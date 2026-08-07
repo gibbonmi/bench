@@ -238,28 +238,32 @@ func doctorReport(stdout io.Writer, version string) int {
 	return rc
 }
 
-// reportPrePush renders the read-only pre-push backstop row when doctor runs inside a git
-// worktree, and returns whether the row is red. git does not clone hooks, so a fresh clone
-// silently drops the default-branch backstop; this catches that the next time doctor runs.
-// The row is read-only by construction: doctor never installs or relabels the hook (self-heal
-// is rejected for least surprise), so the remedy is bench link. A red row makes doctor exit 1
-// even when the shim is healthy.
+// reportPrePush renders the pre-push backstop row when doctor runs inside a git worktree,
+// and returns whether the row is red. git does not clone hooks, so a fresh clone silently
+// drops the default-branch backstop; this catches that the next time doctor runs. A stale
+// bench-managed hook is repaired by bench doctor --fix; an absent, foreign, or diverted hook
+// is left untouched and points to bench link instead. A red row makes doctor exit 1 even when
+// the shim is healthy.
 func reportPrePush(stdout io.Writer) bool {
 	root, err := git.Root()
 	if err != nil {
 		return false // not in a git worktree — no backstop to verify
 	}
-	st := ClassifyPrePush(root)
-	switch st.State {
+	health := InspectPrePush(root)
+	switch health.State {
 	case PrePushManaged:
-		fmt.Fprintf(stdout, "  ok: bench-managed pre-push at %s\n", st.Path)
+		if health.Currency == PrePushStale {
+			fmt.Fprintf(stdout, "  stale: bench-managed pre-push at %s no longer matches the current hook - run bench doctor --fix\n", health.Path)
+			return true
+		}
+		fmt.Fprintf(stdout, "  ok: bench-managed pre-push at %s (branch %s; provenance %s)\n", health.Path, health.Branch, health.Provenance)
 		return false
 	case PrePushForeign:
-		fmt.Fprintf(stdout, "  pre-push: %s is present but not bench-managed (no marker) - run bench link\n", st.Path)
+		fmt.Fprintf(stdout, "  pre-push: %s is present but not bench-managed (no marker) - run bench link\n", health.Path)
 	case PrePushDiverted:
-		fmt.Fprintf(stdout, "  pre-push: diverted by core.hooksPath to %s with no bench-managed hook - run bench link\n", st.Path)
+		fmt.Fprintf(stdout, "  pre-push: diverted by core.hooksPath to %s with no bench-managed hook - run bench link\n", health.Path)
 	default: // PrePushAbsent
-		fmt.Fprintf(stdout, "  pre-push: absent at %s - a fresh clone drops it (git does not clone hooks); run bench link\n", st.Path)
+		fmt.Fprintf(stdout, "  pre-push: absent at %s - a fresh clone drops it (git does not clone hooks); run bench link\n", health.Path)
 	}
 	return true
 }
@@ -305,7 +309,7 @@ func doctorFix(stdout, stderr io.Writer) int {
 			if string(existing) == content {
 				fmt.Fprintf(stdout, "  ok: shim already current at %s (no change)\n", targetPath)
 				doctorPathNotice(stdout, env, dir)
-				return 0
+				return repairStalePrePush(stdout, stderr)
 			}
 		} else {
 			fmt.Fprintf(stderr, "  refusing: %s exists and is not a bench shim (no marker); left unchanged\n", targetPath)
@@ -341,7 +345,52 @@ func doctorFix(stdout, stderr io.Writer) int {
 	}
 	fmt.Fprintf(stdout, "  wrote shim %s (exec -> %s)\n", targetPath, target)
 	doctorPathNotice(stdout, env, dir)
+	return repairStalePrePush(stdout, stderr)
+}
+
+func repairStalePrePush(stdout, stderr io.Writer) int {
+	root, err := git.Root()
+	if err != nil {
+		return 0
+	}
+	health := InspectPrePush(root)
+	switch health.State {
+	case PrePushManaged:
+		if health.Currency == PrePushCurrent {
+			fmt.Fprintf(stdout, "  ok: pre-push already current at %s (no change)\n", health.Path)
+			return 0
+		}
+		if err := installGitHook(root, stderr); err != nil {
+			return 1
+		}
+		if err := restorePrePushExecuteMode(health.Path); err != nil {
+			fmt.Fprintf(stderr, "  error: cannot restore executable mode on pre-push at %s\n", health.Path)
+			return 1
+		}
+		if InspectPrePush(root).Currency != PrePushCurrent {
+			fmt.Fprintf(stderr, "  error: pre-push at %s remains stale after repair\n", health.Path)
+			return 1
+		}
+		fmt.Fprintf(stdout, "  repaired stale pre-push at %s\n", health.Path)
+	case PrePushForeign:
+		fmt.Fprintf(stderr, "  refusing: %s exists and is not a bench-managed pre-push; left unchanged\n", health.Path)
+		return 1
+	}
 	return 0
+}
+
+// restorePrePushExecuteMode adds execute bits to a hook that was already present when the
+// repair rewrote it: writing over an existing file leaves its mode untouched, and git skips
+// a pre-push it cannot execute. The other permission bits are the operator's, so they stay.
+func restorePrePushExecuteMode(path string) error {
+	if isExecutable(path) {
+		return nil
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	return os.Chmod(path, info.Mode().Perm()|0o111)
 }
 
 func resolvedWrapper() string {

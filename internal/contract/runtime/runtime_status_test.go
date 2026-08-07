@@ -122,10 +122,25 @@ func testRuntimeStatusGuardsSignal(t *testing.T) {
 		t.Fatalf("severity ladder broken (worktree=%d guards=%d drain=%d):\n%s", worktree, guards, drain, out)
 	}
 
-	// A managed pre-push clears the gap: no guards row.
-	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "hooks", "pre-push"), "#!/usr/bin/env bash\n# bench:managed-pre-push\nexit 0\n")
+	// A current managed hook with only its baked branch available is healthy, so it
+	// does not spend a status row.
+	f.Bench("link").RequireExit(0)
 	managed := f.Bench("status").Stdout
 	contract.RequireNotContains(t, managed, "guards")
+
+	// Changing managed bytes leaves the marker in place but makes the hook stale.
+	// Status must surface that repairable drift rather than treating every marker as healthy.
+	prePush := filepath.Join(gitDir(t, f), "hooks", "pre-push")
+	managedBytes, err := os.ReadFile(prePush)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, prePush, string(managedBytes)+"# stale\n")
+	stale := f.Bench("status").Stdout
+	requireStatusLineContains(t, stale, "guards", "stale", "bench link")
+	if n := strings.Count(stale, "guards"); n != 1 {
+		t.Fatalf("want one stale guards row, got %d:\n%s", n, stale)
+	}
 
 	// An unrouted repo (no .bench/lines.env) never fires the signal, even with no pre-push.
 	unrouted := contract.NewFixture(t)
@@ -139,6 +154,13 @@ func testRuntimeStatusGuardsPrimaryOnly(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile(".bench/lines.env", "BENCH_CODEX_TOP=t\nBENCH_CODEX_MID=m\nBENCH_CODEX_CHEAP=c\n")
 	f.CommitAll("routed base")
+	f.Bench("link").RequireExit(0)
+	prePush := filepath.Join(gitDir(t, f), "hooks", "pre-push")
+	managedBytes, err := os.ReadFile(prePush)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, prePush, string(managedBytes)+"# stale\n")
 	linked := filepath.Join(f.Root, "linked wt")
 	f.Git("worktree", "add", "-q", "--detach", linked, "HEAD")
 

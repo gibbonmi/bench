@@ -52,7 +52,11 @@ func Upgrade(args []string, stdout, stderr io.Writer, version string) int {
 		fmt.Fprintln(stderr, toon.Errorf("consumer payload allowlist rejected", err.Error()))
 		return 1
 	}
+	direction := compareKitVersions(version, pinned)
 	added, changed, removed := upgradePlanCounts(manifest, plan)
+	if direction != 0 && prePushRefreshEligible(root) {
+		changed++
+	}
 	block, err := toon.TableTyped("upgrade", []string{"from", "to", "added", "changed", "removed"},
 		[][]any{{pinned, version, added, changed, removed}})
 	if err != nil {
@@ -61,7 +65,6 @@ func Upgrade(args []string, stdout, stderr io.Writer, version string) int {
 	}
 	fmt.Fprint(stdout, block)
 
-	direction := compareKitVersions(version, pinned)
 	// The downgrade refusal precedes the --check return: a dry run that reported a plan
 	// the applying run would refuse would be a promise the command cannot keep.
 	if direction < 0 && !force {

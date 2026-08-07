@@ -329,8 +329,8 @@ There is one portable content surface: `.agents/{skills,commands}`. Claude Code 
 adapter paths under `.claude/`; Codex uses `.codex/hooks.json`; both hook adapters call
 the same shared scripts in `.bench/hooks/`. The enforcement that matters remains
 harness-independent too: the `bench shift` loop runs the gate after every iteration
-and commits only on green, and the git `pre-push` hook protects the default branch no
-matter which agent (or human) pushes.
+and commits only on green, and the git `pre-push` hook protects the branch it resolves
+no matter which agent (or human) pushes.
 
 Env knobs: `BENCH_AGENT` (required for `bench shift` — a harness adapter executable
 that takes the prompt as `$1`; reference adapters ship in `.bench/adapters/`),

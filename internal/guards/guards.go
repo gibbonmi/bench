@@ -82,7 +82,7 @@ var inspectGuard = func(ctx context.Context, root string, c candidate) [][]strin
 		return withWired(prePushRow(root), c.wired)
 	}
 	if row, emit := guardRow(c.path, c.fallback); emit {
-		return [][]string{append(row, c.wired)}
+		return [][]string{append(row, "", "", "", c.wired)}
 	}
 	return nil
 }
@@ -235,35 +235,20 @@ func withWired(rows [][]string, wired string) [][]string {
 	return rows
 }
 
-// prePushRow resolves the installed git pre-push hook. A managed hook (carrying the
-// bench marker) is read for its manifest; a marker-less foreign hook is reported
-// `unmanaged` and never executed; an absent hook is a definitive `not installed`.
+// prePushRow renders the hook-health record and keeps the generic manifest parser for
+// the managed hook's guard fields.
 func prePushRow(root string) [][]string {
-	notInstalled := [][]string{{"pre-push", "", "not installed"}}
-	hooksGit, err := git.Output("-C", root, "rev-parse", "--git-path", "hooks")
-	if err != nil || hooksGit == "" {
-		return notInstalled
+	health := adopt.InspectPrePush(root)
+	if health.State == adopt.PrePushManaged {
+		if row, emit := guardRow(health.Path, "pre-push"); emit {
+			return [][]string{append(row, health.Branch, string(health.Provenance), string(health.Currency))}
+		}
+		return nil
 	}
-	if !filepath.IsAbs(hooksGit) {
-		hooksGit = filepath.Join(root, hooksGit)
+	if health.State == adopt.PrePushAbsent {
+		return [][]string{{"pre-push", "", "not installed", "", "", string(health.Currency)}}
 	}
-	prepush := filepath.Join(hooksGit, "pre-push")
-	if !fileExists(prepush) {
-		return notInstalled
-	}
-	content, _ := os.ReadFile(prepush)
-	if !bytes.Contains(content, []byte(adopt.PrePushMarker)) {
-		return [][]string{{"pre-push", "", "unmanaged (no manifest)"}}
-	}
-	if r, emit := guardRow(prepush, "pre-push"); emit {
-		return [][]string{r}
-	}
-	return nil
-}
-
-func fileExists(p string) bool {
-	info, err := os.Stat(p)
-	return err == nil && !info.IsDir()
+	return [][]string{{"pre-push", "", "unmanaged (no manifest)", "", "", string(health.Currency)}}
 }
 
 // Command implements `bench guards [--brief]`. --brief emits one plain line per
@@ -285,13 +270,17 @@ func Command(args []string) (string, int) {
 	if brief {
 		var b strings.Builder
 		for _, r := range rows {
-			fmt.Fprintf(&b, "%s: %s [wired: %s]\n", r[0], r[2], r[3])
+			if r[0] == "pre-push" {
+				fmt.Fprintf(&b, "%s: %s [branch: %s provenance: %s currency: %s wired: %s]\n", r[0], r[2], r[3], r[4], r[5], r[6])
+				continue
+			}
+			fmt.Fprintf(&b, "%s: %s [wired: %s]\n", r[0], r[2], r[6])
 		}
 		fmt.Fprintf(&b, "guard_scan: status=%s inspected=%s total=%s omitted=%s reason=%s\n", scan.Status, scan.Inspected, scan.Total, scan.Omitted, scan.Reason)
 		b.WriteString("full manifests: bench guards\n")
 		return b.String(), 0
 	}
-	out, err := toon.Table("guards", []string{"guard", "boundary", "denies", "wired"}, rows)
+	out, err := toon.Table("guards", []string{"guard", "boundary", "denies", "branch", "provenance", "currency", "wired"}, rows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

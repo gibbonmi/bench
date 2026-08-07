@@ -99,6 +99,22 @@ func hookBranch(root string) string {
 func stageManifest(stage, version string, rows []manifestRow) (string, error) {
 	return stageBytes(stage, "manifest", manifestBytes(version, rows), 0o644)
 }
+
+func stageManagedPrePush(root string, health PrePushHealth) (string, []string, error) {
+	return stageBeside(health.Path, renderedPrePush(root), 0o755)
+}
+
+func renderedPrePush(root string) []byte {
+	return []byte(renderPrePush(root))
+}
+
+func renderPrePush(root string) string {
+	return renderPrePushBranch(hookBranch(root))
+}
+
+func renderPrePushBranch(branch string) string {
+	return strings.ReplaceAll(prePushTemplate, prePushBranchToken, branch)
+}
 func renderVerdicts(name string, vs []lifecycleVerdict) (string, error) {
 	rows := make([][]string, len(vs))
 	for i, v := range vs {

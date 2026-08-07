@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -20,6 +21,11 @@ func TestUpgradeContracts(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
 	contract.RunParallel(t, "bench upgrade check-then-apply contract failed", testUpgradeChecksThenApplies)
+	contract.RunParallel(t, "bench upgrade hook refresh plan contract failed", testUpgradePlansHookRefresh)
+	contract.RunParallel(t, "bench upgrade live hook render plan contract failed", testUpgradePlansLiveHookRender)
+	contract.RunParallel(t, "bench upgrade configured hooksPath refresh plan contract failed", testUpgradePlansAbsentConfiguredHookRefresh)
+	contract.RunParallel(t, "bench upgrade configured hooksPath error plan contract failed", testUpgradeRejectsConfiguredHookPathErrors)
+	contract.RunParallel(t, "bench upgrade special and dangling hook planning contract failed", testUpgradeRefusesUnwritableHooks)
 	contract.RunParallel(t, "bench upgrade unlinked-repo contract failed", testUpgradeRefusesWithoutManifest)
 	contract.RunParallel(t, "bench upgrade same-version no-op contract failed", testUpgradeSameVersionIsNoOp)
 	contract.RunParallel(t, "bench upgrade downgrade refusal contract failed", testUpgradeRefusesDowngrade)
@@ -84,6 +90,197 @@ func requireUpgradePlanRow(t *testing.T, probe contract.Probe, from, to string) 
 	t.Helper()
 	probe.RequireContains(probe.Stdout, upgradePlanHeader)
 	probe.RequireContains(probe.Stdout, "\n  "+from+","+to+",")
+}
+
+func upgradePlanChangedCount(t *testing.T, probe contract.Probe) int {
+	t.Helper()
+	for _, line := range strings.Split(probe.Stdout, "\n") {
+		if !strings.HasPrefix(line, "  ") {
+			continue
+		}
+		cells := strings.Split(strings.TrimSpace(line), ",")
+		if len(cells) != 5 {
+			continue
+		}
+		changed, err := strconv.Atoi(cells[3])
+		if err != nil {
+			t.Fatalf("upgrade plan changed count is not numeric: %q", line)
+		}
+		return changed
+	}
+	t.Fatalf("upgrade plan carries no data row:\n%s", probe.Stdout)
+	return 0
+}
+
+func upgradeSubject(t *testing.T, f contract.Fixture, args ...string) contract.Probe {
+	t.Helper()
+	return f.BenchEnv(map[string]string{"BENCH_KIT": contract.SubjectRoot(t)}, args...)
+}
+
+func testUpgradePlansHookRefresh(t *testing.T) {
+	f := contract.NewFixture(t)
+	installed := linkedRepoAtOlderVersion(t, f, "0.0.1")
+
+	current := upgradeSubject(t, f, "upgrade", "--check")
+	current.RequireExit(0)
+	currentCount := upgradePlanChangedCount(t, current)
+
+	hook := prePushPath(t, f)
+	managedHook := contract.ReadFileAbs(t, hook)
+	if err := os.Remove(hook); err != nil {
+		t.Fatal(err)
+	}
+	absent := upgradeSubject(t, f, "upgrade", "--check")
+	absent.RequireExit(0)
+	if got := upgradePlanChangedCount(t, absent); got != currentCount+1 {
+		t.Fatalf("upgrade plan changed count: got %d, want %d with an absent hook refresh", got, currentCount+1)
+	}
+	contract.WriteFileAbs(t, hook, "#!/bin/sh\nexit 0\n")
+	// A non-managed current file is refused rather than promised as a refresh.
+	foreign := upgradeSubject(t, f, "upgrade", "--check")
+	foreign.RequireExit(0)
+	if got := upgradePlanChangedCount(t, foreign); got != currentCount {
+		t.Fatalf("upgrade plan changed count: got %d, want %d with a refused hook", got, currentCount)
+	}
+	contract.WriteFileAbs(t, hook, managedHook)
+	staleHook := contract.ReadFileAbs(t, hook) + "\n# stale hook\n"
+	contract.WriteFileAbs(t, hook, staleHook)
+	before := fixtureState(t, f)
+	stale := upgradeSubject(t, f, "upgrade", "--check")
+	stale.RequireExit(0)
+	if got := upgradePlanChangedCount(t, stale); got != currentCount+1 {
+		t.Fatalf("upgrade plan changed count: got %d, want %d after a stale hook refresh", got, currentCount+1)
+	}
+	if after := fixtureState(t, f); after != before {
+		t.Fatalf("bench upgrade --check refreshed the hook\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+
+	apply := upgradeSubject(t, f, "upgrade")
+	apply.RequireExit(0)
+	requireLinkEqual(t, manifestKitVersion(t, f), installed, "upgrading did not restamp the manifest kit version")
+	contract.WriteFileAbs(t, hook, staleHook)
+	before = fixtureState(t, f)
+	equal := upgradeSubject(t, f, "upgrade", "--check")
+	equal.RequireExit(0)
+	if got := upgradePlanChangedCount(t, equal); got != 0 {
+		t.Fatalf("equal-version upgrade plan counted stale hook refresh: got %d, want 0", got)
+	}
+	if after := fixtureState(t, f); after != before {
+		t.Fatalf("equal-version bench upgrade --check refreshed the hook\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+func testUpgradePlansLiveHookRender(t *testing.T) {
+	f := contract.NewFixture(t, contract.WithNoRepo())
+	f.Run("git", "init", "-q", "--bare", "-b", "master", "remote.git").RequireExit(0)
+	f.Run("git", "init", "-q", "-b", "master", "repo").RequireExit(0)
+	repo := linkFixtureAt(t, filepath.Join(f.Root, "repo"), f.Env)
+	repo.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "--allow-empty", "-m", "master")
+	repo.Git("remote", "add", "origin", filepath.Join(f.Root, "remote.git"))
+	repo.Git("push", "-q", "origin", "master")
+	repo.Git("remote", "set-head", "origin", "--auto")
+
+	installed := linkedRepoAtOlderVersion(t, repo, "0.0.1")
+	baseline := upgradeSubject(t, repo, "upgrade", "--check")
+	baseline.RequireExit(0)
+	count := upgradePlanChangedCount(t, baseline)
+
+	repo.Git("checkout", "-q", "-b", "main")
+	repo.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "--allow-empty", "-m", "main")
+	repo.Git("push", "-q", "origin", "main")
+	f.Run("git", "-C", filepath.Join(f.Root, "remote.git"), "symbolic-ref", "HEAD", "refs/heads/main").RequireExit(0)
+
+	check := upgradeSubject(t, repo, "upgrade", "--check")
+	check.RequireExit(0)
+	requireUpgradePlanRow(t, check, "0.0.1", installed)
+	if got := upgradePlanChangedCount(t, check); got != count+1 {
+		t.Fatalf("upgrade plan changed count: got %d, want %d when the remote default branch changes", got, count+1)
+	}
+	requireLinkEqual(t, manifestKitVersion(t, repo), "0.0.1", "bench upgrade --check restamped the manifest kit version")
+	requireLinkEqual(t, strings.TrimSpace(repo.Git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").Stdout), "origin/master", "local origin/HEAD moved while the remote default branch changed")
+}
+
+func testUpgradeRefusesUnwritableHooks(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkedRepoAtOlderVersion(t, f, "0.0.1")
+	hook := prePushPath(t, f)
+	baseline := upgradeSubject(t, f, "upgrade", "--check")
+	baseline.RequireExit(0)
+	count := upgradePlanChangedCount(t, baseline)
+
+	if err := os.Remove(hook); err != nil {
+		t.Fatal(err)
+	}
+	f.WriteFifo(filepath.ToSlash(strings.TrimPrefix(hook, f.Root+string(os.PathSeparator))))
+	fifo := f.BenchDeadlined("upgrade", "--check")
+	if fifo.TimedOut {
+		t.Fatal("bench upgrade --check blocked on a writerless FIFO at the effective pre-push path")
+	}
+	fifo.RequireExit(0)
+	if got := upgradePlanChangedCount(t, fifo); got != count {
+		t.Fatalf("upgrade plan changed count: got %d, want %d with a refused FIFO hook", got, count)
+	}
+	if err := os.Remove(hook); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("missing-pre-push", hook); err != nil {
+		t.Fatal(err)
+	}
+	check := upgradeSubject(t, f, "upgrade", "--check")
+	check.RequireExit(0)
+	if got := upgradePlanChangedCount(t, check); got != count {
+		t.Fatalf("upgrade plan changed count: got %d, want %d with a dangling hook", got, count)
+	}
+	apply := upgradeSubject(t, f, "upgrade")
+	apply.RequireExit(1)
+	apply.RequireContains(apply.Stderr, "conflict")
+}
+
+func testUpgradePlansAbsentConfiguredHookRefresh(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.Git("config", "core.hooksPath", ".husky")
+	linkedRepoAtOlderVersion(t, f, "0.0.1")
+	hook := filepath.Join(f.Root, ".husky", "pre-push")
+	baseline := upgradeSubject(t, f, "upgrade", "--check")
+	baseline.RequireExit(0)
+	count := upgradePlanChangedCount(t, baseline)
+	if err := os.Remove(hook); err != nil {
+		t.Fatal(err)
+	}
+
+	check := upgradeSubject(t, f, "upgrade", "--check")
+	check.RequireExit(0)
+	if got := upgradePlanChangedCount(t, check); got != count+1 {
+		t.Fatalf("upgrade plan changed count: got %d, want %d with an absent configured hook refresh", got, count+1)
+	}
+	apply := upgradeSubject(t, f, "upgrade")
+	apply.RequireExit(0)
+	requireExecutable(t, hook, "upgrade did not restore the absent configured pre-push hook")
+}
+
+func testUpgradeRejectsConfiguredHookPathErrors(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.Git("config", "core.hooksPath", ".husky")
+	linkedRepoAtOlderVersion(t, f, "0.0.1")
+
+	baseline := upgradeSubject(t, f, "upgrade", "--check")
+	baseline.RequireExit(0)
+	count := upgradePlanChangedCount(t, baseline)
+
+	hook := filepath.Join(f.Root, ".husky", "pre-push")
+	if err := os.Remove(hook); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Dir(hook)); err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, filepath.Dir(hook), "not a hooks directory\n")
+
+	check := upgradeSubject(t, f, "upgrade", "--check")
+	check.RequireExit(0)
+	if got := upgradePlanChangedCount(t, check); got != count {
+		t.Fatalf("upgrade plan changed count: got %d, want %d with an unreadable configured pre-push path", got, count)
+	}
 }
 
 func testUpgradeChecksThenApplies(t *testing.T) {

@@ -1,6 +1,7 @@
 package surface
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,6 +21,132 @@ func TestLinkLifecycleHostileContracts(t *testing.T) {
 	testLinkRejectsHostileDroppedRows(t)
 	testLinkRejectsFIFOInAllowlistedKitTree(t)
 	testLinkRejectsSymlinkInAllowlistedKitTree(t)
+}
+
+func TestLinkSymlinkLifecycleContracts(t *testing.T) {
+	contract.SkipIfSubjectBenchMissing(t)
+	testLinkConvergesManagedSymlink(t)
+	testLinkRejectsDriftedManagedSymlink(t)
+	testLinkRejectsNewEntryUnderManagedSymlink(t)
+	testUpgradeRefreshesHookThroughManagedSymlink(t)
+	testLinkManagedSymlinkIsIdempotent(t)
+	testLinkLeavesCleanEntryInPlace(t)
+}
+
+func testLinkConvergesManagedSymlink(t *testing.T) {
+	f := convergedManagedSymlinkFixture(t)
+
+	f.Bench("link").RequireExit(0)
+}
+
+// testLinkRejectsDriftedManagedSymlink pins the symlink-parent abort ahead of the soft
+// conflict classification: a drifted entry needs a write, so the deliberately symlinked
+// directory beneath it is a hard refusal for the whole transaction rather than one row
+// of an exit-3 conflicts report that still promotes everything else.
+func testLinkRejectsDriftedManagedSymlink(t *testing.T) {
+	f := convergedManagedSymlinkFixture(t)
+	f.WriteFile(".agents/commands/bench-implement-spec.md", "consumer drift\n")
+	before := fixtureState(t, f)
+
+	probe := f.Bench("link")
+
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stderr, ".agents/commands/bench-implement-spec.md has a symlink parent directory")
+	if after := fixtureState(t, f); after != before {
+		t.Fatalf("symlink-parent refusal still promoted part of the transaction\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+func testLinkRejectsNewEntryUnderManagedSymlink(t *testing.T) {
+	f := contract.NewFixture(t)
+	kit := payloadTestKit(t, f, "symlink-new-entry")
+	f.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
+	makeManagedAgentsSymlink(t, f)
+	contract.WriteFileAbs(t, filepath.Join(kit, ".agents", "commands", "new-managed-command.md"), "new managed command\n")
+
+	probe := f.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link")
+
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stderr, "new-managed-command.md has a symlink parent directory")
+}
+
+func testUpgradeRefreshesHookThroughManagedSymlink(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkedRepoAtOlderVersion(t, f, "0.0.1")
+	makeManagedAgentsSymlink(t, f)
+	hook := prePushPath(t, f)
+	current := contract.ReadFileAbs(t, hook)
+	contract.WriteFileAbs(t, hook, current+"\n# stale hook\n")
+
+	f.Bench("upgrade").RequireExit(0)
+
+	requireLinkEqual(t, contract.ReadFileAbs(t, hook), current, "upgrade through a converged managed symlink did not restore current hook bytes")
+}
+
+func testLinkManagedSymlinkIsIdempotent(t *testing.T) {
+	f := convergedManagedSymlinkFixture(t)
+	f.Bench("link").RequireExit(0)
+	before := fixtureState(t, f)
+
+	f.Bench("link").RequireExit(0)
+
+	if after := fixtureState(t, f); after != before {
+		t.Fatalf("second link through a converged managed symlink changed tree or manifest\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+// testLinkLeavesCleanEntryInPlace pins the skip as a genuine one rather than a rewrite
+// of identical bytes. Comparing content would pass either way, so the inode is the
+// observable that separates them: promotion renames a staged replacement over the
+// destination and changes it, while a skipped entry keeps the file it already had.
+func testLinkLeavesCleanEntryInPlace(t *testing.T) {
+	plain := contract.NewFixture(t)
+	linkOK(t, plain)
+	requireCleanEntryInodeStable(t, plain, "clean entry under an ordinary parent")
+	requireCleanEntryInodeStable(t, convergedManagedSymlinkFixture(t), "clean entry under a symlink parent")
+}
+
+func requireCleanEntryInodeStable(t *testing.T, f contract.Fixture, context string) {
+	t.Helper()
+	before := fixtureInode(t, f, managedFileRel)
+
+	f.Bench("link").RequireExit(0)
+
+	if after := fixtureInode(t, f, managedFileRel); after != before {
+		t.Fatalf("%s: link replaced %s (inode %d -> %d) instead of skipping it", context, managedFileRel, before, after)
+	}
+}
+
+func fixtureInode(t *testing.T, f contract.Fixture, rel string) uint64 {
+	t.Helper()
+	info, err := os.Stat(filepath.Join(f.Root, filepath.FromSlash(rel)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		t.Fatalf("inode unavailable for %s on this platform", rel)
+	}
+	return uint64(stat.Ino)
+}
+
+func convergedManagedSymlinkFixture(t *testing.T) contract.Fixture {
+	t.Helper()
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	makeManagedAgentsSymlink(t, f)
+	return f
+}
+
+func makeManagedAgentsSymlink(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	managed := filepath.Join(f.Root, "managed-agents")
+	if err := os.Rename(filepath.Join(f.Root, ".agents"), managed); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("managed-agents", filepath.Join(f.Root, ".agents")); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // TestLinkPayloadAllowlistContracts pins the consumer-payload allowlist as the single
@@ -170,6 +297,57 @@ func TestLinkMarkerFenceContracts(t *testing.T) {
 	contract.RunParallel(t, "bench link malformed marker contract failed", testLinkMalformedMarker)
 	contract.RunParallel(t, "bench link fenced-marker contract failed", testLinkFencedMarker)
 	contract.RunParallel(t, "bench link unclosed-fence contract failed", testLinkUnclosedFence)
+}
+
+func TestLinkPrePushLifecycleContracts(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "bench link leaves installation open when origin head probing fails", testLinkOriginHeadProbeFailureOpen)
+	contract.RunParallel(t, "bench link refuses a dangling pre-push hook", testLinkDanglingPrePushRefusal)
+	contract.RunParallel(t, "bench link refuses a marker-less pre-push hook", testLinkMarkerlessPrePushRefusal)
+}
+
+func testLinkOriginHeadProbeFailureOpen(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.Git("remote", "add", "origin", filepath.Join(f.Root, "missing-remote.git"))
+
+	linkOK(t, f)
+	hooks := strings.TrimSpace(f.Git("rev-parse", "--git-path", "hooks").Stdout)
+	requireExecutable(t, filepath.Join(f.Root, hooks, "pre-push"), "link failed open when origin head probe failed")
+}
+
+func testLinkDanglingPrePushRefusal(t *testing.T) {
+	f := contract.NewFixture(t)
+	hooks := strings.TrimSpace(f.Git("rev-parse", "--git-path", "hooks").Stdout)
+	path := filepath.Join(f.Root, hooks, "pre-push")
+	if err := os.Symlink("missing-pre-push", path); err != nil {
+		t.Fatal(err)
+	}
+
+	probe := f.Bench("link")
+	if probe.ExitCode == 0 {
+		t.Fatal("link succeeded over a dangling pre-push hook")
+	}
+	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "conflict")
+	target, err := os.Readlink(path)
+	if err != nil || target != "missing-pre-push" {
+		t.Fatalf("dangling pre-push after refusal = %q, %v", target, err)
+	}
+}
+
+func testLinkMarkerlessPrePushRefusal(t *testing.T) {
+	f := contract.NewFixture(t)
+	hooks := strings.TrimSpace(f.Git("rev-parse", "--git-path", "hooks").Stdout)
+	rel := filepath.ToSlash(filepath.Join(hooks, "pre-push"))
+	contents := "#!/bin/sh\nexit 0\n"
+	f.WriteExecutable(rel, contents)
+
+	probe := f.Bench("link")
+	if probe.ExitCode == 0 {
+		t.Fatal("link succeeded over a marker-less pre-push hook")
+	}
+	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "conflict")
+	requireFixtureFileContains(t, f, rel, contents, "marker-less pre-push changed after refusal")
 }
 
 func testLinkMalformedMarker(t *testing.T) {
@@ -377,6 +555,61 @@ func testLinkLifecycleMatrix(t *testing.T) {
 	}
 }
 
+// lifecycleSharedRel is the managed asset the two lifecycle kits both ship with
+// different bytes — the shape a real release takes when it edits an asset a consumer
+// already owns and has never touched.
+const (
+	lifecycleSharedRel = ".agents/commands/lifecycle-shared.md"
+	lifecycleSharedA   = "shared asset, kit A\n"
+	lifecycleSharedB   = "shared asset, kit B, revised\n"
+)
+
+// TestLinkCleanSkipPropagationContracts pins that an untouched managed asset tracks the
+// kit it is linked against rather than the bytes it was first written with. Skipping a
+// destination because it matches the recorded manifest hash makes every release a
+// content no-op for exactly the files a consumer never touched, and leaves the manifest
+// asserting ownership of bytes no kit ships.
+func TestLinkCleanSkipPropagationContracts(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "bench link clean-entry propagation contract failed", testLinkPropagatesChangedKitBytes)
+	contract.RunParallel(t, "bench upgrade clean-entry propagation contract failed", testUpgradePropagatesChangedKitBytes)
+}
+
+func testLinkPropagatesChangedKitBytes(t *testing.T) {
+	f := contract.NewFixture(t)
+	kitA, kitB := lifecycleKits(t, f)
+	f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+	requireLinkEqual(t, f.ReadFile(lifecycleSharedRel), lifecycleSharedA, "link did not install the kit A shared asset")
+
+	f.BenchEnv(map[string]string{"BENCH_KIT": kitB}, "link").RequireExit(0)
+
+	requireLinkEqual(t, f.ReadFile(lifecycleSharedRel), lifecycleSharedB, "relink left an untouched clean asset at the previous kit's bytes")
+	requireManifestHash(t, f, lifecycleSharedRel, lifecycleSharedB, "relink kept the previous kit's manifest hash for a rewritten asset")
+}
+
+func testUpgradePropagatesChangedKitBytes(t *testing.T) {
+	f := contract.NewFixture(t)
+	kitA, kitB := lifecycleKits(t, f)
+	f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+	repinManifestKitVersion(t, f, "0.0.1")
+
+	f.BenchEnv(map[string]string{"BENCH_KIT": kitB}, "upgrade").RequireExit(0)
+
+	requireLinkEqual(t, f.ReadFile(lifecycleSharedRel), lifecycleSharedB, "upgrade left an untouched clean asset at the previous kit's bytes")
+	requireManifestHash(t, f, lifecycleSharedRel, lifecycleSharedB, "upgrade kept the previous kit's manifest hash for a rewritten asset")
+}
+
+// requireManifestHash asserts the manifest owns rel at exactly the hash content
+// fingerprints to, which is what separates a propagated rewrite from a retained row.
+func requireManifestHash(t *testing.T, f contract.Fixture, rel, content, msg string) {
+	t.Helper()
+	want := rel + "\t" + fmt.Sprintf("%x", sha256.Sum256([]byte(content)))
+	if got := manifestRow(t, f, rel); got != want {
+		t.Fatalf("%s: manifest row = %q, want %q", msg, got, want)
+	}
+}
+
 func lifecycleKits(t *testing.T, f contract.Fixture) (string, string) {
 	t.Helper()
 	root := contract.KitRoot(t)
@@ -394,6 +627,8 @@ func lifecycleKits(t *testing.T, f contract.Fixture) (string, string) {
 	kitA, kitB := makeKit("kit-a"), makeKit("kit-b")
 	contract.WriteFileAbs(t, filepath.Join(kitA, ".agents", "commands", "lifecycle-x.md"), "asset x\n")
 	contract.WriteFileAbs(t, filepath.Join(kitB, ".agents", "commands", "lifecycle-y.md"), "asset y\n")
+	contract.WriteFileAbs(t, filepath.Join(kitA, filepath.FromSlash(lifecycleSharedRel)), lifecycleSharedA)
+	contract.WriteFileAbs(t, filepath.Join(kitB, filepath.FromSlash(lifecycleSharedRel)), lifecycleSharedB)
 	return kitA, kitB
 }
 

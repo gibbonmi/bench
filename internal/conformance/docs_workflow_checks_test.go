@@ -24,9 +24,42 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	diags = append(diags, checkCommandFirstAnchors(root)...)
 	diags = append(diags, checkWorkflowAnchors(root)...)
 	diags = append(diags, checkOccurrenceLedgerAndMaintenance(root)...)
+	diags = append(diags, checkPrePushREADMEClaim(root)...)
 	diags = append(diags, checkSkillsIndexGenerateVerify(root, kitRoot)...)
 	diags = append(diags, checkCoverageMaps(root)...)
 	return diags
+}
+
+func checkPrePushREADMEClaim(root string) []string {
+	readme := strings.ReplaceAll(readIfExists(filepath.Join(root, "README.md")), "`", "")
+	var diags []string
+	if !strings.Contains(readme, "pre-push hook protects the branch it resolves") {
+		diags = append(diags, "README.md does not say the pre-push hook protects the branch it resolves")
+	}
+	if strings.Contains(readme, "pre-push hook protects the default branch") {
+		diags = append(diags, "README.md claims the pre-push hook protects the default branch without qualification")
+	}
+	return diags
+}
+
+func TestPrePushREADMEClaimBites(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		readme string
+	}{
+		{"missing resolved branch", "the pre-push hook protects a branch"},
+		{"unqualified default branch", "the pre-push hook protects the branch it resolves\nthe pre-push hook protects the default branch"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.WriteFile(filepath.Join(root, "README.md"), []byte(test.readme), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if diags := checkPrePushREADMEClaim(root); len(diags) == 0 {
+				t.Fatal("pre-push README claim mutation passed")
+			}
+		})
+	}
 }
 
 func checkOccurrenceLedgerMigration(root string) []string {

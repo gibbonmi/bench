@@ -423,7 +423,7 @@ func Plural(n int, one, many string) string {
 // the harness-independent default-branch backstop; this surfaces the gap ambiently rather
 // than only under `bench doctor`. It fires only on the primary checkout of a routed repo
 // (`.bench/lines.env` present) — pool and linked worktrees share the main `.git` and must not
-// double-report the same hook — and stays quiet when the hook is bench-managed. Remedy: bench link.
+// double-report the same hook — and stays quiet when its managed bytes are current. Remedy: bench link.
 func appendGuards(rows []row, root string) []row {
 	if !isPrimaryCheckout(root) {
 		return rows
@@ -431,17 +431,20 @@ func appendGuards(rows []row, root string) []row {
 	if _, err := os.Stat(filepath.Join(root, ".bench", "lines.env")); err != nil {
 		return rows
 	}
-	st := adopt.ClassifyPrePush(root)
-	if st.State == adopt.PrePushManaged {
+	health := adopt.InspectPrePush(root)
+	if health.State == adopt.PrePushManaged && health.Currency == adopt.PrePushCurrent {
 		return rows
 	}
-	return append(rows, row{3, "guards", prePushDetail(st.State), "bench link"})
+	return append(rows, row{3, "guards", prePushDetail(health), "bench link"})
 }
 
 // prePushDetail names the pre-push gap the guards row reports, mirroring the adopt classifier's
 // states so the ambient signal and the doctor row describe the same condition.
-func prePushDetail(state adopt.PrePushState) string {
-	switch state {
+func prePushDetail(health adopt.PrePushHealth) string {
+	if health.State == adopt.PrePushManaged && health.Currency == adopt.PrePushStale {
+		return "pre-push stale"
+	}
+	switch health.State {
 	case adopt.PrePushForeign:
 		return "pre-push not bench-managed"
 	case adopt.PrePushDiverted:

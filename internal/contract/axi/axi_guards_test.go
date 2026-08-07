@@ -30,10 +30,18 @@ func TestAXIGuardsContracts(t *testing.T) {
 func testAXIGuardsAggregation(t *testing.T) {
 	contract.NoteContractFailure(t, "AXI guards aggregation contract failed")
 	f := linkedGuardsFixture(t)
+	prepush := gitPrePushPath(t, f)
+	content, err := os.ReadFile(prepush)
+	if err != nil {
+		t.Fatalf("read generated pre-push: %v", err)
+	}
+	if err := os.WriteFile(prepush, append(content, '\n'), 0o755); err != nil {
+		t.Fatalf("make generated pre-push stale: %v", err)
+	}
 
 	out := f.Bench("guards")
 	out.RequireExit(0)
-	requireGuardsFirstLine(t, out.Stdout, "guards[4]{guard,boundary,denies,wired}:")
+	requireGuardsFirstLine(t, out.Stdout, "guards[4]{guard,boundary,denies,branch,provenance,currency,wired}:")
 	for _, guard := range []string{"block-dangerous-git", "check-agent-line", "stop", "pre-push"} {
 		requireGuardsLineMatching(t, out.Stdout, "^  "+regexp.QuoteMeta(guard)+",")
 	}
@@ -46,25 +54,33 @@ func testAXIGuardsAggregation(t *testing.T) {
 	// TOON-quoted "claude,codex".
 	requireGuardsLineMatching(t, out.Stdout, `^  check-agent-line,.*,claude$`)
 	requireGuardsLineMatching(t, out.Stdout, `^  block-dangerous-git,.*,"claude,codex"$`)
+	requireGuardsLine(t, out.Stdout, `  pre-push,pre-push,direct push to the protected branch; .bench drift when pinned,main,baked,stale,git`)
 
-	prepush := gitPrePushPath(t, f)
 	// An orphan hook script referenced by neither config renders the definitive
 	// `none`, never a blank cell.
 	f.WriteExecutable(".bench/hooks/extra.sh", "#!/usr/bin/env bash\ncat >/dev/null\nexit 0\n")
 	withExtra := f.Bench("guards")
 	withExtra.RequireExit(0)
-	requireGuardsLine(t, withExtra.Stdout, `  extra,"",no manifest,none`)
+	requireGuardsLine(t, withExtra.Stdout, `  extra,"",no manifest,"","","",none`)
 
 	if err := os.Remove(prepush); err != nil {
 		t.Fatalf("remove generated pre-push: %v", err)
 	}
 	withoutPrePush := f.Bench("guards")
 	withoutPrePush.RequireExit(0)
-	requireGuardsLine(t, withoutPrePush.Stdout, `  pre-push,"",not installed,git`)
+	requireGuardsLine(t, withoutPrePush.Stdout, `  pre-push,"",not installed,"","",not-applicable,git`)
 }
 
 func testAXIGuardsBrief(t *testing.T) {
 	f := linkedGuardsFixture(t)
+	prepush := gitPrePushPath(t, f)
+	content, err := os.ReadFile(prepush)
+	if err != nil {
+		t.Fatalf("read generated pre-push: %v", err)
+	}
+	if err := os.WriteFile(prepush, append(content, '\n'), 0o755); err != nil {
+		t.Fatalf("make generated pre-push stale: %v", err)
+	}
 
 	out := f.Bench("guards", "--brief")
 
@@ -73,10 +89,11 @@ func testAXIGuardsBrief(t *testing.T) {
 	requireGuardsStringEqual(t, fmt.Sprint(nonEmptyGuardsLineCount(out.Stdout)), "6", "brief line count")
 	out.RequireContains(out.Stdout, "guard_scan: status=complete")
 	out.RequireContains(out.Stdout, "block-dangerous-git: destructive git")
-	// --brief carries the wired harnesses per guard so the SessionStart injection
-	// stays honest about which configs can actually fire each hook.
+	// --brief carries the shared pre-push health and wired harnesses into the
+	// SessionStart injection.
 	requireGuardsLineMatching(t, out.Stdout, `^check-agent-line: .*\[wired: claude\]$`)
 	requireGuardsLineMatching(t, out.Stdout, `^block-dangerous-git: .*\[wired: claude,codex\]$`)
+	requireGuardsLineMatching(t, out.Stdout, `^pre-push: .*\[branch: main provenance: baked currency: stale wired: git\]$`)
 }
 
 func testAXIGuardsUsageSubdirectory(t *testing.T) {
@@ -125,7 +142,7 @@ func testAXIGuardsUnmanagedPrePushSafety(t *testing.T) {
 	out := f.Bench("guards")
 
 	out.RequireExit(0)
-	requireGuardsLine(t, out.Stdout, `  pre-push,"",unmanaged (no manifest),git`)
+	requireGuardsLine(t, out.Stdout, `  pre-push,"",unmanaged (no manifest),"","",not-applicable,git`)
 	if _, err := os.Stat(sentinel); err == nil {
 		t.Fatal("bench guards executed a foreign pre-push")
 	}
@@ -151,9 +168,9 @@ func testAXIGuardsStaticNonExecution(t *testing.T) {
 
 	guards := f.Bench("guards")
 	guards.RequireExit(0)
-	requireGuardsLine(t, guards.Stdout, `  full,test,a guarded action,none`)
-	requireGuardsLine(t, guards.Stdout, `  incomplete,"",no manifest,none`)
-	requireGuardsLine(t, guards.Stdout, `  absent,"",no manifest,none`)
+	requireGuardsLine(t, guards.Stdout, `  full,test,a guarded action,"","","",none`)
+	requireGuardsLine(t, guards.Stdout, `  incomplete,"",no manifest,"","","",none`)
+	requireGuardsLine(t, guards.Stdout, `  absent,"",no manifest,"","","",none`)
 	requireNoGuardsLineMatching(t, guards.Stdout, `^  informational,`)
 	f.Bench("session-inspect").RequireExit(0)
 	for _, fixture := range fixtures {

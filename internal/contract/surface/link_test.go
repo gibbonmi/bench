@@ -26,6 +26,7 @@ func TestLinkContracts(t *testing.T) {
 	contract.RunParallel(t, "bench link metachar kit-path contract failed", testLinkMetacharKitPath)
 	contract.RunParallel(t, "bench link worktree contract failed", testLinkWorktree)
 	contract.RunParallel(t, "bench link hooksPath contract failed", testLinkHooksPath)
+	contract.RunParallel(t, "bench link renders the managed hook at one live site", testLinkHookTemplateSingleSubstitution)
 	contract.RunParallel(t, "bench link default-branch resolution contract failed", testLinkDefaultBranchResolution)
 	contract.RunParallel(t, "bench link hooksPath conflict contract failed", testLinkHooksPathConflict)
 	contract.RunParallel(t, "managed pre-push gate pin contract failed", testManagedPrePushGatePinning)
@@ -34,6 +35,32 @@ func TestLinkContracts(t *testing.T) {
 	contract.RunParallel(t, "bench link reconciles kit versions contract failed", testLinkReconcilesKitVersions)
 	contract.RunParallel(t, "bench link preserves modified dropped asset contract failed", testLinkKeepsModifiedDroppedAsset)
 	contract.RunParallel(t, "bench link lifecycle matrix contract failed", testLinkLifecycleMatrix)
+}
+
+func testLinkHookTemplateSingleSubstitution(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	needle := "strings.ReplaceAll(prePushTemplate, prePushBranchToken,"
+	got := 0
+	err := filepath.WalkDir(filepath.Join(root, "internal", "adopt"), func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		got += strings.Count(string(data), needle)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != 1 {
+		t.Fatalf("managed hook template branch-token replacements = %d, want 1", got)
+	}
 }
 
 // The wrapper process owns the fault seam, so this checks the actual shipped
@@ -314,6 +341,7 @@ func testLinkDefaultBranchResolution(t *testing.T) {
 	repo.GitAllow("symbolic-ref", "-d", "refs/remotes/origin/HEAD")
 
 	linkOK(t, repo)
+	repo.Git("symbolic-ref", "--quiet", "refs/remotes/origin/HEAD")
 
 	hooks := strings.TrimSpace(repo.Git("rev-parse", "--git-path", "hooks").Stdout)
 	requireFixtureFileContains(t, repo, filepath.ToSlash(filepath.Join(hooks, "pre-push")), "protected=\"master\"", "pre-push bakes the wrong branch fallback when origin/HEAD is unset")

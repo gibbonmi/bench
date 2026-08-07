@@ -6,10 +6,55 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
 type lifecycleVerdict struct{ rel, reason string }
+
+// stagedEntry pairs a plan entry with the staged file promotion will rename into place.
+// Classification stages every entry it inspects because the skip decision compares the
+// destination against exactly the bytes and mode this plan would write, and staging is
+// the only definition of those.
+type stagedEntry struct {
+	entry planEntry
+	stage string
+}
+
+// convergedFingerprint returns dest's fingerprint when dest already holds exactly what
+// promoting staged would leave there, and "" when the entry still needs a write. The
+// permission bits are compared alongside the fingerprint because a fingerprint covers
+// content only, so a kit asset can change its executable bit without changing a byte.
+func convergedFingerprint(dest, staged string) string {
+	destInfo, err := os.Lstat(dest)
+	if err != nil {
+		return ""
+	}
+	stagedInfo, err := os.Lstat(staged)
+	if err != nil {
+		return ""
+	}
+	if destInfo.Mode()&os.ModeSymlink == 0 && destInfo.Mode().Perm() != stagedInfo.Mode().Perm() {
+		return ""
+	}
+	destPrint, err := fingerprintPath(dest)
+	if err != nil {
+		return ""
+	}
+	stagedPrint, err := fingerprintPath(staged)
+	if err != nil || destPrint != stagedPrint {
+		return ""
+	}
+	return destPrint
+}
+
+// ownedUnmodified reports whether dest still carries the exact bytes recorded for it in
+// the previous manifest, where owned is that manifest's hash and "" means unowned.
+func ownedUnmodified(dest, owned string) bool {
+	if owned == "" {
+		return false
+	}
+	fp, err := fingerprintPath(dest)
+	return err == nil && fp == owned
+}
 
 // transactionalLink stages and promotes plan into root as one FT84 transaction, and
 // reports whether anything on disk actually changed (the second return) alongside the
@@ -22,7 +67,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		fmt.Fprintln(stderr, err)
 		return 1, false
 	}
-	accepted := make([]planEntry, 0, len(plan))
+	accepted := make([]stagedEntry, 0, len(plan))
 	planned := make(map[string]bool, len(plan))
 	conflicts := []lifecycleVerdict{}
 	// A FIFO/socket/device at AGENTS.md or CLAUDE.md must never be opened for read —
@@ -41,11 +86,20 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 	if claudeSpecial {
 		conflicts = append(conflicts, lifecycleVerdict{"CLAUDE.md", "project-owned"})
 	}
-	prepush := filepath.Join(hooksDir(root), "pre-push")
-	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), PrePushMarker) {
-		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
+	populateOriginHead(root)
+	hook := InspectPrePush(root)
+	_, hookPresent := os.Lstat(hook.Path)
+	if hook.State == PrePushForeign || (hook.State == PrePushDiverted && hookPresent == nil) {
+		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", hook.Path)
 		return 1, false
 	}
+	stage, err := os.MkdirTemp(root, ".bench-link-")
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1, false
+	}
+	defer os.RemoveAll(stage)
+	rows := map[string]string{}
 	for _, e := range plan {
 		planned[e.rel] = true
 		// "seed" (seed-if-absent) entries - bench setup's profile - are neither a
@@ -61,7 +115,12 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			if _, err := os.Lstat(filepath.Join(root, e.rel)); err == nil {
 				continue
 			}
-			accepted = append(accepted, e)
+			p, err := stagePlanEntry(stage, e, mode)
+			if err != nil {
+				fmt.Fprintln(stderr, err)
+				return 1, false
+			}
+			accepted = append(accepted, stagedEntry{e, p})
 			continue
 		}
 		if e.kind != "inline" && e.kind != "inline-exec" {
@@ -70,51 +129,70 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 				return 1, false
 			}
 		}
-		if hasSymlinkParent(root, e.rel) {
-			fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
-			return 1, false
-		}
 		parent := filepath.Join(root, filepath.Dir(e.rel))
 		if info, err := os.Stat(parent); err == nil && !info.IsDir() {
 			fmt.Fprintf(stderr, "conflict: parent path for %s is not a directory\n", e.rel)
 			return 1, false
 		}
-		if _, err := os.Lstat(filepath.Join(root, e.rel)); err == nil && !manifestOwnedClean(root, e.rel) {
+		// A manifest-owned destination that already holds what this plan would write needs
+		// no write at all, so it leaves the transaction here - never renamed over and never
+		// a conflict candidate - carrying its own fingerprint into the manifest. The
+		// comparison is against the incoming kit bytes rather than the recorded hash: an
+		// asset whose kit content changed between releases is untouched locally yet stale,
+		// and keying the skip on the old hash would make every release a content no-op.
+		// Ownership still gates the skip, so a destination bench never wrote stays a
+		// conflict even when its bytes happen to agree. Everything past this point wants to
+		// write, which is what makes a symlink parent a hard refusal for the whole
+		// transaction: promoting through a deliberately symlinked directory would write
+		// outside the tree the manifest describes, and that outranks the soft per-entry
+		// conflict report.
+		dest := filepath.Join(root, e.rel)
+		_, statErr := os.Lstat(dest)
+		exists := statErr == nil
+		owned := old.Hash(e.rel)
+		staged, err := stagePlanEntry(stage, e, mode)
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1, false
+		}
+		if exists && owned != "" {
+			if fp := convergedFingerprint(dest, staged); fp != "" {
+				rows[e.rel] = fp
+				continue
+			}
+		}
+		if hasSymlinkParent(root, e.rel) {
+			fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
+			return 1, false
+		}
+		// An owned destination still carrying the bytes the manifest recorded is the
+		// consumer's untouched copy of an older kit, so it is rewritten rather than
+		// reported: only a destination that answers to neither the manifest nor the
+		// incoming kit is someone's local edit to preserve.
+		if exists && !ownedUnmodified(dest, owned) {
 			reason := "project-owned"
-			if old.Hash(e.rel) != "" {
+			if owned != "" {
 				reason = "modified-managed"
 			}
 			conflicts = append(conflicts, lifecycleVerdict{e.rel, reason})
 			continue
 		}
-		accepted = append(accepted, e)
+		accepted = append(accepted, stagedEntry{e, staged})
 	}
-	stage, err := os.MkdirTemp(root, ".bench-link-")
-	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1, false
-	}
-	defer os.RemoveAll(stage)
 	changes := []stagedChange{}
-	rows := map[string]string{}
-	for _, e := range accepted {
-		p, err := stagePlanEntry(stage, e, mode)
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1, false
-		}
+	for _, a := range accepted {
 		// A seed entry is never recorded as a managed row: recording it would make a
 		// later reviewer hand-edit read back as a modified-managed conflict on the
 		// next run, which defeats "seed-if-absent, then reviewer-owned".
-		if e.kind != "seed" {
-			fp, err := fingerprintPath(p)
+		if a.entry.kind != "seed" {
+			fp, err := fingerprintPath(a.stage)
 			if err != nil {
 				fmt.Fprintln(stderr, err)
 				return 1, false
 			}
-			rows[e.rel] = fp
+			rows[a.entry.rel] = fp
 		}
-		changes = append(changes, stagedChange{rel: e.rel, stage: p, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+		changes = append(changes, stagedChange{rel: a.entry.rel, stage: a.stage, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
 	}
 	// A dropped old row leaves only when it is still clean. Modified rows remain owned.
 	for _, row := range old.Rows() {
@@ -183,8 +261,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			changes = append(changes, stagedChange{rel: "CLAUDE.md", stage: claude, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
 		}
 	}
-	hookDest := filepath.Join(hooksDir(root), "pre-push")
-	hookStage, hookDirs, err := stageBeside(hookDest, []byte(strings.ReplaceAll(prePushTemplate, prePushBranchToken, hookBranch(root))), 0o755)
+	hookStage, hookDirs, err := stageManagedPrePush(root, hook)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1, false
@@ -196,7 +273,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			removeEmptyDirs(hookDirs)
 		}
 	}()
-	changes = append(changes, stagedChange{rel: "pre-push", dest: hookDest, stage: hookStage, backup: hookStage + ".backup"})
+	changes = append(changes, stagedChange{rel: "pre-push", dest: hook.Path, stage: hookStage, backup: hookStage + ".backup"})
 	manifestRows := make([]manifestRow, 0, len(rows))
 	for rel, hash := range rows {
 		manifestRows = append(manifestRows, manifestRow{rel, hash})
