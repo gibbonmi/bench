@@ -20,9 +20,11 @@ Supersedes `gate-concurrency`'s decision #1 (budget model) and #3 (budget =
 `runtime.GOMAXPROCS(0)`, the whole box). That map's landed canary arm stands as
 built; what changes is that its arithmetic stops computing from the box.
 
-Measured entry state: the changed-tree gate is 89.91 s with `posture` at
-85.415 s inside the full gate against a 50.917 s focused span. Target: a full
-gate under 2 minutes, faster better.
+Measured current state after the three demand reductions: `internal/gate` is
+147.34–159.70 s across three fresh focused runs, and one exact-subject fresh
+gate is 246 s with that package at 230.663 s. The target remains a full gate
+under 2 minutes, faster better; the focused floor means the reduced workload
+is not yet eligible for pool pricing.
 
 ## #1: What is bounded — processes, or cores?
 
@@ -197,7 +199,7 @@ construction, not on measurement.
 
 ## #8: What are `r` and the span-inflation threshold?
 
-Blocked by: #7, #20
+Blocked by: #7, #26
 Type: Prototype
 
 ### Question
@@ -560,6 +562,10 @@ After those three land, #20 re-runs the cold workload census. Only that reduced
 workload may feed #8's pool and reserve pricing. The first ordered spec is
 `gate-evaluation-snapshot`; the other two are downstream and out of its scope.
 
+The three landed reductions were necessary but not sufficient: #20 found the
+focused package floor still above the destination. #21 therefore continues
+demand reduction before #8 without reopening this ordering decision.
+
 Ship-tier duplicate-proof policy is separate shaping because it changes the
 meaning and composition of publication evidence, not merely the dev gate's
 implementation. FT87 continues to own publication timeout behavior.
@@ -604,7 +610,10 @@ oracle behavior does not change. Owner: a fresh spec lifecycle beginning with
 
 ### Answer
 
-— (open)
+Resolved and landed. `gate-decision-test-seam` promoted candidate `f7f0ea8c`
+as `3cce8aab` and retired at `acf5c9da`. The exhaustive public-document
+partition now runs at the decision seam; its seeded full-engine control and
+failure-path representatives retain the composition proof.
 
 ## #19: Does each conformance fixture run only its registered check?
 
@@ -622,7 +631,10 @@ promotion, and retirement.
 
 ### Answer
 
-— (open)
+Resolved and landed. `conformance-harness-scope` promoted candidate
+`cd0b7300` as `6cf1816e` and retired at `c8ea95ea`. Its 83 direct fixture bites
+now execute the canary-resolved ordinary check, including fixture-level
+`CHECK` precedence, while broad controls retain the full table.
 
 ## #20: What workload remains after demand reduction?
 
@@ -635,6 +647,197 @@ Re-run the cold package census and the focused-versus-in-gate span probes after
 #17–#19 land. Update the census asset with exact commits, subjects, repetitions,
 CPU, wall, and process/materialization counts. Report the reduced workload that
 #8 must price; do not carry the pre-refactor demand forward as an assumption.
+
+### Answer
+
+Resolved on exact commit `eb6845f` (tree `cd2ece9`), 2026-08-07 local time.
+The 71-package serial census was green at 767.25 s wall and 1110.99 s CPU.
+`internal/conformance` fell to a 25.83 s three-run mean, but the reduced
+workload still cannot feed #8: `internal/gate` was 147.34, 159.70, and 152.11
+s focused, so its minimum alone exceeds the whole-gate target. One green fresh
+gate was 246 s, with `internal/gate` at 230.663 s, `specbuild` at 177.258 s,
+and contract `runtime` at 152.126 s.
+
+The same gate peaked at 97 concurrent descendants while seven outer phase
+roots overlapped. A two-second ancestry sample saw at least 1,682 distinct
+child PIDs across the run; that is a lower bound because no process-event
+tracer was installed. The public-document matrix now performs one generation
+capture per changed state and no per-row full-engine run, but its 57 captures
+still cost 20.11–21.71 s. Removing that cost alone would not put the focused
+package safely below 120 s. Full method, CPU figures, span inflation, process
+classes, and the cache ruling are in the census asset.
+
+Do not clear the ambient Go cache for this census. `-count=1` already disables
+test-result reuse, while the compile-only warm-up separates test work from
+build work. Clearing the shared build cache would add a different cold-compile
+workload, perturb other worktrees, and invalidate comparison with the existing
+warm-cache gate; the sampled gate still grew that cache by 133.0 MB.
+
+## #21: Which remaining demand must land before outer-width pricing?
+
+Blocked by: #20
+Type: Research
+
+### Question
+
+Trace the current `internal/gate` and `internal/specbuild` focused workloads
+from the post-reduction census. Identify independently useful demand reductions
+that put the longest fresh focused dev package below the two-minute whole-gate
+target with enough margin for gate setup, without weakening an oracle or
+reclassifying a test as cached evidence. Separate work a token pool can improve
+from mixed, serial, fixed-deadline, and process-materialization cost. Retain
+per-test spans and process/materialization counts, and turn any policy choice
+into a new Grill ticket rather than choosing it in research.
+
+### Answer
+
+Resolved on #20's exact commit `eb6845f`, 2026-08-07. Both packages are
+strictly serial test chains: per-test elapsed sums equal package walls
+(`internal/gate` 139.67 s across 241 tests against 140.80 s wall;
+`internal/specbuild` 57.38–59.81 s across 192 tests against 57.80–60.05 s
+walls), so the focused floor is the sum of every test's subprocess waits and a
+token pool cannot shorten it — the pool only stops sibling phases from
+inflating it.
+
+`internal/gate`'s demand is distributed: the largest test is 18.65 s and 40
+tests carry 106.8 s. The sized serial cuts — observing the 2 s termination
+grace instead of paying it live in four of five cancellation tests (~8 s),
+synthesizing the document matrix's 57 generation captures at the decision seam
+(~15 s), and memoizing the per-resolution `go list` module-closure derivation
+(~10–20 s, estimated) — project a 105–125 s floor. That fails the target with
+margin, so no set of single-test fixes reaches the destination and the
+remaining lever is concurrency inside the package run. That lever is blocked
+by process-global state, not test isolation: production `kitRoot` reads
+ambient `BENCH_KIT`, 51 fixture constructions pin it with `t.Setenv` (which
+excludes `t.Parallel`), and two helpers chdir. `internal/specbuild` has no
+such coupling — its cost is pure process churn (35,952–35,957 Git spawns per
+run, 60% `rev-parse` re-deriving repository facts) and test-only `t.Parallel`
+is structurally available.
+
+Gate Git-spawn counts are deterministic: exactly 13,156 per package run,
+dominated by 5,343 `rev-parse` and 1,253 `write-tree`. Choosing the
+concurrency route is a workload-shape and seam decision, so it moved to #22
+rather than being selected here. Per-test tables, spawn histograms, probe
+timings, and method are in the census asset.
+
+## #22: Does the dev gate adopt intra-package test concurrency, and through which mechanism?
+
+Blocked by: #21
+Type: Grill
+
+### Question
+
+#21 found both long dev packages are strictly serial chains and that the
+enumerated serial cuts project only a 105–125 s `internal/gate` floor — short
+of the 120 s whole-gate target with margin. The remaining lever is concurrency
+inside the package run, with three routes:
+
+- `t.Parallel` inside `internal/gate`, which first needs a kit-root injection
+  seam: production `kitRoot` reads ambient `BENCH_KIT`, 51 fixture
+  constructions pin it with `t.Setenv` (mutually exclusive with
+  `t.Parallel`), and two helpers chdir.
+- Splitting `internal/gate`'s tests into several test packages, letting the
+  existing `go test -p` package-level parallelism and per-process env
+  isolation do the work without a production seam change — at the cost of
+  exporting or relocating the internals those tests reach.
+- Test-only `t.Parallel` in `internal/specbuild` (its two `t.Setenv` tests
+  stay serial), independent of either gate route.
+
+The choice changes the workload shape #8 prices — a parallelized package
+becomes saturating, and its width is exactly what the pool's grant pin
+governs — so it precedes any further census. Its answer also decides whether
+the sized serial cuts (grace observation, synthesized matrix generations,
+closure memoization) ride the same spec or land separately, and orders the
+resulting Task tickets.
+
+### Answer
+
+Route one, plus the specbuild lever. `internal/gate` gains a kit-root
+injection seam — production `kitRoot` takes its root as an explicit input
+instead of reading ambient `BENCH_KIT`, retiring the 51 `t.Setenv` fixture
+pins and the two chdir helpers — and its tests then adopt `t.Parallel`. The
+package-split route was rejected: it leaves the ambient read in place and
+works around it, and every extra test package repays binary build and fixture
+setup, the process-materialization cost #21 measured. `internal/specbuild`
+adopts test-only `t.Parallel` as well; its two `t.Setenv` tests stay serial.
+
+The three sized serial cuts land separately, after the concurrency spec: the
+seam spec decides the workload shape #8 prices and is not bloated with
+independently green cuts, which still pay under parallelism because they
+remove CPU and spawns rather than wall alone.
+
+Routing and order: #23 carries the seam and gate `t.Parallel` as a full spec
+lifecycle; #24 lands specbuild `t.Parallel` light-path and may land
+immediately; #25 lands the three cuts as light-path tickets after #23, each
+stopping for a reviewer decision if it turns out to cross a declared seam;
+#26 re-runs the census after #23–#25 land and replaces this ticket in #8's
+blockers.
+
+## #23: Land the gate kit-root seam and `t.Parallel` adoption
+
+Blocked by: #22
+Type: Task
+
+### Question
+
+Write and land `gate-test-concurrency`: production `kitRoot` becomes an
+injected input rather than an ambient `BENCH_KIT` read, the 51 `t.Setenv`
+fixture constructions and two chdir helpers retire, and `internal/gate`'s
+tests run under `t.Parallel`. Oracle behavior does not change; the closed
+subject environment keeps ambient env out of subject inputs per #3. Owner: a
+fresh spec lifecycle beginning with `/bench-write-spec`, followed through
+build, review, promotion, and retirement.
+
+### Answer
+
+— (open)
+
+## #24: Land specbuild test-only `t.Parallel`
+
+Blocked by: #22
+Type: Task
+
+### Question
+
+Mark `internal/specbuild`'s tests parallel, keeping its two `t.Setenv` tests
+serial. Test-only, one independently green ticket, no declared seam — rides
+the standing light-path approval and may land before or alongside #23.
+
+### Answer
+
+— (open)
+
+## #25: Land the three sized serial cuts
+
+Blocked by: #23
+Type: Task
+
+### Question
+
+After #23 retires, land as light-path tickets: observe the 2 s termination
+grace through an injected duration keeping at least one live-cascade proof
+(~8 s), synthesize the document matrix's 57 generation captures at the
+decision seam (~15 s), and memoize the per-resolution `go list` module-closure
+derivation (~10–20 s, estimated). Each ticket stops for a reviewer decision
+if its change turns out to cross a declared seam instead of riding light path.
+
+### Answer
+
+— (open)
+
+## #26: What workload remains after the concurrency route lands?
+
+Blocked by: #23, #24, #25
+Type: Research
+
+### Question
+
+Re-run the cold package census and focused-versus-in-gate span probes after
+#23–#25 land, updating the census asset with exact commits, repetitions, CPU,
+wall, and the new workload-shape classification — a parallelized package is
+expected to move from mixed to saturating, and its width is what the pool's
+grant pin governs. Only this reduced, reshaped workload may feed #8's reserve
+and split pricing.
 
 ### Answer
 
@@ -670,8 +873,8 @@ CPU, wall, and process/materialization counts. Report the reduced workload that
 ## Sources
 
 - Path: `decisions/gate-critical-path.md`
-  Supports: the Destination's 89.91 s entry state and the 85.415 s vs 50.917 s `posture` span behind #6's choice of span inflation.
-  Drift: measured on the artifact-split landed tree; re-measure before #8 if the phase set changes.
+  Supports: the 89.91 s entry state and 85.415 s vs 50.917 s `posture` span behind #6's choice of span inflation.
+  Drift: historical trigger evidence on the artifact-split landed tree; #20 is the current workload account.
 - Path: `decisions/gate-concurrency.md`
   Supports: the landed canary arm, its ~123 load baseline, and decisions #1 and #3 this map supersedes.
   Drift: describes shipped code; re-read if the canary arithmetic changes.
@@ -682,8 +885,8 @@ CPU, wall, and process/materialization counts. Report the reduced workload that
   Supports: FT171's contention evidence, including the 12-core sample where both `TestSetupConflictContracts` FIFO cases exhausted 15 s deadlines under overlap and then passed 3/3 focused at ~0.43 s.
   Drift: a working prioritization document; the row moves as the work lands.
 - Path: `decisions/assets/gate-budget-cpu-wall-census.md`
-  Supports: #13's three-shape finding, cache A/B, preflight ownership and per-test timing, and the focused spans #6's inflation measure needs; 70 packages timed alone on `25385f8`, 777.0 s serial wall against 1198.4 s CPU.
-  Drift: one repetition per package on one box; re-run before any figure is used to pick a constant.
+  Supports: #13's three-shape finding, cache A/B, preflight ownership and per-test timing, #20's post-reduction 71-package census, focused repetitions, exact-subject gate span, process fan-out, and cache ruling, plus #21's serial-chain finding, per-test attribution, deterministic Git-spawn histograms, and concurrency constraints.
+  Drift: measured on one 12-online-CPU host; #26 re-runs the census after the concurrency route (#23–#25) lands, after which #8 still needs its own candidate-width repetitions.
 - Path: `decisions/assets/gate-budget-memory-profile.md`
   Supports: #1–#5's machine-wide process-boundary budget, the non-recursive primary/stripped/canary overlap, the current operator-width plumbing gap, and #20's required memory/process/I/O observables.
   Drift: one green run on `6607236` and one 12-core host before #18–#19; mechanism evidence only, never authority to price #8.
@@ -694,8 +897,8 @@ CPU, wall, and process/materialization counts. Report the reduced workload that
   Supports: #13's finding that `internal/preflight` is excluded from the dev package set and owned by the ship tier.
   Drift: code-derived; re-verify if tier ownership changes.
 - Path: `internal/gate/check_slots_test.go`
-  Supports: #15's 21-row public-document mapping matrix and its mutation, deletion, and restoring full-gate calls.
-  Drift: code-derived; re-verify if mapping coverage moves to a narrower seam.
+  Supports: #18 and #20's current public-document decision matrix, one capture per changed generation, and seeded full-engine control.
+  Drift: code-derived; re-verify if matrix coverage or generation construction moves again.
 - Path: `internal/gate/evaluation.go`
   Supports: #17's current evaluation-owned accepted pre generation, distinct post generation, and common working/prospective source contract.
   Drift: code-derived; re-verify with the operation ceilings in `internal/gate/evaluation_test.go` if evaluation or snapshot ownership moves.

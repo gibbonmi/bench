@@ -308,9 +308,249 @@ decision, not an accidental duplicate call.
   focused spans with in-gate spans for current dev-tier saturating subjects.
   Whole-gate wall remains the global outcome.
 
+## Post-reduction census: decision #20
+
+Measured 2026-08-07 local time on exact commit
+`eb6845f275d1978cffaa5a4868d3be26dae612d2`, tree
+`cd2ece9233e2c5df8649a5250dd01eea1ffd8805`, in isolated Bench worktree
+`152e98b71788880dcffde9a0c9ef1283`. The host exposed 12 online CPUs on an
+Intel i7-13620H under WSL2, using go1.25.0 and ambient build cache
+`/home/devuser/.cache/go-build`. No other gate was active at launch.
+
+The worktree binary was built through `scripts/go-build.sh`. The process
+profile's outer `gate-run` appeared under the main-checkout binary path, but
+that binary and the worktree binary were byte-identical
+(`sha256:3626f711b029bc97201404b55ad870a8c15e28eb9942dae67b9b9f369105ae4c`),
+their seals were byte-identical, and both passed their own freshness check.
+`gate-phases` executed the worktree binary against the worktree subject.
+
+### Cache posture
+
+The compile-only warm-up, `go test -count=1 -run '^$' ./...`, was green in
+5.43 s wall and 37.87 s CPU. Each measured package then ran alone with
+`go test -count=1`, so test-result caching was disabled while compilation
+remained warm.
+
+Clearing the ambient Go cache is the wrong preparation for #20. It would mix
+cold compilation into the test workload the outer scheduler must price and
+would perturb every worktree sharing the host cache. A separate isolated-cache
+probe could price cold-start sensitivity, but its figures must not select the
+reserve. The sampled fresh gate grew the warm cache from 4,312,994,789 to
+4,445,996,316 bytes (133.0 MB) without a pre-run clear.
+
+### Package universe
+
+All 71 packages passed. Serial wall was 767.25 s and CPU was 1110.99 s, an
+aggregate CPU/wall ratio of 1.45. The earlier census was 777.0 s wall and
+1198.4 s CPU across 70 packages: the shipped reductions changed important
+rows, but subsequent test growth left total serial wall only 1.3% lower.
+
+| package | wall (s) | CPU (s) | ratio | tier/shape |
+|---|---:|---:|---:|---|
+| `internal/preflight` | 175.53 | 378.36 | 2.16 | ship-only, saturating |
+| `internal/gate` | 147.34 | 100.65 | 0.68 | dev, mixed |
+| `internal/contract/runtime` | 68.80 | 204.17 | 2.97 | dev, saturating |
+| `internal/specbuild` | 58.18 | 42.54 | 0.73 | dev, mixed |
+| `internal/contract/surface/artifact/posture` | 55.41 | 159.36 | 2.88 | dev, saturating |
+| `internal/contract/surface/publication` | 39.73 | 4.84 | 0.12 | dev, idle |
+| `internal/worktree` | 30.82 | 25.15 | 0.82 | dev, mixed |
+| `internal/publication` | 30.46 | 0.55 | 0.02 | ship-only, idle |
+| `internal/contract/surface/artifact/offline` | 27.78 | 23.64 | 0.85 | dev, serial |
+| `internal/conformance` | 26.27 | 35.08 | 1.34 | dev, mixed |
+| `internal/contract/surface/artifact/prepared` | 25.95 | 23.39 | 0.90 | dev, serial |
+| `internal/contract/surface` | 20.48 | 53.42 | 2.61 | dev, saturating |
+
+`internal/conformance` fell from the earlier 85.11 s focused probe to a
+three-run mean of 25.83 s after its fixture rows narrowed. The test-seam cut
+also reduced the public-document matrix from 35.14 s to 20.11–21.71 s, but
+`internal/gate` as a package did not fall: it now carries 241 top-level tests,
+and later work replaced the saved wall.
+
+### Repetitions and focused floor
+
+The decision-bearing dev packages ran three times on the exact subject. Range
+is `(max - min) / mean`; it states host variance without implying a
+distribution from three samples.
+
+| package | min (s) | median (s) | max (s) | mean (s) | range |
+|---|---:|---:|---:|---:|---:|
+| `internal/gate` | 147.34 | 152.11 | 159.70 | 153.05 | 8.1% |
+| `internal/conformance` | 23.63 | 26.27 | 27.59 | 25.83 | 15.3% |
+| `internal/contract/runtime` | 67.67 | 67.81 | 68.80 | 68.09 | 1.7% |
+| `internal/contract/surface/artifact/posture` | 52.53 | 55.41 | 55.59 | 54.51 | 5.6% |
+| `internal/contract/surface` | 18.59 | 20.48 | 21.10 | 20.06 | 12.5% |
+| `internal/specbuild` | 58.18 | 76.73 | 84.53 | 73.15 | 36.0% |
+
+`internal/gate` alone exceeds the destination's 120-second whole-gate target
+in every focused repetition. The full matrix's 57 changed generations now
+each pay one `write-tree` capture and no per-row full-engine execution; even
+deleting its entire 20–22 s span would leave only 7–13 s for all gate setup
+at the observed package floor. One reduction at that seam is insufficient.
+
+### Exact fresh gate and subprocess fan-out
+
+One fresh gate ran green under the existing process/memory sampler in 246 s.
+This run is not variance-bearing; #20 stopped before repeated full gates
+because the focused floor already invalidated width pricing. Selected in-gate
+package spans were:
+
+| package | focused median (s) | in-gate span (s) | inflation |
+|---|---:|---:|---:|
+| `internal/gate` | 152.11 | 230.663 | 51.6% |
+| `internal/specbuild` | 76.73 | 177.258 | 131.0% |
+| `internal/contract/runtime` | 67.81 | 152.126 | 124.3% |
+| `internal/contract/surface/artifact/posture` | 55.41 | 114.969 | 107.5% |
+| `internal/contract/surface` | 20.48 | 61.260 | 199.1% |
+
+The process sampler walked exact ancestry every two seconds. At the
+97-descendant peak, seven dependency-ready outer roots overlapped:
+conformance-suite, test, race, vet, root conformance, canary, and contract.
+That sample held 21 `go`, five compiler, six linker, 29 `bench`, five
+canary-related, and 12 contract-related processes. Across the run, separate
+samples reached 23 `go`, 21 compiler, seven linker, 29 `bench`, ten
+canary-related, and 29 contract-related processes.
+
+At least 1,682 distinct child PIDs appeared in the two-second samples: 407
+`go`, 344 `bash`, 305 `bench`, 157 compiler, 82 linker, and 76 Git processes,
+plus test binaries and Node/npm work. This is a lower bound, not an exact spawn
+total: `strace`, `perf`, and `bpftrace` were unavailable, and processes shorter
+than the sampling interval can disappear between observations. Peak concurrent
+width is exact for the sampled instants; cumulative launch count is explicitly
+sample-limited.
+
+The gate's peak descendant PSS was 2.02 GB and cgroup current reached 6.93 GB.
+Cache-inclusive allocated memory crossed the sampler's 7 GB symptom threshold,
+so the sampler exited 3 after retaining the green gate; the gate itself exited
+zero.
+
+### Decision #20 result
+
+Contention is current and material, and the subprocess tree confirms that the
+unbounded outer scheduler is one source. It still cannot be priced yet. The
+longest focused dev package is mixed rather than saturating and exceeds the
+whole-gate target before any competing phase starts, so a token pool can bound
+peak demand but cannot make the stated destination achievable. Decision #21
+must reduce the focused floor before #8 measures candidate reserves and grant
+splits.
+
+## Focused demand trace: decision #21
+
+Measured 2026-08-07 local time on the same exact commit `eb6845f` (tree
+`cd2ece9`) as decision #20, same 12-online-CPU host, go1.25.0, ambient warm
+build cache, main checkout with documentation-only dirt — the Go workload is
+byte-identical to #20's subject. Compilation was warmed first (1.16 s). Timing
+runs used clean `go test -count=1 -json`; process counts came from separate
+runs with a PATH shim logging every `git` argv. Shimmed runs are counting
+evidence only — the shim added roughly 10% wall.
+
+### Both packages are strictly serial chains
+
+`internal/gate` ran 241 top-level tests whose elapsed sum, 139.67 s, equals
+its 140.80 s package wall (101.82 s CPU). `internal/specbuild` ran 192 tests
+at 57.38 s and 59.81 s sums against 57.80 s and 60.05 s walls in two runs.
+Nothing overlaps: the gate package carries three `t.Parallel` calls, specbuild
+none. The focused floor is therefore the arithmetic sum of every test's
+subprocess waits, and a token pool cannot shorten it — the pool can only stop
+concurrent phases from inflating it toward #20's 230.663 s in-gate span.
+
+### `internal/gate`: distributed demand, no dominator
+
+Elapsed bands: 18 tests at or above 2 s carry 78.23 s; 22 tests between 1 and
+2 s carry 28.58 s; 27 tests between 0.5 and 1 s carry 19.57 s; the remaining
+174 tests carry 13.29 s. The eighteen leaders:
+
+| top-level test | elapsed (s) |
+|---|---:|
+| `TestPublicDocumentClassesProjectTheirExactCheckPartition` | 18.65 |
+| `TestFT78Story4ProofLedger` | 6.93 |
+| `TestBuildRunsOnEveryUnsoundArtifact` | 5.91 |
+| `TestDecisionSiteFailsClosed` | 5.77 |
+| `TestExecuteTreeBuildsExactUnpublishedBenchkitSource` | 5.11 |
+| `TestDeclaredDocumentInputsInvalidateOwningChecks` | 4.64 |
+| `TestFT78Story3ProofLedger` | 3.70 |
+| `TestComposedGreenAcceptsOnlyCompleteExactTipEvidence` | 3.34 |
+| `TestFreshExecutesEveryComponent` | 3.15 |
+| `TestContractRunsWhenConsumerInventoryIsMalformed` | 3.07 |
+| `TestFirstRunAndFreshBuildEverything` | 2.94 |
+| `TestGateGoRaceRequiresTheTestToRun` | 2.65 |
+| `TestGateRunDeadlineTermGraceThenKill` | 2.18 |
+| `TestConformanceImplementationSelectsOwningOrAllCanaryFamilies` | 2.08 |
+| `TestPhasesCommandNamesStragglersOnTermination` | 2.07 |
+| `TestPhasesCommandSignalCancelsRunningPhaseGroups` | 2.02 |
+| `TestRunnerCancelDuringNeededPhaseReturns130` | 2.01 |
+| `TestRunnerCancelKillsGroup` | 2.01 |
+
+Cost classes inside the package:
+
+- **Fixed deadlines.** Five cancellation tests pay the literal 2 s
+  `processGroupCancelGrace` production constant live, 10.29 s together.
+  Observing the grace through an injected duration while keeping at least one
+  live-cascade proof would save roughly 8 s.
+- **Process materialization.** One package run spawns exactly 13,156 Git
+  processes (identical in both counted runs): 5,343 `rev-parse`, 2,182
+  `read-tree`, 1,817 `cat-file`, 1,324 `add`, 1,253 `write-tree`, 705
+  `ls-tree`, 300 `init`, 89 `commit`. The document matrix's 57 generation
+  captures explain most of its 18.65 s; synthesizing those generations at the
+  decision seam would save roughly 15 s.
+- **Toolchain closure derivation.** Every engine resolution re-runs
+  `go list -buildvcs=false -json -deps -test ./...` (`moduleTestClosure`,
+  memoized only within one resolution). On a fixture-shaped module the warm
+  call costs 0.09–0.14 s (0.60 s first). Child `go` spawns could not be
+  PATH-counted — `go test` places `$GOROOT/bin` at the head of the test
+  process's `PATH` (documented in `cmd/go`'s test help), and no process
+  tracer is installed — so the package-wide count is an estimate from
+  structure: with engine resolutions in the low hundreds, this contributes an
+  estimated 10–20 s.
+- **Real-engine integration.** The rest of the ≥0.5 s mass is deliberate
+  representative coverage: proof ledgers, unsound-artifact sweeps, and
+  full-engine controls retained by decision #18. Fixture construction itself
+  is cheap — a construct-only consumer of the kit-shaped fixture (real
+  `git init`, real `go build`, seal) completes in 0.21 s.
+
+### `internal/specbuild`: flat process churn
+
+The flattest possible profile: the largest test is 4.28 s / 4.72 s across the
+two runs, only six tests reach 1 s (11.93 s / 12.66 s together), and the
+median test is under 0.2 s. One package run spawns 35,952–35,957 Git
+processes, about 187 per test at roughly 1.6 ms average: 21,531 `rev-parse`,
+2,049 `symbolic-ref`, 1,282 `worktree`, 1,223 `add`, 1,162 `show`, 1,158
+`update-ref`, 891 `status`, 825 `show-ref`, 717 `config`, 684 `write-tree`,
+683 `read-tree`, 678 `for-each-ref`, 669 `commit`. Sixty percent of all
+spawns re-derive repository facts through `rev-parse` — the repeated
+source-fact pattern decision #15 found in the gate, here spread across
+lifecycle operations and test helpers. There is no algorithm to speed up and
+no test to fix; the package cost is spawn count times spawn latency.
+
+### Concurrency constraints
+
+Intra-package parallelism is blocked by process-global state, not by test
+isolation. Gate tests each own a private root, but production `kitRoot` reads
+ambient `BENCH_KIT`, the kit-shaped fixture claims it per test with
+`t.Setenv` (51 construction sites, and `t.Setenv` is mutually exclusive with
+`t.Parallel`), and two helpers change the process working directory.
+`internal/specbuild` has two `t.Setenv` tests and no chdir, so test-only
+`t.Parallel` is structurally available there today.
+
+### Decision #21 result
+
+The enumerated serial cuts — grace observation (~8 s), synthesized matrix
+generations (~15 s), closure-derivation memoization (~10–20 s, estimate) —
+project a 105–125 s `internal/gate` floor from the observed 140.80–159.70 s
+range. That still exceeds the 120 s whole-gate target once any setup or
+sibling phase is added, so single-test fixes cannot reach the destination.
+The remaining structural lever is concurrency inside the package run, which
+is a workload-shape and seam decision the map's #22 owns, not a research
+finding this asset can select.
+
 ## Validity
 
-Measured on one box, one tree, one repetition per package. Ratios are stable
-enough to classify shape; the wall figures are not repetition-backed and must
-not be quoted as variance-bearing. Re-run before any figure here is used to
-pick a constant.
+The 2026-08-04 section remains one box, one tree, and one repetition per
+package. Decision #20 adds a new exact tree, three focused repetitions for the
+decision-bearing packages, and one process-profiled fresh gate. The latter is
+mechanism and inflation evidence, not full-gate variance. Decision #21 adds
+per-test attribution and deterministic Git-spawn counts for the two long dev
+packages on #20's exact tree; its shimmed runs are counting evidence, never
+timing evidence. No figure in this asset authorizes a constant until the
+demand decisions #21 raised are resolved, the census is re-run on the reduced
+workload, and #8 repeats its candidate-width matrix on that newer exact
+workload.
