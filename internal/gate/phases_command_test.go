@@ -92,7 +92,8 @@ func TestPhasesCommandSignalHelper(t *testing.T) {
 			Argv: []string{"bash", "-c", `sleep 30 & echo $! > "$1"; wait`, "bash", pidfile},
 		}}
 	}
-	os.Exit(phasesCommandAtKit(root, kit, os.Stdout, os.Stderr))
+	ctx := withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace)
+	os.Exit(phasesCommandAtKitWithContext(ctx, root, kit, os.Stdout, os.Stderr))
 }
 
 // TestPhasesCommandNamesStragglersOnTermination grades the straggler report at the
@@ -166,7 +167,8 @@ sleep 30 & echo $! > "$2"; wait`,
 				"bash", marker, pidfile}},
 		}
 	}
-	os.Exit(phasesCommandAtKit(root, kit, os.Stdout, os.Stderr))
+	ctx := withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace)
+	os.Exit(phasesCommandAtKitWithContext(ctx, root, kit, os.Stdout, os.Stderr))
 }
 
 // stragglerLine returns the run's straggler report, or "" when it printed none. It

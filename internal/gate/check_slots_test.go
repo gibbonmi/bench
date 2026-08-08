@@ -26,7 +26,7 @@ func TestForcedAggregateRedRetiresEveryExecutedCheckSlot(t *testing.T) {
 	fixture := newKitShapedFixture(t)
 	writeGateTestFile(t, fixture.root, ".bench/phase-conformance.sh",
 		"echo conformance >> .git/phase-runs\nif test -f .git/conformance-red; then exit 1; fi\n", 0o644)
-	sealKitShapedBinary(t, fixture.root)
+	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 
 	slots, valid := loadConformanceCheckSlots(fixture.root)
@@ -55,7 +55,7 @@ func TestForcedAggregateRedRetiresEveryExecutedCheckSlot(t *testing.T) {
 func TestOrdinaryScopeInheritsValidCheckSlotsButFreshExecutesAll(t *testing.T) {
 	t.Parallel()
 	fixture := newKitShapedFixture(t)
-	sealKitShapedBinary(t, fixture.root)
+	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	resolution := Resolve(fixture.root, "", RealFS())
 
@@ -121,7 +121,7 @@ func TestDeclaredDocumentInputsInvalidateOwningChecks(t *testing.T) {
 		writeGateTestFile(t, fixture.root, name, "baseline\n", 0o644)
 		baselines[name] = baselineFile{data: []byte("baseline\n"), mode: 0o644}
 	}
-	sealKitShapedBinary(t, fixture.root)
+	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	resolution := Resolve(fixture.root, "", RealFS())
 
@@ -371,7 +371,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	sealKitShapedBinary(t, fixture.root)
+	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 
 	seededSlots := checkSlotTestStoreBytes(t, fixture.root)
@@ -606,7 +606,7 @@ func TestConformanceImplementationSelectsOwningOrAllCanaryFamilies(t *testing.T)
 			fixture := newKitShapedFixture(t)
 			writeGateTestFile(t, fixture.root, "internal/conformance/owners.go", conformanceCanarySources(""), 0o644)
 			writeGateTestFile(t, fixture.root, "internal/conformance/shared.go", "package conformance\n\nfunc sharedHelper() int { return 1 }\n", 0o644)
-			sealKitShapedBinary(t, fixture.root)
+			requireKitShapedBinaryFresh(t, fixture.root)
 			mustExecuteGreen(t, fixture.root, productionGateEngine{})
 			test.mutate(fixture.root)
 
@@ -674,7 +674,7 @@ func TestMixedCheckPartitionProjectsExactOutputAndVerdict(t *testing.T) {
 	fixture := newKitShapedFixture(t)
 	writeGateTestFile(t, fixture.root, ".bench/phase-conformance.sh",
 		"echo conformance >> .git/phase-runs\nprintf '%s\\n' \"$BENCH_CONFORMANCE_CHECKS\" > .git/selected-checks\nprintf '%s\\n' \"$BENCH_CONFORMANCE_INHERITED\" > .git/inherited-checks\n", 0o644)
-	sealKitShapedBinary(t, fixture.root)
+	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	beforeConformance := phaseNameCount(phaseRunNames(t, fixture.root), "conformance")
 	writeGateTestFile(t, fixture.root, "ROADMAP.md", "moved\n", 0o644)

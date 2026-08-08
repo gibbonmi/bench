@@ -25,6 +25,15 @@ import (
 
 const processGroupCancelGrace = 2 * time.Second
 
+type processGroupCancelGraceKey struct{}
+
+func processGroupGrace(ctx context.Context) time.Duration {
+	if grace, ok := ctx.Value(processGroupCancelGraceKey{}).(time.Duration); ok {
+		return grace
+	}
+	return processGroupCancelGrace
+}
+
 type processGroupResult struct {
 	Code     int
 	StartErr error
@@ -65,7 +74,7 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 			// The leader can honor the signal while a descendant it left behind
 			// ignores it; the group kill is what reaps that orphan.
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		case <-time.After(processGroupCancelGrace):
+		case <-time.After(processGroupGrace(ctx)):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 		}

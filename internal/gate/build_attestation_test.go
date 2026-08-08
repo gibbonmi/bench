@@ -72,6 +72,19 @@ func (f attestationFixture) buildAndPublish(t *testing.T, authoredAt time.Time) 
 	f.buildAndPublishAt(t, "./cmd/bench", f.executable, authoredAt)
 }
 
+// attestPublished gives store-focused tests a valid record for the fixture's existing
+// sealed bytes. Tests that observe build output continue through buildAndPublish.
+func (f attestationFixture) attestPublished(t *testing.T, authoredAt time.Time) {
+	t.Helper()
+	digest, err := benchfreshness.ExecutableDigest(f.executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := authorBuildAttestation(f.root, f.executable, digest, authoredAt); err != nil {
+		t.Fatalf("attest the published fixture binary: %v", err)
+	}
+}
+
 // buildAndPublishAt attests before it publishes, so the digest every assertion below reads
 // cannot have come from a seal: the seal describing those bytes does not exist until Publish
 // writes it. The digest is hashed from the staged bytes for the same reason.
@@ -242,11 +255,11 @@ func TestAttestationRefusals(t *testing.T) {
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			fixture := newAttestationFixture(t)
-			fixture.buildAndPublish(t, attestationFixtureTime)
+			fixture.attestPublished(t, attestationFixtureTime)
 			// The baseline is asserted first: without it, the refusal below could be coming
 			// from the fixture rather than from the disturbance the case names.
 			if inspection := fixture.verify(t); !inspection.Attested {
-				t.Fatalf("verify after the gate build = %+v, want it attested before the disturbance", inspection)
+				t.Fatalf("verify after valid authoring = %+v, want it attested before the disturbance", inspection)
 			}
 
 			testCase.disturb(t, fixture)
@@ -299,13 +312,13 @@ func TestAttestationDoesNotDisturbSlots(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fixture.buildAndPublish(t, attestationFixtureTime)
+	fixture.attestPublished(t, attestationFixtureTime)
 	if inspection := fixture.verify(t); !inspection.Attested {
 		t.Fatalf("verify over the first attestation = %+v, want it to replace what sat at its address", inspection)
 	}
 	first := mustRead(t, fixture.attestationPath(t))
 
-	fixture.buildAndPublish(t, attestationFixtureTime.Add(time.Minute))
+	fixture.attestPublished(t, attestationFixtureTime.Add(time.Minute))
 	if inspection := fixture.verify(t); !inspection.Attested {
 		t.Fatalf("verify over the re-authored attestation = %+v, want it to hold", inspection)
 	}

@@ -107,6 +107,9 @@ func TestAttestedSealSkipsTheBuild(t *testing.T) {
 	seal := mustRead(t, fixture.binaryPath()+".seal")
 	writeGateTestFile(t, fixture.root, "tests/canary/fixture.txt", "moved canary fixture\n", 0o644)
 	ancient := time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC)
+	if err := makeFixtureBinaryPrivate(fixture.binaryPath()); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.Chtimes(fixture.binaryPath(), ancient, ancient); err != nil {
 		t.Fatal(err)
 	}

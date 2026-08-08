@@ -311,7 +311,7 @@ func r11Drift(id, kind string) r21ProofCase {
 
 func r11Cancellation(t *testing.T) {
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nsleep 30 & echo $! > .git/child-pid; wait\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace))
 	done := make(chan Result, 1)
 	go func() {
 		done <- executeWithEngineAtKit(ctx, root, root, io.Discard, io.Discard, productionGateEngine{})

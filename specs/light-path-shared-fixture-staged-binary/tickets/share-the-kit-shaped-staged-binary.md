@@ -1,5 +1,7 @@
 # Share the kit-shaped staged binary
 
+Follow-up: `reduce-gate-fixture-materialization.md` retains this ticket's process template and real-build boundary but supersedes its ordinary per-root copy with measured hardlink-and-detach materialization.
+
 Blocked by: none
 Ownership fence: `internal/gate/kitshaped_fixture_test.go`, `internal/gate/build_attestation_test.go`
 Integration surfaces: `internal/gate/kitshaped_fixture_test.go` constructor-only initial seal→process-scoped staged template + SFB1; explicit re-seal helper→real build + SFB3; template→per-root copy→existing freshness publication + SFB5-SFB7; package lifetime→sticky error and cleanup + SFB8-SFB9; `internal/gate/build_attestation_test.go` error-returning build primitive→unchanged testing wrapper + SFB2; changed-source re-seals in `internal/gate/component_inputs_test.go`, `internal/gate/component_identity_test.go`, and `internal/gate/check_slots_test.go`→unchanged real-build helper + SFB3; plant and alternate/authorship builds in `internal/gate/build_skip_test.go` and `internal/gate/build_attestation_test.go`→unchanged real-build helper + SFB4; measured package-wide materialization residual→`reduce-gate-fixture-materialization.md` + GFM1-GFM3

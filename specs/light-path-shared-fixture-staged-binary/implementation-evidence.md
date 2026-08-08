@@ -1,5 +1,7 @@
 # Shared fixture staged-binary implementation evidence
 
+This receipt records the independently green copy-based intermediate commit. The dependent `reduce-gate-fixture-materialization.md` ticket supersedes only its per-root copy after measuring the package residual; the process template, explicit re-seal boundary, sticky error, and teardown remain.
+
 ## Focused resource receipt
 
 The repaired implementation ran:

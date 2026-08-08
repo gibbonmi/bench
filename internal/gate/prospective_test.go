@@ -42,12 +42,28 @@ func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
 	tree := gitOutput(t, root, "write-tree")
 	gitRun(t, root, "reset", "--hard", "HEAD")
 
+	fakeBin := t.TempDir()
+	writeGateTestFile(t, fakeBin, "go", "#!/usr/bin/env bash\necho ordinary-freshness-route >&2\nexit 73\n", 0o755)
+	writeGateTestFile(t, root, prospectiveGatePath,
+		"#!/usr/bin/env bash\nprintf routed > \"$PWD/.git/prospective-route\"\n", 0o755)
 	direct := exec.Command(filepath.Join(root, ".bench", "gate.sh"))
 	direct.Dir = root
-	direct.Env = append(os.Environ(), "BENCH_GATE_PROSPECTIVE=1", "GOCACHE="+t.TempDir())
+	direct.Env = append(os.Environ(),
+		"BENCH_GATE_PROSPECTIVE=1",
+		"PATH="+fakeBin+string(os.PathListSeparator)+os.Getenv("PATH"),
+	)
 	directOutput, directErr := direct.CombinedOutput()
-	if directErr == nil || !strings.Contains(string(directOutput), "rebuild with") {
-		t.Fatalf("ordinary real wrapper with ambient marker = %v, output=%q; want missing-artifact freshness refusal", directErr, directOutput)
+	if directErr == nil || !strings.Contains(string(directOutput), "ordinary-freshness-route") {
+		t.Fatalf("ordinary real wrapper with ambient marker = %v, output=%q; want the ordinary freshness route", directErr, directOutput)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".git", "prospective-route")); !os.IsNotExist(err) {
+		t.Fatalf("ordinary wrapper entered the prospective route: %v", err)
+	}
+	writeGateTestFile(t, root, prospectiveGatePath,
+		string(mustReadGateTestFile(t, filepath.Join(kit, prospectiveGatePath))), 0o755)
+	// The control owns any dist it authored; the final absence must answer only for ExecuteTree.
+	if err := os.RemoveAll(filepath.Join(root, "dist")); err != nil {
+		t.Fatalf("remove ordinary-wrapper control output: %v", err)
 	}
 
 	var stdout, stderr bytes.Buffer

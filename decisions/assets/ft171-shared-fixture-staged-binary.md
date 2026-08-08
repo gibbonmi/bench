@@ -153,3 +153,14 @@ Use the same host and commands as the recorded baseline:
   with the recorded construction error.
 - Toolchain identity: reuse is per test process only. Each worktree and Go test process
   builds its own template, preventing cross-worktree staleness.
+
+## Measured follow-up
+
+The bounded copy implementation proved correct but a fresh runtime census found 101
+constructor materializations rather than the static estimate of about 51. Its serial
+package run still wrote roughly 1.3 million output blocks. The dependent
+`reduce-gate-fixture-materialization.md` ticket therefore supersedes only the ordinary-copy
+recommendation: initial executables hardlink the immutable template, the two in-place
+mutation sites atomically detach first, and every Git directory, seal, and Bench evidence
+store remains private. This preserves the review's rejected-worktree conclusion while
+addressing the measured copy residual.

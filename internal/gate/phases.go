@@ -231,6 +231,10 @@ func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 }
 
 func phasesCommandAtKit(root, kit string, stdout, stderr io.Writer) int {
+	return phasesCommandAtKitWithContext(context.Background(), root, kit, stdout, stderr)
+}
+
+func phasesCommandAtKitWithContext(base context.Context, root, kit string, stdout, stderr io.Writer) int {
 	mode := outerMode
 	if os.Getenv("BENCH_CANARY_INNER") == "1" {
 		mode = innerMode
@@ -240,7 +244,7 @@ func phasesCommandAtKit(root, kit string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(base, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	if mode == outerMode {
 		// A full run grades its excludable phases against the stripped subject; the

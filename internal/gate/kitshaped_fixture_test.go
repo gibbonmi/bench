@@ -81,12 +81,30 @@ var kitShapedTemplateState struct {
 }
 
 func TestMain(m *testing.M) {
+	if err := provideDefaultGoCache(); err != nil {
+		fmt.Fprintln(os.Stderr, "resolve the default Go build cache:", err)
+		os.Exit(1)
+	}
 	code := m.Run()
 	if err := os.RemoveAll(kitShapedTemplateState.dir); err != nil && code == 0 {
 		fmt.Fprintln(os.Stderr, "remove kit-shaped fixture template:", err)
 		code = 1
 	}
 	os.Exit(code)
+}
+
+func provideDefaultGoCache() error {
+	if os.Getenv("GOCACHE") != "" {
+		return nil
+	}
+	if _, err := exec.LookPath("go"); err != nil {
+		return nil
+	}
+	output, err := exec.Command("go", "env", "GOCACHE").Output()
+	if err != nil {
+		return err
+	}
+	return os.Setenv("GOCACHE", strings.TrimSpace(string(output)))
 }
 
 // newKitShapedFixture builds the root and returns it with its resolved table.
@@ -312,8 +330,8 @@ func sealInitialKitShapedBinary(t *testing.T, root string) {
 	if err != nil {
 		t.Fatalf("build the fixture binary template: %v", err)
 	}
-	if err := copyFixtureBinary(template, staged); err != nil {
-		t.Fatalf("copy the fixture binary template: %v", err)
+	if err := materializeFixtureBinary(template, staged); err != nil {
+		t.Fatalf("materialize the fixture binary template: %v", err)
 	}
 	publishKitShapedBinary(t, root, staged)
 }
@@ -333,6 +351,33 @@ func publishKitShapedBinary(t *testing.T, root, staged string) {
 	if err := benchfreshness.Publish(root, staged, filepath.Join(root, "dist", "bench")); err != nil {
 		t.Fatalf("publish the fixture binary: %v", err)
 	}
+}
+
+func requireKitShapedBinaryFresh(t *testing.T, root string) {
+	t.Helper()
+	if err := benchfreshness.Verify(root, filepath.Join(root, "dist", "bench")); err != nil {
+		t.Fatalf("fixture-only edit changed the synthetic Bench build inputs: %v", err)
+	}
+}
+
+func materializeFixtureBinary(source, destination string) error {
+	return materializeFixtureBinaryWithLink(source, destination, os.Link)
+}
+
+func materializeFixtureBinaryWithLink(source, destination string, link func(string, string) error) error {
+	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+		return err
+	}
+	linkErr := link(source, destination)
+	if linkErr == nil {
+		return nil
+	}
+	if _, err := os.Lstat(destination); err == nil {
+		return fmt.Errorf("link fixture binary: destination already exists: %w", linkErr)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect fixture binary destination: %w", err)
+	}
+	return copyFixtureBinary(source, destination)
 }
 
 func copyFixtureBinary(source, destination string) (err error) {
@@ -370,15 +415,96 @@ func copyFixtureBinary(source, destination string) (err error) {
 	return os.Chmod(destination, info.Mode().Perm())
 }
 
-func TestKitShapedFixturesPublishIndependentTemplateCopies(t *testing.T) {
+func makeFixtureBinaryPrivate(path string) (err error) {
+	temporary, err := os.CreateTemp(filepath.Dir(path), ".bench-private-*")
+	if err != nil {
+		return err
+	}
+	temporaryPath := temporary.Name()
+	defer func() {
+		if removeErr := os.Remove(temporaryPath); err == nil && removeErr != nil && !os.IsNotExist(removeErr) {
+			err = removeErr
+		}
+	}()
+	if err := temporary.Close(); err != nil {
+		return err
+	}
+	if err := copyFixtureBinary(path, temporaryPath); err != nil {
+		return err
+	}
+	if err := os.Chmod(temporaryPath, 0o755); err != nil {
+		return err
+	}
+	return os.Rename(temporaryPath, path)
+}
+
+func TestKitShapedFixturesDetachIndependentTemplateLinks(t *testing.T) {
 	t.Parallel()
 	first := newKitShapedFixture(t)
 	second := newKitShapedFixture(t)
+	firstInfo, err := os.Stat(first.binaryPath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondInfo, err := os.Stat(second.binaryPath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !os.SameFile(firstInfo, secondInfo) {
+		t.Fatal("initial fixture binaries do not share the immutable template inode")
+	}
+	if err := makeFixtureBinaryPrivate(first.binaryPath()); err != nil {
+		t.Fatal(err)
+	}
+	privateInfo, err := os.Stat(first.binaryPath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if os.SameFile(privateInfo, secondInfo) {
+		t.Fatal("detached fixture binary still shares the immutable template inode")
+	}
 	if err := os.WriteFile(first.binaryPath(), []byte("changed"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := benchfreshness.Verify(second.root, second.binaryPath()); err != nil {
 		t.Fatalf("second fixture binary after mutating the first = %v, want independent published bytes", err)
+	}
+}
+
+func TestMaterializeFixtureBinaryFallsBackToPrivateCopy(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	source := filepath.Join(root, "template")
+	destination := filepath.Join(root, "fixture", "dist", "bench.staged")
+	writeGateTestFile(t, root, "template", "fixture binary\n", 0o755)
+
+	linkErr := fmt.Errorf("links unavailable")
+	if err := materializeFixtureBinaryWithLink(source, destination, func(string, string) error {
+		return linkErr
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(mustRead(t, destination)); got != "fixture binary\n" {
+		t.Fatalf("fallback bytes = %q, want the template bytes", got)
+	}
+	sourceInfo, err := os.Stat(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	destinationInfo, err := os.Stat(destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if os.SameFile(sourceInfo, destinationInfo) {
+		t.Fatal("copy fallback still shares the template inode")
+	}
+	if err := materializeFixtureBinaryWithLink(source, destination, func(string, string) error {
+		return linkErr
+	}); err == nil {
+		t.Fatal("materialize over an existing destination succeeded")
+	}
+	if got := string(mustRead(t, destination)); got != "fixture binary\n" {
+		t.Fatalf("existing destination after refused fallback = %q, want unchanged bytes", got)
 	}
 }
 

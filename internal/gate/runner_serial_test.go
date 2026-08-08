@@ -287,7 +287,7 @@ func TestRunnerCancelDuringNeededPhaseReturns130(t *testing.T) {
 		},
 		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"build"}},
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace))
 	var stdout, stderr bytes.Buffer
 	done := make(chan int, 1)
 	go func() {

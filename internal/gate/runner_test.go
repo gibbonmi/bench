@@ -26,6 +26,23 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
+const fastProcessGroupCancelGrace = 100 * time.Millisecond
+
+func withProcessGroupCancelGrace(ctx context.Context, grace time.Duration) context.Context {
+	return context.WithValue(ctx, processGroupCancelGraceKey{}, grace)
+}
+
+func TestProcessGroupCancelGraceProductionDefault(t *testing.T) {
+	t.Parallel()
+	if got := processGroupGrace(context.Background()); got != 2*time.Second {
+		t.Fatalf("production process-group cancellation grace = %s, want 2s", got)
+	}
+	ctx := withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace)
+	if got := processGroupGrace(ctx); got != fastProcessGroupCancelGrace {
+		t.Fatalf("scoped process-group cancellation grace = %s, want %s", got, fastProcessGroupCancelGrace)
+	}
+}
+
 // TestRunnerRunsPhasesConcurrently stays serial so scheduler overlap cannot
 // satisfy the timing assertion that attributes phase overlap to the runner.
 func TestRunnerRunsPhasesConcurrently(t *testing.T) {
@@ -217,7 +234,7 @@ func TestRunnerCancelKillsGroup(t *testing.T) {
 		Name: "slow",
 		Argv: []string{"bash", "-c", `sleep 30 & echo $! > "$1"; wait`, "bash", pidfile},
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace))
 	var stdout, stderr bytes.Buffer
 	done := make(chan int, 1)
 	go func() {

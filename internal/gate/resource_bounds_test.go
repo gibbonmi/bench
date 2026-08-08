@@ -63,7 +63,8 @@ func TestGateRunDeadlineTermGraceThenKill(t *testing.T) {
 
 			var stdout, stderr bytes.Buffer
 			done := make(chan Result, 1)
-			go func() { done <- Execute(context.Background(), root, &stdout, &stderr) }()
+			ctx := withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace)
+			go func() { done <- Execute(ctx, root, &stdout, &stderr) }()
 			var got Result
 			select {
 			case got = <-done:
