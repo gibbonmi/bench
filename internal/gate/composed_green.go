@@ -21,7 +21,7 @@ func composedGreenAtKit(root, kit string) bool {
 	if err != nil || !plan.Closed {
 		return false
 	}
-	gitdir, err := commonGitDir(root)
+	gitdir, err := benchgit.Output("-C", root, "rev-parse", "--absolute-git-dir")
 	if err != nil {
 		return false
 	}
