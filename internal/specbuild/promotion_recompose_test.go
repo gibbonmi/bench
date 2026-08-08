@@ -124,6 +124,28 @@ func TestPromoteRecomposesCompatibleSamePathChanges(t *testing.T) {
 	}
 }
 
+func TestPromoteRecomposesIdenticalSamePathChanges(t *testing.T) {
+	candidateContent := strings.Replace(samePathFixture, `candidateValue = "base"`, `candidateValue = "shared"`, 1)
+	candidateContent = strings.Replace(candidateContent, "var spacer01 = 1", "var spacer01 = 10", 1)
+	fixture := reviewedSamePathPromotionFixture(t, candidateContent)
+	workingContent := strings.Replace(samePathFixture, `candidateValue = "base"`, `candidateValue = "shared"`, 1)
+	workingContent = strings.Replace(workingContent, `workingValue = "base"`, `workingValue = "working"`, 1)
+	write(t, filepath.Join(fixture.root, "internal", "specbuild", "same-path.go"), workingContent)
+	git(t, fixture.root, "add", ".")
+	git(t, fixture.root, "commit", "-qm", "identical same-path advance")
+
+	status, err := fixture.service.Promote(t.Context(), "build demo")
+	if err != nil || status.Next != "bench spec build review build demo" {
+		t.Fatalf("Promote = %#v, %v", status, err)
+	}
+	content := git(t, fixture.root, "show", loadRun(t, fixture.service).CandidateTip+":internal/specbuild/same-path.go")
+	for _, want := range []string{`candidateValue = "shared"`, "var spacer01 = 10", `workingValue = "working"`} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("recomposed same-path content = %q, want %q", content, want)
+		}
+	}
+}
+
 func TestPromoteRefusesConflictingSamePathChangesWithoutMutation(t *testing.T) {
 	candidateContent := strings.Replace(samePathFixture, `candidateValue = "base"`, `candidateValue = "candidate"`, 1)
 	fixture := reviewedSamePathPromotionFixture(t, candidateContent)
@@ -146,7 +168,7 @@ func TestPromoteRefusesConflictingSamePathChangesWithoutMutation(t *testing.T) {
 	fixture.service.gate = owner
 
 	_, promoteErr := fixture.service.Promote(t.Context(), "build demo")
-	if promoteErr == nil || !strings.Contains(promoteErr.Error(), "checkpoint patch conflicts with the candidate") {
+	if promoteErr == nil || !strings.Contains(promoteErr.Error(), "merge promotion candidates") {
 		t.Fatalf("Promote error = %v", promoteErr)
 	}
 	afterState, err := os.ReadFile(statePath)
@@ -158,6 +180,80 @@ func TestPromoteRefusesConflictingSamePathChangesWithoutMutation(t *testing.T) {
 	}
 	if got := git(t, fixture.root, "rev-parse", "refs/bench/green/"+before.Branch); got != before.Base {
 		t.Fatalf("green marker = %s after conflict, want %s", got, before.Base)
+	}
+}
+
+func TestPromoteRecompositionUsesAnExplicitTreeMergeBeforeCommit(t *testing.T) {
+	fixture := reviewedPromotionFixture(t)
+	before := loadRun(t, fixture.service)
+	advanceWorking(t, fixture.root)
+	working := git(t, fixture.root, "rev-parse", "HEAD")
+	indexBefore := git(t, fixture.root, "write-tree")
+	statusBefore := git(t, fixture.root, "status", "--porcelain=v1")
+	runner := &promotionMergeRunner{inner: processRunner{}}
+	fixture.service.runner = runner
+
+	status, err := fixture.service.Promote(t.Context(), "build demo")
+	if err != nil || status.Next != "bench spec build review build demo" {
+		t.Fatalf("Promote = %#v, %v", status, err)
+	}
+	wantMerge := []string{"-C", fixture.root, "merge-tree", "--write-tree", "--no-messages", "--merge-base=" + before.Base, working, before.CandidateTip}
+	if len(runner.commands) != 3 || !reflect.DeepEqual(runner.commands[0].Args, wantMerge) || runner.commands[1].Args[2] != "cat-file" || runner.commands[2].Args[2] != "commit-tree" {
+		t.Fatalf("promotion git commands = %#v, want merge-tree %v then cat-file then commit-tree", runner.commands, wantMerge)
+	}
+	tree := runner.commands[1].Args[4]
+	if want := []string{"-C", fixture.root, "cat-file", "-t", tree}; !reflect.DeepEqual(runner.commands[1].Args, want) || runner.commands[2].Args[3] != tree {
+		t.Fatalf("tree validation and commit = %#v, want cat-file %v and the same tree passed to commit-tree", runner.commands[1:], want)
+	}
+	for _, command := range runner.commands {
+		for _, forbidden := range []string{"read-tree", "apply", "write-tree"} {
+			if command.Args[2] == forbidden {
+				t.Fatalf("promotion merge used checkout-backed command %q", forbidden)
+			}
+		}
+	}
+	if got := git(t, fixture.root, "write-tree"); got != indexBefore {
+		t.Fatalf("index tree = %s, want %s", got, indexBefore)
+	}
+	if got := git(t, fixture.root, "status", "--porcelain=v1"); got != statusBefore {
+		t.Fatalf("working status = %q, want %q", got, statusBefore)
+	}
+}
+
+func TestPromoteRecompositionRefusesMalformedMergeResultsWithoutMutation(t *testing.T) {
+	for _, test := range []struct {
+		name, want string
+		output     func(*testing.T, checkpointFixture, record) string
+	}{
+		{"empty output", "malformed tree output", func(*testing.T, checkpointFixture, record) string { return "" }},
+		{"extra output", "malformed tree output", func(t *testing.T, fixture checkpointFixture, run record) string {
+			tree := git(t, fixture.root, "rev-parse", run.CandidateTip+"^{tree}")
+			return tree + "\n" + tree + "\n"
+		}},
+		{"non-tree output", "non-tree object", func(_ *testing.T, _ checkpointFixture, run record) string { return run.Base + "\n" }},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := reviewedPromotionFixture(t)
+			run := loadRun(t, fixture.service)
+			advanceWorking(t, fixture.root)
+			requirePromotionMergeRefusal(t, fixture, promotionMergeResult{set: true, output: test.output(t, fixture, run)}, test.want, nil)
+		})
+	}
+}
+
+func TestPromoteRecompositionRefusesMergeCommandFailureAndCancellation(t *testing.T) {
+	for _, test := range []struct {
+		name, output, want string
+		err, target        error
+	}{
+		{"command failure", "injected merge failure", "injected merge failure", errors.New("injected command failure"), nil},
+		{"cancellation", "", "context canceled", context.Canceled, context.Canceled},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := reviewedPromotionFixture(t)
+			advanceWorking(t, fixture.root)
+			requirePromotionMergeRefusal(t, fixture, promotionMergeResult{set: true, output: test.output, err: test.err}, test.want, test.target)
+		})
 	}
 }
 
@@ -475,6 +571,39 @@ func promotionSnapshotFor(t *testing.T, fixture checkpointFixture) promotionSnap
 	return promotionSnapshot{state: string(state), refs: git(t, fixture.root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/"), head: git(t, fixture.root, "rev-parse", "HEAD")}
 }
 
+func requirePromotionMergeRefusal(t *testing.T, fixture checkpointFixture, result promotionMergeResult, want string, target error) {
+	t.Helper()
+	runner := &promotionMergeRunner{inner: processRunner{}, mergeResult: result}
+	fixture.service.runner = runner
+	owner := &recompositionGate{}
+	fixture.service.gate = owner
+	before := promotionSnapshotFor(t, fixture)
+	indexBefore := git(t, fixture.root, "write-tree")
+	statusBefore := git(t, fixture.root, "status", "--porcelain=v1")
+
+	_, err := fixture.service.Promote(t.Context(), "build demo")
+	if err == nil || !strings.Contains(err.Error(), want) || target != nil && !errors.Is(err, target) {
+		t.Fatalf("Promote = %v, want refusal naming %q and matching %v", err, want, target)
+	}
+	if owner.calls != 0 {
+		t.Fatalf("refusal reached Bootstrap: %d calls", owner.calls)
+	}
+	if after := promotionSnapshotFor(t, fixture); after != before {
+		t.Fatalf("refusal mutated protected state: before=%#v after=%#v", before, after)
+	}
+	if got := git(t, fixture.root, "write-tree"); got != indexBefore {
+		t.Fatalf("refusal changed index tree: %s != %s", got, indexBefore)
+	}
+	if got := git(t, fixture.root, "status", "--porcelain=v1"); got != statusBefore {
+		t.Fatalf("refusal changed working status: %q != %q", got, statusBefore)
+	}
+	for _, command := range runner.commands {
+		if len(command.Args) > 2 && command.Args[2] == "commit-tree" {
+			t.Fatalf("refused merge reached commit-tree: %#v", runner.commands)
+		}
+	}
+}
+
 func requirePromotionRefusal(t *testing.T, fixture checkpointFixture, want string) {
 	t.Helper()
 	owner := &promotionGate{accept: true}
@@ -517,6 +646,31 @@ type recompositionGate struct {
 	calls                 int
 	branch, tip, expected string
 	err                   error
+}
+
+type promotionMergeResult struct {
+	set    bool
+	output string
+	err    error
+}
+
+type promotionMergeRunner struct {
+	inner       Runner
+	commands    []Command
+	mergeResult promotionMergeResult
+}
+
+func (r *promotionMergeRunner) Output(ctx context.Context, program string, args ...string) (string, error) {
+	return r.Run(ctx, Command{Program: program, Args: args})
+}
+
+func (r *promotionMergeRunner) Run(ctx context.Context, command Command) (string, error) {
+	command.Args = append([]string(nil), command.Args...)
+	r.commands = append(r.commands, command)
+	if len(command.Args) > 2 && command.Args[2] == "merge-tree" && r.mergeResult.set {
+		return r.mergeResult.output, r.mergeResult.err
+	}
+	return r.inner.Run(ctx, command)
 }
 
 func (g *recompositionGate) Bootstrap(ctx context.Context, root, branch, tip, expected string) error {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 func (s *Service) recomposePromotion(ctx context.Context, run *record, subject buildSubject) error {
@@ -11,11 +12,7 @@ func (s *Service) recomposePromotion(ctx context.Context, run *record, subject b
 	candidateTip := subject.tip
 	// An empty run has no checkpoint patch, so it rebases directly onto the bootstrapped subject tip.
 	if old != run.Base {
-		patch, err := s.checkpointPatch(ctx, run.Base, old)
-		if err != nil {
-			return err
-		}
-		tree, err := s.replayCheckpoint(ctx, subject.tip, run.Base, old, patch)
+		tree, err := s.mergePromotionTree(ctx, run.Base, subject.tip, old)
 		if err != nil {
 			return err
 		}
@@ -24,12 +21,32 @@ func (s *Service) recomposePromotion(ctx context.Context, run *record, subject b
 			return err
 		}
 	}
-	// A replay must prove conflict-free before the independently valid working tip
+	// The merge must prove conflict-free before the independently valid working tip
 	// becomes project-green, while bootstrap must precede candidate and run mutation.
 	if err := s.gate.Bootstrap(ctx, s.root, subject.branch, subject.tip, greenMarker(s.root, subject.branch)); err != nil {
 		return fmt.Errorf("no exact green evidence: run bench gate --fresh, then retry promote: %w", err)
 	}
 	return s.finishRecomposition(run, old, subject.tip, candidateTip)
+}
+
+func (s *Service) mergePromotionTree(ctx context.Context, base, working, candidate string) (string, error) {
+	output, err := s.git(ctx, nil, nil, "merge-tree", "--write-tree", "--no-messages", "--merge-base="+base, working, candidate)
+	if err != nil {
+		return "", fmt.Errorf("merge promotion candidates: %w", err)
+	}
+	fields := strings.Fields(output)
+	if len(fields) != 1 {
+		return "", errors.New("promotion merge returned malformed tree output")
+	}
+	tree := fields[0]
+	kind, err := s.git(ctx, nil, nil, "cat-file", "-t", tree)
+	if err != nil {
+		return "", fmt.Errorf("validate promotion merge tree: %w", err)
+	}
+	if strings.TrimSpace(kind) != "tree" {
+		return "", errors.New("promotion merge returned a non-tree object")
+	}
+	return tree, nil
 }
 
 // preconditionsAdvancingEmptyRun runs op's preconditions and, where a run has nothing for
