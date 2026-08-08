@@ -129,15 +129,6 @@ tree, and compiler-observing proofs perform real builds.
   ./internal/freshness/check`. Nested canary entries inherit that verifier
   identity, eliminating the per-bite compile while preserving refusal before
   untrusted CLI execution.
-- **The promoted launcher is the explicit bootstrap trust root.** The legacy
-  exact-green gate authenticates and durably promotes this launcher before the
-  installed-only resolver can select it. The resolver fixes its non-ambient
-  slot and rejects missing, symbolic-link, special, or non-executable entries;
-  after launch, the trusted bootstrap validates the current CLI and verifier
-  records and bytes before either selected artifact executes. No executable
-  can authenticate hostile replacement of its own bytes before it runs, so
-  post-promotion compromise of this root belongs to package signing or an OS
-  integrity boundary and is not misrepresented as an in-process digest check.
 - **Every ordinary CLI consumer enrolls.** The shared CLI artifact supplies
   gate plumbing that currently uses `go run`, the build phase and every phase
   that executes or copies its output, contract runtime helpers,
