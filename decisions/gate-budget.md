@@ -754,8 +754,11 @@ resulting Task tickets.
 
 Route one, plus the specbuild lever. `internal/gate` gains a kit-root
 injection seam — production `kitRoot` takes its root as an explicit input
-instead of reading ambient `BENCH_KIT`, retiring the 51 `t.Setenv` fixture
-pins and the two chdir helpers — and its tests then adopt `t.Parallel`. The
+instead of reading ambient `BENCH_KIT`, retiring the fixture constructors'
+`t.Setenv` pins (two constructor pins reached from roughly 52 construction
+sites). The chdir-helper tests keep their chdir and stay serial — cwd is the
+input they exercise, so that pin cannot retire (spec-time amendment,
+2026-08-07) — and the package's tests then adopt `t.Parallel`. The
 package-split route was rejected: it leaves the ambient read in place and
 works around it, and every extra test package repays binary build and fixture
 setup, the process-materialization cost #21 measured. `internal/specbuild`
