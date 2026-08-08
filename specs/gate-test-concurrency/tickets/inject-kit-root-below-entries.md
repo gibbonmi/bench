@@ -1,10 +1,10 @@
 # Inject the kit root below the gate entries
 
 Blocked by: none
-Ownership fence: `internal/gate`
-Integration surfaces: exported entry signatures (`RunCommand`, `Execute`, `ExecuteReusingFreshGreen`, `ExecuteTree`, `PhasesCommand`, `ComposedGreen`) unchanged→existing external callers (`cmd/bench`, `internal/status`) exercised by IK2; kit-taking execution boundary→retire-fixture-kit-pins.md; kit-root carrier→`internal/gate`
-Contracts: none crosses — the carrier, the kit-taking boundary, and every consumer live inside the one fence, and external callers keep today's entry signatures
-Closure: IK1/phase-table, IK1/component-identity, IK1/component-scoping, IK2/env-set, IK2/empty-fallback, IK2/kit-ne-root, IK3/subject-strip
+Ownership fence: `internal/gate`, `cmd/bench/main_test.go`
+Integration surfaces: unchanged `RunCommand` wrapper path→`cmd/bench/main_test.go` + IK2; unchanged `ComposedGreen` caller→`internal/status/status.go` + IK1's composed-green scoping assertion; unchanged `Execute`, `ExecuteReusingFreshGreen`, `ExecuteTree`, and `PhasesCommand` entries→existing `internal/gate` entry tests + IK2; kit-taking execution boundary→retire-fixture-kit-pins.md; kit-root carrier→`internal/gate`
+Contracts: non-empty `BENCH_KIT` selection crosses `cmd/bench/main_test.go`→`internal/gate`, with the environment value as the string domain and the non-empty value selecting the kit, asserted by IK2 against the real wrapper; empty fallback remains inside `internal/gate`; no other value crosses
+Closure: IK1/phase-table, IK1/component-identity, IK1/component-scoping, IK2/env-set, IK2/empty-fallback, IK2/wrapper-kit-ne-root, IK3/subject-strip-kit, IK4/subject-strip-wrapper
 
 ## What to build
 
@@ -43,9 +43,10 @@ today.
 
 ## Acceptance
 
-- [ ] [IK1] (covers KC1) with ambient `BENCH_KIT` naming a foreign path and no per-test pin, evaluation through the kit-taking boundary over an injected fixture root resolves the fixture's own phase table, component identities, and component scoping.
-- [ ] [IK2] (covers KC2) a wrapper-routed entry with `BENCH_KIT` set resolves the kit from the environment at entry, including kit ≠ root; a new serial assertion proves set-but-empty falls back to the graded root.
-- [ ] [IK3] (covers KC4) the closed subject environment still strips `BENCH_KIT`/`BENCH_WRAPPER` from the gate script's environment.
+- [ ] [IK1] (covers KC1) with ambient `BENCH_KIT` naming a foreign path and no per-test pin, evaluation and composed-green scoping through the kit-taking boundary over an injected fixture root resolve the fixture's own phase table, component identities, and component scoping.
+- [ ] [IK2] (covers KC2) a real wrapper-routed entry with `BENCH_KIT` set resolves the kit from the environment at entry, including kit ≠ root; a new serial direct-entry assertion proves set-but-empty falls back to the graded root.
+- [ ] [IK3] (covers KC4) the closed subject environment still strips `BENCH_KIT` from the gate script's environment.
+- [ ] [IK4] (covers KC6) the closed subject environment still strips `BENCH_WRAPPER` from the gate script's environment.
 
 ## Red mutations
 
@@ -53,8 +54,9 @@ today.
 |---|---|---|---|
 | IK1/phase-table | make the phase-table consumer prefer ambient `BENCH_KIT` over the injected value | the serial ambient-guard test | apply, run `go test -count=1 -run <guard> ./internal/gate`, expect the table assertion red |
 | IK1/component-identity | make the identity consumer re-read ambient `BENCH_KIT` | the serial ambient-guard test | apply, run the guard, expect the identity assertion red |
-| IK1/component-scoping | make the scoping consumer re-read ambient `BENCH_KIT` | the serial ambient-guard test | apply, run the guard, expect the eligibility/runner-root assertion red |
+| IK1/component-scoping | make the scoping consumer re-read ambient `BENCH_KIT` | the serial ambient-guard test | apply, run the guard, expect its evaluation or composed-green eligibility/runner-root assertion red |
 | IK2/env-set | make entry resolution ignore the environment and always use the graded root | the existing entry tests that pin `BENCH_KIT` | apply, run `go test -count=1 -run <entry tests> ./internal/gate`, expect red |
 | IK2/empty-fallback | make entry resolution accept an empty `BENCH_KIT` as the kit | the new set-but-empty entry assertion | apply, run its focused test, expect the fallback assertion red |
-| IK2/kit-ne-root | make entry resolution return the graded root when the environment names another directory | the kit≠root manifest-resolution test | apply, run its focused test, expect red |
-| IK3/subject-strip | stop stripping `BENCH_KIT` from the subject environment | the existing subject-env stripping test | apply, run its focused test, expect red |
+| IK2/wrapper-kit-ne-root | make entry resolution return the graded root when the environment names another directory | the new real-wrapper kit≠root test | apply, run the wrapper-focused test in `./cmd/bench`, expect red |
+| IK3/subject-strip-kit | stop stripping `BENCH_KIT` from the subject environment | the existing subject-env stripping test | apply, run its focused test, expect the kit-variable assertion red |
+| IK4/subject-strip-wrapper | stop stripping `BENCH_WRAPPER` from the subject environment | the existing subject-env stripping test | apply, run its focused test, expect the wrapper-variable assertion red |
