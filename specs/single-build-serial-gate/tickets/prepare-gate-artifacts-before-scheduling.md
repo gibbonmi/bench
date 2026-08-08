@@ -1,6 +1,6 @@
 # Prepare gate artifacts before scheduling
 
-Blocked by: share-artifacts-across-local-processes.md, resolve-target-aware-artifact-identities.md
+Blocked by: share-artifacts-across-local-processes.md, resolve-target-aware-artifact-identities.md, require-existing-gate-artifact-authority.md
 Ownership fence: `.bench/gate.sh`, `.bench/gate-prospective.sh`, `scripts/go-build.sh`, `internal/gate/gate_go.go`, `internal/gate/gate_go_test.go`, `internal/gate/phases.go`, `internal/gate/phases_command_test.go`, `internal/conformance/gate_entry_test.go`, `internal/canary/gate_entry_test.go`
 Integration surfaces: real artifact-store producer→share-artifacts-across-local-processes.md; selected CLI/verifier records→gate entry, GateGoArgv, build publication, migrate-gate-fixture-artifact-consumers.md, and admit-one-gate-per-common-repository.md; release/install entry consumers→migrate-preprelease-install-proof-consumers.md; remaining raw construction→enforce-the-executable-artifact-contract.md
 Contracts: `ArtifactRecord` crosses `internal/artifactstore/`→gate preparation in `internal/gate/phases.go` as CLI or verifier class with matching target identity, records resolve before phase-table construction, missing/stale/malformed records refuse with the rebuild or exact-repair action and never fall back, asserted by GP1-GP2 against the real store and phase table
