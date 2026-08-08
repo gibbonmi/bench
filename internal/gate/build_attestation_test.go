@@ -11,6 +11,7 @@ package gate
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,18 +31,24 @@ var attestationFixtureTime = time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)
 func attestationFixtureNow() time.Time { return attestationFixtureTime.Add(time.Hour) }
 
 // buildFixtureBinaryTo compiles a fixture root's pkg to staged, the staging path Publish
-// consumes. Nothing publishes it — a caller that wants the binary in place goes through
-// buildAndPublishAt, the only route here that also leaves a matching seal.
+// consumes. It does not publish; the caller owns any matching publication.
 func buildFixtureBinaryTo(t *testing.T, root, pkg, staged string) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(staged), 0o755); err != nil {
+	if err := buildFixtureBinary(root, pkg, staged); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func buildFixtureBinary(root, pkg, staged string) error {
+	if err := os.MkdirAll(filepath.Dir(staged), 0o755); err != nil {
+		return err
 	}
 	build := exec.Command("go", "build", "-buildvcs=false", "-o", staged, pkg)
 	build.Dir = root
 	if out, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build %s in the fixture: %v\n%s", pkg, err, out)
+		return fmt.Errorf("build %s in the fixture: %w\n%s", pkg, err, out)
 	}
+	return nil
 }
 
 // attestationFixture is a kit-shaped root together with the dist/bench artifact its gate
@@ -148,9 +155,20 @@ func TestGreenBuildAttestsItsOwnBinary(t *testing.T) {
 	if inspection := fixture.verify(t); inspection.Attested {
 		t.Fatalf("verify before any gate build = %+v, want a refusal — the fixture seal is not attested", inspection)
 	}
+	before, err := benchfreshness.ExecutableDigest(fixture.executable)
+	if err != nil {
+		t.Fatal(err)
+	}
 	editFixtureMain(t, fixture.root, "green-build")
 
 	fixture.buildAndPublish(t, attestationFixtureTime)
+	after, err := benchfreshness.ExecutableDigest(fixture.executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after == before {
+		t.Fatalf("green build digest = %s, want bytes distinct from the fixture binary %s", after, before)
+	}
 
 	inspection := fixture.verify(t)
 	if !inspection.Attested {

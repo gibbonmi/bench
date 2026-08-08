@@ -14,6 +14,8 @@ package gate
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -21,6 +23,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -70,6 +73,22 @@ type kitShapedFixture struct {
 	phases []Phase
 }
 
+var kitShapedTemplateState struct {
+	once sync.Once
+	path string
+	dir  string
+	err  error
+}
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	if err := os.RemoveAll(kitShapedTemplateState.dir); err != nil && code == 0 {
+		fmt.Fprintln(os.Stderr, "remove kit-shaped fixture template:", err)
+		code = 1
+	}
+	os.Exit(code)
+}
+
 // newKitShapedFixture builds the root and returns it with its resolved table.
 func newKitShapedFixture(t *testing.T) kitShapedFixture {
 	t.Helper()
@@ -79,7 +98,7 @@ func newKitShapedFixture(t *testing.T) kitShapedFixture {
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	writeKitShapedTree(t, root)
-	sealKitShapedBinary(t, root)
+	sealInitialKitShapedBinary(t, root)
 	// The manifest is generated from BenchkitPhases' own answer for this tree, so the
 	// executed table carries the names the kit table materializes here and nothing else:
 	// a tree that stops satisfying a phase's shape stops declaring that phase.
@@ -89,6 +108,18 @@ func newKitShapedFixture(t *testing.T) kitShapedFixture {
 		t.Fatalf("resolve the fixture phase table: %v", err)
 	}
 	return kitShapedFixture{root: root, phases: phases}
+}
+
+func kitShapedTemplate(root string) (string, error) {
+	kitShapedTemplateState.once.Do(func() {
+		kitShapedTemplateState.dir, kitShapedTemplateState.err = os.MkdirTemp("", "bench-kitshaped-fixture-")
+		if kitShapedTemplateState.err != nil {
+			return
+		}
+		kitShapedTemplateState.path = filepath.Join(kitShapedTemplateState.dir, "bench.staged")
+		kitShapedTemplateState.err = buildFixtureBinary(root, "./cmd/bench", kitShapedTemplateState.path)
+	})
+	return kitShapedTemplateState.path, kitShapedTemplateState.err
 }
 
 func (f kitShapedFixture) phaseNames() []string {
@@ -274,6 +305,19 @@ func writeCaptureSurfaces(t *testing.T, root string) {
 	}
 }
 
+func sealInitialKitShapedBinary(t *testing.T, root string) {
+	t.Helper()
+	staged := filepath.Join(root, "dist", "bench.staged")
+	template, err := kitShapedTemplate(root)
+	if err != nil {
+		t.Fatalf("build the fixture binary template: %v", err)
+	}
+	if err := copyFixtureBinary(template, staged); err != nil {
+		t.Fatalf("copy the fixture binary template: %v", err)
+	}
+	publishKitShapedBinary(t, root, staged)
+}
+
 // sealKitShapedBinary publishes dist/bench through the seal package's Publish, the only
 // writer that produces a seal answering for the tree the binary was built from. Moving the
 // bytes into place by hand leaves an executable no reader can verify.
@@ -281,8 +325,99 @@ func sealKitShapedBinary(t *testing.T, root string) {
 	t.Helper()
 	staged := filepath.Join(root, "dist", "bench.staged")
 	buildFixtureBinaryTo(t, root, "./cmd/bench", staged)
+	publishKitShapedBinary(t, root, staged)
+}
+
+func publishKitShapedBinary(t *testing.T, root, staged string) {
+	t.Helper()
 	if err := benchfreshness.Publish(root, staged, filepath.Join(root, "dist", "bench")); err != nil {
 		t.Fatalf("publish the fixture binary: %v", err)
+	}
+}
+
+func copyFixtureBinary(source, destination string) (err error) {
+	info, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+	input, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := input.Close(); err == nil && closeErr != nil {
+			err = closeErr
+		}
+	}()
+	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+		return err
+	}
+	output, err := os.OpenFile(destination, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := output.Close(); err == nil && closeErr != nil {
+			err = closeErr
+		}
+		if err != nil {
+			_ = os.Remove(destination)
+		}
+	}()
+	if _, err := io.Copy(output, input); err != nil {
+		return err
+	}
+	return os.Chmod(destination, info.Mode().Perm())
+}
+
+func TestKitShapedFixturesPublishIndependentTemplateCopies(t *testing.T) {
+	t.Parallel()
+	first := newKitShapedFixture(t)
+	second := newKitShapedFixture(t)
+	if err := os.WriteFile(first.binaryPath(), []byte("changed"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := benchfreshness.Verify(second.root, second.binaryPath()); err != nil {
+		t.Fatalf("second fixture binary after mutating the first = %v, want independent published bytes", err)
+	}
+}
+
+func TestKitShapedFixtureTemplateFailureIsSticky(t *testing.T) {
+	t.Parallel()
+	if os.Getenv("BENCH_KITSHAPED_TEMPLATE_FAILURE") != "1" {
+		report := filepath.Join(t.TempDir(), "template-directory")
+		command := exec.Command(os.Args[0], "-test.run", "^TestKitShapedFixtureTemplateFailureIsSticky$")
+		command.Env = append(os.Environ(),
+			"BENCH_KITSHAPED_TEMPLATE_FAILURE=1",
+			"BENCH_KITSHAPED_TEMPLATE_REPORT="+report,
+		)
+		if out, err := command.CombinedOutput(); err != nil {
+			t.Fatalf("template failure subprocess: %v\n%s", err, out)
+		}
+		contents, err := os.ReadFile(report)
+		if err != nil {
+			t.Fatalf("read the template lifetime report: %v", err)
+		}
+		dir := string(contents)
+		if dir == "" {
+			t.Fatal("template lifetime report is empty")
+		}
+		if _, err := os.Stat(dir); !os.IsNotExist(err) {
+			t.Fatalf("template directory after the test process = %v, want removed", err)
+		}
+		return
+	}
+	root := t.TempDir()
+	gitRun(t, root, "init", "-q")
+	writeKitShapedTree(t, root)
+	writeGateTestFile(t, root, "cmd/bench/main.go", "package main\nfunc main( {\n", 0o644)
+	_, first := kitShapedTemplate(root)
+	_, second := kitShapedTemplate(root)
+	if first == nil || second == nil || first != second {
+		t.Fatalf("template failures = (%v, %v), want the same retained construction error", first, second)
+	}
+	if err := os.WriteFile(os.Getenv("BENCH_KITSHAPED_TEMPLATE_REPORT"), []byte(kitShapedTemplateState.dir), 0o644); err != nil {
+		t.Fatalf("write the template lifetime report: %v", err)
 	}
 }
 
