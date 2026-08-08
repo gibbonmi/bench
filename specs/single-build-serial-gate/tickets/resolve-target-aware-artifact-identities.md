@@ -1,6 +1,6 @@
 # Resolve target-aware artifact identities
 
-Blocked by: share-artifacts-across-local-processes.md
+Blocked by: share-artifacts-across-local-processes.md, rendezvous-artifact-consumers-across-processes.md
 Ownership fence: `internal/artifactstore/`
 Integration surfaces: opaque store identity→share-artifacts-across-local-processes.md; target-aware `ArtifactRequest`→prepare-gate-artifacts-before-scheduling.md; target-aware `ArtifactRequest`→register-real-build-proof-identities.md; closed request fields→enforce-the-executable-artifact-contract.md
 Contracts: `ArtifactRequest` (artifact class, target-selected source digest, toolchain, GOOS, GOARCH, CGO, flags, mode, closed proof slot) crosses resolver→store in `internal/artifactstore/`, membership is the closed request-field registry, ordering is select target files then frame identity fields before store lookup, absence or an unknown class/slot refuses, asserted by TA1 against target fixtures and the real store
