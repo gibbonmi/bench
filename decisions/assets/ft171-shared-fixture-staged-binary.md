@@ -1,6 +1,6 @@
-# Fixture materialization architecture review
+# FT171 shared fixture staged-binary architecture review
 
-Status: advisory input to the active `gate-test-concurrency` build.
+Status: reviewed architecture input for the `shared-fixture-staged-binary` light-path build.
 
 Reviewer: Claude Fable, read-only architecture pass. The reviewer could inspect the
 primary checkout but not the isolated candidate worktree, so its code citations are to
