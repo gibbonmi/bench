@@ -69,6 +69,15 @@ The first demand-reduction slice (the `gate-decision-test-seam` spec) landed
 read-only decision seam with representative full-engine composition proofs
 retained. Return to the remaining FT171 shaping decisions from here.
 
+The second demand-reduction slice (`conformance-harness-scope`) also landed
+2026-08-07: the 83 direct conformance fixture bites now run only their resolved
+ordinary check while the full-table controls remain broad. The fresh cold
+workload census is therefore the next gate-fix step, before candidate outer
+widths are priced. The pre-push close adds directional evidence from five
+roughly ten-minute gates, dominated by `internal/gate`, `internal/specbuild`,
+and contract packages, but it did not retain an exact subject and worktree per
+sample, so those observations do not satisfy this row's pricing evidence.
+
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
 artifact-suite, and artifact-hoist retros converge on one lifecycle owner. The close's
@@ -335,44 +344,16 @@ a permanent regression test from a temporary overlay that proves a ticket's red.
 Withholding the receipt made the same valid mutation question get rediscovered
 and resolved twice. Source: the conformance-harness-scope retro, drained here.
 
-**FT135 (MEDIUM) — a pre-push guard on a guessed branch looks armed while
-protecting nothing.** When the repository has no resolvable default branch,
-the installed pre-push hook falls back to a baked `fallbackProtectedBranch`
-of `main` (`internal/adopt/link_hook.go`). The hook re-resolves `origin/HEAD`
-live on every push and reaches the baked token only when that lookup stays
-empty — but in exactly that repository the guard looks armed while defending
-a branch that may not be the default, FT86's own failure class one layer
-down. `bench doctor` (or `bench link`'s output) should report whether the
-installed guard's protected branch was resolved or guessed, so the false
-armor is visible where the reviewer looks. Source: `capture/IDEAS.md`, drained here.
-
-A second face, drained 2026-07-29: currency, not resolution. This repo's own
-installed hook is a bench-managed copy from Jul 6 predating the static
-manifest header, so `bench guards` and every SessionStart banner report
-`pre-push: no manifest` with an empty boundary — the guard reads as inert
-while it in fact blocks pushes to `main`, and one session told the reviewer
-`main` was unprotected. `bench doctor` reports ok because it checks only the
-`bench:managed` marker, never content currency against the embedded template.
-Same owner, same fix surface: doctor (or link's output) reports template
-currency alongside resolved-versus-guessed. The local instance is repaired by
-re-running `bench link` (`installPrePush` overwrites a managed hook) — offered
-alongside this drain rather than performed silently, since it rewrites an
-enforcement hook. Source: `capture/IDEAS.md`, drained here.
-
-A third face, drained 2026-07-29: the sanctioned repair route refuses on this
-repo. `bench link` aborts with `conflict: .claude/commands/bench-debug.md has
-a symlink parent directory` — `.claude/commands` is a symlink to
-`.agents/commands`, verified in-tree — and the capture records the refusal
-landing before the pre-push hook refresh, so the second face's repair
-(re-running `bench link`) is unavailable exactly where the stale hook lives; a
-hand-copy fallback was used 2026-07-29. Whether link should traverse the
-symlinked directory, skip already-converged files, or order the hook refresh
-ahead of the conflict check joins the same doctor/link visit this row owns;
-the abort-before-refresh sequencing is the capture's claim, not re-verified
-here. Source: `capture/IDEAS.md`, drained here.
-
-Staged spec: [`specs/pre-push-guard-visibility/spec.md`](specs/pre-push-guard-visibility/spec.md);
-its decision map moved under that folder with the staging commit.
+**FT135 (MEDIUM, decision required) — let `bench link` converge unowned adapter
+destinations without claiming foreign bytes.** The shipped pre-push work exposed
+one residual policy boundary in the kit repository: with no manifest owner,
+an exact adapter destination reached through the canonical directory symlink
+has `owned == ""`, so `convergedFingerprint` is skipped and the symlink-parent
+guard refuses `bench link`. Decide whether Bench may adopt ownership of exact
+converged bytes it did not write, limited to the canonical adapter target and
+never a self-link, while preserving refusal for drift, escaping links, and
+foreign content. Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`
+2026-08-07, drained here; residual after `pre-push-guard-visibility`.
 
 **FT98 (MEDIUM) — one preserve-then-discard primitive;
 four faces.** Three rows were faces of one missing primitive — a sanctioned,
@@ -1565,6 +1546,16 @@ stand in for that evidence. Entry: `/bench-write-spec`. Sources:
 `capture/learnings.md` 2026-08-06, verdicted here; the
 conformance-harness-scope retro, drained here.
 
+The pre-push close adds the same control-only cost and two enforcement faces:
+ticket files and a reviewer-approved spec amendment each paid full gates before
+terminal promotion, while an earlier repair loop admitted source fixes with no
+ticket fence or red mutation. The lifecycle-native entry therefore owns staged
+repair tickets, an explicit amendment operation that respects the recorded
+spec subject, and refusal of active-run source changes outside a ticket fence;
+promotion remains their only project-green boundary. Sources:
+`capture/learnings.md` 2026-08-07 and the `pre-push-guard-visibility` retro,
+drained and verdicted here.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -1678,6 +1669,12 @@ coordinators verify a done-claim without reconstructing or repeating a broad
 suite. Sources: `capture/IDEAS.md` 2026-08-07 and `capture/learnings.md`
 2026-08-06, drained and verdicted here; the gate-decision-test-seam and
 conformance-harness-scope retros, drained here.
+
+The pre-push close repeats the discovery failure at the checkpoint seam: the
+run ID was absent from `status --full`, and `outcome: green` was rejected without
+naming the accepted `passed|already-covered|not-tdd-able` vocabulary. The
+lifecycle-native generator and field-specific refusals above own both facts.
+Source: the `pre-push-guard-visibility` retro, drained here.
 
 **FT196 (LOW) — a Bench-owned lifecycle request-ID generator.** `bench spec
 build assign` (and its lifecycle siblings) take a caller-minted `--request <id>`
@@ -1896,6 +1893,12 @@ consuming path, and reciprocal ticket edge. Assignment already enforces the
 reciprocal edge; what stays here is comparing the complete chain against
 `Contracts:`, coverage, and the edge inventory before leasing work. Source: the
 conformance-harness-scope retro, drained here.
+
+The one-shot close adds literal-deletion honesty to that same pre-assignment
+review: when a mutation depends on deleting an exact anchor, count every
+occurrence so explanatory prose cannot shadow it, and execute the promised
+deletion red before accepting the ticket. Source: the `one-shot-feedback`
+retro, drained here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
@@ -2345,12 +2348,9 @@ build.
    its spec was written and implemented, FT181 shipped 2026-08-03, and
    FT156's anchor-mechanism ruling closed when its registry shipped and the
    spec retired 2026-08-05.
-2. Drain the staged frontier — FT135 carries the sole staged spec — before
-   authoring any new spec; deferring it is an explicit reviewer override, never
-   a silent skip. It does not serve this goal track directly. FT171's first
-   gate-budget demand-reduction slice shipped and its remaining work returned
-   to shaping. FT141
-   builds in parallel where
+2. Take FT171's gate fix next: both demand-reduction slices shipped, so shape
+   the fresh cold workload census and candidate-width pricing before changing
+   outer concurrency. FT141 builds in parallel where
    capacity allows: it is Go, prose-independent, and it unblocks FT107
    *whole* — splitting the fix-loop clause out would spend a second spec,
    review, and full gate on the same anchor-pinned surface, so the batch
@@ -2406,6 +2406,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — drain the staged spec FT135 (`specs/pre-push-guard-visibility/spec.md`).
+1. `/bench-shape-idea` — FT171 gate fix: lock the fresh cold workload census and candidate outer-width decision now that both demand-reduction slices have landed.
 2. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
 3. `/bench-write-spec` — FT141, Go and prose-independent and the literal blocker that unblocks FT107 whole.
