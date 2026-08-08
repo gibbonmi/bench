@@ -9,8 +9,8 @@ import (
 	"strings"
 	"syscall"
 	"testing"
-	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -346,7 +346,7 @@ func requireLinkRefusesSpecialFile(t *testing.T, kitName, relPath, wantStderr st
 	}
 	r := linkFixtureAt(t, repo, f.Env)
 	r.Git("init", "-q")
-	probe := contract.RunAtWithTimeout(t, r, r.Root, map[string]string{"BENCH_KIT": kit}, time.Second, "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "link")
+	probe := contract.RunAtWithTimeout(t, r, r.Root, map[string]string{"BENCH_KIT": kit}, bounds.TestDeadline(0), "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "link")
 	if probe.TimedOut {
 		t.Fatalf("link blocked on %s inside an allowlisted kit tree", relPath)
 	}
@@ -598,7 +598,7 @@ func testLinkRejectsHostileDroppedRows(t *testing.T) {
 			f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
 			before := f.ReadFile(".bench/link-manifest.tsv")
 			hostile.seed(t, f)
-			probe := contract.RunAtWithTimeout(t, f, f.Root, map[string]string{"BENCH_KIT": kitB}, time.Second, "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "link")
+			probe := contract.RunAtWithTimeout(t, f, f.Root, map[string]string{"BENCH_KIT": kitB}, bounds.TestDeadline(0), "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "link")
 			if probe.TimedOut {
 				t.Fatal("relink blocked on hostile dropped target")
 			}

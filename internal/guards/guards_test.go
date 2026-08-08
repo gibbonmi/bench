@@ -39,16 +39,22 @@ func TestScanTimeoutPreservesPartialRowsAndHonestCounts(t *testing.T) {
 	enumerateGuards = func(context.Context, string) ([]candidate, error) {
 		return []candidate{{fallback: "fast"}, {fallback: "blocked"}}, nil
 	}
+	blocked := make(chan struct{})
 	inspectGuard = func(ctx context.Context, _ string, c candidate) [][]string {
 		if c.fallback == "fast" {
 			return [][]string{{"fast", "boundary", "denies", "none"}}
 		}
+		close(blocked)
 		<-ctx.Done()
 		return nil
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	got := Scan(ctx, "/repo")
+	result := make(chan ScanResult, 1)
+	go func() { result <- Scan(ctx, "/repo") }()
+	<-blocked
+	cancel()
+	got := <-result
 	if got.Status != "incomplete" || got.Reason != "timeout" || got.Inspected != "1" || got.Total != "2" || got.Omitted != "1" || len(got.Rows) != 1 {
 		t.Fatalf("Scan = %#v", got)
 	}
