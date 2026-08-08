@@ -3,7 +3,7 @@
 Blocked by: inject-kit-root-below-entries.md
 Ownership fence: `internal/gate`
 Integration surfaces: kit-taking execution boundary→inject-kit-root-below-entries.md; fixture constructor signatures→`internal/gate`; representative pinned entry tests→`internal/gate`
-Contracts: none crosses — the constructors, the migrated call sites, and the representative entry tests all live inside the one fence
+Contracts: the kit-taking execution boundary crosses inject-kit-root-below-entries.md→`internal/gate`, with root and kit as path strings, each migrated call preserving its existing operation order, and absence represented by no alternate entry call, asserted by RP1 against the real blocker-produced boundary
 Closure: RP1/kitshaped-constructor, RP1/routed-constructor, RP1/entry-migration, RP1/hostile-run
 
 ## What to build
