@@ -3,7 +3,7 @@
 Blocked by: retire-fixture-kit-pins.md
 Ownership fence: `internal/gate`
 Integration surfaces: pin-free fixture construction→retire-fixture-kit-pins.md; serial-list enumeration→this ticket's build evidence, graded by the lifecycle's review phase
-Contracts: none crosses — the adoption edits and the enumerated serial list live inside the one fence
+Contracts: pin-free fixture construction crosses retire-fixture-kit-pins.md→`internal/gate`, with the fixture kit carried as an explicit path string before parallel adoption, absence represented by no ambient kit override, and TP1 asserting the boundary through the hostile-environment package run and serial-list review
 Closure: TP1/serial-list, TP1/global-swap, TP1/lock-registry, TP1/race, TP1/narrow-width, TP1/wall-median
 
 ## What to build
