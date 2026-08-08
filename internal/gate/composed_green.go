@@ -12,6 +12,10 @@ import (
 
 // ComposedGreen reports whether the exact working tip's verdict and retained evidence cover the whole tree.
 func ComposedGreen(root string) bool {
+	return composedGreenAtKit(root, kitRoot(root))
+}
+
+func composedGreenAtKit(root, kit string) bool {
 	now := time.Now()
 	plan, err := buildSubject(root)
 	if err != nil || !plan.Closed {
@@ -30,13 +34,13 @@ func ComposedGreen(root string) bool {
 		return false
 	}
 	if loaded.record.partitions() || loaded.record.checkPartitions() {
-		return partialComposedGreen(root, plan, loaded.record, now)
+		return partialComposedGreen(root, kit, plan, loaded.record, now)
 	}
 	return true
 }
 
-func partialComposedGreen(root string, plan subject, record verdictRecord, now time.Time) bool {
-	evaluation := newWorkingTreeEvaluation(root)
+func partialComposedGreen(root, kit string, plan subject, record verdictRecord, now time.Time) bool {
+	evaluation := newWorkingTreeEvaluationAtKit(root, kit)
 	if _, err := evaluation.acceptPre(); err != nil {
 		return false
 	}

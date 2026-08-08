@@ -17,6 +17,7 @@ import (
 // declaring one set would let a record authored as either be read as the other — and the
 // refusals every test above rests on would stop separating them.
 func TestStoreRecordClassesStayMutuallyUnreadable(t *testing.T) {
+	t.Parallel()
 	names := make([]string, 0, len(storeRecordClasses))
 	for name := range storeRecordClasses {
 		names = append(names, name)
@@ -55,6 +56,7 @@ func TestStoreRecordClassesStayMutuallyUnreadable(t *testing.T) {
 // against the *ReadyFields variables themselves, not against a restated list of names, so
 // the only way to satisfy it is for verdictClasses to actually cover both.
 func TestVerdictClassesCoverAllReadyFieldSets(t *testing.T) {
+	t.Parallel()
 	want := [][]string{fullReadyFields, partialReadyFields, checkPartialReadyFields, combinedPartialReadyFields}
 	if len(verdictClasses) != len(want) {
 		t.Fatalf("verdictClasses = %v (%d classes), want %d — one per ready field set (full, partial)", verdictClasses, len(verdictClasses), len(want))
@@ -89,6 +91,7 @@ func TestVerdictClassesCoverAllReadyFieldSets(t *testing.T) {
 // not guarantee: that the class was given the right field set, or wired into validation —
 // those are TestVerdictClassesCoverAllThreeReadyFieldSets's and verdict.go's own tests' job.
 func TestVerdictReadyFieldsAreAllRegistered(t *testing.T) {
+	t.Parallel()
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "verdict.go", nil, 0)
 	if err != nil {

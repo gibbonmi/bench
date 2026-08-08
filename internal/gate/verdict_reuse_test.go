@@ -40,6 +40,7 @@ func gateRunCount(t *testing.T, root string) int {
 // read), and the returned tuple projects the green rather than a zero Inspection that
 // would read as `absent` on a green tree.
 func TestReusableGreenIsReusedWithoutRunningOrWriting(t *testing.T) {
+	t.Parallel()
 	root := reuseMarkerRepo(t, 0, `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	first := Execute(context.Background(), root, io.Discard, io.Discard)
 	if first.ActionExit != 0 || !first.Inspection.ReusableGreen {
@@ -78,6 +79,7 @@ func TestFreshFlagForcesARealRunPastAReusableGreen(t *testing.T) {
 	} {
 		t.Run(order.name, func(t *testing.T) {
 			root := reuseMarkerRepo(t, 0, closed)
+			t.Setenv("BENCH_KIT", root)
 			if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 || !got.Inspection.ReusableGreen {
 				t.Fatalf("seed execution = %+v, want a reusable green", got)
 			}
@@ -102,6 +104,7 @@ func TestFreshFlagForcesARealRunPastAReusableGreen(t *testing.T) {
 // case here leaves exactly one run behind and requires the next execution to reach the
 // oracle anyway.
 func TestNonReusableSubjectsPayARealRun(t *testing.T) {
+	t.Parallel()
 	const closed = `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`
 	seedGreen := func(t *testing.T, root string) {
 		t.Helper()
@@ -165,6 +168,7 @@ func TestNonReusableSubjectsPayARealRun(t *testing.T) {
 }
 
 func TestInspectTreeNeverRunsGate(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	tree := gitOutput(t, root, "write-tree")
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
@@ -187,6 +191,7 @@ func reusableEvidenceRepo(t *testing.T, exit int) string {
 }
 
 func TestExecuteTreeRunsProspectiveWrapper(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	writeGateTestFile(t, root, ".bench/gate.sh", "#!/usr/bin/env bash\ngitdir=\"$(git rev-parse --git-common-dir)\"\nprintf prospective > \"$gitdir/prospective-run\"\nprintf run >> \"$gitdir/prospective-runs\"\n", 0o755)
 	gitRun(t, root, "add", ".bench/gate.sh")
@@ -218,6 +223,7 @@ func TestExecuteTreeRunsProspectiveWrapper(t *testing.T) {
 }
 
 func TestValidateProjectGreenRequiresTipMarkerAndClosedSubject(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
 		t.Fatalf("seed execution = %+v, want green", got)
@@ -245,6 +251,7 @@ func TestValidateProjectGreenRequiresTipMarkerAndClosedSubject(t *testing.T) {
 }
 
 func TestEvidenceDoesNotReuseLatestProjectionOrRed(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
 		t.Fatalf("seed execution = %+v, want green", got)
@@ -267,6 +274,7 @@ func TestEvidenceDoesNotReuseLatestProjectionOrRed(t *testing.T) {
 }
 
 func TestRetainedEvidenceSurvivesHistoryOnlyAdvance(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	tree := gitOutput(t, root, "write-tree")
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
@@ -282,6 +290,7 @@ func TestRetainedEvidenceSurvivesHistoryOnlyAdvance(t *testing.T) {
 }
 
 func TestForcedRedInvalidatesRetainedGreen(t *testing.T) {
+	t.Parallel()
 	root := gateTestRepo(t, "#!/usr/bin/env bash\necho run >> .git/runs\ntest ! -f .git/force-red\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	gitRun(t, root, "add", ".")
 	gitRun(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "subject")
@@ -289,7 +298,7 @@ func TestForcedRedInvalidatesRetainedGreen(t *testing.T) {
 		t.Fatalf("green execution = %+v, want green", got)
 	}
 	writeGateTestFile(t, root, ".git/force-red", "\n", 0o600)
-	if got := RunCommand([]string{"--fresh", root}, io.Discard, io.Discard); got == 0 {
+	if got := executeWithEngineAfterAcquireAtKit(context.Background(), root, root, io.Discard, io.Discard, productionGateEngine{}, notifyGateSignals, forceRun); got.ActionExit == 0 {
 		t.Fatal("forced red execution unexpectedly passed")
 	}
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit == 0 {
@@ -322,6 +331,7 @@ func evidenceFiles(t *testing.T, gitdir string) []string {
 // names the partition and carries it for the consumers that render and refuse against it,
 // and only ReusableGreen is withheld.
 func TestPartialVerdictIsNotReusable(t *testing.T) {
+	t.Parallel()
 	root := reuseMarkerRepo(t, 0, `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
 		t.Fatalf("seed execution = %+v, want green", got)

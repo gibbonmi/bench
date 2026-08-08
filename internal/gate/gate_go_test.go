@@ -80,6 +80,7 @@ func writeRaceTestSourcesFor(t *testing.T, root string, tests []racetests.Test) 
 }
 
 func TestGateGoGofmt(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
 	writeGateGoFile(t, filepath.Join(root, "bad.go"), "package fixture\nfunc Bad()  {\nreturn\n}\n")
@@ -100,6 +101,7 @@ func TestGateGoGofmt(t *testing.T) {
 }
 
 func TestGateGoTestPackageSet(t *testing.T) {
+	t.Parallel()
 	kit := kitRootForTest(t)
 	dev, _, err := CoreTestPackages(kit, registry.Dev)
 	if err != nil {
@@ -131,6 +133,7 @@ func TestGateGoTestPackageSet(t *testing.T) {
 }
 
 func TestCoreTestPackagesIgnoresMalformedAmbientVCSMetadata(t *testing.T) {
+	t.Parallel()
 	parent := t.TempDir()
 	writeGateGoFile(t, filepath.Join(parent, ".git"), "gitdir: missing\n")
 	root := filepath.Join(parent, "module")
@@ -147,6 +150,7 @@ func TestCoreTestPackagesIgnoresMalformedAmbientVCSMetadata(t *testing.T) {
 }
 
 func TestGateGoTestReds(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
 	writeGateGoFile(t, filepath.Join(root, "core", "core_test.go"),
@@ -198,6 +202,7 @@ func TestGateGoCoreTestUsesFreshVerdict(t *testing.T) {
 }
 
 func TestGateGoRaceRequiresTheTestToRun(t *testing.T) {
+	t.Parallel()
 	absent := t.TempDir()
 	writeGateGoFile(t, filepath.Join(absent, "go.mod"), "module fixture\n\ngo 1.25\n")
 	if code, stdout, stderr := runGateGo(t, "race", absent); code != 1 {
@@ -243,6 +248,7 @@ func TestGateGoRaceRequiresTheTestToRun(t *testing.T) {
 }
 
 func TestGateGoConformanceSuiteUsesRegistrySkipPattern(t *testing.T) {
+	t.Parallel()
 	kit := kitRootForTest(t)
 	want := []string{"go", "test", "-count=1", "./internal/conformance", "-skip", registry.InnerSkipPattern()}
 	if got := ConformanceSuiteArgv(kit); !reflect.DeepEqual(got, want) {
@@ -318,6 +324,7 @@ func TestGateGoConformanceSuitePreservesCache(t *testing.T) {
 }
 
 func TestGateGoArgv(t *testing.T) {
+	t.Parallel()
 	want := []string{"go", "-C", "/kit", "run", "-buildvcs=false", "./cmd/bench", "gate-go", "gofmt", "/root"}
 	if got := GateGoArgv("/kit", "gofmt", "/root"); !reflect.DeepEqual(got, want) {
 		t.Fatalf("GateGoArgv = %#v, want %#v", got, want)
@@ -329,6 +336,7 @@ func TestGateGoArgv(t *testing.T) {
 }
 
 func TestGateGoUnknownStep(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
 
@@ -399,6 +407,7 @@ func TestGateGoStepReportsASpawnFailure(t *testing.T) {
 }
 
 func TestGateGoSpacedRoot(t *testing.T) {
+	t.Parallel()
 	root := filepath.Join(t.TempDir(), "spaced root")
 	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
 	writeGateGoFile(t, filepath.Join(root, "bad.go"), "package fixture\nfunc Bad()  {\nreturn\n}\n")

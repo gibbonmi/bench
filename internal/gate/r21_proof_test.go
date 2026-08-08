@@ -7,6 +7,7 @@ import (
 )
 
 func TestR21DeterministicFaultProofRegistryCompleteness(t *testing.T) {
+	t.Parallel()
 	got := make([]string, 0, len(r21ProofRegistry))
 	seen := map[string]bool{}
 	for _, proof := range r21ProofRegistry {
@@ -25,6 +26,7 @@ func TestR21DeterministicFaultProofRegistryCompleteness(t *testing.T) {
 }
 
 func TestR21DeterministicFaultEngine(t *testing.T) {
+	t.Parallel()
 	for _, proof := range r21ProofRegistry {
 		proof := proof
 		t.Run(proof.id, proof.driver)

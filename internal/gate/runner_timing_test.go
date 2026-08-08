@@ -15,6 +15,7 @@ import (
 )
 
 func TestRunnerPrintsConformanceTiming(t *testing.T) {
+	t.Parallel()
 	const timing = "01 load-validity-metadata 2ms\n02 package-core-guard 41s\n"
 
 	seedGitDir := func(t *testing.T, root string) {

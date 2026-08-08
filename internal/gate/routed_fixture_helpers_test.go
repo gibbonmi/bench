@@ -34,10 +34,6 @@ func routedKitFixture(t *testing.T) string {
 		t.Fatal("fixture capture paths are no longer declared; repoint the fixture")
 	}
 	root := t.TempDir()
-	// The fixture claims the kit-root identity for itself, exactly as the contract
-	// fixtures do, so these tests hold whether or not an enclosing gate run exported
-	// the real kit's BENCH_KIT into the test environment.
-	t.Setenv("BENCH_KIT", root)
 	gitRun(t, root, "init", "-q")
 	// The gate script routes through the gate-phases hand-off exactly as the kit's own
 	// entry does — a stand-in binary keeps the exec inert, and the marker line above it
@@ -97,7 +93,7 @@ func commonGitDirOf(t *testing.T, root string) string {
 
 func mustExecuteGreen(t *testing.T, root string, engine gateEngine) {
 	t.Helper()
-	if got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine); got.ActionExit != 0 {
+	if got := executeWithEngineAtKit(context.Background(), root, root, io.Discard, io.Discard, engine); got.ActionExit != 0 {
 		t.Fatalf("execution = %+v, want green", got)
 	}
 }

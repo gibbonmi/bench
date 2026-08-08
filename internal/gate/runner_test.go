@@ -26,6 +26,8 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
+// TestRunnerRunsPhasesConcurrently stays serial so scheduler overlap cannot
+// satisfy the timing assertion that attributes phase overlap to the runner.
 func TestRunnerRunsPhasesConcurrently(t *testing.T) {
 	root := t.TempDir()
 	phases := []Phase{
@@ -55,6 +57,7 @@ func TestRunnerRunsPhasesConcurrently(t *testing.T) {
 }
 
 func TestRunnerPrefixesAndKeepsLinesIntact(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	phases := []Phase{
 		fakePhase("alpha", "printf 'alpha'; sleep 0.05; printf ' one\\nalpha two\\n'"),
@@ -130,6 +133,7 @@ func TestRunnerFinalLineAndExitCodes(t *testing.T) {
 }
 
 func TestRunnerAggregatesAllPhases(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	phases := []Phase{
 		fakePhase("first", "printf 'first\\n'"),
@@ -152,6 +156,7 @@ func TestRunnerAggregatesAllPhases(t *testing.T) {
 }
 
 func TestRunnerInnerModeByteShape(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	phases := []Phase{
 		fakePhase("conformance", "printf 'conformance\\n'"),
@@ -178,6 +183,7 @@ func TestRunnerInnerModeByteShape(t *testing.T) {
 // on these lines, so a reworded or dropped summary is a contract break that no other
 // test in this package would notice.
 func TestRunnerSummaryLineByteShape(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	phases := []Phase{
 		fakePhase("green-phase", "true"),
@@ -204,6 +210,7 @@ func TestRunnerSummaryLineByteShape(t *testing.T) {
 }
 
 func TestRunnerCancelKillsGroup(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	pidfile := filepath.Join(root, "sleep.pid")
 	phase := Phase{
@@ -233,6 +240,7 @@ func TestRunnerCancelKillsGroup(t *testing.T) {
 }
 
 func TestRunnerRootWithSpace(t *testing.T) {
+	t.Parallel()
 	parent := t.TempDir()
 	root := filepath.Join(parent, "root with space")
 	if err := os.Mkdir(root, 0o755); err != nil {
@@ -257,6 +265,7 @@ func TestRunnerRootWithSpace(t *testing.T) {
 // launched: an absolute directory is used as it stands, and an empty one means the
 // runner's root. Anchoring a declared path belongs to whoever produced the phase.
 func TestRunnerPhaseDirIsAbsoluteOrRoot(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	if err := os.Mkdir(filepath.Join(root, "sub"), 0o755); err != nil {
 		t.Fatalf("mkdir sub: %v", err)
@@ -287,6 +296,7 @@ func TestRunnerPhaseDirIsAbsoluteOrRoot(t *testing.T) {
 // optional phase would answer a directory typo with "not installed" and quietly take
 // its check off the gate.
 func TestRunnerPhaseDirUnusableIsRed(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	regular := filepath.Join(root, "regular-file")
 	writeFile(t, regular, "not a directory\n")
@@ -326,6 +336,7 @@ func TestRunnerPhaseDirUnusableIsRed(t *testing.T) {
 // subprocess can distinguish strip-then-set from plain appending — the slice this
 // function returns is the last place the difference is visible.
 func TestMergeEnvStripsThenSets(t *testing.T) {
+	t.Parallel()
 	base := []string{"KEEP=base", "REPLACED=base", "REPLACED=base-again", "PREFIXY_KEY=base"}
 	got := mergeEnv(base, []string{"REPLACED=phase", "ADDED=phase"})
 	want := []string{"KEEP=base", "PREFIXY_KEY=base", "REPLACED=phase", "ADDED=phase"}
@@ -364,6 +375,7 @@ func TestRunnerPhaseEnvStripsThenSets(t *testing.T) {
 }
 
 func TestRunnerTransportsGateOwnedCanarySelection(t *testing.T) {
+	t.Parallel()
 	const selection = "line-routing,package-core-guard"
 	phase := Phase{
 		Name:           "canary",
@@ -433,6 +445,7 @@ func waitForProcessExit(t *testing.T, pid int) {
 }
 
 func TestExecuteCancellationKillsDescendantAfterLeaderExits(t *testing.T) {
+	t.Parallel()
 	root := gateTestRepo(t, `#!/usr/bin/env bash
 (
   trap '' INT TERM
@@ -462,6 +475,7 @@ wait
 }
 
 func TestR17PrivateFaultBridge(t *testing.T) {
+	t.Parallel()
 	op := os.Getenv("FT78_R17_FAULT")
 	valid := map[string]bool{
 		"lock-open": true, "lock-acquisition": true, "temporary-create": true,

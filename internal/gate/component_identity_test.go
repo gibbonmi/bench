@@ -91,6 +91,7 @@ func undeclaredPath(t *testing.T, sets map[string]ComponentInputs) string {
 // and none of the first: a component whose sources changed would keep inheriting evidence
 // taken against the sources it had before.
 func TestComponentIdentityTracksDeclaredContent(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	sets := mustResolveComponentInputs(t, fixture.root)
 	before := mustResolveComponentIdentities(t, fixture.root)
@@ -122,6 +123,7 @@ func TestComponentIdentityTracksDeclaredContent(t *testing.T) {
 // would refuse an identity and run on every changeset, which is the whole of what the
 // scoping buys.
 func TestComponentIdentityCoversDeclaredDirectoryDescendants(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	const dir = "internal/canary/"
 	const component = "canary"
@@ -154,6 +156,7 @@ func TestComponentIdentityCoversDeclaredDirectoryDescendants(t *testing.T) {
 // naming a not-yet-landed surface permanently unable to compute an identity, while the
 // first file to land under it moves the identity anyway.
 func TestComponentIdentityRefusesAnAbsentDeclaredFile(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	snapshot := mustTreeSnapshot(t, fixture.root)
 	const declaredDir = "internal/canary/"
@@ -200,6 +203,7 @@ func TestComponentIdentityRefusesAnAbsentDeclaredFile(t *testing.T) {
 // the two would share an address, and a component that had never run would inherit the
 // other's green.
 func TestComponentIdentitiesAreDomainSeparated(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	snapshot := mustTreeSnapshot(t, fixture.root)
 	shared := componentEntry(t, mustResolveComponentInputs(t, fixture.root), canary.PhaseTest)
@@ -219,6 +223,7 @@ func TestComponentIdentitiesAreDomainSeparated(t *testing.T) {
 // with every declared file untouched. An identity made of input contents alone would let a
 // component inherit evidence produced by a check that no longer runs.
 func TestComponentIdentityTracksItsExecutionClosure(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	snapshot := mustTreeSnapshot(t, fixture.root)
 	inputs := componentEntry(t, mustResolveComponentInputs(t, fixture.root), canary.PhaseTest)
@@ -245,6 +250,7 @@ func TestComponentIdentityTracksItsExecutionClosure(t *testing.T) {
 // snapshot is compared across the republish to prove that is what happened, and the
 // toolchain components — which exec nothing — are held still by the same comparison.
 func TestContractIdentityTracksTheSeal(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	before := mustResolveComponentIdentities(t, fixture.root)
 	snapshotBefore := mustTreeSnapshot(t, fixture.root)
@@ -274,6 +280,7 @@ func TestContractIdentityTracksTheSeal(t *testing.T) {
 // A zero identity handed back instead would be a real address that every component could
 // match, which is a skip over work nobody graded.
 func TestComponentIdentityFailsClosed(t *testing.T) {
+	t.Parallel()
 	t.Run("unreadable snapshot", func(t *testing.T) {
 		fixture := newKitShapedFixture(t)
 		if err := os.RemoveAll(filepath.Join(fixture.root, ".git")); err != nil {

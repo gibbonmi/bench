@@ -22,6 +22,7 @@ func TestExecuteReusingFreshGreenAnswersFromEvaluationOwnedGeneration(t *testing
 	// present for the seed too or the reuse it is counting would refuse on oracle drift.
 	recorder := installGateGitRecorder(t)
 	root := reusableEvidenceRepo(t, 0)
+	t.Setenv("BENCH_KIT", root)
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
 		t.Fatalf("seed execution = %+v, want green", got)
 	}
@@ -49,8 +50,9 @@ func TestExecuteReusingFreshGreenAnswersFromEvaluationOwnedGeneration(t *testing
 // [OR2] A subject with nothing to reuse still pays the real execution: the gate child
 // runs and records the verdict it earned.
 func TestExecuteReusingFreshGreenFallsThroughToRealExecution(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
-	got := ExecuteReusingFreshGreen(context.Background(), root, io.Discard, io.Discard)
+	got := executeReusingFreshGreenAtKit(context.Background(), root, root, io.Discard, io.Discard)
 	if got.ActionExit != 0 || got.GateExit != 0 {
 		t.Fatalf("fall-through result = %+v, want green real run", got)
 	}
@@ -63,6 +65,7 @@ func TestExecuteReusingFreshGreenFallsThroughToRealExecution(t *testing.T) {
 }
 
 func TestGateEvaluationKeepsAcceptedGenerationForStrippedIdentity(t *testing.T) {
+	t.Parallel()
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	evaluation := newWorkingTreeEvaluation(root)
 	if _, err := evaluation.acceptPre(); err != nil {
@@ -184,6 +187,7 @@ func TestGateEvaluationProspectiveValidationRejectsCheckoutDriftWithoutMateriali
 }
 
 func TestGateEvaluationSourceFaultCannotReuseAuthority(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		source func(string) treeSource
@@ -207,6 +211,7 @@ func TestGateEvaluationSourceFaultCannotReuseAuthority(t *testing.T) {
 }
 
 func TestGateEvaluationBlobFaultWidensConformanceInventory(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	writeGateTestFile(t, fixture.root, "ROADMAP.md", "capture-only edit\n", 0o644)
 	evaluation := newWorkingTreeEvaluation(fixture.root)

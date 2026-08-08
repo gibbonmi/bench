@@ -24,6 +24,7 @@ import (
 // absent gate resolves to None. A reordered chain would silently run the wrong oracle;
 // no black-box assertion pins this cheaply, so the table is the genuinely-red signal.
 func TestResolvePrecedence(t *testing.T) {
+	t.Parallel()
 	// present names the set of paths the injected probes report as existing/executable.
 	fs := func(present ...string) FS {
 		set := map[string]bool{}
@@ -166,6 +167,7 @@ func TestGateEnvironmentIsPasslisted(t *testing.T) {
 }
 
 func TestStrictVerdictInspection(t *testing.T) {
+	t.Parallel()
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	s, err := buildSubject(root)
 	if err != nil {
@@ -220,6 +222,7 @@ func TestStrictVerdictInspection(t *testing.T) {
 }
 
 func TestExecutionLockAndDriftFailClosed(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name     string
 		mutation string
@@ -292,6 +295,7 @@ func TestUnlockErrorClearsSameProcessOwnership(t *testing.T) {
 }
 
 func TestNoGateReturnsThreeWithoutRecord(t *testing.T) {
+	t.Parallel()
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", "")
 	if err := os.Remove(filepath.Join(root, ".bench", "gate.sh")); err != nil {
 		t.Fatal(err)

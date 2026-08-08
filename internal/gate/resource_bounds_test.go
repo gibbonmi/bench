@@ -98,6 +98,7 @@ func TestExecuteHealthyGateJustBelowDeadlineRecordsOrdinaryGreen(t *testing.T) {
 // the independent expectation that a change to the real ceiling turns red — without it,
 // the cheap proof could pass while the shipped limit silently drifted.
 func TestManifestEntryLimitConstant(t *testing.T) {
+	t.Parallel()
 	if defaultManifestEntryLimit != 100000 {
 		t.Fatalf("defaultManifestEntryLimit = %d, want 100000 (the shipped gate identity ceiling)", defaultManifestEntryLimit)
 	}

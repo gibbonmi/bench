@@ -17,6 +17,7 @@ var unnarrowedContractArgv = []string{"test", "-count=1", "./internal/contract/.
 // outer gate runs. The two modes differ only in which phases survive the filter, never in
 // what the contract phase grades.
 func TestContractPhaseGradesTheWholeSubtree(t *testing.T) {
+	t.Parallel()
 	kit := contractKit(t, "surface/artifact")
 	root := t.TempDir()
 

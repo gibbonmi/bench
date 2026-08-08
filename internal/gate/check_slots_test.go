@@ -22,6 +22,7 @@ import (
 )
 
 func TestForcedAggregateRedRetiresEveryExecutedCheckSlot(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	writeGateTestFile(t, fixture.root, ".bench/phase-conformance.sh",
 		"echo conformance >> .git/phase-runs\nif test -f .git/conformance-red; then exit 1; fi\n", 0o644)
@@ -52,6 +53,7 @@ func TestForcedAggregateRedRetiresEveryExecutedCheckSlot(t *testing.T) {
 }
 
 func TestOrdinaryScopeInheritsValidCheckSlotsButFreshExecutesAll(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	sealKitShapedBinary(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
@@ -75,6 +77,7 @@ func TestOrdinaryScopeInheritsValidCheckSlotsButFreshExecutesAll(t *testing.T) {
 }
 
 func TestDeclaredDocumentInputsInvalidateOwningChecks(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	fileSet, directorySet := map[string]bool{}, map[string]bool{}
 	owners := map[string][]string{}
@@ -577,6 +580,7 @@ func declaredPublicDocumentClasses(t *testing.T, root string) (files, directorie
 }
 
 func TestConformanceImplementationSelectsOwningOrAllCanaryFamilies(t *testing.T) {
+	t.Parallel()
 	for _, test := range []struct {
 		name       string
 		mutate     func(string)
@@ -624,6 +628,7 @@ func TestConformanceImplementationSelectsOwningOrAllCanaryFamilies(t *testing.T)
 }
 
 func TestUnresolvedCurrentCanaryIdentityWithLegacySlotsRunsFullCanary(t *testing.T) {
+	t.Parallel()
 	for _, resolutionErr := range []error{nil, errors.New("canary identity unresolved")} {
 		root, identities := seededCheckSlotStore(t)
 		partition := partitionConformanceChecks(root, registry.Dev, identities, nil, time.Unix(20, 0))
@@ -665,6 +670,7 @@ func phaseEnvValue(env []string, name string) string {
 }
 
 func TestMixedCheckPartitionProjectsExactOutputAndVerdict(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	writeGateTestFile(t, fixture.root, ".bench/phase-conformance.sh",
 		"echo conformance >> .git/phase-runs\nprintf '%s\\n' \"$BENCH_CONFORMANCE_CHECKS\" > .git/selected-checks\nprintf '%s\\n' \"$BENCH_CONFORMANCE_INHERITED\" > .git/inherited-checks\n", 0o644)
@@ -699,7 +705,7 @@ func TestMixedCheckPartitionProjectsExactOutputAndVerdict(t *testing.T) {
 	if inspection.CheckPartition == nil || inspection.ReusableGreen || inspection.Reason != "partial verdict" {
 		t.Fatalf("mixed inspection = %+v", inspection)
 	}
-	if !ComposedGreen(fixture.root) {
+	if !composedGreenAtKit(fixture.root, fixture.root) {
 		t.Fatal("mixed check verdict did not compose to the one landing green")
 	}
 	if !slices.Equal(inspection.CheckPartition.Executed, record.CheckExecuted) {
@@ -729,6 +735,7 @@ func TestMixedCheckPartitionProjectsExactOutputAndVerdict(t *testing.T) {
 }
 
 func TestCheckOnlyPartialGateProjectsInspectionAndOutput(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	evidenceDir, err := componentSlotDir(fixture.root)
@@ -791,6 +798,7 @@ func requiredMetaChecksForGateTest() []string {
 }
 
 func TestMixedGreenAuthorsOnlyExecutedCheckSlots(t *testing.T) {
+	t.Parallel()
 	root := checkSlotTestRepo(t)
 	identities := checkSlotTestIdentities()
 	first := conformanceCheckPartition{
@@ -827,6 +835,7 @@ func TestMixedGreenAuthorsOnlyExecutedCheckSlots(t *testing.T) {
 }
 
 func TestRedRetiresOnlyExecutedCheckSlots(t *testing.T) {
+	t.Parallel()
 	root := checkSlotTestRepo(t)
 	identities := checkSlotTestIdentities()
 	seed := conformanceCheckPartition{
@@ -859,6 +868,7 @@ func TestRedRetiresOnlyExecutedCheckSlots(t *testing.T) {
 }
 
 func TestRedRetirementSurvivesInheritedSlotDamageAfterSelection(t *testing.T) {
+	t.Parallel()
 	root := checkSlotTestRepo(t)
 	identities := checkSlotTestIdentities()
 	seed := conformanceCheckPartition{
@@ -888,6 +898,7 @@ func TestRedRetirementSurvivesInheritedSlotDamageAfterSelection(t *testing.T) {
 }
 
 func TestHostileCheckEvidenceWidensExecution(t *testing.T) {
+	t.Parallel()
 	const target = "line-routing"
 	for _, test := range []struct {
 		name   string
@@ -964,6 +975,7 @@ func TestHostileCheckEvidenceWidensExecution(t *testing.T) {
 }
 
 func TestForgedMetaSlotCannotReceiveReusableCredit(t *testing.T) {
+	t.Parallel()
 	root, identities := seededCheckSlotStore(t)
 	slots, valid := loadConformanceCheckSlots(root)
 	if !valid {

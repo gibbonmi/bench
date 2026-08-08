@@ -47,7 +47,7 @@ func observeGate(t *testing.T, root string) gateObservation {
 	t.Helper()
 	before := len(phaseRunNames(t, root))
 	var stdout bytes.Buffer
-	result := executeWithEngine(context.Background(), root, &stdout, io.Discard, productionGateEngine{})
+	result := executeWithEngineAtKit(context.Background(), root, root, &stdout, io.Discard, productionGateEngine{})
 	executed := append([]string(nil), phaseRunNames(t, root)[before:]...)
 	sort.Strings(executed)
 	return gateObservation{executed: executed, stdout: stdout.String(), exit: result.ActionExit}
@@ -130,6 +130,7 @@ func partialRecord(t *testing.T, root string) verdictRecord {
 // whole changeset — the shape the reduced run already has — cannot satisfy this row by
 // naming one shared ancestor for all seven.
 func TestCaptureOnlyChangesetExecutesConformanceOnly(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	for _, path := range captureSurfacePaths(ReducedScope()) {
 		writeGateTestFile(t, fixture.root, path, "capture-only edit\n", 0o644)
@@ -173,6 +174,7 @@ func TestCaptureOnlyChangesetExecutesConformanceOnly(t *testing.T) {
 // skip. A single summary line tells an operator that something was skipped without letting
 // them check what stood in for it.
 func TestEverySkipIsAnnouncedWithItsEvidence(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	writeGateTestFile(t, fixture.root, "ROADMAP.md", "capture-only edit\n", 0o644)
 	observation := observeGreenGate(t, fixture.root)
@@ -210,6 +212,7 @@ func TestEverySkipIsAnnouncedWithItsEvidence(t *testing.T) {
 // implementation retiring every slot on any red re-charges the next run for a red none of
 // those components own.
 func TestRedComponentInvalidatesOnlyItsOwnSlot(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	// Moving the canary fixture surface moves canary's identity and no other's, so canary
 	// is the one component with no slot to skip on when the run starts.
@@ -247,6 +250,7 @@ func TestRedComponentInvalidatesOnlyItsOwnSlot(t *testing.T) {
 // slot it had — so leaving those slots up lets the very next run skip a component `--fresh`
 // just proved red.
 func TestForcedRedRetiresTheSlotsItExecuted(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	forcePhaseRed(t, fixture.root, canary.PhaseVet)
 	before := slotBytes(t, fixture.root)
@@ -256,8 +260,8 @@ func TestForcedRedRetiresTheSlotsItExecuted(t *testing.T) {
 		}
 	}
 
-	if got := RunCommand([]string{"--fresh", fixture.root}, io.Discard, io.Discard); got == 0 {
-		t.Fatalf("forced run exit = %d, want red", got)
+	if got := executeWithEngineAfterAcquireAtKit(context.Background(), fixture.root, fixture.root, io.Discard, io.Discard, productionGateEngine{}, notifyGateSignals, forceRun); got.ActionExit == 0 {
+		t.Fatalf("forced run exit = %d, want red", got.ActionExit)
 	}
 	for component, data := range slotBytes(t, fixture.root) {
 		if data != nil {
@@ -278,6 +282,7 @@ func TestForcedRedRetiresTheSlotsItExecuted(t *testing.T) {
 // the decision's worked example: one changeset the components disagree about, which no
 // whole-changeset predicate can express.
 func TestCanaryFixtureEditRunsCanary(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	writeGateTestFile(t, fixture.root, "tests/canary/fixture.txt", "moved canary fixture\n", 0o644)
 	observation := observeGreenGate(t, fixture.root)
@@ -296,6 +301,7 @@ func TestCanaryFixtureEditRunsCanary(t *testing.T) {
 // are hand-declared, and the cheapest declaration — its two directories — is blind to the
 // wiring that decides what the phase actually runs.
 func TestWrapperEditRunsCanary(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	writeGateTestFile(t, fixture.root, "bin/bench.sh", "#!/usr/bin/env bash\n# moved wrapper\nexit 0\n", 0o755)
 	observation := observeGreenGate(t, fixture.root)
@@ -309,6 +315,7 @@ func TestWrapperEditRunsCanary(t *testing.T) {
 // is deliberately absent from canary's declaration, so this pins the ruled narrowing against
 // a later edit widening canary's inputs back to the artifact it execs.
 func TestOrdinaryGoEditSkipsCanary(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	writeGateTestFile(t, fixture.root, "cmd/bench/main.go", "package main\n\n// moved source\nfunc main() {}\n", 0o644)
 	observation := observeGreenGate(t, fixture.root)
@@ -324,6 +331,7 @@ func TestOrdinaryGoEditSkipsCanary(t *testing.T) {
 }
 
 func TestAgentMarkdownEditRunsConsumersAndSkipsToolchain(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	writeGateTestFile(t, fixture.root, ".agents/skills/new-skill/SKILL.md", "# New skill\n", 0o644)
 	observation := observeGreenGate(t, fixture.root)
@@ -346,6 +354,7 @@ func TestAgentMarkdownEditRunsConsumersAndSkipsToolchain(t *testing.T) {
 // anywhere here silently credits ungraded work, and the classes are exercised one per subtest
 // so a refusal that stops refusing is named rather than absorbed by a sibling.
 func TestDecisionSiteFailsClosed(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name    string
 		affects string
@@ -397,6 +406,7 @@ func TestDecisionSiteFailsClosed(t *testing.T) {
 // [PS29] `bench gate --fresh` grades everything and re-authors what it graded, and an
 // unedited tree is still answered by the whole-tree reuse before any component is asked.
 func TestFreshExecutesEveryComponent(t *testing.T) {
+	t.Parallel()
 	t.Run("the whole-tree reuse answers ahead of the decision", func(t *testing.T) {
 		fixture := seededScopingFixture(t)
 		observation := observeGreenGate(t, fixture.root)
@@ -412,8 +422,8 @@ func TestFreshExecutesEveryComponent(t *testing.T) {
 		fixture := seededScopingFixture(t)
 		writeGateTestFile(t, fixture.root, "ROADMAP.md", "capture-only edit\n", 0o644)
 		before := len(phaseRunNames(t, fixture.root))
-		if got := RunCommand([]string{"--fresh", fixture.root}, io.Discard, io.Discard); got != 0 {
-			t.Fatalf("forced run exit = %d, want 0", got)
+		if got := executeWithEngineAfterAcquireAtKit(context.Background(), fixture.root, fixture.root, io.Discard, io.Discard, productionGateEngine{}, notifyGateSignals, forceRun); got.ActionExit != 0 {
+			t.Fatalf("forced run exit = %d, want 0", got.ActionExit)
 		}
 		executed := append([]string(nil), phaseRunNames(t, fixture.root)[before:]...)
 		want := fixture.phaseNames()
@@ -453,6 +463,7 @@ func TestFreshExecutesEveryComponent(t *testing.T) {
 // credit skipped components for the length of the freshness window, and a stripped record
 // would hand a later reduced run an ancestor that graded none of what it inherits.
 func TestPartialGreenRetainsNoWholeTreeEvidence(t *testing.T) {
+	t.Parallel()
 	fixture := seededScopingFixture(t)
 	gitdir := commonGitDirOf(t, fixture.root)
 	retained := evidenceFiles(t, gitdir)
@@ -475,7 +486,7 @@ func TestPartialGreenRetainsNoWholeTreeEvidence(t *testing.T) {
 	// rather than be handed the partial green.
 	var stdout bytes.Buffer
 	before := len(phaseRunNames(t, fixture.root))
-	if got := ExecuteReusingFreshGreen(context.Background(), fixture.root, &stdout, io.Discard); got.ActionExit != 0 {
+	if got := executeReusingFreshGreenAtKit(context.Background(), fixture.root, fixture.root, &stdout, io.Discard); got.ActionExit != 0 {
 		t.Fatalf("commit-path execution = %+v, want green", got)
 	}
 	if len(phaseRunNames(t, fixture.root)) == before {
@@ -485,7 +496,8 @@ func TestPartialGreenRetainsNoWholeTreeEvidence(t *testing.T) {
 
 func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 	t.Run("no verdict", func(t *testing.T) {
-		if ComposedGreen(routedKitFixture(t)) {
+		root := routedKitFixture(t)
+		if composedGreenAtKit(root, root) {
 			t.Fatal("absent verdict composed to whole-tree green")
 		}
 	})
@@ -493,7 +505,7 @@ func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 	t.Run("invalid verdict", func(t *testing.T) {
 		root := routedKitFixture(t)
 		writeCache(t, cachePath(t, root), "{", 0o600)
-		if ComposedGreen(root) {
+		if composedGreenAtKit(root, root) {
 			t.Fatal("invalid verdict composed to whole-tree green")
 		}
 	})
@@ -501,6 +513,7 @@ func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 	t.Run("full", func(t *testing.T) {
 		root := routedKitFixture(t)
 		mustExecuteGreen(t, root, productionGateEngine{})
+		t.Setenv("BENCH_KIT", root)
 		if !ComposedGreen(root) {
 			t.Fatal("full green did not compose to whole-tree green")
 		}
@@ -517,7 +530,7 @@ func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 		if got := fullRunCount(t, root); got != 2 {
 			t.Fatalf("gate runs = %d, want 2 full runs — the capture-only edit must not narrow", got)
 		}
-		if !ComposedGreen(root) {
+		if !composedGreenAtKit(root, root) {
 			t.Fatal("full green after a capture-only edit did not compose")
 		}
 	})
@@ -526,7 +539,7 @@ func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 		fixture := seededScopingFixture(t)
 		writeGateTestFile(t, fixture.root, "ROADMAP.md", "capture-only edit\n", 0o644)
 		observeGreenGate(t, fixture.root)
-		if !ComposedGreen(fixture.root) {
+		if !composedGreenAtKit(fixture.root, fixture.root) {
 			t.Fatal("partial green with every retained component did not compose")
 		}
 	})
@@ -549,7 +562,7 @@ func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 		if err := os.Remove(scopedSlotPath(t, fixture.root, skipped)); err != nil {
 			t.Fatal(err)
 		}
-		if ComposedGreen(fixture.root) {
+		if composedGreenAtKit(fixture.root, fixture.root) {
 			t.Fatal("partial green composed after a skipped component lost its evidence")
 		}
 	})
@@ -558,10 +571,10 @@ func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 		root := routedKitFixture(t)
 		mustExecuteGreen(t, root, productionGateEngine{})
 		writeGateTestFile(t, root, ".bench/gate.sh", "#!/usr/bin/env bash\nexit 1\n", 0o755)
-		if got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, productionGateEngine{}); got.ActionExit == 0 {
+		if got := executeWithEngineAtKit(context.Background(), root, root, io.Discard, io.Discard, productionGateEngine{}); got.ActionExit == 0 {
 			t.Fatal("red fixture gate unexpectedly passed")
 		}
-		if ComposedGreen(root) {
+		if composedGreenAtKit(root, root) {
 			t.Fatal("red verdict composed to whole-tree green")
 		}
 	})

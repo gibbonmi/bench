@@ -13,6 +13,7 @@ import (
 )
 
 func TestCurrentConformanceCanaryIdentitiesResolve(t *testing.T) {
+	t.Parallel()
 	root, err := benchgit.Root()
 	if err != nil {
 		t.Fatal(err)
@@ -32,6 +33,7 @@ func TestCurrentConformanceCanaryIdentitiesResolve(t *testing.T) {
 }
 
 func TestConformanceCheckIdentityBindsEveryAuthorityField(t *testing.T) {
+	t.Parallel()
 	base := checkIdentityMaterial{
 		Check: registry.Check{
 			Name:           "docs-currency-workflow",
@@ -78,6 +80,7 @@ func TestConformanceCheckIdentityBindsEveryAuthorityField(t *testing.T) {
 }
 
 func TestDeclaredCheckSymlinkBindsCanonicalTargetAndRefusesHostileTargets(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	writeGateTestFile(t, root, "scripts/gate-source.sh", "first\n", 0o644)
@@ -125,6 +128,7 @@ func TestDeclaredCheckSymlinkBindsCanonicalTargetAndRefusesHostileTargets(t *tes
 }
 
 func TestDeclaredCheckFileDistinguishesAbsentFromPresentEmpty(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	check := registry.Check{Name: "gate-entry-contract", Inputs: registry.InputGateEntry}
@@ -143,6 +147,7 @@ func TestDeclaredCheckFileDistinguishesAbsentFromPresentEmpty(t *testing.T) {
 }
 
 func TestSharedConformanceImplementationMovesEveryOrdinaryIdentity(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	writeGateTestFile(t, root, "internal/conformance/shared.go", "package conformance\n\nconst shared = 1\n", 0o644)
@@ -182,6 +187,7 @@ func TestSharedConformanceImplementationMovesEveryOrdinaryIdentity(t *testing.T)
 }
 
 func TestExternalConformanceImplementationBindsTransitiveGoDependencies(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	writeGateTestFile(t, root, "go.mod", "module identityfixture\n\ngo 1.21\n", 0o644)

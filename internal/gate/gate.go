@@ -227,7 +227,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	return executeWithEngineAfterAcquire(context.Background(), root, stdout, stderr, productionGateEngine{}, notifyGateSignals, mode).ActionExit
+	return executeWithEngineAfterAcquireAtKit(context.Background(), root, kitRoot(root), stdout, stderr, productionGateEngine{}, notifyGateSignals, mode).ActionExit
 }
 
 type Result struct {
@@ -237,7 +237,7 @@ type Result struct {
 }
 
 func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	return executeWithEngine(ctx, root, stdout, stderr, productionGateEngine{})
+	return executeWithEngineAtKit(ctx, root, kitRoot(root), stdout, stderr, productionGateEngine{})
 }
 
 // ExecuteReusingFreshGreen answers for root's tree like Execute, but a verdict already
@@ -249,12 +249,16 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 // never from an independent capture. Everything else falls through to Execute and pays a
 // real run under the lock.
 func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	if plan, err := newWorkingTreeEvaluation(root).acceptPre(); err == nil {
+	return executeReusingFreshGreenAtKit(ctx, root, kitRoot(root), stdout, stderr)
+}
+
+func executeReusingFreshGreenAtKit(ctx context.Context, root, kit string, stdout, stderr io.Writer) Result {
+	if plan, err := newWorkingTreeEvaluationAtKit(root, kit).acceptPre(); err == nil {
 		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
-	return Execute(ctx, root, stdout, stderr)
+	return executeWithEngineAtKit(ctx, root, kit, stdout, stderr, productionGateEngine{})
 }
 
 // reusedGreenResult is the one place a reused verdict is announced and shaped into a result.
@@ -315,17 +319,25 @@ func notifyGateSignals(ctx context.Context) (context.Context, func()) {
 }
 
 func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine) Result {
-	evaluation := executionEvaluation(newEngineEvaluation(root, engine))
+	return executeWithEngineAtKit(ctx, root, root, stdout, stderr, engine)
+}
+
+func executeWithEngineAtKit(ctx context.Context, root, kit string, stdout, stderr io.Writer, engine gateEngine) Result {
+	evaluation := executionEvaluation(newEngineEvaluationAtKit(root, kit, engine))
 	if _, production := engine.(productionGateEngine); production {
-		evaluation = newWorkingTreeEvaluation(root)
+		evaluation = newWorkingTreeEvaluationAtKit(root, kit)
 	}
 	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, nil, reuseFreshGreen, evaluation)
 }
 
 func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
-	evaluation := executionEvaluation(newEngineEvaluation(root, engine))
+	return executeWithEngineAfterAcquireAtKit(ctx, root, root, stdout, stderr, engine, arm, mode)
+}
+
+func executeWithEngineAfterAcquireAtKit(ctx context.Context, root, kit string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
+	evaluation := executionEvaluation(newEngineEvaluationAtKit(root, kit, engine))
 	if _, production := engine.(productionGateEngine); production {
-		evaluation = newWorkingTreeEvaluation(root)
+		evaluation = newWorkingTreeEvaluationAtKit(root, kit)
 	}
 	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, arm, mode, evaluation)
 }

@@ -2,17 +2,17 @@
 
 Blocked by: none
 Ownership fence: `internal/gate`, `cmd/bench/main_test.go`
-Integration surfaces: unchanged `RunCommand` wrapper path→`cmd/bench/main_test.go` + IK2; unchanged `ComposedGreen` caller→`internal/status/status.go` + IK1's composed-green scoping assertion; unchanged `Execute`, `ExecuteReusingFreshGreen`, `ExecuteTree`, and `PhasesCommand` entries→existing `internal/gate` entry tests + IK2; kit-taking execution boundary→retire-fixture-kit-pins.md; kit-root carrier→`internal/gate`
+Integration surfaces: unchanged `RunCommand` wrapper path→`cmd/bench/main_test.go` + IK2; unchanged `ComposedGreen` caller→`internal/status/status.go` + IK1's composed-green scoping assertion; unchanged `Execute`, `ExecuteReusingFreshGreen`, and `PhasesCommand` entries→existing `internal/gate` entry tests + IK2; unchanged `ExecuteTree` entry→existing prospective tests; working-tree kit-taking execution boundary→retire-fixture-kit-pins.md; kit-root carrier→`internal/gate`
 Contracts: non-empty `BENCH_KIT` selection crosses `cmd/bench/main_test.go`→`internal/gate`, with the environment value as the string domain and the non-empty value selecting the kit, asserted by IK2 against the real wrapper; empty fallback remains inside `internal/gate`; no other value crosses
 Closure: IK1/phase-table, IK1/component-identity, IK1/component-scoping, IK2/env-set, IK2/empty-fallback, IK2/wrapper-kit-ne-root, IK3/subject-strip-kit, IK4/subject-strip-wrapper
 
 ## What to build
 
-Ambient `BENCH_KIT` is resolved exactly once, at the exported gate entries,
-under today's rule (set and non-empty wins, else the graded root). The entries
-are the gate run command, the execute and reuse-execute paths, the
-tree-execute path, the phases plumbing command, and the composed-green query
-`internal/status` consults — all with unchanged signatures. Below the entries
+Ambient `BENCH_KIT` is resolved exactly once, at the exported gate entries that
+currently consume kit identity, under today's rule (set and non-empty wins,
+else the graded root). The entries are the gate run command, the execute and
+reuse-execute paths, the phases plumbing command, and the composed-green query
+`internal/status` consults — all with unchanged signatures. Below those entries
 the kit root travels as an explicit value — parameter or evaluation-scoped
 field, implementer's choice — and all three current consumers move onto it:
 phase-table resolution, component-identity resolution
@@ -20,14 +20,17 @@ phase-table resolution, component-identity resolution
 (`scopeComponentsForIdentityGenerations`, reached from evaluation and from the
 composed-green query alike). No production code in `internal/gate` reads the
 variable after this ticket; `kitRoot`'s single-derivation comment discipline
-transfers to the entry-time resolution.
+transfers to the entry-time resolution. `ExecuteTree` is the bounded exception:
+prospective evaluation returns empty component scoping, so that entry has no
+present kit consumer and carries no private kit parameter.
 
-This ticket also exposes the package-internal execution boundary that takes
-the resolved kit explicitly (the seam beneath the exported entries that the
-execute paths already share). It is what the dependent ticket migrates
-entry-driving fixture tests onto; here it only needs to exist and carry the
-injected kit, proven by the guard test below. Existing tests keep their pins
-and their passing state — no test-side migration lands in this ticket.
+This ticket also exposes the package-internal working-tree execution boundary
+that takes the resolved kit explicitly (the seam beneath the execute entries).
+It is what the dependent ticket migrates entry-driving fixture tests onto; here
+it only needs to exist and carry the injected kit, proven by the guard test
+below. Prospective fixture tests continue through `ExecuteTree`, where no kit
+value can be consumed. Existing tests keep their pins and their passing state —
+no test-side migration lands in this ticket.
 
 A new serial ambient-guard test (it pins env deliberately, so it never adopts
 `t.Parallel`) exports a foreign `BENCH_KIT`, constructs a fixture with the kit

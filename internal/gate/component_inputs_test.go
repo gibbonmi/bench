@@ -55,6 +55,7 @@ func componentEntry(t *testing.T, sets map[string]ComponentInputs, name string) 
 // ./cmd/bench's closure. Those files are what the test and race components grade, so a
 // declaration blind to them buys a skip while the tree's suite no longer builds.
 func TestToolchainInputsCoverTestFilesOutsideTheBinaryClosure(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	sets := mustResolveComponentInputs(t, fixture.root)
 
@@ -70,6 +71,7 @@ func TestToolchainInputsCoverTestFilesOutsideTheBinaryClosure(t *testing.T) {
 // no file under testdata, so a derivation that trusts the listing alone reports a package's
 // fixtures unmoved when a test that reads them starts failing.
 func TestToolchainInputsCoverListedTestdata(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	const fixtureCase = "internal/canary/testdata/case.txt"
 	writeGateTestFile(t, fixture.root, fixtureCase, "graded fixture\n", 0o644)
@@ -89,6 +91,7 @@ func TestToolchainInputsCoverListedTestdata(t *testing.T) {
 // list can match one tree, so agreeing on both is what separates the derivation from a
 // literal that happens to be right today.
 func TestBuildInputsAreNotRestated(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	assertBuildInputsMatchTheDigest(t, fixture.root)
 
@@ -112,6 +115,7 @@ func assertBuildInputsMatchTheDigest(t *testing.T, root string) {
 // of its inputs and moves when the binary's sources do. Declaring only the file set would
 // let a contract skip inherit evidence taken against a different binary.
 func TestContractInputsCarryTheSealSourceDigest(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	before := componentEntry(t, mustResolveComponentInputs(t, fixture.root), canary.PhaseContract).Digests()
 	if len(before) == 0 {
@@ -130,6 +134,7 @@ func TestContractInputsCarryTheSealSourceDigest(t *testing.T) {
 // [CI1] The lifecycle contract reads the platform guide, so its identity must move when
 // the guide changes. A copied .agents-only declaration leaves this edit wrongly skippable.
 func TestContractIdentityTracksManagedBenchGuide(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	writeContractConsumerInventory(t, fixture.root)
 	before := mustResolveComponentIdentities(t, fixture.root)
@@ -146,6 +151,7 @@ func TestContractIdentityTracksManagedBenchGuide(t *testing.T) {
 // comparison catches a local .agents-only walk even when that walk happens to include
 // some of the consumer inventory today.
 func TestContractInputsMatchConsumerDocumentInventory(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	writeContractConsumerInventory(t, fixture.root)
 
@@ -165,6 +171,7 @@ func TestContractInputsMatchConsumerDocumentInventory(t *testing.T) {
 // its contract slot. The other components may retain their evidence; each row observes the
 // affected component's transition away from valid inventory evidence.
 func TestContractRunsWhenConsumerInventoryIsMalformed(t *testing.T) {
+	t.Parallel()
 	for _, mutation := range []struct {
 		name  string
 		apply func(t *testing.T, root string)
@@ -238,6 +245,7 @@ func writeContractConsumerInventory(t *testing.T, root string) {
 }
 
 func TestContractInputsCoverDeclaredAgentMarkdown(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	writeContractConsumerInventory(t, fixture.root)
 	const markdown = ".agents/skills/new-skill/SKILL.md"
@@ -258,6 +266,7 @@ func TestContractInputsCoverDeclaredAgentMarkdown(t *testing.T) {
 // derivation-source conformance check read that name to tell a computed set from a
 // hand-written one.
 func TestComponentInputsReportANamedDerivationSource(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	named := []Source{
 		SourceBuildClosure, SourceModuleTestClosure, SourceModuleTestClosureWithSealAndConsumerDocuments,
@@ -278,6 +287,7 @@ func TestComponentInputsReportANamedDerivationSource(t *testing.T) {
 // would hand back a set smaller than what the component reads, and every path missing from
 // it becomes a change the component skips.
 func TestComponentInputsErrorOnDerivationFailure(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	if err := os.WriteFile(filepath.Join(fixture.root, "go.mod"), []byte("this is not a go.mod\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -311,6 +321,7 @@ func TestComponentInputsErrorOnDerivationFailure(t *testing.T) {
 // shellcheckArgv builds its invocation on top of: a script the enumeration gains is a
 // script the declaration gains, with no edit to the derivation.
 func TestShellcheckInputsFollowItsArgv(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	const added = ".bench/hooks/new.sh"
 	writeGateTestFile(t, fixture.root, added, "#!/usr/bin/env bash\nexit 0\n", 0o755)
@@ -326,6 +337,7 @@ func TestShellcheckInputsFollowItsArgv(t *testing.T) {
 // prefix must not drop or shift a linted path out of the declaration, which a
 // fixed-offset slice of the argv would do the moment the prefix's length changed.
 func TestShellcheckInputsMatchTheFileEnumerationExactly(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	want := shellcheckFiles(fixture.root)
 	slices.Sort(want)
@@ -339,6 +351,7 @@ func TestShellcheckInputsMatchTheFileEnumerationExactly(t *testing.T) {
 // [PS13] canary's declared set carries no binary digest: republishing a different binary
 // over unchanged sources leaves the declaration unmoved.
 func TestCanaryInputsExcludeTheBinary(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	before := componentEntry(t, mustResolveComponentInputs(t, fixture.root), "canary")
 	if len(before.Digests()) != 0 {
@@ -377,6 +390,7 @@ func publishDifferentKitShapedBinary(t *testing.T, root string) {
 // derivation. A component that has no derivable source but reports one anyway would claim
 // a provenance it never computed.
 func TestOnlyCanaryIsHandDeclared(t *testing.T) {
+	t.Parallel()
 	var handDeclared []string
 	for _, declaration := range componentInputDeclarations() {
 		if declaration.source == SourceHandDeclared {
@@ -393,6 +407,7 @@ func TestOnlyCanaryIsHandDeclared(t *testing.T) {
 // leaving the derived closure's file set byte-identical, so a declaration blind to them
 // would call gofmt, vet, test, race, and contract unmoved by a change that can red all five.
 func TestToolchainInputsCoverTheModuleManifest(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 
 	sets := mustResolveComponentInputs(t, fixture.root)
@@ -419,6 +434,7 @@ func TestToolchainInputsCoverTheModuleManifest(t *testing.T) {
 // unmoved: the identity is computed from the declared paths' contents, so a path missing
 // from that set is evidence the dependency bump never reaches.
 func TestModuleManifestEditMovesToolchainInputs(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	before := mustResolveComponentIdentities(t, fixture.root)
 
@@ -437,6 +453,7 @@ func TestModuleManifestEditMovesToolchainInputs(t *testing.T) {
 // module-test closure and the manifest addition — so the derivation-source conformance
 // check can tell this two-part derivation from a hand-copied path list.
 func TestToolchainSourceNamesTheManifestAddition(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	sets := mustResolveComponentInputs(t, fixture.root)
 	for _, name := range moduleClosureComponents() {
@@ -451,6 +468,7 @@ func TestToolchainSourceNamesTheManifestAddition(t *testing.T) {
 // the addition is bounded to the manifest the module actually has, not a path added
 // unconditionally.
 func TestModuleWithoutGoSumResolves(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	if _, err := os.Lstat(filepath.Join(fixture.root, "go.sum")); err == nil {
 		t.Fatalf("fixture unexpectedly carries go.sum; repoint the fixture")

@@ -144,11 +144,10 @@ func componentSkipsOnAncestorEvidence(component string) bool {
 // repository's oracle for one it never chose. And every declaration is derived from a Go
 // module, so a root without one has nothing here to be scoped by.
 func scopeComponentsForGeneration(root string, res Resolution, mode runMode, now time.Time, generation *treeGeneration) componentScoping {
-	return scopeComponentsForIdentityGenerations(root, res, mode, now, generation, generation, generation)
+	return scopeComponentsForIdentityGenerationsAtKit(root, root, res, mode, now, generation, generation, generation)
 }
 
-func scopeComponentsForIdentityGenerations(root string, res Resolution, mode runMode, now time.Time, componentGeneration, checkGeneration, canaryGeneration *treeGeneration) componentScoping {
-	kit := kitRoot(root)
+func scopeComponentsForIdentityGenerationsAtKit(root, kit string, res Resolution, mode runMode, now time.Time, componentGeneration, checkGeneration, canaryGeneration *treeGeneration) componentScoping {
 	if !sameDirectory(root, kit) || !phaseTableGate(root, res) || !isRegularFile(filepath.Join(root, "go.mod")) {
 		return componentScoping{}
 	}
@@ -172,7 +171,7 @@ func scopeComponentsForIdentityGenerations(root string, res Resolution, mode run
 	// would not run, a seal that could not be read, a declared input the snapshot has no
 	// entry for — takes every component with it. A partial set of identities names fewer
 	// inputs than the components read, which is exactly the shape that buys a wrong skip.
-	identities, err := resolveComponentIdentities(root, componentGeneration)
+	identities, err := resolveComponentIdentitiesAtKit(root, kit, componentGeneration)
 	if err != nil {
 		eligible.checks = executeAllConformanceChecks(registry.Dev, checkIdentities)
 		if checkIdentityErr != nil {

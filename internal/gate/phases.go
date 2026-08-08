@@ -202,10 +202,8 @@ func goTestArgv(kit string, args ...string) []string {
 	return append(append(argv, "test", "-count=1"), args...)
 }
 
-// kitRoot names the checkout that owns the Go tests and wrapper scripts a phase table
-// runs: `$BENCH_KIT` when the wrapper routed here, else the graded root itself. Every
-// resolver of a phase table shares this rule — a second derivation could disagree with
-// it, and then a reduction or a re-resolution would swap oracles mid-flight.
+// kitRoot resolves the wrapper-selected kit before an exported entry starts its work.
+// The resolved value is passed through the run so a later phase cannot change oracles.
 func kitRoot(root string) string {
 	if kit := os.Getenv("BENCH_KIT"); kit != "" {
 		return kit
@@ -229,7 +227,10 @@ func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	kit := kitRoot(root)
+	return phasesCommandAtKit(root, kitRoot(root), stdout, stderr)
+}
+
+func phasesCommandAtKit(root, kit string, stdout, stderr io.Writer) int {
 	mode := outerMode
 	if os.Getenv("BENCH_CANARY_INNER") == "1" {
 		mode = innerMode

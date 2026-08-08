@@ -101,6 +101,7 @@ var ft78Story3ExpectedIDs = []string{
 }
 
 func TestFT78Story3ProofLedgerCompleteness(t *testing.T) {
+	t.Parallel()
 	contract.NoteContractFailure(t, r21CompletenessFailure)
 	seen := map[string]int{}
 	for _, proof := range ft78Story3Proofs {

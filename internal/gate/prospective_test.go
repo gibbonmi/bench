@@ -18,6 +18,7 @@ import (
 )
 
 func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
+	t.Parallel()
 	kit := kitRootForTest(t)
 	root := gateTestRepo(t, string(mustReadGateTestFile(t, filepath.Join(kit, ".bench", "gate.sh"))), `{"schema":1,"closure":"local","environment":["HOME"],"paths":[],"tools":[]}`)
 	for _, rel := range []string{
@@ -73,6 +74,7 @@ func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
 }
 
 func TestExecuteTreeIgnoresStoredCheckSlotsAndRunsFullConformanceInventory(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	testBinary, err := os.Executable()
 	if err != nil {
@@ -141,6 +143,7 @@ func TestProspectiveFullInventoryHelper(t *testing.T) {
 }
 
 func TestOrdinaryGreenRemainsProspectiveBootstrapEvidence(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	writeGateTestFile(t, root, prospectiveGatePath, "#!/usr/bin/env bash\nexit 97\n", 0o755)
 	gitRun(t, root, "add", prospectiveGatePath)
@@ -159,6 +162,7 @@ func TestOrdinaryGreenRemainsProspectiveBootstrapEvidence(t *testing.T) {
 }
 
 func TestExecuteTreeReusesExactGreenBeforeGateLock(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	tree := gitOutput(t, root, "write-tree")
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
@@ -185,6 +189,7 @@ func TestExecuteTreeReusesExactGreenBeforeGateLock(t *testing.T) {
 }
 
 func TestNonReusableEvidenceReachesGateLock(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name    string
 		arrange func(t *testing.T, root string)
@@ -283,6 +288,7 @@ func (e *evidenceAfterPreEngine) OpenLock(path string) (gateFile, error) {
 }
 
 func TestEvidenceAppearingAfterPrecheckReusesUnderLock(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	plan := mustSubject(t, root)
 	engine := &evidenceAfterPreEngine{root: root, plan: plan}
@@ -308,6 +314,7 @@ func TestEvidenceAppearingAfterPrecheckReusesUnderLock(t *testing.T) {
 }
 
 func TestExecuteTreeRefusesUnavailableSuppliedTreeWithoutAuthority(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
 		t.Fatalf("ordinary seed = %+v, want green", got)
@@ -327,6 +334,7 @@ func TestExecuteTreeRefusesUnavailableSuppliedTreeWithoutAuthority(t *testing.T)
 }
 
 func TestPolicyVersionMismatchInvalidatesGreen(t *testing.T) {
+	t.Parallel()
 	root := reusableEvidenceRepo(t, 0)
 	old, err := buildSubjectForPolicy(root, root, "oracle-v1/freshness-v1")
 	if err != nil {

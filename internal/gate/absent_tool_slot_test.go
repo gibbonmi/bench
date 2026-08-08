@@ -64,7 +64,7 @@ func newAbsentToolFixture(t *testing.T) kitShapedFixture {
 	if err := os.Remove(filepath.Join(fixture.root, ".bench", "phase-"+absentToolComponent+".sh")); err != nil {
 		t.Fatal(err)
 	}
-	phases, err := phaseTable(fixture.root, kitRoot(fixture.root))
+	phases, err := phaseTable(fixture.root, fixture.root)
 	if err != nil {
 		t.Fatalf("re-resolve the fixture phase table: %v", err)
 	}
@@ -89,6 +89,7 @@ func componentHasSlot(t *testing.T, root, component string) bool {
 // run, and stays green. The gate's optional-phase idiom is untouched — the absent tool is
 // still not a red — but it leaves no evidence behind, because nothing graded the component.
 func TestAbsentOptionalToolLeavesNoSlot(t *testing.T) {
+	t.Parallel()
 	fixture := newAbsentToolFixture(t)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 
@@ -109,6 +110,7 @@ func TestAbsentOptionalToolLeavesNoSlot(t *testing.T) {
 // than borrowing a required component's slot to stand in for the graded case, which is the
 // substitution that would leave "optional" and "absent" indistinguishable.
 func TestInstalledOptionalToolIsGradedLikeAnyOtherComponent(t *testing.T) {
+	t.Parallel()
 	fixture := newAbsentToolFixture(t)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	before := mustResolveComponentIdentities(t, fixture.root)[absentToolComponent]
@@ -146,6 +148,7 @@ func TestInstalledOptionalToolIsGradedLikeAnyOtherComponent(t *testing.T) {
 // the next run. This is the control: withholding every component's evidence would satisfy the
 // two rows above while silently taking per-component scoping off the gate entirely.
 func TestGradedComponentKeepsItsSlotAndSkips(t *testing.T) {
+	t.Parallel()
 	fixture := newAbsentToolFixture(t)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 
@@ -174,6 +177,7 @@ const buildArtifactSourceFile = "component_decision.go"
 // a second spelling of the same fact is the class this repository's code standard refuses
 // whether or not today's spellings happen to agree.
 func TestBuildArtifactPathIsTheOnlyArtifactDerivation(t *testing.T) {
+	t.Parallel()
 	sources, err := filepath.Glob("*.go")
 	if err != nil {
 		t.Fatal(err)

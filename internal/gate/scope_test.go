@@ -11,6 +11,7 @@ import (
 // A surface that exists in neither the declaration nor the repository today: membership
 // must follow location, so a file nobody has enumerated is covered the day it lands.
 func TestReducedScopeDirectoriesCoverTheirSurfaces(t *testing.T) {
+	t.Parallel()
 	scope := ReducedScope()
 	for _, path := range []string{
 		"capture/IDEAS.md",
@@ -31,6 +32,7 @@ func TestReducedScopeDirectoriesCoverTheirSurfaces(t *testing.T) {
 // match costs a real grading. The near-miss siblings share a declared file's prefix and
 // must still fall outside; the mixed set is the all-versus-any error.
 func TestConfinementRejectsUndeclaredPath(t *testing.T) {
+	t.Parallel()
 	scope := ReducedScope()
 	confined := map[string]bool{
 		"ROADMAP.md":                        true,
@@ -61,6 +63,7 @@ func TestConfinementRejectsUndeclaredPath(t *testing.T) {
 // boundary is where an over-broad match would hide: a sibling that merely starts with
 // the directory's name is a different surface entirely.
 func TestDeclaredDirectoryMembership(t *testing.T) {
+	t.Parallel()
 	scope := ReducedScope()
 	member := map[string]bool{
 		"capture/learnings.md":                        true,
@@ -89,6 +92,7 @@ func TestDeclaredDirectoryMembership(t *testing.T) {
 // The reduction is only worth having if it skips the phases that cost — an excludable
 // set holding one cheap phase satisfies every other rule while saving nothing.
 func TestExcludableSetCoversContractPhase(t *testing.T) {
+	t.Parallel()
 	scope := ReducedScope()
 	if !scope.Excludable(canary.PhaseContract) {
 		t.Errorf("Excludable(%q) = false, want true", canary.PhaseContract)
@@ -114,6 +118,7 @@ func TestExcludableSetCoversContractPhase(t *testing.T) {
 // table is what keeps a non-excludable phase from joining every reduced run while the
 // accessor — and the profile row bound to the same derivation — advertises the old pair.
 func TestIncludedPhasesMatchKitTableDerivation(t *testing.T) {
+	t.Parallel()
 	root, err := benchgit.Root()
 	if err != nil {
 		t.Fatalf("resolve kit root: %v", err)

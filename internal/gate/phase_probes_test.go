@@ -41,6 +41,7 @@ func phaseNamed(phases []Phase, name string) (Phase, bool) {
 }
 
 func TestBuiltInConformancePhaseCarriesTheFullDevInventory(t *testing.T) {
+	t.Parallel()
 	phase, found := phaseNamed(BenchkitPhases(t.TempDir(), t.TempDir()), conformancePhaseName)
 	if !found {
 		t.Fatal("built-in phase table has no conformance phase")
@@ -69,6 +70,7 @@ func ordinaryNamesExcept(tier registry.Tier, selected []string) []string {
 }
 
 func TestConformancePhaseDrivesOneAggregateSelectedTimingRun(t *testing.T) {
+	t.Parallel()
 	requireGoToolchain(t)
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
@@ -102,6 +104,7 @@ func TestConformancePhaseDrivesOneAggregateSelectedTimingRun(t *testing.T) {
 }
 
 func TestConformancePhaseRejectsGatePartitionOmissionAndOverlap(t *testing.T) {
+	t.Parallel()
 	requireGoToolchain(t)
 	kit := kitRootForTest(t)
 	selected := []string{"kit-compliance"}
@@ -138,6 +141,7 @@ func TestConformancePhaseRejectsGatePartitionOmissionAndOverlap(t *testing.T) {
 // test materialize for any Go root, the kit-only phases do not, and none of them takes
 // an edge on the build phase — the edge set is where this split's overlap comes from.
 func TestPhaseTableProbedToolchainPhases(t *testing.T) {
+	t.Parallel()
 	requireGoToolchain(t)
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "go.mod"), "module fixture\n")
@@ -178,6 +182,7 @@ func TestPhaseTableProbedToolchainPhases(t *testing.T) {
 // directory, because an unrelated package at either path would otherwise get a phase
 // that can only red.
 func TestPhaseTableKitOnlyPhasesProbe(t *testing.T) {
+	t.Parallel()
 	requireGoToolchain(t)
 	kit := "/tmp/kit"
 
@@ -258,6 +263,7 @@ func TestPhaseTableKitOnlyPhasesProbe(t *testing.T) {
 // one runs a `-run` filter that matches nothing, whose did-it-run guard then reds a repo
 // that declares no such test.
 func TestPhaseProbesReadSyntaxNotBytes(t *testing.T) {
+	t.Parallel()
 	requireGoToolchain(t)
 	mention := "package %s\n\nimport \"testing\"\n\n// func %s(t *testing.T) {}\n\nfunc TestOther(t *testing.T) {\n\t_ = \"func %s(\"\n}\n"
 
@@ -299,6 +305,7 @@ func TestPhaseTableNoToolchainNoPhases(t *testing.T) {
 // deadline is the hang tripwire — a probe that opens the path stalls here rather than
 // wedging the gate.
 func TestPhaseTableProbeRejectsNonRegularGoMod(t *testing.T) {
+	t.Parallel()
 	requireGoToolchain(t)
 	linkRoot := t.TempDir()
 	if err := os.Symlink(filepath.Join(linkRoot, "absent"), filepath.Join(linkRoot, "go.mod")); err != nil {
@@ -346,7 +353,7 @@ func TestPhasesCommandVetPhaseReds(t *testing.T) {
 	t.Setenv("BENCH_CANARY_INNER", "1")
 	t.Setenv("BENCH_CANARY_PHASE", "vet")
 	var stdout, stderr bytes.Buffer
-	code := PhasesCommand([]string{root}, &stdout, &stderr)
+	code := phasesCommandAtKit(root, root, &stdout, &stderr)
 	out := stdout.String() + stderr.String()
 	if code == 0 {
 		t.Fatalf("PhasesCommand = 0 on a tree go vet rejects; output:\n%s", out)

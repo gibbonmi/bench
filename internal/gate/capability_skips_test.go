@@ -52,6 +52,7 @@ func tallyOf(t *testing.T, path string) skipTally {
 // count, so a collector that folded every class into one total, or dropped the class
 // token, fails here.
 func TestSkipRowsReportEveryClass(t *testing.T) {
+	t.Parallel()
 	path := writeSkipLog(t,
 		capability.Skip{Kind: capability.KindCapability, Class: capability.Symlink, Reason: "no unprivileged symlinks"},
 		capability.Skip{Kind: capability.KindEnvironment, Reason: "subject root has no bin/bench.sh"},
@@ -73,6 +74,7 @@ func TestSkipRowsReportEveryClass(t *testing.T) {
 // fully capable host and a collector that silently broke would otherwise read alike.
 // Both an untouched log and a log no phase ever created report the same explicit zero.
 func TestSkipRowsStateZeroExplicitly(t *testing.T) {
+	t.Parallel()
 	want := []string{"capability-skips: 0 (capability=0 environment=0)"}
 	for name, path := range map[string]string{
 		"empty log":  writeSkipLog(t),
@@ -130,6 +132,7 @@ func writeNoiseLog(t *testing.T) string {
 // destination, or read back only one of them, loses counts on exactly the multi-phase
 // runs that matter and fails here.
 func TestCapabilitySkipsCountEveryConcurrentPhase(t *testing.T) {
+	t.Parallel()
 	const phases, linesPerPhase = 6, 40
 
 	symlink, err := capability.Render(capability.Skip{Kind: capability.KindCapability, Class: capability.Symlink, Reason: "no unprivileged symlinks"})

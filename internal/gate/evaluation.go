@@ -19,6 +19,7 @@ type executionEvaluation interface {
 type gateEvaluation struct {
 	runtimeRoot           string
 	identityRoot          string
+	kit                   string
 	prospective           bool
 	preSource             treeSource
 	validateTree          func(string) error
@@ -37,13 +38,14 @@ type gateEvaluation struct {
 
 type engineEvaluation struct {
 	root   string
+	kit    string
 	engine gateEngine
 	pre    *treeGeneration
 	post   *treeGeneration
 }
 
-func newEngineEvaluation(root string, engine gateEngine) *engineEvaluation {
-	return &engineEvaluation{root: root, engine: engine}
+func newEngineEvaluationAtKit(root, kit string, engine gateEngine) *engineEvaluation {
+	return &engineEvaluation{root: root, kit: kit, engine: engine}
 }
 
 func (e *engineEvaluation) acceptPre() (subject, error) {
@@ -77,13 +79,18 @@ func (e *engineEvaluation) scope(res Resolution, mode runMode, now time.Time) co
 	if e.pre == nil {
 		return componentScoping{}
 	}
-	return scopeComponentsForIdentityGenerations(e.root, res, mode, now, e.pre, e.pre, e.pre)
+	return scopeComponentsForIdentityGenerationsAtKit(e.root, e.kit, res, mode, now, e.pre, e.pre, e.pre)
 }
 
 func newWorkingTreeEvaluation(root string) *gateEvaluation {
+	return newWorkingTreeEvaluationAtKit(root, root)
+}
+
+func newWorkingTreeEvaluationAtKit(root, kit string) *gateEvaluation {
 	return &gateEvaluation{
 		runtimeRoot:  root,
 		identityRoot: root,
+		kit:          kit,
 		preSource:    workingTreeSource{root: root},
 		validateTree: func(want string) error {
 			got, err := (workingTreeSource{root: root}).tree()
@@ -159,7 +166,7 @@ func (e *gateEvaluation) scope(res Resolution, mode runMode, now time.Time) comp
 	if e.prospective || e.pre == nil {
 		return componentScoping{}
 	}
-	e.scoping = scopeComponentsForIdentityGenerations(e.runtimeRoot, res, mode, now, e.pre, e.pre, e.pre)
+	e.scoping = scopeComponentsForIdentityGenerationsAtKit(e.runtimeRoot, e.kit, res, mode, now, e.pre, e.pre, e.pre)
 	return e.scoping
 }
 

@@ -37,6 +37,7 @@ func TestPinCommandNotInRepo(t *testing.T) {
 }
 
 func TestPhasesCommandSignalCancelsRunningPhaseGroups(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	pidfile := filepath.Join(root, "sleep.pid")
 	exe, err := os.Executable()
@@ -48,6 +49,7 @@ func TestPhasesCommandSignalCancelsRunningPhaseGroups(t *testing.T) {
 		"BENCH_TEST_PHASES_SIGNAL_HELPER=1",
 		"BENCH_TEST_PHASES_PIDFILE="+pidfile,
 		"BENCH_TEST_PHASES_ROOT="+root,
+		"BENCH_TEST_PHASES_KIT="+root,
 	)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -82,6 +84,7 @@ func TestPhasesCommandSignalHelper(t *testing.T) {
 		return
 	}
 	root := os.Getenv("BENCH_TEST_PHASES_ROOT")
+	kit := os.Getenv("BENCH_TEST_PHASES_KIT")
 	pidfile := os.Getenv("BENCH_TEST_PHASES_PIDFILE")
 	benchkitPhasesForCommand = func(root, kit string) []Phase {
 		return []Phase{{
@@ -89,7 +92,7 @@ func TestPhasesCommandSignalHelper(t *testing.T) {
 			Argv: []string{"bash", "-c", `sleep 30 & echo $! > "$1"; wait`, "bash", pidfile},
 		}}
 	}
-	os.Exit(PhasesCommand([]string{root}, os.Stdout, os.Stderr))
+	os.Exit(phasesCommandAtKit(root, kit, os.Stdout, os.Stderr))
 }
 
 // TestPhasesCommandNamesStragglersOnTermination grades the straggler report at the
@@ -101,6 +104,7 @@ func TestPhasesCommandSignalHelper(t *testing.T) {
 // quick phase has long since exited — its absence from the line is a real exclusion
 // rather than a race the scheduler happened to win.
 func TestPhasesCommandNamesStragglersOnTermination(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	marker := filepath.Join(root, "quick.done")
 	pidfile := filepath.Join(root, "slow.pid")
@@ -114,6 +118,7 @@ func TestPhasesCommandNamesStragglersOnTermination(t *testing.T) {
 		"BENCH_TEST_PHASES_MARKER="+marker,
 		"BENCH_TEST_PHASES_PIDFILE="+pidfile,
 		"BENCH_TEST_PHASES_ROOT="+root,
+		"BENCH_TEST_PHASES_KIT="+root,
 	)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -149,6 +154,7 @@ func TestPhasesCommandStragglerHelper(t *testing.T) {
 		return
 	}
 	root := os.Getenv("BENCH_TEST_PHASES_ROOT")
+	kit := os.Getenv("BENCH_TEST_PHASES_KIT")
 	marker := os.Getenv("BENCH_TEST_PHASES_MARKER")
 	pidfile := os.Getenv("BENCH_TEST_PHASES_PIDFILE")
 	benchkitPhasesForCommand = func(root, kit string) []Phase {
@@ -160,7 +166,7 @@ sleep 30 & echo $! > "$2"; wait`,
 				"bash", marker, pidfile}},
 		}
 	}
-	os.Exit(PhasesCommand([]string{root}, os.Stdout, os.Stderr))
+	os.Exit(phasesCommandAtKit(root, kit, os.Stdout, os.Stderr))
 }
 
 // stragglerLine returns the run's straggler report, or "" when it printed none. It
@@ -176,6 +182,7 @@ func stragglerLine(stderr string) string {
 }
 
 func TestPhaseTable(t *testing.T) {
+	t.Parallel()
 	root := "/tmp/root with spaces"
 	kit := "/tmp/kit"
 	phases := BenchkitPhases(root, kit)
@@ -224,7 +231,8 @@ func TestPhasesCommandRoutesCanaryToOwningPhase(t *testing.T) {
 			t.Setenv("BENCH_CANARY_PHASE", tc.phase)
 
 			var stdout, stderr bytes.Buffer
-			if code := PhasesCommand([]string{t.TempDir()}, &stdout, &stderr); code != 0 {
+			root := t.TempDir()
+			if code := phasesCommandAtKit(root, root, &stdout, &stderr); code != 0 {
 				t.Fatalf("PhasesCommand = %d, want 0; stderr=%q", code, stderr.String())
 			}
 			want := tc.phase + "\ngate: green\n"
@@ -259,6 +267,7 @@ func TestInnerCanarySingularSelectionRemovesPluralSelection(t *testing.T) {
 }
 
 func TestPhaseTableBuildPhase(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "scripts", "go-build.sh"), "#!/usr/bin/env bash\n")
 	writeFile(t, filepath.Join(root, "go.mod"), "module fixture\n")
@@ -328,6 +337,7 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 }
 
 func TestShellcheckPhaseExpandsHookAndLibShellFiles(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "bin", "bench.sh"), "#!/usr/bin/env bash\n")
 	writeFile(t, filepath.Join(root, ".bench", "hooks", "z.sh"), "#!/bin/sh\n")
@@ -364,6 +374,7 @@ func TestShellcheckPhaseExpandsHookAndLibShellFiles(t *testing.T) {
 // hid in a Go string no linter read); red once each path joins the linted set. An
 // argv typo that drops any of them silently un-lints it and fails here, not in review.
 func TestShellcheckPhaseLintsNamedEnforcementShell(t *testing.T) {
+	t.Parallel()
 	if _, err := exec.LookPath("shellcheck"); err != nil {
 		capability.Capability(t, capability.Tool, "shellcheck not installed")
 	}

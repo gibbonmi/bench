@@ -1,6 +1,6 @@
 # gate-test-concurrency
 
-Status: staged
+Status: implemented
 
 Decision source: `decisions/gate-budget.md` decision #22 and ticket #23, reviewer-resolved 2026-08-07 (named reviewed artifact; the map stays top-level because decisions #8 and #24–#26 remain open).
 

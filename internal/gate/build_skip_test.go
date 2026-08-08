@@ -10,6 +10,7 @@ package gate
 // the build phase runs for want of evidence rather than for the reason the row names.
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -43,8 +44,8 @@ func seededBuildFixture(t *testing.T) kitShapedFixture {
 	// piece of evidence, so it authors the attestation whatever the skip decision would have
 	// said — and a row below then reds on its own assertion rather than on this guard, which is
 	// what a mutation to that decision has to be able to show.
-	if got := RunCommand([]string{"--fresh", fixture.root}, io.Discard, io.Discard); got != 0 {
-		t.Fatalf("seed run exit = %d, want 0", got)
+	if got := executeWithEngineAfterAcquireAtKit(context.Background(), fixture.root, fixture.root, io.Discard, io.Discard, productionGateEngine{}, notifyGateSignals, forceRun); got.ActionExit != 0 {
+		t.Fatalf("seed run exit = %d, want 0", got.ActionExit)
 	}
 	if !buildAttestationOf(t, fixture).Attested {
 		t.Fatalf("the seed run left no attestation for %s; nothing below can observe a skip", fixture.binaryPath())
@@ -100,6 +101,7 @@ func mustSealDigests(t *testing.T, executable string) (sources, binary string) {
 // canary is the reader: a capture-only changeset would skip it and leave nothing execing the
 // artifact this row is about.
 func TestAttestedSealSkipsTheBuild(t *testing.T) {
+	t.Parallel()
 	fixture := seededBuildFixture(t)
 	sealed := mustRead(t, fixture.binaryPath())
 	seal := mustRead(t, fixture.binaryPath()+".seal")
@@ -139,6 +141,7 @@ func TestAttestedSealSkipsTheBuild(t *testing.T) {
 // changeset that moves a build input is not capture-only, and that is the whole of what it
 // asserts.
 func TestBuildRunsOnEveryUnsoundArtifact(t *testing.T) {
+	t.Parallel()
 	for _, testCase := range []struct {
 		name  string
 		fault func(t *testing.T, fixture kitShapedFixture)
@@ -210,6 +213,7 @@ func TestBuildRunsOnEveryUnsoundArtifact(t *testing.T) {
 // attestation exists for. What refuses is the store, which never saw a gate build produce those
 // bytes.
 func TestPlantedArtifactRunsTheBuild(t *testing.T) {
+	t.Parallel()
 	fixture := seededBuildFixture(t)
 	attested := buildAttestationFile(t, fixture)
 
@@ -258,6 +262,7 @@ func TestPlantedArtifactRunsTheBuild(t *testing.T) {
 // bytes pin the authorship and the second run pins what that authorship would have bought;
 // neither half alone says a planted binary stays refused.
 func TestRedRunAuthorsNoAttestation(t *testing.T) {
+	t.Parallel()
 	fixture := seededBuildFixture(t)
 
 	// The plant is self-consistent against the sources present now, so nothing in the seal
@@ -303,6 +308,7 @@ func TestRedRunAuthorsNoAttestation(t *testing.T) {
 // artifact. The three cases are the three ways a run can have nothing to inherit — no evidence
 // was ever written, the store was pruned, or the operator forced a real run.
 func TestFirstRunAndFreshBuildEverything(t *testing.T) {
+	t.Parallel()
 	assertGradedEverything := func(t *testing.T, fixture kitShapedFixture, executed []string) {
 		t.Helper()
 		want := fixture.phaseNames()
@@ -348,8 +354,8 @@ func TestFirstRunAndFreshBuildEverything(t *testing.T) {
 		fixture := seededBuildFixture(t)
 		editCaptureSurfaces(t, fixture.root, "capture-only edit")
 		before := len(phaseRunNames(t, fixture.root))
-		if got := RunCommand([]string{"--fresh", fixture.root}, io.Discard, io.Discard); got != 0 {
-			t.Fatalf("forced run exit = %d, want 0", got)
+		if got := executeWithEngineAfterAcquireAtKit(context.Background(), fixture.root, fixture.root, io.Discard, io.Discard, productionGateEngine{}, notifyGateSignals, forceRun); got.ActionExit != 0 {
+			t.Fatalf("forced run exit = %d, want 0", got.ActionExit)
 		}
 		assertGradedEverything(t, fixture, append([]string(nil), phaseRunNames(t, fixture.root)[before:]...))
 	})
@@ -360,6 +366,7 @@ func TestFirstRunAndFreshBuildEverything(t *testing.T) {
 // seal and says nothing about the tree, so the two are asserted to differ first: without that,
 // this row would pass over either one.
 func TestSkippedBuildEvidenceNamesTheSourceDigest(t *testing.T) {
+	t.Parallel()
 	fixture := seededBuildFixture(t)
 	editCaptureSurfaces(t, fixture.root, "capture-only edit")
 

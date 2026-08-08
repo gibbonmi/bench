@@ -127,6 +127,7 @@ func (f componentSlotFixture) slotBytesOf(t *testing.T, components []string) map
 // collided with a verdict field would make some verdict record readable as a slot, and the
 // exact-field-set refusal every test below rests on would stop separating the two.
 func TestComponentSlotFieldsAreDisjointFromTheVerdictClasses(t *testing.T) {
+	t.Parallel()
 	if shared := componentSlotSharesVerdictFields(); len(shared) != 0 {
 		t.Fatalf("slot fields %v share %v with the verdict classes %v", componentSlotFields, shared, partialReadyFields)
 	}
@@ -143,6 +144,7 @@ func TestComponentSlotFieldsAreDisjointFromTheVerdictClasses(t *testing.T) {
 // Resolution is the only thing a skip does to a slot, so a resolution that rewrote anything
 // would move the recorded authorship away from the run that actually graded the component.
 func TestSkippedComponentSlotIsByteIdentical(t *testing.T) {
+	t.Parallel()
 	fixture := newComponentSlotFixture(t)
 	fixture.author(t, canary.PhaseVet, slotFixtureTime)
 	before := mustRead(t, fixture.slotPath(t, canary.PhaseVet))
@@ -172,6 +174,7 @@ func TestSkippedComponentSlotIsByteIdentical(t *testing.T) {
 // through a fabricated identity string, so what is pinned is the whole path from changed
 // sources to a running component.
 func TestSlotDoesNotAnswerForAMovedIdentity(t *testing.T) {
+	t.Parallel()
 	fixture := newComponentSlotFixture(t)
 	const component = canary.PhaseVet
 	const declared = "internal/canary/canary.go"
@@ -209,6 +212,7 @@ func TestSlotDoesNotAnswerForAMovedIdentity(t *testing.T) {
 // component runs. Reading it as one would let the whole-tree reduced record — which is
 // itself evidence about phases it inherited rather than ran — answer for a component.
 func TestSlotWithInheritedFieldsRefuses(t *testing.T) {
+	t.Parallel()
 	fixture := newComponentSlotFixture(t)
 	for _, inherited := range []string{"ancestor", "ancestor_recorded_at", "phases", "reduced"} {
 		t.Run(inherited, func(t *testing.T) {
@@ -246,6 +250,7 @@ func inheritedFieldValue(name string) any {
 // the second is what isolates the component comparison, since the identity comparison alone
 // already refuses the first.
 func TestSlotNamingAnotherComponentRefuses(t *testing.T) {
+	t.Parallel()
 	fixture := newComponentSlotFixture(t)
 	fixture.author(t, canary.PhaseVet, slotFixtureTime)
 	vetBytes := mustRead(t, fixture.slotPath(t, canary.PhaseVet))
@@ -275,6 +280,7 @@ func TestSlotNamingAnotherComponentRefuses(t *testing.T) {
 // component runs. Each case is a separate way the store could hold something that is nearly
 // a slot, and none of them is repaired into one.
 func TestMalformedSlotRefuses(t *testing.T) {
+	t.Parallel()
 	fixture := newComponentSlotFixture(t)
 	identity := fixture.identities[canary.PhaseVet]
 	valid := map[string]any{
@@ -324,6 +330,7 @@ func TestMalformedSlotRefuses(t *testing.T) {
 // invalidating one leaves the others present — a run that graded vet has graded nothing
 // about test, in either direction.
 func TestSlotAuthorshipIsPerComponent(t *testing.T) {
+	t.Parallel()
 	fixture := newComponentSlotFixture(t)
 	family := fixture.components()
 	if len(family) < 2 {

@@ -144,27 +144,25 @@ func TestRunGatePhasesDispatchesToCommand(t *testing.T) {
 	}
 }
 
-func TestShellWrapperRoutesGatePhasesToBinary(t *testing.T) {
+func TestShellWrapperRoutesGatePhasesWithNonRootKit(t *testing.T) {
 	root := t.TempDir()
 	kit := filepath.Join(root, "kit")
 	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
 	argvFile := filepath.Join(root, "argv")
 	writeExecutable(t, filepath.Join(kit, "dist", "bench"), `#!/usr/bin/env bash
-printf '%s\n' "$@" > "$BENCH_TEST_ARGV"
+printf '%s\n' "$BENCH_KIT" "$@" > "$BENCH_TEST_ARGV"
 `)
 
 	cmd := exec.Command("bash", filepath.Join(kit, "bin", "bench.sh"), "gate-phases", "/tmp/repo root")
 	cmd.Env = append(os.Environ(),
 		"BENCH_TEST_ARGV="+argvFile, "BENCH_HOME="+filepath.Join(root, "home"),
-		// The wrapper exports these at dispatch; a suite run through the bench
-		// binary would otherwise route this fixture's copy at the real kit.
-		"BENCH_KIT=", "BENCH_WRAPPER=")
+		"BENCH_KIT="+kit, "BENCH_WRAPPER=")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("bench.sh gate-phases failed: %v\n%s", err, out)
 	}
 	got := strings.Split(strings.TrimSpace(readPath(t, argvFile)), "\n")
-	want := []string{"gate-phases", "/tmp/repo root"}
+	want := []string{kit, "gate-phases", "/tmp/repo root"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("wrapper routed argv = %#v, want %#v\noutput:\n%s", got, want, out)
 	}

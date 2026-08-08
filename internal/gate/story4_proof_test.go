@@ -56,6 +56,7 @@ var ft78Story4ExpectedIDs = []string{
 }
 
 func TestFT78Story4ProofLedgerCompleteness(t *testing.T) {
+	t.Parallel()
 	contract.NoteContractFailure(t, r21CompletenessFailure)
 	seen := map[string]int{}
 	for _, proof := range ft78Story4Proofs {
@@ -177,7 +178,7 @@ func failedPersistenceTrace(op string) []string {
 func r10Control(id string, exit int) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) {
 		root := story4Repo(t, exit)
-		got := Execute(context.Background(), root, io.Discard, io.Discard)
+		got := executeWithEngineAtKit(context.Background(), root, root, io.Discard, io.Discard, productionGateEngine{})
 		wantStatus := "green"
 		if exit != 0 {
 			wantStatus = "red"
@@ -281,7 +282,9 @@ func r11Drift(id, kind string) r21ProofCase {
 		plan := mustSubject(t, root)
 		gitdir := filepath.Dir(cachePath(t, root))
 		done := make(chan Result, 1)
-		go func() { done <- Execute(context.Background(), root, io.Discard, io.Discard) }()
+		go func() {
+			done <- executeWithEngineAtKit(context.Background(), root, root, io.Discard, io.Discard, productionGateEngine{})
+		}()
 		defer func() { _ = os.WriteFile(filepath.Join(gitdir, "release-gate"), nil, 0o600) }()
 		waitFile(t, filepath.Join(gitdir, "gate-marker"))
 		pendingBytes := mustRead(t, cachePath(t, root))
@@ -310,7 +313,9 @@ func r11Cancellation(t *testing.T) {
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nsleep 30 & echo $! > .git/child-pid; wait\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan Result, 1)
-	go func() { done <- Execute(ctx, root, io.Discard, io.Discard) }()
+	go func() {
+		done <- executeWithEngineAtKit(ctx, root, root, io.Discard, io.Discard, productionGateEngine{})
+	}()
 	pid := waitForPIDFile(t, filepath.Join(root, ".git", "child-pid"))
 	cancel()
 	got := <-done
@@ -332,7 +337,7 @@ func r12SeparateGitDir(t *testing.T) {
 	if err := syscall.FcntlFlock(lock.Fd(), syscall.F_SETLK, &held); err != nil {
 		t.Fatal(err)
 	}
-	got := Execute(context.Background(), root2, io.Discard, io.Discard)
+	got := executeWithEngineAtKit(context.Background(), root2, root2, io.Discard, io.Discard, productionGateEngine{})
 	if got.ActionExit != 0 || got.Inspection.State != Ready {
 		t.Fatalf("separate Git dir result = %+v", got)
 	}
@@ -356,7 +361,7 @@ func r13LockFree(t *testing.T) { r13Pending("", os.Getpid(), time.Second).driver
 
 func r13KilledOwner(t *testing.T) {
 	root := gateTestRepo(t, "#!/usr/bin/env bash\necho $$ > .git/gate-pid\ntouch .git/live-owner\nsleep 30\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
-	binary := filepath.Join(contract.SubjectRoot(t), "dist", "bench")
+	binary := currentBenchBinary(t)
 	cmd := exec.Command(binary, "gate-run", root)
 	cmd.Dir = root
 	cmd.Env = os.Environ()
@@ -384,7 +389,7 @@ func r13Recovery(t *testing.T) {
 	if err := durableReplace(filepath.Dir(cachePath(t, root)), rec); err != nil {
 		t.Fatal(err)
 	}
-	got := Execute(context.Background(), root, io.Discard, io.Discard)
+	got := executeWithEngineAtKit(context.Background(), root, root, io.Discard, io.Discard, productionGateEngine{})
 	if got.ActionExit != 0 || got.Inspection.State != Ready || !got.Inspection.ReusableGreen {
 		t.Fatalf("recovery result = %+v", got)
 	}

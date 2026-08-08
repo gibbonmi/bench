@@ -28,6 +28,7 @@ func (s *recordingTreeSource) blob(object string) ([]byte, error) {
 }
 
 func TestTreeGenerationOneTreeAndListingPerGeneration(t *testing.T) {
+	t.Parallel()
 	root, tree := treeGenerationFixture(t)
 	source := &recordingTreeSource{treeSource: prospectiveTreeSource{root: root, treeID: tree}}
 	generation, err := captureTreeGeneration(source)
@@ -40,6 +41,7 @@ func TestTreeGenerationOneTreeAndListingPerGeneration(t *testing.T) {
 }
 
 func TestTreeGenerationSourceFaultDoesNotProduceGeneration(t *testing.T) {
+	t.Parallel()
 	root, tree := treeGenerationFixture(t)
 	for _, tc := range []struct {
 		name   string
@@ -57,6 +59,7 @@ func TestTreeGenerationSourceFaultDoesNotProduceGeneration(t *testing.T) {
 }
 
 func TestTreeGenerationRejectsMalformedListing(t *testing.T) {
+	t.Parallel()
 	root, tree := treeGenerationFixture(t)
 	source := malformedListingTreeSource{treeSource: prospectiveTreeSource{root: root, treeID: tree}}
 	if generation, err := captureTreeGeneration(source); err == nil || generation != nil {
@@ -71,6 +74,7 @@ func (malformedListingTreeSource) list(string) (string, error) {
 }
 
 func TestTreeGenerationRejectsNonBlobRequest(t *testing.T) {
+	t.Parallel()
 	root, tree := treeGenerationFixture(t)
 	source := &recordingTreeSource{treeSource: prospectiveTreeSource{root: root, treeID: tree}}
 	generation, err := captureTreeGeneration(source)
@@ -96,6 +100,7 @@ type failingTreeSource struct{ treeSource }
 func (failingTreeSource) list(string) (string, error) { return "", errBlobUnavailable }
 
 func TestTreeGenerationProspectiveSourceReadsSuppliedTree(t *testing.T) {
+	t.Parallel()
 	root, tree := treeGenerationFixture(t)
 	if err := os.WriteFile(filepath.Join(root, "shared"), []byte("moved\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -137,6 +142,7 @@ func TestTreeGenerationProspectiveSourceReadsSuppliedTree(t *testing.T) {
 }
 
 func TestTreeGenerationMemoizesSharedBlobByObject(t *testing.T) {
+	t.Parallel()
 	root, tree := treeGenerationFixture(t)
 	source := &recordingTreeSource{treeSource: prospectiveTreeSource{root: root, treeID: tree}}
 	generation, err := captureTreeGeneration(source)
@@ -174,6 +180,7 @@ func TestTreeGenerationMemoizesSharedBlobByObject(t *testing.T) {
 }
 
 func TestTreeGenerationMemoizesBlobFailure(t *testing.T) {
+	t.Parallel()
 	root, tree := treeGenerationFixture(t)
 	source := &recordingTreeSource{treeSource: prospectiveTreeSource{root: root, treeID: tree}, err: errBlobUnavailable}
 	generation, err := captureTreeGeneration(source)
@@ -198,6 +205,7 @@ func TestTreeGenerationMemoizesBlobFailure(t *testing.T) {
 }
 
 func TestTreeGenerationCapturesDoNotShareCacheState(t *testing.T) {
+	t.Parallel()
 	root, tree := treeGenerationFixture(t)
 	first, err := captureProspectiveTree(root, tree)
 	if err != nil {

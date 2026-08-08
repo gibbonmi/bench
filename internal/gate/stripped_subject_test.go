@@ -7,6 +7,7 @@ import (
 )
 
 func TestStrippedIdentityIgnoresAllowlistedEdit(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		mutate func(*testing.T, string)
@@ -40,6 +41,7 @@ func TestStrippedIdentityIgnoresAllowlistedEdit(t *testing.T) {
 // that reach beyond the declaration — the root the declared directories sit in, and the
 // names a prefix match swallows — are the strips this rules out.
 func TestStrippedIdentityMovesOnUnlistedEdit(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		mutate func(*testing.T, string)

@@ -10,6 +10,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -21,6 +22,7 @@ import (
 )
 
 func TestRunnerShellcheckAbsentSkips(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	phase := Phase{Name: "shellcheck", Argv: []string{"definitely-not-installed-shellcheck-for-bench-test"}, Optional: true}
 	var stdout, stderr bytes.Buffer
@@ -44,7 +46,8 @@ func r12Contention(id, action string) r21ProofCase {
 		_, _ = benchgit.Output("-C", root, "add", "-A")
 		_, _ = benchgit.Output("-C", root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-m", "base")
 		f := contract.NewFixtureAt(t, root, contract.IsolatedEnv(t, root))
-		bench := filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")
+		kit := kitRootForTest(t)
+		bench := filepath.Join(kit, "bin", "bench.sh")
 		adapter, ownerRoot := filepath.Join(root, "adapter"), root
 		if action == "commit" {
 			_ = os.WriteFile(filepath.Join(root, "work"), []byte("x"), 0o644)
@@ -62,13 +65,16 @@ func r12Contention(id, action string) r21ProofCase {
 			_, _ = benchgit.Output("-C", root, "worktree", "add", "--detach", ownerRoot, "HEAD")
 		}
 		if action == "stop" {
+			binary := currentBenchBinary(t)
 			_ = os.MkdirAll(filepath.Join(root, "bin"), 0o755)
 			_ = os.MkdirAll(filepath.Join(root, "dist"), 0o755)
 			_ = os.WriteFile(filepath.Join(root, "bin", "bench.sh"), mustRead(t, bench), 0o755)
-			_ = os.WriteFile(filepath.Join(root, "dist", "bench"), mustRead(t, filepath.Join(contract.SubjectRoot(t), "dist", "bench")), 0o755)
+			_ = os.WriteFile(filepath.Join(root, "dist", "bench"), mustRead(t, binary), 0o755)
 		}
 		done := make(chan Result, 1)
-		go func() { done <- Execute(context.Background(), ownerRoot, io.Discard, io.Discard) }()
+		go func() {
+			done <- executeWithEngineAtKit(context.Background(), ownerRoot, ownerRoot, io.Discard, io.Discard, productionGateEngine{})
+		}()
 		ownerGitDir := filepath.Dir(cachePath(t, ownerRoot))
 		waitFile(t, filepath.Join(ownerGitDir, "owner-started"))
 		defer func() {
@@ -103,7 +109,7 @@ func r12Contention(id, action string) r21ProofCase {
 		case "shift":
 			probe = contract.RunAtWithTimeout(t, f, root, map[string]string{"BENCH_AGENT": adapter, "BENCH_MAX_ITERS": "1"}, 5*time.Second, "bash", bench, "shift", "blocked")
 		case "stop":
-			probe = contract.RunAtWithInput(t, f, root, map[string]string{"BENCH_SHIFT": "1"}, "{}\n", "bash", filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "stop.sh"))
+			probe = contract.RunAtWithInput(t, f, root, map[string]string{"BENCH_SHIFT": "1"}, "{}\n", "bash", filepath.Join(kit, ".bench", "hooks", "stop.sh"))
 		}
 		if probe.TimedOut || probe.ExitCode == 0 || !strings.Contains(probe.Stdout+probe.Stderr, "gate execution already in progress") {
 			t.Fatalf("%s contention = exit %d\n%s%s", action, probe.ExitCode, probe.Stdout, probe.Stderr)
@@ -150,6 +156,18 @@ func r12Contention(id, action string) r21ProofCase {
 		}
 	}}
 }
+
+func currentBenchBinary(t *testing.T) string {
+	t.Helper()
+	kit := kitRootForTest(t)
+	binary := filepath.Join(t.TempDir(), "bench")
+	cmd := exec.Command("bash", filepath.Join(kit, "scripts", "go-build.sh"), kit, binary)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("build current bench binary: %v\n%s", err, output)
+	}
+	return binary
+}
+
 func TestRunnerOptionalBrokenSymlinkSkips(t *testing.T) {
 	root := t.TempDir()
 	bin := filepath.Join(root, "bin")
@@ -181,6 +199,7 @@ func TestRunnerOptionalBrokenSymlinkSkips(t *testing.T) {
 }
 
 func TestRunnerShellcheckAbsentSkipVerdictNamesNotInstalled(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	phase := Phase{Name: "shellcheck", Argv: []string{"definitely-absent-shellcheck-binary-for-bench-test"}, Optional: true}
 	var stdout, stderr bytes.Buffer
@@ -220,6 +239,7 @@ func TestRunnerOptionalUnexecutableStubGoesRed(t *testing.T) {
 }
 
 func TestRunnerRequiredStartFailureRed(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	phase := Phase{Name: "required", Argv: []string{filepath.Join(root, "missing-required")}}
 	var stdout, stderr bytes.Buffer
@@ -234,6 +254,7 @@ func TestRunnerRequiredStartFailureRed(t *testing.T) {
 }
 
 func TestRunnerNeededPhaseRedSkipsDependentsInnerMode(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	leak := filepath.Join(root, "leak")
 	phases := []Phase{
@@ -255,6 +276,7 @@ func TestRunnerNeededPhaseRedSkipsDependentsInnerMode(t *testing.T) {
 }
 
 func TestRunnerCancelDuringNeededPhaseReturns130(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	pidfile := filepath.Join(root, "sleep.pid")
 	leak := filepath.Join(root, "leak")
@@ -300,6 +322,7 @@ func TestRunnerCancelDuringNeededPhaseReturns130(t *testing.T) {
 // one reach the scheduler unchecked, and a run that executed nothing at all must not be
 // able to report green.
 func TestRunnerUnsatisfiableGraphIsRed(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	leak := filepath.Join(root, "leak")
 	phases := []Phase{
@@ -340,6 +363,7 @@ func TestRunnerUnsatisfiableGraphIsRed(t *testing.T) {
 // ordinary red, and reading it as an interrupt suppresses the summaries and the gate
 // line and leaves the verdict recorded as pending rather than red.
 func TestRunnerPhaseExit130IsRedNotCancellation(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	phases := []Phase{
 		fakePhase("self130", "exit 130"),
@@ -367,6 +391,7 @@ func TestRunnerPhaseExit130IsRedNotCancellation(t *testing.T) {
 }
 
 func TestRunnerNeededPhaseNotFirstStillRunsFirst(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	marker := filepath.Join(root, "built")
 	phases := []Phase{
@@ -391,6 +416,7 @@ func TestRunnerNeededPhaseNotFirstStillRunsFirst(t *testing.T) {
 }
 
 func TestSchedulerRespectsNeeds(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	marker := filepath.Join(root, "made")
 	phases := []Phase{
@@ -415,6 +441,7 @@ func TestSchedulerRespectsNeeds(t *testing.T) {
 // fixed-width scheduler starves rather than merely running slower. The waiters are
 // syscall-blocked subprocesses, not goroutines, so the barrier is GOMAXPROCS-safe.
 func TestSchedulerOverlapsIndependents(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	started := filepath.Join(root, "started")
 	if err := os.Mkdir(started, 0o755); err != nil {
@@ -434,6 +461,7 @@ func TestSchedulerOverlapsIndependents(t *testing.T) {
 }
 
 func TestSchedulerSkipsDependentsOfRed(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	leak, ran := filepath.Join(root, "leak"), filepath.Join(root, "ran")
 	phases := []Phase{
@@ -462,6 +490,7 @@ func TestSchedulerSkipsDependentsOfRed(t *testing.T) {
 }
 
 func TestSchedulerPropagatesOptionalSkip(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	leak := filepath.Join(root, "leak")
 	phases := []Phase{
@@ -483,6 +512,7 @@ func TestSchedulerPropagatesOptionalSkip(t *testing.T) {
 }
 
 func TestRunnerNeededPhaseNotFirstInnerMode(t *testing.T) {
+	t.Parallel()
 	t.Run("runs first", func(t *testing.T) {
 		root := t.TempDir()
 		marker := filepath.Join(root, "built")

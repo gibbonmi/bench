@@ -12,6 +12,7 @@ import (
 )
 
 func TestGateSignalArmFollowsAcquireAndPrecedesOwnerWrite(t *testing.T) {
+	t.Parallel()
 	arm := func(engine *faultEngine) postAcquireContextArm {
 		return func(ctx context.Context) (context.Context, func()) {
 			engine.trace = append(engine.trace, "signal-arm")
@@ -56,6 +57,7 @@ func TestGateSignalArmFollowsAcquireAndPrecedesOwnerWrite(t *testing.T) {
 }
 
 func TestGateOwnerWritePrecedesPendingDurableReplace(t *testing.T) {
+	t.Parallel()
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	engine := &faultEngine{now: time.Date(2026, 7, 23, 12, 0, 0, 0, time.UTC)}
 	_ = executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)

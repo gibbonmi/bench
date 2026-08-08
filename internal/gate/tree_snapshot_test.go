@@ -18,6 +18,7 @@ const treeSnapshotSourceFile = "tree_snapshot.go"
 // graded over the package's own sources; test files are out of scope, where listing paths
 // for an assertion is not an identity's input.
 func TestTreeSnapshotIsTheOnlyListingParser(t *testing.T) {
+	t.Parallel()
 	sources, err := filepath.Glob("*.go")
 	if err != nil {
 		t.Fatal(err)
@@ -51,6 +52,7 @@ func (s literalTreeSource) blob(string) ([]byte, error) { return nil, nil }
 // [RM1] Metadata that is not git's mode-type-object shape refuses the snapshot at parse,
 // so a malformed listing never authorizes a generation that identities would hash.
 func TestTreeSnapshotRefusesMalformedListingMetadata(t *testing.T) {
+	t.Parallel()
 	object := strings.Repeat("a", 40)
 	for name, listing := range map[string]string{
 		"missing object field": "100644 blob\tREADME.md\x00",
@@ -76,6 +78,7 @@ func TestTreeSnapshotRefusesMalformedListingMetadata(t *testing.T) {
 // [RM2] The shapes git actually records — regular, executable, and symlink entries — keep
 // parsing through a real working-tree capture, and blob reads keep their non-blob refusal.
 func TestTreeSnapshotCaptureAcceptsRealGitObjectShapes(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	writeGateTestFile(t, root, "plain.txt", "content\n", 0o644)
@@ -105,6 +108,7 @@ func TestTreeSnapshotCaptureAcceptsRealGitObjectShapes(t *testing.T) {
 // Identity families receive generations from gateEvaluation. A family-local capture would
 // preserve its hash while making source work grow with the number of families.
 func TestProductionIdentityCapturesBelongToEvaluation(t *testing.T) {
+	t.Parallel()
 	sources, err := filepath.Glob("*.go")
 	if err != nil {
 		t.Fatal(err)

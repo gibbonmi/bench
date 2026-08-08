@@ -2,8 +2,8 @@
 
 Blocked by: inject-kit-root-below-entries.md
 Ownership fence: `internal/gate`
-Integration surfaces: kit-taking execution boundary→inject-kit-root-below-entries.md; fixture constructor signatures→`internal/gate`; representative pinned entry tests→`internal/gate`
-Contracts: the kit-taking execution boundary crosses inject-kit-root-below-entries.md→`internal/gate`, with root and kit as path strings, each migrated call preserving its existing operation order, and absence represented by no alternate entry call, asserted by RP1 against the real blocker-produced boundary
+Integration surfaces: working-tree kit-taking execution boundary→inject-kit-root-below-entries.md; fixture constructor signatures→`internal/gate`; representative pinned entry tests→`internal/gate`; prospective `ExecuteTree` exemption→existing prospective tests
+Contracts: the working-tree kit-taking execution boundary crosses inject-kit-root-below-entries.md→`internal/gate`, with root and kit as path strings, each migrated call preserving its existing operation order, and absence represented by no alternate entry call, asserted by RP1 against the real blocker-produced boundary; prospective evaluation returns empty component scoping before kit identity can be consumed, so prospective fixture calls remain on `ExecuteTree` without a private kit carrier
 Closure: RP1/kitshaped-constructor, RP1/routed-constructor, RP1/entry-migration, RP1/hostile-run
 
 ## What to build
@@ -21,7 +21,10 @@ ticket exposed, except a small representative set that keeps driving each
 exported entry as its subject: those representatives pin `BENCH_KIT` to the
 fixture root explicitly (env is the input at that seam) and are thereby
 serial. The two deliberate env-behavior tests — subject-env stripping and the
-kit≠root manifest resolution — likewise keep their pins untouched.
+kit≠root manifest resolution — likewise keep their pins untouched. Prospective
+fixture tests remain on `ExecuteTree`: prospective evaluation cannot consume kit
+identity because it returns empty component scoping, so there is no kit-taking
+prospective boundary to migrate onto.
 
 The proof the retirement is real is one hostile-environment package run
 recorded as build evidence: `BENCH_KIT=<foreign path> go test -count=1

@@ -34,13 +34,17 @@ func componentPolicyDomain(component string) string {
 }
 
 func resolveComponentIdentities(root string, generation *treeGeneration) (map[string]string, error) {
+	return resolveComponentIdentitiesAtKit(root, root, generation)
+}
+
+func resolveComponentIdentitiesAtKit(root, kit string, generation *treeGeneration) (map[string]string, error) {
 	sets, err := ResolveComponentInputs(root)
 	if err != nil {
 		return nil, err
 	}
 	snapshot := generation.snapshot
 	phases := map[string]Phase{}
-	for _, phase := range BenchkitPhases(root, kitRoot(root)) {
+	for _, phase := range BenchkitPhases(root, kit) {
 		phases[phase.Name] = phase
 	}
 	identities := make(map[string]string, len(sets))

@@ -77,19 +77,14 @@ func newKitShapedFixture(t *testing.T) kitShapedFixture {
 		capability.Environment(t, "go toolchain absent; the kit-shaped fixture needs a real module")
 	}
 	root := t.TempDir()
-	// The kit's own declarations are offered only to the root BENCH_KIT names, so the
-	// fixture claims that identity for itself exactly as the synthetic root does — these
-	// tests then hold whether or not an enclosing gate run exported the real kit's
-	// BENCH_KIT into the test environment.
-	t.Setenv("BENCH_KIT", root)
 	gitRun(t, root, "init", "-q")
 	writeKitShapedTree(t, root)
 	sealKitShapedBinary(t, root)
 	// The manifest is generated from BenchkitPhases' own answer for this tree, so the
 	// executed table carries the names the kit table materializes here and nothing else:
 	// a tree that stops satisfying a phase's shape stops declaring that phase.
-	writeKitShapedManifest(t, root, BenchkitPhases(root, kitRoot(root)))
-	phases, err := phaseTable(root, kitRoot(root))
+	writeKitShapedManifest(t, root, BenchkitPhases(root, root))
+	phases, err := phaseTable(root, root)
 	if err != nil {
 		t.Fatalf("resolve the fixture phase table: %v", err)
 	}
@@ -337,6 +332,7 @@ func goListClosure(t *testing.T, root string, args ...string) map[string]bool {
 // that stops materializing the build phase leaves those assertions passing over a table
 // that never declared what they claim to grade.
 func TestKitShapedFixtureCarriesBuildAndCanary(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	for _, name := range []string{canary.PhaseBuild, "canary"} {
 		if !carriesPhase(fixture.phases, name) {
@@ -350,6 +346,7 @@ func TestKitShapedFixtureCarriesBuildAndCanary(t *testing.T) {
 // halves at once — a phase the gate script never reached is missing, and a phase run twice
 // is duplicated.
 func TestKitShapedFixtureGatesGreen(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	if got := fullRunCount(t, fixture.root); got != 1 {
@@ -369,6 +366,7 @@ func TestKitShapedFixtureGatesGreen(t *testing.T) {
 // fixture whose gate script carries no gate-phases hand-off pays a full run for every
 // changeset, and a scoping test written against it would pass while observing nothing at all.
 func TestKitShapedFixtureNarrowsACaptureOnlyChangeset(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	seeded := phaseRunNames(t, fixture.root)
@@ -415,6 +413,7 @@ func unconditionalPhaseNames(table []Phase) (unconditional, skippable []string) 
 // derivation reading the binary's closure would call their inputs unmoved while the tree's
 // test suite no longer builds — the hole this shape exists to expose.
 func TestKitShapedFixtureHasAPackageOutsideTheBinaryClosure(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	binary := goListClosure(t, fixture.root, "-deps", "./cmd/bench")
 	module := goListClosure(t, fixture.root, "-deps", "-test", "./...")
@@ -434,6 +433,7 @@ func TestKitShapedFixtureHasAPackageOutsideTheBinaryClosure(t *testing.T) {
 // after construction. Every build-skip decision rests on that seal, so a fixture whose
 // dist/bench cannot be verified would make a skip look sound for the wrong reason.
 func TestKitShapedFixtureBinaryIsSealed(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	if err := benchfreshness.Verify(fixture.root, fixture.binaryPath()); err != nil {
 		t.Fatalf("benchfreshness.Verify = %v, want the published binary to verify", err)
@@ -445,6 +445,7 @@ func TestKitShapedFixtureBinaryIsSealed(t *testing.T) {
 // the graded tree moves the subject under its own run, and every later test built on this
 // root would then be measuring that drift rather than the decision it meant to observe.
 func TestKitShapedFixtureReusesItsGreen(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	first := phaseRunNames(t, fixture.root)
@@ -463,6 +464,7 @@ func TestKitShapedFixtureReusesItsGreen(t *testing.T) {
 // is a component this root has to be able to grade — and a declaration naming a surface the
 // fixture lacks refuses, which is a component that would run every time on the real kit.
 func TestKitShapedFixtureResolvesEveryRegistryComponentIdentity(t *testing.T) {
+	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	identities := mustResolveComponentIdentities(t, fixture.root)
 	for _, declaration := range componentInputDeclarations() {

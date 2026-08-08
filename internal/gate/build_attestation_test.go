@@ -143,6 +143,7 @@ func editFixtureMain(t *testing.T, root, marker string) {
 // possible sources for the attested digest: taken from the produced bytes it names the new
 // binary and agrees with the new seal, taken from a seal it names the previous one.
 func TestGreenBuildAttestsItsOwnBinary(t *testing.T) {
+	t.Parallel()
 	fixture := newAttestationFixture(t)
 	if inspection := fixture.verify(t); inspection.Attested {
 		t.Fatalf("verify before any gate build = %+v, want a refusal — the fixture seal is not attested", inspection)
@@ -171,6 +172,7 @@ func TestGreenBuildAttestsItsOwnBinary(t *testing.T) {
 // build. This is the whole reason the class exists: seal verification alone cannot tell a
 // gate's binary from anyone else's.
 func TestPlantedSealFailsAttestation(t *testing.T) {
+	t.Parallel()
 	fixture := newAttestationFixture(t)
 	fixture.buildAndPublish(t, attestationFixtureTime)
 	if inspection := fixture.verify(t); !inspection.Attested {
@@ -199,6 +201,7 @@ func TestPlantedSealFailsAttestation(t *testing.T) {
 // different way the store could hold something that is nearly an attestation, and none of
 // them is read as one or repaired into one.
 func TestAttestationRefusals(t *testing.T) {
+	t.Parallel()
 	for _, testCase := range []struct {
 		name    string
 		disturb func(*testing.T, attestationFixture)
@@ -246,6 +249,7 @@ func TestAttestationRefusals(t *testing.T) {
 // authored first, from the registry rather than from a list here, so a component the registry
 // gains is a component this row covers.
 func TestAttestationDoesNotDisturbSlots(t *testing.T) {
+	t.Parallel()
 	fixture := newAttestationFixture(t)
 	identities := mustResolveComponentIdentities(t, fixture.root)
 	family := make([]string, 0, len(identities))
@@ -322,6 +326,7 @@ func TestAttestationDoesNotDisturbSlots(t *testing.T) {
 // they differ in bytes while a single source digest still answers for both seals. What moves
 // between them is the address alone.
 func TestAttestationsAreBoundToTheirArtifact(t *testing.T) {
+	t.Parallel()
 	fixture := newAttestationFixture(t)
 	writeGateTestFile(t, fixture.root, "cmd/alt/main.go",
 		"package main\n\nvar built = \"alt\"\n\nfunc main() { _ = built }\n", 0o644)
