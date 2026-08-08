@@ -2,21 +2,39 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `e1c24b8`, 4 dirty paths, 19 unpushed commits
-Spec: none staged.
-Gate: green at `f4fd683` — stale, work tree `ea46b76`
+Branch: `main` — HEAD `f2a925ee`, drain batch still dirty, 0 unpushed commits
+Spec: `specs/gate-test-concurrency/spec.md` — staged, three tickets written and review-passed
+Gate: green at `f2a925ee`
 
 ## State
 
-**Phase reached: pre-push-guard-visibility promoted terminal; capture drain and spec retirement are next.**
+**Phase reached: spec staged and committed; implementation is the next phase.**
 
-Run `9975d21b` promoted on green: candidate `a57e2334`, promotion commit `e1c24b83`, retained evidence `v1:4cc9bdc6…`, `Status: implemented`. Nineteen assignments across three review rounds; every accepted finding closed, including the spec-authored clean-skip defect (predicate amended to prospective bytes-and-mode match, amendment landed in the closing commit after promotion because the run pins staged spec content). The closing commit also carries the dead `manifestOwnedClean` deletion, three learnings entries (gate-free repair bookkeeping, SpecTip pin, ticket-fence enforcement), and `capture/retros/pre-push-guard-visibility.md`.
+`gate-test-concurrency` (gate-budget #23) is staged with tickets
+`inject-kit-root-below-entries` → `retire-fixture-kit-pins` →
+`adopt-gate-test-parallelism`, one `internal/gate` fence, sequential blockers,
+covering map rows KC1–KC5. Both the spec falsification pass and the
+ticket-breakdown review ran on the mid tier; all findings are folded in.
+Reviewer decisions that stay closed: route one (kit-root injection seam plus
+`t.Parallel`) over a package split; the chdir tests keep their chdir and stay
+serial (#22 answer amended); serial cuts land after this spec (#25); the
+census re-run (#26) gates #8.
 
-Open items for the drain: the retro plus the three learnings entries; two contestable unpinned branches recorded in the round-three review receipt (permission comparison in `convergedFingerprint`, skip-path manifest-row write) as follow-up ticket candidates; `internal/contract/surface/link_lifecycle_test.go` is over the 400-line structure budget without a grant — reviewer's grant or split. Spec retirement (`bench spec retire pre-push-guard-visibility`) was deferred from this close so the reviewer can decide what durable content to promote first. A parked light-path task exists: add the repair-ticket rationale prose to `.agents/commands/bench-implement-spec.md` (prompt already delivered to the reviewer). The cross-harness falsification pass was explicitly skipped by the reviewer; all required lifecycle reviews and promotion ran.
+The implementation session also lands gate-budget **#24** — test-only
+`t.Parallel` in `internal/specbuild`, its two `t.Setenv` tests staying
+serial — as a light-path ticket before or alongside the spec build; its ticket
+text derives from the map's #24 entry, and it deliberately lives outside
+`specs/gate-test-concurrency/tickets/` so the lifecycle's totality never sees
+it.
+
+Still pending from an earlier session, untouched by this one: the roadmap
+drain batch (ROADMAP.md, capture files, the `pre-push-guard-visibility` spec
+deletions) sits uncommitted awaiting reviewer approval; on approval it lands
+in one green commit whose subject ends `spec-retire: pre-push-guard-visibility`.
 
 ## Next command
 
-`/bench-what-next`
+`/bench-implement-spec --full specs/gate-test-concurrency/spec.md`
 
 ## Shape
 
