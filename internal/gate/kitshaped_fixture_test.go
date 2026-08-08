@@ -438,6 +438,30 @@ func makeFixtureBinaryPrivate(path string) (err error) {
 	return os.Rename(temporaryPath, path)
 }
 
+func replaceFixtureBinary(t *testing.T, path string, data []byte) {
+	t.Helper()
+	temporary, err := os.CreateTemp(filepath.Dir(path), ".bench-replacement-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	temporaryPath := temporary.Name()
+	t.Cleanup(func() { _ = os.Remove(temporaryPath) })
+	if _, err := temporary.Write(data); err != nil {
+		_ = temporary.Close()
+		t.Fatal(err)
+	}
+	if err := temporary.Chmod(0o755); err != nil {
+		_ = temporary.Close()
+		t.Fatal(err)
+	}
+	if err := temporary.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(temporaryPath, path); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestKitShapedFixturesDetachIndependentTemplateLinks(t *testing.T) {
 	t.Parallel()
 	first := newKitShapedFixture(t)
@@ -453,18 +477,13 @@ func TestKitShapedFixturesDetachIndependentTemplateLinks(t *testing.T) {
 	if !os.SameFile(firstInfo, secondInfo) {
 		t.Fatal("initial fixture binaries do not share the immutable template inode")
 	}
-	if err := makeFixtureBinaryPrivate(first.binaryPath()); err != nil {
-		t.Fatal(err)
-	}
+	replaceFixtureBinary(t, first.binaryPath(), []byte("changed"))
 	privateInfo, err := os.Stat(first.binaryPath())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if os.SameFile(privateInfo, secondInfo) {
 		t.Fatal("detached fixture binary still shares the immutable template inode")
-	}
-	if err := os.WriteFile(first.binaryPath(), []byte("changed"), 0o755); err != nil {
-		t.Fatal(err)
 	}
 	if err := benchfreshness.Verify(second.root, second.binaryPath()); err != nil {
 		t.Fatalf("second fixture binary after mutating the first = %v, want independent published bytes", err)

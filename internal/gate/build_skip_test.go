@@ -168,7 +168,7 @@ func TestBuildRunsOnEveryUnsoundArtifact(t *testing.T) {
 		{"executable digest mismatch", func(t *testing.T, fixture kitShapedFixture) {
 			// The artifact moves and the seal does not, which is the inverse: the seal and the
 			// attestation still agree with each other and neither answers for the bytes on disk.
-			writeGateTestFile(t, fixture.root, "dist/bench", "#!/usr/bin/env bash\nexit 0\n", 0o755)
+			replaceFixtureBinary(t, fixture.binaryPath(), []byte("#!/usr/bin/env bash\nexit 0\n"))
 		}},
 		{"symlinked sidecar", func(t *testing.T, fixture kitShapedFixture) {
 			seal := fixture.binaryPath() + ".seal"

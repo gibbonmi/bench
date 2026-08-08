@@ -80,6 +80,31 @@ func seededScopingFixture(t *testing.T) kitShapedFixture {
 	return fixture
 }
 
+// seededDecisionFixture authors the prerequisite evidence without executing the phases
+// whose fail-closed decisions the caller observes.
+func seededDecisionFixture(t *testing.T) kitShapedFixture {
+	t.Helper()
+	fixture := newKitShapedFixture(t)
+	authoredAt := time.Now().UTC()
+	for component, identity := range mustResolveComponentIdentities(t, fixture.root) {
+		if !componentSkipsOnAncestorEvidence(component) {
+			continue
+		}
+		if err := authorComponentSlot(fixture.root, component, identity, authoredAt); err != nil {
+			t.Fatalf("author the %q decision fixture slot: %v", component, err)
+		}
+		if inspection := resolveComponentSlot(fixture.root, component, identity, authoredAt); !inspection.Skippable {
+			t.Fatalf("read the %q decision fixture slot = %+v, want skippable", component, inspection)
+		}
+	}
+
+	attestationFixture{root: fixture.root, executable: fixture.binaryPath()}.attestPublished(t, authoredAt)
+	if inspection := verifyBuildAttestation(fixture.root, fixture.binaryPath(), authoredAt); !inspection.Attested {
+		t.Fatalf("read the decision fixture attestation = %+v, want attested", inspection)
+	}
+	return fixture
+}
+
 // slotBytes maps every scoped component to the bytes its slot holds at that component's
 // current identity, and to nil where the store holds none. Comparing these maps across a run
 // is what "left byte-identical" means: a re-stamped slot and a retired one both show up.
@@ -393,11 +418,15 @@ func TestDecisionSiteFailsClosed(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			fixture := seededScopingFixture(t)
+			fixture := seededDecisionFixture(t)
 			tc.inject(t, fixture)
-			observation := observeGate(t, fixture.root)
-			if !observation.ran(tc.affects) {
-				t.Fatalf("executed %v, want %s run past a %s:\n%s", observation.executed, tc.affects, tc.name, observation.stdout)
+			scoping := mustScopeComponents(t, fixture.root, Resolve(fixture.root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
+			executed := fixture.phaseNames()
+			if scoping.partial() {
+				executed = scoping.executedPhaseNames()
+			}
+			if !slicesContains(executed, tc.affects) {
+				t.Fatalf("decision executed %v and skipped %v, want %s run past a %s", executed, scoping.skipped, tc.affects, tc.name)
 			}
 		})
 	}

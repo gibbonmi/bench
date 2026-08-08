@@ -160,7 +160,9 @@ The bounded copy implementation proved correct but a fresh runtime census found 
 constructor materializations rather than the static estimate of about 51. Its serial
 package run still wrote roughly 1.3 million output blocks. The dependent
 `reduce-gate-fixture-materialization.md` ticket therefore supersedes only the ordinary-copy
-recommendation: initial executables hardlink the immutable template, the two in-place
-mutation sites atomically detach first, and every Git directory, seal, and Bench evidence
+recommendation: initial executables hardlink the immutable template, in-place metadata
+mutation atomically detaches first, byte replacement uses an atomic root-local rename, and every Git directory, seal, and Bench evidence
 store remains private. This preserves the review's rejected-worktree conclusion while
-addressing the measured copy residual.
+addressing the measured copy residual. Decision-only refusal tests seed private valid
+evidence through its production writers and call the scoping decision directly; they do not
+execute a full marker-phase run merely to construct their baseline.
