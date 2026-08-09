@@ -18,6 +18,7 @@ import (
 	"time"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 type gateEngine interface {
@@ -102,6 +103,13 @@ func InspectTree(root, tree string) EvidenceInspection {
 
 // ExecuteTree runs or reuses the gate for an unpublished Git tree.
 func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
+	ctx, finishLog := beginGateRunLog(ctx, root, stderr, "prospective")
+	result := executeTreeWithOwner(ctx, root, tree, stdout, stderr, runbinary.ReuseOrOwn)
+	finishLog(result)
+	return result
+}
+
+func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr io.Writer, owner runBinaryOwner) Result {
 	checkout, cleanup, err := prospectiveCheckout(root, tree)
 	if err != nil {
 		fmt.Fprintln(stderr, "prospective gate subject unavailable")
@@ -109,7 +117,7 @@ func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Write
 	}
 	defer cleanup()
 	evaluation := newProspectiveTreeEvaluation(checkout, root, tree)
-	return executeSubjectWithEngine(ctx, checkout, root, stdout, stderr, productionGateEngine{}, nil, reuseFreshGreen, evaluation)
+	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, productionGateEngine{}, nil, reuseFreshGreen, evaluation, owner)
 }
 
 // ValidateProjectGreen reports whether branch's tip and marker have retained exact green evidence.

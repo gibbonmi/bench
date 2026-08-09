@@ -1,4 +1,0 @@
-internal/bounds/bounds.go
-internal/canary/canary.go
-bin/bench.sh
-go.mod

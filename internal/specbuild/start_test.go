@@ -256,6 +256,74 @@ func TestRestartSucceedsAfterSiblingPromotionMovedTheMarker(t *testing.T) {
 	}
 }
 
+func TestRestartAfterCompletedAbandonAcceptsRewrittenStagedSpec(t *testing.T) {
+	root := specEditStartFixture(t)
+	service := New(root, authorizationGate{}, nil)
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	prior := loadRun(t, service)
+	abandonRun(t, service)
+	write(t, filepath.Join(root, "specs", "build demo", "spec.md"), "# Build demo\n\nStatus: staged\n\nRewritten after abandonment.\n")
+	git(t, root, "add", "specs/build demo/spec.md")
+	git(t, root, "commit", "-qm", "rewrite staged spec")
+	rewrittenSpecTip := git(t, root, "rev-parse", "HEAD:specs/build demo/spec.md")
+	recordGreenVerdict(t, root)
+
+	status, err := service.Start(t.Context(), "build demo")
+	if err != nil || status.State != "active" {
+		t.Fatalf("restart = %#v, %v", status, err)
+	}
+	run := loadRun(t, service)
+	if run.Run == prior.Run || run.Terminal || run.Spec != prior.Spec || run.SpecTip != rewrittenSpecTip {
+		t.Fatalf("restarted run = %#v; prior = %#v; want distinct active run at rewritten spec tip %s", run, prior, rewrittenSpecTip)
+	}
+	if len(run.History) != 1 {
+		t.Fatalf("retained history = %d entries, want 1", len(run.History))
+	}
+	var retained record
+	if err := json.Unmarshal(run.History[0], &retained); err != nil || retained.Run != prior.Run || !retained.Terminal {
+		t.Fatalf("retained history = %#v, %v; want terminal prior run %s", retained, err, prior.Run)
+	}
+}
+
+func TestRestartAfterCompletedAbandonPreservesCandidateDriftRefusal(t *testing.T) {
+	root := specEditStartFixture(t)
+	service := New(root, authorizationGate{}, nil)
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	prior := loadRun(t, service)
+	abandonRun(t, service)
+	write(t, filepath.Join(root, "specs", "build demo", "spec.md"), "# Build demo\n\nStatus: staged\n\nRewritten after abandonment.\n")
+	git(t, root, "add", "specs/build demo/spec.md")
+	git(t, root, "commit", "-qm", "rewrite staged spec")
+	recordGreenVerdict(t, root)
+	tree := git(t, root, "rev-parse", prior.Candidate+"^{tree}")
+	drifted := git(t, root, "commit-tree", tree, "-p", prior.Candidate, "-m", "candidate drift")
+	git(t, root, "update-ref", prior.Candidate, drifted, prior.CandidateTip)
+	statePath, err := service.statePath("build demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stateBefore, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	refsBefore := git(t, root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/")
+
+	if _, err := service.Start(t.Context(), "build demo"); err == nil || !strings.Contains(err.Error(), "candidate no longer matches durable tip") {
+		t.Fatalf("restart refusal = %v, want candidate identity refusal", err)
+	}
+	stateAfter, err := os.ReadFile(statePath)
+	if err != nil || string(stateAfter) != string(stateBefore) {
+		t.Fatalf("restart mutated state: before=%q after=%q err=%v", stateBefore, stateAfter, err)
+	}
+	if refsAfter := git(t, root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/"); refsAfter != refsBefore {
+		t.Fatalf("restart mutated refs: before=%q after=%q", refsBefore, refsAfter)
+	}
+}
+
 func TestRestartBootstrapsAgainstLiveMarkerAndRetainsRecordedBase(t *testing.T) {
 	root := repo(t)
 	recorder := &recordingGate{}

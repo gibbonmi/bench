@@ -88,6 +88,7 @@ var subcommandRouting = map[string]routingEntry{
 
 	"canary":            exempt(whyNested),
 	"doctor":            exempt(whyNested),
+	"gate":              exempt(whyNested),
 	"gate-pin":          exempt(whyNested),
 	"gate-run":          exempt(whyNested),
 	"init":              exempt(whyNested),

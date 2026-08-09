@@ -3,7 +3,6 @@ package gate
 import (
 	"errors"
 	"os/exec"
-	"time"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
@@ -11,41 +10,30 @@ import (
 type executionEvaluation interface {
 	acceptPre() (subject, error)
 	validatePre() (subject, error)
-	scope(Resolution, runMode, time.Time) componentScoping
 	capturePost() (subject, error)
-	postStrippedSubject() (subject, error)
 }
 
 type gateEvaluation struct {
-	runtimeRoot           string
-	identityRoot          string
-	kit                   string
-	prospective           bool
-	preSource             treeSource
-	validateTree          func(string) error
-	postSource            treeSource
-	pre                   *treeGeneration
-	post                  *treeGeneration
-	acceptedSubject       subject
-	acceptedStripped      subject
-	acceptedStrippedErr   error
-	acceptedStrippedReady bool
-	postStripped          subject
-	postStrippedErr       error
-	postStrippedReady     bool
-	scoping               componentScoping
+	runtimeRoot     string
+	identityRoot    string
+	prospective     bool
+	preSource       treeSource
+	validateTree    func(string) error
+	postSource      treeSource
+	pre             *treeGeneration
+	post            *treeGeneration
+	acceptedSubject subject
 }
 
 type engineEvaluation struct {
 	root   string
-	kit    string
 	engine gateEngine
 	pre    *treeGeneration
 	post   *treeGeneration
 }
 
-func newEngineEvaluationAtKit(root, kit string, engine gateEngine) *engineEvaluation {
-	return &engineEvaluation{root: root, kit: kit, engine: engine}
+func newEngineEvaluationAtKit(root, _ string, engine gateEngine) *engineEvaluation {
+	return &engineEvaluation{root: root, engine: engine}
 }
 
 func (e *engineEvaluation) acceptPre() (subject, error) {
@@ -68,29 +56,14 @@ func (e *engineEvaluation) capturePost() (subject, error) {
 	return e.engine.PostRunSubject(e.root)
 }
 
-func (e *engineEvaluation) postStrippedSubject() (subject, error) {
-	if e.post == nil {
-		return subject{}, errors.New("post generation unavailable")
-	}
-	return buildStrippedSubjectForGeneration(e.root, e.post)
-}
-
-func (e *engineEvaluation) scope(res Resolution, mode runMode, now time.Time) componentScoping {
-	if e.pre == nil {
-		return componentScoping{}
-	}
-	return scopeComponentsForIdentityGenerationsAtKit(e.root, e.kit, res, mode, now, e.pre, e.pre, e.pre)
-}
-
 func newWorkingTreeEvaluation(root string) *gateEvaluation {
 	return newWorkingTreeEvaluationAtKit(root, root)
 }
 
-func newWorkingTreeEvaluationAtKit(root, kit string) *gateEvaluation {
+func newWorkingTreeEvaluationAtKit(root, _ string) *gateEvaluation {
 	return &gateEvaluation{
 		runtimeRoot:  root,
 		identityRoot: root,
-		kit:          kit,
 		preSource:    workingTreeSource{root: root},
 		validateTree: func(want string) error {
 			got, err := (workingTreeSource{root: root}).tree()
@@ -141,13 +114,6 @@ func (e *gateEvaluation) acceptPre() (subject, error) {
 	if err != nil {
 		return subject{}, err
 	}
-	if !e.prospective {
-		e.acceptedStripped, e.acceptedStrippedErr = buildStrippedSubjectForGeneration(e.runtimeRoot, generation)
-		if e.acceptedStrippedErr != nil {
-			return subject{}, e.acceptedStrippedErr
-		}
-		e.acceptedStrippedReady = true
-	}
 	e.acceptedSubject = plan
 	return plan, nil
 }
@@ -162,14 +128,6 @@ func (e *gateEvaluation) validatePre() (subject, error) {
 	return e.build(e.pre)
 }
 
-func (e *gateEvaluation) scope(res Resolution, mode runMode, now time.Time) componentScoping {
-	if e.prospective || e.pre == nil {
-		return componentScoping{}
-	}
-	e.scoping = scopeComponentsForIdentityGenerationsAtKit(e.runtimeRoot, e.kit, res, mode, now, e.pre, e.pre, e.pre)
-	return e.scoping
-}
-
 func (e *gateEvaluation) capturePost() (subject, error) {
 	generation, err := captureTreeGeneration(e.postSource)
 	if err != nil {
@@ -180,31 +138,7 @@ func (e *gateEvaluation) capturePost() (subject, error) {
 	if err != nil {
 		return subject{}, err
 	}
-	if !e.prospective {
-		e.postStripped, e.postStrippedErr = buildStrippedSubjectForGeneration(e.runtimeRoot, generation)
-		e.postStrippedReady = e.postStrippedErr == nil
-	}
 	return plan, nil
-}
-
-func (e *gateEvaluation) acceptedStrippedSubject() (subject, error) {
-	if e.pre == nil || !e.acceptedStrippedReady {
-		if e.acceptedStrippedErr != nil {
-			return subject{}, e.acceptedStrippedErr
-		}
-		return subject{}, errors.New("pre generation unavailable")
-	}
-	return e.acceptedStripped, nil
-}
-
-func (e *gateEvaluation) postStrippedSubject() (subject, error) {
-	if e.post == nil || !e.postStrippedReady {
-		if e.postStrippedErr != nil {
-			return subject{}, e.postStrippedErr
-		}
-		return subject{}, errors.New("post generation unavailable")
-	}
-	return e.postStripped, nil
 }
 
 func (e *gateEvaluation) build(generation *treeGeneration) (subject, error) {

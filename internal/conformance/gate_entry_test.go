@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func TestRootConformance(t *testing.T) {
@@ -18,8 +19,6 @@ func TestRootConformance(t *testing.T) {
 		capability.Environment(t, "BENCH_CONFORMANCE_ROOT not set")
 	}
 	h := NewHarness(t)
-	// The scope env is passed through verbatim: any normalising here would let a stale
-	// or misspelled value slide into a silent full run instead of the driver's red.
 	selected, selectedSet := os.LookupEnv(registry.ConformanceChecksEnv)
 	var selectedValue *string
 	if selectedSet {
@@ -30,7 +29,7 @@ func TestRootConformance(t *testing.T) {
 	if inheritedSet {
 		inheritedValue = &inherited
 	}
-	for _, diag := range RunConformanceSelection(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceCheckEnv), selectedValue, inheritedValue) {
+	for _, diag := range RunConformanceSelection(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), "", selectedValue, inheritedValue) {
 		t.Errorf("gate: %s", diag)
 	}
 }
@@ -42,11 +41,11 @@ func checkGateEntryContract(root string) []string {
 	}
 	gate := readIfExists(path)
 	var diags []string
-	needle := `exec env BENCH_KIT="$kit" "$bench" gate-phases "$root"`
+	needle := `exec env BENCH_KIT="$kit" BENCH_RUN_BINARY="$bench" "$bench" gate-phases "$root"`
 	if !strings.Contains(gate, needle) {
 		diags = append(diags, fmt.Sprintf(".bench/gate.sh missing %q", needle))
 	}
-	check := `go run ./internal/freshness/check "$kit" "$bench"`
+	check := `"$bench" freshness-check "$kit"`
 	if strings.Index(gate, check) < 0 || strings.Index(gate, check) > strings.Index(gate, needle) {
 		diags = append(diags, fmt.Sprintf(".bench/gate.sh does not run current-source verification %q before %q", check, needle))
 	}
@@ -89,14 +88,14 @@ func TestGateEntryRefusesUnverifiedBinaryBeforeGatePhases(t *testing.T) {
 	kit := filepath.Join(t.TempDir(), "kit [*] path")
 	gatePath := writeGateEntryFixture(t, h, kit)
 
-	probe := runAt(nested, "bash", gatePath)
+	env := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	probe := runAtEnv(nested, env, "bash", gatePath)
 	if probe == nil || probe.ExitCode == 0 {
 		t.Fatalf("gate entry exit = %+v, want an untrusted-binary refusal", probe)
 	}
 	output := probe.Stdout + probe.Stderr
-	rebuild := freshness.RebuildAction(kit)
-	if !strings.Contains(output, rebuild) {
-		t.Fatalf("gate entry missing freshness rebuild action %q:\n%s", rebuild, output)
+	if !strings.Contains(output, runbinary.Env) {
+		t.Fatalf("gate entry missing selected-path refusal:\n%s", output)
 	}
 	if strings.Contains(output, "phase ") {
 		t.Fatalf("gate entry resolved phases before refusing its unverified binary:\n%s", output)
@@ -116,15 +115,15 @@ func TestGateEntryRejectsLegacyBeforeRunningOldTableAndRunsReplacementOnce(t *te
 	kit := filepath.Join(t.TempDir(), "kit [*] path")
 	gatePath := writeGateEntryFixture(t, h, kit)
 	publishGateFixtureBench(t, kit, fmt.Sprintf("#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) test \"$2\" = %q || exit 97; exit 2 ;;\ngate-phases) test \"$BENCH_KIT\" = %q || exit 98; printf 'old phase\\n'; printf 'old\\n' >> \"$2/.git/gate-phases-ran\" ;;\nesac\n", kit, kit))
+	selected := filepath.Join(kit, "dist", "bench")
+	env := runbinary.WithEnv(os.Environ(), selected)
+	env = append(env, "BENCH_KIT="+kit)
 
-	legacy := runAt(nested, "bash", gatePath)
+	legacy := runAtEnv(nested, env, "bash", gatePath)
 	if legacy == nil || legacy.ExitCode == 0 {
 		t.Fatalf("legacy gate entry exit = %+v, want refusal", legacy)
 	}
 	legacyOutput := legacy.Stdout + legacy.Stderr
-	if rebuild := freshness.RebuildAction(kit); !strings.Contains(legacyOutput, rebuild) {
-		t.Fatalf("legacy gate entry missing freshness rebuild action %q:\n%s", rebuild, legacyOutput)
-	}
 	if strings.Contains(legacyOutput, "old phase") {
 		t.Fatalf("legacy gate entry ran the old table:\n%s", legacyOutput)
 	}
@@ -133,14 +132,14 @@ func TestGateEntryRejectsLegacyBeforeRunningOldTableAndRunsReplacementOnce(t *te
 	}
 
 	publishGateFixtureBench(t, kit, fmt.Sprintf("#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) test \"$2\" = %q ;;\ngate-phases) test \"$BENCH_KIT\" = %q || exit 98; printf 'replacement phase\\n'; printf 'replacement\\n' >> \"$2/.git/gate-phases-ran\" ;;\nesac\n", kit, kit))
-	replacement := runAt(nested, "bash", gatePath)
+	replacement := runAtEnv(nested, env, "bash", gatePath)
 	if replacement == nil || replacement.ExitCode != 0 {
 		t.Fatalf("replacement gate entry exit = %+v, want green", replacement)
 	}
 	if output := replacement.Stdout + replacement.Stderr; strings.Count(output, "replacement phase") != 1 {
 		t.Fatalf("replacement gate output = %q, want replacement phase exactly once", output)
 	}
-	repeated := runAt(root, "bash", gatePath)
+	repeated := runAtEnv(root, env, "bash", gatePath)
 	if repeated == nil || repeated.ExitCode != 0 {
 		t.Fatalf("repeated fresh gate entry exit = %+v, want green", repeated)
 	}

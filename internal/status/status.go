@@ -240,18 +240,8 @@ func GateVerdict(root string) GateInfo {
 	return gi
 }
 
-// staleGateDetailAction softens a stale verdict to advisory drift only when the gate's
-// reduced-run declaration confines the whole diff — the same paths the oracle itself calls
-// unobservable, so the board's advice and the gate's behavior cannot name different files.
-// A diff git could not read, or one carrying a single undeclared path, keeps the strong row.
 func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action string) {
-	detail = fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree))
-	action = "re-run the gate"
-	paths, ok := git.ChangedPathsBetweenTrees(root, cachedTree, currentTree)
-	if !ok || !gate.ReducedScope().Confines(paths) {
-		return detail, action
-	}
-	return "stale (reduced-scope drift)", "re-run when convenient"
+	return fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree)), "re-run the gate"
 }
 
 func skippedComponentNames(p *gate.Partition) []string {

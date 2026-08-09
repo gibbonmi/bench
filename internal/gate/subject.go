@@ -22,10 +22,6 @@ import (
 
 var envNameRE = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
-// strippedPolicyVersion is the stripped identity's hash domain. It extends the whole-tree
-// policy rather than standing beside it, so a policy change moves both.
-const strippedPolicyVersion = policyVersion + "/stripped-v1"
-
 type identityCollector struct {
 	w                         io.Writer
 	entries                   int
@@ -38,10 +34,6 @@ func buildSubject(root string) (subject, error) { return buildSubjectFor(root, r
 
 func buildSubjectFor(root, identityRoot string) (subject, error) {
 	return buildSubjectForPolicy(root, identityRoot, policyVersion)
-}
-
-func buildStrippedSubjectForGeneration(root string, generation *treeGeneration) (subject, error) {
-	return buildSubjectForTree(root, root, strippedPolicyVersion, strippedTreeHashFromSnapshot(generation.snapshot))
 }
 
 func buildSubjectForGeneration(root, identityRoot string, generation *treeGeneration) (subject, error) {
@@ -117,19 +109,6 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 	}
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
 	return s, nil
-}
-
-func strippedTreeHashFromSnapshot(snapshot treeSnapshot) string {
-	scope := ReducedScope()
-	h := sha256.New()
-	for _, entry := range snapshot.entries {
-		if scope.Member(entry.Path) {
-			continue
-		}
-		frame(h, entry.Metadata)
-		frame(h, entry.Path)
-	}
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (s *subject) open(reason string) {

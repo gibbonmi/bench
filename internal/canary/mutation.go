@@ -2,15 +2,17 @@ package canary
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/gibbonmi/bench/internal/racetests"
+	"syscall"
 )
 
-const raceTestsMarker = "RACE_TESTS"
+const (
+	filesDirName = "files"
+)
 
 type fixtureMutation struct {
 	Path string `json:"path"`
@@ -40,20 +42,6 @@ func materializeMutationFixture(root, fixture, dst string) error {
 	if info, err := os.Stat(filesDir); err == nil && info.IsDir() {
 		if err := materialize(filesDir, dst); err != nil {
 			return err
-		}
-	}
-	if regularFile(filepath.Join(dst, raceTestsMarker)) {
-		if err := os.Remove(filepath.Join(dst, raceTestsMarker)); err != nil {
-			return err
-		}
-		for rel, source := range racetests.SyntheticSources() {
-			path := filepath.Join(dst, filepath.FromSlash(rel))
-			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-				return err
-			}
-			if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
-				return err
-			}
 		}
 	}
 	mutatePath := filepath.Join(fixture, "MUTATE.json")
@@ -88,6 +76,75 @@ func materializeMutationFixture(root, fixture, dst string) error {
 // MaterializeMutationFixture copies a fixture's base, files, and anchored mutations.
 func MaterializeMutationFixture(root, fixture, dst string) error {
 	return materializeMutationFixture(root, fixture, dst)
+}
+
+// RestoreMutationFixture removes the fixture overlay and recopies its immutable base.
+// The caller can then invoke the same owning check against the same subject and prove
+// the mutation, rather than ambient repository state, caused the red.
+func RestoreMutationFixture(root, fixture, dst string) error {
+	filesDir := filepath.Join(fixture, filesDirName)
+	if info, err := os.Stat(filesDir); err == nil && info.IsDir() {
+		var overlayDirs []string
+		err = filepath.WalkDir(filesDir, func(path string, entry os.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+			if entry.IsDir() {
+				if path != filesDir {
+					rel, err := filepath.Rel(filesDir, path)
+					if err != nil {
+						return err
+					}
+					overlayDirs = append(overlayDirs, restoredFixturePath(rel))
+				}
+				return nil
+			}
+			rel, err := filepath.Rel(filesDir, path)
+			if err != nil {
+				return err
+			}
+			rel = restoredFixturePath(rel)
+			if regularFile(filepath.Join(root, rel)) {
+				return copyBaseFile(filepath.Join(root, rel), filepath.Join(dst, rel))
+			}
+			return os.RemoveAll(filepath.Join(dst, rel))
+		})
+		if err != nil {
+			return err
+		}
+		for i := len(overlayDirs) - 1; i >= 0; i-- {
+			if err := os.Remove(filepath.Join(dst, overlayDirs[i])); err != nil && !errors.Is(err, os.ErrNotExist) {
+				// A non-empty directory contains restored base content and must remain.
+				if !errors.Is(err, syscall.ENOTEMPTY) {
+					return err
+				}
+			}
+		}
+	}
+	basePath := filepath.Join(fixture, "BASE")
+	if !regularFile(basePath) {
+		return nil
+	}
+	rels, err := basePaths(root, basePath)
+	if err != nil {
+		return err
+	}
+	for _, rel := range rels {
+		if err := copyBaseFile(filepath.Join(root, rel), filepath.Join(dst, rel)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func restoredFixturePath(rel string) string {
+	parts := strings.Split(filepath.Clean(rel), string(filepath.Separator))
+	for i, part := range parts {
+		if strings.HasPrefix(part, "dot-") {
+			parts[i] = "." + strings.TrimPrefix(part, "dot-")
+		}
+	}
+	return filepath.Join(parts...)
 }
 
 func basePaths(root, basePath string) ([]string, error) {

@@ -1,1 +1,0 @@
-[{"path":"internal/publication/statemachine.go","old":"\tif wrapper != nil {\n\t\tordered = append(ordered, *wrapper)\n\t}\n\treturn ordered\n}","new":"\tif wrapper != nil {\n\t\tordered = append([]ApprovedPackage{*wrapper}, ordered...)\n\t}\n\treturn ordered\n}"}]

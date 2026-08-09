@@ -567,7 +567,18 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 				return run.status(), nil
 			}
 			if !errors.Is(preconditionErr, errRecompose) {
-				return Status{}, preconditionErr
+				subject, err = s.subject(mutationStart, resolved)
+				if err != nil {
+					return Status{}, preconditionErr
+				}
+				restarting := run
+				restarting.Spec, restarting.SpecTip = subject.spec, subject.specTip
+				if _, err := s.preconditions(mutationStart, slug, resolved, &restarting, "", ""); !errors.Is(err, errRecompose) {
+					if err != nil {
+						return Status{}, err
+					}
+					return Status{}, preconditionErr
+				}
 			}
 			return s.startRun(ctx, slug, resolved, subject, retainTerminalAttempt(run), subject.branch+"\x00"+subject.tip)
 		}

@@ -191,10 +191,9 @@ func checkGoToolchain(root string) []string {
 	return crossCompileMatrix(root, filepath.Join(root, "scripts", "go-build.sh"))
 }
 
-// TestResidualCheckBuildsNothing keeps the gate's build phase the single build of a
-// graded root. A second build here costs a full compile on every run and races the
-// phase for dist/bench; an assertion about dist/bench alone would miss it, because a
-// build aimed at a throwaway path still pays for itself.
+// TestResidualCheckBuildsNothing keeps the residual check from competing with the run
+// owner's single build. An assertion about dist/bench alone would miss a build aimed at
+// a throwaway path.
 func TestResidualCheckBuildsNothing(t *testing.T) {
 	root := t.TempDir()
 	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
@@ -207,7 +206,7 @@ func TestResidualCheckBuildsNothing(t *testing.T) {
 	checkGoToolchain(root)
 
 	if recorded := strings.TrimSpace(readIfExists(filepath.Join(root, "recorded-out"))); recorded != "" {
-		t.Fatalf("residual check invoked the build helper (output path %q); the gate's build phase owns the only build", recorded)
+		t.Fatalf("residual check invoked the build helper (output path %q); the run owner owns the only ordinary build", recorded)
 	}
 	if exists(filepath.Join(root, "dist", "bench")) {
 		t.Fatal("residual check wrote the graded root's dist/bench")

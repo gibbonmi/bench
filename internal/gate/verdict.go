@@ -559,6 +559,14 @@ func requireComponentSet(components []string) error {
 	return nil
 }
 
+func isContentAddress(value string) bool {
+	if len(value) != 64 || strings.ToLower(value) != value {
+		return false
+	}
+	_, err := hex.DecodeString(value)
+	return err == nil
+}
+
 // validateSkipEvidence grades one entry against exactly one of the two evidence forms. The
 // seal form is dispatched on its own field so an entry reaching for both is measured against
 // the seal set and refused for the ancestor fields it also carries, rather than read as

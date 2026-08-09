@@ -71,12 +71,28 @@ retained. Return to the remaining FT171 shaping decisions from here.
 
 The second demand-reduction slice (`conformance-harness-scope`) also landed
 2026-08-07: the 83 direct conformance fixture bites now run only their resolved
-ordinary check while the full-table controls remain broad. The fresh cold
-workload census is therefore the next gate-fix step, before candidate outer
-widths are priced. The pre-push close adds directional evidence from five
-roughly ten-minute gates, dominated by `internal/gate`, `internal/specbuild`,
-and contract packages, but it did not retain an exact subject and worktree per
-sample, so those observations do not satisfy this row's pricing evidence.
+ordinary check while the full-table controls remain broad. The post-reduction
+census then resolved decision #20 on exact commit `eb6845f`: `internal/gate`
+remained a strictly serial 140–160 s focused package, `internal/specbuild`
+remained a 58–60 s serial package, and one fresh gate peaked at 97 concurrent
+descendants. Decision #22 selected intra-package test concurrency before any
+outer-width pricing.
+
+The `gate-test-concurrency` slice landed 2026-08-08: 192 of 245 top-level gate
+tests now run in parallel while 53 reasoned serial tests retain their process-
+global constraints. The exact-candidate package median fell from 150.85 s to
+56.72 s, but width one and width two still wrote roughly 1.26 million filesystem
+blocks each. Its measured materialization follow-up then shared the immutable
+fixture binary and narrowed setup-only work: width one fell to 111.67 s and
+699,904 output blocks; width two fell to 78.79 s and 699,712 blocks. The flat
+write volume across widths means concurrency compresses wall time without
+removing intrinsic fixture work. Resource-constrained follow-ups retain output
+blocks beside wall time and state serial coordinator/delegate cadence as an
+explicit unused-capacity reason when chosen. Decision #23 and its measured
+residual are complete; #24's specbuild parallelism, #25's remaining sized serial
+cuts, and #26's exact post-route census stay open before #8 prices candidate
+outer widths. Sources: the `gate-test-concurrency` retro, drained here;
+`decisions/gate-budget.md`; the retained FT171 implementation receipts.
 
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
@@ -212,6 +228,12 @@ state already owns promotion timings, so the conformance-harness close's request
 for exact stage timings is another instance rather than a second surface.
 Sources: `capture/learnings.md` 2026-08-07, verdicted here; the
 gate-decision-test-seam and conformance-harness-scope retros, drained here.
+
+The gate-test-concurrency close repeats the terminal-evidence gap: promotion
+retained its commit and green digest, but terminal status exposed no per-stage
+timings, so final-check could report no trustworthy promotion timing. This is
+another instance of the retained terminal projection above, not a second CLI
+owner. Source: the `gate-test-concurrency` retro, drained here.
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
@@ -1456,6 +1478,12 @@ clause was left vacuously satisfied by the same drift. Kit edit under the
 spec's out-of-scope riders and its implementation retro, drained here;
 `capture/learnings.md` 2026-08-03, verdicted here.
 
+The gate-test-concurrency close sharpens that universal-claim rule: a structural
+acceptance claim uses semantic enumeration or multiple representation mutations.
+An audit bound to one reviewed function name can prove that exact restoration
+while missing the same carrier expressed directly at another construction site.
+Source: the `gate-test-concurrency` retro, drained here.
+
 The check-level-conformance-scoping close adds a slicing rule to that visit: a
 ticket spanning runtime projection, canary selection, and documentation
 conformance splits those owners before assignment. Its combined scope/report
@@ -2348,9 +2376,10 @@ build.
    its spec was written and implemented, FT181 shipped 2026-08-03, and
    FT156's anchor-mechanism ruling closed when its registry shipped and the
    spec retired 2026-08-05.
-2. Take FT171's gate fix next: both demand-reduction slices shipped, so shape
-   the fresh cold workload census and candidate-width pricing before changing
-   outer concurrency. FT141 builds in parallel where
+2. Take FT171's gate fix next: decision #23 and its measured materialization
+   residual shipped, so resume shaping at #24 and #25, then run #26's exact
+   post-route census before candidate-width pricing changes outer concurrency.
+   FT141 builds in parallel where
    capacity allows: it is Go, prose-independent, and it unblocks FT107
    *whole* — splitting the fix-loop clause out would spend a second spec,
    review, and full gate on the same anchor-pinned surface, so the batch
@@ -2406,6 +2435,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT171 gate fix: lock the fresh cold workload census and candidate outer-width decision now that both demand-reduction slices have landed.
+1. `/bench-shape-idea` — FT171 gate fix: record landed #23, close #24 and #25, then run #26's exact post-route census before the candidate outer-width decision.
 2. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
 3. `/bench-write-spec` — FT141, Go and prose-independent and the literal blocker that unblocks FT107 whole.

@@ -17,7 +17,7 @@ import (
 // helpers the four publication behavior canaries (order-bypass,
 // unpublish-attempt, premature-promotion, integrity-mismatch) share verbatim.
 // They live here, in the one file reachable from all four fixtures through
-// tests/canary/behavior-owned/publication-canary-base.txt's BASE include, so
+// mutation tests can share the same publication state machine input, so
 // the shared setup has a single source instead of four pasted copies. Each
 // canary's own build tag above gates this file into that canary's isolated
 // `go test -tags=...` subprocess; it never compiles into a normal

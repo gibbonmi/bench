@@ -1,7 +1,5 @@
 // Package registry is the conformance check inventory: which checks exist, which
-// tier runs each one, which tests the gate's filtered inner run skips, and the
-// contract for the timing file the conformance driver writes and the gate runner
-// prints.
+// tier runs each one, and the timing contract for the ship rehearsal.
 //
 // It imports nothing from internal/conformance. That package's test files import
 // internal/canary, so anything internal/canary needs to read has to sit below that
@@ -37,18 +35,10 @@ func (source InputSource) Valid() bool {
 	}
 }
 
-// ConformanceTierEnv selects the tier an inner grading surface runs at: the
-// conformance entry point reads it, and so does the gate a canary sweep drives.
+// ConformanceTierEnv selects the tier the explicit conformance entry point runs at.
 // Absent, the surface grades the dev tier — the default stays un-overridable by
 // accident because a writer that means ship has to set it explicitly.
 const ConformanceTierEnv = "BENCH_CONFORMANCE_TIER"
-
-// ConformanceCheckEnv scopes an inner grading surface to a single check: the
-// conformance entry point reads it, and a canary sweep sets it per fixture. Absent,
-// the surface runs the whole tier. Any value naming no check the tier runs is a red
-// diagnostic rather than a fallback, so a stale or misspelled scope can never read as
-// green silence.
-const ConformanceCheckEnv = "BENCH_CONFORMANCE_CHECK"
 
 // ConformanceChecksEnv transports the executed half of the gate-authored ordered
 // ordinary-check partition.
@@ -113,15 +103,13 @@ const (
 var Checks = []Check{
 	{Name: "conformance-meta", Implementation: "checkConformanceMeta", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
 	{Name: "conformance-canary-families", Implementation: "checkConformanceCanaryFamilies", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
-	{Name: "component-input-derivation-source", Implementation: "checkRegisteredDerivationSource", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
-	{Name: "scope-binding", Implementation: "checkScopeBinding", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
-	{Name: "component-scope-binding", Implementation: "checkComponentScopeBinding", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
 	{Name: "kit-compliance", Implementation: "checkKitCompliance", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputCatchAll},
-	{Name: "canary-inner-compliance", Implementation: "checkCanaryInnerCompliance", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "canary-fixture-compliance", Implementation: "checkCanaryFixtureCompliance", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "load-validity-metadata", Implementation: "checkLoadValidityMetadata", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "skills-index-command-adapters", Implementation: "checkSkillsIndexAndCommandAdapters", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "docs-currency-workflow", Implementation: "checkDocsCurrencyAndWorkflow", Tier: Dev, Subject: SubjectRootAndKitRoot, Inputs: InputCatchAll},
 	{Name: "gate-entry-contract", Implementation: "checkGateEntryContract", Tier: Dev, Subject: SubjectRoot, Inputs: InputGateEntry},
+	{Name: "ordinary-build-census", Implementation: "checkOrdinaryBuildCensus", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputCatchAll},
 	{Name: "offline-smoke-proof", Implementation: "checkOfflineSmokeProof", Tier: Dev, Subject: SubjectRoot, Inputs: InputOfflineSmoke},
 	{Name: "handoff-shape-single-source", Implementation: "checkHandoffShape", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "harness-prefix-single-source", Implementation: "checkHarnessPrefix", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
@@ -139,17 +127,14 @@ var Checks = []Check{
 	{Name: "skip-ownership", Implementation: "checkSkipOwnership", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "decision-map-integrity", Implementation: "ValidateDecisionMapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputDecisionDocuments},
 	{Name: "example-agreement", Implementation: "checkExampleAgreement", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
-	{Name: "component-honesty-prose", Implementation: "checkComponentHonestyProfile", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputBenchkitProfile},
-	{Name: "contract-capture-reads", Implementation: "checkContractCaptureReads", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputGoSource},
 	{Name: "injected-port-registry", Implementation: "checkInjectedPortRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
 // diagnostics its fixtures grade. The binding follows the emitting code, not the
 // directory's name: three doc families share docs-currency-workflow, and
-// compliance-hardening grades canary-inner-compliance — the check that runs against
-// the fixture tree — rather than the similarly named kit-compliance, which grades the
-// kit root instead and would scope those fixtures away from their emitter.
+// compliance-hardening grades canary-fixture-compliance against the immutable fixture
+// tree rather than kit-compliance against the live kit root.
 //
 // It is unexported because map iteration order is nondeterministic and the family
 // list feeds a diagnostic; Families is the ordered way in.
@@ -162,7 +147,7 @@ var familyChecks = map[string]string{
 	"docs-currency-token-diet":      "docs-currency-workflow",
 	"workflow-guidance-anchors":     "docs-currency-workflow",
 	"coverage-map-validation":       "docs-currency-workflow",
-	"compliance-hardening":          "canary-inner-compliance",
+	"compliance-hardening":          "canary-fixture-compliance",
 	"decision-map-integrity":        "decision-map-integrity",
 	"example-agreement":             "example-agreement",
 	"injected-ports":                "injected-port-registry",
@@ -257,22 +242,8 @@ func CanonicalOrdinarySelection(tier Tier, names []string) ([]string, error) {
 	return ordered, nil
 }
 
-// RootConformanceTest is the conformance suite's entry point — the test the gate's
-// conformance phase runs, and the declaration a probe looks for to tell a root carrying
-// a real conformance suite from one that merely has a package at the same path. Probes
-// and the skip list read it from here, so the test a probe requires and the test the
-// filtered run excludes cannot come to name different things.
+// RootConformanceTest is the explicit ship rehearsal entry point.
 const RootConformanceTest = "TestRootConformance"
-
-// InnerSkipTests names the conformance tests the gate's filtered inner run excludes.
-// The entry point is the outer run's own, so running it inside the run that implements
-// it is the recursion this list exists to make impossible.
-var InnerSkipTests = []string{RootConformanceTest}
-
-// InnerSkipPattern is the `go test -skip` argument built from InnerSkipTests.
-func InnerSkipPattern() string {
-	return "^(" + strings.Join(InnerSkipTests, "|") + ")$"
-}
 
 const timingFileName = "bench-conformance-timing"
 

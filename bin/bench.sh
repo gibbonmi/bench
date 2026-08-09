@@ -227,9 +227,26 @@ repair_command() {
 # whole argv through. The one seam the strangler grows: later slices add subcommand
 # names to the dispatch below, never a second resolver.
 route_binary() {
-  local bin rc kit wrapper repair_rc
+  local bin rc kit wrapper repair_rc physical
   kit="${BENCH_KIT:-$(kit_dir)}"
   wrapper="$(resolve_script_path)"
+  if [[ -n "${BENCH_RUN_BINARY+x}" ]]; then
+    bin="${BENCH_RUN_BINARY:-}"
+    case "$bin" in
+      /*) ;;
+      *) echo 'bench: inherited BENCH_RUN_BINARY is not absolute' >&2; exit 1 ;;
+    esac
+    if [[ ! -f "$bin" || ! -x "$bin" || -L "$bin" ]]; then
+      echo 'bench: inherited BENCH_RUN_BINARY is not a regular executable' >&2
+      exit 1
+    fi
+    physical="$(cd -P "$(dirname "$bin")" 2>/dev/null && pwd)/$(basename "$bin")"
+    if [[ "$physical" != "$bin" ]]; then
+      echo 'bench: inherited BENCH_RUN_BINARY is not a cleaned physical path' >&2
+      exit 1
+    fi
+    BENCH_KIT="$kit" BENCH_WRAPPER="${BENCH_WRAPPER:-$wrapper}" exec "$bin" "$@"
+  fi
   bin="$(bench_binary_path "$kit")" && rc=0 || rc=$?
   case "$rc" in
     0) BENCH_KIT="${BENCH_KIT:-$kit}" BENCH_WRAPPER="${BENCH_WRAPPER:-$wrapper}" exec "$bin" "$@" ;;

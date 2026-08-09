@@ -28,7 +28,8 @@ func operationID(command, request string) string { return digest(command + "\x00
 func (s *Service) beginOperation(run *record, command, request, input string) (operation, bool, error) {
 	key, inputDigest := operationID(command, request), digest(input)
 	if prior, found := run.Operations[key]; found {
-		if prior.Command != command || prior.Request != request || prior.Input != inputDigest {
+		transition := TransitionLifecycle(prior.public(), LifecycleEvent{Kind: "prepare", Command: command, Request: request, Input: inputDigest})
+		if !transition.Accepted {
 			return operation{}, false, fmt.Errorf("spec build %s request conflicts with different inputs", command)
 		}
 		return prior, prior.State == "completed", nil
@@ -36,7 +37,11 @@ func (s *Service) beginOperation(run *record, command, request, input string) (o
 	if len(run.Operations) >= operationLimit {
 		return operation{}, false, errors.New("spec build operation journal is full")
 	}
-	op := operation{Command: command, Request: request, Input: inputDigest, State: "prepared"}
+	transition := TransitionLifecycle(LifecycleValue{}, LifecycleEvent{Kind: "prepare", Command: command, Request: request, Input: inputDigest})
+	if !transition.Accepted {
+		return operation{}, false, errors.New(transition.Refusal)
+	}
+	op := operationFrom(transition.After)
 	run.Operations[key] = op
 	if err := s.save(*run); err != nil {
 		return operation{}, false, err
@@ -47,15 +52,27 @@ func (s *Service) beginOperation(run *record, command, request, input string) (o
 func (s *Service) recordOperation(run *record, command, request, result string, completed bool) error {
 	key := operationID(command, request)
 	op, found := run.Operations[key]
-	if !found || op.State != "prepared" {
+	if !found {
 		return errors.New("spec build operation journal is incomplete")
 	}
-	op.Result = result
+	kind := "record"
 	if completed {
-		op.State = "completed"
+		kind = "complete"
 	}
-	run.Operations[key] = op
+	transition := TransitionLifecycle(op.public(), LifecycleEvent{Kind: kind, Command: command, Request: request, Input: op.Input, Result: result})
+	if !transition.Accepted {
+		return errors.New("spec build operation journal is incomplete")
+	}
+	run.Operations[key] = operationFrom(transition.After)
 	return s.save(*run)
+}
+
+func (op operation) public() LifecycleValue {
+	return LifecycleValue{Command: op.Command, Request: op.Request, Input: op.Input, Result: op.Result, State: op.State}
+}
+
+func operationFrom(value LifecycleValue) operation {
+	return operation{Command: value.Command, Request: value.Request, Input: value.Input, Result: value.Result, State: value.State}
 }
 
 func (s *Service) operation(run record, command, request string) (operation, bool) {

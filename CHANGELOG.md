@@ -34,6 +34,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Replaced the fixture-driven dev gate with a branch-native architecture: one
+  package-universe test driver, registry-derived race coverage, one bounded tagged
+  system owner, direct mutation-to-check canaries, and immutable Go command and
+  lifecycle decisions. Retired nested Go/canary drivers, repeated contract and
+  conformance repositories, component partitions, and stripped-subject reruns.
 - Made `bench commit` compose and authorize only its named paths, so unrelated
   concurrent working-copy and index state remains intact while the exact tree
   that can land receives the gate verdict. A destination advance now refuses

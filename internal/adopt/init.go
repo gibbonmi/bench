@@ -126,13 +126,11 @@ err "configure .bench/gate.sh - replace this sentinel with real checks"  # ` + b
 # structure at every commit:
 #   bench structure || err "structure over budget"
 
-# Canary - prove the checks above still bite, and that the harness itself is present.
-# Resolve the repo-local CLI (.bench/bin/bench.sh) before a global bench on PATH, so a
-# machine with no global bench (the "global bench optional" story) still reaches canary.
-if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
-  bench="$(dirname "$0")/bin/bench.sh"; [ -x "$bench" ] || bench=bench
-  "$bench" canary "$root" || err "canary sweep failed"
-fi
+# Canary - prove every immutable fixture has exactly one direct owner. Resolve the
+# repo-local CLI before a global bench on PATH, so a machine with no global bench still
+# reaches the branch-native dispatcher.
+bench="$(dirname "$0")/bin/bench.sh"; [ -x "$bench" ] || bench=bench
+"$bench" canary "$root" || err "canary sweep failed"
 
 if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi
 exit "$fail"
