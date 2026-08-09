@@ -1,445 +1,132 @@
-# single-build-serial-gate
+# Single-build serial gate
 
 Status: staged
 
-Decision source: reviewer-confirmed current conversation, 2026-08-08: every local run builds the Bench executable once per exact build environment and reuses it everywhere, and Bench-created resource work has zero overlap.
+Decision source: reviewer-confirmed current conversation on 2026-08-08
 
 ## Problem
 
-A local Bench gate still creates its own contention. The primary subject has a
-published `dist/bench`, but gate toolchain phases invoke the same command through
-`go run`; every gate and nested canary entry also invokes
-`go run ./internal/freshness/check`; deterministic gate fixtures share a staged
-executable only inside one Go test process; and other test helpers call builders
-directly. The outer gate launches ready phases concurrently, the primary and
-stripped phase sets overlap, canary has its own worker pool, and
-`internal/gate` now contains 196 `t.Parallel` calls. Lowering `GOMAXPROCS`
-narrows each process without preventing those independent processes from
-overlapping.
+One logical Bench test or gate run can currently author several host Bench executables. The prospective shell builds one, the ordinary shell compiles a separate freshness verifier, the phase table owns another build, gate-go plumbing uses `go run ./cmd/bench`, and unchanged-host test helpers invoke the subject builder again. A nested canary gate can repeat that work. At the same time, the outer phase scheduler and the primary/stripped split overlap phase processes, multiplying otherwise independent Go compiler demand.
 
-The earlier fixture fix was implemented as designed, but its design explicitly
-stopped at process-local reuse and left scheduling to later FT171 work. That is
-too narrow for the required local behavior. The result is repeated compiler,
-linker, artifact-write, and test-process demand competing for disk and memory
-inside one command.
+A worktree-lifetime binary is not an exact answer: a ticket's red run, green run, review probe, and promotion gate may grade different source snapshots. Reusing one durable binary across those runs can silently execute old code. The safe unit is therefore one top-level run, not one worktree lifetime.
 
 ## Solution
 
-One repository-local artifact store owns a content-addressed executable set,
-and one run authority owns a transferable capacity-one resource turn for the
-entire process tree. The store resolves the exact build environment under the
-requested target, builds one immutable executable for each distinct identity,
-and supplies that artifact to every eligible gate, package process, fixture,
-and nested child. Sibling package processes in a raw `go test ./...` rendezvous
-through the same store and per-identity lock instead of creating process-local
-coordinators. Successful artifacts persist for that source identity; output
-paths, fixture roots, invocations, and process identities do not create new
-identities. Changed target-selected build inputs, toolchains, targets, build
-modes, or a registered independent-authorship slot do.
+Every non-reused top-level Bench gate or focused `bench test` run owns one private temporary directory and selects one absolute, host-target Bench executable built there through `scripts/go-build.sh` in subject mode. The owner propagates that exact path to every ordinary consumer. Direct and prospective gates use the same owner; nested gates inherit the selected path and have no authoring fallback. The owner reaps the complete child process group and removes the private directory on every terminal outcome. A later run starts over with its own exact-snapshot binary, while Go's normal build cache still avoids recompiling unchanged packages.
 
-The same authority makes the ordinary gate non-concurrent by construction. It
-runs one outer phase lineage at a time, runs the primary and stripped tables as
-one ordered schedule, gives Go commands one package slot and one runtime
-thread, runs one canary item at a time, and serializes resource creation inside
-the remaining tests that must exercise coordination. A synchronous parent
-delegates its one turn to a child and becomes quiescent until the child returns;
-it never holds a second turn or competes with its descendant. A gate can still
-test concurrency semantics, but no two Bench-created resource actors are
-runnable at once. External host processes are not part of this claim.
+Every phase-table invocation runs one phase process at a time. Primary and stripped phases enter one stable topological schedule rather than two overlapping schedules. Existing dependency order, dependent skips, optional-tool skips, red aggregation, and process-group cancellation remain authoritative.
 
-This supersedes the positive-width and work-conserving portions of
-`decisions/gate-budget.md` and the retired `gate-test-concurrency` spec. It does
-not reopen the requirements that every gate phase remains present, green means
-the same thing, failures aggregate honestly, cancellation reaps the process
-tree, and compiler-observing proofs perform real builds.
+Independent compiler proofs remain independent: cross-target, release, reproducibility, changed-source, alternate-package, and intentional compiler/linker checks still build the distinct artifact their assertion observes. They are enumerated in one census so an ordinary build cannot hide behind the exception policy.
 
 ## User stories
 
-1. As a Bench developer, each local gate, focused package run, or multi-package
-   Go run produces at most one successful Bench CLI or freshness-verifier
-   executable for each exact build environment, and every consumer that does
-   not observe compilation uses that immutable artifact instead of invoking
-   `go build`, `go run`, or the subject builder again.
-   Line: `gpt-5.6-sol` / high. This is a cross-process artifact identity and
-   freshness boundary whose cheapest mistake silently executes the wrong
-   subject or preserves most of the repeated work.
-2. As a Bench developer, an ordinary gate creates no resource contention of
-   its own: exactly one phase lineage owns the transferable resource turn, and
-   at most one Go package/test slot, canary item, or nested resource-producing
-   actor is runnable at a time, on every host and at every nesting depth.
-   Line: `gpt-5.6-sol` / high. This changes the oracle scheduler and recursive
-   process authority; cancellation and fail-closed propagation make it a
-   highest-risk gate seam.
+1. As a contributor running a ticket's red, green, review, or promotion check, I want that top-level run to build one exact Bench executable and make every ordinary child use it, so the run cannot multiply CLI builds or grade stale code. Line: gpt-5.6-terra / high. The behavior crosses gate ownership, shell entry, Go tests, and nested processes, so correctness needs the high-effort kit line.
+2. As a contributor whose gate exercises direct, prospective, stripped, contract, preflight, conformance, coverage, or canary paths, I want every ordinary path to receive the same selected absolute executable and refuse an absent inherited selection, so hidden builders and authoring fallbacks cannot return. Line: gpt-5.6-terra / high. The migration spans several existing seams and a closed exception inventory.
+3. As a contributor waiting for a gate, I want all phase tables, including the combined primary/stripped table and inner gates, to execute serially without weakening dependency or cancellation semantics, so compiler demand is bounded without changing what green means. Line: gpt-5.6-terra / high. Scheduler and teardown regressions are high-leverage gate defects.
 
 ## Implementation decisions
 
-- **One deep authority, two lifetimes.** A concrete coordinator, not a
-  caller-defined provider interface, owns a repository-local artifact store
-  and a run-local capacity-one turn. Successful artifacts and their identity
-  records persist under the repository's common Git directory; the resource
-  turn and process authority end only after a run reaps every descendant.
-  Non-Git fixtures use the owning kit repository's store. Store discovery,
-  locking, record publication, validation, and repair diagnostics stay hidden
-  behind the coordinator.
-- **Sibling processes rendezvous.** An inherited child joins its parent's run
-  authority or fails closed. A focused or multi-package Go test process with no
-  inherited authority joins the repository store and its per-identity
-  exclusive attempt record; it does not create a private artifact cache.
-  Therefore sibling package processes from raw `go test ./...`, separate
-  focused invocations, and a gate all converge on one successful artifact for
-  the same identity. A repository-local artifact lock coordinates only
-  executable authorship; unrelated test execution remains outside story 1.
-- **Identity follows target-selected executable inputs.** The reusable key is
-  the canonical freshness build-input digest computed with the requested
-  `GOOS`, `GOARCH`, `CGO_ENABLED`, toolchain, and build tags, plus the Go
-  toolchain executable identity, normalized build flags, package/version stamp,
-  artifact class, and build mode. The resolver runs its dependency/file
-  enumeration under that target rather than reusing the host's file set.
-  Windows-only, Unix-only, architecture-only, and CGO-selected sources are
-  required identity cases. The physical root is provenance used to compute and
-  recheck the key, not part of it; destination path, worktree spelling, mtime,
-  invocation, fixture, and process identity are excluded.
-- **One successful artifact and one durable answer per identity.** Resolution
-  is cross-process single-flight: check the completed record, acquire the
-  per-identity lock, check again, then author. Concurrent and later requests
-  receive the same immutable artifact and executable digest. Success is
-  atomically durable. Failure or cancellation publishes no success and every
-  waiter on that attempt receives the same error; an automatic retry is
-  forbidden. A source change creates a new identity, while retrying an
-  unchanged failed identity requires the explicit exact-identity artifact
-  repair. Repair refuses an active attempt, removes only the named failed or
-  corrupt record/artifact, and lets the next request author once. A corrupt or
-  missing completed artifact refuses with that repair route rather than
-  silently rebuilding.
-- **Materialization policy is registered and mutation-safe.** The store artifact
-  is read-only and never passed directly to `freshness.Publish`, whose rename
-  consumes staging. Each consumer registry row declares either
-  `direct-exec`, `immutable-link`, or `mutable-copy`. Direct execution uses
-  the store path. An immutable link is permitted only while the destination
-  remains non-writable and every mutation API first atomically detaches it;
-  a consumer that exposes arbitrary byte or metadata mutation receives a copy.
-  Root-local publication and seals remain independently owned. The validator
-  refuses a writable multiply-linked inode, and the static ownership check
-  rejects direct mutation of an immutable-link destination.
-- **The CLI and bootstrap verifier both enroll.** Artifact classes include the
-  canonical Bench CLI and a freshness-verifier executable. Preparation builds
-  each class once per target identity and publishes both records. The direct
-  gate entry executes the trusted verifier artifact to validate `dist/bench`
-  before executing the CLI; it never runs `go run
-  ./internal/freshness/check`. Nested canary entries inherit that verifier
-  identity, eliminating the per-bite compile while preserving refusal before
-  untrusted CLI execution.
-- **Every ordinary CLI consumer enrolls.** The shared CLI artifact supplies
-  gate plumbing that currently uses `go run`, the build phase and every phase
-  that executes or copies its output, contract runtime helpers,
-  current-subject test helpers, deterministic kit-shaped fixtures, stripped
-  subjects whose target-selected build closure matches, prospective
-  preparation, preflight unchanged-subject helpers, and nested canary gates.
-  A selected path always travels with its artifact record and authenticated
-  authority; a bare ambient path is not trusted.
-- **Real-build proofs are closed identities, not bypasses.** Changed-source,
-  alternate-package, planted-byte, executable-digest, build-authorship,
-  prospective-execution, compiler/linker-failure, release-target, and
-  reproducibility assertions still request real artifacts. Target and source
-  differences are ordinary identities. The registry owns the finite
-  independent-authorship slots — for example reproducibility `first` and
-  `second` — rather than accepting a caller-supplied nonce. A second request
-  for the same slot reuses or returns the same result. Every proof uses the
-  coordinator and transferable capacity-one turn.
-- **Test binaries are classified separately.** A compiled `go test -c`
-  package binary is not the Bench CLI. Canary continues to compile one test
-  binary per exact target/package identity and reuse it for that package's
-  baselines and bites, but those compiles join the same transferable turn.
-- **One structural executable chokepoint.** Only the coordinator's private
-  backend constructs an `exec.Cmd` that can author a registered executable.
-  The executable registry is code consumed by the backend, caller adapters,
-  and conformance. Static conformance follows typed calls/import ownership and
-  parsed argv construction, not substring matching: it rejects an assembled
-  `go run ./cmd/bench`, raw canonical `go build`, subject-mode
-  `scripts/go-build.sh`, or verifier build outside the backend, and it
-  rejects a registry consumer with no adapter. Shell and Go fixture sources
-  that intentionally contain broken build text are a separate closed fixture
-  class, never executable owners.
-- **Story 1 prepares before scheduling.** The public entry resolves or verifies
-  the CLI and verifier artifact set before constructing the phase schedule.
-  The build phase remains present and owns root-local materialization and seal
-  publication; phases that read `dist/bench` retain their build edge.
-  Toolchain phases execute the already selected CLI artifact directly and need
-  no new build edge. Story 1 can therefore land green with the current
-  scheduler before story 2 replaces scheduling.
-- **A resource turn is a transferable lineage, not a process count.** "Active"
-  means the one actor currently entitled to perform Bench-created resource
-  work. A composite parent transfers its turn through the authenticated child
-  descriptor immediately before a synchronous spawn and becomes quiescent
-  while waiting; after the child is reaped, the turn returns exactly once.
-  The parent may remain a live process and logical phase, but it performs no
-  resource work while the descendant owns the turn. A caller never holds a
-  turn while asking a descendant to acquire another one. Missing, duplicated,
-  or out-of-lineage transfer state is red.
-- **Every resource-producing seam participates.** The registered classes are
-  phase execution, stripped-subject materialization and cleanup, Go
-  build/test/vet/run/compile, package and fixture materialization, artifact
-  publication/sealing, canary compile/baseline/bite, and compiler-observing
-  coordination proofs. Non-resource orchestration may prepare metadata, but
-  any synchronous child doing a registered class receives the current turn.
-  The same registry drives the process-tree active recorder, so an omitted
-  class fails enrollment rather than disappearing from the metric.
-- **The gate schedule has capacity one.** The ordinary outer table launches
-  one ready sibling phase lineage at a time in stable topological order. The
-  primary and stripped tables do not get independent schedulers; they settle
-  through one ordered schedule and one aggregate verdict. Inner phases execute
-  only as descendants of their waiting outer canary lineage. Dependency skips,
-  result order, phase summaries, red aggregation, and cancellation reporting
-  remain unchanged.
-- **The core test phase settles per package.** The core package enumeration
-  remains the existing ordered `CoreTestPackages` answer, but the phase invokes
-  one package at a time at width one, continues after package reds, aggregates
-  the same final red, and publishes one authenticated settlement after each
-  package. One package is therefore the largest no-progress unit; a monolithic
-  multi-package child cannot hide more than 45 minutes of serial progress from
-  the watchdog.
-- **Every Go child is width one.** Gate-owned `go test`, `go vet`, `go run`,
-  `go build`, and `go test -c` calls receive the applicable `-p=1` and
-  `-parallel=1` flags plus exactly one authoritative `GOMAXPROCS=1`. Ambient
-  `GOMAXPROCS`, `GOFLAGS`, or test flags cannot widen the run. The build
-  backend uses the same width, so a single authoring turn cannot create an
-  internal compiler storm.
-- **Canary has no worker pool.** Package compiles, baselines, and fixture bites
-  run one item at a time in deterministic order. The existing stage ordering
-  remains: a fixture cannot run before its package binary and baseline exist.
-  `fixtureWorkers`, `bounds.CanaryInnerWidth`, and their width arithmetic are
-  retired rather than left as dead policy.
-- **Concurrency-positive owners are explicitly replaced.**
-  `TestRunnerRunsPhasesConcurrently`,
-  `TestSchedulerOverlapsIndependents`,
-  `TestSweepRunsFixturesConcurrently`,
-  `TestSweepBoundsFixtureConcurrencyAtDerivedWorkerBound`,
-  `TestFixtureWorkers`, and
-  `TestSweepPinsSingleGOMAXPROCSInInnerEnv` retire with the worker/overlap
-  contract and are replaced by capacity-one order, turn-transfer, and exact
-  width-one assertions. The gate-entry tests that pin
-  `go run ./internal/freshness/check` are amended to require the selected
-  verifier artifact and retain their refusal-before-CLI behavior.
-- **Parallel tests lose resource authority.** All 196 current
-  `internal/gate` `t.Parallel` calls retire. A closed registry names the few
-  coordination tests allowed to create simultaneous lightweight callers; an
-  AST conformance check rejects any other `t.Parallel` call in the package.
-  Registered callers delegate the one resource turn to at most one child, so
-  their lock, cancellation, ownership, and atomicity behavior remains real
-  without overlapping resource work.
-- **Timeout measures stalls, not serialized breadth.** The existing 45-minute
-  gate timeout becomes a no-progress deadline, not a whole-run wall deadline.
-  It resets only when a phase, canary item, or registered resource turn settles
-  successfully or red. A run whose total serialized wall exceeds 45 minutes
-  while continuing to settle work may remain green; one actor making no
-  progress for 45 minutes reds with the existing timeout code and cancellation
-  teardown. Arbitrary heartbeat output never resets the deadline. This prevents
-  capacity one from converting legitimate breadth into a timeout
-  green-semantics regression.
-- **One repository admits one gate lineage.** The public gate lock is anchored
-  at the repository common Git directory, so a second gate from another
-  worktree of the same repository refuses before phase or artifact work. The
-  zero-contention claim is per admitted top-level lineage; unrelated raw tools
-  remain external, while two Bench gate lineages for one repository can never
-  overlap.
-- **No performance escape hatch.** There is no width flag, environment knob,
-  automatic host-size formula, or best-effort fallback that can make an
-  ordinary local gate concurrent. Changing capacity is a future
-  reviewer-owned contract change, not runtime configuration.
-
-### Ownership fences
-
-- Artifact identity, store, backend, registry, verifier, and bootstrap owner:
-  `internal/artifactstore/`, `internal/freshness/`,
-  `scripts/go-build.sh`, `.bench/gate.sh`,
-  `.bench/gate-prospective.sh`,
-  `internal/conformance/gate_entry_test.go`, and
-  `internal/canary/gate_entry_test.go`.
-- Gate artifact-consumer, schedule, turn-transfer, timeout, and package-test
-  owner: `internal/gate/` and `internal/bounds/bounds.go`.
-- Canary serial-stage and retired-width owner: `internal/canary/` except
-  `internal/canary/gate_entry_test.go`, plus
-  `internal/conformance/bounds_policy_test.go`.
-- Contract, preflight, and release consumer migration owner:
-  `internal/contract/`, `internal/preflight/`,
-  `scripts/build-artifacts.sh`, `scripts/release-preflight.sh`,
-  `scripts/native-proof.sh`, and `scripts/build-offline-archives.sh`.
-
-These are authoring fences, not horizontal tickets. `craft-tickets` derives
-independently-green tracer outcomes and their value contracts after sign-off;
-no two concurrent writers receive overlapping paths.
+- The selected executable contract is a process-local value named `BENCH_RUN_BINARY`. Its value is a cleaned absolute path to a regular executable in the current owner's private run directory. A top-level owner overwrites hostile ambient input; an inner gate validates and reuses the inherited value. Symlinks, special files, relative paths, missing files, stale seals, and source-mismatched executables refuse.
+- A non-reused gate constructs the owner after subject validation and admission. It builds from the materialized runtime root when that exact subject is the Bench kit; a linked project uses the wrapper-selected kit captured by the owner. Both cases invoke that source root's canonical `scripts/go-build.sh` exactly once in host subject mode. The builder's adjacent seal remains private with the executable.
+- `bench test` is the focused-test owner. With no valid inherited selection it creates one private run directory, invokes the canonical builder once, and passes the selected absolute path into its one `go test -count=1` child. With an inherited selection it reuses it and builds zero executables. A red run and a later green run are separate top-level runs and deliberately get separate binaries.
+- A top-level gate that reuses an exact green verdict performs no build because it executes no gate. Usage, admission, or subject-validation refusals that occur before owner creation also build zero. Once a private directory exists, every exit path, including a canonical builder that leaves partial output and fails, owns its cleanup.
+- `.bench/gate.sh` remains shell. It requires the owner-selected path, executes that binary's `freshness-check` and then the same binary's `gate-phases`, and never calls `go run ./internal/freshness/check`. `.bench/gate-prospective.sh` becomes a no-build pass-through into the same shell route. Neither shell has an authoring fallback.
+- Ordinary consumers are exactly: gate-entry freshness and phase routing; the gofmt, test, race, and conformance-suite `gate-go` phase commands; ordinary conformance, coverage, and contract commands exercised by those suites; shellcheck and canary phase launch; unchanged-host helpers in `internal/gate`, `internal/contract`, and `internal/preflight`; stripped-subject consumers; prospective execution; and nested canary gates. These consumers may run `go test` to compile test packages, but they may not invoke another ordinary `go build`, `go run ./cmd/bench`, `go run ./internal/freshness/check`, or subject-mode `scripts/go-build.sh`.
+- Wrapper, installation, cache-routing, and publication tests that need Bench bytes copy or link the already selected bytes into their fixture. Tests whose assertion is specifically that a different source, package, target, compiler, linker, release workflow, or reproducibility slot authors different bytes retain their own build.
+- The independent-build exception set is closed to: cross-target builds in `scripts/build-artifacts.sh`, `scripts/native-proof.sh`, and `internal/conformance/cross_compile_stress_test.go`; the release build in `scripts/release-preflight.sh` and release-only `internal/preprelease` gate-go invocation; artifact-mode and reproducibility proofs under `internal/contract/surface/artifact/posture/`; changed-source proofs in `internal/contract/freshness_subject_test.go` and `internal/contract/runtime/runtime_gate_freshness_routes_test.go`; alternate-package/compiler attestation in `internal/gate/build_attestation_test.go`; the reduced fixture linker/publication proof in `internal/contract/runtime/runtime_gate_component_boundary_test.go`; and intentional test-executable compilation in `internal/canary/canary.go` and `internal/contract/runtime/runtime_gate_partial_proof_test.go`. Adding a member or constructor requires changing this enumeration and its structural census together.
+- The scheduler uses stable declaration order to choose the next ready phase, runs at most one phase process, settles it, then reevaluates readiness. Primary and stripped phases carry their execution root into one combined table. A red or skipped prerequisite still skips only its dependents; unrelated phases still run and all red results aggregate.
+- Cancellation continues to signal the active phase's process group, waits through the bounded grace, kills remaining descendants, and reaps before returning. Only after that teardown may the run owner remove the selected executable directory. The same order applies to timeout and interrupt.
+- This is a wide refactor and uses `craft-tickets`' expand-migrate-contract sequence. The selection/owner seams expand first, ordinary consumers migrate in independently green cuts, and the exact census plus lifecycle tests contract away every ordinary fallback.
 
 ## Testing decisions
 
-- Good artifact tests inject a counting builder and drive the real repository
-  store through sibling processes, concurrent and repeated requests, failed
-  and cancelled attempts, source movement, hostile records, and cross-target
-  build-tag mutations. They assert artifact identity and backend call count
-  rather than relying on elapsed time.
-- Every artifact-store test injects a fresh isolated store root. Fault,
-  corruption, repair, and cancellation cases are forbidden from discovering
-  or mutating the developer repository's live common-Git-dir store.
-- Good scheduler tests inject blocking phase/resource runners with a shared
-  active counter. They drive the public schedule, split primary/stripped path,
-  parent-to-child turn transfer, nested authority, canary stages, and
-  cancellation. They distinguish a logically live parent from the one runnable
-  resource actor and assert that the latter's maximum is exactly one.
-- Existing freshness publication, hardlink detach, atomic replacement,
-  build-attestation, prospective execution, release reproducibility, and
-  compiler-failure tests remain the behavior owners for the real-build
-  classes. Their setup moves through the coordinator without weakening their
-  assertions.
-- Gate-entry tests execute the selected freshness-verifier artifact under a
-  hostile or stale CLI and preserve the current refusal-before-`gate-phases`
-  assertion. A verifier-source mutation produces a new verifier identity and
-  makes entry refuse the old artifact before the CLI. A counting verifier
-  fixture proves nested canary entries reuse the same current checker identity
-  without invoking the Go tool.
-- A fake clock drives the no-progress timeout. Multiple settling operations
-  whose total exceeds 45 minutes remain live, while one silent actor crossing
-  45 minutes receives code 124 and the existing process-group teardown.
-- The gate seam is the dev gate's build, test, conformance, contract, and canary
-  phases. The implementation gate eventually proves the composed process tree,
-  but this spec phase runs no gate; focused red-capable owners and static
-  conformance are the implementation tickets' first evidence.
-- Total wall time is reported after correctness but is not an acceptance
-  threshold. The governing outcomes are exact build counts, maximum runnable
-  resource actors, and bounded no-progress time, all independent of aggregate
-  machine speed.
+- The run-owner seam receives injected builder, filesystem, source-root, and child-runner tests. Tests count canonical builder calls, record executable identity (absolute path, inode, and digest), inject each terminal outcome, and assert cleanup only after descendant settlement.
+- Gate execution tests drive the real direct and prospective entry points. A marker command at every ordinary consumer records the selected path; the test requires one identical value and one canonical subject-build trace for the whole run.
+- `internal/testreport` tests drive the public `bench test` command with a fake canonical builder and a real child process boundary. They prove one build without inherited selection, zero with one, exact propagation, and a fresh build for the next top-level source snapshot.
+- Existing contract and preflight helpers are tested against the real selected executable rather than a process-local template. Wrapper-specific tests observe copied or linked selected bytes; changed-source and compiler-proof tests remain in the enumerated exception set.
+- Nested-canary tests execute an actual inner gate process. Missing, relative, stale, symlinked, or changed inherited selection refuses before any builder; a valid path is byte-identical at outer and inner markers.
+- Scheduler tests replace the overlap proof with a max-active-process counter and stable-order record. Existing dependency, optional-skip, red-dependent-skip, red aggregation, interrupt, timeout, and orphan-descendant tests stay attached to the real scheduler.
+- A structural conformance test owns the exact ordinary-build census and the enumerated independent exception set. It examines assembled argv and builder call sites, not incidental prose. Mutating any ordinary consumer to a forbidden constructor makes the default gate red.
 
-### Seam diagrams
+### Seam diagram
 
-    trigger: public gate, focused or sibling package process, or nested child
+    trigger: bench gate, commit gate, prospective gate, or bench test
         │
         ▼
-    source root + registered intent + target  ──▶  [ repository artifact store ]  ──▶  durable immutable artifact + identity
-                                                         │
-                                                         └── per-identity attempt lock ──▶ private builder
-                  ◀ tests attach here: sibling processes, counting builder,
-                    hostile records, target-tag mutation and cancellation
+    exact source snapshot ──▶ [ run owner: temp dir + canonical builder once ] ──▶ absolute selected Bench path
+                                      │                                              │
+                                      │                                   tests attach: count build calls and
+                                      │                                   record identity at every consumer
+                                      ▼
+                           [ ordinary and nested children ] ──▶ terminal outcome + descendants reaped
+                                      │
+                                      ▼
+                              remove private run directory
 
-    trigger: resolved outer or inner gate phase table
+    trigger: gate-phases outer or inner invocation
         │
         ▼
-    primary + stripped ready phases  ──▶  [ capacity-one lineage ]  ──▶  ordered results + one aggregate verdict
+    primary phases + stripped phases ──▶ [ one stable topological scheduler ] ──▶ ordered results
                                                    │
-                                      parent delegates turn and waits
-                                                   │
-                                                   ▼
-                                      child actor ──▶ nested child actor
-                                                   │
-                                                   ├── Go: -p=1, -parallel=1, GOMAXPROCS=1
-                                                   └── canary: one compile/baseline/bite at a time
-                  ◀ tests attach here: blocking runners record runnable actor,
-                    turn ownership, launch order, teardown and progress
+                                                   └ tests attach: max-active counter,
+                                                     dependency/skip/red/cancel record
 
 ### Acceptance coverage map
 
 | row | story | behavior | seam | red signal | why it catches the failure |
 |---|---|---|---|---|---|
-| SB1 | 1 | Repeated, concurrent, and later requests for one exact reusable identity across separate processes invoke the builder once and return the same durable artifact and executable digest | repository store with injected counting builder, per-identity lock, and re-exec barrier | new test is red on the current output-path and process-local owners because two sibling processes cannot rendezvous and record more than one build | counts the expensive operation itself across process and invocation lifetimes |
-| SB2 | 1 | A target-selected source, toolchain, target, build-mode, artifact-class, or registered proof-slot change creates one distinct identity; output path, root spelling, mtime, invocation, and process do not | target-aware identity resolver plus build-tag fixture matrix | new Windows/Unix and architecture-tag mutation tests are red against a host-derived digest because the non-host source change aliases | prevents stale cross-target reuse while retaining byte-identical cross-root reuse |
-| SB3 | 1 | Failure reaches every waiter without automatic retry; cancellation publishes no success; corrupt, missing, symlinked, malformed, or digest-mismatched completed artifacts refuse; and exact-identity repair refuses active work and removes only the named bad record | attempt/result records, validator, and exact repair seam | new fault-injection tests are red if a second author starts, a partial is published, hostile state triggers transparent rebuilding, or repair crosses identity/active-owner scope | forbids retry storms and untrusted execution while keeping recovery bounded and explicit |
-| SB4 | 1 | The gate, gate plumbing, phase readers, contract runtime, current-subject helpers, deterministic fixtures, stripped subject, prospective/preflight helpers, and nested canary all consume typed artifact records; only the private backend authors registered executables | typed executable chokepoint, code registry, Go AST call/import audit, and parsed argv audit | the new structural audit is red on today's assembled `GateGoArgv` `go run` argv and direct build adapters; a mutation rebuilding the argv from separate literals remains red | catches constructed commands that a substring scan misses and structurally owns the universal consumer set |
-| SB5 | 1 | Changed-source, alternate-artifact, planted-byte, prospective, authorship, release-target, reproducibility, and compiler-failure proofs still observe real construction, but total builds equal their finite registered identities and slots | proof requests through the private backend | existing behavior assertions plus new registry-slot counts are red if a proof is reused incorrectly, invents a nonce, or bypasses the backend | preserves every real-build reason without an open-ended exception |
-| SB6 | 1 | A focused package, its re-exec child, and sibling consumer packages from raw `go test ./...` converge on the repository store and one artifact for the same identity | shared consumer-package adapter, common-Git-dir discovery, and sibling re-exec harness | new multi-package subprocess fixture is red before implementation because each current package process owns independent state | closes the process-local `sync.Once` hole for the ordinary developer loop Fable identified |
-| SB7 | 1 | Preparation authors one freshness-verifier artifact per identity; direct and nested entries reuse it, verifier-source movement changes identity and refuses the old verifier before the CLI, and no entry runs `go run ./internal/freshness/check` | gate-entry verifier selection, verifier-source mutation, and counting nested-entry fixture | the current command-pin tests, source-mutation case, and build counter are red because today's entry invokes `go run` on every bite and has no durable verifier identity to invalidate | enrolls and currencies the bootstrap compiler route without trusting the CLI it grades |
-| SB8 | 1 | Direct-exec, immutable-link, and mutable-copy consumers follow the registry policy; mutating one root can never change the store artifact or another root | materializer plus existing detach/atomic-replacement seams | new policy matrix and existing inode/digest witnesses are red if a mutable consumer receives a shared link, detach is omitted, or a writable multiply-linked inode is accepted | resolves the prior safe-link contradiction with one executable policy source |
-| SB9 | 1 | Story 1 alone resolves/verifies artifacts before scheduling, retains the build phase for publication, leaves `dist/bench` reader edges intact, and lets toolchain phases execute the store CLI without a new build edge | artifact preparation to existing phase-table construction | new phase inspection is red on either a missing build phase, a toolchain `go run`, or an added toolchain-to-build edge | proves the artifact story is independently green rather than relying on story 2's serial scheduler |
-| ZC1 | 2 | The ordinary outer gate and split primary/stripped path launch one sibling phase lineage at a time; a waiting logical parent may remain live while exactly one descendant owns the runnable resource turn | public scheduler and parent/child turn recorder with blocking fake phases | new sibling-overlap and turn-owner assertions are red against both current concurrent schedulers, but do not count a quiescent parent as a second actor | defines the quantifier so nesting is neither an impossible assertion nor a hidden overlap |
-| ZC2 | 2 | Every gate-owned Go build/test/vet/run/compile child is pinned to one package/test slot and one runtime thread, with ambient width inputs unable to widen it | command constructors and closed child environment | new argv/env matrix is red on today's unpinned outer commands, and hostile ambient cases red if duplicate or wider values survive | prevents hidden parallelism inside the one visible phase |
-| ZC3 | 2 | Canary compiles, baselines, and fixture bites one at a time in deterministic stage order, with worker/inner-width policy absent | canary item iterator, bounds registry, and blocking fake runner | replacement serial tests are red against `eachIndex`/`fixtureWorkers`; the conformance registry is red if retired `CanaryInnerWidth` remains advertised | removes the second fan-out site and its stale policy rather than weakening a green overlap test silently |
-| ZC4 | 2 | A synchronous parent transfers its one turn to a child, performs no resource work while waiting, receives it once after reap, and refuses missing, forged, duplicated, closed, or malformed lineage state | authenticated turn-transfer descriptor and re-exec parent/child harness | hostile transfer tests are red if the child acquires a second turn, the parent continues work, or fallback creates a local pool | directly prevents the nested deadlock and double-owner cases |
-| ZC5 | 2 | Phase execution, stripped-subject materialization/cleanup, every Go child, package/fixture materialization, publication/sealing, canary items, and compiler-observing proofs all use the registered turn; the process-tree maximum runnable actor is one | resource-class registry, typed launch adapters, and one process-tree recorder | deleting acquisition at each class in turn makes the active counter reach two or makes the enrollment audit red | enumerates the quantified resource set and catches work omitted from the recorder |
-| ZC6 | 2 | Interrupting an owner, delegated child, or waiter reaps every descendant, returns the turn exactly once, emits no false verdict, and lets a later run proceed | cancellation and turn-transfer teardown seam | fault tests hang, duplicate/lose the turn, publish a verdict, or block the next run when reclamation is wrong | capacity one cannot trade contention for deadlock or false completion |
-| ZC7 | 2 | An ordinary gate exposes no concurrency knob, contains no unregistered `internal/gate` `t.Parallel`, and stays capacity one under high core counts and hostile `GOMAXPROCS`, `GOFLAGS`, or test flags | public entry, closed coordination-test registry, AST audit, and closed environment | static usage/AST tests plus hostile-env scheduler run are red if any supported widening route or unregistered parallel test exists | makes “every time” a structural contract rather than a recommended invocation |
-| ZC8 | 2 | More than 45 minutes of serialized work remains eligible for green while operations settle inside each window; core tests run and settle one enumerated package at a time while continuing after reds; arbitrary output cannot reset the timer; one package/actor stalled for 45 minutes reds with code 124 and full teardown | real core package enumerator plus fake-clock progress watchdog driven only by package/phase/item/turn settlement | new multi-package cumulative, continue-after-red, package-stall, and heartbeat-spam tests are red against today's monolithic child and one-shot whole-run deadline | makes the real longest phase observable to the watchdog without changing its package membership or aggregate verdict |
-| ZC9 | 2 | Two gates from worktrees sharing one common Git directory cannot overlap: the second refuses before preparation, phase launch, or store authorship | repository-common gate lock and two-worktree process harness | new cross-worktree overlap test is red if the second lineage reaches an artifact or phase marker | closes same-repository sibling runs rather than hiding them behind the external-process exclusion |
-
-Degenerate-implementation check: story 1's cheapest wrong implementation keeps
-the existing process-local `sync.Once` and passes a binary path to one more
-helper; SB1, SB4, SB6, and SB7 stay red on sibling build count, structural
-owners, and the verifier compile. A host-derived cache key stays red on SB2's
-non-host mutation. Story 2's cheapest wrong implementation swaps the outer
-scheduler to sequential but leaves the split scheduler, Go package width,
-canary workers, nested turn handoff, stripped materialization, package-level
-progress, or repository-wide gate admission unchanged; ZC1 through ZC9 isolate
-each surviving layer.
-
-Composition check: artifact reuse without capacity one still lets distinct
-identities and package binaries contend; capacity one without artifact reuse
-serializes the same repeated work and remains unacceptably expensive. SB5 and
-ZC5 require the two stories to compose through one authority. SB9 separately
-proves story 1's pre-schedule artifact contract stays green before the serial
-scheduler lands.
+| RS1 | 1 | A run owner selects one cleaned absolute host Bench path bound to its exact source snapshot; a later top-level run cannot reuse it. | run-owner builder/selection seam | observed red: `rg -n 'BENCH_[A-Z_]*SELECTED' internal .bench --glob '*.go' --glob '*.sh'` exited 1 | No selected-path contract exists, so current consumers cannot prove identity or run-scoped lifetime. |
+| RS2 | 1 | Each non-reused direct or prospective gate builds exactly once through subject-mode `scripts/go-build.sh`; both routes share the owner, while pre-owner and exact-green reuse paths build zero. | real gate execution owner and shell-entry process seam | observed red: `! rg -n 'go run ./internal/freshness/check' .bench/gate.sh` exited 1, and the same assertion for `scripts/go-build.sh` in the prospective shell exited 1 | The current shells independently compile the verifier and prospective CLI, proving ownership is split. |
+| RS3 | 1 | A top-level `bench test` builds once and propagates the selected path to its `go test` child; an inherited run builds zero, and the next top-level red/green snapshot gets a new path. | `internal/testreport` command seam | observed red: the RS1 selected-helper query exited 1 while `internal/testreport/testreport.go` launches `go test` with no selected executable | A child identity record and builder counter distinguish one per run from zero propagation or worktree-lifetime reuse. |
+| RS4 | 2 | Gate entry, freshness self-check, gate-phases, gofmt, test, race, conformance-suite, ordinary conformance, ordinary contract, shellcheck, and canary phase launch all receive the identical selected path and issue no forbidden ordinary build/run command. | real phase-table argv and gate-entry seam | observed red: `! rg -n 'runPhasesConcurrent' internal/gate/runner.go` exited 1, while the same source assertion found the phase-owned build and gate-go `go run` | Assembled argv exposes the current phase-owned build and gate-go fallback. |
+| RS5 | 2 | Every unchanged-host helper under `internal/gate` uses the inherited selected executable and cannot invoke the canonical builder itself. | internal gate helper seam plus structural census | observed red: the ordinary-helper assertion found `internal/gate/runner_serial_test.go` invoking `scripts/go-build.sh` | Counting the real helper's builder trace catches a private test binary even if its bytes happen to match. |
+| RS6 | 2 | `internal/contract` coverage/command fixtures and `internal/preflight` unchanged-host helpers use the inherited selected executable; wrapper/cache fixtures copy or link its bytes, while changed-source proofs stay independent. | contract/preflight helper and fixture-command seam | observed red: the ordinary-helper assertion found one contract and five preflight subject-builder call sites | The helper census and real coverage command tests catch repeated current-subject builds while the exception rows keep distinct-source proofs meaningful. |
+| RS7 | 2 | A nested canary gate receives the exact outer selected path unchanged and builds zero; missing, relative, stale, symlinked, special, or source-mismatched inheritance refuses before a phase. | real canary outer-to-inner process seam | not TDD-able before RS1: no inherited selected-path seam exists to mutate; the expansion ticket adds it before this migration | A real nested process plus a builder trap distinguishes inheritance from a hidden authoring fallback. |
+| RS8 | 1 | Once an owner creates a run directory, canonical-builder failure, green, red, post-owner refusal, timeout, and interrupt all reap any descendants and remove partial output plus the directory; no executable or seal survives. | injected owner lifecycle plus real process-group seam | not TDD-able before RS1: the current tree has no private run-directory owner whose teardown can be observed | Builder and child failure injection at each terminal edge proves both partial-output cleanup and teardown-before-remove ordering. |
+| RS9 | 2 | The structural census rejects every ordinary `go build`, `go run ./cmd/bench`, `go run ./internal/freshness/check`, and subject builder outside the single owners, while accepting only the enumerated cross-target, release, artifact-posture/reproducibility, changed-source, alternate-package, linker/publication, and test-executable proofs. | default conformance structural census | observed red: the entrypoint, gate-plumbing, and ordinary-helper source assertions all exited 1 | An exact allowlist makes a new ordinary constructor red instead of letting a category label excuse it. |
+| SG1 | 3 | Every outer and inner phase-table invocation runs at most one phase process and chooses ready phases in stable declaration order. | real scheduler max-active seam | observed red: `! rg -n 'TestSchedulerOverlapsIndependents' internal/gate/runner_serial_test.go` exited 1, and the same assertion found concurrent runner symbols | The current positive overlap test and concurrent runner make the cheapest parallel implementation observable. |
+| SG2 | 3 | Primary and stripped phases share one serial topological schedule with the correct execution root for each phase. | split-table composition seam | observed red: the SG1 source assertion found the independent `primaryDone` goroutine and stripped schedule | One global max-active counter fails if either table or their composition overlaps. |
+| SG3 | 3 | Serial execution preserves needs order, red-dependent skips, optional skips, execution of unrelated phases, and aggregate-red result. | scheduler result seam | already covered by `TestSchedulerRespectsNeeds`, `TestSchedulerSkipsDependentsOfRed`, `TestSchedulerPropagatesOptionalSkip`, and runner red tests | These independent outcomes go red if serialization is implemented as fail-fast or declaration-only execution. |
+| SG4 | 3 | Interrupt and timeout cancel the active process group, reap a leader's remaining descendants, return the established code, and only then allow owner cleanup. | scheduler/process-group and owner lifecycle junction | already covered in part by `TestPhasesCommandSignalCancelsRunningPhaseGroups`, `TestRunnerCancelKillsGroup`, and `TestExecuteCancellationKillsDescendantAfterLeaderExits`; RS8 adds cleanup order | Existing process assertions preserve cancellation while the lifecycle marker detects premature directory removal. |
 
 ### Edge inventory
 
-- Duplicate/reordered/repeated same-key requests: SB1.
-- Separate focused tests, sibling packages from one `go test ./...`, and a
-  gate racing for the same identity: SB1/SB6; the repository attempt lock
-  admits one author and all others read the completed record.
-- Source changes during identity resolution or construction: SB2/SB3; the
-  completed artifact is re-verified against the accepted generation before it
-  is published, and movement refuses rather than relabeling bytes.
-- Target-conditional source selected only by Windows, Unix, architecture, CGO,
-  or build tags: SB2; enumeration and the post-build recheck both run under the
-  requested target.
-- Foreign, empty, duplicated, malformed, or forged artifact/authority
-  environment: SB3, SB4, ZC4.
-- Artifact-store fault injection and repair: SB3; every test uses an injected
-  isolated store root and never discovers the live repository store.
-- Output and source paths containing spaces, newlines, leading dashes, or
-  symlinks; special files at artifact, authority, or manifest paths: SB2/SB3.
-- Read-only filesystem, hardlink refusal, cross-device materialization, and an
-  existing destination: SB3/SB8 plus the existing copy/detach/replace
-  witnesses.
-- Concurrent first request, producer failure, waiter cancellation, parent
-  death, closed descriptor, and cleanup after partial construction: SB1, SB3,
-  ZC4, ZC6.
-- Zero phases, one phase, unsatisfied needs, a red producer, optional absent
-  tools, and primary/stripped tables of unequal size: ZC1.
-- A live outer canary parent waiting on an inner phase: ZC1/ZC4; the parent is
-  logically live but quiescent, and the child owns the transferred turn.
-- One-core and many-core hosts; hostile width environment and flags: ZC2/ZC7.
-- Empty canary selection, one item, multiple packages, failed compile, empty
-  baseline, and interrupted bite: ZC3/ZC6.
-- Coordination tests that require simultaneous callers: ZC5; callers may
-  overlap, but their resource jobs cannot.
-- Cross-platform and cross-mode release builds: SB2/SB5; each target/mode is a
-  distinct identity and runs serially.
-- Missing/stale freshness verifier, stale CLI, nested gate entry, and verifier
-  source movement: SB2/SB3/SB7; no case falls back to `go run`.
-- Total wall beyond 45 minutes with continued progress versus one 45-minute
-  stall, including per-package progress inside the core test phase: ZC8.
-- Two gate entries from distinct worktrees of one repository: ZC9; the
-  common-Git-dir owner admits one lineage and refuses the other before work.
-- Re-run after an unchanged green: the gate verdict may still be reused under
-  its existing subject contract; when work runs, this spec's capacity and
-  artifact rules apply.
-- **Won't handle:** unrelated user, IDE, CI, or operating-system processes —
-  Bench cannot serialize work it did not create or authorize, and this spec
-  makes no whole-machine idle claim. A second Bench gate for the same
-  repository is not in this exclusion; ZC9 refuses it.
-- **Won't handle:** automatically retrying or deleting a failed/corrupt
-  unchanged identity — transparent repair can recreate the repeated work and
-  hide store corruption, so the explicit repair operation owns that action.
-- **Won't handle:** removing lightweight concurrency from tests whose behavior
-  is lock exclusion, cancellation, process ownership, or atomicity — serializing
-  their resource work preserves the required overlap without weakening those
-  claims.
+- Empty phase table — SG1 records zero active processes and green without constructing another binary.
+- One phase and unequal primary/stripped partitions — SG1 and SG2 use the same scheduler and never require both partitions to be non-empty.
+- Multiple simultaneously ready phases — SG1 requires stable declaration order with a maximum active count of one.
+- Red prerequisite, optional missing tool, unrelated ready phase, and multiple reds — SG3 preserves dependent skips, optional skips, unrelated execution, and aggregate red.
+- Interrupt before build, during build, during a phase, after the leader exits, and during cleanup — RS2, RS8, and SG4 bound each transition and require descendant reap before removal when an owner exists.
+- Canonical builder creates partial executable or seal output and exits red — RS8 requires no child launch and removes every partial path plus the private directory.
+- Timeout during a phase — RS8 and SG4 preserve exit 124, evidence invalidation, process-group teardown, and cleanup.
+- Source changes before ownership, during build, or after selection — RS1 and RS2 bind the path to the accepted snapshot; drift refuses the run without a second build.
+- Prospective materialization and a linked-project kit — RS2 selects the materialized Bench source for a Bench candidate and the captured wrapper-selected kit for a linked non-Bench subject.
+- Repository and temporary paths containing spaces or shell metacharacters — RS1 and RS4 carry argv values without shell interpolation.
+- Relative, missing, empty, symlinked, special, non-executable, stale-sealed, source-mismatched, or hostile ambient selected paths — RS1 and RS7 refuse before ordinary consumers.
+- Nested gate with a valid inherited path — RS7 records identical absolute path, inode, and digest at both levels and a zero nested builder count.
+- Repeated red then green ticket testing — RS3 observes different private paths and exact source identities, never a worktree-lifetime cache entry.
+- `go test` package compilation — RS4 permits ordinary test executables while RS9 rejects a second Bench CLI build initiated by those tests.
+- Cross-target, release, reproducibility, changed-source, alternate-package, linker/publication, and `go test -c` proofs — RS9 enumerates their exact owners and keeps each independently observable.
+- Cleanup after an owner-setup refusal — RS8 removes partial executable, seal, and directory state.
+
+**Won't handle:** durable artifact corruption and repair — no run artifact survives to be discovered or repaired.
+
+**Won't handle:** cross-worktree simultaneous gates — existing admission policy is unchanged; this build bounds only phase execution inside one run.
+
+**Won't handle:** canary fixture-worker overlap — the global canary worker policy is unchanged; only each phase-table invocation is serial.
+
+**Won't handle:** arbitrary subprocess CPU, memory, file, or network resources — the scheduler serializes phase processes, not all descendants or external work.
+
+**Won't handle:** release-target identity unification — independent proof builds keep their current target and authorship semantics.
 
 ## Out of scope
 
-- A host-wide broker coordinating unrelated Bench repositories or external
-  tools: approximately 8–12 edits and 3 gate runs; it requires a security and
-  stale-owner policy beyond this repository-owned contract.
-- Automatic garbage collection or size-based eviction of obsolete successful
-  artifact identities: approximately 6–10 edits and 3 gate runs; content
-  addressing makes old generations inert, while deletion/retention policy is a
-  separate storage-management capability.
-- Reducing, skipping, diff-scoping, or memoizing any gate check: zero checks are
-  removed and green semantics remain unchanged.
-- Parallel release production across platform targets: targets are distinct
-  artifact identities and this spec deliberately runs them one at a time when
-  launched by Bench.
+- Durable or cross-run artifact storage: 24 edits, 4 gate runs. It is a separate cache/store capability and conflicts with private run lifetime.
+- Later-process lookup or reuse of a prior run's executable: 12 edits, 3 gate runs. It requires durable discovery, currency, and repair policy.
+- Target-aware proof migration into the selected host executable: 22 edits, 4 gate runs. Those proofs intentionally observe different targets or sources.
+- A separately built freshness-verifier artifact: 10 edits, 2 gate runs. The selected Bench binary already owns `freshness-check`.
+- Transferable process-tree authority tokens: 18 edits, 3 gate runs. Nested gates carry only the validated selected path and existing gate context.
+- The 45-minute progress watchdog: 14 edits, 3 gate runs. This build preserves existing timeout policy.
+- Arbitrary subprocess/resource serialization: 20 edits, 3 gate runs. Only phase-table process admission changes.
+- Global canary-worker serialization: 14 edits, 3 gate runs. Canary internals retain their independent worker policy.
+- Cross-worktree or common-Git-directory admission changes: 16 edits, 3 gate runs. Existing gate lock behavior remains authoritative.
+- Converting `.bench/gate.sh` into a Go module or Go entry point: 8 edits, 2 gate runs. The project gate remains shell and delegates to the selected binary.
