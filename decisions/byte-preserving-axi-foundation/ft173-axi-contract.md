@@ -24,7 +24,7 @@ Re-read the current published AXI contract, `craft-cli`, command registry, outpu
 helpers, and contract tests. Record every principle, its current documented and
 implemented owner, all independent derivations, uncovered surfaces, and the exact
 compatibility or gate assertion that constrains consolidation in
-`specs/byte-preserving-axi-foundation/decisions/assets/ft173-axi-surface-census.md`.
+`decisions/byte-preserving-axi-foundation/assets/ft173-axi-surface-census.md`.
 
 ### Answer
 
@@ -42,7 +42,7 @@ registry-wide `subcommand-routing` assertion still scans the former dispatcher
 shape instead of `commandRegistry`/`Command.Run`, so it does not currently close
 the help/grammar inventory. The complete census, current counts, exact owners,
 and compatibility assertions are recorded in
-`specs/byte-preserving-axi-foundation/decisions/assets/ft173-axi-surface-census.md`.
+`decisions/byte-preserving-axi-foundation/assets/ft173-axi-surface-census.md`.
 
 ## #2: What contextual help does real command usage require?
 
@@ -57,7 +57,7 @@ refusal, stale-state, and recovery cases; the state already known to the command
 the exact useful next action; and whether a contextual `help[]` row would have
 prevented another turn. Name any unavailable log source rather than substituting
 sampled commands. Store the evidence in
-`specs/byte-preserving-axi-foundation/decisions/assets/ft173-command-help-inventory.md`.
+`decisions/byte-preserving-axi-foundation/assets/ft173-command-help-inventory.md`.
 
 ### Answer
 
@@ -69,7 +69,7 @@ serve as the inventory owner because it hard-codes only `version`, itself, and
 `status`.
 
 Every declared call is inventoried in
-`specs/byte-preserving-axi-foundation/decisions/assets/ft173-command-help-inventory.md`, including unobserved public
+`decisions/byte-preserving-axi-foundation/assets/ft173-command-help-inventory.md`, including unobserved public
 and plumbing surfaces. The available Claude corpus supplies the decisive
 wrong-remedy trace: `bench spec build start` knew exact-green evidence was absent
 but suggested plain `bench gate` where only `bench gate --fresh` could satisfy
@@ -94,7 +94,7 @@ exit-code, and contextual-help derivations to their current owners and consumers
 Identify which moves can preserve bytes, which necessarily change public output,
 which consumers parse that output, and which exact mutation or paired-delta probe
 proves each shared helper still bites. Store the result in
-`specs/byte-preserving-axi-foundation/decisions/assets/ft173-helper-compatibility-census.md`.
+`decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`.
 
 ### Answer
 
@@ -119,7 +119,7 @@ rendering can remain byte-preserving behind current renderers. `help[]`, changed
 actions or refusals, new family homes/flags/schemas, coherent Git snapshots, and the
 full spec-build AXI envelope necessarily change output and require separately approved
 paired deltas. The complete owner/consumer ledger and mutation matrix are recorded in
-`specs/byte-preserving-axi-foundation/decisions/assets/ft173-helper-compatibility-census.md`.
+`decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`.
 
 ## #4: Which CLI surfaces must satisfy the complete AXI contract?
 
@@ -199,11 +199,12 @@ explicitly shippable.
 
 ### Answer
 
-FT173 ships as four independently reviewed specs. The first is a byte-preserving
-AXI foundation: it states the complete ten-principle contract and introduces the
-shared typed outcome, action, bounds, aggregate, registry, and rendering mechanics
-behind existing output. It emits no `help[]` and changes no existing command bytes,
-streams, exits, or accepted argv.
+FT173 ships as eight independently reviewed specs. The byte-preserving foundation
+is five ordered capabilities: an exact compatibility oracle; shared carriers and
+registry declarations; outcome/action migration; bounded-projection migration;
+and aggregate/empty migration. Each capability is independently promotable, emits
+no `help[]`, and changes no existing command bytes, streams, exits, or accepted
+argv.
 
 After that foundation, two sibling public-output migrations may proceed
 independently. One makes every `bench spec build` operation AXI-complete and emits
@@ -214,7 +215,7 @@ decided in #6 and emits its contextual actions in that same atomic output migrat
 The spec-build slice is prioritized when FT185 is available; the Git slice does not
 block it.
 
-The fourth spec completes contextual disclosure across the remaining approved
+The eighth spec completes contextual disclosure across the remaining approved
 surfaces after their output schemas are stable. It consumes the exhaustive command
 inventory, leaves terminal and caller-owned plumbing without invented busywork, and
 does not rewrite the already-migrated spec-build or diff contracts. This dependency
@@ -350,12 +351,23 @@ schema diagnostic.
 
 Each approved slice is independently useful and falsifiable:
 
-- **Byte-preserving foundation:** acceptance is one complete ten-principle owner and
-  shared typed mechanics reached by the existing call sites with no public delta. Its
-  fence is AXI guidance, registry declarations, reusable output mechanics, and only the
-  call-site routing required to consolidate them. Any exact baseline/candidate mismatch
-  is red; focused cap, unit, total, unknown, empty, error, exit, and argv mutations prove
-  the responsible helper bites.
+- **Compatibility oracle:** acceptance is one pinned baseline/candidate matrix over
+  every production member and argv class, comparing stdout, stderr, exit, and
+  acceptance. Its fence is the manifest, case derivation, and paired executor.
+- **Carriers and registry:** acceptance is one complete ten-principle owner plus typed
+  outcome, action, projection, aggregate, empty, and registry mechanics with inert
+  metadata. Its fence is the shared owner, production declarations, conformance, and
+  exact guidance advertisements.
+- **Outcome/action migration:** acceptance is production reachability for every declared
+  outcome/action route with domain kinds, exits, actions, and bytes preserved. Its fence
+  is the existing command families plus route conformance and contraction.
+- **Bounded-projection migration:** acceptance is production reachability for all four
+  owner-specific policies without cap, unit, total, full-mode, or authority movement.
+  Its fence is sanitize, roadmap, worktree, outline, conformance, and contraction.
+- **Aggregate/empty migration:** acceptance is production reachability for every ordered
+  aggregate and exact empty class without inferred totals, unknown coercion, or empty
+  normalization. Its fence is the named semantic owners, registry, conformance, and
+  contraction.
 - **Full-AXI spec build:** acceptance is one consistent ten-principle response contract
   across every operation and lifecycle state, including exact contextual actions. Its
   fence is the lifecycle envelope and action rendering; it composes but does not
@@ -377,11 +389,11 @@ Each approved slice is independently useful and falsifiable:
   spec starts from the harness-log opportunity asset required by #9 and accounts for
   every finding through an acceptance row or an explicit disposition.
 
-The first spec is the byte-preserving foundation. The full-AXI spec-build and coherent
-diff atomic surface migrations follow it, with spec build prioritized once FT185 is
-available. Remaining contextual disclosure is the fourth and final capstone after those
-output schemas stabilize. Spec writers retain only the bounded discretion already listed
-below.
+The five byte-preserving specs land in the order listed above. The full-AXI spec-build
+and coherent diff atomic surface migrations follow them, with spec build prioritized once
+FT185 is available. Remaining contextual disclosure is the eighth and final capstone
+after those output schemas stabilize. Spec writers retain only the bounded discretion
+already listed below.
 
 ## Not yet specified
 
@@ -414,13 +426,13 @@ below.
 - Path: `.agents/skills/bench-craft-cli/SKILL.md`
   Supports: #1 current seven-principle project guidance and query-surface posture.
   Drift: re-read after any AXI guidance edit.
-- Path: `specs/byte-preserving-axi-foundation/decisions/assets/ft173-axi-surface-census.md`
+- Path: `decisions/byte-preserving-axi-foundation/assets/ft173-axi-surface-census.md`
   Supports: #1 and #7 through #10 current ten-principle implementation owners, independent derivations, uncovered surfaces, and exact compatibility or gate assertions.
   Drift: re-run after any command-registry, TOON, usage, truncation, output-helper, spec-build renderer, or AXI contract change.
-- Path: `specs/byte-preserving-axi-foundation/decisions/assets/ft173-command-help-inventory.md`
+- Path: `decisions/byte-preserving-axi-foundation/assets/ft173-command-help-inventory.md`
   Supports: #2 and #7 through #10 exhaustive current CLI and nested-operation contextual-help inventory, usage-log boundary, state-carrying next actions, and wrong-remedy evidence.
   Drift: re-run after any command-registry, wrapper routing, nested grammar, action/next renderer, or named usage-log corpus change.
-- Path: `specs/byte-preserving-axi-foundation/decisions/assets/ft173-helper-compatibility-census.md`
+- Path: `decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`
   Supports: #3 and #7 through #10 current helper owners and consumers, byte-preserving versus output-changing moves, runtime parser census, and exact paired-delta or mutation obligations.
   Drift: re-run after any TOON, usage, truncation, aggregate, empty-state, error/exit, contextual-action, renderer, or command-consumer change.
 - Path: `decisions/spec-build-review-gate-cadence.md`

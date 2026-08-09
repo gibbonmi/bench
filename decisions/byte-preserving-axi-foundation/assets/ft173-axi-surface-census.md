@@ -1,6 +1,6 @@
 # FT173 current AXI surface census
 
-Evidence asset for `specs/byte-preserving-axi-foundation/decisions/ft173-axi-contract.md` ticket #1. Inspected
+Evidence asset for `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md` ticket #1. Inspected
 2026-08-09 at `974020e4af8de5ed75098c4c5934a8907952bb2b`. This is a
 source census only: no command behavior was changed and no gate or test command was
 run.
@@ -22,7 +22,7 @@ Bench has three different statements of that boundary today:
   list` (`projects/benchkit.md:40-52`).
 - The FT173 map now requires all ten principles for every `bench spec build`
   operation while leaving other operational families outside that automatic
-  widening (`specs/byte-preserving-axi-foundation/decisions/ft173-axi-contract.md:124-148`).
+  widening (`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md:124-148`).
 
 The production registry contains 48 root names, but a command definition carries
 only `Name`, `Attachment`, and `Run`; it cannot declare AXI scope, output schema,

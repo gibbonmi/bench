@@ -2,7 +2,7 @@
 
 Subject: `974020e4af8de5ed75098c4c5934a8907952bb2b`
 
-This is the ticket #2 research object for `specs/byte-preserving-axi-foundation/decisions/ft173-axi-contract.md`. It
+This is the ticket #2 research object for `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`. It
 inventories the current executable surface, the state each call already owns at
 return time, and the next command that state can make concrete. It does not choose
 the compatibility boundary or implement `help[]`.

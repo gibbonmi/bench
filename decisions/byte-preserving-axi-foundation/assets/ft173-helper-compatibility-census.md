@@ -1,6 +1,6 @@
 # FT173 helper and byte-compatibility census
 
-Evidence asset for `specs/byte-preserving-axi-foundation/decisions/ft173-axi-contract.md` ticket #3. Inspected
+Evidence asset for `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md` ticket #3. Inspected
 2026-08-09 at `974020e4af8de5ed75098c4c5934a8907952bb2b`. This is a
 read-only source census: no command behavior was changed and no test or gate command
 was run.
@@ -180,9 +180,9 @@ This is the compatibility boundary tickets #7 and #8 must carry forward.
   guidance, output/error rules, and paired-delta expectation.
 - `ROADMAP.md` — FT173 byte-preservation, contextual-disclosure exception, Git-owner,
   and no-double-truncation constraints.
-- `specs/byte-preserving-axi-foundation/decisions/assets/ft173-axi-surface-census.md` — command/call-site counts and
+- `decisions/byte-preserving-axi-foundation/assets/ft173-axi-surface-census.md` — command/call-site counts and
   ten-principle implementation census.
-- `specs/byte-preserving-axi-foundation/decisions/assets/ft173-command-help-inventory.md` — exhaustive action surface and
+- `decisions/byte-preserving-axi-foundation/assets/ft173-command-help-inventory.md` — exhaustive action surface and
   exact known-value/placeholder requirements.
 - `internal/toon`, `internal/usage`, `internal/sanitize`, `internal/roadmap`,
   `internal/worktree`, `internal/outline`, `internal/status`, `internal/handoff`,

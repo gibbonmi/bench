@@ -2426,20 +2426,21 @@ gate's reduced scope, so every separately-landed prose diff pays a full gate
 files couple prose diffs to conformance fixture updates (`craft-delegate` 14
 anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and AXI
 foundation mechanics compound through every later CLI change. FT173 is the
-top roadmap priority and lands its four independently reviewed specs before
+top roadmap priority and lands its eight independently reviewed specs before
 the prose track resumes.
 
-1. Implement FT173 in four independently reviewed specs, foundation first.
-   Start with the staged
-   `specs/byte-preserving-axi-foundation/spec.md`: AXI principles 8–10 enter
-   `craft-cli`, AXI stays scoped to query surfaces, truncation and aggregate
-   mechanics consolidate without changing emitted bytes, and the pinned
-   contract suite guards compatibility. Follow with the full-AXI spec-build
-   migration once FT185 is available and the coherent `bench diff` migration.
-   Write remaining contextual disclosure (`help[]`) as the fourth and final
-   capstone after those schemas stabilize; its required harness-log review
-   folds observed CLI leverage into the spec or gives it an explicit
-   disposition. FT173 remains open until all four land.
+1. Implement FT173 in eight independently reviewed specs, foundation sequence
+   first. The staged sequence is `axi-compatibility-oracle`,
+   `axi-carriers-and-registry`, `axi-outcome-action-migration`,
+   `axi-bounded-projection-migration`, then `axi-aggregate-empty-migration`.
+   It establishes the pinned oracle, records AXI principles 8–10 while keeping
+   AXI scoped to approved query surfaces, and consolidates outcome, action,
+   truncation, aggregate, and empty mechanics without changing emitted bytes.
+   Follow with the full-AXI spec-build migration once FT185 is available and
+   the coherent `bench diff` migration. Write remaining contextual disclosure
+   (`help[]`) as the eighth and final capstone after those schemas stabilize;
+   its required harness-log review folds observed CLI leverage into the spec
+   or gives it an explicit disposition. FT173 remains open until all eight land.
 2. Take FT144's one-decision-both-phases call as the remaining shaping item.
    Reviewer latency is the binding constraint: grills serialize on the reviewer
    while builds parallelize on agents. Five of the original six items have
@@ -2494,6 +2495,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT173 byte-preserving AXI foundation, using the staged `specs/byte-preserving-axi-foundation/spec.md`; follow it with full-AXI spec-build and coherent-diff migrations, then the harness-log-informed contextual-disclosure capstone.
+1. `/bench-implement-spec` — FT173 byte-preserving AXI foundation, starting with staged `specs/axi-compatibility-oracle/spec.md`, then `axi-carriers-and-registry`, `axi-outcome-action-migration`, `axi-bounded-projection-migration`, and `axi-aggregate-empty-migration`; follow with full-AXI spec-build and coherent-diff migrations, then the harness-log-informed contextual-disclosure capstone.
 2. `/bench-shape-idea` — FT171 gate fix: record landed #23, close #24 and #25, then run #26's exact post-route census before the candidate outer-width decision.
 3. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
