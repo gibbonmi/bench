@@ -574,6 +574,9 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 				restarting := run
 				restarting.Spec, restarting.SpecTip = subject.spec, subject.specTip
 				if _, err := s.preconditions(mutationStart, slug, resolved, &restarting, "", ""); !errors.Is(err, errRecompose) {
+					if err != nil {
+						return Status{}, err
+					}
 					return Status{}, preconditionErr
 				}
 			}
