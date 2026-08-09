@@ -45,3 +45,21 @@ compare the resulting slices and blocking edges with the pre-change behavior;
 and reject or reslice a candidate that cannot reproduce its keep-together red,
 makes unrelated tickets wider, or introduces a second source for fixture or
 anchor knowledge.
+
+## 2026-08-09 — Phase-close capture must not repay the authoritative gate  [open]
+
+A spec promotion owns the exact composed gate and landing, but required phase-close
+retro or learning capture happens after that terminal outcome. Writing the tracked
+capture then makes the tree look like new ungated work and routes the session toward
+an immediate second whole-project gate, even though the only new content records the
+outcome of the gate that just completed.
+
+The right behavior is to keep phase-close capture durable and reviewable without
+automatically paying the whole-project oracle again. The capture must not weaken or
+misstate project-green authority, and its eventual reviewed drain still needs an
+ordinary authoritative landing path.
+
+Proposed rule change: define a capture-only accounting path for post-promotion retros
+and learnings. It should preserve the sole promotion gate, avoid an immediate
+follow-up gate solely because capture was recorded, and make the deferred capture
+visible to the next reviewed drain rather than silently treating it as shipped code.
