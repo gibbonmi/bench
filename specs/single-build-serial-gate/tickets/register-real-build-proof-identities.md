@@ -3,7 +3,7 @@
 Blocked by: share-artifacts-across-local-processes.md, resolve-target-aware-artifact-identities.md
 Ownership fence: `internal/artifactstore/`
 Integration surfaces: proof backend→share-artifacts-across-local-processes.md; target-aware fields→resolve-target-aware-artifact-identities.md; closed `ProofRequest`→migrate-gate-real-build-proof-consumers.md; closed `ProofRequest`→migrate-contract-preflight-release-proof-consumers.md; closed `ProofRequest`→migrate-conformance-release-target-proof-consumers.md; closed `ProofRequest`→migrate-preprelease-install-proof-consumers.md; migrated inventory→route-real-build-proofs-through-registered-identities.md; proof registry contraction→enforce-the-executable-artifact-contract.md
-Contracts: `ProofRequest` (proof class, exact source/package/bytes/authorship/target/failure fields, closed slot) crosses registered proof owners→private artifact backend, membership is a finite proof-class and authorship-slot registry, ordering is validate membership then resolve exact identity, absence or caller-invented fields refuse before backend execution, asserted by PR1 against the real registry
+Contracts: `ProofRequest` (proof class, exact source/package/bytes/authorship/target/failure fields, closed slot) crosses registered proof owners→the private backend in `internal/artifactstore/`, membership is a finite proof-class and authorship-slot registry, ordering is validate membership then resolve exact identity, absence or caller-invented fields refuse before backend execution, asserted by PR1 against the real registry
 Closure: PR1/finite-class-registry, PR1/finite-slot-registry, PR1/no-caller-nonce, PR1/unknown-class-refusal
 
 ## What to build
