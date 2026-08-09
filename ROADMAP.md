@@ -593,6 +593,21 @@ generic-worktree landing must name the destination branch and preserve a usable
 verdict across the worktree-to-main transition. Source: the covers-traceability
 retro, drained here.
 
+**FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one
+repository-wide ref inventory.** `bench worktree recovery` and the existing
+cleanup paths act on one known target at a time; they do not classify every
+non-default branch before a reviewer decides what may leave. Add `bench branches
+retire [--discard <branch>...] [--apply <fingerprint>]` as the coordinator over
+the existing worktree landedness, cleanup, and recovery seams. Its plan classifies
+each non-default ref as active, landed, recover, review, or explicit discard.
+Apply binds that complete inventory to one exact fingerprint, preserves dirty
+unpublished work under recovery refs, deletes only refs still at their planned
+OIDs, and refuses concurrent drift. It never auto-lands unique content or falls
+back to raw `git branch -D`. The destructive classifications, policy for refs
+outside registered worktrees, and relationship to FT98's per-payload discard
+remain reviewer decisions. Entry: `/bench-shape-idea`. Source:
+`capture/IDEAS.md`, drained here.
+
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that
 traps automation and leaks on signals.** Reviewer ruling 2026-08-01: humans
 should not be driving the `bench` CLI in the vast majority of cases, and

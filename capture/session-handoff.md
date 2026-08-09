@@ -2,19 +2,19 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `14deeb42`; the `$bench-what-next` batch is uncommitted.
-Spec: `byte-preserving-axi-foundation` remains staged.
-Gate: green at `2000f0a` — stale against the pending batch.
+Branch: `main` — HEAD `355f51c4`; the `$bench-what-next` batch is uncommitted.
+Specs: `byte-preserving-axi-foundation` and `single-build-serial-gate` remain staged.
+Gate: green verdict exists but is stale against the pending batch.
 
 ## State
 
-`branch-native-build-test-architecture` is retired in the pending roadmap-drain
-batch. The two implementation retros and three open learnings are drained into
-FT162, FT171, FT98, FT102, FT168, FT174, and FT184; the unrelated
+The pending drain adds FT199 for a recovery-aware branch-retirement coordinator
+and empties `capture/IDEAS.md`. The snapshot reported no pending retros, no open
+learnings, and no occurrence discrepancies. The unrelated
 `decisions/spec-build-review-gate-cadence.md` remains outside the batch.
 
-The batch awaits reviewer approval. It must be committed once, on green, with a
-subject ending `spec-retire: branch-native-build-test-architecture`.
+The batch awaits reviewer approval. On approval, run the gate and commit the
+batch once; no spec retirement suffix applies.
 
 ## Next command
 
