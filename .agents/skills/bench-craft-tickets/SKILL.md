@@ -39,10 +39,12 @@ migrate batch cannot, the expansion or prefactor is incomplete, or the batch
 is too wide; repair the preparation or split the batch before proceeding.
 
 `craft-spec` owns the spec-time **who-writes-where** fence. This skill owns the
-build-time **what-lands-green-next** unit. A repair ticket derived from a
-debug receipt takes its ownership fence from the receipt's required paths —
-never from the blocked ticket's fence, which the repair must stay out of. Apply the fence by name; do not
-restate or redraw it here.
+build-time **what-lands-green-next** unit. For a validated debug receipt, the
+receipt's required fence is the maximum envelope for repair reslicing; apply
+the ordinary independently-green split rule inside it. The result may be one
+repair ticket or a reciprocal ordered producer-to-consumer chain. The union of
+every repair-ticket ownership fence stays inside the receipt's required fence.
+No repair-ticket ownership fence comes from the blocked ticket's fence.
 
 ## Draft the breakdown
 

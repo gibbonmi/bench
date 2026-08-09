@@ -1,6 +1,6 @@
 # Repair-ticket reslicing
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation on 2026-08-08
 

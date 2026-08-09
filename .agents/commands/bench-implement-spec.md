@@ -177,35 +177,49 @@ reviewer-run pass produces the debug receipt — the blocked report's evidence p
 the confirmed cause, the paths the repair must own, and whether the ticket can
 proceed once the repair lands. Nothing below runs until the receipt exists.
 
-That receipt takes a repair ticket, never a small spec: it already fixes the
-cause, owned paths, and proceed-condition, so a spec would only restate it. The
-ticket adds what the receipt does not: an ownership fence, an acceptance row,
-and a red mutation for the probes to run against.
+`craft-tickets` is the sole repair-reslicing owner. The coordinator charges
+`craft-tickets` with the validated receipt and applies its guidance. The receipt
+already fixes the cause, required fence, and proceed condition, so it takes one
+or more repair tickets, never a small spec. Each ticket adds its own ownership
+fence, at least one acceptance row, and each row's red mutation.
+One repair ticket remains the common case. This command owns only the resulting
+tickets' lifecycle orchestration.
 
-The coordinator derives that ticket from the reviewer-produced receipt; the
-implementing delegate never authors its own acceptance criteria. Having the
-delegate draft them for coordinator approval adds no independent source, only
-a round trip.
+The coordinator authors every repair ticket file; the implementing delegates
+never author their own acceptance criteria. Having them draft criteria for
+coordinator approval adds no independent source, only a round trip.
 
-With the receipt in hand, the coordinator drives the repair through the public
-lifecycle, no synthesized commits, refs, worktrees, or patch replay:
+With the receipt and coordinator-authored tickets in hand, the coordinator
+drives the repair through the public lifecycle, with no synthesized commits,
+refs, worktrees, or patch replay:
 
-1. Derive an ownership-fenced repair ticket from the receipt's required paths
-   (`craft-tickets`), write it under `specs/<slug>/tickets/`, and land it with
-   path-scoped `bench commit`.
-2. `bench spec build promote <slug>` recomposes the run onto the moved tip —
-   the same recomposition rule as any branch-tip move.
-3. Assign, checkpoint, and integrate the repair ticket through the ordinary
-   operations.
-4. Re-base the blocked assignment onto the repaired candidate with
-   `bench spec build assign <slug> --ticket <ticket> --request <id> --refresh
-   <receipt>` — the request the assignment was created under, with the
-   reviewer-run debug receipt as the refresh evidence. The lifecycle preserves
-   the assignment's attributed in-fence work byte-for-byte behind a durable
-   preservation ref, refuses a forged or missing receipt, an out-of-fence
-   payload, a replay conflict, or candidate movement, and an interrupted
-   refresh converges on re-entry.
-5. Resume the original delegate only after the refresh reports the assignment
+1. Write every repair ticket under `specs/<slug>/tickets/`, then land that
+   planning batch with path-scoped `bench commit`.
+2. The planning commit moves the branch tip. Apply the moved-tip recomposition
+   rule under `Close on green` before assigning any repair ticket.
+3. For the one-ticket common case or an ordered repair chain, follow the
+   ready-frontier cadence under `First derive the tickets` and apply every
+   ordinary operation to every ticket:
+   - Assign each repair ticket through the ordinary `assign` operation.
+   - Checkpoint each assigned repair ticket through the ordinary `checkpoint`
+     operation.
+   - Integrate each checkpointed repair ticket through the ordinary `integrate`
+     operation.
+4. The terminal repair ticket's proceed condition is a precondition to refresh. A
+   landed non-terminal prefix does not satisfy it and does not authorize refresh.
+5. Only after either the one-ticket result or the complete ordered repair chain
+   lands and its terminal repair ticket satisfies that precondition, refresh the
+   blocked work. The refresh target is the original blocked assignment:
+   the same assignment whose delegate reported the out-of-fence defect. The refresh
+   evidence is the original validated debug receipt: the same receipt the reviewer
+   accepted for that assignment. Invoke `bench spec build assign <slug>
+   --ticket <ticket> --request <id> --refresh <receipt>` with the request the
+   assignment was created under. The lifecycle preserves the assignment's
+   attributed in-fence work byte-for-byte behind a durable preservation ref,
+   refuses a forged or missing receipt, an out-of-fence payload, a replay
+   conflict, or candidate movement, and an interrupted refresh converges on
+   re-entry.
+6. Resume the original delegate only after the refresh reports the assignment
    based on the repaired candidate; it completes, checkpoints, and integrates
    through the ordinary path.
 

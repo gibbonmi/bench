@@ -71,7 +71,43 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 }
 
 func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T) {
+	const (
+		repairEnvelopeDiag   = ".agents/skills/bench-craft-tickets/SKILL.md dropped the debug receipt's maximum repair envelope"
+		repairResultDiag     = ".agents/skills/bench-craft-tickets/SKILL.md dropped the one-ticket-or-reciprocal-chain repair result"
+		repairChainOnlyDiag  = ".agents/skills/bench-craft-tickets/SKILL.md contains an additive chain-only repair mandate for validated debug receipts"
+		repairUnionDiag      = ".agents/skills/bench-craft-tickets/SKILL.md dropped repair-ticket fence union containment"
+		repairEscapeDiag     = ".agents/skills/bench-craft-tickets/SKILL.md permits a repair ticket to escape the debug receipt's required fence"
+		repairOwnerDiag      = "bench-implement-spec dropped the craft-tickets repair-reslicing owner pointer"
+		repairCommonDiag     = "bench-implement-spec dropped the one-repair-ticket common case"
+		repairSingularDiag   = "bench-implement-spec restores the singular exactly-one repair-ticket mandate"
+		repairAssignDiag     = "bench-implement-spec dropped ordinary assign for every repair-chain ticket"
+		repairCheckDiag      = "bench-implement-spec dropped ordinary checkpoint for every repair-chain ticket"
+		repairIntegrateDiag  = "bench-implement-spec dropped ordinary integrate for every repair-chain ticket"
+		repairGitDiag        = "bench-implement-spec permits chain-local synthesized Git checkpoint plumbing"
+		repairTerminalDiag   = "bench-implement-spec dropped the terminal repair-ticket refresh precondition"
+		repairEarlyDiag      = "bench-implement-spec permits premature refresh after a non-terminal repair ticket"
+		repairAssignmentDiag = "bench-implement-spec replaced the original blocked assignment refresh identity"
+		repairReceiptDiag    = "bench-implement-spec replaced the original validated debug receipt identity"
+	)
 	h := NewHarness(t)
+	owner, ok := conformanceChecks["docs-currency-workflow"]
+	if !ok {
+		t.Fatal("docs-currency-workflow conformance owner is not bound")
+	}
+	root := h.KitRoot
+	diags := owner.run(root, h.KitRoot, registry.Dev)
+	for _, diag := range []string{
+		repairEnvelopeDiag, repairResultDiag, repairChainOnlyDiag,
+		repairUnionDiag, repairEscapeDiag,
+		repairOwnerDiag,
+		repairCommonDiag, repairSingularDiag, repairAssignDiag, repairCheckDiag,
+		repairIntegrateDiag, repairGitDiag,
+		repairTerminalDiag, repairEarlyDiag, repairAssignmentDiag, repairReceiptDiag,
+	} {
+		if containsDiagnostic(diags, diag) {
+			t.Fatalf("finished workflow guidance is not conformant with %q:\n%s", diag, strings.Join(diags, "\n"))
+		}
+	}
 	tests := []struct{ name, rel, old, replacement, diag string }{
 		{"lifecycle deletion", ".agents/commands/bench-implement-spec.md", "`start` → `assign` → `checkpoint` →\n`integrate` → `review` → `promote`; `status` inspects the run and `abandon`\nplans or applies cleanup.", "", "bench-implement-spec dropped or reordered the eight-operation spec-build lifecycle"},
 		{"initial capacity deletion", ".agents/commands/bench-implement-spec.md", "Re-derive the complete ready frontier and the harness's live capacity before\ndispatch. Assign every ownership-safe ticket up to the smaller of frontier size\nand available capacity.", "", "bench-implement-spec dropped initial frontier capacity dispatch"},
@@ -117,6 +153,23 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 		{"edge walk process boundary", ".agents/skills/bench-craft-spec/SKILL.md", "re-run idempotency, process-boundary lifecycle, hostile\nenvironment", "re-run idempotency, hostile\nenvironment", ".agents/skills/bench-craft-spec/SKILL.md dropped the process-boundary lifecycle class from the canonical edge-class run"},
 		{"profile process boundary entry", "projects/benchkit.md", "- state serialized by one process and reloaded by a fresh one: the writer's\n  in-memory value and the reader's re-parse agree at unit level and diverge\n  across the boundary, so the assertion drives a second process rather than\n  reusing the first's structures. Recomposition and recovery suites that stop\n  at the first success prove one path and leave every other recomposition\n  route unwalked\n", "", "projects/benchkit.md dropped the process-boundary lifecycle entry from the hostile-input checklist"},
 		{"contracts re-derivation", ".agents/skills/bench-craft-tickets/SKILL.md", "Re-derive each contract, and every claim a ticket makes about it, from the tree\nafter earlier tickets land — never from the spec's account of the base.", "Re-read each contract, and every claim a ticket makes about it, from the spec's account of the base.", ".agents/skills/bench-craft-tickets/SKILL.md dropped the re-derive-claims-from-the-tree rule from the contracts-discovery step"},
+		{"repair envelope deletion", ".agents/skills/bench-craft-tickets/SKILL.md", "For a validated debug receipt, the\nreceipt's required fence is the maximum envelope for repair reslicing; apply\nthe ordinary independently-green split rule inside it.", "For a validated debug receipt, apply the ordinary independently-green split rule inside its required fence.", repairEnvelopeDiag},
+		{"repair result chain only", ".agents/skills/bench-craft-tickets/SKILL.md", "The result may be one\nrepair ticket or a reciprocal ordered producer-to-consumer chain.", "The result is a reciprocal ordered producer-to-consumer chain.", repairResultDiag},
+		{"repair result one ticket only", ".agents/skills/bench-craft-tickets/SKILL.md", "The result may be one\nrepair ticket or a reciprocal ordered producer-to-consumer chain.", "The result is one repair ticket.", repairResultDiag},
+		{"additive repair result chain only", ".agents/skills/bench-craft-tickets/SKILL.md", "repair ticket or a reciprocal ordered producer-to-consumer chain.", "repair ticket or a reciprocal ordered producer-to-consumer chain.\nA validated debug receipt must produce a reciprocal ordered producer-to-consumer chain.", repairChainOnlyDiag},
+		{"repair union deletion", ".agents/skills/bench-craft-tickets/SKILL.md", "The union of\nevery repair-ticket ownership fence stays inside the receipt's required fence.", "", repairUnionDiag},
+		{"additive repair fence escape", ".agents/skills/bench-craft-tickets/SKILL.md", "The union of\nevery repair-ticket ownership fence stays inside the receipt's required fence.", "The union of every repair-ticket ownership fence stays inside the receipt's required fence. One repair ticket in the chain may escape the receipt's required fence.", repairEscapeDiag},
+		{"repair owner deletion", ".agents/commands/bench-implement-spec.md", "`craft-tickets` is the sole repair-reslicing owner. ", "", repairOwnerDiag},
+		{"repair common-case deletion", ".agents/commands/bench-implement-spec.md", "One repair ticket remains the common case. ", "", repairCommonDiag},
+		{"additive singular repair mandate", ".agents/commands/bench-implement-spec.md", "One repair ticket remains the common case.", "One repair ticket remains the common case. The receipt takes exactly one repair ticket.", repairSingularDiag},
+		{"repair assign deletion", ".agents/commands/bench-implement-spec.md", "Assign each repair ticket through the ordinary `assign` operation.\n", "", repairAssignDiag},
+		{"repair checkpoint deletion", ".agents/commands/bench-implement-spec.md", "Checkpoint each assigned repair ticket through the ordinary `checkpoint`\n     operation.\n", "", repairCheckDiag},
+		{"repair integrate deletion", ".agents/commands/bench-implement-spec.md", "Integrate each checkpointed repair ticket through the ordinary `integrate`\n     operation.\n", "", repairIntegrateDiag},
+		{"additive repair-chain raw Git checkpoint", ".agents/commands/bench-implement-spec.md", "Checkpoint each assigned repair ticket through the ordinary `checkpoint`\n     operation.", "Checkpoint each assigned repair ticket through the ordinary `checkpoint` operation. A repair-chain checkpoint may instead be created with `git commit`.", repairGitDiag},
+		{"terminal refresh-precondition deletion", ".agents/commands/bench-implement-spec.md", "The terminal repair ticket's proceed condition is a precondition to refresh. ", "", repairTerminalDiag},
+		{"additive early refresh", ".agents/commands/bench-implement-spec.md", "The terminal repair ticket's proceed condition is a precondition to refresh.", "The terminal repair ticket's proceed condition is a precondition to refresh. Refresh the original blocked assignment after the first repair ticket lands.", repairEarlyDiag},
+		{"original assignment replacement", ".agents/commands/bench-implement-spec.md", "The refresh target is the original blocked assignment:\n   the same assignment whose delegate reported the out-of-fence defect.", "The refresh target is a replacement assignment.", repairAssignmentDiag},
+		{"original receipt replacement", ".agents/commands/bench-implement-spec.md", "The refresh\n   evidence is the original validated debug receipt: the same receipt the reviewer\n   accepted for that assignment.", "The refresh evidence is a new debug receipt.", repairReceiptDiag},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -128,7 +181,7 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 			path := filepath.Join(root, filepath.FromSlash(tc.rel))
 			requireFixtureNoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
 			requireFixtureNoError(t, os.WriteFile(path, []byte(strings.Replace(string(data), tc.old, tc.replacement, 1)), 0o644))
-			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, tc.diag) {
+			if diags := owner.run(root, h.KitRoot, registry.Dev); !containsDiagnostic(diags, tc.diag) {
 				t.Fatalf("mutation did not bite with %q:\n%s", tc.diag, strings.Join(diags, "\n"))
 			}
 		})
@@ -151,11 +204,11 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 		} {
 			mutated := strings.Replace(string(data), anchor, anchor+"\n  "+contradiction, 1)
 			requireFixtureNoError(t, os.WriteFile(path, []byte(mutated), 0o644))
-			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, diag) {
+			if diags := owner.run(root, h.KitRoot, registry.Dev); !containsDiagnostic(diags, diag) {
 				t.Fatalf("additive contradiction did not bite with %q:\n%s", diag, strings.Join(diags, "\n"))
 			}
 			requireFixtureNoError(t, os.WriteFile(path, data, 0o644))
-			if diags := checkWorkflowAnchors(root); containsDiagnostic(diags, diag) {
+			if diags := owner.run(root, h.KitRoot, registry.Dev); containsDiagnostic(diags, diag) {
 				t.Fatalf("additive contradiction remained red after removal:\n%s", strings.Join(diags, "\n"))
 			}
 		}

@@ -34,6 +34,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made a validated debug receipt's required fence the maximum repair-reslicing
+  envelope: independently-green slicing yields one repair ticket or an ordered
+  chain, the union of their ownership fences remains inside that envelope, and
+  the original blocked assignment refreshes only after the terminal repair
+  ticket lands.
 - Replaced the fixture-driven dev gate with a branch-native architecture: one
   package-universe test driver, registry-derived race coverage, one bounded tagged
   system owner, direct mutation-to-check canaries, and immutable Go command and
