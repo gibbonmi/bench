@@ -100,7 +100,7 @@ func testGoRoutingUnknownSubcommandExits2OnStderr(t *testing.T) {
 		t.Run(tok, func(t *testing.T) {
 			f := contract.NewFixture(t)
 
-			out := f.Bench(tok)
+			out := f.BenchWrapper(tok)
 
 			out.RequireExit(2)
 			if strings.TrimSpace(out.Stdout) != "" {
@@ -120,7 +120,7 @@ func testGoRoutingHelpVariantsStayOnStdoutExit0(t *testing.T) {
 	f := contract.NewFixture(t)
 
 	for _, args := range [][]string{{}, {"help"}, {"--help"}, {"-h"}} {
-		out := f.Bench(args...)
+		out := f.BenchWrapper(args...)
 		out.RequireExit(0)
 		out.RequireContains(out.Stdout, "bench link")
 		if strings.Contains(out.Stdout, "bench resume-clean") {
@@ -138,10 +138,10 @@ func testGoRoutingHelpVariantsStayOnStdoutExit0(t *testing.T) {
 func testGoRoutingVersionFlagMatchesVersionSubcommand(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	want := f.Bench("version")
+	want := f.BenchWrapper("version")
 	want.RequireExit(0)
 
-	got := f.Bench("--version")
+	got := f.BenchWrapper("--version")
 	got.RequireExit(0)
 	if got.Stdout != want.Stdout {
 		t.Fatalf("bench --version stdout = %q, want %q (same as bench version)", got.Stdout, want.Stdout)
@@ -153,7 +153,7 @@ func testGoRoutingVersionOutput(t *testing.T) {
 	version := goRoutingPackageVersion(t)
 	want := "bench " + version + " (" + runtime.GOOS + "/" + runtime.GOARCH + ")"
 
-	out := f.Bench("version")
+	out := f.BenchWrapper("version")
 
 	out.RequireExit(0)
 	got := strings.TrimSuffix(out.Stdout, "\n")
@@ -168,7 +168,7 @@ func testGoRoutingVersionOutput(t *testing.T) {
 func testGoRoutingVersionOutsideRepo(t *testing.T) {
 	f := contract.NewFixture(t, contract.WithNoRepo())
 
-	out := f.Bench("version")
+	out := f.BenchWrapper("version")
 
 	out.RequireExit(0)
 }

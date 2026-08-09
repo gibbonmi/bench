@@ -152,8 +152,8 @@ func proveR17Cancellation(t *testing.T) {
 	f := proofFixture(t)
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\necho run >> .git/ft78-runs\necho $$ > .git/r17-pgid\ntouch .git/r17-started\nwhile :; do sleep .05; done\n")
 	for call := 1; call <= 2; call++ {
-		cmd := exec.Command("bash", benchPath(t), "gate")
-		cmd.Dir, cmd.Env, cmd.SysProcAttr = f.Root, surfaceEnv(f, nil), &syscall.SysProcAttr{Setpgid: true}
+		cmd := exec.Command(benchPath(t), "gate")
+		cmd.Dir, cmd.Env, cmd.SysProcAttr = f.Root, selectedSurfaceEnv(t, f, nil), &syscall.SysProcAttr{Setpgid: true}
 		var out bytes.Buffer
 		cmd.Stdout, cmd.Stderr = &out, &out
 		if err := cmd.Start(); err != nil {

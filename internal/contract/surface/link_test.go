@@ -68,7 +68,7 @@ func testLinkHookTemplateSingleSubstitution(t *testing.T) {
 func testInitScaffoldsLearnings(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	f.Bench("init").RequireExit(0)
+	f.BenchWrapper("init").RequireExit(0)
 
 	if !f.Exists("capture/learnings.md") {
 		t.Fatal("bench init does not scaffold capture/learnings.md")
@@ -80,9 +80,9 @@ func testInitScaffoldsLearnings(t *testing.T) {
 func testInitExistingGateIdempotence(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	f.Bench("init").RequireExit(0)
+	f.BenchWrapper("init").RequireExit(0)
 	appendFile(t, filepath.Join(f.Root, ".bench", "gate.sh"), "# configured by hand\n")
-	f.Bench("init").RequireExit(0)
+	f.BenchWrapper("init").RequireExit(0)
 
 	requireFixtureFileContains(t, f, ".bench/gate.sh", "# configured by hand", "a second bench init clobbered an existing .bench/gate.sh")
 }
@@ -90,7 +90,7 @@ func testInitExistingGateIdempotence(t *testing.T) {
 func testLinkSafeFreshRelink(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	legacy := f.Bench("link")
+	legacy := f.BenchWrapper("link")
 	legacy.RequireExit(0)
 
 	requireLinkFile(t, f, "AGENTS.md")
@@ -154,7 +154,7 @@ func testLinkSafeFreshRelink(t *testing.T) {
 	}
 
 	f.WriteFile("CLAUDE.md", "# Custom\n\nproject-owned claude config\n")
-	custom := f.Bench("link")
+	custom := f.BenchWrapper("link")
 	custom.RequireExit(3)
 	requireFixtureFileContains(t, f, "CLAUDE.md", "project-owned claude config", "relink rewrote a project-owned CLAUDE.md")
 	requireFixtureFileNotContains(t, f, "CLAUDE.md", "@.bench/BENCH.md", "relink injected an import into a project-owned CLAUDE.md")
@@ -212,7 +212,7 @@ func testLinkConflictWithoutManifest(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile(".agents/commands/bench-implement-spec.md", "project command\n")
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 
 	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "conflict")
@@ -235,7 +235,7 @@ func testLinkModifiedManaged(t *testing.T) {
 	linkOK(t, f)
 	appendFile(t, filepath.Join(f.Root, ".agents", "commands", "bench-implement-spec.md"), "\nlocal edit\n")
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 
 	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "modified")
@@ -275,7 +275,7 @@ func testLinkMetacharKitPath(t *testing.T) {
 		filepath.Join(root, ".claude"),
 		filepath.Join(root, ".codex"),
 	)
-	copyFileTo(t, filepath.Join(root, "dist", "bench"), filepath.Join(kitcopy, "dist", "bench"))
+	copyFileTo(t, contract.SelectedBench(t).Path, filepath.Join(kitcopy, "dist", "bench"))
 	copyFileTo(t, filepath.Join(root, "AGENTS.md"), filepath.Join(kitcopy, "AGENTS.md"))
 	copyFileTo(t, filepath.Join(root, ".bench", "BENCH.md"), filepath.Join(kitcopy, ".bench", "BENCH.md"))
 	copyFileTo(t, filepath.Join(root, ".bench", "BENCH-reference.md"), filepath.Join(kitcopy, ".bench", "BENCH-reference.md"))
@@ -291,7 +291,7 @@ func testLinkMetacharKitPath(t *testing.T) {
 	}
 	r := linkFixtureAt(t, repo, f.Env)
 	r.Git("init", "-q")
-	probe := r.BenchEnv(map[string]string{"BENCH_KIT": kitcopy}, "link")
+	probe := r.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitcopy}, "link")
 
 	probe.RequireExit(0)
 	requireExecutable(t, filepath.Join(r.Root, ".bench", "bin", "bench.sh"), "metachar kit path scattered installed files")
@@ -352,7 +352,7 @@ func testLinkHooksPathConflict(t *testing.T) {
 	f.Git("config", "core.hooksPath", ".husky")
 	f.WriteExecutable(".husky/pre-push", "#!/bin/sh\nexit 0\n")
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 
 	if probe.ExitCode == 0 {
 		t.Fatal("link succeeded over a non-managed pre-push in hooksPath")
@@ -363,7 +363,7 @@ func testLinkHooksPathConflict(t *testing.T) {
 
 func linkOK(t *testing.T, f contract.Fixture) contract.Probe {
 	t.Helper()
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 	probe.RequireExit(0)
 	return probe
 }

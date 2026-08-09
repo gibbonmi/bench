@@ -191,22 +191,19 @@ The oracle for a kit runs in two tiers. The **dev tier** — `bench gate`, the
 shift loop, `/bench-final-check`, and the pre-push hook — answers one question:
 does the kit work from the tree? It runs the layers below (all green today).
 The **ship tier** — `bench prep-release` — carries the release-evidence checks,
-described after the layers. An ordinary `.bench/gate.sh` entry first runs the
-current-source freshness owner against the selected `dist/bench`; that owner
-validates the artifact seal before it invokes the selected binary's
-`freshness-check`, so the binary cannot attest for altered bytes. A refusal names
-one copy-paste rebuild action, and the gate never rebuilds the target
-automatically. In an exact unpublished checkout, prospective execution selects a
-tracked preparation hook that uses the canonical
-builder to publish a checkout-local binary and seal before entering the unchanged
-ordinary gate. The unpublished tree therefore needs no pre-existing artifact, and
-its disposable checkout may populate `dist` without leaving any artifact in the
-ordinary checkout. Direct gate entry never invokes preparation and always retains
-the normal missing-or-stale-artifact refusal. Only one of those trusted entries
-reaches the `gate-phases` plumbing subcommand, which runs the layers below as
-four concurrent phases in outer mode (`[phase]`-prefixed output, per-phase
-verdicts, run-all-and-aggregate) and sequentially, unprefixed, sweep-skipped in
-inner mode (`BENCH_CANARY_INNER=1`). A sibling knob, `BENCH_REQUIRE_CAPABILITIES=1`,
+described after the layers. Every non-reused direct or prospective dev-tier run
+owns one private temporary host Bench executable built through
+`scripts/go-build.sh`. The owner passes its cleaned absolute path as
+`BENCH_RUN_BINARY` to the shell entry, freshness check, phase table, contract and
+conformance helpers, stripped subject, and nested canary gates. Nested consumers
+validate and reuse that path; they have no build fallback. Once all descendant
+processes have stopped, the owner removes the private directory on every terminal
+outcome, so no run artifact is available to a later process. The `gate-phases`
+plumbing subcommand runs every outer and inner phase table serially in stable
+topological order. Primary and stripped-subject phases share that one schedule;
+output shape, dependent and optional skips, run-all-and-aggregate red behavior,
+and process-group cancellation are unchanged. A sibling knob,
+`BENCH_REQUIRE_CAPABILITIES=1`,
 turns a nonzero capability-skip count red; absent, or set to anything else, the
 `capability-skips` rows stay informational, because a developer's host legitimately
 lacks capabilities and an unconditional red would make the gate unusable locally.
@@ -314,8 +311,8 @@ contract and canary components (lifecycle contracts link the kit's asset tree, a
 canary fixtures seed from it), so a guidance edit rides the per-component input
 declarations below — the toolchain components skip, the consumers run — rather than
 joining the declaration itself, whose stripped-worktree enforcement would refuse
-it (reviewer decision, 2026-08-02). The build phase is in neither list: it produces the binary
-the other phases exec, so it always runs. Excludability is enforced by
+it (reviewer decision, 2026-08-02). The run owner builds before phase selection,
+so no build phase belongs to either list. Excludability is enforced by
 construction, to the construction's exact width: every full gate on the kit's own
 root runs the excludable phases against a stripped worktree the declared paths are
 absent from (a root that is not the kit runs unsplit — the declaration is the
@@ -343,13 +340,12 @@ two turns the gate red:
 
 | component | declares | provenance |
 |---|---|---|
-| build | `build-closure` | `derived` |
 | gofmt | `module-test-closure`, `manifest` | `derived` |
 | vet | `module-test-closure`, `manifest` | `derived` |
 | test | `module-test-closure`, `manifest` | `derived` |
 | race | `module-test-closure`, `manifest` | `derived` |
 | conformance-suite | `module-test-closure`, `manifest` | `derived` |
-| contract | `module-test-closure`, `manifest`, `seal-source-digest`, `consumer-document-inventory` | `derived` |
+| contract | `module-test-closure`, `manifest`, `consumer-document-inventory` | `derived` |
 | shellcheck | `shellcheck-argv` | `derived` |
 | canary | `hand-declared` | `hand-written` |
 
@@ -357,8 +353,8 @@ two turns the gate red:
 every resolution — the module-wide `go list -deps -test ./...` closure plus the
 module manifest for the toolchain and contract components (never the binary's
 narrower `./cmd/bench` closure, which excludes the packages they grade), the
-seal's source digest and documents resolved from the consumer inventory added for
-`contract` because it execs the built binary and grades managed-asset lifecycle behavior,
+documents resolved from the consumer inventory added for `contract` because it
+executes the selected binary and grades managed-asset lifecycle behavior,
 and shellcheck's own argv enumeration for `shellcheck` — so a hand-copied path
 list can never survive as the declaration. `canary` is the registry's one
 `hand-declared` entry: `internal/canary/`, `tests/canary/`, `.agents/` (its
@@ -385,6 +381,7 @@ unattributable conformance implementation drift runs every conformance canary fa
 | `skills-index-command-adapters` | `catch-all` |
 | `docs-currency-workflow` | `catch-all` |
 | `gate-entry-contract` | `gate-entry` |
+| `ordinary-build-census` | `catch-all` |
 | `offline-smoke-proof` | `offline-smoke` |
 | `handoff-shape-single-source` | `catch-all` |
 | `harness-prefix-single-source` | `go-source` |
@@ -555,12 +552,11 @@ escalation.
 - Never build `dist/bench` with plain `go build`; use
   `bash scripts/go-build.sh <root> <out>` so the binary carries the package
   version required by the version and upgrade contracts.
-- To exercise or measure a worktree's build, invoke that worktree's own
-  `./dist/bench`. `bench` on PATH resolves to the main checkout's wrapper,
-  which runs the main checkout's `dist/bench` — a different binary, usually
-  older than the one under test, so the timings and behavior belong to the
-  wrong subject. The gate is exempt: it hands off to the worktree binary for
-  its phases.
+- To exercise or measure a durable worktree artifact directly, invoke that
+  worktree's own `./dist/bench`. `bench` on PATH resolves to the main checkout's
+  wrapper and may belong to a different source tree. Gate and `bench test` runs
+  do not reuse that artifact: their owner builds one private exact-source binary,
+  propagates it through every ordinary child, and removes it after teardown.
 - Never mutate the repository while a gate is running. The gate binds its
   verdict to the starting subject and rejects a run whose subject changes.
 - `internal/canary`'s own tests run nested. The conformance phase runs the kit's

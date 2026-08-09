@@ -577,17 +577,9 @@ func rejectSymlinkComponents(path string) error {
 
 // Verify reports whether executable has a matching content seal for root.
 func Verify(root, executable string) error {
-	binary, err := secureContents(executable, true)
+	stored, err := verifiedExecutable(executable)
 	if err != nil {
 		return refusal(root, executable, err)
-	}
-	sealData, err := secureContents(sealPath(executable), false)
-	if err != nil {
-		return refusal(root, executable, fmt.Errorf("seal %q: %w", sealPath(executable), err))
-	}
-	stored, err := parseSeal(sealData)
-	if err != nil {
-		return refusal(root, executable, fmt.Errorf("seal %q: %w", sealPath(executable), err))
 	}
 	sources, err := Digest(root)
 	if err != nil {
@@ -596,10 +588,35 @@ func Verify(root, executable string) error {
 	if stored.Sources != sources {
 		return refusal(root, executable, fmt.Errorf("seal source digest does not match current build inputs"))
 	}
-	if stored.Executable != digestBytes(binary) {
-		return refusal(root, executable, fmt.Errorf("seal executable digest does not match binary contents"))
-	}
 	return nil
+}
+
+// VerifyExecutable checks that executable and its adjacent seal are an intact published
+// pair without rediscovering source inputs. A run owner has already verified the source
+// digest; descendants use this narrower check so inherited selection cannot mutate the
+// subject through Go's cache discovery.
+func VerifyExecutable(executable string) error {
+	_, err := verifiedExecutable(executable)
+	return err
+}
+
+func verifiedExecutable(executable string) (seal, error) {
+	binary, err := secureContents(executable, true)
+	if err != nil {
+		return seal{}, err
+	}
+	sealData, err := secureContents(sealPath(executable), false)
+	if err != nil {
+		return seal{}, fmt.Errorf("seal %q: %w", sealPath(executable), err)
+	}
+	stored, err := parseSeal(sealData)
+	if err != nil {
+		return seal{}, fmt.Errorf("seal %q: %w", sealPath(executable), err)
+	}
+	if stored.Executable != digestBytes(binary) {
+		return seal{}, fmt.Errorf("seal executable digest does not match binary contents")
+	}
+	return stored, nil
 }
 
 // Check verifies an executable from current sources, then requires its freshness subcommand.

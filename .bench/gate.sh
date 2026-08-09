@@ -10,11 +10,22 @@ set -uo pipefail
 
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not in a git repository — run inside a Bench-linked repo" >&2; exit 3; }
 gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-kit="$(cd "$gate_dir/.." && pwd)"
-bench="$kit/dist/bench"
-freshness_cache="${GOCACHE:-$kit/dist/.freshness-go-cache}"
-mkdir -p "$freshness_cache"
-if ! (cd "$kit" && GOCACHE="$freshness_cache" go run ./internal/freshness/check "$kit" "$bench"); then
+kit="${BENCH_KIT:-$(cd "$gate_dir/.." && pwd)}"
+bench="${BENCH_RUN_BINARY:-}"
+case "$bench" in
+  /*) ;;
+  *) echo "error: BENCH_RUN_BINARY must name the owner's absolute Bench executable" >&2; exit 1 ;;
+esac
+if [[ ! -f "$bench" || ! -x "$bench" || -L "$bench" ]]; then
+  echo "error: BENCH_RUN_BINARY is not a regular executable" >&2
   exit 1
 fi
-exec env BENCH_KIT="$kit" "$bench" gate-phases "$root"
+bench_physical="$(cd -P "$(dirname "$bench")" 2>/dev/null && pwd)/$(basename "$bench")"
+if [[ "$bench_physical" != "$bench" ]]; then
+  echo "error: BENCH_RUN_BINARY must be a cleaned physical path" >&2
+  exit 1
+fi
+if ! "$bench" freshness-check "$kit"; then
+  exit 1
+fi
+exec env BENCH_KIT="$kit" BENCH_RUN_BINARY="$bench" "$bench" gate-phases "$root"

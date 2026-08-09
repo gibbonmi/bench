@@ -98,10 +98,6 @@ func seededDecisionFixture(t *testing.T) kitShapedFixture {
 		}
 	}
 
-	attestationFixture{root: fixture.root, executable: fixture.binaryPath()}.attestPublished(t, authoredAt)
-	if inspection := verifyBuildAttestation(fixture.root, fixture.binaryPath(), authoredAt); !inspection.Attested {
-		t.Fatalf("read the decision fixture attestation = %+v, want attested", inspection)
-	}
 	return fixture
 }
 
@@ -176,14 +172,6 @@ func TestCaptureOnlyChangesetExecutesConformanceOnly(t *testing.T) {
 	seen := map[string]string{}
 	for _, component := range rec.Skipped {
 		evidence := rec.SkipEvidence[component]
-		if component == canary.PhaseBuild {
-			// Build's evidence is the artifact rather than a slot, so it is the one skip
-			// with no ancestor identity to compare. PS30 owns which digest it names.
-			if evidence.Seal == "" || evidence.Identity != "" {
-				t.Fatalf("build skipped on %+v, want the seal form and no ancestor identity", evidence)
-			}
-			continue
-		}
 		if evidence.Identity != identities[component] {
 			t.Fatalf("%s skipped on identity %q, want its own identity %q", component, evidence.Identity, identities[component])
 		}
@@ -389,14 +377,6 @@ func TestDecisionSiteFailsClosed(t *testing.T) {
 			// The store's file discipline refuses anything but a private regular file, so a
 			// widened mode leaves bytes the reader will not answer from.
 			if err := os.Chmod(scopedSlotPath(t, fixture.root, canary.PhaseVet), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			writeGateTestFile(t, fixture.root, "ROADMAP.md", "capture-only edit\n", 0o644)
-		}},
-		{"seal unreadable", canary.PhaseContract, func(t *testing.T, fixture kitShapedFixture) {
-			// The contract component execs the CLI, so the seal's source digest is one of its
-			// declared inputs and an unreadable seal leaves it unable to say what it reads.
-			if err := os.Remove(fixture.binaryPath() + ".seal"); err != nil {
 				t.Fatal(err)
 			}
 			writeGateTestFile(t, fixture.root, "ROADMAP.md", "capture-only edit\n", 0o644)

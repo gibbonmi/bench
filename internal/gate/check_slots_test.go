@@ -26,7 +26,6 @@ func TestForcedAggregateRedRetiresEveryExecutedCheckSlot(t *testing.T) {
 	fixture := newKitShapedFixture(t)
 	writeGateTestFile(t, fixture.root, ".bench/phase-conformance.sh",
 		"echo conformance >> .git/phase-runs\nif test -f .git/conformance-red; then exit 1; fi\n", 0o644)
-	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 
 	slots, valid := loadConformanceCheckSlots(fixture.root)
@@ -55,7 +54,6 @@ func TestForcedAggregateRedRetiresEveryExecutedCheckSlot(t *testing.T) {
 func TestOrdinaryScopeInheritsValidCheckSlotsButFreshExecutesAll(t *testing.T) {
 	t.Parallel()
 	fixture := newKitShapedFixture(t)
-	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	resolution := Resolve(fixture.root, "", RealFS())
 
@@ -121,7 +119,6 @@ func TestDeclaredDocumentInputsInvalidateOwningChecks(t *testing.T) {
 		writeGateTestFile(t, fixture.root, name, "baseline\n", 0o644)
 		baselines[name] = baselineFile{data: []byte("baseline\n"), mode: 0o644}
 	}
-	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	resolution := Resolve(fixture.root, "", RealFS())
 
@@ -178,16 +175,16 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 		eligible: true,
 		inheritedChecks: []string{
 			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
-			"docs-currency-workflow", "gate-entry-contract", "offline-smoke-proof", "handoff-shape-single-source",
+			"docs-currency-workflow", "gate-entry-contract", "ordinary-build-census", "offline-smoke-proof", "handoff-shape-single-source",
 			"harness-prefix-single-source", "package-shipped-surface", "line-routing", "package-core-guard", "bench-sh-routes",
 			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "bounds-policy",
 			"marker-wait-deadlines", "subcommand-routing", "skip-ownership", "decision-map-integrity", "example-agreement",
 			"component-honesty-prose", "contract-capture-reads", "injected-port-registry",
 		},
-		inheritedComponents: []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		inheritedComponents: []string{"canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
 		phases:              []string{"conformance"},
 		inheritedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters," +
-			"docs-currency-workflow,gate-entry-contract,offline-smoke-proof,handoff-shape-single-source,harness-prefix-single-source," +
+			"docs-currency-workflow,gate-entry-contract,ordinary-build-census,offline-smoke-proof,handoff-shape-single-source,harness-prefix-single-source," +
 			"package-shipped-surface,line-routing,package-core-guard,bench-sh-routes,default-branch-single-source," +
 			"data-handling-derivation,single-control-escaper,bounds-policy,marker-wait-deadlines,subcommand-routing," +
 			"skip-ownership,decision-map-integrity,example-agreement,component-honesty-prose,contract-capture-reads,injected-port-registry",
@@ -196,7 +193,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 		eligible: true,
 		executedChecks: []string{
 			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
-			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"docs-currency-workflow", "ordinary-build-census", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
 			"package-core-guard", "bounds-policy", "example-agreement",
 		},
 		inheritedChecks: []string{
@@ -205,9 +202,9 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			"subcommand-routing", "skip-ownership", "decision-map-integrity", "component-honesty-prose",
 			"contract-capture-reads", "injected-port-registry",
 		},
-		inheritedComponents:      []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		inheritedComponents:      []string{"canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
 		phases:                   []string{"conformance"},
-		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,ordinary-build-census,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
 		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
 			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
 			"subcommand-routing,skip-ownership,decision-map-integrity,component-honesty-prose,contract-capture-reads,injected-port-registry",
@@ -216,7 +213,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 		eligible: true,
 		executedChecks: []string{
 			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
-			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"docs-currency-workflow", "ordinary-build-census", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
 			"package-core-guard", "bounds-policy", "example-agreement",
 		},
 		inheritedChecks: []string{
@@ -226,9 +223,9 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			"contract-capture-reads", "injected-port-registry",
 		},
 		executedComponents:       []string{"contract"},
-		inheritedComponents:      []string{"build", "canary", "conformance-suite", "gofmt", "race", "shellcheck", "test", "vet"},
+		inheritedComponents:      []string{"canary", "conformance-suite", "gofmt", "race", "shellcheck", "test", "vet"},
 		phases:                   []string{"conformance", "contract"},
-		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,ordinary-build-census,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
 		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
 			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
 			"subcommand-routing,skip-ownership,decision-map-integrity,component-honesty-prose,contract-capture-reads,injected-port-registry",
@@ -237,7 +234,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 		eligible: true,
 		executedChecks: []string{
 			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
-			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"docs-currency-workflow", "ordinary-build-census", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
 			"package-core-guard", "bounds-policy", "example-agreement",
 		},
 		inheritedChecks: []string{
@@ -247,9 +244,9 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			"contract-capture-reads", "injected-port-registry",
 		},
 		executedComponents:       []string{"canary", "contract"},
-		inheritedComponents:      []string{"build", "conformance-suite", "gofmt", "race", "shellcheck", "test", "vet"},
+		inheritedComponents:      []string{"conformance-suite", "gofmt", "race", "shellcheck", "test", "vet"},
 		phases:                   []string{"canary", "conformance", "contract"},
-		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,ordinary-build-census,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
 		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
 			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
 			"subcommand-routing,skip-ownership,decision-map-integrity,component-honesty-prose,contract-capture-reads,injected-port-registry",
@@ -258,7 +255,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 		eligible: true,
 		executedChecks: []string{
 			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
-			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"docs-currency-workflow", "ordinary-build-census", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
 			"package-core-guard", "data-handling-derivation", "bounds-policy", "example-agreement",
 		},
 		inheritedChecks: []string{
@@ -266,9 +263,9 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			"default-branch-single-source", "single-control-escaper", "marker-wait-deadlines", "subcommand-routing",
 			"skip-ownership", "decision-map-integrity", "component-honesty-prose", "contract-capture-reads", "injected-port-registry",
 		},
-		inheritedComponents:      []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		inheritedComponents:      []string{"canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
 		phases:                   []string{"conformance"},
-		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,data-handling-derivation,bounds-policy,example-agreement",
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,ordinary-build-census,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,data-handling-derivation,bounds-policy,example-agreement",
 		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
 			"default-branch-single-source,single-control-escaper,marker-wait-deadlines,subcommand-routing,skip-ownership," +
 			"decision-map-integrity,component-honesty-prose,contract-capture-reads,injected-port-registry",
@@ -277,7 +274,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 		eligible: true,
 		executedChecks: []string{
 			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
-			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"docs-currency-workflow", "ordinary-build-census", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
 			"package-core-guard", "bounds-policy", "example-agreement", "component-honesty-prose",
 		},
 		inheritedChecks: []string{
@@ -285,9 +282,9 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "marker-wait-deadlines",
 			"subcommand-routing", "skip-ownership", "decision-map-integrity", "contract-capture-reads", "injected-port-registry",
 		},
-		inheritedComponents:      []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		inheritedComponents:      []string{"canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
 		phases:                   []string{"conformance"},
-		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement,component-honesty-prose",
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,ordinary-build-census,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement,component-honesty-prose",
 		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
 			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
 			"subcommand-routing,skip-ownership,decision-map-integrity,contract-capture-reads,injected-port-registry",
@@ -296,7 +293,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 		eligible: true,
 		executedChecks: []string{
 			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
-			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"docs-currency-workflow", "ordinary-build-census", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
 			"package-core-guard", "bounds-policy", "decision-map-integrity", "example-agreement",
 		},
 		inheritedChecks: []string{
@@ -304,9 +301,9 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "marker-wait-deadlines",
 			"subcommand-routing", "skip-ownership", "component-honesty-prose", "contract-capture-reads", "injected-port-registry",
 		},
-		inheritedComponents:      []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		inheritedComponents:      []string{"canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
 		phases:                   []string{"conformance"},
-		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,decision-map-integrity,example-agreement",
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,ordinary-build-census,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,decision-map-integrity,example-agreement",
 		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
 			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
 			"subcommand-routing,skip-ownership,component-honesty-prose,contract-capture-reads,injected-port-registry",
@@ -315,7 +312,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 		eligible: true,
 		executedChecks: []string{
 			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
-			"docs-currency-workflow", "gate-entry-contract", "offline-smoke-proof", "handoff-shape-single-source",
+			"docs-currency-workflow", "gate-entry-contract", "ordinary-build-census", "offline-smoke-proof", "handoff-shape-single-source",
 			"harness-prefix-single-source", "package-shipped-surface", "line-routing", "package-core-guard", "bench-sh-routes",
 			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "bounds-policy",
 			"marker-wait-deadlines", "subcommand-routing", "skip-ownership", "decision-map-integrity", "example-agreement",
@@ -371,7 +368,6 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 
 	seededSlots := checkSlotTestStoreBytes(t, fixture.root)
@@ -606,7 +602,6 @@ func TestConformanceImplementationSelectsOwningOrAllCanaryFamilies(t *testing.T)
 			fixture := newKitShapedFixture(t)
 			writeGateTestFile(t, fixture.root, "internal/conformance/owners.go", conformanceCanarySources(""), 0o644)
 			writeGateTestFile(t, fixture.root, "internal/conformance/shared.go", "package conformance\n\nfunc sharedHelper() int { return 1 }\n", 0o644)
-			requireKitShapedBinaryFresh(t, fixture.root)
 			mustExecuteGreen(t, fixture.root, productionGateEngine{})
 			test.mutate(fixture.root)
 
@@ -674,7 +669,6 @@ func TestMixedCheckPartitionProjectsExactOutputAndVerdict(t *testing.T) {
 	fixture := newKitShapedFixture(t)
 	writeGateTestFile(t, fixture.root, ".bench/phase-conformance.sh",
 		"echo conformance >> .git/phase-runs\nprintf '%s\\n' \"$BENCH_CONFORMANCE_CHECKS\" > .git/selected-checks\nprintf '%s\\n' \"$BENCH_CONFORMANCE_INHERITED\" > .git/inherited-checks\n", 0o644)
-	requireKitShapedBinaryFresh(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	beforeConformance := phaseNameCount(phaseRunNames(t, fixture.root), "conformance")
 	writeGateTestFile(t, fixture.root, "ROADMAP.md", "moved\n", 0o644)

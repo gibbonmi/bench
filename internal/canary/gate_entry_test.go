@@ -10,11 +10,11 @@ func TestBenchkitGateCallsCanarySubcommandOnlyInOuterMode(t *testing.T) {
 	if strings.Contains(gate, "lib/canary-run.sh") {
 		t.Fatalf("benchkit gate still sources canary-run.sh")
 	}
-	if !strings.Contains(gate, `exec env BENCH_KIT="$kit" "$bench" gate-phases "$root"`) {
+	if !strings.Contains(gate, `exec env BENCH_KIT="$kit" BENCH_RUN_BINARY="$bench" "$bench" gate-phases "$root"`) {
 		t.Fatalf("benchkit gate does not exec gate-phases:\n%s", gate)
 	}
-	freshness := `go run ./internal/freshness/check "$kit" "$bench"`
-	phase := `exec env BENCH_KIT="$kit" "$bench" gate-phases "$root"`
+	freshness := `"$bench" freshness-check "$kit"`
+	phase := `exec env BENCH_KIT="$kit" BENCH_RUN_BINARY="$bench" "$bench" gate-phases "$root"`
 	if strings.Index(gate, freshness) < 0 || strings.Index(gate, freshness) > strings.Index(gate, phase) {
 		t.Fatalf("benchkit gate does not verify %q before %q:\n%s", freshness, phase, gate)
 	}

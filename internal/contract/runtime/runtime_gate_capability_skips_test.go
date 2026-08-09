@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/contract/internal/freshnessfixture"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 const runtimeFreshnessChildEnv = "BENCH_FT131_RUNTIME_FRESHNESS_CHILD"
@@ -30,6 +31,10 @@ func TestRuntimeDirectSubjectRefusesStaleBeforeAssertions(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if os.Getenv(runtimeFreshnessChildEnv) == tc.assertion {
+				root := contract.SubjectRoot(t)
+				if err := freshness.Verify(root, filepath.Join(root, "dist", "bench")); err != nil {
+					t.Fatal(err)
+				}
 				probe := runCapabilitySkipGate(t, nil, capability.Skip{Kind: capability.KindCapability, Class: capability.Symlink, Reason: "fixture"})
 				if tc.assertion == "pass" {
 					probe.RequireExit(0)
@@ -122,7 +127,9 @@ func runCapabilitySkipGate(t *testing.T, env map[string]string, skip capability.
 		value := value
 		run[key] = &value
 	}
-	return f.RunEnvSpec(run, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), "gate-phases", graded)
+	bench := contract.SelectedBench(t).Path
+	run[runbinary.Env] = &bench
+	return f.RunEnvSpec(run, bench, "gate-phases", graded)
 }
 
 // capabilitySkipKit builds the smallest tree BenchkitPhases resolves to green phases:

@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // Recording paths every fixture script writes through, all under the gitignored dist/
@@ -47,7 +48,10 @@ type shipRepo struct {
 // runEnv is the environment every surface drives this fixture through: the kit the
 // conformance step compiles in, plus whatever a row seeds on top.
 func (r shipRepo) runEnv(extra map[string]string) map[string]string {
-	env := map[string]string{"BENCH_KIT": r.Kit}
+	env := map[string]string{
+		"BENCH_KIT":   r.Kit,
+		runbinary.Env: contract.SelectedBench(r.t).Path,
+	}
 	for k, v := range extra {
 		env[k] = v
 	}
@@ -118,8 +122,8 @@ func (r shipRepo) greenTheGate() {
 
 // newStubKit is a throwaway checkout standing where BENCH_KIT points: a module whose
 // conformance entry point records the tier it was asked for and whether the stress tag
-// reached the compiler, plus the real binary, because BENCH_KIT is also where the shell
-// router resolves the command it execs. The real kit cannot stand in for the module —
+// reached the compiler. The selected binary is inherited separately, so this kit stays
+// source-only. The real kit cannot stand in for the module —
 // its ship tier is the ~372 s probe this whole split exists to keep off the common path.
 func newStubKit(t *testing.T) string {
 	t.Helper()
@@ -131,13 +135,6 @@ func newStubKit(t *testing.T) string {
 	contract.WriteFileAbs(t, filepath.Join(pkg, "nostress_test.go"), stubNoStressSource)
 	contract.WriteFileAbs(t, filepath.Join(kit, "cmd", "bench", "main.go"), stubGateGoSource)
 
-	binary := filepath.Join(kit, "dist", "bench")
-	if err := os.MkdirAll(filepath.Dir(binary), 0o755); err != nil {
-		t.Fatalf("create stub kit dist: %v", err)
-	}
-	if err := os.Symlink(filepath.Join(contract.SubjectRoot(t), "dist", "bench"), binary); err != nil {
-		t.Fatalf("link stub kit binary: %v", err)
-	}
 	return kit
 }
 

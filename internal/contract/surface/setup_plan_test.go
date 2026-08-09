@@ -45,7 +45,7 @@ func testSetupPlanIgnoresUnreadablePackageJSON(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(pkgPath, 0o644) })
 
-	probe := f.Bench("setup", "--plan")
+	probe := f.BenchWrapper("setup", "--plan")
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "package.json unreadable")
@@ -57,7 +57,7 @@ func testSetupPlanIgnoresMalformedPackageJSON(t *testing.T) {
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
 	f.WriteFile("package.json", "{not valid json")
 
-	probe := f.Bench("setup", "--plan")
+	probe := f.BenchWrapper("setup", "--plan")
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "package.json malformed JSON")
@@ -75,7 +75,7 @@ func testSetupPlanIgnoresUnreadableMakefile(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(makePath, 0o644) })
 
-	probe := f.Bench("setup", "--plan")
+	probe := f.BenchWrapper("setup", "--plan")
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "Makefile unreadable")
@@ -86,7 +86,7 @@ func testSetupPlanPreviewsGoModule(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
 
-	probe := f.Bench("setup", "--plan")
+	probe := f.BenchWrapper("setup", "--plan")
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "go.mod")
@@ -101,7 +101,7 @@ func testSetupPlanPreviewsGoModule(t *testing.T) {
 func testSetupPlanPreviewsZeroSignal(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	probe := f.Bench("setup", "--plan")
+	probe := f.BenchWrapper("setup", "--plan")
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "no build system detected")

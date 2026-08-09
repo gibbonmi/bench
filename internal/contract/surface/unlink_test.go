@@ -50,7 +50,7 @@ func testUnlinkKeepsModified(t *testing.T) {
 	linkOK(t, f)
 	appendFile(t, filepath.Join(f.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
 
-	probe := f.Bench("unlink")
+	probe := f.BenchWrapper("unlink")
 	probe.RequireExit(3)
 
 	requireFixtureFileContains(t, f, managedFileRel, "local edit", "unlink deleted a locally modified managed file")
@@ -133,7 +133,7 @@ func testUnlinkManifestConditional(t *testing.T) {
 	refused := contract.NewFixture(t)
 	linkOK(t, refused)
 	appendFile(t, filepath.Join(refused.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
-	refused.Bench("unlink").RequireExit(3)
+	refused.BenchWrapper("unlink").RequireExit(3)
 	requireLinkFile(t, refused, ".bench/link-manifest.tsv")
 }
 
@@ -145,7 +145,7 @@ func testUnlinkRefusesTraversal(t *testing.T) {
 	contract.WriteFileAbs(t, outside, "do not delete me\n")
 	appendFile(t, filepath.Join(f.Root, ".bench", "link-manifest.tsv"), "../outside-sentinel\tdeadbeef\n")
 
-	probe := f.Bench("unlink")
+	probe := f.BenchWrapper("unlink")
 	probe.RequireExit(3)
 
 	if got := contract.ReadFileAbs(t, outside); !strings.Contains(got, "do not delete me") {
@@ -161,7 +161,7 @@ func testUnlinkDryRunNoWrites(t *testing.T) {
 	linkOK(t, f)
 	f.CommitAll("linked")
 
-	probe := f.Bench("unlink", "--dry-run")
+	probe := f.BenchWrapper("unlink", "--dry-run")
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "would remove")
 
@@ -178,7 +178,7 @@ func testUnlinkReportsBothRuns(t *testing.T) {
 	real := contract.NewFixture(t)
 	linkOK(t, real)
 	appendFile(t, filepath.Join(real.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
-	realProbe := real.Bench("unlink")
+	realProbe := real.BenchWrapper("unlink")
 	realProbe.RequireExit(3)
 	realProbe.RequireContains(realProbe.Stdout, "removed: .bench/BENCH.md")
 	realProbe.RequireContains(realProbe.Stdout, managedFileRel)
@@ -187,7 +187,7 @@ func testUnlinkReportsBothRuns(t *testing.T) {
 	dry := contract.NewFixture(t)
 	linkOK(t, dry)
 	appendFile(t, filepath.Join(dry.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
-	dryProbe := dry.Bench("unlink", "--dry-run")
+	dryProbe := dry.BenchWrapper("unlink", "--dry-run")
 	dryProbe.RequireExit(3)
 	dryProbe.RequireContains(dryProbe.Stdout, "would remove: .bench/BENCH.md")
 	dryProbe.RequireContains(dryProbe.Stdout, managedFileRel)
@@ -200,7 +200,7 @@ func testUnlinkResidualsMachineReadable(t *testing.T) {
 	linkOK(t, f)
 	appendFile(t, filepath.Join(f.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
 	appendFile(t, filepath.Join(f.Root, ".bench", "link-manifest.tsv"), "../outside-sentinel\tdeadbeef\n")
-	probe := f.Bench("unlink")
+	probe := f.BenchWrapper("unlink")
 	probe.RequireExit(3)
 	probe.RequireContains(probe.Stdout, "residuals[2]{path,reason}:")
 	probe.RequireContains(probe.Stdout, "  .agents/commands/bench-implement-spec.md,modified")
@@ -214,7 +214,7 @@ func testUnlinkNoRawDeletionAdvice(t *testing.T) {
 	appendFile(t, filepath.Join(f.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
 	foreign := prePushPath(t, f)
 	contract.WriteExecutableAbs(t, foreign, "#!/bin/sh\n# foreign executable\n")
-	probe := f.Bench("unlink")
+	probe := f.BenchWrapper("unlink")
 	probe.RequireExit(3)
 	if !f.Exists(relTo(t, f, foreign)) {
 		t.Fatal("unlink removed foreign executable")
@@ -229,7 +229,7 @@ func testUnlinkNoRawDeletionAdvice(t *testing.T) {
 // unlink after a full run also exits 1.
 func testUnlinkAbsentManifest(t *testing.T) {
 	absent := contract.NewFixture(t)
-	noManifest := absent.Bench("unlink")
+	noManifest := absent.BenchWrapper("unlink")
 	if noManifest.ExitCode != 1 {
 		t.Fatalf("unlink on a repo with no manifest exit = %d, want 1\nstdout:\n%s\nstderr:\n%s", noManifest.ExitCode, noManifest.Stdout, noManifest.Stderr)
 	}
@@ -237,14 +237,14 @@ func testUnlinkAbsentManifest(t *testing.T) {
 
 	rowless := contract.NewFixture(t)
 	rowless.WriteFile(".bench/link-manifest.tsv", "#kit\t0.0.0\n")
-	rowlessProbe := rowless.Bench("unlink")
+	rowlessProbe := rowless.BenchWrapper("unlink")
 	rowlessProbe.RequireExit(0)
 	rowlessProbe.RequireContains(rowlessProbe.Stdout, "nothing to remove")
 
 	rerun := contract.NewFixture(t)
 	linkOK(t, rerun)
 	unlinkOK(t, rerun)
-	second := rerun.Bench("unlink")
+	second := rerun.BenchWrapper("unlink")
 	if second.ExitCode != 1 {
 		t.Fatalf("second unlink after a full run exit = %d, want 1\nstderr:\n%s", second.ExitCode, second.Stderr)
 	}
@@ -312,7 +312,7 @@ func testUnlinkSparesExistingClaudeMD(t *testing.T) {
 
 func unlinkOK(t *testing.T, f contract.Fixture) contract.Probe {
 	t.Helper()
-	probe := f.Bench("unlink")
+	probe := f.BenchWrapper("unlink")
 	probe.RequireExit(0)
 	return probe
 }

@@ -96,7 +96,7 @@ func testSpecSlugAnchored(t *testing.T) {
 	contract.Mkdir(t, filepath.Join(f.Root, "sub"))
 
 	// A bare slug resolves specs/<slug>/spec.md at the repo root even when run from a subdir.
-	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), nil, "bash", benchPath(t), "spec", "implemented", "feature").RequireExit(0)
+	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), selectedBenchEnv(t, nil), benchPath(t), "spec", "implemented", "feature").RequireExit(0)
 	contract.RequireContains(t, f.ReadFile("specs/feature/spec.md"), "Status: implemented")
 }
 

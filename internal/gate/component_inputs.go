@@ -25,9 +25,6 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/canary"
-	// The package's own freshness constant owns the bare name here, so the seal package
-	// is reached through an alias.
-	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
@@ -37,9 +34,6 @@ import (
 type Source string
 
 const (
-	// SourceBuildClosure is the `go list -deps ./cmd/bench` closure the freshness digest
-	// already resolves — the files that decide whether the published binary is stale.
-	SourceBuildClosure Source = "build-closure"
 	// SourceModuleTestClosure is the module-wide `go list -deps -test ./...` closure plus
 	// the testdata/ contents of the packages it lists, plus the module manifest: go.mod
 	// always, and go.sum when the module has one. `go list` reports neither file, so a
@@ -47,9 +41,9 @@ const (
 	// otherwise leave this declaration unmoved by a change that can red every component
 	// that carries it.
 	SourceModuleTestClosure Source = "module-test-closure+manifest"
-	// SourceModuleTestClosureWithSealAndConsumerDocuments adds the published binary's seal
-	// source digest and the consumer-inventory documents lifecycle contracts consume.
-	SourceModuleTestClosureWithSealAndConsumerDocuments Source = "module-test-closure+manifest+seal-source-digest+consumer-document-inventory"
+	// SourceModuleTestClosureWithConsumerDocuments adds the consumer-inventory documents
+	// lifecycle contracts consume.
+	SourceModuleTestClosureWithConsumerDocuments Source = "module-test-closure+manifest+consumer-document-inventory"
 	// SourceShellcheckArgv is shellcheckArgv's own file enumeration — the exact argument
 	// list the shellcheck phase lints, read rather than restated.
 	SourceShellcheckArgv Source = "shellcheck-argv"
@@ -77,8 +71,7 @@ func (c ComponentInputs) Source() Source { return c.source }
 // Paths are the declared repository-relative input paths, sorted and deduplicated.
 func (c ComponentInputs) Paths() []string { return slices.Clone(c.paths) }
 
-// Digests are the declared inputs that name content rather than a path — the published
-// binary's seal source digest, for a component that execs it.
+// Digests are declared inputs that name content rather than a path.
 func (c ComponentInputs) Digests() []string { return slices.Clone(c.digests) }
 
 // componentInputDeclaration binds a component to the derivation that answers for it. The
@@ -100,13 +93,12 @@ type componentInputDeclaration struct {
 // package it grades would skip on a change that reds it.
 func componentInputDeclarations() []componentInputDeclaration {
 	return []componentInputDeclaration{
-		{canary.PhaseBuild, SourceBuildClosure, (*inputResolver).buildClosure},
 		{canary.PhaseGofmt, SourceModuleTestClosure, (*inputResolver).moduleClosure},
 		{canary.PhaseVet, SourceModuleTestClosure, (*inputResolver).moduleClosure},
 		{canary.PhaseTest, SourceModuleTestClosure, (*inputResolver).moduleClosure},
 		{canary.PhaseRace, SourceModuleTestClosure, (*inputResolver).moduleClosure},
 		{canary.PhaseConformanceSuite, SourceModuleTestClosure, (*inputResolver).moduleClosure},
-		{canary.PhaseContract, SourceModuleTestClosureWithSealAndConsumerDocuments, (*inputResolver).contractInputs},
+		{canary.PhaseContract, SourceModuleTestClosureWithConsumerDocuments, (*inputResolver).contractInputs},
 		{"shellcheck", SourceShellcheckArgv, (*inputResolver).shellcheckInputs},
 		{"canary", SourceHandDeclared, (*inputResolver).canaryInputs},
 	}
@@ -164,21 +156,9 @@ func ResolveComponentInputs(root string) (map[string]ComponentInputs, error) {
 type inputResolver struct {
 	root string
 
-	buildPaths []string
-	buildErr   error
-	buildDone  bool
-
 	modulePaths []string
 	moduleErr   error
 	moduleDone  bool
-}
-
-func (r *inputResolver) buildClosure() ([]string, []string, error) {
-	if !r.buildDone {
-		r.buildPaths, r.buildErr = benchfreshness.BuildInputs(r.root)
-		r.buildDone = true
-	}
-	return r.buildPaths, nil, r.buildErr
 }
 
 func (r *inputResolver) moduleClosure() ([]string, []string, error) {
@@ -258,17 +238,13 @@ func (r *inputResolver) contractInputs() ([]string, []string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	sources, _, err := benchfreshness.SealDigests(buildArtifactPath(r.root))
-	if err != nil {
-		return nil, nil, err
-	}
 	documents, err := packagesurface.ContractDocumentInputs(r.root)
 	if err != nil {
 		return nil, nil, fmt.Errorf("derive consumer inventory documents: %w", err)
 	}
 	paths = append(paths, documents...)
 	sort.Strings(paths)
-	return slices.Compact(paths), []string{sources}, nil
+	return slices.Compact(paths), nil, nil
 }
 
 // agentMarkdownDirectories is canary's portable-guidance root. The list lives beside its

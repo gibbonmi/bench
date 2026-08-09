@@ -236,10 +236,10 @@ func TestHandoffRouted(t *testing.T) {
 
 	// Through the wrapper, not the binary: the porcelain route and its advertisement in
 	// the wrapper's own help are what make the command discoverable at the shell.
-	out := f.Run("bash", benchPath(t), "handoff")
+	out := f.Run("bash", benchWrapperPath(t), "handoff")
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, "# Session handoff")
-	help := f.Run("bash", benchPath(t), "help")
+	help := f.Run("bash", benchWrapperPath(t), "help")
 	help.RequireExit(0)
 	contract.RequireContains(t, help.Stdout, "bench handoff")
 }

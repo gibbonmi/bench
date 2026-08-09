@@ -224,7 +224,7 @@ func passlistProof(id, name, value, expected string, declaredAbsent bool) ft78Pr
 		}
 		f.WriteFile(".bench/gate-inputs.json", manifest)
 		if name == "BENCH_KIT" {
-			value = contract.SubjectRoot(t)
+			expected = contract.SelectedBench(t).SourceRoot
 		}
 		if name == "BENCH_WRAPPER" {
 			value = benchPath(t)

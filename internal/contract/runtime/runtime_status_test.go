@@ -50,7 +50,7 @@ func testRuntimeStatusIntentCommonDir(t *testing.T) {
 	// sees the same entry — proven by its key surfacing in the board.
 	ledger := `{"schema":1,"entries":[{"key":"shared","kind":"claude-agent","created_at":"2026-07-11T00:00:00Z"}]}` + "\n"
 	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "bench-intent.json"), ledger)
-	out := contract.RunAt(t, f, linked, nil, "bash", benchPath(t), "status", "--all")
+	out := contract.RunAt(t, f, linked, selectedBenchEnv(t, nil), benchPath(t), "status", "--all")
 	out.RequireExit(0)
 	out.RequireContains(out.Stdout, "objective=shared")
 }
@@ -168,7 +168,7 @@ func testRuntimeStatusGuardsPrimaryOnly(t *testing.T) {
 	if n := strings.Count(primary, "guards"); n != 1 {
 		t.Fatalf("want exactly one guards row from the primary checkout, got %d:\n%s", n, primary)
 	}
-	fromLinked := contract.RunAt(t, f, linked, nil, "bash", benchPath(t), "status").Stdout
+	fromLinked := contract.RunAt(t, f, linked, selectedBenchEnv(t, nil), benchPath(t), "status").Stdout
 	contract.RequireNotContains(t, fromLinked, "guards")
 }
 
@@ -213,7 +213,7 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 		t.Fatal("idea created ROADMAP.md; capture should write only capture/IDEAS.md")
 	}
 	contract.Mkdir(t, filepath.Join(f.Root, "sub"))
-	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), nil, "bash", benchPath(t), "idea", "from sub").RequireExit(0)
+	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), selectedBenchEnv(t, nil), benchPath(t), "idea", "from sub").RequireExit(0)
 	contract.RequireFileMatches(t, f, "capture/IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  from sub$`, "idea from nested cwd did not append to root capture/IDEAS.md")
 	if f.Exists("sub/capture/IDEAS.md") {
 		t.Fatal("idea from nested cwd created sub/capture/IDEAS.md")
@@ -433,7 +433,7 @@ func testRuntimeStatusWarmPool(t *testing.T) {
 	contract.RequireContains(t, out, "bench worktree clean <path>")
 	contract.RequireContains(t, out, "1 leased pool worktree")
 	requireStatusLineNotContains(t, out, "1 leased pool worktree", "bench worktree clean <path>")
-	leasedOut := contract.RunAt(t, f, pool.Leased, map[string]string{"BENCH_HOME": benchHome}, "bash", benchPath(t), "status").Stdout
+	leasedOut := contract.RunAt(t, f, pool.Leased, selectedBenchEnv(t, map[string]string{"BENCH_HOME": benchHome}), benchPath(t), "status").Stdout
 	contract.RequireContains(t, leasedOut, "1 out-of-pool worktree")
 	contract.RequireContains(t, leasedOut, "1 leased pool worktree")
 	requireStatusLineNotContains(t, leasedOut, "1 leased pool worktree", "bench worktree clean <path>")

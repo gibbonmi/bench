@@ -65,6 +65,12 @@ func TestDefaultRunnerDispatchesOnCallKind(t *testing.T) {
 			dir:  "/root/internal/contract/axi",
 		},
 		{
+			name: "bite naming an owning subtest runs only that path",
+			call: RunCall{Kind: RunBite, Cwd: "/root/internal/contract/axi", Binary: "/bin/axi.test", Test: "TestOwner/owned_case"},
+			args: []string{"/bin/axi.test", "-test.run", "^TestOwner$/^owned_case$"},
+			dir:  "/root/internal/contract/axi",
+		},
+		{
 			name: "list asks the compiled binary which tests it carries",
 			call: RunCall{Kind: RunList, Cwd: "/root/internal/contract/axi", Binary: "/bin/axi.test"},
 			args: []string{"/bin/axi.test", "-test.list", ".*"},

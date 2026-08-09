@@ -192,7 +192,7 @@ func testAXIBlockDangerousGitLinkedWorktreeClassification(t *testing.T) {
 	f.Env["GIT_COMMITTER_EMAIL"] = "bench@local"
 	copyGuardsExecutable(t, filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), filepath.Join(f.Root, "bin", "bench.sh"))
 	f.CommitAll("init")
-	copyGuardsExecutable(t, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), filepath.Join(f.Root, "dist", "bench"))
+	copyGuardsExecutable(t, contract.SelectedBench(t).Path, filepath.Join(f.Root, "dist", "bench"))
 	linked := filepath.Join(t.TempDir(), "linked")
 	f.Git("worktree", "add", "-q", "--detach", linked, "HEAD")
 	wt := contract.NewFixtureAt(t, linked, f.Env)

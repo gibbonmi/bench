@@ -15,6 +15,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
@@ -42,19 +43,16 @@ func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
 	tree := gitOutput(t, root, "write-tree")
 	gitRun(t, root, "reset", "--hard", "HEAD")
 
-	fakeBin := t.TempDir()
-	writeGateTestFile(t, fakeBin, "go", "#!/usr/bin/env bash\necho ordinary-freshness-route >&2\nexit 73\n", 0o755)
 	writeGateTestFile(t, root, prospectiveGatePath,
 		"#!/usr/bin/env bash\nprintf routed > \"$PWD/.git/prospective-route\"\n", 0o755)
 	direct := exec.Command(filepath.Join(root, ".bench", "gate.sh"))
 	direct.Dir = root
-	direct.Env = append(os.Environ(),
+	direct.Env = runbinary.WithEnv(append(os.Environ(),
 		"BENCH_GATE_PROSPECTIVE=1",
-		"PATH="+fakeBin+string(os.PathListSeparator)+os.Getenv("PATH"),
-	)
+	), "")
 	directOutput, directErr := direct.CombinedOutput()
-	if directErr == nil || !strings.Contains(string(directOutput), "ordinary-freshness-route") {
-		t.Fatalf("ordinary real wrapper with ambient marker = %v, output=%q; want the ordinary freshness route", directErr, directOutput)
+	if directErr == nil || !strings.Contains(string(directOutput), runbinary.Env) {
+		t.Fatalf("ordinary real wrapper without owner = %v, output=%q; want selected-path refusal", directErr, directOutput)
 	}
 	if _, err := os.Stat(filepath.Join(root, ".git", "prospective-route")); !os.IsNotExist(err) {
 		t.Fatalf("ordinary wrapper entered the prospective route: %v", err)
@@ -67,7 +65,7 @@ func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	if got := ExecuteTree(context.Background(), root, tree, &stdout, &stderr); got.ActionExit != 0 {
+	if got := executeTreeWithOwner(context.Background(), root, tree, &stdout, &stderr, runbinary.Own); got.ActionExit != 0 {
 		t.Fatalf("prospective benchkit execution = %+v, want green; stdout=%q stderr=%q", got, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "source B") || strings.Contains(stdout.String(), "source A") {
@@ -135,7 +133,10 @@ exec %q -test.run '^TestProspectiveFullInventoryHelper$'
 	gitRun(t, fixture.root, "reset", "--hard", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	if got := ExecuteTree(context.Background(), fixture.root, tree, &stdout, &stderr); got.ActionExit != 0 {
+	owner := func(_ context.Context, source string) (*runbinary.Selection, error) {
+		return &runbinary.Selection{Path: "/bin/true", SourceRoot: source}, nil
+	}
+	if got := executeTreeWithOwner(context.Background(), fixture.root, tree, &stdout, &stderr, owner); got.ActionExit != 0 {
 		t.Fatalf("prospective execution = %+v, want green; stdout=%q stderr=%q", got, stdout.String(), stderr.String())
 	}
 	data, err := os.ReadFile(selectionPath)
@@ -153,8 +154,9 @@ func TestProspectiveFullInventoryHelper(t *testing.T) {
 		return
 	}
 	root := os.Getenv("BENCH_PROSPECTIVE_PHASE_ROOT")
-	if code := PhasesCommand([]string{root}, io.Discard, io.Discard); code != 0 {
-		t.Fatalf("prospective PhasesCommand = %d, want green", code)
+	var stdout, stderr bytes.Buffer
+	if code := phasesCommandAtKitForTest(root, root, &stdout, &stderr); code != 0 {
+		t.Fatalf("prospective PhasesCommand = %d, want green; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }
 

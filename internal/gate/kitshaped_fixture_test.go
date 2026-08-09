@@ -1,12 +1,8 @@
 package gate
 
-// The kit-shaped fixture root. The synthetic root in reduced_run_test.go declares two
-// phases over a tree with no Go module, so nothing about the build phase, the freshness
-// seal, or the canary surfaces can be observed against it. This root carries the tree
-// shape BenchkitPhases reads — a module with a ./cmd/bench main, the build helper beside
-// its auxiliary input manifest, the wrapper script the canary phase execs, and the canary
-// source and fixture directories — and seals a published dist/bench, so those components
-// have somewhere to be graded. Both roots stand; neither replaces the other.
+// The kit-shaped fixture root carries the tree shape BenchkitPhases reads: a module,
+// wrapper, canary sources, and fixture directories. The run owner supplies the executable,
+// so the ordinary fixture deliberately materializes no dist/bench of its own.
 //
 // Execution stays observable the same way: the resolved gate script appends to
 // .git/full-runs and every phase appends its own name to .git/phase-runs, so the executed
@@ -15,7 +11,6 @@ package gate
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -23,7 +18,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -73,24 +67,12 @@ type kitShapedFixture struct {
 	phases []Phase
 }
 
-var kitShapedTemplateState struct {
-	once sync.Once
-	path string
-	dir  string
-	err  error
-}
-
 func TestMain(m *testing.M) {
 	if err := provideDefaultGoCache(); err != nil {
 		fmt.Fprintln(os.Stderr, "resolve the default Go build cache:", err)
 		os.Exit(1)
 	}
-	code := m.Run()
-	if err := os.RemoveAll(kitShapedTemplateState.dir); err != nil && code == 0 {
-		fmt.Fprintln(os.Stderr, "remove kit-shaped fixture template:", err)
-		code = 1
-	}
-	os.Exit(code)
+	os.Exit(m.Run())
 }
 
 func provideDefaultGoCache() error {
@@ -116,7 +98,6 @@ func newKitShapedFixture(t *testing.T) kitShapedFixture {
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	writeKitShapedTree(t, root)
-	sealInitialKitShapedBinary(t, root)
 	// The manifest is generated from BenchkitPhases' own answer for this tree, so the
 	// executed table carries the names the kit table materializes here and nothing else:
 	// a tree that stops satisfying a phase's shape stops declaring that phase.
@@ -126,18 +107,6 @@ func newKitShapedFixture(t *testing.T) kitShapedFixture {
 		t.Fatalf("resolve the fixture phase table: %v", err)
 	}
 	return kitShapedFixture{root: root, phases: phases}
-}
-
-func kitShapedTemplate(root string) (string, error) {
-	kitShapedTemplateState.once.Do(func() {
-		kitShapedTemplateState.dir, kitShapedTemplateState.err = os.MkdirTemp("", "bench-kitshaped-fixture-")
-		if kitShapedTemplateState.err != nil {
-			return
-		}
-		kitShapedTemplateState.path = filepath.Join(kitShapedTemplateState.dir, "bench.staged")
-		kitShapedTemplateState.err = buildFixtureBinary(root, "./cmd/bench", kitShapedTemplateState.path)
-	})
-	return kitShapedTemplateState.path, kitShapedTemplateState.err
 }
 
 func (f kitShapedFixture) phaseNames() []string {
@@ -165,10 +134,8 @@ func writeKitShapedTree(t *testing.T, root string) {
 		"package conformance\n\nimport \"testing\"\n\nfunc TestRootConformance(t *testing.T) {}\n", 0o644)
 	writeConformanceCanaryOwners(t, root)
 	writeGateTestFile(t, root, "tests/canary/fixture.txt", "canary fixture\n", 0o644)
-	// BenchkitPhases materializes the build phase only when the build helper and go.mod
-	// are both regular files, and the seal digest refuses a root whose auxiliary manifest is
-	// absent or empty. Neither script is ever executed here — the phase manifest routes every
-	// phase through a marker script instead — so both carry the inert body.
+	// The builder remains an inert tracked input so source-closure tests see the same kit
+	// surface. No ordinary fixture command executes it.
 	writeGateTestFile(t, root, "scripts/go-build.sh", "#!/usr/bin/env bash\nexit 0\n", 0o755)
 	writeGateTestFile(t, root, "scripts/go-build.inputs", "build_script=scripts/go-build.sh\n", 0o644)
 	writeGateTestFile(t, root, "bin/bench.sh", "#!/usr/bin/env bash\nexit 0\n", 0o755)
@@ -323,19 +290,6 @@ func writeCaptureSurfaces(t *testing.T, root string) {
 	}
 }
 
-func sealInitialKitShapedBinary(t *testing.T, root string) {
-	t.Helper()
-	staged := filepath.Join(root, "dist", "bench.staged")
-	template, err := kitShapedTemplate(root)
-	if err != nil {
-		t.Fatalf("build the fixture binary template: %v", err)
-	}
-	if err := materializeFixtureBinary(template, staged); err != nil {
-		t.Fatalf("materialize the fixture binary template: %v", err)
-	}
-	publishKitShapedBinary(t, root, staged)
-}
-
 // sealKitShapedBinary publishes dist/bench through the seal package's Publish, the only
 // writer that produces a seal answering for the tree the binary was built from. Moving the
 // bytes into place by hand leaves an executable no reader can verify.
@@ -353,226 +307,10 @@ func publishKitShapedBinary(t *testing.T, root, staged string) {
 	}
 }
 
-func requireKitShapedBinaryFresh(t *testing.T, root string) {
-	t.Helper()
-	if err := benchfreshness.Verify(root, filepath.Join(root, "dist", "bench")); err != nil {
-		t.Fatalf("fixture-only edit changed the synthetic Bench build inputs: %v", err)
-	}
-}
-
-func materializeFixtureBinary(source, destination string) error {
-	return materializeFixtureBinaryWithLink(source, destination, os.Link)
-}
-
-func materializeFixtureBinaryWithLink(source, destination string, link func(string, string) error) error {
-	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
-		return err
-	}
-	linkErr := link(source, destination)
-	if linkErr == nil {
-		return nil
-	}
-	if _, err := os.Lstat(destination); err == nil {
-		return fmt.Errorf("link fixture binary: destination already exists: %w", linkErr)
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("inspect fixture binary destination: %w", err)
-	}
-	return copyFixtureBinary(source, destination)
-}
-
-func copyFixtureBinary(source, destination string) (err error) {
-	info, err := os.Stat(source)
-	if err != nil {
-		return err
-	}
-	input, err := os.Open(source)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if closeErr := input.Close(); err == nil && closeErr != nil {
-			err = closeErr
-		}
-	}()
-	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
-		return err
-	}
-	output, err := os.OpenFile(destination, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if closeErr := output.Close(); err == nil && closeErr != nil {
-			err = closeErr
-		}
-		if err != nil {
-			_ = os.Remove(destination)
-		}
-	}()
-	if _, err := io.Copy(output, input); err != nil {
-		return err
-	}
-	return os.Chmod(destination, info.Mode().Perm())
-}
-
-func makeFixtureBinaryPrivate(path string) (err error) {
-	temporary, err := os.CreateTemp(filepath.Dir(path), ".bench-private-*")
-	if err != nil {
-		return err
-	}
-	temporaryPath := temporary.Name()
-	defer func() {
-		if removeErr := os.Remove(temporaryPath); err == nil && removeErr != nil && !os.IsNotExist(removeErr) {
-			err = removeErr
-		}
-	}()
-	if err := temporary.Close(); err != nil {
-		return err
-	}
-	if err := copyFixtureBinary(path, temporaryPath); err != nil {
-		return err
-	}
-	if err := os.Chmod(temporaryPath, 0o755); err != nil {
-		return err
-	}
-	return os.Rename(temporaryPath, path)
-}
-
-func replaceFixtureBinary(t *testing.T, path string, data []byte) {
-	t.Helper()
-	temporary, err := os.CreateTemp(filepath.Dir(path), ".bench-replacement-*")
-	if err != nil {
-		t.Fatal(err)
-	}
-	temporaryPath := temporary.Name()
-	t.Cleanup(func() { _ = os.Remove(temporaryPath) })
-	if _, err := temporary.Write(data); err != nil {
-		_ = temporary.Close()
-		t.Fatal(err)
-	}
-	if err := temporary.Chmod(0o755); err != nil {
-		_ = temporary.Close()
-		t.Fatal(err)
-	}
-	if err := temporary.Close(); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Rename(temporaryPath, path); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestKitShapedFixturesDetachIndependentTemplateLinks(t *testing.T) {
-	t.Parallel()
-	first := newKitShapedFixture(t)
-	second := newKitShapedFixture(t)
-	firstInfo, err := os.Stat(first.binaryPath())
-	if err != nil {
-		t.Fatal(err)
-	}
-	secondInfo, err := os.Stat(second.binaryPath())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !os.SameFile(firstInfo, secondInfo) {
-		t.Fatal("initial fixture binaries do not share the immutable template inode")
-	}
-	replaceFixtureBinary(t, first.binaryPath(), []byte("changed"))
-	privateInfo, err := os.Stat(first.binaryPath())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if os.SameFile(privateInfo, secondInfo) {
-		t.Fatal("detached fixture binary still shares the immutable template inode")
-	}
-	if err := benchfreshness.Verify(second.root, second.binaryPath()); err != nil {
-		t.Fatalf("second fixture binary after mutating the first = %v, want independent published bytes", err)
-	}
-}
-
-func TestMaterializeFixtureBinaryFallsBackToPrivateCopy(t *testing.T) {
-	t.Parallel()
-	root := t.TempDir()
-	source := filepath.Join(root, "template")
-	destination := filepath.Join(root, "fixture", "dist", "bench.staged")
-	writeGateTestFile(t, root, "template", "fixture binary\n", 0o755)
-
-	linkErr := fmt.Errorf("links unavailable")
-	if err := materializeFixtureBinaryWithLink(source, destination, func(string, string) error {
-		return linkErr
-	}); err != nil {
-		t.Fatal(err)
-	}
-	if got := string(mustRead(t, destination)); got != "fixture binary\n" {
-		t.Fatalf("fallback bytes = %q, want the template bytes", got)
-	}
-	sourceInfo, err := os.Stat(source)
-	if err != nil {
-		t.Fatal(err)
-	}
-	destinationInfo, err := os.Stat(destination)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if os.SameFile(sourceInfo, destinationInfo) {
-		t.Fatal("copy fallback still shares the template inode")
-	}
-	if err := materializeFixtureBinaryWithLink(source, destination, func(string, string) error {
-		return linkErr
-	}); err == nil {
-		t.Fatal("materialize over an existing destination succeeded")
-	}
-	if got := string(mustRead(t, destination)); got != "fixture binary\n" {
-		t.Fatalf("existing destination after refused fallback = %q, want unchanged bytes", got)
-	}
-}
-
-func TestKitShapedFixtureTemplateFailureIsSticky(t *testing.T) {
-	t.Parallel()
-	if os.Getenv("BENCH_KITSHAPED_TEMPLATE_FAILURE") != "1" {
-		report := filepath.Join(t.TempDir(), "template-directory")
-		command := exec.Command(os.Args[0], "-test.run", "^TestKitShapedFixtureTemplateFailureIsSticky$")
-		command.Env = append(os.Environ(),
-			"BENCH_KITSHAPED_TEMPLATE_FAILURE=1",
-			"BENCH_KITSHAPED_TEMPLATE_REPORT="+report,
-		)
-		if out, err := command.CombinedOutput(); err != nil {
-			t.Fatalf("template failure subprocess: %v\n%s", err, out)
-		}
-		contents, err := os.ReadFile(report)
-		if err != nil {
-			t.Fatalf("read the template lifetime report: %v", err)
-		}
-		dir := string(contents)
-		if dir == "" {
-			t.Fatal("template lifetime report is empty")
-		}
-		if _, err := os.Stat(dir); !os.IsNotExist(err) {
-			t.Fatalf("template directory after the test process = %v, want removed", err)
-		}
-		return
-	}
-	root := t.TempDir()
-	gitRun(t, root, "init", "-q")
-	writeKitShapedTree(t, root)
-	writeGateTestFile(t, root, "cmd/bench/main.go", "package main\nfunc main( {\n", 0o644)
-	_, first := kitShapedTemplate(root)
-	_, second := kitShapedTemplate(root)
-	if first == nil || second == nil || first != second {
-		t.Fatalf("template failures = (%v, %v), want the same retained construction error", first, second)
-	}
-	if err := os.WriteFile(os.Getenv("BENCH_KITSHAPED_TEMPLATE_REPORT"), []byte(kitShapedTemplateState.dir), 0o644); err != nil {
-		t.Fatalf("write the template lifetime report: %v", err)
-	}
-}
-
 // writeKitShapedManifest declares one marker phase per name in declared, and writes the
 // script each of them runs.
 //
-// The declared edges are carried through. They are what orders a writer of dist/bench ahead of
-// its readers, so a fixture that dropped them would let a phase copying the artifact race the
-// phase producing it — and would leave the build phase's skip untested against the edges it is
-// claimed to satisfy trivially.
+// Declared edges are carried through so scheduler tests retain the table's dependency shape.
 func writeKitShapedManifest(t *testing.T, root string, declared []Phase) {
 	t.Helper()
 	var doc manifestDoc
@@ -607,17 +345,14 @@ func goListClosure(t *testing.T, root string, args ...string) map[string]bool {
 	return closure
 }
 
-// [PS5] The fixture's resolved table carries build and canary by name. Every later
-// assertion about either component rests on this, so it is stated on its own: a tree shape
-// that stops materializing the build phase leaves those assertions passing over a table
-// that never declared what they claim to grade.
-func TestKitShapedFixtureCarriesBuildAndCanary(t *testing.T) {
+func TestKitShapedFixtureCarriesCanaryAndNoBuildPhase(t *testing.T) {
 	t.Parallel()
 	fixture := newKitShapedFixture(t)
-	for _, name := range []string{canary.PhaseBuild, "canary"} {
-		if !carriesPhase(fixture.phases, name) {
-			t.Fatalf("resolved table = %v, want a %q phase", fixture.phaseNames(), name)
-		}
+	if !carriesPhase(fixture.phases, "canary") {
+		t.Fatalf("resolved table = %v, want canary", fixture.phaseNames())
+	}
+	if carriesPhase(fixture.phases, "build") {
+		t.Fatalf("resolved table = %v, want no build phase", fixture.phaseNames())
 	}
 }
 
@@ -706,17 +441,6 @@ func TestKitShapedFixtureHasAPackageOutsideTheBinaryClosure(t *testing.T) {
 	if !module[outsideBinaryClosurePackage+".test"] {
 		t.Fatalf("%s contributes no test binary, so its _test.go files are outside the module-wide closure: %v",
 			outsideBinaryClosurePackage, sortedClosure(module))
-	}
-}
-
-// [PS7] The published binary verifies against the tree it was built from, immediately
-// after construction. Every build-skip decision rests on that seal, so a fixture whose
-// dist/bench cannot be verified would make a skip look sound for the wrong reason.
-func TestKitShapedFixtureBinaryIsSealed(t *testing.T) {
-	t.Parallel()
-	fixture := newKitShapedFixture(t)
-	if err := benchfreshness.Verify(fixture.root, fixture.binaryPath()); err != nil {
-		t.Fatalf("benchfreshness.Verify = %v, want the published binary to verify", err)
 	}
 }
 

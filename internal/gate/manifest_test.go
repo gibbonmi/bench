@@ -36,7 +36,7 @@ func runManifest(t *testing.T, manifest string) (code int, stderr string, fellBa
 	writeFile(t, manifestPath(root), manifest)
 
 	var outBuf, errBuf bytes.Buffer
-	code = phasesCommandAtKit(root, root, &outBuf, &errBuf)
+	code = phasesCommandAtKitForTest(root, root, &outBuf, &errBuf)
 	_, err := os.Stat(marker)
 	return code, errBuf.String(), err == nil
 }
@@ -49,7 +49,7 @@ func TestPhasesCommandLoadsManifest(t *testing.T) {
 	writeFile(t, manifestPath(root), fmt.Sprintf(`{"phases":[{"name":"declared","argv":["touch",%q]}]}`, declared))
 
 	var stdout, stderr bytes.Buffer
-	if code := phasesCommandAtKit(root, root, &stdout, &stderr); code != 0 {
+	if code := phasesCommandAtKitForTest(root, root, &stdout, &stderr); code != 0 {
 		t.Fatalf("PhasesCommand = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if _, err := os.Stat(declared); err != nil {
@@ -66,7 +66,7 @@ func TestPhasesCommandAbsentManifestFallsBack(t *testing.T) {
 	stubBuiltinTable(t, builtin)
 
 	var stdout, stderr bytes.Buffer
-	if code := phasesCommandAtKit(root, root, &stdout, &stderr); code != 0 {
+	if code := phasesCommandAtKitForTest(root, root, &stdout, &stderr); code != 0 {
 		t.Fatalf("PhasesCommand = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if _, err := os.Stat(builtin); err != nil {
@@ -224,7 +224,7 @@ func TestManifestDanglingSymlinkIsRed(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	if code := phasesCommandAtKit(root, root, &stdout, &stderr); code != 1 {
+	if code := phasesCommandAtKitForTest(root, root, &stdout, &stderr); code != 1 {
 		t.Fatalf("PhasesCommand = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "dangling symlink") || !strings.Contains(stderr.String(), "gone.json") {
@@ -257,7 +257,7 @@ func TestManifestSpecialFileIsRed(t *testing.T) {
 	done := make(chan outcome, 1)
 	go func() {
 		var stdout, stderr bytes.Buffer
-		code := phasesCommandAtKit(root, root, &stdout, &stderr)
+		code := phasesCommandAtKitForTest(root, root, &stdout, &stderr)
 		done <- outcome{code: code, stderr: stderr.String()}
 	}()
 	select {
@@ -296,7 +296,7 @@ func TestPhasesCommandManifestFieldsEndToEnd(t *testing.T) {
 	]}`, alpha, alpha))
 
 	var stdout, stderr bytes.Buffer
-	if code := phasesCommandAtKit(root, root, &stdout, &stderr); code != 0 {
+	if code := phasesCommandAtKitForTest(root, root, &stdout, &stderr); code != 0 {
 		t.Fatalf("PhasesCommand = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if _, err := os.Stat(alpha); err != nil {
@@ -334,7 +334,7 @@ func TestManifestDirResolvesAgainstGradedRoot(t *testing.T) {
 	]}`)
 
 	var stdout, stderr bytes.Buffer
-	if code := PhasesCommand([]string{root}, &stdout, &stderr); code != 0 {
+	if code := phasesCommandAtKitForTest(root, kitRoot(root), &stdout, &stderr); code != 0 {
 		t.Fatalf("PhasesCommand = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	for _, want := range []string{
@@ -375,7 +375,7 @@ func TestPhasesCommandInnerModeManifestDagOrder(t *testing.T) {
 	]}`)
 
 	var stdout, stderr bytes.Buffer
-	if code := phasesCommandAtKit(root, root, &stdout, &stderr); code != 0 {
+	if code := phasesCommandAtKitForTest(root, root, &stdout, &stderr); code != 0 {
 		t.Fatalf("PhasesCommand = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if got, want := stdout.String(), "alpha\nbeta\ngate: green\n"; got != want {

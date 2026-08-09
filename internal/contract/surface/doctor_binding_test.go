@@ -50,10 +50,10 @@ func testDoctorRetiredKeyRewrites(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	f.WriteFile(".bench/lines.env", retiredLinesEnv)
 
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red:")
 	for _, want := range wantRetiredRewrites {
@@ -70,11 +70,11 @@ func testDoctorMigrationRerun(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	f.WriteFile(".bench/lines.env", retiredLinesEnv)
 
-	first := f.BenchEnv(sb.env, "doctor")
-	second := f.BenchEnv(sb.env, "doctor")
+	first := f.BenchWrapperEnv(sb.env, "doctor")
+	second := f.BenchWrapperEnv(sb.env, "doctor")
 	second.RequireExit(1)
 	for _, want := range wantRetiredRewrites {
 		first.RequireContains(first.Stdout, want)
@@ -93,11 +93,11 @@ func testDoctorUnboundColumn(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	f.WriteFile(".bench/lines.env", "BENCH_CODEX_TOP=gpt-5.6-sol\nBENCH_CODEX_MID=gpt-5.6-terra\n"+
 		"BENCH_CODEX_CHEAP=gpt-5.6-luna\nBENCH_CLAUDE_TOP=fable\nBENCH_CLAUDE_MID=opus\nBENCH_CLAUDE_CHEAP=sonnet\n")
 
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "opencode")
 	for _, key := range []string{"BENCH_OPENCODE_TOP", "BENCH_OPENCODE_MID", "BENCH_OPENCODE_CHEAP"} {

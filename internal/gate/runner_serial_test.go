@@ -10,7 +10,6 @@ import (
 	"context"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/contract"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func TestRunnerShellcheckAbsentSkips(t *testing.T) {
@@ -160,12 +160,11 @@ func r12Contention(id, action string) r21ProofCase {
 func currentBenchBinary(t *testing.T) string {
 	t.Helper()
 	kit := kitRootForTest(t)
-	binary := filepath.Join(t.TempDir(), "bench")
-	cmd := exec.Command("bash", filepath.Join(kit, "scripts", "go-build.sh"), kit, binary)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("build current bench binary: %v\n%s", err, output)
+	selection, err := runbinary.Inherit(kit)
+	if err != nil {
+		t.Fatal(err)
 	}
-	return binary
+	return selection.Path
 }
 
 func TestRunnerOptionalBrokenSymlinkSkips(t *testing.T) {
@@ -436,27 +435,27 @@ func TestSchedulerRespectsNeeds(t *testing.T) {
 	}
 }
 
-// TestSchedulerOverlapsIndependents holds four edge-free phases at a barrier that only
-// opens once all four subprocesses exist at the same time, so a serializing or
-// fixed-width scheduler starves rather than merely running slower. The waiters are
-// syscall-blocked subprocesses, not goroutines, so the barrier is GOMAXPROCS-safe.
-func TestSchedulerOverlapsIndependents(t *testing.T) {
+func TestSchedulerRunsIndependentPhasesOneAtATime(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	started := filepath.Join(root, "started")
-	if err := os.Mkdir(started, 0o755); err != nil {
-		t.Fatalf("mkdir started: %v", err)
-	}
-	const barrier = `d="$1"; touch "$d/$2"; for _ in $(seq 500); do [ "$(ls "$d" | wc -l)" -ge 4 ] && exit 0; sleep 0.01; done; exit 1`
+	active := filepath.Join(root, "active")
+	record := filepath.Join(root, "order")
 	var phases []Phase
 	for _, name := range []string{"alpha", "bravo", "charlie", "delta"} {
-		phases = append(phases, Phase{Name: name, Argv: []string{"bash", "-c", barrier, "bash", started, name}})
+		phases = append(phases, Phase{Name: name, Argv: []string{"bash", "-c", `mkdir "$1" || exit 71; printf '%s\n' "$3" >> "$2"; sleep 0.01; rmdir "$1"`, "bash", active, record, name}})
 	}
 
 	var stdout, stderr bytes.Buffer
 	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
 	if rc != 0 {
-		t.Fatalf("runPhases rc = %d; four independent phases never overlapped\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+		t.Fatalf("runPhases rc = %d; independent phases overlapped\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+	}
+	got, err := os.ReadFile(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "alpha\nbravo\ncharlie\ndelta\n" {
+		t.Fatalf("phase order = %q, want declaration order", got)
 	}
 }
 

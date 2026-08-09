@@ -26,6 +26,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -227,7 +228,33 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	return executeWithEngineAfterAcquireAtKit(context.Background(), root, kitRoot(root), stdout, stderr, productionGateEngine{}, notifyGateSignals, mode).ActionExit
+	ctx, finishLog := beginGateRunLog(context.Background(), root, stderr, mode.String())
+	result := executeWithEngineAfterAcquireAtKit(ctx, root, kitRoot(root), stdout, stderr, productionGateEngine{}, notifyGateSignals, mode)
+	finishLog(result)
+	return result.ActionExit
+}
+
+const commandUsage = "usage: bench gate [--fresh|pin]"
+
+func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	if len(args) == 0 {
+		return RunCommand(nil, stdout, stderr)
+	}
+	switch args[0] {
+	case "pin":
+		return PinCommand(args[1:], stdin, stdout, stderr)
+	case "--fresh":
+		if len(args) == 1 {
+			return RunCommand(args, stdout, stderr)
+		}
+	case "--help", "-h", "help":
+		if len(args) == 1 {
+			fmt.Fprintln(stdout, commandUsage)
+			return 0
+		}
+	}
+	fmt.Fprintln(stderr, commandUsage)
+	return 2
 }
 
 type Result struct {
@@ -237,7 +264,10 @@ type Result struct {
 }
 
 func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	return executeWithEngineAtKit(ctx, root, kitRoot(root), stdout, stderr, productionGateEngine{})
+	ctx, finishLog := beginGateRunLog(ctx, root, stderr, "ordinary")
+	result := executeWithEngineAtKit(ctx, root, kitRoot(root), stdout, stderr, productionGateEngine{})
+	finishLog(result)
+	return result
 }
 
 // ExecuteReusingFreshGreen answers for root's tree like Execute, but a verdict already
@@ -278,6 +308,22 @@ const (
 	reuseFreshGreen runMode = iota
 	forceRun
 )
+
+func (m runMode) String() string {
+	if m == forceRun {
+		return "fresh"
+	}
+	return "ordinary"
+}
+
+func runBinarySource(runtimeRoot, storageRoot string, plan subject) string {
+	if plan.Resolution.Kind == ProspectiveGateSh &&
+		isRegularFile(filepath.Join(runtimeRoot, "scripts", "go-build.sh")) &&
+		isRegularFile(filepath.Join(runtimeRoot, "go.mod")) {
+		return runtimeRoot
+	}
+	return kitRoot(storageRoot)
+}
 
 // sameDirectory reports whether two paths name the same directory, by file identity
 // rather than by string equality, so a symlinked or differently-spelled path to one tree
@@ -324,10 +370,12 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 
 func executeWithEngineAtKit(ctx context.Context, root, kit string, stdout, stderr io.Writer, engine gateEngine) Result {
 	evaluation := executionEvaluation(newEngineEvaluationAtKit(root, kit, engine))
+	var owner runBinaryOwner
 	if _, production := engine.(productionGateEngine); production {
 		evaluation = newWorkingTreeEvaluationAtKit(root, kit)
+		owner = productionRunBinaryOwner()
 	}
-	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, nil, reuseFreshGreen, evaluation)
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, engine, nil, reuseFreshGreen, evaluation, owner)
 }
 
 func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
@@ -336,13 +384,31 @@ func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, std
 
 func executeWithEngineAfterAcquireAtKit(ctx context.Context, root, kit string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
 	evaluation := executionEvaluation(newEngineEvaluationAtKit(root, kit, engine))
+	var owner runBinaryOwner
 	if _, production := engine.(productionGateEngine); production {
 		evaluation = newWorkingTreeEvaluationAtKit(root, kit)
+		owner = productionRunBinaryOwner()
 	}
-	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, arm, mode, evaluation)
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, engine, arm, mode, evaluation, owner)
 }
 
 func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation) Result {
+	return executeSubjectWithRunBinary(ctx, runtimeRoot, storageRoot, stdout, stderr, engine, arm, mode, evaluation, nil)
+}
+
+type runBinaryOwner func(context.Context, string) (*runbinary.Selection, error)
+
+func productionRunBinaryOwner() runBinaryOwner {
+	if _, inherited := os.LookupEnv(runbinary.Env); inherited {
+		return runbinary.ReuseOrOwn
+	}
+	if os.Getenv("BENCH_WRAPPER") != "" {
+		return runbinary.Own
+	}
+	return nil
+}
+
+func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner) Result {
 	plan, err := evaluation.acceptPre()
 	if err != nil {
 		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate subject unavailable")
@@ -351,8 +417,10 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		fmt.Fprintln(stderr, "no gate found: add an executable .bench/gate.sh or set BENCH_GATE")
 		return Result{GateExit: 3, ActionExit: 3, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
+	logGateEvent(ctx, gateLogRecord{Event: "subject.accepted", Root: storageRoot, Mode: mode.String(), Detail: plan.Tree})
 	if mode == reuseFreshGreen {
 		if reuse := reusableEvidence(storageRoot, plan, engine.Now()); reuse.ReusableGreen {
+			logGateEvent(ctx, gateLogRecord{Event: "gate.reused", Root: storageRoot})
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
@@ -375,6 +443,7 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		return Result{ActionExit: 1, Inspection: inspection}
 	}
 	defer engine.Unlock(lock)
+	logGateEvent(ctx, gateLogRecord{Event: "gate.locked", Root: storageRoot, Path: filepath.Join(gitdir, "bench-gate.lock")})
 	if arm != nil {
 		var stop func()
 		ctx, stop = arm(ctx)
@@ -395,9 +464,41 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	// written — no pending record to leave behind, no verdict to restore.
 	if mode == reuseFreshGreen {
 		if reuse := reusableEvidence(storageRoot, plan, engine.Now()); reuse.ReusableGreen {
+			logGateEvent(ctx, gateLogRecord{Event: "gate.reused", Root: storageRoot})
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
+	runCtx, cancelRun := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
+	defer cancelRun()
+	var selection *runbinary.Selection
+	if owner != nil {
+		source := runBinarySource(runtimeRoot, storageRoot, plan)
+		logGateEvent(ctx, gateLogRecord{Event: "binary.select.start", Root: source})
+		selection, err = owner(runCtx, source)
+		if err != nil {
+			logGateEvent(ctx, gateLogRecord{Event: "binary.select.finish", Root: source, Detail: err.Error()})
+			if errors.Is(context.Cause(runCtx), errGateTimeout) {
+				fmt.Fprintln(stderr, "gate: timeout")
+				return Result{GateExit: 124, ActionExit: 124, Inspection: inspectAt(storageRoot, engine.Now())}
+			}
+			if ctx.Err() != nil {
+				return Result{GateExit: 130, ActionExit: 130, Inspection: inspectAt(storageRoot, engine.Now())}
+			}
+			return operationalWithEngine(engine, storageRoot, 0, stderr, "gate Bench executable unavailable")
+		}
+		logGateEvent(ctx, gateLogRecord{Event: "binary.select.finish", Root: source, Path: selection.Path})
+		defer func() {
+			err := selection.Close()
+			record := gateLogRecord{Event: "binary.cleanup", Path: selection.Path}
+			if err != nil {
+				record.Detail = err.Error()
+			}
+			logGateEvent(ctx, record)
+		}()
+		plan.Env = runbinary.WithEnv(plan.Env, selection.Path)
+		plan.Env = mergeEnv(plan.Env, []string{"BENCH_KIT=" + selection.SourceRoot})
+	}
+	plan.Env = withGateRunLogEnv(ctx, plan.Env)
 	// The narrowing decision sits under the execution lock, after the whole-tree reuse
 	// answer — reuse costs nothing and grades everything, so it stays the first answer.
 	// Only the ordinary path (runtime and storage root the same tree) narrows; a
@@ -412,15 +513,17 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	var scoping componentScoping
 	if ordinary {
 		scoping = evaluation.scope(plan.Resolution, mode, engine.Now())
+		if selection != nil {
+			scoping.phases = withRunBinary(scoping.phases, selection)
+		}
 	}
 	pending := interruptedRecord(plan, engine.Now())
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
 		_ = durableReplaceWithEngine(engine, gitdir, pending)
 		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate pending persistence failed")
 	}
-	runCtx, cancelRun := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
-	defer cancelRun()
 	var rc int
+	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
 	switch {
 	case scoping.partial():
 		// The announcement is not optional: a skipped grading surface that says
@@ -443,6 +546,7 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	default:
 		rc = runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
 	}
+	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
 	if ctx.Err() != nil {
 		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
@@ -493,14 +597,6 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		// Failing to author only costs a future run its skip, but failing silently
 		// would hide that cost, so it shares the persistence-failure posture below.
 		if err := authorExecutedComponentSlots(storageRoot, scoping, recordedAt); err != nil {
-			fmt.Fprintln(stderr, "gate evidence persistence failed")
-			return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
-		}
-		// The build's evidence is the artifact rather than a slot, so it is authored here
-		// beside them: this run executed the build phase, and the attestation is the record
-		// saying the binary now on disk is the one it produced. A run that skipped the build
-		// authors nothing, leaving the seal and the attestation it inherited untouched.
-		if err := attestExecutedBuild(scoping, storageRoot, recordedAt); err != nil {
 			fmt.Fprintln(stderr, "gate evidence persistence failed")
 			return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
 		}

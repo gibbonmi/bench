@@ -14,12 +14,7 @@ import (
 
 func buildPreflightBinary(t *testing.T) string {
 	t.Helper()
-	binary := filepath.Join(t.TempDir(), "bench")
-	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %v\n%s", err, output)
-	}
-	return binary
+	return selectedBench(t)
 }
 
 func runBuilt(t *testing.T, binary, root string, env []string) ([]byte, error) {

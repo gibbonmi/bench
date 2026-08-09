@@ -57,6 +57,7 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 	go func() { done <- cmd.Wait() }()
 	select {
 	case err := <-done:
+		drainProcessGroup(cmd.Process.Pid)
 		return processGroupResult{Code: processExitCode(cmd, err)}
 	case <-ctx.Done():
 		// Both flavors of cancellation get the same cascade — a catchable signal, the
@@ -71,14 +72,23 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 		_ = syscall.Kill(-cmd.Process.Pid, notice)
 		select {
 		case <-done:
-			// The leader can honor the signal while a descendant it left behind
-			// ignores it; the group kill is what reaps that orphan.
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			drainProcessGroup(cmd.Process.Pid)
 		case <-time.After(processGroupGrace(ctx)):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
+			drainProcessGroup(cmd.Process.Pid)
 		}
 		return processGroupResult{Code: code, Cancelled: true}
+	}
+}
+
+func drainProcessGroup(pgid int) {
+	_ = syscall.Kill(-pgid, syscall.SIGKILL)
+	for {
+		if err := syscall.Kill(-pgid, 0); errors.Is(err, syscall.ESRCH) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
@@ -129,11 +139,11 @@ func runPhases(ctx context.Context, root string, phases []Phase, mode phaseMode,
 		return 1
 	}
 	defer cleanup()
-	return runPhasesConcurrent(ctx, root, withSkipLog(phases, skipLog), skipLog, stdout, stderr)
+	return runPhasesSerial(ctx, root, withSkipLog(phases, skipLog), skipLog, stdout, stderr)
 }
 
 func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
-	results, cancelled := schedule(ctx, root, phases, true, func(Phase) (io.Writer, io.Writer, func()) {
+	results, cancelled := schedule(ctx, root, phases, func(Phase) (io.Writer, io.Writer, func()) {
 		return stdout, stderr, func() {}
 	})
 	if cancelled {
@@ -150,16 +160,15 @@ func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdou
 	return 0
 }
 
-func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
-	results, cancelled := schedule(ctx, root, phases, false, prefixedPhaseWriters(stdout, stderr))
+func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
+	results, cancelled := schedule(ctx, root, phases, prefixedPhaseWriters(stdout, stderr))
 	return aggregateAndReport(results, cancelled, stdout, stderr, func() bool {
 		return reportCapabilitySkips(skipLog, stdout, stderr)
 	})
 }
 
-// prefixedPhaseWriters is the per-phase output plumbing every concurrent schedule
-// shares: one write mutex over both streams, and a `[name] ` prefix per phase, so
-// interleaved phases stay attributable line by line.
+// prefixedPhaseWriters is the outer phase output plumbing. The mutex keeps each
+// phase's two streams coherent with diagnostics emitted by the scheduler.
 func prefixedPhaseWriters(stdout, stderr io.Writer) func(Phase) (io.Writer, io.Writer, func()) {
 	var writeMu sync.Mutex
 	return func(phase Phase) (io.Writer, io.Writer, func()) {
@@ -225,13 +234,12 @@ func reportStragglers(results []phaseResult, stderr io.Writer) {
 // table has settled green; a need that settled red or skipped resolves the dependent as
 // skipped-with-cause without launching it, so a red phase costs the run only the work
 // that actually depended on it. Sequential caps the run at one phase in flight and
-// takes the first ready phase in declaration order, which is the topological order
-// inner mode's pinned byte shape needs.
+// takes the first ready phase in declaration order.
 //
 // A need naming a phase absent from the table is already satisfied: phasesForMode
 // filters the table after the edges are declared, so an inner run legitimately carries
 // edges to phases it does not execute.
-func schedule(ctx context.Context, root string, phases []Phase, sequential bool, open func(Phase) (io.Writer, io.Writer, func())) ([]phaseResult, bool) {
+func schedule(ctx context.Context, root string, phases []Phase, open func(Phase) (io.Writer, io.Writer, func())) ([]phaseResult, bool) {
 	index := make(map[string]int, len(phases))
 	for i, phase := range phases {
 		index[phase.Name] = i
@@ -254,6 +262,7 @@ func schedule(ctx context.Context, root string, phases []Phase, sequential bool,
 			blocker, ready := edgeState(phase, index, settled, results)
 			if blocker != "" {
 				results[i] = phaseResult{Name: phase.Name, SkippedBy: blocker}
+				logGateEvent(ctx, gateLogRecord{Event: "phase.skip", Phase: phase.Name, Detail: blocker})
 				settled[i] = true
 				progressed = true
 				continue
@@ -265,15 +274,17 @@ func schedule(ctx context.Context, root string, phases []Phase, sequential bool,
 			inFlight++
 			progressed = true
 			i, phase := i, phase
+			logGateEvent(ctx, gateLogRecord{Event: "phase.start", Phase: phase.Name, Root: phase.Dir})
 			go func() {
+				started := time.Now()
 				out, errOut, closeWriters := open(phase)
 				results[i] = runPhase(ctx, root, phase, out, errOut)
+				exit := results[i].Code
+				logGateEvent(ctx, gateLogRecord{Event: "phase.finish", Phase: phase.Name, Exit: &exit, ElapsedMS: time.Since(started).Milliseconds()})
 				closeWriters()
 				done <- i
 			}()
-			if sequential {
-				break
-			}
+			break
 		}
 		if inFlight == 0 {
 			if !progressed {

@@ -23,7 +23,7 @@ printf 'alternate subject root:%s\n' "$1"
 	}
 
 	f := contract.NewFixture(t)
-	out := f.Bench("learnings")
+	out := f.BenchWrapper("learnings")
 
 	out.RequireExit(0)
 	out.RequireContains(out.Stdout, "alternate subject root:learnings")

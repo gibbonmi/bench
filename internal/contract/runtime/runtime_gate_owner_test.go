@@ -43,8 +43,8 @@ while :; do sleep .05; done
 	gitdir := gitDir(t, f)
 	ownerPath := filepath.Join(gitdir, "bench-gate-owner")
 	var output bytes.Buffer
-	cmd := exec.Command("bash", benchPath(t), "gate")
-	cmd.Dir, cmd.Env, cmd.Stdout, cmd.Stderr = f.Root, surfaceEnv(f, nil), &output, &output
+	cmd := exec.Command(benchPath(t), "gate")
+	cmd.Dir, cmd.Env, cmd.Stdout, cmd.Stderr = f.Root, selectedSurfaceEnv(t, f, nil), &output, &output
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}

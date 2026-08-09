@@ -248,7 +248,7 @@ func testRepairOptInExact(t *testing.T) {
 		t.Run("value="+value, func(t *testing.T) {
 			f, kit := binaryRepairFixtureKit(t)
 			registry := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\necho repaired\n")
-			out := f.BenchEnv(map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": value}, "version")
+			out := f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": value}, "version")
 			if value == "1" {
 				out.RequireExit(0)
 				return
@@ -274,7 +274,7 @@ func testRepairSuppressionPrecedence(t *testing.T) {
 			f, kit := binaryRepairFixtureKit(t)
 			registry := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\necho should-not-run\n")
 			tc.env["BENCH_KIT"], tc.env["BENCH_NPM_REGISTRY"], tc.env["BENCH_REPAIR"] = kit, registry.URL, "1"
-			out := f.BenchEnv(tc.env, "version")
+			out := f.BenchWrapperEnv(tc.env, "version")
 			out.RequireExit(127)
 			out.RequireContains(out.Stderr, tc.message)
 			if registry.Hits() != 0 {
@@ -293,7 +293,7 @@ func testRepairBenchOfflineExact(t *testing.T) {
 			if value != "" {
 				env["BENCH_OFFLINE"] = value
 			}
-			out := f.BenchEnv(env, "version")
+			out := f.BenchWrapperEnv(env, "version")
 			if value == "1" {
 				out.RequireExit(127)
 				out.RequireContains(out.Stderr, "repair suppressed by BENCH_OFFLINE=1")

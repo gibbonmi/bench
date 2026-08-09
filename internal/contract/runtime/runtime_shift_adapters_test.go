@@ -82,7 +82,7 @@ func testWorktreeLifecycleSurfaceParity(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command(benchPath(t), "worktree", "surface parity")
 	cmd.Dir = interactive.Root
-	cmd.Env = surfaceEnv(interactive, map[string]string{
+	cmd.Env = selectedSurfaceEnv(t, interactive, map[string]string{
 		"BENCH_HOME": interactiveHome, "SHELL": shell,
 		"BENCH_SURFACE_READY": ready, "BENCH_SURFACE_PROCEED": proceed,
 	})
@@ -116,7 +116,7 @@ func testWorktreeLifecycleSurfaceParity(t *testing.T) {
 				launcher = filepath.Join(f.Root, ".bench", "bin", "bench.sh")
 			}
 			env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
-			created := contract.RunAt(t, f, f.Root, env, launcher, "worktree", "create", "--request", "surface-request", "--label", "surface parity")
+			created := contract.RunAt(t, f, f.Root, selectedBenchEnv(t, env), launcher, "worktree", "create", "--request", "surface-request", "--label", "surface parity")
 			created.RequireExit(0)
 			path := worktreeCreatePath(t, created.Stdout)
 			state, assignment := inspectLifecycleState(t, f, path)

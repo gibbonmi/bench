@@ -31,7 +31,7 @@ func TestSetupRerunContracts(t *testing.T) {
 func testSetupRerunUnchangedTree(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
-	first := f.Bench("setup", "--yes")
+	first := f.BenchWrapper("setup", "--yes")
 	first.RequireExit(0)
 	// A fresh converged tree wrote something - it must never claim "already converged".
 	if strings.Contains(strings.ToLower(first.Stdout), "already converged") {
@@ -39,7 +39,7 @@ func testSetupRerunUnchangedTree(t *testing.T) {
 	}
 	before := hashManagedTree(t, f.Root)
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(0)
 	// Strengthened over a bare "converged" substring (satisfied by either wording):
@@ -61,11 +61,11 @@ func testSetupRerunUnchangedTree(t *testing.T) {
 func testSetupRerunWithoutManifestReclassifies(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
-	f.Bench("setup", "--yes").RequireExit(0)
+	f.BenchWrapper("setup", "--yes").RequireExit(0)
 	before := f.ReadFile(".bench/gate.sh")
 	contract.Remove(t, filepath.Join(f.Root, ".bench", "link-manifest.tsv"))
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stdout+probe.Stderr), "conflict")
@@ -82,10 +82,10 @@ func testSetupRerunWithoutManifestReclassifies(t *testing.T) {
 func testSetupRerunRecreatesRemovedAsset(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
-	f.Bench("setup", "--yes").RequireExit(0)
+	f.BenchWrapper("setup", "--yes").RequireExit(0)
 	contract.Remove(t, filepath.Join(f.Root, ".bench", "BENCH.md"))
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(0)
 	requireLinkFile(t, f, ".bench/BENCH.md")
@@ -94,11 +94,11 @@ func testSetupRerunRecreatesRemovedAsset(t *testing.T) {
 func testSetupRerunPreservesModifiedAsset(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
-	f.Bench("setup", "--yes").RequireExit(0)
+	f.BenchWrapper("setup", "--yes").RequireExit(0)
 	const handEdit = "# hand-edited by the project, not bench\n"
 	f.WriteFile(".bench/BENCH.md", handEdit)
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stdout+probe.Stderr), "conflict")
@@ -116,10 +116,10 @@ func testSetupRerunPreservesModifiedAsset(t *testing.T) {
 func testSetupRerunPlanDoesNotWrite(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
-	f.Bench("setup", "--yes").RequireExit(0)
+	f.BenchWrapper("setup", "--yes").RequireExit(0)
 	before := hashManagedTree(t, f.Root)
 
-	probe := f.Bench("setup", "--plan")
+	probe := f.BenchWrapper("setup", "--plan")
 
 	probe.RequireExit(0)
 	after := hashManagedTree(t, f.Root)

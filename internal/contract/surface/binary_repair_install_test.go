@@ -51,7 +51,7 @@ func testRepairMinimalPortablePath(t *testing.T) {
 		"BENCH_NPM_REGISTRY": registry.URL, "PATH": tools,
 	}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(0)
 	if strings.TrimSpace(out.Stdout) != "portable:version" || registry.Hits() != 2 {
@@ -111,7 +111,7 @@ func testRepairInterruptedPromotion(t *testing.T) {
 		t.Fatal(err)
 	}
 	env["BENCH_TEST_REPAIR_READY_FILE"] = ""
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 	out.RequireExit(0)
 	if strings.TrimSpace(out.Stdout) != "repaired-after-interrupt" {
 		t.Fatalf("repair rerun did not recover: %q", out.Stdout)
@@ -137,7 +137,7 @@ func testRepairRejectsMalformedVersion(t *testing.T) {
 		"PATH":       globalDir + string(os.PathListSeparator) + os.Getenv("PATH"),
 	}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(127)
 	requireInterim127Remedy(t, out.Stderr)
@@ -159,7 +159,7 @@ func testRepairReadsLinkedManifestWithoutNewline(t *testing.T) {
 	registry := newBinaryRepairRegistry(t, kit, version, "#!/bin/sh\nprintf 'manifest:%s\\n' \"$1\"\n")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(0)
 	if strings.TrimSpace(out.Stdout) != "manifest:version" {
@@ -178,7 +178,7 @@ func testRepairDownloadsAndRuns(t *testing.T) {
 		"BENCH_NPM_REGISTRY": registry.URL,
 	}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(0)
 	if strings.TrimSpace(out.Stdout) != "repaired:version" {
@@ -200,7 +200,7 @@ func testRepairRefusesBadHash(t *testing.T) {
 	registry := newBinaryRepairRegistry(t, kit, version, "#!/bin/sh\necho bad\n", binaryRepairPinIntegrity("sha512-deadbeef"))
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "integrity mismatch")
@@ -214,7 +214,7 @@ func testRepairRefusesMalformedTar(t *testing.T) {
 	registry := newBinaryRepairRegistry(t, kit, version, "", binaryRepairTarballBytes(binaryRepairMalformedTarball(t)))
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "truncated tar entry")
@@ -230,7 +230,7 @@ func testRepairOffline(t *testing.T) {
 	version := "9.8.7"
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": "http://127.0.0.1:1"}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "repair failed")
@@ -243,7 +243,7 @@ func testRepairSkipsPlumbing(t *testing.T) {
 	registry := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\necho should-not-run\n")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
-	out := f.BenchEnv(env, "tree-hash")
+	out := f.BenchWrapperEnv(env, "tree-hash")
 
 	out.RequireExit(127)
 	if got := registry.Hits(); got != 0 {
@@ -257,7 +257,7 @@ func testRepairAnnounces(t *testing.T) {
 	registry := newBinaryRepairRegistry(t, kit, version, "#!/bin/sh\necho announced\n")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(0)
 	cachePath := binaryRepairCachePath(t, f, version)
@@ -277,10 +277,10 @@ func testRepairIdempotent(t *testing.T) {
 	registry := newBinaryRepairRegistry(t, kit, version, "#!/bin/sh\necho cached:$1\n")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
-	first := f.BenchEnv(env, "version")
+	first := f.BenchWrapperEnv(env, "version")
 	first.RequireExit(0)
 	registry.ResetHits()
-	second := f.BenchEnv(env, "version")
+	second := f.BenchWrapperEnv(env, "version")
 
 	second.RequireExit(0)
 	if strings.TrimSpace(second.Stdout) != "cached:version" {
@@ -295,14 +295,14 @@ func testRepairVersionKeyed(t *testing.T) {
 	f, kit := binaryRepairFixtureKitVersion(t, "9.8.7")
 	registryA := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\necho v987\n")
 	envA := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registryA.URL}
-	f.BenchEnv(envA, "version").RequireExit(0)
+	f.BenchWrapperEnv(envA, "version").RequireExit(0)
 	oldCache := binaryRepairCachePath(t, f, "9.8.7")
 	requireFileExecutable(t, oldCache, "first repair did not populate old version cache")
 	contract.WriteFileAbs(t, filepath.Join(kit, "package.json"), `{"name":"benchkit","version":"9.8.8"}`+"\n")
 	registryB := newBinaryRepairRegistry(t, kit, "9.8.8", "#!/bin/sh\necho v988\n")
 	envB := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registryB.URL}
 
-	out := f.BenchEnv(envB, "version")
+	out := f.BenchWrapperEnv(envB, "version")
 
 	out.RequireExit(0)
 	if strings.TrimSpace(out.Stdout) != "v988" {
@@ -332,7 +332,7 @@ func testRepairNoNode(t *testing.T) {
 	}
 	env := map[string]string{"BENCH_KIT": kit, "PATH": fakebin}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "repair skipped because node is not on PATH")
@@ -348,7 +348,7 @@ func testRepairDisabled(t *testing.T) {
 		"BENCH_NO_REPAIR":    "1",
 	}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "bench: repair disabled by BENCH_NO_REPAIR")
@@ -366,7 +366,7 @@ func testRepairReplacesTornCache(t *testing.T) {
 	registry := newBinaryRepairRegistry(t, kit, version, "#!/bin/sh\necho healed\n")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 
 	out.RequireExit(0)
 	if strings.TrimSpace(out.Stdout) != "healed" {

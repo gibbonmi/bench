@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 type stopProofRun struct {
@@ -162,12 +163,13 @@ wait "$child"
 
 func installStopCountingWrapper(t *testing.T, run stopProofRun) {
 	t.Helper()
-	real := benchPath(t)
+	selection := contract.SelectedBench(t)
+	real := selection.Path
 	script := fmt.Sprintf(`#!/usr/bin/env bash
 if [[ "${1:-}" == gate ]]; then
   printf 'run\n' >> %q
   rc=0
-  bash %q "$@" || rc=$?
+  env BENCH_KIT=%q %s=%q %q "$@" || rc=$?
   printf '%%s\n' "$rc" > %q
   if [[ -f %q ]]; then
     /bin/cp %q %q
@@ -179,8 +181,8 @@ if [[ "${1:-}" == gate ]]; then
   fi
   exit "$rc"
 fi
-exec bash %q "$@"
-`, run.count, real, run.wrapperExit, run.cache, run.cache, run.snapshot, run.kind, run.cache, run.kind, run.kind, real)
+exec env BENCH_KIT=%q %s=%q %q "$@"
+`, run.count, selection.SourceRoot, runbinary.Env, real, real, run.wrapperExit, run.cache, run.cache, run.snapshot, run.kind, run.cache, run.kind, run.kind, selection.SourceRoot, runbinary.Env, real, real)
 	run.f.WriteExecutable("bin/bench.sh", script)
 }
 

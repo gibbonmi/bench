@@ -171,8 +171,8 @@ func TestGradedComponentKeepsItsSlotAndSkips(t *testing.T) {
 // buildArtifactSourceFile is the one file allowed to derive the published binary's path.
 const buildArtifactSourceFile = "component_decision.go"
 
-// [PS51] buildArtifactPath is the package's only derivation of where the build phase
-// publishes its binary. The attestation is addressed by that path, so a second derivation
+// [PS51] buildArtifactPath is the package's only derivation of the alternate-package
+// proof artifact. The attestation is addressed by that path, so a second derivation
 // that normalized differently would have the author write where the reader never looks — and
 // a second spelling of the same fact is the class this repository's code standard refuses
 // whether or not today's spellings happen to agree.

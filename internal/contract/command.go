@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // SharedBuildCacheEnv is the dev-tier build posture opt-in scripts/build-artifacts.sh
@@ -203,8 +204,9 @@ func (f Fixture) CommitAll(message string) {
 
 func (f Fixture) Bench(args ...string) Probe {
 	f.t.Helper()
-	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
-	return f.Run("bash", append([]string{bench}, args...)...)
+	selection := SelectedBench(f.t)
+	program, prefix := selectedBenchCommand(f.t, selection)
+	return f.RunEnv(selectedBenchEnv(nil, selection), program, append(prefix, args...)...)
 }
 
 // BenchDeadlined drives `bench` under the kit's standard test deadline instead of
@@ -214,17 +216,93 @@ func (f Fixture) Bench(args ...string) Probe {
 // deadline is bounds.TestDeadline, the one policy every test wait derives from.
 func (f Fixture) BenchDeadlined(args ...string) Probe {
 	f.t.Helper()
+	selection := SelectedBench(f.t)
+	program, prefix := selectedBenchCommand(f.t, selection)
+	return RunAtWithTimeout(f.t, f, f.Root, selectedBenchEnv(nil, selection), bounds.TestDeadline(0), program, append(prefix, args...)...)
+}
+
+func (f Fixture) BenchEnv(env map[string]string, args ...string) Probe {
+	f.t.Helper()
+	selection := SelectedBench(f.t)
+	program, prefix := selectedBenchCommand(f.t, selection)
+	return f.RunEnv(selectedBenchEnv(env, selection), program, append(prefix, args...)...)
+}
+
+func (f Fixture) BenchEnvSpec(env Env, args ...string) Probe {
+	f.t.Helper()
+	selection := SelectedBench(f.t)
+	program, prefix := selectedBenchCommand(f.t, selection)
+	return f.RunEnvSpec(selectedBenchEnvSpec(env, selection), program, append(prefix, args...)...)
+}
+
+// SelectedBenchPath returns the selected executable for an unchanged subject and the
+// subject's wrapper for a changed-source proof. The wrapper still inherits selection.Path;
+// only its independently mutated routing is under grade.
+func SelectedBenchPath(t testing.TB, selection *runbinary.Selection) string {
+	t.Helper()
+	target, _ := selectedBenchTarget(t, selection)
+	return target
+}
+
+func selectedBenchCommand(t testing.TB, selection *runbinary.Selection) (string, []string) {
+	t.Helper()
+	target, wrapper := selectedBenchTarget(t, selection)
+	if wrapper {
+		return "bash", []string{target}
+	}
+	return target, nil
+}
+
+func selectedBenchTarget(t testing.TB, selection *runbinary.Selection) (string, bool) {
+	t.Helper()
+	subject := SubjectRoot(t)
+	if subject != selection.SourceRoot {
+		return filepath.Join(subject, "bin", "bench.sh"), true
+	}
+	return selection.Path, false
+}
+
+func selectedBenchEnv(env map[string]string, selection *runbinary.Selection) map[string]string {
+	out := make(map[string]string, len(env)+2)
+	for key, value := range env {
+		out[key] = value
+	}
+	out["BENCH_KIT"] = selection.SourceRoot
+	out[runbinary.Env] = selection.Path
+	return out
+}
+
+func selectedBenchEnvSpec(env Env, selection *runbinary.Selection) Env {
+	out := make(Env, len(env)+2)
+	for key, value := range env {
+		out[key] = value
+	}
+	sourceRoot, path := selection.SourceRoot, selection.Path
+	out["BENCH_KIT"] = &sourceRoot
+	out[runbinary.Env] = &path
+	return out
+}
+
+// BenchWrapper executes the repository wrapper for routing-specific contract tests.
+func (f Fixture) BenchWrapper(args ...string) Probe {
+	f.t.Helper()
+	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
+	return f.Run("bash", append([]string{bench}, args...)...)
+}
+
+func (f Fixture) BenchWrapperDeadlined(args ...string) Probe {
+	f.t.Helper()
 	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
 	return RunAtWithTimeout(f.t, f, f.Root, nil, bounds.TestDeadline(0), "bash", append([]string{bench}, args...)...)
 }
 
-func (f Fixture) BenchEnv(env map[string]string, args ...string) Probe {
+func (f Fixture) BenchWrapperEnv(env map[string]string, args ...string) Probe {
 	f.t.Helper()
 	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
 	return f.RunEnv(env, "bash", append([]string{bench}, args...)...)
 }
 
-func (f Fixture) BenchEnvSpec(env Env, args ...string) Probe {
+func (f Fixture) BenchWrapperEnvSpec(env Env, args ...string) Probe {
 	f.t.Helper()
 	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
 	return f.RunEnvSpec(env, "bash", append([]string{bench}, args...)...)
@@ -245,8 +323,9 @@ func mergeEnv(base map[string]string, overrides Env) []string {
 		// resolves the real kit instead of the planted one.
 		"BENCH_KIT",
 		"BENCH_WRAPPER",
+		runbinary.Env,
 	} {
-		env = setEnv(env, k, "")
+		env = unsetEnv(env, k)
 	}
 	for k, v := range base {
 		env = setEnv(env, k, v)
@@ -330,6 +409,9 @@ func IsolatedEnv(t testing.TB, root string) map[string]string {
 
 func ProcessEnv(base, overrides map[string]string) []string {
 	env := os.Environ()
+	for _, key := range []string{"BENCH_KIT", "BENCH_WRAPPER", runbinary.Env} {
+		env = unsetEnv(env, key)
+	}
 	for key, value := range base {
 		env = setEnv(env, key, value)
 	}

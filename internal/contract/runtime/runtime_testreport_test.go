@@ -59,7 +59,7 @@ func testRuntimeTestRunsFreshGoAtRoot(t *testing.T) {
 			if tc.pkg != "" {
 				args = append(args, tc.pkg)
 			}
-			out := contract.RunAt(t, f, deep, env, "bash", args...)
+			out := contract.RunAt(t, f, deep, selectedBenchEnv(t, env), args[0], args[1:]...)
 			if out.ExitCode != 0 || out.Stderr != "" {
 				t.Fatalf("bench test = exit %d stdout %q stderr %q, want success with no stderr", out.ExitCode, out.Stdout, out.Stderr)
 			}
@@ -81,7 +81,7 @@ func testRuntimeLinkedTestReport(t *testing.T) {
 	record := filepath.Join(f.Root, "go-record")
 	f.WriteExecutable("go", fakeGoScript)
 	launcher := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
-	out := contract.RunAt(t, f, deep, map[string]string{"BENCH_TEST_RECORD": record, "PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")}, "bash", launcher, "test", "./linked package*")
+	out := contract.RunAt(t, f, deep, selectedBenchEnv(t, map[string]string{"BENCH_TEST_RECORD": record, "PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")}), "bash", launcher, "test", "./linked package*")
 	if out.ExitCode != 0 || out.Stderr != "" || out.Stdout != "packages[1]{package,status}:\n  example/pass,pass\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n" {
 		t.Fatalf("linked bench test = exit %d stdout %q stderr %q", out.ExitCode, out.Stdout, out.Stderr)
 	}
@@ -103,16 +103,16 @@ func testRuntimeTestGrammar(t *testing.T) {
 	bench := benchPath(t)
 
 	for _, args := range [][]string{{"test", "extra", "again"}, {"test", ""}, {"test", "--unknown"}} {
-		out := contract.RunAt(t, f, deep, env, "bash", append([]string{bench}, args...)...)
+		out := contract.RunAt(t, f, deep, selectedBenchEnv(t, env), bench, args...)
 		if out.ExitCode != 2 || out.Stderr != "" || !strings.HasPrefix(out.Stdout, "usage: bench test [--full] [package]") {
 			t.Fatalf("bench %q = exit %d stdout %q stderr %q, want usage exit 2 on stdout", args, out.ExitCode, out.Stdout, out.Stderr)
 		}
 	}
-	help := contract.RunAt(t, f, deep, env, "bash", bench, "test", "--help")
+	help := contract.RunAt(t, f, deep, selectedBenchEnv(t, env), bench, "test", "--help")
 	if help.ExitCode != 0 || help.Stdout != "usage: bench test [--full] [package]\n" || help.Stderr != "" {
 		t.Fatalf("bench test --help = exit %d stdout %q stderr %q", help.ExitCode, help.Stdout, help.Stderr)
 	}
-	leading := contract.RunAt(t, f, deep, env, "bash", bench, "test", "--full", "--", "-leading package*")
+	leading := contract.RunAt(t, f, deep, selectedBenchEnv(t, env), bench, "test", "--full", "--", "-leading package*")
 	if leading.ExitCode != 0 || leading.Stderr != "" {
 		t.Fatalf("bench test --full -- dash-leading package = exit %d stdout %q stderr %q", leading.ExitCode, leading.Stdout, leading.Stderr)
 	}
@@ -214,9 +214,9 @@ func testRuntimeTestInterruptsProcessGroup(t *testing.T) {
 	f := contract.NewFixture(t)
 	marker := filepath.Join(f.Root, "go-child.pid")
 	f.WriteExecutable("go", "#!/bin/sh\n( trap 'exit 0' INT TERM; while :; do sleep 1; done ) &\nprintf '%s\\n' \"$!\" > \"$BENCH_TEST_MARKER\"\ntrap '' INT\nwhile :; do sleep 1; done\n")
-	cmd := exec.Command("bash", benchPath(t), "test")
+	cmd := exec.Command(benchPath(t), "test")
 	cmd.Dir = f.Root
-	cmd.Env = surfaceEnv(f, map[string]string{"BENCH_TEST_MARKER": marker, "PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")})
+	cmd.Env = selectedSurfaceEnv(t, f, map[string]string{"BENCH_TEST_MARKER": marker, "PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")})
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr

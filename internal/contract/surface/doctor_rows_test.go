@@ -36,7 +36,7 @@ func testDoctorAgentsRowFIFO(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	contract.Remove(t, f.Root+"/AGENTS.md")
 	if err := syscall.Mkfifo(f.Root+"/AGENTS.md", 0o644); err != nil {
@@ -54,7 +54,7 @@ func testDoctorClaudeRowFIFO(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	contract.Remove(t, f.Root+"/CLAUDE.md")
 	if err := syscall.Mkfifo(f.Root+"/CLAUDE.md", 0o644); err != nil {
@@ -100,16 +100,16 @@ func testDoctorSetupPointersRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	contract.Remove(t, f.Root+"/.agents/commands/bench-setup-repo.md")
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red:")
 	probe.RequireContains(probe.Stdout, "bench-setup-repo.md")
 
 	writeDoctorGreenTree(t, f)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireContains(probe.Stdout, "ok:")
 	probe.RequireContains(probe.Stdout, "bench-setup-repo.md")
 }
@@ -118,9 +118,9 @@ func testDoctorAllRowsGreen(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(0)
 	for _, want := range []string{"AGENTS.md", "CLAUDE.md", "gate", "profile", "repo-local bench"} {
 		probe.RequireContains(probe.Stdout, want)
@@ -131,29 +131,29 @@ func testDoctorAgentsRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	// Absent — no AGENTS.md at all.
 	contract.Remove(t, f.Root+"/AGENTS.md")
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: AGENTS.md")
 
 	// Present but no managed block.
 	f.WriteFile("AGENTS.md", "# Working agreement\n\nno bench block here\n")
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: AGENTS.md")
 
 	// Malformed markers — a lone start with no end.
 	f.WriteFile("AGENTS.md", "# Working agreement\n\n<!-- bench:start -->\nunterminated\n")
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: AGENTS.md")
 
 	// Restored to green.
 	writeDoctorGreenTree(t, f)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireContains(probe.Stdout, "ok: AGENTS.md")
 }
 
@@ -164,11 +164,11 @@ func testDoctorClaudeRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	// Preserved project content, imports stripped — the spec's named red cell.
 	f.WriteFile("CLAUDE.md", "# My project\n\nProject-owned notes, no Bench imports.\n")
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: CLAUDE.md")
 	probe.RequireContains(probe.Stdout, "ok: AGENTS.md")
@@ -176,18 +176,18 @@ func testDoctorClaudeRow(t *testing.T) {
 
 	// Absent entirely.
 	contract.Remove(t, f.Root+"/CLAUDE.md")
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: CLAUDE.md")
 
 	// Legacy form (import line only, no .bench/BENCH.md line) counts as green.
 	f.WriteFile("CLAUDE.md", "# Bench\n\nCanonical agreement in AGENTS.md.\n\n@AGENTS.md\n")
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireContains(probe.Stdout, "ok: CLAUDE.md")
 
 	// Canonical form restored.
 	writeDoctorGreenTree(t, f)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireContains(probe.Stdout, "ok: CLAUDE.md")
 }
 
@@ -195,23 +195,23 @@ func testDoctorGateRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	// Absent.
 	contract.Remove(t, f.Root+"/.bench/gate.sh")
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: .bench/gate.sh")
 
 	// Present but not executable.
 	f.WriteFile(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "not executable")
 
 	// Restored to green.
 	writeDoctorGreenTree(t, f)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireContains(probe.Stdout, "ok: gate")
 }
 
@@ -219,23 +219,23 @@ func testDoctorProfileRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	// No projects/ directory at all.
 	contract.Remove(t, f.Root+"/projects")
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: no projects/")
 
 	// projects/ exists but carries no .md profile.
 	f.WriteFile("projects/.keep", "")
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: no projects/")
 
 	// Restored to green.
 	writeDoctorGreenTree(t, f)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireContains(probe.Stdout, "ok: profile")
 }
 
@@ -243,22 +243,22 @@ func testDoctorRepoLocalBenchRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	// Absent.
 	contract.Remove(t, f.Root+"/.bench/bin")
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "red: .bench/bin/bench.sh")
 
 	// Present but not executable.
 	f.WriteFile(".bench/bin/bench.sh", "#!/usr/bin/env bash\nexit 0\n")
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "not executable")
 
 	// Restored to green.
 	writeDoctorGreenTree(t, f)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireContains(probe.Stdout, "ok: repo-local bench")
 }

@@ -106,11 +106,7 @@ func TestReleasePreflightScriptBootstrapsBuiltFullAndFocusedCommands(t *testing.
 }
 
 func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
-	binary := filepath.Join(t.TempDir(), "bench")
-	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %v\n%s", err, output)
-	}
+	binary := selectedBench(t)
 
 	t.Run("tag version mismatch", func(t *testing.T) {
 		root := preflightRepo(t)
@@ -194,11 +190,7 @@ func TestBuiltCommandCancellationPreservesPriorCompleteEvidence(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		capability.Capability(t, capability.Signal, "SIGINT process control is POSIX")
 	}
-	binary := filepath.Join(t.TempDir(), "bench")
-	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %v\n%s", err, output)
-	}
+	binary := selectedBench(t)
 	root := preflightRepo(t)
 	first := exec.Command(binary, "release-preflight", "--mode", "verify")
 	first.Dir = root
@@ -258,11 +250,7 @@ func TestBuiltCommandCancellationPreservesPriorCompleteEvidence(t *testing.T) {
 }
 
 func TestBuiltCommandInputDriftPreservesPriorCompleteEvidence(t *testing.T) {
-	binary := filepath.Join(t.TempDir(), "bench")
-	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %v\n%s", err, output)
-	}
+	binary := selectedBench(t)
 	root := preflightRepo(t)
 	first := exec.Command(binary, "release-preflight", "--mode", "verify")
 	first.Dir = root

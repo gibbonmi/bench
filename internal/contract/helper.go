@@ -12,7 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 type FixtureOption func(*fixtureConfig)
@@ -57,13 +57,25 @@ func SubjectRoot(t testing.TB) string {
 	return KitRoot(t)
 }
 
+// SelectedBench refuses an untrusted inherited Bench executable before a contract uses it.
+func SelectedBench(t testing.TB) *runbinary.Selection {
+	t.Helper()
+	root := os.Getenv("BENCH_KIT")
+	if root == "" {
+		root = KitRoot(t)
+	}
+	selection, err := runbinary.Inherit(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return selection
+
+}
+
 // RequireFreshBench refuses an untrusted selected Bench executable before a contract uses it.
 func RequireFreshBench(t testing.TB) {
 	t.Helper()
-	root := SubjectRoot(t)
-	if err := freshness.Verify(root, filepath.Join(root, "dist", "bench")); err != nil {
-		t.Fatal(err)
-	}
+	_ = SelectedBench(t)
 }
 
 // GoEnvPair returns the two values `go env` resolves for first and second, in that order.

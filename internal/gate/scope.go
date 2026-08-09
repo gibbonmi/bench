@@ -27,9 +27,8 @@ type Scope struct {
 // scratch rather than repository planning state, and is declared because the same paths govern
 // the ambient staleness signal that already carried it.
 //
-// The build phase is in neither phase list. It produces the binary the other phases
-// exec, so it runs in both modes: skipping it would leave a reduced run nothing to exec,
-// and calling it included would claim it grades the declared paths, which it does not.
+// The run owner sits outside the phase table, so this declaration partitions only the
+// checks that consume its selected executable.
 func ReducedScope() Scope {
 	return Scope{
 		directories: []string{"capture/", "decisions/", "specs/"},
@@ -98,8 +97,7 @@ func (s Scope) Excludable(phase string) bool { return slices.Contains(s.excludab
 func (s Scope) ExcludablePhases() []string { return slices.Clone(s.excludable) }
 
 // splitTable partitions a resolved phase table by the declaration: the phases a reduced
-// run executes — the complement of the excludable set, which carries the build phase
-// because it produces the binary the others exec — and the names it skips. Every
+// run executes — the complement of the excludable set — and the names it skips. Every
 // consumer of "what does a reduced run keep" derives from this one partition.
 func (s Scope) splitTable(table []Phase) (run []Phase, skipped []string) {
 	for _, phase := range table {
@@ -113,8 +111,7 @@ func (s Scope) splitTable(table []Phase) (run []Phase, skipped []string) {
 }
 
 // IncludedPhaseNames derives the included set from the phase table that actually runs:
-// root's resolved table minus the excludable declaration, minus the build phase (in
-// neither declared list). The profile's included-phases row and the advertisement
+// root's resolved table minus the excludable declaration. The profile's included-phases row and the advertisement
 // accessor below are both graded against this derivation, so a non-excludable phase
 // added to the table cannot join every reduced run while the prose keeps advertising
 // the old set.
@@ -126,15 +123,13 @@ func IncludedPhaseNames(root, kit string) ([]string, error) {
 	run, _ := ReducedScope().splitTable(table)
 	names := make([]string, 0, len(run))
 	for _, phase := range run {
-		if phase.Name != canary.PhaseBuild {
-			names = append(names, phase.Name)
-		}
+		names = append(names, phase.Name)
 	}
 	return names, nil
 }
 
-// IncludedPhases advertises the phases a reduced run executes against the real tree
-// (minus the build phase, declared in neither list). What actually runs is the table
+// IncludedPhases advertises the phases a reduced run executes against the real tree.
+// What actually runs is the table
 // complement IncludedPhaseNames derives; this list is the declaration's readable summary
 // of it, pinned equal to that derivation over the kit's own table by a unit test, so it
 // cannot drift from what runs.

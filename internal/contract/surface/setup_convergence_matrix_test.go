@@ -33,7 +33,7 @@ func setupMatrixFixture(t *testing.T) contract.Fixture {
 
 func testSetupAgentsAbsent(t *testing.T) {
 	f := setupMatrixFixture(t)
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 	probe.RequireExit(0)
 	requireLiteralCount(t, f, "AGENTS.md", "<!-- bench:start -->", 1, "absent AGENTS.md did not converge")
 }
@@ -41,7 +41,7 @@ func testSetupAgentsAbsent(t *testing.T) {
 func testSetupAgentsEmpty(t *testing.T) {
 	f := setupMatrixFixture(t)
 	f.WriteFile("AGENTS.md", "")
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 	probe.RequireExit(0)
 	requireLiteralCount(t, f, "AGENTS.md", "<!-- bench:start -->", 1, "empty AGENTS.md did not converge")
 }
@@ -49,7 +49,7 @@ func testSetupAgentsEmpty(t *testing.T) {
 func testSetupAgentsNoBlock(t *testing.T) {
 	f := setupMatrixFixture(t)
 	f.WriteFile("AGENTS.md", "# Project rules\n\nKEEP-ME project text.\n")
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 	probe.RequireExit(0)
 	requireLiteralCount(t, f, "AGENTS.md", "<!-- bench:start -->", 1, "AGENTS.md without a block did not converge")
 	requireFixtureFileContains(t, f, "AGENTS.md", "KEEP-ME project text.", "project text lost converging AGENTS.md")
@@ -58,7 +58,7 @@ func testSetupAgentsNoBlock(t *testing.T) {
 func testSetupAgentsNoTrailingNewline(t *testing.T) {
 	f := setupMatrixFixture(t)
 	f.WriteFile("AGENTS.md", "# Project rules\n\nKEEP-ME no trailing newline")
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 	probe.RequireExit(0)
 	requireLiteralCount(t, f, "AGENTS.md", "<!-- bench:start -->", 1, "AGENTS.md lacking a trailing newline did not converge")
 	requireFixtureFileContains(t, f, "AGENTS.md", "KEEP-ME no trailing newline", "project text lost converging a no-trailing-newline AGENTS.md")
@@ -67,7 +67,7 @@ func testSetupAgentsNoTrailingNewline(t *testing.T) {
 func testSetupAgentsUnclosedFence(t *testing.T) {
 	f := setupMatrixFixture(t)
 	f.WriteFile("AGENTS.md", "# Project rules\n\nBroken docs with an unclosed fence:\n\n```\n<!-- bench:start -->\n<!-- bench:end -->\n\nKEEP-ME text after the unclosed fence.\n")
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 	if probe.ExitCode == 0 {
 		t.Fatalf("setup succeeded despite an unclosed fence around Bench markers\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)
 	}
@@ -77,7 +77,7 @@ func testSetupAgentsUnclosedFence(t *testing.T) {
 
 func testSetupClaudeAbsent(t *testing.T) {
 	f := setupMatrixFixture(t)
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 	probe.RequireExit(0)
 	requireFixtureFileContains(t, f, "CLAUDE.md", "@AGENTS.md", "absent CLAUDE.md did not converge")
 	requireFixtureFileContains(t, f, "CLAUDE.md", "@.bench/BENCH.md", "absent CLAUDE.md did not converge")
@@ -93,7 +93,7 @@ func testSetupClaudeAbsent(t *testing.T) {
 func testSetupClaudeEmpty(t *testing.T) {
 	f := setupMatrixFixture(t)
 	f.WriteFile("CLAUDE.md", "")
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 	probe.RequireExit(3)
 	probe.RequireContains(probe.Stdout, "red: CLAUDE.md")
 	if got := f.ReadFile("CLAUDE.md"); got != "" {
@@ -110,7 +110,7 @@ func testSetupClaudeEmpty(t *testing.T) {
 func testSetupClaudeNoImports(t *testing.T) {
 	f := setupMatrixFixture(t)
 	f.WriteFile("CLAUDE.md", "# Custom\n\nproject-owned claude config\n")
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 	probe.RequireExit(3)
 	probe.RequireContains(probe.Stdout, "red: CLAUDE.md")
 	requireFixtureFileContains(t, f, "CLAUDE.md", "project-owned claude config", "setup rewrote a project-owned CLAUDE.md")

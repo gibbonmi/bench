@@ -18,8 +18,20 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/toon"
 )
+
+func phasesCommandAtKitForTest(root, kit string, stdout, stderr io.Writer) int {
+	return phasesCommandAtKitWithContextForTest(context.Background(), root, kit, stdout, stderr)
+}
+
+func phasesCommandAtKitWithContextForTest(base context.Context, root, kit string, stdout, stderr io.Writer) int {
+	return phasesCommandAtKitWithSelection(base, root, kit, &runbinary.Selection{
+		Path:       "/bin/true",
+		SourceRoot: kit,
+	}, stdout, stderr)
+}
 
 // TestPinCommandNotInRepo injects the terminal precondition so the shared
 // not-in-repo branch remains reachable through this in-process seam.
@@ -93,7 +105,7 @@ func TestPhasesCommandSignalHelper(t *testing.T) {
 		}}
 	}
 	ctx := withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace)
-	os.Exit(phasesCommandAtKitWithContext(ctx, root, kit, os.Stdout, os.Stderr))
+	os.Exit(phasesCommandAtKitWithContextForTest(ctx, root, kit, os.Stdout, os.Stderr))
 }
 
 // TestPhasesCommandNamesStragglersOnTermination grades the straggler report at the
@@ -168,7 +180,7 @@ sleep 30 & echo $! > "$2"; wait`,
 		}
 	}
 	ctx := withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace)
-	os.Exit(phasesCommandAtKitWithContext(ctx, root, kit, os.Stdout, os.Stderr))
+	os.Exit(phasesCommandAtKitWithContextForTest(ctx, root, kit, os.Stdout, os.Stderr))
 }
 
 // stragglerLine returns the run's straggler report, or "" when it printed none. It
@@ -234,7 +246,7 @@ func TestPhasesCommandRoutesCanaryToOwningPhase(t *testing.T) {
 
 			var stdout, stderr bytes.Buffer
 			root := t.TempDir()
-			if code := phasesCommandAtKit(root, root, &stdout, &stderr); code != 0 {
+			if code := phasesCommandAtKitForTest(root, root, &stdout, &stderr); code != 0 {
 				t.Fatalf("PhasesCommand = %d, want 0; stderr=%q", code, stderr.String())
 			}
 			want := tc.phase + "\ngate: green\n"
@@ -268,73 +280,33 @@ func TestInnerCanarySingularSelectionRemovesPluralSelection(t *testing.T) {
 	}
 }
 
-func TestPhaseTableBuildPhase(t *testing.T) {
+func TestPhaseTableConsumesSelectedBinaryWithoutBuildPhase(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "scripts", "go-build.sh"), "#!/usr/bin/env bash\n")
 	writeFile(t, filepath.Join(root, "go.mod"), "module fixture\n")
+	selection := &runbinary.Selection{Path: filepath.Join(t.TempDir(), "selected bench"), SourceRoot: "/tmp/kit"}
 
-	phases := BenchkitPhases(root, "/tmp/kit")
-	build := phases[0]
-	if build.Name != "build" || len(build.Needs) != 0 {
-		t.Fatalf("first phase = %#v, want the edge-free build phase", build)
+	phases := withRunBinary(BenchkitPhases(root, selection.SourceRoot), selection)
+	if _, ok := phaseNamed(phases, "build"); ok {
+		t.Fatalf("selected phase table grew a build phase: %v", phaseNames(phases))
 	}
-	want := []string{"bash", filepath.Join(root, "scripts", "go-build.sh"), root, filepath.Join(root, "dist", "bench")}
-	if !reflect.DeepEqual(build.Argv, want) {
-		t.Fatalf("build argv = %#v, want %#v", build.Argv, want)
-	}
-	// The build phase owns the only write to dist/bench, so every phase that execs or
-	// copies that binary carries the edge that keeps it from grading a half-written one.
-	consumers := []string{"conformance", "contract", "shellcheck", "canary"}
-	for _, name := range consumers {
-		phase, ok := phaseNamed(phases, name)
-		if !ok {
-			t.Fatalf("phase %s absent from %#v", name, phaseNames(phases))
+	for _, phase := range phases {
+		if got := phaseEnvValue(phase.Env, runbinary.Env); got != selection.Path {
+			t.Fatalf("phase %s selected path = %q, want %q", phase.Name, got, selection.Path)
 		}
-		if !reflect.DeepEqual(phase.Needs, []string{"build"}) {
-			t.Fatalf("phase %s needs = %#v, want [build]", name, phase.Needs)
+		if got := phaseEnvValue(phase.Env, "BENCH_KIT"); got != selection.SourceRoot {
+			t.Fatalf("phase %s source root = %q, want %q", phase.Name, got, selection.SourceRoot)
 		}
-	}
-	if got := phaseNames(phasesForMode(phases, innerMode)); got[0] != "build" {
-		t.Fatalf("inner phases dropped the build phase: %#v", got)
-	}
-
-	// Every phase owns its edges: one shared backing array would let a caller that
-	// rewrites any phase's Needs silently rewrite the rest of the table's.
-	first, _ := phaseNamed(phases, consumers[0])
-	first.Needs[0] = "rewritten"
-	for _, name := range consumers[1:] {
-		phase, _ := phaseNamed(phases, name)
-		if !reflect.DeepEqual(phase.Needs, []string{"build"}) {
-			t.Fatalf("editing one phase's needs rewrote %s's to %#v", name, phase.Needs)
-		}
-	}
-
-	// Without the Go build surface the table keeps its four-phase shape — and a
-	// half-present surface (either file alone) counts as absent, not buildable.
-	bare := BenchkitPhases(t.TempDir(), "/tmp/kit")
-	if len(bare) != 4 {
-		t.Fatalf("bare root BenchkitPhases len = %d, want 4: %#v", len(bare), phaseNames(bare))
-	}
-	// No build phase means nothing to wait for: an edge to an absent phase would be
-	// a dangling need in every table the fallback emits.
-	for _, phase := range bare {
 		if len(phase.Needs) != 0 {
-			t.Fatalf("bare root phase %s needs = %#v, want none", phase.Name, phase.Needs)
+			t.Fatalf("phase %s retained a build dependency: %v", phase.Name, phase.Needs)
 		}
 	}
-	// A half-present build surface — either file alone — is not buildable. The go.mod
-	// half still probes the toolchain phases in, so the build phase's own absence is
-	// what this asserts.
-	modOnly := t.TempDir()
-	writeFile(t, filepath.Join(modOnly, "go.mod"), "module fixture\n")
-	if _, ok := phaseNamed(BenchkitPhases(modOnly, "/tmp/kit"), "build"); ok {
-		t.Fatalf("go.mod-only root grew a build phase")
-	}
-	helperOnly := t.TempDir()
-	writeFile(t, filepath.Join(helperOnly, "scripts", "go-build.sh"), "#!/usr/bin/env bash\n")
-	if got := BenchkitPhases(helperOnly, "/tmp/kit"); len(got) != 4 {
-		t.Fatalf("helper-only root BenchkitPhases len = %d, want 4: %#v", len(got), phaseNames(got))
+	for _, name := range []string{"gofmt", "test"} {
+		phase, ok := phaseNamed(phases, name)
+		if !ok || len(phase.Argv) == 0 || phase.Argv[0] != selection.Path {
+			t.Fatalf("phase %s argv = %v, want selected executable first", name, phase.Argv)
+		}
 	}
 }
 

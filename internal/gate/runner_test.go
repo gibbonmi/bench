@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -43,33 +44,29 @@ func TestProcessGroupCancelGraceProductionDefault(t *testing.T) {
 	}
 }
 
-// TestRunnerRunsPhasesConcurrently stays serial so scheduler overlap cannot
-// satisfy the timing assertion that attributes phase overlap to the runner.
-func TestRunnerRunsPhasesConcurrently(t *testing.T) {
+func TestRunnerRunsPhasesSeriallyInDeclarationOrder(t *testing.T) {
 	root := t.TempDir()
+	lock := filepath.Join(root, "active")
+	record := filepath.Join(root, "order")
 	phases := []Phase{
-		fakePhase("alpha", "printf 'alpha\\n'; sleep 0.25"),
-		fakePhase("bravo", "printf 'bravo\\n'; sleep 0.25"),
-		fakePhase("charlie", "printf 'charlie\\n'; sleep 0.25"),
-		fakePhase("delta", "printf 'delta\\n'; sleep 0.25"),
+		{Name: "alpha", Argv: []string{"bash", "-c", `mkdir "$1" || exit 71; printf '%s\n' "$3" >> "$2"; sleep 0.02; rmdir "$1"`, "bash", lock, record, "alpha"}},
+		{Name: "bravo", Argv: []string{"bash", "-c", `mkdir "$1" || exit 71; printf '%s\n' "$3" >> "$2"; sleep 0.02; rmdir "$1"`, "bash", lock, record, "bravo"}},
+		{Name: "charlie", Argv: []string{"bash", "-c", `mkdir "$1" || exit 71; printf '%s\n' "$3" >> "$2"; sleep 0.02; rmdir "$1"`, "bash", lock, record, "charlie"}},
+		{Name: "delta", Argv: []string{"bash", "-c", `mkdir "$1" || exit 71; printf '%s\n' "$3" >> "$2"; sleep 0.02; rmdir "$1"`, "bash", lock, record, "delta"}},
 	}
 
 	var stdout, stderr bytes.Buffer
-	start := time.Now()
 	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
-	elapsed := time.Since(start)
 
 	if rc != 0 {
 		t.Fatalf("runPhases rc = %d, stderr:\n%s", rc, stderr.String())
 	}
-	if elapsed >= 750*time.Millisecond {
-		t.Fatalf("runPhases took %v, want concurrent execution under serial sum", elapsed)
+	got, err := os.ReadFile(record)
+	if err != nil {
+		t.Fatal(err)
 	}
-	out := stdout.String() + stderr.String()
-	for _, marker := range []string{"[alpha] alpha", "[bravo] bravo", "[charlie] charlie", "[delta] delta"} {
-		if !strings.Contains(out, marker) {
-			t.Fatalf("output missing %q:\n%s", marker, out)
-		}
+	if string(got) != "alpha\nbravo\ncharlie\ndelta\n" {
+		t.Fatalf("phase order = %q, want declaration order", got)
 	}
 }
 
@@ -254,6 +251,24 @@ func TestRunnerCancelKillsGroup(t *testing.T) {
 		t.Fatal("runPhases did not return after cancellation")
 	}
 	waitForProcessExit(t, pid)
+}
+
+func TestProcessGroupDrainsDescendantsAfterLeaderReturns(t *testing.T) {
+	root := t.TempDir()
+	pidfile := filepath.Join(root, "child.pid")
+	cmd := exec.Command("bash", "-c", `
+(trap '' INT TERM; exec >/dev/null 2>&1; while :; do sleep 1; done) &
+echo $! > "$1"
+exit 0
+`, "bash", pidfile)
+	cmd.Dir = root
+	result := runProcessGroupCommand(withProcessGroupCancelGrace(context.Background(), fastProcessGroupCancelGrace), cmd)
+	if result.Code != 0 {
+		t.Fatalf("leader result = %+v, want green", result)
+	}
+	child := waitForPIDFile(t, pidfile)
+	t.Cleanup(func() { _ = syscall.Kill(child, syscall.SIGKILL) })
+	waitForProcessExit(t, child)
 }
 
 func TestRunnerRootWithSpace(t *testing.T) {

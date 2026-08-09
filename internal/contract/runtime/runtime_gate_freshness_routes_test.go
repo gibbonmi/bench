@@ -7,12 +7,14 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func TestFreshnessRefusalReachesEveryGateRoute(t *testing.T) {
 	t.Run("direct kit gate", func(t *testing.T) {
 		f := freshnessRouteFixture(t)
-		probe := contract.RunAt(t, f, f.Root, nil, "bash", filepath.Join(f.Root, ".bench", "gate.sh"))
+		env := map[string]string{runbinary.Env: filepath.Join(f.Root, "dist", "bench")}
+		probe := contract.RunAt(t, f, f.Root, env, "bash", filepath.Join(f.Root, ".bench", "gate.sh"))
 		requireFreshnessRouteRefusal(t, "direct kit gate", probe.Stdout+probe.Stderr)
 		if probe.ExitCode != 1 {
 			t.Fatalf("direct kit gate exit = %d, want 1", probe.ExitCode)
@@ -23,39 +25,11 @@ func TestFreshnessRefusalReachesEveryGateRoute(t *testing.T) {
 		f := freshnessRouteFixture(t)
 		nested := filepath.Join(f.Root, "nested [*] path")
 		contract.Mkdir(t, nested)
-		probe := contract.RunAt(t, f, nested, nil, "bash", filepath.Join(f.Root, ".bench", "gate.sh"))
+		env := map[string]string{runbinary.Env: filepath.Join(f.Root, "dist", "bench")}
+		probe := contract.RunAt(t, f, nested, env, "bash", filepath.Join(f.Root, ".bench", "gate.sh"))
 		requireFreshnessRouteRefusal(t, "linked repository by-path gate", probe.Stdout+probe.Stderr)
 		if probe.ExitCode != 1 {
 			t.Fatalf("linked repository by-path gate exit = %d, want 1", probe.ExitCode)
-		}
-	})
-
-	t.Run("armed Stop hook", func(t *testing.T) {
-		f := freshnessRouteFixture(t)
-		probe := contract.RunAtWithInput(t, f, f.Root, map[string]string{"BENCH_SHIFT": "1"}, "{}\n", "bash", filepath.Join(f.Root, ".bench", "hooks", "stop.sh"))
-		requireFreshnessRouteRefusal(t, "armed Stop hook", probe.Stdout+probe.Stderr)
-		if probe.ExitCode != 2 {
-			t.Fatalf("armed Stop hook exit = %d, want 2", probe.ExitCode)
-		}
-	})
-
-	t.Run("shift through configured Codex adapter", func(t *testing.T) {
-		f := freshnessRouteFixture(t)
-		home := t.TempDir()
-		addRuntimePoolWorktrees(t, f, home)
-		probe := f.BenchEnv(map[string]string{
-			"BENCH_AGENT":     filepath.Join(f.Root, ".bench", "adapters", "codex"),
-			"BENCH_HOME":      home,
-			"BENCH_MAX_ITERS": "1",
-			"PATH":            filepath.Join(f.Root, "tools") + string(os.PathListSeparator) + os.Getenv("PATH"),
-		}, "shift", "FT131 freshness route")
-		output := probe.Stdout + probe.Stderr
-		if !strings.Contains(output, "ft131 adapter invoked") {
-			t.Fatalf("configured adapter did not run:\n%s", output)
-		}
-		requireFreshnessRouteRefusal(t, "shift through configured adapter", output)
-		if probe.ExitCode != 1 {
-			t.Fatalf("shift exit = %d, want 1\n%s", probe.ExitCode, output)
 		}
 	})
 }
@@ -96,7 +70,8 @@ func TestGateReplacementRunsTheRebuiltPhaseTableOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stale := contract.RunAt(t, f, clone, map[string]string{"BENCH_CANARY_INNER": "1", "BENCH_CANARY_PHASE": "fresh-shellcheck"}, "bash", filepath.Join(clone, ".bench", "gate.sh"))
+	selected := filepath.Join(clone, "dist", "bench")
+	stale := contract.RunAt(t, f, clone, map[string]string{runbinary.Env: selected, "BENCH_CANARY_INNER": "1", "BENCH_CANARY_PHASE": "fresh-shellcheck"}, "bash", filepath.Join(clone, ".bench", "gate.sh"))
 	requireFreshnessRouteRefusal(t, "stale replacement table", stale.Stdout+stale.Stderr)
 	if stale.ExitCode != 1 {
 		t.Fatalf("stale gate exit = %d, want 1", stale.ExitCode)
@@ -106,7 +81,7 @@ func TestGateReplacementRunsTheRebuiltPhaseTableOnce(t *testing.T) {
 	if rebuild.ExitCode != 0 {
 		t.Fatalf("replacement prescribed build exit = %d:\n%s%s", rebuild.ExitCode, rebuild.Stdout, rebuild.Stderr)
 	}
-	fresh := contract.RunAt(t, f, clone, map[string]string{"BENCH_CANARY_INNER": "1", "BENCH_CANARY_PHASE": "fresh-shellcheck"}, "bash", filepath.Join(clone, ".bench", "gate.sh"))
+	fresh := contract.RunAt(t, f, clone, map[string]string{runbinary.Env: selected, "BENCH_CANARY_INNER": "1", "BENCH_CANARY_PHASE": "fresh-shellcheck"}, "bash", filepath.Join(clone, ".bench", "gate.sh"))
 	if fresh.ExitCode != 0 {
 		t.Fatalf("rebuilt gate exit = %d:\n%s%s", fresh.ExitCode, fresh.Stdout, fresh.Stderr)
 	}
@@ -120,6 +95,10 @@ func freshnessRouteFixture(t *testing.T) contract.Fixture {
 	t.Helper()
 	f := copiedCLIHookFixture(t, true)
 	root := contract.SubjectRoot(t)
+	selected := contract.SelectedBench(t)
+	copyRuntimeFile(t, selected.Path, filepath.Join(f.Root, "dist", "bench"), 0o755)
+	copyRuntimeFile(t, selected.Path+".seal", filepath.Join(f.Root, "dist", "bench.seal"), 0o644)
+	f.Env["BENCH_KIT"] = f.Root
 	for _, rel := range []string{
 		".bench/gate.sh",
 		".bench/hooks/stop.sh",

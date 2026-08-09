@@ -13,7 +13,7 @@ import (
 // phase every other family resolves to. The phase name itself is asserted, since a
 // fixture routed to the wrong phase still reds — for the wrong reason, and forever.
 func TestSweepRoutesPhaseNamedFamilies(t *testing.T) {
-	families := []string{PhaseBuild, PhaseGofmt, PhaseVet, PhaseTest, PhaseRace, PhaseConformanceSuite}
+	families := []string{PhaseGofmt, PhaseVet, PhaseTest, PhaseRace, PhaseConformanceSuite}
 	root := t.TempDir()
 	for _, family := range families {
 		fixture(t, canaryFixture(root, family, family+"-fx"), "")
@@ -73,7 +73,7 @@ func TestPhaseNamedFamiliesJoinTheUnscopedBaseline(t *testing.T) {
 // would name no phase, and the assertion would then hold over a baseline never at risk.
 func TestBaselinesRunUnpinnedByPhase(t *testing.T) {
 	root := t.TempDir()
-	fixture(t, canaryFixture(root, PhaseBuild, "build-fx"), "")
+	fixture(t, canaryFixture(root, PhaseVet, "vet-fx"), "")
 	fixture(t, canaryFixture(root, PhaseGofmt, "gofmt-fx"), "")
 	conformance := mappedFamily(t)
 	fixture(t, canaryFixture(root, conformance, "conformance-fx"), "")

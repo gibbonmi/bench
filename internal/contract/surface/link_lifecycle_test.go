@@ -48,7 +48,7 @@ func testLinkConvergesAdapterDirectorySymlink(t *testing.T) {
 	f := adapterDirectorySymlinkFixture(t, "../.agents/commands")
 	before := fixtureStateExceptManifest(t, f)
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 
 	probe.RequireExit(0)
 	if after := fixtureStateExceptManifest(t, f); after != before {
@@ -65,7 +65,7 @@ func testLinkRejectsDriftedAdapterDirectorySymlink(t *testing.T) {
 	f.WriteFile(managedFileRel, "canonical content, locally changed\n")
 	before := fixtureState(t, f)
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stderr, adapterFileRel+" has a symlink parent directory")
@@ -116,7 +116,7 @@ func fixtureStateExceptManifest(t *testing.T, f contract.Fixture) string {
 func testLinkConvergesManagedSymlink(t *testing.T) {
 	f := convergedManagedSymlinkFixture(t)
 
-	f.Bench("link").RequireExit(0)
+	f.BenchWrapper("link").RequireExit(0)
 }
 
 // testLinkRejectsDriftedManagedSymlink pins the symlink-parent abort ahead of the soft
@@ -128,7 +128,7 @@ func testLinkRejectsDriftedManagedSymlink(t *testing.T) {
 	f.WriteFile(".agents/commands/bench-implement-spec.md", "consumer drift\n")
 	before := fixtureState(t, f)
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stderr, ".agents/commands/bench-implement-spec.md has a symlink parent directory")
@@ -140,11 +140,11 @@ func testLinkRejectsDriftedManagedSymlink(t *testing.T) {
 func testLinkRejectsNewEntryUnderManagedSymlink(t *testing.T) {
 	f := contract.NewFixture(t)
 	kit := payloadTestKit(t, f, "symlink-new-entry")
-	f.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
 	makeManagedAgentsSymlink(t, f)
 	contract.WriteFileAbs(t, filepath.Join(kit, ".agents", "commands", "new-managed-command.md"), "new managed command\n")
 
-	probe := f.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link")
+	probe := f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit}, "link")
 
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stderr, "new-managed-command.md has a symlink parent directory")
@@ -158,17 +158,17 @@ func testUpgradeRefreshesHookThroughManagedSymlink(t *testing.T) {
 	current := contract.ReadFileAbs(t, hook)
 	contract.WriteFileAbs(t, hook, current+"\n# stale hook\n")
 
-	f.Bench("upgrade").RequireExit(0)
+	f.BenchWrapper("upgrade").RequireExit(0)
 
 	requireLinkEqual(t, contract.ReadFileAbs(t, hook), current, "upgrade through a converged managed symlink did not restore current hook bytes")
 }
 
 func testLinkManagedSymlinkIsIdempotent(t *testing.T) {
 	f := convergedManagedSymlinkFixture(t)
-	f.Bench("link").RequireExit(0)
+	f.BenchWrapper("link").RequireExit(0)
 	before := fixtureState(t, f)
 
-	f.Bench("link").RequireExit(0)
+	f.BenchWrapper("link").RequireExit(0)
 
 	if after := fixtureState(t, f); after != before {
 		t.Fatalf("second link through a converged managed symlink changed tree or manifest\nbefore:\n%s\nafter:\n%s", before, after)
@@ -190,7 +190,7 @@ func requireCleanEntryInodeStable(t *testing.T, f contract.Fixture, context stri
 	t.Helper()
 	before := fixtureInode(t, f, managedFileRel)
 
-	f.Bench("link").RequireExit(0)
+	f.BenchWrapper("link").RequireExit(0)
 
 	if after := fixtureInode(t, f, managedFileRel); after != before {
 		t.Fatalf("%s: link replaced %s (inode %d -> %d) instead of skipping it", context, managedFileRel, before, after)
@@ -281,7 +281,7 @@ func testLinkExcludesStrayAssetUnderKitOnlyTree(t *testing.T) {
 	}
 	r := linkFixtureAt(t, repo, f.Env)
 	r.Git("init", "-q")
-	r.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
+	r.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
 
 	requireLinkNotExists(t, r, ".agents/skills/bench-assess/stray-new-file.md", "link wrote a stray file added under a kit-only subtree of an allowlisted tree")
 }
@@ -300,7 +300,7 @@ func testLinkSpaceBearingAllowlistedTreePath(t *testing.T) {
 	}
 	r := linkFixtureAt(t, repo, f.Env)
 	r.Git("init", "-q")
-	r.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
+	r.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
 	requireLinkFile(t, r, filepath.ToSlash(spaceRel))
 
 	unlinkOK(t, r)
@@ -366,7 +366,7 @@ func payloadTestKit(t *testing.T, f contract.Fixture, name string) string {
 	copyPaths(t, kit, filepath.Join(root, "bin"), filepath.Join(root, ".agents"), filepath.Join(root, ".claude"), filepath.Join(root, ".codex"))
 	copyFileTo(t, filepath.Join(root, ".bench", "BENCH.md"), filepath.Join(kit, ".bench", "BENCH.md"))
 	copyFileTo(t, filepath.Join(root, ".bench", "BENCH-reference.md"), filepath.Join(kit, ".bench", "BENCH-reference.md"))
-	copyFileTo(t, filepath.Join(root, "dist", "bench"), filepath.Join(kit, "dist", "bench"))
+	copyFileTo(t, contract.SelectedBench(t).Path, filepath.Join(kit, "dist", "bench"))
 	copyPaths(t, filepath.Join(kit, ".bench"), filepath.Join(root, ".bench", "hooks"), filepath.Join(root, ".bench", "adapters"), filepath.Join(root, ".bench", "lib"))
 	return kit
 }
@@ -404,7 +404,7 @@ func testLinkDanglingPrePushRefusal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 	if probe.ExitCode == 0 {
 		t.Fatal("link succeeded over a dangling pre-push hook")
 	}
@@ -422,7 +422,7 @@ func testLinkMarkerlessPrePushRefusal(t *testing.T) {
 	contents := "#!/bin/sh\nexit 0\n"
 	f.WriteExecutable(rel, contents)
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 	if probe.ExitCode == 0 {
 		t.Fatal("link succeeded over a marker-less pre-push hook")
 	}
@@ -434,7 +434,7 @@ func testLinkMalformedMarker(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("AGENTS.md", "PROJECT BEFORE\n<!-- bench:end -->\nPROJECT MIDDLE\n<!-- bench:start -->\nPROJECT AFTER\n")
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 
 	if probe.ExitCode == 0 {
 		t.Fatal("link succeeded despite reversed Bench managed block markers")
@@ -460,7 +460,7 @@ func testLinkUnclosedFence(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("AGENTS.md", "# Project rules\n\nBroken docs with an unclosed fence:\n\n```\n<!-- bench:start -->\n<!-- bench:end -->\n\nKEEP-ME text after the unclosed fence.\n")
 
-	probe := f.Bench("link")
+	probe := f.BenchWrapper("link")
 
 	if probe.ExitCode == 0 {
 		t.Fatal("link succeeded despite an unclosed fence around Bench markers")
@@ -478,7 +478,7 @@ func testLinkRollsBackOnFault(t *testing.T) {
 				f.Git("config", "core.hooksPath", ".husky")
 			}
 			before := fixtureState(t, f)
-			f.BenchEnv(map[string]string{"BENCH_LINK_FAULT": k}, "link").RequireExit(1)
+			f.BenchWrapperEnv(map[string]string{"BENCH_LINK_FAULT": k}, "link").RequireExit(1)
 			if after := fixtureState(t, f); after != before {
 				t.Fatalf("fault %s left repository residue\nbefore:\n%s\nafter:\n%s", k, before, after)
 			}
@@ -497,10 +497,10 @@ func testLinkRelinkRollsBackOnFault(t *testing.T) {
 	f := contract.NewFixtureAt(t, root, contract.IsolatedEnv(t, root))
 	f.Git("init", "-q")
 	kitA, kitB := lifecycleKits(t, f)
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
 	contract.WriteFileAbs(t, filepath.Join(kitB, ".bench", "BENCH.md"), "replacement from kit B\n")
 	before := fixtureState(t, f)
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitB, "BENCH_LINK_FAULT": "last"}, "link").RequireExit(1)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitB, "BENCH_LINK_FAULT": "last"}, "link").RequireExit(1)
 	if after := fixtureState(t, f); after != before {
 		t.Fatalf("relink fault left repository residue\nbefore:\n%s\nafter:\n%s", before, after)
 	}
@@ -547,9 +547,9 @@ func fixtureState(t *testing.T, f contract.Fixture) string {
 func testLinkReconcilesKitVersions(t *testing.T) {
 	f := contract.NewFixture(t)
 	kitA, kitB := lifecycleKits(t, f)
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
 	f.WriteFile(".bench/link-manifest.tsv", strings.Replace(f.ReadFile(".bench/link-manifest.tsv"), "#kit\t", "#kit\tsentinel-a-", 1))
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitB}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitB}, "link").RequireExit(0)
 	requireLinkNotExists(t, f, ".agents/commands/lifecycle-x.md", "clean dropped asset survived relink")
 	requireLinkFile(t, f, ".agents/commands/lifecycle-y.md")
 	requireFixtureFileNotContains(t, f, ".bench/link-manifest.tsv", "lifecycle-x.md\t", "dropped asset stayed manifest-owned")
@@ -560,10 +560,10 @@ func testLinkReconcilesKitVersions(t *testing.T) {
 func testLinkKeepsModifiedDroppedAsset(t *testing.T) {
 	f := contract.NewFixture(t)
 	kitA, kitB := lifecycleKits(t, f)
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
 	oldRow := manifestRow(t, f, ".agents/commands/lifecycle-x.md")
 	f.WriteFile(".agents/commands/lifecycle-x.md", "asset x, locally changed\n")
-	probe := f.BenchEnv(map[string]string{"BENCH_KIT": kitB}, "link")
+	probe := f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitB}, "link")
 	probe.RequireExit(3)
 	requireLinkEqual(t, f.ReadFile(".agents/commands/lifecycle-x.md"), "asset x, locally changed\n", "modified dropped asset bytes changed")
 	if got := manifestRow(t, f, ".agents/commands/lifecycle-x.md"); got != oldRow {
@@ -595,7 +595,7 @@ func testLinkRejectsHostileDroppedRows(t *testing.T) {
 		t.Run(hostile.name, func(t *testing.T) {
 			f := contract.NewFixture(t)
 			kitA, kitB := hostileLifecycleKits(t, f)
-			f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+			f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
 			before := f.ReadFile(".bench/link-manifest.tsv")
 			hostile.seed(t, f)
 			probe := contract.RunAtWithTimeout(t, f, f.Root, map[string]string{"BENCH_KIT": kitB}, bounds.TestDeadline(0), "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "link")
@@ -659,10 +659,10 @@ func TestLinkCleanSkipPropagationContracts(t *testing.T) {
 func testLinkPropagatesChangedKitBytes(t *testing.T) {
 	f := contract.NewFixture(t)
 	kitA, kitB := lifecycleKits(t, f)
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
 	requireLinkEqual(t, f.ReadFile(lifecycleSharedRel), lifecycleSharedA, "link did not install the kit A shared asset")
 
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitB}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitB}, "link").RequireExit(0)
 
 	requireLinkEqual(t, f.ReadFile(lifecycleSharedRel), lifecycleSharedB, "relink left an untouched clean asset at the previous kit's bytes")
 	requireManifestHash(t, f, lifecycleSharedRel, lifecycleSharedB, "relink kept the previous kit's manifest hash for a rewritten asset")
@@ -671,10 +671,10 @@ func testLinkPropagatesChangedKitBytes(t *testing.T) {
 func testUpgradePropagatesChangedKitBytes(t *testing.T) {
 	f := contract.NewFixture(t)
 	kitA, kitB := lifecycleKits(t, f)
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
 	repinManifestKitVersion(t, f, "0.0.1")
 
-	f.BenchEnv(map[string]string{"BENCH_KIT": kitB}, "upgrade").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kitB}, "upgrade").RequireExit(0)
 
 	requireLinkEqual(t, f.ReadFile(lifecycleSharedRel), lifecycleSharedB, "upgrade left an untouched clean asset at the previous kit's bytes")
 	requireManifestHash(t, f, lifecycleSharedRel, lifecycleSharedB, "upgrade kept the previous kit's manifest hash for a rewritten asset")
@@ -700,7 +700,7 @@ func lifecycleKits(t *testing.T, f contract.Fixture) (string, string) {
 		copyPaths(t, kit, filepath.Join(root, "bin"), filepath.Join(root, ".agents"), filepath.Join(root, ".claude"), filepath.Join(root, ".codex"))
 		copyFileTo(t, filepath.Join(root, ".bench", "BENCH.md"), filepath.Join(kit, ".bench", "BENCH.md"))
 		copyFileTo(t, filepath.Join(root, ".bench", "BENCH-reference.md"), filepath.Join(kit, ".bench", "BENCH-reference.md"))
-		copyFileTo(t, filepath.Join(root, "dist", "bench"), filepath.Join(kit, "dist", "bench"))
+		copyFileTo(t, contract.SelectedBench(t).Path, filepath.Join(kit, "dist", "bench"))
 		copyPaths(t, filepath.Join(kit, ".bench"), filepath.Join(root, ".bench", "hooks"), filepath.Join(root, ".bench", "adapters"), filepath.Join(root, ".bench", "lib"))
 		return kit
 	}
@@ -726,7 +726,7 @@ func hostileLifecycleKits(t *testing.T, f contract.Fixture) (string, string) {
 		} {
 			copyFileTo(t, filepath.Join(root, filepath.FromSlash(rel)), filepath.Join(kit, filepath.FromSlash(rel)))
 		}
-		copyFileTo(t, filepath.Join(root, "dist", "bench"), filepath.Join(kit, "dist", "bench"))
+		copyFileTo(t, contract.SelectedBench(t).Path, filepath.Join(kit, "dist", "bench"))
 		return kit
 	}
 	kitA, kitB := makeKit("hostile-kit-a"), makeKit("hostile-kit-b")

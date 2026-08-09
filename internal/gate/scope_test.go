@@ -102,15 +102,6 @@ func TestExcludableSetCoversContractPhase(t *testing.T) {
 			t.Errorf("phase %q is both included and excludable", phase)
 		}
 	}
-	// The build phase produces the binary the other phases exec, so it runs in both
-	// modes: excluding it would break a reduced run, including it would claim it grades
-	// the declared paths.
-	if scope.Excludable(canary.PhaseBuild) {
-		t.Errorf("Excludable(%q) = true, want false", canary.PhaseBuild)
-	}
-	if slices.Contains(scope.IncludedPhases(), canary.PhaseBuild) {
-		t.Errorf("IncludedPhases contains %q, want it declared in neither set", canary.PhaseBuild)
-	}
 }
 
 // The set a reduced run executes is the table complement IncludedPhaseNames derives;

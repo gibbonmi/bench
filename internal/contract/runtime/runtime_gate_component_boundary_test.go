@@ -1,7 +1,7 @@
 package runtime
 
-// The per-component evidence store across a process boundary. Ancestor slots and the build
-// attestation are serialized by one gate process and re-read by the next, so a defect that
+// The per-component evidence store across a process boundary. Ancestor slots are serialized
+// by one gate process and re-read by the next, so a defect that
 // only appears on reload — a record no reader parses, an address the author and the reader
 // spell differently, a partition answered from memory rather than from the store — is
 // invisible to any test that stays inside one process. Every assertion here is therefore on
@@ -9,8 +9,7 @@ package runtime
 // store held afterwards.
 //
 // The fixture is the kit-shaped root: a real Go module with a ./cmd/bench main and a sealed
-// dist/bench, so the components the input registry declares resolve identities and the build
-// phase has an artifact to be attested. Its phases are marker scripts — the executed set is
+// dist/bench, so the components the input registry declares resolve identities. Its phases are marker scripts — the executed set is
 // read from a durable marker rather than from a return value — and the resolved gate script
 // hands off to gate-phases, which is what lets the root be narrowed at all.
 
@@ -87,16 +86,8 @@ func TestPartialEvidenceSurvivesAProcessBoundary(t *testing.T) {
 		t.Fatalf("resolved gate runs = %d, want the seed run only — the narrowed run paid the whole gate", got)
 	}
 
-	// Each announced skip names the evidence class its component actually rests on: build
-	// reuses the artifact its seal describes, and every other component an ancestor slot the
-	// first process wrote.
+	// Each announced skip names the ancestor slot the first process wrote.
 	for component, skip := range announced {
-		if component == canary.PhaseBuild {
-			if skip.seal == "" || skip.seal != boundarySealDigest(t, fixture.root) {
-				t.Fatalf("build skip announced %+v, want the seal source digest %s", skip, boundarySealDigest(t, fixture.root))
-			}
-			continue
-		}
 		if got := authored.slots[component].record.Identity; skip.identity != got {
 			t.Fatalf("%s skip announced identity %q, want the slot the first process authored at %q", component, skip.identity, got)
 		}
@@ -148,13 +139,6 @@ func TestForgedEvidenceIsRefusedOnReload(t *testing.T) {
 		Identity:   forged.record.Identity,
 		AuthoredAt: forged.record.AuthoredAt,
 	})
-	attestation := authored.attestation
-	writeBoundaryRecord(t, attestation.path, storeRecord{
-		Schema:     attestation.record.Schema,
-		Executable: strings.Repeat("b", len(attestation.record.Executable)),
-		AuthoredAt: attestation.record.AuthoredAt,
-	})
-
 	fixture.captureOnlyEdit(t)
 	probe := fixture.gateRun(t)
 	probe.RequireExit(0)
@@ -162,7 +146,7 @@ func TestForgedEvidenceIsRefusedOnReload(t *testing.T) {
 	output := probe.Stdout + probe.Stderr
 	announced := announcedSkips(t, output)
 	skippable, executed := boundaryCapturePartition(fixture.phases)
-	refused := []string{canary.PhaseBuild, canary.PhaseVet}
+	refused := []string{canary.PhaseVet}
 	if got := slices.Sorted(maps.Keys(announced)); !slices.Equal(got, without(skippable, refused)) {
 		t.Fatalf("second process announced skips for %v, want the forged components %v refused:\n%s", got, refused, output)
 	}
@@ -198,9 +182,6 @@ func TestAnnouncedAncestorsMatchWhatWasAuthored(t *testing.T) {
 		t.Fatalf("second process announced no skips at all:\n%s", output)
 	}
 	for component, skip := range announced {
-		if component == canary.PhaseBuild {
-			continue
-		}
 		entry, held := authored.slots[component]
 		if !held {
 			t.Fatalf("%s skipped on evidence the store holds no slot for:\n%s", component, output)
@@ -247,16 +228,10 @@ func TestFreshReauthorsAcrossProcesses(t *testing.T) {
 	reauthored := fixture.readEvidence(t)
 	skippable, _ := boundaryComponents(fixture.phases)
 	for _, component := range skippable {
-		if component == canary.PhaseBuild {
-			continue
-		}
 		before, after := inherited.slots[component], reauthored.slots[component]
 		if after.path == "" || os.SameFile(before.info, after.info) {
 			t.Fatalf("%s slot was not re-authored by --fresh; it still carries the record the forced run inherited from", component)
 		}
-	}
-	if before, after := inherited.attestation, reauthored.attestation; after.path == "" || os.SameFile(before.info, after.info) {
-		t.Fatalf("the build attestation was not re-authored by --fresh; the forced run reused the record it was meant to replace")
 	}
 }
 
@@ -302,7 +277,7 @@ func seededBoundaryFixture(t *testing.T) boundaryFixture {
 			"BENCH_REQUIRE_CAPABILITIES": nil,
 			capability.LogEnv:            nil,
 		},
-		bench:  filepath.Join(contract.SubjectRoot(t), "dist", "bench"),
+		bench:  contract.SelectedBench(t).Path,
 		phases: phases,
 	}
 	seed := fixture.gateRun(t)
@@ -314,7 +289,7 @@ func seededBoundaryFixture(t *testing.T) boundaryFixture {
 		t.Fatalf("seed run executed %v, want the whole resolved table %v", got, boundaryPhaseNames(phases))
 	}
 	skippable, _ := boundaryComponents(phases)
-	if !slices.Equal(slices.Sorted(maps.Keys(fixture.readEvidence(t).slots)), without(skippable, []string{canary.PhaseBuild})) {
+	if !slices.Equal(slices.Sorted(maps.Keys(fixture.readEvidence(t).slots)), skippable) {
 		t.Fatalf("seed run authored slots for %v, want one per evidence-covered component in %v",
 			slices.Sorted(maps.Keys(fixture.readEvidence(t).slots)), skippable)
 	}
@@ -543,7 +518,13 @@ func writeBoundaryTree(t *testing.T, root string) {
 	writeReducedFixtureFile(t, root, "internal/canary/canary.go",
 		"package canary\n\n// Name is the surface the canary phase grades.\nfunc Name() string { return \"canary\" }\n", 0o644)
 	writeReducedFixtureFile(t, root, "tests/canary/fixture.txt", "canary fixture\n", 0o644)
-	writeReducedFixtureFile(t, root, "scripts/go-build.sh", "#!/usr/bin/env bash\nexit 0\n", 0o755)
+	writeReducedFixtureFile(t, root, "scripts/go-build.sh", `#!/usr/bin/env bash
+set -euo pipefail
+root="${1:?missing root}"
+output="${2:?missing output}"
+cp "$root/dist/bench" "$output"
+cp "$root/dist/bench.seal" "$output.seal"
+`, 0o755)
 	writeReducedFixtureFile(t, root, "scripts/go-build.inputs", "build_script=scripts/go-build.sh\n", 0o644)
 	writeReducedFixtureFile(t, root, "bin/bench.sh", "#!/usr/bin/env bash\nexit 0\n", 0o755)
 	writeReducedFixtureFile(t, root, ".bench/gate-inputs.json",

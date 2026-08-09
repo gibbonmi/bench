@@ -48,6 +48,7 @@ func init() {
 		"skills-index-command-adapters":     {checkSkillsIndexAndCommandAdapters, registry.Dev, registry.SubjectRoot},
 		"docs-currency-workflow":            {checkDocsCurrencyAndWorkflow, registry.Dev, registry.SubjectRootAndKitRoot},
 		"gate-entry-contract":               {checkGateEntryContract, registry.Dev, registry.SubjectRoot},
+		"ordinary-build-census":             {checkOrdinaryBuildCensus, registry.Dev, registry.SubjectKitRoot},
 		"offline-smoke-proof":               {checkOfflineSmokeProof, registry.Dev, registry.SubjectRoot},
 		"handoff-shape-single-source":       {checkHandoffShape, registry.Dev, registry.SubjectRoot},
 		"harness-prefix-single-source":      {checkHarnessPrefix, registry.Dev, registry.SubjectRoot},

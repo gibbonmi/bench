@@ -112,7 +112,7 @@ func assertStaleGateStatusCase(t testing.TB, tc staleGateStatusCase) {
 	}
 	out := f.Bench("status").Stdout
 	if tc.runDir != "" {
-		out = contract.RunAt(t, f, filepath.Join(f.Root, filepath.FromSlash(tc.runDir)), nil, "bash", benchPath(t), "status").Stdout
+		out = contract.RunAt(t, f, filepath.Join(f.Root, filepath.FromSlash(tc.runDir)), selectedBenchEnv(t, nil), benchPath(t), "status").Stdout
 	}
 	requireStatusRow(t, out, tc.want)
 }

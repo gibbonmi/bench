@@ -14,24 +14,51 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/contract/internal/freshnessfixture"
+	"github.com/gibbonmi/bench/internal/freshness"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 const runtimeLauncherFreshnessChild = "BENCH_FT131_RUNTIME_LAUNCHER_CHILD"
 
 func benchPath(t testing.TB) string {
 	t.Helper()
-	contract.RequireFreshBench(t)
+	selection := contract.SelectedBench(t)
+	return contract.SelectedBenchPath(t, selection)
+}
+
+func benchWrapperPath(t testing.TB) string {
+	t.Helper()
 	return filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")
+}
+
+func selectedBenchEnv(t testing.TB, extra map[string]string) map[string]string {
+	t.Helper()
+	selection := contract.SelectedBench(t)
+	env := make(map[string]string, len(extra)+2)
+	for key, value := range extra {
+		env[key] = value
+	}
+	env["BENCH_KIT"] = selection.SourceRoot
+	env[runbinary.Env] = selection.Path
+	return env
+}
+
+func selectedSurfaceEnv(t testing.TB, f contract.Fixture, extra map[string]string) []string {
+	t.Helper()
+	return contract.ProcessEnv(f.Env, selectedBenchEnv(t, extra))
 }
 
 func TestRuntimeLauncherRefusesStaleBeforeFalseGreenAndFalseRedAssertions(t *testing.T) {
 	for _, assertion := range []string{"false-green", "false-red"} {
 		t.Run(assertion, func(t *testing.T) {
 			if os.Getenv(runtimeLauncherFreshnessChild) == assertion {
-				launcher := benchPath
-				command := exec.Command("bash", launcher(t), "version")
+				root := contract.SubjectRoot(t)
+				if err := freshness.Verify(root, filepath.Join(root, "dist", "bench")); err != nil {
+					t.Fatal(err)
+				}
+				command := exec.Command("bash", filepath.Join(root, "bin", "bench.sh"), "version")
 				output, err := command.CombinedOutput()
 				if assertion == "false-green" && err == nil {
 					return
@@ -70,9 +97,7 @@ func TestRuntimeBenchPathConsumerEnumeration(t *testing.T) {
 		"runtime_gate_partial_proof_test.go",
 		"runtime_gate_proof_helpers_test.go",
 		"runtime_gate_shift_proof_test.go",
-		"runtime_gate_stop_proof_test.go",
 		"runtime_gate_test.go",
-		"runtime_handoff_grammar_test.go",
 		"runtime_shift_adapters_test.go",
 		"runtime_spec_history_test.go",
 		"runtime_spec_test.go",
@@ -102,8 +127,8 @@ func TestRuntimeBenchPathConsumerEnumeration(t *testing.T) {
 	if got, want := strings.Join(consumers, "\n"), strings.Join(expected, "\n"); got != want {
 		t.Fatalf("benchPath consumer files:\n%s\nwant:\n%s", got, want)
 	}
-	if count != 30 {
-		t.Fatalf("benchPath occurrences = %d, want 30", count)
+	if count != 28 {
+		t.Fatalf("benchPath occurrences = %d, want 28", count)
 	}
 }
 

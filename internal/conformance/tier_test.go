@@ -446,6 +446,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestNativeWorkflowEvidenceEdgeBites":                           true,
 	"TestOccurrenceLedgerMigrationCheckBitesOnFT158Count":           true,
 	"TestOfflineSmokeSliceOneProofIsExecutableNotTokenOnly":         true,
+	"TestOrdinaryBuildCensusMatchesClosedExceptionSet":              true,
 	"TestPackageCoreAndGuardFixturesBite":                           true,
 	"TestRecurrenceMaintenanceContractCheckBites":                   true,
 	"TestResidualCheckCallsCrossCompileMatrix":                      true,

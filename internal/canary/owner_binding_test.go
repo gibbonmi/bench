@@ -111,6 +111,25 @@ func TestSweepRefusesOwnersTheCompiledBinaryDoesNotCarry(t *testing.T) {
 	}
 }
 
+func TestSweepAcceptsNamedSubtestWhenTheBinaryCarriesItsTopLevelOwner(t *testing.T) {
+	root := t.TempDir()
+	dir := contractFixture(t, root, "axi", "subtest-owner")
+	write(t, filepath.Join(dir, testFileName), "TestCanaryOwner/owned_case\n")
+
+	err := Sweep(root, func(call RunCall) RunResult {
+		if result, done := stubToolchain(call); done {
+			return result
+		}
+		if isBaseline(call) {
+			return RunResult{ExitCode: 1, Output: "baseline\n"}
+		}
+		return RunResult{ExitCode: 1, Output: "target-subtest-owner\n"}
+	})
+	if err != nil {
+		t.Fatalf("Sweep named subtest: %v", err)
+	}
+}
+
 // TestSweepRedsWhenAPackageWillNotListItsTests covers the answer the validation cannot work
 // without. A binary that refuses to say what it carries makes every owner in its group
 // unresolvable, and a list failure read as an empty membership would refuse each of those

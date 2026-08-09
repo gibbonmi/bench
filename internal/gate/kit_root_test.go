@@ -62,7 +62,7 @@ func TestPhasesCommandEmptyKitFallsBackToRoot(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	if code := PhasesCommand([]string{root}, &stdout, &stderr); code != 0 {
+	if code := phasesCommandAtKitForTest(root, kitRoot(root), &stdout, &stderr); code != 0 {
 		t.Fatalf("PhasesCommand = %d, want 0; stderr=%q", code, stderr.String())
 	}
 	if gotKit != root {
@@ -86,7 +86,7 @@ func TestPhasesCommandNonEmptyKitSelectsBuiltinTableAtKit(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	if code := PhasesCommand([]string{root}, &stdout, &stderr); code != 0 {
+	if code := phasesCommandAtKitForTest(root, kitRoot(root), &stdout, &stderr); code != 0 {
 		t.Fatalf("PhasesCommand = %d, want 0; stderr=%q", code, stderr.String())
 	}
 	if gotKit != kit {

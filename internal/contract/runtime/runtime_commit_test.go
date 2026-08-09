@@ -407,10 +407,9 @@ exec "$BENCH_TEST_REAL_GIT" "$@"
 	defer releaseWrite.Close()
 
 	var loserStdout, loserStderr bytes.Buffer
-	launcher := benchPath
-	loser := exec.Command("bash", launcher(t), "commit", "-m", "loser", "--spec", "concurrent", "loser.txt")
+	loser := exec.Command(benchPath(t), "commit", "-m", "loser", "--spec", "concurrent", "loser.txt")
 	loser.Dir = f.Root
-	loser.Env = surfaceEnv(f, map[string]string{
+	loser.Env = selectedSurfaceEnv(t, f, map[string]string{
 		"PATH": shim + string(os.PathListSeparator) + os.Getenv("PATH"), "GATE_RC": "0",
 		"BENCH_TEST_CAS_ROOT": f.Root, "BENCH_TEST_CAS_BASE": base, "BENCH_TEST_REAL_GIT": realGit,
 		"GIT_AUTHOR_NAME": "loser", "GIT_AUTHOR_EMAIL": "loser@local",
@@ -741,8 +740,7 @@ func TestCommitResolvesValidPathsFromNestedCWD(t *testing.T) {
 	f.WriteFile("sub/a.txt", "nested bytes\n")
 	before := headSha(f)
 
-	launcher := benchPath
-	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), nil, "bash", launcher(t), "commit", "-m", "nested path", "a.txt").RequireExit(0)
+	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), selectedBenchEnv(t, nil), benchPath(t), "commit", "-m", "nested path", "a.txt").RequireExit(0)
 
 	if headSha(f) == before {
 		t.Fatal("HEAD did not advance for the nested named path")
@@ -773,7 +771,7 @@ func testCommitEmptyPositionalIsUsage(t *testing.T) {
 	f.WriteFile("sub/b.txt", "b\n")
 	before := headSha(f)
 
-	p := contract.RunAt(t, f, filepath.Join(f.Root, "sub"), nil, "bash", benchPath(t), "commit", "-m", "msg", "")
+	p := contract.RunAt(t, f, filepath.Join(f.Root, "sub"), selectedBenchEnv(t, nil), benchPath(t), "commit", "-m", "msg", "")
 
 	// Checked ahead of the exit code and the usage line: the historical bug was a
 	// commit landing files nobody named, not a wrong exit code, so this is the

@@ -38,7 +38,7 @@ func testSetupPreservesConflictsAndWritesRest(t *testing.T) {
 	f.WriteExecutable(".bench/gate.sh", foreignGate)
 	f.WriteFile(".agents/commands/bench-implement-spec.md", foreignCommand)
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stdout+probe.Stderr), "conflict")
@@ -113,7 +113,7 @@ func testSetupDirectoryAtAgentsIsConflict(t *testing.T) {
 	contract.Mkdir(t, filepath.Join(f.Root, "AGENTS.md"))
 	contract.WriteFileAbs(t, filepath.Join(f.Root, "AGENTS.md", "keep.txt"), "project directory content\n")
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stdout+probe.Stderr), "conflict")
@@ -131,7 +131,7 @@ func testSetupDirectoryAtClaudeIsConflict(t *testing.T) {
 	contract.Mkdir(t, filepath.Join(f.Root, "CLAUDE.md"))
 	contract.WriteFileAbs(t, filepath.Join(f.Root, "CLAUDE.md", "keep.txt"), "project directory content\n")
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stdout+probe.Stderr), "conflict")

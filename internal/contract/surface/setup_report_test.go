@@ -22,7 +22,7 @@ func testSetupReportGreen(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(0)
 	out := probe.Stdout
@@ -37,7 +37,7 @@ func testSetupReportGreen(t *testing.T) {
 func testSetupReportZeroSignalPartial(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(3)
 	out := probe.Stdout

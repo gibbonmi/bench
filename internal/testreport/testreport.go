@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -25,6 +26,8 @@ var grammar = usage.Grammar{
 	Flags:   []usage.Flag{{Name: "--full"}},
 	MaxArgs: 1,
 }
+
+var selectRunBinary = runbinary.ReuseOrOwn
 
 // Command runs Go from root and renders one stable row for each observed result.
 func Command(root string, args []string) (string, int) {
@@ -39,9 +42,14 @@ func Command(root string, args []string) (string, int) {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+	selection, err := selectRunBinary(ctx, testBenchSource(root))
+	if err != nil {
+		return toon.Errorf("Bench executable selection failed", err.Error()) + "\n", 1
+	}
+	defer selection.Close()
 	cmd := exec.Command("go", "test", "-json", "-count=1", packageExpr)
 	cmd.Dir = root
-	cmd.Env = capability.WithoutEnvironment(os.Environ(), capability.LogEnv)
+	cmd.Env = runbinary.WithEnv(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), selection.Path)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {
@@ -96,6 +104,13 @@ func Command(root string, args []string) (string, int) {
 		return out, 1
 	}
 	return out, 0
+}
+
+func testBenchSource(root string) string {
+	if kit := os.Getenv("BENCH_KIT"); kit != "" {
+		return kit
+	}
+	return root
 }
 
 type event struct {

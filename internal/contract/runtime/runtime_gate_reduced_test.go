@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // [R24] A capture-only edit on the kit-root shape pays a second full run: the retired
@@ -119,7 +120,8 @@ func seededReducedGateFixture(t *testing.T, kit string) (string, contract.Fixtur
 		"BENCH_REQUIRE_CAPABILITIES": nil,
 		capability.LogEnv:            nil,
 	}
-	bench := filepath.Join(contract.SubjectRoot(t), "dist", "bench")
+	bench := contract.SelectedBench(t).Path
+	env[runbinary.Env] = &bench
 
 	seed := f.RunEnvSpec(env, bench, "gate-run", root)
 	seed.RequireExit(0)

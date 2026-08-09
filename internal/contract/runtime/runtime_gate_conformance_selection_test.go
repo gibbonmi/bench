@@ -8,6 +8,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func TestRuntimeOuterGateIgnoresAmbientConformanceCheck(t *testing.T) {
@@ -56,7 +57,9 @@ func TestRootConformance(t *testing.T) {
 		run["BENCH_CANARY_INNER"] = &marker
 		run["BENCH_CANARY_PHASE"] = &phase
 	}
-	return f.RunEnvSpec(run, runtimeConformanceSelectionBench(t), "gate-phases", graded)
+	bench := runtimeConformanceSelectionBench(t)
+	run[runbinary.Env] = &bench
+	return f.RunEnvSpec(run, bench, "gate-phases", graded)
 }
 
 func runtimeConformanceSelectionBench(t *testing.T) string {
@@ -64,6 +67,5 @@ func runtimeConformanceSelectionBench(t *testing.T) string {
 	if bench := os.Getenv("BENCH_RUNTIME_CONFORMANCE_SELECTION_BINARY"); bench != "" {
 		return bench
 	}
-	contract.RequireFreshBench(t)
-	return filepath.Join(contract.SubjectRoot(t), "dist", "bench")
+	return contract.SelectedBench(t).Path
 }

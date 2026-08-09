@@ -212,7 +212,7 @@ func testRepairPinManifestFailures(t *testing.T) {
 			} else {
 				contract.WriteFileAbs(t, manifest, tc.content)
 			}
-			out := f.BenchEnv(map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "1"}, "version")
+			out := f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "1"}, "version")
 			out.RequireExit(127)
 			out.RequireContains(out.Stderr, "pin manifest binary-pins.json")
 			if registry.Hits() != 0 {
@@ -227,7 +227,7 @@ func testRepairResourceBounds(t *testing.T) {
 	t.Run("total deadline", func(t *testing.T) {
 		f, kit := binaryRepairFixtureKit(t)
 		registry := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\necho never\n", binaryRepairHangMetadata())
-		out := f.BenchEnv(map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_DEADLINE_MS": "50"}, "repair")
+		out := f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_DEADLINE_MS": "50"}, "repair")
 		out.RequireExit(1)
 		out.RequireContains(out.Stderr, "60-second total repair deadline exceeded")
 	})
@@ -237,12 +237,12 @@ func testRepairResourceBounds(t *testing.T) {
 		tgz := binaryRepairTarball(t, binary)
 		registry := newBinaryRepairRegistry(t, kit, "9.8.7", binary, binaryRepairTarballBytes(tgz))
 		env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_DOWNLOAD_LIMIT": fmt.Sprint(len(tgz))}
-		f.BenchEnv(env, "repair").RequireExit(0)
+		f.BenchWrapperEnv(env, "repair").RequireExit(0)
 		if err := os.Remove(binaryRepairCachePath(t, f, "9.8.7")); err != nil {
 			t.Fatal(err)
 		}
 		env["BENCH_TEST_REPAIR_DOWNLOAD_LIMIT"] = fmt.Sprint(len(tgz) - 1)
-		out := f.BenchEnv(env, "repair")
+		out := f.BenchWrapperEnv(env, "repair")
 		out.RequireExit(1)
 		out.RequireContains(out.Stderr, "100 MB download limit exceeded")
 	})
@@ -253,12 +253,12 @@ func testRepairResourceBounds(t *testing.T) {
 		decompressed := binaryRepairGunzip(t, tgz)
 		registry := newBinaryRepairRegistry(t, kit, "9.8.7", binary, binaryRepairTarballBytes(tgz))
 		env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_DECOMPRESSED_LIMIT": fmt.Sprint(len(decompressed))}
-		f.BenchEnv(env, "repair").RequireExit(0)
+		f.BenchWrapperEnv(env, "repair").RequireExit(0)
 		if err := os.Remove(binaryRepairCachePath(t, f, "9.8.7")); err != nil {
 			t.Fatal(err)
 		}
 		env["BENCH_TEST_REPAIR_DECOMPRESSED_LIMIT"] = fmt.Sprint(len(decompressed) - 1)
-		out := f.BenchEnv(env, "repair")
+		out := f.BenchWrapperEnv(env, "repair")
 		out.RequireExit(1)
 		out.RequireContains(out.Stderr, "200 MB decompressed limit exceeded")
 	})
@@ -268,7 +268,7 @@ func testRepairResourceBounds(t *testing.T) {
 		f, kit := binaryRepairFixtureKit(t)
 		tgz := binaryRepairGzipBomb(t, expandedSize)
 		registry := newBinaryRepairRegistry(t, kit, "9.8.7", "unused", binaryRepairTarballBytes(tgz))
-		out := f.BenchEnv(map[string]string{
+		out := f.BenchWrapperEnv(map[string]string{
 			"BENCH_KIT":                            kit,
 			"BENCH_NPM_REGISTRY":                   registry.URL,
 			"BENCH_REPAIR":                         "",
@@ -302,7 +302,7 @@ func testRepairExplicitDefault(t *testing.T) {
 	if err := os.Chmod(filepath.Join(fakebin, "node"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	out := f.BenchEnv(map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_CHILD_MARKER": marker, "PATH": fakebin + string(os.PathListSeparator) + os.Getenv("PATH")}, "version")
+	out := f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_CHILD_MARKER": marker, "PATH": fakebin + string(os.PathListSeparator) + os.Getenv("PATH")}, "version")
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "run bench repair")
 	requirePathAbsent(t, marker, "explicit-default resolution started repair child")
@@ -315,9 +315,9 @@ func testRepairSubcommand(t *testing.T) {
 	f, kit := binaryRepairFixtureKit(t)
 	registry := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\nprintf 'explicit:%s\\n' \"$1\"\n")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": ""}
-	repair := f.BenchEnv(env, "repair")
+	repair := f.BenchWrapperEnv(env, "repair")
 	repair.RequireExit(0)
-	out := f.BenchEnv(env, "version")
+	out := f.BenchWrapperEnv(env, "version")
 	out.RequireExit(0)
 	if strings.TrimSpace(out.Stdout) != "explicit:version" {
 		t.Fatalf("explicitly repaired binary did not run: %q", out.Stdout)
@@ -327,7 +327,7 @@ func testRepairSubcommand(t *testing.T) {
 func testRepairArguments(t *testing.T) {
 	f, kit := binaryRepairFixtureKit(t)
 	for _, args := range [][]string{{"repair", "extra"}, {"repair", "--unknown"}, {"repair", "--prune", "extra"}} {
-		out := f.BenchEnv(map[string]string{"BENCH_KIT": kit, "BENCH_REPAIR": ""}, args...)
+		out := f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit, "BENCH_REPAIR": ""}, args...)
 		out.RequireExit(2)
 		out.RequireContains(out.Stderr, "usage: bench repair [--prune]")
 	}
@@ -346,7 +346,7 @@ func testRepairPrune(t *testing.T) {
 		contract.WriteFileAbs(t, path, "stale")
 	}
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_REPAIR": ""}
-	first := f.BenchEnv(env, "repair", "--prune")
+	first := f.BenchWrapperEnv(env, "repair", "--prune")
 	first.RequireExit(0)
 	first.RequireContains(first.Stderr, "repair prune: removed")
 	if _, err := os.Stat(current); err != nil {
@@ -355,18 +355,18 @@ func testRepairPrune(t *testing.T) {
 	for _, path := range stale {
 		requirePathAbsent(t, path, "prune preserved stale entry")
 	}
-	second := f.BenchEnv(env, "repair", "--prune")
+	second := f.BenchWrapperEnv(env, "repair", "--prune")
 	second.RequireExit(0)
 	second.RequireContains(second.Stderr, "no stale cache entries")
 	if err := os.RemoveAll(filepath.Join(f.Env["BENCH_HOME"], "cache")); err != nil {
 		t.Fatal(err)
 	}
-	absent := f.BenchEnv(env, "repair", "--prune")
+	absent := f.BenchWrapperEnv(env, "repair", "--prune")
 	absent.RequireExit(0)
 	absent.RequireContains(absent.Stderr, "no stale cache entries")
 	corruptPlatform := filepath.Join(f.Env["BENCH_HOME"], "cache", "bin", "9.8.7", binaryRepairPlatformSuffix(t))
 	contract.WriteFileAbs(t, corruptPlatform, "corrupt-current-platform")
-	corrupt := f.BenchEnv(env, "repair", "--prune")
+	corrupt := f.BenchWrapperEnv(env, "repair", "--prune")
 	corrupt.RequireExit(0)
 	corrupt.RequireContains(corrupt.Stderr, "repair prune: removed 9.8.7/"+binaryRepairPlatformSuffix(t))
 	requirePathAbsent(t, corruptPlatform, "prune preserved malformed current-platform file")
@@ -375,7 +375,7 @@ func testRepairPrune(t *testing.T) {
 	if err := os.Symlink(outside, corruptPlatform); err != nil {
 		t.Fatal(err)
 	}
-	symlink := f.BenchEnv(env, "repair", "--prune")
+	symlink := f.BenchWrapperEnv(env, "repair", "--prune")
 	symlink.RequireExit(0)
 	symlink.RequireContains(symlink.Stderr, "no stale cache entries")
 	if info, err := os.Lstat(corruptPlatform); err != nil || info.Mode()&os.ModeSymlink == 0 {

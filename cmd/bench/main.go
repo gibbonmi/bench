@@ -485,6 +485,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return commit.Command(args[1:], stdout, stderr)
 	case "spec":
 		return dispatchSpec(args[1:], stdout)
+	case "gate":
+		return gate.Command(args[1:], os.Stdin, stdout, stderr)
 	case "gate-run":
 		return gate.RunCommand(args[1:], stdout, stderr)
 	case "gate-pin":

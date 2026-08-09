@@ -9,6 +9,9 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // The idiom-setting table test for the module: pure logic, table-driven, no process
@@ -154,7 +157,7 @@ printf '%s\n' "$BENCH_KIT" "$@" > "$BENCH_TEST_ARGV"
 `)
 
 	cmd := exec.Command("bash", filepath.Join(kit, "bin", "bench.sh"), "gate-phases", "/tmp/repo root")
-	cmd.Env = append(os.Environ(),
+	cmd.Env = append(capability.WithoutEnvironment(os.Environ(), runbinary.Env),
 		"BENCH_TEST_ARGV="+argvFile, "BENCH_HOME="+filepath.Join(root, "home"),
 		"BENCH_KIT="+kit, "BENCH_WRAPPER=")
 	out, err := cmd.CombinedOutput()

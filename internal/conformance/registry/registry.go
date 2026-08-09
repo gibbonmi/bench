@@ -122,6 +122,7 @@ var Checks = []Check{
 	{Name: "skills-index-command-adapters", Implementation: "checkSkillsIndexAndCommandAdapters", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "docs-currency-workflow", Implementation: "checkDocsCurrencyAndWorkflow", Tier: Dev, Subject: SubjectRootAndKitRoot, Inputs: InputCatchAll},
 	{Name: "gate-entry-contract", Implementation: "checkGateEntryContract", Tier: Dev, Subject: SubjectRoot, Inputs: InputGateEntry},
+	{Name: "ordinary-build-census", Implementation: "checkOrdinaryBuildCensus", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputCatchAll},
 	{Name: "offline-smoke-proof", Implementation: "checkOfflineSmokeProof", Tier: Dev, Subject: SubjectRoot, Inputs: InputOfflineSmoke},
 	{Name: "handoff-shape-single-source", Implementation: "checkHandoffShape", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "harness-prefix-single-source", Implementation: "checkHarnessPrefix", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},

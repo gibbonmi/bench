@@ -190,7 +190,7 @@ func testRuntimeLinkedWorktreePathAndExec(t *testing.T) {
 func testRuntimeWorktreeExecHelp(t *testing.T) {
 	f := onMainFixture(t)
 	for _, args := range [][]string{{"--help"}, {"worktree", "--help"}} {
-		got := f.Bench(args...)
+		got := f.BenchWrapper(args...)
 		if got.ExitCode != 0 || got.Stderr != "" {
 			t.Fatalf("bench %v = exit %d stderr %q, want help on stdout", args, got.ExitCode, got.Stderr)
 		}
@@ -531,7 +531,7 @@ exec "$REAL_GIT" "$@"
 
 func testRuntimeWorktreeListShellSurface(t *testing.T) {
 	f := onMainFixture(t)
-	general := f.Bench("--help")
+	general := f.BenchWrapper("--help")
 	general.RequireExit(0)
 	contract.RequireContains(t, general.Stdout, "bench worktree list")
 	worktreeHelp := f.Bench("worktree", "--help")
@@ -619,7 +619,7 @@ func testRuntimeWorktreeListRows(t *testing.T) {
 	deep := filepath.Join(f.Root, "deep", "cwd")
 	contract.Mkdir(t, deep)
 
-	out := contract.RunAt(t, f, deep, env, "bash", benchPath(t), "worktree", "list")
+	out := contract.RunAt(t, f, deep, selectedBenchEnv(t, env), benchPath(t), "worktree", "list")
 	out.RequireExit(0)
 	if out.Stderr != "" {
 		t.Fatalf("list wrote stderr: %q", out.Stderr)
@@ -1406,7 +1406,7 @@ func testRuntimeWorktreeCleanFromPoolCwd(t *testing.T) {
 	benchHome := filepath.Join(f.Root, ".bh")
 	pool := addRuntimePoolWorktrees(t, f, benchHome)
 
-	out := contract.RunAt(t, f, pool.Leased, map[string]string{"BENCH_HOME": benchHome}, "bash", benchPath(t), "resume-clean")
+	out := contract.RunAt(t, f, pool.Leased, selectedBenchEnv(t, map[string]string{"BENCH_HOME": benchHome}), benchPath(t), "resume-clean")
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, "retained foreign=1 live-lease=1")
 	contract.RequireNotContains(t, out.Stdout, f.Root)
@@ -1430,7 +1430,7 @@ func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
 		"bench worktree clean [--discard-ignored] [--discard-branch] [--full] <path> [--apply <fingerprint>]",
 		"bench worktree recovery <ref> [--apply <fingerprint>] [--discard <fingerprint>]",
 	}
-	help := f.Bench("--help")
+	help := f.BenchWrapper("--help")
 	help.RequireExit(0)
 	contract.RequireContains(t, help.Stdout, "bench worktree --help")
 	worktreeHelp := f.Bench("worktree", "--help")
@@ -1487,8 +1487,8 @@ func testRuntimeWorktreeHostileSurfaces(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	env := map[string]string{"PATH": shim, "BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
-	realCLI := filepath.Join(contract.SubjectRoot(t), "dist", "bench")
+	env := selectedBenchEnv(t, map[string]string{"PATH": shim, "BENCH_HOME": filepath.Join(f.Root, ".bench-home")})
+	realCLI := contract.SelectedBench(t).Path
 	byPath := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
 	launcher := filepath.Join(t.TempDir(), "bench linked launcher")
 	if err := os.Symlink(byPath, launcher); err != nil {

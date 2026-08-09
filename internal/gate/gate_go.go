@@ -28,6 +28,7 @@ var raceTests = racetests.Tests
 
 const gateGoUsage = "usage: bench gate-go <gofmt|test|race|conformance-suite> [root]"
 const disableBuildVCS = "-buildvcs=false"
+const runBinaryArgvToken = "<bench-run-binary>"
 
 // GateGoCommand is the `bench gate-go <step> [root]` plumbing command. Exit 0 is a
 // green step, 1 a red one, 2 a usage error, and 3 an omitted root that no git worktree
@@ -65,17 +66,20 @@ func GateGoCommand(args []string, stdout, stderr io.Writer) int {
 	}
 }
 
-// GateGoArgv is how any caller invokes one of these steps — a phase in the table, a
-// step in the release step list. It runs through `go run` rather than dist/bench
-// because these steps declare no dependency on the build phase, and the Go build
-// cache backs `go run`, so the compile is paid once. An empty kit leaves the working
-// directory to the caller.
+// GateGoArgv is the release-only entry for one of these steps. Ordinary phase tables use
+// gatePhaseGoArgv so they execute the run owner's selected binary without compiling one.
+// The release workflow retains an independent `go run` because it grades a distinct
+// release subject. An empty kit leaves the working directory to the caller.
 func GateGoArgv(kit, step, root string) []string {
 	argv := []string{"go"}
 	if kit != "" {
 		argv = append(argv, "-C", kit)
 	}
 	return append(argv, "run", disableBuildVCS, "./cmd/bench", "gate-go", step, root)
+}
+
+func gatePhaseGoArgv(step, root string) []string {
+	return []string{runBinaryArgvToken, "gate-go", step, root}
 }
 
 // CoreTestPackages enumerates the packages the core `go test` step runs at tier: the

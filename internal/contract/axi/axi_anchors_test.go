@@ -62,7 +62,7 @@ func testAXIAnchorsSubdirectoryRoutes(t *testing.T) {
 		t.Fatal(err)
 	}
 	want, _ := expectedAnchorTable(t, ".bench/BENCH.md")
-	binary := filepath.Join(contract.SubjectRoot(t), "dist", "bench")
+	binary := contract.SelectedBench(t).Path
 	for _, arg := range []string{
 		".bench/BENCH.md",
 		filepath.Join("..", "..", ".bench", "BENCH.md"),

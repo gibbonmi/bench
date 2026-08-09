@@ -130,9 +130,9 @@ func proveCancelledShift(t *testing.T, run shiftProofRun) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	cmd := exec.Command("bash", benchPath(t), "shift", "R15-cancellation")
+	cmd := exec.Command(benchPath(t), "shift", "R15-cancellation")
 	cmd.Dir = run.f.Root
-	cmd.Env = surfaceEnv(run.f, run.env())
+	cmd.Env = selectedSurfaceEnv(t, run.f, run.env())
 	cmd.Stdout, cmd.Stderr = &out, &out
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {

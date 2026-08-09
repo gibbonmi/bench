@@ -138,8 +138,8 @@ func TestConformancePhaseRejectsGatePartitionOmissionAndOverlap(t *testing.T) {
 }
 
 // TestPhaseTableProbedToolchainPhases grades the go.mod-probed phases: gofmt, vet, and
-// test materialize for any Go root, the kit-only phases do not, and none of them takes
-// an edge on the build phase — the edge set is where this split's overlap comes from.
+// test materialize for any Go root, the kit-only phases do not, and each ordinary
+// Bench command carries the run-binary placeholder until the owner selects its path.
 func TestPhaseTableProbedToolchainPhases(t *testing.T) {
 	t.Parallel()
 	requireGoToolchain(t)
@@ -149,9 +149,9 @@ func TestPhaseTableProbedToolchainPhases(t *testing.T) {
 
 	phases := BenchkitPhases(root, kit)
 	for name, want := range map[string][]string{
-		"gofmt": GateGoArgv(kit, "gofmt", root),
+		"gofmt": gatePhaseGoArgv("gofmt", root),
 		"vet":   {"go", "-C", root, "vet", "./..."},
-		"test":  GateGoArgv(kit, "test", root),
+		"test":  gatePhaseGoArgv("test", root),
 	} {
 		phase, ok := phaseNamed(phases, name)
 		if !ok {
@@ -160,8 +160,6 @@ func TestPhaseTableProbedToolchainPhases(t *testing.T) {
 		if !reflect.DeepEqual(phase.Argv, want) {
 			t.Fatalf("phase %s argv = %#v, want %#v", name, phase.Argv, want)
 		}
-		// No edge on the build phase: none of these execs dist/bench, which is the only
-		// artifact the build edge sequences writers and readers of.
 		if len(phase.Needs) != 0 {
 			t.Fatalf("phase %s needs = %#v, want none", name, phase.Needs)
 		}
@@ -193,7 +191,7 @@ func TestPhaseTableKitOnlyPhasesProbe(t *testing.T) {
 	if !ok {
 		t.Fatalf("race phase absent for a root carrying every race test")
 	}
-	if want := GateGoArgv(kit, "race", raceRoot); !reflect.DeepEqual(race.Argv, want) {
+	if want := gatePhaseGoArgv("race", raceRoot); !reflect.DeepEqual(race.Argv, want) {
 		t.Fatalf("race argv = %#v, want %#v", race.Argv, want)
 	}
 	if len(race.Needs) != 0 {
@@ -226,7 +224,7 @@ func TestPhaseTableKitOnlyPhasesProbe(t *testing.T) {
 	if !ok {
 		t.Fatalf("conformance-suite phase absent for a root carrying %s", registry.ConformancePackage)
 	}
-	if want := GateGoArgv(kit, "conformance-suite", suiteRoot); !reflect.DeepEqual(suite.Argv, want) {
+	if want := gatePhaseGoArgv("conformance-suite", suiteRoot); !reflect.DeepEqual(suite.Argv, want) {
 		t.Fatalf("conformance-suite argv = %#v, want %#v", suite.Argv, want)
 	}
 	// The skip pattern reaches the run from the registry through gate-go, never as a
@@ -353,7 +351,7 @@ func TestPhasesCommandVetPhaseReds(t *testing.T) {
 	t.Setenv("BENCH_CANARY_INNER", "1")
 	t.Setenv("BENCH_CANARY_PHASE", "vet")
 	var stdout, stderr bytes.Buffer
-	code := phasesCommandAtKit(root, root, &stdout, &stderr)
+	code := phasesCommandAtKitForTest(root, root, &stdout, &stderr)
 	out := stdout.String() + stderr.String()
 	if code == 0 {
 		t.Fatalf("PhasesCommand = 0 on a tree go vet rejects; output:\n%s", out)

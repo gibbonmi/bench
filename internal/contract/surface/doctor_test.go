@@ -50,25 +50,25 @@ func testDoctorReport(t *testing.T) {
 	mustWriteFile(t, filepath.Join(f.Root, ".git", "hooks", "pre-push"), currentPrePushBody(t, f), 0o755)
 	writeDoctorGreenTree(t, f)
 
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	requirePathAbsent(t, targetPath, "report on a missing shim wrote a file")
 	probe.RequireContains(probe.Stdout, "missing")
 	probe.RequireContains(probe.Stdout, `rm -f "`+targetPath+`"`)
 
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
-	f.BenchEnv(sb.env, "doctor").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor").RequireExit(0)
 
 	mustWriteFile(t, targetPath, "not a bench shim\n", 0o644)
-	f.BenchEnv(sb.env, "doctor").RequireExit(1)
+	f.BenchWrapperEnv(sb.env, "doctor").RequireExit(1)
 
 	mustWriteFile(t, targetPath, "#!/usr/bin/env bash\n# bench-shim v1 marker\ntarget=/no/such/bench\nexec \"$target\" \"$@\"\n", 0o755)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "stale")
 
 	mustWriteFile(t, targetPath, "#!/usr/bin/env bash\n# bench-shim v1 marker\ntarget=$(touch \""+filepath.Join(f.Root, "pwned")+"\")\nexec \"$target\"\n", 0o755)
-	_ = f.BenchEnv(sb.env, "doctor")
+	_ = f.BenchWrapperEnv(sb.env, "doctor")
 	requirePathAbsent(t, filepath.Join(f.Root, "pwned"), "report executed a hostile shim's target line")
 }
 
@@ -77,12 +77,12 @@ func testDoctorManifestSkew(t *testing.T) {
 	sb := newDoctorSandbox(t, f)
 
 	f.WriteFile(".bench/link-manifest.tsv", ".bench/BENCH.md\tabc\n")
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "version unknown")
 
 	f.WriteFile(".bench/link-manifest.tsv", "#kit\t0.0.0\n.bench/BENCH.md\tabc\n")
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "version skew")
 	probe.RequireContains(probe.Stdout, "0.0.0")
@@ -93,7 +93,7 @@ func testDoctorFixWrite(t *testing.T) {
 	sb := newDoctorSandbox(t, f)
 	targetPath := filepath.Join(sb.plain, "bench")
 
-	probe := f.BenchEnv(sb.env, "doctor", "--fix")
+	probe := f.BenchWrapperEnv(sb.env, "doctor", "--fix")
 
 	probe.RequireExit(0)
 	requirePathExists(t, targetPath, "--fix wrote no shim in the plain PATH dir")
@@ -124,9 +124,9 @@ func testDoctorFixIdempotency(t *testing.T) {
 	sb := newDoctorSandbox(t, f)
 	targetPath := filepath.Join(sb.plain, "bench")
 
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	before := mustReadFile(t, targetPath)
-	probe := f.BenchEnv(sb.env, "doctor", "--fix")
+	probe := f.BenchWrapperEnv(sb.env, "doctor", "--fix")
 
 	probe.RequireExit(0)
 	doctorRequireEqual(t, mustReadFile(t, targetPath), before, "second --fix rewrote an already-current shim")
@@ -143,7 +143,7 @@ func testDoctorFixForeignRefuse(t *testing.T) {
 
 	mustWriteFile(t, foreign, "foreign contents\n", 0o644)
 	before := mustReadFile(t, foreign)
-	probe := f.BenchEnv(sb.env, "doctor", "--fix")
+	probe := f.BenchWrapperEnv(sb.env, "doctor", "--fix")
 	probe.RequireExit(1)
 	doctorRequireEqual(t, mustReadFile(t, foreign), before, "--fix clobbered a foreign file")
 	if !strings.Contains(strings.ToLower(probe.Stderr), "refus") {
@@ -151,7 +151,7 @@ func testDoctorFixForeignRefuse(t *testing.T) {
 	}
 
 	mustWriteFile(t, foreign, "", 0o644)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(1)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(1)
 	info, err := os.Stat(foreign)
 	if err != nil {
 		t.Fatalf("stat present-but-empty foreign file: %v", err)
@@ -161,7 +161,7 @@ func testDoctorFixForeignRefuse(t *testing.T) {
 	}
 
 	mustWriteFile(t, foreign, "#!/usr/bin/env bash\n# bench-shim v1 marker\ntarget="+filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")+"\nexec \"$target\" \"$@\"", 0o755)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 }
 
 func testDoctorFixFallback(t *testing.T) {
@@ -169,7 +169,7 @@ func testDoctorFixFallback(t *testing.T) {
 	sb := newDoctorSandbox(t, f)
 	env := sb.managerOnlyEnv()
 
-	probe := f.BenchEnv(env, "doctor", "--fix")
+	probe := f.BenchWrapperEnv(env, "doctor", "--fix")
 
 	probe.RequireExit(0)
 	requirePathExists(t, filepath.Join(sb.home, ".local", "bin", "bench"), "fallback did not write to ~/.local/bin")
@@ -181,7 +181,7 @@ func testDoctorFixPathNotice(t *testing.T) {
 	sb := newDoctorSandbox(t, f)
 	env := sb.managerOnlyEnv()
 
-	probe := f.BenchEnv(env, "doctor", "--fix")
+	probe := f.BenchWrapperEnv(env, "doctor", "--fix")
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "export PATH")
@@ -197,9 +197,9 @@ func testDoctorFixPathNoticeAlreadyCurrent(t *testing.T) {
 	sb := newDoctorSandbox(t, f)
 	env := sb.managerOnlyEnv()
 
-	f.BenchEnv(env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(env, "doctor", "--fix").RequireExit(0)
 
-	probe := f.BenchEnv(env, "doctor", "--fix")
+	probe := f.BenchWrapperEnv(env, "doctor", "--fix")
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "already current")
@@ -215,7 +215,7 @@ func testDoctorFixPathNoticeAlreadyCurrent(t *testing.T) {
 func testDoctorPrePushRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	prepush := filepath.Join(f.Root, ".git", "hooks", "pre-push")
 	current := currentPrePushBody(t, f)
 	if err := os.Remove(prepush); err != nil {
@@ -225,7 +225,7 @@ func testDoctorPrePushRow(t *testing.T) {
 	// Absent — git does not clone hooks, so a fresh clone drops the backstop: red row that
 	// names "pre-push" and the resolved install path, doctor exit 1.
 	requirePathAbsent(t, prepush, "fresh fixture unexpectedly carries a pre-push")
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "pre-push")
 	probe.RequireContains(probe.Stdout, prepush)
@@ -234,7 +234,7 @@ func testDoctorPrePushRow(t *testing.T) {
 	// left byte-identical (doctor is read-only; only bench link installs).
 	foreign := "#!/usr/bin/env bash\n# a hook the user wrote\nexit 0\n"
 	mustWriteFile(t, prepush, foreign, 0o755)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "not bench-managed")
 	doctorRequireEqual(t, mustReadFile(t, prepush), foreign, "doctor rewrote a foreign pre-push")
@@ -242,22 +242,22 @@ func testDoctorPrePushRow(t *testing.T) {
 	// Managed — the marker fingerprints a bench-managed hook: green row, doctor exit 0.
 	mustWriteFile(t, prepush, current, 0o755)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
-	f.BenchEnv(sb.env, "doctor").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor").RequireExit(0)
 
 	// Diverted — core.hooksPath pointing at a dir with no managed hook (a spaced path, per
 	// the hostile-input checklist) is red "diverted", even though .git/hooks stays managed.
 	divert := filepath.Join(f.Root, "diverted hooks")
 	contract.Mkdir(t, divert)
 	f.Git("config", "core.hooksPath", divert)
-	probe = f.BenchEnv(sb.env, "doctor")
+	probe = f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "diverted")
 
 	// Boundary — a divert dir that DOES carry a managed hook is green, not diverted.
 	mustWriteFile(t, filepath.Join(divert, "pre-push"), current, 0o755)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
-	f.BenchEnv(sb.env, "doctor").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor").RequireExit(0)
 }
 
 func testDoctorFixStalePrePush(t *testing.T) {
@@ -266,7 +266,7 @@ func testDoctorFixStalePrePush(t *testing.T) {
 	sb := newDoctorSandbox(t, f)
 	current := currentPrePushBody(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	prepush := filepath.Join(f.Root, ".git", "hooks", "pre-push")
 	stale := strings.Replace(current, "#!/usr/bin/env bash\n", "#!/usr/bin/env bash\n# stale managed hook\n", 1)
 	mustWriteFile(t, prepush, stale, 0o755)
@@ -275,7 +275,7 @@ func testDoctorFixStalePrePush(t *testing.T) {
 		t.Fatalf("stat stale pre-push: %v", err)
 	}
 
-	plain := f.BenchEnv(sb.env, "doctor")
+	plain := f.BenchWrapperEnv(sb.env, "doctor")
 	plain.RequireExit(1)
 	plain.RequireContains(plain.Stdout, "stale: bench-managed pre-push")
 	plain.RequireContains(plain.Stdout, "current hook - run bench doctor --fix")
@@ -288,7 +288,7 @@ func testDoctorFixStalePrePush(t *testing.T) {
 		t.Fatalf("plain doctor changed stale pre-push mode: got %o, want %o", afterPlain.Mode(), beforeInfo.Mode())
 	}
 
-	first := f.BenchEnv(sb.env, "doctor", "--fix")
+	first := f.BenchWrapperEnv(sb.env, "doctor", "--fix")
 	first.RequireExit(0)
 	first.RequireContains(first.Stdout, "repaired stale pre-push")
 	health := adopt.InspectPrePush(f.Root)
@@ -305,7 +305,7 @@ func testDoctorFixStalePrePush(t *testing.T) {
 	repaired := mustReadFile(t, prepush)
 	mode := info.Mode()
 
-	second := f.BenchEnv(sb.env, "doctor", "--fix")
+	second := f.BenchWrapperEnv(sb.env, "doctor", "--fix")
 	second.RequireExit(0)
 	second.RequireContains(second.Stdout, "pre-push already current")
 	doctorRequireEqual(t, mustReadFile(t, prepush), repaired, "second --fix rewrote repaired pre-push")
@@ -323,7 +323,7 @@ func testDoctorFixStalePrePush(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stat foreign pre-push: %v", err)
 	}
-	refusal := f.BenchEnv(sb.env, "doctor", "--fix")
+	refusal := f.BenchWrapperEnv(sb.env, "doctor", "--fix")
 	refusal.RequireExit(1)
 	refusal.RequireContains(refusal.Stderr, "refusing")
 	doctorRequireEqual(t, mustReadFile(t, prepush), foreign, "--fix clobbered foreign pre-push")
@@ -338,7 +338,7 @@ func testDoctorFixStalePrePush(t *testing.T) {
 	if err := os.Remove(prepush); err != nil {
 		t.Fatalf("remove pre-push: %v", err)
 	}
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	requirePathAbsent(t, prepush, "--fix installed an absent pre-push")
 }
 
@@ -352,7 +352,7 @@ func testDoctorFixStalePrePushExecuteMode(t *testing.T) {
 	sb := newDoctorSandbox(t, f)
 	current := currentPrePushBody(t, f)
 	writeDoctorGreenTree(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	prepush := filepath.Join(f.Root, ".git", "hooks", "pre-push")
 	stale := strings.Replace(current, "#!/usr/bin/env bash\n", "#!/usr/bin/env bash\n# stale managed hook\n", 1)
@@ -361,7 +361,7 @@ func testDoctorFixStalePrePushExecuteMode(t *testing.T) {
 		t.Fatalf("strip execute bits from stale pre-push: %v", err)
 	}
 
-	fix := f.BenchEnv(sb.env, "doctor", "--fix")
+	fix := f.BenchWrapperEnv(sb.env, "doctor", "--fix")
 	fix.RequireExit(0)
 	fix.RequireContains(fix.Stdout, "repaired stale pre-push")
 	doctorRequireEqual(t, mustReadFile(t, prepush), current, "--fix left the repaired pre-push off the current body")
@@ -376,27 +376,27 @@ func testDoctorFixStalePrePushExecuteMode(t *testing.T) {
 
 func currentPrePushBody(t *testing.T, f contract.Fixture) string {
 	t.Helper()
-	f.Bench("link").RequireExit(0)
+	f.BenchWrapper("link").RequireExit(0)
 	return f.ReadFile(".git/hooks/pre-push")
 }
 
 func testDoctorPrePushHealthRendering(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
-	f.Bench("link").RequireExit(0)
+	f.BenchWrapper("link").RequireExit(0)
 	prepush := f.ReadFile(".git/hooks/pre-push")
 	writeDoctorGreenTree(t, f)
 	mustWriteFile(t, filepath.Join(f.Root, ".git", "hooks", "pre-push"), prepush, 0o755)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 
 	f.Git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/live")
-	live := f.BenchEnv(sb.env, "doctor")
+	live := f.BenchWrapperEnv(sb.env, "doctor")
 	live.RequireExit(0)
 	live.RequireContains(live.Stdout, "live")
 	live.RequireContains(live.Stdout, "provenance live")
 
 	f.Git("symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
-	baked := f.BenchEnv(sb.env, "doctor")
+	baked := f.BenchWrapperEnv(sb.env, "doctor")
 	baked.RequireExit(0)
 	baked.RequireContains(baked.Stdout, "main")
 	baked.RequireContains(baked.Stdout, "provenance baked")
@@ -408,13 +408,13 @@ func testDoctorPrePushHealthRendering(t *testing.T) {
 func testDoctorPrePushKitRepo(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
-	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.BenchWrapperEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	f.WriteFile("AGENTS.md", "# Working agreement\n")
 	f.WriteFile(".bench/BENCH.md", "# Bench\n")
 	prepush := filepath.Join(f.Root, ".git", "hooks", "pre-push")
 	requirePathAbsent(t, prepush, "kit-shaped fixture unexpectedly carries a pre-push")
 
-	probe := f.BenchEnv(sb.env, "doctor")
+	probe := f.BenchWrapperEnv(sb.env, "doctor")
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "pre-push")
 	probe.RequireContains(probe.Stdout, prepush)
@@ -472,7 +472,7 @@ func copyDoctorKit(t *testing.T, dst string) {
 		t.Fatalf("create kit commands dir: %v", err)
 	}
 	copyBenchScripts(t, filepath.Join(dst, "bin"))
-	doctorCopyFileIfExists(t, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), filepath.Join(dst, "dist", "bench"), 0o755)
+	doctorCopyFileIfExists(t, contract.SelectedBench(t).Path, filepath.Join(dst, "dist", "bench"), 0o755)
 	doctorCopyFileIfExists(t, filepath.Join(contract.SubjectRoot(t), "AGENTS.md"), filepath.Join(dst, "AGENTS.md"), 0o644)
 }
 

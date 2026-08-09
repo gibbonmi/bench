@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func TestRuntimeFreshInstall(t *testing.T) {
@@ -35,14 +36,15 @@ func testRuntimeFreshInstallGateResolves(t *testing.T) {
 	f.Git("init", "-q")
 
 	stripped := map[string]string{"PATH": "/usr/bin:/bin"}
-	contract.RunAt(t, f, repo, stripped, "bash", benchPath(t), "link").RequireExit(0)
-	contract.RunAt(t, f, repo, stripped, "bash", benchPath(t), "init").RequireExit(0)
+	contract.RunAt(t, f, repo, selectedBenchEnv(t, stripped), benchPath(t), "link").RequireExit(0)
+	contract.RunAt(t, f, repo, selectedBenchEnv(t, stripped), benchPath(t), "init").RequireExit(0)
 
 	// The fresh install must land the local CLI and the copied binary the scaffolded gate
 	// resolves, so the resolution assertion below tests resolution — not mere absence.
 	requireFreshFile(t, filepath.Join(repo, ".bench", "bin", "bench.sh"), "fresh link did not install .bench/bin/bench.sh")
 	requireFreshFile(t, filepath.Join(repo, ".bench", "dist", "bench"), "fresh link did not copy .bench/dist/bench")
 
+	stripped[runbinary.Env] = filepath.Join(repo, ".bench", "dist", "bench")
 	gate := contract.RunAt(t, f, repo, stripped, "bash", filepath.Join(repo, ".bench", "gate.sh"))
 	out := gate.Stdout + gate.Stderr
 	// The scaffolded gate is intentionally red on its sentinel; the contract is that it

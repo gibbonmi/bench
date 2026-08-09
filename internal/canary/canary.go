@@ -22,6 +22,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -70,7 +71,6 @@ func FixturePhase(family string) string {
 // routes there — and it is the one phase whose fixtures spawn no gate at all, being
 // graded by the compiled test binary of the contract package that owns the diagnostic.
 const (
-	PhaseBuild            = "build"
 	PhaseGofmt            = "gofmt"
 	PhaseVet              = "vet"
 	PhaseTest             = "test"
@@ -83,7 +83,6 @@ const (
 // check. A fixture under one of them runs only the phase that owns its failure, instead
 // of the every-non-canary-phase run a family the gate cannot attribute has to pay for.
 var phaseFamilies = map[string]bool{
-	PhaseBuild:            true,
 	PhaseGofmt:            true,
 	PhaseVet:              true,
 	PhaseTest:             true,
@@ -213,8 +212,8 @@ const (
 // invocation runs in its package's source directory — where `go test` runs a test binary —
 // and carries the tree it grades in the environment instead.
 //
-// Test is the one contract test a bite runs, and is empty for a bite that runs its package
-// whole.
+// Test is the one contract test or named subtest a bite runs, and is empty for a bite that
+// runs its package whole.
 type RunCall struct {
 	Kind       RunKind
 	Cwd        string
@@ -704,7 +703,8 @@ func assertDeclaredOwners(fixtures []selected, run sweepRun, runner Runner) erro
 		membership[pkg] = carried[idx]
 	}
 	for _, fx := range fixtures {
-		if fx.pkg == "" || membership[fx.pkg][fx.test] {
+		owner := strings.SplitN(fx.test, "/", 2)[0]
+		if fx.pkg == "" || membership[fx.pkg][owner] {
 			continue
 		}
 		errs = append(errs, fmt.Sprintf("canary fixture '%s' names owning test %q, which the compiled binary of contract package %q does not carry", filepath.Base(fx.dir), fx.test, fx.pkg))
@@ -1334,6 +1334,7 @@ func innerWidthPin() string {
 // strip hands an ambient export control of what the sweep grades, and a strip without its
 // matching set leaves a run reading a value the sweep never chose.
 var sweepEnvKeys = []string{
+	runbinary.Env,
 	"BENCH_KIT",
 	"BENCH_WRAPPER",
 	"BENCH_CANARY_INNER",
@@ -1405,12 +1406,16 @@ func gateSelectedFamilies(tier registry.Tier) (map[string]bool, bool, error) {
 // sweepEnv is the inherited environment with every sweep-controlled variable removed. It
 // is the base each call kind sets its own variables onto.
 func sweepEnv() []string {
+	selected, inherited := os.LookupEnv(runbinary.Env)
 	env := make([]string, 0, len(os.Environ()))
 	for _, kv := range os.Environ() {
 		if slices.ContainsFunc(sweepEnvKeys, func(key string) bool { return strings.HasPrefix(kv, key+"=") }) {
 			continue
 		}
 		env = append(env, kv)
+	}
+	if inherited {
+		env = runbinary.WithEnv(env, selected)
 	}
 	return env
 }
@@ -1467,7 +1472,11 @@ func biteArgs(test string) []string {
 	if test == "" {
 		return nil
 	}
-	return []string{"-test.run", "^" + regexp.QuoteMeta(test) + "$"}
+	parts := strings.Split(test, "/")
+	for i, part := range parts {
+		parts[i] = "^" + regexp.QuoteMeta(part) + "$"
+	}
+	return []string{"-test.run", strings.Join(parts, "/")}
 }
 
 // contractPackagePrefix is the import path a bound package's slash path hangs off, which

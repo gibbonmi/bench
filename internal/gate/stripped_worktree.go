@@ -23,8 +23,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/canary"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // runOuterPhases is the outer gate's entry: it splits the resolved table into the
@@ -41,7 +41,7 @@ import (
 // materialization failure inside the kit's own repository is red, because silently
 // skipping the construction would de-enforce the declaration on exactly the run that
 // needed it.
-func runOuterPhases(ctx context.Context, root, kit string, phases []Phase, stdout, stderr io.Writer) int {
+func runOuterPhases(ctx context.Context, root, kit string, selection *runbinary.Selection, phases []Phase, stdout, stderr io.Writer) int {
 	scope := ReducedScope()
 	primary := make([]Phase, 0, len(phases))
 	excludable := false
@@ -68,14 +68,13 @@ func runOuterPhases(ctx context.Context, root, kit string, phases []Phase, stdou
 		fmt.Fprintln(stderr, "gate: red")
 		return 1
 	}
+	stripped = withRunBinary(stripped, selection)
 	return runSplitPhases(ctx, kit, primary, stripped, subjectRoot, stdout, stderr)
 }
 
 // strippedPhaseSet resolves the phase table a second time against the stripped subject
-// and keeps the excludable phases plus the build phase. Re-resolving is what keeps one
-// source for every phase definition — the same table constructor, pointed at the other
-// root — and the build phase rides along because it produces the dist/ binary the
-// excludable phases exec, exactly as it does on the primary root.
+// and keeps the excludable phases. Re-resolving keeps one source for every phase
+// definition while the run-selected Bench executable remains shared by both subjects.
 func strippedPhaseSet(subjectRoot, kit string, scope Scope) ([]Phase, error) {
 	table, err := phaseTable(subjectRoot, kit)
 	if err != nil {
@@ -83,16 +82,16 @@ func strippedPhaseSet(subjectRoot, kit string, scope Scope) ([]Phase, error) {
 	}
 	stripped := make([]Phase, 0, len(table))
 	for _, phase := range table {
-		if scope.Excludable(phase.Name) || phase.Name == canary.PhaseBuild {
+		if scope.Excludable(phase.Name) {
 			stripped = append(stripped, phase)
 		}
 	}
 	return stripped, nil
 }
 
-// runSplitPhases schedules both sets concurrently and merges one verdict. The stripped
-// set writes to its own capability-skip log, kept apart from the primary log so the two
-// postures cannot blur: the primary run keeps the dev tier's informational reading.
+// runSplitPhases schedules both sets in one serial table and reports one verdict. The
+// stripped set writes to its own capability-skip log, kept apart from the primary log
+// so the two postures cannot blur.
 func runSplitPhases(ctx context.Context, root string, primary, stripped []Phase, subjectRoot string, stdout, stderr io.Writer) int {
 	primaryLog, primaryCleanup, err := newSkipLog()
 	if err != nil {
@@ -117,21 +116,10 @@ func runSplitPhases(ctx context.Context, root string, primary, stripped []Phase,
 	// the construction announces itself and what it grades.
 	fmt.Fprintf(stdout, "gate: stripped subject %s grades: %s\n", subjectRoot, strings.Join(names, ", "))
 
-	open := prefixedPhaseWriters(stdout, stderr)
-	type outcome struct {
-		results   []phaseResult
-		cancelled bool
-	}
-	primaryDone := make(chan outcome, 1)
-	go func() {
-		results, cancelled := schedule(ctx, root, withSkipLog(primary, primaryLog), false, open)
-		primaryDone <- outcome{results, cancelled}
-	}()
-	strippedResults, strippedCancelled := schedule(ctx, root, withSkipLog(stripped, strippedLog), false, open)
-	primaryOutcome := <-primaryDone
+	combined := append(withSkipLog(primary, primaryLog), withSkipLog(stripped, strippedLog)...)
+	results, cancelled := schedule(ctx, root, combined, prefixedPhaseWriters(stdout, stderr))
 
-	return aggregateAndReport(append(primaryOutcome.results, strippedResults...),
-		primaryOutcome.cancelled || strippedCancelled, stdout, stderr,
+	return aggregateAndReport(results, cancelled, stdout, stderr,
 		func() bool { return reportCapabilitySkips(primaryLog, stdout, stderr) },
 		func() bool { return reportStrippedSkips(strippedLog, stderr) })
 }

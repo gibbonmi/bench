@@ -218,7 +218,7 @@ func testSpecHistorySubdirInvocation(t *testing.T) {
 	fromRoot := f.Bench("spec", "history", "sub")
 	fromRoot.RequireExit(0)
 
-	fromSub := contract.RunAt(t, f, filepath.Join(f.Root, "deep", "sub"), nil, "bash", benchPath(t), "spec", "history", "sub")
+	fromSub := contract.RunAt(t, f, filepath.Join(f.Root, "deep", "sub"), selectedBenchEnv(t, nil), benchPath(t), "spec", "history", "sub")
 	fromSub.RequireExit(0)
 	if fromRoot.Stdout != fromSub.Stdout {
 		t.Fatalf("subdirectory invocation diverged from repo root:\nroot: %s\nsub:  %s", fromRoot.Stdout, fromSub.Stdout)

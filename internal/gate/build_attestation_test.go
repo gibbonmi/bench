@@ -62,6 +62,7 @@ type attestationFixture struct {
 func newAttestationFixture(t *testing.T) attestationFixture {
 	t.Helper()
 	fixture := newKitShapedFixture(t)
+	sealKitShapedBinary(t, fixture.root)
 	return attestationFixture{root: fixture.root, executable: fixture.binaryPath()}
 }
 

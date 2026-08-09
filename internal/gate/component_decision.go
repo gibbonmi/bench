@@ -8,7 +8,7 @@ package gate
 // Every path out of scopeComponentsForGeneration that is not a validated slot at the component's exact
 // current identity answers run-the-component: a root that is not the kit, a gate that does
 // not route the phase table, a derivation that failed, an identity that could not be
-// computed, a slot that could not be read or that answers for something else. Fail-closed
+// computed, or a slot that could not be read or answers for something else. Fail-closed
 // is then a property of one function rather than a claim repeated at seven call sites, and
 // the quantifier "every error runs the component" is checkable by reading one file.
 //
@@ -22,11 +22,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	// The package's own freshness constant owns the bare name, so the seal package is
-	// reached through an alias.
-	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
 )
 
 // componentScoping is one execution's per-component answer: the identity of every
@@ -49,12 +45,6 @@ type componentScoping struct {
 	checks     conformanceCheckPartition
 	phases     []Phase
 	skipped    []ComponentSkip
-	// buildArtifact is the binary this root's build phase publishes, set only when the
-	// resolved table carries that phase. It is the one spelling both halves of the
-	// attestation use — the skip decision reads it and the green tail authors against it —
-	// because the record is addressed by the artifact's path, and two spellings would have
-	// the author write where the reader never looks.
-	buildArtifact string
 }
 
 // partial reports whether this run graded less than every component. The announcement, the
@@ -64,10 +54,9 @@ func (s componentScoping) partial() bool {
 	return len(s.skipped) > 0 || len(s.checks.Inherited) > 0
 }
 
-// executedScopedComponents are the components this run graded for itself and whose evidence
-// is an ancestor slot — the set a green run authors slots for and a red run retires them
-// for. build is excluded because its evidence is the attested seal beside the artifact
-// rather than a slot, and the unconditional phases are absent from identities entirely.
+// executedScopedComponents are the components this run graded for itself: the set a green
+// run authors slots for and a red run retires. Unconditional phases are absent from
+// identities entirely.
 func (s componentScoping) executedScopedComponents() []string {
 	skipped := make(map[string]bool, len(s.skipped))
 	for _, skip := range s.skipped {
@@ -81,22 +70,6 @@ func (s componentScoping) executedScopedComponents() []string {
 	}
 	sort.Strings(executed)
 	return executed
-}
-
-// executedBuild reports that this run's own build phase produced the binary now beside the
-// root — the condition under which a green run attests it. A root whose table carries no
-// build phase has no artifact to answer for, and a run that skipped the build produced
-// nothing, so re-attesting there would credit the gate with a binary it did not make.
-func (s componentScoping) executedBuild() bool {
-	if s.buildArtifact == "" {
-		return false
-	}
-	for _, skip := range s.skipped {
-		if skip.Component == canary.PhaseBuild {
-			return false
-		}
-	}
-	return true
 }
 
 // executedPhaseNames are the names of the phases a narrowed run executes, sorted and
@@ -123,12 +96,10 @@ func componentSkipsOnEvidence(component string) bool {
 	return true
 }
 
-// componentSkipsOnAncestorEvidence reports whether a skippable component's evidence is its own
-// ancestor slot. build is the one that skips on something else — it produces the binary the
-// other phases exec, and its evidence is the attested seal beside that artifact — so it is
-// also the one component this run neither authors nor retires a slot for.
+// componentSkipsOnAncestorEvidence reports whether a skippable component's evidence is its
+// own ancestor slot.
 func componentSkipsOnAncestorEvidence(component string) bool {
-	return component != canary.PhaseBuild && componentSkipsOnEvidence(component)
+	return componentSkipsOnEvidence(component)
 }
 
 // scopeComponentsForGeneration decides, for root's resolved table, which components may skip on their own
@@ -181,12 +152,6 @@ func scopeComponentsForIdentityGenerationsAtKit(root, kit string, res Resolution
 		return eligible
 	}
 	scoping := componentScoping{eligible: true, runnerRoot: kit, identities: gradableIdentities(table, identities), checks: eligible.checks}
-	// The artifact is named from the resolved table rather than from the declarations: a
-	// component the registry declares but this tree materializes no phase for has nothing
-	// here to skip and nothing to attest.
-	if carriesPhase(table, canary.PhaseBuild) {
-		scoping.buildArtifact = buildArtifactPath(root)
-	}
 	if mode != reuseFreshGreen {
 		return scoping
 	}
@@ -268,9 +233,6 @@ func componentSkip(root string, scoping componentScoping, component, identity st
 	if !componentSkipsOnEvidence(component) {
 		return ComponentSkip{}, false
 	}
-	if component == canary.PhaseBuild {
-		return attestedBuildSkip(root, scoping.buildArtifact, now)
-	}
 	inspection := resolveComponentSlot(root, component, identity, now)
 	if !inspection.Skippable {
 		return ComponentSkip{}, false
@@ -278,44 +240,8 @@ func componentSkip(root string, scoping componentScoping, component, identity st
 	return ComponentSkip{Component: component, Identity: identity, AuthoredAt: inspection.AuthoredAt}, true
 }
 
-// attestedBuildSkip is build's whole skip decision, and the only one here answered by an
-// artifact rather than by a slot.
-//
-// Both conjuncts are required and neither implies the other. freshness.Check says the binary
-// on disk is the one its own seal describes and that the seal was taken from the sources
-// present now; the attestation says a gate build produced exactly those bytes. Check alone
-// skips on a planted binary republished with its own recomputed seal, which is the whole case
-// the attestation exists for; the attestation alone skips on a gate-built binary whose sources
-// have since moved, which is a stale artifact every reader would then exec. No clock and no
-// mtime enters either half — the question is only ever about content.
-//
-// Every refusal runs the build, which republishes the seal and re-authors the attestation
-// together, so nothing here can leave the artifact permanently unskippable.
-func attestedBuildSkip(root, executable string, now time.Time) (ComponentSkip, bool) {
-	if executable == "" {
-		return ComponentSkip{}, false
-	}
-	if err := benchfreshness.Check(root, executable); err != nil {
-		return ComponentSkip{}, false
-	}
-	if !verifyBuildAttestation(root, executable, now).Attested {
-		return ComponentSkip{}, false
-	}
-	// The recorded evidence is the source digest rather than the executable one: what a
-	// reader of the verdict needs to know is which build inputs the reused artifact answers
-	// for, and the executable digest names bytes that say nothing about the tree.
-	sources, _, err := benchfreshness.SealDigests(executable)
-	if err != nil || !isContentAddress(sources) {
-		return ComponentSkip{}, false
-	}
-	return ComponentSkip{Component: canary.PhaseBuild, Seal: sources}, true
-}
-
-// buildArtifactPath is where root's build phase publishes its binary. The phase's own argv,
-// the skip decision, and the attestation's address are all taken from here. The attestation is
-// keyed by this path's cleaned absolute spelling, so a second derivation that normalized
-// differently would have the author write to an address the reader never looks at — which does
-// not fail loudly, it just silently pays for a build phase on every run forever.
+// buildArtifactPath is retained for the alternate-package attestation proofs, which
+// deliberately author independently built bytes.
 func buildArtifactPath(root string) string { return filepath.Join(root, "dist", "bench") }
 
 // announcement is how one skip reports itself to an operator. The two evidence forms read
@@ -342,23 +268,6 @@ func (s ComponentSkip) evidence() skipEvidence {
 		Identity:   s.Identity,
 		AuthoredAt: s.AuthoredAt.UTC().Truncate(time.Second).Format(time.RFC3339),
 	}
-}
-
-// attestExecutedBuild records that this green run's own build phase produced the binary now
-// beside the root.
-//
-// The digest is taken from the artifact's bytes, never from the seal the build just wrote: a
-// digest read back from a seal would only restate what the build script put on disk, and being
-// the one half no seal writer can supply is the entire point of the record.
-func attestExecutedBuild(scoping componentScoping, root string, authoredAt time.Time) error {
-	if !scoping.executedBuild() {
-		return nil
-	}
-	digest, err := benchfreshness.ExecutableDigest(scoping.buildArtifact)
-	if err != nil {
-		return err
-	}
-	return authorBuildAttestation(root, scoping.buildArtifact, digest, authoredAt)
 }
 
 // authorExecutedComponentSlots records that this green run graded each component it executed

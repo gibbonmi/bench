@@ -3,6 +3,7 @@ package axi
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -16,6 +17,10 @@ const axiFreshnessChildEnv = "BENCH_FT131_AXI_FRESHNESS_CHILD"
 
 func TestRunBenchInDirRefusesStaleSubject(t *testing.T) {
 	if os.Getenv(axiFreshnessChildEnv) == "1" {
+		root := contract.SubjectRoot(t)
+		if err := freshness.Verify(root, filepath.Join(root, "dist", "bench")); err != nil {
+			t.Fatal(err)
+		}
 		f := contract.NewFixture(t)
 		probe := runBenchInDir(t, f, f.Root, "learnings")
 		probe.RequireExit(0)

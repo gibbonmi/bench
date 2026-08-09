@@ -34,6 +34,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made each non-reused gate and focused `bench test` run build one private
+  exact-source Bench executable, propagate it through ordinary and nested
+  consumers, remove it after descendant teardown, and run all primary and
+  stripped phase tables through one serial topological schedule. Outer kit
+  gates also write structured major-point progress records under `.logs/`.
 - Made `bench commit` compose and authorize only its named paths, so unrelated
   concurrent working-copy and index state remains intact while the exact tree
   that can land receives the gate verdict. A destination advance now refuses

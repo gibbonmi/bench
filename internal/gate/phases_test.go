@@ -10,7 +10,7 @@ import (
 // table rather than a written-down list of names: a fixture whose family names any phase
 // the root actually carries runs that phase alone.
 func TestPhasesForModeAcceptsPhaseTableNames(t *testing.T) {
-	names := []string{"build", "gofmt", "vet", "test", "race", "conformance-suite", "conformance", "contract"}
+	names := []string{"gofmt", "vet", "test", "race", "conformance-suite", "conformance", "contract"}
 	var table []Phase
 	for _, name := range names {
 		table = append(table, Phase{Name: name})

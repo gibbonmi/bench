@@ -7,6 +7,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func TestFixtureInitializesGitRepoByDefault(t *testing.T) {
@@ -82,8 +85,30 @@ func TestBenchRunsKitWrapperFromFixture(t *testing.T) {
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nprintf 'fixture gate cwd=%s\\n' \"$PWD\"\nexit 0\n")
 	f.CommitAll("init")
 
-	probe := f.Bench("gate")
+	probe := f.BenchWrapper("gate")
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "fixture gate cwd="+f.Root)
+}
+
+func TestSelectedBenchPathUsesWrapperOnlyForChangedSubject(t *testing.T) {
+	source := t.TempDir()
+	selection := &runbinary.Selection{Path: filepath.Join(t.TempDir(), "bench"), SourceRoot: source}
+	t.Setenv(canary.SubjectRootEnv, source)
+	if got := SelectedBenchPath(t, selection); got != selection.Path {
+		t.Fatalf("unchanged path = %q, want selected executable %q", got, selection.Path)
+	}
+	if program, prefix := selectedBenchCommand(t, selection); program != selection.Path || len(prefix) != 0 {
+		t.Fatalf("unchanged command = %q %q, want selected executable", program, prefix)
+	}
+
+	changed := t.TempDir()
+	t.Setenv(canary.SubjectRootEnv, changed)
+	wrapper := filepath.Join(changed, "bin", "bench.sh")
+	if got := SelectedBenchPath(t, selection); got != wrapper {
+		t.Fatalf("changed-subject path = %q, want wrapper %q", got, wrapper)
+	}
+	if program, prefix := selectedBenchCommand(t, selection); program != "bash" || len(prefix) != 1 || prefix[0] != wrapper {
+		t.Fatalf("changed-subject command = %q %q, want bash %q", program, prefix, wrapper)
+	}
 }

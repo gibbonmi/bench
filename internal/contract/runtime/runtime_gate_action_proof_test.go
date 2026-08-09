@@ -304,9 +304,9 @@ func proveCancelledCommit(t *testing.T, f contract.Fixture, before actionSnapsho
 	f.Git("commit", "-q", "-m", "blocking gate")
 	before = snapshotAction(t, f)
 	var out bytes.Buffer
-	cmd := exec.Command("bash", benchPath(t), "commit", "-m", "cancel", "--spec", "proof", "work.txt")
+	cmd := exec.Command(benchPath(t), "commit", "-m", "cancel", "--spec", "proof", "work.txt")
 	cmd.Dir = f.Root
-	cmd.Env = surfaceEnv(f, nil)
+	cmd.Env = selectedSurfaceEnv(t, f, nil)
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}

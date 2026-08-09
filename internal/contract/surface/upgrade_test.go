@@ -114,7 +114,7 @@ func upgradePlanChangedCount(t *testing.T, probe contract.Probe) int {
 
 func upgradeSubject(t *testing.T, f contract.Fixture, args ...string) contract.Probe {
 	t.Helper()
-	return f.BenchEnv(map[string]string{"BENCH_KIT": contract.SubjectRoot(t)}, args...)
+	return f.BenchWrapperEnv(map[string]string{"BENCH_KIT": contract.SubjectRoot(t)}, args...)
 }
 
 func testUpgradePlansHookRefresh(t *testing.T) {
@@ -212,7 +212,7 @@ func testUpgradeRefusesUnwritableHooks(t *testing.T) {
 		t.Fatal(err)
 	}
 	f.WriteFifo(filepath.ToSlash(strings.TrimPrefix(hook, f.Root+string(os.PathSeparator))))
-	fifo := f.BenchDeadlined("upgrade", "--check")
+	fifo := f.BenchWrapperDeadlined("upgrade", "--check")
 	if fifo.TimedOut {
 		t.Fatal("bench upgrade --check blocked on a writerless FIFO at the effective pre-push path")
 	}
@@ -288,14 +288,14 @@ func testUpgradeChecksThenApplies(t *testing.T) {
 	installed := linkedRepoAtOlderVersion(t, f, "0.0.1")
 
 	before := fixtureState(t, f)
-	check := f.Bench("upgrade", "--check")
+	check := f.BenchWrapper("upgrade", "--check")
 	check.RequireExit(0)
 	requireUpgradePlanRow(t, check, "0.0.1", installed)
 	if after := fixtureState(t, f); after != before {
 		t.Fatalf("bench upgrade --check wrote to the repository\nbefore:\n%s\nafter:\n%s", before, after)
 	}
 
-	apply := f.Bench("upgrade")
+	apply := f.BenchWrapper("upgrade")
 	apply.RequireExit(0)
 	requireUpgradePlanRow(t, apply, "0.0.1", installed)
 	requireLinkEqual(t, manifestKitVersion(t, f), installed, "applying upgrade did not restamp the manifest kit version")
@@ -309,12 +309,12 @@ func testUpgradeChecksThenApplies(t *testing.T) {
 func testUpgradeRefusesWithoutManifest(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	absent := f.Bench("upgrade")
+	absent := f.BenchWrapper("upgrade")
 	absent.RequireExit(1)
 	absent.RequireContains(absent.Stderr, "bench link")
 
 	f.WriteFile(".bench/link-manifest.tsv", "")
-	empty := f.Bench("upgrade")
+	empty := f.BenchWrapper("upgrade")
 	empty.RequireExit(1)
 	empty.RequireContains(empty.Stderr, "empty")
 	empty.RequireNotContains(empty.Stderr, "run 'bench link' first")
@@ -323,10 +323,10 @@ func testUpgradeRefusesWithoutManifest(t *testing.T) {
 func testUpgradeSameVersionIsNoOp(t *testing.T) {
 	f := contract.NewFixture(t)
 	installed := linkedRepoAtOlderVersion(t, f, "0.0.1")
-	f.Bench("upgrade").RequireExit(0)
+	f.BenchWrapper("upgrade").RequireExit(0)
 
 	before := fixtureState(t, f)
-	again := f.Bench("upgrade")
+	again := f.BenchWrapper("upgrade")
 	again.RequireExit(0)
 	requireUpgradePlanRow(t, again, installed, installed)
 	if after := fixtureState(t, f); after != before {
@@ -339,14 +339,14 @@ func testUpgradeRefusesDowngrade(t *testing.T) {
 	installed := linkedRepoAtOlderVersion(t, f, "99.0.0")
 
 	before := fixtureState(t, f)
-	refused := f.Bench("upgrade")
+	refused := f.BenchWrapper("upgrade")
 	refused.RequireExit(1)
 	refused.RequireContains(refused.Stderr, "--force")
 	if after := fixtureState(t, f); after != before {
 		t.Fatalf("a refused downgrade touched the repository\nbefore:\n%s\nafter:\n%s", before, after)
 	}
 
-	forced := f.Bench("upgrade", "--force")
+	forced := f.BenchWrapper("upgrade", "--force")
 	forced.RequireExit(0)
 	requireUpgradePlanRow(t, forced, "99.0.0", installed)
 	requireLinkEqual(t, manifestKitVersion(t, f), installed, "forced downgrade did not restamp the manifest kit version")
@@ -362,7 +362,7 @@ func testUpgradeResolvesThroughLauncherAndSymlink(t *testing.T) {
 	installed := linkedRepoAtOlderVersion(t, f, "0.0.1")
 	kit := contract.SubjectRoot(t)
 
-	direct := f.Bench("upgrade", "--check")
+	direct := f.BenchWrapper("upgrade", "--check")
 	direct.RequireExit(0)
 
 	symlink := filepath.Join(f.Root, "bench-symlink.sh")
@@ -410,7 +410,7 @@ func testUpgradePrereleaseToRelease(t *testing.T) {
 	prerelease := installed + "-rc1"
 	repinManifestKitVersion(t, f, prerelease)
 
-	probe := f.Bench("upgrade")
+	probe := f.BenchWrapper("upgrade")
 
 	probe.RequireExit(0)
 	requireUpgradePlanRow(t, probe, prerelease, installed)
@@ -425,12 +425,12 @@ func testUpgradeArgumentEdges(t *testing.T) {
 	f := contract.NewFixture(t)
 	linkedRepoAtOlderVersion(t, f, "99.0.0")
 
-	unknown := f.Bench("upgrade", "--dry-run")
+	unknown := f.BenchWrapper("upgrade", "--dry-run")
 	unknown.RequireExit(2)
 	unknown.RequireContains(unknown.Stderr, "usage: bench upgrade")
 
 	before := fixtureState(t, f)
-	checkForce := f.Bench("upgrade", "--check", "--force")
+	checkForce := f.BenchWrapper("upgrade", "--check", "--force")
 	checkForce.RequireExit(0)
 	if after := fixtureState(t, f); after != before {
 		t.Fatalf("bench upgrade --check --force wrote to the repository\nbefore:\n%s\nafter:\n%s", before, after)
@@ -445,7 +445,7 @@ func testUpgradeUnusableManifestStates(t *testing.T) {
 	f := contract.NewFixture(t)
 	installed := linkedRepoAtOlderVersion(t, f, "not-a-version")
 
-	applied := f.Bench("upgrade")
+	applied := f.BenchWrapper("upgrade")
 	applied.RequireExit(0)
 	requireUpgradePlanRow(t, applied, "not-a-version", installed)
 	requireLinkEqual(t, manifestKitVersion(t, f), installed, "upgrading from an unparseable pinned version did not restamp the manifest")
@@ -458,7 +458,7 @@ func testUpgradeUnusableManifestStates(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.Chmod(manifest, 0o644)
-	unreadable := f.Bench("upgrade")
+	unreadable := f.BenchWrapper("upgrade")
 	unreadable.RequireExit(1)
 	unreadable.RequireContains(unreadable.Stderr, "unreadable")
 	unreadable.RequireNotContains(unreadable.Stderr, "run 'bench link' first")
@@ -478,7 +478,7 @@ func testUpgradeRemovesPreExclusionKitOnlyAssets(t *testing.T) {
 	f.WriteFile(".bench/link-manifest.tsv", f.ReadFile(".bench/link-manifest.tsv")+
 		preExclusionKitOnlyRel+"\t"+fmt.Sprintf("%x", sha256.Sum256([]byte(kitOnly))))
 
-	probe := f.Bench("upgrade")
+	probe := f.BenchWrapper("upgrade")
 
 	probe.RequireExit(0)
 	requireUpgradePlanRow(t, probe, "0.0.1", installed)
@@ -491,7 +491,7 @@ func testUpgradeKeepsModifiedManagedAsset(t *testing.T) {
 	linkedRepoAtOlderVersion(t, f, "0.0.1")
 	f.WriteFile(".agents/commands/bench-implement-spec.md", "consumer's own edit\n")
 
-	probe := f.Bench("upgrade")
+	probe := f.BenchWrapper("upgrade")
 
 	probe.RequireExit(3)
 	probe.RequireContains(probe.Stdout, "  .agents/commands/bench-implement-spec.md,modified-managed")

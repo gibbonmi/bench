@@ -54,11 +54,7 @@ func assertPublishAuthorizationFailurePreventsArtifactConstruction(t *testing.T,
 }
 
 func TestBuiltCommandFocusedPublishRunsDiagnosticWithoutAuthorizing(t *testing.T) {
-	binary := filepath.Join(t.TempDir(), "bench")
-	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %v\n%s", err, output)
-	}
+	binary := selectedBench(t)
 	root := preflightRepo(t)
 	full := exec.Command(binary, "release-preflight", "--mode", "verify")
 	full.Dir = root

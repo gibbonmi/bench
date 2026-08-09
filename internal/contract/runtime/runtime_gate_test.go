@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -152,14 +151,12 @@ exec "$root/bin/bench.sh" version
 	benchHome, home := f.Env["BENCH_HOME"], f.Env["HOME"]
 	cacheBinary := filepath.Join(benchHome, "cache", "bin", parts[0], parts[1], "bench")
 	contract.Mkdir(t, filepath.Dir(cacheBinary))
-	build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, cacheBinary)
-	build.Dir = root
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build current bench binary: %v\n%s", err, output)
-	}
+	selected := contract.SelectedBench(t)
+	copyRuntimeFile(t, selected.Path, cacheBinary, 0o755)
+	copyRuntimeFile(t, selected.Path+".seal", cacheBinary+".seal", 0o644)
 	f.CommitAll("self-host fixture")
 
-	f.RunEnv(map[string]string{"BENCH_HOME": benchHome, "HOME": home}, "bash", wrapper, "gate").RequireExit(0)
+	f.RunEnv(map[string]string{"BENCH_HOME": benchHome, "HOME": home, "BENCH_RUN_BINARY": cacheBinary}, "bash", wrapper, "gate").RequireExit(0)
 	if _, err := os.Stat(filepath.Join(home, ".bench")); !os.IsNotExist(err) {
 		t.Fatalf("default HOME cache exists after cache-only gate run: %v", err)
 	}
@@ -254,7 +251,7 @@ func testRuntimeGateRepoRootCWD(t *testing.T) {
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\n[ -f package.json ]\n")
 	contract.Mkdir(t, filepath.Join(f.Root, "sub"))
 
-	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), nil, "bash", benchPath(t), "gate").RequireExit(0)
+	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), selectedBenchEnv(t, nil), benchPath(t), "gate").RequireExit(0)
 }
 
 func testRuntimeGateBenchGateCWD(t *testing.T) {
@@ -263,7 +260,7 @@ func testRuntimeGateBenchGateCWD(t *testing.T) {
 	f.WriteExecutable("gate-root.sh", "#!/usr/bin/env bash\n[ -f package.json ]\n")
 	contract.Mkdir(t, filepath.Join(f.Root, "sub"))
 
-	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), map[string]string{"BENCH_GATE": "./gate-root.sh"}, "bash", benchPath(t), "gate").RequireExit(0)
+	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), selectedBenchEnv(t, map[string]string{"BENCH_GATE": "./gate-root.sh"}), benchPath(t), "gate").RequireExit(0)
 }
 
 func testRuntimeGateResolutionOrder(t *testing.T) {
@@ -379,7 +376,7 @@ func testRuntimeGatePinNonTTYRefusal(t *testing.T) {
 	f.CommitAll("init")
 	pin := filepath.Join(gitDir(t, f), "bench-gate-pin")
 
-	probe := contract.RunAtWithInput(t, f, f.Root, nil, "pin .bench\n", "bash", benchPath(t), "gate", "pin")
+	probe := contract.RunAtWithInput(t, f, f.Root, selectedBenchEnv(t, nil), "pin .bench\n", benchPath(t), "gate", "pin")
 	if probe.ExitCode == 0 {
 		t.Fatal("bench gate pin accepted non-TTY stdin")
 	}
@@ -397,7 +394,7 @@ func testRuntimeSymlinkedKitDir(t *testing.T) {
 	contract.Mkdir(t, repo)
 	contract.Mkdir(t, binDir)
 	contract.Mkdir(t, shim)
-	if err := os.Symlink(benchPath(t), filepath.Join(binDir, "bench")); err != nil {
+	if err := os.Symlink(benchWrapperPath(t), filepath.Join(binDir, "bench")); err != nil {
 		t.Fatalf("symlink bench: %v", err)
 	}
 	contract.WriteExecutableAbs(t, filepath.Join(shim, "readlink"), "#!/usr/bin/env bash\nif [ \"${1:-}\" = \"-f\" ]; then exit 1; fi\n/usr/bin/readlink \"$@\"\n")
@@ -434,8 +431,9 @@ func copiedCLIHookFixture(t *testing.T, withCore bool) contract.Fixture {
 	contract.Mkdir(t, filepath.Join(f.Root, ".bench"))
 	contract.Mkdir(t, filepath.Join(f.Root, "bin"))
 	if withCore {
-		contract.Mkdir(t, filepath.Join(f.Root, "dist"))
-		copyRuntimeFile(t, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), filepath.Join(f.Root, "dist", "bench"), 0o755)
+		for key, value := range selectedBenchEnv(t, nil) {
+			f.Env[key] = value
+		}
 	}
 	matches, err := filepath.Glob(filepath.Join(contract.SubjectRoot(t), "bin", "*.sh"))
 	if err != nil {

@@ -7,6 +7,7 @@ npm-debug.log*
 # run and the strangler router prefers. Never committed; the release workflow
 # produces the shipped binaries into the platform packages instead.
 dist/
+.logs/
 projects/regroup.md
 projects/gl-axi.md
 # OS cruft

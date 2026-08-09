@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 func assertBuiltRed(t *testing.T, binary, root string, args []string, want string) {
@@ -50,6 +52,15 @@ func projectRoot(t *testing.T) string {
 		t.Fatal("cannot resolve test source")
 	}
 	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
+}
+
+func selectedBench(t *testing.T) string {
+	t.Helper()
+	selection, err := runbinary.Inherit(projectRoot(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return selection.Path
 }
 
 func preflightRepo(t *testing.T) string {

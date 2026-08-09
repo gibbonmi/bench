@@ -7,7 +7,6 @@ package runtime
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // [R22] The reduced path is retired: an allowlist-confined staged set pays the full gate
@@ -114,7 +114,8 @@ func commitReducedFixture(t *testing.T) (string, contract.Fixture, contract.Env,
 		"BENCH_REQUIRE_CAPABILITIES": nil,
 		capability.LogEnv:            nil,
 	}
-	bench := filepath.Join(contract.SubjectRoot(t), "dist", "bench")
+	bench := contract.SelectedBench(t).Path
+	env[runbinary.Env] = &bench
 
 	seed := f.RunEnvSpec(env, bench, "gate-run", root)
 	seed.RequireExit(0)

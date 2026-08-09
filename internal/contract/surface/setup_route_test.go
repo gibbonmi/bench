@@ -28,7 +28,7 @@ func testSetupConvergesFreshRepo(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	probe.RequireExit(0)
 	requireLinkFile(t, f, "AGENTS.md")
@@ -65,7 +65,7 @@ func testSetupProfileWriteIsTransactional(t *testing.T) {
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
 	f.WriteFile("projects", "not a directory\n")
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	if probe.ExitCode == 0 {
 		t.Fatalf("bench setup succeeded despite an unwritable profile path\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)
@@ -79,14 +79,14 @@ func testSetupFlagEdgeCases(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
 
-	both := f.Bench("setup", "--plan", "--yes")
+	both := f.BenchWrapper("setup", "--plan", "--yes")
 	if both.ExitCode != 2 {
 		t.Fatalf("bench setup --plan --yes exited %d, want 2\nstdout:\n%s\nstderr:\n%s", both.ExitCode, both.Stdout, both.Stderr)
 	}
 	both.RequireContains(both.Stderr, "--plan")
 	both.RequireContains(both.Stderr, "--yes")
 
-	unknown := f.Bench("setup", "--bogus")
+	unknown := f.BenchWrapper("setup", "--bogus")
 	if unknown.ExitCode != 2 {
 		t.Fatalf("bench setup --bogus exited %d, want 2\nstdout:\n%s\nstderr:\n%s", unknown.ExitCode, unknown.Stdout, unknown.Stderr)
 	}
@@ -110,7 +110,7 @@ func testSetupFromSubdirectory(t *testing.T) {
 func testSetupGitlessStops(t *testing.T) {
 	f := contract.NewFixture(t, contract.WithNoRepo())
 
-	probe := f.Bench("setup", "--yes")
+	probe := f.BenchWrapper("setup", "--yes")
 
 	if probe.ExitCode == 0 {
 		t.Fatalf("bench setup succeeded outside a git repository\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)
@@ -141,7 +141,7 @@ func testSetupNonTTYMatrix(t *testing.T) {
 		t.Fatal("bare non-TTY bench setup wrote files")
 	}
 
-	plan := f.Bench("setup", "--plan")
+	plan := f.BenchWrapper("setup", "--plan")
 	plan.RequireExit(0)
 	if f.Exists("AGENTS.md") || f.Exists(".bench") {
 		t.Fatal("bench setup --plan wrote files")
@@ -150,7 +150,7 @@ func testSetupNonTTYMatrix(t *testing.T) {
 	ambiguous := contract.NewFixture(t)
 	ambiguous.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
 	ambiguous.WriteFile("package.json", `{"name":"fixture","scripts":{"test":"echo ok"}}`+"\n")
-	ambiguousProbe := ambiguous.Bench("setup", "--yes")
+	ambiguousProbe := ambiguous.BenchWrapper("setup", "--yes")
 	if ambiguousProbe.ExitCode == 0 {
 		t.Fatalf("--yes over an ambiguous gate plan succeeded\nstdout:\n%s\nstderr:\n%s", ambiguousProbe.Stdout, ambiguousProbe.Stderr)
 	}
@@ -162,7 +162,7 @@ func testSetupNonTTYMatrix(t *testing.T) {
 	conflicted := contract.NewFixture(t)
 	conflicted.WriteFile("go.mod", "module example.com/fixture\n\ngo 1.22\n")
 	conflicted.WriteFile(".agents/commands/bench-implement-spec.md", "project command\n")
-	conflictedProbe := conflicted.Bench("setup", "--yes")
+	conflictedProbe := conflicted.BenchWrapper("setup", "--yes")
 	conflictedProbe.RequireExit(3)
 	requireFixtureFileContains(t, conflicted, ".agents/commands/bench-implement-spec.md", "project command", "--yes over a conflicted but ambiguity-free plan overwrote a project-owned asset")
 	if !conflicted.Exists(".bench/gate.sh") {

@@ -189,7 +189,6 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"reintroduced-bare-skip":                 conformanceFixture(".bench/gate.sh"),
 	"offline-slice1-operation-omitted":       conformanceFixture(".bench/gate.sh"),
 
-	"go-build-broken":           phaseFixture(),
 	"gofmt-unformatted":         phaseFixture(),
 	"vet-printf-arg":            phaseFixture(),
 	"go-test-failing":           phaseFixture(),

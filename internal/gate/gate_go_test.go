@@ -323,7 +323,7 @@ func TestGateGoConformanceSuitePreservesCache(t *testing.T) {
 	}
 }
 
-func TestGateGoArgv(t *testing.T) {
+func TestReleaseGateGoArgvRetainsIndependentBuild(t *testing.T) {
 	t.Parallel()
 	want := []string{"go", "-C", "/kit", "run", "-buildvcs=false", "./cmd/bench", "gate-go", "gofmt", "/root"}
 	if got := GateGoArgv("/kit", "gofmt", "/root"); !reflect.DeepEqual(got, want) {

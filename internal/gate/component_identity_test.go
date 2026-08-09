@@ -1,8 +1,7 @@
 package gate
 
-// Component identities are graded against the kit-shaped fixture, the only root here that
-// carries a real module, a resolved kit phase table, and a sealed dist/bench — the three
-// things an identity is made of.
+// Component identities are graded against the kit-shaped fixture, which carries a real
+// module and a resolved kit phase table without authoring another Bench executable.
 //
 // Two of the properties cannot be observed by moving the tree: the policy domain and the
 // execution closure are what separate components whose declared files are identical, and
@@ -249,33 +248,6 @@ func TestComponentIdentityTracksItsExecutionClosure(t *testing.T) {
 // seal's source digest moves even though its declared files are byte-identical. The
 // snapshot is compared across the republish to prove that is what happened, and the
 // toolchain components — which exec nothing — are held still by the same comparison.
-func TestContractIdentityTracksTheSeal(t *testing.T) {
-	t.Parallel()
-	fixture := newKitShapedFixture(t)
-	before := mustResolveComponentIdentities(t, fixture.root)
-	snapshotBefore := mustTreeSnapshot(t, fixture.root)
-
-	const main = "cmd/bench/main.go"
-	original, err := os.ReadFile(filepath.Join(fixture.root, filepath.FromSlash(main)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	writeGateTestFile(t, fixture.root, main, "package main\n\nfunc main() { _ = 1 }\n", 0o644)
-	sealKitShapedBinary(t, fixture.root)
-	writeGateTestFile(t, fixture.root, main, string(original), 0o644)
-
-	if got := mustTreeSnapshot(t, fixture.root); !reflect.DeepEqual(got, snapshotBefore) {
-		t.Fatal("the republish moved the tree snapshot, so this test no longer isolates the seal")
-	}
-	after := mustResolveComponentIdentities(t, fixture.root)
-	if got, was := componentIdentityOf(t, after, canary.PhaseContract), componentIdentityOf(t, before, canary.PhaseContract); got == was {
-		t.Fatalf("contract identity = %s after the seal's source digest moved, want it to move", got)
-	}
-	if got, was := componentIdentityOf(t, after, canary.PhaseTest), componentIdentityOf(t, before, canary.PhaseTest); got != was {
-		t.Fatalf("%s identity = %s after the republish, want %s — it reads no binary", canary.PhaseTest, got, was)
-	}
-}
-
 // [PS19] Every way an identity can fail to be computed returns an error and no identity.
 // A zero identity handed back instead would be a real address that every component could
 // match, which is a skip over work nobody graded.

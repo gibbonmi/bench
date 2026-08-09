@@ -16,7 +16,6 @@ import (
 
 	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/canary"
-	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
@@ -26,7 +25,7 @@ import (
 func moduleClosureComponents() []string {
 	var names []string
 	for _, declaration := range componentInputDeclarations() {
-		if declaration.source == SourceModuleTestClosure || declaration.source == SourceModuleTestClosureWithSealAndConsumerDocuments {
+		if declaration.source == SourceModuleTestClosure || declaration.source == SourceModuleTestClosureWithConsumerDocuments {
 			names = append(names, declaration.component)
 		}
 	}
@@ -81,53 +80,6 @@ func TestToolchainInputsCoverListedTestdata(t *testing.T) {
 		if paths := componentEntry(t, sets, name).Paths(); !slices.Contains(paths, fixtureCase) {
 			t.Fatalf("%s inputs omit %q: %v", name, fixtureCase, paths)
 		}
-	}
-}
-
-// [PS9] The build component's set is the freshness digest's own build inputs, element for
-// element. That derivation is what decides whether the published binary is stale; a second
-// list here would answer that question differently the day either one moved.
-// The comparison is made twice, across a source the binary gains in between: a hand-written
-// list can match one tree, so agreeing on both is what separates the derivation from a
-// literal that happens to be right today.
-func TestBuildInputsAreNotRestated(t *testing.T) {
-	t.Parallel()
-	fixture := newKitShapedFixture(t)
-	assertBuildInputsMatchTheDigest(t, fixture.root)
-
-	writeGateTestFile(t, fixture.root, "cmd/bench/extra.go", "package main\n\nvar extra = 1\n", 0o644)
-	assertBuildInputsMatchTheDigest(t, fixture.root)
-}
-
-func assertBuildInputsMatchTheDigest(t *testing.T, root string) {
-	t.Helper()
-	want, err := benchfreshness.BuildInputs(root)
-	if err != nil {
-		t.Fatalf("benchfreshness.BuildInputs = %v", err)
-	}
-	got := componentEntry(t, mustResolveComponentInputs(t, root), canary.PhaseBuild).Paths()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("build inputs = %v, want freshness.BuildInputs' %v", got, want)
-	}
-}
-
-// [PS10] The contract component execs the published CLI, so the seal's source digest is one
-// of its inputs and moves when the binary's sources do. Declaring only the file set would
-// let a contract skip inherit evidence taken against a different binary.
-func TestContractInputsCarryTheSealSourceDigest(t *testing.T) {
-	t.Parallel()
-	fixture := newKitShapedFixture(t)
-	before := componentEntry(t, mustResolveComponentInputs(t, fixture.root), canary.PhaseContract).Digests()
-	if len(before) == 0 {
-		t.Fatalf("contract digests = %v, want the seal's source digest", before)
-	}
-
-	writeGateTestFile(t, fixture.root, "cmd/bench/main.go", "package main\n\nfunc main() { _ = 1 }\n", 0o644)
-	sealKitShapedBinary(t, fixture.root)
-
-	after := componentEntry(t, mustResolveComponentInputs(t, fixture.root), canary.PhaseContract).Digests()
-	if reflect.DeepEqual(before, after) {
-		t.Fatalf("contract digests = %v after republishing, want the seal's source digest to move", after)
 	}
 }
 
@@ -269,7 +221,7 @@ func TestComponentInputsReportANamedDerivationSource(t *testing.T) {
 	t.Parallel()
 	fixture := newKitShapedFixture(t)
 	named := []Source{
-		SourceBuildClosure, SourceModuleTestClosure, SourceModuleTestClosureWithSealAndConsumerDocuments,
+		SourceModuleTestClosure, SourceModuleTestClosureWithConsumerDocuments,
 		SourceShellcheckArgv, SourceHandDeclared,
 	}
 
@@ -348,41 +300,14 @@ func TestShellcheckInputsMatchTheFileEnumerationExactly(t *testing.T) {
 	}
 }
 
-// [PS13] canary's declared set carries no binary digest: republishing a different binary
-// over unchanged sources leaves the declaration unmoved.
-func TestCanaryInputsExcludeTheBinary(t *testing.T) {
+// [PS13] canary's declared set carries no selected-binary digest. Run ownership supplies
+// the executable independently of the component's tree-content identity.
+func TestCanaryInputsExcludeTheSelectedBinary(t *testing.T) {
 	t.Parallel()
 	fixture := newKitShapedFixture(t)
-	before := componentEntry(t, mustResolveComponentInputs(t, fixture.root), "canary")
-	if len(before.Digests()) != 0 {
-		t.Fatalf("canary digests = %v, want none", before.Digests())
-	}
-
-	publishDifferentKitShapedBinary(t, fixture.root)
-
-	after := componentEntry(t, mustResolveComponentInputs(t, fixture.root), "canary")
-	if !reflect.DeepEqual(before.Paths(), after.Paths()) || !reflect.DeepEqual(before.Digests(), after.Digests()) {
-		t.Fatalf("canary inputs moved after republishing the binary: before %v/%v, after %v/%v",
-			before.Paths(), before.Digests(), after.Paths(), after.Digests())
-	}
-}
-
-// publishDifferentKitShapedBinary republishes root's dist/bench with different executable
-// bytes over the same source tree — sources unchanged, binary changed — the shape
-// TestCanaryInputsExcludeTheBinary needs to tell "reads the binary" apart from "does not".
-func publishDifferentKitShapedBinary(t *testing.T, root string) {
-	t.Helper()
-	executable := filepath.Join(root, "dist", "bench")
-	original, err := os.ReadFile(executable)
-	if err != nil {
-		t.Fatal(err)
-	}
-	staged := filepath.Join(root, "dist", "bench.restaged")
-	if err := os.WriteFile(staged, append(append([]byte{}, original...), 0), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := benchfreshness.Publish(root, staged, executable); err != nil {
-		t.Fatalf("publish a different binary: %v", err)
+	entry := componentEntry(t, mustResolveComponentInputs(t, fixture.root), "canary")
+	if len(entry.Digests()) != 0 {
+		t.Fatalf("canary digests = %v, want none", entry.Digests())
 	}
 }
 

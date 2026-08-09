@@ -216,8 +216,9 @@ func TestPrepReleaseAllSurfaces(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
 	kit := contract.SubjectRoot(t)
+	selected := contract.SelectedBench(t).Path
 	f := contract.NewFixture(t)
-	f.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
+	f.BenchWrapperEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
 
 	var first string
 	for _, surface := range []struct {
@@ -226,7 +227,7 @@ func TestPrepReleaseAllSurfaces(t *testing.T) {
 	}{
 		{"kit CLI", []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "prep-release"}},
 		{"linked by-path CLI", []string{"bash", filepath.Join(f.Root, ".bench", "bin", "bench.sh"), "prep-release"}},
-		{"compiled binary", []string{filepath.Join(kit, "dist", "bench"), "prep-release"}},
+		{"compiled binary", []string{selected, "prep-release"}},
 	} {
 		probe := f.Run(surface.argv[0], surface.argv[1:]...)
 		if probe.ExitCode == 0 {
@@ -254,7 +255,7 @@ func TestPrepReleaseMissingTool(t *testing.T) {
 		t.Run(tool, func(t *testing.T) {
 			t.Parallel()
 			r := newShipRepo(t)
-			binary := filepath.Join(contract.SubjectRoot(t), "dist", "bench")
+			binary := contract.SelectedBench(t).Path
 
 			probe := r.RunEnv(r.runEnv(map[string]string{"PATH": pathWithout(t, tool)}), binary, "prep-release")
 			if probe.ExitCode == 0 {

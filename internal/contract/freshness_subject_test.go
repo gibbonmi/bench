@@ -17,6 +17,14 @@ import (
 const freshnessSubjectModeEnv = "BENCH_FT131_FRESHNESS_SUBJECT_MODE"
 const freshnessSubjectCaseEnv = "BENCH_FT131_FRESHNESS_SUBJECT_CASE"
 
+func requireChangedSourceFreshBench(t testing.TB) {
+	t.Helper()
+	root := SubjectRoot(t)
+	if err := freshness.Verify(root, filepath.Join(root, "dist", "bench")); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestGoBuildPublishesOneSealedHostSubject(t *testing.T) {
 	root := KitRoot(t)
 	output := filepath.Join(t.TempDir(), "bench subject")
@@ -69,14 +77,14 @@ exec "$BENCH_REAL_GO" "$@"
 	}
 }
 
-func TestRequireFreshBenchRefusesStaleSubject(t *testing.T) {
+func TestChangedSourceProofRefusesStaleSubject(t *testing.T) {
 	if os.Getenv(freshnessSubjectModeEnv) == "stale" {
-		RequireFreshBench(t)
+		requireChangedSourceFreshBench(t)
 		t.Fatal("stale subject reached the contract assertion")
 	}
 
 	root := freshnessfixture.StaleSubject(t, "old subject output")
-	command := exec.Command(os.Args[0], "-test.run=^TestRequireFreshBenchRefusesStaleSubject$")
+	command := exec.Command(os.Args[0], "-test.run=^TestChangedSourceProofRefusesStaleSubject$")
 	command.Env = append(os.Environ(), freshnessSubjectModeEnv+"=stale", canary.SubjectRootEnv+"="+root)
 	output, err := command.CombinedOutput()
 	if err == nil {
@@ -92,10 +100,10 @@ func TestRequireFreshBenchRefusesStaleSubject(t *testing.T) {
 	}
 }
 
-func TestRequireFreshBenchIsRepeatableAcrossCWD(t *testing.T) {
+func TestChangedSourceProofIsRepeatableAcrossCWD(t *testing.T) {
 	if os.Getenv(freshnessSubjectModeEnv) == "repeat" {
-		RequireFreshBench(t)
-		RequireFreshBench(t)
+		requireChangedSourceFreshBench(t)
+		requireChangedSourceFreshBench(t)
 		return
 	}
 
@@ -111,7 +119,7 @@ func TestRequireFreshBenchIsRepeatableAcrossCWD(t *testing.T) {
 		}
 	}
 	for _, dir := range []string{root, nested} {
-		command := exec.Command(os.Args[0], "-test.run=^TestRequireFreshBenchIsRepeatableAcrossCWD$")
+		command := exec.Command(os.Args[0], "-test.run=^TestChangedSourceProofIsRepeatableAcrossCWD$")
 		command.Dir = dir
 		command.Env = append(os.Environ(), freshnessSubjectModeEnv+"=repeat", canary.SubjectRootEnv+"="+root)
 		if output, err := command.CombinedOutput(); err != nil {
@@ -128,7 +136,7 @@ func TestRequireFreshBenchIsRepeatableAcrossCWD(t *testing.T) {
 	}
 }
 
-func TestRequireFreshBenchRefusesUntrustedArtifacts(t *testing.T) {
+func TestChangedSourceProofRefusesUntrustedArtifacts(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		mutate func(t *testing.T, root string)
@@ -153,13 +161,13 @@ func TestRequireFreshBenchRefusesUntrustedArtifacts(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if os.Getenv(freshnessSubjectModeEnv) == "artifact" {
-				RequireFreshBench(t)
+				requireChangedSourceFreshBench(t)
 				t.Fatal("untrusted subject reached the contract assertion")
 			}
 
 			root := freshnessfixture.PublishedSubject(t, "old subject output")
 			tc.mutate(t, root)
-			output, err := runFreshnessChild(t, "^TestRequireFreshBenchRefusesUntrustedArtifacts$/"+tc.name+"$", root, "artifact", tc.name, root)
+			output, err := runFreshnessChild(t, "^TestChangedSourceProofRefusesUntrustedArtifacts$/"+tc.name+"$", root, "artifact", tc.name, root)
 			if err == nil {
 				t.Fatalf("untrusted %s subject reached the contract assertion:\n%s", tc.name, output)
 			}
@@ -168,7 +176,7 @@ func TestRequireFreshBenchRefusesUntrustedArtifacts(t *testing.T) {
 	}
 }
 
-func TestRequireFreshBenchUsesContentRatherThanMtime(t *testing.T) {
+func TestChangedSourceProofUsesContentRatherThanMtime(t *testing.T) {
 	tie := time.Unix(1_700_000_000, 0)
 	for _, tc := range []struct {
 		name      string
@@ -186,7 +194,7 @@ func TestRequireFreshBenchUsesContentRatherThanMtime(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if os.Getenv(freshnessSubjectModeEnv) == "mtime" {
-				RequireFreshBench(t)
+				requireChangedSourceFreshBench(t)
 				if os.Getenv(freshnessSubjectCaseEnv) == "changed source with tied mtimes" {
 					t.Fatal("tied stale subject reached the contract assertion")
 				}
@@ -195,7 +203,7 @@ func TestRequireFreshBenchUsesContentRatherThanMtime(t *testing.T) {
 
 			root := freshnessfixture.PublishedSubject(t, "old subject output")
 			tc.prepare(t, root)
-			output, err := runFreshnessChild(t, "^TestRequireFreshBenchUsesContentRatherThanMtime$/"+tc.name+"$", root, "mtime", tc.name, root)
+			output, err := runFreshnessChild(t, "^TestChangedSourceProofUsesContentRatherThanMtime$/"+tc.name+"$", root, "mtime", tc.name, root)
 			if tc.wantStale {
 				if err == nil {
 					t.Fatalf("tied stale subject reached the contract assertion:\n%s", output)

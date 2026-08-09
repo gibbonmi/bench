@@ -23,9 +23,9 @@ type story5GateOwner struct {
 
 func startStory5GateOwner(t *testing.T, f contract.Fixture) *story5GateOwner {
 	t.Helper()
-	cmd := exec.Command("bash", benchPath(t), "gate")
+	cmd := exec.Command(benchPath(t), "gate")
 	cmd.Dir = f.Root
-	cmd.Env = surfaceEnv(f, nil)
+	cmd.Env = selectedSurfaceEnv(t, f, nil)
 	var childOut bytes.Buffer
 	cmd.Stdout = &childOut
 	cmd.Stderr = &childOut

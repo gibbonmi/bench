@@ -197,7 +197,7 @@ func TestExecuteTreeRunsProspectiveWrapper(t *testing.T) {
 	gitRun(t, root, "add", ".bench/gate.sh")
 	tree := gitOutput(t, root, "write-tree")
 	gitRun(t, root, "reset", "--hard", "HEAD")
-	if got := ExecuteTree(context.Background(), root, tree, io.Discard, io.Discard); got.ActionExit != 0 {
+	if got := executeTreeWithOwner(context.Background(), root, tree, io.Discard, io.Discard, nil); got.ActionExit != 0 {
 		t.Fatalf("prospective execution = %+v, want green", got)
 	}
 	worktreeGitDir := gitOutput(t, root, "rev-parse", "--absolute-git-dir")
@@ -211,7 +211,7 @@ func TestExecuteTreeRunsProspectiveWrapper(t *testing.T) {
 	if got := evidenceFiles(t, gitdir); len(got) != 1 {
 		t.Fatalf("retained evidence after one prospective execution = %v, want one record", got)
 	}
-	if got := ExecuteTree(context.Background(), root, tree, io.Discard, io.Discard); got.ActionExit != 0 {
+	if got := executeTreeWithOwner(context.Background(), root, tree, io.Discard, io.Discard, nil); got.ActionExit != 0 {
 		t.Fatalf("second prospective execution = %+v, want reuse", got)
 	}
 	if got := evidenceFiles(t, gitdir); len(got) != 1 {

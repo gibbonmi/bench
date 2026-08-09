@@ -19,6 +19,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // allowlistedProbePath is the declared path every fixture plants its dependency on. A
@@ -269,7 +270,9 @@ func runStrippedGateWithKit(t *testing.T, phases map[string]string, kit string) 
 		"BENCH_REQUIRE_CAPABILITIES": nil,
 		capability.LogEnv:            nil,
 	}
-	return f.RunEnvSpec(run, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), "gate-phases", root)
+	bench := contract.SelectedBench(t).Path
+	run[runbinary.Env] = &bench
+	return f.RunEnvSpec(run, bench, "gate-phases", root)
 }
 
 // fixtureGit runs git in the fixture repository with an inline identity, so the fixture

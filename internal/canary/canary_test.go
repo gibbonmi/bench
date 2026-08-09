@@ -4,12 +4,24 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
+
+func TestSweepPreservesOneExactSelectedBenchPath(t *testing.T) {
+	selected := filepath.Join(t.TempDir(), "selected bench")
+	t.Setenv(runbinary.Env, selected)
+
+	env := gateEnv(sweepEnv(), registry.Dev)
+	if values := envValues(env, runbinary.Env); !reflect.DeepEqual(values, []string{selected}) {
+		t.Fatalf("inner gate selected paths = %q, want exact inherited path", values)
+	}
+}
 
 // TestRunPrintsCanaryOkOnCleanSweep pins the `bench canary` success feedback,
 // mirroring `structure ok`: a clean sweep must say so on stdout instead of

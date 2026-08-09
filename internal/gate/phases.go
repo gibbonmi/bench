@@ -24,6 +24,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/terminal"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -63,33 +64,11 @@ type Phase struct {
 var benchkitPhasesForCommand = BenchkitPhases
 
 // BenchkitPhases is the real phase table for the kit gate. root is the tree under
-// grade; kit is the checkout that owns the Go tests and wrapper scripts.
-//
-// The build phase owns the only write to root's dist/bench during a gate run, which is
-// why every other phase needs it: the contract and canary phases exec and copy that
-// binary, so they order after the build. Publication semantics — how that binary is
-// safely replaced — are the freshness owner's. A root with no Go build surface has
-// no build phase and so no edges at all.
+// grade; kit is the checkout that owns the Go tests and wrapper scripts. The run owner
+// selects the Bench executable before this table is constructed, so phases consume it
+// and no phase authors another Bench binary.
 func BenchkitPhases(root, kit string) []Phase {
-	var phases []Phase
-	built := false
-	buildHelper := filepath.Join(root, "scripts", "go-build.sh")
-	if isRegularFile(buildHelper) && isRegularFile(filepath.Join(root, "go.mod")) {
-		phases = append(phases, Phase{
-			Name: canary.PhaseBuild,
-			Argv: []string{"bash", buildHelper, root, buildArtifactPath(root)},
-		})
-		built = true
-	}
-	// Each downstream phase gets its own backing array: one shared slice would let an
-	// edit to any phase's Needs rewrite every other phase's edges.
-	needsBuild := func() []string {
-		if !built {
-			return nil
-		}
-		return []string{canary.PhaseBuild}
-	}
-	phases = append(phases, toolchainPhases(root, kit)...)
+	phases := toolchainPhases(root, kit)
 	return append(phases, []Phase{
 		{
 			Name: conformancePhaseName,
@@ -99,24 +78,20 @@ func BenchkitPhases(root, kit string) []Phase {
 				registry.ConformanceChecksEnv + "=" + strings.Join(registry.OrdinaryNames(registry.Dev), ","),
 				registry.ConformanceInheritedEnv + "=",
 			},
-			Needs: needsBuild(),
 		},
 		{
-			Name:  canary.PhaseContract,
-			Argv:  goTestArgv(kit, contractSubtree),
-			Env:   []string{canary.SubjectRootEnv + "=" + root},
-			Needs: needsBuild(),
+			Name: canary.PhaseContract,
+			Argv: goTestArgv(kit, contractSubtree),
+			Env:  []string{canary.SubjectRootEnv + "=" + root},
 		},
 		{
 			Name:     "shellcheck",
 			Argv:     shellcheckArgv(kit),
 			Optional: true,
-			Needs:    needsBuild(),
 		},
 		{
-			Name:  "canary",
-			Argv:  []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "canary", root},
-			Needs: needsBuild(),
+			Name: "canary",
+			Argv: []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "canary", root},
 		},
 	}...)
 }
@@ -128,12 +103,7 @@ func BenchkitPhases(root, kit string) []Phase {
 // test they filter for. Both of the latter probe for a declaration rather than a path,
 // because a path is a name any repo can collide with while these test names are the
 // kit's own.
-//
-// None of them declares a need on the build phase. That edge exists only to sequence the
-// writers and readers of root's dist/bench, and none of these steps execs it — they run
-// through `go run`, which the build cache backs. The absent edge is where the split's
-// overlap comes from, so restoring it costs the whole win.
-func toolchainPhases(root, kit string) []Phase {
+func toolchainPhases(root, _ string) []Phase {
 	if !isRegularFile(filepath.Join(root, "go.mod")) {
 		return nil
 	}
@@ -141,19 +111,35 @@ func toolchainPhases(root, kit string) []Phase {
 		return nil
 	}
 	phases := []Phase{
-		{Name: canary.PhaseGofmt, Argv: GateGoArgv(kit, "gofmt", root)},
+		{Name: canary.PhaseGofmt, Argv: gatePhaseGoArgv("gofmt", root)},
 		// vet needs no gate-go wrapper: it exits nonzero on its own findings and carries
 		// no policy the argv would have to encode.
 		{Name: canary.PhaseVet, Argv: []string{"go", "-C", root, "vet", "./..."}},
-		{Name: canary.PhaseTest, Argv: GateGoArgv(kit, "test", root)},
+		{Name: canary.PhaseTest, Argv: gatePhaseGoArgv("test", root)},
 	}
 	if declaresRaceTest(root) {
-		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: GateGoArgv(kit, "race", root)})
+		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: gatePhaseGoArgv("race", root)})
 	}
 	if declaresTest(conformancePackageDir(root), registry.RootConformanceTest) {
-		phases = append(phases, Phase{Name: canary.PhaseConformanceSuite, Argv: GateGoArgv(kit, "conformance-suite", root)})
+		phases = append(phases, Phase{Name: canary.PhaseConformanceSuite, Argv: gatePhaseGoArgv("conformance-suite", root)})
 	}
 	return phases
+}
+
+func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
+	selected := make([]Phase, len(phases))
+	for i, phase := range phases {
+		selected[i] = phase
+		selected[i].Argv = append([]string(nil), phase.Argv...)
+		if len(selected[i].Argv) > 0 && selected[i].Argv[0] == runBinaryArgvToken {
+			selected[i].Argv[0] = selection.Path
+		}
+		selected[i].Env = mergeEnv(phase.Env, []string{
+			runbinary.Env + "=" + selection.Path,
+			"BENCH_KIT=" + selection.SourceRoot,
+		})
+	}
+	return selected
 }
 
 // conformancePackageDir is the directory the filtered conformance suite grades.
@@ -235,6 +221,18 @@ func phasesCommandAtKit(root, kit string, stdout, stderr io.Writer) int {
 }
 
 func phasesCommandAtKitWithContext(base context.Context, root, kit string, stdout, stderr io.Writer) int {
+	base, closeLog := inheritGateRunLog(base, stderr)
+	defer closeLog()
+	selection, err := runbinary.Inherit(kit)
+	if err != nil {
+		fmt.Fprintf(stderr, "gate: selected Bench executable refused: %v\n", err)
+		fmt.Fprintln(stderr, "gate: red")
+		return 1
+	}
+	return phasesCommandAtKitWithSelection(base, root, kit, selection, stdout, stderr)
+}
+
+func phasesCommandAtKitWithSelection(base context.Context, root, kit string, selection *runbinary.Selection, stdout, stderr io.Writer) int {
 	mode := outerMode
 	if os.Getenv("BENCH_CANARY_INNER") == "1" {
 		mode = innerMode
@@ -244,12 +242,13 @@ func phasesCommandAtKitWithContext(base context.Context, root, kit string, stdou
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
+	phases = withRunBinary(phases, selection)
 	ctx, stop := signal.NotifyContext(base, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	if mode == outerMode {
 		// A full run grades its excludable phases against the stripped subject; the
 		// inner (canary) gate grades a fixture whose declaration this is not.
-		return runOuterPhases(ctx, root, kit, phasesForMode(phases, mode), stdout, stderr)
+		return runOuterPhases(ctx, root, kit, selection, phasesForMode(phases, mode), stdout, stderr)
 	}
 	return runPhases(ctx, kit, phasesForMode(phases, mode), mode, stdout, stderr)
 }
