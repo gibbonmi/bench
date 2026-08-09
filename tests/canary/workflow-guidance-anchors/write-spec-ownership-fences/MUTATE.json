@@ -1,0 +1,12 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "## Ownership fences\nList each exact repo-relative file or path prefix a writer may edit. `craft-spec`\nowns the fence rules; an empty section is incomplete, not unrestricted authority.\n\n",
+    "new": ""
+  },
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "## Template\n",
+    "new": "## Ownership fences\nList each exact repo-relative file or path prefix a writer may edit. `craft-spec` owns the fence rules; an empty section is incomplete, not unrestricted authority.\n\n## Template\n"
+  }
+]

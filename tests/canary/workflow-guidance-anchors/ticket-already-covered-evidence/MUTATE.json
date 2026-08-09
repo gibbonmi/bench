@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
+    "old": "An already-covered spec row keeps its named control and adds a subject mutation\nproving the changed production route reaches that control.",
+    "new": "An already-covered spec row keeps its named control."
+  }
+]

@@ -25,7 +25,8 @@ annotations, while a 5-cell map grades exactly as today. The red signal is
 the command or test that has already been run and failed because the mapped
 behavior is absent or wrong. If
 the behavior is already covered or cannot start red, say so in the row instead
-of pretending it is TDD coverage.
+of pretending it is TDD coverage. Newly authored specs default to the identified
+6-cell shape; the 5-cell shape remains valid for existing specs.
 
 Three rules keep a map honest:
 
@@ -144,7 +145,9 @@ restating the sequence.
 
 At spec time, record explicit **who-writes-where** ownership fences. Each fence
 names every path one writer may edit and is checkable at charge time. These
-fences constrain later work; they are not horizontal delegate assignments.
+fences constrain later work; they are not horizontal delegate assignments. A
+fence entry is an exact repo-relative file or path prefix, never a glob or an
+implementation ticket, and an empty or invalid fence section is incomplete.
 
 `craft-tickets` owns the build-time **what-lands-green-next** unit. This
 section owns only the spec-time **who-writes-where** fence; point to the ticket

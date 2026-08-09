@@ -184,13 +184,17 @@ Record decisions rather than file paths or snippets that rot.
                       ◀ tests attach here: <how a test drives and observes it>
 
 ### Acceptance coverage map
-| story | behavior | seam | red signal | why it catches the failure |
-|---|---|---|---|---|
-| <story #> | <observable behavior> | <test seam> | <observed red, already covered, or not TDD-able with reason> | <why this fails when behavior is missing> |
+| row | story | behavior | seam | red signal | why it catches the failure |
+|---|---|---|---|---|---|
+| <unique spec-local ID> | <story #> | <observable behavior> | <test seam> | <observed red, already covered, or not TDD-able with reason> | <why this fails when behavior is missing> |
 
 ### Edge inventory
 Every edge class lands in a row above or a
 **Won't handle** line: `<edge> — <one-clause why the exclusion is safe>`.
+
+## Ownership fences
+List each exact repo-relative file or path prefix a writer may edit. `craft-spec`
+owns the fence rules; an empty section is incomplete, not unrestricted authority.
 
 ## Out of scope
 Each genuine separate capability includes its derived
@@ -199,5 +203,6 @@ Each genuine separate capability includes its derived
 
 Before a build starts, emit a scannable approval table covering stories and
 their lines, seam diagrams, acceptance coverage including edge dispositions,
-and out of scope. Pause for sign-off. The user stories set breadth, engineering
+ownership fences with an explicit reviewer disposition, and out of scope. Pause
+for sign-off. The user stories set breadth, engineering
 seams place tests, and the gate defines done.

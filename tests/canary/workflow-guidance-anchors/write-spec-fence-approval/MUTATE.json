@@ -1,0 +1,12 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "ownership fences with an explicit reviewer disposition, and out of scope.",
+    "new": "and out of scope."
+  },
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "## Template\n",
+    "new": "Review ownership fences with an explicit reviewer disposition.\n\n## Template\n"
+  }
+]

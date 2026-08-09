@@ -1,6 +1,6 @@
 # Spec-ticket handoff contract
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation on 2026-08-09
 

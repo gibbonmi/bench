@@ -134,6 +134,11 @@ mismatch rather than six tickets past it.
 Re-derive each contract, and every claim a ticket makes about it, from the tree
 after earlier tickets land — never from the spec's account of the base.
 
+A required path outside every approved spec fence stops ticketing. Report the exact
+repo-relative path and the current-tree reason, then return to `$bench-write-spec` for
+reviewed scope repair; never widen a ticket or spec fence locally. A current-tree
+refresh may narrow the work inside an approved fence.
+
 Before discovery is complete, enumerate every required integration surface for
 each file, registry member, command, or fixture the ticket adds, changes, or
 removes. Start from the nearest existing member of the same family and find every
@@ -169,6 +174,19 @@ audit open. If the ticket or schema cannot represent that traceability, stop
 ticketing and report the missing seam; prose or review cannot substitute for
 it. A genuinely semantic reviewer-only claim remains an explicit exception in
 the acceptance row and coverage map.
+
+## Derive ticket evidence from every spec row
+
+An observed-red spec row carries its failing public operation into ticket acceptance
+on the accountable ticket. That ticket adds a distinct post-implementation subject
+mutation; it never copies the spec's obsolete absence probe as finished evidence.
+
+An already-covered spec row keeps its named control and adds a subject mutation
+proving the changed production route reaches that control.
+
+A not-TDD-able spec row names its blocker and maps to the first ticket where the seam exists.
+That ticket adds the subject mutation once the seam is available; the original blocker
+does not grant a permanent exemption from mutation evidence.
 
 ## Write one file per ticket
 
@@ -358,6 +376,14 @@ this behavior green.
 
 The moment is ticket files written and nothing assigned; the owner is one fresh
 read-only delegate, because the author's context is exactly what hid the defect.
+The handoff ledger accounts for every user story, coverage row, named seam, edge row or
+`Won't handle` disposition, and spec ownership fence before assignment. Derive it from
+the approved spec and ticket files in approved blocker-before-consumer build-plan order;
+conversation memory, a copied count, or a new lifecycle artifact is not evidence. For
+each coverage row, the first claimant in that order is the accountable ticket. Later
+tickets may claim the same row as defense in depth without replacing that owner. Every
+fence names its ticket owner or an explicit unused disposition.
+
 The charge is the obligations this skill already states, each re-derived from the
 tree rather than from the ticket's account of it:
 

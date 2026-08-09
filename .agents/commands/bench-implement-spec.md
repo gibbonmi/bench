@@ -47,6 +47,11 @@ before any assignment; a harness that cannot spawn one runs the pass inline and
 flags it in the build plan. Its findings are reslices, repaired before
 `bench spec build start` rather than through a repair round after code lands.
 
+Fence drift takes the same route and the lifecycle does not start without a complete handoff ledger.
+Send seam or fence drift through `$bench-write-spec`, obtain approval for the
+repaired spec, then require `craft-tickets`' completed breakdown review before
+`bench spec build start`; `craft-tickets` owns the ledger schema.
+
 For a reviewed spec-backed build, run `bench spec build start <slug>` before the
 first assignment. The public lifecycle is `start` → `assign` → `checkpoint` →
 `integrate` → `review` → `promote`; `status` inspects the run and `abandon`

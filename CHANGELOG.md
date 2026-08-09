@@ -34,6 +34,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made spec implementation route fence drift through repaired approval and require
+  `craft-tickets`' complete handoff ledger before lifecycle start, with a
+  section-sensitive canary for every spec-to-ticket handoff clause.
 - Made `/bench-debug` distinguish the regression-test seam from the edit owner:
   enumerate relevant callers, fix a uniform invariant once at its narrowest shared
   owner, keep the test at the highest observable seam, and report paths with no

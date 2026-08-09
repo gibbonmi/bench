@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "| row | story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|---|",
+    "new": "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|"
+  }
+]

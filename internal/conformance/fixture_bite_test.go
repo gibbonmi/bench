@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
@@ -67,6 +68,64 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		t.Run(fixture, func(t *testing.T) {
 			runFixtureBite(t, kitRoot, fixture)
 		})
+	}
+}
+
+func TestSpecTicketHandoffWorkflowFixturesAreComplete(t *testing.T) {
+	required := []struct{ fixture, diagnostic string }{
+		{"write-spec-identified-coverage-default", ".agents/commands/bench-write-spec.md Template dropped the six-column identified acceptance-map default"},
+		{"write-spec-unique-row-id", ".agents/commands/bench-write-spec.md Template dropped the unique spec-local row-ID default"},
+		{"write-spec-ownership-fences", ".agents/commands/bench-write-spec.md Template dropped the craft-spec-owned Ownership fences section"},
+		{"write-spec-fence-approval", ".agents/commands/bench-write-spec.md Template approval paragraph dropped the explicit ownership-fence disposition"},
+		{"ticket-observed-red-evidence", ".agents/skills/bench-craft-tickets/SKILL.md dropped the observed-red ticket-evidence route"},
+		{"ticket-already-covered-evidence", ".agents/skills/bench-craft-tickets/SKILL.md dropped the already-covered changed-route mutation"},
+		{"ticket-not-tdd-able-evidence", ".agents/skills/bench-craft-tickets/SKILL.md dropped the not-TDD-able seam-availability route"},
+		{"ticket-handoff-ledger-totality", ".agents/skills/bench-craft-tickets/SKILL.md dropped approved-fence totality from the pre-assignment handoff ledger"},
+		{"ticket-handoff-ledger-current-artifacts", ".agents/skills/bench-craft-tickets/SKILL.md dropped current-artifact/no-copied-totals evidence from the pre-assignment handoff ledger"},
+		{"ticket-handoff-ledger-accountable-claimant", ".agents/skills/bench-craft-tickets/SKILL.md dropped the accountable-first-claimant with later-reinforcement rule from the pre-assignment handoff ledger"},
+		{"ticket-handoff-ledger-fence-disposition", ".agents/skills/bench-craft-tickets/SKILL.md dropped the fence-owner-or-unused disposition from the pre-assignment handoff ledger"},
+		{"ticket-fence-drift-stop", ".agents/skills/bench-craft-tickets/SKILL.md replaced the fence-drift stop with ticket-local widening"},
+		{"implement-spec-approved-handoff", ".agents/commands/bench-implement-spec.md moved the repaired-approval and complete-ledger prerequisite below lifecycle start"},
+		{"craft-spec-exact-literal-fence", ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the exact repo-relative never-glob ownership-fence rule"},
+		{"craft-spec-empty-or-invalid-fence", ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates permits an empty or invalid ownership fence"},
+	}
+	if got, want := len(required), 15; got != want {
+		t.Fatalf("required spec-ticket handoff fixture inventory has %d entries, want %d", got, want)
+	}
+
+	h := NewHarness(t)
+	fixtures, err := canary.Fixtures(filepath.Join(h.KitRoot, "tests", "canary"))
+	requireFixtureNoError(t, err)
+	sectionDiagnostics := map[string]bool{}
+	for _, anchor := range anchors.Entries() {
+		if anchor.Kind == anchors.RequireInSection {
+			sectionDiagnostics[anchor.Diagnostic] = true
+		}
+	}
+	for _, want := range required {
+		fixture, ok := fixtures[want.fixture]
+		if !ok {
+			t.Errorf("required spec-ticket handoff fixture %q is absent", want.fixture)
+			continue
+		}
+		if fixture.Family != "workflow-guidance-anchors" || fixture.Check != "docs-currency-workflow" {
+			t.Errorf("fixture %q owner = %s/%s, want workflow-guidance-anchors/docs-currency-workflow", want.fixture, fixture.Family, fixture.Check)
+		}
+		expect, err := os.ReadFile(filepath.Join(fixture.Dir, "EXPECT"))
+		if err != nil {
+			t.Errorf("read %s EXPECT: %v", want.fixture, err)
+			continue
+		}
+		if got := strings.TrimSpace(string(expect)); got != want.diagnostic {
+			t.Errorf("fixture %q diagnostic = %q, want %q", want.fixture, got, want.diagnostic)
+		}
+		if !sectionDiagnostics[want.diagnostic] {
+			t.Errorf("fixture %q diagnostic has no RequireInSection registry owner", want.fixture)
+		}
+		mutation, err := os.ReadFile(filepath.Join(fixture.Dir, "MUTATE.json"))
+		if err != nil || strings.TrimSpace(string(mutation)) == "" {
+			t.Errorf("fixture %q has no mutation: %v", want.fixture, err)
+		}
 	}
 }
 

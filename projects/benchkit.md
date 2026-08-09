@@ -217,6 +217,11 @@ disappear. The top-level `bench canary` command validates and aggregates the com
 owner inventory without starting a gate or Go subprocess. One tagged system journey
 proves the selected executable reaches that production dispatcher.
 
+The workflow-guidance family pins the spec-to-ticket handoff from identified rows and
+approved ownership fences through ticket evidence, ledger review, fence-drift repair,
+and the lifecycle-entry prerequisite. Its auto-discovered mutations keep each clause in
+the section where a fresh agent acts on it.
+
 The conformance registry remains the single source for check order, subject, input
 derivation, implementation, and canary family ownership. This table is the profile's
 current-state advertisement of its non-meta input bindings:
