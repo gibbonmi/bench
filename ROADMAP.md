@@ -724,7 +724,7 @@ parser proves index-to-detail completeness without creating a second source of
 status. Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here;
 the 2026-08-06 drain's 179397-byte snapshot transport failure.
 
-**FT173 (MEDIUM) — the AXI contract has ten principles, one derivation each.**
+**FT173 (HIGH) — the AXI contract has ten principles, one derivation each.**
 The kit implements its own published contract partially and unevenly, measured
 2026-07-31 against the ten principles at axi.md. Five faces, one owner surface.
 First, `craft-cli` enumerates only seven: content first, contextual disclosure,
@@ -801,12 +801,16 @@ reduced — where plain `bench gate` can only ever re-record another reduced
 verdict, so the stated remediation cannot succeed and the working command
 (`bench gate --fresh`) went unnamed. A refusal or result whose sensible next
 step depends on state the command already knows must emit that step in
-`help[]`. Reviewer acceptance conditions, recorded 2026-08-02: the FT173 spec
-is accepted only with a detailed per-command list covering every `bench` CLI
-command — its follow-up commands and `help[]` contextual-disclosure surface,
-command by command, no sampling — and the spec's grill must open on a deep
-dive into each command's real usage drawn from the Claude session logs plus
-the Codex usage logs the reviewer will share.
+`help[]`. The final FT173 contextual-disclosure capstone opens with an
+open-ended review of the Claude and Codex harness session logs accumulated
+across FT173 and representative recent Bench work. It looks for CLI leverage:
+better `help[]`, repeated tool-call sequences one coherent query can replace,
+and output shaping agents repeatedly perform themselves—such as `head` or
+`tail`—that belongs in bounded defaults, `--full`, aggregates, or another
+CLI-owned projection. The spec is accepted only with a detailed per-command
+action inventory and a disposition for every log-derived opportunity: fold it
+into the spec, identify its existing owner, decline it with a reason, or route
+the separate capability to a named roadmap item.
 
 Two constraints shape the build rather than the diagnosis. Principle 3 should
 not double-truncate a value already bounded at capture, and principle 8 is a
@@ -2420,13 +2424,23 @@ mid-tier refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the
 gate's reduced scope, so every separately-landed prose diff pays a full gate
 — rows batch on the shared full gate, not just shared files; anchor-pinned
 files couple prose diffs to conformance fixture updates (`craft-delegate` 14
-anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and prose
-compounds per-session while the AXI foundation compounds per-CLI-change, so
-the prose batch outranks the foundation only if it lands whole and
-falsifiable — otherwise the foundation goes first while FT141 and FT158
-build.
+anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and AXI
+foundation mechanics compound through every later CLI change. FT173 is the
+top roadmap priority and lands its four independently reviewed specs before
+the prose track resumes.
 
-1. Take FT144's one-decision-both-phases call as the remaining shaping item.
+1. Implement FT173 in four independently reviewed specs, foundation first.
+   Start with the staged
+   `specs/byte-preserving-axi-foundation/spec.md`: AXI principles 8–10 enter
+   `craft-cli`, AXI stays scoped to query surfaces, truncation and aggregate
+   mechanics consolidate without changing emitted bytes, and the pinned
+   contract suite guards compatibility. Follow with the full-AXI spec-build
+   migration once FT185 is available and the coherent `bench diff` migration.
+   Write remaining contextual disclosure (`help[]`) as the fourth and final
+   capstone after those schemas stabilize; its required harness-log review
+   folds observed CLI leverage into the spec or gives it an explicit
+   disposition. FT173 remains open until all four land.
+2. Take FT144's one-decision-both-phases call as the remaining shaping item.
    Reviewer latency is the binding constraint: grills serialize on the reviewer
    while builds parallelize on agents. Five of the original six items have
    closed — FT173's principle-9 relaxation and FT175's spec-start gate were
@@ -2435,7 +2449,7 @@ build.
    its spec was written and implemented, FT181 shipped 2026-08-03, and
    FT156's anchor-mechanism ruling closed when its registry shipped and the
    spec retired 2026-08-05.
-2. Take FT171's gate fix next: decision #23 and its measured materialization
+3. Take FT171's gate fix next: decision #23 and its measured materialization
    residual shipped, so resume shaping at #24 and #25, then run #26's exact
    post-route census before candidate-width pricing changes outer concurrency.
    FT141 builds in parallel where
@@ -2443,7 +2457,7 @@ build.
    *whole* — splitting the fix-loop clause out would spend a second spec,
    review, and full gate on the same anchor-pinned surface, so the batch
    waits for FT141 instead.
-3. Land the prose track's falsification before its wide batch: FT158 first
+4. Land the prose track's falsification before its wide batch: FT158 first
    (with FT170 unproven, the cross-harness refute pass is
    the only demonstrated defect-finder for prose diffs); the FT156 anchor
    registry is already in place under it. Then prose batch 1: FT107
@@ -2452,20 +2466,6 @@ build.
    improves every later grill. Then FT179 + FT111 as one visit, with FT164's
    repair-lane residual riding it as a second `craft-delegate` visit, then
    FT108.
-4. Implement FT173 in three independently reviewed specs, foundation first:
-   AXI principles 8–10 into `craft-cli`, AXI kept scoped to query surfaces,
-   truncation consolidated onto `sanitize.Preview` and aggregate mechanics
-   extracted only where two real derivations exist, all without changing
-   emitted bytes — medium, guarded by the pinned contract suite. Contextual
-   disclosure (`help[]`) second: large and byte-changing (zero prior art; it
-   migrates the AXI query surfaces in green batches and rewrites their
-   pinned output contracts), shippable under the 2026-08-02 principle-9
-   relaxation granted to this face alone. Git-inspection last or in
-   parallel: it extends the existing `bench diff` owner into one coherent
-   status-and-diff snapshot (untracked paths, pre-computed counts, drift-safe
-   reads), but `bench diff` is not a ledger surface — landing it before
-   `help[]` would rewrite the pinned diff contracts twice. FT173 remains open until all
-   three land.
 5. Shape FT175's decision map once the foundation and `help[]` land, and
    write the FT175 spec once the owners it consumes — truncation,
    aggregates, `help[]` — are settled, then build it as vertical green
@@ -2494,6 +2494,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT171 gate fix: record landed #23, close #24 and #25, then run #26's exact post-route census before the candidate outer-width decision.
-2. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
-3. `/bench-write-spec` — FT141, Go and prose-independent and the literal blocker that unblocks FT107 whole.
+1. `/bench-implement-spec` — FT173 byte-preserving AXI foundation, using the staged `specs/byte-preserving-axi-foundation/spec.md`; follow it with full-AXI spec-build and coherent-diff migrations, then the harness-log-informed contextual-disclosure capstone.
+2. `/bench-shape-idea` — FT171 gate fix: record landed #23, close #24 and #25, then run #26's exact post-route census before the candidate outer-width decision.
+3. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.

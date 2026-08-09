@@ -309,6 +309,19 @@ stale, recovery, plan/apply, review, and promotion states. An exact Bench execut
 required only for an acceptance row that observes wrapper routing, executable identity,
 environment, signals/teardown, or installed/stripped behavior.
 
+The final remaining-contextual-disclosure spec begins with an open-ended review of the
+Codex and Claude harness session logs accumulated across FT173 and representative recent
+Bench work. The review looks for CLI leverage rather than a closed keyword checklist.
+Its required examples are useful additions or corrections to a command's `help[]`,
+repeated shell or tool-call sequences that one coherent Bench query could replace, and
+output transformations agents repeatedly perform themselves—such as `head` or `tail`—
+that belong in a bounded default, `--full` escape hatch, pre-computed aggregate, or other
+CLI-owned projection. The resulting evidence asset gives every observed opportunity one
+disposition: fold into the final spec, already owned, decline with a reason, or route to
+a named roadmap item when it is a separate capability or would reopen a closed decision.
+The asset informs the spec and its coverage rows; it does not become a second permanent
+CLI inventory.
+
 Ticket-local checks compile and run only their changed code slice and declared
 integration surfaces. They run only conformance owners and canary fixture-owner
 mutations affected by that slice. No ticket pays the whole-project gate; the completed
@@ -360,12 +373,15 @@ Each approved slice is independently useful and falsifiable:
   the typed action owner, renderer, registry declaration, and remaining approved
   surfaces; it does not rewrite spec-build or diff output or widen other operational
   families to full AXI. Removing a useful row, losing a fixed argument, guessing an
-  unknown value, carrying stale authority, or advertising prose as a command is red.
+  unknown value, carrying stale authority, or advertising prose as a command is red. Its
+  spec starts from the harness-log opportunity asset required by #9 and accounts for
+  every finding through an acceptance row or an explicit disposition.
 
-The first spec is the byte-preserving foundation. The two atomic surface migrations
-follow it as siblings, with spec build prioritized once FT185 is available; remaining
-contextual disclosure follows the stable output schemas. Spec writers retain only the
-bounded discretion already listed below.
+The first spec is the byte-preserving foundation. The full-AXI spec-build and coherent
+diff atomic surface migrations follow it, with spec build prioritized once FT185 is
+available. Remaining contextual disclosure is the fourth and final capstone after those
+output schemas stabilize. Spec writers retain only the bounded discretion already listed
+below.
 
 ## Not yet specified
 
@@ -393,7 +409,7 @@ bounded discretion already listed below.
 ## Sources
 
 - Path: `ROADMAP.md`
-  Supports: #1 through #3 and #6 through #9 current FT173 evidence, closed constraints, and old three-spec sequence.
+  Supports: #1 through #3 and #6 through #9 current FT173 evidence, closed constraints, and the prior three-spec sequence replaced by #7.
   Drift: re-read after FT173, FT175, or FT185 is reshaped, staged, or retired.
 - Path: `.agents/skills/bench-craft-cli/SKILL.md`
   Supports: #1 current seven-principle project guidance and query-surface posture.

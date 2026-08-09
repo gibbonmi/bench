@@ -176,6 +176,6 @@ The wide refactor uses these checkable writer fences. The shared-owner expansion
 
 - Full-AXI `bench spec build` migration, including its family home, shared response envelope, contextual actions, and composition of FT185's gate-result payload: 12 edits, 1 promotion gate run.
 - Coherent `bench diff` migration, including one drift-safe Git snapshot, untracked regular-file bodies under `--full`, and contextual actions: 9 edits, 1 promotion gate run.
-- Remaining contextual-disclosure migration across approved stable surfaces, including additive `help[]` and honest empty action sets: 16 edits, 1 promotion gate run.
+- Remaining contextual-disclosure migration across approved stable surfaces, including additive `help[]`, honest empty action sets, and the required harness-log opportunity review that seeds FT173's final capstone spec: 16 edits, 1 promotion gate run.
 - The successor spec-build review-and-gate cadence and FT130 capture accounting: 14 edits, 1 promotion gate run after their named predecessors ship.
 - Any change to gate authority, whole-project gate ownership, lifecycle transitions, FT185's gate payload, or FT130's capture derivation.
