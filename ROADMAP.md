@@ -94,6 +94,12 @@ cuts, and #26's exact post-route census stay open before #8 prices candidate
 outer widths. Sources: the `gate-test-concurrency` retro, drained here;
 `decisions/gate-budget.md`; the retained FT171 implementation receipts.
 
+The branch-native gate rebuild supplies a timing-discipline instance: compare
+before-and-after runs only on the same subject and cache posture. Its 73.850 s
+prospective run identifies the ordinary test driver as the current dominant
+cost, while its 354.073 s predecessor remains directional rather than a speed
+claim. Source: the branch-native-build-test-architecture retro, drained here.
+
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
 artifact-suite, and artifact-hoist retros converge on one lifecycle owner. The close's
@@ -234,6 +240,14 @@ retained its commit and green digest, but terminal status exposed no per-stage
 timings, so final-check could report no trustworthy promotion timing. This is
 another instance of the retained terminal projection above, not a second CLI
 owner. Source: the `gate-test-concurrency` retro, drained here.
+
+The branch-native rebuild makes the terminal-summary requirement explicit for a
+lifecycle-format reset: retain a schema-migratable terminal record outside the
+replaceable gate implementation, and give final-check an exceptional route that
+requires the retained prospective log, published commit, and stated limitation.
+The repair-reslicing close repeats that retained evidence must remain available
+after retirement. Source: the branch-native-build-test-architecture and
+repair-ticket-reslicing retros, drained here.
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
@@ -476,6 +490,12 @@ plain revert and path-scoped stash were guard-blocked. That workaround is
 recoverable only by session care, so it strengthens the existing CLI-owned
 set-aside face rather than earning a guard exemption. Source:
 `capture/learnings.md` 2026-08-03, verdicted here.
+
+Repair-ticket reslicing confirms the ignored-residue face: a clean worktree can
+remain retained solely because generated gate/cache inventory exceeds the
+destructive limit. A bounded cleanup mode may cover known generated caches, but
+must keep the existing fingerprinted, size-bounded refusal for everything else.
+Source: the repair-ticket-reslicing retro, drained here.
 
 **FT169 (MEDIUM) — one sanctioned worktree landing command
 owns the stale-base dance.** The gate-fastpath build hand-ran the same sequence
@@ -1277,13 +1297,20 @@ last of the three still open. Kit edit under the
 `docs/reporesident-distillation.md` §8.
 
 **FT102 (LOW) — escalation-policy cross-check in the synthesis consistency
-loop.** A kit edit that instructs spending a model tier can contradict the
+and dogfood loops.** A kit edit that instructs spending a model tier can contradict the
 escalation policy without any loop catching it: the widened write-spec step-9
 triggers shipped an automatic top-tier spawn past review (observed
 2026-07-22; corrected in the mid-tier rerouting commit). Make
 `craft-synthesis`'s consistency loop name the escalation policy as a standing
 cross-check for any kit edit that spends a tier. Kit edit under the
 `craft-synthesis` discipline.
+
+Ticket-shaping guidance must also dogfood its own decomposition: apply
+`craft-tickets` to the candidate, reproduce any claimed keep-together project
+gate red, and compare the resulting slices, blocking edges, integration
+surfaces, and fixture/anchor knowledge against the prior guidance. Reject or
+reslice a change that widens unrelated tickets or creates a second source of
+knowledge. Source: `capture/learnings.md` 2026-08-08, verdicted here.
 
 **FT108 (LOW) — a refactor lane with a mechanical exit test.** The kit has no
 refactor path: a pure restructure either gets forced through
@@ -1698,6 +1725,10 @@ suite. Sources: `capture/IDEAS.md` 2026-08-07 and `capture/learnings.md`
 2026-08-06, drained and verdicted here; the gate-decision-test-seam and
 conformance-harness-scope retros, drained here.
 
+Repair-ticket reslicing repeats the `assign --ticket` form defect: the refusal
+must name the accepted ticket-basename form rather than implying a present path
+is missing. Source: the repair-ticket-reslicing retro, drained here.
+
 The pre-push close repeats the discovery failure at the checkpoint seam: the
 run ID was absent from `status --full`, and `outcome: green` was rejected without
 naming the accepted `passed|already-covered|not-tdd-able` vocabulary. The
@@ -1760,6 +1791,12 @@ The FT195 close adds validation to the writer half: journal appends use the
 parser's canonical open-entry grammar instead of allowing a malformed entry to
 remain invisible until `bench status` notices it. Source: the
 go-build-cache-footprint retro, drained here.
+
+The phase-close capture recurrence belongs to the reduced-phase-set face: a
+post-promotion retro or learning remains visible and reviewable, but does not
+repay the promotion gate solely because it records that terminal outcome. Its
+eventual reviewed drain still uses an ordinary authoritative landing path.
+Source: `capture/learnings.md` 2026-08-09, verdicted here.
 
 **FT168 (LOW) — focused iteration evidence: a fixture-selecting
 canary.** Proving one changed
@@ -1927,6 +1964,13 @@ review: when a mutation depends on deleting an exact anchor, count every
 occurrence so explanatory prose cannot shadow it, and execute the promised
 deletion red before accepting the ticket. Source: the `one-shot-feedback`
 retro, drained here.
+
+The repair-reslicing close adds two review obligations to the same ownership
+chain: every atomic closure member gets its own mutation, and review evaluates
+lifecycle state before treating a dependency as blocking. Unchanged consumers
+remain integration surfaces; a path temporarily changed only for a required red
+still needs fence authority. Source: the repair-ticket-reslicing retro, drained
+here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its

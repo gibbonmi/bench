@@ -2,23 +2,19 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `6ed2a74`, 1 dirty path, 20 unpushed commits
-Spec: none staged.
-Gate: green at `2269461` — stale, work tree `514e2f9`
+Branch: `main` — HEAD `14deeb42`; the `$bench-what-next` batch is uncommitted.
+Spec: `byte-preserving-axi-foundation` remains staged.
+Gate: green at `2000f0a` — stale against the pending batch.
 
 ## State
 
-**Phase reached: the gate-test-concurrency retro is drained; FT171 shaping is next.**
+`branch-native-build-test-architecture` is retired in the pending roadmap-drain
+batch. The two implementation retros and three open learnings are drained into
+FT162, FT171, FT98, FT102, FT168, FT174, and FT184; the unrelated
+`decisions/spec-build-review-gate-cadence.md` remains outside the batch.
 
-`gate-test-concurrency` promoted as `3686cb3e` and retired at `bc2d1aff`; its
-measured shared-fixture follow-up landed through `a5afaffd`. The roadmap now
-records decision #23 and that residual as complete, merges the terminal-evidence
-recurrence into FT162, and merges the structural-claim recurrence into FT164.
-The drained retro is removed.
-
-FT171 still has no outer-width choice: resume `decisions/gate-budget.md` at #24
-and #25, then run #26's exact post-route census before #8 prices candidate
-widths. No implementation worktree remains to reconstruct.
+The batch awaits reviewer approval. It must be committed once, on green, with a
+subject ending `spec-retire: branch-native-build-test-architecture`.
 
 ## Next command
 
