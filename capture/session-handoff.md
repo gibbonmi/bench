@@ -2,23 +2,26 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `355f51c4`; the `$bench-what-next` batch is uncommitted.
-Specs: `byte-preserving-axi-foundation` and `single-build-serial-gate` remain staged.
-Gate: green verdict exists but is stale against the pending batch.
+Branch: `main` — HEAD `cfab082`, 1 dirty path, 11 unpushed commits
+Spec: `specs/axi-aggregate-empty-migration/spec.md` (Status: staged), `specs/axi-bounded-projection-migration/spec.md` (Status: staged), `specs/axi-carriers-and-registry/spec.md` (Status: staged), `specs/axi-compatibility-oracle/spec.md` (Status: staged), `specs/axi-outcome-action-migration/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `685bfe0` — stale, work tree `7bd4c59`
 
 ## State
 
-The pending drain adds FT199 for a recovery-aware branch-retirement coordinator
-and empties `capture/IDEAS.md`. The snapshot reported no pending retros, no open
-learnings, and no occurrence discrepancies. The unrelated
-`decisions/spec-build-review-gate-cadence.md` remains outside the batch.
+The `$bench-what-next` drain reconciled the just-retired
+`spec-ticket-handoff-contract` spec and drained its retro. Its recommendations
+merge into FT162 (already-owned promotion diagnostics), FT174 (ticket preflight
+and compound-row mutation inventory), FT107 (exact prospective-source binary
+guidance), and FT158 (one bounded post-review repair). The snapshot has no
+ideas, learnings, or occurrence discrepancies.
 
-The batch awaits reviewer approval. On approval, run the gate and commit the
-batch once; no spec retirement suffix applies.
+The approved batch updates `ROADMAP.md`, removes the retro, and refreshes this
+handoff. It needs one ordinary gated commit; no retirement suffix applies because
+the retirement already landed as `cfab0821`.
 
 ## Next command
 
-`$bench-shape-idea`
+`$bench-implement-spec`
 
 ## Shape
 

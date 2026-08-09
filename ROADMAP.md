@@ -380,6 +380,11 @@ a permanent regression test from a temporary overlay that proves a ticket's red.
 Withholding the receipt made the same valid mutation question get rediscovered
 and resolved twice. Source: the conformance-harness-scope retro, drained here.
 
+The spec-ticket handoff close makes a clean three-axis review the terminal
+semantic boundary: a deterministic promotion red may create one evidence-backed
+repair, but it does not restart open-ended review. Source: the
+spec-ticket-handoff-contract retro, drained here.
+
 **FT135 (MEDIUM, decision required) — let `bench link` converge unowned adapter
 destinations without claiming foreign bytes.** The shipped pre-push work exposed
 one residual policy boundary in the kit repository: with no manifest owner,
@@ -1133,6 +1138,11 @@ and 2 routinely write repro harnesses with no isolation guidance at all. Either
 the entry orientation names the worktree as the debug session's workspace or
 the isolation rule moves ahead of the first write; the reviewer decides whether
 that is `/bench-debug`'s clause or a general session-entry one.
+
+The spec-ticket handoff close adds one promotion-guidance detail: selected-binary
+freshness includes candidate Go test inputs, so a prospective promotion requires
+an exact prospective-source build rather than a binary built from `main`. Source:
+the spec-ticket-handoff-contract retro, drained here.
 
 **FT189 (MEDIUM) — an upstream `git worktree list` hang reaches every Bench
 worktree read.** `git worktree list --porcelain` hangs on a FIFO gitdir placed
@@ -1990,6 +2000,13 @@ lifecycle state before treating a dependency as blocking. Unchanged consumers
 remain integration surfaces; a path temporarily changed only for a required red
 still needs fence authority. Source: the repair-ticket-reslicing retro, drained
 here.
+
+The spec-ticket handoff close adds a read-only ticket preflight, so malformed
+`covers` annotations and contract or fence declarations fail before a
+path-scoped planning gate. `craft-tickets` also expands each independently
+removable member of a compound coverage row, including its retained-inventory
+mutation fixture, before the first breakdown review. Source: the
+spec-ticket-handoff-contract retro, drained here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
