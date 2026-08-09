@@ -12,8 +12,8 @@ Close accepted review finding `COV-001-hostile-fence-grammar` by registering sec
 
 ## Acceptance
 
-- [ ] [RH1] (covers COV-001 exact/glob/out-of-repo member) an anchor and fixture require an exact repo-relative file or path prefix and preserve the rule that a glob is never a fence declaration.
-- [ ] [RH2] (covers COV-001 empty/invalid member) an independently failing anchor and fixture require an empty or invalid fence section to remain incomplete.
+- [ ] [RH1] (covers SH3; repairs COV-001 exact/glob/out-of-repo member) an anchor and fixture require an exact repo-relative file or path prefix and preserve the rule that a glob is never a fence declaration.
+- [ ] [RH2] (covers SH3; repairs COV-001 empty/invalid member) an independently failing anchor and fixture require an empty or invalid fence section to remain incomplete.
 
 ## Red mutations
 
