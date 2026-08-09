@@ -3,7 +3,7 @@
 Blocked by: none
 Ownership fence: `internal/conformance/fixture_bite_test.go`
 Integration surfaces: hostile-fence fixture identities and diagnostics→`TestSpecTicketHandoffWorkflowFixturesAreComplete`
-Contracts: the existing aggregate consumes registered fixture names and exact diagnostics; type is a static required-fixture member, domain adds the two accepted hostile-fence repair fixtures, order follows the authored-spec clause before its empty/invalid refinement, absence fails the aggregate
+Contracts: registered hostile-fence fixture identities cross `tests/canary/workflow-guidance-anchors`→`internal/conformance/fixture_bite_test.go`; type is a static required-fixture member, domain adds the two accepted hostile-fence repair fixtures, order follows the authored-spec clause before its empty/invalid refinement, absence fails the aggregate
 Closure: RF1/exact-literal-membership, RF2/empty-invalid-membership
 
 ## What to build
