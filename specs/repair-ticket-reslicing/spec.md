@@ -97,12 +97,12 @@ ticket lands.
 
 ## Testing decisions
 
-- Test the completed candidate at the kit-content seam through
-  `TestRootConformance`. That run consumes a complete source tree and emits the
-  diagnostic owned by each missing guidance fact. Exercise finished-candidate
-  omissions and additive contradictions through the established
-  `fixture_bite_test.go` mutation table that drives the same workflow-anchor
-  evaluator.
+- Test the completed candidate at the kit-content seam through the registered
+  `docs-currency-workflow` conformance owner. The focused in-process test invokes
+  that production owner directly against each mutated guidance subject and emits
+  the diagnostic owned by the missing fact. Exercise finished-candidate omissions
+  and additive contradictions through the established `fixture_bite_test.go`
+  mutation table instead of the retired selected-root subprocess route.
 - Prove the oracle bites with the existing workflow-anchor literal-mutation
   harness in `internal/conformance/fixture_bite_test.go`. Its table reads the
   canonical guidance source, applies one deletion, swap, or additive
@@ -124,7 +124,7 @@ ticket lands.
 
 ### Seam diagram
 
-    trigger: focused root conformance or literal-mutation test
+    trigger: focused registered-owner literal-mutation test
         │
         ▼
     canonical kit tree ──▶ [ workflow-anchor conformance behavior ] ──▶ exact diagnostic / exit
@@ -145,7 +145,7 @@ ticket lands.
 | RO3 | 2 | `/bench-implement-spec` does not mandate exactly one repair ticket. | workflow-guidance conformance seam | red at build: add the old singular one-ticket mandate while leaving the positive command prose and skill intact; its `ForbidInSection` mutation row must emit the singular-mandate diagnostic | Intact positive prose cannot hide a contradictory command-local override of the skill's plural result. |
 | RO4 | 2 | Every ticket in a repair chain is assigned, checkpointed, and integrated through the ordinary lifecycle, never through synthesized Git plumbing. | workflow-guidance conformance seam | red at build: three literal-mutation rows independently omit `assign`, `checkpoint`, and `integrate`; a fourth adds a chain-local raw-Git checkpoint route while preserving all public operation tokens; each must emit its exact missing-member or synthesized-plumbing diagnostic | Exercising every lifecycle member plus the token-preserving hostile route prevents “landed” from meaning an ad hoc commit or partial transition. |
 | RO5 | 2 | The terminal repair ticket is the receipt's proceed condition; a landed non-terminal prefix cannot authorize refresh. | workflow-guidance conformance seam | red at build: add permission to refresh after the first repair ticket lands while leaving the terminal-only clause intact; its `ForbidInSection` mutation row must emit the premature-refresh diagnostic | The additive contradiction leaves a valid chain, receipt, and positive terminal clause in place but exposes the partial-state error this behavior must forbid. |
-| RO6 | 2 | After the complete repair chain lands, the original blocked assignment refreshes with the original validated debug receipt. | workflow-guidance conformance seam | red at build: replace the original receipt or original assignment in the completed refresh prose, then run focused root conformance for each independently failing identity | This pins both lifecycle identities so a new receipt or replacement assignment cannot silently become the authorization source. |
+| RO6 | 2 | After the complete repair chain lands, the original blocked assignment refreshes with the original validated debug receipt. | workflow-guidance conformance seam | red at build: replace the original receipt or original assignment in the completed refresh prose, then run the focused literal-mutation test through the registered `docs-currency-workflow` owner for each independently failing identity | This pins both lifecycle identities so a new receipt or replacement assignment cannot silently become the authorization source. |
 
 ### Edge inventory
 
