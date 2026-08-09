@@ -34,6 +34,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made `/bench-debug` distinguish the regression-test seam from the edit owner:
+  enumerate relevant callers, fix a uniform invariant once at its narrowest shared
+  owner, keep the test at the highest observable seam, and report paths with no
+  honest shared owner as an architecture finding.
 - Made spec authoring trace bootstrap authority from the raw OS entrypoint and
   require every executable hop to authenticate its successor before launch.
 - Made a validated debug receipt's required fence the maximum repair-reslicing

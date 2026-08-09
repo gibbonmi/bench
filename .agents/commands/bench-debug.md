@@ -74,6 +74,14 @@ seam exists, that is itself the finding** — note it; the architecture is preve
 the bug from being locked down. If a seam exists: repro → failing test → fix → green
 → re-run the full Phase 1 loop.
 
+The regression-test seam and the edit owner may differ. Before editing, enumerate
+the relevant callers and trace the affected paths to the narrowest shared function
+or module where the invariant is uniform. Fix it once there; keep the regression
+test at the highest seam where the reported failure remains observable. A shared
+helper whose callers require different behavior does not own that invariant. If
+the paths have no honest shared owner, record the tangled ownership as the Phase 6
+architecture finding instead of patching every caller.
+
 ## Phase 6 — close out
 
 Done means: the Phase 1 loop no longer reproduces, the regression test passes (or its
