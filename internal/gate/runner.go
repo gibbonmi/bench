@@ -7,6 +7,7 @@ package gate
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -18,9 +19,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/gibbonmi/bench/internal/canary"
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 const processGroupCancelGrace = 2 * time.Second
@@ -124,14 +122,7 @@ func (r phaseResult) green() bool {
 	return r.Code == 0 && !r.Skipped && r.SkippedBy == ""
 }
 
-func runPhases(ctx context.Context, root string, phases []Phase, mode phaseMode, stdout, stderr io.Writer) int {
-	if mode == innerMode {
-		// The inner gate grades a canary's deliberately mutated tree, so its skips
-		// describe that fixture rather than the host. It launches its phases with no
-		// skip log at all — gateEnv strips any value the outer run put in the
-		// environment — which keeps the fixture's lines out of the outer tally.
-		return runPhasesSequential(ctx, root, phases, stdout, stderr)
-	}
+func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
 	skipLog, cleanup, err := newSkipLog()
 	if err != nil {
 		fmt.Fprintf(stderr, "gate: cannot open the capability skip log: %v\n", err)
@@ -140,24 +131,6 @@ func runPhases(ctx context.Context, root string, phases []Phase, mode phaseMode,
 	}
 	defer cleanup()
 	return runPhasesSerial(ctx, root, withSkipLog(phases, skipLog), skipLog, stdout, stderr)
-}
-
-func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
-	results, cancelled := schedule(ctx, root, phases, func(Phase) (io.Writer, io.Writer, func()) {
-		return stdout, stderr, func() {}
-	})
-	if cancelled {
-		reportStragglers(results, stderr)
-		return 130
-	}
-	for _, result := range results {
-		if result.Code != 0 {
-			fmt.Fprintln(stderr, "gate: red")
-			return 1
-		}
-	}
-	fmt.Fprintln(stdout, "gate: green")
-	return 0
 }
 
 func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
@@ -407,28 +380,18 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		argv = append([]string{resolved}, argv[1:]...)
 	}
 
-	if phase.Name == conformancePhaseName {
-		// The run boundary is here, not at the read below: clearing first is what makes
-		// the print answer for this run, so a file some earlier gate, a killed run, or a
-		// different invocation left in the git dir cannot be printed as if it were ours.
-		_ = registry.ClearTiming(root)
-	}
-
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
 	if phase.Dir != "" {
 		cmd.Dir = phase.Dir
 	}
+	var observed bytes.Buffer
 	cmd.Stdout = stdout
+	if len(phase.ExpectedRuns) != 0 {
+		cmd.Stdout = io.MultiWriter(stdout, &observed)
+	}
 	cmd.Stderr = stderr
 	cmd.Env = mergeEnv(gateEnv(), phase.Env)
-	closeAuthority, err := authorizeCanarySelection(cmd, phase)
-	if err != nil {
-		result.Code = 1
-		result.StartErr = err
-		return result
-	}
-	defer closeAuthority()
 	run := runProcessGroupCommand(ctx, cmd)
 	result.Interrupted = run.Cancelled
 	if run.StartErr != nil {
@@ -445,32 +408,14 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		return result
 	}
 	result.Code = run.Code
-	printConformanceTiming(root, phase, stdout)
+	for _, name := range phase.ExpectedRuns {
+		if strings.Contains(observed.String(), "=== RUN   "+name) {
+			continue
+		}
+		fmt.Fprintf(stderr, "%s test did not run: %s\n", phase.Name, name)
+		result.Code = 1
+	}
 	return result
-}
-
-func authorizeCanarySelection(cmd *exec.Cmd, phase Phase) (func(), error) {
-	if len(phase.canaryFamilies) == 0 {
-		return func() {}, nil
-	}
-	reader, writer, err := os.Pipe()
-	if err != nil {
-		return func() {}, err
-	}
-	selection := strings.Join(phase.canaryFamilies, ",")
-	if _, err := io.WriteString(writer, selection); err != nil {
-		reader.Close()
-		writer.Close()
-		return func() {}, err
-	}
-	if err := writer.Close(); err != nil {
-		reader.Close()
-		return func() {}, err
-	}
-	cmd.ExtraFiles = append(cmd.ExtraFiles, reader)
-	fd := 3 + len(cmd.ExtraFiles) - 1
-	cmd.Env = mergeEnv(cmd.Env, []string{canary.FamilySelectionAuthorityEnv + "=" + fmt.Sprint(fd)})
-	return func() { reader.Close() }, nil
 }
 
 // usableDir reports why a phase's working directory cannot be entered, or nil when it
@@ -514,22 +459,6 @@ func envKey(entry string) string {
 		return entry[:idx]
 	}
 	return entry
-}
-
-// printConformanceTiming emits the conformance driver's per-check timing lines. The
-// phase runs under non-verbose `go test`, which swallows a passing test binary's own
-// stdout, so the file the driver leaves under the graded root's git dir is the only
-// way that timing reaches gate output. Printing here covers both runners, both
-// verdicts, and both modes — the canary's vacuity guard grades inner-mode output, so
-// an outer-only print would leave it blind to the format. A root with no git dir or
-// no timing file prints nothing at all.
-func printConformanceTiming(root string, phase Phase, stdout io.Writer) {
-	if phase.Name != conformancePhaseName {
-		return
-	}
-	for _, line := range registry.ReadTimingLines(root) {
-		fmt.Fprintln(stdout, line)
-	}
 }
 
 // phaseToolAbsent reports that phase is optional and the tool it invokes is not on this

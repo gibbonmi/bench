@@ -1,11 +1,8 @@
 package gate
 
-// The four toolchain steps whose argv is policy rather than a plain command, behind
-// one plumbing subcommand so a phase manifest stays declarative. Each of the four
-// exists here because the bare command cannot red on its own: `gofmt -l` exits 0
-// while naming the files it rejects, the test step's package set is exclusion policy,
-// a `-run` filter that matches nothing exits 0, and the filtered conformance suite
-// carries a skip pattern whose single source is the registry.
+// The two toolchain steps whose argv is policy rather than a plain command. Gofmt
+// belongs to the dev phase table; the filtered core test set belongs only to the
+// explicit ship workflow.
 
 import (
 	"bytes"
@@ -26,7 +23,7 @@ import (
 // raceTests is the gate view of the authoritative race-test registry.
 var raceTests = racetests.Tests
 
-const gateGoUsage = "usage: bench gate-go <gofmt|test|race|conformance-suite> [root]"
+const gateGoUsage = "usage: bench gate-go <gofmt|test> [root]"
 const disableBuildVCS = "-buildvcs=false"
 const runBinaryArgvToken = "<bench-run-binary>"
 
@@ -56,20 +53,14 @@ func GateGoCommand(args []string, stdout, stderr io.Writer) int {
 		return gofmtStep(root, stdout, stderr)
 	case "test":
 		return coreTestStep(root, stdout, stderr)
-	case "race":
-		return raceStep(root, stdout, stderr)
-	case "conformance-suite":
-		return conformanceSuiteStep(root, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "bench gate-go: unknown step %q\n%s\n", step, gateGoUsage)
 		return 2
 	}
 }
 
-// GateGoArgv is the release-only entry for one of these steps. Ordinary phase tables use
-// gatePhaseGoArgv so they execute the run owner's selected binary without compiling one.
-// The release workflow retains an independent `go run` because it grades a distinct
-// release subject. An empty kit leaves the working directory to the caller.
+// GateGoArgv is the release-only entry for the core test step. The release workflow
+// retains an independent `go run` because it grades a distinct release subject.
 func GateGoArgv(kit, step, root string) []string {
 	argv := []string{"go"}
 	if kit != "" {
@@ -99,20 +90,6 @@ func CoreTestPackages(root string, tier registry.Tier) ([]string, string, error)
 		packages = append(packages, pkg)
 	}
 	return packages, combined, nil
-}
-
-// ConformanceSuiteArgv is the argv for the filtered conformance run, the one that
-// keeps the conformance package's own suite in the oracle after the core enumeration
-// drops it. It is nil for a root that declares no conformance entry point — linked
-// repos and the minimal fixtures with a go.mod — where the invocation would report a
-// failure about a suite that was never there. The declaration, not the directory, is
-// what the probe asks for: any repo may keep a package at that path, and only the entry
-// point marks the one this run implements.
-func ConformanceSuiteArgv(root string) []string {
-	if !declaresTest(conformancePackageDir(root), registry.RootConformanceTest) {
-		return nil
-	}
-	return []string{"go", "test", "-count=1", "./" + registry.ConformancePackage, "-skip", registry.InnerSkipPattern()}
 }
 
 // gofmtStep reds on the files `gofmt -l` names, which it cannot do on its own: the
@@ -161,38 +138,30 @@ func coreTestStep(root string, stdout, stderr io.Writer) int {
 	return runStep(root, append([]string{"go", "test", "-count=1"}, packages...), stdout, stderr)
 }
 
-// raceStep reds when a target test did not execute, not only when one failed: the
-// `-run` filter exits 0 when it matches nothing, so each `=== RUN` line separates a
-// pass from a test that was never there. Only stdout is captured,
-// where `go test -v` writes that line: tapping both streams would hand exec.Cmd two
-// distinct writers over one buffer, and its per-stream copying goroutines would race
-// on it.
-func raceStep(root string, stdout, stderr io.Writer) int {
-	var seen bytes.Buffer
-	argv := []string{"go", "test", "-race", "-count=1", "-v"}
-	for _, test := range raceTests {
-		if !contains(argv, test.PackagePath) {
-			argv = append(argv, test.PackagePath)
-		}
-	}
-	argv = append(argv, "-run", raceTestFilter())
-	code := runStep(root, argv, io.MultiWriter(stdout, &seen), stderr)
-	for _, test := range raceTests {
-		if strings.Contains(seen.String(), "=== RUN   "+test.Name) {
-			continue
-		}
-		fmt.Fprintf(stderr, "race test did not run: %s %s\n", test.PackagePath, test.Name)
-		code = 1
-	}
-	return code
-}
-
 func raceTestFilter() string {
 	names := make([]string, 0, len(raceTests))
 	for _, test := range raceTests {
 		names = append(names, regexp.QuoteMeta(test.Name))
 	}
 	return "^(" + strings.Join(names, "|") + ")$"
+}
+
+func raceTestNames() []string {
+	names := make([]string, 0, len(raceTests))
+	for _, test := range raceTests {
+		names = append(names, test.Name)
+	}
+	return names
+}
+
+func raceDriverArgv() []string {
+	argv := []string{"go", "test", "-race", "-count=1", "-v"}
+	for _, test := range raceTests {
+		if !contains(argv, test.PackagePath) {
+			argv = append(argv, test.PackagePath)
+		}
+	}
+	return append(argv, "-run", raceTestFilter())
 }
 
 func contains(values []string, want string) bool {
@@ -211,14 +180,6 @@ func declaresRaceTest(root string) bool {
 		}
 	}
 	return false
-}
-
-func conformanceSuiteStep(root string, stdout, stderr io.Writer) int {
-	argv := ConformanceSuiteArgv(root)
-	if argv == nil {
-		return 0
-	}
-	return runStep(root, argv, stdout, stderr)
 }
 
 // runStep executes one step's argv in root, streaming the tool's own output. The argv

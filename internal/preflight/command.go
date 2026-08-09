@@ -51,9 +51,8 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 		return 1
 	}
 	results := r.run(ctx, focused)
-	status := terminalStatus(results)
-	scope := scopeFor(focused)
-	run := RunEvidence{Mode: mode, Scope: scope, Identity: r.identity, Profile: profile, Phases: results}
+	decision := Decide(DecisionInput{Mode: mode, Profile: profile, Focused: focused, Results: results})
+	run := RunEvidence{Mode: mode, Scope: decision.Scope, Identity: r.identity, Profile: profile, Phases: results}
 	finalizeErr := FinalizeEvidence(ctx, root, run)
 	if err := finalizeErr; err != nil {
 		var intentErr *releaseIntentError
@@ -72,12 +71,9 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 	for _, result := range results {
 		fmt.Fprintf(stderr, "release-preflight: %s %s\n", result.Name, result.Status)
 	}
-	if status != StatusGreen {
-		for _, result := range results {
-			if result.Failure != nil {
-				emitFailure(stderr, *result.Failure)
-				break
-			}
+	if !decision.Accepted {
+		if decision.Failure != nil {
+			emitFailure(stderr, *decision.Failure)
 		}
 		return 1
 	}

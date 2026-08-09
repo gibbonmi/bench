@@ -56,12 +56,8 @@ branch-agnostic. This line is only the binding.)
   (`<git-dir>/bench-last-gate`, written durably by gate execution) — never a cold gate run. The
   contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
-  pointing at `/bench-what-next`. A stale gate softens to `reduced-scope drift` /
-  `re-run when convenient` only when the gate's reduced-scope declaration confines
-  every changed path — the same declaration the gate's stripped-worktree construction reads, rendered
-  once in the Gate section's reduced-scope table, so the board's advice and the
-  oracle's behavior cannot name different files; any mixed or untrusted diff fails
-  closed to the strong stale row. Its severity-1 git
+  pointing at `/bench-what-next`. A stale exact verdict always remains the strong stale
+  row; there is no path-based reduced-scope softening. Its severity-1 git
   signal reports dirty paths from the named/current checkout while aggregating
   unpushed commits and unique local branches across the repository; severity-2 intent
   joins the shared common-directory ledger, compact by default and expanded by `--all`.
@@ -183,200 +179,52 @@ reviewer decision the FT76 spec deliberately left open.
 
 ## Gate (`.bench/gate.sh`)
 
-```
-.bench/gate.sh
-```
+The dev gate answers one question for the exact current subject: does the complete kit
+work from this tree? A non-reused run owns one selected Bench executable built through
+`scripts/go-build.sh`, passes its cleaned absolute path as `BENCH_RUN_BINARY`, and
+removes the private build after every terminal outcome. Ordinary commands route through
+the production Go `Command` registry; wrapper, executable identity, freshness, and
+process behavior remain at the bounded system seam.
 
-The oracle for a kit runs in two tiers. The **dev tier** — `bench gate`, the
-shift loop, `/bench-final-check`, and the pre-push hook — answers one question:
-does the kit work from the tree? It runs the layers below (all green today).
-The **ship tier** — `bench prep-release` — carries the release-evidence checks,
-described after the layers. Every non-reused direct or prospective dev-tier run
-owns one private temporary host Bench executable built through
-`scripts/go-build.sh`. The owner passes its cleaned absolute path as
-`BENCH_RUN_BINARY` to the shell entry, freshness check, phase table, contract and
-conformance helpers, stripped subject, and nested canary gates. Nested consumers
-validate and reuse that path; they have no build fallback. Once all descendant
-processes have stopped, the owner removes the private directory on every terminal
-outcome, so no run artifact is available to a later process. The `gate-phases`
-plumbing subcommand runs every outer and inner phase table serially in stable
-topological order. Primary and stripped-subject phases share that one schedule;
-output shape, dependent and optional skips, run-all-and-aggregate red behavior,
-and process-group cancellation are unchanged. A sibling knob,
-`BENCH_REQUIRE_CAPABILITIES=1`,
-turns a nonzero capability-skip count red; absent, or set to anything else, the
-`capability-skips` rows stay informational, because a developer's host legitimately
-lacks capabilities and an unconditional red would make the gate unusable locally.
-Both release workflows wire it on. An empty or legacy-flat canary run exercises
-every non-canary phase; a nested fixture exercises only the phase its family
-binds, which today means conformance. A `behavior-owned` fixture nests no gate
-at all — it is graded by the compiled test binary of the one contract package
-that owns its EXPECT, invoked against the fixture's tree. Canary EXPECT matching
-is substring-based against that run's output, so the byte-shape of whichever
-runs — inner gate or contract binary — is load-bearing:
+The kit phase table is exactly:
 
-1. **Go root conformance** — the conformance phase runs
-   `go test -count=1 ./internal/conformance -run '^TestRootConformance$'` with
-   `BENCH_CONFORMANCE_ROOT` set to the tree under grade. That suite owns parse and
-   validity checks, JSON validity, executable git modes, package-file resolution,
-   npm dry-run package shape, generated skills-index equality, Codex adapter
-   metadata, Claude skill mirroring, shared-rule single-sourcing, stale command
-   references, token-diet placement, workflow anchors, line-routing enforcement,
-   compiled-core build/vet/test/cross-compile checks, release-workflow structure,
-   static guard-header manifests, the profile's hostile-input checklist anchor,
-   acceptance-coverage map validation, no bare `t.Skip`/`t.Skipf`/`t.SkipNow`
-   outside the capability helper package, every subcommand entry point recorded in
-   the routing registry, and no numeric duration literal passed to the marker-wait
-   helper's slow-leg deadline. Ordinary dev gates resolve one content identity per
-   registered check and run the always-on authorization checks plus only the ordinary
-   checks whose identities lack valid retained evidence. The selected ordinary set stays
-   in registry order and shares this one process; output, timings, and the durable verdict
-   name every executed check and the exact identity and authorship time covering every
-   inherited check. `bench gate --fresh`, prospective execution, and ship ignore these
-   reusable slots and execute their complete applicable inventories.
-2. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
-   dependency; upgrades the shell lint automatically once present.
-3. **Managed-asset lifecycle behavior** — the gate runs link, relink, and unlink
-   against throwaway repos to prove fresh installs, transactional rollback, manifest
-   reconciliation across upgrade and downgrade, modified and stale asset handling,
-   repeated lifecycle cycles, existing `AGENTS.md` preservation, same-name conflicts,
-   Codex/Claude hook adapters, shared hooks, and default copy mode.
-4. **Runtime and behavior contracts** — the remaining shell fragments exercise
-   version routing, platform-package generation, runtime hooks, shift/worktree
-   behavior, doctor/postinstall/status/roadmap behavior, and AXI query-surface
-   behavior through throwaway fixture repos.
-5. **AXI query-surface contracts** — the query subcommands' hybrid-contract half:
-   TOON-shaped stdout, definitive empty states, structured stdout errors, honest
-   exit codes, and each guard's aggregation behavior, exercised in throwaway
-   fixture repos.
-6. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
-   `tests/canary/` and asserts each goes red with its targeted error substring. Proves
-   the checks above still *bite*: a check rotted into an always-pass fails here. This
-   is the gate guarding the gate. A nested fixture keeps the real gate entry path but
-   runs only the phase that owns its failure, avoiding unrelated whole-gate work,
-   while the baseline that rejects vacuous EXPECTs carries no phase pin and so still
-   exercises every inner phase. A
-   `behavior-owned` fixture nests nothing: its owning contract package is compiled
-   once per package group and that binary is invoked per fixture tree.
-   An EXPECT for a `behavior-owned` fixture is never checked for mutation-specificity:
-   its contract group's empty-tree baseline is only a collision screen against
-   infrastructure noise, so a generic banner that any failure prints passes it forever.
-   Write the EXPECT as the owning contract test's own failure message for the specific
-   mutated fact; what the comparison does and does not establish is stated on the
-   baseline comparison in `internal/canary`.
-   Fixtures hide dot-dirs behind a `dot-` prefix (e.g. `dot-claude`) so the harness
-   doesn't load fixture skills as real ones; the canary restores them at run time.
-   The sweep's aggregate concurrency is budgeted, not left to either factor: every
-   run it makes — inner gate or contract binary — is invoked with an explicit
-   `GOMAXPROCS` equal to
-   `bounds.CanaryInnerWidth`, stripped-then-set so an inherited value cannot leak
-   past the cap, and the worker pool derives as `runtime.GOMAXPROCS(0)` divided by
-   that width, floored at one and capped at the fixture count. There is no
-   Bench-specific knob — `GOMAXPROCS=8 bench gate` is the operator lever, and it
-   shrinks the whole canary budget. The tripwire decision is recorded in
-   `docs/adr/0001-working-tree-gate-tripwire.md`.
-
-**The reduced-scope declaration.** The kit root always runs the full phase
-table — there is no whole-changeset reduced run (reviewer decision, 2026-08-03),
-and a legacy on-disk reduced verdict fails the loader's exact-field-set
-validation, refusing as an invalid cache record and forcing a fresh run. The
-declaration itself survives: it bounds the stripped-worktree construction below
-and feeds the status board's softening. For dev lifecycle entry, an exact-tip
-per-component partial green is whole-tree green when the gate package
-revalidates the inherited evidence for every skipped component (the
-per-component ancestor lookup is content-addressed with no freshness bound —
-the retained full green serves until the component's input identity moves,
-because the components whose inputs moved run fresh either way; reviewer
-decision, 2026-08-01). This does not make a narrow verdict
-reusable evidence for a later run, and it does not relax the ship tier's full-run
-precondition. The declaration is single-sourced in the gate package
-(`gate.ReducedScope()`) and rendered here; the scope-binding conformance check
-cross-checks this table against it, so drift between the two turns the gate red:
-
-| reduced scope | declared |
+| phase | authoritative argv |
 |---|---|
-| directories | `capture/`, `decisions/`, `specs/` |
-| files | `.bench-notes.md`, `ROADMAP.md` |
-| excludable phases | `gofmt`, `vet`, `test`, `race`, `contract`, `shellcheck`, `canary` |
-| included phases | `conformance`, `conformance-suite` |
+| `gofmt` | `bench gate-go gofmt <root>` |
+| `vet` | `go -C <root> vet ./...` |
+| `test` | `go test -count=1 ./...` |
+| `race` | one `go test -race -count=1 -v` invocation derived from `internal/racetests.Tests` |
+| `system` | `go test -count=1 -tags=system ./internal/systemtest` |
+| `shellcheck` | the stable shell-file inventory, optional when shellcheck is absent |
 
-Membership is location: a file entry matches byte-for-byte, and a directory entry
-covers every descendant, so a file that lands under `capture/`, `decisions/`, or
-`specs/` tomorrow is declared by construction. All three directories are entirely
-formatted documents whose graders are the included phases — `specs/` joined on exactly
-that ground (reviewer decision, 2026-08-01), and `decisions/` joins because conformance
-grades active maps and their owned research assets are documents (reviewer decision,
-2026-08-02). `.agents/` is deliberately absent: its Markdown is a real input to the
-contract and canary components (lifecycle contracts link the kit's asset tree, and
-canary fixtures seed from it), so a guidance edit rides the per-component input
-declarations below — the toolchain components skip, the consumers run — rather than
-joining the declaration itself, whose stripped-worktree enforcement would refuse
-it (reviewer decision, 2026-08-02). The run owner builds before phase selection,
-so no build phase belongs to either list. Excludability is enforced by
-construction, to the construction's exact width: every full gate on the kit's own
-root runs the excludable phases against a stripped worktree the declared paths are
-absent from (a root that is not the kit runs unsplit — the declaration is the
-kit's own, and a linked repo never made it), so an excludable phase that hard-fails
-on a missing declared file, or degrades into an environment-kind skip — the kit's
-idiom for an absent subject file — reds the next full gate and moves to the
-included set. The construction proves nothing beyond those two signatures. A phase
-that reads a declared path but stays green with the file gone is invisible to it,
-and a mis-filed file is graded only by the included phases: a `.go` file committed
-under `capture/`, `decisions/`, or `specs/` is seen by no excludable phase at all, and the
-included phases do not grade Go formatting, so a full gate can pass a tree that
-the same file outside the declaration would have redded. The declared directories
-hold formatted documents; code does not belong in them. Narrowing is selected by
-the changeset, never by a flag — per-component scoping is the only narrowing the
-kit root takes; `bench gate --fresh` is the escape to a whole-tree run.
+Go owns package scheduling inside the one ordinary test driver. There is no separate
+contract or conformance dev driver, per-package loop, nested Go test, inner canary gate,
+component partition, or stripped-subject phase schedule. The race runner verifies every
+registry sentinel executed. The tagged system package has one `TestMain` owner, at most
+three disposable repositories, one selected executable identity ledger, teardown on
+green/red/interrupt/timeout, and exactly one stripped-distribution journey.
 
-**Per-component input declarations.** Beneath the reduced-scope declaration's
-floor, each evidence-skipped component declares its own input set, so a
-changeset touching only one component's inputs runs that component and skips
-the rest on retained ancestor evidence rather than switching every excludable
-phase together. The declarations are single-sourced in the gate package
-(`gate.ComponentInputSources()`) and rendered here; the per-component
-conformance check cross-checks this table against them, so drift between the
-two turns the gate red:
+The six command decision domains—gate, adopt, preflight, spec-build lifecycle, canary,
+and freshness—consume immutable values in process. Their ordinary tests create no
+repositories and start no operating-system processes. `internal/git` owns the one
+ordinary repository adapter; `internal/gate` owns the one ordinary controlled process
+group adapter.
 
-| component | declares | provenance |
-|---|---|---|
-| gofmt | `module-test-closure`, `manifest` | `derived` |
-| vet | `module-test-closure`, `manifest` | `derived` |
-| test | `module-test-closure`, `manifest` | `derived` |
-| race | `module-test-closure`, `manifest` | `derived` |
-| conformance-suite | `module-test-closure`, `manifest` | `derived` |
-| contract | `module-test-closure`, `manifest`, `consumer-document-inventory` | `derived` |
-| shellcheck | `shellcheck-argv` | `derived` |
-| canary | `hand-declared` | `hand-written` |
+Canary fixtures are immutable inputs to registered conformance checks. Each retained
+fixture has exactly one check owner; its ordinary mutation test calls that owner directly,
+requires the fixture-specific red, restores the fixture subject, and requires that red to
+disappear. The top-level `bench canary` command validates and aggregates the complete
+owner inventory without starting a gate or Go subprocess. One tagged system journey
+proves the selected executable reaches that production dispatcher.
 
-`derived` means the component's inputs are computed from a named derivation on
-every resolution — the module-wide `go list -deps -test ./...` closure plus the
-module manifest for the toolchain and contract components (never the binary's
-narrower `./cmd/bench` closure, which excludes the packages they grade), the
-documents resolved from the consumer inventory added for `contract` because it
-executes the selected binary and grades managed-asset lifecycle behavior,
-and shellcheck's own argv enumeration for `shellcheck` — so a hand-copied path
-list can never survive as the declaration. `canary` is the registry's one
-`hand-declared` entry: `internal/canary/`, `tests/canary/`, `.agents/` (its
-fixtures seed from the kit tree, so guidance edits move sweep expectations), and
-the wrapper scripts its phase execs, named directly because it has no derivable
-source.
-
-**Per-check conformance inputs.** The lower conformance registry is the single source for
-each check's name, tier, subject, executable binding, declared input source, and canary
-ownership. The gate resolves those declarations against its exact Git subject; uncertain
-checks use the complete subject as an explicit catch-all. Exact-file absence differs from
-a present empty file, and a declared symlink contributes its canonical in-repository target
-content. Broken, escaping, or unavailable targets widen execution. Every identity also
-binds the shared conformance implementation closure and the invocation schema, so drift in
-selection machinery cannot inherit an older green. A changed owning canary family moves its
-check identity; a changed bound check implementation runs that family, while shared or
-unattributable conformance implementation drift runs every conformance canary family.
+The conformance registry remains the single source for check order, subject, input
+derivation, implementation, and canary family ownership. This table is the profile's
+current-state advertisement of its non-meta input bindings:
 
 | conformance check | input source |
 |---|---|
 | `kit-compliance` | `catch-all` |
-| `canary-inner-compliance` | `catch-all` |
+| `canary-fixture-compliance` | `catch-all` |
 | `load-validity-metadata` | `catch-all` |
 | `skills-index-command-adapters` | `catch-all` |
 | `docs-currency-workflow` | `catch-all` |
@@ -399,64 +247,23 @@ unattributable conformance implementation drift runs every conformance canary fa
 | `skip-ownership` | `go-source` |
 | `decision-map-integrity` | `decision-documents` |
 | `example-agreement` | `catch-all` |
-| `component-honesty-prose` | `benchkit-profile` |
-| `contract-capture-reads` | `go-source` |
 | `injected-port-registry` | `go-source` |
 
-The ordered outer selector is authored only by gate phase construction after ambient
-singular and plural selectors are stripped. The singular selector remains the canary-owned
-inner control. Unknown, duplicate, tier-invalid, out-of-order, incomplete, or overlapping
-partitions red and widen rather than producing empty green. Meta checks never retain slots;
-a green aggregate authors only executed ordinary slots, a red retires only those it
-executed, and interruption authors none.
+A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
+current exact green; partial/component and reduced-scope records are legacy input classes
+that fail closed and are never authored. Prospective execution uses the same complete
+phase architecture. A stale exact verdict stays stale rather than being softened by path
+classification.
 
-Declaration-honesty width, stated with the same candor the stripped-worktree
-construction prose carries above: the stripped-worktree construction proves
-capture-surface blindness only. For these per-component declarations, honesty
-rests on mandatory derivation plus this binding, and a component that reads an
-undeclared non-capture path skips wrongly — that residual is recorded here,
-not hidden. `canary`'s row carries the reviewer's 2026-08-01 narrowing as its
-own accepted gap: the published binary's digest is excluded from its declared
-inputs, so two changes graded separately may land together with the canary
-never run against their combined tree. `bench gate --fresh` and the ship tier
-are what re-prove the tripwire in that case, not a component-scoped run. One more
-recorded residual, accepted at the build's review: the slot and attestation
-field-set slices exist for the record-class family registry only, so a field
-added to a record struct without updating its slice is unobservable — the
-registry's disjointness check cannot see a collision a stale slice hides.
+`BENCH_REQUIRE_CAPABILITIES=1` makes capability skips fatal. Without it, capability
+rows remain informational because a developer host may legitimately lack optional
+facilities. The release workflows enable strict capability posture.
 
-The **ship tier** — `bench prep-release`, maintainer-run once per release —
-carries what the dev tier deliberately does not run: the release-evidence probe
-(the four-platform artifact matrix build, the reproducibility rebuild, and a
-real `release-preflight.sh --mode verify`), the cross-compile matrix
-(`-tags stress`), the release-only package suites (`internal/preflight`,
-`internal/releaseevidence`, `internal/publication` — excluded from the dev
-tier's inner `go test`), and the ship-tier canary fixtures. It refuses to run
-without a current dev-green verdict for the exact tree, so a dev-tier failure
-reds the ship tier too — and a partial verdict is refused the same way, with the
-refusal naming the skipped components and pointing at `bench gate --fresh`,
-because a partial verdict graded only the components whose inputs moved, never
-the whole tree a release answers for. A legacy reduced record fails the loader's
-exact-field-set validation and refuses as an invalid cache record, forcing a
-fresh run. Exit 0 is ship green, with evidence at
-`dist/preflight/release-index.json` and `dist/artifacts`.
-
-**What dev green claims — and does not.** Dev green means the kit works from
-the tree: every static conformance check (including the static half of the
-release-preflight check), the lifecycle, contract, and AXI phases, and the
-dev-tier canary passed. It does not claim the release artifacts build,
-reproduce, or pass preflight verify — those are ship-tier facts, restaged to
-run once per release instead of once per commit, with no check losing
-authority. The dev contract suites drive `scripts/build-artifacts.sh` under
-the shared-build-cache opt-in, so their green proves the generator's logic —
-the planned artifact set, idempotently, with reproducible pins — not
-byte-reproducibility across independent builds, which stays with the ship
-tier above. Neither tier grants publish authority: the publish path's
-`VerifyPublishAuthority` refusal demands a publish-mode index that only the
-release workflow's own preflight produces, while `prep-release` emits
-verify-mode evidence — a rehearsal, never a substitute for that boundary.
-
-The gate file lives outside `package.json` `files[]`, so it never ships to consumers.
+The ship tier remains `bench prep-release`, run once per release. It requires a current
+exact dev-green verdict and owns release-evidence verification, cross-platform artifacts,
+reproducibility, stress/cross-compile coverage, and publication/preflight rehearsal. Dev
+green proves the complete branch-native source architecture; it does not grant publish
+authority or claim release artifacts were reproduced.
 
 ## Lines (model + effort routing)
 
@@ -559,20 +366,11 @@ escalation.
   propagates it through every ordinary child, and removes it after teardown.
 - Never mutate the repository while a gate is running. The gate binds its
   verdict to the starting subject and rejects a run whose subject changes.
-- `internal/canary`'s own tests run nested. The conformance phase runs the kit's
-  `go test` over core packages as a subprocess inheriting the phase environment,
-  so inside a fixture's inner gate they run at `GOMAXPROCS=2`, where the derived
-  worker bound is one. A concurrency expectation keyed to machine width does not
-  merely fail there — it deadlocks until the phase timeout turns conformance red.
-  Key every such expectation to the derived bound, and gate the ones that need
-  real overlap through `capability.CPU`. Prove both directions before believing
-  it: `GOMAXPROCS=2 go test -timeout 120s ./internal/canary` green with the
-  expected `bench-skip kind=capability class=cpu` lines under `-v`, and the same
-  run at full width green with none. A deleted assertion and an honest skip both
-  look green; only the emitted line tells them apart.
-- Never stop a gate by killing only its shell wrapper. Signal `gate-run`, which
-  owns teardown of the gate script's process group, so canary and nested
-  `gate-phases` children cannot outlive the run.
+- Canary mutation tests are ordinary in-process checks. Do not add a gate, wrapper,
+  `go test`, or `go run` constructor to a fixture owner; the architecture census treats
+  that as a regression.
+- Never stop a gate by killing only its shell wrapper. Signal `gate-run`, which owns
+  teardown of the gate script's process group and descendants.
 - Nothing under `.claude/` is a copy. `.claude/commands` is a git-tracked
   symlink to `../.agents/commands`; `.claude/skills` is a real directory whose
   every entry is a symlink to `../../.agents/skills/<name>`. So editing

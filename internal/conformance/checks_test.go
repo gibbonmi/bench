@@ -37,38 +37,33 @@ var conformanceChecks map[string]checkBinding
 
 func init() {
 	conformanceChecks = map[string]checkBinding{
-		"conformance-meta":                  {checkConformanceMeta, registry.Dev, registry.SubjectKitRoot},
-		"conformance-canary-families":       {checkConformanceCanaryFamilies, registry.Dev, registry.SubjectKitRoot},
-		"component-input-derivation-source": {checkRegisteredDerivationSource, registry.Dev, registry.SubjectKitRoot},
-		"scope-binding":                     {checkScopeBinding, registry.Dev, registry.SubjectKitRoot},
-		"component-scope-binding":           {checkComponentScopeBinding, registry.Dev, registry.SubjectKitRoot},
-		"kit-compliance":                    {checkKitCompliance, registry.Dev, registry.SubjectKitRoot},
-		"canary-inner-compliance":           {checkCanaryInnerCompliance, registry.Dev, registry.SubjectRoot},
-		"load-validity-metadata":            {checkLoadValidityMetadata, registry.Dev, registry.SubjectRoot},
-		"skills-index-command-adapters":     {checkSkillsIndexAndCommandAdapters, registry.Dev, registry.SubjectRoot},
-		"docs-currency-workflow":            {checkDocsCurrencyAndWorkflow, registry.Dev, registry.SubjectRootAndKitRoot},
-		"gate-entry-contract":               {checkGateEntryContract, registry.Dev, registry.SubjectRoot},
-		"ordinary-build-census":             {checkOrdinaryBuildCensus, registry.Dev, registry.SubjectKitRoot},
-		"offline-smoke-proof":               {checkOfflineSmokeProof, registry.Dev, registry.SubjectRoot},
-		"handoff-shape-single-source":       {checkHandoffShape, registry.Dev, registry.SubjectRoot},
-		"harness-prefix-single-source":      {checkHarnessPrefix, registry.Dev, registry.SubjectRoot},
-		"package-shipped-surface":           {checkPackageShippedSurface, registry.Dev, registry.SubjectRoot},
-		"line-routing":                      {checkLineRouting, registry.Dev, registry.SubjectRoot},
-		"package-core-guard":                {checkPackageCoreAndGuards, registry.Dev, registry.SubjectRoot},
-		"release-evidence-probe":            {checkReleaseEvidenceProbe, registry.Ship, registry.SubjectRoot},
-		"bench-sh-routes":                   {checkBenchShRoutes, registry.Dev, registry.SubjectRoot},
-		"default-branch-single-source":      {checkDefaultBranchSingleSource, registry.Dev, registry.SubjectRoot},
-		"data-handling-derivation":          {checkDataHandlingDerivation, registry.Dev, registry.SubjectRoot},
-		"single-control-escaper":            {checkSingleControlEscaper, registry.Dev, registry.SubjectRoot},
-		"bounds-policy":                     {checkBoundsPolicy, registry.Dev, registry.SubjectRoot},
-		"marker-wait-deadlines":             {checkMarkerWaitDeadlines, registry.Dev, registry.SubjectRoot},
-		"subcommand-routing":                {checkSubcommandRouting, registry.Dev, registry.SubjectRoot},
-		"skip-ownership":                    {checkSkipOwnership, registry.Dev, registry.SubjectRoot},
-		"decision-map-integrity":            {maps.ValidateDecisionMapTree, registry.Dev, registry.SubjectRoot},
-		"example-agreement":                 {checkExampleAgreement, registry.Dev, registry.SubjectRoot},
-		"component-honesty-prose":           {checkComponentHonestyProfile, registry.Dev, registry.SubjectKitRoot},
-		"contract-capture-reads":            {checkContractCaptureReads, registry.Dev, registry.SubjectKitRoot},
-		"injected-port-registry":            {checkInjectedPortRegistry, registry.Dev, registry.SubjectRoot},
+		"conformance-meta":              {checkConformanceMeta, registry.Dev, registry.SubjectKitRoot},
+		"conformance-canary-families":   {checkConformanceCanaryFamilies, registry.Dev, registry.SubjectKitRoot},
+		"kit-compliance":                {checkKitCompliance, registry.Dev, registry.SubjectKitRoot},
+		"canary-fixture-compliance":     {checkCanaryFixtureCompliance, registry.Dev, registry.SubjectRoot},
+		"load-validity-metadata":        {checkLoadValidityMetadata, registry.Dev, registry.SubjectRoot},
+		"skills-index-command-adapters": {checkSkillsIndexAndCommandAdapters, registry.Dev, registry.SubjectRoot},
+		"docs-currency-workflow":        {checkDocsCurrencyAndWorkflow, registry.Dev, registry.SubjectRootAndKitRoot},
+		"gate-entry-contract":           {checkGateEntryContract, registry.Dev, registry.SubjectRoot},
+		"ordinary-build-census":         {checkOrdinaryBuildCensus, registry.Dev, registry.SubjectKitRoot},
+		"offline-smoke-proof":           {checkOfflineSmokeProof, registry.Dev, registry.SubjectRoot},
+		"handoff-shape-single-source":   {checkHandoffShape, registry.Dev, registry.SubjectRoot},
+		"harness-prefix-single-source":  {checkHarnessPrefix, registry.Dev, registry.SubjectRoot},
+		"package-shipped-surface":       {checkPackageShippedSurface, registry.Dev, registry.SubjectRoot},
+		"line-routing":                  {checkLineRouting, registry.Dev, registry.SubjectRoot},
+		"package-core-guard":            {checkPackageCoreAndGuards, registry.Dev, registry.SubjectRoot},
+		"release-evidence-probe":        {checkReleaseEvidenceProbe, registry.Ship, registry.SubjectRoot},
+		"bench-sh-routes":               {checkBenchShRoutes, registry.Dev, registry.SubjectRoot},
+		"default-branch-single-source":  {checkDefaultBranchSingleSource, registry.Dev, registry.SubjectRoot},
+		"data-handling-derivation":      {checkDataHandlingDerivation, registry.Dev, registry.SubjectRoot},
+		"single-control-escaper":        {checkSingleControlEscaper, registry.Dev, registry.SubjectRoot},
+		"bounds-policy":                 {checkBoundsPolicy, registry.Dev, registry.SubjectRoot},
+		"marker-wait-deadlines":         {checkMarkerWaitDeadlines, registry.Dev, registry.SubjectRoot},
+		"subcommand-routing":            {checkSubcommandRouting, registry.Dev, registry.SubjectRoot},
+		"skip-ownership":                {checkSkipOwnership, registry.Dev, registry.SubjectRoot},
+		"decision-map-integrity":        {maps.ValidateDecisionMapTree, registry.Dev, registry.SubjectRoot},
+		"example-agreement":             {checkExampleAgreement, registry.Dev, registry.SubjectRoot},
+		"injected-port-registry":        {checkInjectedPortRegistry, registry.Dev, registry.SubjectRoot},
 	}
 }
 
@@ -202,10 +197,11 @@ func orderedConformanceSelection(tier registry.Tier, selected *string) (map[stri
 	return want, ordered, nil
 }
 
-// checkCanaryInnerCompliance grades the kit-compliance rules against the fixture tree
-// itself, which only the canary's own inner gate asks for.
-func checkCanaryInnerCompliance(root string) []string {
-	if os.Getenv("BENCH_CANARY_INNER") != "1" || !exists(filepath.Join(root, ".bench-compliance-canary")) {
+// checkCanaryFixtureCompliance grades kit-compliance rules directly against a marked
+// immutable fixture tree. An ordinary live root has no marker and pays no duplicate
+// check; a mutation test supplies the marker and calls this owner without another gate.
+func checkCanaryFixtureCompliance(root string) []string {
+	if !exists(filepath.Join(root, ".bench-compliance-canary")) {
 		return nil
 	}
 	return checkKitCompliance(root)
@@ -440,7 +436,6 @@ func conformanceSubprocessEnv() []string {
 		// leaking into a probe subprocess is the recursive-cascade shape.
 		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") ||
 			strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") ||
-			strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") ||
 			strings.HasPrefix(kv, registry.ConformanceChecksEnv+"=") ||
 			strings.HasPrefix(kv, registry.ConformanceInheritedEnv+"=") {
 			continue

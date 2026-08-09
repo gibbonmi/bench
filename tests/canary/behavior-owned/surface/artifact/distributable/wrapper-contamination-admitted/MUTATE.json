@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".bench/consumer-payload.json",
-    "old": "  { \"source\": \"bin/bench-postinstall.sh\", \"mode\": \"0644\", \"audience\": \"consumer\" },\n",
-    "new": "  { \"source\": \"bin/bench-postinstall.sh\", \"mode\": \"0644\", \"audience\": \"consumer\" },\n  { \"source\": \"dist/bench\", \"mode\": \"0755\", \"audience\": \"consumer\" },\n"
-  }
-]

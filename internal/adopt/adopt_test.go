@@ -268,14 +268,13 @@ func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 		"[ -e DO-NOT-SHIP ] && err \"example check: DO-NOT-SHIP marker file present\"",
 		"bench=\"$(dirname \"$0\")/bin/bench.sh\"; [ -x \"$bench\" ] || bench=bench",
 		"\"$bench\" canary \"$root\" || err \"canary sweep failed\"",
-		"BENCH_CANARY_INNER",
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(gate, want) {
 			t.Fatalf("scaffold gate missing %q:\n%s", want, gate)
 		}
 	}
-	for _, forbidden := range []string{". \"$gate_dir/lib/canary-run.sh\"", "canary runner missing"} {
+	for _, forbidden := range []string{". \"$gate_dir/lib/canary-run.sh\"", "canary runner missing", "BENCH_CANARY_INNER"} {
 		if strings.Contains(gate, forbidden) {
 			t.Fatalf("scaffold gate still contains retired sourcing API %q:\n%s", forbidden, gate)
 		}
@@ -314,19 +313,14 @@ func TestInitScaffoldsTwoLevelSeedCanary(t *testing.T) {
 		t.Fatalf("legacy flat seed EXPECT exists or stat failed unexpectedly: %v", err)
 	}
 
-	var fixtureCalls []string
-	err = canary.Sweep(root, func(call canary.RunCall) canary.RunResult {
-		if call.FixtureDir == "" {
-			return canary.RunResult{ExitCode: 0, Output: "baseline without seed expectation"}
-		}
-		fixtureCalls = append(fixtureCalls, call.FixtureDir)
-		return canary.RunResult{ExitCode: 1, Output: "example check: DO-NOT-SHIP marker file present"}
-	})
+	discovered, err := canary.Fixtures(filepath.Join(root, "tests", "canary"))
 	if err != nil {
-		t.Fatalf("canary sweep over initialized seed failed: %v", err)
+		t.Fatalf("discover initialized seed: %v", err)
 	}
-	if len(fixtureCalls) != 1 || fixtureCalls[0] != seedDir {
-		t.Fatalf("fixture calls = %#v, want only %q", fixtureCalls, seedDir)
+	selection := canary.Select([]canary.Fixture{discovered["example"]})
+	dispatch := canary.Dispatch(selection, func(canary.FixtureOwner) string { return "" })
+	if !dispatch.Accepted || len(dispatch.Dispatched) != 1 || dispatch.Dispatched[0].Fixture != "example" {
+		t.Fatalf("seed dispatch = %#v, want the initialized seed only", dispatch)
 	}
 }
 

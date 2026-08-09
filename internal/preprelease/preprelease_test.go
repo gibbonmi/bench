@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -87,7 +86,7 @@ func TestStepsRunReleaseOnlyPackages(t *testing.T) {
 func TestArtifactStepIsHermetic(t *testing.T) {
 	step := stepNamed(t, Steps("root", "kit"), "artifacts")
 	for _, env := range step.Env {
-		if strings.Contains(env, contract.SharedBuildCacheEnv) {
+		if strings.Contains(env, "BENCH_SHARED_BUILD_CACHE") {
 			t.Errorf("the artifact build opts into the shared build cache via %q, so the release bytes are not hermetic", env)
 		}
 	}

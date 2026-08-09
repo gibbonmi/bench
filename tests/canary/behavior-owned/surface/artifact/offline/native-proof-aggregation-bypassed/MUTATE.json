@@ -1,1 +1,0 @@
-[{"path":"scripts/aggregate-native-proofs.sh","old":"node \"$root/scripts/release-plan.mjs\" \"$root\" targets > \"$matrix\"","new":"node \"$root/scripts/release-plan.mjs\" \"$root\" targets | head -n -1 > \"$matrix\""}]

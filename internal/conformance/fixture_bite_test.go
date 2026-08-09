@@ -3,11 +3,9 @@ package conformance
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/canary"
@@ -26,7 +24,6 @@ func TestLoadValidityMetadataFixturesBite(t *testing.T) {
 		"bad-frontmatter",
 		"claude-skills-unmirrored",
 		"extensionless-gate-ref",
-		"gate-input-gitignored",
 		"shared-rule-drift",
 		"readme-shared-rule-drift",
 	}
@@ -193,7 +190,6 @@ func TestLineRoutingFixturesBite(t *testing.T) {
 	fixtures := []string{
 		"line-binding-prose-drift",
 		"agent-hook-unwired",
-		"agent-hook-broken",
 		"stop-hook-unwired",
 		"adapter-line-broken",
 	}
@@ -212,7 +208,6 @@ func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
 	// conformance over its tree compiles and tests nothing, so it would report
 	// did-not-bite forever.
 	fixtures := []string{
-		"missing-files-entry",
 		"guard-describe-boundary-dropped",
 		"guard-resolver-order-drift",
 		"default-branch-refabricated",
@@ -270,34 +265,22 @@ func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
 
 // TestRunConformanceReportsUnboundCanaryFamily grades the direction the derived
 // family list cannot see: a family directory on disk that the table does not bind.
-// Its fixtures would each silently run a full inner gate — the cost the scoping
-// exists to remove — so the kit's tree and its table have to agree in both
-// directions. The behavior-owned directory and the legacy flat fixture beside it are
-// not conformance families and must stay unreported.
+// Its fixtures would have no production check owner, so the kit's tree and its table
+// have to agree in both directions.
 func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
 	kitRoot := t.TempDir()
 	canaryDir := filepath.Join(kitRoot, "tests", "canary")
-	families := append(registry.Families(), "unbound-family", "behavior-owned")
+	families := append(registry.Families(), "unbound-family")
 	for _, family := range families {
 		requireFixtureNoError(t, os.MkdirAll(filepath.Join(canaryDir, family, "sentinel"), 0o755))
 	}
-	flat := filepath.Join(canaryDir, "legacy-flat")
-	requireFixtureNoError(t, os.MkdirAll(filepath.Join(flat, "files"), 0o755))
-	requireFixtureNoError(t, os.WriteFile(filepath.Join(flat, "EXPECT"), []byte("target\n"), 0o644))
-
 	diags := RunConformance(root, kitRoot, registry.Dev, "")
 
 	want := `canary conformance family "unbound-family" is bound to no conformance check; add it to the registry family table so its fixtures run scoped`
 	if !containsDiagnostic(diags, want) {
 		t.Fatalf("unbound canary family did not produce diagnostic %q:\n%s", want, strings.Join(diags, "\n"))
-	}
-	joined := strings.Join(diags, "\n")
-	for _, excluded := range []string{"behavior-owned", "legacy-flat"} {
-		if strings.Contains(joined, excluded) {
-			t.Errorf("%q is not a conformance family but was reported:\n%s", excluded, joined)
-		}
 	}
 }
 
@@ -331,22 +314,12 @@ func TestSymlinkedCanaryFamilyIsInvisibleToTreeAndSweep(t *testing.T) {
 		t.Errorf("a symlinked family contributes no fixtures but was reported:\n%s", joined)
 	}
 
-	var mu sync.Mutex
-	var swept []string
-	err := canary.Sweep(kitRoot, func(call canary.RunCall) canary.RunResult {
-		if call.FixtureDir == "" {
-			return canary.RunResult{ExitCode: 1, Output: "baseline noise\n"}
-		}
-		mu.Lock()
-		swept = append(swept, filepath.Base(call.FixtureDir))
-		mu.Unlock()
-		return canary.RunResult{ExitCode: 1, Output: "target-" + filepath.Base(call.FixtureDir) + "\n"}
-	})
+	discovered, err := canary.Fixtures(canaryDir)
 	if err != nil {
-		t.Fatalf("Sweep err = %v", err)
+		t.Fatalf("Fixtures err = %v", err)
 	}
-	if slices.Contains(swept, "linked-fixture") {
-		t.Errorf("the sweep graded %v, which reaches through the symlinked family the tree check skips", swept)
+	if _, found := discovered["linked-fixture"]; found {
+		t.Errorf("fixture discovery reached through the symlinked family")
 	}
 }
 
@@ -447,12 +420,11 @@ func TestRunConformanceChecksExecutableGitMode(t *testing.T) {
 func TestConformanceSubprocessEnvStripsConformanceControlVars(t *testing.T) {
 	t.Setenv("BENCH_CONFORMANCE_ROOT", "/tmp/outer-root")
 	t.Setenv(registry.ConformanceTierEnv, "ship")
-	t.Setenv(registry.ConformanceCheckEnv, "package-core-guard")
 	t.Setenv(registry.ConformanceChecksEnv, "line-routing,package-core-guard")
 	t.Setenv(registry.ConformanceInheritedEnv, "bounds-policy")
 
 	for _, kv := range conformanceSubprocessEnv() {
-		for _, name := range []string{"BENCH_CONFORMANCE_ROOT", registry.ConformanceTierEnv, registry.ConformanceCheckEnv, registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv} {
+		for _, name := range []string{"BENCH_CONFORMANCE_ROOT", registry.ConformanceTierEnv, registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv} {
 			if strings.HasPrefix(kv, name+"=") {
 				t.Fatalf("%s leaked into the probe subprocess env: %q", name, kv)
 			}
@@ -559,14 +531,20 @@ func runFixtureBite(t *testing.T, kitRoot, fixture string) {
 		return found.Check, found.Check != ""
 	})
 	requireFixtureNoError(t, err)
-	root := materializeConformanceFixture(t, fixture)
-	diagnostics := RunConformance(root, kitRoot, registry.Dev, check)
-	if !containsDiagnostic(diagnostics, expect) {
-		t.Fatalf("%s did not bite under scoped Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diagnostics, "\n"))
+	owner, found := conformanceChecks[check]
+	if !found {
+		t.Fatalf("fixture %q resolved missing production owner %q", fixture, check)
 	}
-	timing := registry.ReadTimingLines(root)
-	if len(timing) != 1 || len(strings.Fields(timing[0])) < 2 || strings.Fields(timing[0])[1] != check {
-		t.Fatalf("%s timing = %v, want exactly %q", fixture, timing, check)
+	root := materializeConformanceFixture(t, fixture)
+	diagnostics := owner.run(root, kitRoot, registry.Dev)
+	if !containsDiagnostic(diagnostics, expect) {
+		t.Fatalf("%s did not bite through owner %s; want %q in diagnostics:\n%s", fixture, check, expect, strings.Join(diagnostics, "\n"))
+	}
+	if err := canary.RestoreMutationFixture(kitRoot, fixtures[fixture].Dir, root); err != nil {
+		t.Fatalf("restore %s: %v", fixture, err)
+	}
+	if restored := owner.run(root, kitRoot, registry.Dev); containsDiagnostic(restored, expect) {
+		t.Fatalf("%s owner %s retained mutation-specific red %q after restoration:\n%s", fixture, check, expect, strings.Join(restored, "\n"))
 	}
 }
 
@@ -607,11 +585,6 @@ func materializeConformanceFixture(t *testing.T, fixture string) string {
 	fixturePath := canaryFixturePath(t, h.KitRoot, fixture)
 	if err := canary.MaterializeMutationFixture(h.KitRoot, fixturePath, root); err != nil {
 		t.Fatalf("materialize %s: %v", fixture, err)
-	}
-	cmd := exec.Command("git", "init", "-q")
-	cmd.Dir = root
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git init fixture %s: %v\n%s", fixture, err, out)
 	}
 	return root
 }

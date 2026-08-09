@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -585,8 +586,12 @@ func Verify(root, executable string) error {
 	if err != nil {
 		return refusal(root, executable, err)
 	}
-	if stored.Sources != sources {
-		return refusal(root, executable, fmt.Errorf("seal source digest does not match current build inputs"))
+	decision := Select(SelectionInput{
+		StoredSource: stored.Sources, CurrentSource: sources,
+		StoredExecutable: stored.Executable, CurrentExecutable: stored.Executable,
+	})
+	if !decision.Accepted {
+		return refusal(root, executable, errors.New(decision.Reason))
 	}
 	return nil
 }
@@ -613,8 +618,12 @@ func verifiedExecutable(executable string) (seal, error) {
 	if err != nil {
 		return seal{}, fmt.Errorf("seal %q: %w", sealPath(executable), err)
 	}
-	if stored.Executable != digestBytes(binary) {
-		return seal{}, fmt.Errorf("seal executable digest does not match binary contents")
+	decision := Select(SelectionInput{
+		StoredSource: stored.Sources, CurrentSource: stored.Sources,
+		StoredExecutable: stored.Executable, CurrentExecutable: digestBytes(binary),
+	})
+	if !decision.Accepted {
+		return seal{}, errors.New(decision.Reason)
 	}
 	return stored, nil
 }

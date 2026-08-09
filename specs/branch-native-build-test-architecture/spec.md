@@ -1,6 +1,6 @@
 # Branch-native build and test architecture
 
-Status: draft
+Status: implemented
 
 Decision source: reviewer-requested clean-slate design in the current conversation on 2026-08-09
 

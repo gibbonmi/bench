@@ -19,8 +19,6 @@ func TestRootConformance(t *testing.T) {
 		capability.Environment(t, "BENCH_CONFORMANCE_ROOT not set")
 	}
 	h := NewHarness(t)
-	// The scope env is passed through verbatim: any normalising here would let a stale
-	// or misspelled value slide into a silent full run instead of the driver's red.
 	selected, selectedSet := os.LookupEnv(registry.ConformanceChecksEnv)
 	var selectedValue *string
 	if selectedSet {
@@ -31,7 +29,7 @@ func TestRootConformance(t *testing.T) {
 	if inheritedSet {
 		inheritedValue = &inherited
 	}
-	for _, diag := range RunConformanceSelection(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceCheckEnv), selectedValue, inheritedValue) {
+	for _, diag := range RunConformanceSelection(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), "", selectedValue, inheritedValue) {
 		t.Errorf("gate: %s", diag)
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -25,9 +24,6 @@ const releaseEvidenceProbeCheck = "release-evidence-probe"
 var requiredMetaChecks = []string{
 	"conformance-meta",
 	"conformance-canary-families",
-	"component-input-derivation-source",
-	"scope-binding",
-	"component-scope-binding",
 }
 
 func checkConformanceMeta(kitRoot string, tier registry.Tier) []string {
@@ -438,7 +434,6 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestDecisionMapIntegrityFixturesBite":                          true,
 	"TestDocsCurrencyTokenDietAndWorkflowFixturesBite":              true,
 	"TestExampleAgreementFixtureBite":                               true,
-	"TestFilteredRunSelectsRealTests":                               true,
 	"TestHarnessUsesBenchConformanceRootAsGradedRoot":               true,
 	"TestInvalidOrderedSetRedsAndWidensToTheFullTier":               true,
 	"TestLineRoutingFixturesBite":                                   true,
@@ -446,7 +441,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestNativeWorkflowEvidenceEdgeBites":                           true,
 	"TestOccurrenceLedgerMigrationCheckBitesOnFT158Count":           true,
 	"TestOfflineSmokeSliceOneProofIsExecutableNotTokenOnly":         true,
-	"TestOrdinaryBuildCensusMatchesClosedExceptionSet":              true,
+	"TestBranchNativeArchitectureCensus":                            true,
 	"TestPackageCoreAndGuardFixturesBite":                           true,
 	"TestRecurrenceMaintenanceContractCheckBites":                   true,
 	"TestResidualCheckCallsCrossCompileMatrix":                      true,
@@ -616,8 +611,8 @@ func TestConformanceMetaBites(t *testing.T) {
 		conformanceChecks = cloneCheckBindings(bindings)
 	})
 	t.Run("profile binding removed from meta", func(t *testing.T) {
-		setCheckMeta("component-scope-binding", false)
-		if !containsDiagnostic(metaMembershipDiags(), "component-scope-binding is not always-on") {
+		setCheckMeta("conformance-canary-families", false)
+		if !containsDiagnostic(metaMembershipDiags(), "conformance-canary-families is not always-on") {
 			t.Fatal("removing a profile binding from meta did not make conformance meta red")
 		}
 		registry.Checks = slices.Clone(checks)
@@ -676,14 +671,14 @@ func TestConformanceMetaBites(t *testing.T) {
 		}
 		registry.Checks = slices.Clone(checks)
 	})
-	t.Run("component binding grades root", func(t *testing.T) {
+	t.Run("meta check grades root", func(t *testing.T) {
 		for i := range registry.Checks {
-			if registry.Checks[i].Name == "component-scope-binding" {
+			if registry.Checks[i].Name == "conformance-meta" {
 				registry.Checks[i].Subject = registry.SubjectRoot
 			}
 		}
-		if !containsDiagnostic(registryAgreementDiags(), "component-scope-binding subject mismatch") {
-			t.Fatal("moving component scope grading to root did not make conformance meta red")
+		if !containsDiagnostic(registryAgreementDiags(), "conformance-meta subject mismatch") {
+			t.Fatal("moving meta grading to root did not make conformance meta red")
 		}
 	})
 }
@@ -713,16 +708,15 @@ func TestHiddenLiveTreeInventoryBites(t *testing.T) {
 	}
 }
 
-func TestOptionalCanarySurfaceGuardsAbsence(t *testing.T) {
-	t.Setenv("BENCH_CANARY_INNER", "1")
+func TestOptionalCanaryFixtureSurfaceGuardsAbsence(t *testing.T) {
 	root := t.TempDir()
-	if diags := checkCanaryInnerCompliance(root); len(diags) != 0 {
+	if diags := checkCanaryFixtureCompliance(root); len(diags) != 0 {
 		t.Fatalf("absent optional canary surface produced diagnostics: %v", diags)
 	}
 	if err := os.WriteFile(filepath.Join(root, ".bench-compliance-canary"), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if diags := checkCanaryInnerCompliance(root); !containsDiagnostic(diags, "kit root LICENSE is missing") {
+	if diags := checkCanaryFixtureCompliance(root); !containsDiagnostic(diags, "kit root LICENSE is missing") {
 		t.Fatalf("present optional canary surface did not run its targeted grading: %v", diags)
 	}
 }
@@ -942,34 +936,6 @@ func recordedScopeRoot(t *testing.T) string {
 		t.Fatal("the seeding run recorded no timing lines, so the posture assertion proves nothing")
 	}
 	return root
-}
-
-// TestFilteredRunSelectsRealTests keeps the skip list from rotting in either
-// direction. `go test -list` ignores -skip, so it can only supply the inventory the
-// listed names must exist in; compiling the pattern here is the only way to observe
-// that it leaves the cheap tests the filtered run exists to keep running.
-func TestFilteredRunSelectsRealTests(t *testing.T) {
-	h := NewHarness(t)
-	probe := runAtCleanEnv(h.KitRoot, "go", "test", "./"+registry.ConformancePackage, "-list", ".*")
-	if probe == nil || probe.ExitCode != 0 {
-		t.Fatalf("listing the conformance tests failed: %s", formatProbeFailure("go test -list failed", probe, ""))
-	}
-	inventory := strings.Fields(probe.Stdout)
-	for _, name := range registry.InnerSkipTests {
-		if !slices.Contains(inventory, name) {
-			t.Fatalf("skip list names %s, which is not a test in the conformance package", name)
-		}
-	}
-
-	pattern, err := regexp.Compile(registry.InnerSkipPattern())
-	if err != nil {
-		t.Fatalf("compile skip pattern %q: %v", registry.InnerSkipPattern(), err)
-	}
-	for _, name := range []string{"TestRegistryBindsEveryCheck", "TestPackageCoreAndGuardFixturesBite"} {
-		if pattern.MatchString(name) {
-			t.Fatalf("skip pattern %q also excludes %s, so the filtered run drops tests the oracle keeps", registry.InnerSkipPattern(), name)
-		}
-	}
 }
 
 // gitInitedRoot is a graded root a timing file can live in: the file sits under the

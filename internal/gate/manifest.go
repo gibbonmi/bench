@@ -170,7 +170,7 @@ func validateManifest(path, root string, declared []manifestPhase) ([]Phase, err
 }
 
 // validPhaseName holds a name to bytes that survive the three contracts it is
-// addressable through — BENCH_CANARY_PHASE, the "phase <name>:" summary lines, and the
+// addressable through — the "phase <name>:" summary lines and the
 // "[name] " output prefixes. Whitespace or a control byte splits at least one of them.
 func validPhaseName(name string) bool {
 	if name == "" {

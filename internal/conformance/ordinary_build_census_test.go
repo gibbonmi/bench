@@ -7,95 +7,124 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
-type buildConstructor struct {
+type architectureSite struct {
 	path string
+	line int
 	kind string
-}
-
-var expectedBuildConstructors = map[buildConstructor]int{
-	{path: "internal/runbinary/runbinary.go", kind: "subject-builder"}:                                     1,
-	{path: "internal/conformance/cross_compile_stress_test.go", kind: "subject-builder"}:                   1,
-	{path: "internal/contract/freshness_subject_test.go", kind: "subject-builder"}:                         1,
-	{path: "internal/contract/runtime/runtime_gate_freshness_routes_test.go", kind: "subject-builder"}:     2,
-	{path: "internal/contract/surface/artifact/posture/builder_contract_test.go", kind: "subject-builder"}: 6,
-	{path: "internal/contract/surface/artifact/posture/mode_test.go", kind: "subject-builder"}:             10,
-	{path: "internal/contract/surface/artifact/posture/reproducibility_test.go", kind: "subject-builder"}:  1,
-	{path: "internal/contract/surface/artifact/posture/trace_test.go", kind: "subject-builder"}:            1,
-	{path: "scripts/build-artifacts.sh", kind: "subject-builder"}:                                          2,
-	{path: "scripts/native-proof.sh", kind: "subject-builder"}:                                             2,
-	{path: "scripts/release-preflight.sh", kind: "subject-builder"}:                                        1,
-	{path: "internal/gate/build_attestation_test.go", kind: "go-build"}:                                    1,
-	{path: "internal/freshness/freshness_test.go", kind: "subject-builder"}:                                1,
-	{path: "internal/contract/runtime/runtime_gate_component_boundary_test.go", kind: "go-build"}:          1,
-	{path: "scripts/go-build.sh", kind: "go-build"}:                                                        2,
-	{path: "internal/gate/gate_go.go", kind: "go-run-bench"}:                                               1,
-	{path: "internal/canary/canary.go", kind: "go-test-c"}:                                                 1,
-	{path: "internal/contract/runtime/runtime_gate_partial_proof_test.go", kind: "go-test-c"}:              1,
 }
 
 func checkOrdinaryBuildCensus(root string) []string {
 	if !exists(filepath.Join(root, "internal", "gate", "phases.go")) {
 		return nil
 	}
-	actual, err := scanBuildConstructors(root)
-	if err != nil {
-		return []string{"ordinary build census unavailable: " + err.Error()}
-	}
 	var diags []string
-	keys := make(map[buildConstructor]bool, len(actual)+len(expectedBuildConstructors))
-	for site := range actual {
-		keys[site] = true
-	}
-	for site := range expectedBuildConstructors {
-		keys[site] = true
-	}
-	ordered := make([]buildConstructor, 0, len(keys))
-	for site := range keys {
-		ordered = append(ordered, site)
-	}
-	sort.Slice(ordered, func(i, j int) bool {
-		if ordered[i].path == ordered[j].path {
-			return ordered[i].kind < ordered[j].kind
+	phases := gate.BenchkitPhases(root, root)
+	wantNames := []string{"gofmt", "vet", "test", "race", "system", "shellcheck"}
+	gotNames := make([]string, 0, len(phases))
+	for _, phase := range phases {
+		gotNames = append(gotNames, phase.Name)
+		switch phase.Name {
+		case "test":
+			if !slices.Equal(phase.Argv, []string{"go", "test", "-count=1", "./..."}) {
+				diags = append(diags, fmt.Sprintf("ordinary test argv = %q", phase.Argv))
+			}
+		case "race":
+			joined := strings.Join(phase.Argv, " ")
+			if !strings.HasPrefix(joined, "go test -race -count=1 -v ") || strings.Contains(joined, "internal/systemtest") {
+				diags = append(diags, fmt.Sprintf("race argv is not the registry-only driver: %q", phase.Argv))
+			}
+		case "system":
+			if !slices.Equal(phase.Argv, []string{"go", "test", "-count=1", "-tags=system", "./internal/systemtest"}) {
+				diags = append(diags, fmt.Sprintf("system argv = %q", phase.Argv))
+			}
 		}
-		return ordered[i].path < ordered[j].path
-	})
-	for _, site := range ordered {
-		if got, want := actual[site], expectedBuildConstructors[site]; got != want {
-			diags = append(diags, fmt.Sprintf("ordinary build census %s %s constructors = %d, want %d", site.path, site.kind, got, want))
-		}
+	}
+	if !slices.Equal(gotNames, wantNames) {
+		diags = append(diags, fmt.Sprintf("dev phase names = %v, want %v", gotNames, wantNames))
 	}
 
-	phases := gate.BenchkitPhases(root, root)
-	for _, phase := range phases {
-		if phase.Name == "build" {
-			diags = append(diags, "ordinary phase table contains a build phase")
+	sites, err := scanArchitecture(root)
+	if err != nil {
+		return append(diags, "branch-native architecture census unavailable: "+err.Error())
+	}
+	gitRepos, gateProcesses := 0, 0
+	for _, site := range sites {
+		if site.kind == "retired-entry" {
+			diags = append(diags, site.diagnostic())
+			continue
 		}
-		joined := strings.Join(phase.Argv, " ")
-		for _, forbidden := range []string{"go build", "go run ./cmd/bench", "go run ./internal/freshness/check", "scripts/go-build.sh"} {
-			if strings.Contains(joined, forbidden) {
-				diags = append(diags, fmt.Sprintf("ordinary phase %s contains forbidden constructor %q", phase.Name, forbidden))
-			}
+		if strings.HasPrefix(site.path, "internal/systemtest/") {
+			continue
+		}
+		if (site.kind == "repository" || site.kind == "process") && strings.HasPrefix(site.path, "internal/git/") && strings.HasSuffix(site.path, "_test.go") {
+			gitRepos++
+			continue
+		}
+		if site.kind == "process" && site.path == "internal/gate/process_group_adapter_test.go" {
+			gateProcesses++
+			continue
+		}
+		if architectureOwnedTest(site.path) && (site.kind == "process" || site.kind == "repository" || strings.HasPrefix(site.kind, "nested-go-") || site.kind == "inner-gate") {
+			diags = append(diags, site.diagnostic())
+		}
+	}
+	if gitRepos > 1 {
+		diags = append(diags, fmt.Sprintf("internal/git repository constructors = %d, want at most 1", gitRepos))
+	}
+	if gateProcesses > 1 {
+		diags = append(diags, fmt.Sprintf("internal/gate controlled process constructors = %d, want at most 1", gateProcesses))
+	}
+	owner := readIfExists(filepath.Join(root, "internal", "systemtest", "owner_test.go"))
+	if got := strings.Count(owner, "strippedJourneyMarker"); got != 2 {
+		// One declaration and one assertion are the only source references to the singular journey.
+		diags = append(diags, fmt.Sprintf("stripped system journey marker references = %d, want 2", got))
+	}
+	for _, required := range []string{"func TestMain(", "for range 3", "len(o.repos) != 3", "strippedJourneyMarker"} {
+		if !strings.Contains(owner, required) {
+			diags = append(diags, fmt.Sprintf("system owner is missing budget assertion %q", required))
 		}
 	}
 	return diags
 }
 
-func scanBuildConstructors(root string) (map[buildConstructor]int, error) {
-	sites := map[buildConstructor]int{}
+var directArchitectureTests = map[string]bool{
+	"cmd/bench/command_registry_test.go":            true,
+	"internal/adopt/decision_test.go":               true,
+	"internal/canary/decision_test.go":              true,
+	"internal/freshness/decision_test.go":           true,
+	"internal/gate/decision_test.go":                true,
+	"internal/preflight/decision_test.go":           true,
+	"internal/specbuild/lifecycle_decision_test.go": true,
+}
+
+func architectureOwnedTest(path string) bool {
+	if !strings.HasSuffix(path, "_test.go") {
+		return false
+	}
+	return directArchitectureTests[path] || strings.HasPrefix(path, "internal/contract/") || strings.HasPrefix(path, "internal/canary/") || strings.HasPrefix(path, "internal/git/") || strings.HasPrefix(path, "internal/gate/")
+}
+
+func (s architectureSite) diagnostic() string {
+	return fmt.Sprintf("branch-native census forbids %s at %s:%d", s.kind, s.path, s.line)
+}
+
+func scanArchitecture(root string) ([]architectureSite, error) {
+	var sites []architectureSite
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
 		if entry.IsDir() {
 			switch entry.Name() {
-			case ".git", "dist", "node_modules", "vendor":
+			case ".git", ".logs", "dist", "node_modules", "vendor":
 				if path != root {
 					return filepath.SkipDir
 				}
@@ -107,198 +136,165 @@ func scanBuildConstructors(root string) (map[buildConstructor]int, error) {
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		if strings.HasPrefix(rel, "tests/canary/") && strings.Contains(rel, "/files/") {
+		if filepath.Ext(path) != ".go" {
 			return nil
 		}
-		switch filepath.Ext(path) {
-		case ".go":
-			return scanGoBuildConstructors(path, rel, sites)
-		case ".sh":
-			return scanShellBuildConstructors(path, rel, sites)
-		default:
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if strings.Contains(string(data), "//go:build ship") {
 			return nil
 		}
+		found, err := scanArchitectureGo(rel, data)
+		if err != nil {
+			return err
+		}
+		sites = append(sites, found...)
+		return nil
 	})
 	return sites, err
 }
 
-func scanGoBuildConstructors(path, rel string, sites map[buildConstructor]int) error {
+func scanArchitectureGo(rel string, data []byte) ([]architectureSite, error) {
 	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, path, nil, 0)
+	file, err := parser.ParseFile(fset, rel, data, 0)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	execAliases := map[string]bool{}
+	for _, spec := range file.Imports {
+		path, _ := strconv.Unquote(spec.Path.Value)
+		if path != "os/exec" {
+			continue
+		}
+		name := "exec"
+		if spec.Name != nil {
+			name = spec.Name.Name
+		}
+		execAliases[name] = true
+	}
+	var sites []architectureSite
 	for _, declaration := range file.Decls {
 		fn, ok := declaration.(*ast.FuncDecl)
-		if !ok || fn.Body == nil {
+		if !ok {
 			continue
 		}
-		builders := map[string]bool{}
-		if fn.Type.Params != nil {
-			for _, field := range fn.Type.Params.List {
-				for _, name := range field.Names {
-					if strings.Contains(strings.ToLower(name.Name), "buildhelper") {
-						builders[name.Name] = true
-					}
-				}
-			}
+		retired := strings.HasPrefix(rel, "internal/contract/") && (fn.Name.Name == "NewFixture" || fn.Name.Name == "CommitAll")
+		retired = retired || fn.Name.Name == "buildStrippedSubjectForGeneration" || fn.Name.Name == "strippedWorktree"
+		if fn.Recv != nil && (fn.Name.Name == "Bench" || fn.Name.Name == "BenchWrapper") {
+			retired = true
 		}
-		ast.Inspect(fn.Body, func(node ast.Node) bool {
-			switch n := node.(type) {
-			case *ast.AssignStmt:
-				for i, rhs := range n.Rhs {
-					if expressionContains(rhs, "go-build.sh", builders) && i < len(n.Lhs) {
-						if id, ok := n.Lhs[i].(*ast.Ident); ok {
-							builders[id.Name] = true
-						}
-					}
-				}
-			case *ast.ValueSpec:
-				for i, value := range n.Values {
-					if expressionContains(value, "go-build.sh", builders) && i < len(n.Names) {
-						builders[n.Names[i].Name] = true
-					}
-				}
-			}
+		if retired {
+			sites = append(sites, architectureSite{path: rel, line: fset.Position(fn.Pos()).Line, kind: "retired-entry"})
+		}
+	}
+	ast.Inspect(file, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
 			return true
-		})
-		ast.Inspect(fn.Body, func(node ast.Node) bool {
-			call, ok := node.(*ast.CallExpr)
-			if !ok || !isExecutionCall(call.Fun) {
-				return true
+		}
+		line := fset.Position(call.Pos()).Line
+		name, qualifier := callName(call.Fun)
+		if execAliases[qualifier] && (name == "Command" || name == "CommandContext") {
+			kind := "process"
+			literals := callLiterals(call)
+			if containsSequence(literals, "go", "test") {
+				kind = "nested-go-test"
+			} else if containsSequence(literals, "go", "run") {
+				kind = "nested-go-run"
+			} else if containsSequence(literals, "git", "init") || containsSequence(literals, "git", "clone") || containsSequence(literals, "git", "worktree") {
+				kind = "repository"
 			}
-			switch {
-			case expressionContains(call, "go-build.sh", builders):
-				sites[buildConstructor{path: rel, kind: "subject-builder"}]++
-			case callContainsSequence(call, "go", "build"):
-				sites[buildConstructor{path: rel, kind: "go-build"}]++
-			case callContainsSequence(call, "go", "test", "-c"):
-				sites[buildConstructor{path: rel, kind: "go-test-c"}]++
-			case callContainsSequence(call, "go", "run", "./cmd/bench"):
-				sites[buildConstructor{path: rel, kind: "go-run-bench"}]++
-			case callContainsSequence(call, "go", "run", "./internal/freshness/check"):
-				sites[buildConstructor{path: rel, kind: "go-run-freshness"}]++
-			}
+			sites = append(sites, architectureSite{path: rel, line: line, kind: kind})
 			return true
-		})
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	if rel == "internal/gate/gate_go.go" && strings.Contains(string(data), `return append(argv, "run", disableBuildVCS, "./cmd/bench"`) {
-		sites[buildConstructor{path: rel, kind: "go-run-bench"}]++
-	}
-	return nil
-}
-
-func scanShellBuildConstructors(path, rel string, sites map[buildConstructor]int) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	for _, raw := range strings.Split(string(data), "\n") {
-		line := strings.TrimSpace(raw)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
 		}
-		switch {
-		case strings.Contains(line, "scripts/go-build.sh"):
-			sites[buildConstructor{path: rel, kind: "subject-builder"}]++
-		case strings.Contains(line, "go run ./cmd/bench"):
-			sites[buildConstructor{path: rel, kind: "go-run-bench"}]++
-		case strings.Contains(line, "go run ./internal/freshness/check"):
-			sites[buildConstructor{path: rel, kind: "go-run-freshness"}]++
-		case strings.Contains(line, "go build "):
-			sites[buildConstructor{path: rel, kind: "go-build"}]++
+		if isRepositoryCall(name, callLiterals(call)) {
+			sites = append(sites, architectureSite{path: rel, line: line, kind: "repository"})
 		}
-	}
-	return nil
-}
-
-func isExecutionCall(expr ast.Expr) bool {
-	if ident, ok := expr.(*ast.Ident); ok {
-		switch ident.Name {
-		case "runAt", "runAtEnv", "runAtWithInput", "runAtWithTimeout":
-			return true
-		default:
-			return false
-		}
-	}
-	selector, ok := expr.(*ast.SelectorExpr)
-	if !ok {
-		return false
-	}
-	switch selector.Sel.Name {
-	case "Command", "CommandContext", "Run", "RunEnv", "RunEnvSpec", "RunAt", "RunAtWithInput", "RunAtWithTimeout":
 		return true
+	})
+	if architectureOwnedTest(rel) && strings.Contains(string(data), "BENCH_CANARY_INNER") {
+		sites = append(sites, architectureSite{path: rel, line: 1, kind: "inner-gate"})
+	}
+	return sites, nil
+}
+
+func callName(expr ast.Expr) (name, qualifier string) {
+	switch value := expr.(type) {
+	case *ast.Ident:
+		return value.Name, ""
+	case *ast.SelectorExpr:
+		if id, ok := value.X.(*ast.Ident); ok {
+			return value.Sel.Name, id.Name
+		}
+		return value.Sel.Name, ""
+	default:
+		return "", ""
+	}
+}
+
+func callLiterals(call *ast.CallExpr) []string {
+	var literals []string
+	for _, arg := range call.Args {
+		ast.Inspect(arg, func(node ast.Node) bool {
+			literal, ok := node.(*ast.BasicLit)
+			if ok && literal.Kind == token.STRING {
+				value, _ := strconv.Unquote(literal.Value)
+				literals = append(literals, value)
+			}
+			return true
+		})
+	}
+	return literals
+}
+
+func containsSequence(values []string, want ...string) bool {
+	position := 0
+	for _, value := range values {
+		if position < len(want) && value == want[position] {
+			position++
+		}
+	}
+	return position == len(want)
+}
+
+func isRepositoryCall(name string, literals []string) bool {
+	switch name {
+	case "CommitAll", "InitRepo", "NewFixture", "NewRepository", "newRepository":
+		return true
+	case "Run", "Output":
+		return containsSequence(literals, "init") || containsSequence(literals, "clone") || containsSequence(literals, "worktree")
 	default:
 		return false
 	}
 }
 
-func expressionContains(node ast.Node, value string, identifiers map[string]bool) bool {
-	found := false
-	ast.Inspect(node, func(n ast.Node) bool {
-		switch item := n.(type) {
-		case *ast.BasicLit:
-			if item.Kind == token.STRING && strings.Contains(item.Value, value) {
-				found = true
-				return false
-			}
-		case *ast.Ident:
-			if identifiers[item.Name] {
-				found = true
-				return false
-			}
-		}
-		return !found
-	})
-	return found
-}
-
-func callContainsSequence(call *ast.CallExpr, values ...string) bool {
-	var literals []string
-	ast.Inspect(call, func(node ast.Node) bool {
-		literal, ok := node.(*ast.BasicLit)
-		if ok && literal.Kind == token.STRING {
-			literals = append(literals, strings.Trim(literal.Value, "`\""))
-		}
-		return true
-	})
-	position := 0
-	for _, literal := range literals {
-		if position < len(values) && literal == values[position] {
-			position++
-		}
-	}
-	return position == len(values)
-}
-
-func TestOrdinaryBuildCensusMatchesClosedExceptionSet(t *testing.T) {
+func TestBranchNativeArchitectureCensus(t *testing.T) {
 	if diags := checkOrdinaryBuildCensus(NewHarness(t).KitRoot); len(diags) != 0 {
-		t.Fatalf("ordinary build census diagnostics:\n%s", strings.Join(diags, "\n"))
+		t.Fatalf("branch-native architecture census diagnostics:\n%s", strings.Join(diags, "\n"))
 	}
-}
 
-func TestOrdinaryBuildCensusRejectsNewConstructor(t *testing.T) {
-	root := t.TempDir()
-	path := filepath.Join(root, "internal", "ordinary.go")
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	source := `package ordinary
+	t.Run("mutation entries are classified", func(t *testing.T) {
+		source := []byte(`package mutation
 import "os/exec"
-func hidden() { _ = exec.Command("go", "build", "./cmd/bench") }
-`
-	if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	sites, err := scanBuildConstructors(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := sites[buildConstructor{path: "internal/ordinary.go", kind: "go-build"}]; got != 1 {
-		t.Fatalf("new ordinary constructor count = %d, want one", got)
-	}
+func hidden() {
+	_ = exec.Command("bench", "version")
+	_ = exec.Command("go", "test", "./...")
+	CommitAll()
+}
+`)
+		sites, err := scanArchitectureGo("internal/contract/mutation_test.go", source)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := make([]string, 0, len(sites))
+		for _, site := range sites {
+			got = append(got, site.kind)
+		}
+		want := []string{"process", "nested-go-test", "repository"}
+		if !slices.Equal(got, want) {
+			t.Fatalf("mutation classifications = %v, want %v", got, want)
+		}
+	})
 }

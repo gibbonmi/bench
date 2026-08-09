@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/roadmap"
 )
@@ -162,41 +161,6 @@ func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
 	}
 	if action != "re-run the gate" {
 		t.Fatalf("action = %q, want re-run the gate", action)
-	}
-}
-
-// The board's reduced-scope softening and the gate's reduced-run declaration are one fact,
-// so the samples come from the declaration rather than from a list restated here: a path
-// the declaration carries softens, one it does not falls through to the strong stale row,
-// and a mixed diff fails closed. A private allowlist answering the question inside this
-// package fails the moment the declaration carries a path it does not.
-func TestStaleSofteningRoutesThroughDeclaration(t *testing.T) {
-	scope := gate.ReducedScope()
-	root := initRepo(t)
-	const outside = "internal/status/status.go"
-	base := map[string]string{outside: "package status\n"}
-	baseTree := treeOf(t, root, base)
-
-	var declared []string
-	declared = append(declared, scope.Files()...)
-	for _, dir := range scope.Directories() {
-		declared = append(declared, dir+"declared-descendant.md")
-	}
-	for _, path := range declared {
-		detail, action := staleGateDetailAction(root, baseTree, treeOf(t, root, withFiles(base, path)))
-		if detail != "stale (reduced-scope drift)" || action != "re-run when convenient" {
-			t.Errorf("drift in declared %q = (%q, %q), want the softened row", path, detail, action)
-		}
-	}
-
-	undeclared := treeOf(t, root, map[string]string{outside: "package status // drift\n"})
-	if detail, _ := staleGateDetailAction(root, baseTree, undeclared); !strings.HasPrefix(detail, "stale (gated tree") {
-		t.Errorf("drift in undeclared %q = %q, want the strong stale row", outside, detail)
-	}
-
-	mixed := treeOf(t, root, withFiles(map[string]string{outside: "package status // drift\n"}, declared...))
-	if detail, _ := staleGateDetailAction(root, baseTree, mixed); !strings.HasPrefix(detail, "stale (gated tree") {
-		t.Errorf("mixed drift = %q, want the strong stale row", detail)
 	}
 }
 

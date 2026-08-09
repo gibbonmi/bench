@@ -1,10 +1,5 @@
-// Command bench is the compiled core of the Bench kit — the strangler target the
-// shell CLI routes ported subcommands into. Dispatch is a `commands` map of the ported
-// AXI query subcommands (anchors, learnings, maps, guards, diff, coverage, test, worktree list),
-// each resolving repo state and returning its stdout plus an exit code, plus a direct
-// `version` case that needs the build-time GOOS/GOARCH rather than repo state. Every
-// later slice adds names to that map; the shell router (bin/bench.sh) grows names,
-// not mechanisms.
+// Command bench is the compiled core of the Bench kit. The shell CLI routes every
+// compiled subcommand through the production registry below.
 package main
 
 import (
@@ -61,34 +56,84 @@ func main() {
 	// The wrapper's implicit-repair grant is spent once it execs this binary; scrub it so
 	// gate phases and their fixtures never inherit an invocation-dependent privilege.
 	os.Unsetenv("BENCH_ALLOW_IMPLICIT_REPAIR")
-	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+	var observation io.Writer
+	if os.Getenv("BENCH_COMMAND_OBSERVE") == "1" {
+		observation = os.Stderr
+	}
+	os.Exit(Command{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr, Executable: os.Args[0], Observe: observation}.Run(os.Args[1:]))
 }
 
-// commands are the ported AXI query subcommands: each resolves arguments and repo
-// state, then returns its complete stdout plus an exit code — the dispatch below just
-// writes and exits. This map is the one seam that grows per slice; version stays a
-// direct case because it needs the build-time GOOS/GOARCH, not repo state.
-var commands = map[string]func([]string) (string, int){
-	"anchors":             anchorsCommand,
-	"learnings":           learnings.Command,
-	"maps":                maps.Command,
-	"guards":              guards.Command,
-	"diff":                diff.Command,
-	"coverage":            coverage.Command,
-	"status":              status.Command,
-	"handoff":             handoff.Command,
-	"commands":            commandsCommand,
-	"dashboard":           dashboard.Command,
-	"structure":           structure.Command,
-	"models":              models.Command,
-	"outline":             outline.Command,
-	"idea":                roadmap.IdeaCommand,
-	"roadmap":             roadmapCommand,
-	"tree-hash":           treeHash,
-	"resolve-model":       resolveModel,
-	"worktree-pool":       worktree.PoolCommand,
-	"worktree-lease-file": worktree.LeaseFileCommand,
-	"test":                testCommand,
+var commandRegistry = []commandDefinition{
+	{Name: "anchors", Run: outputCommand(anchorsCommand)},
+	{Name: "learnings", Run: outputCommand(learnings.Command)},
+	{Name: "maps", Run: outputCommand(maps.Command)},
+	{Name: "guards", Run: outputCommand(guards.Command)},
+	{Name: "diff", Run: outputCommand(diff.Command)},
+	{Name: "coverage", Run: outputCommand(coverage.Command)},
+	{Name: "status", Run: outputCommand(status.Command)},
+	{Name: "handoff", Run: outputCommand(handoff.Command)},
+	{Name: "commands", Run: outputCommand(commandsCommand)},
+	{Name: "dashboard", Run: outputCommand(dashboard.Command)},
+	{Name: "structure", Run: outputCommand(structure.Command)},
+	{Name: "models", Run: outputCommand(models.Command)},
+	{Name: "outline", Run: outputCommand(outline.Command)},
+	{Name: "idea", Run: outputCommand(roadmap.IdeaCommand)},
+	{Name: "roadmap", Run: outputCommand(roadmapCommand)},
+	{Name: "tree-hash", Run: outputCommand(treeHash)},
+	{Name: "resolve-model", Run: outputCommand(resolveModel)},
+	{Name: "worktree-pool", Run: outputCommand(worktree.PoolCommand)},
+	{Name: "worktree-lease-file", Run: outputCommand(worktree.LeaseFileCommand)},
+	{Name: "test", Run: outputCommand(testCommand)},
+
+	{Name: "version", Attachment: attachmentDirect, Run: versionCommand},
+	{Name: "worktree", Attachment: attachmentDirect, Run: worktreeCommand},
+	{Name: "resume-clean", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return worktree.ResumeCleanCommand(args, c.Stdout, c.Stderr) }},
+	{Name: "session-inspect", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
+	{Name: "shift", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
+	{Name: "commit", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return commit.Command(args, c.Stdout, c.Stderr) }},
+	{Name: "spec", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return dispatchSpec(args, c.Stdout) }},
+	{Name: "gate-go", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
+	{Name: "guard-git", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "check-agent-line", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return checkAgentLine(args, c.Stdin, c.Stdout, c.Stderr) }},
+
+	{Name: "setup", Attachment: attachmentSystem, Run: adoptCommand("setup")},
+	{Name: "link", Attachment: attachmentSystem, Run: adoptCommand("link")},
+	{Name: "init", Attachment: attachmentSystem, Run: adoptCommand("init")},
+	{Name: "doctor", Attachment: attachmentSystem, Run: adoptCommand("doctor")},
+	{Name: "unlink", Attachment: attachmentSystem, Run: adoptCommand("unlink")},
+	{Name: "upgrade", Attachment: attachmentSystem, Run: adoptCommand("upgrade")},
+	{Name: "worktree-hook", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return harness.WorktreeCommand(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "gate", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return gate.Command(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "gate-run", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return gate.RunCommand(args, c.Stdout, c.Stderr) }},
+	{Name: "gate-pin", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return gate.PinCommand(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "gate-phases", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return gatePhasesCommand(args, c.Stdout, c.Stderr) }},
+	{Name: "freshness-check", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return freshnessCheck(args, c.Executable, c.Stderr) }},
+	{Name: "freshness-publish", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return freshnessPublish(args, c.Executable, c.Stderr) }},
+	{Name: "canary", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return canary.Run(args, c.Stdout, c.Stderr) }},
+	{Name: "stop-verdict", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return stopVerdict(args, c.Stdin, c.Stderr) }},
+
+	{Name: "release-preflight", Attachment: attachmentShip, Run: func(c Command, args []string) int { return preflight.Command(args, version, c.Stderr) }},
+	{Name: "prep-release", Attachment: attachmentShip, Run: func(c Command, args []string) int { return preprelease.Command(args, c.Stdout, c.Stderr) }},
+	{Name: "release", Attachment: attachmentShip, Run: func(c Command, args []string) int { return publication.Command(args, c.Stdout, c.Stderr) }},
+}
+
+func outputCommand(fn func([]string) (string, int)) commandHandler {
+	return func(c Command, args []string) int {
+		out, code := fn(args)
+		fmt.Fprint(c.Stdout, out)
+		return code
+	}
+}
+
+func adoptCommand(name string) commandHandler {
+	return func(c Command, args []string) int {
+		return adopt.Run(append([]string{name}, args...), c.Stdout, c.Stderr, version)
+	}
+}
+
+func versionCommand(c Command, _ []string) int {
+	fmt.Fprintln(c.Stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
+	return 0
 }
 
 var anchorsGrammar = usage.Grammar{
@@ -408,115 +453,55 @@ func guardGit(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code 
 	return 2
 }
 
-func run(args []string, stdout, stderr *os.File) int {
-	if len(args) == 0 {
-		fmt.Fprintln(stderr, "bench: no subcommand")
-		return 2
+func worktreeCommand(c Command, args []string) int {
+	if len(args) > 0 && args[0] == "exec" {
+		root, err := git.Root()
+		if err != nil {
+			fmt.Fprintln(c.Stderr, toon.NotInRepo())
+			return 1
+		}
+		return worktree.ExecCommand(root, args[1:], c.Stdin, c.Stdout, c.Stderr)
 	}
-	if fn, ok := commands[args[0]]; ok {
-		out, code := fn(args[1:])
-		fmt.Fprint(stdout, out)
+	if len(args) > 0 && args[0] == "path" {
+		root, err := git.Root()
+		if err != nil {
+			fmt.Fprintln(c.Stderr, toon.NotInRepo())
+			return 1
+		}
+		return worktree.PathCommand(root, args[1:], c.Stdout, c.Stderr)
+	}
+	if len(args) > 0 && args[0] == "list" {
+		out, code := worktree.ListCommand(args[1:])
+		fmt.Fprint(c.Stdout, out)
 		return code
 	}
-	switch args[0] {
-	case "setup", "link", "init", "doctor", "unlink", "upgrade":
-		return adopt.Run(args, stdout, stderr, version)
-	case "version":
-		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
+	if len(args) == 1 && (args[0] == "help" || args[0] == "--help" || args[0] == "-h") {
+		fmt.Fprint(c.Stdout, usage.WorktreeUsage())
 		return 0
-	case "worktree":
-		if len(args) > 1 && args[1] == "exec" {
-			root, err := git.Root()
-			if err != nil {
-				fmt.Fprintln(stderr, toon.NotInRepo())
-				return 1
-			}
-			return worktree.ExecCommand(root, args[2:], os.Stdin, stdout, stderr)
-		}
-		if len(args) > 1 && args[1] == "path" {
-			root, err := git.Root()
-			if err != nil {
-				fmt.Fprintln(stderr, toon.NotInRepo())
-				return 1
-			}
-			return worktree.PathCommand(root, args[2:], stdout, stderr)
-		}
-		if len(args) > 1 && args[1] == "list" {
-			out, code := worktree.ListCommand(args[2:])
-			fmt.Fprint(stdout, out)
-			return code
-		}
-		if len(args) == 2 && (args[1] == "help" || args[1] == "--help" || args[1] == "-h") {
-			fmt.Fprint(stdout, usage.WorktreeUsage())
-			return 0
-		}
-		if len(args) > 1 && args[1] == "create" {
-			root, err := git.Root()
-			if err != nil {
-				fmt.Fprintln(stderr, toon.NotInRepo())
-				return 1
-			}
-			return worktree.CreateCommand(root, args[2:], stdout, stderr)
-		}
-		if len(args) > 1 && args[1] == "release" {
-			root, err := git.Root()
-			if err != nil {
-				fmt.Fprintln(stderr, toon.NotInRepo())
-				return 1
-			}
-			return worktree.ReleaseCommand(root, args[2:], stdout, stderr)
-		}
-		if len(args) > 1 && args[1] == "clean" {
-			return worktree.CleanCommand(args[2:], stdout, stderr)
-		}
-		if len(args) > 1 && args[1] == "recovery" {
-			return worktree.RecoveryCommand(args[2:], stdout, stderr)
-		}
-		return worktree.Subshell(args[1:], os.Stdin, stdout, stderr)
-	case "resume-clean":
-		return worktree.ResumeCleanCommand(args[1:], stdout, stderr)
-	case "session-inspect":
-		return sessioninspect.Command(args[1:], stdout, stderr)
-	case "worktree-hook":
-		return harness.WorktreeCommand(args[1:], os.Stdin, stdout, stderr)
-	case "shift":
-		return shift.Command(args[1:], stdout, stderr)
-	case "commit":
-		return commit.Command(args[1:], stdout, stderr)
-	case "spec":
-		return dispatchSpec(args[1:], stdout)
-	case "gate":
-		return gate.Command(args[1:], os.Stdin, stdout, stderr)
-	case "gate-run":
-		return gate.RunCommand(args[1:], stdout, stderr)
-	case "gate-pin":
-		return gate.PinCommand(args[1:], os.Stdin, stdout, stderr)
-	case "gate-phases":
-		return gatePhasesCommand(args[1:], stdout, stderr)
-	case "freshness-check":
-		return freshnessCheck(args[1:], os.Args[0], stderr)
-	case "freshness-publish":
-		return freshnessPublish(args[1:], os.Args[0], stderr)
-	case "gate-go":
-		return gate.GateGoCommand(args[1:], stdout, stderr)
-	case "release-preflight":
-		return preflight.Command(args[1:], version, stderr)
-	case "prep-release":
-		return preprelease.Command(args[1:], stdout, stderr)
-	case "release":
-		return publication.Command(args[1:], stdout, stderr)
-	case "canary":
-		return canary.Run(args[1:], stdout, stderr)
-	case "guard-git":
-		return guardGit(args[1:], os.Stdin, stdout, stderr)
-	case "check-agent-line":
-		return checkAgentLine(args[1:], os.Stdin, stdout, stderr)
-	case "stop-verdict":
-		return stopVerdict(args[1:], os.Stdin, stderr)
-	default:
-		fmt.Fprintf(stderr, "bench: unknown subcommand: %q\n", args[0])
-		return 2
 	}
+	if len(args) > 0 && args[0] == "create" {
+		root, err := git.Root()
+		if err != nil {
+			fmt.Fprintln(c.Stderr, toon.NotInRepo())
+			return 1
+		}
+		return worktree.CreateCommand(root, args[1:], c.Stdout, c.Stderr)
+	}
+	if len(args) > 0 && args[0] == "release" {
+		root, err := git.Root()
+		if err != nil {
+			fmt.Fprintln(c.Stderr, toon.NotInRepo())
+			return 1
+		}
+		return worktree.ReleaseCommand(root, args[1:], c.Stdout, c.Stderr)
+	}
+	if len(args) > 0 && args[0] == "clean" {
+		return worktree.CleanCommand(args[1:], c.Stdout, c.Stderr)
+	}
+	if len(args) > 0 && args[0] == "recovery" {
+		return worktree.RecoveryCommand(args[1:], c.Stdout, c.Stderr)
+	}
+	return worktree.Subshell(args, c.Stdin, c.Stdout, c.Stderr)
 }
 
 // versionLine renders the single line `bench version` prints. Kept as a pure

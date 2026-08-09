@@ -15,32 +15,16 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"slices"
 	"sort"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/terminal"
 	"github.com/gibbonmi/bench/internal/toon"
-)
-
-// conformancePhaseName is the phase whose per-check timing the runner prints.
-const conformancePhaseName = "conformance"
-
-// contractSubtree is the argv element the contract phase grades: every package below
-// internal/contract, in every mode.
-const contractSubtree = "./internal/contract/..."
-
-type phaseMode int
-
-const (
-	outerMode phaseMode = iota
-	innerMode
 )
 
 // Phase is one benchkit gate check. Argv is passed directly to exec.Command; callers
@@ -52,13 +36,13 @@ const (
 // runner's root are different trees in a linked repo, and only the producer knows which
 // one a path was written against.
 type Phase struct {
-	Name           string
-	Argv           []string
-	Env            []string
-	Optional       bool
-	Needs          []string
-	Dir            string
-	canaryFamilies []string
+	Name         string
+	Argv         []string
+	Env          []string
+	Optional     bool
+	Needs        []string
+	Dir          string
+	ExpectedRuns []string
 }
 
 var benchkitPhasesForCommand = BenchkitPhases
@@ -69,41 +53,27 @@ var benchkitPhasesForCommand = BenchkitPhases
 // and no phase authors another Bench binary.
 func BenchkitPhases(root, kit string) []Phase {
 	phases := toolchainPhases(root, kit)
-	return append(phases, []Phase{
-		{
-			Name: conformancePhaseName,
-			Argv: goTestArgv(kit, "./internal/conformance", "-run", "^TestRootConformance$"),
-			Env: []string{
-				"BENCH_CONFORMANCE_ROOT=" + root,
-				registry.ConformanceChecksEnv + "=" + strings.Join(registry.OrdinaryNames(registry.Dev), ","),
-				registry.ConformanceInheritedEnv + "=",
-			},
-		},
-		{
-			Name: canary.PhaseContract,
-			Argv: goTestArgv(kit, contractSubtree),
-			Env:  []string{canary.SubjectRootEnv + "=" + root},
-		},
-		{
-			Name:     "shellcheck",
-			Argv:     shellcheckArgv(kit),
-			Optional: true,
-		},
-		{
-			Name: "canary",
-			Argv: []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "canary", root},
-		},
-	}...)
+	if sameDirectory(root, kit) {
+		phases = append(phases, Phase{
+			Name: "system",
+			Argv: goTestArgv("", "-tags=system", "./internal/systemtest"),
+			Env:  []string{"BENCH_SYSTEM_ROOT=" + root},
+			Dir:  kit,
+		})
+	}
+	return append(phases, Phase{
+		Name:     "shellcheck",
+		Argv:     shellcheckArgv(kit),
+		Optional: true,
+	})
 }
 
 // toolchainPhases are the Go steps that grade source rather than the built binary. Each
 // materializes only when the graded root carries what the step grades, so a linked repo
-// never reds on a check the kit wrote for itself: gofmt, vet, and test need a Go module
-// and a toolchain to run it, and race and the filtered conformance suite each need the
-// test they filter for. Both of the latter probe for a declaration rather than a path,
-// because a path is a name any repo can collide with while these test names are the
-// kit's own.
-func toolchainPhases(root, _ string) []Phase {
+// never reds on a check the kit wrote for itself. Gofmt, vet, and test need a Go module
+// and a toolchain to run it; the kit-only race step additionally probes for its sentinel
+// declaration rather than assuming a colliding package path carries the same tests.
+func toolchainPhases(root, kit string) []Phase {
 	if !isRegularFile(filepath.Join(root, "go.mod")) {
 		return nil
 	}
@@ -115,13 +85,10 @@ func toolchainPhases(root, _ string) []Phase {
 		// vet needs no gate-go wrapper: it exits nonzero on its own findings and carries
 		// no policy the argv would have to encode.
 		{Name: canary.PhaseVet, Argv: []string{"go", "-C", root, "vet", "./..."}},
-		{Name: canary.PhaseTest, Argv: gatePhaseGoArgv("test", root)},
+		{Name: canary.PhaseTest, Argv: []string{"go", "test", "-count=1", "./..."}, Dir: root},
 	}
-	if declaresRaceTest(root) {
-		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: gatePhaseGoArgv("race", root)})
-	}
-	if declaresTest(conformancePackageDir(root), registry.RootConformanceTest) {
-		phases = append(phases, Phase{Name: canary.PhaseConformanceSuite, Argv: gatePhaseGoArgv("conformance-suite", root)})
+	if sameDirectory(root, kit) && declaresRaceTest(root) {
+		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: raceDriverArgv(), Dir: root, ExpectedRuns: raceTestNames()})
 	}
 	return phases
 }
@@ -140,11 +107,6 @@ func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 		})
 	}
 	return selected
-}
-
-// conformancePackageDir is the directory the filtered conformance suite grades.
-func conformancePackageDir(root string) string {
-	return filepath.Join(root, filepath.FromSlash(registry.ConformancePackage))
 }
 
 // declaresTest reports whether dir holds a test file declaring a top-level func named
@@ -233,24 +195,19 @@ func phasesCommandAtKitWithContext(base context.Context, root, kit string, stdou
 }
 
 func phasesCommandAtKitWithSelection(base context.Context, root, kit string, selection *runbinary.Selection, stdout, stderr io.Writer) int {
-	mode := outerMode
-	if os.Getenv("BENCH_CANARY_INNER") == "1" {
-		mode = innerMode
-	}
 	phases, err := phaseTable(root, kit)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
+	if decision := Decide(DecisionInput{Subject: "phase-table", Resolution: Resolution{Kind: GateSh}, Phases: decisionPhases(phases)}); !decision.Accepted {
+		fmt.Fprintf(stderr, "gate: phase schedule refused: %s\n", decision.Refusal)
+		return 1
+	}
 	phases = withRunBinary(phases, selection)
 	ctx, stop := signal.NotifyContext(base, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	if mode == outerMode {
-		// A full run grades its excludable phases against the stripped subject; the
-		// inner (canary) gate grades a fixture whose declaration this is not.
-		return runOuterPhases(ctx, root, kit, selection, phasesForMode(phases, mode), stdout, stderr)
-	}
-	return runPhases(ctx, kit, phasesForMode(phases, mode), mode, stdout, stderr)
+	return runPhases(ctx, kit, phases, stdout, stderr)
 }
 
 func shellcheckArgv(root string) []string {
@@ -403,116 +360,4 @@ func shellFilesIn(root, relDir string) []string {
 	}
 	sort.Strings(files)
 	return files
-}
-
-func phasesForMode(phases []Phase, mode phaseMode) []Phase {
-	if mode != innerMode {
-		return phases
-	}
-	// An inner gate never sweeps fixtures of its own, so the canary phase is gone before
-	// the owner is read — which also keeps it from being an owner an ambient export could
-	// name, leaving a run of no phases that greens on nothing.
-	inner := make([]Phase, 0, len(phases))
-	for _, phase := range phases {
-		if phase.Name != "canary" {
-			inner = append(inner, phase)
-		}
-	}
-	// The resolved table is the only list of phase names here: an owner it carries names
-	// a real phase and the fixture runs that one alone, while an owner it does not — a
-	// phase this root lacks, or no owner at all — falls back to the full inner gate. A
-	// second list of names would silently disagree with the table the run is made of.
-	owner := os.Getenv(canary.PhaseEnv)
-	if !carriesPhase(inner, owner) {
-		return restoreInnerConformanceCheck(inner)
-	}
-	filtered := make([]Phase, 0, 1)
-	for _, phase := range inner {
-		if phase.Name == owner {
-			filtered = append(filtered, phase)
-		}
-	}
-	return restoreInnerConformanceCheck(filtered)
-}
-
-// restoreInnerConformanceCheck makes the canary-owned selector an explicit phase
-// override after gateEnv strips every ambient value of that control variable.
-func restoreInnerConformanceCheck(phases []Phase) []Phase {
-	check := os.Getenv(registry.ConformanceCheckEnv)
-	if check == "" {
-		return phases
-	}
-	for i := range phases {
-		if phases[i].Name != conformancePhaseName {
-			continue
-		}
-		phases[i].Env = removePhaseEnv(phases[i].Env, registry.ConformanceChecksEnv)
-		phases[i].Env = removePhaseEnv(phases[i].Env, registry.ConformanceInheritedEnv)
-		phases[i].Env = replacePhaseEnv(phases[i].Env, registry.ConformanceCheckEnv, check)
-	}
-	return phases
-}
-
-func withConformanceCheckSelection(phases []Phase, tier registry.Tier, executed, inherited []string) []Phase {
-	orderedExecuted, executedErr := registry.CanonicalOrdinarySelection(tier, executed)
-	orderedInherited, inheritedErr := registry.CanonicalOrdinarySelection(tier, inherited)
-	partition := append(slices.Clone(orderedExecuted), orderedInherited...)
-	canonicalPartition, partitionErr := registry.CanonicalOrdinarySelection(tier, partition)
-	if executedErr != nil || inheritedErr != nil || partitionErr != nil || !slices.Equal(orderedExecuted, executed) || !slices.Equal(orderedInherited, inherited) || !slices.Equal(canonicalPartition, registry.OrdinaryNames(tier)) {
-		orderedExecuted = registry.OrdinaryNames(tier)
-		orderedInherited = nil
-	}
-	out := append([]Phase(nil), phases...)
-	for i := range out {
-		if out[i].Name != conformancePhaseName {
-			continue
-		}
-		out[i].Env = replacePhaseEnv(out[i].Env, registry.ConformanceCheckEnv, "")
-		out[i].Env = replacePhaseEnv(out[i].Env, registry.ConformanceChecksEnv, strings.Join(orderedExecuted, ","))
-		out[i].Env = replacePhaseEnv(out[i].Env, registry.ConformanceInheritedEnv, strings.Join(orderedInherited, ","))
-	}
-	return out
-}
-
-func withCanaryFamilySelection(phases []Phase, families []string) []Phase {
-	if len(families) == 0 {
-		return phases
-	}
-	out := append([]Phase(nil), phases...)
-	for i := range out {
-		if out[i].Name != "canary" {
-			continue
-		}
-		out[i].Env = replacePhaseEnv(out[i].Env, canary.FamilySelectionEnv, strings.Join(families, ","))
-		out[i].Env = replacePhaseEnv(out[i].Env, canary.FamilySelectionOwnerEnv, "gate")
-		out[i].canaryFamilies = slices.Clone(families)
-	}
-	return out
-}
-
-func replacePhaseEnv(env []string, key, value string) []string {
-	out := removePhaseEnv(env, key)
-	if value != "" || key == registry.ConformanceChecksEnv || key == registry.ConformanceInheritedEnv {
-		out = append(out, key+"="+value)
-	}
-	return out
-}
-
-func removePhaseEnv(env []string, key string) []string {
-	out := make([]string, 0, len(env)+1)
-	for _, entry := range env {
-		if !strings.HasPrefix(entry, key+"=") {
-			out = append(out, entry)
-		}
-	}
-	return out
-}
-
-func carriesPhase(phases []Phase, name string) bool {
-	for _, phase := range phases {
-		if phase.Name == name {
-			return true
-		}
-	}
-	return false
 }

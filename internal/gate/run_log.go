@@ -48,7 +48,7 @@ type gateLogRecord struct {
 }
 
 func beginGateRunLog(ctx context.Context, root string, stderr io.Writer, mode string) (context.Context, func(Result)) {
-	if os.Getenv("BENCH_CANARY_INNER") == "1" || !gateLogPathIgnored(root) {
+	if !gateLogPathIgnored(root) {
 		return ctx, func(Result) {}
 	}
 	logs := filepath.Join(root, ".logs")
@@ -91,9 +91,6 @@ func withGateRunLogEnv(ctx context.Context, base []string) []string {
 }
 
 func inheritGateRunLog(ctx context.Context, stderr io.Writer) (context.Context, func()) {
-	if os.Getenv("BENCH_CANARY_INNER") == "1" {
-		return ctx, func() {}
-	}
 	path, root, run := os.Getenv(gateLogPathEnv), os.Getenv(gateLogRootEnv), os.Getenv(gateLogRunEnv)
 	if path == "" || root == "" || run == "" || !filepath.IsAbs(path) || !filepath.IsAbs(root) ||
 		filepath.Clean(path) != path || filepath.Clean(root) != root ||

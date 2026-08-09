@@ -22,9 +22,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -147,19 +145,13 @@ func (r Resolution) command(root string) *exec.Cmd {
 // live kit instead of their own fabricated layout.
 //
 // The capability skip log goes with them: a run owns the log its own phases append to,
-// so an inherited path — the outer gate's, reaching a canary's inner run — must never
-// survive into a child. A run that collects sets its own value back on each phase.
+// so an inherited path must never survive into a child. A collecting run sets its own
+// value back on each phase.
 func gateEnv() []string {
 	var env []string
 	for _, kv := range capability.WithoutEnvironment(os.Environ(), capability.LogEnv) {
 		if strings.HasPrefix(kv, "BENCH_KIT=") ||
-			strings.HasPrefix(kv, "BENCH_WRAPPER=") ||
-			strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") ||
-			strings.HasPrefix(kv, registry.ConformanceChecksEnv+"=") ||
-			strings.HasPrefix(kv, registry.ConformanceInheritedEnv+"=") ||
-			strings.HasPrefix(kv, canary.FamilySelectionEnv+"=") ||
-			strings.HasPrefix(kv, canary.FamilySelectionOwnerEnv+"=") ||
-			strings.HasPrefix(kv, canary.FamilySelectionAuthorityEnv+"=") {
+			strings.HasPrefix(kv, "BENCH_WRAPPER=") {
 			continue
 		}
 		env = append(env, kv)
@@ -351,11 +343,11 @@ func sameDirectory(a, b string) bool {
 // gate-entry conformance check pins). Anything else pays the full run — fail closed,
 // never fail cheap.
 func phaseTableGate(root string, res Resolution) bool {
-	if res.Kind != GateSh {
+	if res.Kind != GateSh && res.Kind != ProspectiveGateSh {
 		return false
 	}
 	script, err := os.ReadFile(filepath.Join(root, ".bench", "gate.sh"))
-	return err == nil && strings.Contains(string(script), "gate-phases")
+	return err == nil && strings.Contains(string(script), `"$bench" gate-phases`)
 }
 
 type postAcquireContextArm func(context.Context) (context.Context, func())
@@ -413,9 +405,13 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	if err != nil {
 		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate subject unavailable")
 	}
+	decision := Decide(DecisionInput{Subject: plan.Tree, Resolution: plan.Resolution})
 	if plan.Resolution.Kind == None {
 		fmt.Fprintln(stderr, "no gate found: add an executable .bench/gate.sh or set BENCH_GATE")
 		return Result{GateExit: 3, ActionExit: 3, Inspection: inspectAt(storageRoot, engine.Now())}
+	}
+	if !decision.Accepted {
+		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate decision refused: "+decision.Refusal)
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "subject.accepted", Root: storageRoot, Mode: mode.String(), Detail: plan.Tree})
 	if mode == reuseFreshGreen {
@@ -471,7 +467,7 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	runCtx, cancelRun := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
 	defer cancelRun()
 	var selection *runbinary.Selection
-	if owner != nil {
+	if owner != nil && phaseTableGate(runtimeRoot, plan.Resolution) {
 		source := runBinarySource(runtimeRoot, storageRoot, plan)
 		logGateEvent(ctx, gateLogRecord{Event: "binary.select.start", Root: source})
 		selection, err = owner(runCtx, source)
@@ -499,69 +495,25 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 		plan.Env = mergeEnv(plan.Env, []string{"BENCH_KIT=" + selection.SourceRoot})
 	}
 	plan.Env = withGateRunLogEnv(ctx, plan.Env)
-	// The narrowing decision sits under the execution lock, after the whole-tree reuse
-	// answer — reuse costs nothing and grades everything, so it stays the first answer.
-	// Only the ordinary path (runtime and storage root the same tree) narrows; a
-	// prospective execution grades a tree about to become HEAD and keeps the full gate.
-	// An ineligible scoping falls back to the full run, never to a coarser skip: a
-	// fail-closed refusal stays a full run.
-	//
-	// forceRun consults no partition: `bench gate --fresh` is the operator's one escape
-	// to a real whole-tree run. It still resolves identities, because a forced green has to
-	// re-author the slot of every component it just graded.
-	ordinary := runtimeRoot == storageRoot
-	var scoping componentScoping
-	if ordinary {
-		scoping = evaluation.scope(plan.Resolution, mode, engine.Now())
-		if selection != nil {
-			scoping.phases = withRunBinary(scoping.phases, selection)
-		}
-	}
+	// Persist the interrupted posture before the oracle starts. The branch-native gate
+	// always grades the complete subject; there is no component partition to retain.
 	pending := interruptedRecord(plan, engine.Now())
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
 		_ = durableReplaceWithEngine(engine, gitdir, pending)
 		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate pending persistence failed")
 	}
-	var rc int
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
-	switch {
-	case scoping.partial():
-		// The announcement is not optional: a skipped grading surface that says
-		// nothing reads as a gate that never ran (the reused-verdict line above is
-		// the same rule). One line per component, each naming the evidence that
-		// covered that component — a single summary line would tell an operator that
-		// something was skipped without letting them check what stood in for it.
-		for _, skip := range scoping.skipped {
-			fmt.Fprintln(stdout, skip.announcement())
-		}
-		if len(scoping.checks.Inherited) > 0 {
-			for _, name := range scoping.checks.verdictExecuted() {
-				fmt.Fprintln(stdout, "conformance check "+name+": executing")
-			}
-			for _, name := range scoping.checks.verdictInherited() {
-				fmt.Fprintln(stdout, "conformance check "+name+": inherited")
-			}
-		}
-		rc = runPhases(runCtx, scoping.runnerRoot, scoping.phases, outerMode, controlSafeWriter{stdout}, controlSafeWriter{stderr})
-	default:
-		rc = runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
-	}
+	rc := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
 	if ctx.Err() != nil {
 		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
 	if errors.Is(context.Cause(runCtx), errGateTimeout) {
 		fmt.Fprintln(stderr, "gate: timeout")
-		if scoping.eligible {
-			if err := applyConformanceCheckOutcome(storageRoot, scoping.checks, checkRunRed, engine.Now()); err != nil {
-				return operationalWithEngine(engine, storageRoot, 124, stderr, "gate evidence invalidation failed")
-			}
-		}
 		if err := invalidateEvidence(storageRoot, plan); err != nil {
 			return operationalWithEngine(engine, storageRoot, 124, stderr, "gate evidence invalidation failed")
 		}
 		ready := verdictRecord{Schema: 1, State: Ready, Status: "timeout", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: engine.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
-		recordScoping(&ready, scoping)
 		if err := durableReplaceWithEngine(engine, gitdir, ready); err != nil {
 			_ = durableReplaceWithEngine(engine, gitdir, pending)
 			return operationalWithEngine(engine, storageRoot, 124, stderr, "gate timeout persistence failed")
@@ -583,73 +535,14 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	}
 	recordedAt := engine.Now()
 	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
-	recordScoping(&ready, scoping)
 	if status == "green" {
-		if scoping.eligible {
-			if err := applyConformanceCheckOutcome(storageRoot, scoping.checks, checkRunGreen, recordedAt); err != nil {
-				fmt.Fprintln(stderr, "gate evidence persistence failed")
-				return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
-			}
-		}
-		// The slots are this run's own account of what it graded, so they are written
-		// whatever shape the run had: a full run authors every component's, a partial
-		// run authors the ones it executed, and a forced run re-authors all of them.
-		// Failing to author only costs a future run its skip, but failing silently
-		// would hide that cost, so it shares the persistence-failure posture below.
-		if err := authorExecutedComponentSlots(storageRoot, scoping, recordedAt); err != nil {
+		if err := retainGreen(storageRoot, plan, recordedAt); err != nil {
 			fmt.Fprintln(stderr, "gate evidence persistence failed")
 			return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
 		}
-		// A narrowed run retains nothing here, which is why only the full
-		// branch below writes evidence. The verdict cache refuses to reuse a narrow
-		// record by its class, but this store has no class at the reuse call site —
-		// reusableEvidence asks only whether a green is retained for this tree and
-		// oracle — so a whole-tree record written by a run that skipped components
-		// would answer a release-path reuse for the next hour with phases nobody ran.
-		// Stripped evidence is the same door one step over: writing it from a narrow
-		// run would re-stamp an ever-older ancestor as recent.
-		if !scoping.partial() {
-			if err := retainGreen(storageRoot, plan, recordedAt); err != nil {
-				fmt.Fprintln(stderr, "gate evidence persistence failed")
-				return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
-			}
-			// A full green is the sole author of the ancestor slot: the same run's
-			// evidence retained under the stripped identity, which is what a later
-			// allowlist-confined tree resolves. Failing to author it only costs a
-			// future full run, but failing silently would hide that cost, so it
-			// shares the persistence-failure posture above.
-			if ordinary {
-				strippedPlan, err := evaluation.postStrippedSubject()
-				if err == nil {
-					err = retainGreen(storageRoot, strippedPlan, recordedAt)
-				}
-				if err != nil {
-					fmt.Fprintln(stderr, "gate evidence persistence failed")
-					return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
-				}
-			}
-		}
 	} else {
-		if scoping.eligible {
-			if err := applyConformanceCheckOutcome(storageRoot, scoping.checks, checkRunRed, recordedAt); err != nil {
-				return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
-			}
-		}
 		if err := invalidateEvidence(storageRoot, plan); err != nil {
 			return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
-		}
-		if err := invalidateExecutedComponentSlots(storageRoot, scoping); err != nil {
-			return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
-		}
-		// A full red also contradicts any ancestor sharing this tree's stripped
-		// identity — the `--fresh` red after a capture-only edit — so that slot goes
-		// with it.
-		if ordinary {
-			if strippedPlan, err := evaluation.postStrippedSubject(); err == nil {
-				if err := invalidateEvidence(storageRoot, strippedPlan); err != nil {
-					return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
-				}
-			}
 		}
 	}
 	if err := durableReplaceWithEngine(engine, gitdir, ready); err != nil {
@@ -658,23 +551,6 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, engine.Now())}
-}
-
-func recordScoping(ready *verdictRecord, scoping componentScoping) {
-	if len(scoping.skipped) > 0 {
-		// The record carries the evidence rather than pointing at the single mutable slot.
-		ready.Executed = scoping.executedPhaseNames()
-		ready.SkipEvidence = make(map[string]skipEvidence, len(scoping.skipped))
-		for _, skip := range scoping.skipped {
-			ready.Skipped = append(ready.Skipped, skip.Component)
-			ready.SkipEvidence[skip.Component] = skip.evidence()
-		}
-	}
-	if len(scoping.checks.Inherited) > 0 {
-		ready.CheckExecuted = scoping.checks.verdictExecuted()
-		ready.CheckInherited = scoping.checks.verdictInherited()
-		ready.CheckEvidence = scoping.checks.verdictEvidence()
-	}
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {

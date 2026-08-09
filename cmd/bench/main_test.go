@@ -33,13 +33,13 @@ func TestVersionLine(t *testing.T) {
 }
 
 func TestRunVersionExits0(t *testing.T) {
-	if rc := run([]string{"version"}, nil, nil); rc != 0 {
+	if rc := (Command{}).Run([]string{"version"}); rc != 0 {
 		t.Errorf("run version exit = %d, want 0", rc)
 	}
 }
 
 func TestRunUnknownExits2(t *testing.T) {
-	if rc := run([]string{"nope"}, nil, nil); rc != 2 {
+	if rc := (Command{}).Run([]string{"nope"}); rc != 2 {
 		t.Errorf("run nope exit = %d, want 2", rc)
 	}
 }
@@ -117,7 +117,7 @@ func TestCheckAgentLineHarnessFlag(t *testing.T) {
 
 func TestRunCanaryDispatchesToCommand(t *testing.T) {
 	stderr := tempFile(t)
-	if rc := run([]string{"canary", "one", "two"}, nil, stderr); rc != 2 {
+	if rc := (Command{Stderr: stderr}).Run([]string{"canary", "one", "two"}); rc != 2 {
 		t.Fatalf("run canary usage exit = %d, want 2", rc)
 	}
 	got := readFile(t, stderr)
@@ -137,7 +137,7 @@ func TestRunGatePhasesDispatchesToCommand(t *testing.T) {
 
 	stdout := tempFile(t)
 	stderr := tempFile(t)
-	rc := run([]string{"gate-phases", "/tmp/root"}, stdout, stderr)
+	rc := (Command{Stdout: stdout, Stderr: stderr}).Run([]string{"gate-phases", "/tmp/root"})
 
 	if rc != 37 {
 		t.Fatalf("run gate-phases exit = %d, want injected exit 37", rc)

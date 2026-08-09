@@ -117,23 +117,34 @@ func pinnedManifest(path string, stderr io.Writer) (Manifest, int) {
 // second time. CLAUDE.md is manifest-owned but conditionally, never planned, so it is
 // not a withdrawal.
 func upgradePlanCounts(manifest Manifest, plan []planEntry) (added, changed, removed int) {
-	planned := make(map[string]bool, len(plan))
-	for _, entry := range plan {
-		planned[entry.rel] = true
-		old := manifest.Hash(entry.rel)
-		if old == "" {
-			added++
-			continue
-		}
-		if entry.kind != "file" {
-			continue
-		}
-		if now, err := fingerprintPath(entry.src); err != nil || now != old {
-			changed++
-		}
-	}
+	current := make([]Asset, 0, len(manifest.hashes))
 	for _, row := range manifest.Rows() {
-		if !planned[row.rel] && row.rel != "CLAUDE.md" {
+		current = append(current, Asset{Path: row.rel, Fingerprint: row.hash})
+	}
+	desired := make([]Asset, 0, len(plan))
+	for _, entry := range plan {
+		old := manifest.Hash(entry.rel)
+		fingerprint := old
+		if fingerprint == "" {
+			fingerprint = entry.kind + ":new"
+		}
+		if entry.kind == "file" {
+			if now, err := fingerprintPath(entry.src); err == nil {
+				fingerprint = now
+			} else {
+				fingerprint = entry.kind + ":unreadable"
+			}
+		}
+		desired = append(desired, Asset{Path: entry.rel, Fingerprint: fingerprint})
+	}
+	decision := PlanLifecycle(LifecycleInput{Current: current, Desired: desired, Preserve: []string{"CLAUDE.md"}})
+	for _, operation := range decision.Operations {
+		switch operation.Kind {
+		case "add":
+			added++
+		case "change":
+			changed++
+		case "remove":
 			removed++
 		}
 	}
