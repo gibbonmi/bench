@@ -72,6 +72,16 @@ func checkWorkflowAnchors(root string) []string {
 		if !strings.Contains(text, "model and effort") {
 			diags = append(diags, "bench-write-spec.md does not mandate per-story model and effort")
 		}
+		if strings.Count(text, "`Bootstrap authority before execution` rule") != 2 {
+			diags = append(diags, "bench-write-spec.md does not apply craft-spec's named bootstrap-authority rule during edge walking and falsification")
+		}
+	}
+	if text := readIfExists(filepath.Join(root, ".agents", "skills", "bench-craft-spec", "SKILL.md")); text != "" {
+		if !strings.Contains(text, "## Bootstrap authority before execution") {
+			diags = append(diags, ".agents/skills/bench-craft-spec/SKILL.md dropped the bootstrap-authority pre-execution trace")
+		} else if !strings.Contains(text, "before launching the next executable") || strings.Contains(text, "after launching the next executable") {
+			diags = append(diags, ".agents/skills/bench-craft-spec/SKILL.md validates a bootstrap authority after launch")
+		}
 	}
 	if text := readIfExists(filepath.Join(root, ".bench", "BENCH-reference.md")); text != "" && !strings.Contains(text, "BENCH_MODEL") {
 		diags = append(diags, "BENCH-reference.md adapter contract does not document BENCH_MODEL")

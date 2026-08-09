@@ -34,6 +34,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made spec authoring trace bootstrap authority from the raw OS entrypoint and
+  require every executable hop to authenticate its successor before launch.
 - Made a validated debug receipt's required fence the maximum repair-reslicing
   envelope: independently-green slicing yields one repair ticket or an ordered
   chain, the union of their ownership fences remains inside that envelope, and

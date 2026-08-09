@@ -70,6 +70,22 @@ over a newly added action is a claim about a test that has never run the
 action, and it rots into an untested wedge. If the control cannot be shown
 to reach the new code, the class becomes a row.
 
+## Bootstrap authority before execution
+
+When a story claims trusted or authenticated execution, or refusal before
+execution, trace the real process from the raw OS entrypoint to the first
+candidate-controlled instruction and through every executable hop. At each hop,
+name the already-trusted validator and how it authenticates the next executable
+before launching the next executable. A path, record, digest, or executable
+cannot authenticate itself. Without an independent trust root, the design is
+incomplete unless a reviewer-visible accepted trust assumption says otherwise.
+
+Coverage starts at the raw entrypoint, places markers in candidate-controlled
+executables, corrupts or replaces the next authority or executable, and asserts
+that no marker runs before refusal. Slicing names who publishes, locates,
+validates, and invokes the first trusted executable; no complete owner is a
+pre-build slicing defect.
+
 Two guards on the exclusions:
 
 - **No amputated callers.** Before writing a **Won't handle** line about an

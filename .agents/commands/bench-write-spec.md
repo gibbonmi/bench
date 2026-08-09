@@ -108,7 +108,8 @@ reviewer approval under `craft-line`.
    classes and row-or-**Won't handle** rule to every behavior. Consult the
    project's hostile-input checklist. When none covers the surface, quarry
    `.agents/skills/bench-craft-seams/references/hostile-input-library.md` and
-   propose a tuned profile addition.
+   propose a tuned profile addition. Apply `craft-spec`'s named
+   `Bootstrap authority before execution` rule.
 
 6. **Route each story.** Give every user story its resolved model and effort
    from `craft-line`, checking the profile's cached routings first. Fully
@@ -139,7 +140,9 @@ reviewer approval under `craft-line`.
    cached routing, does any behavior, red signal, or decision answer name an
    outcome family instead of an exact predicate, and — where the stories
    partition into disjoint package or fence sets — could a narrower capability
-   ship on its own gate? A same-session source, source conflict, or mostly not
+   ship on its own gate? Apply `craft-spec`'s named
+   `Bootstrap authority before execution` rule. A same-session source, source
+   conflict, or mostly not
    observed reds may justify a top-tier pass, but the escalation pauses for
    reviewer approval. The verdict is advisory; sign-off stays with the
    reviewer.

@@ -72,22 +72,25 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 
 func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T) {
 	const (
-		repairEnvelopeDiag   = ".agents/skills/bench-craft-tickets/SKILL.md dropped the debug receipt's maximum repair envelope"
-		repairResultDiag     = ".agents/skills/bench-craft-tickets/SKILL.md dropped the one-ticket-or-reciprocal-chain repair result"
-		repairChainOnlyDiag  = ".agents/skills/bench-craft-tickets/SKILL.md contains an additive chain-only repair mandate for validated debug receipts"
-		repairUnionDiag      = ".agents/skills/bench-craft-tickets/SKILL.md dropped repair-ticket fence union containment"
-		repairEscapeDiag     = ".agents/skills/bench-craft-tickets/SKILL.md permits a repair ticket to escape the debug receipt's required fence"
-		repairOwnerDiag      = "bench-implement-spec dropped the craft-tickets repair-reslicing owner pointer"
-		repairCommonDiag     = "bench-implement-spec dropped the one-repair-ticket common case"
-		repairSingularDiag   = "bench-implement-spec restores the singular exactly-one repair-ticket mandate"
-		repairAssignDiag     = "bench-implement-spec dropped ordinary assign for every repair-chain ticket"
-		repairCheckDiag      = "bench-implement-spec dropped ordinary checkpoint for every repair-chain ticket"
-		repairIntegrateDiag  = "bench-implement-spec dropped ordinary integrate for every repair-chain ticket"
-		repairGitDiag        = "bench-implement-spec permits chain-local synthesized Git checkpoint plumbing"
-		repairTerminalDiag   = "bench-implement-spec dropped the terminal repair-ticket refresh precondition"
-		repairEarlyDiag      = "bench-implement-spec permits premature refresh after a non-terminal repair ticket"
-		repairAssignmentDiag = "bench-implement-spec replaced the original blocked assignment refresh identity"
-		repairReceiptDiag    = "bench-implement-spec replaced the original validated debug receipt identity"
+		bootstrapDeletionDiag = ".agents/skills/bench-craft-spec/SKILL.md dropped the bootstrap-authority pre-execution trace"
+		bootstrapAfterDiag    = ".agents/skills/bench-craft-spec/SKILL.md validates a bootstrap authority after launch"
+		bootstrapPointerDiag  = "bench-write-spec.md does not apply craft-spec's named bootstrap-authority rule during edge walking and falsification"
+		repairEnvelopeDiag    = ".agents/skills/bench-craft-tickets/SKILL.md dropped the debug receipt's maximum repair envelope"
+		repairResultDiag      = ".agents/skills/bench-craft-tickets/SKILL.md dropped the one-ticket-or-reciprocal-chain repair result"
+		repairChainOnlyDiag   = ".agents/skills/bench-craft-tickets/SKILL.md contains an additive chain-only repair mandate for validated debug receipts"
+		repairUnionDiag       = ".agents/skills/bench-craft-tickets/SKILL.md dropped repair-ticket fence union containment"
+		repairEscapeDiag      = ".agents/skills/bench-craft-tickets/SKILL.md permits a repair ticket to escape the debug receipt's required fence"
+		repairOwnerDiag       = "bench-implement-spec dropped the craft-tickets repair-reslicing owner pointer"
+		repairCommonDiag      = "bench-implement-spec dropped the one-repair-ticket common case"
+		repairSingularDiag    = "bench-implement-spec restores the singular exactly-one repair-ticket mandate"
+		repairAssignDiag      = "bench-implement-spec dropped ordinary assign for every repair-chain ticket"
+		repairCheckDiag       = "bench-implement-spec dropped ordinary checkpoint for every repair-chain ticket"
+		repairIntegrateDiag   = "bench-implement-spec dropped ordinary integrate for every repair-chain ticket"
+		repairGitDiag         = "bench-implement-spec permits chain-local synthesized Git checkpoint plumbing"
+		repairTerminalDiag    = "bench-implement-spec dropped the terminal repair-ticket refresh precondition"
+		repairEarlyDiag       = "bench-implement-spec permits premature refresh after a non-terminal repair ticket"
+		repairAssignmentDiag  = "bench-implement-spec replaced the original blocked assignment refresh identity"
+		repairReceiptDiag     = "bench-implement-spec replaced the original validated debug receipt identity"
 	)
 	h := NewHarness(t)
 	owner, ok := conformanceChecks["docs-currency-workflow"]
@@ -97,6 +100,7 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 	root := h.KitRoot
 	diags := owner.run(root, h.KitRoot, registry.Dev)
 	for _, diag := range []string{
+		bootstrapDeletionDiag, bootstrapAfterDiag, bootstrapPointerDiag,
 		repairEnvelopeDiag, repairResultDiag, repairChainOnlyDiag,
 		repairUnionDiag, repairEscapeDiag,
 		repairOwnerDiag,
@@ -151,6 +155,11 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 		{"backup isolation", ".agents/skills/bench-craft-delegate/SKILL.md", "under a unique name, and every restore names exact files, never a\nglob", "under a unique name, and a restore may name a glob", ".agents/skills/bench-craft-delegate/SKILL.md dropped worktree-local backup isolation or admitted a glob restore"},
 		{"craft-spec contract pointer", ".agents/skills/bench-craft-spec/SKILL.md", "Each fence carries value contracts across it, and `craft-tickets` owns naming\nthem in `Discover the contracts before writing files`; this section points at\nthat step by name rather than restating what it requires.", "Each fence carries value contracts across it: every crossing value names its\ntype, its membership or domain rule, its ordering, and its absence semantics.", ".agents/skills/bench-craft-spec/SKILL.md dropped the contracts-discovery pointer from the slicing section"},
 		{"edge walk process boundary", ".agents/skills/bench-craft-spec/SKILL.md", "re-run idempotency, process-boundary lifecycle, hostile\nenvironment", "re-run idempotency, hostile\nenvironment", ".agents/skills/bench-craft-spec/SKILL.md dropped the process-boundary lifecycle class from the canonical edge-class run"},
+		{"bootstrap authority deletion", ".agents/skills/bench-craft-spec/SKILL.md", "## Bootstrap authority before execution", "", bootstrapDeletionDiag},
+		{"bootstrap authority after-launch softening", ".agents/skills/bench-craft-spec/SKILL.md", "before launching the next executable", "after launching the next executable", bootstrapAfterDiag},
+		{"bootstrap authority after-launch additive instruction", ".agents/skills/bench-craft-spec/SKILL.md", "cannot authenticate itself. Without an independent trust root", "cannot authenticate itself. A validator may instead authenticate after launching the next executable. Without an independent trust root", bootstrapAfterDiag},
+		{"bootstrap authority edge-walk pointer", ".agents/commands/bench-write-spec.md", "propose a tuned profile addition. Apply `craft-spec`'s named\n   `Bootstrap authority before execution` rule.", "propose a tuned profile addition.", bootstrapPointerDiag},
+		{"bootstrap authority falsification pointer", ".agents/commands/bench-write-spec.md", "ship on its own gate? Apply `craft-spec`'s named\n   `Bootstrap authority before execution` rule.", "ship on its own gate?", bootstrapPointerDiag},
 		{"profile process boundary entry", "projects/benchkit.md", "- state serialized by one process and reloaded by a fresh one: the writer's\n  in-memory value and the reader's re-parse agree at unit level and diverge\n  across the boundary, so the assertion drives a second process rather than\n  reusing the first's structures. Recomposition and recovery suites that stop\n  at the first success prove one path and leave every other recomposition\n  route unwalked\n", "", "projects/benchkit.md dropped the process-boundary lifecycle entry from the hostile-input checklist"},
 		{"contracts re-derivation", ".agents/skills/bench-craft-tickets/SKILL.md", "Re-derive each contract, and every claim a ticket makes about it, from the tree\nafter earlier tickets land — never from the spec's account of the base.", "Re-read each contract, and every claim a ticket makes about it, from the spec's account of the base.", ".agents/skills/bench-craft-tickets/SKILL.md dropped the re-derive-claims-from-the-tree rule from the contracts-discovery step"},
 		{"repair envelope deletion", ".agents/skills/bench-craft-tickets/SKILL.md", "For a validated debug receipt, the\nreceipt's required fence is the maximum envelope for repair reslicing; apply\nthe ordinary independently-green split rule inside it.", "For a validated debug receipt, apply the ordinary independently-green split rule inside its required fence.", repairEnvelopeDiag},
