@@ -16,13 +16,16 @@ reconciled `ROADMAP.md`. The three new specs passed six cross-harness codex
 review rounds (`gpt-5.6-sol` high, read-only), terminal verdict ACCEPT; all
 pass `bench coverage --check`.
 
-The superseded `axi-compatibility-oracle` build (candidate `9639a81d`, six of
-twelve tickets integrated, two stale active assignments) must not be promoted.
-Resolve it with `bench spec build abandon axi-compatibility-oracle` (plan,
-then `--apply`); defer `reclaim` until `axi-spec-build-complete`'s tickets are
-cut, in case a ticket salvages the bounded process observer or registry census
-from the candidate — otherwise reclaim and let it go. Then
-`bench spec retire axi-compatibility-oracle` once terminal.
+The superseded `axi-compatibility-oracle` run is terminal: abandonment applied
+(two worktrees released, 137 provisional and 21 recovery refs marked). Its
+superseded banner was dropped pre-abandon because lifecycle operations validate
+the spec against the run's recorded subject; the supersession record lives in
+`ROADMAP.md` FT173. `reclaim` is deferred until `axi-spec-build-complete`'s
+tickets are cut, in case one salvages the bounded process observer or registry
+census from candidate `9639a81d` — otherwise reclaim and let it go. The spec
+folder stays until reclaim completes (reclaim validates recorded spec bytes
+like abandon did); `bench spec retire` refuses staged specs, so the folder then
+leaves through an ordinary deletion commit.
 
 Build order: `axi-spec-build-complete` (lands `internal/axi` actions +
 `help[]`), then `axi-coherent-diff`, then `axi-query-disclosure` (its QD5
@@ -32,7 +35,7 @@ composed when FT185 exists, never re-derived.
 
 ## Next command
 
-`bench spec build abandon axi-compatibility-oracle`
+`/bench-implement-spec` — `specs/axi-spec-build-complete/spec.md`
 
 ## Shape
 
