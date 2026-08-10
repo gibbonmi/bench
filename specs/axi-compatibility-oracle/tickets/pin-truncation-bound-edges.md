@@ -1,0 +1,52 @@
+# Pin every truncation bound edge
+
+Blocked by: pin-default-full-and-empty-classes.md
+Ownership fence: `internal/axi/compatibility`, `cmd/bench/axi_compatibility_test.go`, `specs/axi-compatibility-oracle/testdata`
+Integration surfaces: pair and empty matrix plus the candidate-rebuild harness→pin-default-full-and-empty-classes.md; bound case fixtures→`specs/axi-compatibility-oracle/testdata`; bound-edge derivation→`internal/axi/compatibility`; declared cap policies→`decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md` exercised unchanged by every BD1 row; cap constants read by the mutation rows→`internal/bounds/bounds.go`, `internal/sanitize/sanitize.go`, `internal/roadmap/context_types.go`, and `internal/worktree/subshell.go` exercised unchanged by the BD1 rows
+Contracts: the bound-edge case IDs `<member>-<policy>-<below|at|above>` cross `decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`→`specs/axi-compatibility-oracle/testdata`; their type is one baseline observation record per case ID, membership is the four declared truncation policies at three edges plus each policy's distinguishing metadata fact, order is stable case ID ascending, and a policy missing an edge refuses the load; asserted by BD1 against the really rebuilt candidate executable
+Closure: BD1/preview-below, BD1/preview-at, BD1/preview-above, BD1/preview-multibyte, BD1/preview-byte-suffix, BD1/roadmap-below, BD1/roadmap-at, BD1/roadmap-above, BD1/roadmap-utf8-backoff, BD1/ignored-default-20, BD1/ignored-full-1000, BD1/ignored-byte-limit, BD1/ignored-at-least-state, BD1/outline-below, BD1/outline-at, BD1/outline-above, BD1/outline-skip-truncated
+
+## What to build
+
+Each of the four truncation owners has its own cap, its own counting unit, and its
+own metadata, and the helper census is explicit that they are not interchangeable.
+This ticket derives a below/at/above case for each — `sanitize.Preview` at 119,
+120, and 121 code points; `roadmap.limited` at 4095, 4096, and 4097 bytes;
+`worktree.inventoryIgnored` at its 20-path default, its 1000-path full display, and
+its byte limit; `outline` at 199, 200, and 201 rows — plus each policy's
+distinguishing fact: `Preview`'s `… (N bytes)` suffix counted in original bytes,
+`limited`'s UTF-8 backoff, the ignored inventory's at-least/over-limit state, and
+outline's rule that any skip also sets `truncated`.
+
+The TOON byte classes are the sibling ticket `pin-toon-byte-classes.md`: they
+break in the encoder rather than in a cap, so they land green on their own.
+
+Mutations are applied to a scratch copy of the tree and the candidate executable is
+rebuilt through `scripts/go-build.sh`, exactly as in the blocking ticket. The
+rebuild is bounded at 180s and each case child at 30s.
+
+## Acceptance
+
+- [ ] [BD1] (covers CO5) each of the four truncation policies compares byte-exact below, at, and above its cap and across its distinguishing metadata fact, and a candidate rebuilt with any one of those facts changed reports a raw stdout delta on the case that owns it.
+
+## Red mutations
+
+| criterion | mutation | owner | operation sequence |
+|---|---|---|---|
+| BD1/preview-below | cap `sanitize.Preview` at 119 code points in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/preview_below -timeout 900s`; it fails at the raw stdout equality assertion for case `root-status-preview-below`, whose 119-code-point detail is untruncated in the baseline and gains a `…` suffix in the candidate; the rebuild is bounded at 180s and each case child at 30s |
+| BD1/preview-at | cap `sanitize.Preview` at 121 code points in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/preview_at -timeout 900s`; it fails at the raw stdout equality assertion for case `root-status-preview-at`, whose exactly-120-code-point detail loses its truncation suffix in the candidate; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/preview-above | count the `Preview` cap in bytes instead of code points in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/preview_above -timeout 900s`; it fails at the raw stdout equality assertion for case `root-status-preview-above`, reporting a shorter visible prefix for the 121-code-point detail; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/preview-multibyte | truncate `Preview` mid-rune rather than at a code-point boundary in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/preview_multibyte -timeout 900s`; it fails at the raw stdout equality assertion for case `root-status-preview-multibyte`, reporting the replacement rune where the baseline ends on a whole rune; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/preview-byte-suffix | count the `… (N bytes)` suffix from the visible truncated prefix instead of the original value in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/preview_byte_suffix -timeout 900s`; it fails at the raw stdout equality assertion for case `root-status-preview-multibyte`, printing the reduced byte count against the baseline's original length; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/roadmap-below | lower `contextBodyLimit` to 4095 in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/roadmap_below -timeout 900s`; it fails at the raw stdout equality assertion for case `root-roadmap-context-limit-below`, whose 4095-byte body flips `truncated` from false to true; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/roadmap-at | raise `contextBodyLimit` to 4097 in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/roadmap_at -timeout 900s`; it fails at the raw stdout equality assertion for case `root-roadmap-context-limit-at`, whose exactly-4096-byte body changes its `*_bytes` metadata; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/roadmap-above | count the roadmap cap in runes instead of bytes in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/roadmap_above -timeout 900s`; it fails at the raw stdout equality assertion for case `root-roadmap-context-limit-above`, reporting a longer retained body for the multibyte 4097-byte source; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/roadmap-utf8-backoff | remove the UTF-8 backoff so the cap can split a rune in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/roadmap_utf8_backoff -timeout 900s`; it fails at the raw stdout equality assertion for case `root-roadmap-context-limit-multibyte`, reporting the partial rune where the baseline backs off to the previous boundary; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/ignored-default-20 | display 25 ignored paths by default in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/ignored_default -timeout 900s`; it fails at the raw stdout equality assertion for case `nested-worktree-clean-ignored-default`, reporting 25 `ignored_paths` rows against the baseline's 20; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/ignored-full-1000 | display up to 1001 ignored paths under `--full` in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/ignored_full -timeout 900s`; it fails at the raw stdout equality assertion for case `nested-worktree-clean-ignored-full`, reporting the extra row and the changed `truncated` value at the 1000-entry boundary; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/ignored-byte-limit | drop the ignored-inventory byte limit so enumeration continues past it in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/ignored_byte_limit -timeout 900s`; it fails at the raw stdout equality assertion for case `nested-worktree-clean-ignored-bytes`, reporting the enlarged inventory and its changed `fingerprint` cell; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/ignored-at-least-state | report an at-least count as an exact total in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/ignored_at_least -timeout 900s`; it fails at the raw stdout equality assertion for case `nested-worktree-clean-ignored-over-limit`, reporting the exact-count spelling where the baseline marks the over-limit at-least state; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/outline-below | lower `bounds.OutlineRowLimit` to 199 in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/outline_below -timeout 900s`; it fails at the raw stdout equality assertion for case `root-outline-rows-below`, whose 199-symbol fixture flips `truncated` from false to true; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/outline-at | raise `bounds.OutlineRowLimit` to 201 in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/outline_at -timeout 900s`; it fails at the raw stdout equality assertion for case `root-outline-rows-at`, whose exactly-200-symbol fixture changes its emitted and omitted counts; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/outline-above | derive `total_symbols` from the emitted rows in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/outline_above -timeout 900s`; it fails at the raw stdout equality assertion for case `root-outline-rows-above`, reporting `total_symbols=200` against the baseline's 201; bounded by the 180s rebuild and 30s case deadlines |
+| BD1/outline-skip-truncated | ignore skipped files when setting `truncated` in the candidate rebuild | the cap-edge test | run `go test ./cmd/bench -run TestExactMatrixPreservesCapEdges/outline_skip -timeout 900s`; it fails at the raw stdout equality assertion for case `root-outline-skipped`, reporting `truncated=false` with a non-zero skipped count; bounded by the 180s rebuild and 30s case deadlines |

@@ -2,8 +2,8 @@
 
 Blocked by: compare-four-observations.md
 Ownership fence: `internal/axi/compatibility`, `cmd/bench/axi_compatibility_test.go`, `specs/axi-compatibility-oracle/testdata`
-Integration surfaces: four-observation comparator→compare-four-observations.md; pair and empty case fixtures→`specs/axi-compatibility-oracle/testdata`; class derivation for pairs and empties→`internal/axi/compatibility`; declared pair and empty owners→`decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md` exercised unchanged by every EF1 row; bound and byte-class consumer→pin-bound-and-byte-classes.md
-Contracts: the paired case IDs `<member>-default` and `<member>-full`, and the empty-form case IDs `<member>-empty`, cross `decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`→`specs/axi-compatibility-oracle/testdata`; their type is one baseline observation record per case ID, membership is the six declared default/full pairs and the five declared empty forms, order is stable case ID ascending, and a pair missing either half refuses the load; asserted by EF1 against the really rebuilt candidate executable
+Integration surfaces: four-observation comparator→compare-four-observations.md; pair and empty case fixtures→`specs/axi-compatibility-oracle/testdata`; class derivation for pairs and empties→`internal/axi/compatibility`; declared pair and empty owners→`decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md` exercised unchanged by every EF1 row except the two below; dashboard empty-section body→`internal/dashboard/render.go` exercised unchanged by EF1/empty-dashboard-section; roadmap recommended-sequence gap line→`internal/roadmap/roadmap.go` exercised unchanged by EF1/empty-roadmap-recommended-sequence; bound-edge consumer→pin-truncation-bound-edges.md; byte-class consumer→pin-toon-byte-classes.md
+Contracts: the paired case IDs `<member>-default` and `<member>-full`, and the empty-form case IDs `<member>-empty`, cross `decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`→`specs/axi-compatibility-oracle/testdata`; their type is one baseline observation record per case ID, membership is the six declared default/full pairs, the three empty forms that census declares — the TOON zero-row table, spec build's one-row `state=empty`, and status's prose clean line — and two more the tree produces without the census naming them, the dashboard's empty section body from `internal/dashboard/render.go` and roadmap's recommended-sequence gap line from `internal/roadmap/roadmap.go`, order is stable case ID ascending, and a pair missing either half refuses the load; asserted by EF1 against the really rebuilt candidate executable
 Closure: EF1/pair-diff, EF1/pair-test, EF1/pair-outline, EF1/pair-roadmap-context, EF1/pair-worktree-clean, EF1/pair-spec-build-status, EF1/empty-toon-zero-row, EF1/empty-spec-build-state, EF1/empty-status-prose, EF1/empty-dashboard-section, EF1/empty-roadmap-recommended-sequence
 
 ## What to build
@@ -13,14 +13,19 @@ default/`--full` and empty half. It derives a `<member>-default` and
 `<member>-full` case for each of the six pairs the helper census declares —
 `bench diff`, `bench test`, `bench outline`, `bench roadmap --context`,
 `bench worktree clean`, and `bench spec build status` — and one `<member>-empty`
-case for each of the five distinct empty forms the census keeps apart: the TOON
-zero-row table `name[0]{fields}:`, spec build's one-row `spec_build` with
-`state=empty`, status's prose `bench: clean — nothing pending`, a dashboard
-section empty, and roadmap's missing/recommended-sequence empty.
+case for each of five distinct empty forms. Three come from the census, which
+keeps them apart deliberately: the TOON zero-row table `name[0]{fields}:`, spec
+build's one-row `spec_build` with `state=empty`, and status's prose
+`bench: clean — nothing pending`. Two more are the tree's, not the census's: a
+dashboard card renders an explicit empty body — `internal/dashboard/render.go`
+prints `<p class="empty">…</p>` inside the section rather than dropping the
+section — and `bench roadmap` with no drain prints the recommended-sequence
+section verbatim, or, when it is absent, the explicit gap line `nextAction`
+returns in `internal/roadmap/roadmap.go` rather than nothing at all.
 
 The five empty forms mean five different things, and the census is explicit that a
-shared renderer must not normalize them into one spelling. Each row below breaks
-exactly one of those meanings.
+shared renderer must not normalize its three into one spelling. Each row below
+breaks exactly one of those meanings.
 
 Every mutation is applied to a scratch copy of the tree from which the candidate
 executable is rebuilt through `scripts/go-build.sh`, so the mutated subject is
@@ -30,7 +35,7 @@ The rebuild runs under a 180s `context.WithTimeout` and every case child under
 
 ## Acceptance
 
-- [ ] [EF1] (covers CO5) each of the six declared default/`--full` pairs and each of the five declared empty forms compares byte-exact against the pinned baseline, and a candidate rebuilt with any one of those renderings changed reports a raw stdout delta on the case that owns it.
+- [ ] [EF1] (covers CO5) each of the six declared default/`--full` pairs and each of the five empty forms compares byte-exact against the pinned baseline, and a candidate rebuilt with any one of those renderings changed reports a raw stdout delta on the case that owns it.
 
 ## Red mutations
 

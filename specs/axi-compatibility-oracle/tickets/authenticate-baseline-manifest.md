@@ -10,7 +10,7 @@ Closure: BM1/subject, BM1/preimage-build-input-set, BM1/preimage-name-framing, B
 
 `internal/axi/compatibility` loads a baseline manifest and refuses everything that
 would let a later comparison grade itself. A load succeeds only when the record
-pins source subject `974020e4af8de5ed75098c4c5934a8907952bb2b`, carries a
+pins source subject `8ae1512f95e64588487430aefa5b02c288d7de3a`, carries a
 canonical-builder seal whose preimage is recomputed from the real build inputs
 `freshness.BuildInputs` returns (`scripts/go-build.sh`, `package.json`,
 `internal/releaseevidence/requirements.json` and the rest of that closure) framed
@@ -37,7 +37,7 @@ than only bypassing the check that reads it.
 
 | criterion | mutation | owner | operation sequence |
 |---|---|---|---|
-| BM1/subject | change the manifest's `source_subject` to `0000000000000000000000000000000000000000` while every other field stays valid | the manifest-reader test | run `go test ./internal/axi/compatibility -run TestManifestRejectsUnpinnedSubject -timeout 60s`; it fails at the subject-equality assertion reporting want `974020e4af8de5ed75098c4c5934a8907952bb2b`, got the zero subject; the reader's 5s `context.WithTimeout` bounds the load so a stalled read fails as a deadline |
+| BM1/subject | change the manifest's `source_subject` to `0000000000000000000000000000000000000000` while every other field stays valid | the manifest-reader test | run `go test ./internal/axi/compatibility -run TestManifestRejectsUnpinnedSubject -timeout 60s`; it fails at the subject-equality assertion reporting want `8ae1512f95e64588487430aefa5b02c288d7de3a`, got the zero subject; the reader's 5s `context.WithTimeout` bounds the load so a stalled read fails as a deadline |
 | BM1/preimage-build-input-set | drop `scripts/go-build.sh` from the path list the seal preimage hashes, keeping the seal check itself in place | the seal-preimage test | run `go test ./internal/axi/compatibility -run TestManifestSealPreimageCoversEveryBuildInput -timeout 60s`; it fails at the set-equality assertion between the preimage path list and `freshness.BuildInputs(root)`, naming the missing `scripts/go-build.sh`; the input enumeration runs under the same 5s deadline |
 | BM1/preimage-name-framing | hash each build input's contents without its slash-relative name | the seal-preimage test | run `go test ./internal/axi/compatibility -run TestManifestSealPreimageIsNameFramed -timeout 60s`; it fails at the digest-equality assertion against `freshness.Digest(root)` after two same-size inputs are swapped, reporting the two digests; the recompute runs under the 5s deadline |
 | BM1/preimage-length-framing | drop the `%d:` length prefixes so name and contents concatenate unframed | the seal-preimage test | run `go test ./internal/axi/compatibility -run TestManifestSealPreimageIsLengthFramed -timeout 60s`; it fails at the digest-equality assertion against `freshness.Digest(root)` for the crafted boundary-collision pair, reporting both digests; bounded by the 5s deadline |

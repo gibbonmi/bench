@@ -11,7 +11,7 @@ Closure: BC1/baseline-only-authorship, BC1/distinct-executable-identity, BC1/ref
 Expected observations exist only because the pinned baseline executable produced
 them. `cmd/bench/axi_compatibility_test.go` builds two executables once each
 through `scripts/go-build.sh` — one from a worktree checked out at
-`974020e4af8de5ed75098c4c5934a8907952bb2b`, one from the candidate tree — records
+`8ae1512f95e64588487430aefa5b02c288d7de3a`, one from the candidate tree — records
 each one's absolute path and `freshness.SealDigests` executable digest, and hands
 only the baseline handle to the capture API. The capture API refuses any handle
 whose recorded source subject is not the pinned one, and it refuses before it
@@ -36,7 +36,7 @@ child and a broken harness look identical at the gate.
 
 | criterion | mutation | owner | operation sequence |
 |---|---|---|---|
-| BC1/baseline-only-authorship | pass the candidate executable handle to the capture API that writes expected observations | the paired-capture provenance test | run `go test ./cmd/bench -run TestExpectedBytesComeOnlyFromThePinnedExecutable -timeout 600s`; it fails at the provenance assertion reporting recorded subject `<candidate HEAD>` against required `974020e4af8de5ed75098c4c5934a8907952bb2b`; both builds run under a 180s `exec.CommandContext` and each capture child under 30s |
+| BC1/baseline-only-authorship | pass the candidate executable handle to the capture API that writes expected observations | the paired-capture provenance test | run `go test ./cmd/bench -run TestExpectedBytesComeOnlyFromThePinnedExecutable -timeout 600s`; it fails at the provenance assertion reporting recorded subject `<candidate HEAD>` against required `8ae1512f95e64588487430aefa5b02c288d7de3a`; both builds run under a 180s `exec.CommandContext` and each capture child under 30s |
 | BC1/distinct-executable-identity | reuse the baseline executable path as the candidate path | the paired-capture provenance test | run `go test ./cmd/bench -run TestBaselineAndCandidateExecutablesAreDistinct -timeout 600s`; it fails at the executable-digest inequality assertion, printing the one `freshness.SealDigests` digest twice; bounded by the same 180s build and 30s run deadlines |
 | BC1/refusal-precedes-equality | compare observation bytes first and check provenance only when they differ | the paired-capture provenance test | run `go test ./cmd/bench -run TestProvenanceRefusalPrecedesByteEquality -timeout 600s`; with candidate-authored expectations whose bytes match, it fails at the assertion that the returned error is the provenance refusal rather than `nil`; bounded by the 180s build and 30s run deadlines |
 | BC1/expected-bytes-immutable | rewrite the expected fixture from the candidate observation after a comparison runs | the immutable-fixture test | run `go test ./cmd/bench -run TestExpectedFixturesAreUnchangedByACandidateRun -timeout 600s`; it fails at the assertion comparing the fixture's pre-run and post-run SHA-256, naming the rewritten fixture path; the candidate child runs under a 30s deadline |
