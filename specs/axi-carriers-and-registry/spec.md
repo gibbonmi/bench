@@ -21,6 +21,7 @@ After `axi-compatibility-oracle` is implemented, introduce `internal/axi` as the
 ## Implementation decisions
 
 - `internal/axi` owns generic outcomes with domain-supplied kind/exit policy, typed executable actions with fixed and open arguments, owner-supplied bounded projections, ordered typed aggregates, and explicit empty classifications. It derives no domain meaning and emits no public envelope.
+- The exported carrier identifiers are fixed: `axi.Outcome` (CR1), `axi.Action` (CR2), `axi.Projection` (CR3), and for CR4 `axi.Aggregate` with its `axi.Fact` element and `axi.EmptyClass` for empty classifications, all in package `internal/axi`. Dependent specs and tickets reference these literal symbols; renaming one is a spec change, not an implementation choice.
 - The production root registry declares all 48 members; nested family registries compose the same declaration type. Required metadata is attachment, AXI disposition, grammar/help owner, renderer family, empty class, default/detail modes, and applicable shared routes.
 - The exact approved AXI set remains six root queries—`anchors`, `learnings`, `maps`, `guards`, `diff`, `coverage`—plus nested `worktree list`. All other members are explicitly classified and retain their separately reviewed contracts.
 - Registry metadata is validated and observable to conformance but inert to command dispatch and rendering. Independent expectations make flipping an approved member or operational exemption red.
@@ -92,6 +93,6 @@ Every mapped row becomes ticket acceptance, atomic closure, and subject mutation
 ## Ownership fences
 
 - Shared owner: `internal/axi/**` excluding `internal/axi/compatibility/**`.
-- Registry declaration: `cmd/bench/main.go`, `cmd/bench/command_registry.go`, `internal/usage/**`, `internal/spec/**`, `internal/publication/**`, `internal/preflight/**`, `internal/gate/**`, `internal/harness/**`.
+- Registry declaration: `cmd/bench/main.go`, `cmd/bench/command_registry.go`, `cmd/bench/command_registry_test.go`, `internal/usage/**`, `internal/spec/**`, `internal/publication/**`, `internal/preflight/**`, `internal/gate/**`, `internal/harness/**`. The test file is in the fence because the enumeration and validation tests must live in package `main` to see the unexported registry, matching the `cmd/bench` grant in the ticket-derivation table.
 - Conformance and advertisements: `internal/conformance/**`, `.agents/skills/bench-craft-cli/SKILL.md`, `projects/benchkit.md`, `CHANGELOG.md`.
 - The compatibility oracle and all production domain renderers remain unchanged inputs.

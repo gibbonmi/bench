@@ -2,26 +2,51 @@
 
 Blocked by: none
 Ownership fence: `internal/roadmap`
-Integration surfaces: shared aggregate/empty carriers→implemented prerequisite `axi-carriers-and-registry`; final contraction→contract-aggregate-empty-routes.md
-Contracts: roadmap typed context/drain facts cross `internal/roadmap`→shared aggregate; domain is owner source/drain state; order is current block/field order; absence distinguishes zero/unknown/degraded, asserted by RA1
-Closure: RA1/order, RA1/totals, RA1/unknown, RA1/zero, RA1/degraded, RA1/emitted-less-total, RA1/route
+Integration surfaces: ordered aggregate carrier→`internal/axi/aggregate.go` exercised by RA1; context source producer→`internal/roadmap/context_parse.go` exercised by RA1; context renderer→`internal/roadmap/context_render.go` exercised by RA1; drain producer and status callout→`internal/roadmap/roadmap.go` exercised by RA1; legacy carrier contraction→contract-aggregate-empty-routes.md
+Contracts: the per-source `SourceFact{Source,State,Bytes}` triples and the `Drain{Ideas,OpenLearnings,Retros}` counts with their `bounds.FileState` values cross `internal/roadmap/context_parse.go` and `internal/roadmap/roadmap.go`→`internal/axi/aggregate.go`; state is one `bounds.FileState` literal, bytes and counts are non-negative decimals; order is the `labels` slice order followed by `capture/retros/` and `.git/bench-last-gate`; a failed read renders `toon.UnknownCell`, never `0`, asserted by RA1 against the real `BuildContext` and `DrainCounts` producers
+Closure: RA1/order, RA1/source-roadmap, RA1/source-ideas, RA1/source-learnings, RA1/source-budgets, RA1/source-structure-accept, RA1/source-specs, RA1/source-retros, RA1/source-gate-cache, RA1/unknown, RA1/zero, RA1/degraded-evidence, RA1/emitted-less-total, RA1/drain-ideas, RA1/drain-learnings, RA1/drain-retros, RA1/route
 
 ## What to build
 
-Migrate roadmap aggregates through the shared carriers without changing owner semantics or public bytes.
+`bench roadmap --context` and the `bench roadmap` drain callout supply their already-derived
+facts to the shared ordered aggregate carrier and render identical bytes. `BuildContext`
+keeps ownership of every source label, its `bounds.FileState`, and its byte count;
+`DrainCounts` keeps ownership of the three capture counts and their states; `limited` keeps
+ownership of the 4096-byte body bound and the `*_bytes`/`truncated` pair.
+
+The existing context and drain tests are positive controls only, so this ticket adds the
+shared-route mutation the row lacks: a new `TestRoadmapContextAggregateRouteCarriesOwnerFacts`
+in `internal/roadmap` drives the real `ContextCommand` over a fixture repository and asserts
+the `sources` and drain facts reached the renderer through the shared carrier carrying the
+producers' own values.
+
+Tree condition that must hold when this ticket is refreshed: `internal/axi/aggregate.go`
+exists and declares the exported ordered-aggregate type `Aggregate` with its typed fact
+entry `Fact`. If that path or either symbol is absent, stop and report rather than build —
+the prerequisite `axi-carriers-and-registry` build has not landed.
 
 ## Acceptance
 
-- [ ] [RA1] (covers AE3) migrate roadmap aggregates preserve order, totals, unknown, zero, degraded, emitted-less-total, route.
+- [ ] [RA1] (covers AE3) roadmap context and drain render each owner source's state, bytes, and counts — including unknowns, explicit zeros, degraded evidence, and emitted-less-than-total bodies — in owner order through the shared aggregate carrier.
 
 ## Red mutations
 
 | criterion | mutation | owner | operation sequence |
 |---|---|---|---|
-| RA1/order | reorder context facts | the independent roadmap renderer test | render the context fixture and require current order |
-| RA1/totals | derive totals from visible rows | the independent roadmap context test | supply more source facts than visible and require owner totals |
-| RA1/unknown | coerce unknown to zero | the independent roadmap context test | make one source unreadable and require unknown |
-| RA1/zero | omit explicit zero | the independent roadmap drain test | run an empty disposition and require zero remains present |
-| RA1/degraded | drop degraded evidence | the independent roadmap context test | make one source unreadable and require evidence facts |
-| RA1/emitted-less-total | equate emitted and total | the independent roadmap context test | truncate the visible set and require both owner values |
-| RA1/route | leave one context aggregate local | the independent roadmap route test | invoke the context command and require the missing route marker |
+| RA1/order | append the `capture/retros/` and `.git/bench-last-gate` source facts before the `labels` loop instead of after it | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the assertion comparing the `sources` block's source column to the exact eight-label sequence fails at index 0 with `capture/retros/`; every source read is capped at `bounds.ControlRecordLimit` (2 MiB), so a large fixture file cannot stall the walk |
+| RA1/source-roadmap | drop the `ROADMAP.md` entry from the `labels` slice | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the eight-label sequence assertion fails with seven rows and no `ROADMAP.md` source; bounded by `bounds.ControlRecordLimit` |
+| RA1/source-ideas | drop the `capture/IDEAS.md` entry from the `labels` slice | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the sequence assertion fails with no `capture/IDEAS.md` source row; bounded by `bounds.ControlRecordLimit` |
+| RA1/source-learnings | drop the `learnings.JournalPath` entry from the `labels` slice | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the sequence assertion fails with no `capture/learnings.md` source row; bounded by `bounds.ControlRecordLimit` |
+| RA1/source-budgets | drop the `.bench/structure.budgets` entry from the `labels` slice | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the sequence assertion fails with no `.bench/structure.budgets` source row; bounded by `bounds.ControlRecordLimit` |
+| RA1/source-structure-accept | drop the `.bench/structure-accept` entry from the `labels` slice | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the sequence assertion fails with no `.bench/structure-accept` source row; bounded by `bounds.ControlRecordLimit` |
+| RA1/source-specs | drop the `specs/` directory branch so no `specs/` source fact is appended | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the sequence assertion fails with no `specs/` source row; the directory read is one `bounds.ClassifyDir` listing, bounded by the fixture's flat spec directory |
+| RA1/source-retros | stop appending the `retros.Directory + "/"` source fact | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the sequence assertion fails with no `capture/retros/` source row; bounded by `bounds.ControlRecordLimit` per retro file |
+| RA1/source-gate-cache | stop appending the `.git/bench-last-gate` source fact | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the sequence assertion fails with no `.git/bench-last-gate` source row; the gate fact is supplied by the injected `GateCacheFact`, so no cache read occurs |
+| RA1/unknown | in `drainStatus`, render `fmt.Sprintf("%d open in %s", ...)` for a failed learnings state instead of `toon.UnknownCell` | `TestRoadmapDrainStatusNamesDegradedRetros` (`internal/roadmap`) | run `go test ./internal/roadmap -run TestRoadmapDrainStatusNamesDegradedRetros -count=1 -timeout 120s`; the assertion that the degraded capture source renders an unknown cell fails against the literal `0 open in capture/learnings.md`; the fixture writes one unreadable file and every read is capped at `bounds.ControlRecordLimit` |
+| RA1/zero | in `drainStatus`, omit the `- ideas: %d parked` line when the count is `0` | `TestRoadmapDrainStatus` (`internal/roadmap`) | run `go test ./internal/roadmap -run TestRoadmapDrainStatus/learnings_only -count=1 -timeout 120s`; the `ideas: 0 parked in capture/IDEAS.md` want-string assertion fails because the line is absent; each fixture file is a few bytes under `bounds.ControlRecordLimit` |
+| RA1/degraded-evidence | in `BuildContext`, stop appending the `ParseFailure` evidence rows for `degradedState` sources | `TestBuildContextCarriesRetrosAndDegradedEvidence` (`internal/roadmap`) | run `go test ./internal/roadmap -run TestBuildContextCarriesRetrosAndDegradedEvidence -count=1 -timeout 120s`; the assertion that the degraded retro contributes a `parse_failures` entry naming its state and reason fails with an empty `Failures` slice while the `sources` state cell still reads degraded; bounded by `bounds.ControlRecordLimit` |
+| RA1/emitted-less-total | in `limited`, return the full body with `truncated=false` and the truncated byte count | `TestContextBodyLimitBoundaries` (`internal/roadmap`) | run `go test ./internal/roadmap -run TestContextBodyLimitBoundaries -count=1 -timeout 120s`; the boundary case asserting `truncated=true` with `body_bytes` above the 4096-byte bound fails with `false`; the body bound itself is the test's stall bound — the fixture body is written once at the boundary size |
+| RA1/drain-ideas | in `DrainCounts`, return `Ideas: 0` while leaving `IdeasState` unchanged | `TestDrainCountsMixedLines` (`internal/roadmap`) | run `go test ./internal/roadmap -run TestDrainCountsMixedLines -count=1 -timeout 120s`; the assertion on the parked-idea tally fails with `0` against a fixture whose `capture/IDEAS.md` holds parked lines; the file read is capped at `bounds.ControlRecordLimit` |
+| RA1/drain-learnings | in `DrainCounts`, return `OpenLearnings: len(parked)` instead of the learnings tally | `TestRoadmapDrainStatus` (`internal/roadmap`) | run `go test ./internal/roadmap -run TestRoadmapDrainStatus/ideas_only -count=1 -timeout 120s`; the `learnings: 0 open in capture/learnings.md` want-string assertion fails because the ideas count leaks into the learnings cell; bounded by `bounds.ControlRecordLimit` |
+| RA1/drain-retros | in `DrainCounts`, return `Retros: 0` while leaving `RetrosState` unchanged | `TestRoadmapDrainStatusIncludesPendingRetros` (`internal/roadmap`) | run `go test ./internal/roadmap -run TestRoadmapDrainStatusIncludesPendingRetros -count=1 -timeout 120s`; the assertion naming the pending retro count in the drain callout fails with `0 pending in capture/retros/`; each retro file read is capped at `bounds.ControlRecordLimit` |
+| RA1/route | keep the pre-migration local `toon.TableTyped("sources", ...)` block construction and never build the shared aggregate | `TestRoadmapContextAggregateRouteCarriesOwnerFacts` (`internal/roadmap`, new) | run `go test ./internal/roadmap -run TestRoadmapContextAggregateRouteCarriesOwnerFacts -count=1 -timeout 120s`; the assertion that the `sources` facts were carried by `axi.Aggregate` from `BuildContext`'s own `SourceFact` values fails with no aggregate observed, even though the rendered bytes are unchanged; bounded by `bounds.ControlRecordLimit` per source |

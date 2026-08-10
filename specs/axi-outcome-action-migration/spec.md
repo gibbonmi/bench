@@ -21,7 +21,7 @@ After `axi-carriers-and-registry` is implemented, migrate outcome and action con
 ## Implementation decisions
 
 - The `cmd/bench` output adapter migrates first, followed by fence-disjoint query and inspection domain batches. Every ordinary member constructs a shared outcome before its existing renderer; a registry-derived bypass mutation exists per member.
-- Status/handoff, dashboard, and spec-build are separate tickets because dashboard consumes status facts while spec-build has an independent renderer and nine-operation grammar.
+- Status, handoff, dashboard, and spec-build are separate tickets because dashboard consumes status and handoff facts while spec-build has an independent renderer and nine-operation grammar.
 - Publication, worktree, and shift remain separate writers. `shift.Outcome` continues to own `complete`, `failed`, `usage`, `incomplete`, `no-op`, `interrupted` and exits 0/1/2/3/4/130.
 - Typed actions record fixed tokens and open placeholders but existing `action`, `next`, `next_action`, hint, and prose bytes remain exact. This spec emits no `help[]`.
 - The contract ticket removes obsolete local result/action carriers only after every family migration and route junction is green. Zero-consumer exports are residue unless a named public API owner remains.

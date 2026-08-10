@@ -20,6 +20,7 @@ Create one executable compatibility oracle before any AXI carrier or migration w
 ## Implementation decisions
 
 - The compatibility module is a test-facing deep owner: manifest validation, case closure, observation capture, and delta reporting sit behind one interface. It does not render production command output.
+- The comparator's exported identifier is fixed: `compatibility.Compare` in package `internal/axi/compatibility`, taking the authenticated baseline record and a candidate's paired fresh-state observations and returning the per-observation delta report. Dependent specs and tickets reference this literal symbol; renaming it is a spec change, not an implementation choice.
 - The baseline records the pinned subject, canonical-builder seal, stable case ID, argv, fixture identity, raw stdout and stderr, exit, and accepted/rejected classification. The reader rejects an unpinned subject, a seal whose input preimage does not match, a non-regular or symlinked fixture, duplicate IDs, missing observations, and candidate-authored refreshes.
 - Membership derives from all 48 Go roots, wrapper no-argument/help, `--version`, `-v`, wrapper-only `repair`, and the existing nested grammar owners. Every applicable required argv class is present or has a specific not-applicable reason.
 - Ordinary cases use the production `Command` seam. Wrapper routing, process identity, environment, signal, or stream cases use baseline and candidate executables built once each through `scripts/go-build.sh`, with absolute paths and bounded process lifetimes.

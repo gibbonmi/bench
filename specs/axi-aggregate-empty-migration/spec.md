@@ -95,5 +95,5 @@ Each semantic owner row becomes an independently green migration with direct pro
 
 - Query aggregates: `internal/guards/**`, `internal/outline/**`, `internal/roadmap/**`, `internal/worktree/**`.
 - Lifecycle/ambient aggregates: `internal/specbuild/**`, `cmd/bench/specbuild.go`, `internal/publication/**`, `internal/status/**`, `internal/dashboard/**`.
-- Empty declarations and route conformance: `cmd/bench/**`, `internal/conformance/**`, `internal/axi/**`, `projects/benchkit.md`.
+- Empty declarations and route conformance: `internal/toon/**`, `cmd/bench/**`, `internal/conformance/**`, `internal/axi/**`, `projects/benchkit.md`. (`internal/toon` matches the AE8/AE10 grant in the ticket-derivation table; the fences list previously omitted it.)
 - Existing renderers and the compatibility oracle remain exact-output owners.

@@ -2,26 +2,44 @@
 
 Blocked by: none
 Ownership fence: `internal/publication`
-Integration surfaces: shared aggregate/empty carriers→implemented prerequisite `axi-carriers-and-registry`; final contraction→contract-aggregate-empty-routes.md
-Contracts: publication record typed facts cross `internal/publication` state machine→renderer; domain is durable release record; order is record order; absence is explicit no-record with zero/unknown preserved, asserted by PA1
-Closure: PA1/order, PA1/typed-facts, PA1/durable-next, PA1/zero, PA1/unknown, PA1/route
+Integration surfaces: ordered aggregate carrier→`internal/axi/aggregate.go` exercised by PA1; durable record producer and next-state derivation→`internal/publication/statemachine.go` exercised by PA1; release-index digest producer→`internal/publication/approved.go` exercised by PA1; record renderer→`internal/publication/command.go` exercised by PA1; legacy carrier contraction→contract-aggregate-empty-routes.md
+Contracts: the `meta` facts (`release_index_sha256`, `path`, `profile`, `result`, `next_action`) and the per-transition typed facts cross `internal/publication/statemachine.go`→`internal/axi/aggregate.go` and on to `internal/publication/command.go`; `next_action` is one of `submit`, `promote`, `approve-platform-packages`, `approve-wrapper`, `release-complete`, `prepare`, `resolve-integrity-mismatch`; `release_index_sha256` is the lowercase hex sha256 of the approved `dist/preflight/release-index.json` bytes; order is the record's transition order followed by the five meta facts; a record-free repository renders `result=none next_action=prepare` rather than an omitted block, asserted by PA1 against the real `LoadRecord`/`RunPromotion` producers
+Closure: PA1/op-prepare, PA1/op-submit, PA1/op-promote, PA1/op-rollback, PA1/op-status, PA1/transition-order, PA1/typed-facts, PA1/durable-next, PA1/no-record-zero, PA1/release-index-preimage, PA1/route
 
 ## What to build
 
-Migrate publication aggregates through the shared carriers without changing owner semantics or public bytes.
+Every `bench release` operation supplies its already-derived record facts to the shared
+ordered aggregate carrier and renders identical bytes. The durable `Record` stays the sole
+owner of the next state: `nextActionForInProgress` reads only `record.Transitions` and
+`record.Provenance`, and no consumer may re-derive a next action from the rendered rows.
+`VerifyApprovedSet` stays the sole owner of `release_index_sha256`, the value the state
+machine compares before it will submit, promote, or roll back.
+
+The publication package currently has no renderer test of its own, so this ticket authors
+the owner tests named below in `internal/publication`, driving `Command` against the fixture
+registry (`NewFixtureRegistry`) over a `t.TempDir()` repository.
+
+Tree condition that must hold when this ticket is refreshed: `internal/axi/aggregate.go`
+exists and declares the exported ordered-aggregate type `Aggregate` with its typed fact
+entry `Fact`. If that path or either symbol is absent, stop and report rather than build —
+the prerequisite `axi-carriers-and-registry` build has not landed.
 
 ## Acceptance
 
-- [ ] [PA1] (covers AE6) migrate publication aggregates preserve order, typed-facts, durable-next, zero, unknown, route.
+- [ ] [PA1] (covers AE6) each of the five `bench release` operations renders the durable record's typed facts and owner-derived next action in record order through the shared aggregate carrier, with the release-index digest still derived from its own preimage.
 
 ## Red mutations
 
 | criterion | mutation | owner | operation sequence |
 |---|---|---|---|
-| PA1/order | derive next state outside record | the independent producer route or compatibility test | apply the subject mutation, run the real public producer fixture under its named bound, and require the specific red |
-| PA1/typed-facts | stringify numeric fact | the independent producer route or compatibility test | apply the subject mutation, run the real public producer fixture under its named bound, and require the specific red |
-| PA1/durable-next | omit zero | the independent producer route or compatibility test | apply the subject mutation, run the real public producer fixture under its named bound, and require the specific red |
-| PA1/zero | coerce unknown | the independent producer route or compatibility test | apply the subject mutation, run the real public producer fixture under its named bound, and require the specific red |
-| PA1/unknown | reorder fields | the independent producer route or compatibility test | apply the subject mutation, run the real public producer fixture under its named bound, and require the specific red |
-| PA1/route | bypass shared aggregate | the independent producer route or compatibility test | apply the subject mutation, run the real public producer fixture under its named bound, and require the specific red |
-
+| PA1/op-prepare | in `runPrepare`, render the `meta` block with `next_action` empty instead of `submit` | `TestReleasePrepareCarriesOwnerMetaFacts` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleasePrepareCarriesOwnerMetaFacts -count=1 -timeout 180s`; the assertion that the prepare `meta` row's `next_action` cell is `submit` fails with an empty cell; the fixture stages `dist/preflight` and `dist/artifacts` files of a few bytes in a `t.TempDir()`, and `VerifyApprovedSet` performs bounded file reads with no subprocess |
+| PA1/op-submit | in `runSubmit`, hard-code `nextAction = "release-complete"` instead of calling `nextActionForInProgress(record)` when `record.Result != "success"` | `TestReleaseSubmitDerivesNextActionFromTheRecord` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseSubmitDerivesNextActionFromTheRecord -count=1 -timeout 180s`; the assertion that a partially staged first publication renders `next_action=submit` fails with `release-complete`; the run uses `NewFixtureRegistry` (no network) and inherits `subprocess.NotifyCancel`'s cancellable context, so a stuck staged operation is cancelled rather than left running |
+| PA1/op-promote | in `runPromote`, set `nextAction = "release-complete"` on the error path instead of `resolve-integrity-mismatch` | `TestReleasePromoteNamesIntegrityMismatchNextAction` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleasePromoteNamesIntegrityMismatchNextAction -count=1 -timeout 180s`; the assertion that a failed promotion renders `next_action=resolve-integrity-mismatch` beside exit 1 fails with `release-complete`; fixture registry only, bounded by the cancellable `subprocess.NotifyCancel` context |
+| PA1/op-rollback | in `runRollback`, set `nextAction = "release-complete"` on the success path instead of `prepare` | `TestReleaseRollbackReturnsToPrepare` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseRollbackReturnsToPrepare -count=1 -timeout 180s`; the assertion that a completed rollback renders `next_action=prepare` fails with `release-complete`; fixture registry only, bounded by the cancellable `subprocess.NotifyCancel` context |
+| PA1/op-status | in `runStatus`, render `next_action=prepare` for a `success` record instead of `release-complete` | `TestReleaseStatusRendersEachRecordResultNextAction` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseStatusRendersEachRecordResultNextAction -count=1 -timeout 180s`; the `success` case fails with `prepare` against the expected `release-complete`; `runStatus` only reads the record file in a `t.TempDir()`, so there is no subprocess to stall |
+| PA1/transition-order | in `printRecord`, emit the transition rows sorted by package name instead of `record.Transitions` order | `TestReleaseRecordKeepsTransitionOrder` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseRecordKeepsTransitionOrder -count=1 -timeout 180s`; the assertion comparing the rendered `transitions` rows to the record's own order fails at the first row; the record is written directly by the fixture, so no registry call is made |
+| PA1/typed-facts | supply `len(record.Transitions)` to the aggregate as a formatted string rather than the typed integer the carrier declares | `TestReleaseRecordFactsStayTyped` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseRecordFactsStayTyped -count=1 -timeout 180s`; the assertion that the transition-count fact reports the carrier's numeric scalar type fails with the string type; record-file read only, no subprocess |
+| PA1/durable-next | in `printRecord`, compute the next action from the rendered transition rows instead of accepting the `nextAction` the record owner derived | `TestReleaseSubmitDerivesNextActionFromTheRecord` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseSubmitDerivesNextActionFromTheRecord -count=1 -timeout 180s`; the assertion that a record whose `Provenance` names an unstaged wrapper renders `approve-wrapper` fails, because the rendered rows alone cannot distinguish it from a complete run; fixture registry only, bounded by the cancellable context |
+| PA1/no-record-zero | in `runStatus`, return early with no output when `record.SchemaVersion == 0` instead of rendering the `result=none next_action=prepare` row | `TestReleaseStatusRendersEachRecordResultNextAction` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseStatusRendersEachRecordResultNextAction -count=1 -timeout 180s`; the no-record case fails with empty stdout against the expected `meta[1]{release_index_sha256,path,profile,result,next_action}` row carrying `none` and `prepare`; record-file read only |
+| PA1/release-index-preimage | in `VerifyApprovedSet`, compute `releaseIndexSHA256` from the release-index `version` field alone instead of `sha256.Sum256(indexData)` over the whole file | `TestReleaseIndexDigestCommitsToTheWholeIndex` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseIndexDigestCommitsToTheWholeIndex -count=1 -timeout 180s`; the assertion that two release indexes with the same version but different per-artifact `sha256` entries yield different `releaseIndexSHA256` values fails with two equal digests, so the state machine's `record.ReleaseIndexSHA256 != releaseIndexSHA256` refusal stops firing on a swapped artifact set; the test reads two small fixture files and starts no subprocess |
+| PA1/route | keep the pre-migration local `toon.Table("meta", ...)` build in `printRecord` and never construct the shared aggregate | `TestReleaseRecordAggregateRouteCarriesOwnerFacts` (`internal/publication`, new) | run `go test ./internal/publication -run TestReleaseRecordAggregateRouteCarriesOwnerFacts -count=1 -timeout 180s`; the assertion that the five `meta` facts were carried by `axi.Aggregate` from the loaded record fails with no aggregate observed, even though the rendered bytes are unchanged; record-file read only |
