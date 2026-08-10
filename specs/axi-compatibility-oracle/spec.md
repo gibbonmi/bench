@@ -4,11 +4,6 @@ Status: staged
 
 Decision source: `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`
 
-Superseded by the 2026-08-10 forward-build ruling (see `ROADMAP.md` FT173): do
-not assign, integrate, or promote. The active run resolves through `bench spec
-build abandon`, then `reclaim`; this spec then retires. The four migration
-specs this file references were deleted in the same restructure.
-
 ## Problem
 
 Bench has exact-output tests for individual commands but no independent system that proves an internal AXI refactor preserves the complete public language. A migration can keep sampled stdout green while moving an error to stderr, changing an exit, accepting new argv, normalizing an empty state, or drifting a default/`--full` pair.
