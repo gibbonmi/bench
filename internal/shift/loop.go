@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
@@ -215,7 +216,7 @@ func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 	// Signal handling: a pulled line cancels the running child. The loop exits at its
 	// checkpoints so cleanup never races git work or an in-flight gate.
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigCh, subprocess.CancelSignals...)
 	defer signal.Stop(sigCh)
 	go func() {
 		sig := <-sigCh

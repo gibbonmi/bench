@@ -8,9 +8,9 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -471,7 +471,7 @@ func executeCleanup(root string, plan CleanupPlan, checkpoint func(string) error
 	if err := checkpoint(intent.ReceiptPhaseRemoving); err != nil {
 		return plan, err
 	}
-	interruptContext, stopInterrupts := signal.NotifyContext(context.Background(), os.Interrupt)
+	interruptContext, stopInterrupts := subprocess.NotifyCancel(context.Background())
 	defer stopInterrupts()
 	if plan.owned {
 		if out, err := exec.Command("git", "-C", root, "worktree", "unlock", plan.Target).CombinedOutput(); err != nil {

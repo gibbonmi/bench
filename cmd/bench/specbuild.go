@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os/signal"
-	"syscall"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/specbuild"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -27,7 +26,7 @@ func specBuildCommand(args []string) (string, int) {
 		return buildError(errors.New("Git repository unavailable"), "run this command inside the working checkout")
 	}
 	service := specbuild.New(root, productionGateOwner{}, productionWorktreeOwner{})
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	return executeBuild(ctx, service, invocation.Operation, invocation.Slug, invocation.Flags)
 }

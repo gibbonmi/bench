@@ -13,16 +13,15 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/terminal"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -205,7 +204,7 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		return 1
 	}
 	phases = withRunBinary(phases, selection)
-	ctx, stop := signal.NotifyContext(base, syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := subprocess.NotifyCancel(base)
 	defer stop()
 	return runPhases(ctx, kit, phases, stdout, stderr)
 }

@@ -20,7 +20,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -30,6 +29,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/releaseevidence"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -166,7 +166,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	if kit == "" {
 		kit = root
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 
 	for _, step := range Steps(root, kit) {

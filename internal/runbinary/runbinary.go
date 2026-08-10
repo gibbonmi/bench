@@ -20,7 +20,10 @@ import (
 // Env carries the exact Bench executable selected by the current top-level run.
 const Env = "BENCH_RUN_BINARY"
 
-const builderCancelGrace = 2 * time.Second
+// BuilderCancelGrace is how long a cancelled builder group has to exit on SIGTERM
+// before it is killed. Exported so a test waiting out the drain derives its own
+// deadline from this window instead of guessing a literal.
+const BuilderCancelGrace = 2 * time.Second
 
 type Builder func(context.Context, string, string) error
 type Verifier func(string, string) error
@@ -210,7 +213,7 @@ func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
 		select {
 		case <-done:
 			drainBuilderGroup(cmd.Process.Pid)
-		case <-time.After(builderCancelGrace):
+		case <-time.After(BuilderCancelGrace):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 			drainBuilderGroup(cmd.Process.Pid)

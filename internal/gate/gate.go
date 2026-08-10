@@ -14,17 +14,16 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -353,7 +352,7 @@ func phaseTableGate(root string, res Resolution) bool {
 type postAcquireContextArm func(context.Context) (context.Context, func())
 
 func notifyGateSignals(ctx context.Context) (context.Context, func()) {
-	return signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	return subprocess.NotifyCancel(ctx)
 }
 
 func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine) Result {

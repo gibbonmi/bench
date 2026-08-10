@@ -8,11 +8,12 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
+
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 type commandFailure struct{ failure Failure }
@@ -42,7 +43,7 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 		emitFailure(stderr, Failure{Kind: "input", Message: "run release-preflight inside a Git repository"})
 		return 1
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	r := &runner{root: root, mode: mode, binaryVersion: binaryVersion, stderr: stderr}
 	if err := r.populateBaseIdentity(); err != nil {

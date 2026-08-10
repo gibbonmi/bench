@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
-	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -41,7 +40,7 @@ func ExecCommand(root string, args []string, stdin io.Reader, stdout, stderr io.
 }
 
 func runWorktreeChild(argv []string, dir string, stdin io.Reader, stdout, stderr io.Writer) int {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = dir, stdin, stdout, stderr

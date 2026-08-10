@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"os/signal"
 	"sort"
 	"strings"
 	"syscall"
@@ -16,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -40,7 +40,7 @@ func Command(root string, args []string) (string, int) {
 		packageExpr = parsed.Positionals[0]
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	selection, err := selectRunBinary(ctx, testBenchSource(root))
 	if err != nil {

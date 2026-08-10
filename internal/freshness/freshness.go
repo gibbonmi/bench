@@ -18,6 +18,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 const sealSchema = 1
@@ -205,7 +207,7 @@ func beginPublication(executable string) (*publication, error) {
 // for the signal it received.
 func (p *publication) watch() {
 	p.signals = make(chan os.Signal, 1)
-	signal.Notify(p.signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	signal.Notify(p.signals, subprocess.CancelSignals...)
 	go func() {
 		received, delivered := <-p.signals
 		if !delivered {

@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"path/filepath"
-	"syscall"
 
+	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -168,7 +167,7 @@ func runSubmit(root, version, profile, registryBase, path string, stdout, stderr
 		return 1
 	}
 	defer release()
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	registry := NewFixtureRegistry(registryBase)
 	fmt.Fprintf(stderr, "release submit: publishing %s (profile %s, path %s) against %s\n", version, profile, path, registryBase)
@@ -222,7 +221,7 @@ func runPromote(root, version, profile, registryBase string, stdout, stderr io.W
 		return 1
 	}
 	defer release()
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	registry := NewFixtureRegistry(registryBase)
 	fmt.Fprintf(stderr, "release promote: promoting %s against %s\n", version, registryBase)
@@ -265,7 +264,7 @@ func runRollback(root, version, profile, registryBase, message string, stdout, s
 		return 1
 	}
 	defer release()
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	registry := NewFixtureRegistry(registryBase)
 	fmt.Fprintf(stderr, "release rollback: rolling back %s against %s\n", version, registryBase)
