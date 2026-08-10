@@ -1,6 +1,6 @@
 # AXI spec build complete
 
-Status: implemented
+Status: staged
 
 Decision source: `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`
 
