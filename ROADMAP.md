@@ -777,21 +777,28 @@ drift error if they move, so one invocation cannot splice facts from concurrent
 states. The acceptance target is one `bench diff` call for orientation and at
 most one `bench diff --full` call for bodies, replacing the raw status/stat/
 name-only/revision/check sequence. Grade it with a paired-delta fixture against
-raw Git over committed, staged, unstaged, untracked, rename, deletion, binary,
-hostile-filename, clean, and mid-read-drift cases.
+raw Git over committed, staged, unstaged, untracked, nested-new-directory,
+rename, deletion, binary, hostile-filename, clean, and mid-read-drift cases.
 
-Reviewer constraint, 2026-07-31: the consolidation changes call sites only and
-makes no modification to AXI responses. The four truncation derivations and the
-aggregate helpers route through one shared call without altering emitted bytes,
-so the contract suite's pinned stdout stays green and retrofit scope never
-becomes a compatibility question. That constraint has one consequence worth
-stating rather than discovering: principle 9 has no existing implementation to
-route through, so emitting `help[]` necessarily changes bytes and cannot ship
-under it. Reviewer ruling 2026-08-02: the byte-preservation constraint is
-relaxed for the `help[]` spec specifically, and for no other face — the
-foundation still ships without changing emitted bytes. The Git-inspection
-face is likewise byte-changing and therefore gets its own spec; it does not
-relax byte preservation for the foundation.
+Reviewer decision, 2026-08-10: the byte-preserving foundation architecture is
+superseded. The staged five-spec migration-first sequence
+(`axi-compatibility-oracle`, `axi-carriers-and-registry`,
+`axi-outcome-action-migration`, `axi-bounded-projection-migration`,
+`axi-aggregate-empty-migration` — 61 tickets and five promotion gates before
+any public improvement) is retired; FT173 builds the approved behavior forward
+through the existing CLI seams instead. AXI stays scoped to the approved
+surfaces — the six root queries, nested `worktree list`, and the complete
+`bench spec build` family — and each intentional output change is proved by
+reviewed old-to-new fixtures naming its exact delta, while everything outside
+an approved delta keeps its existing exact domain tests. The staged
+replacement sequence is `specs/axi-spec-build-complete/spec.md`, then
+`specs/axi-coherent-diff/spec.md`, then `specs/axi-query-disclosure/spec.md`;
+the superseded `specs/axi-compatibility-oracle/spec.md` build resolves through
+`bench spec build abandon`, then `reclaim`, before retiring. The earlier
+2026-07-31 call-sites-only consolidation constraint and its 2026-08-02
+`help[]`-only relaxation are subsumed by this ruling. The truncation and
+aggregate one-source-per-fact sweep is no longer an FT173 precondition; it
+rides ordinary standards-debt work where a real change touches those owners.
 
 Pricing context, 2026-08-05: the ten principles are not equal in value, and the
 ordering decides what survives if a face competes for scope. TOON's saving is
@@ -2489,22 +2496,27 @@ gate's reduced scope, so every separately-landed prose diff pays a full gate
 — rows batch on the shared full gate, not just shared files; anchor-pinned
 files couple prose diffs to conformance fixture updates (`craft-delegate` 14
 anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and AXI
-foundation mechanics compound through every later CLI change. FT173 is the
-top roadmap priority and lands its eight independently reviewed specs before
+action mechanics compound through every later CLI change. FT173 is the
+top roadmap priority and lands its three independently reviewed specs before
 the prose track resumes.
 
-1. Implement FT173 in eight independently reviewed specs, foundation sequence
-   first. The staged sequence is `axi-compatibility-oracle`,
-   `axi-carriers-and-registry`, `axi-outcome-action-migration`,
-   `axi-bounded-projection-migration`, then `axi-aggregate-empty-migration`.
-   It establishes the pinned oracle, records AXI principles 8–10 while keeping
-   AXI scoped to approved query surfaces, and consolidates outcome, action,
-   truncation, aggregate, and empty mechanics without changing emitted bytes.
-   Follow with the full-AXI spec-build migration once FT185 is available and
-   the coherent `bench diff` migration. Write remaining contextual disclosure
-   (`help[]`) as the eighth and final capstone after those schemas stabilize;
-   its required harness-log review folds observed CLI leverage into the spec
-   or gives it an explicit disposition. FT173 remains open until all eight land.
+1. Implement FT173 in three independently reviewed behavior-first specs. The
+   staged sequence is `axi-spec-build-complete` (every `bench spec build`
+   operation AXI-complete with contextual actions, introducing the shared
+   typed-action owner and `help[]` renderer), then `axi-coherent-diff`
+   (`bench diff` as the one coherent Git-inspection snapshot with contextual
+   actions), then `axi-query-disclosure` (contextual disclosure and
+   schema/help improvements across the remaining approved query surfaces,
+   registry-derived conformance closure, and the ten-principle guidance
+   advertisement). The spec-build slice composes FT185's gate-result payload
+   when available and does not re-derive it; the capstone's required
+   harness-log review folds observed CLI leverage into the spec or gives it
+   an explicit disposition. The active `axi-compatibility-oracle` build is
+   not promoted under the superseded direction: its lifecycle resolves
+   through `bench spec build abandon` then `reclaim`, with the bounded
+   process observer and registry/grammar census salvageable from its
+   candidate only where they directly protect the new behavior. FT173
+   remains open until all three land.
 2. Take FT144's one-decision-both-phases call as the remaining shaping item.
    Reviewer latency is the binding constraint: grills serialize on the reviewer
    while builds parallelize on agents. Five of the original six items have
@@ -2559,6 +2571,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT173 byte-preserving AXI foundation, starting with staged `specs/axi-compatibility-oracle/spec.md`, then `axi-carriers-and-registry`, `axi-outcome-action-migration`, `axi-bounded-projection-migration`, and `axi-aggregate-empty-migration`; follow with full-AXI spec-build and coherent-diff migrations, then the harness-log-informed contextual-disclosure capstone.
+1. `/bench-implement-spec` — FT173 forward AXI build, starting with staged `specs/axi-spec-build-complete/spec.md`, then `axi-coherent-diff`, then the harness-log-informed `axi-query-disclosure` capstone; first resolve the superseded `axi-compatibility-oracle` run via `bench spec build abandon axi-compatibility-oracle`, then `reclaim`.
 2. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`: one exact-snapshot Bench binary per top-level run and one serial phase schedule; #24–#26's census and any outer-width pricing resume on its landed baseline.
 3. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.

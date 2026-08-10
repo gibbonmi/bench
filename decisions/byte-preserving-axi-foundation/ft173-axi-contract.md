@@ -1,17 +1,32 @@
-# FT173 AXI contract and migration sequence
+# FT173 AXI contract and forward-build sequence
 
 Status: ready
 
 ## Destination
 
-One shared AXI owner that states all ten published principles, provides one
-derivation for each reusable output fact, and migrates Bench surfaces in
-independently reviewable slices. The migration retains `bench diff` as the
-coherent Git-inspection owner and extends full AXI behavior to every `bench spec
-build` operation so lifecycle success, refusal, and recovery output is structured,
-deterministic, and directly actionable. It supplies the AXI predecessor consumed
-by the spec-build review-and-gate cadence without redefining gate authority,
+Build the approved AXI behavior forward through Bench's existing CLI seams —
+the `Command` registry, the domain owners, their renderers, `internal/toon`,
+and `internal/usage` — in independently useful behavior-first slices, rather
+than staging a broad byte-preserving migration through universal carriers
+first. The work retains `bench diff` as the coherent Git-inspection owner and
+extends full AXI behavior to every `bench spec build` operation so lifecycle
+success, refusal, and recovery output is structured, deterministic, and
+directly actionable. AXI stays scoped to the already approved surfaces: the
+six root queries (`anchors`, `learnings`, `maps`, `guards`, `diff`,
+`coverage`), nested `worktree list`, and the complete `bench spec build`
+family. Shared machinery is added only where an observable enhancement
+requires it. The sequence supplies the AXI predecessor consumed by the
+spec-build review-and-gate cadence without redefining gate authority,
 gate-result evidence, or capture accounting.
+
+Reviewer decision, 2026-08-10: the prior five-spec byte-preserving foundation
+(compatibility oracle, carriers/registry, and three `migrate-*` waves — 61
+tickets and five promotion gates before any public improvement) is
+superseded. A frozen whole-CLI byte-equality architecture either rejects the
+intended output changes or needs a permanent delta/exception layer once
+output intentionally changes. Intentional output changes are instead proved
+by reviewed old-to-new fixtures; unchanged facts keep their existing exact
+domain tests.
 
 ## #1: What is the current ten-principle implementation census?
 
@@ -120,6 +135,9 @@ actions or refusals, new family homes/flags/schemas, coherent Git snapshots, and
 full spec-build AXI envelope necessarily change output and require separately approved
 paired deltas. The complete owner/consumer ledger and mutation matrix are recorded in
 `decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`.
+The byte-preserving-foundation obligation this census derived is superseded by the
+Destination and #7 — no paired baseline/candidate oracle is built; the census's
+owner, consumer, and seam facts remain the current record.
 
 ## #4: Which CLI surfaces must satisfy the complete AXI contract?
 
@@ -190,37 +208,41 @@ Type: Grill
 
 ### Question
 
-Does the old foundation → contextual disclosure → Git-inspection sequence remain
-three independently reviewed specs, or does the full-AXI `bench spec build`
-migration require its own independently useful spec? Choose the smallest ordering
-that keeps byte-preserving consolidation separate from public-output migrations,
-avoids rewriting pinned contracts twice, and makes the cadence predecessor
-explicitly shippable.
+How is the approved AXI behavior sliced into independently reviewed specs now
+that the byte-preserving foundation is superseded? Choose the smallest ordering
+that delivers user-visible behavior first, avoids rewriting public contracts
+twice, and makes the cadence predecessor explicitly shippable.
 
 ### Answer
 
-FT173 ships as eight independently reviewed specs. The byte-preserving foundation
-is five ordered capabilities: an exact compatibility oracle; shared carriers and
-registry declarations; outcome/action migration; bounded-projection migration;
-and aggregate/empty migration. Each capability is independently promotable, emits
-no `help[]`, and changes no existing command bytes, streams, exits, or accepted
-argv.
+FT173 ships as three independently reviewed behavior-first specs. There is no
+separate horizontal carrier, registry, or migration layer: each spec delivers
+one product outcome through the existing CLI seams and introduces only the
+shared machinery that outcome requires.
 
-After that foundation, two sibling public-output migrations may proceed
-independently. One makes every `bench spec build` operation AXI-complete and emits
-its contextual actions in the same atomic output migration; it composes FT185's
-gate-result payload and is the explicitly shippable predecessor for the spec-build
-review-and-gate cadence. The other makes `bench diff` the coherent Git snapshot
-decided in #6 and emits its contextual actions in that same atomic output migration.
-The spec-build slice is prioritized when FT185 is available; the Git slice does not
-block it.
+1. `axi-spec-build-complete` makes every `bench spec build` operation
+   AXI-complete and emits its contextual actions in one atomic output
+   migration. It introduces the shared typed-action owner and `help[]`
+   renderer as part of delivering that behavior, because spec build is the
+   first and widest consumer. It is the explicitly shippable predecessor for
+   the spec-build review-and-gate cadence; it composes FT185's gate-result
+   payload when FT185 is available and does not re-derive it.
+2. `axi-coherent-diff` makes `bench diff` the coherent Git snapshot decided
+   in #6 and emits its contextual actions in that same atomic output
+   migration. It composes the action owner from the first spec, so it follows
+   `axi-spec-build-complete` in sequence; FT185 blocks neither slice.
+3. `axi-query-disclosure` completes contextual disclosure and any necessary
+   schema/help improvements across the remaining approved query surfaces —
+   `anchors`, `learnings`, `maps`, `guards`, `coverage`, and `worktree
+   list` — after the wide schemas are stable, and closes registry-derived
+   conformance plus the ten-principle guidance advertisement over the whole
+   approved set. It consumes the exhaustive command inventory, leaves
+   terminal and caller-owned plumbing without invented busywork, and does
+   not rewrite the already-migrated spec-build or diff contracts.
 
-The eighth spec completes contextual disclosure across the remaining approved
-surfaces after their output schemas are stable. It consumes the exhaustive command
-inventory, leaves terminal and caller-owned plumbing without invented busywork, and
-does not rewrite the already-migrated spec-build or diff contracts. This dependency
-graph gives each of those two wide surfaces one public-output rewrite while retaining
-separate compatibility review for every byte-changing slice.
+This ordering gives each wide surface one public-output rewrite, puts the
+highest-frequency observed family first, and keeps every byte-changing slice
+under its own reviewed old-to-new fixture set.
 
 ## #8: What compatibility contract governs byte-changing output migrations?
 
@@ -236,9 +258,11 @@ consumers and failure modes rather than preserving accidental prose by default.
 
 ### Answer
 
-The byte-preserving foundation retains exact stdout, stderr, exit, accepted-argv,
-default/`--full`, and empty-state behavior for every existing fixture. It introduces
-no public schema version because it introduces no public output change.
+There is no broad byte-preservation precondition. Every command outside an
+approved delta simply keeps its existing behavior, protected by the exact
+domain tests that already pin it; no universal compatibility oracle stands in
+front of the work. An intentional output change is approved per slice and
+proved by reviewed old-to-new fixtures that name the exact delta.
 
 Contextual disclosure on a surface whose primary response is otherwise stable is an
 additive transition. The existing primary bytes, stream, exit, and argv behavior remain
@@ -281,11 +305,12 @@ the full conformance matrix?
 ### Answer
 
 Proof attaches at the smallest owner that can independently falsify the behavior.
-Shared TOON, grammar, bounds, aggregate carriers, empty-state, error, and action
-mechanics receive focused unit tests and one independent mutation per owned fact. The
-byte-preserving foundation also runs exact baseline/candidate paired deltas over the
-affected argv matrix, comparing stdout, stderr, exit, and accepted arguments. It does
-not expand every command into a duplicate conformance suite.
+Shared action, renderer, and grammar mechanics receive focused unit tests and one
+independent mutation per owned fact. Each intentionally changed surface receives
+reviewed old-to-new fixtures naming the exact delta — added blocks, stream or
+exit changes, accepted new argv — while everything outside the delta keeps its
+existing exact domain tests. No spec expands every command into a duplicate
+conformance suite and no whole-CLI byte-equality oracle is built.
 
 One registry-derived AXI conformance check covers only the surfaces and reusable
 principles declared by the registry. It proves inventory completeness, required output
@@ -303,16 +328,20 @@ as an executable command. The exhaustive usage inventory judges whether the deri
 action is useful; it is evidence, not a second action derivation.
 
 The coherent-diff slice is proved against raw Git over committed, staged, unstaged,
-untracked, rename, deletion, binary, hostile-filename, clean, and mid-read-drift
+untracked, nested-new-directory, rename, deletion, binary, hostile-filename, clean, and mid-read-drift
 fixtures. The spec-build slice uses an in-process operation/state matrix for lifecycle
 semantics and exact old-to-new response deltas across success, no-op, empty, refusal,
 stale, recovery, plan/apply, review, and promotion states. An exact Bench executable is
 required only for an acceptance row that observes wrapper routing, executable identity,
 environment, signals/teardown, or installed/stripped behavior.
 
-The final remaining-contextual-disclosure spec begins with an open-ended review of the
-Codex and Claude harness session logs accumulated across FT173 and representative recent
-Bench work. The review looks for CLI leverage rather than a closed keyword checklist.
+The final `axi-query-disclosure` spec stages now on the exhaustive command
+inventory in `assets/ft173-command-help-inventory.md`; the incremental review of the
+Codex and Claude harness session logs accumulated across the FT173 builds runs
+at that build's entry as its first ticket, since those logs cannot exist before
+the builds. Its dispositions receive reviewer sign-off before implementation
+tickets start, and a fold that changes locked coverage lands as a
+reviewer-approved spec amendment. The review looks for CLI leverage rather than a closed keyword checklist.
 Its required examples are useful additions or corrections to a command's `help[]`,
 repeated shell or tool-call sequences that one coherent Bench query could replace, and
 output transformations agents repeatedly perform themselves—such as `head` or `tail`—
@@ -351,49 +380,36 @@ schema diagnostic.
 
 Each approved slice is independently useful and falsifiable:
 
-- **Compatibility oracle:** acceptance is one pinned baseline/candidate matrix over
-  every production member and argv class, comparing stdout, stderr, exit, and
-  acceptance. Its fence is the manifest, case derivation, and paired executor.
-- **Carriers and registry:** acceptance is one complete ten-principle owner plus typed
-  outcome, action, projection, aggregate, empty, and registry mechanics with inert
-  metadata. Its fence is the shared owner, production declarations, conformance, and
-  exact guidance advertisements.
-- **Outcome/action migration:** acceptance is production reachability for every declared
-  outcome/action route with domain kinds, exits, actions, and bytes preserved. Its fence
-  is the existing command families plus route conformance and contraction.
-- **Bounded-projection migration:** acceptance is production reachability for all four
-  owner-specific policies without cap, unit, total, full-mode, or authority movement.
-  Its fence is sanitize, roadmap, worktree, outline, conformance, and contraction.
-- **Aggregate/empty migration:** acceptance is production reachability for every ordered
-  aggregate and exact empty class without inferred totals, unknown coercion, or empty
-  normalization. Its fence is the named semantic owners, registry, conformance, and
-  contraction.
-- **Full-AXI spec build:** acceptance is one consistent ten-principle response contract
-  across every operation and lifecycle state, including exact contextual actions. Its
-  fence is the lifecycle envelope and action rendering; it composes but does not
+- **Full-AXI spec build (`axi-spec-build-complete`):** acceptance is one consistent
+  ten-principle response contract
+  across every operation and lifecycle state, including exact contextual actions. It
+  introduces the shared typed-action owner and `help[]` renderer as part of that
+  behavior. Its fence is the lifecycle envelope, the action owner, and action
+  rendering; it composes but does not
   re-derive FT185's gate payload or change lifecycle/gate authority. Any operation/state
   matrix or approved old-to-new delta mismatch is red, including a missing known value,
   guessed placeholder, wrong exit, stale action, or mixed old/new operation.
-- **Coherent diff:** acceptance is one compact orientation call and at most one full-body
+- **Coherent diff (`axi-coherent-diff`):** acceptance is one compact orientation call
+  and at most one full-body
   call over one stable Git snapshot. Its fence is the existing diff owner composed with
   existing Git-facts and range owners; it adds no second porcelain parser. A mismatch
   against raw Git, omitted untracked regular-file body, or accepted mid-read splice is
   red, with one independent mutation per hostile-state class.
-- **Remaining contextual disclosure:** acceptance is registry-complete additive
+- **Remaining contextual disclosure (`axi-query-disclosure`):** acceptance is
+  registry-complete additive
   `help[]` on every approved stable surface where the command inventory names a useful
   next action, and an honest empty set for terminal or caller-owned results. Its fence is
-  the typed action owner, renderer, registry declaration, and remaining approved
+  the typed action owner's consumers, the registry-derived conformance closure, the
+  guidance advertisements, and the remaining approved
   surfaces; it does not rewrite spec-build or diff output or widen other operational
   families to full AXI. Removing a useful row, losing a fixed argument, guessing an
   unknown value, carrying stale authority, or advertising prose as a command is red. Its
-  spec starts from the harness-log opportunity asset required by #9 and accounts for
-  every finding through an acceptance row or an explicit disposition.
+  spec starts from the command inventory and harness-log evidence required by #9 and
+  accounts for every finding through an acceptance row or an explicit disposition.
 
-The five byte-preserving specs land in the order listed above. The full-AXI spec-build
-and coherent diff atomic surface migrations follow them, with spec build prioritized once
-FT185 is available. Remaining contextual disclosure is the eighth and final capstone
-after those output schemas stabilize. Spec writers retain only the bounded discretion
-already listed below.
+`axi-spec-build-complete` lands first, then `axi-coherent-diff`, then
+`axi-query-disclosure` after those output schemas stabilize. Spec writers retain
+only the bounded discretion already listed below.
 
 ## Not yet specified
 
@@ -415,6 +431,9 @@ already listed below.
   authority, or treating semantic review as deterministic evidence.
 - Re-deriving FT185's gate-result payload or FT130's capture-accounting contract.
 - Adding a `bench git` namespace or another Git porcelain parser.
+- Rebuilding the superseded whole-CLI byte-equality oracle, universal carriers,
+  or any byte-preserving migration precondition for public improvement.
+- Widening AXI beyond the approved surfaces without a separate reviewer decision.
 - Reopening the terminal single-build serial-gate spec or lifecycle.
 - Implementing, gating, committing, or landing FT173 during this shaping pass.
 
