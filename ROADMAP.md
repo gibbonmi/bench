@@ -100,6 +100,14 @@ prospective run identifies the ordinary test driver as the current dominant
 cost, while its 354.073 s predecessor remains directional rather than a speed
 claim. Source: the branch-native-build-test-architecture retro, drained here.
 
+The next demand-reduction slice is staged at
+`specs/single-build-serial-gate/spec.md` (decision source: the
+reviewer-confirmed 2026-08-08 conversation): one exact-snapshot host Bench
+binary per top-level gate or focused `bench test` run, one phase process at a
+time in a single topological schedule, and a census of the compiler proofs that
+legitimately build distinct artifacts. Implement it before resuming #24–#26 and
+any outer-width pricing, so the census measures the post-slice baseline.
+
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
 artifact-suite, and artifact-hoist retros converge on one lifecycle owner. The close's
@@ -689,9 +697,9 @@ out of the tree first. Source of this clause: `capture/learnings.md`, verdicted
 here. The grammar face came from `capture/IDEAS.md`, drained here.
 
 The discrepancies clause has its second instance, 2026-08-01, and the tree shows
-the pairing is broken from both ends. The roadmap end: the FT135 row omitted the
-staged `specs/pre-push-guard-visibility/spec.md` path the preamble requires, and
-was corrected here only because the session happened to know the convention. The
+the pairing is broken from both ends. The roadmap end: the FT135 row omitted its
+staged spec path the preamble requires, and was corrected here only because the
+session happened to know the convention. The
 spec end: `roadmap_id` comes from a `Roadmap:` header inside the spec file
 (`internal/spec/spec.go`), and none of the three live specs carries one — the
 header was written by hand on some retired specs (`craft-tickets`,
@@ -1143,6 +1151,11 @@ The spec-ticket handoff close adds one promotion-guidance detail: selected-binar
 freshness includes candidate Go test inputs, so a prospective promotion requires
 an exact prospective-source build rather than a binary built from `main`. Source:
 the spec-ticket-handoff-contract retro, drained here.
+
+The 2026-08-09 journal adds one delegation-authorization clause to the same
+`craft-delegate` visit: when delegation changes who performs work the reviewer
+requested, surface that choice before spawning rather than treating context
+pressure as authority. Source: `capture/learnings.md`, verdicted here.
 
 **FT189 (MEDIUM) — an upstream `git worktree list` hang reaches every Bench
 worktree read.** `git worktree list --porcelain` hangs on a FIFO gitdir placed
@@ -1613,7 +1626,7 @@ repair misses, so those journal entries add evidence, not another rule. Sources:
 the covers-traceability and go-build-cache-footprint retros and the 2026-08-06
 learnings journal, drained here.
 
-**FT199 (MEDIUM) — accepted review findings enter a preflighted repair
+**FT200 (MEDIUM) — accepted review findings enter a preflighted repair
 assignment without landing control-only commits.** The conformance-harness run
 paid a whole-project gate and recomposed an unchanged defective candidate merely
 to land a repair ticket, then repeated both after `assign` found a missing fenced
@@ -1819,7 +1832,12 @@ here.
 The FT195 close adds validation to the writer half: journal appends use the
 parser's canonical open-entry grammar instead of allowing a malformed entry to
 remain invisible until `bench status` notices it. Source: the
-go-build-cache-footprint retro, drained here.
+go-build-cache-footprint retro, drained here. The cancel-signal session
+supplied the live instance: its 2026-08-09 journal entry used the `- date`
+bullet form instead of a `## date — title  [open]` heading, so every
+parser-backed reader reported an empty journal while the file carried an
+entry; this drain found and verdicted it only by reading the file directly.
+Source: `capture/learnings.md` 2026-08-09, verdicted here.
 
 The phase-close capture recurrence belongs to the reduced-phase-set face: a
 post-promotion retro or learning remains visible and reviewable, but does not
@@ -2060,6 +2078,19 @@ the gate check: confirm a per-source existence check on the consumer-payload
 allowlist — the emptied-set vacuity closed with the FT85 fix commit, the
 per-path existence guard is the remaining cheap single-source check.
 
+**FT201 (LOW) — production cancel-signal registrations conform to one
+source.** A conformance check that no production Go
+`signal.Notify`/`NotifyContext` call site names a signal literal — the trapped
+set comes from `subprocess.CancelSignals`, made the one source by the
+cancel-signal-parity fix (`6fbf404`). `_test.go` files are excluded because
+`internal/systemtest/owner_test.go` registers its own `os.Interrupt` as a
+fixture. Deferred from the light-path ticket because the check turns one green
+step into a migration plus a new gate rule. The same surface carries the open
+reviewer decision that fix left behind: SIGKILL still orphans the detached
+builder process group, and closing it needs `Pdeathsig`. Sources:
+`capture/IDEAS.md` 2026-08-09, drained here; `capture/learnings.md`
+2026-08-09, verdicted here.
+
 ## Reds the diff doesn't own — inheritance, load, and harness defects
 
 Four rows, one failure class: a red that answers for something other than the
@@ -2237,6 +2268,22 @@ whole-package run, matched by test-name prefix rather than registry
 registration, so the registry undercounts what the gate enforces and a renamed
 test silently drops a check. Register them. Source: the reduced-gate-phase-set
 retro, drained here.
+
+Sixth, carried as the capture's claim rather than verified cause:
+`internal/worktree/worktree_test.go`'s `gitOutput` and its sibling `gitRun`
+shell out with a bare `exec.Command().Output()` — no deadline, no
+process-group teardown — while the `abandon_leftover_test.go` suite
+deliberately plants no-writer FIFOs in the git administration directory, and a
+git child that opens one blocks in `open()` forever without burning CPU. The
+tests remove the planted record before reading, so the hazard window is a test
+failing between the plant and its removal, or a killed test binary: the git
+child is then orphaned with nothing to reap it. The 3+-day `git worktree list`
+orphan found 2026-08-09 is not covered by the cancel-signal-parity fix, which
+closed only the untrapped-signal class. The repro precedes any fix: force a
+failure between the FIFO plant and its removal in
+`TestReleaseRegistrationSkipsUnrelatedSpecialControlRecords`, or kill the test
+binary in that window, and check whether a git child survives blocked on the
+FIFO. Source: `capture/IDEAS.md` 2026-08-09, drained here.
 
 ## Standards debt — one batched light-path pass
 
@@ -2427,7 +2474,7 @@ recommended table is sequencing advice.
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
-| FT199 | FT184 | Let the repair entry consume lifecycle-derived receipts rather than preserving the hand-assembled schema it exists to remove. |
+| FT200 | FT184 | Let the repair entry consume lifecycle-derived receipts rather than preserving the hand-assembled schema it exists to remove. |
 
 ### Goal tracks: guidance prose and the claim ledger
 
@@ -2513,5 +2560,5 @@ now fixture-proven.
 ## Recommended sequence
 
 1. `/bench-implement-spec` — FT173 byte-preserving AXI foundation, starting with staged `specs/axi-compatibility-oracle/spec.md`, then `axi-carriers-and-registry`, `axi-outcome-action-migration`, `axi-bounded-projection-migration`, and `axi-aggregate-empty-migration`; follow with full-AXI spec-build and coherent-diff migrations, then the harness-log-informed contextual-disclosure capstone.
-2. `/bench-shape-idea` — FT171 gate fix: record landed #23, close #24 and #25, then run #26's exact post-route census before the candidate outer-width decision.
+2. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`: one exact-snapshot Bench binary per top-level run and one serial phase schedule; #24–#26's census and any outer-width pricing resume on its landed baseline.
 3. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
