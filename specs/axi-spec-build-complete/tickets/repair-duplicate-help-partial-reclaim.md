@@ -40,7 +40,7 @@ block, and the spent-deletion tables stay fully present.
 
 ## Acceptance
 
-- [ ] [DH1] (covers SB1, SB5) (P1, C1) a reclamation apply that fails after
+- [ ] [DH1] (covers local) (P1, C1) a reclamation apply that fails after
   deleting at least one ref renders the spent-deletion tables followed by
   exactly one `help[]` block — the refusal's — never two; a reclamation
   apply or plan that succeeds, and a reclamation failure that deleted
