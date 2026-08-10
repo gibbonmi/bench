@@ -2,21 +2,33 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `102ae18`, clean tree, 17 unpushed commits
+Branch: `main` — HEAD `e027228`, clean tree, 19 unpushed commits
 Spec: `specs/axi-aggregate-empty-migration/spec.md` (Status: staged), `specs/axi-bounded-projection-migration/spec.md` (Status: staged), `specs/axi-carriers-and-registry/spec.md` (Status: staged), `specs/axi-compatibility-oracle/spec.md` (Status: staged), `specs/axi-outcome-action-migration/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `b350bde` — stale, work tree `c470e97`
+Gate: green at `03e184f` — current
 
 ## State
 
-FT173 implementation is underway on `specs/axi-compatibility-oracle/spec.md`,
-first of the five staged foundation specs, followed by FT171's staged
-`single-build-serial-gate` spec. Commit `102ae18e` landed the reviewed
-pre-build repairs: pin advanced to `8ae1512f` (production bytes unchanged
-since), release/fall-through/empty-form witnesses re-derived from production,
-`pin-bound-and-byte-classes` split in two (12 tickets), breakdown re-reviewed
-ready. `bench spec build start` is next; no assignment exists yet. Known
-deferred repair: `specs/axi-bounded-projection-migration/tickets/contract-projection-routes.md`
-still pins the retired subject `974020e4` — repair when that build starts.
+FT173's first spec, `specs/axi-compatibility-oracle/spec.md` (pin `8ae1512f`,
+12 tickets), has an active `bench spec build` run: candidate `a6af041a`, four
+tickets integrated (`authenticate-baseline-manifest`, `derive-root-registry-membership`,
+`derive-wrapper-surface-membership`, `capture-pinned-baseline`), each with a
+checkpointed receipt carrying delegate red→green logs plus an independent
+coordinator mutation probe — keep that per-ticket probe discipline.
+Ready frontier (serial: every fence shares `internal/axi/compatibility`):
+`derive-nested-grammar-membership` next, then `close-required-argv-classes`,
+`compare-four-observations`, `pin-default-full-and-empty-classes`,
+`pin-truncation-bound-edges` + `pin-toon-byte-classes`, then the two hostile
+tickets. Reviewer-set lines: sonnet/medium for the nested-grammar census and
+both pin-* extension tickets; opus/high for the rest; write delegates only,
+one at a time. Reviewer-ordered: before promotion, a cross-harness review of
+the composed diff via `codex exec` on `gpt-5.6-terra`, high reasoning, yolo
+approval posture, charged to refute "spec implemented". Standing decisions:
+no committed manifest under testdata (seal binds the live tree; capture is
+test-time from a `git archive` build of the pin) — flagged for reviewer veto
+alongside the BC1 file-identity rewording landed at `e027228d`; orphaned
+assignment `166ea6331ceb8e84bb0fc650735eaf75` awaits post-run
+`bench spec build reclaim`; `specs/axi-bounded-projection-migration/tickets/contract-projection-routes.md`
+still pins retired subject `974020e4` — repair when that build starts.
 
 ## Next command
 
