@@ -413,6 +413,197 @@ func TestCommandUsageBranches(t *testing.T) {
 	}
 }
 
+// TestCommandMissingSpecNamesPath is H1's missing half (mutation
+// H1/missing-spec-names-path): no spec at all answers "spec not found" naming the
+// tried path, exit 1.
+func TestCommandMissingSpecNamesPath(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.HasPrefix(out, "error: spec not found") {
+		t.Errorf("output = %q, want the spec-not-found error", out)
+	}
+	if !strings.Contains(out, filepath.Join("specs", slug, "spec.md")) {
+		t.Errorf("output must name the tried spec path:\n%s", out)
+	}
+}
+
+// TestCommandDanglingSymlinkClassifiedBroken is H1's symlink half (mutation
+// H1/dangling-symlink-classified): a dangling symlink where the spec should be is
+// classified broken, not an authoritative empty state — a distinct error from the
+// missing-spec case, naming the spec path.
+func TestCommandDanglingSymlinkClassifiedBroken(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	specPath := filepath.Join("specs", slug, "spec.md")
+	if err := os.MkdirAll(filepath.Dir(specPath), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	if err := os.Symlink("missing-target.md", specPath); err != nil {
+		t.Fatalf("Symlink: %v", err)
+	}
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if strings.HasPrefix(out, "error: spec not found") {
+		t.Errorf("a dangling symlink must not be classified as authoritative absence:\n%s", out)
+	}
+	if !strings.HasPrefix(out, "error: spec not readable") {
+		t.Errorf("output = %q, want the spec-not-readable error", out)
+	}
+	if !strings.Contains(out, specPath) {
+		t.Errorf("output must name the spec path:\n%s", out)
+	}
+}
+
+// TestCommandInvalidCoverageMapCarriesMessage is H2's invalid-map half (mutation
+// H2/validator-message-carried): a coverage map that fails validation surfaces the
+// validator's own message, exit 1.
+func TestCommandInvalidCoverageMapCarriesMessage(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
+		"### Acceptance coverage map\n" +
+		"| row | story | behavior | seam | red signal | why it catches the failure |\n" +
+		"|---|---|---|---|---|---|\n" +
+		"| PF1 | 1 | does x | cli seam | cmd fails |\n" + // 5 cells where 6 are wanted
+		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
+	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.HasPrefix(out, "error: coverage map invalid") {
+		t.Errorf("output = %q, want the coverage-map-invalid error", out)
+	}
+	if !strings.Contains(out, "row 1 has 5 cells (want 6)") {
+		t.Errorf("output must carry the validator's own message:\n%s", out)
+	}
+}
+
+// TestCommandLegacyMapNamesOptIn is H2's legacy-map half (mutation
+// H2/optin-hint-named): a valid legacy 5-cell map (no `row` header column) is
+// refused with an error naming the row-ID opt-in, exit 1.
+func TestCommandLegacyMapNamesOptIn(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
+		"### Acceptance coverage map\n" +
+		"| story | behavior | seam | red signal | why it catches the failure |\n" +
+		"|---|---|---|---|---|\n" +
+		"| 1 | does x | cli seam | cmd fails | catches z |\n" +
+		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
+	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.HasPrefix(out, "error: coverage map not opted into row IDs") {
+		t.Errorf("output = %q, want the opt-in error naming the row-ID convention", out)
+	}
+	if !strings.Contains(out, "`row`") {
+		t.Errorf("output must name the leading `row` column opt-in:\n%s", out)
+	}
+}
+
+// TestCommandFencesAbsentError is H3's absent half (mutation H3/fences-absent-error):
+// a spec with no `## Ownership fences` section at all answers a structured error,
+// exit 1.
+func TestCommandFencesAbsentError(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
+		"### Acceptance coverage map\n" +
+		"| row | story | behavior | seam | red signal | why it catches the failure |\n" +
+		"|---|---|---|---|---|---|\n" +
+		"| PF1 | 1 | does x | cli seam | cmd fails | catches z |\n"
+	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.HasPrefix(out, "error: ownership fences empty") {
+		t.Errorf("output = %q, want the ownership-fences error", out)
+	}
+}
+
+// TestCommandFencesEmptyError is H3's empty half (mutation H3/fences-empty-error):
+// an `## Ownership fences` section present but holding no entry answers the same
+// structured error as the absent case, exit 1.
+func TestCommandFencesEmptyError(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
+		"### Acceptance coverage map\n" +
+		"| row | story | behavior | seam | red signal | why it catches the failure |\n" +
+		"|---|---|---|---|---|---|\n" +
+		"| PF1 | 1 | does x | cli seam | cmd fails | catches z |\n" +
+		"\n## Ownership fences\n\n## Next section\n"
+	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.HasPrefix(out, "error: ownership fences empty") {
+		t.Errorf("output = %q, want the ownership-fences error", out)
+	}
+}
+
+// TestCommandFencesParenTokenNeverAuthorizes is H3's parenthesized-token half
+// (mutation H3/paren-token-never-authorizes): a fences section whose only
+// backticked token sits inside parentheses answers the same structured error as an
+// empty section, exit 1 — a parenthetical mention is never an authorization.
+func TestCommandFencesParenTokenNeverAuthorizes(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
+		"### Acceptance coverage map\n" +
+		"| row | story | behavior | seam | red signal | why it catches the failure |\n" +
+		"|---|---|---|---|---|---|\n" +
+		"| PF1 | 1 | does x | cli seam | cmd fails | catches z |\n" +
+		"\n## Ownership fences\n\n- see also (`internal/" + slug + "/`)\n"
+	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.HasPrefix(out, "error: ownership fences empty") {
+		t.Errorf("a parenthesized backticked token must not authorize: output = %q", out)
+	}
+}
+
+// TestCommandNonStagedNamesFoundStatus is H4 (mutation H4/found-status-named): a
+// spec whose Status: is anything but staged answers a structured error naming the
+// found status, exit 1.
+func TestCommandNonStagedNamesFoundStatus(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	body := strings.Replace(specBody(slug), "Status: staged", "Status: implemented", 1)
+	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.HasPrefix(out, "error: spec not staged") {
+		t.Errorf("output = %q, want the spec-not-staged error", out)
+	}
+	if !strings.Contains(out, "Status: implemented") {
+		t.Errorf("output must name the found status:\n%s", out)
+	}
+}
+
 // TestCommandTrailingNewlineParity is C14: a spec whose last line lacks a trailing
 // newline, and a ticket file whose last line lacks one, each parse identically to
 // their terminated forms.

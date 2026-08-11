@@ -14,9 +14,9 @@ import (
 
 // BootstrapFailure is the fail-closed bootstrap answer: an artifact preflight cannot
 // load or parse never becomes a green-by-omission, it becomes exactly one structured
-// error naming what failed. The exact per-artifact diagnostics belong to a follow-up
-// ticket; this one only guarantees the shape is structured and the posture is
-// fail-closed.
+// error naming what failed — the missing or dangling spec path, the coverage
+// validator's own message or the row-ID opt-in hint, the empty fences section, or the
+// found (non-staged) status — every case fail-closed.
 type BootstrapFailure struct {
 	Kind, Hint string
 }
