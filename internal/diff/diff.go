@@ -173,22 +173,9 @@ func resolveCommitRange(commitArg string) (dr diffRange, errKind, errHint string
 // recorded-key base when it names a reachable ancestor, else merge-base with the
 // default branch — byte-identical to the pre-`--commit` behavior.
 func resolveBranchRange(root string) (dr diffRange, errKind, errHint string) {
-	base, method := resolveBase()
-	if base == "" {
-		def, ok := git.ResolvedDefault(root)
-		if !ok {
-			return diffRange{}, "cannot resolve a review base",
-				"this repository has no resolvable default branch; record one with: git config branch.<name>.benchBase <sha>"
-		}
-		mb, err := git.Output("merge-base", def, "HEAD")
-		if err != nil {
-			return diffRange{}, "cannot resolve a review base",
-				"no merge-base with '" + def + "'; record one with: git config branch.<name>.benchBase <sha>"
-		}
-		base = mb
-		if method == "" {
-			method = "merge-base"
-		}
+	base, method, errKind, errHint := ResolveReviewBase(root)
+	if errKind != "" {
+		return diffRange{}, errKind, errHint
 	}
 	return diffRange{
 		base:      base,
@@ -259,6 +246,34 @@ func Command(args []string) (string, int) {
 		b.Write(body)
 	}
 	return b.String(), 0
+}
+
+// ResolveReviewBase is the single source of the resolved review base for
+// bench diff and its consumers: the recorded `branch.<name>.benchBase` key when
+// it names a reachable ancestor of HEAD, else merge-base with the resolved
+// default branch, with method carrying which path answered — `recorded`,
+// `merge-base`, or one of the loud fallback labels when a recorded key is
+// present but unusable. A non-empty errKind/errHint with an empty base is the
+// only absence shape; base is never empty on a nil error.
+func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
+	base, method = resolveBase()
+	if base != "" {
+		return base, method, "", ""
+	}
+	def, ok := git.ResolvedDefault(root)
+	if !ok {
+		return "", "", "cannot resolve a review base",
+			"this repository has no resolvable default branch; record one with: git config branch.<name>.benchBase <sha>"
+	}
+	mb, err := git.Output("merge-base", def, "HEAD")
+	if err != nil {
+		return "", "", "cannot resolve a review base",
+			"no merge-base with '" + def + "'; record one with: git config branch.<name>.benchBase <sha>"
+	}
+	if method == "" {
+		method = "merge-base"
+	}
+	return mb, method, "", ""
 }
 
 // resolveBase returns the recorded-key base and `recorded` when the key names a
