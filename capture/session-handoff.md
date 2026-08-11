@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `a189b87`, 24 dirty paths, 19 unpushed commits
+Branch: `main` — HEAD `9c9e1fc`, clean tree, 20 unpushed commits
 Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `d94dc30` — stale, work tree `244e150`
+Gate: green at `a289c82` — current
 
 ## State
 
