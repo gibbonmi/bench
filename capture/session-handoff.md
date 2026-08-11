@@ -2,48 +2,49 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `a0fb98e`, 2 dirty paths, 0 unpushed commits
+Branch: `main` — HEAD `4b96a7b`, clean tree, 2 unpushed commits
 Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/bench-preflight/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `d57aa5d` — stale, work tree `8b00a1b`
+Gate: green at `a56d225` — stale, work tree `3839fa5`
 
 ## State
 
-Spec B (`specs/bench-preflight/spec.md`) is staged and reviewer-signed
-(2026-08-11): `bench preflight <build|review> <slug>`, the start-oracle over
-artifacts-vs-reality from the Pocock map's ticket #7. Five stories (1–3
-opus/medium, 4 fable/high, 5 opus/medium), 23-row coverage map, check-4
-predicate reviewer-confirmed as row-ID scan with tag-scoped set equality. A
-Codex falsification pass (`gpt-5.6-sol`/high) ran; its accepted findings are
-folded into the spec. Spec A (lifecycle removal) is implemented and landed;
-`axi-coherent-diff`, `axi-query-disclosure`, and `single-build-serial-gate`
-are parked pre-reshape specs awaiting re-rank, not active work.
+`/bench-implement-spec --full bench-preflight` phase reached: **tickets staged,
+breakdown reviewed, implementation dispatch next**. The 7-ticket breakdown
+under `specs/bench-preflight/tickets/` passed the `craft-tickets` breakdown
+review (Codex `gpt-5.6-sol`/high: 12 findings, all repaired; verify round
+confirmed, two residuals closed after it). Reviewer approvals recorded
+2026-08-11: spec fences gained `.bench/structure-accept` and
+`tests/canary/package-core-guard/`; map rows PF24/PF25 added; the rename sweep
+exempts `specs/`, `CHANGELOG.md`, `capture/`, `ROADMAP.md`, `decisions/`.
+Line: ticket write-delegates sonnet (reviewer-directed sonnet-over-opus),
+advertise ticket fable/high (leverage override), coordinator fable/medium.
 
-Discovered while falsifying Spec B: `bench prep-release` is red on today's
-main — the subcommand-routing conformance check parses dispatch surfaces
-(`commands` map, `run()`) that the `commandRegistry` refactor replaced, so
-root conformance reports every command as no-longer-dispatched. The dev gate
-never runs root conformance (only prep-release sets the env), so dev green is
-honest. The checker repair is Spec B's story 5. Co-discovered, not taken:
-stale decision-map citations (`decisions/gate-budget.md`,
-`decisions/spec-build-review-gate-cadence.md` — retirement already queued for
-the drain) and an injected-port derivation red for `internal/canary` (parked
-in `capture/IDEAS.md`).
-
-Open reviewer decisions, none blocking:
-- `bench worktree clean --apply` still preserves dirty work into
-  `refs/bench/recovery/`, which the next resume sweeps — recommend a
-  follow-up making explicit clean refuse a dirty removal instead.
-- `projects/benchkit.md` ~311–317 still describes lifecycle cadence and
-  `capture/audits/injected-interface-composition.md` cites deleted symbols;
-  both fold into Spec C.
+Build order: frontier `rename-release-preflight-package.md`,
+`export-diff-review-base.md`, `repair-routing-checker.md` (fence-disjoint,
+parallel dispatch, serial landings) → `implement-preflight-review.md` →
+`harden-preflight-bootstrap-errors.md` → `implement-preflight-build.md` →
+`advertise-preflight-kit-prose.md`. Landings via path-scoped `bench commit`;
+`--spec bench-preflight` rides only the final landing. Parked pre-reshape
+specs (`axi-coherent-diff`, `axi-query-disclosure`, `single-build-serial-gate`)
+await re-rank, not active. Post-spec queue unchanged: Spec C (doctrine
+adoption), then a `/bench-what-next` drain.
 
 ## Next command
 
-`/bench-implement-spec` for `bench-preflight` in a fresh mid-tier session.
-Then Spec C (doctrine adoption, map #4/#5/#6/#8/#9/#10) from
-`specs/remove-spec-build-lifecycle/decisions/pocock-alignment.md`, re-reading
-that map's external sources first. Then one `/bench-what-next` drain over the
-finished tree (roadmap re-verdicts incl. FT128/FT173/FT184/FT185, mooted and
-malformed learnings, parked ideas incl. the injected-port red, retirement of
-the `spec-build-review-gate-cadence` and `parallel-session-landings` maps,
-and re-rank of the three parked specs).
+`/bench-implement-spec --full bench-preflight`
+
+## Shape
+
+Rewritten in full at every phase close, pruned rather than accreted: a fresh
+session pays for every line it reads cold, so drop anything it would not act on.
+Operational gotchas are placed by lifetime, not copied here: one that recurs across
+phases belongs in `projects/benchkit.md`'s cold-session notes, and one scoped to a
+build belongs in that spec's coverage rows. This file names at most when you'll hit
+one, never the command — a second copy drifts from the source.
+Keep the three sections above — **State** (what is true now, including anything
+uncommitted), **Next command** (the exact harness-native invocation, not a
+description of it), and this one.
+
+The handoff carries no date of its own. `bench status` computes its age from the
+commit that last wrote this file and reports a `handoff` row once anything has
+landed since. Where this document and the tree disagree, the tree wins.
