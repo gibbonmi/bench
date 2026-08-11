@@ -57,7 +57,7 @@ IDs. Use the four schema-owned types:
   cited summary asset. Include a runnable compatibility probe when the answer
   claims byte or wire compatibility.
 - **Prototype** — write throwaway code to make a reviewer choice concrete.
-- **Grill** — use `craft-grill` to surface and record the reviewer decision.
+- **Grill** — run `craft-grill` frontier rounds to record the reviewer decision.
 - **Task** — complete manual work needed before a decision can be made, naming
   who owns the work.
 
@@ -117,10 +117,10 @@ focused shaping pass. If it does not, create no map and recommend
 decision ticket, record the current answer, and add any newly discovered
 decision tickets with correct `Blocked by` edges. If an answer invalidates
 other tickets, update or delete them. While the reviewer is present, carry a
-Grill straight into newly unblocked decision tickets; never pause for
-permission or a re-prompt between questions. Stop when no reviewer-answerable
-frontier remains or the reviewer stops answering. Leave Research, Prototype,
-or Task evidence work explicit instead of force-grilling it.
+Grill straight into newly unblocked decision tickets as the next numbered
+frontier round; never pause for permission or a re-prompt between rounds.
+Stop when no reviewer-answerable frontier remains or the reviewer stops
+answering. Leave Research, Prototype, or Task work explicit, not force-grilled.
 
 ## The exit
 
