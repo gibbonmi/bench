@@ -13,11 +13,10 @@ import (
 )
 
 // dispatchFile is the one file that decides which subcommand names exist, and
-// dispatchFunc is the function holding the second of its two dispatch surfaces.
+// dispatchRegistry is the identifier of the composite literal that carries them.
 const (
-	dispatchFile = "cmd/bench/main.go"
-	dispatchMap  = "commands"
-	dispatchFunc = "run"
+	dispatchFile     = "cmd/bench/main.go"
+	dispatchRegistry = "commandRegistry"
 )
 
 // grammarPkg and grammarSel name the single owner of arity, flag recognition, `--`, and
@@ -150,8 +149,10 @@ func checkSubcommandRouting(root string) []string {
 	return uniqueSorted(diags)
 }
 
-// dispatchNames reads both dispatch surfaces: the keys of the `commands` map and the case
-// labels of the switch in run(). Either one alone leaves half the CLI unexamined.
+// dispatchNames reads the one dispatch surface: the `Name:` field of every element in the
+// commandRegistry composite literal. It matches on that identifier specifically, not on any
+// composite literal shape, so an unrelated slice of the same element type sitting beside it
+// is never mistaken for the dispatch source.
 func dispatchNames(path, body string) ([]string, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, body, 0)
@@ -160,58 +161,54 @@ func dispatchNames(path, body string) ([]string, error) {
 	}
 	var names []string
 	for _, decl := range file.Decls {
-		switch node := decl.(type) {
-		case *ast.GenDecl:
-			names = append(names, mapDispatchNames(node)...)
-		case *ast.FuncDecl:
-			if node.Name != nil && node.Name.Name == dispatchFunc {
-				names = append(names, switchDispatchNames(node)...)
-			}
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok {
+			continue
 		}
+		names = append(names, registryDispatchNames(genDecl)...)
 	}
 	return names, nil
 }
 
-func mapDispatchNames(decl *ast.GenDecl) []string {
+func registryDispatchNames(decl *ast.GenDecl) []string {
 	var names []string
 	for _, spec := range decl.Specs {
 		value, ok := spec.(*ast.ValueSpec)
-		if !ok || len(value.Names) != 1 || value.Names[0].Name != dispatchMap {
+		if !ok || len(value.Names) != 1 || value.Names[0].Name != dispatchRegistry {
 			continue
 		}
 		for _, expr := range value.Values {
-			literal, ok := expr.(*ast.CompositeLit)
-			if !ok {
-				continue
-			}
-			for _, element := range literal.Elts {
-				pair, ok := element.(*ast.KeyValueExpr)
-				if !ok {
-					continue
-				}
-				if name, ok := stringLiteral(pair.Key); ok {
-					names = append(names, name)
-				}
-			}
+			names = append(names, registryElementNames(expr)...)
 		}
 	}
 	return names
 }
 
-func switchDispatchNames(fn *ast.FuncDecl) []string {
+func registryElementNames(expr ast.Expr) []string {
+	literal, ok := expr.(*ast.CompositeLit)
+	if !ok {
+		return nil
+	}
 	var names []string
-	ast.Inspect(fn, func(node ast.Node) bool {
-		clause, ok := node.(*ast.CaseClause)
+	for _, element := range literal.Elts {
+		entry, ok := element.(*ast.CompositeLit)
 		if !ok {
-			return true
+			continue
 		}
-		for _, expr := range clause.List {
-			if name, ok := stringLiteral(expr); ok {
+		for _, field := range entry.Elts {
+			pair, ok := field.(*ast.KeyValueExpr)
+			if !ok {
+				continue
+			}
+			key, ok := pair.Key.(*ast.Ident)
+			if !ok || key.Name != "Name" {
+				continue
+			}
+			if name, ok := stringLiteral(pair.Value); ok {
 				names = append(names, name)
 			}
 		}
-		return true
-	})
+	}
 	return names
 }
 
@@ -276,10 +273,11 @@ func fileReachesGrammar(path string) bool {
 
 // TestSubcommandRoutingRegistryBites is the recorded bite proof for
 // checkSubcommandRouting (per craft-gate). It runs against a synthetic dispatch file, not
-// the repo tree, and walks the three states that matter: every dispatched name registered,
-// an unregistered name added to the map surface, and an unregistered name added to the
-// switch surface — because a check that read only one surface would leave the other half
-// of the CLI unexamined.
+// the repo tree, and walks the states that matter: every dispatched name registered, an
+// unregistered name added to the registry, a registered row the synthetic registry omits,
+// and a same-shaped composite literal under a different identifier — because reading the
+// wrong surface, missing the no-longer-dispatched arm, or matching by literal shape instead
+// of by the commandRegistry identifier would each pass this exact case unnoticed.
 func TestSubcommandRoutingRegistryBites(t *testing.T) {
 	root := t.TempDir()
 	write := func(body string) {
@@ -291,26 +289,37 @@ func TestSubcommandRoutingRegistryBites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	// One registered name per surface: "maps" is a routed row and "version" an exempt one,
-	// so a clean run proves both dispositions pass rather than only the exempt shortcut.
-	// The registry rows for every other real name are absent from this synthetic file, so
-	// the check's own "registry names a name no longer dispatched" arm fires for them; the
-	// assertions below therefore look for the added name rather than counting diagnostics.
-	clean := "package main\n\nvar commands = map[string]int{\n\t\"maps\": 1,\n}\n\nfunc run(args []string) int {\n\tswitch args[0] {\n\tcase \"version\":\n\t\treturn 0\n\t}\n\treturn 2\n}\n"
+	// One registered name per disposition: "maps" is a routed row and "version" an exempt
+	// one, so a clean run proves both dispositions pass rather than only the exempt
+	// shortcut. Every other real registry row is absent from this synthetic file, so the
+	// check's own "registry names a name the dispatch file no longer dispatches" arm fires
+	// for them; the second assertion below checks that arm still fires for one of them.
+	clean := "package main\n\ntype commandDefinition struct {\n\tName string\n}\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"maps\"},\n\t{Name: \"version\"},\n}\n"
 
 	write(clean)
-	if containsDiagnostic(checkSubcommandRouting(root), "with no entry in the subcommand argument-routing registry") {
-		t.Fatalf("registered names alone: want no unregistered-name diagnostic, got %v", checkSubcommandRouting(root))
+	diags := checkSubcommandRouting(root)
+	if containsDiagnostic(diags, "with no entry in the subcommand argument-routing registry") {
+		t.Fatalf("registered names alone: want no unregistered-name diagnostic, got %v", diags)
+	}
+	if !containsDiagnostic(diags, `the subcommand argument-routing registry names "commit", which`) {
+		t.Fatalf("routed row absent from the synthetic registry: want a no-longer-dispatches diagnostic for commit, got %v", diags)
 	}
 
-	write(strings.Replace(clean, "\t\"maps\": 1,\n", "\t\"maps\": 1,\n\t\"newmap\": 1,\n", 1))
-	if !containsDiagnostic(checkSubcommandRouting(root), `dispatches "newmap" with no entry`) {
-		t.Fatalf("unregistered map key: want a diagnostic naming newmap, got %v", checkSubcommandRouting(root))
+	write(strings.Replace(clean, "\t{Name: \"maps\"},\n", "\t{Name: \"maps\"},\n\t{Name: \"newname\"},\n", 1))
+	if !containsDiagnostic(checkSubcommandRouting(root), `dispatches "newname" with no entry`) {
+		t.Fatalf("unregistered registry name: want a diagnostic naming newname, got %v", checkSubcommandRouting(root))
 	}
 
-	write(strings.Replace(clean, "\tcase \"version\":\n", "\tcase \"version\", \"newcase\":\n", 1))
-	if !containsDiagnostic(checkSubcommandRouting(root), `dispatches "newcase" with no entry`) {
-		t.Fatalf("unregistered switch label: want a diagnostic naming newcase, got %v", checkSubcommandRouting(root))
+	// A second composite literal beside commandRegistry, of the same element shape but
+	// under a different identifier: extraction that matched any composite literal rather
+	// than the commandRegistry identifier specifically would read this decoy's name too.
+	decoy := strings.Replace(clean,
+		"var commandRegistry = []commandDefinition{\n\t{Name: \"maps\"},\n\t{Name: \"version\"},\n}\n",
+		"var commandRegistry = []commandDefinition{\n\t{Name: \"maps\"},\n\t{Name: \"version\"},\n}\n\nvar decoyRegistry = []commandDefinition{\n\t{Name: \"decoyname\"},\n}\n",
+		1)
+	write(decoy)
+	if containsDiagnostic(checkSubcommandRouting(root), `"decoyname"`) {
+		t.Fatalf("decoy composite literal under a different identifier: want it ignored, got %v", checkSubcommandRouting(root))
 	}
 }
 
@@ -322,7 +331,8 @@ func TestSubcommandRoutingRoutedClaimBites(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(root, "cmd", "bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(dispatchFile)), []byte("package main\n\nvar commands = map[string]int{\n\t\"maps\": 1,\n}\n"), 0o644); err != nil {
+	registryBody := "package main\n\ntype commandDefinition struct {\n\tName string\n}\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"maps\"},\n}\n"
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(dispatchFile)), []byte(registryBody), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	pkg := filepath.Join(root, filepath.FromSlash(subcommandRouting["maps"].Pkg))
