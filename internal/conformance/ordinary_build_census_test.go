@@ -98,6 +98,25 @@ func checkOrdinaryBuildCensus(root string) []string {
 			diags = append(diags, fmt.Sprintf("ReleaseOnlyPackages names %q, which has no Go source in the tree", releaseOnly))
 		}
 	}
+	for key := range directArchitectureTests {
+		if !exists(filepath.Join(root, filepath.FromSlash(key))) {
+			diags = append(diags, fmt.Sprintf("directArchitectureTests names %q, which has no file in the tree", key))
+		}
+	}
+	decisionTests, err := filepath.Glob(filepath.Join(root, "internal", "*", "decision_test.go"))
+	if err != nil {
+		return append(diags, "decision-domain census unavailable: "+err.Error())
+	}
+	for _, path := range decisionTests {
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return append(diags, err.Error())
+		}
+		rel = filepath.ToSlash(rel)
+		if !directArchitectureTests[rel] {
+			diags = append(diags, fmt.Sprintf("decision-domain test %q has no directArchitectureTests entry", rel))
+		}
+	}
 	return diags
 }
 
@@ -122,6 +141,7 @@ var directArchitectureTests = map[string]bool{
 	"internal/canary/decision_test.go":           true,
 	"internal/freshness/decision_test.go":        true,
 	"internal/gate/decision_test.go":             true,
+	"internal/preflight/decision_test.go":        true,
 	"internal/releasepreflight/decision_test.go": true,
 }
 
