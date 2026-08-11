@@ -107,8 +107,46 @@ func TestKeptWorktreeOperationsKeepTheirGrammar(t *testing.T) {
 	}
 }
 
+// removedGrammars are the verbs the lifecycle removal took out, written down rather than
+// derived: a restored route answers its own grammar instead of its family's refusal, and
+// the registry a derived check would read is exactly what such a restoration changes.
+var removedGrammars = []struct {
+	argv  []string
+	usage string
+}{
+	{[]string{"spec", "build", "start", "x"}, "usage: bench spec (unknown argument: build)"},
+	{[]string{"spec", "build"}, "usage: bench spec (unknown argument: build)"},
+	{[]string{"worktree", "recovery", "x"}, "usage: bench worktree (unknown argument: recovery)"},
+}
+
+// TestRemovedGrammarsRefuseThroughTheirFamily pins both halves of a removal: the verb
+// refuses at its family's unknown-argument error, and the family help no longer advertises
+// it. The worktree family's fallback is a free-form objective, so a route that merely
+// stopped being routed would open a subshell named for the removed verb instead.
+func TestRemovedGrammarsRefuseThroughTheirFamily(t *testing.T) {
+	for _, removed := range removedGrammars {
+		name := strings.Join(removed.argv, " ")
+		t.Run(name, func(t *testing.T) {
+			out, code := runKeptRoute(removed.argv)
+			if code != 2 {
+				t.Fatalf("%s exit = %d, want 2; output=%q", name, code, out)
+			}
+			if !strings.Contains(out, removed.usage) {
+				t.Fatalf("%s output = %q, want it to name %q", name, out, removed.usage)
+			}
+		})
+	}
+	out, code := runKeptRoute([]string{"worktree", "--help"})
+	if code != 0 {
+		t.Fatalf("worktree --help exit = %d, want 0; output=%q", code, out)
+	}
+	if strings.Contains(out, "recovery") {
+		t.Fatalf("worktree help = %q, want it to name no recovery grammar", out)
+	}
+}
+
 // runKeptRoute joins both sinks: help lands on stdout for some grammars and stderr for
-// others, and which sink a route picked is not what these two tests are grading.
+// others, and which sink a route picked is not what its callers are grading.
 func runKeptRoute(argv []string) (string, int) {
 	var stdout, stderr bytes.Buffer
 	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)

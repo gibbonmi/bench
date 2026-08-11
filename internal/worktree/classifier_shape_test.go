@@ -3,10 +3,18 @@ package worktree
 import (
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
 )
+
+// noWriterDeadline bounds every read this package must decide without: a FIFO planted at
+// an assignment path or in a discovered control record has no writer, so a read of one
+// never returns. Running the subject off the test goroutine turns that into the waiting
+// test's own failure instead of a package-wide timeout.
+const noWriterDeadline = 15 * time.Second
 
 // TestClassifyPathShapeUnknownFileAsParent pins the first ShapeUnknown return site: the
 // path's own Lstat fails for a reason other than absence. A regular file makes an
@@ -52,4 +60,36 @@ func TestClassifyPathShapeUnknownUnreadableGitEntry(t *testing.T) {
 	shape, err := ClassifyPathShape(path)
 	requireTest(t, shape == ShapeUnknown && err != nil,
 		"ClassifyPathShape over an unreadable directory = %v, %v; want %v and a non-nil error", shape, err, ShapeUnknown)
+}
+
+// TestClassifyPathShapeRefusesSpecialGitEntry plants a no-writer FIFO at the checkout's
+// .git entry: the exact shape a fail-open classifier would hand to `git -C <path>
+// rev-parse` without ever finishing, since git opens .git to follow a gitfile pointer.
+// ClassifyPathShape must decide by shape alone, so it runs off the test goroutine and
+// fails the moment it misses the deadline instead of wedging the suite.
+func TestClassifyPathShapeRefusesSpecialGitEntry(t *testing.T) {
+	_, creation := newOwnedAssignment(t, "special-git-fifo")
+	mustRemove(t, filepath.Join(creation.Path, ".git"))
+	mustNoError(t, syscall.Mkfifo(filepath.Join(creation.Path, ".git"), 0o600))
+
+	type shapeOutcome struct {
+		shape PathShape
+		err   error
+	}
+	shapeDone := make(chan shapeOutcome, 1)
+	go func() {
+		shape, err := ClassifyPathShape(creation.Path)
+		shapeDone <- shapeOutcome{shape, err}
+	}()
+	select {
+	case got := <-shapeDone:
+		requireTest(t, got.err == nil && got.shape == ShapeSpecialMetadata,
+			"ClassifyPathShape over FIFO .git = %v, %v; want %v, <nil>", got.shape, got.err, ShapeSpecialMetadata)
+	case <-time.After(noWriterDeadline):
+		t.Fatal("ClassifyPathShape blocked reading a no-writer FIFO .git entry")
+	}
+
+	info, err := os.Lstat(filepath.Join(creation.Path, ".git"))
+	requireTest(t, err == nil && info.Mode()&os.ModeNamedPipe != 0,
+		"the FIFO .git entry was disturbed: %v, %v", info, err)
 }
