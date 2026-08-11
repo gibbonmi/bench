@@ -2,49 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `ca6c35e`, clean tree, 49 unpushed commits
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-compatibility-oracle/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/axi-spec-build-complete/spec.md` (Status: staged), `specs/checkpoint-scoped-review/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged), `specs/ticket-bundle-refusal/spec.md` (Status: staged)
-Gate: green at `f6e02cb` — current
+Branch: `main` — HEAD `944f4fe0` plus this session's map landing; 24 dirty
+paths under `specs/axi-spec-build-complete/tickets/` are approved for discard
+Spec: none active — `decisions/pocock-alignment.md` (Status: ready) is the
+build program; all seven previously staged specs are dispositioned by its #2
 
 ## State
 
-`axi-spec-build-complete`'s run was abandoned this session (2026-08-11) on a
-validated `/bench-debug` receipt: assignments `a69293c0…` and `a931c8ea…` were
-mutually stranded — the CF2 canary fixture edit and its registry expectation in
-`internal/conformance/fixture_bite_test.go` sat in opposite ownership fences,
-so each worktree's focused `TestSpecTicketHandoffWorkflowFixturesAreComplete`
-red was caused by the other's fence, with no lifecycle route to retire either.
-The abandon retained 22 recovery refs (`bench worktree recovery`), including
-both stranded worktrees' in-fence dirty work; candidate `9146b5ed…` and 25
-integrated checkpoints are gone with the run.
+The Pocock-alignment shaping closed 2026-08-11 with all 13 decision tickets
+resolved and the map `ready`. The program: full removal of the provisional
+spec-build lifecycle, doctrine-leaf adoption, and an artifacts-vs-reality
+preflight. Closed decisions (do not reopen): full lifecycle removal, nothing
+surviving (#1); retire `axi-spec-build-complete`, `checkpoint-scoped-review`,
+`ticket-bundle-refusal`, `axi-compatibility-oracle` and park
+`axi-coherent-diff`, `axi-query-disclosure`, `single-build-serial-gate` (#2);
+only `Blocked by:` stays parsed in tickets (#3); `bench-craft-domain`
+companion skill (#4); four doctrine-leaf adoptions including frontier-rounds
+grilling (#5); review re-derives from primary sources (#6); `bench preflight`
+at phase entry, not in the gate (#7); seam-confirmation and breakdown-quiz
+HITL gates replace the delegate breakdown review (#8); hard line budgets
+gate-enforced (#9); craft-line and craft-delegate kept slimmed (#10); CLI
+shrink per #11; zero backwards compatibility (#12); three specs in order
+A lifecycle-removal → B preflight → C doctrine, after housekeeping (#13).
 
-Landed since:
-
-- Spec revision committed (`4721c2d0`): story 5, SB9/SB10, and the one-fence
-  proportionate ticket-evidence contract. Spec status stays `staged`.
-- Combined SB9/SB10 ticket
-  `specs/axi-spec-build-complete/tickets/adopt-proportionate-ticket-evidence-contract.md`
-  committed (`ca6c35ea`), replacing the deleted
-  `remove-mandatory-mutation-guidance.md` and
-  `repair-guidance-canary-fixture-anchors.md`. Breakdown-reviewed pre-assign
-  (read-only delegate); its two covers-honesty findings repaired (MG2→SB9,
-  CF2/CF3→SB10). Blocked by `permanent-optional-ticket-inventory.md`.
-
-Closed decisions: the abandon (receipt-backed, applied), the combined
-one-fence ticket per spec.md line 40, and the spec revision content.
-Open for reviewer: the round-8 P1/C1 tab/CR-vs-FR6 conflict from the abandoned
-run's review receipt still needs a call before any re-landed repair; the new
-learnings entry proposing abandon's staged-spec precondition exemption awaits
-the `/bench-what-next` drain. Build order unchanged: `axi-spec-build-complete`
-(restart), then `axi-coherent-diff`, then `axi-query-disclosure`; the
-`checkpoint-scoped-review` and `ticket-bundle-refusal` specs (staged,
-reviewer-signed) implement after the AXI runs in that coupled order.
+Housekeeping approved but not yet executed: `bench spec retire` for the four
+retired specs, discard of the 24 uncommitted repair-ticket edits, and parking
+the three spec rows for the next `/bench-what-next` drain.
 
 ## Next command
 
-`/bench-implement-spec` for `specs/axi-spec-build-complete/spec.md` — restart
-the build with the recomposed ticket set, recovering preserved work from the
-retained recovery refs.
+Run the approved housekeeping, then `/bench-write-spec` for Spec A (lifecycle
+removal) from `decisions/pocock-alignment.md` tickets #1, #3, #11, #12.
 
 ## Shape
 
