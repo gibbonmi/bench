@@ -2,8 +2,7 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `944f4fe0` plus this session's map landing; 24 dirty
-paths under `specs/axi-spec-build-complete/tickets/` are approved for discard
+Branch: `main` — HEAD `35e887d4`, clean of the retired-spec noise
 Spec: none active — `decisions/pocock-alignment.md` (Status: ready) is the
 build program; all seven previously staged specs are dispositioned by its #2
 
@@ -25,14 +24,18 @@ gate-enforced (#9); craft-line and craft-delegate kept slimmed (#10); CLI
 shrink per #11; zero backwards compatibility (#12); three specs in order
 A lifecycle-removal → B preflight → C doctrine, after housekeeping (#13).
 
-Housekeeping approved but not yet executed: `bench spec retire` for the four
-retired specs, discard of the 24 uncommitted repair-ticket edits, and parking
-the three spec rows for the next `/bench-what-next` drain.
+Housekeeping executed (`35e887d4`): the four retired specs deleted with their
+tickets and dirty edits (`bench spec retire` refused — it only takes
+implemented specs — so deletion into git history was the route). The three
+parked specs stay staged in `specs/`; their roadmap re-rank belongs to the
+next `/bench-what-next` drain. The abandoned run's ~20 recovery refs and open
+assignments are lifecycle debris that Spec A's removal deletes wholesale.
+Reviewer authorized direct-to-main commits without the gate for this program.
 
 ## Next command
 
-Run the approved housekeeping, then `/bench-write-spec` for Spec A (lifecycle
-removal) from `decisions/pocock-alignment.md` tickets #1, #3, #11, #12.
+`/bench-write-spec` for Spec A (lifecycle removal) from
+`decisions/pocock-alignment.md` tickets #1, #3, #11, #12.
 
 ## Shape
 
