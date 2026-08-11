@@ -96,13 +96,12 @@ func checkOrdinaryBuildCensus(root string) []string {
 }
 
 var directArchitectureTests = map[string]bool{
-	"cmd/bench/command_registry_test.go":            true,
-	"internal/adopt/decision_test.go":               true,
-	"internal/canary/decision_test.go":              true,
-	"internal/freshness/decision_test.go":           true,
-	"internal/gate/decision_test.go":                true,
-	"internal/preflight/decision_test.go":           true,
-	"internal/specbuild/lifecycle_decision_test.go": true,
+	"cmd/bench/command_registry_test.go":  true,
+	"internal/adopt/decision_test.go":     true,
+	"internal/canary/decision_test.go":    true,
+	"internal/freshness/decision_test.go": true,
+	"internal/gate/decision_test.go":      true,
+	"internal/preflight/decision_test.go": true,
 }
 
 func architectureOwnedTest(path string) bool {

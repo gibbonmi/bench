@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -44,4 +45,72 @@ func TestCommandDispositionsAreComplete(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("command dispositions = %#v, want %#v", got, want)
 	}
+}
+
+// keptRoutes is the surface a removal may not take with it, written down rather than
+// derived. Every other routing check reads commandRegistry, so deleting a route deletes it
+// from the expectation in the same edit and the check stays green; an enumeration authored
+// against the reviewer's keep list is the only thing an over-broad deletion turns red. Each
+// entry drives the real dispatcher and asserts the route answers its own grammar at exit 0,
+// so a surviving-but-misrouted verb fails as loudly as a deleted one.
+var keptRoutes = []struct {
+	argv []string
+	help string
+}{
+	{[]string{"worktree", "--help"}, "usage: bench worktree"},
+	{[]string{"gate", "--help"}, "usage: bench gate"},
+	{[]string{"commit", "--help"}, "usage: bench commit"},
+	{[]string{"status", "--help"}, "usage: bench status"},
+	{[]string{"guards", "--help"}, "usage: bench guards"},
+	{[]string{"idea", "--help"}, "usage: bench idea"},
+	{[]string{"roadmap", "--help"}, "usage: bench roadmap"},
+	{[]string{"spec", "implemented", "--help"}, "usage: bench spec implemented"},
+	{[]string{"spec", "retire", "--help"}, "usage: bench spec retire"},
+	{[]string{"spec", "history", "--help"}, "usage: bench spec history"},
+}
+
+// keptWorktreeGrammars are the pool operations the worktree family help has to keep naming.
+// The family route surviving says nothing about the operations under it, and each one is
+// reached only through that dispatcher, so the grammar line is where their survival shows.
+var keptWorktreeGrammars = []string{
+	"bench worktree create",
+	"bench worktree path",
+	"bench worktree exec",
+	"bench worktree release",
+	"bench worktree clean",
+}
+
+func TestKeptRoutesAnswerTheirOwnHelp(t *testing.T) {
+	for _, kept := range keptRoutes {
+		name := strings.Join(kept.argv, " ")
+		t.Run(name, func(t *testing.T) {
+			out, code := runKeptRoute(kept.argv)
+			if code != 0 {
+				t.Fatalf("%s exit = %d, want 0; output=%q", name, code, out)
+			}
+			if !strings.Contains(out, kept.help) {
+				t.Fatalf("%s output = %q, want it to name %q", name, out, kept.help)
+			}
+		})
+	}
+}
+
+func TestKeptWorktreeOperationsKeepTheirGrammar(t *testing.T) {
+	out, code := runKeptRoute([]string{"worktree", "--help"})
+	if code != 0 {
+		t.Fatalf("worktree --help exit = %d, want 0; output=%q", code, out)
+	}
+	for _, grammar := range keptWorktreeGrammars {
+		if !strings.Contains(out, grammar) {
+			t.Errorf("worktree help = %q, want it to name %q", out, grammar)
+		}
+	}
+}
+
+// runKeptRoute joins both sinks: help lands on stdout for some grammars and stderr for
+// others, and which sink a route picked is not what these two tests are grading.
+func runKeptRoute(argv []string) (string, int) {
+	var stdout, stderr bytes.Buffer
+	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
+	return stdout.String() + stderr.String(), code
 }

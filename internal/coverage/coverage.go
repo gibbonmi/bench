@@ -62,18 +62,12 @@ const historicalMarker = "<!-- coverage-map: historical -->"
 var fieldNames5 = [5]string{"story", "behavior", "seam", "red signal", "why it catches the failure"}
 var fieldNames6 = [6]string{"row", "story", "behavior", "seam", "red signal", "why it catches the failure"}
 
-// RowIDPattern is the one row-ID grammar: an uppercase tag plus a number. It is
-// exported so a covers annotation in internal/specbuild composes this exact
-// pattern instead of restating it — the map's leading `row` cell and the ID a
-// covers annotation may name can never diverge, because there is only one
-// source. ParseTicket's own row IDs (the `[...]` bracket a ticket row is filed
-// under) are a separate, unconstrained `[^]]+` grammar; they do not use this
-// pattern, and a covers annotation names a coverage-map row ID, not a ticket
-// row ID.
-const RowIDPattern = `[A-Z]+[0-9]+`
+// rowIDPattern is the one row-ID grammar the map's leading `row` cell answers to:
+// an uppercase tag plus a number.
+const rowIDPattern = `[A-Z]+[0-9]+`
 
-// rowIDRe anchors RowIDPattern to a whole cell, spec-local unique.
-var rowIDRe = regexp.MustCompile(`^` + RowIDPattern + `$`)
+// rowIDRe anchors rowIDPattern to a whole cell, spec-local unique.
+var rowIDRe = regexp.MustCompile(`^` + rowIDPattern + `$`)
 
 type dataRow struct {
 	ncells int

@@ -32,11 +32,9 @@ import (
 // audit's inventory, no wider. A package outside it declaring a port is out of scope until
 // a reviewer binds it in; a package inside it that derives nothing fails closed.
 var auditedPortPackages = []string{
-	"cmd/bench",
 	"internal/canary",
 	"internal/gitguard",
 	"internal/publication",
-	"internal/specbuild",
 }
 
 // The five failure modes, each with its own message so a red names its cause without
@@ -64,10 +62,6 @@ type injectedPortRow struct {
 // them, so a diff against a re-derived inventory reads straight down.
 var injectedPortRegistry = []injectedPortRow{
 	{
-		pkg: "cmd/bench", port: "buildService",
-		exempt: "the dispatch seam is graded end to end by the binary-level runtime contract suite in internal/contract/runtime, which drives the real service through the built binary rather than through this parameter",
-	},
-	{
 		pkg: "internal/canary", port: "Runner",
 		testFile: "internal/canary/runner_junction_test.go", testName: "TestSweepTierRunsPlantedBashGate",
 	},
@@ -78,30 +72,6 @@ var injectedPortRegistry = []injectedPortRow{
 	{
 		pkg: "internal/publication", port: "Registry",
 		exempt: "the only adapter without gate coverage is NPMCLIRegistry, which is runbook-only: the gate drives FixtureRegistry against the hermetic offline registry, and no NPMCLIRegistry path performs gate egress or touches a credential (internal/publication/registry.go:5-11)",
-	},
-	{
-		pkg: "internal/specbuild", port: "AbandonOwner",
-		testFile: "internal/specbuild/abandon_test.go", testName: "TestAbandonAppliesForDecayedShapesThroughRealPlanner",
-	},
-	{
-		pkg: "internal/specbuild", port: "GateOwner",
-		exempt: "the gate owner's production implementation spawns the real gate, so it is graded by the binary-level runtime contract suite in internal/contract/runtime rather than by an in-package junction test",
-	},
-	{
-		pkg: "internal/specbuild", port: "PromotionGateOwner",
-		exempt: "the promotion widening of the gate owner is graded with it by the binary-level runtime contract suite in internal/contract/runtime; the compile-time pin in cmd/bench/wiring_pins.go is what stops the widening from silently downgrading",
-	},
-	{
-		pkg: "internal/specbuild", port: "ReleaseOwner",
-		testFile: "internal/specbuild/release_junction_test.go", testName: "TestIntegrateReleasesThroughRealProvisionalRelease",
-	},
-	{
-		pkg: "internal/specbuild", port: "Runner",
-		testFile: "internal/specbuild/checkpoint_fixture_test.go", testName: "TestIntegrateCancellationKeepsPreparedReplayRecoverable",
-	},
-	{
-		pkg: "internal/specbuild", port: "WorktreeOwner",
-		testFile: "internal/specbuild/lifecycle_test.go", testName: "TestAssignBindsTicketAtCandidateInOwnedWorktree",
 	},
 }
 
@@ -198,11 +168,10 @@ func injectedPortRowDiags(root string, row injectedPortRow) []string {
 // A **port** is a named type whose shape is port-shaped — a non-empty interface, a func
 // type, or a struct whose every field is a func — and which the package injects: passes as
 // a function parameter, or narrows to by type assertion or type switch. The assertion arm
-// is not decoration: specbuild's PromotionGateOwner, ReleaseOwner, and AbandonOwner are
-// never parameters at all, they are widenings of an already-injected owner, and a
-// parameter-only rule would leave exactly the three silently-downgradable capabilities out
-// of the inventory. Exportedness is not part of the rule either — cmd/bench is package
-// main, where nothing is exported and buildService is a port all the same.
+// is not decoration: a capability widened out of an already-injected owner is never a
+// parameter at all, so a parameter-only rule would leave exactly the silently-downgradable
+// capabilities out of the inventory. Exportedness is not part of the rule either — a
+// package main declares nothing exported, and its ports are ports all the same.
 func derivedInjectedPorts(dir, pkg string) ([]derivedPort, []string) {
 	fset := token.NewFileSet()
 	shaped := map[string]bool{}
@@ -494,8 +463,8 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 // TestInjectedPortDerivationSeesEveryPortShape pins the shape and injection rules against a
 // synthetic package carrying every shape the audit found — interface, func type, struct of
 // func fields — reached by every injection route it found, including the type assertion and
-// type switch that are the only way specbuild's three widened owner capabilities are ever
-// named. A rule that dropped one of those routes would silently shrink the inventory the
+// type switch that are the only way a widened owner capability is ever named. A rule that
+// dropped one of those routes would silently shrink the inventory the
 // registry is graded against, which is the same silence the fail-closed posture refuses.
 func TestInjectedPortDerivationSeesEveryPortShape(t *testing.T) {
 	source := strings.Join([]string{

@@ -126,7 +126,6 @@ var Checks = []Check{
 	{Name: "subcommand-routing", Implementation: "checkSubcommandRouting", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "skip-ownership", Implementation: "checkSkipOwnership", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "decision-map-integrity", Implementation: "ValidateDecisionMapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputDecisionDocuments},
-	{Name: "example-agreement", Implementation: "checkExampleAgreement", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "injected-port-registry", Implementation: "checkInjectedPortRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 }
 
@@ -149,7 +148,6 @@ var familyChecks = map[string]string{
 	"coverage-map-validation":       "docs-currency-workflow",
 	"compliance-hardening":          "canary-fixture-compliance",
 	"decision-map-integrity":        "decision-map-integrity",
-	"example-agreement":             "example-agreement",
 	"injected-ports":                "injected-port-registry",
 }
 

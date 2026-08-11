@@ -37,6 +37,7 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/sessioninspect"
 	"github.com/gibbonmi/bench/internal/shift"
+	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
@@ -91,7 +92,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "session-inspect", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "shift", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "commit", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return commit.Command(args, c.Stdout, c.Stderr) }},
-	{Name: "spec", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return dispatchSpec(args, c.Stdout) }},
+	{Name: "spec", Attachment: attachmentDirect, Run: outputCommand(spec.Command)},
 	{Name: "gate-go", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "guard-git", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "check-agent-line", Attachment: attachmentDirect, Run: func(c Command, args []string) int { return checkAgentLine(args, c.Stdin, c.Stdout, c.Stderr) }},

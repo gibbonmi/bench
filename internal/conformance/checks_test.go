@@ -62,7 +62,6 @@ func init() {
 		"subcommand-routing":            {checkSubcommandRouting, registry.Dev, registry.SubjectRoot},
 		"skip-ownership":                {checkSkipOwnership, registry.Dev, registry.SubjectRoot},
 		"decision-map-integrity":        {maps.ValidateDecisionMapTree, registry.Dev, registry.SubjectRoot},
-		"example-agreement":             {checkExampleAgreement, registry.Dev, registry.SubjectRoot},
 		"injected-port-registry":        {checkInjectedPortRegistry, registry.Dev, registry.SubjectRoot},
 	}
 }

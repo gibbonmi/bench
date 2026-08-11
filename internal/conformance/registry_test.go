@@ -60,7 +60,6 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"debug-red-commit":                           conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"readme-shaping-skip":                        conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"implement-spec-inline-exception":            conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"implement-spec-landing-commit":              conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"edge-inventory-anchor":                      conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"fix-pass-sentinel-anchor":                   conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"implement-spec-mandatory-delegation-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
@@ -118,15 +117,10 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"ticket-cross-pointers-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"ticket-gate-cadence-anchor":            conformanceFixture(".bench/gate-docs-contracts.sh"),
 
-	"spec-build-initial-capacity-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"spec-build-unused-slot-reason-anchor":        conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"spec-build-review-input-binding-anchor":      conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"spec-build-final-check-single-author-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"spec-build-review-route-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"spec-build-unused-slot-reason-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
 
-	"ticket-decision-map-lifecycle-anchor":  conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"implementation-retro-authoring-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"implementation-retro-drain-anchor":     conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-decision-map-lifecycle-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"implementation-retro-drain-anchor":    conformanceFixture(".bench/gate-docs-contracts.sh"),
 
 	"undocumented-passlist-var": conformanceFixture(".bench/gate.sh"),
 
@@ -185,10 +179,6 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/maps/schema.go",
 		"internal/maps/validation.go",
 		"internal/maps/tree_validation.go",
-		"internal/conformance/checks_test.go",
-	),
-	"example-agreement": conformanceGoFixture(
-		"internal/conformance/example_agreement_test.go",
 		"internal/conformance/checks_test.go",
 	),
 	"injected-ports": conformanceGoFixture(

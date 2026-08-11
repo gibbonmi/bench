@@ -251,7 +251,6 @@ current-state advertisement of its non-meta input bindings:
 | `subcommand-routing` | `go-source` |
 | `skip-ownership` | `go-source` |
 | `decision-map-integrity` | `decision-documents` |
-| `example-agreement` | `catch-all` |
 | `injected-port-registry` | `go-source` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a

@@ -71,8 +71,7 @@ func TestClassifyRealCheckerTimeoutComposition(t *testing.T) {
 }
 
 // gc1Repo builds a temp repo with one commit on "main" and one branch "feature",
-// exercising the exec-git-in-test idiom shared with internal/specbuild's greenGate
-// fixture.
+// exercising the exec-git-in-test idiom.
 func gc1Repo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()

@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".bench/BENCH.md",
-    "old": "Provisional\ncadence is exclusive to reviewed spec-backed builds; light-path work, `bench\nshift`, and ordinary `bench commit` remain commit-on-green.",
-    "new": "<!-- Provisional\ncadence is exclusive to reviewed spec-backed builds; light-path work, `bench\nshift`, and ordinary `bench commit` remain commit-on-green. -->"
-  }
-]
