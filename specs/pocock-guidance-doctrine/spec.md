@@ -314,7 +314,7 @@ It does not revive the removed lifecycle or weaken the gate.
   `.agents/skills/bench-craft-line`, `.agents/skills/bench-craft-spec`
 - `.claude/skills/bench-craft-domain`, `.claude/skills/prototype`
 - `internal/anchors`, `internal/conformance`,
-  `tests/canary/workflow-guidance-anchors`
+  `tests/canary/workflow-guidance-anchors`, `tests/canary/guidance-prose-budgets`
 - `projects/benchkit.md`, `README.md`, `CHANGELOG.md`, `ROADMAP.md`,
   `capture/session-handoff.md`
 
