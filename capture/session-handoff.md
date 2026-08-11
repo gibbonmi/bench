@@ -3,7 +3,7 @@
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
 Branch: `main` — HEAD `35e887d4`, clean of the retired-spec noise
-Spec: none active — `decisions/pocock-alignment.md` (Status: ready) is the
+Spec: none active — `specs/remove-spec-build-lifecycle/decisions/pocock-alignment.md` (Status: ready) is the
 build program; all seven previously staged specs are dispositioned by its #2
 
 ## State
@@ -35,7 +35,7 @@ Reviewer authorized direct-to-main commits without the gate for this program.
 ## Next command
 
 `/bench-write-spec` for Spec A (lifecycle removal) from
-`decisions/pocock-alignment.md` tickets #1, #3, #11, #12.
+`specs/remove-spec-build-lifecycle/decisions/pocock-alignment.md` tickets #1, #3, #11, #12.
 
 ## Shape
 
