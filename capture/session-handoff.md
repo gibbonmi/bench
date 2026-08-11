@@ -8,27 +8,45 @@ Spec: `specs/axi-spec-build-complete/spec.md` (Status: staged), `specs/axi-coher
 ## State
 
 `axi-spec-build-complete`'s spec-build run (`b6f79889...`) is active, candidate
-`123edbab919d2462c73f206dd6623aba5feccc9f`. The previously accepted SB4 finding
-(P1-nondigest-state-name / C1-nondigest-state-name: a valid retained record
-under a non-digest `*.json` filename rendered healthy instead of its own
-diagnostic) is repaired and integrated — ticket
-`specs/axi-spec-build-complete/tickets/repair-nondigest-state-finding.md`,
-assignment `73324cb44cd716dcf9f4b2600ce46c41`. `Service.Runs` now diagnoses
-that case as `nondigest_name`.
+`399dca908c7b1e1a4162eb7625e497dfb6786750`. Two reviewer-authorized repair
+rounds are integrated: the nondigest-state-name diagnostic
+(`repair-nondigest-state-finding.md`) and the duplicate partial-reclaim
+`help[]` envelope (`repair-duplicate-help-partial-reclaim.md`). A fresh
+Terra/xhigh review of the whole composed candidate (receipt digest not yet
+reviewer-triaged, full text at
+`/tmp/.../scratchpad/terra-review-output-2.md` — not durable, re-run the
+review if that scratch file is gone) confirms both repairs and independently
+found five new `accepted` findings, none yet authorized for repair:
 
-A fresh Terra/xhigh review of the whole composed candidate (receipt digest
-`925a9ec921f57225b529def2885158427ba9858ecacf152b64402751357e250b`) confirmed
-that repair and found one new pair of `accepted` findings not yet acted on: a
-partial-reclaim failure renders two `help[]` blocks — `RenderReclamation`
-then `RenderRefusal` each append one, violating the spec's single-envelope
-rule (`internal/specbuild/render.go:251-287`, `spec.md:24`) — and the existing
-partial-reclaim test never renders that path, so the duplicate goes unpinned
-(`internal/specbuild/reclaim_test.go:435-469`). This round's repair authority
-was scoped to exactly the nondigest finding, so promotion was withheld rather
-than widened: `bench spec build status axi-spec-build-complete --full` shows
-`next: bench spec build assign axi-spec-build-complete` — the run is waiting
-on a reviewer decision to authorize a repair ticket for the new finding (or a
-different route).
+- Standards S1: `disclosure_observation.go`/`disclosure_test.go` create real
+  git repos and run OS processes, which the reviewer read as violating
+  `projects/benchkit.md:210-212`'s "ordinary tests create no repositories"
+  rule — contestable: the disclosure fixture harness is the spec's SB2
+  real-service observation seam, and an earlier Fable round's ticket already
+  says "Preserve S3 and S5 exactly as risk-accepted review judgments" over
+  what may be this same tension under different IDs. Needs reviewer judgment,
+  not an assumed repair.
+- Standards S2: `internal/specbuild/reclaim_test.go:481-482`'s new comment
+  keeps the ticket-provenance label `(DH1)`, against `bench-craft-comments`'
+  timeless-current-state rule. Concrete, trivial one-line fix.
+- Spec P1: `cmd/bench/specbuild.go`'s `specBuildCommand` calls `git.Root()`
+  before dispatching help spellings or malformed argv, so `help`/`--help`/`-h`
+  and bad argv outside a git checkout return error/1 instead of the required
+  catalog/0 or usage/2 (`spec.md:28,33-34`).
+- Spec P2: the stale/spent-refresh refusal remedy in
+  `internal/specbuild/disclosure.go`'s `RefusalForClass` emits a generic
+  `assign` action with open placeholders instead of the exact original
+  ticket, request, and `--refresh` receipt — not the class-exact remedy
+  story 2 requires.
+- Coverage C1: `Service.Runs` in `internal/specbuild/state.go` classifies a
+  directory entry from the `os.ReadDir` snapshot, then reopens it by path for
+  `os.ReadFile` — a TOCTOU window a special file could exploit between
+  classification and read; no test drives that race.
+
+Promotion was withheld (review not clean). `bench spec build status
+axi-spec-build-complete --full` shows `next: bench spec build assign
+axi-spec-build-complete` — the run is waiting on a reviewer decision on which
+(if any) of the five new findings to authorize as repair tickets.
 
 Build order unchanged: `axi-spec-build-complete` next, then
 `axi-coherent-diff`, then `axi-query-disclosure`. FT185 composition stays
@@ -38,7 +56,7 @@ prior handoff.
 
 ## Next command
 
-Reviewer decision on the new duplicate-`help[]` finding, then
+Reviewer decision on the five new findings, then
 `/bench-implement-spec --full specs/axi-spec-build-complete/spec.md` resumes
 the same repair → checkpoint → integrate → review → promote cycle.
 
