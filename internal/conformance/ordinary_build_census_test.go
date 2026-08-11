@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -92,16 +93,36 @@ func checkOrdinaryBuildCensus(root string) []string {
 			diags = append(diags, fmt.Sprintf("system owner is missing budget assertion %q", required))
 		}
 	}
+	for _, releaseOnly := range registry.ReleaseOnlyPackages {
+		if !hasGoFile(filepath.Join(root, filepath.FromSlash(releaseOnly))) {
+			diags = append(diags, fmt.Sprintf("ReleaseOnlyPackages names %q, which has no Go source in the tree", releaseOnly))
+		}
+	}
 	return diags
 }
 
+// hasGoFile reports whether path is a directory containing at least one .go
+// file, so a stale package rename (an empty leftover directory) still reds.
+func hasGoFile(path string) bool {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return false
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".go") {
+			return true
+		}
+	}
+	return false
+}
+
 var directArchitectureTests = map[string]bool{
-	"cmd/bench/command_registry_test.go":  true,
-	"internal/adopt/decision_test.go":     true,
-	"internal/canary/decision_test.go":    true,
-	"internal/freshness/decision_test.go": true,
-	"internal/gate/decision_test.go":      true,
-	"internal/preflight/decision_test.go": true,
+	"cmd/bench/command_registry_test.go":         true,
+	"internal/adopt/decision_test.go":            true,
+	"internal/canary/decision_test.go":           true,
+	"internal/freshness/decision_test.go":        true,
+	"internal/gate/decision_test.go":             true,
+	"internal/releasepreflight/decision_test.go": true,
 }
 
 func architectureOwnedTest(path string) bool {

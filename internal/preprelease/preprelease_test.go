@@ -60,7 +60,7 @@ func TestStepsGradeTheRootTheyWereGiven(t *testing.T) {
 	}
 }
 
-// TestStepsRunReleaseOnlyPackages pins the step that keeps internal/preflight,
+// TestStepsRunReleaseOnlyPackages pins the step that keeps internal/releasepreflight,
 // internal/releaseevidence, and internal/publication in ship green. No dev-tier run
 // executes those suites, so nothing else observes this step going missing, and an
 // end-to-end prep-release run cannot stand in here because the command is blocked on an

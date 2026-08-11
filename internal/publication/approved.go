@@ -93,7 +93,7 @@ func VerifyApprovedSet(root, version string) (releaseIndexSHA256 string, package
 // publication needs to compose the preflight publish-mode authority: it never
 // re-reads internal/releaseevidence/requirements.json or re-derives which
 // producer records a profile requires. That requiredness policy is owned
-// entirely by internal/preflight; publication trusts only the index's already-
+// entirely by internal/releasepreflight; publication trusts only the index's already-
 // computed verdict.
 type releaseIndexAuthority struct {
 	Mode    string `json:"mode"`

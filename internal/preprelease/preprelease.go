@@ -100,7 +100,7 @@ func Steps(root, kit string) []Step {
 			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
 		},
 		{
-			// The release-only package suites — internal/preflight,
+			// The release-only package suites — internal/releasepreflight,
 			// internal/releaseevidence, internal/publication — are excluded from the dev
 			// tier's package enumeration, so this ship-tier run is the only surface that
 			// executes them. Without it ship green covers three fewer suites than its

@@ -100,14 +100,14 @@ scripts/write-deterministic-archive.mjs
 .bench/consumer-payload.json
 internal/releaseevidence/artifact_evidence.go
 internal/releaseevidence/artifact_proofs.go
-internal/preflight/command.go
+internal/releasepreflight/command.go
 internal/releaseevidence/component_manifest.go
 internal/releaseevidence/evidence_exchange_darwin.go
 internal/releaseevidence/evidence_exchange_linux.go
 internal/releaseevidence/evidence_exchange_other.go
 internal/releaseevidence/evidence_fingerprint.go
 internal/releaseevidence/evidence_promotion.go
-internal/preflight/identity.go
+internal/releasepreflight/identity.go
 internal/releaseevidence/json_validation.go
 internal/releaseevidence/offline_archive.go
 internal/releaseevidence/package_artifact.go
@@ -119,5 +119,5 @@ internal/releaseevidence/release_plan.go
 internal/releaseevidence/requirement_inspection.go
 internal/releaseevidence/requirements.json
 internal/releaseevidence/types.go
-internal/preflight/types.go
-internal/preflight/vulnerability.go
+internal/releasepreflight/types.go
+internal/releasepreflight/vulnerability.go

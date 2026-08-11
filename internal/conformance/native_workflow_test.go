@@ -213,7 +213,7 @@ func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord) [
 
 import (
 	"os"
-	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/releasepreflight"
 )
 
 var version string
@@ -222,7 +222,7 @@ func main() {
 	if len(os.Args) < 2 || os.Args[1] != "release-preflight" {
 		os.Exit(2)
 	}
-	os.Exit(preflight.Command(os.Args[2:], version, os.Stderr))
+	os.Exit(releasepreflight.Command(os.Args[2:], version, os.Stderr))
 }
 `
 		if err := os.WriteFile(probeMain, []byte(source), 0o644); err != nil {

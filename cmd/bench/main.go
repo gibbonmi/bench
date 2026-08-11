@@ -30,9 +30,9 @@ import (
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/outline"
-	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preprelease"
 	"github.com/gibbonmi/bench/internal/publication"
+	"github.com/gibbonmi/bench/internal/releasepreflight"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/sessioninspect"
@@ -113,7 +113,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "canary", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return canary.Run(args, c.Stdout, c.Stderr) }},
 	{Name: "stop-verdict", Attachment: attachmentSystem, Run: func(c Command, args []string) int { return stopVerdict(args, c.Stdin, c.Stderr) }},
 
-	{Name: "release-preflight", Attachment: attachmentShip, Run: func(c Command, args []string) int { return preflight.Command(args, version, c.Stderr) }},
+	{Name: "release-preflight", Attachment: attachmentShip, Run: func(c Command, args []string) int { return releasepreflight.Command(args, version, c.Stderr) }},
 	{Name: "prep-release", Attachment: attachmentShip, Run: func(c Command, args []string) int { return preprelease.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "release", Attachment: attachmentShip, Run: func(c Command, args []string) int { return publication.Command(args, c.Stdout, c.Stderr) }},
 }

@@ -1,4 +1,4 @@
-package preflight
+package releasepreflight
 
 // DecisionInput is the immutable release evidence presented to preflight policy.
 type DecisionInput struct {

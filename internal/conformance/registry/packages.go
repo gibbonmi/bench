@@ -10,7 +10,7 @@ const ConformancePackage = "internal/conformance"
 // release path. Their suites rebuild the binary and shell out to node, so on a cold
 // Go test cache they blow the 600 s package timeout and present as a hung gate; the
 // ship tier is where they earn their keep.
-var ReleaseOnlyPackages = []string{"internal/preflight", "internal/releaseevidence", "internal/publication"}
+var ReleaseOnlyPackages = []string{"internal/releasepreflight", "internal/releaseevidence", "internal/publication"}
 
 // IsExcludedTestPackage reports whether the unfiltered core `go test` leaves a
 // package to some other surface. internal/contract is run by the gate's own contract
