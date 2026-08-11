@@ -2,63 +2,57 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — tree clean; the repair round below is durable `bench spec build` lifecycle state, not a working-tree diff
-Spec: `specs/axi-spec-build-complete/spec.md` (Status: staged), `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged), `specs/axi-compatibility-oracle/spec.md` (staged, superseded — pending abandon)
+Branch: `main` at `ca2b0ee2` — tree clean; active `bench spec build` lifecycle state is durable, not a working-tree diff
+Spec: `specs/ticket-bundle-refusal/spec.md` (staged, signed off), `specs/checkpoint-scoped-review/spec.md` (staged, signed off), `specs/axi-spec-build-complete/spec.md` (staged, run active), `specs/axi-coherent-diff/spec.md` (staged), `specs/axi-query-disclosure/spec.md` (staged), `specs/single-build-serial-gate/spec.md` (staged), `specs/axi-compatibility-oracle/spec.md` (staged, superseded — pending abandon)
 
 ## State
 
-`axi-spec-build-complete`'s spec-build run (`b6f79889...`) is active, candidate
-`399dca908c7b1e1a4162eb7625e497dfb6786750`. Two reviewer-authorized repair
-rounds are integrated: the nondigest-state-name diagnostic
-(`repair-nondigest-state-finding.md`) and the duplicate partial-reclaim
-`help[]` envelope (`repair-duplicate-help-partial-reclaim.md`). A fresh
-Terra/xhigh review of the whole composed candidate (receipt digest not yet
-reviewer-triaged, full text at
-`/tmp/.../scratchpad/terra-review-output-2.md` — not durable, re-run the
-review if that scratch file is gone) confirms both repairs and independently
-found five new `accepted` findings, none yet authorized for repair:
+Two new specs landed this session, both Sol-falsified (two rounds and one
+round respectively, all findings repaired) and reviewer-signed:
 
-- Standards S1: `disclosure_observation.go`/`disclosure_test.go` create real
-  git repos and run OS processes, which the reviewer read as violating
-  `projects/benchkit.md:210-212`'s "ordinary tests create no repositories"
-  rule — contestable: the disclosure fixture harness is the spec's SB2
-  real-service observation seam, and an earlier Fable round's ticket already
-  says "Preserve S3 and S5 exactly as risk-accepted review judgments" over
-  what may be this same tension under different IDs. Needs reviewer judgment,
-  not an assumed repair.
-- Standards S2: `internal/specbuild/reclaim_test.go:481-482`'s new comment
-  keeps the ticket-provenance label `(DH1)`, against `bench-craft-comments`'
-  timeless-current-state rule. Concrete, trivial one-line fix.
-- Spec P1: `cmd/bench/specbuild.go`'s `specBuildCommand` calls `git.Root()`
-  before dispatching help spellings or malformed argv, so `help`/`--help`/`-h`
-  and bad argv outside a git checkout return error/1 instead of the required
-  catalog/0 or usage/2 (`spec.md:28,33-34`).
-- Spec P2: the stale/spent-refresh refusal remedy in
-  `internal/specbuild/disclosure.go`'s `RefusalForClass` emits a generic
-  `assign` action with open placeholders instead of the exact original
-  ticket, request, and `--refresh` receipt — not the class-exact remedy
-  story 2 requires.
-- Coverage C1: `Service.Runs` in `internal/specbuild/state.go` classifies a
-  directory entry from the `os.ReadDir` snapshot, then reopens it by path for
-  `os.ReadFile` — a TOCTOU window a special file could exploit between
-  classification and read; no test drives that race.
+- `ticket-bundle-refusal` (`1d236fab`): assign refuses any ticket over
+  rows > 5 (deflation-resistant count, non-`R` ranges by span) or closure
+  tokens > 15 without a header-block `Bundle-approved:` line
+  (reviewer-owned, inert at or after the first `##`); `craft-tickets` drops
+  the author-asserted keep-together exception for lifecycle work;
+  `craft-spec` + `/bench-write-spec` gain the single-ticket-landing
+  disclosure. Four implied tickets: refusal core (TB1+TB3), override and
+  anchoring (TB2+TB4, blocked by core), craft-tickets prose (TB5),
+  craft-spec/write-spec prose (TB6). Closed decisions: bounds values, no
+  fence-entry dimension, grammar-independence, header-block anchoring.
+- `checkpoint-scoped-review` (`ca2b0ee2`): advisory three-axis review per
+  assignment on the write delegate's return, before done-claim verification
+  and checkpoint (ordering: return → review → dispositions → verify settled
+  tree → checkpoint); dispositions closed and authority-split (fixed =
+  write delegate; risk-accepted = reviewer; deferred); subject-bound
+  evidence line per assignment in this file, consolidated into the retro.
+  Prose-only across four command/skill files; FT184/FT200 seams untouched.
 
-Promotion was withheld (review not clean). `bench spec build status
-axi-spec-build-complete --full` shows `next: bench spec build assign
-axi-spec-build-complete` — the run is waiting on a reviewer decision on which
-(if any) of the five new findings to authorize as repair tickets.
+Implementation order is coupled: implement `checkpoint-scoped-review` first
+(prose fences, no AXI collision), because its cadence is the dogfood oracle
+for the `ticket-bundle-refusal` build that follows. The
+`ticket-bundle-refusal` code tickets touch `internal/specbuild/`, which sits
+inside the active AXI candidate's fence — prefer closing the AXI run first;
+a main-tip move before then just forces routine recomposition at promote.
 
-Build order unchanged: `axi-spec-build-complete` next, then
-`axi-coherent-diff`, then `axi-query-disclosure`. FT185 composition stays
-closed: promote's gate payload is composed when FT185 exists, never
-re-derived. `axi-compatibility-oracle`'s reclaim is still deferred per the
-prior handoff.
+`axi-spec-build-complete`'s run is active, subject
+`f1b951edc6c653a6f42f1e1f5f32a3eb70e2a377`, next operation `review` (the
+prior candidate's review round left five accepted findings awaiting reviewer
+triage — S1 test-repo tension (contestable), S2 comment provenance label,
+P1 `git.Root()` before help/usage dispatch, P2 non-exact refresh-refusal
+remedy, C1 `Runs` TOCTOU — and the subject has since moved, so the composed
+review must run fresh against `f1b951ed` regardless). Build order unchanged:
+`axi-spec-build-complete`, then `axi-coherent-diff`, then
+`axi-query-disclosure`.
 
 ## Next command
 
-Reviewer decision on the five new findings, then
-`/bench-implement-spec --full specs/axi-spec-build-complete/spec.md` resumes
-the same repair → checkpoint → integrate → review → promote cycle.
+`/bench-implement-spec specs/checkpoint-scoped-review/spec.md`
+
+Then `/bench-implement-spec specs/ticket-bundle-refusal/spec.md` under the
+new cadence. The AXI run resumes separately with
+`bench spec build review axi-spec-build-complete` (fresh composed review of
+`f1b951ed`, five prior findings to re-triage).
 
 ## Shape
 
