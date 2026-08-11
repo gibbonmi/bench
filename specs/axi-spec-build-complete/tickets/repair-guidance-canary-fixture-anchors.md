@@ -3,7 +3,7 @@
 Blocked by: none
 Ownership fence: `tests/canary/workflow-guidance-anchors/ticket-observed-red-evidence/MUTATE.json`, `tests/canary/workflow-guidance-anchors/ticket-observed-red-evidence/EXPECT`, `tests/canary/workflow-guidance-anchors/ticket-already-covered-evidence/MUTATE.json`, `tests/canary/workflow-guidance-anchors/ticket-already-covered-evidence/EXPECT`, `tests/canary/workflow-guidance-anchors/ticket-not-tdd-able-evidence/MUTATE.json`, `tests/canary/workflow-guidance-anchors/ticket-not-tdd-able-evidence/EXPECT`
 Integration surfaces: retained evidence-routing sentences in `bench-craft-tickets`→the three auto-discovered workflow-guidance canary mutations; mutation materialization→each fixture's exact expected bite
-Contracts: each fixture mutates only the stable evidence-route clause shared by the current and mutation-free guidance, so this ticket is independently green before the guidance rewrite and remains a live canary afterward, asserted by CF1-CF3
+Contracts: the retained evidence-route clause crosses each fenced `tests/canary/workflow-guidance-anchors/ticket-observed-red-evidence/MUTATE.json`, `tests/canary/workflow-guidance-anchors/ticket-already-covered-evidence/MUTATE.json`, and `tests/canary/workflow-guidance-anchors/ticket-not-tdd-able-evidence/MUTATE.json` into its sibling EXPECT bite, asserted by CF1-CF3 before and after the guidance rewrite
 
 ## What to build
 
