@@ -63,3 +63,7 @@ something the next session has to think to check.
 - Don't prefix Bash commands with `cd` into the working directory — the Bash tool's
   CWD already persists there, so the `cd` is a no-op and can trigger a needless
   permission prompt. Only `cd` when genuinely moving to a *different* directory.
+- Don't append `2>&1` or other output-capturing flags to a plain `bench` (or other)
+  command — the harness already surfaces stdout and stderr together, so it's
+  redundant. Add `2>&1` only where it changes behavior: piping to a filter that only
+  sees stdout by default, like `... 2>&1 | tail -20`.
