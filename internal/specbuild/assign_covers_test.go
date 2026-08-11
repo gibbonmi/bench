@@ -206,6 +206,59 @@ func TestAssignRequiresAtomicClosureForModernTickets(t *testing.T) {
 	}
 }
 
+// The flag makes the inventory optional, never invalid: a ticket declaring
+// neither a Closure line nor mutation rows assigns, while a declared graph
+// still validates in full, and the unset default stays fail closed.
+func TestAssignOptionalClosureFlag(t *testing.T) {
+	inventoryFree := "# Close every ticket fact\n\n" +
+		"Ownership fence: `internal/specbuild`\n" +
+		"Integration surfaces: parsed closure inventory→`internal/specbuild`\n" +
+		"Contracts: none crosses\n" +
+		"\n## Acceptance\n\n" +
+		"- [ ] [R10] empty and malformed input are refused.\n" +
+		"- [ ] [R11] a rerun is idempotent.\n"
+	t.Run("absent inventory assigns under the flag", func(t *testing.T) {
+		t.Setenv("BENCH_RED_MUTATIONS_OPTIONAL", "1")
+		service := closureRepo(t, inventoryFree)
+		assigned, _, err := service.Assign(context.Background(), "build demo", "one.md", "flag on")
+		if err != nil {
+			t.Fatalf("Assign: %v", err)
+		}
+		if assigned.ID == "" {
+			t.Fatalf("assignment = %#v", assigned)
+		}
+	})
+	t.Run("declared open graph still refuses under the flag", func(t *testing.T) {
+		t.Setenv("BENCH_RED_MUTATIONS_OPTIONAL", "1")
+		open := closureTicket(
+			"Closure: R10/empty, R10/malformed, R11/rerun\n",
+			"| R10/empty | pass empty input | parser test | run parser test |\n"+
+				"| R11/rerun | create a second record | lifecycle test | run lifecycle test |\n",
+		)
+		service := closureRepo(t, open)
+		assigned, _, err := service.Assign(context.Background(), "build demo", "one.md", "flag on open graph")
+		if err == nil {
+			t.Fatalf("Assign leased %#v for a declared open closure graph", assigned)
+		}
+		const want = "spec build assign requires every Closure fact of ticket one.md to have a Red mutations row, but R10/malformed has none"
+		if err.Error() != want {
+			t.Fatalf("error = %q, want %q", err, want)
+		}
+	})
+	t.Run("unset flag refuses the absent inventory", func(t *testing.T) {
+		t.Setenv("BENCH_RED_MUTATIONS_OPTIONAL", "")
+		service := closureRepo(t, inventoryFree)
+		assigned, _, err := service.Assign(context.Background(), "build demo", "one.md", "flag off")
+		if err == nil {
+			t.Fatalf("Assign leased %#v without a Closure inventory", assigned)
+		}
+		const want = "spec build assign requires ticket one.md to declare an atomic Closure inventory"
+		if err.Error() != want {
+			t.Fatalf("error = %q, want %q", err, want)
+		}
+	})
+}
+
 func TestAssignAcceptsClosedModernTicketAndLegacyTicket(t *testing.T) {
 	modern := closureTicket(
 		"Closure: R10/empty, R10/malformed, R11/rerun\n",

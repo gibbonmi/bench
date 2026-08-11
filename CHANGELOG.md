@@ -8,6 +8,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added `BENCH_RED_MUTATIONS_OPTIONAL=1`, a reviewer-set experiment flag under
+  which `bench spec build assign` and refresh accept a modern ticket declaring
+  neither a `Closure:` inventory nor `## Red mutations` rows; a declared
+  inventory still validates in full, and the unset default is unchanged.
 - Added `bench spec build assign --refresh <debug-receipt>`: an out-of-fence repair
   route that re-bases a blocked, uncheckpointed assignment onto the repaired
   candidate, preserving its attributed in-fence work byte-for-byte behind a durable

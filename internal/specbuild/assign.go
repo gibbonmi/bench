@@ -199,8 +199,15 @@ func (t Ticket) ContractsAnchored() bool {
 // author declares cannot disappear between Contracts, Acceptance, and the
 // executable mutation plan. Tickets predating the discovery fields remain
 // assignable rather than being stranded by a grammar introduced later.
+// BENCH_RED_MUTATIONS_OPTIONAL=1 is a reviewer-set experiment flag: it makes
+// the inventory optional, never invalid — a ticket declaring neither a Closure
+// line nor mutation rows assigns, while a declared graph validates in full,
+// and the unset default stays fail closed.
 func requireClosure(ticket Ticket) error {
 	if !ticket.Modern {
+		return nil
+	}
+	if os.Getenv("BENCH_RED_MUTATIONS_OPTIONAL") == "1" && len(ticket.Closure) == 0 && len(ticket.Mutations) == 0 {
 		return nil
 	}
 	name := filepath.Base(ticket.Path)
