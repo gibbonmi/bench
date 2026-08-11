@@ -1,5 +1,20 @@
 # Learnings — usage journal
 
+## 2026-08-11 — checkpoint receipt ownership is the exact changed-path set, not the ticket fence  [open]
+Built a coordinator checkpoint receipt with every path in the assignment's
+ownership fence, including `internal/specbuild/refresh.go`, although that path
+was unchanged. `bench spec build checkpoint` rejected the otherwise valid
+receipt with only the generic invalid-receipt response. Reading
+`validateReceipt` showed that receipt `ownership` must equal the sorted unique
+paths actually changed between the assignment base and receipt tree; the
+ticket fence is only the upper bound. The same validator also requires receipt
+rows to equal the assignment rows exactly and binds the coordinator probe to
+the assignment id and tree. Removing the unchanged path made the checkpoint
+succeed. Proposed rule change: expose or scaffold the complete checkpoint
+receipt shape through `bench`, including the derived changed-path set and rows,
+so coordinators do not duplicate private validator knowledge or confuse the
+authorization fence with observed ownership.
+
 ## 2026-08-10 — craft-delegate's worktree-cutting instruction doesn't carve out spec-build assign  [open]
 Cut a manual `bench worktree create --request <id> --label <work-item>` ahead of
 `bench spec build assign`, following craft-delegate's generic "the coordinator
