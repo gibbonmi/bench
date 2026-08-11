@@ -312,6 +312,7 @@ case "${1-help}" in
   maps)     route_porcelain "$@" ;;
   guards)   route_porcelain "$@" ;;
   diff)     route_porcelain "$@" ;;
+  preflight) route_porcelain "$@" ;;
   coverage) route_porcelain "$@" ;;
   test)     route_porcelain "$@" ;;
   tree-hash) route_binary "$@" ;;

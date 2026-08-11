@@ -30,6 +30,7 @@ import (
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/outline"
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preprelease"
 	"github.com/gibbonmi/bench/internal/publication"
 	"github.com/gibbonmi/bench/internal/releasepreflight"
@@ -70,6 +71,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "maps", Run: outputCommand(maps.Command)},
 	{Name: "guards", Run: outputCommand(guards.Command)},
 	{Name: "diff", Run: outputCommand(diff.Command)},
+	{Name: "preflight", Run: outputCommand(preflight.Command)},
 	{Name: "coverage", Run: outputCommand(coverage.Command)},
 	{Name: "status", Run: outputCommand(status.Command)},
 	{Name: "handoff", Run: outputCommand(handoff.Command)},

@@ -366,7 +366,7 @@ func checkOKLine(msg string) string { return fmt.Sprintf("ok: %s\n", msg) }
 
 // ParseSpec reads and parses the coverage map at path, the package's one exported
 // entry point for callers that cannot construct the unexported parsed type
-// themselves: assign and promote read a spec's opt-in verdict, ordered row IDs, and
+// themselves: internal/preflight reads a spec's opt-in verdict, ordered row IDs, and
 // Check violations through here rather than re-deriving map structure. ids is nil
 // when the map is not opted into row IDs (legacy or absent).
 func ParseSpec(path string) (optIn bool, ids []string, violations []string, err error) {
