@@ -37,5 +37,5 @@ update the test whose comment records the narrowed reading.
 | RG1/wrapped-paren-never-authorizes | reset paren depth per line (revert to the shipped behavior) | the wrapped-parenthetical contract test | seed the two-line parenthetical with a tracked change under its token, run review, expect the false-green failure |
 | RG1/entry-after-closed-paren-authorizes | never reset depth once opened | the entry-after-paren contract test | seed a closed paren then a real entry, run, expect the false-red failure |
 | RG2/subdir-row-owned | skip directories during enumeration (shipped behavior) | the subdir-citation contract test | seed the only citation in `tickets/sub/x.md`, run review, expect the rows-owned false-red failure |
-| RG2/subdir-phantom-detected | enumerate subdirs but drop their token scan | the subdir-phantom contract test | seed `PF99` only in `tickets/sub/x.md`, run, expect the missed-red failure |
+| RG2/subdir-phantom-detected | enumerate subdirs but drop their token scan | the subdir-phantom contract test | seed an own-tag phantom token (the spec's tag followed by 99) only in `tickets/sub/x.md`, run, expect the missed-red failure |
 | RG3/fenced-esc-path-reds | check representability only in red-row details (shipped behavior) | the fenced-ESC contract test | seed an authorized ESC path on a green tree, run, expect the exit-0 failure |
