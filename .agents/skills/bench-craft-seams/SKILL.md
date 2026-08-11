@@ -57,6 +57,9 @@ internal is something the agent can game.
   don't drop the case for the sake of seam height. Higher seams = fewer, more
   stable tests = more of the implementation free to change.
 - The ideal number of new seams for a feature is one. Justify any beyond that.
+- When the seam crosses a dependency, classify it — in-process,
+  local-substitutable, remote-owned, or true-external — and take the test
+  strategy from `references/dependency-categories.md`.
 
 Avoid the word "boundary" (overloaded). Say **seam** or **interface**.
 

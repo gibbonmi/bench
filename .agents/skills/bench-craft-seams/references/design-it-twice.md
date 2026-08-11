@@ -22,6 +22,19 @@ brief verbatim, substituting `<module>`:
   ordering, error modes), one usage example, what it hides, and where its
   leverage is thin."
 
+## What "radically different" means
+
+The briefs buy nothing if the returns are the same design with renamed
+parameters. Radically different interfaces differ on a structural axis: a
+different decomposition (one module versus two), different state ownership
+(caller-held versus module-held), a different caller model (imperative calls
+versus declarative config, push versus pull), or a different error posture
+(fail-fast versus degrade). Check each pair of returns for one structural
+axis on which they disagree; when two converge, the brief was
+under-constrained — rerun one with the convergent shape explicitly forbidden.
+Even when the first idea wins, the losing designs pay for themselves by
+mapping where its leverage is thin.
+
 Then compare the returns on the three things that matter — **depth** (leverage
 at the interface), **locality** (where change concentrates), and **seam
 placement** — and give an opinionated recommendation, or a hybrid if elements

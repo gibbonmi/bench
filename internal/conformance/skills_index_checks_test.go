@@ -8,9 +8,62 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"testing"
 
 	kitpayload "github.com/gibbonmi/bench"
 )
+
+// TestClaudeSkillMirrorClassifiesUserInvokedSkillSymlinks pins the three
+// non-craft postures of checkClaudeSkillMirror: a symlink resolving to its own
+// .agents/skills/<name>/SKILL.md is a genuine user-invoked skill and passes; a
+// name shared with an .agents/commands file is a phase adapter and stays red;
+// anything else — a dangling link, a plain directory — stays red as well.
+func TestClaudeSkillMirrorClassifiesUserInvokedSkillSymlinks(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel, content string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	link := func(target, rel string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(target, path); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write(".agents/skills/prototype/SKILL.md", "---\nname: prototype\n---\n")
+	link("../../.agents/skills/prototype", ".claude/skills/prototype")
+
+	write(".agents/commands/bench-write-spec.md", "command\n")
+	write(".agents/skills/bench-write-spec/SKILL.md", "---\nname: bench-write-spec\n---\n")
+	link("../../.agents/skills/bench-write-spec", ".claude/skills/bench-write-spec")
+
+	link("../../.agents/skills/ghost", ".claude/skills/ghost")
+
+	write(".claude/skills/plaindir/SKILL.md", "---\nname: plaindir\n---\n")
+	write(".agents/skills/plaindir/SKILL.md", "---\nname: plaindir\n---\n")
+
+	got := checkClaudeSkillMirror(root)
+	sort.Strings(got)
+	want := []string{
+		".claude/skills/bench-write-spec is not a craft skill (phase adapters are Codex-only; it duplicates the slash menu)",
+		".claude/skills/ghost does not resolve to .agents/skills/ghost/SKILL.md (broken adapter link)",
+		".claude/skills/plaindir is neither a craft skill nor a user-invoked skill symlink into .agents/skills (phase adapters are Codex-only; it duplicates the slash menu)",
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("diagnostics = \n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
 
 func checkSkillsIndexAndCommandAdapters(root string) []string {
 	var diags []string
@@ -93,17 +146,33 @@ func checkClaudeSkillMirror(root string) []string {
 	claudeDirs, _ := filepath.Glob(filepath.Join(root, ".claude", "skills", "*"))
 	sort.Strings(claudeDirs)
 	for _, dir := range claudeDirs {
-		info, err := os.Stat(dir)
-		if err != nil || !info.IsDir() {
+		base := filepath.Base(dir)
+		if strings.HasPrefix(base, "bench-craft-") {
+			info, err := os.Stat(dir)
+			if err != nil || !info.IsDir() {
+				continue
+			}
+			if !exists(filepath.Join(dir, "SKILL.md")) {
+				diags = append(diags, fmt.Sprintf(".claude/skills/%s does not resolve to a SKILL.md (broken adapter link)", base))
+			}
 			continue
 		}
-		base := filepath.Base(dir)
-		if !strings.HasPrefix(base, "bench-craft-") {
+		// A non-craft entry is admissible only as a user-invoked skill: a symlink
+		// resolving to its own .agents/skills/<name>/SKILL.md. A name shared with a
+		// command file is a phase adapter regardless of where its link points.
+		if exists(filepath.Join(root, ".agents", "commands", base+".md")) {
 			diags = append(diags, fmt.Sprintf(".claude/skills/%s is not a craft skill (phase adapters are Codex-only; it duplicates the slash menu)", base))
 			continue
 		}
-		if !exists(filepath.Join(dir, "SKILL.md")) {
-			diags = append(diags, fmt.Sprintf(".claude/skills/%s does not resolve to a SKILL.md (broken adapter link)", base))
+		linkInfo, err := os.Lstat(dir)
+		if err != nil || linkInfo.Mode()&os.ModeSymlink == 0 {
+			diags = append(diags, fmt.Sprintf(".claude/skills/%s is neither a craft skill nor a user-invoked skill symlink into .agents/skills (phase adapters are Codex-only; it duplicates the slash menu)", base))
+			continue
+		}
+		resolved, resolveErr := filepath.EvalSymlinks(dir)
+		canonical, canonicalErr := filepath.EvalSymlinks(filepath.Join(root, ".agents", "skills", base))
+		if resolveErr != nil || canonicalErr != nil || resolved != canonical || !exists(filepath.Join(canonical, "SKILL.md")) {
+			diags = append(diags, fmt.Sprintf(".claude/skills/%s does not resolve to .agents/skills/%s/SKILL.md (broken adapter link)", base, base))
 		}
 	}
 	return diags

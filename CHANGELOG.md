@@ -26,6 +26,20 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added the user-invoked `prototype` skill (`.agents/skills/prototype`): a
+  disposable prototype answers one named question, runs trivially, keeps state
+  in memory unless persistence is the question, surfaces the relevant state,
+  records the verdict where the question was asked, and is then discarded —
+  no branch-retention route. The `.claude/skills` adapter check now admits a
+  user-invoked skill symlink resolving to its own `.agents/skills` SKILL.md
+  while still rejecting phase-adapter duplication and dangling links.
+- Added on-demand reference leaves to `craft-tdd` (`references/tests.md` for
+  the four properties of a good test, `references/mocking.md` for system-seam
+  mocking and honest stubs) and to `craft-seams`
+  (`references/dependency-categories.md` mapping the in-process,
+  local-substitutable, remote-owned, and true-external dependency classes to
+  their test strategies), and deepened `references/design-it-twice.md` with
+  what makes candidate interfaces radically different.
 - Added the `craft-domain` companion skill (`.agents/skills/bench-craft-domain`):
   canonical domain terms with Avoid lists, concept-edge scenarios,
   producer-derived equivalence partitions, code-versus-claim comparison, and

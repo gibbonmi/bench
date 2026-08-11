@@ -54,7 +54,8 @@ the spec, never from the loop.
    recomputed in the test with the implementation's own algorithm: a test that
    mirrors the code passes by construction, so prefer a literal. Vacuity check:
    an assertion that would also pass against a no-op implementation asserts
-   nothing.
+   nothing. What a good test looks like — the four properties with a worked
+   good/bad pair — is `references/tests.md`.
 2. **Green** — the smallest change that passes it. "Minimal to pass" is a local
    rule for this step, not a license to stop short of the spec's breadth.
 3. **Refactor** — clean up with the test green. A good test survives this; if your
@@ -93,19 +94,8 @@ real system boundaries — time, randomness, network, filesystem, external APIs 
 when the seam requires them. But a boundary stub scripted to return exactly the
 success shape hollows the test out — the test passes while the real integration
 is never exercised. Keep stubs honest: realistic shapes, and failure behaviors
-drawn from the edge inventory, not only the happy reply.
-
-```
-repo = IssueRepo(fake_http); repo.close(41); assert repo.get(41).status == "closed"
-```
-Good — the fake stands at a real system boundary (the injected network client)
-and the assertion reads observable state back through the interface.
-
-```
-repo.close(41); mock_cache.invalidate.assert_called_once()
-```
-Bad — the mock pins an internal collaborator and asserts call count, so a
-refactor that keeps behavior kills the test.
+drawn from the edge inventory, not only the happy reply. The mock-or-not
+rules and the honest-stub good/bad pair are `references/mocking.md`.
 
 ## The oracle is the gate, not you
 
