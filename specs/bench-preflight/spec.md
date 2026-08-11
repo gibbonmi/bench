@@ -229,6 +229,8 @@ load or parse is a red, never a skip.
 | PF21 | 2 | `bench preflight build <slug>` with a tracked change outside every fence entry makes `paths-authorized` red, exit 1 | CLI contract | same observed red as PF1 | hard-coding build-mode `paths-authorized` green passes PF9–PF11; this row is the build-mode red the story's promise requires |
 | PF22 | 3 | a spec whose `Status:` is anything but `staged` (e.g. `implemented`) answers a structured error naming the found status, exit 1 | CLI contract | same observed red as PF1 | the bootstrap's staged-status requirement was otherwise prose-only — an implementation accepting any status would pass every other row |
 | PF23 | 5 | the routing check derives dispatch names from `commandRegistry` and, on today's tree shape, reports real violations instead of "no longer dispatches" for every name; its fixture bite tests drive the registry shape | conformance (root subject) | observed red 2026-08-11: `BENCH_CONFORMANCE_ROOT=<root> go test -count=1 -run '^TestRootConformance$' ./internal/conformance` emits "the subcommand argument-routing registry names \"X\", which cmd/bench/main.go no longer dispatches" for every registered name | a routing check blind to the live dispatch surface is a vacuous oracle — it can neither pin `preflight` nor catch the next unregistered verb |
+| PF24 | 1 | the release-authorization domain lives at `internal/releasepreflight` with the `release-preflight` verb and its exported surface unchanged, and the literal `internal/preflight` appears in no live surface — imports, conformance census and release-only registry strings, the structure accept list, the package-core-guard canary baseline, prose comments, `.bench/BENCH-reference.md` — outside the exempt historical set (`specs/`, `CHANGELOG.md`, `capture/`, `ROADMAP.md`, `decisions/`; exemption reviewer-approved 2026-08-11) | rename prefactor (Go build, conformance census, structure accept list, canary baseline) | observed red 2026-08-11: `internal/releasepreflight` does not exist and the literal is live in 13 surfaces | a half-renamed tree leaves the census, accept list, and canary baseline grading a package that no longer exists, and squats the path the new domain needs |
+| PF25 | 1 | the diff package exports one review-base resolution — recorded `branch.<name>.benchBase` key first, default-branch merge-base fallback, structured error when neither resolves — that `resolveBranchRange` itself consumes; bare `bench diff` output stays byte-identical | diff package | observed red 2026-08-11: `resolveBase` is unexported and handles only the recorded key; the fallback and error semantics live inline in `resolveBranchRange`, so no complete resolution exists for a second consumer | two consumers deriving the base independently is exactly the disagreement the compose-never-re-derive decision forbids |
 
 ### Edge inventory
 
@@ -274,6 +276,9 @@ load or parse is a red, never a skip.
 - `tests/canary/workflow-guidance-anchors/` (fixtures for the new anchors,
   if the anchor family requires them)
 - `cmd/bench/` (registry row, grammar)
+- `.bench/structure-accept` (renamed package entry),
+  `tests/canary/package-core-guard/` (renamed baseline paths) — added by
+  reviewer-approved fence repair 2026-08-11
 - `bin/bench.sh` (route + help)
 - `.bench/BENCH.md`, `.bench/BENCH-reference.md` (CLI inventory; renamed
   plumbing mention)
