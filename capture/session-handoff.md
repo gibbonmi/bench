@@ -2,83 +2,49 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` at `ca2b0ee2` — tree clean; active `bench spec build` lifecycle state is durable, not a working-tree diff
-Spec: `specs/ticket-bundle-refusal/spec.md` (staged, signed off), `specs/checkpoint-scoped-review/spec.md` (staged, signed off), `specs/axi-spec-build-complete/spec.md` (staged, run active), `specs/axi-coherent-diff/spec.md` (staged), `specs/axi-query-disclosure/spec.md` (staged), `specs/single-build-serial-gate/spec.md` (staged), `specs/axi-compatibility-oracle/spec.md` (staged, superseded — pending abandon)
+Branch: `main` — HEAD `ca6c35e`, clean tree, 49 unpushed commits
+Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-compatibility-oracle/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/axi-spec-build-complete/spec.md` (Status: staged), `specs/checkpoint-scoped-review/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged), `specs/ticket-bundle-refusal/spec.md` (Status: staged)
+Gate: green at `f6e02cb` — current
 
 ## State
 
-Two new specs landed this session, both Sol-falsified (two rounds and one
-round respectively, all findings repaired) and reviewer-signed:
+`axi-spec-build-complete`'s run was abandoned this session (2026-08-11) on a
+validated `/bench-debug` receipt: assignments `a69293c0…` and `a931c8ea…` were
+mutually stranded — the CF2 canary fixture edit and its registry expectation in
+`internal/conformance/fixture_bite_test.go` sat in opposite ownership fences,
+so each worktree's focused `TestSpecTicketHandoffWorkflowFixturesAreComplete`
+red was caused by the other's fence, with no lifecycle route to retire either.
+The abandon retained 22 recovery refs (`bench worktree recovery`), including
+both stranded worktrees' in-fence dirty work; candidate `9146b5ed…` and 25
+integrated checkpoints are gone with the run.
 
-- `ticket-bundle-refusal` (`1d236fab`): assign refuses any ticket over
-  rows > 5 (deflation-resistant count, non-`R` ranges by span) or closure
-  tokens > 15 without a header-block `Bundle-approved:` line
-  (reviewer-owned, inert at or after the first `##`); `craft-tickets` drops
-  the author-asserted keep-together exception for lifecycle work;
-  `craft-spec` + `/bench-write-spec` gain the single-ticket-landing
-  disclosure. Four implied tickets: refusal core (TB1+TB3), override and
-  anchoring (TB2+TB4, blocked by core), craft-tickets prose (TB5),
-  craft-spec/write-spec prose (TB6). Closed decisions: bounds values, no
-  fence-entry dimension, grammar-independence, header-block anchoring.
-- `checkpoint-scoped-review` (`ca2b0ee2`): advisory three-axis review per
-  assignment on the write delegate's return, before done-claim verification
-  and checkpoint (ordering: return → review → dispositions → verify settled
-  tree → checkpoint); dispositions closed and authority-split (fixed =
-  write delegate; risk-accepted = reviewer; deferred); subject-bound
-  evidence line per assignment in this file, consolidated into the retro.
-  Prose-only across four command/skill files; FT184/FT200 seams untouched.
+Landed since:
 
-Implementation order is coupled: implement `checkpoint-scoped-review` first
-(prose fences, no AXI collision), because its cadence is the dogfood oracle
-for the `ticket-bundle-refusal` build that follows. The
-`ticket-bundle-refusal` code tickets touch `internal/specbuild/`, which sits
-inside the active AXI candidate's fence — prefer closing the AXI run first;
-a main-tip move before then just forces routine recomposition at promote.
+- Spec revision committed (`4721c2d0`): story 5, SB9/SB10, and the one-fence
+  proportionate ticket-evidence contract. Spec status stays `staged`.
+- Combined SB9/SB10 ticket
+  `specs/axi-spec-build-complete/tickets/adopt-proportionate-ticket-evidence-contract.md`
+  committed (`ca6c35ea`), replacing the deleted
+  `remove-mandatory-mutation-guidance.md` and
+  `repair-guidance-canary-fixture-anchors.md`. Breakdown-reviewed pre-assign
+  (read-only delegate); its two covers-honesty findings repaired (MG2→SB9,
+  CF2/CF3→SB10). Blocked by `permanent-optional-ticket-inventory.md`.
 
-`axi-spec-build-complete`'s run is active, candidate
-`8bf30f22d7520c4124e951820c2a811651ad70e6`. Eight Terra/xhigh review rounds
-have run; fourteen accepted findings across the first seven are integrated
-and confirmed resolved (see git log `spec: ticket ...` commits, one per
-finding). Round 8 found three new findings, none yet authorized for repair:
-
-- **S1 (Standards, accepted as returned, coordinator disagrees):** claims two
-  just-landed repair tickets wrongly declared no integration/contract
-  crossings. Coordinator's read: likely a false positive — the cited
-  cross-file call is an unexported same-package sibling function already used
-  the same way by an earlier, unflagged repair, and the cited CLI renderer
-  already generically consumes the changed value with zero renderer changes
-  needed (proven by an earlier round in this same run).
-- **P1/C1 (Spec/Coverage, accepted, blocked on a closed-decision conflict):**
-  fixed tab/CR bytes survive `axi.Action` construction but round-trip lossy
-  through `RenderHelp`'s TOON table encoding. **Conflicts with FR6**, an
-  already-integrated, explicitly-tested finding from an earlier repair round
-  in this same build that deliberately pins tab/CR as *permitted*
-  fixed-argument bytes, with its own red mutation guarding against exactly
-  the reversal P1's wording implies. The real gap may be TOON-rendering
-  round-trip fidelity, not the construction-time permit decision — needs
-  reviewer call before any repair.
-- **P2/C2 (Spec/Coverage, accepted, lower priority):** `Service.Runs` still
-  has a narrow `Lstat`-then-`ReadFile` window (two path-based syscalls) after
-  an earlier round closed the wider `ReadDir`-to-read window. Real but
-  architecturally residual and low real-world exploitability.
-
-Review receipt submitted regardless (durable record; all three findings kept
-`accepted` as returned, not unilaterally downgraded). Promotion withheld:
-`bench spec build status axi-spec-build-complete --full` shows `next: bench
-spec build assign axi-spec-build-complete`. Build order unchanged:
-`axi-spec-build-complete`, then `axi-coherent-diff`, then
-`axi-query-disclosure`.
+Closed decisions: the abandon (receipt-backed, applied), the combined
+one-fence ticket per spec.md line 40, and the spec revision content.
+Open for reviewer: the round-8 P1/C1 tab/CR-vs-FR6 conflict from the abandoned
+run's review receipt still needs a call before any re-landed repair; the new
+learnings entry proposing abandon's staged-spec precondition exemption awaits
+the `/bench-what-next` drain. Build order unchanged: `axi-spec-build-complete`
+(restart), then `axi-coherent-diff`, then `axi-query-disclosure`; the
+`checkpoint-scoped-review` and `ticket-bundle-refusal` specs (staged,
+reviewer-signed) implement after the AXI runs in that coupled order.
 
 ## Next command
 
-`/bench-implement-spec specs/checkpoint-scoped-review/spec.md`
-
-Then `/bench-implement-spec specs/ticket-bundle-refusal/spec.md` under the
-new cadence. The AXI run resumes separately: reviewer decision on P1 (reopen
-FR6's tab/CR permit decision, or fix the TOON round-trip instead — see
-State above), plus S1 and P2, then
-`/bench-implement-spec --full specs/axi-spec-build-complete/spec.md` resumes
-the repair → checkpoint → integrate → review → promote cycle.
+`/bench-implement-spec` for `specs/axi-spec-build-complete/spec.md` — restart
+the build with the recomposed ticket set, recovering preserved work from the
+retained recovery refs.
 
 ## Shape
 
