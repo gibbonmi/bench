@@ -9,6 +9,8 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 This is the implementation phase. It starts from an approved spec or a tiny change
 with an obvious seam, declares the line, works vertical slices at the agreed seams,
 and uses the acceptance coverage map to keep the build target fixed.
+A spec-backed run opens with `bench preflight build <slug>` before the first
+edit; a red preflight stops the phase.
 
 ## Exit handoff
 

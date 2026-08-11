@@ -352,6 +352,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench diff                 review base + changed files as TOON (--full appends log + diff body)
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
+  bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
   bench test [--full] [package]  run fresh Go tests and render package, failure, and skip evidence as TOON
   bench outline [path]       locate candidate seams (file:line) as TOON; does not identify the project's blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager

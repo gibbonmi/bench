@@ -64,6 +64,7 @@ var subcommandRouting = map[string]routingEntry{
 	"maps":      routed("internal/maps"),
 	"models":    routed("internal/models"),
 	"outline":   routed("internal/outline"),
+	"preflight": routed("internal/preflight"),
 	// prep-release takes a flat argv with no subcommand tree, so it is routed rather
 	// than exempt like the release commands beside it in the dispatch switch.
 	"prep-release": routed("internal/preprelease"),

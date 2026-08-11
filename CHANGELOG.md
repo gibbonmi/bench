@@ -22,6 +22,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added `bench preflight review|build <slug>` to check at phase entry that a spec's
+  artifacts agree with the tree, one verdict row per check and exit 0 only when
+  every applicable check is green.
 - Added `BENCH_RED_MUTATIONS_OPTIONAL=1`, a reviewer-set experiment flag under
   which `bench spec build assign` and refresh accept a modern ticket declaring
   neither a `Closure:` inventory nor `## Red mutations` rows; a declared

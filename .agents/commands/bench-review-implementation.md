@@ -9,6 +9,8 @@ description: Three-axis semantic review of a branch diff — Standards, Spec, an
 This is the semantic review phase. It reviews the branch diff against three
 separate axes: documented standards, the approved spec, and coverage gaps. It
 produces findings the gate cannot see, without claiming authority over done-ness.
+A spec-backed review opens with `bench preflight review <slug>` before pinning
+the diff; a red preflight stops the phase.
 
 ## Exit handoff
 
