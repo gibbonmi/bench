@@ -46,6 +46,7 @@ not the list:
 - writing or reviewing code comments → `.agents/skills/bench-craft-comments/SKILL.md`
 - spawning a delegate / verifying a delegate's done-claim → `.agents/skills/bench-craft-delegate/SKILL.md`
 - any UI work → `.agents/skills/bench-craft-design-system/SKILL.md` + your project's design source
+- pinning domain terms / enumerating concept-edge scenarios → `.agents/skills/bench-craft-domain/SKILL.md`
 - adding, weakening, or removing a gate check / authoring the oracle → `.agents/skills/bench-craft-gate/SKILL.md`
 - surfacing a decision one question at a time → `.agents/skills/bench-craft-grill/SKILL.md`
 - declaring the line / picking a delegate's model or effort → `.agents/skills/bench-craft-line/SKILL.md`

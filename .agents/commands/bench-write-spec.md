@@ -77,7 +77,9 @@ reviewer approval under `craft-line`.
 1. **Read the current state.** Explore the repo and use its vocabulary. Read
    settled ADRs and `projects/<name>.md`. Resolve the one authorized decision
    source under the entry contract. Top-level `decisions/` holds pre-spec
-   working maps; compiled maps live under `specs/<slug>/decisions/`.
+   working maps; compiled maps live under `specs/<slug>/decisions/`. Charge
+   `bench-craft-domain` here: pin canonical terms, derive producer partitions,
+   and resolve code-versus-claim conflicts before stories lock.
 
    Before locking stories, read `craft-tickets`, `craft-delegate`, `craft-tdd`,
    and `craft-seams` so the outcomes reflect how implementation will be sliced,

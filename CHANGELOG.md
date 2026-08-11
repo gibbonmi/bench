@@ -26,6 +26,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added the `craft-domain` companion skill (`.agents/skills/bench-craft-domain`):
+  canonical domain terms with Avoid lists, concept-edge scenarios,
+  producer-derived equivalence partitions, code-versus-claim comparison, and
+  glossary-only `CONTEXT.md` maintenance, charged from grilling, shaping, and
+  spec authoring while hard-to-reverse decisions stay with `craft-adr`.
 - Added `bench preflight review|build <slug>` to check at phase entry that a spec's
   artifacts agree with the tree, one verdict row per check and exit 0 only when
   every applicable check is green.

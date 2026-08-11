@@ -8,6 +8,8 @@ index: surfacing a decision one question at a time
 
 Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions. For each question, provide your recommended answer. The recommendation is the point — it forces a concrete decision instead of an open-ended prompt, and lets me correct rather than compose.
 
+Charge `bench-craft-domain` before the first question — canonical terms, Avoid lists, and concept-edge scenarios sharpen what to ask and pin what each answer means.
+
 If a *fact* can be found by exploring the codebase, look it up rather than asking me. The *decisions*, though, are mine — put each one to me and wait for my answer. A grill that answers its own questions has stopped grilling.
 
 ## Discipline

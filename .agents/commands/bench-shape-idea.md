@@ -11,6 +11,9 @@ mandatory: use one when unresolved reviewer choices form a dependency tree or
 must survive across sessions. A clear idea with no such fog proceeds directly
 to `/bench-write-spec`.
 
+Charge `bench-craft-domain` on entry so decision tickets use canonical terms
+and concept-edge scenarios rather than overloaded vocabulary.
+
 The phase produces or resumes a compact top-level `decisions/<topic>.md` map.
 Run `bench maps --template` for the canonical paste-ready schema; the CLI
 template and parser share one schema owner, so this command does not restate
