@@ -91,3 +91,5 @@ state one at the start. Proposed rule change: none at the kit level;
 treating "check usage against the declared cap on delegate return" as a
 standing step alongside the other verify-the-done-claim checks going
 forward.
+
+- 2026-08-11  Coordinator probe-restore clobbered a delegate's round-2 diff: the restore copied a stale round-1 scratchpad backup over the file. Right behavior: capture a fresh backup immediately before each probe (per-round unique names), and prefer asking the owning delegate to restore its own state. Proposed rule: probe backups carry the round in the filename and are deleted after restore.
