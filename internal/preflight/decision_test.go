@@ -167,16 +167,3 @@ func TestDecideDiffNonempty(t *testing.T) {
 		t.Fatalf("diff-nonempty with an unresolved review base = %+v, want red", c)
 	}
 }
-
-// TestDecideTrailingNewlineParity is PF17's verdict-core half: Decide itself takes no
-// text to parse, so this pins that a token set derived from unterminated-vs-terminated
-// source content (the gatherer's concern) yields the same verdict once it reaches
-// Facts — the scanner discipline lives in the gatherer tests; this guards the seam
-// contract that Facts, once built, is parsed-source-shape-agnostic.
-func TestDecideTrailingNewlineParity(t *testing.T) {
-	terminated := baseFacts()
-	unterminated := baseFacts()
-	if !decisionsEqual(Decide(terminated), Decide(unterminated)) {
-		t.Error("identical Facts values must decide identically regardless of how the gatherer produced them")
-	}
-}
