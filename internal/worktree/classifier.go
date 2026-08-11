@@ -80,6 +80,7 @@ const (
 	ReasonUncertain      CleanupReason = "uncertain"
 	ReasonUnexpectedLock CleanupReason = "unexpected-lock"
 	ReasonOrphaned       CleanupReason = "orphaned"
+	ReasonDirty          CleanupReason = "dirty"
 )
 const actionReleaseRemove CleanupAction = "release-remove"
 
@@ -94,6 +95,17 @@ const actionReleaseLeftover CleanupAction = "release-leftover"
 // reporting a refusal, an invocation error, or a transaction that already completed.
 func (action CleanupAction) removes() bool {
 	return action == ActionRemove || action == ActionRecoverRemove || action == ActionDiscardRemove || action == actionReleaseRemove
+}
+
+// preserves reports whether executing this plan would write work to a recovery ref before
+// removing the checkout. The execution and the planners that must not reach it read the
+// same predicate, so a plan can never be classified as preserving by one and not the
+// other. A detached registration counts whatever its tree holds: the checkout's HEAD is
+// the only thing naming its commits, so the removal would strand them.
+func (plan CleanupPlan) preserves() bool {
+	return plan.Action == ActionRecoverRemove ||
+		(plan.Action == ActionDiscardRemove && plan.Tracked != "clean") ||
+		plan.registration.Detached
 }
 
 var ignoredLstat = os.Lstat
@@ -203,52 +215,6 @@ type IgnoredInventory struct {
 	Uncertain bool
 	Digest    string
 }
-type RecoveryAction string
-
-const (
-	RecoveryRetain                 RecoveryAction = "retain"
-	RecoveryRetire                 RecoveryAction = "retire"
-	RecoveryRetired, RecoveryError RecoveryAction = "retired", "error"
-	// RecoveryOrphaned names a ref that exists with no assignment row claiming it, and
-	// RecoveryAbsent a ref name nothing resolves. They are separate verdicts because one
-	// still holds preserved work and the other is already gone; collapsing them onto
-	// retain leaves the first unreachable and makes a re-run of the second look actionable.
-	RecoveryOrphaned RecoveryAction = "orphaned"
-	RecoveryAbsent   RecoveryAction = "absent"
-	// RecoveryForeign names a ref outside the recovery namespace. It is neither orphaned
-	// nor absent, because both of those are claims about preserved work and this ref holds
-	// none: no verb may spend a deletion on it, whether or not it resolves.
-	RecoveryForeign RecoveryAction = "foreign"
-	// RecoveryDiscarded names work an operator dropped without the proof accepting it.
-	// It stays separate from RecoveryRetired because the receipt is the only durable
-	// record of which of the two claims was made about the same disappearance.
-	RecoveryDiscarded RecoveryAction = "discarded"
-	// RecoveryDiscard is the one verdict that makes a ref the operator's to drop:
-	// verification succeeded, the default branch resolved, and the landedness proof
-	// refused the payloads, so the preserved work is real and only unproven.
-	// RecoveryRetain is every exit that never completed that chain, and it authorizes
-	// nothing: while retain doubled as the discard-eligible verdict, a payload a
-	// history rewrite had garbage-collected planned retain and --discard deleted the
-	// one ref still naming the work.
-	RecoveryDiscard RecoveryAction = "discard"
-)
-
-// recoveryUnknownChanges is the plan's answer when the recovery envelope, its recorded
-// base, or a payload no longer resolves. A rewritten history must not make a ref
-// unplannable, so the summary degrades to this value instead of raising an error.
-const recoveryUnknownChanges = "unknown"
-
-type RecoveryPlan struct {
-	Ref, Root, Payloads, Landed string
-	// Changes summarizes what the payload does to its recorded base, derived at plan time
-	// and never stored: the record would hold a second copy of a fact Git already answers,
-	// and that copy goes stale the moment the base is rewritten.
-	Changes             string
-	Action              RecoveryAction
-	Fingerprint, Detail string
-	assignment          *intent.Assignment
-	recovery            intent.Recovery
-}
 
 func (inventory IgnoredInventory) Summary() string {
 	count := fmt.Sprintf("%d", inventory.Count)
@@ -316,6 +282,13 @@ func PlanAutomatic(root, path string) (CleanupPlan, error) {
 	}
 	if !strings.HasPrefix(plan.landed, "true:") {
 		return automaticRetain(plan, ReasonUnmerged, "assignment branch has not landed"), nil
+	}
+	// The automatic path authors no preservation refs: it runs unattended at every session
+	// start and through every release, and the standing cleaner sweeps the namespace such a
+	// ref would live in, so preserving there would write work nothing can hand back.
+	// Disposing of the checkout stays with the operator's explicit path-addressed clean.
+	if plan.preserves() {
+		return automaticRetain(plan, ReasonDirty, "automatic cleanup does not preserve uncommitted work"), nil
 	}
 	return automaticFingerprint(plan), nil
 }
@@ -393,173 +366,6 @@ func recoveryMetadataMatches(root string, assignment intent.Assignment) bool {
 		}
 	}
 	return true
-}
-func PlanRecovery(root, ref string) (RecoveryPlan, error) {
-	root = canonicalRoot(root)
-	ledgerBytes, err := intent.LifecycleEvidence(root)
-	if err != nil {
-		return RecoveryPlan{}, err
-	}
-	assignments, err := intent.Assignments(root)
-	if err != nil {
-		return RecoveryPlan{}, err
-	}
-	plan := RecoveryPlan{Ref: ref, Action: RecoveryRetain, Root: "none", Payloads: "none", Landed: "unknown", Changes: changeSummary(root, ref)}
-	for i := range assignments {
-		for _, recovery := range assignments[i].Recovery {
-			if recovery.Ref != ref {
-				continue
-			}
-			if plan.assignment != nil {
-				plan.Detail = "recovery ref belongs to ambiguous assignments"
-				return fingerprintRecovery(root, ledgerBytes, plan), nil
-			}
-			assignment := assignments[i]
-			plan.assignment, plan.recovery = &assignment, recovery
-			plan.Root, plan.Payloads = recovery.Root, strings.Join(recovery.Payloads, ";")
-		}
-	}
-	if plan.assignment == nil {
-		// This is the one path that never reaches verifyRecovery's envelope check, so the
-		// namespace is checked here or nowhere: without it an ordinary branch resolves, reads
-		// as an orphan, and a discard deletes it. Existence is not consulted first, because a
-		// name outside the namespace carries no authorization either way.
-		if !strings.HasPrefix(ref, recoveryNamespace()) {
-			plan.Action, plan.Detail = RecoveryForeign, "ref is outside the recovery namespace"
-			return fingerprintRecovery(root, ledgerBytes, plan), nil
-		}
-		// With no row to consult, the ref itself is the only evidence separating work still
-		// preserved from work already retired.
-		plan.Action, plan.Detail = RecoveryAbsent, "recovery ref does not exist"
-		if refExists(root, ref) {
-			plan.Action, plan.Detail = RecoveryOrphaned, "recovery ref has no owning assignment"
-		}
-		return fingerprintRecovery(root, ledgerBytes, plan), nil
-	}
-	if plan.assignment.State != intent.StateRecovered {
-		plan.Detail = "recovery ref has no recovered assignment"
-		return fingerprintRecovery(root, ledgerBytes, plan), nil
-	}
-	if err := verifyRecovery(root, *plan.assignment, plan.recovery); err != nil {
-		plan.Detail = err.Error()
-		return fingerprintRecovery(root, ledgerBytes, plan), nil
-	}
-	def, ok := git.ResolvedDefault(root)
-	if !ok {
-		plan.Detail = "default branch does not resolve"
-		return fingerprintRecovery(root, ledgerBytes, plan), nil
-	}
-	verdicts := make([]string, 0, len(plan.recovery.Payloads))
-	all := len(plan.recovery.Payloads) > 0
-	for _, payload := range plan.recovery.Payloads {
-		landed, byContent, landedErr := git.LandedInDefault(root, payload, def)
-		verdict := "unlanded"
-		if landedErr != nil {
-			verdict = "unknown"
-		} else if landed && byContent {
-			verdict = "patch"
-		} else if landed {
-			verdict = "ancestor"
-		}
-		verdicts = append(verdicts, payload+"="+verdict)
-		all = all && landedErr == nil && landed
-	}
-	plan.Landed = strings.Join(verdicts, ";")
-	if all {
-		plan.Action, plan.Detail = RecoveryRetire, "apply with exact fingerprint"
-	} else {
-		// The one assignment of the discard-eligible verdict: every earlier return leaves
-		// the retain initialiser in place, so reaching this line is the whole proof chain —
-		// envelope verified, default branch resolved, payloads judged and refused.
-		plan.Action, plan.Detail = RecoveryDiscard, "discard with exact fingerprint"
-	}
-	return fingerprintRecovery(root, ledgerBytes, plan), nil
-}
-
-// recoveryNamespace is the ref namespace preserved work lives under, read from the one
-// definition in internal/intent rather than restated here: a reader that named the path
-// for itself could disagree with the writer that puts refs there. The probe identity is
-// arbitrary — only the text ahead of it is the namespace.
-func recoveryNamespace() string {
-	const probe = "namespace-probe"
-	prefix := intent.RecoveryRefPrefix(probe, probe)
-	return prefix[:strings.Index(prefix, probe)]
-}
-
-// refExists reports whether ref names a ref this repository resolves. Only a fully
-// qualified name answers true, so a payload OID or a short name is never mistaken for a
-// surviving recovery ref.
-func refExists(root, ref string) bool {
-	return git.OK("-C", root, "show-ref", "--verify", "--quiet", ref)
-}
-
-// changeSummary counts the distinct paths the envelope at commitish changes against the
-// base that envelope records. Every layer contributes to one count: the operator is
-// deciding about the ref as a whole, and a per-layer breakdown would make a two-file
-// leftover look larger than a one-file one.
-func changeSummary(root, commitish string) string {
-	manifest, ok := readRecoveryManifest(root, commitish)
-	if !ok {
-		return recoveryUnknownChanges
-	}
-	paths := map[string]bool{}
-	for _, payload := range manifest.Layers {
-		out, err := git.Output("-C", root, "diff", "--name-only", manifest.Base, payload)
-		if err != nil {
-			return recoveryUnknownChanges
-		}
-		for _, path := range strings.Split(out, "\n") {
-			if path != "" {
-				paths[path] = true
-			}
-		}
-	}
-	return fmt.Sprintf("paths=%d", len(paths))
-}
-
-// recoveryFingerprintDomain and recoveryFingerprintEffects name the widest authority a
-// recovery fingerprint carries. Both name the destructive discard, because the same
-// fingerprint now authorizes dropping work the landedness proof never accepted, and a
-// value planned under the older retire-only authority must not be able to authorize that.
-const (
-	recoveryFingerprintDomain  = "bench-recovery-retire-or-discard/v1"
-	recoveryFingerprintEffects = "delete-exact-ref,discard-unproven-payload,update-assignment,compact-if-last"
-)
-
-func fingerprintRecovery(root string, ledger []byte, plan RecoveryPlan) RecoveryPlan {
-	return fingerprintRecoveryUnder(root, ledger, plan, recoveryFingerprintDomain, recoveryFingerprintEffects)
-}
-
-// fingerprintRecoveryUnder derives a plan's fingerprint under a named authority. The
-// authority is a parameter rather than a literal so the separation is observable: asking
-// what the same plan fingerprints to under the retire-only authority is the only way to
-// see that the two are different values, which is the whole of the guarantee.
-func fingerprintRecoveryUnder(root string, ledger []byte, plan RecoveryPlan, domain, effects string) RecoveryPlan {
-	common, _ := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
-	def, _ := git.ResolvedDefault(root)
-	defaultOID, _ := git.Output("-C", root, "rev-parse", "--verify", def+"^{commit}")
-	refOID, _ := git.Output("-C", root, "rev-parse", "--verify", plan.Ref+"^{commit}")
-	// Every fact the plan reported is sealed, the derived change summary among them: it is
-	// what the operator judged the discard by, so a plan whose count has moved since must
-	// not still authorize one.
-	parts := [][]byte{
-		[]byte(domain), []byte(common), []byte(def), []byte(defaultOID), ledger,
-		[]byte(plan.Ref), []byte(refOID), []byte(plan.Root), []byte(plan.Payloads), []byte(plan.Landed), []byte(plan.Changes), []byte(plan.Action), []byte(plan.Detail),
-		[]byte(effects),
-	}
-	if plan.assignment != nil {
-		for _, recovery := range plan.assignment.Recovery {
-			actual, _ := git.Output("-C", root, "rev-parse", "--verify", recovery.Ref+"^{commit}")
-			parts = append(parts, []byte(recovery.Ref), []byte(recovery.Root), []byte(strings.Join(recovery.Payloads, ";")), []byte(actual))
-			for _, payload := range recovery.Payloads {
-				exists := git.OK("-C", root, "cat-file", "-e", payload+"^{commit}")
-				reachable := exists && git.OK("-C", root, "merge-base", "--is-ancestor", payload, recovery.Root)
-				parts = append(parts, []byte(payload), []byte(fmt.Sprintf("exists=%t reachable=%t", exists, reachable)))
-			}
-		}
-	}
-	plan.Fingerprint = fingerprintParts(parts...)
-	return plan
 }
 
 type ownerEvidence struct {

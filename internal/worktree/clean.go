@@ -2,15 +2,11 @@ package worktree
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/toon"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,18 +25,6 @@ type recoveryManifest struct {
 type indexEntry struct {
 	mode, oid, path string
 	stage           int
-}
-
-func RetireRecovery(root, ref string) error {
-	plan, err := PlanRecovery(root, ref)
-	if err != nil {
-		return err
-	}
-	if plan.Action != RecoveryRetire {
-		return errors.New(plan.Detail)
-	}
-	_, err = ApplyRecovery(root, ref, plan.Fingerprint)
-	return err
 }
 
 // recoverAssignment writes every Git-visible layer through temporary indexes. It
@@ -375,62 +359,4 @@ func discardIgnored(plan CleanupPlan) error {
 		}
 	}
 	return nil
-}
-func recoveryInvocationError(stdout io.Writer) int {
-	_ = renderRecovery(stdout, RecoveryPlan{Ref: "unknown", Root: "unknown", Payloads: "none", Landed: "unknown", Changes: recoveryUnknownChanges, Action: RecoveryError, Fingerprint: "none", Detail: "invalid invocation; run " + worktreeRecoveryUsage})
-	return 2
-}
-
-// parseRecoveryArgs reads the arguments of both verbs in one place, so the fingerprint's
-// format control is reached by construction rather than by a copy per verb. A bare ref
-// carries no fingerprint and therefore only plans; its verb is never consulted.
-func parseRecoveryArgs(args []string) (string, recoveryVerb, string, bool) {
-	if len(args) == 1 {
-		return args[0], recoveryRetire, "", true
-	}
-	if len(args) != 3 {
-		return "", "", "", false
-	}
-	verb := recoveryVerb(args[1])
-	if verb != recoveryRetire && verb != recoveryDiscard {
-		return "", "", "", false
-	}
-	fingerprint := args[2]
-	if strings.HasPrefix(fingerprint, `"`) && strings.HasSuffix(fingerprint, `"`) {
-		fingerprint = strings.TrimSuffix(strings.TrimPrefix(fingerprint, `"`), `"`)
-	}
-	decoded, err := hex.DecodeString(fingerprint)
-	if err != nil || len(decoded) != sha256.Size || fingerprint != strings.ToLower(fingerprint) {
-		return "", "", "", false
-	}
-	return args[0], verb, fingerprint, true
-}
-
-func RecoveryCommand(args []string, stdout, stderr io.Writer) int {
-	ref, verb, fingerprint, ok := parseRecoveryArgs(args)
-	if !ok {
-		return recoveryInvocationError(stdout)
-	}
-	root, err := git.Root()
-	if err != nil {
-		fmt.Fprintln(stderr, toon.NotInRepo())
-		return 1
-	}
-	plan, err := PlanRecovery(root, ref)
-	if err == nil && fingerprint != "" {
-		plan, err = applyRecoveryVerb(root, ref, fingerprint, verb)
-	}
-	if errors.Is(err, errStaleFingerprint) || errors.Is(err, errRecoveryUnauthorized) {
-		_ = renderRecovery(stdout, plan)
-		return 1
-	}
-	if err != nil {
-		fmt.Fprintf(stderr, "bench worktree recovery: %v\n", err)
-		return 1
-	}
-	if err := renderRecovery(stdout, plan); err != nil {
-		fmt.Fprintf(stderr, "bench worktree recovery: %v\n", err)
-		return 1
-	}
-	return 0
 }

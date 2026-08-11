@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 )
 
 // shiftBranchName extracts the branch a Loop run started, from its "▶ shift on <branch>"
@@ -54,12 +53,20 @@ func runGitOutput(t *testing.T, root string, args ...string) string {
 	return string(out)
 }
 
-// requireRecoveryRefResolves asserts refs/bench/recovery/<branch> exists and resolves.
-func requireRecoveryRefResolves(t *testing.T, root, branch string) {
+// requireRetainedWorktree asserts the shift named its charged worktree as the recovery
+// pointer and left the tree locked in place with its dirty work on disk.
+func requireRetainedWorktree(t *testing.T, root, stdout string) {
 	t.Helper()
-	ref := "refs/bench/recovery/" + branch
-	if out, err := exec.Command("git", "-C", root, "show-ref", "--verify", ref).CombinedOutput(); err != nil {
-		t.Fatalf("recovery ref %s did not resolve: %v\n%s", ref, err, out)
+	wt := shiftWorktreePath(t, stdout)
+	if !contains(stdout, "worktree:"+wt) {
+		t.Fatalf("stdout did not name the retained worktree as the recovery pointer:\n%s", stdout)
+	}
+	porcelain := runGitOutput(t, root, "worktree", "list", "--porcelain")
+	if !contains(porcelain, "worktree "+wt) || !contains(porcelain, "locked") {
+		t.Fatalf("worktree was not retained and locked:\n%s", porcelain)
+	}
+	if _, err := os.Stat(filepath.Join(wt, "work.txt")); err != nil {
+		t.Fatalf("retained worktree lost the work it was preserving: %v", err)
 	}
 }
 
@@ -133,7 +140,7 @@ func armFault(t *testing.T, f fault) {
 }
 
 // TestLoopStagingFaultPreservesAndSplitsEvidence covers row 14 (TDD): a fault injected
-// at the staging step must propagate — snapshot the dirty tree and split by evidence —
+// at the staging step must propagate — retain the dirty tree and split by evidence —
 // rather than being swallowed the way stageTouched ignored a real `git add` failure
 // before FT79. No partial commit lands on the branch.
 func TestLoopStagingFaultPreservesAndSplitsEvidence(t *testing.T) {
@@ -155,7 +162,7 @@ func TestLoopStagingFaultPreservesAndSplitsEvidence(t *testing.T) {
 	if out, err := exec.Command("git", "-C", root, "rev-list", "--count", "HEAD.."+branch).CombinedOutput(); err != nil || string(bytes.TrimSpace(out)) != "0" {
 		t.Fatalf("staging-fault shift committed a partial tree: count=%q err=%v", out, err)
 	}
-	requireRecoveryRefResolves(t, root, branch)
+	requireRetainedWorktree(t, root, stdout.String())
 }
 
 // TestLoopTeardownFaultReportsFailed covers row 15 (TDD): a fault at teardown must exit
@@ -217,38 +224,22 @@ func TestFinishReportsUpsertFailure(t *testing.T) {
 	}
 }
 
-// TestLoopRetainsAndLocksOnSnapshotFailure covers row 4's Seam B half: when the
-// snapshot itself fails — here forced by pre-creating the recovery ref the shift will
-// try to create, so SnapshotDirty's own fail-closed update-ref rejects it — the shift
-// retains and locks the worktree instead of releasing it, drops the lease, and names
-// the worktree path as the recovery pointer.
-func TestLoopRetainsAndLocksOnSnapshotFailure(t *testing.T) {
+// TestLoopRetainsAndLocksDirtyWorktree covers row 4's Seam B half: a preserving failure
+// retains and locks the charged worktree instead of releasing it, drops the lease, and
+// names the worktree path as the recovery pointer. Nothing is written to a ref — the
+// dirty tree stays where an operator can read it.
+func TestLoopRetainsAndLocksDirtyWorktree(t *testing.T) {
 	root := faultFixture(t, "#!/usr/bin/env bash\nexit 1\n") // red gate: forces the preserving path
-	fixed := time.Date(2026, 7, 14, 10, 0, 0, 0, time.UTC)
-	oldNow := timeNow
-	timeNow = func() time.Time { return fixed }
-	t.Cleanup(func() { timeNow = oldNow })
-	branch := "bench/shift-" + fixed.Format("20060102-150405")
-	ref := "refs/bench/recovery/" + branch
-
-	// Pre-create the exact ref this shift will try to create, at some arbitrary commit —
-	// SnapshotDirty's fail-closed update-ref (zero old-oid) then rejects the create.
-	head := strings.TrimSpace(runGitOutput(t, root, "rev-parse", "HEAD"))
-	runGitCmd(t, root, "update-ref", ref, head)
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("snapshot conflict", &stdout, &stderr)
+	code := Loop("preserving failure", &stdout, &stderr)
 
 	if code != 1 {
 		t.Fatalf("Loop returned %d, want 1 (failed, zero commits): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	}
-	wt := shiftWorktreePath(t, stdout.String())
-	if !contains(stdout.String(), "worktree:"+wt) {
-		t.Fatalf("stdout did not name the retained worktree as the recovery pointer:\n%s", stdout.String())
-	}
-	porcelain := runGitOutput(t, root, "worktree", "list", "--porcelain")
-	if !contains(porcelain, "worktree "+wt) || !contains(porcelain, "locked") {
-		t.Fatalf("worktree was not retained and locked after a snapshot failure:\n%s", porcelain)
+	requireRetainedWorktree(t, root, stdout.String())
+	if refs := runGitOutput(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"); strings.TrimSpace(refs) != "" {
+		t.Fatalf("a preserving failure authored recovery refs:\n%s", refs)
 	}
 	leaseFound := false
 	_ = filepath.WalkDir(os.Getenv("BENCH_HOME"), func(path string, d os.DirEntry, err error) error {

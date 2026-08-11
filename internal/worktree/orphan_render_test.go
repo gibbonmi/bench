@@ -8,11 +8,11 @@ import (
 	"unicode"
 )
 
-// summaryFor renders the resume summary for a listing of orphans and preserved records
-// alone, which is the surface these tests are about; the counted header is fixed for all
-// of them and is covered where the sweep produces it.
-func summaryFor(orphans []OrphanCandidate, preserved []PreservedOrphan) string {
-	return renderResumeSummary(ResumeResult{Orphans: orphans, Preserved: preserved})
+// summaryFor renders the resume summary for a listing of orphans alone, which is the
+// surface these tests are about; the counted header is fixed for all of them and is
+// covered where the sweep produces it.
+func summaryFor(orphans []OrphanCandidate) string {
+	return renderResumeSummary(ResumeResult{Orphans: orphans})
 }
 
 func summaryLines(summary string) []string {
@@ -55,7 +55,7 @@ func TestResumeSummaryQuotesHostilePaths(t *testing.T) {
 	for name, path := range cases {
 		t.Run(name, func(t *testing.T) {
 			want := "bench worktree clean " + quoting[name]
-			summary := summaryFor([]OrphanCandidate{{ID: "a1", Path: path}}, nil)
+			summary := summaryFor([]OrphanCandidate{{ID: "a1", Path: path}})
 			requireTest(t, strings.Contains(summary, want), "summary does not carry %q:\n%s", want, summary)
 			argc, arg := oneShellArgument(t, quoting[name])
 			requireTest(t, argc == 1 && arg == path, "shell parsed %s into %d arguments, first %q", quoting[name], argc, arg)
@@ -75,7 +75,7 @@ func TestResumeSummaryPreservesLineStructure(t *testing.T) {
 		"return":  "/pool/wt\rmasked",
 	} {
 		t.Run(name, func(t *testing.T) {
-			summary := summaryFor([]OrphanCandidate{{ID: "a1", Path: path}, {ID: "a2", Path: "/pool/plain"}}, nil)
+			summary := summaryFor([]OrphanCandidate{{ID: "a1", Path: path}, {ID: "a2", Path: "/pool/plain"}})
 			lines := summaryLines(summary)
 			requireTest(t, len(lines) == 3, "summary emitted %d lines for a header and 2 orphans:\n%q", len(lines), summary)
 			body := strings.ReplaceAll(summary, "\n", "")
@@ -93,7 +93,7 @@ func TestResumeSummaryPreservesLineStructure(t *testing.T) {
 // `bench worktree list` reports — and must not send the reader after a path, because no
 // route emits one.
 func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
-	line := summaryLines(summaryFor([]OrphanCandidate{{ID: "a1", Path: "/pool/wt\nforged"}}, nil))[1]
+	line := summaryLines(summaryFor([]OrphanCandidate{{ID: "a1", Path: "/pool/wt\nforged"}}))[1]
 	requireTest(t, strings.Contains(line, "orphan a1:") && strings.Contains(line, "id row in bench worktree list"),
 		"fallback line does not point at the ledger row `bench worktree list` reports: %q", line)
 	requireTest(t, !strings.Contains(line, "by path"),
@@ -105,21 +105,18 @@ func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
 // bounding this output could mislead rather than help.
 func TestResumeSummaryCapsListings(t *testing.T) {
 	var orphans []OrphanCandidate
-	var preserved []PreservedOrphan
 	for i := range 5 {
 		orphans = append(orphans, OrphanCandidate{ID: fmt.Sprintf("o%d", i), Path: fmt.Sprintf("/pool/o%d", i)})
-		preserved = append(preserved, PreservedOrphan{ID: fmt.Sprintf("p%d", i), Ref: fmt.Sprintf("refs/bench/recovery/o/p/%d", i)})
 	}
 
-	lines := summaryLines(summaryFor(orphans, preserved))
-	requireTest(t, len(lines) == 9, "capped summary emitted %d lines, want a header, 3+1 orphan and 3+1 preserved:\n%s", len(lines), strings.Join(lines, "\n"))
+	lines := summaryLines(summaryFor(orphans))
+	requireTest(t, len(lines) == 5, "capped summary emitted %d lines, want a header and 3+1 orphan:\n%s", len(lines), strings.Join(lines, "\n"))
 	requireTest(t, lines[4] == "and 2 more (5 total)", "orphan cap line = %q", lines[4])
-	requireTest(t, lines[8] == "and 2 more (5 total)", "preserved cap line = %q", lines[8])
 	requireTest(t, strings.Contains(lines[3], "/pool/o2") && !strings.Contains(strings.Join(lines, "\n"), "/pool/o3"),
 		"the cap did not bite at the third orphan:\n%s", strings.Join(lines, "\n"))
 
-	atCap := summaryLines(summaryFor(orphans[:3], preserved[:3]))
-	requireTest(t, len(atCap) == 7, "summary exactly at the cap emitted %d lines, want 7:\n%s", len(atCap), strings.Join(atCap, "\n"))
+	atCap := summaryLines(summaryFor(orphans[:3]))
+	requireTest(t, len(atCap) == 4, "summary exactly at the cap emitted %d lines, want 4:\n%s", len(atCap), strings.Join(atCap, "\n"))
 	requireTest(t, !strings.Contains(strings.Join(atCap, "\n"), " more"),
 		"a listing exactly at the cap claims withheld records:\n%s", strings.Join(atCap, "\n"))
 }

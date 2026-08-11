@@ -52,18 +52,6 @@ func dirtyPaths(root string) []string {
 	return parseDirtyPaths(raw)
 }
 
-// scratchExcludeList returns the scratch file names as the exclude set the snapshot
-// primitive takes. internal/worktree owns no scratch policy of its own — internal/shift
-// is the one source of the scratch names, passed in explicitly.
-func scratchExcludeList() []string {
-	names := make([]string, 0, len(scratchFiles))
-	for name := range scratchFiles {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	return names
-}
-
 // stageTouched stages exactly what the agent touched: the paths dirty after it ran
 // (post) minus those dirty before (pre). Snapshotting pre before the gate runs keeps a
 // gate byproduct (an unignored build artifact) and any pre-existing dirt out of the

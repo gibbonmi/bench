@@ -14,17 +14,19 @@ import (
 
 const AssignmentRecordSchema = "bench-assignment/v1"
 
-const (
-	assignmentBranchNamespace = "refs/heads/bench/assign/"
-	recoveryRefNamespace      = "refs/bench/recovery/"
-)
+const assignmentBranchNamespace = "refs/heads/bench/assign/"
+
+// RecoveryRefNamespace is the one name for the namespace preserved work lives under.
+// Both the writer that puts refs there and the standing cleaner that sweeps it read this
+// constant, so neither can address a namespace the other does not.
+const RecoveryRefNamespace = "refs/bench/recovery/"
 
 func AssignmentBranchRef(ownerID, assignmentID string) string {
 	return assignmentBranchNamespace + ownerID + "/" + assignmentID
 }
 
 func RecoveryRefPrefix(ownerID, assignmentID string) string {
-	return recoveryRefNamespace + ownerID + "/" + assignmentID + "/"
+	return RecoveryRefNamespace + ownerID + "/" + assignmentID + "/"
 }
 
 func validAssignmentBranchRef(ref string) bool {
@@ -375,6 +377,75 @@ func PutAssignment(root string, assignment Assignment) error {
 	}
 	ledger.Assignments = append(ledger.Assignments, assignment)
 	return writePath(path, ledger)
+}
+
+// PurgeAssignments drops every assignment record keep rejects, plus every record this
+// build can no longer read at all, and reports how many it dropped. Read is strict
+// because a record it cannot account for must not authorize anything; the purge is
+// deliberately not, because a ledger written by an older binary is unreadable exactly
+// when the standing cleaner is the only thing that can clear it — refusing there would
+// leave every later command reading the same unreadable file. A purge that drops nothing
+// leaves the file's bytes untouched, so a re-run over converged state is a no-op.
+func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
+	path, err := Address(root)
+	if err != nil {
+		return 0, err
+	}
+	if _, err := os.Lstat(path); errors.Is(err, os.ErrNotExist) {
+		return 0, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("purge intent ledger: %w", err)
+	}
+	release, err := acquire(path + ".lock")
+	if err != nil {
+		return 0, err
+	}
+	defer release()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, fmt.Errorf("purge intent ledger: %w", err)
+	}
+	// One tolerant pass for the records the purge decides about, and one for everything
+	// else in the file. Assignments are read as raw values so a single unreadable record
+	// is dropped on its own rather than taking the whole ledger with it.
+	var stored struct {
+		Schema      int               `json:"schema"`
+		Assignments []json.RawMessage `json:"assignments"`
+	}
+	if err := json.Unmarshal(data, &stored); err != nil {
+		return 0, fmt.Errorf("purge intent ledger: %w", err)
+	}
+	kept := make([]Assignment, 0, len(stored.Assignments))
+	ids, requests := map[string]bool{}, map[string]bool{}
+	// A record the legacy schema carries was never authorized to be there — Read refuses the
+	// whole file over one — so under that schema every record is debris, whatever it says
+	// about itself, and the loop that would judge them individually is skipped.
+	if stored.Schema != LegacySchema {
+		for _, record := range stored.Assignments {
+			var assignment Assignment
+			if json.Unmarshal(record, &assignment) != nil || ValidateAssignment(assignment) != nil {
+				continue
+			}
+			if ids[assignment.ID] || requests[assignment.Request] || !keep(assignment) {
+				continue
+			}
+			ids[assignment.ID], requests[assignment.Request] = true, true
+			kept = append(kept, assignment)
+		}
+	}
+	dropped := len(stored.Assignments) - len(kept)
+	if dropped == 0 {
+		return 0, nil
+	}
+	var rest struct {
+		Entries         []Entry          `json:"entries"`
+		CleanupReceipts []CleanupReceipt `json:"cleanup_receipts"`
+	}
+	if err := json.Unmarshal(data, &rest); err != nil {
+		return 0, fmt.Errorf("purge intent ledger: %w", err)
+	}
+	ledger := Ledger{Entries: rest.Entries, Assignments: kept, CleanupReceipts: rest.CleanupReceipts}
+	return dropped, writePath(path, ledger)
 }
 
 func DeleteAssignment(root, id string) error {

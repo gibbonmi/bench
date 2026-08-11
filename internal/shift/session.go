@@ -14,7 +14,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
-	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -290,30 +289,18 @@ func (s *session) teardown() error {
 
 // preserveAndRecover is the one place a post-mutation failure preserves work before this
 // session's charged worktree leaves the process's hands. When nothing beyond scratch is
-// dirty, it releases through teardown and reports RecoveryNone. Otherwise it snapshots
-// the dirty tree (scratch excluded) to refs/bench/recovery/<branch>, parented on the
-// branch tip, and — only on success — releases through teardown the same way. Only when
-// the snapshot itself fails does it retain and lock the worktree instead: the only legal
-// response to a snapshot failure, and it never runs teardown/Release in that case. It
-// always prints the resulting location and marks the session so the deferred cleanup
-// never re-finalizes this worktree.
+// dirty, it releases through teardown and reports RecoveryNone. Otherwise it retains and
+// locks the worktree, leaving the dirty tree exactly where it is and never running
+// teardown/Release: the work stays visible at a path the operator can read, rather than
+// in a ref no command hands back. It always prints the resulting location and marks the
+// session so the deferred cleanup never re-finalizes this worktree.
 func (s *session) preserveAndRecover(reason string) (recovery string, teardownErr error) {
 	defer s.preserve.Store(true)
 	if len(dirtyPaths(s.root)) == 0 {
 		return RecoveryNone, s.teardown()
 	}
-	ref := recoveryRefNamespace + s.branch
-	parent, err := git.Output("-C", s.root, "rev-parse", "HEAD")
-	if err == nil {
-		if _, snapErr := worktree.SnapshotDirty(s.root, parent, ref, scratchExcludeList()); snapErr == nil {
-			fmt.Fprintf(s.stdout, "  recovery: %s\n", recoveryRef(s.branch))
-			return recoveryRef(s.branch), s.teardown()
-		} else {
-			err = snapErr
-		}
-	}
 	if lockErr := worktree.RetainAndLock(s.root, "bench shift recovery: "+reason); lockErr != nil {
-		fmt.Fprintf(s.stderr, "could not retain worktree %s after snapshot failure: %v (snapshot error: %v)\n", s.root, lockErr, err)
+		fmt.Fprintf(s.stderr, "could not retain worktree %s: %v\n", s.root, lockErr)
 	}
 	fmt.Fprintf(s.stdout, "  recovery: %s\n", recoveryWorktree(s.root))
 	return recoveryWorktree(s.root), nil

@@ -286,14 +286,6 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	return 0
 }
-func renderRecovery(stdout io.Writer, plan RecoveryPlan) error {
-	out, err := toon.Table("recovery_cleanup", []string{"ref", "root", "payloads", "landed", "changes", "action", "fingerprint", "detail"}, [][]string{{plan.Ref, plan.Root, plan.Payloads, plan.Landed, plan.Changes, string(plan.Action), plan.Fingerprint, plan.Detail}})
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprint(stdout, out)
-	return err
-}
 func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupReceipt) int {
 	if assignment, err := assignmentByID(root, receipt.Tracked); err == nil && assignment.State == intent.StateComplete {
 		if err := intent.DeleteAssignment(root, assignment.ID); err != nil {
@@ -315,18 +307,16 @@ func ReleaseCommand(root string, args []string, stdout, stderr io.Writer) int {
 	return 1
 }
 
-const worktreeRecoveryUsage = usage.WorktreeRecovery
-
 func renderResumeSummary(result ResumeResult) string {
 	var summary strings.Builder
-	fmt.Fprintf(&summary, "bench resume: removed %d, recovered %d", result.Removed, result.Recovered)
+	fmt.Fprintf(&summary, "bench resume: removed %d, swept refs %d", result.Removed, result.SweptRefs)
 	retained := 0
 	for _, count := range result.Retained {
 		retained += count
 	}
 	if retained > 0 {
 		summary.WriteString("; retained")
-		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonOrphaned, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
+		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonOrphaned, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonDirty, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
 			if count := result.Retained[reason]; count > 0 {
 				fmt.Fprintf(&summary, " %s=%d", reason, count)
 			}
@@ -334,9 +324,6 @@ func renderResumeSummary(result ResumeResult) string {
 	}
 	fmt.Fprintf(&summary, "; pruned branches %d; reconciled %d; failed %d; open assignments %d\n", result.PrunedBranches, result.Reconciled, result.Failed, result.Open)
 	listCapped(&summary, len(result.Orphans), func(i int) string { return orphanLine(result.Orphans[i]) })
-	listCapped(&summary, len(result.Preserved), func(i int) string {
-		return fmt.Sprintf("preserved %s: bench worktree recovery %s\n", result.Preserved[i].ID, result.Preserved[i].Ref)
-	})
 	return summary.String()
 }
 

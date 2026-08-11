@@ -274,25 +274,23 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 			}
 		})
 	}
+	// Every step reachable from the automatic path. StepRecoveryRef is not among them: the
+	// automatic planner retains a checkout it could only remove by preserving first, so the
+	// explicit-retry cases below are where that boundary is graded.
 	for _, tc := range []struct {
 		name       string
 		step       LifecycleStep
-		dirty      bool
 		wantExists bool
 		wantBranch bool
 	}{
-		{"recovery-ref", StepRecoveryRef, true, true, true},
-		{"unlock", StepUnlock, false, true, true},
-		{"sigint-at-unlock", StepUnlock, false, true, true},
-		{"removal-command", StepRemovalAttempt, false, true, true},
-		{"after-removal", StepRemoval, false, false, true},
-		{"after-branch-removal", StepBranch, false, false, false},
+		{"unlock", StepUnlock, true, true},
+		{"sigint-at-unlock", StepUnlock, true, true},
+		{"removal-command", StepRemovalAttempt, true, true},
+		{"after-removal", StepRemoval, false, true},
+		{"after-branch-removal", StepBranch, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root, creation := newOwnedAssignment(t, "fault-"+tc.name)
-			if tc.dirty {
-				mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("dirty\n"), 0o644)
-			}
 			markPending(t, root, creation.Assignment)
 			fault := errors.New("fault " + tc.name)
 			_, err := ApplyAutomatic(root, creation.Path, failLifecycleStep(tc.step, fault))
@@ -308,7 +306,6 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 				registration := gitOutput(t, root, "worktree", "list", "--porcelain")
 				requireTest(t, strings.Contains(registration, "locked "+lockReason(assignments[0])), "surviving checkout is not re-locked:\n%s", registration)
 			}
-			requireTest(t, !tc.dirty || len(assignments[0].Recovery) == 1, "recovery-ref fault lacks durable recovery metadata")
 		})
 	}
 	for _, step := range []LifecycleStep{StepReceipt, StepRecoveryRef, StepUnlock, StepRemoval, StepBranch} {

@@ -153,7 +153,7 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 	}
 }
 
-func TestCleanupDeletesOnlyExactBranchAndRetiresLastRecoveryRef(t *testing.T) {
+func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
 	t.Run("clean assignment compacts and spares sibling", func(t *testing.T) {
 		root, target := newOwnedAssignment(t, "terminal-clean")
 		sibling, err := Create(root, "terminal-clean-sibling", "sibling", nil)
@@ -175,53 +175,6 @@ func TestCleanupDeletesOnlyExactBranchAndRetiresLastRecoveryRef(t *testing.T) {
 		if err != nil || len(assignments) != 1 || assignments[0].ID != sibling.Assignment.ID {
 			t.Fatalf("clean compaction assignments = %#v, %v", assignments, err)
 		}
-	})
-	t.Run("recovered context leaves after last exact ref", func(t *testing.T) {
-		root, target := newOwnedAssignment(t, "terminal-recovered")
-		sibling, err := Create(root, "terminal-recovered-sibling", "sibling", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		siblingRef := "refs/bench/recovery/" + sibling.Assignment.OwnerID + "/" + sibling.Assignment.ID + "/1"
-		gitRun(t, root, "update-ref", siblingRef, target.Assignment.Start)
-		mustWrite(t, filepath.Join(target.Path, "recovered.txt"), []byte("recovered\n"), 0o644)
-		markPending(t, root, target.Assignment)
-		if _, err := ApplyAutomatic(root, target.Path, nil); err != nil {
-			t.Fatal(err)
-		}
-		recovered, err := assignmentByID(root, target.Assignment.ID)
-		if err != nil || recovered.State != intent.StateRecovered || len(recovered.Recovery) != 1 {
-			t.Fatalf("recovered assignment = %#v, %v", recovered, err)
-		}
-		first := recovered.Recovery[0]
-		second := first
-		second.Ref = strings.TrimSuffix(first.Ref, "/1") + "/2"
-		gitRun(t, root, "update-ref", second.Ref, second.Root)
-		recovered.Recovery = append(recovered.Recovery, second)
-		if err := intent.PutAssignment(root, recovered); err != nil {
-			t.Fatal(err)
-		}
-		for _, payload := range first.Payloads {
-			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "cherry-pick", payload)
-		}
-		if err := RetireRecovery(root, first.Ref); err != nil {
-			t.Fatal(err)
-		}
-		if exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", first.Ref).Run() == nil {
-			t.Fatal("first exact recovery ref survived retirement")
-		}
-		gitRun(t, root, "show-ref", "--verify", "--quiet", second.Ref)
-		if current, err := assignmentByID(root, target.Assignment.ID); err != nil || current.State != intent.StateRecovered || len(current.Recovery) != 1 {
-			t.Fatalf("intermediate recovered state = %#v, %v", current, err)
-		}
-		if err := RetireRecovery(root, second.Ref); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := assignmentByID(root, target.Assignment.ID); err == nil {
-			t.Fatal("last-ref retirement did not compact recovered assignment")
-		}
-		gitRun(t, root, "show-ref", "--verify", "--quiet", sibling.Assignment.Branch)
-		gitRun(t, root, "show-ref", "--verify", "--quiet", siblingRef)
 	})
 }
 
@@ -298,8 +251,8 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 
 // TestReleaseNamesRecoveryForPreservedOrphan pins FT93(b), preserved path: a release
 // whose tree was removed out of band but still holds preserved work returns a verdict
-// naming `bench worktree recovery <ref>` and leaves the record and its recovery pointer
-// intact — release never silently discards preserved work.
+// handing over the ref itself and leaves the record and its recovery pointer intact —
+// release never silently discards preserved work.
 func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "oob-preserved")
 	a, err := assignmentByID(root, creation.Assignment.ID)
@@ -312,23 +265,23 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	var out, errb strings.Builder
 	code := ReleaseCommand(root, []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
 	requireTest(t, code != 0, "preserved release exit=%d, want non-zero", code)
-	requireTest(t, strings.Contains(errb.String(), "bench worktree recovery "+ref),
-		"preserved verdict missing recovery command: %q", errb.String())
+	requireTest(t, strings.Contains(errb.String(), "git show "+ref),
+		"preserved verdict does not hand over the ref: %q", errb.String())
 	got, err := assignmentByID(root, a.ID)
 	requireTest(t, err == nil && len(got.Recovery) == 1, "preserved record was mutated or deleted: %v", err)
 }
 
-// TestResumeSweepsResidueAndReportsPreserved pins FT93(c): ConservativeCleanup sweeps
-// tree-gone, unregistered residue records (compacts, counts them), reports preserved-
-// work records with their recovery command without deleting them, and never touches an
-// active record or one whose tree still exists.
+// TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive pins the standing cleaner's
+// blast radius over the ledger: a tree-gone record is dropped whether it was mid-cleanup
+// or holding preserved work the removed lifecycle wrote, while a record whose tree still
+// exists survives untouched.
 //
-// What holds the active, tree-gone record here is its age, not its state: the sweep
-// compacts an orphaned active record, and this one survives only because it was stamped
-// moments ago and so is not aged. That is the race this fixture guards — a sweep that
-// compacted on tree-absence alone would catch a session between `worktree add` and its
+// What holds the active, tree-gone record here is its age, not its state: the reconcile
+// drops an orphaned active record, and this one survives only because it was stamped
+// moments ago and so is not aged. That is the race this fixture guards — a reconcile that
+// dropped on tree-absence alone would catch a session between `worktree add` and its
 // first write.
-func TestResumeSweepsResidueAndReportsPreserved(t *testing.T) {
+func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
 	residue := mustCreate(t, root, "landed-sweep-residue", "residue")
@@ -355,17 +308,17 @@ func TestResumeSweepsResidueAndReportsPreserved(t *testing.T) {
 
 	result, err := ConservativeCleanup(root)
 	mustNoError(t, err)
-	requireTest(t, result.Reconciled == 1, "Reconciled=%d, want 1", result.Reconciled)
-	if _, err := assignmentByID(root, ra.ID); err == nil {
-		t.Fatal("residue record survived the sweep")
-	}
-	for _, keep := range []string{pa.ID, ag.ID, live.Assignment.ID} {
-		if _, err := assignmentByID(root, keep); err != nil {
-			t.Fatalf("record %s was swept but must survive: %v", keep, err)
+	requireTest(t, result.Reconciled == 2, "Reconciled=%d, want 2", result.Reconciled)
+	for _, dropped := range []string{ra.ID, pa.ID} {
+		if _, err := assignmentByID(root, dropped); err == nil {
+			t.Fatalf("tree-gone record %s survived the reconcile", dropped)
 		}
 	}
-	requireTest(t, len(result.Preserved) == 1 && result.Preserved[0].ID == pa.ID && result.Preserved[0].Ref == ref,
-		"Preserved=%+v, want one entry for %s at %s", result.Preserved, pa.ID, ref)
+	for _, keep := range []string{ag.ID, live.Assignment.ID} {
+		if _, err := assignmentByID(root, keep); err != nil {
+			t.Fatalf("record %s was dropped but must survive: %v", keep, err)
+		}
+	}
 }
 
 func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {

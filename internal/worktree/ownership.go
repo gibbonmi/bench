@@ -50,13 +50,17 @@ const (
 	// StepRecoveryRowClose names the boundary a retire or a discard crosses once the
 	// recovery ref is deleted and only the assignment row is left to close.
 	StepRecoveryRowClose LifecycleStep = "recovery-row-close"
-	StepUnlock           LifecycleStep = "unlock"
-	StepRemovalAttempt   LifecycleStep = "removal-attempt"
-	StepRemoval          LifecycleStep = "removal"
-	StepBranch           LifecycleStep = "branch-removal"
-	StepApplyLocked      LifecycleStep = "apply-locked"
-	StepReceipt          LifecycleStep = "cleanup-receipt"
-	StepTerminalReceipt  LifecycleStep = "terminal-receipt"
+	// StepLifecycleSweep names the boundary the standing cleaner crosses once per debris
+	// ref, so an interruption can be placed between two deletions rather than only around
+	// the whole sweep.
+	StepLifecycleSweep  LifecycleStep = "lifecycle-sweep"
+	StepUnlock          LifecycleStep = "unlock"
+	StepRemovalAttempt  LifecycleStep = "removal-attempt"
+	StepRemoval         LifecycleStep = "removal"
+	StepBranch          LifecycleStep = "branch-removal"
+	StepApplyLocked     LifecycleStep = "apply-locked"
+	StepReceipt         LifecycleStep = "cleanup-receipt"
+	StepTerminalReceipt LifecycleStep = "terminal-receipt"
 )
 
 type Fault func(LifecycleStep) error
@@ -457,14 +461,16 @@ func reconcileOutOfBand(root, repo, request, target string, cleanup intent.Clean
 	return receipt, intent.PutCleanupReceipt(root, receipt)
 }
 
-// recoveryPendingError names the deliberate recover-or-retire path for a release that
-// cannot compact because its tree was removed out of band while preserved work remains.
+// recoveryPendingError names what a release cannot compact: its tree was removed out of
+// band while the record still points at preserved work. No command retires that ref any
+// more, and the standing cleaner sweeps the namespace at the next session start, so the
+// line hands over the ref itself — the only handle left for reading the work back.
 func recoveryPendingError(a intent.Assignment) error {
 	ref := "(none)"
 	if len(a.Recovery) > 0 {
 		ref = a.Recovery[0].Ref
 	}
-	return fmt.Errorf("worktree removed out of band; its work is preserved — recover or retire it: bench worktree recovery %s", ref)
+	return fmt.Errorf("worktree removed out of band; its work is preserved until the next session start sweeps it: git show %s", ref)
 }
 func renderRelease(stdout io.Writer, assignment intent.Assignment, action string) int {
 	out, err := toon.Table("worktree_release", []string{"path", "assignment", "state", "action"}, [][]string{{assignment.Worktree, assignment.ID, string(assignment.State), action}})

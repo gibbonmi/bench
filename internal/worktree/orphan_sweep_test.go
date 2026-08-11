@@ -196,13 +196,13 @@ func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
 		"Orphans=%+v, want none: the emitted line is a retirement command for a tree nothing here can reach", result.Orphans)
 }
 
-// TestSweepPreservesOrphanedRecoveryRecords pins the boundary of the sweep's one
+// TestSweepPurgesRecoveredRecordsWhoseTreeIsGone pins the boundary of the reconcile's
 // destructive branch. No record is ever both orphaned and holding preserved work —
 // orphanhood requires state active, and ValidateAssignment refuses an active record with
-// recovery metadata on every ledger read — so residualAssignment is the single guard
-// standing between the compaction branch and a pointer to preserved work, and the closest
-// reachable record is driven through the sweep to hold it there.
-func TestSweepPreservesOrphanedRecoveryRecords(t *testing.T) {
+// recovery metadata on every ledger read — so the closest reachable record is a recovered
+// one, and the standing cleaner drops it: the state it names is one only the removed
+// lifecycle produced, and the ref it points at is one the same run sweeps.
+func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
 	root := newSweepRepo(t)
 	preserved := mustCreate(t, root, "orphan-preserved", "aged, holds preserved work")
 	a := preserved.Assignment
@@ -220,10 +220,10 @@ func TestSweepPreservesOrphanedRecoveryRecords(t *testing.T) {
 	requireTest(t, !orphaned(a, time.Now()), "an aged recovered record reads as orphaned")
 
 	result := mustSweep(t, root)
-	got, err := assignmentByID(root, a.ID)
-	requireTest(t, err == nil && len(got.Recovery) == 1, "the record holding preserved work was compacted: %v", err)
-	requireTest(t, len(result.Preserved) == 1 && result.Preserved[0].Ref == ref,
-		"Preserved=%+v, want one entry at %s", result.Preserved, ref)
+	requireTest(t, result.Reconciled == 1, "Reconciled=%d, want 1", result.Reconciled)
+	if _, err := assignmentByID(root, a.ID); err == nil {
+		t.Fatal("a recovered record whose tree is gone survived the reconcile")
+	}
 }
 
 // TestSweepIsIdempotent pins what a reader actually sees: the summary reprints at every

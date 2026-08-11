@@ -191,15 +191,21 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 				t.Fatal(err)
 			}
 			branchBefore := gitOutput(t, root, "rev-parse", creation.Assignment.Branch)
+			// Preservation is the explicit path-addressed clean's: the automatic planner an
+			// unattended resume or release drives retains a checkout it could only remove by
+			// preserving first, so the layer capture is driven through the surface that
+			// still reaches it.
+			restore := cleanupTransactionBoundary
+			defer func() { cleanupTransactionBoundary = restore }()
+			plan, err := PlanExplicit(root, creation.Path)
+			if err != nil {
+				t.Fatal(err)
+			}
 			stop := errors.New("stop after recovery metadata")
-			_, err = ApplyAutomatic(root, creation.Path, func(step LifecycleStep) error {
-				if step == StepRecoveryMetadata {
-					return stop
-				}
-				return nil
-			})
+			cleanupTransactionBoundary = failLifecycleStep(StepRecoveryMetadata, stop)
+			_, err = ApplyExplicit(root, creation.Path, plan.Fingerprint)
 			if !errors.Is(err, stop) {
-				t.Fatalf("ApplyAutomatic error = %v, want recovery-metadata fault", err)
+				t.Fatalf("ApplyExplicit error = %v, want recovery-metadata fault", err)
 			}
 			assignments, readErr := intent.Assignments(root)
 			if readErr != nil || len(assignments) != 1 || len(assignments[0].Recovery) != 1 {
@@ -209,15 +215,16 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 				t.Fatal("recovery ref exists before its metadata checkpoint replays")
 			}
 			stop = errors.New("stop after durable recovery ref")
-			_, err = ApplyAutomatic(root, creation.Path, func(step LifecycleStep) error {
-				if step == StepRecoveryRef {
-					return stop
-				}
-				return nil
-			})
-			if !errors.Is(err, stop) {
-				t.Fatalf("ApplyAutomatic replay error = %v, want recovery-ref fault", err)
+			replayPlan, err := PlanExplicit(root, creation.Path)
+			if err != nil {
+				t.Fatal(err)
 			}
+			cleanupTransactionBoundary = failLifecycleStep(StepRecoveryRef, stop)
+			_, err = ApplyExplicit(root, creation.Path, replayPlan.Fingerprint)
+			if !errors.Is(err, stop) {
+				t.Fatalf("ApplyExplicit replay error = %v, want recovery-ref fault", err)
+			}
+			cleanupTransactionBoundary = restore
 			indexAfter, err := os.ReadFile(indexPath)
 			if err != nil {
 				t.Fatal(err)

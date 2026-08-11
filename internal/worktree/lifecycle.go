@@ -19,23 +19,19 @@ import (
 )
 
 type ResumeResult struct {
-	Removed, Recovered int
-	Retained           map[CleanupReason]int
-	Failed, Open       int
-	Reconciled         int
-	PrunedBranches     int
-	Preserved          []PreservedOrphan
-	Orphans            []OrphanCandidate
+	Removed        int
+	Retained       map[CleanupReason]int
+	Failed, Open   int
+	SweptRefs      int
+	Reconciled     int
+	PrunedBranches int
+	Orphans        []OrphanCandidate
 }
-
-// PreservedOrphan names a tree-gone assignment record the sweep left intact because it
-// still holds preserved work; Ref is the recovery pointer to recover or retire.
-type PreservedOrphan struct{ ID, Ref string }
 
 // OrphanCandidate names an assignment the sweep judged abandoned while its worktree is
 // still on disk; Path is the argument `bench worktree clean` needs to start retiring it.
 // The sweep only reports these — removal stays behind that explicit path-addressed
-// command, which recovers dirty work into a recovery ref before it removes anything.
+// command, which preserves dirty work before it removes anything.
 type OrphanCandidate struct{ ID, Path string }
 
 var ErrCleanupInterrupted = errors.New("cleanup interrupted")
@@ -423,7 +419,7 @@ func executeCleanup(root string, plan CleanupPlan, checkpoint func(string) error
 		return releaseLeftover(root, plan, checkpoint, fault)
 	}
 	var recovered *intent.Assignment
-	if plan.Action == ActionRecoverRemove || (plan.Action == ActionDiscardRemove && plan.Tracked != "clean") || plan.registration.Detached {
+	if plan.preserves() {
 		assignment, err := recoveryAssignmentForPlan(root, plan)
 		if err != nil {
 			return plan, err

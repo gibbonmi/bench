@@ -54,7 +54,7 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
-	requireTest(t, stdout.String() == "bench resume: removed 1, recovered 0; retained foreign=2 live-lease=1 unexpected-lock=1; pruned branches 2; reconciled 0; failed 0; open assignments 0\n", "resume report = %q", stdout.String())
+	requireTest(t, stdout.String() == "bench resume: removed 1, swept refs 0; retained foreign=2 live-lease=1 unexpected-lock=1; pruned branches 2; reconciled 0; failed 0; open assignments 0\n", "resume report = %q", stdout.String())
 	_, err = os.Stat(owned.Path)
 	requireTest(t, os.IsNotExist(err), "verified owned worktree remains: %v", err)
 	for _, path := range []string{clean, dirty, locked, pool} {
@@ -93,15 +93,23 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 	for _, automatic := range []bool{false, true} {
 		t.Run(fmt.Sprintf("automatic=%t", automatic), func(t *testing.T) {
 			root, creation := newOwnedAssignment(t, fmt.Sprintf("concurrent-%t", automatic))
-			mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("recover once\n"), 0o644)
+			// The two planners now differ on dirt: only the explicit one preserves it, so
+			// each side of this race is driven with the dirtiest tree its planner still
+			// removes — which is what makes the recovery-ref count below meaningful for one
+			// and zero for the other.
+			wantAction := ActionRecoverRemove
+			wantRefs := 1
 			if automatic {
 				markPending(t, root, creation.Assignment)
+				wantAction, wantRefs = ActionRemove, 0
+			} else {
+				mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("recover once\n"), 0o644)
 			}
 			plan, err := PlanExplicit(root, creation.Path)
 			if automatic {
 				plan, err = PlanAutomatic(root, creation.Path)
 			}
-			requireTest(t, err == nil && plan.Action == ActionRecoverRemove, "dirty plan = %#v, %v", plan, err)
+			requireTest(t, err == nil && plan.Action == wantAction, "plan = %#v, %v; want %q", plan, err, wantAction)
 			attempted, locked, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
 			oldAttempt, oldBoundary := cleanupLockAttempt, cleanupTransactionBoundary
 			cleanupLockAttempt = func(target string) { attempted <- target }
@@ -138,7 +146,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 			}
 			refs := strings.Fields(gitOutput(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"))
 			ledger, err := intent.Read(root)
-			requireTest(t, len(refs) == 1 && err == nil && len(ledger.CleanupReceipts) == 1 && ledger.CleanupReceipts[0].State == intent.ReceiptComplete,
+			requireTest(t, len(refs) == wantRefs && err == nil && len(ledger.CleanupReceipts) == 1 && ledger.CleanupReceipts[0].State == intent.ReceiptComplete,
 				"transaction refs=%#v receipts=%#v error=%v", refs, ledger.CleanupReceipts, err)
 			if !automatic {
 				mustNoError(t, intent.DeleteAssignment(root, creation.Assignment.ID))
@@ -295,11 +303,17 @@ func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
 		markPending(t, root, creation.Assignment)
 		requirePlanAction(t, root, creation.Path, ActionRemove)
 	})
+	// Ordinary dirt is classified, not undecided: the automatic planner names it as the
+	// reason it retains, which is what separates a checkout holding uncommitted work from
+	// one whose state it could not read.
 	t.Run("ordinary parent dirt remains classifiable", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "ordinary-dirt")
 		mustWrite(t, filepath.Join(creation.Path, "ordinary.txt"), []byte("ordinary\n"), 0o644)
 		markPending(t, root, creation.Assignment)
-		requirePlanAction(t, root, creation.Path, ActionRecoverRemove)
+		requirePlanAction(t, root, creation.Path, ActionRetain)
+		plan, err := PlanAutomatic(root, creation.Path)
+		mustNoError(t, err)
+		requireTest(t, plan.ReasonCode == ReasonDirty, "dirty plan reason = %q, want %q", plan.ReasonCode, ReasonDirty)
 	})
 }
 

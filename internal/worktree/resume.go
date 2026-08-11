@@ -16,10 +16,6 @@ import (
 
 var errStaleFingerprint = errors.New("cleanup fingerprint is stale")
 
-// errRecoveryUnauthorized marks a refusal the plan itself decided, as opposed to a failure
-// while acting, so the command can answer with the receipt the operator planned from.
-var errRecoveryUnauthorized = errors.New("recovery plan does not authorize this verb")
-
 const cleanupOperation = "worktree-clean"
 
 func cleanupIdentity(root, path string) (string, string, error) {
@@ -75,154 +71,6 @@ func renderReleaseReceipt(stdout io.Writer, receipt intent.CleanupReceipt) int {
 	return renderRelease(stdout, intent.Assignment{ID: receipt.Tracked, Worktree: receipt.Target, State: intent.AssignmentState(receipt.Detail)}, receipt.Action)
 }
 
-// recoveryVerb is the flag an operator typed, carried through to the one place that acts
-// on a plan. Its value is the flag itself so the grammar and the authority stay one fact.
-type recoveryVerb string
-
-const (
-	recoveryRetire  recoveryVerb = "--apply"
-	recoveryDiscard recoveryVerb = "--discard"
-)
-
-// authorizes reports whether a plan carrying this action licenses the verb, and the
-// refusal detail when it does not. The two verbs partition the vocabulary: only the
-// landedness proof's own verdict retires, and only the verdicts that still hold work the
-// proof judged and refused — discard-eligible, and orphaned, which has no row left to
-// judge through — are the operator's to discard. Every other verdict refuses both:
-// retain means the plan could not classify the ref, and a verdict that proved nothing
-// must carry no destructive authority, however the fingerprint arrived.
-func (verb recoveryVerb) authorizes(action RecoveryAction) (bool, string) {
-	switch action {
-	case RecoveryRetire:
-		if verb == recoveryRetire {
-			return true, ""
-		}
-		return false, "a proven-landed payload retires with --apply, not --discard"
-	case RecoveryDiscard, RecoveryOrphaned:
-		if verb == recoveryDiscard {
-			return true, ""
-		}
-		return false, "only a proven-landed payload retires; drop unproven work with --discard"
-	case RecoveryForeign:
-		return false, "only a ref inside the recovery namespace is the operator's to discard"
-	case RecoveryRetain:
-		return false, "the plan could not classify this ref; neither verb is authorized"
-	default:
-		return false, "plan action holds no discardable work"
-	}
-}
-
-// terminal names the claim a completed verb records in the receipt.
-func (verb recoveryVerb) terminal() RecoveryAction {
-	if verb == recoveryRetire {
-		return RecoveryRetired
-	}
-	return RecoveryDiscarded
-}
-
-// ApplyRecovery retires a recovery ref whose payloads the landedness proof accepts.
-func ApplyRecovery(root, ref, fingerprint string) (RecoveryPlan, error) {
-	return applyRecoveryVerb(root, ref, fingerprint, recoveryRetire)
-}
-
-// applyRecoveryVerb is the one actor on a recovery plan. Both verbs spend the same
-// fingerprint over the same plan and share the ref deletion and the row compaction; only
-// which verdicts they accept and which claim they record differ.
-func applyRecoveryVerb(root, ref, fingerprint string, verb recoveryVerb) (RecoveryPlan, error) {
-	plan, err := PlanRecovery(root, ref)
-	if err != nil {
-		return plan, err
-	}
-	if plan.Fingerprint != fingerprint {
-		return plan, errStaleFingerprint
-	}
-	// A ref that is already gone is what a completed discard leaves behind, so a re-run
-	// converges on success rather than refusing work nobody can still do.
-	if verb == recoveryDiscard && plan.Action == RecoveryAbsent {
-		return plan, nil
-	}
-	// A recovered row naming a ref nothing resolves is what an interruption between the
-	// two halves of either verb leaves behind: the ref delete landed and the row close did
-	// not. Closing the row is all that remains, and it happens before the authorization
-	// check because the vanished ref is exactly what makes the plan unclassifiable — asking
-	// the landedness proof about it would refuse the only command that can finish the work.
-	// The claim recorded is the discard for both verbs: retired asserts the proof accepted
-	// the payload, and no proof can run over a ref that no longer resolves, so this receipt
-	// can only honestly say the work is gone without the proof's backing.
-	if plan.assignment != nil && plan.assignment.State == intent.StateRecovered && !refExists(root, plan.Ref) {
-		if err := compactRecoveredAssignment(root, *plan.assignment, ref); err != nil {
-			return plan, err
-		}
-		plan.Action, plan.Detail = RecoveryDiscarded, ""
-		return plan, nil
-	}
-	if authorized, detail := verb.authorizes(plan.Action); !authorized {
-		plan.Detail = detail
-		return plan, fmt.Errorf("%w: %s", errRecoveryUnauthorized, detail)
-	}
-	// Retire reaches an assignment only in the recovered state, because the plan refuses
-	// every other one before it can prove landedness. Discard holds itself to the same
-	// bar: closing a row mid-release would spend a transaction another command owns.
-	if plan.assignment != nil && plan.assignment.State != intent.StateRecovered {
-		plan.Detail = "recovery ref has no recovered assignment"
-		return plan, fmt.Errorf("%w: %s", errRecoveryUnauthorized, plan.Detail)
-	}
-	if err := deleteRecoveryRef(root, plan); err != nil {
-		return plan, err
-	}
-	if err := hit(cleanupTransactionBoundary, StepRecoveryRowClose); err != nil {
-		return plan, err
-	}
-	// An orphaned ref has no row to close, and inventing one would record an intent that
-	// no longer exists.
-	if plan.assignment != nil {
-		if err := compactRecoveredAssignment(root, *plan.assignment, ref); err != nil {
-			return plan, err
-		}
-	}
-	plan.Action, plan.Detail = verb.terminal(), ""
-	return plan, nil
-}
-
-// deleteRecoveryRef removes the ref only while it still holds the object the plan
-// classified, so a ref something else moved is refused rather than dropped blind.
-func deleteRecoveryRef(root string, plan RecoveryPlan) error {
-	expected := plan.Root
-	if plan.assignment == nil {
-		// No row records an orphan's root, so the ref itself is the only thing naming the
-		// object the plan just read.
-		resolved, err := git.Output("-C", root, "rev-parse", "--verify", plan.Ref+"^{commit}")
-		if err != nil {
-			return fmt.Errorf("resolve orphaned recovery ref: %w", err)
-		}
-		expected = resolved
-	}
-	if out, err := exec.Command("git", "-C", root, "update-ref", "-d", plan.Ref, expected).CombinedOutput(); err != nil {
-		return fmt.Errorf("delete exact recovery ref: %s", strings.TrimSpace(string(out)))
-	}
-	return nil
-}
-
-// compactRecoveredAssignment drops one retired or discarded ref from its row, closing the
-// row entirely once nothing preserved is left to point at.
-func compactRecoveredAssignment(root string, assignment intent.Assignment, ref string) error {
-	next := assignment.Recovery[:0]
-	for _, candidate := range assignment.Recovery {
-		if candidate.Ref != ref {
-			next = append(next, candidate)
-		}
-	}
-	assignment.Recovery = next
-	if len(next) > 0 {
-		assignment.State = intent.StateRecovered
-		return intent.PutAssignment(root, assignment)
-	}
-	assignment.State = intent.StateComplete
-	if err := intent.PutAssignment(root, assignment); err != nil {
-		return err
-	}
-	return intent.DeleteAssignment(root, assignment.ID)
-}
 func ApplyExplicit(root, path, fingerprint string) (CleanupPlan, error) {
 	return ApplyExplicitWithOptions(root, path, fingerprint, CleanupOptions{})
 }
@@ -483,13 +331,20 @@ func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanup
 	return applyCleanupTransaction(root, path, plan.Fingerprint, planner, fault, terminal)
 }
 
-// ConservativeCleanup cleans owned worktrees and unclaimed landed branch residue.
+// ConservativeCleanup reconciles the lifecycle debris, then cleans owned worktrees and
+// unclaimed landed branch residue. The reconcile runs first because it is the only thing
+// that can make a ledger an older binary wrote readable again, and every step below reads
+// that ledger.
 func ConservativeCleanup(root string) (ResumeResult, error) {
 	registered, err := ClassifyRegisteredWorktrees(root)
 	if err != nil {
 		return ResumeResult{}, fmt.Errorf("git worktree list failed: %w", err)
 	}
 	result := ResumeResult{Retained: map[CleanupReason]int{}}
+	result.SweptRefs, result.Reconciled, err = reconcileLifecycleDebris(root, registered)
+	if err != nil {
+		return result, err
+	}
 	for _, wt := range registered {
 		if wt.Class == ClassRoot {
 			continue
@@ -513,13 +368,9 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 			result.Failed++
 			return result, err
 		}
-		if plan.Action == ActionRecoverRemove {
-			result.Recovered++
-		} else {
-			result.Removed++
-		}
+		result.Removed++
 	}
-	if err := sweepOrphanAssignments(root, registered, &result); err != nil {
+	if err := sweepOrphanAssignments(root, &result); err != nil {
 		return result, err
 	}
 	result.PrunedBranches, err = intent.PruneUnclaimedLandedBranches(root)
@@ -535,12 +386,10 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 // An active record is swept only once it is orphaned; a younger one is left alone
 // because a live session may still own it. An orphan whose tree survives is reported as
 // an OrphanCandidate and never touched; that type owns why removal stays behind an
-// explicit command. The tree-gone verdicts are the FT93(c) contract, in this order: one
-// git still registers belongs to the prune path, one preserving no work is compacted and
-// counted, and one holding recovery metadata is reported for a deliberate
-// recover-or-retire and left intact. residualAssignment is the single guard between that
-// compaction and a pointer to preserved work.
-func sweepOrphanAssignments(root string, registered []Registered, result *ResumeResult) error {
+// explicit command. A record whose tree is gone is not this sweep's to judge — the
+// reconcile that already ran is the one place a record is dropped, so the two can never
+// disagree about which ones the pool still answers for.
+func sweepOrphanAssignments(root string, result *ResumeResult) error {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return err
@@ -549,37 +398,12 @@ func sweepOrphanAssignments(root string, registered []Registered, result *Resume
 	// window and disagree.
 	now := time.Now()
 	for _, a := range assignments {
-		abandoned := orphaned(a, now)
-		if a.State == intent.StateActive && !abandoned {
+		if !orphaned(a, now) {
 			continue
 		}
-		_, statErr := os.Stat(a.Worktree)
-		if statErr == nil {
-			if abandoned {
-				result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})
-			}
-			continue // the tree still exists
+		if _, statErr := os.Stat(a.Worktree); statErr == nil {
+			result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})
 		}
-		// Only absence licenses a tree-gone verdict. Any other stat error — an unreadable
-		// pool, an I/O failure — leaves the tree's existence unknown, and compacting on
-		// unknown deletes the row while the worktree and its uncommitted work are still
-		// there. Unknown is left out of the listing too: the line would name a retirement
-		// command for a path this host cannot reach, and the record stays visible in the
-		// open-assignment count either way.
-		if !os.IsNotExist(statErr) {
-			continue
-		}
-		if isRegisteredWorktree(registered, a.Worktree) {
-			continue // registered (prunable) — the git-worktree path owns it
-		}
-		if residualAssignment(a) {
-			if err := intent.DeleteAssignment(root, a.ID); err != nil {
-				return err
-			}
-			result.Reconciled++
-			continue
-		}
-		result.Preserved = append(result.Preserved, PreservedOrphan{ID: a.ID, Ref: a.Recovery[0].Ref})
 	}
 	return nil
 }

@@ -98,7 +98,6 @@ var registry = []Anchor{
 	{File: ".agents/commands/bench-assess.md", Kind: Require, Section: "", Needle: "/bench-what-next", Diagnostic: ".agents/commands/bench-assess.md missing acceptance coverage anchor: /bench-what-next"},
 	{File: ".bench/BENCH.md", Kind: Require, Section: "", Needle: "bench worktree release", Diagnostic: ".bench/BENCH.md missing acceptance coverage anchor: bench worktree release"},
 	{File: ".bench/BENCH.md", Kind: Require, Section: "", Needle: "bench worktree clean", Diagnostic: ".bench/BENCH.md missing acceptance coverage anchor: bench worktree clean"},
-	{File: ".bench/BENCH.md", Kind: Require, Section: "", Needle: "bench worktree recovery", Diagnostic: ".bench/BENCH.md missing acceptance coverage anchor: bench worktree recovery"},
 	{File: ".bench/BENCH.md", Kind: Require, Section: "", Needle: "sole gate", Diagnostic: ".bench/BENCH.md missing acceptance coverage anchor: sole gate"},
 	{File: ".bench/BENCH.md", Kind: Require, Section: "", Needle: "terminal final-check never repays", Diagnostic: ".bench/BENCH.md missing acceptance coverage anchor: terminal final-check never repays"},
 	{File: ".bench/BENCH.md", Kind: Require, Section: "", Needle: "reauthors promotion", Diagnostic: ".bench/BENCH.md missing acceptance coverage anchor: reauthors promotion"},
