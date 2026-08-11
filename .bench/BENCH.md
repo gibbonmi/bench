@@ -84,6 +84,12 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
   typed by sessions — are enumerated in `.bench/BENCH-reference.md` (Plumbing
   subcommands), so the always-loaded inventory carries only what sessions run.
 
+**Invoking `bench`.** Run it through your harness's shell tool plainly — that
+tool already surfaces stdout and stderr together, so appending `2>&1` or other
+output-capturing flags to a bare `bench` command is redundant. Add `2>&1` only
+where it changes behavior: piping to a filter that only sees stdout by
+default, like `... 2>&1 | tail -20`.
+
 ## The four invariants (these override convenience, always)
 
 1. **The gate is the oracle — you never grade your own work.**
