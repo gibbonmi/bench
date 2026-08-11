@@ -376,6 +376,55 @@ func TestCommandPhantomAndForeignTag(t *testing.T) {
 	}
 }
 
+// TestCommandTicketsSubdirRowOwned is RG2/subdir-row-owned: a declared row cited only
+// by a ticket file nested under tickets/sub/ is owned — enumeration recurses rather
+// than skipping the subdirectory.
+func TestCommandTicketsSubdirRowOwned(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing only PF1.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", "Nested ticket citing PF2.\n")
+	runGit(t, "add", ".")
+	runGit(t, "commit", "-q", "-m", "c0")
+	runGit(t, "checkout", "-q", "-b", "feature")
+	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	runGit(t, "add", "internal/"+slug+"/foo.go")
+	runGit(t, "commit", "-q", "-m", "c1")
+
+	out, code := Command([]string{"review", slug})
+	if code != 0 {
+		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
+	}
+	if !strings.Contains(out, "rows-owned,green") {
+		t.Errorf("a row cited only under tickets/sub/ must still be owned:\n%s", out)
+	}
+}
+
+// TestCommandTicketsSubdirPhantomDetected is RG2/subdir-phantom-detected: a phantom
+// own-tag token that appears only in a nested tickets/sub/ file is still detected.
+func TestCommandTicketsSubdirPhantomDetected(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", "Nested ticket citing PF99.\n")
+	runGit(t, "add", ".")
+	runGit(t, "commit", "-q", "-m", "c0")
+	runGit(t, "checkout", "-q", "-b", "feature")
+	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	runGit(t, "add", "internal/"+slug+"/foo.go")
+	runGit(t, "commit", "-q", "-m", "c1")
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.Contains(out, "rows-membership,red") || !strings.Contains(out, "PF99") {
+		t.Errorf("a phantom token nested under tickets/sub/ must still be caught:\n%s", out)
+	}
+}
+
 // TestCommandEmptyDiff is C6: an empty changed set in review mode makes diff-nonempty
 // red.
 func TestCommandEmptyDiff(t *testing.T) {
@@ -398,11 +447,11 @@ func TestCommandEmptyDiff(t *testing.T) {
 
 // TestCommandControlBytePath is C7's refusal half: a changed path carrying an ESC
 // control byte exits 1 with the unrepresentable-TOON-cell error rather than a mangled
-// table or a silently sanitized path.
+// table or a silently sanitized path. The refusal is unconditional — it fires before
+// verdict rendering over every changed path, not only one that would otherwise reach
+// a red row's detail cell (see TestCommandFencedControlBytePathReds for the fenced,
+// otherwise-all-green case that exercises that distinction directly).
 func TestCommandControlBytePath(t *testing.T) {
-	// The hostile path is deliberately unfenced: an authorized path never reaches the
-	// rendered detail, so only an unauthorized (and therefore named) control-byte
-	// path exercises the TOON sink's refusal.
 	_, slug := seedConformant(t)
 	hostile := "unfenced/a\x1bb.go"
 	mustWriteFile(t, hostile, "package example\n")
@@ -418,6 +467,30 @@ func TestCommandControlBytePath(t *testing.T) {
 	}
 	if strings.Contains(out, "checks[") {
 		t.Errorf("a control-byte path must never render a checks table:\n%s", out)
+	}
+}
+
+// TestCommandFencedControlBytePathReds is RG3/fenced-esc-path-reds: a changed path
+// carrying an ESC control byte still exits 1 with the unrepresentable-TOON-cell error
+// even when the path is authorized by an ownership fence and every check would
+// otherwise be green — PF7's refusal is unconditional, not gated on the path reaching
+// a red row's rendered detail cell.
+func TestCommandFencedControlBytePathReds(t *testing.T) {
+	_, slug := seedConformant(t)
+	hostile := "internal/" + slug + "/a\x1bb.go"
+	mustWriteFile(t, hostile, "package example\n")
+	runGit(t, "add", "--", hostile)
+	runGit(t, "commit", "-q", "-m", "fenced hostile path")
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.Contains(out, "unrepresentable TOON cell") {
+		t.Errorf("output = %q, want the unrepresentable-TOON-cell error", out)
+	}
+	if strings.Contains(out, "checks[") {
+		t.Errorf("a fenced control-byte path must never render a checks table:\n%s", out)
 	}
 }
 
@@ -733,6 +806,60 @@ func TestCommandFencesParenTokenNeverAuthorizes(t *testing.T) {
 	}
 	if !strings.HasPrefix(out, "error: ownership fences empty") {
 		t.Errorf("a parenthesized backticked token must not authorize: output = %q", out)
+	}
+}
+
+// TestCommandFencesWrappedParenNeverAuthorizes is RG1/wrapped-paren-never-authorizes:
+// a parenthetical that opens on one line and closes on a later one must never
+// authorize the backticked token it wraps, even though the token's own line, read in
+// isolation, starts at depth zero. A tracked change under the wrapped path stays
+// unauthorized — paths-authorized red naming it — while the section's other, real
+// entry keeps the section itself non-empty.
+func TestCommandFencesWrappedParenNeverAuthorizes(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	body := specBody(slug, "- see also (", "  `internal/wrapped/`)")
+	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	runGit(t, "add", ".")
+	runGit(t, "commit", "-q", "-m", "c0")
+	runGit(t, "checkout", "-q", "-b", "feature")
+	mustWriteFile(t, "internal/wrapped/foo.go", "package wrapped\n")
+	runGit(t, "add", "internal/wrapped/foo.go")
+	runGit(t, "commit", "-q", "-m", "c1")
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.Contains(out, "paths-authorized,red") || !strings.Contains(out, "internal/wrapped/foo.go") {
+		t.Errorf("a token wrapped by a cross-line parenthetical must not authorize:\n%s", out)
+	}
+}
+
+// TestCommandFencesEntryAfterClosedParenAuthorizes is
+// RG1/entry-after-closed-paren-authorizes: once a parenthetical that opened across
+// lines closes, depth tracking must return to zero — a real entry on a later line
+// authorizes normally rather than reading as still-nested.
+func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	body := specBody(slug, "- see also (", "  `internal/aside/`)", "- `internal/real/`")
+	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	runGit(t, "add", ".")
+	runGit(t, "commit", "-q", "-m", "c0")
+	runGit(t, "checkout", "-q", "-b", "feature")
+	mustWriteFile(t, "internal/real/foo.go", "package real\n")
+	runGit(t, "add", "internal/real/foo.go")
+	runGit(t, "commit", "-q", "-m", "c1")
+
+	out, code := Command([]string{"review", slug})
+	if code != 0 {
+		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
+	}
+	if !strings.Contains(out, "paths-authorized,green") {
+		t.Errorf("a real entry after a closed cross-line paren must authorize:\n%s", out)
 	}
 }
 

@@ -1,6 +1,7 @@
 package preflight
 
 import (
+	"io/fs"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -129,10 +130,17 @@ func specTag(ids []string) string {
 
 // fenceTokens extracts every backticked token in the `## Ownership fences` section
 // that is not inside parentheses — parenthetical prose is annotation, never
-// authorization.
+// authorization. Paren depth and backtick state carry across line boundaries: a
+// parenthetical that opens on one line and closes on a later one still shields every
+// token inside it, and depth returns to zero once it closes so a later real entry
+// authorizes normally.
 func fenceTokens(content []byte) []string {
 	var tokens []string
 	inSection := false
+	depth := 0
+	inTick := false
+	depthAtOpen := 0
+	var cur strings.Builder
 	for _, raw := range strings.Split(string(content), "\n") {
 		line := strings.TrimSuffix(raw, "\r")
 		if strings.TrimSpace(line) == "## Ownership fences" {
@@ -143,55 +151,54 @@ func fenceTokens(content []byte) []string {
 			inSection = false
 		}
 		if inSection {
-			tokens = append(tokens, fenceTokensInLine(line)...)
+			fenceTokensInLine(line, &depth, &inTick, &depthAtOpen, &cur, &tokens)
 		}
 	}
 	return tokens
 }
 
-// fenceTokensInLine is a small state machine over one line: it tracks parenthesis
-// depth and backtick state, capturing a backtick-quoted token only when the depth at
-// the moment its opening backtick appeared was zero.
-func fenceTokensInLine(line string) []string {
-	var tokens []string
-	depth := 0
-	inTick := false
-	depthAtOpen := 0
-	var cur strings.Builder
+// fenceTokensInLine is one line's pass through the fence-section state machine:
+// paren depth, backtick state, and the token under construction are threaded in by
+// pointer so the caller can carry them across every line of the section. A
+// backtick-quoted token is captured into tokens only when the depth at the moment its
+// opening backtick appeared was zero — inside an open paren, whether opened on this
+// line or an earlier one, never authorizes.
+func fenceTokensInLine(line string, depth *int, inTick *bool, depthAtOpen *int, cur *strings.Builder, tokens *[]string) {
 	for _, r := range line {
 		switch r {
 		case '(':
-			depth++
+			*depth++
 		case ')':
-			if depth > 0 {
-				depth--
+			if *depth > 0 {
+				*depth--
 			}
 		case '`':
-			if inTick {
-				if depthAtOpen == 0 {
-					tokens = append(tokens, cur.String())
+			if *inTick {
+				if *depthAtOpen == 0 {
+					*tokens = append(*tokens, cur.String())
 				}
 				cur.Reset()
-				inTick = false
+				*inTick = false
 			} else {
-				inTick = true
-				depthAtOpen = depth
+				*inTick = true
+				*depthAtOpen = *depth
 			}
 		default:
-			if inTick {
+			if *inTick {
 				cur.WriteRune(r)
 			}
 		}
 	}
-	return tokens
 }
 
-// gatherTicketTokens enumerates specs/<slug>/tickets/, lstat-classifying every entry
-// before it is opened so a FIFO or other special file is refused rather than blocking.
-// Review mode requires the directory to exist; build mode instead reports whether it
-// exists at all (the second return value) so the verdict core can tell an absent
-// directory (row checks not-applicable) from a present-but-empty one (row checks run
-// for real and read as unowned rows).
+// gatherTicketTokens enumerates specs/<slug>/tickets/, recursing into subdirectories
+// so a token cited only under tickets/sub/ is found the same as one at the top level.
+// Every entry — file or subdirectory, at every depth — is lstat-classified before it
+// is opened or descended into, so a FIFO or other special file is refused rather than
+// blocking no matter how deep it sits. Review mode requires the top-level directory to
+// exist; build mode instead reports whether it exists at all (the second return value)
+// so the verdict core can tell an absent directory (row checks not-applicable) from a
+// present-but-empty one (row checks run for real and read as unowned rows).
 func gatherTicketTokens(dir, mode string) (tokens []string, exists bool, err *BootstrapFailure) {
 	d := bounds.ClassifyDir(dir)
 	switch d.State {
@@ -208,11 +215,37 @@ func gatherTicketTokens(dir, mode string) (tokens []string, exists bool, err *Bo
 		return nil, false, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
 	}
 
-	for _, entry := range d.Entries {
+	tokens, ticketErr := scanTicketEntries(dir, d.Entries)
+	if ticketErr != nil {
+		return nil, false, ticketErr
+	}
+	return tokens, true, nil
+}
+
+// scanTicketEntries walks one already-classified directory listing, scanning files
+// for tokens and recursing into subdirectories with the same lstat-first
+// classification gatherTicketTokens applies at the top level — so the special-file
+// refusal holds at every depth, not only the first.
+func scanTicketEntries(dir string, entries []fs.DirEntry) ([]string, *BootstrapFailure) {
+	var tokens []string
+	for _, entry := range entries {
+		path := filepath.Join(dir, entry.Name())
 		if entry.IsDir() {
+			sub := bounds.ClassifyDir(path)
+			switch sub.State {
+			case bounds.StateEmpty:
+				// nothing to scan
+			case bounds.StateParsed:
+				subTokens, subErr := scanTicketEntries(path, sub.Entries)
+				if subErr != nil {
+					return nil, subErr
+				}
+				tokens = append(tokens, subTokens...)
+			default:
+				return nil, &BootstrapFailure{"tickets directory not readable", path + " is " + string(sub.State) + ": " + sub.Reason}
+			}
 			continue
 		}
-		path := filepath.Join(dir, entry.Name())
 		c := bounds.Classify(path, bounds.ControlRecordLimit)
 		switch c.State {
 		case bounds.StateParsed:
@@ -220,10 +253,10 @@ func gatherTicketTokens(dir, mode string) (tokens []string, exists bool, err *Bo
 		case bounds.StateEmpty:
 			// nothing to scan
 		default:
-			return nil, false, &BootstrapFailure{"ticket file not readable", path + " is " + string(c.State) + ": " + c.Reason}
+			return nil, &BootstrapFailure{"ticket file not readable", path + " is " + string(c.State) + ": " + c.Reason}
 		}
 	}
-	return tokens, true, nil
+	return tokens, nil
 }
 
 // baseCurrentFacts backs the base-current check: it resolves the default branch and

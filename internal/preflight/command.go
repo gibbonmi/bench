@@ -43,6 +43,9 @@ func Command(args []string) (string, int) {
 	if bootErr != nil {
 		return toon.Errorf(bootErr.Kind, bootErr.Hint) + "\n", 1
 	}
+	if err := unrepresentableChangedPath(facts.ChangedPaths); err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
 
 	verdict := Decide(facts)
 	rows := make([][]string, len(verdict.Checks))
@@ -64,4 +67,18 @@ func Command(args []string) (string, int) {
 		exit = 1
 	}
 	return b.String(), exit
+}
+
+// unrepresentableChangedPath refuses a changed path spec-TOON cannot render as a
+// cell, before the verdict table is ever built. PF7's contract is unconditional: a
+// path carrying a control byte exits 1 the same way whether it would land in a green
+// row (never rendered) or a red one's detail cell — the refusal cannot depend on
+// which row a later check happens to sort it into.
+func unrepresentableChangedPath(paths []string) error {
+	for _, p := range paths {
+		if !toon.Representable(p) {
+			return fmt.Errorf("changed path %q contains a byte spec-TOON cannot represent", p)
+		}
+	}
+	return nil
 }
