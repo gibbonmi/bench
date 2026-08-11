@@ -2,32 +2,28 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `4b96a7b`, clean tree, 2 unpushed commits
+Branch: `main` — HEAD `03b0e95`, clean tree, 10 unpushed commits
 Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/bench-preflight/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `a56d225` — stale, work tree `3839fa5`
+Gate: green at `a56d225` — stale, work tree `e139396`
 
 ## State
 
-`/bench-implement-spec --full bench-preflight` phase reached: **tickets staged,
-breakdown reviewed, implementation dispatch next**. The 7-ticket breakdown
-under `specs/bench-preflight/tickets/` passed the `craft-tickets` breakdown
-review (Codex `gpt-5.6-sol`/high: 12 findings, all repaired; verify round
-confirmed, two residuals closed after it). Reviewer approvals recorded
-2026-08-11: spec fences gained `.bench/structure-accept` and
-`tests/canary/package-core-guard/`; map rows PF24/PF25 added; the rename sweep
-exempts `specs/`, `CHANGELOG.md`, `capture/`, `ROADMAP.md`, `decisions/`.
-Line: ticket write-delegates sonnet (reviewer-directed sonnet-over-opus),
-advertise ticket fable/high (leverage override), coordinator fable/medium.
-
-Build order: frontier `rename-release-preflight-package.md`,
-`export-diff-review-base.md`, `repair-routing-checker.md` (fence-disjoint,
-parallel dispatch, serial landings) → `implement-preflight-review.md` →
-`harden-preflight-bootstrap-errors.md` → `implement-preflight-build.md` →
-`advertise-preflight-kit-prose.md`. Landings via path-scoped `bench commit`;
-`--spec bench-preflight` rides only the final landing. Parked pre-reshape
-specs (`axi-coherent-diff`, `axi-query-disclosure`, `single-build-serial-gate`)
-await re-rank, not active. Post-spec queue unchanged: Spec C (doctrine
-adoption), then a `/bench-what-next` drain.
+`/bench-implement-spec --full bench-preflight` phase reached: **all 7 tickets
+landed green (fb827ebf..03b0e953), composed three-axis review delegate
+(opus/high, fresh context) running**. All 25 coverage rows built; map
+validates. Landed serially: 556bd98d routing-checker repair (PF23), 11e2c1d9
+ResolveReviewBase export (PF25), c0fe8151 releasepreflight rename (PF24),
+4dbe0902 preflight review command (PF1–PF8, PF15–PF17), a947821c bootstrap
+diagnostics (PF12–PF14, PF22), 0284a3c9 build mode (PF9–PF11, PF21), 03b0e953
+advertisement (PF18–PF20). Exit-report notes pending: C16's shell-route
+mutation cannot bite (`bin/bench.sh` `*) route_binary` fallback dispatches
+unknown tokens via the registry — pre-existing wrapper property); collapsed
+per-story lines: stories 1/3 landed as one core ticket. Remaining: accepted
+review findings as repair tickets (if any), final landing
+`bench commit --spec bench-preflight`, inline final-check + retro. Parked
+pre-reshape specs (`axi-coherent-diff`, `axi-query-disclosure`,
+`single-build-serial-gate`) await re-rank, not active. Post-spec queue:
+Spec C (doctrine adoption), then a `/bench-what-next` drain.
 
 ## Next command
 
