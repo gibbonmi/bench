@@ -10,28 +10,28 @@ import (
 )
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand —
-// two required positionals (mode, slug), no flags yet. `build` is a real word here
-// only in the sense that the mode-validity check below rejects it same as any other
-// unknown mode; the build-mode ticket is what expands both the grammar's accepted set
-// and the checks it runs.
+// two required positionals (mode, slug), no flags yet. Both `review` and `build` are
+// accepted modes; anything else is rejected by the mode-validity check below the same
+// way an unknown word always is.
 var grammar = usage.Grammar{
 	Cmd:     "bench preflight",
-	Help:    "usage: bench preflight review <slug>\n  build mode is not yet accepted.\n",
+	Help:    "usage: bench preflight review <slug>\n       bench preflight build <slug>\n",
 	MinArgs: 2,
 	MaxArgs: 2,
 }
 
-// Command implements `bench preflight review <slug>`. It is the CLI-contract seam:
-// grammar and usage errors ride usage.Parse (exit 2); a not-in-repo cwd or a bootstrap
-// failure is one toon.Errorf line (exit 1); otherwise the five-check verdict renders
-// as TOON and the exit code follows Verdict.Red (0 green, 1 red).
+// Command implements `bench preflight review <slug>` and `bench preflight build
+// <slug>`. It is the CLI-contract seam: grammar and usage errors ride usage.Parse
+// (exit 2); a not-in-repo cwd or a bootstrap failure is one toon.Errorf line (exit
+// 1); otherwise the five-check verdict renders as TOON and the exit code follows
+// Verdict.Red (0 green, 1 red).
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
 	mode, slug := parsed.Positionals[0], parsed.Positionals[1]
-	if mode != "review" {
+	if mode != "review" && mode != modeBuild {
 		return toon.Usage(grammar.Cmd, mode) + "\n", 2
 	}
 	root, err := git.Root()

@@ -49,6 +49,12 @@ type Facts struct {
 	// (e.g. "PF" for PF1..n) — the tag rows-membership scopes its check to, so a
 	// foreign-tag token (FT93) is ignored rather than flagged.
 	SpecTag string
+
+	// TicketsDirExists reports whether specs/<slug>/tickets/ exists at all —
+	// present-but-empty counts as existing. Build mode uses it to tell an absent
+	// tickets/ (row checks not-applicable) from a present one (row checks run for
+	// real, so an empty directory reads as unowned rows rather than a pass).
+	TicketsDirExists bool
 }
 
 // CheckResult is one verdict row: the check's name, its verdict ("green" or "red"),
@@ -60,10 +66,15 @@ type CheckResult struct {
 const (
 	verdictGreen = "green"
 	verdictRed   = "red"
+	verdictNA    = "not-applicable"
+
+	modeBuild = "build"
 )
 
 // Verdict is Decide's complete answer: the five check rows, in fixed order, and
-// whether any of them is red — the caller's exit-code source.
+// whether any of them is red — the caller's exit-code source. A not-applicable row
+// never contributes to Red: it is a printed, definitive verdict in its own right,
+// not a soft pass standing in for a real one.
 type Verdict struct {
 	Checks []CheckResult
 	Red    bool
@@ -71,18 +82,21 @@ type Verdict struct {
 
 // Decide classifies immutable Facts into the five-check verdict. It performs no I/O
 // and consults nothing but its argument, so the same Facts value always yields the
-// same Verdict — the byte-identical-rerun guarantee lives here.
+// same Verdict — the byte-identical-rerun guarantee lives here. Mode applicability
+// lives here rather than in the gatherer: build mode always runs base-current and
+// paths-authorized, runs rows-owned and rows-membership for real only when
+// specs/<slug>/tickets/ exists, and never runs diff-nonempty.
 func Decide(f Facts) Verdict {
 	checks := []CheckResult{
 		baseCurrentCheck(f),
 		pathsAuthorizedCheck(f),
-		rowsOwnedCheck(f),
-		rowsMembershipCheck(f),
-		diffNonemptyCheck(f),
+		rowsOwnedRow(f),
+		rowsMembershipRow(f),
+		diffNonemptyRow(f),
 	}
 	red := false
 	for _, c := range checks {
-		if c.Verdict != verdictGreen {
+		if c.Verdict == verdictRed {
 			red = true
 		}
 	}
@@ -92,6 +106,35 @@ func Decide(f Facts) Verdict {
 func green(name string) CheckResult { return CheckResult{Check: name, Verdict: verdictGreen} }
 func red(name, detail string) CheckResult {
 	return CheckResult{Check: name, Verdict: verdictRed, Detail: detail}
+}
+func notApplicable(name string) CheckResult {
+	return CheckResult{Check: name, Verdict: verdictNA}
+}
+
+// rowsOwnedRow gates rowsOwnedCheck by build-mode ticket-directory applicability:
+// not-applicable when build mode has no tickets/ directory at all, real otherwise.
+func rowsOwnedRow(f Facts) CheckResult {
+	if f.Mode == modeBuild && !f.TicketsDirExists {
+		return notApplicable("rows-owned")
+	}
+	return rowsOwnedCheck(f)
+}
+
+// rowsMembershipRow mirrors rowsOwnedRow for rows-membership.
+func rowsMembershipRow(f Facts) CheckResult {
+	if f.Mode == modeBuild && !f.TicketsDirExists {
+		return notApplicable("rows-membership")
+	}
+	return rowsMembershipCheck(f)
+}
+
+// diffNonemptyRow is not-applicable in build mode unconditionally: a build has no
+// review base to require a nonempty diff against.
+func diffNonemptyRow(f Facts) CheckResult {
+	if f.Mode == modeBuild {
+		return notApplicable("diff-nonempty")
+	}
+	return diffNonemptyCheck(f)
 }
 
 func baseCurrentCheck(f Facts) CheckResult {

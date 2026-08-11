@@ -68,7 +68,7 @@ func Gather(root, mode, slug string) (Facts, *BootstrapFailure) {
 		return Facts{}, &BootstrapFailure{"ownership fences empty", "## Ownership fences declares no backticked entry outside parentheses"}
 	}
 
-	tokens, ticketErr := gatherTicketTokens(filepath.Join(filepath.Dir(resolved), "tickets"), mode)
+	tokens, ticketsDirExists, ticketErr := gatherTicketTokens(filepath.Join(filepath.Dir(resolved), "tickets"), mode)
 	if ticketErr != nil {
 		return Facts{}, ticketErr
 	}
@@ -95,6 +95,7 @@ func Gather(root, mode, slug string) (Facts, *BootstrapFailure) {
 		DeclaredRowIDs:        ids,
 		TicketTokens:          tokens,
 		SpecTag:               specTag(ids),
+		TicketsDirExists:      ticketsDirExists,
 	}, nil
 }
 
@@ -187,26 +188,26 @@ func fenceTokensInLine(line string) []string {
 
 // gatherTicketTokens enumerates specs/<slug>/tickets/, lstat-classifying every entry
 // before it is opened so a FIFO or other special file is refused rather than blocking.
-// Review mode requires the directory to exist; a build-mode caller (not yet accepted
-// by the CLI grammar) would treat absence as not-applicable instead, which is the
-// follow-up build-mode ticket's concern.
-func gatherTicketTokens(dir, mode string) ([]string, *BootstrapFailure) {
+// Review mode requires the directory to exist; build mode instead reports whether it
+// exists at all (the second return value) so the verdict core can tell an absent
+// directory (row checks not-applicable) from a present-but-empty one (row checks run
+// for real and read as unowned rows).
+func gatherTicketTokens(dir, mode string) (tokens []string, exists bool, err *BootstrapFailure) {
 	d := bounds.ClassifyDir(dir)
 	switch d.State {
 	case bounds.StateAbsent:
 		if mode == "review" {
-			return nil, &BootstrapFailure{"tickets directory absent", dir + " does not exist"}
+			return nil, false, &BootstrapFailure{"tickets directory absent", dir + " does not exist"}
 		}
-		return nil, nil
+		return nil, false, nil
 	case bounds.StateEmpty:
-		return nil, nil
+		return nil, true, nil
 	case bounds.StateParsed:
 		// fall through to enumeration below
 	default:
-		return nil, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
+		return nil, false, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
 	}
 
-	var tokens []string
 	for _, entry := range d.Entries {
 		if entry.IsDir() {
 			continue
@@ -219,10 +220,10 @@ func gatherTicketTokens(dir, mode string) ([]string, *BootstrapFailure) {
 		case bounds.StateEmpty:
 			// nothing to scan
 		default:
-			return nil, &BootstrapFailure{"ticket file not readable", path + " is " + string(c.State) + ": " + c.Reason}
+			return nil, false, &BootstrapFailure{"ticket file not readable", path + " is " + string(c.State) + ": " + c.Reason}
 		}
 	}
-	return tokens, nil
+	return tokens, true, nil
 }
 
 // baseCurrentFacts backs the base-current check: it resolves the default branch and
