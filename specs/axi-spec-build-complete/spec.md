@@ -2,7 +2,7 @@
 
 Status: staged
 
-Decision source: reviewer-confirmed current conversation (2026-08-11), retaining the reviewed FT173 contract and replacing only the CF2 repair policy with the proportionate ticket-evidence contract below
+Decision source: `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`
 
 ## Problem
 
@@ -18,7 +18,6 @@ One atomic output migration of the complete nine-operation family to the full te
 2. As an agent whose operation is refused, I want the refusal's remedy derived from the typed precondition result the service already knows, so the advertised command can actually satisfy the observed state (the FT164 wrong-remedy class). Line: gpt-5.6-terra / high. Remedies today are flattened into error prose; recovering them by string inspection would advertise wrong or stale commands.
 3. As an agent orienting cold, I want `bench spec build` with no operation to render a live content-first family home listing every retained run with a definitive empty state, so orientation costs one call instead of a usage error plus discovery. Line: gpt-5.6-terra / medium. The projection is small but replaces a pinned usage/2 result and needs its exact old-to-new fixture.
 4. As an agent running plan/apply operations, I want each abandon/reclaim plan to emit the one authorized apply command carrying the target and fingerprint, and a stale-fingerprint refusal to emit the re-plan command, so two-call safety never costs command reconstruction. Line: gpt-5.6-terra / high. Fingerprint carry-forward is authority-bearing; a guessed or stale value must be impossible.
-5. As a reviewer accepting provisional ticket evidence, I want acceptance/covers rows, focused delegate checks, and independent coordinator verification at the public seam without mandatory `Closure:`, `## Red mutations`, self-mutation, or different-kind/different-site probe ceremony, so evidence stays proportional while a delegate still cannot certify its own work. Line: gpt-5.6-sol / high. This guidance governs future builds, its semantics are not fully gate-derived, and the current split has already stranded an exact conformance red across two repair fences.
 
 ## Implementation decisions
 
@@ -34,10 +33,6 @@ One atomic output migration of the complete nine-operation family to the full te
 - `bench spec build` with no operation renders `spec_build_runs[N]{slug,state,next}` from retained state plus its help block — replacing the current missing-argument usage/2 result under its named fixture. Malformed operations and flag errors keep their usage/2 contract.
 - The 0/1/2 exit taxonomy is unchanged: success/no-op 0, lifecycle refusal 1, usage 2. Promote's gate-result rendering is unchanged; FT185's gate payload is composed when it exists and is never re-derived here.
 - Every operation and lifecycle state receives a reviewed old-to-new fixture pair naming exactly the appended `help[]` block, the `next`-cell change, and the family-home replacement; everything outside a named delta is byte-equal.
-- Ticket authoring requires blockers, exact ownership fences, integration surfaces, contracts, acceptance/covers rows, and focused checks. `Closure:` and `## Red mutations` become an optional compatibility pair: a ticket declaring neither is valid; a ticket declaring only one refuses; a ticket declaring both receives the existing complete graph validation. Current guidance and examples omit the pair by default.
-- Write delegates run the focused checks attached to their acceptance rows. Before checkpoint, the coordinator independently verifies accepted public behavior in the exact returned tree. Hand-applied delegate self-mutations and coordinator different-kind/different-site mutation duties are removed; canary-fixture mutation tests, TDD red-green at pre-agreed seams, and review-time falsification remain unchanged.
-- The three workflow-guidance canaries re-anchor on the retained evidence routes only: an observed-red row carries its failing public operation into ticket acceptance; an already-covered row keeps its named control; and a not-TDD-able row maps to the first ticket where its seam exists. Each fixture's mutation removes that whole retained route. Their exact diagnostic suffixes are respectively `dropped the observed-red public-operation route`, `dropped the already-covered named-control route`, and `dropped the not-TDD-able first-seam route`; a category-only suffix is not an exact bite.
-- The ticket-evidence guidance, its anchors and example agreement, and the workflow-guidance canaries are one ownership fence. The current two-ticket split cannot land independently: the CF2 fixture edit strands the observed `TestSpecTicketHandoffWorkflowFixturesAreComplete` red in `internal/conformance/fixture_bite_test.go`, while the guidance edit owns the sentence that the fixture materializes. `craft-tickets` must keep the repair together unless a thinner split demonstrates its own project-gate green; thematic or chronological ordering is not that proof.
 
 ## Testing decisions
 
@@ -45,7 +40,6 @@ One atomic output migration of the complete nine-operation family to the full te
 - Old-to-new fixtures live under `internal/specbuild` and `cmd/bench` testdata; each pins the old bytes, the new bytes, and the named delta, and a candidate change outside a delta turns the pair red.
 - Action tests fail independently when a useful action is removed, a known value renders as a placeholder, an unknown value is guessed, a fixed flag is dropped, a stale fingerprint is carried, or prose is advertised as a command.
 - One registry-derived conformance check enumerates the nine operations from `buildOperationOrder` and requires the envelope per operation; promotion remains the sole full gate.
-- Ticket-evidence guidance tests attach at the shipped guidance-to-canary seam: the conformance owner materializes the real auto-discovered fixture against the current skill text and requires the fixture-specific retained-route bite. Ticket-breakdown review separately re-derives that the combined guidance/canary fence cannot be split without stranding the named package red.
 
 ### Seam diagram
 
@@ -54,12 +48,6 @@ One atomic output migration of the complete nine-operation family to the full te
         ▼
     lifecycle owner facts ──▶ [ axi.Action derivation + help renderer ] ──▶ existing TOON response + help[]
                                     ◀ tests attach here: operation/state matrix and action counterexamples
-
-    trigger: ticket authoring and provisional checkpoint evidence
-        │
-        ▼
-    guidance + example ──▶ [ proportionate ticket-evidence contract ] ──▶ focused checks + public verification
-                                 ◀ tests attach here: real workflow-guidance canary materialization
 
 ### Acceptance coverage map
 
@@ -73,14 +61,12 @@ One atomic output migration of the complete nine-operation family to the full te
 | SB6 | 1,2,3,4 | Per operation and lifecycle state, one reviewed old-to-new fixture names the exact delta — appended `help[]`, the `next`-cell change, the family-home replacement — and everything outside a named delta is byte-equal between old and new fixtures. | paired old-to-new fixture suite | observed red: `test -e internal/specbuild/testdata` exited 1 | Without the paired fixtures an unnamed output change rides the migration unseen; the pair makes every delta a reviewed artifact. |
 | SB7 | 1,2 | A registry-derived conformance check consumes the exported operation-order accessor, derives the same operation/state axes as SB2, and requires structured stdout, the 0/1/2 taxonomy, the shared help spellings at each operation and the family root, and the help envelope per operation; omitting one operation or leaving a cell unclassified is red. | `internal/conformance` over the exported `internal/spec` accessor | observed red: `rg -n 'axi-disclosure' internal/conformance` exited 1 | Derivation from the production single source rejects a hand-maintained second list that drifts when an operation or refusal constructor is added. |
 | SB8 | 1,2,4 | Removing a useful action, rendering a known value as a placeholder, guessing an unknown value, dropping a fixed flag, carrying a stale fingerprint, advertising prose as a command, and emitting a hostile value unquoted each independently turn a focused owner test red. | action derivation tests | not TDD-able until SB1 supplies the owner | Each mutation class has a distinct silent-failure mode; one aggregate assertion would let six of the seven regress unseen. |
-| SB9 | 5 | Current guidance and examples omit mandatory graph and hand-applied mutation ceremony while retaining acceptance/covers rows, focused delegate checks, and independent coordinator verification of public behavior; an explicitly declared legacy graph pair still receives complete validation. | shipped guidance, example agreement, and provisional checkpoint contract | not TDD-able as one pre-change red because the policy spans guidance and its enforcement advertisements; the accountable ticket must run the focused conformance owners after removing each obsolete duty | The exact retained obligations prevent the cheapest wrong rewrite from deleting all evidence along with mutation ceremony, while the legacy-pair control prevents optional from meaning partially validated. |
-| SB10 | 5 | CF1 removes the observed-red public-operation route and emits `dropped the observed-red public-operation route`; CF2 removes the already-covered named-control route and emits `dropped the already-covered named-control route`; CF3 removes the not-TDD-able blocker-to-first-seam route and emits `dropped the not-TDD-able first-seam route`; each registry expectation changes in the same ownership fence. | shipped guidance through the auto-discovered `workflow-guidance-anchors` canary owner | observed red on assignment `a69293c0ffc8e1dbbcb21d4ebb3dcb1c`: `go test ./internal/conformance -run TestSpecTicketHandoffWorkflowFixturesAreComplete -count=1` reported the ambiguous CF2 suffix `dropped the already-covered` while the out-of-fence registry still expected `dropped the already-covered changed-route mutation` | The real materializer rejects both wrong cuts: changing a fixture without its registry owner cannot produce a green package, and a category-only diagnostic cannot impersonate the exact retained-route bite. |
 
 ### Ticket derivation
 
-Every mapped row becomes ticket acceptance with `(covers <row>)` and a focused public evidence route under the approved fence. A row may split per operation batch by repeating its covers ID. Only an unforeseen local behavior may use `(covers local)`. An older ticket may retain the optional `Closure:` and `## Red mutations` pair, but new tickets do not add either field by default.
+Every mapped row becomes ticket acceptance with `(covers <row>)`, atomic `Closure:` tokens, and a subject mutation under the approved fence. A row may split per operation batch by repeating its covers ID. Only an unforeseen local behavior may use `(covers local)`.
 
-| row | tracer acceptance | approved fence | focused counterexample | independent owner and public operation |
+| row | tracer acceptance and atomic facts | approved fence | subject mutation | independent owner and public operation |
 |---|---|---|---|---|
 | SB1 | construct and render one action / shell and phase kinds / literal token / fixed value / open placeholder / prose refusal / quoted hostile value / newline refusal / empty help | `internal/axi` | mark an orchestration label executable, flatten a fixed argument into prose, and emit a space-bearing value unquoted | pure action tests; construct each class and require typed round-trip, exact serialized argv, or refusal |
 | SB2 | append derived help per operation and state / operation / state class / carried value | `internal/specbuild`, `cmd/bench/specbuild.go`, `cmd/bench/specbuild_test.go` | drop help from one enumerated operation or render one known value as a placeholder | operation/state matrix tests; invoke each operation through the real service under bounded fixtures |
@@ -90,8 +76,6 @@ Every mapped row becomes ticket acceptance with `(covers <row>)` and a focused p
 | SB6 | pin one old-to-new pair per operation and state / old bytes / new bytes / named delta | `internal/specbuild`, `cmd/bench` | change output outside a named delta | paired fixture suite; compare each operation's old and new fixtures and the delta ledger |
 | SB7 | derive the operation/state axes and require the envelope / operation / state cell / stdout / exit / help spellings / help shape | `internal/conformance`, `internal/spec/build.go`, `projects/benchkit.md` | remove one operation from the derived enumeration or leave one cell unclassified | conformance check; consume the exported operation-order accessor and grade each operation |
 | SB8 | prove seven mutation classes independently red / removal / placeholder / guess / dropped flag / stale fingerprint / prose / unquoted hostile value | `internal/axi`, `internal/specbuild` | apply each named mutation one at a time | focused derivation tests; one test per mutation class |
-| SB9 | omit mandatory graph and hand-applied probe ceremony / retain acceptance and covers / focused delegate checks / independent coordinator public verification / complete validation for a declared legacy pair | `.agents/skills/bench-craft-tickets/SKILL.md`, `.agents/skills/bench-craft-delegate/SKILL.md`, `.agents/commands/bench-implement-spec.md`, `internal/anchors/registry_data.go`, `internal/conformance/example_agreement_test.go`, `internal/conformance/fixture_bite_test.go` | remove focused checks or independent public verification together with the obsolete duties, or accept only one legacy graph field | conformance and example-agreement owners; run the focused `internal/conformance` and `internal/specbuild` package tests |
-| SB10 | re-anchor three canaries / observed-red public operation and exact `dropped the observed-red public-operation route` bite / already-covered named control and exact `dropped the already-covered named-control route` bite / not-TDD-able first-seam mapping and exact `dropped the not-TDD-able first-seam route` bite | `.agents/skills/bench-craft-tickets/SKILL.md`, `internal/conformance/fixture_bite_test.go`, `tests/canary/workflow-guidance-anchors/` | shorten one fixture without updating its registry owner, or replace an exact route suffix with a category-only label | workflow-guidance canary owner; materialize all three real fixtures and require each exact retained-route bite |
 
 ### Edge inventory
 
@@ -100,7 +84,6 @@ Every mapped row becomes ticket acceptance with `(covers <row>)` and a focused p
 - Boundary values — SB2 covers single-run versus many-run projections; help blocks are bounded by derivation, never truncated.
 - Malformed input — `ParseBuild`'s unknown-operation, missing-flag, and empty-value behavior is unchanged and remains pinned by the existing parser tests reaching the new home path.
 - Interrupted or partial state — SB5 covers spent partial reclaim receipts; recovery states carry their retained-ref actions.
-- Interrupted or partial authoring state — SB10 requires the guidance clause, fixture mutation, and registry expectation to move together; a package red from only part of that set is never checkpoint evidence.
 - Re-run idempotency — repeated status and home calls return identical bytes; no-op transitions keep exit 0 with their existing rows.
 - Process-boundary lifecycle — matrix fixtures reload retained state in fresh service instances; the family home reads only durable retained state.
 - Hostile environment — control bytes in slugs, paths, and error text keep the existing `sanitize.Controls`/`toon.Representable` behavior; help command values additionally serialize through the action's own argv quoting (SB1), since TOON cell escaping is not command escaping.
@@ -115,12 +98,10 @@ Every mapped row becomes ticket acceptance with `(covers <row>)` and a focused p
 - Contextual disclosure on the remaining query surfaces, conformance closure over the whole approved set, and the guidance rewrite — `axi-query-disclosure` (~14 edits, 1 promotion gate).
 - FT185's gate-result payload; this spec composes it when available and never re-derives it.
 - Widening any other operational family to AXI, `--fields`, a legacy mode, or a dual renderer.
-- Making `Closure:` and `## Red mutations` mandatory again in lifecycle parsing is a separate enforcement change (~4 edits, 1 promotion gate); this repair retains complete validation only when the optional pair is declared.
 
 ## Ownership fences
 
 - Action owner: `internal/axi/`.
 - Family migration: `internal/specbuild/`, `internal/spec/build.go`, `cmd/bench/specbuild.go`, `cmd/bench/specbuild_test.go`, `cmd/bench/testdata/`.
 - Conformance and advertisement: `internal/conformance/`, `projects/benchkit.md`.
-- Proportionate ticket-evidence contract: `.agents/skills/bench-craft-tickets/SKILL.md`, `.agents/skills/bench-craft-delegate/SKILL.md`, `.agents/commands/bench-implement-spec.md`, `internal/anchors/registry_data.go`, `internal/conformance/example_agreement_test.go`, `internal/conformance/fixture_bite_test.go`, `tests/canary/workflow-guidance-anchors/`.
 - Gate authority, lifecycle authority, `internal/gate/`, and every other command family remain unchanged inputs.
