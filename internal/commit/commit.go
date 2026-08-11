@@ -10,10 +10,13 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
-	"github.com/gibbonmi/bench/internal/specbuild"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// specHelp is the single source for --spec's semantics, shown both on a bare
+// --help request and folded into a grammar-error hint.
+const specHelp = "--spec <slug> marks the named spec implemented on the green landing commit"
 
 // Command runs a path-attributed prospective landing. Help exits 0, grammar errors exit
 // 2, and operational refusals exit 1; the landing owner alone composes, authorizes, and
@@ -21,28 +24,17 @@ import (
 func Command(args []string, stdout, stderr io.Writer) int {
 	msg, specSlug, paths, help, usageErr := parseArgs(args)
 	if help != "" {
-		fmt.Fprintln(stdout, help)
+		fmt.Fprintln(stdout, help+"\n  "+specHelp)
 		return 0
 	}
 	if usageErr != "" {
-		fmt.Fprintln(stderr, grammar.Help+" (--spec marks the spec implemented; "+usageErr+")")
+		fmt.Fprintln(stderr, grammar.Help+" ("+specHelp+"; "+usageErr+")")
 		return 2
 	}
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
-	}
-	if specSlug != "" {
-		status, statusErr := specbuild.New(root, nil, nil).Status(specSlug)
-		if statusErr != nil {
-			fmt.Fprintf(stderr, "error: cannot inspect spec build %q: %v\n", specSlug, statusErr)
-			return 1
-		}
-		if status.State == "active" {
-			fmt.Fprintf(stderr, "error: spec build %q is active; run bench spec build promote %s before committing the spec\n", specSlug, specSlug)
-			return 1
-		}
 	}
 
 	// Capture publication identity before reading attributed content. A detached checkout

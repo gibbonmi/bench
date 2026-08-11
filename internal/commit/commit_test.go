@@ -2,25 +2,19 @@ package commit
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/gibbonmi/bench/internal/specbuild"
 )
 
-type commitTestGate struct{}
-
-func (commitTestGate) Bootstrap(context.Context, string, string, string, string) error { return nil }
-func (commitTestGate) AdvanceMarker(context.Context, string, string, string, string) error {
-	return nil
-}
-
-func TestCommandRefusesSpecCommitWhileBuildActive(t *testing.T) {
+// TestCommandFlipsSpecStagedToImplementedOnGreenLanding pins the direct
+// staged->implemented flip Command wires straight to landing.Land: --spec
+// consults no run state, so a green landing on the named spec's tracked path
+// flips its one `Status: staged` line and moves HEAD.
+func TestCommandFlipsSpecStagedToImplementedOnGreenLanding(t *testing.T) {
 	root := t.TempDir()
 	gitCommit := func(args ...string) {
 		t.Helper()
@@ -29,21 +23,29 @@ func TestCommandRefusesSpecCommitWhileBuildActive(t *testing.T) {
 			t.Fatalf("git %v: %v\n%s", args, err, out)
 		}
 	}
-	gitCommit("init", "-q")
+	gitCommit("init", "-q", "-b", "main")
+	gitCommit("config", "user.email", "a@b.c")
+	gitCommit("config", "user.name", "a")
 	if err := os.MkdirAll(filepath.Join(root, "specs", "active"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "specs", "active", "spec.md"), []byte("# Active\n\nStatus: staged\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(`{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	gitCommit("add", ".")
-	gitCommit("-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-qm", "base")
-	if _, err := specbuild.New(root, commitTestGate{}, nil).Start(context.Background(), "active"); err != nil {
-		t.Fatal(err)
-	}
+	gitCommit("commit", "-qm", "base")
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("changed\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -59,17 +61,15 @@ func TestCommandRefusesSpecCommitWhileBuildActive(t *testing.T) {
 	defer os.Chdir(oldwd)
 	var stdout, stderr bytes.Buffer
 	code := Command([]string{"-m", "commit", "--spec", "active", "tracked.txt"}, &stdout, &stderr)
-	if code != 1 {
-		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
-	if !strings.Contains(stderr.String(), "bench spec build promote active") {
-		t.Fatalf("stderr = %q, want promote remedy", stderr.String())
+	got := string(mustReadFile(t, filepath.Join(root, "specs", "active", "spec.md")))
+	if strings.Contains(got, "Status: staged") || !strings.Contains(got, "Status: implemented") {
+		t.Fatalf("spec not flipped: %q", got)
 	}
-	if got := string(mustReadFile(t, filepath.Join(root, "specs", "active", "spec.md"))); !strings.Contains(got, "Status: staged") {
-		t.Fatalf("spec changed: %q", got)
-	}
-	if got := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); got != before {
-		t.Fatalf("HEAD = %s, want %s", got, before)
+	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after == before {
+		t.Fatal("HEAD did not move")
 	}
 }
 
