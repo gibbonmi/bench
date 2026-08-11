@@ -2,31 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `b022697`, 3 dirty paths, 18 unpushed commits
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/bench-preflight/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `9bae8f2` — stale, work tree `08b996f`
+Branch: `main` — HEAD `a189b87`, 24 dirty paths, 19 unpushed commits
+Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `d94dc30` — stale, work tree `244e150`
 
 ## State
 
-`/bench-implement-spec --full bench-preflight` phase reached: **complete**.
-All 25 coverage rows landed (7 implementation + 4 review-repair tickets, every
-landing gate-green); `bench preflight <build|review> <slug>` is live, advertised,
-anchor-pinned, and the routing conformance checker reads `commandRegistry`
-again. Composed review (opus/high, fresh context) returned 10 findings — 8
-repaired and re-verified by a second fresh review, which added 6 minors left
-for reviewer disposition (listed in `capture/retros/bench-preflight.md` with
-the two held vetoes: test-comment ID density, mixed-tag map policy). Retro
-written; drain owns it.
+The 2026-08-11 roadmap drain is complete. `bench-preflight` and
+`remove-spec-build-lifecycle` are retired; their retros, five ideas, and seven
+open learnings are fully dispositioned in `ROADMAP.md`. FT184 and FT196 left
+with the deleted lifecycle. The remaining staged specs are
+`axi-coherent-diff`, `axi-query-disclosure`, and `single-build-serial-gate`.
 
-Parked pre-reshape specs (`axi-coherent-diff`, `axi-query-disclosure`,
-`single-build-serial-gate`) await re-rank. Reviewer context note: the kit's
-gate descends from no-mistakes, skills from the Pocock material, CLI shape
-from AXI — hook-enforced preflight blocking (the no-mistakes posture) is
-priced in this spec's Out of scope if ever wanted.
+Next is the Pocock-alignment program's Spec C through FT107. Its reviewed source
+is the decision map retained by
+`bench spec history remove-spec-build-lifecycle`: adopt decisions #4, #5, #6,
+#8, #9, and #10 as one kit-prose batch, re-reading both named upstream sources
+for drift first. Gate authority and all three review axes stay closed. The
+one-build Opus `/bench-debug` override is not a standing rule unless the
+reviewer widens it during spec writing. After Spec C, rescope
+`axi-coherent-diff` off the retired spec-build/`axi.Action` prerequisite.
 
 ## Next command
 
-`/bench-what-next`
+`$bench-write-spec`
 
 ## Shape
 

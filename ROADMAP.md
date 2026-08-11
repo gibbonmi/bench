@@ -89,9 +89,10 @@ write volume across widths means concurrency compresses wall time without
 removing intrinsic fixture work. Resource-constrained follow-ups retain output
 blocks beside wall time and state serial coordinator/delegate cadence as an
 explicit unused-capacity reason when chosen. Decision #23 and its measured
-residual are complete; #24's specbuild parallelism, #25's remaining sized serial
-cuts, and #26's exact post-route census stay open before #8 prices candidate
-outer widths. Sources: the `gate-test-concurrency` retro, drained here;
+residual are complete. Lifecycle removal moots #24's specbuild parallelism;
+#25's remaining sized serial cuts and #26's exact post-route census stay open
+before #8 prices candidate outer widths, and the decision map first removes
+#24 from #26's blockers. Sources: the `gate-test-concurrency` retro, drained here;
 `decisions/gate-budget.md`; the retained FT171 implementation receipts.
 
 The branch-native gate rebuild supplies a timing-discipline instance: compare
@@ -509,6 +510,13 @@ destructive limit. A bounded cleanup mode may cover known generated caches, but
 must keep the existing fingerprinted, size-bounded refusal for everything else.
 Source: the repair-ticket-reslicing retro, drained here.
 
+The lifecycle-removal close exposes the destructive edge of the remaining
+cleanup route: `bench worktree clean --apply` can still preserve dirty work into
+`refs/bench/recovery/`, while the next resume sweep now deletes that namespace.
+Explicit clean therefore refuses a dirty removal unless the same recoverable,
+reviewer-visible discard contract owns the payload through completion. Source:
+the remove-spec-build-lifecycle retro, drained here.
+
 **FT169 (MEDIUM) — one sanctioned worktree landing command
 owns the stale-base dance.** The gate-fastpath build hand-ran the same sequence
 Occurrences: baseline-01
@@ -790,11 +798,14 @@ through the existing CLI seams instead. AXI stays scoped to the approved
 surfaces — the six root queries and nested `worktree list`; the spec-build
 family was in scope until its removal — and each intentional output change is proved by
 reviewed old-to-new fixtures naming its exact delta, while everything outside
-an approved delta keeps its existing exact domain tests. The staged
-replacement sequence is `specs/axi-spec-build-complete/spec.md`, then
-`specs/axi-coherent-diff/spec.md`, then `specs/axi-query-disclosure/spec.md`;
-the superseded `specs/axi-compatibility-oracle/spec.md` build is already
-retired with its run. The earlier
+an approved delta keeps its existing exact domain tests. The first replacement
+slice, `axi-spec-build-complete`, was overtaken and retired with the provisional
+lifecycle. The two parked successors, `axi-coherent-diff` and
+`axi-query-disclosure`, now require a reviewed rescope: remove the deleted
+spec-build family and `axi.Action` prerequisite while preserving their
+behavior-first changes on the existing CLI/domain seams. `axi-query-disclosure`
+remains blocked on the coherent-diff foundation and its harness-log opportunity
+ledger. The earlier
 2026-07-31 call-sites-only consolidation constraint and its 2026-08-02
 `help[]`-only relaxation are subsumed by this ruling. The truncation and
 aggregate one-source-per-fact sweep is no longer an FT173 precondition; it
@@ -847,13 +858,9 @@ as ad-hoc prose while `bench test`, `bench diff`, and `bench coverage` emit TOON
 Give the gate one structured result schema without changing exit-code authority,
 phase completeness, or the durable verdict it authors. The gate-pipeline map's
 ticket 9 closed the scope decision: no output redesign rides that pipeline build,
-so this is an independent item. The since-removed lifecycle's promote verb was the second
-surface: it emitted only its TOON status line, so the phase evidence its gate run
-produced never reached a retained surface, while the `bench commit` on the same
-tree prints per-phase evidence inline (`phase conformance: green`, `gate:
-green`). One schema covers both. The retained-record half of the same complaint
-— promotion-stage timings the required retro needs — is FT162's, not this row's.
-Entry: `/bench-write-spec`. Sources:
+so this is an independent item. `bench commit` prints the same per-phase evidence
+inline (`phase conformance: green`, `gate: green`), and one schema should own both
+public projections. Entry: `/bench-write-spec`. Sources:
 `capture/IDEAS.md`, drained here; the `injected-interface-junctions` retro,
 drained here.
 
@@ -1164,6 +1171,24 @@ The 2026-08-09 journal adds one delegation-authorization clause to the same
 requested, surface that choice before spawning rather than treating context
 pressure as authority. Source: `capture/learnings.md`, verdicted here.
 
+The Pocock-alignment program makes this row the Spec C umbrella after lifecycle
+removal and `bench preflight` landed. Its reviewed decisions are closed: add a
+companion `craft-domain` skill charged by grill, shape, and spec authoring;
+adopt the TDD examples, deepening/design-it-twice seam leaves, a disposable
+prototype skill, and frontier-round grilling; make review re-derive primary
+facts before comparison; restore reviewer gates for light-path TDD seams and
+ticket breakdowns; enforce the profile's prose budgets mechanically; and keep
+line/delegation governance in slim form. The build re-reads the two named
+upstream sources for drift before writing and preserves gate authority plus all
+three review axes. Source: the reviewed `pocock-alignment` decision map retained
+by `bench spec history remove-spec-build-lifecycle` after retirement.
+
+One decision remains scoped to its observed build until the Spec C writer asks
+the reviewer to widen it: a blocked delegate was allowed to run `/bench-debug`
+through an Opus subagent during `axi-compatibility-oracle`, contradicting the
+standing reviewer-invoked-only rule. Do not silently generalize that one-build
+override. Source: `capture/IDEAS.md` 2026-08-10, drained here.
+
 **FT189 (MEDIUM) — an upstream `git worktree list` hang reaches every Bench
 worktree read.** `git worktree list --porcelain` hangs on a FIFO gitdir placed
 in any private admin entry — reproduced 2026-08-03 at exit 124 under
@@ -1179,7 +1204,8 @@ drained here.
 written exemption.** The `injected-interface-junctions` build's P1 lived at
 exactly one such seam: a type takes an interface, the tests drive a fake, and
 nothing composes the real producer, so the junction's contract is asserted by
-the double that was written to satisfy it. `internal/specbuild` alone takes six
+the double that was written to satisfy it. Before its removal,
+`internal/specbuild` alone took six
 (`GateOwner`, `PromotionGateOwner`, `WorktreeOwner`, `ReleaseOwner`,
 `AbandonOwner`, `Runner`). Enumerate the injected interfaces across the tree and
 give each either a test that composes its real producer or a recorded exemption
@@ -1455,50 +1481,15 @@ which makes the prose unnecessary: `bench idea` can see the subject lock, so it
 can queue the line and write it when the run finishes, or refuse with that
 reason rather than silently voiding the verdict. Deciding between queue and
 refuse is the row's real work — which is why this row stays out of FT107's
-prose batch. The second face, 2026-08-01: the spec-build lifecycle's
-clean-checkout precondition refuses on a dirty `capture/IDEAS.md`, so
-mid-build parking — which `.bench/BENCH.md`'s Capture section instructs —
-blocked three verified tickets behind a one-line capture edit, and recording
-the learning reproduced the block; the session's improvised
-scratchpad-staging workaround loses the idea if the session dies first, the
-exact failure `bench idea` exists to prevent. The reduced-gate allowlist
-(`capture/`, `specs/`, `ROADMAP.md`) already names the paths whose dirtiness
-cannot invalidate a checkpoint's evidence, because the checkpoint's subject
-is the assignment worktree, not the main checkout — exempting that allowlist
-from the precondition is the smaller fix and composes with the shipped
-reduced-phase-set mechanism; decide it together with the gate-window face so
-both surfaces share one answer. Kit edit under the `craft-synthesis`
-discipline. Sources: the 2026-07-25 learnings entry, verdicted in a prior
-drain; `capture/learnings.md` 2026-08-01, verdicted here. The second face
-recurred across the FT176 close: `bench idea` dirtied the capture file and
-blocked the next path-scoped commit until folded into the landing. Source: the
-spec-build-lifecycle-preconditions retro, drained here.
+prose batch. Kit edit under the `craft-synthesis` discipline. Source: the
+2026-07-25 learnings entry, verdicted in a prior drain.
 
 The gate-window face recurred on 2026-08-02 — a `bench idea` write landed inside
 a `bench gate --fresh` window, every phase came back green, and the verdict
 rejected itself for a changed subject — which is the second full re-run this row
-has now cost. A third face joins from FT164's build: the same write against an
-*active spec-build run* is worse than a wasted gate. A capture commit before the
-run's first checkpoint forced recomposition at zero checkpoints, unrecoverable
-at the time (`2874d94` has since made it a rebase), and the run was abandoned and
-rebuilt from snapshotted delegate diffs; even with that fix, every tip move
-mid-run buys a fresh full gate for recomposition. Two things follow. The tree
-was frozen from the removed lifecycle's start to its promote — no capture
-commits, no roadmap edits — and the `--full` route's phase-boundary handoff
-write belonged outside that span; the lifecycle's removal moots the placement
-question, and the row awaits its drain verdict. Sources:
-`capture/learnings.md` 2026-08-02 and 2026-08-03, verdicted here; the
-`ft164-ticket-contracts` retro, drained here. Whatever answer lands carries the
-ft156-anchor-registry close's interim mitigation as its floor: concurrent
-capture edits around a lifecycle commit are preserved by exact hash, as that
-run did by hand. Source: the `ft156-anchor-registry` retro, drained here.
-
-The gate-decision close supplies the review-to-promote instance: capture-only
-commit `ff3818b` moved `main` after review, forcing recomposition and a fresh
-three-axis review before promotion. That is reproduced lifecycle cost for the
-existing freeze rule, not a separate capture policy. Source: the
-gate-decision-test-seam retro and `capture/learnings.md` 2026-08-07, drained and
-verdicted here.
+has now cost. The removed lifecycle moots the former clean-checkout,
+recomposition, checkpoint, and review-to-promote faces; they add no surviving
+work to this gate-lock owner.
 
 **FT138 (LOW) — instrument Bench so build economics are measurable.**
 Reviewer-priced 2026-07-25 as a nice-to-have in its current state, so it
@@ -1571,8 +1562,8 @@ extends an acceptance row already owned by an existing ticket, repair guidance
 decides whether to reuse that ticket rather than create a second source for the
 same row; a separate ticket still needs its own independently-green tracer
 outcome. The run-specific instruction to preserve the review receipt before
-assignment, checkpoint, integration, and fresh exact review is dismissed here
-as already canonical in the spec-build lifecycle. Source: the
+assignment, integration, and fresh exact review is dismissed here as already
+canonical in the current ticket/review cadence. Source: the
 `ft194-project-green-desync` retro, drained here.
 
 The 2026-08-03 lifecycle run adds six clauses to the same visit, all of them
@@ -1632,32 +1623,27 @@ repair misses, so those journal entries add evidence, not another rule. Sources:
 the covers-traceability and go-build-cache-footprint retros and the 2026-08-06
 learnings journal, drained here.
 
-**FT200 (MEDIUM) — accepted review findings enter a preflighted repair
-assignment without landing control-only commits.** The conformance-harness run
-paid a whole-project gate and recomposed an unchanged defective candidate merely
-to land a repair ticket, then repeated both after `assign` found a missing fenced
-`Contracts:` anchor. Add a lifecycle-native repair entry that derives an
-ownership-fenced ticket or assignment from accepted review findings on the
-current candidate. Before any commit gate it validates ticket grammar,
-`Contracts:` anchors, fence coverage, row closure, and assignability. A review
-receipt survives recomposition only while the implementation patch and tree,
-approved-spec digest, and every reviewed input are byte-identical; code or spec
-movement invalidates it. The final post-repair review and authoritative promotion
-gate remain mandatory. A changed shared-helper contract also names and runs its
-existing consumers before checkpoint, so a delegate's focused done-claim cannot
-stand in for that evidence. Entry: `/bench-write-spec`. Sources:
-`capture/learnings.md` 2026-08-06, verdicted here; the
-conformance-harness-scope retro, drained here.
+The bench-preflight and lifecycle-removal closes add two coordinator-proof
+rules to this same visit. A mutation probe takes a fresh, round-unique backup
+immediately before it changes an owned file, prefers owner-driven restoration,
+and deletes the backup after restore; a wholesale deletion ticket carries an
+explicit orphaned-caller sweep over every removed symbol. Both are charged
+evidence, not session-local recovery lore. Sources: `capture/learnings.md`
+2026-08-11 and both 2026-08-11 retros, drained and verdicted here.
 
-The pre-push close adds the same control-only cost and two enforcement faces:
-ticket files and a reviewer-approved spec amendment each paid full gates before
-terminal promotion, while an earlier repair loop admitted source fixes with no
-ticket fence or red mutation. The lifecycle-native entry therefore owns staged
-repair tickets, an explicit amendment operation that respects the recorded
-spec subject, and refusal of active-run source changes outside a ticket fence;
-promotion remains their only project-green boundary. Sources:
-`capture/learnings.md` 2026-08-07 and the `pre-push-guard-visibility` retro,
-drained and verdicted here.
+**FT200 (MEDIUM, decision required) — make preflight mechanical at the landing
+chokepoint.** `bench preflight build|review <slug>` now provides the phase-entry
+start-oracle over base currency, authorized paths, ticket row ownership,
+producer-derived membership, and non-empty review diffs. The removed lifecycle
+moots its repair-assignment and receipt machinery; what remains is the
+large-organization posture requested after the command shipped. Decide whether
+a branch claiming a staged spec must pass preflight in the gate, pre-push, or
+another single landing chokepoint, with a red blocking landing and without
+turning the start-oracle into a second done-oracle. The enforcement must name
+how it discovers the claimed spec, handle multiple staged specs, and remain
+optional only through an explicit project-profile decision. Entry:
+`/bench-shape-idea`. Sources: the bench-preflight spec's reviewed out-of-scope
+cut and `capture/IDEAS.md` 2026-08-11, drained here.
 
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
@@ -1716,84 +1702,6 @@ abandon retry — the crash window sits between the receipt write and
 of its ownership fence; the fix lives in `internal/worktree/resume.go`, beside
 the absent-target planning fix that landed at `dfcc71d`. Source:
 `capture/IDEAS.md` 2026-08-02, drained here.
-
-**FT184 (MEDIUM) — the removed lifecycle's checkpoint receipts were
-hand-assembled
-against an undocumented schema.** (The lifecycle is deleted; this row survives
-as diagnostic-quality evidence awaiting its drain verdict.) The first full
-lifecycle run discovered the
-row-outcome vocabulary (`passed|already-covered|not-tdd-able`) only by reading
-`receiptRows`, and the invalid-receipt error named no failing
-condition, so each invalid-receipt refusal cost an in-package debug harness.
-The row's own re-price trigger fired on 2026-08-04: landing four repair tickets
-through the lifecycle cost more coordinator turns assembling two receipts
-than verifying the two critical repairs they attested. Every field the
-coordinator hand-writes is derived data — run and assignment identities, the
-assignment base, a tree hash computed the way `git.TreeHash` does it, the
-ticket digest, one row per acceptance ID, the changed-path set diffed against
-the base, and a sha256 per assumption string — each cross-checked by
-`validateReceipt`, so any one wrong was an opaque invalid-receipt refusal.
-The coordinator should supply only what it alone knows (row outcomes, the check
-list, and the probe command, output, and exit) and the tool should derive the
-rest, which is this row's generator half stated as a contract.
-Two halves, one owner: a receipt generator (a receipt subcommand
-per assignment) that derives the row set from the ticket file —
-removing the row-set-mismatch refusals paid twice in that build — and a refusal
-that names the first failed check. Sources: the per-component-gate-scoping
-retro, drained here; `capture/learnings.md` 2026-08-04, verdicted here — the
-third build to pay the class, and the one that moved the price from LOW.
-
-The 2026-08-03 run re-priced the generator half and added two faces. The
-coordinator hand-built a `make-receipt.sh` and spent roughly 30k tokens
-reverse-engineering the checkpoint and review receipt schemas, so the generator
-emits the tree hash, digests, and row IDs pre-filled for a named assignment. It
-also enumerates the disposition vocabulary, which is the second face: a review
-receipt marking closed findings `accepted` reads to `hasAcceptedFinding` as an
-unrepaired defect, `promote` refused, and clearing the recorded review cost a
-recomposition round — `accepted` means a real defect the review accepts
-unrepaired, and closed findings need a different word. Either the generator
-enumerates the vocabulary or the schema validates the field and refuses the wrong
-word at submission. Third face, same owner: the lifecycle's `assign --ticket`
-refused a repo-relative or absolute path with a must-name-one-regular-ticket-file
-error, which reads as "the file is missing" when the file is
-present and only the *form* is wrong; it cost two failed invocations before the
-parser was read. A refusal naming the expected form would have cost none.
-Sources: `capture/IDEAS.md` 2026-08-03 and both 2026-08-03 retros, drained here;
-`capture/learnings.md` 2026-08-03, verdicted here. The gate-evaluation-snapshot
-close repeated the generator request after its coordinator manually reproduced
-the tree-hash and receipt schemas. Source: the gate-evaluation-snapshot retro,
-drained here. The ft156-anchor-registry close repeats the third face: `--ticket`
-should say it expects the ticket filename token, not a repository path. Source:
-that retro, drained here.
-
-Checkpoint and review evidence paths add the same diagnostic defect: a relative
-receipt path was rejected only as invalid-receipt, while retrying the
-same bytes at an absolute path succeeds. Name the absolute-path requirement and
-the failing field. The lifecycle-native generator derives checkpoint and review
-receipts from run state and retains structured command exit/output evidence, so
-coordinators verify a done-claim without reconstructing or repeating a broad
-suite. Sources: `capture/IDEAS.md` 2026-08-07 and `capture/learnings.md`
-2026-08-06, drained and verdicted here; the gate-decision-test-seam and
-conformance-harness-scope retros, drained here.
-
-Repair-ticket reslicing repeats the `assign --ticket` form defect: the refusal
-must name the accepted ticket-basename form rather than implying a present path
-is missing. Source: the repair-ticket-reslicing retro, drained here.
-
-The pre-push close repeats the discovery failure at the checkpoint seam: the
-run ID was absent from `status --full`, and `outcome: green` was rejected without
-naming the accepted `passed|already-covered|not-tdd-able` vocabulary. The
-lifecycle-native generator and field-specific refusals above own both facts.
-Source: the `pre-push-guard-visibility` retro, drained here.
-
-**FT196 (LOW) — a Bench-owned lifecycle request-ID generator.** `bench spec
-build assign` (and its lifecycle siblings) take a caller-minted `--request <id>`
-idempotency key, and nothing in Bench mints one, so agents reach for `openssl
-rand -hex` — an external dependency for a value the CLI could supply. Give the
-lifecycle a Bench-owned ID source: either a small generator verb or minting the
-key internally when the flag is omitted, whichever the idempotency contract
-allows. Sources: `capture/IDEAS.md` 2026-08-05 and the `ft156-anchor-registry`
-retro, drained here.
 
 **FT197 (MEDIUM) — the Go core owns gate invocation and process lifetime.** The
 shell entry currently hops from `bin/bench.sh` through `.bench/gate.sh` before
@@ -1965,6 +1873,13 @@ behavior off the spec's own map — decide it alongside the check, same owner.
 Found by the Codex falsification pass on `3eb1c9a`. Source: `capture/IDEAS.md`,
 drained here.
 
+The bench-preflight review found the same membership oracle half-disabled by a
+mixed-tag map: rows-membership derives one `SpecTag` from `ids[0]`, so rows under
+another tag escape the comparison. Decide here whether a coverage map must carry
+exactly one tag or membership must partition and scan per tag; either answer is
+enforced by the coverage validator and includes a mixed-tag red fixture. Source:
+`capture/IDEAS.md` 2026-08-11 and the bench-preflight retro, drained here.
+
 **FT174 (MEDIUM) — ticket files have one enforced dependency, ownership, and
 mutation grammar.** Ticket files carry a `Blocked by:` field keyed by sibling
 title, and no parser reads it. A retitle silently breaks the edge, and nothing
@@ -2034,6 +1949,12 @@ path-scoped planning gate. `craft-tickets` also expands each independently
 removable member of a compound coverage row, including its retained-inventory
 mutation fixture, before the first breakdown review. Source: the
 spec-ticket-handoff-contract retro, drained here.
+
+The bench-preflight close adds one hostile-class obligation: a line-oriented
+grammar's mutation inventory names cross-line variants explicitly rather than
+crediting a single-line red, and the ticket preflight carries the corresponding
+multi-line fixture before review. Source: the bench-preflight retro, drained
+here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
@@ -2294,6 +2215,15 @@ failure between the FIFO plant and its removal in
 binary in that window, and check whether a git child survives blocked on the
 FIFO. Source: `capture/IDEAS.md` 2026-08-09, drained here.
 
+The bench-preflight close adds two concrete harness holes. Its recursive path
+walk lacks the nested-FIFO fixture needed to prove a discovered special file
+refuses before read, and the release-tier root conformance run reported
+`injected-port` finding no ports for `internal/canary`. Preserve the latter as
+an observed `prep-release` red and diagnose it through that exact command before
+changing derivation; the fixture gap can land with the focused preflight test.
+Sources: `capture/IDEAS.md` 2026-08-11 and the bench-preflight retro, drained
+here.
+
 ## Standards debt — one batched light-path pass
 
 Three rows plus FT142's standards track are shippable together as small
@@ -2340,6 +2270,13 @@ lives (commit or spec, never an in-file transcript). One site joins the second
 pass from FT164's close: `ParseTicket`'s doc comment names its consumer rather
 than its contract. Sources: `capture/IDEAS.md`, drained in a prior run; the
 `ft164-ticket-contracts` retro, drained here.
+
+The bench-preflight close adds its remaining comment debt to this pass: remove
+the provenance narration in `gather_test.go`, correct the stale `RenderError`
+doc line, and decide ticket-ID density in tests under the existing
+identifier-provenance rule. The `fenceTokensInLine` parameter-list smell has no
+behavioral defect and does not graduate independently. Source: the
+bench-preflight retro, drained here.
 
 **FT94 (LOW) — single-sourced `bench resume` summary
 golden.** The resume summary line is asserted as a hardcoded exact-string
@@ -2483,66 +2420,42 @@ recommended table is sequencing advice.
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
-| FT200 | FT184 | Let the repair entry consume lifecycle-derived receipts rather than preserving the hand-assembled schema it exists to remove. |
 
 ### Goal tracks: guidance prose and the claim ledger
 
 Two reviewer goals share one path: implement the guidance-prose backlog, and
 ship `bench cite` (FT175) on an AXI-compliant CLI (FT173). The process
 precursor for both is landed: FT164's ticket-contract core shipped 2026-08-03,
-so every later build slices its tickets through a `craft-tickets` the specbuild
-parser accepts. The payoff
+so every later build slices independently green tickets through the current
+`craft-tickets` grammar. The payoff
 facts shaping the order, verified in-tree 2026-08-02 with an independent
 mid-tier refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the
 gate's reduced scope, so every separately-landed prose diff pays a full gate
 — rows batch on the shared full gate, not just shared files; anchor-pinned
 files couple prose diffs to conformance fixture updates (`craft-delegate` 14
 anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and AXI
-action mechanics compound through every later CLI change. FT173 is the
-top roadmap priority and lands its three independently reviewed specs before
-the prose track resumes.
+action mechanics compound through every later CLI change. The reviewed
+Pocock-alignment Spec C is the immediate program continuation; FT173 follows
+with two respecified behavior-first builds.
 
-1. Implement FT173 in three independently reviewed behavior-first specs. The
-   staged sequence was `axi-spec-build-complete` (retired with the spec-build
-   family it covered), then `axi-coherent-diff`
-   (`bench diff` as the one coherent Git-inspection snapshot with contextual
-   actions), then `axi-query-disclosure` (contextual disclosure and
-   schema/help improvements across the remaining approved query surfaces,
-   registry-derived conformance closure, and the ten-principle guidance
-   advertisement). The spec-build slice composes FT185's gate-result payload
-   when available and does not re-derive it; the capstone's required
-   harness-log review folds observed CLI leverage into the spec or gives it
-   an explicit disposition. The superseded `axi-compatibility-oracle` build
-   is already retired with its run, with the bounded
-   process observer and registry/grammar census salvageable from its
-   candidate only where they directly protect the new behavior. FT173
-   remains open until all three land.
-2. Take FT144's one-decision-both-phases call as the remaining shaping item.
-   Reviewer latency is the binding constraint: grills serialize on the reviewer
-   while builds parallelize on agents. Five of the original six items have
-   closed — FT173's principle-9 relaxation and FT175's spec-start gate were
-   ruled 2026-08-02, FT175's three ledger decisions moved behind the owners
-   they consume (step 5), FT164's four flagged spec calls closed when
-   its spec was written and implemented, FT181 shipped 2026-08-03, and
-   FT156's anchor-mechanism ruling closed when its registry shipped and the
-   spec retired 2026-08-05.
-3. Take FT171's gate fix next: decision #23 and its measured materialization
-   residual shipped, so resume shaping at #24 and #25, then run #26's exact
-   post-route census before candidate-width pricing changes outer concurrency.
-   FT141 builds in parallel where
-   capacity allows: it is Go, prose-independent, and it unblocks FT107
-   *whole* — splitting the fix-loop clause out would spend a second spec,
-   review, and full gate on the same anchor-pinned surface, so the batch
-   waits for FT141 instead.
-4. Land the prose track's falsification before its wide batch: FT158 first
-   (with FT170 unproven, the cross-harness refute pass is
-   the only demonstrated defect-finder for prose diffs); the FT156 anchor
-   registry is already in place under it. Then prose batch 1: FT107
-   whole + FT89 + FT99 + FT144, with FT102, FT112, and FT165 riding on the
-   shared gate — disjoint files make them safer to batch, and FT165 early
-   improves every later grill. Then FT179 + FT111 as one visit, with FT164's
-   repair-lane residual riding it as a second `craft-delegate` visit, then
-   FT108.
+1. Write and build the Pocock-alignment program's Spec C through FT107. The
+   reviewed map is closed and retained by the retirement history; it owns the
+   domain skill and doctrine leaves, primary-source review re-derivation,
+   reviewer gates, prose budgets, and slim line/delegation governance. The
+   writer re-checks both named upstream sources for drift before locking the
+   spec. FT158, FT165, FT100, and the other prose rows remain visible inputs;
+   their eventual consolidation is a separate restructure judgment.
+2. Rescope FT173's two parked behavior-first specs. `axi-coherent-diff` removes
+   the retired spec-build/`axi.Action` prerequisite while keeping `bench diff`
+   as the coherent Git snapshot; `axi-query-disclosure` follows with the
+   harness-log ledger, contextual disclosure, registry-derived conformance,
+   and ten-principle guidance. Each returns through review before build.
+3. Implement FT171's staged `single-build-serial-gate` slice, mark deleted
+   specbuild decision #24 moot, then resume #25 and run #26's exact post-route
+   census before pricing outer concurrency. FT141 may proceed independently
+   where capacity allows.
+4. Shape FT198 once the three actionable reviewed slices above are moving; the
+   board's 185 KB full snapshot now confirms the progressive-loading trigger.
 5. Shape FT175's decision map once the foundation and `help[]` land, and
    write the FT175 spec once the owners it consumes — truncation,
    aggregates, `help[]` — are settled, then build it as vertical green
@@ -2557,8 +2470,8 @@ the prose track resumes.
    earlier and git-inspection stays off the critical path. Its three ledger
    decisions are deferred until those two implementations land, so the FT175
    shape-idea session moves to then rather than joining the front-loaded one.
-6. FT100 grills and builds last, after FT89 establishes which guidance is
-   authoritative and past FT170's 2026-08-12 revisit.
+6. FT100's remaining work grills and builds last, after FT89 establishes which
+   guidance is authoritative and past FT170's 2026-08-12 revisit.
 
 Fold FT106's verified-document vocabulary and FT162's exact subject binding
 into the FT175 spec instead of building them as prerequisites; FT99 rides
@@ -2571,6 +2484,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT173 forward AXI build: `axi-coherent-diff`, then the harness-log-informed `axi-query-disclosure` capstone (`axi-spec-build-complete` and the superseded `axi-compatibility-oracle` run are already retired; both parked specs await their rescope).
-2. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`: one exact-snapshot Bench binary per top-level run and one serial phase schedule; #24–#26's census and any outer-width pricing resume on its landed baseline.
-3. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
+1. `/bench-write-spec` — FT107's Pocock-alignment Spec C from the reviewed decisions retained by `bench spec history remove-spec-build-lifecycle`; re-check the two named upstream sources for drift first.
+2. `/bench-write-spec` — FT173 rescope of `axi-coherent-diff` off the retired spec-build/`axi.Action` prerequisite; `axi-query-disclosure` remains its reviewed successor.
+3. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`, then retire moot #24 and resume #25–#26 on the landed serial-gate baseline.
