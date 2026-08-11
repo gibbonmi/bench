@@ -1,5 +1,20 @@
 # Learnings — usage journal
 
+## 2026-08-11 — abandon has no sanctioned route past a dirty staged spec  [open]
+Applying `bench spec build abandon` with an uncommitted staged-spec revision hit
+a dead end from every side: abandon refuses a dirty working checkout; `git
+stash` is guard-blocked as a working-tree set-aside; and committing the revision
+satisfied cleanliness but changed the spec blob, so abandon then refused with
+`staged spec no longer matches recorded subject`. Recovery took a revert commit,
+the abandon, and a revert-of-the-revert — three full-gate cycles (~9 minutes)
+for what should be one operation. A superseding spec revision is a normal reason
+to abandon a run, so the pin defends nothing the apply doesn't destroy anyway.
+Proposed rule change: exempt the staged spec path from abandon's clean-checkout
+and spec-identity preconditions in `internal/specbuild/precondition.go` —
+mirroring abandon's existing moved-tip exemption — so a dirty or committed-ahead
+spec revision survives the abandon untouched instead of forcing the revert
+dance. Identity, ownership, and evidence stay binding.
+
 ## 2026-08-11 — `bench commit --spec` is promotion semantics, not ticket attribution  [open]
 Passed `--spec axi-spec-build-complete` while landing a repair-ticket planning
 batch, intending only to associate the commit with the active build. The commit
