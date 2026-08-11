@@ -3,7 +3,7 @@
 Blocked by: permanent-optional-ticket-inventory.md
 Ownership fence: `.agents/skills/bench-craft-tickets/SKILL.md`, `.agents/skills/bench-craft-delegate/SKILL.md`, `.agents/commands/bench-implement-spec.md`, `internal/anchors/registry_data.go`, `internal/conformance/example_agreement_test.go`, `internal/conformance/fixture_bite_test.go`
 Integration surfaces: craft-tickets taught template→example-agreement oracle; write-delegate evidence contract→implement-spec orchestration; permanent guidance markers→anchor registry and conformance bite fixtures
-Contracts: the taught ticket example crosses `craft-tickets` into `ParseTicket`/example agreement with blockers, fence, integration surfaces, contracts, acceptance rows, and covers mapping but no mandatory Closure or Red-mutations section, asserted by MG1; focused delegate checks and coordinator-owned public behavior verification cross `craft-delegate` into `bench-implement-spec`, anchors, and bite fixtures without self-mutation or different-kind probe duties, asserted by MG2
+Contracts: the taught ticket example crosses `.agents/skills/bench-craft-tickets/SKILL.md`→`internal/conformance/example_agreement_test.go` with blockers, fence, integration surfaces, contracts, acceptance rows, and covers mapping but no mandatory Closure or Red-mutations section, asserted by MG1; focused delegate checks and coordinator-owned public behavior verification cross `.agents/skills/bench-craft-delegate/SKILL.md`→`.agents/commands/bench-implement-spec.md`, `internal/anchors/registry_data.go`, and `internal/conformance/fixture_bite_test.go` without self-mutation or different-kind probe duties, asserted by MG2
 
 ## What to build
 

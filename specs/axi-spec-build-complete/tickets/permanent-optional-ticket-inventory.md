@@ -3,7 +3,7 @@
 Blocked by: none
 Ownership fence: `internal/specbuild/assign.go`, `internal/specbuild/assign_covers_test.go`, `internal/specbuild/refresh.go`, `internal/specbuild/refresh_repin_test.go`, `scripts/gremlins-diff.sh`, `CHANGELOG.md`
 Integration surfaces: parsed presence of optional `Closure:` and `## Red mutations` fields→`requireClosure`; optional legacy graph values→existing bidirectional validator; assignment and refresh revalidation→same `requireClosure` owner; permanent behavior→`scripts/gremlins-diff.sh` and `CHANGELOG.md`
-Contracts: four parser states cross assign and refresh unchanged—neither field succeeds, Closure-only refuses, heading-only refuses, and both declared invoke the complete existing validator—asserted by PO1 and PO2; the permanent no-flag behavior crosses lifecycle enforcement into the changed-package referee and changelog, asserted by PO1
+Contracts: four parser states cross `internal/specbuild/assign.go`→`internal/specbuild/refresh.go` unchanged—neither field succeeds, Closure-only refuses, heading-only refuses, and both declared invoke the complete existing validator—asserted by PO1 and PO2; the permanent no-flag behavior crosses `internal/specbuild/assign.go`→`scripts/gremlins-diff.sh` and `CHANGELOG.md`, asserted by PO1
 
 ## What to build
 
