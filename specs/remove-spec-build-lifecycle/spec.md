@@ -1,6 +1,6 @@
 # Remove the provisional spec-build lifecycle
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/remove-spec-build-lifecycle/decisions/pocock-alignment.md` (compiled ready map, tickets #1, #3, #11, #12; reviewer-resolved 2026-08-11)
 
