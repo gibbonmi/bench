@@ -77,7 +77,7 @@ func Gather(root, mode, slug string) (Facts, *BootstrapFailure) {
 	reviewBase, reviewBaseResolved, reviewBaseHint := reviewBaseFacts(root)
 	var changedPaths []string
 	if reviewBaseResolved {
-		changedPaths, err = changedFilePaths(reviewBase)
+		changedPaths, err = diff.ChangedFilePaths(reviewBase)
 		if err != nil {
 			return Facts{}, &BootstrapFailure{"changed files not readable", err.Error()}
 		}
@@ -253,25 +253,4 @@ func reviewBaseFacts(root string) (base string, resolved bool, hint string) {
 		return "", false, errKind + ": " + errHint
 	}
 	return base, true, ""
-}
-
-// changedFilePaths mirrors bench diff's exact changed-file semantics — `git diff
-// --name-status --no-renames -z <base>`, which folds in committed, index, and tracked
-// worktree changes since base — without importing the diff package's unexported
-// parser. Only the path half of each row is needed here.
-func changedFilePaths(base string) ([]string, error) {
-	raw, err := git.Raw("diff", "--name-status", "--no-renames", "-z", base)
-	if err != nil {
-		return nil, err
-	}
-	parts := strings.Split(string(raw), "\x00")
-	var paths []string
-	for i := 0; i+1 < len(parts); i += 2 {
-		status, path := parts[i], parts[i+1]
-		if status == "" && path == "" {
-			continue
-		}
-		paths = append(paths, path)
-	}
-	return paths, nil
 }

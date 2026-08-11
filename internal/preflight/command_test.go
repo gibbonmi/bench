@@ -269,6 +269,36 @@ func TestCommandOutOfFencePath(t *testing.T) {
 	}
 }
 
+// TestCommandUnstagedOutOfFenceRed is RS1: a tracked file outside every fence entry,
+// already identical between the review base and HEAD, edited in the worktree with no
+// `git add` or commit, still makes paths-authorized red naming the path — proving the
+// changed-set resolution folds in tracked-worktree edits and not just the base..HEAD
+// commit range. The file is committed at the shared base commit itself (never
+// recommitted on feature) so a base..HEAD diff sees no change to it at all; only the
+// uncommitted worktree edit distinguishes it.
+func TestCommandUnstagedOutOfFenceRed(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	mustWriteFile(t, "unfenced/other.go", "package other\n")
+	runGit(t, "add", ".")
+	runGit(t, "commit", "-q", "-m", "c0")
+	runGit(t, "checkout", "-q", "-b", "feature")
+	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	runGit(t, "add", "internal/"+slug+"/foo.go")
+	runGit(t, "commit", "-q", "-m", "c1")
+	mustWriteFile(t, "unfenced/other.go", "package other\n\n// edited, never staged\n")
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.Contains(out, "paths-authorized,red") || !strings.Contains(out, "unfenced/other.go") {
+		t.Errorf("output missing red paths-authorized naming unfenced/other.go:\n%s", out)
+	}
+}
+
 // TestCommandFencePrefixBoundary is C3's prefix-boundary half: internal/git2 must not
 // match a fence entry of internal/git.
 func TestCommandFencePrefixBoundary(t *testing.T) {

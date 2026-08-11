@@ -276,6 +276,23 @@ func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 	return mb, method, "", ""
 }
 
+// ChangedFilePaths is the single source of the changed-path set for bench diff and
+// its consumers: the path half of changedFiles' rows for a resolved review base,
+// carrying bench diff's exact committed+index+tracked-worktree semantics — `git diff
+// --name-status --no-renames -z <base>` — so a consumer never re-derives that git
+// invocation or the NUL-pair parse.
+func ChangedFilePaths(base string) ([]string, error) {
+	rows, err := changedFiles(base)
+	if err != nil {
+		return nil, err
+	}
+	paths := make([]string, 0, len(rows))
+	for _, row := range rows {
+		paths = append(paths, row[1])
+	}
+	return paths, nil
+}
+
 // resolveBase returns the recorded-key base and `recorded` when the key names a
 // reachable ancestor, or ("", <loud fallback method>) when the key is present but
 // unreachable/divergent, or ("","") when there is no usable recorded key.
