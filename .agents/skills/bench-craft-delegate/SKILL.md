@@ -96,27 +96,26 @@ add the missing row when the mutation comes back silently green. A delegate
 asked to reason about whether the mutation would fail returns a plausible
 paragraph; one asked to run it returns a diagnostic.
 
-### Provisional spec-build assignments
+### Spec-backed ticket delegates
 
-A reviewed spec-backed build uses the public `bench spec build` lifecycle instead
-of the generic per-ticket landing below. The delegate returns focused evidence and
-its mutation probe from its owned assignment; it does not checkpoint, integrate,
-release, or claim the assignment green. The coordinator assembles the receipt
-outside that worktree and probes the exact returned tree independently. The
+A reviewed spec-backed build lands each ticket through the generic per-ticket
+landing below. The delegate returns focused evidence and
+its mutation probe from its owned worktree; it does not land the diff or claim
+the ticket green. The coordinator probes the exact returned tree independently
+before landing it. The
 coordinator probe's mutation kind differs from the delegate author's mutation
 kind. It also differs in site from every probe the delegate ran: a second probe
 at the same site is vacuous, and a vacuous probe is indistinguishable from a
 pass. A second instance of the same omission or swap is correlated evidence, not
 an independent probe.
 
-The lifecycle checkpoints, integrates, and releases the assignment; the
-coordinator does not run a generic release. A delegate blocked by a defect
+A delegate blocked by a defect
 outside its fence stops editing and returns a debug receipt rather than a
-done-claim or an out-of-fence fix; the coordinator's repair-and-refresh route
+done-claim or an out-of-fence fix; the coordinator's repair route
 is `.agents/commands/bench-implement-spec.md`'s "When a delegate is blocked
-outside its fence". A provisional checkpoint is not
-project-green evidence and cannot satisfy a done-claim. Only the exact composed
-promotion subject can receive the gate's green verdict. The generic isolation and
+outside its fence". Delegate evidence is not
+project-green evidence and cannot satisfy a done-claim: only the gate's verdict
+on the landed tree can. The generic isolation and
 verification rules below still apply to light-path and non-spec worktrees.
 
 The charge also names the gate layer that owns each artifact class the

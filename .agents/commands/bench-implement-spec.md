@@ -1,5 +1,5 @@
 ---
-description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the lighter-path threshold in .bench/BENCH.md lets you build without a spec. Declares its line and uses TDD at seams. An opt-in `--full <spec>` run carries the spec through implementation, exact-candidate review, promotion, and terminal reporting — resuming from capture/session-handoff.md.
+description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the lighter-path threshold in .bench/BENCH.md lets you build without a spec. Declares its line and uses TDD at seams. An opt-in `--full <spec>` run carries the spec through implementation, review, the final green landing, and terminal reporting — resuming from capture/session-handoff.md.
 ---
 
 # /bench-implement-spec — do the work at the seams
@@ -13,9 +13,9 @@ and uses the acceptance coverage map to keep the build target fixed.
 ## Exit handoff
 
 Close by reporting the implemented stories, the acceptance coverage status for
-each row, and the durable spec-build state. A reviewed spec-backed build closes
-through `bench spec build promote`, then `/bench-final-check` reports its retained
-terminal evidence and captures the retro; a light-path build keeps the existing
+each row, and the landed commits. A reviewed spec-backed build closes through
+`/bench-review-implementation` over the composed diff, then the final green
+landing commit and `/bench-final-check`; a light-path build keeps the existing
 `/bench-review-implementation` then `/bench-final-check` route. A build that stops
 short exits through "When the build stops short" below and recommends its one
 durable next action.
@@ -44,39 +44,25 @@ procedure to the unspecced change and write its one ticket.
 With the ticket files written and nothing assigned, run the breakdown review
 `craft-tickets` owns: one fresh read-only delegate grades the ticket breakdown
 before any assignment; a harness that cannot spawn one runs the pass inline and
-flags it in the build plan. Its findings are reslices, repaired before
-`bench spec build start` rather than through a repair round after code lands.
+flags it in the build plan. Its findings are reslices, repaired before the
+first ticket is assigned rather than through a repair round after code lands.
 
-Fence drift takes the same route and the lifecycle does not start without a complete handoff ledger.
+Fence drift takes the same route and no ticket is assigned without a complete handoff ledger.
 Send seam or fence drift through `$bench-write-spec`, obtain approval for the
 repaired spec, then require `craft-tickets`' completed breakdown review before
-`bench spec build start`; `craft-tickets` owns the ledger schema.
+assigning any ticket; `craft-tickets` owns the ledger schema.
 
-For a reviewed spec-backed build, run `bench spec build start <slug>` before the
-first assignment. The public lifecycle is `start` → `assign` → `checkpoint` →
-`integrate` → `review` → `promote`; `status` inspects the run and `abandon`
-plans or applies cleanup. These eight operations are the complete mutation
-surface a build harness drives: the harness supplies readiness and evidence but
-does not reproduce the lifecycle in Git commands. `reclaim` sits outside that
-surface — a maintainer runs it, plan then `--apply`, over a run that has already
-ended, to delete the provably dead provisional refs it left behind.
+Complete `craft-tickets`' contract discovery before assignment. Nothing
+mechanical validates ticket shape or fences for you: an incomplete ticket
+surfaces as a composed red several tickets later, so repair it before it is
+assigned.
 
-Complete `craft-tickets`' contract discovery before capacity accounting.
-Lifecycle acceptance validates ticket shape, and checkpointing enforces the
-declared fence, but neither proves that the ticket's declared surfaces account
-for every required consumer; repair an incomplete ticket before deriving the
-ready frontier.
+Tickets land serially, commit-on-green. Work respects `Blocked by:` order — a
+ticket starts only after every blocker has landed — and each ticket's verified
+diff lands on the branch with path-scoped `bench commit` before the next
+ticket's landing.
 
-Re-derive the complete ready frontier and the harness's live capacity before
-dispatch. Assign every ownership-safe ticket up to the smaller of frontier size
-and available capacity. For every unused harness slot, record exactly one
-reason: dependency, overlapping ownership fence, unavailable harness capacity,
-or measured resource constraint. Refill the ownership-safe frontier after every
-integration or assignment release while another delegate remains active. A
-one-shot fan-out followed by waiting for the frontier to drain is not this
-cadence.
-
-Light-path work does not enter `bench spec build`. It retains one independently
+Light-path work takes the same landing: one independently
 green ticket, focused checks, and path-scoped `bench commit` as its atomic
 full-project-gate landing.
 
@@ -99,7 +85,7 @@ contract, not a preference:
   sequentially; a spec that lands as one atomic diff is delegated whole to one
   worktree-isolated write subagent, and the invoking session still verifies the
   returned done-claim through the `craft-delegate` contract. Each routed slice
-  is an independently-attributed frontier ticket with its own fresh charge.
+  is an independently-attributed ticket with its own fresh charge.
 - A read-only helper (research, review, planning, search) does not satisfy the
   write requirement. When any change may remain inline, and what a harness that
   cannot spawn a write subagent does instead of editing, are `craft-delegate`'s
@@ -113,7 +99,7 @@ contract, not a preference:
 
 - Before the first slice, check for `reviews/<spec-slug>.md`. When it exists, its
   findings are part of this build's target: resolve them alongside the stories,
-  and the promoted composition that closes them names and deletes the file, so
+  and the green fix commit that closes them names and deletes the file, so
   resolved findings never resurface as pickup work.
 - Work the user stories in vertical slices, not all-tests-first horizontal ones.
 - Use TDD only at the pre-agreed seams; its bounds are `craft-tdd`'s.
@@ -126,19 +112,10 @@ contract, not a preference:
   silently upgrade them into TDD coverage.
 - Each write delegate runs the ticket's focused checks and records its own
   mutation probe. The coordinator independently probes the returned tree through
-  a different mutation kind, then assembles the bounded checkpoint receipt
-  outside the assignment worktree. The coordinator probe is independent evidence,
-  not a replay or transcription of the delegate's pass.
-- Submit focused delegate evidence plus the coordinator-owned, different-kind
-  probe through `checkpoint`.
-- Submit that receipt through `bench spec build checkpoint`, then use
-  `bench spec build integrate`; the lifecycle owns checkpoint commits,
-  compare-and-swap integration, and assignment release. Do not run `bench commit`
-  for a provisional spec-build ticket, and do not release an integrated assignment
-  through generic worktree porcelain.
-- The harness never runs `git commit`, `git update-ref`, `git worktree`, or
-  patch-replay plumbing for this lifecycle. A public operation refusal is a
-  lifecycle result to diagnose or re-enter, never permission to synthesize it.
+  a different mutation kind — independent evidence, not a replay or
+  transcription of the delegate's pass — then lands the verified diff with
+  path-scoped `bench commit -m "<msg>" <path>...`, which gates and commits
+  atomically, and releases the worktree.
 - During structure housekeeping, apply `craft-seams`' split-or-grant rule.
 - One small change at a time, repo stays green — invariant 4 in `.bench/BENCH.md`.
 - Every delegation during the build carries its own line and, when the spec has
@@ -147,8 +124,8 @@ contract, not a preference:
   charge also names `craft-comments` by path
   (`.agents/skills/bench-craft-comments/SKILL.md`) — comment discipline rides
   the charge, not the delegate's priors.
-- Verify each returned provisional claim against its charged rows and report the
-  round in one line: checkpointed, or the missed case and the re-charged repair.
+- Verify each returned done-claim against its charged rows and report the
+  round in one line: landed, or the missed case and the re-charged repair.
 - Verify a claim against the tree as it stands, not against memory; a claim
   over a whole set is verified by enumerating the set, never by extending one
   measured member.
@@ -188,49 +165,19 @@ already fixes the cause, required fence, and proceed condition, so it takes one
 or more repair tickets, never a small spec. Each ticket adds its own ownership
 fence, at least one acceptance row, and each row's red mutation.
 One repair ticket remains the common case. This command owns only the resulting
-tickets' lifecycle orchestration.
+tickets' orchestration.
 
 The coordinator authors every repair ticket file; the implementing delegates
 never author their own acceptance criteria. Having them draft criteria for
 coordinator approval adds no independent source, only a round trip.
 
-With the receipt and coordinator-authored tickets in hand, the coordinator
-drives the repair through the public lifecycle, with no synthesized commits,
-refs, worktrees, or patch replay:
-
-1. Write every repair ticket under `specs/<slug>/tickets/`, then land that
-   planning batch with path-scoped `bench commit`.
-2. The planning commit moves the branch tip. Apply the moved-tip recomposition
-   rule under `Close on green` before assigning any repair ticket.
-3. For the one-ticket common case or an ordered repair chain, follow the
-   ready-frontier cadence under `First derive the tickets` and apply every
-   ordinary operation to every ticket:
-   - Assign each repair ticket through the ordinary `assign` operation.
-   - Checkpoint each assigned repair ticket through the ordinary `checkpoint`
-     operation.
-   - Integrate each checkpointed repair ticket through the ordinary `integrate`
-     operation.
-4. The terminal repair ticket's proceed condition is a precondition to refresh. A
-   landed non-terminal prefix does not satisfy it and does not authorize refresh.
-5. Only after either the one-ticket result or the complete ordered repair chain
-   lands and its terminal repair ticket satisfies that precondition, refresh the
-   blocked work. The refresh target is the original blocked assignment:
-   the same assignment whose delegate reported the out-of-fence defect. The refresh
-   evidence is the original validated debug receipt: the same receipt the reviewer
-   accepted for that assignment. Invoke `bench spec build assign <slug>
-   --ticket <ticket> --request <id> --refresh <receipt>` with the request the
-   assignment was created under. The lifecycle preserves the assignment's
-   attributed in-fence work byte-for-byte behind a durable preservation ref,
-   refuses a forged or missing receipt, an out-of-fence payload, a replay
-   conflict, or candidate movement, and an interrupted refresh converges on
-   re-entry.
-6. Resume the original delegate only after the refresh reports the assignment
-   based on the repaired candidate; it completes, checkpoints, and integrates
-   through the ordinary path.
-
-`abandon` stays the escape hatch for a run the repair route cannot save — a
-conflicting refresh, a dead assignment — never the normal response to an
-out-of-fence discovery.
+With the receipt and coordinator-authored tickets in hand, the repair takes
+the ordinary serial cadence: write every repair ticket under
+`specs/<slug>/tickets/`, land that planning batch with path-scoped
+`bench commit`, then implement and land each repair ticket commit-on-green in
+`Blocked by:` order. Resume the blocked ticket only after the whole repair has
+landed and the receipt's proceed condition is satisfied; its delegate rebases
+onto the repaired tree and completes through the ordinary landing.
 
 ## When the build stops short
 
@@ -239,9 +186,8 @@ defined route — never a silent grind, never an abandoned worktree:
 
 1. **Report state:** stories done vs. remaining, the coverage table as it
    stands, the gate verdict, and what consumed the cap.
-2. **Keep what's real:** retained checkpoints and candidate integrations stay
-   provisional; uncheckpointed work remains in its owned assignment. Nothing
-   gets squash-finished to fake completion.
+2. **Keep what's real:** landed tickets stay landed; unfinished work remains in
+   its owned worktree. Nothing gets squash-finished to fake completion.
 3. **Route by cause, and recommend one:**
    - wrong tier (the model ground, the gate disagreed) → re-declare one tier up
      per the `craft-line` ladder and resume this phase;
@@ -249,51 +195,34 @@ defined route — never a silent grind, never an abandoned worktree:
      with the finding quoted;
    - wrong scope (the spec is bigger than one build) → propose the split; the
      reviewer decides.
-4. **Leave the worktree owned:** a spec-backed run remains in durable lifecycle
-   state; if the reviewer drops it, use `bench spec build abandon` and its
-   fingerprinted apply. A light-path coordinator that cut a generic worktree
-   still owns its retirement: the coordinator that cut it owns its retirement.
+4. **Leave the worktree owned:** every cut worktree keeps its owner — the
+   coordinator that cut it owns its retirement, through `bench worktree release`
+   or `bench worktree clean`.
 
 ## Close on green
 
-- Provisional checkpoints are evidence, not green commits. The exact composed
-  candidate receives a fresh Standards, Spec, and Coverage review before any
-  promotion attempt; submit its bounded receipt through `bench spec build review`.
-- Review the exact candidate composition before `promote`.
-- Accepted findings become new ownership-fenced repair tickets and re-enter
-  `assign`, `checkpoint`, and `integrate` before a fresh composed review. A repair
-  never writes directly to the working branch and a delta-only review cannot
-  authorize the changed composition.
-- When the branch tip moves, `promote` is the operation that recomposes the run
-  onto the new tip, and recomposition discards the review.
-  The repair round is therefore
-  repair → `promote` → `review` → `assign` … `integrate` → `review` → `promote`.
-- `bench spec build promote` is the sole spec-backed whole-project-gate boundary.
-  It constructs the prospective `Status: implemented` tree, runs the gate for
-  that exact subject, and publishes the authorized squash only on green. A red
-  leaves the run provisional and routes candidate-owned defects back to repair.
-- After a green promotion, run `/bench-final-check` only for its terminal
-  retained-evidence report and implementation retro. It does not run another
-  gate, commit the spec, or author `Status: implemented`.
-- Light-path work still lands its ticket with path-scoped
-  `bench commit -m "<msg>"`; ordinary `bench commit` retains its gate-then-commit
-  contract and never creates provisional evidence.
-- Before the composed feature's final gate, emit the coverage table for every
-  acceptance row —
+- Once every implementation ticket short of the final landing has landed, run
+  `/bench-review-implementation` over the composed diff — the semantic
+  three-axis pass (Standards + Spec + Coverage) that catches what the gate can't:
+  right thing built the wrong way, wrong thing built cleanly, or breaking inputs
+  nothing exercises. Review before the final landing, not after.
+- Accepted findings become new ownership-fenced repair tickets and land through
+  the same serial commit-on-green cadence before a fresh review of the changed
+  diff.
+- **The terminal repair-pass bound.** A repair pass lands the findings accepted
+  for its round, performs one fresh review, and stops at that result; another
+  semantic review round opens only when the diff changes or the reviewer
+  requests one.
+- Before the final landing, emit the coverage table for every acceptance row —
   `bench coverage <spec>` produces it and `bench coverage --check <spec>` validates
   the map; don't hand-assemble it. Classify each row `green`, `already covered`,
   or `not TDD-able`. If any mapped behavior is missing, partial, or unclassified,
-  the build is not ready for the gate.
-- Once every ticket is integrated and released, run
-  `/bench-review-implementation` over the exact candidate — the semantic
-  three-axis pass (Standards + Spec + Coverage) that catches what the gate can't:
-  right thing built the wrong way, wrong thing built cleanly, or breaking inputs
-  nothing exercises. Convert its result to the review receipt the public
-  lifecycle validates.
-- **The terminal repair-pass bound.** A repair pass integrates the findings
-  accepted for its round, performs one fresh composed review, and stops at the
-  next promotion result; another semantic review round opens only when the
-  composition changes or the reviewer requests one.
+  the build is not ready to land.
+- The final green landing commit is path-scoped
+  `bench commit --spec <slug> -m "<msg>" <path>...`: it runs the gate, commits
+  only on green, and is the sole author of the spec's `Status: implemented`
+  flip. Every earlier ticket lands the same way without `--spec`; ordinary
+  `bench commit` keeps its gate-then-commit contract everywhere.
 - Then summarize what changed in plain language and hand back. I own the merge;
   propose it, don't perform it.
 
@@ -324,22 +253,20 @@ standalone phases; their contracts stay theirs:
   `.bench/BENCH.md` and `craft-delegate`'s verification discipline. When the
   review delegate cannot run or returns nothing, the run stops and reports at
   that boundary rather than proceeding to final-check with review unrun.
-- Submit the delegate's bounded receipt through `bench spec build review` only
-  while its candidate subject still matches the exact reviewed composition.
-- **Promote inline** through `bench spec build promote`; its exact prospective
-  subject is the final composed gate boundary. Then run **final-check inline**
-  only to report the retained terminal evidence and capture the retro. When an
+- **Land inline:** the final green landing commit — path-scoped
+  `bench commit --spec <slug>` — is the composed gate boundary. Then run
+  **final-check inline** to report the landed evidence and capture the retro. When an
   issue needs deep analysis, the run does not debug inline: it stops at that
   boundary, reports the failing surface, and recommends the reviewer invoke
   `/bench-debug` themselves in this harness's form. That phase is expensive and
   reviewer-invoked by design — no agent charges it.
 
 **Finding disposition.** Concrete defects — bugs, spec misses, missing
-coverage — return through repair assignment, checkpoint, and integration without
+coverage — return through repair tickets landed commit-on-green without
 stopping; contestable design and
 judgment findings are flagged in the exit report for reviewer veto, not
-applied. Re-gating follows the repair-ticket cadence: focused evidence,
-checkpoint, integration, fresh composed review, then promote. The repair pass is
+applied. Re-gating follows the repair-ticket cadence: focused evidence, a
+green landing, then a fresh review of the changed diff. The repair pass is
 bounded by this command's terminal repair-pass bound and routed through
 `craft-delegate`'s repair allowance; this mode adds no second version of
 either.
@@ -373,7 +300,7 @@ working directory, and a non-interactive approval posture — `codex exec
 
 **The falsification offer.** On that same size trigger, ask a second, separate
 question: whether to add a cross-harness falsification pass over the diff
-before promotion — the Codex CLI at the top binding, charged to refute the
+before the final landing — the Codex CLI at the top binding, charged to refute the
 claim that the spec was implemented rather than to grade it against the three
 axes. It is its own question, not a fourth route in the escalation menu, and
 it never runs standing: absent the trigger it is not offered. When this
@@ -385,5 +312,5 @@ row of the spec's acceptance coverage map — implemented, deferred, or
 won't-handle — named row by row against `bench coverage <spec>`'s enumeration.
 When the spec carries no coverage map, the report says so and accounts for the
 user stories instead. Every phase claim in the exit report cites the record
-that proves it: the review delegate's invocation, lifecycle status and retained
-evidence, and the `capture/session-handoff.md` boundary rewrite.
+that proves it: the review delegate's invocation, the landed commits with
+their gate verdicts, and the `capture/session-handoff.md` boundary rewrite.

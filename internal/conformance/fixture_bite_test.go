@@ -128,7 +128,7 @@ func TestSpecTicketHandoffWorkflowFixturesAreComplete(t *testing.T) {
 	}
 }
 
-func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T) {
+func TestWorkflowCadenceAnchorsRejectDeletionAndSwap(t *testing.T) {
 	const (
 		bootstrapDeletionDiag = ".agents/skills/bench-craft-spec/SKILL.md dropped the bootstrap-authority pre-execution trace"
 		bootstrapAfterDiag    = ".agents/skills/bench-craft-spec/SKILL.md validates a bootstrap authority after launch"
@@ -141,14 +141,6 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 		repairOwnerDiag       = "bench-implement-spec dropped the craft-tickets repair-reslicing owner pointer"
 		repairCommonDiag      = "bench-implement-spec dropped the one-repair-ticket common case"
 		repairSingularDiag    = "bench-implement-spec restores the singular exactly-one repair-ticket mandate"
-		repairAssignDiag      = "bench-implement-spec dropped ordinary assign for every repair-chain ticket"
-		repairCheckDiag       = "bench-implement-spec dropped ordinary checkpoint for every repair-chain ticket"
-		repairIntegrateDiag   = "bench-implement-spec dropped ordinary integrate for every repair-chain ticket"
-		repairGitDiag         = "bench-implement-spec permits chain-local synthesized Git checkpoint plumbing"
-		repairTerminalDiag    = "bench-implement-spec dropped the terminal repair-ticket refresh precondition"
-		repairEarlyDiag       = "bench-implement-spec permits premature refresh after a non-terminal repair ticket"
-		repairAssignmentDiag  = "bench-implement-spec replaced the original blocked assignment refresh identity"
-		repairReceiptDiag     = "bench-implement-spec replaced the original validated debug receipt identity"
 	)
 	h := NewHarness(t)
 	owner, ok := conformanceChecks["docs-currency-workflow"]
@@ -162,23 +154,14 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 		repairEnvelopeDiag, repairResultDiag, repairChainOnlyDiag,
 		repairUnionDiag, repairEscapeDiag,
 		repairOwnerDiag,
-		repairCommonDiag, repairSingularDiag, repairAssignDiag, repairCheckDiag,
-		repairIntegrateDiag, repairGitDiag,
-		repairTerminalDiag, repairEarlyDiag, repairAssignmentDiag, repairReceiptDiag,
+		repairCommonDiag, repairSingularDiag,
 	} {
 		if containsDiagnostic(diags, diag) {
 			t.Fatalf("finished workflow guidance is not conformant with %q:\n%s", diag, strings.Join(diags, "\n"))
 		}
 	}
 	tests := []struct{ name, rel, old, replacement, diag string }{
-		{"lifecycle deletion", ".agents/commands/bench-implement-spec.md", "`start` → `assign` → `checkpoint` →\n`integrate` → `review` → `promote`; `status` inspects the run and `abandon`\nplans or applies cleanup.", "", "bench-implement-spec dropped or reordered the eight-operation spec-build lifecycle"},
-		{"additive generic unused-slot reason", ".agents/commands/bench-implement-spec.md", "For every unused harness slot, record exactly one\nreason: dependency, overlapping ownership fence, unavailable harness capacity,\nor measured resource constraint.", "For every unused harness slot, record exactly one reason: dependency, overlapping ownership fence, unavailable harness capacity, or measured resource constraint. An unused slot may instead be `NOT\n  PARALLELIZABLE`.", "bench-implement-spec permits a generic unused-slot reason outside the closed set"},
-		{"frontier swap", ".agents/commands/bench-implement-spec.md", "or measured resource constraint. Refill the ownership-safe frontier after every\nintegration or assignment release while another delegate remains active.", "or measured resource constraint. Wait for the ownership-safe frontier to drain before refill after every integration or assignment release.", "bench-implement-spec replaced continuous frontier refill with drain-then-refill cadence"},
-		{"repair deletion", ".agents/commands/bench-implement-spec.md", "Accepted findings become new ownership-fenced repair tickets and re-enter\n  `assign`, `checkpoint`, and `integrate` before a fresh composed review.", "", "bench-implement-spec routes an accepted repair outside the provisional lifecycle"},
-		{"recomposition discard deletion", ".agents/commands/bench-implement-spec.md", "When the branch tip moves, `promote` is the operation that recomposes the run\n  onto the new tip, and recomposition discards the review.\n  ", "", "bench-implement-spec dropped moved-tip recomposition through promote or its review discard"},
-		{"repair round deletion", ".agents/commands/bench-implement-spec.md", "\n  The repair round is therefore\n  repair → `promote` → `review` → `assign` … `integrate` → `review` → `promote`.", "", "bench-implement-spec dropped the ordered moved-tip repair round"},
 		{"probe kind", ".agents/skills/bench-craft-delegate/SKILL.md", "The\ncoordinator probe's mutation kind differs from the delegate author's mutation\nkind.", "The\ncoordinator probe's mutation kind matches the delegate author's mutation\nkind.", "craft-delegate allows the coordinator probe to repeat the author's mutation kind"},
-		{"raw git route", ".agents/commands/bench-implement-spec.md", "Submit focused delegate evidence plus the coordinator-owned, different-kind\n  probe through `checkpoint`.", "Create the checkpoint with `git commit`; the public `checkpoint` token remains documented.", "bench-implement-spec synthesizes lifecycle Git plumbing outside the eight public operations"},
 		{"template row", ".agents/skills/bench-craft-tickets/SKILL.md", "- [ ] [AB1] <observable behavioral criterion>", "- [ ] <Observable behavioral criterion>", ".agents/skills/bench-craft-tickets/SKILL.md dropped the labeled single-line acceptance row from the ticket template"},
 		{"template row two", ".agents/skills/bench-craft-tickets/SKILL.md", "- [ ] [AB2] <observable behavioral criterion>", "- [ ] <Observable behavioral criterion>", ".agents/skills/bench-craft-tickets/SKILL.md dropped the second labeled acceptance row from the ticket template"},
 		{"template fence", ".agents/skills/bench-craft-tickets/SKILL.md", "Ownership fence: `<path prefix>`, `<path prefix>`\n", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the one-line backticked ownership fence from the ticket template"},
@@ -221,14 +204,6 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 		{"repair owner deletion", ".agents/commands/bench-implement-spec.md", "`craft-tickets` is the sole repair-reslicing owner. ", "", repairOwnerDiag},
 		{"repair common-case deletion", ".agents/commands/bench-implement-spec.md", "One repair ticket remains the common case. ", "", repairCommonDiag},
 		{"additive singular repair mandate", ".agents/commands/bench-implement-spec.md", "One repair ticket remains the common case.", "One repair ticket remains the common case. The receipt takes exactly one repair ticket.", repairSingularDiag},
-		{"repair assign deletion", ".agents/commands/bench-implement-spec.md", "Assign each repair ticket through the ordinary `assign` operation.\n", "", repairAssignDiag},
-		{"repair checkpoint deletion", ".agents/commands/bench-implement-spec.md", "Checkpoint each assigned repair ticket through the ordinary `checkpoint`\n     operation.\n", "", repairCheckDiag},
-		{"repair integrate deletion", ".agents/commands/bench-implement-spec.md", "Integrate each checkpointed repair ticket through the ordinary `integrate`\n     operation.\n", "", repairIntegrateDiag},
-		{"additive repair-chain raw Git checkpoint", ".agents/commands/bench-implement-spec.md", "Checkpoint each assigned repair ticket through the ordinary `checkpoint`\n     operation.", "Checkpoint each assigned repair ticket through the ordinary `checkpoint` operation. A repair-chain checkpoint may instead be created with `git commit`.", repairGitDiag},
-		{"terminal refresh-precondition deletion", ".agents/commands/bench-implement-spec.md", "The terminal repair ticket's proceed condition is a precondition to refresh. ", "", repairTerminalDiag},
-		{"additive early refresh", ".agents/commands/bench-implement-spec.md", "The terminal repair ticket's proceed condition is a precondition to refresh.", "The terminal repair ticket's proceed condition is a precondition to refresh. Refresh the original blocked assignment after the first repair ticket lands.", repairEarlyDiag},
-		{"original assignment replacement", ".agents/commands/bench-implement-spec.md", "The refresh target is the original blocked assignment:\n   the same assignment whose delegate reported the out-of-fence defect.", "The refresh target is a replacement assignment.", repairAssignmentDiag},
-		{"original receipt replacement", ".agents/commands/bench-implement-spec.md", "The refresh\n   evidence is the original validated debug receipt: the same receipt the reviewer\n   accepted for that assignment.", "The refresh evidence is a new debug receipt.", repairReceiptDiag},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -245,33 +220,6 @@ func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T)
 			}
 		})
 	}
-	t.Run("additive direct working branch permission", func(t *testing.T) {
-		const rel = ".agents/commands/bench-implement-spec.md"
-		const anchor = "Accepted findings become new ownership-fenced repair tickets and re-enter\n  `assign`, `checkpoint`, and `integrate` before a fresh composed review."
-		const diag = "bench-implement-spec permits an accepted repair to bypass provisional assignment and write directly to the working branch"
-		data, err := os.ReadFile(filepath.Join(h.KitRoot, filepath.FromSlash(rel)))
-		requireFixtureNoError(t, err)
-		root := t.TempDir()
-		path := filepath.Join(root, filepath.FromSlash(rel))
-		requireFixtureNoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
-		if strings.Count(string(data), anchor) != 1 {
-			t.Fatalf("accepted-repair paragraph anchor count = %d", strings.Count(string(data), anchor))
-		}
-		for _, contradiction := range []string{
-			"For an accepted repair finding, the coordinator may instead write the repair directly to the working branch before `promote`.",
-			"For an accepted `repair` finding, the coordinator may instead write the repair directly to the\n  `working branch` before `promote`.",
-		} {
-			mutated := strings.Replace(string(data), anchor, anchor+"\n  "+contradiction, 1)
-			requireFixtureNoError(t, os.WriteFile(path, []byte(mutated), 0o644))
-			if diags := owner.run(root, h.KitRoot, registry.Dev); !containsDiagnostic(diags, diag) {
-				t.Fatalf("additive contradiction did not bite with %q:\n%s", diag, strings.Join(diags, "\n"))
-			}
-			requireFixtureNoError(t, os.WriteFile(path, data, 0o644))
-			if diags := owner.run(root, h.KitRoot, registry.Dev); containsDiagnostic(diags, diag) {
-				t.Fatalf("additive contradiction remained red after removal:\n%s", strings.Join(diags, "\n"))
-			}
-		}
-	})
 }
 
 func requireFixtureNoError(t *testing.T, err error) {

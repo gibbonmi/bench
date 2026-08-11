@@ -1,5 +1,5 @@
 ---
-description: Three-axis semantic review of an exact spec-build candidate or ordinary branch diff — Standards, Spec, and Coverage. Use after implementation and before spec-build promotion or ordinary final check. Advisory, not authoritative.
+description: Three-axis semantic review of a branch diff — Standards, Spec, and Coverage. Use after implementation and before the final landing. Advisory, not authoritative.
 ---
 
 # /bench-review-implementation — the check the gate can't run
@@ -13,32 +13,26 @@ produces findings the gate cannot see, without claiming authority over done-ness
 ## Exit handoff
 
 Close by reporting Standards, Spec, and Coverage findings separately, with counts
-and the worst issue in each axis. For an active spec build, submit the bounded
-receipt with `bench spec build review <slug> --evidence <receipt>`. Accepted
+and the worst issue in each axis. Accepted
 findings become ownership-fenced repair tickets and return to
-`/bench-implement-spec`; a clean or risk-accepted review proceeds to
-`bench spec build promote <slug>`. Ordinary non-lifecycle findings use the pickup-file route
-in step 5, and an ordinary clean review proceeds to `/bench-final-check`.
+`/bench-implement-spec`; findings that need a later fix pass use the pickup-file route
+in step 5, and a clean review proceeds to `/bench-final-check`.
 
 The gate is deterministic: tests, types, lint, conformance. It catches regressions
 and rule violations. It cannot tell whether you built the *right* thing the *right*
 way. `/bench-review-implementation` is the semantic pass that can — and it's advisory: it surfaces
 findings for you, it has no authority to call anything done. The gate and you do.
 
-Run it on the exact spec-build candidate or the ordinary branch diff against its
+Run it on the branch diff against its
 true base, on three axes that stay separate.
 
 ## Process
 
-1. **Pin the diff.** For an active spec build, read `bench spec build status
-   <slug> --full` and bind the review inputs to the exact candidate subject and
-   recorded run base it reports. Confirm that subject is unchanged immediately
-   before receipt submission; a changed candidate invalidates the review rather
-   than letting a delta review authorize a new composition. For ordinary work,
-   pull the whole base-relative context with `bench diff --full`: it prefers the
+1. **Pin the diff.** Pull the whole base-relative context with
+   `bench diff --full`: it prefers the
    branch's recorded pre-shift base and falls back to merge-base with the default
    branch, and its `method:` line says which happened. When that diff is empty
-   because ordinary work already landed, use `bench diff --full --commit <sha>`
+   because the work already landed, use `bench diff --full --commit <sha>`
    to review exactly that landing commit.
 
 2. **Find the sources.** Spec: `specs/<feature>/spec.md` for this work (or the path I
@@ -76,16 +70,8 @@ true base, on three axes that stay separate.
    correct on the happy path, open on the edges), and merging them lets one mask
    the other. End with a per-axis count and the worst issue within each axis.
 
-5. **Persist the right review state.** For an active spec build, encode all three
-   axes and every finding disposition in the bounded receipt, then submit it with
-   the public review operation. The lifecycle binds its digest to the exact
-   candidate without exposing the body. Accepted repairs become new
-   ownership-fenced assignments; they checkpoint and integrate before the whole
-   changed composition is reviewed again. Do not commit a review artifact or
-   repair directly to the working branch.
-
-   For ordinary non-lifecycle review, actionable findings that need a later fix
-   pass go in `reviews/<spec-slug>.md`. Keep one section per axis: `## Standards`,
+5. **Persist the right review state.** The actionable findings that need a later
+   fix pass go in `reviews/<spec-slug>.md`. Keep one section per axis: `## Standards`,
    `## Spec`, and `## Coverage`. Each carries its finding count, its worst issue,
    and every actionable finding with the file or doc citation its axis supplied.
    Keep all three headings even when only one axis has findings.
@@ -103,17 +89,14 @@ true base, on three axes that stay separate.
    `/bench-implement-spec` session that resolves the findings deletes it in the
    same green fix commit that closes them, so resolved findings cannot resurface.
 
-6. **Hand off, don't repair.** This phase makes no fixes and runs no gate. For an
-   active spec build, submit the receipt first. Accepted findings become
-   ownership-fenced repair tickets and return to `/bench-implement-spec`; a clean
-   or risk-accepted review proceeds to `bench spec build promote <slug>`. Only an
-   ordinary clean review proceeds to `/bench-final-check` for its fresh oracle run.
+6. **Hand off, don't repair.** This phase makes no fixes and runs no gate.
+   Accepted findings become
+   ownership-fenced repair tickets and return to `/bench-implement-spec`; a
+   clean review proceeds to `/bench-final-check` for its fresh oracle run.
 
 ## Where it sits
 
 `/bench-review-implementation` is generation-shaping, not enforcement: run it,
-read the findings, and decide what to fix. For spec builds, promotion is the sole
-deterministic gate and landing author; terminal final-check only reports its
-retained evidence and captures the retro. For ordinary work, final-check still
+read the findings, and decide what to fix. Final-check
 runs the gate and commits on green. Review tells you whether it's *good*; the
 applicable oracle tells you whether it's *done*; you decide whether it ships.

@@ -6,6 +6,20 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Removed
+
+- Removed the provisional spec-build lifecycle wholesale: the `bench spec build`
+  family (`start`, `assign`, `checkpoint`, `integrate`, `review`, `status`,
+  `promote`, `abandon`, and the maintainer-run `reclaim`) and
+  `bench worktree recovery` are no longer commands and answer with the standard
+  unknown-subcommand structured error. `bench resume`'s reconcile now deletes
+  the `refs/bench/specbuild/` and `refs/bench/recovery/` namespaces and purges
+  lifecycle-typed assignments from the intent ledger at every session start,
+  idempotently. Zero backwards compatibility — no shim, no migration tooling;
+  reviewed spec-backed builds land tickets serially commit-on-green through
+  path-scoped `bench commit`, with `--spec <slug>` on the final green landing
+  commit marking the spec implemented.
+
 ### Added
 
 - Added `BENCH_RED_MUTATIONS_OPTIONAL=1`, a reviewer-set experiment flag under

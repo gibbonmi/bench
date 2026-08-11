@@ -35,14 +35,6 @@ func checkWorkflowAnchors(root string) []string {
 		diags = append(diags, "bench-what-next dropped the roadmap context query")
 	}
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterRoadmapContext)...)
-	implementSpec := strings.ToLower(collapseSpace(stripHTMLComments(readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md")))))
-	implementSpec = strings.ReplaceAll(implementSpec, "`", "")
-	if strings.Contains(implementSpec, "for an accepted repair finding, the coordinator may instead write the repair directly to the working branch before promote") {
-		diags = append(diags, "bench-implement-spec permits an accepted repair to bypass provisional assignment and write directly to the working branch")
-	}
-	if strings.Contains(implementSpec, "not parallelizable") {
-		diags = append(diags, "bench-implement-spec permits a generic unused-slot reason outside the closed set")
-	}
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterImplementSpec)...)
 	diags = append(diags, checkSpecAuthorizationContract(root)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterSpecAuthorization)...)

@@ -2,40 +2,41 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `35e887d4`, clean of the retired-spec noise
-Spec: none active — `specs/remove-spec-build-lifecycle/decisions/pocock-alignment.md` (Status: ready) is the
-build program; all seven previously staged specs are dispositioned by its #2
+Branch: `main` — last landed commit `135e55f3`; ticket 4's prose-repair diff is
+in the working tree awaiting the coordinator's landing commit
+Spec: `specs/remove-spec-build-lifecycle/spec.md` (Spec A) — implemented
+pending review; 4/4 tickets landed
 
 ## State
 
-The Pocock-alignment shaping closed 2026-08-11 with all 13 decision tickets
-resolved and the map `ready`. The program: full removal of the provisional
-spec-build lifecycle, doctrine-leaf adoption, and an artifacts-vs-reality
-preflight. Closed decisions (do not reopen): full lifecycle removal, nothing
-surviving (#1); retire `axi-spec-build-complete`, `checkpoint-scoped-review`,
-`ticket-bundle-refusal`, `axi-compatibility-oracle` and park
-`axi-coherent-diff`, `axi-query-disclosure`, `single-build-serial-gate` (#2);
-only `Blocked by:` stays parsed in tickets (#3); `bench-craft-domain`
-companion skill (#4); four doctrine-leaf adoptions including frontier-rounds
-grilling (#5); review re-derives from primary sources (#6); `bench preflight`
-at phase entry, not in the gate (#7); seam-confirmation and breakdown-quiz
-HITL gates replace the delegate breakdown review (#8); hard line budgets
-gate-enforced (#9); craft-line and craft-delegate kept slimmed (#10); CLI
-shrink per #11; zero backwards compatibility (#12); three specs in order
-A lifecycle-removal → B preflight → C doctrine, after housekeeping (#13).
+Spec A (lifecycle removal) is built: the `bench spec build` grammar and
+`bench worktree recovery` are gone from the binary, `bench resume`'s reconcile
+deletes the two lifecycle ref namespaces and purges lifecycle ledger
+assignments, `bench commit --spec` is the sole staged→implemented author with
+its semantics in `--help`, the ticket parser is deleted (`Blocked by:` stays a
+documented convention), and every kit-prose reference is repaired with a new
+standing removed-verb sweep in `internal/conformance` that was observed red
+before the repair. The reviewer authorized direct-to-main commits for this
+program. Closed decisions stay closed: full lifecycle removal with zero
+backwards compatibility, serial commit-on-green as the spec-backed cadence,
+only `Blocked by:` machine-read in tickets. The doctrine rewrite (skill diets,
+`bench-craft-domain`) is Spec C, not this build.
 
-Housekeeping executed (`35e887d4`): the four retired specs deleted with their
-tickets and dirty edits (`bench spec retire` refused — it only takes
-implemented specs — so deletion into git history was the route). The three
-parked specs stay staged in `specs/`; their roadmap re-rank belongs to the
-next `/bench-what-next` drain. The abandoned run's ~20 recovery refs and open
-assignments are lifecycle debris that Spec A's removal deletes wholesale.
-Reviewer authorized direct-to-main commits without the gate for this program.
+Flagged for reviewer veto:
+
+- The removed-verb sweep exempts `CHANGELOG.md`, deviating from RM8's literal
+  file list — it is append-only history and scrubbing it would falsify the
+  record; the changelog carries the one sanctioned removal entry.
+- `bench worktree clean --apply` still preserves dirty payloads into
+  `refs/bench/recovery/`, a namespace resume now sweeps; recommend a
+  refuse-dirty follow-up so clean never writes into a swept namespace.
+- RM11's keep-list predicate was corrected during the build (the enumerated
+  kept-verb `--help` guard).
 
 ## Next command
 
-`/bench-write-spec` for Spec A (lifecycle removal) from
-`specs/remove-spec-build-lifecycle/decisions/pocock-alignment.md` tickets #1, #3, #11, #12.
+`/bench-review-implementation` for `specs/remove-spec-build-lifecycle/spec.md`
+over the composed Spec A diff.
 
 ## Shape
 

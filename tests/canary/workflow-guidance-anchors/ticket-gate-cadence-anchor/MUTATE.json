@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/commands/bench-implement-spec.md",
-    "old": "or measured resource constraint. Refill the ownership-safe frontier after every\nintegration or assignment release while another delegate remains active.",
-    "new": "or measured resource constraint. Wait for the ownership-safe frontier to drain before refill after every integration or assignment release."
-  }
-]

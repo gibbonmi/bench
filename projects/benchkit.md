@@ -30,13 +30,9 @@ branch-agnostic. This line is only the binding.)
   Missing-binary resolution is network-silent by default and names the explicit
   `bench repair` action; automation opts into the same repair path with exactly
   `BENCH_REPAIR=1`, while `BENCH_OFFLINE=1` and `BENCH_NO_REPAIR` suppress it.
-  Reviewed spec builds route through all eight lifecycle `bench spec build`
-  operations; harnesses never synthesize their commit, ref, replay, or worktree
-  plumbing. `reclaim` is the one maintainer-run verb beside that lifecycle —
-  plan/apply removal of a terminal run's provably dead provisional refs, never
-  driven by a build harness.
-  Their final attachment to the oracle is `promote` over the exact reviewed
-  prospective composition, while every earlier ticket transition is provisional.
+  Reviewed spec-backed builds land tickets serially through path-scoped
+  `bench commit`, commit-on-green; `--spec <slug>` on the final green landing
+  commit is the sole author of the spec's `Status: implemented` flip.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench worktree list`, and the shared flat-table
   TOON emitter behind them). The agent-facing read-only
@@ -204,7 +200,7 @@ registry sentinel executed. The tagged system package has one `TestMain` owner, 
 three disposable repositories, one selected executable identity ledger, teardown on
 green/red/interrupt/timeout, and exactly one stripped-distribution journey.
 
-The six command decision domains—gate, adopt, preflight, spec-build lifecycle, canary,
+The five command decision domains—gate, adopt, preflight, canary,
 and freshness—consume immutable values in process. Their ordinary tests create no
 repositories and start no operating-system processes. `internal/git` owns the one
 ordinary repository adapter; `internal/gate` owns the one ordinary controlled process
@@ -218,8 +214,8 @@ owner inventory without starting a gate or Go subprocess. One tagged system jour
 proves the selected executable reaches that production dispatcher.
 
 The workflow-guidance family pins the spec-to-ticket handoff from identified rows and
-approved ownership fences through ticket evidence, ledger review, fence-drift repair,
-and the lifecycle-entry prerequisite. Its auto-discovered mutations keep each clause in
+approved ownership fences through ticket evidence, ledger review, and fence-drift
+repair. Its auto-discovered mutations keep each clause in
 the section where a fresh agent acts on it.
 
 The conformance registry remains the single source for check order, subject, input
@@ -332,12 +328,12 @@ escalation.
   falsification questions, never an open review; its verdict is advisory and
   sign-off stays the reviewer's.
 - **Ticket-breakdown review pass** (`/bench-implement-spec`, after the ticket
-  files are written and before `bench spec build start`) → **mid model, medium
+  files are written and before the first ticket is assigned) → **mid model, medium
   effort, 1 iteration**, read-only. Standing grant like the falsification pass:
   every breakdown gets it, spawned without asking, and charge time never
   re-derives this routing. Charged at `craft-tickets`' consolidated target list,
   never an open review; its findings are reslices the coordinator repairs before
-  the lifecycle starts.
+  assignment begins.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).
   Read-heavy: each takes the full diff plus standards docs and runs verification

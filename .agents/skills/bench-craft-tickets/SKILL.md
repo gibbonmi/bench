@@ -97,7 +97,7 @@ the green landing commit is the one source for that verdict.
 ticket that changes gate cadence names which command authors gate evidence —
 `bench gate`, the canonical producing entry — and which phase consumes it: a
 bare `gate-run --fresh` prints a valid phase result without publishing the
-project-green evidence promotion consumes.
+project-green evidence the landing consumes.
 
 ## Discover the contracts before writing files
 
@@ -277,8 +277,7 @@ word.
   discovered above. Give every independently failing class or member a unique
   `<acceptance ID>/<lowercase-kebab-name>` token. Every acceptance ID owns at
   least one token, and every token appears as the criterion of a red-mutation
-  row. `bench spec build assign` refuses a modern ticket whose inventory is
-  absent or open. The checker proves the declared graph is closed; review still
+  row. Review
   compares the inventory to `Contracts:`, the coverage map, and the edge
   inventory so an undeclared fact cannot hide behind a mechanically valid graph.
 - **`## Red mutations`** binds every acceptance ID to one or more rows: each
@@ -406,6 +405,6 @@ and confirm that every named producer path exists in the tree and holds the name
 value; a crossing anchored to a path that does not yet hold its value is a
 slicing defect the composed red would otherwise surface tickets later.
 
-Findings are reslices, repaired before `bench spec build start`. When the harness
+Findings are reslices, repaired before the first ticket is assigned. When the harness
 cannot spawn a delegate, `craft-delegate`'s capability-aware policy applies: the
 pass runs inline and is flagged in the build plan, never silently skipped.

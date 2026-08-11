@@ -73,7 +73,6 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"capture-sink-anchor":                        conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"craft-seams-structure-headroom":             conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"review-persistence-anchor":                  conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"terminal-repair-bound-anchor":               conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shared-worktree-path-pin":                   conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"delegate-parallel-route-anchor":             conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"delegate-stash-refusal-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
@@ -115,9 +114,6 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"ticket-skill-contract-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"ticket-template-anchor":                conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"ticket-cross-pointers-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
-	"ticket-gate-cadence-anchor":            conformanceFixture(".bench/gate-docs-contracts.sh"),
-
-	"spec-build-unused-slot-reason-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
 
 	"ticket-decision-map-lifecycle-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"implementation-retro-drain-anchor":    conformanceFixture(".bench/gate-docs-contracts.sh"),

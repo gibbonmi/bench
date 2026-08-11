@@ -1,36 +1,27 @@
 ---
-description: Report a terminal spec-build promotion and capture its retro, or run the external gate and commit ordinary non-lifecycle work on green. Never use the model's own judgment as a substitute for retained or freshly observed evidence.
+description: Run the external gate and commit work on green; after a spec's final landing, report the evidence and capture the retro. Never use the model's own judgment as a substitute for retained or freshly observed evidence.
 ---
 
 # /bench-final-check — the gate is the oracle
 
 ## Entry orientation
 
-This is the final verification phase. For a reviewed spec build it reports the
-terminal result already authored by promotion; for light-path and ordinary work
-it runs the external gate and lands only on green. It does not substitute model
+This is the final verification phase. It runs the external gate and lands work
+only on green; for a spec-backed build whose final landing already flipped the
+spec to `Status: implemented`, it reports that landing's evidence and captures
+the retro. It does not substitute model
 judgment for tests, types, lint, or project conformance.
-
-When a spec-build slug is in scope, begin with
-`bench spec build status <slug> --full`. A terminal promoted run takes the retained-evidence route below. An
-active nonterminal run stops here and reports the durable next action from that
-projection; return to assignment, checkpoint, integration, review, or promotion
-as named instead of entering the ordinary landing path. An empty lifecycle is
-not permission to land reviewed spec-backed work through an older command: start
-or resume it through `/bench-implement-spec`. Only light-path and ordinary
-non-lifecycle work take the fresh gate-then-commit route.
 
 ## Exit handoff
 
-Close by reporting the applicable oracle result plainly.
-`bench spec build promote` is the sole spec-backed gate, commit, and `Status: implemented` author.
-A terminal promoted run gets no second gate or landing mutation: do not run
-`bench gate`, `bench commit --spec`, or `bench spec implemented`. Report the
-promotion subject, published working-branch commit, and retained exact green
-evidence from `status --full`, then capture the retro below. If the run is active
-but nonterminal, report its durable next action and stop without changing state.
+Close by reporting the applicable oracle result plainly. A spec's final green
+landing commit — path-scoped `bench commit --spec <slug>` — is the sole
+`Status: implemented` author, and it gets no second gate or landing mutation
+afterward: do not re-run `bench gate` over the unchanged landed tree or run
+`bench spec implemented` on top of it. Report the landing commit and its
+retained exact green evidence, then capture the retro below.
 
-Light-path and ordinary non-lifecycle work retain the gate-then-commit path. On
+Everything else takes the gate-then-commit path. On
 green, land the named paths with `bench commit -m "<msg>" <path>...`; it gates
 and commits them atomically. The honest no-op runs `bench gate` and reports its
 verdict when there is nothing to commit. If the command refuses over an
@@ -40,7 +31,7 @@ the first failing check and smallest reproduction, then recommend the fitting
 repair command: usually `/bench-implement-spec` for feature work or `/bench-debug`
 for a bug.
 
-**The post-merge tail (exit duty).** After the promoted or ordinary green landing
+**The post-merge tail (exit duty).** After the green landing
 reaches the default branch, read `bench status` and run the housekeeping rows it flags before
 closing: a merged spec awaiting retirement gets `bench spec retire <slug>` and
 its `spec-retire: <slug>` commit — promoting durable content first (a decision
@@ -57,10 +48,10 @@ of silently skipping it.
 
 ## Capture the implementation retro
 
-After any applicable post-merge tail, a promoted spec build has one last exit
-duty: rewrite `capture/retros/<spec-slug>.md` in full. Do this only after
-`bench spec build status <slug> --full` reports a terminal promoted run and its retained
-exact green evidence. A re-run replaces that slug's whole file; it never appends,
+After any applicable post-merge tail, an implemented spec has one last exit
+duty: rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
+spec's final green landing commit has flipped it to `Status: implemented`. A
+re-run replaces that slug's whole file; it never appends,
 and it leaves other pending retros untouched.
 
 Use these headings exactly:
@@ -106,18 +97,11 @@ the successful landing boundary is already the verdict, and the retro leaves
 through the next reviewer-approved capture drain.
 
 Report the applicable oracle. This command does not form an opinion about whether
-the work is good: it reports retained promotion evidence or a fresh ordinary
-gate result.
+the work is good: it reports the gate's retained or fresh result.
 
 ## Run it
 
-For a spec-build terminal report, the read-only command is:
-
-```sh
-bench spec build status <slug> --full
-```
-
-Do not reconstruct or rerun its promotion evidence. For ordinary work that has
+For work that has
 paths to land, the oracle run and landing are one command:
 
 ```sh
@@ -138,8 +122,8 @@ gate; to change what runs, change `.bench/gate.sh`.
 
 ## Report
 
-- **Promoted:** report the terminal promotion subject, published commit, and
-  retained exact green evidence plainly; capture the retro without another gate
+- **Spec landed:** report the final landing commit and its retained exact green
+  evidence plainly; capture the retro without another gate
   or commit.
 - **Ordinary green:** the work is committed; state it plainly, and add one line
   noting that ship-tier verification has not run — dev green claims the kit

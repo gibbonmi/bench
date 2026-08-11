@@ -128,11 +128,11 @@ skill, gate, or process prose), and expected effect. Concurrent main-tree
 writers need a visible intent or lease signal — that close repeatedly polled
 process state and delayed gates just to learn when another session finished
 landing on `main`; it is the same subject-visibility surface as the CLI
-diagnostic. The spec-backed half of the first edit has since been answered by
-`spec-integration-gate-cadence`: `bench spec build promote` gates the exact
-prospective implemented tree and is the sole project-green transition for a
-reviewed spec build, so what stays open here is the light-path and non-spec
-close, where the final-check tree is still resolved by hand.
+diagnostic. The spec-backed half of the first edit was answered by
+`spec-integration-gate-cadence`'s promotion gate, since removed with the
+provisional spec-build lifecycle (a reviewed spec-backed build now lands
+through serial `bench commit`), so what stays open here is the light-path and
+non-spec close, where the final-check tree is still resolved by hand.
 
 The handoff storage question joins the same lifecycle decision. A single
 repository-level `capture/session-handoff.md` can be clobbered by concurrent workstreams;
@@ -186,8 +186,8 @@ artifact-suite, and artifact-hoist retros, drained here; `capture/IDEAS.md`, dra
 here and in prior runs; `capture/learnings.md`, verdicted here.
 
 The check-level-conformance-scoping close adds the terminal-record face. A
-retired spec currently makes `bench spec build status <slug> --full` unreadable
-even though the durable run record survives, and that record omits the measured
+retired spec made the removed lifecycle's `status --full` projection unreadable
+even though the durable run record survived, and that record omits the measured
 promotion-stage timings the required retro needs. The terminal projection reads
 the retained record after retirement and retains those timings. Until it does,
 `/bench-final-check` captures the retro before retirement rather than rerunning a
@@ -195,7 +195,7 @@ successful promotion to manufacture evidence. Source: the
 check-level-conformance-scoping retro, drained here.
 
 The FT194 close adds the live prepared-state face: after review acceptance and
-again during repair assignment, `bench spec build status --full` kept `next` at
+again during repair assignment, the removed lifecycle's `status --full` kept `next` at
 `resume promote`. The same terminal projection derives the next action from the
 current lifecycle state rather than retaining a stale prepared operation. Its
 other CLI recommendations — retained promotion identity and evidence after
@@ -414,8 +414,8 @@ the operation earns its authority by being recoverable rather than by an
 exemption to a guard. Face one, recovery payloads (this row's original
 charge): cleanup fail-closes permanently when a payload's content landed
 through different commits — the FT83 delegate payloads are strict subsets of
-the default branch by diff, yet `bench worktree recovery <ref> --apply
-<fingerprint>` still returns `retain` because landed-proof requires the
+the default branch by diff, yet the since-removed recovery verb's
+`--apply <fingerprint>` still returned `retain` because landed-proof requires the
 payload commit itself (observed 2026-07-20); recurred 2026-07-22 when
 `git cherry` missed reshaped commits and the reviewer had to hand-delete refs
 and intent entries, the exact manual surgery the lifecycle exists to prevent.
@@ -425,17 +425,16 @@ reverse-applying the branch's cumulative diff against the default tree
 reviewer-supplied proof for what no derivation can establish (`37411a0`) —
 fail-closed stayed the default and every ambiguity still resolves to
 not-landed. The unprovable half shipped 2026-08-04 (`fafb049`, from the
-`recovery-discard` spec retired here): `bench worktree recovery <ref>
---discard <fingerprint>` retires one inspected payload per invocation without
-asserting it landed, the plan separates an orphaned ref from an absent one and
-reports how many paths the payload touches so the operator is not choosing
-blind, and `bench spec build reclaim` deletes the provisional residue of
-terminal spec-build runs. What remains of this face is the drain itself, and it
-stays reviewer-owned because discarding preserved work is a judgment no
-derivation can make: `bench resume` re-preserves the whole backlog at every
-session start, and most of those rows name recovery refs that no longer exist,
-so the pass is per-ref over what `bench worktree recovery` reports for
-`refs/bench/recovery/` and the open assignment rows. Sources:
+`recovery-discard` spec retired here): the recovery verb's
+`--discard <fingerprint>` retired one inspected payload per invocation without
+asserting it landed, the plan separated an orphaned ref from an absent one and
+reported how many paths the payload touched so the operator was not choosing
+blind, and the reclaim verb deleted the provisional residue of
+terminal spec-build runs. The lifecycle removal has since overtaken the drain
+half of this face: the recovery and reclaim verbs are deleted, `bench resume`
+no longer authors preservation refs, and its reconcile deletes
+`refs/bench/recovery/` and the lifecycle assignment rows wholesale at every
+session start. Sources:
 `capture/IDEAS.md` and `capture/learnings.md` 2026-08-03, drained and verdicted
 here — both reported release growing the preserved set with no retire route,
 which is the route that has now shipped. Two residuals of that build were left
@@ -551,23 +550,23 @@ derived binary and reports the rebuild action; an explicit opt-in may perform
 it, while gate entry remains repair-silent and never rebuilds automatically.
 Source: the FT126 recurrence-tallying retro, drained here.
 
-The FT128 close supplied the base-ref face, and the `bench spec build` family
-has since covered only the spec-backed half of it. `bench worktree create`
+The FT128 close supplied the base-ref face, and the since-removed spec-build
+family covered only the spec-backed half of it. `bench worktree create`
 always roots at the default branch with no base-ref flag, and
 `bench worktree release` refuses while an assignment branch has not landed
 there, so a chain of tickets on an integration branch cannot cut a worktree at
 the chain tip and cannot retire any worktree until the reviewer merges; that
 build formed the chain by merging each previous assignment branch into the next
 worktree, which is the hand-run form of a compare-and-swap integrate. Reviewed
-spec builds now get that surface from `bench spec build assign` / `checkpoint` /
-`integrate`; light-path and non-spec chains still do not, and the landing
-command owns whether they should. Source: the FT128 implementation retro,
+spec-backed builds briefly got that surface from the removed lifecycle's assign /
+checkpoint / integrate operations; with the lifecycle gone no route has it, and
+the landing command owns whether any should. Source: the FT128 implementation retro,
 drained here.
 
 That face recurred on 2026-08-01 during per-component-gate-scoping and sharpened
 into a precise gap: the core already carries the parameter, and only the CLI
 withholds it. `worktree.Create` takes a variadic start ref, but the sole caller
-that supplies one is `bench spec build assign`; the generic
+that supplied one was the removed lifecycle's assign operation; the generic
 `worktree.CreateCommand` derives a start ref only from `--refresh` and otherwise
 passes none, so creation roots at the resolved default branch (falling back to
 `HEAD` when none resolves) with no way to name a base. A spec-branch build
@@ -607,11 +606,12 @@ verdict across the worktree-to-main transition. Source: the covers-traceability
 retro, drained here.
 
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one
-repository-wide ref inventory.** `bench worktree recovery` and the existing
+repository-wide ref inventory.** The existing
 cleanup paths act on one known target at a time; they do not classify every
 non-default branch before a reviewer decides what may leave. Add `bench branches
 retire [--discard <branch>...] [--apply <fingerprint>]` as the coordinator over
-the existing worktree landedness, cleanup, and recovery seams. Its plan classifies
+the existing worktree landedness and cleanup seams (the recovery verb and its
+seam are removed). Its plan classifies
 each non-default ref as active, landed, recover, review, or explicit discard.
 Apply binds that complete inventory to one exact fingerprint, preserves dirty
 unpublished work under recovery refs, deletes only refs still at their planned
@@ -625,7 +625,7 @@ remain reviewer decisions. Entry: `/bench-shape-idea`. Source:
 traps automation and leaks on signals.** Reviewer ruling 2026-08-01: humans
 should not be driving the `bench` CLI in the vast majority of cases, and
 worktrees are not an exception — the agent-facing surface is the subcommands,
-and agent worktree creation already flows through `bench spec build assign`
+and agent worktree creation already flows through `bench worktree create`
 and the shift loop. The bare verb instead runs `Subshell`
 (`internal/worktree/worktree.go:412`): it creates a worktree, runs `$SHELL`
 with stdin inherited, and blocks on `cmd.Run()`, so an automation call
@@ -787,14 +787,14 @@ superseded. The staged five-spec migration-first sequence
 `axi-aggregate-empty-migration` — 61 tickets and five promotion gates before
 any public improvement) is retired; FT173 builds the approved behavior forward
 through the existing CLI seams instead. AXI stays scoped to the approved
-surfaces — the six root queries, nested `worktree list`, and the complete
-`bench spec build` family — and each intentional output change is proved by
+surfaces — the six root queries and nested `worktree list`; the spec-build
+family was in scope until its removal — and each intentional output change is proved by
 reviewed old-to-new fixtures naming its exact delta, while everything outside
 an approved delta keeps its existing exact domain tests. The staged
 replacement sequence is `specs/axi-spec-build-complete/spec.md`, then
 `specs/axi-coherent-diff/spec.md`, then `specs/axi-query-disclosure/spec.md`;
-the superseded `specs/axi-compatibility-oracle/spec.md` build resolves through
-`bench spec build abandon`, then `reclaim`, before retiring. The earlier
+the superseded `specs/axi-compatibility-oracle/spec.md` build is already
+retired with its run. The earlier
 2026-07-31 call-sites-only consolidation constraint and its 2026-08-02
 `help[]`-only relaxation are subsumed by this ruling. The truncation and
 aggregate one-source-per-fact sweep is no longer an FT173 precondition; it
@@ -815,7 +815,7 @@ exceeds the feature — which is the reason AXI stays scoped to the
 high-frequency query surfaces and is not extended to operational commands.
 
 A sixth face, observed 2026-08-02 during the FT164 build, is the canonical
-contextual-disclosure example: `bench spec build start` refused with "no exact
+contextual-disclosure example: the since-removed lifecycle's start verb refused with "no exact
 green evidence: run bench gate, then retry start" on a tip whose verdict was
 reduced — where plain `bench gate` can only ever re-record another reduced
 verdict, so the stated remediation cannot succeed and the working command
@@ -847,9 +847,9 @@ as ad-hoc prose while `bench test`, `bench diff`, and `bench coverage` emit TOON
 Give the gate one structured result schema without changing exit-code authority,
 phase completeness, or the durable verdict it authors. The gate-pipeline map's
 ticket 9 closed the scope decision: no output redesign rides that pipeline build,
-so this is an independent item. `bench spec build promote` is the second
-surface: it emits only its TOON status line, so the phase evidence its gate run
-produced never reaches a retained surface, while the `bench commit` on the same
+so this is an independent item. The since-removed lifecycle's promote verb was the second
+surface: it emitted only its TOON status line, so the phase evidence its gate run
+produced never reached a retained surface, while the `bench commit` on the same
 tree prints per-phase evidence inline (`phase conformance: green`, `gate:
 green`). One schema covers both. The retained-record half of the same complaint
 — promotion-stage timings the required retro needs — is FT162's, not this row's.
@@ -1437,10 +1437,10 @@ drained here.
 The transition now has three authors, not two. `bench spec implemented <spec>`
 and `bench commit --spec <slug>` both perform the `Status: staged` →
 `implemented` flip and each expects to own it, so running the former first makes
-the latter fail with `no Status: staged line`; `bench spec build promote` is a
-third, and the phase contract names it the sole author for a reviewed spec
-build. Name one owner per landing route and make the others refuse rather than
-race. Source: the FT128 implementation retro, drained here.
+the latter fail with `no Status: staged line`; the removed lifecycle's promote
+verb was a third, and the phase contract now names `bench commit --spec` the
+sole author for a reviewed spec-backed build. Name one owner per landing route
+and make the others refuse rather than race. Source: the FT128 implementation retro, drained here.
 
 **FT130 (MEDIUM) — a capture write mid-lifecycle voids or blocks the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
@@ -1482,12 +1482,11 @@ has now cost. A third face joins from FT164's build: the same write against an
 run's first checkpoint forced recomposition at zero checkpoints, unrecoverable
 at the time (`2874d94` has since made it a rebase), and the run was abandoned and
 rebuilt from snapshotted delegate diffs; even with that fix, every tip move
-mid-run buys a fresh full gate for recomposition. Two things follow. The tree is
-frozen from `bench spec build start` to `promote` — no capture commits, no
-roadmap edits — and the `--full` route's phase-boundary handoff write, which
-today lands between them, belongs before `start` or after `promote`; that
-placement is a `bench-implement-spec` command-text edit and rides whichever
-answer the queue-versus-refuse decision produces. Sources:
+mid-run buys a fresh full gate for recomposition. Two things follow. The tree
+was frozen from the removed lifecycle's start to its promote — no capture
+commits, no roadmap edits — and the `--full` route's phase-boundary handoff
+write belonged outside that span; the lifecycle's removal moots the placement
+question, and the row awaits its drain verdict. Sources:
 `capture/learnings.md` 2026-08-02 and 2026-08-03, verdicted here; the
 `ft164-ticket-contracts` retro, drained here. Whatever answer lands carries the
 ft156-anchor-registry close's interim mitigation as its floor: concurrent
@@ -1718,24 +1717,27 @@ of its ownership fence; the fix lives in `internal/worktree/resume.go`, beside
 the absent-target planning fix that landed at `dfcc71d`. Source:
 `capture/IDEAS.md` 2026-08-02, drained here.
 
-**FT184 (MEDIUM) — `bench spec build checkpoint` receipts are hand-assembled
-against an undocumented schema.** The first full lifecycle run discovered the
+**FT184 (MEDIUM) — the removed lifecycle's checkpoint receipts were
+hand-assembled
+against an undocumented schema.** (The lifecycle is deleted; this row survives
+as diagnostic-quality evidence awaiting its drain verdict.) The first full
+lifecycle run discovered the
 row-outcome vocabulary (`passed|already-covered|not-tdd-able`) only by reading
-`receiptRows`, and `error: invalid spec build receipt` names no failing
+`receiptRows`, and the invalid-receipt error named no failing
 condition, so each invalid-receipt refusal cost an in-package debug harness.
 The row's own re-price trigger fired on 2026-08-04: landing four repair tickets
-through `bench spec build` cost more coordinator turns assembling two receipts
+through the lifecycle cost more coordinator turns assembling two receipts
 than verifying the two critical repairs they attested. Every field the
 coordinator hand-writes is derived data — run and assignment identities, the
 assignment base, a tree hash computed the way `git.TreeHash` does it, the
 ticket digest, one row per acceptance ID, the changed-path set diffed against
 the base, and a sha256 per assumption string — each cross-checked by
-`validateReceipt`, so any one wrong is an opaque `invalid spec build receipt`.
+`validateReceipt`, so any one wrong was an opaque invalid-receipt refusal.
 The coordinator should supply only what it alone knows (row outcomes, the check
 list, and the probe command, output, and exit) and the tool should derive the
 rest, which is this row's generator half stated as a contract.
-Two halves, one owner: a receipt generator (a `bench spec build receipt
-<assignment>`-shaped command) that derives the row set from the ticket file —
+Two halves, one owner: a receipt generator (a receipt subcommand
+per assignment) that derives the row set from the ticket file —
 removing the row-set-mismatch refusals paid twice in that build — and a refusal
 that names the first failed check. Sources: the per-component-gate-scoping
 retro, drained here; `capture/learnings.md` 2026-08-04, verdicted here — the
@@ -1751,9 +1753,9 @@ unrepaired defect, `promote` refused, and clearing the recorded review cost a
 recomposition round — `accepted` means a real defect the review accepts
 unrepaired, and closed findings need a different word. Either the generator
 enumerates the vocabulary or the schema validates the field and refuses the wrong
-word at submission. Third face, same owner: `bench spec build assign --ticket`
-refuses a repo-relative or absolute path with `spec build ticket must name one
-regular ticket file`, which reads as "the file is missing" when the file is
+word at submission. Third face, same owner: the lifecycle's `assign --ticket`
+refused a repo-relative or absolute path with a must-name-one-regular-ticket-file
+error, which reads as "the file is missing" when the file is
 present and only the *form* is wrong; it cost two failed invocations before the
 parser was read. A refusal naming the expected form would have cost none.
 Sources: `capture/IDEAS.md` 2026-08-03 and both 2026-08-03 retros, drained here;
@@ -1765,7 +1767,7 @@ should say it expects the ticket filename token, not a repository path. Source:
 that retro, drained here.
 
 Checkpoint and review evidence paths add the same diagnostic defect: a relative
-receipt path is rejected only as `invalid spec build receipt`, while retrying the
+receipt path was rejected only as invalid-receipt, while retrying the
 same bytes at an absolute path succeeds. Name the absolute-path requirement and
 the failing field. The lifecycle-native generator derives checkpoint and review
 receipts from run state and retains structured command exit/output evidence, so
@@ -2501,9 +2503,8 @@ top roadmap priority and lands its three independently reviewed specs before
 the prose track resumes.
 
 1. Implement FT173 in three independently reviewed behavior-first specs. The
-   staged sequence is `axi-spec-build-complete` (every `bench spec build`
-   operation AXI-complete with contextual actions, introducing the shared
-   typed-action owner and `help[]` renderer), then `axi-coherent-diff`
+   staged sequence was `axi-spec-build-complete` (retired with the spec-build
+   family it covered), then `axi-coherent-diff`
    (`bench diff` as the one coherent Git-inspection snapshot with contextual
    actions), then `axi-query-disclosure` (contextual disclosure and
    schema/help improvements across the remaining approved query surfaces,
@@ -2511,9 +2512,8 @@ the prose track resumes.
    advertisement). The spec-build slice composes FT185's gate-result payload
    when available and does not re-derive it; the capstone's required
    harness-log review folds observed CLI leverage into the spec or gives it
-   an explicit disposition. The active `axi-compatibility-oracle` build is
-   not promoted under the superseded direction: its lifecycle resolves
-   through `bench spec build abandon` then `reclaim`, with the bounded
+   an explicit disposition. The superseded `axi-compatibility-oracle` build
+   is already retired with its run, with the bounded
    process observer and registry/grammar census salvageable from its
    candidate only where they directly protect the new behavior. FT173
    remains open until all three land.
@@ -2571,6 +2571,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT173 forward AXI build, starting with staged `specs/axi-spec-build-complete/spec.md`, then `axi-coherent-diff`, then the harness-log-informed `axi-query-disclosure` capstone; first resolve the superseded `axi-compatibility-oracle` run via `bench spec build abandon axi-compatibility-oracle`, then `reclaim`.
+1. `/bench-implement-spec` — FT173 forward AXI build: `axi-coherent-diff`, then the harness-log-informed `axi-query-disclosure` capstone (`axi-spec-build-complete` and the superseded `axi-compatibility-oracle` run are already retired; both parked specs await their rescope).
 2. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`: one exact-snapshot Bench binary per top-level run and one serial phase schedule; #24–#26's census and any outer-width pricing resume on its landed baseline.
 3. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.

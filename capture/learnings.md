@@ -15,7 +15,7 @@ mirroring abandon's existing moved-tip exemption — so a dirty or committed-ahe
 spec revision survives the abandon untouched instead of forcing the revert
 dance. Identity, ownership, and evidence stay binding.
 
-## 2026-08-11 — `bench commit --spec` is promotion semantics, not ticket attribution  [open]
+## 2026-08-11 — `bench commit --spec` is promotion semantics, not ticket attribution  [closed]
 Passed `--spec axi-spec-build-complete` while landing a repair-ticket planning
 batch, intending only to associate the commit with the active build. The commit
 oracle automatically changed the staged spec's status to `implemented`, making
@@ -25,6 +25,9 @@ commit` naming the ticket and learning paths, with no `--spec`; only `bench spec
 build promote` owns implemented status. Proposed rule change: make `bench commit
 --help` state that `--spec` marks the named spec implemented, or refuse `--spec`
 when that slug has an active spec-build run.
+Resolved 2026-08-11: `bench commit --help` now states that `--spec` flips the
+named spec staged→implemented, and the run-state consult is deleted with the
+lifecycle removal.
 
 ## 2026-08-11 — checkpoint receipt ownership is the exact changed-path set, not the ticket fence  [open]
 Built a coordinator checkpoint receipt with every path in the assignment's

@@ -27,7 +27,118 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	diags = append(diags, checkPrePushREADMEClaim(root)...)
 	diags = append(diags, checkSkillsIndexGenerateVerify(root, kitRoot)...)
 	diags = append(diags, checkCoverageMaps(root)...)
+	diags = append(diags, checkRemovedVerbSweep(root)...)
 	return diags
+}
+
+// checkRemovedVerbSweep keeps the deleted provisional lifecycle out of kit
+// prose: the literal command tokens `spec build` and `worktree recovery` must
+// not reappear in any surface an agent reads for guidance. The stale-command
+// and cold-pickup sweeps match only slash-command and single-word `bench <cmd>`
+// tokens, so a leftover `bench spec build promote` passes both. Three surfaces
+// are exempt because their job is history, not guidance: CHANGELOG.md
+// (append-only — scrubbing it would falsify the record), capture/ (journal),
+// and specs/remove-spec-build-lifecycle/ (the removal's own record). Retired
+// spec residue without a `Status: staged` spec.md is history too; only staged
+// specs are guidance a build will act on.
+func checkRemovedVerbSweep(root string) []string {
+	var files []string
+	for _, rel := range []string{"README.md", "ROADMAP.md"} {
+		if path := filepath.Join(root, rel); exists(path) {
+			files = append(files, path)
+		}
+	}
+	for _, rel := range []string{".bench", ".agents", "projects"} {
+		for _, path := range walkConformanceDocs(filepath.Join(root, rel)) {
+			if strings.HasSuffix(path, ".md") {
+				files = append(files, path)
+			}
+		}
+	}
+	stagedRE := regexp.MustCompile(`(?m)^Status: staged$`)
+	specFiles, _ := filepath.Glob(filepath.Join(root, "specs", "*", "spec.md"))
+	sort.Strings(specFiles)
+	for _, specPath := range specFiles {
+		dir := filepath.Dir(specPath)
+		if filepath.Base(dir) == "remove-spec-build-lifecycle" || !stagedRE.MatchString(readIfExists(specPath)) {
+			continue
+		}
+		for _, path := range walkConformanceDocs(dir) {
+			if strings.HasSuffix(path, ".md") {
+				files = append(files, path)
+			}
+		}
+	}
+	files = uniqueSorted(files)
+
+	var diags []string
+	for _, file := range files {
+		rel := slashRel(root, file)
+		for i, line := range strings.Split(readIfExists(file), "\n") {
+			for _, token := range []string{"spec build", "worktree recovery"} {
+				if strings.Contains(line, token) {
+					diags = append(diags, fmt.Sprintf("%s:%d carries removed command token %q; the spec-build lifecycle and the recovery verb are deleted", rel, i+1, token))
+				}
+			}
+		}
+	}
+	return diags
+}
+
+func TestRemovedVerbSweepBites(t *testing.T) {
+	write := func(t *testing.T, root, rel, content string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tests := []struct {
+		name string
+		rel  string
+		text string
+		want bool
+	}{
+		{"operating guide token", ".bench/BENCH.md", "run `bench spec build promote` to land it\n", true},
+		{"skill recovery token", ".agents/skills/bench-craft-delegate/SKILL.md", "retire it with bench worktree recovery\n", true},
+		{"roadmap token", "ROADMAP.md", "resolve the run via `bench spec build abandon`\n", true},
+		{"staged spec ticket token", "specs/some-feature/tickets/one.md", "submit through `bench spec build checkpoint`\n", true},
+		{"removal record exempt", "specs/remove-spec-build-lifecycle/spec.md", "Status: staged\ndelete the `bench spec build` grammar\n", false},
+		{"changelog exempt", "CHANGELOG.md", "- Removed `bench spec build` and `bench worktree recovery`.\n", false},
+		{"capture exempt", "capture/learnings.md", "ran `bench spec build abandon` and it refused\n", false},
+		{"hyphenated prose is not the token", ".bench/BENCH.md", "the spec-build lifecycle was removed\n", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := t.TempDir()
+			// A staged spec.md makes the folder's files sweep subjects; the
+			// removal record's own folder must stay exempt even when staged.
+			if strings.HasPrefix(tt.rel, "specs/") {
+				dir := filepath.Dir(strings.TrimPrefix(tt.rel, "specs/"))
+				for strings.Contains(dir, "/") {
+					dir = filepath.Dir(dir)
+				}
+				write(t, root, "specs/"+dir+"/spec.md", "Status: staged\n")
+			}
+			write(t, root, tt.rel, tt.text)
+			got := len(checkRemovedVerbSweep(root)) > 0
+			if got != tt.want {
+				t.Fatalf("sweep diagnostics present = %v, want %v", got, tt.want)
+			}
+		})
+	}
+	t.Run("unstaged spec residue exempt", func(t *testing.T) {
+		root := t.TempDir()
+		write(t, root, "specs/old-run/spec.md", "Status: implemented\n")
+		write(t, root, "specs/old-run/tickets/one.md", "land through `bench spec build integrate`\n")
+		write(t, root, "specs/residue/tickets/one.md", "bench worktree recovery cleans it\n")
+		if diags := checkRemovedVerbSweep(root); len(diags) != 0 {
+			t.Fatalf("unstaged spec residue was swept:\n%s", strings.Join(diags, "\n"))
+		}
+	})
 }
 
 func checkPrePushREADMEClaim(root string) []string {
