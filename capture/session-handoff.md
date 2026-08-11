@@ -35,13 +35,37 @@ for the `ticket-bundle-refusal` build that follows. The
 inside the active AXI candidate's fence — prefer closing the AXI run first;
 a main-tip move before then just forces routine recomposition at promote.
 
-`axi-spec-build-complete`'s run is active, subject
-`f1b951edc6c653a6f42f1e1f5f32a3eb70e2a377`, next operation `review` (the
-prior candidate's review round left five accepted findings awaiting reviewer
-triage — S1 test-repo tension (contestable), S2 comment provenance label,
-P1 `git.Root()` before help/usage dispatch, P2 non-exact refresh-refusal
-remedy, C1 `Runs` TOCTOU — and the subject has since moved, so the composed
-review must run fresh against `f1b951ed` regardless). Build order unchanged:
+`axi-spec-build-complete`'s run is active, candidate
+`8bf30f22d7520c4124e951820c2a811651ad70e6`. Eight Terra/xhigh review rounds
+have run; fourteen accepted findings across the first seven are integrated
+and confirmed resolved (see git log `spec: ticket ...` commits, one per
+finding). Round 8 found three new findings, none yet authorized for repair:
+
+- **S1 (Standards, accepted as returned, coordinator disagrees):** claims two
+  just-landed repair tickets wrongly declared no integration/contract
+  crossings. Coordinator's read: likely a false positive — the cited
+  cross-file call is an unexported same-package sibling function already used
+  the same way by an earlier, unflagged repair, and the cited CLI renderer
+  already generically consumes the changed value with zero renderer changes
+  needed (proven by an earlier round in this same run).
+- **P1/C1 (Spec/Coverage, accepted, blocked on a closed-decision conflict):**
+  fixed tab/CR bytes survive `axi.Action` construction but round-trip lossy
+  through `RenderHelp`'s TOON table encoding. **Conflicts with FR6**, an
+  already-integrated, explicitly-tested finding from an earlier repair round
+  in this same build that deliberately pins tab/CR as *permitted*
+  fixed-argument bytes, with its own red mutation guarding against exactly
+  the reversal P1's wording implies. The real gap may be TOON-rendering
+  round-trip fidelity, not the construction-time permit decision — needs
+  reviewer call before any repair.
+- **P2/C2 (Spec/Coverage, accepted, lower priority):** `Service.Runs` still
+  has a narrow `Lstat`-then-`ReadFile` window (two path-based syscalls) after
+  an earlier round closed the wider `ReadDir`-to-read window. Real but
+  architecturally residual and low real-world exploitability.
+
+Review receipt submitted regardless (durable record; all three findings kept
+`accepted` as returned, not unilaterally downgraded). Promotion withheld:
+`bench spec build status axi-spec-build-complete --full` shows `next: bench
+spec build assign axi-spec-build-complete`. Build order unchanged:
 `axi-spec-build-complete`, then `axi-coherent-diff`, then
 `axi-query-disclosure`.
 
@@ -50,9 +74,11 @@ review must run fresh against `f1b951ed` regardless). Build order unchanged:
 `/bench-implement-spec specs/checkpoint-scoped-review/spec.md`
 
 Then `/bench-implement-spec specs/ticket-bundle-refusal/spec.md` under the
-new cadence. The AXI run resumes separately with
-`bench spec build review axi-spec-build-complete` (fresh composed review of
-`f1b951ed`, five prior findings to re-triage).
+new cadence. The AXI run resumes separately: reviewer decision on P1 (reopen
+FR6's tab/CR permit decision, or fix the TOON round-trip instead — see
+State above), plus S1 and P2, then
+`/bench-implement-spec --full specs/axi-spec-build-complete/spec.md` resumes
+the repair → checkpoint → integrate → review → promote cycle.
 
 ## Shape
 
