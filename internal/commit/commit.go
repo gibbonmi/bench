@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/specbuild"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -31,6 +32,17 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
+	}
+	if specSlug != "" {
+		status, statusErr := specbuild.New(root, nil, nil).Status(specSlug)
+		if statusErr != nil {
+			fmt.Fprintf(stderr, "error: cannot inspect spec build %q: %v\n", specSlug, statusErr)
+			return 1
+		}
+		if status.State == "active" {
+			fmt.Fprintf(stderr, "error: spec build %q is active; run bench spec build promote %s before committing the spec\n", specSlug, specSlug)
+			return 1
+		}
 	}
 
 	// Capture publication identity before reading attributed content. A detached checkout
