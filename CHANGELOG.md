@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `bench link` now adopts only same-file converged adapter symlinks on first link.
+
 ### Removed
 
 - Removed the provisional spec-build lifecycle wholesale: the `bench spec build`

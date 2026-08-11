@@ -394,17 +394,6 @@ semantic boundary: a deterministic promotion red may create one evidence-backed
 repair, but it does not restart open-ended review. Source: the
 spec-ticket-handoff-contract retro, drained here.
 
-**FT135 (MEDIUM, decision required) — let `bench link` converge unowned adapter
-destinations without claiming foreign bytes.** The shipped pre-push work exposed
-one residual policy boundary in the kit repository: with no manifest owner,
-an exact adapter destination reached through the canonical directory symlink
-has `owned == ""`, so `convergedFingerprint` is skipped and the symlink-parent
-guard refuses `bench link`. Decide whether Bench may adopt ownership of exact
-converged bytes it did not write, limited to the canonical adapter target and
-never a self-link, while preserving refusal for drift, escaping links, and
-foreign content. Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`
-2026-08-07, drained here; residual after `pre-push-guard-visibility`.
-
 **FT98 (MEDIUM) — one preserve-then-discard primitive;
 four faces.** Three rows were faces of one missing primitive — a sanctioned,
 Occurrences: 2026-07-30-scoped-roadmap-commit, baseline-01, baseline-02

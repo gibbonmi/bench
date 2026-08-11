@@ -80,6 +80,22 @@ func convergedSymlinkFingerprint(dest, staged string) string {
 	return destPrint
 }
 
+func sameAdapterTarget(dest, staged string) bool {
+	target, err := os.Readlink(staged)
+	if err != nil {
+		return false
+	}
+	if !filepath.IsAbs(target) {
+		target = filepath.Join(filepath.Dir(dest), target)
+	}
+	destInfo, err := os.Stat(dest)
+	if err != nil {
+		return false
+	}
+	targetInfo, err := os.Stat(target)
+	return err == nil && destInfo.Mode().IsRegular() && targetInfo.Mode().IsRegular() && os.SameFile(destInfo, targetInfo)
+}
+
 // sameRegularContent reports whether two paths resolve to regular files holding the same
 // bytes. Each is stat'd through its links first: a FIFO or device reached by either path
 // would block the read forever.
@@ -192,8 +208,9 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		// comparison is against the incoming kit bytes rather than the recorded hash: an
 		// asset whose kit content changed between releases is untouched locally yet stale,
 		// and keying the skip on the old hash would make every release a content no-op.
-		// Ownership still gates the skip, so a destination bench never wrote stays a
-		// conflict even when its bytes happen to agree. Everything past this point wants to
+		// Ownership still gates the skip except when an unowned adapter under a symlink
+		// parent resolves to its canonical target's same regular file. Byte-identical foreign
+		// files remain conflicts. Everything past this point wants to
 		// write, which is what makes a symlink parent a hard refusal for the whole
 		// transaction: promoting through a deliberately symlinked directory would write
 		// outside the tree the manifest describes, and that outranks the soft per-entry
@@ -207,13 +224,15 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			fmt.Fprintln(stderr, err)
 			return 1, false
 		}
-		if exists && owned != "" {
+		parentSymlink := hasSymlinkParent(root, e.rel)
+		adoptConvergedAdapter := owned == "" && e.kind == "adapter" && parentSymlink && sameAdapterTarget(dest, staged)
+		if exists && (owned != "" || adoptConvergedAdapter) {
 			if fp := convergedFingerprint(dest, staged); fp != "" {
 				rows[e.rel] = fp
 				continue
 			}
 		}
-		if hasSymlinkParent(root, e.rel) {
+		if parentSymlink {
 			fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
 			return 1, false
 		}
