@@ -2,32 +2,31 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `03b0e95`, clean tree, 10 unpushed commits
+Branch: `main` — HEAD `b022697`, 3 dirty paths, 18 unpushed commits
 Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/bench-preflight/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `a56d225` — stale, work tree `e139396`
+Gate: green at `9bae8f2` — stale, work tree `08b996f`
 
 ## State
 
-`/bench-implement-spec --full bench-preflight` phase reached: **all 7 tickets
-landed green (fb827ebf..03b0e953), composed three-axis review delegate
-(opus/high, fresh context) running**. All 25 coverage rows built; map
-validates. Landed serially: 556bd98d routing-checker repair (PF23), 11e2c1d9
-ResolveReviewBase export (PF25), c0fe8151 releasepreflight rename (PF24),
-4dbe0902 preflight review command (PF1–PF8, PF15–PF17), a947821c bootstrap
-diagnostics (PF12–PF14, PF22), 0284a3c9 build mode (PF9–PF11, PF21), 03b0e953
-advertisement (PF18–PF20). Exit-report notes pending: C16's shell-route
-mutation cannot bite (`bin/bench.sh` `*) route_binary` fallback dispatches
-unknown tokens via the registry — pre-existing wrapper property); collapsed
-per-story lines: stories 1/3 landed as one core ticket. Remaining: accepted
-review findings as repair tickets (if any), final landing
-`bench commit --spec bench-preflight`, inline final-check + retro. Parked
-pre-reshape specs (`axi-coherent-diff`, `axi-query-disclosure`,
-`single-build-serial-gate`) await re-rank, not active. Post-spec queue:
-Spec C (doctrine adoption), then a `/bench-what-next` drain.
+`/bench-implement-spec --full bench-preflight` phase reached: **complete**.
+All 25 coverage rows landed (7 implementation + 4 review-repair tickets, every
+landing gate-green); `bench preflight <build|review> <slug>` is live, advertised,
+anchor-pinned, and the routing conformance checker reads `commandRegistry`
+again. Composed review (opus/high, fresh context) returned 10 findings — 8
+repaired and re-verified by a second fresh review, which added 6 minors left
+for reviewer disposition (listed in `capture/retros/bench-preflight.md` with
+the two held vetoes: test-comment ID density, mixed-tag map policy). Retro
+written; drain owns it.
+
+Parked pre-reshape specs (`axi-coherent-diff`, `axi-query-disclosure`,
+`single-build-serial-gate`) await re-rank. Reviewer context note: the kit's
+gate descends from no-mistakes, skills from the Pocock material, CLI shape
+from AXI — hook-enforced preflight blocking (the no-mistakes posture) is
+priced in this spec's Out of scope if ever wanted.
 
 ## Next command
 
-`/bench-implement-spec --full bench-preflight`
+`/bench-what-next`
 
 ## Shape
 

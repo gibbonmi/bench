@@ -1,6 +1,6 @@
 # bench preflight
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/remove-spec-build-lifecycle/decisions/pocock-alignment.md` ticket #7 (compiled ready map, reviewer-resolved 2026-08-11; check-4 predicate — row-ID scan with tag-scoped set equality — clarified with the reviewer in-session 2026-08-11)
 

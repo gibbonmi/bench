@@ -27,7 +27,7 @@ update the test whose comment records the narrowed reading.
 ## Acceptance
 
 - [ ] [RG1] (covers local) a fences section whose parenthetical wraps across lines never authorizes its backticked tokens (the out-of-fence path is red), and an entry on a line after a closed paren authorizes normally — both asserted through the CLI harness.
-- [ ] [RG2] (covers local) a declared row cited only in `tickets/sub/x.md` is owned, and a phantom own-tag token there is detected — both modes.
+- [ ] [RG2] (covers local) a declared row cited only in `tickets/sub/x.md` is owned, and a phantom own-tag token there is detected — asserted in review mode over the enumeration path both modes share.
 - [ ] [RG3] (covers local) a changed path carrying ESC exits 1 with the unrepresentable-TOON-cell error even when the path is inside a fence and every check would be green.
 
 ## Red mutations
