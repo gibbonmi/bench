@@ -150,67 +150,135 @@ func checkSubcommandRouting(root string) []string {
 	return uniqueSorted(diags)
 }
 
-// dispatchNames reads the one dispatch surface: the `Name:` field of every element in the
-// commandRegistry composite literal. It matches on that identifier specifically, not on any
-// composite literal shape, so an unrelated slice of the same element type sitting beside it
-// is never mistaken for the dispatch source.
-func dispatchNames(path, body string) ([]string, error) {
+type commandRegistryEntry struct {
+	name   string
+	fields map[string][]ast.Expr
+}
+
+// parseCommandRegistry owns the syntax shared by registry-backed conformance checks. It
+// locates the named variable exactly once and preserves entry and repeated-field order; each
+// check remains responsible for the meaning of the fields it consumes.
+func parseCommandRegistry(path, body string) ([]commandRegistryEntry, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, body, 0)
 	if err != nil {
 		return nil, err
 	}
-	var names []string
+	type declaration struct {
+		tok  token.Token
+		expr ast.Expr
+	}
+	var declarations []declaration
 	for _, decl := range file.Decls {
 		genDecl, ok := decl.(*ast.GenDecl)
 		if !ok {
 			continue
 		}
-		names = append(names, registryDispatchNames(genDecl)...)
-	}
-	return names, nil
-}
-
-func registryDispatchNames(decl *ast.GenDecl) []string {
-	var names []string
-	for _, spec := range decl.Specs {
-		value, ok := spec.(*ast.ValueSpec)
-		if !ok || len(value.Names) != 1 || value.Names[0].Name != dispatchRegistry {
-			continue
+		for _, spec := range genDecl.Specs {
+			value, ok := spec.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
+			for i, name := range value.Names {
+				if name.Name != dispatchRegistry {
+					continue
+				}
+				if len(value.Names) != 1 || len(value.Values) != 1 || i >= len(value.Values) {
+					return nil, fmt.Errorf("%s must be one named value with one literal", dispatchRegistry)
+				}
+				declarations = append(declarations, declaration{tok: genDecl.Tok, expr: value.Values[i]})
+			}
 		}
-		for _, expr := range value.Values {
-			names = append(names, registryElementNames(expr)...)
-		}
 	}
-	return names
-}
-
-func registryElementNames(expr ast.Expr) []string {
-	literal, ok := expr.(*ast.CompositeLit)
+	if len(declarations) != 1 {
+		return nil, fmt.Errorf("found %d %s declarations, want exactly 1", len(declarations), dispatchRegistry)
+	}
+	if declarations[0].tok != token.VAR {
+		return nil, fmt.Errorf("%s must be declared with var", dispatchRegistry)
+	}
+	literal, ok := declarations[0].expr.(*ast.CompositeLit)
 	if !ok {
-		return nil
+		return nil, fmt.Errorf("%s is not a composite literal", dispatchRegistry)
 	}
-	var names []string
-	for _, element := range literal.Elts {
+	entries := make([]commandRegistryEntry, 0, len(literal.Elts))
+	seen := make(map[string]bool, len(literal.Elts))
+	for i, element := range literal.Elts {
 		entry, ok := element.(*ast.CompositeLit)
 		if !ok {
-			continue
+			return nil, fmt.Errorf("registry entry %d is not a composite literal", i+1)
 		}
+		fields := make(map[string][]ast.Expr)
 		for _, field := range entry.Elts {
 			pair, ok := field.(*ast.KeyValueExpr)
 			if !ok {
 				continue
 			}
 			key, ok := pair.Key.(*ast.Ident)
-			if !ok || key.Name != "Name" {
+			if !ok {
 				continue
 			}
-			if name, ok := stringLiteral(pair.Value); ok {
-				names = append(names, name)
-			}
+			fields[key.Name] = append(fields[key.Name], pair.Value)
 		}
+		names := fields["Name"]
+		if len(names) != 1 {
+			return nil, fmt.Errorf("registry entry %d has %d Name fields, want exactly 1", i+1, len(names))
+		}
+		name, ok := stringLiteral(names[0])
+		if !ok || name == "" {
+			return nil, fmt.Errorf("registry entry %d has malformed or empty Name", i+1)
+		}
+		if seen[name] {
+			return nil, fmt.Errorf("%s repeats command %q", dispatchRegistry, name)
+		}
+		seen[name] = true
+		entries = append(entries, commandRegistryEntry{name: name, fields: fields})
 	}
-	return names
+	return entries, nil
+}
+
+// dispatchNames reads the one dispatch surface in producer order. The shared parser
+// rejects any registry shape that another registry-backed check could interpret differently.
+func dispatchNames(path, body string) ([]string, error) {
+	entries, err := parseCommandRegistry(path, body)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		names = append(names, entry.name)
+	}
+	return names, nil
+}
+
+func TestSubcommandRoutingRegistryParserFailsClosed(t *testing.T) {
+	ordered := "package main\nvar commandRegistry = []commandDefinition{{Name: \"maps\"}, {Name: \"version\"}}\n"
+	got, err := dispatchNames("fixture.go", ordered)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(got, ",") != "maps,version" {
+		t.Fatalf("dispatch names = %q, want producer order [maps version]", got)
+	}
+
+	cases := []struct {
+		name, body, want string
+	}{
+		{"absent registry", "package main\n", "found 0 commandRegistry declarations"},
+		{"multiple registries", "package main\nvar commandRegistry = []commandDefinition{}\nvar commandRegistry = []commandDefinition{}\n", "found 2 commandRegistry declarations"},
+		{"const registry", "package main\nconst commandRegistry = 1\n", "commandRegistry must be declared with var"},
+		{"malformed registry literal", "package main\nvar commandRegistry = buildRegistry()\n", "commandRegistry is not a composite literal"},
+		{"malformed registry entry", "package main\nvar commandRegistry = []commandDefinition{buildEntry()}\n", "registry entry 1 is not a composite literal"},
+		{"missing name", "package main\nvar commandRegistry = []commandDefinition{{}}\n", "registry entry 1 has 0 Name fields"},
+		{"duplicate name", "package main\nvar commandRegistry = []commandDefinition{{Name: \"maps\"}, {Name: \"maps\"}}\n", `commandRegistry repeats command "maps"`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := dispatchNames("fixture.go", tc.body)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("dispatch registry parse error = %v, want substring %q", err, tc.want)
+			}
+		})
+	}
 }
 
 func stringLiteral(expr ast.Expr) (string, bool) {

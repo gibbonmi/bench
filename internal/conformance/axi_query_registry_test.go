@@ -259,85 +259,25 @@ func TestAXIRegistryParserFailsClosed(t *testing.T) {
 }
 
 func parseAXIRegistry(path, body string, reasons map[string]string) (parsedAXIRegistry, error) {
-	file, err := parser.ParseFile(token.NewFileSet(), path, body, 0)
+	entries, err := parseCommandRegistry(path, body)
 	if err != nil {
 		return parsedAXIRegistry{}, err
 	}
-	var registries []ast.Expr
-	for _, decl := range file.Decls {
-		gen, ok := decl.(*ast.GenDecl)
-		if !ok || gen.Tok != token.VAR {
-			continue
-		}
-		for _, spec := range gen.Specs {
-			value, ok := spec.(*ast.ValueSpec)
-			if !ok {
-				continue
-			}
-			for i, name := range value.Names {
-				if name.Name == "commandRegistry" {
-					if len(value.Names) != 1 || len(value.Values) != 1 || i >= len(value.Values) {
-						return parsedAXIRegistry{}, fmt.Errorf("commandRegistry must be one named value with one literal")
-					}
-					registries = append(registries, value.Values[i])
-				}
-			}
-		}
-	}
-	if len(registries) != 1 {
-		return parsedAXIRegistry{}, fmt.Errorf("found %d commandRegistry declarations, want exactly 1", len(registries))
-	}
-	literal, ok := registries[0].(*ast.CompositeLit)
-	if !ok {
-		return parsedAXIRegistry{}, fmt.Errorf("commandRegistry is not a composite literal")
-	}
 	result := parsedAXIRegistry{members: make(map[string][]string)}
-	seen := make(map[string]bool, len(literal.Elts))
-	for i, element := range literal.Elts {
-		entry, ok := element.(*ast.CompositeLit)
-		if !ok {
-			return parsedAXIRegistry{}, fmt.Errorf("registry entry %d is not a composite literal", i+1)
-		}
-		names := registryFields(entry, "Name")
-		if len(names) != 1 {
-			return parsedAXIRegistry{}, fmt.Errorf("registry entry %d has %d Name fields, want exactly 1", i+1, len(names))
-		}
-		name, ok := stringLiteral(names[0])
-		if !ok || name == "" {
-			return parsedAXIRegistry{}, fmt.Errorf("registry entry %d has malformed or empty Name", i+1)
-		}
-		if seen[name] {
-			return parsedAXIRegistry{}, fmt.Errorf("commandRegistry repeats command %q", name)
-		}
-		seen[name] = true
-		dispositions := registryFields(entry, "AXI")
+	for _, entry := range entries {
+		dispositions := entry.fields["AXI"]
 		if len(dispositions) != 1 {
-			return parsedAXIRegistry{}, fmt.Errorf("command %q has %d AXI dispositions, want exactly 1", name, len(dispositions))
+			return parsedAXIRegistry{}, fmt.Errorf("command %q has %d AXI dispositions, want exactly 1", entry.name, len(dispositions))
 		}
-		approved, children, err := parseAXIDisposition(name, dispositions[0], reasons)
+		approved, children, err := parseAXIDisposition(entry.name, dispositions[0], reasons)
 		if err != nil {
 			return parsedAXIRegistry{}, err
 		}
 		if approved {
-			result.members[name] = children
+			result.members[entry.name] = children
 		}
 	}
 	return result, nil
-}
-
-func registryFields(entry *ast.CompositeLit, name string) []ast.Expr {
-	var values []ast.Expr
-	for _, element := range entry.Elts {
-		pair, ok := element.(*ast.KeyValueExpr)
-		if !ok {
-			continue
-		}
-		key, ok := pair.Key.(*ast.Ident)
-		if ok && key.Name == name {
-			values = append(values, pair.Value)
-		}
-	}
-	return values
 }
 
 func parseAXIDisposition(command string, expr ast.Expr, reasons map[string]string) (bool, []string, error) {
