@@ -22,12 +22,9 @@ type listRow struct {
 
 // ListCommand implements the read-only AXI worktree population query.
 func ListCommand(args []string) (string, int) {
-	parsed, line, code := usage.Parse(worktreeListGrammar, args)
+	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {
 		return line + "\n", code
-	}
-	if parsed.EndedFlags {
-		return toon.Usage(usage.WorktreeList, "--") + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {

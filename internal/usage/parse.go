@@ -27,6 +27,10 @@ type Flag struct {
 // of -1 means unbounded (variadic).
 // ReservedPositionalsBeforeTerminator treats that many leading positional slots
 // as literal values before recognizing help, flags, or the first terminator.
+// HelpOnlyWhenSole narrows help to the sole-argument spelling and, with it, turns
+// off the whole flag-recognition pass: the grammar accepts no flags, and "--" is
+// an ordinary positional rather than a terminator, so Result.EndedFlags stays
+// false.
 type Grammar struct {
 	Cmd                                 string
 	Help                                string
