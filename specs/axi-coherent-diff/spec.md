@@ -1,6 +1,6 @@
 # AXI coherent diff
 
-Status: staged
+Status: implemented
 
 Decision source: `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`, as rescoped by the reviewer's FT173 ruling recorded in `ROADMAP.md` (2026-08-10; drained at `2c398ee5`) — `axi-spec-build-complete` and the spec-build family are retired with the provisional lifecycle, so this slice leads the sequence and introduces the typed-action foundation itself.
 
