@@ -138,7 +138,7 @@ func (action Action) render() (string, string, error) {
 			}
 			if argument.known != "" {
 				rendered, err := renderKnownArgument(argument.known)
-				if err != nil || argument.known == "unknown" || (i == 0 && !shellSafeToken(argument.known)) {
+				if err != nil || (i == 0 && !shellSafeToken(argument.known)) {
 					return "", "", errors.New("executable action has an invalid known argument")
 				}
 				args = append(args, rendered)

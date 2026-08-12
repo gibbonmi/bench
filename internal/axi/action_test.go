@@ -63,6 +63,17 @@ func TestRenderHelpRendersReusableInvocationAndHarnessPhase(t *testing.T) {
 	}
 }
 
+func TestRenderHelpRendersKnownArgumentNamedUnknown(t *testing.T) {
+	got, err := RenderHelp([]Action{ExecutableInvocation("inspect an unknown-named map", KnownArgument("maps"), KnownArgument("unknown"))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "help[1]{cmd,why}:\n  bench maps unknown,inspect an unknown-named map\n"
+	if got != want {
+		t.Fatalf("RenderHelp = %q, want %q", got, want)
+	}
+}
+
 func TestRenderHelpShellQuotesKnownArgumentsWithoutChangingFutureInputs(t *testing.T) {
 	got, err := RenderHelp([]Action{ExecutableInvocation(
 		"clean the orphaned worktree",
@@ -101,10 +112,11 @@ func TestRenderHelpRejectsLossyReusableActions(t *testing.T) {
 				why:        "repair decisions/model.md",
 			},
 		},
-		{name: "guessed value", action: ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument("unknown"))},
+		{name: "empty known value", action: ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument(""))},
 		{name: "undeclared placeholder", action: ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument("<path>"))},
 		{name: "control byte", action: ExecutableInvocation("repair", KnownArgument("worktree"), KnownArgument("clean"), KnownArgument("orphan\x1bpool"))},
 		{name: "prose as command", action: ExecutableInvocation("repair", KnownArgument("run bench maps --template"))},
+		{name: "unsafe executable name", action: ExecutableInvocation("repair", KnownArgument("maps!"))},
 		{name: "future command", action: ExecutableInvocation("repair", FutureInput("command"))},
 		{name: "shell command phase", action: HarnessPhase("bench /bench-shape-idea", "shape model")},
 	} {
