@@ -26,6 +26,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- New `/bench-deepen` phase (Codex: `$bench-deepen`) — an architecture-deepening
+  survey ported from Matt Pocock's `improve-codebase-architecture`: scans for
+  shallow modules, presents deepening candidates as a self-contained HTML report,
+  then grills the reviewer's pick. Scopes from a named direction, the latest
+  `ASSESSMENT.md` (the `/bench-assess` conjunction), or commit-history hot spots;
+  `/bench-assess` now routes architecture-shaped findings to it on exit.
 - `bench diff` now renders one coherent AXI snapshot with revision and aggregate
   facts, all-files checkout inventory, whitespace verdicts, exact untracked bodies in
   `--full`, and executable follow-up help; it retries a moving live checkout once and

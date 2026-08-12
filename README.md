@@ -430,6 +430,7 @@ building.
 | `/bench-update-kit` (sync upstream) | — | — | re-run the synthesis vs upstream, 3 loops |
 | `/bench-what-next` (reconcile roadmap, drain capture) | — | — | the kit learns from its own use, one reviewed batch diff |
 | `/bench-debug` (bug path) | diagnosing-bugs | — | repro loop as the bug's gate |
+| `/bench-deepen` (deepening survey) | improve-codebase-architecture | — | scopes from `ASSESSMENT.md` findings; vocabulary charged from `craft-seams`, grilling from `craft-grill`; mid-tier read-only delegate |
 | design-it-twice in `craft-seams` | codebase-design | — | high-effort line at the uncertain seam |
 | `bench shift` notes.md | — | gnhf (iteration context) | — |
 | `block-dangerous-git.sh` | git-guardrails | — | agent has no destructive authority |

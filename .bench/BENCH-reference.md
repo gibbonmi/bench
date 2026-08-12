@@ -90,6 +90,7 @@ Codex phase adapters installed by Bench:
 - `$bench-update-kit` → `.agents/commands/bench-update-kit.md`
 - `$bench-what-next` → `.agents/commands/bench-what-next.md`
 - `$bench-assess` → `.agents/commands/bench-assess.md`
+- `$bench-deepen` → `.agents/commands/bench-deepen.md`
 
 ## Command Notes
 
