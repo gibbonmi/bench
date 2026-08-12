@@ -3,6 +3,7 @@ package worktree
 import (
 	"errors"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"io"
 	"os"
@@ -410,10 +411,7 @@ func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 }
 
 func TestLeaseFile(t *testing.T) {
-	dir := t.TempDir()
-	if out, err := exec.Command("git", "-C", dir, "init").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	dir := gittest.Repo(t)
 	lease, err := LeaseFile(dir)
 	if err != nil {
 		t.Fatalf("LeaseFile: %v", err)
@@ -450,10 +448,7 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 }
 func newWorktreeRepo(t testing.TB) string {
 	t.Helper()
-	root := t.TempDir()
-	gitRun(t, root, "init", "-q", "-b", "main")
-	gitRun(t, root, "config", "user.email", "bench@local")
-	gitRun(t, root, "config", "user.name", "bench")
+	root := gittest.RepoOnBranch(t, "main")
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
 		t.Fatalf("write tracked.txt: %v", err)
 	}

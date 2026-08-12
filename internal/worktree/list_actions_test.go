@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/axi/axitest"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -43,10 +43,7 @@ func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
 	if err := json.Unmarshal(data, &pairs); err != nil {
 		t.Fatal(err)
 	}
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Chdir(root)
 	for _, pair := range pairs {
 		out, code := ListCommand(pair.Argv)
@@ -62,10 +59,7 @@ func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
 }
 
 func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Chdir(root)
 	for _, arg := range []string{"--help", "-h", "help"} {
 		out, code := ListCommand([]string{arg})
@@ -87,10 +81,7 @@ func TestListCommandPreservesCheckedInEmptyPrimaryResponse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Chdir(root)
 	out, code := ListCommand(nil)
 	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {

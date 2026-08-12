@@ -1,6 +1,6 @@
 # AXI query disclosure
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation on 2026-08-12 — repair only the false reusable-invocation prerequisite, authorize that missing owner to land atomically with its first public query consumer, retain the harness-phase addition, preserve QD1–QD6 and the signed QD5 ledger, and keep Fable as the final cross-harness implementation reviewer.
 

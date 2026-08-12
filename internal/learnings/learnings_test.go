@@ -3,7 +3,6 @@ package learnings
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestCommandAppendsTypedDrainActionsAndHonestEmptyHelp(t *testing.T) {
@@ -26,7 +26,7 @@ func TestCommandAppendsTypedDrainActionsAndHonestEmptyHelp(t *testing.T) {
 		{name: "absent", want: "learnings[0]{date,title}:\nhelp[0]{cmd,why}:\n", code: 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := learningsRepo(t)
+			root := gittest.Repo(t)
 			if tc.journal != "" {
 				if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
 					t.Fatal(err)
@@ -60,7 +60,7 @@ func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			root := learningsRepo(t)
+			root := gittest.Repo(t)
 			if tc.journal != "" {
 				if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
 					t.Fatal(err)
@@ -117,7 +117,7 @@ func TestRefusalEvidencePreservesPrimaryAndDisclosesOnlyRepairableMalformed(t *t
 			if err != nil {
 				t.Fatal(err)
 			}
-			root := learningsRepo(t)
+			root := gittest.Repo(t)
 			if tc.setup != nil {
 				tc.setup(t, root)
 			} else {
@@ -165,15 +165,6 @@ func writeJournal(t *testing.T, root string, data []byte) {
 	if err := os.WriteFile(filepath.Join(root, JournalPath), data, 0o644); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func learningsRepo(t *testing.T) string {
-	t.Helper()
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
-	}
-	return root
 }
 
 func TestRows(t *testing.T) {

@@ -2,7 +2,6 @@ package maps
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -11,10 +10,11 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestCommandAppendsOnlyMapActionsToTheCapturedPrimaryResponse(t *testing.T) {
-	root := mapsRepo(t)
+	root := gittest.Repo(t)
 	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestCommandAppendsHonestEmptyHelpForEmptyAndCompleteMaps(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			root := mapsRepo(t)
+			root := gittest.Repo(t)
 			tc.write(t, root)
 			t.Chdir(root)
 
@@ -130,7 +130,7 @@ func TestActionsForRowsCarriesTheInvalidDiagnosticPath(t *testing.T) {
 }
 
 func TestCommandDisclosesTheFullPathForABoundsInvalidMap(t *testing.T) {
-	root := mapsRepo(t)
+	root := gittest.Repo(t)
 	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -144,15 +144,6 @@ func TestCommandDisclosesTheFullPathForABoundsInvalidMap(t *testing.T) {
 	if code != 1 || !strings.Contains(out, "hollow,invalid,map,invalid,\"empty: \"") || !strings.HasSuffix(out, help) {
 		t.Fatalf("Command(%v) = (exit %d, %q), want exit 1 with the bounds diagnostic and %q", []string(nil), code, out, help)
 	}
-}
-
-func mapsRepo(t *testing.T) string {
-	t.Helper()
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
-	}
-	return root
 }
 
 func TestParseDecisionMapSchemaAndTemplate(t *testing.T) {

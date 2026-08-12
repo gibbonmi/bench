@@ -13,13 +13,11 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestCommandAlwaysEmitsCompleteGuardScanMetadata(t *testing.T) {
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	old, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -53,10 +51,7 @@ func TestActionsForRowsDerivesEveryStaleOrUnwiredRowAndDedupes(t *testing.T) {
 }
 
 func TestCommandAppendsHonestEmptyHelpForCleanScan(t *testing.T) {
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Chdir(root)
 	out, code := Command(nil)
 	if code != 0 || !strings.HasSuffix(out, "help[0]{cmd,why}:\n") || strings.Contains(out, "bench link") {
@@ -69,10 +64,7 @@ func TestCommandPreservesCheckedInCleanPrimaryResponse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Chdir(root)
 	out, code := Command(nil)
 	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
@@ -96,10 +88,7 @@ func TestCommandPreservesCheckedInStaleAndUnwiredPrimaryResponse(t *testing.T) {
 		}
 		return [][]string{{"unwired", "boundary", "denies", "", "", "", "none"}}
 	}
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Chdir(root)
 	out, code := Command(nil)
 	const help = "help[2]{cmd,why}:\n  bench link,repair stale\n  bench link,repair unwired\n"
@@ -121,10 +110,7 @@ func TestCommandRendersRealStaleManagedPrePushHookAndRepairAction(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	// origin/HEAD resolves the protected branch live, the posture a linked repo has.
 	if out, err := exec.Command("git", "-C", root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main").CombinedOutput(); err != nil {
 		t.Fatalf("symbolic-ref: %v: %s", err, out)
@@ -167,10 +153,7 @@ func TestCommandPreservesCheckedInIncompleteTimeoutPrimaryResponse(t *testing.T)
 		<-ctx.Done()
 		return nil
 	}
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Chdir(root)
 	out, code := Command(nil)
 	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
@@ -190,10 +173,7 @@ func TestCommandPreservesCheckedInEnumerationTimeoutPrimaryResponse(t *testing.T
 		<-ctx.Done()
 		return nil, ctx.Err()
 	}
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Chdir(root)
 	out, code := Command(nil)
 	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"io"
 	"os"
@@ -351,8 +352,7 @@ func TestExplicitApplyBindsRecoveryActionsAndDiscardFlag(t *testing.T) {
 func newOwnedSubmoduleAssignment(t *testing.T, request string) (string, Creation) {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	source := t.TempDir()
-	gitRun(t, source, "init", "-q", "-b", "main")
+	source := gittest.RepoOnBranch(t, "main")
 	mustWrite(t, filepath.Join(source, "sub.txt"), []byte("clean\n"), 0o644)
 	gitRun(t, source, "add", "sub.txt")
 	gitRun(t, source, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "submodule")

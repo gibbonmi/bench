@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	gitpkg "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestCommandRunsVersionInProcess(t *testing.T) {
@@ -270,11 +271,7 @@ func axiEnvelopeCaseNames(cases map[string]axiEnvelopeCase) []string {
 
 func newAXIEnvelopeRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	runAXIGit(t, "init", "-q", root)
-	runAXIGit(t, "-C", root, "checkout", "-q", "-b", "main")
-	runAXIGit(t, "-C", root, "config", "user.name", "Bench Test")
-	runAXIGit(t, "-C", root, "config", "user.email", "bench@example.invalid")
+	root := gittest.RepoOnBranch(t, "main")
 	writeAXIFixture(t, filepath.Join(root, "nested", "deep", ".keep"), "fixture\n")
 	runAXIGit(t, "-C", root, "add", ".")
 	runAXIGit(t, "-C", root, "commit", "-q", "-m", "fixture base")
