@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `2c398ee5`; the rescoped `specs/axi-coherent-diff/spec.md` is uncommitted pending reviewer sign-off
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged, rescoped), `specs/axi-query-disclosure/spec.md` (Status: staged, still carries the retired spec-build prerequisite — its own rescope is next in FT173), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: not run this session; only spec prose changed
+Branch: `main` — HEAD `00583fa9`; tree clean, commits unpushed
+Spec: `specs/axi-coherent-diff/spec.md` (Status: staged, rescope reviewer-approved and landed), `specs/axi-query-disclosure/spec.md` (Status: staged, still carries the retired spec-build prerequisite — its own rescope is next in FT173), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `00583fa9` via path-scoped `bench commit`
 
 ## State
 
@@ -17,14 +17,14 @@ an old-to-new compatibility row (CD9), owner-bypass proofing (no-own-porcelain
 probe, production-path help fixtures), the `--commit` help contradiction, exact
 schemas for every public block, divergence in the revision row, and
 default-ref/recorded-base identity dimensions with per-attempt resolution
-semantics. `bench coverage --check` is green at 9 rows. Reviewer sign-off on the
-rescoped spec is the open hard stop; the decision map
-`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md` stays shared
-top-level because two staged specs consume it.
+semantics. `bench coverage --check` is green at 9 rows. The reviewer approved the rescope
+(stories, fences, out of scope) 2026-08-12 and it landed at `00583fa9`; the
+decision map `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`
+stays shared top-level because two staged specs consume it.
 
 ## Next command
 
-Reviewer sign-off, then commit the rescope and run `/bench-implement-spec specs/axi-coherent-diff/spec.md` in a fresh mid-tier session.
+`/bench-implement-spec specs/axi-coherent-diff/spec.md` in a fresh mid-tier session.
 
 ## Shape
 
