@@ -137,6 +137,29 @@ func TestCommandPreservesCheckedInIncompleteTimeoutPrimaryResponse(t *testing.T)
 	}
 }
 
+func TestCommandPreservesCheckedInEnumerationTimeoutPrimaryResponse(t *testing.T) {
+	primary, err := os.ReadFile("testdata/pre-disclosure-enumeration-timeout.stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldEnumerate, oldTimeout := enumerateGuards, guardScanTimeout
+	t.Cleanup(func() { enumerateGuards, guardScanTimeout = oldEnumerate, oldTimeout })
+	guardScanTimeout = 10 * time.Millisecond
+	enumerateGuards = func(ctx context.Context, _ string) ([]candidate, error) {
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	t.Chdir(root)
+	out, code := Command(nil)
+	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
+		t.Fatalf("Command = (%d, %q), want checked-in enumeration-timeout primary plus honest empty help", code, out)
+	}
+}
+
 func TestScanTimeoutPreservesPartialRowsAndHonestCounts(t *testing.T) {
 	oldEnumerate, oldInspect := enumerateGuards, inspectGuard
 	t.Cleanup(func() { enumerateGuards, inspectGuard = oldEnumerate, oldInspect })
