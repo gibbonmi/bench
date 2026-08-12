@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
-    "old": "For\neach coverage row, the first claimant in that order is the accountable ticket. Later\ntickets may claim the same row as defense in depth without replacing that owner.",
-    "new": "Later tickets may claim the same row as defense in depth."
-  }
-]

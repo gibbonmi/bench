@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
-    "old": "An observed-red spec row carries its failing public operation into ticket acceptance\non the accountable ticket. That ticket adds a distinct post-implementation subject\nmutation; it never copies the spec's obsolete absence probe as finished evidence.",
-    "new": "An observed-red spec row may copy the spec's absence probe as its finished mutation evidence."
-  }
-]

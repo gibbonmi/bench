@@ -1,7 +1,7 @@
 # Slim craft-tickets to the tracer contract and implement-spec to the orchestration pointer
 
 Blocked by: 03-frontier-grill-and-tdd-seam-gate.md
-Ownership fence: `.agents/skills/bench-craft-tickets/SKILL.md`, `.agents/commands/bench-implement-spec.md`, `internal/anchors/registry_data.go`, `tests/canary/workflow-guidance-anchors`, `.bench/BENCH-reference.md`
+Ownership fence: `.agents/skills/bench-craft-tickets/SKILL.md`, `.agents/commands/bench-implement-spec.md`, `internal/anchors/registry_data.go`, `tests/canary/workflow-guidance-anchors`, `.bench/BENCH-reference.md`, `internal/conformance/fixture_bite_test.go`, `internal/conformance/registry_test.go`
 Integration surfaces: ticket-shape consumers→`.agents/commands/bench-implement-spec.md`; anchors→`internal/anchors/registry_data.go`; anchor canaries→`tests/canary/workflow-guidance-anchors`; index currency→`.bench/BENCH-reference.md`
 Contracts: the slim ticket field set (title, `Blocked by:`, What to build, Acceptance, advisory `Writes:`) crossing `.agents/skills/bench-craft-tickets/SKILL.md`→`.agents/commands/bench-implement-spec.md`, asserted by ST4 against the rewritten command's own reread
 Closure: ST1/slim-contract, ST2/retired-fields-gone, ST3/reviewer-approved-breakdown, ST4/implement-spec-pointer, ST5/anchors-migrated

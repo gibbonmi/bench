@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
-    "old": "Integration surfaces: <surface>→<fence path | existing path + row ID | blocker basename | dependent basename>; or none\n",
-    "new": ""
-  }
-]

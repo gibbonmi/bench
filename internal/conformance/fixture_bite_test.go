@@ -77,18 +77,10 @@ func TestSpecTicketHandoffWorkflowFixturesAreComplete(t *testing.T) {
 		{"write-spec-unique-row-id", ".agents/commands/bench-write-spec.md Template dropped the unique spec-local row-ID default"},
 		{"write-spec-ownership-fences", ".agents/commands/bench-write-spec.md Template dropped the craft-spec-owned Ownership fences section"},
 		{"write-spec-fence-approval", ".agents/commands/bench-write-spec.md Template approval paragraph dropped the explicit ownership-fence disposition"},
-		{"ticket-observed-red-evidence", ".agents/skills/bench-craft-tickets/SKILL.md dropped the observed-red ticket-evidence route"},
-		{"ticket-already-covered-evidence", ".agents/skills/bench-craft-tickets/SKILL.md dropped the already-covered changed-route mutation"},
-		{"ticket-not-tdd-able-evidence", ".agents/skills/bench-craft-tickets/SKILL.md dropped the not-TDD-able seam-availability route"},
-		{"ticket-handoff-ledger-totality", ".agents/skills/bench-craft-tickets/SKILL.md dropped approved-fence totality from the pre-assignment handoff ledger"},
-		{"ticket-handoff-ledger-current-artifacts", ".agents/skills/bench-craft-tickets/SKILL.md dropped current-artifact/no-copied-totals evidence from the pre-assignment handoff ledger"},
-		{"ticket-handoff-ledger-accountable-claimant", ".agents/skills/bench-craft-tickets/SKILL.md dropped the accountable-first-claimant with later-reinforcement rule from the pre-assignment handoff ledger"},
-		{"ticket-handoff-ledger-fence-disposition", ".agents/skills/bench-craft-tickets/SKILL.md dropped the fence-owner-or-unused disposition from the pre-assignment handoff ledger"},
-		{"ticket-fence-drift-stop", ".agents/skills/bench-craft-tickets/SKILL.md replaced the fence-drift stop with ticket-local widening"},
 		{"craft-spec-exact-literal-fence", ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the exact repo-relative never-glob ownership-fence rule"},
 		{"craft-spec-empty-or-invalid-fence", ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates permits an empty or invalid ownership fence"},
 	}
-	if got, want := len(required), 14; got != want {
+	if got, want := len(required), 6; got != want {
 		t.Fatalf("required spec-ticket handoff fixture inventory has %d entries, want %d", got, want)
 	}
 
@@ -133,14 +125,6 @@ func TestWorkflowCadenceAnchorsRejectDeletionAndSwap(t *testing.T) {
 		bootstrapDeletionDiag = ".agents/skills/bench-craft-spec/SKILL.md dropped the bootstrap-authority pre-execution trace"
 		bootstrapAfterDiag    = ".agents/skills/bench-craft-spec/SKILL.md validates a bootstrap authority after launch"
 		bootstrapPointerDiag  = "bench-write-spec.md does not apply craft-spec's named bootstrap-authority rule during edge walking and falsification"
-		repairEnvelopeDiag    = ".agents/skills/bench-craft-tickets/SKILL.md dropped the debug receipt's maximum repair envelope"
-		repairResultDiag      = ".agents/skills/bench-craft-tickets/SKILL.md dropped the one-ticket-or-reciprocal-chain repair result"
-		repairChainOnlyDiag   = ".agents/skills/bench-craft-tickets/SKILL.md contains an additive chain-only repair mandate for validated debug receipts"
-		repairUnionDiag       = ".agents/skills/bench-craft-tickets/SKILL.md dropped repair-ticket fence union containment"
-		repairEscapeDiag      = ".agents/skills/bench-craft-tickets/SKILL.md permits a repair ticket to escape the debug receipt's required fence"
-		repairOwnerDiag       = "bench-implement-spec dropped the craft-tickets repair-reslicing owner pointer"
-		repairCommonDiag      = "bench-implement-spec dropped the one-repair-ticket common case"
-		repairSingularDiag    = "bench-implement-spec restores the singular exactly-one repair-ticket mandate"
 	)
 	h := NewHarness(t)
 	owner, ok := conformanceChecks["docs-currency-workflow"]
@@ -151,10 +135,6 @@ func TestWorkflowCadenceAnchorsRejectDeletionAndSwap(t *testing.T) {
 	diags := owner.run(root, h.KitRoot, registry.Dev)
 	for _, diag := range []string{
 		bootstrapDeletionDiag, bootstrapAfterDiag, bootstrapPointerDiag,
-		repairEnvelopeDiag, repairResultDiag, repairChainOnlyDiag,
-		repairUnionDiag, repairEscapeDiag,
-		repairOwnerDiag,
-		repairCommonDiag, repairSingularDiag,
 	} {
 		if containsDiagnostic(diags, diag) {
 			t.Fatalf("finished workflow guidance is not conformant with %q:\n%s", diag, strings.Join(diags, "\n"))
@@ -162,25 +142,13 @@ func TestWorkflowCadenceAnchorsRejectDeletionAndSwap(t *testing.T) {
 	}
 	tests := []struct{ name, rel, old, replacement, diag string }{
 		{"probe kind", ".agents/skills/bench-craft-delegate/SKILL.md", "The\ncoordinator probe's mutation kind differs from the delegate author's mutation\nkind.", "The\ncoordinator probe's mutation kind matches the delegate author's mutation\nkind.", "craft-delegate allows the coordinator probe to repeat the author's mutation kind"},
-		{"template row", ".agents/skills/bench-craft-tickets/SKILL.md", "- [ ] [AB1] <observable behavioral criterion>", "- [ ] <Observable behavioral criterion>", ".agents/skills/bench-craft-tickets/SKILL.md dropped the labeled single-line acceptance row from the ticket template"},
-		{"template row two", ".agents/skills/bench-craft-tickets/SKILL.md", "- [ ] [AB2] <observable behavioral criterion>", "- [ ] <Observable behavioral criterion>", ".agents/skills/bench-craft-tickets/SKILL.md dropped the second labeled acceptance row from the ticket template"},
-		{"template fence", ".agents/skills/bench-craft-tickets/SKILL.md", "Ownership fence: `<path prefix>`, `<path prefix>`\n", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the one-line backticked ownership fence from the ticket template"},
 		{"template blocked by", ".agents/skills/bench-craft-tickets/SKILL.md", "Blocked by: <sibling ticket file basenames, or none>", "Blocked by: <sibling ticket titles, or none>", ".agents/skills/bench-craft-tickets/SKILL.md dropped the basename-keyed blocked-by line from the ticket template"},
-		{"template mutations header", ".agents/skills/bench-craft-tickets/SKILL.md", "| criterion | mutation | owner | operation sequence |\n|---|---|---|---|\n| <ID> |", "| <ID> |", ".agents/skills/bench-craft-tickets/SKILL.md dropped the red-mutations table from the ticket template"},
-		{"gate checkbox prohibition", ".agents/skills/bench-craft-tickets/SKILL.md", "The\nticket carries behavioral acceptance checkboxes, not a project-gate checkbox:\nthe green landing commit is the one source for that verdict.", "The\nticket carries a project-gate checkbox like every other acceptance row.", ".agents/skills/bench-craft-tickets/SKILL.md dropped the gate-checkbox prohibition from the ticket cadence paragraph"},
-		{"breakdown classification branch", ".agents/skills/bench-craft-tickets/SKILL.md", "Classify the work first against `Classify before slicing`. A wide refactor\n   takes the expand–migrate–contract sequence instead of ordinary grouping;\n   otherwise take", "Take", ".agents/skills/bench-craft-tickets/SKILL.md dropped the blast-radius classification branch from the breakdown method's first step"},
-		{"fence-sized migration", ".agents/skills/bench-craft-tickets/SKILL.md", "move callers in green batches, each batch sized by exactly one\n   ownership fence.", "move callers in green batches sized by judgment.", ".agents/skills/bench-craft-tickets/SKILL.md dropped the one-ownership-fence sizing rule for migrate batches"},
-		{"contract blocker", ".agents/skills/bench-craft-tickets/SKILL.md", " The\n   contract ticket's `Blocked by:` names every migration ticket basename, so no\n   contract runs while a migration is still open.", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the rule that the contract ticket's Blocked by names every migration ticket"},
-		{"step two disjointness", ".agents/skills/bench-craft-tickets/SKILL.md", "Concurrent\n   eligibility is fence disjointness: two tickets run at once only when their\n   ownership fences share no path.", "Confirm the group is independent.", ".agents/skills/bench-craft-tickets/SKILL.md dropped fence disjointness as the mechanical concurrent-eligibility check beside the independently-green rule"},
-		{"one-line ceiling", ".agents/skills/bench-craft-tickets/SKILL.md", " A one-line change pays at most one shared\n   test-harness line: below that ceiling it takes no fresh worktree, no fresh\n   delegate, and no full gate by default.", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the one-line test-harness ceiling beside the independently-green rule"},
-		{"basename blocker", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename.", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the basename-keyed blocker naming from the breakdown method's third step"},
-		{"title blocker forbidden", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename.", "Name every real blocker by sibling ticket title.", ".agents/skills/bench-craft-tickets/SKILL.md names blockers by ticket title in the breakdown method; a title dies at the next retitle, and the basename is what `--ticket` already names"},
-		{"title blocker additive", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename.", "Name every real blocker by sibling ticket file basename. A blocker may also be named by sibling ticket title.", ".agents/skills/bench-craft-tickets/SKILL.md names blockers by ticket title in the breakdown method; a title dies at the next retitle, and the basename is what `--ticket` already names"},
-		{"evidence authorship", ".agents/skills/bench-craft-tickets/SKILL.md", "`bench gate`, the canonical producing entry — and which phase consumes it: a", "`gate-run --fresh`, the canonical producing entry — and which phase consumes it: a", ".agents/skills/bench-craft-tickets/SKILL.md dropped the evidence-authorship rule from the ticket cadence paragraph; a cadence-changing ticket names the producing command and the consuming phase"},
-		{"contracts four facts", ".agents/skills/bench-craft-tickets/SKILL.md", "Every value crossing an ownership fence names four facts: its type, its\nmembership or domain rule, its ordering, and its absence semantics.", "Check that the fences agree.", ".agents/skills/bench-craft-tickets/SKILL.md dropped the four facts every fence-crossing value names in the contracts-discovery step"},
-		{"contracts consumer row", ".agents/skills/bench-craft-tickets/SKILL.md", " and the whole enumerated family", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the real-producer-and-enumerated-family assertion target from the consumer-ticket contract row"},
-		{"junction creation", ".agents/skills/bench-craft-tickets/SKILL.md", "When neither side can assert an invariant alone, add a junction ticket that\ncan. ", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the junction-creation half of the junction rule from the contracts-discovery step"},
-		{"contracts junction", ".agents/skills/bench-craft-tickets/SKILL.md", " A junction row discovered more than one ticket downstream moves a narrower\ncopy of the row to the junction where it belongs, so the red surfaces at the\nmismatch rather than six tickets past it.", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the downstream-copy half of the junction rule from the contracts-discovery step"},
+		{"gate checkbox prohibition", ".agents/skills/bench-craft-tickets/SKILL.md", "not a project-gate checkbox", "a project-gate checkbox like every other acceptance row", ".agents/skills/bench-craft-tickets/SKILL.md dropped the gate-checkbox prohibition from the Acceptance field explanation"},
+		{"breakdown classification branch", ".agents/skills/bench-craft-tickets/SKILL.md", "sequences as expand (new form beside the old), migrate (move callers\nin green batches), then contract", "sequences as expand, migrate, then contract", ".agents/skills/bench-craft-tickets/SKILL.md dropped the blast-radius expand-migrate-contract sequence from the breakdown method"},
+		{"contract blocker", ".agents/skills/bench-craft-tickets/SKILL.md", "`Blocked by:` naming them all", "naming them all by title", ".agents/skills/bench-craft-tickets/SKILL.md dropped the rule that the contract ticket's Blocked by names every migration ticket"},
+		{"basename blocker", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the basename-keyed blocker naming from the breakdown method"},
+		{"title blocker forbidden", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename", "Name every real blocker by sibling ticket title", ".agents/skills/bench-craft-tickets/SKILL.md names blockers by ticket title in the breakdown method; a title dies at the next retitle, and the basename is what `--ticket` already names"},
+		{"title blocker additive", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename", "Name every real blocker by sibling ticket file basename. A blocker may also be named by sibling ticket title", ".agents/skills/bench-craft-tickets/SKILL.md names blockers by ticket title in the breakdown method; a title dies at the next retitle, and the basename is what `--ticket` already names"},
 		{"delegate self-probe", ".agents/skills/bench-craft-delegate/SKILL.md", "require the\ndelegate to apply it to its own finished work, report the observed result, and\nadd the missing row when the mutation comes back silently green.", "require the\ndelegate to consider whether the mutation would fail.", ".agents/skills/bench-craft-delegate/SKILL.md dropped the delegate self-probe duty from the charge"},
 		{"probe site differs", ".agents/skills/bench-craft-delegate/SKILL.md", "It also differs in site from every probe the delegate ran: a second probe\nat the same site is vacuous, and a vacuous probe is indistinguishable from a\npass. ", "", ".agents/skills/bench-craft-delegate/SKILL.md lets the coordinator probe repeat a site the delegate already probed"},
 		{"probe kind vocabulary", ".agents/skills/bench-craft-delegate/SKILL.md", " and the mutation's kind (omission or swap)", "", ".agents/skills/bench-craft-delegate/SKILL.md dropped the omission/swap probe-kind vocabulary from the charge template"},
@@ -194,16 +162,7 @@ func TestWorkflowCadenceAnchorsRejectDeletionAndSwap(t *testing.T) {
 		{"bootstrap authority edge-walk pointer", ".agents/commands/bench-write-spec.md", "propose a tuned profile addition. Apply `craft-spec`'s named\n   `Bootstrap authority before execution` rule.", "propose a tuned profile addition.", bootstrapPointerDiag},
 		{"bootstrap authority falsification pointer", ".agents/commands/bench-write-spec.md", "ship on its own gate? Apply `craft-spec`'s named\n   `Bootstrap authority before execution` rule.", "ship on its own gate?", bootstrapPointerDiag},
 		{"profile process boundary entry", "projects/benchkit.md", "- state serialized by one process and reloaded by a fresh one: the writer's\n  in-memory value and the reader's re-parse agree at unit level and diverge\n  across the boundary, so the assertion drives a second process rather than\n  reusing the first's structures. Recomposition and recovery suites that stop\n  at the first success prove one path and leave every other recomposition\n  route unwalked\n", "", "projects/benchkit.md dropped the process-boundary lifecycle entry from the hostile-input checklist"},
-		{"contracts re-derivation", ".agents/skills/bench-craft-tickets/SKILL.md", "Re-derive each contract, and every claim a ticket makes about it, from the tree\nafter earlier tickets land — never from the spec's account of the base.", "Re-read each contract, and every claim a ticket makes about it, from the spec's account of the base.", ".agents/skills/bench-craft-tickets/SKILL.md dropped the re-derive-claims-from-the-tree rule from the contracts-discovery step"},
-		{"repair envelope deletion", ".agents/skills/bench-craft-tickets/SKILL.md", "For a validated debug receipt, the\nreceipt's required fence is the maximum envelope for repair reslicing; apply\nthe ordinary independently-green split rule inside it.", "For a validated debug receipt, apply the ordinary independently-green split rule inside its required fence.", repairEnvelopeDiag},
-		{"repair result chain only", ".agents/skills/bench-craft-tickets/SKILL.md", "The result may be one\nrepair ticket or a reciprocal ordered producer-to-consumer chain.", "The result is a reciprocal ordered producer-to-consumer chain.", repairResultDiag},
-		{"repair result one ticket only", ".agents/skills/bench-craft-tickets/SKILL.md", "The result may be one\nrepair ticket or a reciprocal ordered producer-to-consumer chain.", "The result is one repair ticket.", repairResultDiag},
-		{"additive repair result chain only", ".agents/skills/bench-craft-tickets/SKILL.md", "repair ticket or a reciprocal ordered producer-to-consumer chain.", "repair ticket or a reciprocal ordered producer-to-consumer chain.\nA validated debug receipt must produce a reciprocal ordered producer-to-consumer chain.", repairChainOnlyDiag},
-		{"repair union deletion", ".agents/skills/bench-craft-tickets/SKILL.md", "The union of\nevery repair-ticket ownership fence stays inside the receipt's required fence.", "", repairUnionDiag},
-		{"additive repair fence escape", ".agents/skills/bench-craft-tickets/SKILL.md", "The union of\nevery repair-ticket ownership fence stays inside the receipt's required fence.", "The union of every repair-ticket ownership fence stays inside the receipt's required fence. One repair ticket in the chain may escape the receipt's required fence.", repairEscapeDiag},
-		{"repair owner deletion", ".agents/commands/bench-implement-spec.md", "`craft-tickets` is the sole repair-reslicing owner. ", "", repairOwnerDiag},
-		{"repair common-case deletion", ".agents/commands/bench-implement-spec.md", "One repair ticket remains the common case. ", "", repairCommonDiag},
-		{"additive singular repair mandate", ".agents/commands/bench-implement-spec.md", "One repair ticket remains the common case.", "One repair ticket remains the common case. The receipt takes exactly one repair ticket.", repairSingularDiag},
+		{"reviewer-approved breakdown", ".agents/skills/bench-craft-tickets/SKILL.md", "presents the reviewer a numbered list — title, `Blocked by:`, and", "sends the breakdown to a fresh read-only delegate — title, `Blocked by:`, and", ".agents/skills/bench-craft-tickets/SKILL.md dropped the reviewer-approved breakdown: a numbered title/blocked-by/outcome list iterated and approved before assignment"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

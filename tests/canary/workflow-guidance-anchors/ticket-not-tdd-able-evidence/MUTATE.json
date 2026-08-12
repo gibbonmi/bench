@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
-    "old": "A not-TDD-able spec row names its blocker and maps to the first ticket where the seam exists.\nThat ticket adds the subject mutation once the seam is available; the original blocker\ndoes not grant a permanent exemption from mutation evidence.",
-    "new": "A not-TDD-able spec row names its blocker and remains exempt from mutation evidence after the seam exists."
-  }
-]
