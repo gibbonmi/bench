@@ -275,7 +275,7 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 
 | subject | limit |
 |---|---|
-| `.bench/BENCH.md` | 150 |
+| `.bench/BENCH.md` | 175 |
 | `.agents/commands/bench-implement-spec.md` | 60 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
 | `.agents/skills/*/SKILL.md` | 120 |
