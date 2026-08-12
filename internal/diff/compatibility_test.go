@@ -49,6 +49,51 @@ func TestPreMigrationResponsesDifferOnlyByNamedAXIDelta(t *testing.T) {
 		})
 	}
 
+	t.Run("preserved live resolution errors", func(t *testing.T) {
+		noDefault := t.TempDir()
+		t.Chdir(noDefault)
+		runGit(t, "init", "-q", "-b", "trunk")
+		runGit(t, "config", "user.email", "t@example.com")
+		runGit(t, "config", "user.name", "t")
+		commitFile(t, "f.txt", "0", "c0")
+		runGit(t, "checkout", "-q", "-b", "other")
+		commitFile(t, "f.txt", "1", "c1")
+		out, code := Command(nil)
+		want := "error: cannot resolve a review base — this repository has no resolvable default branch; record one with: git config branch.<name>.benchBase <sha>\n"
+		if code != 1 || out != want {
+			t.Fatalf("unresolvable default = (%d,%q), want (%d,%q)", code, out, 1, want)
+		}
+
+		noBase := t.TempDir()
+		t.Chdir(noBase)
+		runGit(t, "init", "-q", "-b", "main")
+		runGit(t, "config", "user.email", "t@example.com")
+		runGit(t, "config", "user.name", "t")
+		commitFile(t, "f.txt", "0", "main")
+		runGit(t, "checkout", "-q", "--orphan", "feature")
+		runGit(t, "rm", "-q", "-r", "--cached", ".")
+		commitFile(t, "g.txt", "1", "feature")
+		out, code = Command(nil)
+		want = "error: cannot resolve a review base — no merge-base with 'main'; record one with: git config branch.<name>.benchBase <sha>\n"
+		if code != 1 || out != want {
+			t.Fatalf("no merge-base = (%d,%q), want (%d,%q)", code, out, 1, want)
+		}
+	})
+
+	t.Run("preserved TOON refusal errors", func(t *testing.T) {
+		root, _, _, _ := seedDivergedRepo(t)
+		mustWriteFile(t, "bad\033name", "x\n")
+		out, code := runProductionDiff(t, root)
+		if code != 1 || !strings.HasPrefix(out, "error: unrepresentable TOON cell — ") {
+			t.Fatalf("hostile path = (%d,%q)", code, out)
+		}
+		runGit(t, "commit", "--allow-empty", "-m", "subject \033 control")
+		out, code = runProductionDiff(t, root, "--full")
+		if code != 1 || !strings.HasPrefix(out, "error: unrepresentable TOON cell — ") {
+			t.Fatalf("hostile subject = (%d,%q)", code, out)
+		}
+	})
+
 	for _, tc := range []struct {
 		name string
 		args []string

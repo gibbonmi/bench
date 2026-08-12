@@ -5,7 +5,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 )
 
 func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) {
@@ -91,6 +93,42 @@ func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) 
 						mode = 0o644
 					}
 					if err := os.Chmod("f.txt", mode); err != nil {
+						t.Fatal(err)
+					}
+				}
+			},
+		},
+		{
+			name: "symlink target", dimension: "dirty content",
+			prepare: func(t *testing.T, _, _, _ string) func(int) {
+				mustWriteFile(t, "target-a", "a\n")
+				if err := os.Symlink("target-a", "link"); err != nil {
+					t.Fatal(err)
+				}
+				return func(call int) {
+					if err := os.Remove("link"); err != nil {
+						t.Fatal(err)
+					}
+					target := "target-a"
+					if call%2 == 1 {
+						target = "target-b"
+						mustWriteFile(t, target, "b\n")
+					}
+					if err := os.Symlink(target, "link"); err != nil {
+						t.Fatal(err)
+					}
+				}
+			},
+		},
+		{
+			name: "non-regular stat", dimension: "dirty content",
+			prepare: func(t *testing.T, _, _, _ string) func(int) {
+				if err := syscall.Mkfifo("pipe", 0o600); err != nil {
+					t.Fatal(err)
+				}
+				return func(call int) {
+					stamp := time.Unix(int64(call), 0)
+					if err := os.Chtimes("pipe", stamp, stamp); err != nil {
 						t.Fatal(err)
 					}
 				}

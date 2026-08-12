@@ -93,6 +93,19 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 		}
 	})
 
+	t.Run("hostile reachable commit subject refusal", func(t *testing.T) {
+		root, _, _, _ := seedDivergedRepo(t)
+		runGit(t, "commit", "--allow-empty", "-m", "subject \033 control")
+		raw := rawGitBytes(t, root, false, "log", "--format=%h%x00%s")
+		if !bytes.Contains(raw, []byte{033}) {
+			t.Fatal("raw Git fixture lost control-bearing subject")
+		}
+		out, code := runProductionDiff(t, root, "--full")
+		if code != 1 || !strings.Contains(out, "error: unrepresentable TOON cell") {
+			t.Fatalf("control subject response = (exit %d, %q), want structured refusal", code, out)
+		}
+	})
+
 	t.Run("clean", func(t *testing.T) {
 		root := t.TempDir()
 		t.Chdir(root)
