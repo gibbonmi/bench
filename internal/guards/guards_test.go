@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
@@ -30,6 +31,36 @@ func TestCommandAlwaysEmitsCompleteGuardScanMetadata(t *testing.T) {
 	out, code := Command(nil)
 	if code != 0 || !strings.Contains(out, "guard_scan[1]{status,inspected,total,omitted,reason}:") || !strings.Contains(out, "complete") {
 		t.Fatalf("code/output = %d\n%s", code, out)
+	}
+}
+
+func TestActionsForRowsDerivesEveryStaleOrUnwiredRowAndDedupes(t *testing.T) {
+	rows := [][]string{
+		{"stale", "b", "d", "", "", "stale", "claude"},
+		{"unwired", "b", "d", "", "", "", "none"},
+		{"stale", "b", "d", "", "", "stale", "claude"},
+		{"clean", "b", "d", "", "", "current", "claude"},
+		{"wired", "b", "d", "", "", "", "claude"},
+	}
+	help, err := axi.RenderHelp(actionsForRows(rows))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "help[2]{cmd,why}:\n  bench link,repair stale\n  bench link,repair unwired\n"
+	if help != want {
+		t.Fatalf("help = %q, want %q", help, want)
+	}
+}
+
+func TestCommandAppendsHonestEmptyHelpForCleanScan(t *testing.T) {
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	t.Chdir(root)
+	out, code := Command(nil)
+	if code != 0 || !strings.HasSuffix(out, "help[0]{cmd,why}:\n") || strings.Contains(out, "bench link") {
+		t.Fatalf("Command = (exit %d, %q), want honest empty help", code, out)
 	}
 }
 

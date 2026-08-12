@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -288,5 +289,26 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	return out + meta, 0
+	helpActions := []axi.Action(nil)
+	if scan.Status == "complete" {
+		helpActions = actionsForRows(rows)
+	}
+	help, err := axi.RenderHelp(helpActions)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out + meta + help, 0
+}
+
+func actionsForRows(rows [][]string) []axi.Action {
+	actions := make([]axi.Action, 0, len(rows))
+	for _, row := range rows {
+		if len(row) < 7 {
+			continue
+		}
+		if row[5] == string(adopt.PrePushStale) || row[6] == "none" {
+			actions = append(actions, axi.ExecutableInvocation("repair "+row[0], axi.KnownArgument("link")))
+		}
+	}
+	return actions
 }
