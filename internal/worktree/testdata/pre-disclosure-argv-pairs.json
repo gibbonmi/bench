@@ -1,0 +1,8 @@
+[
+  {"argv":["--help"],"old":{"stdout":"usage: bench worktree list\n","stderr":"","exit":0},"new":{"stdout":"usage: bench worktree list\n","stderr":"","exit":0}},
+  {"argv":["-h"],"old":{"stdout":"usage: bench worktree list\n","stderr":"","exit":0},"new":{"stdout":"usage: bench worktree list\n","stderr":"","exit":0}},
+  {"argv":["help"],"old":{"stdout":"usage: bench worktree list (unknown argument: help)\n","stderr":"","exit":2},"new":{"stdout":"usage: bench worktree list\n","stderr":"","exit":0}},
+  {"argv":["--unknown"],"old":{"stdout":"usage: bench worktree list (unknown argument: --unknown)\n","stderr":"","exit":2},"new":{"stdout":"usage: bench worktree list (unknown argument: --unknown)\n","stderr":"","exit":2}},
+  {"argv":["extra"],"old":{"stdout":"usage: bench worktree list (unknown argument: extra)\n","stderr":"","exit":2},"new":{"stdout":"usage: bench worktree list (unknown argument: extra)\n","stderr":"","exit":2}},
+  {"argv":["--"],"old":{"stdout":"usage: bench worktree list (unknown argument: --)\n","stderr":"","exit":2},"new":{"stdout":"usage: bench worktree list (unknown argument: --)\n","stderr":"","exit":2}}
+]

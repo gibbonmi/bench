@@ -66,24 +66,27 @@ What second?
 	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "broken.md"), []byte("# Broken\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	primary, err := os.ReadFile("testdata/pre-disclosure-frontier-invalid.stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Chdir(root)
 
 	out, code := Command(nil)
-	const primary = "maps[3]{map,title,type,state,blockers}:\n  alpha,First,Research,frontier,\"\"\n  alpha,Second,Task,frontier,\"\"\n  broken,invalid,map,invalid,\"decisions/broken.md: missing Status\"\n"
 	const help = "help[3]{cmd,why}:\n  /bench-shape-idea,\"shape alpha: First\"\n  /bench-shape-idea,\"shape alpha: Second\"\n  bench maps --template,repair decisions/broken.md\n"
-	if code != 1 || out != primary+help {
+	if code != 1 || out != string(primary)+help {
 		t.Fatalf("Command(%v) = (exit %d, %q), want captured primary plus map actions", []string(nil), code, out)
 	}
 }
 
 func TestCommandAppendsHonestEmptyHelpForEmptyAndCompleteMaps(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
-		write func(t *testing.T, root string)
+		name, fixture string
+		write         func(t *testing.T, root string)
 	}{
-		{name: "empty", write: func(t *testing.T, root string) {}},
+		{name: "empty", fixture: "pre-disclosure-terminal.stdout", write: func(t *testing.T, root string) {}},
 		{
-			name: "complete",
+			name: "complete (aliases terminal empty)", fixture: "pre-disclosure-terminal.stdout",
 			write: func(t *testing.T, root string) {
 				t.Helper()
 				if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
@@ -97,13 +100,16 @@ func TestCommandAppendsHonestEmptyHelpForEmptyAndCompleteMaps(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			primary, err := os.ReadFile(filepath.Join("testdata", tc.fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
 			root := mapsRepo(t)
 			tc.write(t, root)
 			t.Chdir(root)
 
 			out, code := Command(nil)
-			const want = "maps[0]{map,title,type,state,blockers}:\nhelp[0]{cmd,why}:\n"
-			if code != 0 || out != want {
+			if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
 				t.Fatalf("Command(%v) = (exit %d, %q), want terminal empty help", []string(nil), code, out)
 			}
 		})

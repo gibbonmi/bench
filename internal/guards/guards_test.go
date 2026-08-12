@@ -64,6 +64,79 @@ func TestCommandAppendsHonestEmptyHelpForCleanScan(t *testing.T) {
 	}
 }
 
+func TestCommandPreservesCheckedInCleanPrimaryResponse(t *testing.T) {
+	primary, err := os.ReadFile("testdata/pre-disclosure-clean.stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	t.Chdir(root)
+	out, code := Command(nil)
+	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
+		t.Fatalf("Command = (%d, %q), want checked-in primary plus exactly one help block", code, out)
+	}
+}
+
+func TestCommandPreservesCheckedInStaleAndUnwiredPrimaryResponse(t *testing.T) {
+	primary, err := os.ReadFile("testdata/pre-disclosure-stale-unwired.stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldEnumerate, oldInspect := enumerateGuards, inspectGuard
+	t.Cleanup(func() { enumerateGuards, inspectGuard = oldEnumerate, oldInspect })
+	enumerateGuards = func(context.Context, string) ([]candidate, error) {
+		return []candidate{{fallback: "stale"}, {fallback: "unwired"}}, nil
+	}
+	inspectGuard = func(_ context.Context, _ string, c candidate) [][]string {
+		if c.fallback == "stale" {
+			return [][]string{{"stale", "boundary", "denies", "", "", "stale", "claude"}}
+		}
+		return [][]string{{"unwired", "boundary", "denies", "", "", "", "none"}}
+	}
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	t.Chdir(root)
+	out, code := Command(nil)
+	const help = "help[2]{cmd,why}:\n  bench link,repair stale\n  bench link,repair unwired\n"
+	if code != 0 || out != string(primary)+help {
+		t.Fatalf("Command = (%d, %q), want checked-in primary plus exactly one help block", code, out)
+	}
+}
+
+func TestCommandPreservesCheckedInIncompleteTimeoutPrimaryResponse(t *testing.T) {
+	primary, err := os.ReadFile("testdata/pre-disclosure-incomplete-timeout.stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldEnumerate, oldInspect, oldTimeout := enumerateGuards, inspectGuard, guardScanTimeout
+	t.Cleanup(func() { enumerateGuards, inspectGuard, guardScanTimeout = oldEnumerate, oldInspect, oldTimeout })
+	guardScanTimeout = 10 * time.Millisecond
+	enumerateGuards = func(context.Context, string) ([]candidate, error) {
+		return []candidate{{fallback: "fast"}, {fallback: "blocked"}}, nil
+	}
+	inspectGuard = func(ctx context.Context, _ string, c candidate) [][]string {
+		if c.fallback == "fast" {
+			return [][]string{{"fast", "boundary", "denies", "", "", "current", "claude"}}
+		}
+		<-ctx.Done()
+		return nil
+	}
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	t.Chdir(root)
+	out, code := Command(nil)
+	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
+		t.Fatalf("Command = (%d, %q), want checked-in timeout/incomplete primary plus honest empty help", code, out)
+	}
+}
+
 func TestScanTimeoutPreservesPartialRowsAndHonestCounts(t *testing.T) {
 	oldEnumerate, oldInspect := enumerateGuards, inspectGuard
 	t.Cleanup(func() { enumerateGuards, inspectGuard = oldEnumerate, oldInspect })

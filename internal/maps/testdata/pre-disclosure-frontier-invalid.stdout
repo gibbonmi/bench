@@ -1,0 +1,4 @@
+maps[3]{map,title,type,state,blockers}:
+  alpha,First,Research,frontier,""
+  alpha,Second,Task,frontier,""
+  broken,invalid,map,invalid,"decisions/broken.md: missing Status"

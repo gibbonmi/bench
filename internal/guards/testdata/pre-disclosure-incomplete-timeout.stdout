@@ -1,0 +1,4 @@
+guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:
+  fast,boundary,denies,"","",current,claude
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  incomplete,"1","2","1",timeout

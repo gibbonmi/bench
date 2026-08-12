@@ -42,6 +42,37 @@ func TestCommandAppendsTypedDrainActionsAndHonestEmptyHelp(t *testing.T) {
 	}
 }
 
+func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
+	for _, tc := range []struct {
+		name, fixture, journal, help string
+	}{
+		{"open", "pre-disclosure-open.stdout", "# Learnings — usage journal\n\n## 2026-01-01 — first [open]\n", "help[1]{cmd,why}:\n  /bench-what-next,\"verdict 2026-01-01: first\"\n"},
+		{"drained", "pre-disclosure-drained.stdout", "# Learnings — usage journal\n", "help[0]{cmd,why}:\n"},
+		{"absent", "pre-disclosure-absent.stdout", "", "help[0]{cmd,why}:\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			primary, err := os.ReadFile(filepath.Join("testdata", tc.fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			root := learningsRepo(t)
+			if tc.journal != "" {
+				if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(filepath.Join(root, JournalPath), []byte(tc.journal), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			t.Chdir(root)
+			got, code := Command(nil)
+			if code != 0 || got != string(primary)+tc.help {
+				t.Fatalf("Command = (%d, %q), want checked-in primary plus exactly one help block", code, got)
+			}
+		})
+	}
+}
+
 func learningsRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()

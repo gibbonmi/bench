@@ -340,3 +340,31 @@ func TestCommand(t *testing.T) {
 		}
 	})
 }
+
+func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
+	mapped := func(row string) string {
+		return "# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + row
+	}
+	for _, tc := range []struct {
+		name, fixture, body, help string
+	}{
+		{"mapped actionable", "pre-disclosure-mapped.stdout", mapped("| 1 | b | s | unchecked | catches one |\n"), "help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage row 1\n"},
+		{"repairable malformed", "pre-disclosure-malformed.stdout", mapped("| 9 | b | s | red | catches one |\n"), "help[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"},
+		{"mapped zero-row", "pre-disclosure-zero-row.stdout", mapped(""), "help[0]{cmd,why}:\n"},
+		{"historical terminal", "pre-disclosure-historical.stdout", "# historical\n<!-- coverage-map: historical -->\n### Acceptance coverage map\n|bad|\n", "help[0]{cmd,why}:\n"},
+		{"no-map terminal", "pre-disclosure-no-map.stdout", "# no map\n", "help[0]{cmd,why}:\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			primary, err := os.ReadFile(filepath.Join("testdata", tc.fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Chdir(t.TempDir())
+			mustWrite(t, "spec.md", tc.body)
+			out, code := Command([]string{"spec.md"})
+			if code != 0 || out != string(primary)+tc.help {
+				t.Fatalf("Command = (%d, %q), want checked-in primary plus exactly one help block", code, out)
+			}
+		})
+	}
+}

@@ -1,14 +1,57 @@
 package worktree
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi"
 )
+
+type worktreeListArgvPair struct {
+	Argv []string `json:"argv"`
+	Old  struct {
+		Stdout string `json:"stdout"`
+		Stderr string `json:"stderr"`
+		Exit   int    `json:"exit"`
+	} `json:"old"`
+	New struct {
+		Stdout string `json:"stdout"`
+		Stderr string `json:"stderr"`
+		Exit   int    `json:"exit"`
+	} `json:"new"`
+}
+
+func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
+	data, err := os.ReadFile("testdata/pre-disclosure-argv-pairs.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var pairs []worktreeListArgvPair
+	if err := json.Unmarshal(data, &pairs); err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	t.Chdir(root)
+	for _, pair := range pairs {
+		out, code := ListCommand(pair.Argv)
+		if out != pair.New.Stdout || pair.New.Stderr != "" || code != pair.New.Exit {
+			t.Fatalf("ListCommand(%q) = stdout=%q stderr=%q exit=%d, want checked-in new response", pair.Argv, out, "", code)
+		}
+		if pair.Old != pair.New {
+			if len(pair.Argv) != 1 || (pair.Argv[0] != "--help" && pair.Argv[0] != "-h" && pair.Argv[0] != "help") {
+				t.Fatalf("paired fixture admits an unapproved argv delta: %#v", pair)
+			}
+		}
+	}
+}
 
 func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
 	root := t.TempDir()
@@ -28,6 +71,22 @@ func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
 		if code != 2 || out != want {
 			t.Errorf("ListCommand(%q) = (%d, %q), want usage exit 2", args, code, out)
 		}
+	}
+}
+
+func TestListCommandPreservesCheckedInEmptyPrimaryResponse(t *testing.T) {
+	primary, err := os.ReadFile("testdata/pre-disclosure-empty.stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	t.Chdir(root)
+	out, code := ListCommand(nil)
+	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
+		t.Fatalf("ListCommand = (%d, %q), want checked-in primary plus exactly one help block", code, out)
 	}
 }
 
@@ -51,6 +110,10 @@ func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
 }
 
 func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
+	primaryTemplate, err := os.ReadFile("testdata/pre-disclosure-active-orphan.stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	a := mustCreate(t, root, "request-a", "alpha")
@@ -68,8 +131,16 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 	if first.Assignment.ID > second.Assignment.ID {
 		first, second = second, first
 	}
-	want := fmt.Sprintf("worktrees[4]{id,label,state,source,tree,lease,landed,ignored}:\n  %s,%s,active,assignment,present,none,true,0\n  %s,%s,active,assignment,present,none,true,0\n  foreign,%s,foreign,foreign,present,none,unknown,0\n  foreign,%s,foreign,foreign,missing,none,unknown,unknown\nhelp[5]{cmd,why}:\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree clean '%s',clean the orphaned worktree\n", first.Assignment.ID, first.Assignment.Label, second.Assignment.ID, second.Assignment.Label, present, missing, first.Assignment.ID, first.Assignment.ID, second.Assignment.ID, second.Assignment.ID, missing)
-	if code != 0 || out != want {
-		t.Fatalf("ListCommand = (%d, %q), want %q", code, out, want)
+	primary := strings.NewReplacer(
+		"{{ID1}}", first.Assignment.ID,
+		"{{LABEL1}}", first.Assignment.Label,
+		"{{ID2}}", second.Assignment.ID,
+		"{{LABEL2}}", second.Assignment.Label,
+		"{{PRESENT}}", present,
+		"{{MISSING}}", missing,
+	).Replace(string(primaryTemplate))
+	help := fmt.Sprintf("help[5]{cmd,why}:\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree clean '%s',clean the orphaned worktree\n", first.Assignment.ID, first.Assignment.ID, second.Assignment.ID, second.Assignment.ID, missing)
+	if code != 0 || out != primary+help {
+		t.Fatalf("ListCommand = (%d, %q), want materialized checked-in primary plus exactly one help block", code, out)
 	}
 }
