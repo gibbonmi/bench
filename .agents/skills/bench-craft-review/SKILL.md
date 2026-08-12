@@ -43,10 +43,10 @@ its count and its worst issue.
   derivations of one fact is the code-standard defect review exists to grade.
   When the diff landed as delegate slices, hunt duplication at fence boundaries
   specifically — a shared primitive no slice owned arrives derived once per fence
-  (the prefactor rule lives in `craft-tickets`; the ownership fence lives in
-  `craft-spec`). For a ticketed build, re-run `craft-tickets`' integration-surface
-  discovery over each ticket; a false `none`, an unresolved surface, or dual
-  ownership is a Standards finding. The smell baseline below rides this axis.
+  (the ownership fence lives in `craft-spec`; `craft-tickets` owns the
+  independently-green tracer grouping and the advisory `Writes:` disjointness
+  note). A false disjointness claim across two tickets' `Writes:` notes is a
+  Standards finding. The smell baseline below rides this axis.
   Comment prose is graded against `craft-comments` — a comment that narrates
   the change, cites provenance, or argues its own correctness is a Standards
   finding. Separate hard violations from judgment calls; skip what the gate

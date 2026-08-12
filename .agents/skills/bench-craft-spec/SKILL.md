@@ -107,9 +107,9 @@ ticket rule by name rather than restating it here. `craft-tickets` derives
 complete tracer tickets from the locked stories, and each resulting ticket
 receives the spec's applicable ownership fence.
 
-Each fence carries value contracts across it, and `craft-tickets` owns naming
-them in `Discover the contracts before writing files`; this section points at
-that step by name rather than restating what it requires.
+Each fence carries value contracts across it: a contract between tickets is
+stated in the ticket's `What to build` and `Acceptance`, re-derived from the
+tree by review rather than trusted from the ticket's account.
 
 ## Reread the whole artifact after wide edits
 

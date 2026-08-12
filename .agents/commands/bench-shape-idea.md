@@ -56,7 +56,8 @@ IDs. Use the four schema-owned types:
 - **Research** — read primary docs, APIs, or local code and produce a short
   cited summary asset. Include a runnable compatibility probe when the answer
   claims byte or wire compatibility.
-- **Prototype** — write throwaway code to make a reviewer choice concrete.
+- **Prototype** — write throwaway code to make a reviewer choice concrete;
+  charge the `prototype` skill.
 - **Grill** — run `craft-grill` frontier rounds to record the reviewer decision.
 - **Task** — complete manual work needed before a decision can be made, naming
   who owns the work.
