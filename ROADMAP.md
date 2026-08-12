@@ -757,64 +757,49 @@ parser proves index-to-detail completeness without creating a second source of
 status. Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here;
 the 2026-08-06 drain's 179397-byte snapshot transport failure.
 
-**FT173 (HIGH) — the AXI contract has ten principles, one derivation each.**
-The coherent Git snapshot and executable-action owner are landed: `bench diff`
-returns one movement-checked revision, checkout, inventory, whitespace, log,
-patch, identity, and contextual-action response. FT173's remaining work is the
-staged `axi-query-disclosure` capstone, which composes that owner across the
-remaining approved query surfaces and nested `worktree list`. AXI stays bounded
-to those surfaces; no parallel renderer, legacy mode, `bench git` namespace, or
-second domain derivation joins the build.
+**FT173 (MEDIUM, decision required) — AXI residual: the
+active-assignment-with-deleted-tree disclosure class.** The AXI program is
+otherwise landed: `bench diff` owns the coherent Git snapshot, and the
+`axi-query-disclosure` capstone (implemented 2026-08-12) composed contextual
+disclosure, the harness-log ledger, registry-derived conformance, and the
+ten-principle `craft-cli` guidance across the approved query surfaces and
+nested `worktree list`. The durable boundary holds: AXI stays scoped to the
+high-frequency query surfaces — turn-preventing principles outrank format, and
+a gate-checked query command carries roughly five contract behaviors, so
+conformance verification exceeds the feature elsewhere; no parallel renderer,
+legacy mode, or `bench git` namespace.
 
-The capstone preserves each surface's existing primary bytes, streams, exits,
-argv, empty states, and bounded defaults outside its reviewed additive
-`help[]` delta. It starts with the required Claude and Codex harness-log ledger:
-every observed CLI-leverage opportunity is folded into the spec, cited to its
-existing owner, declined with a reason, or routed to a named roadmap item before
-implementation proceeds. The ten-principle `craft-cli` guidance and
-registry-derived conformance close in the same build so emitted behavior and its
-standing authoring contract cannot drift apart.
+The residual is review finding R11, a state the spec never defined: an active
+assignment whose worktree tree has been deleted is an undecided QD6 hybrid —
+`internal/worktree/list.go` renders active/missing, advertises path/exec
+actions, and never reports clean. Needs a reviewer-approved amendment defining
+the disclosure class before any code moves; once the class is decided, the
+change itself is light-path sized. Entry: reviewer decision on the class, then
+the light path. Sources: the axi-query-disclosure retro and
+`capture/IDEAS.md`, drained here.
 
-Pricing context, 2026-08-05: the ten principles are not equal in value, and the
-ordering decides what survives if a face competes for scope. TOON's saving is
-linear — ~40% of output tokens the agent was going to read anyway — while
-structured stdout errors, honest exit codes, and definitive empty states each
-prevent whole extra turns: a failure routed to stderr is invisible to the
-agent, which then guesses and re-runs; silence on zero results forces a
-re-verification call; ambiguous exit codes force prose parsing. A prevented
-turn is worth far more than a compressed row, so the turn-preventing principles
-outrank the format. The same turn-versus-token arithmetic prices conformance
-itself: a gate-checked query command carries roughly five contract behaviors
-(rows, empty state, argv grammar, deep-cwd, routing), so the verification
-exceeds the feature — which is the reason AXI stays scoped to the
-high-frequency query surfaces and is not extended to operational commands.
-
-A sixth face, observed 2026-08-02 during the FT164 build, is the canonical
-contextual-disclosure example: the since-removed lifecycle's start verb refused with "no exact
-green evidence: run bench gate, then retry start" on a tip whose verdict was
-reduced — where plain `bench gate` can only ever re-record another reduced
-verdict, so the stated remediation cannot succeed and the working command
-(`bench gate --fresh`) went unnamed. A refusal or result whose sensible next
-step depends on state the command already knows must emit that step in
-`help[]`. The final FT173 contextual-disclosure capstone opens with an
-open-ended review of the Claude and Codex harness session logs accumulated
-across FT173 and representative recent Bench work. It looks for CLI leverage:
-better `help[]`, repeated tool-call sequences one coherent query can replace,
-and output shaping agents repeatedly perform themselves—such as `head` or
-`tail`—that belongs in bounded defaults, `--full`, aggregates, or another
-CLI-owned projection. The spec is accepted only with a detailed per-command
-action inventory and a disposition for every log-derived opportunity: fold it
-into the spec, identify its existing owner, decline it with a reason, or route
-the separate capability to a named roadmap item.
-
-Two constraints shape the build rather than the diagnosis. Principle 3 should
-not double-truncate a value already bounded at capture, and principle 8 is a
-query-surface rule, not a binary-wide one — `craft-cli` already holds that the
-contract attaches to the surface, so an operational command answering with live
-data on no arguments is a regression, not conformance. The truncation and
-aggregate one-source-per-fact sweep is not an FT173 precondition; it rides
-ordinary standards-debt work where a real change touches those owners. Sources:
-the FT173 decision map and the axi-coherent-diff retro, drained here.
+**FT202 (MEDIUM, decision required) — a standing test-support fence, and the
+census scope for process-backed fixtures.** Two coupled reviewer decisions from
+the axi-query-disclosure close. First, cross-package test scaffolding has no
+fenced home: two amendment cycles in one spec (the axitest relocation, then
+`internal/gittest`) each paid a reviewer round-trip for the same question.
+Propose a named commons fence in `projects/benchkit.md` — test-support only,
+census-visible — instead of per-spec amendments. A/B evidence exists: round two
+confirmed the vocabulary-gap hypothesis (commons prose flips stop-and-surface
+into a gate-green no-round-trip build); the evidence and candidate B diff live
+outside the tree at `~/fence-experiment/` (README inside, not re-read this
+drain), and the census-visible sentence needs tightening before the prose
+graduates. Second, the ordinary-test census does not count process-backed git
+fixtures reached through `internal/git` (21 repos in the cmd/bench registry
+envelope test); extending the census is an oracle change and a reviewer
+decision. Order constraint: answer the census-scope question first or require
+the scaffold stay census-visible — the pending R2 harness collapse (repair
+ticket T1, awaiting the fence decision) would otherwise move those constructors
+into a non-`_test.go` scaffold `architectureOwnedTest` never inspects, making
+them permanently census-invisible. In-scope residue: `leasedRepo` stayed
+outside the gittest collapse (it would need a third API shape), flagged in the
+T1 ticket evidence. Entry: `/bench-shape-idea`. Sources: `capture/IDEAS.md`
+(three lines) and the axi-query-disclosure retro, drained here.
 
 **FT185 (MEDIUM) — gate results join the structured Bench output contract.**
 `bench gate` is the last major agent-facing surface that reports phase verdicts
@@ -1001,6 +986,25 @@ machinery are gone; what stays here is the one-source-per-fact rule the instance
 argued for. Kit edit under the `craft-synthesis`
 discipline. Sources: `capture/learnings.md` 2026-08-03, verdicted here and in a
 prior run.
+
+**FT204 (LOW, decision required) — one bounded transcript/session query.**
+Agents repeatedly shape harness transcripts and session evidence with
+`head`/`tail`/`awk`/`sort` chains; consider one bounded agent-facing query for
+transcript and session census plus evidence projection. This is a new
+operational surface, not an AXI query-surface extension, so it needs its own
+operational-surface decision before any shaping. Entry: reviewer decision.
+Source: `capture/IDEAS.md`, drained here (routed out of the
+axi-query-disclosure harness-log ledger).
+
+**FT205 (LOW) — `craft-delegate` names the delegate-worktree end-of-life
+pair.** A delegate assignment ends through `bench worktree release` by the
+creating request; `bench worktree clean` alone leaves the assignment
+`recovered` in the intent ledger, and the one-delegate-per-session pool then
+refuses every later create until `bench resume-clean` reconciles it (observed
+2026-08-12). Kit edit under the `craft-synthesis` discipline: one clause in
+`craft-delegate` naming release as the default end and clean-then-
+`bench resume-clean` as the recovery pair for harness-created delegate
+worktrees. Source: `capture/learnings.md` 2026-08-12, verdicted here.
 
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
@@ -1806,9 +1810,9 @@ builder process group, and closing it needs `Pdeathsig`. Sources:
 
 ## Reds the diff doesn't own — inheritance, load, and harness defects
 
-Four rows, one failure class: a red that answers for something other than the
+Five rows, one failure class: a red that answers for something other than the
 diff in front of the gate — an inherited baseline, machine contention, a
-literal deadline, a harness defect.
+literal deadline, a harness defect, a flaky oracle.
 
 **FT141 (MEDIUM) — `bench gate pin` records red verdicts,
 so inherited reds stop reading as caused.** The pin records only the tree it
@@ -1846,6 +1850,15 @@ explain the interruption is lost. Preserve that record or bind its identity
 inside the pending record before replacement. Sources: `capture/IDEAS.md` and
 `capture/learnings.md` 2026-08-07, drained and verdicted here; the
 gate-decision-test-seam retro, drained here.
+
+**FT203 (MEDIUM) — pre-existing flake: `TestListCommandPublicRowsAndDisclosure`.**
+Fails roughly 1 in 6–7 full `internal/worktree` package runs; reproduced on a
+clean `git archive` HEAD baseline by the T1 repair delegate, so it predates the
+axi-query-disclosure repair tickets. A flaky oracle in the gate's path is a red
+that answers for timing rather than the diff, and it taxes every landing that
+crosses the package. Build the tight red-capable repro loop first, then fix
+against it. Entry: `/bench-debug`. Sources: `capture/IDEAS.md` and the
+axi-query-disclosure retro, drained here.
 
 **FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate
 quiet check.** Two faces of the same defect — a red answering for machine
@@ -2152,7 +2165,15 @@ loop graduates on a Bench workflow that cannot be made agent-operable, and a
 third-party questionnaire graduates when a real decision map blocks on someone
 other than the reviewer and reviewer-directed grilling misroutes the question.
 Source: `upstream(mattpocock/skills@84fdeff)`, drained from
-`capture/IDEAS.md` here.
+`capture/IDEAS.md` here. Also parked here 2026-08-12: a one-off `bench commit`
+refusal — `gate: red` / `prospective authorization refused: inherited` — on a
+tree whose immediately following direct `bench gate` was green (the retried
+commit landed on the fresh verdict); not reproduced across seven later
+landings, and a repro through anything but `bench commit` itself proves
+nothing. Workaround on recurrence: run `bench gate` directly and retry.
+Graduate on a second reproduced refusal through `bench commit`; the
+verdict-class plumbing around `inherited` records is the suspect. Source:
+`capture/learnings.md` 2026-08-12, verdicted here.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
 2026-07-11: still not implementable on current Codex — delegation has no
@@ -2208,7 +2229,6 @@ recommended table is sequencing advice.
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
-| FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
 
 ### Goal tracks: guidance prose and the claim ledger
 
@@ -2224,35 +2244,27 @@ gate's reduced scope, so every separately-landed prose diff pays a full gate
 files couple prose diffs to conformance fixture updates (`craft-delegate` 14
 anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and AXI
 action mechanics compound through every later CLI change. The reviewed
-Pocock-alignment Spec C has shipped and FT107 is retired; FT173 is the immediate
-program continuation with two respecified behavior-first builds.
+Pocock-alignment Spec C has shipped and FT107 is retired; both FT173
+behavior-first builds (`axi-coherent-diff`, `axi-query-disclosure`) have now
+shipped, leaving only the FT173 R11 residual, so FT171's staged serial-gate
+slice is the immediate program continuation.
 
-1. Rescope FT173's two parked behavior-first specs. `axi-coherent-diff` removes
-   the retired spec-build/`axi.Action` prerequisite while keeping `bench diff`
-   as the coherent Git snapshot; `axi-query-disclosure` follows with the
-   harness-log ledger, contextual disclosure, registry-derived conformance,
-   and ten-principle guidance. Each returns through review before build.
-2. Implement FT171's staged `single-build-serial-gate` slice, mark deleted
+1. Implement FT171's staged `single-build-serial-gate` slice, mark deleted
    specbuild decision #24 moot, then resume #25 and run #26's exact post-route
    census before pricing outer concurrency. FT141 may proceed independently
    where capacity allows.
-3. Shape FT198 once FT173 and FT171 are moving; the
+2. Shape FT175's decision map now — its consumed owners (truncation,
+   aggregates, `help[]`) landed with the axi-query-disclosure capstone, the
+   condition the 2026-08-02 reviewer ruling set ("interfaces settled" means
+   the consumed owners, not the whole FT173 row). Then write the FT175 spec
+   and build it as vertical green slices: file evidence plus strict store and
+   `claim show/check`; assessments with spans and absence scopes; command
+   evidence plus replay and staleness; supersede/retire reachability; the
+   complete AXI list/detail/status surface; deterministic gate and ambient
+   status integration; then one local contradiction as the dogfood proof.
+3. Shape FT198 once FT175 and FT171 are moving; the
    board's 170 KB full snapshot now confirms the progressive-loading trigger.
-4. Shape FT175's decision map once the foundation and `help[]` land, and
-   write the FT175 spec once the owners it consumes — truncation,
-   aggregates, `help[]` — are settled, then build it as vertical green
-   slices: file evidence plus strict store and `claim show/check`;
-   assessments with spans and absence scopes; command evidence plus replay
-   and staleness; supersede/retire reachability; the
-   complete AXI list/detail/status surface using FT173's owners;
-   deterministic gate and ambient status integration; then one local
-   contradiction as the dogfood proof. Reviewer ruling 2026-08-02:
-   "interfaces settled" means the consumed owners, not the whole FT173 row —
-   the foundation and `help[]` settle them, so the FT175 spec starts one spec
-   earlier and git-inspection stays off the critical path. Its three ledger
-   decisions are deferred until those two implementations land, so the FT175
-   shape-idea session moves to then rather than joining the front-loaded one.
-5. FT100's remaining work grills and builds last, after FT89 establishes which
+4. FT100's remaining work grills and builds last, after FT89 establishes which
    guidance is authoritative and the reviewer resolves FT170's benchmark route.
 
 Fold FT106's verified-document vocabulary and FT162's exact subject binding
@@ -2266,6 +2278,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT173's staged `specs/axi-query-disclosure/spec.md` contextual-disclosure capstone.
-2. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`, then retire moot #24 and resume #25–#26 on the landed serial-gate baseline.
-3. `/bench-shape-idea` — FT198's progressively loaded roadmap index; the 170 KB full snapshot confirms the context-cost trigger.
+1. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`, then retire moot #24 and resume #25–#26 on the landed serial-gate baseline.
+2. `/bench-debug` — FT203's reproduced `TestListCommandPublicRowsAndDisclosure` flake (~1 in 6–7 full `internal/worktree` runs on a clean baseline).
+3. `/bench-shape-idea` — FT175's claim-ledger decision map; its consumed owners (truncation, aggregates, `help[]`) landed with the axi-query-disclosure capstone.

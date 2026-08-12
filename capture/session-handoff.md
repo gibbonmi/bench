@@ -2,32 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `2747e38b`, clean tree, unpushed backlog (~65 commits; push remains reviewer-owned)
-Spec: `specs/axi-query-disclosure/spec.md` (Status: implemented at `2747e38b`); `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `2747e38b` (fresh verdict on the landing)
+Branch: `main` — HEAD `6a69cdd9` before the drain commit, clean tree otherwise, unpushed backlog (~66 commits; push remains reviewer-owned)
+Spec: `specs/single-build-serial-gate/spec.md` (Status: staged); `axi-query-disclosure` retired this pass
+Gate: green at `d360fc0` cached tree (matches work tree)
 
 ## State
 
-axi-query-disclosure is closed: review pickup committed (`04ddded7`), the
-Opus-accepted nine-ticket repair frontier fully landed (`30c50b50`, `6a38fc6d`,
-`d1b2ef19`, `69492c70`, `93fbe8e9`, `5d71b964`, `b18fa260`, fence amendment
-`31d63b5f`, final `2747e38b` with the pickup file deleted), and the retro is at
-`capture/retros/axi-query-disclosure.md`. Reviewer decisions taken this
-session and staying closed: `internal/gittest/` fence amendment; guards
-real-stale fixture added; coverage `why` reworded. Uncommitted right now:
-`capture/` updates (IDEAS lines, two open learnings entries, the retro, this
-file) staged for the close-out commit that immediately follows this rewrite —
-if that commit is absent, land those `capture/` paths first.
+The 2026-08-12 `/bench-what-next` drain is drafted as one uncommitted batch
+awaiting reviewer approval: FT173 collapsed to its R11 residual and the spec
+retired; new rows FT202 (fence + census scope decision), FT203 (worktree list
+flake, `/bench-debug`), FT204 (transcript query, decision), FT205
+(`craft-delegate` release-path clause); the inherited-refusal learning
+re-parked in FT6 pending a real `bench commit` repro; inbox, journal, and the
+axi-query-disclosure retro drained to empty; sequence refreshed (FT171 spec,
+FT203 debug, FT175 shape). If the drain commit (`... spec-retire:
+axi-query-disclosure`) is absent from history, the batch is still awaiting
+approval — review the working diff, then commit it whole on green.
 
-Parked for the reviewer (in `capture/IDEAS.md`): R11 active-assignment/deleted-
-tree spec amendment; census scope for process-backed fixtures (coupled with
-gittest census visibility); standing test-support commons fence; pre-existing
-`TestListCommandPublicRowsAndDisclosure` flake. Assignment
-`4fb88c5a8a96bceffe565d3a540018a1` and all foreign worktrees preserved.
+Decisions staying closed: `internal/gittest` fence amendment; guards
+real-stale fixture; coverage `why` rewording; FT175 shape unblocked by the
+capstone landing per the 2026-08-02 reviewer ruling.
 
 ## Next command
 
-`$bench-what-next`
+`/bench-implement-spec` on `specs/single-build-serial-gate/spec.md`
 
 ## Shape
 
