@@ -6,270 +6,115 @@ index: spawning a delegate / verifying a delegate's done-claim
 
 # Delegating without losing the plot
 
-A delegate buys two things: parallelism, and isolation of a heavy read-set from
-your context. It costs one thing that matters more when misjudged: the work
-happens where you can't see it. This skill keeps the cost bounded.
+A delegate buys parallelism and isolates a heavy read-set; misjudged, it
+costs the thing that matters: the work happens unseen.
 
 ## Delegate or inline
 
-The coordinator scopes, routes, and verifies work; a write-delegate authors code.
-The inline allowance is exactly one source-line insertion, one source-line
-deletion, or one source-line replacement in code or tests. A replacement counts
-as one correction even though a unified diff renders it as one deleted line plus
-one added line. This allowance spans the current reviewer request — the current
-user objective — and does not reset when work is split into tasks, slices,
+The coordinator scopes, routes, and verifies work; a write-delegate authors
+code. The inline allowance is exactly one source-line insertion, one
+source-line deletion, or one source-line replacement in code or tests. A
+replacement counts as one correction. This allowance spans the current
+reviewer request and does not reset when work is split into tasks, slices,
 delegates, or verification rounds. A no-spec change admitted by the
-lighter-path threshold in `.bench/BENCH.md`'s "Right-size the process"
-paragraph may also remain inline — the only allowance beyond the
-one-source-line rule. All other code authorship runs as a
-write-delegation in an isolated worktree, including mechanical work, atomic
-diffs, and fixes the coordinator has already diagnosed. Read-only coordination
-stays inline. Never delegate a decision the reviewer owns (what ships, spec
-content, an irreversible choice); a delegate inherits your authority ceiling,
-not the reviewer's.
-
-This policy is capability-aware: a harness that cannot spawn a write subagent
-never falls back inline for work beyond the allowances above. It stops before
-editing and emits one executable resume handoff to a subagent-capable harness —
-the repository path, the working branch or worktree, the spec or change name,
-the destination harness, and that harness's exact invocation. One route, not a
-menu; the phase being resumed supplies its own harness-native invocation forms.
+lighter-path threshold in `.bench/BENCH.md` may also remain inline — the
+only other allowance. All other code authorship runs as a write-delegation
+in an isolated worktree; read-only coordination stays inline. Never
+delegate a decision the reviewer owns.
+This policy is capability- and posture-aware: a harness that cannot spawn a
+write subagent, or a reviewer who has prohibited delegation for this work,
+never falls back inline beyond the allowances above — a spec-doc-only
+correction is not a silent exception to either stop. Either posture stops
+before editing and emits one executable resume handoff to a subagent-capable
+harness — the repository path, the working branch or worktree, the spec or
+change name, the destination harness, and that harness's exact invocation.
+Surface before spawn any delegation that changes who performs requested work.
 
 ## The charge
 
-A delegate has no conversation memory: everything it needs must be in the
-prompt. A complete charge names the objective, the inputs by path, the seam it
-works at, the return shape (raw data or a structured report — its final message
-is the deliverable), and its budget. Route its model and effort with
-`craft-line` — the line is declared by you, not chosen by the delegate — and
-carry both explicitly: the model goes on the call itself as the bound alias
-(never omitted — an Agent call without a model inherits *your* model, which is
-silent escalation when you run top-tier), and the effort and iteration cap go in the
-charge text, because the Agent tool has no effort parameter — effort rides in
-the charge or it rides nowhere.
-
-A context-inheriting delegate (a harness's fork type, which clones this
-conversation) is the one exception to the contextless premise — and it always
-runs the parent model, ignoring any model override, so in a top-tier session
-every fork is a top-tier delegate. A fork is legal only where `craft-line`'s
-table already routes top, and it is declared like any line. Fork because the
-read-set genuinely is this conversation, never to skip writing the charge;
-everything else spawns fresh on the bound alias.
-
-Prefer compressed inputs over inherited context: give the delegate the named
-decision source plus the exact source passages and coverage rows its slice
-needs, not the orchestrator's whole read list. A build charge also carries
-the **fixture-and-seam inventory** for its fence — the test helpers, gate
-doubles, and prior-art fixtures by name and file — assembled once by the
-coordinator and pasted into every charge that fence receives; a delegate
-holding the inventory writes against prior art instead of re-deriving it,
-which is the single largest first-pass-quality lever a charge controls.
-
-Charged checks are focused: the delegate iterates with `-run` filters over
-its own tests, runs one full-package pass before returning, and never runs
-`-race` or any other phase the project gate already owns — the gate re-grades
-the composition anyway, so duplicating its phases in every delegate buys
-minutes and tokens for no verdict.
-
-Name exemplar files to mirror, and say so explicitly when no exemplar exists.
-A convention stated as prose degrades as the tree grows: "follow the repo's
-error idiom" hands the delegate a judgment it cannot make, because the idiom
-lives in files it will not read; "mirror the error shape in
-`internal/x/foo.go`" survives translation to a low-context delegate, because
-a path resolves the same way at any context size. A charge that extends an
+A delegate has no conversation memory: everything it needs is in the
+prompt — objective, inputs by path, seam, return shape, budget. Route model
+and effort with `craft-line`: the model rides the call itself as the bound
+alias (never omitted — an unbound call inherits *your* model, silent
+escalation at top tier); effort and the iteration cap ride the charge text,
+since the Agent tool has no effort parameter. Prefer compressed inputs — the
+named decision source, the exact passages, and the coverage rows the slice
+needs — plus the fixture-and-seam inventory for its fence, so the delegate
+writes against prior art instead of re-deriving it.
+Name exemplar files to mirror when one exists. A charge that extends an
 enumerated family names every registry the family already appears in, traced
 from one existing sibling through the tree; a registry the charge does not
 name is one the delegate will miss.
 
-A write-delegation from a spec carries its stories' coverage rows — behavior,
-seam, red signal — in the charge, every time, and requires the delegate to show
-each row red before the edit and green after. That is what makes the done-claim
-verifiable by running the gate instead of re-reading the work; a charge without
-its rows buys a diff you must read line-by-line to trust. When the spec
-sliced the build across delegates, check each slice against `craft-spec`'s
-"Slicing a build for delegates" before sending the charge — charge time is
-when the fence is still checkable.
-
-Name the mutation that breaks the change's central property, and require the
+A write-delegation from a spec carries its stories' coverage rows —
+behavior, seam, red signal — every time, and requires the delegate to show
+each row red before the edit and green after; check each slice against
+`craft-spec`'s "Slicing a build for delegates" first. Name the mutation that
+breaks the change's central property, and require the
 delegate to apply it to its own finished work, report the observed result, and
-add the missing row when the mutation comes back silently green. A delegate
-asked to reason about whether the mutation would fail returns a plausible
-paragraph; one asked to run it returns a diagnostic.
-
-### Spec-backed ticket delegates
-
-A reviewed spec-backed build lands each ticket through the generic per-ticket
-landing below. The delegate returns focused evidence and
-its mutation probe from its owned worktree; it does not land the diff or claim
-the ticket green. The coordinator probes the exact returned tree independently
-before landing it. The
+add the missing row when the mutation comes back silently green.
+A delegate blocked by a defect outside its fence stops and reports rather
+than fixing out of fence. A worktree-isolated charge opens with the
+stale-base check (`git merge --ff-only main`, verify HEAD equals main, stop
+if denied); a fix-pass charge names a commit-specific sentinel the delegate
+verifies before editing.
+A ticket delegate returns focused evidence and its own mutation probe from
+its worktree; it does not land the diff. The coordinator probes the exact
+returned tree independently before landing it. The
 coordinator probe's mutation kind differs from the delegate author's mutation
 kind. It also differs in site from every probe the delegate ran: a second probe
 at the same site is vacuous, and a vacuous probe is indistinguishable from a
-pass. A second instance of the same omission or swap is correlated evidence, not
-an independent probe.
-
-A delegate blocked by a defect
-outside its fence stops editing and returns a debug receipt rather than a
-done-claim or an out-of-fence fix; the coordinator's repair route
-is `.agents/commands/bench-implement-spec.md`'s "When a delegate is blocked
-outside its fence". Delegate evidence is not
-project-green evidence and cannot satisfy a done-claim: only the gate's verdict
-on the landed tree can. The generic isolation and
-verification rules below still apply to light-path and non-spec worktrees.
-
-The charge also names the gate layer that owns each artifact class the
-delegate touches — workflows and `.bench/` content to canary, gate output
-shape to canary, skills and commands to conformance — and states the converse
-to the delegate in the same breath: the named list is a floor, not a ceiling.
-Omit the mapping and the delegate breaks a layer nothing in its charged
-verification list can see; omit the converse and it treats the list as
-permission to check nothing else.
-
-A worktree-isolated delegate's charge opens with the stale-base check: run
-`git merge --ff-only main`, verify HEAD equals main, stop and report if the
-merge is denied or diverges. Worktrees get cut behind a moving main, and a
-delegate that builds on a stale base re-fights landed work. The orchestrator
-holds the other end of the contract: a blocked worktree is fast-forwarded by
-the orchestrating session, which then resumes the same delegate. Read-only
-delegates are unaffected. A fix-pass charge against a repository snapshot
-names a commit-specific sentinel — a function or test introduced by the
-commit under fix — and requires the delegate to verify it before editing,
-then stop and report if it is absent.
-
+pass. A repeat site is not independent evidence.
 ```
-Implement story 3 of specs/retry-backoff/spec.md in this worktree. Open with the
-stale-base check: run `git merge --ff-only main`, verify HEAD equals main,
-stop and report if denied. Coverage rows: [the story's rows]. Effort: medium,
-~3 iterations. Self-probe before returning: apply the central-property
-mutation — delete the backoff cap — to your finished work, then report the
-observed result and the mutation's kind (omission or swap). Stop at diff ready
-with focused tests green; return the red→green log per row.
+Implement story 3 of specs/retry-backoff/spec.md. Open with the stale-base
+check. Coverage rows: [rows]. Effort: medium, ~3 iterations. Self-probe:
+apply the central-property mutation, then report the observed result and the mutation's kind (omission or swap).
+Stop at diff ready; return the red→green log per row.
 ```
-Good — a write-delegation whose opener rides in the charge, whose rows make
-the done-claim verifiable, and whose self-probe names both the mutation and
-its kind.
-
-```
-Review this diff on the Standards axis only. Base: run `bench diff` for the
-changed files; read AGENTS.md and .bench/BENCH.md for the conventions. Charge:
-.agents/skills/bench-craft-review/SKILL.md. Effort: medium, ~1 iteration — one
-pass, no fix iteration. Return findings under ## Standards, each citing the rule,
-under 400 words. Do not edit any file.
-```
-Good — self-contained: inputs by path, the charge by path, the return shape and
-a write prohibition stated.
-
-```
-Review the changes we discussed against our standards, like last time.
-```
-Bad — "we discussed", "our", "last time": every referent lives in a context the
-delegate does not have; it will guess all three.
+Good — rows make the done-claim verifiable, and the self-probe names its kind.
 
 ## Scope
 
-One delegate, one coherent unit — one axis, one story, one search question. A
-delegate charged with several loosely-joined jobs returns a summary that blurs
-them, and you can't verify what you can't attribute.
+One delegate, one coherent unit: one axis, one story, one search question.
 
 ## Isolation
 
-A write-delegation runs in an isolated worktree (`bench worktree`), so stray
-edits can't land in reviewer-owned files — the delegate gets a checkout, not
-your checkout. Concurrent delegates get *separate* worktrees, one each: two
-writers in one checkout collide, and a mixed `git status` makes both
-done-claims unverifiable. The harness's own `isolation: worktree` cannot cut
-the second one — it derives its request ID from the harness session ID alone,
-so a second concurrent request collides with the first assignment and is
-refused (`worktree create request conflicts with its existing assignment`).
-The coordinator cuts the worktrees instead: run
-`bench worktree create --request <opaque-id> --label <work-item>` once per
-delegate — a distinct request id each — and hand each delegate its returned
-root path. Dispatch independent delegates concurrently and keep coordinating
-while they run — the charge, not the coordinator's attention, carries the
-conventions, so blocking on each return buys nothing but wall-clock. Share a
-worktree — or run sequentially — only when one delegate's
-work genuinely depends on another's output. A charge that shares an existing
-worktree names its root and pins every file-tool path to that root; shell CWD
-does not retarget file tools.
-
-The whole-tree gate is a serialized resource: concurrent `bench commit` gates
-flake load-sensitive tests that pass serially — a red that answers for machine
-load rather than for any diff. A write-delegate stops at "diff ready, focused
-tests green"; the coordinator runs `bench commit` per worktree, one at a time.
-When `bench commit` reports nothing to commit beside a visibly modified file,
-the coordinator diagnoses a CWD/tree mismatch before treating the command as
-defective.
-
-A worktree isolates the working tree, not repository-global git surfaces —
-the stash stack above all. Two delegates in separate worktrees share one
-stash stack, and stashing cross-applies their in-flight edits until neither
-diff can be attributed. A charge bans `git stash` — the destructive-git guard
-refuses it, and the guard's deny table owns which verbs — and names the
-per-worktree substitute instead: copy the working file aside with `cp`,
-restore the committed version with `git show HEAD:<path> > <path>`, run the
-test, then copy the working file back. The copy lives inside the delegate's own
-worktree under a unique name, and every restore names exact files, never a
-glob — a stale scratchpad swept into a later restore glob clobbers files
-outside the fence.
-
-Read-only delegations need no worktree; say "do not edit any file" in the
-charge and mean it. Review delegates return findings only. The coordinator
-verifies the repair in the checkout that owns the diff. Repairs beyond the
-allowance under Delegate or inline are routed as Verifying the done-claim
-directs; a fresh repair delegate receives the finding and a commit-specific
-sentinel for the diff under repair.
-
-### The shared-checkout exception
-
-Some work no worktree can hold: a large uncommitted build the gate is red on
-cannot be committed first, and a worktree branched from HEAD would not contain
-the code under repair. A delegate may then run in the main checkout under
-exactly four conditions — one writer at a time; a named file allowlist in the
-charge; no commit authority; a `git status` check verified on return. All
-four, every time: this is the one loosening of the isolation rule, and the
-conditions are what carry the safety.
+A write-delegation runs in an isolated worktree (`bench worktree`), so
+stray edits can't land in reviewer-owned files. Concurrent delegates get
+separate worktrees, one each — the harness's own `isolation: worktree`
+cannot cut a second one (its request ID derives from the session ID alone),
+so the coordinator runs `bench worktree create --request <opaque-id>
+--label <work-item>` once per delegate. Share a worktree only when a
+delegate's work depends on another's output; a shared charge names the root
+and pins every file-tool path to that root. The whole-tree gate is
+serialized: a write-delegate stops at diff-ready with focused tests green;
+the coordinator runs `bench commit` per worktree, one at a time.
+A worktree isolates the working tree, not the repo-global stash stack a
+concurrent delegate shares. A charge bans `git stash` — the destructive-git
+guard refuses it — and names the substitute: `cp` the working file aside,
+restore the committed version with `git show HEAD:<path> > <path>`, test,
+then copy it back. The copy lives inside the delegate's own worktree
+under a unique name, and every restore names exact files, never a
+glob.
+Read-only delegations need no worktree; say "do not edit any file" and mean
+it. A large uncommitted build no worktree can hold may run in the main
+checkout under exactly four conditions: one writer, a named file allowlist,
+no commit authority, a `git status` check verified on return.
 
 ## Verifying the done-claim
 
-A delegate's done-claim is a claim, not a result. Before accepting one:
-
-- run the gate against the delegate's work — its green report is not your green;
-- check every coverage row in the charge went red-then-green — a missed row is
-  a missed case, found now instead of at review;
-- run `git status` in the worktree it used — files touched outside the charge
-  are a finding, not a footnote;
-- resolve every identifier in an absence, exclusion, or withholding claim to a
-  real thing before accepting it — a misspelled identifier passes its contract
-  by asserting the absence of something that never existed;
-- probe at least one accepted behavior independently of the delegate's own
-  tests — through the built binary or a fixture the delegate did not author.
-  Delegates write the tests that pin their work, so gate-green alone cannot
-  tell a correct build from a self-consistent wrong one; keep the probe
-  constant across a batch, not front-loaded;
-- spot-check the citations in any summary before folding it into your own
-  report — a delegate's confident paraphrase inherits none of the source's
-  authority.
-
-Accepting a done-claim unverified is grading your own work at one remove —
-invariant #1 with extra steps.
-
-Report every verification round in one line, like a ladder move: accepted, or
-what was missed and where the fix went. When a rejected miss exceeds the
-canonical allowance under Delegate or inline, route its concrete repair:
-continue the delegate that authored the slice when the harness can still resume
-it — for its own repair, its context is by definition the right context, and
-the resume rides the cache instead of rebuilding the read-set. Continuation
-covers only a repair to that delegate's own slice; anything else is new work
-and gets a fresh charge, because the written charge — not accumulated context —
-is what carries the conventions. When the authoring delegate is gone, re-charge
-a fresh write-delegate in an isolated worktree with the finding and sentinel.
-Recurring misses across delegates are a charge defect, not a
-delegate defect — tighten the rows in the charge before re-sending it.
-
-Acceptance closes the worktree too: once the slice's `bench commit` lands, the
-coordinator releases the worktree it cut — `bench worktree release --request
-<opaque-id> <path>`, the same request id create used — one release per create,
-before this session ends. Release matches only the creating request, so a
-worktree that outlives its coordinator is unreleasable and falls to the slower
-path-addressed `bench worktree clean`.
+A delegate's done-claim is a claim, not a result. Before accepting one: run
+the gate against its work; check every coverage row went red-then-green;
+run `git status` in the worktree it used; resolve every identifier in an
+absence or exclusion claim to a real thing; probe one accepted behavior
+independently of the delegate's own tests, kept constant across a batch;
+spot-check citations before folding a summary in.
+Report every verification round in one line: accepted, or what was missed
+and where the fix went. Repairs beyond the allowance under Delegate or
+inline are routed as Verifying the done-claim directs: continue the
+delegate for its own repair only when the harness can resume it; otherwise
+a fresh charge in an isolated worktree carries the finding and a sentinel.
+The coordinator verifies the repair in the checkout that owns the diff.
+Acceptance closes the worktree too: once the slice lands, the coordinator
+releases the worktree it cut — `bench worktree release --request <opaque-id>
+<path>`, the same request id create used.
