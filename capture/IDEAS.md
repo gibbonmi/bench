@@ -1,0 +1,1 @@
+- 2026-08-12  harness-transcript-query: consider one bounded agent-facing query for transcript/session census and evidence projection, replacing repeated head/tail/awk/sort shaping; requires a separate operational-surface decision.
