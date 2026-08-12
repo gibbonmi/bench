@@ -53,8 +53,8 @@ finding quoted; wrong scope → propose the split for the reviewer to decide.
 ## `--full <spec>`
 
 Orchestrates implementation, a delegate-run review, the final landing, and
-`/bench-final-check` end to end; refuses on a missing or unnamed spec. At
-every phase boundary it writes the phase reached into
-`capture/session-handoff.md` and refreshes the pin with `bench handoff`. A
-diff large enough to risk missed bugs pauses to ask the reviewer before
-escalating tier or adding a cross-harness falsification pass — both offers, never applied silently.
+`/bench-final-check`; refuses on a missing or unnamed spec. At every phase
+boundary it writes the phase reached into `capture/session-handoff.md` and
+refreshes the pin with `bench handoff`. A diff large enough to risk missed
+bugs pauses to ask the reviewer before escalating tier or adding a
+cross-harness falsification pass — both are offers, never silently applied.

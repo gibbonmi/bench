@@ -109,7 +109,7 @@ of hand-running the two commands above.
 
 ## How it meets the rest of Bench
 
-This phase is reviewer-invoked. A spec-build write delegate never charges it:
+This phase is reviewer-invoked. A write delegate never charges it:
 when its repro proves the defect lives outside its ticket fence, the delegate
 stops implementation edits, keeps its in-fence work dirty in its owned worktree,
 and returns a bounded blocked report — repro command, red output digest, the

@@ -19,9 +19,9 @@ and the worst issue in each axis, plus two totals kept apart: the raw finding
 count per axis, and the de-duplicated repair-target count after collapsing
 findings that name the same fix. Volume and repair work are different numbers —
 never report one where the other is asked for.
-Accepted findings become ownership-fenced repair tickets and return to
-`/bench-implement-spec`; findings that need a later fix pass use the pickup-file route
-in step 5, and a clean review proceeds to `/bench-final-check`.
+Accepted findings become slim repair tickets with an advisory `Writes:` note,
+and return to `/bench-implement-spec`; findings that need a later fix pass use
+the pickup-file route in step 5, and a clean review proceeds to `/bench-final-check`.
 
 The gate is deterministic: tests, types, lint, conformance. It catches regressions
 and rule violations. It cannot tell whether you built the *right* thing the *right*
@@ -108,9 +108,9 @@ true base, on three axes that stay separate.
    same green fix commit that closes them, so resolved findings cannot resurface.
 
 6. **Hand off, don't repair.** This phase makes no fixes and runs no gate.
-   Accepted findings become
-   ownership-fenced repair tickets and return to `/bench-implement-spec`; a
-   clean review proceeds to `/bench-final-check` for its fresh oracle run.
+   Accepted findings become slim repair tickets carrying an advisory
+   `Writes:` note and return to `/bench-implement-spec`; a clean review
+   proceeds to `/bench-final-check` for its fresh oracle run.
 
 ## Where it sits
 

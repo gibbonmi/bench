@@ -8,7 +8,9 @@ index: surfacing decisions in numbered frontier rounds
 
 Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk the design tree as a **frontier**: at any moment, the frontier is the set of questions whose prerequisites are settled. Each round asks the whole frontier at once; each question carries your recommended answer. The recommendation is the point — it forces a concrete decision instead of an open-ended prompt, and lets me correct rather than compose.
 
-Charge `bench-craft-domain` before the first round — canonical terms, Avoid lists, and concept-edge scenarios sharpen what to ask and pin what each answer means.
+Charge `bench-craft-domain` before the first round — canonical terms, Avoid
+lists, and concept-edge scenarios sharpen what to ask and pin what each
+answer means.
 
 If a *fact* can be found by exploring the codebase, look it up rather than asking me. The *decisions*, though, are mine — put each one to me and wait for my answer. A grill that answers its own questions has stopped grilling.
 

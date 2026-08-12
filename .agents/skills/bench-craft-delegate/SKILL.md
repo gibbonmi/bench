@@ -66,10 +66,10 @@ kind. It also differs in site from every probe the delegate ran: a second probe
 at the same site is vacuous, and a vacuous probe is indistinguishable from a
 pass. A repeat site is not independent evidence.
 ```
-Implement story 3 of specs/retry-backoff/spec.md. Open with the stale-base
-check. Coverage rows: [rows]. Effort: medium, ~3 iterations. Self-probe:
-apply the central-property mutation, then report the observed result and the mutation's kind (omission or swap).
-Stop at diff ready; return the red→green log per row.
+Implement story 3 of specs/retry-backoff/spec.md. Stale-base check first.
+Coverage rows: [rows]. Effort: medium, ~3 iterations. Stop at diff ready;
+return the red→green log per row. Self-probe: apply the central-property
+mutation; report the observed result and the mutation's kind (omission or swap).
 ```
 Good — rows make the done-claim verifiable, and the self-probe names its kind.
 
@@ -111,10 +111,10 @@ independently of the delegate's own tests, kept constant across a batch;
 spot-check citations before folding a summary in.
 Report every verification round in one line: accepted, or what was missed
 and where the fix went. Repairs beyond the allowance under Delegate or
-inline are routed as Verifying the done-claim directs: continue the
-delegate for its own repair only when the harness can resume it; otherwise
-a fresh charge in an isolated worktree carries the finding and a sentinel.
-The coordinator verifies the repair in the checkout that owns the diff.
+inline continue the authoring delegate for its own slice when the harness can
+resume it; otherwise a fresh charge in an isolated worktree carries the
+finding and a sentinel. The coordinator verifies the repair in the checkout
+that owns the diff.
 Acceptance closes the worktree too: once the slice lands, the coordinator
 releases the worktree it cut — `bench worktree release --request <opaque-id>
 <path>`, the same request id create used.
