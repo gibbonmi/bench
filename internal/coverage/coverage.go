@@ -435,11 +435,12 @@ func Command(args []string) (string, int) {
 	}
 	b.WriteString(tbl)
 	violations := Check(p)
-	actions := make([]axi.Action, 0, len(Rows(p)))
-	if len(violations) > 0 {
+	rows := Rows(p)
+	actions := make([]axi.Action, 0, len(rows))
+	if len(rows) > 0 && len(violations) > 0 {
 		actions = append(actions, axi.ExecutableInvocation("retry after repairing coverage map", axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(spec)))
-	} else {
-		for _, row := range Rows(p) {
+	} else if len(rows) > 0 {
+		for _, row := range rows {
 			actions = append(actions, axi.ExecutableInvocation("check coverage row "+row[0], axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(spec)))
 		}
 	}
@@ -448,8 +449,5 @@ func Command(args []string) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	b.WriteString(help)
-	if len(violations) > 0 {
-		return b.String(), 1
-	}
 	return b.String(), 0
 }

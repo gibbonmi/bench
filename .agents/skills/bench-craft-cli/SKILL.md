@@ -78,7 +78,7 @@ applies to each surface. Commands not listed retain their own contracts.
 | `bench maps` | Offer shaping or template repair for each decision state that needs it. |
 | `bench guards` | Offer the applicable repair for each stale or unwired guard. |
 | `bench diff` | Offer full inspection or retry only when snapshot state warrants it. |
-| `bench coverage` | Offer a check for each matching unchecked coverage row, or a repair retry after refusal. |
+| `bench coverage` | Offer one check action per mapped coverage row, or a repair retry after refusal. |
 | `bench worktree list` | Offer inspect, execute, or clean actions according to each worktree state. |
 
 Every approved result ends with `help[N]{cmd,why}:`; an honest empty envelope is

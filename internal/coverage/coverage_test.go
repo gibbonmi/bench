@@ -204,13 +204,24 @@ func TestCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("malformed map gets repair then retry action", func(t *testing.T) {
+	t.Run("malformed map gets repair retry without changing extraction exit", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		body := mapped("| 9 | b | s | red | catches one |\n")
 		mustWrite(t, "spec.md", body)
 		out, code := Command([]string{"spec.md"})
-		if code != 1 || !strings.Contains(out, "bench coverage --check spec.md,retry after repairing coverage map") {
-			t.Fatalf("Command = (%d, %q), want exit 1 repair retry", code, out)
+		want := "spec: spec.md\nstate: mapped\nrows[1]{story,seam,red_signal}:\n  \"9\",s,red\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
+		if code != 0 || out != want {
+			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+		}
+	})
+
+	t.Run("canonical mapped zero-row table is terminal", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := mapped("")
+		mustWrite(t, "spec.md", body)
+		out, code := Command([]string{"spec.md"})
+		if want := wantTable(t, "spec.md", body); out != want || code != 0 {
+			t.Fatalf("Command = (%d, %q), want (%d, %q)", code, out, 0, want)
 		}
 	})
 

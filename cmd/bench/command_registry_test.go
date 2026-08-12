@@ -197,7 +197,7 @@ func axiEnvelopeCases() []axiEnvelopeCase {
 		},
 		{
 			name: "coverage", route: []string{"coverage"}, successArgv: []string{"coverage", "fixture"}, emptyArgv: []string{"coverage", "empty"},
-			successMarker: "rows[1]{story,seam,red_signal}:\n", emptyMarker: "rows[0]{story,seam,red_signal}:\n", usage: "usage: bench coverage", setupSuccess: setupAXICoverage, setupEmpty: setupAXIEmptyCoverage,
+			successMarker: "rows[1]{story,seam,red_signal}:\n", emptyMarker: "state: mapped\nrows[0]{story,seam,red_signal}:\n", usage: "usage: bench coverage", setupSuccess: setupAXICoverage, setupEmpty: setupAXIEmptyCoverage,
 		},
 		{
 			name: "worktree list", route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
@@ -290,7 +290,18 @@ func setupAXICoverage(t *testing.T, root string) {
 }
 
 func setupAXIEmptyCoverage(t *testing.T, root string) {
-	writeAXIFixture(t, filepath.Join(root, "specs", "empty", "spec.md"), "# Empty\n\n<!-- coverage-map: historical -->\n")
+	const spec = `# Empty
+
+## User stories
+
+1. As a caller, I get no rows.
+
+### Acceptance coverage map
+
+| row | story | behavior | seam | red signal | why it catches the failure |
+|---|---|---|---|---|---|
+`
+	writeAXIFixture(t, filepath.Join(root, "specs", "empty", "spec.md"), spec)
 }
 
 func setupAXIWorktree(t *testing.T, root string) {

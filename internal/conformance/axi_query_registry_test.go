@@ -98,6 +98,7 @@ func checkAXIGuidance(guidance string, registryMembers map[string][]string) []st
 		"`help[N]{cmd,why}:`",
 		"`help[0]{cmd,why}:`",
 		"per matching row",
+		"one check action per mapped coverage row",
 		"state-derived action",
 		"stable source order",
 		"known argument",
@@ -172,6 +173,7 @@ func TestAXIGuidanceContractBites(t *testing.T) {
 		{"malformed member", anchorsCell, "| bench anchors |", "row 1 is malformed"},
 		{"forbidden option", "Minimal default schemas", "Minimal default schemas --fields", "forbidden field-selection"},
 		{"missing help contract", "`help[0]{cmd,why}:`", "`help[0]:`", "omits required contract"},
+		{"unchecked coverage classifier", "one check action per mapped coverage row", "one check action per unchecked coverage row", "omits required contract"},
 	}
 	for _, mutation := range mutations {
 		t.Run(mutation.name, func(t *testing.T) {
