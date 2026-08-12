@@ -1,11 +1,11 @@
 # Disclose learnings actions through the harness-phase owner
 
-Blocked by: record-ft173-log-leverage.md
-Writes: `internal/axi/`, `internal/learnings/`
+Blocked by: record-ft173-log-leverage.md, disclose-map-actions.md
+Writes: `internal/learnings/`
 
 ## What to build
 
-Extend the typed AXI action owner with the harness-phase kind, then make the public `learnings` query append one `/bench-what-next` action for each open-entry state while complete and empty results append the honest zero-row help block. Preserve the primary response, stream, exit, and accepted argv bytes and capture the pre-change responses beside the candidate fixtures.
+Consume the typed harness-phase kind landed with `maps`, then make the public `learnings` query append one `/bench-what-next` action for each open-entry state while complete and empty results append the honest zero-row help block. Preserve the primary response, stream, exit, and accepted argv bytes and capture the pre-change responses beside the candidate fixtures.
 
 ## Acceptance
 

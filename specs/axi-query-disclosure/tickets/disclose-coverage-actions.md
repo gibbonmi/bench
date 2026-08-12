@@ -1,6 +1,6 @@
 # Disclose coverage check and retry actions
 
-Blocked by: record-ft173-log-leverage.md
+Blocked by: record-ft173-log-leverage.md, disclose-map-actions.md
 Writes: `internal/coverage/`
 
 ## What to build

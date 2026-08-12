@@ -1,6 +1,6 @@
 # Route worktree list through shared usage and disclosure
 
-Blocked by: record-ft173-log-leverage.md
+Blocked by: record-ft173-log-leverage.md, disclose-map-actions.md
 Writes: `internal/worktree/`, `internal/usage/`
 
 ## What to build

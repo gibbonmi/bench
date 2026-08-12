@@ -1,14 +1,15 @@
 # Disclose map frontier and repair actions
 
-Blocked by: record-ft173-log-leverage.md, disclose-learnings-actions.md
-Writes: `internal/maps/`
+Blocked by: record-ft173-log-leverage.md
+Writes: `internal/axi/`, `internal/maps/`
 
 ## What to build
 
-Make the public `maps` query derive actions from each rendered map row: a frontier names `/bench-shape-idea`, and an invalid map names `bench maps --template` together with its diagnostic path. Carry each row's values, deduplicate exact templates without reordering, and keep empty or terminal results honestly action-free.
+Extend the typed AXI action owner with the reusable executable-invocation and harness-phase kinds and kind-specific renderer dispatch, then consume both through the public `maps` query: a frontier names `/bench-shape-idea` without a `bench ` prefix, and an invalid map names `bench maps --template` together with its diagnostic path. Carry every known argv token, use only explicitly unknown future-input slots, carry each row's values, deduplicate exact templates without reordering, and keep empty or terminal results honestly action-free. Existing diff action bytes remain unchanged.
 
 ## Acceptance
 
-- [ ] [MH1] (covers QD1) every actionable frontier and invalid-map row yields its own correctly valued action, including a many-row fixture that rejects first-match-only derivation and guessed paths.
-- [ ] [MH2] (covers QD1) empty and complete map results append the honest zero-row help block, with no repair or shaping busywork.
-- [ ] [MH3] (covers QD6) old-to-new public-command fixtures prove that each named maps state changes only by its appended help block; primary bytes, stream, exit, and argv behavior remain byte-equal.
+- [ ] [MH1] (covers QD1) the reusable invocation owner rejects dropped known argv, guessed values, undeclared placeholders, and prose-as-command; the phase owner and renderer emit the canonical `/bench-shape-idea` phase without a `bench ` prefix while preserving existing diff action bytes; and the public `maps` query consumes both kinds.
+- [ ] [MH2] (covers QD1) every actionable frontier and invalid-map row yields its own correctly valued action, including a many-row fixture that rejects first-match-only derivation and guessed paths.
+- [ ] [MH3] (covers QD1) empty and complete map results append the honest zero-row help block, with no repair or shaping busywork.
+- [ ] [MH4] (covers QD6) old-to-new public-command fixtures prove that each named maps state changes only by its appended help block; primary bytes, stream, exit, and argv behavior remain byte-equal.
