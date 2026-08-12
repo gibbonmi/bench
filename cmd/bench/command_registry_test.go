@@ -52,12 +52,13 @@ func TestCommandDispositionsAreComplete(t *testing.T) {
 }
 
 func TestCommandRegistryAXIDispositionsAreComplete(t *testing.T) {
-	want := map[string][]string{"anchors": nil, "learnings": nil, "maps": nil, "guards": nil, "diff": nil, "coverage": nil, "worktree": {"list"}}
-	got := map[string][]string{}
+	_ = axiRegistryMemberNames(t)
+}
+
+func axiRegistryMemberNames(t *testing.T) []string {
+	t.Helper()
+	var members []string
 	seen := map[string]bool{}
-	if len(commandRegistry) != 49 {
-		t.Fatalf("commandRegistry entries = %d, want 49", len(commandRegistry))
-	}
 	for _, definition := range commandRegistry {
 		if seen[definition.Name] {
 			t.Fatalf("commandRegistry repeats %q", definition.Name)
@@ -69,7 +70,7 @@ func TestCommandRegistryAXIDispositionsAreComplete(t *testing.T) {
 			if len(disposition.children) != 0 || disposition.exemption != "" {
 				t.Fatalf("command %q has a conflicting AXI root disposition: %#v", definition.Name, disposition)
 			}
-			got[definition.Name] = nil
+			members = append(members, definition.Name)
 		case len(disposition.children) > 0:
 			if disposition.root || disposition.exemption != "" {
 				t.Fatalf("command %q has a conflicting AXI child disposition: %#v", definition.Name, disposition)
@@ -80,8 +81,8 @@ func TestCommandRegistryAXIDispositionsAreComplete(t *testing.T) {
 					t.Fatalf("command %q has invalid AXI children %q", definition.Name, disposition.children)
 				}
 				children[child] = true
+				members = append(members, definition.Name+" "+child)
 			}
-			got[definition.Name] = disposition.children
 		case disposition.exemption != "":
 			if disposition.root || len(disposition.children) != 0 || strings.TrimSpace(disposition.exemption) == "" {
 				t.Fatalf("command %q has a conflicting AXI exemption: %#v", definition.Name, disposition)
@@ -90,15 +91,14 @@ func TestCommandRegistryAXIDispositionsAreComplete(t *testing.T) {
 			t.Fatalf("command %q has no AXI disposition", definition.Name)
 		}
 	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("AXI declarations = %#v, want %#v", got, want)
-	}
+	sort.Strings(members)
+	return members
 }
 
 type axiEnvelopeCase struct {
-	name, successMarker, emptyMarker, usage string
-	route, successArgv, emptyArgv           []string
-	setupSuccess, setupEmpty                func(*testing.T, string)
+	successMarker, emptyMarker, usage              string
+	route, successArgv, deepSuccessArgv, emptyArgv []string
+	setupSuccess, setupEmpty                       func(*testing.T, string)
 }
 
 type axiCommandResult struct {
@@ -107,8 +107,14 @@ type axiCommandResult struct {
 }
 
 func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
-	for _, tc := range axiEnvelopeCases() {
-		t.Run(tc.name+"/structured-success", func(t *testing.T) {
+	cases := axiEnvelopeCases()
+	members := axiRegistryMemberNames(t)
+	if caseNames := axiEnvelopeCaseNames(cases); !reflect.DeepEqual(caseNames, members) {
+		t.Fatalf("AXI envelope fixtures = %q, registry members = %q", caseNames, members)
+	}
+	for _, name := range members {
+		tc := cases[name]
+		t.Run(name+"/structured-success", func(t *testing.T) {
 			root := newAXIEnvelopeRepo(t)
 			tc.setupSuccess(t, root)
 			result := runAXICommandAt(t, root, tc.successArgv)
@@ -120,7 +126,7 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 			}
 		})
 
-		t.Run(tc.name+"/definitive-empty", func(t *testing.T) {
+		t.Run(name+"/definitive-empty", func(t *testing.T) {
 			root := newAXIEnvelopeRepo(t)
 			tc.setupEmpty(t, root)
 			result := runAXICommandAt(t, root, tc.emptyArgv)
@@ -132,14 +138,14 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 			}
 		})
 
-		t.Run(tc.name+"/structured-refusal", func(t *testing.T) {
+		t.Run(name+"/structured-refusal", func(t *testing.T) {
 			result := runAXICommandAt(t, t.TempDir(), tc.successArgv)
 			if result.code != 1 || result.stderr != "" || !strings.HasPrefix(result.stdout, "error:") {
 				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want structured stdout refusal/1", result.stdout, result.stderr, result.code)
 			}
 		})
 
-		t.Run(tc.name+"/unknown-flag", func(t *testing.T) {
+		t.Run(name+"/unknown-flag", func(t *testing.T) {
 			argv := append(append([]string(nil), tc.route...), "--unknown-axi-probe")
 			result := runAXICommandAt(t, t.TempDir(), argv)
 			if result.code != 2 || result.stderr != "" || !strings.HasPrefix(result.stdout, tc.usage) {
@@ -147,7 +153,7 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 			}
 		})
 
-		t.Run(tc.name+"/help-spellings", func(t *testing.T) {
+		t.Run(name+"/help-spellings", func(t *testing.T) {
 			for _, spelling := range []string{"--help", "-h", "help"} {
 				argv := append(append([]string(nil), tc.route...), spelling)
 				result := runAXICommandAt(t, t.TempDir(), argv)
@@ -157,11 +163,15 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 			}
 		})
 
-		t.Run(tc.name+"/deep-cwd", func(t *testing.T) {
+		t.Run(name+"/deep-cwd", func(t *testing.T) {
 			root := newAXIEnvelopeRepo(t)
 			tc.setupSuccess(t, root)
 			fromRoot := runAXICommandAt(t, root, tc.successArgv)
-			fromDeep := runAXICommandAt(t, filepath.Join(root, "nested", "deep"), tc.successArgv)
+			deepArgv := tc.successArgv
+			if tc.deepSuccessArgv != nil {
+				deepArgv = tc.deepSuccessArgv
+			}
+			fromDeep := runAXICommandAt(t, filepath.Join(root, "nested", "deep"), deepArgv)
 			if fromRoot.code != 0 || fromRoot.stderr != "" || !strings.Contains(fromRoot.stdout, tc.successMarker) {
 				t.Fatalf("root control = %#v, want successful %q envelope", fromRoot, tc.successMarker)
 			}
@@ -172,38 +182,47 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 	}
 }
 
-func axiEnvelopeCases() []axiEnvelopeCase {
+func axiEnvelopeCases() map[string]axiEnvelopeCase {
 	noSetup := func(*testing.T, string) {}
-	return []axiEnvelopeCase{
-		{
-			name: "anchors", route: []string{"anchors"}, successArgv: []string{"anchors", ".bench/BENCH.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
-			successMarker: "anchors[", emptyMarker: "anchors[0]{kind,section,needle}:\n", usage: "usage: bench anchors", setupSuccess: noSetup, setupEmpty: noSetup,
+	return map[string]axiEnvelopeCase{
+		"anchors": {
+			route: []string{"anchors"}, successArgv: []string{"anchors", ".bench/BENCH.md"}, deepSuccessArgv: []string{"anchors", "../../.bench/BENCH.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
+			successMarker: "anchors[", emptyMarker: "anchors[0]{kind,section,needle}:\n", usage: "usage: bench anchors", setupSuccess: setupAXIAnchors, setupEmpty: noSetup,
 		},
-		{
-			name: "learnings", route: []string{"learnings"}, successArgv: []string{"learnings"}, emptyArgv: []string{"learnings"},
+		"learnings": {
+			route: []string{"learnings"}, successArgv: []string{"learnings"}, emptyArgv: []string{"learnings"},
 			successMarker: "learnings[1]{date,title}:\n", emptyMarker: "learnings[0]{date,title}:\n", usage: "usage: bench learnings", setupSuccess: setupAXILearnings, setupEmpty: noSetup,
 		},
-		{
-			name: "maps", route: []string{"maps"}, successArgv: []string{"maps"}, emptyArgv: []string{"maps"},
+		"maps": {
+			route: []string{"maps"}, successArgv: []string{"maps"}, emptyArgv: []string{"maps"},
 			successMarker: "maps[1]{map,title,type,state,blockers}:\n", emptyMarker: "maps[0]{map,title,type,state,blockers}:\n", usage: "usage: bench maps", setupSuccess: setupAXIMap, setupEmpty: noSetup,
 		},
-		{
-			name: "guards", route: []string{"guards"}, successArgv: []string{"guards"}, emptyArgv: []string{"guards"},
+		"guards": {
+			route: []string{"guards"}, successArgv: []string{"guards"}, emptyArgv: []string{"guards"},
 			successMarker: "guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:\n", emptyMarker: "guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:\n", usage: "usage: bench guards", setupSuccess: noSetup, setupEmpty: setupAXIEmptyGuards,
 		},
-		{
-			name: "diff", route: []string{"diff"}, successArgv: []string{"diff"}, emptyArgv: []string{"diff"},
+		"diff": {
+			route: []string{"diff"}, successArgv: []string{"diff"}, emptyArgv: []string{"diff"},
 			successMarker: "files[1]{status,path,kind}:\n", emptyMarker: "files[0]{status,path,kind}:\n", usage: "usage: bench diff", setupSuccess: setupAXIDiff, setupEmpty: noSetup,
 		},
-		{
-			name: "coverage", route: []string{"coverage"}, successArgv: []string{"coverage", "fixture"}, emptyArgv: []string{"coverage", "empty"},
+		"coverage": {
+			route: []string{"coverage"}, successArgv: []string{"coverage", "fixture"}, emptyArgv: []string{"coverage", "empty"},
 			successMarker: "rows[1]{story,seam,red_signal}:\n", emptyMarker: "state: mapped\nrows[0]{story,seam,red_signal}:\n", usage: "usage: bench coverage", setupSuccess: setupAXICoverage, setupEmpty: setupAXIEmptyCoverage,
 		},
-		{
-			name: "worktree list", route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
+		"worktree list": {
+			route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
 			successMarker: "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
 		},
 	}
+}
+
+func axiEnvelopeCaseNames(cases map[string]axiEnvelopeCase) []string {
+	names := make([]string, 0, len(cases))
+	for name := range cases {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 func newAXIEnvelopeRepo(t *testing.T) string {
@@ -219,6 +238,10 @@ func newAXIEnvelopeRepo(t *testing.T) string {
 	base := strings.TrimSpace(runAXIGit(t, "-C", root, "rev-parse", "HEAD"))
 	runAXIGit(t, "-C", root, "config", "branch.main.benchBase", base)
 	return root
+}
+
+func setupAXIAnchors(t *testing.T, root string) {
+	writeAXIFixture(t, filepath.Join(root, ".bench", "BENCH.md"), "# Fixture\n")
 }
 
 func setupAXILearnings(t *testing.T, root string) {

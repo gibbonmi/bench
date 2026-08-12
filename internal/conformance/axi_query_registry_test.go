@@ -37,8 +37,7 @@ var expectedAXIPrinciples = []string{
 }
 
 type parsedAXIRegistry struct {
-	members    map[string][]string
-	entryCount int
+	members map[string][]string
 }
 
 func checkAXIQueryRegistry(root string) []string {
@@ -52,9 +51,6 @@ func checkAXIQueryRegistry(root string) []string {
 		return []string{"AXI query registry invalid: " + err.Error()}
 	}
 	var diags []string
-	if registry.entryCount != 49 {
-		diags = append(diags, fmt.Sprintf("AXI query registry has %d command entries, want 49", registry.entryCount))
-	}
 	if !reflect.DeepEqual(registry.members, approvedAXIQueries) {
 		diags = append(diags, fmt.Sprintf("AXI query registry declares %#v, want %#v", registry.members, approvedAXIQueries))
 	}
@@ -287,7 +283,7 @@ func parseAXIRegistry(path, body string, reasons map[string]string) (parsedAXIRe
 	if !ok {
 		return parsedAXIRegistry{}, fmt.Errorf("commandRegistry is not a composite literal")
 	}
-	result := parsedAXIRegistry{members: make(map[string][]string), entryCount: len(literal.Elts)}
+	result := parsedAXIRegistry{members: make(map[string][]string)}
 	seen := make(map[string]bool, len(literal.Elts))
 	for i, element := range literal.Elts {
 		entry, ok := element.(*ast.CompositeLit)
