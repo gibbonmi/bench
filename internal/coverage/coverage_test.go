@@ -1,17 +1,16 @@
 package coverage
 
 import (
-	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axitest"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
-	toonlib "github.com/toon-format/toon-go"
 )
 
 const stories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n"
@@ -382,21 +381,30 @@ func TestCommandControlBearingSpecPathPreservesPrimaryAndHonestFallback(t *testi
 			if !strings.Contains(out, "help[1]{cmd,why}:") {
 				t.Fatalf("Command = %q, want one action", out)
 			}
-			decoded, err := toonlib.DecodeString(out[strings.Index(out, "help["):])
+			argv, err := axitest.RecoverHelpCommandArgv(out)
 			if err != nil {
 				t.Fatal(err)
 			}
-			help := decoded.(map[string]any)["help"].([]any)
-			if len(help) != 1 {
-				t.Fatalf("decoded help = %#v, want one action", help)
+			want := []string{"bench", "coverage", "--check", path}
+			if !slices.Equal(argv, want) {
+				t.Fatalf("shell argv = %q, want %q", argv, want)
 			}
-			command := help[0].(map[string]any)["cmd"].(string)
-			recovered, err := exec.Command("sh", "-c", "set -- "+command+"; printf %s \"$4\"").Output()
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(recovered, []byte(path)) {
-				t.Fatalf("shell argv = %q, want %q", recovered, path)
+		})
+	}
+}
+
+func TestCommandAngleBracketSpecPathPreservesPrimaryAndHonestFallback(t *testing.T) {
+	mapped := "# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 1 | b | s | unchecked | catches one |\n"
+	for _, marker := range []string{"<", ">"} {
+		t.Run(marker, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			path := "angle" + marker + "spec.md"
+			mustWrite(t, path, mapped)
+			out, code := Command([]string{path})
+			primary := "spec: " + path + "\nstate: mapped\nrows[1]{story,seam,red_signal}:\n  \"1\",s,unchecked\n"
+			want := primary + "help[0]{cmd,why}:\n"
+			if code != 0 || out != want {
+				t.Fatalf("Command = (%d, %q), want checked primary plus honest empty help", code, out)
 			}
 		})
 	}

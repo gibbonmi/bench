@@ -34,12 +34,14 @@ type Action struct {
 // Known arguments carry the exact value already available to the query; future
 // inputs render as an explicit slot instead of a guessed value.
 type InvocationArgument struct {
-	known, future string
+	known         string
+	knownDeclared bool
+	future        string
 }
 
 // KnownArgument returns an argument whose value is already known.
 func KnownArgument(value string) InvocationArgument {
-	return InvocationArgument{known: value}
+	return InvocationArgument{known: value, knownDeclared: true}
 }
 
 // FutureInput returns one explicitly unknown argument slot.
@@ -52,7 +54,7 @@ func ExecutableInvocation(why string, arguments ...InvocationArgument) Action {
 	declared := append([]InvocationArgument(nil), arguments...)
 	invocation := make([]string, 0, len(declared))
 	for _, argument := range declared {
-		if argument.known != "" {
+		if argument.knownDeclared {
 			if rendered, err := renderKnownArgument(argument.known); err == nil {
 				invocation = append(invocation, rendered)
 			} else {
@@ -108,7 +110,7 @@ func (action Action) hasUnsupportedDisclosureValue() bool {
 		return true
 	}
 	for _, argument := range action.arguments {
-		if hasUnsupportedControl(argument.known) {
+		if argument.knownDeclared && !validKnownArgument(argument.known) {
 			return true
 		}
 	}
@@ -157,10 +159,10 @@ func (action Action) render() (string, string, error) {
 		}
 		args := make([]string, 0, len(action.arguments))
 		for i, argument := range action.arguments {
-			if (argument.known == "") == (argument.future == "") {
+			if argument.knownDeclared == (argument.future != "") {
 				return "", "", errors.New("executable action requires known arguments or declared future inputs")
 			}
-			if argument.known != "" {
+			if argument.knownDeclared {
 				rendered, err := renderKnownArgument(argument.known)
 				if err != nil || (i == 0 && !shellSafeToken(argument.known)) {
 					return "", "", errors.New("executable action has an invalid known argument")

@@ -1,17 +1,17 @@
 package worktree
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi"
-	toonlib "github.com/toon-format/toon-go"
+	"github.com/gibbonmi/bench/internal/axitest"
 )
 
 type worktreeListArgvPair struct {
@@ -169,21 +169,33 @@ func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing
 			if !strings.Contains(out, "help[1]{cmd,why}:\n") {
 				t.Fatalf("ListCommand = %q, want one orphan-clean action", out)
 			}
-			decoded, err := toonlib.DecodeString(out[strings.Index(out, "help["):])
+			argv, err := axitest.RecoverHelpCommandArgv(out)
 			if err != nil {
 				t.Fatal(err)
 			}
-			help := decoded.(map[string]any)["help"].([]any)
-			if len(help) != 1 {
-				t.Fatalf("decoded help = %#v, want one action", help)
+			want := []string{"bench", "worktree", "clean", missing}
+			if !slices.Equal(argv, want) {
+				t.Fatalf("shell argv = %q, want %q", argv, want)
 			}
-			command := help[0].(map[string]any)["cmd"].(string)
-			recovered, err := exec.Command("sh", "-c", "set -- "+command+"; printf %s \"$4\"").Output()
-			if err != nil {
+		})
+	}
+}
+
+func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *testing.T) {
+	for _, marker := range []string{"<", ">"} {
+		t.Run(marker, func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			missing := filepath.Join(t.TempDir(), "orphan"+marker+"path")
+			gitRun(t, root, "worktree", "add", "-q", "--detach", missing, "HEAD")
+			if err := os.RemoveAll(missing); err != nil {
 				t.Fatal(err)
 			}
-			if !bytes.Equal(recovered, []byte(missing)) {
-				t.Fatalf("shell argv = %q, want %q", recovered, missing)
+			chdir(t, root)
+			out, code := ListCommand(nil)
+			primary := "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n  foreign," + missing + ",foreign,foreign,missing,none,unknown,unknown\n"
+			want := primary + "help[0]{cmd,why}:\n"
+			if code != 0 || out != want {
+				t.Fatalf("ListCommand = (%d, %q), want checked primary plus honest empty help", code, out)
 			}
 		})
 	}

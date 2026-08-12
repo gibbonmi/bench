@@ -1,12 +1,11 @@
 package axi
 
 import (
-	"bytes"
-	"os/exec"
+	"slices"
 	"strings"
 	"testing"
 
-	toonlib "github.com/toon-format/toon-go"
+	"github.com/gibbonmi/bench/internal/axitest"
 )
 
 func TestRenderHelpPreservesEveryKnownArgument(t *testing.T) {
@@ -85,21 +84,13 @@ func TestKnownArgumentControlValuesRoundTripThroughTOONAndPOSIXShell(t *testing.
 			if err != nil {
 				t.Fatal(err)
 			}
-			decoded, err := toonlib.DecodeString(rendered)
+			argv, err := axitest.RecoverHelpCommandArgv(rendered)
 			if err != nil {
 				t.Fatal(err)
 			}
-			help := decoded.(map[string]any)["help"].([]any)
-			if len(help) != 1 {
-				t.Fatalf("decoded help = %#v, want one action", help)
-			}
-			command := help[0].(map[string]any)["cmd"].(string)
-			out, err := exec.Command("sh", "-c", "set -- "+command+"; printf %s \"$4\"").Output()
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(out, []byte(source)) {
-				t.Fatalf("shell argv = %q, want %q", out, source)
+			want := []string{"bench", "worktree", "clean", source}
+			if !slices.Equal(argv, want) {
+				t.Fatalf("shell argv = %q, want %q", argv, want)
 			}
 		})
 	}
@@ -143,8 +134,6 @@ func TestRenderHelpRejectsLossyReusableActions(t *testing.T) {
 				why:        "repair decisions/model.md",
 			},
 		},
-		{name: "empty known value", action: ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument(""))},
-		{name: "undeclared placeholder", action: ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument("<path>"))},
 		{name: "prose as command", action: ExecutableInvocation("repair", KnownArgument("run bench maps --template"))},
 		{name: "unsafe executable name", action: ExecutableInvocation("repair", KnownArgument("maps!"))},
 		{name: "future command", action: ExecutableInvocation("repair", FutureInput("command"))},
@@ -160,6 +149,8 @@ func TestRenderHelpRejectsLossyReusableActions(t *testing.T) {
 
 func TestRenderHelpUsesHonestEmptyForUnsupportedDisclosureValue(t *testing.T) {
 	for _, action := range []Action{
+		ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument("")),
+		ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument("decisions/<broken>.md")),
 		ExecutableInvocation("repair", KnownArgument("worktree"), KnownArgument("clean"), KnownArgument("orphan\x1bpool")),
 		ExecutableInvocation("repair malformed\x1bmap", KnownArgument("maps"), KnownArgument("--template")),
 	} {
