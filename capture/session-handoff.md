@@ -2,23 +2,32 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `e39d9f2`, clean tree, 52 unpushed commits
-Spec: `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `7fd5b28` — stale, work tree `20a8f05`
+Branch: `main` — HEAD `2747e38b`, clean tree, unpushed backlog (~65 commits; push remains reviewer-owned)
+Spec: `specs/axi-query-disclosure/spec.md` (Status: implemented at `2747e38b`); `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `2747e38b` (fresh verdict on the landing)
 
 ## State
 
-The composed AXI query disclosure candidate includes the final-evidence closure
-and is ready for full semantic review against the staged spec. No repair pickup
-remains. The accepted AXI set, default-extraction disclosure scope,
-compatibility partition, registry-owned membership, call-site action
-provenance, QD1–QD6, and the signed QD5 ledger remain closed. Any stale paused
-worktree diff is excluded from this candidate; foreign worktrees remain
-preserved.
+axi-query-disclosure is closed: review pickup committed (`04ddded7`), the
+Opus-accepted nine-ticket repair frontier fully landed (`30c50b50`, `6a38fc6d`,
+`d1b2ef19`, `69492c70`, `93fbe8e9`, `5d71b964`, `b18fa260`, fence amendment
+`31d63b5f`, final `2747e38b` with the pickup file deleted), and the retro is at
+`capture/retros/axi-query-disclosure.md`. Reviewer decisions taken this
+session and staying closed: `internal/gittest/` fence amendment; guards
+real-stale fixture added; coverage `why` reworded. Uncommitted right now:
+`capture/` updates (IDEAS lines, two open learnings entries, the retro, this
+file) staged for the close-out commit that immediately follows this rewrite —
+if that commit is absent, land those `capture/` paths first.
+
+Parked for the reviewer (in `capture/IDEAS.md`): R11 active-assignment/deleted-
+tree spec amendment; census scope for process-backed fixtures (coupled with
+gittest census visibility); standing test-support commons fence; pre-existing
+`TestListCommandPublicRowsAndDisclosure` flake. Assignment
+`4fb88c5a8a96bceffe565d3a540018a1` and all foreign worktrees preserved.
 
 ## Next command
 
-`$bench-review-implementation specs/axi-query-disclosure/spec.md --full`
+`$bench-what-next`
 
 ## Shape
 
