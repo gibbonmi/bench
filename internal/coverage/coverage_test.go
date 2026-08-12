@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
 	toonlib "github.com/toon-format/toon-go"
@@ -147,23 +146,13 @@ func mustWrite(t *testing.T, path, content string) {
 	}
 }
 
-// wantTable renders the exact TOON output Command produces for a resolved spec label and
-// body, via the same State/Rows/toon.Table calls Command itself makes — so the test pins
-// the round-trip without re-deriving the TOON format.
-func wantTable(t *testing.T, label, body string) string {
+// wantTable renders the primary TOON table and appends the independently specified help.
+func wantTable(t *testing.T, label, body, help string) string {
 	t.Helper()
 	p := spec(body)
 	tbl, err := toon.Table("rows", []string{"story", "seam", "red_signal"}, Rows(p))
 	if err != nil {
 		t.Fatalf("toon.Table: %v", err)
-	}
-	actions := make([]axi.Action, 0, len(Rows(p)))
-	for _, row := range Rows(p) {
-		actions = append(actions, axi.ExecutableInvocation("check coverage row "+row[0], axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(label)))
-	}
-	help, err := axi.RenderHelp(actions)
-	if err != nil {
-		t.Fatal(err)
 	}
 	return "spec: " + label + "\n" + "state: " + State(p) + "\n" + tbl + help
 }
@@ -181,7 +170,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "spec.md", body)
 
 		out, code := Command([]string{"spec.md"})
-		if want := wantTable(t, "spec.md", body); out != want || code != 0 {
+		if want := wantTable(t, "spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage row 1\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -223,7 +212,7 @@ func TestCommand(t *testing.T) {
 		body := mapped("")
 		mustWrite(t, "spec.md", body)
 		out, code := Command([]string{"spec.md"})
-		if want := wantTable(t, "spec.md", body); out != want || code != 0 {
+		if want := wantTable(t, "spec.md", body, "help[0]{cmd,why}:\n"); out != want || code != 0 {
 			t.Fatalf("Command = (%d, %q), want (%d, %q)", code, out, 0, want)
 		}
 	})
@@ -234,7 +223,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/foo/spec.md", body)
 
 		out, code := Command([]string{"foo"})
-		if want := wantTable(t, "specs/foo/spec.md", body); out != want || code != 0 {
+		if want := wantTable(t, "specs/foo/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/foo/spec.md,check coverage row 2\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -245,7 +234,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/bar/spec.md", body)
 
 		out, code := Command([]string{"bar.md"})
-		if want := wantTable(t, "specs/bar/spec.md", body); out != want || code != 0 {
+		if want := wantTable(t, "specs/bar/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/bar/spec.md,check coverage row 3\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -276,7 +265,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/foo/spec.md", specsBody)
 
 		out, code := Command([]string{"foo"})
-		if want := wantTable(t, "foo", cwdBody); out != want || code != 0 {
+		if want := wantTable(t, "foo", cwdBody, "help[1]{cmd,why}:\n  bench coverage --check foo,check coverage row 1\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — the CWD file should shadow the specs/ fallback", out, code, want)
 		}
 	})
@@ -304,7 +293,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/dist/spec.md", body)
 
 		out, code := Command([]string{"dist"})
-		if want := wantTable(t, "specs/dist/spec.md", body); out != want || code != 0 {
+		if want := wantTable(t, "specs/dist/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/dist/spec.md,check coverage row 1\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — a directory is not a spec candidate", out, code, want)
 		}
 	})

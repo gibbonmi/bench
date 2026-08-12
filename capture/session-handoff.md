@@ -1,24 +1,24 @@
 # Session handoff
 
-Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — HEAD `543d855`, 1 dirty path, 34 unpushed commits
+Repository: `dbca5cee8575039429f902686c8119f2-7a4e18e46b2d6c51282cdf16dee24ce1` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-3325222104/dbca5cee8575039429f902686c8119f2-7a4e18e46b2d6c51282cdf16dee24ce1`
+Branch: `bench/assign/dbca5cee8575039429f902686c8119f2/7a4e18e46b2d6c51282cdf16dee24ce1` — HEAD `eebf80a`, 2 dirty paths, 41 unpushed commits
 Spec: `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `87299b5` — stale, work tree `a10f583`
+Gate: no gate has run.
 
 ## State
 
-The repaired implementation was re-reviewed on exact candidate
-`c2542a97..543d8551`: Standards 3, Spec 2, Coverage 3, collapsing to six
-deterministic repair targets recorded in `reviews/axi-query-disclosure.md`.
-The formerly accepted seven targets are resolved. Keep the approved surface,
-default-extraction scope, exact compatibility contract, production-registry
-ownership, and the reviewer-selected call-site provenance decision closed.
-No push has run. The eight pre-existing foreign worktree records remain untouched.
+The composed AXI query disclosure candidate includes the final-evidence closure
+and is ready for full semantic review against the staged spec. No repair pickup
+remains. The accepted AXI set, default-extraction disclosure scope,
+compatibility partition, registry-owned membership, call-site action
+provenance, QD1–QD6, and the signed QD5 ledger remain closed. Any stale paused
+worktree diff is excluded from this candidate; foreign worktrees remain
+preserved.
 
 ## Next command
 
-`$bench-implement-spec specs/axi-query-disclosure/spec.md --full`
+`$bench-review-implementation specs/axi-query-disclosure/spec.md --full`
 
 ## Shape
 
