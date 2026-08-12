@@ -109,6 +109,6 @@ Every mapped row becomes ticket acceptance with `(covers <row>)`, atomic `Closur
 
 - Snapshot owner: `internal/diff/`.
 - Checkout facts: `internal/git/` (additive helpers only; existing consumers' behavior is unchanged).
-- Registration and conformance: `cmd/bench/main.go`, `internal/conformance/`, `projects/benchkit.md`.
+- Registration and conformance: `cmd/bench/main.go`, `internal/conformance/`, `projects/benchkit.md`, `CHANGELOG.md`.
 - Action owner: `internal/axi/` — a new package this spec introduces (typed-action owner and `help[]` renderer).
 - Every other command remains unchanged; no spec-build surface exists to touch.
