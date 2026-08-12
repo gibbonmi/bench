@@ -49,6 +49,10 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 - Plumbing subcommands, driven by hooks and adapters, live in
   `.bench/BENCH-reference.md`; this inventory tracks `bin/bench.sh`. Run `bench`
   plainly through your shell tool; add `2>&1` only where it changes behavior.
+  Never pipe any `bench` output through `head`/`tail` or otherwise truncate
+  it: the complete output is the evidence (on a red gate, the failure
+  attribution), and output too long to read is CLI-owned projection work, not
+  call-site shaping.
 
 ## The four invariants (these override convenience, always)
 
