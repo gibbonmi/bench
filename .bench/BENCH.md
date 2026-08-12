@@ -163,11 +163,11 @@ only path in.
 ## Capture
 
 Parking an idea is conversational, never a CLI chore for the reviewer: when the
-they set one aside, or you spot a tangent worth keeping, **you** run
+reviewer wants to set one aside, or you spot a tangent worth keeping, **you** run
 `bench idea "<text>"`. Offer once, then let it go. Parked ideas land in
 `capture/IDEAS.md` and graduate into `ROADMAP.md` only through a reviewed
 `/bench-what-next` drain. If `bench` isn't on PATH, append the dated line
-(`- YYYY-MM-DD <text>`) to `capture/IDEAS.md` yourself.
+(`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yourself.
 
 Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`;
 `/bench-what-next` owns their reviewed drain.

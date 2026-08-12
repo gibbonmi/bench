@@ -224,7 +224,7 @@ func proseBudgetSkillEntries(root string) ([]os.DirEntry, string) {
 	// os.ReadDir sorts by filename, so the enumeration reports in one order run to run.
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, ""
+		return nil, "prose-budget subject unreadable: " + proseBudgetSkillsDir + ": " + err.Error()
 	}
 	return entries, ""
 }
@@ -517,6 +517,25 @@ func TestGuidanceProseBudgetReportsAnUnreadableSubject(t *testing.T) {
 	diags := checkGuidanceProseBudgets(root)
 	if !containsDiagnostic(diags, "prose-budget subject unreadable: .agents/skills/bench-craft-tickets/SKILL.md could not be read") {
 		t.Fatalf("an unreadable subject was accepted:\n%s", strings.Join(diags, "\n"))
+	}
+}
+
+// TestGuidanceProseBudgetReportsAnUnreadableSkillsRoot pins the fail-closed diagnostic for
+// a skills root that Lstat classifies as a real directory but os.ReadDir cannot enumerate: a
+// permission fault must not silently drop every wildcard subject under it.
+func TestGuidanceProseBudgetReportsAnUnreadableSkillsRoot(t *testing.T) {
+	root := writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows...), healthyProseBudgetFiles())
+	dir := filepath.Join(root, ".agents", "skills")
+	if err := os.Chmod(dir, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(dir, 0o755) })
+	if _, err := os.ReadDir(dir); err == nil {
+		capability.Capability(t, capability.Privilege, "the test process reads mode 0000 directories, so an unreadable skills root cannot be planted")
+	}
+	diags := checkGuidanceProseBudgets(root)
+	if !containsDiagnostic(diags, "prose-budget subject unreadable: .agents/skills: ") {
+		t.Fatalf("an unreadable skills root was accepted:\n%s", strings.Join(diags, "\n"))
 	}
 }
 
