@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 func TestCommandAppendsTypedDrainActionsAndHonestEmptyHelp(t *testing.T) {
@@ -70,6 +72,63 @@ func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
 				t.Fatalf("Command = (%d, %q), want checked-in primary plus exactly one help block", code, got)
 			}
 		})
+	}
+}
+
+func TestRefusalEvidencePreservesPrimaryAndDisclosesOnlyRepairableMalformed(t *testing.T) {
+	type fixtureCase struct {
+		name, pre, candidate, journal string
+		setup                         func(*testing.T, string)
+		code                          int
+	}
+	cases := []fixtureCase{
+		{name: "malformed-among-parsed", pre: "pre-disclosure-malformed.stdout", candidate: "candidate-malformed.stdout", journal: "# Learnings — usage journal\n\n## 2026-01-01 — first [open]\n## broken\n", code: 1},
+		{name: "unsupported-schema", pre: "pre-disclosure-unsupported.stdout", candidate: "candidate-unsupported.stdout", journal: "not a learnings journal\n", code: 1},
+		{name: "empty", pre: "pre-disclosure-empty.stdout", candidate: "candidate-empty.stdout", setup: func(t *testing.T, root string) { writeJournal(t, root, nil) }, code: 1},
+		{name: "invalid-utf8", pre: "pre-disclosure-invalid-utf8.stdout", candidate: "candidate-invalid-utf8.stdout", setup: func(t *testing.T, root string) { writeJournal(t, root, []byte{0xff, '\n'}) }, code: 1},
+		{name: "oversized", pre: "pre-disclosure-oversized.stdout", candidate: "candidate-oversized.stdout", setup: func(t *testing.T, root string) { writeJournal(t, root, make([]byte, bounds.ControlRecordLimit+1)) }, code: 1},
+		{name: "wrong-type", pre: "pre-disclosure-wrong-type.stdout", candidate: "candidate-wrong-type.stdout", setup: func(t *testing.T, root string) {
+			if err := os.MkdirAll(filepath.Join(root, JournalPath), 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}, code: 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			pre, err := os.ReadFile(filepath.Join("testdata", tc.pre))
+			if err != nil {
+				t.Fatal(err)
+			}
+			candidate, err := os.ReadFile(filepath.Join("testdata", tc.candidate))
+			if err != nil {
+				t.Fatal(err)
+			}
+			root := learningsRepo(t)
+			if tc.setup != nil {
+				tc.setup(t, root)
+			} else {
+				writeJournal(t, root, []byte(tc.journal))
+			}
+			t.Chdir(root)
+			got, code := Command(nil)
+			t.Logf("observed candidate code=%d stdout=%q", code, got)
+			if code != tc.code || got != string(candidate) {
+				t.Fatalf("candidate = (%d, %q), want (%d, %q)", code, got, tc.code, candidate)
+			}
+			if tc.name != "malformed-among-parsed" && string(pre) != string(candidate) {
+				t.Fatalf("early refusal changed: pre=%q candidate=%q", pre, candidate)
+			}
+		})
+	}
+}
+
+func writeJournal(t *testing.T, root string, data []byte) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, JournalPath), data, 0o644); err != nil {
+		t.Fatal(err)
 	}
 }
 

@@ -1,0 +1,5 @@
+learnings[2]{date,title}:
+  2026-01-01,first
+  line 4,malformed learning heading
+help[1]{cmd,why}:
+  /bench-what-next,"verdict 2026-01-01: first"
