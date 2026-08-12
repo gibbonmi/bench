@@ -2,22 +2,24 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `fd6ac31`, 1 dirty path, 14 unpushed commits
+Branch: `main` — HEAD `29a8997`, clean tree, 27 unpushed commits
 Spec: `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `2bee65b` — stale, work tree `8f172d6`
+Gate: green at `763e5b9` — stale, work tree `ef855f7`
 
 ## State
 
-`axi-coherent-diff` is implemented and retired. This maintenance batch drains
-its retro into FT113's final-landing CLI contract, FT162's exact repair-review
-subject, and FT164's repair/probe guidance. FT173 now names only the staged
-`axi-query-disclosure` capstone and is first in the refreshed sequence. There
-are no parked ideas or open learnings. The coherent-diff implementation commits
-remain unpushed; no foreign worktree or branch was cleaned.
+All nine `axi-query-disclosure` implementation tickets are landed through
+path-scoped green commits. The approved query set is registry-declared and
+conformance-graded, all named query surfaces append contextual or honest-empty
+help, worktree-list help uses the shared grammar, and `craft-cli` carries the
+ten-principle contract. Review preflight is green at `29a89978`. Keep the approved
+surface, compatibility deltas, production-registry ownership, and named Fable
+cross-harness final review closed; do not widen to operational commands. No push
+has run, and the eight pre-existing foreign worktree records remain untouched.
 
 ## Next command
 
-`$bench-implement-spec specs/axi-query-disclosure/spec.md --full`
+`$bench-review-implementation specs/axi-query-disclosure/spec.md`
 
 ## Shape
 
