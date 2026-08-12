@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `9674d6ec`; the rescoped `specs/axi-query-disclosure/spec.md` and this handoff refresh are uncommitted pending reviewer sign-off
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged, rescope landed at `00583fa9`), `specs/axi-query-disclosure/spec.md` (Status: staged, rescoped, sign-off pending), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `9674d6ec` via path-scoped `bench commit`; commits unpushed
+Branch: `main` — HEAD `4f6945ff`; tree clean, commits unpushed
+Spec: `specs/axi-coherent-diff/spec.md` (Status: staged, rescope landed at `00583fa9`), `specs/axi-query-disclosure/spec.md` (Status: staged, rescope approved and landed at `4f6945ff`), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `4f6945ff` via path-scoped `bench commit`
 
 ## State
 
@@ -19,13 +19,14 @@ additive-compat paired fixtures incl. `anchors`, registry-declared AXI
 membership on the production entries in `cmd/bench/main.go`, seven exact
 conformance predicates, a guidance-versus-registry cross-check, both inventoried
 worktree actions, blocked ticket order). `bench coverage --check` is green at
-6 rows; reviewer sign-off on that rescope is the open hard stop. The decision
-map `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md` stays
-shared top-level because two staged specs consume it.
+6 rows; the reviewer approved both rescopes 2026-08-12. The decision map
+`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md` stays shared
+top-level because two staged specs consume it. No open hard stop remains before
+the coherent-diff build.
 
 ## Next command
 
-Reviewer sign-off on `specs/axi-query-disclosure/spec.md`, then commit it and run `/bench-implement-spec specs/axi-coherent-diff/spec.md` in a fresh mid-tier session.
+`/bench-implement-spec specs/axi-coherent-diff/spec.md` in a fresh mid-tier session.
 
 ## Shape
 
