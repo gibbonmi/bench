@@ -108,6 +108,47 @@ func TestCommandPreservesCheckedInStaleAndUnwiredPrimaryResponse(t *testing.T) {
 	}
 }
 
+// TestCommandRendersRealStaleManagedPrePushHookAndRepairAction drives the whole disclosure
+// off a real fixture: the kit's own managed pre-push asset, installed at the hook path and
+// drifted the way an install left behind by an older kit drifts, so adopt's currency check
+// reads it as stale. Nothing is stubbed — the row's cells and the appended `bench link`
+// repair are the production scan's own derivation, which is what the stubbed stale/unwired
+// tests above cannot show.
+func TestCommandRendersRealStaleManagedPrePushHookAndRepairAction(t *testing.T) {
+	// The fixture is the shipped hook body itself rather than a hand-copied one, so the
+	// only difference from a current install is the trailing drift line.
+	canonical, err := os.ReadFile(filepath.Join("..", "adopt", "prepush.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	// origin/HEAD resolves the protected branch live, the posture a linked repo has.
+	if out, err := exec.Command("git", "-C", root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main").CombinedOutput(); err != nil {
+		t.Fatalf("symbolic-ref: %v: %s", err, out)
+	}
+	hooks := filepath.Join(root, ".git", "hooks")
+	if err := os.MkdirAll(hooks, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	stale := string(canonical) + "\n# left behind by an older bench link\n"
+	if err := os.WriteFile(filepath.Join(hooks, "pre-push"), []byte(stale), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+	out, code := Command(nil)
+	want := "guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:\n" +
+		"  pre-push,pre-push,direct push to the protected branch; .bench drift when pinned,main,live,stale,git\n" +
+		"guard_scan[1]{status,inspected,total,omitted,reason}:\n" +
+		"  complete,\"1\",\"1\",\"0\",none\n" +
+		"help[1]{cmd,why}:\n  bench link,repair pre-push\n"
+	if code != 0 || out != want {
+		t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+	}
+}
+
 func TestCommandPreservesCheckedInIncompleteTimeoutPrimaryResponse(t *testing.T) {
 	primary, err := os.ReadFile("testdata/pre-disclosure-incomplete-timeout.stdout")
 	if err != nil {
