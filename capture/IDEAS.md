@@ -1,0 +1,2 @@
+- 2026-08-11  decisions/gate-budget.md and decisions/spec-build-review-gate-cadence.md carry stale Sources paths (internal/canary/canary.go, internal/specbuild/*) and stale $bench-finalize-spec refs; visible on the BENCH_CONFORMANCE_ROOT probe surface, predates pocock-guidance-doctrine
+- 2026-08-11  trim .bench/BENCH.md further: budget raised to 175 under AF1 because a 15% word prune at house wrap still lands ~190 lines; a real cut needs a doctrine decision (CLI Inventory relocation or rule consolidation) to get back toward 150

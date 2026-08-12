@@ -2,8 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `72a372c8`
-Spec: `specs/pocock-guidance-doctrine/spec.md` (Status: staged), `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Branch: `main` — HEAD `a354ced`, 3 dirty paths, 41 unpushed commits
+Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `c93bc38` — stale, work tree `bf91238`
 
 ## State
 
@@ -41,7 +42,7 @@ gap, not a contradiction. These four files are outside ticket 10's fence.
 
 ## Next command
 
-`/bench-final-check` (review ran; findings landed at `reviews/pocock-guidance-doctrine.md` and AF6's CHANGELOG repair is landing here)
+`/bench-what-next`
 
 ## Shape
 
