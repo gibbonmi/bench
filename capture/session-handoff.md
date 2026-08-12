@@ -2,32 +2,46 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `215a7fc`, 1 dirty path, 22 unpushed commits
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/pocock-guidance-doctrine/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `9841e3f` — stale, work tree `add9144`
+Branch: `main` — HEAD `72a372c8`
+Spec: `specs/pocock-guidance-doctrine/spec.md` (Status: staged), `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
 
 ## State
 
-Pocock-alignment Spec C is staged at
-`specs/pocock-guidance-doctrine/spec.md`. Its compiled decision map is the
-byte-identical retained `pocock-alignment` source, limited to decisions #4, #5,
-#6, #8, #9, and #10. The upstream comparison was refreshed through
-`mattpocock/skills` `84fdeff`; prototype branch retention remains deliberately
-unadopted in favor of the reviewed discard-after-verdict rule.
+Pocock-guidance-doctrine (Spec C) tickets 01–09 are landed:
+`craft-domain`, the TDD/seams reference leaves, and `prototype`;
+frontier-round grilling and the light-path TDD seam gate; slim
+`craft-tickets`/`bench-implement-spec`; slim `craft-delegate` and
+`craft-line`'s owned-red convergence; re-derive-then-compare review with
+dispositions and committed pickup; `.bench/BENCH.md` at 150 lines with
+`AGENTS.md`'s shell rules; the spec-reread rule, seams read budget, and
+`/bench-debug` entry isolation; and the fail-closed prose-budget conformance
+check with its canary. Ticket 10 (whole-artifact reread and this record pass)
+is in flight in a write-delegate worktree, diff ready, not yet committed.
 
-Fable medium with bypass permissions rejected the first draft on four omissions;
-all were repaired. A fresh Terra xhigh falsification pass accepted the 24-row
-candidate with zero Standards, Spec, or Coverage findings. Closed decisions stay
-closed: gate authority and all three parallel review axes remain; ticket fences
-become advisory `Writes:` notes; the one-build Opus `/bench-debug` override is not
-standing; unowned `bench-link` convergence remains limited to canonical same-file
-adapter targets, with divergent and byte-identical foreign targets refused. No
-push is authorized. The other staged specs remain `axi-coherent-diff`,
-`axi-query-disclosure`, and `single-build-serial-gate`.
+Closed decisions that stay closed: byte-identical and divergent foreign
+`bench link` adapter targets keep their landed hard refusals — ticket 10 does
+not touch adoption behavior. The `tests/canary/guidance-prose-budgets` fence
+addition, `prototype`'s missing `disable-model-invocation` flag, and
+`.bench/BENCH.md`'s ~135-column wrap are flagged veto items from the review
+pass, not open questions — they ride the batch approval unless vetoed.
+
+Ticket 10's sweep found dangling cross-references to retired ticket-schema
+ceremony outside its ownership fence — reported, not patched:
+`.agents/skills/bench-craft-spec/SKILL.md` points at a `craft-tickets`
+section (`Discover the contracts before writing files`) that no longer
+exists; `.agents/skills/bench-craft-review/SKILL.md` cites a `craft-tickets`
+"prefactor rule" and "integration-surface discovery" that no longer exist
+there; `.agents/commands/bench-debug.md` still describes the retired
+delegate "debug receipt", "assignment ID", and an `assign --refresh` verb,
+and points at a `bench-implement-spec.md` section ("When a delegate is
+blocked outside its fence") that the ticket-04 slimming removed.
+`.agents/commands/bench-shape-idea.md` names the "Prototype" decision-ticket
+type but never points at the `prototype` skill by name — a discoverability
+gap, not a contradiction. These four files are outside ticket 10's fence.
 
 ## Next command
 
-`$bench-implement-spec`
+`/bench-final-check` (review ran; findings landed at `reviews/pocock-guidance-doctrine.md` and AF6's CHANGELOG repair is landing here)
 
 ## Shape
 

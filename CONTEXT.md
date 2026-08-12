@@ -77,6 +77,17 @@ cold session reads this first to avoid drifting the vocabulary.
 - **gate cache** — the durable ready or pending verdict that gate execution binds to
   the closed oracle subject in the Git dir, so read-only consumers can project gate
   state without a cold run. Not "gate log".
+- **frontier round** — one numbered round of `craft-grill`: every question whose
+  prerequisites are already settled, asked together with a recommendation, before
+  the skill waits and recomputes the next round. Not "one question at a time".
+- **disposition** — the exactly-one next-action label a review finding carries:
+  `no-op` (the concern is refuted, no repair target remains), `auto-fix` (a
+  deterministic rule or exact spec predicate, repairable in already-approved
+  scope), or `ask-user` (needs judgment, scope, authority, or an oracle change).
+  A repair-routing label, not permission for the read-only review phase to edit.
+- **prose budget** — the per-surface line-count ceiling in `projects/benchkit.md`'s
+  one mechanically parseable budget table, enforced by a fail-closed conformance
+  check. Not "line limit" in prose — prose budget.
 
 ## Avoid
 

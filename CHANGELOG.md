@@ -26,12 +26,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
-- Added the user-invoked `prototype` skill (`.agents/skills/prototype`): a
+- Added the standalone `prototype` skill (`.agents/skills/prototype`): a
   disposable prototype answers one named question, runs trivially, keeps state
   in memory unless persistence is the question, surfaces the relevant state,
   records the verdict where the question was asked, and is then discarded —
   no branch-retention route. The `.claude/skills` adapter check now admits a
-  user-invoked skill symlink resolving to its own `.agents/skills` SKILL.md
+  standalone skill symlink resolving to its own `.agents/skills` SKILL.md
   while still rejecting phase-adapter duplication and dangling links.
 - Added on-demand reference leaves to `craft-tdd` (`references/tests.md` for
   the four properties of a good test, `references/mocking.md` for system-seam
@@ -75,8 +75,46 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Added `bench spec build reclaim <slug> [--apply <fingerprint>]` for a maintainer to
   plan, then apply, the deletion of one terminal spec-build run's leftover provisional
   refs, deleting only what the plan can prove dead and reporting the rest.
+- Added a fail-closed prose-budget conformance check with a canary mutation:
+  `projects/benchkit.md` owns the one budget table, the check parses it rather
+  than repeating its numbers, classifies every skill automatically, and
+  refuses malformed or duplicate policy before reading.
 
 ### Changed
+
+- Replaced one-question-at-a-time grilling with numbered frontier rounds: every
+  question whose prerequisites are settled appears in the same round with a
+  recommendation, then the skill waits and recomputes; `bench-shape-idea` uses
+  the same frontier vocabulary. Light-path TDD now stops before its first test
+  for reviewer seam confirmation, and ticket breakdown returns to an explicit
+  reviewer round trip — a numbered title/`Blocked by:`/delivered-outcome list,
+  iterated and approved before assignment — with the existing batch-approval
+  AFK carve-out as the only no-round-trip exception.
+- Slimmed `craft-tickets` to the independently-green tracer rule, `Blocked by:`,
+  `What to build`, `Acceptance`, and the advisory `Writes:` note, dropping
+  Contracts, Integration surfaces, Closure, covers annotations, red-mutation
+  tables, handoff ledgers, and fence enforcement; `bench-implement-spec` is now
+  the short orchestration pointer to that ticket shape, commit-on-green
+  cadence, TDD, review, and final-check. `craft-delegate` shed receipt,
+  lifecycle, duplicated mutation, and charge ceremony down to its safety core
+  (fresh context, explicit line and bounded charge, worktree isolation,
+  independent done-claim verification). `craft-line` kept the tier binding and
+  ladder, but now classifies only reds the current diff owns, against the
+  pinned inherited baseline and spec-predicted reds, before a retry or
+  escalation.
+- Made review re-derive-then-compare on all three axes: Coverage independently
+  enumerates producer membership and the spec's authorized write set, Spec
+  quotes the applicable spec line and drives from behavior, and Standards
+  keeps the Fowler baseline, all in parallel fresh contexts. Every finding
+  carries exactly one disposition (`no-op`, `auto-fix`, or `ask-user`);
+  actionable findings are written to `reviews/<slug>.md` and committed before
+  repair begins.
+- Slimmed `.bench/BENCH.md` to its own 150-line budget with restated
+  predicates in place of the removed prose, and added FT107's remaining
+  operational rules to `AGENTS.md`: PID-or-sentinel waits, plan-before-apply
+  destructive scripts, `rg --hidden` for repository-wide sweeps, and
+  non-interactive Bench verb discovery through `bench commands --brief` or
+  source.
 
 - Made spec implementation route fence drift through repaired approval and require
   `craft-tickets`' complete handoff ledger before lifecycle start, with a

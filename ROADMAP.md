@@ -1178,6 +1178,18 @@ through an Opus subagent during `axi-compatibility-oracle`, contradicting the
 standing reviewer-invoked-only rule. Do not silently generalize that one-build
 override. Source: `capture/IDEAS.md` 2026-08-10, drained here.
 
+Spec C (`specs/pocock-guidance-doctrine/spec.md`) tickets 01–09 landed
+2026-08-11: `craft-domain`, the TDD/seams reference leaves, and the `prototype`
+skill; frontier-round grilling and the light-path TDD seam gate; slim
+`craft-tickets` and `bench-implement-spec`; slim `craft-delegate` and
+`craft-line`'s owned-red convergence; re-derive-then-compare review with
+dispositions and committed pickup; `.bench/BENCH.md` at 150 lines with
+`AGENTS.md`'s shell rules; the spec-reread rule, seams read budget, and
+`/bench-debug` entry isolation; and the fail-closed prose-budget conformance
+check with its canary. Ticket 10 (whole-artifact reread and this record pass)
+is in flight; the row leaves once the spec's final green landing flips
+`Status: implemented`.
+
 **FT189 (MEDIUM) — an upstream `git worktree list` hang reaches every Bench
 worktree read.** `git worktree list --porcelain` hangs on a FIFO gitdir placed
 in any private admin entry — reproduced 2026-08-03 at exit 124 under
@@ -2473,6 +2485,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT107's Pocock-alignment Spec C from the reviewed decisions retained by `bench spec history remove-spec-build-lifecycle`; re-check the two named upstream sources for drift first.
+1. `/bench-review-implementation` then `/bench-final-check` — FT107's Pocock-alignment Spec C (`specs/pocock-guidance-doctrine/spec.md`) is written and staged, tickets 01–09 are landed, and ticket 10 (whole-artifact reread and records) is finalizing; review the composed diff, then land it green.
 2. `/bench-write-spec` — FT173 rescope of `axi-coherent-diff` off the retired spec-build/`axi.Action` prerequisite; `axi-query-disclosure` remains its reviewed successor.
 3. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`, then retire moot #24 and resume #25–#26 on the landed serial-gate baseline.

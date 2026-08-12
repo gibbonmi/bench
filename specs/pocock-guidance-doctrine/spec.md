@@ -1,6 +1,6 @@
 # Pocock-aligned guidance doctrine
 
-Status: staged
+Status: implemented
 
 Decision source: compiled map `specs/pocock-guidance-doctrine/decisions/pocock-alignment.md` (decisions #4, #5, #6, #8, #9, and #10; reviewer-resolved 2026-08-11; restored from `bench spec history remove-spec-build-lifecycle` after the dual retirement)
 
