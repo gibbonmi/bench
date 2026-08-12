@@ -169,7 +169,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "spec.md", body)
 
 		out, code := Command([]string{"spec.md"})
-		if want := wantTable(t, "spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage row 1\n"); out != want || code != 0 {
+		if want := wantTable(t, "spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage for stories 1\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -179,7 +179,7 @@ func TestCommand(t *testing.T) {
 		body := mapped("| 1 | b | s | unchecked | catches one |\n| 2 | c | t | already covered | catches two |\n| 1 | b | s | unchecked | catches one |\n")
 		mustWrite(t, "path with spaces/spec.md", body)
 		out, code := Command([]string{"path with spaces/spec.md"})
-		want := "spec: path with spaces/spec.md\nstate: mapped\nrows[3]{story,seam,red_signal}:\n  \"1\",s,unchecked\n  \"2\",t,already covered\n  \"1\",s,unchecked\nhelp[2]{cmd,why}:\n  bench coverage --check 'path with spaces/spec.md',check coverage row 1\n  bench coverage --check 'path with spaces/spec.md',check coverage row 2\n"
+		want := "spec: path with spaces/spec.md\nstate: mapped\nrows[3]{story,seam,red_signal}:\n  \"1\",s,unchecked\n  \"2\",t,already covered\n  \"1\",s,unchecked\nhelp[2]{cmd,why}:\n  bench coverage --check 'path with spaces/spec.md',check coverage for stories 1\n  bench coverage --check 'path with spaces/spec.md',check coverage for stories 2\n"
 		if code != 0 || out != want {
 			t.Fatalf("Command = (%d, %q), want (%d, %q)", code, out, 0, want)
 		}
@@ -190,7 +190,7 @@ func TestCommand(t *testing.T) {
 		body := mapped("| 1 | b | s | repair is not evidence | catches one |\n")
 		mustWrite(t, "spec.md", body)
 		out, code := Command([]string{"spec.md"})
-		if code != 0 || !strings.Contains(out, "bench coverage --check spec.md,check coverage row 1") {
+		if code != 0 || !strings.Contains(out, "bench coverage --check spec.md,check coverage for stories 1") {
 			t.Fatalf("Command = (%d, %q), want unchecked check action", code, out)
 		}
 	})
@@ -222,7 +222,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/foo/spec.md", body)
 
 		out, code := Command([]string{"foo"})
-		if want := wantTable(t, "specs/foo/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/foo/spec.md,check coverage row 2\n"); out != want || code != 0 {
+		if want := wantTable(t, "specs/foo/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/foo/spec.md,check coverage for stories 2\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -233,7 +233,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/bar/spec.md", body)
 
 		out, code := Command([]string{"bar.md"})
-		if want := wantTable(t, "specs/bar/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/bar/spec.md,check coverage row 3\n"); out != want || code != 0 {
+		if want := wantTable(t, "specs/bar/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/bar/spec.md,check coverage for stories 3\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -264,7 +264,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/foo/spec.md", specsBody)
 
 		out, code := Command([]string{"foo"})
-		if want := wantTable(t, "foo", cwdBody, "help[1]{cmd,why}:\n  bench coverage --check foo,check coverage row 1\n"); out != want || code != 0 {
+		if want := wantTable(t, "foo", cwdBody, "help[1]{cmd,why}:\n  bench coverage --check foo,check coverage for stories 1\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — the CWD file should shadow the specs/ fallback", out, code, want)
 		}
 	})
@@ -292,7 +292,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/dist/spec.md", body)
 
 		out, code := Command([]string{"dist"})
-		if want := wantTable(t, "specs/dist/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/dist/spec.md,check coverage row 1\n"); out != want || code != 0 {
+		if want := wantTable(t, "specs/dist/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/dist/spec.md,check coverage for stories 1\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — a directory is not a spec candidate", out, code, want)
 		}
 	})
@@ -339,7 +339,7 @@ func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
 	for _, tc := range []struct {
 		name, fixture, body, help string
 	}{
-		{"mapped actionable", "pre-disclosure-mapped.stdout", mapped("| 1 | b | s | unchecked | catches one |\n"), "help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage row 1\n"},
+		{"mapped actionable", "pre-disclosure-mapped.stdout", mapped("| 1 | b | s | unchecked | catches one |\n"), "help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage for stories 1\n"},
 		{"repairable malformed", "pre-disclosure-malformed.stdout", mapped("| 9 | b | s | red | catches one |\n"), "help[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"},
 		{"mapped zero-row", "pre-disclosure-zero-row.stdout", mapped(""), "help[0]{cmd,why}:\n"},
 		{"historical terminal", "pre-disclosure-historical.stdout", "# historical\n<!-- coverage-map: historical -->\n### Acceptance coverage map\n|bad|\n", "help[0]{cmd,why}:\n"},

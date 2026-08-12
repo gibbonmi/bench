@@ -441,7 +441,7 @@ func Command(args []string) (string, int) {
 		actions = append(actions, axi.ExecutableInvocation("retry after repairing coverage map", axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(spec)))
 	} else if len(rows) > 0 {
 		for _, row := range rows {
-			actions = append(actions, axi.ExecutableInvocation("check coverage row "+row[0], axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(spec)))
+			actions = append(actions, axi.ExecutableInvocation("check coverage for stories "+row[0], axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(spec)))
 		}
 	}
 	help, err := axi.RenderHelp(actions)
