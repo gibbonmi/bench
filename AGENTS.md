@@ -63,3 +63,12 @@ something the next session has to think to check.
 - Don't prefix Bash commands with `cd` into the working directory — the Bash tool's
   CWD already persists there, so the `cd` is a no-op and can trigger a needless
   permission prompt. Only `cd` when genuinely moving to a *different* directory.
+- Wait on a PID or a sentinel file, never by polling a self-matching pattern —
+  `pgrep -f` of your own command text matches the command that's doing the polling.
+- A destructive or bulk-rewrite script runs plan-before-apply: print the exact
+  target list, sample it, then apply.
+- A repository-wide sweep uses `rg --hidden` (excluding `.git/`) so dot-directories
+  are enumerated.
+- Discover Bench verbs non-interactively — `bench commands --brief` or the source —
+  never by trying a bare unknown verb; pipe stdin from `/dev/null` where a command
+  might prompt.
