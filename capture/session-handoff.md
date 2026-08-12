@@ -2,30 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `7bc6ee4e`; the roadmap drain is uncommitted pending reviewer approval
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: cached green at pre-drain tree `51f4ad3`; this batch is not gated
+Branch: `main` — HEAD `2c398ee5`; the rescoped `specs/axi-coherent-diff/spec.md` is uncommitted pending reviewer sign-off
+Spec: `specs/axi-coherent-diff/spec.md` (Status: staged, rescoped), `specs/axi-query-disclosure/spec.md` (Status: staged, still carries the retired spec-build prerequisite — its own rescope is next in FT173), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: not run this session; only spec prose changed
 
 ## State
 
-Pocock-guidance-doctrine is implemented at `a354cede`; this drain removes FT107
-and retires its spec. Its two ideas route to FT89 (stale lifecycle references)
-and FT100 (wrap-neutral prose weight). Its malformed journal bullets route to
-FT164 (prove mutations landed) and FT169 (resolve the landing checkout). The
-retro's cross-harness premise check routes to FT158 and its clean
-conformance-probe recommendation routes to FT120; it carried no
-repair-attribution table.
-
-The minimum revisit dates for FT38 and FT170 have elapsed. This batch marks
-both LOW and decision-required without putting either in the recommended
-sequence; that activation and the FT120 routing remain reviewer-veto calls.
-The refreshed sequence is FT173, FT171, then FT198. If approved, commit the
-whole batch once on green with a subject ending
-`spec-retire: pocock-guidance-doctrine`.
+FT173's `axi-coherent-diff` rescope is written: the retired spec-build/`axi.Action`
+prerequisite is removed, the behavior-first ruling preserved, and the slice now
+introduces the typed-action owner and `help[]` renderer itself (new `internal/axi`,
+CD8, one tracer with CD7). A reviewer-mandated codex `gpt-5.6-sol`/xhigh
+falsification loop accepted on iteration 4 after driving three repair rounds:
+an old-to-new compatibility row (CD9), owner-bypass proofing (no-own-porcelain
+probe, production-path help fixtures), the `--commit` help contradiction, exact
+schemas for every public block, divergence in the revision row, and
+default-ref/recorded-base identity dimensions with per-attempt resolution
+semantics. `bench coverage --check` is green at 9 rows. Reviewer sign-off on the
+rescoped spec is the open hard stop; the decision map
+`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md` stays shared
+top-level because two staged specs consume it.
 
 ## Next command
 
-`$bench-write-spec`
+Reviewer sign-off, then commit the rescope and run `/bench-implement-spec specs/axi-coherent-diff/spec.md` in a fresh mid-tier session.
 
 ## Shape
 
