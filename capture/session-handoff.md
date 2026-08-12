@@ -1,10 +1,10 @@
 # Session handoff
 
-Repository: `dbca5cee8575039429f902686c8119f2-7a4e18e46b2d6c51282cdf16dee24ce1` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-3325222104/dbca5cee8575039429f902686c8119f2-7a4e18e46b2d6c51282cdf16dee24ce1`
-Branch: `bench/assign/dbca5cee8575039429f902686c8119f2/7a4e18e46b2d6c51282cdf16dee24ce1` — HEAD `eebf80a`, 2 dirty paths, 41 unpushed commits
+Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `d70e479`, 1 dirty path, 49 unpushed commits
 Spec: `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: no gate has run.
+Gate: green at `0db2b0e` — stale, work tree `6c5f916`
 
 ## State
 
