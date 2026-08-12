@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/anchors"
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/coverage"
@@ -166,6 +167,11 @@ func anchorsCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	help, err := axi.RenderHelp(nil)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	out += help
 	return out, 0
 }
 
