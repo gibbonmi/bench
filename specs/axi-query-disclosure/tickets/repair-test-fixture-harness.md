@@ -1,12 +1,9 @@
 # Repair test fixture harness
 
-Blocked by: repair-structured-envelope-proof.md, repair-learnings-unreadable-pair.md, repair-guards-real-stale-fixture.md, repair-worktree-complete-pair.md, repair-maps-bounds-invalid-path.md, and a reviewer-approved amendment to the spec's `## Ownership fences` naming the scaffold's home
-Writes: proposed — the amendment-named test-support package, `internal/learnings/learnings_test.go`, `internal/maps/maps_test.go`, `internal/guards/guards_test.go`, `internal/worktree/` test files, `cmd/bench/command_registry_test.go`
+Blocked by: none — all five blocker tickets are landed (b18fa260, d1b2ef19, 5d71b964, 69492c70, 93fbe8e9) and the fence amendment naming `internal/gittest/` is reviewer-approved in the spec's `## Ownership fences`
+Writes: `internal/gittest/` (new), `internal/learnings/learnings_test.go`, `internal/maps/maps_test.go`, `internal/guards/guards_test.go`, `internal/worktree/` test files, `cmd/bench/command_registry_test.go`
 
 ## What to build
-
-NOT ASSIGNABLE until the human reviewer approves the fence amendment — this
-ticket is the presented proposal, off the current frontier.
 
 The contract step of the expand/migrate/contract sequence for review finding
 R2: collapse the five independently derived minimal git test-repo scaffolds —
