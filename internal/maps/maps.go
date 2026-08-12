@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -26,10 +27,11 @@ var grammar = usage.Grammar{
 }
 
 type activeScan struct {
-	rows   [][]any
-	count  int
-	state  bounds.FileState
-	reason string
+	rows         [][]any
+	invalidPaths map[string]string
+	count        int
+	state        bounds.FileState
+	reason       string
 }
 
 // ActiveRows projects one active-directory scan into query rows and its distinct map count.
@@ -48,17 +50,17 @@ func scanActive(root string) activeScan {
 		return activeScan{state: state, reason: reason}
 	}
 
-	s := activeScan{state: bounds.StateParsed}
+	s := activeScan{state: bounds.StateParsed, invalidPaths: make(map[string]string)}
 	for _, candidate := range candidates {
 		mapName := strings.TrimSuffix(filepath.Base(candidate.Path), filepath.Ext(candidate.Path))
 		file := bounds.Classify(filepath.Join(root, filepath.FromSlash(candidate.Path)), bounds.ControlRecordLimit)
 		if file.State != bounds.StateParsed {
-			s.invalid(mapName, string(file.State)+": "+file.Reason)
+			s.invalid(mapName, candidate.Path, string(file.State)+": "+file.Reason)
 			continue
 		}
 		m, diagnostics := ValidateDecisionMap(root, candidate.Path, false, file.Data)
 		if len(diagnostics) > 0 {
-			s.invalid(mapName, diagnostics[0].Message)
+			s.invalid(mapName, candidate.Path, diagnostics[0].Message)
 			continue
 		}
 		rows := projectedRows(mapName, m)
@@ -73,8 +75,10 @@ func scanActive(root string) activeScan {
 	return s
 }
 
-func (s *activeScan) invalid(name, reason string) {
-	s.rows = append(s.rows, []any{name, "invalid", "map", "invalid", reason})
+func (s *activeScan) invalid(name, path, reason string) {
+	row := []any{name, "invalid", "map", "invalid", reason}
+	s.rows = append(s.rows, row)
+	s.invalidPaths[invalidRowKey(row)] = path
 	s.count++
 }
 
@@ -159,10 +163,34 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	help, err := axi.RenderHelp(actionsForRows(s.rows, s.invalidPaths))
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	out += help
 	for _, row := range s.rows {
 		if row[3] == "invalid" {
 			return out, 1
 		}
 	}
 	return out, 0
+}
+
+func actionsForRows(rows [][]any, invalidPaths map[string]string) []axi.Action {
+	actions := make([]axi.Action, 0, len(rows))
+	for _, row := range rows {
+		mapName, title, state := row[0].(string), row[1].(string), row[3].(string)
+		switch state {
+		case "frontier":
+			actions = append(actions, axi.HarnessPhase("/bench-shape-idea", "shape "+mapName+": "+title))
+		case "invalid":
+			path := invalidPaths[invalidRowKey(row)]
+			actions = append(actions, axi.ExecutableInvocation("repair "+path, axi.KnownArgument("maps"), axi.KnownArgument("--template")))
+		}
+	}
+	return actions
+}
+
+func invalidRowKey(row []any) string {
+	return row[0].(string) + "\x00" + row[4].(string)
 }

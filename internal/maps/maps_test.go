@@ -2,14 +2,135 @@ package maps
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 )
+
+func TestCommandAppendsOnlyMapActionsToTheCapturedPrimaryResponse(t *testing.T) {
+	root := mapsRepo(t)
+	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	const frontier = `# Alpha
+
+Status: shaping
+
+## Destination
+
+Settle it.
+
+## #1: First
+
+Blocked by: none
+Type: Research
+
+### Question
+
+What first?
+
+### Answer
+
+— (open)
+
+## #2: Second
+
+Blocked by: none
+Type: Task
+
+### Question
+
+What second?
+
+### Answer
+
+— (open)
+
+## Not yet specified
+
+## Spec-writer discretion
+
+## Out of scope
+
+## Sources
+`
+	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "alpha.md"), []byte(frontier), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "broken.md"), []byte("# Broken\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+
+	out, code := Command(nil)
+	const primary = "maps[3]{map,title,type,state,blockers}:\n  alpha,First,Research,frontier,\"\"\n  alpha,Second,Task,frontier,\"\"\n  broken,invalid,map,invalid,\"decisions/broken.md: missing Status\"\n"
+	const help = "help[3]{cmd,why}:\n  /bench-shape-idea,\"shape alpha: First\"\n  /bench-shape-idea,\"shape alpha: Second\"\n  bench maps --template,repair decisions/broken.md\n"
+	if code != 1 || out != primary+help {
+		t.Fatalf("Command(%v) = (exit %d, %q), want captured primary plus map actions", []string(nil), code, out)
+	}
+}
+
+func TestCommandAppendsHonestEmptyHelpForEmptyAndCompleteMaps(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		write func(t *testing.T, root string)
+	}{
+		{name: "empty", write: func(t *testing.T, root string) {}},
+		{
+			name: "complete",
+			write: func(t *testing.T, root string) {
+				t.Helper()
+				if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				document := strings.NewReplacer("Status: shaping", "Status: ready", "<answer>", "Resolved.").Replace(DecisionMapTemplate())
+				if err := os.WriteFile(filepath.Join(root, DecisionsDir, "complete.md"), []byte(document), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := mapsRepo(t)
+			tc.write(t, root)
+			t.Chdir(root)
+
+			out, code := Command(nil)
+			const want = "maps[0]{map,title,type,state,blockers}:\nhelp[0]{cmd,why}:\n"
+			if code != 0 || out != want {
+				t.Fatalf("Command(%v) = (exit %d, %q), want terminal empty help", []string(nil), code, out)
+			}
+		})
+	}
+}
+
+func TestActionsForRowsCarriesTheInvalidDiagnosticPath(t *testing.T) {
+	row := []any{"broken", "invalid", "map", "invalid", "decisions/broken: map.md: missing Status"}
+	paths := map[string]string{invalidRowKey(row): "decisions/broken: map.md"}
+	help, err := axi.RenderHelp(actionsForRows([][]any{row}, paths))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "help[1]{cmd,why}:\n  bench maps --template,\"repair decisions/broken: map.md\"\n"
+	if help != want {
+		t.Fatalf("actionsForRows invalid help = %q, want %q", help, want)
+	}
+}
+
+func mapsRepo(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v\n%s", err, out)
+	}
+	return root
+}
 
 func TestParseDecisionMapSchemaAndTemplate(t *testing.T) {
 	const document = `# Schema map
