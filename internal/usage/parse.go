@@ -23,7 +23,8 @@ type Flag struct {
 
 // Grammar declares the argument shape one subcommand parses through Parse:
 // its usage-line command name, its declared help text, the flags it accepts,
-// and its positional arity. MaxArgs of -1 means unbounded (variadic).
+// its positional arity, and any compatibility rendering it preserves. MaxArgs
+// of -1 means unbounded (variadic).
 // ReservedPositionalsBeforeTerminator treats that many leading positional slots
 // as literal values before recognizing help, flags, or the first terminator.
 type Grammar struct {
@@ -34,6 +35,9 @@ type Grammar struct {
 	MaxArgs                             int
 	ReservedPositionalsBeforeTerminator int
 	HelpOnlyWhenSole                    bool
+	// UnquotedEmptyPositional retains an established usage response whose
+	// unknown-argument cell was empty instead of the shared quoted marker.
+	UnquotedEmptyPositional bool
 }
 
 // Result is a successful parse: the flags present (an empty string value for
@@ -132,6 +136,9 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 		// filesystem silently widens to the cwd. Rejecting it here gives every
 		// grammar the guard instead of each path-taking subcommand re-deriving it.
 		if a == "" {
+			if g.UnquotedEmptyPositional {
+				return Result{}, toon.Usage(g.Cmd, ""), 2
+			}
 			return Result{}, toon.Usage(g.Cmd, `""`), 2
 		}
 		// Trailing garbage is reported on the first excess argument, not a

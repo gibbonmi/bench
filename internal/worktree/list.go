@@ -13,7 +13,7 @@ import (
 
 var worktreeListFields = []string{"id", "label", "state", "source", "tree", "lease", "landed", "ignored"}
 
-var worktreeListGrammar = usage.Grammar{Cmd: usage.WorktreeList, Help: "usage: " + usage.WorktreeList, HelpOnlyWhenSole: true}
+var worktreeListGrammar = usage.Grammar{Cmd: usage.WorktreeList, Help: "usage: " + usage.WorktreeList, HelpOnlyWhenSole: true, UnquotedEmptyPositional: true}
 
 type listRow struct {
 	values     []any

@@ -1,0 +1,4 @@
+{
+  "old":{"stdout":"worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n  foreign,{{PRESENT}},foreign,foreign,present,none,unknown,0\n","stderr":"","exit":0},
+  "new":{"stdout":"worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n  foreign,{{PRESENT}},foreign,foreign,present,none,unknown,0\nhelp[0]{cmd,why}:\n","stderr":"","exit":0}
+}

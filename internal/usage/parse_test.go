@@ -114,6 +114,21 @@ func TestParseEmptyPositionalIsUsageError(t *testing.T) {
 	}
 }
 
+func TestParseUnquotedEmptyPositionalIsGrammarScoped(t *testing.T) {
+	compat := testGrammar()
+	compat.UnquotedEmptyPositional = true
+	_, line, code := Parse(compat, []string{""})
+	if want := toon.Usage(compat.Cmd, ""); line != want || code != 2 {
+		t.Errorf("compat Parse(empty) = (%q, %d), want (%q, 2)", line, code, want)
+	}
+
+	ordinary := testGrammar()
+	_, line, code = Parse(ordinary, []string{""})
+	if want := toon.Usage(ordinary.Cmd, `""`); line != want || code != 2 {
+		t.Errorf("ordinary Parse(empty) = (%q, %d), want (%q, 2)", line, code, want)
+	}
+}
+
 // TestParseDoubleDashEndsFlags pins the leading-dash-positional rule the
 // grammar exists to make expressible: once "--" is seen, a later dash-prefixed
 // token is an ordinary positional, never an unknown-flag error.
