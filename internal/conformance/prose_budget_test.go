@@ -182,28 +182,51 @@ func proseBudgetSubjects(root string, policy proseBudgetPolicy) (subjects, diags
 	for subject := range policy.exact {
 		add(subject)
 	}
-	// os.ReadDir sorts by filename, so the enumeration reports in one order run to run.
-	entries, err := os.ReadDir(filepath.Join(root, filepath.FromSlash(proseBudgetSkillsDir)))
-	if err == nil {
-		for _, entry := range entries {
-			rel := path.Join(proseBudgetSkillsDir, entry.Name())
-			if entry.Type()&os.ModeSymlink != 0 {
-				diags = append(diags, "prose-budget subject refused: "+rel+" is a symbolic link, not a regular directory")
-				continue
-			}
-			if !entry.IsDir() {
-				continue
-			}
-			skill := path.Join(rel, proseBudgetSkillFile)
-			// A skill directory with no SKILL.md at all is some other check's fact; only
-			// a subject the table names is required to exist.
-			if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(skill))); err == nil {
-				add(skill)
-			}
+	entries, rootDiag := proseBudgetSkillEntries(root)
+	if rootDiag != "" {
+		diags = append(diags, rootDiag)
+	}
+	for _, entry := range entries {
+		rel := path.Join(proseBudgetSkillsDir, entry.Name())
+		if entry.Type()&os.ModeSymlink != 0 {
+			diags = append(diags, "prose-budget subject refused: "+rel+" is a symbolic link, not a regular directory")
+			continue
+		}
+		if !entry.IsDir() {
+			continue
+		}
+		skill := path.Join(rel, proseBudgetSkillFile)
+		// A skill directory with no SKILL.md at all is some other check's fact; only
+		// a subject the table names is required to exist.
+		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(skill))); err == nil {
+			add(skill)
 		}
 	}
 	sort.Strings(subjects)
 	return subjects, diags
+}
+
+// proseBudgetSkillEntries classifies the skills root before anything reads through it, for
+// the same reason its children are classified: a `.agents/skills` that is itself a link
+// would enumerate whatever it points at under the canonical path. A root that is absent
+// yields no entries and no diagnostic — only a subject the table names is required to exist.
+func proseBudgetSkillEntries(root string) ([]os.DirEntry, string) {
+	dir := filepath.Join(root, filepath.FromSlash(proseBudgetSkillsDir))
+	info, err := os.Lstat(dir)
+	switch {
+	case err != nil:
+		return nil, ""
+	case info.Mode()&os.ModeSymlink != 0:
+		return nil, "prose-budget subject refused: " + proseBudgetSkillsDir + " is a symbolic link, not a regular directory"
+	case !info.IsDir():
+		return nil, "prose-budget subject refused: " + proseBudgetSkillsDir + " is not a directory"
+	}
+	// os.ReadDir sorts by filename, so the enumeration reports in one order run to run.
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, ""
+	}
+	return entries, ""
 }
 
 // proseBudgetLineCount counts lines the way a reader does, so a file ending with a newline
@@ -236,7 +259,8 @@ var proseBudgetRows = []string{
 	"| `.agents/skills/*/SKILL.md` | 120 |",
 }
 
-// lines renders count logical lines, ending with a newline unless trailing is false.
+// proseBudgetLines renders count logical lines of filler prose, ending with a newline
+// unless trailing is false.
 func proseBudgetLines(count int, trailing bool) string {
 	if count == 0 {
 		return ""
@@ -439,6 +463,60 @@ func TestGuidanceProseBudgetRefusesASymlinkedSkillDirectory(t *testing.T) {
 	diags := checkGuidanceProseBudgets(root)
 	if !containsDiagnostic(diags, "prose-budget subject refused: .agents/skills/bench-craft-adapter is a symbolic link, not a regular directory") {
 		t.Fatalf("a symlinked skill directory was followed:\n%s", strings.Join(diags, "\n"))
+	}
+}
+
+// TestGuidanceProseBudgetRefusesASymlinkedSkillsRoot keeps the refusal at the root of the
+// guidance tree, where a single link would redirect the whole enumeration. The linked tree
+// holds a skill far over budget, so a checker that read through the link would report that
+// subject under a canonical path instead of refusing the root.
+func TestGuidanceProseBudgetRefusesASymlinkedSkillsRoot(t *testing.T) {
+	root := writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows[0], proseBudgetRows[2]), map[string]string{
+		".bench/BENCH.md":                          proseBudgetLines(149, true),
+		"payload/skills/bench-craft-line/SKILL.md": proseBudgetLines(500, true),
+	})
+	if err := os.MkdirAll(filepath.Join(root, ".agents"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(root, "payload", "skills"), filepath.Join(root, ".agents", "skills")); err != nil {
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+	}
+	diags := checkGuidanceProseBudgets(root)
+	if !containsDiagnostic(diags, "prose-budget subject refused: .agents/skills is a symbolic link, not a regular directory") {
+		t.Fatalf("a symlinked skills root was not refused:\n%s", strings.Join(diags, "\n"))
+	}
+	if containsDiagnostic(diags, "prose-budget exceeded") {
+		t.Fatalf("the check enumerated through the symlinked root:\n%s", strings.Join(diags, "\n"))
+	}
+}
+
+// TestGuidanceProseBudgetReportsAnAbsentTableSubject pins the missing-subject diagnostic: a
+// row the reviewer keeps for a file nobody ships is a stale table, not a clean tree.
+func TestGuidanceProseBudgetReportsAnAbsentTableSubject(t *testing.T) {
+	files := healthyProseBudgetFiles()
+	delete(files, ".agents/skills/bench-craft-tickets/SKILL.md")
+	diags := checkGuidanceProseBudgets(writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows...), files))
+	if !containsDiagnostic(diags, "prose-budget subject missing: .agents/skills/bench-craft-tickets/SKILL.md is named by the projects/benchkit.md budget table but absent from the tree") {
+		t.Fatalf("a table row naming an absent subject was accepted:\n%s", strings.Join(diags, "\n"))
+	}
+}
+
+// TestGuidanceProseBudgetReportsAnUnreadableSubject pins the unreadable diagnostic: a
+// regular, classified subject whose bytes the check cannot get is reported rather than
+// silently counted as within budget.
+func TestGuidanceProseBudgetReportsAnUnreadableSubject(t *testing.T) {
+	root := writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows...), healthyProseBudgetFiles())
+	subject := filepath.Join(root, ".agents", "skills", "bench-craft-tickets", "SKILL.md")
+	if err := os.Chmod(subject, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(subject, 0o644) })
+	if _, err := os.ReadFile(subject); err == nil {
+		capability.Capability(t, capability.Privilege, "the test process reads mode 0000 files, so an unreadable subject cannot be planted")
+	}
+	diags := checkGuidanceProseBudgets(root)
+	if !containsDiagnostic(diags, "prose-budget subject unreadable: .agents/skills/bench-craft-tickets/SKILL.md could not be read") {
+		t.Fatalf("an unreadable subject was accepted:\n%s", strings.Join(diags, "\n"))
 	}
 }
 

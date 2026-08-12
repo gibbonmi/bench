@@ -86,7 +86,8 @@ const (
 	InputBenchRoutes InputSource = "bench-routes"
 	// InputDecisionDocuments binds active and compiled decision-map trees.
 	InputDecisionDocuments InputSource = "decision-documents"
-	// InputBenchkitProfile binds the profile honesty assertion to its rendered table.
+	// InputBenchkitProfile binds the checks a profile-owned table drives, each reading that
+	// table and the subjects it names.
 	InputBenchkitProfile InputSource = "benchkit-profile"
 )
 

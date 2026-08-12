@@ -13,12 +13,12 @@ import (
 	kitpayload "github.com/gibbonmi/bench"
 )
 
-// TestClaudeSkillMirrorClassifiesUserInvokedSkillSymlinks pins the three
+// TestClaudeSkillMirrorClassifiesStandaloneSkillSymlinks pins the three
 // non-craft postures of checkClaudeSkillMirror: a symlink resolving to its own
-// .agents/skills/<name>/SKILL.md is a genuine user-invoked skill and passes; a
+// .agents/skills/<name>/SKILL.md is a genuine standalone skill and passes; a
 // name shared with an .agents/commands file is a phase adapter and stays red;
 // anything else — a dangling link, a plain directory — stays red as well.
-func TestClaudeSkillMirrorClassifiesUserInvokedSkillSymlinks(t *testing.T) {
+func TestClaudeSkillMirrorClassifiesStandaloneSkillSymlinks(t *testing.T) {
 	root := t.TempDir()
 	write := func(rel, content string) {
 		t.Helper()
@@ -58,7 +58,7 @@ func TestClaudeSkillMirrorClassifiesUserInvokedSkillSymlinks(t *testing.T) {
 	want := []string{
 		".claude/skills/bench-write-spec is not a craft skill (phase adapters are Codex-only; it duplicates the slash menu)",
 		".claude/skills/ghost does not resolve to .agents/skills/ghost/SKILL.md (broken adapter link)",
-		".claude/skills/plaindir is neither a craft skill nor a user-invoked skill symlink into .agents/skills (phase adapters are Codex-only; it duplicates the slash menu)",
+		".claude/skills/plaindir is neither a craft skill nor a standalone skill symlink into .agents/skills (phase adapters are Codex-only; it duplicates the slash menu)",
 	}
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("diagnostics = \n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
@@ -157,7 +157,7 @@ func checkClaudeSkillMirror(root string) []string {
 			}
 			continue
 		}
-		// A non-craft entry is admissible only as a user-invoked skill: a symlink
+		// A non-craft entry is admissible only as a standalone skill: a symlink
 		// resolving to its own .agents/skills/<name>/SKILL.md. A name shared with a
 		// command file is a phase adapter regardless of where its link points.
 		if exists(filepath.Join(root, ".agents", "commands", base+".md")) {
@@ -166,7 +166,7 @@ func checkClaudeSkillMirror(root string) []string {
 		}
 		linkInfo, err := os.Lstat(dir)
 		if err != nil || linkInfo.Mode()&os.ModeSymlink == 0 {
-			diags = append(diags, fmt.Sprintf(".claude/skills/%s is neither a craft skill nor a user-invoked skill symlink into .agents/skills (phase adapters are Codex-only; it duplicates the slash menu)", base))
+			diags = append(diags, fmt.Sprintf(".claude/skills/%s is neither a craft skill nor a standalone skill symlink into .agents/skills (phase adapters are Codex-only; it duplicates the slash menu)", base))
 			continue
 		}
 		resolved, resolveErr := filepath.EvalSymlinks(dir)
