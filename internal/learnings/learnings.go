@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -217,7 +218,11 @@ func Command(args []string) (string, int) {
 		if err != nil {
 			return toon.RenderError(err) + "\n", 1
 		}
-		return out, 0
+		help, err := axi.RenderHelp(nil)
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
+		}
+		return out + help, 0
 	case bounds.StateParsed:
 		// falls through to the structural parse below
 	default:
@@ -235,6 +240,15 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	actions := make([]axi.Action, 0, len(entries))
+	for _, entry := range entries {
+		actions = append(actions, axi.HarnessPhase("/bench-what-next", "verdict "+entry.Date+": "+entry.Title))
+	}
+	help, err := axi.RenderHelp(actions)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	out += help
 	if len(malformed) > 0 {
 		return out, 1
 	}
