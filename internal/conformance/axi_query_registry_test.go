@@ -20,6 +20,21 @@ var approvedAXIQueries = map[string][]string{
 
 var axiChildName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 var profileAXICommand = regexp.MustCompile("`bench ([^`]+)`")
+var guidanceAXICommand = regexp.MustCompile("(?m)^\\| `bench ([^`]+)` \\| ([^|\\n]+) \\|$")
+var guidanceAXIPrinciple = regexp.MustCompile(`(?m)^([0-9]+)\. \*\*([^*\n]+)\.\*\*`)
+
+var expectedAXIPrinciples = []string{
+	"Token-efficient output",
+	"Minimal default schemas",
+	"Content truncation",
+	"Pre-computed aggregates",
+	"Definitive empty states",
+	"Structured errors and honest exit codes",
+	"Ambient context",
+	"Content first",
+	"Contextual disclosure",
+	"Consistent way to get help",
+}
 
 type parsedAXIRegistry struct {
 	members    map[string][]string
@@ -50,7 +65,134 @@ func checkAXIQueryRegistry(root string) []string {
 	} else if registryQueries := flattenAXIQueries(registry.members); !reflect.DeepEqual(profileQueries, registryQueries) {
 		diags = append(diags, fmt.Sprintf("AXI profile seam advertises %q, registry declares %q", profileQueries, registryQueries))
 	}
+	guidancePath := filepath.Join(root, ".agents", "skills", "bench-craft-cli", "SKILL.md")
+	diags = append(diags, checkAXIGuidance(readIfExists(guidancePath), registry.members)...)
 	return uniqueSorted(diags)
+}
+
+func checkAXIGuidance(guidance string, registryMembers map[string][]string) []string {
+	var diags []string
+	principles := guidanceAXIPrinciple.FindAllStringSubmatch(guidance, -1)
+	gotPrinciples := make([]string, 0, len(principles))
+	for i, principle := range principles {
+		wantNumber := fmt.Sprint(i + 1)
+		if principle[1] != wantNumber {
+			diags = append(diags, fmt.Sprintf("AXI guidance principle %d is numbered %s, want %s", i+1, principle[1], wantNumber))
+		}
+		gotPrinciples = append(gotPrinciples, principle[2])
+	}
+	if !reflect.DeepEqual(gotPrinciples, expectedAXIPrinciples) {
+		diags = append(diags, fmt.Sprintf("AXI guidance principles are %q, want %q", gotPrinciples, expectedAXIPrinciples))
+	}
+
+	guidanceQueries, err := guidanceAXIQueries(guidance)
+	if err != nil {
+		diags = append(diags, "AXI guidance approved-query table invalid: "+err.Error())
+	} else if registryQueries := flattenAXIQueries(registryMembers); !reflect.DeepEqual(guidanceQueries, registryQueries) {
+		diags = append(diags, fmt.Sprintf("AXI guidance advertises %q, registry declares %q", guidanceQueries, registryQueries))
+	}
+	if strings.Contains(guidance, "--fields") {
+		diags = append(diags, "AXI guidance advertises the forbidden field-selection flag")
+	}
+	required := []string{
+		"`help[N]{cmd,why}:`",
+		"`help[0]{cmd,why}:`",
+		"per matching row",
+		"state-derived action",
+		"stable source order",
+		"known argument",
+		"unknown future-input slots",
+		"Terminal results offer no busywork",
+		"`--help`, `-h`, and bare `help`",
+	}
+	contractText := strings.Join(strings.Fields(guidance), " ")
+	for _, phrase := range required {
+		if !strings.Contains(contractText, phrase) {
+			diags = append(diags, fmt.Sprintf("AXI guidance omits required contract %q", phrase))
+		}
+	}
+	return diags
+}
+
+func guidanceAXIQueries(guidance string) ([]string, error) {
+	const marker = "## Bench application"
+	if strings.Count(guidance, marker) != 1 {
+		return nil, fmt.Errorf("found %d Bench application sections, want exactly 1", strings.Count(guidance, marker))
+	}
+	section := guidance[strings.Index(guidance, marker)+len(marker):]
+	if end := strings.Index(section, "\n## "); end >= 0 {
+		section = section[:end]
+	}
+	const tableStart = "| approved query | contextual disclosure |\n| --- | --- |\n"
+	if strings.Count(section, tableStart) != 1 {
+		return nil, fmt.Errorf("found %d approved-query tables, want exactly 1", strings.Count(section, tableStart))
+	}
+	rows := strings.Split(section[strings.Index(section, tableStart)+len(tableStart):], "\n")
+	if len(rows) == 0 || !strings.HasPrefix(rows[0], "|") {
+		return nil, fmt.Errorf("approved-query table has no rows")
+	}
+	seen := make(map[string]bool, len(rows))
+	queries := make([]string, 0, len(rows))
+	for i, row := range rows {
+		if !strings.HasPrefix(row, "|") {
+			break
+		}
+		match := guidanceAXICommand.FindStringSubmatch(row)
+		if match == nil {
+			return nil, fmt.Errorf("approved-query table row %d is malformed", i+1)
+		}
+		query := match[1]
+		if seen[query] {
+			return nil, fmt.Errorf("approved-query table repeats %q", query)
+		}
+		seen[query] = true
+		if strings.TrimSpace(match[2]) == "" {
+			return nil, fmt.Errorf("approved-query table gives %q no application", query)
+		}
+		queries = append(queries, query)
+	}
+	sort.Strings(queries)
+	return queries, nil
+}
+
+func TestAXIGuidanceContractBites(t *testing.T) {
+	h := NewHarness(t)
+	guidance := h.ReadRootFile(".agents", "skills", "bench-craft-cli", "SKILL.md")
+	if diags := checkAXIGuidance(guidance, approvedAXIQueries); len(diags) != 0 {
+		t.Fatalf("live guidance is not a valid mutation base: %v", diags)
+	}
+	const anchorsCell = "| `bench anchors` |"
+	mutations := []struct {
+		name, old, replacement, want string
+	}{
+		{"removed principle", "8. **Content first.**", "", "principles are"},
+		{"renumbered principle", "8. **Content first.**", "11. **Content first.**", "numbered 11"},
+		{"omitted member", "| `bench worktree list` |", "<!-- omitted -->", "guidance advertises"},
+		{"additional member", anchorsCell, "| `bench status` | Report the operational dashboard. |\n" + anchorsCell, "guidance advertises"},
+		{"malformed member", anchorsCell, "| bench anchors |", "row 1 is malformed"},
+		{"forbidden option", "Minimal default schemas", "Minimal default schemas --fields", "forbidden field-selection"},
+		{"missing help contract", "`help[0]{cmd,why}:`", "`help[0]:`", "omits required contract"},
+	}
+	for _, mutation := range mutations {
+		t.Run(mutation.name, func(t *testing.T) {
+			if strings.Count(guidance, mutation.old) != 1 {
+				t.Fatalf("mutation anchor %q count = %d, want 1", mutation.old, strings.Count(guidance, mutation.old))
+			}
+			mutated := strings.Replace(guidance, mutation.old, mutation.replacement, 1)
+			if diags := checkAXIGuidance(mutated, approvedAXIQueries); !diagnosticsContain(diags, mutation.want) {
+				t.Fatalf("mutation diagnostics = %v, want substring %q", diags, mutation.want)
+			}
+		})
+	}
+}
+
+func diagnosticsContain(diags []string, want string) bool {
+	for _, diag := range diags {
+		if strings.Contains(diag, want) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestAXIMembershipExpectationBitesInBothDirections(t *testing.T) {

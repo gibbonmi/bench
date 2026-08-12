@@ -6,71 +6,89 @@ index: building an agent-facing CLI
 
 # AXI — Agent eXperience Interface
 
-Standards for a CLI an agent uses by shell execution. The goal is higher accuracy
-at lower token cost than either a raw CLI or an MCP server. In a project that
-declares AXI conformance, treat these as the conformance target the gate checks.
-A surface with its own documented output contract is out of this skill's scope;
-do not "fix" it toward these rules. The contract attaches to the surface, not
-the binary: bench's operational commands keep their plain-text stderr/exit-code
-contract, while its query subcommands (`learnings`, `maps`, `guards`, `diff`,
-`coverage`, `worktree list`) conform to AXI and are gate-checked against it. Full spec: https://axi.md
+AXI is the output contract for a CLI an agent drives through the shell. It aims
+for accurate action at low token cost. Apply it per surface: a declared query may
+conform while operational siblings keep their own documented contract. Full spec:
+https://axi.md
 
 ## The principles
 
-1. **Token-efficient output.** Emit [TOON](https://toonformat.dev) on stdout
-   (~40% fewer tokens than equivalent JSON). Keep internal logic on JSON; convert
-   at the output boundary only.
+1. **Token-efficient output.** Emit compact [TOON](https://toonformat.dev) on
+   stdout. Keep internal representations private and convert once at the output
+   boundary.
 
-2. **Minimal default schemas.** Every field costs tokens times row count. Default
-   list views to 3–4 fields (id, title, status), not ten. Default limits high
-   enough to cover the common case in one call. Long bodies go in detail views.
-   Offer `--fields` for explicit extras.
+2. **Minimal default schemas.** Return only fields needed for the usual decision,
+   normally three or four per list row. Put long bodies in a detail view and set
+   the default limit high enough for the common case.
 
-   The same list, both ways:
+   One contrast shows the target:
 
-   ```
+   ```text
    issues[2]{id,title,status}:
      41,Fix login redirect,open
      42,Rate-limit webhooks,closed
+   help[0]{cmd,why}:
    ```
-   Good — three TOON fields; the agent skims the whole page in one glance.
 
+   Good: the complete answer and its terminal state are visible at once.
+
+   ```json
+   [{"id":41,"iid":41,"project_id":7,"title":"Fix login redirect",
+     "state":"open","labels":[],"author":{"name":"..."},"web_url":"..."}]
    ```
-   [{"id":41,"iid":41,"project_id":7,"title":"Fix login redirect","state":"open",
-     "labels":[],"author":{"name":"…"},"web_url":"…","created_at":"…"}]
-   ```
-   Bad — ten-field JSON rows; every extra field is tokens × row count the agent
-   pays before it can answer.
 
-3. **Truncate, don't omit.** In detail views, show a preview of large fields plus
-   the total size and the escape hatch (`--full`). Never silently drop a field;
-   never dump the whole thing by default.
+   Bad: unrelated fields multiply by every row before the agent can decide.
 
-4. **Pre-compute aggregates.** The expensive cost is the follow-up call. Include
-   total counts ("30 of 847"), and cheap derived status ("checks: 3/3 passed")
-   inline, so the agent doesn't have to ask again.
+3. **Content truncation.** Preview large values with their total size and an
+   explicit way to request the complete value. Never silently omit content or
+   dump an unbounded body by default.
 
-5. **Definitive empty states.** Say "0 closed issues found," not silence. Make it
-   clear the command succeeded and the absence is the answer.
+4. **Pre-computed aggregates.** Include cheap counts and derived verdicts such as
+   `30 of 847` or `checks: 3/3 passed`; do not make the caller reconstruct them.
 
-6. **Structured errors and honest exit codes.** Errors go to **stdout** in the
-   same structured format (the agent reads stdout; an error routed to stderr is
-   invisible to it), with an actionable suggestion that references your
-   CLI's own commands — never a leaked dependency stack trace. Mutations are
-   idempotent (closing an already-closed thing is a no-op, exit 0). Reserve
-   nonzero for genuinely unsatisfiable intent. No interactive prompts — every
-   operation completes from flags alone. stdout = data the agent reads; stderr =
-   progress/debug it ignores; exit codes: 0 ok (incl. no-op), 1 error, 2 usage.
+5. **Definitive empty states.** Emit a typed zero-row result. Silence is not an
+   answer, and a successful absence exits zero.
 
-7. **Ambient context.** Offer a session-start hook that runs the tool and prints a
-   compact dashboard of current state, so a fresh session can act without a
-   discovery round-trip.
+6. **Structured errors and honest exit codes.** Put actionable, structured
+   refusals on stdout, never dependency traces. Use exit 0 for success and
+   idempotent no-ops, 1 for unsatisfied intent, and 2 for usage. Reserve stderr
+   for progress or debugging; never prompt interactively.
 
-## Conformance is a gate check
+7. **Ambient context.** Let a session-start hook print a compact current-state
+   dashboard so a fresh agent can act without a discovery call.
 
-In an AXI-conformant project these aren't style preferences — they're testable.
-The project gate asserts TOON-shaped stdout, minimal default schemas, structured
-stdout errors, and correct exit codes, and can run a paired-delta harness against
-the raw tool the CLI wraps. A change that regresses ergonomics fails the gate the
-same as a broken test. That's the external oracle pointed at the thing being
-built.
+8. **Content first.** Start stdout with the requested data, empty state, refusal,
+   or usage. Append navigation only after that answer.
+
+9. **Contextual disclosure.** Append actions earned by the returned state, never
+   a static command catalog.
+
+10. **Consistent way to get help.** All approved queries accept `--help`, `-h`,
+    and bare `help`; each prints usage on stdout and exits zero.
+
+## Bench application
+
+This table is the complete approved Bench AXI query set and says how the contract
+applies to each surface. Commands not listed retain their own contracts.
+
+| approved query | contextual disclosure |
+| --- | --- |
+| `bench anchors` | Report anchor matches or a definitive empty result; terminal checks offer no repair busywork. |
+| `bench learnings` | Offer the learnings drain for each distinct open entry. |
+| `bench maps` | Offer shaping or template repair for each decision state that needs it. |
+| `bench guards` | Offer the applicable repair for each stale or unwired guard. |
+| `bench diff` | Offer full inspection or retry only when snapshot state warrants it. |
+| `bench coverage` | Offer a check for each matching unchecked coverage row, or a repair retry after refusal. |
+| `bench worktree list` | Offer inspect, execute, or clean actions according to each worktree state. |
+
+Every approved result ends with `help[N]{cmd,why}:`; an honest empty envelope is
+`help[0]{cmd,why}:`. Derive one state-derived action per matching row. Collapse
+exact duplicates while retaining stable source order. Carry every known argument
+literally, with placeholders only for unknown future-input slots. Terminal results
+offer no busywork.
+
+## Conformance
+
+The project gate derives the approved set from the production command registry
+and compares both membership directions with the table above. It also grades the
+ten ordered principles, output envelopes, help spellings, and executable behavior.

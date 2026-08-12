@@ -87,6 +87,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Recast the AXI CLI guidance as a ten-principle per-surface contract with
+  contextual result actions and a registry-checked approved-query inventory.
 - Replaced one-question-at-a-time grilling with numbered frontier rounds: every
   question whose prerequisites are settled appears in the same round with a
   recommendation, then the skill waits and recomputes; `bench-shape-idea` uses

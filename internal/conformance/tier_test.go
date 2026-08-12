@@ -439,6 +439,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestInvalidOrderedSetRedsAndWidensToTheFullTier":           true,
 	"TestLineRoutingFixturesBite":                               true,
 	"TestAXIMembershipExpectationBitesInBothDirections":         true,
+	"TestAXIGuidanceContractBites":                              true,
 	"TestLoadValidityMetadataFixturesBite":                      true,
 	"TestNativeWorkflowEvidenceEdgeBites":                       true,
 	"TestOccurrenceLedgerMigrationCheckBitesOnFT158Count":       true,
