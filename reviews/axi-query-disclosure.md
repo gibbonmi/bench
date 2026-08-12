@@ -2,7 +2,7 @@
 
 Candidate: `c2542a9765f91d3581ae88cf6d37d1da3ea0d2ee..bd4b184f65411e8cbc8251d9167a9a4dd2310a34`, plus the generated `capture/session-handoff.md` refresh.
 
-Verdict: **REJECT**. The candidate has six unique actionable findings. Accepted product decisions remain closed; every finding is a deterministic repair inside the approved specification.
+Verdict: **REJECT**. The candidate has seven unique actionable findings. Accepted product decisions remain closed; every finding is a deterministic repair inside the approved specification.
 
 ## Standards
 
@@ -22,7 +22,7 @@ Disposition: `auto-fix`.
 
 ## Spec
 
-Finding count: 2. Worst issue: Critical.
+Finding count: 3. Worst issue: Critical.
 
 ### Critical — QD2 empty-token fixture does not contain the pre-change bytes
 
@@ -35,6 +35,12 @@ Disposition: `auto-fix`.
 Disposition: `auto-fix`.
 
 `internal/axi/action.go:106` recognizes only unsupported control runes before rendering, while `internal/axi/action.go:243` also rejects empty known arguments and values containing `<` or `>`. Such a coverage or worktree path reaches `RenderHelp`, returns an error, replaces the computed primary response, and changes the exit instead of appending honest empty help. QD1 explicitly requires primary-response and exit preservation for any unrepresentable known argv or `why` cell, including coverage and worktree paths (`specs/axi-query-disclosure/spec.md:30`, `specs/axi-query-disclosure/spec.md:57`). Make the fallback predicate cover every renderer refusal and prove it through public surfaces.
+
+### Medium — QD1 public oracle independently re-sorts producer rows
+
+Disposition: `auto-fix`.
+
+`internal/worktree/list_actions_test.go:137` compares the two generated assignment IDs and swaps the fixture values into lexical order before building the expected public response. QD1 requires intent-ledger serialized ID order followed by Git registration producer order, and explicitly forbids tests from independently re-sorting it (`specs/axi-query-disclosure/spec.md:27`, `specs/axi-query-disclosure/spec.md:57`). A production change that re-sorts assignments can therefore stay green. Consume the assignment producer's order directly and prove a production re-sort makes the public oracle red.
 
 ## Coverage
 
