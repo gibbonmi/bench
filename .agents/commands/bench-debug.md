@@ -10,6 +10,12 @@ This is the bug path. Use it when something is broken, throwing, failing, or slo
 It produces a tight red-capable repro loop first, then uses that loop as the
 external signal for diagnosis and the fix.
 
+If the debug work may write anything — a throwaway harness, an instrumented
+copy, an edit under test — create or select its isolated worktree *before* the
+first repro artifact exists. A clean-at-start main checkout that picks up
+writes mid-debug becomes unattributably dirty; deciding isolation after Phase 1
+has already produced artifacts is too late.
+
 ## Exit handoff
 
 Close by reporting the repro command, the confirmed cause, the fix state, whether

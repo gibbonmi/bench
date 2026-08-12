@@ -63,6 +63,12 @@ internal is something the agent can game.
 
 Avoid the word "boundary" (overloaded). Say **seam** or **interface**.
 
+Before exploring the tree for where a seam belongs, declare a small read budget
+— a number of files. If you spend it without finding traction, stop guessing
+and reroute through `bench outline`, then report the budget spent alongside
+the reroute; a silent, unbounded read loop is not an accepted way to find a
+seam.
+
 The edge classes a domain's inputs actually present — per surface: shell CLI,
 HTTP API, web UI, background jobs — are templated in
 `references/hostile-input-library.md`. Quarry it when an edge inventory or a new
