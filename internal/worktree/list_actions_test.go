@@ -2,7 +2,9 @@ package worktree
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -117,6 +119,54 @@ func TestListCommandCheckedInPresentForeignTerminalPair(t *testing.T) {
 	}
 	if code != pair.New.Exit || out != pair.New.Stdout {
 		t.Fatalf("ListCommand = stdout=%q stderr=%q exit=%d, want checked-in terminal primary plus exactly one empty help block", out, "", code)
+	}
+}
+
+// TestListCommandCheckedInCompletedAssignmentTerminalPair pins the owned completed
+// assignment row, the state the present-foreign pair above never reaches. The release
+// transaction compacts a completed record on its way out, so the state a listing can
+// observe is the one a release interrupted at its terminal-receipt boundary leaves —
+// reached here through ReleaseCommand rather than a hand-written ledger entry. A
+// completed assignment is non-actionable, so its disclosure is exactly one empty help
+// block.
+func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
+	data, err := os.ReadFile("testdata/pre-disclosure-complete-assignment-pair.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var pair worktreeListTerminalPair
+	if err := json.Unmarshal(data, &pair); err != nil {
+		t.Fatal(err)
+	}
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	creation := mustCreate(t, root, "landed-complete-assignment", "complete assignment")
+	boundary := cleanupTransactionBoundary
+	t.Cleanup(func() { cleanupTransactionBoundary = boundary })
+	cleanupTransactionBoundary = func(step LifecycleStep) error {
+		if step == StepTerminalReceipt {
+			return errors.New("stop before the completed record is compacted")
+		}
+		return nil
+	}
+	if code := ReleaseCommand(root, []string{"--request", "landed-complete-assignment", creation.Path}, io.Discard, io.Discard); code == 0 {
+		t.Fatalf("interrupted release exit = %d, want non-zero", code)
+	}
+	cleanupTransactionBoundary = boundary
+	assignments, err := intent.Assignments(root)
+	if err != nil || len(assignments) != 1 || assignments[0].State != intent.StateComplete {
+		t.Fatalf("Assignments = %#v, %v, want one completed assignment", assignments, err)
+	}
+	chdir(t, root)
+	out, code := ListCommand(nil)
+	materialize := strings.NewReplacer("{{ID}}", assignments[0].ID, "{{LABEL}}", assignments[0].Label)
+	pair.Old.Stdout = materialize.Replace(pair.Old.Stdout)
+	pair.New.Stdout = materialize.Replace(pair.New.Stdout)
+	if pair.Old.Stderr != "" || pair.New.Stderr != "" || pair.Old.Exit != 0 || pair.New.Exit != 0 || pair.New.Stdout != pair.Old.Stdout+"help[0]{cmd,why}:\n" {
+		t.Fatalf("terminal pair admits a response change beyond exactly one empty help block: %#v", pair)
+	}
+	if code != pair.New.Exit || out != pair.New.Stdout {
+		t.Fatalf("ListCommand = stdout=%q stderr=%q exit=%d, want checked-in completed-assignment primary plus exactly one empty help block", out, "", code)
 	}
 }
 
