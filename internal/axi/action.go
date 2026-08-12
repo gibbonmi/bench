@@ -86,6 +86,9 @@ func RenderHelp(actions []Action) (string, error) {
 	rows := make([][]string, 0, len(actions))
 	seen := make(map[string]struct{}, len(actions))
 	for _, action := range actions {
+		if action.hasUnsupportedDisclosureValue() {
+			return toon.Table("help", []string{"cmd", "why"}, nil)
+		}
 		command, why, err := action.render()
 		if err != nil {
 			return "", err
@@ -98,6 +101,27 @@ func RenderHelp(actions []Action) (string, error) {
 		rows = append(rows, []string{command, why})
 	}
 	return toon.Table("help", []string{"cmd", "why"}, rows)
+}
+
+func (action Action) hasUnsupportedDisclosureValue() bool {
+	if hasUnsupportedControl(action.why) {
+		return true
+	}
+	for _, argument := range action.arguments {
+		if hasUnsupportedControl(argument.known) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasUnsupportedControl(value string) bool {
+	for _, r := range value {
+		if unicode.IsControl(r) && r != '\t' && r != '\n' && r != '\r' {
+			return true
+		}
+	}
+	return false
 }
 
 var fullSHA = regexp.MustCompile(`^[0-9a-f]{40}$`)
@@ -220,12 +244,7 @@ func validKnownArgument(value string) bool {
 	if value == "" || strings.ContainsAny(value, "<>") {
 		return false
 	}
-	for _, r := range value {
-		if unicode.IsControl(r) {
-			return false
-		}
-	}
-	return true
+	return !hasUnsupportedControl(value)
 }
 
 func shellSafeToken(value string) bool {

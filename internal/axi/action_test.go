@@ -1,8 +1,12 @@
 package axi
 
 import (
+	"bytes"
+	"os/exec"
 	"strings"
 	"testing"
+
+	toonlib "github.com/toon-format/toon-go"
 )
 
 func TestRenderHelpPreservesEveryKnownArgument(t *testing.T) {
@@ -74,6 +78,33 @@ func TestRenderHelpRendersKnownArgumentNamedUnknown(t *testing.T) {
 	}
 }
 
+func TestKnownArgumentControlValuesRoundTripThroughTOONAndPOSIXShell(t *testing.T) {
+	for _, source := range []string{"tab\tvalue", "line\nvalue", "return\rvalue"} {
+		t.Run(source, func(t *testing.T) {
+			rendered, err := RenderHelp([]Action{ExecutableInvocation("clean", KnownArgument("worktree"), KnownArgument("clean"), KnownArgument(source))})
+			if err != nil {
+				t.Fatal(err)
+			}
+			decoded, err := toonlib.DecodeString(rendered)
+			if err != nil {
+				t.Fatal(err)
+			}
+			help := decoded.(map[string]any)["help"].([]any)
+			if len(help) != 1 {
+				t.Fatalf("decoded help = %#v, want one action", help)
+			}
+			command := help[0].(map[string]any)["cmd"].(string)
+			out, err := exec.Command("sh", "-c", "set -- "+command+"; printf %s \"$4\"").Output()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(out, []byte(source)) {
+				t.Fatalf("shell argv = %q, want %q", out, source)
+			}
+		})
+	}
+}
+
 func TestRenderHelpShellQuotesKnownArgumentsWithoutChangingFutureInputs(t *testing.T) {
 	got, err := RenderHelp([]Action{ExecutableInvocation(
 		"clean the orphaned worktree",
@@ -114,7 +145,6 @@ func TestRenderHelpRejectsLossyReusableActions(t *testing.T) {
 		},
 		{name: "empty known value", action: ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument(""))},
 		{name: "undeclared placeholder", action: ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument("<path>"))},
-		{name: "control byte", action: ExecutableInvocation("repair", KnownArgument("worktree"), KnownArgument("clean"), KnownArgument("orphan\x1bpool"))},
 		{name: "prose as command", action: ExecutableInvocation("repair", KnownArgument("run bench maps --template"))},
 		{name: "unsafe executable name", action: ExecutableInvocation("repair", KnownArgument("maps!"))},
 		{name: "future command", action: ExecutableInvocation("repair", FutureInput("command"))},
@@ -125,6 +155,43 @@ func TestRenderHelpRejectsLossyReusableActions(t *testing.T) {
 				t.Fatal("RenderHelp accepted a lossy reusable action")
 			}
 		})
+	}
+}
+
+func TestRenderHelpUsesHonestEmptyForUnsupportedDisclosureValue(t *testing.T) {
+	for _, action := range []Action{
+		ExecutableInvocation("repair", KnownArgument("worktree"), KnownArgument("clean"), KnownArgument("orphan\x1bpool")),
+		ExecutableInvocation("repair malformed\x1bmap", KnownArgument("maps"), KnownArgument("--template")),
+	} {
+		got, err := RenderHelp([]Action{action})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != "help[0]{cmd,why}:\n" {
+			t.Fatalf("RenderHelp = %q, want honest empty help", got)
+		}
+	}
+}
+
+func TestKnownArgumentRefusesUnsupportedControls(t *testing.T) {
+	controls := make([]rune, 0, 61)
+	for r := rune(0); r < 0x20; r++ {
+		if r != '\t' && r != '\n' && r != '\r' {
+			controls = append(controls, r)
+		}
+	}
+	controls = append(controls, 0x7f)
+	for r := rune(0x80); r <= 0x9f; r++ {
+		controls = append(controls, r)
+	}
+	for _, r := range controls {
+		got, err := RenderHelp([]Action{ExecutableInvocation("repair", KnownArgument("maps"), KnownArgument(string(r)))})
+		if err != nil {
+			t.Fatalf("RenderHelp(%U): %v", r, err)
+		}
+		if got != "help[0]{cmd,why}:\n" {
+			t.Fatalf("RenderHelp(%U) = %q, want honest empty help", r, got)
+		}
 	}
 }
 

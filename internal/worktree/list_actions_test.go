@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	toonlib "github.com/toon-format/toon-go"
 )
 
 type worktreeListArgvPair struct {
@@ -147,5 +149,42 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 	help := fmt.Sprintf("help[5]{cmd,why}:\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree clean '%s',clean the orphaned worktree\n", first.Assignment.ID, first.Assignment.ID, second.Assignment.ID, second.Assignment.ID, missing)
 	if code != 0 || out != primary+help {
 		t.Fatalf("ListCommand = (%d, %q), want materialized checked-in primary plus exactly one help block", code, out)
+	}
+}
+
+func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing.T) {
+	for _, control := range []string{"\t", "\n", "\r"} {
+		t.Run("control", func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			missing := filepath.Join(t.TempDir(), "orphan"+control+"path")
+			gitRun(t, root, "worktree", "add", "-q", "--detach", missing, "HEAD")
+			if err := os.RemoveAll(missing); err != nil {
+				t.Fatal(err)
+			}
+			chdir(t, root)
+			out, code := ListCommand(nil)
+			if code != 0 || !strings.HasPrefix(out, "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n") {
+				t.Fatalf("ListCommand = (%d, %q), want primary worktree response and exit 0", code, out)
+			}
+			if !strings.Contains(out, "help[1]{cmd,why}:\n") {
+				t.Fatalf("ListCommand = %q, want one orphan-clean action", out)
+			}
+			decoded, err := toonlib.DecodeString(out[strings.Index(out, "help["):])
+			if err != nil {
+				t.Fatal(err)
+			}
+			help := decoded.(map[string]any)["help"].([]any)
+			if len(help) != 1 {
+				t.Fatalf("decoded help = %#v, want one action", help)
+			}
+			command := help[0].(map[string]any)["cmd"].(string)
+			recovered, err := exec.Command("sh", "-c", "set -- "+command+"; printf %s \"$4\"").Output()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(recovered, []byte(missing)) {
+				t.Fatalf("shell argv = %q, want %q", recovered, missing)
+			}
+		})
 	}
 }

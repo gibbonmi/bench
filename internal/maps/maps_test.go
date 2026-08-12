@@ -879,6 +879,20 @@ func TestCommandRejectsCountAndTemplateTogether(t *testing.T) {
 	}
 }
 
+func TestInvalidMapActionWithUnsupportedWhyUsesHonestEmptyHelp(t *testing.T) {
+	actions := actionsForRows(
+		[][]any{{"broken", "invalid", "map", "invalid", "diagnostic"}},
+		map[string]string{invalidRowKey([]any{"broken", "invalid", "map", "invalid", "diagnostic"}): "decisions/broken\x1b.md"},
+	)
+	help, err := axi.RenderHelp(actions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if help != "help[0]{cmd,why}:\n" {
+		t.Fatalf("RenderHelp = %q, want honest empty help", help)
+	}
+}
+
 func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {

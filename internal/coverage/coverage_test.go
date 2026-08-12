@@ -1,7 +1,9 @@
 package coverage
 
 import (
+	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -10,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
+	toonlib "github.com/toon-format/toon-go"
 )
 
 const stories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n"
@@ -364,6 +367,47 @@ func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
 			out, code := Command([]string{"spec.md"})
 			if code != 0 || out != string(primary)+tc.help {
 				t.Fatalf("Command = (%d, %q), want checked-in primary plus exactly one help block", code, out)
+			}
+		})
+	}
+}
+
+func TestCommandControlBearingSpecPathPreservesPrimaryAndHonestFallback(t *testing.T) {
+	mapped := "# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 1 | b | s | unchecked | catches one |\n"
+	for _, control := range []string{"\t", "\n", "\r", "\x1b"} {
+		t.Run("control", func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			path := "control" + control + "spec.md"
+			mustWrite(t, path, mapped)
+			out, code := Command([]string{path})
+			primary := "spec: " + path + "\nstate: mapped\nrows[1]{story,seam,red_signal}:\n  \"1\",s,unchecked\n"
+			if code != 0 || !strings.HasPrefix(out, primary) {
+				t.Fatalf("Command = (%d, %q), want primary response and exit 0", code, out)
+			}
+			if control == "\x1b" {
+				if out != primary+"help[0]{cmd,why}:\n" {
+					t.Fatalf("Command fallback = %q, want primary plus empty help", out)
+				}
+				return
+			}
+			if !strings.Contains(out, "help[1]{cmd,why}:") {
+				t.Fatalf("Command = %q, want one action", out)
+			}
+			decoded, err := toonlib.DecodeString(out[strings.Index(out, "help["):])
+			if err != nil {
+				t.Fatal(err)
+			}
+			help := decoded.(map[string]any)["help"].([]any)
+			if len(help) != 1 {
+				t.Fatalf("decoded help = %#v, want one action", help)
+			}
+			command := help[0].(map[string]any)["cmd"].(string)
+			recovered, err := exec.Command("sh", "-c", "set -- "+command+"; printf %s \"$4\"").Output()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(recovered, []byte(path)) {
+				t.Fatalf("shell argv = %q, want %q", recovered, path)
 			}
 		})
 	}
