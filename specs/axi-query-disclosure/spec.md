@@ -99,7 +99,9 @@ Every mapped row becomes ticket acceptance with `(covers <row>)`; focused checks
 
 - Surface derivations: `cmd/bench/main.go`, `internal/learnings/`, `internal/maps/`, `internal/guards/`, `internal/coverage/`, `internal/worktree/`, `internal/usage/`.
 - Conformance and advertisement: `internal/conformance/`, `cmd/bench/main.go` and `cmd/bench/command_registry.go` (AXI-scope declarations on existing entries only), `cmd/bench/command_registry_test.go`, `projects/benchkit.md`.
+- Approved anchor fixture: `cmd/bench/anchor_help_test.go`; this exact path was approved in the anchor ticket breakdown and implements QD6's `cmd/bench` fixture seam.
 - Guidance: `.agents/skills/bench-craft-cli/SKILL.md`, `CHANGELOG.md`.
 - Evidence: `decisions/byte-preserving-axi-foundation/assets/`, `capture/IDEAS.md` (routed captures only).
 - Action owner: `internal/axi/` — additive only: this spec introduces the reusable executable-invocation and harness-phase kinds plus the renderer's kind-specific phase dispatch atomically with `maps`, their first public query consumer; the diff-specific actions and every byte they emit remain unchanged.
 - `internal/diff` is a consumed input and remains unchanged; no spec-build surface exists to touch.
+- Fence reconciliation: `specs/axi-query-disclosure/spec.md` itself, only for this reviewer-approved summary correction from the QD6 `cmd/bench` ticket-derivation fence to the exact approved anchor fixture above.
