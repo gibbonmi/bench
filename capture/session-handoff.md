@@ -2,31 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `4f6945ff`; tree clean, commits unpushed
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged, rescope landed at `00583fa9`), `specs/axi-query-disclosure/spec.md` (Status: staged, rescope approved and landed at `4f6945ff`), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `4f6945ff` via path-scoped `bench commit`
+Branch: `main` — HEAD `2d1bee6`, clean tree, 7 unpushed commits
+Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `a126a86` — stale, work tree `40490c7`
 
 ## State
 
-Both FT173 rescopes are done. `axi-coherent-diff` (approved, landed `00583fa9`)
-introduces the typed-action owner and `help[N]{cmd,why}` renderer in new
-`internal/axi` and makes `bench diff` the coherent snapshot. `axi-query-disclosure`
-is rescoped on top of it: the spec-build family is out of the approved set (six
-root queries plus `worktree list`), the harness-phase action kind lands there as
-its only additive `internal/axi` change, and its codex `gpt-5.6-sol`/xhigh
-falsification loop accepted on iteration 3 after two repair rounds (QD6
-additive-compat paired fixtures incl. `anchors`, registry-declared AXI
-membership on the production entries in `cmd/bench/main.go`, seven exact
-conformance predicates, a guidance-versus-registry cross-check, both inventoried
-worktree actions, blocked ticket order). `bench coverage --check` is green at
-6 rows; the reviewer approved both rescopes 2026-08-12. The decision map
-`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md` stays shared
-top-level because two staged specs consume it. No open hard stop remains before
-the coherent-diff build.
+The `axi-coherent-diff` implementation breakdown is reviewer-approved and landed.
+The staged spec's `CHANGELOG.md` ownership-fence amendment landed at `49bc1895`;
+the single atomic tracer ticket
+`specs/axi-coherent-diff/tickets/render-one-coherent-diff-snapshot.md` landed at
+`2d1bee6b`. It owns CD1-CD9 because a thinner landing would expose a partial
+public response before the paired compatibility oracle and every-response
+`help[]` contract are complete. Terra then Fable each ran exactly one read-only
+ticket review. Their accepted repairs preserve existing `git.Facts` callers via
+an additive all-files facts path and close detached-HEAD, deep-cwd, stable-rerun,
+and base-equals-HEAD cases. `bench preflight build axi-coherent-diff` and
+`bench coverage --check specs/axi-coherent-diff/spec.md` are green. The next
+phase is one fresh isolated write-delegate charge; no implementation edit has
+started.
 
 ## Next command
 
-`/bench-implement-spec specs/axi-coherent-diff/spec.md` in a fresh mid-tier session.
+`$bench-implement-spec specs/axi-coherent-diff/spec.md --full`
 
 ## Shape
 
