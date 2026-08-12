@@ -129,6 +129,23 @@ func TestActionsForRowsCarriesTheInvalidDiagnosticPath(t *testing.T) {
 	}
 }
 
+func TestCommandDisclosesTheFullPathForABoundsInvalidMap(t *testing.T) {
+	root := mapsRepo(t)
+	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "hollow.md"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+
+	out, code := Command(nil)
+	const help = "help[1]{cmd,why}:\n  bench maps --template,repair decisions/hollow.md\n"
+	if code != 1 || !strings.Contains(out, "hollow,invalid,map,invalid,\"empty: \"") || !strings.HasSuffix(out, help) {
+		t.Fatalf("Command(%v) = (exit %d, %q), want exit 1 with the bounds diagnostic and %q", []string(nil), code, out, help)
+	}
+}
+
 func mapsRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
