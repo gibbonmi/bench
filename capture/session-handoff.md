@@ -2,29 +2,22 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `2d1bee6`, clean tree, 7 unpushed commits
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged), `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `a126a86` — stale, work tree `40490c7`
+Branch: `main` — HEAD `fd6ac31`, 1 dirty path, 14 unpushed commits
+Spec: `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `2bee65b` — stale, work tree `8f172d6`
 
 ## State
 
-The `axi-coherent-diff` implementation breakdown is reviewer-approved and landed.
-The staged spec's `CHANGELOG.md` ownership-fence amendment landed at `49bc1895`;
-the single atomic tracer ticket
-`specs/axi-coherent-diff/tickets/render-one-coherent-diff-snapshot.md` landed at
-`2d1bee6b`. It owns CD1-CD9 because a thinner landing would expose a partial
-public response before the paired compatibility oracle and every-response
-`help[]` contract are complete. Terra then Fable each ran exactly one read-only
-ticket review. Their accepted repairs preserve existing `git.Facts` callers via
-an additive all-files facts path and close detached-HEAD, deep-cwd, stable-rerun,
-and base-equals-HEAD cases. `bench preflight build axi-coherent-diff` and
-`bench coverage --check specs/axi-coherent-diff/spec.md` are green. The next
-phase is one fresh isolated write-delegate charge; no implementation edit has
-started.
+`axi-coherent-diff` is implemented and retired. This maintenance batch drains
+its retro into FT113's final-landing CLI contract, FT162's exact repair-review
+subject, and FT164's repair/probe guidance. FT173 now names only the staged
+`axi-query-disclosure` capstone and is first in the refreshed sequence. There
+are no parked ideas or open learnings. The coherent-diff implementation commits
+remain unpushed; no foreign worktree or branch was cleaned.
 
 ## Next command
 
-`$bench-implement-spec specs/axi-coherent-diff/spec.md --full`
+`$bench-implement-spec specs/axi-query-disclosure/spec.md --full`
 
 ## Shape
 

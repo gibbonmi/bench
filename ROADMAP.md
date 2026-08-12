@@ -258,6 +258,15 @@ The repair-reslicing close repeats that retained evidence must remain available
 after retirement. Source: the branch-native-build-test-architecture and
 repair-ticket-reslicing retros, drained here.
 
+The coherent-diff repair adds one exact-subject face. After transient review
+findings become a committed repair ticket and the pickup file is deleted in the
+green repair, a second semantic-review preflight must bind the repaired product
+candidate without treating planning provenance or the required pickup deletion
+as an unauthorized product path. Decide whether the full run records an
+explicit review base/head or preflight gains a repair-candidate selector; do not
+weaken the ownership fence to make the composed diff pass. Source: the
+axi-coherent-diff retro, drained here.
+
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
 merge (the ship canary tier pin, the untiered-registry assertion, the
@@ -749,70 +758,22 @@ status. Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here;
 the 2026-08-06 drain's 179397-byte snapshot transport failure.
 
 **FT173 (HIGH) — the AXI contract has ten principles, one derivation each.**
-The kit implements its own published contract partially and unevenly, measured
-2026-07-31 against the ten principles at axi.md. Five faces, one owner surface.
-First, `craft-cli` enumerates only seven: content first, contextual disclosure,
-and the per-subcommand help fallback are absent from the skill, so the guidance
-cannot ask for what it never names. Second, contextual disclosure is emitted
-nowhere — `help[` returns zero hits across non-test `cmd/` and `internal/` — and
-it is the one principle with no partial implementation to consolidate. Third,
-truncation has four independent derivations: `sanitize.Preview` (13 non-test
-callsites across 8 packages), `internal/roadmap`'s package-private `limited()`
-(9 callsites, 1 package), `internal/worktree/subshell.go`, and
-`internal/outline/outline.go`. `sanitize.Preview` is already the shared one and
-is the consolidation target; treating `limited()` as the seed inverts the actual
-usage. Fourth, pre-computed aggregates have no shared helper and are derived per
-command — `outline_meta`, `internal/publication`'s `next_action`, and
-`internal/roadmap`'s byte and occurrence counts each roll their own.
+The coherent Git snapshot and executable-action owner are landed: `bench diff`
+returns one movement-checked revision, checkout, inventory, whitespace, log,
+patch, identity, and contextual-action response. FT173's remaining work is the
+staged `axi-query-disclosure` capstone, which composes that owner across the
+remaining approved query surfaces and nested `worktree list`. AXI stays bounded
+to those surfaces; no parallel renderer, legacy mode, `bench git` namespace, or
+second domain derivation joins the build.
 
-Fifth, routine Git inspection still escapes the AXI surface. The 2026-08-02
-decision-map gate-scope build needed repeated batches of `git status
---short --branch`, `git diff --stat`, `git diff`, `git diff --check`, `git
-rev-parse`, `git log -1`, and `git show --stat` to answer two questions: what
-changed, and what exact body should be reviewed. `bench diff` already owns
-review-base resolution, the changed-file inventory, the landed-commit log, and
-the patch body, so extend that command rather than minting a parallel `bench
-git` namespace or a second derivation of those facts. Its default response
-becomes one coherent snapshot with a compact revision row, pre-computed commit,
-file, insertion, deletion, staged, unstaged, and untracked counts, the existing
-base-to-worktree `files[N]{status,path}` inventory augmented with untracked
-paths, a minimal checkout table that distinguishes index from worktree state,
-and a whitespace-check result. Reuse `internal/git.Facts` — already the NUL-safe
-checkout owner consumed by `bench roadmap --context` — for branch, divergence,
-and XY status, and reuse `internal/diff`'s range owner for base-relative facts;
-do not add another porcelain parser. `bench diff --full` returns the same
-snapshot plus the existing log and an exact patch that does not silently omit
-untracked regular files; `--commit` remains the post-landing view. Capture HEAD,
-index, and worktree identity around the reads and retry or return a structured
-drift error if they move, so one invocation cannot splice facts from concurrent
-states. The acceptance target is one `bench diff` call for orientation and at
-most one `bench diff --full` call for bodies, replacing the raw status/stat/
-name-only/revision/check sequence. Grade it with a paired-delta fixture against
-raw Git over committed, staged, unstaged, untracked, nested-new-directory,
-rename, deletion, binary, hostile-filename, clean, and mid-read-drift cases.
-
-Reviewer decision, 2026-08-10: the byte-preserving foundation architecture is
-superseded. The staged five-spec migration-first sequence
-(`axi-compatibility-oracle`, `axi-carriers-and-registry`,
-`axi-outcome-action-migration`, `axi-bounded-projection-migration`,
-`axi-aggregate-empty-migration` — 61 tickets and five promotion gates before
-any public improvement) is retired; FT173 builds the approved behavior forward
-through the existing CLI seams instead. AXI stays scoped to the approved
-surfaces — the six root queries and nested `worktree list`; the spec-build
-family was in scope until its removal — and each intentional output change is proved by
-reviewed old-to-new fixtures naming its exact delta, while everything outside
-an approved delta keeps its existing exact domain tests. The first replacement
-slice, `axi-spec-build-complete`, was overtaken and retired with the provisional
-lifecycle. The two parked successors, `axi-coherent-diff` and
-`axi-query-disclosure`, now require a reviewed rescope: remove the deleted
-spec-build family and `axi.Action` prerequisite while preserving their
-behavior-first changes on the existing CLI/domain seams. `axi-query-disclosure`
-remains blocked on the coherent-diff foundation and its harness-log opportunity
-ledger. The earlier
-2026-07-31 call-sites-only consolidation constraint and its 2026-08-02
-`help[]`-only relaxation are subsumed by this ruling. The truncation and
-aggregate one-source-per-fact sweep is no longer an FT173 precondition; it
-rides ordinary standards-debt work where a real change touches those owners.
+The capstone preserves each surface's existing primary bytes, streams, exits,
+argv, empty states, and bounded defaults outside its reviewed additive
+`help[]` delta. It starts with the required Claude and Codex harness-log ledger:
+every observed CLI-leverage opportunity is folded into the spec, cited to its
+existing owner, declined with a reason, or routed to a named roadmap item before
+implementation proceeds. The ten-principle `craft-cli` guidance and
+registry-derived conformance close in the same build so emitted behavior and its
+standing authoring contract cannot drift apart.
 
 Pricing context, 2026-08-05: the ten principles are not equal in value, and the
 ordering decides what survives if a face competes for scope. TOON's saving is
@@ -850,10 +811,10 @@ Two constraints shape the build rather than the diagnosis. Principle 3 should
 not double-truncate a value already bounded at capture, and principle 8 is a
 query-surface rule, not a binary-wide one — `craft-cli` already holds that the
 contract attaches to the surface, so an operational command answering with live
-data on no arguments is a regression, not conformance. The
-truncation half alone is a one-source-per-fact sweep and could ride the standards
-debt batch; the rest is a build. Sources: `capture/IDEAS.md`, drained here; the reviewer
-constraint above, parked and drained here.
+data on no arguments is a regression, not conformance. The truncation and
+aggregate one-source-per-fact sweep is not an FT173 precondition; it rides
+ordinary standards-debt work where a real change touches those owners. Sources:
+the FT173 decision map and the axi-coherent-diff retro, drained here.
 
 **FT185 (MEDIUM) — gate results join the structured Bench output contract.**
 `bench gate` is the last major agent-facing surface that reports phase verdicts
@@ -1267,6 +1228,13 @@ verb was a third, and the phase contract now names `bench commit --spec` the
 sole author for a reviewed spec-backed build. Name one owner per landing route
 and make the others refuse rather than race. Source: the FT128 implementation retro, drained here.
 
+The coherent-diff close exposes the same usage residual directly: the canonical
+final-landing prose abbreviates the command to `bench commit --spec <slug>`, but
+the executable requires both `-m` and an explicit path. Let the owned status
+transition satisfy the path requirement, and keep one copy-pasteable command
+shape in the phase contract so a conformant close does not pay two usage
+refusals. Source: the axi-coherent-diff retro, drained here.
+
 **FT130 (MEDIUM) — a capture write mid-lifecycle voids or blocks the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
 idea` to park the tangent, which wrote `capture/IDEAS.md` inside the gate's window;
@@ -1436,6 +1404,15 @@ and deletes the backup after restore; a wholesale deletion ticket carries an
 explicit orphaned-caller sweep over every removed symbol. Both are charged
 evidence, not session-local recovery lore. Sources: `capture/learnings.md`
 2026-08-11 and both 2026-08-11 retros, drained and verdicted here.
+
+The coherent-diff close adds two repair-proof clauses. Every identity-oracle
+repair mutates the exact production dimension it claims to protect before the
+coordinator accepts it; changing a correlated dimension is not evidence. A
+delegate cap followed by a reviewer-approved tier escalation counts as a repair
+round and carries `delegate-error` attribution, so the retro does not erase the
+failed first charge. The existing ticket-breakdown review and three-axis
+semantic implementation review remain separate cadences and need no duplicate
+rule. Source: the axi-coherent-diff retro, drained here.
 
 **FT200 (MEDIUM, decision required) — make preflight mechanical at the landing
 chokepoint.** `bench preflight build|review <slug>` now provides the phase-entry
@@ -2289,6 +2266,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT173 rescope of `axi-coherent-diff` off the retired spec-build/`axi.Action` prerequisite; `axi-query-disclosure` remains its reviewed successor.
+1. `/bench-implement-spec` — FT173's staged `specs/axi-query-disclosure/spec.md` contextual-disclosure capstone.
 2. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`, then retire moot #24 and resume #25–#26 on the landed serial-gate baseline.
 3. `/bench-shape-idea` — FT198's progressively loaded roadmap index; the 170 KB full snapshot confirms the context-cost trigger.
