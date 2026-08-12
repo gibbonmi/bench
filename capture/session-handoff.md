@@ -2,29 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `00583fa9`; tree clean, commits unpushed
-Spec: `specs/axi-coherent-diff/spec.md` (Status: staged, rescope reviewer-approved and landed), `specs/axi-query-disclosure/spec.md` (Status: staged, still carries the retired spec-build prerequisite — its own rescope is next in FT173), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `00583fa9` via path-scoped `bench commit`
+Branch: `main` — HEAD `9674d6ec`; the rescoped `specs/axi-query-disclosure/spec.md` and this handoff refresh are uncommitted pending reviewer sign-off
+Spec: `specs/axi-coherent-diff/spec.md` (Status: staged, rescope landed at `00583fa9`), `specs/axi-query-disclosure/spec.md` (Status: staged, rescoped, sign-off pending), `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: green at `9674d6ec` via path-scoped `bench commit`; commits unpushed
 
 ## State
 
-FT173's `axi-coherent-diff` rescope is written: the retired spec-build/`axi.Action`
-prerequisite is removed, the behavior-first ruling preserved, and the slice now
-introduces the typed-action owner and `help[]` renderer itself (new `internal/axi`,
-CD8, one tracer with CD7). A reviewer-mandated codex `gpt-5.6-sol`/xhigh
-falsification loop accepted on iteration 4 after driving three repair rounds:
-an old-to-new compatibility row (CD9), owner-bypass proofing (no-own-porcelain
-probe, production-path help fixtures), the `--commit` help contradiction, exact
-schemas for every public block, divergence in the revision row, and
-default-ref/recorded-base identity dimensions with per-attempt resolution
-semantics. `bench coverage --check` is green at 9 rows. The reviewer approved the rescope
-(stories, fences, out of scope) 2026-08-12 and it landed at `00583fa9`; the
-decision map `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`
-stays shared top-level because two staged specs consume it.
+Both FT173 rescopes are done. `axi-coherent-diff` (approved, landed `00583fa9`)
+introduces the typed-action owner and `help[N]{cmd,why}` renderer in new
+`internal/axi` and makes `bench diff` the coherent snapshot. `axi-query-disclosure`
+is rescoped on top of it: the spec-build family is out of the approved set (six
+root queries plus `worktree list`), the harness-phase action kind lands there as
+its only additive `internal/axi` change, and its codex `gpt-5.6-sol`/xhigh
+falsification loop accepted on iteration 3 after two repair rounds (QD6
+additive-compat paired fixtures incl. `anchors`, registry-declared AXI
+membership on the production entries in `cmd/bench/main.go`, seven exact
+conformance predicates, a guidance-versus-registry cross-check, both inventoried
+worktree actions, blocked ticket order). `bench coverage --check` is green at
+6 rows; reviewer sign-off on that rescope is the open hard stop. The decision
+map `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md` stays
+shared top-level because two staged specs consume it.
 
 ## Next command
 
-`/bench-implement-spec specs/axi-coherent-diff/spec.md` in a fresh mid-tier session.
+Reviewer sign-off on `specs/axi-query-disclosure/spec.md`, then commit it and run `/bench-implement-spec specs/axi-coherent-diff/spec.md` in a fresh mid-tier session.
 
 ## Shape
 
