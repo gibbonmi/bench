@@ -72,3 +72,8 @@ something the next session has to think to check.
 - Discover Bench verbs non-interactively — `bench commands --brief` or the source —
   never by trying a bare unknown verb; pipe stdin from `/dev/null` where a command
   might prompt.
+- Run gate and landing surfaces (`bench gate`, `bench commit`) plainly: never
+  pipe them through `head`/`tail` or otherwise truncate, and add `2>&1` only
+  where it changes behavior. The complete log is the failure-attribution
+  evidence; output too long to read is CLI-owned projection work, not
+  call-site shaping.
