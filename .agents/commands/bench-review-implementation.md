@@ -15,8 +15,11 @@ the diff; a red preflight stops the phase.
 ## Exit handoff
 
 Close by reporting Standards, Spec, and Coverage findings separately, with counts
-and the worst issue in each axis. Accepted
-findings become ownership-fenced repair tickets and return to
+and the worst issue in each axis, plus two totals kept apart: the raw finding
+count per axis, and the de-duplicated repair-target count after collapsing
+findings that name the same fix. Volume and repair work are different numbers —
+never report one where the other is asked for.
+Accepted findings become ownership-fenced repair tickets and return to
 `/bench-implement-spec`; findings that need a later fix pass use the pickup-file route
 in step 5, and a clean review proceeds to `/bench-final-check`.
 
@@ -43,9 +46,12 @@ true base, on three axes that stay separate.
    `projects/<name>.md` and any `CONTRIBUTING`/conventions docs in the repo.
 
 3. **Spawn the axes in parallel sub-agents** (so they don't pollute each other's
-   context), one per axis — Standards, Spec, and the Coverage axis — each under
+   context and one axis's derivation cannot seed another's), one per axis —
+   Standards, Spec, and the Coverage axis — each under
    ~400 words, charged and verified per the `craft-delegate` skill (these are
-   read-only delegations). Each delegate takes the diff, the sources for its
+   read-only delegations). Each delegate re-derives its own facts from its
+   primary source before comparing the candidate — see `craft-review` — and
+   takes the diff, the sources for its
    axis, and its charge from the `craft-review` skill
    (`.agents/skills/bench-craft-review/SKILL.md`) — the one source for what each
    axis hunts and what a finding must cite; don't restate the charges here.
@@ -71,14 +77,24 @@ true base, on three axes that stay separate.
    fail another (right thing, wrong conventions; clean conventions, wrong thing;
    correct on the happy path, open on the edges), and merging them lets one mask
    the other. End with a per-axis count and the worst issue within each axis.
+   Give every finding exactly one disposition: `no-op` (the candidate or a cited
+   source refutes the concern; no repair target remains), `auto-fix` (a
+   deterministic hard rule or exact spec predicate can be repaired inside
+   already-approved scope), or `ask-user` (the finding needs judgment, scope,
+   authority, or an oracle change). A disposition is a repair-routing label, not
+   permission for this read-only phase to make the edit itself.
 
-5. **Persist the right review state.** The actionable findings that need a later
+5. **Write and commit the pickup state, in that order, before repair begins.**
+   The actionable findings that need a later
    fix pass go in `reviews/<spec-slug>.md`. Keep one section per axis: `## Standards`,
    `## Spec`, and `## Coverage`. Each carries its finding count, its worst issue,
-   and every actionable finding with the file or doc citation its axis supplied.
-   Keep all three headings even when only one axis has findings.
-   Replace a stale artifact rather than appending, and commit the artifact in the
-   same session that writes it so pickup state is tracked at birth.
+   and every actionable finding with its disposition and the file or doc
+   citation its axis supplied. Keep all three headings even when only one axis
+   has findings. Replace a stale artifact rather than appending, and commit the
+   artifact in the same session that writes it, before any repair edit lands —
+   including when the findings were returned by another harness picking this
+   review up mid-flight: capture and commit its findings the same way before
+   touching the fix.
 
    A clean review, or one where the reviewer accepts every residual risk,
    writes no artifact: the `reviews/` directory means "there is fix work to
