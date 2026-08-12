@@ -2,24 +2,25 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `29a8997`, clean tree, 27 unpushed commits
+Branch: `main` — HEAD `b90d8a4`, clean tree, 29 unpushed commits
 Spec: `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `763e5b9` — stale, work tree `ef855f7`
+Gate: green at `4440ce1` — stale, work tree `210c21c`
 
 ## State
 
-All nine `axi-query-disclosure` implementation tickets are landed through
-path-scoped green commits. The approved query set is registry-declared and
-conformance-graded, all named query surfaces append contextual or honest-empty
-help, worktree-list help uses the shared grammar, and `craft-cli` carries the
-ten-principle contract. Review preflight is green at `29a89978`. Keep the approved
-surface, compatibility deltas, production-registry ownership, and named Fable
-cross-harness final review closed; do not widen to operational commands. No push
-has run, and the eight pre-existing foreign worktree records remain untouched.
+Implementation review is recorded at `reviews/axi-query-disclosure.md` in
+`b90d8a4c`: Standards 2, Spec 5, Coverage 2, collapsing to seven repair targets.
+Six are deterministic auto-fixes. One reviewer decision remains: remove the
+test-fitted literal `unknown` rejection and move guessed-value falsification to
+call-site derivation tests (recommended), or redesign the public action type with
+a new enforceable provenance contract. Keep the approved query surface,
+compatibility deltas, production-registry ownership, and Fable findings closed.
+No repair has started, no push has run, and the eight pre-existing foreign
+worktree records remain untouched.
 
 ## Next command
 
-`$bench-review-implementation specs/axi-query-disclosure/spec.md`
+`$bench-implement-spec specs/axi-query-disclosure/spec.md --full`
 
 ## Shape
 

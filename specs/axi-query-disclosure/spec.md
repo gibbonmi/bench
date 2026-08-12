@@ -104,4 +104,4 @@ Every mapped row becomes ticket acceptance with `(covers <row>)`; focused checks
 - Evidence: `decisions/byte-preserving-axi-foundation/assets/`, `capture/IDEAS.md` (routed captures only).
 - Action owner: `internal/axi/` — additive only: this spec introduces the reusable executable-invocation and harness-phase kinds plus the renderer's kind-specific phase dispatch atomically with `maps`, their first public query consumer; the diff-specific actions and every byte they emit remain unchanged.
 - `internal/diff` is a consumed input and remains unchanged; no spec-build surface exists to touch.
-- Workflow reconciliation: `specs/axi-query-disclosure/spec.md` itself for this reviewer-approved fence correction, and `capture/session-handoff.md` for the phase pins required by the approved `--full` run.
+- Workflow reconciliation: `specs/axi-query-disclosure/spec.md` itself for reviewer-approved corrections, `specs/axi-query-disclosure/tickets/` for accepted review repairs, `reviews/axi-query-disclosure.md` for transient pickup state, and `capture/session-handoff.md` for the phase pins required by the approved `--full` run.
