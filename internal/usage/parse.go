@@ -33,6 +33,7 @@ type Grammar struct {
 	MinArgs                             int
 	MaxArgs                             int
 	ReservedPositionalsBeforeTerminator int
+	HelpOnlyWhenSole                    bool
 }
 
 // Result is a successful parse: the flags present (an empty string value for
@@ -60,7 +61,9 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 	// input because variadic commands may legitimately receive it as free text.
 	if len(args) == 1 {
 		switch args[0] {
-		case "help", "--help", "-h":
+		case "--help", "-h":
+			return Result{}, g.Help, 0
+		case "help":
 			return Result{}, g.Help, 0
 		}
 	}
@@ -86,7 +89,7 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		reserved := !endedFlags && result.PositionalsBeforeTerminator < g.ReservedPositionalsBeforeTerminator
-		if !endedFlags && !reserved {
+		if !endedFlags && !reserved && !g.HelpOnlyWhenSole {
 			if a == "--help" || a == "-h" {
 				return Result{}, g.Help, 0
 			}

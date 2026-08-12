@@ -13,7 +13,12 @@ import (
 
 var worktreeListFields = []string{"id", "label", "state", "source", "tree", "lease", "landed", "ignored"}
 
-var worktreeListGrammar = usage.Grammar{Cmd: usage.WorktreeList, Help: "usage: " + usage.WorktreeList}
+var worktreeListGrammar = usage.Grammar{Cmd: usage.WorktreeList, Help: "usage: " + usage.WorktreeList, HelpOnlyWhenSole: true}
+
+type listRow struct {
+	values     []any
+	orphanPath string
+}
 
 // ListCommand implements the read-only AXI worktree population query.
 func ListCommand(args []string) (string, int) {
@@ -38,12 +43,11 @@ func ListCommand(args []string) (string, int) {
 	}
 
 	def, defaultResolved := git.ResolvedDefault(root)
-	rows := make([][]any, 0, len(assignments)+len(registrations))
-	orphanPaths := make([]string, 0, len(registrations))
+	rows := make([]listRow, 0, len(assignments)+len(registrations))
 	assignedPaths := make(map[string]bool, len(assignments))
 	for _, assignment := range assignments {
 		assignedPaths[assignment.Worktree] = true
-		rows = append(rows, listAssignmentRow(root, assignment, def, defaultResolved))
+		rows = append(rows, listRow{values: listAssignmentRow(root, assignment, def, defaultResolved)})
 	}
 	mainRoot := canonicalRoot(root)
 	for _, registration := range registrations {
@@ -55,31 +59,36 @@ func ListCommand(args []string) (string, int) {
 			label = registration.Path
 		}
 		tree := listTree(registration.Path)
-		rows = append(rows, []any{"foreign", label, "foreign", "foreign", tree, listLease(registration.Path), listLanded(root, registration.Branch, def, defaultResolved), listIgnored(registration.Path)})
+		row := listRow{values: []any{"foreign", label, "foreign", "foreign", tree, listLease(registration.Path), listLanded(root, registration.Branch, def, defaultResolved)}}
+		row.values = append(row.values, listIgnored(registration.Path))
 		if tree == "missing" {
-			orphanPaths = append(orphanPaths, registration.Path)
+			row.orphanPath = registration.Path
 		}
+		rows = append(rows, row)
 	}
-	out, err := toon.TableTyped("worktrees", worktreeListFields, rows)
+	values := make([][]any, 0, len(rows))
+	for _, row := range rows {
+		values = append(values, row.values)
+	}
+	out, err := toon.TableTyped("worktrees", worktreeListFields, values)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	help, err := axi.RenderHelp(actionsForRows(rows, orphanPaths))
+	help, err := axi.RenderHelp(actionsForRows(rows))
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
 	return out + help, 0
 }
 
-func actionsForRows(rows [][]any, orphanPaths []string) []axi.Action {
+func actionsForRows(rows []listRow) []axi.Action {
 	actions := make([]axi.Action, 0, len(rows))
-	orphanIndex := 0
 	for _, row := range rows {
-		if len(row) < 3 {
+		if len(row.values) < 3 {
 			continue
 		}
-		if row[2] == string(intent.StateActive) {
-			id, ok := row[0].(string)
+		if row.values[2] == string(intent.StateActive) {
+			id, ok := row.values[0].(string)
 			if !ok || id == "" {
 				continue
 			}
@@ -88,9 +97,8 @@ func actionsForRows(rows [][]any, orphanPaths []string) []axi.Action {
 				axi.ExecutableInvocation("run a command in the active worktree", axi.KnownArgument("worktree"), axi.KnownArgument("exec"), axi.KnownArgument(id), axi.KnownArgument("--"), axi.FutureInput("command")))
 			continue
 		}
-		if row[2] == "foreign" && len(row) > 4 && row[4] == "missing" && orphanIndex < len(orphanPaths) {
-			actions = append(actions, axi.ExecutableInvocation("clean the orphaned worktree", axi.KnownArgument("worktree"), axi.KnownArgument("clean"), axi.KnownArgument(orphanPaths[orphanIndex])))
-			orphanIndex++
+		if row.values[2] == "foreign" && row.orphanPath != "" {
+			actions = append(actions, axi.ExecutableInvocation("clean the orphaned worktree", axi.KnownArgument("worktree"), axi.KnownArgument("clean"), axi.KnownArgument(row.orphanPath)))
 		}
 	}
 	return actions

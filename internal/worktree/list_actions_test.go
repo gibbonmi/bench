@@ -99,7 +99,12 @@ func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
 		{"foreign", "present", "foreign", "foreign", "present"},
 		{"foreign", "two", "foreign", "foreign", "missing"},
 	}
-	help, err := axi.RenderHelp(actionsForRows(rows, []string{"/tmp/orphan one", "/tmp/orphan-two"}))
+	owned := make([]listRow, len(rows))
+	for i, row := range rows {
+		owned[i] = listRow{values: row}
+	}
+	owned[2].orphanPath, owned[5].orphanPath = "/tmp/orphan one", "/tmp/orphan-two"
+	help, err := axi.RenderHelp(actionsForRows(owned))
 	if err != nil {
 		t.Fatal(err)
 	}
