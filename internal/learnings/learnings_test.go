@@ -1,6 +1,7 @@
 package learnings
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 func TestCommandAppendsTypedDrainActionsAndHonestEmptyHelp(t *testing.T) {
@@ -79,7 +82,10 @@ func TestRefusalEvidencePreservesPrimaryAndDisclosesOnlyRepairableMalformed(t *t
 	type fixtureCase struct {
 		name, pre, candidate, journal string
 		setup                         func(*testing.T, string)
-		code                          int
+		// resolve supplies the run-scoped bytes a fixture cannot check in — an OS error
+		// naming an absolute temp path — for substitution into journalPathToken.
+		resolve func(*testing.T) string
+		code    int
 	}
 	cases := []fixtureCase{
 		{name: "malformed-among-parsed", pre: "pre-disclosure-malformed.stdout", candidate: "candidate-malformed.stdout", journal: "# Learnings — usage journal\n\n## 2026-01-01 — first [open]\n## broken\n", code: 1},
@@ -87,6 +93,14 @@ func TestRefusalEvidencePreservesPrimaryAndDisclosesOnlyRepairableMalformed(t *t
 		{name: "empty", pre: "pre-disclosure-empty.stdout", candidate: "candidate-empty.stdout", setup: func(t *testing.T, root string) { writeJournal(t, root, nil) }, code: 1},
 		{name: "invalid-utf8", pre: "pre-disclosure-invalid-utf8.stdout", candidate: "candidate-invalid-utf8.stdout", setup: func(t *testing.T, root string) { writeJournal(t, root, []byte{0xff, '\n'}) }, code: 1},
 		{name: "oversized", pre: "pre-disclosure-oversized.stdout", candidate: "candidate-oversized.stdout", setup: func(t *testing.T, root string) { writeJournal(t, root, make([]byte, bounds.ControlRecordLimit+1)) }, code: 1},
+		{name: "dangling-symlink", pre: "pre-disclosure-dangling-symlink.stdout", candidate: "candidate-dangling-symlink.stdout", setup: func(t *testing.T, root string) {
+			if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(filepath.Join(root, "capture", "vanished.md"), filepath.Join(root, JournalPath)); err != nil {
+				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+			}
+		}, resolve: journalAbsPath, code: 1},
 		{name: "wrong-type", pre: "pre-disclosure-wrong-type.stdout", candidate: "candidate-wrong-type.stdout", setup: func(t *testing.T, root string) {
 			if err := os.MkdirAll(filepath.Join(root, JournalPath), 0o755); err != nil {
 				t.Fatal(err)
@@ -110,6 +124,11 @@ func TestRefusalEvidencePreservesPrimaryAndDisclosesOnlyRepairableMalformed(t *t
 				writeJournal(t, root, []byte(tc.journal))
 			}
 			t.Chdir(root)
+			if tc.resolve != nil {
+				runScoped := tc.resolve(t)
+				pre = []byte(strings.ReplaceAll(string(pre), journalPathToken, runScoped))
+				candidate = []byte(strings.ReplaceAll(string(candidate), journalPathToken, runScoped))
+			}
 			got, code := Command(nil)
 			t.Logf("observed candidate code=%d stdout=%q", code, got)
 			if code != tc.code || got != string(candidate) {
@@ -120,6 +139,22 @@ func TestRefusalEvidencePreservesPrimaryAndDisclosesOnlyRepairableMalformed(t *t
 			}
 		})
 	}
+}
+
+// journalPathToken stands in the checked-in fixtures for the absolute journal path an
+// OS error string embeds, which is temp-directory-scoped and so differs every run.
+const journalPathToken = "{{JOURNAL}}"
+
+// journalAbsPath is the absolute path the command classified, resolved the way the
+// command resolves it so a filesystem that reports a different real path than the one
+// t.TempDir handed out still substitutes the bytes the error actually names.
+func journalAbsPath(t *testing.T) string {
+	t.Helper()
+	root, err := git.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(root, JournalPath)
 }
 
 func writeJournal(t *testing.T, root string, data []byte) {
