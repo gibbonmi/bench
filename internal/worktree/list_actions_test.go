@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi"
-	"github.com/gibbonmi/bench/internal/axitest"
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/axitest"
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 )
 
 func TestRenderHelpPreservesEveryKnownArgument(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/axitest"
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
 )
