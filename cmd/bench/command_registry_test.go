@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	gitpkg "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -97,8 +98,43 @@ func axiRegistryMemberNames(t *testing.T) []string {
 
 type axiEnvelopeCase struct {
 	successMarker, emptyMarker, usage              string
+	blocks                                         []string
 	route, successArgv, deepSuccessArgv, emptyArgv []string
 	setupSuccess, setupEmpty                       func(*testing.T, string)
+}
+
+// resultBlock is the table whose rows the member's success and empty cases differ over —
+// the block its identifying marker names, so the two do not drift apart.
+func (tc axiEnvelopeCase) resultBlock(t *testing.T) string {
+	t.Helper()
+	name, _, found := strings.Cut(tc.successMarker, "[")
+	if !found || name == "" {
+		t.Fatalf("success marker %q names no result table", tc.successMarker)
+	}
+	return name
+}
+
+// axiEnvelopeRows decodes a member's whole stdout as one TOON document and returns its
+// result rows. Decoding the complete output is the envelope claim: bytes before, between,
+// or after the blocks fail the decode, the recovered block order pins what the command
+// emitted and in what order, and the help table has to be schema-correct and terminal.
+func axiEnvelopeRows(t *testing.T, tc axiEnvelopeCase, result axiCommandResult) []any {
+	t.Helper()
+	document, err := axitest.DecodeDocument(result.stdout)
+	if err != nil {
+		t.Fatalf("stdout = %q, want structured TOON: %v", result.stdout, err)
+	}
+	if !reflect.DeepEqual(document.Blocks, tc.blocks) {
+		t.Fatalf("stdout blocks = %q, want %q; stdout=%q", document.Blocks, tc.blocks, result.stdout)
+	}
+	if _, err := document.HelpActions(); err != nil {
+		t.Fatalf("stdout = %q, want a terminal help[N]{cmd,why} envelope: %v", result.stdout, err)
+	}
+	rows, err := document.Rows(tc.resultBlock(t))
+	if err != nil {
+		t.Fatalf("stdout = %q: %v", result.stdout, err)
+	}
+	return rows
 }
 
 type axiCommandResult struct {
@@ -118,11 +154,11 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 			root := newAXIEnvelopeRepo(t)
 			tc.setupSuccess(t, root)
 			result := runAXICommandAt(t, root, tc.successArgv)
-			if result.code != 0 || result.stderr != "" || !strings.Contains(result.stdout, tc.successMarker) || strings.Contains(result.stdout, tc.emptyMarker) {
+			if result.code != 0 || result.stderr != "" || !strings.Contains(result.stdout, tc.successMarker) {
 				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want non-empty %q TOON on stdout/0", result.stdout, result.stderr, result.code, tc.successMarker)
 			}
-			if !hasAXIHelpEnvelope(result.stdout) {
-				t.Fatalf("stdout = %q, want appended help[N]{cmd,why} envelope", result.stdout)
+			if rows := axiEnvelopeRows(t, tc, result); len(rows) == 0 {
+				t.Fatalf("stdout = %q, want at least one result row", result.stdout)
 			}
 		})
 
@@ -133,8 +169,8 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 			if result.code != 0 || result.stderr != "" || !strings.Contains(result.stdout, tc.emptyMarker) {
 				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want definitive %q on stdout/0", result.stdout, result.stderr, result.code, tc.emptyMarker)
 			}
-			if !strings.Contains(result.stdout, "help[0]{cmd,why}:\n") {
-				t.Fatalf("empty stdout = %q, want honest zero-row help envelope", result.stdout)
+			if rows := axiEnvelopeRows(t, tc, result); len(rows) != 0 {
+				t.Fatalf("stdout = %q, want a zero-row result table", result.stdout)
 			}
 		})
 
@@ -187,30 +223,37 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 	return map[string]axiEnvelopeCase{
 		"anchors": {
 			route: []string{"anchors"}, successArgv: []string{"anchors", ".bench/BENCH.md"}, deepSuccessArgv: []string{"anchors", "../../.bench/BENCH.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
+			blocks:        []string{"anchors", "help"},
 			successMarker: "anchors[", emptyMarker: "anchors[0]{kind,section,needle}:\n", usage: "usage: bench anchors", setupSuccess: setupAXIAnchors, setupEmpty: noSetup,
 		},
 		"learnings": {
 			route: []string{"learnings"}, successArgv: []string{"learnings"}, emptyArgv: []string{"learnings"},
+			blocks:        []string{"learnings", "help"},
 			successMarker: "learnings[1]{date,title}:\n", emptyMarker: "learnings[0]{date,title}:\n", usage: "usage: bench learnings", setupSuccess: setupAXILearnings, setupEmpty: noSetup,
 		},
 		"maps": {
 			route: []string{"maps"}, successArgv: []string{"maps"}, emptyArgv: []string{"maps"},
+			blocks:        []string{"maps", "help"},
 			successMarker: "maps[1]{map,title,type,state,blockers}:\n", emptyMarker: "maps[0]{map,title,type,state,blockers}:\n", usage: "usage: bench maps", setupSuccess: setupAXIMap, setupEmpty: noSetup,
 		},
 		"guards": {
 			route: []string{"guards"}, successArgv: []string{"guards"}, emptyArgv: []string{"guards"},
+			blocks:        []string{"guards", "guard_scan", "help"},
 			successMarker: "guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:\n", emptyMarker: "guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:\n", usage: "usage: bench guards", setupSuccess: noSetup, setupEmpty: setupAXIEmptyGuards,
 		},
 		"diff": {
 			route: []string{"diff"}, successArgv: []string{"diff"}, emptyArgv: []string{"diff"},
+			blocks:        []string{"revision", "aggregate", "files", "checkout", "whitespace", "help"},
 			successMarker: "files[1]{status,path,kind}:\n", emptyMarker: "files[0]{status,path,kind}:\n", usage: "usage: bench diff", setupSuccess: setupAXIDiff, setupEmpty: noSetup,
 		},
 		"coverage": {
 			route: []string{"coverage"}, successArgv: []string{"coverage", "fixture"}, emptyArgv: []string{"coverage", "empty"},
+			blocks:        []string{"spec", "state", "rows", "help"},
 			successMarker: "rows[1]{story,seam,red_signal}:\n", emptyMarker: "state: mapped\nrows[0]{story,seam,red_signal}:\n", usage: "usage: bench coverage", setupSuccess: setupAXICoverage, setupEmpty: setupAXIEmptyCoverage,
 		},
 		"worktree list": {
 			route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
+			blocks:        []string{"worktrees", "help"},
 			successMarker: "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
 		},
 	}
@@ -368,15 +411,6 @@ func runAXICommandAt(t *testing.T, cwd string, argv []string) axiCommandResult {
 	var stdout, stderr bytes.Buffer
 	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
 	return axiCommandResult{stdout: stdout.String(), stderr: stderr.String(), code: code}
-}
-
-func hasAXIHelpEnvelope(out string) bool {
-	for _, line := range strings.Split(out, "\n") {
-		if strings.HasPrefix(line, "help[") && strings.HasSuffix(line, "]{cmd,why}:") {
-			return true
-		}
-	}
-	return false
 }
 
 // keptRoutes is the surface a removal may not take with it, written down rather than
