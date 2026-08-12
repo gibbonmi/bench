@@ -20,9 +20,33 @@ type commandDisposition struct {
 
 type commandHandler func(Command, []string) int
 
+type commandAXIDisposition struct {
+	root      bool
+	children  []string
+	exemption string
+}
+
+var axiApprovedRoot = commandAXIDisposition{root: true}
+
+func axiApprovedChildren(children ...string) commandAXIDisposition {
+	return commandAXIDisposition{children: children}
+}
+
+func axiExempt(reason string) commandAXIDisposition {
+	return commandAXIDisposition{exemption: reason}
+}
+
+const (
+	axiReasonOperational = "operational surface has its own output contract"
+	axiReasonMutation    = "state-changing surface is outside the read-only AXI query set"
+	axiReasonPlumbing    = "internal plumbing is outside the public AXI query set"
+	axiReasonRelease     = "release surface has its own ship-tier contract"
+)
+
 type commandDefinition struct {
 	Name       string
 	Attachment processAttachment
+	AXI        commandAXIDisposition
 	Run        commandHandler
 }
 

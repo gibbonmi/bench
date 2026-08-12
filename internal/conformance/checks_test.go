@@ -60,6 +60,7 @@ func init() {
 		"bounds-policy":                 {checkBoundsPolicy, registry.Dev, registry.SubjectRoot},
 		"marker-wait-deadlines":         {checkMarkerWaitDeadlines, registry.Dev, registry.SubjectRoot},
 		"subcommand-routing":            {checkSubcommandRouting, registry.Dev, registry.SubjectRoot},
+		"axi-query-registry":            {checkAXIQueryRegistry, registry.Dev, registry.SubjectRoot},
 		"skip-ownership":                {checkSkipOwnership, registry.Dev, registry.SubjectRoot},
 		"decision-map-integrity":        {maps.ValidateDecisionMapTree, registry.Dev, registry.SubjectRoot},
 		"injected-port-registry":        {checkInjectedPortRegistry, registry.Dev, registry.SubjectRoot},

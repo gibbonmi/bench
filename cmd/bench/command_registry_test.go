@@ -2,11 +2,15 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"sort"
 	"strings"
 	"testing"
+
+	gitpkg "github.com/gibbonmi/bench/internal/git"
 )
 
 func TestCommandRunsVersionInProcess(t *testing.T) {
@@ -45,6 +49,300 @@ func TestCommandDispositionsAreComplete(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("command dispositions = %#v, want %#v", got, want)
 	}
+}
+
+func TestCommandRegistryAXIDispositionsAreComplete(t *testing.T) {
+	want := map[string][]string{"anchors": nil, "learnings": nil, "maps": nil, "guards": nil, "diff": nil, "coverage": nil, "worktree": {"list"}}
+	got := map[string][]string{}
+	seen := map[string]bool{}
+	if len(commandRegistry) != 49 {
+		t.Fatalf("commandRegistry entries = %d, want 49", len(commandRegistry))
+	}
+	for _, definition := range commandRegistry {
+		if seen[definition.Name] {
+			t.Fatalf("commandRegistry repeats %q", definition.Name)
+		}
+		seen[definition.Name] = true
+		disposition := definition.AXI
+		switch {
+		case disposition.root:
+			if len(disposition.children) != 0 || disposition.exemption != "" {
+				t.Fatalf("command %q has a conflicting AXI root disposition: %#v", definition.Name, disposition)
+			}
+			got[definition.Name] = nil
+		case len(disposition.children) > 0:
+			if disposition.root || disposition.exemption != "" {
+				t.Fatalf("command %q has a conflicting AXI child disposition: %#v", definition.Name, disposition)
+			}
+			children := map[string]bool{}
+			for _, child := range disposition.children {
+				if child == "" || strings.ContainsAny(child, " \t\r\n") || children[child] {
+					t.Fatalf("command %q has invalid AXI children %q", definition.Name, disposition.children)
+				}
+				children[child] = true
+			}
+			got[definition.Name] = disposition.children
+		case disposition.exemption != "":
+			if disposition.root || len(disposition.children) != 0 || strings.TrimSpace(disposition.exemption) == "" {
+				t.Fatalf("command %q has a conflicting AXI exemption: %#v", definition.Name, disposition)
+			}
+		default:
+			t.Fatalf("command %q has no AXI disposition", definition.Name)
+		}
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("AXI declarations = %#v, want %#v", got, want)
+	}
+}
+
+type axiEnvelopeCase struct {
+	name, successMarker, emptyMarker, usage string
+	route, successArgv, emptyArgv           []string
+	setupSuccess, setupEmpty                func(*testing.T, string)
+}
+
+type axiCommandResult struct {
+	stdout, stderr string
+	code           int
+}
+
+func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
+	for _, tc := range axiEnvelopeCases() {
+		t.Run(tc.name+"/structured-success", func(t *testing.T) {
+			root := newAXIEnvelopeRepo(t)
+			tc.setupSuccess(t, root)
+			result := runAXICommandAt(t, root, tc.successArgv)
+			if result.code != 0 || result.stderr != "" || !strings.Contains(result.stdout, tc.successMarker) || strings.Contains(result.stdout, tc.emptyMarker) {
+				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want non-empty %q TOON on stdout/0", result.stdout, result.stderr, result.code, tc.successMarker)
+			}
+			if !hasAXIHelpEnvelope(result.stdout) {
+				t.Fatalf("stdout = %q, want appended help[N]{cmd,why} envelope", result.stdout)
+			}
+		})
+
+		t.Run(tc.name+"/definitive-empty", func(t *testing.T) {
+			root := newAXIEnvelopeRepo(t)
+			tc.setupEmpty(t, root)
+			result := runAXICommandAt(t, root, tc.emptyArgv)
+			if result.code != 0 || result.stderr != "" || !strings.Contains(result.stdout, tc.emptyMarker) {
+				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want definitive %q on stdout/0", result.stdout, result.stderr, result.code, tc.emptyMarker)
+			}
+			if !strings.Contains(result.stdout, "help[0]{cmd,why}:\n") {
+				t.Fatalf("empty stdout = %q, want honest zero-row help envelope", result.stdout)
+			}
+		})
+
+		t.Run(tc.name+"/structured-refusal", func(t *testing.T) {
+			result := runAXICommandAt(t, t.TempDir(), tc.successArgv)
+			if result.code != 1 || result.stderr != "" || !strings.HasPrefix(result.stdout, "error:") {
+				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want structured stdout refusal/1", result.stdout, result.stderr, result.code)
+			}
+		})
+
+		t.Run(tc.name+"/unknown-flag", func(t *testing.T) {
+			argv := append(append([]string(nil), tc.route...), "--unknown-axi-probe")
+			result := runAXICommandAt(t, t.TempDir(), argv)
+			if result.code != 2 || result.stderr != "" || !strings.HasPrefix(result.stdout, tc.usage) {
+				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want stdout usage/2 beginning %q", result.stdout, result.stderr, result.code, tc.usage)
+			}
+		})
+
+		t.Run(tc.name+"/help-spellings", func(t *testing.T) {
+			for _, spelling := range []string{"--help", "-h", "help"} {
+				argv := append(append([]string(nil), tc.route...), spelling)
+				result := runAXICommandAt(t, t.TempDir(), argv)
+				if result.code != 0 || result.stderr != "" || !strings.HasPrefix(result.stdout, tc.usage) {
+					t.Errorf("%s = stdout=%q stderr=%q exit=%d; want stdout usage/0 beginning %q", spelling, result.stdout, result.stderr, result.code, tc.usage)
+				}
+			}
+		})
+
+		t.Run(tc.name+"/deep-cwd", func(t *testing.T) {
+			root := newAXIEnvelopeRepo(t)
+			tc.setupSuccess(t, root)
+			fromRoot := runAXICommandAt(t, root, tc.successArgv)
+			fromDeep := runAXICommandAt(t, filepath.Join(root, "nested", "deep"), tc.successArgv)
+			if fromRoot.code != 0 || fromRoot.stderr != "" || !strings.Contains(fromRoot.stdout, tc.successMarker) {
+				t.Fatalf("root control = %#v, want successful %q envelope", fromRoot, tc.successMarker)
+			}
+			if fromDeep != fromRoot {
+				t.Fatalf("deep cwd result = %#v, root result = %#v", fromDeep, fromRoot)
+			}
+		})
+	}
+}
+
+func axiEnvelopeCases() []axiEnvelopeCase {
+	noSetup := func(*testing.T, string) {}
+	return []axiEnvelopeCase{
+		{
+			name: "anchors", route: []string{"anchors"}, successArgv: []string{"anchors", ".bench/BENCH.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
+			successMarker: "anchors[", emptyMarker: "anchors[0]{kind,section,needle}:\n", usage: "usage: bench anchors", setupSuccess: noSetup, setupEmpty: noSetup,
+		},
+		{
+			name: "learnings", route: []string{"learnings"}, successArgv: []string{"learnings"}, emptyArgv: []string{"learnings"},
+			successMarker: "learnings[1]{date,title}:\n", emptyMarker: "learnings[0]{date,title}:\n", usage: "usage: bench learnings", setupSuccess: setupAXILearnings, setupEmpty: noSetup,
+		},
+		{
+			name: "maps", route: []string{"maps"}, successArgv: []string{"maps"}, emptyArgv: []string{"maps"},
+			successMarker: "maps[1]{map,title,type,state,blockers}:\n", emptyMarker: "maps[0]{map,title,type,state,blockers}:\n", usage: "usage: bench maps", setupSuccess: setupAXIMap, setupEmpty: noSetup,
+		},
+		{
+			name: "guards", route: []string{"guards"}, successArgv: []string{"guards"}, emptyArgv: []string{"guards"},
+			successMarker: "guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:\n", emptyMarker: "guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:\n", usage: "usage: bench guards", setupSuccess: noSetup, setupEmpty: setupAXIEmptyGuards,
+		},
+		{
+			name: "diff", route: []string{"diff"}, successArgv: []string{"diff"}, emptyArgv: []string{"diff"},
+			successMarker: "files[1]{status,path,kind}:\n", emptyMarker: "files[0]{status,path,kind}:\n", usage: "usage: bench diff", setupSuccess: setupAXIDiff, setupEmpty: noSetup,
+		},
+		{
+			name: "coverage", route: []string{"coverage"}, successArgv: []string{"coverage", "fixture"}, emptyArgv: []string{"coverage", "empty"},
+			successMarker: "rows[1]{story,seam,red_signal}:\n", emptyMarker: "rows[0]{story,seam,red_signal}:\n", usage: "usage: bench coverage", setupSuccess: setupAXICoverage, setupEmpty: setupAXIEmptyCoverage,
+		},
+		{
+			name: "worktree list", route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
+			successMarker: "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
+		},
+	}
+}
+
+func newAXIEnvelopeRepo(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	runAXIGit(t, "init", "-q", root)
+	runAXIGit(t, "-C", root, "checkout", "-q", "-b", "main")
+	runAXIGit(t, "-C", root, "config", "user.name", "Bench Test")
+	runAXIGit(t, "-C", root, "config", "user.email", "bench@example.invalid")
+	writeAXIFixture(t, filepath.Join(root, "nested", "deep", ".keep"), "fixture\n")
+	runAXIGit(t, "-C", root, "add", ".")
+	runAXIGit(t, "-C", root, "commit", "-q", "-m", "fixture base")
+	base := strings.TrimSpace(runAXIGit(t, "-C", root, "rev-parse", "HEAD"))
+	runAXIGit(t, "-C", root, "config", "branch.main.benchBase", base)
+	return root
+}
+
+func setupAXILearnings(t *testing.T, root string) {
+	writeAXIFixture(t, filepath.Join(root, "capture", "learnings.md"), "# Learnings — usage journal\n\n## 2026-01-01 — fixture [open]\n")
+}
+
+func setupAXIMap(t *testing.T, root string) {
+	const document = `# Fixture
+
+Status: shaping
+
+## Destination
+
+Settle it.
+
+## #1: Decide
+
+Blocked by: none
+Type: Research
+
+### Question
+
+What now?
+
+### Answer
+
+— (open)
+
+## Not yet specified
+
+## Spec-writer discretion
+
+## Out of scope
+
+## Sources
+`
+	writeAXIFixture(t, filepath.Join(root, "decisions", "fixture.md"), document)
+}
+
+func setupAXIEmptyGuards(t *testing.T, root string) {
+	const hook = `#!/bin/sh
+# bench:managed-pre-push
+# name: pre-push
+# boundary: pre-push
+# denies: nothing (informational)
+# why: fixture has no deny-capable guards
+`
+	writeAXIFixture(t, filepath.Join(root, ".git", "hooks", "pre-push"), hook)
+}
+
+func setupAXIDiff(t *testing.T, root string) {
+	writeAXIFixture(t, filepath.Join(root, "dirty.txt"), "dirty\n")
+}
+
+func setupAXICoverage(t *testing.T, root string) {
+	const spec = `# Fixture
+
+## User stories
+
+1. As a caller, I get one row.
+
+### Acceptance coverage map
+
+| row | story | behavior | seam | red signal | why it catches the failure |
+|---|---|---|---|---|---|
+| FX1 | 1 | fixture | command | observed red | catches omission |
+`
+	writeAXIFixture(t, filepath.Join(root, "specs", "fixture", "spec.md"), spec)
+}
+
+func setupAXIEmptyCoverage(t *testing.T, root string) {
+	writeAXIFixture(t, filepath.Join(root, "specs", "empty", "spec.md"), "# Empty\n\n<!-- coverage-map: historical -->\n")
+}
+
+func setupAXIWorktree(t *testing.T, root string) {
+	linked := filepath.Join(t.TempDir(), "linked")
+	runAXIGit(t, "-C", root, "worktree", "add", "-q", "-b", "fixture-linked", linked)
+}
+
+func writeAXIFixture(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir fixture parent: %v", err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("write fixture %s: %v", path, err)
+	}
+}
+
+func runAXIGit(t *testing.T, args ...string) string {
+	t.Helper()
+	out, err := gitpkg.Raw(args...)
+	if err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, out)
+	}
+	return string(out)
+}
+
+func runAXICommandAt(t *testing.T, cwd string, argv []string) axiCommandResult {
+	t.Helper()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(cwd); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Errorf("restore cwd: %v", err)
+		}
+	}()
+	var stdout, stderr bytes.Buffer
+	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
+	return axiCommandResult{stdout: stdout.String(), stderr: stderr.String(), code: code}
+}
+
+func hasAXIHelpEnvelope(out string) bool {
+	for _, line := range strings.Split(out, "\n") {
+		if strings.HasPrefix(line, "help[") && strings.HasSuffix(line, "]{cmd,why}:") {
+			return true
+		}
+	}
+	return false
 }
 
 // keptRoutes is the surface a removal may not take with it, written down rather than

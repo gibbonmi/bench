@@ -125,6 +125,7 @@ var Checks = []Check{
 	{Name: "bounds-policy", Implementation: "checkBoundsPolicy", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "marker-wait-deadlines", Implementation: "checkMarkerWaitDeadlines", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "subcommand-routing", Implementation: "checkSubcommandRouting", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "axi-query-registry", Implementation: "checkAXIQueryRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "skip-ownership", Implementation: "checkSkipOwnership", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "decision-map-integrity", Implementation: "ValidateDecisionMapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputDecisionDocuments},
 	{Name: "injected-port-registry", Implementation: "checkInjectedPortRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
