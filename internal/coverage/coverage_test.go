@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -153,7 +154,15 @@ func wantTable(t *testing.T, label, body string) string {
 	if err != nil {
 		t.Fatalf("toon.Table: %v", err)
 	}
-	return "spec: " + label + "\n" + "state: " + State(p) + "\n" + tbl
+	actions := make([]axi.Action, 0, len(Rows(p)))
+	for _, row := range Rows(p) {
+		actions = append(actions, axi.ExecutableInvocation("check coverage row "+row[0], axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(label)))
+	}
+	help, err := axi.RenderHelp(actions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return "spec: " + label + "\n" + "state: " + State(p) + "\n" + tbl + help
 }
 
 // TestCommand drives Command through its public (args) -> (output, exit code) interface
@@ -171,6 +180,37 @@ func TestCommand(t *testing.T) {
 		out, code := Command([]string{"spec.md"})
 		if want := wantTable(t, "spec.md", body); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
+		}
+	})
+
+	t.Run("appends one check action per unchecked row and deduplicates exact templates", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := mapped("| 1 | b | s | unchecked | catches one |\n| 2 | c | t | already covered | catches two |\n| 1 | b | s | unchecked | catches one |\n")
+		mustWrite(t, "path with spaces/spec.md", body)
+		out, code := Command([]string{"path with spaces/spec.md"})
+		want := "spec: path with spaces/spec.md\nstate: mapped\nrows[3]{story,seam,red_signal}:\n  \"1\",s,unchecked\n  \"2\",t,already covered\n  \"1\",s,unchecked\nhelp[2]{cmd,why}:\n  bench coverage --check 'path with spaces/spec.md',check coverage row 1\n  bench coverage --check 'path with spaces/spec.md',check coverage row 2\n"
+		if code != 0 || out != want {
+			t.Fatalf("Command = (%d, %q), want (%d, %q)", code, out, 0, want)
+		}
+	})
+
+	t.Run("repair prose does not alter unchecked classification", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := mapped("| 1 | b | s | repair is not evidence | catches one |\n")
+		mustWrite(t, "spec.md", body)
+		out, code := Command([]string{"spec.md"})
+		if code != 0 || !strings.Contains(out, "bench coverage --check spec.md,check coverage row 1") {
+			t.Fatalf("Command = (%d, %q), want unchecked check action", code, out)
+		}
+	})
+
+	t.Run("malformed map gets repair then retry action", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := mapped("| 9 | b | s | red | catches one |\n")
+		mustWrite(t, "spec.md", body)
+		out, code := Command([]string{"spec.md"})
+		if code != 1 || !strings.Contains(out, "bench coverage --check spec.md,retry after repairing coverage map") {
+			t.Fatalf("Command = (%d, %q), want exit 1 repair retry", code, out)
 		}
 	})
 
@@ -216,7 +256,7 @@ func TestCommand(t *testing.T) {
 
 	t.Run("slug shadowed by a same-named CWD file resolves path-first", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		cwdBody := mapped("| 4 | cwd | cwd-seam | cwd-red | cwd-why |\n")
+		cwdBody := mapped("| 1 | cwd | cwd-seam | cwd-red | cwd-why |\n")
 		specsBody := mapped("| 5 | specs | specs-seam | specs-red | specs-why |\n")
 		mustWrite(t, "foo", cwdBody)
 		mustWrite(t, "specs/foo/spec.md", specsBody)

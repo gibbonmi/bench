@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -433,5 +434,22 @@ func Command(args []string) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	b.WriteString(tbl)
+	violations := Check(p)
+	actions := make([]axi.Action, 0, len(Rows(p)))
+	if len(violations) > 0 {
+		actions = append(actions, axi.ExecutableInvocation("retry after repairing coverage map", axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(spec)))
+	} else {
+		for _, row := range Rows(p) {
+			actions = append(actions, axi.ExecutableInvocation("check coverage row "+row[0], axi.KnownArgument("coverage"), axi.KnownArgument("--check"), axi.KnownArgument(spec)))
+		}
+	}
+	help, err := axi.RenderHelp(actions)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	b.WriteString(help)
+	if len(violations) > 0 {
+		return b.String(), 1
+	}
 	return b.String(), 0
 }
