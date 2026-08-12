@@ -10,6 +10,17 @@ cold session reads this first to avoid drifting the vocabulary.
   call work done. Not "the checks", not "CI", not "the suite" — the gate.
 - **oracle** — the authority that decides done-ness. The gate is this repo's oracle.
   The model is never the oracle; it does not grade its own work.
+- **canary inventory** — the non-empty set of immutable fixture bindings that
+  `bench canary` validates. It proves inventory shape and one accepted binding
+  per fixture, not owner execution or a planted red. Not “canary dispatch”, not
+  “the sweep”.
+- **planted-reason proof** — a direct mutation test materializes one fixture,
+  invokes its exact owner, requires the fixture's `EXPECT` diagnostic, restores
+  the subject, and requires that diagnostic to disappear. Not inventory
+  validation, not an empty-tree collision screen.
+- **linked repo** — a project that receives Bench's linked payload and local
+  launcher, but not the kit's source-only ordinary test packages. Not “consumer
+  repo”, not “the kit”.
 - **shift** — one run of the gated loop (`bench shift "<objective>"`): iterate, run
   the gate, commit only on green. The unit of autonomous work.
 - **seam** — a stable interface where a test attaches and where you compose rather
