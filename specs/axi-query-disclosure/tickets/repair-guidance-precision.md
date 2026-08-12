@@ -9,5 +9,4 @@ Describe coverage disclosure at the transition that actually emits it: a success
 
 ## Acceptance
 
-- [ ] [GP1] (covers QD4) guidance names the successful extraction transition precisely and does not claim that the retry is appended after a refusal; its conformance mutation turns the inaccurate wording red.
-
+- [ ] [GP1] (covers QD4) guidance says that a successful default `coverage` extraction with repairable mapped rows appends the exact repair-then-`bench coverage --check <spec>` retry. It does not claim that `coverage --check` or any refusal appends disclosure; its conformance mutation turns that inaccurate wording red.

@@ -9,6 +9,6 @@ Consume the typed harness-phase kind landed with `maps`, then make the public `l
 
 ## Acceptance
 
-- [ ] [LH1] (covers QD1) open learnings state renders the canonical `/bench-what-next` phase through the typed owner, never as a shell command, with duplicate templates removed in stable row order.
+- [ ] [LH1] (covers QD1) open learnings state renders the canonical `/bench-what-next` phase through the typed owner, never as a shell command, with duplicate templates removed in producer row order.
 - [ ] [LH2] (covers QD1) drained and absent journals append the honest `help[0]{cmd,why}:` block without inventing work.
-- [ ] [LH3] (covers QD6) old-to-new public-command fixtures prove that each named learnings state changes only by its appended help block; primary bytes, stream, exit, and argv behavior remain byte-equal.
+- [ ] [LH3] (covers QD6) old-to-new public-command fixtures prove that open, drained, and absent learnings states change only by their appended help block; primary bytes, stream, exit, and argv behavior remain byte-equal. `repair-learnings-refusal-evidence.md` owns the distinct malformed-among-parsed and early-refusal partitions that this original ticket omitted.

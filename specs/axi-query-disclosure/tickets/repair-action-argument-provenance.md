@@ -9,6 +9,6 @@ Remove the test-fitted literal `unknown` rejection from the shared executable-ac
 
 ## Acceptance
 
-- [ ] [RP1] (covers QD1) `KnownArgument("unknown")` is a valid literal value, while empty, control-bearing, placeholder-bearing, and unsafe executable-name values remain refused by the shared owner.
+- [ ] [RP1] (covers QD1) `KnownArgument("unknown")` is a valid literal value, while empty, unsupported-control-bearing, placeholder-bearing, and unsafe executable-name values remain refused by the shared owner. The supported-control rewrite in `repair-control-bearing-action-values.md` supersedes this ticket's original blanket control-bearing counterexample: tab U+0009, line feed U+000A, and carriage return U+000D become valid, while every other `unicode.IsControl` rune remains refused.
 - [ ] [RP2] (covers QD1) maps, coverage, and worktree derivation fixtures independently pin their source-derived paths, ids, and argv, so replacing one carried value with a guessed literal turns its owning test red.
 - [ ] [RP3] (covers QD1) the shared owner contains no literal-value blacklist masquerading as provenance validation.

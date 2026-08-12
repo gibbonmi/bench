@@ -9,7 +9,7 @@ Declare AXI scope on the production registry entries, including nested `worktree
 
 ## Acceptance
 
-- [ ] [AC1] (covers QD3) production registry declarations identify exactly `anchors`, `learnings`, `maps`, `guards`, `coverage`, and `worktree list`, with every other member explicitly exempted and nested membership derived rather than guessed.
+- [ ] [AC1] (covers QD3) production registry declarations identify exactly `anchors`, `learnings`, `maps`, `guards`, `diff`, `coverage`, and `worktree list`, with every other member explicitly exempted and nested membership derived rather than guessed.
 - [ ] [AC2] (covers QD3) every declared member is graded independently for structured success stdout, definitive zero-row empty, structured refusal on stdout/1, unknown-flag usage/2, identical deep-cwd routing, all three help spellings on exit 0, and an appended or honest-empty help envelope.
 - [ ] [AC3] (covers QD3) removing one approved declaration or adding one operational declaration makes conformance red against an independent expectation; package-main tests bind registry declarations to real command envelopes.
 - [ ] [AC4] (covers QD3) `projects/benchkit.md` advertises the same approved set and no wider operational family.
