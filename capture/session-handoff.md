@@ -2,21 +2,19 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `b90d8a4`, clean tree, 29 unpushed commits
+Branch: `main` — HEAD `543d855`, 1 dirty path, 34 unpushed commits
 Spec: `specs/axi-query-disclosure/spec.md` (Status: staged), `specs/single-build-serial-gate/spec.md` (Status: staged)
-Gate: green at `4440ce1` — stale, work tree `210c21c`
+Gate: green at `87299b5` — stale, work tree `a10f583`
 
 ## State
 
-Implementation review is recorded at `reviews/axi-query-disclosure.md` in
-`b90d8a4c`: Standards 2, Spec 5, Coverage 2, collapsing to seven repair targets.
-Six are deterministic auto-fixes. One reviewer decision remains: remove the
-test-fitted literal `unknown` rejection and move guessed-value falsification to
-call-site derivation tests (recommended), or redesign the public action type with
-a new enforceable provenance contract. Keep the approved query surface,
-compatibility deltas, production-registry ownership, and Fable findings closed.
-No repair has started, no push has run, and the eight pre-existing foreign
-worktree records remain untouched.
+The repaired implementation was re-reviewed on exact candidate
+`c2542a97..543d8551`: Standards 3, Spec 2, Coverage 3, collapsing to six
+deterministic repair targets recorded in `reviews/axi-query-disclosure.md`.
+The formerly accepted seven targets are resolved. Keep the approved surface,
+default-extraction scope, exact compatibility contract, production-registry
+ownership, and the reviewer-selected call-site provenance decision closed.
+No push has run. The eight pre-existing foreign worktree records remain untouched.
 
 ## Next command
 
