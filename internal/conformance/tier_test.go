@@ -433,6 +433,8 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestDecisionMapIntegrityFixtureInventoryRejectsDeletion":   true,
 	"TestDecisionMapIntegrityFixturesBite":                      true,
 	"TestDocsCurrencyTokenDietAndWorkflowFixturesBite":          true,
+	"TestGuidanceProseBudgetCanaryFixtureBites":                 true,
+	"TestGuidanceProseBudgetsHoldOnTheLiveTree":                 true,
 	"TestHarnessUsesBenchConformanceRootAsGradedRoot":           true,
 	"TestInvalidOrderedSetRedsAndWidensToTheFullTier":           true,
 	"TestLineRoutingFixturesBite":                               true,

@@ -63,6 +63,7 @@ func init() {
 		"skip-ownership":                {checkSkipOwnership, registry.Dev, registry.SubjectRoot},
 		"decision-map-integrity":        {maps.ValidateDecisionMapTree, registry.Dev, registry.SubjectRoot},
 		"injected-port-registry":        {checkInjectedPortRegistry, registry.Dev, registry.SubjectRoot},
+		"guidance-prose-budgets":        {checkGuidanceProseBudgets, registry.Dev, registry.SubjectRoot},
 	}
 }
 

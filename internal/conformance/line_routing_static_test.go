@@ -81,24 +81,31 @@ func checkLineBinding(root string) []string {
 // profileLinesSection returns the body under the profile's `Lines` heading and whether that
 // heading exists. The cross-check is anchored here rather than run over the whole file
 // because an unanchored search lets any passing mention keep the check green while the table
-// that renders the binding for a human rots. The section runs to the next heading of the
-// same or shallower depth, so its own subsections stay inside it.
+// that renders the binding for a human rots.
 func profileLinesSection(profile string) (string, bool) {
+	return profileSection(profile, "Lines")
+}
+
+// profileSection returns the body under the profile heading named title, and whether that
+// heading exists. A heading matches on its first word so a parenthetical subtitle can be
+// reworded without moving the anchor. The section runs to the next heading of the same or
+// shallower depth, so its own subsections stay inside it.
+func profileSection(profile, title string) (string, bool) {
 	depth := 0
 	var body []string
 	for _, line := range strings.Split(profile, "\n") {
 		hashes := len(line) - len(strings.TrimLeft(line, "#"))
-		title := ""
+		heading := ""
 		if hashes > 0 && strings.HasPrefix(line[hashes:], " ") {
-			title = strings.TrimSpace(line[hashes:])
+			heading = strings.TrimSpace(line[hashes:])
 		}
 		if depth == 0 {
-			if title == "Lines" || strings.HasPrefix(title, "Lines ") {
+			if heading == title || strings.HasPrefix(heading, title+" ") {
 				depth = hashes
 			}
 			continue
 		}
-		if title != "" && hashes <= depth {
+		if heading != "" && hashes <= depth {
 			break
 		}
 		body = append(body, line)

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-fixture/SKILL.md",
+    "old": "This fixture skill sits one line inside the budget its profile publishes.",
+    "new": "This fixture skill sits one line inside the budget its profile publishes.\nThe mutation adds three more lines,\nwhich carries the file past the limit\nthe fixture profile publishes for it."
+  }
+]

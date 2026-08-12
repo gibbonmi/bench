@@ -248,6 +248,7 @@ current-state advertisement of its non-meta input bindings:
 | `skip-ownership` | `go-source` |
 | `decision-map-integrity` | `decision-documents` |
 | `injected-port-registry` | `go-source` |
+| `guidance-prose-budgets` | `benchkit-profile` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
 current exact green; partial/component and reduced-scope records are legacy input classes
@@ -264,6 +265,26 @@ exact dev-green verdict and owns release-evidence verification, cross-platform a
 reproducibility, stress/cross-compile coverage, and publication/preflight rehearsal. Dev
 green proves the complete branch-native source architecture; it does not grant publish
 authority or claim release artifacts were reproduced.
+
+### Guidance prose budgets
+
+Guidance prose that outgrows a session's attention stops being read. This table is the
+one source for how long each subject may be, and the `guidance-prose-budgets` check
+parses it rather than repeating its numbers. An exact row beats the glob row a subject
+also matches, so raising or lowering a budget is an edit here and nowhere else.
+
+| subject | limit |
+|---|---|
+| `.bench/BENCH.md` | 150 |
+| `.agents/commands/bench-implement-spec.md` | 60 |
+| `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
+| `.agents/skills/*/SKILL.md` | 120 |
+
+The glob row is what classifies a newly added skill, so a skill arrives budgeted without
+anybody editing the checker. Every other `.agents/commands/*.md` file is outside the
+reviewed universe, and the `.claude/skills/*` adapter symlinks are distribution surfaces
+rather than subjects — a symbolic link or special file found where a subject belongs is
+refused unread.
 
 ## Lines (model + effort routing)
 
@@ -308,13 +329,6 @@ escalation.
   gate attachment from that source and the current tree. Top + high remains a
   reviewer-approved escalation. Distinct from the doc-authoring leverage
   override above: that spends the top tier on the kit's guidance prose.
-- **Spec-build guidance cadence** → **`gpt-5.6-sol / high`**. Run `bench
-  structure` before and after the guidance cut; the inherited findings are the
-  baseline and the cut adds none. Both dogfood traces use the public porcelain:
-  three ownership-safe tickets fill three slots, and integrating one unlocks a
-  fourth assignment while another delegate remains active. The final composed
-  gate runs only through `promote`; existing shift and ordinary-commit runtime
-  contracts remain positive controls.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
@@ -328,12 +342,11 @@ escalation.
   falsification questions, never an open review; its verdict is advisory and
   sign-off stays the reviewer's.
 - **Ticket-breakdown review pass** (`/bench-implement-spec`, after the ticket
-  files are written and before the first ticket is assigned) → **mid model, medium
-  effort, 1 iteration**, read-only. Standing grant like the falsification pass:
-  every breakdown gets it, spawned without asking, and charge time never
-  re-derives this routing. Charged at `craft-tickets`' consolidated target list,
-  never an open review; its findings are reslices the coordinator repairs before
-  assignment begins.
+  files are written and before the first ticket is assigned) → no delegate and no
+  line. The coordinator presents the breakdown to the reviewer as a numbered list
+  of title, `Blocked by:`, and delivered outcome, and iterates it with them until
+  they approve; approval is the reviewer's, so a read-only pass standing in for it
+  would grade the wrong thing.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).
   Read-heavy: each takes the full diff plus standards docs and runs verification

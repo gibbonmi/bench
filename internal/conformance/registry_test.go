@@ -174,6 +174,10 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/conformance/injected_ports_test.go",
 		"internal/conformance/checks_test.go",
 	),
+	"guidance-prose-budgets": conformanceGoFixture(
+		"internal/conformance/prose_budget_test.go",
+		"internal/conformance/checks_test.go",
+	),
 }
 
 func conformanceFixture(shellSources ...string) fixtureRegistration {
