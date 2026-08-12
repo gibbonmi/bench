@@ -41,7 +41,9 @@ branch-agnostic. This line is only the binding.)
   the AXI contract fragments. Guard manifests come from each guard script's static
   leading-comment header (read as data, never executed), and
   `bench guards --brief` is the surface the SessionStart hook injects.
-  `bench diff` is the single source of review-base truth: the shift loop records
+  `bench diff` is the single coherent review snapshot and source of review-base truth:
+  it reports the revision, aggregate, inventory, checkout, whitespace, and optional
+  complete patch from one movement-checked read; the shift loop records
   the pre-shift HEAD in `branch.<name>.benchBase`, `diff` resolves that key first
   and merge-base with the default branch as fallback. `bench coverage --check` is
   the one parser for the acceptance-coverage-map convention; the gate's docs

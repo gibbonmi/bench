@@ -9,7 +9,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -98,6 +102,15 @@ type RepoFacts struct {
 	Dirty                 bool
 	Ahead, Behind         int
 	Changes               []PorcelainEntry
+}
+
+// DiffFacts is the additive facts path for bench diff. It intentionally leaves Facts
+// unchanged for existing consumers while expanding untracked directories into the
+// individual entries a coherent patch can actually show.
+type DiffFacts struct {
+	RepoFacts
+	Head, DefaultTip, RecordedBase string
+	Porcelain                      []byte
 }
 
 // LandedStateFact is the offline git verdict used by status. DirtyPaths describes the named
@@ -324,6 +337,101 @@ func Facts(root string) (RepoFacts, error) {
 		return RepoFacts{}, fmt.Errorf("parse git divergence: %w", err)
 	}
 	return f, nil
+}
+
+// AllFilesFacts derives the diff-specific status facts with Git's all-files
+// untracked policy. Existing Facts callers retain their collapsed-directory output.
+func AllFilesFacts(root string) (DiffFacts, error) {
+	branch, err := CheckedOutBranch(root)
+	if err != nil {
+		return DiffFacts{}, err
+	}
+	head, _ := Output("-C", root, "rev-parse", "HEAD")
+	recordedBase := ""
+	if branch != "HEAD" {
+		recordedBase, _ = Output("-C", root, "config", "branch."+branch+".benchBase")
+	}
+	raw, changes, err := AllFilesStatus(root)
+	if err != nil {
+		return DiffFacts{}, err
+	}
+	f := DiffFacts{
+		RepoFacts:    RepoFacts{Branch: branch, Changes: changes},
+		Head:         head,
+		RecordedBase: recordedBase,
+		Porcelain:    raw,
+	}
+	f.Dirty = len(f.Changes) > 0
+	def, ok := ResolvedDefault(root)
+	if !ok {
+		return f, nil
+	}
+	defaultTip, err := Output("-C", root, "rev-parse", def)
+	if err != nil {
+		return DiffFacts{}, fmt.Errorf("git default tip: %w", err)
+	}
+	f.DefaultBranch, f.DefaultTip, f.DefaultResolved = def, defaultTip, true
+	counts, err := Output("-C", root, "rev-list", "--left-right", "--count", defaultTip+"..."+head)
+	if err != nil {
+		return DiffFacts{}, fmt.Errorf("git rev-list: %w", err)
+	}
+	if _, err := fmt.Sscanf(counts, "%d\t%d", &f.Behind, &f.Ahead); err != nil {
+		return DiffFacts{}, fmt.Errorf("parse git divergence: %w", err)
+	}
+	return f, nil
+}
+
+// AllFilesStatus returns Git's raw all-files porcelain plus untracked special
+// entries that Git omits from that stream. The supplemental walk only classifies
+// non-regular, non-directory, non-symlink nodes and asks Git whether each is tracked
+// or ignored; it never opens the node.
+func AllFilesStatus(root string) ([]byte, []PorcelainEntry, error) {
+	raw, err := Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
+	if err != nil {
+		return nil, nil, err
+	}
+	changes := ParsePorcelainZ(raw)
+	seen := make(map[string]bool, len(changes))
+	for _, change := range changes {
+		seen[change.Path] = true
+	}
+	err = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.Name() == ".git" {
+			if entry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.IsDir() || entry.Type().IsRegular() || entry.Type()&os.ModeSymlink != 0 {
+			return nil
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		if info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		if seen[rel] || OK("-C", root, "ls-files", "--error-unmatch", "--", rel) || OK("-C", root, "check-ignore", "-q", "--", rel) {
+			return nil
+		}
+		seen[rel] = true
+		changes = append(changes, PorcelainEntry{Status: "??", Path: rel})
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	sort.Slice(changes, func(i, j int) bool { return changes[i].Path < changes[j].Path })
+	return raw, changes, nil
 }
 
 // ParsePorcelainZ splits `git status --porcelain -z --no-renames` output into entries.

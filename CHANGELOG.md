@@ -26,6 +26,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- `bench diff` now renders one coherent AXI snapshot with revision and aggregate
+  facts, all-files checkout inventory, whitespace verdicts, exact untracked bodies in
+  `--full`, and executable follow-up help; it retries a moving live checkout once and
+  then refuses a torn response.
+
 - Added the standalone `prototype` skill (`.agents/skills/prototype`): a
   disposable prototype answers one named question, runs trivially, keeps state
   in memory unless persistence is the question, surfaces the relevant state,

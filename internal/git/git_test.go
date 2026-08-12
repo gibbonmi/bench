@@ -69,6 +69,33 @@ func TestTreeHashDirtyTreeDiffers(t *testing.T) {
 	}
 }
 
+func TestAllFilesFactsExpandsWithoutChangingFacts(t *testing.T) {
+	root := t.TempDir()
+	runGit(t, root, "init", "-q", "-b", "main")
+	runGit(t, root, "config", "user.email", "t@example.com")
+	runGit(t, root, "config", "user.name", "t")
+	if err := os.MkdirAll(filepath.Join(root, "nested", "new"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "nested", "new", "file.txt"), []byte("new\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	legacy, err := Facts(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, err := AllFilesFacts(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := legacy.Changes[0].Path, "nested/"; got != want {
+		t.Fatalf("Facts changed its legacy collapsed-directory result: got %q, want %q", got, want)
+	}
+	if got, want := all.Changes[0].Path, "nested/new/file.txt"; got != want {
+		t.Fatalf("AllFilesFacts path = %q, want %q", got, want)
+	}
+}
+
 func TestTreeHashExcludesIgnoredContent(t *testing.T) {
 	root := newRepo(t)
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("ignored/\n"), 0o644); err != nil {

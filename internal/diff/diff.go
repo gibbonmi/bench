@@ -1,37 +1,27 @@
-// Package diff ports `bench diff`: the single source of review-base truth for the
-// review phase. The recorded `branch.<name>.benchBase` key wins when it names a
-// reachable ancestor; otherwise merge-base with the default branch. The preamble
-// names which method resolved so a review agent can see a fallback happen, and a
-// recorded sha that is unreachable or not an ancestor falls back loudly rather than
-// silently diffing from the wrong base. Changed files follow as a
-// `files[N]{status,path}:` table with paths escaped exactly once.
-//
-// The `--full` flag appends the rest of the base-relative picture a review agent
-// otherwise hand-runs as two extra git calls: a `log[N]{sha,subject}:` TOON table
-// from `git log <base>..HEAD` (two-dot: commits on HEAD since base), and — last,
-// behind a fixed `diff_body:` marker line — the raw output of `git diff <base>`
-// (committed, index, and tracked worktree changes since the resolved base) passed
-// through verbatim, undecorated by TOON so a hunk header or `+`/`-` line survives
-// unmangled. Bare `bench diff` is byte-for-byte unaffected by the flag's existence.
-//
-// `--commit <sha>` bounds the same three sections to one already-landed commit
-// instead of the current branch: base becomes the commit's own first parent
-// (`git rev-parse --verify <sha>^`), so the range is an exact two-commit diff, not
-// a merge-base-relative one — for a merge commit this is everything the merge
-// brought in. benchBase/merge-base resolution is skipped entirely; `method: commit
-// <sha>` is how a reader sees that the override applies. The sha is verified before
-// any section renders: an unresolvable sha or a root commit's missing parent is
-// its own structured error, never a leaked git failure.
+// Package diff owns the coherent Git review snapshot. A live response resolves its
+// branch range once, renders every bounded and complete section from that attempt,
+// and compares each patch-observable identity before emitting any bytes. A named
+// commit remains an immutable first-parent view and omits unrelated checkout facts.
 package diff
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// snapshotAfterRead is a test seam for a deterministic mutation between the two
+// identity captures. Production leaves it as a no-op.
+var snapshotAfterRead = func() {}
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand —
 // arity, flag recognition, `--`, repeated flags, and help all come from there rather
@@ -117,20 +107,283 @@ func diffBody(rangeArgs ...string) ([]byte, error) {
 	return git.Raw(args...)
 }
 
+func changedFilesAt(root string, rangeArgs ...string) ([][]string, error) {
+	args := append([]string{"-C", root, "diff", "--name-status", "--no-renames", "-z"}, rangeArgs...)
+	raw, err := git.Raw(args...)
+	if err != nil {
+		return nil, err
+	}
+	return parseNameStatusZ(raw), nil
+}
+
+func diffBodyAt(root string, rangeArgs ...string) ([]byte, error) {
+	args := append([]string{"-C", root, "diff"}, rangeArgs...)
+	return git.Raw(args...)
+}
+
+func commitLogAt(root, rangeExpr string) ([][]string, error) {
+	raw, err := git.Raw("-C", root, "log", "--format=%h%x00%s", rangeExpr)
+	if err != nil {
+		return nil, err
+	}
+	return parseLogFormat(raw), nil
+}
+
+func fileKind(root, path string) string {
+	info, err := os.Lstat(filepath.Join(root, path))
+	if err != nil {
+		return "dangling-symlink"
+	}
+	mode := info.Mode()
+	if mode.IsRegular() {
+		return ""
+	}
+	if mode&os.ModeSymlink != 0 {
+		if _, err := os.Stat(filepath.Join(root, path)); err != nil {
+			return "dangling-symlink"
+		}
+		return "symlink"
+	}
+	if mode&os.ModeNamedPipe != 0 {
+		return "fifo"
+	}
+	if mode&os.ModeSocket != 0 {
+		return "socket"
+	}
+	if mode&os.ModeDevice != 0 {
+		return "device"
+	}
+	return "special"
+}
+
+func checkoutRows(changes []git.PorcelainEntry) [][]string {
+	rows := make([][]string, 0, len(changes))
+	for _, change := range changes {
+		if len(change.Status) != 2 {
+			continue
+		}
+		x, y := string(change.Status[0]), string(change.Status[1])
+		if x == " " {
+			x = "-"
+		}
+		if y == " " {
+			y = "-"
+		}
+		rows = append(rows, []string{x, y, change.Path})
+	}
+	return rows
+}
+
+func statusCounts(changes []git.PorcelainEntry) (staged, unstaged, untracked int) {
+	for _, change := range changes {
+		if change.Status == "??" {
+			untracked++
+			continue
+		}
+		if len(change.Status) == 2 && change.Status[0] != ' ' {
+			staged++
+		}
+		if len(change.Status) == 2 && change.Status[1] != ' ' {
+			unstaged++
+		}
+	}
+	return
+}
+
+func shortstat(root string, args ...string) (insertions, deletions int, err error) {
+	cmd := append([]string{"-C", root, "diff", "--shortstat"}, args...)
+	out, err := git.Output(cmd...)
+	if err != nil || out == "" {
+		return 0, 0, err
+	}
+	for _, field := range strings.Split(out, ",") {
+		words := strings.Fields(field)
+		if len(words) < 2 {
+			continue
+		}
+		n, parseErr := strconv.Atoi(words[0])
+		if parseErr != nil {
+			continue
+		}
+		if strings.HasPrefix(words[1], "insertion") {
+			insertions = n
+		}
+		if strings.HasPrefix(words[1], "deletion") {
+			deletions = n
+		}
+	}
+	return insertions, deletions, nil
+}
+
+func whitespace(root string, args ...string) (clean bool, offenses int, err error) {
+	cmd := append([]string{"-C", root, "diff", "--check"}, args...)
+	out, runErr := git.Raw(cmd...)
+	if runErr == nil {
+		return true, 0, nil
+	}
+	if len(out) == 0 {
+		return false, 0, runErr
+	}
+	return false, len(strings.Split(strings.TrimSuffix(string(out), "\n"), "\n")), nil
+}
+
+type snapshotIdentity struct {
+	head, defaultTip, recordedBase, index, porcelain string
+	dirtyContent, dirtyMode, dirtyGitlink            string
+}
+
+func digest(bytes []byte) string { return fmt.Sprintf("%x", sha256.Sum256(bytes)) }
+
+func capturedIdentity(root string, facts git.DiffFacts) (snapshotIdentity, error) {
+	identity := snapshotIdentity{
+		head:         facts.Head,
+		defaultTip:   facts.DefaultTip,
+		recordedBase: facts.RecordedBase,
+		porcelain:    digest(facts.Porcelain),
+	}
+	var err error
+	identity.index, err = indexIdentity(root)
+	if err != nil {
+		return snapshotIdentity{}, err
+	}
+	identity.dirtyContent, identity.dirtyMode, identity.dirtyGitlink, err = pathIdentities(root, facts.Changes)
+	return identity, err
+}
+
+func recapturedIdentity(root string, facts git.DiffFacts) (snapshotIdentity, error) {
+	after := facts
+	var err error
+	after.Head, err = git.Output("-C", root, "rev-parse", "HEAD")
+	if err != nil {
+		return snapshotIdentity{}, err
+	}
+	if facts.DefaultResolved {
+		after.DefaultTip, err = git.Output("-C", root, "rev-parse", facts.DefaultBranch)
+		if err != nil {
+			return snapshotIdentity{}, err
+		}
+	}
+	if facts.Branch != "HEAD" {
+		after.RecordedBase, _ = git.Output("-C", root, "config", "branch."+facts.Branch+".benchBase")
+	}
+	after.Porcelain, after.Changes, err = git.AllFilesStatus(root)
+	if err != nil {
+		return snapshotIdentity{}, err
+	}
+	return capturedIdentity(root, after)
+}
+
+func indexIdentity(root string) (string, error) {
+	if indexPath, err := git.Output("-C", root, "rev-parse", "--git-path", "index"); err == nil {
+		if !filepath.IsAbs(indexPath) {
+			indexPath = filepath.Join(root, indexPath)
+		}
+		data, readErr := os.ReadFile(indexPath)
+		if readErr != nil {
+			return "", readErr
+		}
+		return digest(data), nil
+	} else {
+		return "", err
+	}
+}
+
+func pathIdentities(root string, changes []git.PorcelainEntry) (contentDigest, modeDigest, gitlinkDigest string, err error) {
+	contents := make([]string, 0, len(changes))
+	modes := make([]string, 0, len(changes))
+	gitlinks := make([]string, 0, len(changes))
+	for _, entry := range changes {
+		path := filepath.Join(root, entry.Path)
+		info, err := os.Lstat(path)
+		if err != nil {
+			contents = append(contents, entry.Path+":missing")
+			modes = append(modes, entry.Path+":missing")
+			continue
+		}
+		modes = append(modes, entry.Path+":"+info.Mode().String())
+		if head, ok := gitlinkHead(root, entry.Path); ok {
+			gitlinks = append(gitlinks, entry.Path+":"+head)
+			continue
+		}
+		value := ""
+		switch {
+		case info.Mode().IsRegular():
+			data, readErr := os.ReadFile(path)
+			if readErr != nil {
+				return "", "", "", readErr
+			}
+			value = digest(data)
+		case info.Mode()&os.ModeSymlink != 0:
+			target, readErr := os.Readlink(path)
+			if readErr != nil {
+				return "", "", "", readErr
+			}
+			value = target
+		default:
+			value = fmt.Sprintf("%d:%d", info.Size(), info.ModTime().UnixNano())
+		}
+		contents = append(contents, entry.Path+":"+value)
+	}
+	sort.Strings(contents)
+	sort.Strings(modes)
+	sort.Strings(gitlinks)
+	return digest([]byte(strings.Join(contents, "\x00"))), digest([]byte(strings.Join(modes, "\x00"))), digest([]byte(strings.Join(gitlinks, "\x00"))), nil
+}
+
+func gitlinkHead(root, path string) (string, bool) {
+	entry, err := git.Output("-C", root, "ls-files", "--stage", "--", path)
+	if err != nil || !strings.HasPrefix(entry, "160000 ") {
+		return "", false
+	}
+	head, err := git.Output("-C", filepath.Join(root, path), "rev-parse", "HEAD")
+	if err != nil {
+		return "missing", true
+	}
+	return head, true
+}
+
+func (i snapshotIdentity) drifted(after snapshotIdentity) string {
+	for _, field := range []struct{ name, before, after string }{
+		{"HEAD", i.head, after.head}, {"default tip", i.defaultTip, after.defaultTip},
+		{"recorded base", i.recordedBase, after.recordedBase}, {"index", i.index, after.index},
+		{"porcelain", i.porcelain, after.porcelain},
+		{"dirty content", i.dirtyContent, after.dirtyContent},
+		{"dirty mode", i.dirtyMode, after.dirtyMode},
+		{"dirty gitlink HEAD", i.dirtyGitlink, after.dirtyGitlink},
+	} {
+		if field.before != field.after {
+			return field.name
+		}
+	}
+	return ""
+}
+
+func untrackedPatches(root string, facts git.DiffFacts) ([]byte, error) {
+	var paths []string
+	for _, entry := range facts.Changes {
+		if entry.Status == "??" && fileKind(root, entry.Path) == "" {
+			paths = append(paths, entry.Path)
+		}
+	}
+	sort.Strings(paths)
+	var body []byte
+	for _, path := range paths {
+		patch, err := git.Raw("-C", root, "diff", "--no-index", "--", "/dev/null", path)
+		if err != nil && len(patch) == 0 {
+			return nil, err
+		}
+		body = append(body, patch...)
+	}
+	return body, nil
+}
+
 const fullHelp = `usage: bench diff [--full] [--commit <sha>]
-  --full appends, after the files table, a log[N]{sha,subject} TOON table (git
-  log <base>..HEAD) and, last, a verbatim diff_body: block (git diff
-  <base>, including tracked index and worktree changes) — the raw diff is passed
-  through unescaped, not TOON-encoded. The log remains commit-only.
-  A commit subject carrying a control byte makes --full refuse: it exits 1
-  with the unrepresentable-TOON-cell error instead of rendering a mangled log
-  row.
-  --commit <sha> bounds every section to one already-landed commit instead of
-  the current branch: base becomes <sha>'s first parent, skipping
-  benchBase/merge-base resolution entirely — the fallback for reviewing work
-  after it has already merged, when the branch-relative diff is empty. A root
-  commit (no parent) or an unresolvable <sha> exits 1 with a structured
-  error; a bare --commit (no value) or a repeated --commit exits 2.
+  Live mode reports one movement-checked revision, aggregate, files, checkout,
+  and whitespace snapshot. --full also appends the commit log and verbatim
+  tracked patch, then path-sorted raw Git patches for untracked regular files.
+  --commit <sha> reports the immutable first-parent view of one resolved commit
+  and omits unrelated live-checkout facts. Bounded results advertise the exact
+  --full invocation; complete and clean results advertise an empty help table.
 `
 
 // diffRange is the resolved review range every rendering section shares: the base
@@ -139,6 +392,7 @@ const fullHelp = `usage: bench diff [--full] [--commit <sha>]
 // commit-relative (exact first-parent) range.
 type diffRange struct {
 	base      string
+	head      string
 	method    string
 	filesArgs []string
 	logRange  string
@@ -149,19 +403,20 @@ type diffRange struct {
 // resolved first parent. The sha is verified before anything renders — an
 // unresolvable sha and a root commit's missing parent are each their own
 // structured error (kind, hint), never a leaked git failure.
-func resolveCommitRange(commitArg string) (dr diffRange, errKind, errHint string) {
-	headSha, err := git.Output("rev-parse", "--verify", commitArg+"^{commit}")
+func resolveCommitRange(root, commitArg string) (dr diffRange, errKind, errHint string) {
+	headSha, err := git.Output("-C", root, "rev-parse", "--verify", commitArg+"^{commit}")
 	if err != nil {
 		return diffRange{}, "cannot resolve --commit",
 			"'" + commitArg + "' does not name a commit reachable in this repository"
 	}
-	baseSha, err := git.Output("rev-parse", "--verify", commitArg+"^")
+	baseSha, err := git.Output("-C", root, "rev-parse", "--verify", commitArg+"^")
 	if err != nil {
 		return diffRange{}, "--commit has no parent",
 			"'" + commitArg + "' is a root commit — there is no first parent to diff against"
 	}
 	return diffRange{
 		base:      baseSha,
+		head:      headSha,
 		method:    "commit " + headSha,
 		filesArgs: []string{baseSha, headSha},
 		logRange:  baseSha + ".." + headSha,
@@ -199,53 +454,240 @@ func Command(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 
-	var dr diffRange
-	var errKind, errHint string
-	if hasCommit {
-		dr, errKind, errHint = resolveCommitRange(commitArg)
-	} else {
-		dr, errKind, errHint = resolveBranchRange(root)
+	invocation := append([]string{"diff"}, args...)
+	for attempt := 0; attempt < 2; attempt++ {
+		out, drift, errKind, errHint := renderAttempt(root, hasCommit, commitArg, full)
+		if errKind != "" {
+			return toon.Errorf(errKind, errHint) + "\n", 1
+		}
+		if drift == "" {
+			return out, 0
+		}
+		if attempt == 1 {
+			help, err := axi.RenderHelp([]axi.Action{axi.RetryDiff(invocation)})
+			if err != nil {
+				return toon.RenderError(err) + "\n", 1
+			}
+			return toon.Errorf("snapshot drift", "the "+drift+" changed while reading; retry the exact invocation") + "\n" + help, 1
+		}
 	}
-	if errKind != "" {
-		return toon.Errorf(errKind, errHint) + "\n", 1
-	}
+	return toon.Errorf("snapshot drift", "the repository changed while reading") + "\n", 1
+}
 
-	branch, _ := git.Output("symbolic-ref", "--quiet", "--short", "HEAD")
-	branchLabel := branch
-	if branchLabel == "" {
-		branchLabel = "(detached)"
+func renderAttempt(root string, hasCommit bool, commitArg string, full bool) (out, drift, errKind, errHint string) {
+	var dr diffRange
+	if hasCommit {
+		dr, errKind, errHint = resolveCommitRange(root, commitArg)
+		if errKind != "" {
+			return "", "", errKind, errHint
+		}
+		out, errKind, errHint := renderCommit(root, dr, full)
+		return out, "", errKind, errHint
+	}
+	facts, err := git.AllFilesFacts(root)
+	if err != nil {
+		return "", "", "checkout facts failed", err.Error()
+	}
+	before, err := capturedIdentity(root, facts)
+	if err != nil {
+		return "", "", "snapshot identity failed", err.Error()
+	}
+	dr, errKind, errHint = resolveBranchRangeFromFacts(root, facts)
+	if errKind != "" {
+		return "", "", errKind, errHint
+	}
+	output, errKind, errHint := renderLive(root, dr, facts, full)
+	if errKind != "" {
+		return "", "", errKind, errHint
+	}
+	snapshotAfterRead()
+	after, err := recapturedIdentity(root, facts)
+	if err != nil {
+		return "", "", "snapshot identity failed", err.Error()
+	}
+	if changed := before.drifted(after); changed != "" {
+		return "", changed, "", ""
+	}
+	return output, "", "", ""
+}
+
+func renderLive(root string, dr diffRange, facts git.DiffFacts, full bool) (string, string, string) {
+	tracked, err := changedFilesAt(root, dr.filesArgs...)
+	if err != nil {
+		return "", "git diff --name-status failed", err.Error()
+	}
+	files := make([][]string, 0, len(tracked)+len(facts.Changes))
+	for _, row := range tracked {
+		files = append(files, []string{row[0], row[1], ""})
+	}
+	for _, entry := range facts.Changes {
+		if entry.Status == "??" {
+			files = append(files, []string{"?", entry.Path, fileKind(root, entry.Path)})
+		}
+	}
+	commits, err := commitLogAt(root, dr.logRange)
+	if err != nil {
+		return "", "git log failed", err.Error()
+	}
+	insertions, deletions, err := shortstat(root, dr.filesArgs...)
+	if err != nil {
+		return "", "git diff --shortstat failed", err.Error()
+	}
+	clean, offenses, err := whitespace(root, dr.filesArgs...)
+	if err != nil {
+		return "", "git diff --check failed", err.Error()
+	}
+	staged, unstaged, untracked := statusCounts(facts.Changes)
+	branch := facts.Branch
+	if branch == "HEAD" {
+		branch = "(detached)"
+	}
+	revision, err := toon.Table("revision", []string{"branch", "default", "ahead", "behind", "base", "method", "head"}, [][]string{{branch, facts.DefaultBranch, strconv.Itoa(facts.Ahead), strconv.Itoa(facts.Behind), dr.base, dr.method, facts.Head}})
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	aggregate, err := toon.Table("aggregate", []string{"commits", "files", "insertions", "deletions", "staged", "unstaged", "untracked"}, [][]string{{strconv.Itoa(len(commits)), strconv.Itoa(len(files)), strconv.Itoa(insertions), strconv.Itoa(deletions), strconv.Itoa(staged), strconv.Itoa(unstaged), strconv.Itoa(untracked)}})
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	fileTable, err := toon.Table("files", []string{"status", "path", "kind"}, files)
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	checkout, err := toon.Table("checkout", []string{"index", "worktree", "path"}, checkoutRows(facts.Changes))
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	white, err := toon.Table("whitespace", []string{"clean", "offenses"}, [][]string{{strconv.FormatBool(clean), strconv.Itoa(offenses)}})
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "branch: %s\n", branchLabel)
-	fmt.Fprintf(&b, "base: %s\n", dr.base)
-	fmt.Fprintf(&b, "method: %s\n", dr.method)
-	files, err := changedFiles(dr.filesArgs...)
-	if err != nil {
-		return toon.Errorf("git diff --name-status failed", err.Error()) + "\n", 1
-	}
-	tbl, err := toon.Table("files", []string{"status", "path"}, files)
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	b.WriteString(tbl)
+	b.WriteString(revision)
+	b.WriteString(aggregate)
+	b.WriteString(fileTable)
+	b.WriteString(checkout)
+	b.WriteString(white)
 	if full {
-		logRows, err := commitLog(dr.logRange)
+		logTable, err := toon.Table("log", []string{"sha", "subject"}, commits)
 		if err != nil {
-			return toon.Errorf("git log failed", err.Error()) + "\n", 1
+			return "", "unrepresentable TOON cell", err.Error()
 		}
-		logTbl, err := toon.Table("log", []string{"sha", "subject"}, logRows)
+		body, err := diffBodyAt(root, dr.bodyArgs...)
 		if err != nil {
-			return toon.RenderError(err) + "\n", 1
+			return "", "git diff failed", err.Error()
 		}
-		b.WriteString(logTbl)
+		untrackedBody, err := untrackedPatches(root, facts)
+		if err != nil {
+			return "", "git diff --no-index failed", err.Error()
+		}
+		b.WriteString(logTable)
 		b.WriteString("diff_body:\n")
-		body, err := diffBody(dr.bodyArgs...)
+		b.Write(body)
+		b.Write(untrackedBody)
+	}
+	actions := []axi.Action(nil)
+	if !full && len(files) > 0 {
+		actions = append(actions, axi.InspectFull(""))
+	}
+	help, err := axi.RenderHelp(actions)
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	b.WriteString(help)
+	return b.String(), "", ""
+}
+
+func renderCommit(root string, dr diffRange, full bool) (string, string, string) {
+	files, err := changedFilesAt(root, dr.filesArgs...)
+	if err != nil {
+		return "", "git diff --name-status failed", err.Error()
+	}
+	commits, err := commitLogAt(root, dr.logRange)
+	if err != nil {
+		return "", "git log failed", err.Error()
+	}
+	insertions, deletions, err := shortstat(root, dr.filesArgs...)
+	if err != nil {
+		return "", "git diff --shortstat failed", err.Error()
+	}
+	revision, err := toon.Table("revision", []string{"commit", "base", "method"}, [][]string{{dr.head, dr.base, dr.method}})
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	aggregate, err := toon.Table("aggregate", []string{"commits", "files", "insertions", "deletions"}, [][]string{{strconv.Itoa(len(commits)), strconv.Itoa(len(files)), strconv.Itoa(insertions), strconv.Itoa(deletions)}})
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	for i := range files {
+		files[i] = append(files[i], "")
+	}
+	fileTable, err := toon.Table("files", []string{"status", "path", "kind"}, files)
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	var b strings.Builder
+	b.WriteString(revision)
+	b.WriteString(aggregate)
+	b.WriteString(fileTable)
+	if full {
+		logTable, err := toon.Table("log", []string{"sha", "subject"}, commits)
 		if err != nil {
-			return toon.Errorf("git diff failed", err.Error()) + "\n", 1
+			return "", "unrepresentable TOON cell", err.Error()
 		}
+		body, err := diffBodyAt(root, dr.bodyArgs...)
+		if err != nil {
+			return "", "git diff failed", err.Error()
+		}
+		b.WriteString(logTable)
+		b.WriteString("diff_body:\n")
 		b.Write(body)
 	}
-	return b.String(), 0
+	actions := []axi.Action(nil)
+	if !full && len(files) > 0 {
+		actions = append(actions, axi.InspectFull(dr.head))
+	}
+	help, err := axi.RenderHelp(actions)
+	if err != nil {
+		return "", "unrepresentable TOON cell", err.Error()
+	}
+	b.WriteString(help)
+	return b.String(), "", ""
+}
+
+func resolveBranchRangeFromFacts(root string, facts git.DiffFacts) (dr diffRange, errKind, errHint string) {
+	base, method := "", ""
+	if facts.RecordedBase != "" {
+		switch {
+		case !git.OK("-C", root, "cat-file", "-e", facts.RecordedBase+"^{commit}"):
+			method = "merge-base (recorded sha unreachable)"
+		case !git.OK("-C", root, "merge-base", "--is-ancestor", facts.RecordedBase, facts.Head):
+			method = "merge-base (recorded sha not an ancestor)"
+		default:
+			base, method = facts.RecordedBase, "recorded"
+		}
+	}
+	if base == "" {
+		if !facts.DefaultResolved {
+			return diffRange{}, "cannot resolve a review base", "this repository has no resolvable default branch; record one with: git config branch.<name>.benchBase <sha>"
+		}
+		var err error
+		base, err = git.Output("-C", root, "merge-base", facts.DefaultTip, facts.Head)
+		if err != nil {
+			return diffRange{}, "cannot resolve a review base", "no merge-base with '" + facts.DefaultBranch + "'; record one with: git config branch.<name>.benchBase <sha>"
+		}
+		if method == "" {
+			method = "merge-base"
+		}
+	}
+	return diffRange{
+		base:      base,
+		head:      facts.Head,
+		method:    method,
+		filesArgs: []string{base},
+		logRange:  base + ".." + facts.Head,
+		bodyArgs:  []string{base},
+	}, "", ""
 }
 
 // ResolveReviewBase is the single source of the resolved review base for

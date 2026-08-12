@@ -1,0 +1,6 @@
+branch: feature
+base: 06d53f18d44494ead344d1f720fdb978128684a7
+method: commit f590a43d52b3b03f6d897375ee8f530f48efb596
+files[2]{status,path}:
+  A,committed.txt
+  M,tracked.txt

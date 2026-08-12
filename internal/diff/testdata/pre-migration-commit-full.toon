@@ -1,0 +1,23 @@
+branch: feature
+base: 06d53f18d44494ead344d1f720fdb978128684a7
+method: commit f590a43d52b3b03f6d897375ee8f530f48efb596
+files[2]{status,path}:
+  A,committed.txt
+  M,tracked.txt
+log[1]{sha,subject}:
+  f590a43,feature commit
+diff_body:
+diff --git a/committed.txt b/committed.txt
+new file mode 100644
+index 0000000..41f6c96
+--- /dev/null
++++ b/committed.txt
+@@ -0,0 +1 @@
++committed file
+diff --git a/tracked.txt b/tracked.txt
+index e58e67c..f22e488 100644
+--- a/tracked.txt
++++ b/tracked.txt
+@@ -1 +1,2 @@
+ base line
++committed line
