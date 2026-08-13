@@ -1,8 +1,9 @@
 package conformance
 
 // The tier registry itself: which checks each tier runs, that metadata and bound
-// functions cannot drift apart, that the filtered inner run selects real tests, and
-// that every executed check leaves one timing line in a stable order.
+// functions cannot drift apart, that the selected/inherited ordinary-check partition
+// selects real tests, and that every executed check leaves one timing line in a stable
+// order.
 
 import (
 	"fmt"
@@ -434,6 +435,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestGuidanceProseBudgetCanaryFixtureBites":                 true,
 	"TestGuidanceProseBudgetsHoldOnTheLiveTree":                 true,
 	"TestHarnessUsesBenchConformanceRootAsGradedRoot":           true,
+	"TestInjectedPortRegistryCheckBites":                        true,
 	"TestInvalidOrderedSetRedsAndWidensToTheFullTier":           true,
 	"TestAXIMembershipExpectationBitesInBothDirections":         true,
 	"TestAXIGuidanceContractBites":                              true,

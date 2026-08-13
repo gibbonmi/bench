@@ -32,7 +32,6 @@ import (
 // audit's inventory, no wider. A package outside it declaring a port is out of scope until
 // a reviewer binds it in; a package inside it that derives nothing fails closed.
 var auditedPortPackages = []string{
-	"internal/canary",
 	"internal/gitguard",
 	"internal/publication",
 }
@@ -61,10 +60,6 @@ type injectedPortRow struct {
 // auditedPortPackages. Rows are grouped by package and ordered as the derivation reports
 // them, so a diff against a re-derived inventory reads straight down.
 var injectedPortRegistry = []injectedPortRow{
-	{
-		pkg: "internal/canary", port: "Runner",
-		testFile: "internal/canary/runner_junction_test.go", testName: "TestSweepTierRunsPlantedBashGate",
-	},
 	{
 		pkg: "internal/gitguard", port: "Checker",
 		testFile: "internal/gitguard/checker_junction_test.go", testName: "TestClassifyRealCheckerResolvedComposition",
@@ -400,6 +395,22 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 		if len(diags) != 1 || !strings.Contains(diags[0], zeroPortInventoryMessage) ||
 			!strings.Contains(diags[0], "internal/sample") {
 			t.Fatalf("an audited package deriving zero ports: want one zero-inventory diagnostic naming it, got %v", diags)
+		}
+	})
+
+	t.Run("a retired live-tree row is absent", func(t *testing.T) {
+		for _, row := range injectedPortRegistry {
+			if row.pkg == "internal/canary" && row.port == "Runner" {
+				t.Fatal("the retired internal/canary.Runner registry row returned")
+			}
+		}
+	})
+
+	t.Run("a retired live-tree audit fires", func(t *testing.T) {
+		packages := append(append([]string(nil), auditedPortPackages...), "internal/canary")
+		diags := injectedPortDiags(NewHarness(t).KitRoot, packages, injectedPortRegistry)
+		if len(diags) != 1 || !strings.Contains(diags[0], zeroPortInventoryMessage) || !strings.Contains(diags[0], "internal/canary") {
+			t.Fatalf("a reintroduced canary audit: want its zero-port diagnostic, got %v", diags)
 		}
 	})
 

@@ -450,21 +450,21 @@ func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 	}
 	diags := RunConformance(root, kitRoot, registry.Dev, "")
 
-	want := `canary conformance family "unbound-family" is bound to no conformance check; add it to the registry family table so its fixtures run scoped`
+	want := `canary conformance family "unbound-family" is bound to no conformance check; add it to the registry family table so its fixtures resolve a conformance-check binding`
 	if !containsDiagnostic(diags, want) {
 		t.Fatalf("unbound canary family did not produce diagnostic %q:\n%s", want, strings.Join(diags, "\n"))
 	}
 }
 
-// TestSymlinkedCanaryFamilyIsInvisibleToTreeAndSweep pins the agreement that makes
+// TestSymlinkedCanaryFamilyIsInvisibleToInventory pins the agreement that makes
 // skipping a symlinked family directory the right answer rather than a hole. os.ReadDir
 // reports a symlink by its own type, so neither the unbound-family read nor the canary
 // package's fixture walk descends into one — a symlinked family therefore contributes
-// no fixture to the sweep, has no inner run to scope, and cannot be unbound. Reporting
-// it would demand a table binding no fixture ever uses. The two sides share one reading
-// of the tree; changing either alone reds a family with no fixtures or leaves a real
-// family's fixtures silently unscoped.
-func TestSymlinkedCanaryFamilyIsInvisibleToTreeAndSweep(t *testing.T) {
+// no fixture to inventory binding resolution and cannot be unbound. Reporting it would
+// demand a table binding no fixture can resolve. The two sides share one reading of the
+// tree; changing either alone reds a family with no fixtures or leaves a real family's
+// fixtures without a binding.
+func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
 	kitRoot := t.TempDir()
@@ -474,7 +474,7 @@ func TestSymlinkedCanaryFamilyIsInvisibleToTreeAndSweep(t *testing.T) {
 	}
 	// The target sits outside tests/canary, so only the link can make it read as a
 	// family — and it holds a real fixture, so a walk that followed the link would both
-	// report the family unbound and sweep the fixture under it.
+	// report the family unbound and add the fixture to the inventory.
 	target := filepath.Join(kitRoot, "outside", "linked-family")
 	writeCanaryFixture(t, filepath.Join(target, "linked-fixture"))
 	if err := os.Symlink(target, filepath.Join(canaryDir, "symlinked-family")); err != nil {
@@ -541,8 +541,8 @@ func runConformanceFamilyAbsence(t *testing.T, setup func(*testing.T, string)) {
 	}
 }
 
-// writeCanaryFixture creates the minimum a canary fixture needs to be swept: a files/
-// tree and an EXPECT the sweep helpers echo back.
+// writeCanaryFixture creates the minimal fixture tree used by inventory and direct-proof
+// tests.
 func writeCanaryFixture(t *testing.T, dir string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Join(dir, "files"), 0o755); err != nil {

@@ -61,7 +61,7 @@ func UnboundConformanceFamilies(kitRoot string) []string {
 			continue
 		}
 		if _, found := registry.FamilyCheck(name); !found {
-			diagnostics = append(diagnostics, fmt.Sprintf("canary conformance family %q is bound to no conformance check; add it to the registry family table so its fixtures run scoped", name))
+			diagnostics = append(diagnostics, fmt.Sprintf("canary conformance family %q is bound to no conformance check; add it to the registry family table so its fixtures resolve a conformance-check binding", name))
 		}
 	}
 	return diagnostics

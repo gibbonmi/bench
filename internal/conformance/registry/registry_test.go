@@ -10,11 +10,10 @@ import (
 )
 
 // TestFamilyCheckTableBindsRegisteredChecks closes the phantom-check gap: a value
-// naming no registry row would scope that family's fixtures to a check that never
-// runs, and every one of them would report did-not-bite forever.
+// naming no registry row leaves that family's fixtures without a resolved binding.
 func TestFamilyCheckTableBindsRegisteredChecks(t *testing.T) {
 	if len(familyChecks) == 0 {
-		t.Fatal("the family→check table is empty, so no conformance fixture resolves a scope")
+		t.Fatal("the family→check table is empty, so no conformance fixture resolves a binding")
 	}
 	for family, name := range familyChecks {
 		check, found := Find(name)
@@ -22,12 +21,11 @@ func TestFamilyCheckTableBindsRegisteredChecks(t *testing.T) {
 			t.Errorf("family %q binds check %q, which no registry row carries", family, name)
 			continue
 		}
-		// A fixture with no CHECK file of its own is swept at the dev tier and takes its
-		// scope from this table. Bind a family to a ship-tier check and every such
-		// fixture in it is scoped to a check the dev sweep never executes, which the
-		// conformance driver reds outright as a scope the tier does not run.
+		// A fixture with no CHECK file resolves a dev-tier binding from this table. A
+		// ship-tier family binding therefore leaves that fixture outside its declared
+		// tier, which the conformance driver rejects.
 		if check.Tier != Dev {
-			t.Errorf("family %q binds check %q, which runs at the %s tier; its CHECK-less fixtures are swept at dev and would red for naming a check that tier does not run", family, name, check.Tier)
+			t.Errorf("family %q binds check %q at the %s tier; its CHECK-less fixtures require a dev-tier binding", family, name, check.Tier)
 		}
 	}
 }

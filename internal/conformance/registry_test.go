@@ -305,17 +305,15 @@ func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]canary.Fixt
 		if !family.IsDir() {
 			continue
 		}
-		// A family is canonical when the sweep can route it: to a phase (the behavior
-		// family's contract phase, or a phase family named for its own phase) or to a
-		// conformance check the registry binds. Only a family that routes to conformance
-		// and is bound to nothing is unattributable — a legacy flat fixture is a fixture
-		// in its own right rather than a family, and runs the full inner gate.
+		// A family is canonical when inventory resolution can identify it: through a
+		// family binding or through its own fixture marker. Only a family with neither
+		// is unattributable; a flat fixture carries its own binding rather than a family.
 		if canary.IsConformanceFamily(filepath.Join(fixturesDir, family.Name())) && !familyIsBound(family.Name()) {
 			t.Errorf("canary family %q is not canonical", family.Name())
 		}
 	}
-	// The sweep's own walk enumerates the fixtures, base-name uniqueness included: a
-	// second walk here would disagree with the tree the sweep actually runs.
+	// Inventory discovery enumerates fixtures and enforces base-name uniqueness. A second
+	// walk here would disagree with the producer the check consumes.
 	discovered, err := canary.Fixtures(fixturesDir)
 	if err != nil {
 		t.Fatalf("walk canary fixtures: %v", err)

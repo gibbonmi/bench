@@ -110,8 +110,8 @@ func RunConformance(root, kitRoot string, tier registry.Tier, scope string) []st
 	return RunConformanceSelection(root, kitRoot, tier, scope, nil, nil)
 }
 
-// RunConformanceSelection accepts the inner-canary single-check control and the outer
-// gate's exact executed/inherited ordinary-check partition as distinct authorities.
+// RunConformanceSelection accepts a single-check control and the gate's exact
+// selected/inherited ordinary-check partition as distinct authorities.
 func RunConformanceSelection(root, kitRoot string, tier registry.Tier, scope string, selected, inheritedControl *string) []string {
 	// The writer clears the root's timing file, so it is established before the scope
 	// postures return: a run that executes nothing still has to leave the file empty,
@@ -275,9 +275,8 @@ func checkConformanceCanaryFamilies(kitRoot string) []string {
 			diags = append(diags, fmt.Sprintf("canary conformance family %q has no fixture directories under %s", family, filepath.ToSlash(filepath.Join("tests", "canary", family))))
 		}
 	}
-	// The scan lives in the canary package, which owns the fixture-tree layout and asserts
-	// the same binding at the top of its sweep. One derivation serves both callers, so the
-	// check and the sweep cannot disagree about which family is unbound.
+	// The canary package owns fixture-tree and unbound-family derivation; conformance
+	// consumes that single source.
 	return append(diags, canary.UnboundConformanceFamilies(kitRoot)...)
 }
 
