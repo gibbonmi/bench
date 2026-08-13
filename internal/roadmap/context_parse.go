@@ -18,6 +18,12 @@ var roadmapStartRe = regexp.MustCompile(`^\*\*([A-Za-z]+[0-9]+)(.*)$`)
 var commandRe = regexp.MustCompile(`/bench-[A-Za-z0-9-]+`)
 var ideaRe = regexp.MustCompile(`^- ([0-9]{4}-[0-9]{2}-[0-9]{2})  (.*)$`)
 
+// ValidRowID reuses ParseDocument's row-start recognizer for selector input.
+func ValidRowID(id string) bool {
+	m := roadmapStartRe.FindStringSubmatch("**" + id)
+	return m != nil && m[1] == id
+}
+
 // ValidOccurrenceIncident is the shared grammar for the incident half of an
 // occurrence token and a roadmap ledger entry.
 func ValidOccurrenceIncident(key string) bool {

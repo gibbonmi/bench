@@ -17,7 +17,7 @@ func contextUsage() string { return roadmapUsage() }
 var contextGrammar = usage.Grammar{
 	Cmd:   "bench roadmap --context",
 	Help:  strings.TrimSuffix(contextUsage(), "\n"),
-	Flags: []usage.Flag{{Name: "--context"}, {Name: "--full"}},
+	Flags: []usage.Flag{{Name: "--context"}, {Name: "--full"}, {Name: "--row", HasValue: true, NoEmptyValue: true}},
 }
 
 // ContextCommand implements the read-only schema-3 AXI roadmap snapshot.
@@ -37,13 +37,74 @@ func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int
 		return toon.Usage("bench roadmap --context", arg) + "\n", 2
 	}
 	_, full := parsed.Flags["--full"]
+	rowValue, selectRows := parsed.Flags["--row"]
+	if selectRows && full {
+		return toon.Usage(contextGrammar.Cmd, "--row with --full") + "\n", 2
+	}
+	var requested []string
+	if selectRows {
+		seen := map[string]bool{}
+		for _, id := range strings.Split(rowValue, ",") {
+			if !ValidRowID(id) {
+				return toon.Usage(contextGrammar.Cmd, "--row "+rowValue) + "\n", 2
+			}
+			if !seen[id] {
+				seen[id] = true
+				requested = append(requested, id)
+			}
+		}
+	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	s, err := BuildContext(root, full, gate(root))
+	s, err := BuildContext(root, full || selectRows, gate(root))
 	if err != nil {
 		return toon.Errorf("roadmap context failed", err.Error()) + "\n", 1
+	}
+	if selectRows {
+		// Selector mode needs a full parse to retain selected roadmap bodies, but
+		// never transports complete capture-unit bodies as a side effect.
+		for i := range s.Ideas {
+			s.Ideas[i].Text = ""
+			s.Ideas[i].Truncated = s.Ideas[i].TextBytes > 0
+		}
+		for i := range s.Learnings {
+			s.Learnings[i].Body = ""
+			s.Learnings[i].Truncated = s.Learnings[i].BodyBytes > 0
+		}
+		for i := range s.Retros {
+			s.Retros[i].Body = ""
+			s.Retros[i].Truncated = s.Retros[i].BodyBytes > 0
+		}
+		for i := range s.Failures {
+			s.Failures[i].Raw = ""
+			s.Failures[i].Truncated = s.Failures[i].RawBytes > 0
+		}
+		present := make(map[string]bool, len(s.Roadmap.Rows))
+		for _, row := range s.Roadmap.Rows {
+			present[row.ID] = true
+		}
+		var missing []string
+		for _, id := range requested {
+			if !present[id] {
+				missing = append(missing, id)
+			}
+		}
+		if len(missing) > 0 {
+			return toon.Errorf("roadmap row not found", strings.Join(missing, ",")) + "\n", 1
+		}
+		selected := make([]RoadmapRow, 0, len(requested))
+		for _, id := range requested {
+			for _, row := range s.Roadmap.Rows {
+				if row.ID == id {
+					selected = append(selected, row)
+					break
+				}
+			}
+		}
+		s.Roadmap.Rows = selected
+		s.Full = true
 	}
 	out, err := renderContext(s)
 	if err != nil {

@@ -54,6 +54,80 @@ func TestContextCommandEndsWithHelpBlock(t *testing.T) {
 	}
 }
 
+func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
+	root := newRepo(t)
+	body := strings.Repeat("x", contextBodyLimit+17)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — first.**\n"+body+"\n\n**FT2 — second.**\nother\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	longCapture := strings.Repeat("capture-body", 500)
+	if err := os.WriteFile(filepath.Join(root, "capture", "IDEAS.md"), []byte("- 2026-01-01  "+longCapture+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := ContextCommand([]string{"--context", "--row", "FT2,FT1,FT1"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("selector exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("roadmap_rows")
+	if err != nil || len(rows) != 2 {
+		t.Fatalf("selected rows = %#v, %v", rows, err)
+	}
+	for i, want := range []struct{ id, body string }{{"FT2", "other"}, {"FT1", body}} {
+		row, ok := rows[i].(map[string]any)
+		if !ok || row["id"] != want.id || row["body"] != want.body || row["body_bytes"] != float64(len(want.body)) || row["truncated"] != false {
+			t.Fatalf("selected row = %#v", rows[i])
+		}
+	}
+	if strings.Contains(out, longCapture) {
+		t.Fatal("complete capture body leaked into selector output")
+	}
+	if document.Blocks[len(document.Blocks)-1] != "help" {
+		t.Fatalf("blocks = %q", document.Blocks)
+	}
+	if _, err := document.HelpActions(); err != nil {
+		t.Fatalf("help = %v", err)
+	}
+}
+
+func TestContextCommandRowSelectorRefusesMalformedAndMissing(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — first.**\nbody\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		args []string
+		code int
+		want []string
+	}{
+		{[]string{"--context", "--row", ""}, 2, []string{"usage:"}},
+		{[]string{"--context", "--row", "FT1,"}, 2, []string{"usage:"}},
+		{[]string{"--context", "--row", "not-an-id"}, 2, []string{"usage:"}},
+		{[]string{"--context", "--row", "FT1,NOPE2,NOPE3"}, 1, []string{"NOPE2", "NOPE3"}},
+		{[]string{"--context", "--row", "FT1", "--full"}, 2, []string{"usage:"}},
+	} {
+		out, code := ContextCommand(tc.args, func(string) GateCacheFact { return GateCacheFact{} })
+		missing := false
+		for _, want := range tc.want {
+			if !strings.Contains(out, want) {
+				missing = true
+			}
+		}
+		if code != tc.code || missing {
+			t.Fatalf("args=%v = %q/%d, want %q/%d", tc.args, out, code, tc.want, tc.code)
+		}
+		if tc.code == 1 && (strings.Contains(out, "roadmap_rows[") || strings.Contains(out, "body_bytes")) {
+			t.Fatalf("partial selector output = %q", out)
+		}
+	}
+}
+
 func TestBuildContextCarriesRetrosAndDegradedEvidence(t *testing.T) {
 	root := newRepo(t)
 	dir := filepath.Join(root, "capture", "retros")
