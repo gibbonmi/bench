@@ -1743,29 +1743,6 @@ crediting a single-line red, and the ticket preflight carries the corresponding
 multi-line fixture before review. Source: the bench-preflight retro, drained
 here.
 
-**FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
-vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
-contract group's empty-tree baseline, which establishes only that the string is
-not infrastructure noise. A generic banner that any failure prints passes that
-screen forever, so nothing grades mutation-specificity for the 33 fixtures
-carrying the gate-guarding-the-gate proof — the profile now says so, but saying
-so is not checking it. Real vacuity wants the unmutated twin: BASE plus `files/`
-without `MUTATE.json`, run in the same shape and required to *not* show the
-EXPECT. That is derivable today for the 9 MUTATE-shaped fixtures, while the 24
-`files/`-only ones bake the mutation into the fixture tree and would need a
-delete-or-absence op `MUTATE.json` cannot express — so the shape is genuinely
-open and the row starts as a grill.
-
-Second clause, same owner and same question: whether a non-contract vacuity
-baseline needs a full inner gate. The stage-2 build silently narrowed every one
-of them to a single phase, which is semantically wrong and was reverted before
-landing, but the revert cost ~6 s of gate and ~1 s of canary. A deliberate
-scoping with correct semantics may recover that legitimately. Decide it with the
-twin question rather than separately — both rule on what a baseline must run to
-mean what it claims. Entry: `/bench-shape-idea`. Sources: `capture/IDEAS.md`, drained
-here; the `ft91-canary-compiled-bites` review S1, recoverable via `git show
-4429b05:reviews/ft91-canary-compiled-bites.md`.
-
 **FT177 (MEDIUM) — a stale `dist/bench` makes contract-test mutation probes
 silent no-ops.** Any `internal/contract/surface/*` or
 `internal/contract/runtime` test that execs the CLI grades the previous
