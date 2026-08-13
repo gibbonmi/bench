@@ -1753,24 +1753,6 @@ inside the pending record before replacement. Sources: `capture/IDEAS.md` and
 `capture/learnings.md` 2026-08-07, drained and verdicted here; the
 gate-decision-test-seam retro, drained here.
 
-**FT203 (MEDIUM) — pre-existing flake: `TestListCommandPublicRowsAndDisclosure`.**
-Fails roughly 1 in 6–7 full `internal/worktree` package runs; reproduced on a
-clean `git archive` HEAD baseline by the T1 repair delegate, so it predates the
-axi-query-disclosure repair tickets. A flaky oracle in the gate's path is a red
-that answers for timing rather than the diff, and it taxes every landing that
-crosses the package. Build the tight red-capable repro loop first, then fix
-against it. Entry: `/bench-debug`. Sources: `capture/IDEAS.md` and the
-axi-query-disclosure retro, drained here.
-
-Decision #26's post-rebuild census widens the observed family. On exact commit
-`a3b599ea`, two of six `internal/worktree` package runs went red: a fresh gate
-failed `TestListCommandCheckedInCompletedAssignmentTerminalPair`, and the serial
-census had one unattributed red because its output was not captured; three
-focused repetitions passed. The rate matches this row, but the named test does
-not, so debugging starts with package-family failure capture rather than an
-overfit loop around one test. Source:
-`decisions/assets/gate-budget-cpu-wall-census.md` decision #26.
-
 **FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate
 quiet check.** Two faces of the same defect — a red answering for machine
 contention rather than for the diff — and one owner, so they ship together.
@@ -2169,5 +2151,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-debug` — FT203's `internal/worktree` flake family, now two reds in six decision-#26 package runs rather than only `TestListCommandPublicRowsAndDisclosure`.
-2. `/bench-shape-idea` — FT198's durable detail owner, migration, history, and index-completeness decisions.
+1. `/bench-shape-idea` — FT198's durable detail owner, migration, history, and index-completeness decisions.
+2. `/bench-shape-idea` — FT189's reproduced upstream `git worktree list` hang needs a Bench-owned refusal or execution bound.

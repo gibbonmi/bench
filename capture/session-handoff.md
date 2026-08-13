@@ -2,21 +2,19 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `d7a6e67`, 3 dirty paths, 7 unpushed commits
+Branch: `main` — HEAD `217b010`, 3 dirty paths, 9 unpushed commits
 Spec: none staged.
-Gate: green at `2180b3d` — stale, work tree `bbfa62c`
+Gate: green at `e5b4094` — stale, work tree `89a1e87`
 
 ## State
 
-FT171 closed at `2dd71f83`: gate-budget decision #27 retired #8 because the
-serial baseline already meets the destination, and no spec follows. The roadmap
-therefore carries no FT171 row or sequence item.
+FT203 closed at `217b010b`: both flaky `internal/worktree` fixture comparisons
+now drive deterministic leading-zero assignment IDs and assert their quoted
+TOON form. The uncommitted roadmap reconcile removes FT203.
 
-FT203 now owns decision #26's wider `internal/worktree` flake evidence: two reds
-in six package runs on `a3b599ea`, including
-`TestListCommandCheckedInCompletedAssignmentTerminalPair`, while three focused
-repetitions passed. Debug the package family rather than overfitting to the
-row's original named test. FT198 follows in the sequence.
+FT198 is next: shape the durable detail owner, migration, history, and
+index-completeness contract for the progressively loaded roadmap. FT189 follows
+as the next reproduced medium-severity defect.
 
 There are no ideas, learnings, retros, occurrence discrepancies, or staged
 specs. `ASSESSMENT.md` and `capture/FIXES.md` remain foreign assessment
@@ -24,7 +22,7 @@ artifacts; both registered assignment worktrees remain foreign and untouched.
 
 ## Next command
 
-`$bench-debug`
+`$bench-shape-idea`
 
 ## Shape
 
