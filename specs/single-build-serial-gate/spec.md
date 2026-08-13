@@ -1,6 +1,6 @@
 # Single-build serial gate
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation on 2026-08-08
 
