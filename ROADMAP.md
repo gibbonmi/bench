@@ -694,7 +694,8 @@ consistent snapshot, but the ordinary query and phase can load the index first
 and request only the detailed records needed for reconcile or drain judgments.
 Decide the durable detail owner, migration and history behavior, and how the
 parser proves index-to-detail completeness without creating a second source of
-status. Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here;
+status. Spec: `specs/roadmap-progressive-index/spec.md` (staged).
+Entry: `/bench-implement-spec`. Source: `capture/IDEAS.md`, drained here;
 the 2026-08-06 drain's 179397-byte snapshot transport failure.
 
 **FT173 (MEDIUM, decision required) — AXI residual: the
