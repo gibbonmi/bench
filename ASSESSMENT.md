@@ -22,8 +22,9 @@ separate truthful owners, and the source tree's full gate is green. Release is
 still blocked because the tag workflow bypasses the governed, resumable
 publication lifecycle.
 
-Current inventory: **1 high, 7 med, and 4 low** findings. Already-tracked work
-is mapped to `capture/FIXES.md`; it is not re-filed as a new idea.
+Current inventory: **1 high, 7 med, and 4 low** findings. Live defect-shaped
+roadmap work is prioritized in `capture/FIXES.md`; features and decision-only
+opportunities remain solely on the roadmap.
 
 ## Previous assessment reconciliation
 
@@ -157,9 +158,9 @@ architecture report produced with this assessment.** ✓
 | 7 | FT162/FT185: unify terminal subject and structured gate evidence | Green/red runs project the same subject and outcome without reconstruction | 1 day |
 | 8 | Reconcile the invalid map through maintenance | `bench maps` has no invalid rows and no vanished source paths are invented | 0.25–0.5 day |
 
-The full 62-row disposition and dependency order is in
-`capture/FIXES.md`. FT198 is the current reviewer-decision entry; no spec is
-staged.
+The 24 live fix-class rows are prioritized in `capture/FIXES.md`. FT198 remains
+the overall roadmap's current reviewer-decision entry and is intentionally not
+in that fix-only view; no spec is staged.
 
 ## Verification notes
 
