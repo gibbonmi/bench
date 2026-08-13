@@ -1,12 +1,12 @@
 // Package preprelease owns `bench prep-release`, the ship-tier rehearsal. `bench gate`
 // answers the narrower question — does the kit work from this tree — and leaves the
 // four-platform artifact matrix, the cross-compile matrix, the release-only package
-// suites, the release preflight verify, and the ship-tier canary fixtures to a surface
+// suites, the release preflight verify, and ship-tier canary inventory validation to a surface
 // that runs once per release instead of once per commit. This is that surface, and its
 // exit code carries the authority the dev gate gave up.
 //
 // It invents no machinery: every step is an existing script, the existing conformance
-// suite at the ship tier, or the existing canary sweep. Ship green is exit 0 with
+// suite at the ship tier, or the existing canary inventory validation. Ship green is exit 0 with
 // evidence at dist/preflight/release-index.json and dist/artifacts.
 //
 // The dev-green precondition is an observer, not a second verdict-reuse grant: a green
@@ -71,7 +71,7 @@ var grammar = usage.Grammar{
 }
 
 // Step is one ship-tier stage. Exactly one of Argv and Run is set: the scripted stages
-// are subprocesses, and the canary sweep is a library call.
+// are subprocesses, and the canary inventory validation is a library call.
 type Step struct {
 	Name string
 	Argv []string
@@ -118,7 +118,10 @@ func Steps(root, kit string) []Step {
 		},
 		{
 			Name: "canary-ship",
-			Run:  canary.SweepShip,
+			Run: func(root string) error {
+				_, err := canary.Inventory(root)
+				return err
+			},
 		},
 	}
 }

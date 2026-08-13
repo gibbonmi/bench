@@ -119,7 +119,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 	}
-	result, err := dispatchInventory(root)
+	result, err := Inventory(root)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
@@ -128,13 +128,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// SweepShip validates the ship command's canary inventory without launching a nested driver.
-func SweepShip(root string) error {
-	_, err := dispatchInventory(root)
-	return err
-}
-
-func dispatchInventory(root string) (Selection, error) {
+// Inventory returns the validated fixture inventory decision for root.
+func Inventory(root string) (Selection, error) {
 	found, err := Fixtures(filepath.Join(root, "tests", "canary"))
 	if err != nil {
 		return Selection{}, err

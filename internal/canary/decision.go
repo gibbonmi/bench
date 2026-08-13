@@ -21,13 +21,6 @@ type Selection struct {
 	Diagnostics []string
 }
 
-// DispatchResult is the aggregated result of invoking every selected owner once.
-type DispatchResult struct {
-	Accepted    bool
-	Dispatched  []FixtureOwner
-	Diagnostics []string
-}
-
 // Select assigns every immutable fixture value to exactly one owning check.
 func Select(fixtures []Fixture) Selection {
 	decision := Selection{}
@@ -54,26 +47,6 @@ func Select(fixtures []Fixture) Selection {
 	sort.Strings(decision.Diagnostics)
 	decision.Accepted = len(decision.Diagnostics) == 0 && len(decision.Owners) == len(fixtures)
 	return decision
-}
-
-// Dispatch invokes each selected owner in stable order and retains every diagnostic.
-func Dispatch(selection Selection, invoke func(FixtureOwner) string) DispatchResult {
-	result := DispatchResult{}
-	if !selection.Accepted || invoke == nil {
-		result.Diagnostics = append(result.Diagnostics, selection.Diagnostics...)
-		if len(result.Diagnostics) == 0 {
-			result.Diagnostics = append(result.Diagnostics, "canary dispatch is unavailable")
-		}
-		return result
-	}
-	for _, owner := range selection.Owners {
-		result.Dispatched = append(result.Dispatched, owner)
-		if diagnostic := invoke(owner); diagnostic != "" {
-			result.Diagnostics = append(result.Diagnostics, fmt.Sprintf("canary %q (%s): %s", owner.Fixture, owner.Owner, diagnostic))
-		}
-	}
-	result.Accepted = len(result.Diagnostics) == 0 && len(result.Dispatched) == len(selection.Owners)
-	return result
 }
 
 func resolveFixtureOwner(fixture Fixture) string {

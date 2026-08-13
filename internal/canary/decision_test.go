@@ -30,19 +30,3 @@ func TestSelectCanaryOwnersFromImmutableFixtures(t *testing.T) {
 		})
 	}
 }
-
-func TestDispatchAggregatesEveryOwnerDiagnostic(t *testing.T) {
-	selection := Select([]Fixture{
-		{Dir: "/fixtures/a", Check: "line-routing"},
-		{Dir: "/fixtures/b", Check: "package-core-guard"},
-	})
-	result := Dispatch(selection, func(owner FixtureOwner) string {
-		return "specific red from " + owner.Owner
-	})
-	if result.Accepted || len(result.Dispatched) != 2 || len(result.Diagnostics) != 2 {
-		t.Fatalf("Dispatch() = %#v, want two dispatched owners and two diagnostics", result)
-	}
-	if rerun := Dispatch(selection, func(owner FixtureOwner) string { return "specific red from " + owner.Owner }); !reflect.DeepEqual(rerun, result) {
-		t.Fatalf("Dispatch() rerun = %#v, want %#v", rerun, result)
-	}
-}
