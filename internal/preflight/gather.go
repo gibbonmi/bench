@@ -1,6 +1,8 @@
 package preflight
 
 import (
+	"errors"
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"regexp"
@@ -118,6 +120,24 @@ func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapF
 		SpecTag:               specTag(ids),
 		TicketsDirExists:      ticketsDirExists,
 	}, nil
+}
+
+// AuthorizeReviewedSource returns the one shared range fact after checking its
+// committed paths against the staged spec's existing ownership-fence owner.
+// Landing consumes this narrower final authorization rather than re-parsing fences.
+func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) {
+	facts, failure := Gather(root, "review", slug, base)
+	if failure != nil {
+		return diff.SourceRange{}, fmt.Errorf("%s: %s", failure.Kind, failure.Hint)
+	}
+	check := pathsAuthorizedCheck(facts)
+	if check.Verdict == verdictRed {
+		return diff.SourceRange{}, errors.New(check.Detail)
+	}
+	if facts.SourceBase == "" || facts.SourceTip == "" {
+		return diff.SourceRange{}, errors.New("reviewed source range is unresolved")
+	}
+	return diff.SourceRange{Base: facts.SourceBase, Tip: facts.SourceTip, CommittedPaths: facts.ChangedPaths}, nil
 }
 
 func headTip(root string) string { h, _ := git.Output("-C", root, "rev-parse", "HEAD"); return h }

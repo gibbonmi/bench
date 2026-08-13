@@ -443,6 +443,7 @@ var keptWorktreeGrammars = []string{
 	"bench worktree release",
 	"bench worktree clean",
 	"bench worktree reauthorize",
+	"bench worktree land",
 }
 
 func TestKeptRoutesAnswerTheirOwnHelp(t *testing.T) {

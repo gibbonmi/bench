@@ -10,6 +10,7 @@ const (
 	WorktreeRelease     = "bench worktree release --request <opaque-id> <path>"
 	WorktreeClean       = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] <path> [--apply <fingerprint>]"
 	WorktreeReauthorize = "bench worktree reauthorize --assignment <assignment-id> --request <opaque-id> --base <commit> --source-tip <commit> <path>"
+	WorktreeLand        = "bench worktree land --request <opaque-id> --base <commit> --source-tip <commit> --spec <slug> -m <message> <path>"
 )
 
 var worktreeCommands = []string{
@@ -20,6 +21,7 @@ var worktreeCommands = []string{
 	WorktreeRelease,
 	WorktreeClean,
 	WorktreeReauthorize,
+	WorktreeLand,
 }
 
 func WorktreeUsage() string {

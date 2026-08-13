@@ -336,6 +336,12 @@ func FindAssignmentByRequest(root, requestDigest string) (Assignment, bool, erro
 	return Assignment{}, false, nil
 }
 
+// FindAssignmentForRequest resolves an opaque caller token through the ledger's
+// request-digest owner. Lifecycle commands never compare caller tokens directly.
+func FindAssignmentForRequest(root, request string) (Assignment, bool, error) {
+	return FindAssignmentByRequest(root, requestDigestValue(request))
+}
+
 func Assignments(root string) ([]Assignment, error) {
 	ledger, err := Read(root)
 	if err != nil {

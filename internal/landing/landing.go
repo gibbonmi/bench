@@ -4,6 +4,7 @@ package landing
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -28,6 +30,27 @@ type Request struct {
 
 // Result identifies a successfully published commit and its authorized tree.
 type Result struct{ Base, Commit, Tree string }
+
+// ReviewedRequest names the immutable, reviewer-approved source pair and the
+// destination snapshot it is composed onto. Checkout fingerprints guard state;
+// every published byte still comes from Git objects.
+type ReviewedRequest struct {
+	Root, Destination, DestinationBase string
+	Source, SourceTip, ReviewBase      string
+	SourceWorktree                     string
+	SourceFingerprint                  string
+	DestinationFingerprint             string
+	SpecPath                           string
+	SpecBytes                          []byte
+	SpecMode                           os.FileMode
+	Message                            string
+	Stdout, Stderr                     io.Writer
+}
+
+// ReviewedResult is the immutable publication receipt needed by the lifecycle owner.
+type ReviewedResult struct {
+	SourceBase, SourceTip, DestinationBase, Commit, Tree string
+}
 
 // CompositionRequest identifies two immutable commits to merge without checkout state.
 type CompositionRequest struct {
@@ -225,6 +248,120 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 		return Result{Base: r.Expected, Commit: commit, Tree: tree}, fmt.Errorf("landed-but-checkout-incomplete: %w", err)
 	}
 	return Result{Base: r.Expected, Commit: commit, Tree: tree}, nil
+}
+
+// LandReviewed composes an exact reviewed source, applies its staged-spec
+// transition only to that prospective tree, and publishes a two-parent commit.
+// The worktree lifecycle owns authentication, marker advancement, reconciliation,
+// and release around this irreversible operation.
+func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedResult, error) {
+	if r.Root == "" || r.Destination == "" || r.DestinationBase == "" || r.Source == "" || r.SourceTip == "" || r.ReviewBase == "" || r.SourceWorktree == "" || r.SourceFingerprint == "" || r.DestinationFingerprint == "" || r.SpecPath == "" || strings.TrimSpace(r.Message) == "" {
+		return ReviewedResult{}, errors.New("reviewed landing request is incomplete")
+	}
+	destination, err := compositionCommit(r.Root, r.DestinationBase, "destination")
+	if err != nil || destination != r.DestinationBase {
+		return ReviewedResult{}, errors.New("destination base is not an exact commit")
+	}
+	source, err := compositionCommit(r.Root, r.SourceTip, "source")
+	if err != nil || source != r.SourceTip {
+		return ReviewedResult{}, errors.New("source tip is not an exact commit")
+	}
+	branchTip, err := output(r.Root, "rev-parse", "--verify", r.Source+"^{commit}")
+	if err != nil || branchTip != source {
+		return ReviewedResult{}, errors.New("reviewed source tip moved")
+	}
+	if _, kind, _ := diff.ResolveSourceRange(r.Root, r.ReviewBase, source); kind != "" {
+		return ReviewedResult{}, errors.New("reviewed source base is invalid")
+	}
+	if err := stagedSpecMatches(r.Root, destination, source, r.SpecPath, r.SpecBytes); err != nil {
+		return ReviewedResult{}, err
+	}
+	composition, err := o.Compose(CompositionRequest{Root: r.Root, Destination: destination, Source: source, ReviewBase: r.ReviewBase})
+	if err != nil {
+		return ReviewedResult{}, err
+	}
+	if composition.Conflict.Kind != "" {
+		return ReviewedResult{}, fmt.Errorf("composition conflict: %s", composition.Conflict.Kind)
+	}
+	implemented, err := spec.Implemented(r.SpecBytes)
+	if err != nil {
+		return ReviewedResult{}, err
+	}
+	tree, err := replaceTreeFile(r.Root, composition.Tree, r.SpecPath, implemented, r.SpecMode)
+	if err != nil {
+		return ReviewedResult{}, fmt.Errorf("transition staged spec: %w", err)
+	}
+	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); got.Kind != authorization.Green {
+		return ReviewedResult{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
+	}
+	// Recheck the two moving identities after the gate and before creating an
+	// otherwise unreachable object. Tree equality is insufficient: review binds a commit.
+	if branchTip, err = output(r.Root, "rev-parse", "--verify", r.Source+"^{commit}"); err != nil || branchTip != source {
+		return ReviewedResult{}, errors.New("reviewed source tip moved")
+	}
+	if fingerprint, fingerprintErr := CheckoutFingerprint(r.SourceWorktree); fingerprintErr != nil || fingerprint != r.SourceFingerprint {
+		return ReviewedResult{}, errors.New("reviewed source checkout changed")
+	}
+	if fingerprint, fingerprintErr := CheckoutFingerprint(r.Root); fingerprintErr != nil || fingerprint != r.DestinationFingerprint {
+		return ReviewedResult{}, errors.New("landing destination checkout changed")
+	}
+	commit, err := output(r.Root, "commit-tree", tree, "-p", destination, "-p", source, "-m", r.Message)
+	if err != nil {
+		return ReviewedResult{}, fmt.Errorf("create landing commit: %w", err)
+	}
+	if err := o.updateRef(r.Root, r.Destination, commit, destination); err != nil {
+		return ReviewedResult{}, fmt.Errorf("destination compare-and-swap refused: %w", err)
+	}
+	return ReviewedResult{SourceBase: r.ReviewBase, SourceTip: source, DestinationBase: destination, Commit: commit, Tree: tree}, nil
+}
+
+// CheckoutFingerprint binds the attached branch, commit, index, worktree,
+// untracked set, ignored set, and nested-repository state observed at a checkout.
+func CheckoutFingerprint(root string) (string, error) {
+	branch, err := output(root, "symbolic-ref", "--quiet", "HEAD")
+	if err != nil {
+		return "", err
+	}
+	head, err := output(root, "rev-parse", "HEAD^{commit}")
+	if err != nil {
+		return "", err
+	}
+	status, err := benchgit.Raw("-C", root, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignored")
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(bytes.Join([][]byte{[]byte(branch), []byte(head), status}, []byte{0}))
+	return fmt.Sprintf("%x", sum), nil
+}
+
+func stagedSpecMatches(root, destination, source, path string, want []byte) error {
+	for _, commit := range []string{destination, source} {
+		got, err := benchgit.Raw("-C", root, "show", commit+":"+path)
+		if err != nil || !bytes.Equal(got, want) {
+			return errors.New("source and destination do not carry identical staged spec bytes")
+		}
+	}
+	return nil
+}
+
+func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMode) (string, error) {
+	dir, err := os.MkdirTemp("", "bench-reviewed-landing-index-")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(dir)
+	idx := filepath.Join(dir, "index")
+	if err := indexRun(root, idx, "read-tree", baseTree); err != nil {
+		return "", err
+	}
+	blob, err := outputInput(root, content, "hash-object", "-w", "--stdin")
+	if err != nil {
+		return "", err
+	}
+	if err := indexRun(root, idx, "update-index", "--add", "--cacheinfo", gitRegularFileMode(mode)+","+blob+","+path); err != nil {
+		return "", err
+	}
+	return indexOutput(root, idx, "write-tree")
 }
 
 func validRequest(r Request) error {

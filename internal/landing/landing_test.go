@@ -274,6 +274,282 @@ func TestLandRefusesEveryNonGreenAuthorizationWithoutMutation(t *testing.T) {
 	}
 }
 
+func TestLandReviewedPublishesExactSourceParentAndProspectiveSpec(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "specs/x/spec.md", "Status: staged\nbody\n")
+	git(t, root, "add", "specs/x/spec.md")
+	git(t, root, "commit", "-qm", "stage spec")
+	destination := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "switch", "-q", "-c", "reviewed-source")
+	write(t, root, "reviewed", "source bytes\n")
+	git(t, root, "add", "reviewed")
+	git(t, root, "commit", "-qm", "reviewed work")
+	source := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "switch", "-q", "main")
+	sourceWorktree := filepath.Join(t.TempDir(), "source")
+	git(t, root, "worktree", "add", "-q", sourceWorktree, "reviewed-source")
+	sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	destinationFingerprint, err := CheckoutFingerprint(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	o := New()
+	o.authorize = func(_ context.Context, root, tree string, _ io.Writer, _ io.Writer) authorization.Result {
+		if got := git(t, root, "show", tree+":specs/x/spec.md"); got != "Status: implemented\nbody" {
+			t.Fatalf("authorized spec = %q", got)
+		}
+		return authorization.Result{Kind: authorization.Green}
+	}
+	got, err := o.LandReviewed(context.Background(), ReviewedRequest{
+		Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+		Source: "refs/heads/reviewed-source", SourceTip: source, ReviewBase: destination,
+		SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+		SpecPath: "specs/x/spec.md", SpecBytes: []byte("Status: staged\nbody\n"), SpecMode: 0o644,
+		Message: "land reviewed source",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.SourceTip != source || got.DestinationBase != destination || git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+destination+" "+source {
+		t.Fatalf("published identity = %+v", got)
+	}
+	if got.Tree != git(t, root, "rev-parse", got.Commit+"^{tree}") || git(t, root, "show", got.Commit+":specs/x/spec.md") != "Status: implemented\nbody" {
+		t.Fatalf("published prospective tree was lost: %+v", got)
+	}
+}
+
+func TestLandReviewedRefusesTreeEquivalentMovedSourceTip(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "specs/x/spec.md", "Status: staged\n")
+	git(t, root, "add", "specs/x/spec.md")
+	git(t, root, "commit", "-qm", "stage spec")
+	destination := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "switch", "-q", "-c", "reviewed-source")
+	write(t, root, "reviewed", "source bytes\n")
+	git(t, root, "add", "reviewed")
+	git(t, root, "commit", "-qm", "reviewed work")
+	reviewed := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "commit", "--allow-empty", "-qm", "tree-equivalent drift")
+	git(t, root, "switch", "-q", "main")
+	sourceWorktree := filepath.Join(t.TempDir(), "source")
+	git(t, root, "worktree", "add", "-q", sourceWorktree, "reviewed-source")
+	sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	destinationFingerprint, err := CheckoutFingerprint(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+	_, err = o.LandReviewed(context.Background(), ReviewedRequest{
+		Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+		Source: "refs/heads/reviewed-source", SourceTip: reviewed, ReviewBase: destination,
+		SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+		SpecPath: "specs/x/spec.md", SpecBytes: []byte("Status: staged\n"), SpecMode: 0o644, Message: "must not land",
+	})
+	if err == nil || !strings.Contains(err.Error(), "source tip moved") {
+		t.Fatalf("tree-equivalent moved source = %v", err)
+	}
+	if got := git(t, root, "rev-parse", "refs/heads/main"); got != destination {
+		t.Fatalf("destination moved to %s", got)
+	}
+}
+
+func TestLandReviewedRechecksCheckoutFingerprintsAfterAuthorization(t *testing.T) {
+	for _, tc := range []struct {
+		name, want string
+		mutate     func(*testing.T, string, string)
+	}{
+		{name: "destination", want: "destination checkout changed", mutate: func(t *testing.T, root, _ string) { write(t, root, "late", "destination dirt") }},
+		{name: "source", want: "source checkout changed", mutate: func(t *testing.T, _, source string) { write(t, source, "late", "source dirt") }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := fixture(t)
+			write(t, root, "specs/x/spec.md", "Status: staged\n")
+			git(t, root, "add", "specs/x/spec.md")
+			git(t, root, "commit", "-qm", "stage spec")
+			destination := git(t, root, "rev-parse", "HEAD")
+			sourceWorktree := filepath.Join(t.TempDir(), "source")
+			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			write(t, sourceWorktree, "reviewed", "source bytes\n")
+			git(t, sourceWorktree, "add", "reviewed")
+			git(t, sourceWorktree, "commit", "-qm", "reviewed")
+			source := git(t, sourceWorktree, "rev-parse", "HEAD")
+			sourceFingerprint, _ := CheckoutFingerprint(sourceWorktree)
+			destinationFingerprint, _ := CheckoutFingerprint(root)
+			o := New()
+			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+				tc.mutate(t, root, sourceWorktree)
+				return authorization.Result{Kind: authorization.Green}
+			}
+			_, err := o.LandReviewed(context.Background(), ReviewedRequest{
+				Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+				Source: "refs/heads/reviewed-source", SourceTip: source, ReviewBase: destination,
+				SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+				SpecPath: "specs/x/spec.md", SpecBytes: []byte("Status: staged\n"), SpecMode: 0o644, Message: "must refuse",
+			})
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("fingerprint mutation error = %v, want %q", err, tc.want)
+			}
+			if got := git(t, root, "rev-parse", "main"); got != destination {
+				t.Fatalf("destination moved to %s", got)
+			}
+		})
+	}
+}
+
+func TestLandReviewedAuthorizationKindTablePreservesState(t *testing.T) {
+	for _, kind := range []authorization.Kind{authorization.Green, authorization.Candidate, authorization.Inherited, authorization.Infrastructure} {
+		t.Run(string(kind), func(t *testing.T) {
+			root := fixture(t)
+			write(t, root, "specs/x/spec.md", "Status: staged\n")
+			git(t, root, "add", "specs/x/spec.md")
+			git(t, root, "commit", "-qm", "stage spec")
+			destination := git(t, root, "rev-parse", "HEAD")
+			sourceWorktree := filepath.Join(t.TempDir(), "source")
+			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			write(t, sourceWorktree, "reviewed", "source bytes\n")
+			git(t, sourceWorktree, "add", "reviewed")
+			git(t, sourceWorktree, "commit", "-qm", "reviewed")
+			source := git(t, sourceWorktree, "rev-parse", "HEAD")
+			sourceFingerprint, _ := CheckoutFingerprint(sourceWorktree)
+			destinationFingerprint, _ := CheckoutFingerprint(root)
+			o := New()
+			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+				return authorization.Result{Kind: kind}
+			}
+			got, err := o.LandReviewed(context.Background(), ReviewedRequest{
+				Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+				Source: "refs/heads/reviewed-source", SourceTip: source, ReviewBase: destination,
+				SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+				SpecPath: "specs/x/spec.md", SpecBytes: []byte("Status: staged\n"), SpecMode: 0o644, Message: "authorize",
+			})
+			if kind == authorization.Green {
+				if err != nil || got.Commit == "" {
+					t.Fatalf("green authorization = %+v, %v", got, err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), string(kind)) {
+				t.Fatalf("%s authorization error = %v", kind, err)
+			}
+			if git(t, root, "rev-parse", "main") != destination || git(t, root, "status", "--porcelain=v1") != "" || git(t, sourceWorktree, "status", "--porcelain=v1") != "" {
+				t.Fatalf("%s authorization changed repository state", kind)
+			}
+		})
+	}
+}
+
+func TestLandReviewedSpecStateTableRefusesBeforeAuthorization(t *testing.T) {
+	for _, tc := range []struct {
+		name, sourceSpec, destinationSpec string
+	}{
+		{name: "invalid", sourceSpec: "Status: staged\nStatus: staged\n", destinationSpec: "Status: staged\nStatus: staged\n"},
+		{name: "absent", sourceSpec: ""},
+		{name: "divergent", sourceSpec: "Status: staged\nsource\n", destinationSpec: "Status: staged\ndestination\n"},
+		{name: "implemented", sourceSpec: "Status: implemented\n", destinationSpec: "Status: implemented\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := fixture(t)
+			if tc.destinationSpec != "" {
+				write(t, root, "specs/x/spec.md", tc.destinationSpec)
+				git(t, root, "add", "specs/x/spec.md")
+				git(t, root, "commit", "-qm", "destination spec")
+			}
+			destination := git(t, root, "rev-parse", "HEAD")
+			sourceWorktree := filepath.Join(t.TempDir(), "source")
+			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			if tc.sourceSpec != "" {
+				write(t, sourceWorktree, "specs/x/spec.md", tc.sourceSpec)
+				git(t, sourceWorktree, "add", "specs/x/spec.md")
+			}
+			write(t, sourceWorktree, "reviewed", "source bytes\n")
+			git(t, sourceWorktree, "add", "reviewed")
+			git(t, sourceWorktree, "commit", "-qm", "source")
+			source := git(t, sourceWorktree, "rev-parse", "HEAD")
+			sourceFingerprint, _ := CheckoutFingerprint(sourceWorktree)
+			destinationFingerprint, _ := CheckoutFingerprint(root)
+			calls := 0
+			o := New()
+			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+				calls++
+				return authorization.Result{Kind: authorization.Green}
+			}
+			_, err := o.LandReviewed(context.Background(), ReviewedRequest{
+				Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+				Source: "refs/heads/reviewed-source", SourceTip: source, ReviewBase: destination,
+				SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+				SpecPath: "specs/x/spec.md", SpecBytes: []byte(tc.sourceSpec), SpecMode: 0o644, Message: "must refuse",
+			})
+			if err == nil || calls != 0 || git(t, root, "rev-parse", "main") != destination {
+				t.Fatalf("spec state %s = error %v calls %d", tc.name, err, calls)
+			}
+		})
+	}
+}
+
+func TestLandReviewedDestinationCASLossThenRecomposition(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "specs/x/spec.md", "Status: staged\n")
+	git(t, root, "add", "specs/x/spec.md")
+	git(t, root, "commit", "-qm", "stage spec")
+	destination := git(t, root, "rev-parse", "HEAD")
+	sourceWorktree := filepath.Join(t.TempDir(), "source")
+	git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+	write(t, sourceWorktree, "reviewed", "source bytes\n")
+	git(t, sourceWorktree, "add", "reviewed")
+	git(t, sourceWorktree, "commit", "-qm", "reviewed")
+	source := git(t, sourceWorktree, "rev-parse", "HEAD")
+
+	winnerTree := git(t, root, "rev-parse", destination+"^{tree}")
+	winner := git(t, root, "commit-tree", winnerTree, "-p", destination, "-m", "winner")
+	calls := 0
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		calls++
+		return authorization.Result{Kind: authorization.Green}
+	}
+	o.updateRef = func(gotRoot, ref, next, expected string) error {
+		if calls == 1 {
+			git(t, gotRoot, "update-ref", ref, winner, expected)
+		}
+		return updateRef(gotRoot, ref, next, expected)
+	}
+	request := func(base string) ReviewedRequest {
+		sourceFingerprint, _ := CheckoutFingerprint(sourceWorktree)
+		destinationFingerprint, _ := CheckoutFingerprint(root)
+		return ReviewedRequest{
+			Root: root, Destination: "refs/heads/main", DestinationBase: base,
+			Source: "refs/heads/reviewed-source", SourceTip: source, ReviewBase: destination,
+			SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+			SpecPath: "specs/x/spec.md", SpecBytes: []byte("Status: staged\n"), SpecMode: 0o644, Message: "land",
+		}
+	}
+	if _, err := o.LandReviewed(context.Background(), request(destination)); err == nil || !strings.Contains(err.Error(), "compare-and-swap") {
+		t.Fatalf("CAS loser error = %v", err)
+	}
+	if got := git(t, root, "rev-parse", "main"); got != winner {
+		t.Fatalf("winner was overwritten: %s", got)
+	}
+	git(t, root, "reset", "--hard", winner)
+	got, err := o.LandReviewed(context.Background(), request(winner))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if calls != 2 || git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+winner+" "+source {
+		t.Fatalf("recomposition = %+v, authorization calls=%d", got, calls)
+	}
+}
+
 func TestLandReportsPublishedCommitWhenReconciliationFails(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "named", "changed")
