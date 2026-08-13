@@ -20,11 +20,14 @@ Supersedes `gate-concurrency`'s decision #1 (budget model) and #3 (budget =
 `runtime.GOMAXPROCS(0)`, the whole box). That map's landed canary arm stands as
 built; what changes is that its arithmetic stops computing from the box.
 
-Measured current state after the three demand reductions: `internal/gate` is
-147.34–159.70 s across three fresh focused runs, and one exact-subject fresh
-gate is 246 s with that package at 230.663 s. The target remains a full gate
-under 2 minutes, faster better; the focused floor means the reduced workload
-is not yet eligible for pool pricing.
+Measured state has moved twice since the #20 census: the #23 concurrency route
+cut the focused `internal/gate` median from 150.85 s to 56.72 s, then the
+single-build serial gate and the 2026-08-09 branch-native rebuild (`3701c4a0`)
+replaced the fixture-driven workload wholesale — one host binary per top-level
+run, one phase process at a time, direct mutation-to-check canaries, no
+stripped-subject reruns. The target remains a full gate under 2 minutes,
+faster better; no current-tree census exists, which is #26's job before #8
+prices anything.
 
 ## #1: What is bounded — processes, or cores?
 
@@ -793,7 +796,18 @@ build, review, promotion, and retirement.
 
 ### Answer
 
-— (open)
+Resolved and landed. `gate-test-concurrency` staged at `f2a925ee` and retired
+at `bc2d1aff` (2026-08-08): production kit-root became an injected input, the
+fixture `t.Setenv` pins retired, and 192 of 245 top-level gate tests adopted
+`t.Parallel` with 53 reasoned serial holdouts. The exact-candidate focused
+package median fell from 150.85 s to 56.72 s; the measured shared-fixture
+follow-up then took width one to 111.67 s / 699,904 output blocks and width
+two to 78.79 s / 699,712 blocks — flat write volume across widths, so
+concurrency compresses wall without removing intrinsic fixture work. The
+2026-08-09 branch-native rebuild (`3701c4a0`) has since replaced that
+fixture-driven suite wholesale — `internal/gate` now carries five in-package
+top-level tests — so these figures are the route's landed evidence, not the
+current workload.
 
 ## #24: Land specbuild test-only `t.Parallel`
 
@@ -808,7 +822,9 @@ the standing light-path approval and may land before or alongside #23.
 
 ### Answer
 
-— (open)
+Retired as moot. The spec-build lifecycle core was removed wholesale
+(`dae240df`) and `internal/specbuild` no longer exists, so there is no package
+to parallelize. Removed from #26's blockers per the reviewed roadmap drain.
 
 ## #25: Land the three sized serial cuts
 
@@ -826,21 +842,33 @@ if its change turns out to cross a declared seam instead of riding light path.
 
 ### Answer
 
-— (open)
+Moot as sized, flagged for reviewer veto against the roadmap's "land #25's
+cuts". All three estimates priced a workload the branch-native rebuild
+(`3701c4a0`) deleted: the document matrix and the in-package cancellation
+tests are gone, and the grace is already injectable through context
+(`processGroupGrace`, landed with `af23f587`) with the 2 s default intact.
+The `go list` module-closure derivation survives unmemoized in
+`internal/gate/gate_go.go`; whether it is still worth memoizing is priced by
+#26's census on the current workload rather than landed on a stale estimate,
+per #20's own rule against carrying pre-refactor demand forward.
 
 ## #26: What workload remains after the concurrency route lands?
 
-Blocked by: #23, #24, #25
+Blocked by: #23, #25
 Type: Research
 
 ### Question
 
-Re-run the cold package census and focused-versus-in-gate span probes after
-#23–#25 land, updating the census asset with exact commits, repetitions, CPU,
-wall, and the new workload-shape classification — a parallelized package is
-expected to move from mixed to saturating, and its width is what the pool's
-grant pin governs. Only this reduced, reshaped workload may feed #8's reserve
-and split pricing.
+Re-run the cold package census and focused-versus-in-gate span probes on the
+current baseline — the branch-native, single-build serial gate: one host
+binary per top-level run, one phase process at a time, direct
+mutation-to-check canaries, no stripped-subject reruns — updating the census
+asset with exact commits, repetitions, CPU, wall, and the new workload-shape
+classification. Re-walk #4's fan-out inventory while there: the rebuild
+retired `eachIndex` and serialized the phase table, so the pool's client
+sites must be re-enumerated before #8 prices reintroduced width. Include the
+surviving `go list` module-closure derivation from #25. Only this reduced,
+reshaped workload may feed #8's reserve and split pricing.
 
 ### Answer
 
@@ -889,19 +917,16 @@ and split pricing.
   Drift: a working prioritization document; the row moves as the work lands.
 - Path: `decisions/assets/gate-budget-cpu-wall-census.md`
   Supports: #13's three-shape finding, cache A/B, preflight ownership and per-test timing, #20's post-reduction 71-package census, focused repetitions, exact-subject gate span, process fan-out, and cache ruling, plus #21's serial-chain finding, per-test attribution, deterministic Git-spawn histograms, and concurrency constraints.
-  Drift: measured on one 12-online-CPU host; #26 re-runs the census after the concurrency route (#23–#25) lands, after which #8 still needs its own candidate-width repetitions.
+  Drift: measured on one 12-online-CPU host and on the pre-rebuild fixture-driven workload; #26 re-runs the census on the branch-native single-build serial baseline, after which #8 still needs its own candidate-width repetitions.
 - Path: `decisions/assets/gate-budget-memory-profile.md`
   Supports: #1–#5's machine-wide process-boundary budget, the non-recursive primary/stripped/canary overlap, the current operator-width plumbing gap, and #20's required memory/process/I/O observables.
   Drift: one green run on `6607236` and one 12-core host before #18–#19; mechanism evidence only, never authority to price #8.
-- Path: `internal/contract/surface/artifact/internal/fixture/fixture.go`
-  Supports: #13's current dev-posture finding that artifact contract package `TestMain` sets `BENCH_SHARED_BUILD_CACHE=1` before tests run.
-  Drift: code-derived; re-verify if artifact fixture setup changes.
+- Path: `decisions/assets/ft171-shared-fixture-staged-binary.md`
+  Supports: #23's measured residual — the shared immutable fixture binary and narrowed setup-only work behind the 111.67 s / 78.79 s width figures and the flat ~700k output-block volume.
+  Drift: measured on the pre-rebuild fixture-driven suite; landed-route evidence, never the current workload.
 - Path: `internal/conformance/registry/packages.go`
   Supports: #13's finding that `internal/preflight` is excluded from the dev package set and owned by the ship tier.
   Drift: code-derived; re-verify if tier ownership changes.
-- Path: `internal/gate/check_slots_test.go`
-  Supports: #18 and #20's current public-document decision matrix, one capture per changed generation, and seeded full-engine control.
-  Drift: code-derived; re-verify if matrix coverage or generation construction moves again.
 - Path: `internal/gate/evaluation.go`
   Supports: #17's current evaluation-owned accepted pre generation, distinct post generation, and common working/prospective source contract.
   Drift: code-derived; re-verify with the operation ceilings in `internal/gate/evaluation_test.go` if evaluation or snapshot ownership moves.
@@ -911,6 +936,6 @@ and split pricing.
 - Path: `internal/releaseevidence/registry.json`
   Supports: #15's release-preflight gate, full-race, vet, artifact, and smoke commands.
   Drift: code-derived; re-verify if release evidence phase ownership changes.
-- Path: `internal/canary/canary.go`
-  Supports: #1's double-claim finding (`fixtureWorkers`) and #9's already-scoped finding (`biteArgs`, `subjectCall`, `group`), read 2026-08-04 alongside `internal/gate/runner.go`'s unbounded `inFlight` launch loop and `internal/bounds/bounds.go`'s `CanaryInnerWidth`; the full fan-out inventory behind the second fog item was not read.
-  Drift: code-derived; re-verify before spec authoring.
+- Path: `internal/gate/runner.go`
+  Supports: the current serialized phase table behind #26's baseline and the context-injectable `processGroupGrace` behind #25's mootness.
+  Drift: code-derived; the pre-rebuild `canary.go`/`check_slots_test.go`/artifact-fixture sources behind #1, #9, #13, and #18's findings were deleted by `3701c4a0`, and those answers now rest on the census and memory-profile assets plus spec-retirement history.
