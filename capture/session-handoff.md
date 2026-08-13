@@ -2,22 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `6a69cdd9` before the drain commit, clean tree otherwise, unpushed backlog (~66 commits; push remains reviewer-owned)
-Spec: `specs/single-build-serial-gate/spec.md` (Status: staged); `axi-query-disclosure` retired this pass
-Gate: green at `d360fc0` cached tree (matches work tree)
+Branch: `main` — HEAD `ddd7b6f3` before this approved drain; assessment artifacts remain uncommitted outside its scope
+Spec: `specs/single-build-serial-gate/spec.md` (Status: staged)
+Gate: pending the approved drain's path-scoped `bench commit`
 
 ## State
 
-The 2026-08-12 `/bench-what-next` drain is drafted as one uncommitted batch
-awaiting reviewer approval: FT173 collapsed to its R11 residual and the spec
-retired; new rows FT202 (fence + census scope decision), FT203 (worktree list
-flake, `/bench-debug`), FT204 (transcript query, decision), FT205
-(`craft-delegate` release-path clause); the inherited-refusal learning
-re-parked in FT6 pending a real `bench commit` repro; inbox, journal, and the
-axi-query-disclosure retro drained to empty; sequence refreshed (FT171 spec,
-FT203 debug, FT175 shape). If the drain commit (`... spec-retire:
-axi-query-disclosure`) is absent from history, the batch is still awaiting
-approval — review the working diff, then commit it whole on green.
+The approved 2026-08-13 `/bench-what-next` drain removes the
+canary-planted-reason-ownership retro. FT162 gains prospective-failure locality
+and commit-timing receipts; FT106 gains a claim-path census; FT164 gains
+synthetic-registry disclosure and aggregate-candidate repair rereads. The
+producer-derived baseline reminder is already canonical and adds no new rule.
+
+`ASSESSMENT.md` and `capture/FIXES.md` are pre-existing assessment artifacts
+outside this drain and remain uncommitted. The staged serial-gate spec remains
+the leading actionable work after this documentation commit.
 
 Decisions staying closed: `internal/gittest` fence amendment; guards
 real-stale fixture; coverage `why` rewording; FT175 shape unblocked by the
@@ -25,7 +24,7 @@ capstone landing per the 2026-08-02 reviewer ruling.
 
 ## Next command
 
-`/bench-implement-spec` on `specs/single-build-serial-gate/spec.md`
+`/bench-implement-spec` — `specs/single-build-serial-gate/spec.md`
 
 ## Shape
 

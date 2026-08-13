@@ -226,6 +226,13 @@ attribution bound to the exact tree and worktree. Buffered output and a
 coordinator-observed wall time are not durable enough for performance diagnosis.
 Source: the `ft187-communication-surface-cut` retro, drained here.
 
+The canary planted-reason close adds two receipt projections to the same owner:
+a prospective gate failure says whether its failing package lies outside the
+candidate diff, and `bench commit` renders retained per-phase timings in its
+final receipt instead of requiring a JSONL-log read. Both remain bound to the
+exact candidate, so neither weakens the gate or turns unrelated failures into
+success. Source: the canary-planted-reason-ownership retro, drained here.
+
 The handoff half now includes a fresh-context escape hatch, but only at a
 durable lifecycle boundary. After repeated rejected repairs, a false-green
 done-claim, or enough superseded evidence that the durable assignment is simpler
@@ -928,6 +935,12 @@ the top and is re-read when committed, not only when written. This stays a
 discipline check: phrase-grepping project prose cannot demonstrate a reliable
 bite. Source: the learnings journal, verdicted in a prior drain.
 
+The canary planted-reason close adds a generated live-current-claim path census
+to documentation reconciliation. Any claim path outside its charged fence is
+sliced before a delegate starts, so a required residual cannot first appear
+during the documentation edit. Source: the canary-planted-reason-ownership
+retro, drained here.
+
 **FT189 (MEDIUM) — an upstream `git worktree list` hang reaches every Bench
 worktree read.** `git worktree list --porcelain` hangs on a FIFO gitdir placed
 in any private admin entry — reproduced 2026-08-03 at exit 124 under
@@ -1417,6 +1430,14 @@ round and carries `delegate-error` attribution, so the retro does not erase the
 failed first charge. The existing ticket-breakdown review and three-axis
 semantic implementation review remain separate cadences and need no duplicate
 rule. Source: the axi-coherent-diff retro, drained here.
+
+The canary planted-reason close adds two charge-time repair checks: a
+conformance repair says whether package tests use synthetic registry data rather
+than the live root and runs the public root conformance seam; after preserving a
+review pickup, its reread compares the aggregate candidate with the slice base.
+The producer-derived baseline probe is already required before ticket execution,
+so its repeated reminder is dismissed rather than becoming a second rule.
+Source: the canary-planted-reason-ownership retro, drained here.
 
 **FT200 (MEDIUM, decision required) — make preflight mechanical at the landing
 chokepoint.** `bench preflight build|review <slug>` now provides the phase-entry
