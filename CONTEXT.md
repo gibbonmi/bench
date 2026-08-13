@@ -88,6 +88,16 @@ cold session reads this first to avoid drifting the vocabulary.
 - **gate cache** — the durable ready or pending verdict that gate execution binds to
   the closed oracle subject in the Git dir, so read-only consumers can project gate
   state without a cold run. Not "gate log".
+- **landing source** — a build-owned Git integration branch identified by its
+  frozen base and current source tip. Semantic review binds to that pair. Not a
+  mutable `benchBase`, not a reconstructed path list.
+- **landing destination** — the expected tip of the branch that receives a
+  landing source. Movement requires a new composition and gate verdict, not a
+  new source review by itself. Not the source's frozen base.
+- **prospective landing tree** — the exact Git tree produced by composing a
+  landing source onto an expected landing destination, including any authorized
+  final transition. It is the whole-project gate subject. Not the source diff,
+  not the ambient working tree.
 - **frontier round** — one numbered round of `craft-grill`: every question whose
   prerequisites are already settled, asked together with a recommendation, before
   the skill waits and recomputes the next round. Not "one question at a time".
