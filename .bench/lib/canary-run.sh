@@ -24,9 +24,9 @@ fi
 # `root` is provided by the sourcing gate; see the contract above.
 # shellcheck disable=SC2154
 if [ -z "$_canary_bench" ]; then
-  err "canary sweep failed"
+  err "canary inventory unavailable: Bench command was not found"
 elif ! "$_canary_bench" canary "$root"; then
-  err "canary sweep failed"
+  err "canary inventory validation failed"
 fi
 
 unset _canary_lib_dir _canary_bench

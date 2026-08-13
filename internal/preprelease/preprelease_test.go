@@ -1,7 +1,9 @@
 package preprelease
 
 import (
+	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -108,6 +110,74 @@ func TestConformanceShipRunsTheStressAssertions(t *testing.T) {
 			t.Errorf("the ship conformance filter %q does not select %q", filter, name)
 		}
 	}
+}
+
+func TestCanaryShipStepUsesInventoryDecision(t *testing.T) {
+	root := t.TempDir()
+	step := stepNamed(t, Steps(root, "kit"), "canary-ship")
+	var output strings.Builder
+	err := runStep(context.Background(), root, step, &output)
+	if err == nil || !strings.Contains(err.Error(), "canary fixture inventory is empty") {
+		t.Fatalf("canary ship step error = %v, want the inventory refusal", err)
+	}
+}
+
+func TestCanaryCompatibilityShimAttributesInventoryFailures(t *testing.T) {
+	root := t.TempDir()
+	bin := filepath.Join(root, "bin")
+	if err := os.Mkdir(bin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeExecutable(t, filepath.Join(bin, "git"), "#!/bin/sh\nexit 1\n")
+	writeExecutable(t, filepath.Join(bin, "bench"), "#!/bin/sh\nprintf '%s\\n' \"$*\" > \"$BENCH_CANARY_ARGS\"\nexit 1\n")
+
+	t.Run("resolved Bench", func(t *testing.T) {
+		args := filepath.Join(root, "bench-args")
+		t.Setenv("BENCH_CANARY_ARGS", args)
+		output := runCanaryCompatibilityShim(t, root, bin)
+		if !strings.Contains(output, "ERR:canary inventory validation failed") {
+			t.Fatalf("resolved Bench output = %q, want inventory validation failure", output)
+		}
+		data, err := os.ReadFile(args)
+		if err != nil || string(data) != "canary fixture root\n" {
+			t.Fatalf("resolved Bench argv = %q, %v; want canary fixture root", data, err)
+		}
+	})
+
+	t.Run("missing Bench", func(t *testing.T) {
+		if err := os.Remove(filepath.Join(bin, "bench")); err != nil {
+			t.Fatal(err)
+		}
+		output := runCanaryCompatibilityShim(t, root, bin)
+		if !strings.Contains(output, "ERR:canary inventory unavailable: Bench command was not found") {
+			t.Fatalf("missing Bench output = %q, want missing inventory command failure", output)
+		}
+	})
+}
+
+func runCanaryCompatibilityShim(t *testing.T, dir, bin string) string {
+	t.Helper()
+	shim := filepath.Join(repoRoot(t), ".bench", "lib", "canary-run.sh")
+	command := "root='fixture root'\nerr() { printf 'ERR:%s\\n' \"$1\"; }\n. " + shellQuote(shim)
+	cmd := exec.Command("bash", "-c", command)
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "PATH="+bin+":/usr/bin:/bin")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("source canary compatibility shim: %v\n%s", err, output)
+	}
+	return string(output)
+}
+
+func writeExecutable(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte(content), 0o755); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\\\"'\\\"'") + "'"
 }
 
 func runFilter(t *testing.T, argv []string) string {
