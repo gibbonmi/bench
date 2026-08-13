@@ -1,14 +1,16 @@
 package roadmap
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/bounds"
 )
 
@@ -216,205 +218,174 @@ func TestIdeaOwnedOccurrenceRefusalsPreserveInbox(t *testing.T) {
 	}
 }
 
-// TestRoadmapMissing covers the two states a reader could collapse onto one another. An
-// absent file is the maintenance-prompt posture: exit 0 with a pointer to
-// /bench-what-next, never a crash or a bare empty verdict. A zero-byte file is present,
-// so it takes the non-absent posture — exit 1 naming the state — and must not print the
-// prompt that would tell a reader no roadmap was ever created.
-func TestRoadmapMissing(t *testing.T) {
+func TestRoadmapBoardDocument(t *testing.T) {
 	root := newRepo(t)
-	if out, code := RoadmapCommand(nil); out != missingRoadmap || code != 0 {
-		t.Fatalf("absent: got %q/%d", out, code)
+	var rows strings.Builder
+	for i := 1; i <= 11; i++ {
+		fmt.Fprintf(&rows, "**FT%d — row %d.**\n\n", i, i)
 	}
-	if err := os.WriteFile(roadmapPath(t, root), nil, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if out, code := RoadmapCommand(nil); code != 1 || !strings.Contains(out, "error: ROADMAP.md is empty") || strings.Contains(out, "no ROADMAP.md") {
-		t.Fatalf("zero-byte: got %q/%d", out, code)
-	}
-	if !strings.Contains(missingRoadmap, "/bench-what-next") {
-		t.Fatalf("missing-roadmap pointer does not name /bench-what-next: %q", missingRoadmap)
-	}
-}
-
-// TestRoadmapVerbatim covers a populated file returned byte-for-byte before the callout.
-func TestRoadmapVerbatim(t *testing.T) {
-	root := newRepo(t)
-	content := "# Roadmap\n\n- 2026-01-01  first\n- 2026-01-02  second\n\n## Recommended sequence\n\n1. First item - /bench-shape-idea\n2. Second item - /bench-implement-spec\n"
-	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out, code := RoadmapCommand(nil)
-	if code != 0 || !strings.HasPrefix(out, content) {
-		t.Fatalf("verbatim: got %q/%d", out, code)
-	}
-}
-
-// TestRoadmapMissingSection covers a roadmap body without `## Recommended sequence`:
-// exit 0, body still printed, explicit missing-section message instead of silence.
-func TestRoadmapMissingSection(t *testing.T) {
-	root := newRepo(t)
-	content := "# Roadmap\n\n## Context\n\nNo sequence here.\n"
+	content := "# Roadmap\n\n" + rows.String() + "## Recommended sequence\n\n1. First item - /bench-shape-idea\n"
 	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	out, code := RoadmapCommand(nil)
 	if code != 0 {
-		t.Fatalf("exit: got %d, want 0", code)
+		t.Fatalf("exit = %d; stdout=%q", code, out)
 	}
-	if !strings.HasPrefix(out, content) {
-		t.Fatalf("body not printed verbatim: %q", out)
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatalf("stdout = %q; decode: %v", out, err)
 	}
-	if !strings.Contains(out, "no ## Recommended sequence section") || !strings.Contains(out, "/bench-what-next") {
-		t.Fatalf("missing-section message absent: %q", out)
+	if want := []string{"roadmap", "board", "sequence", "drain", "help"}; !reflect.DeepEqual(document.Blocks, want) {
+		t.Fatalf("blocks = %q, want %q", document.Blocks, want)
+	}
+	roadmapRows, err := document.Rows("roadmap")
+	if err != nil || len(roadmapRows) != 10 {
+		t.Fatalf("roadmap rows = %v/%v, want 10", roadmapRows, err)
+	}
+	first := roadmapRows[0].(map[string]any)
+	last := roadmapRows[9].(map[string]any)
+	if first["id"] != "FT1" || last["id"] != "FT10" {
+		t.Fatalf("roadmap IDs = %q through %q, want FT1 through FT10", first["id"], last["id"])
+	}
+	sequenceRows, err := document.Rows("sequence")
+	if err != nil || len(sequenceRows) != 1 {
+		t.Fatalf("sequence rows = %v/%v, want one", sequenceRows, err)
+	}
+	sequence := sequenceRows[0].(map[string]any)
+	if fmt.Sprint(sequence["rank"]) != "1" || sequence["text"] != "First item - /bench-shape-idea" || sequence["command"] != "/bench-shape-idea" {
+		t.Fatalf("sequence = %#v", sequence)
+	}
+	boardRows, err := document.Rows("board")
+	if err != nil || len(boardRows) != 1 {
+		t.Fatalf("board rows = %v/%v, want one", boardRows, err)
+	}
+	board := boardRows[0].(map[string]any)
+	if fmt.Sprint(board["rows_shown"]) != "10" || fmt.Sprint(board["rows_total"]) != "11" || board["sequence_trusted"] != true {
+		t.Fatalf("board = %#v, want shown=10 total=11 trusted=true", board)
 	}
 }
 
-// TestRoadmapMalformedSequence covers a present section whose numbered-item count
-// breaks the two-or-three contract: an explicit malformed message, not a verbatim callout.
-func TestRoadmapMalformedSequence(t *testing.T) {
-	cases := []struct {
-		name  string
-		items string
-		count string
-	}{
-		{"no items", "", "0"},
-		{"one item", "1. Only item - /bench-shape-idea\n", "1"},
-		{"four items", "1. a - /x\n2. b - /x\n3. c - /x\n4. d - /x\n", "4"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+func TestRoadmapBoardRowBoundary(t *testing.T) {
+	for _, count := range []int{0, 9, 10, 11} {
+		t.Run(fmt.Sprintf("%d rows", count), func(t *testing.T) {
 			root := newRepo(t)
-			content := "# Roadmap\n\n## Recommended sequence\n\n" + tc.items
-			if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
+			var content strings.Builder
+			content.WriteString("# Roadmap\n\n## Recommended sequence\n\n")
+			for i := 1; i <= count; i++ {
+				fmt.Fprintf(&content, "**FT%d — row.**\n\n", i)
+			}
+			if err := os.WriteFile(roadmapPath(t, root), []byte(content.String()), 0o644); err != nil {
 				t.Fatal(err)
 			}
 			out, code := RoadmapCommand(nil)
 			if code != 0 {
-				t.Fatalf("exit: got %d, want 0", code)
+				t.Fatalf("exit = %d; stdout=%q", code, out)
 			}
-			if !strings.Contains(out, "malformed ## Recommended sequence: "+tc.count+" numbered item(s)") || !strings.Contains(out, "/bench-what-next") {
-				t.Fatalf("malformed-section message absent: %q", out)
+			document, err := axitest.DecodeDocument(out)
+			if err != nil {
+				t.Fatal(err)
 			}
-			if strings.Contains(out, "## Next action") {
-				t.Fatalf("malformed section still rendered as next action: %q", out)
+			rows, err := document.Rows("roadmap")
+			if err != nil || len(rows) != min(10, count) {
+				t.Fatalf("roadmap rows = %d/%v, want %d", len(rows), err, min(10, count))
+			}
+			board, _ := document.Rows("board")
+			if len(board) != 1 || fmt.Sprint(board[0].(map[string]any)["rows_total"]) != fmt.Sprint(count) {
+				t.Fatalf("board = %#v, want total=%d", board, count)
 			}
 		})
 	}
 }
 
-// TestRoadmapSequenceFenceBlindness covers headings inside fenced code blocks: a
-// fenced `## Recommended sequence` must not start the section, and a fenced `## `
-// heading inside the section must not truncate it.
-func TestRoadmapSequenceFenceBlindness(t *testing.T) {
-	root := newRepo(t)
-	content := "# Roadmap\n\n```\n## Recommended sequence\n\n1. fake - /x\n```\n\n## Recommended sequence\n\n1. Real item - /bench-shape-idea\n\n```\n## Later\n```\n\n2. Second item - /bench-implement-spec\n\n## Later\n\nDo not include.\n"
-	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out, code := RoadmapCommand(nil)
-	if code != 0 {
-		t.Fatalf("exit: got %d, want 0", code)
-	}
-	callout := out[strings.LastIndex(out, "## Next action"):]
-	if strings.Contains(callout, "fake - /x") {
-		t.Fatalf("fenced heading hijacked the section start:\n%s", callout)
-	}
-	if !strings.Contains(callout, "2. Second item - /bench-implement-spec") {
-		t.Fatalf("fenced heading truncated the section:\n%s", callout)
-	}
-	if strings.Contains(callout, "Do not include.") {
-		t.Fatalf("callout included the following section:\n%s", callout)
-	}
-}
-
-// TestRoadmapHeadingTrailingWhitespace covers a hand-edited heading with trailing
-// spaces or tabs: it still matches instead of silently yielding no callout.
-func TestRoadmapHeadingTrailingWhitespace(t *testing.T) {
-	root := newRepo(t)
-	content := "# Roadmap\n\n## Recommended sequence \t\n\n1. First item - /bench-shape-idea\n2. Second item - /bench-implement-spec\n"
-	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out, code := RoadmapCommand(nil)
-	if code != 0 {
-		t.Fatalf("exit: got %d, want 0", code)
-	}
-	if !strings.Contains(out, "## Next action") || !strings.Contains(out, "1. First item - /bench-shape-idea") {
-		t.Fatalf("padded heading did not match: %q", out)
-	}
-}
-
-// TestRoadmapDrainStatus covers the maintenance prompt when either drain source has rows.
-func TestRoadmapDrainStatus(t *testing.T) {
-	cases := []struct {
-		name      string
-		ideas     string
-		learnings string
-		want      []string
-		notWanted []string
+func TestRoadmapBoardInputStates(t *testing.T) {
+	t.Run("absent", func(t *testing.T) {
+		newRepo(t)
+		out, code := RoadmapCommand(nil)
+		if code != 0 || !strings.Contains(out, "/bench-what-next") {
+			t.Fatalf("absent = %q/%d", out, code)
+		}
+		document, err := axitest.DecodeDocument(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows, _ := document.Rows("roadmap")
+		sequence, _ := document.Rows("sequence")
+		if len(rows) != 0 || len(sequence) != 0 {
+			t.Fatalf("absent rows = %d/%d, want zero", len(rows), len(sequence))
+		}
+	})
+	for _, tc := range []struct {
+		name, content, state string
 	}{
-		{
-			name:  "ideas only",
-			ideas: "- 2026-07-05  parked\n",
-			want:  []string{"ideas: 1 parked in capture/IDEAS.md", "learnings: 0 open in capture/learnings.md", "/bench-what-next"},
-		},
-		{
-			name:      "learnings only",
-			learnings: "## 2026-07-05 — open learning  [open]\n",
-			want:      []string{"ideas: 0 parked in capture/IDEAS.md", "learnings: 1 open in capture/learnings.md", "/bench-what-next"},
-		},
-		{
-			name:      "empty sources",
-			ideas:     "",
-			learnings: "## <date> — template  [open]\n",
-			notWanted: []string{"## Drain status", "/bench-what-next"},
-		},
-	}
-	for _, tc := range cases {
+		{"empty", "", "empty"},
+		{"unsupported", "not a roadmap\n", "unsupported-schema"},
+	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newRepo(t)
-			if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n\n## Recommended sequence\n\n1. First item - /bench-shape-idea\n2. Second item - /bench-implement-spec\n"), 0o644); err != nil {
+			if err := os.WriteFile(roadmapPath(t, root), []byte(tc.content), 0o644); err != nil {
 				t.Fatal(err)
 			}
-			if tc.ideas != "" {
-				if err := os.WriteFile(ideasPath(t, root), []byte(tc.ideas), 0o644); err != nil {
-					t.Fatal(err)
-				}
-			}
-			if tc.learnings != "" {
-				path := filepath.Join(root, "capture", "learnings.md")
-				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-					t.Fatal(err)
-				}
-				if err := os.WriteFile(path, []byte(tc.learnings), 0o644); err != nil {
-					t.Fatal(err)
-				}
-			}
 			out, code := RoadmapCommand(nil)
-			if code != 0 {
-				t.Fatalf("exit: got %d, want 0", code)
-			}
-			for _, want := range tc.want {
-				if !strings.Contains(out, want) {
-					t.Fatalf("missing %q in:\n%s", want, out)
-				}
-			}
-			for _, notWanted := range tc.notWanted {
-				if strings.Contains(out, notWanted) {
-					t.Fatalf("unexpected %q in:\n%s", notWanted, out)
-				}
+			if code != 1 || !strings.Contains(out, tc.state) {
+				t.Fatalf("%s = %q/%d", tc.name, out, code)
 			}
 		})
 	}
+	t.Run("failed read", func(t *testing.T) {
+		root := newRepo(t)
+		if err := os.Mkdir(roadmapPath(t, root), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		out, code := RoadmapCommand(nil)
+		if code != 1 || !strings.Contains(out, "wrong-type") {
+			t.Fatalf("failed read = %q/%d", out, code)
+		}
+	})
 }
 
-func TestRoadmapDrainStatusIncludesPendingRetros(t *testing.T) {
+func TestRoadmapUsesOneUsageAcrossForms(t *testing.T) {
+	want := "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...>\n"
+	for _, command := range []func() (string, int){
+		func() (string, int) { return RoadmapCommand([]string{"--help"}) },
+		func() (string, int) {
+			return ContextCommand([]string{"--help"}, func(string) GateCacheFact { return GateCacheFact{} })
+		},
+	} {
+		out, code := command()
+		if code != 0 || out != want {
+			t.Fatalf("help = %q/%d, want %q/0", out, code, want)
+		}
+		if !strings.Contains(out, "bench roadmap |") || !strings.Contains(out, "bench roadmap --context [--full]") || !strings.Contains(out, "bench roadmap --context --row <ID,...>") || strings.Contains(out, "bench roadmap --row") {
+			t.Fatalf("usage does not distinguish the three forms: %q", out)
+		}
+	}
+}
+
+func TestRoadmapBoardRefusesControlByte(t *testing.T) {
 	root := newRepo(t)
-	if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n\n## Recommended sequence\n\n1. First - /bench-shape-idea\n2. Second - /bench-implement-spec\n"), 0o644); err != nil {
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — bad\x01 title.**\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	retro := filepath.Join(root, "capture", "retros", "done.md")
+	out, code := RoadmapCommand(nil)
+	if code != 1 || !strings.Contains(out, "error: unrepresentable TOON cell") {
+		t.Fatalf("control byte = %q/%d", out, code)
+	}
+}
+
+func TestRoadmapBoardPendingDrainDisclosesWhatNext(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — current.**\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(ideasPath(t, root), []byte("- 2026-08-13  pending idea\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	learningsPath := filepath.Join(root, "capture", "learnings.md")
+	if err := os.WriteFile(learningsPath, []byte("## 2026-08-13 — pending learning  [open]\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	retro := filepath.Join(root, "capture", "retros", "pending.md")
 	if err := os.MkdirAll(filepath.Dir(retro), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -422,16 +393,47 @@ func TestRoadmapDrainStatusIncludesPendingRetros(t *testing.T) {
 		t.Fatal(err)
 	}
 	out, code := RoadmapCommand(nil)
-	if code != 0 || !strings.Contains(out, "retros: 1 pending in capture/retros/") {
-		t.Fatalf("roadmap = %q/%d", out, code)
+	if code != 0 {
+		t.Fatalf("exit = %d; stdout=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actions, err := document.HelpActions()
+	if err != nil || len(actions) != 1 || actions[0].Cmd != "/bench-what-next" {
+		t.Fatalf("help = %#v/%v, want /bench-what-next", actions, err)
+	}
+	drain, err := document.Rows("drain")
+	if err != nil || len(drain) != 1 {
+		t.Fatalf("drain = %#v/%v", drain, err)
+	}
+	facts := drain[0].(map[string]any)
+	if fmt.Sprint(facts["ideas"]) != "1" || fmt.Sprint(facts["learnings"]) != "1" || fmt.Sprint(facts["retros"]) != "1" || facts["ideas_state"] != "parsed" || facts["learnings_state"] != "parsed" || facts["retros_state"] != "parsed" {
+		t.Fatalf("drain facts = %#v", facts)
 	}
 }
 
-func TestRoadmapDrainStatusNamesDegradedRetros(t *testing.T) {
-	root := newRepo(t)
-	if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n\n## Recommended sequence\n\n1. First - /bench-shape-idea\n2. Second - /bench-implement-spec\n"), 0o644); err != nil {
-		t.Fatal(err)
+func TestRecommendedSequenceGrammar(t *testing.T) {
+	if got := RecommendedSequence("# Roadmap\n"); got != "" {
+		t.Fatalf("missing sequence = %q", got)
 	}
+	if got := RecommendedSequence("## Recommended sequence\n\n1. only\n"); got != "## Recommended sequence\n\n1. only\n" {
+		t.Fatalf("malformed sequence = %q", got)
+	}
+	fenced := "# Roadmap\n\n```\n## Recommended sequence\n1. fake\n```\n\n## Recommended sequence\n\n1. real\n\n```\n## Later\n```\n\n2. second\n\n## Later\nnope\n"
+	want := "## Recommended sequence\n\n1. real\n\n```\n## Later\n```\n\n2. second\n"
+	if got := RecommendedSequence(fenced); got != want {
+		t.Fatalf("fenced sequence = %q, want %q", got, want)
+	}
+	padded := "## Recommended sequence \t\n\n1. first\n2. second\n"
+	if got := RecommendedSequence(padded); got != "## Recommended sequence \t\n\n1. first\n2. second\n" {
+		t.Fatalf("padded sequence = %q", got)
+	}
+}
+
+func TestDrainCountsReportsDegradedRetros(t *testing.T) {
+	root := newRepo(t)
 	retro := filepath.Join(root, "capture", "retros", "wait.md")
 	if err := os.MkdirAll(filepath.Dir(retro), 0o755); err != nil {
 		t.Fatal(err)
@@ -439,45 +441,8 @@ func TestRoadmapDrainStatusNamesDegradedRetros(t *testing.T) {
 	if err := exec.Command("mkfifo", retro).Run(); err != nil {
 		t.Fatal(err)
 	}
-	type result struct {
-		out  string
-		code int
-	}
-	done := make(chan result, 1)
-	go func() {
-		out, code := RoadmapCommand(nil)
-		done <- result{out, code}
-	}()
-	var got result
-	select {
-	case got = <-done:
-	case <-time.After(bounds.TestDeadline(bounds.TestDeadlineFloor)):
-		t.Fatal("bench roadmap blocked on a retrospective FIFO")
-	}
-	out, code := got.out, got.code
-	if code != 0 || !strings.Contains(out, "retros: unknown (capture/retros/ is wrong-type)") {
-		t.Fatalf("roadmap = %q/%d", out, code)
-	}
-}
-
-// TestRoadmapRecommendedSequenceCallout covers the no-drain extraction branch.
-func TestRoadmapRecommendedSequenceCallout(t *testing.T) {
-	root := newRepo(t)
-	content := "# Roadmap\n\n## Context\n\nKeep current.\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n2. Implement next item - /bench-implement-spec\n\n## Later\n\nDo not include.\n"
-	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out, code := RoadmapCommand(nil)
-	if code != 0 {
-		t.Fatalf("exit: got %d, want 0", code)
-	}
-	want := "## Next action\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n2. Implement next item - /bench-implement-spec\n"
-	if !strings.Contains(out, want) {
-		t.Fatalf("missing recommended sequence callout %q in:\n%s", want, out)
-	}
-	callout := out[strings.LastIndex(out, "## Next action"):]
-	if strings.Contains(callout, "Do not include.") {
-		t.Fatalf("callout included the following section:\n%s", callout)
+	if drain := DrainCounts(root); drain.RetrosState != bounds.StateWrongType {
+		t.Fatalf("retros state = %q, want %q", drain.RetrosState, bounds.StateWrongType)
 	}
 }
 

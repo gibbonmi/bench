@@ -43,6 +43,7 @@ func checkPackageShippedSurface(root string) []string {
 			diags = append(diags, fmt.Sprintf("repair policy omits %q", fact))
 		}
 	}
+	diags = append(diags, checkRoadmapLauncherHelpLine(readIfExists(filepath.Join(root, "bin", "bench.sh")))...)
 	var requirements struct {
 		BinaryPinManifest struct {
 			Path string `json:"path"`
@@ -92,6 +93,13 @@ func checkPackageShippedSurface(root string) []string {
 		}
 	}
 	return diags
+}
+
+func checkRoadmapLauncherHelpLine(script string) []string {
+	if strings.Contains(script, "bench roadmap              show the top 10 roadmap rows + drain state") {
+		return nil
+	}
+	return []string{"bin/bench.sh roadmap help line does not describe the top-10 board"}
 }
 
 // shippedFiles returns every file the npm tarball would carry, expanding package.json

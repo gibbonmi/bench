@@ -8,7 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-func contextUsage() string { return "usage: bench roadmap --context [--full]\n" }
+func contextUsage() string { return roadmapUsage() }
 
 // contextGrammar is the declared argument shape usage.Parse enforces for the
 // `bench roadmap --context` form — arity, flag recognition, `--`, repeated flags, and

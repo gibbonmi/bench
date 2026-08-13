@@ -340,7 +340,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench models               list advisory model-id candidates for the line binding
   bench structure            flag oversized files + crowded dirs (wire into the gate)
   bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
-  bench roadmap              print the roadmap + drain status (capture/IDEAS.md, learnings)
+  bench roadmap              show the top 10 roadmap rows + drain state
   bench status               ambient dashboard: what needs attention + the next action
   bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite capture/session-handoff.md
   bench commands --brief     print the direct, read-only command probe

@@ -237,8 +237,8 @@ func commandsCommand(args []string) (string, int) {
 var gatePhasesCommand = gate.PhasesCommand
 
 func roadmapCommand(args []string) (string, int) {
-	if len(args) == 0 {
-		return roadmap.RoadmapCommand(nil)
+	if len(args) == 0 || len(args) == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help") {
+		return roadmap.RoadmapCommand(args)
 	}
 	return roadmap.ContextCommand(args, func(root string) roadmap.GateCacheFact {
 		g := status.GateVerdict(root)

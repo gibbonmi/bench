@@ -18,6 +18,10 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
+func roadmapUsage() string {
+	return "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...>\n"
+}
+
 // ideaGrammar is the declared argument shape usage.Parse enforces for this subcommand —
 // arity, flag recognition, `--`, and help all come from there rather than a local switch.
 // The text is variadic, so MaxArgs is unbounded; `--` is what makes idea text that
@@ -42,7 +46,7 @@ func ValidOccurrenceOwner(owner string) bool { return occurrenceOwner.MatchStrin
 // takes nothing at all.
 var roadmapGrammar = usage.Grammar{
 	Cmd:  "bench roadmap",
-	Help: "usage: bench roadmap",
+	Help: strings.TrimSuffix(roadmapUsage(), "\n"),
 }
 
 // IdeasFile and RoadmapFile are the two repo-relative control records this package
@@ -152,19 +156,7 @@ func needsNewline(file string) bool {
 	return data[len(data)-1] != '\n'
 }
 
-// missingRoadmap is the absent-file posture: no working document at all is a maintenance
-// prompt, never a crash or silent empty output. A ROADMAP.md that exists but holds no
-// bytes is not this case — someone created it and left it unwritten, which the empty
-// state reports instead.
-const missingRoadmap = "no ROADMAP.md — run /bench-what-next to create the working roadmap\n"
-
-// RoadmapCommand implements `bench roadmap`: it prints ROADMAP.md verbatim followed
-// by the drain-status block when capture sources need draining, or by the
-// `## Recommended sequence` callout when nothing does. Absence renders the
-// maintenance prompt on exit 0 — the only authoritative empty state — while every
-// other state exits 1 with a structured error naming it: a present-but-empty file,
-// any classifier failure, or the parser's own unsupported-schema verdict. A read that
-// did not produce a working document can therefore never print as one.
+// RoadmapCommand implements the bounded top-of-board projection for `bench roadmap`.
 func RoadmapCommand(args []string) (string, int) {
 	if _, line, code := usage.Parse(roadmapGrammar, args); line != "" {
 		return line + "\n", code
@@ -176,7 +168,7 @@ func RoadmapCommand(args []string) (string, int) {
 	c := bounds.Classify(filepath.Join(root, RoadmapFile), bounds.ControlRecordLimit)
 	switch {
 	case c.State == bounds.StateAbsent:
-		return missingRoadmap, 0
+		return renderRoadmapBoard(Document{}, DrainCounts(root), true)
 	case c.State == bounds.StateEmpty:
 		// The classifier carries no diagnostic for a clean read of nothing, so the
 		// error line supplies the one fact that separates this from absence.
@@ -190,11 +182,62 @@ func RoadmapCommand(args []string) (string, int) {
 			return toon.RecordError(RoadmapFile, bounds.StateUnsupportedSchema, f.Reason) + "\n", 1
 		}
 	}
-	text := doc.Text
-	if status := drainStatus(root); status != "" {
-		return text + status, 0
+	return renderRoadmapBoard(doc, DrainCounts(root), false)
+}
+
+func renderRoadmapBoard(doc Document, drain Drain, absent bool) (string, int) {
+	rowsShown := len(doc.Rows)
+	if rowsShown > 10 {
+		rowsShown = 10
 	}
-	return text + nextAction(text), 0
+	roadmapRows := make([][]any, rowsShown)
+	for i := range roadmapRows {
+		r := doc.Rows[i]
+		roadmapRows[i] = []any{r.ID, r.Title, r.Spec, r.SpecStatus, r.ExternalTrigger, r.OccurrenceCount, r.OccurrenceKeys}
+	}
+	sequenceRows := make([][]any, len(doc.Sequence))
+	for i, r := range doc.Sequence {
+		sequenceRows[i] = []any{r.Rank, r.Text, r.Command}
+	}
+	sources := []SourceFact{
+		{Source: RoadmapFile, State: string(bounds.StateParsed)},
+		{Source: IdeasFile, State: string(drain.IdeasState)},
+		{Source: learnings.JournalPath, State: string(drain.LearningsState)},
+		{Source: retros.Directory + "/", State: string(drain.RetrosState)},
+	}
+	trusted := occurrenceSequenceTrusted(doc.OccurrenceDiscrepancies, sources)
+	blocks := []struct {
+		name   string
+		fields []string
+		rows   [][]any
+	}{
+		{"roadmap", []string{"id", "title", "spec", "spec_status", "external_trigger", "occurrence_count", "occurrence_keys"}, roadmapRows},
+		{"board", []string{"rows_shown", "rows_total", "sequence_trusted"}, [][]any{{rowsShown, len(doc.Rows), trusted}}},
+		{"sequence", []string{"rank", "text", "command"}, sequenceRows},
+		{"drain", []string{"ideas", "ideas_state", "learnings", "learnings_state", "retros", "retros_state"}, [][]any{{drain.Ideas, string(drain.IdeasState), drain.OpenLearnings, string(drain.LearningsState), drain.Retros, string(drain.RetrosState)}}},
+	}
+	if absent || drain.Ideas != 0 || drain.OpenLearnings != 0 || drain.Retros != 0 {
+		blocks = append(blocks, struct {
+			name   string
+			fields []string
+			rows   [][]any
+		}{"help", []string{"cmd", "why"}, [][]any{{"/bench-what-next", "create or drain the working roadmap"}}})
+	} else {
+		blocks = append(blocks, struct {
+			name   string
+			fields []string
+			rows   [][]any
+		}{"help", []string{"cmd", "why"}, nil})
+	}
+	var out strings.Builder
+	for _, block := range blocks {
+		text, err := toon.TableTyped(block.name, block.fields, block.rows)
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
+		}
+		out.WriteString(text)
+	}
+	return out.String(), 0
 }
 
 // Drain is the typed capture-source snapshot `bench roadmap` and `bench status` project.
@@ -235,39 +278,6 @@ func RoadmapText(root string) (text string, present bool) {
 func ParkedIdeas(root string) []string {
 	parked, _ := ideaLines(filepath.Join(root, IdeasFile))
 	return parked
-}
-
-func drainStatus(root string) string {
-	// bench roadmap's status callout preserves failed capture-source evidence.
-	drain := DrainCounts(root)
-	if drain.Ideas == 0 && drain.OpenLearnings == 0 && drain.Retros == 0 && !drain.LearningsState.Failed() && !drain.RetrosState.Failed() {
-		return ""
-	}
-	learningsStatus := fmt.Sprintf("%d open in %s", drain.OpenLearnings, learnings.JournalPath)
-	if drain.LearningsState.Failed() {
-		learningsStatus = toon.UnknownCell(learnings.JournalPath, drain.LearningsState)
-	}
-	retro := fmt.Sprintf("%d pending in %s/", drain.Retros, retros.Directory)
-	if drain.RetrosState.Failed() {
-		retro = toon.UnknownCell(retros.Directory+"/", drain.RetrosState)
-	}
-	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %s\n- retros: %s\n\nRun /bench-what-next before trusting the sequence.\n", drain.Ideas, IdeasFile, learningsStatus, retro)
-}
-
-// numberedItem matches one sequence entry; the format contract wants two or three.
-var numberedItem = regexp.MustCompile(`(?m)^[0-9]+\. `)
-
-// nextAction renders the no-drain call to action: the sequence section verbatim, or
-// an explicit gap message so a broken format contract never yields silent output.
-func nextAction(roadmap string) string {
-	section := RecommendedSequence(roadmap)
-	if section == "" {
-		return "\n\nROADMAP.md has no ## Recommended sequence section — run /bench-what-next to restore it.\n"
-	}
-	if n := len(numberedItem.FindAllString(section, -1)); n < 2 || n > 3 {
-		return fmt.Sprintf("\n\nmalformed ## Recommended sequence: %d numbered item(s), expected two or three — run /bench-what-next to repair it.\n", n)
-	}
-	return "\n\n## Next action\n\n" + section
 }
 
 // RecommendedSequence extracts the `## Recommended sequence` section, from its
