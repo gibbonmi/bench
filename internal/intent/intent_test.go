@@ -303,6 +303,64 @@ func TestAssignmentCreatedAtAcceptsFuture(t *testing.T) {
 	}
 }
 
+func TestCompareAndSwapRequestDigestRefusesConcurrentMovementAndPreservesOtherFields(t *testing.T) {
+	assignment := activeAssignment()
+	original := assignment
+	assignment.Request = strings.Repeat("e", 64)
+	if err := compareAndSwapRequestDigest(&assignment, original.Request, strings.Repeat("f", 64)); err == nil {
+		t.Fatal("compareAndSwapRequestDigest accepted a moved request digest")
+	}
+	if assignment.Request != strings.Repeat("e", 64) {
+		t.Fatalf("refused CAS changed request to %q", assignment.Request)
+	}
+
+	assignment = original
+	replacement := strings.Repeat("f", 64)
+	if err := compareAndSwapRequestDigest(&assignment, original.Request, replacement); err != nil {
+		t.Fatal(err)
+	}
+	if assignment.Request != replacement {
+		t.Fatalf("CAS request = %q, want %q", assignment.Request, replacement)
+	}
+	assignment.Request = original.Request
+	if !reflect.DeepEqual(assignment, original) {
+		t.Fatalf("CAS changed fields beyond request: got %#v, want %#v", assignment, original)
+	}
+}
+
+func TestReauthorizeAssignmentRefusesRequestDigestCollision(t *testing.T) {
+	root := newRepo(t)
+	first := activeAssignment()
+	first.Request = requestDigestValue("first-request")
+	second := activeAssignment()
+	second.ID, second.OwnerID = strings.Repeat("c", 32), strings.Repeat("d", 32)
+	second.Request = requestDigestValue("replacement-request")
+	second.Branch = AssignmentBranchRef(second.OwnerID, second.ID)
+	second.Worktree = "/pool/other"
+	if err := PutAssignment(root, first); err != nil {
+		t.Fatal(err)
+	}
+	if err := PutAssignment(root, second); err != nil {
+		t.Fatal(err)
+	}
+	before, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReauthorizeAssignment(root, first.ID, "replacement-request", func(Assignment) error { return nil }, noReauthorizeTransition, nil); err == nil {
+		t.Fatal("ReauthorizeAssignment accepted another assignment's request digest")
+	}
+	after, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(after, before) {
+		t.Fatalf("collision changed ledger: before=%#v after=%#v", before, after)
+	}
+}
+
+func noReauthorizeTransition(Assignment, Assignment) (func(), error) { return func() {}, nil }
+
 func activeAssignment() Assignment {
 	owner, id := strings.Repeat("a", 32), strings.Repeat("b", 32)
 	return Assignment{

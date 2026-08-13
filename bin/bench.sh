@@ -366,7 +366,8 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench worktree list        list assignments and registered worktrees as TOON
   bench worktree path <target>  print one active owned worktree's portable path
   bench worktree exec <target> -- <command> [args...]  run a child directly in an active owned worktree
-  bench worktree --help      show exact list, path, exec, create, release, and clean grammar
+  bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
+  bench worktree --help      show exact list, path, exec, create, release, clean, and reauthorize grammar
   bash bin/bench.sh gate --fresh  run the current worktree's gate
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)

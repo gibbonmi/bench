@@ -1,6 +1,7 @@
 package intent
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -377,6 +378,73 @@ func PutAssignment(root string, assignment Assignment) error {
 	}
 	ledger.Assignments = append(ledger.Assignments, assignment)
 	return writePath(path, ledger)
+}
+
+// ReauthorizeAssignment swaps one request digest only after its caller's reversible
+// external transition succeeds. The rollback keeps that derived state coherent when
+// the expected-old write cannot commit.
+func ReauthorizeAssignment(root, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
+	path, err := Address(root)
+	if err != nil {
+		return Assignment{}, err
+	}
+	release, err := acquire(path + ".lock")
+	if err != nil {
+		return Assignment{}, err
+	}
+	defer release()
+	ledger, err := readPath(path)
+	if err != nil {
+		return Assignment{}, err
+	}
+	for i := range ledger.Assignments {
+		current := ledger.Assignments[i]
+		if current.ID != id {
+			continue
+		}
+		expectedOld := current.Request
+		if err := verify(current); err != nil {
+			return Assignment{}, err
+		}
+		if !ValidIdentity(id) || request == "" {
+			return Assignment{}, errors.New("invalid reauthorization identity")
+		}
+		newDigest := requestDigestValue(request)
+		for j, other := range ledger.Assignments {
+			if j != i && other.Request == newDigest {
+				return Assignment{}, errors.New("request digest already belongs to another assignment")
+			}
+		}
+		next := current
+		next.Request = newDigest
+		rollback, err := transition(current, next)
+		if err != nil {
+			return Assignment{}, err
+		}
+		if beforeCAS != nil {
+			beforeCAS(&ledger.Assignments[i])
+		}
+		if err := compareAndSwapRequestDigest(&ledger.Assignments[i], expectedOld, newDigest); err != nil {
+			rollback()
+			return Assignment{}, err
+		}
+		if err := writePath(path, ledger); err != nil {
+			rollback()
+			return Assignment{}, err
+		}
+		return current, nil
+	}
+	return Assignment{}, errors.New("assignment not found")
+}
+
+func requestDigestValue(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
+
+func compareAndSwapRequestDigest(assignment *Assignment, expectedOld, replacement string) error {
+	if assignment.Request != expectedOld {
+		return errors.New("assignment request changed during reauthorization")
+	}
+	assignment.Request = replacement
+	return nil
 }
 
 // PurgeAssignments drops every assignment record keep rejects, plus every record this
