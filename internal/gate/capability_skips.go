@@ -26,8 +26,9 @@ import (
 // lacks capabilities, and an unconditional red would make the gate unusable locally.
 const requireCapabilitiesEnv = "BENCH_REQUIRE_CAPABILITIES"
 
-// skipRowPrefix identifies separately parseable skip-accounting rows so reports retain
-// them alongside phase verdicts without weaving them into verdict text.
+// skipRowPrefix opens every row this file writes. The canary matches EXPECT
+// substrings against inner-gate output, so these rows are added alongside the phase
+// verdicts rather than woven into them.
 const skipRowPrefix = "capability-skips"
 
 type skipTally struct {

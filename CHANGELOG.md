@@ -93,6 +93,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made `bench canary` report only validated canary inventory; retained kit fixtures
+  are proven by ordinary mutation tests, and newly initialized linked repos leave
+  planted-reason proof to project-native tests.
 - Recast the AXI CLI guidance as a ten-principle per-surface contract with
   contextual result actions and a registry-checked approved-query inventory.
 - Replaced one-question-at-a-time grilling with numbered frontier rounds: every

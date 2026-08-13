@@ -15,10 +15,12 @@ more than you are.
 
 A check you have never seen fail is a hope, not a check. Before a new check
 lands, break the thing it guards, watch the gate go red **with the check's own
-message**, then revert. Where the repo has canary machinery (known-broken
-fixtures the gate runs itself against), the check ships with its fixture so the
-proof reruns forever; where it doesn't, the one observed red is the minimum,
-stated in the spec or commit.
+message**, then revert. A retained kit fixture earns its place through an
+ordinary mutation test that calls its exact registered owner, requires the
+planted diagnostic, restores the subject, and requires that diagnostic to
+disappear. A linked repo receives canary inventory validation from Bench and
+owns equivalent planted-reason proof in its native tests. Without a retained
+fixture, the one observed red is the minimum, stated in the spec or commit.
 
 Completion criterion for a new check: observed red once with the targeted
 message, green after the fix, and the red reproducible from the diff — a
@@ -87,24 +89,22 @@ config missing — what happens next is a decision, not an accident:
 
 ## Layer the gate
 
-parse/validity → structure → conformance → behavior contracts → canary (the
-gate run against known-broken fixtures, asserting each targeted message still
-fires — the gate guarding the gate). A new check joins its layer, and a check
-another check depends on runs first.
+parse/validity → structure → conformance → behavior contracts → canary inventory.
+The final layer validates a non-empty set of accepted fixture bindings; ordinary
+native tests own the direct planted-reason proof. A new check joins its layer,
+and a check another check depends on runs first.
 
 ## Keep the tripwire alive
 
-The gate runs from the working tree, so the agent it grades can edit it. The
-canary harness is what makes that safe — not decoration: weaken a check and its
-known-broken fixture stops failing, and the harness turns that silence into a
-red gate and a reviewable diff. The defense only works while it exists, so the
-gate goes red when the canary fixture set is emptied or missing — and a
-scaffolded gate ships already defended: a sentinel keeps it red until
-configured, and one canaried example check seeds the fixtures. Deleting or
-weakening the tripwire is loud by construction; it follows the same rule as any
-weakening (below), never a quiet step inside making a change pass. The threat
-this covers is the lazy shortcut, not a determined adversary — the contract is
-loudness, not prevention.
+The gate runs from the working tree, so the agent it grades can edit it. Keep
+that edit loud: every retained kit fixture has direct ordinary-test proof, and
+an empty, invalid, or unbound canary inventory is red. Linked repos keep the
+same division of responsibility: Bench validates their inventory, while their
+native tests prove their checks bite. A scaffolded gate's configuration sentinel
+keeps it red until the project supplies real checks and bindings. Deleting or
+weakening this defense follows the same rule as any weakening (below), never a
+quiet step inside making a change pass. The threat this covers is the lazy
+shortcut, not a determined adversary — the contract is loudness, not prevention.
 
 ## Weakening is a reviewer decision
 

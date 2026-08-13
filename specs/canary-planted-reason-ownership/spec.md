@@ -1,6 +1,6 @@
 # Canary planted-reason ownership
 
-Status: staged
+Status: implemented
 
 Decision source: specs/canary-planted-reason-ownership/decisions/canary-planted-reason-ownership.md
 

@@ -196,11 +196,12 @@ The kit phase table is exactly:
 | `shellcheck` | the stable shell-file inventory, optional when shellcheck is absent |
 
 Go owns package scheduling inside the one ordinary test driver. There is no separate
-contract or conformance dev driver, per-package loop, nested Go test, inner canary gate,
-component partition, or stripped-subject phase schedule. The race runner verifies every
-registry sentinel executed. The tagged system package has one `TestMain` owner, at most
-three disposable repositories, one selected executable identity ledger, teardown on
-green/red/interrupt/timeout, and exactly one stripped-distribution journey.
+contract or conformance dev driver, per-package loop, nested Go test, fixture-executing
+canary phase, component partition, or stripped-subject phase schedule. The race runner
+verifies every registry sentinel executed. The tagged system package has one
+`TestMain` owner, at most three disposable repositories, one selected executable
+identity ledger, teardown on green/red/interrupt/timeout, and exactly one
+stripped-distribution journey.
 
 The five command decision domains—gate, adopt, preflight, canary,
 and freshness—consume immutable values in process. Their ordinary tests create no
@@ -208,12 +209,13 @@ repositories and start no operating-system processes. `internal/git` owns the on
 ordinary repository adapter; `internal/gate` owns the one ordinary controlled process
 group adapter.
 
-Canary fixtures are immutable inputs to registered conformance checks. Each retained
+Canary fixtures are immutable inputs to registered conformance checks. Each retained kit
 fixture has exactly one check owner; its ordinary mutation test calls that owner directly,
 requires the fixture-specific red, restores the fixture subject, and requires that red to
 disappear. The top-level `bench canary` command validates and aggregates the complete
-owner inventory without starting a gate or Go subprocess. One tagged system journey
-proves the selected executable reaches that production dispatcher.
+canary inventory without invoking owners or starting a successor process. Linked repos
+receive that inventory validation and own planted-reason proof in their native tests. One
+tagged system journey proves the selected executable reaches the production inventory path.
 
 The workflow-guidance family pins the spec-to-ticket handoff from identified rows and
 approved ownership fences through ticket evidence, ledger review, and fence-drift
