@@ -218,6 +218,6 @@ remain there until the normal reviewed roadmap drain reconciles their text.
 
 ## Sources
 
-- Path: `decisions/assets/ft153-branch-native-canary-contract.md`
+- Path: `specs/canary-planted-reason-ownership/decisions/assets/ft153-branch-native-canary-contract.md`
   Supports: #1's current-tree derivation and the factual premises of #2 through #7, including the two executed sentinel probes and the 31-member reader census.
   Drift: re-verify if the gate phase table, canary inventory path, conformance registry or fixture-bite tests, init scaffold, project profile, or retained fixture inventory changes before `/bench-write-spec` reads this map.
