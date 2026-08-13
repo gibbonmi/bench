@@ -542,6 +542,93 @@ The remaining structural lever is concurrency inside the package run, which
 is a workload-shape and seam decision the map's #22 owns, not a research
 finding this asset can select.
 
+## Post-rebuild census: decision #26
+
+Measured 2026-08-13 (12:57–13:05 UTC) on exact commit `a3b599ea`, the same
+12-online-CPU host, load average 0.44 at start with nothing else running.
+Baseline: the single-build serial gate plus the branch-native rebuild
+(`3701c4a0`) — one host binary per top-level run, one phase process at a
+time, direct mutation-to-check canaries inside `internal/conformance`, no
+stripped-subject reruns, no nested gate drivers. Cache posture per #20's
+ruling: ambient shared build cache retained, `-count=1` throughout, and a
+compile-only warm-up (`go test -exec=/bin/true ./...`, 2.25 s wall / 13.8 s
+CPU) separating build work from test work.
+
+### Serial package census
+
+64 packages, one serial `go test -count=1` per package under `/usr/bin/time`:
+105.2 s wall, 46.7 s CPU (28.8 user + 18.0 sys). Decision #20's baseline was
+71 packages at 767.25 s wall / 1110.99 s CPU — a 7.3x wall and 23.8x CPU
+reduction. The former dominators are gone: `internal/gate` runs its five
+in-package top-level tests in 0.01 s, `internal/specbuild` is deleted. The
+current top of the table:
+
+| package | wall s | user s | sys s |
+|---|---|---|---|
+| `internal/publication` | 30.52 | 0.42 | 0.16 |
+| `internal/worktree` | 19.49 | 5.43 | 4.03 |
+| `internal/conformance` | 15.35 | 6.54 | 3.34 |
+| `internal/freshness` | 7.65 | 1.41 | 1.44 |
+| `internal/gitguard` | 4.26 | 0.22 | 0.11 |
+| `internal/intent` | 3.23 | 0.94 | 0.35 |
+| `internal/diff` | 2.84 | 1.05 | 0.81 |
+
+Focused repetitions, three per package: `publication` 30.31–30.71 s,
+`worktree` 18.79–19.10 s, `conformance` 14.98–15.16 s, `freshness`
+7.03–7.27 s. Every long package is idle- or churn-dominated, not
+CPU-dominated: `publication` remains the FT87 unreachable-port wait (30 s
+wall, 0.4 s CPU), and `worktree`/`conformance` spend most of their wall in
+subprocess latency.
+
+### Fresh gates
+
+Two `bench gate --fresh` runs with 0.5 s descendant sampling: 38.26 s wall
+(green, 33.65 s user + 17.65 s sys) and 38.00 s wall (red, 32.01 s user +
+17.09 s sys). Phase spans from the gate's own progress log (green run):
+gofmt 0.08 s, vet 0.57 s, test 31.90 s, race 2.41 s, system 1.43 s,
+shellcheck 0.26 s — 36.63 s of serial phase time plus ~1.6 s of setup
+(selection, single subject build, freshness). Peak concurrent descendants:
+25 in both runs, against 97 pre-rebuild. Average utilization is ~1.3 of 12
+cores; the box is nowhere near saturation.
+
+The test phase compresses the 105.2 s serial census into 31.9 s through `go
+test ./...`'s own package parallelism (`-p` defaulting to `GOMAXPROCS`) and
+is floored by `publication`'s 30 s idle wait — the phase's critical path is
+FT87's timeout, not CPU contention.
+
+The red run's failure was `TestListCommandCheckedInCompletedAssignmentTerminalPair`
+in `internal/worktree`; the serial census also had one unattributed
+`internal/worktree` red (output not captured), and the three focused
+repetitions passed. Two reds in six package runs this session matches
+FT203's ~1-in-6–7 profile, but this failing test is not FT203's named
+`TestListCommandPublicRowsAndDisclosure` — the flake family is wider than
+the roadmap row records.
+
+### Fan-out inventory and the #25 residual
+
+Re-walk of every production `go func` site: the phase runner launches at
+most one phase and blocks on its completion (serial by construction);
+`guards` and `sessioninspect` wrap serial children in timeout selects;
+`models` fans out network calls only; every other site is a single
+`cmd.Wait()` await. Bench-owned CPU fan-out sites: zero. The only remaining
+width owner is the Go toolchain's package parallelism inside the single test
+phase, which #10 already established does not read a token pool.
+
+The `go list -json -deps ./cmd/bench` module-closure derivation
+(`internal/freshness.buildInputs`) measures 0.10–0.31 s warm across three
+runs, inside the ~1.6 s gate setup. The #25 memoization residual is dead on
+this workload.
+
+### Decision #26 result
+
+The destination's premise is structurally gone on this baseline: nothing
+oversubscribes the box, the ~123 load-average symptom cannot reproduce from
+a serial phase table peaking at 25 descendants, and the whole-gate target is
+exceeded at 38 s against 120 s. There is no dev-tier saturating class left
+for #8 to certify `r` against — the pool's would-be clients no longer exist.
+Whether #8 and the pool destination retire as achieved-by-other-means is a
+policy choice routed to the map's #27, not selected here.
+
 ## Validity
 
 The 2026-08-04 section remains one box, one tree, and one repetition per
@@ -550,7 +637,9 @@ decision-bearing packages, and one process-profiled fresh gate. The latter is
 mechanism and inflation evidence, not full-gate variance. Decision #21 adds
 per-test attribution and deterministic Git-spawn counts for the two long dev
 packages on #20's exact tree; its shimmed runs are counting evidence, never
-timing evidence. No figure in this asset authorizes a constant until the
-demand decisions #21 raised are resolved, the census is re-run on the reduced
-workload, and #8 repeats its candidate-width matrix on that newer exact
-workload.
+timing evidence. Decisions #13–#21's figures describe the pre-rebuild
+fixture-driven workload and are historical after `3701c4a0`; decision #26's
+section is the only one measured on the current baseline, with two fresh-gate
+repetitions and three focused repetitions per long package on one host. No
+figure here authorizes a width constant; #27 decides whether any constant is
+still needed.

@@ -25,9 +25,10 @@ cut the focused `internal/gate` median from 150.85 s to 56.72 s, then the
 single-build serial gate and the 2026-08-09 branch-native rebuild (`3701c4a0`)
 replaced the fixture-driven workload wholesale — one host binary per top-level
 run, one phase process at a time, direct mutation-to-check canaries, no
-stripped-subject reruns. The target remains a full gate under 2 minutes,
-faster better; no current-tree census exists, which is #26's job before #8
-prices anything.
+stripped-subject reruns. The target of a full gate under 2 minutes is now
+exceeded threefold: #26's census on `a3b599ea` measured 38 s wall, ~51 s
+CPU, and 25 peak descendants, with no Bench-owned fan-out left. Whether this
+destination has been met by other means is #27's open reviewer call.
 
 ## #1: What is bounded — processes, or cores?
 
@@ -202,7 +203,7 @@ construction, not on measurement.
 
 ## #8: What are `r` and the span-inflation threshold?
 
-Blocked by: #7, #26
+Blocked by: #7, #26, #27
 Type: Prototype
 
 ### Question
@@ -872,6 +873,44 @@ reshaped workload may feed #8's reserve and split pricing.
 
 ### Answer
 
+Resolved 2026-08-13 on exact commit `a3b599ea`, same 12-online-CPU host. The
+serial package census is 64 packages at 105.2 s wall / 46.7 s CPU (#20:
+767.25 s / 1110.99 s); two fresh gates were 38.26 s (green) and 38.00 s
+(red) wall at ~51 s CPU each, peaking at 25 concurrent descendants against
+97 pre-rebuild, ~1.3 of 12 cores busy on average. Phase spans: test 31.9 s
+(floored by `internal/publication`'s FT87 30 s idle wait), race 2.4 s,
+system 1.4 s, everything else sub-second, ~1.6 s setup. The fan-out re-walk
+found zero Bench-owned CPU fan-out sites — the only remaining width owner is
+`go test`'s own `-p` inside the single test phase — and the `go list`
+closure derivation is 0.10–0.31 s warm, so the #25 residual is dead. The red
+was `TestListCommandCheckedInCompletedAssignmentTerminalPair` in
+`internal/worktree` (2 reds in 6 package runs this session, FT203's rate but
+not its named test — the flake family is wider than the roadmap row). No
+dev-tier saturating class remains for #8 to certify against; whether the
+pool destination survives at all is #27. Full tables and method are in the
+census asset.
+
+## #27: Does the pool destination survive the serial baseline?
+
+Blocked by: #26
+Type: Grill
+
+### Question
+
+The destination exists to stop the gate oversubscribing the box, on evidence
+of load ~123 and a ten-minute worst case. #26 measured the current baseline
+at 38 s wall, ~51 s CPU, 25 peak descendants, ~1.3 of 12 cores busy: the
+symptom cannot reproduce, the two-minute target is exceeded threefold, and
+zero Bench-owned fan-out sites remain to hold a token. Does #8 still price
+`r` and the grant split — against what symptom, on what class? — or do #8
+and the token-pool destination retire as achieved by the single-build serial
+gate, with any future reintroduction of phase overlap reopening shaping
+first? Recommendation: retire #8, mark the map's destination met by other
+means, and close the map; the mechanism decisions (#1–#5, #10–#12) remain
+recorded as settled design if overlap ever returns.
+
+### Answer
+
 — (open)
 
 ## Not yet specified
@@ -917,7 +956,7 @@ reshaped workload may feed #8's reserve and split pricing.
   Drift: a working prioritization document; the row moves as the work lands.
 - Path: `decisions/assets/gate-budget-cpu-wall-census.md`
   Supports: #13's three-shape finding, cache A/B, preflight ownership and per-test timing, #20's post-reduction 71-package census, focused repetitions, exact-subject gate span, process fan-out, and cache ruling, plus #21's serial-chain finding, per-test attribution, deterministic Git-spawn histograms, and concurrency constraints.
-  Drift: measured on one 12-online-CPU host and on the pre-rebuild fixture-driven workload; #26 re-runs the census on the branch-native single-build serial baseline, after which #8 still needs its own candidate-width repetitions.
+  Drift: #13–#21's figures are pre-rebuild and historical; the decision #26 section is current as of `a3b599ea`, and #27 decides whether any width pricing follows.
 - Path: `decisions/assets/gate-budget-memory-profile.md`
   Supports: #1–#5's machine-wide process-boundary budget, the non-recursive primary/stripped/canary overlap, the current operator-width plumbing gap, and #20's required memory/process/I/O observables.
   Drift: one green run on `6607236` and one 12-core host before #18–#19; mechanism evidence only, never authority to price #8.
