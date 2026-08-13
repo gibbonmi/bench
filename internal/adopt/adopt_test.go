@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/gibbonmi/bench/internal/canary"
 )
 
 func TestRewriteAgentsBlockEdges(t *testing.T) {
@@ -264,10 +262,8 @@ func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 	gate := scaffoldGate()
 	mustContain := []string{
 		"BENCH_SENTINEL",
-		seedCanaryPath,
-		"[ -e DO-NOT-SHIP ] && err \"example check: DO-NOT-SHIP marker file present\"",
 		"bench=\"$(dirname \"$0\")/bin/bench.sh\"; [ -x \"$bench\" ] || bench=bench",
-		"\"$bench\" canary \"$root\" || err \"canary sweep failed\"",
+		"\"$bench\" canary \"$root\" || err \"canary inventory validation failed\"",
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(gate, want) {
@@ -281,7 +277,7 @@ func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 	}
 }
 
-func TestInitScaffoldsTwoLevelSeedCanary(t *testing.T) {
+func TestInitDoesNotSeedLinkedProof(t *testing.T) {
 	root := t.TempDir()
 	cmd := exec.Command("git", "-C", root, "init", "-q")
 	if out, err := cmd.CombinedOutput(); err != nil {
@@ -298,30 +294,67 @@ func TestInitScaffoldsTwoLevelSeedCanary(t *testing.T) {
 	if code := Init(nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("Init exit = %d, stderr:\n%s", code, stderr.String())
 	}
-	if !strings.Contains(stdout.String(), "scaffolded "+seedCanaryPath) {
-		t.Fatalf("Init stdout missing seed canary path %q:\n%s", seedCanaryPath, stdout.String())
+	for _, path := range []string{"tests/canary/example/example/EXPECT", "tests/canary/example/example/files/DO-NOT-SHIP"} {
+		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(path))); !os.IsNotExist(err) {
+			t.Fatalf("retired seed path %q exists or stat failed unexpectedly: %v", path, err)
+		}
 	}
+	if strings.Contains(stdout.String(), "proved") || strings.Contains(stdout.String(), "seed canary") {
+		t.Fatalf("Init output makes a planted-proof claim: %s", stdout.String())
+	}
+}
 
-	seedDir := filepath.Join(root, filepath.FromSlash(seedCanaryPath))
-	if got := readFile(t, filepath.Join(seedDir, "EXPECT")); got != "example check: DO-NOT-SHIP marker file present\n" {
-		t.Fatalf("seed EXPECT = %q", got)
+func TestInitReentryPreservesProjectInventoryInSpecialPath(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "repo [x].*")
+	if err := os.MkdirAll(filepath.Join(root, "tests", "canary", "project", "family", "files"), 0o755); err != nil {
+		t.Fatal(err)
 	}
-	if got := readFile(t, filepath.Join(seedDir, "files", "DO-NOT-SHIP")); !strings.Contains(got, "seed example check") {
-		t.Fatalf("seed marker file text = %q", got)
+	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v\n%s", err, out)
 	}
-	if _, err := os.Stat(filepath.Join(root, "tests", "canary", "example", "EXPECT")); !os.IsNotExist(err) {
-		t.Fatalf("legacy flat seed EXPECT exists or stat failed unexpectedly: %v", err)
+	if err := os.WriteFile(filepath.Join(root, "tests", "canary", "project", "family", "EXPECT"), []byte("project check\n"), 0o644); err != nil {
+		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(root, "tests", "canary", "project", "family", "files", "owned"), []byte("keep\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	kit := filepath.Clean(filepath.Join(mustGetwd(t), "..", ".."))
+	t.Setenv("BENCH_KIT", kit)
+	t.Chdir(root)
+	var stdout, stderr bytes.Buffer
+	if code := Init(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("Init run 1 exit = %d, stderr: %s", code, stderr.String())
+	}
+	projectGate := "#!/usr/bin/env bash\nproject-owned-check\n"
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte(projectGate), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	stdout.Reset()
+	stderr.Reset()
+	if code := Init(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("Init run 2 exit = %d, stderr: %s", code, stderr.String())
+	}
+	if got := readFile(t, filepath.Join(root, ".bench", "gate.sh")); got != projectGate {
+		t.Fatalf("project gate = %q, want preserved project-owned check", got)
+	}
+	if got := readFile(t, filepath.Join(root, "tests", "canary", "project", "family", "EXPECT")); got != "project check\n" {
+		t.Fatalf("project EXPECT = %q", got)
+	}
+	if got := readFile(t, filepath.Join(root, "tests", "canary", "project", "family", "files", "owned")); got != "keep\n" {
+		t.Fatalf("project fixture = %q", got)
+	}
+	if _, err := os.Stat(filepath.Join(root, "tests", "canary", "example")); !os.IsNotExist(err) {
+		t.Fatalf("retired seed directory exists or stat failed unexpectedly: %v", err)
+	}
+}
 
-	discovered, err := canary.Fixtures(filepath.Join(root, "tests", "canary"))
+func mustGetwd(t *testing.T) string {
+	t.Helper()
+	wd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("discover initialized seed: %v", err)
+		t.Fatal(err)
 	}
-	selection := canary.Select([]canary.Fixture{discovered["example"]})
-	dispatch := canary.Dispatch(selection, func(canary.FixtureOwner) string { return "" })
-	if !dispatch.Accepted || len(dispatch.Dispatched) != 1 || dispatch.Dispatched[0].Fixture != "example" {
-		t.Fatalf("seed dispatch = %#v, want the initialized seed only", dispatch)
-	}
+	return wd
 }
 
 // TestCompareKitVersions pins the ordering `bench upgrade` decides on. The prerelease

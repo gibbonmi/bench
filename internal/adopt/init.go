@@ -11,8 +11,6 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const seedCanaryPath = "tests/canary/example/example"
-
 func Init(args []string, stdout, stderr io.Writer) int {
 	if len(args) > 0 {
 		fmt.Fprintln(stderr, "usage: bench init")
@@ -47,22 +45,6 @@ func Init(args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 		fmt.Fprintln(stdout, "scaffolded .bench/gate.sh - red until you replace the sentinel with real checks")
-	}
-	canaryDir := filepath.Join(root, filepath.FromSlash(seedCanaryPath))
-	if _, err := os.Lstat(canaryDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Join(canaryDir, "files"), 0o755); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		if err := os.WriteFile(filepath.Join(canaryDir, "files", "DO-NOT-SHIP"), []byte("Presence of this file at the repo root makes the seed example check fail.\n"), 0o644); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		if err := os.WriteFile(filepath.Join(canaryDir, "EXPECT"), []byte("example check: DO-NOT-SHIP marker file present\n"), 0o644); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		fmt.Fprintf(stdout, "scaffolded %s - the seed canary; copy it for each real check\n", seedCanaryPath)
 	}
 	journal := filepath.Join(root, filepath.FromSlash(learnings.JournalPath))
 	if _, err := os.Lstat(journal); os.IsNotExist(err) {
@@ -114,23 +96,15 @@ err() { echo "gate: $*" >&2; fail=1; }
 # work against an empty gate. Delete this one line once a real check exists above.
 err "configure .bench/gate.sh - replace this sentinel with real checks"  # ` + benchSentinelMarker + `
 
-# Example check + its seed canary (` + seedCanaryPath + `) are the pattern to copy: run a
-# check, err on failure, and add a canary that proves it bites. This one fails if a
-# forbidden marker file is present; the seed fixture plants that file so the canary can
-# prove the check still bites. Replace it with your real checks - and keep a canary for
-# each, because the canary subcommand turns the gate red if tests/canary/ ever goes empty.
-[ -e DO-NOT-SHIP ] && err "example check: DO-NOT-SHIP marker file present"
-
 # Structural debt is NOT checked here. ` + "`bench shift`" + ` runs ` + "`bench structure`" + ` after the
 # loop and refactors only when a file or dir is over budget. Uncomment to hard-block
 # structure at every commit:
 #   bench structure || err "structure over budget"
 
-# Canary - prove every immutable fixture has exactly one direct owner. Resolve the
-# repo-local CLI before a global bench on PATH, so a machine with no global bench still
-# reaches the branch-native dispatcher.
+# Validate the configured fixture inventory. Resolve the repo-local CLI before a global
+# bench on PATH so a machine with no global bench still reaches the inventory command.
 bench="$(dirname "$0")/bin/bench.sh"; [ -x "$bench" ] || bench=bench
-"$bench" canary "$root" || err "canary sweep failed"
+"$bench" canary "$root" || err "canary inventory validation failed"
 
 if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi
 exit "$fail"
