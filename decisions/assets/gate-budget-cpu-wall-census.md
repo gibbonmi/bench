@@ -641,5 +641,5 @@ timing evidence. Decisions #13–#21's figures describe the pre-rebuild
 fixture-driven workload and are historical after `3701c4a0`; decision #26's
 section is the only one measured on the current baseline, with two fresh-gate
 repetitions and three focused repetitions per long package on one host. No
-figure here authorizes a width constant; #27 decides whether any constant is
-still needed.
+figure here authorizes a width constant; #27 ruled that none is needed and
+closed the map.

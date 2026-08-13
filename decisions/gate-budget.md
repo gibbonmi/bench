@@ -1,6 +1,6 @@
 # Gate budget (FT171)
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -27,8 +27,9 @@ replaced the fixture-driven workload wholesale — one host binary per top-level
 run, one phase process at a time, direct mutation-to-check canaries, no
 stripped-subject reruns. The target of a full gate under 2 minutes is now
 exceeded threefold: #26's census on `a3b599ea` measured 38 s wall, ~51 s
-CPU, and 25 peak descendants, with no Bench-owned fan-out left. Whether this
-destination has been met by other means is #27's open reviewer call.
+CPU, and 25 peak descendants, with no Bench-owned fan-out left. #27 closed
+the map 2026-08-13: the destination is met by other means, no spec follows,
+and `ready` here marks terminal closure rather than spec-readiness.
 
 ## #1: What is bounded — processes, or cores?
 
@@ -218,7 +219,11 @@ which this map declined to assert.
 
 ### Answer
 
-— (open)
+Retired unpriced by #27's ruling: no saturating class remains to certify `r`
+or a grant split against, and the fixtures this prototype would have swept
+(#9's baselines included) were retired with the fixture-driven architecture.
+A future phase-overlap reintroduction re-prices from a fresh census rather
+than from this ticket.
 
 ## #9: Can behavior-owned baselines narrow soundly?
 
@@ -911,7 +916,12 @@ recorded as settled design if overlap ever returns.
 
 ### Answer
 
-— (open)
+Retire and close, reviewer-accepted 2026-08-13. The destination is met by
+other means: the single-build serial gate and the branch-native rebuild
+bound demand by construction, and no workload class remains for a reserve to
+protect. #8 retires unpriced. The mechanism decisions (#1–#5, #10–#12) stand
+as settled design; any future reintroduction of phase overlap reopens
+shaping and re-censuses before adopting them.
 
 ## Not yet specified
 
@@ -956,7 +966,7 @@ recorded as settled design if overlap ever returns.
   Drift: a working prioritization document; the row moves as the work lands.
 - Path: `decisions/assets/gate-budget-cpu-wall-census.md`
   Supports: #13's three-shape finding, cache A/B, preflight ownership and per-test timing, #20's post-reduction 71-package census, focused repetitions, exact-subject gate span, process fan-out, and cache ruling, plus #21's serial-chain finding, per-test attribution, deterministic Git-spawn histograms, and concurrency constraints.
-  Drift: #13–#21's figures are pre-rebuild and historical; the decision #26 section is current as of `a3b599ea`, and #27 decides whether any width pricing follows.
+  Drift: #13–#21's figures are pre-rebuild and historical; the decision #26 section is current as of `a3b599ea`, and #27 closed the map with no width pricing to follow.
 - Path: `decisions/assets/gate-budget-memory-profile.md`
   Supports: #1–#5's machine-wide process-boundary budget, the non-recursive primary/stripped/canary overlap, the current operator-width plumbing gap, and #20's required memory/process/I/O observables.
   Drift: one green run on `6607236` and one 12-core host before #18–#19; mechanism evidence only, never authority to price #8.
