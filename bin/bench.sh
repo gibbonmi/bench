@@ -345,7 +345,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite capture/session-handoff.md
   bench commands --brief     print the direct, read-only command probe
   bench dashboard [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
-  bench canary [root]        run the gate against known-broken fixtures
+  bench canary [root]        validate fixture inventory
   bench anchors <path>       anchors pinning a repo-relative path as TOON (kind, section, needle)
   bench learnings            open journal entries as a TOON table (date, title)
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)

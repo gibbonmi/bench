@@ -115,14 +115,42 @@ func TestCheckAgentLineHarnessFlag(t *testing.T) {
 	}
 }
 
-func TestRunCanaryDispatchesToCommand(t *testing.T) {
+func TestRunCanaryRetainsPositionalGrammar(t *testing.T) {
+	for _, help := range []string{"help", "--help", "-h"} {
+		stdout, stderr := tempFile(t), tempFile(t)
+		if rc := (Command{Stdout: stdout, Stderr: stderr}).Run([]string{"canary", help}); rc != 0 {
+			t.Errorf("canary %s exit = %d, want 0", help, rc)
+		}
+		if got := readFile(t, stdout); got != "usage: bench canary [root]\n" {
+			t.Errorf("canary %s stdout = %q, want exact usage", help, got)
+		}
+	}
+
 	stderr := tempFile(t)
 	if rc := (Command{Stderr: stderr}).Run([]string{"canary", "one", "two"}); rc != 2 {
-		t.Fatalf("run canary usage exit = %d, want 2", rc)
+		t.Fatalf("run canary too-many-arguments exit = %d, want 2", rc)
 	}
-	got := readFile(t, stderr)
-	if !strings.Contains(got, "usage: bench canary") {
-		t.Fatalf("canary did not dispatch to command usage, stderr:\n%s", got)
+	if got := readFile(t, stderr); !strings.Contains(got, "usage: bench canary") || !strings.Contains(got, "unknown argument: two") {
+		t.Fatalf("canary too-many-arguments stderr = %q, want usage and offending argument", got)
+	}
+
+	stderr = tempFile(t)
+	if rc := (Command{Stderr: stderr}).Run([]string{"canary", filepath.Join(t.TempDir(), "missing")}); rc != 1 {
+		t.Fatalf("run canary invalid root exit = %d, want 1", rc)
+	}
+}
+
+func TestShellWrapperHelpAdvertisesCanaryInventory(t *testing.T) {
+	out, err := exec.Command("bash", filepath.Join("..", "..", "bin", "bench.sh"), "--help").CombinedOutput()
+	if err != nil {
+		t.Fatalf("bench.sh --help failed: %v\n%s", err, out)
+	}
+	help := string(out)
+	if !strings.Contains(help, "bench canary [root]        validate fixture inventory") {
+		t.Fatalf("wrapper help missing canary inventory wording:\n%s", help)
+	}
+	if strings.Contains(help, "run the gate against known-broken fixtures") {
+		t.Fatalf("wrapper help retained stale canary execution wording:\n%s", help)
 	}
 }
 
