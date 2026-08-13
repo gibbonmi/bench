@@ -35,7 +35,8 @@ const (
 
 // IsConformanceFamily reports whether dir is a family rather than a flat fixture.
 func IsConformanceFamily(dir string) bool {
-	return !holdsExpect(dir)
+	holds, err := holdsExpect(dir)
+	return err == nil && !holds
 }
 
 // UnboundConformanceFamilies reports family directories without a registry owner.
@@ -47,7 +48,16 @@ func UnboundConformanceFamilies(kitRoot string) []string {
 	var diagnostics []string
 	for _, entry := range entries {
 		name := entry.Name()
-		if !entry.IsDir() || !IsConformanceFamily(filepath.Join(kitRoot, "tests", "canary", name)) {
+		if !entry.IsDir() {
+			continue
+		}
+		familyDir := filepath.Join(kitRoot, "tests", "canary", name)
+		holds, err := holdsExpect(familyDir)
+		if err != nil {
+			diagnostics = append(diagnostics, err.Error())
+			continue
+		}
+		if holds {
 			continue
 		}
 		if _, found := registry.FamilyCheck(name); !found {
@@ -162,7 +172,11 @@ func discoverFixtures(dir string) ([]fixtureRecord, error) {
 		}
 		name := family.Name()
 		familyDir := filepath.Join(dir, name)
-		if holdsExpect(familyDir) {
+		holds, err := holdsExpect(familyDir)
+		if err != nil {
+			return nil, err
+		}
+		if holds {
 			if err := add(fixtureRecord{dir: familyDir}); err != nil {
 				return nil, err
 			}
@@ -231,9 +245,17 @@ func readMarker(dir, marker string) (string, bool, error) {
 	}
 }
 
-func holdsExpect(dir string) bool {
-	_, err := os.Stat(filepath.Join(dir, "EXPECT"))
-	return err == nil
+func holdsExpect(dir string) (bool, error) {
+	markerPath := filepath.Join(dir, "EXPECT")
+	classified := bounds.Classify(markerPath, bounds.ControlRecordLimit)
+	switch classified.State {
+	case bounds.StateAbsent:
+		return false, nil
+	case bounds.StateEmpty, bounds.StateParsed:
+		return true, nil
+	default:
+		return false, fmt.Errorf("canary fixture marker %s cannot be read: %s", markerPath, classified.Reason)
+	}
 }
 
 // MaterializeFixture copies one fixture mutation into dst and restores encoded dot paths.
