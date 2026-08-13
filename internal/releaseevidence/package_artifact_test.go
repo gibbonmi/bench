@@ -67,6 +67,34 @@ func TestOfflineNetworkControlEnvelopeWriter(t *testing.T) {
 	}
 }
 
+func TestBuildReleaseEvidenceIncludesRegisteredPackageEvidence(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Clean(filepath.Join(cwd, "..", ".."))
+	staging := t.TempDir()
+	wrapper, packages := filepath.Join(staging, "wrapper"), filepath.Join(staging, "packages")
+	cmd := exec.Command("node", filepath.Join(root, "scripts", "build-release-evidence.mjs"), root, wrapper, packages)
+	cmd.Dir = root
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("build release evidence: %v\n%s", err, out)
+	}
+	for _, requirement := range Requirements() {
+		if requirement.PackageMode == "" {
+			continue
+		}
+		path := filepath.Join(wrapper, filepath.FromSlash(requirement.Path))
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatalf("registered package evidence %q: %v", requirement.Path, err)
+		}
+		if !info.Mode().IsRegular() || info.Size() == 0 {
+			t.Fatalf("registered package evidence %q is not a non-empty regular file", requirement.Path)
+		}
+	}
+}
+
 func TestOfflineNetworkControlNonzeroSentinelIsNotPass(t *testing.T) {
 	cwd, err := os.Getwd()
 	if err != nil {

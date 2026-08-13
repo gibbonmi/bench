@@ -2,9 +2,13 @@ package conformance
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -14,61 +18,262 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
-func TestLoadValidityMetadataFixturesBite(t *testing.T) {
+func TestEveryRetainedFixtureBitesThroughRegisteredOwner(t *testing.T) {
 	h := NewHarness(t)
-	kitRoot := h.KitRoot
-	fixtures := []string{
-		"invalid-json",
-		"codex-hooks-broken",
-		"codex-hooks-timeout",
-		"codex-hooks-timeout-typed",
-		"bad-frontmatter",
-		"claude-skills-unmirrored",
-		"extensionless-gate-ref",
-		"shared-rule-drift",
-		"readme-shared-rule-drift",
-	}
-	for _, fixture := range fixtures {
-		t.Run(fixture, func(t *testing.T) {
-			runFixtureBite(t, kitRoot, fixture)
-		})
-	}
-}
-
-func TestSkillsIndexAndCommandAdapterFixturesBite(t *testing.T) {
-	h := NewHarness(t)
-	kitRoot := h.KitRoot
-	fixtures := []string{
-		"dangling-index",
-		"missing-index-field",
-		"stale-index-wording",
-		"unindexed-skill",
-		"roadmap-promotion-persistence",
-	}
-	for _, fixture := range fixtures {
-		t.Run(fixture, func(t *testing.T) {
-			runFixtureBite(t, kitRoot, fixture)
-		})
-	}
-}
-
-func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
-	h := NewHarness(t)
-	kitRoot := h.KitRoot
-	all, err := canary.Fixtures(filepath.Join(kitRoot, "tests", "canary"))
+	canaryDir := filepath.Join(h.KitRoot, "tests", "canary")
+	completed := map[string]bool{}
+	runFixtureUniverse(t, canaryDir, func(t *testing.T, name string, fixture canary.Fixture) {
+		runFixtureBite(t, h.KitRoot, name, fixture)
+		completed[name] = true
+	})
+	want, err := canary.Fixtures(canaryDir)
 	requireFixtureNoError(t, err)
-	var fixtures []string
-	for name, fixture := range all {
-		if fixture.Family == "docs-currency-token-diet" || fixture.Family == "workflow-guidance-anchors" {
-			fixtures = append(fixtures, name)
+	if !sameFixtureSet(completed, want) {
+		t.Fatalf("completed fixture proofs do not equal the current producer: got %d, want %d", len(completed), len(want))
+	}
+}
+
+func TestFixtureUniverseDerivesFamilyAndExplicitCheckBindings(t *testing.T) {
+	canaryDir := filepath.Join(t.TempDir(), "canary")
+	for _, fixture := range []struct{ family, name, check string }{
+		{"package-core-guard", "family-derived", ""},
+		{"package-core-guard", "explicit-ship", "release-evidence-probe"},
+	} {
+		dir := filepath.Join(canaryDir, fixture.family, fixture.name)
+		requireFixtureNoError(t, os.MkdirAll(dir, 0o755))
+		requireFixtureNoError(t, os.WriteFile(filepath.Join(dir, "EXPECT"), []byte("synthetic diagnostic\n"), 0o644))
+		if fixture.check != "" {
+			requireFixtureNoError(t, os.WriteFile(filepath.Join(dir, "CHECK"), []byte(fixture.check+"\n"), 0o644))
 		}
 	}
-	slices.Sort(fixtures)
-	for _, fixture := range fixtures {
-		t.Run(fixture, func(t *testing.T) {
-			runFixtureBite(t, kitRoot, fixture)
+	observed := map[string]bool{}
+	runFixtureUniverse(t, canaryDir, func(_ *testing.T, name string, _ canary.Fixture) { observed[name] = true })
+	if got, want := len(observed), 2; got != want {
+		t.Fatalf("synthetic fixture callbacks = %d, want %d", got, want)
+	}
+}
+
+func TestFixtureBiteProofArchitecture(t *testing.T) {
+	h := NewHarness(t)
+	path := filepath.Join(h.KitRoot, "internal", "conformance", "fixture_bite_test.go")
+	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	functions := map[string]*ast.FuncDecl{}
+	for _, declaration := range file.Decls {
+		if function, ok := declaration.(*ast.FuncDecl); ok {
+			functions[function.Name.Name] = function
+		}
+	}
+	live := functions["TestEveryRetainedFixtureBitesThroughRegisteredOwner"]
+	runner := functions["runFixtureUniverse"]
+	if live == nil || runner == nil {
+		t.Fatal("fixture proof needs its live test and producer-derived runner")
+	}
+	if callsNamed(live, "runFixtureUniverse") != 1 || rangeCount(live) != 0 {
+		t.Fatal("live fixture proof must make one producer-derived runner call without a second proof loop")
+	}
+	if callsNamed(runner, "Fixtures") != 1 {
+		t.Fatal("fixture proof runner must derive its universe from canary.Fixtures")
+	}
+	if callsNamed(live, "runFixtureBite") != 1 {
+		t.Fatal("live fixture proof callback must call runFixtureBite once before recording completion")
+	}
+	if !recordsFixtureAfterProof(live) {
+		t.Fatal("live fixture proof must record completed[name] only after runFixtureBite returns")
+	}
+	fixtures, err := canary.Fixtures(filepath.Join(h.KitRoot, "tests", "canary"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if literal := retainedFixtureNameLiteral(fixtures, live, runner); literal != "" {
+		t.Fatalf("fixture proof stores retained fixture name %q instead of deriving it", literal)
+	}
+	if calls, err := packageRunFixtureBiteCalls(filepath.Dir(path)); err != nil {
+		t.Fatal(err)
+	} else if calls != 1 {
+		t.Fatalf("internal/conformance has %d runFixtureBite calls, want one universal proof caller", calls)
+	}
+}
+
+func TestRetiredReleaseFixtureReplacementsArePresent(t *testing.T) {
+	if diagnostics := retiredReleaseFixtureReplacementDiagnostics(NewHarness(t).KitRoot); len(diagnostics) != 0 {
+		t.Fatalf("retired release fixture replacement census:\n%s", strings.Join(diagnostics, "\n"))
+	}
+}
+
+func retiredReleaseFixtureReplacementDiagnostics(root string) []string {
+	replacements := map[string]string{
+		"internal/releaseevidence/release_index_test.go":    "TestReleaseIndexBindsComponentManifestDigest",
+		"internal/releaseevidence/package_artifact_test.go": "TestBuildReleaseEvidenceIncludesRegisteredPackageEvidence",
+	}
+	var diagnostics []string
+	for rel, symbol := range replacements {
+		file, err := parser.ParseFile(token.NewFileSet(), filepath.Join(root, filepath.FromSlash(rel)), nil, 0)
+		if err != nil {
+			diagnostics = append(diagnostics, fmt.Sprintf("parse release replacement %s: %v", rel, err))
+			continue
+		}
+		found := false
+		for _, declaration := range file.Decls {
+			function, ok := declaration.(*ast.FuncDecl)
+			if ok && function.Name.Name == symbol {
+				found = true
+			}
+		}
+		if !found {
+			diagnostics = append(diagnostics, fmt.Sprintf("release replacement %s does not declare %s", rel, symbol))
+		}
+	}
+	for _, rel := range []string{
+		"tests/canary/package-core-guard/release-digest-binding-omitted",
+		"tests/canary/package-core-guard/release-package-evidence-omitted",
+		"tests/canary/package-core-guard/release-evidence-probe-base.txt",
+	} {
+		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(rel))); err == nil {
+			diagnostics = append(diagnostics, fmt.Sprintf("retired release fixture %s remains", rel))
+		} else if !os.IsNotExist(err) {
+			diagnostics = append(diagnostics, fmt.Sprintf("inspect retired release fixture %s: %v", rel, err))
+		}
+	}
+	return diagnostics
+}
+
+func callsNamed(function *ast.FuncDecl, name string) int {
+	var calls int
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		switch target := call.Fun.(type) {
+		case *ast.Ident:
+			if target.Name == name {
+				calls++
+			}
+		case *ast.SelectorExpr:
+			if target.Sel.Name == name {
+				calls++
+			}
+		}
+		return true
+	})
+	return calls
+}
+
+func rangeCount(function *ast.FuncDecl) int {
+	var ranges int
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		if _, ok := node.(*ast.RangeStmt); ok {
+			ranges++
+		}
+		return true
+	})
+	return ranges
+}
+
+func recordsFixtureAfterProof(live *ast.FuncDecl) bool {
+	var callback *ast.FuncLit
+	ast.Inspect(live.Body, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		name, _ := call.Fun.(*ast.Ident)
+		if name == nil || name.Name != "runFixtureUniverse" || len(call.Args) != 3 {
+			return true
+		}
+		callback, _ = call.Args[2].(*ast.FuncLit)
+		return false
+	})
+	if callback == nil {
+		return false
+	}
+	proof, record := -1, -1
+	for index, statement := range callback.Body.List {
+		if statementCalls(statement, "runFixtureBite") {
+			proof = index
+		}
+		if recordsCompletedFixture(statement) {
+			record = index
+		}
+	}
+	return proof >= 0 && record > proof
+}
+
+func statementCalls(statement ast.Stmt, name string) bool {
+	found := false
+	ast.Inspect(statement, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		if target, ok := call.Fun.(*ast.Ident); ok && target.Name == name {
+			found = true
+		}
+		return true
+	})
+	return found
+}
+
+func recordsCompletedFixture(statement ast.Stmt) bool {
+	assignment, ok := statement.(*ast.AssignStmt)
+	if !ok || len(assignment.Lhs) != 1 {
+		return false
+	}
+	index, ok := assignment.Lhs[0].(*ast.IndexExpr)
+	if !ok {
+		return false
+	}
+	completed, completedOK := index.X.(*ast.Ident)
+	name, nameOK := index.Index.(*ast.Ident)
+	return completedOK && nameOK && completed.Name == "completed" && name.Name == "name"
+}
+
+func retainedFixtureNameLiteral(fixtures map[string]canary.Fixture, functions ...*ast.FuncDecl) string {
+	for _, function := range functions {
+		var literal string
+		ast.Inspect(function.Body, func(node ast.Node) bool {
+			value, ok := node.(*ast.BasicLit)
+			if !ok || value.Kind != token.STRING {
+				return true
+			}
+			text, err := strconv.Unquote(value.Value)
+			if err == nil && fixtures[text].Dir != "" {
+				literal = text
+				return false
+			}
+			return true
+		})
+		if literal != "" {
+			return literal
+		}
+	}
+	return ""
+}
+
+func packageRunFixtureBiteCalls(dir string) (int, error) {
+	packages, err := parser.ParseDir(token.NewFileSet(), dir, func(info os.FileInfo) bool {
+		return strings.HasSuffix(info.Name(), "_test.go")
+	}, 0)
+	if err != nil {
+		return 0, err
+	}
+	var calls int
+	for _, file := range packages["conformance"].Files {
+		ast.Inspect(file, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			if target, ok := call.Fun.(*ast.Ident); ok && target.Name == "runFixtureBite" {
+				calls++
+			}
+			return true
 		})
 	}
+	return calls, nil
 }
 
 func TestSpecTicketHandoffWorkflowFixturesAreComplete(t *testing.T) {
@@ -185,58 +390,6 @@ func requireFixtureNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
 		t.Fatal(err)
-	}
-}
-
-func TestCoverageMapValidationFixtureBite(t *testing.T) {
-	h := NewHarness(t)
-	kitRoot := h.KitRoot
-	fixtures := []string{
-		"broken-coverage-map",
-		"no-map-not-historical",
-		"stray-flat-live-spec",
-	}
-	for _, fixture := range fixtures {
-		t.Run(fixture, func(t *testing.T) {
-			runFixtureBite(t, kitRoot, fixture)
-		})
-	}
-}
-
-func TestLineRoutingFixturesBite(t *testing.T) {
-	h := NewHarness(t)
-	kitRoot := h.KitRoot
-	fixtures := []string{
-		"line-binding-prose-drift",
-		"agent-hook-unwired",
-		"stop-hook-unwired",
-		"adapter-line-broken",
-	}
-	for _, fixture := range fixtures {
-		t.Run(fixture, func(t *testing.T) {
-			runFixtureBite(t, kitRoot, fixture)
-		})
-	}
-}
-
-func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
-	h := NewHarness(t)
-	kitRoot := h.KitRoot
-	// Only fixtures a conformance check grades belong here. A fixture whose failure a
-	// gate phase owns is proved by the canary sweep at that phase instead; running
-	// conformance over its tree compiles and tests nothing, so it would report
-	// did-not-bite forever.
-	fixtures := []string{
-		"guard-describe-boundary-dropped",
-		"guard-resolver-order-drift",
-		"default-branch-refabricated",
-		"kit-only-asset-admitted",
-		"kit-only-allowlist-emptied",
-	}
-	for _, fixture := range fixtures {
-		t.Run(fixture, func(t *testing.T) {
-			runFixtureBite(t, kitRoot, fixture)
-		})
 	}
 }
 
@@ -369,21 +522,22 @@ func TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable(t *testing.T
 		}},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			root := t.TempDir()
-			runGit(t, root, "init")
-			kitRoot := t.TempDir()
-			tt.setup(t, filepath.Join(kitRoot, "tests", "canary"))
+		t.Run(tt.name, func(t *testing.T) { runConformanceFamilyAbsence(t, tt.setup) })
+	}
+}
 
-			diags := RunConformance(root, kitRoot, registry.Dev, "")
-
-			for _, family := range registry.Families() {
-				want := fmt.Sprintf("canary conformance family %q has no fixture directories", family)
-				if !containsDiagnostic(diags, want) {
-					t.Errorf("no diagnostic %q:\n%s", want, strings.Join(diags, "\n"))
-				}
-			}
-		})
+func runConformanceFamilyAbsence(t *testing.T, setup func(*testing.T, string)) {
+	t.Helper()
+	root := t.TempDir()
+	runGit(t, root, "init")
+	kitRoot := t.TempDir()
+	setup(t, filepath.Join(kitRoot, "tests", "canary"))
+	diags := RunConformance(root, kitRoot, registry.Dev, "")
+	for _, family := range registry.Families() {
+		want := fmt.Sprintf("canary conformance family %q has no fixture directories", family)
+		if !containsDiagnostic(diags, want) {
+			t.Errorf("no diagnostic %q:\n%s", want, strings.Join(diags, "\n"))
+		}
 	}
 }
 
@@ -510,25 +664,33 @@ func TestCheckPackageFilesToleratesNpmStderrNotice(t *testing.T) {
 func TestFixtureBiteResolutionRefusesInvalidInputs(t *testing.T) {
 	fixtureDir := t.TempDir()
 	requireFixtureNoError(t, os.WriteFile(filepath.Join(fixtureDir, "EXPECT"), []byte("fixture diagnostic\n"), 0o644))
-	fixtures := map[string]canary.Fixture{
-		"fixture": {Dir: fixtureDir, Family: "family"},
+	fixture := func(check string) map[string]canary.Fixture {
+		return map[string]canary.Fixture{"fixture": {Dir: fixtureDir, Family: "family", Check: check}}
 	}
+	fixtures := fixture("")
 
 	tests := []struct {
 		name     string
 		fixtures map[string]canary.Fixture
-		lookup   func(canary.Fixture) (string, bool)
 		want     string
 	}{
-		{"missing fixture", nil, func(canary.Fixture) (string, bool) { return "", false }, "not found"},
-		{"unbound family", fixtures, func(canary.Fixture) (string, bool) { return "", false }, "is unbound"},
-		{"unknown check", fixtures, func(canary.Fixture) (string, bool) { return "unknown", true }, "is not registered"},
-		{"meta check", fixtures, func(canary.Fixture) (string, bool) { return "conformance-meta", true }, "is meta"},
-		{"wrong tier", fixtures, func(canary.Fixture) (string, bool) { return "release-evidence-probe", true }, "does not run at dev"},
+		{"missing fixture", nil, "not found"},
+		{"unbound family", fixtures, "is unbound"},
+		{"unknown check", fixture("unknown"), "is not registered"},
+		{"meta check", fixture("conformance-meta"), "is meta"},
+		{"ship owner resolves", fixture("release-evidence-probe"), ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := resolveFixtureBite("fixture", tt.fixtures, tt.lookup)
+			resolved, err := resolveFixtureBite("fixture", tt.fixtures, func(found canary.Fixture) (string, bool) {
+				return found.Check, found.Check != ""
+			})
+			if tt.want == "" {
+				if err != nil || resolved.tier != registry.Ship {
+					t.Fatalf("ship resolution = %#v, %v; want registered ship owner", resolved, err)
+				}
+				return
+			}
 			if err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Fatalf("resolve error = %v, want %q", err, tt.want)
 			}
@@ -536,65 +698,101 @@ func TestFixtureBiteResolutionRefusesInvalidInputs(t *testing.T) {
 	}
 
 	requireFixtureNoError(t, os.WriteFile(filepath.Join(fixtureDir, "EXPECT"), nil, 0o644))
-	_, _, err := resolveFixtureBite("fixture", fixtures, func(canary.Fixture) (string, bool) { return "", false })
-	if err == nil || !strings.Contains(err.Error(), "empty EXPECT") {
-		t.Fatalf("empty EXPECT error = %v", err)
+	for _, expectation := range [][]byte{nil, []byte(" \t\r\n"), []byte("\u2003")} {
+		requireFixtureNoError(t, os.WriteFile(filepath.Join(fixtureDir, "EXPECT"), expectation, 0o644))
+		_, err := resolveFixtureBite("fixture", fixtures, func(canary.Fixture) (string, bool) { return "", false })
+		if err == nil || !strings.Contains(err.Error(), "empty EXPECT") {
+			t.Fatalf("empty EXPECT error = %v", err)
+		}
 	}
 }
 
-func runFixtureBite(t *testing.T, kitRoot, fixture string) {
+type fixtureBiteResolution struct {
+	check, expect string
+	tier          registry.Tier
+}
+
+func runFixtureUniverse(t *testing.T, canaryDir string, proof func(*testing.T, string, canary.Fixture)) {
 	t.Helper()
-	fixtures, err := canary.Fixtures(filepath.Join(kitRoot, "tests", "canary"))
+	fixtures, err := canary.Fixtures(canaryDir)
 	requireFixtureNoError(t, err)
-	check, expect, err := resolveFixtureBite(fixture, fixtures, func(found canary.Fixture) (string, bool) {
+	names := make([]string, 0, len(fixtures))
+	for name := range fixtures {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	for _, name := range names {
+		fixture := fixtures[name]
+		t.Run(name, func(t *testing.T) { proof(t, name, fixture) })
+	}
+}
+
+func sameFixtureSet(completed map[string]bool, fixtures map[string]canary.Fixture) bool {
+	if len(completed) != len(fixtures) {
+		return false
+	}
+	for name := range fixtures {
+		if !completed[name] {
+			return false
+		}
+	}
+	return true
+}
+
+func runFixtureBite(t *testing.T, kitRoot, fixture string, found canary.Fixture) {
+	t.Helper()
+	resolved, err := resolveFixtureBite(fixture, map[string]canary.Fixture{fixture: found}, func(found canary.Fixture) (string, bool) {
 		return found.Check, found.Check != ""
 	})
 	requireFixtureNoError(t, err)
-	owner, found := conformanceChecks[check]
-	if !found {
-		t.Fatalf("fixture %q resolved missing production owner %q", fixture, check)
+	owner, ownerFound := conformanceChecks[resolved.check]
+	if !ownerFound {
+		t.Fatalf("fixture %q resolved missing production owner %q", fixture, resolved.check)
 	}
-	root := materializeConformanceFixture(t, fixture)
-	diagnostics := owner.run(root, kitRoot, registry.Dev)
-	if !containsDiagnostic(diagnostics, expect) {
-		t.Fatalf("%s did not bite through owner %s; want %q in diagnostics:\n%s", fixture, check, expect, strings.Join(diagnostics, "\n"))
+	if owner.tier != resolved.tier {
+		t.Fatalf("fixture %q owner %q tier = %s, registry tier = %s", fixture, resolved.check, owner.tier, resolved.tier)
 	}
-	if err := canary.RestoreMutationFixture(kitRoot, fixtures[fixture].Dir, root); err != nil {
+	root := t.TempDir()
+	if err := canary.MaterializeMutationFixture(kitRoot, found.Dir, root); err != nil {
+		t.Fatalf("materialize %s: %v", fixture, err)
+	}
+	diagnostics := owner.run(root, kitRoot, resolved.tier)
+	if !containsDiagnostic(diagnostics, resolved.expect) {
+		t.Fatalf("%s did not bite through owner %s; want %q in diagnostics:\n%s", fixture, resolved.check, resolved.expect, strings.Join(diagnostics, "\n"))
+	}
+	if err := canary.RestoreMutationFixture(kitRoot, found.Dir, root); err != nil {
 		t.Fatalf("restore %s: %v", fixture, err)
 	}
-	if restored := owner.run(root, kitRoot, registry.Dev); containsDiagnostic(restored, expect) {
-		t.Fatalf("%s owner %s retained mutation-specific red %q after restoration:\n%s", fixture, check, expect, strings.Join(restored, "\n"))
+	if restored := owner.run(root, kitRoot, resolved.tier); containsDiagnostic(restored, resolved.expect) {
+		t.Fatalf("%s owner %s retained mutation-specific red %q after restoration:\n%s", fixture, resolved.check, resolved.expect, strings.Join(restored, "\n"))
 	}
 }
 
-func resolveFixtureBite(fixture string, fixtures map[string]canary.Fixture, fixtureCheck func(canary.Fixture) (string, bool)) (string, string, error) {
+func resolveFixtureBite(fixture string, fixtures map[string]canary.Fixture, fixtureCheck func(canary.Fixture) (string, bool)) (fixtureBiteResolution, error) {
 	found, ok := fixtures[fixture]
 	if !ok {
-		return "", "", fmt.Errorf("fixture %q not found in canary inventory", fixture)
+		return fixtureBiteResolution{}, fmt.Errorf("fixture %q not found in canary inventory", fixture)
 	}
 	expectData, err := os.ReadFile(filepath.Join(found.Dir, "EXPECT"))
 	if err != nil {
-		return "", "", fmt.Errorf("read %s EXPECT: %w", fixture, err)
+		return fixtureBiteResolution{}, fmt.Errorf("read %s EXPECT: %w", fixture, err)
 	}
 	expect := strings.TrimSpace(string(expectData))
 	if expect == "" {
-		return "", "", fmt.Errorf("fixture %q has an empty EXPECT", fixture)
+		return fixtureBiteResolution{}, fmt.Errorf("fixture %q has an empty EXPECT", fixture)
 	}
 	checkName, bound := fixtureCheck(found)
 	if !bound || checkName == "" {
-		return "", "", fmt.Errorf("fixture %q family %q is unbound", fixture, found.Family)
+		return fixtureBiteResolution{}, fmt.Errorf("fixture %q family %q is unbound", fixture, found.Family)
 	}
 	check, foundCheck := registry.Find(checkName)
 	if !foundCheck {
-		return "", "", fmt.Errorf("fixture %q family %q check %q is not registered", fixture, found.Family, checkName)
+		return fixtureBiteResolution{}, fmt.Errorf("fixture %q family %q check %q is not registered", fixture, found.Family, checkName)
 	}
 	if check.Meta {
-		return "", "", fmt.Errorf("fixture %q family %q check %q is meta", fixture, found.Family, checkName)
+		return fixtureBiteResolution{}, fmt.Errorf("fixture %q family %q check %q is meta", fixture, found.Family, checkName)
 	}
-	if !check.RunsAt(registry.Dev) {
-		return "", "", fmt.Errorf("fixture %q family %q check %q does not run at dev", fixture, found.Family, checkName)
-	}
-	return checkName, expect, nil
+	return fixtureBiteResolution{check: checkName, expect: expect, tier: check.Tier}, nil
 }
 
 func materializeConformanceFixture(t *testing.T, fixture string) string {

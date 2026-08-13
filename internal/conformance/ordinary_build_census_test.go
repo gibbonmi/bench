@@ -143,6 +143,7 @@ var directArchitectureTests = map[string]bool{
 	"internal/gate/decision_test.go":             true,
 	"internal/preflight/decision_test.go":        true,
 	"internal/releasepreflight/decision_test.go": true,
+	"internal/conformance/fixture_bite_test.go":  true,
 }
 
 func architectureOwnedTest(path string) bool {

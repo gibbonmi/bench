@@ -225,17 +225,6 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 	}
 }
 
-// TestDataHandlingDerivationFixtureBite is the canary-fixture bite proof for
-// story 18: the fixture omits one passlist pattern from an otherwise-complete
-// listing, and the derivation check fires that pattern's own diagnostic under a
-// full RunConformance pass.
-func TestDataHandlingDerivationFixtureBite(t *testing.T) {
-	h := NewHarness(t)
-	kitRoot := h.KitRoot
-	fixture := "undocumented-passlist-var"
-	runFixtureBite(t, kitRoot, fixture)
-}
-
 // TestSingleControlEscaperBites is the recorded bite proof for
 // checkSingleControlEscaper (per craft-gate): a tree with one escaper package
 // passes; a second package that grows its own escaper fires a diagnostic naming

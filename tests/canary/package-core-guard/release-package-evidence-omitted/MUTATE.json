@@ -1,1 +1,0 @@
-[{"path":"scripts/build-release-evidence.mjs","old":"copyAssets(wrapperDir);\ncopyPackageEvidence(wrapperDir);\n","new":"copyAssets(wrapperDir);\n"}]

@@ -107,28 +107,6 @@ func TestDecisionMapIntegrityCheckValidatesEveryCandidate(t *testing.T) {
 	}
 }
 
-func TestDecisionMapIntegrityFixturesBite(t *testing.T) {
-	h := NewHarness(t)
-	kitRoot := h.KitRoot
-	fixtures, err := canary.Fixtures(filepath.Join(kitRoot, "tests", "canary", "decision-map-integrity"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := validateDecisionMapIntegrityFixtureInventory(fixtures); err != nil {
-		t.Fatal(err)
-	}
-	names := make([]string, 0, len(fixtures))
-	for name := range fixtures {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	for _, name := range names {
-		t.Run(name, func(t *testing.T) {
-			runFixtureBite(t, kitRoot, name)
-		})
-	}
-}
-
 func TestDecisionMapIntegrityFixtureInventoryRejectsDeletion(t *testing.T) {
 	h := NewHarness(t)
 	canaryRoot := filepath.Join(t.TempDir(), "tests", "canary")
