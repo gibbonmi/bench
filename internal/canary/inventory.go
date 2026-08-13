@@ -17,7 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-const absentHarnessMessage = "canary harness absent — tests/canary/ has no fixtures; the gate cannot prove its own checks bite"
+const absentHarnessMessage = "canary fixture inventory is empty"
 
 const (
 	checkFileName = "CHECK"
