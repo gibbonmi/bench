@@ -1,6 +1,6 @@
 # Report truthful canary inventory
 
-Blocked by: none
+Blocked by: prove-every-retained-fixture.md
 Writes: `internal/canary`, `internal/systemtest`
 
 ## What to build
@@ -9,4 +9,4 @@ Make the real public command report only its accepted inventory count. Preserve 
 
 ## Acceptance
 
-- [ ] (covers CI1) A successful real command and its selected-executable journey print exactly `canary inventory ok (<n> fixture bindings)`, with the current complete producer yielding 184 and no production count constant.
+- [ ] (covers CI1) A successful real command and its selected-executable journey print exactly `canary inventory ok (<n> fixture bindings)`, with the accepted complete retained producer yielding 182 and no production count constant.
