@@ -1,6 +1,8 @@
 package worktree
 
 import (
+	"bytes"
+	cryptorand "crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,6 +34,13 @@ type worktreeListArgvPair struct {
 type worktreeListTerminalPair struct {
 	Old worktreeListResponse `json:"old"`
 	New worktreeListResponse `json:"new"`
+}
+
+func setRandomReader(t *testing.T, data []byte) {
+	t.Helper()
+	randomReader := cryptorand.Reader
+	cryptorand.Reader = bytes.NewReader(data)
+	t.Cleanup(func() { cryptorand.Reader = randomReader })
 }
 
 func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
@@ -131,6 +140,7 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 	}
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)))
 	creation := mustCreate(t, root, "landed-complete-assignment", "complete assignment")
 	boundary := cleanupTransactionBoundary
 	t.Cleanup(func() { cleanupTransactionBoundary = boundary })
@@ -150,7 +160,7 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 	}
 	chdir(t, root)
 	out, code := ListCommand(nil)
-	materialize := strings.NewReplacer("{{ID}}", assignments[0].ID, "{{LABEL}}", assignments[0].Label)
+	materialize := strings.NewReplacer("{{LABEL}}", assignments[0].Label)
 	pair.Old.Stdout = materialize.Replace(pair.Old.Stdout)
 	pair.New.Stdout = materialize.Replace(pair.New.Stdout)
 	if pair.Old.Stderr != "" || pair.New.Stderr != "" || pair.Old.Exit != 0 || pair.New.Exit != 0 || pair.New.Stdout != pair.Old.Stdout+"help[0]{cmd,why}:\n" {
@@ -192,6 +202,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 	}
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)+strings.Repeat("\x20", 16)+strings.Repeat("\x02", 16)))
 	mustCreate(t, root, "request-a", "alpha")
 	mustCreate(t, root, "request-b", "beta")
 	present := filepath.Join(t.TempDir(), "present foreign")
@@ -208,9 +219,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 		t.Fatalf("Assignments = %#v, %v, want two producer-ordered rows", assignments, err)
 	}
 	primary := strings.NewReplacer(
-		"{{ID1}}", assignments[0].ID,
 		"{{LABEL1}}", assignments[0].Label,
-		"{{ID2}}", assignments[1].ID,
 		"{{LABEL2}}", assignments[1].Label,
 		"{{PRESENT}}", present,
 		"{{MISSING}}", missing,

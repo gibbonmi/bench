@@ -1,4 +1,4 @@
 {
-  "old":{"stdout":"worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n  {{ID}},{{LABEL}},complete,assignment,missing,none,unknown,unknown\n","stderr":"","exit":0},
-  "new":{"stdout":"worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n  {{ID}},{{LABEL}},complete,assignment,missing,none,unknown,unknown\nhelp[0]{cmd,why}:\n","stderr":"","exit":0}
+  "old":{"stdout":"worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n  \"01010101010101010101010101010101\",{{LABEL}},complete,assignment,missing,none,unknown,unknown\n","stderr":"","exit":0},
+  "new":{"stdout":"worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n  \"01010101010101010101010101010101\",{{LABEL}},complete,assignment,missing,none,unknown,unknown\nhelp[0]{cmd,why}:\n","stderr":"","exit":0}
 }

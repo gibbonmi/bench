@@ -1,5 +1,5 @@
 worktrees[4]{id,label,state,source,tree,lease,landed,ignored}:
-  {{ID1}},{{LABEL1}},active,assignment,present,none,true,0
-  {{ID2}},{{LABEL2}},active,assignment,present,none,true,0
+  "01010101010101010101010101010101",{{LABEL1}},active,assignment,present,none,true,0
+  "02020202020202020202020202020202",{{LABEL2}},active,assignment,present,none,true,0
   foreign,{{PRESENT}},foreign,foreign,present,none,unknown,0
   foreign,{{MISSING}},foreign,foreign,missing,none,unknown,unknown
