@@ -812,35 +812,6 @@ public projections. Entry: `/bench-write-spec`. Sources:
 `capture/IDEAS.md`, drained here; the `injected-interface-junctions` retro,
 drained here.
 
-**FT175 (MEDIUM, decision required) — a claim ledger for assertions about the
-world.** The gate refuses "I believe the tests pass" and nothing refuses "I
-believe this harness supports fresh-context delegation." A draft spec proposes
-`bench cite` / `bench claim`: a CLI that acquires and stores evidence with its
-hashes, an agent-written assessment over a four-state vocabulary, a span
-verifier that confirms a quoted substring is present in the stored bytes, replay
-that marks an assessment stale when its evidence moves, and a gate phase over
-the whole thing. The draft was reviewed 2026-07-31 by cold re-derivation against
-this tree; most of its repository claims reproduced, and the parts that did not
-are recorded against the rows they touch rather than here.
-
-It enters as a decision tree, not a spec, because three questions interact and
-none is settled. The draft specifies its own gate phase two incompatible ways —
-well-formedness only in one section, consuming assessment state in another — and
-only the first is defensible under invariant 1, since the canary can prove
-`bench claim check` rejects a malformed record but cannot prove an assessment is
-honest. The CLI narrows the agent's assertion without removing it: fabrication is
-blocked, but the agent still selects which evidence to acquire and which span to
-quote, and spans are exempted for the two states most likely to hide a check
-nobody ran. And the ledger would be the kit's first durable capture store whose
-retirement rule cannot be "drain to zero" — every existing source empties, while
-a claim's value is that it persists. Settle those three before any spec. The
-span verifier is not prior art: `kunchenguid/no-mistakes` was read at its README,
-gate-model, pipeline, auto-fix, and pipeline-steps pages plus its step
-implementations, and documents no span or quotation verification — its finding
-`action` vocabulary (`no-op` / `auto-fix` / `ask-user`) is agent-assigned, so the
-transferable part is its fail-closed default, not the classification itself.
-Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here.
-
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
 frontmatter; derive the skills index and inventories from one implementation;
@@ -2220,11 +2191,10 @@ recommended table is sequencing advice.
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 
-### Goal tracks: guidance prose and the claim ledger
+### Goal track: guidance prose
 
-Two reviewer goals share one path: implement the guidance-prose backlog, and
-ship `bench cite` (FT175) on an AXI-compliant CLI (FT173). The process
-precursor for both is landed: FT164's ticket-contract core shipped 2026-08-03,
+The guidance-prose backlog follows one path. Its process precursor is landed:
+FT164's ticket-contract core shipped 2026-08-03,
 so every later build slices independently green tickets through the current
 `craft-tickets` grammar. The payoff
 facts shaping the order, verified in-tree 2026-08-02 with an independent
@@ -2232,43 +2202,29 @@ mid-tier refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the
 gate's reduced scope, so every separately-landed prose diff pays a full gate
 — rows batch on the shared full gate, not just shared files; anchor-pinned
 files couple prose diffs to conformance fixture updates (`craft-delegate` 14
-anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and AXI
-action mechanics compound through every later CLI change. The reviewed
-Pocock-alignment Spec C has shipped and FT107 is retired; both FT173
-behavior-first builds (`axi-coherent-diff`, `axi-query-disclosure`) have now
-shipped, leaving only the FT173 R11 residual. FT171's landed #23 and serial-gate
-baseline make #24 moot; reconcile the map, then resume #25 and run #26 before
-pricing outer concurrency.
+anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17). The reviewed
+Pocock-alignment Spec C has shipped and FT107 is retired. FT171's landed #23 and
+serial-gate baseline make #24 moot; reconcile the map, then resume #25 and run
+#26 before pricing outer concurrency.
 
 1. Reconcile FT171's `decisions/gate-budget.md`: close landed #23, retire moot
    #24 and remove it from #26's blockers, then land #25's cuts and run #26's
    exact post-route census before pricing outer concurrency. FT141 may proceed
    independently where capacity allows.
-2. Shape FT175's decision map now — its consumed owners (truncation,
-   aggregates, `help[]`) landed with the axi-query-disclosure capstone, the
-   condition the 2026-08-02 reviewer ruling set ("interfaces settled" means
-   the consumed owners, not the whole FT173 row). Then write the FT175 spec
-   and build it as vertical green slices: file evidence plus strict store and
-   `claim show/check`; assessments with spans and absence scopes; command
-   evidence plus replay and staleness; supersede/retire reachability; the
-   complete AXI list/detail/status surface; deterministic gate and ambient
-   status integration; then one local contradiction as the dogfood proof.
-3. Shape FT198 once FT175 and FT171 are moving; the
+2. Shape FT198 once FT171 is moving; the
    board's 170 KB full snapshot now confirms the progressive-loading trigger.
-4. FT100's remaining work grills and builds last, after FT89 establishes which
+3. FT100's remaining work grills and builds last, after FT89 establishes which
    guidance is authoritative and the reviewer resolves FT170's benchmark route.
 
-Fold FT106's verified-document vocabulary and FT162's exact subject binding
-into the FT175 spec instead of building them as prerequisites; FT99 rides
-prose batch 1, and its uncertainty obligation folds into the FT175 spec
-where claims consume it. FT133 remains parallel evidence hardening; FT71
-stays deferred behind its existing FT169 recommendation. FT172 is outside
-this critical path; the FT156 anchor registry shipped, so section-scoped
-`.bench/BENCH.md` anchors — the exact surface the prose batch edits — are
-now fixture-proven.
+FT99 rides prose batch 1. FT106 and FT162 remain independently sequenced by
+their existing dependencies. FT133 remains parallel evidence hardening; FT71
+stays deferred behind its existing FT169 recommendation. FT172 is outside this
+critical path; the FT156 anchor registry shipped, so section-scoped
+`.bench/BENCH.md` anchors — the exact surface the prose batch edits — are now
+fixture-proven.
 
 ## Recommended sequence
 
 1. `/bench-shape-idea` — reconcile FT171's landed #23, moot #24, and remaining #25–#26 in `decisions/gate-budget.md`.
 2. `/bench-debug` — FT203's reproduced `TestListCommandPublicRowsAndDisclosure` flake (~1 in 6–7 full `internal/worktree` runs on a clean baseline).
-3. `/bench-shape-idea` — FT175's claim-ledger decision map; its consumed owners (truncation, aggregates, `help[]`) landed with the axi-query-disclosure capstone.
+3. `/bench-shape-idea` — FT198's durable detail owner, migration, history, and index-completeness decisions.

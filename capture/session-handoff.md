@@ -2,29 +2,25 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `6974e9f1` before this approved retirement; assessment artifacts remain uncommitted outside its scope
-Spec: `specs/single-build-serial-gate/` retired after Fable confirmed its implementation already landed in ancestor `040ead11`
-Gate: pending the retirement's path-scoped `bench commit`
+Branch: `main` — HEAD `2dd71f8`, 4 dirty paths, 6 unpushed commits
+Spec: none staged.
+Gate: green at `d79ad80` — stale, work tree `6456d77`
 
 ## State
 
-Fable/medium rejected the restored staged serial-gate plan because its reds and
-migration tickets described behavior already present in the current tree. The
-implemented-state correction landed as `6974e9f1`; this retirement removes the
-stale spec and ticket DAG and removes their directives from `ROADMAP.md`.
+The current `$bench-what-next` batch is uncommitted pending reviewer approval.
+It removes FT175 at the reviewer's direction, reconciles every dependent
+goal-track and sequence reference, dismisses the sole learning because it
+repeats the phase's existing trusted-snapshot boundary, and leaves no ideas,
+learnings, retros, occurrence discrepancies, or staged specs.
 
-FT171 remains open only for the gate-budget map's current work: reconcile landed
-#23, mark lifecycle-removed #24 moot and remove it from #26's blockers, then
-resume #25 and run #26 before pricing outer concurrency. Do not recreate or
-implement the retired serial-gate plan.
-
-`ASSESSMENT.md` and `capture/FIXES.md` remain pre-existing assessment artifacts
-outside this retirement and uncommitted. Both registered assignment worktrees
-remain foreign and untouched.
+The refreshed sequence is FT171, FT203, then FT198. `ASSESSMENT.md` and
+`capture/FIXES.md` remain pre-existing assessment artifacts outside this batch.
+Both registered assignment worktrees remain foreign and untouched.
 
 ## Next command
 
-`/bench-shape-idea` — reconcile FT171 #23–#26 in `decisions/gate-budget.md`
+`$bench-shape-idea`
 
 ## Shape
 
