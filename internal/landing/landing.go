@@ -2,6 +2,7 @@
 package landing
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -27,6 +28,135 @@ type Request struct {
 
 // Result identifies a successfully published commit and its authorized tree.
 type Result struct{ Base, Commit, Tree string }
+
+// CompositionRequest identifies two immutable commits to merge without checkout state.
+type CompositionRequest struct {
+	Root, Destination, Source, ReviewBase string
+}
+
+// CompositionResult is either a prospective tree or one bounded conflict kind.
+type CompositionResult struct {
+	Base, Tree string
+	Conflict   Conflict
+}
+
+// Conflict describes why Git could not produce one prospective tree.
+type Conflict struct{ Kind string }
+
+// Compose performs Git's three-way tree merge using the repository's real merge base.
+// ReviewBase is metadata only and is never used as the merge base.
+func (o Owner) Compose(r CompositionRequest) (CompositionResult, error) {
+	if r.Root == "" || r.Destination == "" || r.Source == "" {
+		return CompositionResult{}, errors.New("composition request is incomplete")
+	}
+	destination, err := compositionCommit(r.Root, r.Destination, "destination")
+	if err != nil {
+		return CompositionResult{}, err
+	}
+	source, err := compositionCommit(r.Root, r.Source, "source")
+	if err != nil {
+		return CompositionResult{}, err
+	}
+	base, err := output(r.Root, "merge-base", destination, source)
+	if err != nil {
+		return CompositionResult{}, fmt.Errorf("find merge base: %w", err)
+	}
+	out, err := mergeTree(r.Root, destination, source)
+	if err == nil {
+		tree, err := mergeTreeResult(out)
+		if err != nil {
+			return CompositionResult{}, err
+		}
+		return CompositionResult{Base: base, Tree: tree}, nil
+	}
+	kind, parseErr := conflictKind(out)
+	if parseErr != nil {
+		return CompositionResult{}, parseErr
+	}
+	return CompositionResult{Base: base, Conflict: Conflict{Kind: kind}}, nil
+}
+
+func compositionCommit(root, value, role string) (string, error) {
+	commit, err := output(root, "rev-parse", "--verify", value+"^{commit}")
+	if err != nil {
+		return "", fmt.Errorf("composition %s is not a commit", role)
+	}
+	return commit, nil
+}
+
+func mergeTree(root, destination, source string) (string, error) {
+	// merge-tree finds the merge base itself; this avoids checkout and index state.
+	return outputCombined(root, "merge-tree", "--write-tree", "-z", destination, source)
+}
+
+func mergeTreeResult(output string) (string, error) {
+	tree, _, found := strings.Cut(output, "\x00")
+	if !found || len(tree) != 40 {
+		return "", errors.New("merge-tree returned no tree")
+	}
+	return tree, nil
+}
+
+func conflictKind(output string) (string, error) {
+	parts := bytes.Split([]byte(output), []byte{0})
+	separator := -1
+	for i, part := range parts {
+		if len(part) == 0 {
+			separator = i
+			break
+		}
+	}
+	if separator < 1 {
+		return "", errors.New("merge-tree returned no conflict records")
+	}
+	modes := make([]string, 0, separator-1)
+	for _, record := range parts[1:separator] {
+		fields := strings.Fields(string(record))
+		if len(fields) < 3 || fields[2][0] < '1' || fields[2][0] > '3' {
+			return "", errors.New("merge-tree returned malformed conflict record")
+		}
+		modes = append(modes, fields[0])
+	}
+	for _, record := range parts[separator+1:] {
+		kind := string(record)
+		switch kind {
+		case "CONFLICT (modify/delete)":
+			return "modify/delete", nil
+		case "CONFLICT (rename/rename)":
+			return "rename/rename", nil
+		case "CONFLICT (directory/file)", "CONFLICT (file/directory)":
+			return "file/directory", nil
+		case "CONFLICT (distinct modes)":
+			kind := contentConflictKind(modes)
+			if kind == "textual" {
+				return "mode", nil
+			}
+			return kind, nil
+		case "CONFLICT (contents)":
+			return contentConflictKind(modes), nil
+		}
+	}
+	return "", errors.New("merge-tree returned an unrecognized conflict kind")
+}
+
+func contentConflictKind(modes []string) string {
+	for _, mode := range modes {
+		if mode == "160000" {
+			return "gitlink"
+		}
+		if mode == "120000" {
+			return "symlink"
+		}
+	}
+	for _, mode := range modes {
+		for _, other := range modes {
+			if mode != other {
+				return "mode"
+			}
+		}
+	}
+	return "textual"
+}
 
 type composedSnapshot struct {
 	tree            string
@@ -320,6 +450,11 @@ func unique(values []string) []string {
 func updateRef(root, ref, new, old string) error { return run(root, "update-ref", ref, new, old) }
 func output(root string, args ...string) (string, error) {
 	return benchgit.Output(append([]string{"-C", root}, args...)...)
+}
+func outputCombined(root string, args ...string) (string, error) {
+	c := exec.Command("git", append([]string{"-C", root}, args...)...)
+	b, err := c.CombinedOutput()
+	return strings.TrimSpace(string(b)), err
 }
 func outputInput(root string, input []byte, args ...string) (string, error) {
 	c := exec.Command("git", append([]string{"-C", root}, args...)...)

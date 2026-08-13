@@ -185,6 +185,195 @@ func TestLandRealGitCompositionTable(t *testing.T) {
 	}
 }
 
+func TestComposeDivergenceProbe(t *testing.T) {
+	root := fixture(t)
+	base := git(t, root, "rev-parse", "HEAD")
+	write(t, root, "destination-only", "destination")
+	git(t, root, "add", "destination-only")
+	git(t, root, "commit", "-qm", "destination")
+	destination := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "checkout", "-qb", "source", base)
+	write(t, root, "source-only", "source")
+	git(t, root, "add", "source-only")
+	git(t, root, "commit", "-qm", "source")
+	source := git(t, root, "rev-parse", "HEAD")
+	got, err := New().Compose(CompositionRequest{Root: root, Destination: destination, Source: source, ReviewBase: base})
+	if err != nil || got.Base != base || got.Conflict.Kind != "" {
+		t.Fatalf("compose = %+v, %v", got, err)
+	}
+	if git(t, root, "show", got.Tree+":destination-only") != "destination" || git(t, root, "show", got.Tree+":source-only") != "source" {
+		t.Fatal("tree omitted side")
+	}
+}
+
+func TestComposePartialAncestryAppliesOnlyLaterSourceCommit(t *testing.T) {
+	root := fixture(t)
+	base := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "checkout", "-qb", "source", base)
+	write(t, root, "early", "early")
+	git(t, root, "add", "early")
+	git(t, root, "commit", "-qm", "early")
+	early := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "checkout", "-q", "main")
+	git(t, root, "merge", "-q", "--ff-only", early)
+	destination := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "checkout", "-q", "source")
+	write(t, root, "later", "later")
+	git(t, root, "add", "later")
+	git(t, root, "commit", "-qm", "later")
+	source := git(t, root, "rev-parse", "HEAD")
+	got, err := New().Compose(CompositionRequest{Root: root, Destination: destination, Source: source, ReviewBase: base})
+	if err != nil || got.Base != early || got.Conflict.Kind != "" {
+		t.Fatalf("compose = %+v, %v", got, err)
+	}
+	if git(t, root, "show", got.Tree+":early") != "early" || git(t, root, "show", got.Tree+":later") != "later" {
+		t.Fatal("partial ancestry tree incomplete")
+	}
+}
+
+func TestComposeClassifiesRealGitConflictsWithoutMutation(t *testing.T) {
+	cases := []struct {
+		name  string
+		kind  string
+		setup func(*testing.T, string, string) (string, string)
+	}{
+		{"textual", "textual", changeBoth("named", "destination", "source")},
+		{"modify-delete", "modify/delete", modifyDelete},
+		{"rename-rename", "rename/rename", renameRename},
+		{"file-directory", "file/directory", fileDirectory},
+		{"mode", "mode", modeConflict},
+		{"symlink", "symlink", symlinkConflict},
+		{"gitlink", "gitlink", gitlinkConflict},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := fixture(t)
+			base := git(t, root, "rev-parse", "HEAD")
+			destination, source := tc.setup(t, root, base)
+			before := compositionState(t, root)
+			got, err := New().Compose(CompositionRequest{Root: root, Destination: destination, Source: source, ReviewBase: "not-the-merge-base"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if expectedBase := git(t, root, "merge-base", destination, source); got.Base != expectedBase || got.Tree != "" || got.Conflict.Kind != tc.kind {
+				t.Fatalf("compose = %+v, want base %s and %s conflict", got, expectedBase, tc.kind)
+			}
+			if after := compositionState(t, root); !reflect.DeepEqual(after, before) {
+				t.Fatalf("prospective composition mutated repository\nbefore: %#v\nafter: %#v", before, after)
+			}
+		})
+	}
+}
+
+func TestConflictKindRejectsEmptyMergeTreeOutput(t *testing.T) {
+	if _, err := conflictKind(""); err == nil {
+		t.Fatal("empty merge-tree output classified without an error")
+	}
+}
+
+func TestComposeRejectsUnresolvedCommit(t *testing.T) {
+	root := fixture(t)
+	_, err := New().Compose(CompositionRequest{Root: root, Destination: "not-a-commit", Source: "HEAD"})
+	if err == nil || !strings.Contains(err.Error(), "destination is not a commit") {
+		t.Fatalf("compose error = %v", err)
+	}
+}
+
+func changeBoth(path, destinationValue, sourceValue string) func(*testing.T, string, string) (string, string) {
+	return func(t *testing.T, root, base string) (string, string) {
+		return commitSides(t, root, base, func() { write(t, root, path, destinationValue) }, func() { write(t, root, path, sourceValue) })
+	}
+}
+
+func modifyDelete(t *testing.T, root, base string) (string, string) {
+	return commitSides(t, root, base, func() { write(t, root, "named", "destination") }, func() { git(t, root, "rm", "-q", "named") })
+}
+
+func renameRename(t *testing.T, root, base string) (string, string) {
+	return commitSides(t, root, base, func() { git(t, root, "mv", "named", "destination-name") }, func() { git(t, root, "mv", "named", "source-name") })
+}
+
+func fileDirectory(t *testing.T, root, base string) (string, string) {
+	return commitSides(t, root, base, func() { write(t, root, "clash", "file") }, func() { write(t, root, "clash/child", "child") })
+}
+
+func modeConflict(t *testing.T, root, base string) (string, string) {
+	return commitSides(t, root, base, func() {
+		write(t, root, "named", "destination")
+		if err := os.Chmod(filepath.Join(root, "named"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}, func() { write(t, root, "named", "source") })
+}
+
+func symlinkConflict(t *testing.T, root, base string) (string, string) {
+	return commitSides(t, root, base, func() {
+		if err := os.Remove(filepath.Join(root, "named")); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink("destination-target", filepath.Join(root, "named")); err != nil {
+			capability.Capability(t, capability.Symlink, err.Error())
+		}
+	}, func() { write(t, root, "named", "source") })
+}
+
+func gitlinkConflict(t *testing.T, root, base string) (string, string) {
+	nested := filepath.Join(root, "nested")
+	if err := os.Mkdir(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	git(t, nested, "init", "-q", "-b", "main")
+	git(t, nested, "config", "user.email", "a@b.c")
+	git(t, nested, "config", "user.name", "a")
+	write(t, nested, "inside", "base")
+	git(t, nested, "add", "inside")
+	git(t, nested, "commit", "-qm", "base")
+	git(t, root, "add", "nested")
+	git(t, root, "commit", "-qm", "add gitlink")
+	base = git(t, root, "rev-parse", "HEAD")
+	git(t, nested, "checkout", "-qb", "destination")
+	write(t, nested, "inside", "destination")
+	git(t, nested, "commit", "-am", "destination", "-q")
+	destinationNested := git(t, nested, "rev-parse", "HEAD")
+	git(t, nested, "checkout", "-qb", "source", baseForNested(t, nested))
+	write(t, nested, "inside", "source")
+	git(t, nested, "commit", "-am", "source", "-q")
+	sourceNested := git(t, nested, "rev-parse", "HEAD")
+	return commitSides(t, root, base, func() { git(t, nested, "checkout", "-q", destinationNested); git(t, root, "add", "nested") }, func() { git(t, nested, "checkout", "-q", sourceNested); git(t, root, "add", "nested") })
+}
+
+func baseForNested(t *testing.T, root string) string { return git(t, root, "rev-parse", "main") }
+
+func commitSides(t *testing.T, root, base string, destinationChange, sourceChange func()) (string, string) {
+	git(t, root, "checkout", "-qb", "destination", base)
+	destinationChange()
+	git(t, root, "add", "-A")
+	git(t, root, "commit", "-qm", "destination")
+	destination := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "checkout", "-qb", "source", base)
+	sourceChange()
+	git(t, root, "add", "-A")
+	git(t, root, "commit", "-qm", "source")
+	return destination, git(t, root, "rev-parse", "HEAD")
+}
+
+type compositionSnapshot struct{ refs, index, status, worktree, mergeHead string }
+
+func compositionState(t *testing.T, root string) compositionSnapshot {
+	t.Helper()
+	mergeHead, err := os.ReadFile(filepath.Join(root, ".git", "MERGE_HEAD"))
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	return compositionSnapshot{
+		refs:      string(gitBytes(t, root, "for-each-ref", "--format=%(refname) %(objectname)")),
+		index:     string(gitBytes(t, root, "ls-files", "--stage", "-z")),
+		status:    string(gitBytes(t, root, "status", "--porcelain=v2", "--untracked-files=all")),
+		worktree:  string(gitBytes(t, root, "diff", "--binary", "HEAD")),
+		mergeHead: string(mergeHead),
+	}
+}
+
 func compositionResult(paths, names []string, content map[string]string) compositionExpectation {
 	return compositionExpectation{paths: paths, wantNames: names, wantContent: content}
 }
