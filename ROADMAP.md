@@ -101,14 +101,6 @@ prospective run identifies the ordinary test driver as the current dominant
 cost, while its 354.073 s predecessor remains directional rather than a speed
 claim. Source: the branch-native-build-test-architecture retro, drained here.
 
-The next demand-reduction slice is staged at
-`specs/single-build-serial-gate/spec.md` (decision source: the
-reviewer-confirmed 2026-08-08 conversation): one exact-snapshot host Bench
-binary per top-level gate or focused `bench test` run, one phase process at a
-time in a single topological schedule, and a census of the compiler proofs that
-legitimately build distinct artifacts. Implement it before resuming #24–#26 and
-any outer-width pricing, so the census measures the post-slice baseline.
-
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
 artifact-suite, and artifact-hoist retros converge on one lifecycle owner. The close's
@@ -2244,13 +2236,14 @@ anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and AXI
 action mechanics compound through every later CLI change. The reviewed
 Pocock-alignment Spec C has shipped and FT107 is retired; both FT173
 behavior-first builds (`axi-coherent-diff`, `axi-query-disclosure`) have now
-shipped, leaving only the FT173 R11 residual, so FT171's staged serial-gate
-slice is the immediate program continuation.
+shipped, leaving only the FT173 R11 residual. FT171's landed #23 and serial-gate
+baseline make #24 moot; reconcile the map, then resume #25 and run #26 before
+pricing outer concurrency.
 
-1. Implement FT171's staged `single-build-serial-gate` slice, mark deleted
-   specbuild decision #24 moot, then resume #25 and run #26's exact post-route
-   census before pricing outer concurrency. FT141 may proceed independently
-   where capacity allows.
+1. Reconcile FT171's `decisions/gate-budget.md`: close landed #23, retire moot
+   #24 and remove it from #26's blockers, then land #25's cuts and run #26's
+   exact post-route census before pricing outer concurrency. FT141 may proceed
+   independently where capacity allows.
 2. Shape FT175's decision map now — its consumed owners (truncation,
    aggregates, `help[]`) landed with the axi-query-disclosure capstone, the
    condition the 2026-08-02 reviewer ruling set ("interfaces settled" means
@@ -2276,6 +2269,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT171's staged `specs/single-build-serial-gate/spec.md`, then retire moot #24 and resume #25–#26 on the landed serial-gate baseline.
+1. `/bench-shape-idea` — reconcile FT171's landed #23, moot #24, and remaining #25–#26 in `decisions/gate-budget.md`.
 2. `/bench-debug` — FT203's reproduced `TestListCommandPublicRowsAndDisclosure` flake (~1 in 6–7 full `internal/worktree` runs on a clean baseline).
 3. `/bench-shape-idea` — FT175's claim-ledger decision map; its consumed owners (truncation, aggregates, `help[]`) landed with the axi-query-disclosure capstone.
