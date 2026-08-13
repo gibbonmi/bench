@@ -2,25 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `2dd71f8`, 4 dirty paths, 6 unpushed commits
+Branch: `main` — HEAD `d7a6e67`, 3 dirty paths, 7 unpushed commits
 Spec: none staged.
-Gate: green at `d79ad80` — stale, work tree `6456d77`
+Gate: green at `2180b3d` — stale, work tree `bbfa62c`
 
 ## State
 
-The current `$bench-what-next` batch is uncommitted pending reviewer approval.
-It removes FT175 at the reviewer's direction, reconciles every dependent
-goal-track and sequence reference, dismisses the sole learning because it
-repeats the phase's existing trusted-snapshot boundary, and leaves no ideas,
-learnings, retros, occurrence discrepancies, or staged specs.
+FT171 closed at `2dd71f83`: gate-budget decision #27 retired #8 because the
+serial baseline already meets the destination, and no spec follows. The roadmap
+therefore carries no FT171 row or sequence item.
 
-The refreshed sequence is FT171, FT203, then FT198. `ASSESSMENT.md` and
-`capture/FIXES.md` remain pre-existing assessment artifacts outside this batch.
-Both registered assignment worktrees remain foreign and untouched.
+FT203 now owns decision #26's wider `internal/worktree` flake evidence: two reds
+in six package runs on `a3b599ea`, including
+`TestListCommandCheckedInCompletedAssignmentTerminalPair`, while three focused
+repetitions passed. Debug the package family rather than overfitting to the
+row's original named test. FT198 follows in the sequence.
+
+There are no ideas, learnings, retros, occurrence discrepancies, or staged
+specs. `ASSESSMENT.md` and `capture/FIXES.md` remain foreign assessment
+artifacts; both registered assignment worktrees remain foreign and untouched.
 
 ## Next command
 
-`$bench-shape-idea`
+`$bench-debug`
 
 ## Shape
 

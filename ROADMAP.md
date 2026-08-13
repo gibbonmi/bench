@@ -42,65 +42,6 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
-against measured contention.** The artifact-split follow-up measured the
-`posture` package materially slower inside the fresh full gate than in its
-focused run while other outer phases overlapped. The existing gate-concurrency
-decision deliberately left outer phases uncapped until that evidence existed;
-the gate-critical-path map now records that the trigger fired but grants no
-authority to choose a cap. Price candidate outer widths with repeated full-gate
-measurements on the same tree, recording the exact commit, worktree, and run
-time beside every sample. Measure enough repetitions to state the variance;
-discard a sample whose subject does not match the build under test rather than
-reporting it. Preserve every phase and unchanged green semantics. Scoped
-gating remains ruled out and is not a speed lever. Entry:
-`/bench-shape-idea`. Sources: `capture/IDEAS.md`, drained here;
-`decisions/gate-concurrency.md`; `decisions/gate-critical-path.md`; the
-2026-07-30 Claude usage-report assessment, drained here. A first full gate on
-a 12-online-core host supplied the lower-width sample 2026-07-31: both
-`TestSetupConflictContracts` FIFO cases exhausted their 15 s subprocess
-deadlines while the outer phases overlapped, then the exact pair passed
-focused once and 3/3 repeated at about 0.43 s per run. Treat that delta as
-contention evidence for pricing the outer widths, not as authority to pick one
-from a single machine.
-
-The first demand-reduction slice (the `gate-decision-test-seam` spec) landed
-2026-08-07: the exhaustive public-document mapping matrix now runs at the
-read-only decision seam with representative full-engine composition proofs
-retained. Return to the remaining FT171 shaping decisions from here.
-
-The second demand-reduction slice (`conformance-harness-scope`) also landed
-2026-08-07: the 83 direct conformance fixture bites now run only their resolved
-ordinary check while the full-table controls remain broad. The post-reduction
-census then resolved decision #20 on exact commit `eb6845f`: `internal/gate`
-remained a strictly serial 140–160 s focused package, `internal/specbuild`
-remained a 58–60 s serial package, and one fresh gate peaked at 97 concurrent
-descendants. Decision #22 selected intra-package test concurrency before any
-outer-width pricing.
-
-The `gate-test-concurrency` slice landed 2026-08-08: 192 of 245 top-level gate
-tests now run in parallel while 53 reasoned serial tests retain their process-
-global constraints. The exact-candidate package median fell from 150.85 s to
-56.72 s, but width one and width two still wrote roughly 1.26 million filesystem
-blocks each. Its measured materialization follow-up then shared the immutable
-fixture binary and narrowed setup-only work: width one fell to 111.67 s and
-699,904 output blocks; width two fell to 78.79 s and 699,712 blocks. The flat
-write volume across widths means concurrency compresses wall time without
-removing intrinsic fixture work. Resource-constrained follow-ups retain output
-blocks beside wall time and state serial coordinator/delegate cadence as an
-explicit unused-capacity reason when chosen. Decision #23 and its measured
-residual are complete. Lifecycle removal moots #24's specbuild parallelism;
-#25's remaining sized serial cuts and #26's exact post-route census stay open
-before #8 prices candidate outer widths, and the decision map first removes
-#24 from #26's blockers. Sources: the `gate-test-concurrency` retro, drained here;
-`decisions/gate-budget.md`; the retained FT171 implementation receipts.
-
-The branch-native gate rebuild supplies a timing-discipline instance: compare
-before-and-after runs only on the same subject and cache posture. Its 73.850 s
-prospective run identifies the ordinary test driver as the current dominant
-cost, while its 354.073 s predecessor remains directional rather than a speed
-claim. Source: the branch-native-build-test-architecture retro, drained here.
-
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
 artifact-suite, and artifact-hoist retros converge on one lifecycle owner. The close's
@@ -1821,6 +1762,15 @@ crosses the package. Build the tight red-capable repro loop first, then fix
 against it. Entry: `/bench-debug`. Sources: `capture/IDEAS.md` and the
 axi-query-disclosure retro, drained here.
 
+Decision #26's post-rebuild census widens the observed family. On exact commit
+`a3b599ea`, two of six `internal/worktree` package runs went red: a fresh gate
+failed `TestListCommandCheckedInCompletedAssignmentTerminalPair`, and the serial
+census had one unattributed red because its output was not captured; three
+focused repetitions passed. The rate matches this row, but the named test does
+not, so debugging starts with package-family failure capture rather than an
+overfit loop around one test. Source:
+`decisions/assets/gate-budget-cpu-wall-census.md` decision #26.
+
 **FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate
 quiet check.** Two faces of the same defect — a red answering for machine
 contention rather than for the diff — and one owner, so they ship together.
@@ -1903,8 +1853,8 @@ instances: the AGENTS.md and CLAUDE.md FIFO setup contracts both exhausted
 their hardcoded 15 s subprocess bounds under the gate's outer-phase load, then
 passed focused once and 3/3 repeated at about 0.43 s per run. Derive those
 bounds from the shared test deadline rather than pricing a special-file
-regression against a 16-core host; FT171 owns whether reducing outer
-concurrency also lowers the contention that triggered them.
+regression against a 16-core host. The closed gate-budget map found no remaining
+outer-phase contention lever on the serial baseline.
 
 **FT120 (LOW) — gate, canary, and contract test-harness defects nothing
 asserts.** Two
@@ -2203,17 +2153,11 @@ gate's reduced scope, so every separately-landed prose diff pays a full gate
 — rows batch on the shared full gate, not just shared files; anchor-pinned
 files couple prose diffs to conformance fixture updates (`craft-delegate` 14
 anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17). The reviewed
-Pocock-alignment Spec C has shipped and FT107 is retired. FT171's landed #23 and
-serial-gate baseline make #24 moot; reconcile the map, then resume #25 and run
-#26 before pricing outer concurrency.
+Pocock-alignment Spec C has shipped and FT107 is retired.
 
-1. Reconcile FT171's `decisions/gate-budget.md`: close landed #23, retire moot
-   #24 and remove it from #26's blockers, then land #25's cuts and run #26's
-   exact post-route census before pricing outer concurrency. FT141 may proceed
-   independently where capacity allows.
-2. Shape FT198 once FT171 is moving; the
+1. Shape FT198; the
    board's 170 KB full snapshot now confirms the progressive-loading trigger.
-3. FT100's remaining work grills and builds last, after FT89 establishes which
+2. FT100's remaining work grills and builds last, after FT89 establishes which
    guidance is authoritative and the reviewer resolves FT170's benchmark route.
 
 FT99 rides prose batch 1. FT106 and FT162 remain independently sequenced by
@@ -2225,6 +2169,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — reconcile FT171's landed #23, moot #24, and remaining #25–#26 in `decisions/gate-budget.md`.
-2. `/bench-debug` — FT203's reproduced `TestListCommandPublicRowsAndDisclosure` flake (~1 in 6–7 full `internal/worktree` runs on a clean baseline).
-3. `/bench-shape-idea` — FT198's durable detail owner, migration, history, and index-completeness decisions.
+1. `/bench-debug` — FT203's `internal/worktree` flake family, now two reds in six decision-#26 package runs rather than only `TestListCommandPublicRowsAndDisclosure`.
+2. `/bench-shape-idea` — FT198's durable detail owner, migration, history, and index-completeness decisions.
