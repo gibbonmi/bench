@@ -107,9 +107,11 @@ joins the approved AXI query set as one member covering both forms, and
   bite tests are updated in the same change, never weakened — landing the
   schema bump alone bricks `/bench-what-next` (the phase stops on any schema
   but the pinned one), and editing the prose alone turns the gate red.
-  Consequence for slicing: stories 1–3 and 6 sequence together; stories 4
-  and 5 could ship independently green, and bundling them here is a chosen
-  bundle surfaced for reviewer sign-off, not a default.
+  Consequence for slicing: stories 1–3 and 6 sequence together, and story 5
+  rides behind that sequence because PI19's disclosure is gradeable only
+  over a surface that already omits bodies. Story 4 (the bare board) is the
+  only independently shippable slice; bundling it here is a chosen bundle
+  surfaced for reviewer sign-off, not a default.
 - **Capture bodies under index-first.** The drain obtains retro, learning,
   and idea bodies by reading each file at the path the index names (decision
   #3's sanctioned route — each capture file is small; `--full` stays the
@@ -174,7 +176,8 @@ joins the approved AXI query set as one member covering both forms, and
   the byte count is the true size (the hostile-input rule: assert what the
   contract permits, not only what it refuses).
 - Seams and prior art: `internal/roadmap` command-level tests
-  (`context_test.go`, existing `RoadmapCommand` tests) for stories 1–4;
+  (`context_test.go`, existing `RoadmapCommand` tests) for stories 1–4,
+  plus the launcher line-content sweep for PI21;
   `cmd/bench`'s `TestAXIRegistryBindsEachRealCommandEnvelope` fixture table
   and `internal/conformance`'s AXI equality checks for story 5. No new seam
   is introduced.
@@ -222,10 +225,12 @@ joins the approved AXI query set as one member covering both forms, and
 | PI13 | 4 | the member's single usage string names the bare, `--context [--full]`, and `--row` forms | package test on each grammar's help (`RoadmapCommand(["--help"])` and `ContextCommand` help — the dispatcher routes argument-bearing calls to the context grammar, so the bare grammar is reachable only at this seam) | observed red | today `roadmapGrammar.Help` is `usage: bench roadmap` alone and no help names `--row`; the help-spelling exit-0 behavior itself already passes and rides PI15's envelope subtests |
 | PI14 | 4 | a control byte in a row title yields the structured render error, never a corrupt document | package test | observed red | the bare verb newly pushes titles through `toon.Table`; asserts the refusal on the new surface |
 | PI15 | 5 | `roadmap` is an `axiApprovedRoot` member: guidance/registry/profile equality green and the envelope fixture passes all six member behaviors | `internal/conformance` + `cmd/bench` envelope harness | observed red | flipping the registry without fixture and table entries (or vice versa) fails the equality and fixture-membership checks |
-| PI16 | 2, 3 | `--context`, `--row`, and `--full` stdout each decode as one TOON document with a terminal `help` block | ContextCommand test | observed red | membership promises the envelope on every form; only the bare form rides the fixture table |
+| PI16 | 1, 3 | default `--context` and `--full` stdout each decode as one TOON document with a terminal `help` block | ContextCommand test | observed red | membership promises the envelope on every form; only the bare form rides the fixture table |
 | PI17 | 6 | `/bench-what-next` requires the schema-4 index snapshot, index-first evidence doctrine, and the narrowed retro-inventory rule; the recurrence-contract, helpers, and workflow-anchors checks pin the new anchors | `internal/conformance` recurrence-contract, helpers, and `checkWorkflowAnchors` checks against the live prose | observed red | `checkRecurrenceMaintenanceContract`, the helpers' occurrence expectation, and the retro-evidence anchor stay red until prose and all three pinning sites move together — the cheapest wrong implementation (leave the prose alone) is exactly what the current anchors mandate |
 | PI18 | 1 | the schema-4 `--context` document enumerates its complete block list — the sixteen current blocks plus terminal `help` — in every mode | ContextCommand test decoding block names | observed red | pins the unenumerated "every structured field stays": an index renderer that drops `capture_occurrences`, `specs`, `git`, or any cross-check block goes red |
 | PI19 | 1, 5 | index-mode success disclosure names the exact row-selector command (and `--full`), and the craft-cli disclosure cell carries the row-selector command as a `checkAXIGuidance` required phrase with a bite mutation | ContextCommand test + `checkAXIGuidance` required-phrase list and `TestAXIGuidanceContractBites` mutation | observed red | the body-omission contract rests on disclosure owning "request the complete value"; an empty `help[0]` on success or a vague disclosure cell would otherwise pass — the equality check alone grades membership, not wording |
+| PI20 | 2 | `--row` stdout decodes as one TOON document with a terminal `help` block | ContextCommand test | observed red | catches a selector document that emits its rows without the terminal `help` block — the form an agent decodes immediately after a fetch, and the one form no fixture-table case covers |
+| PI21 | 4 | `bin/bench.sh`'s roadmap help line describes the top-10 board surface | the existing launcher line-content sweep in `internal/conformance/package_shipped_surface_test.go`, extended with the roadmap help-line assertion | observed red | the current line advertises the verbatim-dump-plus-drain-status surface the rebuild removes; the docs-currency sweep checks command existence, not description accuracy |
 
 ### Edge inventory
 
@@ -266,7 +271,9 @@ joins the approved AXI query set as one member covering both forms, and
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/recurrence_maintenance_contract_test.go`
 - `internal/conformance/docs_workflow_helpers_test.go`
+- `internal/conformance/package_shipped_surface_test.go`
 - `internal/anchors/registry_data.go`
+- `bin/bench.sh`
 - `projects/benchkit.md`
 - `CONTEXT.md`
 - `ROADMAP.md`
