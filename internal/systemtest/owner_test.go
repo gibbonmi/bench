@@ -358,18 +358,18 @@ func TestWrapperInstallFreshnessAndReloadJourneys(t *testing.T) {
 	}
 }
 
-func TestCanaryDispatchAndAggregation(t *testing.T) {
+func TestCanaryInventoryAndSelectedExecutable(t *testing.T) {
 	fixtures, err := canary.Fixtures(filepath.Join(owner.kit, "tests", "canary"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	result := owner.runSelected(owner.repos[1], "canary", owner.kit)
-	want := fmt.Sprintf("canary ok (%d fixture owners dispatched)\n", len(fixtures))
+	want := fmt.Sprintf("canary inventory ok (%d fixture bindings)\n", len(fixtures))
 	if result.code != 0 || result.stdout != want {
-		t.Fatalf("canary dispatch = (%d, %q, %q)", result.code, result.stdout, result.stderr)
+		t.Fatalf("canary inventory = (%d, %q, %q)", result.code, result.stdout, result.stderr)
 	}
 	if !strings.Contains(result.stderr, "command-registry:canary") {
-		t.Fatalf("canary bypassed production dispatch: %q", result.stderr)
+		t.Fatalf("canary bypassed selected command-registry inventory route: %q", result.stderr)
 	}
 }
 

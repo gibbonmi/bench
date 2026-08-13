@@ -97,7 +97,7 @@ func Fixtures(canaryDir string) (map[string]Fixture, error) {
 
 var grammar = usage.Grammar{Cmd: "bench canary", Help: "usage: bench canary [root]", MaxArgs: 1}
 
-// Run validates and dispatches the production owner inventory for every fixture.
+// Run validates the production owner inventory for every fixture.
 func Run(args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -124,7 +124,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	fmt.Fprintf(stdout, "canary ok (%d fixture owners dispatched)\n", len(result.Dispatched))
+	fmt.Fprintf(stdout, "canary inventory ok (%d fixture bindings)\n", len(result.Owners))
 	return 0
 }
 
@@ -134,16 +134,16 @@ func SweepShip(root string) error {
 	return err
 }
 
-func dispatchInventory(root string) (DispatchResult, error) {
+func dispatchInventory(root string) (Selection, error) {
 	found, err := Fixtures(filepath.Join(root, "tests", "canary"))
 	if err != nil {
-		return DispatchResult{}, err
+		return Selection{}, err
 	}
 	fixtures := make([]Fixture, 0, len(found))
 	for _, fixture := range found {
 		fixtures = append(fixtures, fixture)
 	}
-	result := Dispatch(Select(fixtures), func(FixtureOwner) string { return "" })
+	result := Select(fixtures)
 	if !result.Accepted {
 		return result, errors.New(strings.Join(result.Diagnostics, "\n"))
 	}

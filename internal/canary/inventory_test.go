@@ -1,12 +1,27 @@
 package canary
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
 )
+
+func TestRunReportsAcceptedInventoryBindings(t *testing.T) {
+	working, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	if code := Run([]string{filepath.Join(working, "../..")}, &stdout, &stderr); code != 0 {
+		t.Fatalf("Run() = %d, stderr=%q", code, stderr.String())
+	}
+	if got, want := stdout.String(), "canary inventory ok (182 fixture bindings)\n"; got != want {
+		t.Fatalf("Run() stdout = %q, want %q", got, want)
+	}
+}
 
 func TestFixturesRefusesEmptyInventoryWithInventoryOnlyDiagnostic(t *testing.T) {
 	_, err := Fixtures(t.TempDir())
