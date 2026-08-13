@@ -36,7 +36,7 @@ var fencesEndRe = regexp.MustCompile(`^#{2,} `)
 // spec resolver, the coverage parser, and tickets/ enumeration, and returns either an
 // immutable Facts value ready for Decide, or the one BootstrapFailure that explains
 // why no Facts value can be trusted. Exactly one of the two return values is non-zero.
-func Gather(root, mode, slug string) (Facts, *BootstrapFailure) {
+func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapFailure) {
 	content, resolved, tried, ok, err := specref.Resolve(root, slug)
 	if err != nil {
 		return Facts{}, &BootstrapFailure{"spec not readable", "spec " + slug + ": " + err.Error()}
@@ -76,9 +76,27 @@ func Gather(root, mode, slug string) (Facts, *BootstrapFailure) {
 
 	defaultBranchResolved, defaultBranchCurrent := baseCurrentFacts(root)
 	reviewBase, reviewBaseResolved, reviewBaseHint := reviewBaseFacts(root)
+	var source diff.SourceRange
+	if len(explicitBase) > 0 && explicitBase[0] != "" {
+		var kind string
+		source, kind, reviewBaseHint = diff.ResolveSourceRange(root, explicitBase[0], headTip(root))
+		reviewBase = source.Base
+		reviewBaseResolved = kind == ""
+		if mode == "review" && reviewBaseResolved {
+			if dirty, err := git.Output("-C", root, "status", "--porcelain"); err != nil {
+				return Facts{}, &BootstrapFailure{"source status unreadable", err.Error()}
+			} else if dirty != "" {
+				return Facts{}, &BootstrapFailure{"source not clean", "review source has uncommitted changes"}
+			}
+		}
+	}
 	var changedPaths []string
 	if reviewBaseResolved {
-		changedPaths, err = diff.ChangedFilePaths(reviewBase)
+		if source.Base != "" {
+			changedPaths, err = diff.SourceSnapshotPaths(root, source)
+		} else {
+			changedPaths, err = diff.ChangedFilePathsAt(root, reviewBase)
+		}
 		if err != nil {
 			return Facts{}, &BootstrapFailure{"changed files not readable", err.Error()}
 		}
@@ -91,6 +109,8 @@ func Gather(root, mode, slug string) (Facts, *BootstrapFailure) {
 		DefaultBranchCurrent:  defaultBranchCurrent,
 		ReviewBaseResolved:    reviewBaseResolved,
 		ReviewBaseHint:        reviewBaseHint,
+		SourceBase:            source.Base,
+		SourceTip:             source.Tip,
 		ChangedPaths:          changedPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,
@@ -99,6 +119,8 @@ func Gather(root, mode, slug string) (Facts, *BootstrapFailure) {
 		TicketsDirExists:      ticketsDirExists,
 	}, nil
 }
+
+func headTip(root string) string { h, _ := git.Output("-C", root, "rev-parse", "HEAD"); return h }
 
 // specStatus resolves the typed Status: value for slug via the spec package's Facts —
 // the one source of typed spec status — matched by slug rather than re-parsing the

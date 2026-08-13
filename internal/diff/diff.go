@@ -30,7 +30,7 @@ var snapshotAfterRead = func() {}
 var grammar = usage.Grammar{
 	Cmd:   "bench diff",
 	Help:  strings.TrimSuffix(fullHelp, "\n"),
-	Flags: []usage.Flag{{Name: "--full"}, {Name: "--commit", HasValue: true}},
+	Flags: []usage.Flag{{Name: "--full"}, {Name: "--commit", HasValue: true}, {Name: "--base", HasValue: true, NoEmptyValue: true}},
 }
 
 // parseNameStatusZ turns `git diff --name-status --no-renames -z` output into
@@ -377,7 +377,7 @@ func untrackedPatches(root string, facts git.DiffFacts) ([]byte, error) {
 	return body, nil
 }
 
-const fullHelp = `usage: bench diff [--full] [--commit <sha>]
+const fullHelp = `usage: bench diff [--full] [--commit <sha>] [--base <commit>]
   Live mode reports one movement-checked revision, aggregate, files, checkout,
   and whitespace snapshot. --full also appends the commit log and verbatim
   tracked patch, then path-sorted raw Git patches for untracked regular files.
@@ -397,6 +397,34 @@ type diffRange struct {
 	filesArgs []string
 	logRange  string
 	bodyArgs  []string
+}
+
+// SourceRange is the frozen, inclusive-ancestor source identity shared by explicit
+// diff and preflight. Tip is captured with Base so callers never pair a path set
+// from one source revision with the identity of another.
+type SourceRange struct {
+	Base, Tip      string
+	CommittedPaths []string
+}
+
+// ResolveSourceRange resolves an explicit source base and its exact source tip.
+func ResolveSourceRange(root, base, tip string) (SourceRange, string, string) {
+	b, err := git.Output("-C", root, "rev-parse", "--verify", base+"^{commit}")
+	if err != nil {
+		return SourceRange{}, "cannot resolve --base", "'" + base + "' does not name a commit reachable in this repository"
+	}
+	if !git.OK("-C", root, "merge-base", "--is-ancestor", b, tip) {
+		return SourceRange{}, "--base is not an ancestor", "'" + b + "' is not an ancestor of '" + tip + "'"
+	}
+	paths, err := changedFilesAt(root, b, tip)
+	if err != nil {
+		return SourceRange{}, "committed source paths not readable", err.Error()
+	}
+	committed := make([]string, 0, len(paths))
+	for _, path := range paths {
+		committed = append(committed, path[1])
+	}
+	return SourceRange{Base: b, Tip: tip, CommittedPaths: committed}, "", ""
 }
 
 // resolveCommitRange builds the diffRange for `--commit <sha>`: base is <sha>'s
@@ -449,6 +477,10 @@ func Command(args []string) (string, int) {
 	}
 	_, full := parsed.Flags["--full"]
 	commitArg, hasCommit := parsed.Flags["--commit"]
+	baseArg, hasBase := parsed.Flags["--base"]
+	if hasCommit && hasBase {
+		return toon.Usage(grammar.Cmd, "--base") + "\n", 2
+	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
@@ -456,7 +488,7 @@ func Command(args []string) (string, int) {
 
 	invocation := append([]string{"diff"}, args...)
 	for attempt := 0; attempt < 2; attempt++ {
-		out, drift, errKind, errHint := renderAttempt(root, hasCommit, commitArg, full)
+		out, drift, errKind, errHint := renderAttempt(root, hasCommit, commitArg, hasBase, baseArg, full)
 		if errKind != "" {
 			return toon.Errorf(errKind, errHint) + "\n", 1
 		}
@@ -474,7 +506,7 @@ func Command(args []string) (string, int) {
 	return toon.Errorf("snapshot drift", "the repository changed while reading") + "\n", 1
 }
 
-func renderAttempt(root string, hasCommit bool, commitArg string, full bool) (out, drift, errKind, errHint string) {
+func renderAttempt(root string, hasCommit bool, commitArg string, hasBase bool, baseArg string, full bool) (out, drift, errKind, errHint string) {
 	var dr diffRange
 	if hasCommit {
 		dr, errKind, errHint = resolveCommitRange(root, commitArg)
@@ -492,7 +524,11 @@ func renderAttempt(root string, hasCommit bool, commitArg string, full bool) (ou
 	if err != nil {
 		return "", "", "snapshot identity failed", err.Error()
 	}
-	dr, errKind, errHint = resolveBranchRangeFromFacts(root, facts)
+	if hasBase {
+		dr, errKind, errHint = resolveExplicitRange(root, baseArg, facts.Head)
+	} else {
+		dr, errKind, errHint = resolveBranchRangeFromFacts(root, facts)
+	}
 	if errKind != "" {
 		return "", "", errKind, errHint
 	}
@@ -509,6 +545,42 @@ func renderAttempt(root string, hasCommit bool, commitArg string, full bool) (ou
 		return "", changed, "", ""
 	}
 	return output, "", "", ""
+}
+
+func resolveExplicitRange(root, base, head string) (diffRange, string, string) {
+	source, kind, hint := ResolveSourceRange(root, base, head)
+	if kind != "" {
+		return diffRange{}, kind, hint
+	}
+	return diffRange{base: source.Base, head: source.Tip, method: "explicit", filesArgs: []string{source.Base}, logRange: source.Base + ".." + source.Tip, bodyArgs: []string{source.Base}}, "", ""
+}
+
+// SourceSnapshotPaths returns the complete explicit-source inventory: committed,
+// index, tracked-worktree, and untracked paths. The committed half belongs to SourceRange.
+func SourceSnapshotPaths(root string, source SourceRange) ([]string, error) {
+	paths := append([]string(nil), source.CommittedPaths...)
+	facts, err := git.AllFilesFacts(root)
+	if err != nil {
+		return nil, err
+	}
+	tracked, err := ChangedFilePathsAt(root, source.Base)
+	if err != nil {
+		return nil, err
+	}
+	paths = append(paths, tracked...)
+	for _, entry := range facts.Changes {
+		if entry.Status == "??" {
+			paths = append(paths, entry.Path)
+		}
+	}
+	sort.Strings(paths)
+	unique := paths[:0]
+	for _, path := range paths {
+		if len(unique) == 0 || unique[len(unique)-1] != path {
+			unique = append(unique, path)
+		}
+	}
+	return unique, nil
 }
 
 func renderLive(root string, dr diffRange, facts git.DiffFacts, full bool) (string, string, string) {
@@ -588,7 +660,11 @@ func renderLive(root string, dr diffRange, facts git.DiffFacts, full bool) (stri
 	}
 	actions := []axi.Action(nil)
 	if !full && len(files) > 0 {
-		actions = append(actions, axi.InspectFull(""))
+		if dr.method == "explicit" {
+			actions = append(actions, axi.InspectFullBase(dr.base))
+		} else {
+			actions = append(actions, axi.InspectFull(""))
+		}
 	}
 	help, err := axi.RenderHelp(actions)
 	if err != nil {
@@ -724,7 +800,12 @@ func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 // --name-status --no-renames -z <base>` — so a consumer never re-derives that git
 // invocation or the NUL-pair parse.
 func ChangedFilePaths(base string) ([]string, error) {
-	rows, err := changedFiles(base)
+	return ChangedFilePathsAt("", base)
+}
+
+// ChangedFilePathsAt is ChangedFilePaths rooted at root when supplied.
+func ChangedFilePathsAt(root, base string) ([]string, error) {
+	rows, err := changedFilesAt(root, base)
 	if err != nil {
 		return nil, err
 	}

@@ -29,8 +29,13 @@ type Facts struct {
 	ReviewBaseResolved bool
 	ReviewBaseHint     string
 
-	// ChangedPaths is the changed-file set since the resolved review base — bench
-	// diff's exact semantics (committed, index, and tracked worktree changes). An
+	// SourceBase and SourceTip are the full identities pinned by an explicit-base
+	// invocation. Empty values preserve the existing implicit-base presentation.
+	SourceBase string
+	SourceTip  string
+
+	// ChangedPaths is the changed-file set since the resolved review base. Explicit
+	// source builds include committed, index, tracked-worktree, and untracked paths. An
 	// empty set is a legitimate answer, not an unresolved one.
 	ChangedPaths []string
 
