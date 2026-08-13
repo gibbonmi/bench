@@ -8,6 +8,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/learnings"
 )
 
@@ -26,6 +27,30 @@ func TestContextBodyLimitBoundaries(t *testing.T) {
 	got, full, truncated = limited(s, true)
 	if got != s || full != 4098 || truncated {
 		t.Fatal("--full did not preserve body")
+	}
+}
+
+func TestContextCommandEndsWithHelpBlock(t *testing.T) {
+	newRepo(t)
+	for _, args := range [][]string{{"--context"}, {"--context", "--full"}} {
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} })
+		if code != 0 {
+			t.Fatalf("args=%v exit: got %d, want 0; output=%q", args, code, out)
+		}
+		document, err := axitest.DecodeDocument(out)
+		if err != nil {
+			t.Fatalf("args=%v did not decode as one TOON document: %v", args, err)
+		}
+		if len(document.Blocks) == 0 || document.Blocks[len(document.Blocks)-1] != "help" {
+			t.Fatalf("args=%v blocks = %q, want terminal help", args, document.Blocks)
+		}
+		rows, err := document.Rows("help")
+		if err != nil {
+			t.Fatalf("args=%v help block: %v", args, err)
+		}
+		if len(rows) != 0 || !strings.HasSuffix(out, "help[0]{cmd,why}:\n") {
+			t.Fatalf("args=%v help rows/output = %d/%q", args, len(rows), out)
+		}
 	}
 }
 

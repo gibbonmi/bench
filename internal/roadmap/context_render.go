@@ -113,6 +113,7 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows = append(rows, []any{r.Source, r.Reason, r.Raw, r.RawBytes, r.Truncated})
 	}
 	bs = append(bs, block{"parse_failures", []string{"source", "reason", "raw", "raw_bytes", "truncated"}, rows})
+	bs = append(bs, block{"help", []string{"cmd", "why"}, nil})
 	var out strings.Builder
 	for _, b := range bs {
 		x, e := toon.TableTyped(b.name, b.fields, b.rows)
