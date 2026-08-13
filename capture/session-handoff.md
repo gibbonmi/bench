@@ -2,27 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `217b010`, 3 dirty paths, 9 unpushed commits
-Spec: none staged.
-Gate: green at `e5b4094` — stale, work tree `89a1e87`
+Branch: `main` — HEAD `c46b135`, 2 dirty paths, 17 unpushed commits
+Spec: `specs/roadmap-progressive-index/spec.md` (Status: staged)
+Gate: green at `a095153` — stale, work tree `18f7eca`
 
 ## State
 
-FT203 closed at `217b010b`: both flaky `internal/worktree` fixture comparisons
-now drive deterministic leading-zero assignment IDs and assert their quoted
-TOON form. The uncommitted roadmap reconcile removes FT203.
+Roadmap maintenance keeps all 62 rows, folds the write-spec slicing idea into
+FT174's existing spec-to-ticket handoff owner, empties the capture inbox, and
+advances the recommended sequence from shaping FT198 to finishing its active
+implementation. No retro, learning, occurrence, or spec retirement was pending.
 
-FT198 is next: shape the durable detail owner, migration, history, and
-index-completeness contract for the progressively loaded roadmap. FT189 follows
-as the next reproduced medium-severity defect.
+FT198 `roadmap-progressive-index` has three green ticket commits on `main`:
+`ea5dd47a` add-context-envelope, `403a66a8` rebuild-bare-board, and
+`c46b135a` add-row-selector. `land-index-doctrine` is preserved uncommitted in
+`/home/devuser/.bench/worktrees/bench-3325222104/62f66d33a5fd9afdf9446f51ce9f3edb-f70c5f8dc98f203fac19bdd6e07df1d3`.
 
-There are no ideas, learnings, retros, occurrence discrepancies, or staged
-specs. `ASSESSMENT.md` and `capture/FIXES.md` remain foreign assessment
-artifacts; both registered assignment worktrees remain foreign and untouched.
+That nine-path diff has PI1-PI5, PI9, PI17, and PI18 green, including recorded
+prose-only and schema-only PI17 revert reds. Its final mutation exposed duplicate
+default body-omission enforcement in `projectBody` and `ContextCommand`; collapse
+that fact to one owner before landing. The prior top-line delegate exhausted its
+8-iteration cap, so resume as a fresh declared repair stage rather than continuing
+that charge.
+
+After the doctrine ticket lands, continue `join-axi-set`, three-axis composed
+review, the reviewer-chosen Fable/high cross-harness falsification pass, the final
+`--spec` landing, and `/bench-final-check`. The
+`ft153-canary-public-repro` assignment remains foreign and untouched.
 
 ## Next command
 
-`$bench-shape-idea`
+`$bench-implement-spec --full roadmap-progressive-index`
 
 ## Shape
 

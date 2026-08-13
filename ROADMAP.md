@@ -685,18 +685,16 @@ to move. Source: `capture/learnings.md`, verdicted here; the map and its bite te
 were read in the tree on 2026-08-01.
 
 **FT198 (MEDIUM) — make `ROADMAP.md` a progressively loaded index.** The board
-has reached 62 rows and 179 KB; this drain's required full context snapshot was
-complete on disk but too large for one agent-tool response. Keep the main
-roadmap as a concise index of ID, title, priority, state, dependencies, and the
-next phase, with each row's detailed evidence and rationale stored behind one
-canonical on-demand reader. `bench roadmap --context --full` remains one
-consistent snapshot, but the ordinary query and phase can load the index first
-and request only the detailed records needed for reconcile or drain judgments.
-Decide the durable detail owner, migration and history behavior, and how the
-parser proves index-to-detail completeness without creating a second source of
-status. Spec: `specs/roadmap-progressive-index/spec.md` (staged).
-Entry: `/bench-implement-spec`. Source: `capture/IDEAS.md`, drained here;
-the 2026-08-06 drain's 179397-byte snapshot transport failure.
+has reached 62 rows and 179 KB; a required full context snapshot was complete
+on disk but too large for one agent-tool response. The ready decision map and
+staged spec settle the durable owner, bounded index, complete detail reader,
+migration, history, and index-completeness contracts. Three independently green
+tickets have landed; the atomic index-doctrine ticket is active, followed by
+the AXI membership ticket and composed review. Spec:
+`specs/roadmap-progressive-index/spec.md` (staged). Entry:
+`/bench-implement-spec --full roadmap-progressive-index`. Source:
+`capture/IDEAS.md`, drained here; the 2026-08-06 drain's 179397-byte snapshot
+transport failure.
 
 **FT173 (MEDIUM, decision required) — AXI residual: the
 active-assignment-with-deleted-tree disclosure class.** The AXI program is
@@ -1663,6 +1661,12 @@ removable member of a compound coverage row, including its retained-inventory
 mutation fixture, before the first breakdown review. Source: the
 spec-ticket-handoff-contract retro, drained here.
 
+When the reviewer is present at staged-spec sign-off, `/bench-write-spec` may
+derive and present that ticket breakdown for approval in the same session;
+`/bench-implement-spec` still revalidates it against the current tree before
+assignment. This is the existing spec-to-ticket handoff moved earlier, not a
+second slicing owner. Source: `capture/IDEAS.md` 2026-08-13, drained here.
+
 The bench-preflight close adds one hostile-class obligation: a line-oriented
 grammar's mutation inventory names cross-line variants explicitly rather than
 crediting a single-line red, and the ticket preflight carries the corresponding
@@ -2152,5 +2156,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT198's durable detail owner, migration, history, and index-completeness decisions.
+1. `/bench-implement-spec --full roadmap-progressive-index` — finish FT198's active doctrine ticket, AXI membership ticket, and composed review.
 2. `/bench-shape-idea` — FT189's reproduced upstream `git worktree list` hang needs a Bench-owned refusal or execution bound.
