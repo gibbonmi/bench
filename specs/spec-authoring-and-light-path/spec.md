@@ -225,6 +225,11 @@ reading the enforcement surface.
   `RequireInSection`. Multi-clause route sentences are pinned by one long
   needle covering the whole sentence, so dropping any clause fails the
   substring.
+- **Fixture census stays independently green per ticket**: every ticket that
+  adds or removes a top-level canary fixture updates the checked-in expected
+  binding count in `internal/canary/inventory_test.go` in the same commit. The
+  independently authored literal remains the omission sentinel; it is not
+  derived from the producer under test.
 - **Prose budgets bind the edits**: `.bench/BENCH.md` ≤ 180 (now 177),
   `bench-implement-spec.md` ≤ 60 (deletion frees room), `craft-tickets` ≤ 100
   (at limit) and `craft-delegate` ≤ 120 (at limit) — additions displace
@@ -288,6 +293,14 @@ reading the enforcement surface.
 | WF16 | 1 | craft-tickets scopes reviewer-approved breakdown and one-write-delegate-charge to spec-backed builds and carves out the light-path ticket with the table as its standing approval | fixture bite (new carve-out fixture; the retained breakdown fixture stays green) | observed red: restore-half red until the carve-out lands | without the carve-out the skill contradicts BENCH.md's route and the contradiction is anchored red |
 | WF17 | 5 | the implemented drain item lands as its own commit on green, named as the second exception to the drain's one-batch-commit rule | fixture bite (new batch-commit-exception fixture — no fixture backs the rule today) | observed red: restore-half red until the named exception lands | a drain folding the implementation into the batch diff or leaving it uncommitted violates the retained one-batch rule or the new exception needle |
 | WF18 | 3 | bench-shape-idea.md's exit recommends `/bench-write-spec` from the session holding the ready decision source; the fresh-mid-tier routing is retired | fixture bite (shape-idea exit fixture updated or created) pairing Forbid on the retired routing with Require on the successor | observed red: restore-half red until the recommendation is replaced | the additive cheat or a surviving fresh-mid-tier recommendation trips a needle |
+| WF19 | 1 | the lighten-light-path ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | observed red: the ticket's two new fixtures make `go test ./internal/canary` report 185 while the expected count remains 183 | an omitted same-commit census update leaves the ticket gate red |
+| WF20 | 2 | the move-slicing-into-write-spec ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixtures while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
+| WF21 | 4 | the cross-harness-reviewer-recipes ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixtures while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
+| WF22 | 5 | the drain-time-light-path ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixtures while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
+| WF23 | 6 | the repair-stale-anchors ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixtures while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
+| WF24 | 3 | the main-session-authorship ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixtures while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
+| WF25 | 3 | the verification-loops ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixtures while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
+| WF26 | 4 | the reviewer-override-flag ticket's fixture addition updates the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixture while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
 
 ### Edge inventory
 
@@ -339,6 +352,7 @@ reading the enforcement surface.
 - `projects/benchkit.md`
 - `docs/field-guide.html`
 - `internal/anchors/registry_data.go`
+- `internal/canary/inventory_test.go`
 - `internal/conformance/fixture_bite_test.go`
 - `tests/canary/workflow-guidance-anchors/`
 - `specs/spec-authoring-and-light-path/`

@@ -1,7 +1,7 @@
 # Move ticket slicing into the write-spec phase
 
 Blocked by: none
-Writes: .agents/commands/bench-write-spec.md, .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-tickets/SKILL.md, .bench/BENCH.md, docs/field-guide.html, internal/anchors/registry_data.go, tests/canary/workflow-guidance-anchors/
+Writes: .agents/commands/bench-write-spec.md, .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-tickets/SKILL.md, .bench/BENCH.md, docs/field-guide.html, internal/anchors/registry_data.go, internal/canary/inventory_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
 
@@ -73,3 +73,5 @@ siblings — those paths land serially across the whole spec.
       (covers WF4)
 - [ ] with everything landed, BENCH.md is ≤ 180 lines, implement-spec ≤ 60,
       and craft-tickets ≤ 100 (covers WF13)
+- [ ] the ticket's fixture additions update the canary binding count in this
+      ticket's green commit (covers WF20)

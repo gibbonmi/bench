@@ -1,7 +1,7 @@
 # Document the --reviewer override flag
 
 Blocked by: verification-loops.md, cross-harness-reviewer-recipes.md
-Writes: .agents/commands/bench-write-spec.md, internal/anchors/registry_data.go, tests/canary/workflow-guidance-anchors/
+Writes: .agents/commands/bench-write-spec.md, internal/anchors/registry_data.go, internal/canary/inventory_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
 
@@ -23,3 +23,5 @@ Registry and fixture paths land serially across the whole spec.
 - [ ] the grammar sentence with tier resolution and unbound-id refusal is
       documented, cites the recipes file, and its long-needle fixture bites
       both halves (covers WF8)
+- [ ] the ticket's fixture addition updates the canary binding count in this
+      ticket's green commit (covers WF26)

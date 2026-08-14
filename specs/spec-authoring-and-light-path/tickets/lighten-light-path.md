@@ -1,7 +1,7 @@
 # Lighten the light path to write-ticket-then-implement-inline
 
 Blocked by: none
-Writes: .bench/BENCH.md, .agents/skills/bench-craft-tdd/SKILL.md, .agents/skills/bench-craft-tickets/SKILL.md, internal/anchors/registry_data.go, internal/conformance/fixture_bite_test.go, tests/canary/workflow-guidance-anchors/
+Writes: .bench/BENCH.md, .agents/skills/bench-craft-tdd/SKILL.md, .agents/skills/bench-craft-tickets/SKILL.md, internal/anchors/registry_data.go, internal/canary/inventory_test.go, internal/conformance/fixture_bite_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
 
@@ -51,3 +51,5 @@ whole spec.
       (covers WF16)
 - [ ] with everything landed, BENCH.md is ≤ 180 lines, craft-tdd ≤ 120, and
       craft-tickets ≤ 100 (covers WF13)
+- [ ] the ticket's fixture additions update the canary binding count in this
+      ticket's green commit (covers WF19)

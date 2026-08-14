@@ -1,7 +1,7 @@
 # Pin the cross-harness reviewer recipes
 
 Blocked by: none
-Writes: .agents/skills/bench-craft-delegate/SKILL.md, .agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md, internal/anchors/registry_data.go, internal/conformance/fixture_bite_test.go, tests/canary/workflow-guidance-anchors/
+Writes: .agents/skills/bench-craft-delegate/SKILL.md, .agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md, internal/anchors/registry_data.go, internal/canary/inventory_test.go, internal/conformance/fixture_bite_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
 
@@ -30,3 +30,5 @@ whole spec.
       fixtures bite both halves (covers WF9)
 - [ ] with the rule and pointer landed, craft-delegate is ≤ 120 lines
       (covers WF13)
+- [ ] the ticket's fixture additions update the canary binding count in this
+      ticket's green commit (covers WF21)

@@ -1,7 +1,7 @@
 # Let a what-next drain implement light-path items on the spot
 
 Blocked by: none
-Writes: .agents/commands/bench-what-next.md, .bench/BENCH.md, internal/anchors/registry_data.go, tests/canary/workflow-guidance-anchors/
+Writes: .agents/commands/bench-what-next.md, .bench/BENCH.md, internal/anchors/registry_data.go, internal/canary/inventory_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
 
@@ -39,3 +39,5 @@ a new fixture; a second Require pins the commit exception.
       Require row with a new fixture biting both halves (covers WF17)
 - [ ] `.bench/BENCH.md` carries the close-by-implementation clause and remains
       within its 180-line budget (covers WF13)
+- [ ] the ticket's fixture additions update the canary binding count in this
+      ticket's green commit (covers WF22)

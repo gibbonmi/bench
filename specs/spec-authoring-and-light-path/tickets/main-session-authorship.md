@@ -1,7 +1,7 @@
 # State main-session spec authorship
 
 Blocked by: move-slicing-into-write-spec.md
-Writes: .agents/commands/bench-write-spec.md, .agents/commands/bench-shape-idea.md, projects/benchkit.md, docs/field-guide.html, internal/anchors/registry_data.go, tests/canary/workflow-guidance-anchors/
+Writes: .agents/commands/bench-write-spec.md, .agents/commands/bench-shape-idea.md, projects/benchkit.md, docs/field-guide.html, internal/anchors/registry_data.go, internal/canary/inventory_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
 
@@ -51,3 +51,5 @@ tree with siblings — those paths land serially across the whole spec.
 - [ ] bench-shape-idea.md's exit recommends `/bench-write-spec` from the
       session holding the ready source, the retired routing trips a Forbid,
       and the fixture bites both halves (covers WF18)
+- [ ] the ticket's fixture additions update the canary binding count in this
+      ticket's green commit (covers WF24)

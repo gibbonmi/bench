@@ -1,7 +1,7 @@
 # Repair the four stale anchor registry rows
 
 Blocked by: none
-Writes: internal/anchors/registry_data.go, tests/canary/workflow-guidance-anchors/
+Writes: internal/anchors/registry_data.go, internal/canary/inventory_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
 
@@ -29,3 +29,5 @@ tree with every sibling — those paths land serially across the whole spec.
 - [ ] the `shared-build-cache opt-in` row is gone and the root-conformance
       sweep output shows zero stale diagnostics for the rows this ticket owns,
       inherited reds recorded (covers WF12)
+- [ ] the ticket's fixture additions update the canary binding count in this
+      ticket's green commit (covers WF23)

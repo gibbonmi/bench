@@ -1,7 +1,7 @@
 # Install the two verification loops and their record
 
 Blocked by: move-slicing-into-write-spec.md
-Writes: .agents/commands/bench-write-spec.md, projects/benchkit.md, internal/anchors/registry_data.go, internal/conformance/fixture_bite_test.go, tests/canary/workflow-guidance-anchors/
+Writes: .agents/commands/bench-write-spec.md, projects/benchkit.md, internal/anchors/registry_data.go, internal/canary/inventory_test.go, internal/conformance/fixture_bite_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
 
@@ -57,3 +57,5 @@ fixture paths land serially across the whole spec.
 - [ ] benchkit.md's falsification and breakdown rows match the two-loop
       process, the breakdown row pointing at the write-spec slicing step,
       not `/bench-implement-spec` (covers WF10)
+- [ ] the ticket's fixture additions update the canary binding count in this
+      ticket's green commit (covers WF25)
