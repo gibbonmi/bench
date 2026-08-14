@@ -83,75 +83,6 @@ func checkWorkflowAnchors(root string) []string {
 	return diags
 }
 
-const integrationSourceDiagnosticPrefix = "workflow integration source: "
-
-func integrationSourceWorkflowAnchors() []anchors.Anchor {
-	var found []anchors.Anchor
-	for _, anchor := range anchors.Entries() {
-		if strings.HasPrefix(anchor.Diagnostic, integrationSourceDiagnosticPrefix) {
-			found = append(found, anchor)
-		}
-	}
-	return found
-}
-
-func checkIntegrationSourceWorkflowCurrency(root string) []string {
-	var diags []string
-	for _, anchor := range integrationSourceWorkflowAnchors() {
-		if anchor.File == "internal/usage/worktree.go" {
-			continue
-		}
-		text := strings.ToLower(anchors.CollapseSpace(anchors.StripHTMLComments(
-			readIfExists(filepath.Join(root, filepath.FromSlash(anchor.File))),
-		)))
-		text = strings.NewReplacer("`", "", "<code>", "", "</code>", "").Replace(text)
-		for _, stale := range []string{
-			"benchbase",
-			"sole landing path",
-			"path-scoped bench commit is the only",
-			"branch's recorded pre-shift base",
-		} {
-			if strings.Contains(text, stale) {
-				diags = append(diags, fmt.Sprintf("%s retains stale scalar or sole-path workflow claim %q", anchor.File, stale))
-			}
-		}
-	}
-	return diags
-}
-
-func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
-	workflowAnchors := integrationSourceWorkflowAnchors()
-	if got, want := len(workflowAnchors), 12; got != want {
-		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
-	}
-	seenFiles := map[string]bool{}
-	for _, anchor := range workflowAnchors {
-		if seenFiles[anchor.File] {
-			t.Fatalf("integration-source workflow surface repeated: %s", anchor.File)
-		}
-		seenFiles[anchor.File] = true
-		t.Run(anchor.File, func(t *testing.T) {
-			root := t.TempDir()
-			path := filepath.Join(root, filepath.FromSlash(anchor.File))
-			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(path, []byte(anchor.Needle+"\n"), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			if diags := checkWorkflowAnchors(root); containsDiagnostic(diags, anchor.Diagnostic) {
-				t.Fatalf("anchor is red while its current-state sentence is present: %s", anchor.Diagnostic)
-			}
-			if err := os.WriteFile(path, []byte("planted old workflow\n"), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, anchor.Diagnostic) {
-				t.Fatalf("reverting current-state sentence did not bite with %q", anchor.Diagnostic)
-			}
-		})
-	}
-}
-
 func checkStructuredPhaseContract(sharedRules string) []string {
 	if strings.TrimSpace(sharedRules) == "" {
 		return []string{structuredPhaseUnavailable}
@@ -400,6 +331,75 @@ func TestStructuredPhaseContractPinsTheFixedClauseSet(t *testing.T) {
 				if !containsDiagnostic(diags, want) {
 					t.Fatalf("clause set stayed valid; want %q in diagnostics:\n%s", want, strings.Join(diags, "\n"))
 				}
+			}
+		})
+	}
+}
+
+const integrationSourceDiagnosticPrefix = "workflow integration source: "
+
+func integrationSourceWorkflowAnchors() []anchors.Anchor {
+	var found []anchors.Anchor
+	for _, anchor := range anchors.Entries() {
+		if strings.HasPrefix(anchor.Diagnostic, integrationSourceDiagnosticPrefix) {
+			found = append(found, anchor)
+		}
+	}
+	return found
+}
+
+func checkIntegrationSourceWorkflowCurrency(root string) []string {
+	var diags []string
+	for _, anchor := range integrationSourceWorkflowAnchors() {
+		if anchor.File == "internal/usage/worktree.go" {
+			continue
+		}
+		text := strings.ToLower(anchors.CollapseSpace(anchors.StripHTMLComments(
+			readIfExists(filepath.Join(root, filepath.FromSlash(anchor.File))),
+		)))
+		text = strings.NewReplacer("`", "", "<code>", "", "</code>", "").Replace(text)
+		for _, stale := range []string{
+			"benchbase",
+			"sole landing path",
+			"path-scoped bench commit is the only",
+			"branch's recorded pre-shift base",
+		} {
+			if strings.Contains(text, stale) {
+				diags = append(diags, fmt.Sprintf("%s retains stale scalar or sole-path workflow claim %q", anchor.File, stale))
+			}
+		}
+	}
+	return diags
+}
+
+func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
+	workflowAnchors := integrationSourceWorkflowAnchors()
+	if got, want := len(workflowAnchors), 12; got != want {
+		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
+	}
+	seenFiles := map[string]bool{}
+	for _, anchor := range workflowAnchors {
+		if seenFiles[anchor.File] {
+			t.Fatalf("integration-source workflow surface repeated: %s", anchor.File)
+		}
+		seenFiles[anchor.File] = true
+		t.Run(anchor.File, func(t *testing.T) {
+			root := t.TempDir()
+			path := filepath.Join(root, filepath.FromSlash(anchor.File))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(anchor.Needle+"\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if diags := checkWorkflowAnchors(root); containsDiagnostic(diags, anchor.Diagnostic) {
+				t.Fatalf("anchor is red while its current-state sentence is present: %s", anchor.Diagnostic)
+			}
+			if err := os.WriteFile(path, []byte("planted old workflow\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, anchor.Diagnostic) {
+				t.Fatalf("reverting current-state sentence did not bite with %q", anchor.Diagnostic)
 			}
 		})
 	}
