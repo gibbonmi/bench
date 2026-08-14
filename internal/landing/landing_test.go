@@ -38,6 +38,27 @@ func TestLandStreamsProspectiveGateOutputOnce(t *testing.T) {
 	}
 }
 
+func TestRuntimeIgnoredPathRejectsUnsafeOrCollapsedNames(t *testing.T) {
+	for _, tc := range []struct {
+		path string
+		want bool
+	}{
+		{path: ".logs", want: true},
+		{path: ".logs/", want: true},
+		{path: ".logs/gate.jsonl", want: true},
+		{path: ".logs-foreign/gate.jsonl"},
+		{path: ".logs/../foreign"},
+		{path: ".logs//gate.jsonl"},
+		{path: ".logs/\x1b"},
+	} {
+		t.Run(strings.ReplaceAll(tc.path, "\x1b", "escape"), func(t *testing.T) {
+			if got := RuntimeIgnoredPath(tc.path); got != tc.want {
+				t.Fatalf("RuntimeIgnoredPath(%q) = %t, want %t", tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestLandComposesOnlyNamedPathsAndCASesExpectedBase(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "named", "changed")

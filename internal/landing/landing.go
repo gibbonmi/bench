@@ -330,8 +330,61 @@ func CheckoutFingerprint(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	status, err = fingerprintStatus(status)
+	if err != nil {
+		return "", err
+	}
 	sum := sha256.Sum256(bytes.Join([][]byte{[]byte(branch), []byte(head), status}, []byte{0}))
 	return fmt.Sprintf("%x", sum), nil
+}
+
+// RuntimeIgnoredPath reports whether path is a safe spelling within Bench's ignored runtime log root.
+func RuntimeIgnoredPath(path string) bool {
+	for _, r := range path {
+		if r < 0x20 || r == 0x7f {
+			return false
+		}
+	}
+	if path == ".logs/" {
+		return true
+	}
+	native := filepath.FromSlash(path)
+	if path == "" || filepath.IsAbs(native) || filepath.Clean(native) != native || filepath.ToSlash(native) != path {
+		return false
+	}
+	return path == ".logs" || strings.HasPrefix(path, ".logs/")
+}
+
+func fingerprintStatus(raw []byte) ([]byte, error) {
+	var filtered bytes.Buffer
+	for offset := 0; offset < len(raw); {
+		end := bytes.IndexByte(raw[offset:], 0)
+		if end < 0 {
+			return nil, errors.New("malformed checkout status")
+		}
+		end += offset
+		record := raw[offset:end]
+		offset = end + 1
+		if len(record) < 4 || record[2] != ' ' {
+			return nil, errors.New("malformed checkout status")
+		}
+		status, path := record[:2], string(record[3:])
+		if string(status) == "!!" && RuntimeIgnoredPath(path) {
+			continue
+		}
+		filtered.Write(record)
+		filtered.WriteByte(0)
+		if status[0] == 'R' || status[0] == 'C' || status[1] == 'R' || status[1] == 'C' {
+			originalEnd := bytes.IndexByte(raw[offset:], 0)
+			if originalEnd < 1 {
+				return nil, errors.New("malformed checkout status")
+			}
+			originalEnd += offset
+			filtered.Write(raw[offset : originalEnd+1])
+			offset = originalEnd + 1
+		}
+	}
+	return filtered.Bytes(), nil
 }
 
 func stagedSpecMatches(root, destination, source, path string, want []byte) error {

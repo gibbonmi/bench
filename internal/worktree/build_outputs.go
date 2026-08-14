@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gibbonmi/bench/internal/jsonfile"
+	"github.com/gibbonmi/bench/internal/landing"
 )
 
 const buildOutputDeclarationLimit = 16 * 1024
@@ -70,10 +71,21 @@ func validBuildOutputPath(entry string) bool {
 }
 
 func ignoredWithinBuildOutputs(inventory IgnoredInventory, declared []string) bool {
+	return ignoredWithinDeclaredOutputs(inventory, declared, func(string) bool { return false })
+}
+
+func ignoredWithinLandingAllowance(inventory IgnoredInventory, declared []string) bool {
+	return ignoredWithinDeclaredOutputs(inventory, declared, landing.RuntimeIgnoredPath)
+}
+
+func ignoredWithinDeclaredOutputs(inventory IgnoredInventory, declared []string, additional func(string) bool) bool {
 	if inventory.Count == 0 || inventory.Uncertain || inventory.OverLimit || inventory.AtLeast {
 		return false
 	}
 	for _, ignored := range inventory.Paths {
+		if additional(ignored) {
+			continue
+		}
 		contained := false
 		for _, entry := range declared {
 			if strings.HasSuffix(entry, "/") {

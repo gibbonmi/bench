@@ -316,7 +316,7 @@ func landingDestination(root string) (string, string, string, string, error) {
 	}
 	ignored, _, ignoredErr := inventoryIgnored(root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
-	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinBuildOutputs(ignored, declared)) {
+	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinLandingAllowance(ignored, declared)) {
 		return "", "", "", "", errors.New("landing destination has undeclared ignored residue")
 	}
 	tip, err := git.Output("-C", root, "rev-parse", "HEAD^{commit}")

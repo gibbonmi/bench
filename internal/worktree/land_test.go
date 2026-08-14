@@ -98,6 +98,68 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 	}
 }
 
+func TestLandCommandPublicPreservesHistoricalRuntimeLogs(t *testing.T) {
+	binary := buildLandingBinary(t)
+	request := "public-land-runtime-logs"
+	root, creation, _, _, tally := publicLandingFixture(t, request, "", "")
+	mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".logs/\n"), 0o644)
+	gitRun(t, root, "add", ".gitignore")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore runtime logs")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	mustMkdirAll(t, filepath.Join(root, ".logs"), 0o700)
+	history := filepath.Join(root, ".logs", "history.jsonl")
+	mustWrite(t, history, []byte("historical progress\n"), 0o600)
+
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command(binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
+	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+	if code := exitCode(cmd.Run()); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+		t.Fatalf("runtime-log landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got, err := os.ReadFile(history); err != nil || string(got) != "historical progress\n" {
+		t.Fatalf("historical progress log = %q, %v", got, err)
+	}
+	logs, err := filepath.Glob(filepath.Join(root, ".logs", "gate-*.jsonl"))
+	if err != nil || len(logs) != 1 {
+		t.Fatalf("gate progress logs = %q, %v", logs, err)
+	}
+	if got, err := os.ReadFile(logs[0]); err != nil || !strings.Contains(string(got), `"event":"gate.start"`) || !strings.Contains(string(got), `"event":"gate.finish"`) {
+		t.Fatalf("durable gate progress log = %q, %v", got, err)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v", got, err)
+	}
+}
+
+func TestLandCommandRefusesPostGateUnknownIgnoredMutation(t *testing.T) {
+	binary := buildLandingBinary(t)
+	request := "public-land-post-gate-ignored"
+	root, creation, _, _, tally := publicLandingFixture(t, request, "foreign-generated/output", "")
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nrg -q '^Status: implemented$' specs/x/spec.md\n[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\nmkdir -p \"$LAND_DESTINATION/foreign-generated\"\nprintf injected > \"$LAND_DESTINATION/foreign-generated/output\"\n"), 0o755)
+	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[\"LAND_GATE_TALLY\",\"LAND_DESTINATION\"],\"paths\":[],\"tools\":[]}\n"), 0o644)
+	gitRun(t, root, "add", ".bench/gate-prospective.sh", ".bench/gate-inputs.json")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "inject post-gate ignored mutation")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command(binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
+	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+	cmd.Env = append(os.Environ(), "LAND_DESTINATION="+root)
+	if code := exitCode(cmd.Run()); code != 1 || !strings.Contains(stdout.String(), "landing destination checkout changed") {
+		t.Fatalf("post-gate ignored mutation = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "main"); got != base {
+		t.Fatalf("post-gate mutation published main=%s, want %s", got, base)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("post-gate mutation gate tally = %q, %v", got, err)
+	}
+}
+
 func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *testing.T) {
 	binary := buildLandingBinary(t)
 	request := "public-land-resume"
