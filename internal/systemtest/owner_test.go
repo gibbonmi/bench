@@ -698,7 +698,7 @@ func systemSelected(t *testing.T, root string, env []string, args ...string) pro
 
 func systemLand(t *testing.T, root, home, tally, trees, ready, release string, source systemLandingWorktree, base string) processResult {
 	t.Helper()
-	return systemSelected(t, root, systemLandEnv(root, home, tally, trees, ready, release), "worktree", "land", "--request", sourceRequest(source), "--base", base, "--source-tip", source.tip, "--spec", "x", "-m", "land race source", source.path)
+	return systemSelected(t, root, systemLandEnv(root, home, tally, trees, ready, release), systemLandArgs(source, base)...)
 }
 
 func systemStartLand(t *testing.T, root, home, tally, trees, ready, release string, source systemLandingWorktree, base string) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer) {
@@ -706,8 +706,7 @@ func systemStartLand(t *testing.T, root, home, tally, trees, ready, release stri
 	if err := owner.observeSelected(); err != nil {
 		t.Fatal(err)
 	}
-	args := []string{"worktree", "land", "--request", sourceRequest(source), "--base", base, "--source-tip", source.tip, "--spec", "x", "-m", "land race source", source.path}
-	cmd := exec.Command(owner.selected.path, args...)
+	cmd := exec.Command(owner.selected.path, systemLandArgs(source, base)...)
 	cmd.Dir = root
 	cmd.Env = mergeEnvironment(os.Environ(), systemLandEnv(root, home, tally, trees, ready, release))
 	stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
@@ -721,8 +720,10 @@ func systemStartLand(t *testing.T, root, home, tally, trees, ready, release stri
 	return cmd, stdout, stderr
 }
 
-func sourceRequest(source systemLandingWorktree) string {
-	return source.request
+// systemLandArgs is the one landing invocation both race harnesses drive, so a
+// blocking and a foreground land can never diverge in what they actually ran.
+func systemLandArgs(source systemLandingWorktree, base string) []string {
+	return []string{"worktree", "land", "--request", source.request, "--base", base, "--source-tip", source.tip, "--spec", "x", "-m", "land race source", source.path}
 }
 
 func systemExitCode(err error) int {
