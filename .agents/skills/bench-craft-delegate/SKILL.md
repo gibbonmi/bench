@@ -34,10 +34,10 @@ Surface before spawn any delegation that changes who performs requested work.
 
 A delegate has no conversation memory: everything it needs is in the prompt —
 objective, inputs by path, seam, return shape, budget. Route model and effort with
-`craft-line`: name the bound alias on every call (omission inherits your model and
-may silently escalate); put effort and iteration cap in the charge. An own-family
-reviewer uses the harness's native agent surface, never that family's CLI. Cross-family
-reviews and the no-native-surface fallback use the exact recipes in
+`craft-line`: name the resolved bound model id on every call (omission inherits your
+model and may silently escalate); put effort and iteration cap in the charge.
+An own-family reviewer uses the harness's native agent surface, never that family's CLI.
+Cross-family reviews and the no-native-surface fallback use the exact recipes in
 `references/cross-harness-reviewers.md`. Prefer compressed inputs — the named
 decision source, exact passages, coverage rows, and the fence's fixture-and-seam
 inventory — so the delegate uses prior art instead of re-deriving it.
