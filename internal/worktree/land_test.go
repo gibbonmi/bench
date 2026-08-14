@@ -164,14 +164,18 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	binary := buildLandingBinary(t)
 	request := "public-land-resume"
 	root, creation, base, tip, tally := publicLandingFixture(t, request, "private/output", "dist/")
+	shortBase := base[:8]
+	if got := gitOutput(t, root, "rev-parse", "--verify", shortBase+"^{commit}"); got != base {
+		t.Fatalf("short review base resolved to %s, want %s", got, base)
+	}
 	land := func(args ...string) (int, string, string) {
 		var stdout, stderr bytes.Buffer
 		cmd := exec.Command(binary, append([]string{"worktree", "land"}, args...)...)
 		cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
 		return exitCode(cmd.Run()), stdout.String(), stderr.String()
 	}
-	code, stdout, stderr := land("--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
-	if code != 1 || !strings.Contains(stdout, "worktree=incomplete:release}") || !strings.Contains(stderr, "worktree retained (ignored)") {
+	code, stdout, stderr := land("--request", request, "--base", shortBase, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
+	if code != 1 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=incomplete:release}") || !strings.Contains(stderr, "worktree retained (ignored)") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout, stderr)
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -180,8 +184,8 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	}
 	commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
 	destination := gitOutput(t, root, "rev-parse", "main")
-	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
-	if code != 0 || !strings.Contains(stdout, "worktree=released}") || stderr != "" {
+	code, stdout, stderr = land("--resume", published, "--request", request, "--base", shortBase, "--source-tip", tip, "--spec", "x", creation.Path)
+	if code != 0 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=released}") || stderr != "" {
 		t.Fatalf("resume = (%d, %q, %q)", code, stdout, stderr)
 	}
 	if got := gitOutput(t, root, "rev-parse", "main"); got != destination {
@@ -190,9 +194,40 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
 		t.Fatalf("resume reran gate: tally=%q error=%v", got, err)
 	}
-	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
-	if code != 0 || !strings.Contains(stdout, "worktree=already-complete}") || stderr != "" {
+	code, stdout, stderr = land("--resume", published, "--request", request, "--base", shortBase, "--source-tip", tip, "--spec", "x", creation.Path)
+	if code != 0 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=already-complete}") || stderr != "" {
 		t.Fatalf("completed resume = (%d, %q, %q)", code, stdout, stderr)
+	}
+}
+
+func TestResumeLandCommandRefusesNonAncestorReviewBaseWithoutMutation(t *testing.T) {
+	binary := buildLandingBinary(t)
+	request := "resume-nonancestor-base"
+	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	run := func(args ...string) (int, string, string) {
+		var stdout, stderr bytes.Buffer
+		cmd := exec.Command(binary, append([]string{"worktree", "land"}, args...)...)
+		cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+		return exitCode(cmd.Run()), stdout.String(), stderr.String()
+	}
+	if code, stdout, stderr := run("--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path); code != 0 || !strings.Contains(stdout, "worktree=released}") || stderr == "" {
+		t.Fatalf("landing = (%d, %q, %q)", code, stdout, stderr)
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
+	destination := gitOutput(t, root, "rev-parse", "main")
+	code, stdout, stderr := run("--resume", published, "--request", request, "--base", destination, "--source-tip", tip, "--spec", "x", creation.Path)
+	if code != 1 || !strings.Contains(stdout, "review base does not authenticate the published source") || stderr != "" {
+		t.Fatalf("nonancestor resume = (%d, %q, %q)", code, stdout, stderr)
+	}
+	if got := gitOutput(t, root, "rev-parse", "main"); got != destination {
+		t.Fatalf("nonancestor resume moved destination: got %s want %s", got, destination)
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+		t.Fatalf("nonancestor resume moved project-green: got %s want %s", got, published)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("nonancestor resume reran gate: tally=%q error=%v", got, err)
 	}
 }
 

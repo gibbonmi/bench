@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -265,10 +266,11 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 		return "", "", "", "", errors.New("published commit does not authenticate the reviewed source parent")
 	}
 	destinationBase = parts[1]
-	sourceBase, err = git.Output("-C", root, "rev-parse", "--verify", base+"^{commit}")
-	if err != nil || sourceBase != base || !git.OK("-C", root, "merge-base", "--is-ancestor", sourceBase, source) {
+	sourceRange, kind, _ := diff.ResolveSourceRange(root, base, source)
+	if kind != "" {
 		return "", "", "", "", errors.New("review base does not authenticate the published source")
 	}
+	sourceBase = sourceRange.Base
 	specPath := resumeSpecPath(slug)
 	staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
 	implemented, implementedErr := spec.Implemented(staged)
