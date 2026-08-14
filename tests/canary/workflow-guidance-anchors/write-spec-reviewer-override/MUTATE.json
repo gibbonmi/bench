@@ -1,0 +1,1 @@
+[{"path":".agents/commands/bench-write-spec.md","old":"`--reviewer <tier-or-model> [effort]` overrides both loop delegates:","new":"Reviewer selection is optional:"},{"path":".agents/commands/bench-write-spec.md","old":"an unbound id is\n   refused","new":"an unbound id is accepted"}]

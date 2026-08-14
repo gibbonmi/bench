@@ -124,7 +124,7 @@ convergence, a call `craft-line` owns.
 ## Workflow
 
 1. `/bench-shape-idea` for a multi-session unresolved decision tree.
-2. `/bench-write-spec` to lock stories, seams, and gate expectations.
+2. `/bench-write-spec` to lock stories, seams, and gate expectations, and slice the tickets.
 3. `/bench-implement-spec` to implement at the chosen seams.
 4. `/bench-review-implementation` for semantic review before the final landing.
 5. `/bench-final-check` to gate, commit on green, and report the landing
@@ -138,7 +138,7 @@ focused regression checks, then the gate.
 
 | Observable | Route |
 |---|---|
-| Decomposes to one independently-green ticket and crosses no declared seam | Light path: charge `craft-tickets`, write the one ticket, then implement it without a spec. This table is the standing approval to skip the spec phase; the ticket still rides the session's existing approval surface. |
+| Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template), then implement it inline in this session — no breakdown-approval pause, write-delegate, or worktree. This table is the standing approval to skip the spec phase; gate and commit on green. |
 | Either observable is false | Normal full workflow. |
 
 Reviewed spec-backed implementation keeps one retained integration source:
@@ -170,7 +170,8 @@ Parking an idea is conversational, never a CLI chore for the reviewer: when the
 reviewer wants to set one aside, or you spot a tangent worth keeping, **you** run
 `bench idea "<text>"`. Offer once, then let it go. Parked ideas land in
 `capture/IDEAS.md` and graduate into `ROADMAP.md` only through a reviewed
-`/bench-what-next` drain. If `bench` isn't on PATH, append the dated line
+`/bench-what-next` drain, or close by implementation during that same reviewed
+drain. If `bench` isn't on PATH, append the dated line
 (`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yourself.
 
 Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`;

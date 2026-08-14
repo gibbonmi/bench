@@ -328,31 +328,26 @@ escalation.
   leverage override in `craft-line`: guidance prose compounds through every
   session that loads it while the edit costs few tokens. The `craft-skills` and
   `craft-adr` skills apply. Spend here.
-- **Spec authoring** → **mid model; fresh build session after ticket slicing**.
+- **Spec and ticket authoring** → **the session holding the decision source, at
+  whatever tier it runs**.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
-  map, a reviewer-confirmed current conversation, or a named reviewed artifact, then
-  derives engineering seams, tests, coverage, hostile-input attachment, and
-  gate attachment from that source and the current tree. Top + high remains a
-  reviewer-approved escalation. Distinct from the doc-authoring leverage
+  map, a reviewer-confirmed current conversation, or a named reviewed artifact,
+  and authors the spec and tickets from that source and the current tree. Top +
+  high remains a reviewer-approved escalation. After ticket approval, a fresh
+  mid-tier session starts the build. Distinct from the doc-authoring leverage
   override above: that spends the top tier on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed — a wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
-- **Spec falsification pass** (`/bench-write-spec` step 9) → **mid model, high
-  effort, 1 iteration**, read-only. Standing grant: every draft gets the pass,
-  spawned without asking, because at the mid binding it is not a top-tier bump.
-  The step's signals nominate a draft for a top-binding pass instead — that is
-  an ordinary bump and pauses and asks; never escalate silently. Charged at
-  falsification questions, never an open review; its verdict is advisory and
-  sign-off stays the reviewer's.
-- **Ticket-breakdown review pass** (`/bench-implement-spec`, after the ticket
-  files are written and before the first ticket is assigned) → no delegate and no
-  line. The coordinator presents the breakdown to the reviewer as a numbered list
-  of title, `Blocked by:`, and delivered outcome, and iterates it with them until
-  they approve; approval is the reviewer's, so a read-only pass standing in for it
-  would grade the wrong thing.
+- **Spec falsification pass** (`/bench-write-spec`, loop 1) → **mid model, high
+  effort**, read-only and same-family through the harness's native agent surface.
+  It reviews the spec alone before slicing.
+- **Ticket-breakdown review pass** (`/bench-write-spec`, loop 2) → the same model,
+  effort, and venue. It reviews the ticket breakdown alone against `craft-tickets`
+  after `/bench-write-spec` slices it. `/bench-write-spec` owns both loops'
+  operating protocol.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).
   Read-heavy: each takes the full diff plus standards docs and runs verification

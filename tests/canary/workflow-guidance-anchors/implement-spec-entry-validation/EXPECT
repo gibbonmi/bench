@@ -1,0 +1,1 @@
+.agents/commands/bench-implement-spec.md must validate existing tickets and route a ticketless spec-backed run to /bench-write-spec

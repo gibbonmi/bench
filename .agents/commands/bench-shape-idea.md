@@ -134,6 +134,6 @@ before one bundled spec becomes the default.
 
 A possible scope split is a reviewer decision, not an excuse to close shaping
 early. Surface it as a decision ticket and continue until the reviewer either
-chooses the split or rejects it. When the map reaches `ready`, recommend a
-fresh mid-tier `/bench-write-spec` session with one clause explaining why the
-decision source is ready.
+chooses the split or rejects it. When the map reaches `ready`, recommend
+`/bench-write-spec` from the session holding the ready decision source, with one
+clause explaining why the source is ready.

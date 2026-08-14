@@ -1,16 +1,15 @@
 ---
 name: craft-tickets
-description: How to break a spec or small change into independently-green tracer tickets with explicit blockers and one fresh write-delegate charge each. Use at build entry, when deriving tickets from stories and seams, when deciding what lands green next, or when a wide refactor needs an expand–contract sequence.
+description: How to break a spec or small change into independently-green tracer tickets with explicit blockers and, for spec-backed builds, one fresh write-delegate charge each. Use during spec authoring, when deriving tickets from stories and seams, when deciding what lands green next, or when a wide refactor needs an expand–contract sequence.
 index: breaking a build into independently-green tickets
 ---
 
 # Tickets: what lands green next
 
-A ticket is the **smallest independently-green** vertical unit: a tightly
-related story group that cuts a narrow but complete path through the layers
-and can land committed on a green project gate by itself — a tracer bullet,
-demoable or verifiable alone. A horizontal layer, tests without behavior, or
-behavior without its tests is not a ticket. Its green integration-source commit is the grading rule.
+A ticket is the **smallest independently-green** vertical unit: a tightly related
+story group that cuts a narrow but complete path through the layers and can land
+committed on a green project gate by itself — a tracer bullet. A horizontal layer,
+tests without behavior, or behavior without its tests is not a ticket. Its green integration-source commit is the grading rule.
 
 ## Draft the breakdown
 
@@ -26,12 +25,12 @@ instead sequences as expand (new form beside the old), migrate (move callers
 in green batches), then contract (remove the old form once every migrate
 ticket lands, `Blocked by:` naming them all).
 
-**Reviewer-approved breakdown.** Before any ticket is assigned, the
+**Reviewer-approved breakdown.** Before any spec-backed ticket is assigned, the
 coordinator presents the reviewer a numbered list — title, `Blocked by:`, and
-delivered outcome — for every proposed ticket, iterates it with the
-reviewer, and records approval. This is the only route onto the frontier;
-the batch-approval AFK carve-out in `.bench/BENCH.md` is the sole
-no-round-trip exception.
+delivered outcome — for every proposed ticket, iterates it with the reviewer, and records approval.
+For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out
+in `.bench/BENCH.md` is the sole no-round-trip exception. The light path is the exception:
+`.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and the main session implements it inline.
 
 ## Write one file per ticket
 
@@ -90,7 +89,7 @@ A verb-first, end-to-end outcome a fresh delegate can land alone.
 
 ## Land the frontier
 
-Work the unblocked frontier. One ticket equals **one fresh write-delegate
+Spec-backed builds work the unblocked frontier. One ticket equals **one fresh write-delegate
 charge**; independent frontier tickets run in parallel only where their
 `Writes:` notes are disjoint, and dependent tickets run sequentially.
 

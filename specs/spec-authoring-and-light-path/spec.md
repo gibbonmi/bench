@@ -1,6 +1,6 @@
 # spec-authoring-and-light-path
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation, 2026-08-14 (light-path shape, slicing move, two-loop authorship verification, --reviewer grammar, drain-time implement-now, and the seam-pause drop each closed by explicit reviewer answer).
 

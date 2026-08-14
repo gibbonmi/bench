@@ -10,16 +10,16 @@ If there's no spec, the change must fall under the lighter-path threshold in
 `.bench/BENCH.md`'s "Right-size the process" paragraph, or route to
 `/bench-write-spec` first.
 
-## Declare the line, derive the tickets, route the venue
+If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no
+ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
+
+## Declare the line, validate the tickets, route the venue
 
 Declare the line before touching code — `craft-line` owns the template, the
-tier decision, and the escalation ladder. Charge `craft-tickets` to break the
-spec's stories and seams (or the one light-path change) into tickets under
-`specs/<slug>/tickets/`, then run its reviewer-approved breakdown before any
-assignment — the AFK carve-out in `.bench/BENCH.md` is the only exception.
-After approval, create or retain one integration worktree at the reviewed graph
-commit; that commit is its frozen review base. Enter it and run `bench preflight
-build <slug>` before the first edit; a red preflight stops the phase.
+tier decision, and the escalation ladder. After the write-spec-phase approval,
+create or retain one integration worktree at the reviewed graph commit; that
+commit is its frozen review base. Enter it and run `bench preflight build <slug>`
+before the first edit; a red preflight stops the phase.
 Every spec-backed run assigns genuine write work to a write subagent before
 implementation: `craft-delegate`
 owns isolation and verification, `craft-line` its model and effort. A read-only

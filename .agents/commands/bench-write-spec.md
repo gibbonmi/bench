@@ -16,10 +16,9 @@ done.
 Close by showing the approval table for user stories, seams with diagrams,
 acceptance coverage, and out of scope. The spec carries `Status: staged`
 (staged → implemented at the green gate → promote-then-delete on merge). Stop
-for sign-off, then continue into `/bench-implement-spec` only to slice and win
-approval for the tickets. After that review, recommend a fresh mid-tier session
-to build one retained integration source, review its frozen base and tip, and
-hand the accepted source to `bench worktree land`.
+for sign-off, then recommend a fresh mid-tier build session on one retained
+integration source; review its frozen base and tip, and hand the accepted source
+to `bench worktree land`.
 
 ## Entry contract
 
@@ -66,8 +65,8 @@ engineering plan.
 
 ## Who runs this phase
 
-The mid tier authors ordinary specs and carries their decision context through
-reviewed ticket slicing. A same-session current-conversation source is
+The session holding the decision source authors the spec and tickets at whatever
+tier it runs. A same-session current-conversation source is
 authorized by the entry contract, not by inherited memory: verify the reviewer
 confirmation and write its provenance line. The fresh implementation session
 starts only after ticket approval. Top tier remains an explicit escalation that
@@ -142,20 +141,43 @@ pauses for reviewer approval under `craft-line`.
    retirement removes the compiled maps and map-owned assets, plus
    implementation tickets, with the spec.
 
-9. **Falsification review before sign-off.** Every draft gets the pass. The
-   falsification review runs at the mid tier for one iteration in a fresh
-   read-only delegate. Charge it
-   with falsification questions: would the cheapest wrong implementation pass,
-   does every source behavior have a red-capable row, does every line match
-   cached routing, does any behavior, red signal, or decision answer name an
-   outcome family instead of an exact predicate, and — where the stories
-   partition into disjoint package or fence sets — could a narrower capability
-   ship on its own gate? Apply `craft-spec`'s named
-   `Bootstrap authority before execution` rule. A same-session source, source
-   conflict, or mostly not
-   observed reds may justify a top-tier pass, but the escalation pauses for
-   reviewer approval. The verdict is advisory; sign-off stays with the
-   reviewer.
+9. **Verification loops before sign-off.** Every draft gets two verification
+   loops through the harness's native agent surface: a read-only same-family
+   mid-tier delegate at high effort takes the spec alone in loop 1 before
+   slicing, then takes the breakdown alone in loop 2 after slicing and checks it
+   against `craft-tickets`. Each loop repeats author-fix/re-review uncapped until
+   no blocking findings — a recorded reviewer exception to the declared
+   iteration cap — with every round reported in one line. The loop verdicts stay
+   advisory; reviewer sign-off remains the hard stop.
+
+   `--reviewer <tier-or-model> [effort]` overrides both loop delegates: a tier
+   resolves through the invoking harness's own `.bench/lines.env` column
+   (`--reviewer mid xhigh` under Codex resolves `BENCH_CODEX_MID` at xhigh), a
+   model id must already be bound in `.bench/lines.env` and an unbound id is
+   refused, an own-family id runs through the native agent surface, and a
+   cross-family id uses the exact recipe in
+   `.agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md`.
+
+   Loop 1 asks the falsification questions: would the cheapest wrong
+   implementation pass, does every source behavior have a red-capable row, does
+   every line match cached routing, does any behavior, red signal, or decision
+   answer name an outcome family instead of an exact predicate, are the source
+   and observed reds sound even when the source is same-session, conflicting, or
+   mostly not observed, and — where the stories partition into disjoint package
+   or fence sets — could a narrower capability ship
+   on its own gate? Apply `craft-spec`'s named
+   `Bootstrap authority before execution` rule.
+
+10. **Slice the implementation tickets.** After loop 1 accepts, charge
+    `craft-tickets` and write the breakdown under `specs/<slug>/tickets/`. Carry
+    its numbered title, `Blocked by:`, and delivered outcome list into the
+    approval table so the spec and tickets receive one sign-off, then run loop 2
+    on that breakdown.
+
+    At close, write `Verification log: spec <n> + tickets <m> iteration(s) to
+    accept — <note>` into the spec. When either loop takes more than one iteration
+    to accept, append one `capture/learnings.md` entry naming the stage that
+    missed, what review caught, why it was missed, and the proposed rule change.
 
 ## Template
 
@@ -165,6 +187,8 @@ pauses for reviewer approval under `craft-line`.
 Status: staged
 
 Decision source: <one ready compiled map, reviewer-confirmed conversation with date, or named reviewed artifact>
+
+Verification log: spec <n> + tickets <m> iteration(s) to accept — <note>
 
 ## Problem
 The problem, from the user's point of view.
