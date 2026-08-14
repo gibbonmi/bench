@@ -3,7 +3,7 @@
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
 Branch: `main`
-Spec: `specs/worktree-enumeration-hang/spec.md` — `Status: staged`, awaiting reviewer sign-off.
+Spec: `specs/worktree-enumeration-hang/spec.md` — `Status: staged`, reviewer-approved 2026-08-14 (spec, ticket breakdown, the flagged `bounds.Run`-variant deviation, and the neutral-relabel decisions).
 
 ## State
 
@@ -15,14 +15,19 @@ iterations to accept, tickets 2 — the log line in the spec names the largest
 catches. Ticket graph: `resolve-git-common-dir` → `refuse-malformed-admin-entries`
 → {`bound-worktree-enumeration`, `report-admin-entry-in-doctor`}; lines
 sonnet/medium, sonnet/medium (routing rows), opus/medium, sonnet/low.
-Reviewer sign-off on the spec and breakdown is the hard stop before any
-build. One learnings entry (2026-08-14, 33-round loop) awaits the next
-`/bench-what-next` drain. `decisions/spec-build-review-gate-cadence.md`
+Sign-off landed 2026-08-14, so the build may start; tickets commit serially
+on one retained integration source per the workflow. Since staging, the
+write-spec loop amendments (materiality exit, promise guard,
+cheapest-plausible standard) landed with their own anchors and canary
+fixtures, and the pre-existing leading-zero-sha flake in
+`TestResolveBranchRangeConsumesExport` was repaired (reviewer-approved).
+One learnings entry (2026-08-14, 33-round loop, A/B verdict recorded) awaits
+the next `/bench-what-next` drain. `decisions/spec-build-review-gate-cadence.md`
 remains invalid (its own shaping resume owns the repair).
 
 ## Next command
 
-Reviewer: approve or veto the approval table in the closing report, then start a fresh mid-tier build session with `/bench-implement-spec worktree-enumeration-hang`.
+`/bench-implement-spec worktree-enumeration-hang` — in a fresh mid-tier build session.
 
 ## Shape
 
