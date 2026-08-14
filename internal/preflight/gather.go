@@ -113,6 +113,7 @@ func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapF
 		ReviewBaseHint:        reviewBaseHint,
 		SourceBase:            source.Base,
 		SourceTip:             source.Tip,
+		ExplicitSourceRange:   len(explicitBase) > 0 && explicitBase[0] != "",
 		ChangedPaths:          changedPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,

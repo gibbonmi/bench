@@ -11,7 +11,7 @@ func TestExplicitBaseReviewOwnsSourceRangeNotDestinationHandoff(t *testing.T) {
 	root, slug := seedConformant(t)
 	base := runGit(t, "rev-parse", "main")
 	tip := runGit(t, "rev-parse", "feature")
-	runGit(t, "checkout", "-q", "-b", "destination")
+	runGit(t, "checkout", "-q", "main")
 	mustWriteFile(t, "capture/session-handoff.md", "destination only\n")
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "destination handoff")
@@ -37,6 +37,34 @@ func TestExplicitBaseReviewOwnsSourceRangeNotDestinationHandoff(t *testing.T) {
 	}
 	if string(configAfter) != string(configBefore) {
 		t.Fatal("accepted explicit preflight changed Git config bytes")
+	}
+	facts, boot = Gather(root, "build", slug, base)
+	if boot != nil {
+		t.Fatalf("build Gather = %s: %s", boot.Kind, boot.Hint)
+	}
+	if strings.Join(facts.ChangedPaths, ",") != "internal/example/foo.go" {
+		t.Fatalf("explicit source build paths = %v, want only source-authored path", facts.ChangedPaths)
+	}
+	// The advanced destination default branch is intentionally not an ancestor of
+	// the retained source. An explicit source range remains valid because the
+	// frozen base is an ancestor of its captured source tip.
+	out, code = Command([]string{"build", slug, "--base", base})
+	if code != 0 || !strings.Contains(out, "base-current,green") {
+		t.Fatalf("explicit build = (%d):\n%s", code, out)
+	}
+	configAfter, err = os.ReadFile(filepath.Join(root, ".git", "config"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(configAfter) != string(configBefore) {
+		t.Fatal("accepted explicit build preflight changed Git config bytes")
+	}
+
+	// Mutation control: bare preflight still grades destination ancestry and must
+	// refuse this diverged source rather than inheriting explicit-range validity.
+	out, code = Command([]string{"build", slug})
+	if code != 1 || !strings.Contains(out, "base-current,red,default branch tip is not an ancestor of HEAD") {
+		t.Fatalf("bare build after destination advance = (%d):\n%s", code, out)
 	}
 	mustWriteFile(t, "internal/example/staged.go", "package example\n")
 	runGit(t, "add", "internal/example/staged.go")
