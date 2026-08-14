@@ -430,6 +430,7 @@ var keptRoutes = []struct {
 	help string
 }{
 	{[]string{"worktree", "--help"}, "usage: bench worktree"},
+	{[]string{"worktree", "reauthorize", "--help"}, "usage: bench worktree reauthorize"},
 	{[]string{"gate", "--help"}, "usage: bench gate"},
 	{[]string{"commit", "--help"}, "usage: bench commit"},
 	{[]string{"status", "--help"}, "usage: bench status"},
@@ -450,6 +451,8 @@ var keptWorktreeGrammars = []string{
 	"bench worktree exec",
 	"bench worktree release",
 	"bench worktree clean",
+	"bench worktree reauthorize",
+	"bench worktree land",
 }
 
 func TestKeptRoutesAnswerTheirOwnHelp(t *testing.T) {

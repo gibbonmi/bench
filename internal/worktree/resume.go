@@ -314,7 +314,7 @@ func recoveryAssignmentForPlan(root string, plan CleanupPlan) (intent.Assignment
 	}
 	return intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: parts[4], OwnerID: parts[3],
-		Request: requestDigest("foreign:" + plan.Target), Label: "foreign exact cleanup", Start: head,
+		Request: intent.RequestDigest("foreign:" + plan.Target), Label: "foreign exact cleanup", Start: head,
 		Branch: intent.AssignmentBranchRef(parts[3], parts[4]), Worktree: plan.Target,
 		State: intent.StateCleanupPending, Recovery: []intent.Recovery{},
 	}, nil

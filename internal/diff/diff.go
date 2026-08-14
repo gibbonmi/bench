@@ -23,6 +23,17 @@ import (
 // identity captures. Production leaves it as a no-op.
 var snapshotAfterRead = func() {}
 
+// SetSnapshotAfterReadForTest installs the deterministic movement seam and returns
+// its restoration function. Production callers leave the seam as its no-op default.
+func SetSnapshotAfterReadForTest(after func()) func() {
+	previous := snapshotAfterRead
+	if after == nil {
+		after = func() {}
+	}
+	snapshotAfterRead = after
+	return func() { snapshotAfterRead = previous }
+}
+
 // grammar is the declared argument shape usage.Parse enforces for this subcommand —
 // arity, flag recognition, `--`, repeated flags, and help all come from there rather
 // than a local switch.
@@ -30,7 +41,7 @@ var snapshotAfterRead = func() {}
 var grammar = usage.Grammar{
 	Cmd:   "bench diff",
 	Help:  strings.TrimSuffix(fullHelp, "\n"),
-	Flags: []usage.Flag{{Name: "--full"}, {Name: "--commit", HasValue: true}},
+	Flags: []usage.Flag{{Name: "--full"}, {Name: "--commit", HasValue: true}, {Name: "--base", HasValue: true, NoEmptyValue: true}},
 }
 
 // parseNameStatusZ turns `git diff --name-status --no-renames -z` output into
@@ -377,7 +388,7 @@ func untrackedPatches(root string, facts git.DiffFacts) ([]byte, error) {
 	return body, nil
 }
 
-const fullHelp = `usage: bench diff [--full] [--commit <sha>]
+const fullHelp = `usage: bench diff [--full] [--commit <sha>] [--base <commit>]
   Live mode reports one movement-checked revision, aggregate, files, checkout,
   and whitespace snapshot. --full also appends the commit log and verbatim
   tracked patch, then path-sorted raw Git patches for untracked regular files.
@@ -397,6 +408,101 @@ type diffRange struct {
 	filesArgs []string
 	logRange  string
 	bodyArgs  []string
+}
+
+// SourceRange is the frozen, inclusive-ancestor source identity shared by explicit
+// diff and preflight. Tip is captured with Base so callers never pair a path set
+// from one source revision with the identity of another.
+type SourceRange struct {
+	Base, Tip      string
+	CommittedPaths []string
+}
+
+// MovementSnapshot is the typed checkout state one movement-checked read exposes to
+// its caller. The root and facts stay coupled so derived source ranges and paths
+// cannot accidentally inspect the process working directory.
+type MovementSnapshot struct {
+	root  string
+	Facts git.DiffFacts
+}
+
+// MovementResult is the single outcome of a root-bound attempt. Drift remains
+// distinct from a read failure so callers retry only repository movement.
+type MovementResult struct {
+	DriftKind, DriftHint string
+	Kind, Hint           string
+}
+
+// MovementChecked captures one root-bound checkout identity, runs read against its
+// typed facts, then verifies the identity again. A non-empty drift asks the caller to
+// retry; kind and hint preserve an ordinary read failure without reclassifying it.
+func MovementChecked(root string, read func(MovementSnapshot) (kind, hint string)) MovementResult {
+	facts, err := git.AllFilesFacts(root)
+	if err != nil {
+		return MovementResult{Kind: "checkout facts failed", Hint: err.Error()}
+	}
+	before, err := capturedIdentity(root, facts)
+	if err != nil {
+		return MovementResult{Kind: "snapshot identity failed", Hint: err.Error()}
+	}
+	if kind, hint := read(MovementSnapshot{root: root, Facts: facts}); kind != "" {
+		return MovementResult{Kind: kind, Hint: hint}
+	}
+	snapshotAfterRead()
+	after, err := recapturedIdentity(root, facts)
+	if err != nil {
+		return MovementResult{Kind: "snapshot identity failed", Hint: err.Error()}
+	}
+	if drift := before.drifted(after); drift != "" {
+		return MovementResult{DriftKind: drift, DriftHint: "the " + drift + " changed while reading; retry the exact invocation"}
+	}
+	return MovementResult{}
+}
+
+// MovementCheckedRetry is the movement-retry policy every drift-sensitive read shares:
+// one retry when the only thing that failed was repository movement, then the second
+// attempt's answer stands — including its terminal drift hint, which no caller spells
+// for itself. A read failure is never retried, so a caller cannot turn a broken read
+// into a drift refusal.
+func MovementCheckedRetry(root string, read func(MovementSnapshot) (kind, hint string)) MovementResult {
+	var result MovementResult
+	for attempt := 0; attempt < 2; attempt++ {
+		result = MovementChecked(root, read)
+		if result.Kind != "" || result.DriftKind == "" {
+			return result
+		}
+	}
+	return result
+}
+
+// ResolveSourceRange resolves base against the snapshot's captured source tip.
+func (snapshot MovementSnapshot) ResolveSourceRange(base string) (SourceRange, string, string) {
+	return ResolveSourceRange(snapshot.root, base, snapshot.Facts.Head)
+}
+
+// SourceSnapshotPaths returns source paths derived from the same captured checkout.
+func (snapshot MovementSnapshot) SourceSnapshotPaths(source SourceRange) ([]string, error) {
+	return sourceSnapshotPaths(snapshot.root, source, snapshot.Facts)
+}
+
+// ResolveSourceRange resolves an explicit source base and its exact source tip.
+func ResolveSourceRange(root, base, tip string) (SourceRange, string, string) {
+	b, err := git.Output("-C", root, "rev-parse", "--verify", base+"^{commit}")
+	if err != nil {
+		return SourceRange{}, "cannot resolve --base", "'" + base + "' does not name a commit reachable in this repository"
+	}
+	if !git.OK("-C", root, "merge-base", "--is-ancestor", b, tip) {
+		return SourceRange{}, "--base is not an ancestor", "'" + b + "' is not an ancestor of '" + tip + "'"
+	}
+	paths, err := changedFilesAt(root, b, tip)
+	if err != nil {
+		return SourceRange{}, "committed source paths not readable", err.Error()
+	}
+	committed := make([]string, 0, len(paths))
+	for _, path := range paths {
+		committed = append(committed, path[1])
+	}
+	return SourceRange{Base: b, Tip: tip, CommittedPaths: committed}, "", ""
 }
 
 // resolveCommitRange builds the diffRange for `--commit <sha>`: base is <sha>'s
@@ -449,66 +555,93 @@ func Command(args []string) (string, int) {
 	}
 	_, full := parsed.Flags["--full"]
 	commitArg, hasCommit := parsed.Flags["--commit"]
+	baseArg, hasBase := parsed.Flags["--base"]
+	if hasCommit && hasBase {
+		return toon.Usage(grammar.Cmd, "--base") + "\n", 2
+	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
 
 	invocation := append([]string{"diff"}, args...)
-	for attempt := 0; attempt < 2; attempt++ {
-		out, drift, errKind, errHint := renderAttempt(root, hasCommit, commitArg, full)
-		if errKind != "" {
-			return toon.Errorf(errKind, errHint) + "\n", 1
-		}
-		if drift == "" {
-			return out, 0
-		}
-		if attempt == 1 {
-			help, err := axi.RenderHelp([]axi.Action{axi.RetryDiff(invocation)})
-			if err != nil {
-				return toon.RenderError(err) + "\n", 1
-			}
-			return toon.Errorf("snapshot drift", "the "+drift+" changed while reading; retry the exact invocation") + "\n" + help, 1
-		}
+	out, drift, driftHint, errKind, errHint := renderAttempt(root, hasCommit, commitArg, hasBase, baseArg, full)
+	if errKind != "" {
+		return toon.Errorf(errKind, errHint) + "\n", 1
 	}
-	return toon.Errorf("snapshot drift", "the repository changed while reading") + "\n", 1
+	if drift == "" {
+		return out, 0
+	}
+	help, err := axi.RenderHelp([]axi.Action{axi.RetryDiff(invocation)})
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return toon.Errorf("snapshot drift", driftHint) + "\n" + help, 1
 }
 
-func renderAttempt(root string, hasCommit bool, commitArg string, full bool) (out, drift, errKind, errHint string) {
+func renderAttempt(root string, hasCommit bool, commitArg string, hasBase bool, baseArg string, full bool) (out, drift, driftHint, errKind, errHint string) {
 	var dr diffRange
 	if hasCommit {
 		dr, errKind, errHint = resolveCommitRange(root, commitArg)
 		if errKind != "" {
-			return "", "", errKind, errHint
+			return "", "", "", errKind, errHint
 		}
 		out, errKind, errHint := renderCommit(root, dr, full)
-		return out, "", errKind, errHint
+		return out, "", "", errKind, errHint
 	}
+	result := MovementCheckedRetry(root, func(snapshot MovementSnapshot) (kind, hint string) {
+		if hasBase {
+			dr, kind, hint = resolveExplicitRange(root, baseArg, snapshot.Facts.Head)
+		} else {
+			dr, kind, hint = resolveBranchRangeFromFacts(root, snapshot.Facts)
+		}
+		if kind != "" {
+			return kind, hint
+		}
+		out, kind, hint = renderLive(root, dr, snapshot.Facts, full)
+		return kind, hint
+	})
+	return out, result.DriftKind, result.DriftHint, result.Kind, result.Hint
+}
+
+func resolveExplicitRange(root, base, head string) (diffRange, string, string) {
+	source, kind, hint := ResolveSourceRange(root, base, head)
+	if kind != "" {
+		return diffRange{}, kind, hint
+	}
+	return diffRange{base: source.Base, head: source.Tip, method: "explicit", filesArgs: []string{source.Base}, logRange: source.Base + ".." + source.Tip, bodyArgs: []string{source.Base}}, "", ""
+}
+
+// SourceSnapshotPaths returns the complete explicit-source inventory: committed,
+// index, tracked-worktree, and untracked paths. The committed half belongs to SourceRange.
+func SourceSnapshotPaths(root string, source SourceRange) ([]string, error) {
 	facts, err := git.AllFilesFacts(root)
 	if err != nil {
-		return "", "", "checkout facts failed", err.Error()
+		return nil, err
 	}
-	before, err := capturedIdentity(root, facts)
+	return sourceSnapshotPaths(root, source, facts)
+}
+
+func sourceSnapshotPaths(root string, source SourceRange, facts git.DiffFacts) ([]string, error) {
+	paths := append([]string(nil), source.CommittedPaths...)
+	tracked, err := ChangedFilePathsAt(root, source.Base)
 	if err != nil {
-		return "", "", "snapshot identity failed", err.Error()
+		return nil, err
 	}
-	dr, errKind, errHint = resolveBranchRangeFromFacts(root, facts)
-	if errKind != "" {
-		return "", "", errKind, errHint
+	paths = append(paths, tracked...)
+	for _, entry := range facts.Changes {
+		if entry.Status == "??" {
+			paths = append(paths, entry.Path)
+		}
 	}
-	output, errKind, errHint := renderLive(root, dr, facts, full)
-	if errKind != "" {
-		return "", "", errKind, errHint
+	sort.Strings(paths)
+	unique := paths[:0]
+	for _, path := range paths {
+		if len(unique) == 0 || unique[len(unique)-1] != path {
+			unique = append(unique, path)
+		}
 	}
-	snapshotAfterRead()
-	after, err := recapturedIdentity(root, facts)
-	if err != nil {
-		return "", "", "snapshot identity failed", err.Error()
-	}
-	if changed := before.drifted(after); changed != "" {
-		return "", changed, "", ""
-	}
-	return output, "", "", ""
+	return unique, nil
 }
 
 func renderLive(root string, dr diffRange, facts git.DiffFacts, full bool) (string, string, string) {
@@ -588,7 +721,11 @@ func renderLive(root string, dr diffRange, facts git.DiffFacts, full bool) (stri
 	}
 	actions := []axi.Action(nil)
 	if !full && len(files) > 0 {
-		actions = append(actions, axi.InspectFull(""))
+		if dr.method == "explicit" {
+			actions = append(actions, axi.InspectFullBase(dr.base))
+		} else {
+			actions = append(actions, axi.InspectFull(""))
+		}
 	}
 	help, err := axi.RenderHelp(actions)
 	if err != nil {
@@ -724,7 +861,12 @@ func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 // --name-status --no-renames -z <base>` — so a consumer never re-derives that git
 // invocation or the NUL-pair parse.
 func ChangedFilePaths(base string) ([]string, error) {
-	rows, err := changedFiles(base)
+	return ChangedFilePathsAt("", base)
+}
+
+// ChangedFilePathsAt is ChangedFilePaths rooted at root when supplied.
+func ChangedFilePathsAt(root, base string) ([]string, error) {
+	rows, err := changedFilesAt(root, base)
 	if err != nil {
 		return nil, err
 	}

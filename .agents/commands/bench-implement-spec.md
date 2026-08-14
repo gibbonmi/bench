@@ -17,13 +17,12 @@ Declare the line before touching code — `craft-line` owns the template, the
 tier decision, and the escalation ladder. Charge `craft-tickets` to break the
 spec's stories and seams (or the one light-path change) into tickets under
 `specs/<slug>/tickets/`, then run its reviewer-approved breakdown before any
-ticket is assigned — the AFK batch-approval carve-out in `.bench/BENCH.md` is
-the only no-round-trip route. Every spec-backed run assigns genuine
-write work to at least one write subagent before the first implementation
-edit — `craft-delegate` owns isolation and verification, `craft-line` owns
-its model and effort. A read-only helper never satisfies the write
-requirement; when the harness cannot spawn a write subagent,
-`craft-delegate`'s capability-aware policy governs what runs inline instead.
+assignment — the AFK carve-out in `.bench/BENCH.md` is the only exception.
+After approval, create or retain one integration worktree at the reviewed graph
+commit; that commit is its frozen review base. Every spec-backed run assigns
+genuine write work to a write subagent before implementation: `craft-delegate`
+owns isolation and verification, `craft-line` its model and effort. A read-only
+helper does not satisfy this; `craft-delegate` governs incapable harnesses.
 
 ## Build
 
@@ -36,12 +35,12 @@ landing it.
 
 ## Land
 
-Tickets land serially in `Blocked by:` order, each through path-scoped
-`bench commit`, gate-then-commit atomically. Once every ticket short of the
-final landing is in, run `/bench-review-implementation` over the composed
-diff; accepted findings land as repair tickets through the same cadence. The
-final green landing commit is `bench commit --spec <slug>` — it is the sole
-author of the spec's `Status: implemented` flip. Then run `/bench-final-check`.
+Tickets commit green serially in `Blocked by:` order on the retained integration
+source. Then run `/bench-review-implementation` over its explicit frozen base
+and source tip. Accepted findings commit there as repair tickets and move the
+tip, so review runs again. From the clean destination, hand the accepted pair to
+`bench worktree land`; it composes, gates, publishes `Status: implemented`, and
+releases the source. Then run `/bench-final-check`.
 
 ## When the build stops short
 

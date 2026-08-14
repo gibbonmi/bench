@@ -1,6 +1,6 @@
 # parallel-session-landings
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/parallel-session-landings/decisions/parallel-session-landings.md` (ready compiled map, reviewer-approved 2026-08-13)
 

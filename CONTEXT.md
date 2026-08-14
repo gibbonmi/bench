@@ -93,8 +93,9 @@ cold session reads this first to avoid drifting the vocabulary.
   the closed oracle subject in the Git dir, so read-only consumers can project gate
   state without a cold run. Not "gate log".
 - **landing source** — a build-owned Git integration branch identified by its
-  frozen base and current source tip. Semantic review binds to that pair. Not a
-  mutable `benchBase`, not a reconstructed path list.
+  frozen base and current source tip. Serial green tickets accumulate there;
+  semantic review binds to that pair and `bench worktree land` consumes it. Not
+  a mutable review base, not a reconstructed path list.
 - **landing destination** — the expected tip of the branch that receives a
   landing source. Movement requires a new composition and gate verdict, not a
   new source review by itself. Not the source's frozen base.

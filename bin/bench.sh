@@ -350,7 +350,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench learnings            open journal entries as a TOON table (date, title)
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
-  bench diff                 review base + changed files as TOON (--full appends log + diff body)
+  bench diff                 review base + changed files as TOON (--full appends log + diff body; --base freezes source)
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
   bench test [--full] [package]  run fresh Go tests and render package, failure, and skip evidence as TOON
@@ -366,7 +366,8 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench worktree list        list assignments and registered worktrees as TOON
   bench worktree path <target>  print one active owned worktree's portable path
   bench worktree exec <target> -- <command> [args...]  run a child directly in an active owned worktree
-  bench worktree --help      show exact list, path, exec, create, release, and clean grammar
+  bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
+  bench worktree --help      show exact list, path, exec, create, release, clean, and reauthorize grammar
   bash bin/bench.sh gate --fresh  run the current worktree's gate
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)

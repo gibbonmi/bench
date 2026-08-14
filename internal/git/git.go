@@ -439,14 +439,37 @@ func AllFilesStatus(root string) ([]byte, []PorcelainEntry, error) {
 // characters, or a literal newline survives whole — the one source of that framing
 // knowledge for every caller (the shift staging diff and the commit block-check).
 func ParsePorcelainZ(raw []byte) []PorcelainEntry {
+	entries, _ := ParsePorcelainZStrict(raw)
+	return entries
+}
+
+// ParsePorcelainZStrict parses and validates NUL-framed porcelain-v1 records.
+// Rename and copy records carry a second, path-only NUL record; it is returned
+// with an empty Status so callers can preserve the framing while filtering.
+func ParsePorcelainZStrict(raw []byte) ([]PorcelainEntry, error) {
 	var entries []PorcelainEntry
-	for record := range bytes.SplitSeq(raw, []byte{0}) {
-		if len(record) <= 3 {
-			continue // trailing empty after the final NUL, or a malformed short record
+	for offset := 0; offset < len(raw); {
+		end := bytes.IndexByte(raw[offset:], 0)
+		if end < 0 {
+			return nil, errors.New("malformed checkout status")
+		}
+		record := raw[offset : offset+end]
+		offset += end + 1
+		if len(record) < 4 || record[2] != ' ' {
+			return nil, errors.New("malformed checkout status")
 		}
 		entries = append(entries, PorcelainEntry{Status: string(record[:2]), Path: string(record[3:])})
+		status := record[:2]
+		if status[0] == 'R' || status[0] == 'C' || status[1] == 'R' || status[1] == 'C' {
+			end = bytes.IndexByte(raw[offset:], 0)
+			if end < 1 {
+				return nil, errors.New("malformed checkout status")
+			}
+			entries = append(entries, PorcelainEntry{Path: string(raw[offset : offset+end])})
+			offset += end + 1
+		}
 	}
-	return entries
+	return entries, nil
 }
 
 // GateCacheFile is the filename of the cached gate verdict, written under the git

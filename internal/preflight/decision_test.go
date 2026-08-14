@@ -88,6 +88,30 @@ func TestDecideBaseCurrent(t *testing.T) {
 	}
 }
 
+func TestDecideExplicitSourceRangeReplacesDefaultBranchAncestry(t *testing.T) {
+	// A retained source may predate destination-only phase commits. Its frozen
+	// base-to-tip range, not destination ancestry, is the applicable validity fact.
+	f := baseFacts()
+	f.DefaultBranchCurrent = false
+	f.ExplicitSourceRange = true
+	if c, _ := checkRow(Decide(f), "base-current"); c.Verdict != verdictGreen {
+		t.Fatalf("explicit source range with stale destination = %+v, want green", c)
+	}
+
+	// Mutation control: omitting --base restores the default-branch predicate.
+	f.ExplicitSourceRange = false
+	if c, _ := checkRow(Decide(f), "base-current"); c.Verdict != verdictRed {
+		t.Fatalf("bare stale destination = %+v, want red", c)
+	}
+
+	f.ExplicitSourceRange = true
+	f.ReviewBaseResolved = false
+	f.ReviewBaseHint = "--base is not an ancestor"
+	if c, _ := checkRow(Decide(f), "base-current"); c.Verdict != verdictRed || c.Detail != "source base does not resolve: --base is not an ancestor" {
+		t.Fatalf("invalid explicit source range = %+v, want source-validity red", c)
+	}
+}
+
 func TestDecidePathsAuthorized(t *testing.T) {
 	f := baseFacts()
 	f.ChangedPaths = []string{"unfenced/path.go"}

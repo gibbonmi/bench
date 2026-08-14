@@ -35,8 +35,6 @@ type Creation struct {
 	Assignment intent.Assignment
 }
 
-func requestDigest(request string) string { return textDigest(request) }
-
 type LifecycleStep string
 
 const (
@@ -136,7 +134,7 @@ func Create(root, request, label string, fault Fault, requestedStart ...string) 
 	if err != nil {
 		return Creation{}, err
 	}
-	digest := requestDigest(request)
+	digest := intent.RequestDigest(request)
 	release, err := lockCreationRequest(root, digest)
 	if err != nil {
 		return Creation{}, err
@@ -319,7 +317,7 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 	if err != nil {
 		return intent.CleanupReceipt{}, err
 	}
-	request := requestDigest(requestArg)
+	request := intent.RequestDigest(requestArg)
 	if receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request); readErr != nil {
 		return intent.CleanupReceipt{}, readErr
 	} else if found && receipt.State == intent.ReceiptComplete {
@@ -336,7 +334,7 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		matches := found && cleanup.Branch != "" && cleanup.Fingerprint == expected
 		if matches && cleanup.State == intent.ReceiptComplete && cleanup.Action == string(ActionRemoved) && !git.OK("-C", root, "show-ref", "--verify", "--quiet", cleanup.Branch) {
 			completed := intent.Assignment{ID: cleanup.Assignment, Worktree: target, State: intent.StateComplete}
-			receipt := receiptFromRelease(repo, request, completed, string(ActionRemoved))
+			receipt := receiptFromRelease(repo, request, completed, string(ActionRemoved), cleanup.Branch, cleanup.BranchOID)
 			return receipt, intent.PutCleanupReceipt(root, receipt)
 		}
 		if matches && cleanup.State == intent.ReceiptInFlight {
@@ -362,7 +360,7 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		assignment = &foundAssignment
 	}
 	if assignment.State == intent.StateRecovered {
-		receipt := receiptFromRelease(repo, request, *assignment, "retained")
+		receipt := receiptFromRelease(repo, request, *assignment, "retained", "", "")
 		return receipt, intent.PutCleanupReceipt(root, receipt)
 	}
 	if assignment.State != intent.StateActive && assignment.State != intent.StateCleanupPending {
@@ -384,7 +382,7 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		if readErr != nil {
 			return readErr
 		}
-		return intent.PutCleanupReceipt(root, receiptFromRelease(repo, request, current, string(plan.Action)))
+		return intent.PutCleanupReceipt(root, receiptFromRelease(repo, request, current, string(plan.Action), plan.branchRef, plan.branchOID))
 	}
 	var plan CleanupPlan
 	if resumeFingerprint == "" {
@@ -444,7 +442,7 @@ func reconcileOutOfBand(root, repo, request, target string, cleanup intent.Clean
 		// The record was already compacted out of band; synthesize the terminal receipt
 		// so a replay of this release is idempotent.
 		completed := intent.Assignment{ID: cleanup.Assignment, Worktree: target, State: intent.StateComplete}
-		receipt := receiptFromRelease(repo, request, completed, string(ActionRemoved))
+		receipt := receiptFromRelease(repo, request, completed, string(ActionRemoved), cleanup.Branch, cleanup.BranchOID)
 		return receipt, intent.PutCleanupReceipt(root, receipt)
 	}
 	if assignment.Request != request || assignment.Worktree != target {
@@ -457,7 +455,7 @@ func reconcileOutOfBand(root, repo, request, target string, cleanup intent.Clean
 	if err := intent.PutAssignment(root, assignment); err != nil {
 		return intent.CleanupReceipt{}, err
 	}
-	receipt := receiptFromRelease(repo, request, assignment, string(ActionRemoved))
+	receipt := receiptFromRelease(repo, request, assignment, string(ActionRemoved), cleanup.Branch, cleanup.BranchOID)
 	return receipt, intent.PutCleanupReceipt(root, receipt)
 }
 

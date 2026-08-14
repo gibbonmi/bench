@@ -4,18 +4,21 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand —
-// two required positionals (mode, slug), no flags yet. Both `review` and `build` are
+// two required positionals (mode, slug) and an optional explicit base. Both `review`
+// and `build` are
 // accepted modes; anything else is rejected by the mode-validity check below the same
 // way an unknown word always is.
 var grammar = usage.Grammar{
 	Cmd:     "bench preflight",
-	Help:    "usage: bench preflight review <slug>\n       bench preflight build <slug>\n",
+	Help:    "usage: bench preflight review <slug> [--base <commit>]\n       bench preflight build <slug> [--base <commit>]\n",
+	Flags:   []usage.Flag{{Name: "--base", HasValue: true, NoEmptyValue: true}},
 	MinArgs: 2,
 	MaxArgs: 2,
 }
@@ -31,6 +34,7 @@ func Command(args []string) (string, int) {
 		return line + "\n", code
 	}
 	mode, slug := parsed.Positionals[0], parsed.Positionals[1]
+	base := parsed.Flags["--base"]
 	if mode != "review" && mode != modeBuild {
 		return toon.Usage(grammar.Cmd, mode) + "\n", 2
 	}
@@ -39,8 +43,11 @@ func Command(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 
-	facts, bootErr := Gather(root, mode, slug)
+	facts, bootErr := Gather(root, mode, slug, base)
 	if bootErr != nil {
+		if bootErr.Kind == "snapshot drift" {
+			return snapshotDriftRefusal(args, bootErr.Hint), 1
+		}
 		return toon.Errorf(bootErr.Kind, bootErr.Hint) + "\n", 1
 	}
 	if err := unrepresentableChangedPath(facts.ChangedPaths); err != nil {
@@ -60,6 +67,13 @@ func Command(args []string) (string, int) {
 	var b strings.Builder
 	fmt.Fprintf(&b, "phase: %s\n", mode)
 	fmt.Fprintf(&b, "spec: %s\n", facts.SpecPath)
+	if facts.SourceBase != "" {
+		source, err := toon.Table("source", []string{"base", "tip"}, [][]string{{facts.SourceBase, facts.SourceTip}})
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
+		}
+		b.WriteString(source)
+	}
 	b.WriteString(tbl)
 
 	exit := 0
@@ -67,6 +81,19 @@ func Command(args []string) (string, int) {
 		exit = 1
 	}
 	return b.String(), exit
+}
+
+func snapshotDriftRefusal(args []string, hint string) string {
+	invocation := make([]axi.InvocationArgument, 0, len(args)+1)
+	invocation = append(invocation, axi.KnownArgument("preflight"))
+	for _, arg := range args {
+		invocation = append(invocation, axi.KnownArgument(arg))
+	}
+	help, err := axi.RenderHelp([]axi.Action{axi.RetryInvocation(invocation...)})
+	if err != nil {
+		return toon.RenderError(err) + "\n"
+	}
+	return toon.Errorf("snapshot drift", hint) + "\n" + help
 }
 
 // unrepresentableChangedPath refuses a changed path spec-TOON cannot render as a

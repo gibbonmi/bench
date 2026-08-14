@@ -333,3 +333,12 @@ func TestParseRepeatedHelpIsHelp(t *testing.T) {
 		}
 	}
 }
+
+func TestParseRequiredFlagKeepsDeclaredHelp(t *testing.T) {
+	g := Grammar{Cmd: "bench land", Help: "usage: bench land", MinArgs: 1, MaxArgs: 1,
+		Flags: []Flag{{Name: "--request", HasValue: true, Required: true}}}
+	_, line, code := Parse(g, []string{"target"})
+	if code != 2 || line != g.Help {
+		t.Fatalf("Parse missing required flag = (%q, %d), want %q, 2", line, code, g.Help)
+	}
+}

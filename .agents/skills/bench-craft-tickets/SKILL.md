@@ -10,7 +10,7 @@ A ticket is the **smallest independently-green** vertical unit: a tightly
 related story group that cuts a narrow but complete path through the layers
 and can land committed on a green project gate by itself — a tracer bullet,
 demoable or verifiable alone. A horizontal layer, tests without behavior, or
-behavior without its tests is not a ticket. The green landing commit is the grading rule.
+behavior without its tests is not a ticket. Its green integration-source commit is the grading rule.
 
 ## Draft the breakdown
 
@@ -94,7 +94,7 @@ Work the unblocked frontier. One ticket equals **one fresh write-delegate
 charge**; independent frontier tickets run in parallel only where their
 `Writes:` notes are disjoint, and dependent tickets run sequentially.
 
-Run focused checks during the ticket, not a standalone full gate. Serial
-path-scoped `bench commit` is the only per-ticket full-project-gate boundary
-and commits only on green, one full gate per landing; `/bench-final-check` is
-the final full gate over the composed feature.
+Run focused checks during the ticket, not a standalone full gate. For a
+reviewed spec chain, commit tickets serially on one retained integration source,
+one full-project gate per commit. Review freezes that source's base and tip;
+`bench worktree land` composes and gates it, and final-check reports the evidence.

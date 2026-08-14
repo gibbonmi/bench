@@ -63,13 +63,13 @@ func TestTicketTokenScanTrailingNewlineParity(t *testing.T) {
 	}
 }
 
-// TestGatherSpecStatusOutsideGlobNotReadable reaches gather.go's spec-status
+// TestGatherSpecStatusOutsideFolderEnumerationNotReadable reaches gather.go's spec-status
 // fallback branch: specref.Resolve succeeds (the argument is a literal path, tried
-// as-given) over a file that specref.Facts' specs/*/spec.md glob never covers because
+// as-given) over a file that specref.Facts' folder-spec enumeration never covers because
 // it is not literally named spec.md — so no typed status is available to trust, and
-// Gather answers the "spec status not readable" BootstrapFailure naming the glob
+// Gather answers the "spec status not readable" BootstrapFailure naming the enumeration
 // mismatch, distinct from the specref.Facts-error half of the same Kind.
-func TestGatherSpecStatusOutsideGlobNotReadable(t *testing.T) {
+func TestGatherSpecStatusOutsideFolderEnumerationNotReadable(t *testing.T) {
 	root := t.TempDir()
 	t.Chdir(root)
 	slug := "specs/example/other.md" // valid content, but not specs/<slug>/spec.md
@@ -82,7 +82,7 @@ func TestGatherSpecStatusOutsideGlobNotReadable(t *testing.T) {
 	if bootErr.Kind != "spec status not readable" {
 		t.Fatalf("bootErr.Kind = %q, want %q", bootErr.Kind, "spec status not readable")
 	}
-	if !strings.Contains(bootErr.Hint, "did not resolve through the folder-spec glob") {
-		t.Errorf("bootErr.Hint = %q, want it to name the folder-spec glob mismatch", bootErr.Hint)
+	if !strings.Contains(bootErr.Hint, "did not resolve through folder-spec enumeration") {
+		t.Errorf("bootErr.Hint = %q, want it to name the folder-spec enumeration mismatch", bootErr.Hint)
 	}
 }

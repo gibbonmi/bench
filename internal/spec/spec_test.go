@@ -232,6 +232,88 @@ func TestFactsIncludesFolderSpecsAndMalformedEvidence(t *testing.T) {
 	}
 }
 
+func TestFactsEnumeratesBracketedRootLiterally(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "repo[brackets]")
+	writeFolderSpec(t, root, "folder", "Status: staged\n")
+
+	facts, err := Facts(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Fact{{Slug: "folder", Path: "specs/folder/spec.md", Status: "staged"}}
+	if !reflect.DeepEqual(facts, want) {
+		t.Fatalf("Facts = %#v, want %#v", facts, want)
+	}
+}
+
+func TestFactsEnumeratesFolderCandidates(t *testing.T) {
+	cases := []struct {
+		name  string
+		setup func(t *testing.T, root string)
+		want  []Fact
+	}{
+		{
+			name: "skips non-directory entries and folders without spec files",
+			setup: func(t *testing.T, root string) {
+				writeFolderSpec(t, root, "zulu", "Status: staged\n")
+				writeFolderSpec(t, root, "alpha", "Status: staged\n")
+				if err := os.MkdirAll(filepath.Join(root, "specs", "missing"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(filepath.Join(root, "specs", "note.md"), []byte("not a folder spec\n"), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			},
+			want: []Fact{
+				{Slug: "alpha", Path: "specs/alpha/spec.md", Status: "staged"},
+				{Slug: "zulu", Path: "specs/zulu/spec.md", Status: "staged"},
+			},
+		},
+		{
+			name: "follows a directory symlink",
+			setup: func(t *testing.T, root string) {
+				target := filepath.Join(root, "target")
+				if err := os.MkdirAll(target, 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(filepath.Join(target, "spec.md"), []byte("Status: staged\n"), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.MkdirAll(filepath.Join(root, "specs"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				link := filepath.Join(root, "specs", "linked")
+				if err := os.Symlink(target, link); err != nil {
+					capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+				}
+			},
+			want: []Fact{{Slug: "linked", Path: "specs/linked/spec.md", Status: "staged"}},
+		},
+		{
+			name: "keeps a .md-suffixed directory name in the derived path",
+			setup: func(t *testing.T, root string) {
+				writeFolderSpec(t, root, "x.md", "Status: staged\n")
+			},
+			want: []Fact{{Slug: "x.md", Path: "specs/x.md/spec.md", Status: "staged"}},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			tc.setup(t, root)
+
+			facts, err := Facts(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(facts, tc.want) {
+				t.Fatalf("Facts = %#v, want %#v", facts, tc.want)
+			}
+		})
+	}
+}
+
 func TestLiveSpecPrimitives(t *testing.T) {
 	if got, want := LiveSpecPath("ticket-19"), "specs/ticket-19/spec.md"; got != want {
 		t.Errorf("LiveSpecPath = %q, want %q", got, want)
@@ -239,6 +321,15 @@ func TestLiveSpecPrimitives(t *testing.T) {
 	content := []byte("specs/one/spec.md specs/two_2/spec.md specs/one/spec.md\n```\nspecs/hidden/spec.md\n```\nspecs/<slug>/spec.md\n")
 	if got, want := LiveSpecSlugs(content), []string{"one", "two_2"}; !reflect.DeepEqual(got, want) {
 		t.Errorf("LiveSpecSlugs = %q, want %q", got, want)
+	}
+}
+
+func TestLiveSpecPathNormalizesExplicitPath(t *testing.T) {
+	if got, want := LiveSpecPath("./specs/ticket-19/spec.md"), "specs/ticket-19/spec.md"; got != want {
+		t.Errorf("LiveSpecPath = %q, want %q", got, want)
+	}
+	if got, want := LiveSpecSlug("./specs/ticket-19/spec.md"), "ticket-19"; got != want {
+		t.Errorf("LiveSpecSlug = %q, want %q", got, want)
 	}
 }
 

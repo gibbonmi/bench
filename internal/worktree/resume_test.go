@@ -158,6 +158,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 	}
 	t.Run("release", func(t *testing.T) {
 		orderRoot, ordered := newOwnedAssignment(t, "release-receipt-order")
+		tip := gitOutput(t, orderRoot, "rev-parse", ordered.Assignment.Branch)
 		stop := errors.New("stop after terminal release receipt")
 		oldOrderBoundary := cleanupTransactionBoundary
 		cleanupTransactionBoundary = func(step LifecycleStep) error {
@@ -170,12 +171,14 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		requireTest(t, code != 0, "terminal receipt fault unexpectedly succeeded")
 		cleanupTransactionBoundary = oldOrderBoundary
 		repo, _, _ := cleanupIdentity(orderRoot, ordered.Path)
-		_, found, err := intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, requestDigest("landed-release-receipt-order"))
-		requireTest(t, err == nil && found, "terminal release receipt missing: %v", err)
+		receipt, found, err := intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, intent.RequestDigest("landed-release-receipt-order"))
+		requireTest(t, err == nil && found && receipt.Branch == ordered.Assignment.Branch && receipt.BranchOID == tip, "terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
 		_, err = assignmentByID(orderRoot, ordered.Assignment.ID)
 		requireTest(t, err == nil, "assignment compacted before terminal receipt checkpoint: %v", err)
 		code = ReleaseCommand(orderRoot, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
 		requireTest(t, code == 0, "terminal receipt replay exit=%d", code)
+		receipt, found, err = intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, intent.RequestDigest("landed-release-receipt-order"))
+		requireTest(t, err == nil && found && receipt.Branch == ordered.Assignment.Branch && receipt.BranchOID == tip, "replayed terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
 		root, creation := newOwnedAssignment(t, "concurrent-release")
 		attempted, locked, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
 		oldAttempt, oldBoundary := cleanupLockAttempt, cleanupTransactionBoundary

@@ -29,8 +29,18 @@ type Facts struct {
 	ReviewBaseResolved bool
 	ReviewBaseHint     string
 
-	// ChangedPaths is the changed-file set since the resolved review base — bench
-	// diff's exact semantics (committed, index, and tracked worktree changes). An
+	// SourceBase and SourceTip are the full identities pinned by an explicit-base
+	// invocation. Empty values preserve the existing implicit-base presentation.
+	SourceBase string
+	SourceTip  string
+
+	// ExplicitSourceRange records that the invocation supplied --base. Its validity
+	// comes from the same resolved source range that supplies ReviewBaseResolved,
+	// rather than from destination default-branch ancestry.
+	ExplicitSourceRange bool
+
+	// ChangedPaths is the changed-file set since the resolved review base. Explicit
+	// source builds include committed, index, tracked-worktree, and untracked paths. An
 	// empty set is a legitimate answer, not an unresolved one.
 	ChangedPaths []string
 
@@ -83,9 +93,11 @@ type Verdict struct {
 // Decide classifies immutable Facts into the five-check verdict. It performs no I/O
 // and consults nothing but its argument, so the same Facts value always yields the
 // same Verdict — the byte-identical-rerun guarantee lives here. Mode applicability
-// lives here rather than in the gatherer: build mode always runs base-current and
-// paths-authorized, runs rows-owned and rows-membership for real only when
-// specs/<slug>/tickets/ exists, and never runs diff-nonempty.
+// lives here rather than in the gatherer: an explicit source range makes
+// base-current grade that range's validity, while a bare invocation grades default
+// branch ancestry. Build mode always runs paths-authorized, runs rows-owned and
+// rows-membership for real only when specs/<slug>/tickets/ exists, and never runs
+// diff-nonempty.
 func Decide(f Facts) Verdict {
 	checks := []CheckResult{
 		baseCurrentCheck(f),
@@ -138,6 +150,12 @@ func diffNonemptyRow(f Facts) CheckResult {
 }
 
 func baseCurrentCheck(f Facts) CheckResult {
+	if f.ExplicitSourceRange {
+		if !f.ReviewBaseResolved {
+			return red("base-current", "source base does not resolve: "+f.ReviewBaseHint)
+		}
+		return green("base-current")
+	}
 	if !f.DefaultBranchResolved {
 		return red("base-current", "default branch does not resolve")
 	}

@@ -312,7 +312,7 @@ func foreignRecoveryAssignment(root, target string) *intent.Assignment {
 	var found *intent.Assignment
 	for i := range assignments {
 		candidate := assignments[i]
-		if candidate.Worktree == target && candidate.Label == "foreign exact cleanup" && candidate.Request == requestDigest("foreign:"+target) && len(candidate.Recovery) > 0 {
+		if candidate.Worktree == target && candidate.Label == "foreign exact cleanup" && candidate.Request == intent.RequestDigest("foreign:"+target) && len(candidate.Recovery) > 0 {
 			if found != nil {
 				return nil
 			}

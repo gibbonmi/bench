@@ -24,6 +24,7 @@ const (
 type Action struct {
 	kind       actionKind
 	commit     string
+	base       string
 	invocation []string
 	arguments  []InvocationArgument
 	phase      string
@@ -78,9 +79,24 @@ func InspectFull(commit string) Action {
 	return Action{kind: actionInspectFull, commit: commit}
 }
 
+// InspectFullBase retains an explicit source base in a bounded-diff follow-up.
+func InspectFullBase(base string) Action {
+	return Action{kind: actionInspectFull, base: base}
+}
+
+// RetryAfterMovement is the one why-line every drift refusal advertises. It is
+// owned here so a command's own refusal cannot drift from the action that renders it.
+const RetryAfterMovement = "retry after the repository stopped moving"
+
 // RetryDiff returns the exact diff invocation that a drift refusal could not satisfy.
 func RetryDiff(invocation []string) Action {
 	return Action{kind: actionRetryDiff, invocation: append([]string(nil), invocation...)}
+}
+
+// RetryInvocation is the same drift retry for any command whose invocation is not a
+// diff: the caller declares its arguments and this owner supplies the why-line.
+func RetryInvocation(arguments ...InvocationArgument) Action {
+	return ExecutableInvocation(RetryAfterMovement, arguments...)
 }
 
 // RenderHelp renders the terminal help block, including the definitive empty state.
@@ -135,23 +151,32 @@ func (action Action) render() (string, string, error) {
 			return "", "", errors.New("full diff action arguments are derived by the owner")
 		}
 		args := []string{"diff", "--full"}
+		if action.commit != "" && action.base != "" {
+			return "", "", errors.New("full diff action cannot combine commit and base")
+		}
 		if action.commit != "" {
 			if !fullSHA.MatchString(action.commit) {
 				return "", "", errors.New("full diff action requires a resolved commit sha")
 			}
 			args = append(args, "--commit", action.commit)
 		}
+		if action.base != "" {
+			if !fullSHA.MatchString(action.base) {
+				return "", "", errors.New("full diff action requires a resolved base sha")
+			}
+			args = append(args, "--base", action.base)
+		}
 		return "bench " + strings.Join(args, " "), "inspect the complete patch", nil
 	case actionRetryDiff:
-		if action.commit != "" {
+		if action.commit != "" || action.base != "" {
 			return "", "", errors.New("retry action cannot guess a commit")
 		}
 		if !validDiffInvocation(action.invocation) {
 			return "", "", errors.New("retry action requires an exact executable diff invocation")
 		}
-		return "bench " + strings.Join(action.invocation, " "), "retry after the repository stopped moving", nil
+		return "bench " + strings.Join(action.invocation, " "), RetryAfterMovement, nil
 	case actionInvocation:
-		if action.phase != "" || action.commit != "" {
+		if action.phase != "" || action.commit != "" || action.base != "" {
 			return "", "", errors.New("executable action has undeclared fields")
 		}
 		if action.why == "" {
@@ -206,9 +231,14 @@ func validDiffInvocation(args []string) bool {
 	if len(rest) == 2 && rest[0] == "--commit" {
 		return validValue(rest[1])
 	}
+	if len(rest) == 2 && rest[0] == "--base" {
+		return validValue(rest[1])
+	}
 	if len(rest) == 3 {
 		return (rest[0] == "--full" && rest[1] == "--commit" && validValue(rest[2])) ||
-			(rest[0] == "--commit" && validValue(rest[1]) && rest[2] == "--full")
+			(rest[0] == "--commit" && validValue(rest[1]) && rest[2] == "--full") ||
+			(rest[0] == "--full" && rest[1] == "--base" && validValue(rest[2])) ||
+			(rest[0] == "--base" && validValue(rest[1]) && rest[2] == "--full")
 	}
 	return false
 }
