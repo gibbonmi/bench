@@ -341,19 +341,16 @@ escalation.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed — a wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
-- **Spec falsification pass** (`/bench-write-spec` step 9) → **mid model, high
-  effort, 1 iteration**, read-only. Standing grant: every draft gets the pass,
-  spawned without asking, because at the mid binding it is not a top-tier bump.
-  The step's signals nominate a draft for a top-binding pass instead — that is
-  an ordinary bump and pauses and asks; never escalate silently. Charged at
-  falsification questions, never an open review; its verdict is advisory and
-  sign-off stays the reviewer's.
-- **Ticket-breakdown review pass** (`/bench-implement-spec`, after the ticket
-  files are written and before the first ticket is assigned) → no delegate and no
-  line. The coordinator presents the breakdown to the reviewer as a numbered list
-  of title, `Blocked by:`, and delivered outcome, and iterates it with them until
-  they approve; approval is the reviewer's, so a read-only pass standing in for it
-  would grade the wrong thing.
+- **Spec falsification pass** (`/bench-write-spec` step 9, loop 1) → **mid model,
+  high effort**, read-only and same-family through the harness's native agent
+  surface. It takes the spec alone before slicing and repeats
+  author-fix/re-review until no blocking findings.
+- **Ticket-breakdown review pass** (`/bench-write-spec` slicing step, loop 2) →
+  the same line and delegate shape. It takes the breakdown alone against
+  `craft-tickets` after slicing and repeats author-fix/re-review until no blocking
+  findings. Both loops are an uncapped reviewer exception to the declared
+  iteration cap, report every round in one line, remain advisory, and leave
+  sign-off as the reviewer's hard stop.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).
   Read-heavy: each takes the full diff plus standards docs and runs verification

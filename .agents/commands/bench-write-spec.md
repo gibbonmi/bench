@@ -141,26 +141,35 @@ pauses for reviewer approval under `craft-line`.
    retirement removes the compiled maps and map-owned assets, plus
    implementation tickets, with the spec.
 
-9. **Falsification review before sign-off.** Every draft gets the pass. The
-   falsification review runs at the mid tier for one iteration in a fresh
-   read-only delegate. Charge it
-   with falsification questions: would the cheapest wrong implementation pass,
-   does every source behavior have a red-capable row, does every line match
-   cached routing, does any behavior, red signal, or decision answer name an
-   outcome family instead of an exact predicate, and — where the stories
-   partition into disjoint package or fence sets — could a narrower capability
-   ship on its own gate? Apply `craft-spec`'s named
-   `Bootstrap authority before execution` rule. A same-session source, source
-   conflict, or mostly not
-   observed reds may justify a top-tier pass, but the escalation pauses for
-   reviewer approval. The verdict is advisory; sign-off stays with the
-   reviewer.
+9. **Verification loops before sign-off.** Every draft gets two verification
+   loops through the harness's native agent surface: a read-only same-family
+   mid-tier delegate at high effort takes the spec alone in loop 1 before
+   slicing, then takes the breakdown alone in loop 2 after slicing and checks it
+   against `craft-tickets`. Each loop repeats author-fix/re-review uncapped until
+   no blocking findings — a recorded reviewer exception to the declared
+   iteration cap — with every round reported in one line. The loop verdicts stay
+   advisory; reviewer sign-off remains the hard stop.
 
-10. **Slice the implementation tickets.** After the falsification review
-    completes with its advisory verdict, charge `craft-tickets` and write the
-    breakdown under `specs/<slug>/tickets/`. Carry its numbered title,
-    `Blocked by:`, and delivered outcome list into the approval table so the
-    spec and tickets receive one sign-off.
+   Loop 1 asks the falsification questions: would the cheapest wrong
+   implementation pass, does every source behavior have a red-capable row, does
+   every line match cached routing, does any behavior, red signal, or decision
+   answer name an outcome family instead of an exact predicate, are the source
+   and observed reds sound even when the source is same-session, conflicting, or
+   mostly not observed, and — where the stories partition into disjoint package
+   or fence sets — could a narrower capability ship
+   on its own gate? Apply `craft-spec`'s named
+   `Bootstrap authority before execution` rule.
+
+10. **Slice the implementation tickets.** After loop 1 accepts, charge
+    `craft-tickets` and write the breakdown under `specs/<slug>/tickets/`. Carry
+    its numbered title, `Blocked by:`, and delivered outcome list into the
+    approval table so the spec and tickets receive one sign-off, then run loop 2
+    on that breakdown.
+
+    At close, write `Verification log: spec <n> + tickets <m> iteration(s) to
+    accept — <note>` into the spec. When either loop takes more than one iteration
+    to accept, append one `capture/learnings.md` entry naming the stage that
+    missed, what review caught, why it was missed, and the proposed rule change.
 
 ## Template
 
@@ -170,6 +179,8 @@ pauses for reviewer approval under `craft-line`.
 Status: staged
 
 Decision source: <one ready compiled map, reviewer-confirmed conversation with date, or named reviewed artifact>
+
+Verification log: spec <n> + tickets <m> iteration(s) to accept — <note>
 
 ## Problem
 The problem, from the user's point of view.

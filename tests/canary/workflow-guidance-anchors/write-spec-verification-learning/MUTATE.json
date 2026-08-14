@@ -1,0 +1,1 @@
+[{"path":".agents/commands/bench-write-spec.md","old":"When either loop takes more than one iteration","new":"When verification takes more than one iteration, continue without recording the miss;"}]
