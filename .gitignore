@@ -13,6 +13,10 @@ projects/gl-axi.md
 # OS cruft
 .DS_Store
 
+# Claude Code user-local permissions — per-user, never shared; the tracked
+# harness surface lives in .claude/skills/ and stays committed.
+.claude/settings.local.json
+
 
 # Bench shift scratch — created in the repo root during `bench shift`, cleaned on
 # normal exit/interrupt; ignored so an unclean kill can't leave them to be committed.
