@@ -2,37 +2,27 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — spec staged at the latest `spec:` commit, capture close follows it
-Spec: `specs/spec-authoring-and-light-path/spec.md` — `Status: staged`, reviewer-approved 2026-08-14, verification log `spec 5 + tickets 3`
-Gate: green at the staging commit
+Branch: `main` — HEAD `0d196bc5`, uncommitted `$bench-what-next` batch awaiting approval
+Spec: none staged; `spec-authoring-and-light-path` landed at `8c8e5325` and retired at `0d196bc5`.
+Gate: cached green `cca928c` is stale; the uncommitted maintenance batch has not been gated.
 
 ## State
 
-`spec-authoring-and-light-path` is staged and signed off with its eight tickets
-under `specs/spec-authoring-and-light-path/tickets/`. Initial frontier (all
-serial — every ticket shares `internal/anchors/registry_data.go` and
-`tests/canary/workflow-guidance-anchors/`): lighten-light-path,
-move-slicing-into-write-spec, cross-harness-reviewer-recipes,
-drain-time-light-path, repair-stale-anchors; then main-session-authorship →
-verification-loops → reviewer-override-flag.
+The proposed drain empties two ideas, two journal entries, and the
+`spec-authoring-and-light-path` retro. It adds the live-tree ordinary-gate gap
+to FT120, outcome-shaped guidance to FT100, landing-result clarity to FT169,
+filesystem-state edge inventory to FT144, fixture-census ownership to FT174,
+and new FT206 for destination metadata before exact-candidate review. The
+journal rule is already shipped; its narrow A/B rerun requests no follow-up.
 
-Closed reviewer decisions the build must not reopen: uncapped verification
-loops; light-path ticket file kept with inline implementation; own-family
-reviewers via native agent surface (CLI only cross-family or when no native
-surface exists); one bundled spec; transitional slicing-step trigger (worded
-against the current falsification review, re-pointed to loop 1 by
-verification-loops); drain implement-now lands as its own commit via a second
-named batch-rule exception.
-
-Two light-path commits already landed the enforcement-surface-read rule in
-`bench-write-spec.md` step 1 — the build must preserve it through the step-9
-rewrite. An A/B rerun prompt for that rule (Codex form) was handed to the
-reviewer; if it ran, `capture/learnings.md` carries an "A/B rerun" entry for
-the next drain.
+No roadmap row was retired or reworded: the trusted schema-4 context reported
+61 live rows, no staged specs, no spec-history rows, and no occurrence
+discrepancies. No restructure was requested. Reviewer approval is required
+before the one scoped commit.
 
 ## Next command
 
-`/bench-implement-spec spec-authoring-and-light-path` — fresh mid-tier session.
+`$bench-shape-idea` — FT189's reproduced upstream `git worktree list` hang needs a Bench-owned refusal or execution bound.
 
 ## Shape
 

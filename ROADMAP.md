@@ -310,6 +310,13 @@ above — one decision, both phases — then build the kit edit under
 `craft-synthesis`. Sources: `capture/learnings.md`, drained in a prior run and
 here; `capture/session-handoff.md`, drained in a prior run.
 
+The spec-authoring-and-light-path close adds a filesystem-state example to the
+same edge inventory: an absent tickets directory and a present-but-empty one
+must be separate hostile inputs, because only the latter declares a ticket
+surface and must refuse as unowned work. Add that distinction to the
+`craft-spec` examples rather than relying on a named path to imply its state.
+Source: the spec-authoring-and-light-path retro, drained here.
+
 **FT158 (MEDIUM) — make cross-harness
 falsification standing for kit-guidance diffs.** FT91's draft, FT152's build,
 Occurrences: baseline-01, baseline-02, baseline-03
@@ -577,6 +584,13 @@ reports bounded offending paths for ignored residue and textual conflicts, and
 names the precise subject-closure reason when prospective authorization fails.
 Those details replace manual enumeration and the `BENCH_HOME` probe without
 weakening the refusal. Source: the parallel-session-landings retro, drained
+here.
+
+The spec-authoring-and-light-path close adds successful-publication clarity:
+when `bench worktree land` publishes but cleanup refuses, its result reports
+publication separately from the remaining fingerprinted cleanup sequence. A
+green landing must not read like failed publication, while the deletion boundary
+stays fail closed. Source: the spec-authoring-and-light-path retro, drained
 here.
 
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one
@@ -917,6 +931,18 @@ argued for. Kit edit under the `craft-synthesis`
 discipline. Sources: `capture/learnings.md` 2026-08-03, verdicted here and in a
 prior run.
 
+**FT206 (MEDIUM) — exact-candidate review sees destination metadata before it
+freezes.** The spec-authoring-and-light-path landing correctly refused when the
+destination and reviewed source carried different staged-spec bytes; moving the
+metadata repair to the destination then required a fresh three-axis review even
+though the implementation decision was unchanged. Reconcile destination-owned
+staged-spec metadata before the final exact-candidate review, so the frozen pair
+already contains the bytes the landing evaluates. This does not authorize a
+post-review behavior or acceptance change; those still return to the existing
+review and sign-off route. Kit workflow edit under the `craft-synthesis`
+discipline. Entry: `/bench-shape-idea`. Source: the
+spec-authoring-and-light-path retro, drained here.
+
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 Agents repeatedly shape harness transcripts and session evidence with
 `head`/`tail`/`awk`/`sort` chains; consider one bounded agent-facing query for
@@ -1025,6 +1051,12 @@ lowering `.bench/BENCH.md` from its reviewed 175-line bound, choose a word-count
 or house-wrap-normalized measure and decide which doctrine moves or consolidates;
 a cosmetic reflow is not a weight reduction. Sources: `capture/IDEAS.md`
 2026-08-11 and the Pocock-guidance-doctrine retro, drained here.
+
+The skill-library audit also asks whether procedural guidance can state the
+required end state instead: assess every step-by-step instruction for an
+outcome-shaped replacement that preserves its constraint while removing an
+unnecessary branch. This is a weight question, not a second correctness owner.
+Source: `capture/IDEAS.md` 2026-08-14, drained here.
 
 **FT101 (LOW) — per-context scope for monorepos: domain docs and profile.** A
 monorepo has more than one bounded context, but the kit assumes one
@@ -1675,6 +1707,11 @@ removable member of a compound coverage row, including its retained-inventory
 mutation fixture, before the first breakdown review. Source: the
 spec-ticket-handoff-contract retro, drained here.
 
+When a ticket changes the canary fixture universe, the same ticket grammar must
+name the coverage owner that updates the census; a fixture addition without that
+owner is an incomplete closure, not an incidental test change. Source: the
+spec-authoring-and-light-path retro, drained here.
+
 When the reviewer is present at staged-spec sign-off, `/bench-write-spec` may
 derive and present that ticket breakdown for approval in the same session;
 `/bench-implement-spec` still revalidates it against the current tree before
@@ -1944,6 +1981,14 @@ about eight unrelated diagnostics, so focused mutation verification needs one
 clean entry point whose executed family and result are unambiguous. This is a
 harness seam, not another guidance rule. Source: the Pocock-guidance-doctrine
 retro, drained here.
+
+The ordinary dev gate runs `go test ./...`, but `TestRootConformance` skips
+without `BENCH_CONFORMANCE_ROOT`; only the ship pre-release path supplies the
+live tree. The capture reports four stale live-tree rows found while the
+spec-authoring-and-light-path spec was written without making an ordinary gate
+red. Make the dev gate execute the existing root sweep against its graded tree,
+with a regression that proves an unfixtured stale row fails before release.
+Source: `capture/IDEAS.md` 2026-08-14, drained here.
 
 ## Standards debt — one batched light-path pass
 
