@@ -342,6 +342,37 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 	}
 }
 
+func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
+	for _, specArg := range []string{"x", "./specs/x/spec.md"} {
+		t.Run(specArg, func(t *testing.T) {
+			request := "resume-spec-form-" + strings.ReplaceAll(specArg, "/", "-")
+			root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+			t.Chdir(root)
+			oldMarker := advanceLandingMarker
+			advanceLandingMarker = func(context.Context, string, string, string, string) error {
+				return errors.New("injected marker interruption")
+			}
+			t.Cleanup(func() { advanceLandingMarker = oldMarker })
+
+			var stdout, stderr bytes.Buffer
+			if code := LandCommand(root, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 1 || !strings.Contains(stdout.String(), "worktree=incomplete:marker}") {
+				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			}
+			published := gitOutput(t, root, "rev-parse", "main")
+			advanceLandingMarker = oldMarker
+			stdout.Reset()
+			stderr.Reset()
+			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", specArg, creation.Path}
+			if code := LandCommand(root, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+				t.Fatalf("resume with spec %q = (%d, %q, %q)", specArg, code, stdout.String(), stderr.String())
+			}
+			if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+				t.Fatalf("resume reran gate: tally=%q error=%v", got, err)
+			}
+		})
+	}
+}
+
 func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
 	request := "resume-marker"
 	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")

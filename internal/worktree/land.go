@@ -141,7 +141,7 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
-	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], parsed.Flags["--spec"])
+	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], spec.LiveSpecSlug(parsed.Flags["--spec"]))
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
@@ -251,7 +251,7 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 		return "", "", "", "", errors.New("review base does not authenticate the published source")
 	}
 	sourceBase = sourceRange.Base
-	specPath := resumeSpecPath(slug)
+	specPath := spec.LiveSpecPath(slug)
 	staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
 	implemented, implementedErr := spec.Implemented(staged)
 	publishedSpec, publishedErr := git.Raw("-C", root, "show", published+":"+specPath)
@@ -263,13 +263,6 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 		return "", "", "", "", errors.New("published tree is unreadable")
 	}
 	return published, sourceBase, destinationBase, tree, nil
-}
-
-func resumeSpecPath(slug string) string {
-	if strings.ContainsRune(slug, '/') {
-		return filepath.ToSlash(filepath.Clean(slug))
-	}
-	return "specs/" + strings.TrimSuffix(slug, ".md") + "/spec.md"
 }
 
 func resumeIncomplete(stdout io.Writer, base, source, destinationBase, published, tree, step string) int {

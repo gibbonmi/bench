@@ -242,6 +242,15 @@ func TestLiveSpecPrimitives(t *testing.T) {
 	}
 }
 
+func TestLiveSpecPathNormalizesExplicitPath(t *testing.T) {
+	if got, want := LiveSpecPath("./specs/ticket-19/spec.md"), "specs/ticket-19/spec.md"; got != want {
+		t.Errorf("LiveSpecPath = %q, want %q", got, want)
+	}
+	if got, want := LiveSpecSlug("./specs/ticket-19/spec.md"), "ticket-19"; got != want {
+		t.Errorf("LiveSpecSlug = %q, want %q", got, want)
+	}
+}
+
 func TestFactsRetainsHostileCandidates(t *testing.T) {
 	root := t.TempDir()
 	writeFolderSpec(t, root, "malformed", "Status: sta\xffged\n")

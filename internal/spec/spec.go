@@ -38,9 +38,17 @@ type Fact struct {
 	Slug, Path, Status, RoadmapID string
 }
 
-// LiveSpecPath returns a live folder spec's repository-relative path.
-func LiveSpecPath(slug string) string {
-	return filepath.ToSlash(filepath.Join("specs", slug, "spec.md"))
+// LiveSpecPath normalizes a live spec slug or explicit path to its repository-relative path.
+func LiveSpecPath(arg string) string {
+	if strings.ContainsRune(arg, '/') {
+		return filepath.ToSlash(filepath.Clean(arg))
+	}
+	return filepath.ToSlash(filepath.Join("specs", strings.TrimSuffix(arg, ".md"), "spec.md"))
+}
+
+// LiveSpecSlug returns the slug named by a live spec slug or explicit path.
+func LiveSpecSlug(arg string) string {
+	return filepath.Base(filepath.Dir(filepath.FromSlash(LiveSpecPath(arg))))
 }
 
 // LiveSpecSlugs enumerates distinct live folder-spec slugs named outside fenced code.
@@ -151,7 +159,7 @@ func Resolve(base, arg string) (content []byte, resolved string, tried []string,
 	if !strings.ContainsRune(arg, '/') {
 		slug := strings.TrimSuffix(arg, ".md")
 		flat := filepath.Join(base, "specs", slug+".md")
-		folder := filepath.Join(base, "specs", slug, "spec.md")
+		folder := filepath.Join(base, filepath.FromSlash(LiveSpecPath(arg)))
 		tried = append(tried, folder)
 		if pathExists(flat) {
 			if pathExists(filepath.Dir(folder)) {
@@ -368,7 +376,7 @@ func retireCommand(rest []string) (string, int) {
 	base := RepoBase()
 	content, resolved, tried, found, err := Resolve(base, arg)
 	if err != nil {
-		folder := filepath.Join(base, "specs", strings.TrimSuffix(arg, ".md"), "spec.md")
+		folder := filepath.Join(base, filepath.FromSlash(LiveSpecPath(arg)))
 		if resolved == folder {
 			if residue, ok := folderResidue(base, arg); ok {
 				return toon.Errorf("incomplete retired spec folder: "+residue,
