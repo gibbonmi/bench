@@ -515,6 +515,37 @@ func TestLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
 	}
 }
 
+func TestLandCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		args []string
+		help string
+	}{
+		{"first request", []string{"--base", "b", "--source-tip", "s", "--spec", "x", "-m", "m", "path"}, landGrammar.Help},
+		{"first base", []string{"--request", "r", "--source-tip", "s", "--spec", "x", "-m", "m", "path"}, landGrammar.Help},
+		{"first source tip", []string{"--request", "r", "--base", "b", "--spec", "x", "-m", "m", "path"}, landGrammar.Help},
+		{"first spec", []string{"--request", "r", "--base", "b", "--source-tip", "s", "-m", "m", "path"}, landGrammar.Help},
+		{"first message", []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "path"}, landGrammar.Help},
+		{"resume request", []string{"--resume", "p", "--base", "b", "--source-tip", "s", "--spec", "x", "path"}, resumeLandGrammar.Help},
+		{"resume base", []string{"--resume", "p", "--request", "r", "--source-tip", "s", "--spec", "x", "path"}, resumeLandGrammar.Help},
+		{"resume source tip", []string{"--resume", "p", "--request", "r", "--base", "b", "--spec", "x", "path"}, resumeLandGrammar.Help},
+		{"resume spec", []string{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "s", "path"}, resumeLandGrammar.Help},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if code := LandCommand("", tc.args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != tc.help+"\n" {
+				t.Fatalf("LandCommand(%q) = (%d, %q, %q), want (2, empty, %q)", tc.args, code, stdout.String(), stderr.String(), tc.help+"\n")
+			}
+		})
+	}
+
+	var stdout, stderr bytes.Buffer
+	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "path"}
+	if code := ResumeLandCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != resumeLandGrammar.Help+"\n" {
+		t.Fatalf("ResumeLandCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), resumeLandGrammar.Help+"\n")
+	}
+}
+
 func TestResumeLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
 	for _, args := range [][]string{
 		{"--resume", "would-be-path", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x"},

@@ -28,11 +28,12 @@ var landGrammar = usage.Grammar{
 	MinArgs: 1,
 	MaxArgs: 1,
 	Flags: []usage.Flag{
-		{Name: "--request", HasValue: true, NoEmptyValue: true},
-		{Name: "--base", HasValue: true, NoEmptyValue: true},
-		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
-		{Name: "--spec", HasValue: true, NoEmptyValue: true},
-		{Name: "-m", HasValue: true, NoEmptyValue: true},
+		{Name: "--resume", HasValue: true, NoEmptyValue: true},
+		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--base", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--source-tip", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--spec", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "-m", HasValue: true, NoEmptyValue: true, Required: true},
 	},
 }
 
@@ -42,11 +43,11 @@ var resumeLandGrammar = usage.Grammar{
 	MinArgs: 1,
 	MaxArgs: 1,
 	Flags: []usage.Flag{
-		{Name: "--resume", HasValue: true, NoEmptyValue: true},
-		{Name: "--request", HasValue: true, NoEmptyValue: true},
-		{Name: "--base", HasValue: true, NoEmptyValue: true},
-		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
-		{Name: "--spec", HasValue: true, NoEmptyValue: true},
+		{Name: "--resume", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--base", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--source-tip", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--spec", HasValue: true, NoEmptyValue: true, Required: true},
 	},
 }
 
@@ -69,10 +70,6 @@ func LandCommand(root string, args []string, stdout, stderr io.Writer) int {
 	if line != "" {
 		fmt.Fprintln(stderr, line)
 		return code
-	}
-	if len(parsed.Flags) != 5 {
-		fmt.Fprintln(stderr, landGrammar.Help)
-		return 2
 	}
 	path, err := canonicalPath(parsed.Positionals[0])
 	if err != nil {
@@ -121,20 +118,7 @@ func LandCommand(root string, args []string, stdout, stderr io.Writer) int {
 }
 
 func hasResumeFlag(args []string) bool {
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if arg == "--" {
-			return false
-		}
-		if arg == "--resume" {
-			return true
-		}
-		switch arg {
-		case "--request", "--base", "--source-tip", "--spec", "-m":
-			i++
-		}
-	}
-	return false
+	return usage.FlagPresent(landGrammar, args, "--resume")
 }
 
 // ResumeLandCommand finishes only a published landing's marker, destination checkout,
@@ -144,10 +128,6 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	if line != "" {
 		fmt.Fprintln(stderr, line)
 		return code
-	}
-	if len(parsed.Flags) != 5 {
-		fmt.Fprintln(stderr, resumeLandGrammar.Help)
-		return 2
 	}
 	path, err := canonicalPath(parsed.Positionals[0])
 	if err != nil {

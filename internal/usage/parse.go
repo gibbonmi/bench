@@ -7,8 +7,8 @@ import (
 )
 
 // Flag declares one flag a Grammar accepts: its literal spelling (e.g. "-m",
-// "--all"), whether it consumes the following argument as its value, and
-// whether that value may be empty.
+// "--all"), whether it consumes the following argument as its value, whether
+// that value may be empty, and whether the flag is required.
 //
 // NoEmptyValue applies the empty-positional rule to a flag's value: an empty
 // string is what an unset shell variable expands to inside quotes, so a flag
@@ -19,6 +19,7 @@ type Flag struct {
 	Name         string
 	HasValue     bool
 	NoEmptyValue bool
+	Required     bool
 }
 
 // Grammar declares the argument shape one subcommand parses through Parse:
@@ -57,9 +58,10 @@ type Result struct {
 // outcomes: a populated Result with an empty line and code 0 on a successful
 // parse; a help outcome (zero Result, g.Help as the line, code 0) when --help
 // or -h appears after any reserved positionals and before "--", or when a help
-// spelling is the sole argument; or a rendered usage error (zero Result, a
-// toon.Usage or toon.MissingArg line, code 2). A caller prints a non-empty line
-// and exits with code verbatim; Result is meaningful only when line == "".
+// spelling is the sole argument; or a usage error (zero Result, a grammar's
+// declared help or a toon.Usage/toon.MissingArg line, code 2). A caller prints a
+// non-empty line and exits with code verbatim; Result is meaningful only when
+// line == "".
 //
 // Rendering is delegated to toon.Usage and toon.MissingArg throughout, so
 // this package never re-derives the usage-line shape.
@@ -160,5 +162,36 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 	if len(result.Positionals) < g.MinArgs {
 		return Result{}, toon.MissingArg(g.Cmd, "argument"), 2
 	}
+	for _, f := range g.Flags {
+		if f.Required {
+			if _, ok := result.Flags[f.Name]; !ok {
+				return Result{}, g.Help, 2
+			}
+		}
+	}
 	return result, "", 0
+}
+
+// FlagPresent reports whether args select a declared flag, skipping values
+// according to the grammar so a value equal to another flag cannot misclassify
+// the command mode.
+func FlagPresent(g Grammar, args []string, name string) bool {
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--" {
+			return false
+		}
+		for _, f := range g.Flags {
+			if arg == f.Name {
+				if arg == name {
+					return true
+				}
+				if f.HasValue {
+					i++
+				}
+				break
+			}
+		}
+	}
+	return false
 }

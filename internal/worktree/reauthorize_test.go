@@ -51,6 +51,20 @@ func TestReauthorizeCommandGrammarKeepsFlagValuesOutOfPath(t *testing.T) {
 	}
 }
 
+func TestReauthorizeCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
+	for _, args := range [][]string{
+		{"--request", "r", "--base", "b", "--source-tip", "s", "path"},
+		{"--assignment", "a", "--base", "b", "--source-tip", "s", "path"},
+		{"--assignment", "a", "--request", "r", "--source-tip", "s", "path"},
+		{"--assignment", "a", "--request", "r", "--base", "b", "path"},
+	} {
+		var stdout, stderr bytes.Buffer
+		if code := ReauthorizeCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != reauthorizeGrammar.Help+"\n" {
+			t.Fatalf("ReauthorizeCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), reauthorizeGrammar.Help+"\n")
+		}
+	}
+}
+
 func TestReauthorizeCommandEscapesControlBearingBase(t *testing.T) {
 	root, creation, _, tip := reauthorizeFixture(t)
 	var stdout, stderr bytes.Buffer

@@ -19,10 +19,10 @@ var reauthorizeGrammar = usage.Grammar{
 	MinArgs: 1,
 	MaxArgs: 1,
 	Flags: []usage.Flag{
-		{Name: "--assignment", HasValue: true, NoEmptyValue: true},
-		{Name: "--request", HasValue: true, NoEmptyValue: true},
-		{Name: "--base", HasValue: true, NoEmptyValue: true},
-		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
+		{Name: "--assignment", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--base", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--source-tip", HasValue: true, NoEmptyValue: true, Required: true},
 	},
 }
 
@@ -46,10 +46,6 @@ func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) in
 	if line != "" {
 		fmt.Fprintln(stderr, line)
 		return code
-	}
-	if len(parsed.Flags) != 4 {
-		fmt.Fprintln(stderr, reauthorizeGrammar.Help)
-		return 2
 	}
 	id, request := parsed.Flags["--assignment"], parsed.Flags["--request"]
 	base, tip := parsed.Flags["--base"], parsed.Flags["--source-tip"]
