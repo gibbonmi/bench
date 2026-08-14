@@ -35,6 +35,20 @@ var landGrammar = usage.Grammar{
 	},
 }
 
+var resumeLandGrammar = usage.Grammar{
+	Cmd:     "bench worktree land",
+	Help:    "usage: " + usage.WorktreeLandResume,
+	MinArgs: 1,
+	MaxArgs: 1,
+	Flags: []usage.Flag{
+		{Name: "--resume", HasValue: true, NoEmptyValue: true},
+		{Name: "--request", HasValue: true, NoEmptyValue: true},
+		{Name: "--base", HasValue: true, NoEmptyValue: true},
+		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
+		{Name: "--spec", HasValue: true, NoEmptyValue: true},
+	},
+}
+
 var landReviewed = func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
 	return landing.New().LandReviewed(ctx, request)
 }
@@ -47,6 +61,9 @@ var authorizeLandingSource = preflight.AuthorizeReviewedSource
 // LandCommand is the first-run reviewed-source landing operation. It performs every
 // reversible proof before the exact-tree owner receives authority to publish.
 func LandCommand(root string, args []string, stdout, stderr io.Writer) int {
+	if hasResumeFlag(args) {
+		return ResumeLandCommand(root, args, stdout, stderr)
+	}
 	parsed, line, code := usage.Parse(landGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -100,6 +117,182 @@ func LandCommand(root string, args []string, stdout, stderr io.Writer) int {
 	}
 	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=released}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree)
 	return 0
+}
+
+func hasResumeFlag(args []string) bool {
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--" {
+			return false
+		}
+		if arg == "--resume" {
+			return true
+		}
+		switch arg {
+		case "--request", "--base", "--source-tip", "--spec", "-m":
+			i++
+		}
+	}
+	return false
+}
+
+// ResumeLandCommand finishes only a published landing's marker, destination checkout,
+// and release work. Its proofs keep a retry from becoming a second publication attempt.
+func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int {
+	parsed, line, code := usage.Parse(resumeLandGrammar, args)
+	if line != "" {
+		fmt.Fprintln(stderr, line)
+		return code
+	}
+	if len(parsed.Flags) != 5 {
+		fmt.Fprintln(stderr, resumeLandGrammar.Help)
+		return 2
+	}
+	path, err := canonicalPath(parsed.Positionals[0])
+	if err != nil {
+		return landRefusal(stdout, "worktree path is not canonical")
+	}
+	destination, branch, marker, err := resumeLandingDestination(root)
+	if err != nil {
+		return landRefusal(stdout, err.Error())
+	}
+	published, sourceBase, destinationBase, tree, err := resumePublished(root, destination, parsed.Flags["--resume"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
+	if err != nil {
+		return landRefusal(stdout, err.Error())
+	}
+	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], parsed.Flags["--spec"])
+	if err != nil {
+		return landRefusal(stdout, err.Error())
+	}
+	if !active {
+		if _, err := terminalResumeReceipt(root, path, parsed.Flags["--request"]); err != nil {
+			return landRefusal(stdout, err.Error())
+		}
+	}
+	if destination == published {
+		if err := advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
+			return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "marker")
+		}
+	} else if marker == "" || !git.OK("-C", root, "merge-base", "--is-ancestor", published, marker) {
+		return landRefusal(stdout, "project-green marker is absent, behind, or divergent from the published landing")
+	}
+	if err := reconcileLanding(root, destination); err != nil {
+		return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "reconcile")
+	}
+	if !active {
+		fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=already-complete}\n", sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree)
+		return 0
+	}
+	if releaseLandingAssignment(root, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
+		return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "release")
+	}
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=released}\n", sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree)
+	return 0
+}
+
+func terminalResumeReceipt(root, path, request string) (intent.CleanupReceipt, error) {
+	repo, target, err := cleanupIdentity(root, path)
+	if err != nil {
+		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
+	}
+	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, target, requestDigest(request))
+	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) {
+		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
+	}
+	return receipt, nil
+}
+
+func resumeLandingDestination(root string) (string, string, string, error) {
+	branch, ok := git.ResolvedDefault(root)
+	if !ok {
+		return "", "", "", errors.New("default branch is unresolved")
+	}
+	current, err := git.CheckedOutBranch(root)
+	if err != nil || current != branch {
+		return "", "", "", errors.New("landing checkout is not attached to the default branch")
+	}
+	// A published ref can lead its un-reconciled index after a process interruption;
+	// unstaged changes are instead caller work and must not be overwritten by resume.
+	if !git.OK("-C", root, "diff", "--quiet") {
+		return "", "", "", errors.New("landing destination has unstaged changes")
+	}
+	destination, err := git.Output("-C", root, "rev-parse", "refs/heads/"+branch+"^{commit}")
+	if err != nil {
+		return "", "", "", errors.New("landing destination has no commit")
+	}
+	marker, err := landingMarker(root, branch, destination)
+	if err != nil {
+		return "", "", "", err
+	}
+	return destination, branch, marker, nil
+}
+
+func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assignment, bool, error) {
+	a, found, err := intent.FindAssignmentForRequest(root, request)
+	if err != nil {
+		return intent.Assignment{}, false, err
+	}
+	if !found {
+		return intent.Assignment{}, false, nil
+	}
+	if (a.State != intent.StateActive && a.State != intent.StateCleanupPending) || a.Worktree != path {
+		return intent.Assignment{}, false, errors.New("request, assignment, or path mismatch")
+	}
+	evidence, markerErr := validateOwnerMarker(root, path)
+	if markerErr != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree || evidence.registration.BranchRef != a.Branch || !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
+		return intent.Assignment{}, false, errors.New("owner marker or assignment branch mismatch")
+	}
+	if _, err := landingSource(root, a, base, tip, slug); err != nil {
+		return intent.Assignment{}, false, err
+	}
+	return a, true, nil
+}
+
+func resumePublished(root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {
+	published, err = git.Output("-C", root, "rev-parse", "--verify", value+"^{commit}")
+	if err != nil || published != value {
+		return "", "", "", "", errors.New("published commit is not an exact commit identity")
+	}
+	if !git.OK("-C", root, "merge-base", "--is-ancestor", published, destination) {
+		return "", "", "", "", errors.New("published commit is not reachable from the destination")
+	}
+	parents, err := git.Output("-C", root, "rev-list", "--parents", "-n", "1", published)
+	if err != nil {
+		return "", "", "", "", errors.New("published commit parents are unreadable")
+	}
+	parts := strings.Fields(parents)
+	if len(parts) != 3 || parts[2] != source {
+		return "", "", "", "", errors.New("published commit does not authenticate the reviewed source parent")
+	}
+	destinationBase = parts[1]
+	sourceBase, err = git.Output("-C", root, "rev-parse", "--verify", base+"^{commit}")
+	if err != nil || sourceBase != base || !git.OK("-C", root, "merge-base", "--is-ancestor", sourceBase, source) {
+		return "", "", "", "", errors.New("review base does not authenticate the published source")
+	}
+	specPath := resumeSpecPath(slug)
+	staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
+	implemented, implementedErr := spec.Implemented(staged)
+	publishedSpec, publishedErr := git.Raw("-C", root, "show", published+":"+specPath)
+	if stagedErr != nil || implementedErr != nil || publishedErr != nil || !bytes.Equal(implemented, publishedSpec) {
+		return "", "", "", "", errors.New("published commit does not carry the source staged spec transition")
+	}
+	tree, err = git.Output("-C", root, "rev-parse", published+"^{tree}")
+	if err != nil {
+		return "", "", "", "", errors.New("published tree is unreadable")
+	}
+	return published, sourceBase, destinationBase, tree, nil
+}
+
+func resumeSpecPath(slug string) string {
+	if strings.ContainsRune(slug, '/') {
+		return filepath.ToSlash(filepath.Clean(slug))
+	}
+	return "specs/" + strings.TrimSuffix(slug, ".md") + "/spec.md"
+}
+
+func resumeIncomplete(stdout io.Writer, base, source, destinationBase, published, tree, step string) int {
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=incomplete:%s}\n", base, source, destinationBase, published, tree, step)
+	return 1
 }
 
 type landingSourceFact struct {
