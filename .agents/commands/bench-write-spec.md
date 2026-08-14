@@ -16,10 +16,9 @@ done.
 Close by showing the approval table for user stories, seams with diagrams,
 acceptance coverage, and out of scope. The spec carries `Status: staged`
 (staged → implemented at the green gate → promote-then-delete on merge). Stop
-for sign-off, then continue into `/bench-implement-spec` only to slice and win
-approval for the tickets. After that review, recommend a fresh mid-tier session
-to build one retained integration source, review its frozen base and tip, and
-hand the accepted source to `bench worktree land`.
+for sign-off, then recommend a fresh mid-tier build session on one retained
+integration source; review its frozen base and tip, and hand the accepted source
+to `bench worktree land`.
 
 ## Entry contract
 
@@ -156,6 +155,12 @@ pauses for reviewer approval under `craft-line`.
    observed reds may justify a top-tier pass, but the escalation pauses for
    reviewer approval. The verdict is advisory; sign-off stays with the
    reviewer.
+
+10. **Slice the implementation tickets.** After the falsification review
+    completes with its advisory verdict, charge `craft-tickets` and write the
+    breakdown under `specs/<slug>/tickets/`. Carry its numbered title,
+    `Blocked by:`, and delivered outcome list into the approval table so the
+    spec and tickets receive one sign-off.
 
 ## Template
 

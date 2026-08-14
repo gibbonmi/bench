@@ -1,6 +1,6 @@
 ---
 name: craft-tickets
-description: How to break a spec or small change into independently-green tracer tickets with explicit blockers and, for spec-backed builds, one fresh write-delegate charge each. Use at build entry, when deriving tickets from stories and seams, when deciding what lands green next, or when a wide refactor needs an expand–contract sequence.
+description: How to break a spec or small change into independently-green tracer tickets with explicit blockers and, for spec-backed builds, one fresh write-delegate charge each. Use during spec authoring, when deriving tickets from stories and seams, when deciding what lands green next, or when a wide refactor needs an expand–contract sequence.
 index: breaking a build into independently-green tickets
 ---
 

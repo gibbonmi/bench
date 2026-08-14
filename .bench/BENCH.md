@@ -124,7 +124,7 @@ convergence, a call `craft-line` owns.
 ## Workflow
 
 1. `/bench-shape-idea` for a multi-session unresolved decision tree.
-2. `/bench-write-spec` to lock stories, seams, and gate expectations.
+2. `/bench-write-spec` to lock stories, seams, and gate expectations, and slice the tickets.
 3. `/bench-implement-spec` to implement at the chosen seams.
 4. `/bench-review-implementation` for semantic review before the final landing.
 5. `/bench-final-check` to gate, commit on green, and report the landing
