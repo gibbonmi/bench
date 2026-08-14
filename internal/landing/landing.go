@@ -356,33 +356,24 @@ func RuntimeIgnoredPath(path string) bool {
 }
 
 func fingerprintStatus(raw []byte) ([]byte, error) {
+	entries, err := benchgit.ParsePorcelainZStrict(raw)
+	if err != nil {
+		return nil, err
+	}
 	var filtered bytes.Buffer
-	for offset := 0; offset < len(raw); {
-		end := bytes.IndexByte(raw[offset:], 0)
-		if end < 0 {
-			return nil, errors.New("malformed checkout status")
-		}
-		end += offset
-		record := raw[offset:end]
-		offset = end + 1
-		if len(record) < 4 || record[2] != ' ' {
-			return nil, errors.New("malformed checkout status")
-		}
-		status, path := record[:2], string(record[3:])
-		if string(status) == "!!" && RuntimeIgnoredPath(path) {
+	for _, entry := range entries {
+		if entry.Status == "" {
+			filtered.WriteString(entry.Path)
+			filtered.WriteByte(0)
 			continue
 		}
-		filtered.Write(record)
-		filtered.WriteByte(0)
-		if status[0] == 'R' || status[0] == 'C' || status[1] == 'R' || status[1] == 'C' {
-			originalEnd := bytes.IndexByte(raw[offset:], 0)
-			if originalEnd < 1 {
-				return nil, errors.New("malformed checkout status")
-			}
-			originalEnd += offset
-			filtered.Write(raw[offset : originalEnd+1])
-			offset = originalEnd + 1
+		if entry.Status == "!!" && RuntimeIgnoredPath(entry.Path) {
+			continue
 		}
+		filtered.WriteString(entry.Status)
+		filtered.WriteByte(' ')
+		filtered.WriteString(entry.Path)
+		filtered.WriteByte(0)
 	}
 	return filtered.Bytes(), nil
 }

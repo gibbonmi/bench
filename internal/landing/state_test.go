@@ -192,6 +192,39 @@ func TestLandPreservesWholeUnnamedFingerprintAndCleansOwnedPaths(t *testing.T) {
 	}
 }
 
+func TestFingerprintStatusRejectsMalformedRecord(t *testing.T) {
+	if _, err := fingerprintStatus([]byte("?? path")); err == nil {
+		t.Fatal("fingerprintStatus accepted unterminated porcelain record")
+	}
+}
+
+func TestFingerprintStatusRejectsEmptyPrimaryPath(t *testing.T) {
+	if _, err := fingerprintStatus([]byte("?? \x00")); err == nil {
+		t.Fatal("fingerprintStatus accepted an empty primary path")
+	}
+}
+
+func TestFingerprintStatusRejectsEmptyRenameSource(t *testing.T) {
+	if _, err := fingerprintStatus([]byte("R  renamed\x00\x00")); err == nil {
+		t.Fatal("fingerprintStatus accepted an empty rename source")
+	}
+}
+
+func TestFingerprintStatusPreservesValidRecord(t *testing.T) {
+	got, err := fingerprintStatus([]byte("?? file\x00"))
+	if err != nil || string(got) != "?? file\x00" {
+		t.Fatalf("fingerprintStatus valid record = %q, %v", got, err)
+	}
+}
+
+func TestFingerprintStatusFiltersOnlyDeclaredRuntimeResidue(t *testing.T) {
+	raw := []byte("!! .logs/build\x00!! cache/output\x00")
+	got, err := fingerprintStatus(raw)
+	if err != nil || string(got) != "!! cache/output\x00" {
+		t.Fatalf("fingerprintStatus filtering = %q, %v", got, err)
+	}
+}
+
 func fingerprintUnnamedState(t *testing.T, root string) unnamedFingerprint {
 	t.Helper()
 	return unnamedFingerprint{

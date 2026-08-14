@@ -479,10 +479,12 @@ tree never appear in the gate checkout.
 ## Ownership fences
 
 - `internal/diff/`
+- `internal/git/`
 - `internal/preflight/`
 - `internal/landing/`
 - `internal/worktree/`
 - `internal/intent/`
+- `internal/spec/`
 - `internal/gate/authorization/`
 - `internal/axi/`
 - `internal/usage/`
