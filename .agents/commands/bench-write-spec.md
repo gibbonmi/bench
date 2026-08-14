@@ -86,6 +86,12 @@ pauses for reviewer approval under `craft-line`.
    and `craft-seams` so the outcomes reflect how implementation will be sliced,
    charged, tested, and fenced.
 
+   When the spec will edit gate-enforced prose — anchored clauses, canary
+   fixtures, counted or byte-pinned substrings — read the enforcement
+   surface's content before locking rows: every fixture `EXPECT` and mutation
+   string, and every bespoke check that greps or counts the target files. A
+   claim built from file and fixture names alone ships wrong fixtures.
+
 2. **Derive the engineering seams.** Reconcile the decision source with the
    current repo. Prefer an existing seam and use the highest seam that
    exercises real behavior; fewer seams are better. Use `craft-seams`. State
