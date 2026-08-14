@@ -220,11 +220,18 @@ func resumeDestructiveDestinationState(root, destination, published, destination
 		return errors.New("landing destination status is malformed")
 	}
 	staged := false
+	allowedIgnored, allowanceKnown := false, false
 	for _, entry := range entries {
 		switch entry.Status {
 		case "":
 			continue
 		case "!!":
+			if !allowanceKnown {
+				allowedIgnored, allowanceKnown = ignoredResidueDeclared(root), true
+			}
+			if allowedIgnored {
+				continue
+			}
 			return errors.New("landing destination has ignored residue")
 		case "??":
 			return errors.New("landing destination has untracked collisions")
@@ -238,6 +245,19 @@ func resumeDestructiveDestinationState(root, destination, published, destination
 		return errors.New("landing destination has staged changes")
 	}
 	return nil
+}
+
+// ignoredResidueDeclared reports whether the destination's ignored residue sits
+// entirely inside its declared build outputs. Resume applies the same allowance the
+// first run did, so a landing that validly proceeded with declared outputs and then
+// failed at release can still be completed rather than being permanently stuck.
+func ignoredResidueDeclared(root string) bool {
+	ignored, _, ignoredErr := inventoryIgnored(root, false)
+	declared, _, declarationErr := loadBuildOutputs(root)
+	if ignoredErr != nil || declarationErr != nil {
+		return false
+	}
+	return ignoredWithinLandingAllowance(ignored, declared)
 }
 
 func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assignment, bool, error) {

@@ -295,10 +295,16 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 		{name: "PL30", later: true},
 	} {
 		for _, tc := range []struct {
-			name  string
-			setup func(*testing.T, string)
+			name    string
+			allowed bool
+			setup   func(*testing.T, string)
 		}{
 			{name: "clean"},
+			{name: "declared ignored output", allowed: true, setup: func(t *testing.T, root string) {
+				mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("dist/\n"), 0o644)
+				mustMkdirAll(t, filepath.Join(root, "dist"), 0o755)
+				mustWrite(t, filepath.Join(root, "dist", "out"), []byte("build output\n"), 0o600)
+			}},
 			{name: "staged changes", setup: func(t *testing.T, root string) {
 				mustWrite(t, filepath.Join(root, "staged.txt"), []byte("staged\n"), 0o600)
 				gitRun(t, root, "add", "staged.txt")
@@ -344,9 +350,9 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				}
 				before := resumeDestinationState(t, root)
 				code, stdout, stderr := land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
-				if tc.setup == nil {
+				if tc.setup == nil || tc.allowed {
 					if code != 0 || !strings.Contains(stdout, "worktree=released}") || stderr != "" {
-						t.Fatalf("clean resume = (%d, %q, %q)", code, stdout, stderr)
+						t.Fatalf("resume = (%d, %q, %q)", code, stdout, stderr)
 					}
 					return
 				}
