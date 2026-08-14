@@ -1078,8 +1078,9 @@
                   question at a time until nothing unresolved still blocks a spec. Decision maps
                   normally come from this phase; the write-spec entry contract owns the narrow
                   recording exception. Shaping runs on the top-tier model, because eliminating
-                  uncertainty is exactly what the smartest model is for; once the map is clear,
-                  the handoff is a fresh mid-tier session by default.</p>
+                  uncertainty is exactly what the smartest model is for; once the map is clear, the
+                  session holding that decision source authors the spec and tickets at whatever tier
+                  it runs.</p>
                 </div>
               </div></div>
             </details>
@@ -1319,19 +1320,12 @@
       <div class="callout">
         <span class="label">When to start a new session, and on which model</span>
         <p>
-          Each phase boundary is also a session boundary, and that's deliberate. A phase
-          leaves behind an artifact written for a reader with no memory (a decision map, a
-          spec, a reviewed branch), so the next phase starts fresh and reads the artifact
-          instead of dragging along a long conversation. The handoff out of shaping is the
-          one to internalize: shaping runs on the smartest model available, because its
-          whole job is to eliminate uncertainty, and by the time it finishes, the session
-          is carrying a large and expensive context. Writing the spec then starts clean on
-          a mid-tier session. This matters because specs and code are the two most
-          token-intensive things an agent produces; neither belongs on the top model by
-          default. The spec is written on the mid tier from the finished decision map now
-          co-located with it as settled provenance, and
-          the build is orchestrated on the mid tier with cheap-tier work at known seams,
-          escalating a stage only where a seam is genuinely uncertain.
+          A durable phase artifact makes a session boundary safe, but does not require one.
+          The session holding a ready decision source authors the spec and tickets at whatever
+          tier it runs, retaining the reviewed intent while it turns that source into engineering
+          seams, coverage, and an approved breakdown. After ticket approval, implementation
+          starts in a fresh mid-tier session: it orchestrates cheap-tier work at known seams and
+          escalates a stage only where a seam is genuinely uncertain.
         </p>
       </div>
 

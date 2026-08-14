@@ -328,12 +328,13 @@ escalation.
   leverage override in `craft-line`: guidance prose compounds through every
   session that loads it while the edit costs few tokens. The `craft-skills` and
   `craft-adr` skills apply. Spend here.
-- **Spec authoring** → **mid model; fresh build session after ticket slicing**.
+- **Spec and ticket authoring** → **the session holding the decision source, at
+  whatever tier it runs**.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
-  map, a reviewer-confirmed current conversation, or a named reviewed artifact, then
-  derives engineering seams, tests, coverage, hostile-input attachment, and
-  gate attachment from that source and the current tree. Top + high remains a
-  reviewer-approved escalation. Distinct from the doc-authoring leverage
+  map, a reviewer-confirmed current conversation, or a named reviewed artifact,
+  and authors the spec and tickets from that source and the current tree. Top +
+  high remains a reviewer-approved escalation. After ticket approval, a fresh
+  mid-tier session starts the build. Distinct from the doc-authoring leverage
   override above: that spends the top tier on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.

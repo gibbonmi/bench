@@ -65,8 +65,8 @@ engineering plan.
 
 ## Who runs this phase
 
-The mid tier authors ordinary specs and carries their decision context through
-reviewed ticket slicing. A same-session current-conversation source is
+The session holding the decision source authors the spec and tickets at whatever
+tier it runs. A same-session current-conversation source is
 authorized by the entry contract, not by inherited memory: verify the reviewer
 confirmation and write its provenance line. The fresh implementation session
 starts only after ticket approval. Top tier remains an explicit escalation that
