@@ -10,8 +10,8 @@ If there's no spec, the change must fall under the lighter-path threshold in
 `.bench/BENCH.md`'s "Right-size the process" paragraph, or route to
 `/bench-write-spec` first.
 
-If a spec-backed run has no `specs/<slug>/tickets/` directory, return to
-`/bench-write-spec`; ticket slicing and approval belong there.
+If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no
+ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
 
 ## Declare the line, validate the tickets, route the venue
 
