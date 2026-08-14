@@ -116,6 +116,13 @@ raw `git add` standing in for `bench commit`) proves nothing about the accused
 path: without the real repro, dismiss the entry as unreproduced, or re-park it
 with the missing repro named as its graduation trigger.
 
+For a drained item that meets the light-path observables, offer the reviewer
+"implement now" instead of a `ROADMAP.md` row: write its one ticket file, spawn a
+write-delegate charged with that ticket under `craft-delegate` isolation and
+`craft-line` routing, then verify the returned diff in the main session against
+the ticket's acceptance rows and the gate. Items needing a reviewer decision, a
+new seam, or spec-level design still graduate to `ROADMAP.md`.
+
 ## 6. Classify every run; restructure on request
 
 While walking the rows, classify each as a fix (a defect in existing
@@ -168,14 +175,17 @@ approval, commit on green. Never commit the drain without that approval; a
 standing batch approval (the AGENTS.md rule) counts, with contestable calls
 flagged for post-hoc veto.
 
-Two constraints shape that single commit. When the pass retires a spec, the
-commit subject **ends with** `spec-retire: <slug>` — that suffix is the exact
-grammar `bench spec history` matches, so a subject that merely mentions the slug
-loses the retirement evidence a later run's shipped-row check reads. The suffix
-carries one slug, so a pass retiring two or more specs takes one extra commit
-per additional slug and says so in the exit; that is rare, and correctness of
-the history query outranks the saved gate. And the handoff is written last,
-immediately before the commit: its pin block names the pre-commit HEAD by
+Three constraints shape the drain's commits. An item completed through
+"implement now" lands as its own commit on green before the drain's batch commit;
+this is the second exception to the one-batch-commit rule, beside the extra
+per-spec commits required when one pass retires two or more specs. When the pass
+retires a spec, the commit subject **ends with** `spec-retire: <slug>` — that suffix
+is the exact grammar `bench spec history` matches, so a subject that merely
+mentions the slug loses the retirement evidence a later run's shipped-row check
+reads. The suffix carries one slug, so a pass retiring two or more specs takes
+one extra commit per additional slug and says so in the exit; that is rare, and
+correctness of the history query outranks the saved gate. And the handoff is
+written last, immediately before the commit: its pin block names the pre-commit HEAD by
 construction, which is correct rather than stale — `bench status` dates the
 handoff by the commit that wrote it, and the tree wins wherever the two
 disagree.
