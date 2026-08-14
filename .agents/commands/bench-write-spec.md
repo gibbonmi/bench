@@ -148,7 +148,13 @@ pauses for reviewer approval under `craft-line`.
    against `craft-tickets`. Each loop repeats author-fix/re-review uncapped until
    no blocking findings — a recorded reviewer exception to the declared
    iteration cap — with every round reported in one line. The loop verdicts stay
-   advisory; reviewer sign-off remains the hard stop.
+   advisory; reviewer sign-off remains the hard stop. A finding blocks only
+   when it changes observable behavior, an ownership fence, or the ticket
+   graph; a round returning only prose or accounting findings is the
+   acceptance round — fold those fixes into the acceptance instead of another
+   round. A revision may not add a promise beyond the decision source unless
+   a blocking finding demands it; the review flags an unflagged addition for
+   removal rather than demanding rows for it.
 
    `--reviewer <tier-or-model> [effort]` overrides both loop delegates: a tier
    resolves through the invoking harness's own `.bench/lines.env` column
@@ -166,7 +172,10 @@ pauses for reviewer approval under `craft-line`.
    mostly not observed, and — where the stories partition into disjoint package
    or fence sets — could a narrower capability ship
    on its own gate? Apply `craft-spec`'s named
-   `Bootstrap authority before execution` rule.
+   `Bootstrap authority before execution` rule. The degenerate standard is
+   the cheapest plausible wrong implementation — a degenerate that needs
+   deliberate contrivance is the build's mutation-probe target, never a new
+   spec row.
 
 10. **Slice the implementation tickets.** After loop 1 accepts, charge
     `craft-tickets` and write the breakdown under `specs/<slug>/tickets/`. Carry
