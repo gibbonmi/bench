@@ -20,9 +20,9 @@ minimum to pass its own tests, then stop. So:
   the signed-off seam without a second reviewer gate. At those seams the test target is
   external — I chose the seam and the behavior — so passing the test means
   matching my spec, not the agent's guess.
-- Light-path work has no spec sign-off, so it stops before its first TDD test
-  and presents its seam for reviewer confirmation, with a one-clause why. A
-  confirmed seam then carries the same external-target authority.
+- Light-path work names the test seam in its ticket file and starts without a live
+  confirmation stop; the reviewer can veto the seam post-hoc. The right-size
+  table's standing approval gives the named seam external-target authority.
 - Off the marked seams, write the code and let the gate catch regressions —
   remembering the gate only catches what some test observes. If off-seam code
   carries behavior no seam can observe, that is a seam-set defect: surface it,

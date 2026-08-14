@@ -138,7 +138,7 @@ focused regression checks, then the gate.
 
 | Observable | Route |
 |---|---|
-| Decomposes to one independently-green ticket and crosses no declared seam | Light path: charge `craft-tickets`, write the one ticket, then implement it without a spec. This table is the standing approval to skip the spec phase; the ticket still rides the session's existing approval surface. |
+| Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template), then implement it inline in this session — no breakdown-approval pause, write-delegate, or worktree. This table is the standing approval to skip the spec phase; gate and commit on green. |
 | Either observable is false | Normal full workflow. |
 
 Reviewed spec-backed implementation keeps one retained integration source:
