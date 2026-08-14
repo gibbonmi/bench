@@ -459,6 +459,22 @@ func MovementChecked(root string, read func(MovementSnapshot) (kind, hint string
 	return MovementResult{}
 }
 
+// MovementCheckedRetry is the movement-retry policy every drift-sensitive read shares:
+// one retry when the only thing that failed was repository movement, then the second
+// attempt's answer stands — including its terminal drift hint, which no caller spells
+// for itself. A read failure is never retried, so a caller cannot turn a broken read
+// into a drift refusal.
+func MovementCheckedRetry(root string, read func(MovementSnapshot) (kind, hint string)) MovementResult {
+	var result MovementResult
+	for attempt := 0; attempt < 2; attempt++ {
+		result = MovementChecked(root, read)
+		if result.Kind != "" || result.DriftKind == "" {
+			return result
+		}
+	}
+	return result
+}
+
 // ResolveSourceRange resolves base against the snapshot's captured source tip.
 func (snapshot MovementSnapshot) ResolveSourceRange(base string) (SourceRange, string, string) {
 	return ResolveSourceRange(snapshot.root, base, snapshot.Facts.Head)
@@ -549,23 +565,18 @@ func Command(args []string) (string, int) {
 	}
 
 	invocation := append([]string{"diff"}, args...)
-	for attempt := 0; attempt < 2; attempt++ {
-		out, drift, driftHint, errKind, errHint := renderAttempt(root, hasCommit, commitArg, hasBase, baseArg, full)
-		if errKind != "" {
-			return toon.Errorf(errKind, errHint) + "\n", 1
-		}
-		if drift == "" {
-			return out, 0
-		}
-		if attempt == 1 {
-			help, err := axi.RenderHelp([]axi.Action{axi.RetryDiff(invocation)})
-			if err != nil {
-				return toon.RenderError(err) + "\n", 1
-			}
-			return toon.Errorf("snapshot drift", driftHint) + "\n" + help, 1
-		}
+	out, drift, driftHint, errKind, errHint := renderAttempt(root, hasCommit, commitArg, hasBase, baseArg, full)
+	if errKind != "" {
+		return toon.Errorf(errKind, errHint) + "\n", 1
 	}
-	return toon.Errorf("snapshot drift", "the repository changed while reading") + "\n", 1
+	if drift == "" {
+		return out, 0
+	}
+	help, err := axi.RenderHelp([]axi.Action{axi.RetryDiff(invocation)})
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return toon.Errorf("snapshot drift", driftHint) + "\n" + help, 1
 }
 
 func renderAttempt(root string, hasCommit bool, commitArg string, hasBase bool, baseArg string, full bool) (out, drift, driftHint, errKind, errHint string) {
@@ -578,7 +589,7 @@ func renderAttempt(root string, hasCommit bool, commitArg string, hasBase bool, 
 		out, errKind, errHint := renderCommit(root, dr, full)
 		return out, "", "", errKind, errHint
 	}
-	result := MovementChecked(root, func(snapshot MovementSnapshot) (kind, hint string) {
+	result := MovementCheckedRetry(root, func(snapshot MovementSnapshot) (kind, hint string) {
 		if hasBase {
 			dr, kind, hint = resolveExplicitRange(root, baseArg, snapshot.Facts.Head)
 		} else {

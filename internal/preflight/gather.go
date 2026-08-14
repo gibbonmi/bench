@@ -40,49 +40,44 @@ var fencesEndRe = regexp.MustCompile(`^#{2,} `)
 // why no Facts value can be trusted. Exactly one of the two return values is non-zero.
 func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapFailure) {
 	if len(explicitBase) > 0 && explicitBase[0] != "" {
-		for attempt := 0; attempt < 2; attempt++ {
-			var gathered Facts
-			var gatherFailure *BootstrapFailure
-			result := diff.MovementChecked(root, func(snapshot diff.MovementSnapshot) (string, string) {
-				var err error
-				var resolveKind, resolveHint string
-				source, resolveKind, resolveHint := snapshot.ResolveSourceRange(explicitBase[0])
-				if resolveKind != "" {
-					return resolveKind, resolveHint
-				}
-				paths, err := snapshot.SourceSnapshotPaths(source)
-				if err != nil {
-					return "changed files not readable", err.Error()
-				}
-				if mode == "review" {
-					dirty, statusErr := git.Output("-C", root, "status", "--porcelain")
-					if statusErr != nil {
-						return "source status unreadable", statusErr.Error()
-					}
-					if dirty != "" {
-						return "source not clean", "review source has uncommitted changes"
-					}
-				}
-				gathered, gatherFailure = gather(root, mode, slug, &source, paths)
-				if gatherFailure != nil {
-					return gatherFailure.Kind, gatherFailure.Hint
-				}
-				return "", ""
-			})
-			if result.Kind != "" {
-				if gatherFailure != nil {
-					return Facts{}, gatherFailure
-				}
-				return Facts{}, &BootstrapFailure{result.Kind, result.Hint}
+		var gathered Facts
+		var gatherFailure *BootstrapFailure
+		result := diff.MovementCheckedRetry(root, func(snapshot diff.MovementSnapshot) (string, string) {
+			var err error
+			var resolveKind, resolveHint string
+			source, resolveKind, resolveHint := snapshot.ResolveSourceRange(explicitBase[0])
+			if resolveKind != "" {
+				return resolveKind, resolveHint
 			}
-			if result.DriftKind == "" {
-				return gathered, nil
+			paths, err := snapshot.SourceSnapshotPaths(source)
+			if err != nil {
+				return "changed files not readable", err.Error()
 			}
-			if attempt == 1 {
-				return Facts{}, &BootstrapFailure{"snapshot drift", result.DriftHint}
+			if mode == "review" {
+				dirty, statusErr := git.Output("-C", root, "status", "--porcelain")
+				if statusErr != nil {
+					return "source status unreadable", statusErr.Error()
+				}
+				if dirty != "" {
+					return "source not clean", "review source has uncommitted changes"
+				}
 			}
+			gathered, gatherFailure = gather(root, mode, slug, &source, paths)
+			if gatherFailure != nil {
+				return gatherFailure.Kind, gatherFailure.Hint
+			}
+			return "", ""
+		})
+		if result.Kind != "" {
+			if gatherFailure != nil {
+				return Facts{}, gatherFailure
+			}
+			return Facts{}, &BootstrapFailure{result.Kind, result.Hint}
 		}
-		return Facts{}, &BootstrapFailure{"snapshot drift", "the repository changed while reading; retry the exact invocation"}
+		if result.DriftKind != "" {
+			return Facts{}, &BootstrapFailure{"snapshot drift", result.DriftHint}
+		}
+		return gathered, nil
 	}
 	return gather(root, mode, slug, nil, nil)
 }
