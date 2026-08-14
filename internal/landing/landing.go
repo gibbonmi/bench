@@ -303,7 +303,7 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 		return ReviewedResult{}, errors.New("reviewed source checkout changed")
 	}
 	if fingerprint, fingerprintErr := CheckoutFingerprint(r.Root); fingerprintErr != nil || fingerprint != r.DestinationFingerprint {
-		return ReviewedResult{}, errors.New("landing destination checkout changed")
+		return ReviewedResult{}, errors.New("landing destination checkout changed; rerun the landing to recompose onto the moved destination")
 	}
 	commit, err := output(r.Root, "commit-tree", tree, "-p", destination, "-p", source, "-m", r.Message)
 	if err != nil {
@@ -635,7 +635,7 @@ func destinationUpdateFailure(root, ref, expected string, updateErr error) error
 		return fmt.Errorf("read destination after failed ref update: %w", err)
 	}
 	if actual != expected {
-		return fmt.Errorf("destination compare-and-swap refused: %w", updateErr)
+		return fmt.Errorf("destination compare-and-swap refused; rerun the landing to recompose onto the moved destination: %w", updateErr)
 	}
 	return updateErr
 }
