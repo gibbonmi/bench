@@ -38,12 +38,19 @@ type Fact struct {
 	Slug, Path, Status, RoadmapID string
 }
 
-// LiveSpecPath normalizes a live spec slug or explicit path to its repository-relative path.
+// LiveSpecPath normalizes a live spec slug or explicit path to its repository-relative
+// path. The `.md` trim is a CLI-argument affordance — `bench <verb> foo.md` means the
+// spec `foo` — so it belongs here and never to an enumerated directory name.
 func LiveSpecPath(arg string) string {
 	if strings.ContainsRune(arg, '/') {
 		return filepath.ToSlash(filepath.Clean(arg))
 	}
-	return filepath.ToSlash(filepath.Join("specs", strings.TrimSuffix(arg, ".md"), "spec.md"))
+	return specPath(strings.TrimSuffix(arg, ".md"))
+}
+
+// specPath is the folder-spec layout for one literal directory name, taken verbatim.
+func specPath(name string) string {
+	return filepath.ToSlash(filepath.Join("specs", name, "spec.md"))
 }
 
 // LiveSpecSlug returns the slug named by a live spec slug or explicit path.
@@ -119,7 +126,7 @@ func Facts(root string) ([]Fact, error) {
 		}
 		f := Fact{
 			Slug: entry.Name(),
-			Path: LiveSpecPath(entry.Name()),
+			Path: specPath(entry.Name()),
 		}
 		c := bounds.Classify(path, bounds.ControlRecordLimit)
 		if c.State == bounds.StateParsed {

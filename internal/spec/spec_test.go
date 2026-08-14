@@ -289,6 +289,13 @@ func TestFactsEnumeratesFolderCandidates(t *testing.T) {
 			},
 			want: []Fact{{Slug: "linked", Path: "specs/linked/spec.md", Status: "staged"}},
 		},
+		{
+			name: "keeps a .md-suffixed directory name in the derived path",
+			setup: func(t *testing.T, root string) {
+				writeFolderSpec(t, root, "x.md", "Status: staged\n")
+			},
+			want: []Fact{{Slug: "x.md", Path: "specs/x.md/spec.md", Status: "staged"}},
+		},
 	}
 
 	for _, tc := range cases {
