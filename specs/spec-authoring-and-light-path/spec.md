@@ -355,6 +355,7 @@ reading the enforcement surface.
 - `internal/canary/inventory_test.go`
 - `internal/conformance/fixture_bite_test.go`
 - `tests/canary/workflow-guidance-anchors/`
+- `reviews/spec-authoring-and-light-path.md`
 - `specs/spec-authoring-and-light-path/`
 
 ## Out of scope
