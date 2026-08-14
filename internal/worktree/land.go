@@ -146,7 +146,7 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 		return landRefusal(stdout, err.Error())
 	}
 	if !active {
-		if _, err := terminalResumeReceipt(root, path, parsed.Flags["--request"]); err != nil {
+		if _, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"]); err != nil {
 			return landRefusal(stdout, err.Error())
 		}
 	}
@@ -171,13 +171,13 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	return 0
 }
 
-func terminalResumeReceipt(root, path, request string) (intent.CleanupReceipt, error) {
+func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {
 	repo, target, err := cleanupIdentity(root, path)
 	if err != nil {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}
 	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, target, intent.RequestDigest(request))
-	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) {
+	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) || receipt.Branch == "" || !strings.HasSuffix(receipt.Branch, "/"+receipt.Tracked) || receipt.BranchOID != sourceTip {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}
 	return receipt, nil

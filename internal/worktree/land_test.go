@@ -200,6 +200,91 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	}
 }
 
+func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
+	binary := buildLandingBinary(t)
+	request := "public-resume-identity"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "private/output", "dist/")
+	land := func(args ...string) (int, string, string) {
+		var stdout, stderr bytes.Buffer
+		cmd := exec.Command(binary, append([]string{"worktree", "land"}, args...)...)
+		cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+		return exitCode(cmd.Run()), stdout.String(), stderr.String()
+	}
+
+	if code, stdout, stderr := land("--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path); code != 1 || !strings.Contains(stdout, "worktree=incomplete:release}") || stderr == "" {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout, stderr)
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
+	destination := gitOutput(t, root, "rev-parse", "main")
+	for _, tc := range []struct {
+		name, published, source string
+	}{
+		{name: "wrong-published", published: destination, source: tip},
+		{name: "wrong-source", published: published, source: base},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			code, stdout, stderr := land("--resume", tc.published, "--request", request, "--base", base, "--source-tip", tc.source, "--spec", "x", creation.Path)
+			if code != 1 || !strings.HasPrefix(stdout, "refused{detail=") || stderr != "" {
+				t.Fatalf("resume refusal = (%d, %q, %q)", code, stdout, stderr)
+			}
+			if got := gitOutput(t, root, "rev-parse", "main"); got != destination {
+				t.Fatalf("resume moved destination: got %s want %s", got, destination)
+			}
+			if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+				t.Fatalf("resume moved project-green: got %s want %s", got, published)
+			}
+		})
+	}
+	if err := os.Remove(filepath.Join(creation.Path, "private", "output")); err != nil {
+		t.Fatal(err)
+	}
+	if code, stdout, stderr := land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path); code != 0 || !strings.Contains(stdout, "worktree=released}") || stderr != "" {
+		t.Fatalf("active resume = (%d, %q, %q)", code, stdout, stderr)
+	}
+	repo, _, err := cleanupIdentity(root, creation.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, creation.Path, intent.RequestDigest(request))
+	if err != nil || !found || receipt.Branch != creation.Assignment.Branch || receipt.BranchOID != tip {
+		t.Fatalf("terminal receipt = %#v, found=%t error=%v", receipt, found, err)
+	}
+	checkout := gitOutput(t, root, "status", "--porcelain=v1", "--untracked-files=all")
+	for _, tc := range []struct {
+		name   string
+		mutate func(*intent.CleanupReceipt)
+	}{
+		{name: "wrong-branch", mutate: func(receipt *intent.CleanupReceipt) {
+			receipt.Branch = intent.AssignmentBranchRef(strings.Repeat("a", 32), strings.Repeat("b", 32))
+		}},
+		{name: "wrong-source", mutate: func(receipt *intent.CleanupReceipt) {
+			receipt.BranchOID = base
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			forged := receipt
+			tc.mutate(&forged)
+			if err := intent.PutCleanupReceipt(root, forged); err != nil {
+				t.Fatal(err)
+			}
+			code, stdout, stderr := land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
+			if got := gitOutput(t, root, "rev-parse", "main"); got != destination {
+				t.Fatalf("mismatched receipt moved destination: got %s want %s", got, destination)
+			}
+			if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+				t.Fatalf("mismatched receipt moved project-green: got %s want %s", got, published)
+			}
+			if got := gitOutput(t, root, "status", "--porcelain=v1", "--untracked-files=all"); got != checkout {
+				t.Fatalf("mismatched receipt changed checkout: got %q want %q", got, checkout)
+			}
+			if code != 1 || !strings.Contains(stdout, "missing-terminal-receipt") || stderr != "" {
+				t.Fatalf("mismatched receipt resume = (%d, %q, %q)", code, stdout, stderr)
+			}
+		})
+	}
+}
+
 func TestResumeLandCommandRefusesNonAncestorReviewBaseWithoutMutation(t *testing.T) {
 	binary := buildLandingBinary(t)
 	request := "resume-nonancestor-base"

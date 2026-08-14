@@ -269,8 +269,12 @@ var restoreClean = func(wt string) {
 var cleanupTransactionBoundary Fault
 var cleanupLockAttempt = func(string) {}
 
-func receiptFromRelease(repo, request string, assignment intent.Assignment, action string) intent.CleanupReceipt {
-	return intent.CleanupReceipt{Schema: intent.CleanupReceiptSchema, Repo: repo, Operation: releaseOperation, Target: assignment.Worktree, Fingerprint: request, State: intent.ReceiptComplete, Phase: intent.ReceiptPhaseTerminal, Action: action, Tracked: assignment.ID, Recovery: "none", Detail: string(assignment.State), Owned: true}
+func receiptFromRelease(repo, request string, assignment intent.Assignment, action, branch, branchOID string) intent.CleanupReceipt {
+	receipt := intent.CleanupReceipt{Schema: intent.CleanupReceiptSchema, Repo: repo, Operation: releaseOperation, Target: assignment.Worktree, Fingerprint: request, State: intent.ReceiptComplete, Phase: intent.ReceiptPhaseTerminal, Action: action, Tracked: assignment.ID, Recovery: "none", Detail: string(assignment.State), Owned: true}
+	if branch != "" && branchOID != "" {
+		receipt.Branch, receipt.BranchOID = branch, branchOID
+	}
+	return receipt
 }
 func ensureRecoveryRef(root string, assignment intent.Assignment, recovery intent.Recovery) error {
 	if current, err := git.Output("-C", root, "show-ref", "--verify", "--hash", recovery.Ref); err == nil {
