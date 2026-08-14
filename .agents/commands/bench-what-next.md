@@ -13,16 +13,23 @@ entries, or `capture/retros/` has pending implementation retros. One run
 reconciles the roadmap against the tree, drains all three capture sources,
 refreshes the recommended sequence, and hands the reviewer one diff to approve.
 
-At entry, invoke `bench roadmap --context --full` exactly once. Its successful schema-3
-snapshot is the complete local evidence for every step below. Accept only
-`context.schema = 3`; every other schema stops the phase before any batch mutation.
-Do not guess recurrence facts from an older schema. If the query fails, stop the
-phase and report its error; manual evidence reconstruction would create a different,
-partial input and is not a fallback.
+At entry, invoke `bench roadmap --context` exactly once. Its successful schema-4
+index is the complete local inventory for every step below: every roadmap row and
+capture unit, each capture path, every true body byte count, and all cross-check
+blocks. Accept only `context.schema = 4`; every other schema stops the phase before
+any batch mutation. Do not guess recurrence facts from an older schema. The index
+proves what exists; targeted fetches and named body reads prove content.
+
+Fetch complete roadmap detail only for rows the reconcile touches with
+`bench roadmap --context --row <ids>`. Read idea, learning, and retro bodies
+from the paths the index names. If the query fails, stop the phase and report its
+error. A targeted fetch or named body read that fails also stops the phase; manual
+evidence reconstruction would create a different, partial input and is not a
+fallback.
 
 Before beginning `## 1. Reconcile first`, read `context.sequence_trusted` from that
 snapshot. When it is false, stop before any batch mutation and report every
-`occurrence_discrepancies` row together with the complete context snapshot. The
+`occurrence_discrepancies` row together with the complete index snapshot. The
 structural evidence remains visible for reviewer diagnosis; do not infer a ledger
 or a sequence from partial sources.
 
@@ -70,9 +77,10 @@ parked in the inbox; partial drains would kill the empty-state trigger.
 
 ## 4. Drain implementation retros
 
-The snapshot's `retros` bodies are the only retro evidence this run reads; do
-not re-read the directory into a second, potentially different snapshot. For
-every actionable recommendation in every body, record one explicit disposition:
+The index is the sole retro inventory this run reads; do not re-enumerate
+`capture/retros/` into a second, potentially different listing. Reading each body
+at the path its index row names is required detail retrieval, not another inventory.
+For every actionable recommendation in every body, record one explicit disposition:
 merge into an existing roadmap row, a new roadmap row, a learning-or-rule
 disposition, or an explicit dismissal with one line of why. When a
 learning-or-rule disposition adds journal material, carry it immediately

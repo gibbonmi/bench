@@ -34,7 +34,7 @@ branch-agnostic. This line is only the binding.)
   `bench commit`, commit-on-green; `--spec <slug>` on the final green landing
   commit is the sole author of the spec's `Status: implemented` flip.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
-  `bench diff`, `bench coverage`, and `bench worktree list`, and the
+  `bench diff`, `bench coverage`, `bench roadmap`, and `bench worktree list`, and the
   shared flat-table TOON emitter behind them). The agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract: TOON stdout,
   definitive empty states, structured errors on stdout, exit 0/1/2. Gate-tested by

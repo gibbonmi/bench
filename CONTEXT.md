@@ -50,6 +50,10 @@ cold session reads this first to avoid drifting the vocabulary.
   assessed open work in priority order, ending in a `## Recommended sequence`
   that names the next actions. Printed with `bench roadmap`. A row leaves when
   the work ships or a reconcile removes it. Not "icebox", not "backlog" — roadmap.
+- **roadmap index / roadmap detail** — schema-4 projections of the **roadmap** and
+  its capture evidence. The index inventories every row and capture unit with
+  true body sizes but no bodies; detail is a complete body fetched for named rows
+  or read from the capture paths the index names. Not a truncated preview.
 - **ideas inbox** — the capture-and-forget sink at `capture/IDEAS.md` (repo root):
   out-of-scope ideas parked with `bench idea`, committing to nothing.
   Append-only, no status or lifecycle; drained to zero into the **roadmap** by

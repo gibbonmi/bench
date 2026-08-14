@@ -77,8 +77,8 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		m := roadmapStartRe.FindStringSubmatch(lines[i])
 		if m == nil {
 			if strings.HasPrefix(lines[i], "**") {
-				raw, n, tr := limited(lines[i], full)
-				failures = append(failures, ParseFailure{RoadmapFile, "malformed roadmap row", raw, n, tr})
+				raw, n := projectBody(lines[i], full)
+				failures = append(failures, ParseFailure{RoadmapFile, "malformed roadmap row", raw, n})
 			}
 			i++
 			continue
@@ -93,8 +93,8 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		}
 		if !closed {
 			rawText := strings.Join(lines[start:i+1], "\n")
-			raw, n, tr := limited(rawText, full)
-			failures = append(failures, ParseFailure{RoadmapFile, "unclosed roadmap heading", raw, n, tr})
+			raw, n := projectBody(rawText, full)
+			failures = append(failures, ParseFailure{RoadmapFile, "unclosed roadmap heading", raw, n})
 			continue
 		}
 		headerJoined := strings.Join(headerParts, "\n")
@@ -107,8 +107,8 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 			i++
 		}
 		bodyRaw := strings.TrimSpace(strings.Join(append([]string{inlineBody}, lines[bodyStart:i]...), "\n"))
-		body, bodyBytes, truncated := limited(bodyRaw, full)
-		r := RoadmapRow{ID: m[1], Title: title, Body: body, BodyBytes: bodyBytes, Truncated: truncated}
+		body, bodyBytes := projectBody(bodyRaw, full)
+		r := RoadmapRow{ID: m[1], Title: title, Body: body, BodyBytes: bodyBytes}
 		rowLines := lines[start:i]
 		joined := strings.Join(rowLines, "\n")
 		if slugs := spec.LiveSpecSlugs([]byte(joined)); len(slugs) > 0 {
@@ -121,7 +121,7 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 			r.OccurrenceKeys, r.OccurrenceCount = keys, count
 		} else {
 			doc.OccurrenceDiscrepancies = append(doc.OccurrenceDiscrepancies, OccurrenceDiscrepancy{Source: RoadmapFile, CaptureUnit: r.ID, Kind: "malformed-ledger", Owner: r.ID, Structural: true})
-			failures = append(failures, ParseFailure{RoadmapFile, "malformed-ledger", "", 0, false})
+			failures = append(failures, ParseFailure{RoadmapFile, "malformed-ledger", "", 0})
 		}
 		doc.Rows = append(doc.Rows, r)
 	}
@@ -176,8 +176,8 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		}
 	}
 	if len(content) > 0 && len(doc.Rows) == 0 && len(failures) == 0 && !hasSection {
-		raw, n, tr := limited(string(content), full)
-		failures = append(failures, ParseFailure{RoadmapFile, noRoadmapRowsReason, raw, n, tr})
+		raw, n := projectBody(string(content), full)
+		failures = append(failures, ParseFailure{RoadmapFile, noRoadmapRowsReason, raw, n})
 	}
 	return doc, failures
 }
@@ -205,12 +205,12 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 		}
 		m := ideaRe.FindStringSubmatch(line)
 		if m == nil {
-			raw, n, tr := limited(line, full)
-			failures = append(failures, ParseFailure{IdeasFile, "malformed idea row", raw, n, tr})
+			raw, n := projectBody(line, full)
+			failures = append(failures, ParseFailure{IdeasFile, "malformed idea row", raw, n})
 			continue
 		}
-		text, n, tr := limited(m[2], full)
-		facts = append(facts, IdeaFact{Date: m[1], Text: text, Body: m[2], Line: i + 1, TextBytes: n, Truncated: tr})
+		text, n := projectBody(m[2], full)
+		facts = append(facts, IdeaFact{Date: m[1], Text: text, Body: m[2], Line: i + 1, TextBytes: n})
 	}
 	return facts, failures, rawLines
 }
@@ -224,7 +224,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 			cd := bounds.ClassifyDir(sourcePath(root, label))
 			s.Sources = append(s.Sources, SourceFact{label, string(cd.State), dirBytes(cd.Entries)})
 			if degradedState(cd.State) {
-				s.Failures = append(s.Failures, ParseFailure{label, string(cd.State) + ": " + cd.Reason, "", 0, false})
+				s.Failures = append(s.Failures, ParseFailure{label, string(cd.State) + ": " + cd.Reason, "", 0})
 			}
 			continue
 		}
@@ -234,7 +234,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 		}
 		s.Sources = append(s.Sources, SourceFact{label, string(c.State), len(c.Data)})
 		if degradedState(c.State) {
-			s.Failures = append(s.Failures, ParseFailure{label, string(c.State) + ": " + c.Reason, "", 0, false})
+			s.Failures = append(s.Failures, ParseFailure{label, string(c.State) + ": " + c.Reason, "", 0})
 		}
 	}
 	retroFacts := retros.Facts(root)
@@ -243,18 +243,17 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 		retroBytes += len(f.Body)
 		body := ""
 		bytes := len(f.Body)
-		truncated := false
 		if f.State == bounds.StateParsed || f.State == bounds.StateEmpty {
-			body, bytes, truncated = limited(string(f.Body), full)
+			body, bytes = projectBody(string(f.Body), full)
 		}
-		s.Retros = append(s.Retros, RetroFact{f.Path, string(f.State), body, bytes, truncated})
+		s.Retros = append(s.Retros, RetroFact{f.Path, string(f.State), body, bytes})
 		if degradedState(f.State) {
-			s.Failures = append(s.Failures, ParseFailure{f.Path, string(f.State) + ": " + f.Reason, "", 0, false})
+			s.Failures = append(s.Failures, ParseFailure{f.Path, string(f.State) + ": " + f.Reason, "", 0})
 		}
 	}
 	s.Sources = append(s.Sources, SourceFact{retros.Directory + "/", string(retroFacts.State), retroBytes})
 	if degradedState(retroFacts.State) && len(retroFacts.Entries) == 0 {
-		s.Failures = append(s.Failures, ParseFailure{retros.Directory + "/", string(retroFacts.State) + ": " + retroFacts.Reason, "", 0, false})
+		s.Failures = append(s.Failures, ParseFailure{retros.Directory + "/", string(retroFacts.State) + ": " + retroFacts.Reason, "", 0})
 	}
 	cacheState := "absent"
 	if gate.Present {
@@ -289,13 +288,13 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	}
 	learningFacts, malformedLearnings := learnings.Parse(data[learnings.JournalPath])
 	for _, e := range learningFacts {
-		body, n, tr := limited(e.Body, full)
-		s.Learnings = append(s.Learnings, LearningFact{Date: e.Date, Title: e.Title, State: e.State, Body: body, Line: e.Line, BodyBytes: n, Truncated: tr})
+		body, n := projectBody(e.Body, full)
+		s.Learnings = append(s.Learnings, LearningFact{Date: e.Date, Title: e.Title, State: e.State, Body: body, Line: e.Line, BodyBytes: n})
 		units = append(units, captureUnit{Source: learnings.JournalPath, CaptureUnit: "line " + strconv.Itoa(e.Line), Body: e.Body})
 	}
 	for _, m := range malformedLearnings {
-		raw, n, tr := limited(m.Raw, full)
-		s.Failures = append(s.Failures, ParseFailure{learnings.JournalPath, m.Reason, raw, n, tr})
+		raw, n := projectBody(m.Raw, full)
+		s.Failures = append(s.Failures, ParseFailure{learnings.JournalPath, m.Reason, raw, n})
 	}
 	for _, retro := range retroFacts.Entries {
 		if retro.State != bounds.StateParsed {

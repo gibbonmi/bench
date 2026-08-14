@@ -1,6 +1,6 @@
 # roadmap-progressive-index
 
-Status: staged
+Status: implemented
 Roadmap: FT198
 
 Decision source: specs/roadmap-progressive-index/decisions/roadmap-progressive-index.md (ready compiled map, Opus-approved 2026-08-13)

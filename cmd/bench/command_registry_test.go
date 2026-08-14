@@ -257,6 +257,11 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 			blocks:        []string{"worktrees", "help"},
 			successMarker: "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
 		},
+		"roadmap": {
+			route: []string{"roadmap"}, successArgv: []string{"roadmap"}, emptyArgv: []string{"roadmap"},
+			blocks:        []string{"roadmap", "board", "sequence", "drain", "help"},
+			successMarker: "roadmap[", emptyMarker: "roadmap[0]{id,title,spec,spec_status,external_trigger,occurrence_count,occurrence_keys}:\n", usage: "usage: bench roadmap", setupSuccess: setupAXIRoadmap, setupEmpty: noSetup,
+		},
 	}
 }
 
@@ -370,6 +375,10 @@ func setupAXIEmptyCoverage(t *testing.T, root string) {
 func setupAXIWorktree(t *testing.T, root string) {
 	linked := filepath.Join(t.TempDir(), "linked")
 	runAXIGit(t, "-C", root, "worktree", "add", "-q", "-b", "fixture-linked", linked)
+}
+
+func setupAXIRoadmap(t *testing.T, root string) {
+	writeAXIFixture(t, filepath.Join(root, "ROADMAP.md"), "**FT1 — fixture.**\n")
 }
 
 func writeAXIFixture(t *testing.T, path, content string) {

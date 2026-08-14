@@ -20,7 +20,7 @@ var contextGrammar = usage.Grammar{
 	Flags: []usage.Flag{{Name: "--context"}, {Name: "--full"}, {Name: "--row", HasValue: true, NoEmptyValue: true}},
 }
 
-// ContextCommand implements the read-only schema-3 AXI roadmap snapshot.
+// ContextCommand implements the read-only schema-4 AXI roadmap snapshot.
 func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int) {
 	parsed, line, code := usage.Parse(contextGrammar, args)
 	if line != "" {
@@ -63,24 +63,14 @@ func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int
 		return toon.Errorf("roadmap context failed", err.Error()) + "\n", 1
 	}
 	if selectRows {
-		// Selector mode needs a full parse to retain selected roadmap bodies, but
-		// never transports complete capture-unit bodies as a side effect.
-		for i := range s.Ideas {
-			s.Ideas[i].Text = ""
-			s.Ideas[i].Truncated = s.Ideas[i].TextBytes > 0
-		}
-		for i := range s.Learnings {
-			s.Learnings[i].Body = ""
-			s.Learnings[i].Truncated = s.Learnings[i].BodyBytes > 0
-		}
-		for i := range s.Retros {
-			s.Retros[i].Body = ""
-			s.Retros[i].Truncated = s.Retros[i].BodyBytes > 0
-		}
+		omitCaptureBodies(&s)
 		for i := range s.Failures {
 			s.Failures[i].Raw = ""
-			s.Failures[i].Truncated = s.Failures[i].RawBytes > 0
 		}
+	}
+	if selectRows {
+		// Selector mode needs a full parse to retain selected roadmap bodies, but
+		// never transports complete capture-unit bodies as a side effect.
 		present := make(map[string]bool, len(s.Roadmap.Rows))
 		for _, row := range s.Roadmap.Rows {
 			present[row.ID] = true
@@ -113,6 +103,18 @@ func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int
 	return out, 0
 }
 
+func omitCaptureBodies(s *ContextSnapshot) {
+	for i := range s.Ideas {
+		s.Ideas[i].Text = ""
+	}
+	for i := range s.Learnings {
+		s.Learnings[i].Body = ""
+	}
+	for i := range s.Retros {
+		s.Retros[i].Body = ""
+	}
+}
+
 func renderContext(s ContextSnapshot) (string, error) {
 	type block struct {
 		name   string
@@ -120,7 +122,7 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows   [][]any
 	}
 	var bs []block
-	bs = append(bs, block{"context", []string{"schema", "full", "sequence_trusted"}, [][]any{{3, s.Full, s.SequenceTrusted}}})
+	bs = append(bs, block{"context", []string{"schema", "full", "sequence_trusted"}, [][]any{{4, s.Full, s.SequenceTrusted}}})
 	rows := make([][]any, len(s.Sources))
 	for i, r := range s.Sources {
 		rows[i] = []any{r.Source, r.State, r.Bytes}
@@ -128,9 +130,9 @@ func renderContext(s ContextSnapshot) (string, error) {
 	bs = append(bs, block{"sources", []string{"source", "state", "bytes"}, rows})
 	rows = nil
 	for _, r := range s.Roadmap.Rows {
-		rows = append(rows, []any{r.ID, r.Title, r.Spec, r.SpecStatus, r.ExternalTrigger, r.Body, r.BodyBytes, r.Truncated, r.OccurrenceCount, r.OccurrenceKeys})
+		rows = append(rows, []any{r.ID, r.Title, r.Spec, r.SpecStatus, r.ExternalTrigger, r.Body, r.BodyBytes, r.OccurrenceCount, r.OccurrenceKeys})
 	}
-	bs = append(bs, block{"roadmap_rows", []string{"id", "title", "spec", "spec_status", "external_trigger", "body", "body_bytes", "truncated", "occurrence_count", "occurrence_keys"}, rows})
+	bs = append(bs, block{"roadmap_rows", []string{"id", "title", "spec", "spec_status", "external_trigger", "body", "body_bytes", "occurrence_count", "occurrence_keys"}, rows})
 	rows = nil
 	for _, r := range s.Roadmap.Sequence {
 		rows = append(rows, []any{r.Rank, r.Text, r.Command})
@@ -138,19 +140,19 @@ func renderContext(s ContextSnapshot) (string, error) {
 	bs = append(bs, block{"roadmap_sequence", []string{"rank", "text", "command"}, rows})
 	rows = nil
 	for _, r := range s.Ideas {
-		rows = append(rows, []any{r.Date, r.Text, r.TextBytes, r.Truncated})
+		rows = append(rows, []any{r.Date, r.Line, r.Text, r.TextBytes})
 	}
-	bs = append(bs, block{"ideas", []string{"date", "text", "text_bytes", "truncated"}, rows})
+	bs = append(bs, block{"ideas", []string{"date", "line", "text", "text_bytes"}, rows})
 	rows = nil
 	for _, r := range s.Learnings {
-		rows = append(rows, []any{r.Date, r.Title, r.State, r.Body, r.BodyBytes, r.Truncated})
+		rows = append(rows, []any{r.Date, r.Line, r.Title, r.State, r.Body, r.BodyBytes})
 	}
-	bs = append(bs, block{"learnings", []string{"date", "title", "state", "body", "body_bytes", "truncated"}, rows})
+	bs = append(bs, block{"learnings", []string{"date", "line", "title", "state", "body", "body_bytes"}, rows})
 	rows = nil
 	for _, r := range s.Retros {
-		rows = append(rows, []any{r.Path, r.State, r.Body, r.BodyBytes, r.Truncated})
+		rows = append(rows, []any{r.Path, r.State, r.Body, r.BodyBytes})
 	}
-	bs = append(bs, block{"retros", []string{"path", "state", "body", "body_bytes", "truncated"}, rows})
+	bs = append(bs, block{"retros", []string{"path", "state", "body", "body_bytes"}, rows})
 	rows = nil
 	for _, r := range s.CaptureOccurrences {
 		rows = append(rows, []any{r.Owner, r.Incident, r.Source, r.CaptureUnit, r.State})
@@ -171,10 +173,14 @@ func renderContext(s ContextSnapshot) (string, error) {
 	bs = append(bs, block{"gate_cache", []string{"present", "state", "pending_status", "status", "cached_tree", "work_tree", "timestamp", "stale"}, s.GateCache})
 	rows = nil
 	for _, r := range s.Failures {
-		rows = append(rows, []any{r.Source, r.Reason, r.Raw, r.RawBytes, r.Truncated})
+		rows = append(rows, []any{r.Source, r.Reason, r.Raw, r.RawBytes})
 	}
-	bs = append(bs, block{"parse_failures", []string{"source", "reason", "raw", "raw_bytes", "truncated"}, rows})
-	bs = append(bs, block{"help", []string{"cmd", "why"}, nil})
+	bs = append(bs, block{"parse_failures", []string{"source", "reason", "raw", "raw_bytes"}, rows})
+	help := [][]any(nil)
+	if !s.Full {
+		help = [][]any{{"bench roadmap --context --row <ID,...>", "request selected complete rows; use bench roadmap --context --full for the complete snapshot"}}
+	}
+	bs = append(bs, block{"help", []string{"cmd", "why"}, help})
 	var out strings.Builder
 	for _, b := range bs {
 		x, e := toon.TableTyped(b.name, b.fields, b.rows)
