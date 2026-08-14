@@ -82,7 +82,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "models", AXI: axiExempt(axiReasonOperational), Run: outputCommand(models.Command)},
 	{Name: "outline", AXI: axiExempt(axiReasonOperational), Run: outputCommand(outline.Command)},
 	{Name: "idea", AXI: axiExempt(axiReasonMutation), Run: outputCommand(roadmap.IdeaCommand)},
-	{Name: "roadmap", AXI: axiExempt(axiReasonOperational), Run: outputCommand(roadmapCommand)},
+	{Name: "roadmap", AXI: axiApprovedRoot, Run: outputCommand(roadmapCommand)},
 	{Name: "tree-hash", AXI: axiExempt(axiReasonPlumbing), Run: outputCommand(treeHash)},
 	{Name: "resolve-model", AXI: axiExempt(axiReasonPlumbing), Run: outputCommand(resolveModel)},
 	{Name: "worktree-pool", AXI: axiExempt(axiReasonPlumbing), Run: outputCommand(worktree.PoolCommand)},

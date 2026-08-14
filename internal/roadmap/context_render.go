@@ -176,7 +176,11 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows = append(rows, []any{r.Source, r.Reason, r.Raw, r.RawBytes})
 	}
 	bs = append(bs, block{"parse_failures", []string{"source", "reason", "raw", "raw_bytes"}, rows})
-	bs = append(bs, block{"help", []string{"cmd", "why"}, nil})
+	help := [][]any(nil)
+	if !s.Full {
+		help = [][]any{{"bench roadmap --context --row <ID,...>", "request selected complete rows; use bench roadmap --context --full for the complete snapshot"}}
+	}
+	bs = append(bs, block{"help", []string{"cmd", "why"}, help})
 	var out strings.Builder
 	for _, b := range bs {
 		x, e := toon.TableTyped(b.name, b.fields, b.rows)

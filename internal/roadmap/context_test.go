@@ -29,9 +29,24 @@ func TestContextCommandEndsWithHelpBlock(t *testing.T) {
 		if err != nil {
 			t.Fatalf("args=%v help block: %v", args, err)
 		}
-		if len(rows) != 0 || !strings.HasSuffix(out, "help[0]{cmd,why}:\n") {
-			t.Fatalf("args=%v help rows/output = %d/%q", args, len(rows), out)
+		wantRows := 0
+		if len(args) == 1 {
+			wantRows = 1
 		}
+		if len(rows) != wantRows {
+			t.Fatalf("args=%v help rows = %d, want %d", args, len(rows), wantRows)
+		}
+	}
+}
+
+func TestContextCommandIndexDisclosesCompleteRoadmapQueries(t *testing.T) {
+	newRepo(t)
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	if !strings.Contains(out, "bench roadmap --context --row <ID,...>") || !strings.Contains(out, "bench roadmap --context --full") {
+		t.Fatalf("index help = %q, want row selector and complete snapshot", out)
 	}
 }
 

@@ -15,6 +15,7 @@ import (
 
 var approvedAXIQueries = map[string][]string{
 	"anchors": nil, "learnings": nil, "maps": nil, "guards": nil, "diff": nil, "coverage": nil,
+	"roadmap":  nil,
 	"worktree": {"list"},
 }
 
@@ -106,6 +107,7 @@ func checkAXIGuidance(guidance string, registryMembers map[string][]string) []st
 		"unknown future-input slots",
 		"Terminal results offer no busywork",
 		"`--help`, `-h`, and bare `help`",
+		"`bench roadmap --context --row <ID,...>`",
 	}
 	contractText := strings.Join(strings.Fields(guidance), " ")
 	for _, phrase := range required {
@@ -178,6 +180,7 @@ func TestAXIGuidanceContractBites(t *testing.T) {
 		{"coverage retry moved to refusal", "Successful default extraction", "`coverage --check` refusal", "omits required contract"},
 		{"coverage retry why changed", "`retry after repairing coverage map`", "`retry after checking coverage map`", "omits required contract"},
 		{"coverage refusal gains disclosure", "`coverage --check` and every refusal retain their error contracts and append no disclosure", "`coverage --check` and every refusal retain their error contracts and append disclosure", "omits required contract"},
+		{"roadmap disclosure omitted", "`bench roadmap --context --row <ID,...>`", "", "omits required contract"},
 	}
 	for _, mutation := range mutations {
 		t.Run(mutation.name, func(t *testing.T) {
