@@ -120,10 +120,6 @@ func checkIntegrationSourceWorkflowCurrency(root string) []string {
 }
 
 func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
-	kitRoot, err := findKitRoot()
-	if err != nil {
-		t.Fatal(err)
-	}
 	workflowAnchors := integrationSourceWorkflowAnchors()
 	if got, want := len(workflowAnchors), 12; got != want {
 		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
@@ -134,12 +130,6 @@ func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
 			t.Fatalf("integration-source workflow surface repeated: %s", anchor.File)
 		}
 		seenFiles[anchor.File] = true
-		if data, err := os.ReadFile(filepath.Join(kitRoot, filepath.FromSlash(anchor.File))); err != nil {
-			t.Fatalf("read current workflow surface %s: %v", anchor.File, err)
-		} else if !anchors.Satisfied(anchors.Require, string(data), anchor.Needle) {
-			t.Fatalf("current workflow surface %s does not satisfy %q", anchor.File, anchor.Needle)
-		}
-
 		t.Run(anchor.File, func(t *testing.T) {
 			root := t.TempDir()
 			path := filepath.Join(root, filepath.FromSlash(anchor.File))
