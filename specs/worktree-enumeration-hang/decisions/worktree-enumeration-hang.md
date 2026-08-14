@@ -28,11 +28,12 @@ Reproduced 2026-08-14, git 2.43.0: any of `gitdir`, `HEAD`, `commondir`,
 `git worktree add`/`lock`/`unlock`/`prune` and `git branch --list` also hang;
 `git status`, `git rev-parse` (including `--git-common-dir`), and
 `git for-each-ref` stay clean. Bench enumeration has one owner —
-`git.Worktrees` in `internal/git/git.go`, seven production callers, reached by
+`git.Worktrees` in `internal/git/git.go`, eight production callers (the
+intra-package `PruneLandedBranches` was found at spec review), reached by
 `bench status`, the session-start `bench resume`, `bench worktree *`, and the
 dashboard — and runs with no deadline today. The established bound seam is the
 `internal/bounds` policy registry plus `bounds.Run`. Full matrix and repro
-script: `decisions/assets/worktree-enumeration-hang-probe.md`.
+script: `specs/worktree-enumeration-hang/decisions/assets/worktree-enumeration-hang-probe.md`.
 
 ## #2: Which mitigation posture does Bench own — pre-scan refusal, execution bound, or both?
 
@@ -136,7 +137,7 @@ rejected.
 
 ## Sources
 
-- Path: `decisions/assets/worktree-enumeration-hang-probe.md`
+- Path: `specs/worktree-enumeration-hang/decisions/assets/worktree-enumeration-hang-probe.md`
   Supports: #1's full matrix and repro script, and the exposure facts behind #2 and #3's recommendations.
   Drift: git-version- and host-dependent; re-run its script after a git upgrade before trusting the matrix.
 - Path: `ROADMAP.md`

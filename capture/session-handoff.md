@@ -2,28 +2,27 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `7ae73f01` plus the FT189 shaping artifacts
-Spec: none staged.
+Branch: `main`
+Spec: `specs/worktree-enumeration-hang/spec.md` — `Status: staged`, awaiting reviewer sign-off.
 
 ## State
 
-FT189 shaping is closed: `decisions/worktree-enumeration-hang.md` is `ready`
-with all four tickets resolved. Reviewer decisions (2026-08-14): both arms —
-pre-scan refusal (every entry under `<git-common-dir>/worktrees/` must be a
-regular file or directory) plus a named `internal/bounds` deadline through
-`bounds.Run`; scope is the sole enumeration owner `git.Worktrees` only; the
-refusal names the entry path and shape, `bench doctor` reports the same
-finding, and no Bench command deletes under `.git/worktrees/` (plan/apply
-repair rejected). Mutation-site exposure is parked in `capture/IDEAS.md`.
-Probe evidence: `decisions/assets/worktree-enumeration-hang-probe.md`.
-
-`decisions/spec-build-review-gate-cadence.md` is invalid (its Sources cite the
-removed `internal/specbuild/checkpoint.go`), which alone keeps `bench maps` at
-exit 1; repairing it belongs to that map's own shaping resume, not FT189.
+FT189's spec and tickets are authored and verified: 24 coverage rows
+(`bench coverage --check` green; preflight `rows-owned`/`rows-membership`
+green), decision source compiled at
+`specs/worktree-enumeration-hang/decisions/`. Verification loops: spec 33
+iterations to accept, tickets 2 — the log line in the spec names the largest
+catches. Ticket graph: `resolve-git-common-dir` → `refuse-malformed-admin-entries`
+→ {`bound-worktree-enumeration`, `report-admin-entry-in-doctor`}; lines
+sonnet/medium, sonnet/medium (routing rows), opus/medium, sonnet/low.
+Reviewer sign-off on the spec and breakdown is the hard stop before any
+build. One learnings entry (2026-08-14, 33-round loop) awaits the next
+`/bench-what-next` drain. `decisions/spec-build-review-gate-cadence.md`
+remains invalid (its own shaping resume owns the repair).
 
 ## Next command
 
-`/bench-write-spec` — compile the ready `worktree-enumeration-hang` map into the FT189 build spec.
+Reviewer: approve or veto the approval table in the closing report, then start a fresh mid-tier build session with `/bench-implement-spec worktree-enumeration-hang`.
 
 ## Shape
 
