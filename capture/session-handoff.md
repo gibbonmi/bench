@@ -2,33 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `eb05d52`, 3 dirty paths, 38 unpushed commits
+Branch: `main` — HEAD `5d4ae93`, 4 dirty paths, 41 unpushed commits
 Spec: none staged.
-Gate: green at `c29f5bd` — stale, work tree `01a3158`
+Gate: green at `813e71e` — stale, work tree `fce9053`
 
 ## State
 
-`parallel-session-landings` is published: `main` carries `3947bcca` (parents
-`105d243d` + reviewed source tip `1968620d`, tree `5f6abb26`,
-`Status: implemented`), project-green at the published commit, assignment
-`3ae1acc9` released, worktree removed. Both merged specs are retired
-(`spec-retire:` commits). The retro is at
-`capture/retros/parallel-session-landings.md`; two new open learnings and one
-parked idea await the drain. Everything is committed; nothing is pushed —
-pushing `main` is the reviewer's call.
+`parallel-session-landings` and `roadmap-progressive-index` are published and
+retired (`3947bcca`, `eb05d529`). This uncommitted drain removes the stale FT198
+row, empties the inbox, journal, and retro capture, and merges their residual
+work into FT162, FT169, FT177, FT178, and FT185. The reviewer must approve the
+batch before it commits.
 
-Open reviewer-veto flags from the build: the resume landing-identity authority
-was implemented (receipt `Branch`/`BranchOID` reuse, commit `fa8bdbbe` in the
-landed range) without a recorded reviewer decision; `.bench/build-outputs.json`
-now declares two harness-local `.claude/` files as landing allowance; the
-PL15/PL16 public journey asserts the destination-checkout fingerprint refusal
-with CAS classification covered at the injected-updater seam.
+Veto surface: FT162 receives the landing-prerequisite guidance; FT169 receives
+bounded landing-refusal detail; FT178 receives unknown-flag refusal; FT177
+receives stale command-discovery detection; FT185 receives concise green output.
+The map-to-ticket learning was already triaged in FT174; the durable-build and
+no-truncation rules already exist. No restructure was requested.
 
 Preserve foreign assignment `fdf07b2661ab381f9125643169f1af10` byte-for-byte.
 
 ## Next command
 
-`/bench-what-next` — the board's leading invocable signal (`drain`).
+`/bench-shape-idea` — the board's leading invocable signal (`decisions`).
 
 ## Shape
 

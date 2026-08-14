@@ -207,6 +207,13 @@ explicit review base/head or preflight gains a repair-candidate selector; do not
 weaken the ownership fence to make the composed diff pass. Source: the
 axi-coherent-diff retro, drained here.
 
+The parallel-session-landings close also found that the full-build guidance
+omits its own landing prerequisites: source-built binary path, `BENCH_HOME`, a
+clean destination, and any declared allowance. State those prerequisites beside
+the final landing invocation so a fresh implementation session does not discover
+them through refusals. Source: the parallel-session-landings retro, drained
+here.
+
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
 merge (the ship canary tier pin, the untiered-registry assertion, the
@@ -565,6 +572,13 @@ and reports the primary checkout and destination before merging instead of
 trusting ambient cwd. Sources: the Pocock-guidance-doctrine retro and
 `capture/learnings.md` 2026-08-12, drained here.
 
+The parallel-session-landings close adds refusal locality: the landing command
+reports bounded offending paths for ignored residue and textual conflicts, and
+names the precise subject-closure reason when prospective authorization fails.
+Those details replace manual enumeration and the `BENCH_HOME` probe without
+weakening the refusal. Source: the parallel-session-landings retro, drained
+here.
+
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one
 repository-wide ref inventory.** The existing
 cleanup paths act on one known target at a time; they do not classify every
@@ -599,6 +613,12 @@ needs a signal trap or a lease the resume path reclaims. The
 discovery convention is now canonical in `AGENTS.md`'s shell rules. Sources:
 `capture/IDEAS.md` (reviewer ruling), drained here; `capture/learnings.md`,
 verdicted here.
+
+Unknown flags take the same unintended bare-verb route: `bench worktree land
+--help` opened the interactive subshell instead of returning usage, briefly
+creating and releasing an assignment. Parser-first dispatch must reject unknown
+flags before choosing the bare command. Source: the parallel-session-landings
+retro, drained here.
 
 **FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's
 non-recurrence evidence complete.** The row grammar is currently implicit:
@@ -684,18 +704,6 @@ map and the snapshot surfaces the pin as a discrepancy when a graded row is abou
 to move. Source: `capture/learnings.md`, verdicted here; the map and its bite test
 were read in the tree on 2026-08-01.
 
-**FT198 (MEDIUM) — make `ROADMAP.md` a progressively loaded index.** The board
-has reached 62 rows and 179 KB; a required full context snapshot was complete
-on disk but too large for one agent-tool response. The ready decision map and
-staged spec settle the durable owner, bounded index, complete detail reader,
-migration, history, and index-completeness contracts. Three independently green
-tickets have landed; the atomic index-doctrine ticket is active, followed by
-the AXI membership ticket and composed review. Spec:
-`specs/roadmap-progressive-index/spec.md` (staged). Entry:
-`/bench-implement-spec --full roadmap-progressive-index`. Source:
-`capture/IDEAS.md`, drained here; the 2026-08-06 drain's 179397-byte snapshot
-transport failure.
-
 **FT173 (MEDIUM, decision required) — AXI residual: the
 active-assignment-with-deleted-tree disclosure class.** The AXI program is
 otherwise landed: `bench diff` owns the coherent Git snapshot, and the
@@ -751,6 +759,12 @@ inline (`phase conformance: green`, `gate: green`), and one schema should own bo
 public projections. Entry: `/bench-write-spec`. Sources:
 `capture/IDEAS.md`, drained here; the `injected-interface-junctions` retro,
 drained here.
+
+Green `bench gate` and `bench commit` runs currently stream a full per-package
+transcript even though the durable JSONL log retains it. The shared projection
+should show phase verdicts and the log pointer on green while preserving the
+complete transcript on red, removing the incentive to truncate command output
+at the caller. Source: `capture/IDEAS.md`, drained here.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -1690,6 +1704,12 @@ reduced-gate-phase-set retro, drained here. Recurred across the FT176 close:
 freshness forced two manual rebuilds before `bench commit` would run. Source:
 the spec-build-lifecycle-preconditions retro, drained here.
 
+The same stale durable binary makes `bench commands --brief` advertise an older
+command registry than the current wrapper and source. Command discovery must
+either verify source/binary identity or refuse with the stale artifact and its
+repair action; a quiet listing is a false capability claim. Source:
+`capture/IDEAS.md`, drained here.
+
 **FT103 (LOW) — existence-checked absence evidence: the gate half.** A
 delegate's payload slice landed with a misspelled kit-only allowlist row
 (`craft-synthesis` for the actual `bench-craft-synthesis`), so its contract
@@ -2156,5 +2176,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec --full roadmap-progressive-index` — finish FT198's active doctrine ticket, AXI membership ticket, and composed review.
-2. `/bench-shape-idea` — FT189's reproduced upstream `git worktree list` hang needs a Bench-owned refusal or execution bound.
+1. `/bench-shape-idea` — FT189's reproduced upstream `git worktree list` hang needs a Bench-owned refusal or execution bound.
+2. `/bench-write-spec` — FT185 can make gate and commit results one structured, concise public projection.
