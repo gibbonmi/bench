@@ -35,8 +35,6 @@ type Creation struct {
 	Assignment intent.Assignment
 }
 
-func requestDigest(request string) string { return textDigest(request) }
-
 type LifecycleStep string
 
 const (
@@ -136,7 +134,7 @@ func Create(root, request, label string, fault Fault, requestedStart ...string) 
 	if err != nil {
 		return Creation{}, err
 	}
-	digest := requestDigest(request)
+	digest := intent.RequestDigest(request)
 	release, err := lockCreationRequest(root, digest)
 	if err != nil {
 		return Creation{}, err
@@ -319,7 +317,7 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 	if err != nil {
 		return intent.CleanupReceipt{}, err
 	}
-	request := requestDigest(requestArg)
+	request := intent.RequestDigest(requestArg)
 	if receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request); readErr != nil {
 		return intent.CleanupReceipt{}, readErr
 	} else if found && receipt.State == intent.ReceiptComplete {

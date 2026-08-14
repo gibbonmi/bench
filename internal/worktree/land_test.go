@@ -334,7 +334,7 @@ func TestResumeLandCommandRefusesWhenTerminalReceiptWasEvicted(t *testing.T) {
 	for i := 0; i < intent.MaxCleanupReceipts; i++ {
 		receipt := intent.CleanupReceipt{
 			Schema: intent.CleanupReceiptSchema, Repo: root, Operation: "eviction-test", Target: filepath.Join(root, fmt.Sprintf("target-%d", i)),
-			Fingerprint: requestDigest(fmt.Sprintf("evict-%d", i)), State: intent.ReceiptComplete, Phase: intent.ReceiptPhaseTerminal, Action: "removed",
+			Fingerprint: intent.RequestDigest(fmt.Sprintf("evict-%d", i)), State: intent.ReceiptComplete, Phase: intent.ReceiptPhaseTerminal, Action: "removed",
 		}
 		if err := intent.PutCleanupReceipt(root, receipt); err != nil {
 			t.Fatal(err)

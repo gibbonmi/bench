@@ -112,7 +112,7 @@ func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if assignment.Request != requestDigest("replacement-request") {
+	if assignment.Request != intent.RequestDigest("replacement-request") {
 		t.Fatalf("assignment request = %q, want replacement digest", assignment.Request)
 	}
 	expectedAssignment := assignment
@@ -151,7 +151,7 @@ func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
 			install: func(t *testing.T, creation Creation) {
 				old := reauthorizeLock
 				next := creation.Assignment
-				next.Request = requestDigest("replacement-request")
+				next.Request = intent.RequestDigest("replacement-request")
 				reauthorizeLock = func(root, path, reason string) error {
 					if reason == lockReason(next) {
 						return errors.New("injected relock failure")
@@ -165,7 +165,7 @@ func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
 			name: "expected-old loss",
 			install: func(t *testing.T, _ Creation) {
 				old := reauthorizeBeforeCAS
-				reauthorizeBeforeCAS = func(a *intent.Assignment) { a.Request = requestDigest("concurrent-winner") }
+				reauthorizeBeforeCAS = func(a *intent.Assignment) { a.Request = intent.RequestDigest("concurrent-winner") }
 				t.Cleanup(func() { reauthorizeBeforeCAS = old })
 			},
 		},

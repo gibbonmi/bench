@@ -386,7 +386,7 @@ func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
 	code = ReleaseCommand(root, args, &replay, &replayErr)
 	requireTest(t, code == 0 && replay.String() == first.String() && replayErr.String() == "", "release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
 	repo, _, _ := cleanupIdentity(root, creation.Path)
-	_, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, creation.Path, requestDigest("landed-release-crash-window"))
+	_, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, creation.Path, intent.RequestDigest("landed-release-crash-window"))
 	requireTest(t, err == nil && found, "release receipt missing: %v", err)
 }
 func mustRemove(t *testing.T, path string) {

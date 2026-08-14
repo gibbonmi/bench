@@ -170,7 +170,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		requireTest(t, code != 0, "terminal receipt fault unexpectedly succeeded")
 		cleanupTransactionBoundary = oldOrderBoundary
 		repo, _, _ := cleanupIdentity(orderRoot, ordered.Path)
-		_, found, err := intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, requestDigest("landed-release-receipt-order"))
+		_, found, err := intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, intent.RequestDigest("landed-release-receipt-order"))
 		requireTest(t, err == nil && found, "terminal release receipt missing: %v", err)
 		_, err = assignmentByID(orderRoot, ordered.Assignment.ID)
 		requireTest(t, err == nil, "assignment compacted before terminal receipt checkpoint: %v", err)

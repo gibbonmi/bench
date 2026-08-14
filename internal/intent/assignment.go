@@ -339,7 +339,7 @@ func FindAssignmentByRequest(root, requestDigest string) (Assignment, bool, erro
 // FindAssignmentForRequest resolves an opaque caller token through the ledger's
 // request-digest owner. Lifecycle commands never compare caller tokens directly.
 func FindAssignmentForRequest(root, request string) (Assignment, bool, error) {
-	return FindAssignmentByRequest(root, requestDigestValue(request))
+	return FindAssignmentByRequest(root, RequestDigest(request))
 }
 
 func Assignments(root string) ([]Assignment, error) {
@@ -415,7 +415,7 @@ func ReauthorizeAssignment(root, id, request string, verify func(Assignment) err
 		if !ValidIdentity(id) || request == "" {
 			return Assignment{}, errors.New("invalid reauthorization identity")
 		}
-		newDigest := requestDigestValue(request)
+		newDigest := RequestDigest(request)
 		for j, other := range ledger.Assignments {
 			if j != i && other.Request == newDigest {
 				return Assignment{}, errors.New("request digest already belongs to another assignment")
@@ -443,7 +443,8 @@ func ReauthorizeAssignment(root, id, request string, verify func(Assignment) err
 	return Assignment{}, errors.New("assignment not found")
 }
 
-func requestDigestValue(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
+// RequestDigest derives the persisted identity for an opaque caller request.
+func RequestDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
 
 func compareAndSwapRequestDigest(assignment *Assignment, expectedOld, replacement string) error {
 	if assignment.Request != expectedOld {

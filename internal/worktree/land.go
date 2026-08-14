@@ -176,7 +176,7 @@ func terminalResumeReceipt(root, path, request string) (intent.CleanupReceipt, e
 	if err != nil {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}
-	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, target, requestDigest(request))
+	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, target, intent.RequestDigest(request))
 	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}

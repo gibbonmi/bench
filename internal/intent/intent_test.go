@@ -331,10 +331,10 @@ func TestCompareAndSwapRequestDigestRefusesConcurrentMovementAndPreservesOtherFi
 func TestReauthorizeAssignmentRefusesRequestDigestCollision(t *testing.T) {
 	root := newRepo(t)
 	first := activeAssignment()
-	first.Request = requestDigestValue("first-request")
+	first.Request = RequestDigest("first-request")
 	second := activeAssignment()
 	second.ID, second.OwnerID = strings.Repeat("c", 32), strings.Repeat("d", 32)
-	second.Request = requestDigestValue("replacement-request")
+	second.Request = RequestDigest("replacement-request")
 	second.Branch = AssignmentBranchRef(second.OwnerID, second.ID)
 	second.Worktree = "/pool/other"
 	if err := PutAssignment(root, first); err != nil {
