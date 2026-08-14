@@ -12,4 +12,3 @@ Close the overlapping Standards and Coverage findings recorded in `reviews/spec-
 - [ ] the profile no longer duplicates the command-owned loop protocol
 - [ ] exact anchors and mutations independently protect the loop-1 and loop-2 routing facts
 - [ ] the fixture addition and canary binding count land together
-

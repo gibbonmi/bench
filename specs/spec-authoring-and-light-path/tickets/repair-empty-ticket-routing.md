@@ -11,4 +11,3 @@ Close the Spec-axis WF4 finding recorded in `reviews/spec-authoring-and-light-pa
 
 - [ ] the command names both absent and no-ticket-file states and routes either to `/bench-write-spec`
 - [ ] the existing entry-validation mutation fixture bites the completed predicate
-

@@ -11,4 +11,3 @@ Close the Standards wording finding recorded in `reviews/spec-authoring-and-ligh
 
 - [ ] craft-delegate uses the canonical resolved-model-id vocabulary
 - [ ] the existing mutation fixture bites the revised sentence
-
