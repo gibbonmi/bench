@@ -2,29 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5d4ae93`, 4 dirty paths, 41 unpushed commits
-Spec: none staged.
-Gate: green at `813e71e` — stale, work tree `fce9053`
+Branch: `main` — spec staged at the latest `spec:` commit, capture close follows it
+Spec: `specs/spec-authoring-and-light-path/spec.md` — `Status: staged`, reviewer-approved 2026-08-14, verification log `spec 5 + tickets 3`
+Gate: green at the staging commit
 
 ## State
 
-`parallel-session-landings` and `roadmap-progressive-index` are published and
-retired (`3947bcca`, `eb05d529`). This uncommitted drain removes the stale FT198
-row, empties the inbox, journal, and retro capture, and merges their residual
-work into FT162, FT169, FT177, FT178, and FT185. The reviewer must approve the
-batch before it commits.
+`spec-authoring-and-light-path` is staged and signed off with its eight tickets
+under `specs/spec-authoring-and-light-path/tickets/`. Initial frontier (all
+serial — every ticket shares `internal/anchors/registry_data.go` and
+`tests/canary/workflow-guidance-anchors/`): lighten-light-path,
+move-slicing-into-write-spec, cross-harness-reviewer-recipes,
+drain-time-light-path, repair-stale-anchors; then main-session-authorship →
+verification-loops → reviewer-override-flag.
 
-Veto surface: FT162 receives the landing-prerequisite guidance; FT169 receives
-bounded landing-refusal detail; FT178 receives unknown-flag refusal; FT177
-receives stale command-discovery detection; FT185 receives concise green output.
-The map-to-ticket learning was already triaged in FT174; the durable-build and
-no-truncation rules already exist. No restructure was requested.
+Closed reviewer decisions the build must not reopen: uncapped verification
+loops; light-path ticket file kept with inline implementation; own-family
+reviewers via native agent surface (CLI only cross-family or when no native
+surface exists); one bundled spec; transitional slicing-step trigger (worded
+against the current falsification review, re-pointed to loop 1 by
+verification-loops); drain implement-now lands as its own commit via a second
+named batch-rule exception.
 
-Preserve foreign assignment `fdf07b2661ab381f9125643169f1af10` byte-for-byte.
+Two light-path commits already landed the enforcement-surface-read rule in
+`bench-write-spec.md` step 1 — the build must preserve it through the step-9
+rewrite. An A/B rerun prompt for that rule (Codex form) was handed to the
+reviewer; if it ran, `capture/learnings.md` carries an "A/B rerun" entry for
+the next drain.
 
 ## Next command
 
-`/bench-shape-idea` — the board's leading invocable signal (`decisions`).
+`/bench-implement-spec spec-authoring-and-light-path` — fresh mid-tier session.
 
 ## Shape
 
