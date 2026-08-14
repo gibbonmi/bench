@@ -1,4 +1,4 @@
 {
   "schema": 1,
-  "paths": ["dist/"]
+  "paths": ["dist/", ".claude/scheduled_tasks.lock", ".claude/settings.local.json"]
 }
