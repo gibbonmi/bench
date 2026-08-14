@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -44,6 +45,9 @@ func Command(args []string) (string, int) {
 
 	facts, bootErr := Gather(root, mode, slug, base)
 	if bootErr != nil {
+		if bootErr.Kind == "snapshot drift" {
+			return snapshotDriftRefusal(args, bootErr.Hint), 1
+		}
 		return toon.Errorf(bootErr.Kind, bootErr.Hint) + "\n", 1
 	}
 	if err := unrepresentableChangedPath(facts.ChangedPaths); err != nil {
@@ -77,6 +81,19 @@ func Command(args []string) (string, int) {
 		exit = 1
 	}
 	return b.String(), exit
+}
+
+func snapshotDriftRefusal(args []string, hint string) string {
+	invocation := make([]axi.InvocationArgument, 0, len(args)+1)
+	invocation = append(invocation, axi.KnownArgument("preflight"))
+	for _, arg := range args {
+		invocation = append(invocation, axi.KnownArgument(arg))
+	}
+	help, err := axi.RenderHelp([]axi.Action{axi.ExecutableInvocation("retry after the repository stopped moving", invocation...)})
+	if err != nil {
+		return toon.RenderError(err) + "\n"
+	}
+	return toon.Errorf("snapshot drift", hint) + "\n" + help
 }
 
 // unrepresentableChangedPath refuses a changed path spec-TOON cannot render as a

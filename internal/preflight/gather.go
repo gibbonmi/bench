@@ -39,6 +39,55 @@ var fencesEndRe = regexp.MustCompile(`^#{2,} `)
 // immutable Facts value ready for Decide, or the one BootstrapFailure that explains
 // why no Facts value can be trusted. Exactly one of the two return values is non-zero.
 func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapFailure) {
+	if len(explicitBase) > 0 && explicitBase[0] != "" {
+		for attempt := 0; attempt < 2; attempt++ {
+			var gathered Facts
+			var gatherFailure *BootstrapFailure
+			result := diff.MovementChecked(root, func(snapshot diff.MovementSnapshot) (string, string) {
+				var err error
+				var resolveKind, resolveHint string
+				source, resolveKind, resolveHint := snapshot.ResolveSourceRange(explicitBase[0])
+				if resolveKind != "" {
+					return resolveKind, resolveHint
+				}
+				paths, err := snapshot.SourceSnapshotPaths(source)
+				if err != nil {
+					return "changed files not readable", err.Error()
+				}
+				if mode == "review" {
+					dirty, statusErr := git.Output("-C", root, "status", "--porcelain")
+					if statusErr != nil {
+						return "source status unreadable", statusErr.Error()
+					}
+					if dirty != "" {
+						return "source not clean", "review source has uncommitted changes"
+					}
+				}
+				gathered, gatherFailure = gather(root, mode, slug, &source, paths)
+				if gatherFailure != nil {
+					return gatherFailure.Kind, gatherFailure.Hint
+				}
+				return "", ""
+			})
+			if result.Kind != "" {
+				if gatherFailure != nil {
+					return Facts{}, gatherFailure
+				}
+				return Facts{}, &BootstrapFailure{result.Kind, result.Hint}
+			}
+			if result.DriftKind == "" {
+				return gathered, nil
+			}
+			if attempt == 1 {
+				return Facts{}, &BootstrapFailure{"snapshot drift", result.DriftHint}
+			}
+		}
+		return Facts{}, &BootstrapFailure{"snapshot drift", "the repository changed while reading; retry the exact invocation"}
+	}
+	return gather(root, mode, slug, nil, nil)
+}
+
+func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string) (Facts, *BootstrapFailure) {
 	content, resolved, tried, ok, err := specref.Resolve(root, slug)
 	if err != nil {
 		return Facts{}, &BootstrapFailure{"spec not readable", "spec " + slug + ": " + err.Error()}
@@ -76,31 +125,21 @@ func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapF
 		return Facts{}, ticketErr
 	}
 
-	defaultBranchResolved, defaultBranchCurrent := baseCurrentFacts(root)
-	reviewBase, reviewBaseResolved, reviewBaseHint := reviewBaseFacts(root)
-	var source diff.SourceRange
-	if len(explicitBase) > 0 && explicitBase[0] != "" {
-		var kind string
-		source, kind, reviewBaseHint = diff.ResolveSourceRange(root, explicitBase[0], headTip(root))
-		reviewBase = source.Base
-		reviewBaseResolved = kind == ""
-		if mode == "review" && reviewBaseResolved {
-			if dirty, err := git.Output("-C", root, "status", "--porcelain"); err != nil {
-				return Facts{}, &BootstrapFailure{"source status unreadable", err.Error()}
-			} else if dirty != "" {
-				return Facts{}, &BootstrapFailure{"source not clean", "review source has uncommitted changes"}
-			}
-		}
-	}
-	var changedPaths []string
-	if reviewBaseResolved {
-		if source.Base != "" {
-			changedPaths, err = diff.SourceSnapshotPaths(root, source)
-		} else {
+	defaultBranchResolved, defaultBranchCurrent := false, false
+	reviewBase, reviewBaseResolved, reviewBaseHint := "", false, ""
+	changedPaths := append([]string(nil), sourcePaths...)
+	var resolvedSource diff.SourceRange
+	if source != nil {
+		resolvedSource = *source
+		reviewBase, reviewBaseResolved = resolvedSource.Base, true
+	} else {
+		defaultBranchResolved, defaultBranchCurrent = baseCurrentFacts(root)
+		reviewBase, reviewBaseResolved, reviewBaseHint = reviewBaseFacts(root)
+		if reviewBaseResolved {
 			changedPaths, err = diff.ChangedFilePathsAt(root, reviewBase)
-		}
-		if err != nil {
-			return Facts{}, &BootstrapFailure{"changed files not readable", err.Error()}
+			if err != nil {
+				return Facts{}, &BootstrapFailure{"changed files not readable", err.Error()}
+			}
 		}
 	}
 
@@ -111,9 +150,9 @@ func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapF
 		DefaultBranchCurrent:  defaultBranchCurrent,
 		ReviewBaseResolved:    reviewBaseResolved,
 		ReviewBaseHint:        reviewBaseHint,
-		SourceBase:            source.Base,
-		SourceTip:             source.Tip,
-		ExplicitSourceRange:   len(explicitBase) > 0 && explicitBase[0] != "",
+		SourceBase:            resolvedSource.Base,
+		SourceTip:             resolvedSource.Tip,
+		ExplicitSourceRange:   source != nil,
 		ChangedPaths:          changedPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,
@@ -140,8 +179,6 @@ func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) 
 	}
 	return diff.SourceRange{Base: facts.SourceBase, Tip: facts.SourceTip, CommittedPaths: facts.ChangedPaths}, nil
 }
-
-func headTip(root string) string { h, _ := git.Output("-C", root, "rev-parse", "HEAD"); return h }
 
 // specStatus resolves the typed Status: value for slug via the spec package's Facts —
 // the one source of typed spec status — matched by slug rather than re-parsing the
