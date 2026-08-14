@@ -297,6 +297,7 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 		for _, tc := range []struct {
 			name    string
 			allowed bool
+			detail  string
 			setup   func(*testing.T, string)
 		}{
 			{name: "clean"},
@@ -305,21 +306,21 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				mustMkdirAll(t, filepath.Join(root, "dist"), 0o755)
 				mustWrite(t, filepath.Join(root, "dist", "out"), []byte("build output\n"), 0o600)
 			}},
-			{name: "staged changes", setup: func(t *testing.T, root string) {
+			{name: "staged changes", detail: "landing destination has staged changes", setup: func(t *testing.T, root string) {
 				mustWrite(t, filepath.Join(root, "staged.txt"), []byte("staged\n"), 0o600)
 				gitRun(t, root, "add", "staged.txt")
 			}},
-			{name: "tracked-worktree changes", setup: func(t *testing.T, root string) {
+			{name: "tracked-worktree changes", detail: "landing destination has tracked-worktree changes", setup: func(t *testing.T, root string) {
 				mustWrite(t, filepath.Join(root, "owned.txt"), []byte("caller bytes\n"), 0o600)
 			}},
-			{name: "untracked collision", setup: func(t *testing.T, root string) {
+			{name: "untracked collision", detail: "landing destination has untracked collisions", setup: func(t *testing.T, root string) {
 				mustWrite(t, filepath.Join(root, "untracked-collision.txt"), []byte("caller bytes\n"), 0o600)
 			}},
-			{name: "ignored residue", setup: func(t *testing.T, root string) {
+			{name: "ignored residue", detail: "landing destination has ignored residue", setup: func(t *testing.T, root string) {
 				mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored-residue\n"), 0o644)
 				mustWrite(t, filepath.Join(root, "ignored-residue"), []byte("caller bytes\n"), 0o600)
 			}},
-			{name: "nested repository", setup: func(t *testing.T, root string) {
+			{name: "nested repository", detail: "landing destination has nested repositories", setup: func(t *testing.T, root string) {
 				nested := filepath.Join(root, "nested")
 				mustMkdirAll(t, nested, 0o755)
 				gitRun(t, nested, "init", "-q", "-b", "main")
@@ -356,8 +357,8 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 					}
 					return
 				}
-				if code != 1 || !strings.HasPrefix(stdout, "refused{detail=landing destination has ") || stderr != "" {
-					t.Fatalf("destructive-state refusal = (%d, %q, %q)", code, stdout, stderr)
+				if code != 1 || stdout != "refused{detail="+tc.detail+"}\n" || stderr != "" {
+					t.Fatalf("destructive-state refusal = (%d, %q, %q), want detail %q", code, stdout, stderr, tc.detail)
 				}
 				if after := resumeDestinationState(t, root); after != before {
 					t.Fatalf("refusal changed destination state:\nbefore:\n%safter:\n%s", before, after)
