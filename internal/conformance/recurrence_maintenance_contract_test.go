@@ -25,19 +25,25 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	occurrences = collapseSpace(occurrences)
 	sequence = collapseSpace(sequence)
 	var diags []string
-	if entryCount != 1 || !strings.Contains(entry, "`context.schema = 3`") ||
+	if entryCount != 1 || !strings.Contains(entry, "`context.schema = 4`") ||
 		!strings.Contains(entry, "every other schema stops the phase before any batch mutation") ||
 		!strings.Contains(entry, "Do not guess recurrence facts from an older schema") {
-		diags = append(diags, "bench-what-next does not require schema 3 before recurrence maintenance")
+		diags = append(diags, "bench-what-next does not require schema 4 before recurrence maintenance")
 	}
-	schemaAt := strings.Index(entry, "`context.schema = 3`")
+	if entryCount != 1 || !strings.Contains(entry, "schema-4 index is the complete local inventory") ||
+		!strings.Contains(entry, "The index proves what exists; targeted fetches and named body reads prove content") ||
+		!strings.Contains(entry, "Fetch complete roadmap detail only for rows the reconcile touches") ||
+		!strings.Contains(entry, "Read idea, learning, and retro bodies from the paths the index names") {
+		diags = append(diags, "bench-what-next does not use index-first evidence for recurrence maintenance")
+	}
+	schemaAt := strings.Index(entry, "`context.schema = 4`")
 	trustAt := strings.Index(entry, "Before beginning `## 1. Reconcile first`, read `context.sequence_trusted` from that snapshot.")
 	trustStop := "snapshot. When it is false, stop before any batch mutation"
 	if entryCount != 1 || trustAt <= schemaAt || !strings.Contains(entry, trustStop) {
 		diags = append(diags, "bench-what-next does not stop untrusted recurrence evidence before reconciliation")
 	}
-	if entryCount != 1 || trustAt <= schemaAt || !strings.Contains(entry, "`occurrence_discrepancies` row together with the complete context snapshot") {
-		diags = append(diags, "bench-what-next does not preserve complete context evidence before reconciliation")
+	if entryCount != 1 || trustAt <= schemaAt || !strings.Contains(entry, "`occurrence_discrepancies` row together with the complete index snapshot") {
+		diags = append(diags, "bench-what-next does not preserve complete index evidence before reconciliation")
 	}
 	pending := "add its incident key to that owner's `Occurrences:` line in `ROADMAP.md` before removing any source unit"
 	if occurrenceCount != 1 || !strings.Contains(occurrences, "For every `pending` owner/incident pair") || !strings.Contains(occurrences, pending) {
@@ -80,12 +86,15 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 	mutations := []struct {
 		name, old, new, want string
 	}{
-		{"schema", "`context.schema = 3`", "`context.schema = 2`", "bench-what-next does not require schema 3 before recurrence maintenance"},
-		{"schema guessing", "Do not guess recurrence facts from an older schema.", "Infer recurrence facts from an older schema.", "bench-what-next does not require schema 3 before recurrence maintenance"},
+		{"schema", "`context.schema = 4`", "`context.schema = 3`", "bench-what-next does not require schema 4 before recurrence maintenance"},
+		{"schema guessing", "Do not guess recurrence facts from an older schema.", "Infer recurrence facts from an older schema.", "bench-what-next does not require schema 4 before recurrence maintenance"},
+		{"index inventory", "schema-4\nindex is the complete local inventory", "schema-4\nindex is a partial inventory", "bench-what-next does not use index-first evidence for recurrence maintenance"},
+		{"targeted detail", "Fetch complete roadmap detail only for rows the reconcile touches", "Fetch complete roadmap detail for every row", "bench-what-next does not use index-first evidence for recurrence maintenance"},
+		{"named capture bodies", "Read idea, learning, and retro bodies\nfrom the paths the index names", "Read capture bodies from a directory sweep", "bench-what-next does not use index-first evidence for recurrence maintenance"},
 		{"trust after reconcile", "Before beginning `## 1. Reconcile first`, read `context.sequence_trusted` from that\nsnapshot.", "After `## 1. Reconcile first`, read `context.sequence_trusted` from that\nsnapshot.", "bench-what-next does not stop untrusted recurrence evidence before reconciliation"},
 		{"trust polarity", "snapshot. When it is false, stop before any batch mutation", "snapshot. When it is true, stop before any batch mutation", "bench-what-next does not stop untrusted recurrence evidence before reconciliation"},
 		{"trust stop", "stop before any batch mutation", "continue into batch mutation", "bench-what-next does not stop untrusted recurrence evidence before reconciliation"},
-		{"context evidence", "`occurrence_discrepancies` row together with the complete context snapshot", "`occurrence_discrepancies` row", "bench-what-next does not preserve complete context evidence before reconciliation"},
+		{"context evidence", "`occurrence_discrepancies` row together with the complete index snapshot", "`occurrence_discrepancies` row", "bench-what-next does not preserve complete index evidence before reconciliation"},
 		{"pending ledger", "add its incident\nkey to that owner's `Occurrences:` line in `ROADMAP.md` before removing any source\nunit", "record the pending pair for later", "bench-what-next does not ledger every pending occurrence before source removal"},
 		{"already recorded", "remove its\nsource unit without adding another key", "remove its source unit after adding another key", "bench-what-next does not remove already-recorded occurrence sources without another key"},
 		{"equal class", "apply literal dependencies, then explicit\nreviewer pricing. Only when all four stronger inputs tie, rank by descending\noccurrence count.", "rank by descending occurrence count before explicit reviewer pricing.", "bench-what-next recurrence sequence precedence is incomplete or out of order"},

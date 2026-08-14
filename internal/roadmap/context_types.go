@@ -3,10 +3,7 @@ package roadmap
 import (
 	"io/fs"
 	"path/filepath"
-	"unicode/utf8"
 )
-
-const contextBodyLimit = 4096
 
 type SourceFact struct {
 	Source, State string
@@ -16,7 +13,6 @@ type RoadmapRow struct {
 	ID, Title, Spec, SpecStatus, Body string
 	ExternalTrigger                   bool
 	BodyBytes                         int
-	Truncated                         bool
 	OccurrenceKeys                    string
 	OccurrenceCount                   int
 }
@@ -29,23 +25,19 @@ type IdeaFact struct {
 	Body       string
 	Line       int
 	TextBytes  int
-	Truncated  bool
 }
 type LearningFact struct {
 	Date, Title, State, Body string
 	Line                     int
 	BodyBytes                int
-	Truncated                bool
 }
 type RetroFact struct {
 	Path, State, Body string
 	BodyBytes         int
-	Truncated         bool
 }
 type ParseFailure struct {
 	Source, Reason, Raw string
 	RawBytes            int
-	Truncated           bool
 }
 
 type GateCacheFact struct {
@@ -114,16 +106,12 @@ func dirBytes(entries []fs.DirEntry) int {
 	return total
 }
 
-func limited(s string, full bool) (string, int, bool) {
+func projectBody(s string, full bool) (string, int) {
 	n := len([]byte(s))
-	if full || n <= contextBodyLimit {
-		return s, n, false
+	if full {
+		return s, n
 	}
-	b := []byte(s)[:contextBodyLimit]
-	for !utf8.Valid(b) {
-		b = b[:len(b)-1]
-	}
-	return string(b), n, true
+	return "", n
 }
 
 func sourcePath(root, label string) string { return filepath.Join(root, filepath.FromSlash(label)) }

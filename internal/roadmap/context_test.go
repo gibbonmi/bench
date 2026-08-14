@@ -6,29 +6,10 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"unicode/utf8"
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/learnings"
 )
-
-func TestContextBodyLimitBoundaries(t *testing.T) {
-	for _, n := range []int{4095, 4096, 4097} {
-		got, full, truncated := limited(strings.Repeat("x", n), false)
-		if full != n || truncated != (n > 4096) || len(got) != min(n, 4096) {
-			t.Fatalf("n=%d got bytes=%d full=%d truncated=%v", n, len(got), full, truncated)
-		}
-	}
-	s := strings.Repeat("x", 4095) + "€"
-	got, full, truncated := limited(s, false)
-	if full != 4098 || !truncated || !utf8.ValidString(got) || len(got) != 4095 {
-		t.Fatalf("UTF-8 boundary got bytes=%d full=%d truncated=%v valid=%v", len(got), full, truncated, utf8.ValidString(got))
-	}
-	got, full, truncated = limited(s, true)
-	if got != s || full != 4098 || truncated {
-		t.Fatal("--full did not preserve body")
-	}
-}
 
 func TestContextCommandEndsWithHelpBlock(t *testing.T) {
 	newRepo(t)
@@ -54,9 +35,235 @@ func TestContextCommandEndsWithHelpBlock(t *testing.T) {
 	}
 }
 
+func TestContextCommandIndexOmitsRoadmapBodiesWithTrueSizes(t *testing.T) {
+	root := newRepo(t)
+	const body = "complete roadmap evidence"
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — first.**\n"+body+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("roadmap_rows")
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("roadmap rows = %#v, %v", rows, err)
+	}
+	row := rows[0].(map[string]any)
+	if row["body"] != "" || row["body_bytes"] != float64(len(body)) {
+		t.Fatalf("roadmap row = %#v", row)
+	}
+}
+
+func TestContextCommandIndexOmitsCaptureBodiesWithTrueSizes(t *testing.T) {
+	root := newRepo(t)
+	files := map[string]string{
+		IdeasFile:                     "- 2026-01-02  idea evidence\n",
+		learnings.JournalPath:         "## 2026-01-03 — lesson  [open]\nlearning evidence\n",
+		"capture/retros/completed.md": "retro evidence\n",
+	}
+	for path, body := range files {
+		fullPath := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(fullPath, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []struct {
+		block, bodyField, bytesField, body string
+	}{
+		{"ideas", "text", "text_bytes", "idea evidence"},
+		{"learnings", "body", "body_bytes", "learning evidence"},
+		{"retros", "body", "body_bytes", "retro evidence\n"},
+	} {
+		rows, err := document.Rows(want.block)
+		if err != nil || len(rows) != 1 {
+			t.Fatalf("%s rows = %#v, %v", want.block, rows, err)
+		}
+		row := rows[0].(map[string]any)
+		if row[want.bodyField] != "" || row[want.bytesField] != float64(len(want.body)) {
+			t.Fatalf("%s row = %#v", want.block, row)
+		}
+	}
+}
+
+func TestContextCommandCarriesCaptureLineNumbersInEveryMode(t *testing.T) {
+	root := newRepo(t)
+	for path, body := range map[string]string{
+		RoadmapFile:           "**FT1 — first.**\nroadmap body\n",
+		IdeasFile:             "\n- 2026-01-02  idea evidence\n",
+		learnings.JournalPath: "\n## 2026-01-03 — lesson  [open]\nlearning evidence\n",
+	} {
+		fullPath := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(fullPath, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, args := range [][]string{{"--context"}, {"--context", "--row", "FT1"}, {"--context", "--full"}} {
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} })
+		if code != 0 {
+			t.Fatalf("args=%v exit = %d, output=%q", args, code, out)
+		}
+		document, err := axitest.DecodeDocument(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, block := range []string{"ideas", "learnings"} {
+			rows, err := document.Rows(block)
+			if err != nil || len(rows) != 1 {
+				t.Fatalf("args=%v %s rows = %#v, %v", args, block, rows, err)
+			}
+			if line := rows[0].(map[string]any)["line"]; line != float64(2) {
+				t.Fatalf("args=%v %s line = %#v, want 2", args, block, line)
+			}
+		}
+	}
+}
+
+func TestContextCommandFullCarriesCompleteBodiesAtSchemaFour(t *testing.T) {
+	root := newRepo(t)
+	files := map[string]string{
+		RoadmapFile:                   "**FT1 — first.**\nroadmap evidence\n",
+		IdeasFile:                     "- 2026-01-02  idea evidence\nmalformed idea\n",
+		learnings.JournalPath:         "## 2026-01-03 — lesson  [open]\nlearning evidence\n",
+		"capture/retros/completed.md": "retro evidence\n",
+	}
+	for path, body := range files {
+		fullPath := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(fullPath, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, code := ContextCommand([]string{"--context", "--full"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contextRows, err := document.Rows("context")
+	if err != nil || len(contextRows) != 1 || contextRows[0].(map[string]any)["schema"] != float64(4) {
+		t.Fatalf("context rows = %#v, %v", contextRows, err)
+	}
+	for _, want := range []struct{ block, field, body string }{
+		{"roadmap_rows", "body", "roadmap evidence"},
+		{"ideas", "text", "idea evidence"},
+		{"learnings", "body", "learning evidence"},
+		{"retros", "body", "retro evidence\n"},
+		{"parse_failures", "raw", "malformed idea"},
+	} {
+		rows, err := document.Rows(want.block)
+		if err != nil || len(rows) != 1 || rows[0].(map[string]any)[want.field] != want.body {
+			t.Fatalf("%s rows = %#v, %v", want.block, rows, err)
+		}
+	}
+}
+
+func TestContextCommandSchemaFourHasNoTruncatedColumn(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — first.**\nbody\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"--context"}, {"--context", "--row", "FT1"}, {"--context", "--full"}} {
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} })
+		if code != 0 {
+			t.Fatalf("args=%v exit = %d, output=%q", args, code, out)
+		}
+		if strings.Contains(out, "truncated") {
+			t.Fatalf("args=%v retained truncated column: %s", args, out)
+		}
+		document, err := axitest.DecodeDocument(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows, err := document.Rows("context")
+		if err != nil || len(rows) != 1 || rows[0].(map[string]any)["schema"] != float64(4) {
+			t.Fatalf("args=%v context rows = %#v, %v", args, rows, err)
+		}
+	}
+}
+
+func TestContextCommandIndexOmitsUnsupportedSchemaRaw(t *testing.T) {
+	root := newRepo(t)
+	const raw = "sectionless roadmap evidence"
+	if err := os.WriteFile(roadmapPath(t, root), []byte(raw), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		args    []string
+		wantRaw string
+	}{
+		{[]string{"--context"}, ""},
+		{[]string{"--context", "--full"}, raw},
+	} {
+		out, code := ContextCommand(tc.args, func(string) GateCacheFact { return GateCacheFact{} })
+		if code != 0 {
+			t.Fatalf("args=%v exit = %d, output=%q", tc.args, code, out)
+		}
+		document, err := axitest.DecodeDocument(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows, err := document.Rows("parse_failures")
+		if err != nil || len(rows) != 1 {
+			t.Fatalf("args=%v parse failures = %#v, %v", tc.args, rows, err)
+		}
+		row := rows[0].(map[string]any)
+		if row["raw"] != tc.wantRaw || row["raw_bytes"] != float64(len(raw)) {
+			t.Fatalf("args=%v parse failure = %#v", tc.args, row)
+		}
+	}
+}
+
+func TestContextCommandEveryModeEnumeratesTheCompleteBlockList(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — first.**\nbody\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"context", "sources", "roadmap_rows", "roadmap_sequence", "ideas", "learnings", "retros",
+		"capture_occurrences", "occurrence_discrepancies", "structure", "specs", "spec_history",
+		"git", "git_changes", "gate_cache", "parse_failures", "help",
+	}
+	for _, args := range [][]string{{"--context"}, {"--context", "--row", "FT1"}, {"--context", "--full"}} {
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} })
+		if code != 0 {
+			t.Fatalf("args=%v exit = %d, output=%q", args, code, out)
+		}
+		document, err := axitest.DecodeDocument(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(document.Blocks, want) {
+			t.Fatalf("args=%v blocks = %q, want %q", args, document.Blocks, want)
+		}
+	}
+}
+
 func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
 	root := newRepo(t)
-	body := strings.Repeat("x", contextBodyLimit+17)
+	body := strings.Repeat("x", 4113)
 	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — first.**\n"+body+"\n\n**FT2 — second.**\nother\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +288,7 @@ func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
 	}
 	for i, want := range []struct{ id, body string }{{"FT2", "other"}, {"FT1", body}} {
 		row, ok := rows[i].(map[string]any)
-		if !ok || row["id"] != want.id || row["body"] != want.body || row["body_bytes"] != float64(len(want.body)) || row["truncated"] != false {
+		if !ok || row["id"] != want.id || row["body"] != want.body || row["body_bytes"] != float64(len(want.body)) {
 			t.Fatalf("selected row = %#v", rows[i])
 		}
 	}
@@ -153,7 +360,7 @@ func TestBuildContextCarriesRetrosAndDegradedEvidence(t *testing.T) {
 	if len(s.Sources) < 2 || s.Sources[len(s.Sources)-2].Source != "capture/retros/" {
 		t.Fatalf("sources = %#v", s.Sources)
 	}
-	if got, err := renderContext(s); err != nil || !strings.Contains(got, "retros[3]{path,state,body,body_bytes,truncated}:") || !strings.Contains(got, "capture/retros/bad.md,unreadable") || !strings.Contains(got, "parse_failures[1]{") {
+	if got, err := renderContext(s); err != nil || !strings.Contains(got, "retros[3]{path,state,body,body_bytes}:") || !strings.Contains(got, "capture/retros/bad.md,unreadable") || !strings.Contains(got, "parse_failures[1]{") {
 		t.Fatalf("context = %q, %v", got, err)
 	}
 }
@@ -423,7 +630,7 @@ func TestBuildContextProjectsEveryRecordedSourceWithoutPendingPair(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "3,false,true") {
+	if !strings.Contains(out, "4,false,true") {
 		t.Fatalf("trusted context header missing: %s", out)
 	}
 	if !strings.Contains(out, "capture/IDEAS.md,line 1,already-recorded,FT1,recorded,false") {

@@ -29,11 +29,7 @@ func checkWorkflowAnchors(root string) []string {
 	diags = append(diags, checkStructuredPhaseContract(readIfExists(filepath.Join(root, ".bench", "BENCH.md")))...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterStructured)...)
 	whatNext := readIfExists(filepath.Join(root, ".agents", "commands", "bench-what-next.md"))
-	if whatNext != "" && (strings.Count(whatNext, "bench roadmap --context") != 1 ||
-		!strings.Contains(collapseSpace(whatNext), "If the query fails, stop the phase") ||
-		!strings.Contains(collapseSpace(whatNext), "manual evidence reconstruction")) {
-		diags = append(diags, "bench-what-next dropped the roadmap context query")
-	}
+	diags = append(diags, checkRoadmapContextQuery(whatNext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterRoadmapContext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterImplementSpec)...)
 	diags = append(diags, checkSpecAuthorizationContract(root)...)
@@ -79,6 +75,37 @@ func checkWorkflowAnchors(root string) []string {
 		diags = append(diags, "BENCH-reference.md adapter contract does not document BENCH_MODEL")
 	}
 	return diags
+}
+
+func checkRoadmapContextQuery(whatNext string) []string {
+	if whatNext == "" {
+		return nil
+	}
+	indexCall := "`bench roadmap --context`"
+	rowCall := "`bench roadmap --context --row <ids>`"
+	if strings.Count(whatNext, indexCall) != 1 || strings.Count(whatNext, rowCall) != 1 ||
+		strings.Count(whatNext, "bench roadmap --context") != 2 ||
+		!strings.Contains(collapseSpace(whatNext), "If the query fails, stop the phase") ||
+		!strings.Contains(collapseSpace(whatNext), "manual evidence reconstruction") {
+		return []string{"bench-what-next dropped the roadmap context query"}
+	}
+	return nil
+}
+
+func TestRoadmapContextQueryCheckBites(t *testing.T) {
+	const guidance = "Use `bench roadmap --context` once, then fetch `bench roadmap --context --row <ids>`. If the query fails, stop the phase; manual evidence reconstruction is not a fallback."
+	for _, mutation := range []struct{ name, old, replacement string }{
+		{"invocation set", "`bench roadmap --context --row <ids>`", "`bench roadmap --context --full`"},
+		{"query failure", "If the query fails, stop the phase", "If the query fails, continue"},
+		{"manual reconstruction", "manual evidence reconstruction", "ad hoc reconstruction"},
+	} {
+		t.Run(mutation.name, func(t *testing.T) {
+			mutated := strings.Replace(guidance, mutation.old, mutation.replacement, 1)
+			if !containsDiagnostic(checkRoadmapContextQuery(mutated), "bench-what-next dropped the roadmap context query") {
+				t.Fatal("mutation did not bite")
+			}
+		})
+	}
 }
 
 func checkStructuredPhaseContract(sharedRules string) []string {
