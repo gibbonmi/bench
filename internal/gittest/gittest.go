@@ -1,10 +1,13 @@
-// Package gittest owns the one git test-repository scaffold the package tests share.
-// It creates repositories and nothing else: package-specific fixture bytes stay with the
-// test that grades them. Only tests import this package; no production package may.
+// Package gittest owns the shared git test scaffolds package tests use.
+// Repository setup and file-backed command fixtures live here; package-specific fixture
+// bytes stay with the test that grades them. Only tests import this package.
 package gittest
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -14,6 +17,18 @@ import (
 func Repo(t testing.TB) string {
 	t.Helper()
 	return initialize(t)
+}
+
+// StubGit installs a pure file-backed git stub for worktree-resolution tests.
+func StubGit(t testing.TB, root, mode, logPath string) {
+	t.Helper()
+	dir := t.TempDir()
+	script := filepath.Join(dir, "git")
+	body := fmt.Sprintf("#!/bin/sh\nprintf '%%s\\n' \"$*\" >> %q\ncase \"$*\" in\n  *'--git-common-dir'*)\n    if [ %q = fail-rev-parse ]; then exit 1; fi\n    if [ %q = bad-rev-parse ]; then printf '%%s\\n' %q; else printf '%%s\\n' %q; fi;;\n  *worktree*) exit 0;;\nesac\n", logPath, mode, mode, filepath.Join(root, "missing-common"), filepath.Join(root, ".git"))
+	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
+		t.Fatalf("stub git: %v", err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
 // RepoOnBranch initializes an empty repository on branch with a commit identity configured,

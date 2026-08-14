@@ -406,7 +406,7 @@ func validateOwnerMarker(root, path string) (ownerEvidence, error) {
 		return ownerEvidence{}, errors.New("private worktree administration directory is unavailable")
 	}
 	admin = filepath.Clean(admin)
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil || !filepath.IsAbs(common) {
 		return ownerEvidence{}, errors.New("common Git directory is unavailable")
 	}

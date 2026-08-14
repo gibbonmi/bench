@@ -57,7 +57,7 @@ type Ledger struct {
 // Address resolves the ledger through git's absolute common-directory query, so
 // the primary checkout and every linked worktree share one file.
 func Address(root string) (string, error) {
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil || common == "" {
 		return "", fmt.Errorf("resolve git common directory: %w", err)
 	}

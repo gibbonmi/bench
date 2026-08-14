@@ -273,7 +273,7 @@ ul { margin: 0; padding-left: 1.25rem; font-size: .9rem; }
 <section class="card">
   <h2>Worktrees</h2>
   {{if .WorktreesErr}}
-  <p class="error">git worktree list failed: {{.WorktreesErr}}</p>
+  <p class="error">worktree discovery failed: {{.WorktreesErr}}</p>
   {{else if .Worktrees}}
   <table>
     <thead><tr><th>class</th><th>path</th></tr></thead>

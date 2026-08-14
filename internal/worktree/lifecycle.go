@@ -380,7 +380,7 @@ func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) erro
 // it. Only a target with no git metadata entry reaches here, so the administration
 // directory it names is already dangling.
 func releaseRegistration(root, target string) error {
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil {
 		return fmt.Errorf("resolve common Git directory: %w", err)
 	}

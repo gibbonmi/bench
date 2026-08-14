@@ -133,9 +133,53 @@ type Worktree struct {
 	LockReason string
 }
 
+// ResolutionError reports a common-directory resolution that cannot be trusted.
+type ResolutionError struct {
+	Path string
+	Err  error
+}
+
+func (e *ResolutionError) Error() string {
+	if e.Path != "" {
+		return fmt.Sprintf("git common directory %q has shape %v; investigate the git failure", e.Path, e.Err)
+	}
+	return fmt.Sprintf("git common directory resolution failed (%s); investigate the git failure", e.Err)
+}
+
+func (e *ResolutionError) Unwrap() error { return e.Err }
+
+func commonDirArgs(root string) []string {
+	return []string{"-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir"}
+}
+
+// CommonDir resolves the repository's shared administrative directory.
+func CommonDir(root string) (string, error) {
+	common, err := Output(commonDirArgs(root)...)
+	if err != nil {
+		return "", &ResolutionError{Err: fmt.Errorf("rev-parse %s: %w", strings.Join(commonDirArgs(root), " "), err)}
+	}
+	if common == "" {
+		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path")}
+	}
+	info, statErr := os.Lstat(common)
+	if statErr != nil {
+		return "", &ResolutionError{Path: common, Err: fmt.Errorf("missing path: %w", statErr)}
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return "", &ResolutionError{Path: common, Err: errors.New("symlink")}
+	}
+	if !info.IsDir() {
+		return "", &ResolutionError{Path: common, Err: errors.New("non-directory")}
+	}
+	return common, nil
+}
+
 // Worktrees returns every registered checkout using NUL-framed porcelain. The
 // framing is required because a valid worktree path may contain a newline.
 func Worktrees(root string) ([]Worktree, error) {
+	if _, err := CommonDir(root); err != nil {
+		return nil, err
+	}
 	raw, err := Raw("-C", root, "worktree", "list", "--porcelain", "-z")
 	if err != nil {
 		return nil, err

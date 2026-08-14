@@ -1,9 +1,12 @@
 package git
 
 import (
+	"errors"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -15,6 +18,37 @@ func runGit(t *testing.T, root string, args ...string) string {
 		t.Fatalf("git %v: %v", args, err)
 	}
 	return string(out)
+}
+
+func TestWorktreesRejectsBadCommonDirBeforePorcelain(t *testing.T) {
+	root := newRepo(t)
+	logPath := filepath.Join(t.TempDir(), "argv")
+	gittest.StubGit(t, root, "bad-rev-parse", logPath)
+	_, err := Worktrees(root)
+	var resolution *ResolutionError
+	if !errors.As(err, &resolution) || !strings.Contains(err.Error(), "missing-common") || !strings.Contains(err.Error(), "missing path") || !strings.Contains(err.Error(), "investigate the git failure") {
+		t.Fatalf("err=%v", err)
+	}
+	data, _ := os.ReadFile(logPath)
+	if strings.Contains(string(data), "worktree") {
+		t.Fatalf("worktree invoked: %s", data)
+	}
+}
+
+func TestWorktreesPropagatesRevParseFailureBeforePorcelain(t *testing.T) {
+	root := newRepo(t)
+	logPath := filepath.Join(t.TempDir(), "argv")
+	gittest.StubGit(t, root, "fail-rev-parse", logPath)
+	var err error
+	_, err = Worktrees(root)
+	var resolution *ResolutionError
+	if !errors.As(err, &resolution) || !strings.Contains(err.Error(), "rev-parse") || !strings.Contains(err.Error(), "investigate the git failure") {
+		t.Fatalf("err=%v", err)
+	}
+	data, _ := os.ReadFile(logPath)
+	if strings.Contains(string(data), "worktree") {
+		t.Fatalf("worktree invoked: %s", data)
+	}
 }
 
 // newRepo initialises a repo with one commit and returns its root.

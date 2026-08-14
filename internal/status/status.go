@@ -378,7 +378,7 @@ func appendWorktree(rows []row, root string) []row {
 		// A classify failure means the pool/leased/out-of-pool counts below are
 		// unknowable, not zero: surface the git failure itself as the row rather than
 		// falling through to an empty-looking board (the false-empty class FT29 swept).
-		return append(rows, row{2, "worktree", fmt.Sprintf("git worktree list failed: %v", err), "investigate the git failure, then re-run bench status"})
+		return append(rows, row{2, "worktree", fmt.Sprintf("worktree discovery failed: %v", err), "investigate the git failure, then re-run bench status"})
 	}
 	outOfPool, leased := 0, 0
 	for _, wt := range registered {
@@ -451,7 +451,7 @@ func prePushDetail(health adopt.PrePushHealth) string {
 // low-noise signal stays quiet rather than double-reporting.
 func isPrimaryCheckout(root string) bool {
 	gitDir, err1 := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-dir")
-	common, err2 := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err2 := git.CommonDir(root)
 	if err1 != nil || err2 != nil {
 		return false
 	}

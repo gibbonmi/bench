@@ -118,7 +118,7 @@ func ClassifyRegisteredWorktrees(root string) ([]Registered, error) {
 	return out, nil
 }
 func canonicalRoot(root string) string {
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil || filepath.Base(common) != ".git" {
 		return root
 	}

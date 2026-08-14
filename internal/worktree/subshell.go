@@ -51,7 +51,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -364,7 +364,7 @@ func explicitContentIdentity(target string) (string, error) {
 	return fingerprintParts(parts...), nil
 }
 func predictedForeignRef(root, target, admin string) (string, error) {
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil {
 		return "", err
 	}

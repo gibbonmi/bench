@@ -504,8 +504,8 @@ func TestAppendWorktreeSurfacesClassifyFailure(t *testing.T) {
 	if len(rows) == 0 {
 		t.Fatal("appendWorktree dropped the classify failure instead of surfacing a row")
 	}
-	if !strings.Contains(rows[0].detail, "worktree list failed") {
-		t.Errorf("row detail = %q, want it to name the git worktree-list failure", rows[0].detail)
+	if !strings.Contains(rows[0].detail, "worktree discovery failed") {
+		t.Errorf("row detail = %q, want it to name worktree discovery failure", rows[0].detail)
 	}
 }
 
