@@ -1,6 +1,6 @@
 # Worktree enumeration hang
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -55,7 +55,11 @@ constant driven through `bounds.Run`.
 
 ### Answer
 
-— (open — reviewer)
+Both (reviewer, 2026-08-14). Before enumeration, every entry under
+`<git-common-dir>/worktrees/` must be a regular file or directory or Bench
+refuses, naming the entry; the enumeration call itself runs under a named
+`internal/bounds` registry deadline through `bounds.Run` as the backstop for
+blocking shapes the scan cannot classify.
 
 ## #3: Does the mitigation cover enumeration only, or every worktree-admin git call?
 
@@ -75,7 +79,10 @@ removes the ambient hang — with the mutation-site exposure parked via
 
 ### Answer
 
-— (open — reviewer)
+Enumeration only (reviewer, 2026-08-14). The pre-scan and bound attach to the
+sole enumeration owner `git.Worktrees` and nothing else; worktree-mutating git
+calls stay unguarded in this build, and that exposure is parked in
+`capture/IDEAS.md` for a reviewed drain.
 
 ## #4: What does the refusal disclose, and is there a repair route?
 
@@ -94,7 +101,11 @@ removal stays a human act.
 
 ### Answer
 
-— (open — reviewer)
+Name + doctor, no delete (reviewer, 2026-08-14). The refusal names the
+offending entry path and its observed shape with "inspect and remove it" as
+the next action; `bench doctor` reports the same finding; no Bench command
+deletes anything under `.git/worktrees/`. A plan/apply repair command was
+rejected.
 
 ## Not yet specified
 
@@ -113,6 +124,11 @@ removal stays a human act.
 ## Out of scope
 
 - Fixing or patching upstream git; no upstream report is part of this work.
+- Guarding worktree-mutating git calls (`add`/`lock`/`unlock`/`prune`) — #3
+  scoped this build to enumeration; the exposure is parked in
+  `capture/IDEAS.md`.
+- Any Bench command that deletes or repairs entries under `.git/worktrees/` —
+  a plan/apply repair route was rejected in #4.
 - `git branch --list` exposure — Bench never invokes it (`LocalBranches` uses
   `for-each-ref`, which stays clean).
 - Repairing `decisions/spec-build-review-gate-cadence.md`; that invalid map is

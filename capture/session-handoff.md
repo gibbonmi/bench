@@ -7,15 +7,15 @@ Spec: none staged.
 
 ## State
 
-FT189 shaping opened `decisions/worktree-enumeration-hang.md`. Research ticket
-#1 is resolved: the hang is reproduced on git 2.43.0 (any FIFO admin entry
-wedges `git worktree list --porcelain`; matrix and repro script in
-`decisions/assets/worktree-enumeration-hang-probe.md`), Bench inherits it
-through the sole enumeration owner `git.Worktrees`, and `internal/bounds` is
-the established bound seam. Grill #2 (mitigation posture — pre-scan refusal,
-execution bound, or both; recommendation: both) is the frontier; #3 (scope)
-and #4 (refusal disclosure/repair) are blocked behind it. All three need the
-reviewer live. CONTEXT.md gained the **worktree admin entry** term.
+FT189 shaping is closed: `decisions/worktree-enumeration-hang.md` is `ready`
+with all four tickets resolved. Reviewer decisions (2026-08-14): both arms —
+pre-scan refusal (every entry under `<git-common-dir>/worktrees/` must be a
+regular file or directory) plus a named `internal/bounds` deadline through
+`bounds.Run`; scope is the sole enumeration owner `git.Worktrees` only; the
+refusal names the entry path and shape, `bench doctor` reports the same
+finding, and no Bench command deletes under `.git/worktrees/` (plan/apply
+repair rejected). Mutation-site exposure is parked in `capture/IDEAS.md`.
+Probe evidence: `decisions/assets/worktree-enumeration-hang-probe.md`.
 
 `decisions/spec-build-review-gate-cadence.md` is invalid (its Sources cite the
 removed `internal/specbuild/checkpoint.go`), which alone keeps `bench maps` at
@@ -23,7 +23,7 @@ exit 1; repairing it belongs to that map's own shaping resume, not FT189.
 
 ## Next command
 
-`/bench-shape-idea` — resume `worktree-enumeration-hang` at decision ticket #2 with the reviewer present.
+`/bench-write-spec` — compile the ready `worktree-enumeration-hang` map into the FT189 build spec.
 
 ## Shape
 
