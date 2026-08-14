@@ -89,7 +89,7 @@ func snapshotDriftRefusal(args []string, hint string) string {
 	for _, arg := range args {
 		invocation = append(invocation, axi.KnownArgument(arg))
 	}
-	help, err := axi.RenderHelp([]axi.Action{axi.ExecutableInvocation("retry after the repository stopped moving", invocation...)})
+	help, err := axi.RenderHelp([]axi.Action{axi.RetryInvocation(invocation...)})
 	if err != nil {
 		return toon.RenderError(err) + "\n"
 	}
