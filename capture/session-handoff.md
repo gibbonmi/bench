@@ -2,37 +2,36 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `c46b135`, 2 dirty paths, 17 unpushed commits
-Spec: `specs/roadmap-progressive-index/spec.md` (Status: staged)
-Gate: green at `a095153` — stale, work tree `18f7eca`
+Branch: `main` — HEAD `75cfc95`, 1 dirty path, 3 unpushed commits
+Spec: `specs/parallel-session-landings/spec.md` (Status: staged)
+Gate: green at `338fcd1` — stale, work tree `a5f64f1`
 
 ## State
 
-Roadmap maintenance keeps all 62 rows, folds the write-spec slicing idea into
-FT174's existing spec-to-ticket handoff owner, empties the capture inbox, and
-advances the recommended sequence from shaping FT198 to finishing its active
-implementation. No retro, learning, occurrence, or spec retirement was pending.
+All review repair targets for `parallel-session-landings` are committed green in
+the retained integration worktree at
+`/home/devuser/.bench/worktrees/bench-3325222104/f4184ff502884623aebddc5adedb2f18-3ae1acc9b13bc0e78eaa9d9f1cf10291`.
+Semantic re-review of `be5ec93e..a2e94ef3` (three top/high axes) returned seven
+auto-fix findings, all landed green as commits `a3095bc2..a71eea9c`; the worktree
+is clean at `a71eea9cbb1aea6c36ce35d240ff032afbe1e8ea`. Two flags stay open for
+reviewer veto: the prior `ask-user` resume-authority target was implemented
+(commit `fa8bdbbe`, reusing existing receipt `Branch`/`BranchOID` fields — no new
+schema) without a recorded reviewer decision, and the PL15/PL16 public journey
+asserts the destination-checkout fingerprint refusal rather than CAS
+classification (any public movement trips that recheck first; CAS remains
+covered at the injected-updater seam).
 
-FT198 `roadmap-progressive-index` has three green ticket commits on `main`:
-`ea5dd47a` add-context-envelope, `403a66a8` rebuild-bare-board, and
-`c46b135a` add-row-selector. `land-index-doctrine` is preserved uncommitted in
-`/home/devuser/.bench/worktrees/bench-3325222104/62f66d33a5fd9afdf9446f51ce9f3edb-f70c5f8dc98f203fac19bdd6e07df1d3`.
-
-That nine-path diff has PI1-PI5, PI9, PI17, and PI18 green, including recorded
-prose-only and schema-only PI17 revert reds. Its final mutation exposed duplicate
-default body-omission enforcement in `projectBody` and `ContextCommand`; collapse
-that fact to one owner before landing. The prior top-line delegate exhausted its
-8-iteration cap, so resume as a fresh declared repair stage rather than continuing
-that charge.
-
-After the doctrine ticket lands, continue `join-axi-set`, three-axis composed
-review, the reviewer-chosen Fable/high cross-harness falsification pass, the final
-`--spec` landing, and `/bench-final-check`. The
-`ft153-canary-public-repro` assignment remains foreign and untouched.
+Current phase: final landing — reauthorize assignment
+`3ae1acc9b13bc0e78eaa9d9f1cf10291` with a fresh ephemeral token (prior token lost
+at the session boundary; recovery path per the reauthorize ticket), explicit
+review at base `be5ec93e`, then `bench worktree land --spec
+parallel-session-landings` from clean `main` using the source-built binary.
+FT198 remains published on main as `75cfc952`, spec `Status: implemented`.
+Preserve foreign assignment `fdf07b2661ab381f9125643169f1af10` byte-for-byte.
 
 ## Next command
 
-`$bench-implement-spec --full roadmap-progressive-index`
+`$bench-implement-spec --full parallel-session-landings`
 
 ## Shape
 

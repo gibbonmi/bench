@@ -1,0 +1,1 @@
+- 2026-08-13  Bug: bench commands --brief can silently use a stale durable dist/bench, expose only version/commands/status while the current wrapper/source supports a larger command registry, and give no freshness or source/binary mismatch diagnostic; command discovery must either use the current source identity or fail loudly with the exact stale artifact and repair action.
