@@ -5,7 +5,7 @@ Writes: .agents/commands/bench-implement-spec.md, internal/anchors/registry_data
 
 ## What to build
 
-Close the Spec-axis WF4 finding recorded in `reviews/spec-authoring-and-light-path.md`: entry validation treats an absent ticket directory and a present directory containing no ticket files as the same ticketless state, and routes both to `/bench-write-spec` before preflight. Re-derive the existing anchor and fixture rather than adding a second policy source.
+Entry validation treats an absent ticket directory and a present directory containing no ticket files as the same ticketless state, and routes both to `/bench-write-spec` before preflight. Re-derive the existing anchor and fixture rather than adding a second policy source.
 
 ## Acceptance
 

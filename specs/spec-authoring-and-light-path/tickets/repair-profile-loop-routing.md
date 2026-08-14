@@ -5,7 +5,7 @@ Writes: projects/benchkit.md, internal/anchors/registry_data.go, internal/canary
 
 ## What to build
 
-Close the overlapping Standards and Coverage findings recorded in `reviews/spec-authoring-and-light-path.md`. The Benchkit Lines rows retain cached model, effort, venue, and lean stage identity: loop 1 reviews the spec before slicing, and loop 2 reviews the ticket breakdown after the write-spec slicing step. Operational retry, reporting, advisory-verdict, and reviewer-stop policy stays single-sourced in `bench-write-spec`. Pin each lean row with an exact Require and mutation proof.
+The Benchkit Lines rows retain cached model, effort, venue, and lean stage identity: loop 1 reviews the spec before slicing, and loop 2 reviews the ticket breakdown after the write-spec slicing step. Operational retry, reporting, advisory-verdict, and reviewer-stop policy stays single-sourced in `bench-write-spec`. Pin each lean row with an exact Require and mutation proof.
 
 ## Acceptance
 

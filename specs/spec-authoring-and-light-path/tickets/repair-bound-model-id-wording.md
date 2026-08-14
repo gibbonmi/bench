@@ -5,7 +5,7 @@ Writes: .agents/skills/bench-craft-delegate/SKILL.md, internal/anchors/registry_
 
 ## What to build
 
-Close the Standards wording finding recorded in `reviews/spec-authoring-and-light-path.md`: replace the undefined `bound alias` with `resolved bound model id`, then re-derive the existing anchor and fixture so own-family versus cross-family routing stays protected without adding a second rule.
+Replace the undefined `bound alias` with `resolved bound model id`, then re-derive the existing anchor and fixture so own-family versus cross-family routing stays protected without adding a second rule.
 
 ## Acceptance
 
