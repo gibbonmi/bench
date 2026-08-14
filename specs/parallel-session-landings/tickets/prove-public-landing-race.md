@@ -1,6 +1,6 @@
 # Prove the public landing race
 
-Blocked by: classify-destination-ref-update-failures.md
+Blocked by: classify-destination-ref-update-failures.md, enumerate-specs-without-glob-roots.md
 Writes: internal/systemtest
 
 ## What to build

@@ -193,9 +193,9 @@ func specStatus(root, slug, resolved string) (string, *BootstrapFailure) {
 			return f.Status, nil
 		}
 	}
-	// resolved may point at a path Facts' specs/*/spec.md glob does not cover (e.g. a
+	// resolved may point at a path Facts' folder-spec enumeration does not cover (e.g. a
 	// non-standard argument); either way, no typed status is available to trust.
-	return "", &BootstrapFailure{"spec status not readable", resolved + " did not resolve through the folder-spec glob"}
+	return "", &BootstrapFailure{"spec status not readable", resolved + " did not resolve through folder-spec enumeration"}
 }
 
 // specTag is the alphabetic prefix shared by a spec's declared row IDs, e.g. "PF" for

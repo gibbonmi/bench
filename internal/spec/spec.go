@@ -97,23 +97,29 @@ func metadata(content []byte) (status, roadmapID string) {
 	return status, roadmapID
 }
 
-// Facts reads folder specs in path order. Every globbed path is classified before it is
+// Facts reads folder specs in slug order. Every present spec.md is classified before it is
 // opened: only bounds.StateParsed supplies metadata; every other bounds.FileState remains an
 // empty-metadata evidence row instead of becoming an omission or a returned read error. This
 // fail-closed posture gives ambient consumers evidence without letting a special file block.
 func Facts(root string) ([]Fact, error) {
-	folder, err := filepath.Glob(filepath.Join(root, "specs", "*", "spec.md"))
+	entries, err := os.ReadDir(filepath.Join(root, "specs"))
 	if err != nil {
-		return nil, err
+		return []Fact{}, nil
 	}
-	paths := folder
-	sort.Strings(paths)
-	out := make([]Fact, 0, len(paths))
-	for _, path := range paths {
-		slug := filepath.Base(filepath.Dir(path))
+	out := make([]Fact, 0, len(entries))
+	for _, entry := range entries {
+		candidate := filepath.Join(root, "specs", entry.Name())
+		info, err := os.Stat(candidate)
+		if err != nil || !info.IsDir() {
+			continue
+		}
+		path := filepath.Join(candidate, "spec.md")
+		if _, err := os.Lstat(path); err != nil {
+			continue
+		}
 		f := Fact{
-			Slug: slug,
-			Path: LiveSpecPath(slug),
+			Slug: entry.Name(),
+			Path: LiveSpecPath(entry.Name()),
 		}
 		c := bounds.Classify(path, bounds.ControlRecordLimit)
 		if c.State == bounds.StateParsed {
@@ -121,6 +127,7 @@ func Facts(root string) ([]Fact, error) {
 		}
 		out = append(out, f)
 	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Slug < out[j].Slug })
 	return out, nil
 }
 
