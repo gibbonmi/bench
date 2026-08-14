@@ -242,7 +242,7 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 		return Result{}, fmt.Errorf("create landing commit: %w", err)
 	}
 	if err := o.updateRef(r.Root, r.Destination, commit, r.Expected); err != nil {
-		return Result{}, fmt.Errorf("destination compare-and-swap refused: %w", err)
+		return Result{}, destinationUpdateFailure(r.Root, r.Destination, r.Expected, err)
 	}
 	if err := o.reconcile(r, paths, snapshot); err != nil {
 		return Result{Base: r.Expected, Commit: commit, Tree: tree}, fmt.Errorf("landed-but-checkout-incomplete: %w", err)
@@ -310,7 +310,7 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 		return ReviewedResult{}, fmt.Errorf("create landing commit: %w", err)
 	}
 	if err := o.updateRef(r.Root, r.Destination, commit, destination); err != nil {
-		return ReviewedResult{}, fmt.Errorf("destination compare-and-swap refused: %w", err)
+		return ReviewedResult{}, destinationUpdateFailure(r.Root, r.Destination, destination, err)
 	}
 	return ReviewedResult{SourceBase: r.ReviewBase, SourceTip: source, DestinationBase: destination, Commit: commit, Tree: tree}, nil
 }
@@ -629,6 +629,16 @@ func unique(values []string) []string {
 	return out
 }
 func updateRef(root, ref, new, old string) error { return run(root, "update-ref", ref, new, old) }
+func destinationUpdateFailure(root, ref, expected string, updateErr error) error {
+	actual, err := output(root, "rev-parse", "--verify", ref+"^{commit}")
+	if err != nil {
+		return fmt.Errorf("read destination after failed ref update: %w", err)
+	}
+	if actual != expected {
+		return fmt.Errorf("destination compare-and-swap refused: %w", updateErr)
+	}
+	return updateErr
+}
 func output(root string, args ...string) (string, error) {
 	return benchgit.Output(append([]string{"-C", root}, args...)...)
 }

@@ -272,6 +272,48 @@ func TestLandPreservesWinnerOnCASLoss(t *testing.T) {
 	}
 }
 
+func TestLandRetainsInfrastructureRefUpdateFailureWhenDestinationIsUnchanged(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "named", "changed")
+	base := git(t, root, "rev-parse", "HEAD")
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+	o.updateRef = func(string, string, string, string) error { return os.ErrPermission }
+
+	_, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "blocked", Paths: []string{"named"}})
+	if err == nil || strings.Contains(err.Error(), "compare-and-swap") || !strings.Contains(err.Error(), os.ErrPermission.Error()) {
+		t.Fatalf("unchanged destination update error = %v", err)
+	}
+	if got := git(t, root, "rev-parse", "HEAD"); got != base {
+		t.Fatalf("destination changed to %s", got)
+	}
+}
+
+func TestLandClassifiesHeldDestinationRefLockAsInfrastructure(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "named", "changed")
+	base := git(t, root, "rev-parse", "HEAD")
+	lock := filepath.Join(root, ".git", "refs", "heads", "main.lock")
+	if err := os.WriteFile(lock, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Remove(lock) })
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+
+	_, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "locked", Paths: []string{"named"}})
+	if err == nil || strings.Contains(err.Error(), "compare-and-swap") {
+		t.Fatalf("held destination ref lock error = %v", err)
+	}
+	if got := git(t, root, "rev-parse", "HEAD"); got != base {
+		t.Fatalf("destination changed to %s", got)
+	}
+}
+
 func TestLandRefusesEveryNonGreenAuthorizationWithoutMutation(t *testing.T) {
 	for _, kind := range []authorization.Kind{authorization.Candidate, authorization.Inherited, authorization.Infrastructure} {
 		t.Run(string(kind), func(t *testing.T) {
@@ -562,11 +604,16 @@ func TestLandReviewedDestinationCASLossThenRecomposition(t *testing.T) {
 		t.Fatalf("winner was overwritten: %s", got)
 	}
 	git(t, root, "reset", "--hard", winner)
+	o.updateRef = func(string, string, string, string) error { return os.ErrPermission }
+	if _, err := o.LandReviewed(context.Background(), request(winner)); err == nil || strings.Contains(err.Error(), "compare-and-swap") || !strings.Contains(err.Error(), os.ErrPermission.Error()) {
+		t.Fatalf("unchanged destination update error = %v", err)
+	}
+	o.updateRef = updateRef
 	got, err := o.LandReviewed(context.Background(), request(winner))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if calls != 2 || git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+winner+" "+source {
+	if calls != 3 || git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+winner+" "+source {
 		t.Fatalf("recomposition = %+v, authorization calls=%d", got, calls)
 	}
 }
