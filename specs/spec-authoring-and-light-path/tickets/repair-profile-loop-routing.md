@@ -1,6 +1,6 @@
 # Keep profile loop routing lean and mutation-backed
 
-Blocked by: none
+Blocked by: repair-census-map-coverage.md
 Writes: projects/benchkit.md, internal/anchors/registry_data.go, internal/canary/inventory_test.go, tests/canary/workflow-guidance-anchors/
 
 ## What to build
