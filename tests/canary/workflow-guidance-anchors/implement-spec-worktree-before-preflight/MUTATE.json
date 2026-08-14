@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "After approval, create or retain one integration worktree at the reviewed graph\ncommit; that commit is its frozen review base. Enter it and run `bench preflight\nbuild <slug>` before the first edit; a red preflight stops the phase.",
+    "new": "Run `bench preflight build <slug>` before the first edit; a red preflight stops\nthe phase. After approval, create or retain one integration worktree at the reviewed\ngraph commit; that commit is its frozen review base."
+  }
+]

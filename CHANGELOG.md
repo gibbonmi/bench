@@ -9,6 +9,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 ### Fixed
 
 - `bench link` now adopts only same-file converged adapter symlinks on first link.
+- `/bench-implement-spec` now creates or retains its integration worktree before
+  running build preflight, so earlier local `main` commits cannot contaminate the
+  spec-owned changed-path check.
 
 ### Removed
 

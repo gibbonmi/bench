@@ -1,0 +1,1 @@
+.agents/commands/bench-implement-spec.md does not create or retain the integration worktree before build preflight
