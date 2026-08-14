@@ -16,9 +16,10 @@ done.
 Close by showing the approval table for user stories, seams with diagrams,
 acceptance coverage, and out of scope. The spec carries `Status: staged`
 (staged → implemented at the green gate → promote-then-delete on merge). Stop
-for reviewer sign-off, then recommend a new mid-tier session to run
-`/bench-implement-spec`, or `bench shift` only when every story is cheap and
-the coverage map is fully gate-observable.
+for sign-off, then continue into `/bench-implement-spec` only to slice and win
+approval for the tickets. After that review, recommend a fresh mid-tier session
+to build one retained integration source, review its frozen base and tip, and
+hand the accepted source to `bench worktree land`.
 
 ## Entry contract
 
@@ -65,12 +66,12 @@ engineering plan.
 
 ## Who runs this phase
 
-The mid tier authors ordinary specs in a new session on the mid tier by
-default. A
-same-session current-conversation source is authorized by the entry contract,
-not by inherited memory: verify the reviewer confirmation and write its
-provenance line. The top tier remains an explicit escalation that pauses for
-reviewer approval under `craft-line`.
+The mid tier authors ordinary specs and carries their decision context through
+reviewed ticket slicing. A same-session current-conversation source is
+authorized by the entry contract, not by inherited memory: verify the reviewer
+confirmation and write its provenance line. The fresh implementation session
+starts only after ticket approval. Top tier remains an explicit escalation that
+pauses for reviewer approval under `craft-line`.
 
 ## Process
 

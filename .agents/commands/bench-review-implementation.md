@@ -9,8 +9,8 @@ description: Three-axis semantic review of a branch diff — Standards, Spec, an
 This is the semantic review phase. It reviews the branch diff against three
 separate axes: documented standards, the approved spec, and coverage gaps. It
 produces findings the gate cannot see, without claiming authority over done-ness.
-A spec-backed review opens with `bench preflight review <slug>` before pinning
-the diff; a red preflight stops the phase.
+A spec-backed review runs from the retained integration source and opens with
+`bench preflight review` in explicit-base mode; a red preflight stops the phase.
 
 ## Exit handoff
 
@@ -34,11 +34,10 @@ true base, on three axes that stay separate.
 ## Process
 
 1. **Pin the diff.** Pull the whole base-relative context with
-   `bench diff --full`: it prefers the
-   branch's recorded pre-shift base and falls back to merge-base with the default
-   branch, and its `method:` line says which happened. When that diff is empty
-   because the work already landed, use `bench diff --full --commit <sha>`
-   to review exactly that landing commit.
+   `bench diff --full` in explicit-base mode, supplying the same frozen base as
+   preflight. Record the complete reported base and source tip; a dirty source,
+   moved tip, or pair that differs from preflight stops review. When work already
+   landed, use `bench diff --full --commit <sha>` for that historical commit.
 
 2. **Find the sources.** Spec: `specs/<feature>/spec.md` for this work (or the path I
    give you). Standards: `AGENTS.md` and `.bench/BENCH.md` — the working agreement
@@ -109,8 +108,9 @@ true base, on three axes that stay separate.
 
 6. **Hand off, don't repair.** This phase makes no fixes and runs no gate.
    Accepted findings become slim repair tickets carrying an advisory
-   `Writes:` note and return to `/bench-implement-spec`; a clean review
-   proceeds to `/bench-final-check` for its fresh oracle run.
+   `Writes:` note and return to `/bench-implement-spec` on the same integration
+   source. A clean review hands its frozen base and reviewed tip to
+   `bench worktree land`; `/bench-final-check` reports that landing's oracle.
 
 ## Where it sits
 

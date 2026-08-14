@@ -40,7 +40,7 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
   `bench coverage`, `bench outline`, `bench models`, `bench version`, and
   `bench test [--full] [package]` for package, failure, and skip evidence as
   TOON.
-- Work: `bench worktree` (`bench worktree path <target>`,
+- Work: `bench worktree` (`bench worktree path <target>`, `bench worktree land`,
   `bench worktree exec <target> -- <command>`, `bench worktree release` by the
   creating request, `bench worktree clean` for plan/apply removal),
   `bench shift`, path-scoped `bench commit -m <msg> <path>...` (`--spec <slug>`
@@ -141,11 +141,11 @@ focused regression checks, then the gate.
 | Decomposes to one independently-green ticket and crosses no declared seam | Light path: charge `craft-tickets`, write the one ticket, then implement it without a spec. This table is the standing approval to skip the spec phase; the ticket still rides the session's existing approval surface. |
 | Either observable is false | Normal full workflow. |
 
-Reviewed spec-backed implementation lands its tickets serially, each
-commit-on-green through path-scoped `bench commit` — the sole landing path.
-Review the composed diff before the final landing; accepted findings land as
-repair tickets on the same cadence. `--spec <slug>` rides only that final commit
-and marks the spec `Status: implemented`.
+Reviewed spec-backed implementation keeps one retained integration source:
+tickets commit green there serially, then semantic review freezes its base and
+tip. Accepted findings commit there on the same cadence. From the destination,
+`bench worktree land` composes and gates that reviewed source, publishes the
+implemented spec, and releases the source only after publication completes.
 
 **Fix, don't park.** A small defect you find mid-work is not backlog: the
 fix lands in the active workflow as its own commit. Parking it to
@@ -175,4 +175,3 @@ reviewer wants to set one aside, or you spot a tangent worth keeping, **you** ru
 
 Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`;
 `/bench-what-next` owns their reviewed drain.
-

@@ -30,9 +30,10 @@ branch-agnostic. This line is only the binding.)
   Missing-binary resolution is network-silent by default and names the explicit
   `bench repair` action; automation opts into the same repair path with exactly
   `BENCH_REPAIR=1`, while `BENCH_OFFLINE=1` and `BENCH_NO_REPAIR` suppress it.
-  Reviewed spec-backed builds land tickets serially through path-scoped
-  `bench commit`, commit-on-green; `--spec <slug>` on the final green landing
-  commit is the sole author of the spec's `Status: implemented` flip.
+  Reviewed spec-backed builds keep serial green ticket commits on one retained
+  integration source. Semantic review binds its frozen base and tip;
+  `bench worktree land` composes and gates that pair on the destination, and its
+  published commit owns the spec's `Status: implemented` flip.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, and `bench worktree list`, and the
   shared flat-table TOON emitter behind them). The agent-facing read-only
@@ -41,11 +42,11 @@ branch-agnostic. This line is only the binding.)
   the AXI contract fragments. Guard manifests come from each guard script's static
   leading-comment header (read as data, never executed), and
   `bench guards --brief` is the surface the SessionStart hook injects.
-  `bench diff` is the single coherent review snapshot and source of review-base truth:
-  it reports the revision, aggregate, inventory, checkout, whitespace, and optional
-  complete patch from one movement-checked read; the shift loop records
-  the pre-shift HEAD in `branch.<name>.benchBase`, `diff` resolves that key first
-  and merge-base with the default branch as fallback. `bench coverage --check` is
+  `bench diff` is the single coherent review snapshot: it reports the revision,
+  aggregate, inventory, checkout, whitespace, and optional complete patch from
+  one movement-checked read. Spec-backed review supplies the retained source's
+  explicit frozen base; bare mode retains its recorded-base fallback for other
+  work. `bench coverage --check` is
   the one parser for the acceptance-coverage-map convention; the gate's docs
   fragment consumes it instead of carrying its own.
 - **The ambient dashboard** (`bench status`). The single deterministic renderer the
@@ -327,7 +328,7 @@ escalation.
   leverage override in `craft-line`: guidance prose compounds through every
   session that loads it while the edit costs few tokens. The `craft-skills` and
   `craft-adr` skills apply. Spend here.
-- **Spec authoring** → **mid model, fresh session by default**.
+- **Spec authoring** → **mid model; fresh build session after ticket slicing**.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
   map, a reviewer-confirmed current conversation, or a named reviewed artifact, then
   derives engineering seams, tests, coverage, hostile-input attachment, and

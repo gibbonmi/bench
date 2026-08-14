@@ -54,10 +54,10 @@ breaks the change's central property, and require the
 delegate to apply it to its own finished work, report the observed result, and
 add the missing row when the mutation comes back silently green.
 A delegate blocked by a defect outside its fence stops and reports rather
-than fixing out of fence. A worktree-isolated charge opens with the
-stale-base check (`git merge --ff-only main`, verify HEAD equals main, stop
-if denied); a fix-pass charge names a commit-specific sentinel the delegate
-verifies before editing.
+than fixing out of fence. A new worktree charge opens with the stale-base check
+(`git merge --ff-only main`, verify HEAD equals main, stop if denied); dependent
+tickets in a reviewed spec chain share the retained integration source and
+verify its expected tip. A fix-pass charge names a commit-specific sentinel.
 A ticket delegate returns focused evidence and its own mutation probe from
 its worktree; it does not land the diff. The coordinator probes the exact
 returned tree independently before landing it. The
@@ -85,8 +85,8 @@ separate worktrees, one each — the harness's own `isolation: worktree`
 cannot cut a second one (its request ID derives from the session ID alone),
 so the coordinator runs `bench worktree create --request <opaque-id>
 --label <work-item>` once per delegate. Share a worktree only when a
-delegate's work depends on another's output; a shared charge names the root
-and pins every file-tool path to that root. The whole-tree gate is
+delegate's work depends on another's output; reviewed dependent tickets share
+one retained integration source, and each charge names its root and expected tip. The whole-tree gate is
 serialized: a write-delegate stops at diff-ready with focused tests green;
 the coordinator runs `bench commit` per worktree, one at a time.
 A worktree isolates the working tree, not the repo-global stash stack a
@@ -115,6 +115,6 @@ inline continue the authoring delegate for its own slice when the harness can
 resume it; otherwise a fresh charge in an isolated worktree carries the
 finding and a sentinel. The coordinator verifies the repair in the checkout
 that owns the diff.
-Acceptance closes the worktree too: once the slice lands, the coordinator
-releases the worktree it cut — `bench worktree release --request <opaque-id>
-<path>`, the same request id create used.
+Acceptance closes an independent worktree after its slice lands. A reviewed
+dependent chain remains retained through explicit source review; only
+`bench worktree land` releases it after the reviewed source publishes.

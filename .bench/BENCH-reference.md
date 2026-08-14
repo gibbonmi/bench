@@ -99,6 +99,12 @@ Detailed output contracts for the AXI query surfaces live in the project
 profile (`projects/<name>.md`);
 hook and adapter plumbing is described in the sections below.
 
+A reviewed spec build keeps its serial ticket commits in one retained
+integration source. Semantic review freezes the explicit base and source tip;
+from the destination, `bench worktree land` is the operational handoff that
+composes and gates that pair before publication and source release. Executable
+help owns its flags and positional grammar.
+
 ## Plumbing subcommands
 
 Driven by hooks and adapters, never typed by sessions — the one enumeration

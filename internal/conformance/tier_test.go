@@ -436,6 +436,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestGuidanceProseBudgetsHoldOnTheLiveTree":                 true,
 	"TestHarnessUsesBenchConformanceRootAsGradedRoot":           true,
 	"TestInjectedPortRegistryCheckBites":                        true,
+	"TestIntegrationSourceWorkflowAnchorsBiteIndependently":     true,
 	"TestInvalidOrderedSetRedsAndWidensToTheFullTier":           true,
 	"TestAXIMembershipExpectationBitesInBothDirections":         true,
 	"TestAXIGuidanceContractBites":                              true,

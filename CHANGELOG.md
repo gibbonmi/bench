@@ -20,9 +20,9 @@ All notable user-facing changes to Bench are documented here. The format follows
   the `refs/bench/specbuild/` and `refs/bench/recovery/` namespaces and purges
   lifecycle-typed assignments from the intent ledger at every session start,
   idempotently. Zero backwards compatibility — no shim, no migration tooling;
-  reviewed spec-backed builds land tickets serially commit-on-green through
-  path-scoped `bench commit`, with `--spec <slug>` on the final green landing
-  commit marking the spec implemented.
+  reviewed spec-backed builds now keep serial green ticket commits on one
+  retained integration source, review its explicit frozen pair, and publish it
+  through `bench worktree land` with the spec transition in the gated tree.
 
 ### Added
 

@@ -6,20 +6,20 @@ description: Run the external gate and commit work on green; after a spec's fina
 
 ## Entry orientation
 
-This is the final verification phase. It runs the external gate and lands work
-only on green; for a spec-backed build whose final landing already flipped the
-spec to `Status: implemented`, it reports that landing's evidence and captures
-the retro. It does not substitute model
-judgment for tests, types, lint, or project conformance.
+This is the final verification phase. For a reviewed spec-backed integration
+source, `bench worktree land` already ran the external gate, published the
+implemented spec, and released the source; final-check reports that landing's
+retained evidence and captures the retro. Other work lands only on green. It
+does not substitute model judgment for tests, types, lint, or conformance.
 
 ## Exit handoff
 
-Close by reporting the applicable oracle result plainly. A spec's final green
-landing commit — path-scoped `bench commit --spec <slug>` — is the sole
-`Status: implemented` author, and it gets no second gate or landing mutation
-afterward: do not re-run `bench gate` over the unchanged landed tree or run
-`bench spec implemented` on top of it. Report the landing commit and its
-retained exact green evidence, then capture the retro below.
+Close by reporting the applicable oracle result plainly. A reviewed spec's
+published `bench worktree land` commit is the `Status: implemented` author and
+gets no second gate or landing mutation afterward: do not re-run `bench gate`
+over its unchanged tree or run `bench spec implemented` on top of it. Report the
+reviewed source pair, landing commit, and retained exact green evidence, then
+capture the retro below.
 
 Everything else takes the gate-then-commit path. On
 green, land the named paths with `bench commit -m "<msg>" <path>...`; it gates

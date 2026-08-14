@@ -924,7 +924,7 @@
               <code>learnings</code>, <code>idea</code>), <strong>oracle and diagnostics</strong>
               (<code>gate</code>, <code>canary</code>, <code>structure</code>, <code>guards</code>,
               <code>coverage</code>, <code>models</code>), and <strong>work execution</strong>
-              (<code>worktree</code>, <code>shift</code>, path-scoped <code>commit</code>, and
+              (<code>worktree</code>, including reviewed-source landing, <code>shift</code>, <code>commit</code>, and
               the <code>spec</code> lifecycle). You never need to type these yourself;
               the agent runs them and reports.</p>
             </div>
@@ -1105,14 +1105,13 @@
                   decisions, <em>pre-agreed test seams</em>, an acceptance coverage map, and the
                   gate expectations that define done. It synthesizes what's already been discussed
                   rather than re-interviewing you. A spec is one of the most token-heavy
-                  artifacts the agent produces, so by default it runs on the mid tier, in a fresh
-                  session that reads the finished decision map instead of inheriting the shaping
-                  conversation. Compiling moves the source map and any map-owned assets to
+                  artifacts the agent produces, so by default it runs on the mid tier while retaining
+                  the approved decision context through ticket slicing. Compiling moves the source map and any map-owned assets to
                   <code>specs/&lt;feature&gt;/decisions/</code>, updates their references, and leaves
                   top-level <code>decisions/</code> for pre-spec decision work. Its entry contract owns
                   the narrow same-session recording
-                  exception. The spec stops for your sign-off, then the build runs on another
-                  fresh session. The target is locked before the loop starts, so the loop can't
+                  exception. The spec stops for your sign-off, tickets are sliced and approved in
+                  that context, then their build starts in a fresh session. The target is locked before the loop starts, so the loop can't
                   renegotiate it.</p>
                 </div>
               </div></div>
@@ -1136,9 +1135,10 @@
                   <div class="label">How it works</div>
                   <p>Starting from the approved spec, the agent derives independently-green
                   tracer tickets under <code>specs/&lt;feature&gt;/tickets/</code>, then works one
-                  unblocked frontier ticket per fresh write-delegate context. Focused seam checks
-                  drive iteration; each ticket lands through one atomic full-gate commit, and
-                  final-check gates the composed feature. The acceptance coverage map keeps the
+                  unblocked frontier ticket per fresh write-delegate context on one retained
+                  integration source. Focused seam checks drive iteration; each ticket commits
+                  green there, and the finished source is reviewed by its explicit frozen base and
+                  tip before <code>bench worktree land</code> composes and gates it on the destination. The acceptance coverage map keeps the
                   target fixed. A build that stalls exits early with an honest report instead of
                   grinding past its cap.</p>
                 </div>
@@ -1161,7 +1161,7 @@
                 </div>
                 <div class="solution">
                   <div class="label">How it works</div>
-                  <p>A semantic review of the branch diff on three separate axes:
+                  <p>A semantic review of the retained integration source's explicit frozen-base-to-tip diff on three separate axes:
                   <strong>Standards</strong> (does it follow this repo's documented conventions),
                   <strong>Spec</strong> (does it match what was approved), and
                   <strong>Coverage</strong> (what breaking inputs does nothing exercise). Every
@@ -1187,11 +1187,11 @@
                 </div>
                 <div class="solution">
                   <div class="label">How it works</div>
-                  <p>The phase runs the external gate and reports the result plainly, including
-                  a red one with the failing output. On green, it lands the work with a
-                  path-scoped <code>bench commit</code>, which gates and commits the named files
-                  atomically; when the commit finishes a spec, the spec's status flips to
-                  implemented in the same commit. Model judgment is never a substitute for
+                  <p>For ordinary work, the phase runs the external gate and reports the result
+                  plainly, including a red one with the failing output. For a reviewed spec source,
+                  <code>bench worktree land</code> already composed and gated the frozen pair,
+                  published the implemented spec, and released the source; final-check reports
+                  that retained landing evidence. Model judgment is never a substitute for
                   the gate here. That is the whole point of the phase.</p>
                 </div>
               </div></div>
