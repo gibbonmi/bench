@@ -23,3 +23,11 @@ What happened: `dist/bench` was rebuilt with plain `go build` to drive the landi
 Right behavior: before touching a durable artifact, re-read the profile's cold-session notes; the sanctioned build path is `bash scripts/go-build.sh <root> <out>`.
 
 Proposed rule change: none — the note existed; the miss was not reading it before acting.
+
+## 2026-08-14 — Don't truncate bench output at the call site [open]
+
+What happened: multiple `bench commit`/`bench gate` invocations this session were piped through `tail` with reflexive `2>&1`, against BENCH.md's rule that complete bench output is the evidence and truncation risks eating red-run failure attribution.
+
+Right behavior: run `bench` plainly; if green-run transcripts are too long to carry, that is CLI projection work — parked as an idea — not call-site shaping.
+
+Proposed rule change: none — the rule exists and is right; the parked terse-green-projection idea addresses the incentive.
