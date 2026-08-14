@@ -9,6 +9,6 @@ The Benchkit Lines rows retain cached model, effort, venue, and lean stage ident
 
 ## Acceptance
 
-- [ ] the profile no longer duplicates the command-owned loop protocol
+- [ ] the profile no longer duplicates the command-owned loop protocol (covers WF10)
 - [ ] exact anchors and mutations independently protect the loop-1 and loop-2 routing facts
-- [ ] the fixture addition and canary binding count land together
+- [ ] the fixture addition and canary binding count land together (covers WF27)

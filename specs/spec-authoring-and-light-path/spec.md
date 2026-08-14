@@ -301,6 +301,7 @@ reading the enforcement surface.
 | WF24 | 3 | the main-session-authorship ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixtures while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
 | WF25 | 3 | the verification-loops ticket's fixture additions update the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixtures while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
 | WF26 | 4 | the reviewer-override-flag ticket's fixture addition updates the independently authored canary binding count in the same commit | `TestRunReportsAcceptedInventoryBindings` | add the ticket's top-level fixture while retaining the previous expected count; `go test ./internal/canary` fails | an omitted same-commit census update leaves the ticket gate red |
+| WF27 | 3 | the repair-profile-loop-routing ticket's two fixture additions update the independently authored canary binding count from 202 to 204 in the same commit | `TestRunReportsAcceptedInventoryBindings` | observed red: the ticket's two new fixtures made the actual count 204 while the expected count remained 202 | an omitted same-commit census update leaves the repair ticket red |
 
 ### Edge inventory
 
