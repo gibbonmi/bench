@@ -2,27 +2,28 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `0d196bc5`, uncommitted `$bench-what-next` batch awaiting approval
-Spec: none staged; `spec-authoring-and-light-path` landed at `8c8e5325` and retired at `0d196bc5`.
-Gate: cached green `cca928c` is stale; the uncommitted maintenance batch has not been gated.
+Branch: `main` — HEAD `7ae73f01` plus the FT189 shaping artifacts
+Spec: none staged.
 
 ## State
 
-The proposed drain empties two ideas, two journal entries, and the
-`spec-authoring-and-light-path` retro. It adds the live-tree ordinary-gate gap
-to FT120, outcome-shaped guidance to FT100, landing-result clarity to FT169,
-filesystem-state edge inventory to FT144, fixture-census ownership to FT174,
-and new FT206 for destination metadata before exact-candidate review. The
-journal rule is already shipped; its narrow A/B rerun requests no follow-up.
+FT189 shaping opened `decisions/worktree-enumeration-hang.md`. Research ticket
+#1 is resolved: the hang is reproduced on git 2.43.0 (any FIFO admin entry
+wedges `git worktree list --porcelain`; matrix and repro script in
+`decisions/assets/worktree-enumeration-hang-probe.md`), Bench inherits it
+through the sole enumeration owner `git.Worktrees`, and `internal/bounds` is
+the established bound seam. Grill #2 (mitigation posture — pre-scan refusal,
+execution bound, or both; recommendation: both) is the frontier; #3 (scope)
+and #4 (refusal disclosure/repair) are blocked behind it. All three need the
+reviewer live. CONTEXT.md gained the **worktree admin entry** term.
 
-No roadmap row was retired or reworded: the trusted schema-4 context reported
-61 live rows, no staged specs, no spec-history rows, and no occurrence
-discrepancies. No restructure was requested. Reviewer approval is required
-before the one scoped commit.
+`decisions/spec-build-review-gate-cadence.md` is invalid (its Sources cite the
+removed `internal/specbuild/checkpoint.go`), which alone keeps `bench maps` at
+exit 1; repairing it belongs to that map's own shaping resume, not FT189.
 
 ## Next command
 
-`$bench-shape-idea` — FT189's reproduced upstream `git worktree list` hang needs a Bench-owned refusal or execution bound.
+`/bench-shape-idea` — resume `worktree-enumeration-hang` at decision ticket #2 with the reviewer present.
 
 ## Shape
 

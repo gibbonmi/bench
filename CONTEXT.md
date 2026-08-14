@@ -32,6 +32,10 @@ cold session reads this first to avoid drifting the vocabulary.
 - **worktree** — an isolated Git checkout. `bench shift` leases warm, reusable
   pooled worktrees. Interactive and harness lifecycle commands create exact owned,
   locked assignment worktrees and release them safely.
+- **worktree admin entry** — one file or directory git keeps per registered
+  worktree under `<git-common-dir>/worktrees/<id>/` (`gitdir`, `HEAD`,
+  `commondir`, `locked`, …), read by `git worktree` subcommands. Git-owned state
+  Bench never writes. Not "metadata file", not "worktree config" — admin entry.
 - **invariant** — one of the four non-negotiable rules (canonical in `.bench/BENCH.md`)
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,
