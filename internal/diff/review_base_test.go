@@ -165,7 +165,11 @@ func TestResolveBranchRangeConsumesExport(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command(nil) exit = %d, want 0; output:\n%s", code, out)
 	}
-	if !strings.HasPrefix(out, "revision[1]{branch,default,ahead,behind,base,method,head}:\n  feature,main,") || !strings.Contains(out, c1+",merge-base") {
+	// The base cell renders quoted when the sha starts with a zero (the toon
+	// layer treats a leading-zero string as numeric-looking), so the assertion
+	// accepts both renderings rather than flaking on the fixture repo's sha.
+	if !strings.HasPrefix(out, "revision[1]{branch,default,ahead,behind,base,method,head}:\n  feature,main,") ||
+		(!strings.Contains(out, c1+",merge-base") && !strings.Contains(out, `"`+c1+`",merge-base`)) {
 		t.Errorf("Command(nil) output = %q, want revision carrying merge-base %q", out, c1)
 	}
 }
