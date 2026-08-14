@@ -341,16 +341,13 @@ escalation.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed — a wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
-- **Spec falsification pass** (`/bench-write-spec` step 9, loop 1) → **mid model,
-  high effort**, read-only and same-family through the harness's native agent
-  surface. It takes the spec alone before slicing and repeats
-  author-fix/re-review until no blocking findings.
-- **Ticket-breakdown review pass** (`/bench-write-spec` slicing step, loop 2) →
-  the same line and delegate shape. It takes the breakdown alone against
-  `craft-tickets` after slicing and repeats author-fix/re-review until no blocking
-  findings. Both loops are an uncapped reviewer exception to the declared
-  iteration cap, report every round in one line, remain advisory, and leave
-  sign-off as the reviewer's hard stop.
+- **Spec falsification pass** (`/bench-write-spec`, loop 1) → **mid model, high
+  effort**, read-only and same-family through the harness's native agent surface.
+  It reviews the spec alone before slicing.
+- **Ticket-breakdown review pass** (`/bench-write-spec`, loop 2) → the same model,
+  effort, and venue. It reviews the ticket breakdown alone against `craft-tickets`
+  after `/bench-write-spec` slices it. `/bench-write-spec` owns both loops'
+  operating protocol.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).
   Read-heavy: each takes the full diff plus standards docs and runs verification
