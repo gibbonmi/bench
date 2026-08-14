@@ -32,15 +32,15 @@ Surface before spawn any delegation that changes who performs requested work.
 
 ## The charge
 
-A delegate has no conversation memory: everything it needs is in the
-prompt — objective, inputs by path, seam, return shape, budget. Route model
-and effort with `craft-line`: the model rides the call itself as the bound
-alias (never omitted — an unbound call inherits *your* model, silent
-escalation at top tier); effort and the iteration cap ride the charge text,
-since the Agent tool has no effort parameter. Prefer compressed inputs — the
-named decision source, the exact passages, and the coverage rows the slice
-needs — plus the fixture-and-seam inventory for its fence, so the delegate
-writes against prior art instead of re-deriving it.
+A delegate has no conversation memory: everything it needs is in the prompt —
+objective, inputs by path, seam, return shape, budget. Route model and effort with
+`craft-line`: name the bound alias on every call (omission inherits your model and
+may silently escalate); put effort and iteration cap in the charge. An own-family
+reviewer uses the harness's native agent surface, never that family's CLI. Cross-family
+reviews and the no-native-surface fallback use the exact recipes in
+`references/cross-harness-reviewers.md`. Prefer compressed inputs — the named
+decision source, exact passages, coverage rows, and the fence's fixture-and-seam
+inventory — so the delegate uses prior art instead of re-deriving it.
 Name exemplar files to mirror when one exists. A charge that extends an
 enumerated family names every registry the family already appears in, traced
 from one existing sibling through the tree; a registry the charge does not
