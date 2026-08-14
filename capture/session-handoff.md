@@ -2,36 +2,33 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `75cfc95`, 1 dirty path, 3 unpushed commits
-Spec: `specs/parallel-session-landings/spec.md` (Status: staged)
-Gate: green at `338fcd1` — stale, work tree `a5f64f1`
+Branch: `main` — HEAD `eb05d52`, 3 dirty paths, 38 unpushed commits
+Spec: none staged.
+Gate: green at `c29f5bd` — stale, work tree `01a3158`
 
 ## State
 
-All review repair targets for `parallel-session-landings` are committed green in
-the retained integration worktree at
-`/home/devuser/.bench/worktrees/bench-3325222104/f4184ff502884623aebddc5adedb2f18-3ae1acc9b13bc0e78eaa9d9f1cf10291`.
-Semantic re-review of `be5ec93e..a2e94ef3` (three top/high axes) returned seven
-auto-fix findings, all landed green as commits `a3095bc2..a71eea9c`; the worktree
-is clean at `a71eea9cbb1aea6c36ce35d240ff032afbe1e8ea`. Two flags stay open for
-reviewer veto: the prior `ask-user` resume-authority target was implemented
-(commit `fa8bdbbe`, reusing existing receipt `Branch`/`BranchOID` fields — no new
-schema) without a recorded reviewer decision, and the PL15/PL16 public journey
-asserts the destination-checkout fingerprint refusal rather than CAS
-classification (any public movement trips that recheck first; CAS remains
-covered at the injected-updater seam).
+`parallel-session-landings` is published: `main` carries `3947bcca` (parents
+`105d243d` + reviewed source tip `1968620d`, tree `5f6abb26`,
+`Status: implemented`), project-green at the published commit, assignment
+`3ae1acc9` released, worktree removed. Both merged specs are retired
+(`spec-retire:` commits). The retro is at
+`capture/retros/parallel-session-landings.md`; two new open learnings and one
+parked idea await the drain. Everything is committed; nothing is pushed —
+pushing `main` is the reviewer's call.
 
-Current phase: final landing — reauthorize assignment
-`3ae1acc9b13bc0e78eaa9d9f1cf10291` with a fresh ephemeral token (prior token lost
-at the session boundary; recovery path per the reauthorize ticket), explicit
-review at base `be5ec93e`, then `bench worktree land --spec
-parallel-session-landings` from clean `main` using the source-built binary.
-FT198 remains published on main as `75cfc952`, spec `Status: implemented`.
+Open reviewer-veto flags from the build: the resume landing-identity authority
+was implemented (receipt `Branch`/`BranchOID` reuse, commit `fa8bdbbe` in the
+landed range) without a recorded reviewer decision; `.bench/build-outputs.json`
+now declares two harness-local `.claude/` files as landing allowance; the
+PL15/PL16 public journey asserts the destination-checkout fingerprint refusal
+with CAS classification covered at the injected-updater seam.
+
 Preserve foreign assignment `fdf07b2661ab381f9125643169f1af10` byte-for-byte.
 
 ## Next command
 
-`$bench-implement-spec --full parallel-session-landings`
+`/bench-what-next` — the board's leading invocable signal (`drain`).
 
 ## Shape
 

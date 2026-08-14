@@ -383,6 +383,10 @@ escalation.
   wrapper and may belong to a different source tree. Gate and `bench test` runs
   do not reuse that artifact: their owner builds one private exact-source binary,
   propagates it through every ordinary child, and removes it after teardown.
+- A direct `./dist/bench` invocation needs `BENCH_HOME` exported (the wrapper
+  exports it; the gate-inputs closure declares it). Without it the prospective
+  subject stays open, so a landing's gate can run fully green and still refuse
+  as `prospective authorization refused: infrastructure`.
 - Never mutate the repository while a gate is running. The gate binds its
   verdict to the starting subject and rejects a run whose subject changes.
 - Canary mutation tests are ordinary in-process checks. Do not add a gate, wrapper,
