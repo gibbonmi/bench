@@ -18,7 +18,7 @@ func TestRunReportsAcceptedInventoryBindings(t *testing.T) {
 	if code := Run([]string{filepath.Join(working, "../..")}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() = %d, stderr=%q", code, stderr.String())
 	}
-	if got, want := stdout.String(), "canary inventory ok (195 fixture bindings)\n"; got != want {
+	if got, want := stdout.String(), "canary inventory ok (197 fixture bindings)\n"; got != want {
 		t.Fatalf("Run() stdout = %q, want %q", got, want)
 	}
 }
