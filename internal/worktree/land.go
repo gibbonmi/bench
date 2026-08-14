@@ -150,6 +150,9 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 			return landRefusal(stdout, err.Error())
 		}
 	}
+	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
+		return landRefusal(stdout, err.Error())
+	}
 	if destination == published {
 		if err := advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
 			return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "marker")
@@ -192,11 +195,6 @@ func resumeLandingDestination(root string) (string, string, string, error) {
 	if err != nil || current != branch {
 		return "", "", "", errors.New("landing checkout is not attached to the default branch")
 	}
-	// A published ref can lead its un-reconciled index after a process interruption;
-	// unstaged changes are instead caller work and must not be overwritten by resume.
-	if !git.OK("-C", root, "diff", "--quiet") {
-		return "", "", "", errors.New("landing destination has unstaged changes")
-	}
 	destination, err := git.Output("-C", root, "rev-parse", "refs/heads/"+branch+"^{commit}")
 	if err != nil {
 		return "", "", "", errors.New("landing destination has no commit")
@@ -206,6 +204,40 @@ func resumeLandingDestination(root string) (string, string, string, error) {
 		return "", "", "", err
 	}
 	return destination, branch, marker, nil
+}
+
+func resumeDestructiveDestinationState(root, destination, published, destinationBase string) error {
+	nested, err := classifyNestedState(root)
+	if err != nil || nested != nestedClean {
+		return errors.New("landing destination has nested repositories")
+	}
+	raw, err := git.Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all", "--ignored")
+	if err != nil {
+		return errors.New("landing destination status is unreadable")
+	}
+	entries, err := git.ParsePorcelainZStrict(raw)
+	if err != nil {
+		return errors.New("landing destination status is malformed")
+	}
+	staged := false
+	for _, entry := range entries {
+		switch entry.Status {
+		case "":
+			continue
+		case "!!":
+			return errors.New("landing destination has ignored residue")
+		case "??":
+			return errors.New("landing destination has untracked collisions")
+		}
+		if entry.Status[1] != ' ' {
+			return errors.New("landing destination has tracked-worktree changes")
+		}
+		staged = staged || entry.Status[0] != ' '
+	}
+	if staged && (destination != published || !git.OK("-C", root, "diff", "--cached", "--quiet", destinationBase, "--")) {
+		return errors.New("landing destination has staged changes")
+	}
+	return nil
 }
 
 func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assignment, bool, error) {
