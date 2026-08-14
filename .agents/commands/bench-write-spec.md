@@ -150,6 +150,14 @@ pauses for reviewer approval under `craft-line`.
    iteration cap — with every round reported in one line. The loop verdicts stay
    advisory; reviewer sign-off remains the hard stop.
 
+   `--reviewer <tier-or-model> [effort]` overrides both loop delegates: a tier
+   resolves through the invoking harness's own `.bench/lines.env` column
+   (`--reviewer mid xhigh` under Codex resolves `BENCH_CODEX_MID` at xhigh), a
+   model id must already be bound in `.bench/lines.env` and an unbound id is
+   refused, an own-family id runs through the native agent surface, and a
+   cross-family id uses the exact recipe in
+   `.agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md`.
+
    Loop 1 asks the falsification questions: would the cheapest wrong
    implementation pass, does every source behavior have a red-capable row, does
    every line match cached routing, does any behavior, red signal, or decision
