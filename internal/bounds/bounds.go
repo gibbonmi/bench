@@ -24,8 +24,11 @@ import (
 // markdown file read whole into memory, so it is deliberately far below ModelReadLimit,
 // which bounds an untrusted provider response instead.
 const (
-	ProviderTimeout                 = 10 * time.Second
-	GitRefreshTimeout               = 30 * time.Second
+	ProviderTimeout   = 10 * time.Second
+	GitRefreshTimeout = 30 * time.Second
+	// Git 2.43.0 can block while reading malformed worktree admin files; this
+	// backstop retires when upstream bounds those reads itself.
+	WorktreeListTimeout             = 15 * time.Second
 	GuardScanTimeout                = 5 * time.Second
 	GateTimeout                     = 45 * time.Minute
 	ModelReadLimit            int64 = 5 << 20
@@ -91,6 +94,21 @@ type ProcessResult struct {
 }
 
 func Run(parent context.Context, limit time.Duration, cmd *exec.Cmd) ProcessResult {
+	var output bytes.Buffer
+	result := run(parent, limit, cmd, &output, &output)
+	result.Output = output.Bytes()
+	return result
+}
+
+// RunOutput preserves command stdout in stdout while retaining stderr in Result.Output.
+func RunOutput(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout io.Writer) ProcessResult {
+	var stderr bytes.Buffer
+	result := run(parent, limit, cmd, stdout, &stderr)
+	result.Output = stderr.Bytes()
+	return result
+}
+
+func run(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout, stderr io.Writer) ProcessResult {
 	if err := parent.Err(); err != nil {
 		return ProcessResult{Status: ProcessCanceled, Err: err}
 	}
@@ -100,8 +118,7 @@ func Run(parent context.Context, limit time.Duration, cmd *exec.Cmd) ProcessResu
 		cmd.SysProcAttr = &syscall.SysProcAttr{}
 	}
 	cmd.SysProcAttr.Setpgid = true
-	var output bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &output, &output
+	cmd.Stdout, cmd.Stderr = stdout, stderr
 	if err := cmd.Start(); err != nil {
 		return ProcessResult{Status: ProcessStart, Err: err}
 	}
@@ -110,13 +127,13 @@ func Run(parent context.Context, limit time.Duration, cmd *exec.Cmd) ProcessResu
 	select {
 	case err := <-done:
 		if err == nil {
-			return ProcessResult{Status: ProcessComplete, Output: output.Bytes()}
+			return ProcessResult{Status: ProcessComplete}
 		}
 		exit := 1
 		if cmd.ProcessState != nil && cmd.ProcessState.ExitCode() > 0 {
 			exit = cmd.ProcessState.ExitCode()
 		}
-		return ProcessResult{Status: ProcessExit, Output: output.Bytes(), Err: err, Exit: exit}
+		return ProcessResult{Status: ProcessExit, Err: err, Exit: exit}
 	case <-ctx.Done():
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 		<-done
@@ -124,7 +141,7 @@ func Run(parent context.Context, limit time.Duration, cmd *exec.Cmd) ProcessResu
 		if parent.Err() != nil {
 			status = ProcessCanceled
 		}
-		return ProcessResult{Status: status, Output: output.Bytes(), Err: ctx.Err()}
+		return ProcessResult{Status: status, Err: ctx.Err()}
 	}
 }
 

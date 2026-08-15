@@ -528,6 +528,17 @@ func TestAppendWorktreeKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T
 	}
 }
 
+func TestAppendWorktreeRendersBoundExpiryAsTypedFailure(t *testing.T) {
+	restore := git.SetWorktreeListTimeoutForTest(100 * time.Millisecond)
+	t.Cleanup(restore)
+	root := initRepo(t)
+	gittest.StubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
+	rows := appendWorktree(nil, root)
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktree list") || rows[0].action != "investigate the git failure" || strings.Contains(rows[0].action, "retry") {
+		t.Fatalf("bound row = %#v", rows)
+	}
+}
+
 func TestAppendWorktreeRendersTypedAdminRefusal(t *testing.T) {
 	root := initRepo(t)
 	common, err := git.CommonDir(root)

@@ -16,13 +16,26 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
-// refCheckTimeout bounds the ref/branch existence probes the destructive-git guard
+// refCheckTimeout is the hook-scoped fail-safe for destructive-git classification,
+// unlike the policy-owned worktree discovery bound below. It bounds the ref/branch
+// existence probes the destructive-git guard
 // runs per classification (internal/gitguard's checkout and forced-creation verdicts):
 // a hung git must never stall a PreToolUse Bash hook, so each probe is bounded at two
 // seconds and then resolves to its caller's fail-safe default.
 const refCheckTimeout = 2 * time.Second
+
+var worktreeListTimeout = bounds.WorktreeListTimeout
+
+// SetWorktreeListTimeoutForTest installs a test-only discovery bound and restores it.
+func SetWorktreeListTimeoutForTest(limit time.Duration) func() {
+	previous := worktreeListTimeout
+	worktreeListTimeout = limit
+	return func() { worktreeListTimeout = previous }
+}
 
 // RefResolves reports whether arg names a commit-ish that resolves in the process
 // working directory — the agent's cwd, where the guarded Bash command would run, not a
@@ -275,6 +288,10 @@ func CommonDir(root string) (string, error) {
 	if err != nil {
 		return "", &ResolutionError{Err: fmt.Errorf("rev-parse %s: %w", strings.Join(commonDirArgs(root), " "), err), Action: "investigate the git failure"}
 	}
+	return validateCommonDir(common)
+}
+
+func validateCommonDir(common string) (string, error) {
 	if common == "" {
 		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path"), Action: "investigate the git failure"}
 	}
@@ -291,18 +308,45 @@ func CommonDir(root string) (string, error) {
 	return common, nil
 }
 
+func boundedGit(args ...string) ([]byte, error) {
+	var stdout bytes.Buffer
+	result := bounds.RunOutput(context.Background(), worktreeListTimeout, exec.Command("git", args...), &stdout)
+	if result.Status == bounds.ProcessComplete {
+		return stdout.Bytes(), nil
+	}
+	if result.Status == bounds.ProcessExit {
+		return stdout.Bytes(), result.Err
+	}
+	invocation := "git " + strings.Join(args, " ")
+	if result.Status == bounds.ProcessTimeout {
+		return nil, &ResolutionError{Err: fmt.Errorf("%s timed out after %s", invocation, worktreeListTimeout), Action: "investigate the git failure"}
+	}
+	return nil, &ResolutionError{Err: fmt.Errorf("%s failed to start or was canceled: %w", invocation, result.Err), Action: "investigate the git failure"}
+}
+
 // Worktrees returns every registered checkout using NUL-framed porcelain. The
 // framing is required because a valid worktree path may contain a newline.
 func Worktrees(root string) ([]Worktree, error) {
-	common, err := CommonDir(root)
+	commonRaw, err := boundedGit(commonDirArgs(root)...)
+	if err != nil {
+		if _, ok := err.(*ResolutionError); ok {
+			return nil, err
+		}
+		return nil, &ResolutionError{Err: fmt.Errorf("rev-parse %s: %w", strings.Join(commonDirArgs(root), " "), err), Action: "investigate the git failure"}
+	}
+	common, err := validateCommonDir(strings.TrimRight(string(commonRaw), "\n"))
 	if err != nil {
 		return nil, err
 	}
 	if err := ScanWorktreeAdmin(common); err != nil {
 		return nil, err
 	}
-	raw, err := Raw("-C", root, "worktree", "list", "--porcelain", "-z")
+	raw, err := boundedGit("-C", root, "worktree", "list", "--porcelain", "-z")
 	if err != nil {
+		var typed *ResolutionError
+		if errors.As(err, &typed) {
+			return nil, err
+		}
 		return nil, err
 	}
 	var worktrees []Worktree

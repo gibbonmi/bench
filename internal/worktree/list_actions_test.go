@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/axi/axitest"
@@ -57,6 +58,18 @@ func TestListCommandKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T) {
 				t.Fatalf("%s list output code=%d out=%q", tc.mode, code, out)
 			}
 		})
+	}
+}
+
+func TestListCommandRendersBoundExpiryAsTypedFailure(t *testing.T) {
+	restore := git.SetWorktreeListTimeoutForTest(100 * time.Millisecond)
+	t.Cleanup(restore)
+	root := gittest.RepoOnBranch(t, "main")
+	gittest.StubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
+	t.Chdir(root)
+	out, code := ListCommand(nil)
+	if code != 1 || !strings.Contains(out, "worktree list") || !strings.Contains(out, "investigate the git failure") || strings.Contains(out, "inspect and remove it") || strings.Contains(out, "retry") {
+		t.Fatalf("bound list output code=%d out=%q", code, out)
 	}
 }
 

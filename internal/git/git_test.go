@@ -373,6 +373,71 @@ func TestWorktreesPropagatesRevParseFailureBeforePorcelain(t *testing.T) {
 	}
 }
 
+func TestWorktreeListTimeoutDefaultUsesPolicy(t *testing.T) {
+	if worktreeListTimeout != bounds.WorktreeListTimeout {
+		t.Fatalf("worktreeListTimeout=%s, want %s", worktreeListTimeout, bounds.WorktreeListTimeout)
+	}
+}
+
+func TestWorktreesBoundsEachChildAndPreservesStdout(t *testing.T) {
+	for _, tc := range []struct{ mode, invocation string }{
+		{"block-worktree", "worktree list"},
+		{"block-rev-parse", "rev-parse"},
+	} {
+		t.Run(tc.mode, func(t *testing.T) {
+			restore := SetWorktreeListTimeoutForTest(100 * time.Millisecond)
+			t.Cleanup(restore)
+			root := newRepo(t)
+			gittest.StubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
+			done := make(chan error, 1)
+			go func() { _, err := Worktrees(root); done <- err }()
+			select {
+			case err := <-done:
+				var typed *ResolutionError
+				if !errors.As(err, &typed) || !strings.Contains(err.Error(), tc.invocation) || !strings.Contains(err.Error(), "100ms") || !strings.Contains(err.Error(), "investigate the git failure") {
+					t.Fatalf("timeout refusal = %v", err)
+				}
+			case <-time.After(time.Second):
+				t.Fatalf("%s did not return within the overridden bound", tc.mode)
+			}
+		})
+	}
+
+	t.Run("noisy list", func(t *testing.T) {
+		root := newRepo(t)
+		gittest.StubGit(t, root, "noisy-list", filepath.Join(t.TempDir(), "argv"))
+		worktrees, err := Worktrees(root)
+		if err != nil || len(worktrees) != 1 || worktrees[0].Path != root {
+			t.Fatalf("noisy list = %#v, %v", worktrees, err)
+		}
+	})
+}
+
+func TestWorktreesTypesStartFailures(t *testing.T) {
+	for _, tc := range []struct {
+		name, mode, invocation, failure string
+		setup                           func(*testing.T)
+	}{
+		{"porcelain", "vanish-after-rev-parse", "worktree list", "executable file not found", nil},
+		{"rev parse", "", "rev-parse", "executable file not found", func(t *testing.T) { t.Setenv("PATH", t.TempDir()) }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newRepo(t)
+			if tc.mode != "" {
+				gittest.StubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
+			}
+			if tc.setup != nil {
+				tc.setup(t)
+			}
+			_, err := Worktrees(root)
+			var typed *ResolutionError
+			if !errors.As(err, &typed) || !strings.Contains(err.Error(), tc.invocation) || !strings.Contains(err.Error(), tc.failure) || typed.Action != "investigate the git failure" {
+				t.Fatalf("start failure = %v", err)
+			}
+		})
+	}
+}
+
 // newRepo initialises a repo with one commit and returns its root.
 func newRepo(t *testing.T) string {
 	t.Helper()
