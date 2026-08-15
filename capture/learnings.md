@@ -36,3 +36,40 @@ walk each ticket's end state against every guard the spec itself adds.
 enforcement surfaces as the read-before-rows list for "new verb" and "new conformance
 test"; `craft-spec` already says to read the enforcement surface — this is the project
 half of that rule.
+
+## 2026-08-15 — an exit test that says "the old suite still passes" is blind to uncovered behavior [open]
+
+**What happened.** `specs/skills-index-reader` ticket 1 collapsed the conformance skills-index
+parsers into `internal/skillsindex`. The spec's SI10 exit test reads "every pre-existing test
+passes with test logic unmodified", and it did pass — but the collapse silently changed the
+oracle. `Check` accumulated diagnostics into a `map[string]string` keyed by skill name, so a
+skill that both declares no `index:` frontmatter and still carries a committed entry in the block
+lost one of its two diagnostics; the pre-collapse code appended to a slice and emitted both.
+The full suite, all four skills-index canaries, and every SI row were green on the regression.
+It was caught only by a coordinator probe that ran one hand-built input through the old
+implementation at `5b41322a` and the new one at the tip and diffed the two outputs.
+
+Nothing in the coverage map could have seen it. SI3's mixed root is specified as three
+*distinct* skills carrying one diagnostic each ("a missing-`index:` skill `alpha`, a drifted
+committed entry for `beta`, and a committed entry for absent `gamma`"), and the
+`missing-index-field` canary's committed block is empty, so its skill never collides. No
+pre-existing test asserted the two-diagnostics-for-one-skill case either, which is exactly why
+SI10 passed.
+
+**Right behavior.** Two things, and the second is the root cause. First: an exit test framed as
+"the pre-existing suite passes" only protects behavior that suite already asserts; for a
+behavior-preserving refactor of an oracle, the strong form is a differential run of the old and
+new implementations over a producer-derived input family, and the spec should say when that is
+required rather than leaving "nothing observable changed" to a suite that cannot observe it.
+Second: the underlying miss was an undecided cardinality at a concept edge — "a diagnostic is
+attributed to a skill" was never settled as 1:1 or 1:N. The old code answered 1:N by accident
+(a slice), the new code answered 1:1 by accident (a map). A fixture built only from
+single-defect skills cannot force that decision into the open.
+
+**Proposed rule change.** Two, separable. (1) `craft-spec`: when a spec's own justification is
+that behavior is preserved, its exit row names the differential — old implementation and new
+over one enumerated input family — instead of, or in addition to, "pre-existing tests pass".
+(2) `craft-domain`: when a spec introduces an ordering or grouping requirement over a
+collection that had none, the row set must fix the cardinality at that concept edge (can one
+member carry two of these?) with a fixture that exercises the many case, because the natural
+implementation of "ordered by key" quietly makes it one.

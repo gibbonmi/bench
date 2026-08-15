@@ -2,25 +2,47 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `f0ece251`, clean, 7 unpushed commits
-Spec: `specs/skills-index-reader/spec.md` — Status: staged, reviewer-approved 2026-08-15 (two serial tickets: extract-skills-index-module → route-skills-index-verb-and-retire-script).
-Gate: green at `f0ece251` — current exact tree
+Branch: `main` — HEAD `5b41322`, clean tree, 8 unpushed commits
+Spec: `specs/skills-index-reader/spec.md` (Status: staged)
+Gate: green at `5257da3` — stale, work tree `aaac3b9`
 
 ## State
 
-The 2026-08 deepening map lives at `decisions/deepening-2026-08.md`. Landed: candidates
-1+3 (gate spec, retired), 6 (`internal/gate/greenmarker`), 5 (`internal/shift/objective.go`).
-Candidate 8 is staged as `specs/skills-index-reader` (module `internal/skillsindex`, verb
-`bench skills-index`, `.bench/skills-index.sh` deleted; loop 1 ran three rounds and the
-reviewer stopped further review — tickets are unreviewed). Remaining after it: adopt spec
-(#9), worktree spec (#8), reader tickets (#12). Two open learnings entries await
-`/bench-what-next`: map placement on retire, and the write-spec loop cap (the reviewer
-asked whether a standing cap exists — none does; the entry proposes one).
+`/bench-implement-spec skills-index-reader --full` is mid-run. The retained integration
+source is the worktree labelled `skills-index-reader` (`bench worktree list` gives its
+path); frozen review base `5b41322a`, source tip `2ca77cb2`. Two commits there:
+`83e57d8b` (ticket 1 — `internal/skillsindex` ships as the one index reader; the
+conformance parsers `checkSkillsIndex`, `kitOnlySkillSources`, `frontmatterField`,
+`markerBlock` and the shell-probing `checkSkillsIndexGenerateVerify` collapse into it;
+a `go/ast` guard fails on any surviving second reader) and `2ca77cb2` (ticket 2 —
+`bench skills-index [--check|--write]` routed end-to-end, `.bench/skills-index.sh`
+deleted, every reference re-pointed). Gate green at both.
+
+Coordinator verification caught one regression in ticket 1 and the authoring delegate
+repaired it: `Check` keyed diagnostics by skill name, so a skill both missing `index:`
+and still carrying a committed entry lost one of its two diagnostics. No canary sees it
+(`missing-index-field`'s block is empty). Fixed to accumulate per skill in pre-collapse
+order, covered by an extended SI3 row.
+
+Two calls left open for reviewer veto, both non-behavioral: ticket 1 also deleted
+`skillNameFromIndexLine` (dead after the collapse, and it enumerates the line shape SI6
+bans) which the spec's permitted-edit list does not name; and ticket 2's charge to
+re-point "the `kitOnlySkillSources` comment" was dropped as moot, that function having
+been deleted.
+
+Reviewer-approved follow-up, to run after the landing: write a NEW dated
+`/tmp/architecture-review-<ts>.html` — leaving `/tmp/architecture-review-20260815T101417.html`
+untouched as the record of the survey at `e91d0cb3` — carrying as-built Before/After for
+the five landed deepening candidates (1+3, 5, 6, 8) with 2, 4, 7 left as proposed.
+Candidate 8's original After diagram is superseded: it drew the shell script surviving as
+a consumer of the module.
+
+Two open learnings entries still await `/bench-what-next`: map placement on retire, and
+the write-spec loop cap.
 
 ## Next command
 
-`/bench-implement-spec skills-index-reader` — fresh mid-tier session, one retained
-integration source, tickets serial; lines: story 1 opus/medium, story 2 sonnet/medium.
+`/bench-review-implementation`
 
 ## Shape
 
