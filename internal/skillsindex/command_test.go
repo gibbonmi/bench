@@ -69,6 +69,18 @@ func TestCommand(t *testing.T) {
 	}
 }
 
+// Argument validation is a verdict on the arguments alone: outside a repository the
+// conflicting pair still earns usage and exit 2, not the not-in-repo refusal.
+func TestConflictingModesAreRefusedOutsideARepository(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	wantConflict := grammar.Help + " (--check and --write are mutually exclusive)\n"
+	report, code := Command([]string{"--check", "--write"})
+	if report != wantConflict || code != 2 {
+		t.Fatalf("--check --write outside a repo = %q, %d, want %q, 2", report, code, wantConflict)
+	}
+}
+
 // run is the fixture git driver shared by this file's Command test.
 func run(t *testing.T, root string, args ...string) {
 	t.Helper()

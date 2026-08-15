@@ -25,19 +25,20 @@ var grammar = usage.Grammar{
 // Write's own error and exits 1 without the file being touched — Write refuses before
 // any bytes are written, so the caller and the file agree on nothing having changed.
 // The two modes name opposite intents, so asking for both is a usage error rather than
-// a silent precedence rule.
+// a silent precedence rule, refused before repository discovery so the verdict on the
+// arguments does not depend on where the caller stands.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
-	root, err := git.Root()
-	if err != nil {
-		return toon.NotInRepo() + "\n", 1
-	}
 	_, write := parsed.Flags["--write"]
 	if _, check := parsed.Flags["--check"]; check && write {
 		return grammar.Help + " (--check and --write are mutually exclusive)\n", 2
+	}
+	root, err := git.Root()
+	if err != nil {
+		return toon.NotInRepo() + "\n", 1
 	}
 	if write {
 		if werr := Write(root); werr != nil {

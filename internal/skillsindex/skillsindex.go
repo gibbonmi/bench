@@ -57,10 +57,13 @@ type Entry struct {
 // Indexed reports whether the entry contributes a line to the generated block.
 func (e Entry) Indexed() bool { return e.Trigger != "" }
 
-// Line renders the entry's index line. skillName reads the name back out of one, and
-// the two are the format's only owners.
+// skillPathFormat is the skill source path an index line carries: Line formats it,
+// indexLineRe matches it.
+const skillPathFormat = ".agents/skills/%s/SKILL.md"
+
+// Line renders the entry's index line.
 func (e Entry) Line() string {
-	line := fmt.Sprintf("- %s → `.agents/skills/%s/SKILL.md`", e.Trigger, e.Name)
+	line := fmt.Sprintf("- %s → `"+skillPathFormat+"`", e.Trigger, e.Name)
 	if e.KitOnly {
 		line += " (kit-only)"
 	}
@@ -70,7 +73,7 @@ func (e Entry) Line() string {
 	return line
 }
 
-var indexLineRe = regexp.MustCompile(`\.agents/skills/([a-z0-9-]+)/SKILL\.md`)
+var indexLineRe = regexp.MustCompile(strings.Replace(regexp.QuoteMeta(skillPathFormat), "%s", "([a-z0-9-]+)", 1))
 
 // skillName returns the skill a committed index line names, or "" for a line that is
 // not one. Expected lines carry their skill in the Entry that rendered them, so this
@@ -314,7 +317,6 @@ func findBlock(text string) (blockSpan, bool) {
 	return blockSpan{}, false
 }
 
-// replace renders the file with block standing in for the span's current lines.
 func (s blockSpan) replace(block []string) string {
 	out := append([]string{}, s.before...)
 	out = append(out, block...)
