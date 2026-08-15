@@ -16,9 +16,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
-// GC10 remains covered through authorization's prospective path in
-// internal/worktree/land_test.go:65-73 and internal/landing/landing_test.go.
-
 func TestGateRunGreenReusesRecordedVerdict(t *testing.T) {
 	root := outcomeFixture(t)
 	var firstOut, firstErr bytes.Buffer

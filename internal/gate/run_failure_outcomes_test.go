@@ -106,6 +106,70 @@ func TestGateRunTimeoutInvalidatesOldEvidence(t *testing.T) {
 	}
 }
 
+func TestGateRunCancellationLeavesPendingForRecovery(t *testing.T) {
+	root := failureOutcomeFixture(t)
+	outcomeWrite(t, root, ".gate-sleep", "\n", 0o644)
+	ctx, cancel := context.WithCancel(context.Background())
+	finished := make(chan Result, 1)
+	go func() {
+		finished <- Execute(ctx, root, &bytes.Buffer{}, &bytes.Buffer{})
+	}()
+	awaitGateMarker(t, filepath.Join(root, ".gate-record-during"))
+	cancel()
+
+	var result Result
+	select {
+	case result = <-finished:
+	case <-time.After(failureOutcomeDeadline()):
+		t.Fatal("canceled gate did not exit")
+	}
+	if result.GateExit != 130 || result.ActionExit != 130 {
+		t.Fatalf("canceled result = %#v, want gate and action exit 130", result)
+	}
+	if inspection := Inspect(root); inspection.State != Pending || inspection.Status != "" || inspection.ReusableGreen {
+		t.Fatalf("canceled inspection = %#v, want pending without a terminal status", inspection)
+	}
+
+	if err := os.Remove(filepath.Join(root, ".gate-sleep")); err != nil {
+		t.Fatal(err)
+	}
+	if recovered := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); recovered.ActionExit != 0 {
+		t.Fatalf("recovery result = %#v", recovered)
+	}
+	if inspection := Inspect(root); inspection.State != Ready || inspection.Status != "green" || !inspection.ReusableGreen {
+		t.Fatalf("recovery inspection = %#v, want reusable ready green", inspection)
+	}
+}
+
+func TestGateRunRefusesInitialPendingPersistenceWhenCacheIsDirectory(t *testing.T) {
+	root := outcomeFixture(t)
+	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	cache := filepath.Join(gitdir, "bench-last-gate")
+	if err := os.Mkdir(cache, 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	if got := RunCommand([]string{"--fresh", root}, &stdout, &stderr); got != 1 {
+		t.Fatalf("pending persistence refusal exit = %d, stderr=%q", got, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "gate pending persistence failed") {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(root, ".gate-run-count")); !os.IsNotExist(err) {
+		if err == nil {
+			t.Fatal("oracle ran after initial pending persistence refusal")
+		}
+		t.Fatalf("run counter stat = %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".gate-record-during")); !os.IsNotExist(err) {
+		if err == nil {
+			t.Fatal("oracle wrote a record witness after initial pending persistence refusal")
+		}
+		t.Fatalf("record witness stat = %v", err)
+	}
+}
+
 func TestGateRunRejectsGreenWhenEvidenceDirectoryModeChanges(t *testing.T) {
 	requireDirectoryWriteDenied(t)
 	root := failureOutcomeFixture(t)
