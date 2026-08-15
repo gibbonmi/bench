@@ -872,17 +872,6 @@ sliced before a delegate starts, so a required residual cannot first appear
 during the documentation edit. Source: the canary-planted-reason-ownership
 retro, drained here.
 
-**FT189 (MEDIUM) — an upstream `git worktree list` hang reaches every Bench
-worktree read.** `git worktree list --porcelain` hangs on a FIFO gitdir placed
-in any private admin entry — reproduced 2026-08-03 at exit 124 under
-`timeout 5`. Every `bench` command that enumerates worktrees inherits the hang
-before any Bench guard runs, so the failure is a wedged command rather than a
-refusal, and no deadline the repo owns bounds it today. The work is a mitigation
-Bench can own: a pre-scan that refuses a malformed admin entry by shape, a bound
-on the enumeration call, or both, with the upstream behavior named so the
-mitigation retires if Git fixes it. Source: `capture/IDEAS.md` 2026-08-03,
-drained here.
-
 **FT190 (MEDIUM) — every injected interface has a real-producer test or a
 written exemption.** The `injected-interface-junctions` build's P1 lived at
 exactly one such seam: a type takes an interface, the tests drive a fake, and
