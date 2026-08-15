@@ -1,7 +1,7 @@
 # Refuse malformed worktree admin entries before enumerating
 
 Blocked by: resolve-git-common-dir.md
-Writes: internal/git, internal/gittest, internal/worktree/list.go, internal/worktree/list_actions_test.go, internal/worktree/resume_test.go, internal/status/status.go, internal/status/status_test.go
+Writes: internal/git, internal/gittest, internal/worktree/list.go, internal/worktree/list_actions_test.go, internal/worktree/ownership.go, internal/worktree/resume_test.go, internal/status/status.go, internal/status/status_test.go
 
 ## What to build
 

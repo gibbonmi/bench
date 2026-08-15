@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: specs/worktree-enumeration-hang/decisions/worktree-enumeration-hang.md (compiled ready map, reviewer-resolved 2026-08-14)
 
-Verification log: spec 33 + tickets 2 iteration(s) to accept — the spec loop grew the map from 11 to 24 rows; the largest catches were the linked-worktree degenerate, the typed-error rendering contract across three surfaces, and the fail-closed resolution path.
+Verification log: spec 34 + tickets 3 iteration(s) to accept — the original loop grew the map from 11 to 24 rows; the ownership-fence amendment added the ticket source path and its truthful `Writes:` claim without changing behavior, seams, or coverage.
 
 ## Problem
 
@@ -433,9 +433,12 @@ spine, so no path ever has two writers at once.
   `internal/gate/engine.go`, `internal/dashboard/render.go`,
   `internal/status/status.go`
 - `refuse-malformed-admin-entries`: `internal/git/`, `internal/gittest/`,
-  `internal/worktree/list.go`, `internal/worktree/list_actions_test.go`,
-  `internal/worktree/resume_test.go`, `internal/status/status.go`,
-  `internal/status/status_test.go`
+	`internal/worktree/list.go`, `internal/worktree/list_actions_test.go`,
+	`internal/worktree/resume_test.go`, `internal/worktree/ownership.go`,
+	`internal/worktree/lifecycle_policy_test.go`, `internal/status/status.go`,
+	`internal/status/status_test.go`, `specs/worktree-enumeration-hang/spec.md`,
+	`specs/worktree-enumeration-hang/tickets/refuse-malformed-admin-entries.md`,
+	`reviews/worktree-enumeration-hang.md`
 - `bound-worktree-enumeration`: `internal/git/`, `internal/gittest/`,
   `internal/bounds/`, `internal/conformance/bounds_policy_test.go`,
   `internal/status/status_test.go`, `internal/worktree/list_actions_test.go`
