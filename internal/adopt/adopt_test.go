@@ -6,7 +6,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 func TestRewriteAgentsBlockEdges(t *testing.T) {
@@ -207,6 +210,59 @@ func TestLinkOutsideGitRepoNamesGitRepository(t *testing.T) {
 	}
 	if strings.Contains(got, "Bench-linked repo") {
 		t.Fatalf("stderr = %q, must not use the shared AXI NotInRepo() phrasing", got)
+	}
+}
+
+func TestReportDoctorRowsReportsMalformedWorktreeAdmin(t *testing.T) {
+	root := t.TempDir()
+	runAdoptGit(t, root, "init", "-q")
+	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	common, err := git.CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fifo := filepath.Join(common, "worktrees", "doctor-fifo", "gitdir")
+	if err := os.MkdirAll(filepath.Dir(fifo), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+
+	var stdout bytes.Buffer
+	if !reportDoctorRows(&stdout) {
+		t.Fatal("reportDoctorRows did not report the malformed worktree admin entry")
+	}
+	if got := stdout.String(); !strings.Contains(got, "red:") || !strings.Contains(got, "worktrees/doctor-fifo/gitdir") {
+		t.Fatalf("doctor rows = %q, want red worktrees/doctor-fifo/gitdir row", got)
+	}
+	if info, err := os.Lstat(fifo); err != nil || info.Mode()&os.ModeNamedPipe == 0 {
+		t.Fatalf("FIFO after doctor = %v, %v; want extant FIFO", info, err)
+	}
+}
+
+func TestReportDoctorRowsLeavesHealthyWorktreeAdminSilent(t *testing.T) {
+	root := t.TempDir()
+	runAdoptGit(t, root, "init", "-q")
+	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+
+	var stdout bytes.Buffer
+	_ = reportDoctorRows(&stdout)
+	if got := stdout.String(); strings.Contains(got, "worktree admin") || strings.Contains(got, "worktrees/") {
+		t.Fatalf("healthy doctor rows include worktree-admin row: %q", got)
+	}
+}
+
+func runAdoptGit(t *testing.T, root string, args ...string) {
+	t.Helper()
+	if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, out)
 	}
 }
 
