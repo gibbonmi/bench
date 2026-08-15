@@ -170,6 +170,30 @@ func TestGateRunRefusesInitialPendingPersistenceWhenCacheIsDirectory(t *testing.
 	}
 }
 
+func TestGateRunRefusesOwnerPersistenceWhenOwnerPathIsDirectory(t *testing.T) {
+	root := outcomeFixture(t)
+	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	if err := os.Mkdir(filepath.Join(gitdir, "bench-gate-owner"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	if got := RunCommand([]string{"--fresh", root}, &stdout, &stderr); got != 1 {
+		t.Fatalf("owner persistence refusal exit = %d, stderr=%q", got, stderr.String())
+	}
+	if got := stderr.String(); got != "gate owner persistence failed\n" {
+		t.Fatalf("stderr = %q, want exact owner persistence diagnostic", got)
+	}
+	for _, path := range []string{".gate-run-count", ".gate-record-during"} {
+		if _, err := os.Stat(filepath.Join(root, path)); !os.IsNotExist(err) {
+			if err == nil {
+				t.Fatalf("oracle wrote %s after owner persistence refusal", path)
+			}
+			t.Fatalf("oracle witness stat for %s = %v", path, err)
+		}
+	}
+}
+
 func TestGateRunRejectsGreenWhenEvidenceDirectoryModeChanges(t *testing.T) {
 	requireDirectoryWriteDenied(t)
 	root := failureOutcomeFixture(t)
@@ -236,25 +260,14 @@ func TestGateRunPreservesPendingWhenTerminalReplaceFails(t *testing.T) {
 
 func failureOutcomeFixture(t *testing.T) string {
 	t.Helper()
-	root := outcomeFixture(t)
-	outcomeWrite(t, root, ".bench/gate.sh", `#!/bin/sh
-set -eu
-count=0
-if [ -f .gate-run-count ]; then count=$(cat .gate-run-count); fi
-printf '%s' "$((count + 1))" > .gate-run-count
-gitdir=$(git rev-parse --absolute-git-dir)
-cp "$gitdir/bench-last-gate" .gate-record-during
-if [ -e .gate-wait ]; then
+	return outcomeFixture(t, `if [ -e .gate-wait ]; then
   : > .gate-running
   while [ ! -e .gate-release ]; do sleep 0.01; done
 fi
 if [ -e .gate-sleep ]; then sleep 5; fi
 if [ -e .gate-evidence-0500 ] || [ -e .gate-evidence-unwritable ]; then chmod 500 "$gitdir/bench-gate-evidence"; fi
 if [ -e .gate-gitdir-0500 ]; then chmod 500 "$gitdir"; fi
-if [ -e .gate-red ]; then exit 7; fi
-if [ -e .gate-drift ]; then printf 'moved\n' >> tracked.txt; fi
-`+"\n", 0o755)
-	return root
+`)
 }
 
 type gateLockHolder struct {

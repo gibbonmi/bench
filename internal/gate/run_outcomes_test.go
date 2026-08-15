@@ -168,21 +168,29 @@ func TestGateRunReloadsDeadOwnerPendingRecord(t *testing.T) {
 	}
 }
 
-func outcomeFixture(t *testing.T) string {
+func outcomeFixture(t *testing.T, extraGateScript ...string) string {
 	t.Helper()
 	root := gittest.RepoOnBranch(t, "main")
 	outcomeWrite(t, root, ".gitignore", ".gate-*\n", 0o644)
 	outcomeWrite(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n", 0o644)
-	outcomeWrite(t, root, ".bench/gate.sh", `#!/bin/sh
+	gateScript := `#!/bin/sh
 set -eu
 count=0
 if [ -f .gate-run-count ]; then count=$(cat .gate-run-count); fi
 printf '%s' "$((count + 1))" > .gate-run-count
 gitdir=$(git rev-parse --absolute-git-dir)
 cp "$gitdir/bench-last-gate" .gate-record-during
-if [ -e .gate-red ]; then exit 7; fi
+`
+	if len(extraGateScript) > 1 {
+		t.Fatalf("outcome fixture received %d extra gate scripts, want at most 1", len(extraGateScript))
+	}
+	if len(extraGateScript) == 1 {
+		gateScript += extraGateScript[0]
+	}
+	gateScript += `if [ -e .gate-red ]; then exit 7; fi
 if [ -e .gate-drift ]; then printf 'moved\n' >> tracked.txt; fi
-`+"\n", 0o755)
+`
+	outcomeWrite(t, root, ".bench/gate.sh", gateScript, 0o755)
 	outcomeWrite(t, root, "tracked.txt", "tracked\n", 0o644)
 	outcomeCommit(t, root, "fixture")
 	return root
