@@ -1,34 +1,18 @@
 # Session handoff
 
-Repository: `c7f62432abb513b693e7eb380f2b4015-22fa8276882c8052351c3d896383d3e5` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-3325222104/c7f62432abb513b693e7eb380f2b4015-22fa8276882c8052351c3d896383d3e5`
-Branch: `bench/assign/c7f62432abb513b693e7eb380f2b4015/22fa8276882c8052351c3d896383d3e5` — HEAD `98f55ca`, clean tree, 0 unpushed commits
-Spec: `specs/worktree-enumeration-hang/spec.md` (Status: staged)
-Gate: green at `37f929e` — current
+Repository: `cfebe240863609a9be6b97d6c899166e-ab82bff56301fccbea971d14a9347184` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-3325222104/cfebe240863609a9be6b97d6c899166e-ab82bff56301fccbea971d14a9347184`
+Branch: `bench/assign/cfebe240863609a9be6b97d6c899166e/ab82bff56301fccbea971d14a9347184` — HEAD `36e8af5`, one handoff edit, six candidate commits atop base
+Spec: `specs/gate-run-transaction/spec.md` (Status: staged)
+Gate: green at `36e8af5`; the only later edit is this handoff.
 
 ## State
 
-FT189's spec and tickets are authored and verified: 24 coverage rows
-(`bench coverage --check` green; preflight `rows-owned`/`rows-membership`
-green), decision source compiled at
-`specs/worktree-enumeration-hang/decisions/`. Verification loops: spec 33
-iterations to accept, tickets 2 — the log line in the spec names the largest
-catches. Ticket graph: `resolve-git-common-dir` → `refuse-malformed-admin-entries`
-→ {`bound-worktree-enumeration`, `report-admin-entry-in-doctor`}; lines
-sonnet/medium, sonnet/medium (routing rows), opus/medium, sonnet/low.
-Sign-off landed 2026-08-14, so the build may start; tickets commit serially
-on one retained integration source per the workflow. Since staging, the
-write-spec loop amendments (materiality exit, promise guard,
-cheapest-plausible standard) landed with their own anchors and canary
-fixtures, and the pre-existing leading-zero-sha flake in
-`TestResolveBranchRangeConsumesExport` was repaired (reviewer-approved).
-One learnings entry (2026-08-14, 33-round loop, A/B verdict recorded) awaits
-the next `/bench-what-next` drain. `decisions/spec-build-review-gate-cadence.md`
-remains invalid (its own shaping resume owns the repair).
+`$bench-implement-spec gate-run-transaction --full` completed the six-ticket build on base `00290cf2`. The candidate consists of `3f173ef4`, `4afab82f`, `70b015be`, `23538b2a`, `03c1dc95`, and `36e8af5c`; all ticket-local mutation proofs and full commit gates are green. GC5 uses the public `--fresh` path because ordinary execution reuses before lock acquisition. GT5 proves a terminal-persistence error cannot be suppressed because mode `0500` fails before pending replacement. Terra/high remains the sole semantic reviewer, with separate Standards, Spec, and Coverage axes and no cross-harness review. Any Luna delegate runs at max effort.
 
 ## Next command
 
-`$bench-write-spec worktree-enumeration-hang`
+`$bench-implement-spec gate-run-transaction --full`
 
 ## Shape
 
