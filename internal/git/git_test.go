@@ -271,6 +271,26 @@ func TestWorktreesTreatsRegularFileAdminRootAsAbsent(t *testing.T) {
 	}
 }
 
+func TestPruneLandedBranchesUsesNeutralDiscoveryFailure(t *testing.T) {
+	root := newRepo(t)
+	common, err := CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := filepath.Join(common, "worktrees", "fifo")
+	if err := os.MkdirAll(id, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+	}
+
+	_, err = PruneLandedBranches(root, nil)
+	if err == nil || !strings.Contains(err.Error(), "worktree discovery failed") || strings.Contains(err.Error(), "git worktree list") {
+		t.Fatalf("worktree discovery refusal = %v", err)
+	}
+}
+
 func TestWorktreesAcceptsRegularFirstLevelAdminEntry(t *testing.T) {
 	root := newRepo(t)
 	common, err := CommonDir(root)

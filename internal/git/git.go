@@ -157,6 +157,7 @@ type ResolutionError struct {
 	Action string
 }
 
+// WorktreeFailure exposes the recovery action for a worktree discovery failure.
 type WorktreeFailure interface {
 	error
 	WorktreeAction() string
@@ -176,6 +177,7 @@ func (e *WorktreeAdminError) Error() string {
 
 func (e *WorktreeAdminError) WorktreeAction() string { return e.Action }
 
+// WorktreeScanError reports a failure while inspecting a worktree admin entry.
 type WorktreeScanError struct {
 	Path   string
 	Err    error
@@ -414,7 +416,7 @@ func PruneLandedBranches(root string, protectedBranches []string) (int, error) {
 	}
 	worktrees, err := Worktrees(root)
 	if err != nil {
-		return 0, fmt.Errorf("git worktree list: %w", err)
+		return 0, fmt.Errorf("worktree discovery failed: %w", err)
 	}
 	checkedOut := map[string]bool{}
 	for _, worktree := range worktrees {
