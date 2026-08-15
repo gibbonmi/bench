@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: specs/gate-run-transaction/decisions/deepening-2026-08.md (compiled ready map, reviewer-resolved 2026-08-15; tickets #4, #6, #7 govern this spec)
 
-Verification log: spec 1 + tickets 1 iteration(s) to accept — reviewer-capped at one round per loop (Codex `gpt-5.6-sol`, high, read-only, `--reviewer` override); loop 1 returned 8 blocking findings, all folded (GC5 lock holder isolated from any in-flight run, GC6 seeded green + `--fresh`, GT4/GT5 persistence-failure rows and GT6 structural predicate added, GR2 enumerated per narrow class, GR5 validator rows, GC11 abandoned-pending row replacing a false already-covered cite); loop 2 returned 5 blocking, all folded except the per-row split of the two characterization tickets, kept fixture-grouped as a flagged reviewer call. Acceptance was by cap, not by a clean re-review.
+Verification log: spec 1 + tickets 1 iteration(s) to accept — reviewer-capped at one round per loop (Codex `gpt-5.6-sol`, high, read-only, `--reviewer` override); loop 1 returned 8 blocking findings, all folded (GC5 lock holder isolated from any in-flight run, GC6 seeded green + `--fresh`, GT4/GT5 persistence-failure rows and GT6 structural predicate added, GR2 enumerated per narrow class, GR5 validator rows, GC11 abandoned-pending row replacing a false already-covered cite); loop 2 returned 5 blocking, all folded except the per-row split of the two characterization tickets, kept fixture-grouped as a flagged reviewer call. Acceptance was by cap, not by a clean re-review. Reviewer sign-off 2026-08-15: spec, six tickets, fences, and the fixture-grouped characterization tickets approved as presented.
 
 ## Problem
 
