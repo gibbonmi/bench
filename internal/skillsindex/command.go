@@ -18,13 +18,14 @@ var grammar = usage.Grammar{
 	Flags: []usage.Flag{{Name: "--check"}, {Name: "--write"}},
 }
 
-// Command implements `bench skills-index [--check|--write]`, the operator's one
-// regenerator and drift check now that the retired shell regenerator is gone. `--check`
-// (the default) prints Check's diagnostics one per line and exits 1 if any, 0 if
-// clean. `--write` regenerates the block via Write; a blocking refusal (the
-// allowlist unparseable, or the reference file missing or unmarked) prints Write's
-// own error and exits 1 without the file being touched — Write refuses before any
-// bytes are written, so the caller and the file agree on nothing having changed.
+// Command implements `bench skills-index [--check|--write]`, the operator's regenerator
+// and drift check. `--check` (the default) prints Check's diagnostics one per line and
+// exits 1 if any, 0 if clean. `--write` regenerates the block via Write; a blocking
+// refusal (the allowlist unparseable, or the reference file missing or unmarked) prints
+// Write's own error and exits 1 without the file being touched — Write refuses before
+// any bytes are written, so the caller and the file agree on nothing having changed.
+// The two modes name opposite intents, so asking for both is a usage error rather than
+// a silent precedence rule.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -34,7 +35,11 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	if _, write := parsed.Flags["--write"]; write {
+	_, write := parsed.Flags["--write"]
+	if _, check := parsed.Flags["--check"]; check && write {
+		return grammar.Help + " (--check and --write are mutually exclusive)\n", 2
+	}
+	if write {
 		if werr := Write(root); werr != nil {
 			return werr.Error() + "\n", 1
 		}

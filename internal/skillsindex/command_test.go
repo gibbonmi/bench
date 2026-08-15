@@ -1,15 +1,17 @@
 package skillsindex
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
-// Command is the operator's only regenerator now that the retired shell script is gone:
-// --check (the default) reports drift and exits 1, --write clears it and exits 0, and
-// a following --check on the freshly written tree reports nothing.
+// The verb's mode contract: --check (the default) reports drift and exits 1, the
+// conflicting pair is refused with usage and touches nothing, --write clears the drift
+// and exits 0, and a following --check on the freshly written tree reports nothing.
 func TestCommand(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
@@ -27,6 +29,23 @@ func TestCommand(t *testing.T) {
 	report, code = Command([]string{"--check"})
 	if report != wantCheck || code != 1 {
 		t.Fatalf("--check on drifted tree = %q, %d, want %q, 1", report, code, wantCheck)
+	}
+
+	before, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantConflict := grammar.Help + " (--check and --write are mutually exclusive)\n"
+	report, code = Command([]string{"--check", "--write"})
+	if report != wantConflict || code != 2 {
+		t.Fatalf("--check --write = %q, %d, want %q, 2", report, code, wantConflict)
+	}
+	after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != string(before) {
+		t.Fatalf("--check --write changed bytes:\n%q\nwant\n%q", after, before)
 	}
 
 	report, code = Command([]string{"--write"})

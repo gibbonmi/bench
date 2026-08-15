@@ -127,7 +127,8 @@ with two serial tickets (expand, then contract), not a split.
   the conformance *implementations* live in `_test.go` files, so collapsing a parser is a
   test-file edit by location, not an assertion change. The permitted edits are —
   `checkSkillsIndex`, `kitOnlySkillSources`, and `frontmatterField` collapsing to calls
-  into the module, and `markerBlock` (whose only caller was `checkSkillsIndex`) deleted; the removal of
+  into the module, and `markerBlock` (whose only caller was `checkSkillsIndex`) deleted; `skillNameFromIndexLine`
+  deleted, dead once the module owns the line format and a re-encoding of the shape SI6 bans; the removal of
   `checkSkillsIndexGenerateVerify` and its call site; the `checkShellSyntax` pattern entry;
   the subcommand-routing registry row; the SI6 guard test plus its one
   `classifiedLiveTreeTests` entry in `internal/conformance/tier_test.go` (the guard reads
@@ -172,6 +173,11 @@ with two serial tickets (expand, then contract), not a split.
 | SI8 | 2 | `.bench/skills-index.sh` does not exist; `rg --hidden -g '!.git' skills-index.sh` matches only `internal/conformance/registry_test.go` (the retired-twin rows), `decisions/`, `ASSESSMENT.md`, `specs/`, plus `CHANGELOG.md` and `capture/` where the landing writes them | source (`rg --hidden`) | not TDD-able — deletion + sweep; verified by review | a surviving reference is a dead pointer to a regenerator that no longer runs |
 | SI9 | 2 | `bin/bench.sh` carries the `skills-index)` case label and help line, `.bench/BENCH.md` lists `bench skills-index`, and the subcommand-routing registry routes it to `internal/skillsindex` (whose `Command` calls `usage.Parse`) — all in one commit | conformance docs sweeps | already covered — `checkColdPickupCLILists` is red on a documented `bench skills-index` with no `bin/bench.sh` label and on a labelled command missing from the inventory; `checkSubcommandRouting` is red on an unregistered dispatch name or a routed package that never reaches `usage.Parse` | an unlisted or unlabelled verb is the 2026-08-14 CLI-inventory learning recurring |
 | SI10 | 2 | every pre-existing test passes with test logic unmodified — the permitted mechanical edits are exactly the exit-test list in Implementation decisions; a changed assertion reverts the move (map #4) | ordinary `test` phase + `git diff -- '*_test.go'` | exit test | the refactor's only oracle is that nothing observable changed |
+
+SI4's "already covered" is inaccurate and stands as recorded rather than fixed: the four
+canaries exercise missing-entry, dangling-entry, missing-`index:` and attributed drift, but
+none produces the non-attributable `skills index block drifted from generated form` case.
+No canary is added for it.
 
 ### Edge inventory
 - error path — SI3/SI5/SI7 (missing markers and missing reference file keep today's diagnostics; unparseable allowlist refuses).

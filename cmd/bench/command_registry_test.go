@@ -520,6 +520,39 @@ func TestRemovedGrammarsRefuseThroughTheirFamily(t *testing.T) {
 	}
 }
 
+// TestSkillsIndexRoutesThroughDispatch drives the verb where the wrapper sends it: the
+// registry route, the module's grammar, and the reference-file bytes a later invocation
+// reads back rather than a value held over from the write.
+func TestSkillsIndexRoutesThroughDispatch(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	writeAXIFixture(t, filepath.Join(root, ".agents", "skills", "alpha", "SKILL.md"), "---\nname: alpha\nindex: doing alpha things\n---\n")
+	// The markers are the fixture's own text: cmd/bench grades routing, so it seeds a
+	// reference file rather than reaching into the module for the block's shape.
+	writeAXIFixture(t, filepath.Join(root, ".bench", "BENCH-reference.md"),
+		"# Reference\n\n<!-- bench:skills-index:start -->\n<!-- bench:skills-index:end -->\n")
+
+	drift := "skills index missing entry for skill 'alpha' (regenerate: bench skills-index --write)\n"
+	for _, tc := range []struct {
+		name   string
+		argv   []string
+		stdout string
+		code   int
+	}{
+		{"default check", []string{"skills-index"}, drift, 1},
+		{"explicit check", []string{"skills-index", "--check"}, drift, 1},
+		{"write", []string{"skills-index", "--write"}, "", 0},
+		{"check after write", []string{"skills-index", "--check"}, "", 0},
+		{"help", []string{"skills-index", "--help"}, "usage: bench skills-index [--check|--write]\n", 0},
+		{"unknown flag", []string{"skills-index", "--bogus"}, "usage: bench skills-index (unknown argument: --bogus)\n", 2},
+		{"conflicting modes", []string{"skills-index", "--check", "--write"}, "usage: bench skills-index [--check|--write] (--check and --write are mutually exclusive)\n", 2},
+	} {
+		result := runAXICommandAt(t, root, tc.argv)
+		if result.stdout != tc.stdout || result.stderr != "" || result.code != tc.code {
+			t.Fatalf("%s: %v = stdout=%q stderr=%q exit=%d, want stdout=%q exit=%d", tc.name, tc.argv, result.stdout, result.stderr, result.code, tc.stdout, tc.code)
+		}
+	}
+}
+
 // runKeptRoute joins both sinks: help lands on stdout for some grammars and stderr for
 // others, and which sink a route picked is not what its callers are grading.
 func runKeptRoute(argv []string) (string, int) {

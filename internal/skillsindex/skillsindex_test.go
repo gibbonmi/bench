@@ -133,23 +133,35 @@ func TestCheckAttributesEveryDriftInAlphabeticalOrder(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\n---\n")
 	writeFile(t, root, ".agents/skills/beta/SKILL.md", "---\nname: beta\nindex: doing beta things\n---\n")
-	// alpha collides two diagnostics on one skill: it declares no trigger AND still
-	// carries a committed entry. A per-skill map would drop one of them, so the pair
-	// is asserted here rather than left to the canaries — none of which has both a
-	// field-less skill and a non-empty committed block.
 	writeFile(t, root, ".bench/BENCH-reference.md", reference(
-		"- doing alpha things → `.agents/skills/alpha/SKILL.md`\n"+
-			"- stale beta wording → `.agents/skills/beta/SKILL.md`\n"+
-			"- doing gamma things → `.agents/skills/gamma/SKILL.md`\n"))
+		"- stale beta wording \u2192 `.agents/skills/beta/SKILL.md`\n"+
+			"- doing gamma things \u2192 `.agents/skills/gamma/SKILL.md`\n"))
 
 	want := []string{
 		"skill 'alpha' missing index: frontmatter (the skills index is generated)",
-		"skills index entry 'alpha' has no indexed .agents/skills/alpha on disk (regenerate: bench skills-index --write)",
 		"skills index entry for 'beta' drifted from its frontmatter (regenerate: bench skills-index --write)",
 		"skills index entry 'gamma' has no indexed .agents/skills/gamma on disk (regenerate: bench skills-index --write)",
 	}
 	if got := Check(root); strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("attributed diagnostics =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// A skill can earn two diagnostics at once: it declares no trigger and still carries a
+// committed entry. Keying one string per skill would drop the first of the pair, and no
+// canary fixture pairs a field-less skill with a non-empty committed block.
+func TestCheckKeepsBothDiagnosticsForACollidingSkill(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\n---\n")
+	writeFile(t, root, ".bench/BENCH-reference.md", reference(
+		"- doing alpha things \u2192 `.agents/skills/alpha/SKILL.md`\n"))
+
+	want := []string{
+		"skill 'alpha' missing index: frontmatter (the skills index is generated)",
+		"skills index entry 'alpha' has no indexed .agents/skills/alpha on disk (regenerate: bench skills-index --write)",
+	}
+	if got := Check(root); strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("colliding diagnostics =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
 
@@ -194,8 +206,8 @@ func TestUnparseableAllowlistRefusesWriteAndLeavesCheckAlone(t *testing.T) {
 	if string(after) != string(before) {
 		t.Fatalf("refused write changed bytes:\n%q\nwant\n%q", after, before)
 	}
-	// Check keeps today's posture: it marks nothing and adds no allowlist diagnostic,
-	// so the gate gains no red the index itself did not earn.
+	// Check marks nothing and adds no allowlist diagnostic, so the gate gains no red
+	// the index itself did not earn.
 	wantCheck := "skills index missing entry for skill 'zeta' (regenerate: bench skills-index --write)"
 	if got := Check(root); strings.Join(got, "\n") != wantCheck {
 		t.Fatalf("check with an unparseable allowlist =\n%s\nwant\n%s", strings.Join(got, "\n"), wantCheck)

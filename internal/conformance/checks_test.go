@@ -298,8 +298,6 @@ func containsDiagnostic(diags []string, want string) bool {
 	return false
 }
 
-// frontmatterField is the fence rule's one reader; conformance calls the module
-// rather than carrying a second copy of it.
 func frontmatterField(path, key string) string {
 	return skillsindex.FrontmatterField(path, key)
 }

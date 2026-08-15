@@ -4,10 +4,9 @@
 // kit-only rows; the block between the bench:skills-index markers is derived from
 // them, never hand-maintained.
 //
-// The index used to be derived twice — a shell generator and a conformance check that
-// re-implemented the same frontmatter read, kit-only marking, line format, and
-// diagnostics. Every consumer now goes through this package, so a change to the line
-// shape or the fence rule lands once.
+// Every consumer reads the index here — the conformance check behind the gate and the
+// `bench skills-index` verb — so the line shape, the kit-only marking, and the fence
+// rule have one owner.
 package skillsindex
 
 import (
@@ -58,7 +57,8 @@ type Entry struct {
 // Indexed reports whether the entry contributes a line to the generated block.
 func (e Entry) Indexed() bool { return e.Trigger != "" }
 
-// Line renders the entry's index line.
+// Line renders the entry's index line. skillName reads the name back out of one, and
+// the two are the format's only owners.
 func (e Entry) Line() string {
 	line := fmt.Sprintf("- %s → `.agents/skills/%s/SKILL.md`", e.Trigger, e.Name)
 	if e.KitOnly {
@@ -70,11 +70,23 @@ func (e Entry) Line() string {
 	return line
 }
 
+var indexLineRe = regexp.MustCompile(`\.agents/skills/([a-z0-9-]+)/SKILL\.md`)
+
+// skillName returns the skill a committed index line names, or "" for a line that is
+// not one. Expected lines carry their skill in the Entry that rendered them, so this
+// reader is for committed text only — text no Entry can vouch for.
+func skillName(line string) string {
+	if m := indexLineRe.FindStringSubmatch(line); len(m) == 2 {
+		return m[1]
+	}
+	return ""
+}
+
 // Entries enumerates root's skills in alphabetical directory order, skipping a skill
 // whose name has a same-named .agents/commands/<name>.md — a command adapter, which
 // the slash menu already surfaces. The error is non-nil only when the allowlist is
 // present and unparseable; entries come back unmarked in that case so a caller can
-// choose between refusing (Write) and today's posture (Check).
+// choose between refusing the write (Write) and grading what it can (Check).
 func Entries(root string) ([]Entry, error) {
 	kitOnly, err := kitOnlySources(root)
 	files, _ := filepath.Glob(filepath.Join(root, ".agents", "skills", "*", "SKILL.md"))
@@ -131,28 +143,30 @@ func Check(root string) []string {
 	// keying one string per name, which would silently drop the first of the pair.
 	attributed := map[string][]string{}
 	var expected []string
+	expectedByName := map[string]string{}
 	for _, entry := range entries {
 		if !entry.Indexed() {
 			attributed[entry.Name] = append(attributed[entry.Name], fmt.Sprintf("skill '%s' missing index: frontmatter (the skills index is generated)", entry.Name))
 			continue
 		}
-		expected = append(expected, entry.Line())
+		line := entry.Line()
+		expected = append(expected, line)
+		expectedByName[entry.Name] = line
 	}
 
 	ref := readIfExists(filepath.Join(root, filepath.FromSlash(referenceRel)))
 	if ref == "" {
 		return append(ordered(attributed), referenceRel+" missing (skills index unverifiable)")
 	}
-	actual, ok := markerBlock(ref)
+	span, ok := findBlock(ref)
 	if !ok {
 		return append(ordered(attributed), referenceRel+" skills-index markers missing (bench:skills-index)")
 	}
-	if strings.Join(expected, "\n") == strings.Join(actual, "\n") {
+	if strings.Join(expected, "\n") == strings.Join(span.block, "\n") {
 		return ordered(attributed)
 	}
 
-	expectedByName := byName(expected)
-	actualByName := byName(actual)
+	actualByName := committedByName(span.block)
 	drifted := false
 	for name, line := range expectedByName {
 		if actualByName[name] == line {
@@ -197,10 +211,11 @@ func Write(root string) error {
 			block = append(block, entry.Line())
 		}
 	}
-	rewritten, ok := replaceMarkerBlock(string(ref), block)
+	span, ok := findBlock(string(ref))
 	if !ok {
 		return fmt.Errorf("%s skills-index markers missing (bench:skills-index)", referenceRel)
 	}
+	rewritten := span.replace(block)
 	tmp, err := os.CreateTemp(filepath.Dir(path), ".skills-index-*")
 	if err != nil {
 		return err
@@ -245,7 +260,7 @@ func kitOnlySources(root string) (map[string]bool, error) {
 
 // ordered flattens the per-skill diagnostics into the contract's one sequence:
 // skill-alphabetical, and within a skill the order they were emitted — the missing
-// trigger before any block drift, which is what the pre-module check printed.
+// trigger before any block drift.
 func ordered(attributed map[string][]string) []string {
 	names := make([]string, 0, len(attributed))
 	for name := range attributed {
@@ -259,55 +274,52 @@ func ordered(attributed map[string][]string) []string {
 	return out
 }
 
-var indexLineRe = regexp.MustCompile(`\.agents/skills/([a-z0-9-]+)/SKILL\.md`)
-
-func byName(lines []string) map[string]string {
+// committedByName keys the committed block's lines by the skill each one names.
+// A line naming no skill is unattributable and carries no key.
+func committedByName(lines []string) map[string]string {
 	out := map[string]string{}
 	for _, line := range lines {
-		if m := indexLineRe.FindStringSubmatch(line); len(m) == 2 {
-			out[m[1]] = line
+		if name := skillName(line); name != "" {
+			out[name] = line
 		}
 	}
 	return out
 }
 
-func markerBlock(text string) ([]string, bool) {
-	inBlock := false
-	var out []string
-	for _, line := range strings.Split(text, "\n") {
-		switch {
-		case line == endMarker:
-			return out, inBlock
-		case inBlock:
-			out = append(out, line)
-		case line == startMarker:
-			inBlock = true
-		}
-	}
-	return nil, false
+// blockSpan is the reference file cut at the generated block: the lines through the
+// start marker, the block itself, and the end marker onward. Check reads the block and
+// Write substitutes it, so both see the same span of the same file.
+type blockSpan struct {
+	before []string
+	block  []string
+	after  []string
 }
 
-func replaceMarkerBlock(text string, block []string) (string, bool) {
-	var out []string
-	skipping, replaced := false, false
-	for _, line := range strings.Split(text, "\n") {
-		switch {
-		case line == startMarker:
-			out = append(out, line)
-			out = append(out, block...)
-			skipping, replaced = true, true
-			continue
-		case line == endMarker:
-			skipping = false
+// findBlock locates the generated block. An end marker reached before a start marker,
+// or a start marker with no end after it, means the file carries no block.
+func findBlock(text string) (blockSpan, bool) {
+	lines := strings.Split(text, "\n")
+	start := -1
+	for i, line := range lines {
+		if line == endMarker {
+			if start < 0 {
+				return blockSpan{}, false
+			}
+			return blockSpan{before: lines[:start+1], block: lines[start+1 : i], after: lines[i:]}, true
 		}
-		if !skipping {
-			out = append(out, line)
+		if start < 0 && line == startMarker {
+			start = i
 		}
 	}
-	if !replaced || skipping {
-		return "", false
-	}
-	return strings.Join(out, "\n"), true
+	return blockSpan{}, false
+}
+
+// replace renders the file with block standing in for the span's current lines.
+func (s blockSpan) replace(block []string) string {
+	out := append([]string{}, s.before...)
+	out = append(out, block...)
+	out = append(out, s.after...)
+	return strings.Join(out, "\n")
 }
 
 func readIfExists(path string) string {

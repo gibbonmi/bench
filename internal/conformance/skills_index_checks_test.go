@@ -180,8 +180,6 @@ func checkClaudeSkillMirror(root string) []string {
 	return diags
 }
 
-// checkSkillsIndex grades the committed skills index through the module that
-// generates it, so the gate's oracle and `bench skills-index` cannot disagree.
 func checkSkillsIndex(root string) []string {
 	return skillsindex.Check(root)
 }
@@ -256,13 +254,11 @@ func checkRoadmapPromotionAnchors(root string) []string {
 	return diags
 }
 
-// TestSkillsIndexConformanceCarriesNoSecondReader is the row that sees the cheapest
-// wrong refactor: adding internal/skillsindex and leaving the old parsers in place.
-// The three banned literals are the skills index's derivable facts — marker text,
-// allowlist path, line format — and the module is their one source, so a copy in
-// either conformance file is a second reader by definition. Every declaration except
-// this function is in scope, so hoisting a literal to a package-level const or a
-// helper trips the guard rather than evading it.
+// TestSkillsIndexConformanceCarriesNoSecondReader keeps the skills index's derivable
+// facts — marker text, allowlist path, line format — out of the conformance files.
+// internal/skillsindex is their one source, so a copy in either file is a second reader
+// by definition. Every declaration except this function is in scope, so hoisting a
+// literal to a package-level const or a helper trips the guard rather than evading it.
 func TestSkillsIndexConformanceCarriesNoSecondReader(t *testing.T) {
 	const guard = "TestSkillsIndexConformanceCarriesNoSecondReader"
 	banned := []string{
