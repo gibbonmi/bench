@@ -59,9 +59,11 @@ bounds its own admin reads.
 ## Implementation decisions
 
 - **One shape owner.** A single scanner in `internal/git` owns the predicate
-  the reviewer fixed: every entry under `<git-common-dir>/worktrees/` — each
-  `<id>` directory and each entry directly inside it — must be a regular file
-  or a directory. Exported contract (lands in the scanner ticket; the doctor ticket only
+  the reviewer fixed: each `<id>` directory and every non-private entry directly
+  inside it under `<git-common-dir>/worktrees/` must be a regular file or a
+  directory. The exact literal `bench-lease` is a private Bench lifecycle control
+  record; the scanner ignores it so lifecycle can retain malformed or non-regular
+  leases as uncertain without reading or mutating them. Exported contract (lands in the scanner ticket; the doctor ticket only
   calls it): `ScanWorktreeAdmin(commonDir string) error`, nil when `worktrees/` is
   absent, empty, or a non-symlink non-directory (git skips those shapes, probe
   asset) — but a **symlinked** `worktrees/` is refused, because git follows
@@ -387,6 +389,11 @@ bounds its own admin reads.
   but only review can check the strings are read from the type's action
   field rather than re-derived as per-surface constants (the duplication
   defect the code standard names).
+- **Exception (reviewed lifecycle control record):** exact literal `bench-lease`
+  is private to Bench lifecycle and is ignored by the scanner, including when
+  malformed or non-regular, so lifecycle can retain it as uncertain without
+  reading or mutating it. This exception changes no acceptance row; review
+  checks the scanner's literal exemption and public contract.
 - **Exception (review-checked property):** the `canceled` arm of the
   variant-consumption switch — unreachable by construction under the
   `context.Background()` parent, so no fixture can produce it. Review owns
@@ -435,7 +442,8 @@ spine, so no path ever has two writers at once.
 - `refuse-malformed-admin-entries`: `internal/git/`, `internal/gittest/`,
   `internal/worktree/list.go`, `internal/worktree/list_actions_test.go`,
   `internal/worktree/resume_test.go`, `internal/status/status.go`,
-  `internal/status/status_test.go`
+  `internal/status/status_test.go`, `specs/worktree-enumeration-hang/spec.md`,
+  `reviews/worktree-enumeration-hang.md`
 - `bound-worktree-enumeration`: `internal/git/`, `internal/gittest/`,
   `internal/bounds/`, `internal/conformance/bounds_policy_test.go`,
   `internal/status/status_test.go`, `internal/worktree/list_actions_test.go`

@@ -186,9 +186,12 @@ func (e *WorktreeScanError) Unwrap() error { return e.Err }
 
 func (e *WorktreeScanError) WorktreeAction() string { return e.Action }
 
-// ScanWorktreeAdmin refuses malformed entries before git can open them. Git 2.43.0
-// blocking-open-for-read behavior on FIFO admin files is the upstream reason this
-// remains a preflight until git bounds those reads itself.
+// ScanWorktreeAdmin refuses malformed entries before git can open them. Every
+// non-private direct entry must be a regular file or directory; the exact literal
+// bench-lease is a private Bench lifecycle control record and is ignored so its
+// lifecycle can retain uncertain non-regular leases without reading or mutating them.
+// Git 2.43.0 blocking-open-for-read behavior on FIFO admin files is the upstream
+// reason this remains a preflight until git bounds those reads itself.
 func ScanWorktreeAdmin(commonDir string) error {
 	base := filepath.Join(commonDir, "worktrees")
 	info, err := os.Lstat(base)
@@ -230,8 +233,8 @@ func ScanWorktreeAdmin(commonDir string) error {
 			if err != nil {
 				return worktreeScanError(filepath.Join("worktrees", id.Name(), child.Name()), err)
 			}
-			// Bench owns this private control record. Its lifecycle policy retains
-			// every non-regular lease as uncertain without following or removing it.
+			// Bench owns this private control record. Its lifecycle retains uncertain
+			// non-regular leases without following or removing them.
 			if child.Name() == "bench-lease" {
 				continue
 			}
