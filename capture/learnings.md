@@ -53,7 +53,7 @@ Proposed rule change: add an interruption/recovery contract that records the
 phase state and frozen pair atomically, then makes resume surface the required
 next phase and refuse landing until a fresh terminal review verdict exists.
 
-## 2026-08-15 — write-spec loops accepted by reviewer cap, not by clean re-review
+## 2026-08-15 — write-spec loops accepted by reviewer cap, not by clean re-review [open]
 
 **What happened.** The reviewer set `--reviewer` to Codex `gpt-5.6-sol` and capped both
 verification loops of `specs/gate-run-transaction` at one round. Loop 1 returned eight
