@@ -61,12 +61,37 @@ blocking findings (two named mutations were not red-capable as written; a false
 "already covered" citation; missing persistence-failure rows; the deep-module story
 was satisfiable by symbol deletion alone). All were folded, but no reviewer round
 re-checked the folds; loop 2's per-row split finding was declined by the author as a
-cost call and surfaced in the approval table.
+cost call and surfaced in the approval table. Implementation then proved the two
+mutation misses were reachability errors: ordinary execution reuses before lock
+acquisition, and mode `0500` fails terminal persistence before the proposed pending
+rewrite can affect the record.
 
 **Right behavior.** Under a round cap, the author still folds every blocking finding
 and states in the verification log that acceptance was by cap; a declined blocking
-finding is a reviewer decision surfaced at sign-off, never silently dropped.
+finding is a reviewer decision surfaced at sign-off, never silently dropped. Before
+sign-off, each folded red signal gets a cheap control-flow reachability probe against
+the named public fixture; a cap records review limits, not evidence that a mutation
+can bite.
 
 **Proposed rule change.** `/bench-write-spec` step 9: when `--reviewer` carries a
 round cap below "until clean", the verification-log line must say "accepted by cap"
 and name any blocking finding the author declined, so the sign-off table carries it.
+The same close checks that every folded mutation reaches the claimed branch from its
+fixture and records any corrected public path in the acceptance row.
+
+## 2026-08-15 — gate lifecycle failures need a three-class matrix [open]
+
+**What happened.** The staged gate-transaction coverage named terminal retain,
+invalidate, and replace failures, but semantic review still found uncovered owner and
+pending writes before the oracle plus cancellation while the oracle was running.
+Each branch was locally reasonable; the omission came from enumerating error strings
+instead of the transaction's lifecycle positions.
+
+**Right behavior.** A transactional runner's failure inventory names three classes:
+**pre-oracle persistence**, **in-oracle interruption**, and **terminal persistence**.
+Every owned write or interruption point is assigned to one class, then covered or
+explicitly declined. This keeps the matrix stable when functions move between files.
+
+**Proposed rule change.** Add the three-class lifecycle matrix to `craft-spec`'s edge
+inventory for transaction-shaped work. A coverage row or Won't-handle decision owns
+each cell; listing only the terminal branches is incomplete.

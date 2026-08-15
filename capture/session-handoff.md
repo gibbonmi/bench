@@ -1,34 +1,18 @@
 # Session handoff
 
-Repository: `c7f62432abb513b693e7eb380f2b4015-22fa8276882c8052351c3d896383d3e5` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-3325222104/c7f62432abb513b693e7eb380f2b4015-22fa8276882c8052351c3d896383d3e5`
-Branch: `bench/assign/c7f62432abb513b693e7eb380f2b4015/22fa8276882c8052351c3d896383d3e5` — HEAD `98f55ca`, clean tree, 0 unpushed commits
-Spec: `specs/worktree-enumeration-hang/spec.md` (Status: staged)
-Gate: green at `37f929e` — current
+Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `2d2bcbe`, 3 dirty paths, 17 unpushed commits
+Spec: none staged.
+Gate: green at `6461319` — stale, work tree `33da328`
 
 ## State
 
-FT189's spec and tickets are authored and verified: 24 coverage rows
-(`bench coverage --check` green; preflight `rows-owned`/`rows-membership`
-green), decision source compiled at
-`specs/worktree-enumeration-hang/decisions/`. Verification loops: spec 33
-iterations to accept, tickets 2 — the log line in the spec names the largest
-catches. Ticket graph: `resolve-git-common-dir` → `refuse-malformed-admin-entries`
-→ {`bound-worktree-enumeration`, `report-admin-entry-in-doctor`}; lines
-sonnet/medium, sonnet/medium (routing rows), opus/medium, sonnet/low.
-Sign-off landed 2026-08-14, so the build may start; tickets commit serially
-on one retained integration source per the workflow. Since staging, the
-write-spec loop amendments (materiality exit, promise guard,
-cheapest-plausible standard) landed with their own anchors and canary
-fixtures, and the pre-existing leading-zero-sha flake in
-`TestResolveBranchRangeConsumesExport` was repaired (reviewer-approved).
-One learnings entry (2026-08-14, 33-round loop, A/B verdict recorded) awaits
-the next `/bench-what-next` drain. `decisions/spec-build-review-gate-cadence.md`
-remains invalid (its own shaping resume owns the repair).
+`gate-run-transaction` landed from reviewed pair `59faeec6` → `b7d38bd1` as `379035df`, then retired as `dac455bc`. Standards, Spec, and Coverage were each zero-finding on the final exact pair. The retained source and assignment are removed. `.bench/BENCH.md` now carries the fingerprinted `bench worktree clean` grammar in `2d2bcbeb`. Pending capture is intentionally uncommitted: `capture/retros/gate-run-transaction.md`; the existing cap-acceptance learning amended with mutation reachability; a separate three-class lifecycle-failure learning; and bounded `capture/agent-performance.md`. The scorecard caps itself at 10 comparable assignments per aggregate, 6 routing rows, 5 evidence rows, and 120 lines. Luna remains priced at 0.2× Terra for routing analysis; per-agent token telemetry is unavailable.
 
 ## Next command
 
-`$bench-write-spec worktree-enumeration-hang`
+`/bench-what-next` — the board's leading invocable signal (`drain`).
 
 ## Shape
 
