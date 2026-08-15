@@ -11,7 +11,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
@@ -131,16 +130,6 @@ type gateFile interface {
 
 func durableReplace(gitdir string, rec verdictRecord) error {
 	return durableReplaceWithEngine(productionGateEngine{}, gitdir, rec)
-}
-
-func persistInterruptedIfGreen(engine gateEngine, root, gitdir string, plan subject) {
-	if !inspectAt(root, engine.Now()).ReusableGreen {
-		return
-	}
-	pending := interruptedRecord(plan, engine.Now())
-	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
-		_ = durableReplaceWithEngine(engine, gitdir, pending)
-	}
 }
 
 func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecord) error {
@@ -735,26 +724,4 @@ func requireObjectFields(data []byte, want []string) error {
 		return errors.New("invalid record fields")
 	}
 	return nil
-}
-
-func lockHeld(gitdir string) (bool, error) {
-	path := filepath.Join(gitdir, "bench-gate.lock")
-	executionLockOwners.Lock()
-	defer executionLockOwners.Unlock()
-	if executionLockOwners.paths[path] {
-		return true, nil
-	}
-	f, err := os.Open(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	defer f.Close()
-	lock := recordLock(syscall.F_RDLCK)
-	if err := syscall.FcntlFlock(f.Fd(), syscall.F_GETLK, &lock); err != nil {
-		return false, err
-	}
-	return lock.Type != syscall.F_UNLCK, nil
 }

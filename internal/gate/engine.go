@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -193,55 +192,6 @@ func inspectEvidenceWindowed(root string, plan subject, now time.Time, expires b
 	return inspection
 }
 
-func retainGreen(root string, plan subject, recordedAt time.Time) error {
-	gitdir, err := benchgit.CommonDir(root)
-	if err != nil {
-		return err
-	}
-	dir := filepath.Join(gitdir, "bench-gate-evidence")
-	if err := ensureEvidenceDir(gitdir, dir); err != nil {
-		return err
-	}
-	record := verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
-	return durableReplaceAt(dir, evidenceName(plan), record)
-}
-
-func ensureEvidenceDir(parent, dir string) error {
-	if err := os.Mkdir(dir, 0o700); err != nil && !errors.Is(err, os.ErrExist) {
-		return err
-	}
-	info, err := os.Stat(dir)
-	if err != nil || !info.IsDir() || info.Mode().Perm() != 0o700 {
-		return errors.New("invalid evidence directory")
-	}
-	parentFile, err := os.Open(parent)
-	if err != nil {
-		return err
-	}
-	defer parentFile.Close()
-	return parentFile.Sync()
-}
-
-func invalidateEvidence(root string, plan subject) error {
-	gitdir, err := benchgit.CommonDir(root)
-	if err != nil {
-		return err
-	}
-	dir := filepath.Join(gitdir, "bench-gate-evidence")
-	if err := os.Remove(evidencePath(gitdir, plan)); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
-	}
-	file, err := os.Open(dir)
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	return file.Sync()
-}
-
 func evidencePath(gitdir string, plan subject) string {
 	return filepath.Join(gitdir, "bench-gate-evidence", evidenceName(plan))
 }
@@ -333,45 +283,6 @@ func reusableEvidence(root string, plan subject, now time.Time) Inspection {
 		return Inspection{}
 	}
 	return Inspection{State: Ready, Status: "green", CachedTree: plan.Tree, CurrentTree: plan.Tree, RecordedAt: evidence.RecordedAt, ReusableGreen: true}
-}
-
-func ownerRecord(now time.Time) []byte {
-	return []byte(strconv.Itoa(os.Getpid()) + " " + now.UTC().Truncate(time.Second).Format(time.RFC3339) + "\n")
-}
-
-func writeOwnerDiagnostic(stderr io.Writer, path string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return
-	}
-	fields := strings.Fields(string(data))
-	if len(fields) != 2 {
-		return
-	}
-	pid, err := strconv.Atoi(fields[0])
-	if err != nil || pid <= 0 {
-		return
-	}
-	if _, err := time.Parse(time.RFC3339, fields[1]); err != nil {
-		return
-	}
-	liveness := "alive"
-	if err := syscall.Kill(pid, 0); err != nil && err != syscall.EPERM {
-		liveness = "not alive"
-	}
-	fmt.Fprintf(stderr, "gate owner: pid %d (%s)\n", pid, liveness)
-}
-
-func interruptedRecord(plan subject, now time.Time) verdictRecord {
-	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
-}
-
-func sameSubject(a, b subject) bool {
-	return a.Tree == b.Tree && a.Oracle == b.Oracle && a.Resolution == b.Resolution && a.Closed == b.Closed && a.Reason == b.Reason
-}
-
-func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) int {
-	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, true).Code
 }
 
 func runResolved(ctx context.Context, root string, res Resolution, env []string, stdout, stderr io.Writer, processGroup bool) processGroupResult {
