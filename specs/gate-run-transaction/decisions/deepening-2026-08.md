@@ -4,7 +4,7 @@ Status: ready
 
 ## Destination
 
-Turn the 2026-08-15 deepening survey (report `/tmp/architecture-review-20260815T101417.html`,
+Turn the 2026-08-15 deepening survey (report `/tmp/architecture-review-20260815T101417.html`, a session artifact outside the tree,
 scoped by `ASSESSMENT.md` L-O1/M-C1/M-W1 and roadmap FT186/FT162/FT185) into
 reviewer-decided, behavior-preserving deepenings, each specced and built through the
 normal workflow with an exit test that keeps existing test logic unmodified. Candidates
@@ -86,7 +86,7 @@ worktree/git (2, 7 after FT189) — in that order, or another grouping/order?
 
 ### Answer
 
-Five specs, cut and built in this order: gate (candidates 1, 3, 6) → shift (5) → skills (8) → adopt (4) → worktree/git (2, 7; blocked on FT189 landing per #1). Each spec is one `/bench-write-spec` from this map.
+Four specs and three light-path lanes, in this order: gate spec (candidates 1, 3) → light-path tickets for 6 (green-marker reader) and 5 (shift objective owner) → skills spec (8) → adopt spec (4) → worktree spec (2) and light-path tickets, one per reader, for 7 (both blocked on FT189 landing per #1). Routing rule: `.bench/BENCH.md`'s right-size table — 5, 6, and each reader of 7 are one independently-green ticket crossing no declared seam. Each spec is one `/bench-write-spec` from this map, compiled once into `specs/gate-run-transaction/decisions/`; later specs and light-path tickets cite that compiled path (revised 2026-08-15 with reviewer confirmation).
 
 ## #6: Candidate 1 — the gate run as one transaction
 
