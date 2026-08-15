@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -57,8 +58,7 @@ func AdvanceMarker(_ context.Context, root, branch, destination, expected string
 }
 
 func checkMarker(root, branch, destination, expected string, advance bool) error {
-	marker := "refs/bench/green/" + branch
-	actual, present, err := markerCommit(root, marker)
+	actual, present, err := greenmarker.Read(root, branch)
 	if err != nil {
 		return err
 	}
@@ -95,33 +95,11 @@ func checkMarker(root, branch, destination, expected string, advance bool) error
 		}
 	} else if expected != "" {
 		return errors.New("project-green marker does not match expected prior tip")
-	} else {
-		actual = "0000000000000000000000000000000000000000"
 	}
 	if !advance {
 		return nil
 	}
-	if _, err := benchgit.Raw("-C", root, "update-ref", marker, destination, actual); err != nil {
-		if existing, checkErr := benchgit.Output("-C", root, "rev-parse", "--verify", marker+"^{commit}"); checkErr == nil && existing == destination {
-			return nil
-		}
-		return fmt.Errorf("record project-green marker: %w", err)
-	}
-	return nil
-}
-
-func markerCommit(root, marker string) (string, bool, error) {
-	if _, err := benchgit.Output("-C", root, "rev-parse", "--verify", marker); err != nil {
-		if _, symbolicErr := benchgit.Raw("-C", root, "symbolic-ref", "--quiet", marker); symbolicErr == nil {
-			return "", true, errors.New("read project-green marker: dangling symbolic ref")
-		}
-		return "", false, nil
-	}
-	actual, err := benchgit.Output("-C", root, "rev-parse", "--verify", marker+"^{commit}")
-	if err != nil {
-		return "", true, fmt.Errorf("read project-green marker: %w", err)
-	}
-	return actual, true, nil
+	return greenmarker.Advance(root, branch, destination, actual)
 }
 
 func fullCommit(root, value string) bool {

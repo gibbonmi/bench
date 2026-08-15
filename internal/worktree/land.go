@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
@@ -362,9 +363,9 @@ func landingDestination(root string) (string, string, string, string, error) {
 }
 
 func landingMarker(root, branch, destination string) (string, error) {
-	marker, err := git.Output("-C", root, "rev-parse", "--verify", "refs/bench/green/"+branch+"^{commit}")
+	marker, _, err := greenmarker.Read(root, branch)
 	if err != nil {
-		marker = ""
+		return "", err
 	}
 	if err := authorization.CheckMarker(context.Background(), root, branch, destination, marker); err != nil {
 		return "", err

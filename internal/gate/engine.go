@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -61,8 +62,8 @@ func ValidateProjectGreen(root, branch string) EvidenceInspection {
 	if err != nil {
 		return EvidenceInspection{Reason: "working tip unavailable"}
 	}
-	marker, err := benchgit.Output("-C", root, "rev-parse", "--verify", "refs/bench/green/"+branch)
-	if err != nil || marker != tip {
+	marker, present, err := greenmarker.Read(root, branch)
+	if err != nil || !present || marker != tip {
 		return EvidenceInspection{Reason: "project-green marker changed"}
 	}
 	plan, err := buildSubject(root)
