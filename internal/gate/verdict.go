@@ -382,30 +382,6 @@ func rejectDuplicateNames(dec *json.Decoder) error {
 	return err
 }
 
-// The two exact field sets a ready record may carry. They are alternatives, never a
-// spectrum: a record holding part of one and part of another names no class the loader
-// can resolve, and resolving it by guess would credit work that nobody ran. The narrow
-// sets are derived — the full set plus that class's own fields — so a field added to the
-// full record joins them without a second edit; restated, that addition would make the
-// narrow classes silently reject every valid record.
-var (
-	fullReadyFields            = []string{"oracle", "recorded_at", "schema", "state", "status", "tree"}
-	partialReadyFields         = sortedFieldSet(fullReadyFields, "executed", "skip_evidence", "skipped")
-	checkPartialReadyFields    = sortedFieldSet(fullReadyFields, "check_evidence", "check_executed", "check_inherited")
-	combinedPartialReadyFields = sortedFieldSet(partialReadyFields, "check_evidence", "check_executed", "check_inherited")
-)
-
-// readyFieldClasses is the one place every ready verdict class is enumerated, keyed by the
-// name storeRecordClasses (record_classes.go) reports it under. A *ReadyFields variable above
-// that never joins this map is caught by TestVerdictReadyFieldsAreAllRegistered, which parses
-// this file's declarations and fails for any it does not find registered here.
-var readyFieldClasses = map[string][]string{
-	"full verdict":             fullReadyFields,
-	"partial verdict":          partialReadyFields,
-	"check-partial verdict":    checkPartialReadyFields,
-	"combined-partial verdict": combinedPartialReadyFields,
-}
-
 // The two exact field sets one skip-evidence entry may carry, under the same alternatives
 // discipline as the record classes: an ancestor slot's identity with the time it was
 // authored, or a reused build's seal digest. An entry holding parts of both describes no
@@ -414,14 +390,6 @@ var (
 	ancestorEvidenceFields = []string{"authored_at", "identity"}
 	sealEvidenceFields     = []string{"seal"}
 )
-
-// sortedFieldSet joins a base field set with extras in the sorted order
-// requireObjectFields compares against.
-func sortedFieldSet(base []string, extra ...string) []string {
-	fields := append(slices.Clone(base), extra...)
-	sort.Strings(fields)
-	return fields
-}
 
 // partitions reports whether the record reaches for the partial class at all: any single
 // partial field measures the record against the whole partial set, so a fragment is
@@ -640,49 +608,11 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 	if _, err := hex.DecodeString(r.Oracle); err != nil || strings.ToLower(r.Oracle) != r.Oracle {
 		return errors.New("invalid oracle")
 	}
-	switch r.State {
-	case Ready:
-		want := fullReadyFields
-		switch {
-		case r.partitions() && r.checkPartitions():
-			want = combinedPartialReadyFields
-		case r.partitions():
-			want = partialReadyFields
-		case r.checkPartitions():
-			want = checkPartialReadyFields
-		}
-		if err := requireObjectFields(data, want); err != nil {
-			return err
-		}
-		if (r.Status != "green" && r.Status != "red" && r.Status != "timeout") || r.RecordedAt == "" || r.StartedAt != "" || r.OwnerPID != 0 {
-			return errors.New("invalid ready")
-		}
-		tm, err := strictRecordTime(r.RecordedAt)
-		if err != nil || tm.After(now) {
-			return errors.New("invalid ready time")
-		}
-		if r.partitions() {
-			if err := validatePartition(data, r, tm); err != nil {
-				return err
-			}
-		}
-		if r.checkPartitions() {
-			return validateCheckPartition(data, r, tm)
-		}
-	case Pending:
-		if err := requireObjectFields(data, []string{"oracle", "owner_pid", "schema", "started_at", "state", "tree"}); err != nil {
-			return err
-		}
-		if r.Status != "" || r.RecordedAt != "" || r.StartedAt == "" || r.OwnerPID <= 0 {
-			return errors.New("invalid pending")
-		}
-		if tm, err := strictRecordTime(r.StartedAt); err != nil || tm.After(now) {
-			return errors.New("invalid pending time")
-		}
-	default:
-		return errors.New("invalid state")
+	class, err := selectVerdictRecordClass(data)
+	if err != nil {
+		return err
 	}
-	return nil
+	return class.validate(data, r, now)
 }
 
 func strictRecordTime(value string) (time.Time, error) {
