@@ -150,6 +150,8 @@ type Worktree struct {
 // enumeration and pool lifecycle.
 const BenchLeaseFilename = "bench-lease"
 
+const investigateGitFailureAction = "investigate the git failure"
+
 // ResolutionError reports a common-directory resolution that cannot be trusted.
 type ResolutionError struct {
 	Path   string
@@ -258,7 +260,7 @@ func worktreeAdminError(path, shape string) error {
 }
 
 func worktreeScanError(path string, err error) error {
-	return &WorktreeScanError{Path: path, Err: err, Action: "investigate the git failure"}
+	return &WorktreeScanError{Path: path, Err: err, Action: investigateGitFailureAction}
 }
 
 func fileShape(mode os.FileMode) string {
@@ -298,17 +300,17 @@ func CommonDir(root string) (string, error) {
 
 func validateCommonDir(common string) (string, error) {
 	if common == "" {
-		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path"), Action: "investigate the git failure"}
+		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path"), Action: investigateGitFailureAction}
 	}
 	info, statErr := os.Lstat(common)
 	if statErr != nil {
-		return "", &ResolutionError{Path: common, Err: fmt.Errorf("missing path: %w", statErr), Action: "investigate the git failure"}
+		return "", &ResolutionError{Path: common, Err: fmt.Errorf("missing path: %w", statErr), Action: investigateGitFailureAction}
 	}
 	if info.Mode()&os.ModeSymlink != 0 {
-		return "", &ResolutionError{Path: common, Err: errors.New("symlink"), Action: "investigate the git failure"}
+		return "", &ResolutionError{Path: common, Err: errors.New("symlink"), Action: investigateGitFailureAction}
 	}
 	if !info.IsDir() {
-		return "", &ResolutionError{Path: common, Err: errors.New("non-directory"), Action: "investigate the git failure"}
+		return "", &ResolutionError{Path: common, Err: errors.New("non-directory"), Action: investigateGitFailureAction}
 	}
 	return common, nil
 }
@@ -328,9 +330,9 @@ func boundedGit(args ...string) ([]byte, error) {
 		return stdout.Bytes(), failure
 	}
 	if result.Status == bounds.ProcessTimeout {
-		return nil, &ResolutionError{Err: fmt.Errorf("%s timed out after %s", invocation, worktreeListTimeout), Action: "investigate the git failure"}
+		return nil, &ResolutionError{Err: fmt.Errorf("%s timed out after %s", invocation, worktreeListTimeout), Action: investigateGitFailureAction}
 	}
-	return nil, &ResolutionError{Err: fmt.Errorf("%s failed to start or was canceled: %w", invocation, result.Err), Action: "investigate the git failure"}
+	return nil, &ResolutionError{Err: fmt.Errorf("%s failed to start or was canceled: %w", invocation, result.Err), Action: investigateGitFailureAction}
 }
 
 // Worktrees returns every registered checkout using NUL-framed porcelain. The
@@ -341,7 +343,7 @@ func Worktrees(root string) ([]Worktree, error) {
 		if _, ok := err.(*ResolutionError); ok {
 			return nil, err
 		}
-		return nil, &ResolutionError{Err: err, Action: "investigate the git failure"}
+		return nil, &ResolutionError{Err: err, Action: investigateGitFailureAction}
 	}
 	common, err := validateCommonDir(strings.TrimRight(string(commonRaw), "\n"))
 	if err != nil {
