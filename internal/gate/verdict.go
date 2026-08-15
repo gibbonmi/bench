@@ -234,7 +234,7 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	// Checked after drift and expiry: those retire a narrow record exactly as they retire a
 	// full one, and naming the narrowness of an expired record would dress retired evidence
 	// as current. The Partition on the inspection carries the narrowness either way.
-	if reason := narrowVerdictReason(rec); reason != "" {
+	if reason := narrowVerdictReason(loaded.class); reason != "" {
 		gi.Reason = reason
 		return gi
 	}
@@ -242,12 +242,9 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	return gi
 }
 
-// narrowVerdictReason names the class of a verdict that graded less than the whole tree, and
-// returns "" for one that graded all of it. A partial verdict ran only the components whose
-// inputs moved. It is evidence about its own tree and never the whole-tree green a reuse
-// credits, so this is the single place a reuse asks how wide the grading was.
-func narrowVerdictReason(r verdictRecord) string {
-	if r.partitions() || r.checkPartitions() {
+// narrowVerdictReason returns the reuse reason for the class the loader selected.
+func narrowVerdictReason(class verdictRecordClass) string {
+	if strings.HasSuffix(class.name, "partial verdict") {
 		return "partial verdict"
 	}
 	return ""
@@ -255,6 +252,7 @@ func narrowVerdictReason(r verdictRecord) string {
 
 type loadedVerdict struct {
 	record verdictRecord
+	class  verdictRecordClass
 	state  State
 	reason string
 	bytes  int
@@ -316,10 +314,16 @@ func loadVerdict(path string, now time.Time) loadedVerdict {
 	if read.data == nil {
 		return loaded
 	}
-	if err := strictJSON(read.data, &loaded.record); err != nil || validateRecordBytes(read.data, loaded.record, now) != nil {
+	if err := strictJSON(read.data, &loaded.record); err != nil {
 		loaded.state, loaded.reason = Invalid, "invalid cache record"
 		return loaded
 	}
+	class, err := validateRecordBytes(read.data, loaded.record, now)
+	if err != nil {
+		loaded.state, loaded.reason = Invalid, "invalid cache record"
+		return loaded
+	}
+	loaded.class = class
 	loaded.state = loaded.record.State
 	return loaded
 }
@@ -601,18 +605,18 @@ func validateCheckPartition(data []byte, r verdictRecord, recordedAt time.Time) 
 	return nil
 }
 
-func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
+func validateRecordBytes(data []byte, r verdictRecord, now time.Time) (verdictRecordClass, error) {
 	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) || len(r.Oracle) != 64 {
-		return errors.New("invalid record")
+		return verdictRecordClass{}, errors.New("invalid record")
 	}
 	if _, err := hex.DecodeString(r.Oracle); err != nil || strings.ToLower(r.Oracle) != r.Oracle {
-		return errors.New("invalid oracle")
+		return verdictRecordClass{}, errors.New("invalid oracle")
 	}
 	class, err := selectVerdictRecordClass(data)
 	if err != nil {
-		return err
+		return verdictRecordClass{}, err
 	}
-	return class.validate(data, r, now)
+	return class, class.validate(data, r, now)
 }
 
 func strictRecordTime(value string) (time.Time, error) {
