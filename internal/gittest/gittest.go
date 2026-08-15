@@ -9,7 +9,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // Repo initializes an empty repository in a fresh temporary directory and returns its root.
@@ -52,6 +55,21 @@ func RepoOnBranch(t testing.TB, branch string) string {
 	return root
 }
 
+// FIFOWorktreeAdmin plants a writerless FIFO gitdir under the real repository's common directory.
+func FIFOWorktreeAdmin(t testing.TB, root, id string) string {
+	t.Helper()
+	commonDir := output(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	worktreeDir := filepath.Join(commonDir, "worktrees", id)
+	if err := os.MkdirAll(worktreeDir, 0o755); err != nil {
+		t.Fatalf("create worktree admin directory: %v", err)
+	}
+	gitDir := filepath.Join(worktreeDir, "gitdir")
+	if err := syscall.Mkfifo(gitDir, 0o600); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+	}
+	return gitDir
+}
+
 func initialize(t testing.TB, options ...string) string {
 	t.Helper()
 	root := t.TempDir()
@@ -61,7 +79,14 @@ func initialize(t testing.TB, options ...string) string {
 
 func run(t testing.TB, root string, args ...string) {
 	t.Helper()
-	if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+	_ = output(t, root, args...)
+}
+
+func output(t testing.TB, root string, args ...string) string {
+	t.Helper()
+	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
+	if err != nil {
 		t.Fatalf("git %s: %v: %s", strings.Join(args, " "), err, out)
 	}
+	return strings.TrimSpace(string(out))
 }

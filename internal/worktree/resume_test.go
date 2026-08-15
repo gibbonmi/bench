@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -14,24 +13,13 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"testing"
 	"time"
 )
 
 func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
 	root := newWorktreeRepo(t)
-	common, err := git.CommonDir(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	id := filepath.Join(common, "worktrees", "resume")
-	if err := os.MkdirAll(id, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
-	}
+	gittest.FIFOWorktreeAdmin(t, root, "resume")
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
 	done := make(chan int, 1)

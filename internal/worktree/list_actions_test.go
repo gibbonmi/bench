@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -24,17 +23,7 @@ import (
 
 func TestListCommandRendersTypedAdminRefusal(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
-	common, err := git.CommonDir(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	id := filepath.Join(common, "worktrees", "typed")
-	if err := os.MkdirAll(id, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	gittest.FIFOWorktreeAdmin(t, root, "typed")
 	t.Chdir(root)
 	out, code := ListCommand(nil)
 	if code == 0 || !strings.Contains(out, "worktrees/typed/gitdir") || !strings.Contains(out, "fifo") || !strings.Contains(out, "inspect and remove it") {

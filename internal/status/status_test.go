@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -541,17 +540,7 @@ func TestAppendWorktreeRendersBoundExpiryAsTypedFailure(t *testing.T) {
 
 func TestAppendWorktreeRendersTypedAdminRefusal(t *testing.T) {
 	root := initRepo(t)
-	common, err := git.CommonDir(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	id := filepath.Join(common, "worktrees", "typed")
-	if err := os.MkdirAll(id, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	gittest.FIFOWorktreeAdmin(t, root, "typed")
 	rows := appendWorktree(nil, root)
 	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action != "inspect and remove it" {
 		t.Fatalf("typed row = %#v", rows)

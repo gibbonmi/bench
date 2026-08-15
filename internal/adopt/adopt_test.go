@@ -6,10 +6,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestRewriteAgentsBlockEdges(t *testing.T) {
@@ -219,17 +218,7 @@ func TestReportDoctorRowsReportsMalformedWorktreeAdmin(t *testing.T) {
 	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	common, err := git.CommonDir(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fifo := filepath.Join(common, "worktrees", "doctor-fifo", "gitdir")
-	if err := os.MkdirAll(filepath.Dir(fifo), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
-		t.Fatal(err)
-	}
+	fifo := gittest.FIFOWorktreeAdmin(t, root, "doctor-fifo")
 	t.Chdir(root)
 
 	var stdout bytes.Buffer
