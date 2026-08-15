@@ -214,6 +214,8 @@ Take FT89's single-sourcing slice here: one shipped Go module owns skill frontma
 
 - Candidates 1 and 3: `specs/gate-run-transaction` (retired 2026-08-15, commit `379035df`).
 - FT189 has landed on `main`; the #1 sequencing block on candidates 2 and 7 is lifted.
+- Candidate 6: `specs/light-path-green-marker-reader` — `internal/gate/greenmarker` (commit `0d4a0b7d`).
+- Candidate 5: `specs/light-path-shift-objective-owner` — `internal/shift/objective.go` (commit `329a03ed`).
 
 ## Not yet specified
 
