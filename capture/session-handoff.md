@@ -2,26 +2,25 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `329a03ed`, clean, 5 unpushed commits
-Spec: none staged.
-Gate: green at `329a03ed` — current exact tree
+Branch: `main` — HEAD `f0ece251`, clean, 7 unpushed commits
+Spec: `specs/skills-index-reader/spec.md` — Status: staged, reviewer-approved 2026-08-15 (two serial tickets: extract-skills-index-module → route-skills-index-verb-and-retire-script).
+Gate: green at `f0ece251` — current exact tree
 
 ## State
 
-The 2026-08 deepening map lives at `decisions/deepening-2026-08.md` (re-homed after
-the gate spec's retire deleted it). Landed from it: candidates 1+3 (gate spec, retired),
-6 (`internal/gate/greenmarker`), 5 (`internal/shift/objective.go`). Remaining lanes in
-map order: skills spec (candidate 8, ticket #13), adopt spec (candidate 4, #9), worktree
-spec (candidate 2, #8) plus one light-path ticket per recurring reader for candidate 7
-(#12) — FT189 has landed, so nothing blocks them. FT207 still holds its unresolved
-decision; FT185 remains the next ready non-deepening build. One open learnings entry
-awaits `/bench-what-next` (map placement on retire).
+The 2026-08 deepening map lives at `decisions/deepening-2026-08.md`. Landed: candidates
+1+3 (gate spec, retired), 6 (`internal/gate/greenmarker`), 5 (`internal/shift/objective.go`).
+Candidate 8 is staged as `specs/skills-index-reader` (module `internal/skillsindex`, verb
+`bench skills-index`, `.bench/skills-index.sh` deleted; loop 1 ran three rounds and the
+reviewer stopped further review — tickets are unreviewed). Remaining after it: adopt spec
+(#9), worktree spec (#8), reader tickets (#12). Two open learnings entries await
+`/bench-what-next`: map placement on retire, and the write-spec loop cap (the reviewer
+asked whether a standing cap exists — none does; the entry proposes one).
 
 ## Next command
 
-`/bench-write-spec` for candidate 8 from `decisions/deepening-2026-08.md` ticket #13
-(one shipped skill-frontmatter reader; kit edit under `craft-synthesis`, ADR 0006/0012
-constraints).
+`/bench-implement-spec skills-index-reader` — fresh mid-tier session, one retained
+integration source, tickets serial; lines: story 1 opus/medium, story 2 sonnet/medium.
 
 ## Shape
 
