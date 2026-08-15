@@ -1,16 +1,18 @@
 package conformance
 
 import (
-	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
-	kitpayload "github.com/gibbonmi/bench"
+	"github.com/gibbonmi/bench/internal/skillsindex"
 )
 
 // TestClaudeSkillMirrorClassifiesStandaloneSkillSymlinks pins the three
@@ -178,98 +180,10 @@ func checkClaudeSkillMirror(root string) []string {
 	return diags
 }
 
-// kitOnlySkillSources reads root's consumer-payload allowlist and returns the skill
-// sources it withholds. The allowlist is the one source of who receives an asset, so
-// the index expectation reads it here exactly as the generator does instead of naming
-// the kit-only skills a second time. A tree with no allowlist (a stripped fixture) has
-// nothing withheld, which is also what the generator concludes.
-func kitOnlySkillSources(root string) map[string]bool {
-	var rows []kitpayload.PayloadRow
-	if err := json.Unmarshal([]byte(readIfExists(filepath.Join(root, ".bench", "consumer-payload.json"))), &rows); err != nil {
-		return nil
-	}
-	out := map[string]bool{}
-	for _, source := range kitpayload.PayloadKitOnlyPrefixes(rows) {
-		out[source] = true
-	}
-	return out
-}
-
+// checkSkillsIndex grades the committed skills index through the module that
+// generates it, so the gate's oracle and `bench skills-index` cannot disagree.
 func checkSkillsIndex(root string) []string {
-	var diags []string
-	var expected []string
-	kitOnly := kitOnlySkillSources(root)
-	skillFiles, _ := filepath.Glob(filepath.Join(root, ".agents", "skills", "*", "SKILL.md"))
-	sort.Strings(skillFiles)
-	for _, file := range skillFiles {
-		name := filepath.Base(filepath.Dir(file))
-		if exists(filepath.Join(root, ".agents", "commands", name+".md")) {
-			continue
-		}
-		index := frontmatterField(file, "index")
-		if index == "" {
-			diags = append(diags, fmt.Sprintf("skill '%s' missing index: frontmatter (the skills index is generated)", name))
-			continue
-		}
-		line := fmt.Sprintf("- %s \u2192 `.agents/skills/%s/SKILL.md`", index, name)
-		if kitOnly[".agents/skills/"+name] {
-			line += " (kit-only)"
-		}
-		if note := frontmatterField(file, "index-note"); note != "" {
-			line += " + " + note
-		}
-		expected = append(expected, line)
-	}
-
-	const start = "<!-- bench:skills-index:start -->"
-	const end = "<!-- bench:skills-index:end -->"
-	refPath := filepath.Join(root, ".bench", "BENCH-reference.md")
-	ref := readIfExists(refPath)
-	if ref == "" {
-		return append(diags, ".bench/BENCH-reference.md missing (skills index unverifiable)")
-	}
-	actual, ok := markerBlock(ref, start, end)
-	if !ok {
-		return append(diags, ".bench/BENCH-reference.md skills-index markers missing (bench:skills-index)")
-	}
-	if strings.Join(expected, "\n") == strings.Join(actual, "\n") {
-		return diags
-	}
-
-	expectedByName := map[string]string{}
-	for _, line := range expected {
-		if name := skillNameFromIndexLine(line); name != "" {
-			expectedByName[name] = line
-		}
-	}
-	actualByName := map[string]string{}
-	for _, line := range actual {
-		if name := skillNameFromIndexLine(line); name != "" {
-			actualByName[name] = line
-		}
-	}
-	attributed := false
-	for name, line := range expectedByName {
-		if actualByName[name] == line {
-			continue
-		}
-		if _, ok := actualByName[name]; ok {
-			diags = append(diags, fmt.Sprintf("skills index entry for '%s' drifted from its frontmatter (regenerate: .bench/skills-index.sh --write)", name))
-		} else {
-			diags = append(diags, fmt.Sprintf("skills index missing entry for skill '%s' (regenerate: .bench/skills-index.sh --write)", name))
-		}
-		attributed = true
-	}
-	for name := range actualByName {
-		if _, ok := expectedByName[name]; !ok {
-			diags = append(diags, fmt.Sprintf("skills index entry '%s' has no indexed .agents/skills/%s on disk (regenerate: .bench/skills-index.sh --write)", name, name))
-			attributed = true
-		}
-	}
-	if !attributed {
-		diags = append(diags, "skills index block drifted from generated form (regenerate: .bench/skills-index.sh --write)")
-	}
-	return diags
+	return skillsindex.Check(root)
 }
 
 func checkCommandGuideReferences(root string) []string {
@@ -342,82 +256,48 @@ func checkRoadmapPromotionAnchors(root string) []string {
 	return diags
 }
 
-func checkSkillsIndexGenerateVerify(root, kitRoot string) []string {
-	if !exists(filepath.Join(kitRoot, ".bench", "skills-index.sh")) {
-		return nil
+// TestSkillsIndexConformanceCarriesNoSecondReader is the row that sees the cheapest
+// wrong refactor: adding internal/skillsindex and leaving the old parsers in place.
+// The three banned literals are the skills index's derivable facts — marker text,
+// allowlist path, line format — and the module is their one source, so a copy in
+// either conformance file is a second reader by definition. Every declaration except
+// this function is in scope, so hoisting a literal to a package-level const or a
+// helper trips the guard rather than evading it.
+func TestSkillsIndexConformanceCarriesNoSecondReader(t *testing.T) {
+	const guard = "TestSkillsIndexConformanceCarriesNoSecondReader"
+	banned := []string{
+		"<!-- bench:skills-index:start -->",
+		"consumer-payload.json",
+		"→ `.agents/skills/",
 	}
-	tmp, err := os.MkdirTemp("", "bench-skills-index-*")
-	if err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	defer os.RemoveAll(tmp)
-	if err := os.MkdirAll(filepath.Join(tmp, ".bench"), 0o755); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	if err := os.MkdirAll(filepath.Join(tmp, ".agents", "skills", "zeta-skill"), 0o755); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	if err := os.WriteFile(filepath.Join(tmp, ".agents", "skills", "zeta-skill", "SKILL.md"), []byte("---\nname: zeta-skill\ndescription: d\nindex: doing zeta things\n---\n"), 0o644); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	if err := os.WriteFile(filepath.Join(tmp, ".bench", "BENCH-reference.md"), []byte("# Reference\n\n<!-- bench:skills-index:start -->\n<!-- bench:skills-index:end -->\n"), 0o644); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	// The allowlist is JSON, so its key order carries no meaning: this fixture writes
-	// "audience" before "source" precisely because a reader that only matches one fixed
-	// order would drop the marker and generate a consumer-visible skill for a withheld
-	// one. Marker text is not re-stated here — the assertion below reads the generated
-	// line as a whole.
-	if err := os.WriteFile(filepath.Join(tmp, ".bench", "consumer-payload.json"),
-		[]byte(`[{ "audience": "kit-only", "mode": "0644", "tree": true, "source": ".agents/skills/zeta-skill" }]`), 0o644); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	script := filepath.Join(kitRoot, ".bench", "skills-index.sh")
-	if probe := runAt(tmp, "bash", script, "--check"); probe == nil || probe.ExitCode == 0 {
-		return []string{"skills-index generate/verify contract failed: check passed on an empty index block"}
-	}
-	if probe := runAt(tmp, "bash", script, "--write"); probe == nil || probe.ExitCode != 0 {
-		return []string{"skills-index generate/verify contract failed: --write failed"}
-	}
-	generated := readIfExists(filepath.Join(tmp, ".bench", "BENCH-reference.md"))
-	if !strings.Contains(generated, "- doing zeta things \u2192 `.agents/skills/zeta-skill/SKILL.md` (kit-only)") {
-		return []string{"skills-index generate/verify contract failed: --write did not generate the entry from frontmatter and the allowlist's audience"}
-	}
-	if probe := runAt(tmp, "bash", script, "--check"); probe == nil || probe.ExitCode != 0 {
-		return []string{"skills-index generate/verify contract failed: check red right after --write"}
-	}
-	before := readIfExists(filepath.Join(tmp, ".bench", "BENCH-reference.md"))
-	if probe := runAt(tmp, "bash", script, "--write"); probe == nil || probe.ExitCode != 0 {
-		return []string{"skills-index generate/verify contract failed: second --write failed"}
-	}
-	if before != readIfExists(filepath.Join(tmp, ".bench", "BENCH-reference.md")) {
-		return []string{"skills-index generate/verify contract failed: --write is not idempotent"}
-	}
-	return nil
-}
-
-func markerBlock(text, start, end string) ([]string, bool) {
-	lines := strings.Split(text, "\n")
-	inBlock := false
-	var out []string
-	for _, line := range lines {
-		switch {
-		case line == end:
-			return out, inBlock
-		case inBlock:
-			out = append(out, line)
-		case line == start:
-			inBlock = true
+	kitRoot := NewHarness(t).KitRoot
+	for _, rel := range []string{"skills_index_checks_test.go", "checks_test.go"} {
+		fset := token.NewFileSet()
+		path := filepath.Join(kitRoot, "internal", "conformance", rel)
+		file, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, declaration := range file.Decls {
+			if function, ok := declaration.(*ast.FuncDecl); ok && function.Name.Name == guard {
+				continue
+			}
+			ast.Inspect(declaration, func(node ast.Node) bool {
+				literal, ok := node.(*ast.BasicLit)
+				if !ok || literal.Kind != token.STRING {
+					return true
+				}
+				value, err := strconv.Unquote(literal.Value)
+				if err != nil {
+					return true
+				}
+				for _, banned := range banned {
+					if strings.Contains(value, banned) {
+						t.Errorf("%s carries skills-index literal %q (%s); internal/skillsindex is its one source", rel, banned, fset.Position(literal.Pos()))
+					}
+				}
+				return true
+			})
 		}
 	}
-	return nil, false
-}
-
-func skillNameFromIndexLine(line string) string {
-	re := regexp.MustCompile(`\.agents/skills/([a-z0-9-]+)/SKILL\.md`)
-	m := re.FindStringSubmatch(line)
-	if len(m) != 2 {
-		return ""
-	}
-	return m[1]
 }

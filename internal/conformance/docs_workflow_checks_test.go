@@ -13,7 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/roadmap"
 )
 
-func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
+func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 	var diags []string
 	diags = append(diags, checkStaleCommandReferences(root)...)
 	diags = append(diags, checkColdPickupCLILists(root)...)
@@ -25,7 +25,6 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	diags = append(diags, checkWorkflowAnchors(root)...)
 	diags = append(diags, checkOccurrenceLedgerAndMaintenance(root)...)
 	diags = append(diags, checkPrePushREADMEClaim(root)...)
-	diags = append(diags, checkSkillsIndexGenerateVerify(root, kitRoot)...)
 	diags = append(diags, checkCoverageMaps(root)...)
 	diags = append(diags, checkRemovedVerbSweep(root)...)
 	return diags

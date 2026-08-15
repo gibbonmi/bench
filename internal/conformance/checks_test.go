@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/skillsindex"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -297,26 +298,10 @@ func containsDiagnostic(diags []string, want string) bool {
 	return false
 }
 
+// frontmatterField is the fence rule's one reader; conformance calls the module
+// rather than carrying a second copy of it.
 func frontmatterField(path, key string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
-	fence := 0
-	prefix := key + ":"
-	for _, line := range strings.Split(string(data), "\n") {
-		if line == "---" {
-			fence++
-			continue
-		}
-		if fence == 1 && strings.HasPrefix(line, prefix) {
-			return strings.TrimSpace(strings.TrimPrefix(line, prefix))
-		}
-		if fence > 1 {
-			return ""
-		}
-	}
-	return ""
+	return skillsindex.FrontmatterField(path, key)
 }
 
 func readIfExists(path string) string {

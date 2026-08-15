@@ -453,6 +453,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestShipConformanceRunNamesDeclaredTests":                  true,
 	"TestRetiredReleaseFixtureReplacementsArePresent":           true,
 	"TestWorkflowCadenceAnchorsRejectDeletionAndSwap":           true,
+	"TestSkillsIndexConformanceCarriesNoSecondReader":           true,
 	"TestSpecTicketHandoffWorkflowFixturesAreComplete":          true,
 	"TestTimingOrderStable":                                     true,
 	"TestUnknownScopeIsRedAndRunsNothing":                       true,
