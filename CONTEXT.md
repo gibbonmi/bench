@@ -118,6 +118,21 @@ cold session reads this first to avoid drifting the vocabulary.
 - **prose budget** — the per-surface line-count ceiling in `projects/benchkit.md`'s
   one mechanically parseable budget table, enforced by a fail-closed conformance
   check. Not "line limit" in prose — prose budget.
+- **green marker** — the ref `refs/bench/green/<branch>` the gate advances to the tip
+  it graded green, read through one marker module that peels, classifies a dangling
+  ref, and answers whether the marker authorizes a tip. Not "green ref", not "the
+  marker" unqualified — green marker.
+- **record class** — one registered shape of a gate verdict record: its name, exact
+  field set, and validator, enumerated only in the record-class registry. Not "verdict
+  kind", not "field set" — record class.
+- **eligibility verdict** — the one decided answer to "is this worktree Bench-owned and
+  safe to remove", carrying its evidence, with refusal precedence declared as ordered
+  data; automatic cleanup is a stricter reading of it. Not "cleanup plan" (that is the
+  explicit plan/apply fingerprint), not "classification" — eligibility verdict.
+- **objective projection** — a per-surface rendering of a shift objective (banner,
+  prompt, scratch, predicate argument, durable commit subject) issued by the objective
+  module; no surface receives the unprojected text. Not "the objective string" —
+  objective projection.
 
 ## Avoid
 
