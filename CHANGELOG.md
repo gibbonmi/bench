@@ -29,6 +29,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- New `bench skills-index [--check|--write]` command — the operator's one skills-index
+  reader and regenerator; `.bench/skills-index.sh` is gone and every reference now
+  names the verb.
 - New `/bench-deepen` phase (Codex: `$bench-deepen`) — an architecture-deepening
   survey ported from Matt Pocock's `improve-codebase-architecture`: scans for
   shallow modules, presents deepening candidates as a self-contained HTML report,

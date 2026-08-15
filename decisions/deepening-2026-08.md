@@ -210,6 +210,8 @@ leave the FT89 row in place?
 
 Take FT89's single-sourcing slice here: one shipped Go module owns skill frontmatter (`index:`/`index-note:`) and kit-only marking from `consumer-payload.json`; `.bench/skills-index.sh` and the conformance check both invoke it, so neither carries its own parser. The checked-in index is the independently authored expectation (ADR 0006), following the declarative-registry shape ADR 0012 blesses. The FT89 roadmap row stays in place. Kit edit under `craft-synthesis`.
 
+Superseded 2026-08-15: `.bench/skills-index.sh` is deleted; the regenerator is `bench skills-index --write`.
+
 ## Landed
 
 - Candidates 1 and 3: `specs/gate-run-transaction` (retired 2026-08-15, commit `379035df`).

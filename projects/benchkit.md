@@ -72,7 +72,7 @@ branch-agnostic. This line is only the binding.)
   Portable harness-facing content. The contract is structural: every skill carries YAML
   frontmatter (name + description) and follows progressive disclosure; every command
   is a phase the index names. The `.bench/BENCH.md` skills index is generated
-  from each skill's `index:` frontmatter (`.bench/skills-index.sh --write`);
+  from each skill's `index:` frontmatter (`bench skills-index --write`);
   craft skills' visible names use `craft-*` so `$bench` menus show
   only human-run phase adapters. Codex command-adapter skills are derived from
   `.agents/commands/` and documented in `.bench/BENCH.md`. The gate's conformance

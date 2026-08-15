@@ -37,9 +37,9 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 - Oracle: `bench gate` (`--fresh`), `bench gate pin`, `bench prep-release`,
   `bench release`, `bench canary`, `bench preflight review|build <slug>`,
   `bench structure`, `bench anchors`, `bench guards`, `bench diff`,
-  `bench coverage`, `bench outline`, `bench models`, `bench version`, and
-  `bench test [--full] [package]` for package, failure, and skip evidence as
-  TOON.
+  `bench coverage`, `bench outline`, `bench models`, `bench skills-index`
+  (`--check`, `--write`), `bench version`, and `bench test [--full] [package]`
+  for package, failure, and skip evidence as TOON.
 - Work: `bench worktree` (`bench worktree list`, `bench worktree path <target>`,
   `bench worktree exec <target> -- <command>`, `bench worktree create`, `bench worktree release` by the creating request,
   `bench worktree clean [--discard-ignored] [--discard-branch] [--full] <path> [--apply <fingerprint>]` for plan/apply removal,

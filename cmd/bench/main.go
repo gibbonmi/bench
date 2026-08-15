@@ -39,6 +39,7 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/sessioninspect"
 	"github.com/gibbonmi/bench/internal/shift"
+	"github.com/gibbonmi/bench/internal/skillsindex"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
@@ -83,6 +84,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "outline", AXI: axiExempt(axiReasonOperational), Run: outputCommand(outline.Command)},
 	{Name: "idea", AXI: axiExempt(axiReasonMutation), Run: outputCommand(roadmap.IdeaCommand)},
 	{Name: "roadmap", AXI: axiApprovedRoot, Run: outputCommand(roadmapCommand)},
+	{Name: "skills-index", AXI: axiExempt(axiReasonMutation), Run: outputCommand(skillsindex.Command)},
 	{Name: "tree-hash", AXI: axiExempt(axiReasonPlumbing), Run: outputCommand(treeHash)},
 	{Name: "resolve-model", AXI: axiExempt(axiReasonPlumbing), Run: outputCommand(resolveModel)},
 	{Name: "worktree-pool", AXI: axiExempt(axiReasonPlumbing), Run: outputCommand(worktree.PoolCommand)},
