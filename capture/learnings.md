@@ -1,6 +1,6 @@
 # Learnings — usage journal
 
-## 2026-08-14 — write-spec falsification loop took 33 rounds on worktree-enumeration-hang
+## 2026-08-14 — write-spec falsification loop took 33 rounds on worktree-enumeration-hang [open]
 
 What happened: /bench-write-spec's loop 1 needed 33 author-fix/re-review rounds
 before ACCEPT (tickets loop: 2). The author drafted from the compiled map plus
@@ -23,3 +23,32 @@ found the intra-package PruneLandedBranches caller or all eight
 the drain: the deep consumer surfaces were found only by adversarial
 tree-verifying review, not by authoring guidance — the verification loop,
 not the skill, is the load-bearing control.
+
+## 2026-08-14 — CLI changes can leave the canonical command inventory stale [open]
+
+What happened: recent Bench CLI work added public worktree commands without
+updating `.bench/BENCH.md`'s always-loaded CLI Inventory, so cold sessions were
+given an incomplete command surface.
+Right behavior: every change to the Bench CLI's public command surface must keep
+the canonical markdown command definition current in the same change. A
+codified validator must compare the production command surface and the markdown
+inventory in both directions, fail with an attributable diagnostic when a
+command or definition is missing or stale, and carry a retained omission
+mutation proving that failure bites.
+Proposed rule change: add that validator to the conformance layer and make its
+green result an acceptance requirement for every public Bench CLI change.
+
+## 2026-08-15 — interrupted semantic review leaves ambiguous pickup state [open]
+
+What happened: the worktree-enumeration-hang semantic-review session was
+interrupted after it wrote and committed `reviews/worktree-enumeration-hang.md`.
+The retained source therefore looks clean but carries an actionable review
+artifact, with no terminal review verdict or handoff that distinguishes it from
+an intentionally paused repair pass.
+Right behavior: phase recovery must classify a persisted review artifact as
+unfinished pickup state, reacquire the exact candidate base and tip, and rerun
+all three review axes before either repair or landing. It must never infer a
+clean review, acceptance, or landing authority from the artifact or its commit.
+Proposed rule change: add an interruption/recovery contract that records the
+phase state and frozen pair atomically, then makes resume surface the required
+next phase and refuse landing until a fresh terminal review verdict exists.

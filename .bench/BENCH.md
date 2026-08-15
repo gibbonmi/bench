@@ -40,19 +40,20 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
   `bench coverage`, `bench outline`, `bench models`, `bench version`, and
   `bench test [--full] [package]` for package, failure, and skip evidence as
   TOON.
-- Work: `bench worktree` (`bench worktree path <target>`, `bench worktree land`,
-  `bench worktree exec <target> -- <command>`, `bench worktree release` by the
-  creating request, `bench worktree clean` for plan/apply removal),
+- Work: `bench worktree` (`bench worktree list`, `bench worktree path <target>`,
+  `bench worktree exec <target> -- <command>`, `bench worktree create`,
+  `bench worktree release` by the creating request, `bench worktree clean` for
+  plan/apply removal, `bench worktree reauthorize`, `bench worktree land`),
   `bench shift`, path-scoped `bench commit -m <msg> <path>...` (`--spec <slug>`
   semantics in `bench commit --help`), `bench spec implemented`,
   `bench spec retire`, `bench spec history`.
 - Plumbing subcommands, driven by hooks and adapters, live in
   `.bench/BENCH-reference.md`; this inventory tracks `bin/bench.sh`. Run `bench`
-  plainly through your shell tool; add `2>&1` only where it changes behavior.
-  Never pipe any `bench` output through `head`/`tail` or otherwise truncate
-  it: the complete output is the evidence (on a red gate, the failure
-  attribution), and output too long to read is CLI-owned projection work, not
-  call-site shaping.
+  exactly as its executable help spells it. Never append extra subcommands,
+  `</dev/null`, `2>&1`, a pipeline, or a shell follow-on: Bench owns
+  non-interactive input, complete output, and required next actions. The complete
+  output is the evidence (on a red gate, the failure attribution), and output too
+  long to read is CLI-owned projection work, not call-site shaping.
 
 ## The four invariants (these override convenience, always)
 

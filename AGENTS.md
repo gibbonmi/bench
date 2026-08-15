@@ -70,5 +70,4 @@ something the next session has to think to check.
 - A repository-wide sweep uses `rg --hidden` (excluding `.git/`) so dot-directories
   are enumerated.
 - Discover Bench verbs non-interactively — `bench commands --brief` or the source —
-  never by trying a bare unknown verb; pipe stdin from `/dev/null` where a command
-  might prompt.
+  never by trying a bare unknown verb.
