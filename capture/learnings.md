@@ -73,3 +73,24 @@ over one enumerated input family — instead of, or in addition to, "pre-existin
 collection that had none, the row set must fix the cardinality at that concept edge (can one
 member carry two of these?) with a fixture that exercises the many case, because the natural
 implementation of "ordered by key" quietly makes it one.
+
+## 2026-08-15 — a coverage row claimed "already covered" by fixtures that do not cover it [open]
+
+**What happened.** `specs/skills-index-reader` row SI4 classified the non-attributable
+`block drifted from generated form` diagnostic as "already covered — canaries
+`unindexed-skill`, `dangling-index`, `missing-index-field`, `stale-index-wording`". The
+review axis enumerated all four `EXPECT` files: they pin missing-entry, dangling-entry,
+missing-index and attributed drift, and none names block drift. The row named real
+fixtures that exist and bite, so nothing in the gate or the spec check contradicted it —
+the claim was only falsifiable by reading each fixture's expectation. The reviewer
+accepted the gap rather than adding a fifth canary.
+
+**Right behavior.** A row whose red signal is "already covered by <named fixtures>" is a
+claim about those fixtures' contents, not their existence. Verify it by reading each
+one's expectation against the specific behavior the row states, and cite that expectation
+in the row. A fixture that covers the same *check* is not the same as one that covers the
+same *diagnostic*.
+
+**Proposed rule change.** `craft-spec`: an "already covered" red signal cites the exact
+expectation text that makes it red, not just the fixture directory name. If quoting the
+expectation shows it grades a different case, the row is not covered.
