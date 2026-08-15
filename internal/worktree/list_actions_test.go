@@ -11,13 +11,54 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/axi/axitest"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
+
+func TestListCommandRendersTypedAdminRefusal(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	common, err := git.CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := filepath.Join(common, "worktrees", "typed")
+	if err := os.MkdirAll(id, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+	out, code := ListCommand(nil)
+	if code == 0 || !strings.Contains(out, "worktrees/typed/gitdir") || !strings.Contains(out, "fifo") || !strings.Contains(out, "inspect and remove it") {
+		t.Fatalf("typed list output code=%d out=%q", code, out)
+	}
+}
+
+func TestListCommandKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T) {
+	for _, tc := range []struct {
+		mode, detail, action string
+	}{
+		{"bad-rev-parse", "missing-common", "investigate the git failure"},
+		{"fail-worktree", "cannot read registered worktrees", "run git worktree list and retry"},
+	} {
+		t.Run(tc.mode, func(t *testing.T) {
+			root := gittest.RepoOnBranch(t, "main")
+			gittest.StubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
+			t.Chdir(root)
+			out, code := ListCommand(nil)
+			if code != 1 || !strings.Contains(out, tc.detail) || !strings.Contains(out, tc.action) {
+				t.Fatalf("%s list output code=%d out=%q", tc.mode, code, out)
+			}
+		})
+	}
+}
 
 type worktreeListResponse struct {
 	Stdout string `json:"stdout"`

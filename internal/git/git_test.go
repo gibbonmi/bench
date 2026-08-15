@@ -2,12 +2,18 @@ package git
 
 import (
 	"errors"
-	"github.com/gibbonmi/bench/internal/gittest"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // runGit runs `git -C root <args>` and fails the test on a nonzero exit.
@@ -18,6 +24,322 @@ func runGit(t *testing.T, root string, args ...string) string {
 		t.Fatalf("git %v: %v", args, err)
 	}
 	return string(out)
+}
+
+func worktreesWithin(t *testing.T, root string) ([]Worktree, error) {
+	t.Helper()
+	type result struct {
+		worktrees []Worktree
+		err       error
+	}
+	done := make(chan result, 1)
+	go func() {
+		worktrees, err := Worktrees(root)
+		done <- result{worktrees: worktrees, err: err}
+	}()
+	select {
+	case result := <-done:
+		return result.worktrees, result.err
+	case <-time.After(bounds.TestDeadline(0)):
+		t.Fatal("git.Worktrees blocked on worktree admin entry")
+		return nil, nil
+	}
+}
+
+func requireAdminRefusal(t *testing.T, err error, path, shape string) {
+	t.Helper()
+	var got *WorktreeAdminError
+	if !errors.As(err, &got) || got.Path != path || got.Shape != shape || got.Action != "inspect and remove it" || !strings.Contains(err.Error(), path) {
+		t.Fatalf("admin refusal = %v, want path=%q shape=%q", err, path, shape)
+	}
+}
+
+func TestScanWorktreeAdminAcceptanceShapes(t *testing.T) {
+	root := newRepo(t)
+	common, err := CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := filepath.Join(common, "worktrees")
+	admin := filepath.Join(base, "x y*")
+	if err := os.MkdirAll(admin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(admin, "gitdir"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var got *WorktreeAdminError
+	if err := ScanWorktreeAdmin(common); !errors.As(err, &got) || got.Shape != "fifo" || !strings.Contains(got.Error(), "worktrees/x y*/gitdir") || !strings.Contains(got.Error(), "inspect and remove it") {
+		t.Fatalf("fifo refusal = %v", err)
+	}
+	_ = os.Remove(filepath.Join(admin, "gitdir"))
+	if err := os.Symlink("target", filepath.Join(admin, "gitdir")); err != nil {
+		t.Fatal(err)
+	}
+	if err := ScanWorktreeAdmin(common); !errors.As(err, &got) || got.Shape != "symlink" {
+		t.Fatalf("symlink refusal = %v", err)
+	}
+	_ = os.Remove(filepath.Join(admin, "gitdir"))
+	if err := os.Symlink("lease-target", filepath.Join(admin, "bench-lease")); err != nil {
+		t.Fatal(err)
+	}
+	if err := ScanWorktreeAdmin(common); err != nil {
+		t.Fatalf("Bench lease refusal = %v", err)
+	}
+	_ = os.Remove(filepath.Join(admin, "bench-lease"))
+	if err := os.WriteFile(filepath.Join(admin, "gitdir"), []byte("ok"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(admin, "nested"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(admin, "nested", "deep"), []byte("ok"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := ScanWorktreeAdmin(common); err != nil {
+		t.Fatalf("regular/deep state refused: %v", err)
+	}
+	if err := os.RemoveAll(base); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(base, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := ScanWorktreeAdmin(common); err != nil {
+		t.Fatalf("fifo worktrees should be absent: %v", err)
+	}
+}
+
+func TestWorktreesRefusesMalformedAdminShapes(t *testing.T) {
+	t.Run("FIFO gitdir", func(t *testing.T) {
+		root := newRepo(t)
+		common, err := CommonDir(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		id := filepath.Join(common, "worktrees", "fifo")
+		if err := os.MkdirAll(id, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
+			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		}
+		_, err = worktreesWithin(t, root)
+		requireAdminRefusal(t, err, "worktrees/fifo/gitdir", "fifo")
+	})
+	t.Run("first-level symlink", func(t *testing.T) {
+		root := newRepo(t)
+		common, err := CommonDir(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		target := filepath.Join(t.TempDir(), "target")
+		if err := os.Mkdir(target, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Join(common, "worktrees"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(target, filepath.Join(common, "worktrees", "linked")); err != nil {
+			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+		}
+		_, err = worktreesWithin(t, root)
+		requireAdminRefusal(t, err, "worktrees/linked", "symlink")
+	})
+	t.Run("first-level FIFO", func(t *testing.T) {
+		root := newRepo(t)
+		common, err := CommonDir(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Join(common, "worktrees"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := syscall.Mkfifo(filepath.Join(common, "worktrees", "fifo"), 0o600); err != nil {
+			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		}
+		_, err = worktreesWithin(t, root)
+		requireAdminRefusal(t, err, "worktrees/fifo", "fifo")
+	})
+	t.Run("symlinked gitdir", func(t *testing.T) {
+		root := newRepo(t)
+		common, err := CommonDir(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		id := filepath.Join(common, "worktrees", "linked-gitdir")
+		if err := os.MkdirAll(id, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		target := filepath.Join(t.TempDir(), "regular")
+		if err := os.WriteFile(target, []byte("regular\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(target, filepath.Join(id, "gitdir")); err != nil {
+			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+		}
+		_, err = worktreesWithin(t, root)
+		requireAdminRefusal(t, err, "worktrees/linked-gitdir/gitdir", "symlink")
+	})
+	t.Run("stray FIFO preserves hostile id", func(t *testing.T) {
+		root := newRepo(t)
+		common, err := CommonDir(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		id := filepath.Join(common, "worktrees", "x y*")
+		if err := os.MkdirAll(id, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := syscall.Mkfifo(filepath.Join(id, "stray"), 0o600); err != nil {
+			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		}
+		_, err = worktreesWithin(t, root)
+		requireAdminRefusal(t, err, "worktrees/x y*/stray", "fifo")
+	})
+}
+
+func TestScanWorktreeAdminRefusesUninspectableRoot(t *testing.T) {
+	common := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(common, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	err := ScanWorktreeAdmin(common)
+	var got *WorktreeScanError
+	if !errors.As(err, &got) || got.Path != "worktrees" || got.Action != "investigate the git failure" {
+		t.Fatalf("scan error = %v", err)
+	}
+}
+
+func TestWorktreesAllowsBenignAdminShapes(t *testing.T) {
+	t.Run("absent and FIFO worktrees root", func(t *testing.T) {
+		root := newRepo(t)
+		if _, err := worktreesWithin(t, root); err != nil {
+			t.Fatalf("absent worktrees root: %v", err)
+		}
+		common, err := CommonDir(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		base := filepath.Join(common, "worktrees")
+		if err := syscall.Mkfifo(base, 0o600); err != nil {
+			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		}
+		if _, err := worktreesWithin(t, root); err != nil {
+			t.Fatalf("FIFO worktrees root: %v", err)
+		}
+	})
+	for _, state := range []string{"prunable", "gitdir-less", "empty", "deep FIFO"} {
+		t.Run(state, func(t *testing.T) {
+			assertBenignAdminShape(t, state)
+		})
+	}
+}
+
+func assertBenignAdminShape(t *testing.T, state string) {
+	t.Helper()
+	root := newRepo(t)
+	common, err := CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := filepath.Join(common, "worktrees", "benign")
+	switch state {
+	case "prunable":
+		linked := filepath.Join(t.TempDir(), "linked")
+		runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+		if err := os.RemoveAll(linked); err != nil {
+			t.Fatal(err)
+		}
+	case "gitdir-less", "empty":
+		if err := os.MkdirAll(id, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	case "deep FIFO":
+		if err := os.MkdirAll(filepath.Join(id, "logs"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := syscall.Mkfifo(filepath.Join(id, "logs", "HEAD"), 0o600); err != nil {
+			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		}
+	}
+	if _, err := worktreesWithin(t, root); err != nil {
+		t.Fatalf("%s state refused: %v", state, err)
+	}
+}
+
+func TestWorktreesRefusesSymlinkedAdminRootBeforePorcelain(t *testing.T) {
+	root := newRepo(t)
+	common, err := CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(t.TempDir(), "worktrees")
+	if err := os.Mkdir(target, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, filepath.Join(common, "worktrees")); err != nil {
+		t.Fatal(err)
+	}
+	var got *WorktreeAdminError
+	if _, err := Worktrees(root); !errors.As(err, &got) || got.Shape != "symlink" {
+		t.Fatalf("symlink root refusal = %v", err)
+	}
+}
+
+func TestWorktreesRefusesSharedAdminFromLinkedRoot(t *testing.T) {
+	root := newRepo(t)
+	linked := filepath.Join(t.TempDir(), "linked")
+	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	common, err := CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := filepath.Join(common, "worktrees", "linked-fixture")
+	if err := os.MkdirAll(id, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var got *WorktreeAdminError
+	if _, err := Worktrees(linked); !errors.As(err, &got) || got.Shape != "fifo" {
+		t.Fatalf("linked refusal = %v", err)
+	}
+}
+
+func TestWorktreesRefusesMalformedAdminBeforePorcelain(t *testing.T) {
+	root := newRepo(t)
+	logPath := filepath.Join(t.TempDir(), "argv")
+	gittest.StubGit(t, root, "block-worktree", logPath)
+	id := filepath.Join(root, ".git", "worktrees", "before-porcelain")
+	if err := os.MkdirAll(id, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+	}
+	done := make(chan error, 1)
+	go func() {
+		_, err := Worktrees(root)
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		var got *WorktreeAdminError
+		if !errors.As(err, &got) || !strings.Contains(err.Error(), "worktrees/before-porcelain/gitdir") || got.Shape != "fifo" || got.Action != "inspect and remove it" {
+			t.Fatalf("admin refusal = %v", err)
+		}
+	case <-time.After(bounds.TestDeadline(0)):
+		t.Fatal("malformed worktree admin entry reached porcelain")
+	}
+	data, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "worktree") {
+		t.Fatalf("worktree invoked: %s", data)
+	}
 }
 
 func TestWorktreesRejectsBadCommonDirBeforePorcelain(t *testing.T) {
