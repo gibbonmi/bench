@@ -54,6 +54,27 @@ func requireAdminRefusal(t *testing.T, err error, path, shape string) {
 	}
 }
 
+func TestCommonDirReturnsUnvalidatedOutput(t *testing.T) {
+	root := newRepo(t)
+	gittest.StubGit(t, root, "bad-rev-parse", filepath.Join(t.TempDir(), "argv"))
+	want := filepath.Join(root, "missing-common")
+	got, err := CommonDir(root)
+	if err != nil || got != want {
+		t.Fatalf("CommonDir = %q, %v, want %q, nil", got, err, want)
+	}
+}
+
+func TestCommonDirKeepsPlainOutputFailure(t *testing.T) {
+	root := newRepo(t)
+	gittest.StubGit(t, root, "fail-rev-parse", filepath.Join(t.TempDir(), "argv"))
+	_, err := CommonDir(root)
+	var exitErr *exec.ExitError
+	var resolution *ResolutionError
+	if !errors.As(err, &exitErr) || errors.As(err, &resolution) {
+		t.Fatalf("CommonDir failure = %T %v, want plain git.Output exit error", err, err)
+	}
+}
+
 func TestScanWorktreeAdminAcceptanceShapes(t *testing.T) {
 	root := newRepo(t)
 	common, err := CommonDir(root)
@@ -236,6 +257,38 @@ func TestWorktreesAllowsBenignAdminShapes(t *testing.T) {
 	}
 }
 
+func TestWorktreesTreatsRegularFileAdminRootAsAbsent(t *testing.T) {
+	root := newRepo(t)
+	common, err := CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(common, "worktrees"), []byte("ignored\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := worktreesWithin(t, root); err != nil {
+		t.Fatalf("regular-file worktrees root: %v", err)
+	}
+}
+
+func TestWorktreesAcceptsRegularFirstLevelAdminEntry(t *testing.T) {
+	root := newRepo(t)
+	common, err := CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := filepath.Join(common, "worktrees")
+	if err := os.Mkdir(base, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(base, "regular-id"), []byte("ignored\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := worktreesWithin(t, root); err != nil {
+		t.Fatalf("regular first-level admin entry: %v", err)
+	}
+}
+
 func assertBenignAdminShape(t *testing.T, state string) {
 	t.Helper()
 	root := newRepo(t)
@@ -287,9 +340,9 @@ func TestWorktreesRefusesSymlinkedAdminRootBeforePorcelain(t *testing.T) {
 	}
 }
 
-func TestWorktreesRefusesSharedAdminFromLinkedRoot(t *testing.T) {
+func TestWorktreesRefusesSharedAdminFromHostileLinkedRoot(t *testing.T) {
 	root := newRepo(t)
-	linked := filepath.Join(t.TempDir(), "linked")
+	linked := filepath.Join(t.TempDir(), "linked root [*];$(nope)")
 	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 	common, err := CommonDir(root)
 	if err != nil {

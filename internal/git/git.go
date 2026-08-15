@@ -284,11 +284,7 @@ func commonDirArgs(root string) []string {
 
 // CommonDir resolves the repository's shared administrative directory.
 func CommonDir(root string) (string, error) {
-	common, err := Output(commonDirArgs(root)...)
-	if err != nil {
-		return "", &ResolutionError{Err: fmt.Errorf("rev-parse %s: %w", strings.Join(commonDirArgs(root), " "), err), Action: "investigate the git failure"}
-	}
-	return validateCommonDir(common)
+	return Output(commonDirArgs(root)...)
 }
 
 func validateCommonDir(common string) (string, error) {
