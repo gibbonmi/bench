@@ -1,9 +1,10 @@
 # Session handoff
 
-Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main`
-Spec: `specs/worktree-enumeration-hang/spec.md` — `Status: staged`, reviewer-approved 2026-08-14 (spec, ticket breakdown, the flagged `bounds.Run`-variant deviation, and the neutral-relabel decisions).
+Repository: `c7f62432abb513b693e7eb380f2b4015-22fa8276882c8052351c3d896383d3e5` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-3325222104/c7f62432abb513b693e7eb380f2b4015-22fa8276882c8052351c3d896383d3e5`
+Branch: `bench/assign/c7f62432abb513b693e7eb380f2b4015/22fa8276882c8052351c3d896383d3e5` — HEAD `98f55ca`, clean tree, 0 unpushed commits
+Spec: `specs/worktree-enumeration-hang/spec.md` (Status: staged)
+Gate: green at `37f929e` — current
 
 ## State
 
@@ -27,7 +28,7 @@ remains invalid (its own shaping resume owns the repair).
 
 ## Next command
 
-`/bench-implement-spec worktree-enumeration-hang` — in a fresh mid-tier build session.
+`$bench-write-spec worktree-enumeration-hang`
 
 ## Shape
 
