@@ -146,6 +146,10 @@ type Worktree struct {
 	LockReason string
 }
 
+// BenchLeaseFilename names the private lifecycle record shared by worktree
+// enumeration and pool lifecycle.
+const BenchLeaseFilename = "bench-lease"
+
 // ResolutionError reports a common-directory resolution that cannot be trusted.
 type ResolutionError struct {
 	Path   string
@@ -187,9 +191,9 @@ func (e *WorktreeScanError) Unwrap() error { return e.Err }
 func (e *WorktreeScanError) WorktreeAction() string { return e.Action }
 
 // ScanWorktreeAdmin refuses malformed entries before git can open them. Every
-// non-private direct entry must be a regular file or directory; the exact literal
-// bench-lease is a private Bench lifecycle control record and is ignored so its
-// lifecycle can retain uncertain non-regular leases without reading or mutating them.
+// non-private direct entry must be a regular file or directory. BenchLeaseFilename
+// is ignored so lifecycle can retain uncertain non-regular leases without reading
+// or mutating them.
 // Git 2.43.0 blocking-open-for-read behavior on FIFO admin files is the upstream
 // reason this remains a preflight until git bounds those reads itself.
 func ScanWorktreeAdmin(commonDir string) error {
@@ -235,7 +239,7 @@ func ScanWorktreeAdmin(commonDir string) error {
 			}
 			// Bench owns this private control record. Its lifecycle retains uncertain
 			// non-regular leases without following or removing them.
-			if child.Name() == "bench-lease" {
+			if child.Name() == BenchLeaseFilename {
 				continue
 			}
 			if childInfo.Mode().IsRegular() || childInfo.IsDir() {
@@ -313,10 +317,14 @@ func boundedGit(args ...string) ([]byte, error) {
 	if result.Status == bounds.ProcessComplete {
 		return stdout.Bytes(), nil
 	}
-	if result.Status == bounds.ProcessExit {
-		return stdout.Bytes(), result.Err
-	}
 	invocation := "git " + strings.Join(args, " ")
+	if result.Status == bounds.ProcessExit {
+		failure := fmt.Errorf("%s: %w", invocation, result.Err)
+		if diagnostic := bytes.TrimRight(result.Output, "\r\n"); len(diagnostic) > 0 {
+			failure = fmt.Errorf("%w: %s", failure, diagnostic)
+		}
+		return stdout.Bytes(), failure
+	}
 	if result.Status == bounds.ProcessTimeout {
 		return nil, &ResolutionError{Err: fmt.Errorf("%s timed out after %s", invocation, worktreeListTimeout), Action: "investigate the git failure"}
 	}
@@ -331,7 +339,7 @@ func Worktrees(root string) ([]Worktree, error) {
 		if _, ok := err.(*ResolutionError); ok {
 			return nil, err
 		}
-		return nil, &ResolutionError{Err: fmt.Errorf("rev-parse %s: %w", strings.Join(commonDirArgs(root), " "), err), Action: "investigate the git failure"}
+		return nil, &ResolutionError{Err: err, Action: "investigate the git failure"}
 	}
 	common, err := validateCommonDir(strings.TrimRight(string(commonRaw), "\n"))
 	if err != nil {

@@ -396,13 +396,39 @@ func TestWorktreesRefusesMalformedAdminBeforePorcelain(t *testing.T) {
 }
 
 func TestWorktreesRejectsBadCommonDirBeforePorcelain(t *testing.T) {
+	for _, tc := range []struct {
+		name, mode string
+		want       []string
+	}{
+		{"missing", "bad-rev-parse", []string{"missing-common", "missing path"}},
+		{"empty", "empty-rev-parse", []string{"empty path"}},
+		{"symlink to directory", "symlink-rev-parse", []string{"symlink-common", "symlink"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assertBadCommonDirRefusal(t, tc.mode, tc.want)
+		})
+	}
+}
+
+func assertBadCommonDirRefusal(t *testing.T, mode string, want []string) {
+	t.Helper()
 	root := newRepo(t)
 	logPath := filepath.Join(t.TempDir(), "argv")
-	gittest.StubGit(t, root, "bad-rev-parse", logPath)
+	commonDir := gittest.StubGit(t, root, mode, logPath)
+	if mode == "symlink-rev-parse" {
+		if err := os.Symlink(filepath.Join(root, ".git"), commonDir); err != nil {
+			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+		}
+	}
 	_, err := Worktrees(root)
 	var resolution *ResolutionError
-	if !errors.As(err, &resolution) || !strings.Contains(err.Error(), "missing-common") || !strings.Contains(err.Error(), "missing path") || !strings.Contains(err.Error(), "investigate the git failure") {
-		t.Fatalf("err=%v", err)
+	if !errors.As(err, &resolution) || resolution.Action != "investigate the git failure" {
+		t.Fatalf("resolution refusal = %v", err)
+	}
+	for _, fragment := range want {
+		if !strings.Contains(err.Error(), fragment) {
+			t.Fatalf("resolution refusal = %v, want %q", err, fragment)
+		}
 	}
 	data, _ := os.ReadFile(logPath)
 	if strings.Contains(string(data), "worktree") {
@@ -413,11 +439,11 @@ func TestWorktreesRejectsBadCommonDirBeforePorcelain(t *testing.T) {
 func TestWorktreesPropagatesRevParseFailureBeforePorcelain(t *testing.T) {
 	root := newRepo(t)
 	logPath := filepath.Join(t.TempDir(), "argv")
-	gittest.StubGit(t, root, "fail-rev-parse", logPath)
+	gittest.StubGit(t, root, "fail-rev-parse-noisy", logPath)
 	var err error
 	_, err = Worktrees(root)
 	var resolution *ResolutionError
-	if !errors.As(err, &resolution) || !strings.Contains(err.Error(), "rev-parse") || !strings.Contains(err.Error(), "investigate the git failure") {
+	if !errors.As(err, &resolution) || resolution.Err == nil || !strings.Contains(resolution.Err.Error(), "rev-parse") || !strings.Contains(resolution.Err.Error(), "fatal: common directory unavailable") || resolution.Action != "investigate the git failure" {
 		t.Fatalf("err=%v", err)
 	}
 	data, _ := os.ReadFile(logPath)

@@ -51,7 +51,7 @@ func Pool(root string) string {
 	return filepath.Join(benchHome(), "worktrees", key)
 }
 func LeaseFile(path string) (string, error) {
-	lease, err := git.Output("-C", path, "rev-parse", "--git-path", "bench-lease")
+	lease, err := git.Output("-C", path, "rev-parse", "--git-path", git.BenchLeaseFilename)
 	if err != nil {
 		return "", err
 	}
