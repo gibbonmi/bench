@@ -10,7 +10,8 @@ in-flight run refuses with the owner diagnostic (GC4); lock held by a separate
 holder process — the test binary re-exec'd (prior art
 `internal/freshness/freshness_test.go`) that opens `<git-dir>/bench-gate.lock`,
 takes the fcntl write lock, writes an owner record, and waits — demotes a
-retained reusable green to pending on the refused call (GC5); with
+retained reusable green to pending on a refused `RunCommand([--fresh, root])`
+(GC5; ordinary `Execute` reuses before lock acquisition per GC1); with
 `gateTimeout` overridden and restored, a `--fresh` run of a sleeping script
 records `timeout` and the earlier green is not reused afterwards (GC6);
 sentinel-switched `--fresh` runs whose script strips the evidence directory
@@ -29,7 +30,7 @@ observed red.
 ## Acceptance
 
 - [ ] In-flight run holding the lock: concurrent `Execute` `ActionExit 1`, stderr `gate execution already in progress` and `gate owner: pid <n> (alive)`, script not re-run (covers GC4)
-- [ ] Retained green + external holder: `Inspect` `Ready`/`green` before, `Pending` after the refused call, script not run (covers GC5)
+- [ ] Retained green + external holder: `Inspect` `Ready`/`green` before, refused `RunCommand([--fresh, root])`, `Pending` after the refused call, script not run (covers GC5)
 - [ ] Sleeping script under sub-second `gateTimeout` via `--fresh`: 124, `gate: timeout`, `Inspect` `Ready`/`timeout`; sentinel removed, ordinary run re-runs (counter 3) (covers GC6)
 - [ ] Evidence dir stripped to 0500 before green exit: `ActionExit 1`, `gate evidence persistence failed`, not reusable (covers GT3)
 - [ ] Evidence dir unwritable before red exit with a retained file present: `ActionExit 1`, `gate evidence invalidation failed`, not reusable (covers GT4)

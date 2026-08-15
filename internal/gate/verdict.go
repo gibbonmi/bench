@@ -11,7 +11,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
@@ -120,36 +119,13 @@ type subject struct {
 	Env          []string
 }
 
-type gateFile interface {
-	Name() string
-	Chmod(os.FileMode) error
-	Write([]byte) (int, error)
-	Sync() error
-	Close() error
-	Fd() uintptr
-}
-
 func durableReplace(gitdir string, rec verdictRecord) error {
-	return durableReplaceWithEngine(productionGateEngine{}, gitdir, rec)
-}
-
-func persistInterruptedIfGreen(engine gateEngine, root, gitdir string, plan subject) {
-	if !inspectAt(root, engine.Now()).ReusableGreen {
-		return
-	}
-	pending := interruptedRecord(plan, engine.Now())
-	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
-		_ = durableReplaceWithEngine(engine, gitdir, pending)
-	}
-}
-
-func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecord) error {
 	data, err := json.Marshal(rec)
 	if err != nil {
 		return err
 	}
 	data = append(data, '\n')
-	tmp, err := engine.CreateTemp(gitdir, ".bench-last-gate-")
+	tmp, err := os.CreateTemp(gitdir, ".bench-last-gate-")
 	if err != nil {
 		return err
 	}
@@ -172,10 +148,10 @@ func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecor
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	if err := engine.Rename(name, filepath.Join(gitdir, benchgit.GateCacheFile)); err != nil {
+	if err := os.Rename(name, filepath.Join(gitdir, benchgit.GateCacheFile)); err != nil {
 		return err
 	}
-	dir, err := engine.OpenDir(gitdir)
+	dir, err := os.Open(gitdir)
 	if err != nil {
 		return err
 	}
@@ -190,11 +166,7 @@ func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecor
 	return nil
 }
 
-func Inspect(root string) Inspection { return inspectWithEngine(root, productionGateEngine{}) }
-
-func inspectWithEngine(root string, engine gateEngine) Inspection {
-	return inspectAt(root, engine.Now())
-}
+func Inspect(root string) Inspection { return inspectAt(root, time.Now().UTC()) }
 
 func inspectAt(root string, now time.Time) Inspection {
 	s, err := buildSubject(root)
@@ -262,7 +234,7 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	// Checked after drift and expiry: those retire a narrow record exactly as they retire a
 	// full one, and naming the narrowness of an expired record would dress retired evidence
 	// as current. The Partition on the inspection carries the narrowness either way.
-	if reason := narrowVerdictReason(rec); reason != "" {
+	if reason := narrowVerdictReason(loaded.class); reason != "" {
 		gi.Reason = reason
 		return gi
 	}
@@ -270,12 +242,9 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	return gi
 }
 
-// narrowVerdictReason names the class of a verdict that graded less than the whole tree, and
-// returns "" for one that graded all of it. A partial verdict ran only the components whose
-// inputs moved. It is evidence about its own tree and never the whole-tree green a reuse
-// credits, so this is the single place a reuse asks how wide the grading was.
-func narrowVerdictReason(r verdictRecord) string {
-	if r.partitions() || r.checkPartitions() {
+// narrowVerdictReason returns the reuse reason for the class the loader selected.
+func narrowVerdictReason(class verdictRecordClass) string {
+	if strings.HasSuffix(class.name, "partial verdict") {
 		return "partial verdict"
 	}
 	return ""
@@ -283,6 +252,7 @@ func narrowVerdictReason(r verdictRecord) string {
 
 type loadedVerdict struct {
 	record verdictRecord
+	class  verdictRecordClass
 	state  State
 	reason string
 	bytes  int
@@ -344,10 +314,16 @@ func loadVerdict(path string, now time.Time) loadedVerdict {
 	if read.data == nil {
 		return loaded
 	}
-	if err := strictJSON(read.data, &loaded.record); err != nil || validateRecordBytes(read.data, loaded.record, now) != nil {
+	if err := strictJSON(read.data, &loaded.record); err != nil {
 		loaded.state, loaded.reason = Invalid, "invalid cache record"
 		return loaded
 	}
+	class, err := validateRecordBytes(read.data, loaded.record, now)
+	if err != nil {
+		loaded.state, loaded.reason = Invalid, "invalid cache record"
+		return loaded
+	}
+	loaded.class = class
 	loaded.state = loaded.record.State
 	return loaded
 }
@@ -410,30 +386,6 @@ func rejectDuplicateNames(dec *json.Decoder) error {
 	return err
 }
 
-// The two exact field sets a ready record may carry. They are alternatives, never a
-// spectrum: a record holding part of one and part of another names no class the loader
-// can resolve, and resolving it by guess would credit work that nobody ran. The narrow
-// sets are derived — the full set plus that class's own fields — so a field added to the
-// full record joins them without a second edit; restated, that addition would make the
-// narrow classes silently reject every valid record.
-var (
-	fullReadyFields            = []string{"oracle", "recorded_at", "schema", "state", "status", "tree"}
-	partialReadyFields         = sortedFieldSet(fullReadyFields, "executed", "skip_evidence", "skipped")
-	checkPartialReadyFields    = sortedFieldSet(fullReadyFields, "check_evidence", "check_executed", "check_inherited")
-	combinedPartialReadyFields = sortedFieldSet(partialReadyFields, "check_evidence", "check_executed", "check_inherited")
-)
-
-// readyFieldClasses is the one place every ready verdict class is enumerated, keyed by the
-// name storeRecordClasses (record_classes.go) reports it under. A *ReadyFields variable above
-// that never joins this map is caught by TestVerdictReadyFieldsAreAllRegistered, which parses
-// this file's declarations and fails for any it does not find registered here.
-var readyFieldClasses = map[string][]string{
-	"full verdict":             fullReadyFields,
-	"partial verdict":          partialReadyFields,
-	"check-partial verdict":    checkPartialReadyFields,
-	"combined-partial verdict": combinedPartialReadyFields,
-}
-
 // The two exact field sets one skip-evidence entry may carry, under the same alternatives
 // discipline as the record classes: an ancestor slot's identity with the time it was
 // authored, or a reused build's seal digest. An entry holding parts of both describes no
@@ -442,14 +394,6 @@ var (
 	ancestorEvidenceFields = []string{"authored_at", "identity"}
 	sealEvidenceFields     = []string{"seal"}
 )
-
-// sortedFieldSet joins a base field set with extras in the sorted order
-// requireObjectFields compares against.
-func sortedFieldSet(base []string, extra ...string) []string {
-	fields := append(slices.Clone(base), extra...)
-	sort.Strings(fields)
-	return fields
-}
 
 // partitions reports whether the record reaches for the partial class at all: any single
 // partial field measures the record against the whole partial set, so a fragment is
@@ -661,56 +605,18 @@ func validateCheckPartition(data []byte, r verdictRecord, recordedAt time.Time) 
 	return nil
 }
 
-func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
+func validateRecordBytes(data []byte, r verdictRecord, now time.Time) (verdictRecordClass, error) {
 	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) || len(r.Oracle) != 64 {
-		return errors.New("invalid record")
+		return verdictRecordClass{}, errors.New("invalid record")
 	}
 	if _, err := hex.DecodeString(r.Oracle); err != nil || strings.ToLower(r.Oracle) != r.Oracle {
-		return errors.New("invalid oracle")
+		return verdictRecordClass{}, errors.New("invalid oracle")
 	}
-	switch r.State {
-	case Ready:
-		want := fullReadyFields
-		switch {
-		case r.partitions() && r.checkPartitions():
-			want = combinedPartialReadyFields
-		case r.partitions():
-			want = partialReadyFields
-		case r.checkPartitions():
-			want = checkPartialReadyFields
-		}
-		if err := requireObjectFields(data, want); err != nil {
-			return err
-		}
-		if (r.Status != "green" && r.Status != "red" && r.Status != "timeout") || r.RecordedAt == "" || r.StartedAt != "" || r.OwnerPID != 0 {
-			return errors.New("invalid ready")
-		}
-		tm, err := strictRecordTime(r.RecordedAt)
-		if err != nil || tm.After(now) {
-			return errors.New("invalid ready time")
-		}
-		if r.partitions() {
-			if err := validatePartition(data, r, tm); err != nil {
-				return err
-			}
-		}
-		if r.checkPartitions() {
-			return validateCheckPartition(data, r, tm)
-		}
-	case Pending:
-		if err := requireObjectFields(data, []string{"oracle", "owner_pid", "schema", "started_at", "state", "tree"}); err != nil {
-			return err
-		}
-		if r.Status != "" || r.RecordedAt != "" || r.StartedAt == "" || r.OwnerPID <= 0 {
-			return errors.New("invalid pending")
-		}
-		if tm, err := strictRecordTime(r.StartedAt); err != nil || tm.After(now) {
-			return errors.New("invalid pending time")
-		}
-	default:
-		return errors.New("invalid state")
+	class, err := selectVerdictRecordClass(data)
+	if err != nil {
+		return verdictRecordClass{}, err
 	}
-	return nil
+	return class, class.validate(data, r, now)
 }
 
 func strictRecordTime(value string) (time.Time, error) {
@@ -735,26 +641,4 @@ func requireObjectFields(data []byte, want []string) error {
 		return errors.New("invalid record fields")
 	}
 	return nil
-}
-
-func lockHeld(gitdir string) (bool, error) {
-	path := filepath.Join(gitdir, "bench-gate.lock")
-	executionLockOwners.Lock()
-	defer executionLockOwners.Unlock()
-	if executionLockOwners.paths[path] {
-		return true, nil
-	}
-	f, err := os.Open(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	defer f.Close()
-	lock := recordLock(syscall.F_RDLCK)
-	if err := syscall.FcntlFlock(f.Fd(), syscall.F_GETLK, &lock); err != nil {
-		return false, err
-	}
-	return lock.Type != syscall.F_UNLCK, nil
 }

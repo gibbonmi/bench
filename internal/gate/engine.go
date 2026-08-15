@@ -11,81 +11,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"sync"
-	"syscall"
 	"time"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
-
-type gateEngine interface {
-	Now() time.Time
-	BuildSubject(string) (subject, error)
-	PostRunSubject(string) (subject, error)
-	GitDir(string) (string, error)
-	OpenLock(string) (gateFile, error)
-	Acquire(gateFile) error
-	Unlock(gateFile) error
-	CreateTemp(string, string) (gateFile, error)
-	Rename(string, string) error
-	OpenDir(string) (gateFile, error)
-	WriteFile(string, []byte, os.FileMode) error
-	Remove(string) error
-}
-
-type productionGateEngine struct{}
-
-var executionLockOwners = struct {
-	sync.Mutex
-	paths map[string]bool
-}{paths: map[string]bool{}}
-
-func recordLock(typ int16) syscall.Flock_t {
-	return syscall.Flock_t{Type: typ, Whence: int16(io.SeekStart), Start: 0, Len: 0}
-}
-
-func (productionGateEngine) Now() time.Time                              { return time.Now().UTC() }
-func (productionGateEngine) BuildSubject(root string) (subject, error)   { return buildSubject(root) }
-func (productionGateEngine) PostRunSubject(root string) (subject, error) { return buildSubject(root) }
-func (productionGateEngine) GitDir(root string) (string, error) {
-	return benchgit.Output("-C", root, "rev-parse", "--absolute-git-dir")
-}
-func (productionGateEngine) OpenLock(path string) (gateFile, error) {
-	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
-}
-func (productionGateEngine) Acquire(f gateFile) error {
-	executionLockOwners.Lock()
-	defer executionLockOwners.Unlock()
-	if executionLockOwners.paths[f.Name()] {
-		return syscall.EAGAIN
-	}
-	lock := recordLock(syscall.F_WRLCK)
-	if err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock); err != nil {
-		return err
-	}
-	executionLockOwners.paths[f.Name()] = true
-	return nil
-}
-func (productionGateEngine) Unlock(f gateFile) error {
-	executionLockOwners.Lock()
-	defer executionLockOwners.Unlock()
-	lock := recordLock(syscall.F_UNLCK)
-	err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock)
-	delete(executionLockOwners.paths, f.Name())
-	return err
-}
-func (productionGateEngine) CreateTemp(dir, pattern string) (gateFile, error) {
-	return os.CreateTemp(dir, pattern)
-}
-func (productionGateEngine) Rename(oldpath, newpath string) error  { return os.Rename(oldpath, newpath) }
-func (productionGateEngine) OpenDir(path string) (gateFile, error) { return os.Open(path) }
-func (productionGateEngine) WriteFile(path string, data []byte, mode os.FileMode) error {
-	return os.WriteFile(path, data, mode)
-}
-func (productionGateEngine) Remove(path string) error { return os.Remove(path) }
 
 // EvidenceInspection reports whether retained gate evidence can authorize one tree.
 type EvidenceInspection struct {
@@ -117,7 +48,7 @@ func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr
 	}
 	defer cleanup()
 	evaluation := newProspectiveTreeEvaluation(checkout, root, tree)
-	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, productionGateEngine{}, nil, reuseFreshGreen, evaluation, owner)
+	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, nil, reuseFreshGreen, evaluation, owner)
 }
 
 // ValidateProjectGreen reports whether branch's tip and marker have retained exact green evidence.
@@ -191,55 +122,6 @@ func inspectEvidenceWindowed(root string, plan subject, now time.Time, expires b
 	}
 	inspection.ReusableGreen, inspection.Reason = true, ""
 	return inspection
-}
-
-func retainGreen(root string, plan subject, recordedAt time.Time) error {
-	gitdir, err := benchgit.CommonDir(root)
-	if err != nil {
-		return err
-	}
-	dir := filepath.Join(gitdir, "bench-gate-evidence")
-	if err := ensureEvidenceDir(gitdir, dir); err != nil {
-		return err
-	}
-	record := verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
-	return durableReplaceAt(dir, evidenceName(plan), record)
-}
-
-func ensureEvidenceDir(parent, dir string) error {
-	if err := os.Mkdir(dir, 0o700); err != nil && !errors.Is(err, os.ErrExist) {
-		return err
-	}
-	info, err := os.Stat(dir)
-	if err != nil || !info.IsDir() || info.Mode().Perm() != 0o700 {
-		return errors.New("invalid evidence directory")
-	}
-	parentFile, err := os.Open(parent)
-	if err != nil {
-		return err
-	}
-	defer parentFile.Close()
-	return parentFile.Sync()
-}
-
-func invalidateEvidence(root string, plan subject) error {
-	gitdir, err := benchgit.CommonDir(root)
-	if err != nil {
-		return err
-	}
-	dir := filepath.Join(gitdir, "bench-gate-evidence")
-	if err := os.Remove(evidencePath(gitdir, plan)); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
-	}
-	file, err := os.Open(dir)
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	return file.Sync()
 }
 
 func evidencePath(gitdir string, plan subject) string {
@@ -333,45 +215,6 @@ func reusableEvidence(root string, plan subject, now time.Time) Inspection {
 		return Inspection{}
 	}
 	return Inspection{State: Ready, Status: "green", CachedTree: plan.Tree, CurrentTree: plan.Tree, RecordedAt: evidence.RecordedAt, ReusableGreen: true}
-}
-
-func ownerRecord(now time.Time) []byte {
-	return []byte(strconv.Itoa(os.Getpid()) + " " + now.UTC().Truncate(time.Second).Format(time.RFC3339) + "\n")
-}
-
-func writeOwnerDiagnostic(stderr io.Writer, path string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return
-	}
-	fields := strings.Fields(string(data))
-	if len(fields) != 2 {
-		return
-	}
-	pid, err := strconv.Atoi(fields[0])
-	if err != nil || pid <= 0 {
-		return
-	}
-	if _, err := time.Parse(time.RFC3339, fields[1]); err != nil {
-		return
-	}
-	liveness := "alive"
-	if err := syscall.Kill(pid, 0); err != nil && err != syscall.EPERM {
-		liveness = "not alive"
-	}
-	fmt.Fprintf(stderr, "gate owner: pid %d (%s)\n", pid, liveness)
-}
-
-func interruptedRecord(plan subject, now time.Time) verdictRecord {
-	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
-}
-
-func sameSubject(a, b subject) bool {
-	return a.Tree == b.Tree && a.Oracle == b.Oracle && a.Resolution == b.Resolution && a.Closed == b.Closed && a.Reason == b.Reason
-}
-
-func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) int {
-	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, true).Code
 }
 
 func runResolved(ctx context.Context, root string, res Resolution, env []string, stdout, stderr io.Writer, processGroup bool) processGroupResult {

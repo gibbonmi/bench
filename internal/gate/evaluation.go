@@ -25,42 +25,7 @@ type gateEvaluation struct {
 	acceptedSubject subject
 }
 
-type engineEvaluation struct {
-	root   string
-	engine gateEngine
-	pre    *treeGeneration
-	post   *treeGeneration
-}
-
-func newEngineEvaluationAtKit(root, _ string, engine gateEngine) *engineEvaluation {
-	return &engineEvaluation{root: root, engine: engine}
-}
-
-func (e *engineEvaluation) acceptPre() (subject, error) {
-	generation, err := captureTreeGeneration(workingTreeSource{root: e.root})
-	if err != nil {
-		return subject{}, err
-	}
-	e.pre = generation
-	return e.engine.BuildSubject(e.root)
-}
-
-func (e *engineEvaluation) validatePre() (subject, error) { return e.engine.BuildSubject(e.root) }
-
-func (e *engineEvaluation) capturePost() (subject, error) {
-	generation, err := captureTreeGeneration(workingTreeSource{root: e.root})
-	if err != nil {
-		return subject{}, err
-	}
-	e.post = generation
-	return e.engine.PostRunSubject(e.root)
-}
-
-func newWorkingTreeEvaluation(root string) *gateEvaluation {
-	return newWorkingTreeEvaluationAtKit(root, root)
-}
-
-func newWorkingTreeEvaluationAtKit(root, _ string) *gateEvaluation {
+func newGateEvaluation(root string) *gateEvaluation {
 	return &gateEvaluation{
 		runtimeRoot:  root,
 		identityRoot: root,

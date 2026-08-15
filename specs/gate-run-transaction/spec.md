@@ -1,6 +1,6 @@
 # gate-run-transaction
 
-Status: staged
+Status: implemented
 
 Decision source: specs/gate-run-transaction/decisions/deepening-2026-08.md (compiled ready map, reviewer-resolved 2026-08-15; tickets #4, #6, #7 govern this spec)
 
