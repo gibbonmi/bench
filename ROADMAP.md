@@ -1125,17 +1125,6 @@ does not currently name. Propose the assertion rule as a gate check
 violated. Kit edit under the `craft-synthesis` discipline. Background:
 `docs/reporesident-distillation.md` §2.
 
-**FT186 (LOW) — split the gate executor and type its verdict
-records without changing behavior.** Two structural hotspots sit behind the
-gate seam. `executeSubjectWithEngine` combines locking, subject-drift checks,
-component selection, dispatch, and four persistence branches in one roughly
-200-line function. Verdict field-set validity is separately hand-maintained in
-`readyFieldClasses` and the record-class registry. Under the mechanical
-refactor lane, split the executor by those responsibilities and make
-record shape type-enforced, preserving the existing gate and mutation tests as
-the exit test. These are refactors, not a gate rewrite. Source:
-`capture/IDEAS.md`, drained here.
-
 **FT111 (LOW) — provenance tags that outlive their specs.** Code comments
 carrying `FT<n> story <n>` tags point at specs that retire — two retired on
 2026-07-23 alone — so a tag naming a retired spec points at nothing, which is
@@ -2166,7 +2155,6 @@ recommended table is sequencing advice.
 
 | FT | Depends on | Why |
 |---|---|---|
-| FT186 | FT108 | The gate restructure needs the mechanical exit test before moving oracle code without behavioral stories. |
 
 ### Recommended
 
