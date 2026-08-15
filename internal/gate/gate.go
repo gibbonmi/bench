@@ -219,7 +219,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		root = r
 	}
 	ctx, finishLog := beginGateRunLog(context.Background(), root, stderr, mode.String())
-	result := executeWithEngineAfterAcquireAtKit(ctx, root, kitRoot(root), stdout, stderr, productionGateEngine{}, notifyGateSignals, mode)
+	result := executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
 	finishLog(result)
 	return result.ActionExit
 }
@@ -255,7 +255,7 @@ type Result struct {
 
 func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, "ordinary")
-	result := executeWithEngineAtKit(ctx, root, kitRoot(root), stdout, stderr, productionGateEngine{})
+	result := execute(ctx, root, stdout, stderr)
 	finishLog(result)
 	return result
 }
@@ -269,16 +269,12 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 // never from an independent capture. Everything else falls through to Execute and pays a
 // real run under the lock.
 func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	return executeReusingFreshGreenAtKit(ctx, root, kitRoot(root), stdout, stderr)
-}
-
-func executeReusingFreshGreenAtKit(ctx context.Context, root, kit string, stdout, stderr io.Writer) Result {
-	if plan, err := newWorkingTreeEvaluationAtKit(root, kit).acceptPre(); err == nil {
+	if plan, err := newGateEvaluation(root).acceptPre(); err == nil {
 		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
-	return executeWithEngineAtKit(ctx, root, kit, stdout, stderr, productionGateEngine{})
+	return execute(ctx, root, stdout, stderr)
 }
 
 // reusedGreenResult is the one place a reused verdict is announced and shaped into a result.
@@ -354,45 +350,17 @@ func notifyGateSignals(ctx context.Context) (context.Context, func()) {
 	return subprocess.NotifyCancel(ctx)
 }
 
-func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine) Result {
-	return executeWithEngineAtKit(ctx, root, root, stdout, stderr, engine)
+func execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, nil, reuseFreshGreen, newGateEvaluation(root), productionRunBinaryOwner())
 }
 
-func executeWithEngineAtKit(ctx context.Context, root, kit string, stdout, stderr io.Writer, engine gateEngine) Result {
-	evaluation := executionEvaluation(newEngineEvaluationAtKit(root, kit, engine))
-	var owner runBinaryOwner
-	if _, production := engine.(productionGateEngine); production {
-		evaluation = newWorkingTreeEvaluationAtKit(root, kit)
-		owner = productionRunBinaryOwner()
-	}
-	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, engine, nil, reuseFreshGreen, evaluation, owner)
-}
-
-func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
-	return executeWithEngineAfterAcquireAtKit(ctx, root, root, stdout, stderr, engine, arm, mode)
-}
-
-func executeWithEngineAfterAcquireAtKit(ctx context.Context, root, kit string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
-	evaluation := executionEvaluation(newEngineEvaluationAtKit(root, kit, engine))
-	var owner runBinaryOwner
-	if _, production := engine.(productionGateEngine); production {
-		evaluation = newWorkingTreeEvaluationAtKit(root, kit)
-		owner = productionRunBinaryOwner()
-	}
-	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, engine, arm, mode, evaluation, owner)
-}
-
-func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation) Result {
-	return executeSubjectWithRunBinary(ctx, runtimeRoot, storageRoot, stdout, stderr, engine, arm, mode, evaluation, nil)
+func executeAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, arm, mode, newGateEvaluation(root), productionRunBinaryOwner())
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {
-	return operationalWithEngine(productionGateEngine{}, root, gateExit, stderr, msg)
-}
-
-func operationalWithEngine(engine gateEngine, root string, gateExit int, stderr io.Writer, msg string) Result {
 	fmt.Fprintln(stderr, msg)
-	inspection := inspectAt(root, engine.Now())
+	inspection := inspectAt(root, time.Now().UTC())
 	inspection.ReusableGreen = false
 	return Result{GateExit: gateExit, ActionExit: 1, Inspection: inspection}
 }

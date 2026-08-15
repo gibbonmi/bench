@@ -119,26 +119,13 @@ type subject struct {
 	Env          []string
 }
 
-type gateFile interface {
-	Name() string
-	Chmod(os.FileMode) error
-	Write([]byte) (int, error)
-	Sync() error
-	Close() error
-	Fd() uintptr
-}
-
 func durableReplace(gitdir string, rec verdictRecord) error {
-	return durableReplaceWithEngine(productionGateEngine{}, gitdir, rec)
-}
-
-func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecord) error {
 	data, err := json.Marshal(rec)
 	if err != nil {
 		return err
 	}
 	data = append(data, '\n')
-	tmp, err := engine.CreateTemp(gitdir, ".bench-last-gate-")
+	tmp, err := os.CreateTemp(gitdir, ".bench-last-gate-")
 	if err != nil {
 		return err
 	}
@@ -161,10 +148,10 @@ func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecor
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	if err := engine.Rename(name, filepath.Join(gitdir, benchgit.GateCacheFile)); err != nil {
+	if err := os.Rename(name, filepath.Join(gitdir, benchgit.GateCacheFile)); err != nil {
 		return err
 	}
-	dir, err := engine.OpenDir(gitdir)
+	dir, err := os.Open(gitdir)
 	if err != nil {
 		return err
 	}
@@ -179,11 +166,7 @@ func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecor
 	return nil
 }
 
-func Inspect(root string) Inspection { return inspectWithEngine(root, productionGateEngine{}) }
-
-func inspectWithEngine(root string, engine gateEngine) Inspection {
-	return inspectAt(root, engine.Now())
-}
+func Inspect(root string) Inspection { return inspectAt(root, time.Now().UTC()) }
 
 func inspectAt(root string, now time.Time) Inspection {
 	s, err := buildSubject(root)
