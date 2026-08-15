@@ -105,13 +105,13 @@ func requireAdapter(agent string) error {
 // the objective — the project's per-repo early-completion override. Absent or
 // non-executable means "run to the iteration cap". Run from the worktree root, so
 // done.sh sees the shift's in-progress tree.
-func objectiveMet(root, objective string) bool {
+func objectiveMet(root string, objective objective) bool {
 	done := filepath.Join(root, ".bench", "done.sh")
 	info, err := os.Stat(done)
 	if err != nil || info.IsDir() || info.Mode()&0o111 == 0 {
 		return false
 	}
-	cmd := exec.Command(done, objective)
+	cmd := exec.Command(done, objective.predicateArgument())
 	cmd.Dir = root
 	return cmd.Run() == nil
 }

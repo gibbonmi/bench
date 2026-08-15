@@ -12,7 +12,6 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -100,15 +99,6 @@ func createShiftBranch(wt, timestamp string) (string, error) {
 	return "", lastErr
 }
 
-// objectiveBanner formats the shift-start line. The objective is reviewer-authored and
-// already rejected at intake if it carries a control byte, but the banner renders it
-// through the shared sanitizer anyway — one policy for every terminal render of
-// operator-influenced text, no render path with a raw escape sequence behind it. The
-// " — objective:" delimiter is load-bearing: the shift-start parser splits the branch on it.
-func objectiveBanner(branch, objective string) string {
-	return fmt.Sprintf("▶ shift on %s — objective: %s", branch, sanitize.Preview(objective))
-}
-
 // Loop runs the gated shift: validate the objective and env, preflight the adapter,
 // acquire a pooled worktree, branch, iterate (commit on green, preserve on a red gate)
 // to the objective or the iteration cap, pay down touched-scope structural debt at
@@ -119,11 +109,12 @@ func Loop(objective string, stdout, stderr io.Writer) int {
 	return loop(objective, false, stdout, stderr)
 }
 
-func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
-	if err := validateObjective(objective); err != nil {
+func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
+	if err := validateObjective(objectiveText); err != nil {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, stderr, err.Error())
 	}
+	objective := objective(objectiveText)
 	maxIters, err := parseBoundedInt("BENCH_MAX_ITERS", bounds.MainIterationsDefault, bounds.IterationMin, bounds.IterationMax)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
@@ -202,7 +193,7 @@ func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 	}
 	// 0600: the worktree scratch file is the one place the full objective text persists,
 	// so it is readable only by the user who started the shift.
-	if err := os.WriteFile(wt+"/.bench-objective", []byte(objective+"\n"), 0o600); err != nil {
+	if err := os.WriteFile(wt+"/.bench-objective", objective.scratch(), 0o600); err != nil {
 		fmt.Fprintf(stderr, "could not write shift objective: %v\n", err)
 		s.teardown()
 		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift objective"})
@@ -246,7 +237,7 @@ func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 		defer wallTimer.Stop()
 	}
 
-	fmt.Fprintln(stdout, objectiveBanner(branch, objective))
+	fmt.Fprintln(stdout, objective.banner(branch))
 	fmt.Fprintf(stdout, "  worktree: %s\n", wt)
 	fmt.Fprintf(stdout, "  cap: %d iterations. Ctrl-C to pull the line.\n", maxIters)
 	started := time.Now()
@@ -260,7 +251,7 @@ func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 		s.iterationsUsed = i
 		fmt.Fprintf(stdout, "── iteration %d/%d ──\n", i, maxIters)
 		pre := dirtyPaths(wt)
-		adapterErr := s.runAdapter(fmt.Sprintf(iterationPrompt, objective))
+		adapterErr := s.runAdapter(objective.prompt())
 		s.checkpoint()
 		post := dirtyPaths(wt)
 		if s.runGate() == 0 {
@@ -285,7 +276,7 @@ func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 				}
 				break
 			}
-			if err := exec.Command("git", "-C", wt, "commit", "-q", "-m", fmt.Sprintf("shift: iteration %d — %s", i, objective)).Run(); err != nil {
+			if err := exec.Command("git", "-C", wt, "commit", "-q", "-m", objective.commitSubject(i)).Run(); err != nil {
 				fmt.Fprintf(stderr, "could not commit iteration %d: %v\n", i, err)
 				return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("could not commit iteration %d", i)))
 			}

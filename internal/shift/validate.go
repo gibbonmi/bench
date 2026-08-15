@@ -1,51 +1,11 @@
 package shift
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
-	"unicode/utf8"
 )
-
-// objectiveMaxRunes caps an objective in Unicode code points, not bytes, so a
-// multibyte objective is not cut at a fraction of its apparent length. The text
-// flows into a commit subject, a scratch file, and status; an unbounded objective
-// would carry into all three at once.
-const objectiveMaxRunes = 200
-
-// hasControlByte reports whether s carries any byte below 0x20 or the DEL byte 0x7f.
-// This is a stricter, single-purpose check than toon.Representable's cell-escaping
-// notion (which tolerates \n/\r/\t inside an already-escaped TOON cell): a shift
-// objective is one line of operator intent, never a pre-escaped cell, so every control
-// byte is rejected outright, no exceptions.
-func hasControlByte(s string) bool {
-	for i := 0; i < len(s); i++ {
-		if b := s[i]; b < 0x20 || b == 0x7f {
-			return true
-		}
-	}
-	return false
-}
-
-// validateObjective rejects an empty or whitespace-only objective — the "improve the
-// codebase" default is gone, an operator must state one — or one carrying a control
-// byte, so hostile or accidental text is refused at entry, before it can reach the
-// intent ledger or the TOON emitter.
-func validateObjective(objective string) error {
-	if strings.TrimSpace(objective) == "" {
-		return errors.New("objective required: bench shift <objective...>")
-	}
-	if hasControlByte(objective) {
-		return errors.New("objective contains a control byte")
-	}
-	if n := utf8.RuneCountInString(objective); n > objectiveMaxRunes {
-		return fmt.Errorf("objective too long: %d runes, maximum %d", n, objectiveMaxRunes)
-	}
-	return nil
-}
 
 // parseBoundedInt reads name from the environment as an integer in [min,max],
 // returning def when the variable is unset or empty. A set-but-invalid value
