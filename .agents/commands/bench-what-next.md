@@ -59,6 +59,17 @@ only as the residual work the spec did not ship.
 
 ## 2. Drain occurrence evidence
 
+### Normalize touched rows
+
+Keep current-state core prose concise. Each drained historical incident, build,
+retro, or learning merged into a row becomes exactly one physical
+`Occurrence: <when/source> — <short situation>.` line. Occurrence lines contain
+event evidence only. New feature faces and decisions remain concise core prose.
+Normalize every touched row before batch proposal.
+
+**Good — event-only evidence:** `Occurrence: 2026-08-15 gate build — primary-checkout preflight failed on a stale base.`
+**Bad — remedy derivation:** `Occurrence: 2026-08-15 gate build — change preflight selection to fix the stale base.`
+
 For every `pending` owner/incident pair in `capture_occurrences`, add its incident
 key to that owner's `Occurrences:` line in `ROADMAP.md` before removing any source
 unit for the pair. Show the owning-row edit in the batch before the corresponding

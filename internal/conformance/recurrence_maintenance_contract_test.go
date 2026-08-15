@@ -53,6 +53,28 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 		diags = append(diags, "bench-what-next does not remove already-recorded occurrence sources without another key")
 	}
 
+	normalizeHeading := "### Normalize touched rows"
+	normalizeBeforeBatch := "Normalize every touched row before batch proposal."
+	if occurrenceCount != 1 || strings.Count(occurrences, normalizeHeading) != 1 || !strings.Contains(occurrences, normalizeBeforeBatch) {
+		diags = append(diags, "bench-what-next does not normalize every touched row before batch proposal")
+	}
+	physicalOccurrence := "exactly one physical `Occurrence: <when/source> — <short situation>.` line"
+	if occurrenceCount != 1 || !strings.Contains(occurrences, physicalOccurrence) {
+		diags = append(diags, "bench-what-next does not require one physical occurrence line per drained event")
+	}
+	eventOnly := "Occurrence lines contain event evidence only."
+	coreProse := "New feature faces and decisions remain concise core prose."
+	if occurrenceCount != 1 || !strings.Contains(occurrences, eventOnly) || !strings.Contains(occurrences, coreProse) {
+		diags = append(diags, "bench-what-next does not keep occurrence evidence separate from core remedies")
+	}
+	goodOccurrence := "**Good — event-only evidence:** `Occurrence: 2026-08-15 gate build — primary-checkout preflight failed on a stale base.`"
+	badOccurrence := "**Bad — remedy derivation:** `Occurrence: 2026-08-15 gate build — change preflight selection to fix the stale base.`"
+	goodAt := strings.Index(occurrences, goodOccurrence)
+	badAt := strings.Index(occurrences, badOccurrence)
+	if occurrenceCount != 1 || strings.Count(occurrences, goodOccurrence) != 1 || strings.Count(occurrences, badOccurrence) != 1 || goodAt < 0 || badAt <= goodAt {
+		diags = append(diags, "bench-what-next does not retain the event-only occurrence contrast")
+	}
+
 	precedence := []string{
 		"Rank rows by severity.",
 		"choose actionable work over blocked work",
@@ -97,6 +119,11 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"context evidence", "`occurrence_discrepancies` row together with the complete index snapshot", "`occurrence_discrepancies` row", "bench-what-next does not preserve complete index evidence before reconciliation"},
 		{"pending ledger", "add its incident\nkey to that owner's `Occurrences:` line in `ROADMAP.md` before removing any source\nunit", "record the pending pair for later", "bench-what-next does not ledger every pending occurrence before source removal"},
 		{"already recorded", "remove its\nsource unit without adding another key", "remove its source unit after adding another key", "bench-what-next does not remove already-recorded occurrence sources without another key"},
+		{"normalize heading", "### Normalize touched rows", "### Touched rows", "bench-what-next does not normalize every touched row before batch proposal"},
+		{"normalize before proposal", "Normalize every touched row before batch proposal.", "Normalize touched rows after batch proposal.", "bench-what-next does not normalize every touched row before batch proposal"},
+		{"physical occurrence shape", "exactly one physical\n`Occurrence: <when/source> — <short situation>.` line", "one or more `Occurrence:` paragraphs", "bench-what-next does not require one physical occurrence line per drained event"},
+		{"event-only boundary", "Occurrence lines contain\nevent evidence only.", "Occurrence lines contain event evidence and remedy derivation.", "bench-what-next does not keep occurrence evidence separate from core remedies"},
+		{"contrastive example", "**Good — event-only evidence:** `Occurrence: 2026-08-15 gate build — primary-checkout preflight failed on a stale base.`", "**Good — remedy derivation:** `Occurrence: 2026-08-15 gate build — change preflight selection to fix the stale base.`", "bench-what-next does not retain the event-only occurrence contrast"},
 		{"equal class", "apply literal dependencies, then explicit\nreviewer pricing. Only when all four stronger inputs tie, rank by descending\noccurrence count.", "rank by descending occurrence count before explicit reviewer pricing.", "bench-what-next recurrence sequence precedence is incomplete or out of order"},
 	}
 	for _, mutation := range mutations {
@@ -115,6 +142,7 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 			if !containsDiagnostic(checkRecurrenceMaintenanceContract(root), mutation.want) {
 				t.Fatalf("mutation did not bite: want %q", mutation.want)
 			}
+			t.Logf("observed red: %s", mutation.want)
 		})
 	}
 }
