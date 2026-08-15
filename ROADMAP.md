@@ -54,6 +54,13 @@ Concurrent main-tree writers need visible intent or a lease; two sessions sharin
 a checkout serialize lifecycle mutations and landings, side-work uses a worktree,
 and foreign dirt refuses or uses FT98's recoverable set-aside.
 
+Recovered review artifacts retain their frozen candidate pair and terminal verdict;
+resume reruns every review axis before repair or landing. Assigned worktree authoring
+keeps `main` read-only except controlled commits and landings.
+
+Occurrence: 2026-08-15 interrupted FT189 review — a committed review pickup had no terminal verdict or recovery handoff.
+Occurrence: 2026-08-15 capture idea — concurrent authoring on `main` motivated assigned-worktree and serialized-landing evaluation.
+
 The handoff decision chooses one authoritative `capture/session-handoff.md`,
 per-spec handoffs, or a generated per-workstream projection; it must not create a
 second convention. Source: `capture/IDEAS.md`, drained here.
@@ -145,6 +152,14 @@ Occurrence: 2026-07-27 `ft91-artifact-build-tiering` — review corrected four t
 The edge inventory also distinguishes an absent tickets directory from a present
 but empty one; only the latter declares an unowned ticket surface. Source: the
 spec-authoring-and-light-path retro, drained here.
+
+Cap-accepted verification records the cap and declined findings, then probes each
+folded red signal through its named public fixture. Transaction-shaped specs classify
+owned failures as pre-oracle persistence, in-oracle interruption, or terminal persistence.
+
+Occurrence: 2026-08-14 FT189 falsification — adversarial review, not authoring prose, found deep consumer omissions across 33 rounds.
+Occurrence: 2026-08-15 gate-run-transaction cap — folded mutations needed public-fixture reachability probes after capped review.
+Occurrence: 2026-08-15 gate-run-transaction review — lifecycle-position coverage missed owner/pending writes and in-oracle cancellation.
 
 **FT158 (MEDIUM) — make cross-harness
 falsification standing for kit-guidance diffs.** The prepared spec/diff bundle
@@ -264,6 +279,15 @@ subject-closure reasons, and separates publication from cleanup refusal. Sources
 Pocock-guidance-doctrine, parallel-session-landings, and
 spec-authoring-and-light-path retros.
 
+Landing recovery accepts a listed assignment/digest selector or reports a resumable
+request token; it never requires reconstructing a historical opaque input.
+
+Occurrence: FT189 landing recovery — a persisted request digest could not replay the original request token.
+
+**FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.** Decide whether every worktree-mutating Git call pre-scans malformed private admin entries through FT189's refusal owner before Git can block. Entry: `/bench-shape-idea`.
+
+Occurrence: 2026-08-14 FT189 probe — add, lock, unlock, and prune call sites could hang on the malformed admin entries enumeration now refuses.
+
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one
 repository-wide ref inventory.** The existing
 cleanup paths act on one known target at a time; they do not classify every
@@ -370,6 +394,8 @@ should show phase verdicts and the log pointer on green while preserving the
 complete transcript on red, removing the incentive to truncate command output
 at the caller. Source: `capture/IDEAS.md`, drained here.
 
+Occurrence: 2026-08-14 CLI inventory learning — public worktree commands reached the CLI before the canonical inventory was updated.
+
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
 frontmatter; derive the skills index and inventories from one implementation;
@@ -465,7 +491,11 @@ freezes.** Reconcile destination-owned staged-spec metadata before exact review;
 post-review behavior or acceptance changes still return to review and sign-off.
 Kit workflow edit under `craft-synthesis`, entry `/bench-shape-idea`.
 
+Landing reports the exact staged-spec reconciliation route when destination and
+source bytes differ.
+
 Occurrence: spec-authoring-and-light-path landing — destination and reviewed source had different staged-spec bytes, forcing fresh exact review.
+Occurrence: gate-run-transaction landing — destination/source staged-spec reconciliation required a fresh exact review.
 
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 Agents repeatedly shape harness transcripts and session evidence with
@@ -714,6 +744,7 @@ Occurrence: covers-traceability and FT195 closes — `-run` alternation, classif
 Occurrence: 2026-08-11 preflight/lifecycle-removal closes — mutation backups and orphaned-caller sweeps were not charged (source: retros).
 Occurrence: axi-coherent-diff close — repair evidence changed a correlated dimension or erased an escalated failed charge (source: retro).
 Occurrence: canary-planted-reason close — synthetic/live-root and candidate/base rereads were missing from conformance repair (source: retro).
+Occurrence: gate-run-transaction retro — scorecard attribution separates delegate rework from spec-origin findings.
 
 
 
@@ -1169,5 +1200,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT189's reproduced upstream `git worktree list` hang needs a Bench-owned refusal or execution bound.
+1. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
 2. `/bench-write-spec` — FT185 can make gate and commit results one structured, concise public projection.
+3. `/bench-shape-idea` — FT162 resolves durable interrupted-review recovery and assigned-worktree authoring after FT169's landing primitive.

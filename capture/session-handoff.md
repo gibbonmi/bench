@@ -2,24 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `64c409b`, 5 dirty paths, 18 unpushed commits
+Branch: `main` — HEAD `cee1dfb`, clean, 1 unpushed commit
 Spec: none staged.
-Gate: green at `e6e7c6b` — stale, work tree `6a4b4c1`
+Gate: green at `cee1dfb` — current exact tree
 
 ## State
 
-Agent-performance capture is provider-specific under
-`capture/agent-performance/`. Its shared contract bounds current aggregates and
-evidence; `open-ai-models.md` carries the `gate-run-transaction` observations and
-`claude-models.md` preserves unknowns until a Claude landing supplies evidence.
-`/bench-final-check` now refreshes every participating provider during the
-implementation retro, and `/bench-what-next` includes those durable scorecards in
-the reviewed capture commit. Focused anchors, conformance, retros, and structure
-checks are green; the whole-tree gate remains for the landing commit.
+FT189 remains retired. FT207 holds the unresolved decision whether malformed-admin
+refusal fronts all worktree-mutating calls; FT185 remains the next ready build.
+Provider scorecards remain under `capture/agent-performance/`: OpenAI retains the
+gate-run-transaction aggregate and Claude remains intentionally unknown. Capture is
+drained; the existing full gate is green on this exact tree.
 
 ## Next command
 
-`bench commit -m "capture: split agent performance by provider" .agents/commands/bench-final-check.md .agents/commands/bench-what-next.md .bench/BENCH.md capture/agent-performance.md capture/agent-performance/README.md capture/agent-performance/open-ai-models.md capture/agent-performance/claude-models.md capture/session-handoff.md`
+`/bench-shape-idea`
 
 ## Shape
 
