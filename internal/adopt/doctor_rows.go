@@ -32,6 +32,7 @@ var doctorRows = []doctorRow{
 	{"setup pointers", evalSetupPointersRow},
 	{"binding migration", evalBindingMigrationRow},
 	{"binding columns", evalBindingColumnsRow},
+	{"worktree admin", evalWorktreeAdminRow},
 }
 
 // reportDoctorRows renders every per-harness row when doctor runs inside a git
@@ -200,6 +201,17 @@ func evalBindingColumnsRow(root string) (bool, string) {
 	}
 	return true, "unbound columns in .bench/lines.env: " + strings.Join(unbound, "; ") +
 		" — each refuses to launch until it is bound"
+}
+
+func evalWorktreeAdminRow(root string) (bool, string) {
+	common, err := git.CommonDir(root)
+	if err != nil {
+		return false, err.Error()
+	}
+	if err := git.ScanWorktreeAdmin(common); err != nil {
+		return false, err.Error()
+	}
+	return true, ""
 }
 
 func bindingPath(root string) string {

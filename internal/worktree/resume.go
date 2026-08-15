@@ -338,7 +338,7 @@ func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanup
 func ConservativeCleanup(root string) (ResumeResult, error) {
 	registered, err := ClassifyRegisteredWorktrees(root)
 	if err != nil {
-		return ResumeResult{}, fmt.Errorf("git worktree list failed: %w", err)
+		return ResumeResult{}, fmt.Errorf("worktree discovery failed: %w", err)
 	}
 	result := ResumeResult{Retained: map[CleanupReason]int{}}
 	result.SweptRefs, result.Reconciled, err = reconcileLifecycleDebris(root, registered)

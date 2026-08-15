@@ -1,6 +1,6 @@
 # worktree-enumeration-hang
 
-Status: staged
+Status: implemented
 
 Decision source: specs/worktree-enumeration-hang/decisions/worktree-enumeration-hang.md (compiled ready map, reviewer-resolved 2026-08-14)
 

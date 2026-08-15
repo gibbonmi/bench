@@ -51,7 +51,7 @@ func Pool(root string) string {
 	return filepath.Join(benchHome(), "worktrees", key)
 }
 func LeaseFile(path string) (string, error) {
-	lease, err := git.Output("-C", path, "rev-parse", "--git-path", "bench-lease")
+	lease, err := git.Output("-C", path, "rev-parse", "--git-path", git.BenchLeaseFilename)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +118,7 @@ func ClassifyRegisteredWorktrees(root string) ([]Registered, error) {
 	return out, nil
 }
 func canonicalRoot(root string) string {
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil || filepath.Base(common) != ".git" {
 		return root
 	}

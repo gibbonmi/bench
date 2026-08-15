@@ -51,7 +51,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -187,11 +187,11 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "unowned assignment has an ambiguous lease"
 			}
 		case LeaseUnknown:
-			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "assignment lease state is unknown"
+			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, unknownLeaseReason
 		}
 	} else if statErr != nil && !errors.Is(statErr, os.ErrNotExist) {
 		if plan.owned {
-			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "assignment lease state is unknown"
+			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, unknownLeaseReason
 		}
 	}
 	nested, nestedErr := classifyNestedState(target)
@@ -364,7 +364,7 @@ func explicitContentIdentity(target string) (string, error) {
 	return fingerprintParts(parts...), nil
 }
 func predictedForeignRef(root, target, admin string) (string, error) {
-	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := git.CommonDir(root)
 	if err != nil {
 		return "", err
 	}

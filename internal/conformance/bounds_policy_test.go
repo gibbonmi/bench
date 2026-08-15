@@ -17,7 +17,7 @@ func checkBoundsPolicy(root string) []string {
 	if registry == "" {
 		return []string{"internal/bounds policy registry is absent"}
 	}
-	required := []string{"ProviderTimeout", "GitRefreshTimeout", "GuardScanTimeout", "GateTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "OutlineRowLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale", "CanaryInnerWidth"}
+	required := []string{"ProviderTimeout", "GitRefreshTimeout", "WorktreeListTimeout", "GuardScanTimeout", "GateTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "OutlineRowLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale", "CanaryInnerWidth"}
 	var diags []string
 	for _, name := range required {
 		if !strings.Contains(registry, name) {
@@ -34,6 +34,7 @@ func checkBoundsPolicy(root string) []string {
 		"internal/guards/guards.go":                 {"bounds.GuardScanTimeout"},
 		"internal/gate/gate.go":                     {"bounds.GateTimeout"},
 		"internal/worktree/refresh/refresh.go":      {"bounds.GitRefreshTimeout"},
+		"internal/git/git.go":                       {"bounds.WorktreeListTimeout"},
 		"internal/worktree/lifecycle.go":            {"bounds.LeaseStale"},
 		"internal/worktree/classifier.go":           {"bounds.AssignmentStale"},
 		"internal/shift/loop.go":                    {"bounds.MainIterationsDefault", "bounds.RefactorIterationsDefault", "bounds.IterationMin", "bounds.IterationMax", "bounds.MaxWall"},

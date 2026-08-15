@@ -171,6 +171,14 @@ func TestRunClassifiesProcessOutcomes(t *testing.T) {
 	}
 }
 
+func TestRunOutputKeepsStdoutSeparateFromStderr(t *testing.T) {
+	var stdout bytes.Buffer
+	result := RunOutput(context.Background(), time.Second, exec.Command("sh", "-c", "printf out; printf err >&2"), &stdout)
+	if result.Status != ProcessComplete || stdout.String() != "out" || string(result.Output) != "err" {
+		t.Fatalf("RunOutput = status=%q stdout=%q stderr=%q", result.Status, stdout.String(), result.Output)
+	}
+}
+
 func TestReadClassifiesExactLimitAndLimitPlusOne(t *testing.T) {
 	for _, tt := range []struct {
 		name string

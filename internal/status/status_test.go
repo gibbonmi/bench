@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/roadmap"
 )
 
@@ -482,10 +483,9 @@ func TestAppendWorktreeIgnoresUnownedBranchPrefix(t *testing.T) {
 	}
 }
 
-// appendWorktree must surface a `git worktree list` failure as a visible row, never as
-// silence that a reader mistakes for "no worktree signals" — the false-empty class FT29
-// swept. The failure is induced deterministically (the FT29 gitOpError style: break the
-// git query itself, here by revoking read access to .git) rather than a PATH-shimmed git.
+// appendWorktree must surface a discovery failure as a visible row, never as silence that
+// a reader mistakes for "no worktree signals". This filesystem refusal reaches common-dir
+// resolution before porcelain, while the PATH-stub fixtures cover typed and generic routing.
 func TestAppendWorktreeSurfacesClassifyFailure(t *testing.T) {
 	root := initRepo(t)
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
@@ -504,8 +504,46 @@ func TestAppendWorktreeSurfacesClassifyFailure(t *testing.T) {
 	if len(rows) == 0 {
 		t.Fatal("appendWorktree dropped the classify failure instead of surfacing a row")
 	}
-	if !strings.Contains(rows[0].detail, "worktree list failed") {
-		t.Errorf("row detail = %q, want it to name the git worktree-list failure", rows[0].detail)
+	if !strings.Contains(rows[0].detail, "git common directory") || rows[0].action != "investigate the git failure" {
+		t.Errorf("row = %#v, want typed resolution refusal", rows[0])
+	}
+}
+
+func TestAppendWorktreeKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T) {
+	for _, tc := range []struct {
+		mode, detail, action string
+	}{
+		{"fail-rev-parse", "rev-parse", "investigate the git failure"},
+		{"fail-worktree", "git worktree list failed", "run git worktree list and retry"},
+	} {
+		t.Run(tc.mode, func(t *testing.T) {
+			root := initRepo(t)
+			gittest.StubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
+			rows := appendWorktree(nil, root)
+			if len(rows) != 1 || !strings.Contains(rows[0].detail, tc.detail) || rows[0].action != tc.action {
+				t.Fatalf("%s row = %#v", tc.mode, rows)
+			}
+		})
+	}
+}
+
+func TestAppendWorktreeRendersBoundExpiryAsTypedFailure(t *testing.T) {
+	restore := git.SetWorktreeListTimeoutForTest(100 * time.Millisecond)
+	t.Cleanup(restore)
+	root := initRepo(t)
+	gittest.StubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
+	rows := appendWorktree(nil, root)
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktree list") || rows[0].action != "investigate the git failure" || strings.Contains(rows[0].action, "retry") {
+		t.Fatalf("bound row = %#v", rows)
+	}
+}
+
+func TestAppendWorktreeRendersTypedAdminRefusal(t *testing.T) {
+	root := initRepo(t)
+	gittest.FIFOWorktreeAdmin(t, root, "typed")
+	rows := appendWorktree(nil, root)
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action != "inspect and remove it" {
+		t.Fatalf("typed row = %#v", rows)
 	}
 }
 

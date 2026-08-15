@@ -30,13 +30,17 @@ func ListCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
+	registrations, err := git.Worktrees(root)
+	if err != nil {
+		var typed git.WorktreeFailure
+		if errors.As(err, &typed) {
+			return toon.Errorf(typed.Error(), typed.WorktreeAction()) + "\n", 1
+		}
+		return toon.Errorf("cannot read registered worktrees", "run git worktree list and retry") + "\n", 1
+	}
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return toon.Errorf("cannot read worktree assignments", "repair the Bench intent ledger and retry") + "\n", 1
-	}
-	registrations, err := git.Worktrees(root)
-	if err != nil {
-		return toon.Errorf("cannot read registered worktrees", "run git worktree list and retry") + "\n", 1
 	}
 
 	def, defaultResolved := git.ResolvedDefault(root)

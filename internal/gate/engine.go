@@ -163,7 +163,7 @@ func inspectEvidenceWindowed(root string, plan subject, now time.Time, expires b
 	if !plan.Closed {
 		return inspection
 	}
-	gitdir, err := commonGitDir(root)
+	gitdir, err := benchgit.CommonDir(root)
 	if err != nil {
 		inspection.Reason = "evidence unavailable"
 		return inspection
@@ -194,7 +194,7 @@ func inspectEvidenceWindowed(root string, plan subject, now time.Time, expires b
 }
 
 func retainGreen(root string, plan subject, recordedAt time.Time) error {
-	gitdir, err := commonGitDir(root)
+	gitdir, err := benchgit.CommonDir(root)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func ensureEvidenceDir(parent, dir string) error {
 }
 
 func invalidateEvidence(root string, plan subject) error {
-	gitdir, err := commonGitDir(root)
+	gitdir, err := benchgit.CommonDir(root)
 	if err != nil {
 		return err
 	}
@@ -251,10 +251,6 @@ func evidenceName(plan subject) string {
 	frame(h, plan.Tree)
 	frame(h, plan.Oracle)
 	return hex.EncodeToString(h.Sum(nil))
-}
-
-func commonGitDir(root string) (string, error) {
-	return benchgit.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
 }
 
 func prospectiveCheckout(root, tree string) (string, func(), error) {

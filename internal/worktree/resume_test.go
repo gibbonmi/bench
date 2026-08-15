@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -15,6 +16,23 @@ import (
 	"testing"
 	"time"
 )
+
+func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
+	root := newWorktreeRepo(t)
+	gittest.FIFOWorktreeAdmin(t, root, "resume")
+	chdir(t, root)
+	var stdout, stderr bytes.Buffer
+	done := make(chan int, 1)
+	go func() { done <- ResumeCleanCommand(nil, &stdout, &stderr) }()
+	select {
+	case code := <-done:
+		out := stdout.String() + stderr.String()
+		requireTest(t, code == 1, "ResumeCleanCommand code=%d output=%q", code, out)
+		requireTest(t, strings.Contains(out, "worktrees/resume/gitdir") && strings.Contains(out, "fifo") && strings.Contains(out, "inspect and remove it") && !strings.Contains(out, "git worktree list failed"), "resume output = %q", out)
+	case <-time.After(bounds.TestDeadline(0)):
+		t.Fatal("resume cleanup blocked on malformed worktree admin entry")
+	}
+}
 
 func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	home := t.TempDir()
