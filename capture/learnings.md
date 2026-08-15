@@ -52,3 +52,21 @@ clean review, acceptance, or landing authority from the artifact or its commit.
 Proposed rule change: add an interruption/recovery contract that records the
 phase state and frozen pair atomically, then makes resume surface the required
 next phase and refuse landing until a fresh terminal review verdict exists.
+
+## 2026-08-15 — write-spec loops accepted by reviewer cap, not by clean re-review
+
+**What happened.** The reviewer set `--reviewer` to Codex `gpt-5.6-sol` and capped both
+verification loops of `specs/gate-run-transaction` at one round. Loop 1 returned eight
+blocking findings (two named mutations were not red-capable as written; a false
+"already covered" citation; missing persistence-failure rows; the deep-module story
+was satisfiable by symbol deletion alone). All were folded, but no reviewer round
+re-checked the folds; loop 2's per-row split finding was declined by the author as a
+cost call and surfaced in the approval table.
+
+**Right behavior.** Under a round cap, the author still folds every blocking finding
+and states in the verification log that acceptance was by cap; a declined blocking
+finding is a reviewer decision surfaced at sign-off, never silently dropped.
+
+**Proposed rule change.** `/bench-write-spec` step 9: when `--reviewer` carries a
+round cap below "until clean", the verification-log line must say "accepted by cap"
+and name any blocking finding the author declined, so the sign-off table carries it.
