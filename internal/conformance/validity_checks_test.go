@@ -35,7 +35,6 @@ func checkShellSyntax(root string) []string {
 	for _, pattern := range []string{
 		"bin/*.sh",
 		".bench/gate-*.sh",
-		".bench/skills-index.sh",
 		".bench/hooks/*.sh",
 		".bench/lib/*.sh",
 		"scripts/*.sh",

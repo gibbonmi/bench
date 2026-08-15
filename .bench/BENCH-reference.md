@@ -37,7 +37,7 @@ what lives here is reference you consult on demand.
 
 Claude Code loads these on its own. On other harnesses, read the file when the
 trigger applies — or paste it as context. This block is generated from each
-skill's `index:` frontmatter (`.bench/skills-index.sh --write`); edit the skill,
+skill's `index:` frontmatter (`bench skills-index --write`); edit the skill,
 not the list:
 
 <!-- bench:skills-index:start -->

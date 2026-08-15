@@ -69,6 +69,7 @@ var subcommandRouting = map[string]routingEntry{
 	// than exempt like the release commands beside it in the dispatch switch.
 	"prep-release": routed("internal/preprelease"),
 	"roadmap":      routed("internal/roadmap"),
+	"skills-index": routed("internal/skillsindex"),
 	"status":       routed("internal/status"),
 	"structure":    routed("internal/structure"),
 	"test":         routed("internal/testreport"),

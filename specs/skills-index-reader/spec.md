@@ -1,6 +1,6 @@
 # skills-index-reader
 
-Status: staged
+Status: implemented
 
 Decision source: decisions/deepening-2026-08.md (compiled ready map, reviewer-resolved 2026-08-15; tickets #4 and #13 govern this spec; the shell-script disposition was closed in conversation 2026-08-15 — delete `.bench/skills-index.sh`, the regenerator becomes `bench skills-index --write`)
 
