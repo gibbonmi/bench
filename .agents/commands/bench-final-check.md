@@ -48,8 +48,8 @@ of silently skipping it.
 
 ## Capture the implementation retro
 
-After any applicable post-merge tail, an implemented spec has one last exit
-duty: rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
+After any applicable post-merge tail, an implemented spec has two final exit
+duties. Rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
 spec's final green landing commit has flipped it to `Status: implemented`. A
 re-run replaces that slug's whole file; it never appends,
 and it leaves other pending retros untouched.
@@ -91,7 +91,14 @@ single guidance source for that vocabulary; the anchors registry needle pinning
 those terms is its enforcement copy, not a second source. A later reader of the
 drained tables reads the terms from the tables themselves.
 
-This file is pending capture for `/bench-what-next`, not
+Then read `capture/agent-performance/README.md` and both provider scorecards.
+Refresh the scorecard for every provider whose models served as implementer,
+reviewer, or orchestrator on this landing. Update its
+last-incorporated-landing line and fold the new evidence into affected aggregates;
+leave an uninvolved provider unchanged. Completion means every participating
+model/effort/role is accounted for without adding a per-run diary row.
+
+These files are pending capture for `/bench-what-next`, not
 a second roadmap. Do not run another gate or commit just to capture the retro;
 the successful landing boundary is already the verdict, and the retro leaves
 through the next reviewer-approved capture drain.

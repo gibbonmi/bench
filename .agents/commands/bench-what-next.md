@@ -160,11 +160,13 @@ rewrites `ROADMAP.md`; this is reviewed maintenance judgment, not global sorting
 Draft the full pass as one uncommitted batch diff: the reconciled roadmap, the
 emptied inbox, retro dispositions and removals, journal verdicts including
 dismissals, every `bench spec retire` the reconcile earned, and the rewritten
-`capture/session-handoff.md`. Everything the pass touches lands in that one
-diff and one commit. The gate is what a commit costs, and this pass is
-bookkeeping — splitting it across a drain commit, a retire commit, and a
-handoff commit buys nothing and pays the oracle three times. Leave no part of
-the pass for a follow-up invocation to commit.
+`capture/session-handoff.md`. Include any provider scorecards that
+`/bench-final-check` refreshed with the landing evidence; unlike per-spec retros,
+the scorecards persist after this batch. Everything the pass touches lands in
+that one diff and one commit. The gate is what a commit costs, and this pass is
+bookkeeping — splitting it across a drain commit, a retire commit, and a handoff
+commit buys nothing and pays the oracle three times. Leave no part of the pass
+for a follow-up invocation to commit.
 
 The diff includes the run's concise `CHANGELOG.md` entry only when the pass
 changes notable user-facing behavior. The approved commit and Git history own

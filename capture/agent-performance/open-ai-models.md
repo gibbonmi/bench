@@ -1,34 +1,12 @@
-# Agent implementation and orchestration scorecard
+# OpenAI model scorecard
 
-This working document guides model and effort routing from observed delivery
-quality, cost, and coordination load. It is a current scorecard, not a run log.
-Unknown measurements stay unknown; qualitative impressions never become invented
-token counts.
+Last incorporated landing: `gate-run-transaction` (`379035df`).
 
-## Update contract
+## Cost assumptions
 
-- Rewrite rows in place after a completed landing or controlled comparison.
-- Aggregate at most the latest 10 comparable assignments per model/effort/role.
-- Keep at most 6 routing rows and 5 representative-evidence rows.
-- Replace the least decision-relevant evidence when a stronger example arrives.
-- Keep the file at or below 120 lines; shorten or remove evidence before adding a
-  section.
-- Attribute rework to one origin: delegate, spec/ticket, tree/tooling, reviewer,
-  or orchestrator. Do not charge upstream omissions to the implementer.
-- Compare dollars separately from tokens and latency. The current planning input
-  prices Luna tokens at 0.2× Terra, so Luna reaches dollar break-even near 5×
-  Terra's token use; per-agent token telemetry is not currently available.
-
-## Measures
-
-| measure | meaning |
-| --- | --- |
-| first-pass accepted | Done-claim needed no coordinator-authored correction before commit |
-| coordinator catches | Material completeness, fence, correctness, or evidence misses |
-| repair rounds | Returned write pass after an accepted finding; in-pass feedback is still a catch |
-| mutation quality | Required mutations bit and production was restored exactly |
-| terminal quality | Focused checks, full gate, and exact-tip review outcome |
-| efficiency | Token evidence when available, relative dollar input, and wall-clock churn |
+The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches
+dollar break-even near 5x Terra's token use. Per-agent token telemetry is not
+currently available.
 
 ## Current routing
 
@@ -52,12 +30,12 @@ token counts.
 ## Current decisions
 
 - Use Luna/max for bounded implementation when its expected token use is plausibly
-  below 5× Terra and wall-clock latency is acceptable.
+  below 5x Terra and wall-clock latency is acceptable.
 - Use Terra/high for semantic review and for implementation requiring judgment
   across ownership fences, spec corrections, or several interacting lifecycle
   branches.
 - Judge the orchestrator on both terminal correctness and avoidable lifecycle
   churn. A green landing does not erase unnecessary gates, candidate moves, or
   discovery refusals.
-- Do not change routing from one run alone. Promote a signal to a general rule only
-  after two comparable runs or one controlled model comparison.
+- Change routing only after two comparable runs or one controlled model
+  comparison.

@@ -175,5 +175,6 @@ reviewer wants to set one aside, or you spot a tangent worth keeping, **you** ru
 drain. If `bench` isn't on PATH, append the dated line
 (`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yourself.
 
-Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`;
-`/bench-what-next` owns their reviewed drain.
+Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`
+and refreshes affected `capture/agent-performance/` scorecards;
+`/bench-what-next` owns the reviewed capture commit.

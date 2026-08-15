@@ -2,17 +2,24 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `2d2bcbe`, 3 dirty paths, 17 unpushed commits
+Branch: `main` — HEAD `64c409b`, 5 dirty paths, 18 unpushed commits
 Spec: none staged.
-Gate: green at `6461319` — stale, work tree `33da328`
+Gate: green at `e6e7c6b` — stale, work tree `6a4b4c1`
 
 ## State
 
-`gate-run-transaction` landed from reviewed pair `59faeec6` → `b7d38bd1` as `379035df`, then retired as `dac455bc`. Standards, Spec, and Coverage were each zero-finding on the final exact pair. The retained source and assignment are removed. `.bench/BENCH.md` now carries the fingerprinted `bench worktree clean` grammar in `2d2bcbeb`. Pending capture is intentionally uncommitted: `capture/retros/gate-run-transaction.md`; the existing cap-acceptance learning amended with mutation reachability; a separate three-class lifecycle-failure learning; and bounded `capture/agent-performance.md`. The scorecard caps itself at 10 comparable assignments per aggregate, 6 routing rows, 5 evidence rows, and 120 lines. Luna remains priced at 0.2× Terra for routing analysis; per-agent token telemetry is unavailable.
+Agent-performance capture is provider-specific under
+`capture/agent-performance/`. Its shared contract bounds current aggregates and
+evidence; `open-ai-models.md` carries the `gate-run-transaction` observations and
+`claude-models.md` preserves unknowns until a Claude landing supplies evidence.
+`/bench-final-check` now refreshes every participating provider during the
+implementation retro, and `/bench-what-next` includes those durable scorecards in
+the reviewed capture commit. Focused anchors, conformance, retros, and structure
+checks are green; the whole-tree gate remains for the landing commit.
 
 ## Next command
 
-`/bench-what-next` — the board's leading invocable signal (`drain`).
+`bench commit -m "capture: split agent performance by provider" .agents/commands/bench-final-check.md .agents/commands/bench-what-next.md .bench/BENCH.md capture/agent-performance.md capture/agent-performance/README.md capture/agent-performance/open-ai-models.md capture/agent-performance/claude-models.md capture/session-handoff.md`
 
 ## Shape
 
