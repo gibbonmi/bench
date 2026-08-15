@@ -104,7 +104,7 @@ func TestScanWorktreeAdminAcceptanceShapes(t *testing.T) {
 	if err := os.Symlink("lease-target", filepath.Join(admin, "bench-lease")); err != nil {
 		t.Fatal(err)
 	}
-	if err := ScanWorktreeAdmin(common); err != nil {
+	if err := ScanWorktreeAdmin(common); !errors.As(err, &got) || got.Shape != "symlink" || !strings.Contains(got.Error(), "bench-lease") {
 		t.Fatalf("Bench lease refusal = %v", err)
 	}
 	_ = os.Remove(filepath.Join(admin, "bench-lease"))
@@ -229,6 +229,36 @@ func TestScanWorktreeAdminRefusesUninspectableRoot(t *testing.T) {
 	var got *WorktreeScanError
 	if !errors.As(err, &got) || got.Path != "worktrees" || got.Action != "investigate the git failure" {
 		t.Fatalf("scan error = %v", err)
+	}
+}
+
+func TestWorktreesPropagatesScanTraversalFailureBeforePorcelain(t *testing.T) {
+	root := newRepo(t)
+	logPath := filepath.Join(t.TempDir(), "argv")
+	common := gittest.StubGit(t, root, "clean", logPath)
+	id := filepath.Join(common, "worktrees", "unreadable")
+	if err := os.MkdirAll(id, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(id, 0); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(id, 0o755) })
+	if _, err := os.ReadDir(id); err == nil {
+		capability.Capability(t, capability.Privilege, "host privileges bypass unreadable-directory traversal")
+	}
+
+	_, err := Worktrees(root)
+	var got *WorktreeScanError
+	if !errors.As(err, &got) || got.Path != "worktrees/unreadable" || got.Action != "investigate the git failure" {
+		t.Fatalf("scan traversal failure = %v", err)
+	}
+	data, readErr := os.ReadFile(logPath)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if strings.Contains(string(data), "worktree list") {
+		t.Fatalf("porcelain invoked after scan failure: %s", data)
 	}
 }
 

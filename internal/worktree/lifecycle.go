@@ -38,6 +38,8 @@ var ErrCleanupInterrupted = errors.New("cleanup interrupted")
 
 const leaseTimeLayout = "2006-01-02T15:04:05Z"
 
+const unknownLeaseReason = "assignment lease state is unknown"
+
 var chmodPool = os.Chmod
 
 type LeaseState string

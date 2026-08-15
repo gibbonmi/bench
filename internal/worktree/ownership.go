@@ -367,6 +367,13 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		return intent.CleanupReceipt{}, errors.New("assignment state does not accept release")
 	}
 	if resumeFingerprint == "" {
+		lease, leaseErr := LeaseFile(target)
+		if leaseErr != nil {
+			return intent.CleanupReceipt{}, leaseErr
+		}
+		if _, statErr := os.Lstat(lease); statErr == nil && ProbeLease(lease) == LeaseUnknown {
+			return intent.CleanupReceipt{}, retainedReleaseError(retainedPlan(target, ReasonUncertain, unknownLeaseReason), requestArg, targetArg)
+		}
 		if err := validateCreationBundle(root, *assignment); err != nil {
 			return intent.CleanupReceipt{}, fmt.Errorf("%w; checkout retained", err)
 		}
