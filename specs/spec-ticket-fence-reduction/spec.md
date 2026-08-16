@@ -149,11 +149,35 @@ bundle (map #9).
   fixtures; anchors whose needle is reworded (the `--reviewer` grammar, the
   falsification-question line, `craft-tdd`'s red-signal-ownership sentence, and
   the profile's loop-1/loop-2 routing) are rewritten in place.
-  `.agents/commands/bench-write-spec.md` carries twenty anchored needles today.
+  `.agents/commands/bench-write-spec.md` carries **47** anchored registry rows
+  today (34 `Require`, 8 `RequireInSection`, 4 `Forbid`, 1 `ForbidInSection`), all
+  live and green — the "twenty" this spec carried at staging was a miscount, not a
+  stale inventory. Eleven canary fixtures under `workflow-guidance-anchors/` embed a
+  full copy of the file, so a retargeted needle moves its fixture payload too.
   The shrink dispositions **every one** — retained in the 60-line file,
   retargeted to `craft-spec` with its section named, or retired with its canary —
   and the ticket's acceptance is the full enumeration, not a sample. `bench
   anchors` green over the tree is the check that no needle was left behind.
+- **Where the surviving prose lands (reviewer-closed 2026-08-16).** Only seven
+  needles live exclusively inside the moved template block; 31 more live in prose
+  that stays behind, totalling ~3,300 characters against a 60-line budget that
+  counts physical newlines. They do not all fit, and the resolution is a split by
+  ownership rather than deletion — nothing is retired for being surplus:
+  - The command keeps the entry contract, ownership, the exit handoff, the
+    spec-retire lifecycle, and the stale-command sweep. That is ~1,100 characters
+    of verbatim needle, which fits 60 lines with room for structure.
+  - The **review rubric** — the materiality exit, the cheapest-plausible degenerate
+    standard, and the falsification questions — moves to `craft-spec`, which already
+    owns the process. It is rubric, not phase choreography.
+  - Three sentences are **two-loop residue** and are reworded to one round rather
+    than relocated: the slicing step ("After loop 1 accepts … then run loop 2"), the
+    learnings hook ("When *either loop* takes more than one iteration"), and the
+    `Verification log: spec <n> + tickets <m>` two-count schema. Left alone they
+    survive as anchored false claims — the defect story 31 exists to prevent.
+  - `craft-spec` therefore overruns the 120-line `*/SKILL.md` glob and takes an
+    exact budget row of its own, resolving the headroom question the Further notes
+    left open.
+
 - **Confirmed rather than changed.** `projects/benchkit.md` already routes both
   write-spec loops to **mid model, high effort, read-only and same-family through
   the harness's native agent surface**. Map #12 and #15 therefore confirm the
