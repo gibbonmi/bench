@@ -56,10 +56,13 @@ and foreign dirt refuses or uses FT98's recoverable set-aside.
 
 Recovered review artifacts retain their frozen candidate pair and terminal verdict;
 resume reruns every review axis before repair or landing. Assigned worktree authoring
-keeps `main` read-only except controlled commits and landings.
+keeps `main` read-only except controlled commits and landings. Phase-close handoff
+capture never commits onto an already reviewed source tip; it is emitted as the
+continuation prompt or written on the destination after landing.
 
 Occurrence: 2026-08-15 interrupted FT189 review — a committed review pickup had no terminal verdict or recovery handoff.
 Occurrence: 2026-08-15 capture idea — concurrent authoring on `main` motivated assigned-worktree and serialized-landing evaluation.
+Occurrence: 2026-08-16 FT210 review — candidate-bound review would have been invalidated by committing phase-close handoff prose after the clean exact-tip verdict.
 
 The handoff decision chooses one authoritative `capture/session-handoff.md`,
 per-spec handoffs, or a generated per-workstream projection; it must not create a
@@ -291,6 +294,11 @@ request token; it never requires reconstructing a historical opaque input.
 
 Occurrence: FT189 landing recovery — a persisted request digest could not replay the original request token.
 
+An incomplete post-publication release names the ignored residue and prints the
+exact safe cleanup/release continuation rather than requiring manual inventory.
+
+Occurrence: 2026-08-16 FT210 landing — publication succeeded but release stopped on ignored gate logs and the refusal named no direct cleanup plan.
+
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.** Decide whether every worktree-mutating Git call pre-scans malformed private admin entries through FT189's refusal owner before Git can block. Entry: `/bench-shape-idea`.
 
 Occurrence: 2026-08-14 FT189 probe — add, lock, unlock, and prune call sites could hang on the malformed admin entries enumeration now refuses.
@@ -511,9 +519,12 @@ Occurrence: 2026-08-03 injected-interface-junctions review — a fake-only junct
 **FT191 (MEDIUM) — a fixture-and-seam inventory a charge can carry for free.**
 Extend `bench outline` or a sibling reader to emit helpers, doubles, and
 prior-art fixtures with `file:line`; decide at spec time whether this is a
-projection or an existing-outline mode.
+projection or an existing-outline mode. A universal safety claim also enumerates
+every executable consumer from registries and the call graph, then binds its
+mutation to the shared external boundary rather than a repair-owned seam.
 
 Occurrence: 2026-08-03 delegate retros — hand-built fixture inventories improved first-pass charge inputs.
+Occurrence: 2026-08-16 FT210 review — a planner-local counter stayed green while list and resume-clean reached target Git through older lease/classifier consumers.
 
 **FT192 (MEDIUM) — one source per fact reaches spec and ticket prose.** Specs
 name enumeration sources instead of copying implementation-derived counts;
@@ -567,20 +578,12 @@ implementation of "ordered by key" quietly answers one. Kit edit under
 
 Occurrence: 2026-08-15 skills-index-reader ticket 1 — a map-keyed accumulator silently dropped a second diagnostic while the full suite, four canaries, and every spec row stayed green (`capture/learnings.md`, verdicted here).
 
-**FT210 (MEDIUM) — a landed-but-unreleased assignment is invisible, and
-worktree retirement has no bulk path.** `bench worktree list` prints
-`state=active` for an assignment whose work has fully landed and whose writer is
-long gone, so the session-start `retained active=N` reads as healthy when it means
-the opposite. Nothing enforces the release that would clear it: a multi-ticket
-build releases its integration source and leaves every per-ticket worktree behind.
-Distinguish "a writer is in here" from "nobody ever released this", and give the
-sweep a sanctioned bulk form so retiring a build's trees is not a hand-written
-shell loop. Either the coordinator releases at ticket close, or the closing phase
-sweeps while it still knows which trees were its own. Overlaps FT199's
-classification vocabulary one level down, at assignments rather than refs.
-Entry: `/bench-shape-idea`.
-
-Occurrence: 2026-08-16 FT208 aftermath — ten worktrees survived the build, seven still `active` because release was never called, and clearing them by hand exposed three defects in the recovery path.
+**FT211 (MEDIUM) — spec and ticket fences shrink without weakening coverage.**
+`specs/spec-ticket-fence-reduction/spec.md` is staged: accept a reduced coverage
+schema beside the legacy forms, project one row shape, consolidate the spec
+template and edge/red-signal ownership, and replace two capped review loops with
+one review over the spec-and-ticket pair. Entry:
+`/bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high`.
 
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 Agents repeatedly shape harness transcripts and session evidence with
@@ -629,7 +632,11 @@ linked repos get the same protection.
 code does X” claim in Problem, Solution, and Implementation against the tree at
 spec time: name the command/check or mark uncertainty. `/bench-write-spec`
 step 9 applies the falsification pass, while review audits call-site tables and
-cross-products.
+cross-products. A decision source older than `HEAD` has each premise rechecked
+against its target and file history before it becomes a story; already-landed
+work is recorded as an implementation decision, not specified again. A grill
+recommendation that asserts current-code behavior names the evidence read in the
+current session before the premise can close a decision.
 
 Occurrence: retired minimal-subprocess-data-exposure spec — its gate premise was stale when the build reached stage 1b.
 Occurrence: retired cli-grammar-and-capability-evidence spec — an asserted `go test` behavior was false when stories were built.
@@ -649,6 +656,7 @@ named as a read-before-rows list, and each ticket's end state is walked against
 every guard the spec itself adds.
 
 Occurrence: 2026-08-15 skills-index-reader spec loop — three review rounds on unread enforcement surfaces and a ticket boundary that left the spec's own guard red (`capture/learnings.md`, verdicted here).
+Occurrence: 2026-08-16 FT210 and spec-ticket-fence authoring — false current-code premises reopened a decision, and a pre-HEAD map specified prose commit `24cad87d` had already landed.
 
 
 
@@ -664,6 +672,12 @@ craft-skill library and the demonstrated-delta audit over the rest of the
 always-loaded surface. Kit edit under the
 `craft-synthesis` discipline; starts as a grill (`/bench-shape-idea`) because
 the cut line on always-loaded rules is a reviewer decision.
+
+The prose cut inventories anchor-pinned clauses first and consolidates or retires
+their enforcement owners before setting the new budget; anchors are constraints
+to disposition, not a reason to leave duplicated ceremony in place.
+
+Occurrence: 2026-08-16 write-spec weight review — the remaining 1,300 words were mostly anchor-pinned, so anchor consolidation became the prerequisite to another cut.
 
 The audit evaluates guidance against both loads an agent pays — bytes loaded
 into context and cognitive branches introduced after loading — and treats
@@ -819,7 +833,9 @@ near-zero runs are invalid, and caveats must match charged mechanisms.
 Registry-entry tickets derive fences from the previous entry's landing and trace
 every new-name crossing. Scope repairs from the invariant, reread each repaired
 artifact whole, target false claims in red-mutation checks, and give every
-prose-only phase step a `Contracts:` landing site.
+prose-only phase step a `Contracts:` landing site. A repair that changes a shared
+classifier consumes FT191's executable-consumer inventory and reruns its external-
+boundary mutation before exact-tip review.
 
 Lifecycle assignments use candidate ancestry while ordinary delegations may
 require ff-to-main. Headless wrappers distinguish edits from stalls; review-only
@@ -849,6 +865,7 @@ Occurrence: canary-planted-reason close — synthetic/live-root and candidate/ba
 Occurrence: gate-run-transaction retro — scorecard attribution separates delegate rework from spec-origin findings.
 Occurrence: 2026-08-15 skills-index hostile-input retro — both repair rounds shared one shape: the ticket stated a principle and the delegate implemented the single instance its acceptance row named.
 Occurrence: 2026-08-15 FT208 authoring — the producer-reader inventory was scoped to the consolidated reader and consumers were inferred from filenames instead of enumerated from executable registries and the call graph (`capture/learnings.md`, verdicted here).
+Occurrence: 2026-08-16 FT210 repair — the first hostile-metadata repair proved only its newly introduced planner seam and missed two older consumers.
 
 
 
@@ -982,9 +999,12 @@ Occurrence: FT126 recurrence — a scoped conformance command again omitted `BEN
 A red signal reading "already covered by <named fixtures>" is a claim about those
 fixtures' expectations, not their existence: the row cites the exact expectation
 text that makes it red, and a fixture covering the same check is not one covering
-the same diagnostic.
+the same diagnostic. It names the cheapest wrong implementation and the field,
+offset, or value where the expectation differs; checked-in goldens asserting the
+same output are inventoried before any one test is called the sole red.
 
 Occurrence: 2026-08-15 skills-index-reader review — row SI4 named four real canaries, none of which asserted the diagnostic it claimed (`capture/learnings.md`, verdicted here).
+Occurrence: 2026-08-16 spec-ticket-fence authoring — a true empty-cell assertion did not distinguish the old and new schemas, and five goldens already held a projection red attributed to one helper.
 
 
 
@@ -1003,6 +1023,9 @@ Every cross-fence fact carries declaration, resolving owner, exported value,
 consuming path, and reciprocal edge. Review counts exact-anchor occurrences
 before deletion, gives every closure member its mutation, checks lifecycle before
 dependency blocking, and treats unchanged consumers as integration surfaces.
+Vertical tickets whose behavior necessarily uses an established dispatcher,
+renderer, or terminal-lifecycle owner include that path in the advisory fence
+before delegation rather than discovering the seam as an out-of-fence repair.
 Preflight rejects malformed covers/contracts/fences, expands compound rows into
 independently removable members with retained fixtures, assigns canary-universe
 ownership, revalidates spec-ticket breakdowns against the tree, and includes
@@ -1018,6 +1041,7 @@ Occurrence: spec-authoring-and-light-path close — canary-universe changes lack
 Occurrence: 2026-08-13 staged-spec handoff — breakdown approval moved earlier, with implementation-time tree revalidation (source: `capture/IDEAS.md`).
 Occurrence: bench-preflight close — line-oriented grammar needed explicit cross-line hostile variants (source: retro).
 Occurrence: 2026-08-16 light-path ticket — the template was copied from a sibling in `specs/`, which reintroduced the retired `Assumptions:` field.
+Occurrence: 2026-08-16 FT210 implementation — plan, apply, and half-apply slices each crossed an established owner omitted from the advisory ticket fence.
 
 
 
@@ -1321,6 +1345,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT210 decides how a landed-but-unreleased assignment becomes visible and how a build's worktrees are retired in bulk.
+1. `/bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high` — FT211 builds the already-staged reduced coverage and authoring-fence contract.
 2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
 3. `/bench-write-spec` — FT185 can make gate and commit results one structured, concise public projection.

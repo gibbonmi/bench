@@ -1,25 +1,22 @@
 # Session handoff
 
-Repository: `89d5d0eebf093c03c876ddd10b63473c-ee22771c3ed7bf922904bf893b610286` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-3325222104/89d5d0eebf093c03c876ddd10b63473c-ee22771c3ed7bf922904bf893b610286`
-Branch: `bench/assign/89d5d0eebf093c03c876ddd10b63473c/ee22771c3ed7bf922904bf893b610286` — HEAD `7014bfa`, clean tree, 49 unpushed commits
-Spec: `specs/worktree-landed-retirement/spec.md` (Status: staged)
-Gate: green at `57162e3` — stale, work tree `9b8a805`
+Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `b6957e7`, 4 dirty paths, 0 unpushed commits
+Spec: `specs/spec-ticket-fence-reduction/spec.md` (Status: staged)
+Gate: green at `8516a2d` — stale, work tree `1261719`
 
 ## State
 
-Implementation is complete on retained assignment
-`ee22771c3ed7bf922904bf893b610286`. All five tickets are committed serially and
-green through the full gate. The frozen review base is `68ebb9ce`; the candidate
-includes the approved ownership-fence repairs for the handoff and derived canary
-inventory count.
-
-Semantic review is next: run three independent Terra/high axes over the exact
-base/source pair. No review, landing, retirement, retro, or push has run yet.
+The `/bench-what-next` batch is prepared and uncommitted. It removes shipped FT210,
+adds FT211 for the staged `spec-ticket-fence-reduction` build, folds the pending idea,
+five learnings, and FT210 retro into existing roadmap owners, refreshes the OpenAI
+scorecard, and drains ideas/learnings/retros to zero. Main at `b6957e7f` is pushed;
+the five-path maintenance diff awaits reviewer approval.
 
 ## Next command
 
-`$bench-review-implementation worktree-landed-retirement --base 68ebb9cef9a39a3d35349b9dc4534dad2c044f33 --reviewer terra high`
+`$bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high`
 
 ## Shape
 

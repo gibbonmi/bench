@@ -1,1 +1,0 @@
-- 2026-08-16  Cut bench-write-spec.md prose further: it is ~1300 words after the to-spec remake because most surviving sentences are anchor-pinned; retiring or consolidating those anchors (loop protocol, --reviewer grammar, falsification questions, retire step) is the reviewer decision that unlocks the next cut
