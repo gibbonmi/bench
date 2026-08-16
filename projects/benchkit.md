@@ -131,6 +131,10 @@ coverage map; a class skipped here returns as a regression.
 - a dangling symlink where a file is expected: a plain read reports it as
   not-found, so a reader that does not stat first classifies a broken link as an
   authoritative empty state
+- a *live* symlink where a generator's input file is expected: following it makes
+  bytes outside the graded tree authoritative, and a generator that then rewrites
+  that path writes through the link to a target the tree never named. Refusing a
+  broken link is not enough — the working link is the destructive half
 - unquoted multi-word arguments (`$*` vs `$1`)
 - lifecycle guidance that names every sanctioned operation but routes one step
   through raw Git anyway; swap the route while preserving all command tokens, so
