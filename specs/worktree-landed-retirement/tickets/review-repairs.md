@@ -1,7 +1,7 @@
 # Repair semantic-review findings
 
 Blocked by: make-release-a-workflow-step.md
-Writes: internal/worktree/clean_landed.go, internal/worktree/worktree.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_landed_hostile_test.go, reviews/worktree-landed-retirement.md
+Writes: internal/worktree/clean_landed.go, internal/worktree/worktree.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_landed_hostile_test.go, internal/canary/inventory_test.go, reviews/worktree-landed-retirement.md
 
 ## What to build
 
@@ -16,3 +16,5 @@ Delete the transient review pickup in the same green repair commit.
 - [ ] `(covers LR9)` Every initial-drift partition exits 1, emits the exact stale-fingerprint diagnostic, and mutates and settles nothing.
 - [ ] `(covers LR8)` A fresh CLI process lists only the retained assignment after apply.
 - [ ] `(covers LR18)` The ESC target remains present and its help contains one safe pointer-style per-path remedy with no raw ESC byte.
+- [ ] `(covers LR19)` Every special assignment-path shape makes zero calls to the target-path explicit planner/Git route.
+- [ ] The canary inventory test checks successful output shape without hard-coding the repository-derived fixture total.
