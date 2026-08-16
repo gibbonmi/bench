@@ -1,7 +1,6 @@
 package packagesurface
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -45,21 +44,17 @@ func ContractDocumentInputs(root string) ([]string, error) {
 	return slices.Compact(paths), nil
 }
 
+// consumerPayloadRows reads the graded root's allowlist through the canonical payload
+// reader: classification before the open, and one parser for syntax and row validity,
+// so this inventory cannot resolve a document set from rows the allowlist forbids. The
+// allowlist is this check's subject, so absence is a defect here rather than optional.
 func consumerPayloadRows(root string) ([]kitpayload.PayloadRow, error) {
-	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(consumerPayloadPath)))
+	rows, absent, err := kitpayload.PayloadRowsAt(filepath.Join(root, filepath.FromSlash(consumerPayloadPath)))
+	if absent {
+		return nil, fmt.Errorf("%s is absent: the consumer payload inventory has no source", consumerPayloadPath)
+	}
 	if err != nil {
-		return nil, fmt.Errorf("read consumer payload inventory: %w", err)
-	}
-	var rows []kitpayload.PayloadRow
-	if err := json.Unmarshal(data, &rows); err != nil {
-		return nil, fmt.Errorf("parse consumer payload inventory: %w", err)
-	}
-	seen := make(map[string]bool, len(rows))
-	for _, row := range rows {
-		if !consumerPayloadSourceSafe(row.Source) || seen[row.Source] || row.Audience != kitpayload.PayloadAudienceConsumer && row.Audience != kitpayload.PayloadAudienceKitOnly {
-			return nil, fmt.Errorf("consumer payload inventory contains an unresolved row: %+v", row)
-		}
-		seen[row.Source] = true
+		return nil, err
 	}
 	return rows, nil
 }
@@ -109,16 +104,4 @@ func requireConsumerAsset(root, source string) error {
 		return fmt.Errorf("consumer inventory asset %q is not a regular file", source)
 	}
 	return nil
-}
-
-func consumerPayloadSourceSafe(source string) bool {
-	if source == "" || strings.HasPrefix(source, "/") || strings.ContainsRune(source, '\\') {
-		return false
-	}
-	for _, segment := range strings.Split(source, "/") {
-		if segment == "" || segment == "." || segment == ".." {
-			return false
-		}
-	}
-	return true
 }

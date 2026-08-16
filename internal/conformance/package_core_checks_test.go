@@ -9,8 +9,10 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	kitpayload "github.com/gibbonmi/bench"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/packagesurface"
@@ -90,13 +92,15 @@ func checkPackageFiles(root string) []string {
 // empty prefix set every packed path passes vacuously, so the emptied-allowlist case
 // must be caught here rather than silently skipped alongside the missing-file case.
 func checkNoKitOnlyPackedAssets(root, packJSON string) []string {
-	data, err := os.ReadFile(filepath.Join(root, ".bench", "consumer-payload.json"))
-	if err != nil {
+	rows, absent, err := kitpayload.PayloadRowsAt(filepath.Join(root, ".bench", "consumer-payload.json"))
+	if absent {
 		return nil
 	}
-	var rows []kitpayload.PayloadRow
-	if err := json.Unmarshal(data, &rows); err != nil {
-		return nil
+	if err != nil {
+		// A present allowlist that does not resolve cannot be silently skipped the way
+		// an absent one is: the prefix set would be empty and every packed path would
+		// pass vacuously, which is the exact failure this guard exists to catch.
+		return []string{err.Error()}
 	}
 	prefixes := kitpayload.PayloadKitOnlyPrefixes(rows)
 	var diags []string
@@ -312,4 +316,95 @@ func platformMatrix(path string) ([]platformTarget, error) {
 		return nil, err
 	}
 	return plan.Targets, nil
+}
+
+// hostilePayloadPlanters extends the shared producer partition to the allowlist: the
+// byte-shape half reuses hostileSkillPlanters (one owner for FIFO, both link forms,
+// oversized, and invalid UTF-8), and the semantic half adds the row defects only the
+// canonical parser can see. A JSON-decode-only reader survives the first group and
+// admits the second.
+func hostilePayloadPlanters(t *testing.T) map[string]func(*testing.T, string) {
+	t.Helper()
+	planters := map[string]func(*testing.T, string){}
+	for kind, plant := range hostileSkillPlanters {
+		planters[kind] = plant
+	}
+	for kind, content := range map[string]string{
+		"empty":            "",
+		"invalid JSON":     "{not json",
+		"unknown audience": `[{"source":"AGENTS.md","audience":"everyone"}]`,
+		"empty source":     `[{"source":"","audience":"kit-only"}]`,
+		"unsafe source":    `[{"source":"../escape","audience":"kit-only"}]`,
+		"duplicate source": `[{"source":"AGENTS.md","audience":"consumer"},{"source":"AGENTS.md","audience":"kit-only"}]`,
+	} {
+		planters[kind] = func(t *testing.T, path string) {
+			t.Helper()
+			if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	return planters
+}
+
+// TestRegisteredPayloadConsumersRefuseHostilePayload is the allowlist composition row.
+// The package-core guard, the registered package-shipped-surface check, and the
+// packagesurface contract-document inventory all read the same tracked file, so each
+// has to complete over a hostile or invalid one and name the path it refused —
+// otherwise skills-index can go green while a package reader hangs in open(2) or ships
+// an inventory derived from rows the allowlist forbids.
+func TestRegisteredPayloadConsumersRefuseHostilePayload(t *testing.T) {
+	const rel = ".bench/consumer-payload.json"
+	// One packed file list, enough for the guard to have something to grade: the
+	// refusal under test happens before it is consulted.
+	const packJSON = `[{"files":[{"path":"package/AGENTS.md"}]}]`
+	for kind, plant := range hostilePayloadPlanters(t) {
+		t.Run(kind, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			// package.json is the shipped-surface check's own entry condition; without
+			// it that consumer returns before it reaches the allowlist.
+			if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"files":[".agents/"]}`), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			plant(t, filepath.Join(root, ".bench", "consumer-payload.json"))
+
+			consumers := map[string]func() []string{
+				// The guard function itself, not the registered package-core-guard
+				// binding: that binding reaches this reader only through a real
+				// `npm pack`, which a fixture root cannot satisfy.
+				"package-core-guard": func() []string { return checkNoKitOnlyPackedAssets(root, packJSON) },
+				"package-shipped-surface": func() []string {
+					binding, bound := conformanceChecks["package-shipped-surface"]
+					if !bound {
+						t.Fatal("package-shipped-surface conformance owner is not bound")
+					}
+					return binding.run(root, root, registry.Dev)
+				},
+				"packagesurface.ContractDocumentInputs": func() []string {
+					_, err := packagesurface.ContractDocumentInputs(root)
+					if err == nil {
+						return nil
+					}
+					return []string{err.Error()}
+				},
+			}
+			for name, run := range consumers {
+				t.Run(name, func(t *testing.T) {
+					done := make(chan []string, 1)
+					go func() { done <- run() }()
+					select {
+					case diags := <-done:
+						if !containsDiagnostic(diags, rel) {
+							t.Fatalf("%s over a %s %s produced %q, want a diagnostic naming the refused path", name, kind, rel, diags)
+						}
+					case <-time.After(bounds.TestDeadline(0)):
+						t.Fatalf("%s blocked on a %s %s, so it opened the path before classifying it", name, kind, rel)
+					}
+				})
+			}
+		})
+	}
 }

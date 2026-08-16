@@ -13,6 +13,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 //go:embed .bench/consumer-payload.json
@@ -40,14 +42,50 @@ const (
 // same tracked bytes directly (a JSON file, not a Go call) rather than hand-listing the
 // payload a second time.
 func PayloadRows() ([]PayloadRow, error) {
+	return PayloadRowsFrom(consumerPayloadJSON)
+}
+
+// PayloadRowsFrom is the one parser for allowlist bytes, wherever they came from:
+// decoding and row validation are a single step so that no reader can decode the JSON
+// and then act on rows the allowlist forbids. Empty bytes are a present, unusable
+// allowlist and are refused here; only a caller that never reaches this parser — an
+// absent file — may treat the allowlist as optional.
+func PayloadRowsFrom(data []byte) ([]PayloadRow, error) {
 	var rows []PayloadRow
-	if err := json.Unmarshal(consumerPayloadJSON, &rows); err != nil {
+	if err := json.Unmarshal(data, &rows); err != nil {
 		return nil, fmt.Errorf("consumer payload allowlist is invalid: %w", err)
 	}
 	if err := validatePayloadRows(rows); err != nil {
 		return nil, err
 	}
 	return rows, nil
+}
+
+// PayloadRowsAt reads the allowlist from the filesystem for every consumer that reads
+// the tracked file rather than the embedded copy. The path is attacker-shaped input to
+// checks that gate what ships, so it is classified before it is opened — a link is
+// refused rather than followed and a FIFO cannot block a check in open(2) — and the
+// classified bytes then go through the same parser the embedded copy uses. absent is
+// reported separately because only one caller (the skills index, which withholds
+// nothing when there is no allowlist) is allowed to continue on it.
+func PayloadRowsAt(path string) (rows []PayloadRow, absent bool, err error) {
+	classified := bounds.ClassifyNoFollow(path)
+	switch classified.State {
+	case bounds.StateAbsent:
+		return nil, true, nil
+	case bounds.StateParsed:
+	default:
+		reason := classified.Reason
+		if reason == "" {
+			reason = string(classified.State)
+		}
+		return nil, false, fmt.Errorf("%s unreadable: %s", path, reason)
+	}
+	rows, err = PayloadRowsFrom(classified.Data)
+	if err != nil {
+		return nil, false, fmt.Errorf("%s: %w", path, err)
+	}
+	return rows, false, nil
 }
 
 // validatePayloadRows fails closed on the row shapes the readers downstream cannot

@@ -55,3 +55,35 @@ func TestPayloadRowsAcceptsTheShippedAllowlist(t *testing.T) {
 		t.Fatal("the shipped consumer-payload allowlist parsed to no rows")
 	}
 }
+
+// TestPayloadRowsFromRejectsInvalidBytes pins the one parser every consumer reaches:
+// syntax and row semantics are refused together, so a reader that decoded the JSON
+// itself and skipped the row predicates cannot admit a row the allowlist forbids.
+// Empty bytes are a present, unusable allowlist, not an absent one.
+func TestPayloadRowsFromRejectsInvalidBytes(t *testing.T) {
+	cases := []struct {
+		name    string
+		data    string
+		wantErr bool
+	}{
+		{name: "the shipped shape parses", data: `[{"source":"bin/bench.sh","mode":"0755","audience":"consumer"}]`},
+		{name: "empty bytes are not an allowlist", data: "", wantErr: true},
+		{name: "truncated JSON", data: `[{"source":"bin/bench.sh"`, wantErr: true},
+		{name: "not an array", data: `{"source":"bin/bench.sh"}`, wantErr: true},
+		{name: "unknown audience", data: `[{"source":"bin/bench.sh","audience":"everyone"}]`, wantErr: true},
+		{name: "empty source", data: `[{"source":"","audience":"consumer"}]`, wantErr: true},
+		{name: "unsafe source", data: `[{"source":"../x","audience":"consumer"}]`, wantErr: true},
+		{name: "duplicate source", data: `[{"source":"a","audience":"consumer"},{"source":"a","audience":"kit-only"}]`, wantErr: true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := PayloadRowsFrom([]byte(tc.data))
+			if tc.wantErr && err == nil {
+				t.Fatalf("PayloadRowsFrom(%q) accepted bytes it must refuse", tc.data)
+			}
+			if !tc.wantErr && err != nil {
+				t.Fatalf("PayloadRowsFrom(%q) refused a valid allowlist: %v", tc.data, err)
+			}
+		})
+	}
+}

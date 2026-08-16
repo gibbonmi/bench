@@ -10,7 +10,6 @@
 package skillsindex
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -37,13 +36,15 @@ const (
 	regenerateHint = "(regenerate: bench skills-index --write)"
 )
 
-// ErrAllowlistUnreadable is Write's refusal when the allowlist exists but does not
-// parse. Generating anyway would commit a block with every kit-only marker missing
-// and attribute the resulting drift to the skills rather than to the reader that
-// dropped them, so the write is refused before the file is touched. Check keeps the
-// opposite posture — it marks nothing and adds no diagnostic — because the gate must
-// not gain a red the index itself did not earn.
-var ErrAllowlistUnreadable = errors.New(allowlistRel + " unreadable: kit-only marking unresolved (write refused)")
+// allowlistDiagnostic is the one wording for a present allowlist the reader cannot
+// resolve. Both callers refuse on it: generating would commit a block with every
+// kit-only marker missing, and grading against that block would attribute the reader's
+// defect to the skills.
+const allowlistDiagnostic = allowlistRel + " unreadable: kit-only marking unresolved"
+
+// ErrAllowlistUnreadable is Write's refusal when the allowlist is present but does not
+// resolve, so the write is refused before the reference file is touched.
+var ErrAllowlistUnreadable = errors.New(allowlistDiagnostic + " (write refused)")
 
 // Entry is one skill's index row as data. Trigger is empty for a skill that declares
 // no `index:` frontmatter; such a skill renders no line but still earns a diagnostic,
@@ -101,8 +102,8 @@ func skillName(line string) string {
 // Entries enumerates root's skills in alphabetical directory order, skipping a skill
 // whose name has a same-named .agents/commands/<name>.md — a command adapter, which
 // the slash menu already surfaces. The error is non-nil only when the allowlist is
-// present and unparseable; entries come back unmarked in that case so a caller can
-// choose between refusing the write (Write) and grading what it can (Check).
+// present and does not resolve; entries come back unmarked in that case, and both
+// callers refuse on the error rather than acting on unmarked rows.
 func Entries(root string) ([]Entry, error) {
 	kitOnly, err := kitOnlySources(root)
 	// Literal child enumeration, not a glob: the root is operator-supplied text, and a
@@ -183,7 +184,7 @@ func FrontmatterField(path, key string) string {
 // line last. The order is part of the contract: the gate and `bench skills-index`
 // print the same sequence.
 func Check(root string) []string {
-	entries, _ := Entries(root)
+	entries, allowlistErr := Entries(root)
 	// A skill can earn more than one diagnostic — no trigger and a stale committed
 	// entry is the colliding case — so this accumulates per skill rather than
 	// keying one string per name, which would silently drop the first of the pair.
@@ -206,6 +207,12 @@ func Check(root string) []string {
 		line := entry.Line()
 		expected = append(expected, line)
 		expectedByName[entry.Name] = line
+	}
+
+	if allowlistErr != nil {
+		// Every kit-only marker in the generated block would be missing, so the block
+		// comparison below would report drift the skills did not cause.
+		return append(ordered(attributed), allowlistDiagnostic)
 	}
 
 	ref, refusal := readReference(root)
@@ -326,18 +333,18 @@ func ReferenceRefusalPrefix() string {
 	return refusedDiagnostic(referenceRel, "")
 }
 
-// kitOnlySources reads the allowlist's withheld skill sources. The allowlist is the
-// one source of who receives an asset, so the index marks the same rows instead of
-// naming the kit-only skills a second time; it is JSON, so a row that orders
-// "audience" before "source" resolves like any other. A tree with no allowlist has
-// nothing withheld, which is also what the generator concludes.
+// kitOnlySources reads the allowlist's withheld skill sources through the canonical
+// payload reader, so the index marks exactly the rows every other destination honours
+// instead of naming the kit-only skills — or re-deriving row validity — a second time.
+// Only absence is optional: a tree with no allowlist withholds nothing, which is also
+// what the generator concludes. Anything present that does not resolve, empty bytes
+// included, leaves marking unresolved.
 func kitOnlySources(root string) (map[string]bool, error) {
-	classified := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(allowlistRel)))
-	if classified.State != bounds.StateParsed {
+	rows, absent, err := kitpayload.PayloadRowsAt(filepath.Join(root, filepath.FromSlash(allowlistRel)))
+	if absent {
 		return nil, nil
 	}
-	var rows []kitpayload.PayloadRow
-	if err := json.Unmarshal(classified.Data, &rows); err != nil {
+	if err != nil {
 		return nil, ErrAllowlistUnreadable
 	}
 	out := map[string]bool{}
