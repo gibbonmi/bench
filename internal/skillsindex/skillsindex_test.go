@@ -337,3 +337,32 @@ func TestRefusedCommandNamedSkillIsDiagnosedBeforeAdapterSuppression(t *testing.
 		t.Fatalf("Write changed the reference:\n%q", string(after))
 	}
 }
+
+// A skill file is attacker-shaped input, so only a fence that opens at byte zero and
+// closes may authorize an index field: a late fence lets prose smuggle one in, and an
+// unclosed opener lets the whole body act as frontmatter.
+func TestFrontmatterFieldRequiresCompleteLeadingFence(t *testing.T) {
+	for _, row := range []struct {
+		name    string
+		content string
+		want    string
+	}{
+		{"complete leading fence", "---\nname: probe\nindex: taken\n---\n", "taken"},
+		{"unclosed opener without a trailing newline", "---\nname: probe\nindex: taken", ""},
+		{"closing fence as a last line without a trailing newline", "---\nname: probe\nindex: taken\n---", "taken"},
+		{"duplicate key keeps the first value", "---\nindex: first value\nindex: second value\n---\n", "first value"},
+		{"duplicate key keeps an empty first value", "---\nindex:\nindex: second value\n---\n", ""},
+		{"text before the opener", "prose\n---\nindex: smuggled\n---\n", ""},
+		{"blank line before the opener", "\n---\nindex: smuggled\n---\n", ""},
+		{"unclosed opener", "---\nname: probe\nindex: smuggled\n", ""},
+		{"no fence at all", "index: smuggled\n", ""},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root := t.TempDir()
+			writeFile(t, root, "SKILL.md", row.content)
+			if got := FrontmatterField(filepath.Join(root, "SKILL.md"), "index"); got != row.want {
+				t.Fatalf("index = %q, want %q", got, row.want)
+			}
+		})
+	}
+}

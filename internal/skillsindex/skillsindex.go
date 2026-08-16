@@ -146,9 +146,11 @@ func Entries(root string) ([]Entry, error) {
 	return entries, err
 }
 
-// FrontmatterField returns the first value of key inside path's leading `---` fence.
-// Nothing after the closing fence counts, so a body line that happens to start with
-// the key is not frontmatter.
+// FrontmatterField returns the first value of key inside path's complete leading
+// `---` fence. The fence must open at byte zero and close: prose before the opener
+// and an unclosed opener are body text, so neither can authorize an indexed field.
+// Nothing after the closing fence counts either. This is the `<key>:` prefix contract,
+// not YAML — nesting, quoting, and schema validation stay out of scope.
 func FrontmatterField(path, key string) string {
 	// The producer classifier, not os.ReadFile: this path is attacker-shaped input to
 	// generated output, so a link is refused rather than followed and a FIFO cannot
@@ -157,21 +159,22 @@ func FrontmatterField(path, key string) string {
 	if classified.State != bounds.StateParsed {
 		return ""
 	}
-	data := classified.Data
-	fence := 0
+	lines := strings.Split(string(classified.Data), "\n")
+	if len(lines) == 0 || lines[0] != "---" {
+		return ""
+	}
 	prefix := key + ":"
-	for _, line := range strings.Split(string(data), "\n") {
+	value, found := "", false
+	for _, line := range lines[1:] {
 		if line == "---" {
-			fence++
-			continue
+			return value
 		}
-		if fence == 1 && strings.HasPrefix(line, prefix) {
-			return strings.TrimSpace(strings.TrimPrefix(line, prefix))
-		}
-		if fence > 1 {
-			return ""
+		if !found && strings.HasPrefix(line, prefix) {
+			value, found = strings.TrimSpace(strings.TrimPrefix(line, prefix)), true
 		}
 	}
+	// Falling out of the loop means the opener never closed, so the body it swallowed
+	// is not frontmatter and the value it appeared to carry is withheld.
 	return ""
 }
 
