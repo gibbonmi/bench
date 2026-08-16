@@ -1,7 +1,7 @@
 # Repair semantic-review findings
 
 Blocked by: make-release-a-workflow-step.md
-Writes: internal/worktree/clean_landed.go, internal/worktree/worktree.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_landed_hostile_test.go, internal/canary/inventory_test.go, reviews/worktree-landed-retirement.md
+Writes: internal/worktree/clean_landed.go, internal/worktree/list.go, internal/worktree/resume.go, internal/worktree/worktree.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_landed_hostile_test.go, internal/worktree/landed_test.go, internal/canary/inventory_test.go, reviews/worktree-landed-retirement.md
 
 ## What to build
 
@@ -18,3 +18,4 @@ Delete the transient review pickup in the same green repair commit.
 - [ ] `(covers LR18)` The ESC target remains present and its help contains one safe pointer-style per-path remedy with no raw ESC byte.
 - [ ] `(covers LR19)` Every special assignment-path shape makes zero calls to the target-path explicit planner/Git route.
 - [ ] The canary inventory test checks successful output shape without hard-coding the repository-derived fixture total.
+- [ ] `(covers LR19)` `worktree list` and `resume-clean` reject checkout directories with special `.git` metadata before any target-path explicit planner/Git call and complete without blocking.
