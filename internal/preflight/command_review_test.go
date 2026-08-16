@@ -99,8 +99,8 @@ func TestCommandFencePrefixBoundary(t *testing.T) {
 	slug := "boundary"
 	initRepo(t)
 	body := "# boundary\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
-		"### Acceptance coverage map\n| row | story | behavior | seam | red signal | why it catches the failure |\n" +
-		"|---|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | cmd fails | catches z |\n\n" +
+		"### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n" +
+		"|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | catches z |\n\n" +
 		"## Ownership fences\n\n- `internal/git`\n"
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
 	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1.\n")

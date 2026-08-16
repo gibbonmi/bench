@@ -1,4 +1,4 @@
 spec: spec.md
 state: mapped
-rows[1]{story,seam,red_signal}:
-  "9",s,red
+rows[1]{story,behavior,seam}:
+  "9",b,s

@@ -76,7 +76,7 @@ func TestStateAndRows(t *testing.T) {
 	if State(p) != "mapped" {
 		t.Fatalf("state = %q", State(p))
 	}
-	want := [][]string{{"2–3", "cli seam", "cmd fails, loudly"}, {"edge of 1", "gate", "already covered"}}
+	want := [][]string{{"2–3", `does x \| y`, "cli seam"}, {"edge of 1", "edge case", "gate"}}
 	if got := Rows(p); !reflect.DeepEqual(got, want) {
 		t.Errorf("Rows = %v, want %v", got, want)
 	}
@@ -216,8 +216,8 @@ func TestRowsProjectsShortRowUnderBothSchemas(t *testing.T) {
 	if State(legacy) != "mapped" {
 		t.Fatalf("legacy state = %q, want mapped", State(legacy))
 	}
-	// Row 1 carries no seam and no red signal; row 2 carries a seam but no red signal.
-	wantLegacy := [][]string{{"1", "", ""}, {"2", "cli seam", ""}}
+	// Row 1 carries a behavior but no seam; row 2 carries both.
+	wantLegacy := [][]string{{"1", "does x", ""}, {"2", "does y", "cli seam"}}
 	if got := Rows(legacy); !reflect.DeepEqual(got, wantLegacy) {
 		t.Errorf("Rows = %v, want %v", got, wantLegacy)
 	}
@@ -230,7 +230,7 @@ func TestRowsProjectsShortRowUnderBothSchemas(t *testing.T) {
 	}
 	// The leading row-ID cell shifts every field one place right, so the same
 	// shortfall lands on the same two names.
-	wantOptIn := [][]string{{"1", "", ""}, {"2", "gate", ""}}
+	wantOptIn := [][]string{{"1", "does x", ""}, {"2", "does y", "gate"}}
 	if got := Rows(optIn); !reflect.DeepEqual(got, wantOptIn) {
 		t.Errorf("Rows = %v, want %v", got, wantOptIn)
 	}
@@ -244,7 +244,7 @@ func TestCommandRendersShortRow(t *testing.T) {
 	mustWrite(t, "spec.md", "# t\n\n"+stories+"\n### Acceptance coverage map\n"+hdr+"| 1 | does x |\n")
 
 	out, code := Command([]string{"spec.md"})
-	want := "spec: spec.md\nstate: mapped\nrows[1]{story,seam,red_signal}:\n  \"1\",\"\",\"\"\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
+	want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",does x,\"\"\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
 	if code != 0 || out != want {
 		t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
 	}
@@ -262,7 +262,7 @@ func TestCheckOptIn(t *testing.T) {
 	if State(p) != "mapped" {
 		t.Fatalf("state = %q, want mapped", State(p))
 	}
-	want := [][]string{{"1", "cli seam", "cmd fails"}, {"2", "gate", "already covered"}}
+	want := [][]string{{"1", "does x", "cli seam"}, {"2", "does y", "gate"}}
 	if got := Rows(p); !reflect.DeepEqual(got, want) {
 		t.Errorf("Rows = %v, want %v", got, want)
 	}
@@ -320,17 +320,6 @@ func mustWrite(t *testing.T, path, content string) {
 	}
 }
 
-// wantTable renders the primary TOON table and appends the independently specified help.
-func wantTable(t *testing.T, label, body, help string) string {
-	t.Helper()
-	p := spec(body)
-	tbl, err := toon.Table("rows", []string{"story", "seam", "red_signal"}, Rows(p))
-	if err != nil {
-		t.Fatalf("toon.Table: %v", err)
-	}
-	return "spec: " + label + "\n" + "state: " + State(p) + "\n" + tbl + help
-}
-
 // TestCommand drives Command through its public (args) -> (output, exit code) interface
 // only, per the spec's testing decision — never parse/Check directly.
 func TestCommand(t *testing.T) {
@@ -344,7 +333,8 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "spec.md", body)
 
 		out, code := Command([]string{"spec.md"})
-		if want := wantTable(t, "spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage for stories 1\n"); out != want || code != 0 {
+		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage for stories 1\n"
+		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -354,7 +344,7 @@ func TestCommand(t *testing.T) {
 		body := mapped("| 1 | b | s | unchecked | catches one |\n| 2 | c | t | already covered | catches two |\n| 1 | b | s | unchecked | catches one |\n")
 		mustWrite(t, "path with spaces/spec.md", body)
 		out, code := Command([]string{"path with spaces/spec.md"})
-		want := "spec: path with spaces/spec.md\nstate: mapped\nrows[3]{story,seam,red_signal}:\n  \"1\",s,unchecked\n  \"2\",t,already covered\n  \"1\",s,unchecked\nhelp[2]{cmd,why}:\n  bench coverage --check 'path with spaces/spec.md',check coverage for stories 1\n  bench coverage --check 'path with spaces/spec.md',check coverage for stories 2\n"
+		want := "spec: path with spaces/spec.md\nstate: mapped\nrows[3]{story,behavior,seam}:\n  \"1\",b,s\n  \"2\",c,t\n  \"1\",b,s\nhelp[2]{cmd,why}:\n  bench coverage --check 'path with spaces/spec.md',check coverage for stories 1\n  bench coverage --check 'path with spaces/spec.md',check coverage for stories 2\n"
 		if code != 0 || out != want {
 			t.Fatalf("Command = (%d, %q), want (%d, %q)", code, out, 0, want)
 		}
@@ -375,7 +365,7 @@ func TestCommand(t *testing.T) {
 		body := mapped("| 9 | b | s | red | catches one |\n")
 		mustWrite(t, "spec.md", body)
 		out, code := Command([]string{"spec.md"})
-		want := "spec: spec.md\nstate: mapped\nrows[1]{story,seam,red_signal}:\n  \"9\",s,red\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
+		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"9\",b,s\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
 		if code != 0 || out != want {
 			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
 		}
@@ -386,7 +376,8 @@ func TestCommand(t *testing.T) {
 		body := mapped("")
 		mustWrite(t, "spec.md", body)
 		out, code := Command([]string{"spec.md"})
-		if want := wantTable(t, "spec.md", body, "help[0]{cmd,why}:\n"); out != want || code != 0 {
+		want := "spec: spec.md\nstate: mapped\nrows[0]{story,behavior,seam}:\nhelp[0]{cmd,why}:\n"
+		if out != want || code != 0 {
 			t.Fatalf("Command = (%d, %q), want (%d, %q)", code, out, 0, want)
 		}
 	})
@@ -397,7 +388,8 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/foo/spec.md", body)
 
 		out, code := Command([]string{"foo"})
-		if want := wantTable(t, "specs/foo/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/foo/spec.md,check coverage for stories 1\n"); out != want || code != 0 {
+		want := "spec: specs/foo/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b2,s2\nhelp[1]{cmd,why}:\n  bench coverage --check specs/foo/spec.md,check coverage for stories 1\n"
+		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -408,7 +400,8 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/bar/spec.md", body)
 
 		out, code := Command([]string{"bar.md"})
-		if want := wantTable(t, "specs/bar/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/bar/spec.md,check coverage for stories 1\n"); out != want || code != 0 {
+		want := "spec: specs/bar/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b3,s3\nhelp[1]{cmd,why}:\n  bench coverage --check specs/bar/spec.md,check coverage for stories 1\n"
+		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
@@ -439,7 +432,8 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/foo/spec.md", specsBody)
 
 		out, code := Command([]string{"foo"})
-		if want := wantTable(t, "foo", cwdBody, "help[1]{cmd,why}:\n  bench coverage --check foo,check coverage for stories 1\n"); out != want || code != 0 {
+		want := "spec: foo\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",cwd,cwd-seam\nhelp[1]{cmd,why}:\n  bench coverage --check foo,check coverage for stories 1\n"
+		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — the CWD file should shadow the specs/ fallback", out, code, want)
 		}
 	})
@@ -467,7 +461,8 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/dist/spec.md", body)
 
 		out, code := Command([]string{"dist"})
-		if want := wantTable(t, "specs/dist/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/dist/spec.md,check coverage for stories 1\n"); out != want || code != 0 {
+		want := "spec: specs/dist/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench coverage --check specs/dist/spec.md,check coverage for stories 1\n"
+		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — a directory is not a spec candidate", out, code, want)
 		}
 	})
@@ -507,6 +502,59 @@ func TestCommand(t *testing.T) {
 	})
 }
 
+// TestCommandProjectsOneRowShapeAcrossSchemas pins the whole primary response as a
+// literal for every accepted header. The same named cells are written under each of
+// the four, so an agent seeding tasks from `bench coverage` reads one row shape and
+// never branches on the spec's schema — including the behavior cell, which every
+// header carries and which names what to build. The expectation is spelled out here
+// rather than recomputed from the implementation's own column list, which would
+// follow a projection change silently instead of going red on it.
+func TestCommandProjectsOneRowShapeAcrossSchemas(t *testing.T) {
+	const want = "spec: spec.md\nstate: mapped\nrows[2]{story,behavior,seam}:\n" +
+		"  \"1\",does x,cli seam\n" +
+		"  \"2\",does y,gate\n" +
+		"help[2]{cmd,why}:\n" +
+		"  bench coverage --check spec.md,check coverage for stories 1\n" +
+		"  bench coverage --check spec.md,check coverage for stories 2\n"
+	rows := [][4]string{{"AB1", "1", "does x", "cli seam"}, {"CD2", "2", "does y", "gate"}}
+	for _, shape := range mapShapes {
+		t.Run(shape.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			mustWrite(t, "spec.md", shape.body(stories, rows))
+
+			out, code := Command([]string{"spec.md"})
+			if code != 0 || out != want {
+				t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+			}
+		})
+	}
+}
+
+// TestCommandActionListIsUnchangedByTheSchema drives the other half of the action
+// list — a map with violations — under every accepted header. Cutting a column
+// changes what the rows block projects, not what the AXI block offers: a violating
+// map still earns exactly one `retry after repairing coverage map` action, whichever
+// schema it was written under. The clean per-row case is asserted literally in
+// TestCommandProjectsOneRowShapeAcrossSchemas above.
+func TestCommandActionListIsUnchangedByTheSchema(t *testing.T) {
+	const want = "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n" +
+		"  \"9\",does x,cli seam\n" +
+		"help[1]{cmd,why}:\n" +
+		"  bench coverage --check spec.md,retry after repairing coverage map\n"
+	rows := [][4]string{{"AB1", "9", "does x", "cli seam"}} // story 9 is undeclared
+	for _, shape := range mapShapes {
+		t.Run(shape.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			mustWrite(t, "spec.md", shape.body(stories, rows))
+
+			out, code := Command([]string{"spec.md"})
+			if code != 0 || out != want {
+				t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+			}
+		})
+	}
+}
+
 func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
 	mapped := func(row string) string {
 		return "# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + row
@@ -543,7 +591,7 @@ func TestCommandControlBearingSpecPathPreservesPrimaryAndHonestFallback(t *testi
 			path := "control" + control + "spec.md"
 			mustWrite(t, path, mapped)
 			out, code := Command([]string{path})
-			primary := "spec: " + path + "\nstate: mapped\nrows[1]{story,seam,red_signal}:\n  \"1\",s,unchecked\n"
+			primary := "spec: " + path + "\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\n"
 			if code != 0 || !strings.HasPrefix(out, primary) {
 				t.Fatalf("Command = (%d, %q), want primary response and exit 0", code, out)
 			}
@@ -576,7 +624,7 @@ func TestCommandAngleBracketSpecPathPreservesPrimaryAndHonestFallback(t *testing
 			path := "angle" + marker + "spec.md"
 			mustWrite(t, path, mapped)
 			out, code := Command([]string{path})
-			primary := "spec: " + path + "\nstate: mapped\nrows[1]{story,seam,red_signal}:\n  \"1\",s,unchecked\n"
+			primary := "spec: " + path + "\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\n"
 			want := primary + "help[0]{cmd,why}:\n"
 			if code != 0 || out != want {
 				t.Fatalf("Command = (%d, %q), want checked primary plus honest empty help", code, out)
@@ -628,13 +676,13 @@ func TestFiveCellHeadersSelectSchemaByName(t *testing.T) {
 	legacy := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + row)
 	reduced := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID + row)
 
-	// Legacy reads story/seam/red-signal off cells 0, 2, 3. The reduced header's
-	// leading row-ID cell shifts everything one place right, and it has no red-signal
-	// field at all, so that slot reads empty.
-	if want := [][]string{{"1", "s", "r"}}; !reflect.DeepEqual(Rows(legacy), want) {
+	// Legacy reads story/behavior/seam off cells 0, 1, 2. The reduced header's leading
+	// row-ID cell shifts every field one place right, so the same cells project as a
+	// different triple.
+	if want := [][]string{{"1", "b", "s"}}; !reflect.DeepEqual(Rows(legacy), want) {
 		t.Errorf("legacy Rows = %v, want %v", Rows(legacy), want)
 	}
-	if want := [][]string{{"b", "r", ""}}; !reflect.DeepEqual(Rows(reduced), want) {
+	if want := [][]string{{"b", "s", "r"}}; !reflect.DeepEqual(Rows(reduced), want) {
 		t.Errorf("reduced Rows = %v, want %v", Rows(reduced), want)
 	}
 	if reflect.DeepEqual(Rows(legacy), Rows(reduced)) {

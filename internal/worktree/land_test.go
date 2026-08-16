@@ -732,7 +732,7 @@ func publicLandingFixture(t *testing.T, request, ignored, declaration string) (s
 		ignore = strings.Split(ignored, "/")[0] + "/\n"
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte(ignore), 0o644)
 	}
-	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|---|\n| LX1 | 1 | lands | command | command fails | catches failure |\n\n## Ownership fences\n\n- `owned.txt`\n"
+	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| LX1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `owned.txt`\n"
 	mustMkdirAll(t, filepath.Join(root, "specs", "x", "tickets"), 0o755)
 	mustWrite(t, filepath.Join(root, "specs", "x", "spec.md"), []byte(specBody), 0o644)
 	mustWrite(t, filepath.Join(root, "specs", "x", "tickets", "one.md"), []byte("Ticket covers LX1.\n"), 0o644)

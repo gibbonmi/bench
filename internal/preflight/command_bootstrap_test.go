@@ -156,9 +156,9 @@ func TestCommandInvalidCoverageMapCarriesMessage(t *testing.T) {
 	initRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
-		"| row | story | behavior | seam | red signal | why it catches the failure |\n" +
-		"|---|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam | cmd fails |\n" + // 5 cells where 6 are wanted
+		"| row | story | behavior | seam | why it catches the failure |\n" +
+		"|---|---|---|---|---|\n" +
+		"| PF1 | 1 | does x | cli seam |\n" + // 4 cells where 5 are wanted
 		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
@@ -169,22 +169,22 @@ func TestCommandInvalidCoverageMapCarriesMessage(t *testing.T) {
 	if !strings.HasPrefix(out, "error: coverage map invalid") {
 		t.Errorf("output = %q, want the coverage-map-invalid error", out)
 	}
-	if !strings.Contains(out, "row 1 has 5 cells (want 6)") {
+	if !strings.Contains(out, "row 1 has 4 cells (want 5)") {
 		t.Errorf("output must carry the validator's own message:\n%s", out)
 	}
 }
 
-// TestCommandLegacyMapNamesOptIn is H2's legacy-map half (mutation
-// H2/optin-hint-named): a valid legacy 5-cell map (no `row` header column) is
+// TestCommandNoRowIDMapNamesOptIn is H2's no-row-ID half (mutation
+// H2/optin-hint-named): a valid reduced 4-cell map (no `row` header column) is
 // refused with an error naming the row-ID opt-in, exit 1.
-func TestCommandLegacyMapNamesOptIn(t *testing.T) {
+func TestCommandNoRowIDMapNamesOptIn(t *testing.T) {
 	slug := "example"
 	initRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
-		"| story | behavior | seam | red signal | why it catches the failure |\n" +
-		"|---|---|---|---|---|\n" +
-		"| 1 | does x | cli seam | cmd fails | catches z |\n" +
+		"| story | behavior | seam | why it catches the failure |\n" +
+		"|---|---|---|---|\n" +
+		"| 1 | does x | cli seam | catches z |\n" +
 		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
@@ -208,9 +208,9 @@ func TestCommandFencesAbsentError(t *testing.T) {
 	initRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
-		"| row | story | behavior | seam | red signal | why it catches the failure |\n" +
-		"|---|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam | cmd fails | catches z |\n"
+		"| row | story | behavior | seam | why it catches the failure |\n" +
+		"|---|---|---|---|---|\n" +
+		"| PF1 | 1 | does x | cli seam | catches z |\n"
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
@@ -230,9 +230,9 @@ func TestCommandFencesEmptyError(t *testing.T) {
 	initRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
-		"| row | story | behavior | seam | red signal | why it catches the failure |\n" +
-		"|---|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam | cmd fails | catches z |\n" +
+		"| row | story | behavior | seam | why it catches the failure |\n" +
+		"|---|---|---|---|---|\n" +
+		"| PF1 | 1 | does x | cli seam | catches z |\n" +
 		"\n## Ownership fences\n\n## Next section\n"
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
@@ -254,9 +254,9 @@ func TestCommandFencesParenTokenNeverAuthorizes(t *testing.T) {
 	initRepo(t)
 	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n" +
-		"| row | story | behavior | seam | red signal | why it catches the failure |\n" +
-		"|---|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam | cmd fails | catches z |\n" +
+		"| row | story | behavior | seam | why it catches the failure |\n" +
+		"|---|---|---|---|---|\n" +
+		"| PF1 | 1 | does x | cli seam | catches z |\n" +
 		"\n## Ownership fences\n\n- see also (`internal/" + slug + "/`)\n"
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
 

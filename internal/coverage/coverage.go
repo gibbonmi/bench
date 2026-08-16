@@ -271,10 +271,12 @@ func State(p parsed) string {
 	}
 }
 
-// Rows returns the story, seam, and red-signal cells of each data row for a mapped
+// Rows returns the story, behavior, and seam cells of each data row for a mapped
 // spec; nil otherwise. The cells are resolved by name through the row's schema, so a
 // map that opts into row IDs projects the same three fields as a legacy one and the
-// leading row-ID cell is not part of the projection.
+// leading row-ID cell is not part of the projection. These three fields are the ones
+// every accepted header carries — behavior is the cell that names what to build — so
+// a caller reads one row shape whichever schema the spec uses.
 func Rows(p parsed) [][]string {
 	if State(p) != "mapped" {
 		return nil
@@ -282,7 +284,7 @@ func Rows(p parsed) [][]string {
 	s := p.projection()
 	var rows [][]string
 	for _, r := range p.dataRows {
-		rows = append(rows, []string{s.cell(r, fieldStory), s.cell(r, fieldSeam), s.cell(r, fieldRedSignal)})
+		rows = append(rows, []string{s.cell(r, fieldStory), s.cell(r, fieldBehavior), s.cell(r, fieldSeam)})
 	}
 	return rows
 }
@@ -535,7 +537,7 @@ func Command(args []string) (string, int) {
 	var b strings.Builder
 	fmt.Fprintf(&b, "spec: %s\n", spec)
 	fmt.Fprintf(&b, "state: %s\n", State(p))
-	tbl, err := toon.Table("rows", []string{"story", "seam", "red_signal"}, Rows(p))
+	tbl, err := toon.Table("rows", []string{"story", "behavior", "seam"}, Rows(p))
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
