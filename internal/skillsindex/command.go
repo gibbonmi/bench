@@ -1,6 +1,8 @@
 package skillsindex
 
 import (
+	"errors"
+	"os/exec"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -38,7 +40,7 @@ func Command(args []string) (string, int) {
 	}
 	root, err := git.Root()
 	if err != nil {
-		return toon.NotInRepo() + "\n", 1
+		return discoveryRefusal(err) + "\n", 1
 	}
 	if write {
 		if werr := Write(root); werr != nil {
@@ -51,4 +53,16 @@ func Command(args []string) (string, int) {
 		return "", 0
 	}
 	return strings.Join(diags, "\n") + "\n", 1
+}
+
+// discoveryRefusal names the recovery action the caller actually has. A discovery error
+// that never launched Git is an environment defect, not a location one: telling an
+// operator with no `git` on PATH to stand somewhere else sends them after the wrong fix.
+// Only an executed probe reports the position it measured.
+func discoveryRefusal(err error) string {
+	var launch *exec.Error
+	if errors.As(err, &launch) {
+		return toon.Errorf("required tool is missing or not executable: "+launch.Name, "install git and re-run")
+	}
+	return toon.NotInRepo()
 }
