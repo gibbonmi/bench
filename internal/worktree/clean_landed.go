@@ -299,7 +299,9 @@ func applyLandedSet(root string, set landedCleanupSet, options CleanupOptions) (
 			}
 			return fresh.plan, nil
 		}
-		applied, applyErr := applyCleanupTransaction(root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, nil)
+		// The terminal callback keeps the lifecycle's post-settlement fault boundary between
+		// completed rows, where a later-row drift must still stop the set apply.
+		applied, applyErr := applyCleanupTransaction(root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
 		plans = append(plans, applied)
 		if applyErr != nil {
 			return plans, applyErr

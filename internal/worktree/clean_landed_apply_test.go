@@ -131,7 +131,7 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 	t.Cleanup(func() { cleanupTransactionBoundary = previousBoundary })
 	mutated := false
 	cleanupTransactionBoundary = func(step LifecycleStep) error {
-		if step == StepApplyLocked && !mutated {
+		if step == StepTerminalReceipt && !mutated {
 			mutated = true
 			mustWrite(t, filepath.Join(drifted.Path, "drifted.txt"), []byte("drifted\n"), 0o644)
 		}
@@ -146,6 +146,15 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 	}
 	if _, err := os.Lstat(drifted.Path); err != nil {
 		t.Fatalf("drifted second row disappeared: %v", err)
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil || len(assignments) != 2 {
+		t.Fatalf("assignments after second-row drift = %#v, %v; want the dirty and drifted rows", assignments, err)
+	}
+	for _, assignment := range assignments {
+		if assignment.ID == settled.Assignment.ID {
+			t.Fatalf("settled first row %q remains assigned", settled.Assignment.ID)
+		}
 	}
 	_, _, retryCode := runCleanLanded(t, root, "--landed", "--apply", landedRowFingerprint(t, plan))
 	if retryCode != 1 {
