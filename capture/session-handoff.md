@@ -2,21 +2,24 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `b6957e7`, 4 dirty paths, 0 unpushed commits
+Branch: `main` — HEAD `945c9266`, 3 dirty paths, 1 unpushed commit
 Spec: `specs/spec-ticket-fence-reduction/spec.md` (Status: staged)
-Gate: green at `8516a2d` — stale, work tree `1261719`
+Gate: green at `945c9266` — re-run on the drain batch before commit
 
 ## State
 
-The `/bench-what-next` batch is prepared and uncommitted. It removes shipped FT210,
-adds FT211 for the staged `spec-ticket-fence-reduction` build, folds the pending idea,
-five learnings, and FT210 retro into existing roadmap owners, refreshes the OpenAI
-scorecard, and drains ideas/learnings/retros to zero. Main at `b6957e7f` is pushed;
-the five-path maintenance diff awaits reviewer approval.
+`945c9266` landed the AGENTS.md verb-discovery correction: `bench help` is the verb
+inventory, `bench commands --brief` is a three-verb liveness probe. The
+`/bench-what-next` batch on top of it is prepared and uncommitted under standing
+reviewer approval — it adds FT198 (progressively loaded roadmap; `ASSESSMENT.md`
+ranks it 0 and it had no roadmap row), folds the parked verb-discovery idea and the
+derive-help-from-`commandRegistry` finding into FT89, empties `capture/IDEAS.md`,
+and promotes FT198 above FT207 in the sequence. Two calls are contestable: the
+FT198 row itself, and demoting FT207 on `ASSESSMENT.md` pricing.
 
 ## Next command
 
-`$bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high`
+`/bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high`
 
 ## Shape
 
