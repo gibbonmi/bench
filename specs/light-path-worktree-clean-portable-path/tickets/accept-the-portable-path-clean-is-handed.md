@@ -3,7 +3,6 @@
 Blocked by: none
 
 Ownership fence: `internal/worktree`
-Assumptions: `targetPath` already owns the `~` grammar for `path` and `exec`; `CleanCommand` is the only entry point that takes an operator-supplied operand
 
 ## What to build
 

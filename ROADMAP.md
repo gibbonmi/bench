@@ -232,6 +232,7 @@ operator to add `--discard-ignored` must say that adding it invalidates the
 fingerprint it just printed.
 
 Occurrence: 2026-08-15 skills-index-reader retro — adding the flag the plan recommended invalidated that plan's fingerprint with no warning.
+Occurrence: 2026-08-16 worktree cleanup sweep — one plan row quoted its fingerprint field and nine did not, so a scripted sweep silently dropped the quoted worktree.
 
 Generated residue remains bounded and fingerprinted; explicit clean refuses dirty
 removal unless the reviewer-visible discard contract owns the payload through
@@ -322,6 +323,7 @@ Occurrence: 2026-08-15 skills-index-reader retro — short-SHA revisions were re
 Occurrence: 2026-08-15 skills-index-reader retro — a staged-spec byte difference refused without naming the remedy, which a veto-recording build hits every time.
 Occurrence: 2026-08-15 skills-index-reader retro — a failed release step exited 1 after a successful publish, reading as nothing landed.
 Occurrence: 2026-08-15 skills-index-reader retro — gate progress logs written to the worktree's `.logs/` blocked the release they preceded.
+Occurrence: 2026-08-15 skills-index hostile-input retro — three separate `land` refusals each needed a follow-up command to diagnose, while `bench preflight review` already names the offending file.
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that
 traps automation and leaks on signals.** The agent-facing surface is the
@@ -329,11 +331,6 @@ subcommands; the bare verb must print usage, while any retained subshell gets an
 explicit opt-in name plus signal-safe release or lease reclamation.
 
 Occurrence: 2026-08-01 reviewer ruling — three bare-verb probes hung and leaked two worktrees before cleanup (`capture/IDEAS.md`, `capture/learnings.md`).
-
-Every next action a worktree subcommand advertises resolves as printed: `bench
-worktree list` prints `bench worktree path <id>` while only the label resolves.
-
-Occurrence: 2026-08-15 skills-index-reader retro — the invocation `bench worktree list` advertised was refused by `bench worktree path`.
 
 Parser-first dispatch rejects unknown flags before choosing the bare command, and
 the discovery convention remains canonical in `AGENTS.md`. Source: the
@@ -445,6 +442,18 @@ source, so that commit cannot delete `reviews/<slug>.md`.
 
 Occurrence: 2026-08-15 skills-index-reader retro — `craft-review` told the fix commit to delete an artifact living on the other checkout.
 
+`bench spec retire` prints a next action that tells the reader to remove the
+ROADMAP row, while `/bench-final-check` reserves every roadmap edit for
+`/bench-what-next`; one of the two is wrong and a reader who follows the CLI
+violates the phase contract. `/bench-debug` gains the two cases its Phase 1 and
+Phase 2 leave unstated: when the reported artifacts are consumed by the act of
+reporting, the repro loop is built against a fresh fixture the repro creates
+itself, and a question whose honest answer is "working as designed" is not
+finished until the recovery path that design assumes has been exercised.
+
+Occurrence: 2026-08-15 skills-index hostile-input retro — the CLI's own next action contradicted the phase that owns roadmap edits.
+Occurrence: 2026-08-16 worktree-cleanup debug — the bug's evidence was destroyed by the act of cleaning it up, and the correct answer to the reported symptom was "by design" with two real defects behind it.
+
 The coherence pass reconciles `.bench/BENCH.md` and `BENCH-reference.md` against
 `bin/bench.sh`, re-derives stale decision-document sources from the live tree,
 and folds Redact-style secret-safe excerpts into existing debugging guidance.
@@ -526,24 +535,23 @@ source bytes differ.
 Occurrence: spec-authoring-and-light-path landing — destination and reviewed source had different staged-spec bytes, forcing fresh exact review.
 Occurrence: gate-run-transaction landing — destination/source staged-spec reconciliation required a fresh exact review.
 
-**FT208 (MEDIUM) — `internal/skillsindex` trusts its producers on paths, globs,
-and bytes.** The one shipped reader of the generated skills index takes hostile
-and degenerate producer input at face value across eleven edges, all inherited
-byte-identical from the pre-collapse conformance parsers rather than introduced
-by the collapse. Classify producer paths before reading them, since a FIFO at
-`SKILL.md`, `consumer-payload.json`, or `BENCH-reference.md` hangs the gate and a
-dangling symlink reads as an authoritative empty file. Glob metacharacters in the
-repository root silently yield zero skills, so `--write` erases the index. An
-orphan skill directory with no `SKILL.md` is omitted while an empty one is
-diagnosed; a present-but-empty reference file reports as missing; the
-leading-fence rule is unenforced; control bytes in `index:`/`index-note:` inject a
-second rendered line; marker cardinality is unchecked; semantically invalid
-allowlist rows bypass row validation; a rename failure or SIGINT leaves temp-file
-residue; and `git` missing from PATH reports as not-in-a-repo. Entry:
-`/bench-write-spec`. Source: `capture/IDEAS.md`, drained here (findings and
-citations in the review artifact committed at `56fc8861`, deleted at retirement).
+**FT208 (MEDIUM, decision required) — skills-index producer-hardening
+residuals: one refusal grammar, per-shape marker diagnostics, and HI14's seam.**
+The hostile-input hardening shipped; three findings stayed open because each needs
+a decision the spec did not make. Give `internal/toon` a `MissingTool(tool)`
+constructor and one producer-refusal grammar, closing both the sixth copy of
+"required tool is missing or not executable" in `skillsindex/command.go` and the
+competing wordings in `skillsindex.refusedDiagnostic` and `anchors.RefusalPrefix`;
+this reaches `internal/toon`, which sat outside the shipped fence. Decide whether
+`skillsindex.findBlock` keeps reporting zero, reversed, unclosed, duplicate-start,
+and duplicate-end markers all as "markers missing" — a duplicate-marker reference
+is currently told it names no block — since per-shape diagnostics are a behavior
+change. And accept HI14's lower seam or authorize an npm-backed fixture: the
+composition test calls `checkNoKitOnlyPackedAssets` directly because the
+registered binding only reaches the payload reader after a real `npm pack
+--dry-run`. Entry: reviewer decision. Source: `capture/IDEAS.md`, drained here.
 
-Occurrence: 2026-08-15 skills-index-reader review — eleven hostile-input edges survived the collapse into the single reader, unasserted by any fixture.
+Occurrence: 2026-08-15 skills-index hostile-input review — three findings were reviewer decisions rather than fix work and were parked rather than built.
 
 **FT209 (MEDIUM) — a behavior-preserving refactor proves itself by differential,
 and a new grouping fixes its cardinality.** Two separable kit edits. `craft-spec`:
@@ -558,6 +566,21 @@ implementation of "ordered by key" quietly answers one. Kit edit under
 `craft-synthesis`.
 
 Occurrence: 2026-08-15 skills-index-reader ticket 1 — a map-keyed accumulator silently dropped a second diagnostic while the full suite, four canaries, and every spec row stayed green (`capture/learnings.md`, verdicted here).
+
+**FT210 (MEDIUM) — a landed-but-unreleased assignment is invisible, and
+worktree retirement has no bulk path.** `bench worktree list` prints
+`state=active` for an assignment whose work has fully landed and whose writer is
+long gone, so the session-start `retained active=N` reads as healthy when it means
+the opposite. Nothing enforces the release that would clear it: a multi-ticket
+build releases its integration source and leaves every per-ticket worktree behind.
+Distinguish "a writer is in here" from "nobody ever released this", and give the
+sweep a sanctioned bulk form so retiring a build's trees is not a hand-written
+shell loop. Either the coordinator releases at ticket close, or the closing phase
+sweeps while it still knows which trees were its own. Overlaps FT199's
+classification vocabulary one level down, at assignments rather than refs.
+Entry: `/bench-shape-idea`.
+
+Occurrence: 2026-08-16 FT208 aftermath — ten worktrees survived the build, seven still `active` because release was never called, and clearing them by hand exposed three defects in the recovery path.
 
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 Agents repeatedly shape harness transcripts and session evidence with
@@ -582,6 +605,7 @@ spawn.
 
 Occurrence: 2026-08-15 skills-index-reader retro — a probe that deleted a branch produced a compile error and proved nothing.
 Occurrence: 2026-08-15 skills-index-reader retro — three review axes were reported running twice while all three were parked on stdin.
+Occurrence: 2026-08-15 skills-index hostile-input retro — a probe mutating provably-redundant code passed by construction and was indistinguishable from coverage.
 
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
@@ -770,6 +794,7 @@ tier use, and phase/package timings. Decide storage, ownership, granularity,
 retention, and audience through `/bench-shape-idea` under `craft-synthesis`.
 
 Occurrence: 2026-07-25 reviewer pricing — economics instrumentation was a nice-to-have until an acceptance trigger requires it.
+Occurrence: 2026-08-15/16 two retros — gate phase verdicts carry no elapsed time, so retro timings cannot be recorded without hand-instrumentation.
 
 **FT164 (MEDIUM) — repair-lane charges, and a done-claim that resolves its
 named owners.** One `craft-delegate` visit governs repair/experiment charges
@@ -822,6 +847,8 @@ Occurrence: 2026-08-11 preflight/lifecycle-removal closes — mutation backups a
 Occurrence: axi-coherent-diff close — repair evidence changed a correlated dimension or erased an escalated failed charge (source: retro).
 Occurrence: canary-planted-reason close — synthetic/live-root and candidate/base rereads were missing from conformance repair (source: retro).
 Occurrence: gate-run-transaction retro — scorecard attribution separates delegate rework from spec-origin findings.
+Occurrence: 2026-08-15 skills-index hostile-input retro — both repair rounds shared one shape: the ticket stated a principle and the delegate implemented the single instance its acceptance row named.
+Occurrence: 2026-08-15 FT208 authoring — the producer-reader inventory was scoped to the consolidated reader and consumers were inferred from filenames instead of enumerated from executable registries and the call graph (`capture/learnings.md`, verdicted here).
 
 
 
@@ -929,6 +956,7 @@ Occurrence: FT86/FT91 resolution reviews — real coverage tests lacked rows in 
 Occurrence: 2026-08-01 orphaned-review pickup — `reviews/` and `specs/<slug>/spec.md` were not both present (source: `capture/IDEAS.md`).
 Occurrence: 2026-08-02 learnings/index-lock review — a lower read bound changed behavior and a held index lock exposed retry policy (source: `capture/learnings.md`).
 Occurrence: 2026-08-07 gate-decision review — shipped test code retained a bounded residual bundle (source: `capture/IDEAS.md`).
+Occurrence: 2026-08-15 skills-index hostile-input retro — the pickup artifact had to be deleted and its residual decisions parked, a route `craft-review` does not document.
 
 
 
@@ -989,6 +1017,7 @@ Occurrence: spec-ticket-handoff close — read-only preflight and compound-row e
 Occurrence: spec-authoring-and-light-path close — canary-universe changes lacked an explicit coverage owner (source: retro).
 Occurrence: 2026-08-13 staged-spec handoff — breakdown approval moved earlier, with implementation-time tree revalidation (source: `capture/IDEAS.md`).
 Occurrence: bench-preflight close — line-oriented grammar needed explicit cross-line hostile variants (source: retro).
+Occurrence: 2026-08-16 light-path ticket — the template was copied from a sibling in `specs/`, which reintroduced the retired `Assumptions:` field.
 
 
 
@@ -1007,6 +1036,7 @@ action.
 
 Occurrence: reduced-gate-phase-set retro — source edits were tested against stale `dist/bench` (source: `capture/IDEAS.md`).
 Occurrence: spec-build-lifecycle-preconditions retro — FT176 freshness required manual rebuilds before `bench commit` (source: retro).
+Occurrence: 2026-08-16 worktree-fix session — `bench` execs a prebuilt vendored binary, so every end-to-end check needed a hand-built binary and `BENCH_RUN_BINARY`, documented nowhere.
 
 
 **FT103 (LOW) — existence-checked absence evidence: the gate half.** Check that
@@ -1291,6 +1321,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT208 hardens `internal/skillsindex` against the producer-path, glob, and byte edges that can hang the gate or erase the index.
+1. `/bench-shape-idea` — FT210 decides how a landed-but-unreleased assignment becomes visible and how a build's worktrees are retired in bulk.
 2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
 3. `/bench-write-spec` — FT185 can make gate and commit results one structured, concise public projection.
