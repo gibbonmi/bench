@@ -222,7 +222,15 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 		}
 	}
 	for _, row := range set.rows {
-		if row.plan.Action != ActionRetain || !lineSafe(row.assignment.Worktree) {
+		if row.plan.Action != ActionRetain {
+			continue
+		}
+		if !lineSafe(row.assignment.Worktree) {
+			actions = append(actions, axi.ExecutableInvocation(
+				fmt.Sprintf("resolve retained worktree (%s) through its assignment pointer", row.plan.ReasonCode),
+				axi.KnownArgument("worktree"), axi.KnownArgument("exec"), axi.KnownArgument(row.assignment.ID), axi.KnownArgument("--"),
+				axi.KnownArgument("bench"), axi.KnownArgument("worktree"), axi.KnownArgument("clean"), axi.KnownArgument("."),
+			))
 			continue
 		}
 		actions = append(actions, axi.ExecutableInvocation(
@@ -236,6 +244,17 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 	}
 	_, err = fmt.Fprint(stdout, help)
 	return err
+}
+
+func renderLandedStale(stdout io.Writer, set landedCleanupSet, fingerprint string) error {
+	plans := make([]CleanupPlan, 0, len(set.rows)+1)
+	plans = append(plans, CleanupPlan{
+		Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: fingerprint, Reason: errStaleFingerprint.Error(),
+	})
+	for _, row := range set.rows {
+		plans = append(plans, row.plan)
+	}
+	return renderCleanups(stdout, plans)
 }
 
 func sameLandedCleanupTuple(a, b landedCleanupRow) bool {

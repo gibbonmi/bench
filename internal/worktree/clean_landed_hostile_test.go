@@ -47,7 +47,8 @@ func TestCleanLandedControlBytePathRetained(t *testing.T) {
 	landAssignment(t, root, creation, "control.txt")
 
 	stdout, stderr, code := runCleanLanded(t, root, "--landed")
-	if code != 0 || stderr != "" || strings.ContainsRune(stdout, '\x1b') || !strings.Contains(stdout, "sha256:") || !strings.Contains(stdout, ",retain,") || !strings.Contains(stdout, "unsafe control bytes") {
+	pointer := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree clean ."
+	if code != 0 || stderr != "" || strings.ContainsRune(stdout, '\x1b') || !strings.Contains(stdout, "sha256:") || !strings.Contains(stdout, ",retain,") || !strings.Contains(stdout, "unsafe control bytes") || strings.Count(stdout, pointer) != 1 {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	fingerprint := landedRowFingerprint(t, stdout)

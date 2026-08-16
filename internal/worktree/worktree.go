@@ -277,11 +277,7 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 			return cleanInvocationError(stdout)
 		}
 		if fingerprint != "" && fingerprint != set.fingerprint {
-			plans := make([]CleanupPlan, 0, len(set.rows))
-			for _, row := range set.rows {
-				plans = append(plans, row.plan)
-			}
-			_ = renderCleanups(stdout, plans)
+			_ = renderLandedStale(stdout, set, fingerprint)
 			return 1
 		}
 		if fingerprint != "" {

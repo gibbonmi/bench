@@ -3,6 +3,7 @@ package worktree
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 )
 
 func TestCleanLandedApplyRemovesAndSettles(t *testing.T) {
+	binary := buildLandingBinary(t)
 	root, first, second, dirty := landedSetFixture(t)
 	plan, planErr, planCode := runCleanLanded(t, root, "--landed")
 	if planCode != 0 || planErr != "" {
@@ -40,9 +42,11 @@ func TestCleanLandedApplyRemovesAndSettles(t *testing.T) {
 	if err != nil || len(assignments) != 1 || assignments[0].ID != dirty.Assignment.ID {
 		t.Fatalf("assignments after apply = %#v, %v; want only dirty row", assignments, err)
 	}
-	listing, listCode := ListCommand(nil)
-	if listCode != 0 || strings.Contains(listing, first.Assignment.ID) || strings.Contains(listing, second.Assignment.ID) || !strings.Contains(listing, dirty.Assignment.ID) {
-		t.Fatalf("list after apply = (%d, %q), want only dirty assignment", listCode, listing)
+	list := exec.Command(binary, "worktree", "list")
+	list.Dir = root
+	listing, listErr := list.Output()
+	if listErr != nil || strings.Contains(string(listing), first.Assignment.ID) || strings.Contains(string(listing), second.Assignment.ID) || !strings.Contains(string(listing), dirty.Assignment.ID) {
+		t.Fatalf("fresh list after apply = (%v, %q), want only dirty assignment", listErr, listing)
 	}
 }
 
@@ -83,13 +87,29 @@ func TestCleanLandedApplyRefusesInitialDriftWithoutMutation(t *testing.T) {
 			if tc.args != nil {
 				args = tc.args(landedRowFingerprint(t, plan))
 			}
-			_, stderr, code := runCleanLanded(t, root, args...)
-			if code != 1 || stderr != "" {
-				t.Fatalf("apply exit=%d stderr=%q, want stale refusal", code, stderr)
+			stdout, stderr, code := runCleanLanded(t, root, args...)
+			if code != 1 || stderr != "" || !strings.HasPrefix(stdout, "worktree_cleanup[") || !strings.Contains(stdout, "unknown,error,unknown,unknown,none,") || strings.Count(stdout, errStaleFingerprint.Error()) != 1 {
+				t.Fatalf("apply exit=%d stdout=%q stderr=%q, want stale refusal diagnostic", code, stdout, stderr)
 			}
 			for _, creation := range []Creation{first, second} {
 				if _, err := os.Lstat(creation.Path); err != nil {
 					t.Fatalf("stale apply removed %q: %v", creation.Path, err)
+				}
+			}
+			assignments, assignmentErr := intent.Assignments(root)
+			if assignmentErr != nil {
+				t.Fatal(assignmentErr)
+			}
+			for _, creation := range []Creation{first, second} {
+				active := false
+				for _, assignment := range assignments {
+					if assignment.ID == creation.Assignment.ID && assignment.State == intent.StateActive {
+						active = true
+						break
+					}
+				}
+				if !active {
+					t.Fatalf("stale apply settled %q: %#v", creation.Assignment.ID, assignments)
 				}
 			}
 		})
