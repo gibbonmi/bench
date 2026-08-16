@@ -14,14 +14,20 @@ import (
 // document set nobody consented to. Absent is a defect here too: this check's whole
 // subject is the allowlist.
 func TestContractDocumentInputsRefusesUnresolvableAllowlists(t *testing.T) {
-	for name, allowlist := range map[string]string{
-		"absent":           "",
-		"empty":            "",
-		"invalid JSON":     "{not json",
-		"unknown audience": `[{"source":"AGENTS.md","audience":"everyone"}]`,
-		"empty source":     `[{"source":"","audience":"kit-only"}]`,
-		"unsafe source":    `[{"source":"../escape","audience":"kit-only"}]`,
-		"duplicate source": `[{"source":"AGENTS.md","audience":"consumer"},{"source":"AGENTS.md","audience":"kit-only"}]`,
+	for name, refusal := range map[string]struct {
+		allowlist string
+		want      string
+	}{
+		// Absent and empty want distinct wordings: both name the same path, so an
+		// assertion on the path alone would still pass if a present-but-empty
+		// allowlist were reclassified as absent.
+		"absent":           {want: consumerPayloadPath + " is absent: the consumer payload inventory has no source"},
+		"empty":            {want: consumerPayloadPath + " unreadable: empty"},
+		"invalid JSON":     {allowlist: "{not json", want: consumerPayloadPath},
+		"unknown audience": {allowlist: `[{"source":"AGENTS.md","audience":"everyone"}]`, want: consumerPayloadPath},
+		"empty source":     {allowlist: `[{"source":"","audience":"kit-only"}]`, want: consumerPayloadPath},
+		"unsafe source":    {allowlist: `[{"source":"../escape","audience":"kit-only"}]`, want: consumerPayloadPath},
+		"duplicate source": {allowlist: `[{"source":"AGENTS.md","audience":"consumer"},{"source":"AGENTS.md","audience":"kit-only"}]`, want: consumerPayloadPath},
 	} {
 		t.Run(name, func(t *testing.T) {
 			root := t.TempDir()
@@ -29,7 +35,7 @@ func TestContractDocumentInputsRefusesUnresolvableAllowlists(t *testing.T) {
 				t.Fatal(err)
 			}
 			if name != "absent" {
-				if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(consumerPayloadPath)), []byte(allowlist), 0o644); err != nil {
+				if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(consumerPayloadPath)), []byte(refusal.allowlist), 0o644); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -37,8 +43,8 @@ func TestContractDocumentInputsRefusesUnresolvableAllowlists(t *testing.T) {
 			if err == nil {
 				t.Fatalf("ContractDocumentInputs with a %s allowlist returned no error", name)
 			}
-			if !strings.Contains(err.Error(), consumerPayloadPath) {
-				t.Fatalf("ContractDocumentInputs with a %s allowlist = %v, want the refused path named", name, err)
+			if !strings.Contains(err.Error(), refusal.want) {
+				t.Fatalf("ContractDocumentInputs with a %s allowlist = %v, want an error containing %q", name, err, refusal.want)
 			}
 		})
 	}

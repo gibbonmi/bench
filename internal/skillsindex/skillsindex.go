@@ -353,7 +353,8 @@ func replaceReference(ctx context.Context, path, contents string) error {
 var preReplacementBarrier = func(context.Context) {}
 
 // renameFile is the replacement's last operation, named so a test can fail it after
-// the sibling temp exists — the one failure path cleanup used to miss.
+// the sibling temp exists — the one interval in which cleanup must remove a temp the
+// caller never sees.
 var renameFile = os.Rename
 
 // orphanDiagnostic names the one skill-directory-without-SKILL.md wording Check

@@ -13,12 +13,12 @@ All notable user-facing changes to Bench are documented here. The format follows
   acting on them: a symlinked, special, oversized, or non-UTF-8 `SKILL.md`,
   `.bench/BENCH-reference.md`, or `.bench/consumer-payload.json` is named and
   refused, a skill directory with no `SKILL.md` is reported even when a same-named
-  command adapter exists, and a control rune can no longer forge an index line. A
-  repository path containing spaces or glob characters keeps its skills. `--write`
-  leaves the reference untouched on every refusal, and an interrupted or failed
-  replacement leaves no `.bench/.skills-index-*` scratch file behind. A missing or
-  non-executable `git` is now reported as the missing tool it is, rather than as
-  not being in a repository.
+  command adapter exists, and a control rune can no longer forge an index line. This
+  command keeps every skill under a repository path containing spaces or glob
+  characters. `--write` leaves the reference untouched on every refusal, and an
+  interrupted or failed replacement leaves no `.bench/.skills-index-*` scratch file
+  behind. A missing or non-executable `git` is now reported as the missing tool it
+  is, rather than as not being in a repository.
 - `/bench-implement-spec` now creates or retains its integration worktree before
   running build preflight, so earlier local `main` commits cannot contaminate the
   spec-owned changed-path check.

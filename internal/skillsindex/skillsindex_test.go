@@ -137,6 +137,46 @@ func TestCheckAndWriteGenerateVerifyContract(t *testing.T) {
 	}
 }
 
+// TestUnterminatedFinalLineRoundTripsByteForByte covers the reference whose last line
+// carries no trailing newline: the generator rebuilds the file around the block, so a
+// tail it silently terminates would rewrite bytes outside the block it owns.
+func TestUnterminatedFinalLineRoundTripsByteForByte(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
+	tail := "## Trailing section with no final newline"
+	refPath := filepath.Join(root, ".bench", "BENCH-reference.md")
+	writeFile(t, root, ".bench/BENCH-reference.md", reference("")+tail)
+
+	want := "skills index missing entry for skill 'alpha' (regenerate: bench skills-index --write)"
+	if got := Check(root); strings.Join(got, "\n") != want {
+		t.Fatalf("check on an unterminated reference =\n%s\nwant\n%s", strings.Join(got, "\n"), want)
+	}
+	if err := Write(context.Background(), root); err != nil {
+		t.Fatal(err)
+	}
+	generated, err := os.ReadFile(refPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantRef := reference("- doing alpha things → `.agents/skills/alpha/SKILL.md`\n") + tail
+	if string(generated) != wantRef {
+		t.Fatalf("generated reference =\n%q\nwant\n%q", generated, wantRef)
+	}
+	if got := Check(root); len(got) != 0 {
+		t.Fatalf("check right after write = %s, want none", strings.Join(got, "\n"))
+	}
+	if err := Write(context.Background(), root); err != nil {
+		t.Fatal(err)
+	}
+	after, err := os.ReadFile(refPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != string(generated) {
+		t.Fatalf("second write changed bytes:\n%q\nwant\n%q", after, generated)
+	}
+}
+
 func TestCheckAttributesEveryDriftInAlphabeticalOrder(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\n---\n")
@@ -191,7 +231,7 @@ func TestZeroSkillRootRendersAnEmptyBlockAndPasses(t *testing.T) {
 	}
 }
 
-func TestUnparseableAllowlistRefusesWriteAndLeavesCheckAlone(t *testing.T) {
+func TestUnparseableAllowlistRefusesBothWriteAndCheck(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".agents/skills/zeta/SKILL.md", "---\nname: zeta\nindex: doing zeta things\n---\n")
 	writeFile(t, root, ".bench/consumer-payload.json", "{not json")
