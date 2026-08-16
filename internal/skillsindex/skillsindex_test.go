@@ -581,6 +581,74 @@ func TestReferenceProducerStatesStayDistinctAndBlockWrite(t *testing.T) {
 	}
 }
 
+// TestControlRunesNeverReachTheRenderedLine is the sink contract: the index line is
+// line-structured markdown, so any control rune in a rendered field could split or
+// forge an entry and is refused before rendering, while ordinary graphic Unicode —
+// accented Latin, CJK, emoji, arrows — still renders as exactly one line. The
+// permitted half is asserted alongside the refused one because an ASCII-only fix
+// passes the refusals and quietly loses the rest of the control partition.
+func TestControlRunesNeverReachTheRenderedLine(t *testing.T) {
+	for _, row := range []struct {
+		name    string
+		key     string
+		value   string
+		refused bool
+	}{
+		{"tab in the trigger", "index", "doing\tthings", true},
+		{"carriage return forging a second line", "index", "safe → `x`\r- forged → `y`", true},
+		{"escape in the trigger", "index", "doing\x1b[31m things", true},
+		{"bell in the trigger", "index", "doing\a things", true},
+		{"nul in the trigger", "index", "doing\x00 things", true},
+		{"delete in the trigger", "index", "doing\x7f things", true},
+		{"c1 next-line in the trigger", "index", "doing\u0085things", true},
+		{"tab in the note", "index-note", "a\tnote", true},
+		{"carriage return in the note", "index-note", "a note\r- forged", true},
+		{"escape in the note", "index-note", "a\x1bnote", true},
+		{"graphic unicode in the trigger", "index", "café 文書 🚀 →", false},
+		{"graphic unicode in the note", "index-note", "註記 ✨ →", false},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root := t.TempDir()
+			trigger, note := "doing probe things", "a probe note"
+			if row.key == "index" {
+				trigger = row.value
+			} else {
+				note = row.value
+			}
+			writeFile(t, root, ".agents/skills/probe/SKILL.md", "---\nindex: "+trigger+"\nindex-note: "+note+"\n---\n")
+			original := reference("")
+			writeFile(t, root, ".bench/BENCH-reference.md", original)
+
+			block := renderedBlock(t, root)
+			if !row.refused {
+				want := "- " + trigger + " → `.agents/skills/probe/SKILL.md` + " + note
+				if block != want {
+					t.Fatalf("rendered block =\n%q\nwant\n%q", block, want)
+				}
+				return
+			}
+			if block != "" {
+				t.Fatalf("refused field rendered a line: %q", block)
+			}
+			wantPrefix := ".agents/skills/probe/SKILL.md refused: "
+			diags := Check(root)
+			if len(diags) != 1 || !strings.HasPrefix(diags[0], wantPrefix) {
+				t.Fatalf("Check = %v, want one diagnostic starting %q", diags, wantPrefix)
+			}
+			if err := Write(root); err == nil || !strings.HasPrefix(err.Error(), wantPrefix) {
+				t.Fatalf("Write error = %v, want one starting %q", err, wantPrefix)
+			}
+			after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(after) != original {
+				t.Fatalf("Write changed the reference:\n%q", string(after))
+			}
+		})
+	}
+}
+
 func writeAt(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -607,4 +675,16 @@ func hasPrefixed(diags []string, prefix string) bool {
 		}
 	}
 	return false
+}
+
+// A newline cannot survive the fence scan's line split, so the sink table above cannot
+// construct one from a file; the predicate is asserted directly so a later parser that
+// does yield multi-line values still finds the sink closed.
+func TestControlRefusalCoversTheNewlineTheParserCannotYield(t *testing.T) {
+	if controlRefusal("index", "safe\n- forged") == "" {
+		t.Fatal("newline accepted in an index field")
+	}
+	if got := controlRefusal("index", "café 文書 🚀 →"); got != "" {
+		t.Fatalf("graphic unicode refused: %s", got)
+	}
 }

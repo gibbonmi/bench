@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 
 	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -137,12 +138,20 @@ func Entries(root string) ([]Entry, error) {
 		if exists(filepath.Join(root, ".agents", "commands", name+".md")) {
 			continue
 		}
-		entries = append(entries, Entry{
+		entry := Entry{
 			Name:    name,
 			Trigger: FrontmatterField(file, "index"),
 			Note:    FrontmatterField(file, "index-note"),
 			KitOnly: kitOnly[".agents/skills/"+name],
-		})
+		}
+		// A field only becomes a rendered line once it is safe for one; the fence parser
+		// publishes the value, this decides whether it may reach the sink.
+		if reason := controlRefusal("index", entry.Trigger); reason != "" {
+			entry.Refusal = reason
+		} else if reason := controlRefusal("index-note", entry.Note); reason != "" {
+			entry.Refusal = reason
+		}
+		entries = append(entries, entry)
 	}
 	return entries, err
 }
@@ -311,6 +320,20 @@ func Write(root string) error {
 // reports and Write refuses with.
 func orphanDiagnostic(name string) string {
 	return fmt.Sprintf(skillPathFormat+" missing (orphan skill directory)", name)
+}
+
+// controlRefusal reasons about a parsed field's fitness for the sink. Entry.Line is
+// line-structured markdown with no escaping, so any control rune could truncate the
+// entry or forge a second one — a CR is enough. The whole Unicode control category is
+// refused, C0 and C1 alike, because an ASCII shortlist leaves DEL and the C1 range
+// able to reach the same sink.
+func controlRefusal(key, value string) string {
+	for _, r := range value {
+		if unicode.IsControl(r) {
+			return fmt.Sprintf("%s: carries control rune U+%04X (an index entry is one line)", key, r)
+		}
+	}
+	return ""
 }
 
 // refusalDiagnostic names the one untrustworthy-bytes wording Check reports and Write
