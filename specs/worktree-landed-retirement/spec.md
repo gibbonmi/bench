@@ -340,6 +340,7 @@ disposition.
 - `internal/usage/worktree.go`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
+- `internal/canary/inventory_test.go`
 - `tests/canary/workflow-guidance-anchors/` (three new fixture directories only)
 - `cmd/bench/command_registry_test.go`
 - `.bench/BENCH.md` (the CLI-inventory sentence for `bench worktree clean` only)

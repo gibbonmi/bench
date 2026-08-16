@@ -1,0 +1,1 @@
+[{"path":".agents/skills/bench-craft-delegate/SKILL.md","old":"Acceptance closes an independent worktree after its slice lands: the coordinator runs `bench worktree release --request <opaque-id> <path>` for it.","new":"Acceptance closes an independent worktree after its slice lands."}]

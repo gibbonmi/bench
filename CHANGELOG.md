@@ -46,6 +46,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added the `landed` assignment classification and `bench worktree clean --landed`
+  plan/apply sweep for retiring landed worktrees as one fingerprinted set.
 - New `bench skills-index [--check|--write]` command — the operator's one skills-index
   reader and regenerator; `.bench/skills-index.sh` is gone and every reference now
   names the verb.

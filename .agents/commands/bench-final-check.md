@@ -38,8 +38,7 @@ its `spec-retire: <slug>` commit — promoting durable content first (a decision
 to an ADR, a hostile edge to the profile); retiring the whole
 `specs/<slug>/` folder removes its compiled decision provenance with its tickets,
 so there is no separate top-level decision-map delete; an orphaned review pickup is promoted or
-deleted by hand; leftover worktrees and scratch branches go through
-`bench worktree clean`. Leave the roadmap and capture rows to
+deleted by hand; scratch branches go through `bench worktree clean`; leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report. Leave the roadmap and capture rows to
 `/bench-what-next` — that phase owns the reconcile and the drain, and this duty
 never restates it. On a topic branch these duties defer by design: the rows
 fire only on the default branch, and the next default-branch session's
