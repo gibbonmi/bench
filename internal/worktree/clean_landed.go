@@ -1,0 +1,230 @@
+package worktree
+
+import (
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
+)
+
+const landedSetFingerprintVersion = "bench-landed-set/v1"
+
+type landedCleanupRow struct {
+	assignment intent.Assignment
+	plan       CleanupPlan
+	headOID    string
+	lease      string
+}
+
+type landedCleanupSet struct {
+	rows        []landedCleanupRow
+	fingerprint string
+}
+
+func planLandedSet(root string, options CleanupOptions) (landedCleanupSet, error) {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return landedCleanupSet{}, err
+	}
+	sort.Slice(assignments, func(i, j int) bool { return assignments[i].ID < assignments[j].ID })
+	defaultRef, ok := git.ResolvedDefault(root)
+	if !ok {
+		return landedCleanupSet{}, nil
+	}
+	leases, err := assignmentLeaseStates(root)
+	if err != nil {
+		return landedCleanupSet{}, err
+	}
+
+	set := landedCleanupSet{rows: make([]landedCleanupRow, 0, len(assignments))}
+	for _, assignment := range assignments {
+		if assignment.State != intent.StateActive || assignment.Branch == "" {
+			continue
+		}
+		landed, byContent, proofErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), defaultRef)
+		if proofErr != nil || !landed {
+			continue
+		}
+		proof := "true:ancestry"
+		if byContent {
+			proof = "true:patch"
+		}
+		lease := leases[assignment.OwnerID]
+		if lease == "" {
+			lease = "none"
+		}
+		classifierPlan := CleanupPlan{Target: root, landed: proof}
+		if lease == string(LeaseLive) {
+			classifierPlan.ReasonCode = ReasonLiveLease
+		}
+		if !assignmentLanded(assignment, classifierPlan) {
+			continue
+		}
+		headOID, oidErr := git.Output("-C", root, "rev-parse", "--verify", assignment.Branch+"^{commit}")
+		if oidErr != nil {
+			continue
+		}
+		plan := planLandedAssignment(root, assignment, options)
+		plan.Assignment = assignment.ID
+		set.rows = append(set.rows, landedCleanupRow{assignment: assignment, plan: plan, headOID: headOID, lease: lease})
+	}
+	if len(set.rows) == 0 {
+		return set, nil
+	}
+	set.fingerprint = fingerprintLandedSet(set.rows, options)
+	for i := range set.rows {
+		set.rows[i].plan.Fingerprint = set.fingerprint
+	}
+	return set, nil
+}
+
+func planLandedAssignment(root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
+	// Only the checkout shape licenses the explicit planner: it invokes git against the
+	// target, which can block forever when a ledger path has decayed into a FIFO or socket.
+	shape, shapeErr := ClassifyPathShape(assignment.Worktree)
+	if shapeErr != nil || shape != ShapeCheckoutDirectory {
+		detail := "assignment path shape is " + string(shape)
+		if shapeErr != nil {
+			detail = "assignment path shape is unknown: " + shapeErr.Error()
+		}
+		plan := retainedPlan(assignment.Worktree, ReasonUncertain, detail)
+		plan.Assignment, plan.Recovery, plan.Tracked, plan.ignoredSummary = assignment.ID, "none", "unknown", "unknown"
+		plan.assignment, plan.owned = &assignment, true
+		return plan
+	}
+	plan, err := PlanExplicitWithOptions(root, assignment.Worktree, options)
+	if err != nil {
+		plan = retainedPlan(assignment.Worktree, ReasonUncertain, err.Error())
+		plan.Assignment, plan.Recovery, plan.Tracked, plan.ignoredSummary = assignment.ID, "none", "unknown", "unknown"
+		plan.assignment, plan.owned = &assignment, true
+		return plan
+	}
+	if plan.preserves() {
+		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonDirty, "per-path cleanup is required to preserve work"
+		plan.Recovery = "none"
+	}
+	return plan
+}
+
+// assignmentLeaseStates reads leases through the shared administration directory so
+// selector classification never asks a decayed assignment path to resolve its gitdir.
+func assignmentLeaseStates(root string) (map[string]string, error) {
+	common, err := git.CommonDir(root)
+	if err != nil {
+		return nil, err
+	}
+	if err := git.ScanWorktreeAdmin(common); err != nil {
+		return nil, err
+	}
+	base := filepath.Join(common, "worktrees")
+	entries, err := os.ReadDir(base)
+	if errors.Is(err, os.ErrNotExist) {
+		return map[string]string{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	states := make(map[string]string, len(entries))
+	for _, entry := range entries {
+		admin := filepath.Join(base, entry.Name())
+		markerPath := filepath.Join(admin, OwnerMarkerFile)
+		info, statErr := os.Lstat(markerPath)
+		if statErr != nil || !info.Mode().IsRegular() {
+			continue
+		}
+		data, readErr := os.ReadFile(markerPath)
+		if readErr != nil {
+			continue
+		}
+		marker, decodeErr := decodeMarker(data)
+		if decodeErr != nil {
+			continue
+		}
+		leasePath := filepath.Join(admin, git.BenchLeaseFilename)
+		leaseInfo, leaseErr := os.Lstat(leasePath)
+		switch {
+		case errors.Is(leaseErr, os.ErrNotExist):
+			states[marker.OwnerID] = "none"
+		case leaseErr != nil || !leaseInfo.Mode().IsRegular():
+			states[marker.OwnerID] = string(LeaseUnknown)
+		default:
+			states[marker.OwnerID] = string(ProbeLease(leasePath))
+		}
+	}
+	return states, nil
+}
+
+// fingerprintLandedSet binds both membership and every removal-relevant row fact. A
+// later apply compares this digest before touching the first checkout, so adding a row
+// or changing one preserving verdict must change the value shared by every output row.
+func fingerprintLandedSet(rows []landedCleanupRow, options CleanupOptions) string {
+	parts := [][]byte{
+		[]byte(landedSetFingerprintVersion),
+		[]byte(strconv.FormatBool(options.DiscardIgnored)),
+		[]byte(strconv.FormatBool(options.DiscardBranch)),
+		[]byte(strconv.FormatBool(options.Full)),
+	}
+	for _, row := range rows {
+		parts = append(parts,
+			[]byte(row.assignment.ID),
+			[]byte(row.assignment.Worktree),
+			[]byte(row.plan.Action),
+			[]byte(row.headOID),
+			[]byte(row.plan.Tracked),
+			[]byte(strconv.Itoa(row.plan.Ignored.Count)),
+			[]byte(row.lease),
+		)
+	}
+	return fingerprintParts(parts...)
+}
+
+func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOptions) error {
+	plans := make([]CleanupPlan, 0, len(set.rows))
+	for _, row := range set.rows {
+		plans = append(plans, row.plan)
+	}
+	if err := renderCleanups(stdout, plans); err != nil || len(set.rows) == 0 {
+		return err
+	}
+	actions := make([]axi.Action, 0, len(set.rows)+1)
+	for _, row := range set.rows {
+		if row.plan.Action.removes() {
+			arguments := []axi.InvocationArgument{axi.KnownArgument("worktree"), axi.KnownArgument("clean")}
+			if options.DiscardIgnored {
+				arguments = append(arguments, axi.KnownArgument("--discard-ignored"))
+			}
+			if options.DiscardBranch {
+				arguments = append(arguments, axi.KnownArgument("--discard-branch"))
+			}
+			if options.Full {
+				arguments = append(arguments, axi.KnownArgument("--full"))
+			}
+			arguments = append(arguments, axi.KnownArgument("--landed"), axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
+			actions = append(actions, axi.ExecutableInvocation("apply the landed worktree plan", arguments...))
+			break
+		}
+	}
+	for _, row := range set.rows {
+		if row.plan.Action != ActionRetain || !lineSafe(row.assignment.Worktree) {
+			continue
+		}
+		actions = append(actions, axi.ExecutableInvocation(
+			fmt.Sprintf("resolve retained worktree (%s)", row.plan.ReasonCode),
+			axi.KnownArgument("worktree"), axi.KnownArgument("clean"), axi.KnownArgument(row.assignment.Worktree),
+		))
+	}
+	help, err := axi.RenderHelp(actions)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(stdout, help)
+	return err
+}

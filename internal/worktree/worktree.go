@@ -220,6 +220,7 @@ func cleanInvocationError(stdout io.Writer) int {
 func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
+	landed := false
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--discard-ignored":
@@ -228,6 +229,11 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 			options.DiscardBranch = true
 		case "--full":
 			options.Full = true
+		case "--landed":
+			if landed {
+				return cleanInvocationError(stdout)
+			}
+			landed = true
 		case "--apply":
 			if i+1 >= len(args) || fingerprint != "" {
 				return cleanInvocationError(stdout)
@@ -247,7 +253,7 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 			target = args[i]
 		}
 	}
-	if target == "" {
+	if target == "" && !landed || target != "" && landed {
 		return cleanInvocationError(stdout)
 	}
 	if fingerprint != "" {
@@ -260,6 +266,29 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
+	}
+	if landed {
+		set, planErr := planLandedSet(root, options)
+		if planErr != nil {
+			_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: fingerprint, Reason: planErr.Error()})
+			return 1
+		}
+		if fingerprint != "" && len(set.rows) == 0 {
+			return cleanInvocationError(stdout)
+		}
+		if fingerprint != "" && fingerprint != set.fingerprint {
+			plans := make([]CleanupPlan, 0, len(set.rows))
+			for _, row := range set.rows {
+				plans = append(plans, row.plan)
+			}
+			_ = renderCleanups(stdout, plans)
+			return 1
+		}
+		if err := renderLandedSet(stdout, set, options); err != nil {
+			fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
+			return 1
+		}
+		return 0
 	}
 	plan, err := PlanExplicitWithOptions(root, target, options)
 	if err == nil && fingerprint != "" {

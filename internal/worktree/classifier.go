@@ -17,6 +17,32 @@ import (
 type CleanupAction string
 
 func renderCleanup(stdout io.Writer, plan CleanupPlan) error {
+	return renderCleanups(stdout, []CleanupPlan{plan})
+}
+
+var cleanupFields = []string{"target", "action", "tracked", "ignored", "recovery", "fingerprint", "detail"}
+
+func renderCleanups(stdout io.Writer, plans []CleanupPlan) error {
+	rows := make([][]string, 0, len(plans))
+	for _, plan := range plans {
+		rows = append(rows, cleanupRow(plan))
+	}
+	out, err := toon.Table("worktree_cleanup", cleanupFields, rows)
+	if err != nil {
+		return err
+	}
+	if _, err = fmt.Fprint(stdout, out); err != nil {
+		return err
+	}
+	for _, plan := range plans {
+		if err := renderIgnoredPreview(stdout, plan); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func cleanupRow(plan CleanupPlan) []string {
 	tracked, recovery := plan.Tracked, plan.Recovery
 	if tracked == "" {
 		tracked = "unknown"
@@ -43,12 +69,12 @@ func renderCleanup(stdout io.Writer, plan CleanupPlan) error {
 	if !cleanupOutputSafe(detail) {
 		detail = "unsafe detail " + cleanupOutputValue(detail)
 	}
-	out, err := toon.Table("worktree_cleanup", []string{"target", "action", "tracked", "ignored", "recovery", "fingerprint", "detail"}, [][]string{{target, string(plan.Action), tracked, ignored, recovery, plan.Fingerprint, detail}})
-	if err != nil {
-		return err
-	}
-	if _, err = fmt.Fprint(stdout, out); err != nil || plan.Ignored.Shown == 0 {
-		return err
+	return []string{target, string(plan.Action), tracked, ignored, recovery, plan.Fingerprint, detail}
+}
+
+func renderIgnoredPreview(stdout io.Writer, plan CleanupPlan) error {
+	if plan.Ignored.Shown == 0 {
+		return nil
 	}
 	rows := make([][]string, 0, plan.Ignored.Shown)
 	for _, path := range plan.Ignored.Paths[:plan.Ignored.Shown] {
