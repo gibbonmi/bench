@@ -335,7 +335,9 @@ disposition.
 ## Ownership fences
 
 - `specs/worktree-landed-retirement/spec.md`
+- `specs/worktree-landed-retirement/tickets/review-repairs.md`
 - `capture/session-handoff.md`
+- `reviews/worktree-landed-retirement.md` (transient review pickup; deleted with its repairs)
 - `internal/worktree/` (production and test files; the coordinator commits per ticket)
 - `internal/usage/worktree.go`
 - `internal/anchors/registry_data.go`
