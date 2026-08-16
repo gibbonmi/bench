@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -317,5 +318,166 @@ func requireUnreadableDir(t *testing.T, path string) {
 	}
 	if _, err := os.ReadDir(path); err == nil {
 		capability.Capability(t, capability.Privilege, "mode 0o000 directory is still readable by this user")
+	}
+}
+
+// TestClassifyNoFollowStates grades the no-follow form's complete disposition in one
+// table. It is separate from TestClassifyStates because the two forms disagree on
+// exactly one input — a live symlink — and a shared table could not assert both
+// contracts. Every row is a real filesystem object: a synthetic mode seam would let an
+// implementation pass the table while still opening the path it refuses.
+func TestClassifyNoFollowStates(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		fixture func(*testing.T, string) string
+		state   FileState
+		stream  ReadStatus
+		data    string
+		reason  bool
+	}{
+		{
+			name:    "absent",
+			fixture: func(_ *testing.T, dir string) string { return filepath.Join(dir, "SKILL.md") },
+			state:   StateAbsent,
+		},
+		{
+			name:    "empty",
+			fixture: func(t *testing.T, dir string) string { return writeFixture(t, dir, "SKILL.md", "") },
+			state:   StateEmpty,
+			stream:  ReadComplete,
+		},
+		{
+			name:    "regular file",
+			fixture: func(t *testing.T, dir string) string { return writeFixture(t, dir, "SKILL.md", "---\nname: x\n---\n") },
+			state:   StateParsed,
+			stream:  ReadComplete,
+			data:    "---\nname: x\n---\n",
+		},
+		{
+			name: "exactly the control-record limit",
+			fixture: func(t *testing.T, dir string) string {
+				return writeFixture(t, dir, "SKILL.md", strings.Repeat("a", int(ControlRecordLimit)))
+			},
+			state:  StateParsed,
+			stream: ReadComplete,
+			data:   strings.Repeat("a", int(ControlRecordLimit)),
+		},
+		{
+			name: "one byte over the control-record limit",
+			fixture: func(t *testing.T, dir string) string {
+				return writeFixture(t, dir, "SKILL.md", strings.Repeat("a", int(ControlRecordLimit)+1))
+			},
+			state:  StateUnreadable,
+			stream: ReadOversized,
+			reason: true,
+		},
+		{
+			name:    "invalid UTF-8",
+			fixture: func(t *testing.T, dir string) string { return writeFixture(t, dir, "SKILL.md", "head\xff\xfetail") },
+			state:   StateMalformed,
+			stream:  ReadComplete,
+			data:    "head\xff\xfetail",
+			reason:  true,
+		},
+		{
+			name: "live symlink",
+			fixture: func(t *testing.T, dir string) string {
+				target := writeFixture(t, dir, "target.md", "# linked\n")
+				link := filepath.Join(dir, "SKILL.md")
+				requireSymlink(t, target, link)
+				return link
+			},
+			state:  StateWrongType,
+			reason: true,
+		},
+		{
+			name: "dangling symlink",
+			fixture: func(t *testing.T, dir string) string {
+				link := filepath.Join(dir, "SKILL.md")
+				requireSymlink(t, filepath.Join(dir, "gone.md"), link)
+				return link
+			},
+			state:  StateWrongType,
+			reason: true,
+		},
+		{
+			name: "socket",
+			fixture: func(t *testing.T, dir string) string {
+				return requireSocket(t, filepath.Join(dir, "control.sock"))
+			},
+			state:  StateWrongType,
+			reason: true,
+		},
+		{
+			name:    "directory",
+			fixture: func(t *testing.T, dir string) string { return makeDir(t, dir, "SKILL.md") },
+			state:   StateWrongType,
+			reason:  true,
+		},
+		{
+			name: "device",
+			fixture: func(t *testing.T, _ string) string {
+				const device = "/dev/null"
+				if info, err := os.Lstat(device); err != nil || info.Mode()&os.ModeDevice == 0 {
+					capability.Capability(t, capability.Fifo, fmt.Sprintf("no device node at %s", device))
+				}
+				return device
+			},
+			state:  StateWrongType,
+			reason: true,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ClassifyNoFollow(tt.fixture(t, t.TempDir()))
+			if got.State != tt.state {
+				t.Fatalf("ClassifyNoFollow state = %q, want %q (reason=%q)", got.State, tt.state, got.Reason)
+			}
+			if got.Stream != tt.stream {
+				t.Errorf("ClassifyNoFollow stream = %q, want %q", got.Stream, tt.stream)
+			}
+			if string(got.Data) != tt.data {
+				t.Errorf("ClassifyNoFollow data length = %d, want %d", len(got.Data), len(tt.data))
+			}
+			if tt.reason && got.Reason == "" {
+				t.Errorf("ClassifyNoFollow reason is empty, want the underlying diagnostic preserved")
+			}
+			if !tt.reason && got.Reason != "" {
+				t.Errorf("ClassifyNoFollow reason = %q, want empty for a non-diagnostic state", got.Reason)
+			}
+		})
+	}
+}
+
+// TestClassifyNoFollowFIFOWithoutOpen is the row the table above cannot hold: a FIFO
+// with no writer blocks in open(2) forever, so a type-blind implementation hangs the
+// whole table instead of failing one row. It fails here by expiring the deadline.
+func TestClassifyNoFollowFIFOWithoutOpen(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "SKILL.md")
+	requireFifo(t, path)
+	done := make(chan Classified, 1)
+	go func() { done <- ClassifyNoFollow(path) }()
+	select {
+	case got := <-done:
+		if got.State != StateWrongType {
+			t.Fatalf("FIFO state = %q, want %q", got.State, StateWrongType)
+		}
+	case <-time.After(TestDeadline(0)):
+		t.Fatal("ClassifyNoFollow blocked on a FIFO with no writer, so it opened the path before checking its type")
+	}
+}
+
+// TestClassifyFormsDisagreeOnlyOnSymlinks pins the one input the two forms answer
+// differently, so a later edit cannot quietly collapse them into one policy: Classify
+// still reads a control record behind a live link, and the no-follow form refuses it.
+func TestClassifyFormsDisagreeOnlyOnSymlinks(t *testing.T) {
+	dir := t.TempDir()
+	target := writeFixture(t, dir, "target.md", "# linked\n")
+	link := filepath.Join(dir, "SKILL.md")
+	requireSymlink(t, target, link)
+	if got := Classify(link, ControlRecordLimit); got.State != StateParsed {
+		t.Errorf("Classify(live symlink) = %q, want %q: the follow contract other callers depend on changed", got.State, StateParsed)
+	}
+	if got := ClassifyNoFollow(link); got.State != StateWrongType {
+		t.Errorf("ClassifyNoFollow(live symlink) = %q, want %q", got.State, StateWrongType)
 	}
 }

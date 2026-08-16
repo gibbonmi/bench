@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	kitpayload "github.com/gibbonmi/bench"
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 const (
@@ -52,10 +53,17 @@ type Entry struct {
 	Trigger string
 	Note    string
 	KitOnly bool
+	// Refusal is the classifier's diagnostic for a skill whose SKILL.md is not
+	// trustworthy bytes at all — a link, a special file, oversized, or not UTF-8. It is
+	// distinct from an empty Trigger because a skill nobody could read has not declined
+	// to be indexed; it has to be named as refused so the operator fixes the file rather
+	// than adding frontmatter to something that cannot hold it.
+	Refusal string
 }
 
-// Indexed reports whether the entry contributes a line to the generated block.
-func (e Entry) Indexed() bool { return e.Trigger != "" }
+// Indexed reports whether the entry contributes a line to the generated block. A refused
+// skill renders no line: bytes the classifier would not vouch for cannot author one.
+func (e Entry) Indexed() bool { return e.Refusal == "" && e.Trigger != "" }
 
 // skillPathFormat is the skill source path an index line carries: Line formats it,
 // indexLineRe matches it.
@@ -100,6 +108,10 @@ func Entries(root string) ([]Entry, error) {
 		if exists(filepath.Join(root, ".agents", "commands", name+".md")) {
 			continue
 		}
+		if c := bounds.ClassifyNoFollow(file); c.State.Failed() {
+			entries = append(entries, Entry{Name: name, Refusal: c.Reason})
+			continue
+		}
 		entries = append(entries, Entry{
 			Name:    name,
 			Trigger: FrontmatterField(file, "index"),
@@ -114,10 +126,14 @@ func Entries(root string) ([]Entry, error) {
 // Nothing after the closing fence counts, so a body line that happens to start with
 // the key is not frontmatter.
 func FrontmatterField(path, key string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
+	// The producer classifier, not os.ReadFile: this path is attacker-shaped input to
+	// generated output, so a link is refused rather than followed and a FIFO cannot
+	// block the gate in open(2).
+	classified := bounds.ClassifyNoFollow(path)
+	if classified.State != bounds.StateParsed {
 		return ""
 	}
+	data := classified.Data
 	fence := 0
 	prefix := key + ":"
 	for _, line := range strings.Split(string(data), "\n") {
@@ -148,6 +164,10 @@ func Check(root string) []string {
 	var expected []string
 	expectedByName := map[string]string{}
 	for _, entry := range entries {
+		if entry.Refusal != "" {
+			attributed[entry.Name] = append(attributed[entry.Name], fmt.Sprintf(skillPathFormat+" refused: %s", entry.Name, entry.Refusal))
+			continue
+		}
 		if !entry.Indexed() {
 			attributed[entry.Name] = append(attributed[entry.Name], fmt.Sprintf("skill '%s' missing index: frontmatter (the skills index is generated)", entry.Name))
 			continue
@@ -246,12 +266,12 @@ func Write(root string) error {
 // "audience" before "source" resolves like any other. A tree with no allowlist has
 // nothing withheld, which is also what the generator concludes.
 func kitOnlySources(root string) (map[string]bool, error) {
-	raw, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(allowlistRel)))
-	if err != nil {
+	classified := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(allowlistRel)))
+	if classified.State != bounds.StateParsed {
 		return nil, nil
 	}
 	var rows []kitpayload.PayloadRow
-	if err := json.Unmarshal(raw, &rows); err != nil {
+	if err := json.Unmarshal(classified.Data, &rows); err != nil {
 		return nil, ErrAllowlistUnreadable
 	}
 	out := map[string]bool{}
@@ -324,12 +344,15 @@ func (s blockSpan) replace(block []string) string {
 	return strings.Join(out, "\n")
 }
 
+// readIfExists reads a producer file through the no-follow classifier, so a reference
+// that is a link, a special file, oversized, or not UTF-8 reads as nothing rather than
+// as bytes the generator would treat as authoritative.
 func readIfExists(path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
+	classified := bounds.ClassifyNoFollow(path)
+	if classified.State != bounds.StateParsed {
 		return ""
 	}
-	return string(data)
+	return string(classified.Data)
 }
 
 func exists(path string) bool {

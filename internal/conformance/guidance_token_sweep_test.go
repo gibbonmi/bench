@@ -75,7 +75,16 @@ func checkGuidanceTokens(root string) []string {
 		files, discovery := discoverGuidanceFiles(root, filepath.Join(root, dir))
 		diags = append(diags, discovery...)
 		for _, path := range files {
-			diags = append(diags, guidanceFileDiags(slashRel(root, path), readIfExists(path), binding, bound)...)
+			rel := slashRel(root, path)
+			// Discovery classified the entry's shape; this classifies its bytes, so an
+			// oversized or non-UTF-8 guidance file is reported rather than swept as an
+			// empty document that trivially carries no offending token.
+			text := bounds.ClassifyNoFollow(path)
+			if text.State.Failed() {
+				diags = append(diags, fmt.Sprintf("guidance file refused: %s could not be read (%s)", rel, text.Reason))
+				continue
+			}
+			diags = append(diags, guidanceFileDiags(rel, string(text.Data), binding, bound)...)
 		}
 	}
 	return diags

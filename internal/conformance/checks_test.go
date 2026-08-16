@@ -1,6 +1,7 @@
 package conformance
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,10 +12,13 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -302,7 +306,25 @@ func frontmatterField(path, key string) string {
 	return skillsindex.FrontmatterField(path, key)
 }
 
+// hardenedProducerRe matches the three producer classes whose bytes are authoritative
+// input to generated output. Only these delegate to the no-follow classifier: widening
+// the set would quietly change what every other check in this package reads, and the
+// producer contract is what was reviewed, not "every file a check happens to open".
+var hardenedProducerRe = regexp.MustCompile(`(^|/)(\.agents/skills/[^/]+/SKILL\.md|\.bench/BENCH-reference\.md|\.bench/consumer-payload\.json)$`)
+
+// readIfExists returns a file's text, or "" for anything a caller may not trust. A
+// producer path goes through the no-follow classifier first, so a link is refused
+// rather than followed, a FIFO cannot block the check in open(2), and oversized or
+// non-UTF-8 bytes never reach a parser. Every other path keeps the plain read: this
+// helper is shared by checks whose subjects are ordinary tracked sources.
 func readIfExists(path string) string {
+	if hardenedProducerRe.MatchString(filepath.ToSlash(path)) {
+		classified := bounds.ClassifyNoFollow(path)
+		if classified.State != bounds.StateParsed {
+			return ""
+		}
+		return string(classified.Data)
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return ""
@@ -490,4 +512,126 @@ func tempGitRepoWithLines(linesEnv string) (string, func(), error) {
 		return "", func() {}, err
 	}
 	return dir, cleanup, nil
+}
+
+// hostileSkillPlanters build one hostile SKILL.md each. The FIFO carries the
+// load-bearing half — it has no writer, so a reader that opens before it classifies
+// blocks in open(2) forever and fails by expiring the deadline rather than by returning
+// a wrong answer. The two link forms cover redirection at a target inside and outside
+// the graded tree, and the byte cases cover the two bounded-read refusals.
+var hostileSkillPlanters = map[string]func(*testing.T, string){
+	"fifo": func(t *testing.T, path string) {
+		if err := syscall.Mkfifo(path, 0o644); err != nil {
+			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+		}
+	},
+	"live symlink": func(t *testing.T, path string) {
+		target := filepath.Join(filepath.Dir(path), "target.md")
+		if err := os.WriteFile(target, []byte("---\nname: target\nindex: forged\n---\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(target, path); err != nil {
+			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		}
+	},
+	"dangling symlink": func(t *testing.T, path string) {
+		if err := os.Symlink(filepath.Join(filepath.Dir(path), "gone.md"), path); err != nil {
+			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		}
+	},
+	"oversized": func(t *testing.T, path string) {
+		if err := os.WriteFile(path, bytes.Repeat([]byte("a"), int(bounds.ControlRecordLimit)+1), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	},
+	"invalid UTF-8": func(t *testing.T, path string) {
+		if err := os.WriteFile(path, []byte("---\nname: x\xff\xfe\n---\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	},
+}
+
+// hostileSkillReaders names each registered check that reads a SKILL.md and the skill
+// whose file that check is the reader of. Running the registered function rather than a
+// replica is the whole point: a replica would prove only that the copy was hardened,
+// while the composition failure this row exists to catch is a check that goes green in
+// its own package and then hangs behind the gate.
+var hostileSkillReaders = []struct {
+	check string
+	skill string
+}{
+	{"load-validity-metadata", "bench-craft-hostile"},
+	{"skills-index-command-adapters", "bench-craft-hostile"},
+	{"docs-currency-workflow", "bench-craft-spec"},
+	{"line-routing", "bench-craft-hostile"},
+	{"guidance-prose-budgets", "bench-craft-hostile"},
+	{"axi-query-registry", "bench-craft-cli"},
+}
+
+// TestRegisteredSkillReadersRefuseHostileSkillFiles is the composition row: every
+// registered reader of a skill file has to complete over a hostile one and say which
+// path it refused. Completion alone is not enough — a reader that swallows the refusal
+// silently reports a clean skill it never read — so each case asserts the offending
+// path appears in the check's own diagnostics.
+func TestRegisteredSkillReadersRefuseHostileSkillFiles(t *testing.T) {
+	for kind, plant := range hostileSkillPlanters {
+		t.Run(kind, func(t *testing.T) {
+			root := writeHostileSkillRoot(t, plant)
+			for _, reader := range hostileSkillReaders {
+				t.Run(reader.check, func(t *testing.T) {
+					binding, bound := conformanceChecks[reader.check]
+					if !bound {
+						t.Fatalf("%s conformance owner is not bound", reader.check)
+					}
+					want := fmt.Sprintf(".agents/skills/%s/SKILL.md", reader.skill)
+					done := make(chan []string, 1)
+					go func() { done <- binding.run(root, root, registry.Dev) }()
+					select {
+					case diags := <-done:
+						if !containsDiagnostic(diags, want) {
+							t.Fatalf("%s over a %s %s produced %q, want a diagnostic naming the refused path", reader.check, kind, want, diags)
+						}
+					case <-time.After(bounds.TestDeadline(0)):
+						t.Fatalf("%s blocked on a %s %s, so it opened the path before classifying it", reader.check, kind, want)
+					}
+				})
+			}
+		})
+	}
+}
+
+// writeHostileSkillRoot plants one hostile SKILL.md per skill each registered reader
+// owns, plus the minimum profile the budget check needs to have a policy at all. Every
+// other subject the checks look for is absent on purpose: this root grades the reader's
+// refusal, not the tree's completeness.
+func writeHostileSkillRoot(t *testing.T, plant func(*testing.T, string)) string {
+	t.Helper()
+	root := t.TempDir()
+	profile := proseBudgetTable(proseBudgetHeader, proseBudgetRows...)
+	if err := os.MkdirAll(filepath.Join(root, "projects"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "projects", "benchkit.md"), []byte(profile), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// The guidance sweep grades model literals only against a present binding, so
+	// without lines.env the line-routing check would return before it reached a skill.
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(guidanceFixtureEnv), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, reader := range hostileSkillReaders {
+		dir := filepath.Join(root, ".agents", "skills", reader.skill)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		path := filepath.Join(dir, "SKILL.md")
+		if _, err := os.Lstat(path); err == nil {
+			continue
+		}
+		plant(t, path)
+	}
+	return root
 }

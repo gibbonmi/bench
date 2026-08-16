@@ -67,26 +67,7 @@ func Classify(path string, limit int64) Classified {
 	if state != "" {
 		return Classified{State: state, Reason: reason}
 	}
-	if !info.Mode().IsRegular() {
-		return Classified{State: StateWrongType, Reason: fmt.Sprintf("not a regular file: %s", info.Mode().Type())}
-	}
-	file, err := os.Open(path)
-	if err != nil {
-		return Classified{State: StateUnreadable, Reason: err.Error()}
-	}
-	defer file.Close()
-	read := Read(file, limit)
-	switch read.Status {
-	case ReadOversized, ReadFailed:
-		return Classified{State: StateUnreadable, Stream: read.Status, Reason: read.Err.Error()}
-	}
-	if !utf8.Valid(read.Data) {
-		return Classified{State: StateMalformed, Stream: read.Status, Data: read.Data, Reason: "invalid UTF-8"}
-	}
-	if len(read.Data) == 0 {
-		return Classified{State: StateEmpty, Stream: read.Status, Data: read.Data}
-	}
-	return Classified{State: StateParsed, Stream: read.Status, Data: read.Data}
+	return gradeBytes(path, info, limit)
 }
 
 // ClassifyDir reports the state of a control directory at path.
@@ -130,4 +111,53 @@ func resolve(path string) (fs.FileInfo, FileState, string) {
 		info = target
 	}
 	return info, "", ""
+}
+
+// ClassifyNoFollow reports the state of a producer file at path without ever following
+// a link or opening a non-regular object, reading at most ControlRecordLimit. It sits
+// beside Classify rather than replacing it because the two answer one input
+// differently on purpose: a control record behind a live link is still that record, but
+// a producer file is authoritative input to generated output, so a link there redirects
+// the generator at bytes outside the tree it is grading. Both link forms are therefore
+// wrong-type, and the type check precedes every open so a FIFO cannot block the gate in
+// open(2). The limit is not a parameter: one producer read under two bounds is the
+// divergence ControlRecordLimit exists to forbid.
+func ClassifyNoFollow(path string) Classified {
+	info, err := os.Lstat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return Classified{State: StateAbsent}
+		}
+		return Classified{State: StateUnreadable, Reason: err.Error()}
+	}
+	return gradeBytes(path, info, ControlRecordLimit)
+}
+
+// gradeBytes is what both public forms mean by "read this and say what it is". The two
+// differ only in how they resolve the path — followed or refused — and in which limit
+// they bind; everything from the regular-file check onward is one fact about how bounded
+// bytes are graded, and splitting it would let the oversized or UTF-8 disposition drift
+// between the forms one edit at a time. info must already be the caller's resolved
+// stat: this helper does not decide whether a link is a control record.
+func gradeBytes(path string, info fs.FileInfo, limit int64) Classified {
+	if !info.Mode().IsRegular() {
+		return Classified{State: StateWrongType, Reason: fmt.Sprintf("not a regular file: %s", info.Mode().Type())}
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return Classified{State: StateUnreadable, Reason: err.Error()}
+	}
+	defer file.Close()
+	read := Read(file, limit)
+	switch read.Status {
+	case ReadOversized, ReadFailed:
+		return Classified{State: StateUnreadable, Stream: read.Status, Reason: read.Err.Error()}
+	}
+	if !utf8.Valid(read.Data) {
+		return Classified{State: StateMalformed, Stream: read.Status, Data: read.Data, Reason: "invalid UTF-8"}
+	}
+	if len(read.Data) == 0 {
+		return Classified{State: StateEmpty, Stream: read.Status, Data: read.Data}
+	}
+	return Classified{State: StateParsed, Stream: read.Status, Data: read.Data}
 }

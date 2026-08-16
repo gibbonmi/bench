@@ -2,9 +2,10 @@ package anchors
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // Anchor describes one ordered conformance prose anchor.
@@ -38,15 +39,24 @@ func EvaluateGroup(root string, group Group) []string {
 	var diagnostics []string
 	files := map[string]fileResult{}
 	sections := map[string]sectionResult{}
+	// One refusal per file, not one per anchor: a refused file fails every anchor it
+	// owns, and repeating the same repair a dozen times buries the rest of the report.
+	reported := map[string]bool{}
 	for _, anchor := range registry {
 		if anchor.Group != group {
 			continue
 		}
 		file, loaded := files[anchor.File]
 		if !loaded {
-			text, exists := read(filepath.Join(root, filepath.FromSlash(anchor.File)))
-			file = fileResult{active: StripHTMLComments(text), exists: exists}
+			file = read(filepath.Join(root, filepath.FromSlash(anchor.File)), anchor.File)
 			files[anchor.File] = file
+		}
+		if file.refusal != "" {
+			if !reported[anchor.File] {
+				reported[anchor.File] = true
+				diagnostics = append(diagnostics, file.refusal)
+			}
+			continue
 		}
 		if anchor.Kind == Require {
 			if !file.exists {
@@ -83,6 +93,10 @@ func EvaluateGroup(root string, group Group) []string {
 type fileResult struct {
 	active string
 	exists bool
+	// refusal is set when the path is present but its bytes are untrustworthy. It is
+	// kept apart from exists because "the anchor file is missing" sends the reader to
+	// write one, while a link or a special file at that path is a different repair.
+	refusal string
 }
 
 type sectionResult struct {
@@ -104,9 +118,18 @@ func resolveSection(file, title, active string, exists bool) sectionResult {
 	return sectionResult{body: body}
 }
 
-func read(path string) (string, bool) {
-	data, err := os.ReadFile(path)
-	return string(data), err == nil
+// read classifies an anchor file before it opens one. Registry targets include skill
+// and reference producer files, so a link is refused rather than followed and a FIFO
+// cannot block the gate in open(2).
+func read(path, rel string) fileResult {
+	classified := bounds.ClassifyNoFollow(path)
+	switch {
+	case classified.State == bounds.StateAbsent:
+		return fileResult{}
+	case classified.State.Failed():
+		return fileResult{exists: true, refusal: fmt.Sprintf("acceptance coverage anchor file refused: %s (%s)", rel, classified.Reason)}
+	}
+	return fileResult{active: StripHTMLComments(string(classified.Data)), exists: true}
 }
 
 // StripHTMLComments removes complete comments and truncates at an unterminated comment.

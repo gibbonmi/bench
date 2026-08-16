@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/skillsindex"
 )
 
@@ -81,11 +82,14 @@ func checkSkillFrontmatter(root string) []string {
 	files, _ := filepath.Glob(filepath.Join(root, ".agents", "skills", "*", "SKILL.md"))
 	sort.Strings(files)
 	for _, path := range files {
-		data, err := os.ReadFile(path)
-		if err != nil {
+		// Classified before it is opened: this is the first check to touch a skill file,
+		// so a FIFO here would block the whole gate rather than one diagnostic.
+		classified := bounds.ClassifyNoFollow(path)
+		if classified.State.Failed() {
+			diags = append(diags, fmt.Sprintf("%s refused: %s", slashRel(root, path), classified.Reason))
 			continue
 		}
-		first := string(data)
+		first := string(classified.Data)
 		if i := strings.IndexByte(first, '\n'); i >= 0 {
 			first = first[:i]
 		}
