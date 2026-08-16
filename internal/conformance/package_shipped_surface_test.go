@@ -64,9 +64,15 @@ func checkPackageShippedSurface(root string) []string {
 	if !strings.Contains(guide, "`bench repair") {
 		diags = append(diags, "CLI inventory omits bench repair")
 	}
-	var rows []kitpayload.PayloadRow
-	if err := readJSONAt(root, ".bench/consumer-payload.json", &rows); err != nil {
-		return append(diags, "read consumer payload allowlist: "+err.Error())
+	// The canonical payload reader, not a local open-and-decode: this check derives
+	// package.json's exclusion list from the allowlist, so it must refuse the same
+	// hostile shapes and the same invalid rows every other consumer refuses.
+	rows, absent, err := kitpayload.PayloadRowsAt(filepath.Join(root, ".bench", "consumer-payload.json"))
+	if absent {
+		return append(diags, ".bench/consumer-payload.json missing: the package exclusion check has no source")
+	}
+	if err != nil {
+		return append(diags, err.Error())
 	}
 	kitOnly := kitpayload.PayloadKitOnlyPrefixes(rows)
 	if len(kitOnly) == 0 {

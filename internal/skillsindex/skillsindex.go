@@ -10,7 +10,7 @@
 package skillsindex
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -18,8 +18,10 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 
 	kitpayload "github.com/gibbonmi/bench"
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 const (
@@ -36,13 +38,19 @@ const (
 	regenerateHint = "(regenerate: bench skills-index --write)"
 )
 
-// ErrAllowlistUnreadable is Write's refusal when the allowlist exists but does not
-// parse. Generating anyway would commit a block with every kit-only marker missing
-// and attribute the resulting drift to the skills rather than to the reader that
-// dropped them, so the write is refused before the file is touched. Check keeps the
-// opposite posture — it marks nothing and adds no diagnostic — because the gate must
-// not gain a red the index itself did not earn.
-var ErrAllowlistUnreadable = errors.New(allowlistRel + " unreadable: kit-only marking unresolved (write refused)")
+// allowlistDiagnostic is the one wording for a present allowlist the reader cannot
+// resolve. Both callers refuse on it: generating would commit a block with every
+// kit-only marker missing, and grading against that block would attribute the reader's
+// defect to the skills.
+const allowlistDiagnostic = allowlistRel + " unreadable: kit-only marking unresolved"
+
+// markersDiagnostic is the one wording for a reference that names no single generated
+// block. Check grades against it and Write refuses on it, so the two never drift.
+const markersDiagnostic = referenceRel + " skills-index markers missing (bench:skills-index)"
+
+// ErrAllowlistUnreadable is Write's refusal when the allowlist is present but does not
+// resolve, so the write is refused before the reference file is touched.
+var ErrAllowlistUnreadable = errors.New(allowlistDiagnostic + " (write refused)")
 
 // Entry is one skill's index row as data. Trigger is empty for a skill that declares
 // no `index:` frontmatter; such a skill renders no line but still earns a diagnostic,
@@ -52,10 +60,22 @@ type Entry struct {
 	Trigger string
 	Note    string
 	KitOnly bool
+	// Refusal is the classifier's diagnostic for a skill whose SKILL.md is not
+	// trustworthy bytes at all — a link, a special file, oversized, or not UTF-8. It is
+	// distinct from an empty Trigger because a skill nobody could read has not declined
+	// to be indexed; it has to be named as refused so the operator fixes the file rather
+	// than adding frontmatter to something that cannot hold it.
+	Refusal string
+	// Orphan marks a real skill directory with no SKILL.md at all. Absence is not bad
+	// bytes, so it carries no Refusal reason, and it is not empty bytes either: those
+	// are readable and grade as a missing trigger. A skill source nobody wrote is a
+	// producer defect, so it is named rather than dropped.
+	Orphan bool
 }
 
-// Indexed reports whether the entry contributes a line to the generated block.
-func (e Entry) Indexed() bool { return e.Trigger != "" }
+// Indexed reports whether the entry contributes a line to the generated block. A refused
+// skill renders no line: bytes the classifier would not vouch for cannot author one.
+func (e Entry) Indexed() bool { return !e.Orphan && e.Refusal == "" && e.Trigger != "" }
 
 // skillPathFormat is the skill source path an index line carries: Line formats it,
 // indexLineRe matches it.
@@ -88,50 +108,88 @@ func skillName(line string) string {
 // Entries enumerates root's skills in alphabetical directory order, skipping a skill
 // whose name has a same-named .agents/commands/<name>.md — a command adapter, which
 // the slash menu already surfaces. The error is non-nil only when the allowlist is
-// present and unparseable; entries come back unmarked in that case so a caller can
-// choose between refusing the write (Write) and grading what it can (Check).
+// present and does not resolve; entries come back unmarked in that case, and both
+// callers refuse on the error rather than acting on unmarked rows.
 func Entries(root string) ([]Entry, error) {
 	kitOnly, err := kitOnlySources(root)
-	files, _ := filepath.Glob(filepath.Join(root, ".agents", "skills", "*", "SKILL.md"))
-	sort.Strings(files)
+	// Literal child enumeration, not a glob: the root is operator-supplied text, and a
+	// pattern walk would read a `[ ] * ?` in it as syntax and report a repository with
+	// no skills at all. A child that is not a real directory — a link to one included —
+	// is not a skill source, so it never reaches the classifier.
+	skillsDir := bounds.ClassifyDir(filepath.Join(root, ".agents", "skills"))
+	names := make([]string, 0, len(skillsDir.Entries))
+	for _, child := range skillsDir.Entries {
+		if child.IsDir() {
+			names = append(names, child.Name())
+		}
+	}
+	sort.Strings(names)
 	var entries []Entry
-	for _, file := range files {
-		name := filepath.Base(filepath.Dir(file))
+	for _, name := range names {
+		file := filepath.Join(root, ".agents", "skills", name, "SKILL.md")
+		c := bounds.ClassifyNoFollow(file)
+		// Classification runs before the command-adapter question so suppression cannot
+		// hide a defective producer: suppression drops a row from the rendered block, it
+		// does not excuse a directory named like an adapter from being diagnosed when
+		// nothing wrote its SKILL.md or the bytes there cannot be vouched for.
+		if c.State == bounds.StateAbsent {
+			entries = append(entries, Entry{Name: name, Orphan: true})
+			continue
+		}
+		if c.State.Failed() {
+			entries = append(entries, Entry{Name: name, Refusal: c.Reason})
+			continue
+		}
 		if exists(filepath.Join(root, ".agents", "commands", name+".md")) {
 			continue
 		}
-		entries = append(entries, Entry{
+		entry := Entry{
 			Name:    name,
 			Trigger: FrontmatterField(file, "index"),
 			Note:    FrontmatterField(file, "index-note"),
 			KitOnly: kitOnly[".agents/skills/"+name],
-		})
+		}
+		// A field only becomes a rendered line once it is safe for one; the fence parser
+		// publishes the value, this decides whether it may reach the sink.
+		if reason := controlRefusal("index", entry.Trigger); reason != "" {
+			entry.Refusal = reason
+		} else if reason := controlRefusal("index-note", entry.Note); reason != "" {
+			entry.Refusal = reason
+		}
+		entries = append(entries, entry)
 	}
 	return entries, err
 }
 
-// FrontmatterField returns the first value of key inside path's leading `---` fence.
-// Nothing after the closing fence counts, so a body line that happens to start with
-// the key is not frontmatter.
+// FrontmatterField returns the first value of key inside path's complete leading
+// `---` fence. The fence must open at byte zero and close: prose before the opener
+// and an unclosed opener are body text, so neither can authorize an indexed field.
+// Nothing after the closing fence counts either. This is the `<key>:` prefix contract,
+// not YAML — nesting, quoting, and schema validation stay out of scope.
 func FrontmatterField(path, key string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
+	// The producer classifier, not os.ReadFile: this path is attacker-shaped input to
+	// generated output, so a link is refused rather than followed and a FIFO cannot
+	// block the gate in open(2).
+	classified := bounds.ClassifyNoFollow(path)
+	if classified.State != bounds.StateParsed {
 		return ""
 	}
-	fence := 0
+	lines := strings.Split(string(classified.Data), "\n")
+	if len(lines) == 0 || lines[0] != "---" {
+		return ""
+	}
 	prefix := key + ":"
-	for _, line := range strings.Split(string(data), "\n") {
+	value, found := "", false
+	for _, line := range lines[1:] {
 		if line == "---" {
-			fence++
-			continue
+			return value
 		}
-		if fence == 1 && strings.HasPrefix(line, prefix) {
-			return strings.TrimSpace(strings.TrimPrefix(line, prefix))
-		}
-		if fence > 1 {
-			return ""
+		if !found && strings.HasPrefix(line, prefix) {
+			value, found = strings.TrimSpace(strings.TrimPrefix(line, prefix)), true
 		}
 	}
+	// Falling out of the loop means the opener never closed, so the body it swallowed
+	// is not frontmatter and the value it appeared to carry is withheld.
 	return ""
 }
 
@@ -140,7 +198,7 @@ func FrontmatterField(path, key string) string {
 // line last. The order is part of the contract: the gate and `bench skills-index`
 // print the same sequence.
 func Check(root string) []string {
-	entries, _ := Entries(root)
+	entries, allowlistErr := Entries(root)
 	// A skill can earn more than one diagnostic — no trigger and a stale committed
 	// entry is the colliding case — so this accumulates per skill rather than
 	// keying one string per name, which would silently drop the first of the pair.
@@ -148,6 +206,14 @@ func Check(root string) []string {
 	var expected []string
 	expectedByName := map[string]string{}
 	for _, entry := range entries {
+		if entry.Orphan {
+			attributed[entry.Name] = append(attributed[entry.Name], orphanDiagnostic(entry.Name))
+			continue
+		}
+		if entry.Refusal != "" {
+			attributed[entry.Name] = append(attributed[entry.Name], refusalDiagnostic(entry.Name, entry.Refusal))
+			continue
+		}
 		if !entry.Indexed() {
 			attributed[entry.Name] = append(attributed[entry.Name], fmt.Sprintf("skill '%s' missing index: frontmatter (the skills index is generated)", entry.Name))
 			continue
@@ -157,13 +223,19 @@ func Check(root string) []string {
 		expectedByName[entry.Name] = line
 	}
 
-	ref := readIfExists(filepath.Join(root, filepath.FromSlash(referenceRel)))
-	if ref == "" {
-		return append(ordered(attributed), referenceRel+" missing (skills index unverifiable)")
+	if allowlistErr != nil {
+		// Every kit-only marker in the generated block would be missing, so the block
+		// comparison below would report drift the skills did not cause.
+		return append(ordered(attributed), allowlistDiagnostic)
+	}
+
+	ref, refusal := readReference(root)
+	if refusal != "" {
+		return append(ordered(attributed), refusal)
 	}
 	span, ok := findBlock(ref)
 	if !ok {
-		return append(ordered(attributed), referenceRel+" skills-index markers missing (bench:skills-index)")
+		return append(ordered(attributed), markersDiagnostic)
 	}
 	if strings.Join(expected, "\n") == strings.Join(span.block, "\n") {
 		return ordered(attributed)
@@ -197,61 +269,146 @@ func Check(root string) []string {
 
 // Write regenerates root's block in place. The reference file is a shipped 0644 asset
 // whose mode the release-evidence registry checks, so the temp file's 0600 is
-// corrected before the rename replaces it.
-func Write(root string) error {
+// corrected before the rename replaces it. The context is the caller's abandon
+// authority: an operator who interrupts the verb gets the original reference back
+// rather than a half-published one.
+func Write(ctx context.Context, root string) error {
 	entries, err := Entries(root)
 	if err != nil {
 		return ErrAllowlistUnreadable
 	}
 	path := filepath.Join(root, filepath.FromSlash(referenceRel))
-	ref, readErr := os.ReadFile(path)
-	if readErr != nil {
-		return fmt.Errorf("%s missing (skills index unverifiable)", referenceRel)
+	ref, refusal := readReference(root)
+	if refusal != "" {
+		return errors.New(refusal)
 	}
 	var block []string
 	for _, entry := range entries {
+		// A producer defect means the generated block would be authored from a tree the
+		// reader cannot vouch for, so the reference keeps its bytes until the source is
+		// fixed — the same posture Check takes, and the same wording.
+		if entry.Orphan {
+			return errors.New(orphanDiagnostic(entry.Name))
+		}
+		if entry.Refusal != "" {
+			return errors.New(refusalDiagnostic(entry.Name, entry.Refusal))
+		}
 		if entry.Indexed() {
 			block = append(block, entry.Line())
 		}
 	}
-	span, ok := findBlock(string(ref))
+	span, ok := findBlock(ref)
 	if !ok {
-		return fmt.Errorf("%s skills-index markers missing (bench:skills-index)", referenceRel)
+		return errors.New(markersDiagnostic)
 	}
 	rewritten := span.replace(block)
+	return replaceReference(ctx, path, rewritten)
+}
+
+// replaceReference puts contents at path through a sibling temp, and owns cleanup for
+// the whole interval in which that temp exists but is not yet the reference: one
+// deferred removal covers every failure between creation and rename, and only a
+// completed rename disarms it. Callers that need to abandon replacement mid-interval —
+// a cancelled context, say — return from here rather than removing the temp themselves,
+// so no later failure path can be added without inheriting the cleanup.
+func replaceReference(ctx context.Context, path, contents string) error {
 	tmp, err := os.CreateTemp(filepath.Dir(path), ".skills-index-*")
 	if err != nil {
 		return err
 	}
 	name := tmp.Name()
-	if _, err := tmp.WriteString(rewritten); err != nil {
+	renamed := false
+	defer func() {
+		if !renamed {
+			os.Remove(name)
+		}
+	}()
+	if _, err := tmp.WriteString(contents); err != nil {
 		tmp.Close()
-		os.Remove(name)
 		return err
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(name)
 		return err
 	}
 	if err := os.Chmod(name, 0o644); err != nil {
-		os.Remove(name)
 		return err
 	}
-	return os.Rename(name, path)
+	preReplacementBarrier(ctx)
+	// The last moment abandonment is still free: past the rename the reference has
+	// already changed hands, so a cancellation observed here returns through the
+	// deferred removal instead of publishing bytes nobody is waiting for.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := renameFile(name, path); err != nil {
+		return err
+	}
+	renamed = true
+	return nil
 }
 
-// kitOnlySources reads the allowlist's withheld skill sources. The allowlist is the
-// one source of who receives an asset, so the index marks the same rows instead of
-// naming the kit-only skills a second time; it is JSON, so a row that orders
-// "audience" before "source" resolves like any other. A tree with no allowlist has
-// nothing withheld, which is also what the generator concludes.
+// preReplacementBarrier is the instant between a written temp and the rename, named so
+// a test can hold a real process there and interrupt it — the one interval in which
+// cleanup authority is otherwise unobservable from outside. Production passes through.
+var preReplacementBarrier = func(context.Context) {}
+
+// renameFile is the replacement's last operation, named so a test can fail it after
+// the sibling temp exists — the one interval in which cleanup must remove a temp the
+// caller never sees.
+var renameFile = os.Rename
+
+// orphanDiagnostic names the one skill-directory-without-SKILL.md wording Check
+// reports and Write refuses with.
+func orphanDiagnostic(name string) string {
+	return fmt.Sprintf(skillPathFormat+" missing (orphan skill directory)", name)
+}
+
+// controlRefusal reasons about a parsed field's fitness for the sink. Entry.Line is
+// line-structured markdown with no escaping, so any control rune could truncate the
+// entry or forge a second one — a CR is enough. The whole Unicode control category is
+// refused, C0 and C1 alike, because an ASCII shortlist leaves DEL and the C1 range
+// able to reach the same sink.
+func controlRefusal(key, value string) string {
+	for _, r := range value {
+		if unicode.IsControl(r) {
+			return fmt.Sprintf("%s: carries control rune U+%04X (an index entry is one line)", key, r)
+		}
+	}
+	return ""
+}
+
+// refusalDiagnostic names the one untrustworthy-bytes wording Check reports and Write
+// refuses with.
+func refusalDiagnostic(name, reason string) string {
+	return refusedDiagnostic(fmt.Sprintf(skillPathFormat, name), reason)
+}
+
+// refusedDiagnostic is the one shape every untrustworthy-producer refusal takes, so a
+// skill file and the reference read the same way to an operator and a consumer can
+// recognize either without matching two wordings.
+func refusedDiagnostic(path, reason string) string {
+	return path + " refused: " + reason
+}
+
+// ReferenceRefusalPrefix is what a refused reference diagnostic starts with. It is
+// exported because the conformance composition row has to recognize this package's
+// refusal through a registered check without restating the wording.
+func ReferenceRefusalPrefix() string {
+	return refusedDiagnostic(referenceRel, "")
+}
+
+// kitOnlySources reads the allowlist's withheld skill sources through the canonical
+// payload reader, so the index marks exactly the rows every other destination honours
+// instead of naming the kit-only skills — or re-deriving row validity — a second time.
+// Only absence is optional: a tree with no allowlist withholds nothing, which is also
+// what the generator concludes. Anything present that does not resolve, empty bytes
+// included, leaves marking unresolved.
 func kitOnlySources(root string) (map[string]bool, error) {
-	raw, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(allowlistRel)))
-	if err != nil {
+	rows, absent, err := kitpayload.PayloadRowsAt(filepath.Join(root, filepath.FromSlash(allowlistRel)))
+	if absent {
 		return nil, nil
 	}
-	var rows []kitpayload.PayloadRow
-	if err := json.Unmarshal(raw, &rows); err != nil {
+	if err != nil {
 		return nil, ErrAllowlistUnreadable
 	}
 	out := map[string]bool{}
@@ -298,23 +455,31 @@ type blockSpan struct {
 	after  []string
 }
 
-// findBlock locates the generated block. An end marker reached before a start marker,
-// or a start marker with no end after it, means the file carries no block.
+// findBlock locates the generated block, scanning the whole file rather than stopping
+// at the first plausible pair: only one start marker followed by one end marker names a
+// block unambiguously. Zero, reversed, unclosed, or repeated markers leave the writer
+// with a choice it has no basis to make, so the file carries no block and keeps its bytes.
 func findBlock(text string) (blockSpan, bool) {
 	lines := strings.Split(text, "\n")
-	start := -1
+	start, end := -1, -1
 	for i, line := range lines {
-		if line == endMarker {
-			if start < 0 {
+		switch line {
+		case startMarker:
+			if start >= 0 {
 				return blockSpan{}, false
 			}
-			return blockSpan{before: lines[:start+1], block: lines[start+1 : i], after: lines[i:]}, true
-		}
-		if start < 0 && line == startMarker {
 			start = i
+		case endMarker:
+			if end >= 0 {
+				return blockSpan{}, false
+			}
+			end = i
 		}
 	}
-	return blockSpan{}, false
+	if start < 0 || end < start {
+		return blockSpan{}, false
+	}
+	return blockSpan{before: lines[:start+1], block: lines[start+1 : end], after: lines[end:]}, true
 }
 
 func (s blockSpan) replace(block []string) string {
@@ -324,12 +489,23 @@ func (s blockSpan) replace(block []string) string {
 	return strings.Join(out, "\n")
 }
 
-func readIfExists(path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
+// readReference classifies the reference once for both Check and Write, returning its
+// text or the one diagnostic that ends the read. The states stay apart because they
+// send an operator to different repairs: absent means write the file, present-and-empty
+// means the file lost its content, and anything else means the path is not the producer
+// it claims to be — collapsing them to absence is exactly how a false empty source
+// would authorize replacing tracked bytes.
+func readReference(root string) (string, string) {
+	classified := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(referenceRel)))
+	switch classified.State {
+	case bounds.StateParsed:
+		return string(classified.Data), ""
+	case bounds.StateAbsent:
+		return "", referenceRel + " missing (skills index unverifiable)"
+	case bounds.StateEmpty:
+		return "", referenceRel + " empty (skills index unverifiable)"
 	}
-	return string(data)
+	return "", refusedDiagnostic(referenceRel, classified.Reason)
 }
 
 func exists(path string) bool {

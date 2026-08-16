@@ -560,3 +560,26 @@ func runKeptRoute(argv []string) (string, int) {
 	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
 	return stdout.String() + stderr.String(), code
 }
+
+// TestSkillsIndexDistinguishesMissingGitFromOutsideRepository grades the two ways
+// repository discovery fails as one partition: an unlaunchable `git` and an executed
+// `git` outside a work tree must name different recovery actions, and they are asserted
+// together so a missing-tool special case cannot regress the outside-repository line.
+func TestSkillsIndexDistinguishesMissingGitFromOutsideRepository(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		path   string
+		stdout string
+	}{
+		{"git cannot launch", "", "error: required tool is missing or not executable: git — install git and re-run\n"},
+		{"git runs outside a repository", os.Getenv("PATH"), "error: not in a git repository — run inside a Bench-linked repo\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("PATH", tc.path)
+			result := runAXICommandAt(t, t.TempDir(), []string{"skills-index"})
+			if result.stdout != tc.stdout || result.stderr != "" || result.code != 1 {
+				t.Fatalf("skills-index with PATH=%q = stdout=%q stderr=%q exit=%d, want stdout=%q exit=1", tc.path, result.stdout, result.stderr, result.code, tc.stdout)
+			}
+		})
+	}
+}

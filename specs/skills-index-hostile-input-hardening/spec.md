@@ -1,6 +1,6 @@
 # skills-index hostile-input hardening
 
-Status: staged
+Status: implemented
 
 Decision source: `ROADMAP.md` FT208 at `20d52ca7f997235514539dbeb001da558d44cb25` (reviewer-approved drain)
 

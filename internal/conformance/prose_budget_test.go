@@ -72,17 +72,16 @@ func checkGuidanceProseBudgets(root string) []string {
 	}
 	subjects, diags := proseBudgetSubjects(root, policy)
 	for _, rel := range subjects {
-		absolute := filepath.Join(root, filepath.FromSlash(rel))
-		info, err := os.Lstat(absolute)
+		// One classification, not a second mode reader: the shared producer classifier
+		// owns shape and bounded bytes, and this check owns only what each state costs
+		// the budget report.
+		subject := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(rel)))
 		switch {
-		case err != nil:
+		case subject.State == bounds.StateAbsent:
 			diags = append(diags, "prose-budget subject missing: "+rel+" is named by the "+proseBudgetProfile+" budget table but absent from the tree")
 			continue
-		case info.Mode()&os.ModeSymlink != 0:
-			diags = append(diags, "prose-budget subject refused: "+rel+" is a symbolic link, not a regular file")
-			continue
-		case !info.Mode().IsRegular():
-			diags = append(diags, "prose-budget subject refused: "+rel+" is a named pipe or other special file, not a regular file")
+		case subject.State == bounds.StateWrongType:
+			diags = append(diags, "prose-budget subject refused: "+rel+" is not a regular file ("+subject.Reason+")")
 			continue
 		}
 		limit, classified := policy.limitFor(rel)
@@ -90,12 +89,11 @@ func checkGuidanceProseBudgets(root string) []string {
 			diags = append(diags, "prose-budget subject unclassified: "+rel+" matches no row in the "+proseBudgetProfile+" budget table")
 			continue
 		}
-		body, err := os.ReadFile(absolute)
-		if err != nil {
-			diags = append(diags, "prose-budget subject unreadable: "+rel+" could not be read ("+err.Error()+")")
+		if subject.State.Failed() {
+			diags = append(diags, "prose-budget subject unreadable: "+rel+" could not be read ("+subject.Reason+")")
 			continue
 		}
-		if count := proseBudgetLineCount(body); count > limit {
+		if count := proseBudgetLineCount(subject.Data); count > limit {
 			diags = append(diags, fmt.Sprintf("prose-budget exceeded: %s is %d lines, over its %d-line budget", rel, count, limit))
 		}
 	}
@@ -398,7 +396,7 @@ func TestGuidanceProseBudgetRefusesNonRegularSubjects(t *testing.T) {
 	}{
 		{
 			kind: "symlink",
-			want: "prose-budget subject refused: .agents/skills/bench-craft-linked/SKILL.md is a symbolic link, not a regular file",
+			want: "prose-budget subject refused: .agents/skills/bench-craft-linked/SKILL.md is not a regular file",
 			plant: func(t *testing.T, path string) {
 				target := filepath.Join(filepath.Dir(path), "..", "bench-craft-line", "SKILL.md")
 				if err := os.Symlink(target, path); err != nil {
@@ -408,7 +406,7 @@ func TestGuidanceProseBudgetRefusesNonRegularSubjects(t *testing.T) {
 		},
 		{
 			kind: "fifo",
-			want: "prose-budget subject refused: .agents/skills/bench-craft-linked/SKILL.md is a named pipe or other special file, not a regular file",
+			want: "prose-budget subject refused: .agents/skills/bench-craft-linked/SKILL.md is not a regular file",
 			plant: func(t *testing.T, path string) {
 				if err := syscall.Mkfifo(path, 0o644); err != nil {
 					capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
@@ -417,7 +415,7 @@ func TestGuidanceProseBudgetRefusesNonRegularSubjects(t *testing.T) {
 		},
 		{
 			kind: "socket",
-			want: "prose-budget subject refused: .agents/skills/bench-craft-linked/SKILL.md is a named pipe or other special file, not a regular file",
+			want: "prose-budget subject refused: .agents/skills/bench-craft-linked/SKILL.md is not a regular file",
 			plant: func(t *testing.T, path string) {
 				listener, err := net.Listen("unix", path)
 				if err != nil {

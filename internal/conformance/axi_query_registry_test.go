@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 var approvedAXIQueries = map[string][]string{
@@ -42,16 +44,25 @@ type parsedAXIRegistry struct {
 }
 
 func checkAXIQueryRegistry(root string) []string {
+	// The guidance file is classified before anything else this check reads, because it
+	// is the one producer-shaped input here: refusing it must not depend on the Go
+	// sources parsing, and reading it as an empty document would report every AXI
+	// principle as deleted and send the reader to rewrite prose that is still there.
+	const guidanceRel = ".agents/skills/bench-craft-cli/SKILL.md"
+	guidance := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(guidanceRel)))
+	var diags []string
+	if guidance.State.Failed() {
+		diags = append(diags, "AXI guidance refused: "+guidanceRel+" ("+guidance.Reason+")")
+	}
 	reasons, err := axiReasonConstants(filepath.Join(root, "cmd", "bench", "command_registry.go"))
 	if err != nil {
-		return []string{"AXI query registry cannot read dispositions: " + err.Error()}
+		return uniqueSorted(append(diags, "AXI query registry cannot read dispositions: "+err.Error()))
 	}
 	mainPath := filepath.Join(root, "cmd", "bench", "main.go")
 	registry, err := parseAXIRegistry(mainPath, readIfExists(mainPath), reasons)
 	if err != nil {
-		return []string{"AXI query registry invalid: " + err.Error()}
+		return uniqueSorted(append(diags, "AXI query registry invalid: "+err.Error()))
 	}
-	var diags []string
 	if !reflect.DeepEqual(registry.members, approvedAXIQueries) {
 		diags = append(diags, fmt.Sprintf("AXI query registry declares %#v, want %#v", registry.members, approvedAXIQueries))
 	}
@@ -62,8 +73,9 @@ func checkAXIQueryRegistry(root string) []string {
 	} else if registryQueries := flattenAXIQueries(registry.members); !reflect.DeepEqual(profileQueries, registryQueries) {
 		diags = append(diags, fmt.Sprintf("AXI profile seam advertises %q, registry declares %q", profileQueries, registryQueries))
 	}
-	guidancePath := filepath.Join(root, ".agents", "skills", "bench-craft-cli", "SKILL.md")
-	diags = append(diags, checkAXIGuidance(readIfExists(guidancePath), registry.members)...)
+	if !guidance.State.Failed() {
+		diags = append(diags, checkAXIGuidance(string(guidance.Data), registry.members)...)
+	}
 	return uniqueSorted(diags)
 }
 
