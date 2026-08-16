@@ -100,15 +100,32 @@ func skillName(line string) string {
 // choose between refusing the write (Write) and grading what it can (Check).
 func Entries(root string) ([]Entry, error) {
 	kitOnly, err := kitOnlySources(root)
-	files, _ := filepath.Glob(filepath.Join(root, ".agents", "skills", "*", "SKILL.md"))
-	sort.Strings(files)
+	// Literal child enumeration, not a glob: the root is operator-supplied text, and a
+	// pattern walk would read a `[ ] * ?` in it as syntax and report a repository with
+	// no skills at all. A child that is not a real directory — a link to one included —
+	// is not a skill source, so it never reaches the classifier.
+	skillsDir := bounds.ClassifyDir(filepath.Join(root, ".agents", "skills"))
+	names := make([]string, 0, len(skillsDir.Entries))
+	for _, child := range skillsDir.Entries {
+		if child.IsDir() {
+			names = append(names, child.Name())
+		}
+	}
+	sort.Strings(names)
 	var entries []Entry
-	for _, file := range files {
-		name := filepath.Base(filepath.Dir(file))
+	for _, name := range names {
 		if exists(filepath.Join(root, ".agents", "commands", name+".md")) {
 			continue
 		}
-		if c := bounds.ClassifyNoFollow(file); c.State.Failed() {
+		file := filepath.Join(root, ".agents", "skills", name, "SKILL.md")
+		c := bounds.ClassifyNoFollow(file)
+		// A directory with no SKILL.md stays unenumerated, as the pattern walk left it:
+		// naming that orphan is the dependent orphan-policy ticket's decision, not this
+		// one's.
+		if c.State == bounds.StateAbsent {
+			continue
+		}
+		if c.State.Failed() {
 			entries = append(entries, Entry{Name: name, Refusal: c.Reason})
 			continue
 		}

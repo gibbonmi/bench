@@ -213,3 +213,40 @@ func TestUnparseableAllowlistRefusesWriteAndLeavesCheckAlone(t *testing.T) {
 		t.Fatalf("check with an unparseable allowlist =\n%s\nwant\n%s", strings.Join(got, "\n"), wantCheck)
 	}
 }
+
+// hostileRoot is a repository root whose own name carries every character a glob would
+// consume. Discovery must read it as literal text: a pattern-based walk matches nothing
+// here and silently reports a repository with no skills at all.
+func hostileRoot(t *testing.T) string {
+	t.Helper()
+	root := filepath.Join(t.TempDir(), "hostile [ ] * ? root")
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
+func TestEntriesEnumerateLiterallyUnderAGlobShapedRoot(t *testing.T) {
+	root := hostileRoot(t)
+	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
+	line := "- doing alpha things → `.agents/skills/alpha/SKILL.md`"
+
+	if got := renderedBlock(t, root); got != line {
+		t.Fatalf("rendered block = %q, want %q", got, line)
+	}
+
+	writeFile(t, root, ".bench/BENCH-reference.md", reference(line+"\n"))
+	if diags := Check(root); len(diags) != 0 {
+		t.Fatalf("Check diagnostics = %v, want none", diags)
+	}
+	if err := Write(root); err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+	after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := reference(line + "\n"); string(after) != want {
+		t.Fatalf("Write erased the generated row:\n%q\nwant\n%q", string(after), want)
+	}
+}
