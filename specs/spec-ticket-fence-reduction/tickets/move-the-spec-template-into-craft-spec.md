@@ -11,9 +11,7 @@ which already owns the authoring discipline, and the command keeps only its entr
 contract, ownership, and exit handoff. The template it carries is the reduced
 one: `| row | story | behavior | seam | why it catches the failure |`.
 
-`projects/benchkit.md`'s guidance-prose-budget table gains a
-`.agents/commands/bench-write-spec.md | 60` row, so the shrink is enforced rather
-than a one-time diff that re-accretes. It also gains an exact
+`projects/benchkit.md`'s guidance-prose-budget table gains an exact
 `.agents/skills/bench-craft-spec/SKILL.md` row: craft-spec is 71 lines and the
 template block is 65, so taking the template puts it past the 120-line `*/SKILL.md`
 glob it currently matches. Set the row to the landed line count plus modest
@@ -29,8 +27,10 @@ Leave the review-loop and `--reviewer` needles alone; the next ticket owns them.
 
 ## Acceptance
 
-- [ ] `(covers SR18)` `bench-write-spec.md` is at most 60 lines and the profile's budget table
-      carries its row; raising the file above 60 turns the budget check red.
+- [ ] `(covers SR18)` `bench-write-spec.md` loses the template block and nothing else;
+      the 60-line budget row is **not** added here. The file is 190 lines and the block is
+      65, so it lands near 125 — adding the row now would make this ticket red on its own
+      gate. The next ticket does the prose thinning and adds the row once the file fits.
 - [ ] `(covers SR18)` `craft-spec` carries the spec template with the reduced five-column header.
 - [ ] `(covers SR18)` The budget table carries an exact `craft-spec` row above its landed
       line count, and raising the file past it turns the budget check red.

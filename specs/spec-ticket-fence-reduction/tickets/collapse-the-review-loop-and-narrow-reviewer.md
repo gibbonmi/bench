@@ -44,8 +44,16 @@ with its canary — and this ticket records the full enumeration. Eleven canary
 fixtures embed a copy of `bench-write-spec.md`; a fixture whose needle moved
 retargets its payload to the receiving file, or it reproduces nothing.
 
+This ticket also carries the budget row the previous one deferred. Only after the
+rubric moves and the loop prose collapses does `bench-write-spec.md` fit 60 lines,
+so `projects/benchkit.md` gains its `.agents/commands/bench-write-spec.md | 60` row
+here, in the same green commit that makes the file fit.
+
 ## Acceptance
 
+- [ ] `(covers SR18)` The profile's budget table carries the
+      `.agents/commands/bench-write-spec.md | 60` row, the file is at most 60 lines, and
+      raising it above 60 turns the budget check red.
 - [ ] `(covers SR19)` `bench-write-spec.md` states one review round over the pair with the ticket
       quiz as its approval step, and no two-round sentence remains in the tree.
 - [ ] `(covers SR19)` The profile carries one collapsed routing row naming mid model and high
