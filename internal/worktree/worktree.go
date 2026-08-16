@@ -129,6 +129,10 @@ func classifyPath(root, pool, path string) Class {
 		return ClassRoot
 	}
 	if insidePool(pool, path) {
+		shape, err := ClassifyPathShape(path)
+		if err != nil || shape != ShapeCheckoutDirectory {
+			return ClassPoolWarm
+		}
 		lease, _ := LeaseFile(path)
 		if isRegularFile(lease) {
 			return ClassPoolLease

@@ -73,7 +73,10 @@ func ListCommand(args []string) (string, int) {
 	}
 	landed := false
 	for _, assignment := range assignments {
-		if plan, planErr := PlanExplicit(root, assignment.Worktree); planErr == nil && assignmentLanded(assignment, plan) {
+		if assignment.State != intent.StateActive {
+			continue
+		}
+		if plan := planLandedAssignment(root, assignment, CleanupOptions{}); assignmentLanded(assignment, plan) {
 			landed = true
 			break
 		}
@@ -134,6 +137,9 @@ func listLease(path string) string {
 		}
 		return "unknown"
 	}
+	if listPathHasSpecialGitMetadata(path) {
+		return "unknown"
+	}
 	lease, err := LeaseFile(path)
 	if err != nil {
 		return "unknown"
@@ -162,9 +168,17 @@ func listIgnored(path string) any {
 	if _, err := os.Stat(path); err != nil {
 		return "unknown"
 	}
+	if listPathHasSpecialGitMetadata(path) {
+		return "unknown"
+	}
 	inventory, _, err := inventoryIgnored(path, true)
 	if err != nil || inventory.Uncertain {
 		return "unknown"
 	}
 	return inventory.Count
+}
+
+func listPathHasSpecialGitMetadata(path string) bool {
+	shape, err := ClassifyPathShape(path)
+	return err == nil && shape == ShapeSpecialMetadata
 }

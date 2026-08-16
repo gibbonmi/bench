@@ -352,6 +352,11 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 		if _, err := os.Stat(wt.Path); os.IsNotExist(err) {
 			continue
 		}
+		shape, shapeErr := ClassifyPathShape(wt.Path)
+		if shapeErr != nil || shape != ShapeCheckoutDirectory {
+			result.Retained[ReasonUncertain]++
+			continue
+		}
 		plan, err := PlanAutomatic(root, wt.Path)
 		if err != nil {
 			return result, err
@@ -402,7 +407,7 @@ func sweepOrphanAssignments(root string, result *ResumeResult) error {
 			continue
 		}
 		if _, statErr := os.Stat(a.Worktree); statErr == nil {
-			if plan, planErr := PlanExplicit(root, a.Worktree); planErr == nil && assignmentLanded(a, plan) {
+			if plan := planLandedAssignment(root, a, CleanupOptions{}); assignmentLanded(a, plan) {
 				continue
 			}
 			result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})

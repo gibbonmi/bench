@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -137,5 +138,78 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 				t.Fatalf("special path disappeared: %v", err)
 			}
 		})
+	}
+}
+
+func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		make func(*testing.T, string)
+	}{
+		{name: "fifo", make: func(t *testing.T, path string) {
+			if err := syscall.Mkfifo(path, 0o600); err != nil {
+				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			}
+		}},
+		{name: "socket", make: func(t *testing.T, path string) {
+			listener, err := net.Listen("unix", path)
+			if err != nil {
+				capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable: %v", err))
+			}
+			t.Cleanup(func() { _ = listener.Close() })
+		}},
+		{name: "symlink", make: func(t *testing.T, path string) {
+			if err := os.Symlink(path+"-target", path); err != nil {
+				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+			creation := mustCreate(t, root, "landed-metadata-"+tc.name, tc.name)
+			landAssignment(t, root, creation, "metadata.txt")
+			metadata := filepath.Join(creation.Path, ".git")
+			if err := os.Remove(metadata); err != nil {
+				t.Fatal(err)
+			}
+			tc.make(t, metadata)
+
+			realGit, err := exec.LookPath("git")
+			if err != nil {
+				t.Fatal(err)
+			}
+			wrapper := t.TempDir()
+			log := filepath.Join(wrapper, "target-git.log")
+			wrapperPath := filepath.Join(wrapper, "git")
+			wrapperSource := "#!/bin/sh\nprevious=\nfor argument in \"$@\"; do\n  if [ \"$previous\" = -C ] && [ \"$argument\" = \"$BENCH_TEST_FORBIDDEN_GIT_C\" ]; then\n    printf '%s\\n' \"$@\" >> \"$BENCH_TEST_TARGET_GIT_LOG\"\n    exit 97\n  fi\n  previous=$argument\ndone\nexec \"$BENCH_TEST_REAL_GIT\" \"$@\"\n"
+			if err := os.WriteFile(wrapperPath, []byte(wrapperSource), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("BENCH_TEST_FORBIDDEN_GIT_C", creation.Path)
+			t.Setenv("BENCH_TEST_TARGET_GIT_LOG", log)
+			t.Setenv("BENCH_TEST_REAL_GIT", realGit)
+			t.Setenv("PATH", wrapper+string(os.PathListSeparator)+os.Getenv("PATH"))
+			chdir(t, root)
+
+			if listing, code := ListCommand(nil); code != 0 || !strings.Contains(listing, creation.Assignment.ID) {
+				t.Fatalf("ListCommand = (%d, %q), want complete assignment row", code, listing)
+			}
+			assertNoTargetGitCalls(t, log, "ListCommand")
+			var stdout, stderr strings.Builder
+			if code := ResumeCleanCommand(nil, &stdout, &stderr); code != 0 {
+				t.Fatalf("ResumeCleanCommand = (%d, %q, %q), want completion", code, stdout.String(), stderr.String())
+			}
+			assertNoTargetGitCalls(t, log, "ResumeCleanCommand")
+		})
+	}
+}
+
+func assertNoTargetGitCalls(t *testing.T, log, consumer string) {
+	t.Helper()
+	if calls, err := os.ReadFile(log); err == nil && len(calls) != 0 {
+		t.Fatalf("%s reached target git: %q", consumer, calls)
+	} else if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
 	}
 }
