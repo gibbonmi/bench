@@ -2,47 +2,33 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5b41322`, clean tree, 8 unpushed commits
-Spec: `specs/skills-index-reader/spec.md` (Status: staged)
-Gate: green at `5257da3` — stale, work tree `aaac3b9`
+Branch: `main` — HEAD `c0f387d`, 20 unpushed commits
+Spec: none staged.
+Gate: green at `caa483a` — stale against the drain's work tree.
 
 ## State
 
-`/bench-implement-spec skills-index-reader --full` is mid-run. The retained integration
-source is the worktree labelled `skills-index-reader` (`bench worktree list` gives its
-path); frozen review base `5b41322a`, source tip `2ca77cb2`. Two commits there:
-`83e57d8b` (ticket 1 — `internal/skillsindex` ships as the one index reader; the
-conformance parsers `checkSkillsIndex`, `kitOnlySkillSources`, `frontmatterField`,
-`markerBlock` and the shell-probing `checkSkillsIndexGenerateVerify` collapse into it;
-a `go/ast` guard fails on any surviving second reader) and `2ca77cb2` (ticket 2 —
-`bench skills-index [--check|--write]` routed end-to-end, `.bench/skills-index.sh`
-deleted, every reference re-pointed). Gate green at both.
+`/bench-what-next` drained all three capture sources in one batch: `capture/IDEAS.md`
+and `capture/learnings.md` are empty, `capture/retros/` is gone. `ROADMAP.md` gained
+FT208 (harden `internal/skillsindex` against eleven inherited hostile-input edges) and
+FT209 (differential exit rows for behavior-preserving refactors; cardinality fixed at a
+new grouping's concept edge). Retro and learning evidence merged into FT89, FT98, FT99,
+FT133, FT169, FT178, FT180, and FT205. FT89 lost its skills-index single-sourcing clause,
+which shipped; its row stays open for the YAML-parsing half.
 
-Coordinator verification caught one regression in ticket 1 and the authoring delegate
-repaired it: `Check` keyed diagnostics by skill name, so a skill both missing `index:`
-and still carrying a committed entry lost one of its two diagnostics. No canary sees it
-(`missing-index-field`'s block is empty). Fixed to accumulate per skill in pre-collapse
-order, covered by an extended SI3 row.
+Also in this commit: both `capture/agent-performance/` scorecards, refreshed by the
+skills-index-reader landing (Claude for Opus/Sonnet as implementer and Opus as
+orchestrator; OpenAI for Sol as reviewer).
 
-Two calls left open for reviewer veto, both non-behavioral: ticket 1 also deleted
-`skillNameFromIndexLine` (dead after the collapse, and it enumerates the line shape SI6
-bans) which the spec's permitted-edit list does not name; and ticket 2's charge to
-re-point "the `kitOnlySkillSources` comment" was dropped as moot, that function having
-been deleted.
-
-Reviewer-approved follow-up, to run after the landing: write a NEW dated
-`/tmp/architecture-review-<ts>.html` — leaving `/tmp/architecture-review-20260815T101417.html`
-untouched as the record of the survey at `e91d0cb3` — carrying as-built Before/After for
-the five landed deepening candidates (1+3, 5, 6, 8) with 2, 4, 7 left as proposed.
-Candidate 8's original After diagram is superseded: it drew the shell script surviving as
-a consumer of the module.
-
-Two open learnings entries still await `/bench-what-next`: map placement on retire, and
-the write-spec loop cap.
+Reviewer-approved follow-up not yet done: write a NEW dated
+`/tmp/architecture-review-<ts>.html` carrying as-built Before/After for the five landed
+deepening candidates (1+3, 5, 6, 8), leaving `/tmp/architecture-review-20260815T101417.html`
+untouched as the record of the survey at `e91d0cb3`. Candidate 8's original After diagram
+is superseded — it drew the shell script surviving as a consumer of the module.
 
 ## Next command
 
-`/bench-review-implementation`
+`/bench-write-spec` for FT208.
 
 ## Shape
 
