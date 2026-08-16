@@ -291,9 +291,11 @@ parsed):
 ## Out of scope
 
 - **Contract the six-column branch** — delete the two legacy header cases, their
-  field descriptors, and the six-column canary fixture, and migrate the two
-  remaining staged specs. Blocked until no staged spec uses the six-column
-  header; this spec's own map is one of them. 6 edits, 2 gate runs.
+  field descriptors, and the six-column canary fixture. `worktree-landed-retirement`
+  retired at `64bca130`, so this spec's own map is now the only staged
+  six-column map in the tree: the contract unblocks as soon as this spec reaches
+  `Status: implemented` and its map is migrated or retired with it.
+  4 edits, 2 gate runs.
 - **Move the right-size table's light-path threshold** (map #16). 2 edits, 1 gate
   run.
 - **Change `/bench-implement-spec`'s worktree, preflight, or landing
