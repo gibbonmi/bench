@@ -105,6 +105,13 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			previousPlanner := planLandedExplicitWithOptions
+			plannerCalls := 0
+			planLandedExplicitWithOptions = func(root, path string, options CleanupOptions) (CleanupPlan, error) {
+				plannerCalls++
+				return previousPlanner(root, path, options)
+			}
+			t.Cleanup(func() { planLandedExplicitWithOptions = previousPlanner })
 			root := newWorktreeRepo(t)
 			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
 			creation := mustCreate(t, root, "landed-special-"+strings.ReplaceAll(tc.name, " ", "-"), tc.name)
@@ -122,6 +129,9 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			_, applyErr, applyCode := runCleanLanded(t, root, "--landed", "--apply", fingerprint)
 			if applyCode != 0 || applyErr != "" {
 				t.Fatalf("apply exit=%d stderr=%q", applyCode, applyErr)
+			}
+			if plannerCalls != 0 {
+				t.Fatalf("special path reached explicit planner %d time(s)", plannerCalls)
 			}
 			if _, err := os.Lstat(creation.Path); err != nil {
 				t.Fatalf("special path disappeared: %v", err)
