@@ -8,8 +8,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
-- The destructive-Git guard now allows recoverable `git stash` working-tree
-  operations while continuing to block stash-history deletion with `drop` or `clear`.
+- The destructive-Git guard no longer intercepts `git stash`; stash lifecycle is
+  available for isolating unrelated working-tree state while other destructive Git
+  operations remain guarded.
 - `bench coverage --check` now refuses a coverage row that references more than four
   stories or states more than one predicate (a `;` outside backticks), and a declared
   story that no row references unless the spec carries a

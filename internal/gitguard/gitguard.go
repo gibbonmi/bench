@@ -35,7 +35,6 @@ var denyTable = []struct{ key, label string }{
 	{"switch", "git switch --force"},
 	{"restore", "git restore path"},
 	{"rebase", "history rewrite"},
-	{"stash", "git stash drop"},
 	{"amend", "git commit --amend"},
 	{"update-ref", "git update-ref -d"},
 	{"tag", "git tag -d"},

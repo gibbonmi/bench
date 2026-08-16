@@ -106,31 +106,7 @@ func TestClassifyVerdicts(t *testing.T) {
 	}
 }
 
-// TestClassifyStashHistoryMutations keeps destructive stash-history operations blocked.
-func TestClassifyStashMutations(t *testing.T) {
-	history := denyLabels["stash"]
-	if history == "" {
-		t.Fatal("stash history deny class missing from the table")
-	}
-	cases := []struct {
-		name string
-		cmd  string
-		want string
-	}{
-		{"drop", "git stash drop", history},
-		{"clear", "git stash clear", history},
-		{"drop with a flag", "git stash drop -q", history},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			if got := Classify(c.cmd, refYes); got != c.want {
-				t.Errorf("Classify(%q) = %q, want %q", c.cmd, got, c.want)
-			}
-		})
-	}
-}
-
-func TestClassifyStashWorkingTreeOperationsAllowed(t *testing.T) {
+func TestClassifyStashOperationsAllowed(t *testing.T) {
 	commands := []string{
 		"git stash",
 		"git stash push",
@@ -148,6 +124,9 @@ func TestClassifyStashWorkingTreeOperationsAllowed(t *testing.T) {
 		"git -c foo=bar stash pop",
 		"bash -c 'git stash pop'",
 		"xargs git stash",
+		"git stash drop",
+		"git stash clear",
+		"git stash drop -q",
 	}
 	for _, command := range commands {
 		if got := Classify(command, refYes); got != "" {
@@ -156,9 +135,6 @@ func TestClassifyStashWorkingTreeOperationsAllowed(t *testing.T) {
 	}
 }
 
-// TestClassifyStashReadOnly pins the allow set. Without it, refusing every `git stash`
-// would satisfy TestClassifyStashMutations while taking away the inspection an agent
-// legitimately needs.
 func TestClassifyStashReadOnly(t *testing.T) {
 	cases := []struct {
 		name string

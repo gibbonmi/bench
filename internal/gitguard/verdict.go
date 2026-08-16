@@ -40,10 +40,6 @@ func classify(sub string, args []string, viaXargs bool, chk Checker) string {
 		}
 	case "rebase":
 		return denyLabels["rebase"]
-	case "stash":
-		if key := stashVerdict(args); key != "" {
-			return denyLabels[key]
-		}
 	case "commit":
 		if contains(args, "--amend") {
 			return denyLabels["amend"]
@@ -141,15 +137,6 @@ func restoreVerdict(args []string, viaXargs bool) bool {
 		return false
 	}
 	return contains(args, ".") || restoreHasPathspec(args)
-}
-
-// stashVerdict blocks only operations that destroy stash history. Working-tree stash
-// operations remain recoverable and are allowed.
-func stashVerdict(args []string) string {
-	if len(args) > 0 && (args[0] == "drop" || args[0] == "clear") {
-		return "stash"
-	}
-	return ""
 }
 
 func reflogVerdict(args []string) bool {
