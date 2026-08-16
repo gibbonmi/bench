@@ -70,6 +70,20 @@ func TestCheck(t *testing.T) {
 			"coverage map row 1 has a malformed row id 'ab-1'"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 1 | b | s | r | w |\n| not-an-id | 2 | b | s | r | w |\n",
 			"coverage map row 2 has a malformed row id 'not-an-id'"},
+		// The opt-in header's own cell resolution: each of these names a field at a
+		// different offset than the legacy header puts it at, so a check reading a
+		// literal index — or a schema whose field list has slipped against its
+		// columns — reports the neighbouring column's name instead of these.
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 1 | b | s | r |\n",
+			"coverage map row 1 has 5 cells (want 6)"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 1 | b |  | r | w |\n",
+			"coverage map row 1 has an empty 'seam' cell"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 1 | b | s |  | w |\n",
+			"coverage map row 1 has an empty 'red signal' cell"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 1 | prints x; removes y | s | r | w |\n",
+			"coverage map row 1 behavior states more than one predicate (';' outside backticks); split the row"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 9 | b | s | r | w |\n",
+			"references story 9, which the spec does not declare (has: 1, 2, 3)"},
 		// A row spanning more than bounds.CoverageRowStories stories is an outcome family.
 		{"# b\n\n" + bareStories + "\n### Acceptance coverage map\n" + hdr + "| 1-5 | b | s | r | w |\n",
 			"coverage map row 1 references 5 stories (max 4); an outcome family is not one red-capable row"},
@@ -97,6 +111,53 @@ func TestCheck(t *testing.T) {
 		if len(v) == 0 || !strings.Contains(strings.Join(v, "\n"), c.want) {
 			t.Errorf("Check violations %v do not contain %q", v, c.want)
 		}
+	}
+}
+
+// TestRowsProjectsShortRowUnderBothSchemas drives the projection over a data row
+// carrying fewer cells than its header declares. Check refuses such a row on width
+// and moves on, but Rows walks every data row regardless, so the projection resolves
+// fields that run past the row's last cell: those read as empty and the cells the row
+// does carry still land in their named slots. Asserting the projected triple rather
+// than absence-of-panic pins which cells those are.
+func TestRowsProjectsShortRowUnderBothSchemas(t *testing.T) {
+	legacy := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr +
+		"| 1 | does x |\n" +
+		"| 2 | does y | cli seam |\n")
+	if State(legacy) != "mapped" {
+		t.Fatalf("legacy state = %q, want mapped", State(legacy))
+	}
+	// Row 1 carries no seam and no red signal; row 2 carries a seam but no red signal.
+	wantLegacy := [][]string{{"1", "", ""}, {"2", "cli seam", ""}}
+	if got := Rows(legacy); !reflect.DeepEqual(got, wantLegacy) {
+		t.Errorf("Rows = %v, want %v", got, wantLegacy)
+	}
+
+	optIn := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 +
+		"| AB1 | 1 | does x |\n" +
+		"| CD2 | 2 | does y | gate |\n")
+	if State(optIn) != "mapped" {
+		t.Fatalf("opt-in state = %q, want mapped", State(optIn))
+	}
+	// The leading row-ID cell shifts every field one place right, so the same
+	// shortfall lands on the same two names.
+	wantOptIn := [][]string{{"1", "", ""}, {"2", "gate", ""}}
+	if got := Rows(optIn); !reflect.DeepEqual(got, wantOptIn) {
+		t.Errorf("Rows = %v, want %v", got, wantOptIn)
+	}
+}
+
+// TestCommandRendersShortRow drives the same shortfall through Command, the surface a
+// caller actually reads: a short row still renders as a full three-column TOON record
+// with its absent cells empty, alongside the repair action its width violation earns.
+func TestCommandRendersShortRow(t *testing.T) {
+	t.Chdir(t.TempDir())
+	mustWrite(t, "spec.md", "# t\n\n"+stories+"\n### Acceptance coverage map\n"+hdr+"| 1 | does x |\n")
+
+	out, code := Command([]string{"spec.md"})
+	want := "spec: spec.md\nstate: mapped\nrows[1]{story,seam,red_signal}:\n  \"1\",\"\",\"\"\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
+	if code != 0 || out != want {
+		t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
 	}
 }
 
