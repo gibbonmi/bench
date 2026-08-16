@@ -71,11 +71,25 @@ func ListCommand(args []string) (string, int) {
 	for _, row := range rows {
 		values = append(values, row.values)
 	}
+	landed := false
+	for _, assignment := range assignments {
+		if assignment.State != intent.StateActive {
+			continue
+		}
+		if plan := planLandedAssignment(root, assignment, CleanupOptions{}); assignmentLanded(assignment, plan) {
+			landed = true
+			break
+		}
+	}
 	out, err := toon.TableTyped("worktrees", worktreeListFields, values)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	help, err := axi.RenderHelp(actionsForRows(rows))
+	actions := actionsForRows(rows)
+	if landed {
+		actions = append(actions, axi.ExecutableInvocation("clean landed assignments", axi.KnownArgument("worktree"), axi.KnownArgument("clean"), axi.KnownArgument("--landed")))
+	}
+	help, err := axi.RenderHelp(actions)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -123,6 +137,9 @@ func listLease(path string) string {
 		}
 		return "unknown"
 	}
+	if listPathHasSpecialGitMetadata(path) {
+		return "unknown"
+	}
 	lease, err := LeaseFile(path)
 	if err != nil {
 		return "unknown"
@@ -151,9 +168,17 @@ func listIgnored(path string) any {
 	if _, err := os.Stat(path); err != nil {
 		return "unknown"
 	}
+	if listPathHasSpecialGitMetadata(path) {
+		return "unknown"
+	}
 	inventory, _, err := inventoryIgnored(path, true)
 	if err != nil || inventory.Uncertain {
 		return "unknown"
 	}
 	return inventory.Count
+}
+
+func listPathHasSpecialGitMetadata(path string) bool {
+	shape, err := ClassifyPathShape(path)
+	return err == nil && shape == ShapeSpecialMetadata
 }

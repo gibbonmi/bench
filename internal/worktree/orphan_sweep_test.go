@@ -43,9 +43,15 @@ func mustSweep(t *testing.T, root string) ResumeResult {
 	return result
 }
 
+func makeUnlandedAssignment(t *testing.T, creation Creation) {
+	t.Helper()
+	commitInWorktree(t, creation.Path, "unlanded.txt", "unlanded\n", "unlanded")
+}
+
 func TestResumeSummaryNamesCleanCommand(t *testing.T) {
 	root := newSweepRepo(t)
 	orphan := mustCreate(t, root, "summary-clean-command", "aged, tree present")
+	makeUnlandedAssignment(t, orphan)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
 
 	summary := renderResumeSummary(mustSweep(t, root))
@@ -66,6 +72,7 @@ func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore")
 	orphan := mustCreate(t, root, "summary-ignored-residue", "aged, ignored residue")
+	makeUnlandedAssignment(t, orphan)
 	mustWrite(t, filepath.Join(orphan.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
 
@@ -84,6 +91,7 @@ func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
 func TestResumeSummaryNeverSuggestsDiscardIgnored(t *testing.T) {
 	root := newSweepRepo(t)
 	orphan := mustCreate(t, root, "summary-no-discard", "aged, tree present")
+	makeUnlandedAssignment(t, orphan)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
 
 	summary := renderResumeSummary(mustSweep(t, root))
@@ -134,6 +142,8 @@ func TestSweepHandlesPreStampLedgerRecords(t *testing.T) {
 	root := newSweepRepo(t)
 	present := mustCreate(t, root, "prestamp-present", "unstamped, tree present")
 	gone := mustCreate(t, root, "prestamp-gone", "unstamped, tree gone")
+	makeUnlandedAssignment(t, present)
+	makeUnlandedAssignment(t, gone)
 	unstamp(t, root, present.Assignment)
 	unstamp(t, root, gone.Assignment)
 	address, err := intent.Address(root)
@@ -234,6 +244,8 @@ func TestSweepIsIdempotent(t *testing.T) {
 	root := newSweepRepo(t)
 	present := mustCreate(t, root, "idempotent-orphan", "aged, tree present")
 	gone := mustCreate(t, root, "idempotent-residue", "aged, tree gone")
+	makeUnlandedAssignment(t, present)
+	makeUnlandedAssignment(t, gone)
 	backdate(t, root, present.Assignment, 8*24*time.Hour)
 	backdate(t, root, gone.Assignment, 8*24*time.Hour)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", gone.Path)

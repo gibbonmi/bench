@@ -482,6 +482,14 @@ func TestKeptWorktreeOperationsKeepTheirGrammar(t *testing.T) {
 	}
 }
 
+func TestWorktreeHelpNamesLandedGrammar(t *testing.T) {
+	out, code := runKeptRoute([]string{"worktree", "--help"})
+	const grammar = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>]"
+	if code != 0 || !strings.Contains(out, grammar) {
+		t.Fatalf("worktree --help exit=%d output=%q, want %q", code, out, grammar)
+	}
+}
+
 // removedGrammars are the verbs the lifecycle removal took out, written down rather than
 // derived: a restored route answers its own grammar instead of its family's refusal, and
 // the registry a derived check would read is exactly what such a restoration changes.

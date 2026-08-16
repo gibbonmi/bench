@@ -267,7 +267,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 		"{{PRESENT}}", present,
 		"{{MISSING}}", missing,
 	).Replace(string(primaryTemplate))
-	help := fmt.Sprintf("help[5]{cmd,why}:\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree clean '%s',clean the orphaned worktree\n", assignments[0].ID, assignments[0].ID, assignments[1].ID, assignments[1].ID, missing)
+	help := fmt.Sprintf("help[6]{cmd,why}:\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree path %s,inspect active worktree\n  bench worktree exec %s -- <command>,run a command in the active worktree\n  bench worktree clean '%s',clean the orphaned worktree\n  bench worktree clean --landed,clean landed assignments\n", assignments[0].ID, assignments[0].ID, assignments[1].ID, assignments[1].ID, missing)
 	if code != 0 || out != primary+help {
 		t.Fatalf("ListCommand = (%d, %q), want materialized checked-in primary plus exactly one help block", code, out)
 	}

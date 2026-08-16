@@ -129,6 +129,10 @@ func classifyPath(root, pool, path string) Class {
 		return ClassRoot
 	}
 	if insidePool(pool, path) {
+		shape, err := ClassifyPathShape(path)
+		if err != nil || shape != ShapeCheckoutDirectory {
+			return ClassPoolWarm
+		}
 		lease, _ := LeaseFile(path)
 		if isRegularFile(lease) {
 			return ClassPoolLease
@@ -220,6 +224,7 @@ func cleanInvocationError(stdout io.Writer) int {
 func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
+	landed := false
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--discard-ignored":
@@ -228,6 +233,11 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 			options.DiscardBranch = true
 		case "--full":
 			options.Full = true
+		case "--landed":
+			if landed {
+				return cleanInvocationError(stdout)
+			}
+			landed = true
 		case "--apply":
 			if i+1 >= len(args) || fingerprint != "" {
 				return cleanInvocationError(stdout)
@@ -247,7 +257,7 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 			target = args[i]
 		}
 	}
-	if target == "" {
+	if target == "" && !landed || target != "" && landed {
 		return cleanInvocationError(stdout)
 	}
 	if fingerprint != "" {
@@ -260,6 +270,36 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
+	}
+	if landed {
+		set, planErr := planLandedSet(root, options)
+		if planErr != nil {
+			_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: fingerprint, Reason: planErr.Error()})
+			return 1
+		}
+		if fingerprint != "" && len(set.rows) == 0 {
+			return cleanInvocationError(stdout)
+		}
+		if fingerprint != "" && fingerprint != set.fingerprint {
+			_ = renderLandedStale(stdout, set, fingerprint)
+			return 1
+		}
+		if fingerprint != "" {
+			plans, applyErr := applyLandedSet(root, set, options)
+			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
+				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
+				return 1
+			}
+			if applyErr != nil {
+				return 1
+			}
+			return 0
+		}
+		if err := renderLandedSet(stdout, set, options); err != nil {
+			fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
+			return 1
+		}
+		return 0
 	}
 	plan, err := PlanExplicitWithOptions(root, target, options)
 	if err == nil && fingerprint != "" {
@@ -319,13 +359,16 @@ func renderResumeSummary(result ResumeResult) string {
 	}
 	if retained > 0 {
 		summary.WriteString("; retained")
-		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonOrphaned, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonDirty, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
+		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonLanded, ReasonOrphaned, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonDirty, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
 			if count := result.Retained[reason]; count > 0 {
 				fmt.Fprintf(&summary, " %s=%d", reason, count)
 			}
 		}
 	}
 	fmt.Fprintf(&summary, "; pruned branches %d; reconciled %d; failed %d; open assignments %d\n", result.PrunedBranches, result.Reconciled, result.Failed, result.Open)
+	if result.Retained[ReasonLanded] > 0 {
+		summary.WriteString("landed: bench worktree clean --landed (plans only; re-run with --apply <fingerprint> to remove)\n")
+	}
 	listCapped(&summary, len(result.Orphans), func(i int) string { return orphanLine(result.Orphans[i]) })
 	return summary.String()
 }

@@ -42,7 +42,7 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
   for package, failure, and skip evidence as TOON.
 - Work: `bench worktree` (`bench worktree list`, `bench worktree path <target>`,
   `bench worktree exec <target> -- <command>`, `bench worktree create`, `bench worktree release` by the creating request,
-  `bench worktree clean [--discard-ignored] [--discard-branch] [--full] <path> [--apply <fingerprint>]` for plan/apply removal,
+  `bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>]` for plan/apply removal,
   `bench worktree reauthorize`, `bench worktree land`),
   `bench shift`, path-scoped `bench commit -m <msg> <path>...` (`--spec <slug>`
   semantics in `bench commit --help`), `bench spec implemented`,

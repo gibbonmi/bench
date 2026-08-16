@@ -115,6 +115,6 @@ inline continue the authoring delegate for its own slice when the harness can
 resume it; otherwise a fresh charge in an isolated worktree carries the
 finding and a sentinel. The coordinator verifies the repair in the checkout
 that owns the diff.
-Acceptance closes an independent worktree after its slice lands. A reviewed
+Acceptance closes an independent worktree after its slice lands: the coordinator runs `bench worktree release --request <opaque-id> <path>` for it. A reviewed
 dependent chain remains retained through explicit source review; only
 `bench worktree land` releases it after the reviewed source publishes.

@@ -1,40 +1,25 @@
 # Session handoff
 
-Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — HEAD is the FT210 row-split commit (after `0feeb0f2` and the coverage-rules commit), unpushed
-Spec: `specs/worktree-landed-retirement/spec.md` — `Status: staged`, reviewer-approved; 35 rows after the family-row split, 5 tickets.
-Gate: green at every commit above (`bench commit`).
+Repository: `89d5d0eebf093c03c876ddd10b63473c-ee22771c3ed7bf922904bf893b610286` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-3325222104/89d5d0eebf093c03c876ddd10b63473c-ee22771c3ed7bf922904bf893b610286`
+Branch: `bench/assign/89d5d0eebf093c03c876ddd10b63473c/ee22771c3ed7bf922904bf893b610286` — HEAD `7014bfa`, clean tree, 49 unpushed commits
+Spec: `specs/worktree-landed-retirement/spec.md` (Status: staged)
+Gate: green at `57162e3` — stale, work tree `9b8a805`
 
 ## State
 
-Five commits landed this session. After the first three, a Sol A/B run (in
-`/tmp/bench-ab/`, assessment there) showed three tightening rules earn their cost, so
-`bench coverage --check` now refuses family rows (>4 stories or a `;` behavior),
-unreferenced stories without a `Not covered:` line, and `craft-spec` fixes the
-red-signal cell grammar; the FT210 map was split from 20 to 35 single-predicate rows
-with six `Not covered:` lines and the tickets' `covers` re-pointed. The first three: `24cad87d` kit remake (`craft-spec` on to-spec,
-`craft-tickets` on to-tickets, thin `bench-write-spec`, anchors/canaries repointed, index
-regenerated); `dc598762` the previous session's `/bench-what-next` drain plus this session's
-learnings/idea; and the FT210 spec commit — `specs/worktree-landed-retirement/` (spec with
-37 stories in three outcome groups and 20 coverage rows, 5 approved tracer tickets under
-`tickets/`, the compiled map under `decisions/` with #9 re-closed) and `CONTEXT.md`'s
-`landed assignment` term. Sol's independent no-review authoring run of the same map (41
-stories / 6 rows / 5 tickets, an invented set-receipt seam) was compared and not adopted;
-it lives only in the session scratchpad.
+Implementation is complete on retained assignment
+`ee22771c3ed7bf922904bf893b610286`. All five tickets are committed serially and
+green through the full gate. The frozen review base is `68ebb9ce`; the candidate
+includes the approved ownership-fence repairs for the handoff and derived canary
+inventory count.
 
-Ticket frontier: `count-and-advertise-landed-assignments.md` (blocked by none) →
-`plan-the-landed-set-under-one-fingerprint.md` → `apply-the-landed-plan-and-settle-records.md`
-→ {`refuse-a-half-applied-landed-set.md`, `make-release-a-workflow-step.md`}.
-
-Open reviewer decision, unrelated: eight `bench worktree list` rows in state `recovered`
-hold uncommitted FT208 ticket work under recovery refs. Follow-up you named: slim
-`bench-shape-idea` in its own pass; the parked idea to cut `bench-write-spec` further.
+Semantic review is next: run three independent Terra/high axes over the exact
+base/source pair. No review, landing, retirement, retro, or push has run yet.
 
 ## Next command
 
-`/bench-implement-spec worktree-landed-retirement` in a fresh mid-tier session, on one
-retained integration source.
+`$bench-review-implementation worktree-landed-retirement --base 68ebb9cef9a39a3d35349b9dc4534dad2c044f33 --reviewer terra high`
 
 ## Shape
 

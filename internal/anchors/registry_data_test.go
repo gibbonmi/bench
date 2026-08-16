@@ -42,3 +42,45 @@ func TestFinalCommunicationMarkerTuples(t *testing.T) {
 		previous = at
 	}
 }
+
+// TestLandedRetirementAnchorTuples keeps the accepted tuples independent of the
+// production registry so a self-consistent omission cannot define itself green.
+func TestLandedRetirementAnchorTuples(t *testing.T) {
+	wanted := []Anchor{
+		{
+			Group:      AfterImplementSpec,
+			File:       ".agents/skills/bench-craft-delegate/SKILL.md",
+			Kind:       RequireInSection,
+			Section:    "Verifying the done-claim",
+			Needle:     "Acceptance closes an independent worktree after its slice lands: the coordinator runs `bench worktree release --request <opaque-id> <path>` for it.",
+			Diagnostic: ".agents/skills/bench-craft-delegate/SKILL.md dropped release-at-acceptance",
+		},
+		{
+			Group:      AfterImplementSpec,
+			File:       ".agents/commands/bench-final-check.md",
+			Kind:       RequireInSection,
+			Section:    "Exit handoff",
+			Needle:     "leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report",
+			Diagnostic: ".agents/commands/bench-final-check.md post-merge tail dropped the landed worktree sweep step",
+		},
+		{
+			Group:      AfterImplementSpec,
+			File:       ".agents/commands/bench-final-check.md",
+			Kind:       ForbidInSection,
+			Section:    "Exit handoff",
+			Needle:     "leftover worktrees and scratch branches go through",
+			Diagnostic: ".agents/commands/bench-final-check.md still routes leftover worktrees to a bare per-path clean",
+		},
+	}
+	for _, want := range wanted {
+		matches := 0
+		for _, entry := range Entries() {
+			if entry == want {
+				matches++
+			}
+		}
+		if matches != 1 {
+			t.Errorf("registry has %d rows matching %+v; want exactly one", matches, want)
+		}
+	}
+}

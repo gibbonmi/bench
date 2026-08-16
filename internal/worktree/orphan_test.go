@@ -94,6 +94,7 @@ func backdate(t *testing.T, root string, assignment intent.Assignment, age time.
 
 func TestPlanAutomaticLabelsOrphaned(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "orphan-label")
+	commitInWorktree(t, creation.Path, "orphan.txt", "orphan\n", "orphan")
 	backdate(t, root, creation.Assignment, 8*24*time.Hour)
 	plan, err := PlanAutomatic(root, creation.Path)
 	requireTest(t, err == nil && plan.Action == ActionRetain && plan.ReasonCode == ReasonOrphaned,
@@ -107,6 +108,7 @@ func TestPlanAutomaticKeepsEarlierRetainReason(t *testing.T) {
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore")
 	creation := mustCreate(t, root, "orphan-residue", "ignored residue")
+	commitInWorktree(t, creation.Path, "orphan.txt", "orphan\n", "orphan")
 	mustWrite(t, filepath.Join(creation.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	backdate(t, root, creation.Assignment, 8*24*time.Hour)
 	plan, err := PlanAutomatic(root, creation.Path)

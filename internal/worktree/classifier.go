@@ -17,6 +17,32 @@ import (
 type CleanupAction string
 
 func renderCleanup(stdout io.Writer, plan CleanupPlan) error {
+	return renderCleanups(stdout, []CleanupPlan{plan})
+}
+
+var cleanupFields = []string{"target", "action", "tracked", "ignored", "recovery", "fingerprint", "detail"}
+
+func renderCleanups(stdout io.Writer, plans []CleanupPlan) error {
+	rows := make([][]string, 0, len(plans))
+	for _, plan := range plans {
+		rows = append(rows, cleanupRow(plan))
+	}
+	out, err := toon.Table("worktree_cleanup", cleanupFields, rows)
+	if err != nil {
+		return err
+	}
+	if _, err = fmt.Fprint(stdout, out); err != nil {
+		return err
+	}
+	for _, plan := range plans {
+		if err := renderIgnoredPreview(stdout, plan); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func cleanupRow(plan CleanupPlan) []string {
 	tracked, recovery := plan.Tracked, plan.Recovery
 	if tracked == "" {
 		tracked = "unknown"
@@ -43,12 +69,12 @@ func renderCleanup(stdout io.Writer, plan CleanupPlan) error {
 	if !cleanupOutputSafe(detail) {
 		detail = "unsafe detail " + cleanupOutputValue(detail)
 	}
-	out, err := toon.Table("worktree_cleanup", []string{"target", "action", "tracked", "ignored", "recovery", "fingerprint", "detail"}, [][]string{{target, string(plan.Action), tracked, ignored, recovery, plan.Fingerprint, detail}})
-	if err != nil {
-		return err
-	}
-	if _, err = fmt.Fprint(stdout, out); err != nil || plan.Ignored.Shown == 0 {
-		return err
+	return []string{target, string(plan.Action), tracked, ignored, recovery, plan.Fingerprint, detail}
+}
+
+func renderIgnoredPreview(stdout io.Writer, plan CleanupPlan) error {
+	if plan.Ignored.Shown == 0 {
+		return nil
 	}
 	rows := make([][]string, 0, plan.Ignored.Shown)
 	for _, path := range plan.Ignored.Paths[:plan.Ignored.Shown] {
@@ -81,6 +107,7 @@ const (
 	ReasonUnexpectedLock CleanupReason = "unexpected-lock"
 	ReasonOrphaned       CleanupReason = "orphaned"
 	ReasonDirty          CleanupReason = "dirty"
+	ReasonLanded         CleanupReason = "landed"
 )
 const actionReleaseRemove CleanupAction = "release-remove"
 
@@ -257,13 +284,29 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
 	plan, err := PlanExplicit(root, path)
 	if err != nil {
+		if assignment, missing := activeAssignmentWithMissingBranch(root, path); missing {
+			plan := retainedPlan(path, ReasonActive, "assignment landedness is unknown")
+			plan.Assignment = assignment.ID
+			plan.owned, plan.assignment = true, &assignment
+			if planHasLiveLease(plan) {
+				plan.ReasonCode, plan.Reason = ReasonLiveLease, "assignment has a live lease"
+			}
+			return automaticFingerprint(plan), nil
+		}
 		reason := ReasonUncertain
 		if strings.Contains(err.Error(), "assignment") || strings.Contains(err.Error(), "intent ledger") {
 			reason = ReasonMalformed
 		}
 		return retainedPlan(path, reason, err.Error()), nil
 	}
+	if plan.assignment != nil && planHasLiveLease(plan) {
+		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "assignment has a live lease"
+		return automaticFingerprint(plan), nil
+	}
 	if plan.Action == ActionRetain {
+		if plan.assignment != nil && assignmentLanded(*plan.assignment, plan) {
+			plan.ReasonCode, plan.Reason = ReasonLanded, "assignment branch has landed"
+		}
 		return automaticFingerprint(plan), nil
 	}
 	if plan.assignment == nil || !plan.owned {
@@ -273,8 +316,12 @@ func PlanAutomatic(root, path string) (CleanupPlan, error) {
 	if plan.assignment.State != intent.StateCleanupPending {
 		reason := ReasonUncertain
 		if plan.assignment.State == intent.StateActive {
-			reason = ReasonActive
-			if orphaned(*plan.assignment, time.Now()) {
+			if assignmentLanded(*plan.assignment, plan) {
+				reason = ReasonLanded
+			} else {
+				reason = ReasonActive
+			}
+			if reason == ReasonActive && orphaned(*plan.assignment, time.Now()) {
 				reason = ReasonOrphaned
 			}
 		}

@@ -1,6 +1,6 @@
 # worktree landed-assignment visibility and bulk retirement
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/worktree-landed-retirement/decisions/worktree-landed-retirement.md` (ready compiled map, FT210, all fifteen tickets reviewer-closed 2026-08-16; #9 re-closed the same day during spec authoring)
 
