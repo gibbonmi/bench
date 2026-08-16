@@ -106,52 +106,20 @@ func TestClassifyVerdicts(t *testing.T) {
 	}
 }
 
-// TestClassifyStashMutations walks both stash deny classes. Expectations read their labels
-// from the deny table rather than repeating the strings, so rewording a row cannot leave a
-// stale copy passing here. The two labels must differ: the blocked agent reads the label to
-// learn which hazard it hit.
+// TestClassifyStashHistoryMutations keeps destructive stash-history operations blocked.
 func TestClassifyStashMutations(t *testing.T) {
-	worktree := denyLabels["stash-worktree"]
 	history := denyLabels["stash"]
-	if worktree == "" || history == "" {
-		t.Fatalf("stash deny classes missing from the table: stash-worktree=%q stash=%q", worktree, history)
-	}
-	if worktree == history {
-		t.Fatalf("both stash classes carry label %q, so the refusal names the wrong hazard", worktree)
+	if history == "" {
+		t.Fatal("stash history deny class missing from the table")
 	}
 	cases := []struct {
 		name string
 		cmd  string
 		want string
 	}{
-		{"bare stash is push", "git stash", worktree},
-		{"push", "git stash push", worktree},
-		{"save", "git stash save wip", worktree},
-		{"pop", "git stash pop", worktree},
-		{"apply", "git stash apply", worktree},
-		{"branch", "git stash branch recovered", worktree},
-		{"unrecognized verb fails closed", "git stash create", worktree},
-
-		// drop and clear destroy stash history, a different hazard from cross-applying
-		// working-tree state, and keep their own label.
 		{"drop", "git stash drop", history},
 		{"clear", "git stash clear", history},
-
-		{"quoted multi-word message", `git stash push -m "wip thing"`, worktree},
-		{"pathspec past the separator", `git stash push -- "path/with space"`, worktree},
-
-		// A flag value or a pathspec can be spelled like a read-only verb. These forms omit
-		// the verb entirely, so they push a stash; a verdict that reads the first free
-		// argument instead of the subcommand position allows them.
-		{"message value spelled like a read-only verb", "git stash -m list", worktree},
-		{"pathspec spelled like a read-only verb", "git stash -- list", worktree},
-		{"long-option message value spelled like a read-only verb", "git stash --message show", worktree},
-		{"flag before a message value spelled like a read-only verb", "git stash -u -m list", worktree},
-
 		{"drop with a flag", "git stash drop -q", history},
-		{"global option before the subcommand", "git -c foo=bar stash pop", worktree},
-		{"one wrapper level", "bash -c 'git stash pop'", worktree},
-		{"xargs", "xargs git stash", worktree},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -159,6 +127,32 @@ func TestClassifyStashMutations(t *testing.T) {
 				t.Errorf("Classify(%q) = %q, want %q", c.cmd, got, c.want)
 			}
 		})
+	}
+}
+
+func TestClassifyStashWorkingTreeOperationsAllowed(t *testing.T) {
+	commands := []string{
+		"git stash",
+		"git stash push",
+		"git stash save wip",
+		"git stash pop",
+		"git stash apply",
+		"git stash branch recovered",
+		"git stash create",
+		`git stash push -m "wip thing"`,
+		`git stash push -- "path/with space"`,
+		"git stash -m list",
+		"git stash -- list",
+		"git stash --message show",
+		"git stash -u -m list",
+		"git -c foo=bar stash pop",
+		"bash -c 'git stash pop'",
+		"xargs git stash",
+	}
+	for _, command := range commands {
+		if got := Classify(command, refYes); got != "" {
+			t.Errorf("Classify(%q) = %q, want allow", command, got)
+		}
 	}
 }
 

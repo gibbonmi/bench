@@ -36,7 +36,6 @@ var denyTable = []struct{ key, label string }{
 	{"restore", "git restore path"},
 	{"rebase", "history rewrite"},
 	{"stash", "git stash drop"},
-	{"stash-worktree", "git stash working tree"},
 	{"amend", "git commit --amend"},
 	{"update-ref", "git update-ref -d"},
 	{"tag", "git tag -d"},
@@ -79,7 +78,7 @@ func Classify(command string, chk Checker) string {
 // command, naming the deny label. One source for the message the hook emits.
 func BlockMessage(label string) string {
 	return "BLOCKED: `" + label + "` — you don't have authority over this. " +
-		"The merge and any history rewrite are the user's, and setting work aside or " +
-		"discarding it leaves a gate verdict answering for something other than what is " +
+		"The merge and any history rewrite are the user's, and discarding work leaves a " +
+		"gate verdict answering for something other than what is " +
 		"on disk. A failed shift is rolled back by bench, not by you. Stop and hand back."
 }

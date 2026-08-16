@@ -2,7 +2,7 @@
 # name: block-dangerous-git
 # boundary: PreToolUse:Bash
 # denies: destructive git operations
-# why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer, and setting work aside detaches the gate verdict from the tree
+# why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer, and discarding work detaches the gate verdict from the tree
 # PreToolUse guard: the agent has no destructive git authority. This makes
 # invariant #4 ("you assist, you don't decide where a decision is mine")
 # enforceable for the operations that can silently destroy a shift's work or
