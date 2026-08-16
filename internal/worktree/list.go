@@ -71,11 +71,22 @@ func ListCommand(args []string) (string, int) {
 	for _, row := range rows {
 		values = append(values, row.values)
 	}
+	landed := false
+	for _, assignment := range assignments {
+		if plan, planErr := PlanExplicit(root, assignment.Worktree); planErr == nil && assignmentLanded(assignment, plan) {
+			landed = true
+			break
+		}
+	}
 	out, err := toon.TableTyped("worktrees", worktreeListFields, values)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	help, err := axi.RenderHelp(actionsForRows(rows))
+	actions := actionsForRows(rows)
+	if landed {
+		actions = append(actions, axi.ExecutableInvocation("clean landed assignments", axi.KnownArgument("worktree"), axi.KnownArgument("clean"), axi.KnownArgument("--landed")))
+	}
+	help, err := axi.RenderHelp(actions)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

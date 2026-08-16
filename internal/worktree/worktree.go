@@ -319,13 +319,16 @@ func renderResumeSummary(result ResumeResult) string {
 	}
 	if retained > 0 {
 		summary.WriteString("; retained")
-		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonOrphaned, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonDirty, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
+		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonLanded, ReasonOrphaned, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonDirty, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
 			if count := result.Retained[reason]; count > 0 {
 				fmt.Fprintf(&summary, " %s=%d", reason, count)
 			}
 		}
 	}
 	fmt.Fprintf(&summary, "; pruned branches %d; reconciled %d; failed %d; open assignments %d\n", result.PrunedBranches, result.Reconciled, result.Failed, result.Open)
+	if result.Retained[ReasonLanded] > 0 {
+		summary.WriteString("landed: bench worktree clean --landed (plans only; re-run with --apply <fingerprint> to remove)\n")
+	}
 	listCapped(&summary, len(result.Orphans), func(i int) string { return orphanLine(result.Orphans[i]) })
 	return summary.String()
 }

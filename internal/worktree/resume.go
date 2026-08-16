@@ -402,6 +402,9 @@ func sweepOrphanAssignments(root string, result *ResumeResult) error {
 			continue
 		}
 		if _, statErr := os.Stat(a.Worktree); statErr == nil {
+			if plan, planErr := PlanExplicit(root, a.Worktree); planErr == nil && assignmentLanded(a, plan) {
+				continue
+			}
 			result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})
 		}
 	}
