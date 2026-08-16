@@ -18,10 +18,10 @@ content is a finding to surface, not to paper over.
 
 ## Acceptance
 
-- [ ] None of the six named Go test files embeds a six-column coverage map.
+- [ ] `(covers SR17)` None of the six named Go test files embeds a six-column coverage map.
 - [ ] `tests/canary/coverage-map-validation/broken-coverage-map` is left on its
       legacy header on purpose — it is what proves the legacy branch still
       validates — and that intent is stated where the fixture lives.
-- [ ] The preflight, worktree, systemtest, and command-registry suites pass with
+- [ ] `(covers SR17)` The preflight, worktree, systemtest, and command-registry suites pass with
       their fixtures migrated, asserting the same outcomes as before.
 - [ ] No fixture assertion was weakened or deleted to accommodate the new header.

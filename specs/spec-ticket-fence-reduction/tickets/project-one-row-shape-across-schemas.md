@@ -26,13 +26,13 @@ tautological assertion cannot mask a later change.
 
 ## Acceptance
 
-- [ ] `bench coverage <spec>` renders `rows[N]{story,behavior,seam}` for a
+- [ ] `(covers SR9)` `bench coverage <spec>` renders `rows[N]{story,behavior,seam}` for a
       six-column spec, with the behavior cell's text in the middle column.
-- [ ] The same command renders the identical TOON header for a reduced spec.
-- [ ] Both assertions compare against a literal expected block, not a value
+- [ ] `(covers SR10)` The same command renders the identical TOON header for a reduced spec.
+- [ ] `(covers SR9)` Both assertions compare against a literal expected block, not a value
       recomputed with the implementation's column list.
-- [ ] Reverting the projection to `{story,seam,red_signal}` turns both the
+- [ ] `(covers SR9)` Reverting the projection to `{story,seam,red_signal}` turns both the
       literal assertions and the checked-in goldens red — demonstrated and recorded.
-- [ ] The five `testdata/*.stdout` goldens were edited by hand, not regenerated.
-- [ ] A violating spec still renders the single retry action; a clean one still
+- [ ] `(covers SR9)` The five `testdata/*.stdout` goldens were edited by hand, not regenerated.
+- [ ] `(covers SR11)` A violating spec still renders the single retry action; a clean one still
       renders one action per row.

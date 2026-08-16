@@ -20,16 +20,16 @@ missing the canonical header rather than parsed under a guess.
 
 ## Acceptance
 
-- [ ] Both reduced headers report state `mapped`, with row IDs present for the
+- [ ] `(covers SR1, SR2)` Both reduced headers report state `mapped`, with row IDs present for the
       five-cell form and absent for the four-cell form.
-- [ ] Two five-cell headers differing only in whether they name `red signal`
+- [ ] `(covers SR4)` Two five-cell headers differing only in whether they name `red signal`
       select different schemas from identical row bytes.
-- [ ] A reduced-map row with the wrong cell count reports `(want 5)`.
-- [ ] An empty cell in a reduced map names a field the reduced header declares.
-- [ ] A `;` in a reduced map's behavior cell is refused as more than one predicate.
-- [ ] Story-reference, fan-out-bound, duplicate-ID, malformed-ID, and orphan-story
+- [ ] `(covers SR5)` A reduced-map row with the wrong cell count reports `(want 5)`.
+- [ ] `(covers SR6)` An empty cell in a reduced map names a field the reduced header declares.
+- [ ] `(covers SR7)` A `;` in a reduced map's behavior cell is refused as more than one predicate.
+- [ ] `(covers SR3, SR8)` Story-reference, fan-out-bound, duplicate-ID, malformed-ID, and orphan-story
       violations are string-identical across all four headers.
-- [ ] A header renaming only some cells reports `coverage map missing the canonical header`.
-- [ ] A reduced map with a header and no rows reports `coverage map has no data rows`.
-- [ ] The historical marker skips validation under a reduced header.
-- [ ] An escaped pipe (`\|`) inside a reduced map's behavior cell survives parsing.
+- [ ] `(covers SR13)` A header renaming only some cells reports `coverage map missing the canonical header`.
+- [ ] `(covers SR14)` A reduced map with a header and no rows reports `coverage map has no data rows`.
+- [ ] `(covers SR15, SR16)` The historical marker skips validation under a reduced header.
+- [ ] `(covers SR8)` An escaped pipe (`\|`) inside a reduced map's behavior cell survives parsing.

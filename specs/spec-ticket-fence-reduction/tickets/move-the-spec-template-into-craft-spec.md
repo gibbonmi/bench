@@ -25,11 +25,11 @@ Leave the review-loop and `--reviewer` needles alone; the next ticket owns them.
 
 ## Acceptance
 
-- [ ] `bench-write-spec.md` is at most 60 lines and the profile's budget table
+- [ ] `(covers SR18)` `bench-write-spec.md` is at most 60 lines and the profile's budget table
       carries its row; raising the file above 60 turns the budget check red.
-- [ ] `craft-spec` carries the spec template with the reduced five-column header.
-- [ ] Every template-block needle is retargeted to `craft-spec` with its section
+- [ ] `(covers SR18)` `craft-spec` carries the spec template with the reduced five-column header.
+- [ ] `(covers SR25, SR26)` Every template-block needle is retargeted to `craft-spec` with its section
       named, and each retargeted anchor's canary still reproduces its own
       `EXPECT` line.
-- [ ] No needle is deleted by this ticket.
-- [ ] `bench anchors` is green.
+- [ ] `(covers SR25)` No needle is deleted by this ticket.
+- [ ] `(covers SR25)` `bench anchors` is green.

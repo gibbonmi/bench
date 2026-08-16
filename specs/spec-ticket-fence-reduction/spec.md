@@ -261,6 +261,10 @@ parsed):
 
 ## Ownership fences
 
+- `specs/spec-ticket-fence-reduction/spec.md`
+- `specs/spec-ticket-fence-reduction/tickets/`
+- `reviews/spec-ticket-fence-reduction.md` (transient review pickup; deleted with its repairs)
+- `capture/session-handoff.md`
 - `internal/coverage/coverage.go`
 - `internal/coverage/coverage_test.go`
 - `internal/coverage/testdata/`

@@ -26,16 +26,16 @@ retired here with its canary — and this ticket records the full enumeration.
 
 ## Acceptance
 
-- [ ] `bench-write-spec.md` states one review round over the pair with the ticket
+- [ ] `(covers SR19)` `bench-write-spec.md` states one review round over the pair with the ticket
       quiz as its approval step, and no two-round sentence remains in the tree.
-- [ ] The profile carries one collapsed routing row naming mid model and high
+- [ ] `(covers SR19)` The profile carries one collapsed routing row naming mid model and high
       effort; no loop-1/loop-2 pair remains.
-- [ ] The `--reviewer` anchor names a tier-only grammar resolving same-family
+- [ ] `(covers SR20)` The `--reviewer` anchor names a tier-only grammar resolving same-family
       through the harness's own column, with no cross-family route and no
       model-id form.
-- [ ] `--reviewer <a bound model id>` is an invocation error.
+- [ ] `(covers SR20)` `--reviewer <a bound model id>` is an invocation error.
 - [ ] `references/cross-harness-reviewers.md` and its two canaries are unchanged.
-- [ ] All twenty pre-shrink needles are enumerated with their end state, and
+- [ ] `(covers SR25)` All twenty pre-shrink needles are enumerated with their end state, and
       every retired needle's canary is retired with it.
-- [ ] `bench anchors` is green, and every touched canary still reproduces its own
+- [ ] `(covers SR26)` `bench anchors` is green, and every touched canary still reproduces its own
       `EXPECT` line.

@@ -17,10 +17,10 @@ CHANGELOG carries one entry for the reduced schema and the single review round.
 
 ## Acceptance
 
-- [ ] No guidance file describes the coverage map as carrying a red signal.
-- [ ] `craft-delegate`'s charge names behavior and seam.
-- [ ] `CONTEXT.md` defines **coverage row** and **acceptance row**, each with an
+- [ ] `(covers SR27)` No guidance file describes the coverage map as carrying a red signal.
+- [ ] `(covers SR27)` `craft-delegate`'s charge names behavior and seam.
+- [ ] `(covers SR28)` `CONTEXT.md` defines **coverage row** and **acceptance row**, each with an
       Avoid list, and stays glossary-only.
-- [ ] The field guide and distillation doc describe the reduced schema.
-- [ ] CHANGELOG carries the entry; `bench skills-index --check` is green.
+- [ ] `(covers SR29)` The field guide and distillation doc describe the reduced schema.
+- [ ] `(covers SR29, SR30)` CHANGELOG carries the entry; `bench skills-index --check` is green.
 - [ ] `bench gate` is green over the whole change.
