@@ -1,10 +1,17 @@
 package skillsindex
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // writeFile is the fixture builder every case below shares: a temp root grown one
@@ -365,4 +372,182 @@ func TestFrontmatterFieldRequiresCompleteLeadingFence(t *testing.T) {
 			}
 		})
 	}
+}
+
+// referenceSnapshot records what the reference is without ever reading a path the
+// classifier would refuse: a FIFO opened here would block the test itself, which is
+// the failure the production reader exists to avoid.
+func referenceSnapshot(t *testing.T, path string) string {
+	t.Helper()
+	info, err := os.Lstat(path)
+	if err != nil {
+		return "absent"
+	}
+	switch {
+	case info.Mode()&fs.ModeSymlink != 0:
+		target, err := os.Readlink(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return "symlink " + target
+	case info.Mode().IsRegular():
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return "regular " + string(data)
+	}
+	return "other " + info.Mode().Type().String()
+}
+
+// await runs one reference-reading call under a deadline. A reader that reopens the
+// path directly blocks in open(2) on the FIFO row forever, and a hung package test
+// reports as a suite-wide timeout rather than as this row, so the bound is here.
+func await[T any](t *testing.T, what string, call func() T) T {
+	t.Helper()
+	done := make(chan T, 1)
+	go func() { done <- call() }()
+	select {
+	case got := <-done:
+		return got
+	case <-time.After(bounds.TestDeadline(0)):
+		t.Fatalf("%s blocked on the reference, so it opened the path before classifying it", what)
+	}
+	panic("unreachable")
+}
+
+// TestReferenceProducerStatesStayDistinctAndBlockWrite is HI4: every hostile or
+// degenerate reference disposition keeps its own diagnostic — empty is not missing,
+// and an untrustworthy object is neither — and none of them lets Write touch the
+// bytes it could not read.
+func TestReferenceProducerStatesStayDistinctAndBlockWrite(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		plant   func(*testing.T, string)
+		want    string
+		refusal bool
+	}{
+		{name: "missing", want: referenceRel + " missing (skills index unverifiable)"},
+		{
+			name:  "empty",
+			plant: func(t *testing.T, path string) { writeAt(t, path, "") },
+			want:  referenceRel + " empty (skills index unverifiable)",
+		},
+		{
+			name: "oversized",
+			plant: func(t *testing.T, path string) {
+				writeAt(t, path, strings.Repeat("a", int(bounds.ControlRecordLimit)+1))
+			},
+			refusal: true,
+		},
+		{
+			name:    "invalid UTF-8",
+			plant:   func(t *testing.T, path string) { writeAt(t, path, reference("")+"\xff\xfe") },
+			refusal: true,
+		},
+		{
+			name: "directory",
+			plant: func(t *testing.T, path string) {
+				if err := os.MkdirAll(path, 0o755); err != nil {
+					t.Fatal(err)
+				}
+			},
+			refusal: true,
+		},
+		{
+			name: "fifo",
+			plant: func(t *testing.T, path string) {
+				if err := syscall.Mkfifo(path, 0o644); err != nil {
+					capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+				}
+			},
+			refusal: true,
+		},
+		{
+			name: "live symlink",
+			plant: func(t *testing.T, path string) {
+				target := filepath.Join(filepath.Dir(path), "elsewhere.md")
+				writeAt(t, target, reference(""))
+				if err := os.Symlink(target, path); err != nil {
+					capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+				}
+			},
+			refusal: true,
+		},
+		{
+			name: "dangling symlink",
+			plant: func(t *testing.T, path string) {
+				if err := os.Symlink(filepath.Join(filepath.Dir(path), "gone.md"), path); err != nil {
+					capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+				}
+			},
+			refusal: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
+			path := filepath.Join(root, filepath.FromSlash(referenceRel))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if tc.plant != nil {
+				tc.plant(t, path)
+			}
+			before := referenceSnapshot(t, path)
+
+			diags := await(t, "Check", func() []string { return Check(root) })
+			err := await(t, "Write", func() error { return Write(root) })
+			if err == nil {
+				t.Fatal("Write accepted a reference it could not read")
+			}
+			if got := referenceSnapshot(t, path); got != before {
+				t.Fatalf("Write changed the reference it refused: %.60q, want %.60q", got, before)
+			}
+			if tc.refusal {
+				prefix := ReferenceRefusalPrefix()
+				if !hasPrefixed(diags, prefix) {
+					t.Fatalf("Check reported %q, want a diagnostic prefixed %q", diags, prefix)
+				}
+				if !strings.HasPrefix(err.Error(), prefix) || strings.TrimSpace(strings.TrimPrefix(err.Error(), prefix)) == "" {
+					t.Fatalf("Write reported %q, want an attributed refusal prefixed %q", err, prefix)
+				}
+				return
+			}
+			if !hasExact(diags, tc.want) {
+				t.Fatalf("Check reported %q, want %q", diags, tc.want)
+			}
+			if err.Error() != tc.want {
+				t.Fatalf("Write reported %q, want %q", err, tc.want)
+			}
+		})
+	}
+}
+
+func writeAt(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func hasExact(diags []string, want string) bool {
+	for _, diag := range diags {
+		if diag == want {
+			return true
+		}
+	}
+	return false
+}
+
+func hasPrefixed(diags []string, prefix string) bool {
+	for _, diag := range diags {
+		if strings.HasPrefix(diag, prefix) && strings.TrimSpace(strings.TrimPrefix(diag, prefix)) != "" {
+			return true
+		}
+	}
+	return false
 }

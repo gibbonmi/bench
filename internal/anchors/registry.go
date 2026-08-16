@@ -118,6 +118,11 @@ func resolveSection(file, title, active string, exists bool) sectionResult {
 	return sectionResult{body: body}
 }
 
+// RefusalPrefix opens every refused-anchor-file diagnostic. It is exported so a
+// consumer composing this registry with its own checks can recognize the registry's
+// refusal without restating the wording.
+const RefusalPrefix = "acceptance coverage anchor file refused: "
+
 // read classifies an anchor file before it opens one. Registry targets include skill
 // and reference producer files, so a link is refused rather than followed and a FIFO
 // cannot block the gate in open(2).
@@ -127,7 +132,7 @@ func read(path, rel string) fileResult {
 	case classified.State == bounds.StateAbsent:
 		return fileResult{}
 	case classified.State.Failed():
-		return fileResult{exists: true, refusal: fmt.Sprintf("acceptance coverage anchor file refused: %s (%s)", rel, classified.Reason)}
+		return fileResult{exists: true, refusal: fmt.Sprintf("%s%s (%s)", RefusalPrefix, rel, classified.Reason)}
 	}
 	return fileResult{active: StripHTMLComments(string(classified.Data)), exists: true}
 }

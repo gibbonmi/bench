@@ -208,9 +208,9 @@ func Check(root string) []string {
 		expectedByName[entry.Name] = line
 	}
 
-	ref := readIfExists(filepath.Join(root, filepath.FromSlash(referenceRel)))
-	if ref == "" {
-		return append(ordered(attributed), referenceRel+" missing (skills index unverifiable)")
+	ref, refusal := readReference(root)
+	if refusal != "" {
+		return append(ordered(attributed), refusal)
 	}
 	span, ok := findBlock(ref)
 	if !ok {
@@ -255,9 +255,9 @@ func Write(root string) error {
 		return ErrAllowlistUnreadable
 	}
 	path := filepath.Join(root, filepath.FromSlash(referenceRel))
-	ref, readErr := os.ReadFile(path)
-	if readErr != nil {
-		return fmt.Errorf("%s missing (skills index unverifiable)", referenceRel)
+	ref, refusal := readReference(root)
+	if refusal != "" {
+		return errors.New(refusal)
 	}
 	var block []string
 	for _, entry := range entries {
@@ -274,7 +274,7 @@ func Write(root string) error {
 			block = append(block, entry.Line())
 		}
 	}
-	span, ok := findBlock(string(ref))
+	span, ok := findBlock(ref)
 	if !ok {
 		return fmt.Errorf("%s skills-index markers missing (bench:skills-index)", referenceRel)
 	}
@@ -309,7 +309,21 @@ func orphanDiagnostic(name string) string {
 // refusalDiagnostic names the one untrustworthy-bytes wording Check reports and Write
 // refuses with.
 func refusalDiagnostic(name, reason string) string {
-	return fmt.Sprintf(skillPathFormat+" refused: %s", name, reason)
+	return refusedDiagnostic(fmt.Sprintf(skillPathFormat, name), reason)
+}
+
+// refusedDiagnostic is the one shape every untrustworthy-producer refusal takes, so a
+// skill file and the reference read the same way to an operator and a consumer can
+// recognize either without matching two wordings.
+func refusedDiagnostic(path, reason string) string {
+	return path + " refused: " + reason
+}
+
+// ReferenceRefusalPrefix is what a refused reference diagnostic starts with. It is
+// exported because the conformance composition row has to recognize this package's
+// refusal through a registered check without restating the wording.
+func ReferenceRefusalPrefix() string {
+	return refusedDiagnostic(referenceRel, "")
 }
 
 // kitOnlySources reads the allowlist's withheld skill sources. The allowlist is the
@@ -396,15 +410,23 @@ func (s blockSpan) replace(block []string) string {
 	return strings.Join(out, "\n")
 }
 
-// readIfExists reads a producer file through the no-follow classifier, so a reference
-// that is a link, a special file, oversized, or not UTF-8 reads as nothing rather than
-// as bytes the generator would treat as authoritative.
-func readIfExists(path string) string {
-	classified := bounds.ClassifyNoFollow(path)
-	if classified.State != bounds.StateParsed {
-		return ""
+// readReference classifies the reference once for both Check and Write, returning its
+// text or the one diagnostic that ends the read. The states stay apart because they
+// send an operator to different repairs: absent means write the file, present-and-empty
+// means the file lost its content, and anything else means the path is not the producer
+// it claims to be — collapsing them to absence is exactly how a false empty source
+// would authorize replacing tracked bytes.
+func readReference(root string) (string, string) {
+	classified := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(referenceRel)))
+	switch classified.State {
+	case bounds.StateParsed:
+		return string(classified.Data), ""
+	case bounds.StateAbsent:
+		return "", referenceRel + " missing (skills index unverifiable)"
+	case bounds.StateEmpty:
+		return "", referenceRel + " empty (skills index unverifiable)"
 	}
-	return string(classified.Data)
+	return "", refusedDiagnostic(referenceRel, classified.Reason)
 }
 
 func exists(path string) bool {

@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
@@ -633,5 +634,66 @@ func writeHostileSkillRoot(t *testing.T, plant func(*testing.T, string)) string 
 		}
 		plant(t, path)
 	}
+	return root
+}
+
+// hostileReferenceReaders names each registered check that reads .bench/BENCH-reference.md
+// and the refusal it owns. The two wordings differ because the diagnostic belongs to the
+// consumer, not to the classifier: skills-index refuses a producer it cannot generate
+// from, while the anchor registry refuses a prose subject it cannot evaluate. Both are
+// sourced from their owner so this row cannot drift into a copy of either.
+var hostileReferenceReaders = []struct {
+	check string
+	want  string
+}{
+	{"skills-index-command-adapters", skillsindex.ReferenceRefusalPrefix()},
+	{"docs-currency-workflow", anchors.RefusalPrefix + ".bench/BENCH-reference.md"},
+}
+
+// TestRegisteredReferenceReadersRefuseHostileReferenceFiles is the reference half of
+// the composition row: docs-currency-workflow evaluates bespoke reference checks and
+// the anchor registry in the same run, so one reader still opening the path directly
+// hangs or misreports the whole gate phase after skills-index has already refused.
+func TestRegisteredReferenceReadersRefuseHostileReferenceFiles(t *testing.T) {
+	for kind, plant := range hostileSkillPlanters {
+		t.Run(kind, func(t *testing.T) {
+			root := writeHostileReferenceRoot(t, plant)
+			for _, reader := range hostileReferenceReaders {
+				t.Run(reader.check, func(t *testing.T) {
+					binding, bound := conformanceChecks[reader.check]
+					if !bound {
+						t.Fatalf("%s conformance owner is not bound", reader.check)
+					}
+					done := make(chan []string, 1)
+					go func() { done <- binding.run(root, root, registry.Dev) }()
+					select {
+					case diags := <-done:
+						if !containsDiagnostic(diags, reader.want) {
+							t.Fatalf("%s over a %s reference produced %q, want a diagnostic containing %q", reader.check, kind, diags, reader.want)
+						}
+					case <-time.After(bounds.TestDeadline(0)):
+						t.Fatalf("%s blocked on a %s reference, so it opened the path before classifying it", reader.check, kind)
+					}
+				})
+			}
+		})
+	}
+}
+
+// writeHostileReferenceRoot plants one hostile .bench/BENCH-reference.md beside the
+// minimum tree these two checks need to reach it. Every other subject is absent on
+// purpose: this root grades the reference reader's refusal, not the tree.
+func writeHostileReferenceRoot(t *testing.T, plant func(*testing.T, string)) string {
+	t.Helper()
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// The token-diet and anchor routes both look past the reference unless the guide
+	// that points at it exists, so a bare hostile file alone would leave them unreached.
+	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), []byte("# Guide\n\nSee .bench/BENCH-reference.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	plant(t, filepath.Join(root, ".bench", "BENCH-reference.md"))
 	return root
 }
