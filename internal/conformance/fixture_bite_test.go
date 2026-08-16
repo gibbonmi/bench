@@ -278,10 +278,10 @@ func packageRunFixtureBiteCalls(dir string) (int, error) {
 
 func TestSpecTicketHandoffWorkflowFixturesAreComplete(t *testing.T) {
 	required := []struct{ fixture, diagnostic string }{
-		{"write-spec-identified-coverage-default", ".agents/commands/bench-write-spec.md Template dropped the six-column identified acceptance-map default"},
-		{"write-spec-unique-row-id", ".agents/commands/bench-write-spec.md Template dropped the unique spec-local row-ID default"},
-		{"write-spec-ownership-fences", ".agents/commands/bench-write-spec.md Template dropped the craft-spec-owned Ownership fences section"},
-		{"write-spec-fence-approval", ".agents/commands/bench-write-spec.md Template approval paragraph dropped the explicit ownership-fence disposition"},
+		{"write-spec-identified-coverage-default", ".agents/skills/bench-craft-spec/SKILL.md Template dropped the identified reduced-column acceptance-map default"},
+		{"write-spec-unique-row-id", ".agents/skills/bench-craft-spec/SKILL.md Template dropped the unique spec-local row-ID default"},
+		{"write-spec-ownership-fences", ".agents/skills/bench-craft-spec/SKILL.md Template dropped the craft-spec-owned Ownership fences section"},
+		{"write-spec-fence-approval", ".agents/skills/bench-craft-spec/SKILL.md Template approval paragraph dropped the explicit ownership-fence disposition"},
 		{"craft-spec-exact-literal-fence", ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the exact repo-relative never-glob ownership-fence rule"},
 		{"craft-spec-empty-or-invalid-fence", ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates permits an empty or invalid ownership fence"},
 	}

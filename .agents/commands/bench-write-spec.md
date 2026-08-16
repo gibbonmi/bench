@@ -65,7 +65,7 @@ approval. Top tier remains an explicit escalation under `craft-line`.
    on the decision source; read the enforcement surface before locking rows
    that touch anchored clauses, canary fixtures, or counted substrings. Give
    each story group its resolved model and effort from `craft-line`. Write
-   `specs/<feature>/spec.md` from the template below and run
+   `specs/<feature>/spec.md` from `craft-spec`'s template and run
    `bench coverage --check`. The stale-command-reference sweep remains
    fail-closed across staged specs. When no hostile-input checklist class covers
    a surface, quarry the seams library and
@@ -122,69 +122,3 @@ approval. Top tier remains an explicit escalation under `craft-line`.
     accept — <note>` into the spec. When either loop takes more than one iteration
     to accept, append one `capture/learnings.md` entry naming the stage that
     missed, what review caught, why it was missed, and the proposed rule change.
-
-## Template
-
-```markdown
-# <feature>
-
-Status: staged
-
-Decision source: <one ready compiled map, reviewer-confirmed conversation with date, or named reviewed artifact>
-
-Verification log: spec <n> + tickets <m> iteration(s) to accept — <note>
-
-## Problem
-The problem, from the user's point of view.
-
-## Solution
-The solution, from the user's point of view.
-
-## User stories
-A long, numbered, extensive breadth floor grouped by outcome — one
-`As an <actor>, I want <feature>, so that <benefit>` per behavior, edge, and
-reviewed exclusion, partially redundant on purpose. Each group opens with its
-`Line: <resolved model id> / <effort>.` and one plain sentence explaining why.
-
-## Implementation decisions
-Modules, interfaces, schema or contract changes, and architectural calls.
-Record decisions rather than file paths or snippets that rot.
-
-## Testing decisions
-- What external behavior a good test exercises.
-- Which engineering seams receive tests and their prior art.
-- Which gate seam observes the feature.
-
-### Seam diagram
-
-    trigger: <who/what invokes this>
-        │
-        ▼
-    <input>  ──▶  [ <unit behind the seam> ]  ──▶  <output>
-                      ◀ tests attach here: <how a test drives and observes it>
-
-### Acceptance coverage map
-| row | story | behavior | seam | red signal | why it catches the failure |
-|---|---|---|---|---|---|
-| <unique spec-local ID> | <story #> | <observable behavior> | <test seam> | <observed red, already covered, or not TDD-able with reason> | <why this fails when behavior is missing> |
-
-### Edge inventory
-Every edge class lands in a row above or a
-**Won't handle** line: `<edge> — <one-clause why the exclusion is safe>`.
-
-## Ownership fences
-List each exact repo-relative file or path prefix a writer may edit. `craft-spec`
-owns the fence rules; an empty section is incomplete, not unrestricted authority.
-
-## Out of scope
-Each genuine separate capability includes its derived
-`<n> edits, <n> gate runs` estimate.
-
-## Further notes
-```
-
-Before a build starts, emit a scannable approval table covering stories and
-their lines, seam diagrams, acceptance coverage including edge dispositions,
-ownership fences with an explicit reviewer disposition, and out of scope. Pause
-for sign-off. The user stories set breadth, engineering
-seams place tests, and the gate defines done.

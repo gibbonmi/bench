@@ -1,7 +1,7 @@
 [
   {
-    "path": ".agents/commands/bench-write-spec.md",
-    "old": "| <unique spec-local ID> | <story #> | <observable behavior> | <test seam> | <observed red, already covered, or not TDD-able with reason> | <why this fails when behavior is missing> |",
-    "new": "| <row ID> | <story #> | <observable behavior> | <test seam> | <observed red, already covered, or not TDD-able with reason> | <why this fails when behavior is missing> |"
+    "path": ".agents/skills/bench-craft-spec/SKILL.md",
+    "old": "| <unique spec-local ID> | <story #> | <observable behavior> | <test seam> | <why this fails when behavior is missing> |",
+    "new": "| <row ID> | <story #> | <observable behavior> | <test seam> | <why this fails when behavior is missing> |"
   }
 ]

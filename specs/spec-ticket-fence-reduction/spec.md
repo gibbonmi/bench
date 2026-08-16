@@ -299,6 +299,7 @@ parsed):
 - `internal/systemtest/owner_test.go`
 - `cmd/bench/command_registry_test.go`
 - `internal/anchors/registry_data.go`
+- `internal/conformance/fixture_bite_test.go` (the four `TestSpecTicketHandoffWorkflowFixturesAreComplete` diagnostic literals that mirror retargeted anchors, and nothing else)
 - `.agents/commands/bench-write-spec.md`
 - `.agents/commands/bench-implement-spec.md`
 - `.agents/skills/bench-craft-spec/SKILL.md`

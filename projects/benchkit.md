@@ -288,6 +288,7 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 | `.bench/BENCH.md` | 180 |
 | `.agents/commands/bench-implement-spec.md` | 60 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
+| `.agents/skills/bench-craft-spec/SKILL.md` | 150 |
 | `.agents/skills/*/SKILL.md` | 120 |
 
 The glob row is what classifies a newly added skill, so a skill arrives budgeted without
