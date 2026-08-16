@@ -743,3 +743,48 @@ func TestExactlyOneMarkerSpanIsRequired(t *testing.T) {
 		}
 	})
 }
+
+// siblingTemps names the replacement temps left beside the reference. It reads the
+// directory rather than opening any child: a residue count must not itself become a
+// reader of a path the classifier would refuse.
+func siblingTemps(t *testing.T, root string) []string {
+	t.Helper()
+	dir, err := os.ReadDir(filepath.Join(root, ".bench"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var residue []string
+	for _, child := range dir {
+		if strings.HasPrefix(child.Name(), ".skills-index-") {
+			residue = append(residue, child.Name())
+		}
+	}
+	return residue
+}
+
+func TestRenameFailureLeavesNoResidueAndKeepsReferenceBytes(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
+	refPath := filepath.Join(root, ".bench", "BENCH-reference.md")
+	original := reference("")
+	writeFile(t, root, ".bench/BENCH-reference.md", original)
+
+	injected := fmt.Errorf("injected rename failure")
+	restore := renameFile
+	renameFile = func(string, string) error { return injected }
+	defer func() { renameFile = restore }()
+
+	if err := Write(root); err == nil || !strings.Contains(err.Error(), injected.Error()) {
+		t.Fatalf("write with a failing rename = %v, want %v", err, injected)
+	}
+	kept, err := os.ReadFile(refPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(kept) != original {
+		t.Fatalf("reference after a failed rename =\n%q\nwant\n%q", kept, original)
+	}
+	if residue := siblingTemps(t, root); len(residue) != 0 {
+		t.Fatalf("failed rename left %v, want no .bench/.skills-index-* residue", residue)
+	}
+}

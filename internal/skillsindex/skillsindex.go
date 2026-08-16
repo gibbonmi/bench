@@ -299,26 +299,47 @@ func Write(root string) error {
 		return errors.New(markersDiagnostic)
 	}
 	rewritten := span.replace(block)
+	return replaceReference(path, rewritten)
+}
+
+// replaceReference puts contents at path through a sibling temp, and owns cleanup for
+// the whole interval in which that temp exists but is not yet the reference: one
+// deferred removal covers every failure between creation and rename, and only a
+// completed rename disarms it. Callers that need to abandon replacement mid-interval —
+// a cancelled context, say — return from here rather than removing the temp themselves,
+// so no later failure path can be added without inheriting the cleanup.
+func replaceReference(path, contents string) error {
 	tmp, err := os.CreateTemp(filepath.Dir(path), ".skills-index-*")
 	if err != nil {
 		return err
 	}
 	name := tmp.Name()
-	if _, err := tmp.WriteString(rewritten); err != nil {
+	renamed := false
+	defer func() {
+		if !renamed {
+			os.Remove(name)
+		}
+	}()
+	if _, err := tmp.WriteString(contents); err != nil {
 		tmp.Close()
-		os.Remove(name)
 		return err
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(name)
 		return err
 	}
 	if err := os.Chmod(name, 0o644); err != nil {
-		os.Remove(name)
 		return err
 	}
-	return os.Rename(name, path)
+	if err := renameFile(name, path); err != nil {
+		return err
+	}
+	renamed = true
+	return nil
 }
+
+// renameFile is the replacement's last operation, named so a test can fail it after
+// the sibling temp exists — the one failure path cleanup used to miss.
+var renameFile = os.Rename
 
 // orphanDiagnostic names the one skill-directory-without-SKILL.md wording Check
 // reports and Write refuses with.
