@@ -42,6 +42,18 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
+**FT198 (MEDIUM, decision required) — a progressively loaded roadmap.** The board
+is read whole every time it is read at all: `ROADMAP.md` is 87 KB and the full
+context snapshot is 170 KB, so every drain, status check, and sequence question
+pays the entire history to reach three rows. Decide the progressive shape — one
+canonical detail owner per row, an index the CLI can answer from without loading
+the bodies, and a migration that preserves each row's status and occurrence
+history. Index completeness is mechanically checked rather than asserted, so a row
+that loses its detail owner is a red, not a silent gap. Ranked 0 in
+`ASSESSMENT.md`'s improvement backlog and referenced by the guidance-prose track's
+sequence; it had no row until this drain. Starts as a grill
+(`/bench-shape-idea`) because the detail-owner split is a reviewer decision.
+
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** One lifecycle owner resolves the exact final-check tree before a
 gate, exposes an active dirty assignment, and records open assignments and branch
@@ -468,6 +480,18 @@ and folds Redact-style secret-safe excerpts into existing debugging guidance.
 Sources: `capture/IDEAS.md` 2026-08-05/11 and `upstream(mattpocock/skills@84fdeff)`.
 
 Occurrence: 2026-08-05/11 coherence drain — CLI inventories and decision documents still carried stale source paths.
+
+The always-loaded verb-discovery clause names the wrong property: "discover Bench
+verbs non-interactively" reads as a ban on exploring, when the rule is that the
+discovery call must print and exit — a bare `bench worktree` creates a worktree
+and opens a subshell no agent can drive. Reword it to name print-and-exit, moving
+the anchor needle with it. The durable fix behind the recurring CLI-inventory
+drift is generation rather than another manual reconcile: root command names carry
+five independent advertisements and only `commandRegistry` executes anything, so
+deriving root help, the `.bench/BENCH.md` inventory, and `commands --brief` from
+that registry retires the drift class this row keeps re-fixing by hand.
+
+Occurrence: 2026-08-16 verb-discovery review — `AGENTS.md` advertised `bench commands --brief` as the verb inventory when it is a three-verb liveness probe (`capture/IDEAS.md`, drained here).
 
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 `RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`;
@@ -1346,5 +1370,5 @@ fixture-proven.
 ## Recommended sequence
 
 1. `/bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high` — FT211 builds the already-staged reduced coverage and authoring-fence contract.
-2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
-3. `/bench-write-spec` — FT185 can make gate and commit results one structured, concise public projection.
+2. `/bench-shape-idea` — FT198 decides the progressive roadmap shape; `ASSESSMENT.md` ranks it 0 and this drain paid the 170 KB snapshot to reach three rows.
+3. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
