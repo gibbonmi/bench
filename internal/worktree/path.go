@@ -67,7 +67,10 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 	}
 	var selected *intent.Assignment
 	for i := range assignments {
-		matches := assignments[i].Label == target
+		// The id is the address `bench worktree list` advertises in its executable help
+		// rows, and it is the only unique one: labels can collide, and the ambiguity
+		// guard below is what answers when they do.
+		matches := assignments[i].Label == target || assignments[i].ID == target
 		if isPath {
 			worktree, worktreeErr := canonicalPath(assignments[i].Worktree)
 			matches = worktreeErr == nil && worktree == path
