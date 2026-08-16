@@ -44,7 +44,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	root = canonicalRoot(root)
 	target, err := canonicalPath(path)
 	if err != nil {
-		return retainedPlan(path, ReasonUncertain, "target path is not canonical"), nil
+		return unresolvedPlan(path, ReasonUncertain, "target path is not canonical"), nil
 	}
 	unsafeTarget := !cleanupOutputSafe(target)
 	worktrees, err := git.Worktrees(root)
@@ -76,7 +76,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 		return plan, nil
 	}
 	if registration == nil {
-		plan := retainedPlan(target, ReasonForeign, "target is not registered")
+		plan := unresolvedPlan(target, ReasonForeign, "target is not registered")
 		plan.Fingerprint = explicitRetainFingerprint(common, defaultRef, defaultOID, target, plan, options)
 		return plan, nil
 	}

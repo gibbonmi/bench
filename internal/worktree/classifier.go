@@ -203,6 +203,12 @@ type CleanupPlan struct {
 	// leftover names the present bytes a release-leftover plan hands on rather than
 	// removes; it is empty for every plan that answers for a checkout.
 	leftover string
+	// unresolved marks a plan whose operand named nothing this repository can act on,
+	// as opposed to a checkout it resolved and then declined to remove. Only the
+	// path-addressed command reads it, to keep a destructive call from reporting
+	// success it never earned; the automatic sweep addresses registrations it already
+	// holds and never produces one.
+	unresolved bool
 }
 type IgnoredInventory struct {
 	Count     int
@@ -323,6 +329,14 @@ func foreignRecoveryAssignment(root, target string) *intent.Assignment {
 }
 func retainedPlan(target string, reason CleanupReason, detail string) CleanupPlan {
 	return CleanupPlan{Target: target, Action: ActionRetain, ReasonCode: reason, Reason: detail}
+}
+
+// unresolvedPlan is retainedPlan for an operand this repository could not resolve to one
+// of its own checkouts.
+func unresolvedPlan(target string, reason CleanupReason, detail string) CleanupPlan {
+	plan := retainedPlan(target, reason, detail)
+	plan.unresolved = true
+	return plan
 }
 func recoveryMetadataMatches(root string, assignment intent.Assignment) bool {
 	prefix := intent.RecoveryRefPrefix(assignment.OwnerID, assignment.ID)

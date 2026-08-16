@@ -284,6 +284,9 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
 		return 1
 	}
+	if plan.unresolved {
+		return 1
+	}
 	return 0
 }
 func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupReceipt) int {
