@@ -10,6 +10,7 @@
 package skillsindex
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -268,8 +269,10 @@ func Check(root string) []string {
 
 // Write regenerates root's block in place. The reference file is a shipped 0644 asset
 // whose mode the release-evidence registry checks, so the temp file's 0600 is
-// corrected before the rename replaces it.
-func Write(root string) error {
+// corrected before the rename replaces it. The context is the caller's abandon
+// authority: an operator who interrupts the verb gets the original reference back
+// rather than a half-published one.
+func Write(ctx context.Context, root string) error {
 	entries, err := Entries(root)
 	if err != nil {
 		return ErrAllowlistUnreadable
@@ -299,7 +302,7 @@ func Write(root string) error {
 		return errors.New(markersDiagnostic)
 	}
 	rewritten := span.replace(block)
-	return replaceReference(path, rewritten)
+	return replaceReference(ctx, path, rewritten)
 }
 
 // replaceReference puts contents at path through a sibling temp, and owns cleanup for
@@ -308,7 +311,7 @@ func Write(root string) error {
 // completed rename disarms it. Callers that need to abandon replacement mid-interval —
 // a cancelled context, say — return from here rather than removing the temp themselves,
 // so no later failure path can be added without inheriting the cleanup.
-func replaceReference(path, contents string) error {
+func replaceReference(ctx context.Context, path, contents string) error {
 	tmp, err := os.CreateTemp(filepath.Dir(path), ".skills-index-*")
 	if err != nil {
 		return err
@@ -330,12 +333,24 @@ func replaceReference(path, contents string) error {
 	if err := os.Chmod(name, 0o644); err != nil {
 		return err
 	}
+	preReplacementBarrier(ctx)
+	// The last moment abandonment is still free: past the rename the reference has
+	// already changed hands, so a cancellation observed here returns through the
+	// deferred removal instead of publishing bytes nobody is waiting for.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := renameFile(name, path); err != nil {
 		return err
 	}
 	renamed = true
 	return nil
 }
+
+// preReplacementBarrier is the instant between a written temp and the rename, named so
+// a test can hold a real process there and interrupt it — the one interval in which
+// cleanup authority is otherwise unobservable from outside. Production passes through.
+var preReplacementBarrier = func(context.Context) {}
 
 // renameFile is the replacement's last operation, named so a test can fail it after
 // the sibling temp exists — the one failure path cleanup used to miss.

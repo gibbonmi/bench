@@ -1,6 +1,7 @@
 package skillsindex
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -102,7 +103,7 @@ func TestCheckAndWriteGenerateVerifyContract(t *testing.T) {
 	if got := Check(root); strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("check on an empty block =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
-	if err := Write(root); err != nil {
+	if err := Write(context.Background(), root); err != nil {
 		t.Fatal(err)
 	}
 	if got := Check(root); len(got) != 0 {
@@ -117,7 +118,7 @@ func TestCheckAndWriteGenerateVerifyContract(t *testing.T) {
 	if string(generated) != wantRef {
 		t.Fatalf("generated reference =\n%q\nwant\n%q", generated, wantRef)
 	}
-	if err := Write(root); err != nil {
+	if err := Write(context.Background(), root); err != nil {
 		t.Fatal(err)
 	}
 	after, err := os.ReadFile(refPath)
@@ -175,7 +176,7 @@ func TestCheckKeepsBothDiagnosticsForACollidingSkill(t *testing.T) {
 func TestZeroSkillRootRendersAnEmptyBlockAndPasses(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".bench/BENCH-reference.md", reference(""))
-	if err := Write(root); err != nil {
+	if err := Write(context.Background(), root); err != nil {
 		t.Fatal(err)
 	}
 	generated, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
@@ -201,7 +202,7 @@ func TestUnparseableAllowlistRefusesWriteAndLeavesCheckAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = Write(root)
+	err = Write(context.Background(), root)
 	want := ".bench/consumer-payload.json unreadable: kit-only marking unresolved (write refused)"
 	if err == nil || err.Error() != want {
 		t.Fatalf("write refusal = %v, want %q", err, want)
@@ -246,7 +247,7 @@ func TestPresentInvalidAllowlistStatesRefuseCheckAndWrite(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := Write(root); err == nil || err.Error() != ErrAllowlistUnreadable.Error() {
+			if err := Write(context.Background(), root); err == nil || err.Error() != ErrAllowlistUnreadable.Error() {
 				t.Fatalf("write with a %s allowlist = %v, want %v", name, err, ErrAllowlistUnreadable)
 			}
 			after, err := os.ReadFile(refPath)
@@ -270,7 +271,7 @@ func TestAbsentAllowlistStaysOptional(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".agents/skills/zeta/SKILL.md", "---\nname: zeta\nindex: doing zeta things\n---\n")
 	writeFile(t, root, ".bench/BENCH-reference.md", reference(""))
-	if err := Write(root); err != nil {
+	if err := Write(context.Background(), root); err != nil {
 		t.Fatalf("write with no allowlist = %v, want success", err)
 	}
 	if got := Check(root); len(got) != 0 {
@@ -303,7 +304,7 @@ func TestEntriesEnumerateLiterallyUnderAGlobShapedRoot(t *testing.T) {
 	if diags := Check(root); len(diags) != 0 {
 		t.Fatalf("Check diagnostics = %v, want none", diags)
 	}
-	if err := Write(root); err != nil {
+	if err := Write(context.Background(), root); err != nil {
 		t.Fatalf("Write: %v", err)
 	}
 	after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
@@ -339,7 +340,7 @@ func TestOrphanIsDiagnosedBeforeAdapterSuppression(t *testing.T) {
 	if got := strings.Join(Check(root), "\n"); got != wantDiag {
 		t.Fatalf("Check =\n%s\nwant\n%s", got, wantDiag)
 	}
-	if err := Write(root); err == nil || err.Error() != wantDiag {
+	if err := Write(context.Background(), root); err == nil || err.Error() != wantDiag {
 		t.Fatalf("Write error = %v, want %s", err, wantDiag)
 	}
 	after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
@@ -390,7 +391,7 @@ func TestRefusedCommandNamedSkillIsDiagnosedBeforeAdapterSuppression(t *testing.
 	if len(diags) != 1 || !strings.HasPrefix(diags[0], wantPrefix) {
 		t.Fatalf("Check = %v, want one diagnostic starting %q", diags, wantPrefix)
 	}
-	if err := Write(root); err == nil || !strings.HasPrefix(err.Error(), wantPrefix) {
+	if err := Write(context.Background(), root); err == nil || !strings.HasPrefix(err.Error(), wantPrefix) {
 		t.Fatalf("Write error = %v, want one starting %q", err, wantPrefix)
 	}
 	after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
@@ -554,7 +555,7 @@ func TestReferenceProducerStatesStayDistinctAndBlockWrite(t *testing.T) {
 			before := referenceSnapshot(t, path)
 
 			diags := await(t, "Check", func() []string { return Check(root) })
-			err := await(t, "Write", func() error { return Write(root) })
+			err := await(t, "Write", func() error { return Write(context.Background(), root) })
 			if err == nil {
 				t.Fatal("Write accepted a reference it could not read")
 			}
@@ -635,7 +636,7 @@ func TestControlRunesNeverReachTheRenderedLine(t *testing.T) {
 			if len(diags) != 1 || !strings.HasPrefix(diags[0], wantPrefix) {
 				t.Fatalf("Check = %v, want one diagnostic starting %q", diags, wantPrefix)
 			}
-			if err := Write(root); err == nil || !strings.HasPrefix(err.Error(), wantPrefix) {
+			if err := Write(context.Background(), root); err == nil || !strings.HasPrefix(err.Error(), wantPrefix) {
 				t.Fatalf("Write error = %v, want one starting %q", err, wantPrefix)
 			}
 			after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
@@ -718,7 +719,7 @@ func TestExactlyOneMarkerSpanIsRequired(t *testing.T) {
 				// acceptance and must still be exercised when Check accepts the span.
 				t.Errorf("check = %v, want [%s]", got, want)
 			}
-			err := Write(root)
+			err := Write(context.Background(), root)
 			if err == nil || err.Error() != want {
 				t.Errorf("write = %v, want %s", err, want)
 			}
@@ -738,7 +739,7 @@ func TestExactlyOneMarkerSpanIsRequired(t *testing.T) {
 		if got := Check(root); len(got) != 0 {
 			t.Fatalf("check = %v, want none", got)
 		}
-		if err := Write(root); err != nil {
+		if err := Write(context.Background(), root); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -774,7 +775,7 @@ func TestRenameFailureLeavesNoResidueAndKeepsReferenceBytes(t *testing.T) {
 	renameFile = func(string, string) error { return injected }
 	defer func() { renameFile = restore }()
 
-	if err := Write(root); err == nil || !strings.Contains(err.Error(), injected.Error()) {
+	if err := Write(context.Background(), root); err == nil || !strings.Contains(err.Error(), injected.Error()) {
 		t.Fatalf("write with a failing rename = %v, want %v", err, injected)
 	}
 	kept, err := os.ReadFile(refPath)

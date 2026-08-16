@@ -1,8 +1,11 @@
 package skillsindex
 
 import (
+	"context"
 	"errors"
+	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -43,7 +46,12 @@ func Command(args []string) (string, int) {
 		return discoveryRefusal(err) + "\n", 1
 	}
 	if write {
-		if werr := Write(root); werr != nil {
+		// The verb owns the interrupt for exactly as long as it is replacing bytes:
+		// an operator's Ctrl-C during a write is an instruction to abandon it, and the
+		// default handler would take the process down mid-replacement instead.
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+		defer stop()
+		if werr := Write(ctx, root); werr != nil {
 			return werr.Error() + "\n", 1
 		}
 		return "", 0
