@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/bounds"
 	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -46,7 +47,13 @@ var (
 	storyNumRe = regexp.MustCompile(`^[0-9]+\. `)
 	mapEndRe   = regexp.MustCompile(`^#{2,} `)
 	edgeRe     = regexp.MustCompile(`^[Ee][Dd][Gg][Ee]`)
-	parenRe    = regexp.MustCompile(`[ \t]*\(.*\)$`)
+	// notCoveredRe is the one grammar for a story-level coverage exception: a story no
+	// row references must either gain a row or carry this line with a reason.
+	notCoveredRe = regexp.MustCompile(`^Not covered: story ([0-9]+) — (.*)$`)
+	// clauseRe finds a `;` outside backticks: the cheap tell of a behavior cell that
+	// states more than one predicate, which no single test can go red on.
+	clauseRe = regexp.MustCompile("`[^`]*`|;")
+	parenRe  = regexp.MustCompile(`[ \t]*\(.*\)$`)
 	// storyPartRe matches one comma-separated part of a story reference; storyRefRe
 	// matches the whole comma list. Both compose storyPartPattern, so they cannot
 	// disagree about what a part looks like: every trimmed part storyRefRe accepts is
@@ -85,6 +92,7 @@ type parsed struct {
 	headerOK   bool
 	optIn      bool
 	storyNums  map[int]bool
+	notCovered map[int]string
 	dataRows   []dataRow
 }
 
@@ -139,6 +147,14 @@ func parse(content []byte) parsed {
 					p.storyNums = make(map[int]bool)
 				}
 				p.storyNums[n] = true
+			}
+		}
+		if m := notCoveredRe.FindStringSubmatch(line); m != nil {
+			if n, err := strconv.Atoi(m[1]); err == nil {
+				if p.notCovered == nil {
+					p.notCovered = make(map[int]string)
+				}
+				p.notCovered[n] = trimSpaceTab(m[2])
 			}
 		}
 		if line == "### Acceptance coverage map" && !p.seen {
@@ -259,6 +275,7 @@ func Check(p parsed) []string {
 	}
 	width, fields, storyOff := p.width(), p.fields(), p.storyOffset()
 	seenIDs := make(map[string]int) // row id -> first row number that used it
+	referenced := make(map[int]bool)
 	var v []string
 	for idx, r := range p.dataRows {
 		rn := idx + 1
@@ -281,6 +298,9 @@ func Check(p parsed) []string {
 				seenIDs[id] = rn
 			}
 		}
+		if strings.Contains(stripBackticks(r.all[storyOff+1]), ";") {
+			v = append(v, fmt.Sprintf("coverage map row %d behavior states more than one predicate (';' outside backticks); split the row", rn))
+		}
 		story := parenRe.ReplaceAllString(r.all[storyOff], "")
 		if story == "" || edgeRe.MatchString(story) {
 			continue
@@ -289,11 +309,14 @@ func Check(p parsed) []string {
 			v = append(v, fmt.Sprintf("coverage map row %d has an unrecognized story reference '%s'", rn, story))
 			continue
 		}
+		fanOut := 0
 		for _, part := range strings.Split(story, ",") {
 			m := storyPartRe.FindStringSubmatch(trimSpaceTab(part))
 			start, _ := strconv.Atoi(m[1])
 			if m[2] == "" {
 				v = append(v, p.checkStoryMember(rn, start)...)
+				referenced[start] = true
+				fanOut++
 				continue
 			}
 			end, _ := strconv.Atoi(m[2])
@@ -306,14 +329,49 @@ func Check(p parsed) []string {
 			// cover. Only the first gap is reported — it names the row's fault, and a
 			// wide range would otherwise bury the rest of the output.
 			for n := start; n <= end; n++ {
+				referenced[n] = true
+				fanOut++
 				if msgs := p.checkStoryMember(rn, n); msgs != nil {
 					v = append(v, msgs...)
 					break
 				}
 			}
 		}
+		if fanOut > bounds.CoverageRowStories {
+			v = append(v, fmt.Sprintf("coverage map row %d references %d stories (max %d); an outcome family is not one red-capable row", rn, fanOut, bounds.CoverageRowStories))
+		}
+	}
+	// A declared story no row references is a breadth-floor promise nothing checks:
+	// it needs a row or an explicit, reasoned exception line.
+	declared := make([]int, 0, len(p.storyNums))
+	for n := range p.storyNums {
+		declared = append(declared, n)
+	}
+	sort.Ints(declared)
+	for _, n := range declared {
+		if referenced[n] {
+			continue
+		}
+		reason, ok := p.notCovered[n]
+		switch {
+		case !ok:
+			v = append(v, fmt.Sprintf("coverage map leaves story %d unreferenced; add a row or a `Not covered: story %d — <reason>` line", n, n))
+		case reason == "":
+			v = append(v, fmt.Sprintf("story %d is marked Not covered without a reason", n))
+		}
 	}
 	return v
+}
+
+// stripBackticks removes inline code spans so a `;` inside a command or literal does
+// not read as a second predicate.
+func stripBackticks(cell string) string {
+	return clauseRe.ReplaceAllStringFunc(cell, func(m string) string {
+		if m == ";" {
+			return m
+		}
+		return ""
+	})
 }
 
 // checkStoryMember validates one story number referenced by row rn against the

@@ -6,6 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `bench coverage --check` now refuses a coverage row that references more than four
+  stories or states more than one predicate (a `;` outside backticks), and a declared
+  story that no row references unless the spec carries a
+  `Not covered: story <n> — <reason>` line under the map.
+
 ### Fixed
 
 - `bench link` now adopts only same-file converged adapter symlinks on first link.

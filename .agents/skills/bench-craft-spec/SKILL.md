@@ -6,8 +6,8 @@ index: coverage-map rows, edge inventories, story sizing, and delegate slicing f
 
 # Spec: synthesize, don't interview
 
-Turn the authorized decision source and what you already know of the codebase
-into `specs/<slug>/spec.md` — synthesize, with at most two late questions.
+Turn the authorized decision source and what you know of the codebase into
+`specs/<slug>/spec.md` — synthesize, with at most two late questions.
 
 1. **Explore the repo**; use the glossary's terms and respect the area's ADRs.
 2. **Sketch the seams** (`craft-seams`): existing over new, the highest that
@@ -17,11 +17,10 @@ into `specs/<slug>/spec.md` — synthesize, with at most two late questions.
 
 ## User stories
 
-A long, numbered, extensive breadth floor, grouped by outcome: one story per
+A long, numbered, extensive breadth floor grouped by outcome: one story per
 actor-want-benefit — `As an <actor>, I want <feature>, so that <benefit>` — for
-every behavior, edge, and reviewed exclusion the source promises. Partial
-redundancy is the point: each story restates one behavior downstream slices and
-reviews must not drop. A story is a want, never an engineering layer
+every behavior, edge, and reviewed exclusion the source promises; partial
+redundancy is the point. A story is a want, never an engineering layer
 (`craft-tickets` owns slice sizing); each group carries one `Line:`.
 
 ## The acceptance coverage map
@@ -29,12 +28,15 @@ reviews must not drop. A story is a want, never an engineering layer
 Each row ties a story to one observable behavior at a seam: `story`,
 `behavior`, `seam`, `red signal`, `why it catches the failure`. An optional
 leading `row` column opts the spec into ticket covers traceability (new specs
-default to it). The red signal is the command or test already run and failed
-because the behavior is absent — say "already covered" or "not TDD-able" rather
-than pretend. Name the cheapest wrong implementation per story and the row that
-goes red on it (across fences, the composition degenerate through the real
-producer); enumerate every quantifier; every source behavior becomes a row or a
-stated exception.
+default to it). `bench coverage --check` refuses a row that references more
+than four stories or states two predicates (`;`), and a declared story no row
+references unless a `Not covered: story <n> — <reason>` line sits under the map.
+The red signal names the exact test function or command and its assertion —
+`observed red:`, `not observed:` (the test you will write), `already covered:`
+(function and asserted content), or `not TDD-able:` (why) — never a file name.
+Name the cheapest wrong implementation per story and the row that goes red on
+it (across fences, the composition degenerate through the real producer);
+enumerate every quantifier; every source behavior becomes a row or an exception.
 
 ## The edge inventory
 

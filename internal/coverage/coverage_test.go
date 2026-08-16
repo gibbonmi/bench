@@ -13,7 +13,11 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const stories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n"
+// stories declares three stories and, because most fixtures reference only story 1,
+// carries the reasoned exception line the checker requires for the other two; the
+// unreferenced-story rule has its own red cases below on bareStories.
+const stories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n\nNot covered: story 2 — fixture\nNot covered: story 3 — fixture\n"
+const bareStories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n4. As j, I want k, so l.\n5. As m, I want n, so o.\n"
 const hdr = "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|\n"
 const hdr6 = "| row | story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|---|\n"
 
@@ -66,6 +70,27 @@ func TestCheck(t *testing.T) {
 			"coverage map row 1 has a malformed row id 'ab-1'"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 1 | b | s | r | w |\n| not-an-id | 2 | b | s | r | w |\n",
 			"coverage map row 2 has a malformed row id 'not-an-id'"},
+		// A row spanning more than bounds.CoverageRowStories stories is an outcome family.
+		{"# b\n\n" + bareStories + "\n### Acceptance coverage map\n" + hdr + "| 1-5 | b | s | r | w |\n",
+			"coverage map row 1 references 5 stories (max 4); an outcome family is not one red-capable row"},
+		// A `;` outside backticks in the behavior cell is a second predicate; one inside
+		// a code span is not.
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 1 | prints x; removes y | s | r | w |\n",
+			"coverage map row 1 behavior states more than one predicate (';' outside backticks); split the row"},
+		// A declared story no row references needs a row or a reasoned exception line.
+		{"# b\n\n" + bareStories + "\n### Acceptance coverage map\n" + hdr + "| 1-4 | b | s | r | w |\n",
+			"coverage map leaves story 5 unreferenced; add a row or a `Not covered: story 5 — <reason>` line"},
+		{"# b\n\n" + bareStories + "\nNot covered: story 5 — \n\n### Acceptance coverage map\n" + hdr + "| 1-4 | b | s | r | w |\n",
+			"story 5 is marked Not covered without a reason"},
+	}
+	// The controls for the three rules: exactly four stories, a `;` inside backticks,
+	// and a reasoned exception all pass.
+	for _, body := range []string{
+		"# b\n\n" + bareStories + "\nNot covered: story 5 — out of scope\n\n### Acceptance coverage map\n" + hdr + "| 1-4 | runs `a; b` | s | r | w |\n",
+	} {
+		if v := Check(spec(body)); len(v) != 0 {
+			t.Errorf("control fixture violations = %v", v)
+		}
 	}
 	for _, c := range cases {
 		v := Check(spec(c.body))
@@ -218,22 +243,22 @@ func TestCommand(t *testing.T) {
 
 	t.Run("separator-free slug resolves specs/<slug>/spec.md", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		body := mapped("| 2 | b2 | s2 | r2 | w2 |\n")
+		body := mapped("| 1 | b2 | s2 | r2 | w2 |\n")
 		mustWrite(t, "specs/foo/spec.md", body)
 
 		out, code := Command([]string{"foo"})
-		if want := wantTable(t, "specs/foo/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/foo/spec.md,check coverage for stories 2\n"); out != want || code != 0 {
+		if want := wantTable(t, "specs/foo/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/foo/spec.md,check coverage for stories 1\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
 
 	t.Run("slug already ending .md resolves folder spec", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		body := mapped("| 3 | b3 | s3 | r3 | w3 |\n")
+		body := mapped("| 1 | b3 | s3 | r3 | w3 |\n")
 		mustWrite(t, "specs/bar/spec.md", body)
 
 		out, code := Command([]string{"bar.md"})
-		if want := wantTable(t, "specs/bar/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/bar/spec.md,check coverage for stories 3\n"); out != want || code != 0 {
+		if want := wantTable(t, "specs/bar/spec.md", body, "help[1]{cmd,why}:\n  bench coverage --check specs/bar/spec.md,check coverage for stories 1\n"); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})

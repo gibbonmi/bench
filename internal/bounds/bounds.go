@@ -43,7 +43,10 @@ const (
 	LeaseStale                      = time.Minute
 	AssignmentStale                 = 7 * 24 * time.Hour
 	CanaryInnerWidth                = 2
-	TestDeadlineFloor               = 20 * time.Second
+	// CoverageRowStories caps how many stories one acceptance-coverage row may reference;
+	// a row spanning more is an outcome family no single test can go red on.
+	CoverageRowStories = 4
+	TestDeadlineFloor  = 20 * time.Second
 )
 
 // TestDeadline derives an outer test deadline from the inner bound that deadline has
