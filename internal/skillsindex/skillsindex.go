@@ -43,6 +43,10 @@ const (
 // defect to the skills.
 const allowlistDiagnostic = allowlistRel + " unreadable: kit-only marking unresolved"
 
+// markersDiagnostic is the one wording for a reference that names no single generated
+// block. Check grades against it and Write refuses on it, so the two never drift.
+const markersDiagnostic = referenceRel + " skills-index markers missing (bench:skills-index)"
+
 // ErrAllowlistUnreadable is Write's refusal when the allowlist is present but does not
 // resolve, so the write is refused before the reference file is touched.
 var ErrAllowlistUnreadable = errors.New(allowlistDiagnostic + " (write refused)")
@@ -230,7 +234,7 @@ func Check(root string) []string {
 	}
 	span, ok := findBlock(ref)
 	if !ok {
-		return append(ordered(attributed), referenceRel+" skills-index markers missing (bench:skills-index)")
+		return append(ordered(attributed), markersDiagnostic)
 	}
 	if strings.Join(expected, "\n") == strings.Join(span.block, "\n") {
 		return ordered(attributed)
@@ -292,7 +296,7 @@ func Write(root string) error {
 	}
 	span, ok := findBlock(ref)
 	if !ok {
-		return fmt.Errorf("%s skills-index markers missing (bench:skills-index)", referenceRel)
+		return errors.New(markersDiagnostic)
 	}
 	rewritten := span.replace(block)
 	tmp, err := os.CreateTemp(filepath.Dir(path), ".skills-index-*")
@@ -414,23 +418,31 @@ type blockSpan struct {
 	after  []string
 }
 
-// findBlock locates the generated block. An end marker reached before a start marker,
-// or a start marker with no end after it, means the file carries no block.
+// findBlock locates the generated block, scanning the whole file rather than stopping
+// at the first plausible pair: only one start marker followed by one end marker names a
+// block unambiguously. Zero, reversed, unclosed, or repeated markers leave the writer
+// with a choice it has no basis to make, so the file carries no block and keeps its bytes.
 func findBlock(text string) (blockSpan, bool) {
 	lines := strings.Split(text, "\n")
-	start := -1
+	start, end := -1, -1
 	for i, line := range lines {
-		if line == endMarker {
-			if start < 0 {
+		switch line {
+		case startMarker:
+			if start >= 0 {
 				return blockSpan{}, false
 			}
-			return blockSpan{before: lines[:start+1], block: lines[start+1 : i], after: lines[i:]}, true
-		}
-		if start < 0 && line == startMarker {
 			start = i
+		case endMarker:
+			if end >= 0 {
+				return blockSpan{}, false
+			}
+			end = i
 		}
 	}
-	return blockSpan{}, false
+	if start < 0 || end < start {
+		return blockSpan{}, false
+	}
+	return blockSpan{before: lines[:start+1], block: lines[start+1 : end], after: lines[end:]}, true
 }
 
 func (s blockSpan) replace(block []string) string {

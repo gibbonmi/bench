@@ -688,3 +688,58 @@ func TestControlRefusalCoversTheNewlineTheParserCannotYield(t *testing.T) {
 		t.Fatalf("graphic unicode refused: %s", got)
 	}
 }
+
+// TestExactlyOneMarkerSpanIsRequired walks the marker cardinality table through both
+// public consumers. A parser that stops at the first end marker accepts most of these
+// rows, and each acceptance would let Write rewrite bytes it cannot place.
+func TestExactlyOneMarkerSpanIsRequired(t *testing.T) {
+	const (
+		start = "<!-- bench:skills-index:start -->"
+		end   = "<!-- bench:skills-index:end -->"
+	)
+	malformed := []struct {
+		name string
+		ref  string
+	}{
+		{name: "zero markers", ref: "# Reference\n\nno block here\n"},
+		{name: "reversed order", ref: "# Reference\n\n" + end + "\n\n" + start + "\n"},
+		{name: "unclosed start", ref: "# Reference\n\n" + start + "\n- a line\n"},
+		{name: "duplicate start", ref: "# Reference\n\n" + start + "\n" + start + "\n" + end + "\n"},
+		{name: "duplicate end", ref: "# Reference\n\n" + start + "\n" + end + "\n" + end + "\n"},
+		{name: "two complete spans", ref: "# Reference\n\n" + start + "\n" + end + "\n" + start + "\n" + end + "\n"},
+	}
+	want := referenceRel + " skills-index markers missing (bench:skills-index)"
+	for _, tc := range malformed {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			writeFile(t, root, ".bench/BENCH-reference.md", tc.ref)
+			if got := Check(root); len(got) != 1 || got[0] != want {
+				// Errorf, not Fatalf: the byte-preservation clause below is a separate
+				// acceptance and must still be exercised when Check accepts the span.
+				t.Errorf("check = %v, want [%s]", got, want)
+			}
+			err := Write(root)
+			if err == nil || err.Error() != want {
+				t.Errorf("write = %v, want %s", err, want)
+			}
+			after, readErr := os.ReadFile(filepath.Join(root, filepath.FromSlash(referenceRel)))
+			if readErr != nil {
+				t.Fatal(readErr)
+			}
+			if string(after) != tc.ref {
+				t.Fatalf("write changed bytes:\n%q\nwant\n%q", after, tc.ref)
+			}
+		})
+	}
+
+	t.Run("exactly one ordered span", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, root, ".bench/BENCH-reference.md", reference(""))
+		if got := Check(root); len(got) != 0 {
+			t.Fatalf("check = %v, want none", got)
+		}
+		if err := Write(root); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
