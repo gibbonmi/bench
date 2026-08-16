@@ -1,9 +1,11 @@
 // Package coverage ports `bench coverage`: the acceptance-coverage-map parser the
 // gate's docs layer and the review phase both consume. Extraction mode emits the
 // spec's state and rows as TOON; `--check` validates the map (canonical header,
-// five-cell rows, non-empty cells, story references against the exact declared
-// story set, historical opt-out) and requires a map at all unless the spec is
-// marked historical. A map may opt into per-row IDs by leading the header with a
+// rows as wide as that header declares, non-empty cells, story references against
+// the exact declared story set, historical opt-out) and requires a map at all unless
+// the spec is marked historical. A map may drop the `red signal` column; which
+// columns a header carries is fixed by the header itself, never by its cell
+// count. A map may opt into per-row IDs by leading the header with a
 // `row` column; an opted-in map's IDs are grammar-checked, spec-local unique, and
 // exported to other packages via ParseSpec. The validation phrasings are
 // load-bearing — downstream consumers match them by substring — so this is the
@@ -93,6 +95,8 @@ type schema struct {
 var schemas = []schema{
 	{fields: []string{fieldStory, fieldBehavior, fieldSeam, fieldRedSignal, fieldWhy}},
 	{fields: []string{fieldRow, fieldStory, fieldBehavior, fieldSeam, fieldRedSignal, fieldWhy}},
+	{fields: []string{fieldRow, fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
+	{fields: []string{fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
 }
 
 // header is the lowercased header line this schema answers to — the join of its own

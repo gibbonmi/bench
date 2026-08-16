@@ -21,6 +21,52 @@ const bareStories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want 
 const hdr = "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|\n"
 const hdr6 = "| row | story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|---|\n"
 
+// The reduced headers: the same map with the `red signal` column cut. hdrReducedID
+// is the five-cell opted-in form, and it is deliberately the same width as hdr —
+// the two differ only in whether they name `red signal`, which is what makes a
+// schema chosen by cell count observably wrong.
+const hdrReducedID = "| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n"
+const hdrReduced = "| story | behavior | seam | why it catches the failure |\n|---|---|---|---|\n"
+
+// bareStoriesExcused declares five stories and excuses the fifth, so a fixture
+// covering exactly the four-story bound is clean rather than orphaning a story.
+const bareStoriesExcused = bareStories + "\nNot covered: story 5 — out of scope\n"
+
+// mapShape is one accepted header paired with the writer that places named cells
+// under it. The four shapes let one violation table run against every schema, so a
+// check reading a literal offset — which passes under the header it was written
+// for and misreads under another — cannot hide behind a single-header fixture.
+type mapShape struct {
+	name  string
+	hdr   string
+	optIn bool
+	row   func(id, story, behavior, seam string) string
+}
+
+var mapShapes = []mapShape{
+	{"legacy", hdr, false, func(_, story, behavior, seam string) string {
+		return "| " + story + " | " + behavior + " | " + seam + " | r | w |\n"
+	}},
+	{"legacy-opt-in", hdr6, true, func(id, story, behavior, seam string) string {
+		return "| " + id + " | " + story + " | " + behavior + " | " + seam + " | r | w |\n"
+	}},
+	{"reduced-opt-in", hdrReducedID, true, func(id, story, behavior, seam string) string {
+		return "| " + id + " | " + story + " | " + behavior + " | " + seam + " | w |\n"
+	}},
+	{"reduced", hdrReduced, false, func(_, story, behavior, seam string) string {
+		return "| " + story + " | " + behavior + " | " + seam + " | w |\n"
+	}},
+}
+
+// body renders a whole spec under this shape's header from named cells.
+func (s mapShape) body(storyBlock string, rows [][4]string) string {
+	b := "# b\n\n" + storyBlock + "\n### Acceptance coverage map\n" + s.hdr
+	for _, r := range rows {
+		b += s.row(r[0], r[1], r[2], r[3])
+	}
+	return b
+}
+
 func spec(body string) parsed { return parse([]byte(body)) }
 
 func TestStateAndRows(t *testing.T) {
@@ -40,6 +86,17 @@ func TestStateAndRows(t *testing.T) {
 	}
 	if State(spec("# n\nprose only\n")) != "no-map" {
 		t.Error("no-map state not detected")
+	}
+
+	// The marker opts a spec out under a reduced header too. The row is deliberately
+	// too narrow for its header, so a Check that still returns nil proves validation
+	// was skipped rather than merely satisfied.
+	reducedHistorical := "# h\n<!-- coverage-map: historical -->\n### Acceptance coverage map\n" + hdrReduced + "| 1 | b | s |\n"
+	if State(spec(reducedHistorical)) != "historical" {
+		t.Errorf("reduced historical state = %q, want historical", State(spec(reducedHistorical)))
+	}
+	if v := Check(spec(reducedHistorical)); v != nil {
+		t.Errorf("reduced historical Check = %v, want nil", v)
 	}
 }
 
@@ -96,6 +153,38 @@ func TestCheck(t *testing.T) {
 			"coverage map leaves story 5 unreferenced; add a row or a `Not covered: story 5 — <reason>` line"},
 		{"# b\n\n" + bareStories + "\nNot covered: story 5 — \n\n### Acceptance coverage map\n" + hdr + "| 1-4 | b | s | r | w |\n",
 			"story 5 is marked Not covered without a reason"},
+		// The reduced schemas answer with their own width and their own field names.
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID, "coverage map has no data rows"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced, "coverage map has no data rows"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID + "| AB1 | 1 | b | s |\n",
+			"coverage map row 1 has 4 cells (want 5)"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID + "| AB1 | 1 | b | s | r | w |\n",
+			"coverage map row 1 has 6 cells (want 5)"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced + "| 1 | b | s | r | w |\n",
+			"coverage map row 1 has 5 cells (want 4)"},
+		// Index 3 is the only offset where the reduced and legacy five-cell field
+		// lists disagree — `seam` there, `red signal` in the legacy list — so the
+		// empty-cell case asserts the fourth cell. The last cell would prove nothing:
+		// index 4 is `why it catches the failure` under both.
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID + "| AB1 | 1 | b |  | w |\n",
+			"coverage map row 1 has an empty 'seam' cell"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced + "| 1 | b |  | w |\n",
+			"coverage map row 1 has an empty 'seam' cell"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID + "| AB1 | 1 | prints x; removes y | s | w |\n",
+			"coverage map row 1 behavior states more than one predicate (';' outside backticks); split the row"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced + "| 1 | prints x; removes y | s | w |\n",
+			"coverage map row 1 behavior states more than one predicate (';' outside backticks); split the row"},
+		// A header renaming only its last cell, at each accepted width. Every one is
+		// refused rather than parsed under a guess: a schema resolved by cell count
+		// whenever the names do not match would accept all three.
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n| story | behavior | seam | outcome |\n|---|---|---|---|\n| 1 | b | s | w |\n",
+			"coverage map missing the canonical header"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n| row | story | behavior | seam | outcome |\n|---|---|---|---|---|\n| AB1 | 1 | b | s | w |\n",
+			"coverage map missing the canonical header"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n| row | story | behavior | seam | red signal | outcome |\n|---|---|---|---|---|---|\n| AB1 | 1 | b | s | r | w |\n",
+			"coverage map missing the canonical header"},
+		// A spec with no map and no historical marker is a violation in itself.
+		{"# n\nprose only\n", "coverage map missing and spec is not marked historical"},
 	}
 	// The controls for the three rules: exactly four stories, a `;` inside backticks,
 	// and a reasoned exception all pass.
@@ -491,6 +580,138 @@ func TestCommandAngleBracketSpecPathPreservesPrimaryAndHonestFallback(t *testing
 			want := primary + "help[0]{cmd,why}:\n"
 			if code != 0 || out != want {
 				t.Fatalf("Command = (%d, %q), want checked primary plus honest empty help", code, out)
+			}
+		})
+	}
+}
+
+// TestSchemaSelectionByHeaderNames drives every accepted header through State and
+// ParseSpec, the two verdicts a caller reads: each maps, and each reports the opt-in
+// and ordered row IDs its own header declares.
+func TestSchemaSelectionByHeaderNames(t *testing.T) {
+	dir := t.TempDir()
+	for _, s := range mapShapes {
+		t.Run(s.name, func(t *testing.T) {
+			body := s.body(stories, [][4]string{{"AB1", "1", "does x", "cli seam"}})
+			if got := State(spec(body)); got != "mapped" {
+				t.Fatalf("State = %q, want mapped", got)
+			}
+			path := filepath.Join(dir, s.name+".md")
+			mustWrite(t, path, body)
+			optIn, ids, violations, err := ParseSpec(path)
+			if err != nil {
+				t.Fatalf("ParseSpec: %v", err)
+			}
+			if optIn != s.optIn {
+				t.Errorf("optIn = %v, want %v", optIn, s.optIn)
+			}
+			var wantIDs []string
+			if s.optIn {
+				wantIDs = []string{"AB1"}
+			}
+			if !reflect.DeepEqual(ids, wantIDs) {
+				t.Errorf("ids = %v, want %v", ids, wantIDs)
+			}
+			if len(violations) != 0 {
+				t.Errorf("violations = %v, want none", violations)
+			}
+		})
+	}
+}
+
+// TestFiveCellHeadersSelectSchemaByName drives byte-identical rows through the two
+// five-cell headers. They differ only in whether they name `red signal`, so a schema
+// resolved by cell count would project both alike; resolved by name, the same cells
+// land in different fields and the projections differ.
+func TestFiveCellHeadersSelectSchemaByName(t *testing.T) {
+	const row = "| 1 | b | s | r | w |\n"
+	legacy := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + row)
+	reduced := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID + row)
+
+	// Legacy reads story/seam/red-signal off cells 0, 2, 3. The reduced header's
+	// leading row-ID cell shifts everything one place right, and it has no red-signal
+	// field at all, so that slot reads empty.
+	if want := [][]string{{"1", "s", "r"}}; !reflect.DeepEqual(Rows(legacy), want) {
+		t.Errorf("legacy Rows = %v, want %v", Rows(legacy), want)
+	}
+	if want := [][]string{{"b", "r", ""}}; !reflect.DeepEqual(Rows(reduced), want) {
+		t.Errorf("reduced Rows = %v, want %v", Rows(reduced), want)
+	}
+	if reflect.DeepEqual(Rows(legacy), Rows(reduced)) {
+		t.Errorf("both five-cell headers projected %v; the schema was chosen by cell count, not cell names", Rows(legacy))
+	}
+}
+
+// TestViolationsAreIdenticalAcrossSchemas runs one violation table against every
+// accepted header from one set of named cells. Cutting a column must not cut a
+// check, so each case asserts the *same* violation strings under every schema —
+// a check reading a literal offset would report a different message, or none, under
+// one of the four. Behaviors carry an escaped pipe, since a behavior legitimately
+// contains `|` and the parser's split sentinel has to survive the schema change.
+func TestViolationsAreIdenticalAcrossSchemas(t *testing.T) {
+	const behavior = `does x \| y`
+	cases := []struct {
+		name      string
+		stories   string
+		rows      [][4]string
+		want      string // "" means the fixture must be clean under every schema
+		optInOnly bool
+	}{
+		{name: "clean row with an escaped pipe", stories: stories,
+			rows: [][4]string{{"AB1", "1", behavior, "cli seam"}}},
+		{name: "story reference at the fan-out bound", stories: bareStoriesExcused,
+			rows: [][4]string{{"AB1", "1-4", behavior, "cli seam"}}},
+		{name: "unrecognized story reference", stories: stories,
+			rows: [][4]string{{"AB1", "x", behavior, "cli seam"}},
+			want: "coverage map row 1 has an unrecognized story reference 'x'"},
+		{name: "undeclared story", stories: stories,
+			rows: [][4]string{{"AB1", "9", behavior, "cli seam"}},
+			want: "coverage map row 1 references story 9, which the spec does not declare (has: 1, 2, 3)"},
+		{name: "story zero", stories: stories,
+			rows: [][4]string{{"AB1", "0", behavior, "cli seam"}},
+			want: "coverage map row 1 references story 0, which is not a valid story number"},
+		{name: "range with end before start", stories: bareStoriesExcused,
+			rows: [][4]string{{"AB1", "3-1", behavior, "cli seam"}},
+			want: "coverage map row 1 has a story range with end before start '3-1'"},
+		{name: "fan-out past the bound", stories: bareStories,
+			rows: [][4]string{{"AB1", "1-5", behavior, "cli seam"}},
+			want: "coverage map row 1 references 5 stories (max 4); an outcome family is not one red-capable row"},
+		{name: "orphan story", stories: bareStories,
+			rows: [][4]string{{"AB1", "1-4", behavior, "cli seam"}},
+			want: "coverage map leaves story 5 unreferenced; add a row or a `Not covered: story 5 — <reason>` line"},
+		{name: "duplicate row id", stories: stories, optInOnly: true,
+			rows: [][4]string{{"AB1", "1", behavior, "cli seam"}, {"AB1", "2", behavior, "gate"}},
+			want: "coverage map row 2 has a duplicate row id 'AB1' (first used at row 1)"},
+		{name: "malformed row id", stories: stories, optInOnly: true,
+			rows: [][4]string{{"ab-1", "1", behavior, "cli seam"}},
+			want: "coverage map row 1 has a malformed row id 'ab-1'"},
+		{name: "empty row id", stories: stories, optInOnly: true,
+			rows: [][4]string{{"", "1", behavior, "cli seam"}},
+			want: "coverage map row 1 has an empty 'row' cell"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var first []string
+			firstName := ""
+			for _, s := range mapShapes {
+				if c.optInOnly && !s.optIn {
+					continue
+				}
+				got := Check(spec(s.body(c.stories, c.rows)))
+				if c.want == "" {
+					if len(got) != 0 {
+						t.Errorf("%s: violations = %v, want none", s.name, got)
+					}
+				} else if !strings.Contains(strings.Join(got, "\n"), c.want) {
+					t.Errorf("%s: violations %v do not contain %q", s.name, got, c.want)
+				}
+				if firstName == "" {
+					first, firstName = got, s.name
+					continue
+				}
+				if !reflect.DeepEqual(got, first) {
+					t.Errorf("%s violations = %v, but %s reported %v; the same map must be refused identically under every schema", s.name, got, firstName, first)
+				}
 			}
 		})
 	}
