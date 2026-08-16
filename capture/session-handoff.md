@@ -2,28 +2,24 @@
 
 Repository: `89d5d0eebf093c03c876ddd10b63473c-ee22771c3ed7bf922904bf893b610286` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/.bench/worktrees/bench-3325222104/89d5d0eebf093c03c876ddd10b63473c-ee22771c3ed7bf922904bf893b610286`
-Branch: `bench/assign/89d5d0eebf093c03c876ddd10b63473c/ee22771c3ed7bf922904bf893b610286` — HEAD `db1d967`, clean tree, 49 unpushed commits
+Branch: `bench/assign/89d5d0eebf093c03c876ddd10b63473c/ee22771c3ed7bf922904bf893b610286` — HEAD `7014bfa`, clean tree, 49 unpushed commits
 Spec: `specs/worktree-landed-retirement/spec.md` (Status: staged)
-Gate: green at `4f15dfa` — stale, work tree `9df3007`
+Gate: green at `57162e3` — stale, work tree `9b8a805`
 
 ## State
 
-Implementation is active on retained assignment
-`ee22771c3ed7bf922904bf893b610286`. Ticket
-`count-and-advertise-landed-assignments.md` landed green at `7f5b4798`; repair
-`db1d9679` restored its staged ticket metadata after preflight correctly rejected that
-out-of-fence path. The candidate remains based on `68ebb9ce`.
+Implementation is complete on retained assignment
+`ee22771c3ed7bf922904bf893b610286`. All five tickets are committed serially and
+green through the full gate. The frozen review base is `68ebb9ce`; the candidate
+includes the approved ownership-fence repairs for the handoff and derived canary
+inventory count.
 
-Frontier: `plan-the-landed-set-under-one-fingerprint.md`, then
-`apply-the-landed-plan-and-settle-records.md`, then the independent final pair
-`refuse-a-half-applied-landed-set.md` and `make-release-a-workflow-step.md`.
-
-The full run uses fresh ticket write delegates and three independent Terra/high review
-axes before `bench worktree land`; no review or landing has run yet.
+Semantic review is next: run three independent Terra/high axes over the exact
+base/source pair. No review, landing, retirement, retro, or push has run yet.
 
 ## Next command
 
-`$bench-implement-spec --full worktree-landed-retirement --reviewer terra high`
+`$bench-review-implementation worktree-landed-retirement --base 68ebb9cef9a39a3d35349b9dc4534dad2c044f33 --reviewer terra high`
 
 ## Shape
 
