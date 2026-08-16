@@ -284,6 +284,17 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 			_ = renderCleanups(stdout, plans)
 			return 1
 		}
+		if fingerprint != "" {
+			plans, applyErr := applyLandedSet(root, set, options)
+			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
+				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
+				return 1
+			}
+			if applyErr != nil {
+				return 1
+			}
+			return 0
+		}
 		if err := renderLandedSet(stdout, set, options); err != nil {
 			fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
 			return 1

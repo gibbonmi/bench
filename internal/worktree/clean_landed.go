@@ -46,35 +46,10 @@ func planLandedSet(root string, options CleanupOptions) (landedCleanupSet, error
 
 	set := landedCleanupSet{rows: make([]landedCleanupRow, 0, len(assignments))}
 	for _, assignment := range assignments {
-		if assignment.State != intent.StateActive || assignment.Branch == "" {
-			continue
-		}
-		landed, byContent, proofErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), defaultRef)
-		if proofErr != nil || !landed {
-			continue
-		}
-		proof := "true:ancestry"
-		if byContent {
-			proof = "true:patch"
-		}
 		lease := leases[assignment.OwnerID]
-		if lease == "" {
-			lease = "none"
+		if row, selected := selectLandedCleanupRow(root, assignment, defaultRef, lease, options); selected {
+			set.rows = append(set.rows, row)
 		}
-		classifierPlan := CleanupPlan{Target: root, landed: proof}
-		if lease == string(LeaseLive) {
-			classifierPlan.ReasonCode = ReasonLiveLease
-		}
-		if !assignmentLanded(assignment, classifierPlan) {
-			continue
-		}
-		headOID, oidErr := git.Output("-C", root, "rev-parse", "--verify", assignment.Branch+"^{commit}")
-		if oidErr != nil {
-			continue
-		}
-		plan := planLandedAssignment(root, assignment, options)
-		plan.Assignment = assignment.ID
-		set.rows = append(set.rows, landedCleanupRow{assignment: assignment, plan: plan, headOID: headOID, lease: lease})
 	}
 	if len(set.rows) == 0 {
 		return set, nil
@@ -84,6 +59,40 @@ func planLandedSet(root string, options CleanupOptions) (landedCleanupSet, error
 		set.rows[i].plan.Fingerprint = set.fingerprint
 	}
 	return set, nil
+}
+
+// selectLandedCleanupRow is the selector's single per-assignment proof: the set plan
+// and every pre-mutation row re-plan use it, so a row cannot become removable through a
+// different route after its shared fingerprint was validated.
+func selectLandedCleanupRow(root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions) (landedCleanupRow, bool) {
+	if assignment.State != intent.StateActive || assignment.Branch == "" {
+		return landedCleanupRow{}, false
+	}
+	landed, byContent, proofErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), defaultRef)
+	if proofErr != nil || !landed {
+		return landedCleanupRow{}, false
+	}
+	proof := "true:ancestry"
+	if byContent {
+		proof = "true:patch"
+	}
+	if lease == "" {
+		lease = "none"
+	}
+	classifierPlan := CleanupPlan{Target: root, landed: proof}
+	if lease == string(LeaseLive) {
+		classifierPlan.ReasonCode = ReasonLiveLease
+	}
+	if !assignmentLanded(assignment, classifierPlan) {
+		return landedCleanupRow{}, false
+	}
+	headOID, oidErr := git.Output("-C", root, "rev-parse", "--verify", assignment.Branch+"^{commit}")
+	if oidErr != nil {
+		return landedCleanupRow{}, false
+	}
+	plan := planLandedAssignment(root, assignment, options)
+	plan.Assignment = assignment.ID
+	return landedCleanupRow{assignment: assignment, plan: plan, headOID: headOID, lease: lease}, true
 }
 
 func planLandedAssignment(root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
@@ -227,4 +236,74 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 	}
 	_, err = fmt.Fprint(stdout, help)
 	return err
+}
+
+func sameLandedCleanupTuple(a, b landedCleanupRow) bool {
+	return a.assignment.ID == b.assignment.ID &&
+		a.assignment.Worktree == b.assignment.Worktree &&
+		a.plan.Action == b.plan.Action &&
+		a.headOID == b.headOID &&
+		a.plan.Tracked == b.plan.Tracked &&
+		a.plan.Ignored.Count == b.plan.Ignored.Count &&
+		a.lease == b.lease
+}
+
+func replanLandedCleanupRow(root, assignmentID string, options CleanupOptions) (landedCleanupRow, bool, error) {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return landedCleanupRow{}, false, err
+	}
+	defaultRef, ok := git.ResolvedDefault(root)
+	if !ok {
+		return landedCleanupRow{}, false, nil
+	}
+	leases, err := assignmentLeaseStates(root)
+	if err != nil {
+		return landedCleanupRow{}, false, err
+	}
+	for _, assignment := range assignments {
+		if assignment.ID == assignmentID {
+			row, selected := selectLandedCleanupRow(root, assignment, defaultRef, leases[assignment.OwnerID], options)
+			return row, selected, nil
+		}
+	}
+	return landedCleanupRow{}, false, nil
+}
+
+func applyLandedSet(root string, set landedCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
+	plans := make([]CleanupPlan, 0, len(set.rows))
+	for _, planned := range set.rows {
+		if !planned.plan.Action.removes() {
+			plans = append(plans, planned.plan)
+			continue
+		}
+		current, selected, err := replanLandedCleanupRow(root, planned.assignment.ID, options)
+		if err != nil {
+			return append(plans, planned.plan), err
+		}
+		if !selected || !sameLandedCleanupTuple(planned, current) {
+			if selected {
+				plans = append(plans, current.plan)
+			} else {
+				plans = append(plans, planned.plan)
+			}
+			return plans, errStaleFingerprint
+		}
+		planner := func(string) (CleanupPlan, error) {
+			fresh, stillSelected, planErr := replanLandedCleanupRow(root, planned.assignment.ID, options)
+			if planErr != nil {
+				return CleanupPlan{}, planErr
+			}
+			if !stillSelected || !sameLandedCleanupTuple(planned, fresh) {
+				return CleanupPlan{Target: planned.assignment.Worktree}, nil
+			}
+			return fresh.plan, nil
+		}
+		applied, applyErr := applyCleanupTransaction(root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, nil)
+		plans = append(plans, applied)
+		if applyErr != nil {
+			return plans, applyErr
+		}
+	}
+	return plans, nil
 }

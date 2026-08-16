@@ -28,6 +28,16 @@ func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
 	if !strings.Contains(stdout, clean.Path+",remove,") || !strings.Contains(stdout, "bench worktree clean '"+dirty.Path+"'") || !strings.Contains(stdout, "bench worktree clean --landed --apply ") {
 		t.Fatalf("output=%q, want safe row and pasteable help", stdout)
 	}
+	_, applyErr, applyCode := runCleanLanded(t, root, "--landed", "--apply", landedRowFingerprint(t, stdout))
+	if applyCode != 0 || applyErr != "" {
+		t.Fatalf("apply exit=%d stderr=%q", applyCode, applyErr)
+	}
+	if _, err := os.Lstat(clean.Path); !os.IsNotExist(err) {
+		t.Fatalf("safe hostile path was not removed: %v", err)
+	}
+	if _, err := os.Lstat(dirty.Path); err != nil {
+		t.Fatalf("dirty hostile path disappeared: %v", err)
+	}
 }
 
 func TestCleanLandedControlBytePathRetained(t *testing.T) {
