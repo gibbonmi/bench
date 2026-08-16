@@ -3,6 +3,8 @@ package worktree
 import (
 	"bytes"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -42,5 +44,56 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 	code := CleanCommand([]string{creation.Path}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("resolved retain code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
+// [CP1][CP2] `bench worktree path` prints a portable `~`-prefixed path and the help rows
+// steer the operator straight from it into `bench worktree clean`, so the two have to
+// compose. Plan and apply must also agree on one canonical target: a fingerprint taken
+// against the unexpanded path and applied against the expanded one would remove a
+// checkout the operator never saw named.
+func TestCleanCommandAcceptsThePortablePathThatPathPrints(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "portable")
+	// The fixture worktree lives under BENCH_HOME inside root, so pointing HOME at root
+	// is what makes `path` print the portable form this test is about.
+	t.Setenv("HOME", root)
+	t.Chdir(root)
+	var printed, stderr bytes.Buffer
+	if code := PathCommand(root, []string{creation.Assignment.Label}, &printed, &stderr); code != 0 {
+		t.Fatalf("path exited %d: %s", code, stderr.String())
+	}
+	portable := strings.TrimSpace(printed.String())
+	if !strings.HasPrefix(portable, "~/") {
+		t.Fatalf("path printed %q, want the portable home form", portable)
+	}
+	var planned bytes.Buffer
+	if code := CleanCommand([]string{portable}, &planned, &stderr); code != 0 {
+		t.Fatalf("clean %q exited %d: %s", portable, code, planned.String())
+	}
+	if !strings.Contains(planned.String(), ",remove,") {
+		t.Fatalf("clean %q planned no removal: %s", portable, planned.String())
+	}
+	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
+	if fingerprint == "" {
+		t.Fatalf("plan carried no fingerprint: %s", planned.String())
+	}
+	var applied bytes.Buffer
+	if code := CleanCommand([]string{portable, "--apply", fingerprint}, &applied, &stderr); code != 0 {
+		t.Fatalf("apply against the portable path exited %d: %s", code, applied.String())
+	}
+	if !strings.Contains(applied.String(), ",removed,") {
+		t.Fatalf("apply did not remove: %s", applied.String())
+	}
+}
+
+// [CP3] An unsupported home form is a bad operand in its own right, not a path that
+// merely happens to be unregistered once it has been canonicalized against the repo root.
+func TestCleanCommandRefusesAnUnsupportedHomeTarget(t *testing.T) {
+	root, _ := newOwnedAssignment(t, "homeform")
+	t.Chdir(root)
+	var stdout, stderr bytes.Buffer
+	code := CleanCommand([]string{"~someone/else"}, &stdout, &stderr)
+	if code == 0 || !bytes.Contains(stdout.Bytes(), []byte("unsupported home target")) {
+		t.Fatalf("unsupported home target code=%d stdout=%q", code, stdout.String())
 	}
 }

@@ -89,21 +89,35 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 	return *selected, nil
 }
 
+// expandHomeTarget resolves the portable `~`-prefixed form that every worktree command
+// prints, and owns that grammar for all of them. The second result reports whether the
+// target used the home form at all, so a caller can leave an ordinary path untouched;
+// `~user` stays unsupported because the address this expands is one Bench itself
+// printed, and Bench never prints another account's home.
+func expandHomeTarget(target string) (string, bool, error) {
+	if target != "~" && !strings.HasPrefix(target, "~/") {
+		if strings.HasPrefix(target, "~") {
+			return "", true, errors.New("unsupported home target")
+		}
+		return "", false, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", true, err
+	}
+	if target == "~" {
+		return home, true, nil
+	}
+	return filepath.Join(home, target[2:]), true, nil
+}
+
 func targetPath(target string) (string, bool, error) {
-	if target == "~" || strings.HasPrefix(target, "~/") {
-		home, err := os.UserHomeDir()
+	if expanded, isHome, err := expandHomeTarget(target); isHome {
 		if err != nil {
 			return "", false, err
 		}
-		if target == "~" {
-			path, err := canonicalPath(home)
-			return path, true, err
-		}
-		path, err := canonicalPath(filepath.Join(home, target[2:]))
+		path, err := canonicalPath(expanded)
 		return path, true, err
-	}
-	if strings.HasPrefix(target, "~") {
-		return "", false, errors.New("unsupported home target")
 	}
 	if filepath.IsAbs(target) {
 		path, err := canonicalPath(target)

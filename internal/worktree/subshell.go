@@ -26,6 +26,26 @@ func canonicalPath(path string) (string, error) {
 	}
 	return filepath.Clean(abs), nil
 }
+
+// resolveOperand canonicalizes an operator-supplied target, resolving the portable `~`
+// form the worktree commands print. Both the plan and the apply that follows it route
+// through this, so a fingerprint taken from one addresses the same checkout as the
+// other; the errors it returns are the operator-facing reasons verbatim.
+func resolveOperand(path string) (string, error) {
+	expanded, isHome, err := expandHomeTarget(path)
+	if err != nil {
+		return "", err
+	}
+	if isHome {
+		path = expanded
+	}
+	target, err := canonicalPath(path)
+	if err != nil {
+		return "", errors.New("target path is not canonical")
+	}
+	return target, nil
+}
+
 func PlanExplicit(root, path string) (CleanupPlan, error) {
 	return PlanExplicitWithOptions(root, path, CleanupOptions{})
 }
@@ -42,9 +62,9 @@ func explicitRetainFingerprint(common, defaultRef, defaultOID, target string, pl
 }
 func PlanExplicitWithOptions(root, path string, options CleanupOptions) (CleanupPlan, error) {
 	root = canonicalRoot(root)
-	target, err := canonicalPath(path)
+	target, err := resolveOperand(path)
 	if err != nil {
-		return unresolvedPlan(path, ReasonUncertain, "target path is not canonical"), nil
+		return unresolvedPlan(path, ReasonUncertain, err.Error()), nil
 	}
 	unsafeTarget := !cleanupOutputSafe(target)
 	worktrees, err := git.Worktrees(root)

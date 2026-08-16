@@ -19,7 +19,7 @@ var errStaleFingerprint = errors.New("cleanup fingerprint is stale")
 const cleanupOperation = "worktree-clean"
 
 func cleanupIdentity(root, path string) (string, string, error) {
-	target, err := canonicalPath(path)
+	target, err := resolveOperand(path)
 	if err != nil {
 		return "", "", err
 	}
