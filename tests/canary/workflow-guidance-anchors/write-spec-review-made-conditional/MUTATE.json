@@ -1,1 +1,1 @@
-[{"path":".agents/commands/bench-write-spec.md","old":"Every draft gets two verification\n   loops","new":"A draft may get one verification loop"}]
+[{"path": ".agents/commands/bench-write-spec.md", "old": "Two rounds per artifact, spec then\n   tickets,", "new": "A single round per artifact, spec then\n   tickets,"}]
