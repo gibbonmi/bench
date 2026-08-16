@@ -334,10 +334,15 @@ disposition.
 
 ## Ownership fences
 
+- `specs/worktree-landed-retirement/spec.md`
+- `specs/worktree-landed-retirement/tickets/review-repairs.md`
+- `capture/session-handoff.md`
+- `reviews/worktree-landed-retirement.md` (transient review pickup; deleted with its repairs)
 - `internal/worktree/` (production and test files; the coordinator commits per ticket)
 - `internal/usage/worktree.go`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
+- `internal/canary/inventory_test.go`
 - `tests/canary/workflow-guidance-anchors/` (three new fixture directories only)
 - `cmd/bench/command_registry_test.go`
 - `.bench/BENCH.md` (the CLI-inventory sentence for `bench worktree clean` only)
