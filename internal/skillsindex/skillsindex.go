@@ -59,11 +59,16 @@ type Entry struct {
 	// to be indexed; it has to be named as refused so the operator fixes the file rather
 	// than adding frontmatter to something that cannot hold it.
 	Refusal string
+	// Orphan marks a real skill directory with no SKILL.md at all. Absence is not bad
+	// bytes, so it carries no Refusal reason, and it is not empty bytes either: those
+	// are readable and grade as a missing trigger. A skill source nobody wrote is a
+	// producer defect, so it is named rather than dropped.
+	Orphan bool
 }
 
 // Indexed reports whether the entry contributes a line to the generated block. A refused
 // skill renders no line: bytes the classifier would not vouch for cannot author one.
-func (e Entry) Indexed() bool { return e.Refusal == "" && e.Trigger != "" }
+func (e Entry) Indexed() bool { return !e.Orphan && e.Refusal == "" && e.Trigger != "" }
 
 // skillPathFormat is the skill source path an index line carries: Line formats it,
 // indexLineRe matches it.
@@ -114,19 +119,21 @@ func Entries(root string) ([]Entry, error) {
 	sort.Strings(names)
 	var entries []Entry
 	for _, name := range names {
-		if exists(filepath.Join(root, ".agents", "commands", name+".md")) {
-			continue
-		}
 		file := filepath.Join(root, ".agents", "skills", name, "SKILL.md")
 		c := bounds.ClassifyNoFollow(file)
-		// A directory with no SKILL.md stays unenumerated, as the pattern walk left it:
-		// naming that orphan is the dependent orphan-policy ticket's decision, not this
-		// one's.
+		// Classification runs before the command-adapter question so suppression cannot
+		// hide a defective producer: suppression drops a row from the rendered block, it
+		// does not excuse a directory named like an adapter from being diagnosed when
+		// nothing wrote its SKILL.md or the bytes there cannot be vouched for.
 		if c.State == bounds.StateAbsent {
+			entries = append(entries, Entry{Name: name, Orphan: true})
 			continue
 		}
 		if c.State.Failed() {
 			entries = append(entries, Entry{Name: name, Refusal: c.Reason})
+			continue
+		}
+		if exists(filepath.Join(root, ".agents", "commands", name+".md")) {
 			continue
 		}
 		entries = append(entries, Entry{
@@ -181,8 +188,12 @@ func Check(root string) []string {
 	var expected []string
 	expectedByName := map[string]string{}
 	for _, entry := range entries {
+		if entry.Orphan {
+			attributed[entry.Name] = append(attributed[entry.Name], orphanDiagnostic(entry.Name))
+			continue
+		}
 		if entry.Refusal != "" {
-			attributed[entry.Name] = append(attributed[entry.Name], fmt.Sprintf(skillPathFormat+" refused: %s", entry.Name, entry.Refusal))
+			attributed[entry.Name] = append(attributed[entry.Name], refusalDiagnostic(entry.Name, entry.Refusal))
 			continue
 		}
 		if !entry.Indexed() {
@@ -247,6 +258,15 @@ func Write(root string) error {
 	}
 	var block []string
 	for _, entry := range entries {
+		// A producer defect means the generated block would be authored from a tree the
+		// reader cannot vouch for, so the reference keeps its bytes until the source is
+		// fixed — the same posture Check takes, and the same wording.
+		if entry.Orphan {
+			return errors.New(orphanDiagnostic(entry.Name))
+		}
+		if entry.Refusal != "" {
+			return errors.New(refusalDiagnostic(entry.Name, entry.Refusal))
+		}
 		if entry.Indexed() {
 			block = append(block, entry.Line())
 		}
@@ -275,6 +295,18 @@ func Write(root string) error {
 		return err
 	}
 	return os.Rename(name, path)
+}
+
+// orphanDiagnostic names the one skill-directory-without-SKILL.md wording Check
+// reports and Write refuses with.
+func orphanDiagnostic(name string) string {
+	return fmt.Sprintf(skillPathFormat+" missing (orphan skill directory)", name)
+}
+
+// refusalDiagnostic names the one untrustworthy-bytes wording Check reports and Write
+// refuses with.
+func refusalDiagnostic(name, reason string) string {
+	return fmt.Sprintf(skillPathFormat+" refused: %s", name, reason)
 }
 
 // kitOnlySources reads the allowlist's withheld skill sources. The allowlist is the

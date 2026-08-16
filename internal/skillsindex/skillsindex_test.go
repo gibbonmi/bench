@@ -250,3 +250,90 @@ func TestEntriesEnumerateLiterallyUnderAGlobShapedRoot(t *testing.T) {
 		t.Fatalf("Write erased the generated row:\n%q\nwant\n%q", string(after), want)
 	}
 }
+
+// TestOrphanIsDiagnosedBeforeAdapterSuppression pairs the two command-named directories
+// on purpose: if suppression ran before classification, the orphan would vanish behind
+// its adapter and the index would report a clean tree with a missing producer in it.
+func TestOrphanIsDiagnosedBeforeAdapterSuppression(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
+	writeFile(t, root, ".agents/commands/bench-orphan.md", "command\n")
+	if err := os.MkdirAll(filepath.Join(root, ".agents", "skills", "bench-orphan"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, root, ".agents/commands/bench-valid.md", "command\n")
+	writeFile(t, root, ".agents/skills/bench-valid/SKILL.md", "---\nname: bench-valid\nindex: valid adapter skill\n---\n")
+
+	line := "- doing alpha things → `.agents/skills/alpha/SKILL.md`"
+	if got := renderedBlock(t, root); got != line {
+		t.Fatalf("rendered block = %q, want %q", got, line)
+	}
+
+	original := reference(line + "\n")
+	writeFile(t, root, ".bench/BENCH-reference.md", original)
+	wantDiag := ".agents/skills/bench-orphan/SKILL.md missing (orphan skill directory)"
+	if got := strings.Join(Check(root), "\n"); got != wantDiag {
+		t.Fatalf("Check =\n%s\nwant\n%s", got, wantDiag)
+	}
+	if err := Write(root); err == nil || err.Error() != wantDiag {
+		t.Fatalf("Write error = %v, want %s", err, wantDiag)
+	}
+	after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != original {
+		t.Fatalf("Write changed the reference:\n%q", string(after))
+	}
+}
+
+// TestEmptySkillBytesStayDistinctFromAbsence holds the two states apart: absence is an
+// orphan directory, while zero bytes are a readable skill that simply declared no
+// trigger, and each keeps its own diagnostic.
+func TestEmptySkillBytesStayDistinctFromAbsence(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, ".agents/skills/empty/SKILL.md", "")
+	if err := os.MkdirAll(filepath.Join(root, ".agents", "skills", "gone"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, root, ".bench/BENCH-reference.md", reference(""))
+
+	want := "skill 'empty' missing index: frontmatter (the skills index is generated)\n" +
+		".agents/skills/gone/SKILL.md missing (orphan skill directory)"
+	if got := strings.Join(Check(root), "\n"); got != want {
+		t.Fatalf("Check =\n%s\nwant\n%s", got, want)
+	}
+}
+
+// TestRefusedCommandNamedSkillIsDiagnosedBeforeAdapterSuppression is the untrustworthy-bytes
+// half of the same ordering: suppression removes a row from the rendered block, it does not
+// grant amnesty from diagnosis, so a symlinked SKILL.md behind an adapter still refuses.
+func TestRefusedCommandNamedSkillIsDiagnosedBeforeAdapterSuppression(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
+	writeFile(t, root, ".agents/commands/bench-refused.md", "command\n")
+	writeFile(t, root, ".agents/skills/bench-refused/elsewhere.md", "---\nname: bench-refused\nindex: smuggled\n---\n")
+	if err := os.Symlink("elsewhere.md", filepath.Join(root, ".agents", "skills", "bench-refused", "SKILL.md")); err != nil {
+		t.Fatal(err)
+	}
+
+	line := "- doing alpha things → `.agents/skills/alpha/SKILL.md`"
+	original := reference(line + "\n")
+	writeFile(t, root, ".bench/BENCH-reference.md", original)
+
+	wantPrefix := ".agents/skills/bench-refused/SKILL.md refused: "
+	diags := Check(root)
+	if len(diags) != 1 || !strings.HasPrefix(diags[0], wantPrefix) {
+		t.Fatalf("Check = %v, want one diagnostic starting %q", diags, wantPrefix)
+	}
+	if err := Write(root); err == nil || !strings.HasPrefix(err.Error(), wantPrefix) {
+		t.Fatalf("Write error = %v, want one starting %q", err, wantPrefix)
+	}
+	after, err := os.ReadFile(filepath.Join(root, ".bench", "BENCH-reference.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != original {
+		t.Fatalf("Write changed the reference:\n%q", string(after))
+	}
+}
