@@ -69,5 +69,6 @@ something the next session has to think to check.
   target list, sample it, then apply.
 - A repository-wide sweep uses `rg --hidden` (excluding `.git/`) so dot-directories
   are enumerated.
-- Discover Bench verbs non-interactively — `bench commands --brief` or the source —
-  never by trying a bare unknown verb.
+- Discover Bench verbs non-interactively — `bench help` for the inventory,
+  `bench <verb> --help` for a grammar (`bench commands --brief` is a three-verb
+  liveness probe, not an inventory) — never by trying a bare unknown verb.
