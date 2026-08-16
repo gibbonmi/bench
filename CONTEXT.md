@@ -36,6 +36,11 @@ cold session reads this first to avoid drifting the vocabulary.
   worktree under `<git-common-dir>/worktrees/<id>/` (`gitdir`, `HEAD`,
   `commondir`, `locked`, …), read by `git worktree` subcommands. Git-owned state
   Bench never writes. Not "metadata file", not "worktree config" — admin entry.
+- **landed assignment** — an assignment worktree whose ledger state is `active`,
+  whose branch has landed on the default branch, and whose lease is not live: nobody
+  released it. A derived classification, never a ledger state; retired by
+  `bench worktree clean --landed`. Not "orphan" (that is age alone), not "stale",
+  "idle", "abandoned", or "unreleased" (true of every active row) — landed.
 - **invariant** — one of the four non-negotiable rules (canonical in `.bench/BENCH.md`)
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,

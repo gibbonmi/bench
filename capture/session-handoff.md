@@ -2,33 +2,34 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `c0f387d`, 20 unpushed commits
-Spec: none staged.
-Gate: green at `caa483a` — stale against the drain's work tree.
+Branch: `main` — HEAD is the FT210 spec commit (after `dc598762`), unpushed
+Spec: `specs/worktree-landed-retirement/spec.md` — `Status: staged`, reviewer-approved.
+Gate: green at every commit above (`bench commit`).
 
 ## State
 
-`/bench-what-next` drained all three capture sources in one batch: `capture/IDEAS.md`
-and `capture/learnings.md` are empty, `capture/retros/` is gone. `ROADMAP.md` gained
-FT208 (harden `internal/skillsindex` against eleven inherited hostile-input edges) and
-FT209 (differential exit rows for behavior-preserving refactors; cardinality fixed at a
-new grouping's concept edge). Retro and learning evidence merged into FT89, FT98, FT99,
-FT133, FT169, FT178, FT180, and FT205. FT89 lost its skills-index single-sourcing clause,
-which shipped; its row stays open for the YAML-parsing half.
+Three commits landed this session: `24cad87d` kit remake (`craft-spec` on to-spec,
+`craft-tickets` on to-tickets, thin `bench-write-spec`, anchors/canaries repointed, index
+regenerated); `dc598762` the previous session's `/bench-what-next` drain plus this session's
+learnings/idea; and the FT210 spec commit — `specs/worktree-landed-retirement/` (spec with
+37 stories in three outcome groups and 20 coverage rows, 5 approved tracer tickets under
+`tickets/`, the compiled map under `decisions/` with #9 re-closed) and `CONTEXT.md`'s
+`landed assignment` term. Sol's independent no-review authoring run of the same map (41
+stories / 6 rows / 5 tickets, an invented set-receipt seam) was compared and not adopted;
+it lives only in the session scratchpad.
 
-Also in this commit: both `capture/agent-performance/` scorecards, refreshed by the
-skills-index-reader landing (Claude for Opus/Sonnet as implementer and Opus as
-orchestrator; OpenAI for Sol as reviewer).
+Ticket frontier: `count-and-advertise-landed-assignments.md` (blocked by none) →
+`plan-the-landed-set-under-one-fingerprint.md` → `apply-the-landed-plan-and-settle-records.md`
+→ {`refuse-a-half-applied-landed-set.md`, `make-release-a-workflow-step.md`}.
 
-Reviewer-approved follow-up not yet done: write a NEW dated
-`/tmp/architecture-review-<ts>.html` carrying as-built Before/After for the five landed
-deepening candidates (1+3, 5, 6, 8), leaving `/tmp/architecture-review-20260815T101417.html`
-untouched as the record of the survey at `e91d0cb3`. Candidate 8's original After diagram
-is superseded — it drew the shell script surviving as a consumer of the module.
+Open reviewer decision, unrelated: eight `bench worktree list` rows in state `recovered`
+hold uncommitted FT208 ticket work under recovery refs. Follow-up you named: slim
+`bench-shape-idea` in its own pass; the parked idea to cut `bench-write-spec` further.
 
 ## Next command
 
-`/bench-write-spec` for FT208.
+`/bench-implement-spec worktree-landed-retirement` in a fresh mid-tier session, on one
+retained integration source.
 
 ## Shape
 
