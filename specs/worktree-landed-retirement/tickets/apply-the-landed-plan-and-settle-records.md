@@ -22,6 +22,8 @@ completed. Demo: apply, then `bench worktree list`.
 - [ ] `(covers LR8)` Apply on LR7's pool removes both clean trees (`removed`), deletes their proven-landed branches, leaves the dirty tree and its `retain` row, exits 0, and `bench worktree list` immediately shows no row for the removed assignments and still shows the dirty one.
 - [ ] `(covers LR9)` A new landed row, an uncommitted file, a lease going live, or a fast-forward that changes a planned HEAD OID while staying landed each make `--apply <fp>` exit 1 with the stale-fingerprint error, remove nothing, settle nothing.
 - [ ] `(covers LR10)` An unparseable-lease tree plans `retain` (`uncertain`) with its per-path remedy, counts `landed` in the summary, and is present after apply.
-- [ ] `(covers LR13)` Only the second of two removable rows has undeclared residue: bare retains it (`ignored`); `--discard-ignored` plans it `discard-remove`, `--full` widens its preview; apply removes both and deletes both branches without `--discard-branch`; with `--discard-branch` the outcome is identical and `detail` names the assertion; a squash-landed unprovable branch is not selected.
+- [ ] `(covers LR13)` Only the second of two removable rows has undeclared residue: bare retains it (`ignored`); `--discard-ignored` plans it `discard-remove` and `--full` widens its preview.
+- [ ] `(covers LR32)` Applying that pool removes both and deletes both branches without `--discard-branch`; with `--discard-branch` the outcome is identical and `detail` names the assertion.
+- [ ] `(covers LR33)` A squash-landed unprovable branch is not selected by `--landed`.
 - [ ] Before any mutation, a fingerprint with one hex digit altered, or the same rows planned under a different flag set, is refused with the stale-fingerprint error, nothing removed, nothing settled.
 - [ ] The LR17 spaced/glob tree is removed by apply; the LR18 ESC tree and every LR19 special-shaped path are present after apply.

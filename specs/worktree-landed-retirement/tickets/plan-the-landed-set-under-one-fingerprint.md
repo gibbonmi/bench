@@ -28,10 +28,16 @@ verb over a mixed pool.
 
 ## Acceptance
 
-- [ ] `(covers LR7)` Three landed assignments under three requests/labels (two clean, one dirty) plan as three id-ordered rows sharing one fingerprint, actions `remove`, `remove`, `retain` (`dirty`), no recovery ref, help with the apply invocation and one `clean <path>` for the dirty row, nothing removed.
-- [ ] `(covers LR11)` Zero landed rows: empty table, no help, exit 0 on repeated runs; `--apply <64-hex>` on that pool exits 2.
-- [ ] `(covers LR12)` `--landed <path>` and `<path> --landed` exit 2 naming the new usage; short, long, non-hex, and uppercase `--apply` values exit 2 with `--landed`; `bench worktree --help` contains the full new grammar.
+- [ ] `(covers LR7)` Three landed assignments under three requests/labels (two clean, one dirty) plan as three id-ordered rows, actions `remove`, `remove`, `retain` (`dirty`), no recovery ref.
+- [ ] `(covers LR27)` Every row of that plan carries the same set fingerprint.
+- [ ] `(covers LR28)` The help block names the apply invocation and one `clean <path>` for the dirty row, and the bare plan removes nothing.
+- [ ] `(covers LR11)` Zero landed rows: empty table, no help, exit 0 on repeated runs.
+- [ ] `(covers LR29)` `--apply <64-hex>` on that pool exits 2.
+- [ ] `(covers LR12)` `--landed <path>` and `<path> --landed` exit 2 naming the new usage.
+- [ ] `(covers LR30)` Short, long, non-hex, and uppercase `--apply` values exit 2 with `--landed`.
+- [ ] `(covers LR31)` `bench worktree --help` contains the full new grammar.
 - [ ] `(covers LR17)` A path with a space and `*` plans `remove`; its dirty variant's remedy line and the apply invocation render quoted and pasteable; apply (next ticket) removes the clean one.
-- [ ] `(covers LR18)` A path with ESC plans `retain` (`uncertain`), pointer target, no byte in any help line, exit 0, present after apply; a path with a tab renders escaped as one row.
+- [ ] `(covers LR18)` A path with ESC plans `retain` (`uncertain`), pointer target, no byte in any help line, exit 0, present after apply.
+- [ ] `(covers LR35)` A path with a tab renders escaped as one row.
 - [ ] `(covers LR19)` FIFO, dangling symlink, unix socket (`internal/bounds` `requireSocket` pattern, capability-guarded), and a `/dev/null`-resolving path each plan `retain` (`uncertain`, shape named); the command completes without opening the special file; apply removes none.
 - [ ] Selector partition: a landed row with an unparseable lease is selected; a live-lease row, a non-true-proof row, and a `cleanup-pending`/`recovered`/`complete` record are not.

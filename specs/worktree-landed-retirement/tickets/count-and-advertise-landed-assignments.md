@@ -22,8 +22,14 @@ zero, keeping the per-row `path`/`exec` actions. Demo: cut two worktrees, land o
 ## Acceptance
 
 - [ ] `(covers LR1)` A pool with one landed and one non-landed active assignment prints `retained active=1 landed=1`, removes nothing, and both trees remain.
-- [ ] `(covers LR2)` A landed tree with a live lease counts `live-lease=1` and not `landed`; with a dead lease `landed=1`; with an unparseable regular lease file `landed=1`.
+- [ ] `(covers LR2)` A landed tree with a live lease counts `live-lease=1` and not `landed`.
+- [ ] `(covers LR21)` A landed tree with a dead lease counts `landed=1`.
+- [ ] `(covers LR22)` A landed tree with an unparseable regular lease file counts `landed=1`.
 - [ ] `(covers LR3)` A landed tree with undeclared ignored residue and one with dirty tracked state both count `landed`, not `ignored`, `active`, or `orphaned`.
-- [ ] `(covers LR4)` An aged landed tree counts `landed` and is absent from the orphan lines; an aged non-landed tree still prints its orphan line; a landed count above zero prints exactly one `bench worktree clean --landed` line and never `--discard-ignored`.
-- [ ] `(covers LR5)` With no resolvable default branch, or an erroring proof, a landed-looking assignment counts `active` and `list` renders no `clean --landed` action; `cleanup-pending`, `recovered`, and `complete` records over landed branches are never counted `landed` and render no action.
+- [ ] `(covers LR4)` An aged landed tree counts `landed` and is absent from the orphan lines.
+- [ ] `(covers LR23)` An aged non-landed tree still prints its orphan line.
+- [ ] `(covers LR24)` A landed count above zero prints exactly one `bench worktree clean --landed` line and never `--discard-ignored`.
+- [ ] `(covers LR5)` With no resolvable default branch, a landed-looking assignment counts `active` and `list` renders no `clean --landed` action.
+- [ ] `(covers LR25)` With an erroring landedness proof, the assignment counts `active` and `list` renders no action.
+- [ ] `(covers LR26)` `cleanup-pending`, `recovered`, and `complete` records over landed branches are never counted `landed` and render no action.
 - [ ] `(covers LR6)` Exactly one `bench worktree clean --landed` help action when at least one row is landed, none when zero, per-row `path`/`exec` actions unchanged.

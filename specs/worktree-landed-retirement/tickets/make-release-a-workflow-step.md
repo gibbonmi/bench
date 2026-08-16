@@ -26,5 +26,6 @@ and `bench worktree clean --landed`. Demo: remove either sentence, gate goes red
 
 ## Acceptance
 
-- [ ] `(covers LR15)` All three tuples are registered exactly once; each canary fixture's mutation emits exactly its diagnostic and restoration clears it; the live command and skill files satisfy all three on the clean tree.
+- [ ] `(covers LR15)` All three tuples are registered exactly once and the live command and skill files satisfy them on the clean tree.
+- [ ] `(covers LR34)` Each tuple's canary fixture mutation emits exactly its diagnostic and restoration clears it.
 - [ ] `(covers LR16)` `CHANGELOG.md` `[Unreleased]` carries exactly one `Added` entry naming both.

@@ -2,13 +2,18 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD is the FT210 spec commit (after `dc598762`), unpushed
-Spec: `specs/worktree-landed-retirement/spec.md` — `Status: staged`, reviewer-approved.
+Branch: `main` — HEAD is the FT210 row-split commit (after `0feeb0f2` and the coverage-rules commit), unpushed
+Spec: `specs/worktree-landed-retirement/spec.md` — `Status: staged`, reviewer-approved; 35 rows after the family-row split, 5 tickets.
 Gate: green at every commit above (`bench commit`).
 
 ## State
 
-Three commits landed this session: `24cad87d` kit remake (`craft-spec` on to-spec,
+Five commits landed this session. After the first three, a Sol A/B run (in
+`/tmp/bench-ab/`, assessment there) showed three tightening rules earn their cost, so
+`bench coverage --check` now refuses family rows (>4 stories or a `;` behavior),
+unreferenced stories without a `Not covered:` line, and `craft-spec` fixes the
+red-signal cell grammar; the FT210 map was split from 20 to 35 single-predicate rows
+with six `Not covered:` lines and the tickets' `covers` re-pointed. The first three: `24cad87d` kit remake (`craft-spec` on to-spec,
 `craft-tickets` on to-tickets, thin `bench-write-spec`, anchors/canaries repointed, index
 regenerated); `dc598762` the previous session's `/bench-what-next` drain plus this session's
 learnings/idea; and the FT210 spec commit — `specs/worktree-landed-retirement/` (spec with
