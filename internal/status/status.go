@@ -14,6 +14,7 @@
 package status
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -646,26 +647,36 @@ func orphanedPickupCount(root string) int {
 	return n
 }
 
-// roadmapReconcileCounts scans ROADMAP.md for live spec-path tokens and classifies each
-// distinct path against the tree: a missing file is a dangling row (the spec retired but its
-// roadmap row survived); a present file that spec.AwaitsRetirement marks is a merged row (the
-// work shipped but the drain missed it). A present, still-staged spec is the normal open-work
-// state and counts nothing. Absent or empty ROADMAP.md → 0, 0, bounds.StateParsed, the ordinary
-// quiet-roadmap posture; a ROADMAP.md whose read failed reports that state instead, so
-// appendRoadmapReconcile renders the failed read as unknown rather than a fabricated clean
-// board. Each named live spec goes through the classifier too, so a FIFO cannot
-// block the board; a spec path that yields no content at all is the dangling case, whether
-// nothing is there or what is there could not be read. The merged predicate is
-// spec.AwaitsRetirement, the same one source the retirement counter applies.
+// roadmapReconcileCounts scans ROADMAP.md's index plus every roadmap/ row-file body for
+// live spec-path tokens — a row's spec path lives in its row file now, not the index line
+// — and classifies each distinct path against the tree: a missing file is a dangling row
+// (the spec retired but its roadmap row survived); a present file that spec.AwaitsRetirement
+// marks is a merged row (the work shipped but the drain missed it). A present, still-staged
+// spec is the normal open-work state and counts nothing. Absent or empty ROADMAP.md → 0, 0,
+// bounds.StateParsed, the ordinary quiet-roadmap posture; a ROADMAP.md whose read failed
+// reports that state instead, so appendRoadmapReconcile renders the failed read as unknown
+// rather than a fabricated clean board. Each named live spec goes through the classifier
+// too, so a FIFO cannot block the board; a spec path that yields no content at all is the
+// dangling case, whether nothing is there or what is there could not be read. The merged
+// predicate is spec.AwaitsRetirement, the same one source the retirement counter applies.
 func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.FileState) {
-	c := bounds.Classify(filepath.Join(root, roadmap.RoadmapFile), bounds.ControlRecordLimit)
+	tree := roadmap.LoadTree(root)
 	switch {
-	case c.State.Failed():
-		return 0, 0, c.State
-	case c.State == bounds.StateAbsent || c.State == bounds.StateEmpty:
+	case tree.Index.State.Failed():
+		return 0, 0, tree.Index.State
+	case tree.Index.State == bounds.StateAbsent || tree.Index.State == bounds.StateEmpty:
 		return 0, 0, bounds.StateParsed
 	}
-	for _, slug := range spec.LiveSpecSlugs(c.Data) {
+	var content bytes.Buffer
+	content.Write(tree.Index.Data)
+	for _, file := range tree.Files {
+		if file.State != bounds.StateParsed && file.State != bounds.StateEmpty {
+			continue
+		}
+		content.WriteByte('\n')
+		content.Write(file.Data)
+	}
+	for _, slug := range spec.LiveSpecSlugs(content.Bytes()) {
 		folderPath := spec.LiveSpecPath(slug)
 		sc := bounds.Classify(filepath.Join(root, folderPath), bounds.ControlRecordLimit)
 		if sc.State == bounds.StateAbsent || sc.State.Failed() {

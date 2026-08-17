@@ -141,6 +141,74 @@ func TestRoadmapReconcileCounts(t *testing.T) {
 	}
 }
 
+// TestRoadmapReconcileCountsFromRowFile covers story 20 (PR17): the split board keeps a
+// row's spec path in roadmap/FT7.md's body, not ROADMAP.md's index line, so the reconcile
+// scan must classify a spec named only there — a scan of ROADMAP.md alone counts zero.
+func TestRoadmapReconcileCountsFromRowFile(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "specs", "merged"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "specs", "merged", "spec.md"), []byte("Status: implemented\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	const heading = "**FT7 (LOW) — x.**"
+	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapFile), []byte(heading+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, roadmap.RoadmapDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	body := heading + "\nMerged into specs/merged/spec.md.\n"
+	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapDir, "FT7.md"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	merged, dangling, state := roadmapReconcileCounts(root)
+	if merged != 1 || dangling != 0 || state.Failed() {
+		t.Fatalf("roadmapReconcileCounts = (%d, %d, %s), want (1, 0, parsed)", merged, dangling, state)
+	}
+}
+
+// TestDashboardRoadmapTextAndSequenceRenderFromSplitTree covers story 21 (PR18): the
+// dashboard renders its roadmap text and recommended sequence through roadmap.RoadmapText
+// and roadmap.RecommendedSequence, the same two readers this package's own
+// appendRoadmapReconcile sits beside. Both already parse ROADMAP.md's index only, so a
+// split tree (index plus a roadmap/ row file) must render unchanged — this is a
+// regression pin, not a behavior change: it is expected to pass with no production code
+// touched.
+func TestDashboardRoadmapTextAndSequenceRenderFromSplitTree(t *testing.T) {
+	root := t.TempDir()
+	const heading = "**FT7 (LOW) — x.**"
+	index := "# Roadmap\n\n" + heading + "\n\n## Recommended sequence\n\n1. Shape next - /bench-shape-idea\n"
+	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapFile), []byte(index), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, roadmap.RoadmapDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	const bodyOnlyText = "Body text that lives only in the row file."
+	body := heading + "\n" + bodyOnlyText + "\n"
+	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapDir, "FT7.md"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	text, present := roadmap.RoadmapText(root)
+	if !present {
+		t.Fatal("RoadmapText reported absent over a present split tree")
+	}
+	if text != index {
+		t.Fatalf("RoadmapText = %q, want the index verbatim %q", text, index)
+	}
+	if strings.Contains(text, bodyOnlyText) {
+		t.Fatalf("RoadmapText leaked row-file body content: %q", text)
+	}
+
+	wantSequence := "## Recommended sequence\n\n1. Shape next - /bench-shape-idea\n"
+	if seq := roadmap.RecommendedSequence(text); seq != wantSequence {
+		t.Fatalf("RecommendedSequence = %q, want %q", seq, wantSequence)
+	}
+}
+
 // short guards the [:7] tree-prefix slice against a short or "none" hash.
 func TestShort(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
