@@ -602,13 +602,6 @@ implementation of "ordered by key" quietly answers one. Kit edit under
 
 Occurrence: 2026-08-15 skills-index-reader ticket 1 — a map-keyed accumulator silently dropped a second diagnostic while the full suite, four canaries, and every spec row stayed green (`capture/learnings.md`, verdicted here).
 
-**FT211 (MEDIUM) — spec and ticket fences shrink without weakening coverage.**
-`specs/spec-ticket-fence-reduction/spec.md` is staged: accept a reduced coverage
-schema beside the legacy forms, project one row shape, consolidate the spec
-template and edge/red-signal ownership, and replace two capped review loops with
-one review over the spec-and-ticket pair. Entry:
-`/bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high`.
-
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 Agents repeatedly shape harness transcripts and session evidence with
 `head`/`tail`/`awk`/`sort` chains; consider one bounded agent-facing query for
@@ -1369,6 +1362,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high` — FT211 builds the already-staged reduced coverage and authoring-fence contract.
-2. `/bench-shape-idea` — FT198 decides the progressive roadmap shape; `ASSESSMENT.md` ranks it 0 and this drain paid the 170 KB snapshot to reach three rows.
-3. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
+1. `/bench-shape-idea` — FT198 decides the progressive roadmap shape; `ASSESSMENT.md` ranks it 0 and this drain paid the 170 KB snapshot to reach three rows.
+2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
