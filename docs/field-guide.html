@@ -700,13 +700,14 @@
           <div class="body">
             <p class="def">The evidence that coverage is real: a check that demonstrably
             fails when the behavior it maps is absent or wrong. A test that cannot go red
-            proves nothing, so every acceptance row has to name one.</p>
+            proves nothing, so every coverage row's why-it-catches clause has to name one.</p>
           </div>
         </details>
         <details class="card">
-          <summary><span class="name">Acceptance coverage map</span><span class="role">each story mapped to its red signal</span></summary>
+          <summary><span class="name">Acceptance coverage map</span><span class="role">each story mapped to a behavior at a seam</span></summary>
           <div class="body">
-            <p class="def">The table in every spec that maps each story to its red signal.
+            <p class="def">The table in every spec that maps each story to one observable
+            behavior, the seam it is observed at, and why that row catches the failure.
             During the build it is the unit of TDD coverage and the thing that keeps the
             target fixed: rows go red one at a time as each slice starts, never batched
             into an upfront pile of failing tests.</p>
@@ -773,7 +774,7 @@
         <span class="label">A feature, end to end</span>
         <p>
           The spec names the seams and writes the coverage map, and you sign off. The
-          build declares its line, then works vertical slices: each row's red signal goes
+          build declares its line, then works vertical slices: each row's check goes
           red, the smallest change turns it green, and a refactor pass cleans up behind
           it. Review checks what the gate can't see, and the final check runs the gate
           and commits. At every step the thing being satisfied is a target you chose,
@@ -1390,8 +1391,9 @@
             <div class="solution">
               <div class="label">How it works</div>
               <p>The authoring discipline behind every spec. Each acceptance-coverage row names a
-              real <em>red signal</em>, meaning a check that demonstrably fails when the story
-              isn't met. Alongside that come a canonical inventory of edge classes to walk,
+              story, an observable behavior, the seam it is observed at, and why that row catches
+              the failure — a real <em>red signal</em>, meaning a check that demonstrably fails
+              when the story isn't met. Alongside that come a canonical inventory of edge classes to walk,
               sizing rules for stories and scope cuts so "out of scope" is a genuine decision,
               not a dodge, and the fence rule for slicing a build across delegates.</p>
             </div>

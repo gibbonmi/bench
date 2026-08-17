@@ -57,19 +57,19 @@ its count and its worst issue.
   creep); requirements implemented but wrong, including calls the diff
   introduces into APIs, flags, or config keys that don't exist — a symbol the
   dependency doesn't export is a finding one grep or `--help` run confirms.
-  When the spec carries an acceptance coverage map, audit every row — a
-  missing, partial, falsely-classified, or unclosed mapped behavior is a Spec
-  finding.
+  If the spec carries an acceptance coverage map, audit every row — a missing,
+  partial, falsely-classified, or unclosed mapped behavior is a Spec finding.
 - **Coverage** — before hunting, independently enumerate two things from the
   approved spec and the tree, not from the diff's own account: the
   producer-derived input family the change actually consumes, and the
   spec-authorized write set it's allowed to touch. Then run the adversarial
   pass: name concrete inputs or states that would break the diff and that no
-  acceptance row or existing test exercises. Walk the edge classes (the generic
-  classes live in `bench-craft-spec`'s edge inventory) plus the profile's
-  hostile-input checklist when one exists — the two together are the full
-  inventory. An edge the spec explicitly marked won't-handle is not a finding;
-  an edge nobody decided is.
+  acceptance row or existing test exercises. `bench coverage <spec>` projects
+  `rows[N]{story,behavior,seam}`; a row's why-it-catches clause is in the spec
+  file, which `bench-craft-spec` owns. Walk the edge classes (`craft-tdd` owns
+  the canonical run) plus the profile's hostile-input checklist when one
+  exists — the two together are the full inventory. An edge the spec explicitly
+  marked won't-handle is not a finding; an edge nobody decided is.
 
 ## The smell baseline
 
