@@ -2,43 +2,40 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `29da04eb`, 5 dirty capture/roadmap paths (this drain's batch,
-pending reviewer approval to commit), 26 unpushed commits
-Spec: none active
-Gate: green at `29da04eb` (re-verified independently with this batch's diff in the
-working tree)
+Branch: `main` — HEAD `a0c9d26e`, working tree clean apart from this file, 27 unpushed commits
+Spec: none active — FT198 shaped, awaiting `/bench-write-spec`
+Gate: green at `a0c9d26e`
 
 ## State
 
-`/bench-what-next` ran a full reconcile-and-drain. Roadmap: FT212/FT213/FT214 new
-rows, occurrence lines added to FT133/FT162/FT169/FT192, FT6 gained a
-parked-pending-evidence entry, sequence refreshed to add FT213 as rank 3.
-`capture/IDEAS.md` and `capture/learnings.md` both empty; `capture/retros/` removed
-(its one retro fully dispositioned into the roadmap, its repair-attribution tally
-reported).
+`/bench-shape-idea 198` ran a single-session grill (rounds 1–3, all answered,
+reviewer confirmed shared understanding). No decision map was created: the tree had
+no multi-session dependency. The reviewed decisions, which stay closed:
 
-One idea item went through "implement now" instead of a roadmap row: the six-column
-coverage-schema contraction landed at `29da04eb` (`5af64b76` ticket commit +
-`29da04eb` review-repair commit, fast-forwarded from an isolated worktree, gate
-green both times). The other two sub-items of that same idea did not: moving the
-light-path threshold is blocked on a usage measurement that hasn't run yet (parked
-into FT6), and deleting `references/cross-harness-reviewers.md` was refused —
-decision map #13 closed as "it survives" and writing that ticket would have reversed
-a closed decision.
+- `ROADMAP.md` becomes a hand-ordered index: section headings, board prose
+  (release-readiness, dependencies, recommended sequence, section intros) and, per
+  row, exactly today's heading line `**FT<n> (<priority>[, decision required]) — <title>.**`
+  with no body.
+- Each row's body — prose, `Occurrence:` ledger, `Sources:` — lives in
+  `roadmap/FT<n>.md`, which opens with the same heading line repeated verbatim.
+- The CLI parses only that split shape (no legacy inline-body compatibility: this
+  is the only repo with a roadmap). It exits non-zero on any of: an index row with no
+  file, a file with no index row, an inline body under an index row, a file heading
+  that differs from its index line. `.bench/gate.sh` invokes that check so a lost
+  detail owner is a red.
+- Migration is a one-shot script, run once in the build then deleted; acceptance is
+  `bench roadmap --context --full` rows, ledgers, and sequence identical before and
+  after.
+- One spec covers layout, parser, gate check, and this board's migration.
 
-`capture/agent-performance/claude-models.md` carries `/bench-final-check`'s
-already-refreshed scorecard for `spec-ticket-fence-reduction`, included in this
-batch unmodified.
-
-Everything above is one uncommitted batch, awaiting reviewer approval before the
-single commit that lands it (invariant 4: never commit without that approval).
+Spec-writer discretion (bounded, non-behavioral): whether the check rides the
+schema-4 parse or a `--check` flag; which `ROADMAP.md` readers move to the row-file
+parse (`bench idea --owner` validation, status spec-path reconcile, `--context --row`
+fetch); the migration script's language.
 
 ## Next command
 
-`/bench-shape-idea`
-
-(FT198 — the progressive-roadmap decision `ASSESSMENT.md` ranks 0 — is the top line
-of the refreshed `## Recommended sequence`, once this batch commits.)
+`/bench-write-spec` FT198 (progressive roadmap) — from this session's decisions above.
 
 ## Shape
 
