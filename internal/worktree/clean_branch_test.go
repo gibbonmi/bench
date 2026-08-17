@@ -185,4 +185,5 @@ func TestDiscardBranchLeavesADetachedHeadUnaffected(t *testing.T) {
 	mustNoError(t, err)
 	requireTest(t, !plan.deleteBranch, "detached-HEAD plan authorized branch deletion under the override")
 	requireTest(t, plan.branchRef == "", "detached-HEAD plan named a deletable branch: %q", plan.branchRef)
+	requireTest(t, plan.Action == ActionRecoverRemove, "detached-HEAD action = %q, want recover-remove — the two checks above only bind while the fixture still reaches a removing verdict", plan.Action)
 }

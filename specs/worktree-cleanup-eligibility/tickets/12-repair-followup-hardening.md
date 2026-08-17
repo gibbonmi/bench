@@ -25,6 +25,6 @@ Two trivial, no-behavior-change hardenings found by the follow-up review:
 
 ## Acceptance
 
-- [ ] subshell.go's DiscardBranch comment names the detached-HEAD invariant.
-- [ ] The regression test asserts a removing Action in addition to the zero-value checks.
-- [ ] All existing tests remain green with unmodified assertions elsewhere.
+- [x] subshell.go's DiscardBranch comment names the detached-HEAD invariant.
+- [x] The regression test asserts a removing Action in addition to the zero-value checks.
+- [x] All existing tests remain green with unmodified assertions elsewhere.

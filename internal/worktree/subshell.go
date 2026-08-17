@@ -235,7 +235,10 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	// unmerged. DiscardBranch is the operator supplying that missing proof by hand, applied
 	// here rather than fed into the decision, so the recorded landedness — typed and wire
 	// form alike — reports what the tool concluded on its own. The automatic path plans with
-	// an empty CleanupOptions, so this override never reaches it.
+	// an empty CleanupOptions, so this override never reaches it. The detached conjunct holds
+	// because a detached HEAD has no branch for the operator to authorize deleting: headRef is
+	// the "detached" sentinel rather than a ref, so dropping the conjunct would hand that
+	// sentinel to the branch deletion as if it named something.
 	if options.DiscardBranch && !facts.headDetached {
 		plan.deleteBranch = true
 		plan.branchRef, plan.branchOID = headRef, head
