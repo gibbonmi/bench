@@ -1,6 +1,6 @@
 ---
 name: craft-spec
-description: The spec-authoring discipline — the acceptance-coverage-map row schema, what counts as a real red signal, the canonical edge-inventory classes, how stories and scope cuts are sized, and how a build is sliced for delegates. Use when authoring or auditing a spec, writing coverage rows, asking "what's the red signal", walking an edge inventory, judging whether a cut is genuinely out of scope, or slicing a build for delegates.
+description: The spec-authoring discipline — the acceptance-coverage-map row schema, which edges a spec must dispose of, how stories and scope cuts are sized, and how a build is sliced for delegates. Use when authoring or auditing a spec, writing coverage rows, deciding an edge is a Won't handle, judging whether a cut is genuinely out of scope, or slicing a build for delegates.
 index: coverage-map rows, edge inventories, story sizing, and delegate slicing for a spec
 ---
 
@@ -26,25 +26,21 @@ redundancy is the point. A story is a want, never an engineering layer
 ## The acceptance coverage map
 
 Each row ties a story to one observable behavior at a seam: `story`,
-`behavior`, `seam`, `red signal`, `why it catches the failure`. An optional
-leading `row` column opts the spec into ticket covers traceability (new specs
-default to it). `bench coverage --check` refuses a row that references more
-than four stories or states two predicates (`;`), and a declared story no row
-references unless a `Not covered: story <n> — <reason>` line sits under the map.
-The red signal names the exact test function or command and its assertion —
-`observed red:`, `not observed:` (the test you will write), `already covered:`
-(function and asserted content), or `not TDD-able:` (why) — never a file name.
+`behavior`, `seam`, `why it catches the failure`. An optional leading `row`
+column opts the spec into ticket covers traceability (new specs default to it).
+`bench coverage --check` refuses a row that references more than four stories or
+states two predicates (`;`), and a declared story no row references unless a
+`Not covered: story <n> — <reason>` line sits under the map.
 Name the cheapest wrong implementation per story and the row that goes red on
 it (across fences, the composition degenerate through the real producer);
 enumerate every quantifier; every source behavior becomes a row or an exception.
 
 ## The edge inventory
 
-Walk each behavior through error path, empty/absent input, boundary values,
-malformed input, interrupted or partial state, re-run idempotency, process-boundary lifecycle, hostile
-environment, plus the profile's hostile-input checklist. Every edge lands in a
-row ("edge of N") or a one-line **Won't handle** with a surviving in-scope
-caller; a control resolving a class must exercise the **new** surface.
+`craft-tdd` walks the canonical edge classes at the seam. Attach the profile's
+hostile-input checklist to that walk, and give each edge the reviewer
+deliberately excludes a one-line **Won't handle** with a surviving in-scope
+caller.
 
 ## Bootstrap authority before execution
 
@@ -129,7 +125,7 @@ Record decisions rather than file paths or snippets that rot.
 | <unique spec-local ID> | <story #> | <observable behavior> | <test seam> | <why this fails when behavior is missing> |
 
 ### Edge inventory
-Every edge class lands in a row above or a
+Each deliberately excluded edge takes a
 **Won't handle** line: `<edge> — <one-clause why the exclusion is safe>`.
 
 ## Ownership fences

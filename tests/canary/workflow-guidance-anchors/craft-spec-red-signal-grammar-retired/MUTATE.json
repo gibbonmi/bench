@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/SKILL.md",
+    "old": "Name the cheapest wrong implementation per story",
+    "new": "The red signal names the exact test function or command and its assertion —\n`observed red:`, `not observed:` (the test you will write), `already covered:`\n(function and asserted content), or `not TDD-able:` (why) — never a file name.\nName the cheapest wrong implementation per story"
+  }
+]

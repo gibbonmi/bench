@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tdd/SKILL.md",
+    "old": "The row schema is `bench-craft-spec`'s\nand the red-signal classification is this skill's — don't restate the map's\nfields here, and classify a row only from the run that observes it:",
+    "new": "The row schema and the red-signal\ndefinition are `bench-craft-spec`'s; don't restate them here:"
+  }
+]

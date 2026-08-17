@@ -28,13 +28,16 @@ minimum to pass its own tests, then stop. So:
   carries behavior no seam can observe, that is a seam-set defect: surface it,
   don't skip it.
 - The spec's user stories are the breadth **floor, not the ceiling**. At a marked
-  seam, enumerate the behavior's failure modes by walking the edge classes —
-  the generic classes live in `bench-craft-spec`'s edge inventory, and
-  the domain half is the project profile's hostile-input checklist — and
-  propose them as coverage rows for the
-  reviewer to veto; never silently skip an edge the spec forgot. The over-fit guard constrains what *correct* means (the reviewer chose
-  the seam and the semantics), never which inputs get exercised. If a story isn't
-  covered, that's a gap to fix, not a stop.
+  seam, enumerate the behavior's failure modes by walking the classes below and
+  propose them as coverage rows for the reviewer to veto; never silently skip an
+  edge the spec forgot. The over-fit guard constrains what *correct* means (the
+  reviewer chose the seam and the semantics), never which inputs get exercised.
+  If a story isn't covered, that's a gap to fix, not a stop.
+
+The classes to walk: error path, empty/absent input, boundary values, malformed
+input, interrupted or partial state, re-run idempotency, process-boundary
+lifecycle, hostile environment, plus the project profile's hostile-input
+checklist. A control resolving a class must exercise the **new** surface.
 
 **Catch yourself inventing a test target mid-loop? Stop — that is the exact
 failure this skill exists to prevent.** The seam and the semantics come from
@@ -76,10 +79,9 @@ failing when the iteration ends is destroyed, not carried to the next one.
 ## Acceptance rows
 
 When `/bench-write-spec` includes an acceptance coverage map, treat each
-acceptance row as the unit of TDD coverage. The row schema and the red-signal definition are
-`bench-craft-spec`'s — its coverage-map section is the one source of
-the five fields and of what a red signal must be; don't restate them here. This
-skill owns only the TDD-side discipline for working the rows:
+acceptance row as the unit of TDD coverage. The row schema is `bench-craft-spec`'s
+and the red-signal classification is this skill's — don't restate the map's
+fields here, and classify a row only from the run that observes it:
 
 - Rows go red one at a time as each slice starts — never batched into an
   upfront all-red test file. The row's red signal runs immediately before

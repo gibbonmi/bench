@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tdd/SKILL.md",
+    "old": "re-run idempotency, process-boundary\nlifecycle, hostile environment",
+    "new": "re-run idempotency, hostile environment"
+  }
+]

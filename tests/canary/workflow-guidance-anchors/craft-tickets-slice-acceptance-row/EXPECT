@@ -1,0 +1,1 @@
+.agents/skills/bench-craft-tickets/SKILL.md dropped the rule that a coverage row inside a slice its parent already opened is that slice's acceptance row, not its own ticket

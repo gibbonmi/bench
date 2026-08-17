@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-tickets/SKILL.md",
+    "old": "not a ticket; a coverage row that only adds a test to a seam its parent slice\nalready opened is that slice's acceptance row. Its green integration-source\ncommit is the grading rule.",
+    "new": "not a ticket. Its green integration-source commit is the grading rule."
+  }
+]
