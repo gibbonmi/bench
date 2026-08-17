@@ -2,52 +2,51 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `595763a1`, 47 unpushed commits
-Spec: `specs/progressive-roadmap/spec.md` (FT198) — implemented, reviewed,
-landed, retired; the folder no longer exists
-Gate: green at `5ee78026` (the `bench worktree land` publish); retained exact
-evidence for that commit is the landing's own record, not re-run since
+Branch: `main` — HEAD at this commit (see `git log -1`), pushed to none pending
+Spec: none staged (`specs/` empty)
+Gate: green, fresh run on this exact working tree before commit
 
 ## State
 
-FT198 (the split roadmap board) is fully closed. `ROADMAP.md` carries one
-physical heading line per row and no body; each row's detail lives in
-`roadmap/FT<n>.md`. Landed in one `bench worktree land` publish (`5ee78026`)
-composing a retained integration source that carried: the parser + this
-repo's 67-row migration, the `roadmap-detail-integrity` conformance check (9
-canary fixtures), CLI rendering, status/dashboard/journey wiring, and docs —
-then a three-axis review (Standards/Spec/Coverage, `opus`/medium, 19 raw
-findings / 12 repair targets) and four repair tickets closing all accepted
-findings, each independently gate-verified and mutation-probed by the
-coordinator. Two low-stakes findings are reviewer-accepted residual risk
-(recorded in the pre-land closing commit, now folded into `5ee78026`'s
-history). `bench spec retire progressive-roadmap` ran post-landing
-(`595763a1`): the spec folder, `FT198`'s `ROADMAP.md` row, and
-`roadmap/FT198.md` are gone.
+`/bench-what-next` reconciled the board and drained all three capture sources
+to zero, plus verified an out-of-band request: two architecture-review HTML
+docs in `/tmp` (2026-08-15 survey at `main@e91d0cb3`, 2026-08-16 as-built
+companion at `main@c0f387db`) claimed four of eight deepening candidates were
+built. All four verified true against the tree: gate-transaction +
+verdict-registry (`internal/gate/run_transaction.go`,
+`verdict_registry.go`, guard test `TestSkillsIndexConformanceCarriesNoSecondReader`
+sibling `verdict_registry_guard_test.go`), shift-objective owner
+(`internal/shift/objective.go`), the green-marker reader
+(`internal/gate/greenmarker/greenmarker.go`), and the skills-index reader
+(`internal/skillsindex/`, `.bench/skills-index.sh` deleted). The remaining
+three candidates (worktree eligibility consolidation, adopt-lifecycle
+one-decision, git.Output named readers) were unbuilt and untracked anywhere
+in `ROADMAP.md` or `bench maps` — added as FT216/FT217/FT218. A fourth new
+row, FT215, captures the progressive-roadmap retro's "no changed-package
+gate path" finding.
 
-**Retro not yet captured.** `/bench-final-check`'s retro-capture step
-(`capture/retros/progressive-roadmap.md`, `capture/agent-performance/`
-scorecard refresh) has not run this session — do it before drifting to other
-work, since the landing evidence and delegate performance detail are freshest
-now.
+Reconcile: FT198 (progressive-roadmap) had already landed and spec-retired in
+a prior session but two prose references survived (`Goal track: guidance
+prose` step 1, `Recommended sequence` line 1) — removed. The one pending
+retro (`capture/retros/progressive-roadmap.md`) is fully drained: its
+Bench-CLI binary-trust finding folded into FT177, its ticket-fence finding
+into FT174, its parallel-repair-porting finding into FT205, its
+changed-package-gate finding became FT215; the retro file is deleted.
+Repair-attribution tally from that retro: 9 tickets, 1 one-shot repair (cause:
+tree-drift), 8 clean.
 
-**Untouched by this build, pre-existing:** 7 unresolved decision maps, 61
-structure issues, one foreign out-of-pool worktree at
-`/tmp/bench-gate-subject-*` — none are this build's duty; they route to
-`/bench-shape-idea`, `craft-seams`, and a manual `bench worktree clean`
-respectively, whenever a session picks them up.
+**Untouched by this pass, pre-existing:** 7 unresolved decision maps
+(`bench maps`), one invalid (`spec-build-review-gate-cadence`), one
+out-of-pool worktree, and the ~61 structure issues restated by the 2026-08-15
+architecture review as 8 named deepening candidates (4 now built, 3 tracked
+as FT216-218, 1 folded into the already-shipped `internal/skillsindex`
+build). None are this pass's duty.
 
 ## Next command
 
-`capture/retros/progressive-roadmap.md` (rewrite in full, the template is in
-the `bench-final-check` skill) plus the two
-`capture/agent-performance/` scorecards for every provider that served as
-implementer, reviewer, or orchestrator on this landing. No gate or commit
-needed to reach that duty — the landing is already the verdict — but commit
-the retro and scorecard files once written
-(`bench commit -m "retro: progressive-roadmap" capture/retros/progressive-roadmap.md capture/agent-performance/...`).
-After that, `/bench-what-next` is the next open phase (roadmap/capture
-reconcile and drain) if nothing more specific is chosen first.
+`/bench-shape-idea` for FT207 (worktree-mutating malformed-admin refusal) —
+top of the refreshed `## Recommended sequence`, unblocked now that FT189 has
+landed.
 
 ## Shape
 
@@ -64,19 +63,3 @@ description of it), and this one.
 The handoff carries no date of its own. `bench status` computes its age from the
 commit that last wrote this file and reports a `handoff` row once anything has
 landed since. Where this document and the tree disagree, the tree wins.
-
-## Machine note
-
-The globally installed `bench` on PATH resolves a stale 0.2.0 release,
-untrusted by the gate's freshness seal against this tree's current source.
-Working pattern used throughout the FT198 build: `bash scripts/go-build.sh
-/home/devuser/workspace/bench dist/bench` from the main tree (gitignored,
-safe to rebuild repeatedly), then every invocation needing the current source
-as `BENCH_RUN_BINARY=/home/devuser/workspace/bench/dist/bench bench <args>`.
-`bench commit`'s and `bench worktree land`'s internal gate calls refuse an
-inherited binary for a never-before-graded prospective (uncommitted or
-freshly composed) tree state — run `bench gate --fresh` once on the exact
-tree state first (caches a reusable green verdict) when using
-`BENCH_RUN_BINARY`; `bench worktree land` itself needs no override — run it
-plain (unset `BENCH_RUN_BINARY`) so it owns its own fresh build of the
-composed tree.

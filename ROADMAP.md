@@ -85,6 +85,14 @@ means the repository-controlled compliance assessment.
 
 **FT214 (MEDIUM) — a build may not edit its own spec's acceptance rows, budget targets, or ownership fences.**
 
+**FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
+
+**FT216 (MEDIUM, decision required) — one eligibility verdict for "ours and safe to remove" across worktree cleanup.**
+
+**FT217 (LOW, decision required) — one decision every adopt-lifecycle verb executes.**
+
+**FT218 (LOW) — named git readers instead of learned CLI flags.**
+
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.**
 
 **FT101 (LOW) — per-context scope for monorepos: domain docs and profile.**
@@ -255,9 +263,7 @@ files couple prose diffs to conformance fixture updates (`craft-delegate` 14
 anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17). The reviewed
 Pocock-alignment Spec C has shipped and FT107 is retired.
 
-1. Shape FT198; the
-   board's 170 KB full snapshot now confirms the progressive-loading trigger.
-2. FT100's remaining work grills and builds last, after FT89 establishes which
+1. FT100's remaining work grills and builds last, after FT89 establishes which
    guidance is authoritative and the reviewer resolves FT170's benchmark route.
 
 FT99 rides prose batch 1. FT106 and FT162 remain independently sequenced by
@@ -269,6 +275,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT198 decides the progressive roadmap shape; `ASSESSMENT.md` ranks it 0 and this drain paid the 170 KB snapshot to reach three rows.
-2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
-3. `/bench-write-spec` — FT213 gives a read-only delegate its own worktree when it reads a tree also being graded, and requires an oracle-verified probe before trusting a delegate's gate-skip claim; reproduced twice in this drain's source retro.
+1. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block; unblocked now that FT189 has landed.
+2. `/bench-shape-idea` — FT216 decides whether worktree cleanup's "ours and safe to remove" eligibility collapses to one deep verdict module instead of last-write-wins across nine files re-decided by prefix-sniffing; unblocked now that FT189 has landed.
+3. `/bench-write-spec` — FT213 gives a read-only delegate its own worktree when it reads a tree also being graded, and requires an oracle-verified probe before trusting a delegate's gate-skip claim; reproduced twice in the spec-ticket-fence-reduction retro.
