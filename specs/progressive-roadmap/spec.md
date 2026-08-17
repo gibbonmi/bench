@@ -1,6 +1,6 @@
 # Progressive roadmap
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation, 2026-08-17 (`/bench-shape-idea 198`, three grill rounds and a confirmed shared understanding, recorded in `capture/session-handoff.md` at commit `handoff: FT198 shaped`). Supersedes decision #1 of the retired `roadmap-progressive-index` compiled map (2026-08-13, "`ROADMAP.md` remains the only durable owner"): the FT198 row's redrain reopened the detail-owner question and the 2026-08-17 grill closed it as one file per row.
 

@@ -818,7 +818,7 @@ func TestStrippedDistributionJourney(t *testing.T) {
 	if result := owner.runSelected(repo, "link", "copy"); result.code != 0 {
 		t.Fatalf("stripped install exit = %d: %s", result.code, result.stderr)
 	}
-	for _, path := range []string{"capture", "decisions", "specs"} {
+	for _, path := range []string{"capture", "decisions", "specs", "roadmap"} {
 		if err := os.RemoveAll(filepath.Join(repo, path)); err != nil {
 			t.Fatal(err)
 		}
@@ -833,7 +833,7 @@ func TestStrippedDistributionJourney(t *testing.T) {
 			t.Fatalf("installed package path %s is unavailable: %v", path, err)
 		}
 	}
-	for _, path := range []string{"capture", "decisions", "specs", "ROADMAP.md", ".bench-notes.md"} {
+	for _, path := range []string{"capture", "decisions", "specs", "roadmap", "ROADMAP.md", ".bench-notes.md"} {
 		if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(path))); !errors.Is(err, os.ErrNotExist) {
 			t.Fatalf("excluded path %s remains in stripped subject", path)
 		}

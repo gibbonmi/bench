@@ -121,12 +121,12 @@ func IdeaCommand(args []string) (string, int) {
 }
 
 func validateOccurrenceOwner(root, owner string) error {
-	c := bounds.Classify(filepath.Join(root, RoadmapFile), bounds.ControlRecordLimit)
-	if c.State != bounds.StateParsed {
+	tree := LoadTree(root)
+	if tree.Index.State != bounds.StateParsed {
 		return fmt.Errorf("%s is not a trusted current roadmap", RoadmapFile)
 	}
-	doc, failures := ParseDocument(c.Data, nil, true)
-	if len(failures) != 0 || len(doc.OccurrenceDiscrepancies) != 0 {
+	doc, failures, diagnostics := ParseDocument(tree, nil, true)
+	if len(failures) != 0 || len(diagnostics) != 0 || len(doc.OccurrenceDiscrepancies) != 0 {
 		return fmt.Errorf("%s is structurally untrusted", RoadmapFile)
 	}
 	for _, row := range doc.Rows {
@@ -165,27 +165,27 @@ func RoadmapCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	c := bounds.Classify(filepath.Join(root, RoadmapFile), bounds.ControlRecordLimit)
+	tree := LoadTree(root)
 	switch {
-	case c.State == bounds.StateAbsent:
-		return renderRoadmapBoard(Document{}, DrainCounts(root), true)
-	case c.State == bounds.StateEmpty:
+	case tree.Index.State == bounds.StateAbsent:
+		return renderRoadmapBoard(Document{}, nil, DrainCounts(root), true, tree.DirState)
+	case tree.Index.State == bounds.StateEmpty:
 		// The classifier carries no diagnostic for a clean read of nothing, so the
 		// error line supplies the one fact that separates this from absence.
-		return toon.RecordError(RoadmapFile, c.State, "the file exists but holds no bytes") + "\n", 1
-	case c.State.Failed():
-		return toon.RecordError(RoadmapFile, c.State, c.Reason) + "\n", 1
+		return toon.RecordError(RoadmapFile, tree.Index.State, "the file exists but holds no bytes") + "\n", 1
+	case tree.Index.State.Failed():
+		return toon.RecordError(RoadmapFile, tree.Index.State, tree.Index.Reason) + "\n", 1
 	}
-	doc, failures := ParseDocument(c.Data, nil, true)
+	doc, failures, diagnostics := ParseDocument(tree, nil, true)
 	for _, f := range failures {
 		if f.Reason == noRoadmapRowsReason {
 			return toon.RecordError(RoadmapFile, bounds.StateUnsupportedSchema, f.Reason) + "\n", 1
 		}
 	}
-	return renderRoadmapBoard(doc, DrainCounts(root), false)
+	return renderRoadmapBoard(doc, diagnostics, DrainCounts(root), false, tree.DirState)
 }
 
-func renderRoadmapBoard(doc Document, drain Drain, absent bool) (string, int) {
+func renderRoadmapBoard(doc Document, diagnostics []Diagnostic, drain Drain, absent bool, dirState bounds.FileState) (string, int) {
 	rowsShown := len(doc.Rows)
 	if rowsShown > 10 {
 		rowsShown = 10
@@ -201,11 +201,12 @@ func renderRoadmapBoard(doc Document, drain Drain, absent bool) (string, int) {
 	}
 	sources := []SourceFact{
 		{Source: RoadmapFile, State: string(bounds.StateParsed)},
+		{Source: RoadmapDir + "/", State: string(dirState)},
 		{Source: IdeasFile, State: string(drain.IdeasState)},
 		{Source: learnings.JournalPath, State: string(drain.LearningsState)},
 		{Source: retros.Directory + "/", State: string(drain.RetrosState)},
 	}
-	trusted := occurrenceSequenceTrusted(doc.OccurrenceDiscrepancies, sources)
+	trusted := occurrenceSequenceTrusted(doc.OccurrenceDiscrepancies, diagnostics, sources)
 	blocks := []struct {
 		name   string
 		fields []string
@@ -264,11 +265,11 @@ func DrainCounts(root string) Drain {
 // its definitive empty state, which is where every state but a clean non-empty read
 // lands — the page degrades rather than failing, unlike the `bench roadmap` command.
 func RoadmapText(root string) (text string, present bool) {
-	c := bounds.Classify(filepath.Join(root, RoadmapFile), bounds.ControlRecordLimit)
-	if c.State != bounds.StateParsed {
+	tree := LoadTree(root)
+	if tree.Index.State != bounds.StateParsed {
 		return "", false
 	}
-	doc, _ := ParseDocument(c.Data, nil, true)
+	doc, _, _ := ParseDocument(tree, nil, true)
 	return doc.Text, true
 }
 
@@ -286,8 +287,8 @@ func ParkedIdeas(root string) []string {
 // the section nor terminates it. Both `bench roadmap`'s next-action callout and the
 // dashboard's sequence block read it, so the two share one parser.
 func RecommendedSequence(roadmap string) string {
-	doc, _ := ParseDocument([]byte(roadmap), nil, true)
-	return doc.SequenceText
+	_, text, _ := parseSequence(strings.Split(roadmap, "\n"))
+	return text
 }
 
 // learningCount classifies capture/learnings.md and counts its parser-approved open rows.

@@ -73,7 +73,15 @@ func projectCaptureOccurrences(doc *Document, units []captureUnit) ([]CaptureOcc
 	return occurrences, pairs
 }
 
-func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy, sources []SourceFact) bool {
+// occurrenceSequenceTrusted reports whether the recommended sequence rests on
+// evidence the reader may act on. Any structural discrepancy, any integrity
+// diagnostic over the split board, or any capture source that did not read cleanly
+// withdraws that trust: a sequence derived from an unread row file or a broken tree
+// is a guess, and the index may never look clean over one.
+func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy, diagnostics []Diagnostic, sources []SourceFact) bool {
+	if len(diagnostics) != 0 {
+		return false
+	}
 	for _, discrepancy := range discrepancies {
 		if discrepancy.Structural {
 			return false
@@ -83,7 +91,7 @@ func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy, sources []
 	for _, source := range sources {
 		states[source.Source] = source.State
 	}
-	for _, source := range []string{RoadmapFile, IdeasFile, learnings.JournalPath, retros.Directory + "/"} {
+	for _, source := range []string{RoadmapFile, RoadmapDir + "/", IdeasFile, learnings.JournalPath, retros.Directory + "/"} {
 		switch bounds.FileState(states[source]) {
 		case bounds.StateAbsent, bounds.StateEmpty, bounds.StateParsed:
 			continue

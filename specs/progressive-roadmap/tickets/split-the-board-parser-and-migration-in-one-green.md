@@ -1,7 +1,7 @@
 # Split the board: land the tree parser and this board's migration in one green
 
 Blocked by: none
-Writes: internal/roadmap, internal/conformance/docs_workflow_checks_test.go, cmd/bench/command_registry_test.go, ROADMAP.md, roadmap/
+Writes: internal/roadmap, internal/conformance/docs_workflow_checks_test.go, internal/conformance/recurrence_maintenance_contract_test.go, cmd/bench/command_registry_test.go, ROADMAP.md, roadmap/
 
 ## What to build
 

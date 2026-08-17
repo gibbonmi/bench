@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 func checkOccurrenceLedgerAndMaintenance(root string) []string {
@@ -149,17 +151,23 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 
 func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
 	root := t.TempDir()
-	data, err := os.ReadFile(filepath.Join(NewHarness(t).KitRoot, "ROADMAP.md"))
+	kit := NewHarness(t).KitRoot
+	index, err := os.ReadFile(filepath.Join(kit, "ROADMAP.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	mutated := strings.Replace(string(data), "Occurrences: baseline-01, baseline-02, baseline-03", "Occurrences: baseline-01, baseline-02", 1)
-	if mutated == string(data) {
-		t.Fatal("FT158 migration-count mutation did not change its ledger")
-	}
-	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte(mutated), 0o644); err != nil {
+	// The ledger the mutation drops a key from lives in the row's own detail file, so
+	// the fixture copies the live board's index beside a mutated roadmap/FT158.md.
+	rowFile := filepath.Join(kit, "roadmap", "FT158.md")
+	row, err := os.ReadFile(rowFile)
+	if err != nil {
 		t.Fatal(err)
 	}
+	mutated := strings.Replace(string(row), "Occurrences: baseline-01, baseline-02, baseline-03", "Occurrences: baseline-01, baseline-02", 1)
+	if mutated == string(row) {
+		t.Fatal("FT158 migration-count mutation did not change its ledger")
+	}
+	roadmaptest.WriteSplitBoard(t, root, string(index), map[string]string{"FT158.md": mutated})
 	found := false
 	for _, diag := range checkOccurrenceLedgerMigration(root) {
 		if diag == "ROADMAP.md occurrence-ledger migration count for FT158 is wrong" {
@@ -173,17 +181,22 @@ func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
 
 func TestOccurrenceLedgerMigrationAllowsRetiredFT126(t *testing.T) {
 	root := t.TempDir()
-	const migrated = "**FT71 — migration baseline.**\nOccurrences: baseline-01\n\n" +
-		"**FT158 — migration baseline.**\nOccurrences: baseline-01, baseline-02, baseline-03\n\n" +
-		"**FT128 — migration baseline.**\nOccurrences: baseline-01\n\n" +
-		"**FT98 — migration baseline.**\nOccurrences: baseline-01, baseline-02, baseline-03\n\n" +
-		"**FT169 — migration baseline.**\nOccurrences: baseline-01\n\n" +
-		"**FT141 — migration baseline.**\nOccurrences: baseline-01\n\n" +
-		"**FT94 — migration baseline.**\nOccurrences: baseline-01\n\n" +
-		"**FT125 — migration baseline.**\nOccurrences: baseline-01\n"
-	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte(migrated), 0o644); err != nil {
-		t.Fatal(err)
+	index, files := "", map[string]string{}
+	for _, row := range [][2]string{
+		{"FT71", "baseline-01"},
+		{"FT158", "baseline-01, baseline-02, baseline-03"},
+		{"FT128", "baseline-01"},
+		{"FT98", "baseline-01, baseline-02, baseline-03"},
+		{"FT169", "baseline-01"},
+		{"FT141", "baseline-01"},
+		{"FT94", "baseline-01"},
+		{"FT125", "baseline-01"},
+	} {
+		heading := "**" + row[0] + " — migration baseline.**"
+		index += heading + "\n\n"
+		files[row[0]+".md"] = heading + "\nOccurrences: " + row[1] + "\n"
 	}
+	roadmaptest.WriteSplitBoard(t, root, index, files)
 	if containsDiagnostic(checkOccurrenceLedgerMigration(root), "ROADMAP.md occurrence-ledger migration count for FT126 is wrong") {
 		t.Fatal("retired FT126 remained required by occurrence-ledger migration")
 	}

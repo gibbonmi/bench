@@ -61,13 +61,16 @@ branch-agnostic. This line is only the binding.)
   unpushed commits and unique local branches across the repository; severity-2 intent
   joins the shared common-directory ledger, compact by default and expanded by `--all`.
 - **The capture inbox and working roadmap** (`bench idea` → `capture/IDEAS.md`;
-  `bench roadmap` → `ROADMAP.md`). Capture-and-forget: park an out-of-scope idea,
+  `bench roadmap` → the `ROADMAP.md` index and its `roadmap/FT<n>.md` detail
+  owners, one per row, each holding that row's body, `Occurrence:` ledger, and
+  `Sources:` line). Capture-and-forget: park an out-of-scope idea,
   commit to nothing; ideas graduate only through a `/bench-what-next` drain into the
   working roadmap. The contract (gate-tested in a throwaway repo): `idea` appends one
   dated line and creates the inbox; a no-arg `idea` errors without appending;
   `roadmap` prints the working document plus drain status, or its
-  `## Recommended sequence` when nothing needs draining. `capture/IDEAS.md` and `ROADMAP.md`
-  are per-consumer content — never in the kit's `package.json` `files[]`.
+  `## Recommended sequence` when nothing needs draining. `capture/IDEAS.md`,
+  `ROADMAP.md`, and `roadmap/` are per-consumer content — never in the kit's
+  `package.json` `files[]`.
 - **The kit content surface** (`.agents/skills/*/SKILL.md`, `.agents/commands/*.md`).
   Portable harness-facing content. The contract is structural: every skill carries YAML
   frontmatter (name + description) and follows progressive disclosure; every command
@@ -259,6 +262,7 @@ current-state advertisement of its non-meta input bindings:
 | `decision-map-integrity` | `decision-documents` |
 | `injected-port-registry` | `go-source` |
 | `guidance-prose-budgets` | `benchkit-profile` |
+| `roadmap-detail-integrity` | `roadmap-board` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
 current exact green; partial/component and reduced-scope records are legacy input classes

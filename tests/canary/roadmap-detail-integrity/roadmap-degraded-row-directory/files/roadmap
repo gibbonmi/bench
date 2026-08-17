@@ -1,0 +1,2 @@
+A regular file stands where the detail directory belongs, so no row's detail owner
+could be read and the directory itself is what the check names.

@@ -9,8 +9,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 func checkDocsCurrencyAndWorkflow(root, _ string) []string {
@@ -37,9 +39,10 @@ func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 // tokens, so a leftover `bench spec build promote` passes both. Three surfaces
 // are exempt because their job is history, not guidance: CHANGELOG.md
 // (append-only — scrubbing it would falsify the record), capture/ (journal),
-// and specs/remove-spec-build-lifecycle/ (the removal's own record). Retired
-// spec residue without a `Status: staged` spec.md is history too; only staged
-// specs are guidance a build will act on.
+// and specs/remove-spec-build-lifecycle/ (the removal's own record). Row bodies live
+// in roadmap/<ID>.md, so the directory is swept beside the index or the sweep misses
+// every row body. Retired spec residue without a `Status: staged` spec.md is history
+// too; only staged specs are guidance a build will act on.
 func checkRemovedVerbSweep(root string) []string {
 	var files []string
 	for _, rel := range []string{"README.md", "ROADMAP.md"} {
@@ -47,7 +50,7 @@ func checkRemovedVerbSweep(root string) []string {
 			files = append(files, path)
 		}
 	}
-	for _, rel := range []string{".bench", ".agents", "projects"} {
+	for _, rel := range []string{".bench", ".agents", "projects", roadmap.RoadmapDir} {
 		for _, path := range walkConformanceDocs(filepath.Join(root, rel)) {
 			if strings.HasSuffix(path, ".md") {
 				files = append(files, path)
@@ -104,6 +107,7 @@ func TestRemovedVerbSweepBites(t *testing.T) {
 		{"operating guide token", ".bench/BENCH.md", "run `bench spec build promote` to land it\n", true},
 		{"skill recovery token", ".agents/skills/bench-craft-delegate/SKILL.md", "retire it with bench worktree recovery\n", true},
 		{"roadmap token", "ROADMAP.md", "resolve the run via `bench spec build abandon`\n", true},
+		{"row file token", "roadmap/FT7.md", "**FT7 — x.**\nresolve the run via `bench spec build abandon`\n", true},
 		{"staged spec ticket token", "specs/some-feature/tickets/one.md", "submit through `bench spec build checkpoint`\n", true},
 		{"removal record exempt", "specs/remove-spec-build-lifecycle/spec.md", "Status: staged\ndelete the `bench spec build` grammar\n", false},
 		{"changelog exempt", "CHANGELOG.md", "- Removed `bench spec build` and `bench worktree recovery`.\n", false},
@@ -172,12 +176,16 @@ func TestPrePushREADMEClaimBites(t *testing.T) {
 	}
 }
 
+// checkOccurrenceLedgerMigration grades the migrated ledger counts through the roadmap
+// loader, so the counts come from the row files that own the ledgers rather than from a
+// second parse of the index. The legacy-heading sweep stays on the index bytes: an
+// `evidence supplied` count was a heading qualifier, and headings live in ROADMAP.md.
 func checkOccurrenceLedgerMigration(root string) []string {
-	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
-	if err != nil {
+	tree := roadmap.LoadTree(root)
+	if tree.Index.State != bounds.StateParsed {
 		return []string{"ROADMAP.md unavailable for occurrence-ledger migration check"}
 	}
-	doc, failures := roadmap.ParseDocument(data, nil, true)
+	doc, failures, _ := roadmap.ParseDocument(tree, nil, true)
 	if len(failures) != 0 {
 		return []string{"ROADMAP.md occurrence-ledger migration has malformed rows"}
 	}
@@ -194,7 +202,7 @@ func checkOccurrenceLedgerMigration(root string) []string {
 			diags = append(diags, "ROADMAP.md occurrence-ledger migration count for "+id+" is wrong")
 		}
 	}
-	if strings.Contains(strings.ToLower(string(data)), "evidence supplied") {
+	if strings.Contains(strings.ToLower(string(tree.Index.Data)), "evidence supplied") {
 		diags = append(diags, "ROADMAP.md retains a legacy evidence-supplied heading count")
 	}
 	return diags
@@ -202,10 +210,9 @@ func checkOccurrenceLedgerMigration(root string) []string {
 
 func TestOccurrenceLedgerMigrationCheckBites(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte("**FT71 (HIGH, evidence supplied) — title.**\nOccurrences: baseline-01\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if diags := checkOccurrenceLedgerMigration(root); len(diags) == 0 {
+	const heading = "**FT71 (HIGH, evidence supplied) — title.**"
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT71.md": heading + "\nOccurrences: baseline-01\n"})
+	if !containsDiagnostic(checkOccurrenceLedgerMigration(root), "ROADMAP.md retains a legacy evidence-supplied heading count") {
 		t.Fatal("legacy heading mutation passed occurrence-ledger migration check")
 	}
 }

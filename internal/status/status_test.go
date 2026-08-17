@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 func TestTimeoutGateIsDistinctHighestSeveritySignal(t *testing.T) {
@@ -138,6 +139,26 @@ func TestRoadmapReconcileCounts(t *testing.T) {
 	merged, dangling, state := roadmapReconcileCounts(root)
 	if merged != 1 || dangling != 1 || state.Failed() {
 		t.Fatalf("roadmapReconcileCounts = (%d, %d, %s), want (1, 1, parsed)", merged, dangling, state)
+	}
+}
+
+// TestRoadmapReconcileCountsFromRowFile covers story 20 (PR17): the split board keeps a
+// row's spec path in roadmap/FT7.md's body, not ROADMAP.md's index line, so the reconcile
+// scan must classify a spec named only there — a scan of ROADMAP.md alone counts zero.
+func TestRoadmapReconcileCountsFromRowFile(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "specs", "merged"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "specs", "merged", "spec.md"), []byte("Status: implemented\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	const heading = "**FT7 (LOW) — x.**"
+	body := heading + "\nMerged into specs/merged/spec.md.\n"
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT7.md": body})
+	merged, dangling, state := roadmapReconcileCounts(root)
+	if merged != 1 || dangling != 0 || state.Failed() {
+		t.Fatalf("roadmapReconcileCounts = (%d, %d, %s), want (1, 0, parsed)", merged, dangling, state)
 	}
 }
 

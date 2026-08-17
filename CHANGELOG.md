@@ -8,6 +8,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- The roadmap is now a split board: `ROADMAP.md` keeps its section prose and exactly
+  one heading line per row with no body, and each row's body, `Occurrence:` ledger,
+  and `Sources:` line move to `roadmap/FT<n>.md`, so a cold read costs the index
+  alone and a row edit opens one file. `bench roadmap --context` lists `roadmap/` in
+  its sources block and renders a missing detail owner, an orphaned row file, an
+  inline body, a heading mismatch, an unrecognized file, a duplicate row ID, and a
+  wrapped heading as parse failures over a malformed index; the new Dev-tier
+  `roadmap-detail-integrity` conformance check reds the gate on any of them. The
+  schema stays 4, and the inline-body layout is no longer accepted.
 - The destructive-Git guard no longer intercepts `git stash`; stash lifecycle is
   available for isolating unrelated working-tree state while other destructive Git
   operations remain guarded.

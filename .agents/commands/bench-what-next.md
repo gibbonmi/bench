@@ -43,6 +43,12 @@ is the top line of the refreshed `## Recommended sequence`.
 
 ## 1. Reconcile first
 
+The board is split, so every edit below has one owner: `ROADMAP.md` holds the
+priority ordering and one heading line per row, while a row's body, its
+`Occurrence:` ledger, and its `Sources:` line are edited in `roadmap/FT<n>.md`,
+and retiring a row deletes its `ROADMAP.md` heading line and its
+`roadmap/FT<n>.md` together in the same batch.
+
 Before draining anything, verify every `ROADMAP.md` row against the tree. When a
 row's spec may have shipped, use `bench spec history <slug>` for the shipped-row
 check. Shipped work is removed and stale wording is corrected. Row presence is
