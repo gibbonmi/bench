@@ -172,3 +172,18 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 		requireTest(t, statErr == nil, "apply removed a mismatched checkout: %v", statErr)
 	})
 }
+
+// [RW5] Ticket 09 regression guard. A detached HEAD has no branch for the operator
+// override to name: at base the whole derivation, override included, lived inside
+// `headRef != "detached"`. A registered, detached-HEAD worktree with DiscardBranch
+// must leave deleteBranch/branchRef at their zero values, matching base exactly —
+// contrast the attached-branch cases above, which do expect deleteBranch=true.
+func TestDiscardBranchLeavesADetachedHeadUnaffected(t *testing.T) {
+	root := newWorktreeRepo(t)
+	target := filepath.Join(filepath.Dir(root), "detached discard target")
+	gitRun(t, root, "worktree", "add", "-q", "--detach", target, "HEAD")
+	plan, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardBranch: true})
+	mustNoError(t, err)
+	requireTest(t, !plan.deleteBranch, "detached-HEAD plan authorized branch deletion under the override")
+	requireTest(t, plan.branchRef == "", "detached-HEAD plan named a deletable branch: %q", plan.branchRef)
+}

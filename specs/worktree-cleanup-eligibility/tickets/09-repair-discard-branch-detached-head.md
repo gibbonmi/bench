@@ -26,6 +26,6 @@ and `plan.branchRef == ""`.
 
 ## Acceptance
 
-- [ ] `--discard-branch` on a detached-HEAD worktree does not set deleteBranch/branchRef, matching base.
-- [ ] A new test in clean_branch_test.go (alongside `TestDiscardBranchLeavesTheDerivedClassificationUnchanged`/`TestDiscardBranchNeverBypassesARefusal`) pins the detached+DiscardBranch case.
-- [ ] All pre-existing DiscardBranch/detached tests remain green and unmodified.
+- [x] `--discard-branch` on a detached-HEAD worktree does not set deleteBranch/branchRef, matching base.
+- [x] A new test in clean_branch_test.go (alongside `TestDiscardBranchLeavesTheDerivedClassificationUnchanged`/`TestDiscardBranchNeverBypassesARefusal`) pins the detached+DiscardBranch case.
+- [x] All pre-existing DiscardBranch/detached tests remain green and unmodified.

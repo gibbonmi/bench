@@ -236,7 +236,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	// here rather than fed into the decision, so `landed` still records what the tool itself
 	// concluded — the automatic classifier reads only that string, and therefore cannot be
 	// reached by this override.
-	if options.DiscardBranch {
+	if options.DiscardBranch && !facts.headDetached {
 		plan.deleteBranch = true
 		plan.branchRef, plan.branchOID = headRef, head
 	}
