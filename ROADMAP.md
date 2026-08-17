@@ -87,9 +87,9 @@ means the repository-controlled compliance assessment.
 
 **FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
 
-**FT216 (MEDIUM, decision required) — one eligibility verdict for "ours and safe to remove" across worktree cleanup.**
+**FT216 (MEDIUM) — one eligibility verdict for "ours and safe to remove" across worktree cleanup.**
 
-**FT217 (LOW, decision required) — one decision every adopt-lifecycle verb executes.**
+**FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
@@ -275,6 +275,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block; unblocked now that FT189 has landed.
-2. `/bench-shape-idea` — FT216 decides whether worktree cleanup's "ours and safe to remove" eligibility collapses to one deep verdict module instead of last-write-wins across nine files re-decided by prefix-sniffing; unblocked now that FT189 has landed.
+1. `/bench-write-spec` — FT216 deepens worktree cleanup around one eligibility verdict from the ready `decisions/deepening-2026-08.md` map.
+2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block; unblocked now that FT189 has landed.
 3. `/bench-write-spec` — FT213 gives a read-only delegate its own worktree when it reads a tree also being graded, and requires an oracle-verified probe before trusting a delegate's gate-skip claim; reproduced twice in the spec-ticket-fence-reduction retro.
