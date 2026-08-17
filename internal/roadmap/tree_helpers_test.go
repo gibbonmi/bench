@@ -1,13 +1,13 @@
 package roadmap
 
 import (
-	"os"
-	"path/filepath"
+	"fmt"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 // indexTree is the index-only tree a test drives when the row files are not the
@@ -44,47 +44,38 @@ func splitTree(index string, files map[string]string) Tree {
 	return tree
 }
 
-// writeSplitBoard writes a split board into root: the index text as ROADMAP.md and one
-// roadmap/<name> per entry. It is the on-disk twin of splitTree, for the tests that
-// drive a command rather than the parse.
-func writeSplitBoard(t *testing.T, root, index string, files map[string]string) {
-	t.Helper()
-	if err := os.WriteFile(filepath.Join(root, RoadmapFile), []byte(index), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if len(files) == 0 {
-		return
-	}
-	if err := os.MkdirAll(filepath.Join(root, RoadmapDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for name, content := range files {
-		if err := os.WriteFile(filepath.Join(root, RoadmapDir, name), []byte(content), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
+// Row is one split-board row: a heading line and its body, the shape board and
+// writeBoard take one per row.
+type Row struct {
+	Heading string
+	Body    string
 }
 
-// writeBoard writes the board built from one heading-and-body pair per row.
-func writeBoard(t *testing.T, root string, rows ...[2]string) {
+// writeBoard writes the on-disk split board built from one heading-and-body Row per
+// row: the index text as ROADMAP.md and one roadmap/<name> row file per row. It is
+// the on-disk twin of splitTree, for the tests that drive a command rather than the
+// parse.
+func writeBoard(t *testing.T, root string, rows ...Row) {
 	t.Helper()
 	index, files := board(rows...)
-	writeSplitBoard(t, root, index, files)
+	roadmaptest.WriteSplitBoard(t, root, index, files)
 }
 
-// board renders an index and its row files from one row heading and body, the shape
-// most fixtures need: `**FT1 — one.**` in ROADMAP.md and heading plus body in
-// roadmap/FT1.md.
-func board(rows ...[2]string) (string, map[string]string) {
+// board renders an index and its row files from rows, the shape most fixtures need:
+// `**FT1 — one.**` in ROADMAP.md and heading plus body in roadmap/FT1.md.
+func board(rows ...Row) (string, map[string]string) {
 	var index strings.Builder
 	files := map[string]string{}
 	for _, row := range rows {
-		heading, body := row[0], row[1]
-		index.WriteString(heading + "\n\n")
-		id := heading[2:strings.Index(heading, " ")]
-		content := heading + "\n"
-		if body != "" {
-			content += body
+		index.WriteString(row.Heading + "\n\n")
+		space := strings.Index(row.Heading, " ")
+		if space < 0 {
+			panic(fmt.Sprintf("board: heading %q has no space after the row ID", row.Heading))
+		}
+		id := row.Heading[2:space]
+		content := row.Heading + "\n"
+		if row.Body != "" {
+			content += row.Body
 		}
 		files[id+".md"] = content
 	}

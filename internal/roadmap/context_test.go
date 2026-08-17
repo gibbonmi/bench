@@ -53,7 +53,7 @@ func TestContextCommandIndexDisclosesCompleteRoadmapQueries(t *testing.T) {
 func TestContextCommandIndexOmitsRoadmapBodiesWithTrueSizes(t *testing.T) {
 	root := newRepo(t)
 	const body = "complete roadmap evidence"
-	writeBoard(t, root, [2]string{"**FT1 — first.**", body + "\n"})
+	writeBoard(t, root, Row{"**FT1 — first.**", body + "\n"})
 	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
@@ -152,7 +152,7 @@ func TestContextCommandCarriesCaptureLineNumbersInEveryMode(t *testing.T) {
 
 func TestContextCommandFullCarriesCompleteBodiesAtSchemaFour(t *testing.T) {
 	root := newRepo(t)
-	writeBoard(t, root, [2]string{"**FT1 — first.**", "roadmap evidence\n"})
+	writeBoard(t, root, Row{"**FT1 — first.**", "roadmap evidence\n"})
 	files := map[string]string{
 		IdeasFile:                     "- 2026-01-02  idea evidence\nmalformed idea\n",
 		learnings.JournalPath:         "## 2026-01-03 — lesson  [open]\nlearning evidence\n",
@@ -277,7 +277,7 @@ func TestContextCommandEveryModeEnumeratesTheCompleteBlockList(t *testing.T) {
 func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
 	root := newRepo(t)
 	body := strings.Repeat("x", 4113)
-	writeBoard(t, root, [2]string{"**FT1 — first.**", body + "\n"}, [2]string{"**FT2 — second.**", "other\n"})
+	writeBoard(t, root, Row{"**FT1 — first.**", body + "\n"}, Row{"**FT2 — second.**", "other\n"})
 	if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +320,7 @@ func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
 func TestContextCommandSourcesListsRoadmapDirectory(t *testing.T) {
 	root := newRepo(t)
 	const body = "row detail\n"
-	writeBoard(t, root, [2]string{"**FT1 — first.**", body})
+	writeBoard(t, root, Row{"**FT1 — first.**", body})
 	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
@@ -406,7 +406,7 @@ func TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed(t *testi
 // returns the requested row's body straight from its row file, with body_bytes.
 func TestContextCommandRowSelectorRendersRowFileBody(t *testing.T) {
 	root := newRepo(t)
-	writeBoard(t, root, [2]string{"**FT7 (LOW) — x.**", "row detail\n"})
+	writeBoard(t, root, Row{"**FT7 (LOW) — x.**", "row detail\n"})
 	out, code := ContextCommand([]string{"--context", "--row", "FT7"}, func(string) GateCacheFact { return GateCacheFact{} })
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
@@ -426,9 +426,9 @@ func TestContextCommandRowSelectorRendersRowFileBody(t *testing.T) {
 }
 
 // TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence covers PR27
-// (story 44, the render-side half shared with ticket 1's loader): a row file the
-// classifier reports wrong-type — a directory sitting where the row file belongs —
-// renders a parse_failures row naming it and drops sequence_trusted.
+// (story 44, the render side): a row file the classifier reports wrong-type — a
+// directory sitting where the row file belongs — renders a parse_failures row naming
+// it and drops sequence_trusted.
 func TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence(t *testing.T) {
 	root := newRepo(t)
 	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT7 (LOW) — x.**\n"), 0o644); err != nil {
@@ -473,7 +473,7 @@ func TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence(t *test
 // nonexistent path instead.
 func TestContextCommandUnrecognizedFileColonInPathRendersFullSource(t *testing.T) {
 	root := newRepo(t)
-	writeBoard(t, root, [2]string{"**FT7 (LOW) — x.**", ""})
+	writeBoard(t, root, Row{Heading: "**FT7 (LOW) — x.**", Body: ""})
 	if err := os.WriteFile(filepath.Join(root, RoadmapDir, "x: y.md"), []byte("scratch\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -573,8 +573,8 @@ func TestBuildContextCarriesRetrosAndDegradedEvidence(t *testing.T) {
 
 func TestParseDocumentOccurrenceLedgers(t *testing.T) {
 	index, files := board(
-		[2]string{"**FT1 — one.**", "Body\nOccurrences: alpha-1, beta-2\n"},
-		[2]string{"**FT2 — two.**", "Body\nOccurrences: bad, bad\n"},
+		Row{"**FT1 — one.**", "Body\nOccurrences: alpha-1, beta-2\n"},
+		Row{"**FT2 — two.**", "Body\nOccurrences: bad, bad\n"},
 	)
 	doc, failures, _ := ParseDocument(splitTree(index, files), nil, false)
 	if got := doc.Rows[0]; got.OccurrenceKeys != "alpha-1, beta-2" || got.OccurrenceCount != 2 {
@@ -654,7 +654,7 @@ func TestBuildContextProjectsPendingCaptureOccurrences(t *testing.T) {
 
 func TestBuildContextClassifiesOccurrenceDiscrepancies(t *testing.T) {
 	root := newRepo(t)
-	writeBoard(t, root, [2]string{"**FT1 — one.**", "Occurrences: recorded\n"}, [2]string{"**FT2 — two.**", "Occurrences: bad, bad\n"})
+	writeBoard(t, root, Row{"**FT1 — one.**", "Occurrences: recorded\n"}, Row{"**FT2 — two.**", "Occurrences: bad, bad\n"})
 	ideas := strings.Join([]string{
 		"- 2026-07-10  duplicate [occurrence:FT1/recorded]",
 		"- 2026-07-10  malformed [occurrence:FT1/unterminated",
@@ -805,7 +805,7 @@ func TestBuildContextKeepsSameIncidentForSeparateOwners(t *testing.T) {
 
 func TestBuildContextProjectsEveryRecordedSourceWithoutPendingPair(t *testing.T) {
 	root := newRepo(t)
-	writeBoard(t, root, [2]string{"**FT1 — one.**", "Occurrences: recorded\n"})
+	writeBoard(t, root, Row{"**FT1 — one.**", "Occurrences: recorded\n"})
 	if err := os.WriteFile(filepath.Join(root, IdeasFile), []byte("- 2026-07-10  first [occurrence:FT1/recorded]\n- 2026-07-10  second [occurrence:FT1/recorded]\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

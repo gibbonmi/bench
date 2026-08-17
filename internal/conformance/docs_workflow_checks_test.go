@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 func checkDocsCurrencyAndWorkflow(root, _ string) []string {
@@ -38,11 +39,10 @@ func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 // tokens, so a leftover `bench spec build promote` passes both. Three surfaces
 // are exempt because their job is history, not guidance: CHANGELOG.md
 // (append-only — scrubbing it would falsify the record), capture/ (journal),
-// and specs/remove-spec-build-lifecycle/ (the removal's own record). The row bodies
-// moved out of ROADMAP.md into roadmap/<ID>.md, so the directory is swept beside the
-// index or the sweep loses every row body it used to read. Retired
-// spec residue without a `Status: staged` spec.md is history too; only staged
-// specs are guidance a build will act on.
+// and specs/remove-spec-build-lifecycle/ (the removal's own record). Row bodies live
+// in roadmap/<ID>.md, so the directory is swept beside the index or the sweep misses
+// every row body. Retired spec residue without a `Status: staged` spec.md is history
+// too; only staged specs are guidance a build will act on.
 func checkRemovedVerbSweep(root string) []string {
 	var files []string
 	for _, rel := range []string{"README.md", "ROADMAP.md"} {
@@ -211,7 +211,7 @@ func checkOccurrenceLedgerMigration(root string) []string {
 func TestOccurrenceLedgerMigrationCheckBites(t *testing.T) {
 	root := t.TempDir()
 	const heading = "**FT71 (HIGH, evidence supplied) — title.**"
-	writeSplitRoadmap(t, root, heading+"\n", map[string]string{"FT71.md": heading + "\nOccurrences: baseline-01\n"})
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT71.md": heading + "\nOccurrences: baseline-01\n"})
 	if !containsDiagnostic(checkOccurrenceLedgerMigration(root), "ROADMAP.md retains a legacy evidence-supplied heading count") {
 		t.Fatal("legacy heading mutation passed occurrence-ledger migration check")
 	}
@@ -572,21 +572,4 @@ func h2Headings(text string) map[string]bool {
 		}
 	}
 	return out
-}
-
-// writeSplitRoadmap writes a split board into root: the index as ROADMAP.md and one
-// roadmap/<ID>.md per named row file.
-func writeSplitRoadmap(t *testing.T, root, index string, files map[string]string) {
-	t.Helper()
-	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte(index), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(root, roadmap.RoadmapDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for name, content := range files {
-		if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapDir, name), []byte(content), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
 }

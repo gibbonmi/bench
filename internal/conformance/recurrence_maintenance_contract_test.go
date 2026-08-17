@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 func checkOccurrenceLedgerAndMaintenance(root string) []string {
@@ -154,8 +156,8 @@ func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The ledger the mutation drops a key from lives in the row's own detail file now,
-	// so the fixture copies the live board's index beside a mutated roadmap/FT158.md.
+	// The ledger the mutation drops a key from lives in the row's own detail file, so
+	// the fixture copies the live board's index beside a mutated roadmap/FT158.md.
 	rowFile := filepath.Join(kit, "roadmap", "FT158.md")
 	row, err := os.ReadFile(rowFile)
 	if err != nil {
@@ -165,7 +167,7 @@ func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
 	if mutated == string(row) {
 		t.Fatal("FT158 migration-count mutation did not change its ledger")
 	}
-	writeSplitRoadmap(t, root, string(index), map[string]string{"FT158.md": mutated})
+	roadmaptest.WriteSplitBoard(t, root, string(index), map[string]string{"FT158.md": mutated})
 	found := false
 	for _, diag := range checkOccurrenceLedgerMigration(root) {
 		if diag == "ROADMAP.md occurrence-ledger migration count for FT158 is wrong" {
@@ -194,7 +196,7 @@ func TestOccurrenceLedgerMigrationAllowsRetiredFT126(t *testing.T) {
 		index += heading + "\n\n"
 		files[row[0]+".md"] = heading + "\nOccurrences: " + row[1] + "\n"
 	}
-	writeSplitRoadmap(t, root, index, files)
+	roadmaptest.WriteSplitBoard(t, root, index, files)
 	if containsDiagnostic(checkOccurrenceLedgerMigration(root), "ROADMAP.md occurrence-ledger migration count for FT126 is wrong") {
 		t.Fatal("retired FT126 remained required by occurrence-ledger migration")
 	}

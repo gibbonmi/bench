@@ -2,13 +2,13 @@ package roadmap
 
 import (
 	"os"
-	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 // diagnosticStrings renders ParseDocument's typed diagnostics the way every reader
@@ -229,24 +229,9 @@ func TestTreeParseAbsentBoardIsQuiet(t *testing.T) {
 // tree is whole.
 func TestIdeaOwnerValidatesThroughTheSplitTree(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
-	writeBoard := func(t *testing.T, root string, rowFile bool) {
-		t.Helper()
-		if err := os.WriteFile(roadmapPath(t, root), []byte(heading+"\n"), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		if !rowFile {
-			return
-		}
-		if err := os.MkdirAll(filepath.Join(root, RoadmapDir), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(root, RoadmapDir, "FT7.md"), []byte(heading+"\n"), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
 
 	root := newRepo(t)
-	writeBoard(t, root, false)
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", nil)
 	out, code := IdeaCommand([]string{"--owner", "FT7", "--incident", "signal", "text"})
 	if code != 1 || !strings.Contains(out, "ROADMAP.md is structurally untrusted") {
 		t.Fatalf("missing detail owner = %q/%d, want exit 1 naming the untrusted tree", out, code)
@@ -256,7 +241,7 @@ func TestIdeaOwnerValidatesThroughTheSplitTree(t *testing.T) {
 	}
 
 	root = newRepo(t)
-	writeBoard(t, root, true)
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT7.md": heading + "\n"})
 	if out, code := IdeaCommand([]string{"--owner", "FT7", "--incident", "signal", "text"}); code != 0 {
 		t.Fatalf("whole tree = %q/%d, want exit 0", out, code)
 	}

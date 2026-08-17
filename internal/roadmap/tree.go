@@ -122,7 +122,7 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 		case owned:
 			// The row file is the whole row as a reader sees it: its first line
 			// repeats the index line, so the ledger, the spec path, and the
-			// trigger words read exactly the text they read before the split.
+			// trigger words are all read from this text.
 			rowText = string(file.Data)
 			first, body, _ := strings.Cut(rowText, "\n")
 			if first != line {

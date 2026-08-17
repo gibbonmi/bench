@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 func TestTimeoutGateIsDistinctHighestSeveritySignal(t *testing.T) {
@@ -153,16 +154,8 @@ func TestRoadmapReconcileCountsFromRowFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	const heading = "**FT7 (LOW) — x.**"
-	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapFile), []byte(heading+"\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(root, roadmap.RoadmapDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
 	body := heading + "\nMerged into specs/merged/spec.md.\n"
-	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapDir, "FT7.md"), []byte(body), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT7.md": body})
 	merged, dangling, state := roadmapReconcileCounts(root)
 	if merged != 1 || dangling != 0 || state.Failed() {
 		t.Fatalf("roadmapReconcileCounts = (%d, %d, %s), want (1, 0, parsed)", merged, dangling, state)
