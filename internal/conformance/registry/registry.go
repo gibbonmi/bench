@@ -28,7 +28,7 @@ const (
 func (source InputSource) Valid() bool {
 	switch source {
 	case InputCatchAll, InputGoSource, InputGoAndDataHandling, InputGateEntry, InputOfflineSmoke,
-		InputBenchRoutes, InputDecisionDocuments, InputBenchkitProfile:
+		InputBenchRoutes, InputDecisionDocuments, InputRoadmapBoard, InputBenchkitProfile:
 		return true
 	default:
 		return false
@@ -86,6 +86,9 @@ const (
 	InputBenchRoutes InputSource = "bench-routes"
 	// InputDecisionDocuments binds active and compiled decision-map trees.
 	InputDecisionDocuments InputSource = "decision-documents"
+	// InputRoadmapBoard binds the split roadmap board: the ROADMAP.md index and the
+	// roadmap/ detail owners its rows name.
+	InputRoadmapBoard InputSource = "roadmap-board"
 	// InputBenchkitProfile binds the checks a profile-owned table drives, each reading that
 	// table and the subjects it names.
 	InputBenchkitProfile InputSource = "benchkit-profile"
@@ -130,6 +133,7 @@ var Checks = []Check{
 	{Name: "decision-map-integrity", Implementation: "ValidateDecisionMapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputDecisionDocuments},
 	{Name: "injected-port-registry", Implementation: "checkInjectedPortRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "guidance-prose-budgets", Implementation: "checkGuidanceProseBudgets", Tier: Dev, Subject: SubjectRoot, Inputs: InputBenchkitProfile},
+	{Name: "roadmap-detail-integrity", Implementation: "ValidateRoadmapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputRoadmapBoard},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
@@ -153,6 +157,7 @@ var familyChecks = map[string]string{
 	"decision-map-integrity":        "decision-map-integrity",
 	"injected-ports":                "injected-port-registry",
 	"guidance-prose-budgets":        "guidance-prose-budgets",
+	"roadmap-detail-integrity":      "roadmap-detail-integrity",
 }
 
 // Families lists the family names this table binds, in sorted order. They are the
