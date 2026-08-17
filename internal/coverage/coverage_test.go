@@ -371,6 +371,23 @@ func TestCommand(t *testing.T) {
 		}
 	})
 
+	// An unrecognized header has no descriptor of its own, so its rows project through
+	// the legacy field order: a caller still gets the story/behavior/seam it seeds tasks
+	// from, next to the repair action the unknown header earns. Dropping the rows would
+	// leave the map's content unreachable until someone fixes the header by hand.
+	t.Run("unrecognized header projects rows through the legacy order", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := "# t\n\n" + stories + "\n### Acceptance coverage map\n" +
+			"| story | behavior | seam | outcome |\n|---|---|---|---|\n| 1 | b | s | w |\n"
+		mustWrite(t, "spec.md", body)
+
+		out, code := Command([]string{"spec.md"})
+		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
+		if code != 0 || out != want {
+			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+		}
+	})
+
 	t.Run("canonical mapped zero-row table is terminal", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		body := mapped("")

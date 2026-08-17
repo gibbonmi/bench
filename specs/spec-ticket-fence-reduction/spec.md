@@ -31,7 +31,7 @@ review loops become one round over the spec-and-tickets pair. The edge-class wal
 moves to the TDD loop where the seam is visible, leaving `**Won't handle**` for
 reviewed exclusions. `craft-tickets` takes `to-tickets`' sizing rule, and the
 spec template moves into `craft-spec` so `bench-write-spec.md` fits a new 73-line
-budget (reviewer-accepted 2026-08-17 in place of the map's 60; see the prose-landing bullet).
+budget (reviewer-accepted 2026-08-16 in place of the map's 60; see the prose-landing bullet).
 
 ## User stories
 
@@ -167,7 +167,7 @@ bundle (map #9).
     spec-retire lifecycle, and the stale-command sweep. That is ~3,300 characters
     of verbatim needle once the retained anchors are counted — the map's 60-line
     estimate rested on a ~1,100 miscount — and it lands at 73 lines, the budget the
-    reviewer accepted at build time (2026-08-17).
+    reviewer accepted at build time (2026-08-16).
   - The **review rubric** — the materiality exit, the cheapest-plausible degenerate
     standard, and the falsification questions — moves to `craft-spec`, which already
     owns the process. It is rubric, not phase choreography.
@@ -342,12 +342,12 @@ Three items for reviewer veto rather than assumption:
   `| row | story | behavior | seam | why it catches the failure |`. Story 2 also
   accepts the four-cell form without `row`, extending the existing row-ID opt-out
   convention to the reduced schema. Flagged as a non-behavioral extension of the
-  source; veto it and story 2, SR2, and one accept-ticket bullet come out.
+  source; the reviewer kept it at review close (2026-08-16).
 - **`craft-spec`'s budget headroom.** It is 71 lines under the 120-line
   `*/SKILL.md` glob. Taking the template while shedding the grammar and the edge
   walk lands it near 110 — inside the glob but thin. Adding an exact budget row is
-  a "what the gate proves" call, so the build will surface the landed line count
-  rather than add a row on its own.
+  a "what the gate proves" call; the build surfaced the landed count and the
+  reviewer ratified an exact 150-line row (2026-08-16).
 - **Map #18** (closing the two `capture/learnings.md` entries against this map)
   carries no coverage row because it is a `/bench-what-next` action outside this
   diff.

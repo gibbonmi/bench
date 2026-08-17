@@ -2,54 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `73c97aa5`; integration worktree
+Branch: `main` — HEAD `73c97aa5` (frozen review base); integration worktree
 `bench worktree path d58e5fed7d1634c79cdeacadfa519a8c` on
-`bench/assign/…/d58e5fed7d1634c79cdeacadfa519a8c`, frozen review base `73c97aa5`
-Spec: `specs/spec-ticket-fence-reduction/spec.md` (Status: staged)
-Gate: green in the worktree at the tip, all six phases, verified-stable subject;
-worktree clean
+`bench/assign/…/d58e5fed7d1634c79cdeacadfa519a8c`, reviewed tip = the commit that
+carries this file
+Spec: `specs/spec-ticket-fence-reduction/spec.md` (Status: staged until `bench worktree land`)
+Gate: green in the worktree at the tip
 
 ## State
 
-`/bench-implement-spec --full` has finished build and review and is **stopped before
-landing, awaiting five reviewer decisions**. All nine tickets are landed green on the
-integration source (the ninth, `anchor-the-realigned-consumers`, is a repair ticket the
-build added from its own probes). Three review axes ran at `fable`/high over base
-`73c97aa5` → the reviewed tip; findings are committed at
-`reviews/spec-ticket-fence-reduction.md` — 12 raw, 9 repair targets, 4 `auto-fix` and
-5 `ask-user`. Nothing may land until the five `ask-user` items are answered, because
-one of them asks whether the spec's own acceptance criterion may stand.
-
-The blocking five, in the review artifact: Spec F1 (the diff rewrote story 19 / SR18
-from the map's 60 to 73, added four ownership fences, and added a
-`.agents/skills/bench-craft-spec/SKILL.md | 150` row the spec's Further notes forbade;
-two supporting claims are dated 2026-08-17, a future date). Spec F2 (the ninth ticket
-adds five anchors and five canaries beyond the approved eight-slice breakdown). Spec F3
-(story 2's four-cell header extension is implemented and still carries its veto flag).
-Standards 2 (the acceptance-row rule now lives verbatim in `CONTEXT.md` and
-`craft-tickets`, each with its own anchor and canary). Standards 6 (the 73-line budget
-is met partly by rewrapping — 29 lines over 100 characters).
-
-Partial corroboration for F1: the previous session's handoff recorded the 73-line
-budget as reviewer-accepted in place of the map's 60. It records nothing about the
-`craft-spec | 150` row or the fence additions, and no acceptance can be dated
-2026-08-17.
-
-The four `auto-fix` findings — two comment-register violations in `internal/coverage`,
-and two missing tests (a control byte through a behavior cell, and `projection()`'s
-unknown-header fallback) — are ready to land as repair tickets on the same integration
-source once the blocking five are answered.
-
-Two learnings are logged in `capture/learnings.md` for the next `/bench-what-next`
-drain: a read-only review delegate wrote scratch files into the graded worktree (the
-gate caught it as `gate subject changed during execution`), and a build edited its own
-spec's acceptance criterion.
+`/bench-implement-spec --full` has finished build and review; the source is ready to
+land. Ten tickets landed green (eight from the approved breakdown plus two repair
+tickets the build and review added). Review round 1 (`opus`/high, three axes over
+`73c97aa5..578811f2`) produced 8 raw findings → 4 repair targets, closed at `8be12dd5`;
+round 2 over the repair delta was clean. A parallel session (`a78c0db0`) reviewed the
+same source and stopped with five reviewer questions; all five are answered and
+recorded in the spec: 73-line budget accepted, story 2 kept, `craft-spec | 150` row
+and the four spec/handoff fences ratified, no rewrap. That session is abandoned; do
+not resume it.
 
 ## Next command
 
-Answer the five `ask-user` findings in `reviews/spec-ticket-fence-reduction.md`, then:
-
-`/bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high`
+From `~/workspace/bench` on `main`:
+`bench worktree land --request 02c6f79b54a3505522af4c84014e0670 --base 73c97aa5 --source-tip <tip> --spec spec-ticket-fence-reduction -m "<msg>" <worktree path>`,
+then `/bench-final-check`.
 
 ## Shape
 
