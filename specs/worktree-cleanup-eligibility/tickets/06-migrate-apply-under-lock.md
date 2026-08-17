@@ -13,4 +13,4 @@ mutation-boundary contract used by the release and landing migration.
 
 ## Acceptance
 
-- [ ] CO2: explicit and automatic apply replan under the transaction lock and execute only an eligible verdict with unchanged stale-fingerprint and interruption outcomes.
+- [x] CO2: explicit and automatic apply replan under the transaction lock and execute only an eligible verdict with unchanged stale-fingerprint and interruption outcomes.
