@@ -185,7 +185,7 @@ func RoadmapCommand(args []string) (string, int) {
 	return renderRoadmapBoard(doc, diagnostics, DrainCounts(root), false, tree.DirState)
 }
 
-func renderRoadmapBoard(doc Document, diagnostics []string, drain Drain, absent bool, dirState bounds.FileState) (string, int) {
+func renderRoadmapBoard(doc Document, diagnostics []Diagnostic, drain Drain, absent bool, dirState bounds.FileState) (string, int) {
 	rowsShown := len(doc.Rows)
 	if rowsShown > 10 {
 		rowsShown = 10

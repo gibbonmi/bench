@@ -465,6 +465,50 @@ func TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence(t *test
 	}
 }
 
+// TestContextCommandUnrecognizedFileColonInPathRendersFullSource covers the
+// repair-typed-diagnostic ticket: an unrecognized-file basename that legally
+// contains ": " (nothing in the roadmap/ listing grammar forbids it) must render its
+// whole path as parse_failures.source. The old strings.Cut(d, ": ")-on-the-formatted-
+// string approach cut at the basename's own ": " and reported a truncated,
+// nonexistent path instead.
+func TestContextCommandUnrecognizedFileColonInPathRendersFullSource(t *testing.T) {
+	root := newRepo(t)
+	writeBoard(t, root, [2]string{"**FT7 (LOW) — x.**", ""})
+	if err := os.WriteFile(filepath.Join(root, RoadmapDir, "x: y.md"), []byte("scratch\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("parse_failures")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const wantSource = "roadmap/x: y.md"
+	const wantReason = "unrecognized file under roadmap/; expected <row ID>.md"
+	var found, truncated bool
+	for _, r := range rows {
+		row := r.(map[string]any)
+		if row["source"] == wantSource && row["reason"] == wantReason {
+			found = true
+		}
+		if row["source"] == "roadmap/x" {
+			truncated = true
+		}
+	}
+	if truncated {
+		t.Fatalf("parse_failures = %#v, source truncated at the basename's own \": \"", rows)
+	}
+	if !found {
+		t.Fatalf("parse_failures = %#v, want source %q reason %q", rows, wantSource, wantReason)
+	}
+}
+
 func TestContextCommandRowSelectorRefusesMalformedAndMissing(t *testing.T) {
 	root := newRepo(t)
 	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — first.**\nbody\n"), 0o644); err != nil {

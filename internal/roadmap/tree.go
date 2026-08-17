@@ -53,6 +53,20 @@ func LoadTree(root string) Tree {
 // migration, and every reader that names a row's file go through it.
 func rowFilePath(id string) string { return RoadmapDir + "/" + id + ".md" }
 
+// Diagnostic is one integrity fault ParseDocument found in the split board, carried
+// as its own path and reason rather than a formatted string a caller would have to
+// re-parse. A legal basename may itself contain ": " (the string String returns), so
+// a reader that wants the path or the reason separately takes the field, never a cut
+// of the rendered text.
+type Diagnostic struct {
+	Path, Reason string
+}
+
+// String renders a Diagnostic in the one format every roadmap surface has always
+// shown a reader: the path, then the reason. ValidateRoadmapTree's conformance
+// binding and every diagnostic-string test read this text.
+func (d Diagnostic) String() string { return d.Path + ": " + d.Reason }
+
 // ParseDocument projects a classified tree into the Document every roadmap surface
 // renders, the parse failures the snapshot reports, and the ordered integrity
 // diagnostics the conformance check returns. Diagnostics run in index order and then in
@@ -63,12 +77,12 @@ func rowFilePath(id string) string { return RoadmapDir + "/" + id + ".md" }
 // holds: a missing detail owner, a heading mismatch, and an inline body keep the index
 // row, while a wrapped heading, the second position of a duplicated ID, an orphan, and
 // an unrecognized file yield no row at all.
-func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, []ParseFailure, []string) {
+func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, []ParseFailure, []Diagnostic) {
 	content := tree.Index.Data
 	lines := strings.Split(string(content), "\n")
 	doc := Document{Text: string(content)}
 	var failures []ParseFailure
-	var diagnostics []string
+	var diagnostics []Diagnostic
 	owners, unread := rowFileOwners(tree.Files)
 	indexed := map[string]bool{}
 
@@ -93,11 +107,11 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 			i++
 		}
 		if closeAt < 0 {
-			diagnostics = append(diagnostics, fmt.Sprintf("%s: wrapped heading at line %d; a row heading is one physical line", RoadmapFile, at))
+			diagnostics = append(diagnostics, Diagnostic{RoadmapFile, fmt.Sprintf("wrapped heading at line %d; a row heading is one physical line", at)})
 			continue
 		}
 		if indexed[id] {
-			diagnostics = append(diagnostics, fmt.Sprintf("%s: duplicate row %s at line %d", RoadmapFile, id, at))
+			diagnostics = append(diagnostics, Diagnostic{RoadmapFile, fmt.Sprintf("duplicate row %s at line %d", id, at)})
 			continue
 		}
 		indexed[id] = true
@@ -112,17 +126,17 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 			rowText = string(file.Data)
 			first, body, _ := strings.Cut(rowText, "\n")
 			if first != line {
-				diagnostics = append(diagnostics, fmt.Sprintf("%s: heading does not match %s row %s", rowFilePath(id), RoadmapFile, id))
+				diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("heading does not match %s row %s", RoadmapFile, id)})
 			}
 			row.Body, row.BodyBytes = projectBody(strings.TrimSpace(body), full)
 		case unread[id]:
 			// The directory pass names the file it could not read; the row keeps its
 			// place on the board with the body nobody was able to load.
 		default:
-			diagnostics = append(diagnostics, fmt.Sprintf("%s: missing detail owner for %s row %s", rowFilePath(id), RoadmapFile, id))
+			diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("missing detail owner for %s row %s", RoadmapFile, id)})
 		}
 		if strings.TrimSpace(m[2][closeAt+2:]) != "" || anyNonBlank(lines[under:i]) {
-			diagnostics = append(diagnostics, fmt.Sprintf("%s: row %s carries an inline body; move it to %s", RoadmapFile, id, rowFilePath(id)))
+			diagnostics = append(diagnostics, Diagnostic{RoadmapFile, fmt.Sprintf("row %s carries an inline body; move it to %s", id, rowFilePath(id))})
 		}
 
 		if slugs := spec.LiveSpecSlugs([]byte(rowText)); len(slugs) > 0 {
@@ -173,17 +187,17 @@ func rowFileOwners(files []RowFile) (owners map[string]RowFile, unread map[strin
 // listingDiagnostics reports what the roadmap/ listing holds that no index row claimed,
 // in directory order: a basename outside the row-ID grammar, a row file the classifier
 // could not read, and a detail file whose row is not on the board.
-func listingDiagnostics(files []RowFile, indexed map[string]bool) []string {
-	var diagnostics []string
+func listingDiagnostics(files []RowFile, indexed map[string]bool) []Diagnostic {
+	var diagnostics []Diagnostic
 	for _, file := range files {
 		id, ok := rowFileID(file.Name)
 		switch {
 		case !ok:
-			diagnostics = append(diagnostics, fmt.Sprintf("%s/%s: unrecognized file under %s/; expected <row ID>.md", RoadmapDir, file.Name, RoadmapDir))
+			diagnostics = append(diagnostics, Diagnostic{RoadmapDir + "/" + file.Name, fmt.Sprintf("unrecognized file under %s/; expected <row ID>.md", RoadmapDir)})
 		case file.State != bounds.StateParsed && file.State != bounds.StateEmpty:
-			diagnostics = append(diagnostics, fmt.Sprintf("%s: %s detail file: %s", rowFilePath(id), file.State, file.Reason))
+			diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("%s detail file: %s", file.State, file.Reason)})
 		case !indexed[id]:
-			diagnostics = append(diagnostics, fmt.Sprintf("%s: orphan detail file with no %s row %s", rowFilePath(id), RoadmapFile, id))
+			diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("orphan detail file with no %s row %s", RoadmapFile, id)})
 		}
 	}
 	return diagnostics

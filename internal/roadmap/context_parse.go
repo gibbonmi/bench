@@ -104,7 +104,7 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 
 func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, error) {
 	s := ContextSnapshot{Full: full}
-	var diagnostics []string
+	var diagnostics []Diagnostic
 	// The index is read through the loader, not the label sweep below: one classified
 	// tree feeds both this snapshot's ROADMAP.md source row and the parse, so the row
 	// and the rows it summarises can never come from two different reads.
@@ -181,13 +181,13 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	s.Roadmap, roadFails, diagnostics = ParseDocument(tree, statuses, full)
 	s.Failures = append(s.Failures, roadFails...)
 	// Each integrity diagnostic renders as its own parse_failures row, sourced at the
-	// offending path it names (the prefix up to its first ": ", ParseDocument's own
-	// convention). Any diagnostic at all — not only one sourced at ROADMAP.md itself —
-	// withdraws trust from the index: a reader must never see ROADMAP.md's own row
-	// still reading clean over a tree the parser could not fully resolve.
+	// path and reason ParseDocument already carried apart — never a re-parse of the
+	// formatted string, which a path containing ": " would cut wrong. Any diagnostic
+	// at all — not only one sourced at ROADMAP.md itself — withdraws trust from the
+	// index: a reader must never see ROADMAP.md's own row still reading clean over a
+	// tree the parser could not fully resolve.
 	for _, d := range diagnostics {
-		source, reason, _ := strings.Cut(d, ": ")
-		s.Failures = append(s.Failures, ParseFailure{source, reason, "", 0})
+		s.Failures = append(s.Failures, ParseFailure{d.Path, d.Reason, "", 0})
 	}
 	if len(diagnostics) > 0 {
 		for i := range s.Sources {

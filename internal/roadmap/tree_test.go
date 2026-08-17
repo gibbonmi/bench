@@ -11,6 +11,20 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 )
 
+// diagnosticStrings renders ParseDocument's typed diagnostics the way every reader
+// before the Diagnostic type saw them, so a test can keep asserting the exact
+// "<path>: <reason>" text without re-deriving it from the struct fields itself.
+func diagnosticStrings(diagnostics []Diagnostic) []string {
+	if diagnostics == nil {
+		return nil
+	}
+	rendered := make([]string, len(diagnostics))
+	for i, d := range diagnostics {
+		rendered[i] = d.String()
+	}
+	return rendered
+}
+
 // TestTreeParseAcceptsHeadingOnlyRowFile covers PR1: an index of one physical heading
 // line per row plus a row file repeating that heading with nothing after it is a clean
 // board — the row carries the index title and an empty body, and nothing is reported.
@@ -69,7 +83,7 @@ func TestTreeParseDerivesSpecAndTriggerFromRowFile(t *testing.T) {
 func TestTreeParseReportsMissingDetailOwner(t *testing.T) {
 	doc, _, diagnostics := ParseDocument(indexTree("**FT7 (LOW) — x.**\n"), nil, true)
 	want := []string{"roadmap/FT7.md: missing detail owner for ROADMAP.md row FT7"}
-	if !reflect.DeepEqual(diagnostics, want) {
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
 	if len(doc.Rows) != 1 || doc.Rows[0].ID != "FT7" || doc.Rows[0].Body != "" {
@@ -88,7 +102,7 @@ func TestTreeParseReportsOrphanRowFile(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			doc, _, diagnostics := ParseDocument(splitTree(tc.index, map[string]string{"FT8.md": orphan}), nil, true)
-			if !reflect.DeepEqual(diagnostics, []string{want}) {
+			if !reflect.DeepEqual(diagnosticStrings(diagnostics), []string{want}) {
 				t.Fatalf("diagnostics = %#v, want %#v", diagnostics, []string{want})
 			}
 			if len(doc.Rows) != 0 {
@@ -108,7 +122,7 @@ func TestTreeParseReportsInlineBody(t *testing.T) {
 	})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
 	want := []string{"ROADMAP.md: row FT7 carries an inline body; move it to roadmap/FT7.md"}
-	if !reflect.DeepEqual(diagnostics, want) {
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
 	if len(doc.Rows) != 2 || doc.Rows[0].Body != "Owned body." {
@@ -123,7 +137,7 @@ func TestTreeParseReportsHeadingMismatch(t *testing.T) {
 	tree := splitTree("**FT7 (LOW) — x.**\n", map[string]string{"FT7.md": "**FT7 (LOW) — y.**\nbody\n"})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
 	want := []string{"roadmap/FT7.md: heading does not match ROADMAP.md row FT7"}
-	if !reflect.DeepEqual(diagnostics, want) {
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
 	if len(doc.Rows) != 1 || doc.Rows[0].Title != "(LOW) — x." || doc.Rows[0].Body != "body" {
@@ -144,7 +158,7 @@ func TestTreeParseReportsUnrecognizedFiles(t *testing.T) {
 		"roadmap/FT7.txt: unrecognized file under roadmap/; expected <row ID>.md",
 		"roadmap/notes.md: unrecognized file under roadmap/; expected <row ID>.md",
 	}
-	if !reflect.DeepEqual(diagnostics, want) {
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
 	if len(doc.Rows) != 1 || doc.Rows[0].ID != "AB1" {
@@ -159,7 +173,7 @@ func TestTreeParseReportsDuplicateIndexID(t *testing.T) {
 	tree := splitTree(heading+"\n\n"+heading+"\n", map[string]string{"FT7.md": heading + "\n"})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
 	want := []string{"ROADMAP.md: duplicate row FT7 at line 3"}
-	if !reflect.DeepEqual(diagnostics, want) {
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
 	if len(doc.Rows) != 1 {
@@ -177,7 +191,7 @@ func TestTreeParseDropsWrappedHeadingAndKeepsMissingOwnerRow(t *testing.T) {
 		"ROADMAP.md: wrapped heading at line 1; a row heading is one physical line",
 		"roadmap/FT8.md: missing detail owner for ROADMAP.md row FT8",
 	}
-	if !reflect.DeepEqual(diagnostics, want) {
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
 	if len(doc.Rows) != 1 || doc.Rows[0].ID != "FT8" || doc.Rows[0].Body != "" {
@@ -193,7 +207,7 @@ func TestTreeParseReportsUnreadRowFile(t *testing.T) {
 	tree.Files = []RowFile{{Name: "FT7.md", State: bounds.StateWrongType, Reason: "not a regular file: d---------"}}
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
 	want := []string{"roadmap/FT7.md: wrong-type detail file: not a regular file: d---------"}
-	if !reflect.DeepEqual(diagnostics, want) {
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
 	if len(doc.Rows) != 1 || doc.Rows[0].Body != "" {

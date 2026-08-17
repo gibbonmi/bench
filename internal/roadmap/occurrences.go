@@ -78,7 +78,7 @@ func projectCaptureOccurrences(doc *Document, units []captureUnit) ([]CaptureOcc
 // diagnostic over the split board, or any capture source that did not read cleanly
 // withdraws that trust: a sequence derived from an unread row file or a broken tree
 // is a guess, and the index may never look clean over one.
-func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy, diagnostics []string, sources []SourceFact) bool {
+func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy, diagnostics []Diagnostic, sources []SourceFact) bool {
 	if len(diagnostics) != 0 {
 		return false
 	}
