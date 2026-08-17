@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	gitpkg "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/roadmap"
 )
 
 func TestCommandRunsVersionInProcess(t *testing.T) {
@@ -377,8 +378,12 @@ func setupAXIWorktree(t *testing.T, root string) {
 	runAXIGit(t, "-C", root, "worktree", "add", "-q", "-b", "fixture-linked", linked)
 }
 
+// setupAXIRoadmap writes the split board the roadmap surfaces read: one index heading
+// line and the row file that owns its detail.
 func setupAXIRoadmap(t *testing.T, root string) {
-	writeAXIFixture(t, filepath.Join(root, "ROADMAP.md"), "**FT1 — fixture.**\n")
+	const heading = "**FT1 — fixture.**"
+	writeAXIFixture(t, filepath.Join(root, "ROADMAP.md"), heading+"\n")
+	writeAXIFixture(t, filepath.Join(root, roadmap.RoadmapDir, "FT1.md"), heading+"\n")
 }
 
 func writeAXIFixture(t *testing.T, path, content string) {

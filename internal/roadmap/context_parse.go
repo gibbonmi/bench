@@ -69,119 +69,6 @@ func parseOccurrenceLedger(lines []string) (string, int, bool) {
 	return ledger, len(keys), true
 }
 
-func ParseDocument(content []byte, statuses map[string]string, full bool) (Document, []ParseFailure) {
-	lines := strings.Split(string(content), "\n")
-	doc := Document{Text: string(content)}
-	var failures []ParseFailure
-	for i := 0; i < len(lines); {
-		m := roadmapStartRe.FindStringSubmatch(lines[i])
-		if m == nil {
-			if strings.HasPrefix(lines[i], "**") {
-				raw, n := projectBody(lines[i], full)
-				failures = append(failures, ParseFailure{RoadmapFile, "malformed roadmap row", raw, n})
-			}
-			i++
-			continue
-		}
-		start := i
-		headerParts := []string{m[2]}
-		closed := strings.Contains(m[2], "**")
-		for !closed && i+1 < len(lines) {
-			i++
-			headerParts = append(headerParts, lines[i])
-			closed = strings.Contains(lines[i], "**")
-		}
-		if !closed {
-			rawText := strings.Join(lines[start:i+1], "\n")
-			raw, n := projectBody(rawText, full)
-			failures = append(failures, ParseFailure{RoadmapFile, "unclosed roadmap heading", raw, n})
-			continue
-		}
-		headerJoined := strings.Join(headerParts, "\n")
-		closeAt := strings.Index(headerJoined, "**")
-		title := strings.Trim(strings.ReplaceAll(headerJoined[:closeAt], "\n", " "), " —:-\t")
-		inlineBody := strings.TrimSpace(headerJoined[closeAt+2:])
-		i++
-		bodyStart := i
-		for i < len(lines) && !strings.HasPrefix(lines[i], "**") && !strings.HasPrefix(lines[i], "## ") {
-			i++
-		}
-		bodyRaw := strings.TrimSpace(strings.Join(append([]string{inlineBody}, lines[bodyStart:i]...), "\n"))
-		body, bodyBytes := projectBody(bodyRaw, full)
-		r := RoadmapRow{ID: m[1], Title: title, Body: body, BodyBytes: bodyBytes}
-		rowLines := lines[start:i]
-		joined := strings.Join(rowLines, "\n")
-		if slugs := spec.LiveSpecSlugs([]byte(joined)); len(slugs) > 0 {
-			r.Spec = slugs[0]
-			r.SpecStatus = statuses[slugs[0]]
-		}
-		lower := strings.ToLower(joined)
-		r.ExternalTrigger = strings.Contains(lower, "pending ") || strings.Contains(lower, "graduate on") || strings.Contains(lower, "scheduled")
-		if keys, count, valid := parseOccurrenceLedger(rowLines); valid {
-			r.OccurrenceKeys, r.OccurrenceCount = keys, count
-		} else {
-			doc.OccurrenceDiscrepancies = append(doc.OccurrenceDiscrepancies, OccurrenceDiscrepancy{Source: RoadmapFile, CaptureUnit: r.ID, Kind: "malformed-ledger", Owner: r.ID, Structural: true})
-			failures = append(failures, ParseFailure{RoadmapFile, "malformed-ledger", "", 0})
-		}
-		doc.Rows = append(doc.Rows, r)
-	}
-	inSequence, inFence, sequenceStart, sequenceEnd := false, false, -1, len(lines)
-	hasSection := false
-	for idx, line := range lines {
-		trimmed := strings.TrimRight(line, " \t\r")
-		if strings.HasPrefix(trimmed, "```") {
-			inFence = !inFence
-			continue
-		}
-		if inFence {
-			continue
-		}
-		// Any unfenced `## ` heading — not only Recommended sequence — is roadmap
-		// structure: a document with sections is a working roadmap the reader
-		// recognizes, possibly one with nothing due yet, never "not the document
-		// you think".
-		if strings.HasPrefix(trimmed, "## ") {
-			hasSection = true
-		}
-		if !inSequence && trimmed == "## Recommended sequence" {
-			inSequence = true
-			sequenceStart = idx
-			continue
-		}
-		if inSequence && strings.HasPrefix(trimmed, "## ") {
-			sequenceEnd = idx
-			break
-		}
-		if !inSequence {
-			continue
-		}
-		parts := strings.SplitN(line, ". ", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		rank, err := strconv.Atoi(parts[0])
-		if err != nil {
-			continue
-		}
-		cmd := ""
-		if m := commandRe.FindString(parts[1]); m != "" {
-			cmd = m
-		}
-		doc.Sequence = append(doc.Sequence, SequenceRow{Rank: rank, Text: parts[1], Command: cmd})
-	}
-	if sequenceStart >= 0 {
-		doc.SequenceText = strings.Join(lines[sequenceStart:sequenceEnd], "\n")
-		if !strings.HasSuffix(doc.SequenceText, "\n") {
-			doc.SequenceText += "\n"
-		}
-	}
-	if len(content) > 0 && len(doc.Rows) == 0 && len(failures) == 0 && !hasSection {
-		raw, n := projectBody(string(content), full)
-		failures = append(failures, ParseFailure{RoadmapFile, noRoadmapRowsReason, raw, n})
-	}
-	return doc, failures
-}
-
 // noRoadmapRowsReason is roadmap's unsupported-schema predicate — bytes that read
 // cleanly but in which ParseDocument recognized no roadmap structure at all: no
 // `**ID**` row and no unfenced `## ` section, Recommended sequence or otherwise. A
@@ -217,7 +104,16 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 
 func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, error) {
 	s := ContextSnapshot{Full: full}
-	labels := []string{RoadmapFile, IdeasFile, learnings.JournalPath, ".bench/structure.budgets", ".bench/structure-accept", "specs/"}
+	var diagnostics []string
+	// The index is read through the loader, not the label sweep below: one classified
+	// tree feeds both this snapshot's ROADMAP.md source row and the parse, so the row
+	// and the rows it summarises can never come from two different reads.
+	tree := LoadTree(root)
+	s.Sources = append(s.Sources, SourceFact{RoadmapFile, string(tree.Index.State), len(tree.Index.Data)})
+	if degradedState(tree.Index.State) {
+		s.Failures = append(s.Failures, ParseFailure{RoadmapFile, string(tree.Index.State) + ": " + tree.Index.Reason, "", 0})
+	}
+	labels := []string{IdeasFile, learnings.JournalPath, ".bench/structure.budgets", ".bench/structure-accept", "specs/"}
 	data := map[string][]byte{}
 	for _, label := range labels {
 		if label == "specs/" {
@@ -278,7 +174,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 		}
 	}
 	var roadFails []ParseFailure
-	s.Roadmap, roadFails = ParseDocument(data[RoadmapFile], statuses, full)
+	s.Roadmap, roadFails, diagnostics = ParseDocument(tree, statuses, full)
 	s.Failures = append(s.Failures, roadFails...)
 	s.Ideas, roadFails, _ = parseIdeas(data[IdeasFile], full)
 	s.Failures = append(s.Failures, roadFails...)
@@ -349,7 +245,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 			}
 		}
 	}
-	s.SequenceTrusted = occurrenceSequenceTrusted(s.Roadmap.OccurrenceDiscrepancies, s.Sources)
+	s.SequenceTrusted = occurrenceSequenceTrusted(s.Roadmap.OccurrenceDiscrepancies, diagnostics, s.Sources)
 	return s, nil
 }
 

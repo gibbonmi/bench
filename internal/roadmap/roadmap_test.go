@@ -131,9 +131,7 @@ func TestIdeaNewlineNormalization(t *testing.T) {
 
 func TestIdeaOwnedOccurrence(t *testing.T) {
 	root := newRepo(t)
-	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT98 — active work replaces retired FT97.**\nOccurrences: baseline-01\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeBoard(t, root, [2]string{"**FT98 — active work replaces retired FT97.**", "Occurrences: baseline-01\n"})
 	if err := os.WriteFile(ideasPath(t, root), []byte("- 2026-07-30  hand added"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -152,18 +150,17 @@ func TestIdeaOwnedOccurrence(t *testing.T) {
 
 func TestIdeaHistoricalOwnerAbsentFromCurrentRoadmapRefuses(t *testing.T) {
 	root := newRepo(t)
-	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT98 — retired history.**\nOccurrences: baseline-01\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if out, err := exec.Command("git", "-C", root, "add", RoadmapFile).CombinedOutput(); err != nil {
+	writeBoard(t, root, [2]string{"**FT98 — retired history.**", "Occurrences: baseline-01\n"})
+	if out, err := exec.Command("git", "-C", root, "add", RoadmapFile, RoadmapDir).CombinedOutput(); err != nil {
 		t.Fatalf("stage history: %v: %s", err, out)
 	}
 	if out, err := exec.Command("git", "-C", root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "retire FT98").CombinedOutput(); err != nil {
 		t.Fatalf("commit history: %v: %s", err, out)
 	}
-	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT99 — current.**\nOccurrences: baseline-01\n"), 0o644); err != nil {
+	if err := os.Remove(filepath.Join(root, RoadmapDir, "FT98.md")); err != nil {
 		t.Fatal(err)
 	}
+	writeBoard(t, root, [2]string{"**FT99 — current.**", "Occurrences: baseline-01\n"})
 	before := []byte("- 2026-07-30  existing idea\n")
 	if err := os.WriteFile(ideasPath(t, root), before, 0o644); err != nil {
 		t.Fatal(err)
@@ -177,31 +174,30 @@ func TestIdeaHistoricalOwnerAbsentFromCurrentRoadmapRefuses(t *testing.T) {
 }
 
 func TestIdeaOwnedOccurrenceRefusalsPreserveInbox(t *testing.T) {
+	const ledger = "Occurrences: baseline-01\n"
 	tests := []struct {
-		name    string
-		roadmap string
-		args    []string
-		code    int
+		name   string
+		ledger string
+		args   []string
+		code   int
 	}{
-		{"missing incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "idea"}, 2},
-		{"missing owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--incident", "signal", "idea"}, 2},
-		{"repeated owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--owner", "FT98", "--incident", "signal", "idea"}, 2},
-		{"repeated incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--incident", "signal", "--incident", "other", "idea"}, 2},
-		{"empty owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "", "--incident", "signal", "idea"}, 2},
-		{"empty incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--incident", "", "idea"}, 2},
-		{"flag-like owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "--incident", "signal", "idea"}, 2},
-		{"flag-like incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--incident", "--owner", "idea"}, 2},
-		{"malformed owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT0", "--incident", "signal", "idea"}, 2},
-		{"malformed incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--incident", "Bad", "idea"}, 2},
-		{"unknown owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT99", "--incident", "signal", "idea"}, 1},
-		{"untrusted roadmap", "**FT98 — active.**\nOccurrences: invalid_key\n", []string{"--owner", "FT98", "--incident", "signal", "idea"}, 1},
+		{"missing incident", ledger, []string{"--owner", "FT98", "idea"}, 2},
+		{"missing owner", ledger, []string{"--incident", "signal", "idea"}, 2},
+		{"repeated owner", ledger, []string{"--owner", "FT98", "--owner", "FT98", "--incident", "signal", "idea"}, 2},
+		{"repeated incident", ledger, []string{"--owner", "FT98", "--incident", "signal", "--incident", "other", "idea"}, 2},
+		{"empty owner", ledger, []string{"--owner", "", "--incident", "signal", "idea"}, 2},
+		{"empty incident", ledger, []string{"--owner", "FT98", "--incident", "", "idea"}, 2},
+		{"flag-like owner", ledger, []string{"--owner", "--incident", "signal", "idea"}, 2},
+		{"flag-like incident", ledger, []string{"--owner", "FT98", "--incident", "--owner", "idea"}, 2},
+		{"malformed owner", ledger, []string{"--owner", "FT0", "--incident", "signal", "idea"}, 2},
+		{"malformed incident", ledger, []string{"--owner", "FT98", "--incident", "Bad", "idea"}, 2},
+		{"unknown owner", ledger, []string{"--owner", "FT99", "--incident", "signal", "idea"}, 1},
+		{"untrusted roadmap", "Occurrences: invalid_key\n", []string{"--owner", "FT98", "--incident", "signal", "idea"}, 1},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newRepo(t)
-			if err := os.WriteFile(roadmapPath(t, root), []byte(tc.roadmap), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			writeBoard(t, root, [2]string{"**FT98 — active.**", tc.ledger})
 			before := []byte("- 2026-07-30  existing idea\n")
 			if err := os.WriteFile(ideasPath(t, root), before, 0o644); err != nil {
 				t.Fatal(err)
@@ -220,14 +216,12 @@ func TestIdeaOwnedOccurrenceRefusalsPreserveInbox(t *testing.T) {
 
 func TestRoadmapBoardDocument(t *testing.T) {
 	root := newRepo(t)
-	var rows strings.Builder
+	board11 := make([][2]string, 0, 11)
 	for i := 1; i <= 11; i++ {
-		fmt.Fprintf(&rows, "**FT%d — row %d.**\n\n", i, i)
+		board11 = append(board11, [2]string{fmt.Sprintf("**FT%d — row %d.**", i, i), ""})
 	}
-	content := "# Roadmap\n\n" + rows.String() + "## Recommended sequence\n\n1. First item - /bench-shape-idea\n"
-	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	index, files := board(board11...)
+	writeSplitBoard(t, root, "# Roadmap\n\n"+index+"## Recommended sequence\n\n1. First item - /bench-shape-idea\n", files)
 	out, code := RoadmapCommand(nil)
 	if code != 0 {
 		t.Fatalf("exit = %d; stdout=%q", code, out)
@@ -270,14 +264,12 @@ func TestRoadmapBoardRowBoundary(t *testing.T) {
 	for _, count := range []int{0, 9, 10, 11} {
 		t.Run(fmt.Sprintf("%d rows", count), func(t *testing.T) {
 			root := newRepo(t)
-			var content strings.Builder
-			content.WriteString("# Roadmap\n\n## Recommended sequence\n\n")
+			fixture := make([][2]string, 0, count)
 			for i := 1; i <= count; i++ {
-				fmt.Fprintf(&content, "**FT%d — row.**\n\n", i)
+				fixture = append(fixture, [2]string{fmt.Sprintf("**FT%d — row.**", i), ""})
 			}
-			if err := os.WriteFile(roadmapPath(t, root), []byte(content.String()), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			index, files := board(fixture...)
+			writeSplitBoard(t, root, "# Roadmap\n\n## Recommended sequence\n\n"+index, files)
 			out, code := RoadmapCommand(nil)
 			if code != 0 {
 				t.Fatalf("exit = %d; stdout=%q", code, out)
