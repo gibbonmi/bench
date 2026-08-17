@@ -120,15 +120,16 @@ func planLandedAssignment(root string, assignment intent.Assignment, options Cle
 }
 
 // retainForLandedPreservation is the landed-set's single site for the preservation
-// refusal: it calls the same automaticPreservationTrigger (eligibility.go) decideAutomatic's
+// refusal: it calls the same automaticPreservationVerdict (eligibility.go) decideAutomatic's
 // own dirty-refusal branch consults, so the two never derive "would removing this strand
 // uncommitted work" differently, even though each still projects its own operator-facing
 // message for its own command surface.
 func retainForLandedPreservation(plan CleanupPlan) CleanupPlan {
-	if !automaticPreservationTrigger(plan) {
+	retain, action, reasonCode, reason := automaticPreservationVerdict(plan, "per-path cleanup is required to preserve work")
+	if !retain {
 		return plan
 	}
-	plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonDirty, "per-path cleanup is required to preserve work"
+	plan.Action, plan.ReasonCode, plan.Reason = action, reasonCode, reason
 	plan.Recovery = "none"
 	return plan
 }

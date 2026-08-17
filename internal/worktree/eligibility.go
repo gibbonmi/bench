@@ -363,18 +363,22 @@ func decideAutomatic(f automaticFacts) automaticVerdict {
 	// start and through every release, and the standing cleaner sweeps the namespace such a
 	// ref would live in, so preserving there would write work nothing can hand back.
 	// Disposing of the checkout stays with the operator's explicit path-addressed clean.
-	if automaticPreservationTrigger(plan) {
-		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonDirty, Reason: "automatic cleanup does not preserve uncommitted work", AssignmentID: assignmentID}
+	if retain, action, reasonCode, reason := automaticPreservationVerdict(plan, "automatic cleanup does not preserve uncommitted work"); retain {
+		return automaticVerdict{Action: action, ReasonCode: reasonCode, Reason: reason, AssignmentID: assignmentID}
 	}
 	return automaticVerdict{Action: plan.Action, ReasonCode: plan.ReasonCode, Reason: plan.Reason, AssignmentID: assignmentID}
 }
 
-// automaticPreservationTrigger is the one place that decides whether automatic-flavored
-// policy must refuse a plan to avoid stranding uncommitted work: decideAutomatic's own
-// dirty-refusal branch and the landed-set's retainForLandedPreservation (clean_landed.go)
-// both call this instead of independently reading plan.preserves(), so the two routes can
-// never derive "would removing this strand uncommitted work" differently — even though each
-// still projects its own operator-facing message for its own command surface.
-func automaticPreservationTrigger(plan CleanupPlan) bool {
-	return plan.preserves()
+// automaticPreservationVerdict is the one place automatic-flavored policy decides whether
+// a plan must be retained to avoid stranding uncommitted work, and what Action/ReasonCode
+// that refusal carries. decideAutomatic's own dirty-refusal branch and the landed-set's
+// retainForLandedPreservation (clean_landed.go) both call this — neither writes its own
+// ActionRetain/ReasonDirty literal — so the two routes can never derive "would removing
+// this strand uncommitted work" differently. Each caller still supplies its own
+// operator-facing message for its own command surface.
+func automaticPreservationVerdict(plan CleanupPlan, message string) (retain bool, action CleanupAction, reasonCode CleanupReason, reason string) {
+	if !plan.preserves() {
+		return false, plan.Action, plan.ReasonCode, plan.Reason
+	}
+	return true, ActionRetain, ReasonDirty, message
 }

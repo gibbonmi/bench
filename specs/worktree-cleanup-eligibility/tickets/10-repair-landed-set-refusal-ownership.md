@@ -30,6 +30,6 @@ Recovery-reset behavior exactly.
 
 ## Acceptance
 
-- [ ] CO3/EV2: the only literal `ActionRetain, ReasonDirty` construction for this refusal is inside eligibility.go; both consumers call it.
-- [ ] Byte-identical messages: "automatic cleanup does not preserve uncommitted work" (PlanAutomatic) and "per-path cleanup is required to preserve work" (landed-set) unchanged.
-- [ ] All existing tests in eligibility_test.go, clean_landed_apply_test.go remain green with unmodified assertions.
+- [x] CO3/EV2: the only literal `ActionRetain, ReasonDirty` construction for this refusal is inside eligibility.go; both consumers call it.
+- [x] Byte-identical messages: "automatic cleanup does not preserve uncommitted work" (PlanAutomatic) and "per-path cleanup is required to preserve work" (landed-set) unchanged.
+- [x] All existing tests in eligibility_test.go, clean_landed_apply_test.go remain green with unmodified assertions.
