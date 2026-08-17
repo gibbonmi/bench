@@ -88,7 +88,7 @@ func newSystemOwner() (*systemOwner, error) {
 			_ = o.cleanup()
 			return nil, err
 		}
-		if result := o.runAt(repo, nil, "git", "init", "-q"); result.code != 0 {
+		if result := o.runAt(repo, nil, "git", "init", "-q", "-b", "main"); result.code != 0 {
 			_ = o.cleanup()
 			return nil, fmt.Errorf("git init: %s", result.stderr)
 		}
@@ -378,7 +378,7 @@ func TestWorktreeReauthorizeJourney(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"init", "-q"}, {"add", "base.txt"}, {"-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "base"}} {
+	for _, args := range [][]string{{"init", "-q", "-b", "main"}, {"add", "base.txt"}, {"-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "base"}} {
 		if len(args) == 2 && args[0] == "add" {
 			if err := os.WriteFile(filepath.Join(repo, "base.txt"), []byte("base\n"), 0o644); err != nil {
 				t.Fatal(err)
