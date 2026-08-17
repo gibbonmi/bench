@@ -1,0 +1,7 @@
+[
+  {
+    "path": "CHANGELOG.md",
+    "old": "- A spec's acceptance coverage map now carries four columns — story, behavior, seam, and\n  why it catches the failure — behind the optional leading row ID; the retired `red\n  signal` column's job belongs to the why-it-catches clause. `bench coverage <spec>` now\n  projects `rows[N]{story,behavior,seam}` instead of `rows[N]{story,seam,red_signal}`, so\n  task seeding reads a column every schema has. The previous six-column header still\n  parses.\n",
+    "new": ""
+  }
+]

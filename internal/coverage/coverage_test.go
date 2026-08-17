@@ -382,6 +382,40 @@ func TestCommand(t *testing.T) {
 		}
 	})
 
+	// The behavior cell is author-controlled prose that reaches the TOON encoder, so a
+	// control byte in it is refused whole: the AXI error contract replaces the response
+	// rather than a table with one lossy cell in it.
+	t.Run("control-bearing behavior cell refuses the whole response", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		mustWrite(t, "spec.md", mapped("| 1 | b\x1bx | s | r | w |\n"))
+
+		out, code := Command([]string{"spec.md"})
+		want := "error: unrepresentable TOON cell — toon: unsupported control character U+001B in string\n"
+		if code != 1 || out != want {
+			t.Fatalf("Command = (%d, %q), want (1, %q)", code, out, want)
+		}
+	})
+
+	// A comma is the row delimiter and a tab is an escapable control, so a behavior
+	// carrying either is the case where an unquoted cell would silently split or
+	// corrupt the record. Both stay one three-field row, quoted by the encoder.
+	for _, tc := range []struct{ name, behavior, row string }{
+		{"comma", "a,b", "  \"1\",\"a,b\",s\n"},
+		{"tab", "does\tx", "  \"1\",\"does\\tx\",s\n"},
+	} {
+		t.Run("delimiter-bearing behavior renders one quoted row: "+tc.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			mustWrite(t, "spec.md", mapped("| 1 | "+tc.behavior+" | s | r | w |\n"))
+
+			out, code := Command([]string{"spec.md"})
+			want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n" + tc.row +
+				"help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage for stories 1\n"
+			if code != 0 || out != want {
+				t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+			}
+		})
+	}
+
 	t.Run("separator-free slug resolves specs/<slug>/spec.md", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		body := mapped("| 1 | b2 | s2 | r2 | w2 |\n")

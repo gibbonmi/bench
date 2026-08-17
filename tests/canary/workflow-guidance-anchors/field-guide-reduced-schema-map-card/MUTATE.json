@@ -1,0 +1,7 @@
+[
+  {
+    "path": "docs/field-guide.html",
+    "old": "            <p class=\"def\">The table in every spec that maps each story to one observable\n            behavior, the seam it is observed at, and why that row catches the failure.\n            During the build it is the unit of TDD coverage and the thing that keeps the\n            target fixed: rows go red one at a time as each slice starts, never batched\n            into an upfront pile of failing tests.</p>\n",
+    "new": ""
+  }
+]

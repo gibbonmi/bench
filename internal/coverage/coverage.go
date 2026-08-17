@@ -169,9 +169,8 @@ type parsed struct {
 }
 
 // projection is the descriptor Rows reads cells through. A header matching no
-// descriptor has none of its own, so it projects through the legacy field order —
-// the same cells it yielded when the offsets came from an opt-in flag an unmatched
-// header never set. Check refuses such a map before any other cell read.
+// descriptor has none of its own, so it projects through the legacy field order.
+// Check refuses such a map before any other cell read.
 func (p parsed) projection() schema {
 	if p.sch.known() {
 		return p.sch
