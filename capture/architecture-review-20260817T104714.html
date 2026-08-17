@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Architecture review — bench</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { border-style: dashed; }
+      .leak { color: #dc2626; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+      .arrow { color: #64748b; font-size: 1.35rem; line-height: 1; }
+      .module-shadow { box-shadow: 0 12px 30px -24px rgb(15 23 42 / 0.55); }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+      <header class="space-y-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Architecture review</p>
+            <h1 class="mt-2 text-4xl font-serif tracking-tight">bench</h1>
+          </div>
+          <div class="text-sm text-slate-600 sm:text-right">
+            <p>2026-08-17</p>
+            <p class="font-mono text-xs">main @ 1c86bdf9</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-x-6 gap-y-3 rounded-xl border border-slate-200 bg-white px-5 py-4 text-xs text-slate-600 module-shadow">
+          <span class="inline-flex items-center gap-2"><span class="h-5 w-8 rounded border-2 border-slate-500 bg-white"></span>solid box = module</span>
+          <span class="inline-flex items-center gap-2"><span class="h-5 w-8 rounded border-2 border-dashed border-slate-500 bg-white"></span>dashed line = seam</span>
+          <span class="inline-flex items-center gap-2"><span class="text-lg font-bold text-red-600">→</span>red arrow = leakage</span>
+          <span class="inline-flex items-center gap-2"><span class="h-5 w-8 rounded border-4 border-slate-900 bg-slate-800"></span>dark box = deep module</span>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs uppercase tracking-wider text-slate-500">Candidate territory</p>
+            <p class="mt-1 font-semibold">ASSESSMENT.md architecture rows</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs uppercase tracking-wider text-slate-500">Current opportunities</p>
+            <p class="mt-1 font-semibold">3 source-verified</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs uppercase tracking-wider text-slate-500">Prior survey</p>
+            <p class="mt-1 font-semibold">5 landed or excluded</p>
+          </div>
+        </div>
+      </header>
+
+      <section id="candidates" class="space-y-10">
+        <article id="worktree-eligibility" class="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 module-shadow">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-[0.22em] text-slate-500">FT216</p>
+              <h2 class="mt-2 text-2xl font-serif font-semibold">Make cleanup eligibility one verdict</h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Strong</span>
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">in-process</span>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-lg bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700">
+            <p>internal/worktree/subshell.go:63–307</p>
+            <p>internal/worktree/classifier.go:284–346</p>
+            <p>internal/worktree/clean_landed.go · lifecycle.go · ownership.go · worktree.go</p>
+          </div>
+
+          <div class="mt-7 grid gap-5 lg:grid-cols-2">
+            <div>
+              <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Before</p>
+              <div class="min-h-[320px] rounded-xl border border-slate-200 bg-stone-50 p-3">
+                <pre class="mermaid">
+flowchart TB
+  O["owner and assignment"] --> E["PlanExplicit"]
+  L["lease and nested state"] --> E
+  G["landed proof"] --> E
+  E --> P["mutable CleanupPlan"]
+  P -.-> A["PlanAutomatic"]
+  A --> D["second decision"]
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class P,A leak;
+  linkStyle 4 stroke:#dc2626,stroke-width:2px;
+                </pre>
+              </div>
+            </div>
+            <div>
+              <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">After</p>
+              <div class="min-h-[320px] rounded-xl border border-slate-200 bg-stone-50 p-3">
+                <pre class="mermaid">
+flowchart TB
+  E["ownership and safety evidence"] --> V["eligibility module<br/>one decided verdict"]
+  V --> X["explicit cleanup"]
+  V --> A["automatic cleanup"]
+  V --> P["apply + lifecycle paths"]
+  classDef deep fill:#1e293b,stroke:#0f172a,stroke-width:4px,color:#fff;
+  class V deep;
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-7 grid gap-5 md:grid-cols-2">
+            <div class="space-y-4">
+              <div>
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</h3>
+                <p class="mt-1">Explicit planning decides through ordered mutation, then automatic cleanup re-reads assignment, recovery, and string-encoded landedness to decide again.</p>
+              </div>
+              <div>
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</h3>
+                <p class="mt-1">Deepen one eligibility module that owns ordered evidence and the decided verdict; cleanup paths project that decision.</p>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Wins</h3>
+              <ul class="mt-2 space-y-2 text-sm">
+                <li>• locality: refusal precedence in one module</li>
+                <li>• leverage: one verdict, many consumers</li>
+                <li>• tests cross one interface</li>
+                <li>• string leakage ends</li>
+              </ul>
+              <p class="mt-4 border-l-2 border-emerald-500 pl-3 text-sm text-slate-600"><span class="font-semibold">Deletion test:</span> deleting the deep module would spread eligibility precedence across cleanup consumers.</p>
+            </div>
+          </div>
+
+          <div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <span class="font-semibold">ADR 0005 constraint:</span> ownership, assignment, lock, landedness, recovery, and preservation remain conjunctive; no reopening is warranted.
+          </div>
+        </article>
+
+        <article id="adopt-lifecycle" class="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 module-shadow">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-[0.22em] text-slate-500">FT217</p>
+              <h2 class="mt-2 text-2xl font-serif font-semibold">Make lifecycle planning authoritative</h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">Worth exploring</span>
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">in-process</span>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-lg bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700">
+            <p>internal/adopt/decision.go:11–97</p>
+            <p>internal/adopt/upgrade.go:116–146</p>
+            <p>internal/adopt/link_transaction.go:127–381 · unlink.go:55–137 · setup.go:306</p>
+          </div>
+
+          <div class="mt-7 grid gap-5 lg:grid-cols-2">
+            <div>
+              <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Before</p>
+              <div class="space-y-2 rounded-xl border border-slate-200 bg-stone-50 p-5 min-h-[320px]">
+                <div class="h-12 border-l-4 border-red-500 bg-white px-4 py-3 text-sm"><span class="font-mono">link</span> derives and applies effects</div>
+                <div class="h-12 border-l-4 border-red-500 bg-white px-4 py-3 text-sm"><span class="font-mono">setup</span> enters link derivation</div>
+                <div class="h-12 border-l-4 border-slate-500 bg-white px-4 py-3 text-sm"><span class="font-mono">upgrade</span> reads PlanLifecycle</div>
+                <div class="h-12 border-l-4 border-red-500 bg-white px-4 py-3 text-sm"><span class="font-mono">unlink</span> derives removals</div>
+                <p class="pt-3 text-center text-xs uppercase tracking-wider text-red-700">three decision paths leak</p>
+              </div>
+            </div>
+            <div>
+              <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">After</p>
+              <div class="rounded-xl border border-slate-200 bg-stone-50 p-5 min-h-[320px]">
+                <div class="deep rounded-xl border-4 border-slate-950 px-5 py-8 text-center text-white">
+                  <p class="text-xs uppercase tracking-wider text-slate-300">Deep module</p>
+                  <p class="mt-2 text-lg font-semibold">Lifecycle decision</p>
+                  <p class="mt-1 text-sm text-slate-300">inventories → ordered effects</p>
+                </div>
+                <div class="mt-5 grid grid-cols-2 gap-2 text-center font-mono text-xs">
+                  <div class="rounded border border-slate-300 bg-white py-3">link apply</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">setup apply</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">upgrade apply</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">unlink apply</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-7 grid gap-5 md:grid-cols-2">
+            <div class="space-y-4">
+              <div>
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</h3>
+                <p class="mt-1">PlanLifecycle makes an immutable add/change/remove decision, but only upgrade consumes it; link, setup, and unlink derive effects elsewhere.</p>
+              </div>
+              <div>
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</h3>
+                <p class="mt-1">Make one lifecycle decision owner authoritative for all four verbs while each keeps its distinct safety checks and atomic implementation.</p>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Wins</h3>
+              <ul class="mt-2 space-y-2 text-sm">
+                <li>• locality: effect semantics stay together</li>
+                <li>• leverage: one decision, four verbs</li>
+                <li>• tests reach real composition</li>
+                <li>• verb mechanics stay distinct</li>
+              </ul>
+              <p class="mt-4 border-l-2 border-amber-500 pl-3 text-sm text-slate-600"><span class="font-semibold">Deletion test:</span> PlanLifecycle is shallow today; deleting it removes only upgrade’s small calculation.</p>
+            </div>
+          </div>
+
+          <div class="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <span class="font-semibold">Closed decision:</span> dry-run output remains out of scope; no ADR conflicts.
+          </div>
+        </article>
+
+        <article id="git-admin-reader" class="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 module-shadow">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-[0.22em] text-slate-500">FT218</p>
+              <h2 class="mt-2 text-2xl font-serif font-semibold">Absorb private admin-directory resolution</h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">Worth exploring</span>
+              <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-800">local-substitutable</span>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-lg bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700">
+            <p>internal/status/status.go:459</p>
+            <p>internal/worktree/subshell.go:103 · classifier.go:465 · clean.go:50</p>
+            <p>internal/worktree/lifecycle.go:309 · ownership.go:257</p>
+            <p>internal/git/git.go:284–290, 733–758</p>
+          </div>
+
+          <div class="mt-7 grid gap-5 lg:grid-cols-2">
+            <div>
+              <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Before</p>
+              <div class="relative min-h-[320px] rounded-xl border border-slate-200 bg-stone-50 p-5">
+                <div class="grid grid-cols-2 gap-2 text-center font-mono text-xs">
+                  <div class="rounded border border-slate-300 bg-white py-3">status</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">subshell</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">classifier</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">clean</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">lifecycle</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">ownership</div>
+                </div>
+                <div class="my-4 text-center text-3xl font-bold text-red-600">↓ ↓ ↓</div>
+                <div class="rounded-lg border-2 border-red-400 bg-red-50 p-4 text-center font-mono text-xs text-red-900">
+                  git.Output(rev-parse, --path-format=absolute, --git-dir)
+                </div>
+                <p class="mt-3 text-center text-xs uppercase tracking-wider text-red-700">six callers learn Git grammar</p>
+              </div>
+            </div>
+            <div>
+              <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">After</p>
+              <div class="relative min-h-[320px] rounded-xl border border-slate-200 bg-stone-50 p-5">
+                <div class="grid grid-cols-3 gap-2 text-center font-mono text-xs">
+                  <div class="rounded border border-slate-300 bg-white py-3">status</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">cleanup</div>
+                  <div class="rounded border border-slate-300 bg-white py-3">ownership</div>
+                </div>
+                <div class="my-4 text-center text-3xl font-bold text-slate-500">↓</div>
+                <div class="deep rounded-xl border-4 border-slate-950 px-5 py-8 text-center text-white">
+                  <p class="text-xs uppercase tracking-wider text-slate-300">Git adapter</p>
+                  <p class="mt-2 text-lg font-semibold">Private admin-directory fact</p>
+                  <p class="mt-1 text-sm text-slate-300">flags + validation + failure posture</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-7 grid gap-5 md:grid-cols-2">
+            <div class="space-y-4">
+              <div>
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</h3>
+                <p class="mt-1">Six production readers repeat the same Git incantation while validation and failure posture remain caller knowledge.</p>
+              </div>
+              <div>
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</h3>
+                <p class="mt-1">Deepen the existing Git adapter around the repeated repository fact; retain Output, Raw, and OK as plumbing.</p>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Wins</h3>
+              <ul class="mt-2 space-y-2 text-sm">
+                <li>• locality: Git flags in adapter</li>
+                <li>• leverage: one fact, six callers</li>
+                <li>• failure posture stops drifting</li>
+                <li>• CommonDir precedent composes</li>
+              </ul>
+              <p class="mt-4 border-l-2 border-indigo-500 pl-3 text-sm text-slate-600"><span class="font-semibold">Deletion test:</span> the Git adapter earns its seam; its generic interface still leaks repeated grammar.</p>
+            </div>
+          </div>
+
+          <div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <span class="font-semibold">ADR 0005 constraint:</span> private administration evidence remains part of verifiable ownership; no reopening is warranted.
+          </div>
+        </article>
+      </section>
+
+      <aside class="rounded-xl border border-slate-200 bg-white p-6 module-shadow">
+        <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Verified exclusions</h2>
+        <div class="mt-4 grid gap-4 text-sm md:grid-cols-3">
+          <p><span class="font-semibold">Skills index:</span> internal/skillsindex is now the one frontmatter reader; conformance delegates to it.</p>
+          <p><span class="font-semibold">Prior candidates:</span> gate transaction, verdict registry, shift objective, and green marker are landed.</p>
+          <p><span class="font-semibold">FT197:</span> process ownership is a design decision, not source evidence of a shallow module.</p>
+        </div>
+      </aside>
+
+      <section id="top-recommendation" class="rounded-2xl border-2 border-emerald-600 bg-emerald-950 px-7 py-8 text-white module-shadow">
+        <p class="text-xs uppercase tracking-[0.22em] text-emerald-300">Top recommendation</p>
+        <a href="#worktree-eligibility" class="mt-3 block text-3xl font-serif font-semibold underline decoration-emerald-400 underline-offset-4">FT216 — make cleanup eligibility one verdict</a>
+        <p class="mt-3 text-emerald-100">It removes a second safety decision from destructive cleanup and concentrates the preservation posture behind one interface.</p>
+      </section>
+    </main>
+  </body>
+</html>
