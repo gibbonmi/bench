@@ -2,40 +2,32 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `a0c9d26e`, working tree clean apart from this file, 27 unpushed commits
-Spec: none active — FT198 shaped, awaiting `/bench-write-spec`
-Gate: green at `a0c9d26e`
+Branch: `main` — HEAD `f1ab2825`, uncommitted `specs/progressive-roadmap/` and this file, 28 unpushed commits
+Spec: `specs/progressive-roadmap/spec.md` — staged, awaiting sign-off
+Gate: green at `f1ab2825`
 
 ## State
 
-`/bench-shape-idea 198` ran a single-session grill (rounds 1–3, all answered,
-reviewer confirmed shared understanding). No decision map was created: the tree had
-no multi-session dependency. The reviewed decisions, which stay closed:
+`/bench-write-spec 198` authored `specs/progressive-roadmap/spec.md` (Status: staged,
+28 coverage rows, `go run ./cmd/bench coverage --check` green) and five tickets under
+`specs/progressive-roadmap/tickets/`, from the 2026-08-17 reviewer-confirmed grill.
+One Opus/high review round BLOCKed on 6 blocking + 8 prose findings; all are folded
+and named in the spec's verification log. Uncommitted: the spec folder and this
+file. Awaiting the reviewer's sign-off on the approval table (stories and lines,
+seams, coverage, fences, out of scope, ticket graph). Two contestable calls flagged
+in the spec: it supersedes decision #1 of the retired `roadmap-progressive-index`
+map ("`ROADMAP.md` remains the only durable owner"), and stories 8, 25, 38–39,
+44–46 are spec-writer additions beyond the grill.
 
-- `ROADMAP.md` becomes a hand-ordered index: section headings, board prose
-  (release-readiness, dependencies, recommended sequence, section intros) and, per
-  row, exactly today's heading line `**FT<n> (<priority>[, decision required]) — <title>.**`
-  with no body.
-- Each row's body — prose, `Occurrence:` ledger, `Sources:` — lives in
-  `roadmap/FT<n>.md`, which opens with the same heading line repeated verbatim.
-- The CLI parses only that split shape (no legacy inline-body compatibility: this
-  is the only repo with a roadmap). It exits non-zero on any of: an index row with no
-  file, a file with no index row, an inline body under an index row, a file heading
-  that differs from its index line. `.bench/gate.sh` invokes that check so a lost
-  detail owner is a red.
-- Migration is a one-shot script, run once in the build then deleted; acceptance is
-  `bench roadmap --context --full` rows, ledgers, and sequence identical before and
-  after.
-- One spec covers layout, parser, gate check, and this board's migration.
-
-Spec-writer discretion (bounded, non-behavioral): whether the check rides the
-schema-4 parse or a `--check` flag; which `ROADMAP.md` readers move to the row-file
-parse (`bench idea --owner` validation, status spec-path reconcile, `--context --row`
-fetch); the migration script's language.
+Machine note: the `bench` wrapper resolves an installed 0.2.0 release ahead of the
+dev build, so `bench coverage --check` there predates the reduced schema — use
+`go run ./cmd/bench` for spec-phase checks until that is fixed.
 
 ## Next command
 
-`/bench-write-spec` FT198 (progressive roadmap) — from this session's decisions above.
+On sign-off: `bench commit -m "spec: stage progressive-roadmap (FT198)" specs/progressive-roadmap capture/session-handoff.md`, then a fresh mid-tier session runs
+`/bench-implement-spec progressive-roadmap` on one retained integration source,
+frontier ticket `split-the-board-parser-and-migration-in-one-green.md`.
 
 ## Shape
 
