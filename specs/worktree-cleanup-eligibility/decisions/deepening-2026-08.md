@@ -25,6 +25,9 @@ deepening did not become an unreviewed feature change?
 ### Answer
 
 FT216 and FT217 each receive their own `/bench-write-spec` pass from this map.
+The FT216 pass compiles the map into
+`specs/worktree-cleanup-eligibility/decisions/`; FT217 and FT218 cite that one
+copy until the remaining decisions are re-homed before FT216 retires.
 FT218 uses one light-path ticket per reader that recurs at three or more
 production sites. Every route carries the same exit proof: the pre-existing
 suite passes with test logic unchanged; mechanical test renames are permitted,

@@ -2,32 +2,43 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `bdab7c3`, 6 dirty paths, 1 unpushed commit
-Spec: none staged.
-Gate: green at `ce01d2a` — stale, work tree `5537bc2`
+Branch: `main` — base HEAD `fb7338d`, approved FT216 staging ready for its phase-close commit, 2 prior unpushed commits
+Spec: `specs/worktree-cleanup-eligibility/spec.md` — staged and reviewer-approved
+Gate: `bench coverage --check worktree-cleanup-eligibility` green with 33 rows; preflight row ownership/membership green, `paths-authorized` red because main's stale review base spans inherited changes and the staging includes roadmap/map-promotion paths outside build fences
 
 ## State
 
-`$bench-deepen` reverified the current architecture at `main@1c86bdf9`,
-wrote the visual report to
-`capture/architecture-review-20260817T104714.html`, and committed it as
-`bdab7c3b`. Three opportunities remain: FT216 worktree eligibility, FT217
-adopt lifecycle planning, and FT218 named Git readers.
+FT216 now has one staged behavior-preserving spec and eight tracer-bullet tickets.
+The ready map moved, rather than copied, to
+`specs/worktree-cleanup-eligibility/decisions/deepening-2026-08.md`; that is the
+spec's sole `Decision source:`. FT217 and FT218 still cite the same compiled map,
+so their remaining decisions must be re-homed before the FT216 spec retires.
 
-`decisions/deepening-2026-08.md` is now the one current ready map for those
-three. FT216 and FT217 are spec-ready; FT218 takes one light-path ticket per
-reader, beginning with the six-site private administration-directory fact.
-The map preserves exact cleanup precedence, keeps adopt dry-run behavior out of
-scope, and retains `git.Output`/`Raw`/`OK` as plumbing. The roadmap now
-matches those closed decisions. `bench maps` must omit this map before pickup.
+Closed decisions stay closed: characterize all 9 explicit and 13 automatic
+`(Action, ReasonCode)` outcomes before extraction; one typed eligibility owner
+holds ownership, assignment, lock, lease, landedness, recovery, tracked,
+nested, and ignored-residue policy; automatic cleanup is a stricter reading of
+that verdict; `DiscardBranch` remains explicit-only and derived-after; no
+precedence anomaly or observable cleanup behavior changes in this build.
 
-An open learning in `capture/learnings.md` asks `/bench-deepen` to refresh a
-ready map, replace duplicate roadmap decision claims with pointers, and rewrite
-the handoff automatically after a new survey proves the frontier is empty.
+The ticket DAG is 01 explicit characterization → 02 automatic characterization
+→ 03 typed verdict expansion, then two branches: 04 automatic/shared landedness
+→ 06 apply-under-lock → 07 release/landing, and 05 landed-set preservation. 08
+contracts both branches and rewrites ADR 0005. Tickets 04 and 05 are independently
+green but both may write `clean_landed.go`, so implementation serializes them on
+the one retained integration source.
+
+The reviewer-requested Terra pair completed: one Terra authored the slice; a
+second independent Terra-high round found two blockers in iteration 1 and
+accepted the repaired pair in iteration 2. The reviewer then approved the staged
+spec, ticket DAG, shared-file serialization, and decision-map re-home condition.
+The mandatory learning in
+`capture/learnings.md` adds a shared-reader census and a per-consumer ship test
+before future ticket slicing.
 
 ## Next command
 
-`$bench-write-spec`
+`$bench-implement-spec using specs/worktree-cleanup-eligibility/spec.md`
 
 ## Shape
 

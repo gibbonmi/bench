@@ -3,7 +3,7 @@
 Blocked by: none
 
 Ownership fence: `internal/gate` (a new marker package beneath it), `internal/gate/authorization`, `internal/worktree/land.go`
-Assumptions: decision source `decisions/deepening-2026-08.md` #4 (exit-test rule) and #11 (candidate 6); the public seams `gate.ValidateProjectGreen`, `authorization.CheckMarker`, `authorization.AdvanceMarker`, and `worktree.landingMarker`'s callers do not move
+Assumptions: historical decision source `decisions/deepening-2026-08.md` at commit `eda60dfe` #4 (exit-test rule) and #11 (candidate 6); the public seams `gate.ValidateProjectGreen`, `authorization.CheckMarker`, `authorization.AdvanceMarker`, and `worktree.landingMarker`'s callers do not move
 
 ## What to build
 

@@ -275,6 +275,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT216 deepens worktree cleanup around one eligibility verdict from the ready `decisions/deepening-2026-08.md` map.
+1. `/bench-implement-spec` — build the approved staged FT216 `specs/worktree-cleanup-eligibility/spec.md` on one retained integration source.
 2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block; unblocked now that FT189 has landed.
 3. `/bench-write-spec` — FT213 gives a read-only delegate its own worktree when it reads a tree also being graded, and requires an oracle-verified probe before trusting a delegate's gate-skip claim; reproduced twice in the spec-ticket-fence-reduction retro.

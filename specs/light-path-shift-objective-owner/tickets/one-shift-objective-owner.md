@@ -3,7 +3,7 @@
 Blocked by: none
 
 Ownership fence: `internal/shift`
-Assumptions: decision source `decisions/deepening-2026-08.md` #4 (exit-test rule) and #10 (candidate 5); `sanitize.Preview` is the one escape-and-bound policy; `objectiveBanner` and `validateObjective` keep their tested signatures
+Assumptions: historical decision source `decisions/deepening-2026-08.md` at commit `eda60dfe` #4 (exit-test rule) and #10 (candidate 5); `sanitize.Preview` is the one escape-and-bound policy; `objectiveBanner` and `validateObjective` keep their tested signatures
 
 ## What to build
 

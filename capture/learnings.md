@@ -15,3 +15,18 @@ create a second map.
 
 Proposed rule: add this current-state refresh to `/bench-deepen` after source
 verification and before the exit handoff.
+
+## 2026-08-17 — Inventory shared decision readers before ticket slicing [open]
+
+The FT216 write-spec pass named the two obvious planners but missed the shared
+`assignmentLanded` reader that preserved the formatted landedness protocol across
+automatic cleanup, landed-set planning, resume, and list. The first ticket slice
+also bundled automatic planning with the independently shippable landed-set
+consumer, so the required review round needed a second acceptance iteration.
+
+Before ownership fences or tickets are written, automatically census every
+production reader of the decision fact being deepened, including helpers called
+by named consumers. Put each shared reader under an exact fence, then ask whether
+each consumer branch can land green without the others and split the DAG wherever
+the answer is yes. Proposed rule: add the reader census and per-branch ship test to
+`/bench-write-spec` immediately before the `craft-tickets` slice.
