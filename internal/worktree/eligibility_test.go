@@ -17,16 +17,16 @@ import (
 
 // TestExplicitEligibilityOutcomeMatrix is a characterization oracle for
 // PlanExplicitWithOptions: it pins the nine reachable explicit `(Action,
-// ReasonCode)` tuples against the pre-refactor tree. Each expected tuple below
-// is hand-authored from the block order documented in subshell.go, never
-// derived by calling production decision code a second time. Where a rule's
-// current position only matters because a later block can overwrite an
-// earlier one, the fixture carries both pieces of evidence so the assertion
-// pins the actual winner rather than an idealized precedence.
+// ReasonCode)` tuples. Each expected tuple below is hand-authored from the
+// block order decideExplicit documents, never derived by calling production
+// decision code a second time. Where a rule's current position only matters
+// because a later block can overwrite an earlier one, the fixture carries
+// both pieces of evidence so the assertion pins the actual winner rather than
+// an idealized precedence.
 func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 	t.Run("retain-uncertain", func(t *testing.T) {
-		// EX1a: the primary checkout is refused before any other evidence is
-		// gathered (subshell.go L93-97), an early return rather than a
+		// EX1a: PlanExplicitWithOptions refuses the primary checkout before any
+		// other evidence is gathered, an early return rather than a
 		// last-write-wins overwrite.
 		t.Run("primary", func(t *testing.T) {
 			root := newWorktreeRepo(t)
@@ -42,8 +42,8 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 		})
 		// EX1b: an otherwise-clean, otherwise-removable, correctly owned and
 		// locked registration would end `remove` with no reason code at every
-		// earlier block, but unsafe control bytes in the target path win the
-		// final override at L290-293, beating even a clean removal.
+		// earlier block, but unsafe control bytes in the target path win
+		// decideExplicit's final override, beating even a clean removal.
 		t.Run("unsafe-target-override", func(t *testing.T) {
 			root, target := newUnsafeTargetOwnedWorktree(t, "ex1-unsafe-override")
 			marker, err := markerPath(target)
@@ -59,7 +59,7 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// EX2: an unregistered target never reaches ownership evidence at all —
-	// path convention alone proves nothing (L98-102).
+	// path convention alone proves nothing.
 	t.Run("retain-foreign", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		target := filepath.Join(t.TempDir(), "unregistered")
@@ -75,9 +75,9 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// EX3: two different malformed-evidence sources compete — a malformed
-	// owner marker (L120, decided in the early marker block) and a malformed
-	// build-output declaration (L232, decided in the later ignored-residue
-	// block). Both land the same ReasonCode, but only the later block's
+	// owner marker, decided in decideExplicit's early marker block, and a
+	// malformed build-output declaration, decided in its later ignored-residue
+	// block. Both land the same ReasonCode, but only the later block's
 	// Reason text survives, pinning the current later-rule winner rather than
 	// the marker block's own detail.
 	t.Run("retain-malformed", func(t *testing.T) {
@@ -100,7 +100,7 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 
 	// EX4: a foreign lock on an unmarked registration is isolated evidence —
 	// no lease, ignored residue, or nested-state condition present — so it
-	// survives to the end exactly as the marker block (L150-151) decided it.
+	// survives to the end exactly as decideExplicit's ownership block decided it.
 	t.Run("retain-unexpected-lock", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		target := filepath.Join(t.TempDir(), "foreign locked")
@@ -117,12 +117,12 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 		requireTest(t, before == after, "foreign-lock planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
 
-	// EX5: the marker block first refuses on a lock-reason mismatch
-	// (L141-144, an owned registration whose Bench lock no longer matches its
+	// EX5: decideExplicit's marker block first refuses on a lock-reason
+	// mismatch (an owned registration whose Bench lock no longer matches its
 	// assignment) — an earlier applicable refusal. A live lease on the same
-	// fixture is decided afterward at L196-216 and overwrites it, pinning the
-	// lease block's effective position after the marker block rather than an
-	// idealized order.
+	// fixture is decided afterward in the lease block and overwrites it,
+	// pinning the lease block's effective position after the marker block
+	// rather than an idealized order.
 	t.Run("retain-live-lease", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "ex5-live-lease")
 		gitRun(t, root, "worktree", "unlock", creation.Path)
@@ -141,10 +141,10 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 		requireTest(t, before == after, "competing lock/lease planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
 
-	// EX6: a live lease is decided at L196-216, an earlier applicable
-	// refusal. Undeclared ignored residue without --discard-ignored is
-	// decided afterward at L228-239 and overwrites it, pinning the
-	// ignored-residue block's position after lease/nested evaluation.
+	// EX6: decideExplicit's lease block is an earlier applicable refusal.
+	// Undeclared ignored residue without --discard-ignored is decided
+	// afterward in the ignored-residue block and overwrites it, pinning that
+	// block's position after lease/nested evaluation.
 	t.Run("retain-ignored", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
@@ -184,7 +184,7 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// EX8: an otherwise-removable checkout carrying an untracked file is
-	// dirty rather than clean, so the recovery promotion at L270-286 chooses
+	// dirty rather than clean, so decideExplicit's recovery promotion chooses
 	// `recover-remove` and computes a fresh recovery ref rather than removing
 	// outright.
 	t.Run("recover-remove", func(t *testing.T) {
@@ -203,8 +203,8 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 
 	// EX9: bounded ignored residue that is declared as build output in
 	// .bench/build-outputs.json is authorized rather than undeclared — the
-	// opposite authorization path from EX6's --discard-ignored flag — so the
-	// discard-remove promotion at L287-289 applies instead of the ignored
+	// opposite authorization path from EX6's --discard-ignored flag — so
+	// decideExplicit's discard-remove promotion applies instead of the ignored
 	// refusal.
 	t.Run("discard-remove", func(t *testing.T) {
 		root := newWorktreeRepo(t)
@@ -266,11 +266,10 @@ func newUnsafeTargetOwnedWorktree(t *testing.T, request string) (root, target st
 	return root, target
 }
 
-// TestAutomaticEligibilityOutcomeMatrix is a characterization oracle for PlanAutomatic
-// (classifier.go:284-347): it pins the thirteen reachable automatic `(Action,
-// ReasonCode)` tuples against the pre-refactor tree. PlanAutomatic always calls
-// PlanExplicit with an empty CleanupOptions{} first and then applies its own ordered
-// overrides on top — this structurally means DiscardBranch, an explicit-only operator
+// TestAutomaticEligibilityOutcomeMatrix is a characterization oracle for PlanAutomatic:
+// it pins the thirteen reachable automatic `(Action, ReasonCode)` tuples. PlanAutomatic
+// always calls PlanExplicit with an empty CleanupOptions{} first and then applies its own
+// ordered overrides on top — this structurally means DiscardBranch, an explicit-only operator
 // assertion, can never reach automatic evaluation. Each expected tuple below is
 // hand-authored from that ordering, never derived by calling production decision code a
 // second time. Where a case exists only because automatic's own check overrides — or
@@ -283,8 +282,8 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	// "landedness query failure retained" case does). The corruption reaches deep
 	// enough that PlanExplicit itself returns a genuine error (a raw git failure,
 	// not a formatted "unknown:" landed string) rather than succeeding with an
-	// uncertain plan. PlanAutomatic's top-level fallback (classifier.go L296-300)
-	// catches exactly this: an explicit-planning error whose text names neither
+	// uncertain plan. decideAutomatic's explicit-planning-error fallback catches
+	// exactly this: an explicit-planning error whose text names neither
 	// "assignment" nor "intent ledger" retains uncertain rather than guessing
 	// unmerged or removable from a fact it never obtained. The evidence pinned
 	// here is deliberately the tuple only — the exact git error string is not a
@@ -309,11 +308,11 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// AU2: a worktree git itself registers, carrying no owner marker at all, is
-	// clean and unlocked. Explicit's own registration-only reading (subshell.go
-	// L150-154, the same foreign-clean shape EX7 pins) would allow `remove` with
-	// no refusal — but automatic never reaches that: since explicit's Action here
-	// is not Retain, automatic's stricter ownership join (classifier.go L312-314)
-	// fires and refuses foreign regardless of what explicit alone permitted.
+	// clean and unlocked. Explicit's own registration-only reading (the same
+	// foreign-clean shape EX7 pins) would allow `remove` with no refusal — but
+	// automatic never reaches that: since explicit's Action here is not Retain,
+	// decideAutomatic's stricter ownership join fires and refuses foreign
+	// regardless of what explicit alone permitted.
 	t.Run("retain-foreign", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		target := filepath.Join(t.TempDir(), "au2-registered-unowned")
@@ -332,9 +331,9 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	// AU3: a fully owned, cleanup-pending assignment whose ledger record carries a
 	// recovery entry that names no actual recovery manifest. Explicit itself never
 	// checks recovery agreement, so its own action here is `recover-remove` (the
-	// declared Recovery entry promotes it, subshell.go L270-286) — but automatic's
-	// recovery conjunct (classifier.go L330-332, ADR 0005) refuses malformed
-	// instead of trusting a Recovery entry nothing on disk backs.
+	// declared Recovery entry promotes it through decideExplicit's recovery
+	// promotion) — but decideAutomatic's recovery conjunct (ADR 0005) refuses
+	// malformed instead of trusting a Recovery entry nothing on disk backs.
 	t.Run("retain-malformed", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "au3-recovery-mismatch")
 		assignment := creation.Assignment
@@ -359,10 +358,9 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	// AU4: a foreign lock on an unmarked, unregistered-by-marker registration —
 	// EX4's exact fixture — is isolated evidence with nothing later to override it
 	// in explicit planning, so explicit's own decision is already
-	// retain/unexpected-lock. Automatic's first check (classifier.go L306-311)
-	// passes any already-Retain explicit result straight through, so the reason
-	// survives rather than being replaced by the generic ownership refusal at
-	// L312-314.
+	// retain/unexpected-lock. decideAutomatic's retain-passthrough passes any
+	// already-Retain explicit result straight through, so the reason survives
+	// rather than being replaced by the generic ownership refusal below it.
 	t.Run("retain-unexpected-lock", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		target := filepath.Join(t.TempDir(), "au4 foreign locked")
@@ -380,12 +378,12 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// AU5: EX6's exact live-lease-plus-undeclared-ignored-residue fixture. Inside
-	// explicit planning the ignored-residue block (subshell.go L228-239) runs
-	// after the lease block (L196-216) and overwrites it, so explicit's own final
-	// answer here is retain/ignored, not retain/live-lease. Automatic's dedicated
-	// lease recheck (classifier.go L302-305) runs before any retain-passthrough
-	// or ownership check and reprobes the same lease file independently, so it
-	// overrides explicit's ignored answer with live-lease regardless.
+	// decideExplicit the ignored-residue block runs after the lease block and
+	// overwrites it, so explicit's own final answer here is retain/ignored, not
+	// retain/live-lease. PlanAutomatic reprobes the same lease file independently
+	// and decideAutomatic's live-lease override reads that reprobe before any
+	// retain-passthrough or ownership check, so it overrides explicit's ignored
+	// answer with live-lease regardless.
 	t.Run("retain-live-lease", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
@@ -410,12 +408,12 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 
 	// AU6: TestPlanAutomaticKeepsEarlierRetainReason's exact fixture — an aged,
 	// still-Active, unlanded assignment carrying undeclared ignored residue.
-	// Explicit's own ignored-residue refusal (subshell.go L228-239) already makes
-	// the plan Retain, so automatic's first check (classifier.go L306-311) passes
-	// it straight through: since the branch has not landed, assignmentLanded is
-	// false and no override fires, and the block below that would relabel an aged
-	// active assignment orphaned (L316-328) is never reached at all because the
-	// function already returned.
+	// decideExplicit's ignored-residue refusal already makes the plan Retain, so
+	// decideAutomatic's retain-passthrough passes it straight through: since the
+	// branch has not landed, assignmentLanded is false and no override fires, and
+	// the not-cleanup-pending block below — which would relabel an aged active
+	// assignment orphaned — is never reached because the function already
+	// returned.
 	t.Run("retain-ignored", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
@@ -439,9 +437,9 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 
 	// AU7: TestPlanAutomaticLabelsOrphaned's shape without the backdate. Explicit
 	// has no refusal here (a clean owned checkout, still Active rather than
-	// cleanup-pending), so automatic reaches the not-cleanup-pending block
-	// (classifier.go L316-328); the branch is unlanded so reason starts Active,
-	// and the assignment is young so the orphaned age override never fires.
+	// cleanup-pending), so decideAutomatic reaches its not-cleanup-pending block;
+	// the branch is unlanded so reason starts Active, and the assignment is young
+	// so the orphaned age override never fires.
 	t.Run("retain-active", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "au7-young-active")
 		commitInWorktree(t, creation.Path, "au7.txt", "au7\n", "au7 unmerged commit")
@@ -459,10 +457,10 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	// AU8: mirrors TestPlanAutomaticKeepsEarlierRetainReason's fixture shape
 	// (owned, Active, explicit already refusing on undeclared ignored residue),
 	// but with no divergent commit so the branch is trivially landed by ancestry.
-	// Automatic's first check (classifier.go L306-311) still passes the plan
-	// through as Retain, but this time assignmentLanded is true, so the reason is
-	// overwritten to landed — the opposite of AU6, proving the override applies
-	// only when landed and discards whatever explicit refusal preceded it.
+	// decideAutomatic's retain-passthrough still passes the plan through as
+	// Retain, but this time assignmentLanded is true, so the reason is overwritten
+	// to landed — the opposite of AU6, proving the override applies only when
+	// landed and discards whatever explicit refusal preceded it.
 	t.Run("retain-landed", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
@@ -485,8 +483,8 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	// AU9: TestPlanAutomaticLabelsOrphaned's exact fixture. Explicit again has no
 	// refusal, so automatic reaches the not-cleanup-pending block; the branch is
 	// unlanded so reason starts Active, but the assignment was backdated past
-	// bounds.AssignmentStale, so the orphaned override (classifier.go L324-326)
-	// relabels it before returning.
+	// bounds.AssignmentStale, so decideAutomatic's orphaned-age override relabels
+	// it before returning.
 	t.Run("retain-orphaned", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "au9-aged-active")
 		commitInWorktree(t, creation.Path, "au9.txt", "au9\n", "au9 unmerged commit")
@@ -503,14 +501,13 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// AU10: a cleanup-pending, owned assignment whose branch carries a commit not
-	// reachable from the default branch. PlanAutomatic's own signature (classifier.go
-	// L284, confirmed by reading it, not guessed) takes only (root, path string) —
-	// it cannot accept CleanupOptions at all, so DiscardBranch structurally cannot
-	// reach it. The dedicated assertion below proves this rather than asserting it
-	// by inspection alone: explicit planning over the identical fixture WITH
-	// DiscardBranch authorizes exact branch deletion (plan.deleteBranch), yet
-	// PlanAutomatic over the same fixture still retains unmerged and carries no
-	// branch-deletion authority.
+	// reachable from the default branch. PlanAutomatic's signature takes only
+	// (root, path string) — it cannot accept CleanupOptions at all, so
+	// DiscardBranch structurally cannot reach it. The assertion below pins that
+	// as behavior rather than as a signature reading: explicit planning over the
+	// identical fixture WITH DiscardBranch authorizes exact branch deletion
+	// (plan.deleteBranch), yet PlanAutomatic over the same fixture still retains
+	// unmerged and carries no branch-deletion authority.
 	t.Run("retain-unmerged", func(t *testing.T) {
 		root, creation := newPendingAssignment(t, "au10-unmerged-branch")
 		commitInWorktree(t, creation.Path, "au10.txt", "au10\n", "au10 unmerged commit")
@@ -530,12 +527,12 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// AU11: a cleanup-pending assignment whose branch is trivially landed by
-	// ancestry but whose checkout carries an untracked file. Explicit's own
-	// dirty-preservation promotion (subshell.go L270-286) already makes this
-	// recover-remove, so plan.preserves() is true; automatic's final check
-	// (classifier.go L343-345) retains rather than authoring a recovery ref
-	// unattended. The before/after lifecycle snapshot (which includes
-	// refs/bench/) is the proof that no recovery evidence gets authored.
+	// ancestry but whose checkout carries an untracked file. decideExplicit's
+	// recovery promotion already makes this recover-remove, so plan.preserves()
+	// is true; decideAutomatic's final preservation check retains rather than
+	// authoring a recovery ref unattended. The before/after lifecycle snapshot
+	// (which includes refs/bench/) is the proof that no recovery evidence gets
+	// authored.
 	t.Run("retain-dirty", func(t *testing.T) {
 		root, creation := newPendingAssignment(t, "au11-dirty-landed")
 		mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
@@ -552,7 +549,8 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 
 	// AU12: a verified, cleanup-pending, trivially-landed, clean assignment —
 	// the one case automatic's stricter reading still admits — falls through
-	// every retain check to classifier.go L346 with an empty reason code.
+	// every retain check in decideAutomatic to its final passthrough, with an
+	// empty reason code.
 	t.Run("remove", func(t *testing.T) {
 		root, creation := newPendingAssignment(t, "au12-remove")
 		marker, err := markerPath(creation.Path)
@@ -567,11 +565,11 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// AU13: AU12's exact fixture with declared bounded ignored build output added
-	// (EX9's declaration shape). Explicit's own discard-remove promotion
-	// (subshell.go L287-289) already applies since the residue is declared;
-	// automatic's preservation check does not fire because plan.preserves()
-	// requires DiscardRemove with a non-clean Tracked state, and Tracked stays
-	// "clean" here, so the plan falls through unchanged.
+	// (EX9's declaration shape). decideExplicit's discard-remove promotion already
+	// applies since the residue is declared; automatic's preservation check does
+	// not fire because plan.preserves() requires DiscardRemove with a non-clean
+	// Tracked state, and Tracked stays "clean" here, so the plan falls through
+	// unchanged.
 	t.Run("discard-remove", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		gitRun(t, root, "branch", "-M", "main")
@@ -603,10 +601,9 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 // classifyNestedState, inventoryIgnored, git.LandedInDefault — never a copy of production's
 // own answer) and calling decideExplicit directly reproduces the exact action, reason,
 // typed landedness, and recovery/branch-deletion authority PlanExplicitWithOptions itself
-// returns. A refactor that kept a second, scattered decision in subshell.go, or that
-// wrapped an already-mutated plan in a verdict at the end instead of genuinely deciding
-// once, would make this independent comparison diverge from PlanExplicitWithOptions's own
-// projection.
+// returns. A second decision made in subshell.go, or a plan mutated after decideExplicit
+// returned, would make this independent comparison diverge from
+// PlanExplicitWithOptions's own projection.
 func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
 	t.Run("clean-remove", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "ev1-clean-remove")

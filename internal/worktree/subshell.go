@@ -233,9 +233,9 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	// reverse-applicability — which proves a squash-landing but still refuses whatever it
 	// cannot represent byte- and mode-exactly, so a fully-landed branch can read as
 	// unmerged. DiscardBranch is the operator supplying that missing proof by hand, applied
-	// here rather than fed into the decision, so `landed` still records what the tool itself
-	// concluded — the automatic classifier reads only that string, and therefore cannot be
-	// reached by this override.
+	// here rather than fed into the decision, so the recorded landedness — typed and wire
+	// form alike — reports what the tool concluded on its own. The automatic path plans with
+	// an empty CleanupOptions, so this override never reaches it.
 	if options.DiscardBranch && !facts.headDetached {
 		plan.deleteBranch = true
 		plan.branchRef, plan.branchOID = headRef, head

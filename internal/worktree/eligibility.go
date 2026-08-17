@@ -8,11 +8,11 @@ import (
 
 // This file owns the ordered eligibility decisions: the single answer to "is this worktree
 // ours and safe to remove, and if not, why", for every consumer that decides one.
-// PlanExplicitWithOptions in subshell.go gathers every Git and filesystem fact
-// unconditionally, exactly as it always has, builds one explicitFacts value from what it
-// gathered, and calls decideExplicit exactly once. PlanAutomatic in classifier.go layers its
-// own stricter reading on top: it calls PlanExplicit first, gathers the automatic-specific
-// facts decideAutomatic needs, and calls decideAutomatic exactly once. Nothing outside this
+// PlanExplicitWithOptions in subshell.go gathers every Git and filesystem fact, builds one
+// explicitFacts value from what it gathered, and calls decideExplicit exactly once.
+// PlanAutomatic in classifier.go layers its own stricter reading on top: it calls
+// PlanExplicit first, gathers the automatic-specific facts decideAutomatic needs, and
+// calls decideAutomatic exactly once. Nothing outside this
 // file orders or selects an eligibility action or reason before execution; subshell.go and
 // classifier.go only project the returned verdict onto the operator-facing CleanupPlan,
 // including any lookup (a recovery ref prediction) that needs I/O the decision itself must
@@ -30,15 +30,21 @@ const (
 	landednessProven
 )
 
-// landedness is the typed replacement for the "true:ancestry" / "unknown:<err>" strings
-// PlanAutomatic still parses by prefix; String reproduces that exact wire format so the
-// out-of-scope consumer keeps working unchanged while every in-scope decision reads the
-// typed fields instead.
+// landedness carries a branch's proven relationship to the default ref as typed fields;
+// every decision reads those. String renders the "true:ancestry" / "unknown:<err>" wire
+// form, whose only consumer is the explicit fingerprint, which hashes it as evidence.
 type landedness struct {
 	kind      landednessKind
 	err       string
 	landed    bool
 	byContent bool
+}
+
+// provenLanded reports whether the query was actually asked and answered yes — the one
+// reading that authorizes acting on a landing, as opposed to detachment, an absent default
+// ref, a failed query, or a proven non-landing.
+func (l landedness) provenLanded() bool {
+	return l.kind == landednessProven && l.landed
 }
 
 func (l landedness) String() string {
@@ -82,10 +88,9 @@ const (
 // explicitFacts carries every typed fact PlanExplicitWithOptions gathers before it can
 // answer "ours and safe to remove". Each field is evidence, not a conclusion: the same
 // facts feed decideExplicit whether the eventual verdict retains, removes, recovers, or
-// discards, and a field left at its zero value simply was never gathered because an
-// earlier fact already made it inapplicable (mirroring the original code's own
-// conditional evidence-gathering, e.g. the assignment ledger is read only when a marker
-// validated).
+// discards, and a field left at its zero value was never gathered because an earlier fact
+// already made it inapplicable — the assignment ledger, for one, is read only when a
+// marker validated.
 type explicitFacts struct {
 	registrationBranchRef  string
 	registrationLockReason string
@@ -127,8 +132,8 @@ type explicitFacts struct {
 
 // explicitVerdict is the decided answer plus every piece of evidence PlanExplicitWithOptions
 // needs to project it onto CleanupPlan and, for a RecoverRemove or DiscardRemove verdict,
-// to finish resolving the recovery ref. It is not a renamed plan: nothing here has been
-// mutated by a second decision, it is the one-time output of decideExplicit.
+// to finish resolving the recovery ref. Every field is the one-time output of a single
+// decideExplicit call; no consumer decides over it again.
 type explicitVerdict struct {
 	Action     CleanupAction
 	ReasonCode CleanupReason
@@ -288,8 +293,9 @@ type automaticFacts struct {
 // automaticVerdict is the decided answer for the automatic, unattended cleanup path. Action,
 // ReasonCode, and Reason are the decision itself; AssignmentID echoes the one piece of
 // evidence PlanAutomatic projects onto CleanupPlan.Assignment that decideExplicit never sets
-// (subshell.go never assigns it), staying empty on exactly the branches where the pre-refactor
-// code left plan.Assignment untouched.
+// (subshell.go never assigns it). It stays empty on every branch that reaches its verdict
+// without a verified assignment to name, so the projection leaves CleanupPlan.Assignment
+// untouched there.
 type automaticVerdict struct {
 	Action       CleanupAction
 	ReasonCode   CleanupReason
@@ -356,7 +362,7 @@ func decideAutomatic(f automaticFacts) automaticVerdict {
 	if plan.landedTyped.kind == landednessUnknownNoDefault || plan.landedTyped.kind == landednessUnknownError {
 		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonUncertain, Reason: "assignment landedness is unknown", AssignmentID: assignmentID}
 	}
-	if !(plan.landedTyped.kind == landednessProven && plan.landedTyped.landed) {
+	if !plan.landedTyped.provenLanded() {
 		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonUnmerged, Reason: "assignment branch has not landed", AssignmentID: assignmentID}
 	}
 	// The automatic path authors no preservation refs: it runs unattended at every session

@@ -229,8 +229,8 @@ type CleanupPlan struct {
 	landed               string
 	// landedTyped carries the same landedness evidence as landed, but as the typed value
 	// decideExplicit produced, so a production reader can branch on its kind and proof
-	// fields instead of parsing the wire string. landed stays alongside it: subshell.go's
-	// fingerprint still hashes the string as evidence, and a hand-built stub (clean_landed.go)
+	// fields rather than parsing the wire string. landed stays alongside it: subshell.go's
+	// fingerprint hashes the string as evidence, and a hand-built stub (clean_landed.go)
 	// may populate only the typed field when it has no need to fabricate the string.
 	landedTyped landedness
 	// leftover names the present bytes a release-leftover plan hands on rather than
@@ -289,8 +289,7 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 
 // PlanAutomatic decides the automatic, unattended reading of eligibility: it calls
 // PlanExplicit for its own result, gathers every automatic-specific fact decideAutomatic
-// needs — in the same order and under the same conditions PlanAutomatic always has, so a
-// fact stays ungathered exactly where the pre-refactor code left it inapplicable — and
+// needs — a fact stays ungathered where an earlier one already made it inapplicable — and
 // calls decideAutomatic exactly once, then projects the returned verdict onto the plan.
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
 	explicitPlan, explicitErr := PlanExplicit(root, path)

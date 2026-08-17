@@ -1,7 +1,7 @@
 # Repair: stale-comment cleanup and landedness dedup
 
 Blocked by: 10-repair-landed-set-refusal-ownership.md
-Writes: internal/worktree/eligibility.go, internal/worktree/subshell.go, internal/worktree/classifier.go, internal/worktree/landed.go, internal/worktree/eligibility_test.go, specs/worktree-cleanup-eligibility/tickets/11-repair-comment-cleanup-and-dedup.md
+Writes: internal/worktree/eligibility.go, internal/worktree/subshell.go, internal/worktree/classifier.go, internal/worktree/landed.go, internal/worktree/eligibility_test.go, internal/worktree/clean_branch_test.go, specs/worktree-cleanup-eligibility/tickets/11-repair-comment-cleanup-and-dedup.md
 
 Source: reviews/worktree-cleanup-eligibility.md, Standards findings 1, 2, 4; Spec finding 2.
 
@@ -28,7 +28,7 @@ post-repair state rather than needing a second pass:
 
 ## Acceptance
 
-- [ ] No comment in the touched files describes removed/superseded behavior.
-- [ ] No PR-talk register violation remains (no narration, provenance, or self-justifying argument in a comment).
-- [ ] `landedness.provenLanded()` exists and both call sites use it.
-- [ ] All existing tests remain green with unmodified assertions — this ticket touches comments and one dedup method only, no behavior change.
+- [x] No comment in the touched files describes removed/superseded behavior.
+- [x] No PR-talk register violation remains (no narration, provenance, or self-justifying argument in a comment).
+- [x] `landedness.provenLanded()` exists and both call sites use it.
+- [x] All existing tests remain green with unmodified assertions — this ticket touches comments and one dedup method only, no behavior change.
