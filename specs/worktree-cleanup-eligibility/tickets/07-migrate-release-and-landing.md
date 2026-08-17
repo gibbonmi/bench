@@ -12,4 +12,4 @@ ticket changes which decision they consume, not their public command behavior.
 
 ## Acceptance
 
-- [ ] CO4: `ReleaseCommand` and both first-run and resumed `LandCommand` release only through the automatic verdict while retaining their exact receipts and diagnostics.
+- [x] CO4: `ReleaseCommand` and both first-run and resumed `LandCommand` release only through the automatic verdict while retaining their exact receipts and diagnostics.

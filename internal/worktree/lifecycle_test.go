@@ -389,6 +389,29 @@ func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
 	_, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, creation.Path, intent.RequestDigest("landed-release-crash-window"))
 	requireTest(t, err == nil && found, "release receipt missing: %v", err)
 }
+
+// TestReleaseUnmergedAssignmentRetains pins CO4: ReleaseCommand decides purely through the
+// automatic verdict (PlanAutomatic), not a second, independently-authored policy. An
+// unlanded assignment branch is a retain PlanAutomatic itself decides — release must honor
+// it rather than removing, and the assignment must land in cleanup-pending (the automatic
+// transaction's own state, not a bespoke pre-transition refusal) so a retry replans through
+// the same verdict.
+func TestReleaseUnmergedAssignmentRetains(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "unmerged-release")
+	commitInWorktree(t, creation.Path, "unique.txt", "preserve\n", "unique work")
+
+	var stdout, stderr strings.Builder
+	code := ReleaseCommand(root, []string{"--request", "landed-unmerged-release", creation.Path}, &stdout, &stderr)
+	requireTest(t, code == 1, "unmerged release exit=%d stderr=%q", code, stderr.String())
+	requireTest(t, strings.Contains(stderr.String(), "worktree retained (unmerged)") && strings.Contains(stderr.String(), "assignment branch has not landed"),
+		"unmerged reason missing: %q", stderr.String())
+	_, statErr := os.Stat(creation.Path)
+	requireTest(t, statErr == nil, "unmerged worktree removed: %v", statErr)
+	assignment, err := assignmentByID(root, creation.Assignment.ID)
+	mustNoError(t, err)
+	requireTest(t, assignment.State == intent.StateCleanupPending, "unmerged assignment state = %q, want cleanup-pending", assignment.State)
+}
+
 func mustRemove(t *testing.T, path string) {
 	t.Helper()
 	if err := os.RemoveAll(path); err != nil {
