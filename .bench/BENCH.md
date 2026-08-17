@@ -170,10 +170,10 @@ only path in.
 Parking an idea is conversational, never a CLI chore for the reviewer: when the
 reviewer wants to set one aside, or you spot a tangent worth keeping, **you** run
 `bench idea "<text>"`. Offer once, then let it go. Parked ideas land in
-`capture/IDEAS.md` and graduate into `ROADMAP.md` only through a reviewed
-`/bench-what-next` drain, or close by implementation during that same reviewed
-drain. If `bench` isn't on PATH, append the dated line
-(`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yourself.
+`capture/IDEAS.md` and graduate to the board — an index line in `ROADMAP.md`,
+body and ledger in `roadmap/FT<n>.md` — only through a reviewed `/bench-what-next`
+drain, or close by implementation during that same drain. If `bench` isn't on
+PATH, append the dated line (`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yourself.
 
 Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`
 and refreshes affected `capture/agent-performance/` scorecards;

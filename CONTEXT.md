@@ -55,14 +55,18 @@ cold session reads this first to avoid drifting the vocabulary.
 - **command** — a canonical phase of the workflow (`/bench-shape-idea`, `/bench-write-spec`, `/bench-debug`,
   `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`, plus `/bench-setup-repo`, `/bench-update-kit`, `/bench-what-next`). Not "slash command
   template" in prose — command.
-- **roadmap** — the working prioritization document at `ROADMAP.md` (repo root):
-  assessed open work in priority order, ending in a `## Recommended sequence`
-  that names the next actions. Printed with `bench roadmap`. A row leaves when
-  the work ships or a reconcile removes it. Not "icebox", not "backlog" — roadmap.
+- **roadmap** — the working prioritization document, split between `ROADMAP.md`
+  (repo root) and `roadmap/`: assessed open work in priority order, ending in a
+  `## Recommended sequence` that names the next actions. `ROADMAP.md` is the index
+  — one physical heading line per row, no bodies — and `roadmap/FT<n>.md` owns that
+  row's body, its `Occurrence:` ledger, and its `Sources:` line. Printed with
+  `bench roadmap`. A row leaves — index line and detail file together — when the
+  work ships or a reconcile removes it. Not "icebox", not "backlog" — roadmap.
 - **roadmap index / roadmap detail** — schema-4 projections of the **roadmap** and
   its capture evidence. The index inventories every row and capture unit with
-  true body sizes but no bodies; detail is a complete body fetched for named rows
-  or read from the capture paths the index names. Not a truncated preview.
+  true body sizes but no bodies; detail is a complete body, read for a named row
+  from its `roadmap/FT<n>.md` owner or from the capture paths the index names.
+  Not a truncated preview.
 - **ideas inbox** — the capture-and-forget sink at `capture/IDEAS.md` (repo root):
   out-of-scope ideas parked with `bench idea`, committing to nothing.
   Append-only, no status or lifecycle; drained to zero into the **roadmap** by

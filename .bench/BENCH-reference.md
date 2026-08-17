@@ -14,6 +14,10 @@ what lives here is reference you consult on demand.
   Bench-managed block.
 - `.bench/gate.sh` is the project gate.
 - `capture/learnings.md` is the usage journal for process learnings.
+- `ROADMAP.md` is the working roadmap's index — board prose plus one heading line
+  per row, no bodies — and `roadmap/` holds one detail owner per row,
+  `roadmap/FT<n>.md`, carrying that row's body, `Occurrence:` ledger, and
+  `Sources:` line.
 - `.bench/bin/` is the local CLI copy `bench link` installs for hooks, so Stop and
   SessionStart do not depend on a global `bench` on PATH.
 - `.agents/commands/` contains portable Bench command phases.

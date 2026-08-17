@@ -158,7 +158,7 @@ bench/
 │   ├── structure/            # structure checker + budgets parser (whole-tree + touched)
 │   ├── worktree/             # worktree pool-path + lease-file conventions
 │   ├── models/               # bench models advisory discovery inventory
-│   ├── roadmap/              # capture/IDEAS.md + ROADMAP.md owner: idea, roadmap, drain counts
+│   ├── roadmap/              # capture/IDEAS.md + ROADMAP.md index + roadmap/ detail owner
 │   └── git/                  # shared git subprocess helpers + gate tree-hash
 └── projects/
     ├── benchkit.md           # seams, gate, lines for this kit
@@ -220,7 +220,7 @@ still match (including a `CLAUDE.md` that `bench link` itself created), prunes e
 managed directories, strips the managed AGENTS.md block while keeping your prose, and
 removes the bench-managed pre-push hook. A file you edited since linking, a `CLAUDE.md`
 that predates link (link never records one, even a present-but-empty file), and your
-own artifacts (ROADMAP.md, capture/IDEAS.md, CONTEXT.md, `specs/`, `decisions/`,
+own artifacts (ROADMAP.md, `roadmap/`, capture/IDEAS.md, CONTEXT.md, `specs/`, `decisions/`,
 `capture/learnings.md`, `.bench/gate.sh`), are left in place.
 Rehearse it first with `bench unlink --dry-run`, which prints the exact plan and
 changes nothing:

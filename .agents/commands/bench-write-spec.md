@@ -55,8 +55,8 @@ compatibility, or a reviewer-chosen seam.
    `Bootstrap authority before execution` rule.
 2. **Retire superseded work by promotion then deletion.** Leave no `Superseded by` marker: promote durable
    decisions, delete the old spec under a `spec-retire: <name>` commit, repair references. The same
-   promote-then-delete commit removes the spec's `ROADMAP.md` row. Whole-folder retirement removes the compiled
-   maps and map-owned assets, plus tickets.
+   promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file.
+   Whole-folder retirement removes the compiled maps and map-owned assets, plus tickets.
 3. **Slice, then review once.** Charge `craft-tickets` and write the breakdown under `specs/<slug>/tickets/`; carry
    its numbered title, `Blocked by:`, and delivered outcome list into the approval table so the spec and tickets
    receive one sign-off. One review round covers the spec-and-tickets pair with the reviewer-named model, and
