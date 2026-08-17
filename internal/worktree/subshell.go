@@ -113,46 +113,43 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 		return CleanupPlan{}, err
 	}
 	plan := CleanupPlan{Target: target, Action: ActionRemove, Tracked: "clean", Recovery: "none", registration: *registration, discardIgnored: options.DiscardIgnored, discardBranch: options.DiscardBranch}
-	markerInfo, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
+	facts := explicitFacts{
+		registrationBranchRef:  registration.BranchRef,
+		registrationLockReason: registration.LockReason,
+		registrationLocked:     registration.Locked,
+		registrationDetached:   registration.Detached,
+		discardIgnored:         options.DiscardIgnored,
+	}
+	_, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
 	if markerStatErr == nil {
+		facts.markerPresent = true
 		evidence, markerErr := validateOwnerMarker(root, target)
 		if markerErr != nil {
-			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonMalformed, markerErr.Error()
+			facts.markerErr = markerErr
 		} else {
 			assignments, assignmentErr := intent.Assignments(root)
 			if assignmentErr != nil {
-				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonMalformed, "assignment ledger is unreadable"
+				facts.assignmentLedgerErr = assignmentErr
 			} else {
+				var matched *intent.Assignment
 				for i := range assignments {
 					if assignments[i].Worktree == target && assignments[i].OwnerID == evidence.marker.OwnerID {
-						if plan.assignment != nil {
-							plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonMalformed, "registration has ambiguous assignments"
+						if matched != nil {
+							facts.assignmentAmbiguous = true
 							break
 						}
 						candidate := assignments[i]
-						plan.assignment = &candidate
+						matched = &candidate
 					}
 				}
-				if plan.assignment == nil && plan.Reason == "" {
-					plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonMalformed, "owner marker has no matching assignment"
-				} else if plan.assignment != nil && plan.Reason == "" {
-					plan.owned = true
-					if registration.BranchRef != plan.assignment.Branch {
-						plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "assignment does not match current branch"
-					} else if registration.LockReason != lockReason(*plan.assignment) {
-						plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUnexpectedLock, "assignment does not match current Bench lock"
-					}
-				}
+				facts.matchedAssignment = matched
 			}
 		}
 	} else if !errors.Is(markerStatErr, os.ErrNotExist) {
 		return CleanupPlan{}, markerStatErr
-	} else if registration.Locked {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUnexpectedLock, "foreign or unexpected lock is retained"
-	} else {
-		plan.assignment = foreignRecoveryAssignment(root, target)
+	} else if !registration.Locked {
+		facts.foreignAssignment = foreignRecoveryAssignment(root, target)
 	}
-	_ = markerInfo
 	head, err := git.Output("-C", target, "rev-parse", "HEAD")
 	if err != nil {
 		return CleanupPlan{}, err
@@ -165,14 +162,16 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	if err != nil {
 		return CleanupPlan{}, err
 	}
+	initialTracked := "clean"
 	if len(status) > 0 {
-		plan.Tracked = "dirty"
+		initialTracked = "dirty"
 		for record := range bytes.SplitSeq(status, []byte{0}) {
 			if len(record) >= 2 && (bytes.Contains(record[:2], []byte("U")) || bytes.Equal(record[:2], []byte("AA")) || bytes.Equal(record[:2], []byte("DD"))) {
-				plan.Tracked = "conflicted"
+				initialTracked = "conflicted"
 			}
 		}
 	}
+	facts.initialTracked = initialTracked
 	contentIdentity, err := explicitContentIdentity(target)
 	if err != nil {
 		return CleanupPlan{}, err
@@ -195,102 +194,69 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	}
 	buildOutputs, buildOutputEvidence, buildOutputErr := loadBuildOutputs(root)
 	if _, statErr := os.Lstat(leasePath); statErr == nil {
-		switch ProbeLease(leasePath) {
-		case LeaseLive:
-			if plan.owned {
-				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "assignment has a live lease"
-			} else {
-				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "unowned assignment has an ambiguous lease"
-			}
-		case LeaseDead:
-			if !plan.owned {
-				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "unowned assignment has an ambiguous lease"
-			}
-		case LeaseUnknown:
-			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, unknownLeaseReason
-		}
-	} else if statErr != nil && !errors.Is(statErr, os.ErrNotExist) {
-		if plan.owned {
-			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, unknownLeaseReason
-		}
+		facts.leasePresent = true
+		facts.leaseState = ProbeLease(leasePath)
+	} else if !errors.Is(statErr, os.ErrNotExist) {
+		facts.leaseStatErr = statErr
 	}
 	nested, nestedErr := classifyNestedState(target)
 	nestedEvidence := string(nested)
 	if nestedErr != nil {
 		nestedEvidence += ":" + nestedErr.Error()
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "nested repository state is unknown"
-	} else if nested == nestedDirty {
-		plan.Tracked = "nested-dirty"
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "nested repository or submodule is dirty"
-	} else if nested == nestedEmbeddedClean || nested == nestedEmbeddedDirty {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "embedded repository is retained"
 	}
+	facts.nestedState, facts.nestedErr = nested, nestedErr
 	ignored, ignoredCanonical, ignoredErr := inventoryIgnored(target, options.Full)
 	plan.Ignored = ignored
 	declaredIgnored := buildOutputErr == nil && ignoredWithinBuildOutputs(ignored, buildOutputs)
-	if buildOutputErr != nil {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonMalformed, "build-output declaration is malformed"
-	} else if ignoredErr != nil {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "ignored inventory is uncertain"
-	} else if ignored.OverLimit {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonIgnored, "ignored inventory exceeds the destructive limit"
-	} else if ignored.Count > 0 && !options.DiscardIgnored && !declaredIgnored {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonIgnored, "ignored residuals require --discard-ignored"
+	facts.buildOutputErr = buildOutputErr
+	facts.ignoredErr = ignoredErr
+	facts.ignoredOverLimit = ignored.OverLimit
+	facts.ignoredCount = ignored.Count
+	facts.declaredIgnored = declaredIgnored
+	facts.headDetached = headRef == "detached"
+	facts.defaultKnown = defaultOID != "none"
+	facts.headRef, facts.head = headRef, head
+	if !facts.headDetached && facts.defaultKnown {
+		facts.landedOK, facts.landedByContent, facts.landedErr = git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef)
 	}
-	landed := "detached"
-	if headRef != "detached" {
-		if defaultOID == "none" {
-			landed = "unknown"
-		} else if ok, byContent, landedErr := git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef); landedErr != nil {
-			landed = "unknown:" + landedErr.Error()
-		} else {
-			proof := "ancestry"
-			if byContent {
-				proof = "patch"
-			}
-			landed = strconv.FormatBool(ok) + ":" + proof
-			plan.deleteBranch = ok
-			if ok {
-				plan.branchRef, plan.branchOID = headRef, head
-			}
-		}
-		// The derived proof above reads ancestry, then merges, then patch-equivalence, then
-		// reverse-applicability — which proves a squash-landing but still refuses whatever it
-		// cannot represent byte- and mode-exactly, so a fully-landed branch can read as
-		// unmerged. DiscardBranch is the operator supplying that missing proof by hand. It
-		// is written after the derivation rather than into it, so `landed` still records what
-		// the tool itself concluded — the automatic classifier reads only that string, and
-		// therefore cannot be reached by this override.
-		if options.DiscardBranch {
-			plan.deleteBranch = true
-			plan.branchRef, plan.branchOID = headRef, head
-		}
-	}
+	facts.unsafeTarget = unsafeTarget
+
+	verdict := decideExplicit(facts)
+	plan.Action, plan.ReasonCode, plan.Reason = verdict.Action, verdict.ReasonCode, verdict.Reason
+	plan.owned, plan.assignment = verdict.Owned, verdict.Assignment
+	plan.Tracked = verdict.Tracked
+	landed := verdict.Landed.String()
 	plan.landed = landed
-	if plan.Action != ActionRetain && (plan.Tracked != "clean" || registration.Detached || plan.assignment != nil && len(plan.assignment.Recovery) > 0) {
-		plan.Action = ActionRecoverRemove
-		if plan.owned && plan.assignment != nil {
-			if len(plan.assignment.Recovery) > 0 {
-				plan.Recovery = plan.assignment.Recovery[0].Ref
-			} else {
-				plan.Recovery, err = nextRecoveryRef(root, *plan.assignment)
-			}
-		} else if plan.assignment != nil {
-			plan.Recovery = plan.assignment.Recovery[0].Ref
-		} else {
-			plan.Recovery, err = predictedForeignRef(root, target, admin)
-		}
-		if err != nil {
-			return CleanupPlan{}, err
-		}
+	plan.landedTyped = verdict.Landed
+	plan.deleteBranch, plan.branchRef, plan.branchOID = verdict.DeleteBranch, verdict.BranchRef, verdict.BranchOID
+	// The derivation above reads ancestry, then merges, then patch-equivalence, then
+	// reverse-applicability — which proves a squash-landing but still refuses whatever it
+	// cannot represent byte- and mode-exactly, so a fully-landed branch can read as
+	// unmerged. DiscardBranch is the operator supplying that missing proof by hand, applied
+	// here rather than fed into the decision, so the recorded landedness — typed and wire
+	// form alike — reports what the tool concluded on its own. The automatic path plans with
+	// an empty CleanupOptions, so this override never reaches it. The detached conjunct holds
+	// because a detached HEAD has no branch for the operator to authorize deleting: headRef is
+	// the "detached" sentinel rather than a ref, so dropping the conjunct would hand that
+	// sentinel to the branch deletion as if it named something.
+	if options.DiscardBranch && !facts.headDetached {
+		plan.deleteBranch = true
+		plan.branchRef, plan.branchOID = headRef, head
 	}
-	if plan.Action != ActionRetain && ignored.Count > 0 && (options.DiscardIgnored || declaredIgnored) {
-		plan.Action = ActionDiscardRemove
+	recovery := verdict.Recovery
+	switch verdict.RecoveryLookup {
+	case recoveryLookupOwned:
+		recovery, err = nextRecoveryRef(root, *plan.assignment)
+	case recoveryLookupForeign:
+		recovery, err = predictedForeignRef(root, target, admin)
+	}
+	if err != nil {
+		return CleanupPlan{}, err
 	}
 	if unsafeTarget {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "target contains unsafe control bytes"
-		plan.Recovery = "none"
+		recovery = "none"
 	}
+	plan.Recovery = recovery
 	parts := [][]byte{
 		[]byte("bench-explicit/v2"), []byte(common), []byte(defaultRef), []byte(defaultOID),
 		[]byte(target), []byte(admin), []byte(registration.Path), []byte(registration.BranchRef),

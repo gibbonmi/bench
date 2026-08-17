@@ -14,16 +14,16 @@ rules.
 
 ## Acceptance
 
-- [ ] AU1: unknown landedness or assignment state retains as `uncertain`.
-- [ ] AU2: registration without the verified owner-and-assignment join retains as `foreign`.
-- [ ] AU3: malformed assignment or mismatched recovery metadata retains as `malformed`.
-- [ ] AU4: an unexpected lock surviving explicit planning retains as `unexpected-lock`.
-- [ ] AU5: a live lease wins as `live-lease` even with another explicit refusal.
-- [ ] AU6: an aged unlanded assignment with ignored residue retains as `ignored`.
-- [ ] AU7: a young active unlanded assignment retains as `active`.
-- [ ] AU8: an active landed assignment retains as `landed` under the current override.
-- [ ] AU9: an aged active unlanded assignment retains as `orphaned`.
-- [ ] AU10: a cleanup-pending assignment with an unlanded branch retains as `unmerged`.
-- [ ] AU11: a cleanup-pending landed assignment needing preservation retains as `dirty`.
-- [ ] AU12: a verified cleanup-pending landed clean assignment projects `remove` with no reason code.
-- [ ] AU13: that assignment with declared bounded ignored output projects `discard-remove`.
+- [x] AU1: unknown landedness or assignment state retains as `uncertain`.
+- [x] AU2: registration without the verified owner-and-assignment join retains as `foreign`.
+- [x] AU3: malformed assignment or mismatched recovery metadata retains as `malformed`.
+- [x] AU4: an unexpected lock surviving explicit planning retains as `unexpected-lock`.
+- [x] AU5: a live lease wins as `live-lease` even with another explicit refusal.
+- [x] AU6: an aged unlanded assignment with ignored residue retains as `ignored`.
+- [x] AU7: a young active unlanded assignment retains as `active`.
+- [x] AU8: an active landed assignment retains as `landed` under the current override.
+- [x] AU9: an aged active unlanded assignment retains as `orphaned`.
+- [x] AU10: a cleanup-pending assignment with an unlanded branch retains as `unmerged`.
+- [x] AU11: a cleanup-pending landed assignment needing preservation retains as `dirty`.
+- [x] AU12: a verified cleanup-pending landed clean assignment projects `remove` with no reason code.
+- [x] AU13: that assignment with declared bounded ignored output projects `discard-remove`.

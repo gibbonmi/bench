@@ -84,6 +84,16 @@ func ApplyExplicitWithOptions(root, path, fingerprint string, options CleanupOpt
 type cleanupPlanner func(string) (CleanupPlan, error)
 type cleanupTerminal func(CleanupPlan) error
 
+// eligible reports whether plan is allowed to reach executeCleanup. A retain verdict is
+// never eligible, so the pre-lock fast path in applyAutomaticWithTerminal and the
+// lock-scoped gate in applyCleanupTransaction read the same predicate: the former only
+// skips acquiring the lock when a cheap early check already agrees with what the latter
+// would decide anyway, and the latter's fresh, under-lock replan is what actually governs
+// execution.
+func (plan CleanupPlan) eligible() bool {
+	return plan.Action != ActionRetain
+}
+
 func applyCleanupTransaction(root, path, fingerprint string, planner cleanupPlanner, localFault Fault, terminal cleanupTerminal) (CleanupPlan, error) {
 	repo, target, err := cleanupIdentity(root, path)
 	if err != nil {
@@ -136,7 +146,7 @@ func applyCleanupTransaction(root, path, fingerprint string, planner cleanupPlan
 		}
 		plan.Fingerprint = fingerprint
 	}
-	if plan.Action == ActionRetain {
+	if !plan.eligible() {
 		if err := intent.PutCleanupReceipt(root, receiptFromPlan(repo, plan, intent.ReceiptComplete)); err != nil {
 			return plan, err
 		}
@@ -324,7 +334,7 @@ func ApplyAutomatic(root, path string, fault Fault) (CleanupPlan, error) {
 }
 func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanupTerminal) (CleanupPlan, error) {
 	plan, err := PlanAutomatic(root, path)
-	if err != nil || plan.Action == ActionRetain {
+	if err != nil || !plan.eligible() {
 		return plan, err
 	}
 	planner := func(target string) (CleanupPlan, error) { return PlanAutomatic(root, target) }

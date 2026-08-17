@@ -76,14 +76,10 @@ func selectLandedCleanupRow(root string, assignment intent.Assignment, defaultRe
 	if proofErr != nil || !landed {
 		return landedCleanupRow{}, false
 	}
-	proof := "true:ancestry"
-	if byContent {
-		proof = "true:patch"
-	}
 	if lease == "" {
 		lease = "none"
 	}
-	classifierPlan := CleanupPlan{Target: root, landed: proof}
+	classifierPlan := CleanupPlan{Target: root, landedTyped: landedness{kind: landednessProven, landed: true, byContent: byContent}}
 	if lease == string(LeaseLive) {
 		classifierPlan.ReasonCode = ReasonLiveLease
 	}
@@ -120,10 +116,21 @@ func planLandedAssignment(root string, assignment intent.Assignment, options Cle
 		plan.assignment, plan.owned = &assignment, true
 		return plan
 	}
-	if plan.preserves() {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonDirty, "per-path cleanup is required to preserve work"
-		plan.Recovery = "none"
+	return retainForLandedPreservation(plan)
+}
+
+// retainForLandedPreservation is the landed-set's single site for the preservation
+// refusal: it calls the same automaticPreservationVerdict (eligibility.go) decideAutomatic's
+// own dirty-refusal branch consults, so the two never derive "would removing this strand
+// uncommitted work" differently, even though each still projects its own operator-facing
+// message for its own command surface.
+func retainForLandedPreservation(plan CleanupPlan) CleanupPlan {
+	retain, action, reasonCode, reason := automaticPreservationVerdict(plan, "per-path cleanup is required to preserve work")
+	if !retain {
+		return plan
 	}
+	plan.Action, plan.ReasonCode, plan.Reason = action, reasonCode, reason
+	plan.Recovery = "none"
 	return plan
 }
 

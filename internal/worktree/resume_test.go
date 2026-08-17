@@ -240,6 +240,34 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 	})
 }
 
+// TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck proves the lock-scoped replan
+// is authoritative over applyAutomaticWithTerminal's pre-lock fast path: the pre-lock plan
+// says remove, but state changes once the transaction lock is held (the deterministic
+// StepApplyLocked seam) so the fresh replan under lock says retain. Execution must honor
+// the later, authoritative verdict rather than the earlier one that let it through the
+// fast path.
+func TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck(t *testing.T) {
+	root, creation := newPendingAssignment(t, "lock-scoped-replan")
+	requirePlanAction(t, root, creation.Path, ActionRemove)
+	oldBoundary := cleanupTransactionBoundary
+	var raced bool
+	cleanupTransactionBoundary = func(step LifecycleStep) error {
+		if step == StepApplyLocked && !raced {
+			raced = true
+			mustWrite(t, filepath.Join(creation.Path, "raced.txt"), []byte("raced\n"), 0o644)
+		}
+		return nil
+	}
+	defer func() { cleanupTransactionBoundary = oldBoundary }()
+	plan, err := ApplyAutomatic(root, creation.Path, nil)
+	requireTest(t, err == nil && plan.Action == ActionRetain,
+		"raced apply = %#v, %v; want the lock-scoped replan's retain honored", plan, err)
+	requireTest(t, raced, "boundary seam never fired; race was not exercised")
+	_, statErr := os.Stat(creation.Path)
+	requireTest(t, statErr == nil,
+		"apply removed a worktree the lock-scoped replan retained: %v", statErr)
+}
+
 func TestPlanAutomaticUsesLandedInDefaultMatrix(t *testing.T) {
 	t.Run("ancestry eligible", func(t *testing.T) {
 		root, creation := newPendingAssignment(t, "ancestry")

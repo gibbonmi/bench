@@ -235,6 +235,19 @@ func TestCleanLandedApplyStopsAfterCompletedRowFault(t *testing.T) {
 	}
 }
 
+func TestCleanLandedPlanRetainsPreservedRowThroughEligibilityOwner(t *testing.T) {
+	root, _, _, dirty := landedSetFixture(t)
+	plan, planErr, planCode := runCleanLanded(t, root, "--landed")
+	if planCode != 0 || planErr != "" {
+		t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
+	}
+	if !strings.Contains(plan, dirty.Path+",retain,") ||
+		!strings.Contains(plan, ",none,") ||
+		strings.Count(plan, "per-path cleanup is required to preserve work") != 1 {
+		t.Fatalf("plan = %q, want dirty row retained once via the shared preservation refusal", plan)
+	}
+}
+
 func TestCleanLandedApplyCarriesModifiersAndDeletesProvenBranches(t *testing.T) {
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))

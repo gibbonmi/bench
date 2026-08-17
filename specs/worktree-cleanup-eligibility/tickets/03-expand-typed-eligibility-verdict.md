@@ -15,6 +15,6 @@ independent of the new policy implementation.
 
 ## Acceptance
 
-- [ ] EV1: one eligibility call returns the decision and typed evidence, and explicit projection does not make a second decision.
-- [ ] EV2: eligibility action and refusal ordering lives only in the eligibility module before execution.
-- [ ] EV3: fingerprints bind every removal-relevant evidence byte and verdict projection, including typed landedness.
+- [x] EV1: one eligibility call returns the decision and typed evidence, and explicit projection does not make a second decision.
+- [x] EV2: eligibility action and refusal ordering lives only in the eligibility module before execution.
+- [x] EV3: fingerprints bind every removal-relevant evidence byte and verdict projection, including typed landedness.
