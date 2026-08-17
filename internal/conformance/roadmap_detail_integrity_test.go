@@ -20,14 +20,15 @@ const roadmapDetailIntegrityFamily = "roadmap-detail-integrity"
 // whose fixture is gone; this independently authored inventory is what makes that
 // omission red.
 var roadmapDetailIntegrityFixtureClasses = map[string]string{
-	"roadmap-missing-detail-owner": "missing detail owner",
-	"roadmap-orphan-detail":        "orphan detail file",
-	"roadmap-inline-body":          "carries an inline body",
-	"roadmap-heading-mismatch":     "heading does not match",
-	"roadmap-unrecognized-file":    "unrecognized file under",
-	"roadmap-duplicate-row":        "duplicate row",
-	"roadmap-wrapped-heading":      "wrapped heading",
-	"roadmap-unreadable-detail":    "detail file: not a regular file",
+	"roadmap-missing-detail-owner":   "missing detail owner",
+	"roadmap-orphan-detail":          "orphan detail file",
+	"roadmap-inline-body":            "carries an inline body",
+	"roadmap-heading-mismatch":       "heading does not match",
+	"roadmap-unrecognized-file":      "unrecognized file under",
+	"roadmap-duplicate-row":          "duplicate row",
+	"roadmap-wrapped-heading":        "wrapped heading",
+	"roadmap-unreadable-detail":      "detail file: not a regular file",
+	"roadmap-degraded-row-directory": "detail directory",
 }
 
 func validateRoadmapDetailIntegrityFixtureInventory(fixtures map[string]canary.Fixture) error {
@@ -35,8 +36,8 @@ func validateRoadmapDetailIntegrityFixtureInventory(fixtures map[string]canary.F
 	for name := range roadmapDetailIntegrityFixtureClasses {
 		expected = append(expected, name)
 	}
-	if len(expected) != 8 {
-		return fmt.Errorf("roadmap-detail-integrity fixture inventory has %d entries, want 8", len(expected))
+	if len(expected) != 9 {
+		return fmt.Errorf("roadmap-detail-integrity fixture inventory has %d entries, want 9", len(expected))
 	}
 	sort.Strings(expected)
 	actual := make([]string, 0, len(expected))

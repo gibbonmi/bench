@@ -127,10 +127,14 @@ against the enforcement surface).
   present, inline text discarded) so `rows_total` and status still see it. Wrapped
   heading yields no row; the second of a duplicate ID yields no row; orphan and
   unrecognized files yield no row. A malformed ledger reports its discrepancy and
-  parse failure with `Source` = `roadmap/<ID>.md`, capture unit = the ID.
+  parse failure with `Source` = `roadmap/<ID>.md`, capture unit = the ID. A degraded
+  `roadmap/` keeps every index row: no listing was taken, so no row's owner is known
+  to be missing and none is told it is.
 - **`roadmap/` joins the sequence-trust sources.** A row file whose classifier state
   is anything but parsed or empty renders a `parse_failures` row naming it and
-  flips `sequence_trusted` false, exactly as a degraded `ROADMAP.md` does.
+  flips `sequence_trusted` false, exactly as a degraded `ROADMAP.md` does. The
+  directory's own state is graded the same way: absent and empty are answers, and
+  anything else is one diagnostic sourced at `roadmap/` naming the classifier's reason.
 - **Two docs-currency readers move onto the loader.** `checkOccurrenceLedgerMigration`
   reads the loader's `Document` (its count map unchanged) and
   `checkRemovedVerbSweep` sweeps `README.md`, `ROADMAP.md`, and every
@@ -141,10 +145,11 @@ against the enforcement surface).
   byte after the first line break, trimmed as today's body is trimmed. The ledger
   parser, `spec.LiveSpecSlugs`, and the external-trigger words read the heading
   plus body, exactly the text they read today, so schema-4 cells do not move.
-- **Diagnostics are ordered and path-first.** Missing owner, orphan, inline body,
-  heading mismatch, unrecognized file, duplicate ID, wrapped heading — one message
-  per finding, index order then directory order, each beginning with the offending
-  repo-relative path. The conformance check returns them verbatim; `--context`
+- **Diagnostics are ordered and path-first.** A degraded `roadmap/`, then missing
+  owner, orphan, inline body, heading mismatch, unrecognized file, duplicate ID,
+  wrapped heading — one message per finding, the directory's own state first because
+  every row-level finding rests on it, then index order and directory order, each
+  beginning with the offending repo-relative path. The conformance check returns them verbatim; `--context`
   renders each as a `parse_failures` row whose `source` is that path, and marks
   `ROADMAP.md` malformed. Schema stays 4: a new `sources` row and new
   `parse_failures` rows are additive.
@@ -235,8 +240,9 @@ Not covered: story 43 — reviewed exclusion, no flag is built.
   (`roadmap/FT5.md` opening `**FT6 …**`) as its own class — PR7's heading mismatch
   against FT5's index line already names the file and the row.
 - **Won't handle** a `roadmap/` entry that is a subdirectory or symlink as its own
-  class — the classifier's wrong-type state reports it as an unrecognized entry
-  through PR8's path, and no in-scope caller creates one.
+  class — the row-file read never follows a link, so both grade wrong-type and are
+  named by story 44's unread-detail diagnostic (or PR8's, when the basename is also
+  outside the row-ID grammar), and no in-scope caller creates one.
 - **Won't handle** a row file over `bounds.ControlRecordLimit` specially — the
   classifier's existing bounded-read state renders as a parse failure exactly as an
   oversized `ROADMAP.md` does today.

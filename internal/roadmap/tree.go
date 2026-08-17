@@ -43,7 +43,10 @@ func LoadTree(root string) Tree {
 	dir := bounds.ClassifyDir(filepath.Join(root, RoadmapDir))
 	tree.DirState, tree.DirReason, tree.DirBytes = dir.State, dir.Reason, dirBytes(dir.Entries)
 	for _, entry := range dir.Entries {
-		c := bounds.Classify(filepath.Join(root, RoadmapDir, entry.Name()), bounds.ControlRecordLimit)
+		// The producer form, not Classify: a row file is authoritative input the board
+		// is graded from, so a link here would grade bytes nobody put under roadmap/.
+		// Both link kinds land in the wrong-type state the listing pass already reports.
+		c := bounds.ClassifyNoFollow(filepath.Join(root, RoadmapDir, entry.Name()))
 		tree.Files = append(tree.Files, RowFile{Name: entry.Name(), Reason: c.Reason, State: c.State, Data: c.Data})
 	}
 	return tree
@@ -69,14 +72,15 @@ func (d Diagnostic) String() string { return d.Path + ": " + d.Reason }
 
 // ParseDocument projects a classified tree into the Document every roadmap surface
 // renders, the parse failures the snapshot reports, and the ordered integrity
-// diagnostics the conformance check returns. Diagnostics run in index order and then in
-// directory order, and each begins with the repo-relative path of the file at fault.
+// diagnostics the conformance check returns. A degraded RoadmapDir comes first because
+// it is the precondition every row-level finding rests on; the rest run in index order
+// and then in directory order, and each begins with the repo-relative path at fault.
 //
 // Row disposition is fixed per fault class rather than left to each caller, so
 // rows_total, the row selector, and the status board agree on what a faulted board
-// holds: a missing detail owner, a heading mismatch, and an inline body keep the index
-// row, while a wrapped heading, the second position of a duplicated ID, an orphan, and
-// an unrecognized file yield no row at all.
+// holds: a missing detail owner, a heading mismatch, an inline body, and every row of a
+// degraded directory keep the index row, while a wrapped heading, the second position of
+// a duplicated ID, an orphan, and an unrecognized file yield no row at all.
 func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, []ParseFailure, []Diagnostic) {
 	content := tree.Index.Data
 	lines := strings.Split(string(content), "\n")
@@ -84,7 +88,17 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 	var failures []ParseFailure
 	var diagnostics []Diagnostic
 	owners, unread := rowFileOwners(tree.Files)
-	indexed := map[string]bool{}
+	// rowed is the ID a row was built for, so the next index line carrying it is a
+	// duplicate; claimed is every ID the index names at all, faulted lines included, so
+	// the directory pass never calls a claimed row's file an orphan.
+	rowed, claimed := map[string]bool{}, map[string]bool{}
+	// A directory the classifier could not read yields no listing, so every row would
+	// otherwise be told its detail owner is missing. Name the directory once instead:
+	// nobody looked, so no row's owner is known to be absent.
+	dirDegraded := degradedState(tree.DirState)
+	if dirDegraded {
+		diagnostics = append(diagnostics, Diagnostic{RoadmapDir + "/", fmt.Sprintf("%s detail directory: %s", tree.DirState, tree.DirReason)})
+	}
 
 	for i := 0; i < len(lines); {
 		line := lines[i]
@@ -98,6 +112,7 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 			continue
 		}
 		id, at := m[1], i+1
+		claimed[id] = true
 		closeAt := strings.Index(m[2], "**")
 		i++
 		// Whatever sits under the heading is consumed either way: the split shape has
@@ -110,11 +125,11 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 			diagnostics = append(diagnostics, Diagnostic{RoadmapFile, fmt.Sprintf("wrapped heading at line %d; a row heading is one physical line", at)})
 			continue
 		}
-		if indexed[id] {
+		if rowed[id] {
 			diagnostics = append(diagnostics, Diagnostic{RoadmapFile, fmt.Sprintf("duplicate row %s at line %d", id, at)})
 			continue
 		}
-		indexed[id] = true
+		rowed[id] = true
 
 		row := RoadmapRow{ID: id, Title: strings.Trim(m[2][:closeAt], " —:-\t")}
 		rowText := line
@@ -129,9 +144,10 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 				diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("heading does not match %s row %s", RoadmapFile, id)})
 			}
 			row.Body, row.BodyBytes = projectBody(strings.TrimSpace(body), full)
-		case unread[id]:
-			// The directory pass names the file it could not read; the row keeps its
-			// place on the board with the body nobody was able to load.
+		case unread[id], dirDegraded:
+			// The listing pass has already named the file — or the directory — it could
+			// not read; the row keeps its place on the board with the body nobody was
+			// able to load.
 		default:
 			diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("missing detail owner for %s row %s", RoadmapFile, id)})
 		}
@@ -154,7 +170,7 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 		doc.Rows = append(doc.Rows, row)
 	}
 
-	diagnostics = append(diagnostics, listingDiagnostics(tree.Files, indexed)...)
+	diagnostics = append(diagnostics, listingDiagnostics(tree.Files, claimed)...)
 	sequence, sequenceText, hasSection := parseSequence(lines)
 	doc.Sequence, doc.SequenceText = sequence, sequenceText
 	if len(content) > 0 && len(doc.Rows) == 0 && len(failures) == 0 && len(diagnostics) == 0 && !hasSection {
@@ -186,8 +202,10 @@ func rowFileOwners(files []RowFile) (owners map[string]RowFile, unread map[strin
 
 // listingDiagnostics reports what the roadmap/ listing holds that no index row claimed,
 // in directory order: a basename outside the row-ID grammar, a row file the classifier
-// could not read, and a detail file whose row is not on the board.
-func listingDiagnostics(files []RowFile, indexed map[string]bool) []Diagnostic {
+// could not read, and a detail file whose row is not on the board. claimed carries every
+// ID the index named, not only the ones that became rows: a file whose index line is
+// itself faulted has an owner on the board and is not an orphan.
+func listingDiagnostics(files []RowFile, claimed map[string]bool) []Diagnostic {
 	var diagnostics []Diagnostic
 	for _, file := range files {
 		id, ok := rowFileID(file.Name)
@@ -196,7 +214,7 @@ func listingDiagnostics(files []RowFile, indexed map[string]bool) []Diagnostic {
 			diagnostics = append(diagnostics, Diagnostic{RoadmapDir + "/" + file.Name, fmt.Sprintf("unrecognized file under %s/; expected <row ID>.md", RoadmapDir)})
 		case file.State != bounds.StateParsed && file.State != bounds.StateEmpty:
 			diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("%s detail file: %s", file.State, file.Reason)})
-		case !indexed[id]:
+		case !claimed[id]:
 			diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("orphan detail file with no %s row %s", RoadmapFile, id)})
 		}
 	}

@@ -2,12 +2,15 @@ package roadmap
 
 import (
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
@@ -215,10 +218,119 @@ func TestTreeParseReportsUnreadRowFile(t *testing.T) {
 	}
 }
 
+// TestTreeParseReportsEmptyRowFileAsHeadingMismatch covers the other half of PR7: a row
+// file that exists with no bytes is an owner whose heading is gone, not an absent owner,
+// so it reports the mismatch rather than staying silent behind the missing-owner class.
+func TestTreeParseReportsEmptyRowFileAsHeadingMismatch(t *testing.T) {
+	tree := splitTree("**FT7 (LOW) — x.**\n", map[string]string{"FT7.md": ""})
+	doc, _, diagnostics := ParseDocument(tree, nil, true)
+	want := []string{"roadmap/FT7.md: heading does not match ROADMAP.md row FT7"}
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
+		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
+	}
+	if len(doc.Rows) != 1 || doc.Rows[0].Title != "(LOW) — x." || doc.Rows[0].Body != "" {
+		t.Fatalf("rows = %#v, want the FT7 row kept with an empty body", doc.Rows)
+	}
+}
+
+// TestTreeParseWrappedHeadingWithRowFilePresentReportsOnce pins the wrapped-heading
+// class to one message: the index names FT7, so its detail file has an owner on the
+// board and the directory pass must not also call it an orphan.
+func TestTreeParseWrappedHeadingWithRowFilePresentReportsOnce(t *testing.T) {
+	index := "**FT7 (LOW) — a\nlong title.**\n"
+	tree := splitTree(index, map[string]string{"FT7.md": "**FT7 (LOW) — a long title.**\n"})
+	doc, _, diagnostics := ParseDocument(tree, nil, true)
+	want := []string{"ROADMAP.md: wrapped heading at line 1; a row heading is one physical line"}
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
+		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
+	}
+	if len(doc.Rows) != 0 {
+		t.Fatalf("rows = %#v, want none for a wrapped heading", doc.Rows)
+	}
+}
+
+// TestTreeParseReportsDegradedRowDirectory covers the directory's own state: a roadmap/
+// the classifier could not read is named once, with the cause, and no row is told its
+// detail owner is missing over a listing nobody was able to take. The index-absent case
+// is the half that was silently clean before.
+func TestTreeParseReportsDegradedRowDirectory(t *testing.T) {
+	want := []string{"roadmap/: wrong-type detail directory: not a directory: ----------"}
+	for _, tc := range []struct {
+		name, index string
+		rows        int
+	}{
+		{"index present", "**FT7 (LOW) — x.**\n", 1},
+		{"index absent", "", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			roadmaptest.WriteSplitBoard(t, root, tc.index, nil)
+			if err := os.WriteFile(filepath.Join(root, "roadmap"), []byte("not a directory\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			doc, _, diagnostics := ParseDocument(LoadTree(root), nil, true)
+			if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
+				t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
+			}
+			if len(doc.Rows) != tc.rows {
+				t.Fatalf("rows = %#v, want %d kept over an unreadable directory", doc.Rows, tc.rows)
+			}
+			if got := ValidateRoadmapTree(root); !reflect.DeepEqual(got, want) {
+				t.Fatalf("ValidateRoadmapTree = %#v, want %#v", got, want)
+			}
+		})
+	}
+}
+
+// TestTreeParseRefusesSymlinkRowFile covers the row-file read's refusal to follow a
+// link: a detail owner is authoritative input to the board's grade, so bytes reached
+// through a link are not that owner's bytes and grade wrong-type like any other
+// non-regular entry.
+func TestTreeParseRefusesSymlinkRowFile(t *testing.T) {
+	const heading = "**FT7 (LOW) — x.**"
+	root := t.TempDir()
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT8.md": heading + "\n"})
+	if err := os.Symlink(filepath.Join(root, "roadmap", "FT8.md"), filepath.Join(root, "roadmap", "FT7.md")); err != nil {
+		t.Fatal(err)
+	}
+	doc, _, diagnostics := ParseDocument(LoadTree(root), nil, true)
+	want := []string{
+		"roadmap/FT7.md: wrong-type detail file: not a regular file: L---------",
+		"roadmap/FT8.md: orphan detail file with no ROADMAP.md row FT8",
+	}
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
+		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
+	}
+	if len(doc.Rows) != 1 || doc.Rows[0].Body != "" {
+		t.Fatalf("rows = %#v, want the FT7 row kept with the linked body unread", doc.Rows)
+	}
+}
+
+// TestOccurrenceSequenceTrustedRefusesDegradedRowDirectorySource pins the roadmap/ entry
+// of the trust list itself: a sources block reporting a degraded directory withdraws
+// trust on its own, so the entry carries weight rather than shadowing the diagnostics
+// check that runs before it.
+func TestOccurrenceSequenceTrustedRefusesDegradedRowDirectorySource(t *testing.T) {
+	sources := []SourceFact{
+		{Source: RoadmapFile, State: string(bounds.StateParsed)},
+		{Source: RoadmapDir + "/", State: string(bounds.StateParsed)},
+		{Source: IdeasFile, State: string(bounds.StateAbsent)},
+		{Source: learnings.JournalPath, State: string(bounds.StateAbsent)},
+		{Source: retros.Directory + "/", State: string(bounds.StateAbsent)},
+	}
+	if !occurrenceSequenceTrusted(nil, nil, sources) {
+		t.Fatal("a clean sources block withdrew trust")
+	}
+	sources[1].State = string(bounds.StateUnreadable)
+	if occurrenceSequenceTrusted(nil, nil, sources) {
+		t.Fatal("an unreadable roadmap/ source kept the sequence trusted")
+	}
+}
+
 // TestTreeParseAbsentBoardIsQuiet covers PR16 and PR19 at the parse: a repository with
 // neither the index nor the directory is a repository without a board, not a broken one.
 func TestTreeParseAbsentBoardIsQuiet(t *testing.T) {
-	doc, failures, diagnostics := ParseDocument(Tree{Index: bounds.Classified{State: bounds.StateAbsent}}, nil, true)
+	doc, failures, diagnostics := ParseDocument(Tree{Index: bounds.Classified{State: bounds.StateAbsent}, DirState: bounds.StateAbsent}, nil, true)
 	if len(doc.Rows) != 0 || len(failures) != 0 || len(diagnostics) != 0 {
 		t.Fatalf("absent board = rows %#v failures %#v diagnostics %#v", doc.Rows, failures, diagnostics)
 	}

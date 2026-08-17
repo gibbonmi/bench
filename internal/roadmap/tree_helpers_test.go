@@ -11,13 +11,15 @@ import (
 )
 
 // indexTree is the index-only tree a test drives when the row files are not the
-// subject: parsed index bytes and no roadmap/ listing at all.
+// subject: parsed index bytes and no roadmap/ directory at all. Absence is the state a
+// missing directory classifies to, and the state the parse must read here — the zero
+// value is no state at all and would grade as a degraded directory.
 func indexTree(index string) Tree {
 	state := bounds.StateParsed
 	if index == "" {
 		state = bounds.StateEmpty
 	}
-	return Tree{Index: bounds.Classified{State: state, Data: []byte(index)}}
+	return Tree{Index: bounds.Classified{State: state, Data: []byte(index)}, DirState: bounds.StateAbsent}
 }
 
 // splitTree is the split board a test drives: parsed index bytes plus one parsed

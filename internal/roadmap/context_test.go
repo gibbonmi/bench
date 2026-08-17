@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 func TestContextCommandEndsWithHelpBlock(t *testing.T) {
@@ -316,37 +317,59 @@ func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
 
 // TestContextCommandSourcesListsRoadmapDirectory covers PR11 (stories 13, 26): the
 // sources block gains a roadmap/ row reporting the split directory's state and byte
-// total, and the context row still reads schema 4.
+// total, and the context row still reads schema 4. A directory that is not there and one
+// that holds nothing are authoritative answers, not degraded reads, so each is pinned
+// beside the parsed row rather than left to the one healthy state.
 func TestContextCommandSourcesListsRoadmapDirectory(t *testing.T) {
-	root := newRepo(t)
-	const body = "row detail\n"
-	writeBoard(t, root, Row{"**FT1 — first.**", body})
-	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
-	if code != 0 {
-		t.Fatalf("exit = %d, output=%q", code, out)
-	}
-	document, err := axitest.DecodeDocument(out)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rows, err := document.Rows("sources")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var found map[string]any
-	for _, r := range rows {
-		row := r.(map[string]any)
-		if row["source"] == "roadmap/" {
-			found = row
-		}
-	}
-	wantBytes := float64(len("**FT1 — first.**\n" + body))
-	if found == nil || found["state"] != "parsed" || found["bytes"] != wantBytes {
-		t.Fatalf("sources = %#v, want a roadmap/ row parsed,%v", rows, wantBytes)
-	}
-	contextRows, err := document.Rows("context")
-	if err != nil || len(contextRows) != 1 || contextRows[0].(map[string]any)["schema"] != float64(4) {
-		t.Fatalf("context rows = %#v, %v", contextRows, err)
+	const heading, body = "**FT1 — first.**", "row detail\n"
+	for _, tc := range []struct {
+		name, state string
+		bytes       float64
+		plant       func(*testing.T, string)
+	}{
+		{"parsed", "parsed", float64(len(heading + "\n" + body)), func(t *testing.T, root string) {
+			writeBoard(t, root, Row{heading, body})
+		}},
+		{"absent", "absent", 0, func(t *testing.T, root string) {
+			roadmaptest.WriteSplitBoard(t, root, heading+"\n", nil)
+		}},
+		{"empty", "empty", 0, func(t *testing.T, root string) {
+			roadmaptest.WriteSplitBoard(t, root, heading+"\n", nil)
+			if err := os.Mkdir(filepath.Join(root, RoadmapDir), 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newRepo(t)
+			tc.plant(t, root)
+			out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+			if code != 0 {
+				t.Fatalf("exit = %d, output=%q", code, out)
+			}
+			document, err := axitest.DecodeDocument(out)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rows, err := document.Rows("sources")
+			if err != nil {
+				t.Fatal(err)
+			}
+			var found map[string]any
+			for _, r := range rows {
+				row := r.(map[string]any)
+				if row["source"] == "roadmap/" {
+					found = row
+				}
+			}
+			if found == nil || found["state"] != tc.state || found["bytes"] != tc.bytes {
+				t.Fatalf("sources = %#v, want a roadmap/ row %s,%v", rows, tc.state, tc.bytes)
+			}
+			contextRows, err := document.Rows("context")
+			if err != nil || len(contextRows) != 1 || contextRows[0].(map[string]any)["schema"] != float64(4) {
+				t.Fatalf("context rows = %#v, %v", contextRows, err)
+			}
+		})
 	}
 }
 
@@ -600,14 +623,24 @@ func TestOccurrenceIncidentGrammar(t *testing.T) {
 
 func TestOccurrenceLedgerMalformedAndLineEndings(t *testing.T) {
 	const heading = "**FT1 — one.**"
-	valid, failures, _ := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\r\nOccurrences: alpha-1, beta-2"}), nil, false)
+	// The row file's first line is the index line byte-for-byte, so a CRLF row file
+	// under an LF index really has drifted: the ledger still parses across the line
+	// endings, and the stray carriage return is a heading mismatch rather than nothing.
+	valid, failures, diagnostics := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\r\nOccurrences: alpha-1, beta-2"}), nil, false)
+	wantDiagnostics := []string{"roadmap/FT1.md: heading does not match ROADMAP.md row FT1"}
 	if len(failures) != 0 || valid.Rows[0].OccurrenceCount != 2 {
 		t.Fatalf("CRLF newline-less ledger = %#v, %#v", valid, failures)
 	}
+	if !reflect.DeepEqual(diagnosticStrings(diagnostics), wantDiagnostics) {
+		t.Fatalf("CRLF row-file diagnostics = %#v, want %#v", diagnostics, wantDiagnostics)
+	}
 	for _, ledger := range []string{"Occurrences:", "Occurrences: alpha_1", "Occurrences: beta, alpha", "Occurrences: alpha, alpha", "Occurrences: alpha\nOccurrences: beta"} {
-		doc, got, _ := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\n" + ledger + "\n"}), nil, false)
+		doc, got, diagnostics := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\n" + ledger + "\n"}), nil, false)
 		if len(got) != 1 || got[0].Reason != "malformed-ledger" || len(doc.OccurrenceDiscrepancies) != 1 {
 			t.Fatalf("ledger %q accepted: %#v, %#v", ledger, doc, got)
+		}
+		if len(diagnostics) != 0 {
+			t.Fatalf("ledger %q reported integrity diagnostics %#v, want none over a whole board", ledger, diagnostics)
 		}
 	}
 }
