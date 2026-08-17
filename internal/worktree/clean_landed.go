@@ -116,10 +116,20 @@ func planLandedAssignment(root string, assignment intent.Assignment, options Cle
 		plan.assignment, plan.owned = &assignment, true
 		return plan
 	}
-	if plan.preserves() {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonDirty, "per-path cleanup is required to preserve work"
-		plan.Recovery = "none"
+	return retainForLandedPreservation(plan)
+}
+
+// retainForLandedPreservation is the landed-set's single site for the preservation
+// refusal: it reads the same plan.preserves() predicate PlanAutomatic's own stricter
+// reading already consults (classifier.go), so the two never derive "would removing
+// this strand uncommitted work" differently, even though each still projects its own
+// operator-facing message for its own command surface.
+func retainForLandedPreservation(plan CleanupPlan) CleanupPlan {
+	if !plan.preserves() {
+		return plan
 	}
+	plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonDirty, "per-path cleanup is required to preserve work"
+	plan.Recovery = "none"
 	return plan
 }
 

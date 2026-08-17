@@ -12,4 +12,4 @@ the expansion ticket without waiting for automatic cleanup's consumer migration.
 
 ## Acceptance
 
-- [ ] CO3: `--landed` planning obtains its preservation refusal from the eligibility owner while its set fingerprint and no-op rows stay unchanged.
+- [x] CO3: `--landed` planning obtains its preservation refusal from the eligibility owner while its set fingerprint and no-op rows stay unchanged.
