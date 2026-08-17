@@ -314,6 +314,157 @@ func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
 	}
 }
 
+// TestContextCommandSourcesListsRoadmapDirectory covers PR11 (stories 13, 26): the
+// sources block gains a roadmap/ row reporting the split directory's state and byte
+// total, and the context row still reads schema 4.
+func TestContextCommandSourcesListsRoadmapDirectory(t *testing.T) {
+	root := newRepo(t)
+	const body = "row detail\n"
+	writeBoard(t, root, [2]string{"**FT1 — first.**", body})
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("sources")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found map[string]any
+	for _, r := range rows {
+		row := r.(map[string]any)
+		if row["source"] == "roadmap/" {
+			found = row
+		}
+	}
+	wantBytes := float64(len("**FT1 — first.**\n" + body))
+	if found == nil || found["state"] != "parsed" || found["bytes"] != wantBytes {
+		t.Fatalf("sources = %#v, want a roadmap/ row parsed,%v", rows, wantBytes)
+	}
+	contextRows, err := document.Rows("context")
+	if err != nil || len(contextRows) != 1 || contextRows[0].(map[string]any)["schema"] != float64(4) {
+		t.Fatalf("context rows = %#v, %v", contextRows, err)
+	}
+}
+
+// TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed covers PR12
+// (story 14): a missing detail owner renders as a parse_failures row sourced at the
+// offending row file, ROADMAP.md's own sources row flips to malformed, and the
+// context row's sequence_trusted goes false — a general predicate over any
+// diagnostic, not only this fault class.
+func TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT7 (LOW) — x.**\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("parse_failures")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, r := range rows {
+		row := r.(map[string]any)
+		if row["source"] == "roadmap/FT7.md" && row["reason"] == "missing detail owner for ROADMAP.md row FT7" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("parse_failures = %#v, want roadmap/FT7.md missing detail owner", rows)
+	}
+	sourceRows, err := document.Rows("sources")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var roadmapState any
+	for _, r := range sourceRows {
+		row := r.(map[string]any)
+		if row["source"] == RoadmapFile {
+			roadmapState = row["state"]
+		}
+	}
+	if roadmapState != "malformed" {
+		t.Fatalf("ROADMAP.md source state = %v, want malformed", roadmapState)
+	}
+	contextRows, err := document.Rows("context")
+	if err != nil || len(contextRows) != 1 || contextRows[0].(map[string]any)["sequence_trusted"] != false {
+		t.Fatalf("context rows = %#v, %v", contextRows, err)
+	}
+}
+
+// TestContextCommandRowSelectorRendersRowFileBody covers PR13 (story 15): --row
+// returns the requested row's body straight from its row file, with body_bytes.
+func TestContextCommandRowSelectorRendersRowFileBody(t *testing.T) {
+	root := newRepo(t)
+	writeBoard(t, root, [2]string{"**FT7 (LOW) — x.**", "row detail\n"})
+	out, code := ContextCommand([]string{"--context", "--row", "FT7"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("roadmap_rows")
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("roadmap_rows = %#v, %v", rows, err)
+	}
+	row := rows[0].(map[string]any)
+	if row["body"] != "row detail" || row["body_bytes"] != float64(len("row detail")) {
+		t.Fatalf("row = %#v", row)
+	}
+}
+
+// TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence covers PR27
+// (story 44, the render-side half shared with ticket 1's loader): a row file the
+// classifier reports wrong-type — a directory sitting where the row file belongs —
+// renders a parse_failures row naming it and drops sequence_trusted.
+func TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT7 (LOW) — x.**\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, RoadmapDir, "FT7.md"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("parse_failures")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, r := range rows {
+		row := r.(map[string]any)
+		if row["source"] == "roadmap/FT7.md" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("parse_failures = %#v, want roadmap/FT7.md named", rows)
+	}
+	contextRows, err := document.Rows("context")
+	if err != nil || len(contextRows) != 1 || contextRows[0].(map[string]any)["sequence_trusted"] != false {
+		t.Fatalf("context rows = %#v, %v", contextRows, err)
+	}
+}
+
 func TestContextCommandRowSelectorRefusesMalformedAndMissing(t *testing.T) {
 	root := newRepo(t)
 	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — first.**\nbody\n"), 0o644); err != nil {

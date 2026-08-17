@@ -260,6 +260,40 @@ func TestRoadmapBoardDocument(t *testing.T) {
 	}
 }
 
+// TestRoadmapBoardRendersDetailFromRowFile covers PR14 (story 16): title comes from
+// the index line while spec, occurrence_count, and occurrence_keys come from the
+// row-file body, and an empty ROADMAP.md still exits 1 with the record error.
+func TestRoadmapBoardRendersDetailFromRowFile(t *testing.T) {
+	root := newRepo(t)
+	body := "Blocked until the deploy is scheduled; the spec is `specs/foo/spec.md`.\nOccurrences: alpha-1, beta-2\n"
+	writeBoard(t, root, [2]string{"**FT1 — index title.**", body})
+	out, code := RoadmapCommand(nil)
+	if code != 0 {
+		t.Fatalf("exit = %d; stdout=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("roadmap")
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("roadmap rows = %#v, %v", rows, err)
+	}
+	row := rows[0].(map[string]any)
+	if row["title"] != "index title." || row["spec"] != "foo" || fmt.Sprint(row["occurrence_count"]) != "2" || row["occurrence_keys"] != "alpha-1, beta-2" {
+		t.Fatalf("row = %#v", row)
+	}
+
+	root = newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte(""), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code = RoadmapCommand(nil)
+	if code != 1 || !strings.Contains(out, "empty") {
+		t.Fatalf("empty ROADMAP.md = %q/%d, want exit 1 naming empty", out, code)
+	}
+}
+
 func TestRoadmapBoardRowBoundary(t *testing.T) {
 	for _, count := range []int{0, 9, 10, 11} {
 		t.Run(fmt.Sprintf("%d rows", count), func(t *testing.T) {

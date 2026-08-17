@@ -113,6 +113,10 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	if degradedState(tree.Index.State) {
 		s.Failures = append(s.Failures, ParseFailure{RoadmapFile, string(tree.Index.State) + ": " + tree.Index.Reason, "", 0})
 	}
+	s.Sources = append(s.Sources, SourceFact{RoadmapDir + "/", string(tree.DirState), tree.DirBytes})
+	if degradedState(tree.DirState) {
+		s.Failures = append(s.Failures, ParseFailure{RoadmapDir + "/", string(tree.DirState) + ": " + tree.DirReason, "", 0})
+	}
 	labels := []string{IdeasFile, learnings.JournalPath, ".bench/structure.budgets", ".bench/structure-accept", "specs/"}
 	data := map[string][]byte{}
 	for _, label := range labels {
@@ -176,6 +180,22 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	var roadFails []ParseFailure
 	s.Roadmap, roadFails, diagnostics = ParseDocument(tree, statuses, full)
 	s.Failures = append(s.Failures, roadFails...)
+	// Each integrity diagnostic renders as its own parse_failures row, sourced at the
+	// offending path it names (the prefix up to its first ": ", ParseDocument's own
+	// convention). Any diagnostic at all — not only one sourced at ROADMAP.md itself —
+	// withdraws trust from the index: a reader must never see ROADMAP.md's own row
+	// still reading clean over a tree the parser could not fully resolve.
+	for _, d := range diagnostics {
+		source, reason, _ := strings.Cut(d, ": ")
+		s.Failures = append(s.Failures, ParseFailure{source, reason, "", 0})
+	}
+	if len(diagnostics) > 0 {
+		for i := range s.Sources {
+			if s.Sources[i].Source == RoadmapFile && s.Sources[i].State == string(bounds.StateParsed) {
+				s.Sources[i].State = string(bounds.StateMalformed)
+			}
+		}
+	}
 	s.Ideas, roadFails, _ = parseIdeas(data[IdeasFile], full)
 	s.Failures = append(s.Failures, roadFails...)
 	units := make([]captureUnit, 0, len(s.Ideas))

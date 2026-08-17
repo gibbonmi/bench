@@ -91,7 +91,7 @@ func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy, diagnostic
 	for _, source := range sources {
 		states[source.Source] = source.State
 	}
-	for _, source := range []string{RoadmapFile, IdeasFile, learnings.JournalPath, retros.Directory + "/"} {
+	for _, source := range []string{RoadmapFile, RoadmapDir + "/", IdeasFile, learnings.JournalPath, retros.Directory + "/"} {
 		switch bounds.FileState(states[source]) {
 		case bounds.StateAbsent, bounds.StateEmpty, bounds.StateParsed:
 			continue

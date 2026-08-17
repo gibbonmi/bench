@@ -168,7 +168,7 @@ func RoadmapCommand(args []string) (string, int) {
 	tree := LoadTree(root)
 	switch {
 	case tree.Index.State == bounds.StateAbsent:
-		return renderRoadmapBoard(Document{}, nil, DrainCounts(root), true)
+		return renderRoadmapBoard(Document{}, nil, DrainCounts(root), true, tree.DirState)
 	case tree.Index.State == bounds.StateEmpty:
 		// The classifier carries no diagnostic for a clean read of nothing, so the
 		// error line supplies the one fact that separates this from absence.
@@ -182,10 +182,10 @@ func RoadmapCommand(args []string) (string, int) {
 			return toon.RecordError(RoadmapFile, bounds.StateUnsupportedSchema, f.Reason) + "\n", 1
 		}
 	}
-	return renderRoadmapBoard(doc, diagnostics, DrainCounts(root), false)
+	return renderRoadmapBoard(doc, diagnostics, DrainCounts(root), false, tree.DirState)
 }
 
-func renderRoadmapBoard(doc Document, diagnostics []string, drain Drain, absent bool) (string, int) {
+func renderRoadmapBoard(doc Document, diagnostics []string, drain Drain, absent bool, dirState bounds.FileState) (string, int) {
 	rowsShown := len(doc.Rows)
 	if rowsShown > 10 {
 		rowsShown = 10
@@ -201,6 +201,7 @@ func renderRoadmapBoard(doc Document, diagnostics []string, drain Drain, absent 
 	}
 	sources := []SourceFact{
 		{Source: RoadmapFile, State: string(bounds.StateParsed)},
+		{Source: RoadmapDir + "/", State: string(dirState)},
 		{Source: IdeasFile, State: string(drain.IdeasState)},
 		{Source: learnings.JournalPath, State: string(drain.LearningsState)},
 		{Source: retros.Directory + "/", State: string(drain.RetrosState)},
