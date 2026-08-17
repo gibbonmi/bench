@@ -27,8 +27,6 @@ means the repository-controlled compliance assessment.
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
 
-**FT198 (MEDIUM, decision required) — a progressively loaded roadmap.**
-
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject and handoff.**
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
