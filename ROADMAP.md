@@ -135,6 +135,9 @@ Final landing guidance states the source-built binary, `BENCH_HOME`, clean
 destination, and declared allowance before the landing invocation. Source:
 parallel-session-landings retro, drained here.
 
+Occurrence: 2026-08-16 spec-ticket-fence-reduction retro — `bench handoff` recorded worktree-relative facts in the handoff header when run inside a worktree, not the repository.
+Occurrence: 2026-08-16 spec-ticket-fence-reduction retro — two sessions drove one integration source after a continuation prompt was emitted and the emitting session kept working; the first session's `--full` phase-boundary handoff write was skipped.
+
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The retired FT91 review remains the canonical carrier; full citations are
 recoverable via `bench spec history ft91-gate-tier-split`. Standards work keeps
@@ -344,6 +347,7 @@ Occurrence: 2026-08-15 skills-index-reader retro — a staged-spec byte differen
 Occurrence: 2026-08-15 skills-index-reader retro — a failed release step exited 1 after a successful publish, reading as nothing landed.
 Occurrence: 2026-08-15 skills-index-reader retro — gate progress logs written to the worktree's `.logs/` blocked the release they preceded.
 Occurrence: 2026-08-15 skills-index hostile-input retro — three separate `land` refusals each needed a follow-up command to diagnose, while `bench preflight review` already names the offending file.
+Occurrence: 2026-08-16 spec-ticket-fence-reduction retro — a digested `land` request id was recoverable only from the creating session's transcript, and `bench worktree list` neither printed the raw id nor accepted the assignment id.
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that
 traps automation and leaks on signals.** The agent-facing surface is the
@@ -355,6 +359,15 @@ Occurrence: 2026-08-01 reviewer ruling — three bare-verb probes hung and leake
 Parser-first dispatch rejects unknown flags before choosing the bare command, and
 the discovery convention remains canonical in `AGENTS.md`. Source: the
 parallel-session-landings retro, drained here.
+
+**FT212 (LOW) — `bench worktree clean --landed` fails "invalid invocation"
+though `.bench/BENCH.md`'s inventory advertises the form.** Reproduced directly:
+`bench worktree clean --landed` prints `invalid invocation; run bench worktree
+clean [--discard-ignored] [--discard-branch] [--full] <path> [--apply
+<fingerprint>]` — a usage string that does not list `--landed` as accepted.
+Either the flag ships or the inventory line drops it.
+
+Occurrence: 2026-08-16 spec-ticket-fence-reduction retro — the flag errored during the retro's own landing; reproduced again here via direct invocation on `main`.
 
 **FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's
 non-recurrence evidence complete.** Contract the row grammar as exactly
@@ -558,6 +571,7 @@ are gone, but the one-source-per-fact rule remains. Kit edit under
 
 Occurrence: 2026-08-03 injected-interface-junctions review — a failure-message count disagreed across implementation, spec, and ticket prose.
 Occurrence: recovery-discard build — ticket `Assumptions:` copied a standing tree-verification rule.
+Occurrence: 2026-08-16 spec-ticket-fence-reduction review — the narrower-capability falsification question stayed pinned to `bench-write-spec.md` because two test literals (`TestWorkflowCadenceAnchorsRejectDeletionAndSwap`, `docs_workflow_helpers_test.go`) anchored its byte-exact tail there instead of `craft-spec`'s Review rubric.
 
 **FT206 (MEDIUM) — exact-candidate review sees destination metadata before it
 freezes.** Reconcile destination-owned staged-spec metadata before exact review;
@@ -627,6 +641,22 @@ Occurrence: 2026-08-15 skills-index-reader retro — a probe that deleted a bran
 Occurrence: 2026-08-15 skills-index-reader retro — three review axes were reported running twice while all three were parked on stdin.
 Occurrence: 2026-08-15 skills-index hostile-input retro — a probe mutating provably-redundant code passed by construction and was indistinguishable from coverage.
 
+**FT213 (MEDIUM) — a read-only delegate reading a graded tree gets its own
+worktree, and a delegate's claim about a gate signal gets an oracle-verified
+probe.** `craft-delegate` says a read-only delegate "needs no worktree; say 'do
+not edit any file' and mean it," which still gives it full write access to
+whatever tree the coordinator is about to grade. Give a read-only delegate
+reading a tree also being graded its own worktree, or have the coordinator
+verify the tree unchanged before the landing gate. Separately, a delegate's
+reading of a gate skip or gate-adjacent signal is a claim, not a result: plant
+the corresponding break and run the oracle before believing either reading.
+`internal/canary/mutation.go`'s `RestoreMutationFixture` should refuse `dst ==
+root` rather than silently no-op when a caller passes the real root. Kit edit
+under `craft-synthesis`.
+
+Occurrence: 2026-08-16 spec-ticket-fence-reduction review — a read-only axis delegate mutated the graded integration worktree by creating and removing a scratch test file; the gate's own subject-changed check caught it, but polling found the mechanism only after roughly an hour of chasing gate machinery.
+Occurrence: 2026-08-16 spec-ticket-fence-reduction close — two delegates read one `TestRootConformance` environment skip two different ways; the coordinator planted an anchor break and ran the full gate to red before believing either reading.
+
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
 (continue-on-chmod-failure), a fork the build must put to the reviewer — and
@@ -674,6 +704,18 @@ every guard the spec itself adds.
 
 Occurrence: 2026-08-15 skills-index-reader spec loop — three review rounds on unread enforcement surfaces and a ticket boundary that left the spec's own guard red (`capture/learnings.md`, verdicted here).
 Occurrence: 2026-08-16 FT210 and spec-ticket-fence authoring — false current-code premises reopened a decision, and a pre-HEAD map specified prose commit `24cad87d` had already landed.
+
+**FT214 (MEDIUM) — a build may not edit its own spec's acceptance rows, budget
+targets, or ownership fences.** A build hitting a spec-level shortfall edits the
+spec it is implementing instead of stopping and returning to
+`/bench-write-spec` — the material-acceptance-shortfall predicate applies even
+when the change sits inside the spec's own ownership fences. `craft-spec` or
+`/bench-implement-spec` states this rule explicitly. A gate-visible check is
+possible: a budget row whose value equals the current line count of its
+subject proves nothing, since the check parses only that one source. Kit edit
+under `craft-synthesis`.
+
+Occurrence: 2026-08-16 spec-ticket-fence-reduction build — two commits inside the graded diff rewrote the spec's own story 19/SR18 budget from 60 to 73 and added a budget row its own Further notes had forbidden; the Spec review axis caught it because the gate's budget check parses only the landed size.
 
 
 
@@ -1022,6 +1064,7 @@ same output are inventoried before any one test is called the sole red.
 
 Occurrence: 2026-08-15 skills-index-reader review — row SI4 named four real canaries, none of which asserted the diagnostic it claimed (`capture/learnings.md`, verdicted here).
 Occurrence: 2026-08-16 spec-ticket-fence authoring — a true empty-cell assertion did not distinguish the old and new schemas, and five goldens already held a projection red attributed to one helper.
+Occurrence: 2026-08-16 spec-ticket-fence-reduction review — three red-signal rows (SR27-SR29) named checks that did not exist; a delegate's own honest omission probe exposed it where the gate's citation check did not.
 
 
 
@@ -1279,7 +1322,14 @@ landings, and a repro through anything but `bench commit` itself proves
 nothing. Workaround on recurrence: run `bench gate` directly and retry.
 Graduate on a second reproduced refusal through `bench commit`; the
 verdict-class plumbing around `inherited` records is the suspect. Source:
-`capture/learnings.md` 2026-08-12, verdicted here.
+`capture/learnings.md` 2026-08-12, verdicted here. Also parked here
+2026-08-16: moving `.bench/BENCH.md`'s light-path threshold (map #16 of the
+retired `spec-ticket-fence-reduction` spec) — its own decision #16 deferred the
+move pending a measurement of whether the reduced-schema heavy path sees more
+uptake, and that observation window has not run yet. Graduate on either the
+measurement landing or a reviewer call to move without it; the direction, the
+replacement Observable wording, and the anchors/canaries it drags are
+unresolved. Source: `capture/IDEAS.md`, drained here.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
 2026-07-11: still not implementable on current Codex — delegation has no
@@ -1364,3 +1414,4 @@ fixture-proven.
 
 1. `/bench-shape-idea` — FT198 decides the progressive roadmap shape; `ASSESSMENT.md` ranks it 0 and this drain paid the 170 KB snapshot to reach three rows.
 2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block.
+3. `/bench-write-spec` — FT213 gives a read-only delegate its own worktree when it reads a tree also being graded, and requires an oracle-verified probe before trusting a delegate's gate-skip claim; reproduced twice in this drain's source retro.

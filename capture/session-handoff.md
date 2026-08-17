@@ -2,30 +2,43 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `73c97aa5` (frozen review base); integration worktree
-`bench worktree path d58e5fed7d1634c79cdeacadfa519a8c` on
-`bench/assign/…/d58e5fed7d1634c79cdeacadfa519a8c`, reviewed tip = the commit that
-carries this file
-Spec: `specs/spec-ticket-fence-reduction/spec.md` (Status: staged until `bench worktree land`)
-Gate: green in the worktree at the tip
+Branch: `main` — HEAD `29da04eb`, 5 dirty capture/roadmap paths (this drain's batch,
+pending reviewer approval to commit), 26 unpushed commits
+Spec: none active
+Gate: green at `29da04eb` (re-verified independently with this batch's diff in the
+working tree)
 
 ## State
 
-`/bench-implement-spec --full` has finished build and review; the source is ready to
-land. Ten tickets landed green (eight from the approved breakdown plus two repair
-tickets the build and review added). Review round 1 (`opus`/high, three axes over
-`73c97aa5..578811f2`) produced 8 raw findings → 4 repair targets, closed at `8be12dd5`;
-round 2 over the repair delta was clean. A parallel session (`a78c0db0`) reviewed the
-same source and stopped with five reviewer questions; all five are answered and
-recorded in the spec: 73-line budget accepted, story 2 kept, `craft-spec | 150` row
-and the four spec/handoff fences ratified, no rewrap. That session is abandoned; do
-not resume it.
+`/bench-what-next` ran a full reconcile-and-drain. Roadmap: FT212/FT213/FT214 new
+rows, occurrence lines added to FT133/FT162/FT169/FT192, FT6 gained a
+parked-pending-evidence entry, sequence refreshed to add FT213 as rank 3.
+`capture/IDEAS.md` and `capture/learnings.md` both empty; `capture/retros/` removed
+(its one retro fully dispositioned into the roadmap, its repair-attribution tally
+reported).
+
+One idea item went through "implement now" instead of a roadmap row: the six-column
+coverage-schema contraction landed at `29da04eb` (`5af64b76` ticket commit +
+`29da04eb` review-repair commit, fast-forwarded from an isolated worktree, gate
+green both times). The other two sub-items of that same idea did not: moving the
+light-path threshold is blocked on a usage measurement that hasn't run yet (parked
+into FT6), and deleting `references/cross-harness-reviewers.md` was refused —
+decision map #13 closed as "it survives" and writing that ticket would have reversed
+a closed decision.
+
+`capture/agent-performance/claude-models.md` carries `/bench-final-check`'s
+already-refreshed scorecard for `spec-ticket-fence-reduction`, included in this
+batch unmodified.
+
+Everything above is one uncommitted batch, awaiting reviewer approval before the
+single commit that lands it (invariant 4: never commit without that approval).
 
 ## Next command
 
-From `~/workspace/bench` on `main`:
-`bench worktree land --request 02c6f79b54a3505522af4c84014e0670 --base 73c97aa5 --source-tip <tip> --spec spec-ticket-fence-reduction -m "<msg>" <worktree path>`,
-then `/bench-final-check`.
+`/bench-shape-idea`
+
+(FT198 — the progressive-roadmap decision `ASSESSMENT.md` ranks 0 — is the top line
+of the refreshed `## Recommended sequence`, once this batch commits.)
 
 ## Shape
 
