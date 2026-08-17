@@ -1,7 +1,9 @@
 package worktree
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -592,4 +595,182 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 		after := lifecycleSnapshot(t, root, creation.Path, marker)
 		requireTest(t, before == after, "declared-output pending planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
+}
+
+// TestEligibilityVerdictProjectsWithoutSecondDecision proves decideExplicit is the whole
+// decision: independently gathering the same typed facts PlanExplicitWithOptions gathers
+// (using the same package-private evidence functions — validateOwnerMarker, ProbeLease,
+// classifyNestedState, inventoryIgnored, git.LandedInDefault — never a copy of production's
+// own answer) and calling decideExplicit directly reproduces the exact action, reason,
+// typed landedness, and recovery/branch-deletion authority PlanExplicitWithOptions itself
+// returns. A refactor that kept a second, scattered decision in subshell.go, or that
+// wrapped an already-mutated plan in a verdict at the end instead of genuinely deciding
+// once, would make this independent comparison diverge from PlanExplicitWithOptions's own
+// projection.
+func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
+	t.Run("clean-remove", func(t *testing.T) {
+		root, creation := newOwnedAssignment(t, "ev1-clean-remove")
+		assertVerdictMatchesPlan(t, root, creation.Path, CleanupOptions{})
+	})
+	t.Run("dirty-recover-remove", func(t *testing.T) {
+		root, creation := newOwnedAssignment(t, "ev1-dirty-recover-remove")
+		mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
+		assertVerdictMatchesPlan(t, root, creation.Path, CleanupOptions{})
+	})
+}
+
+// assertVerdictMatchesPlan gathers explicitFacts for path independently of
+// PlanExplicitWithOptions, decides a verdict from them directly, and asserts every
+// field the projection is responsible for carrying onto CleanupPlan — action, reason,
+// typed landedness, and branch/recovery authority — agrees with what
+// PlanExplicitWithOptions actually returns for the identical fixture.
+func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOptions) {
+	t.Helper()
+	target, err := canonicalPath(path)
+	mustNoError(t, err)
+	facts := gatherExplicitFactsForTest(t, root, target, options)
+	verdict := decideExplicit(facts)
+
+	plan, err := PlanExplicitWithOptions(root, path, options)
+	mustNoError(t, err)
+
+	requireTest(t, verdict.Action == plan.Action && verdict.ReasonCode == plan.ReasonCode && verdict.Reason == plan.Reason,
+		"independently decided verdict = %#v, want it to match PlanExplicitWithOptions's projection %#v", verdict, plan)
+	requireTest(t, verdict.Landed.String() == plan.landed,
+		"independently decided typed landedness %q, want it to match the projected landed string %q", verdict.Landed.String(), plan.landed)
+	requireTest(t, verdict.DeleteBranch == plan.deleteBranch && verdict.BranchRef == plan.branchRef && verdict.BranchOID == plan.branchOID,
+		"independently decided branch-deletion authority = %v/%s/%s, want it to match the projected plan %v/%s/%s",
+		verdict.DeleteBranch, verdict.BranchRef, verdict.BranchOID, plan.deleteBranch, plan.branchRef, plan.branchOID)
+
+	wantRecovery := verdict.Recovery
+	switch verdict.RecoveryLookup {
+	case recoveryLookupOwned:
+		wantRecovery, err = nextRecoveryRef(root, *verdict.Assignment)
+		mustNoError(t, err)
+	case recoveryLookupForeign:
+		admin, adminErr := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
+		mustNoError(t, adminErr)
+		wantRecovery, err = predictedForeignRef(root, target, admin)
+		mustNoError(t, err)
+	}
+	if !cleanupOutputSafe(target) {
+		wantRecovery = "none"
+	}
+	requireTest(t, wantRecovery == plan.Recovery,
+		"independently resolved recovery ref %q, want it to match the projected plan recovery %q", wantRecovery, plan.Recovery)
+}
+
+// gatherExplicitFactsForTest independently gathers the same explicitFacts
+// PlanExplicitWithOptions gathers for target, in the same order, so
+// TestEligibilityVerdictProjectsWithoutSecondDecision can call decideExplicit on them
+// without going through subshell.go's own projection at all.
+func gatherExplicitFactsForTest(t *testing.T, root, target string, options CleanupOptions) explicitFacts {
+	t.Helper()
+	root = canonicalRoot(root)
+	worktrees, err := git.Worktrees(root)
+	mustNoError(t, err)
+	var registration *git.Worktree
+	for i := range worktrees {
+		candidate, pathErr := canonicalPath(worktrees[i].Path)
+		if pathErr == nil && candidate == target {
+			registration = &worktrees[i]
+			break
+		}
+	}
+	requireTest(t, registration != nil, "fixture target %s is not a registered worktree", target)
+	admin, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
+	mustNoError(t, err)
+
+	facts := explicitFacts{
+		registrationBranchRef:  registration.BranchRef,
+		registrationLockReason: registration.LockReason,
+		registrationLocked:     registration.Locked,
+		registrationDetached:   registration.Detached,
+		discardIgnored:         options.DiscardIgnored,
+	}
+	_, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
+	if markerStatErr == nil {
+		facts.markerPresent = true
+		evidence, markerErr := validateOwnerMarker(root, target)
+		if markerErr != nil {
+			facts.markerErr = markerErr
+		} else {
+			assignments, assignmentErr := intent.Assignments(root)
+			if assignmentErr != nil {
+				facts.assignmentLedgerErr = assignmentErr
+			} else {
+				var matched *intent.Assignment
+				for i := range assignments {
+					if assignments[i].Worktree == target && assignments[i].OwnerID == evidence.marker.OwnerID {
+						if matched != nil {
+							facts.assignmentAmbiguous = true
+							break
+						}
+						candidate := assignments[i]
+						matched = &candidate
+					}
+				}
+				facts.matchedAssignment = matched
+			}
+		}
+	} else if !errors.Is(markerStatErr, os.ErrNotExist) {
+		t.Fatalf("stat owner marker: %v", markerStatErr)
+	} else if !registration.Locked {
+		facts.foreignAssignment = foreignRecoveryAssignment(root, target)
+	}
+
+	head, err := git.Output("-C", target, "rev-parse", "HEAD")
+	mustNoError(t, err)
+	headRef, _ := git.Output("-C", target, "symbolic-ref", "--quiet", "HEAD")
+	if headRef == "" {
+		headRef = "detached"
+	}
+	status, err := git.Raw("--no-optional-locks", "-C", target, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
+	mustNoError(t, err)
+	tracked := "clean"
+	if len(status) > 0 {
+		tracked = "dirty"
+		for record := range bytes.SplitSeq(status, []byte{0}) {
+			if len(record) >= 2 && (bytes.Contains(record[:2], []byte("U")) || bytes.Equal(record[:2], []byte("AA")) || bytes.Equal(record[:2], []byte("DD"))) {
+				tracked = "conflicted"
+			}
+		}
+	}
+	facts.initialTracked = tracked
+
+	leasePath, err := LeaseFile(target)
+	mustNoError(t, err)
+	if _, statErr := os.Lstat(leasePath); statErr == nil {
+		facts.leasePresent = true
+		facts.leaseState = ProbeLease(leasePath)
+	} else if !errors.Is(statErr, os.ErrNotExist) {
+		facts.leaseStatErr = statErr
+	}
+
+	nested, nestedErr := classifyNestedState(target)
+	facts.nestedState, facts.nestedErr = nested, nestedErr
+
+	buildOutputs, _, buildOutputErr := loadBuildOutputs(root)
+	ignored, _, ignoredErr := inventoryIgnored(target, options.Full)
+	facts.buildOutputErr = buildOutputErr
+	facts.ignoredErr = ignoredErr
+	facts.ignoredOverLimit = ignored.OverLimit
+	facts.ignoredCount = ignored.Count
+	facts.declaredIgnored = buildOutputErr == nil && ignoredWithinBuildOutputs(ignored, buildOutputs)
+
+	defaultRef, defaultOID := "none", "none"
+	if def, ok := git.ResolvedDefault(root); ok {
+		defaultRef = def
+		if oid, oidErr := git.Output("-C", root, "rev-parse", "--verify", def+"^{commit}"); oidErr == nil {
+			defaultOID = oid
+		}
+	}
+	facts.headDetached = headRef == "detached"
+	facts.defaultKnown = defaultOID != "none"
+	facts.headRef, facts.head = headRef, head
+	if !facts.headDetached && facts.defaultKnown {
+		facts.landedOK, facts.landedByContent, facts.landedErr = git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef)
+	}
+	facts.unsafeTarget = !cleanupOutputSafe(target)
+	return facts
 }
