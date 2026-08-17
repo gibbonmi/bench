@@ -28,7 +28,7 @@ Leave the review-loop and `--reviewer` needles alone; the next ticket owns them.
 ## Acceptance
 
 - [ ] `(covers SR18)` `bench-write-spec.md` loses the template block and nothing else;
-      the 60-line budget row is **not** added here. The file is 190 lines and the block is
+      the command's budget row is **not** added here. The file is 190 lines and the block is
       65, so it lands near 125 — adding the row now would make this ticket red on its own
       gate. The next ticket does the prose thinning and adds the row once the file fits.
 - [ ] `(covers SR18)` `craft-spec` carries the spec template with the reduced five-column header.

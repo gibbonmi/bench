@@ -40,20 +40,21 @@ anchored registry rows before the shrink — 34 `Require`, 8 `RequireInSection`,
 `Forbid`, 1 `ForbidInSection`, all live and green; the "twenty" the spec carried at
 staging was a miscount. Every one must end in exactly one state — retained in the
 thinned file, retargeted by the previous ticket or by this one, or reworded here
-with its canary — and this ticket records the full enumeration. Eleven canary
-fixtures embed a copy of `bench-write-spec.md`; a fixture whose needle moved
-retargets its payload to the receiving file, or it reproduces nothing.
+with its canary — and this ticket records the full enumeration. A `BASE`/`MUTATE.json`
+fixture that mutates a moved needle follows it to the receiving file; payload-only
+fixtures are hand-written stand-ins, not copies of `bench-write-spec.md`.
 
 This ticket also carries the budget row the previous one deferred. Only after the
-rubric moves and the loop prose collapses does `bench-write-spec.md` fit 60 lines,
-so `projects/benchkit.md` gains its `.agents/commands/bench-write-spec.md | 60` row
+rubric moves and the loop prose collapses does `bench-write-spec.md` fit its budget,
+so `projects/benchkit.md` gains its `.agents/commands/bench-write-spec.md | 73` row
+(reviewer-accepted at build time in place of 60, which the retained needles cannot meet)
 here, in the same green commit that makes the file fit.
 
 ## Acceptance
 
 - [ ] `(covers SR18)` The profile's budget table carries the
-      `.agents/commands/bench-write-spec.md | 60` row, the file is at most 60 lines, and
-      raising it above 60 turns the budget check red.
+      `.agents/commands/bench-write-spec.md | 73` row, the file is at most 73 lines, and
+      raising it above 73 turns the budget check red.
 - [ ] `(covers SR19)` `bench-write-spec.md` states one review round over the pair with the ticket
       quiz as its approval step, and no two-round sentence remains in the tree.
 - [ ] `(covers SR19)` The profile carries one collapsed routing row naming mid model and high

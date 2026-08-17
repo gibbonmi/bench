@@ -30,8 +30,8 @@ beside the existing one so nothing in flight breaks, and projects one uniform
 review loops become one round over the spec-and-tickets pair. The edge-class walk
 moves to the TDD loop where the seam is visible, leaving `**Won't handle**` for
 reviewed exclusions. `craft-tickets` takes `to-tickets`' sizing rule, and the
-spec template moves into `craft-spec` so `bench-write-spec.md` fits a new 60-line
-budget.
+spec template moves into `craft-spec` so `bench-write-spec.md` fits a new 73-line
+budget (reviewer-accepted 2026-08-17 in place of the map's 60; see the prose-landing bullet).
 
 ## User stories
 
@@ -62,7 +62,7 @@ the profile's doc-authoring leverage override.
 
 17. As a spec author, I want the spec template to live in `craft-spec`, so that the authoring discipline and the artifact shape have one owner.
 18. As a cold session, I want `bench-write-spec.md` to hold only the entry contract, ownership, and exit handoff, so that the phase file is read rather than skimmed.
-19. As a maintainer, I want `.agents/commands/bench-write-spec.md` budgeted at 60 lines in the profile's table, so that the shrink is enforced rather than a one-time diff that re-accretes.
+19. As a maintainer, I want `.agents/commands/bench-write-spec.md` budgeted at 73 lines in the profile's table, so that the shrink is enforced rather than a one-time diff that re-accretes.
 20. As a spec author, I want one review round over the spec-and-tickets pair instead of two rounds per artifact, so that the loop converges on a verdict rather than on a cap.
 21. As a spec author, I want `craft-tickets`' granularity / blocking-edges / merge-split quiz to be that round's approval step, so that ticket approval is not a separate loop.
 22. As a spec author, I want `--reviewer <tier> [effort]` to resolve same-family through the invoking harness's own `.bench/lines.env` column only, so that one resolution path replaces both the family fork and the bound-model-id lookup.
@@ -152,20 +152,22 @@ bundle (map #9).
   `.agents/commands/bench-write-spec.md` carries **47** anchored registry rows
   today (34 `Require`, 8 `RequireInSection`, 4 `Forbid`, 1 `ForbidInSection`), all
   live and green — the "twenty" this spec carried at staging was a miscount, not a
-  stale inventory. Eleven canary fixtures under `workflow-guidance-anchors/` embed a
-  full copy of the file, so a retargeted needle moves its fixture payload too.
-  The shrink dispositions **every one** — retained in the 60-line file,
+  stale inventory. A `BASE`/`MUTATE.json` fixture that mutates a moved needle
+  follows it; payload-only fixtures are hand-written stand-ins, not copies of the file.
+  The shrink dispositions **every one** — retained in the budgeted file,
   retargeted to `craft-spec` with its section named, or retired with its canary —
   and the ticket's acceptance is the full enumeration, not a sample. `bench
   anchors` green over the tree is the check that no needle was left behind.
 - **Where the surviving prose lands (reviewer-closed 2026-08-16).** Only seven
   needles live exclusively inside the moved template block; 31 more live in prose
-  that stays behind, totalling ~3,300 characters against a 60-line budget that
+  that stays behind, totalling ~3,300 characters against a line budget that
   counts physical newlines. They do not all fit, and the resolution is a split by
   ownership rather than deletion — nothing is retired for being surplus:
   - The command keeps the entry contract, ownership, the exit handoff, the
-    spec-retire lifecycle, and the stale-command sweep. That is ~1,100 characters
-    of verbatim needle, which fits 60 lines with room for structure.
+    spec-retire lifecycle, and the stale-command sweep. That is ~3,300 characters
+    of verbatim needle once the retained anchors are counted — the map's 60-line
+    estimate rested on a ~1,100 miscount — and it lands at 73 lines, the budget the
+    reviewer accepted at build time (2026-08-17).
   - The **review rubric** — the materiality exit, the cheapest-plausible degenerate
     standard, and the falsification questions — moves to `craft-spec`, which already
     owns the process. It is rubric, not phase choreography.
@@ -243,7 +245,7 @@ bundle (map #9).
 | SR15 | 14 | a spec with no map and no historical marker is still a violation | `internal/coverage` | already covered: the `coverage-map-validation/no-map-not-historical` canary reproduces `coverage map missing and spec is not marked historical` | a new schema path that defaults to "mapped" makes an unmapped spec pass |
 | SR16 | 15 | the historical marker skips validation under a reduced header | `internal/coverage` | not observed: `TestStateAndRows` gains a reduced historical case asserting `historical` | a marker check bound to the legacy header grades an opted-out spec |
 | SR17 | 16 | the six Go test files outside `internal/coverage` that embed a coverage map use the reduced header, and their suites stay green | `internal/preflight`, `internal/worktree`, `internal/systemtest`, `cmd/bench` | not observed: those suites run unchanged against migrated fixtures | a fixture left six-column means the reduced header is never exercised through a real consumer |
-| SR18 | 17, 18, 19 | `bench-write-spec.md` is at most 60 lines and the profile's budget table carries its row | gate docs layer | not observed: the `guidance-prose-budgets` check will fail on the 190-line file the moment its row is added | without the row the shrink is unenforced and re-accretes |
+| SR18 | 17, 18, 19 | `bench-write-spec.md` is at most 73 lines and the profile's budget table carries its row | gate docs layer | not observed: the `guidance-prose-budgets` check will fail on the 190-line file the moment its row is added | without the row the shrink is unenforced and re-accretes |
 | SR19 | 20, 21 | `bench-write-spec.md` states one review round over the spec-and-tickets pair with the ticket quiz as its approval step | gate docs layer | not observed: the two-round anchor is replaced by a one-round needle, and its canary fixture mutates the new sentence | a reworded round paragraph that keeps two loops leaves the cost the change exists to cut |
 | SR20 | 22 | the `--reviewer` anchor names a tier-only grammar resolving same-family through the harness's own column, with no cross-family route and no bound-model-id form | gate docs layer | not observed: the reworded anchor's canary fixture drops the tier-only clause and expects the diagnostic | a needle left naming the cross-family recipe or the model-id form keeps a removed branch documented |
 | SR21 | 23, 24 | `craft-spec` carries no red-signal grammar and `craft-tdd` names `already covered` and `not TDD-able` | gate docs layer | not observed: a new `ForbidInSection` anchor on `craft-spec` reports a diagnostic while the four-form grammar remains; the existing `not TDD-able` requirement on `craft-tdd` holds the other half and no canary plants it today | deleting the grammar from both files at once leaves no owner for the classification |

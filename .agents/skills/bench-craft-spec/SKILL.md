@@ -70,6 +70,19 @@ tree by review rather than trusted from the ticket's account.
 
 After a pass touching many sections, reread the complete artifact end to end and reconcile contradictions before handing off.
 
+## Review rubric
+
+The round asks: would the cheapest wrong implementation pass, does every source behavior have a
+red-capable row, does every line match cached routing, does any behavior, red signal, or decision
+answer name an outcome family instead of an exact predicate, and are the source and observed reds
+sound even when the source is same-session, conflicting, or mostly not observed? The degenerate
+standard is the cheapest plausible wrong implementation — a degenerate that needs deliberate
+contrivance is the build's mutation-probe target, never a new spec row. A finding blocks only when it
+changes observable behavior, an ownership fence, or the ticket graph; a round returning only prose or
+accounting findings is the acceptance round — fold those fixes into the acceptance instead of another
+round. A revision may not add a promise beyond the decision source unless a blocking finding demands
+it; the review flags an unflagged addition for removal rather than demanding rows for it.
+
 ## Template
 
 ```markdown
@@ -79,7 +92,7 @@ Status: staged
 
 Decision source: <one ready compiled map, reviewer-confirmed conversation with date, or named reviewed artifact>
 
-Verification log: spec <n> + tickets <m> iteration(s) to accept — <note>
+Verification log: <n> iteration(s) to accept — <note>
 
 ## Problem
 The problem, from the user's point of view.

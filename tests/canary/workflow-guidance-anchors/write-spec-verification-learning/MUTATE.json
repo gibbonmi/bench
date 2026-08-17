@@ -1,1 +1,1 @@
-[{"path":".agents/commands/bench-write-spec.md","old":"When either loop takes more than one iteration","new":"When verification takes more than one iteration, continue without recording the miss;"}]
+[{"path": ".agents/commands/bench-write-spec.md", "old": "When the round takes more\n   than one iteration to accept, append one", "new": "When the round takes more than one iteration to accept, continue without recording the miss and skip"}]
