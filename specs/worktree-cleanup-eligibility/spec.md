@@ -1,6 +1,6 @@
 # worktree-cleanup-eligibility
 
-Status: implemented
+Status: staged
 
 Decision source: specs/worktree-cleanup-eligibility/decisions/deepening-2026-08.md (compiled ready map, refreshed and reviewer-resolved 2026-08-17; decisions #1 and #2 govern FT216)
 
