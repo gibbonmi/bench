@@ -3,13 +3,12 @@
 // spec's state and rows as TOON; `--check` validates the map (canonical header,
 // rows as wide as that header declares, non-empty cells, story references against
 // the exact declared story set, historical opt-out) and requires a map at all unless
-// the spec is marked historical. A map may drop the `red signal` column; which
-// columns a header carries is fixed by the header itself, never by its cell
-// count. A map may opt into per-row IDs by leading the header with a
-// `row` column; an opted-in map's IDs are grammar-checked, spec-local unique, and
-// exported to other packages via ParseSpec. The validation phrasings are
-// load-bearing — downstream consumers match them by substring — so this is the
-// one validator for the convention.
+// the spec is marked historical. Which columns a header carries is fixed by the
+// header itself, never by its cell count. A map may opt into per-row IDs by leading
+// the header with a `row` column; an opted-in map's IDs are grammar-checked,
+// spec-local unique, and exported to other packages via ParseSpec. The validation
+// phrasings are load-bearing — downstream consumers match them by substring — so
+// this is the one validator for the convention.
 package coverage
 
 import (
@@ -73,12 +72,11 @@ const historicalMarker = "<!-- coverage-map: historical -->"
 // cell order and a header line is their join, so each name is spelled once and both
 // the header match and the violation messages read it from the same place.
 const (
-	fieldRow       = "row"
-	fieldStory     = "story"
-	fieldBehavior  = "behavior"
-	fieldSeam      = "seam"
-	fieldRedSignal = "red signal"
-	fieldWhy       = "why it catches the failure"
+	fieldRow      = "row"
+	fieldStory    = "story"
+	fieldBehavior = "behavior"
+	fieldSeam     = "seam"
+	fieldWhy      = "why it catches the failure"
 )
 
 // schema is the one descriptor for an accepted header: its field names, in cell
@@ -93,10 +91,8 @@ type schema struct {
 // schemas are the accepted headers, tried in order. The first is also the projection
 // fallback for a map whose header matched none of them.
 var schemas = []schema{
-	{fields: []string{fieldStory, fieldBehavior, fieldSeam, fieldRedSignal, fieldWhy}},
-	{fields: []string{fieldRow, fieldStory, fieldBehavior, fieldSeam, fieldRedSignal, fieldWhy}},
-	{fields: []string{fieldRow, fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
 	{fields: []string{fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
+	{fields: []string{fieldRow, fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
 }
 
 // header is the lowercased header line this schema answers to — the join of its own
@@ -169,8 +165,9 @@ type parsed struct {
 }
 
 // projection is the descriptor Rows reads cells through. A header matching no
-// descriptor has none of its own, so it projects through the legacy field order.
-// Check refuses such a map before any other cell read.
+// descriptor has none of its own, so it projects through schemas[0], the four-cell
+// reduced schema: story, behavior, and seam stay at offsets 0, 1, and 2. Check
+// refuses such a map before any other cell read.
 func (p parsed) projection() schema {
 	if p.sch.known() {
 		return p.sch
