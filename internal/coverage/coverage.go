@@ -89,7 +89,9 @@ type schema struct {
 }
 
 // schemas are the accepted headers, tried in order. The first is also the projection
-// fallback for a map whose header matched none of them.
+// fallback for a map whose header matched none of them: the non-opt-in header stays
+// first because projection() falls back to schemas[0], and that fallback's output is
+// pinned.
 var schemas = []schema{
 	{fields: []string{fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
 	{fields: []string{fieldRow, fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
@@ -269,7 +271,7 @@ func State(p parsed) string {
 
 // Rows returns the story, behavior, and seam cells of each data row for a mapped
 // spec; nil otherwise. The cells are resolved by name through the row's schema, so a
-// map that opts into row IDs projects the same three fields as a legacy one and the
+// map that opts into row IDs projects the same three fields as a non-opt-in one and the
 // leading row-ID cell is not part of the projection. These three fields are the ones
 // every accepted header carries — behavior is the cell that names what to build — so
 // a caller reads one row shape whichever schema the spec uses.
@@ -286,7 +288,7 @@ func Rows(p parsed) [][]string {
 }
 
 // rowIDs returns the leading row-ID cell of each data row, in map order, for an
-// opted-in mapped spec; nil for a legacy map or a spec that is not mapped. It backs
+// opted-in mapped spec; nil for a non-opt-in map or a spec that is not mapped. It backs
 // ParseSpec, the package's one exported entry point for callers outside the
 // package, which cannot construct a parsed value themselves.
 func rowIDs(p parsed) []string {
@@ -473,7 +475,7 @@ func checkOKLine(msg string) string { return fmt.Sprintf("ok: %s\n", msg) }
 // entry point for callers that cannot construct the unexported parsed type
 // themselves: internal/preflight reads a spec's opt-in verdict, ordered row IDs, and
 // Check violations through here rather than re-deriving map structure. ids is nil
-// when the map is not opted into row IDs (legacy or absent).
+// when the map is not opted into row IDs (non-opt-in or absent).
 func ParseSpec(path string) (optIn bool, ids []string, violations []string, err error) {
 	content, err := os.ReadFile(path)
 	if err != nil {

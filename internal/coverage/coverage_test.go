@@ -740,6 +740,12 @@ func TestViolationsAreIdenticalAcrossSchemas(t *testing.T) {
 		{name: "malformed row id", stories: stories, optInOnly: true,
 			rows: [][4]string{{"ab-1", "1", behavior, "cli seam"}},
 			want: "coverage map row 1 has a malformed row id 'ab-1'"},
+		// A malformed row ID at a later row, not just row 0, must still be rejected —
+		// the well-formed first row proves the check runs per row rather than only at
+		// the start of the loop.
+		{name: "malformed row id at a later row", stories: stories, optInOnly: true,
+			rows: [][4]string{{"AB1", "1", behavior, "cli seam"}, {"not-an-id", "2", behavior, "gate"}},
+			want: "coverage map row 2 has a malformed row id 'not-an-id'"},
 		{name: "empty row id", stories: stories, optInOnly: true,
 			rows: [][4]string{{"", "1", behavior, "cli seam"}},
 			want: "coverage map row 1 has an empty 'row' cell"},
