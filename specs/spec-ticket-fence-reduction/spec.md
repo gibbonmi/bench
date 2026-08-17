@@ -291,6 +291,7 @@ parsed):
 - `specs/spec-ticket-fence-reduction/tickets/`
 - `reviews/spec-ticket-fence-reduction.md` (transient review pickup; deleted with its repairs)
 - `capture/session-handoff.md`
+- `capture/learnings.md` (entries this build's sessions log for the next drain)
 - `internal/coverage/coverage.go`
 - `internal/coverage/coverage_test.go`
 - `internal/coverage/testdata/`
