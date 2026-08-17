@@ -1,18 +1,22 @@
 package worktree
 
-import "github.com/gibbonmi/bench/internal/intent"
+import (
+	"strings"
 
-// This file owns the ordered explicit-eligibility decision: the single answer to "is this
-// worktree ours and safe to remove, and if not, why". PlanExplicitWithOptions in
-// subshell.go gathers every Git and filesystem fact unconditionally, exactly as it always
-// has, builds one explicitFacts value from what it gathered, and calls decideExplicit
-// exactly once. Nothing outside this file orders or selects an eligibility action or
-// reason before execution; subshell.go only projects the returned explicitVerdict onto the
-// operator-facing CleanupPlan, including any lookup (a recovery ref prediction) that needs
-// I/O the decision itself must not perform.
-//
-// PlanAutomatic (classifier.go) still decides its own stricter reading directly; routing it
-// through this module is a later, separately reviewed migration.
+	"github.com/gibbonmi/bench/internal/intent"
+)
+
+// This file owns the ordered eligibility decisions: the single answer to "is this worktree
+// ours and safe to remove, and if not, why", for every consumer that decides one.
+// PlanExplicitWithOptions in subshell.go gathers every Git and filesystem fact
+// unconditionally, exactly as it always has, builds one explicitFacts value from what it
+// gathered, and calls decideExplicit exactly once. PlanAutomatic in classifier.go layers its
+// own stricter reading on top: it calls PlanExplicit first, gathers the automatic-specific
+// facts decideAutomatic needs, and calls decideAutomatic exactly once. Nothing outside this
+// file orders or selects an eligibility action or reason before execution; subshell.go and
+// classifier.go only project the returned verdict onto the operator-facing CleanupPlan,
+// including any lookup (a recovery ref prediction) that needs I/O the decision itself must
+// not perform.
 
 // landednessKind names which of the four ways PlanExplicitWithOptions can know a branch's
 // relationship to the default ref: never resolvable (detached), resolvable but never asked
@@ -258,4 +262,119 @@ func decideExplicit(f explicitFacts) explicitVerdict {
 	}
 
 	return v
+}
+
+// automaticFacts carries PlanExplicit's own result plus every automatic-specific fact
+// PlanAutomatic gathers on top of it before decideAutomatic can answer "is this eligible for
+// unattended, automatic cleanup, and if not, why not". explicitErr and explicit are mutually
+// exclusive with the missingBranch* fields: the missingBranch* fields are gathered only when
+// PlanExplicit itself failed and PlanAutomatic salvages one narrow fact from that failure;
+// every other field is gathered only when PlanExplicit succeeded, mirroring PlanAutomatic's
+// own conditional evidence-gathering — a field left at its zero value simply was never
+// gathered because an earlier fact already made it inapplicable.
+type automaticFacts struct {
+	explicitErr error
+	explicit    CleanupPlan
+
+	missingBranchAssignment *intent.Assignment
+	missingBranchLiveLease  bool
+
+	liveLease       bool
+	landed          bool
+	orphanedActive  bool
+	recoveryMatches bool
+}
+
+// automaticVerdict is the decided answer for the automatic, unattended cleanup path. Action,
+// ReasonCode, and Reason are the decision itself; AssignmentID echoes the one piece of
+// evidence PlanAutomatic projects onto CleanupPlan.Assignment that decideExplicit never sets
+// (subshell.go never assigns it), staying empty on exactly the branches where the pre-refactor
+// code left plan.Assignment untouched.
+type automaticVerdict struct {
+	Action       CleanupAction
+	ReasonCode   CleanupReason
+	Reason       string
+	AssignmentID string
+}
+
+// decideAutomatic is the single place the automatic ordered eligibility decision is made:
+// the explicit-planning-error salvage (an active assignment whose branch cannot be
+// resolved), the live-lease override, retain-passthrough with a landed-reason swap, the
+// foreign/unowned refusal, the not-cleanup-pending reasons (with the orphaned-age override),
+// the recovery-metadata-match check, the unknown/unmerged landedness checks, and the final
+// preservation refusal. The order and every message are pinned by
+// TestAutomaticEligibilityOutcomeMatrix and must not change here without that
+// characterization moving first.
+func decideAutomatic(f automaticFacts) automaticVerdict {
+	if f.explicitErr != nil {
+		if f.missingBranchAssignment != nil {
+			v := automaticVerdict{Action: ActionRetain, ReasonCode: ReasonActive, Reason: "assignment landedness is unknown", AssignmentID: f.missingBranchAssignment.ID}
+			if f.missingBranchLiveLease {
+				v.ReasonCode, v.Reason = ReasonLiveLease, "assignment has a live lease"
+			}
+			return v
+		}
+		reason := ReasonUncertain
+		if strings.Contains(f.explicitErr.Error(), "assignment") || strings.Contains(f.explicitErr.Error(), "intent ledger") {
+			reason = ReasonMalformed
+		}
+		return automaticVerdict{Action: ActionRetain, ReasonCode: reason, Reason: f.explicitErr.Error()}
+	}
+
+	plan := f.explicit
+	if plan.assignment != nil && f.liveLease {
+		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonLiveLease, Reason: "assignment has a live lease"}
+	}
+	if plan.Action == ActionRetain {
+		if plan.assignment != nil && f.landed {
+			return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonLanded, Reason: "assignment branch has landed"}
+		}
+		return automaticVerdict{Action: plan.Action, ReasonCode: plan.ReasonCode, Reason: plan.Reason}
+	}
+	if plan.assignment == nil || !plan.owned {
+		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonForeign, Reason: "registration is not a verified owned assignment"}
+	}
+
+	assignmentID := plan.assignment.ID
+	if plan.assignment.State != intent.StateCleanupPending {
+		reason := ReasonUncertain
+		if plan.assignment.State == intent.StateActive {
+			if f.landed {
+				reason = ReasonLanded
+			} else {
+				reason = ReasonActive
+			}
+			if reason == ReasonActive && f.orphanedActive {
+				reason = ReasonOrphaned
+			}
+		}
+		return automaticVerdict{Action: ActionRetain, ReasonCode: reason, Reason: "assignment is not cleanup-pending", AssignmentID: assignmentID}
+	}
+	if !f.recoveryMatches {
+		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonMalformed, Reason: "assignment recovery metadata does not match refs", AssignmentID: assignmentID}
+	}
+	if plan.landedTyped.kind == landednessUnknownNoDefault || plan.landedTyped.kind == landednessUnknownError {
+		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonUncertain, Reason: "assignment landedness is unknown", AssignmentID: assignmentID}
+	}
+	if !(plan.landedTyped.kind == landednessProven && plan.landedTyped.landed) {
+		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonUnmerged, Reason: "assignment branch has not landed", AssignmentID: assignmentID}
+	}
+	// The automatic path authors no preservation refs: it runs unattended at every session
+	// start and through every release, and the standing cleaner sweeps the namespace such a
+	// ref would live in, so preserving there would write work nothing can hand back.
+	// Disposing of the checkout stays with the operator's explicit path-addressed clean.
+	if automaticPreservationTrigger(plan) {
+		return automaticVerdict{Action: ActionRetain, ReasonCode: ReasonDirty, Reason: "automatic cleanup does not preserve uncommitted work", AssignmentID: assignmentID}
+	}
+	return automaticVerdict{Action: plan.Action, ReasonCode: plan.ReasonCode, Reason: plan.Reason, AssignmentID: assignmentID}
+}
+
+// automaticPreservationTrigger is the one place that decides whether automatic-flavored
+// policy must refuse a plan to avoid stranding uncommitted work: decideAutomatic's own
+// dirty-refusal branch and the landed-set's retainForLandedPreservation (clean_landed.go)
+// both call this instead of independently reading plan.preserves(), so the two routes can
+// never derive "would removing this strand uncommitted work" differently — even though each
+// still projects its own operator-facing message for its own command surface.
+func automaticPreservationTrigger(plan CleanupPlan) bool {
+	return plan.preserves()
 }

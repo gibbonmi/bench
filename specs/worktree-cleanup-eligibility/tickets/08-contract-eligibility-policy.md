@@ -14,6 +14,6 @@ alter pre-existing test logic except a mechanical rename if one is unavoidable.
 
 ## Acceptance
 
-- [ ] OS1: the pre-existing suite passes with unchanged test logic, apart from any mechanical rename.
-- [ ] OS2: ADR 0005 names the eligibility verdict and retains verifiable conjunctive ownership and preservation requirements.
-- [ ] OS3: deleting the eligibility module would require ordered policy to return to explicit, automatic, and landed-set consumers.
+- [x] OS1: the pre-existing suite passes with unchanged test logic, apart from any mechanical rename.
+- [x] OS2: ADR 0005 names the eligibility verdict and retains verifiable conjunctive ownership and preservation requirements.
+- [x] OS3: deleting the eligibility module would require ordered policy to return to explicit, automatic, and landed-set consumers.

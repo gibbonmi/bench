@@ -287,73 +287,51 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 	return now.Sub(created) > bounds.AssignmentStale
 }
 
+// PlanAutomatic decides the automatic, unattended reading of eligibility: it calls
+// PlanExplicit for its own result, gathers every automatic-specific fact decideAutomatic
+// needs — in the same order and under the same conditions PlanAutomatic always has, so a
+// fact stays ungathered exactly where the pre-refactor code left it inapplicable — and
+// calls decideAutomatic exactly once, then projects the returned verdict onto the plan.
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
-	plan, err := PlanExplicit(root, path)
-	if err != nil {
+	explicitPlan, explicitErr := PlanExplicit(root, path)
+	facts := automaticFacts{explicitErr: explicitErr, explicit: explicitPlan}
+
+	if explicitErr != nil {
 		if assignment, missing := activeAssignmentWithMissingBranch(root, path); missing {
-			plan := retainedPlan(path, ReasonActive, "assignment landedness is unknown")
-			plan.Assignment = assignment.ID
-			plan.owned, plan.assignment = true, &assignment
-			if planHasLiveLease(plan) {
-				plan.ReasonCode, plan.Reason = ReasonLiveLease, "assignment has a live lease"
-			}
+			salvage := retainedPlan(path, ReasonActive, "assignment landedness is unknown")
+			salvage.owned, salvage.assignment = true, &assignment
+			facts.missingBranchAssignment = &assignment
+			facts.missingBranchLiveLease = planHasLiveLease(salvage)
+		}
+	} else if explicitPlan.assignment != nil {
+		facts.liveLease = planHasLiveLease(explicitPlan)
+		facts.landed = assignmentLanded(*explicitPlan.assignment, explicitPlan)
+		if explicitPlan.assignment.State == intent.StateActive {
+			facts.orphanedActive = orphaned(*explicitPlan.assignment, time.Now())
+		}
+		if explicitPlan.owned && explicitPlan.assignment.State == intent.StateCleanupPending {
+			facts.recoveryMatches = recoveryMetadataMatches(root, *explicitPlan.assignment)
+		}
+	}
+
+	verdict := decideAutomatic(facts)
+
+	if explicitErr != nil {
+		if facts.missingBranchAssignment != nil {
+			plan := retainedPlan(path, verdict.ReasonCode, verdict.Reason)
+			plan.Assignment = verdict.AssignmentID
+			plan.owned, plan.assignment = true, facts.missingBranchAssignment
 			return automaticFingerprint(plan), nil
 		}
-		reason := ReasonUncertain
-		if strings.Contains(err.Error(), "assignment") || strings.Contains(err.Error(), "intent ledger") {
-			reason = ReasonMalformed
-		}
-		return retainedPlan(path, reason, err.Error()), nil
+		return retainedPlan(path, verdict.ReasonCode, verdict.Reason), nil
 	}
-	if plan.assignment != nil && planHasLiveLease(plan) {
-		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "assignment has a live lease"
-		return automaticFingerprint(plan), nil
-	}
-	if plan.Action == ActionRetain {
-		if plan.assignment != nil && assignmentLanded(*plan.assignment, plan) {
-			plan.ReasonCode, plan.Reason = ReasonLanded, "assignment branch has landed"
-		}
-		return automaticFingerprint(plan), nil
-	}
-	if plan.assignment == nil || !plan.owned {
-		return automaticRetain(plan, ReasonForeign, "registration is not a verified owned assignment"), nil
-	}
-	plan.Assignment = plan.assignment.ID
-	if plan.assignment.State != intent.StateCleanupPending {
-		reason := ReasonUncertain
-		if plan.assignment.State == intent.StateActive {
-			if assignmentLanded(*plan.assignment, plan) {
-				reason = ReasonLanded
-			} else {
-				reason = ReasonActive
-			}
-			if reason == ReasonActive && orphaned(*plan.assignment, time.Now()) {
-				reason = ReasonOrphaned
-			}
-		}
-		return automaticRetain(plan, reason, "assignment is not cleanup-pending"), nil
-	}
-	if !recoveryMetadataMatches(root, *plan.assignment) {
-		return automaticRetain(plan, ReasonMalformed, "assignment recovery metadata does not match refs"), nil
-	}
-	if plan.landedTyped.kind == landednessUnknownNoDefault || plan.landedTyped.kind == landednessUnknownError {
-		return automaticRetain(plan, ReasonUncertain, "assignment landedness is unknown"), nil
-	}
-	if !(plan.landedTyped.kind == landednessProven && plan.landedTyped.landed) {
-		return automaticRetain(plan, ReasonUnmerged, "assignment branch has not landed"), nil
-	}
-	// The automatic path authors no preservation refs: it runs unattended at every session
-	// start and through every release, and the standing cleaner sweeps the namespace such a
-	// ref would live in, so preserving there would write work nothing can hand back.
-	// Disposing of the checkout stays with the operator's explicit path-addressed clean.
-	if plan.preserves() {
-		return automaticRetain(plan, ReasonDirty, "automatic cleanup does not preserve uncommitted work"), nil
+
+	plan := explicitPlan
+	plan.Action, plan.ReasonCode, plan.Reason = verdict.Action, verdict.ReasonCode, verdict.Reason
+	if verdict.AssignmentID != "" {
+		plan.Assignment = verdict.AssignmentID
 	}
 	return automaticFingerprint(plan), nil
-}
-func automaticRetain(plan CleanupPlan, reason CleanupReason, detail string) CleanupPlan {
-	plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, reason, detail
-	return automaticFingerprint(plan)
 }
 func automaticFingerprint(plan CleanupPlan) CleanupPlan {
 	if plan.assignment != nil {
