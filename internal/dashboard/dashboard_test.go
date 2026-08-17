@@ -1,10 +1,13 @@
 package dashboard
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -129,6 +132,53 @@ func TestRenderRoadmapAndSequencePreserveNewlinesInPre(t *testing.T) {
 	}
 	if !strings.Contains(out, "1. Shape next\n2. Write spec") {
 		t.Errorf("Sequence lost its real newline between steps:\n%s", roadmap)
+	}
+}
+
+// TestGatherRenderRoadmapTextAndSequenceFromSplitTree covers story 21 (PR18) through the
+// dashboard's own composition and render path: gather() calling the roadmap package's
+// readers, then Render formatting the resulting Snapshot — rather than asserting
+// roadmap.RoadmapText/roadmap.RecommendedSequence directly, so a dashboard-side reader
+// swap or sequence-format regression reds here. Both readers already parse ROADMAP.md's
+// index only, so a split tree (index plus a roadmap/ row file) must render unchanged —
+// this is a regression pin, not a behavior change.
+func TestGatherRenderRoadmapTextAndSequenceFromSplitTree(t *testing.T) {
+	root := t.TempDir()
+	const heading = "**FT7 (LOW) — x.**"
+	index := "# Roadmap\n\n" + heading + "\n\n## Recommended sequence\n\n1. Shape next - /bench-shape-idea\n"
+	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapFile), []byte(index), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, roadmap.RoadmapDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	const bodyOnlyText = "Body text that lives only in the row file."
+	body := heading + "\n" + bodyOnlyText + "\n"
+	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapDir, "FT7.md"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	snap := gather(root)
+	if !snap.RoadmapPresent {
+		t.Fatal("gather reported roadmap absent over a present split tree")
+	}
+	if snap.RoadmapText != index {
+		t.Fatalf("gather RoadmapText = %q, want the index verbatim %q", snap.RoadmapText, index)
+	}
+	if strings.Contains(snap.RoadmapText, bodyOnlyText) {
+		t.Fatalf("gather RoadmapText leaked row-file body content: %q", snap.RoadmapText)
+	}
+	wantSequence := "## Recommended sequence\n\n1. Shape next - /bench-shape-idea\n"
+	if snap.Sequence != wantSequence {
+		t.Fatalf("gather Sequence = %q, want %q", snap.Sequence, wantSequence)
+	}
+
+	out := Render(snap)
+	if !strings.Contains(out, "Shape next") {
+		t.Errorf("rendered page dropped the recommended sequence:\n%s", section(out, "Roadmap"))
+	}
+	if strings.Contains(out, bodyOnlyText) {
+		t.Errorf("rendered page leaked row-file body content:\n%s", section(out, "Roadmap"))
 	}
 }
 
