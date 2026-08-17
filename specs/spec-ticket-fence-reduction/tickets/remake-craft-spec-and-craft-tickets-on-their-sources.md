@@ -31,24 +31,24 @@ in README and CHANGELOG; do not edit those files.
 
 ## Acceptance
 
-- [ ] `craft-spec` contains no `observed red:` / `not observed:` / `already covered:` /
+- [ ] `(covers SR21)` `craft-spec` contains no `observed red:` / `not observed:` / `already covered:` /
       `not TDD-able:` grammar, and `craft-tdd` names `already covered` and
       `not TDD-able`.
-- [ ] Deleting the red-signal grammar's replacement clause from `craft-spec`
+- [ ] `(covers SR21)` Deleting the red-signal grammar's replacement clause from `craft-spec`
       turns a new anchor red.
-- [ ] The canonical edge-class run appears in `craft-tdd`; **both** craft-spec
+- [ ] `(covers SR22)` The canonical edge-class run appears in `craft-tdd`; **both** craft-spec
       edge-class anchors — the plain `re-run idempotency` Require and the
       `RequireInSection("The edge inventory")` class run — name `craft-tdd`, and a
       new canary plants the moved section.
-- [ ] `craft-spec` still requires `**Won't handle**` for reviewed exclusions and
+- [ ] `(covers SR22)` `craft-spec` still requires `**Won't handle**` for reviewed exclusions and
       no longer requires a disposition per walked class.
-- [ ] The acceptance-row clause in `craft-tickets` is anchored, and deleting it
+- [ ] `(covers SR23)` The acceptance-row clause in `craft-tickets` is anchored, and deleting it
       turns that anchor red through a canary that plants the deletion.
 - [ ] `craft-tickets`' existing prose is unchanged apart from anything an anchor
       requires.
-- [ ] `craft-tdd`'s red-signal-ownership sentence names the new owner and its
+- [ ] `(covers SR31)` `craft-tdd`'s red-signal-ownership sentence names the new owner and its
       needle matches; the old needle appears nowhere.
-- [ ] `independently-green implementation tickets` still reads in README and
+- [ ] `(covers SR24)` `independently-green implementation tickets` still reads in README and
       CHANGELOG, with their anchors green and neither file edited.
-- [ ] `bench anchors` is green and every touched canary reproduces its own
+- [ ] `(covers SR26)` `bench anchors` is green and every touched canary reproduces its own
       `EXPECT` line.

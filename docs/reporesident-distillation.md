@@ -81,8 +81,8 @@ reroute to the feature path."* It also forbids bundling a bug fix into a refacto
 **The bench gap.** There is no refactor path at all. `rg -i refactor` across the kit
 returns one line in `bench-implement-spec.md` about dry-running broad renames. Today a
 pure restructure either gets forced through spec → implement → review (wrong shape: there
-are no stories and no red signal, so the coverage map is a fiction), or it goes through
-the direct fix-and-gate path with nothing but the gate protecting behavior.
+are no stories and no new observable behavior, so the coverage map is a fiction), or it
+goes through the direct fix-and-gate path with nothing but the gate protecting behavior.
 
 **How I'd land it.** A `craft-refactor` skill, not a phase. Phases are reviewer-chosen
 entry points; a refactor is usually a shape the work turns out to have, and skills are

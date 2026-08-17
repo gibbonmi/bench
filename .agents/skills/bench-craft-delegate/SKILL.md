@@ -46,9 +46,9 @@ enumerated family names every registry the family already appears in, traced
 from one existing sibling through the tree; a registry the charge does not
 name is one the delegate will miss.
 
-A write-delegation from a spec carries its stories' coverage rows —
-behavior, seam, red signal — every time, and requires the delegate to show
-each row red before the edit and green after; check each slice against
+A write-delegation from a spec carries its stories' coverage rows — behavior,
+seam, why it catches the failure — every time, and requires the delegate to
+show each row red before the edit and green after; check each slice against
 `craft-spec`'s "Slicing a build for delegates" first. Name the mutation that
 breaks the change's central property, and require the
 delegate to apply it to its own finished work, report the observed result, and

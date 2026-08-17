@@ -1,6 +1,6 @@
 # Spec and ticket fence reduction
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/spec-ticket-fence-reduction/decisions/spec-ticket-fence-reduction.md` (ready compiled map, all eighteen decision tickets reviewer-closed 2026-08-16; #15 carries a same-day superseding note fixing this build's review tier at `fable`/high)
 

@@ -287,7 +287,9 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 |---|---|
 | `.bench/BENCH.md` | 180 |
 | `.agents/commands/bench-implement-spec.md` | 60 |
+| `.agents/commands/bench-write-spec.md` | 73 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
+| `.agents/skills/bench-craft-spec/SKILL.md` | 150 |
 | `.agents/skills/*/SKILL.md` | 120 |
 
 The glob row is what classifies a newly added skill, so a skill arrives budgeted without
@@ -345,12 +347,10 @@ escalation.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed — a wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
-- **Spec falsification pass** (`/bench-write-spec`, loop 1) → **mid model, high
+- **Spec-and-tickets review round** (`/bench-write-spec`) → **mid model, high
   effort**, read-only and same-family through the harness's native agent surface.
-  It reviews the spec alone before slicing.
-- **Ticket-breakdown review pass** (`/bench-write-spec`, loop 2) → the same model,
-  effort, and venue. It reviews the ticket breakdown alone against `craft-tickets`
-  after `/bench-write-spec` slices it. `/bench-write-spec` owns both loops'
+  It reviews the spec and its ticket breakdown together against `craft-tickets`
+  after `/bench-write-spec` slices it; `/bench-write-spec` owns the round's
   operating protocol.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).

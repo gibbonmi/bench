@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "seed the\nharness's native task list from `bench coverage <spec>`, whose\n`rows[N]{story,behavior,seam}` projection is one task per row.",
+    "new": "seed the\nharness's native task list from `bench coverage <spec>`."
+  }
+]

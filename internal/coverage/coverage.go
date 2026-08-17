@@ -1,9 +1,11 @@
 // Package coverage ports `bench coverage`: the acceptance-coverage-map parser the
 // gate's docs layer and the review phase both consume. Extraction mode emits the
 // spec's state and rows as TOON; `--check` validates the map (canonical header,
-// five-cell rows, non-empty cells, story references against the exact declared
-// story set, historical opt-out) and requires a map at all unless the spec is
-// marked historical. A map may opt into per-row IDs by leading the header with a
+// rows as wide as that header declares, non-empty cells, story references against
+// the exact declared story set, historical opt-out) and requires a map at all unless
+// the spec is marked historical. A map may drop the `red signal` column; which
+// columns a header carries is fixed by the header itself, never by its cell
+// count. A map may opt into per-row IDs by leading the header with a
 // `row` column; an opted-in map's IDs are grammar-checked, spec-local unique, and
 // exported to other packages via ParseSpec. The validation phrasings are
 // load-bearing — downstream consumers match them by substring — so this is the
@@ -67,8 +69,80 @@ var (
 // row validation (a mapped-but-historical state).
 const historicalMarker = "<!-- coverage-map: historical -->"
 
-var fieldNames5 = [5]string{"story", "behavior", "seam", "red signal", "why it catches the failure"}
-var fieldNames6 = [6]string{"row", "story", "behavior", "seam", "red signal", "why it catches the failure"}
+// The cell names a coverage-map header can carry. A schema is a list of these in
+// cell order and a header line is their join, so each name is spelled once and both
+// the header match and the violation messages read it from the same place.
+const (
+	fieldRow       = "row"
+	fieldStory     = "story"
+	fieldBehavior  = "behavior"
+	fieldSeam      = "seam"
+	fieldRedSignal = "red signal"
+	fieldWhy       = "why it catches the failure"
+)
+
+// schema is the one descriptor for an accepted header: its field names, in cell
+// order. Row width, the name a violation message quotes, and every cell offset all
+// derive from that list, and each check reads its cell by name — so no check can
+// address the wrong column when a second header joins the set. Adding a header is
+// adding a descriptor here, not editing the checks.
+type schema struct {
+	fields []string
+}
+
+// schemas are the accepted headers, tried in order. The first is also the projection
+// fallback for a map whose header matched none of them.
+var schemas = []schema{
+	{fields: []string{fieldStory, fieldBehavior, fieldSeam, fieldRedSignal, fieldWhy}},
+	{fields: []string{fieldRow, fieldStory, fieldBehavior, fieldSeam, fieldRedSignal, fieldWhy}},
+	{fields: []string{fieldRow, fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
+	{fields: []string{fieldStory, fieldBehavior, fieldSeam, fieldWhy}},
+}
+
+// header is the lowercased header line this schema answers to — the join of its own
+// field names, so the match and the descriptor cannot drift apart.
+func (s schema) header() string { return strings.Join(s.fields, "|") }
+
+// known reports whether a header resolved to a descriptor at all.
+func (s schema) known() bool { return len(s.fields) > 0 }
+
+// width is the cell count this schema's data rows must have.
+func (s schema) width() int { return len(s.fields) }
+
+// optIn reports whether this schema carries per-row IDs, which is to say a row field.
+func (s schema) optIn() bool { return s.index(fieldRow) >= 0 }
+
+// index is the cell offset of a named field, or -1 when this schema has no such field.
+func (s schema) index(name string) int {
+	for i, f := range s.fields {
+		if f == name {
+			return i
+		}
+	}
+	return -1
+}
+
+// cell reads one row's named field. A field this schema does not carry, and a field
+// past a short row's last cell, both read as empty — the same value a present-but-blank
+// cell has, which the empty-cell and row-ID checks already treat as a fault.
+func (s schema) cell(r dataRow, name string) string {
+	i := s.index(name)
+	if i < 0 || i >= len(r.cells) {
+		return ""
+	}
+	return r.cells[i]
+}
+
+// schemaFor resolves a lowercased header line to its descriptor; a header matching
+// none yields the zero schema, which reports !known().
+func schemaFor(header string) schema {
+	for _, s := range schemas {
+		if s.header() == header {
+			return s
+		}
+	}
+	return schema{}
+}
 
 // rowIDPattern is the one row-ID grammar the map's leading `row` cell answers to:
 // an uppercase tag plus a number.
@@ -78,48 +152,30 @@ const rowIDPattern = `[A-Z]+[0-9]+`
 var rowIDRe = regexp.MustCompile(`^` + rowIDPattern + `$`)
 
 type dataRow struct {
-	ncells int
-	all    [6]string // c[1..6] (c[1..5] when not opted in), trimmed; empty beyond ncells
+	cells []string // one map row's cells, trimmed, exactly as many as were written
 }
 
 // parsed is the result of one scan of a spec: whether the map header was seen, the
-// historical opt-out, whether the parsed header matched the canonical one, whether
-// that header opted into row IDs, the declared story numbers, and the data rows.
+// historical opt-out, whether a header line was reached at all, the schema that
+// header resolved to, the declared story numbers, and the data rows.
 type parsed struct {
 	seen       bool
 	historical bool
 	gotHeader  bool
-	headerOK   bool
-	optIn      bool
+	sch        schema // the descriptor the header matched; zero when none did
 	storyNums  map[int]bool
 	notCovered map[int]string
 	dataRows   []dataRow
 }
 
-// width reports the cell count an opted-in map's rows must have (6) versus a legacy
-// map's (5); fields and storyOffset shift in lockstep with the same choice.
-func (p parsed) width() int {
-	if p.optIn {
-		return 6
+// projection is the descriptor Rows reads cells through. A header matching no
+// descriptor has none of its own, so it projects through the legacy field order.
+// Check refuses such a map before any other cell read.
+func (p parsed) projection() schema {
+	if p.sch.known() {
+		return p.sch
 	}
-	return 5
-}
-
-// fields names the cells at width(), in order, for empty-cell and count violations.
-func (p parsed) fields() []string {
-	if p.optIn {
-		return fieldNames6[:]
-	}
-	return fieldNames5[:]
-}
-
-// storyOffset is the index of the story cell: 0 for a legacy row, 1 when a leading
-// row-ID cell has shifted every other field one place right.
-func (p parsed) storyOffset() int {
-	if p.optIn {
-		return 1
-	}
-	return 0
+	return schemas[0]
 }
 
 func parse(content []byte) parsed {
@@ -192,23 +248,13 @@ func (p *parsed) processMapLine(raw string) {
 	}
 	if !p.gotHeader {
 		p.gotHeader = true
-		switch strings.ToLower(strings.Join(cells, "|")) {
-		case "story|behavior|seam|red signal|why it catches the failure":
-			p.headerOK = true
-		case "row|story|behavior|seam|red signal|why it catches the failure":
-			p.headerOK = true
-			p.optIn = true
-		}
+		p.sch = schemaFor(strings.ToLower(strings.Join(cells, "|")))
 		return
 	}
 	if allSep {
 		return
 	}
-	dr := dataRow{ncells: len(cells)}
-	for i := 0; i < 6 && i < len(cells); i++ {
-		dr.all[i] = cells[i]
-	}
-	p.dataRows = append(p.dataRows, dr)
+	p.dataRows = append(p.dataRows, dataRow{cells: cells})
 }
 
 // State classifies the spec: no-map (no coverage header), historical (opted out), or
@@ -224,16 +270,20 @@ func State(p parsed) string {
 	}
 }
 
-// Rows returns story/seam/red_signal per data row for a mapped spec; nil otherwise.
-// The row-ID cell of an opted-in map, if any, is not part of this schema.
+// Rows returns the story, behavior, and seam cells of each data row for a mapped
+// spec; nil otherwise. The cells are resolved by name through the row's schema, so a
+// map that opts into row IDs projects the same three fields as a legacy one and the
+// leading row-ID cell is not part of the projection. These three fields are the ones
+// every accepted header carries — behavior is the cell that names what to build — so
+// a caller reads one row shape whichever schema the spec uses.
 func Rows(p parsed) [][]string {
 	if State(p) != "mapped" {
 		return nil
 	}
-	off := p.storyOffset()
+	s := p.projection()
 	var rows [][]string
 	for _, r := range p.dataRows {
-		rows = append(rows, []string{r.all[off], r.all[off+2], r.all[off+3]})
+		rows = append(rows, []string{s.cell(r, fieldStory), s.cell(r, fieldBehavior), s.cell(r, fieldSeam)})
 	}
 	return rows
 }
@@ -243,12 +293,12 @@ func Rows(p parsed) [][]string {
 // ParseSpec, the package's one exported entry point for callers outside the
 // package, which cannot construct a parsed value themselves.
 func rowIDs(p parsed) []string {
-	if State(p) != "mapped" || !p.optIn {
+	if State(p) != "mapped" || !p.sch.optIn() {
 		return nil
 	}
 	ids := make([]string, len(p.dataRows))
 	for i, r := range p.dataRows {
-		ids[i] = r.all[0]
+		ids[i] = p.sch.cell(r, fieldRow)
 	}
 	return ids
 }
@@ -267,29 +317,28 @@ func Check(p parsed) []string {
 	case "historical":
 		return nil
 	}
-	if !p.headerOK {
+	if !p.sch.known() {
 		return []string{"coverage map missing the canonical header"}
 	}
 	if len(p.dataRows) == 0 {
 		return []string{"coverage map has no data rows"}
 	}
-	width, fields, storyOff := p.width(), p.fields(), p.storyOffset()
+	s := p.sch
 	seenIDs := make(map[string]int) // row id -> first row number that used it
 	referenced := make(map[int]bool)
 	var v []string
 	for idx, r := range p.dataRows {
 		rn := idx + 1
-		if r.ncells != width {
-			v = append(v, fmt.Sprintf("coverage map row %d has %d cells (want %d)", rn, r.ncells, width))
+		if len(r.cells) != s.width() {
+			v = append(v, fmt.Sprintf("coverage map row %d has %d cells (want %d)", rn, len(r.cells), s.width()))
 			continue
 		}
-		for i := 0; i < width; i++ {
-			if r.all[i] == "" {
-				v = append(v, fmt.Sprintf("coverage map row %d has an empty '%s' cell", rn, fields[i]))
+		for _, name := range s.fields {
+			if s.cell(r, name) == "" {
+				v = append(v, fmt.Sprintf("coverage map row %d has an empty '%s' cell", rn, name))
 			}
 		}
-		if p.optIn && r.all[0] != "" {
-			id := r.all[0]
+		if id := s.cell(r, fieldRow); id != "" {
 			if !rowIDRe.MatchString(id) {
 				v = append(v, fmt.Sprintf("coverage map row %d has a malformed row id '%s'", rn, id))
 			} else if first, dup := seenIDs[id]; dup {
@@ -298,10 +347,10 @@ func Check(p parsed) []string {
 				seenIDs[id] = rn
 			}
 		}
-		if strings.Contains(stripBackticks(r.all[storyOff+1]), ";") {
+		if strings.Contains(stripBackticks(s.cell(r, fieldBehavior)), ";") {
 			v = append(v, fmt.Sprintf("coverage map row %d behavior states more than one predicate (';' outside backticks); split the row", rn))
 		}
-		story := parenRe.ReplaceAllString(r.all[storyOff], "")
+		story := parenRe.ReplaceAllString(s.cell(r, fieldStory), "")
 		if story == "" || edgeRe.MatchString(story) {
 			continue
 		}
@@ -434,7 +483,7 @@ func ParseSpec(path string) (optIn bool, ids []string, violations []string, err 
 		return false, nil, nil, err
 	}
 	p := parse(content)
-	return p.optIn, rowIDs(p), Check(p), nil
+	return p.sch.optIn(), rowIDs(p), Check(p), nil
 }
 
 // Command implements `bench coverage [--check] <spec.md | slug>`.
@@ -487,7 +536,7 @@ func Command(args []string) (string, int) {
 	var b strings.Builder
 	fmt.Fprintf(&b, "spec: %s\n", spec)
 	fmt.Fprintf(&b, "state: %s\n", State(p))
-	tbl, err := toon.Table("rows", []string{"story", "seam", "red_signal"}, Rows(p))
+	tbl, err := toon.Table("rows", []string{"story", "behavior", "seam"}, Rows(p))
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

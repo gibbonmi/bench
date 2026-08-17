@@ -1,0 +1,7 @@
+[
+  {
+    "path": "CONTEXT.md",
+    "old": "- **acceptance row** — the **coverage row** an implementation ticket claims as\n  its own acceptance. Not \"the ticket's checklist\", not \"definition of done\" —\n  acceptance row.\n",
+    "new": ""
+  }
+]

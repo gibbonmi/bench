@@ -2,24 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `945c9266`, 3 dirty paths, 1 unpushed commit
-Spec: `specs/spec-ticket-fence-reduction/spec.md` (Status: staged)
-Gate: green at `945c9266` — re-run on the drain batch before commit
+Branch: `main` — HEAD `73c97aa5` (frozen review base); integration worktree
+`bench worktree path d58e5fed7d1634c79cdeacadfa519a8c` on
+`bench/assign/…/d58e5fed7d1634c79cdeacadfa519a8c`, reviewed tip = the commit that
+carries this file
+Spec: `specs/spec-ticket-fence-reduction/spec.md` (Status: staged until `bench worktree land`)
+Gate: green in the worktree at the tip
 
 ## State
 
-`945c9266` landed the AGENTS.md verb-discovery correction: `bench help` is the verb
-inventory, `bench commands --brief` is a three-verb liveness probe. The
-`/bench-what-next` batch on top of it is prepared and uncommitted under standing
-reviewer approval — it adds FT198 (progressively loaded roadmap; `ASSESSMENT.md`
-ranks it 0 and it had no roadmap row), folds the parked verb-discovery idea and the
-derive-help-from-`commandRegistry` finding into FT89, empties `capture/IDEAS.md`,
-and promotes FT198 above FT207 in the sequence. Two calls are contestable: the
-FT198 row itself, and demoting FT207 on `ASSESSMENT.md` pricing.
+`/bench-implement-spec --full` has finished build and review; the source is ready to
+land. Ten tickets landed green (eight from the approved breakdown plus two repair
+tickets the build and review added). Review round 1 (`opus`/high, three axes over
+`73c97aa5..578811f2`) produced 8 raw findings → 4 repair targets, closed at `8be12dd5`;
+round 2 over the repair delta was clean. A parallel session (`a78c0db0`) reviewed the
+same source and stopped with five reviewer questions; all five are answered and
+recorded in the spec: 73-line budget accepted, story 2 kept, `craft-spec | 150` row
+and the four spec/handoff fences ratified, no rewrap. That session is abandoned; do
+not resume it.
 
 ## Next command
 
-`/bench-implement-spec --full spec-ticket-fence-reduction --reviewer fable high`
+From `~/workspace/bench` on `main`:
+`bench worktree land --request 02c6f79b54a3505522af4c84014e0670 --base 73c97aa5 --source-tip <tip> --spec spec-ticket-fence-reduction -m "<msg>" <worktree path>`,
+then `/bench-final-check`.
 
 ## Shape
 

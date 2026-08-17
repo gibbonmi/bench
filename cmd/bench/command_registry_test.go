@@ -250,7 +250,7 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 		"coverage": {
 			route: []string{"coverage"}, successArgv: []string{"coverage", "fixture"}, emptyArgv: []string{"coverage", "empty"},
 			blocks:        []string{"spec", "state", "rows", "help"},
-			successMarker: "rows[1]{story,seam,red_signal}:\n", emptyMarker: "state: mapped\nrows[0]{story,seam,red_signal}:\n", usage: "usage: bench coverage", setupSuccess: setupAXICoverage, setupEmpty: setupAXIEmptyCoverage,
+			successMarker: "rows[1]{story,behavior,seam}:\n", emptyMarker: "state: mapped\nrows[0]{story,behavior,seam}:\n", usage: "usage: bench coverage", setupSuccess: setupAXICoverage, setupEmpty: setupAXIEmptyCoverage,
 		},
 		"worktree list": {
 			route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
@@ -350,9 +350,9 @@ func setupAXICoverage(t *testing.T, root string) {
 
 ### Acceptance coverage map
 
-| row | story | behavior | seam | red signal | why it catches the failure |
-|---|---|---|---|---|---|
-| FX1 | 1 | fixture | command | observed red | catches omission |
+| row | story | behavior | seam | why it catches the failure |
+|---|---|---|---|---|
+| FX1 | 1 | fixture | command | catches omission |
 `
 	writeAXIFixture(t, filepath.Join(root, "specs", "fixture", "spec.md"), spec)
 }
@@ -366,8 +366,8 @@ func setupAXIEmptyCoverage(t *testing.T, root string) {
 
 ### Acceptance coverage map
 
-| row | story | behavior | seam | red signal | why it catches the failure |
-|---|---|---|---|---|---|
+| row | story | behavior | seam | why it catches the failure |
+|---|---|---|---|---|
 `
 	writeAXIFixture(t, filepath.Join(root, "specs", "empty", "spec.md"), spec)
 }

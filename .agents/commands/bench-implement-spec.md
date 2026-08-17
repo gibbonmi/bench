@@ -29,10 +29,10 @@ helper does not satisfy this; `craft-delegate` governs incapable harnesses.
 
 Work the user stories in vertical slices at the agreed seams, TDD only where
 `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
-harness's native task list from `bench coverage <spec>`, one task per row.
-Each write delegate runs its ticket's focused checks and its own mutation
-probe; the coordinator independently verifies the returned diff before
-landing it.
+harness's native task list from `bench coverage <spec>`, whose
+`rows[N]{story,behavior,seam}` projection is one task per row. Each write
+delegate runs its ticket's focused checks and its own mutation probe; the
+coordinator independently verifies the returned diff before landing it.
 
 ## Land
 

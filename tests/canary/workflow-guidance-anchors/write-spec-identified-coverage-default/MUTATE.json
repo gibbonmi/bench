@@ -1,7 +1,7 @@
 [
   {
-    "path": ".agents/commands/bench-write-spec.md",
-    "old": "| row | story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|---|",
-    "new": "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|"
+    "path": ".agents/skills/bench-craft-spec/SKILL.md",
+    "old": "| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|",
+    "new": "| story | behavior | seam | why it catches the failure |\n|---|---|---|---|"
   }
 ]

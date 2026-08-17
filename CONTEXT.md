@@ -79,6 +79,13 @@ cold session reads this first to avoid drifting the vocabulary.
   a decision map, linked to other decision tickets by `Blocked by`. Distinct
   from an **implementation ticket**, the independently-green build unit under
   `specs/<slug>/tickets/`.
+- **coverage row** — one row of a spec's acceptance coverage map, tying one
+  story to one observable behavior at a seam: story, behavior, seam, why it
+  catches the failure, behind an optional leading row ID. Not "acceptance
+  criterion", not "test case", not "requirement" — coverage row.
+- **acceptance row** — the **coverage row** an implementation ticket claims as
+  its own acceptance. Not "the ticket's checklist", not "definition of done" —
+  acceptance row.
 - **session handoff** — the phase-close continuation artifact at
   `capture/session-handoff.md`, rewritten in full by `bench handoff`. It hands the whole
   repository to the next session and is rewritten, never appended to.

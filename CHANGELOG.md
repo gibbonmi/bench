@@ -15,6 +15,16 @@ All notable user-facing changes to Bench are documented here. The format follows
   stories or states more than one predicate (a `;` outside backticks), and a declared
   story that no row references unless the spec carries a
   `Not covered: story <n> — <reason>` line under the map.
+- A spec's acceptance coverage map now carries four columns — story, behavior, seam, and
+  why it catches the failure — behind the optional leading row ID; the retired `red
+  signal` column's job belongs to the why-it-catches clause. `bench coverage <spec>` now
+  projects `rows[N]{story,behavior,seam}` instead of `rows[N]{story,seam,red_signal}`, so
+  task seeding reads a column every schema has. The previous six-column header still
+  parses.
+- `/bench-write-spec` now runs one review round over the spec-and-tickets pair rather than
+  two, with the ticket-granularity quiz as its approval step, and `--reviewer <tier>
+  [effort]` now takes a tier only — resolved through the invoking harness's own
+  `.bench/lines.env` column. A bound model id is an invocation error.
 
 ### Fixed
 

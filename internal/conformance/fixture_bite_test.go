@@ -278,10 +278,10 @@ func packageRunFixtureBiteCalls(dir string) (int, error) {
 
 func TestSpecTicketHandoffWorkflowFixturesAreComplete(t *testing.T) {
 	required := []struct{ fixture, diagnostic string }{
-		{"write-spec-identified-coverage-default", ".agents/commands/bench-write-spec.md Template dropped the six-column identified acceptance-map default"},
-		{"write-spec-unique-row-id", ".agents/commands/bench-write-spec.md Template dropped the unique spec-local row-ID default"},
-		{"write-spec-ownership-fences", ".agents/commands/bench-write-spec.md Template dropped the craft-spec-owned Ownership fences section"},
-		{"write-spec-fence-approval", ".agents/commands/bench-write-spec.md Template approval paragraph dropped the explicit ownership-fence disposition"},
+		{"write-spec-identified-coverage-default", ".agents/skills/bench-craft-spec/SKILL.md Template dropped the identified reduced-column acceptance-map default"},
+		{"write-spec-unique-row-id", ".agents/skills/bench-craft-spec/SKILL.md Template dropped the unique spec-local row-ID default"},
+		{"write-spec-ownership-fences", ".agents/skills/bench-craft-spec/SKILL.md Template dropped the craft-spec-owned Ownership fences section"},
+		{"write-spec-fence-approval", ".agents/skills/bench-craft-spec/SKILL.md Template approval paragraph dropped the explicit ownership-fence disposition"},
 		{"craft-spec-exact-literal-fence", ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the exact repo-relative never-glob ownership-fence rule"},
 		{"craft-spec-empty-or-invalid-fence", ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates permits an empty or invalid ownership fence"},
 	}
@@ -360,7 +360,7 @@ func TestWorkflowCadenceAnchorsRejectDeletionAndSwap(t *testing.T) {
 		{"registry tracing", ".agents/skills/bench-craft-delegate/SKILL.md", "names every registry the family already appears in, traced\nfrom one existing sibling through the tree; a registry the charge does not\nname is one the delegate will miss.", "checks the obvious registries.", ".agents/skills/bench-craft-delegate/SKILL.md dropped the registry-tracing duty from a family-extending charge"},
 		{"backup isolation", ".agents/skills/bench-craft-delegate/SKILL.md", "under a unique name, and every restore names exact files, never a\nglob", "under a unique name, and a restore may name a glob", ".agents/skills/bench-craft-delegate/SKILL.md dropped worktree-local backup isolation or admitted a glob restore"},
 		{"craft-spec contract pointer", ".agents/skills/bench-craft-spec/SKILL.md", "Each fence carries value contracts across it: a contract between tickets is\nstated in the ticket's `What to build` and `Acceptance`, re-derived from the\ntree by review rather than trusted from the ticket's account.", "Each fence carries value contracts across it: every crossing value names its\ntype, its membership or domain rule, its ordering, and its absence semantics.", ".agents/skills/bench-craft-spec/SKILL.md dropped the cross-ticket contract statement from the slicing section"},
-		{"edge walk process boundary", ".agents/skills/bench-craft-spec/SKILL.md", "re-run idempotency, process-boundary lifecycle, hostile\nenvironment", "re-run idempotency, hostile\nenvironment", ".agents/skills/bench-craft-spec/SKILL.md dropped the process-boundary lifecycle class from the canonical edge-class run"},
+		{"edge walk process boundary", ".agents/skills/bench-craft-tdd/SKILL.md", "re-run idempotency, process-boundary\nlifecycle, hostile environment", "re-run idempotency, hostile environment", ".agents/skills/bench-craft-tdd/SKILL.md Apply it only at pre-agreed seams dropped the process-boundary lifecycle class from the canonical edge-class run"},
 		{"bootstrap authority deletion", ".agents/skills/bench-craft-spec/SKILL.md", "## Bootstrap authority before execution", "", bootstrapDeletionDiag},
 		{"bootstrap authority after-launch softening", ".agents/skills/bench-craft-spec/SKILL.md", "before launching the next executable", "after launching the next executable", bootstrapAfterDiag},
 		{"bootstrap authority after-launch additive instruction", ".agents/skills/bench-craft-spec/SKILL.md", "cannot authenticate itself. Without an independent trust root", "cannot authenticate itself. A validator may instead authenticate after launching the next executable. Without an independent trust root", bootstrapAfterDiag},

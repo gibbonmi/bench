@@ -1,1 +1,7 @@
-[{"path":".agents/commands/bench-write-spec.md","old":"At close, write `Verification log: spec <n> + tickets <m> iteration(s) to\n    accept — <note>` into the spec.","new":"At close, record that verification completed."},{"path":".agents/commands/bench-write-spec.md","old":"Verification log: spec <n> + tickets <m> iteration(s) to accept — <note>","new":"Verification complete."}]
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "At\n   close, write `Verification log: <n> iteration(s) to accept — <note>` into the spec.",
+    "new": "At close, record that verification completed."
+  }
+]

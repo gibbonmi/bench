@@ -1,1 +1,1 @@
-[{"path": ".agents/commands/bench-write-spec.md", "old": "Two rounds per artifact, spec then\n   tickets,", "new": "A single round per artifact, spec then\n   tickets,"}]
+[{"path": ".agents/commands/bench-write-spec.md", "old": "One review round covers the spec-and-tickets pair with the reviewer-named model", "new": "Two review rounds, spec then tickets, run with the reviewer-named model"}]

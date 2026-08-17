@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-review/SKILL.md",
+    "old": "`bench coverage <spec>` projects\n  `rows[N]{story,behavior,seam}`; a row's why-it-catches clause is in the spec\n  file, which `bench-craft-spec` owns.",
+    "new": "`bench-craft-spec` owns the spec\n  file."
+  }
+]
