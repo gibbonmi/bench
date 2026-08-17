@@ -2,43 +2,50 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — base HEAD `fb7338d`, approved FT216 staging ready for its phase-close commit, 2 prior unpushed commits
-Spec: `specs/worktree-cleanup-eligibility/spec.md` — staged and reviewer-approved
-Gate: `bench coverage --check worktree-cleanup-eligibility` green with 33 rows; preflight row ownership/membership green, `paths-authorized` red because main's stale review base spans inherited changes and the staging includes roadmap/map-promotion paths outside build fences
+Branch: `main` — HEAD `7e5e3ae8`, 22 commits ahead of the session-start pin, working tree has only pending capture files uncommitted (see State)
+Spec: `specs/worktree-cleanup-eligibility/spec.md` — implemented, landed at `7d799eccd2c6f6452557af8cda4d28fa710aea51`, then retired at `7e5e3ae8`; the folder no longer exists
 
 ## State
 
-FT216 now has one staged behavior-preserving spec and eight tracer-bullet tickets.
-The ready map moved, rather than copied, to
-`specs/worktree-cleanup-eligibility/decisions/deepening-2026-08.md`; that is the
-spec's sole `Decision source:`. FT217 and FT218 still cite the same compiled map,
-so their remaining decisions must be re-homed before the FT216 spec retires.
+FT216 (worktree-cleanup-eligibility) is fully landed and retired. One in-process
+eligibility module (`internal/worktree/eligibility.go`) now owns both the
+explicit and automatic ordered cleanup decisions, plus the shared preservation
+refusal both `PlanAutomatic` and the landed-set planner consume; ADR 0005 is
+rewritten as resulting-state documentation. 8 build tickets + 4 repair tickets
+landed serially on one retained integration source; three-axis review found and
+closed a real regression (`--discard-branch` + detached HEAD) and a genuine
+spec-compliance gap (CO3/EV2), both independently re-verified clean on
+follow-up. FT217/FT218's remaining decisions were re-homed into
+`roadmap/FT217.md`/`roadmap/FT218.md` before the spec's decision map was
+deleted with retirement.
 
-Closed decisions stay closed: characterize all 9 explicit and 13 automatic
-`(Action, ReasonCode)` outcomes before extraction; one typed eligibility owner
-holds ownership, assignment, lock, lease, landedness, recovery, tracked,
-nested, and ignored-residue policy; automatic cleanup is a stricter reading of
-that verdict; `DiscardBranch` remains explicit-only and derived-after; no
-precedence anomaly or observable cleanup behavior changes in this build.
+Mid-build, an unrelated baseline gate red (`TestWorktreeReauthorizeJourney`,
+a `git init.defaultBranch=master` host-config dependency in a system-test
+fixture) blocked every commit; diagnosed and fixed via `/bench-debug`, landed
+separately at `868a4e4e` before FT216 work resumed.
 
-The ticket DAG is 01 explicit characterization → 02 automatic characterization
-→ 03 typed verdict expansion, then two branches: 04 automatic/shared landedness
-→ 06 apply-under-lock → 07 release/landing, and 05 landed-set preservation. 08
-contracts both branches and rewrites ADR 0005. Tickets 04 and 05 are independently
-green but both may write `clean_landed.go`, so implementation serializes them on
-the one retained integration source.
+Three files are uncommitted by design, left for a reviewed `/bench-what-next`
+capture drain: `capture/learnings.md` (one new open entry — a resolved
+`reviews/<slug>.md` left in the tree hard-blocks `bench worktree land`, not
+just `bench preflight review`), `capture/retros/worktree-cleanup-eligibility.md`
+(the full landing retro), and `capture/agent-performance/claude-models.md`
+(refreshed with this landing's Sonnet/Opus evidence — `open-ai-models.md` is
+untouched, no OpenAI models ran this session). None of the pre-existing 7
+unresolved decision maps or the 62 structure issues `bench status` flags are
+from this session — unrelated, pre-existing repo state.
 
-The reviewer-requested Terra pair completed: one Terra authored the slice; a
-second independent Terra-high round found two blockers in iteration 1 and
-accepted the repaired pair in iteration 2. The reviewer then approved the staged
-spec, ticket DAG, shared-file serialization, and decision-map re-home condition.
-The mandatory learning in
-`capture/learnings.md` adds a shared-reader census and a per-consumer ship test
-before future ticket slicing.
+One unrelated, explicitly user-approved change also landed this session:
+`.claude/settings.json` now scopes non-bench personal/bundled skills off for
+this repo via `skillOverrides` (commit `3cc98077`) — reversible, repo-scoped,
+does not touch anything outside this checkout.
+
+`dist/bench` must exist and be reasonably fresh for local `bench` CLI
+resolution to work in this checkout — it is not a purely disposable artifact
+here; rebuild with `go build -o dist/bench ./cmd/bench` if it's ever removed.
 
 ## Next command
 
-`$bench-implement-spec using specs/worktree-cleanup-eligibility/spec.md`
+`/bench-what-next`
 
 ## Shape
 
