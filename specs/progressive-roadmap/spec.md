@@ -253,6 +253,7 @@ Not covered: story 43 — reviewed exclusion, no flag is built.
 - `internal/conformance/checks_test.go`
 - `internal/conformance/registry_test.go`
 - `internal/conformance/docs_workflow_checks_test.go`
+- `internal/conformance/recurrence_maintenance_contract_test.go`
 - `internal/conformance/tier_test.go`
 - `cmd/bench/command_registry_test.go`
 - `internal/conformance/roadmap_detail_integrity_test.go`
