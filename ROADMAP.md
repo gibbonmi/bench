@@ -91,6 +91,14 @@ means the repository-controlled compliance assessment.
 
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
+**FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
+
+**FT220 (LOW) — `/bench-write-spec` censuses shared decision readers before ticket slicing.**
+
+**FT221 (LOW) — `craft-delegate`'s cp-aside mutation-probe guidance becomes a named checklist step.**
+
+**FT222 (LOW, decision required) — a standing per-repair-class delegate-tier preference in `projects/benchkit.md`.**
+
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.**
 
 **FT101 (LOW) — per-context scope for monorepos: domain docs and profile.**
@@ -273,5 +281,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block; unblocked now that FT189 has landed.
-2. `/bench-write-spec` — FT213 gives a read-only delegate its own worktree when it reads a tree also being graded, and requires an oracle-verified probe before trusting a delegate's gate-skip claim; reproduced twice in the spec-ticket-fence-reduction retro.
+1. `/bench-shape-idea` — FT100 cuts prose weight from `AGENTS.md`/`.bench/BENCH.md` and the craft-skill library to demonstrated-delta clauses; reviewer-prioritized to the top of the queue 2026-08-17, ahead of its recommended-after-FT89 sequencing.
+2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block; unblocked now that FT189 has landed.
+3. `/bench-write-spec` — FT213 gives a read-only delegate its own worktree when it reads a tree also being graded, and requires an oracle-verified probe before trusting a delegate's gate-skip claim; reproduced twice in the spec-ticket-fence-reduction retro.

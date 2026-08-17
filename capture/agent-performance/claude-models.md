@@ -1,15 +1,17 @@
 # Claude model scorecard
 
-Last incorporated landing: `progressive-roadmap` (`5ee78026`, 2026-08-17) —
-Opus/medium coordinated 9 ticket-sized charges (5 build, 4 repair) across a
-shared retained worktree plus 3 parallel isolated worktrees, ran 3 parallel
-Opus/medium review axes, and independently mutation-probed every accepted
-delegate diff before committing it.
+Last incorporated landing: `worktree-cleanup-eligibility` (`7d799ecc`, 2026-08-17)
+— Opus/medium coordinated an 8-ticket serial migration plus 4 repair tickets on
+one retained worktree, ran 3 parallel Opus/medium review axes then a scoped
+3-axis Opus/low follow-up, and independently mutation-probed every accepted
+delegate diff (at a site/kind distinct from each delegate's own probe) before
+committing it.
 
-Five completed landings are now recorded. Opus has a large implementer
-sample across both effort tiers and a three-landing reviewer/orchestrator
-sample; Sonnet now has a real multi-charge low-effort sample alongside its
-earlier single medium-effort one. Routing still follows the project's
+Six completed landings are now recorded. Sonnet now carries a large,
+higher-stakes implementer sample spanning medium and high effort on real
+production Go refactor work, not only low-effort tickets. Opus has a large
+implementer sample across three effort tiers and a four-landing
+reviewer/orchestrator sample. Routing still follows the project's
 harness-to-tier binding.
 
 ## Current routing
@@ -17,11 +19,11 @@ harness-to-tier binding.
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
 | Fable / high | orchestrator on 1 landing (tickets 6–8, review, landing) + implementer, 1 prose ticket | every done-claim probed with a distinct mutation kind and site; caught three false enforcement claims in spec rows and two unattributed-writer events; as implementer it surfaced an unreachable acceptance criterion instead of forcing it | Top tier for guidance prose and for coordination when the spec's own claims are suspect; not yet observed on Go |
-| Opus / medium | implementer, 21 ticket-sized charges across 4 landings | 18 of 21 first-pass accepted; 3 coordinator catches; every required mutation bit and production was restored exactly each time | Project mid-tier default for gate and conformance logic; sample now spans 4 landings |
+| Opus / medium, low | implementer, 21 medium-effort charges across 4 landings + 2 low-effort polish-repair charges (this landing) | medium: 18 of 21 first-pass accepted, 3 coordinator catches, every required mutation bit and production restored exactly; low (n=2): 2 of 2 first-pass accepted, one delegate exceeded its charge with a more diagnostic mutation probe than requested | Medium is mid-tier default for gate and conformance logic; low is promising for small, low-risk polish/hardening repairs specifically — too small a sample yet to set a default there |
 | Opus / high | implementer, 12 charges (2 process-lifecycle, 4 guidance-prose/anchor, 3 inline light-path, 2 Go-seam parser/conformance-oracle rewrites, 1 conformance-correctness repair) | all 12 first-pass accepted; the largest single charge this landing (a full parser rewrite plus a 67-row repo migration with an empty differential proof) still self-probed cleanly and flagged a spec-vs-charge disagreement rather than silently resolving it either way | Use high for process-lifecycle, cleanup-authority, destructive-command, anchored guidance-prose, and large/foundational Go-seam rewrites |
-| Opus / medium | orchestrator, 3 landings | verified every done-claim independently with a mutation at a distinct site/kind from the delegate's own each time; caught 1 silent oracle regression, 1 partial-ordering hole, 1 dependency inversion, 1 under-declared ownership fence, and 1 cross-ticket merge conflict from parallel repair porting; 0 vacuous probes this landing | Continue; deliberate site/kind variance per probe is holding up as the fix for the earlier vacuous-probe weakness |
-| Opus / medium–high | reviewer, 3 read-only axes on 3 landings + 1 delta re-review | 21+19 raw findings across landings, cumulative de-duplicated repair targets over 20; every finding cites file:line or story/row ID; this landing's Coverage axis found a diagnostic-emitting code path whose own new trust-list wiring was provably unexercised by any test | Reviewer default at mid tier; high effort added the enumeration-quality citations |
-| Sonnet / low–medium | implementer, 5 low-effort ticket-sized charges (this landing) + 1 earlier medium-effort charge | 5 of 6 first-pass accepted; the one exception needed a coordinator-authored merge-conflict resolution at land time, caused by porting parallel repair tickets from a shared stale base rather than a defect in the delegate's own diff | Cheap-tier default holds for known-shape, gate-covered work; a parallel-repair-batch charge should declare its expected touched-file set so ports can be sequenced to avoid conflict |
+| Opus / medium | orchestrator, 4 landings | verified every done-claim independently with a mutation at a distinct site/kind from the delegate's own each time; caught 1 silent oracle regression, 1 partial-ordering hole, 1 dependency inversion, 1 under-declared ownership fence, 1 cross-ticket merge conflict from parallel repair porting, and (this landing) a resolved review-pickup artifact left uncommitted-for-deletion that hard-blocked landing until removed | Continue; deliberate site/kind variance per probe is holding up as the fix for the earlier vacuous-probe weakness |
+| Opus / medium–high | reviewer, 3 read-only axes on 4 landings + 1 delta re-review + 1 scoped low-effort follow-up | 21+19+12(3-axis)+7(follow-up) raw findings across landings; every finding cites file:line or story/row ID; this landing's Coverage axis found a real production regression (a derived-after operator override that had migrated outside its original guard, reachable but exercised by no test or coordinator mutation probe) and Standards+Spec independently converged on the same under-closed spec row from two different angles | Reviewer default at mid tier for a first full pass; a narrowly-scoped low-effort follow-up (verify specific named fixes, not re-hunt the whole diff) held up as a real second-pass discount, not just a smaller sample |
+| Sonnet / medium–high | implementer, 10 ticket-sized charges (this landing: 8 build tickets + 2 regression/seam repairs) | 10 of 10 first-pass accepted at the diff level, including the landing's two highest-risk charges (an ordered-decision-logic extraction and its final cross-file consolidation); one delegate caught and discarded its own wrong initial hypothesis via direct testing rather than reporting it as fact; one delegate flagged a judgment call already resolved in its charge rather than silently picking a different answer | Effort should scale with the seam's behavior-preservation risk, not the ticket's line count — the two highest-effort charges here were both refactors of already-correct logic, not new logic |
 
 ## Representative evidence
 
@@ -31,7 +33,7 @@ harness-to-tier binding.
 | `spec-ticket-fence-reduction` realign ticket | Opus / high / implementer | Ran the charged omission probe on its own landed glossary entry, saw the gate stay green, and reported that plainly as a finding instead of a pass — which exposed three spec rows claiming enforcement that did not exist and produced two repair tickets. |
 | `spec-ticket-fence-reduction` collapse ticket | Fable / high / implementer | Enumerated all 47 anchored needles, then stopped at a spec-level shortfall (60-line budget unreachable from the retained needles) with the arithmetic and three options rather than forcing a fit or silently re-pricing. |
 | `progressive-roadmap` split-the-board ticket | Opus / high / implementer | The coordinator's own charge paraphrased the spec's per-class fault disposition wrong; the delegate re-read the spec, found the disagreement, implemented the spec's actual rule, and flagged the discrepancy explicitly rather than silently resolving it either direction. |
-| `progressive-roadmap` repair-roadmap-detail-integrity-correctness | Opus / high / implementer | Departed from the ticket's suggested fix (mark a shared map before a `continue`) because that fix would have silently changed unrelated duplicate-ID behavior; used two purpose-separated maps instead and named the trade-off in its report rather than taking the literal instruction. |
+| `worktree-cleanup-eligibility` Coverage axis | Opus / medium / reviewer | Found that a refactor-relocated operator override (`--discard-branch`) had silently escaped its original detached-HEAD guard — a real, reachable regression that 8 build tickets' own tests, 8 coordinator mutation probes at deliberately varied sites, and a full green gate had all missed, because nothing had ever exercised that specific evidence combination. |
 
 ## Current decisions
 
@@ -52,3 +54,16 @@ harness-to-tier binding.
 - The zero-delegate light-path shape produces self-catches, not accepted-claim catches;
   treat its evidence as weaker in kind, not merely smaller, when comparing to delegated
   landings.
+- Sonnet at medium-high effort handled an 8-ticket behavior-preserving Go refactor,
+  including its two highest-risk seams, with zero coordinator-found defects; effort choice
+  tracked behavior-preservation risk correctly even though every ticket's line count was
+  modest. Treat Sonnet as viable for real production refactor work at the right effort,
+  not only for known-shape low-effort tickets.
+- Mutation probes and a full green gate both missed a real regression that an adversarial
+  review pass caught by asking "what combination of evidence has nothing exercised" rather
+  than "does the changed logic behave as charged." A review pass earns its cost distinctly
+  from probing: probing verifies a claimed fix; review hunts for the untested combination
+  nobody claimed to have covered.
+- A resolved review-pickup artifact (`reviews/<slug>.md`) left in the tree past its last
+  finding's fix is now a hard `bench worktree land` refusal, not merely a style miss —
+  delete it in the same commit that closes the last finding, every time.

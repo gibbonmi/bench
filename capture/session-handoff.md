@@ -2,50 +2,53 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `7e5e3ae8`, 22 commits ahead of the session-start pin, working tree has only pending capture files uncommitted (see State)
-Spec: `specs/worktree-cleanup-eligibility/spec.md` — implemented, landed at `7d799eccd2c6f6452557af8cda4d28fa710aea51`, then retired at `7e5e3ae8`; the folder no longer exists
+Branch: `main` — HEAD `9616919a`, working tree carries the reviewed `/bench-what-next` capture-drain batch, about to land as one commit
+Spec: none staged; `specs/` is empty
 
 ## State
 
-FT216 (worktree-cleanup-eligibility) is fully landed and retired. One in-process
-eligibility module (`internal/worktree/eligibility.go`) now owns both the
-explicit and automatic ordered cleanup decisions, plus the shared preservation
-refusal both `PlanAutomatic` and the landed-set planner consume; ADR 0005 is
-rewritten as resulting-state documentation. 8 build tickets + 4 repair tickets
-landed serially on one retained integration source; three-axis review found and
-closed a real regression (`--discard-branch` + detached HEAD) and a genuine
-spec-compliance gap (CO3/EV2), both independently re-verified clean on
-follow-up. FT217/FT218's remaining decisions were re-homed into
-`roadmap/FT217.md`/`roadmap/FT218.md` before the spec's decision map was
-deleted with retirement.
+`/bench-what-next` reconciled the roadmap against the tree (nothing shipped
+since the last drain; `specs/` and `spec_history` are both empty, so no
+`bench spec retire` was owed this pass) and drained every capture source to
+zero:
 
-Mid-build, an unrelated baseline gate red (`TestWorktreeReauthorizeJourney`,
-a `git init.defaultBranch=master` host-config dependency in a system-test
-fixture) blocked every commit; diagnosed and fixed via `/bench-debug`, landed
-separately at `868a4e4e` before FT216 work resumed.
+- `capture/IDEAS.md` was already empty.
+- `capture/learnings.md`'s three open entries are verdicted: one (resolved
+  `reviews/<slug>.md` blocking `bench worktree land`) merged as an occurrence
+  into `roadmap/FT89.md`; two (refresh a ready `/bench-deepen` map before
+  handoff; census shared decision readers before `/bench-write-spec` ticket
+  slicing) became new kit-edit rows `roadmap/FT219.md` and
+  `roadmap/FT220.md`.
+- `capture/retros/worktree-cleanup-eligibility.md` is drained and deleted.
+  Its actionable recommendations: three merged as occurrences into existing
+  rows (`roadmap/FT113.md` — sharpen the `--spec` flip's `--help`/guard;
+  `roadmap/FT169.md` — land's ownership-fence refusal should name the
+  offending path; `roadmap/FT177.md` — landing guard should warn before
+  removing a load-bearing `dist/bench`), one became a new kit-edit row
+  (`roadmap/FT221.md` — promote `craft-delegate`'s cp-aside guidance to a
+  named checklist step), and one became a new decision-required row
+  (`roadmap/FT222.md` — standing per-repair-class delegate-tier preference in
+  `projects/benchkit.md`). Repair-attribution tally from its table: 8 tickets,
+  6 one-shots (0 repair rounds), 2 with repairs — cause counts:
+  delegate-error 1, spec-row 1, other 2.
+- `capture/agent-performance/claude-models.md`'s refresh from the prior
+  `/bench-final-check` landing evidence (FT216, `worktree-cleanup-eligibility`)
+  is carried through in this same commit.
 
-Three files are uncommitted by design, left for a reviewed `/bench-what-next`
-capture drain: `capture/learnings.md` (one new open entry — a resolved
-`reviews/<slug>.md` left in the tree hard-blocks `bench worktree land`, not
-just `bench preflight review`), `capture/retros/worktree-cleanup-eligibility.md`
-(the full landing retro), and `capture/agent-performance/claude-models.md`
-(refreshed with this landing's Sonnet/Opus evidence — `open-ai-models.md` is
-untouched, no OpenAI models ran this session). None of the pre-existing 7
-unresolved decision maps or the 62 structure issues `bench status` flags are
-from this session — unrelated, pre-existing repo state.
-
-One unrelated, explicitly user-approved change also landed this session:
-`.claude/settings.json` now scopes non-bench personal/bundled skills off for
-this repo via `skillOverrides` (commit `3cc98077`) — reversible, repo-scoped,
-does not touch anything outside this checkout.
+`## Recommended sequence` rank 1 is now FT100 (`/bench-shape-idea` — cut prose
+weight from `AGENTS.md`/`.bench/BENCH.md` and the craft-skill library to
+demonstrated-delta clauses), reviewer-prioritized ahead of its
+recommended-after-FT89 sequencing. FT207 (`/bench-shape-idea`) and FT213
+(`/bench-write-spec`) follow at ranks 2 and 3, unchanged. This run's roadmap
+edits are all feature/guidance-shaped except FT222, which is decision-only.
 
 `dist/bench` must exist and be reasonably fresh for local `bench` CLI
-resolution to work in this checkout — it is not a purely disposable artifact
-here; rebuild with `go build -o dist/bench ./cmd/bench` if it's ever removed.
+resolution to work in this checkout; rebuild with
+`go build -o dist/bench ./cmd/bench` if it's ever removed.
 
 ## Next command
 
-`/bench-what-next`
+`/bench-shape-idea`
 
 ## Shape
 
