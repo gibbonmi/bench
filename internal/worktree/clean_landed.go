@@ -76,14 +76,10 @@ func selectLandedCleanupRow(root string, assignment intent.Assignment, defaultRe
 	if proofErr != nil || !landed {
 		return landedCleanupRow{}, false
 	}
-	proof := "true:ancestry"
-	if byContent {
-		proof = "true:patch"
-	}
 	if lease == "" {
 		lease = "none"
 	}
-	classifierPlan := CleanupPlan{Target: root, landed: proof}
+	classifierPlan := CleanupPlan{Target: root, landedTyped: landedness{kind: landednessProven, landed: true, byContent: byContent}}
 	if lease == string(LeaseLive) {
 		classifierPlan.ReasonCode = ReasonLiveLease
 	}

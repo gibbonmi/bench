@@ -227,6 +227,12 @@ type CleanupPlan struct {
 	branchRef, branchOID string
 	ignoredSummary       string
 	landed               string
+	// landedTyped carries the same landedness evidence as landed, but as the typed value
+	// decideExplicit produced, so a production reader can branch on its kind and proof
+	// fields instead of parsing the wire string. landed stays alongside it: subshell.go's
+	// fingerprint still hashes the string as evidence, and a hand-built stub (clean_landed.go)
+	// may populate only the typed field when it has no need to fabricate the string.
+	landedTyped landedness
 	// leftover names the present bytes a release-leftover plan hands on rather than
 	// removes; it is empty for every plan that answers for a checkout.
 	leftover string
@@ -330,10 +336,10 @@ func PlanAutomatic(root, path string) (CleanupPlan, error) {
 	if !recoveryMetadataMatches(root, *plan.assignment) {
 		return automaticRetain(plan, ReasonMalformed, "assignment recovery metadata does not match refs"), nil
 	}
-	if strings.HasPrefix(plan.landed, "unknown") {
+	if plan.landedTyped.kind == landednessUnknownNoDefault || plan.landedTyped.kind == landednessUnknownError {
 		return automaticRetain(plan, ReasonUncertain, "assignment landedness is unknown"), nil
 	}
-	if !strings.HasPrefix(plan.landed, "true:") {
+	if !(plan.landedTyped.kind == landednessProven && plan.landedTyped.landed) {
 		return automaticRetain(plan, ReasonUnmerged, "assignment branch has not landed"), nil
 	}
 	// The automatic path authors no preservation refs: it runs unattended at every session

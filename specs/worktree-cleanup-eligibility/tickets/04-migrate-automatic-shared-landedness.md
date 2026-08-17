@@ -15,5 +15,5 @@ uses.
 
 ## Acceptance
 
-- [ ] CO1: `PlanAutomatic` and the shared assignment-landed readers obtain their answer from typed verdict evidence, with no production parsing of formatted landedness.
-- [ ] DB1: explicit `DiscardBranch` can authorize exact deletion after derived landedness, while automatic cleanup retains the unprovable-branch fixture as `unmerged`.
+- [x] CO1: `PlanAutomatic` and the shared assignment-landed readers obtain their answer from typed verdict evidence, with no production parsing of formatted landedness.
+- [x] DB1: explicit `DiscardBranch` can authorize exact deletion after derived landedness, while automatic cleanup retains the unprovable-branch fixture as `unmerged`.

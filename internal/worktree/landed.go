@@ -2,7 +2,6 @@ package worktree
 
 import (
 	"os"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -10,7 +9,7 @@ import (
 
 func assignmentLanded(assignment intent.Assignment, plan CleanupPlan) bool {
 	return assignment.State == intent.StateActive &&
-		strings.HasPrefix(plan.landed, "true:") &&
+		plan.landedTyped.kind == landednessProven && plan.landedTyped.landed &&
 		!planHasLiveLease(plan)
 }
 

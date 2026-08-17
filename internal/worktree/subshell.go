@@ -227,6 +227,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	plan.Tracked = verdict.Tracked
 	landed := verdict.Landed.String()
 	plan.landed = landed
+	plan.landedTyped = verdict.Landed
 	plan.deleteBranch, plan.branchRef, plan.branchOID = verdict.DeleteBranch, verdict.BranchRef, verdict.BranchOID
 	// The derivation above reads ancestry, then merges, then patch-equivalence, then
 	// reverse-applicability — which proves a squash-landing but still refuses whatever it
