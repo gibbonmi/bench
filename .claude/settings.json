@@ -1,5 +1,36 @@
 {
   "$comment": "Project settings for Bench. WorktreeCreate/WorktreeRemove route Claude's native lifecycle through the shared Bench core. SessionStart prints the ambient dashboard; Stop enforces the completion oracle during a shift; PreToolUse guards destructive Git and delegated model tiers.",
+  "skillOverrides": {
+    "$comment": "Repo-scoped: hide non-bench personal (~/.claude/skills) and bundled/plugin skills so this project surfaces only bench-craft-* and project-owned skills. Does not uninstall anything globally. 'prototype' is deliberately absent: this repo's own .claude/skills/prototype (-> .agents/skills/prototype) shadows the personal one by name, and an override here would hide that project-owned skill too.",
+    "diagnosing-bugs": "off",
+    "find-skills": "off",
+    "grill-me": "off",
+    "grill-with-docs": "off",
+    "grilling": "off",
+    "handoff": "off",
+    "improve-codebase-architecture": "off",
+    "no-mistakes": "off",
+    "setup-matt-pocock-skills": "off",
+    "tdd": "off",
+    "to-spec": "off",
+    "to-tickets": "off",
+    "triage": "off",
+    "writing-great-skills": "off",
+    "dataviz": "off",
+    "artifact-design": "off",
+    "artifact-capabilities": "off",
+    "update-config": "off",
+    "keybindings-help": "off",
+    "simplify": "off",
+    "fewer-permission-prompts": "off",
+    "loop": "off",
+    "schedule": "off",
+    "claude-api": "off",
+    "run": "off",
+    "init": "off",
+    "review": "off",
+    "security-review": "off"
+  },
   "hooks": {
     "WorktreeCreate": [
       {
