@@ -30,6 +30,7 @@ type activeScan struct {
 	rows         [][]any
 	invalidPaths map[string]string
 	count        int
+	readyCount   int
 	state        bounds.FileState
 	reason       string
 }
@@ -38,6 +39,12 @@ type activeScan struct {
 func ActiveRows(root string) ([][]any, int, bounds.FileState) {
 	s := scanActive(root)
 	return s.rows, s.count, s.state
+}
+
+// ActiveCounts returns the unresolved-or-invalid and ready active-map counts.
+func ActiveCounts(root string) (unresolved, ready int, state bounds.FileState) {
+	s := scanActive(root)
+	return s.count, s.readyCount, s.state
 }
 
 func scanActive(root string) activeScan {
@@ -66,6 +73,8 @@ func scanActive(root string) activeScan {
 		rows := projectedRows(mapName, m)
 		if m.Status == "shaping" {
 			s.count++
+		} else if m.Status == "ready" {
+			s.readyCount++
 		}
 		if len(rows) > 0 {
 			s.rows = append(s.rows, rows...)

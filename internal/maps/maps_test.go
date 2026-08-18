@@ -916,3 +916,22 @@ func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
 		t.Fatalf("ActiveRows = (%#v, %d, %s), want (%#v, 1, parsed)", rows, count, state, want)
 	}
 }
+
+func TestActiveCountsSeparatesReadyMaps(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	shaping := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	ready := strings.Replace(shaping, "Status: shaping", "Status: ready", 1)
+	for name, document := range map[string]string{"shaping.md": shaping, "ready.md": ready} {
+		if err := os.WriteFile(filepath.Join(root, DecisionsDir, name), []byte(document), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	unresolved, readyCount, state := ActiveCounts(root)
+	if unresolved != 1 || readyCount != 1 || state != bounds.StateParsed {
+		t.Fatalf("ActiveCounts = (%d, %d, %s), want (1, 1, parsed)", unresolved, readyCount, state)
+	}
+}

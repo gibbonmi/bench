@@ -109,11 +109,13 @@ func Signals(root string) []Signal {
 func SignalsWith(root string, query Query) []Signal {
 	var rows []row
 
+	rows = appendSetup(rows, root)
 	rows = appendGate(rows, root)
 	rows = appendGit(rows, root, query)
 	rows = appendWorktree(rows, root)
 	rows = appendIntent(rows, root)
 	rows = appendGuards(rows, root)
+	rows = appendStagedSpecs(rows, root)
 	rows = appendDrain(rows, root)
 	rows = appendStructure(rows, root)
 	rows = appendMaps(rows, root)
@@ -131,6 +133,42 @@ func SignalsWith(root string, query Query) []Signal {
 		out[i] = Signal{Severity: r.sev, Name: r.signal, Detail: r.detail, Action: r.action}
 	}
 	return out
+}
+
+func appendSetup(rows []row, root string) []row {
+	info, err := os.Stat(filepath.Join(root, ".bench"))
+	if err != nil || !info.IsDir() {
+		return append(rows, row{0, "setup", "no .bench/", "bench setup"})
+	}
+	return rows
+}
+
+func appendStagedSpecs(rows []row, root string) []row {
+	n, slug := stagedSpecCount(root)
+	if n == 0 {
+		return rows
+	}
+	action := "/bench-implement-spec"
+	if n == 1 {
+		action += " specs/" + slug + "/spec.md"
+	}
+	return append(rows, row{4, "specs", fmt.Sprintf("%d staged spec(s)", n), action})
+}
+
+func stagedSpecCount(root string) (int, string) {
+	facts, err := spec.Facts(root)
+	if err != nil {
+		return 0, ""
+	}
+	n, slug := 0, ""
+	for _, fact := range facts {
+		if fact.Status != "staged" {
+			continue
+		}
+		n++
+		slug = fact.Slug
+	}
+	return n, slug
 }
 
 // Command implements `bench status`. It composes every sibling signal into the ambient
@@ -531,12 +569,28 @@ func appendStructure(rows []row, root string) []row {
 // the scan ran cleanly, or an explicit unknown row naming the decisions/ read failure
 // when it did not — a scan that could not run must never render as zero unresolved.
 func appendMaps(rows []row, root string) []row {
-	n, state := maps.UnresolvedCount(root)
+	n, ready, state := maps.ActiveCounts(root)
 	if state.Failed() {
 		return append(rows, row{6, "decisions", toon.UnknownCell(maps.DecisionsDir, state), "bench maps"})
 	}
 	if n > 0 {
 		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "/bench-shape-idea"})
+	}
+	if ready > 0 {
+		action := "/bench-write-spec"
+		if ready == 1 {
+			candidates, err := maps.DiscoverDecisionMapCandidates(root)
+			if err != nil {
+				return rows
+			}
+			for _, candidate := range candidates {
+				if !candidate.Compiled {
+					action += " " + candidate.Path
+					break
+				}
+			}
+		}
+		return append(rows, row{6, "decisions", fmt.Sprintf("%d ready map(s)", ready), action})
 	}
 	return rows
 }

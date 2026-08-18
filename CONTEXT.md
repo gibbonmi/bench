@@ -104,7 +104,7 @@ cold session reads this first to avoid drifting the vocabulary.
   from the **ambient dashboard** (`bench status`): the page is the shareable rendered view,
   the ambient dashboard is the terminal print. Not "the dashboard" unqualified — that name
   ambiguously means both.
-- **signal** — one ranked line on the **ambient dashboard** (gate, git, worktree, intent, guards,
+- **signal** — one ranked line on the **ambient dashboard** (setup, gate, git, worktree, intent, guards,
   drain, structure, decisions, specs, reviews, roadmap). Shown only when it fires. Not
   "check", not "alert".
 - **severity ladder** — the fixed rank order that decides which **signal** leads the
