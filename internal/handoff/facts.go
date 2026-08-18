@@ -3,7 +3,6 @@ package handoff
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
@@ -156,51 +155,8 @@ func treeRef(tree string) string {
 	return "`" + status.Short(tree) + "`"
 }
 
-// benchCommandPrefix opens a `bench` subcommand action, the second of the two shapes a
-// board action takes when it is something a session can type.
-const benchCommandPrefix = "bench "
-
-// IsInvocable reports whether a board action is something a session can type. It is
-// exported as the one source of that rule: the runtime contract's expectation reads it
-// rather than restating the prefixes, so a change to what qualifies cannot leave a second
-// copy asserting the superseded rule.
-//
-// Qualifying is syntactic, against the canonical form the board writes: an action is a
-// command when it opens a phase invocation or a `bench` subcommand. The opening is
-// necessary but not sufficient — a row may join several steps with status.StepSeparator
-// ("/bench-final-check / push" once the tree is clean), and that string opens a phase
-// invocation while being two commands, which is not something a reader can run. Splitting
-// it and taking an arm would be this package deciding what the board meant by a sequence,
-// so a compound action does not qualify.
-func IsInvocable(action string) bool {
-	if strings.Contains(action, status.StepSeparator) {
-		return false
-	}
-	return strings.HasPrefix(action, harnessPrefix[harnessClaude]) || strings.HasPrefix(action, benchCommandPrefix)
-}
-
-// nextAction selects the board's next command under root, and reports whether a board
-// carrying signals offered none. The board is the one source of what to do next, so the
-// handoff and `bench status` cannot disagree about it.
-func nextAction(root string) (action, signal string, noneInvocable bool) {
-	signals := status.SignalsWith(root, status.Query{ExcludeDirtyPaths: []string{status.HandoffFile}})
-	if action, signal, ok := firstInvocable(signals); ok {
-		return action, signal, false
-	}
-	return "", "", len(signals) > 0
-}
-
-// firstInvocable takes the leading signal whose action is a command rather than a hint,
-// walking the signals in the order they arrive. That order is the board's severity ladder
-// and internal/status owns it, so this re-ranks nothing: the choice is only whether a row
-// qualifies — which IsInvocable decides — never whether it outranks another. Most board
-// actions are prose describing a situation ("fix before commit", "split (craft-seams)"),
-// and a field promising an invocation cannot render one of those.
-func firstInvocable(signals []status.Signal) (action, name string, ok bool) {
-	for _, s := range signals {
-		if IsInvocable(s.Action) {
-			return s.Action, s.Name, true
-		}
-	}
-	return "", "", false
+func applyRoute(f *facts, route status.RouteResult) {
+	f.Action = route.Lead.Action
+	f.Signal = route.Lead.Name
+	f.NoInvocable = route.NoCommand
 }

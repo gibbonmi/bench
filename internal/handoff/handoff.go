@@ -17,7 +17,7 @@ import (
 // spelling, repetition, and arity, and accepts anything as a declared flag's value.
 var grammar = usage.Grammar{
 	Cmd:  "bench handoff",
-	Help: "usage: bench handoff [--harness " + harnessChoices() + "] [--next <command>]",
+	Help: "usage: bench handoff [--harness " + status.HarnessChoices() + "] [--next <command>]",
 	Flags: []usage.Flag{
 		{Name: "--harness", HasValue: true, NoEmptyValue: true},
 		// An empty override names no command. Left to fall through it would read as a
@@ -39,9 +39,9 @@ func Command(args []string) (string, int) {
 	if line != "" {
 		return line + "\n", code
 	}
-	harness := harnessClaude
+	harness := status.HarnessClaude
 	if value, present := parsed.Flags["--harness"]; present {
-		if _, known := harnessPrefix[value]; !known {
+		if !status.ValidHarness(value) {
 			return toon.Usage(grammar.Cmd, "--harness "+value) + "\n", 2
 		}
 		harness = value
@@ -61,8 +61,7 @@ func Command(args []string) (string, int) {
 	if override, present := parsed.Flags["--next"]; present {
 		f.Action = override
 	} else {
-		action, signal, noneInvocable := nextAction(root)
-		f.Action, f.Signal, f.NoInvocable = translate(action, harness), signal, noneInvocable
+		applyRoute(&f, status.Route(status.SignalsWith(root, status.Query{ExcludeDirtyPaths: []string{status.HandoffFile}}), harness))
 	}
 	if err := validate(f); err != nil {
 		return err.Error() + "\n", 1

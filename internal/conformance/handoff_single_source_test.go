@@ -137,18 +137,19 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	}
 }
 
-// handoffPkgDir holds the render path, prefixTableFile the file owning the harness table, and
-// prefixTableVar its name — the one place either phase-invocation form may be written.
+// handoffPkgDir holds the consumer package, prefixTablePkgDir/File hold the route owner's
+// harness table, and prefixTableVar is its name.
 const (
-	handoffPkgDir   = "internal/handoff"
-	prefixTableFile = "render.go"
-	prefixTableVar  = "harnessPrefix"
+	handoffPkgDir     = "internal/handoff"
+	prefixTablePkgDir = "internal/status"
+	prefixTableFile   = "route.go"
+	prefixTableVar    = "harnessPrefix"
 )
 
 // checkHarnessPrefix reports any string literal in the handoff package that writes a phase
-// invocation form the harness table already owns — a trailing replacement with a hardcoded
-// target, an inline conditional, a second table. Each is a producer the table cannot see, so
-// a harness added as a row would leave it behind.
+// invocation form the status route owner already owns — a trailing replacement with a
+// hardcoded target, an inline conditional, a second table. Each is a producer the table
+// cannot see, so a harness added as a row would leave it behind.
 //
 // The literals are read through the AST for the reason packageReachesGrammar states: the
 // package's doc comments legitimately discuss these forms in prose, and a substring scan
@@ -156,13 +157,31 @@ const (
 // table's own values, so a new row is covered the moment it lands and this check restates
 // nothing the table already says.
 func checkHarnessPrefix(root string) []string {
+	fset := token.NewFileSet()
+	tableDir := filepath.Join(root, filepath.FromSlash(prefixTablePkgDir))
+	if !exists(tableDir) {
+		return nil
+	}
+	tablePath := filepath.Join(tableDir, prefixTableFile)
+	tableSource := readIfExists(tablePath)
+	if tableSource == "" {
+		return []string{fmt.Sprintf("%s/%s declares no %s table, so no single owner of the phase-invocation forms remains", prefixTablePkgDir, prefixTableFile, prefixTableVar)}
+	}
+	tableFile, err := parser.ParseFile(fset, tablePath, tableSource, 0)
+	if err != nil {
+		return []string{fmt.Sprintf("%s/%s cannot be parsed for harness prefix literals: %v", prefixTablePkgDir, prefixTableFile, err)}
+	}
+	forms, _ := prefixTable(tableFile)
+	if len(forms) == 0 {
+		return []string{fmt.Sprintf("%s/%s declares no %s table, so no single owner of the phase-invocation forms remains", prefixTablePkgDir, prefixTableFile, prefixTableVar)}
+	}
+
 	dir := filepath.Join(root, filepath.FromSlash(handoffPkgDir))
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil
 	}
 
-	fset := token.NewFileSet()
 	parsed := map[string]*ast.File{}
 	var names []string
 	for _, entry := range entries {
@@ -179,16 +198,11 @@ func checkHarnessPrefix(root string) []string {
 		names = append(names, name)
 	}
 
-	forms, owned := prefixTable(parsed[prefixTableFile])
-	if len(forms) == 0 {
-		return []string{fmt.Sprintf("%s/%s declares no %s table, so no single owner of the phase-invocation forms remains", handoffPkgDir, prefixTableFile, prefixTableVar)}
-	}
-
 	var diags []string
 	for _, name := range names {
 		ast.Inspect(parsed[name], func(node ast.Node) bool {
 			literal, ok := node.(*ast.BasicLit)
-			if !ok || owned[literal.Pos()] {
+			if !ok {
 				return true
 			}
 			value, ok := stringLiteral(literal)
@@ -197,7 +211,7 @@ func checkHarnessPrefix(root string) []string {
 			}
 			for _, form := range forms {
 				if strings.Contains(value, form) {
-					diags = append(diags, fmt.Sprintf("%s/%s writes the phase-invocation form %q in the literal %q; only the %s table in %s may produce it", handoffPkgDir, name, form, value, prefixTableVar, prefixTableFile))
+					diags = append(diags, fmt.Sprintf("%s/%s writes the phase-invocation form %q in the literal %q; only the %s table in %s/%s may produce it", handoffPkgDir, name, form, value, prefixTableVar, prefixTablePkgDir, prefixTableFile))
 				}
 			}
 			return true
@@ -256,37 +270,43 @@ func prefixTable(file *ast.File) ([]string, map[token.Pos]bool) {
 // a second table-shaped literal in another file.
 func TestHarnessPrefixSingleSourcedBites(t *testing.T) {
 	root := t.TempDir()
-	dir := filepath.Join(root, filepath.FromSlash(handoffPkgDir))
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
+	handoffDir := filepath.Join(root, filepath.FromSlash(handoffPkgDir))
+	tableDir := filepath.Join(root, filepath.FromSlash(prefixTablePkgDir))
+	for _, dir := range []string{handoffDir, tableDir} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
 	}
-	write := func(name, body string) {
+	write := func(dir, name, body string) {
 		t.Helper()
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
-	table := "package handoff\n\nvar " + prefixTableVar + " = map[string]string{\n\t\"claude\": \"/synth-\",\n\t\"codex\":  \"$synth-\",\n}\n"
+	table := "package status\n\nvar " + prefixTableVar + " = map[string]string{\n\t\"claude\": \"/synth-\",\n\t\"codex\":  \"$synth-\",\n}\n"
 
-	write(prefixTableFile, table)
+	if !containsDiagnostic(checkHarnessPrefix(root), prefixTablePkgDir+"/"+prefixTableFile+" declares no "+prefixTableVar+" table") {
+		t.Fatalf("missing route owner: want a diagnostic, got %v", checkHarnessPrefix(root))
+	}
+
+	write(tableDir, prefixTableFile, table)
 	if diags := checkHarnessPrefix(root); len(diags) != 0 {
 		t.Fatalf("table alone: want no diagnostics, got %v", diags)
 	}
 
 	// The state a substring scan cannot tell from a violation: the forms discussed in a doc
 	// comment, which every file in this package legitimately does.
-	write("sections.go", "package handoff\n\n// Phase invocations render as /synth- or $synth- depending on the harness.\nfunc split() {}\n")
+	write(handoffDir, "sections.go", "package handoff\n\n// Phase invocations render as /synth- or $synth- depending on the harness.\nfunc split() {}\n")
 	if diags := checkHarnessPrefix(root); len(diags) != 0 {
 		t.Fatalf("forms named only in prose: want no diagnostics, got %v", diags)
 	}
 
-	write(prefixTableFile, table+"\nfunc translate(name string) string { return \"$synth-\" + name }\n")
+	write(handoffDir, "sections.go", "package handoff\n\nfunc translate(name string) string { return \"$synth-\" + name }\n")
 	if !containsDiagnostic(checkHarnessPrefix(root), `writes the phase-invocation form "$synth-"`) {
 		t.Fatalf("inline literal beside the table: want a diagnostic, got %v", checkHarnessPrefix(root))
 	}
 
-	write(prefixTableFile, table)
-	write("sections.go", "package handoff\n\nvar legacyPrefix = map[string]string{\n\t\"claude\": \"/synth-\",\n}\n")
+	write(handoffDir, "sections.go", "package handoff\n\nvar legacyPrefix = map[string]string{\n\t\"claude\": \"/synth-\",\n}\n")
 	if !containsDiagnostic(checkHarnessPrefix(root), "sections.go writes the phase-invocation form") {
 		t.Fatalf("second table-shaped literal: want a diagnostic naming the file, got %v", checkHarnessPrefix(root))
 	}
