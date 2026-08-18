@@ -62,14 +62,101 @@ type row struct {
 	action         string
 }
 
+type actionKind uint8
+
+// StepSeparator joins the steps of a board action that names a sequence rather than one
+// command. The action grammar rejects it, so sequences never become invocable routes.
+const StepSeparator = " / "
+
+const (
+	actionNone actionKind = iota
+	actionPhase
+	actionBench
+	actionGit
+)
+
+type statusAction struct {
+	text string
+	kind actionKind
+}
+
+func parseAction(text string) statusAction {
+	a := statusAction{text: text}
+	if strings.Contains(text, StepSeparator) {
+		return a
+	}
+	if strings.HasPrefix(text, harnessPrefix[HarnessClaude]) {
+		command, argument, hasArgument := strings.Cut(text, " ")
+		if command == harnessPrefix[HarnessClaude] || strings.Contains(strings.TrimPrefix(command, harnessPrefix[HarnessClaude]), "/") {
+			return a
+		}
+		if hasArgument && !((strings.HasPrefix(argument, "specs/") && strings.HasSuffix(argument, "/spec.md")) ||
+			(strings.HasPrefix(argument, "decisions/") && strings.HasSuffix(argument, ".md"))) {
+			return a
+		}
+		a.kind = actionPhase
+		return a
+	}
+	if strings.HasPrefix(text, "git ") && isGitAction(strings.Fields(strings.TrimPrefix(text, "git "))) {
+		a.kind = actionGit
+		return a
+	}
+	if strings.HasPrefix(text, "bench ") && isBenchAction(strings.Fields(strings.TrimPrefix(text, "bench "))) {
+		a.kind = actionBench
+	}
+	return a
+}
+
+func isGitAction(parts []string) bool {
+	if len(parts) == 1 {
+		return parts[0] == "push" || parts[0] == "status"
+	}
+	return len(parts) == 2 && parts[0] == "worktree" && parts[1] == "list"
+}
+
+func isBenchAction(parts []string) bool {
+	if len(parts) == 1 {
+		switch parts[0] {
+		case "gate", "handoff", "link", "maps", "roadmap", "setup", "structure":
+			return true
+		}
+		return false
+	}
+	if len(parts) == 2 {
+		return (parts[0] == "gate" && parts[1] == "--fresh") ||
+			(parts[0] == "status" && parts[1] == "--all") ||
+			(parts[0] == "worktree" && parts[1] == "list")
+	}
+	return len(parts) == 3 &&
+		((parts[0] == "spec" && parts[1] == "retire") ||
+			(parts[0] == "worktree" && parts[1] == "clean"))
+}
+
+// IsInvocable reports whether action is one command accepted by the status action grammar.
+func IsInvocable(text string) bool {
+	return parseAction(text).kind != actionNone
+}
+
 // Signal is one ambient-board row exposed as structured data — the severity sort key
-// plus the signal/detail/action triple. It is the shared accessor the text board and the
-// human dashboard both consume, so the two views cannot rank or drop signals differently.
+// plus the signal/detail/action triple. Action remains the rendered string contract while
+// actionKind carries the producer grammar's typed validity into routing. It is the shared
+// accessor the text board and the human dashboard both consume, so the two views cannot
+// rank or drop signals differently.
 type Signal struct {
-	Severity int
-	Name     string
-	Detail   string
-	Action   string
+	Severity   int
+	Name       string
+	Detail     string
+	Action     string
+	actionKind actionKind
+}
+
+func newSignal(severity int, name, detail, text string) Signal {
+	a := parseAction(text)
+	return Signal{Severity: severity, Name: name, Detail: detail, Action: a.text, actionKind: a.kind}
+}
+
+func (s Signal) invocable() bool {
+	return s.actionKind != actionNone
 }
 
 // GateInfo is the structured gate-verdict cache read, shared by the status board and the
@@ -134,7 +221,7 @@ func SignalsWith(root string, query Query) []Signal {
 
 	out := make([]Signal, len(rows))
 	for i, r := range rows {
-		out[i] = Signal{Severity: r.sev, Name: r.signal, Detail: r.detail, Action: r.action}
+		out[i] = newSignal(r.sev, r.signal, r.detail, r.action)
 	}
 	return out
 }
@@ -158,11 +245,11 @@ func appendStagedSpecs(rows []row, root string) []row {
 	if n == 0 {
 		return rows
 	}
-	action := "/bench-implement-spec"
+	command := "/bench-implement-spec"
 	if n == 1 {
-		action += " specs/" + slug + "/spec.md"
+		command += " specs/" + slug + "/spec.md"
 	}
-	return append(rows, row{4, "specs", fmt.Sprintf("%d staged spec(s)", n), action})
+	return append(rows, row{4, "specs", fmt.Sprintf("%d staged spec(s)", n), command})
 }
 
 func stagedSpecCount(root string) (int, string) {
@@ -294,8 +381,8 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 			detail := partialGreenDetail(gv.Partition, gv.CheckPartition)
 			return append(rows, row{7, "gate", detail, "bench gate --fresh"})
 		}
-		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
-		return append(rows, row{7, "gate", detail, action})
+		detail, command := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
+		return append(rows, row{7, "gate", detail, command})
 	}
 	if gv.Status == "timeout" {
 		return append(rows, row{0, "gate", "timeout", "bench gate --fresh"})
@@ -358,12 +445,6 @@ func componentNames(components []gate.ComponentSkip) []string {
 	return names
 }
 
-// StepSeparator joins the steps of a board action that names a sequence rather than one
-// command. It is exported as the one source of that join: a reader deciding whether an
-// action is a single invocation recognizes the separator instead of restating it, so the
-// producer and the recognizer cannot drift apart.
-const StepSeparator = " / "
-
 // appendGit adds the uncommitted/unpushed signal (sev 1). dirty is the porcelain status;
 // ahead is the upstream-relative commit list, read only when an upstream is configured.
 func appendGit(rows []row, root string, query Query) []row {
@@ -384,11 +465,11 @@ func appendGit(rows []row, root string, query Query) []row {
 	if len(details) == 0 {
 		return rows
 	}
-	action := "git push"
+	command := "git push"
 	if fact.DirtyPaths > 0 {
-		action = "/bench-final-check"
+		command = "/bench-final-check"
 	}
-	return append(rows, row{1, "git", strings.Join(details, ", "), action})
+	return append(rows, row{1, "git", strings.Join(details, ", "), command})
 }
 
 // objectiveDisplay resolves the human-facing objective text for an intent entry. The
@@ -455,7 +536,7 @@ func expandIntentSignals(root string, signals []Signal) []Signal {
 			parts = append(parts, "recovery="+sanitize.Preview(entry.Recovery))
 		}
 		parts = append(parts, "objective="+objectiveDisplay(entry))
-		out = append(out, Signal{Severity: 2, Name: "intent", Detail: strings.Join(parts, " "), Action: "bench status --all"})
+		out = append(out, newSignal(2, "intent", strings.Join(parts, " "), "bench status --all"))
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Severity < out[j].Severity })
 	return out
@@ -620,7 +701,7 @@ func appendMaps(rows []row, root string) []row {
 		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "/bench-shape-idea"})
 	}
 	if ready > 0 {
-		action := "/bench-write-spec"
+		command := "/bench-write-spec"
 		if ready == 1 {
 			candidates, err := maps.DiscoverDecisionMapCandidates(root)
 			if err != nil {
@@ -628,12 +709,12 @@ func appendMaps(rows []row, root string) []row {
 			}
 			for _, candidate := range candidates {
 				if !candidate.Compiled {
-					action += " " + candidate.Path
+					command += " " + candidate.Path
 					break
 				}
 			}
 		}
-		return append(rows, row{6, "decisions", fmt.Sprintf("%d ready map(s)", ready), action})
+		return append(rows, row{6, "decisions", fmt.Sprintf("%d ready map(s)", ready), command})
 	}
 	return rows
 }

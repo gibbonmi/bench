@@ -197,7 +197,7 @@ func TestRenderSetupLeadsAnUnadoptedRepository(t *testing.T) {
 	if got := render(root, false); got != wantBoard {
 		t.Fatalf("unadopted board = %q, want %q", got, wantBoard)
 	}
-	wantRoute := RouteResult{Lead: Signal{Severity: 0, Name: "setup", Detail: "no .bench/", Action: "bench setup"}}
+	wantRoute := RouteResult{Lead: newSignal(0, "setup", "no .bench/", "bench setup")}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, wantRoute) {
 		t.Fatalf("unadopted route = %#v, want %#v", got, wantRoute)
 	}
@@ -254,7 +254,7 @@ func TestRenderedBoardAndRouteForStagedSpecWithReviewPickup(t *testing.T) {
 	if got := render(root, false); got != wantBoard {
 		t.Fatalf("paired-review staged-spec board = %q, want %q", got, wantBoard)
 	}
-	wantRoute := RouteResult{Lead: Signal{Severity: 4, Name: "specs", Detail: "1 staged spec(s)", Action: "/bench-implement-spec specs/staged/spec.md"}}
+	wantRoute := RouteResult{Lead: newSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/staged/spec.md")}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, wantRoute) {
 		t.Fatalf("paired-review staged-spec route = %#v, want %#v", got, wantRoute)
 	}
@@ -273,7 +273,7 @@ func TestSignalsRenderDirtyAndUnpushedTogether(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := []Signal{{Severity: 1, Name: "git", Detail: "1 dirty path, 1 unpushed commit", Action: "/bench-final-check"}}
+	want := []Signal{newSignal(1, "git", "1 dirty path, 1 unpushed commit", "/bench-final-check")}
 	if got := Signals(root); !reflect.DeepEqual(got, want) {
 		t.Fatalf("Signals = %#v, want %#v", got, want)
 	}
@@ -297,9 +297,9 @@ func TestRouteForInvokesStagedSpecWhosePathContainsSpacesAheadOfDrain(t *testing
 	gitRun(t, root, "commit", "-m", "base")
 
 	want := RouteResult{
-		Lead: Signal{Severity: 4, Name: "specs", Detail: "1 staged spec(s)", Action: "/bench-implement-spec specs/my spec/spec.md"},
+		Lead: newSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/my spec/spec.md"),
 		RunnersUp: []Signal{
-			{Severity: 4, Name: "drain", Detail: "1 idea(s), 0 open learning(s), 0 pending retro(s)", Action: "/bench-drain"},
+			newSignal(4, "drain", "1 idea(s), 0 open learning(s), 0 pending retro(s)", "/bench-drain"),
 		},
 	}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
@@ -321,7 +321,7 @@ func TestRouteForInvokesReadyMapWhosePathContainsSpaces(t *testing.T) {
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 
-	want := RouteResult{Lead: Signal{Severity: 6, Name: "decisions", Detail: "1 ready map(s)", Action: "/bench-write-spec decisions/my map.md"}}
+	want := RouteResult{Lead: newSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
 		t.Fatalf("spaced ready-map route = %#v, want %#v", got, want)
 	}
@@ -504,7 +504,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		}},
 		{name: "git unavailable", signal: "git", detail: "git state unavailable", setup: func(t *testing.T) (string, Query) {
 			return t.TempDir(), Query{}
-		}, exact: []Signal{{Severity: 1, Name: "git", Detail: "git state unavailable", Action: "git status"}}},
+		}, exact: []Signal{newSignal(1, "git", "git state unavailable", "git status")}},
 		{name: "git dirty", signal: "git", detail: "dirty path", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "tracked.txt", "dirty\n", 0o644)
@@ -520,14 +520,14 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			write(t, root, "ahead.txt", "ahead\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{{Severity: 1, Name: "git", Detail: "1 unpushed commit", Action: "git push"}}},
+		}, exact: []Signal{newSignal(1, "git", "1 unpushed commit", "git push")}},
 		{name: "git unique branch", signal: "git", detail: "unique branch", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			gitRun(t, root, "checkout", "-b", "feature")
 			write(t, root, "feature.txt", "feature\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{{Severity: 1, Name: "git", Detail: "1 unique branch", Action: "git push"}}},
+		}, exact: []Signal{newSignal(1, "git", "1 unique branch", "git push")}},
 		{name: "worktree leased and out of pool", signal: "worktree", count: 2, setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			t.Setenv("BENCH_HOME", t.TempDir())
@@ -547,8 +547,8 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			gitRun(t, root, "worktree", "add", "-q", "--detach", outside, "HEAD")
 			return root, Query{}
 		}, exact: []Signal{
-			{Severity: 2, Name: "worktree", Detail: "1 out-of-pool worktree", Action: "bench worktree clean <path>"},
-			{Severity: 2, Name: "worktree", Detail: "1 leased pool worktree", Action: "bench worktree list"},
+			newSignal(2, "worktree", "1 out-of-pool worktree", "bench worktree clean <path>"),
+			newSignal(2, "worktree", "1 leased pool worktree", "bench worktree list"),
 		}},
 		{name: "worktree typed failure", signal: "worktree", detail: "rev-parse", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
@@ -566,7 +566,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				t.Fatal(err)
 			}
 			return root, Query{}
-		}, exact: []Signal{{Severity: 2, Name: "intent", Detail: "1 correlated, 0 uncorrelated; oldest: live", Action: "bench status --all"}}},
+		}, exact: []Signal{newSignal(2, "intent", "1 correlated, 0 uncorrelated; oldest: live", "bench status --all")}},
 		{name: "intent unavailable", signal: "intent", detail: "intent ledger unavailable", setup: func(t *testing.T) (string, Query) {
 			return t.TempDir(), Query{}
 		}},
@@ -600,23 +600,23 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			write(t, root, "long.go", strings.Repeat("x\n", 401), 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{{Severity: 5, Name: "structure", Detail: "1 issue(s)", Action: "bench structure"}}},
+		}, exact: []Signal{newSignal(5, "structure", "1 issue(s)", "bench structure")}},
 		{name: "unresolved map", signal: "decisions", detail: "unresolved map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "decisions/shaping.md", maps.DecisionMapTemplate(), 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{{Severity: 6, Name: "decisions", Detail: "1 unresolved map(s)", Action: "/bench-shape-idea"}},
+		}, exact: []Signal{newSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")},
 			board: "▶ /bench-shape-idea  (decisions)\n  decisions  1 unresolved map(s)            → /bench-shape-idea\n",
-			route: &RouteResult{Lead: Signal{Severity: 6, Name: "decisions", Detail: "1 unresolved map(s)", Action: "/bench-shape-idea"}}},
+			route: &RouteResult{Lead: newSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")}},
 		{name: "one ready map", signal: "decisions", detail: "1 ready map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "decisions/my map.md", readyMap(), 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{{Severity: 6, Name: "decisions", Detail: "1 ready map(s)", Action: "/bench-write-spec decisions/my map.md"}},
+		}, exact: []Signal{newSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")},
 			board: "▶ /bench-write-spec decisions/my map.md  (decisions)\n  decisions  1 ready map(s)                 → /bench-write-spec decisions/my map.md\n",
-			route: &RouteResult{Lead: Signal{Severity: 6, Name: "decisions", Detail: "1 ready map(s)", Action: "/bench-write-spec decisions/my map.md"}}},
+			route: &RouteResult{Lead: newSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}},
 		{name: "multiple ready maps", signal: "decisions", detail: "2 ready map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "decisions/one.md", readyMap(), 0o644)
@@ -630,7 +630,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
 			}
 			return root, Query{}
-		}, exact: []Signal{{Severity: 6, Name: "decisions", Detail: "unknown (decisions is wrong-type)", Action: "bench maps"}}},
+		}, exact: []Signal{newSignal(6, "decisions", "unknown (decisions is wrong-type)", "bench maps")}},
 		{name: "implemented spec", signal: "specs", detail: "awaiting retirement", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "specs/implemented/spec.md", "Status: implemented\n", 0o644)
