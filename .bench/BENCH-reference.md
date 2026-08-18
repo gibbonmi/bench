@@ -69,8 +69,10 @@ not the list:
 The canonical phase bodies live in `.agents/commands/`. Harnesses may expose those
 phases differently:
 
-- **Claude Code:** invoke the phase directly as a slash command, e.g. `/bench-write-spec`.
-- **Codex:** invoke the matching explicit skill, e.g. `$bench-write-spec`; each `$bench-*`
+- **Claude Code:** invoke `/bench` to route from observed state, or invoke a phase
+  directly as a slash command, e.g. `/bench-write-spec`.
+- **Codex:** invoke `$bench` to route from observed state, or invoke the matching
+  explicit skill, e.g. `$bench-write-spec`; each `$bench-*`
   adapter reads the canonical command file and follows it. These adapters are
   explicit-only (`allow_implicit_invocation: false`) because workflow phases are
   reviewer-chosen entry points, not background generation guidance.
@@ -84,6 +86,7 @@ form lives with the communication rules in `.bench/BENCH.md`.
 
 Codex phase adapters installed by Bench:
 
+- `$bench` → `.agents/commands/bench.md` (front door; routes with `--harness codex`)
 - `$bench-setup-repo` → `.agents/commands/bench-setup-repo.md`
 - `$bench-shape-idea` → `.agents/commands/bench-shape-idea.md`
 - `$bench-write-spec` → `.agents/commands/bench-write-spec.md`

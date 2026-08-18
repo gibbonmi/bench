@@ -13,11 +13,11 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 - **Skills** shape *how* you generate — guidance, not rules — in
   `.agents/skills/` (and `.claude/skills/` for Claude Code);
   `.bench/BENCH-reference.md` indexes them.
-- **Commands** are the workflow phases below: `/bench-setup-repo` on adoption,
-  `/bench-drain` when a drain is pending. `/bench-update-kit`,
-  `/bench-assess`, and `craft-synthesis` ship only in the Bench kit repository;
-  a linked repo upgrades with `bench upgrade` instead, and the skills index
-  marks the rows it does not receive.
+- **Commands:** `/bench` (Claude Code) and `$bench` (Codex) route observed state;
+  `/bench-setup-repo` handles adoption and `/bench-drain` pending capture.
+  `/bench-update-kit`, `/bench-assess`, and `craft-synthesis`
+  ship only in the Bench kit repository; a linked repo upgrades with `bench upgrade`.
+  The skills index marks omitted rows.
 - **The gate and the hooks** enforce, with authority you do not have:
   `bench shift` gates every iteration and commits only on green; a `pre-push`
   hook protects the default branch.
@@ -124,12 +124,12 @@ convergence, a call `craft-line` owns.
 
 ## Workflow
 
+0. `/bench` in Claude Code or `$bench` in Codex to route from observed state.
 1. `/bench-shape-idea` for a multi-session unresolved decision tree.
 2. `/bench-write-spec` to lock stories, seams, and gate expectations, and slice the tickets.
 3. `/bench-implement-spec` to implement at the chosen seams.
 4. `/bench-review-implementation` for semantic review before the final landing.
-5. `/bench-final-check` to gate, commit on green, and report the landing
-   evidence.
+5. `/bench-final-check` to gate, commit on green, and report the landing evidence.
 
 **Right-size the process; ask before deviating.** A few-line change doesn't need
 the full pipeline, and you may propose a lighter path — but skipping a canonical
