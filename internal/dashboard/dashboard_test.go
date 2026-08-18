@@ -98,6 +98,14 @@ func TestRenderSignalsOrderedMembership(t *testing.T) {
 	}
 }
 
+func TestRenderSignalWithEmptyActionKeepsEmptyCell(t *testing.T) {
+	s := baseSnapshot()
+	s.Signals = []status.Signal{{Name: "reviews", Detail: "1 orphaned review pickup", Action: ""}}
+	if out := Render(s); !strings.Contains(out, "<td></td></tr>") {
+		t.Fatalf("empty action cell was not rendered:\n%s", section(out, "Signals"))
+	}
+}
+
 // Row 5: the roadmap section renders the ROADMAP.md rows and the recommended sequence.
 func TestRenderRoadmapRowsAndSequence(t *testing.T) {
 	s := baseSnapshot()

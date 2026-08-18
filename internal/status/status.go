@@ -193,15 +193,15 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 	}
 	if gv.State == string(gate.Pending) {
 		if gv.PendingStatus == "locked-pending" {
-			return append(rows, row{1, "gate", "locked-pending", "wait for live gate owner"})
+			return append(rows, row{1, "gate", "locked-pending", ""})
 		}
-		return append(rows, row{2, "gate", "interrupted-pending", "re-run the gate"})
+		return append(rows, row{2, "gate", "interrupted-pending", "bench gate"})
 	}
 	if gv.State == string(gate.Invalid) {
-		return append(rows, row{3, "gate", "invalid verdict", "re-run the gate"})
+		return append(rows, row{3, "gate", "invalid verdict", "bench gate"})
 	}
 	if gv.State == string(gate.Unavailable) {
-		return append(rows, row{3, "gate", "verdict unavailable", "inspect gate state"})
+		return append(rows, row{3, "gate", "verdict unavailable", "bench gate --fresh"})
 	}
 	// Staleness outranks the verdict the record carries: a red the gate has retired names a
 	// tree the reader has left, and "fix before commit" would send them after work that is
@@ -211,16 +211,16 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 		// longer composes it as a whole-tree green. A moved tree is drift instead.
 		if gv.CachedTree == gv.WorkTree && (gv.Partition != nil || gv.CheckPartition != nil) {
 			detail := partialGreenDetail(gv.Partition, gv.CheckPartition)
-			return append(rows, row{7, "gate", detail, "bench gate --fresh for a whole-tree verdict"})
+			return append(rows, row{7, "gate", detail, "bench gate --fresh"})
 		}
 		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
 		return append(rows, row{7, "gate", detail, action})
 	}
 	if gv.Status == "timeout" {
-		return append(rows, row{0, "gate", "timeout", "inspect the hang and re-run the gate"})
+		return append(rows, row{0, "gate", "timeout", "bench gate --fresh"})
 	}
 	if gv.Status == "red" {
-		return append(rows, row{0, "gate", "red", "fix before commit"})
+		return append(rows, row{0, "gate", "red", "/bench-debug"})
 	}
 	return rows
 }
@@ -251,7 +251,7 @@ func GateVerdict(root string) GateInfo {
 }
 
 func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action string) {
-	return fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree)), "re-run the gate"
+	return fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree)), "bench gate"
 }
 
 func skippedComponentNames(p *gate.Partition) []string {
@@ -288,25 +288,26 @@ const StepSeparator = " / "
 func appendGit(rows []row, root string, query Query) []row {
 	fact, err := git.LandedState(root, query.ExcludeDirtyPaths...)
 	if err != nil {
-		return append(rows, row{1, "git", "git state unavailable", "investigate local git state"})
+		return append(rows, row{1, "git", "git state unavailable", "git status"})
 	}
-	var details, actions []string
+	var details []string
 	if fact.DirtyPaths > 0 {
 		details = append(details, Plural(fact.DirtyPaths, "dirty path", "dirty paths"))
-		actions = append(actions, "commit on green")
 	}
 	if fact.UnpushedCommits > 0 {
 		details = append(details, Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits"))
-		actions = append(actions, "/bench-final-check")
 	}
 	if fact.UniqueBranches > 0 {
 		details = append(details, Plural(fact.UniqueBranches, "unique branch", "unique branches"))
-		actions = append(actions, "push")
 	}
 	if len(details) == 0 {
 		return rows
 	}
-	return append(rows, row{1, "git", strings.Join(details, ", "), strings.Join(actions, StepSeparator)})
+	action := "git push"
+	if fact.DirtyPaths > 0 {
+		action = "/bench-final-check"
+	}
+	return append(rows, row{1, "git", strings.Join(details, ", "), action})
 }
 
 // objectiveDisplay resolves the human-facing objective text for an intent entry. The
@@ -330,7 +331,7 @@ func objectiveDisplay(entry intent.Entry) string {
 func appendIntent(rows []row, root string) []row {
 	live, err := intent.Snapshot(root)
 	if err != nil {
-		return append(rows, row{2, "intent", "intent ledger unavailable", "inspect shared git intent ledger"})
+		return append(rows, row{2, "intent", "intent ledger unavailable", "bench status --all"})
 	}
 	if len(live) == 0 {
 		return rows
@@ -347,7 +348,7 @@ func appendIntent(rows []row, root string) []row {
 	if r := live[0].Recovery; r != "" && r != shift.RecoveryNone {
 		detail += "; recovery: " + sanitize.Preview(r)
 	}
-	return append(rows, row{2, "intent", detail, "resume interrupted work"})
+	return append(rows, row{2, "intent", detail, "bench status --all"})
 }
 
 func expandIntentSignals(root string, signals []Signal) []Signal {
@@ -373,7 +374,7 @@ func expandIntentSignals(root string, signals []Signal) []Signal {
 			parts = append(parts, "recovery="+sanitize.Preview(entry.Recovery))
 		}
 		parts = append(parts, "objective="+objectiveDisplay(entry))
-		out = append(out, Signal{Severity: 2, Name: "intent", Detail: strings.Join(parts, " "), Action: "resume interrupted work"})
+		out = append(out, Signal{Severity: 2, Name: "intent", Detail: strings.Join(parts, " "), Action: "bench status --all"})
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Severity < out[j].Severity })
 	return out
@@ -390,9 +391,9 @@ func appendWorktree(rows []row, root string) []row {
 		// falling through to an empty-looking board (the false-empty class FT29 swept).
 		var typed git.WorktreeFailure
 		if errors.As(err, &typed) {
-			return append(rows, row{2, "worktree", typed.Error(), typed.WorktreeAction()})
+			return append(rows, row{2, "worktree", typed.Error(), "bench worktree list"})
 		}
-		return append(rows, row{2, "worktree", fmt.Sprintf("git worktree list failed: %v", err), "run git worktree list and retry"})
+		return append(rows, row{2, "worktree", fmt.Sprintf("git worktree list failed: %v", err), "git worktree list"})
 	}
 	outOfPool, leased := 0, 0
 	for _, wt := range registered {
@@ -404,10 +405,10 @@ func appendWorktree(rows []row, root string) []row {
 		}
 	}
 	if outOfPool > 0 {
-		rows = append(rows, row{2, "worktree", Plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), "inspect exact worktree (bench worktree clean <path>)"})
+		rows = append(rows, row{2, "worktree", Plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), "bench worktree clean <path>"})
 	}
 	if leased > 0 {
-		rows = append(rows, row{2, "worktree", Plural(leased, "leased pool worktree", "leased pool worktrees"), "resume leased worktree"})
+		rows = append(rows, row{2, "worktree", Plural(leased, "leased pool worktree", "leased pool worktrees"), "bench worktree list"})
 	}
 	return rows
 }
@@ -521,7 +522,7 @@ func appendDrain(rows []row, root string) []row {
 // appendStructure adds the structural-debt signal (sev 5) when the violation count is positive.
 func appendStructure(rows []row, root string) []row {
 	if n := structure.ViolationCount(root); n > 0 {
-		return append(rows, row{5, "structure", fmt.Sprintf("%d issue(s)", n), "split (craft-seams)"})
+		return append(rows, row{5, "structure", fmt.Sprintf("%d issue(s)", n), "bench structure"})
 	}
 	return rows
 }
@@ -532,7 +533,7 @@ func appendStructure(rows []row, root string) []row {
 func appendMaps(rows []row, root string) []row {
 	n, state := maps.UnresolvedCount(root)
 	if state.Failed() {
-		return append(rows, row{6, "decisions", toon.UnknownCell(maps.DecisionsDir, state), "investigate decisions/ (bench maps)"})
+		return append(rows, row{6, "decisions", toon.UnknownCell(maps.DecisionsDir, state), "bench maps"})
 	}
 	if n > 0 {
 		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "/bench-shape-idea"})
@@ -563,7 +564,7 @@ func appendRetirement(rows []row, root string) []row {
 // gate/git rows in the budget. A paired pickup (its spec still present) is expected state.
 func appendOrphanedPickup(rows []row, root string) []row {
 	if n := orphanedPickupCount(root); n > 0 {
-		return append(rows, row{9, "reviews", Plural(n, "orphaned review pickup", "orphaned review pickups"), "promote or delete by hand"})
+		return append(rows, row{9, "reviews", Plural(n, "orphaned review pickup", "orphaned review pickups"), ""})
 	}
 	return rows
 }

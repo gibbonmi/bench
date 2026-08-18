@@ -10,16 +10,99 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
 func TestTimeoutGateIsDistinctHighestSeveritySignal(t *testing.T) {
 	rows := appendGateInfo(nil, GateInfo{Present: true, State: "ready", Status: "timeout"}, t.TempDir())
-	if len(rows) != 1 || rows[0].detail != "timeout" || rows[0].sev != 0 || !strings.Contains(rows[0].action, "hang") {
+	if len(rows) != 1 || rows[0].detail != "timeout" || rows[0].sev != 0 || rows[0].action != "bench gate --fresh" {
 		t.Fatalf("timeout rows = %#v", rows)
+	}
+}
+
+func TestGateActionNormalization(t *testing.T) {
+	partial := &gate.Partition{}
+	for _, tc := range []struct {
+		name string
+		gate GateInfo
+		want string
+	}{
+		{"red", GateInfo{Present: true, State: string(gate.Ready), Status: "red"}, "/bench-debug"},
+		{"timeout", GateInfo{Present: true, State: string(gate.Ready), Status: "timeout"}, "bench gate --fresh"},
+		{"invalid", GateInfo{Present: true, State: string(gate.Invalid)}, "bench gate"},
+		{"unavailable", GateInfo{Present: true, State: string(gate.Unavailable)}, "bench gate --fresh"},
+		{"drifted", GateInfo{Present: true, State: string(gate.Ready), Stale: true, CachedTree: "old", WorkTree: "new"}, "bench gate"},
+		{"exact-tip partial", GateInfo{Present: true, State: string(gate.Ready), Stale: true, CachedTree: "tree", WorkTree: "tree", Partition: partial}, "bench gate --fresh"},
+		{"locked-pending", GateInfo{Present: true, State: string(gate.Pending), PendingStatus: "locked-pending"}, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rows := appendGateInfo(nil, tc.gate, t.TempDir())
+			if len(rows) != 1 || rows[0].action != tc.want {
+				t.Fatalf("action = %#v, want %q", rows, tc.want)
+			}
+		})
+	}
+}
+
+func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
+	cases := []struct {
+		name string
+		rows func(*testing.T) []row
+	}{
+		{"gate locked", func(t *testing.T) []row {
+			return appendGateInfo(nil, GateInfo{Present: true, State: string(gate.Pending), PendingStatus: "locked-pending"}, t.TempDir())
+		}},
+		{"gate interrupted", func(t *testing.T) []row {
+			return appendGateInfo(nil, GateInfo{Present: true, State: string(gate.Pending)}, t.TempDir())
+		}},
+		{"gate invalid", func(t *testing.T) []row {
+			return appendGateInfo(nil, GateInfo{Present: true, State: string(gate.Invalid)}, t.TempDir())
+		}},
+		{"gate unavailable", func(t *testing.T) []row {
+			return appendGateInfo(nil, GateInfo{Present: true, State: string(gate.Unavailable)}, t.TempDir())
+		}},
+		{"gate drifted", func(t *testing.T) []row {
+			return appendGateInfo(nil, GateInfo{Present: true, State: string(gate.Ready), Stale: true, CachedTree: "old", WorkTree: "new"}, t.TempDir())
+		}},
+		{"gate timeout", func(t *testing.T) []row {
+			return appendGateInfo(nil, GateInfo{Present: true, State: string(gate.Ready), Status: "timeout"}, t.TempDir())
+		}},
+		{"gate red", func(t *testing.T) []row {
+			return appendGateInfo(nil, GateInfo{Present: true, State: string(gate.Ready), Status: "red"}, t.TempDir())
+		}},
+		{"git unavailable", func(t *testing.T) []row { return appendGit(nil, t.TempDir(), Query{}) }},
+		{"intent unavailable", func(t *testing.T) []row { return appendIntent(nil, t.TempDir()) }},
+		{"intent live", func(t *testing.T) []row {
+			root := initRepo(t)
+			if err := intent.Upsert(root, intent.Entry{Key: "live", Kind: intent.KindWorktree, CreatedAt: time.Unix(1, 0), Worktree: root}); err != nil {
+				t.Fatal(err)
+			}
+			return appendIntent(nil, root)
+		}},
+		{"worktree typed", func(t *testing.T) []row {
+			root := initRepo(t)
+			gittest.StubGit(t, root, "fail-rev-parse", filepath.Join(t.TempDir(), "argv"))
+			return appendWorktree(nil, root)
+		}},
+		{"worktree porcelain", func(t *testing.T) []row {
+			root := initRepo(t)
+			gittest.StubGit(t, root, "fail-worktree", filepath.Join(t.TempDir(), "argv"))
+			return appendWorktree(nil, root)
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, produced := range tc.rows(t) {
+				if produced.action != "" && !IsInvocable(produced.action) {
+					t.Errorf("board action %q is not invocable", produced.action)
+				}
+			}
+		})
 	}
 }
 
@@ -181,8 +264,8 @@ func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
 	if detail != "stale (gated tree 0123456, work tree none)" {
 		t.Fatalf("detail = %q, want strong stale detail", detail)
 	}
-	if action != "re-run the gate" {
-		t.Fatalf("action = %q, want re-run the gate", action)
+	if action != "bench gate" {
+		t.Fatalf("action = %q, want bench gate", action)
 	}
 }
 
@@ -310,7 +393,7 @@ func TestDriftedRedVerdictRendersAsStaleRatherThanRed(t *testing.T) {
 	if len(rows) != 1 {
 		t.Fatalf("rows = %#v, want one gate row", rows)
 	}
-	if !strings.HasPrefix(rows[0].detail, "stale (gated tree") || rows[0].action != "re-run the gate" {
+	if !strings.HasPrefix(rows[0].detail, "stale (gated tree") || rows[0].action != "bench gate" {
 		t.Fatalf("rows = %#v, want the drift row rather than a red one", rows)
 	}
 }
@@ -505,7 +588,7 @@ func TestRenderDirtyLeadsGitOverDrainRow(t *testing.T) {
 
 	out := render(root, false)
 	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
-	if !strings.HasPrefix(lines[0], "▶ commit on green  (git)") {
+	if !strings.HasPrefix(lines[0], "▶ /bench-final-check  (git)") {
 		t.Errorf("lead line = %q, want git action lead", lines[0])
 	}
 	if !strings.Contains(out, "1 idea(s), 0 open learning(s)") || !strings.Contains(out, "/bench-what-next") {
@@ -563,7 +646,7 @@ func TestAppendWorktreeSurfacesClassifyFailure(t *testing.T) {
 	if len(rows) == 0 {
 		t.Fatal("appendWorktree dropped the classify failure instead of surfacing a row")
 	}
-	if !strings.Contains(rows[0].detail, "git common directory") || rows[0].action != "investigate the git failure" {
+	if !strings.Contains(rows[0].detail, "git common directory") || rows[0].action != "bench worktree list" {
 		t.Errorf("row = %#v, want typed resolution refusal", rows[0])
 	}
 }
@@ -572,8 +655,8 @@ func TestAppendWorktreeKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T
 	for _, tc := range []struct {
 		mode, detail, action string
 	}{
-		{"fail-rev-parse", "rev-parse", "investigate the git failure"},
-		{"fail-worktree", "git worktree list failed", "run git worktree list and retry"},
+		{"fail-rev-parse", "rev-parse", "bench worktree list"},
+		{"fail-worktree", "git worktree list failed", "git worktree list"},
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
 			root := initRepo(t)
@@ -592,7 +675,7 @@ func TestAppendWorktreeRendersBoundExpiryAsTypedFailure(t *testing.T) {
 	root := initRepo(t)
 	gittest.StubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
 	rows := appendWorktree(nil, root)
-	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktree list") || rows[0].action != "investigate the git failure" || strings.Contains(rows[0].action, "retry") {
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktree list") || rows[0].action != "bench worktree list" {
 		t.Fatalf("bound row = %#v", rows)
 	}
 }
@@ -601,7 +684,7 @@ func TestAppendWorktreeRendersTypedAdminRefusal(t *testing.T) {
 	root := initRepo(t)
 	gittest.FIFOWorktreeAdmin(t, root, "typed")
 	rows := appendWorktree(nil, root)
-	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action != "inspect and remove it" {
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action != "bench worktree list" {
 		t.Fatalf("typed row = %#v", rows)
 	}
 }
