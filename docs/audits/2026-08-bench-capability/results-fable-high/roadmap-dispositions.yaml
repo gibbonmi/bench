@@ -1,0 +1,284 @@
+# Roadmap dispositions — every row on ROADMAP.md at 58d966e2, plus the audit findings
+# that have no row. Vocabulary: KEEP | REWRITE | MERGE | SPLIT | FIX-NOW |
+# FIX-BEFORE-MIGRATION | FIX-WHEN-TOUCHED | EXPERIMENT | DEFER | DONE/ARCHIVE |
+# SUPERSEDED | DELETE | UNCONFIRMED | WONT-FIX.
+# "target" names the action item in action-items.yaml the row folds into, when any.
+# Nothing here modifies the live roadmap; this is the proposed disposition for the
+# reviewer's next /bench-what-next.
+
+rows:
+  # ---- rows that fold into the twelve-item portfolio -----------------------------
+  - id: FT133
+    disposition: SPLIT
+    target: A1 (conformance graded in the dev gate) + DEFER remainder
+    reason: The row's premise (a `red signal` column to resolve) is stale — the column is retired from the coverage schema; 2 of its 8 occurrences are the `TestRootConformance` skip, which A1 closes. Citation-resolution proper is a later, smaller row.
+  - id: FT120
+    disposition: SPLIT
+    target: A1 (the 2026-08-14 skip occurrence) + DEFER the harness-defect residue
+    reason: Nine unrelated harness fixes; only the conformance-skip one has evidence of consequence today.
+  - id: FT213
+    disposition: SPLIT
+    target: A1 (its 2026-08-16 occurrence is a conformance-skip reading) + DEFER the craft-delegate visit (with FT205, FT221)
+    reason: Rank 3 on the board; the skill edit is cheap but unmeasured, so it batches with the other craft-delegate rows once the delegate file is next touched.
+  - id: FT100
+    disposition: KEEP
+    target: after A11 (measurement) — not rank 1
+    reason: Reproduced volume (27,758 words; 3.6× upstream per feature) but zero A/B evidence; the row's own text and both audits say anchor consolidation and a benchmark route (FT170) come first. Editorial cuts without measurement are coin flips.
+  - id: FT170
+    disposition: MERGE
+    target: A11 (measurement harness)
+    reason: FT170 *is* the benchmark-route decision A11 executes; it is parked yet gates FT100.
+  - id: FT138
+    disposition: MERGE
+    target: A11 (instrumentation half)
+    reason: Per-phase `ElapsedMS` already lands in `.logs/gate-*.jsonl`; token/tool-call/turn counting is the missing instrumentation A11 needs.
+  - id: FT89
+    disposition: SPLIT
+    target: A1 (doc-currency items become gate-red once conformance runs) + A3 (generate root help/inventory from `commandRegistry` folds into the router root) + DEFER the rest
+    reason: Correctness sweep gets a mechanical owner instead of a prose pass; the registry-generation build is the same seam the router changes.
+  - id: FT112
+    disposition: MERGE
+    target: A5 (`/bench-debug` restoration)
+    reason: One-clause `/bench-debug` rule; land in the same visit that restores the upstream constraints.
+  - id: FT180
+    disposition: MERGE
+    target: A9 (light-path close step: ticket consumed on landing; `specs: N tickets-only` signal)
+    reason: The 34 tickets-only folders are this route's missing close step; deciding the ticket-only route decides the residue rule.
+  - id: FT162
+    disposition: REWRITE
+    target: A8 (handoff minimal extension) takes the handoff-state half; DEFER the full-run subject half
+    reason: 11 occurrences accreted; the part with fresh evidence (stale `## State`, phantom red in the pin block) is small and lands with L-02/L-04.
+  - id: FT177
+    disposition: SPLIT
+    target: A9 (SessionStart/`bench doctor` build hint on 127; landing guard warns before removing `dist/bench`) + DEFER the mod-time freshness refusal
+    reason: The cold-start half was observed in this run and in both audits; the test-fidelity half has no fresh occurrence.
+  - id: FT24
+    disposition: KEEP
+    target: parked; A5 records the reviewer decision on Codex `$bench-debug` invocation
+    reason: Codex still exposes no deny-capable spawn hook; the re-check trigger is written down.
+
+  # ---- rows already satisfied by the tree --------------------------------------
+  - id: FT212
+    disposition: DONE/ARCHIVE
+    reason: `bench worktree clean --landed` returns a valid plan (rc 0) and the usage string lists `(<path> | --landed)`; closed by FT216 (7d799ecc). Verified by running it.
+  - id: FT190
+    disposition: DONE/ARCHIVE
+    reason: `internal/conformance/injected_ports_test.go` enforces real-producer-or-written-exemption (empty exemption is red).
+  - id: FT165
+    disposition: DONE/ARCHIVE
+    reason: `bench-craft-domain` exists and `bench-shape-idea.md:14` charges it on entry.
+
+  # ---- small, evidence-backed fixes not worth a spec ----------------------------
+  - id: FT182
+    disposition: FIX-WHEN-TOUCHED
+    reason: One file, one error, one branch (`resume.go`); no fresh occurrence beyond the one recorded.
+  - id: FT201
+    disposition: FIX-WHEN-TOUCHED
+    reason: The one live drift (`skillsindex/command.go:52` uses `os.Interrupt` not `subprocess.CancelSignals`) is a two-line fix; the conformance rule can ride A1's suite.
+  - id: FT103
+    disposition: FIX-WHEN-TOUCHED
+    reason: Stat each allowlist `Source` path; narrow, mechanical.
+  - id: FT173
+    disposition: FIX-WHEN-TOUCHED
+    reason: Light-path change once the reviewer names the disclosure class; smallest well-defined worktree item.
+  - id: FT117
+    disposition: FIX-WHEN-TOUCHED
+    reason: Body is stale in at least one leaf (worktree list already routed); remaining leaves fix when their files are next opened.
+  - id: FT94
+    disposition: FIX-WHEN-TOUCHED
+    reason: Golden literal duplication; standards-debt batch.
+
+  # ---- decisions the reviewer can take cheaply, then park or build ---------------
+  - id: FT207
+    disposition: DEFER
+    reason: Rank 2 on the board but one occurrence; a hang-class decision worth taking when the worktree package is next opened. Not in the twelve because no fresh occurrence and no user-facing surface changes.
+  - id: FT200
+    disposition: DEFER
+    reason: "Preflight at the landing chokepoint" is the one Sol ask that has a shipped command behind it; decide after A1/A3 land so the chokepoint is the router's landing route, not a new one.
+  - id: FT222
+    disposition: DEFER
+    reason: One profile-table row; take at the next `projects/benchkit.md` edit.
+  - id: FT38
+    disposition: DEFER
+    reason: Taste decision on a view-only surface.
+  - id: FT202
+    disposition: DEFER
+    reason: Fence/census decision; no fresh occurrence.
+  - id: FT204
+    disposition: DEFER
+    reason: New surface with no evidence of repeated demand beyond one session.
+  - id: FT208
+    disposition: DEFER
+    reason: Three independent hostile-input residual decisions; none observed to bite in this run.
+  - id: FT140
+    disposition: DEFER
+    reason: Five unrelated verdicts; drain them as verdicts at the next what-next, not as a build.
+  - id: FT142
+    disposition: DEFER
+    reason: Release-track residuals; deployment is NO-GO and the citations live in spec history.
+  - id: FT141
+    disposition: REWRITE
+    reason: Name collision — `bench gate pin` already exists as the pre-push pin porcelain; the row must rename or extend before it can be built. Deferred until then.
+
+  # ---- accreted rows to prune before they are next worked -----------------------
+  - id: FT98
+    disposition: REWRITE
+    reason: Three shipped commits and a duplicated occurrence sit inside it; rewrite to the 3–4 open sub-items (`--fingerprint-only`, stale-fingerprint retire coverage, orphan-deletion CAS, fingerprint field consistency).
+  - id: FT169
+    disposition: REWRITE
+    reason: The command shipped; keep only the residual refusal-message defects (last three occurrences) and the undecided authority questions.
+  - id: FT164
+    disposition: REWRITE
+    reason: Core shipped 2026-08-03; 16 occurrences restate a few rules — prune to the open ones (repair charge shape; done-claim resolves owners).
+  - id: FT158
+    disposition: REWRITE
+    reason: Absorbed six later disciplines; keep the standing-falsification requirement, move the rest to the skills they belong to.
+  - id: FT144
+    disposition: REWRITE
+    reason: Three unrelated asks (audience partition; post-approval-edit ruling — already a decision file; verification-failure classification).
+  - id: FT199
+    disposition: SPLIT
+    reason: The `bench branches retire` coordinator is one feature; the six landing/refusal diagnostics are FIX-WHEN-TOUCHED items in `internal/landing`, and its staged-spec-bytes occurrence duplicates FT206.
+  - id: FT206
+    disposition: MERGE
+    target: FT199's landing-refusal half
+    reason: Same `landing.go:385` refusal without remedy.
+  - id: FT197
+    disposition: REWRITE
+    reason: Process-group ownership and signal propagation already exist in `internal/gate/runner.go`; only the shell hop remains and it is not causing observed harm.
+  - id: FT174
+    disposition: REWRITE
+    reason: Two tickets-only folders already carve pieces off it and the `ParseTicket` symbol it leans on exists only in those unlanded tickets; rewrite to what remains after A9 settles the light-path close step.
+  - id: FT130
+    disposition: REWRITE
+    reason: Detection shipped (gate-run-transaction); rewrite to the queue-vs-refuse policy choice only.
+  - id: FT172
+    disposition: REWRITE
+    reason: Snapshot largely shipped; keep the row-grammar contract and `roadmap_id` sourcing decision.
+
+  # ---- keep as backlog, outside the twelve --------------------------------------
+  - id: FT71
+    disposition: DEFER
+    reason: HIGH on the bank track, but the bank/release track is NO-GO and the row is sequenced after FT169; no active dependency.
+  - id: FT106
+    disposition: DEFER
+    reason: Doc-claim probe is worthwhile after A1 makes the mechanical doc contracts run again.
+  - id: FT99
+    disposition: DEFER
+    reason: Prose batch item.
+  - id: FT101
+    disposition: DEFER
+    reason: No monorepo adopter yet; contains a contested gate-scoping sub-decision.
+  - id: FT102
+    disposition: DEFER
+    reason: Six-line synthesis clause; batch with the next craft-skill visit.
+  - id: FT104
+    disposition: DEFER
+  - id: FT108
+    disposition: DEFER
+    reason: The lighter-path table already carries most of the refactor lane; build when a refactor actually needs it.
+  - id: FT111
+    disposition: DEFER
+    reason: Land with FT179 as one comments visit.
+  - id: FT113
+    disposition: DEFER
+    reason: `--spec` misuse guard is small; take with the next `internal/commit` change.
+  - id: FT115
+    disposition: DEFER
+  - id: FT125
+    disposition: DEFER
+    reason: Carries its own validation obligation (measure narrowed reads) — belongs after A11's instrumentation.
+  - id: FT166
+    disposition: DEFER
+  - id: FT168
+    disposition: DEFER
+  - id: FT178
+    disposition: DEFER
+    reason: Real automation trap; low frequency; do not probe by running.
+  - id: FT179
+    disposition: DEFER
+  - id: FT185
+    disposition: DEFER
+    reason: Gate output as TOON is a good CLI change; A1's named-skip disclosure is the urgent slice of it.
+  - id: FT191
+    disposition: DEFER
+  - id: FT192
+    disposition: DEFER
+    reason: Craft-spec visit with FT209/FT214.
+  - id: FT209
+    disposition: DEFER
+  - id: FT214
+    disposition: DEFER
+  - id: FT215
+    disposition: DEFER
+    reason: Gate cost is real (65 s) but the fixed floor is not the bottleneck any reproduced defect points at.
+  - id: FT217
+    disposition: DEFER
+  - id: FT218
+    disposition: DEFER
+  - id: FT219
+    disposition: DEFER
+  - id: FT220
+    disposition: DEFER
+  - id: FT221
+    disposition: DEFER
+    reason: With FT205/FT213 as one craft-delegate visit.
+  - id: FT205
+    disposition: DEFER
+  - id: FT58
+    disposition: DEFER
+  - id: FT92
+    disposition: DEFER
+  - id: FT6
+    disposition: KEEP
+    reason: Parked bundle with per-item triggers; leave parked.
+  - id: FT8
+    disposition: KEEP
+    reason: Scheduled; time box not reached.
+
+# ---- audit findings with no row today (proposed new rows; see action-items.yaml) ----
+new_rows:
+  - id: NEW-A1
+    disposition: FIX-NOW
+    title: live-root conformance graded in the dev gate; environment skip inside the oracle is red; skips named
+    evidence: ledger L-01, L-21
+  - id: NEW-A2
+    disposition: FIX-NOW
+    title: red verdicts drift-checked; status/handoff agree with gate
+    evidence: ledger L-02
+  - id: NEW-A3
+    disposition: KEEP
+    title: /bench router over `bench status --route`; staged-spec + setup signals; invocable action column; rename what-next → drain
+    evidence: ledger L-03, L-15, L-16
+  - id: NEW-A4
+    disposition: FIX-NOW
+    title: adoption smoke — scaffolded gate can go green
+    evidence: ledger L-14
+  - id: NEW-A5
+    disposition: KEEP
+    title: restore `/bench-debug` upstream constraints; Codex trigger decision; Claude parity check
+    evidence: ledger L-10, L-11, L-30
+  - id: NEW-A6
+    disposition: FIX-NOW
+    title: worktree tests isolate BENCH_HOME; no ambient pool writes
+    evidence: ledger L-06
+  - id: NEW-A7
+    disposition: FIX-BEFORE-MIGRATION
+    title: release workflow publishes only through `bench release submit/promote`
+    evidence: ledger L-13 (before the next release; deployment is NO-GO today)
+  - id: NEW-A9
+    disposition: FIX-WHEN-TOUCHED
+    title: hygiene batch (orphan tickets + light-path close step, inert Codex key, stale structure-accept rows, BENCH-reference stale phase prose, outline bare form, guard rim/gaps, session-start hint, log pruning)
+    evidence: ledger L-17, L-18, L-19, L-20, L-29, L-30
+  - id: NEW-A10
+    disposition: EXPERIMENT
+    title: repair-loop tripwire (advisory row from gate records)
+    evidence: ledger L-22
+  - id: NEW-A11
+    disposition: EXPERIMENT
+    title: measurement harness (arms A/B/C, D/E/F, G) + instrumentation; blocks FT100
+    evidence: ledger L-05, L-11, L-23, L-25
+  - id: NEW-A12
+    disposition: WONT-FIX
+    title: canonical work-state store, context compiler, typed claim graph, executable review runner (Sol T.1–T.3)
+    evidence: ledger L-04, L-05, L-23, L-24, L-26 — not supported by an observed failure; revisit only if A11 shows one

@@ -1,0 +1,261 @@
+# Final action portfolio — twelve items, ranked. This is the same portfolio as
+# proposed-roadmap.md. Every item answers "how will we know this improved Bench?" in
+# `validation`. Ledger ids refer to reconciliation-ledger.md; FT ids to the live board.
+
+- id: A1
+  priority: P0
+  title: The dev gate grades the kit's own contracts — live-root conformance runs, an environment skip inside the oracle is red, and every skip is named
+  problem: 29 registered conformance checks (docs, adapters, coverage-map validity, decision-map integrity, prose budgets, AXI registry) reach the live tree only through TestRootConformance, which skips without BENCH_CONFORMANCE_ROOT; only bench prep-release sets it. bench gate is green at HEAD while 10 diagnostics are red, and the footer hides the loss as "environment=1".
+  evidence: L-01, L-21 (REPRODUCED — 3.2 s command; gate footer; phase table read); history — moved into a Go phase 2026-07-05 (72c037a1), removed 2026-08-09 (3701c4a0) with the profile stating the separate driver was retired but still claiming the gate enforces the contracts; FT120/FT213 occurrences show the skip being misread afterwards.
+  proposed_change: >
+    Carry BENCH_CONFORMANCE_ROOT=<graded root> and BENCH_CONFORMANCE_TIER=dev into the
+    ordinary `go test -count=1 ./...` phase environment (or default the root when the
+    graded root is the kit itself) — consistent with the profile's "one ordinary test
+    driver" decision, no resurrected separate phase. In internal/gate/capability_skips.go,
+    print each environment skip's test name and reason (the tally already keeps
+    environmentReasons) and treat an environment-class skip inside the oracle as red.
+    Then disposition the 10 diagnostics (fix the tree or, with reviewer approval, the
+    contract) so HEAD is green again.
+  non_goals: no new phase; no change to prep-release's ship tier; no prose rewrites beyond the 10 diagnostics; capability-class skips (fifo/privilege) stay footnotes.
+  owner_layer: gate (Bench core) + conformance registry
+  dependencies: none
+  acceptance_criteria:
+    - bench gate at 58d966e2 exits non-zero naming the 10 current diagnostics with their existing messages
+    - after the fixes, bench gate is green and the test phase output shows TestRootConformance ran (not skipped)
+    - deleting `## Entry orientation` from any .agents/commands/*.md reds the gate with docs-currency-workflow's own message; restoring greens it
+    - removing the env assignment reds the gate with an "environment skip inside the oracle" message, not a footer count
+    - skip line reads `class=environment: N (TestName: reason)` for every environment skip
+    - added wall-clock reported in landing evidence (Opus measured +3.2 s on 64 s)
+    - bench maps rc 0 (decision-map-integrity fixed by the same clean-up); FT133/FT120/FT213 skip occurrences closed or annotated
+  validation: the red-first run at HEAD; two mutation probes of different kind and site (env removal; heading deletion); prep-release ship-tier conformance still green and not double-run; days-between-violation-and-detection metric drops from ≥6 to 0
+  expected_benefit: six advisory surfaces become control at once; the kit's largest package starts paying rent; every later prose/router change is graded by the contracts it must keep
+  complexity: low (env plumbing + skip rendering + 10 small fixes)
+  risk: low; a contract that is genuinely stale surfaces immediately and is a reviewer decision, not a silent pass
+  migration: none
+
+- id: A2
+  priority: P0
+  title: One staleness rule for gate verdicts — reds are drift-checked, and status/handoff agree with bench gate
+  problem: inspectSubjectAt returns on any non-green record before comparing trees, and status.GateVerdict defines Stale only for greens; after a red then a revert to a green-cached tree, bench gate reuses green while bench status headlines "gate red → fix before commit" and bench handoff would pin that red.
+  evidence: L-02 (REPRODUCED in this run — three-command sequence)
+  proposed_change: evaluate tree/oracle drift before the status branch in internal/gate/verdict.go inspectSubjectAt; define Stale on the record (any status) in internal/status/status.go; add the regression test asserting gate/status/handoff agreement across (green@T0 → red@T1 → revert→T0).
+  non_goals: no second verdict store; no change to the evidence key or reuse semantics.
+  owner_layer: gate + status (Bench core)
+  dependencies: none
+  acceptance_criteria:
+    - the reproduction sequence yields status "gate green (reused)" or "stale — re-run" but never "red" for a tree with green evidence
+    - handoff pin block never writes a red for a tree the evidence store holds green
+    - regression test lands in internal/gate or internal/status and bites when either line is reverted
+  validation: the regression test; a manual re-run of the sequence
+  expected_benefit: the ambient dashboard and resume artifact stop contradicting the oracle; no phantom 65 s gate runs or phantom debugging sessions
+  complexity: low (~20 lines + test)
+  risk: none material
+  migration: none
+
+- id: A3
+  priority: P1
+  title: /bench front door — `bench status --route` emits one next[1]{state,why,command} row; staged-spec and un-adopted signals; invocable action column; rename what-next → drain
+  problem: no surface routes from observed state; wrapper prints a 44-line inventory; binary says "no subcommand"; status prints "clean" in an un-adopted repo; a valid staged spec produces no row; six of eleven actions are prose; /bench-what-next is named like a router and is maintenance; ask-matt was never ported.
+  evidence: L-03, L-08, L-15, L-16, L-31 (REPRODUCED)
+  proposed_change: >
+    Add `specs: staged` (from the spec Status reader) and `setup` (no .bench/) signals;
+    normalize every status action to an invocable command or empty; add `--route`
+    that ranks by the existing severity ordinals and emits exactly one row plus
+    runners-up in one line; ship a thin model-invocable .agents/commands/bench.md
+    (Claude) and $bench (Codex, allow_implicit_invocation false per policy) that
+    invoke `bench status --route` and load only the recommended phase; make the
+    wrapper's bare root print the route (inventory on `bench help`), and align the
+    binary's no-arg/help with it; rename /bench-what-next → /bench-drain (adapters,
+    anchors, README).
+  non_goals: no new work-state file; no context compiler; no re-derivation of signals; no change to expert phases' behavior.
+  owner_layer: CLI (status) + harness adapters
+  dependencies: A1 (the docs/adapter contracts that grade the new phase file and rename); A2 (a router must not read a phantom red)
+  acceptance_criteria:
+    - fixture per scenario (un-adopted; clean+roadmap; unshaped idea; shaped map ready; staged spec; interrupted intent; gate red; dirty tree; staged+reviewed awaiting land) — each yields exactly one expected command
+    - `bench status --route` in this repo at HEAD emits one row
+    - Claude and Codex adapters render the same route with harness-native prefixes (existing handoff prefix test extended)
+    - the wrapper's bare invocation and the binary's agree
+    - conformance (A1) green after the rename
+  validation: the scenario fixtures; A11 entry-point measures (steps to correct workflow, unnecessary questions, incorrect routing) before/after
+  expected_benefit: user clarity; consistent entry across harnesses; the workflow middle becomes visible; Next has one owner
+  complexity: medium (one flag, two signals, action normalization, two thin adapters, one rename)
+  risk: medium — the rename touches anchors/tests; mitigated by A1 grading them
+  migration: what-next → drain alias for one release; handoff `## Next command` keeps working unchanged
+
+- id: A4
+  priority: P1
+  title: Adoption smoke — a newly adopted repo's scaffolded gate can go green
+  problem: bench setup scaffolds no .bench/gate-inputs.json (gate env is PATH only → `HOME: unbound variable` in the wrapper under set -u), and the scaffolded gate.sh hard-fails on `bench canary` which exits 1 on the empty inventory every new repo has.
+  evidence: L-14 (REPRODUCED end to end in a throwaway repo)
+  proposed_change: setup scaffolds gate-inputs.json declaring HOME/BENCH_HOME; bin/bench.sh:14 names its own failure (`${BENCH_HOME:-${HOME:?…}}`); scaffolded canary line emitted commented with a TODO; a system-test fixture drives temp repo → setup → trivial real check → gate green.
+  non_goals: no change to setup's plan-first UX (it is the best surface in the repo); no init/setup merge.
+  owner_layer: adopt (Bench core) + wrapper
+  dependencies: none
+  acceptance_criteria:
+    - the fixture passes; removing any of the three changes reds it with the named cause
+    - `env -u HOME bash .bench/bin/bench.sh version` prints a self-naming error
+  validation: the fixture; time-to-first-green for a new adopter (README clean-room step)
+  expected_benefit: onboarding works; invariant 1 holds for adopters, not just the kit
+  complexity: low
+  risk: low
+  migration: existing adopters unaffected (their gate-inputs.json/gate.sh are hand-configured)
+
+- id: A5
+  priority: P1
+  title: Restore /bench-debug's upstream constraints and settle its trigger on both harnesses
+  problem: bench-debug preserves the four load-bearing constraints but dropped the loop-construction menu (10→5), the two hard stop-gates and checkbox completion form, and "tighten the loop"; the personal upstream skill is switched off in this repo, and $bench-debug cannot self-invoke on Codex; there is no Claude-side invocation-policy check.
+  evidence: L-10, L-11, L-30 (REPRODUCED textually against pinned upstream d574778f); PRACTITIONER EVIDENCE for the mechanism's value
+  proposed_change: >
+    Add references/loop-constructions.md behind a Phase 1 pointer (the ten
+    constructions + HITL); restore "No red-capable command, no Phase 2", "Do not
+    proceed until reproduced and minimised", and the `- [ ]` completion checklist;
+    restore "Tighten the loop" as a named step; move the Bench-mechanics tail behind a
+    pointer; fold FT112's approximation rule in. Reviewer decision recorded in the
+    same change: `$bench-debug` allow_implicit_invocation on Codex (yes/no) — if no,
+    A10's tripwire is the trigger. Add the Claude-side mirror of
+    checkCodexCommandAdapters and delete the inert disable-model-invocation key from
+    the 11 Codex SKILL.md files.
+  non_goals: no compression, no rewrite, no replacement; no benchmark-driven deletion before A11 arms D/E/F run.
+  owner_layer: skill (phase file + reference) + conformance (parity check) + adapters
+  dependencies: A1 (the phase file's structural contract is graded)
+  acceptance_criteria:
+    - side-by-side diff against upstream shows each restored constraint
+    - phase file stays within its prose budget (reference file carries the menu)
+    - parity check bites on a Claude phase whose policy disagrees with the Codex adapter
+  validation: A11 arms E/F (Bench-integrated vs upstream) — steps to first reproduction, root-cause-before-fix, first-fix success, original-signal rerun
+  expected_benefit: preserves the one behavior with repeated practitioner evidence and reaches it from both harnesses
+  complexity: low
+  risk: low
+  migration: none
+
+- id: A6
+  priority: P1
+  title: Kit tests stop writing into the operator's real BENCH_HOME
+  problem: internal/worktree reauthorize fixtures create pool worktrees under the ambient BENCH_HOME and never remove them — 759 orphaned `001-*` dirs (41 MB) in ~/.bench/worktrees, ~10 added per gate run; Sol's E006 subject pollution is the same leak under a subject-pointing BENCH_HOME.
+  evidence: L-06 (OBSERVED before/after two gate runs; owner located by rg)
+  proposed_change: isolate BENCH_HOME in the worktree package test helper (newWorktreeRepo/mustCreate) or TestMain; add an assertion that the ambient pool listing is unchanged by a package run; document a one-off operator prune (out of the ticket).
+  non_goals: no change to production pool resolution.
+  owner_layer: tests (worktree package)
+  dependencies: none
+  acceptance_criteria:
+    - `go test ./internal/worktree` leaves ~/.bench/worktrees byte-identical
+    - the assertion bites when the Setenv is removed
+  validation: the assertion; `ls ~/.bench/worktrees | wc -l` stable across gate runs
+  expected_benefit: hygiene; faster `bench worktree` scans on the operator's machine; removes a confusing artifact class from every future audit
+  complexity: trivial
+  risk: none
+  migration: operator prunes existing orphans once
+
+- id: A7
+  priority: P1
+  title: The release workflow publishes only through bench release submit/promote
+  problem: .github/workflows/release.yml publishes with raw `npm publish` in two steps, bypassing the resumable, digest-verified state machine the runbook requires; a partial publication cannot be resumed or rolled back through Bench.
+  evidence: L-13 (REPRODUCED statically; ASSESSMENT.md §6 already records it)
+  proposed_change: replace the two publish steps with `bench release submit`/`promote` (or gate raw publish behind a refusal); keep the preflight ordering; document in the runbook.
+  non_goals: no release performed as part of the fix; no change to artifact assembly.
+  owner_layer: release (workflow + Bench core release commands)
+  dependencies: none (must land before the next release; deployment is NO-GO today)
+  acceptance_criteria:
+    - workflow dry-run/fixture shows the raw path absent and submit/promote invoked with the release-index digest
+    - runbook and workflow agree
+  validation: a dry-run against a local registry (the release-preflight rehearsal path already exists)
+  expected_benefit: publication is resumable and evidence-bound; closes an ASSESSMENT.md finding that has sat since 2026-08-13
+  complexity: medium (CI + release commands, credentials scoping)
+  risk: medium — needs a live registry rehearsal before trusting it
+  migration: none
+
+- id: A8
+  priority: P2
+  title: Minimal work-state extension — constrain handoff `## State` and carry the repro / next discriminator
+  problem: the handoff pin block is regenerated but `## State` is free prose that was wrong on three facts at HEAD; a bug's repro command and the next discriminating action live nowhere durable, so a resuming session (or model) rebuilds them; three surfaces answer "Next" independently.
+  evidence: L-04, L-07 (REPRODUCED); Opus K; Sol K (the need for a *new* store is UNSUPPORTED)
+  proposed_change: handoff shape: `## State` limited to assertions the tree can contradict (branch, spec status, dirty count, gate verdict — mostly generated) plus at most a few lines; add an optional `Repro:` line (command + expected red) written by /bench-debug and by the blocked-delegate report; `## Next command` becomes the router's output (A3). Extend handoff-shape conformance accordingly.
+  non_goals: no Goal/Core/Verified/Open/Next file; no attempt ledger schema; no context compiler.
+  owner_layer: handoff (Bench core) + phase files
+  dependencies: A2 (no phantom red in the pin block), A3 (Next projection)
+  acceptance_criteria:
+    - handoff-shape check reds a State section exceeding the constraint
+    - /bench-debug's exit handoff writes `Repro:`; a fresh session can run it verbatim
+  validation: A11 recovery measures (checkpoint completeness, cross-model resume, repeated dead ends)
+  expected_benefit: resumability with less prose; the one missing field Bench actually lacks
+  complexity: low
+  risk: low
+  migration: existing handoff files re-rendered by `bench handoff`
+
+- id: A9
+  priority: P2
+  title: Hygiene batch — residue, stale prose, and small CLI sharp edges
+  problem: 34 tickets-only spec folders (light-path route has no close step); inert `disable-model-invocation` on Codex adapters; 4 stale structure-accept rows; BENCH-reference/review prose describing a conformance phase that no longer exists; `bench outline` bare 24.6 KB; degraded git-guard rim matches substring `git`; three guard gaps; SessionStart silent on a missing core; `.logs`/evidence never pruned; landing guard removes a load-bearing dist/bench without warning.
+  evidence: L-16, L-17, L-18, L-19, L-20, L-29, L-30; FT177/FT180
+  proposed_change: delete reviewed residue and make the light-path landing commit consume its ticket (+ `specs: N tickets-only` row); delete the inert key; fix stale accept rows; fix the two prose passages; outline bare form → meta + per-dir counts; tokenize the degraded rim and add stash drop/clear, filter-branch, rm -rf; on 127 the SessionStart/doctor path prints the build/repair command; prune logs by count; landing guard warns before removing dist/bench.
+  non_goals: no structure-policy decision (reviewer: gate at frozen budget or drop from status); no outline redesign.
+  owner_layer: CLI + hooks + docs
+  dependencies: A1 (prose fixes graded), A3 (status row)
+  acceptance_criteria: each sub-item has a one-line check (count of tickets-only dirs = 0 after landing a light-path ticket; guard corpus; outline bytes; stale-accept lines = 0; hook output contains hint)
+  validation: the per-item checks; A11 context measures for outline
+  expected_benefit: less noise on the ambient board; fewer cold-start turns lost
+  complexity: low, many small pieces (batch under one gate as the standards-debt section already proposes)
+  risk: low
+  migration: none
+
+- id: A10
+  priority: EXPERIMENT
+  title: Repair-loop tripwire — advisory `repair_loop` row from gate records
+  problem: nothing detects that an agent is patching in a loop; /bench-debug (the mechanism with practitioner evidence) is reviewer-invoked and explicit-only on Codex, so the trigger depends on a human noticing.
+  evidence: L-22 (data exists: `.logs/gate-*.jsonl` carries per-phase exit and elapsed per run; bench-last-gate carries status/tree/oracle/time); benefit is HYPOTHESIS
+  proposed_change: bench gate emits `repair_loop[1]{phase,attempts,action}` → `/bench-debug` on the second consecutive red with the same first-failing phase (check-level once A1's conformance diagnostics are structured); advisory only; measure against the retro repair-attribution tally already collected by /bench-final-check.
+  non_goals: no blocking behavior; no attempt-ledger schema.
+  owner_layer: gate output
+  dependencies: A1 (structured skip/diagnostic output), A5 (the trigger target exists on both harnesses)
+  acceptance_criteria:
+    - fixture with two identical-phase reds emits the row; a red with a different first-failing phase does not
+  validation: repair rounds per ticket (retro table) and blank-retry rate (A11) before/after; promote to control only if rounds fall
+  expected_benefit: the missing trigger for the strongest-evidence behavior
+  complexity: low
+  risk: false positives → keep advisory
+  migration: none
+
+- id: A11
+  priority: EXPERIMENT
+  title: Measurement harness — arms A/B/C, D/E/F, G with instrumentation; blocks FT100
+  problem: 28 prose artifacts and every delegation/line rule have zero controlled evidence; the only comparable study (SWE-Skills-Bench) found most skills neutral and some harmful; FT100 (rank 1) proposes editorial cuts with no measurement; Bench collects no token/tool-call/turn data.
+  evidence: L-05, L-11, L-23, L-25 (UNINVESTIGATED by all three audits — by construction)
+  proposed_change: >
+    Instrument (FT138): per-run tokens, tool calls, files read, duplicate reads,
+    gate runs, repair rounds (retro table already), wall time. Task corpus from
+    retired specs (`git log --diff-filter=D -- specs/`, parent-of-landing checkouts)
+    and FT `Occurrence:` bugs. Arms: A model+AGENTS.md only; B current Bench; C Bench
+    after A1–A9; D/E current Bench without/with /bench-debug on bug tasks; F upstream
+    diagnosing-bugs vs /bench-debug; G review with commit log withheld vs supplied.
+    ≥5 trials per arm per task, medians and spread, both harnesses where possible.
+    Pre-registered criteria: B beats A on requirement satisfaction and epistemic
+    quality at ≤3× tokens; E beats D on first-fix success and time-to-root-cause;
+    C beats B on tokens at equal outcome (the only honest justification for FT100);
+    G decides the commit-log question. Leave-one-out over the 16 craft skills.
+  non_goals: no prose cuts, no skill deletions, no delegation-rule changes before results.
+  owner_layer: benchmark suite (new, kit-only) + instrumentation in gate/final-check
+  dependencies: A1–A3 for arm C; none for A/B/D/E/F/G
+  acceptance_criteria:
+    - harness runs one task across arms unattended and emits the metric table
+    - pre-registration file committed before the first scored run
+  validation: the harness is its own validation; results feed FT100/FT170's decisions
+  expected_benefit: every future guidance change becomes a measured change
+  complexity: high (evaluation compute/time)
+  risk: results may show Bench's prose layer is neutral — that is a finding, not a failure
+  migration: none
+
+- id: A12
+  priority: DELETE
+  title: Do not build — canonical work-state store, context compiler, typed claim graph, executable review runner, or a strangler spine
+  problem: Sol's T.1–T.3 and R propose a new spine (router + work record + compiler + typed evidence) in front of existing modules; none rests on an observed failure that the incremental items above do not address, and each would create a second reader of facts Bench already single-sources.
+  evidence: L-04, L-05, L-23, L-24, L-26 — every reproduced defect is local; the deterministic core held under every probe
+  proposed_change: record the decision; revisit only if A11 produces an observed failure (context, resume, or review independence) that A3/A8 do not close.
+  non_goals: this is not a rejection of the *concerns* — they are carried by A3 (entry), A8 (state), A9/A11 (context), A10/A5 (empirical escape).
+  owner_layer: doctrine
+  dependencies: A11
+  acceptance_criteria: the decision is written in the roadmap's dependency/goal-track section
+  validation: A11 results
+  expected_benefit: avoids months of migration and duplicated truth
+  complexity: n/a
+  risk: if A11 shows resume/context failures, the answer is a bounded extension of A8, not a spine
+  migration: n/a
