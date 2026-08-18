@@ -266,7 +266,7 @@ conformance paths, canary fixtures, and docs, graded by A1's conformance and
 - `internal/axi/action.go`, `internal/axi/action_test.go`
 - `internal/dashboard/`
 - `internal/roadmap/roadmap.go`, `internal/roadmap/roadmap_test.go`
-- `internal/learnings/learnings.go`, `internal/learnings/learnings_test.go`
+- `internal/learnings/learnings.go`, `internal/learnings/learnings_test.go`, `internal/learnings/testdata/candidate-malformed.stdout`
 - `internal/adopt/init.go`
 - `internal/anchors/registry_data.go`
 - `internal/conformance/`
