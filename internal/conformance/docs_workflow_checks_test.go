@@ -144,6 +144,58 @@ func TestRemovedVerbSweepBites(t *testing.T) {
 	})
 }
 
+// TestIntroducedCommandsAllowanceIsNarrow pins every edge of the staged-spec
+// allowance: it admits only declared tokens, only inside the declaring spec's own
+// directory, only while the spec is staged. Each negative case is one way a broader
+// implementation would let a phantom phase into guidance.
+func TestIntroducedCommandsAllowanceIsNarrow(t *testing.T) {
+	write := func(t *testing.T, root, rel, content string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	declaring := "# door\n\nStatus: staged\n\nIntroduces commands: /bench-door, `$bench-door`\n\nRun /bench-door then $bench-door.\n"
+	tests := []struct {
+		name  string
+		files map[string]string
+		want  []string
+	}{
+		{"declared tokens pass in spec.md and its tickets", map[string]string{
+			"specs/door/spec.md":        declaring,
+			"specs/door/tickets/one.md": "ship /bench-door and $bench-door\n",
+		}, nil},
+		{"undeclared token in the declaring directory stays red", map[string]string{
+			"specs/door/spec.md":        declaring,
+			"specs/door/tickets/one.md": "then /bench-window\n",
+		}, []string{"stale command reference /bench-window in specs/door/tickets/one.md:1"}},
+		{"declared token outside the directory stays red", map[string]string{
+			"specs/door/spec.md":  declaring,
+			"README.md":           "start with /bench-door\n",
+			"specs/other/spec.md": "Status: staged\n\nsee /bench-door\n",
+		}, []string{"stale command reference /bench-door in README.md:1", "stale command reference /bench-door in specs/other/spec.md:3"}},
+		{"implemented spec grants nothing", map[string]string{
+			"specs/door/spec.md": strings.Replace(declaring, "Status: staged", "Status: implemented", 1),
+		}, []string{"stale command reference /bench-door in specs/door/spec.md:5", "stale Codex adapter reference $bench-door in specs/door/spec.md:5", "stale command reference /bench-door in specs/door/spec.md:7", "stale Codex adapter reference $bench-door in specs/door/spec.md:7"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := t.TempDir()
+			for rel, content := range tt.files {
+				write(t, root, rel, content)
+			}
+			got := checkStaleCommandReferences(root)
+			if strings.Join(got, "\n") != strings.Join(tt.want, "\n") {
+				t.Fatalf("diagnostics = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func checkPrePushREADMEClaim(root string) []string {
 	readme := strings.ReplaceAll(readIfExists(filepath.Join(root, "README.md")), "`", "")
 	var diags []string
@@ -310,6 +362,7 @@ func checkStaleCommandReferences(root string) []string {
 		files = append(files, walkConformanceDocs(filepath.Join(root, filepath.FromSlash(rel)))...)
 	}
 	files = uniqueSorted(files)
+	introduced := introducedCommands(root)
 
 	knownStale := map[string]bool{
 		"/resynthesize":   true,
@@ -346,22 +399,76 @@ func checkStaleCommandReferences(root string) []string {
 				text = text[:idx]
 			}
 		}
+		allowed := introduced[specSlugOf(rel)]
 		for i, line := range strings.Split(text, "\n") {
 			for _, match := range slashRef.FindAllStringSubmatch(line, -1) {
 				token := "/" + match[2]
-				if !validSlash[token] && (strings.HasPrefix(token, "/bench-") || knownStale[token]) {
+				if !validSlash[token] && !allowed[token] && (strings.HasPrefix(token, "/bench-") || knownStale[token]) {
 					diags = append(diags, fmt.Sprintf("stale command reference %s in %s:%d", token, rel, i+1))
 				}
 			}
 			for _, match := range codexRef.FindAllStringSubmatch(line, -1) {
 				token := "$" + match[2]
-				if strings.HasPrefix(token, "$bench-") && !validCodex[token] {
+				if strings.HasPrefix(token, "$bench-") && !validCodex[token] && !allowed[token] {
 					diags = append(diags, fmt.Sprintf("stale Codex adapter reference %s in %s:%d", token, rel, i+1))
 				}
 			}
 		}
 	}
 	return diags
+}
+
+// introducedCommandsRE is the one grammar for the header line a staged spec uses to
+// declare the phase commands it introduces: the sweep derives its valid tokens from
+// files present in .agents/commands/, so a spec whose deliverable is a new or renamed
+// phase would otherwise be red on every mention of its own deliverable.
+var introducedCommandsRE = regexp.MustCompile(`(?m)^Introduces commands:[ \t]*(.+)$`)
+
+// introducedCommands maps each staged spec slug to the command tokens its spec.md
+// declares. The allowance is deliberately narrow: only a spec.md whose Status is
+// staged grants it, only tokens spelled as `/bench-…` or `$bench-…` count, and the
+// caller applies it only to files inside that spec's own directory. An implemented
+// spec grants nothing — by then the phase files exist, or the promise was never kept
+// and the sweep should say so.
+func introducedCommands(root string) map[string]map[string]bool {
+	stagedRE := regexp.MustCompile(`(?m)^Status: staged$`)
+	out := map[string]map[string]bool{}
+	specFiles, _ := filepath.Glob(filepath.Join(root, "specs", "*", "spec.md"))
+	for _, specPath := range specFiles {
+		text := readIfExists(specPath)
+		if !stagedRE.MatchString(text) {
+			continue
+		}
+		m := introducedCommandsRE.FindStringSubmatch(text)
+		if m == nil {
+			continue
+		}
+		tokens := map[string]bool{}
+		for _, raw := range strings.Split(m[1], ",") {
+			token := strings.Trim(strings.TrimSpace(raw), "`")
+			if strings.HasPrefix(token, "/bench-") || strings.HasPrefix(token, "$bench-") {
+				tokens[token] = true
+			}
+		}
+		if len(tokens) > 0 {
+			out[filepath.Base(filepath.Dir(specPath))] = tokens
+		}
+	}
+	return out
+}
+
+// specSlugOf returns the spec slug a swept path belongs to (`specs/<slug>/…`), or ""
+// for every other path — the key introducedCommands' allowance is looked up by.
+func specSlugOf(rel string) string {
+	rest, ok := strings.CutPrefix(rel, "specs/")
+	if !ok {
+		return ""
+	}
+	slug, _, found := strings.Cut(rest, "/")
+	if !found {
+		return ""
+	}
+	return slug
 }
 
 func checkColdPickupCLILists(root string) []string {

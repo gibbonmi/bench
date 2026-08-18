@@ -39,6 +39,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"unindexed-skill":               conformanceFixture(".bench/gate.sh", ".bench/skills-index.sh"),
 
 	"stale-command-reference":          conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"introduces-undeclared-command":    conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"stale-codex-adapter-reference":    conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"retired-command-reference":        conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"stale-cli-doc-reference":          conformanceFixture(".bench/gate-docs-contracts.sh"),

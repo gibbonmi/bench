@@ -88,6 +88,8 @@ Status: staged
 
 Decision source: <one ready compiled map, reviewer-confirmed conversation with date, or named reviewed artifact>
 
+Introduces commands: <optional — the `/bench-…` and `$bench-…` phases this spec ships, valid in its own directory while staged>
+
 Verification log: <n> iteration(s) to accept — <note>
 
 ## Problem
