@@ -313,7 +313,7 @@ func renderRoute(route RouteResult) (string, int) {
 		if i > 0 {
 			b.WriteString("; ")
 		}
-		fmt.Fprintf(&b, "%s (%s) → %s", runnerUp.Name, runnerUp.Detail, runnerUp.Action)
+		fmt.Fprintf(&b, "%s (%s) → %s", sanitize.Controls(runnerUp.Name), sanitize.Controls(runnerUp.Detail), sanitize.Controls(runnerUp.Action))
 	}
 	b.WriteByte('\n')
 	return b.String(), 0

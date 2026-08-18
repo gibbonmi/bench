@@ -1369,3 +1369,44 @@ func TestCommandRoutePrintsLeadAndRunnersUp(t *testing.T) {
 		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
 	}
 }
+
+func TestCommandRouteEscapesControlBytesInProducerPaths(t *testing.T) {
+	root := initRepo(t)
+	writeFile := func(path, body string, mode os.FileMode) {
+		t.Helper()
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeFile(".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n", 0o644)
+	writeFile(".bench/gate.sh", "#!/bin/sh\nexit 7\n", 0o755)
+	writeFile("specs/my [draft]\x1b/spec.md", "Status: staged\n", 0o644)
+	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
+	writeFile("decisions/my * map\x07.md", ready, 0o644)
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 7 {
+		t.Fatalf("gate exit = %d, want red 7", result.ActionExit)
+	}
+
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+
+	want := "next[1]{state,why,command}:\n" +
+		"  gate,red,/bench-debug\n" +
+		"also: specs (1 staged spec(s)) → /bench-implement-spec specs/my [draft]\\u001b/spec.md; decisions (1 ready map(s)) → /bench-write-spec decisions/my * map\\u0007.md\n"
+	if got, code := Command([]string{"--route"}); code != 0 || got != want {
+		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
+	}
+}
