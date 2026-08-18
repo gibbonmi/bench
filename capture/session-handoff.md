@@ -2,10 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `a2914fd5`, working tree clean, 2 commits unpushed
-Spec: none staged; the light-path ticket at
-`specs/light-path-live-root-conformance/tickets/grade-the-live-root-inside-the-dev-gate.md`
-is implemented and landed
+Branch: `main` — HEAD `fb35cce`, clean tree, 3 unpushed commits
+Spec: none staged.
+Gate: green at `ad4832b` — current
 
 ## State
 
@@ -23,7 +22,11 @@ Audit decisions that stay closed: incremental strategy; no work-state store,
 compiler, or claim graph (A12); `/bench` is an adapter over
 `bench status --route`; FT100 waits for the measurement harness (A11).
 
-**Audit action A1 is landed** (`a2914fd5`). `bench gate`'s ordinary test phase
+**Audit action A1 is landed** (`a2914fd5`), from the light-path ticket at
+`specs/light-path-live-root-conformance/tickets/grade-the-live-root-inside-the-dev-gate.md`.
+Gate, commit, and capture are all done — the board still routes to
+`/bench-final-check` only because the commits are unpushed, and the push is the
+reviewer's. `bench gate`'s ordinary test phase
 now carries the graded root and the dev tier to `TestRootConformance`, so the
 conformance registry's 29 checks grade the live tree on every gate rather than
 only under `prep-release`. An environment-class skip observed by the oracle is
@@ -59,7 +62,7 @@ issues.
 
 ## Next command
 
-`/bench-review-implementation`
+`/bench-final-check` — the board's leading invocable signal (`git`).
 
 ## Shape
 
