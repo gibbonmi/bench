@@ -36,15 +36,20 @@ const (
 )
 
 type Inspection struct {
-	State          State
-	Status         string
-	PendingStatus  string
-	CachedTree     string
-	CurrentTree    string
-	RecordedAt     time.Time
-	Reason         string
-	CacheBytes     int
-	ReusableGreen  bool
+	State         State
+	Status        string
+	PendingStatus string
+	CachedTree    string
+	CurrentTree   string
+	RecordedAt    time.Time
+	Reason        string
+	CacheBytes    int
+	ReusableGreen bool
+	// Drifted marks a record whose tree or oracle is not this subject's, whatever verdict it
+	// carries. It travels with the inspection so a consumer never decides for itself whether
+	// a record describes the tree its reader is on — a red graded elsewhere is not this
+	// tree's red.
+	Drifted        bool
 	Partition      *Partition
 	CheckPartition *CheckPartition
 }
@@ -212,19 +217,21 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	}
 	tm, _ := time.Parse(time.RFC3339, rec.RecordedAt)
 	gi.RecordedAt = tm
+	// Drift is graded ahead of the record's own status, and ahead of the closure check that
+	// refuses reuse: a record naming a tree or an oracle this subject does not have is
+	// evidence about some other run, and a red of another tree read as this one's sends a
+	// reader to fix work that is no longer here.
+	drift := driftReason(rec, s)
+	gi.Drifted = drift != ""
 	if !s.Closed {
+		return gi
+	}
+	if gi.Drifted {
+		gi.Reason = drift
 		return gi
 	}
 	if rec.Status != "green" {
 		gi.Reason = "recorded " + rec.Status
-		return gi
-	}
-	if rec.Tree != s.Tree {
-		gi.Reason = "working tree changed"
-		return gi
-	}
-	if rec.Oracle != s.Oracle {
-		gi.Reason = "oracle changed"
 		return gi
 	}
 	if now.Sub(tm) >= freshness {
@@ -240,6 +247,19 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	}
 	gi.ReusableGreen = true
 	return gi
+}
+
+// driftReason names how a record fails to describe the subject, and "" when it describes it.
+// One derivation answers both the reuse refusal and the Drifted flag consumers read, so no
+// surface can call a retired record current by comparing tree hashes for itself.
+func driftReason(rec verdictRecord, s subject) string {
+	switch {
+	case rec.Tree != s.Tree:
+		return "working tree changed"
+	case rec.Oracle != s.Oracle:
+		return "oracle changed"
+	}
+	return ""
 }
 
 // narrowVerdictReason returns the reuse reason for the class the loader selected.

@@ -290,6 +290,44 @@ func TestPartialRowActionIsFresh(t *testing.T) {
 	}
 }
 
+// A red recorded against a tree the work tree has since left describes that run, not this
+// one. The board must send the reader back to the gate rather than headline a red for work
+// that is no longer in the tree — the drifted record is stale, whatever verdict it carries.
+func TestDriftedRedVerdictRendersAsStaleRatherThanRed(t *testing.T) {
+	root := initRepo(t)
+	gated := treeOf(t, root, map[string]string{"f.txt": "x // red\n"})
+	current := treeOf(t, root, map[string]string{"f.txt": "x\n"})
+	writeFullGateCache(t, root, gated, "red")
+
+	gv := GateVerdict(root)
+	if gv.CachedTree != gated || gv.WorkTree != current {
+		t.Fatalf("verdict = %#v, want a red recorded against a tree the work tree has left", gv)
+	}
+	if !gv.Stale {
+		t.Fatalf("verdict = %#v, want the drifted red marked stale", gv)
+	}
+	rows := appendGateInfo(nil, gv, root)
+	if len(rows) != 1 {
+		t.Fatalf("rows = %#v, want one gate row", rows)
+	}
+	if !strings.HasPrefix(rows[0].detail, "stale (gated tree") || rows[0].action != "re-run the gate" {
+		t.Fatalf("rows = %#v, want the drift row rather than a red one", rows)
+	}
+}
+
+// writeFullGateCache installs a ready full-class record naming cachedTree with the given
+// verdict, at the mode and field set the gate's loader requires of the full class.
+func writeFullGateCache(t *testing.T, root, cachedTree, status string) {
+	t.Helper()
+	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
+	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)
+	record := fmt.Sprintf(`{"schema":1,"state":"ready","status":%q,"tree":%q,"oracle":%q,"recorded_at":%q}`+"\n",
+		status, cachedTree, strings.Repeat("0", 64), recorded)
+	if err := os.WriteFile(filepath.Join(gitdir, git.GateCacheFile), []byte(record), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // writePartialGateCache installs a ready partial green naming cachedTree, skipping the
 // given components, at the mode and exact field set the gate's loader requires of the
 // partial class. Each skipped component carries ancestor-form evidence (an identity and

@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -31,5 +32,24 @@ func TestInspectVerdictClassReuseReason(t *testing.T) {
 				t.Fatalf("inspection = %#v, want reusable=%t reason=%q", inspection, tc.reusable, tc.reason)
 			}
 		})
+	}
+}
+
+// A record naming a tree the work tree has left is evidence about that tree's run, whatever
+// verdict it carries. The inspection therefore grades drift ahead of the record's status, so
+// no consumer can read a red graded elsewhere as this tree's red.
+func TestInspectGradesDriftAheadOfRecordStatus(t *testing.T) {
+	root := outcomeFixture(t)
+	subject, err := buildSubject(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := inspectReadyRecord(strings.Repeat("a", 40), subject.Oracle, time.Now().UTC().Truncate(time.Second))
+	record.Status = "red"
+	writeInspectRecord(t, root, inspectJSON(record))
+
+	inspection := Inspect(root)
+	if !inspection.Drifted || inspection.Reason != "working tree changed" {
+		t.Fatalf("inspection = %#v, want a drifted record naming the moved tree", inspection)
 	}
 }

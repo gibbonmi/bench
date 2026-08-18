@@ -70,12 +70,13 @@ type Signal struct {
 
 // GateInfo is the structured gate-verdict cache read, shared by the status board and the
 // dashboard so neither re-parses `<git-dir>/bench-last-gate`. Present is false when no
-// cache file exists; Stale primarily marks a ready green verdict whose cached tree
-// differs from the work tree. It also marks an exact-tip non-reusable green the gate
-// cannot compose as a whole-tree verdict. Partition carries narrowness at component
-// granularity: non-nil for a partial verdict that graded only the components whose
-// inputs moved, nil for a full record. Status/CachedTree/WorkTree/Timestamp carry the raw
-// fields for a human view; the board reduces them to its severity rows.
+// cache file exists; Stale marks a ready verdict the gate no longer stands behind for this
+// subject — a record whose tree or oracle has drifted, whatever verdict it carries, or an
+// exact-tip non-reusable green the gate cannot compose as a whole-tree verdict. Partition
+// carries narrowness at component granularity: non-nil for a partial verdict that graded
+// only the components whose inputs moved, nil for a full record.
+// Status/CachedTree/WorkTree/Timestamp carry the raw fields for a human view; the board
+// reduces them to its severity rows.
 type GateInfo struct {
 	Present        bool
 	State          string
@@ -202,12 +203,9 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 	if gv.State == string(gate.Unavailable) {
 		return append(rows, row{3, "gate", "verdict unavailable", "inspect gate state"})
 	}
-	if gv.Status == "timeout" {
-		return append(rows, row{0, "gate", "timeout", "inspect the hang and re-run the gate"})
-	}
-	if gv.Status == "red" {
-		return append(rows, row{0, "gate", "red", "fix before commit"})
-	}
+	// Staleness outranks the verdict the record carries: a red the gate has retired names a
+	// tree the reader has left, and "fix before commit" would send them after work that is
+	// no longer in the tree. Only a verdict the gate still stands behind reaches the rows below.
 	if gv.Stale {
 		// An exact-tip narrow verdict stays distinct from drift even when the gate no
 		// longer composes it as a whole-tree green. A moved tree is drift instead.
@@ -217,6 +215,12 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 		}
 		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
 		return append(rows, row{7, "gate", detail, action})
+	}
+	if gv.Status == "timeout" {
+		return append(rows, row{0, "gate", "timeout", "inspect the hang and re-run the gate"})
+	}
+	if gv.Status == "red" {
+		return append(rows, row{0, "gate", "red", "fix before commit"})
 	}
 	return rows
 }
@@ -234,9 +238,13 @@ func GateVerdict(root string) GateInfo {
 	}
 	gi.Partition = in.Partition
 	gi.CheckPartition = in.CheckPartition
+	// A drifted record is stale whatever verdict it carries — the gate has already decided it
+	// describes another tree or another oracle — while a green the gate will not reuse is
+	// stale on the reuse rule alone. A composed whole-tree green can only rescue the second:
+	// it holds exactly when the record matches the subject, which is when drift is absent.
 	nonReusableGreen := in.State == gate.Ready && in.Status == "green" && !in.ReusableGreen
-	gi.Stale = nonReusableGreen
-	if nonReusableGreen && in.CachedTree == in.CurrentTree && gate.ComposedGreen(root) {
+	gi.Stale = nonReusableGreen || (in.State == gate.Ready && in.Drifted)
+	if gi.Stale && in.CachedTree == in.CurrentTree && gate.ComposedGreen(root) {
 		gi.Stale = false
 	}
 	return gi
