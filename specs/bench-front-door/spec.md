@@ -278,6 +278,8 @@ conformance paths, canary fixtures, and docs, graded by A1's conformance and
 - `.bench/BENCH.md`, `.bench/BENCH-reference.md`
 - `README.md`, `CONTEXT.md`, `ROADMAP.md`, `projects/benchkit.md`
 - `docs/reporesident-distillation.md`, `docs/greenfield-build-sequence.md`
+- `CHANGELOG.md`
+- `reviews/bench-front-door.md`
 - `capture/session-handoff.md`
 - `specs/bench-front-door/`
 
