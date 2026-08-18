@@ -1,1 +1,1 @@
-.bench/BENCH.md or .bench/BENCH-reference.md does not list CLI command 'bench gate'
+.bench/BENCH.md does not identify `bench help` as the executable inventory

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 type processAttachment string
@@ -47,6 +48,7 @@ type commandDefinition struct {
 	Name       string
 	Attachment processAttachment
 	AXI        commandAXIDisposition
+	Help       []string
 	Run        commandHandler
 }
 
@@ -80,6 +82,9 @@ func (c Command) Run(args []string) int {
 	if c.Observe != nil {
 		fmt.Fprintln(c.Observe, commandImplementationID(definition))
 	}
+	if definition.Help != nil {
+		return helpCommand(c, definition, args[1:])
+	}
 	return definition.Run(c, args[1:])
 }
 
@@ -94,6 +99,13 @@ func commandByName(name string) (commandDefinition, bool) {
 		}
 	}
 	return commandDefinition{}, false
+}
+
+func renderCommandHelp(definition commandDefinition) string {
+	if len(definition.Help) == 0 {
+		return ""
+	}
+	return strings.Join(definition.Help, "\n") + "\n"
 }
 
 func commandDispositions() []commandDisposition {

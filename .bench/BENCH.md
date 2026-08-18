@@ -28,28 +28,14 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 
 ## CLI Inventory
 
-- Setup: `bench setup`, `bench link`, `bench init`, `bench unlink`,
-  `bench doctor`, `bench repair` (`--prune`), `bench upgrade` (`--check`,
-  `--force`).
-- Context: `bench status`, `bench handoff`, `bench commands --brief`,
-  `bench dashboard`, `bench idea`, `bench roadmap`, `bench learnings`,
-  `bench maps`.
-- Oracle: `bench gate` (`--fresh`), `bench gate pin`, `bench prep-release`,
-  `bench release`, `bench canary`, `bench preflight review|build <slug>`,
-  `bench structure`, `bench anchors`, `bench guards`, `bench diff`,
-  `bench coverage`, `bench outline`, `bench models`, `bench skills-index`
-  (`--check`, `--write`), `bench version`, and `bench test [--full] [package]`
-  for package, failure, and skip evidence as TOON.
-- Work: `bench worktree` (`bench worktree list`, `bench worktree path <target>`,
-  `bench worktree exec <target> -- <command>`, `bench worktree create`, `bench worktree release` by the creating request,
-  `bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>]` for plan/apply removal,
-  `bench worktree reauthorize`, `bench worktree land`),
-  `bench shift`, path-scoped `bench commit -m <msg> <path>...` (`--spec <slug>`
-  semantics in `bench commit --help`), `bench spec implemented`,
-  `bench spec retire`, `bench spec history`.
-- Plumbing subcommands, driven by hooks and adapters, live in
-  `.bench/BENCH-reference.md`; this inventory tracks `bin/bench.sh`. Run `bench`
-  exactly as its executable help spells it. Never append extra subcommands,
+- Setup and adoption connect a repository to the kit and maintain that installation.
+- Context commands expose current state, navigation, capture, and planning evidence.
+- Oracle commands inspect or enforce readiness from development through release.
+- Work commands own isolated execution, gated changes, and spec lifecycle operations.
+
+`bench help` is the complete executable inventory. Plumbing subcommands, driven by
+hooks and adapters, live in `.bench/BENCH-reference.md`. Run `bench` exactly as its
+executable help spells it. Never append extra subcommands,
   `</dev/null`, `2>&1`, a pipeline, or a shell follow-on: Bench owns
   non-interactive input, complete output, and required next actions. The complete
   output is the evidence (on a red gate, the failure attribution), and output too

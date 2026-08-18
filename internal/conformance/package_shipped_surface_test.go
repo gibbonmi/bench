@@ -3,9 +3,11 @@ package conformance
 import (
 	"encoding/json"
 	"fmt"
+	"go/ast"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -43,7 +45,9 @@ func checkPackageShippedSurface(root string) []string {
 			diags = append(diags, fmt.Sprintf("repair policy omits %q", fact))
 		}
 	}
-	diags = append(diags, checkRoadmapHelpLine(readIfExists(filepath.Join(root, "cmd", "bench", "main.go")))...)
+	helpSource := readIfExists(filepath.Join(root, "cmd", "bench", "main.go"))
+	diags = append(diags, checkHelpInventorySingleSource(root)...)
+	diags = append(diags, checkRoadmapHelpLine(helpSource)...)
 	var requirements struct {
 		BinaryPinManifest struct {
 			Path string `json:"path"`
@@ -60,8 +64,7 @@ func checkPackageShippedSurface(root string) []string {
 			diags = append(diags, fmt.Sprintf("repair pin path does not match requirement %q", requirements.BinaryPinManifest.Path))
 		}
 	}
-	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
-	if !strings.Contains(guide, "`bench repair") {
+	if !strings.Contains(helpSource, "bench repair") {
 		diags = append(diags, "CLI inventory omits bench repair")
 	}
 	// The canonical payload reader, not a local open-and-decode: this check derives
@@ -106,6 +109,110 @@ func checkRoadmapHelpLine(helpInventorySource string) []string {
 		return nil
 	}
 	return []string{"cmd/bench/main.go help inventory does not describe the top-10 board"}
+}
+
+const helpInventoryTitle = "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
+
+func checkHelpInventorySingleSource(root string) []string {
+	var diags []string
+	occurrences := 0
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel := filepath.ToSlash(strings.TrimPrefix(path, root+string(filepath.Separator)))
+		if entry.IsDir() {
+			if rel == ".git" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		productionGo := strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, "_test.go")
+		publicSurface := rel == "bin/bench.sh" || rel == ".bench/BENCH.md" || rel == ".bench/BENCH-reference.md"
+		if productionGo || publicSurface {
+			if !entry.Type().IsRegular() {
+				diags = append(diags, rel+" is not a regular help-inventory source")
+				return nil
+			}
+			occurrences += strings.Count(readIfExists(path), helpInventoryTitle)
+		}
+		return nil
+	})
+	if err != nil {
+		diags = append(diags, "scan help inventory sources: "+err.Error())
+	}
+	if occurrences != 1 {
+		diags = append(diags, fmt.Sprintf("help inventory title appears %d times on production surfaces, want exactly 1", occurrences))
+	}
+
+	path := filepath.Join(root, "cmd", "bench", "main.go")
+	entries, err := parseCommandRegistry(path, readIfExists(path))
+	if err != nil {
+		return append(diags, "help inventory commandRegistry: "+err.Error())
+	}
+	for _, entry := range entries {
+		if entry.name != "help" {
+			continue
+		}
+		fields := entry.fields["Help"]
+		if len(fields) != 1 {
+			return append(diags, "help inventory must be literal rows on commandRegistry")
+		}
+		literal, ok := fields[0].(*ast.CompositeLit)
+		if !ok || len(literal.Elts) == 0 {
+			return append(diags, "help inventory must be literal rows on commandRegistry")
+		}
+		for i, element := range literal.Elts {
+			row, ok := element.(*ast.BasicLit)
+			if !ok {
+				return append(diags, "help inventory must be literal rows on commandRegistry")
+			}
+			text, err := strconv.Unquote(row.Value)
+			if err != nil || strings.ContainsAny(text, "\r\n") {
+				return append(diags, "help inventory must be literal rows on commandRegistry")
+			}
+			if i == 0 && text != helpInventoryTitle {
+				return append(diags, "help inventory must be literal rows on commandRegistry")
+			}
+		}
+		return diags
+	}
+	return append(diags, "help inventory must be literal rows on commandRegistry")
+}
+
+func TestHelpInventorySingleSourceBites(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel, body string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	title := "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
+	registry := "package main\n\ntype commandDefinition struct { Name string; Help []string }\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"help\", Help: []string{\n\t\t\"" + title + "\",\n\t\t\"  bench roadmap              show the top 10 roadmap rows + drain state\",\n\t}},\n}\n"
+	write("cmd/bench/main.go", registry)
+	write("cmd/bench/command_registry.go", "package main\n")
+	write("bin/bench.sh", "#!/bin/sh\n")
+	write(".bench/BENCH.md", "Run `bench help`.\n")
+	if diags := checkHelpInventorySingleSource(root); len(diags) != 0 {
+		t.Fatalf("registry-owned inventory = %v, want no diagnostics", diags)
+	}
+
+	write("bin/bench.sh", "#!/bin/sh\n# "+title+"\n")
+	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "appears 2 times") {
+		t.Fatalf("duplicate production inventory = %v, want duplicate-source diagnostic", diags)
+	}
+
+	write("bin/bench.sh", "#!/bin/sh\n")
+	moved := "package main\n\ntype commandDefinition struct { Name string; Help []string }\n\nvar helpInventory = []string{\"" + title + "\"}\n\nvar commandRegistry = []commandDefinition{{Name: \"help\", Help: helpInventory}}\n"
+	write("cmd/bench/main.go", moved)
+	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "must be literal rows on commandRegistry") {
+		t.Fatalf("inventory moved beside registry = %v, want registry-source diagnostic", diags)
+	}
 }
 
 // shippedFiles returns every file the npm tarball would carry, expanding package.json

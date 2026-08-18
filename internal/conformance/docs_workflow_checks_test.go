@@ -536,33 +536,34 @@ func specSlugOf(rel string) string {
 
 func checkColdPickupCLILists(root string) []string {
 	bench := readIfExists(filepath.Join(root, "bin", "bench.sh"))
-	if bench == "" {
+	registryPath := filepath.Join(root, filepath.FromSlash(dispatchFile))
+	registrySource := readIfExists(registryPath)
+	if bench == "" && registrySource == "" {
 		return nil
 	}
-	cmdRE := regexp.MustCompile(`(?m)^  ([a-z][a-z-]*)\)\s`)
-	var commands []string
-	for _, match := range cmdRE.FindAllStringSubmatch(bench, -1) {
-		commands = append(commands, match[1])
-	}
-	sort.Strings(commands)
-	known := map[string]bool{}
-	for _, command := range commands {
-		known[command] = true
-	}
-	docRef := regexp.MustCompile("`bench ([a-z][a-z-]*)\\b")
 	var diags []string
-	// The documented surface is the always-loaded inventory plus the reference file's
-	// plumbing enumeration: sessions read BENCH.md, hooks-and-adapters plumbing is
-	// deliberately demoted to BENCH-reference.md, and a route documented in neither
-	// is still a cold-pickup hole.
-	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
-	if guide != "" {
-		guide += "\n" + readIfExists(filepath.Join(root, ".bench", "BENCH-reference.md"))
-		for _, command := range commands {
-			if !strings.Contains(guide, "bench "+command) {
-				diags = append(diags, fmt.Sprintf(".bench/BENCH.md or .bench/BENCH-reference.md does not list CLI command 'bench %s'", command))
+	known := map[string]bool{}
+	cmdRE := regexp.MustCompile(`(?m)^  ([a-z][a-z-]*)(?:\|[^)]*)?\)\s`)
+	for _, match := range cmdRE.FindAllStringSubmatch(bench, -1) {
+		known[match[1]] = true
+	}
+	if registrySource != "" {
+		names, err := dispatchNames(registryPath, registrySource)
+		if err != nil {
+			diags = append(diags, dispatchFile+" cannot be parsed for CLI documentation currency: "+err.Error())
+		} else {
+			for _, name := range names {
+				known[name] = true
 			}
 		}
+	}
+	docRef := regexp.MustCompile("`bench ([a-z][a-z-]*)\\b")
+	// The operating guide names the executable inventory without repeating it. Executable
+	// names come from the production dispatch surfaces; prose references are checked against
+	// that set so a documented command cannot outlive its route.
+	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
+	if guide != "" && !strings.Contains(guide, "`bench help` is the complete executable inventory") {
+		diags = append(diags, ".bench/BENCH.md does not identify `bench help` as the executable inventory")
 	}
 	// Reverse check: a `bench <cmd>` reference that names no route is a dead pointer.
 	// Commands and skills alike route the reader to the CLI in prose, so the whole
@@ -594,6 +595,37 @@ func checkColdPickupCLILists(root string) []string {
 		}
 	}
 	return diags
+}
+
+func TestColdPickupCLIListsBites(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel, body string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("cmd/bench/main.go", "package main\nvar commandRegistry = []commandDefinition{{Name: \"help\"}, {Name: \"status\"}}\n")
+	write("bin/bench.sh", "case \"$1\" in\n  status) ;;\nesac\n")
+	guide := "## CLI Inventory\n\n- Context commands expose current state.\n\n`bench help` is the complete executable inventory.\n"
+	write(".bench/BENCH.md", guide)
+	if diags := checkColdPickupCLILists(root); len(diags) != 0 {
+		t.Fatalf("category guide with registry pointer = %v, want no diagnostics", diags)
+	}
+
+	write(".bench/BENCH.md", "## CLI Inventory\n\n- Context commands expose current state.\n")
+	if diags := checkColdPickupCLILists(root); !containsDiagnostic(diags, "does not identify `bench help` as the executable inventory") {
+		t.Fatalf("guide without canonical pointer = %v, want pointer diagnostic", diags)
+	}
+
+	write(".bench/BENCH.md", guide+"Run `bench vanished` next.\n")
+	if diags := checkColdPickupCLILists(root); !containsDiagnostic(diags, "documents unknown CLI command 'bench vanished'") {
+		t.Fatalf("guide with stale command = %v, want stale-command diagnostic", diags)
+	}
 }
 
 func checkAXIProfileAnchors(root string) []string {

@@ -22,9 +22,10 @@ branch-agnostic. This line is only the binding.)
   conformant tree (green) and a broken one (red); never by trusting a reading of the
   diff. The gate package is the single deep owner of reusable-verdict authorization
   and durable execution; the accepted trust posture is recorded in ADR 0002.
-- **The `bench` CLI subcommands.** The operational shell surface; the canonical
-  inventory is `.bench/BENCH.md`'s CLI Inventory — this profile doesn't
-  re-enumerate it. Stable command names and exit codes are the contract; the
+- **The `bench` CLI subcommands.** The operational shell surface; `bench help`,
+  rendered from Go `commandRegistry`, is the executable inventory, while
+  `.bench/BENCH.md` keeps category-level operational guidance. Stable command names
+  and exit codes are the contract; the
   implementation behind each is free to change. Keep gate resolution
   (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.
   Missing-binary resolution is network-silent by default and names the explicit

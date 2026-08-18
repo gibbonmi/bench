@@ -54,6 +54,26 @@ func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
 	}
 }
 
+func TestHelpRendersCommandRegistryRows(t *testing.T) {
+	old := commandRegistry
+	t.Cleanup(func() { commandRegistry = old })
+	commandRegistry = []commandDefinition{{
+		Name: "help",
+		Help: []string{
+			"bench test inventory",
+			"  bench example  prove the registry owns this row",
+		},
+	}}
+
+	var stdout bytes.Buffer
+	if code := (Command{Stdout: &stdout}).Run([]string{"help"}); code != 0 {
+		t.Fatalf("help exit = %d, want 0", code)
+	}
+	if want := "bench test inventory\n  bench example  prove the registry owns this row\n"; stdout.String() != want {
+		t.Fatalf("help stdout = %q, want registry rows %q", stdout.String(), want)
+	}
+}
+
 func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 	var directRoot bytes.Buffer
 	if code := (Command{Stdout: &directRoot}).Run(nil); code != 0 {
