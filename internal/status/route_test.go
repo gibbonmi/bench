@@ -17,6 +17,8 @@ func TestIsInvocable(t *testing.T) {
 		{"git push", true},
 		{"bench spec retire <slug>", true},
 		{"/bench-drain", true},
+		{"/bench-implement-spec specs/my [draft]/spec.md", true},
+		{"/bench-write-spec decisions/my * map.md", true},
 	}
 	for _, tc := range cases {
 		if got := IsInvocable(tc.action); got != tc.want {

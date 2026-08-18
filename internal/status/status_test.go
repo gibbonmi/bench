@@ -225,6 +225,54 @@ func TestSignalsOrderStagedSpecsAfterGuardsBeforeDrain(t *testing.T) {
 	}
 }
 
+func TestRouteForInvokesStagedSpecWhosePathContainsSpacesAheadOfDrain(t *testing.T) {
+	root := initRepo(t)
+	for path, body := range map[string]string{
+		"capture/IDEAS.md":      "- 2026-08-18  pending\n",
+		"specs/my spec/spec.md": "Status: staged\n",
+	} {
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	want := RouteResult{
+		Lead: Signal{Severity: 4, Name: "specs", Detail: "1 staged spec(s)", Action: "/bench-implement-spec specs/my spec/spec.md"},
+		RunnersUp: []Signal{
+			{Severity: 4, Name: "drain", Detail: "1 idea(s), 0 open learning(s), 0 pending retro(s)", Action: "/bench-drain"},
+		},
+	}
+	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
+		t.Fatalf("spaced staged-spec route = %#v, want %#v", got, want)
+	}
+}
+
+func TestRouteForInvokesReadyMapWhosePathContainsSpaces(t *testing.T) {
+	root := initRepo(t)
+	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
+	path := filepath.Join(root, "decisions", "my map.md")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(ready), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	want := RouteResult{Lead: Signal{Severity: 6, Name: "decisions", Detail: "1 ready map(s)", Action: "/bench-write-spec decisions/my map.md"}}
+	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
+		t.Fatalf("spaced ready-map route = %#v, want %#v", got, want)
+	}
+}
+
 func TestGateActionNormalization(t *testing.T) {
 	partial := &gate.Partition{}
 	for _, tc := range []struct {

@@ -40,7 +40,15 @@ func IsInvocable(action string) bool {
 		return false
 	}
 	if strings.HasPrefix(action, harnessPrefix[HarnessClaude]) {
-		return len(strings.Fields(action)) <= 2
+		command, argument, hasArgument := strings.Cut(action, " ")
+		if command == harnessPrefix[HarnessClaude] || strings.Contains(strings.TrimPrefix(command, harnessPrefix[HarnessClaude]), "/") {
+			return false
+		}
+		if !hasArgument {
+			return true
+		}
+		return (strings.HasPrefix(argument, "specs/") && strings.HasSuffix(argument, "/spec.md")) ||
+			(strings.HasPrefix(argument, "decisions/") && strings.HasSuffix(argument, ".md"))
 	}
 	if strings.HasPrefix(action, "git ") {
 		return isGitCommand(strings.Fields(strings.TrimPrefix(action, "git ")))
