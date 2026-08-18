@@ -2,53 +2,64 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `9616919a`, working tree carries the reviewed `/bench-what-next` capture-drain batch, about to land as one commit
-Spec: none staged; `specs/` is empty
+Branch: `main` — HEAD `a2914fd5`, working tree clean, 2 commits unpushed
+Spec: none staged; the light-path ticket at
+`specs/light-path-live-root-conformance/tickets/grade-the-live-root-inside-the-dev-gate.md`
+is implemented and landed
 
 ## State
 
-`/bench-what-next` reconciled the roadmap against the tree (nothing shipped
-since the last drain; `specs/` and `spec_history` are both empty, so no
-`bench spec retire` was owed this pass) and drained every capture source to
-zero:
+The 2026-08 capability audit is reconciled and its worktrees are retired.
+Results live at `docs/audits/2026-08-bench-capability/results-fable-high/`;
+`final-reconciliation.md` (§A, §N, §O) and `next-ticket.md` are the durable
+reads. The three audit worktrees (`bench-audit-fable`, `-opus`, `-sol`) and
+their `audit/*` branches are gone, discarded through `bench worktree clean`
+with recovery refs retained under `refs/bench/recovery/`. One unlanded delta
+died with them: the fable tree also turned `design`, `artifact-diagramming`,
+and `code-review` off in `.claude/settings.json`'s `skillOverrides`. Not
+landed — reviewer's call whether those three should be hidden in this repo.
 
-- `capture/IDEAS.md` was already empty.
-- `capture/learnings.md`'s three open entries are verdicted: one (resolved
-  `reviews/<slug>.md` blocking `bench worktree land`) merged as an occurrence
-  into `roadmap/FT89.md`; two (refresh a ready `/bench-deepen` map before
-  handoff; census shared decision readers before `/bench-write-spec` ticket
-  slicing) became new kit-edit rows `roadmap/FT219.md` and
-  `roadmap/FT220.md`.
-- `capture/retros/worktree-cleanup-eligibility.md` is drained and deleted.
-  Its actionable recommendations: three merged as occurrences into existing
-  rows (`roadmap/FT113.md` — sharpen the `--spec` flip's `--help`/guard;
-  `roadmap/FT169.md` — land's ownership-fence refusal should name the
-  offending path; `roadmap/FT177.md` — landing guard should warn before
-  removing a load-bearing `dist/bench`), one became a new kit-edit row
-  (`roadmap/FT221.md` — promote `craft-delegate`'s cp-aside guidance to a
-  named checklist step), and one became a new decision-required row
-  (`roadmap/FT222.md` — standing per-repair-class delegate-tier preference in
-  `projects/benchkit.md`). Repair-attribution tally from its table: 8 tickets,
-  6 one-shots (0 repair rounds), 2 with repairs — cause counts:
-  delegate-error 1, spec-row 1, other 2.
-- `capture/agent-performance/claude-models.md`'s refresh from the prior
-  `/bench-final-check` landing evidence (FT216, `worktree-cleanup-eligibility`)
-  is carried through in this same commit.
+Audit decisions that stay closed: incremental strategy; no work-state store,
+compiler, or claim graph (A12); `/bench` is an adapter over
+`bench status --route`; FT100 waits for the measurement harness (A11).
 
-`## Recommended sequence` rank 1 is now FT100 (`/bench-shape-idea` — cut prose
-weight from `AGENTS.md`/`.bench/BENCH.md` and the craft-skill library to
-demonstrated-delta clauses), reviewer-prioritized ahead of its
-recommended-after-FT89 sequencing. FT207 (`/bench-shape-idea`) and FT213
-(`/bench-write-spec`) follow at ranks 2 and 3, unchanged. This run's roadmap
-edits are all feature/guidance-shaped except FT222, which is decision-only.
+**Audit action A1 is landed** (`a2914fd5`). `bench gate`'s ordinary test phase
+now carries the graded root and the dev tier to `TestRootConformance`, so the
+conformance registry's 29 checks grade the live tree on every gate rather than
+only under `prep-release`. An environment-class skip observed by the oracle is
+red, not a footer count, and every skip line names the emitting test. Ten
+diagnostics were red at HEAD behind a green gate; all ten are disposed, plus an
+eleventh the fix exposed (the `BENCH-reference.md` anchor needle itself carried
+the removed `spec build` token its own sweep forbids).
 
-`dist/bench` must exist and be reasonably fresh for local `bench` CLI
-resolution to work in this checkout; rebuild with
-`go build -o dist/bench ./cmd/bench` if it's ever removed.
+Three calls in that commit are post-hoc veto surface:
+
+- The `.agents/commands/bench-implement-spec.md` prose budget went 60 → 75 in
+  `projects/benchkit.md`. The file was at exactly 60 and the restored
+  `## Entry orientation` / `## Exit handoff` headings do not fit; 75 matches its
+  sibling `bench-write-spec.md` at 73. The alternative was cutting prose the
+  `fa4e1f02` slimming had already chosen to keep.
+- `bounds.CanaryInnerWidth` is retired rather than rehomed. Its only consumer,
+  `internal/canary/canary.go`, was deleted by `3701c4a0` with the parallel
+  fixture sweep, and nothing replaced the arithmetic.
+- `decisions/spec-build-review-gate-cadence.md`'s two dangling `Sources` rows
+  now point at `CHANGELOG.md` and `internal/landing/landing.go`. The larger
+  question is untouched and open: that map is `Status: shaping` for a
+  provisional spec-build lifecycle the tree deleted wholesale, so whether it is
+  still live work belongs in a `/bench-what-next` drain.
+
+Next by the audit's own ranking is **A2** (the verdict reader — changes what the
+dashboard reports), then **A3** (`/bench` router), both in
+`results-fable-high/action-items.yaml`. A1 was sequenced first so A3's new phase
+file, rename, and adapters land graded rather than unenforced.
+
+Standing repo condition, not this session's doing: `bench status` reports the
+`pre-push` hook missing (`bench link` installs it) and 62 `bench structure`
+issues.
 
 ## Next command
 
-`/bench-shape-idea`
+`/bench-review-implementation`
 
 ## Shape
 
