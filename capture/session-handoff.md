@@ -2,62 +2,64 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `f1135fd6`, working tree carries the reviewed `/bench-what-next` drain batch, about to land as one commit
+Branch: `main` — HEAD `18c7c212`, clean tree, pushed through `f1135fd6`; `036c1761` and later are unpushed
 Spec: none staged; `specs/` is empty
-Gate: green at `f1135fd6` (fresh, via the landing `bench commit` itself)
+Gate: green at `18c7c212` (fresh, via the landing `bench commit` itself)
 
 ## State
 
-`/bench-debug` found and fixed a gate defect the drain's own landing attempt
-surfaced: `bench commit`'s prospective authorization runs `TestRootConformance`
-against an ephemeral `git worktree add` + `read-tree` checkout that never
-carries `dist/` (gitignored), and `package-core-guard`'s `checkPackageFiles`
-demanded it exist unconditionally — a check meant for a built release payload,
-newly reachable on every ordinary commit since A1 wired the conformance
-registry into the dev-gate test phase. Every `bench commit` was red for this
-reason, independent of diff content. Fixed in `f1135fd6`
-(`internal/conformance/package_core_checks_test.go`,
-`internal/conformance/fixture_bite_test.go`): a missing, gitignored `files[]`
-entry is exempt below ship tier (using the `tier` parameter
-`checkPackageCoreAndGuards` already threaded but never used), ship tier keeps
-the strict check, and a genuinely missing tracked entry still flags
-everywhere. New regression test:
-`TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier`. Built in an
-isolated `bench worktree create` assignment, gated green there, then
-fast-forwarded onto `main` (the assignment predates a spec and
-`bench worktree land` requires one, so the merge was a manual
-`git merge --ff-only`, not a Bench-owned landing verb — worth a roadmap row if
-this recurs). Assignment released and removed.
+**Reviewer override standing for this repo:** the 2026-08 capability audit's
+own priority order
+(`docs/audits/2026-08-bench-capability/results-fable-high/proposed-roadmap.md`)
+supersedes `ROADMAP.md`'s `## Recommended sequence` until the audit's active
+items (A1–A11; A12 is a decision, not a build) are exhausted. This is recorded
+in `ROADMAP.md` itself, not just here.
 
-`/bench-what-next` separately reconciled the roadmap against the tree
-(nothing shipped since the last drain beyond the already-annotated FT120/A1
-work; `specs/` and `spec_history` are both empty, so no `bench spec retire`
-was owed) and drained the one open capture source:
+A1 (live-root conformance in the dev gate) is landed — `a2914fd5` plus the
+follow-up gate-defect fix `f1135fd6` (a prospective/composed-tree checkout
+never carries the gitignored `dist/` `package.json` `files[]` entry;
+`package-core-guard` now exempts it below ship tier). **A2 is next, not yet
+started** — a prior attempt in this session edited
+`internal/gate/verdict.go` and was explicitly reverted at the reviewer's
+request to run in a fresh session instead; nothing of that attempt survives
+on disk.
 
-- `capture/IDEAS.md` was already empty; `capture/retros/` was already empty.
-- `capture/learnings.md`'s one open entry (`bench commit` refused twice with
-  `prospective authorization refused: inherited`, printing a misleading
-  `gate: red`) reproduces FT6's own 2026-08-12 graduation trigger — a second
-  refusal through `bench commit` itself — so it graduated out of FT6's parked
-  tier into a new decision-required row, `roadmap/FT223.md`: reviewer chooses
-  between rewording the refusal in operator terms (name `bench gate --fresh`,
-  stop printing `gate: red` for a partial verdict) or having `bench commit`
-  escalate to a fresh prospective gate itself instead of refusing.
-- Caught in the same pass: `## Reds the diff doesn't own` had drifted to
-  "Four rows" against five listed rows before FT223 landed; corrected, and
-  the section is genuinely five rows again with FT223 added.
+**A2 — one staleness rule for gate verdicts** (P0, no dependencies, audit
+estimate ~20 lines + test). Full spec:
+`docs/audits/2026-08-bench-capability/results-fable-high/action-items.yaml`,
+entry `id: A2`.
 
-`## Recommended sequence` is unchanged — FT223 is LOW severity and does not
-outrank the existing top three (FT100, FT207, FT213).
-
-Standing repo condition, not this pass's doing: `bench status` reports the
-`pre-push` hook missing (`bench link` installs it) and 62 `bench structure`
-issues.
+- **Problem:** `internal/gate/verdict.go`'s `inspectSubjectAt` checks
+  `rec.Status != "green"` (line ~218) and returns *before* checking
+  `rec.Tree != s.Tree` (tree drift) or `rec.Oracle != s.Oracle`. So a red
+  verdict recorded against a tree the working tree has since moved away from
+  (e.g. green@T0 → red@T1 → revert→T0) is reported as a red for the *current*
+  tree, when it's really drift — the record doesn't describe T0 at all.
+- **`internal/status/status.go`'s `GateVerdict`** compounds this:
+  `Stale` is defined only when `in.Status == "green"` (`nonReusableGreen`), so
+  a drifted red never gets marked stale and `appendGateInfo` reports
+  "red: fix before commit" unconditionally on `gv.Status == "red"`.
+- **Proposed fix** (per the audit, worth re-deriving fresh rather than trusting
+  verbatim): reorder `inspectSubjectAt` to check tree/oracle drift before the
+  status branch; extend `GateVerdict`'s `Stale` derivation to cover a drifted
+  record of any status, not just green.
+- **Acceptance criteria** (from action-items.yaml, authoritative): the
+  green@T0→red@T1→revert→T0 sequence yields "gate green (reused)" or
+  "stale — re-run", never "red"; the handoff pin block never writes a red for
+  a tree the evidence store holds green; a regression test in
+  `internal/gate` or `internal/status` bites when either fix is reverted.
+- **Non-goals:** no second verdict store; no change to the evidence key or
+  reuse semantics.
 
 ## Next command
 
-`/bench-final-check` — the board's leading invocable signal (`git`), once this
-batch and the prior unpushed commits are ready to land together.
+Fresh session. Recommended: Sonnet orchestrates, delegates the implementation
+itself to an Opus subagent (write-delegate, isolated worktree per
+`craft-delegate`), Sonnet handles the line declaration, gate, commit, and this
+handoff's close. `/bench-debug` is the right phase — A2 is a defect in
+`inspectSubjectAt`/`GateVerdict`, not new-feature work, and the audit already
+supplies the reproduction shape (green@T0→red@T1→revert→T0); build the Phase 1
+repro loop from that before touching either file.
 
 ## Shape
 
