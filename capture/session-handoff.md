@@ -44,7 +44,14 @@ Three calls in that commit are post-hoc veto surface:
   `fa4e1f02` slimming had already chosen to keep.
 - `bounds.CanaryInnerWidth` is retired rather than rehomed. Its only consumer,
   `internal/canary/canary.go`, was deleted by `3701c4a0` with the parallel
-  fixture sweep, and nothing replaced the arithmetic.
+  fixture sweep, and nothing replaced the arithmetic. The decision record already
+  reaches the same place: `decisions/cost-follows-project-size.md` #3 answers
+  "worker-width policy and `CanaryInnerWidth` interaction: n/a — no fan-out"
+  (reviewer, 2026-07-26). The rejected fan-out is why nothing consumed the bound,
+  so this retirement follows that decision rather than reopening it. Its two other
+  surviving mentions — that map and `decisions/assets/gate-pipeline-fixture-inventory.md`
+  — are historical record, and the fixture names that asset lists are not live
+  fixtures (`bench canary` holds at 233 bindings).
 - `decisions/spec-build-review-gate-cadence.md`'s two dangling `Sources` rows
   now point at `CHANGELOG.md` and `internal/landing/landing.go`. The larger
   question is untouched and open: that map is `Status: shaping` for a
