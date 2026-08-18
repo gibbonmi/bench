@@ -6,7 +6,7 @@ Decision source: docs/audits/2026-08-bench-capability/results-fable-high/action-
 
 Introduces commands: /bench-drain, $bench-drain
 
-Verification log: <pending> — filled at review close
+Verification log: 1 iteration(s) to accept — no independent delegate round (the requested `opus` writer/reviewer failed three times on API 529 with nothing on disk); the session author's rubric pass surfaced the stale-command-sweep gap, resolved as the `Introduces commands:` light-path gate ticket, and the reviewer approved spec + tickets on 2026-08-18
 
 ## Problem
 
