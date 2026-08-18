@@ -90,6 +90,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "worktree-pool", AXI: axiExempt(axiReasonPlumbing), Run: outputCommand(worktree.PoolCommand)},
 	{Name: "worktree-lease-file", AXI: axiExempt(axiReasonPlumbing), Run: outputCommand(worktree.LeaseFileCommand)},
 	{Name: "test", AXI: axiExempt(axiReasonOperational), Run: outputCommand(testCommand)},
+	{Name: "help", AXI: axiExempt(axiReasonOperational), Run: helpCommand},
 
 	{Name: "version", Attachment: attachmentDirect, AXI: axiExempt(axiReasonOperational), Run: versionCommand},
 	{Name: "worktree", Attachment: attachmentDirect, AXI: axiApprovedChildren("list"), Run: worktreeCommand},
@@ -139,6 +140,57 @@ func adoptCommand(name string) commandHandler {
 
 func versionCommand(c Command, _ []string) int {
 	fmt.Fprintln(c.Stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
+	return 0
+}
+
+const helpInventory = `bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
+  bench link [copy|symlink]  safely wire the kit into this repo for every harness
+  bench init                 scaffold .bench/gate.sh in the current repo
+  bench unlink [--dry-run]   remove the per-repo Bench footprint the manifest records
+  bench upgrade [--check] [--force]  plan and apply a relink onto the installed kit version
+  bench models               list advisory model-id candidates for the line binding
+  bench structure            flag oversized files + crowded dirs (wire into the gate)
+  bench skills-index [--check|--write]  print skills-index drift (default) or regenerate it
+  bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
+  bench roadmap              show the top 10 roadmap rows + drain state
+  bench status               ambient dashboard: what needs attention + the next action
+  bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite capture/session-handoff.md
+  bench commands --brief     print the direct, read-only command probe
+  bench dashboard [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
+  bench canary [root]        validate fixture inventory
+  bench anchors <path>       anchors pinning a repo-relative path as TOON (kind, section, needle)
+  bench learnings            open journal entries as a TOON table (date, title)
+  bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
+  bench guards               every guard's deny surface as TOON (guard, boundary, denies)
+  bench diff                 review base + changed files as TOON (--full appends log + diff body; --base freezes source)
+  bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
+  bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench test [--full] [package]  run fresh Go tests and render package, failure, and skip evidence as TOON
+  bench outline [path]       locate candidate seams (file:line) as TOON; does not identify the project's blessed seams
+  bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
+  bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
+  bench gate [--fresh]       run the project gate (the oracle; --fresh ignores a reusable green)
+  bench prep-release         ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
+  bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
+  bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--message text]  governed npm publication
+  bench gate pin             pin HEAD's .bench tree for pre-push verification
+  bench worktree [--refresh] [objective] create an owned worktree subshell and release it on exit
+  bench worktree list        list assignments and registered worktrees as TOON
+  bench worktree path <target>  print one active owned worktree's portable path
+  bench worktree exec <target> -- <command> [args...]  run a child directly in an active owned worktree
+  bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
+  bench worktree --help      show exact list, path, exec, create, release, clean, and reauthorize grammar
+  bash bin/bench.sh gate --fresh  run the current worktree's gate
+  bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
+  bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)
+  bench spec implemented <slug>    flip a spec's Status: staged line to implemented
+  bench spec retire <slug>         delete a merged spec + its review pickup (validated)
+  bench spec history <slug>        retire/delete commits for a spec, newest first (TOON)
+  bench version              print the installed Bench version (os/arch)
+`
+
+func helpCommand(c Command, _ []string) int {
+	fmt.Fprint(c.Stdout, helpInventory)
 	return 0
 }
 

@@ -106,6 +106,7 @@ var subcommandRouting = map[string]routingEntry{
 	"worktree":          exempt(whyNested),
 
 	"version": exempt("takes no arguments: the dispatch case prints the build-time version line and returns"),
+	"help":    exempt("takes no arguments: the command prints the top-level inventory and returns"),
 }
 
 // checkSubcommandRouting grades every dispatched subcommand name against the registry

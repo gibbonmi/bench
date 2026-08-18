@@ -54,6 +54,70 @@ func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
 	}
 }
 
+func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
+	var directRoot bytes.Buffer
+	if code := (Command{Stdout: &directRoot}).Run(nil); code != 0 {
+		t.Fatalf("in-process root exit = %d, want 0", code)
+	}
+	if !strings.HasPrefix(directRoot.String(), "next[1]{state,why,command}:\n") {
+		t.Fatalf("in-process root = %q, want next route table", directRoot.String())
+	}
+
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	binary := filepath.Join(t.TempDir(), "bench")
+	build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, binary)
+	cleanEnv := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	build.Env = cleanEnv
+	if out, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build bench: %v\n%s", err, out)
+	}
+
+	run := func(path string, args ...string) string {
+		t.Helper()
+		cmd := exec.Command(path, args...)
+		cmd.Env = cleanEnv
+		if path != binary {
+			cmd.Env = append(capability.WithoutEnvironment(runbinary.WithEnv(cleanEnv, binary), "BENCH_KIT"), "BENCH_KIT="+root)
+		}
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("%s %v: %v\n%s", path, args, err, out)
+		}
+		return string(out)
+	}
+
+	binaryRoot := run(binary)
+	if !strings.HasPrefix(binaryRoot, "next[1]{state,why,command}:\n") {
+		t.Fatalf("binary root = %q, want next route table", binaryRoot)
+	}
+	if binaryRoot != directRoot.String() {
+		t.Fatalf("binary root = %q, in-process root = %q", binaryRoot, directRoot.String())
+	}
+	wrapper := filepath.Join(root, "bin", "bench.sh")
+	if wrapperRoot := run(wrapper); wrapperRoot != binaryRoot {
+		t.Fatalf("wrapper root = %q, binary root = %q", wrapperRoot, binaryRoot)
+	}
+
+	binaryHelp := run(binary, "help")
+	if !strings.HasPrefix(binaryHelp, "bench — Pocock"+" pipeline") {
+		t.Fatalf("binary help = %q, want inventory", binaryHelp)
+	}
+	if !strings.Contains(binaryHelp, "bench canary [root]        validate fixture inventory") {
+		t.Fatalf("binary help missing canary inventory wording:\n%s", binaryHelp)
+	}
+	if strings.Contains(binaryHelp, "run the gate against known-broken fixtures") {
+		t.Fatalf("binary help retained stale canary execution wording:\n%s", binaryHelp)
+	}
+	for _, spelling := range []string{"help", "--help", "-h"} {
+		if wrapperHelp := run(wrapper, spelling); wrapperHelp != binaryHelp {
+			t.Errorf("wrapper %s = %q, binary help = %q", spelling, wrapperHelp, binaryHelp)
+		}
+	}
+}
+
 // TestResolveModelHarnessFlag drives the CLI's argument surface: --harness selects the
 // column, and the retired --alias / --provider-model spellings are rejected rather than
 // quietly resolving a model, so there is only one way to ask the binding a question.
@@ -147,20 +211,6 @@ func TestRunCanaryRetainsPositionalGrammar(t *testing.T) {
 	stderr = tempFile(t)
 	if rc := (Command{Stderr: stderr}).Run([]string{"canary", filepath.Join(t.TempDir(), "missing")}); rc != 1 {
 		t.Fatalf("run canary invalid root exit = %d, want 1", rc)
-	}
-}
-
-func TestShellWrapperHelpAdvertisesCanaryInventory(t *testing.T) {
-	out, err := exec.Command("bash", filepath.Join("..", "..", "bin", "bench.sh"), "--help").CombinedOutput()
-	if err != nil {
-		t.Fatalf("bench.sh --help failed: %v\n%s", err, out)
-	}
-	help := string(out)
-	if !strings.Contains(help, "bench canary [root]        validate fixture inventory") {
-		t.Fatalf("wrapper help missing canary inventory wording:\n%s", help)
-	}
-	if strings.Contains(help, "run the gate against known-broken fixtures") {
-		t.Fatalf("wrapper help retained stale canary execution wording:\n%s", help)
 	}
 }
 

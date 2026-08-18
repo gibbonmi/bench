@@ -70,8 +70,7 @@ func (c Command) Run(args []string) int {
 		c.Stderr = io.Discard
 	}
 	if len(args) == 0 {
-		fmt.Fprintln(c.Stderr, "bench: no subcommand")
-		return 2
+		args = []string{"status", "--route"}
 	}
 	definition, ok := commandByName(args[0])
 	if !ok {
