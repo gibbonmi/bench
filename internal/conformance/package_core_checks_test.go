@@ -14,13 +14,14 @@ import (
 	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
 func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
 	var diags []string
-	diags = append(diags, checkPackageFiles(root)...)
+	diags = append(diags, checkPackageFiles(root, tier)...)
 	diags = append(diags, checkGoToolchain(root)...)
 	diags = append(diags, checkReleaseWorkflow(root)...)
 	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
@@ -32,7 +33,7 @@ func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
 	return diags
 }
 
-func checkPackageFiles(root string) []string {
+func checkPackageFiles(root string, tier registry.Tier) []string {
 	path := filepath.Join(root, "package.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -49,9 +50,18 @@ func checkPackageFiles(root string) []string {
 		if strings.HasPrefix(file, "!") {
 			continue
 		}
-		if !exists(filepath.Join(root, filepath.FromSlash(file))) {
-			diags = append(diags, "package.json files[] missing "+file)
+		if exists(filepath.Join(root, filepath.FromSlash(file))) {
+			continue
 		}
+		// A gitignored files[] entry (dist/, the repo-local Go build) exists only once
+		// something has built it — a bare or prospective checkout never carries one, so
+		// its completeness is a built-payload concern below ship tier, not a tree-shape
+		// one. Ship-tier grading keeps the strict check: the release rehearsal build
+		// precedes it.
+		if tier != registry.Ship && benchgit.OK("-C", root, "check-ignore", "-q", "--", file) {
+			continue
+		}
+		diags = append(diags, "package.json files[] missing "+file)
 	}
 	if len(pkg.Files) == 0 {
 		return diags
@@ -79,6 +89,43 @@ func checkPackageFiles(root string) []string {
 		diags = append(diags, checkNoKitOnlyPackedAssets(root, probe.Stdout)...)
 	}
 	return append(diags, checkRepoOnlyPackageClaims(root)...)
+}
+
+// TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier pins the prospective-checkout
+// repro: a files[] entry that is both absent and gitignored (dist/, in the real tree) is
+// exactly what any bare `git worktree add` + `read-tree` checkout produces, since a build
+// artifact never rides along with tracked content. Dev tier must not flag it — it is not a
+// tree-shape defect — while ship tier, the release rehearsal, keeps the strict check. A
+// genuinely missing tracked entry still flags at both tiers, so the exemption stays narrow.
+func TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier(t *testing.T) {
+	root := t.TempDir()
+	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"files":["dist/","README.md"]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// README.md is deliberately left absent and untracked (not gitignored): a genuinely
+	// missing tracked entry, the case the check must keep catching at every tier.
+
+	dev := checkPackageFiles(root, registry.Dev)
+	if containsDiagnostic(dev, "missing dist/") {
+		t.Fatalf("dev tier flagged the gitignored, unbuilt dist/ entry: %v", dev)
+	}
+	if !containsDiagnostic(dev, "missing README.md") {
+		t.Fatalf("dev tier did not flag the genuinely missing tracked entry: %v", dev)
+	}
+
+	ship := checkPackageFiles(root, registry.Ship)
+	if !containsDiagnostic(ship, "missing dist/") {
+		t.Fatalf("ship tier did not flag the missing built entry: %v", ship)
+	}
+	if !containsDiagnostic(ship, "missing README.md") {
+		t.Fatalf("ship tier did not flag the genuinely missing tracked entry: %v", ship)
+	}
 }
 
 // checkNoKitOnlyPackedAssets is the FT85 story 3 forbidden-asset guard: it derives the

@@ -654,7 +654,7 @@ func TestCheckPackageFilesToleratesNpmStderrNotice(t *testing.T) {
 	}
 	t.Setenv("PATH", stub+string(os.PathListSeparator)+os.Getenv("PATH"))
 
-	for _, diag := range checkPackageFiles(root) {
+	for _, diag := range checkPackageFiles(root, registry.Dev) {
 		if strings.Contains(diag, "JSON unreadable") {
 			t.Fatalf("npm stderr notice corrupted the pack JSON parse: %s", diag)
 		}
