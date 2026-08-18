@@ -1,6 +1,10 @@
 package status
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestIsInvocable(t *testing.T) {
 	cases := []struct {
@@ -92,5 +96,44 @@ func TestFirstInvocable(t *testing.T) {
 			t.Fatalf("%s: firstInvocable = (%q, %q, %v), want (%q, %q, %v)",
 				tc.what, signal.Action, signal.Name, ok, tc.action, tc.wantName, tc.wantPresent)
 		}
+	}
+}
+
+func TestRouteForUsesCleanFallbackOnlyForAnEmptyBoard(t *testing.T) {
+	root := t.TempDir()
+	drain := RouteFor(root, nil, HarnessClaude)
+	if drain.Lead != (Signal{Name: "clean", Detail: "nothing pending", Action: "/bench-drain"}) || drain.NoCommand {
+		t.Fatalf("drain fallback = %#v", drain)
+	}
+	if got, code := renderRoute(drain); code != 0 || got != "next[1]{state,why,command}:\n  clean,nothing pending,/bench-drain\nalso: none\n" {
+		t.Fatalf("drain fallback output = (%q, %d)", got, code)
+	}
+	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte("# Roadmap\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	roadmap := RouteFor(root, nil, HarnessClaude)
+	if roadmap.Lead != (Signal{Name: "clean", Detail: "nothing pending", Action: "bench roadmap"}) || roadmap.NoCommand {
+		t.Fatalf("roadmap fallback = %#v", roadmap)
+	}
+	if got, code := renderRoute(roadmap); code != 0 || got != "next[1]{state,why,command}:\n  clean,nothing pending,bench roadmap\nalso: none\n" {
+		t.Fatalf("roadmap fallback output = (%q, %d)", got, code)
+	}
+
+	locked := RouteFor(root, []Signal{{Name: "gate", Detail: "locked-pending"}}, HarnessClaude)
+	if locked.Lead != (Signal{Name: "gate", Detail: "locked-pending"}) || !locked.NoCommand || len(locked.RunnersUp) != 0 {
+		t.Fatalf("locked board = %#v, want no-command lead without fallback", locked)
+	}
+	if got, code := renderRoute(locked); code != 0 || got != "next[1]{state,why,command}:\n  gate,locked-pending,\"\"\nalso: none\n" {
+		t.Fatalf("locked route = (%q, %d)", got, code)
+	}
+}
+
+func TestRouteForTranslatesLeadAndRunnersUpForCodex(t *testing.T) {
+	route := RouteFor(t.TempDir(), []Signal{
+		{Name: "drain", Detail: "1 idea", Action: "/bench-what-next"},
+		{Name: "specs", Detail: "1 staged spec", Action: "/bench-implement-spec"},
+	}, "codex")
+	if got, code := renderRoute(route); code != 0 || got != "next[1]{state,why,command}:\n  drain,1 idea,$bench-what-next\nalso: specs (1 staged spec) → $bench-implement-spec\n" {
+		t.Fatalf("codex route = (%q, %d)", got, code)
 	}
 }

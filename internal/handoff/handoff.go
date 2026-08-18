@@ -61,7 +61,7 @@ func Command(args []string) (string, int) {
 	if override, present := parsed.Flags["--next"]; present {
 		f.Action = override
 	} else {
-		applyRoute(&f, status.Route(status.SignalsWith(root, status.Query{ExcludeDirtyPaths: []string{status.HandoffFile}}), harness))
+		applyRoute(&f, status.RouteFor(root, status.SignalsWith(root, status.Query{ExcludeDirtyPaths: []string{status.HandoffFile}}), harness))
 	}
 	if err := validate(f); err != nil {
 		return err.Error() + "\n", 1

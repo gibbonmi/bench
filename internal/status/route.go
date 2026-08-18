@@ -1,6 +1,8 @@
 package status
 
 import (
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -98,6 +100,21 @@ func Route(signals []Signal, harness string) RouteResult {
 		return RouteResult{}
 	}
 	return RouteResult{Lead: translateSignal(signals[0], harness), NoCommand: true}
+}
+
+// RouteFor selects the route for root's board. A clean board is the only case without a
+// signal, so its fallback belongs beside selection rather than in each caller.
+func RouteFor(root string, signals []Signal, harness string) RouteResult {
+	route := Route(signals, harness)
+	if len(signals) != 0 {
+		return route
+	}
+	action := "/bench-drain"
+	if _, err := os.Stat(filepath.Join(root, "ROADMAP.md")); err == nil {
+		action = "bench roadmap"
+	}
+	route.Lead = translateSignal(Signal{Name: "clean", Detail: "nothing pending", Action: action}, harness)
+	return route
 }
 
 func firstInvocable(signals []Signal) (index int, signal Signal, ok bool) {

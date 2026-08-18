@@ -45,9 +45,13 @@ import (
 // grammar is the declared argument shape usage.Parse enforces for this subcommand —
 // arity, flag recognition, `--`, and help all come from there rather than a local switch.
 var grammar = usage.Grammar{
-	Cmd:   "bench status",
-	Help:  "usage: bench status [--all]",
-	Flags: []usage.Flag{{Name: "--all"}},
+	Cmd:  "bench status",
+	Help: "usage: bench status [--all] [--route [--harness " + HarnessChoices() + "]]",
+	Flags: []usage.Flag{
+		{Name: "--all"},
+		{Name: "--route"},
+		{Name: "--harness", HasValue: true, NoEmptyValue: true},
+	},
 }
 
 // row is one dashboard signal: a severity (the sort/lead key), and the signal/detail/
@@ -171,22 +175,55 @@ func stagedSpecCount(root string) (int, string) {
 	return n, slug
 }
 
-// Command implements `bench status`. It composes every sibling signal into the ambient
-// board and returns it with exit 0. `--all` lifts the five-row budget and prints every
-// signal; `-h/--help` prints usage (exit 0); an unknown argument — including `--all`
-// with any trailing token — is a usage error (exit 2); outside a repo is the structured
-// error (exit 1).
+// Command implements `bench status`. It renders the ambient board by default, its full
+// form with --all, or the one-row route for one named harness.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
 	_, all := parsed.Flags["--all"]
+	_, route := parsed.Flags["--route"]
+	harness := HarnessClaude
+	if value, present := parsed.Flags["--harness"]; present {
+		if !route || !ValidHarness(value) {
+			return toon.Usage(grammar.Cmd, "--harness "+value) + "\n", 2
+		}
+		harness = value
+	}
+	if all && route {
+		return toon.Usage(grammar.Cmd, "--all") + "\n", 2
+	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
+	if route {
+		return renderRoute(RouteFor(root, Signals(root), harness))
+	}
 	return render(root, all), 0
+}
+
+func renderRoute(route RouteResult) (string, int) {
+	out, err := toon.Table("next", []string{"state", "why", "command"}, [][]string{{route.Lead.Name, route.Lead.Detail, route.Lead.Action}})
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	var b strings.Builder
+	b.WriteString(out)
+	b.WriteString("also: ")
+	if len(route.RunnersUp) == 0 {
+		b.WriteString("none\n")
+		return b.String(), 0
+	}
+	for i, runnerUp := range route.RunnersUp {
+		if i > 0 {
+			b.WriteString("; ")
+		}
+		fmt.Fprintf(&b, "%s (%s) → %s", runnerUp.Name, runnerUp.Detail, runnerUp.Action)
+	}
+	b.WriteByte('\n')
+	return b.String(), 0
 }
 
 // render gathers every signal under root, sorts ascending by severity, and formats the

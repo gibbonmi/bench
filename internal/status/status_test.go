@@ -1,8 +1,10 @@
 package status
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -890,15 +892,71 @@ func TestCommandArgs(t *testing.T) {
 	if r, c := Command([]string{"-h"}); c != 0 || !strings.Contains(r, "usage: bench status") {
 		t.Errorf("help: report %q exit %d", r, c)
 	}
-	if r, c := Command([]string{"-h"}); !strings.Contains(r, "[--all]") {
-		t.Errorf("help usage should advertise [--all], got %q exit %d", r, c)
+	if r, c := Command([]string{"-h"}); !strings.Contains(r, "[--route [--harness claude|codex]]") {
+		t.Errorf("help usage should advertise route grammar, got %q exit %d", r, c)
 	}
 	if r, c := Command([]string{"--all"}); c != 0 {
 		t.Errorf("--all should be accepted with exit 0, got report %q exit %d", r, c)
 	}
-	for _, bad := range [][]string{{"--all", "extra"}, {"--allx"}, {"-a"}} {
+	for _, bad := range [][]string{{"--all", "extra"}, {"--allx"}, {"-a"}, {"--route", "--all"}, {"--harness", "codex"}, {"--route", "--harness", "opencode"}, {"--route", "extra"}} {
 		if r, c := Command(bad); c != 2 || !strings.Contains(r, "usage:") {
 			t.Errorf("args %q: report %q exit %d, want usage exit 2", bad, r, c)
 		}
+	}
+}
+
+func TestCommandRouteOutsideRepositoryReturnsStructuredError(t *testing.T) {
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+
+	if got, code := Command([]string{"--route"}); code != 1 || got != "error: not in a git repository — run inside a Bench-linked repo\n" {
+		t.Fatalf("Command(--route) = (%q, %d)", got, code)
+	}
+}
+
+func TestCommandRoutePrintsLeadAndRunnersUp(t *testing.T) {
+	root := initRepo(t)
+	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "capture", "IDEAS.md"), []byte("- 2026-08-18 pending\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nexit 7\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "tracked.txt")
+	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 7 {
+		t.Fatalf("gate exit = %d, want red 7", result.ActionExit)
+	}
+
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+
+	want := "next[1]{state,why,command}:\n" +
+		"  gate,red,/bench-debug\n" +
+		"also: git (1 dirty path) → /bench-final-check; drain (1 idea(s), 0 open learning(s), 0 pending retro(s)) → /bench-what-next\n"
+	if got, code := Command([]string{"--route"}); code != 0 || got != want {
+		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
 	}
 }

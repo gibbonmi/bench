@@ -44,6 +44,16 @@ func TestRunUnknownExits2(t *testing.T) {
 	}
 }
 
+func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
+	stdout := tempFile(t)
+	if code := (Command{Stdout: stdout}).Run([]string{"status", "--route"}); code != 0 {
+		t.Fatalf("status --route exit = %d, want 0", code)
+	}
+	if got := readFile(t, stdout); !strings.HasPrefix(got, "next[1]{state,why,command}:\n") {
+		t.Fatalf("status --route = %q, want one next row", got)
+	}
+}
+
 // TestResolveModelHarnessFlag drives the CLI's argument surface: --harness selects the
 // column, and the retired --alias / --provider-model spellings are rejected rather than
 // quietly resolving a model, so there is only one way to ask the binding a question.
