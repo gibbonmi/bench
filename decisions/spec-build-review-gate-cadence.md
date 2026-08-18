@@ -120,13 +120,13 @@ Type: Grill
 ### Question
 
 Should the final wrapper remain inside `$bench-implement-spec --full`, or should
-Bench add a separate `$bench-finalize-spec` phase?
+Bench add a separate finalize-spec phase?
 
 ### Answer
 
 `$bench-implement-spec --full` remains the end-to-end wrapper and composes the
 standalone `$bench-review-implementation` phase immediately before promotion.
-There is no `$bench-finalize-spec`. A clean or risk-accepted exact-candidate
+There is no separate finalize-spec phase. A clean or risk-accepted exact-candidate
 receipt proceeds to `bench spec build promote`; an accepted defect pays no gate,
 becomes a fenced repair ticket, and returns through the ordinary provisional
 lifecycle before the complete changed composition is pinned and reviewed again.
@@ -271,12 +271,12 @@ map before handing it to spec authoring.
 - Path: `ROADMAP.md`
   Supports: #7 and #8 existing FT173 and FT130 ownership.
   Drift: re-read after either roadmap item is reshaped, staged, or retired.
-- Path: `internal/specbuild/checkpoint.go`
-  Supports: #1 current durable checkpoint receipt and exact evidence bindings.
-  Drift: re-read if checkpoint receipt validation or retained assignment evidence changes.
-- Path: `internal/specbuild/lifecycle.go`
-  Supports: #4 and #5's current candidate-bound review receipt and three-axis lifecycle operation.
-  Drift: re-read if review, promotion, or recomposition transitions change.
+- Path: `CHANGELOG.md`
+  Supports: #1's checkpoint receipt and #4/#5's candidate-bound review receipt, whose provisional lifecycle was removed wholesale and now survives only as this removal record.
+  Drift: re-read before specifying the successor; its seams re-derive from the surviving landing path, not the deleted lifecycle.
+- Path: `internal/landing/landing.go`
+  Supports: #4 and #5's surviving composition-and-publication operation, now owned by `bench worktree land`.
+  Drift: re-read if composition, gating, or publication ordering changes.
 - Path: `projects/benchkit.md`
   Supports: #2 and #3 current process, conformance, and canary ownership.
   Drift: re-read if the gate architecture, process-seam inventory, or conformance registry contract changes.

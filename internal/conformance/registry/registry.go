@@ -35,6 +35,11 @@ func (source InputSource) Valid() bool {
 	}
 }
 
+// ConformanceRootEnv names the tree the explicit conformance entry point grades. It is
+// the only way that entry point learns a root, so a surface that means to grade one has
+// to set it; unset, the entry point skips.
+const ConformanceRootEnv = "BENCH_CONFORMANCE_ROOT"
+
 // ConformanceTierEnv selects the tier the explicit conformance entry point runs at.
 // Absent, the surface grades the dev tier — the default stays un-overridable by
 // accident because a writer that means ship has to set it explicitly.

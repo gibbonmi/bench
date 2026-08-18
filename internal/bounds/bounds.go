@@ -42,7 +42,6 @@ const (
 	MaxWall                         = 24 * time.Hour
 	LeaseStale                      = time.Minute
 	AssignmentStale                 = 7 * 24 * time.Hour
-	CanaryInnerWidth                = 2
 	// CoverageRowStories caps how many stories one acceptance-coverage row may reference;
 	// a row spanning more is an outcome family no single test can go red on.
 	CoverageRowStories = 4

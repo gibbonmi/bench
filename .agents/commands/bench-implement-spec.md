@@ -4,14 +4,25 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 
 # /bench-implement-spec — do the work at the seams
 
-## Entry
+## Entry orientation
 
-If there's no spec, the change must fall under the lighter-path threshold in
-`.bench/BENCH.md`'s "Right-size the process" paragraph, or route to
-`/bench-write-spec` first.
+This is the implementation phase: it starts from an approved spec, or from a
+change small enough for the lighter-path threshold, declares the line, and works
+vertical slices at the pre-agreed seams. If there's no spec, the change must fall
+under that threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph,
+or route to `/bench-write-spec` first.
 
 If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no
 ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
+
+## Exit handoff
+
+Close by reporting the implemented stories, each acceptance row's coverage
+status, and the landed commits. A reviewed spec-backed build closes through
+`/bench-review-implementation` and `bench worktree land`, then
+`/bench-final-check`; a light-path build goes straight to `/bench-final-check`.
+A build that stops short exits through "When the build stops short" below and
+recommends its one durable next action.
 
 ## Declare the line, validate the tickets, route the venue
 

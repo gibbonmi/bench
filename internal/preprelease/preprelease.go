@@ -97,7 +97,7 @@ func Steps(root, kit string) []Step {
 			// grades no package suites of its own — the step below is what runs those.
 			Name: "conformance-ship",
 			Argv: append(goTestArgv(kit), "-tags", "stress", "./internal/conformance", "-run", ShipConformanceRun()),
-			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
+			Env:  []string{registry.ConformanceRootEnv + "=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
 		},
 		{
 			// The release-only package suites — internal/releasepreflight,

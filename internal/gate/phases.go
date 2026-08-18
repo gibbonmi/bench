@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -84,13 +85,42 @@ func toolchainPhases(root, kit string) []Phase {
 		// vet needs no gate-go wrapper: it exits nonzero on its own findings and carries
 		// no policy the argv would have to encode.
 		{Name: canary.PhaseVet, Argv: []string{"go", "-C", root, "vet", "./..."}},
-		{Name: canary.PhaseTest, Argv: []string{"go", "test", "-count=1", "./..."}, Dir: root},
+		{Name: canary.PhaseTest, Argv: []string{"go", "test", "-count=1", "./..."}, Dir: root, Env: rootConformanceEnv(root, kit)},
 	}
 	if sameDirectory(root, kit) && declaresRaceTest(root) {
 		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: raceDriverArgv(), Dir: root, ExpectedRuns: raceTestNames()})
 	}
 	return phases
 }
+
+// rootConformanceEnv points the ordinary test phase at the tree under grade, so the
+// conformance registry's checks run inside the oracle instead of skipping for an unset
+// root. There is no separate conformance phase or driver: Go owns package scheduling
+// inside the one ordinary test driver, and this is what makes that driver grade the
+// live tree rather than only the fixtures.
+//
+// It materializes on the same terms as the race and system phases — only where the
+// graded root is the kit, and only where that kit actually declares the entry test, so
+// a linked repo (or a root whose package path merely collides) never inherits a
+// variable its test binaries cannot honor. The tier is pinned rather than left to its
+// unset default: the phase inherits the operator's environment, and an ambient ship
+// tier would otherwise widen what the dev gate grades.
+func rootConformanceEnv(root, kit string) []string {
+	if !sameDirectory(root, kit) {
+		return nil
+	}
+	if !declaresTest(filepath.Join(root, filepath.FromSlash(conformancePackagePath)), registry.RootConformanceTest) {
+		return nil
+	}
+	return []string{
+		registry.ConformanceRootEnv + "=" + root,
+		registry.ConformanceTierEnv + "=" + string(registry.Dev),
+	}
+}
+
+// conformancePackagePath is where the entry test lives inside the kit, relative to the
+// graded root.
+const conformancePackagePath = "internal/conformance"
 
 func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	selected := make([]Phase, len(phases))

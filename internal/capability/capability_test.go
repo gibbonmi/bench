@@ -11,16 +11,33 @@ import (
 )
 
 // TestRenderCapabilityLine pins the exact structured line a capability skip writes:
-// kind, class, and reason must all be recoverable by a downstream collector that
+// kind, class, name, and reason must all be recoverable by a downstream collector that
 // prefix-matches bench-skip and reads the leading key=value tokens.
 func TestRenderCapabilityLine(t *testing.T) {
-	got, err := Render(Skip{Kind: KindCapability, Class: Symlink, Reason: "requires unprivileged symlink support"})
+	got, err := Render(Skip{Kind: KindCapability, Class: Symlink, Name: "TestSymlinkRefusal", Reason: "requires unprivileged symlink support"})
 	if err != nil {
 		t.Fatalf("Render: %v", err)
 	}
-	want := "bench-skip kind=capability class=symlink reason=requires unprivileged symlink support\n"
+	want := "bench-skip kind=capability class=symlink name=TestSymlinkRefusal reason=requires unprivileged symlink support\n"
 	if got != want {
 		t.Fatalf("Render = %q, want %q", got, want)
+	}
+}
+
+// TestRenderRejectsUnusableName proves an unnamed or space-carrying skip is refused
+// rather than formatted. The gate reds on the environment population and quotes the
+// name in that verdict, so an empty name would hand a reader the same bare count the
+// named line replaced; a name carrying a space would make the reason token unparseable.
+// Dropping the name guard is the mutant this pins against.
+func TestRenderRejectsUnusableName(t *testing.T) {
+	for _, name := range []string{"", "Test With Space", "Test\tTabbed"} {
+		got, err := Render(Skip{Kind: KindEnvironment, Name: name, Reason: "no root"})
+		if err == nil {
+			t.Fatalf("Render(name=%q) = %q, want an error", name, got)
+		}
+		if got != "" {
+			t.Fatalf("Render(name=%q) returned line %q alongside the error; want empty", name, got)
+		}
 	}
 }
 
@@ -29,7 +46,7 @@ func TestRenderCapabilityLine(t *testing.T) {
 // silently mint a class the strict count never tallies. Making Class.valid always
 // report true is the mutant this pins against: it turns this red.
 func TestRenderCapabilityLineRejectsUnknownClass(t *testing.T) {
-	got, err := Render(Skip{Kind: KindCapability, Class: Class("network"), Reason: "needs a socket"})
+	got, err := Render(Skip{Kind: KindCapability, Class: Class("network"), Name: "TestNetworkSkip", Reason: "needs a socket"})
 	if err == nil {
 		t.Fatalf("Render(%q) = %q, want an error for an unenumerated class", "network", got)
 	}
@@ -44,9 +61,9 @@ func TestRenderCapabilityLineRejectsUnknownClass(t *testing.T) {
 // a class no writer can emit.
 func TestParseLine(t *testing.T) {
 	for _, want := range []Skip{
-		{Kind: KindCapability, Class: Symlink, Reason: "requires unprivileged symlink support"},
-		{Kind: KindCapability, Class: Privilege, Reason: "reason with kind=capability class=fifo inside it"},
-		{Kind: KindEnvironment, Reason: "subject root has no bin/bench.sh"},
+		{Kind: KindCapability, Class: Symlink, Name: "TestSymlinkRefusal", Reason: "requires unprivileged symlink support"},
+		{Kind: KindCapability, Class: Privilege, Name: "TestDropPrivilege/subtest", Reason: "reason with kind=capability class=fifo name=X inside it"},
+		{Kind: KindEnvironment, Name: "TestRootConformance", Reason: "BENCH_CONFORMANCE_ROOT not set"},
 	} {
 		line, err := Render(want)
 		if err != nil {
@@ -61,10 +78,12 @@ func TestParseLine(t *testing.T) {
 	for _, line := range []string{
 		"",
 		"ok  \tinternal/gate\t0.4s",
-		"bench-skip kind=capability class=network reason=needs a socket",
-		"bench-skip kind=capability reason=no class token",
-		"bench-skip kind=capability class=symlink",
-		"bench-skip kind=other reason=unknown kind",
+		"bench-skip kind=capability class=network name=T reason=needs a socket",
+		"bench-skip kind=capability name=T reason=no class token",
+		"bench-skip kind=capability class=symlink name=T",
+		"bench-skip kind=other name=T reason=unknown kind",
+		"bench-skip kind=environment reason=no name token",
+		"bench-skip kind=environment name= reason=empty name token",
 	} {
 		if got, ok := ParseLine(line); ok {
 			t.Fatalf("ParseLine(%q) = %#v, true; want refused", line, got)
@@ -87,7 +106,11 @@ func TestWithoutEnvironment(t *testing.T) {
 // t.Skip turns both subtests red because the destination (file or buffer) stays
 // empty.
 func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
-	want := "bench-skip kind=capability class=fifo reason=requires a host fifo\n"
+	// The name on the line is the emitting subtest's own t.Name(), which is what makes a
+	// skip traceable back to the assertion it dropped.
+	want := func(t *testing.T) string {
+		return "bench-skip kind=capability class=fifo name=" + t.Name() + "/skips reason=requires a host fifo\n"
+	}
 
 	t.Run("file transport", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "skip.log")
@@ -105,8 +128,8 @@ func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
 		if err != nil {
 			t.Fatalf("read skip log: %v", err)
 		}
-		if string(got) != want {
-			t.Fatalf("skip log contents = %q, want %q", got, want)
+		if string(got) != want(t) {
+			t.Fatalf("skip log contents = %q, want %q", got, want(t))
 		}
 	})
 
@@ -125,8 +148,8 @@ func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
 		if !skipped {
 			t.Fatal("subtest did not report a skip")
 		}
-		if got := buf.String(); got != want {
-			t.Fatalf("captured skip line = %q, want %q", got, want)
+		if got := buf.String(); got != want(t) {
+			t.Fatalf("captured skip line = %q, want %q", got, want(t))
 		}
 	})
 }
@@ -147,7 +170,7 @@ func TestEnvironmentWritesLineBeforeSkip(t *testing.T) {
 	if !skipped {
 		t.Fatal("subtest did not report a skip")
 	}
-	want := "bench-skip kind=environment reason=subject root has no bin/bench.sh\n"
+	want := "bench-skip kind=environment name=" + t.Name() + "/skips reason=subject root has no bin/bench.sh\n"
 	got, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read skip log: %v", err)

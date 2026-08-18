@@ -103,7 +103,7 @@ Detailed output contracts for the AXI query surfaces live in the project
 profile (`projects/<name>.md`);
 hook and adapter plumbing is described in the sections below.
 
-A reviewed spec build keeps its serial ticket commits in one retained
+A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip;
 from the destination, `bench worktree land` is the operational handoff that
 composes and gates that pair before publication and source release. Executable
@@ -128,8 +128,8 @@ Go-toolchain phases materialize only when the graded root carries what each step
 grades. The manifest is a capability for projects whose gate is not shaped like
 the kit's, not the route the kit takes.
 
-The built-in conformance phase receives a gate-authored, registry-ordered
-ordinary-check set. An ordinary dev gate may inherit exact per-check evidence,
+The ordinary test phase carries the graded root and the dev tier to the conformance
+entry point, which receives a gate-authored, registry-ordered ordinary-check set. An ordinary dev gate may inherit exact per-check evidence,
 but meta checks always execute in the same aggregate process and validate the
 complete, disjoint executed/inherited partition. `gate --fresh`, prospective
 execution, and ship remain full boundaries. A mixed verdict lists every

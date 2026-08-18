@@ -203,9 +203,16 @@ The kit phase table is exactly:
 | `system` | `go test -count=1 -tags=system ./internal/systemtest` |
 | `shellcheck` | the stable shell-file inventory, optional when shellcheck is absent |
 
-Go owns package scheduling inside the one ordinary test driver. There is no separate
+Go owns package scheduling inside the one ordinary test driver, and that driver grades
+the live tree: the `test` phase carries the graded root and the dev tier to the
+conformance entry point, so the registry's checks run inside the oracle rather than only
+under `prep-release`. The phase materializes that environment on the same terms as race
+and system — kit-only, and only where the entry test is declared — so a linked repo is
+unaffected. There is no separate
 contract or conformance dev driver, per-package loop, nested Go test, fixture-executing
-canary phase, component partition, or stripped-subject phase schedule. The race runner
+canary phase, component partition, or stripped-subject phase schedule. An
+environment-class skip observed by the oracle is red and names the test that emitted it:
+a check the gate failed to stage has no verdict, so it cannot be counted as green. The race runner
 verifies every registry sentinel executed. The tagged system package has one
 `TestMain` owner, at most three disposable repositories, one selected executable
 identity ledger, teardown on green/red/interrupt/timeout, and exactly one
@@ -290,7 +297,7 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 | subject | limit |
 |---|---|
 | `.bench/BENCH.md` | 180 |
-| `.agents/commands/bench-implement-spec.md` | 60 |
+| `.agents/commands/bench-implement-spec.md` | 75 |
 | `.agents/commands/bench-write-spec.md` | 73 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
 | `.agents/skills/bench-craft-spec/SKILL.md` | 150 |

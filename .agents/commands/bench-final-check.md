@@ -48,7 +48,7 @@ of silently skipping it.
 ## Capture the implementation retro
 
 After any applicable post-merge tail, an implemented spec has two final exit
-duties. Rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
+duties: rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
 spec's final green landing commit has flipped it to `Status: implemented`. A
 re-run replaces that slug's whole file; it never appends,
 and it leaves other pending retros untouched.

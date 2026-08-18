@@ -32,14 +32,12 @@ const requireCapabilitiesEnv = "BENCH_REQUIRE_CAPABILITIES"
 const skipRowPrefix = "capability-skips"
 
 type skipTally struct {
-	byClass     map[capability.Class]int
-	capability  int
-	environment int
-	// environmentReasons keeps each environment skip's reason text, because the counts
-	// alone cannot tell a stripping-induced degradation from the ordinary environment
-	// skips every host emits. Only the stripped-subject posture reads them; the dev-tier
-	// report stays a count.
-	environmentReasons []string
+	byClass    map[capability.Class]int
+	capability int
+	// environment keeps each environment skip whole, because a count cannot say which
+	// assertion went unmade: this population is red inside the oracle, and a verdict a
+	// reader cannot act on is the failure mode the count already had.
+	environment []capability.Skip
 }
 
 // newSkipLog creates the run-scoped file the phases append to. The path is absolute
@@ -92,8 +90,7 @@ func readSkipTally(path string) (skipTally, error) {
 			tally.byClass[skip.Class]++
 			tally.capability++
 		case capability.KindEnvironment:
-			tally.environment++
-			tally.environmentReasons = append(tally.environmentReasons, skip.Reason)
+			tally.environment = append(tally.environment, skip)
 		}
 	}
 	return tally, nil
@@ -101,15 +98,44 @@ func readSkipTally(path string) (skipTally, error) {
 
 // skipRows renders the tally. The totals row is unconditional — a run with nothing to
 // report says so, because absent output and zero skips must not read alike. Classes
-// follow the package's declared order so the rows are stable run to run.
+// follow the package's declared order so the rows are stable run to run. The
+// environment row names every skip it counts: this population is the one the gate reds
+// on, and a reader who has to go find which test stopped running has been handed a
+// number rather than a diagnosis.
 func skipRows(tally skipTally) []string {
-	rows := []string{fmt.Sprintf("%s: %d (capability=%d environment=%d)", skipRowPrefix, tally.capability+tally.environment, tally.capability, tally.environment)}
+	rows := []string{fmt.Sprintf("%s: %d (capability=%d environment=%d)", skipRowPrefix, tally.capability+len(tally.environment), tally.capability, len(tally.environment))}
 	for _, class := range capability.Classes() {
 		if count := tally.byClass[class]; count > 0 {
 			rows = append(rows, fmt.Sprintf("%s class=%s: %d", skipRowPrefix, class, count))
 		}
 	}
+	if len(tally.environment) > 0 {
+		rows = append(rows, fmt.Sprintf("%s class=environment: %d (%s)", skipRowPrefix, len(tally.environment), strings.Join(namedReasons(tally.environment), ", ")))
+	}
 	return rows
+}
+
+// namedReasons renders each environment skip as "TestName: reason", the form both the
+// row and the red message read.
+func namedReasons(skips []capability.Skip) []string {
+	named := make([]string, 0, len(skips))
+	for _, skip := range skips {
+		named = append(named, skip.Name+": "+skip.Reason)
+	}
+	return named
+}
+
+// environmentFailure is the red message for a check the oracle asked for and did not
+// get. Unlike a capability skip, an environment skip is never a fact about the host:
+// it says a test found its staging absent, and inside the gate the gate is what stages
+// it. Making this informational is what let the kit's own conformance suite go
+// unenforced behind a green verdict, so the posture is unconditional — there is no
+// developer-host exemption to grant, because the missing staging is the gate's own.
+func environmentFailure(tally skipTally) string {
+	if len(tally.environment) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("gate: the oracle staged no environment for %d skipped check(s), so their verdict is absent, not green: %s", len(tally.environment), strings.Join(namedReasons(tally.environment), "; "))
 }
 
 // strict reports whether this run treats an incomplete capability population as red.
@@ -148,6 +174,10 @@ func reportCapabilitySkips(path string, stdout, stderr io.Writer) bool {
 			fmt.Fprintf(stderr, "gate: an unreadable skip log is fatal under %s=1\n", requireCapabilitiesEnv)
 			red = true
 		}
+	}
+	if failure := environmentFailure(tally); failure != "" {
+		fmt.Fprintln(stderr, failure)
+		red = true
 	}
 	if failure := strictFailure(tally); failure != "" {
 		fmt.Fprintln(stderr, failure)

@@ -14,9 +14,9 @@ import (
 )
 
 func TestRootConformance(t *testing.T) {
-	root := os.Getenv("BENCH_CONFORMANCE_ROOT")
+	root := os.Getenv(registry.ConformanceRootEnv)
 	if root == "" {
-		capability.Environment(t, "BENCH_CONFORMANCE_ROOT not set")
+		capability.Environment(t, registry.ConformanceRootEnv+" not set")
 	}
 	h := NewHarness(t)
 	selected, selectedSet := os.LookupEnv(registry.ConformanceChecksEnv)

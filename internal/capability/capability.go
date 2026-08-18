@@ -29,6 +29,7 @@ import (
 type TB interface {
 	Helper()
 	Fatalf(format string, args ...any)
+	Name() string
 	Skip(args ...any)
 }
 
@@ -73,10 +74,14 @@ const (
 	KindEnvironment Kind = "environment"
 )
 
-// Skip is one skip's structured content. Class is empty for KindEnvironment.
+// Skip is one skip's structured content. Class is empty for KindEnvironment. Name is
+// the emitting test, carried because a count cannot tell a reader which assertion went
+// unmade — the gate reports skips long after the test binary that emitted them exited,
+// so the name has to travel on the line or be lost.
 type Skip struct {
 	Kind   Kind
 	Class  Class
+	Name   string
 	Reason string
 }
 
@@ -109,18 +114,23 @@ var stdout io.Writer = os.Stdout
 
 // Render is the one place a skip line is built, newline included. Reason takes the
 // remainder of the line verbatim (no escaping), so a reader need only split the
-// leading kind and class tokens off the front. A class outside the enumerated set is
-// refused rather than formatted: an open vocabulary would let a typo mint a class
-// nothing counts.
+// leading kind, class, and name tokens off the front. A class outside the enumerated
+// set is refused rather than formatted: an open vocabulary would let a typo mint a
+// class nothing counts. An empty or space-carrying name is refused for a narrower
+// reason: name is a fixed-width token in a space-delimited line, and an unnamed skip
+// is exactly the unactionable count this line shape exists to replace.
 func Render(skip Skip) (string, error) {
+	if skip.Name == "" || strings.ContainsAny(skip.Name, " \t") {
+		return "", fmt.Errorf("capability: skip name %q must be a single non-empty token", skip.Name)
+	}
 	switch skip.Kind {
 	case KindCapability:
 		if !skip.Class.valid() {
 			return "", fmt.Errorf("capability: unknown class %q", skip.Class)
 		}
-		return fmt.Sprintf("%s kind=%s class=%s reason=%s\n", linePrefix, skip.Kind, skip.Class, skip.Reason), nil
+		return fmt.Sprintf("%s kind=%s class=%s name=%s reason=%s\n", linePrefix, skip.Kind, skip.Class, skip.Name, skip.Reason), nil
 	case KindEnvironment:
-		return fmt.Sprintf("%s kind=%s reason=%s\n", linePrefix, skip.Kind, skip.Reason), nil
+		return fmt.Sprintf("%s kind=%s name=%s reason=%s\n", linePrefix, skip.Kind, skip.Name, skip.Reason), nil
 	}
 	return "", fmt.Errorf("capability: unknown kind %q", skip.Kind)
 }
@@ -151,6 +161,11 @@ func ParseLine(line string) (Skip, bool) {
 	default:
 		return Skip{}, false
 	}
+	name, rest, ok := cutField(rest, "name")
+	if !ok || name == "" {
+		return Skip{}, false
+	}
+	skip.Name = name
 	reason, ok := strings.CutPrefix(rest, "reason=")
 	if !ok {
 		return Skip{}, false
@@ -208,7 +223,7 @@ func writeSkipLine(t TB, w io.Writer, line string) {
 // vanishing from the line silently.
 func Capability(t TB, class Class, reason string) {
 	t.Helper()
-	line, err := Render(Skip{Kind: KindCapability, Class: class, Reason: reason})
+	line, err := Render(Skip{Kind: KindCapability, Class: class, Name: t.Name(), Reason: reason})
 	if err != nil {
 		t.Fatalf("capability.Capability: %v", err)
 	}
@@ -221,7 +236,7 @@ func Capability(t TB, class Class, reason string) {
 // before skipping, for the same reason Capability does.
 func Environment(t TB, reason string) {
 	t.Helper()
-	line, err := Render(Skip{Kind: KindEnvironment, Reason: reason})
+	line, err := Render(Skip{Kind: KindEnvironment, Name: t.Name(), Reason: reason})
 	if err != nil {
 		t.Fatalf("capability.Environment: %v", err)
 	}

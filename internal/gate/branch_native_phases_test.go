@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 func TestBenchkitPhasesUseBranchNativeDrivers(t *testing.T) {
@@ -32,6 +34,35 @@ func TestBenchkitPhasesUseBranchNativeDrivers(t *testing.T) {
 	if want := raceDriverArgv(); !reflect.DeepEqual(byName["race"].Argv, want) {
 		t.Fatalf("race test argv = %#v, want %#v", byName["race"].Argv, want)
 	}
+	wantEnv := []string{registry.ConformanceRootEnv + "=" + root, registry.ConformanceTierEnv + "=" + string(registry.Dev)}
+	if !reflect.DeepEqual(byName["test"].Env, wantEnv) {
+		t.Fatalf("ordinary test env = %#v, want %#v", byName["test"].Env, wantEnv)
+	}
+}
+
+// TestLinkedRootTestPhaseCarriesNoConformanceEnv holds the materialization rule the
+// race and system phases already follow: a graded root that does not declare the
+// conformance entry test gets no variable its test binaries cannot honor. Dropping the
+// probe and setting the env unconditionally turns this red.
+func TestLinkedRootTestPhaseCarriesNoConformanceEnv(t *testing.T) {
+	kit, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module linked\n\ngo 1.24\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, phase := range BenchkitPhases(root, kit) {
+		if phase.Name != "test" {
+			continue
+		}
+		if phase.Env != nil {
+			t.Fatalf("linked-root test env = %#v, want none", phase.Env)
+		}
+		return
+	}
+	t.Fatal("linked root produced no test phase")
 }
 
 func TestPhaseTableGateRequiresSelectedBinaryRoute(t *testing.T) {

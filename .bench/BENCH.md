@@ -177,4 +177,4 @@ PATH, append the dated line (`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yours
 
 Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`
 and refreshes affected `capture/agent-performance/` scorecards;
-`/bench-what-next` owns the reviewed capture commit.
+`/bench-what-next` owns their reviewed drain and its capture commit.
