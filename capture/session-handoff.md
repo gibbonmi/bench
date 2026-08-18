@@ -2,30 +2,35 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `d884020`, 8 dirty paths, 0 unpushed commits
+Branch: `main` — HEAD `dae4387`, clean tree, 3 unpushed commits
 Spec: `specs/bench-front-door/spec.md` (Status: staged)
-Gate: green at `764af7e` — stale, work tree `d514682`
+Gate: green at `e3f0e62` — stale, work tree `19c0b52`
 
 ## State
 
 **Reviewer override standing for this repo:** the 2026-08 capability audit's own priority
 order (`docs/audits/2026-08-bench-capability/results-fable-high/proposed-roadmap.md`)
 supersedes `ROADMAP.md`'s `## Recommended sequence` until A1–A11 are exhausted; recorded
-in `ROADMAP.md`. A1 and A2 are landed.
+in `ROADMAP.md`. A1 and A2 are landed; A3 (`bench-front-door`) is staged, unstarted.
 
-**A3 spec staged, sign-off given 2026-08-18.** `specs/bench-front-door/spec.md` (42
-stories, 47 rows, seven serial tickets under `tickets/`) is the reviewed build spec;
-decision source is `action-items.yaml` entry A3. Reviewer-visible calls the build may
-still contest are collected in the spec's Further notes (the flagged `decisions: ready`
-state, gate red → `/bench-debug`, inventory into the binary's `help` verb, staged-spec
-severity tie rule, the destination-side "awaiting land" answer). Landed alongside it as a
-light path: the stale-command sweep's `Introduces commands:` allowance
-(`specs/light-path-introduces-commands-allowance/tickets/`), which is what lets a staged
-spec name the phase it ships.
+**`/bench-implement-spec specs/bench-front-door/spec.md --full` was invoked and stopped
+before the first ticket landed.** Sequence: created integration worktree at `dae4387`
+(request `bench-front-door-impl`) → `bench preflight build bench-front-door` green →
+charged ticket `01-extract-route-owner.md` (Line: opus/mid-tier, high effort) to a
+write-delegate three times in a row. All three failed identically on API 529
+(Overloaded) with nothing written to the worktree — same failure mode already recorded
+in this spec's own verification log for the write-spec phase. This is a service
+availability issue, not a diff-owned red; there is nothing to fix in the ticket or spec.
+On asking, the reviewer chose to stop and hand off rather than keep retrying, wait, or
+try a one-off top-tier delegate. The now-unused integration worktree was released
+(`bench worktree release`); `main` is untouched and clean at `dae4387`.
+
+**No decisions were closed or reopened this session.** The spec's five reviewer-visible
+calls (Further notes) are all still open, unchanged from staging.
 
 ## Next command
 
-`/bench-implement-spec specs/bench-front-door/spec.md`
+`/bench-final-check` — the board's leading invocable signal (`git`).
 
 ## Shape
 
