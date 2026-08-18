@@ -44,6 +44,16 @@ func TestAppendSetupReportsOnlyUnadoptedRoots(t *testing.T) {
 	}
 }
 
+func TestAppendSetupStaysQuietWhenBenchPathCannotBeRead(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Symlink(".bench", filepath.Join(root, ".bench")); err != nil {
+		t.Fatal(err)
+	}
+	if got := appendSetup(nil, root); len(got) != 0 {
+		t.Fatalf("unreadable .bench setup row = %#v, want none", got)
+	}
+}
+
 func TestStagedSpecCountUsesFactsStatusReader(t *testing.T) {
 	root := t.TempDir()
 	write := func(path, body string) {

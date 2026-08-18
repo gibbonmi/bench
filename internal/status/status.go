@@ -141,7 +141,13 @@ func SignalsWith(root string, query Query) []Signal {
 
 func appendSetup(rows []row, root string) []row {
 	info, err := os.Stat(filepath.Join(root, ".bench"))
-	if err != nil || !info.IsDir() {
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return rows
+		}
+		return append(rows, row{0, "setup", "no .bench/", "bench setup"})
+	}
+	if !info.IsDir() {
 		return append(rows, row{0, "setup", "no .bench/", "bench setup"})
 	}
 	return rows
