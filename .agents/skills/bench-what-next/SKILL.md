@@ -1,11 +1,10 @@
 ---
 name: bench-what-next
-description: Explicit Codex adapter for the /bench-what-next phase. Use only when the reviewer invokes $bench-what-next; read .agents/commands/bench-what-next.md and follow it.
+description: Renamed Codex adapter for /bench-drain. Read and follow .agents/commands/bench-drain.md.
 disable-model-invocation: true
 ---
 
 # $bench-what-next
 
-Read `.agents/commands/bench-what-next.md` completely and follow it as the active Bench
-phase. The command file is canonical; do not substitute this adapter for the phase
-instructions.
+Renamed to `$bench-drain`. Read `.agents/commands/bench-drain.md` completely and
+follow it as the active Bench phase.

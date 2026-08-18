@@ -255,7 +255,7 @@ func validFutureInput(name string) bool {
 
 func validHarnessPhase(phase string) bool {
 	switch phase {
-	case "/bench-shape-idea", "/bench-what-next":
+	case "/bench-shape-idea", "/bench-drain", "/bench-what-next":
 		return true
 	default:
 		return false

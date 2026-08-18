@@ -55,7 +55,7 @@ branch-agnostic. This line is only the binding.)
   (`<git-dir>/bench-last-gate`, written durably by gate execution) — never a cold gate run. The
   contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
-  pointing at `/bench-what-next`. A stale exact verdict always remains the strong stale
+  pointing at `/bench-drain`. A stale exact verdict always remains the strong stale
   row; there is no path-based reduced-scope softening. Its severity-1 git
   signal reports dirty paths from the named/current checkout while aggregating
   unpushed commits and unique local branches across the repository; severity-2 intent
@@ -64,7 +64,7 @@ branch-agnostic. This line is only the binding.)
   `bench roadmap` → the `ROADMAP.md` index and its `roadmap/FT<n>.md` detail
   owners, one per row, each holding that row's body, `Occurrence:` ledger, and
   `Sources:` line). Capture-and-forget: park an out-of-scope idea,
-  commit to nothing; ideas graduate only through a `/bench-what-next` drain into the
+  commit to nothing; ideas graduate only through a `/bench-drain` drain into the
   working roadmap. The contract (gate-tested in a throwaway repo): `idea` appends one
   dated line and creates the inbox; a no-arg `idea` errors without appending;
   `roadmap` prints the working document plus drain status, or its

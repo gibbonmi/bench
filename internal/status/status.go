@@ -573,7 +573,7 @@ func appendDrain(rows []row, root string) []row {
 		if ideas == 0 && open == 0 && retroCount == 0 {
 			return rows
 		}
-		return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s), %d pending retro(s)", ideas, open, retroCount), "/bench-what-next"})
+		return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s), %d pending retro(s)", ideas, open, retroCount), "/bench-drain"})
 	}
 	var parts []string
 	if ideasFailed {
@@ -591,7 +591,7 @@ func appendDrain(rows []row, root string) []row {
 	} else {
 		parts = append(parts, fmt.Sprintf("%d pending retro(s)", retroCount))
 	}
-	return append(rows, row{4, "drain", strings.Join(parts, ", "), "/bench-what-next"})
+	return append(rows, row{4, "drain", strings.Join(parts, ", "), "/bench-drain"})
 }
 
 // appendStructure adds the structural-debt signal (sev 5) when the violation count is positive.
@@ -676,7 +676,7 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	}
 	merged, dangling, state := roadmapReconcileCounts(root)
 	if state.Failed() {
-		return append(rows, row{10, "roadmap", toon.UnknownCell(roadmap.RoadmapFile, state), "/bench-what-next"})
+		return append(rows, row{10, "roadmap", toon.UnknownCell(roadmap.RoadmapFile, state), "/bench-drain"})
 	}
 	if merged == 0 && dangling == 0 {
 		return rows
@@ -688,7 +688,7 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	if dangling > 0 {
 		details = append(details, Plural(dangling, "row names a retired spec", "rows name a retired spec"))
 	}
-	return append(rows, row{10, "roadmap", strings.Join(details, ", "), "/bench-what-next"})
+	return append(rows, row{10, "roadmap", strings.Join(details, ", "), "/bench-drain"})
 }
 
 // retirementCount counts live folder specs that spec.AwaitsRetirement marks — a merged spec

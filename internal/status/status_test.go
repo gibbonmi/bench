@@ -784,7 +784,7 @@ func TestRenderDirtyLeadsGitOverDrainRow(t *testing.T) {
 	if !strings.HasPrefix(lines[0], "▶ /bench-final-check  (git)") {
 		t.Errorf("lead line = %q, want git action lead", lines[0])
 	}
-	if !strings.Contains(out, "1 idea(s), 0 open learning(s)") || !strings.Contains(out, "/bench-what-next") {
+	if !strings.Contains(out, "1 idea(s), 0 open learning(s)") || !strings.Contains(out, "/bench-drain") {
 		t.Errorf("drain row missing from:\n%s", out)
 	}
 }
@@ -955,7 +955,7 @@ func TestCommandRoutePrintsLeadAndRunnersUp(t *testing.T) {
 
 	want := "next[1]{state,why,command}:\n" +
 		"  gate,red,/bench-debug\n" +
-		"also: git (1 dirty path) → /bench-final-check; drain (1 idea(s), 0 open learning(s), 0 pending retro(s)) → /bench-what-next\n"
+		"also: git (1 dirty path) → /bench-final-check; drain (1 idea(s), 0 open learning(s), 0 pending retro(s)) → /bench-drain\n"
 	if got, code := Command([]string{"--route"}); code != 0 || got != want {
 		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
 	}

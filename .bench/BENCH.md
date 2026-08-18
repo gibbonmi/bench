@@ -14,7 +14,7 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
   `.agents/skills/` (and `.claude/skills/` for Claude Code);
   `.bench/BENCH-reference.md` indexes them.
 - **Commands** are the workflow phases below: `/bench-setup-repo` on adoption,
-  `/bench-what-next` when a drain is pending. `/bench-update-kit`,
+  `/bench-drain` when a drain is pending. `/bench-update-kit`,
   `/bench-assess`, and `craft-synthesis` ship only in the Bench kit repository;
   a linked repo upgrades with `bench upgrade` instead, and the skills index
   marks the rows it does not receive.
@@ -160,7 +160,7 @@ flagging contestable calls. Absent one, spec sign-off is a hard stop.
 deviate, make a judgment call you're unsure about, or catch a should-have-asked
 in hindsight, append one entry to `capture/learnings.md`: what happened, the
 right behavior, and a proposed rule change if any — you capture, I decide.
-`/bench-what-next` verdicts every open entry into roadmap items with my
+`/bench-drain` verdicts every open entry into roadmap items with my
 sign-off. A harness's auto-memory holds user and preference facts; a process or
 judgment learning lands in `capture/learnings.md`, whose reviewed drain is its
 only path in.
@@ -171,10 +171,10 @@ Parking an idea is conversational, never a CLI chore for the reviewer: when the
 reviewer wants to set one aside, or you spot a tangent worth keeping, **you** run
 `bench idea "<text>"`. Offer once, then let it go. Parked ideas land in
 `capture/IDEAS.md` and graduate to the board — an index line in `ROADMAP.md`,
-body and ledger in `roadmap/FT<n>.md` — only through a reviewed `/bench-what-next`
+body and ledger in `roadmap/FT<n>.md` — only through a reviewed `/bench-drain`
 drain, or close by implementation during that same drain. If `bench` isn't on
 PATH, append the dated line (`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yourself.
 
 Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`
 and refreshes affected `capture/agent-performance/` scorecards;
-`/bench-what-next` owns their reviewed drain and its capture commit.
+`/bench-drain` owns their reviewed drain and its capture commit.

@@ -84,7 +84,7 @@ func TestRenderSignalsOrderedMembership(t *testing.T) {
 	s.Signals = []status.Signal{
 		{Severity: 0, Name: "gate", Detail: "SIG-GATE", Action: "fix before commit"},
 		{Severity: 1, Name: "git", Detail: "SIG-GIT", Action: "commit on green"},
-		{Severity: 4, Name: "drain", Detail: "SIG-DRAIN", Action: "/bench-what-next"},
+		{Severity: 4, Name: "drain", Detail: "SIG-DRAIN", Action: "/bench-drain"},
 	}
 	out := Render(s)
 	gate := strings.Index(out, "SIG-GATE")

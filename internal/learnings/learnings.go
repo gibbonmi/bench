@@ -242,7 +242,7 @@ func Command(args []string) (string, int) {
 	}
 	actions := make([]axi.Action, 0, len(entries))
 	for _, entry := range entries {
-		actions = append(actions, axi.HarnessPhase("/bench-what-next", "verdict "+entry.Date+": "+entry.Title))
+		actions = append(actions, axi.HarnessPhase("/bench-drain", "verdict "+entry.Date+": "+entry.Title))
 	}
 	help, err := axi.RenderHelp(actions)
 	if err != nil {

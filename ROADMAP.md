@@ -2,7 +2,7 @@
 
 The working prioritization document: every row is open work, verified against
 the tree; a row leaves when the work ships (spec-retire) or a
-`/bench-what-next` reconcile removes it. Raw capture never lands here — it
+`/bench-drain` reconcile removes it. Raw capture never lands here — it
 goes to `capture/IDEAS.md` and enters only through a reviewed drain. A row for spec'd
 work names its spec path (`specs/<slug>/spec.md`) — that path is what `bench status`
 cross-checks against the tree, so a row that omits it is a visible choice to
@@ -289,7 +289,7 @@ everything below until its active items (A1–A11, A12 is a decision not a build
 exhausted; the rows below stay as the board's contents, not its near-term order. A1 landed
 (`a2914fd5`, `f1135fd6`). A2 (one staleness rule for gate verdicts — status/handoff agree
 with `bench gate`) is next: P0, no dependencies. This note is a standing instruction, not
-a `/bench-what-next` reconcile; the next full drain should fold the audit's ranking into
+a `/bench-drain` reconcile; the next full drain should fold the audit's ranking into
 this section properly (`roadmap-dispositions.yaml` has the row-by-row mapping) rather than
 carry this pointer forward.
 

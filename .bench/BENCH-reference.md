@@ -92,7 +92,8 @@ Codex phase adapters installed by Bench:
 - `$bench-review-implementation` → `.agents/commands/bench-review-implementation.md`
 - `$bench-final-check` → `.agents/commands/bench-final-check.md`
 - `$bench-update-kit` → `.agents/commands/bench-update-kit.md`
-- `$bench-what-next` → `.agents/commands/bench-what-next.md`
+- `$bench-drain` → `.agents/commands/bench-drain.md`
+- `/bench-what-next`, `$bench-what-next` → `.agents/commands/bench-drain.md` (one-release alias)
 - `$bench-assess` → `.agents/commands/bench-assess.md`
 - `$bench-deepen` → `.agents/commands/bench-deepen.md`
 

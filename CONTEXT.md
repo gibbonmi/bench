@@ -53,7 +53,7 @@ cold session reads this first to avoid drifting the vocabulary.
   (`.agents/skills/*/SKILL.md`; `.claude/skills/` mirrors them for Claude Code).
   Reached for when the task matches; not a rule.
 - **command** — a canonical phase of the workflow (`/bench-shape-idea`, `/bench-write-spec`, `/bench-debug`,
-  `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`, plus `/bench-setup-repo`, `/bench-update-kit`, `/bench-what-next`). Not "slash command
+  `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`, plus `/bench-setup-repo`, `/bench-update-kit`, `/bench-drain`). Not "slash command
   template" in prose — command.
 - **roadmap** — the working prioritization document, split between `ROADMAP.md`
   (repo root) and `roadmap/`: assessed open work in priority order, ending in a

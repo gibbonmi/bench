@@ -58,14 +58,14 @@ func TestFirstInvocable(t *testing.T) {
 		{
 			what: "prose ahead of a command",
 			signals: append(append([]Signal{}, prose...),
-				Signal{Severity: 4, Name: "drain", Detail: "1 idea(s)", Action: "/bench-what-next"}),
-			action: "/bench-what-next", wantName: "drain", wantPresent: true,
+				Signal{Severity: 4, Name: "drain", Detail: "1 idea(s)", Action: "/bench-drain"}),
+			action: "/bench-drain", wantName: "drain", wantPresent: true,
 		},
 		{
 			what: "a command leads",
 			signals: []Signal{
 				{Severity: 3, Name: "guards", Detail: "pre-push hook missing", Action: "bench link"},
-				{Severity: 4, Name: "drain", Detail: "1 idea(s)", Action: "/bench-what-next"},
+				{Severity: 4, Name: "drain", Detail: "1 idea(s)", Action: "/bench-drain"},
 			},
 			action: "bench link", wantName: "guards", wantPresent: true,
 		},
@@ -81,9 +81,9 @@ func TestFirstInvocable(t *testing.T) {
 			what: "a compound action naming several steps is not one invocation",
 			signals: []Signal{
 				{Severity: 1, Name: "git", Detail: "7 unpushed commits", Action: "/bench-final-check / push"},
-				{Severity: 4, Name: "drain", Detail: "1 idea(s)", Action: "/bench-what-next"},
+				{Severity: 4, Name: "drain", Detail: "1 idea(s)", Action: "/bench-drain"},
 			},
-			action: "/bench-what-next", wantName: "drain", wantPresent: true,
+			action: "/bench-drain", wantName: "drain", wantPresent: true,
 		},
 		{
 			what:    "a word beginning with bench is not a command",
@@ -130,10 +130,10 @@ func TestRouteForUsesCleanFallbackOnlyForAnEmptyBoard(t *testing.T) {
 
 func TestRouteForTranslatesLeadAndRunnersUpForCodex(t *testing.T) {
 	route := RouteFor(t.TempDir(), []Signal{
-		{Name: "drain", Detail: "1 idea", Action: "/bench-what-next"},
+		{Name: "drain", Detail: "1 idea", Action: "/bench-drain"},
 		{Name: "specs", Detail: "1 staged spec", Action: "/bench-implement-spec"},
 	}, "codex")
-	if got, code := renderRoute(route); code != 0 || got != "next[1]{state,why,command}:\n  drain,1 idea,$bench-what-next\nalso: specs (1 staged spec) → $bench-implement-spec\n" {
+	if got, code := renderRoute(route); code != 0 || got != "next[1]{state,why,command}:\n  drain,1 idea,$bench-drain\nalso: specs (1 staged spec) → $bench-implement-spec\n" {
 		t.Fatalf("codex route = (%q, %d)", got, code)
 	}
 }

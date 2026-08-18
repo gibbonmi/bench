@@ -37,10 +37,10 @@ one keeps paying until it stops finding rot.
 re-verifies a *doc* against the tree. `CONTEXT.md`, `projects/<name>.md`, and `docs/adr/`
 are asserted once and trusted forever, which sits badly with invariant 3 — we tell every
 session to write for the teammate who just walked in, and never check that what that
-teammate would read is still true. `/bench-what-next` already reconciles `ROADMAP.md`
+teammate would read is still true. `/bench-drain` already reconciles `ROADMAP.md`
 rows against the tree; this is the same move aimed at a wider target.
 
-**How I'd land it.** A step in `/bench-what-next`, not a new phase — the drain is
+**How I'd land it.** A step in `/bench-drain`, not a new phase — the drain is
 already the scheduled maintenance surface and already has a batch-diff verdict
 mechanism to hang corrections on. Sample two claims from the doc set
 (`CONTEXT.md` terms, `projects/<name>.md` seams, ADR statements), verify each against
@@ -263,7 +263,7 @@ be entirely sufficient — in which case this drains as a one-line clarification
 **How I'd land it, if the gap is real.** Say so in Capture: technical observations go to
 `bench idea` with a `debt:` prefix, and the drain routes prefixed lines to the roadmap's
 debt tier rather than the feature sequence. No new file. bench already has the strictly
-better half of RepoResident's loop — `/bench-what-next` verdicts every entry in a
+better half of RepoResident's loop — `/bench-drain` verdicts every entry in a
 reviewed batch diff, where `maintain.md` lets the agent promote and drop flags on its own
 authority, which violates our rule that the agent captures and the reviewer decides.
 

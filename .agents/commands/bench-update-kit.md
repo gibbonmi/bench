@@ -19,7 +19,7 @@ the proposal. The recommended next command is `/bench-final-check` after accepte
 changes are applied; otherwise no build-phase command follows a rejected proposal.
 
 Bring *others'* improvements into the kit. This is the external, version-driven
-input — the counterpart to the internal path, where `/bench-what-next` drains your
+input — the counterpart to the internal path, where `/bench-drain` drains your
 own usage journal into roadmap items built under `craft-synthesis`. It
 **proposes; you merge.**
 

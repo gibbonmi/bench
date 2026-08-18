@@ -252,7 +252,7 @@ ul { margin: 0; padding-left: 1.25rem; font-size: .9rem; }
   <pre>{{.Sequence}}</pre>
   {{end}}
   {{else}}
-  <p class="empty">No ROADMAP.md — run /bench-what-next to create the working roadmap.</p>
+  <p class="empty">No ROADMAP.md — run /bench-drain to create the working roadmap.</p>
   {{end}}
 </section>
 
