@@ -75,13 +75,18 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 		t.Fatalf("build bench: %v\n%s", err, out)
 	}
 
-	run := func(path string, args ...string) string {
+	command := func(path string, args ...string) *exec.Cmd {
 		t.Helper()
 		cmd := exec.Command(path, args...)
 		cmd.Env = cleanEnv
 		if path != binary {
 			cmd.Env = append(capability.WithoutEnvironment(runbinary.WithEnv(cleanEnv, binary), "BENCH_KIT"), "BENCH_KIT="+root)
 		}
+		return cmd
+	}
+	run := func(path string, args ...string) string {
+		t.Helper()
+		cmd := command(path, args...)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("%s %v: %v\n%s", path, args, err, out)
@@ -115,6 +120,21 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 		if wrapperHelp := run(wrapper, spelling); wrapperHelp != binaryHelp {
 			t.Errorf("wrapper %s = %q, binary help = %q", spelling, wrapperHelp, binaryHelp)
 		}
+	}
+
+	cmd := command(wrapper, "help", "extra")
+	out, err := cmd.CombinedOutput()
+	exit, ok := err.(*exec.ExitError)
+	if !ok || exit.ExitCode() != 2 || string(out) != "usage: bench help (unknown argument: extra)\n" {
+		t.Fatalf("wrapper help extra = (output %q, error %v), want help usage and exit 2", out, err)
+	}
+}
+
+func TestRunHelpRejectsTrailingArguments(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"help", "extra"})
+	if code != 2 || stdout.String() != "usage: bench help (unknown argument: extra)\n" || stderr.Len() != 0 {
+		t.Fatalf("help extra = (stdout %q, stderr %q, exit %d), want help usage on stdout and exit 2", stdout.String(), stderr.String(), code)
 	}
 }
 

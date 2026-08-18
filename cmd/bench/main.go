@@ -189,7 +189,11 @@ const helpInventory = `bench — Pocock pipeline meets Kun Chen substrate, gated
   bench version              print the installed Bench version (os/arch)
 `
 
-func helpCommand(c Command, _ []string) int {
+func helpCommand(c Command, args []string) int {
+	if len(args) != 0 {
+		fmt.Fprintln(c.Stdout, toon.Usage("bench help", args[0]))
+		return 2
+	}
 	fmt.Fprint(c.Stdout, helpInventory)
 	return 0
 }

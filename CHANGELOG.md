@@ -8,6 +8,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Bare wrapper and binary invocations now render the `bench status --route`
+  recommendation, `/bench` and `$bench` follow that route, help spellings show the
+  command inventory, and capture maintenance is now `/bench-drain` (`$bench-drain`)
+  with the former phase name retained as a one-release alias.
 - The roadmap is now a split board: `ROADMAP.md` keeps its section prose and exactly
   one heading line per row with no body, and each row's body, `Occurrence:` ledger,
   and `Sources:` line move to `roadmap/FT<n>.md`, so a cold read costs the index
