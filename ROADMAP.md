@@ -155,10 +155,12 @@ they stay separate builds, but they read and prioritize as one theme.
 ## Reds the diff doesn't own — inheritance, load, and harness defects
 
 Five rows, one failure class: a red that answers for something other than the
-diff in front of the gate — an inherited baseline, machine contention, a
-literal deadline, a harness defect, a flaky oracle.
+diff in front of the gate — an inherited baseline, machine contention and a
+flaky oracle, a literal deadline, a harness defect.
 
 **FT141 (MEDIUM) — `bench gate pin` records red verdicts, so inherited reds stop reading as caused.**
+
+**FT223 (LOW, decision required) — `bench commit`'s inherited-verdict refusal misreads as a red gate.**
 
 **FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate quiet check.**
 

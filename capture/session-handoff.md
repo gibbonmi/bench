@@ -2,74 +2,62 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `fb35cce`, clean tree, 3 unpushed commits
-Spec: none staged.
-Gate: green at `ad4832b` — current
+Branch: `main` — HEAD `f1135fd6`, working tree carries the reviewed `/bench-what-next` drain batch, about to land as one commit
+Spec: none staged; `specs/` is empty
+Gate: green at `f1135fd6` (fresh, via the landing `bench commit` itself)
 
 ## State
 
-The 2026-08 capability audit is reconciled and its worktrees are retired.
-Results live at `docs/audits/2026-08-bench-capability/results-fable-high/`;
-`final-reconciliation.md` (§A, §N, §O) and `next-ticket.md` are the durable
-reads. The three audit worktrees (`bench-audit-fable`, `-opus`, `-sol`) and
-their `audit/*` branches are gone, discarded through `bench worktree clean`
-with recovery refs retained under `refs/bench/recovery/`. One unlanded delta
-died with them: the fable tree also turned `design`, `artifact-diagramming`,
-and `code-review` off in `.claude/settings.json`'s `skillOverrides`. Not
-landed — reviewer's call whether those three should be hidden in this repo.
+`/bench-debug` found and fixed a gate defect the drain's own landing attempt
+surfaced: `bench commit`'s prospective authorization runs `TestRootConformance`
+against an ephemeral `git worktree add` + `read-tree` checkout that never
+carries `dist/` (gitignored), and `package-core-guard`'s `checkPackageFiles`
+demanded it exist unconditionally — a check meant for a built release payload,
+newly reachable on every ordinary commit since A1 wired the conformance
+registry into the dev-gate test phase. Every `bench commit` was red for this
+reason, independent of diff content. Fixed in `f1135fd6`
+(`internal/conformance/package_core_checks_test.go`,
+`internal/conformance/fixture_bite_test.go`): a missing, gitignored `files[]`
+entry is exempt below ship tier (using the `tier` parameter
+`checkPackageCoreAndGuards` already threaded but never used), ship tier keeps
+the strict check, and a genuinely missing tracked entry still flags
+everywhere. New regression test:
+`TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier`. Built in an
+isolated `bench worktree create` assignment, gated green there, then
+fast-forwarded onto `main` (the assignment predates a spec and
+`bench worktree land` requires one, so the merge was a manual
+`git merge --ff-only`, not a Bench-owned landing verb — worth a roadmap row if
+this recurs). Assignment released and removed.
 
-Audit decisions that stay closed: incremental strategy; no work-state store,
-compiler, or claim graph (A12); `/bench` is an adapter over
-`bench status --route`; FT100 waits for the measurement harness (A11).
+`/bench-what-next` separately reconciled the roadmap against the tree
+(nothing shipped since the last drain beyond the already-annotated FT120/A1
+work; `specs/` and `spec_history` are both empty, so no `bench spec retire`
+was owed) and drained the one open capture source:
 
-**Audit action A1 is landed** (`a2914fd5`), from the light-path ticket at
-`specs/light-path-live-root-conformance/tickets/grade-the-live-root-inside-the-dev-gate.md`.
-Gate, commit, and capture are all done — the board still routes to
-`/bench-final-check` only because the commits are unpushed, and the push is the
-reviewer's. `bench gate`'s ordinary test phase
-now carries the graded root and the dev tier to `TestRootConformance`, so the
-conformance registry's 29 checks grade the live tree on every gate rather than
-only under `prep-release`. An environment-class skip observed by the oracle is
-red, not a footer count, and every skip line names the emitting test. Ten
-diagnostics were red at HEAD behind a green gate; all ten are disposed, plus an
-eleventh the fix exposed (the `BENCH-reference.md` anchor needle itself carried
-the removed `spec build` token its own sweep forbids).
+- `capture/IDEAS.md` was already empty; `capture/retros/` was already empty.
+- `capture/learnings.md`'s one open entry (`bench commit` refused twice with
+  `prospective authorization refused: inherited`, printing a misleading
+  `gate: red`) reproduces FT6's own 2026-08-12 graduation trigger — a second
+  refusal through `bench commit` itself — so it graduated out of FT6's parked
+  tier into a new decision-required row, `roadmap/FT223.md`: reviewer chooses
+  between rewording the refusal in operator terms (name `bench gate --fresh`,
+  stop printing `gate: red` for a partial verdict) or having `bench commit`
+  escalate to a fresh prospective gate itself instead of refusing.
+- Caught in the same pass: `## Reds the diff doesn't own` had drifted to
+  "Four rows" against five listed rows before FT223 landed; corrected, and
+  the section is genuinely five rows again with FT223 added.
 
-Three calls in that commit are post-hoc veto surface:
+`## Recommended sequence` is unchanged — FT223 is LOW severity and does not
+outrank the existing top three (FT100, FT207, FT213).
 
-- The `.agents/commands/bench-implement-spec.md` prose budget went 60 → 75 in
-  `projects/benchkit.md`. The file was at exactly 60 and the restored
-  `## Entry orientation` / `## Exit handoff` headings do not fit; 75 matches its
-  sibling `bench-write-spec.md` at 73. The alternative was cutting prose the
-  `fa4e1f02` slimming had already chosen to keep.
-- `bounds.CanaryInnerWidth` is retired rather than rehomed. Its only consumer,
-  `internal/canary/canary.go`, was deleted by `3701c4a0` with the parallel
-  fixture sweep, and nothing replaced the arithmetic. The decision record already
-  reaches the same place: `decisions/cost-follows-project-size.md` #3 answers
-  "worker-width policy and `CanaryInnerWidth` interaction: n/a — no fan-out"
-  (reviewer, 2026-07-26). The rejected fan-out is why nothing consumed the bound,
-  so this retirement follows that decision rather than reopening it. Its two other
-  surviving mentions — that map and `decisions/assets/gate-pipeline-fixture-inventory.md`
-  — are historical record, and the fixture names that asset lists are not live
-  fixtures (`bench canary` holds at 233 bindings).
-- `decisions/spec-build-review-gate-cadence.md`'s two dangling `Sources` rows
-  now point at `CHANGELOG.md` and `internal/landing/landing.go`. The larger
-  question is untouched and open: that map is `Status: shaping` for a
-  provisional spec-build lifecycle the tree deleted wholesale, so whether it is
-  still live work belongs in a `/bench-what-next` drain.
-
-Next by the audit's own ranking is **A2** (the verdict reader — changes what the
-dashboard reports), then **A3** (`/bench` router), both in
-`results-fable-high/action-items.yaml`. A1 was sequenced first so A3's new phase
-file, rename, and adapters land graded rather than unenforced.
-
-Standing repo condition, not this session's doing: `bench status` reports the
+Standing repo condition, not this pass's doing: `bench status` reports the
 `pre-push` hook missing (`bench link` installs it) and 62 `bench structure`
 issues.
 
 ## Next command
 
-`/bench-final-check` — the board's leading invocable signal (`git`).
+`/bench-final-check` — the board's leading invocable signal (`git`), once this
+batch and the prior unpushed commits are ready to land together.
 
 ## Shape
 
