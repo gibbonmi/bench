@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `18c7c212`, clean tree, pushed through `f1135fd6`; `036c1761` and later are unpushed
+Branch: `main` — HEAD `2915fcc0`, clean tree, 3 unpushed commits
 Spec: none staged; `specs/` is empty
-Gate: green at `18c7c212` (fresh, via the landing `bench commit` itself)
+Gate: green at `2915fcc0` (fresh, via the landing `bench commit` itself)
 
 ## State
 
@@ -16,50 +16,38 @@ items (A1–A11; A12 is a decision, not a build) are exhausted. This is recorded
 in `ROADMAP.md` itself, not just here.
 
 A1 (live-root conformance in the dev gate) is landed — `a2914fd5` plus the
-follow-up gate-defect fix `f1135fd6` (a prospective/composed-tree checkout
-never carries the gitignored `dist/` `package.json` `files[]` entry;
-`package-core-guard` now exempts it below ship tier). **A2 is next, not yet
-started** — a prior attempt in this session edited
-`internal/gate/verdict.go` and was explicitly reverted at the reviewer's
-request to run in a fresh session instead; nothing of that attempt survives
-on disk.
+follow-up gate-defect fix `f1135fd6`. **A2 (one staleness rule for gate
+verdicts) is landed** — `2915fcc0`. `inspectSubjectAt` now grades tree/oracle
+drift via one `driftReason` derivation ahead of the record's own status, and
+`Inspection.Drifted` carries that out; `status.GateVerdict` marks a drifted
+record stale whatever verdict it carries, and `appendGateInfo` checks `Stale`
+before `Status == "red"/"timeout"`. `handoff`'s `gateField` needed no change —
+it already deferred staleness entirely to `status.GateVerdict.Stale`.
+Verified independently (not just the delegate's claim): full `bench gate
+--fresh` green in the delegate's worktree and again after fast-forwarding
+main; the green@T0→red@T1→revert→T0 sequence re-run end-to-end against a
+freshly built binary in a separate throwaway worktree, confirming `bench
+status` now reports `stale (gated tree …, work tree …) → re-run the gate`
+and `bench handoff` reports `Gate: red at \`…\` — stale, work tree \`…\`` —
+never a bare "red" or a false "— current" for a drifted record.
 
-**A2 — one staleness rule for gate verdicts** (P0, no dependencies, audit
-estimate ~20 lines + test). Full spec:
+**A3 is next** — the `/bench` front door (`bench status --route`,
+`/bench-drain` rename, staged-spec/un-adopted signals). Both its dependencies
+(A1, A2) are now landed. Full spec:
 `docs/audits/2026-08-bench-capability/results-fable-high/action-items.yaml`,
-entry `id: A2`.
-
-- **Problem:** `internal/gate/verdict.go`'s `inspectSubjectAt` checks
-  `rec.Status != "green"` (line ~218) and returns *before* checking
-  `rec.Tree != s.Tree` (tree drift) or `rec.Oracle != s.Oracle`. So a red
-  verdict recorded against a tree the working tree has since moved away from
-  (e.g. green@T0 → red@T1 → revert→T0) is reported as a red for the *current*
-  tree, when it's really drift — the record doesn't describe T0 at all.
-- **`internal/status/status.go`'s `GateVerdict`** compounds this:
-  `Stale` is defined only when `in.Status == "green"` (`nonReusableGreen`), so
-  a drifted red never gets marked stale and `appendGateInfo` reports
-  "red: fix before commit" unconditionally on `gv.Status == "red"`.
-- **Proposed fix** (per the audit, worth re-deriving fresh rather than trusting
-  verbatim): reorder `inspectSubjectAt` to check tree/oracle drift before the
-  status branch; extend `GateVerdict`'s `Stale` derivation to cover a drifted
-  record of any status, not just green.
-- **Acceptance criteria** (from action-items.yaml, authoritative): the
-  green@T0→red@T1→revert→T0 sequence yields "gate green (reused)" or
-  "stale — re-run", never "red"; the handoff pin block never writes a red for
-  a tree the evidence store holds green; a regression test in
-  `internal/gate` or `internal/status` bites when either fix is reverted.
-- **Non-goals:** no second verdict store; no change to the evidence key or
-  reuse semantics.
+entry `id: A3`. Priority P1, medium complexity (one flag, two new status
+signals, action normalization, two thin harness adapters, one rename touching
+anchors/tests — mitigated by A1's conformance coverage). Read the full entry
+before starting; it is not summarized further here to avoid a second
+derivation that can drift from the source.
 
 ## Next command
 
-Fresh session. Recommended: Sonnet orchestrates, delegates the implementation
-itself to an Opus subagent (write-delegate, isolated worktree per
-`craft-delegate`), Sonnet handles the line declaration, gate, commit, and this
-handoff's close. `/bench-debug` is the right phase — A2 is a defect in
-`inspectSubjectAt`/`GateVerdict`, not new-feature work, and the audit already
-supplies the reproduction shape (green@T0→red@T1→revert→T0); build the Phase 1
-repro loop from that before touching either file.
+Fresh session. `/bench-write-spec` is the right phase — A3 is genuinely
+multi-seam (status signals, a new flag, two harness adapters, a rename) and
+crosses the light-path threshold in `.bench/BENCH.md`, unlike A1/A2 which were
+single-seam defects. Read `action-items.yaml`'s A3 entry and
+`proposed-roadmap.md` for the full shape before drafting stories.
 
 ## Shape
 
