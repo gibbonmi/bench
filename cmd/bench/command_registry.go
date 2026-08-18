@@ -29,6 +29,11 @@ type commandAXIDisposition struct {
 
 var axiApprovedRoot = commandAXIDisposition{root: true}
 
+var commandAliases = map[string]string{
+	"--help": "help",
+	"-h":     "help",
+}
+
 func axiApprovedChildren(children ...string) commandAXIDisposition {
 	return commandAXIDisposition{children: children}
 }
@@ -74,7 +79,11 @@ func (c Command) Run(args []string) int {
 	if len(args) == 0 {
 		args = []string{"status", "--route"}
 	}
-	definition, ok := commandByName(args[0])
+	name := args[0]
+	if canonical, ok := commandAliases[name]; ok {
+		name = canonical
+	}
+	definition, ok := commandByName(name)
 	if !ok {
 		fmt.Fprintf(c.Stderr, "bench: unknown subcommand: %q\n", args[0])
 		return 2

@@ -65,12 +65,16 @@ func TestHelpRendersCommandRegistryRows(t *testing.T) {
 		},
 	}}
 
-	var stdout bytes.Buffer
-	if code := (Command{Stdout: &stdout}).Run([]string{"help"}); code != 0 {
-		t.Fatalf("help exit = %d, want 0", code)
-	}
-	if want := "bench test inventory\n  bench example  prove the registry owns this row\n"; stdout.String() != want {
-		t.Fatalf("help stdout = %q, want registry rows %q", stdout.String(), want)
+	for _, spelling := range []string{"help", "--help", "-h"} {
+		t.Run(spelling, func(t *testing.T) {
+			var stdout bytes.Buffer
+			if code := (Command{Stdout: &stdout}).Run([]string{spelling}); code != 0 {
+				t.Fatalf("%s exit = %d, want 0", spelling, code)
+			}
+			if want := "bench test inventory\n  bench example  prove the registry owns this row\n"; stdout.String() != want {
+				t.Fatalf("%s stdout = %q, want registry rows %q", spelling, stdout.String(), want)
+			}
+		})
 	}
 }
 
@@ -137,6 +141,9 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 		t.Fatalf("binary help retained stale canary execution wording:\n%s", binaryHelp)
 	}
 	for _, spelling := range []string{"help", "--help", "-h"} {
+		if spellingHelp := run(binary, spelling); spellingHelp != binaryHelp {
+			t.Errorf("binary %s = %q, binary help = %q", spelling, spellingHelp, binaryHelp)
+		}
 		if wrapperHelp := run(wrapper, spelling); wrapperHelp != binaryHelp {
 			t.Errorf("wrapper %s = %q, binary help = %q", spelling, wrapperHelp, binaryHelp)
 		}
