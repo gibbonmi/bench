@@ -68,3 +68,27 @@ currently implies the source is fine and the landing verb disagrees. The
 abbreviated-SHA case is a smaller separate fix: `land` should either accept what
 `git rev-parse` accepts or say that it wants full SHAs, rather than reporting a
 mismatch.
+
+## 2026-08-19 — an ownership fence that lists a file but not its paired golden reds preflight for a correct edit [open]
+
+**What happened.** Twice in one session. FT234 ticket 01 fenced `cmd/bench/main.go`
+but not `cmd/bench/main_test.go`, which holds the hand-written help-inventory
+golden. Advertising the new `reclaim` verb in the `worktree --help` row is
+correct and required, and it necessarily changes the golden — so
+`bench preflight build` went red with `not authorized by any ownership fence:
+cmd/bench/main_test.go` on a diff that was right. The FT226 entry above is the
+same class with a different paired path (`capture/session-handoff.md`, which
+every phase close writes).
+
+**Right behavior.** When a spec fences a file that has a paired expectation the
+tree maintains by hand — a golden, an inventory fixture, an anchor registry — fence
+the pair, not the file. The write delegate should also report a red preflight
+rather than describing its diff as clean; this one did not, and the coordinator
+caught it only by running preflight independently.
+
+**Proposed rule change.** `craft-spec`'s fence rule gains one sentence: a fenced
+file's hand-maintained paired expectation is fenced with it, with the help-inventory
+golden and the session handoff as the two standing examples. Guidance, not
+enforcement — `bench preflight` already catches the violation cheaply and
+precisely, so the cost of the current state is one red preflight and a two-line
+spec edit, which does not justify teaching preflight to infer pairings.
