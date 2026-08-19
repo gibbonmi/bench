@@ -26,6 +26,10 @@ type ResumeResult struct {
 	Reconciled     int
 	PrunedBranches int
 	Orphans        []OrphanCandidate
+	// ReclaimableKeys counts the pool keys `bench worktree reclaim` would target. It is
+	// the same predicate that command plans with, so the ambient number and the verb's
+	// target count cannot disagree. Resume reports it and removes nothing.
+	ReclaimableKeys int
 }
 
 // OrphanCandidate names an assignment the sweep judged abandoned while its worktree is

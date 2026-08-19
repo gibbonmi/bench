@@ -35,6 +35,11 @@ branch-agnostic. This line is only the binding.)
   integration source. Semantic review binds its frozen base and tip;
   `bench worktree land` composes and gates that pair on the destination, and its
   published commit owns the spec's `Status: implemented` flip.
+  `bench worktree reclaim` is the one reader of the `$BENCH_HOME/worktrees` pool
+  parent: bare it plans reclaimable keys and removes nothing, and
+  `--apply <fingerprint>` removes exactly what that plan named. It owns the single
+  reclaimability predicate; `bench resume-clean` counts through that same predicate,
+  reports the count and the verb, and never removes a pool key itself.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench roadmap`, and `bench worktree list`, and the
   shared flat-table TOON emitter behind them). The agent-facing read-only

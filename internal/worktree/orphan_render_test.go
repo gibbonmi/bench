@@ -1,8 +1,12 @@
 package worktree
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
+	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"unicode"
@@ -119,4 +123,109 @@ func TestResumeSummaryCapsListings(t *testing.T) {
 	requireTest(t, len(atCap) == 4, "summary exactly at the cap emitted %d lines, want 4:\n%s", len(atCap), strings.Join(atCap, "\n"))
 	requireTest(t, !strings.Contains(strings.Join(atCap, "\n"), " more"),
 		"a listing exactly at the cap claims withheld records:\n%s", strings.Join(atCap, "\n"))
+}
+
+// resumeReclaimableCount reads the count back out of the rendered resume summary, which
+// is the only number an operator ever sees. Reading the struct field instead would grade
+// the count against itself rather than against what was reported.
+func resumeReclaimableCount(t *testing.T, summary string) int {
+	t.Helper()
+	match := regexp.MustCompile(`pool: (\d+) reclaimable keys`).FindStringSubmatch(summary)
+	if match == nil {
+		return 0
+	}
+	count, err := strconv.Atoi(match[1])
+	mustNoError(t, err)
+	return count
+}
+
+// planReclaimableCount reads the reclaimable column out of the plan's aggregate row, so
+// the comparison is against what `bench worktree reclaim` actually advertises as its
+// target count rather than against a second call of the predicate from the test.
+func planReclaimableCount(t *testing.T, out string) int {
+	t.Helper()
+	match := regexp.MustCompile(`(?m)^\s+\d+,(\d+),\d+,"?[0-9a-f]{64}"?$`).FindStringSubmatch(out)
+	requireTest(t, match != nil, "plan carries no aggregate row: %q", out)
+	count, err := strconv.Atoi(match[1])
+	mustNoError(t, err)
+	return count
+}
+
+func mustResumeClean(t *testing.T) (string, int) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	requireTest(t, code == 0, "resume-clean code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	return stdout.String(), code
+}
+
+// plantHostilePool fills a pool with the shapes the predicate must separate, plus the
+// current repository's own empty key, which is excluded before the predicate runs.
+func plantHostilePool(t *testing.T, pool, root string) {
+	t.Helper()
+	plantDeadChild(t, pool, "dead-key", "wt")
+	plantDeadChild(t, pool, "another-dead-key", "wt")
+	mustMkdirAll(t, filepath.Join(pool, "empty-key"), 0o700)
+	plantLiveChild(t, pool, "live-key", "wt")
+	mustWrite(t, filepath.Join(pool, "stray-key-file"), []byte("mine\n"), 0o644)
+	mustMkdirAll(t, filepath.Join(pool, filepath.Base(Pool(canonicalRoot(root)))), 0o700)
+}
+
+// [RS1] The debris is invisible without a line that both counts it and names the verb.
+// A resume that reports the count but not the command leaves the operator hunting for a
+// verb; one that prints the line over a clean pool trains them to ignore it.
+func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testing.T) {
+	summary := renderResumeSummary(ResumeResult{ReclaimableKeys: 2})
+	requireTest(t, strings.Contains(summary, "pool: 2 reclaimable keys") && strings.Contains(summary, "bench worktree reclaim"),
+		"resume summary does not count the reclaimable keys and name the verb:\n%s", summary)
+
+	clean := renderResumeSummary(ResumeResult{})
+	requireTest(t, !strings.Contains(clean, "reclaim"),
+		"resume summary advertises reclamation over a pool with nothing to reclaim:\n%s", clean)
+}
+
+// [RS3] The ambient number is the one an operator trusts without re-checking, so it has to
+// be the verb's own target count. A second walk of the pool would drift from the predicate
+// the command plans with, and the drift would only show up as a plan that named a
+// different set than resume promised.
+func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
+	t.Run("hostile pool", func(t *testing.T) {
+		pool, root := newReclaimPool(t)
+		plantHostilePool(t, pool, root)
+
+		summary, _ := mustResumeClean(t)
+		plan, code := mustReclaim(t)
+		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
+		want := planReclaimableCount(t, plan)
+		requireTest(t, want == 3, "the hostile pool plans %d reclaimable keys, want the two dead and the empty one: %q", want, plan)
+		requireTest(t, resumeReclaimableCount(t, summary) == want,
+			"resume reported %d reclaimable keys, the plan targets %d:\n%s\n%s", resumeReclaimableCount(t, summary), want, summary, plan)
+	})
+	t.Run("clean pool", func(t *testing.T) {
+		pool, root := newReclaimPool(t)
+		plantLiveChild(t, pool, "live-key", "wt")
+		mustMkdirAll(t, filepath.Join(pool, filepath.Base(Pool(canonicalRoot(root)))), 0o700)
+
+		summary, _ := mustResumeClean(t)
+		plan, code := mustReclaim(t)
+		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
+		want := planReclaimableCount(t, plan)
+		requireTest(t, want == 0, "the clean pool plans %d reclaimable keys, want none: %q", want, plan)
+		requireTest(t, resumeReclaimableCount(t, summary) == want,
+			"resume reported %d reclaimable keys over a clean pool:\n%s", resumeReclaimableCount(t, summary), summary)
+	})
+}
+
+// [RS2] Resume runs unattended at session start, outside any tree the gate observes. It
+// reports the pool and never touches it, so the whole recursive listing has to survive a
+// resume byte-identical — including the keys it just counted as reclaimable.
+func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
+	pool, root := newReclaimPool(t)
+	plantHostilePool(t, pool, root)
+	before := poolListing(t, pool)
+
+	summary, _ := mustResumeClean(t)
+	requireTest(t, resumeReclaimableCount(t, summary) > 0, "the fixture pool reported nothing reclaimable:\n%s", summary)
+	requireTest(t, poolListing(t, pool) == before,
+		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
 }

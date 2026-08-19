@@ -369,6 +369,9 @@ func renderResumeSummary(result ResumeResult) string {
 	if result.Retained[ReasonLanded] > 0 {
 		summary.WriteString("landed: bench worktree clean --landed (plans only; re-run with --apply <fingerprint> to remove)\n")
 	}
+	if result.ReclaimableKeys > 0 {
+		fmt.Fprintf(&summary, "pool: %d reclaimable keys; bench worktree reclaim (plans only; re-run with --apply <fingerprint> to remove)\n", result.ReclaimableKeys)
+	}
 	listCapped(&summary, len(result.Orphans), func(i int) string { return orphanLine(result.Orphans[i]) })
 	return summary.String()
 }

@@ -351,6 +351,13 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 		return ResumeResult{}, fmt.Errorf("worktree discovery failed: %w", err)
 	}
 	result := ResumeResult{Retained: map[CleanupReason]int{}}
+	// The pool count is a report, never an action: reclamation is the OrphanCandidate
+	// posture, where the sweep names the debris and the explicit command acts on it. A
+	// pool this process cannot read leaves the count at zero rather than failing a resume
+	// whose other work is unaffected — the verb itself reports that failure properly.
+	if plan, planErr := planPoolReclaim(root); planErr == nil {
+		result.ReclaimableKeys = plan.reclaimableCount()
+	}
 	result.SweptRefs, result.Reconciled, err = reconcileLifecycleDebris(root, registered)
 	if err != nil {
 		return result, err
