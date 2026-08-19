@@ -132,6 +132,14 @@ coverage map; a class skipped here returns as a regression.
   the *tracked* configuration, and decide per field whether it excludes its own
   write or states the post-write truth — an untracked fixture holds the tree
   still and passes either way
+- a path read out of a file, which is not evidence about anything until it is
+  resolved the way its writer resolves it. A git worktree's `.git` pointer may
+  carry a relative `gitdir:`, which git resolves against the pointer's own
+  directory; statting it against the process working directory answers a
+  question about a different path, and a command that treats the resulting
+  absence as proof will act on live data. Trimming is the same trap — a path may
+  legitimately end in a space. Decide per field whether a value is absolute, and
+  treat unresolvable as unknown rather than as absent
 - hand-edited files whose last line lacks a trailing newline
 - absent file vs present-but-empty file (distinct behaviors, both asserted)
 - special files in any discovered path — script discovery, control-record reads,
