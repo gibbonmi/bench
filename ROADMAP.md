@@ -26,10 +26,8 @@ means the repository-controlled compliance assessment.
 ## Next — the 2026-08 capability audit's active portfolio
 
 The audit's remaining action items, now board rows rather than an external
-pointer. A1, A2, and A3 landed; these four are what is left of the portfolio
+pointer. A1, A2, A3, and A6 landed; these three are what is left of the portfolio
 that is actionable today. The `## Recommended sequence` draws from here first.
-
-**FT226 (HIGH) — kit tests stop writing into the operator's real `BENCH_HOME`.**
 
 **FT227 (HIGH) — adoption smoke: a newly adopted repository's scaffolded gate goes green.**
 
@@ -39,7 +37,7 @@ that is actionable today. The `## Recommended sequence` draws from here first.
 
 ## Features, in priority order
 
-**FT234 (HIGH) — a pool key whose source repository is gone can be reclaimed.**
+**FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
 
@@ -288,6 +286,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT226: kit tests stop writing into the operator's real `BENCH_HOME`. Highest severity actionable row — the only one whose defect damages the operator's own machine, and it has no dependencies.
-2. `/bench-write-spec` — FT227: adoption smoke, so a newly adopted repository's scaffolded gate can go green. No dependencies; it is the outcome evidence adoption currently lacks.
-3. `/bench-write-spec` — FT228: restore `/bench-debug`'s constraints, settle the Codex trigger, check Claude parity. Unblocked, and it folds in the reproduction-economics rule and leaves FT24 parked as the upstream re-check.
+1. `/bench-write-spec` — FT227: adoption smoke, so a newly adopted repository's scaffolded gate can go green. Highest severity actionable row with no dependencies, and it is the outcome evidence adoption still lacks.
+2. `/bench-write-spec` — FT228: restore `/bench-debug`'s constraints, settle the Codex trigger, check Claude parity. Unblocked; it folds in the reproduction-economics rule and leaves FT24 parked as the upstream re-check.
+3. `/bench-shape-idea` — FT225: decide whether a review may amend the spec in the source it reviewed. Decision-required and now the most-evidenced blocker in the landing path — every reviewed landing that amends its spec pays a hand-committed detour, and FT233's remedy wording depends on which way this goes.

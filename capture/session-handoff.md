@@ -1,41 +1,38 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`; the build runs in the integration worktree with label
-`ft226 implementation` (assignment `6a22e66f47a693f42e306c0ec030e1ba`, request
-`ft226-build`) — address it by label, never by a pasted path
-Branch: `main` — the source's frozen review base is `b2d3d625`, which a concurrent
-session has since moved past
-Spec: `specs/ft226-test-home-isolation/spec.md` — `Status: staged`
-Phase reached: `/bench-implement-spec --full`, three tickets and the review repair
-pass all landed green in the source; ready to reauthorize and land
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `5fc748b` at the time this was written, clean but for this drain batch
+Spec: none staged; `specs/` is empty
+Gate: green
 
 ## State
 
-All three tickets are committed on green in the integration source, and the
-three-axis review's repair pass has landed on top of them. The spec's Build
-verification log carries every acceptance row's evidence — the sweep counts, the
-three mutation probes, and SW3 — and is the source for all of it.
+Two specs shipped and retired this session. FT226 stopped the kit's own tests
+writing into the operator's `BENCH_HOME` — the reauthorize fixture binds its own
+home, and `internal/worktree` runs under a process-private one that reds on
+residue and names the leaking test. FT234 added `bench worktree reclaim`, the
+first reader over the pool parent, so a key whose source repository is deleted
+can be recovered at all. The operator's pool went from 1,719 keys and 91 MB to
+one key and 120 KB, and the FT234 acceptance demo ran against that real pool.
 
-The review found twelve items across three axes, collapsing to eight repair
-targets; `reviews/ft226-test-home-isolation.md` holds the pickup state and is
-deleted by the commit that closes the findings. The reviewer approved the two
-judgment calls: the spec's probe (b) command now takes its `GOTMPDIR` form, and
-the test-local `withinDir` deliberately stays independent of the production
-`insidePool`.
+This drain reconciled both shipped rows off the board, drained two ideas, four
+learnings, and two retros, and opened FT235 from the pool-directory-naming idea.
+Every capture source is empty.
 
-**The landing needs a reauthorize.** A concurrent session landed `e1b44e62` and
-`a9e8e232` on `main` during this build, so the source's base is behind the
-destination; run `bench worktree reauthorize` to the current base before
-`bench worktree land`. Those two gate runs also leaked ten fresh `001-<digits>`
-pool keys, because `main` does not yet carry ticket 01. A second sweep pass clears
-them once this spec lands; the script was throwaway and never committed, so
-regenerate it from the spec's SW1 predicate.
+The board's most-evidenced open thread is the reviewed-landing spec-byte
+question: FT225 (decide whether a review may amend the spec in its own source)
+and FT233 (landing refusals name their remedy) each took new occurrences today,
+and FT233's wording depends on FT225's decision. That is why the sequence puts
+FT225 third despite two HIGH rows above it.
+
+`dist/bench` was a day stale for most of this session; it is rebuilt. Rebuild it
+before hand-running any newly landed verb.
 
 ## Next command
 
-`bench worktree reauthorize` to the current destination HEAD, then
-`bench worktree land`, then `/bench-final-check`.
+`/bench-write-spec` — FT227: adoption smoke, so a newly adopted repository's
+scaffolded gate can go green.
 
 ## Shape
 
