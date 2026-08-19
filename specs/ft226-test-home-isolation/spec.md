@@ -1,6 +1,6 @@
 # ft226-test-home-isolation
 
-Status: staged
+Status: implemented
 
 Decision source: roadmap/FT226.md (reviewed drain commit cd355f45, 2026-08-19) with the audit evidence it cites — docs/audits/2026-08-bench-capability/results-fable-high/reconciliation-ledger.md entry L-06 and action-items.yaml item A6.
 

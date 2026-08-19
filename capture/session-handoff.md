@@ -1,49 +1,41 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — HEAD `f3027f58` (spec staged, capture and output style committed), clean but for this handoff rewrite
-Spec: `specs/ft226-test-home-isolation/spec.md` — `Status: staged`, awaiting reviewer sign-off on the spec-and-tickets pair
-Gate: green at `f3027f58`
+Path: `~/workspace/bench`; the build runs in the integration worktree with label
+`ft226 implementation` (assignment `6a22e66f47a693f42e306c0ec030e1ba`, request
+`ft226-build`) — address it by label, never by a pasted path
+Branch: `main` — the source's frozen review base is `b2d3d625`, which a concurrent
+session has since moved past
+Spec: `specs/ft226-test-home-isolation/spec.md` — `Status: staged`
+Phase reached: `/bench-implement-spec --full`, three tickets and the review repair
+pass all landed green in the source; ready to reauthorize and land
 
 ## State
 
-**FT226 is specified, not approved.** The spec and its three serial tickets are
-written, `bench coverage --check` is green (12 rows), `bench preflight build` is
-green on every row-ownership check, and the mid-tier review round took two
-iterations to accept (folded; see the spec's `Verification log` and the dated
-`capture/learnings.md` entry). The spec directory is committed at `f3027f58`;
-the reviewer's sign-off on the approval table is still the gate to the build, and
-the spec file itself is the veto surface.
+All three tickets are committed on green in the integration source, and the
+three-axis review's repair pass has landed on top of them. The spec's Build
+verification log carries every acceptance row's evidence — the sweep counts, the
+three mutation probes, and SW3 — and is the source for all of it.
 
-What the build does: `reauthorizeFixture` binds a per-test `BENCH_HOME` like its
-siblings (ticket 01); `internal/worktree` gains a `TestMain` that runs the
-package under a process-private `BENCH_HOME` and exits red on residue, naming the
-leaking test (ticket 02, proven by mutation); the operator's 1,690 orphaned
-`001-<digits>` pool keys (63 MB) are swept once, plan-before-apply, under a
-dangling-`gitdir:` predicate (ticket 03, destructive, outside the tree — your
-spec sign-off is its approval).
+The review found twelve items across three axes, collapsing to eight repair
+targets; `reviews/ft226-test-home-isolation.md` holds the pickup state and is
+deleted by the commit that closes the findings. The reviewer approved the two
+judgment calls: the spec's probe (b) command now takes its `GOTMPDIR` form, and
+the test-local `withinDir` deliberately stays independent of the production
+`insidePool`.
 
-Decisions left open for you, flagged in the spec: the oracle seam is in-package
-`TestMain` rather than a gate-level private home for the test/race phases (priced
-in Out of scope); the sweep is a throwaway script, not a `bench worktree` verb
-(priced). Measured facts: the full ordinary suite under an empty sentinel
-`BENCH_HOME` writes exactly ten `worktrees/001-*` entries, all from
-`TestReauthorize*`, and nothing else.
-
-The gate run that landed `f3027f58` added ten more `001-*` keys to the operator's
-pool (1,699 → 1,709): live evidence for ticket 03's sweep count, which should be
-taken fresh at apply time.
+**The landing needs a reauthorize.** A concurrent session landed `e1b44e62` and
+`a9e8e232` on `main` during this build, so the source's base is behind the
+destination; run `bench worktree reauthorize` to the current base before
+`bench worktree land`. Those two gate runs also leaked ten fresh `001-<digits>`
+pool keys, because `main` does not yet carry ticket 01. A second sweep pass clears
+them once this spec lands; the script was throwaway and never committed, so
+regenerate it from the spec's SW1 predicate.
 
 ## Next command
 
-Sign off the spec and tickets (the approval table is in the write-spec session's
-closing message; the spec file itself is the veto surface), then start a fresh
-session with:
-
-`/bench-implement-spec ft226-test-home-isolation`
-
-Line for the build: `opus` / medium per the spec's story groups.
+`bench worktree reauthorize` to the current destination HEAD, then
+`bench worktree land`, then `/bench-final-check`.
 
 ## Shape
 
