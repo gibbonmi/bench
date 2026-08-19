@@ -54,16 +54,16 @@ func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
 	}
 }
 
-func TestHelpRendersCommandRegistryRows(t *testing.T) {
+func TestHelpRendersPublicCommandRegistryRows(t *testing.T) {
 	old := commandRegistry
 	t.Cleanup(func() { commandRegistry = old })
-	commandRegistry = []commandDefinition{{
-		Name: "help",
-		Help: []string{
-			"bench test inventory",
-			"  bench example  prove the registry owns this row",
+	commandRegistry = []commandDefinition{
+		{Name: "help", Inventory: publicInventory(), Kind: commandHelp},
+		{
+			Name:      "status",
+			Inventory: publicInventory(helpRow{Order: 1, Description: "prove the public command owns this row"}),
 		},
-	}}
+	}
 
 	for _, spelling := range []string{"help", "--help", "-h"} {
 		t.Run(spelling, func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestHelpRendersCommandRegistryRows(t *testing.T) {
 			if code := (Command{Stdout: &stdout}).Run([]string{spelling}); code != 0 {
 				t.Fatalf("%s exit = %d, want 0", spelling, code)
 			}
-			if want := "bench test inventory\n  bench example  prove the registry owns this row\n"; stdout.String() != want {
+			if want := helpInventoryTitle + "\n  bench status               prove the public command owns this row\n"; stdout.String() != want {
 				t.Fatalf("%s stdout = %q, want registry rows %q", spelling, stdout.String(), want)
 			}
 		})
@@ -163,6 +163,28 @@ func TestRunHelpRejectsTrailingArguments(t *testing.T) {
 	if code != 2 || stdout.String() != "usage: bench help (unknown argument: extra)\n" || stderr.Len() != 0 {
 		t.Fatalf("help extra = (stdout %q, stderr %q, exit %d), want help usage on stdout and exit 2", stdout.String(), stderr.String(), code)
 	}
+}
+
+func TestHelpKeepsStatusPublicRoute(t *testing.T) {
+	t.Run("inventory", func(t *testing.T) {
+		var stdout bytes.Buffer
+		if code := (Command{Stdout: &stdout}).Run([]string{"help"}); code != 0 {
+			t.Fatalf("help exit = %d, want 0", code)
+		}
+		const row = "  bench status               ambient dashboard: what needs attention + the next action\n"
+		if !strings.Contains(stdout.String(), row) {
+			t.Fatalf("help omitted independently required public status row %q", row)
+		}
+	})
+	t.Run("dispatch", func(t *testing.T) {
+		var stdout bytes.Buffer
+		if code := (Command{Stdout: &stdout}).Run([]string{"status", "--help"}); code != 0 {
+			t.Fatalf("status --help exit = %d, want 0", code)
+		}
+		if !strings.HasPrefix(stdout.String(), "usage: bench status") {
+			t.Fatalf("status --help = %q, want status grammar", stdout.String())
+		}
+	})
 }
 
 // TestResolveModelHarnessFlag drives the CLI's argument surface: --harness selects the

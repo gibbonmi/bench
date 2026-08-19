@@ -247,13 +247,31 @@ func dispatchNames(path, body string) ([]string, error) {
 	}
 	names := make([]string, 0, len(entries))
 	for _, entry := range entries {
+		if values := entry.fields["WrapperOnly"]; len(values) == 1 {
+			wrapperOnly, ok := values[0].(*ast.Ident)
+			if ok && wrapperOnly.Name == "true" {
+				continue
+			}
+		}
+		names = append(names, entry.name)
+	}
+	return names, nil
+}
+
+func commandRegistryNames(path, body string) ([]string, error) {
+	entries, err := parseCommandRegistry(path, body)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
 		names = append(names, entry.name)
 	}
 	return names, nil
 }
 
 func TestSubcommandRoutingRegistryParserFailsClosed(t *testing.T) {
-	ordered := "package main\nvar commandRegistry = []commandDefinition{{Name: \"maps\"}, {Name: \"version\"}}\n"
+	ordered := "package main\nvar commandRegistry = []commandDefinition{{Name: \"maps\"}, {Name: \"repair\", WrapperOnly: true}, {Name: \"version\"}}\n"
 	got, err := dispatchNames("fixture.go", ordered)
 	if err != nil {
 		t.Fatal(err)

@@ -548,7 +548,7 @@ func checkColdPickupCLILists(root string) []string {
 		known[match[1]] = true
 	}
 	if registrySource != "" {
-		names, err := dispatchNames(registryPath, registrySource)
+		names, err := commandRegistryNames(registryPath, registrySource)
 		if err != nil {
 			diags = append(diags, dispatchFile+" cannot be parsed for CLI documentation currency: "+err.Error())
 		} else {
@@ -609,9 +609,9 @@ func TestColdPickupCLIListsBites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write("cmd/bench/main.go", "package main\nvar commandRegistry = []commandDefinition{{Name: \"help\"}, {Name: \"status\"}}\n")
+	write("cmd/bench/main.go", "package main\nvar commandRegistry = []commandDefinition{{Name: \"help\"}, {Name: \"status\"}, {Name: \"mirror\", WrapperOnly: true, Inventory: publicInventory()}}\n")
 	write("bin/bench.sh", "case \"$1\" in\n  status) ;;\nesac\n")
-	guide := "## CLI Inventory\n\n- Context commands expose current state.\n\n`bench help` is the complete executable inventory.\n"
+	guide := "## CLI Inventory\n\n- Context commands expose current state.\n\n`bench help` is the complete executable inventory.\n\nRun `bench mirror` for the wrapper-only route.\n"
 	write(".bench/BENCH.md", guide)
 	if diags := checkColdPickupCLILists(root); len(diags) != 0 {
 		t.Fatalf("category guide with registry pointer = %v, want no diagnostics", diags)

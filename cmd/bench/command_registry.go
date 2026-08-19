@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 )
 
@@ -20,6 +21,40 @@ type commandDisposition struct {
 }
 
 type commandHandler func(Command, []string) int
+
+type commandKind uint8
+
+const (
+	commandStandard commandKind = iota
+	commandHelp
+)
+
+type inventoryVisibility uint8
+
+const (
+	inventoryUnclassified inventoryVisibility = iota
+	inventoryPublic
+	inventoryInternal
+)
+
+type helpRow struct {
+	Order       int
+	Prefix      string
+	Suffix      string
+	Gap         int
+	Description string
+}
+
+type commandInventory struct {
+	Visibility inventoryVisibility
+	Rows       []helpRow
+}
+
+func publicInventory(rows ...helpRow) commandInventory {
+	return commandInventory{Visibility: inventoryPublic, Rows: rows}
+}
+
+var internalInventory = commandInventory{Visibility: inventoryInternal}
 
 type commandAXIDisposition struct {
 	root      bool
@@ -50,11 +85,13 @@ const (
 )
 
 type commandDefinition struct {
-	Name       string
-	Attachment processAttachment
-	AXI        commandAXIDisposition
-	Help       []string
-	Run        commandHandler
+	Name        string
+	Attachment  processAttachment
+	AXI         commandAXIDisposition
+	Inventory   commandInventory
+	WrapperOnly bool
+	Kind        commandKind
+	Run         commandHandler
 }
 
 // Command is the in-process production entry for ordinary command behavior.
@@ -91,8 +128,8 @@ func (c Command) Run(args []string) int {
 	if c.Observe != nil {
 		fmt.Fprintln(c.Observe, commandImplementationID(definition))
 	}
-	if definition.Help != nil {
-		return helpCommand(c, definition, args[1:])
+	if definition.Kind == commandHelp {
+		return helpCommand(c, args[1:])
 	}
 	return definition.Run(c, args[1:])
 }
@@ -103,18 +140,45 @@ func commandImplementationID(definition commandDefinition) string {
 
 func commandByName(name string) (commandDefinition, bool) {
 	for _, definition := range commandRegistry {
-		if definition.Name == name {
+		if definition.Name == name && !definition.WrapperOnly {
 			return definition, true
 		}
 	}
 	return commandDefinition{}, false
 }
 
-func renderCommandHelp(definition commandDefinition) string {
-	if len(definition.Help) == 0 {
-		return ""
+const helpInventoryTitle = "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
+
+func renderCommandHelp() string {
+	type orderedRow struct {
+		order int
+		text  string
 	}
-	return strings.Join(definition.Help, "\n") + "\n"
+	var rows []orderedRow
+	for _, definition := range commandRegistry {
+		if definition.Inventory.Visibility != inventoryPublic {
+			continue
+		}
+		for _, row := range definition.Inventory.Rows {
+			prefix := row.Prefix
+			if prefix == "" {
+				prefix = "bench"
+			}
+			command := prefix + " " + definition.Name + row.Suffix
+			text := fmt.Sprintf("  %-25s  %s", command, row.Description)
+			if row.Gap > 0 {
+				text = "  " + command + strings.Repeat(" ", row.Gap) + row.Description
+			}
+			rows = append(rows, orderedRow{order: row.Order, text: text})
+		}
+	}
+	sort.SliceStable(rows, func(i, j int) bool { return rows[i].order < rows[j].order })
+	lines := make([]string, 1, len(rows)+1)
+	lines[0] = helpInventoryTitle
+	for _, row := range rows {
+		lines = append(lines, row.text)
+	}
+	return strings.Join(lines, "\n") + "\n"
 }
 
 func commandDispositions() []commandDisposition {

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -64,9 +66,6 @@ func checkPackageShippedSurface(root string) []string {
 			diags = append(diags, fmt.Sprintf("repair pin path does not match requirement %q", requirements.BinaryPinManifest.Path))
 		}
 	}
-	if !strings.Contains(helpSource, "bench repair") {
-		diags = append(diags, "CLI inventory omits bench repair")
-	}
 	// The canonical payload reader, not a local open-and-decode: this check derives
 	// package.json's exclusion list from the allowlist, so it must refuse the same
 	// hostile shapes and the same invalid rows every other consumer refuses.
@@ -105,7 +104,7 @@ func checkPackageShippedSurface(root string) []string {
 }
 
 func checkRoadmapHelpLine(helpInventorySource string) []string {
-	if strings.Contains(helpInventorySource, "bench roadmap              show the top 10 roadmap rows + drain state") {
+	if strings.Contains(helpInventorySource, "show the top 10 roadmap rows + drain state") {
 		return nil
 	}
 	return []string{"cmd/bench/main.go help inventory does not describe the top-10 board"}
@@ -150,34 +149,81 @@ func checkHelpInventorySingleSource(root string) []string {
 	if err != nil {
 		return append(diags, "help inventory commandRegistry: "+err.Error())
 	}
+	helpFound := false
+	publicCommands := map[string]bool{}
 	for _, entry := range entries {
-		if entry.name != "help" {
+		fields := entry.fields["Inventory"]
+		if len(fields) != 1 {
+			diags = append(diags, fmt.Sprintf("help inventory command %q has %d classifications, want exactly 1", entry.name, len(fields)))
 			continue
 		}
-		fields := entry.fields["Help"]
-		if len(fields) != 1 {
-			return append(diags, "help inventory must be literal rows on commandRegistry")
-		}
-		literal, ok := fields[0].(*ast.CompositeLit)
-		if !ok || len(literal.Elts) == 0 {
-			return append(diags, "help inventory must be literal rows on commandRegistry")
-		}
-		for i, element := range literal.Elts {
-			row, ok := element.(*ast.BasicLit)
-			if !ok {
-				return append(diags, "help inventory must be literal rows on commandRegistry")
+		switch value := fields[0].(type) {
+		case *ast.Ident:
+			if value.Name != "internalInventory" {
+				diags = append(diags, fmt.Sprintf("help inventory command %q has unknown classification %q", entry.name, value.Name))
 			}
-			text, err := strconv.Unquote(row.Value)
-			if err != nil || strings.ContainsAny(text, "\r\n") {
-				return append(diags, "help inventory must be literal rows on commandRegistry")
+		case *ast.CallExpr:
+			owner, ok := value.Fun.(*ast.Ident)
+			if !ok || owner.Name != "publicInventory" {
+				diags = append(diags, fmt.Sprintf("help inventory command %q must use publicInventory or internalInventory", entry.name))
+				continue
 			}
-			if i == 0 && text != helpInventoryTitle {
-				return append(diags, "help inventory must be literal rows on commandRegistry")
+			publicCommands[entry.name] = true
+			if entry.name == "help" {
+				helpFound = true
+				if len(value.Args) != 0 {
+					diags = append(diags, "help command must not own a standalone command-row catalog")
+				}
+				continue
 			}
+			if len(value.Args) == 0 {
+				diags = append(diags, fmt.Sprintf("public help command %q owns no inventory rows", entry.name))
+			}
+			for _, argument := range value.Args {
+				row, ok := argument.(*ast.CompositeLit)
+				if !ok {
+					diags = append(diags, fmt.Sprintf("public help command %q has a row outside its literal helpRow metadata", entry.name))
+					continue
+				}
+				rowType, typed := row.Type.(*ast.Ident)
+				if !typed || rowType.Name != "helpRow" {
+					diags = append(diags, fmt.Sprintf("public help command %q has a row outside its literal helpRow metadata", entry.name))
+				}
+			}
+		default:
+			diags = append(diags, fmt.Sprintf("help inventory command %q has malformed classification", entry.name))
 		}
-		return diags
 	}
-	return append(diags, "help inventory must be literal rows on commandRegistry")
+	if !helpFound {
+		diags = append(diags, "help command is not classified as public inventory")
+	}
+	if !publicCommands["repair"] {
+		diags = append(diags, "CLI inventory omits bench repair")
+	}
+	for _, rel := range []string{"cmd/bench/main.go", "cmd/bench/command_registry.go"} {
+		sourcePath := filepath.Join(root, filepath.FromSlash(rel))
+		file, parseErr := parser.ParseFile(token.NewFileSet(), sourcePath, readIfExists(sourcePath), 0)
+		if parseErr != nil {
+			diags = append(diags, rel+" cannot be parsed for standalone help catalogs: "+parseErr.Error())
+			continue
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			literal, ok := node.(*ast.BasicLit)
+			if !ok || literal.Kind != token.STRING {
+				return true
+			}
+			text, unquoteErr := strconv.Unquote(literal.Value)
+			if unquoteErr == nil && (strings.HasPrefix(text, "  bench ") || strings.HasPrefix(text, "  bash bin/bench.sh ")) {
+				diags = append(diags, rel+" carries a standalone rendered help command row")
+			}
+			return true
+		})
+	}
+	registryOwner := readIfExists(filepath.Join(root, "cmd", "bench", "command_registry.go"))
+	if !strings.Contains(registryOwner, "definition.Name + row.Suffix") {
+		diags = append(diags, "help renderer does not derive each command token from commandRegistry Name")
+	}
+	return diags
 }
 
 func TestHelpInventorySingleSourceBites(t *testing.T) {
@@ -193,9 +239,9 @@ func TestHelpInventorySingleSourceBites(t *testing.T) {
 		}
 	}
 	title := "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
-	registry := "package main\n\ntype commandDefinition struct { Name string; Help []string }\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"help\", Help: []string{\n\t\t\"" + title + "\",\n\t\t\"  bench roadmap              show the top 10 roadmap rows + drain state\",\n\t}},\n}\n"
+	registry := "package main\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"help\", Inventory: publicInventory()},\n\t{Name: \"repair\", WrapperOnly: true, Inventory: publicInventory(helpRow{Order: 1, Description: \"repair\"})},\n\t{Name: \"status\", Inventory: publicInventory(helpRow{Order: 2, Description: \"state\"})},\n\t{Name: \"plumbing\", Inventory: internalInventory},\n}\n"
 	write("cmd/bench/main.go", registry)
-	write("cmd/bench/command_registry.go", "package main\n")
+	write("cmd/bench/command_registry.go", "package main\nconst title = \""+title+"\"\nfunc render(definition commandDefinition, row helpRow) { _ = definition.Name + row.Suffix }\n")
 	write("bin/bench.sh", "#!/bin/sh\n")
 	write(".bench/BENCH.md", "Run `bench help`.\n")
 	if diags := checkHelpInventorySingleSource(root); len(diags) != 0 {
@@ -208,10 +254,14 @@ func TestHelpInventorySingleSourceBites(t *testing.T) {
 	}
 
 	write("bin/bench.sh", "#!/bin/sh\n")
-	moved := "package main\n\ntype commandDefinition struct { Name string; Help []string }\n\nvar helpInventory = []string{\"" + title + "\"}\n\nvar commandRegistry = []commandDefinition{{Name: \"help\", Help: helpInventory}}\n"
-	write("cmd/bench/main.go", moved)
-	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "must be literal rows on commandRegistry") {
-		t.Fatalf("inventory moved beside registry = %v, want registry-source diagnostic", diags)
+	write("cmd/bench/main.go", registry+"\nvar helpInventory = []string{\"  bench status  state\"}\n")
+	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "standalone rendered help command row") {
+		t.Fatalf("inventory moved beside registry = %v, want standalone-catalog diagnostic", diags)
+	}
+
+	write("cmd/bench/main.go", strings.Replace(registry, "{Name: \"status\", Inventory: publicInventory(helpRow{Order: 2, Description: \"state\"})}", "{Name: \"status\"}", 1))
+	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "status\" has 0 classifications") {
+		t.Fatalf("unclassified public route = %v, want classification diagnostic", diags)
 	}
 }
 
