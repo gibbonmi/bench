@@ -39,3 +39,32 @@ it explicitly.
 resolved (`$HOME` expanded), the same form `worktree create` prints — an agent-facing
 verb's output is meant to be pasted into a shell. If the `~` form is deliberate for
 display, add `--absolute`; either way the two verbs should agree.
+
+## 2026-08-19 — `bench worktree land` refuses unless source and destination carry identical staged spec bytes [open]
+
+**What happened.** The FT226 build wrote its verification log into the spec inside
+the integration worktree, which the spec's own ownership fence authorizes. At
+landing, `bench worktree land` refused with `source and destination do not carry
+identical staged spec bytes`. The fix was to copy the spec directory to the
+destination and commit it there first, spending a whole extra gate run, after
+which the land succeeded. Two earlier refusals in the same sequence cost another
+two attempts: `--base`/`--source-tip` must be full 40-character SHAs (an
+abbreviated pair returns the unrelated-sounding `worktree source tip mismatch`),
+and `bench worktree reauthorize` requires `--base` to be an ancestor of the source
+tip, so a destination that moved during the build is reauthorized against the
+frozen review base, not the new destination HEAD.
+
+**Right behavior.** Treat the staged spec as destination-owned during a
+worktree-backed build: write the verification log to the destination and commit it
+there before calling `land`, or accept the extra gate run. Always pass full SHAs to
+`land`. When the destination moves mid-build, reauthorize against the frozen review
+base and let `land` compose.
+
+**Proposed rule change.** Two candidates, both reviewer's call. First, `land`'s
+spec-bytes refusal should name the remedy it wants — it knows both paths and could
+print the exact destination commit to make first. Second, `/bench-implement-spec`
+could say where the verification log is written, since the spec's ownership fence
+currently implies the source is fine and the landing verb disagrees. The
+abbreviated-SHA case is a smaller separate fix: `land` should either accept what
+`git rev-parse` accepts or say that it wants full SHAs, rather than reporting a
+mismatch.
