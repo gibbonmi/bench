@@ -115,7 +115,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "guard-git", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "check-agent-line", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return checkAgentLine(args, c.Stdin, c.Stdout, c.Stderr) }},
 
-	{Name: "setup", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: internalInventory, Run: adoptCommand("setup")},
+	{Name: "setup", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 0, Suffix: " [--plan|--yes]", Description: "inspect, preview, and converge the current repository"}), Run: adoptCommand("setup")},
 	{Name: "link", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 1, Suffix: " [copy|symlink]", Description: "safely wire the kit into this repo for every harness"}), Run: adoptCommand("link")},
 	{Name: "init", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 2, Description: "scaffold .bench/gate.sh in the current repo"}), Run: adoptCommand("init")},
 	{Name: "doctor", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 24, Suffix: " [--fix]", Description: "report (and repair) the PATH shim under a node version manager"}), Run: adoptCommand("doctor")},

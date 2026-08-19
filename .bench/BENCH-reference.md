@@ -116,11 +116,9 @@ help owns its flags and positional grammar.
 
 ## Plumbing subcommands
 
-Driven by hooks and adapters, never typed by sessions — the one enumeration
-(the always-loaded inventory in `.bench/BENCH.md` points here): `bench tree-hash`,
-`bench gate-run`, `bench freshness-check`, `bench gate-phases`, `bench gate-go`, `bench release-preflight`, `bench guard-git`, `bench resolve-model`,
-`bench check-agent-line`, `bench stop-verdict`, `bench session-inspect`, `bench worktree-pool`,
-`bench worktree-lease-file`, `bench worktree-hook`, `bench resume-clean`.
+Definitions classified as internal inventory support hooks and adapters rather than
+interactive sessions. Their exact set is registry-owned so visibility changes cannot
+drift from `bench help`; inspect the registry when maintaining those callers.
 
 ## Phase manifest
 

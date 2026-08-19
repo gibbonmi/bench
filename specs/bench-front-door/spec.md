@@ -100,7 +100,7 @@ registry; small but two surfaces must agree byte-for-byte.
 
 32. As a user typing bare `bench`, I want the route (not the inventory), and the inventory on `bench help`, `--help`, `-h`, so that the public entry point routes.
 33. As a user invoking the binary directly with no arguments, I want the same route, and on `help`/`--help`/`-h` the same inventory as the wrapper, so that the wrapper and the binary agree.
-34. As the reviewer, I want the inventory text held once — in the binary's `help` verb, with the wrapper's help arm routing to it — so that the two entries cannot drift; the wrapper still owns wrapper-only verbs and the inventory stays text, not a registry projection.
+34. As the reviewer, I want `commandRegistry` to own every command's public/internal visibility and each public help row, with the binary's `help` verb rendering that projection and the wrapper's help arm routing to it, so that visibility, child grammar, and rendered inventory cannot drift across production sources.
 35. As the reviewer, I want the new `help` dispatch name registered in the fail-closed routing registry (`subcommandRouting`, exempt: takes no arguments), so that the conformance suite stays green rather than red on the added verb.
 
 ### Group F — rename `/bench-what-next` → `/bench-drain`
@@ -156,9 +156,12 @@ conformance paths, canary fixtures, and docs, graded by A1's conformance and
   `$bench` follows the Codex adapter shape (`name: bench`, references the command file,
   `allow_implicit_invocation: false`). Both load only the phase the route names.
 - **Root and help.** Wrapper bare invocation and binary no-arg both run
-  `status --route` and return its exit code; the inventory text lives in the binary's
-  `help` verb (exempt in the routing registry) and the wrapper's `help|--help|-h` arm
-  routes to it. Trade the reviewer decides: `bench help` then needs the binary
+  `status --route` and return its exit code. `commandRegistry` classifies every
+  definition public or internal and owns each public command's help rows; the binary's
+  `help` verb projects those rows and the wrapper's `help|--help|-h` arm routes to it.
+  The complete output is pinned independently at the public help seam so deleting any
+  public command or child row is red without introducing a second production catalog.
+  Trade the reviewer decides: `bench help` then needs the binary
   (`route_binary` exits 127 with its install message when absent); the alternative is
   leaving the heredoc in the wrapper and having the binary's `help` print a one-line
   pointer to `bench help`.
@@ -234,7 +237,7 @@ conformance paths, canary fixtures, and docs, graded by A1's conformance and
 | R36 | 31 | one table-driven test feeds a board carrying `/bench-drain` to the route owner and asserts `/bench-drain` for claude and `$bench-drain` for codex | route owner unit test | a translation applied only in handoff leaves the route untested |
 | R37 | 32 | bare `bin/bench.sh` prints the `next[1]` table and `bin/bench.sh help` prints the inventory beginning `bench — Pocock pipeline` | cmd/bench main test driving `bin/bench.sh` | a wrapper still defaulting to the heredoc fails |
 | R38 | 33 | the built binary with no arguments prints the same `next[1]` table as the wrapper, and `dist/bench help` prints byte-identical inventory to `bin/bench.sh help` | cmd/bench main test (`Command{}.Run` + `bin/bench.sh`) | `no subcommand` exit 2, or two inventories, fails |
-| R39 | 34 | the inventory string appears once in the tree — in the Go `help` verb — and `bin/bench.sh` contains no `Pocock pipeline` heredoc | cmd/bench main test reading the tree | a second copy of the inventory turns red |
+| R39 | 34 | `Command.Run(["help"])` is byte-identical to an independently authored complete inventory expectation covering all public and child rows, including `bench setup` and `bench worktree exec` | cmd/bench public help test | deleting a public command or child row turns the complete output red |
 | R40 | 35 | `subcommandRouting` carries a `help` row and the routing check is green | conformance routing test | the fail-closed registry is red for the unregistered verb |
 | R41 | 36 | `.agents/commands/bench-drain.md` carries the drain phase body and `disable-model-invocation: true`, and `.agents/skills/bench-drain/` carries the Codex pair | conformance adapter checks | the rename without the pair turns the glob red |
 | R42 | 37 | `.agents/commands/bench-what-next.md` and `.agents/skills/bench-what-next/` exist as thin aliases naming `bench-drain.md`, and `bench handoff --next /bench-what-next` on a fixture still validates | conformance stale-command sweep + handoff test | deleting the alias makes old handoffs stale; the sweep goes red on any old reference |
@@ -243,6 +246,7 @@ conformance paths, canary fixtures, and docs, graded by A1's conformance and
 | R45 | 40 | the six renamed `drain-*` canary fixtures validate under `bench canary` and the conformance registry table names them | canary + `registry_test` | a stale fixture name is red in the registry table |
 | R46 | 41 | the stale-command sweep, `checkCommandGuideReferences`, and `bench skills-index --check` are green after the prose rename | conformance + skills-index | a missed `$bench-what-next →` mapping row or a dangling reference is red |
 | R47 | 42 | with the alias files removed in a throwaway copy, the stale-command sweep reports every remaining `/bench-what-next` reference | conformance sweep mutation | proves the alias window is the only thing keeping old references green |
+| R48 | 34 | every registry definition has exactly one public/internal classification, every public definition owns its help rows, and no standalone production inventory exists | conformance registry/source check | misclassifying a board-routed command or adding another production inventory turns red |
 
 ### Edge inventory
 
@@ -285,7 +289,7 @@ conformance paths, canary fixtures, and docs, graded by A1's conformance and
 
 ## Out of scope
 
-- Generating root help, the `.bench/BENCH.md` inventory, and `commands --brief` from `commandRegistry` (FT89 remainder) — ~6 edits, 2 gate runs.
+- Generating `commands --brief` from `commandRegistry` (FT89 remainder); root help and public/internal inventory projection are owned here — ~2 edits, 1 gate run.
 - Deleting the `what-next` alias files after one release and sweeping the residue — 2 deletions plus the references the sweep names, 1 gate run.
 - A8 (constrained `## State`, `Repro:` line, Next from the router in the handoff body) — depends on this spec; own spec.
 - A9 hygiene batch (session-start hint, log pruning, dist/bench landing warning) — own spec.
@@ -296,5 +300,5 @@ conformance paths, canary fixtures, and docs, graded by A1's conformance and
 ## Further notes
 
 - No `Roadmap:` line: the audit's board has not been drained into `ROADMAP.md`; the reviewer override records the audit order there. The drain that folds A3 in also folds FT89 (root/inventory generation, partial) and FT180 (route decision surface).
-- Reviewer-visible calls, in one place: (1) `decisions: ready` state (story 17) is an addition beyond the source's two named signals, demanded by its own fixture list; (2) gate red → `/bench-debug`; (3) inventory relocation into the binary and the 127 trade; (4) staged severity 4 tie rule vs renumbering; (5) the "reviewed, awaiting land" scenario answering `bench worktree list`.
+- Reviewer-visible calls, in one place: (1) `decisions: ready` state (story 17) is an addition beyond the source's two named signals, demanded by its own fixture list; (2) gate red → `/bench-debug`; (3) registry-owned inventory projection in the binary and the 127 trade; (4) staged severity 4 tie rule vs renumbering; (5) the "reviewed, awaiting land" scenario answering `bench worktree list`.
 - Migration: an old handoff's `## Next command` naming `/bench-what-next` resolves through the alias for one release.
