@@ -322,6 +322,12 @@ func checkCodexCommandAdapters(root string) []string {
 		}
 	}
 	// The other completeness direction: a row survives the command file it grades.
+	// The pass is unconditional over the whole table, so a narrow root — every canary
+	// fixture in this family materializes one phase, not thirteen — collects a stale
+	// row for each phase it does not carry. Scoping the pass to roots that look
+	// complete would make the check guess which absences are real, so the noise stays
+	// and the fixtures isolate their own red by its text rather than by the diagnostic
+	// count.
 	phases := make([]string, 0, len(phaseInvocationPolicy))
 	for name := range phaseInvocationPolicy {
 		phases = append(phases, name)
