@@ -340,6 +340,7 @@ approve, merge, or split at sign-off.
 - `internal/worktree/orphan_render_test.go`
 - `internal/usage/worktree.go`
 - `cmd/bench/main.go`
+- `cmd/bench/main_test.go` (the help-inventory golden paired with the row above)
 - `projects/benchkit.md`
 - `specs/ft234-pool-key-reclaim/`
 - `capture/session-handoff.md`

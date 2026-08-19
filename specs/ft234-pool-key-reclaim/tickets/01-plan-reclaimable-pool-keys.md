@@ -1,7 +1,7 @@
 # Plan reclaimable pool keys
 
 Blocked by: none
-Writes: internal/worktree/pool_reclaim.go, internal/worktree/pool_reclaim_test.go, internal/usage/worktree.go, cmd/bench/main.go
+Writes: internal/worktree/pool_reclaim.go, internal/worktree/pool_reclaim_test.go, internal/usage/worktree.go, cmd/bench/main.go, cmd/bench/main_test.go
 
 ## What to build
 
