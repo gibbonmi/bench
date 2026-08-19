@@ -1,0 +1,5 @@
+.agents/commands/bench-debug.md
+.agents/skills/bench-debug/SKILL.md
+.agents/skills/bench-debug/agents/openai.yaml
+.bench/BENCH.md
+.bench/BENCH-reference.md

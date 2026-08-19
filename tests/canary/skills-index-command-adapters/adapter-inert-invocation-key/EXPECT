@@ -1,0 +1,1 @@
+Codex adapter 'bench-write-spec' SKILL.md frontmatter carries the inert disable-model-invocation key; agents/openai.yaml is the Codex invocation-policy surface

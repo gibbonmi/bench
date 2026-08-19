@@ -202,6 +202,64 @@ func checkCommandGuideReferences(root string) []string {
 	return diags
 }
 
+// explicitOnlyDescriptionMarker is the phrasing that tells Codex a phase fires only on
+// a typed invocation. On a row the policy marks implicitly invocable it is the one
+// sentence that would keep the flip from ever firing, so it is graded as an anti-trigger.
+const explicitOnlyDescriptionMarker = "Use only when the reviewer invokes"
+
+// phaseInvocationPolicy is the reviewed invocation posture of every Bench phase: whether
+// the Claude model may reach for the command on its own, and whether Codex may invoke the
+// adapter skill implicitly. It restates the frontmatter facts it grades on purpose — that
+// independence is what turns a silent flip of either surface red, the named exception to
+// the one-source rule, and the canary fixtures beside it demonstrate the reds.
+var phaseInvocationPolicy = map[string]struct {
+	claudeModelInvocable bool
+	codexImplicit        bool
+}{
+	// The reviewer's 2026-08-19 settle: the bug path fires on symptoms, on both harnesses.
+	"bench-debug": {claudeModelInvocable: true, codexImplicit: true},
+
+	"bench":                       {claudeModelInvocable: true},
+	"bench-final-check":           {claudeModelInvocable: true},
+	"bench-implement-spec":        {claudeModelInvocable: true},
+	"bench-review-implementation": {claudeModelInvocable: true},
+	"bench-shape-idea":            {claudeModelInvocable: true},
+	"bench-write-spec":            {claudeModelInvocable: true},
+
+	"bench-assess":     {},
+	"bench-deepen":     {},
+	"bench-drain":      {},
+	"bench-setup-repo": {},
+	"bench-update-kit": {},
+	"bench-what-next":  {},
+}
+
+// invocationYAMLValue spells the openai.yaml line a policy value demands. Both the match
+// and the mismatch branch read it, so the file's grammar has one spelling in the check.
+func invocationYAMLValue(implicit bool) string {
+	return fmt.Sprintf("allow_implicit_invocation: %t", implicit)
+}
+
+// frontmatterHasKey reports whether a frontmatter block declares key at all, empty value
+// included — the presence question FrontmatterField cannot answer, since it returns the
+// same empty string for an absent key and a declared-but-blank one. A mention in the body
+// is not frontmatter and stays inert.
+func frontmatterHasKey(text, key string) bool {
+	lines := strings.Split(text, "\n")
+	if len(lines) == 0 || lines[0] != "---" {
+		return false
+	}
+	for _, line := range lines[1:] {
+		if line == "---" {
+			return false
+		}
+		if strings.HasPrefix(line, key+":") {
+			return true
+		}
+	}
+	return false
+}
+
 func checkCodexCommandAdapters(root string) []string {
 	var diags []string
 	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md")) + "\n" + readIfExists(filepath.Join(root, ".bench", "BENCH-reference.md"))
@@ -226,12 +284,25 @@ func checkCodexCommandAdapters(root string) []string {
 		if !strings.Contains(adapterText, ".agents/commands/"+commandName+".md") {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' does not reference .agents/commands/%s.md", name, commandName))
 		}
+		if frontmatterHasKey(adapterText, "disable-model-invocation") {
+			diags = append(diags, fmt.Sprintf("Codex adapter '%s' SKILL.md frontmatter carries the inert disable-model-invocation key; agents/openai.yaml is the Codex invocation-policy surface", name))
+		}
 		if !exists(metadata) {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' missing agents/openai.yaml explicit-invocation metadata", name))
 			continue
 		}
-		if !strings.Contains(readIfExists(metadata), "allow_implicit_invocation: false") {
-			diags = append(diags, fmt.Sprintf("Codex adapter '%s' does not disable implicit invocation", name))
+		if policy, declared := phaseInvocationPolicy[name]; declared {
+			metadataText := readIfExists(metadata)
+			switch {
+			case strings.Contains(metadataText, invocationYAMLValue(policy.codexImplicit)):
+			case strings.Contains(metadataText, invocationYAMLValue(!policy.codexImplicit)):
+				diags = append(diags, fmt.Sprintf("Codex adapter '%s' agents/openai.yaml spells allow_implicit_invocation: %t against the invocation policy's %t", name, !policy.codexImplicit, policy.codexImplicit))
+			default:
+				diags = append(diags, fmt.Sprintf("Codex adapter '%s' agents/openai.yaml declares no allow_implicit_invocation value (undeclared invocation policy)", name))
+			}
+			if policy.codexImplicit && strings.Contains(collapseSpace(frontmatterField(adapter, "description")), explicitOnlyDescriptionMarker) {
+				diags = append(diags, fmt.Sprintf("Codex adapter '%s' description carries explicit-only phrasing (%q) though the invocation policy makes it implicitly invocable", name, explicitOnlyDescriptionMarker))
+			}
 		}
 		if !strings.Contains(guide, "$"+name) {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' is not documented in the operating guide (.bench/BENCH.md or .bench/BENCH-reference.md)", name))
@@ -303,5 +374,68 @@ func TestSkillsIndexConformanceCarriesNoSecondReader(t *testing.T) {
 				return true
 			})
 		}
+	}
+}
+
+// TestCodexAdapterInvocationPolicyGradesParseEdges pins the two policy edges no canary
+// fixture can reach from the real tree: an agents/openai.yaml that declares nothing is
+// red as undeclared rather than passing as "not the wrong value", and the explicit-only
+// description clause is red on a row the policy marks implicitly invocable — the
+// anti-trigger that would leave a flipped yaml unable to fire.
+func TestCodexAdapterInvocationPolicyGradesParseEdges(t *testing.T) {
+	adapterBody := func(name, description string) string {
+		return fmt.Sprintf("---\nname: %s\ndescription: %s\n---\n\nRead `.agents/commands/%s.md`.\n", name, description, name)
+	}
+	for _, tc := range []struct {
+		name        string
+		phase       string
+		description string
+		yaml        string
+		want        string
+	}{
+		{
+			name:        "empty yaml",
+			phase:       "bench-write-spec",
+			description: "Explicit Codex adapter. Use only when the reviewer invokes $bench-write-spec.",
+			yaml:        "",
+			want:        "Codex adapter 'bench-write-spec' agents/openai.yaml declares no allow_implicit_invocation value (undeclared invocation policy)",
+		},
+		{
+			name:        "yaml spelling neither value",
+			phase:       "bench-write-spec",
+			description: "Explicit Codex adapter. Use only when the reviewer invokes $bench-write-spec.",
+			yaml:        "policy:\n  allow_implicit_invocation: maybe\n",
+			want:        "Codex adapter 'bench-write-spec' agents/openai.yaml declares no allow_implicit_invocation value (undeclared invocation policy)",
+		},
+		{
+			name:        "explicit-only description on an implicit row",
+			phase:       "bench-debug",
+			description: "Codex adapter for the bug path. Use only when the reviewer invokes $bench-debug.",
+			yaml:        "policy:\n  allow_implicit_invocation: true\n",
+			want:        `Codex adapter 'bench-debug' description carries explicit-only phrasing ("Use only when the reviewer invokes") though the invocation policy makes it implicitly invocable`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			write := func(rel, content string) {
+				t.Helper()
+				path := filepath.Join(root, filepath.FromSlash(rel))
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			write(".bench/BENCH.md", fmt.Sprintf("/%s and $%s\n", tc.phase, tc.phase))
+			write(".bench/BENCH-reference.md", "reference\n")
+			write(".agents/commands/"+tc.phase+".md", "---\ndescription: phase\n---\n")
+			write(".agents/skills/"+tc.phase+"/SKILL.md", adapterBody(tc.phase, tc.description))
+			write(".agents/skills/"+tc.phase+"/agents/openai.yaml", tc.yaml)
+
+			if diags := checkCodexCommandAdapters(root); !containsDiagnostic(diags, tc.want) {
+				t.Fatalf("diagnostics = %q, want one containing %q", diags, tc.want)
+			}
+		})
 	}
 }

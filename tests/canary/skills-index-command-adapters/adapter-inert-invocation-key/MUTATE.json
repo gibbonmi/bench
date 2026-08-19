@@ -1,0 +1,1 @@
+[{"path": ".agents/skills/bench-write-spec/SKILL.md", "old": "name: bench-write-spec\n", "new": "name: bench-write-spec\ndisable-model-invocation: true\n"}]

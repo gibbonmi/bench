@@ -1,7 +1,6 @@
 ---
 name: bench-what-next
 description: Renamed Codex adapter for /bench-drain. Read and follow .agents/commands/bench-drain.md.
-disable-model-invocation: true
 ---
 
 # $bench-what-next

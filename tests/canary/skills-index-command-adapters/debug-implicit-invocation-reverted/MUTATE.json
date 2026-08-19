@@ -1,0 +1,1 @@
+[{"path": ".agents/skills/bench-debug/agents/openai.yaml", "old": "allow_implicit_invocation: true", "new": "allow_implicit_invocation: false"}]

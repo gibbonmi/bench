@@ -1,7 +1,6 @@
 ---
 name: bench-write-spec
 description: Explicit Codex adapter for the /bench-write-spec phase. Use only when the reviewer invokes $bench-write-spec; read .agents/commands/bench-write-spec.md and follow it.
-disable-model-invocation: true
 ---
 
 # $bench-write-spec

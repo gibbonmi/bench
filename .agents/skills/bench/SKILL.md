@@ -1,7 +1,6 @@
 ---
 name: bench
 description: Explicit Codex adapter for the /bench front door. Use only when the reviewer invokes $bench; read .agents/commands/bench.md and follow it with Codex route rendering.
-disable-model-invocation: true
 ---
 
 # $bench
