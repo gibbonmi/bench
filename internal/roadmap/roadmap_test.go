@@ -329,7 +329,7 @@ func TestRoadmapBoardInputStates(t *testing.T) {
 	t.Run("absent", func(t *testing.T) {
 		newRepo(t)
 		out, code := RoadmapCommand(nil)
-		if code != 0 || !strings.Contains(out, "/bench-what-next") {
+		if code != 0 || !strings.Contains(out, "/bench-drain") {
 			t.Fatalf("absent = %q/%d", out, code)
 		}
 		document, err := axitest.DecodeDocument(out)
@@ -428,8 +428,8 @@ func TestRoadmapBoardPendingDrainDisclosesWhatNext(t *testing.T) {
 		t.Fatal(err)
 	}
 	actions, err := document.HelpActions()
-	if err != nil || len(actions) != 1 || actions[0].Cmd != "/bench-what-next" {
-		t.Fatalf("help = %#v/%v, want /bench-what-next", actions, err)
+	if err != nil || len(actions) != 1 || actions[0].Cmd != "/bench-drain" {
+		t.Fatalf("help = %#v/%v, want /bench-drain", actions, err)
 	}
 	drain, err := document.Rows("drain")
 	if err != nil || len(drain) != 1 {

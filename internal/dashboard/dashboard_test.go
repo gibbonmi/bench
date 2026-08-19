@@ -84,7 +84,7 @@ func TestRenderSignalsOrderedMembership(t *testing.T) {
 	s.Signals = []status.Signal{
 		{Severity: 0, Name: "gate", Detail: "SIG-GATE", Action: "fix before commit"},
 		{Severity: 1, Name: "git", Detail: "SIG-GIT", Action: "commit on green"},
-		{Severity: 4, Name: "drain", Detail: "SIG-DRAIN", Action: "/bench-what-next"},
+		{Severity: 4, Name: "drain", Detail: "SIG-DRAIN", Action: "/bench-drain"},
 	}
 	out := Render(s)
 	gate := strings.Index(out, "SIG-GATE")
@@ -95,6 +95,14 @@ func TestRenderSignalsOrderedMembership(t *testing.T) {
 	}
 	if !(gate < git && git < drain) {
 		t.Fatalf("signals re-ordered (gate=%d git=%d drain=%d)", gate, git, drain)
+	}
+}
+
+func TestRenderSignalWithEmptyActionKeepsEmptyCell(t *testing.T) {
+	s := baseSnapshot()
+	s.Signals = []status.Signal{{Name: "reviews", Detail: "1 orphaned review pickup", Action: ""}}
+	if out := Render(s); !strings.Contains(out, "<td></td></tr>") {
+		t.Fatalf("empty action cell was not rendered:\n%s", section(out, "Signals"))
 	}
 }
 

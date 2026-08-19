@@ -29,7 +29,7 @@ func checkWorkflowAnchors(root string) []string {
 	diags := anchors.EvaluateGroup(root, anchors.BeforeStructured)
 	diags = append(diags, checkStructuredPhaseContract(readIfExists(filepath.Join(root, ".bench", "BENCH.md")))...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterStructured)...)
-	whatNext := readIfExists(filepath.Join(root, ".agents", "commands", "bench-what-next.md"))
+	whatNext := readIfExists(filepath.Join(root, ".agents", "commands", "bench-drain.md"))
 	diags = append(diags, checkRoadmapContextQuery(whatNext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterRoadmapContext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterImplementSpec)...)
@@ -89,7 +89,7 @@ func checkRoadmapContextQuery(whatNext string) []string {
 		strings.Count(whatNext, "bench roadmap --context") != 2 ||
 		!strings.Contains(collapseSpace(whatNext), "If the query fails, stop the phase") ||
 		!strings.Contains(collapseSpace(whatNext), "manual evidence reconstruction") {
-		return []string{"bench-what-next dropped the roadmap context query"}
+		return []string{"bench-drain dropped the roadmap context query"}
 	}
 	return nil
 }
@@ -103,7 +103,7 @@ func TestRoadmapContextQueryCheckBites(t *testing.T) {
 	} {
 		t.Run(mutation.name, func(t *testing.T) {
 			mutated := strings.Replace(guidance, mutation.old, mutation.replacement, 1)
-			if !containsDiagnostic(checkRoadmapContextQuery(mutated), "bench-what-next dropped the roadmap context query") {
+			if !containsDiagnostic(checkRoadmapContextQuery(mutated), "bench-drain dropped the roadmap context query") {
 				t.Fatal("mutation did not bite")
 			}
 		})

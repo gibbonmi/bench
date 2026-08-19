@@ -39,7 +39,7 @@ to an ADR, a hostile edge to the profile); retiring the whole
 `specs/<slug>/` folder removes its compiled decision provenance with its tickets,
 so there is no separate top-level decision-map delete; an orphaned review pickup is promoted or
 deleted by hand; scratch branches go through `bench worktree clean`; leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report. Leave the roadmap and capture rows to
-`/bench-what-next` — that phase owns the reconcile and the drain, and this duty
+`/bench-drain` — that phase owns the reconcile and the drain, and this duty
 never restates it. On a topic branch these duties defer by design: the rows
 fire only on the default branch, and the next default-branch session's
 SessionStart status re-surfaces them — state the deferral in the close instead
@@ -97,7 +97,7 @@ last-incorporated-landing line and fold the new evidence into affected aggregate
 leave an uninvolved provider unchanged. Completion means every participating
 model/effort/role is accounted for without adding a per-run diary row.
 
-These files are pending capture for `/bench-what-next`, not
+These files are pending capture for `/bench-drain`, not
 a second roadmap. Do not run another gate or commit just to capture the retro;
 the successful landing boundary is already the verdict, and the retro leaves
 through the next reviewer-approved capture drain.

@@ -13,7 +13,7 @@ in the spec: if the alternative is chosen, keep the heredoc and make the binary'
 print a one-line pointer instead — the acceptance below then reads "pointer" for R38's
 help half.
 
-Covers: R37, R38, R39, R40
+Covers: R37, R38, R39, R40, R48
 
 ## Acceptance
 

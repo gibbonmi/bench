@@ -2,39 +2,10 @@ package handoff
 
 import (
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/toon"
 )
-
-// harnessClaude is the harness whose invocation form internal/status produces, so it is
-// both the default and the translation's source prefix.
-const harnessClaude = "claude"
-
-// harnessPrefix maps a harness to the prefix its phase invocations take. It is the only
-// place either form is written: translation reads the source prefix out of this table
-// rather than restating it, and the usage line reads the key set out of it through
-// harnessChoices, so adding a harness is a row here and nothing else.
-var harnessPrefix = map[string]string{
-	harnessClaude: "/bench-",
-	"codex":       "$bench-",
-}
-
-// harnessChoices renders the accepted harness names for the usage line, the default first
-// and the rest in sorted order. It derives from the table that decides which names are
-// accepted, so a usage line advertising a harness the command rejects — or omitting one it
-// takes — is not a state this package can reach.
-func harnessChoices() string {
-	rest := make([]string, 0, len(harnessPrefix))
-	for name := range harnessPrefix {
-		if name != harnessClaude {
-			rest = append(rest, name)
-		}
-	}
-	sort.Strings(rest)
-	return strings.Join(append([]string{harnessClaude}, rest...), "|")
-}
 
 // renderPath renders the git root as a reader elsewhere should see it: abbreviated to `~`
 // when it is $HOME or sits beneath it, absolute otherwise. The containment test is by path
@@ -53,13 +24,6 @@ func renderPath(root, home string) string {
 		return root
 	}
 	return "~/" + rest
-}
-
-// translate rewrites a canonical phase invocation into the selected harness's form. It
-// applies to the derived action only: a `--next` override is the session's own words, and
-// rewriting them would change what the reviewer asked the next session to run.
-func translate(action, harness string) string {
-	return strings.ReplaceAll(action, harnessPrefix[harnessClaude], harnessPrefix[harness])
 }
 
 // render composes the pin block — everything a cold session needs to know before it acts.

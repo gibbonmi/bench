@@ -219,8 +219,12 @@ func checkCodexCommandAdapters(root string) []string {
 		if frontmatterField(adapter, "name") != name {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' frontmatter name does not match command", name))
 		}
-		if !strings.Contains(adapterText, ".agents/commands/"+name+".md") {
-			diags = append(diags, fmt.Sprintf("Codex adapter '%s' does not reference .agents/commands/%s.md", name, name))
+		commandName := name
+		if name == "bench-what-next" {
+			commandName = "bench-drain"
+		}
+		if !strings.Contains(adapterText, ".agents/commands/"+commandName+".md") {
+			diags = append(diags, fmt.Sprintf("Codex adapter '%s' does not reference .agents/commands/%s.md", name, commandName))
 		}
 		if !exists(metadata) {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' missing agents/openai.yaml explicit-invocation metadata", name))

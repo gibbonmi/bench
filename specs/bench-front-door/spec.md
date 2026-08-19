@@ -1,6 +1,6 @@
 # bench-front-door
 
-Status: staged
+Status: implemented
 
 Decision source: docs/audits/2026-08-bench-capability/results-fable-high/action-items.yaml entry `A3` (named reviewed artifact from the 2026-08 capability audit; ledger L-03, L-08, L-15 carry its reproduced evidence; dependencies A1 and A2 landed at `a2914fd5`/`f1135fd6` and `2915fcc0`)
 

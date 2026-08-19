@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/coverage"
+	"github.com/gibbonmi/bench/internal/handoff"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
@@ -193,6 +194,68 @@ func TestIntroducedCommandsAllowanceIsNarrow(t *testing.T) {
 				t.Fatalf("diagnostics = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRenamedDrainAliasKeepsOldHandoffInvocable(t *testing.T) {
+	root := t.TempDir()
+	runGit(t, root, "init")
+	runGit(t, root, "config", "user.email", "t@example.com")
+	runGit(t, root, "config", "user.name", "t")
+	for rel, content := range map[string]string{
+		".agents/commands/bench-what-next.md": "Renamed to /bench-drain.\n",
+		".bench/keep":                         "\n",
+	} {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	runGit(t, root, "add", "-A")
+	runGit(t, root, "commit", "-m", "fixture")
+	t.Chdir(root)
+
+	if out, code := handoff.Command([]string{"--next", "/bench-what-next"}); code != 0 {
+		t.Fatalf("bench handoff alias = (%q, %d), want exit 0", out, code)
+	}
+}
+
+func TestStaleCommandSweepReportsOldReferencesWhenDrainAliasesAreRemoved(t *testing.T) {
+	root := t.TempDir()
+	files := map[string]string{
+		".agents/commands/bench-drain.md":         "# /bench-drain\n",
+		".agents/commands/bench-what-next.md":     "Renamed to /bench-drain.\n",
+		".agents/skills/bench-what-next/SKILL.md": "Read .agents/commands/bench-drain.md.\n",
+		".bench/BENCH-reference.md":               "Alias: /bench-what-next and $bench-what-next.\n",
+		"README.md":                               "Old handoffs may still name /bench-what-next.\n",
+	}
+	for rel, content := range files {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if diags := checkStaleCommandReferences(root); len(diags) != 0 {
+		t.Fatalf("aliases present diagnostics = %q, want none", diags)
+	}
+	for _, rel := range []string{".agents/commands/bench-what-next.md", ".agents/skills/bench-what-next/SKILL.md"} {
+		if err := os.Remove(filepath.Join(root, filepath.FromSlash(rel))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want := []string{
+		"stale command reference /bench-what-next in .bench/BENCH-reference.md:1",
+		"stale Codex adapter reference $bench-what-next in .bench/BENCH-reference.md:1",
+		"stale command reference /bench-what-next in README.md:1",
+	}
+	if got := checkStaleCommandReferences(root); strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("alias-removal diagnostics = %q, want %q", got, want)
 	}
 }
 
@@ -473,33 +536,34 @@ func specSlugOf(rel string) string {
 
 func checkColdPickupCLILists(root string) []string {
 	bench := readIfExists(filepath.Join(root, "bin", "bench.sh"))
-	if bench == "" {
+	registryPath := filepath.Join(root, filepath.FromSlash(dispatchFile))
+	registrySource := readIfExists(registryPath)
+	if bench == "" && registrySource == "" {
 		return nil
 	}
-	cmdRE := regexp.MustCompile(`(?m)^  ([a-z][a-z-]*)\)\s`)
-	var commands []string
-	for _, match := range cmdRE.FindAllStringSubmatch(bench, -1) {
-		commands = append(commands, match[1])
-	}
-	sort.Strings(commands)
-	known := map[string]bool{}
-	for _, command := range commands {
-		known[command] = true
-	}
-	docRef := regexp.MustCompile("`bench ([a-z][a-z-]*)\\b")
 	var diags []string
-	// The documented surface is the always-loaded inventory plus the reference file's
-	// plumbing enumeration: sessions read BENCH.md, hooks-and-adapters plumbing is
-	// deliberately demoted to BENCH-reference.md, and a route documented in neither
-	// is still a cold-pickup hole.
-	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
-	if guide != "" {
-		guide += "\n" + readIfExists(filepath.Join(root, ".bench", "BENCH-reference.md"))
-		for _, command := range commands {
-			if !strings.Contains(guide, "bench "+command) {
-				diags = append(diags, fmt.Sprintf(".bench/BENCH.md or .bench/BENCH-reference.md does not list CLI command 'bench %s'", command))
+	known := map[string]bool{}
+	cmdRE := regexp.MustCompile(`(?m)^  ([a-z][a-z-]*)(?:\|[^)]*)?\)\s`)
+	for _, match := range cmdRE.FindAllStringSubmatch(bench, -1) {
+		known[match[1]] = true
+	}
+	if registrySource != "" {
+		names, err := commandRegistryNames(registryPath, registrySource)
+		if err != nil {
+			diags = append(diags, dispatchFile+" cannot be parsed for CLI documentation currency: "+err.Error())
+		} else {
+			for _, name := range names {
+				known[name] = true
 			}
 		}
+	}
+	docRef := regexp.MustCompile("`bench ([a-z][a-z-]*)\\b")
+	// The operating guide names the executable inventory without repeating it. Executable
+	// names come from the production dispatch surfaces; prose references are checked against
+	// that set so a documented command cannot outlive its route.
+	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
+	if guide != "" && !strings.Contains(guide, "`bench help` is the complete executable inventory") {
+		diags = append(diags, ".bench/BENCH.md does not identify `bench help` as the executable inventory")
 	}
 	// Reverse check: a `bench <cmd>` reference that names no route is a dead pointer.
 	// Commands and skills alike route the reader to the CLI in prose, so the whole
@@ -531,6 +595,37 @@ func checkColdPickupCLILists(root string) []string {
 		}
 	}
 	return diags
+}
+
+func TestColdPickupCLIListsBites(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel, body string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("cmd/bench/main.go", "package main\nvar commandRegistry = []commandDefinition{{Name: \"help\"}, {Name: \"status\"}, {Name: \"mirror\", WrapperOnly: true, Inventory: publicInventory()}}\n")
+	write("bin/bench.sh", "case \"$1\" in\n  status) ;;\nesac\n")
+	guide := "## CLI Inventory\n\n- Context commands expose current state.\n\n`bench help` is the complete executable inventory.\n\nRun `bench mirror` for the wrapper-only route.\n"
+	write(".bench/BENCH.md", guide)
+	if diags := checkColdPickupCLILists(root); len(diags) != 0 {
+		t.Fatalf("category guide with registry pointer = %v, want no diagnostics", diags)
+	}
+
+	write(".bench/BENCH.md", "## CLI Inventory\n\n- Context commands expose current state.\n")
+	if diags := checkColdPickupCLILists(root); !containsDiagnostic(diags, "does not identify `bench help` as the executable inventory") {
+		t.Fatalf("guide without canonical pointer = %v, want pointer diagnostic", diags)
+	}
+
+	write(".bench/BENCH.md", guide+"Run `bench vanished` next.\n")
+	if diags := checkColdPickupCLILists(root); !containsDiagnostic(diags, "documents unknown CLI command 'bench vanished'") {
+		t.Fatalf("guide with stale command = %v, want stale-command diagnostic", diags)
+	}
 }
 
 func checkAXIProfileAnchors(root string) []string {
@@ -641,6 +736,12 @@ func checkCommandFirstAnchors(root string) []string {
 	for _, file := range commandFiles {
 		rel := slashRel(root, file)
 		text := readIfExists(file)
+		if filepath.Base(file) == "bench-what-next.md" {
+			if !strings.Contains(text, "Renamed to `/bench-drain`") || !strings.Contains(text, ".agents/commands/bench-drain.md") {
+				diags = append(diags, rel+" is not a thin alias to .agents/commands/bench-drain.md")
+			}
+			continue
+		}
 		if !regexp.MustCompile(`(?m)^## Entry orientation$`).MatchString(text) {
 			diags = append(diags, rel+" missing Entry orientation")
 		}

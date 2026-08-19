@@ -106,6 +106,7 @@ var subcommandRouting = map[string]routingEntry{
 	"worktree":          exempt(whyNested),
 
 	"version": exempt("takes no arguments: the dispatch case prints the build-time version line and returns"),
+	"help":    exempt("takes no arguments: the command prints the top-level inventory and returns"),
 }
 
 // checkSubcommandRouting grades every dispatched subcommand name against the registry
@@ -246,13 +247,31 @@ func dispatchNames(path, body string) ([]string, error) {
 	}
 	names := make([]string, 0, len(entries))
 	for _, entry := range entries {
+		if values := entry.fields["WrapperOnly"]; len(values) == 1 {
+			wrapperOnly, ok := values[0].(*ast.Ident)
+			if ok && wrapperOnly.Name == "true" {
+				continue
+			}
+		}
+		names = append(names, entry.name)
+	}
+	return names, nil
+}
+
+func commandRegistryNames(path, body string) ([]string, error) {
+	entries, err := parseCommandRegistry(path, body)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
 		names = append(names, entry.name)
 	}
 	return names, nil
 }
 
 func TestSubcommandRoutingRegistryParserFailsClosed(t *testing.T) {
-	ordered := "package main\nvar commandRegistry = []commandDefinition{{Name: \"maps\"}, {Name: \"version\"}}\n"
+	ordered := "package main\nvar commandRegistry = []commandDefinition{{Name: \"maps\"}, {Name: \"repair\", WrapperOnly: true}, {Name: \"version\"}}\n"
 	got, err := dispatchNames("fixture.go", ordered)
 	if err != nil {
 		t.Fatal(err)

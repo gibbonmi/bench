@@ -22,9 +22,10 @@ branch-agnostic. This line is only the binding.)
   conformant tree (green) and a broken one (red); never by trusting a reading of the
   diff. The gate package is the single deep owner of reusable-verdict authorization
   and durable execution; the accepted trust posture is recorded in ADR 0002.
-- **The `bench` CLI subcommands.** The operational shell surface; the canonical
-  inventory is `.bench/BENCH.md`'s CLI Inventory — this profile doesn't
-  re-enumerate it. Stable command names and exit codes are the contract; the
+- **The `bench` CLI subcommands.** The operational shell surface; `bench help`,
+  rendered from Go `commandRegistry`, is the executable inventory, while
+  `.bench/BENCH.md` keeps category-level operational guidance. Stable command names
+  and exit codes are the contract; the
   implementation behind each is free to change. Keep gate resolution
   (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.
   Missing-binary resolution is network-silent by default and names the explicit
@@ -55,7 +56,7 @@ branch-agnostic. This line is only the binding.)
   (`<git-dir>/bench-last-gate`, written durably by gate execution) — never a cold gate run. The
   contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
-  pointing at `/bench-what-next`. A stale exact verdict always remains the strong stale
+  pointing at `/bench-drain`. A stale exact verdict always remains the strong stale
   row; there is no path-based reduced-scope softening. Its severity-1 git
   signal reports dirty paths from the named/current checkout while aggregating
   unpushed commits and unique local branches across the repository; severity-2 intent
@@ -64,7 +65,7 @@ branch-agnostic. This line is only the binding.)
   `bench roadmap` → the `ROADMAP.md` index and its `roadmap/FT<n>.md` detail
   owners, one per row, each holding that row's body, `Occurrence:` ledger, and
   `Sources:` line). Capture-and-forget: park an out-of-scope idea,
-  commit to nothing; ideas graduate only through a `/bench-what-next` drain into the
+  commit to nothing; ideas graduate only through a `/bench-drain` drain into the
   working roadmap. The contract (gate-tested in a throwaway repo): `idea` appends one
   dated line and creates the inbox; a no-arg `idea` errors without appending;
   `roadmap` prints the working document plus drain status, or its

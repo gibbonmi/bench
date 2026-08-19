@@ -3,9 +3,13 @@ package conformance
 import (
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -43,7 +47,9 @@ func checkPackageShippedSurface(root string) []string {
 			diags = append(diags, fmt.Sprintf("repair policy omits %q", fact))
 		}
 	}
-	diags = append(diags, checkRoadmapLauncherHelpLine(readIfExists(filepath.Join(root, "bin", "bench.sh")))...)
+	helpSource := readIfExists(filepath.Join(root, "cmd", "bench", "main.go"))
+	diags = append(diags, checkHelpInventorySingleSource(root)...)
+	diags = append(diags, checkRoadmapHelpLine(helpSource)...)
 	var requirements struct {
 		BinaryPinManifest struct {
 			Path string `json:"path"`
@@ -59,10 +65,6 @@ func checkPackageShippedSurface(root string) []string {
 		if requirements.BinaryPinManifest.Path == "" || !strings.Contains(script, want) {
 			diags = append(diags, fmt.Sprintf("repair pin path does not match requirement %q", requirements.BinaryPinManifest.Path))
 		}
-	}
-	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
-	if !strings.Contains(guide, "`bench repair") {
-		diags = append(diags, "CLI inventory omits bench repair")
 	}
 	// The canonical payload reader, not a local open-and-decode: this check derives
 	// package.json's exclusion list from the allowlist, so it must refuse the same
@@ -101,11 +103,166 @@ func checkPackageShippedSurface(root string) []string {
 	return diags
 }
 
-func checkRoadmapLauncherHelpLine(script string) []string {
-	if strings.Contains(script, "bench roadmap              show the top 10 roadmap rows + drain state") {
+func checkRoadmapHelpLine(helpInventorySource string) []string {
+	if strings.Contains(helpInventorySource, "show the top 10 roadmap rows + drain state") {
 		return nil
 	}
-	return []string{"bin/bench.sh roadmap help line does not describe the top-10 board"}
+	return []string{"cmd/bench/main.go help inventory does not describe the top-10 board"}
+}
+
+const helpInventoryTitle = "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
+
+func checkHelpInventorySingleSource(root string) []string {
+	var diags []string
+	occurrences := 0
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel := filepath.ToSlash(strings.TrimPrefix(path, root+string(filepath.Separator)))
+		if entry.IsDir() {
+			if rel == ".git" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		productionGo := strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, "_test.go")
+		publicSurface := rel == "bin/bench.sh" || rel == ".bench/BENCH.md" || rel == ".bench/BENCH-reference.md"
+		if productionGo || publicSurface {
+			if !entry.Type().IsRegular() {
+				diags = append(diags, rel+" is not a regular help-inventory source")
+				return nil
+			}
+			occurrences += strings.Count(readIfExists(path), helpInventoryTitle)
+		}
+		return nil
+	})
+	if err != nil {
+		diags = append(diags, "scan help inventory sources: "+err.Error())
+	}
+	if occurrences != 1 {
+		diags = append(diags, fmt.Sprintf("help inventory title appears %d times on production surfaces, want exactly 1", occurrences))
+	}
+
+	path := filepath.Join(root, "cmd", "bench", "main.go")
+	entries, err := parseCommandRegistry(path, readIfExists(path))
+	if err != nil {
+		return append(diags, "help inventory commandRegistry: "+err.Error())
+	}
+	helpFound := false
+	publicCommands := map[string]bool{}
+	for _, entry := range entries {
+		fields := entry.fields["Inventory"]
+		if len(fields) != 1 {
+			diags = append(diags, fmt.Sprintf("help inventory command %q has %d classifications, want exactly 1", entry.name, len(fields)))
+			continue
+		}
+		switch value := fields[0].(type) {
+		case *ast.Ident:
+			if value.Name != "internalInventory" {
+				diags = append(diags, fmt.Sprintf("help inventory command %q has unknown classification %q", entry.name, value.Name))
+			}
+		case *ast.CallExpr:
+			owner, ok := value.Fun.(*ast.Ident)
+			if !ok || owner.Name != "publicInventory" {
+				diags = append(diags, fmt.Sprintf("help inventory command %q must use publicInventory or internalInventory", entry.name))
+				continue
+			}
+			publicCommands[entry.name] = true
+			if entry.name == "help" {
+				helpFound = true
+				if len(value.Args) != 0 {
+					diags = append(diags, "help command must not own a standalone command-row catalog")
+				}
+				continue
+			}
+			if len(value.Args) == 0 {
+				diags = append(diags, fmt.Sprintf("public help command %q owns no inventory rows", entry.name))
+			}
+			for _, argument := range value.Args {
+				row, ok := argument.(*ast.CompositeLit)
+				if !ok {
+					diags = append(diags, fmt.Sprintf("public help command %q has a row outside its literal helpRow metadata", entry.name))
+					continue
+				}
+				rowType, typed := row.Type.(*ast.Ident)
+				if !typed || rowType.Name != "helpRow" {
+					diags = append(diags, fmt.Sprintf("public help command %q has a row outside its literal helpRow metadata", entry.name))
+				}
+			}
+		default:
+			diags = append(diags, fmt.Sprintf("help inventory command %q has malformed classification", entry.name))
+		}
+	}
+	if !helpFound {
+		diags = append(diags, "help command is not classified as public inventory")
+	}
+	if !publicCommands["repair"] {
+		diags = append(diags, "CLI inventory omits bench repair")
+	}
+	for _, rel := range []string{"cmd/bench/main.go", "cmd/bench/command_registry.go"} {
+		sourcePath := filepath.Join(root, filepath.FromSlash(rel))
+		file, parseErr := parser.ParseFile(token.NewFileSet(), sourcePath, readIfExists(sourcePath), 0)
+		if parseErr != nil {
+			diags = append(diags, rel+" cannot be parsed for standalone help catalogs: "+parseErr.Error())
+			continue
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			literal, ok := node.(*ast.BasicLit)
+			if !ok || literal.Kind != token.STRING {
+				return true
+			}
+			text, unquoteErr := strconv.Unquote(literal.Value)
+			if unquoteErr == nil && (strings.HasPrefix(text, "  bench ") || strings.HasPrefix(text, "  bash bin/bench.sh ")) {
+				diags = append(diags, rel+" carries a standalone rendered help command row")
+			}
+			return true
+		})
+	}
+	registryOwner := readIfExists(filepath.Join(root, "cmd", "bench", "command_registry.go"))
+	if !strings.Contains(registryOwner, "definition.Name + row.Suffix") {
+		diags = append(diags, "help renderer does not derive each command token from commandRegistry Name")
+	}
+	return diags
+}
+
+func TestHelpInventorySingleSourceBites(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel, body string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	title := "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
+	registry := "package main\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"help\", Inventory: publicInventory()},\n\t{Name: \"repair\", WrapperOnly: true, Inventory: publicInventory(helpRow{Order: 1, Description: \"repair\"})},\n\t{Name: \"status\", Inventory: publicInventory(helpRow{Order: 2, Description: \"state\"})},\n\t{Name: \"plumbing\", Inventory: internalInventory},\n}\n"
+	write("cmd/bench/main.go", registry)
+	write("cmd/bench/command_registry.go", "package main\nconst title = \""+title+"\"\nfunc render(definition commandDefinition, row helpRow) { _ = definition.Name + row.Suffix }\n")
+	write("bin/bench.sh", "#!/bin/sh\n")
+	write(".bench/BENCH.md", "Run `bench help`.\n")
+	if diags := checkHelpInventorySingleSource(root); len(diags) != 0 {
+		t.Fatalf("registry-owned inventory = %v, want no diagnostics", diags)
+	}
+
+	write("bin/bench.sh", "#!/bin/sh\n# "+title+"\n")
+	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "appears 2 times") {
+		t.Fatalf("duplicate production inventory = %v, want duplicate-source diagnostic", diags)
+	}
+
+	write("bin/bench.sh", "#!/bin/sh\n")
+	write("cmd/bench/main.go", registry+"\nvar helpInventory = []string{\"  bench status  state\"}\n")
+	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "standalone rendered help command row") {
+		t.Fatalf("inventory moved beside registry = %v, want standalone-catalog diagnostic", diags)
+	}
+
+	write("cmd/bench/main.go", strings.Replace(registry, "{Name: \"status\", Inventory: publicInventory(helpRow{Order: 2, Description: \"state\"})}", "{Name: \"status\"}", 1))
+	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "status\" has 0 classifications") {
+		t.Fatalf("unclassified public route = %v, want classification diagnostic", diags)
+	}
 }
 
 // shippedFiles returns every file the npm tarball would carry, expanding package.json

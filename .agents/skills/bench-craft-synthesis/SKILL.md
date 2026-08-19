@@ -1,13 +1,13 @@
 ---
 name: craft-synthesis
-description: The discipline for safely folding a candidate change into the Bench kit — respect closed decisions, assess by the gap it fills, pass three quality loops (legibility, consistency, dogfood), and propose rather than merge. Use whenever evaluating a change to the kit itself, from either source — /bench-update-kit, or a learnings-sourced roadmap item queued by /bench-what-next.
+description: The discipline for safely folding a candidate change into the Bench kit — respect closed decisions, assess by the gap it fills, pass three quality loops (legibility, consistency, dogfood), and propose rather than merge. Use whenever evaluating a change to the kit itself, from either source — /bench-update-kit, or a learnings-sourced roadmap item queued by /bench-drain.
 index: evaluating a change to the kit itself
 ---
 
 # Synthesis — fold a change into the kit without bloating it
 
 This is the shared middle of `/bench-update-kit` (upstream changes) and the
-learnings-sourced roadmap items `/bench-what-next` queues (learnings changes).
+learnings-sourced roadmap items `/bench-drain` queues (learnings changes).
 Those paths gather candidates and record results; this skill is what happens in
 between — the same discipline regardless of where a candidate came from. The root virtue is **anti-sediment**: the kit growing is a *cost*, and a change
 earns its place only by filling a real gap, never because it reads well in isolation.

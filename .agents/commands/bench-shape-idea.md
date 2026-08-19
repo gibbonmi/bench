@@ -91,9 +91,9 @@ means it is not ready.
 
 ## Starting from the roadmap
 
-`ROADMAP.md` is the working prioritization document `/bench-what-next`
+`ROADMAP.md` is the working prioritization document `/bench-drain`
 maintains. Raw capture lives in `capture/IDEAS.md` and reaches the roadmap only through
-a reviewed `/bench-what-next` drain.
+a reviewed `/bench-drain` drain.
 
 When invoked cold, read the index `ROADMAP.md` — one heading line per row, no
 bodies — and offer its top items, recommended sequence first, asking which to
@@ -101,7 +101,7 @@ pull up. Fetch detail per row only for the ones in play, with
 `bench roadmap --context --row <ids>` or from the row's own `roadmap/FT<n>.md`.
 When the conversation already carries a fresh idea, proceed with it without
 interrupting for the roadmap. If the roadmap is empty or absent, say so, note
-that `/bench-what-next` rebuilds it, and continue.
+that `/bench-drain` rebuilds it, and continue.
 
 Pulling an item leaves its roadmap row in place: row presence is the item's
 status as current open work, and the row remains through shaping, spec, and

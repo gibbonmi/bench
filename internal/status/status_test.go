@@ -1,25 +1,713 @@
 package status
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 func TestTimeoutGateIsDistinctHighestSeveritySignal(t *testing.T) {
 	rows := appendGateInfo(nil, GateInfo{Present: true, State: "ready", Status: "timeout"}, t.TempDir())
-	if len(rows) != 1 || rows[0].detail != "timeout" || rows[0].sev != 0 || !strings.Contains(rows[0].action, "hang") {
+	if len(rows) != 1 || rows[0].detail != "timeout" || rows[0].sev != 0 || rows[0].action.render() != "bench gate --fresh" {
 		t.Fatalf("timeout rows = %#v", rows)
+	}
+}
+
+func TestAppendSetupReportsOnlyUnadoptedRoots(t *testing.T) {
+	root := t.TempDir()
+	if got := appendSetup(nil, root); len(got) != 1 || got[0] != (row{0, "setup", "no .bench/", commandAction(setupAction)}) {
+		t.Fatalf("unadopted setup row = %#v", got)
+	}
+	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if got := appendSetup(nil, root); len(got) != 0 {
+		t.Fatalf("adopted setup row = %#v, want none", got)
+	}
+}
+
+func TestAppendSetupStaysQuietWhenBenchPathCannotBeRead(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Symlink(".bench", filepath.Join(root, ".bench")); err != nil {
+		t.Fatal(err)
+	}
+	if got := appendSetup(nil, root); len(got) != 0 {
+		t.Fatalf("unreadable .bench setup row = %#v, want none", got)
+	}
+}
+
+func TestStagedSpecCountUsesFactsStatusReader(t *testing.T) {
+	root := t.TempDir()
+	write := func(path, body string) {
+		t.Helper()
+		full := filepath.Join(root, "specs", path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("staged/spec.md", "Status: staged\n")
+	write("implemented/spec.md", "Status: implemented\n")
+	write("fenced/spec.md", "```md\nStatus: staged\n```\n")
+	if err := os.MkdirAll(filepath.Join(root, "specs", "missing"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	fifo := filepath.Join(root, "specs", "fifo", "spec.md")
+	if err := os.MkdirAll(filepath.Dir(fifo), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+	}
+	if got, _ := stagedSpecCount(root); got != 1 {
+		t.Fatalf("stagedSpecCount = %d, want 1", got)
+	}
+
+	fifoRoot := t.TempDir()
+	if err := syscall.Mkfifo(filepath.Join(fifoRoot, "specs"), 0o644); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+	}
+	done := make(chan int, 1)
+	go func() {
+		count, _ := stagedSpecCount(fifoRoot)
+		done <- count
+	}()
+	select {
+	case got := <-done:
+		if got != 0 {
+			t.Fatalf("FIFO specs count = %d, want 0", got)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("stagedSpecCount blocked on a FIFO specs path")
+	}
+}
+
+func TestAppendStagedSpecsRoutesAndOrdersBeforeRetirement(t *testing.T) {
+	root := initRepo(t)
+	for path, body := range map[string]string{
+		"specs/staged/spec.md": "Status: staged\n",
+		"specs/merged/spec.md": "Status: implemented\n",
+		"reviews/staged.md":    "paired review\n",
+	} {
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	rows := appendStagedSpecs(nil, root)
+	rows = appendRetirement(rows, root)
+	want := []row{
+		{4, "specs", "1 staged spec(s)", commandActionWithArgument(implementSpecPhaseAction, "specs/staged/spec.md")},
+		{8, "specs", "1 merged spec(s) awaiting retirement", commandActionWithArgument(retireSpecAction, "<slug>")},
+	}
+	if !reflect.DeepEqual(rows, want) {
+		t.Fatalf("staged and retirement rows = %#v, want %#v", rows, want)
+	}
+
+	second := filepath.Join(root, "specs", "second", "spec.md")
+	if err := os.MkdirAll(filepath.Dir(second), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(second, []byte("Status: staged\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	rows = appendStagedSpecs(nil, root)
+	if got := rows[0].action.render(); got != "/bench-implement-spec" {
+		t.Fatalf("multiple staged action = %q, want bare command", got)
+	}
+}
+
+func TestAppendMapsRoutesReadyOnlyWithoutUnresolvedOrInvalidMaps(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "decisions")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
+	if err := os.WriteFile(filepath.Join(dir, "ready.md"), []byte(ready), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 ready map(s)", commandActionWithArgument(writeSpecPhaseAction, "decisions/ready.md")}}) {
+		t.Fatalf("ready-only maps row = %#v", got)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "second.md"), []byte(ready), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "2 ready map(s)", commandAction(writeSpecPhaseAction)}}) {
+		t.Fatalf("multiple-ready maps row = %#v", got)
+	}
+	if err := os.Remove(filepath.Join(dir, "second.md")); err != nil {
+		t.Fatal(err)
+	}
+
+	shaping := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	if err := os.WriteFile(filepath.Join(dir, "shaping.md"), []byte(shaping), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", commandAction(shapeIdeaPhaseAction)}}) {
+		t.Fatalf("ready plus shaping maps row = %#v", got)
+	}
+
+	if err := os.Remove(filepath.Join(dir, "shaping.md")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "invalid.md"), []byte("# invalid\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", commandAction(shapeIdeaPhaseAction)}}) {
+		t.Fatalf("ready plus invalid maps row = %#v", got)
+	}
+}
+
+func TestRenderSetupLeadsAnUnadoptedRepository(t *testing.T) {
+	root := initRepo(t)
+	commitFile(t, root, "tracked.txt")
+	if err := os.Remove(filepath.Join(root, ".bench")); err != nil {
+		t.Fatal(err)
+	}
+	wantBoard := "▶ bench setup  (setup)\n  setup      no .bench/                     → bench setup\n"
+	if got := render(root, false); got != wantBoard {
+		t.Fatalf("unadopted board = %q, want %q", got, wantBoard)
+	}
+	wantRoute := RouteResult{Lead: testSignal(0, "setup", "no .bench/", "bench setup")}
+	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, wantRoute) {
+		t.Fatalf("unadopted route = %#v, want %#v", got, wantRoute)
+	}
+}
+
+func TestSignalsOrderStagedSpecsAfterGuardsBeforeDrain(t *testing.T) {
+	root := initRepo(t)
+	for path, body := range map[string]string{
+		".bench/lines.env":     "BENCH_CODEX_MID=test\n",
+		"capture/IDEAS.md":     "- 2026-08-18  pending\n",
+		"specs/staged/spec.md": "Status: staged\n",
+	} {
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	var names []string
+	for _, signal := range Signals(root) {
+		if signal.Name == "guards" || signal.Name == "specs" || signal.Name == "drain" {
+			names = append(names, signal.Name)
+		}
+	}
+	if !reflect.DeepEqual(names, []string{"guards", "specs", "drain"}) {
+		t.Fatalf("signal order = %q, want guards, specs, drain", names)
+	}
+}
+
+func TestRenderedBoardAndRouteForStagedSpecWithReviewPickup(t *testing.T) {
+	root := initRepo(t)
+	for path, body := range map[string]string{
+		"specs/staged/spec.md": "Status: staged\n",
+		"reviews/staged.md":    "pickup\n",
+	} {
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	wantBoard := "▶ /bench-implement-spec specs/staged/spec.md  (specs)\n" +
+		"  specs      1 staged spec(s)               → /bench-implement-spec specs/staged/spec.md\n"
+	if got := render(root, false); got != wantBoard {
+		t.Fatalf("paired-review staged-spec board = %q, want %q", got, wantBoard)
+	}
+	wantRoute := RouteResult{Lead: testSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/staged/spec.md")}
+	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, wantRoute) {
+		t.Fatalf("paired-review staged-spec route = %#v, want %#v", got, wantRoute)
+	}
+}
+
+func TestSignalsRenderDirtyAndUnpushedTogether(t *testing.T) {
+	root := initRepo(t)
+	commitFile(t, root, "tracked.txt")
+	gitRun(t, root, "branch", "-M", "main")
+	gitRun(t, root, "remote", "add", "origin", root)
+	gitRun(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
+	gitRun(t, root, "config", "branch.main.remote", "origin")
+	gitRun(t, root, "config", "branch.main.merge", "refs/heads/main")
+	commitFile(t, root, "ahead.txt")
+	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	want := []Signal{testSignal(1, "git", "1 dirty path, 1 unpushed commit", "/bench-final-check")}
+	if got := Signals(root); !reflect.DeepEqual(got, want) {
+		t.Fatalf("Signals = %#v, want %#v", got, want)
+	}
+}
+
+func TestRouteForInvokesStagedSpecWhosePathContainsSpacesAheadOfDrain(t *testing.T) {
+	root := initRepo(t)
+	for path, body := range map[string]string{
+		"capture/IDEAS.md":      "- 2026-08-18  pending\n",
+		"specs/my spec/spec.md": "Status: staged\n",
+	} {
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	want := RouteResult{
+		Lead: testSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/my spec/spec.md"),
+		RunnersUp: []Signal{
+			testSignal(4, "drain", "1 idea(s), 0 open learning(s), 0 pending retro(s)", "/bench-drain"),
+		},
+	}
+	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
+		t.Fatalf("spaced staged-spec route = %#v, want %#v", got, want)
+	}
+}
+
+func TestRouteForInvokesReadyMapWhosePathContainsSpaces(t *testing.T) {
+	root := initRepo(t)
+	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
+	path := filepath.Join(root, "decisions", "my map.md")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(ready), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	want := RouteResult{Lead: testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}
+	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
+		t.Fatalf("spaced ready-map route = %#v, want %#v", got, want)
+	}
+}
+
+func TestGateActionNormalization(t *testing.T) {
+	partial := &gate.Partition{}
+	for _, tc := range []struct {
+		name string
+		gate GateInfo
+		want string
+	}{
+		{"red", GateInfo{Present: true, State: string(gate.Ready), Status: "red"}, "/bench-debug"},
+		{"timeout", GateInfo{Present: true, State: string(gate.Ready), Status: "timeout"}, "bench gate --fresh"},
+		{"invalid", GateInfo{Present: true, State: string(gate.Invalid)}, "bench gate"},
+		{"unavailable", GateInfo{Present: true, State: string(gate.Unavailable)}, "bench gate --fresh"},
+		{"drifted", GateInfo{Present: true, State: string(gate.Ready), Stale: true, CachedTree: "old", WorkTree: "new"}, "bench gate"},
+		{"exact-tip partial", GateInfo{Present: true, State: string(gate.Ready), Stale: true, CachedTree: "tree", WorkTree: "tree", Partition: partial}, "bench gate --fresh"},
+		{"locked-pending", GateInfo{Present: true, State: string(gate.Pending), PendingStatus: "locked-pending"}, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rows := appendGateInfo(nil, tc.gate, t.TempDir())
+			if len(rows) != 1 || rows[0].action.render() != tc.want {
+				t.Fatalf("action = %#v, want %q", rows, tc.want)
+			}
+		})
+	}
+}
+
+func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
+	write := func(t *testing.T, root, path, body string, mode os.FileMode) {
+		t.Helper()
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+	commit := func(t *testing.T, root string) {
+		t.Helper()
+		gitRun(t, root, "add", "-A")
+		gitRun(t, root, "commit", "-m", "fixture")
+	}
+	cleanRepo := func(t *testing.T) string {
+		t.Helper()
+		root := initRepo(t)
+		write(t, root, "tracked.txt", "base\n", 0o644)
+		commit(t, root)
+		gitRun(t, root, "branch", "-M", "main")
+		return root
+	}
+	gateCache := func(t *testing.T, root string) string {
+		t.Helper()
+		return filepath.Join(gitRun(t, root, "rev-parse", "--absolute-git-dir"), git.GateCacheFile)
+	}
+	writePendingGate := func(t *testing.T, root string) {
+		t.Helper()
+		record := fmt.Sprintf(`{"schema":1,"state":"pending","tree":%q,"oracle":%q,"started_at":%q,"owner_pid":999999}`+"\n",
+			gitRun(t, root, "write-tree"), strings.Repeat("0", 64), time.Now().UTC().Add(-time.Minute).Truncate(time.Second).Format(time.RFC3339))
+		if err := os.WriteFile(gateCache(t, root), []byte(record), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	readyGate := func(t *testing.T, status string) string {
+		t.Helper()
+		root := cleanRepo(t)
+		write(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n", 0o644)
+		write(t, root, ".bench/gate.sh", "#!/bin/sh\nexit 0\n", 0o755)
+		commit(t, root)
+		if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 0 {
+			t.Fatalf("seed gate exit = %d", result.ActionExit)
+		}
+		path := gateCache(t, root)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var record map[string]any
+		if err := json.Unmarshal(data, &record); err != nil {
+			t.Fatal(err)
+		}
+		record["status"] = status
+		data, err = json.Marshal(record)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, append(data, '\n'), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return root
+	}
+	readyMap := func() string {
+		body := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+		return strings.Replace(body, "Status: shaping", "Status: ready", 1)
+	}
+
+	type fixture struct {
+		name, signal, detail string
+		count                int
+		setup                func(*testing.T) (string, Query)
+		exact                []Signal
+		board                string
+		route                *RouteResult
+	}
+	cases := []fixture{
+		{name: "setup", signal: "setup", detail: "no .bench/", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			if err := os.RemoveAll(filepath.Join(root, ".bench")); err != nil {
+				t.Fatal(err)
+			}
+			return root, Query{}
+		}},
+		{name: "gate red", signal: "gate", detail: "red", setup: func(t *testing.T) (string, Query) {
+			return readyGate(t, "red"), Query{}
+		}},
+		{name: "gate timeout", signal: "gate", detail: "timeout", setup: func(t *testing.T) (string, Query) {
+			return readyGate(t, "timeout"), Query{}
+		}},
+		{name: "gate invalid", signal: "gate", detail: "invalid verdict", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			if err := os.WriteFile(gateCache(t, root), []byte("{}\n"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			return root, Query{}
+		}},
+		{name: "gate unavailable", signal: "gate", detail: "verdict unavailable", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			gittest.StubGit(t, root, "fail-rev-parse", filepath.Join(t.TempDir(), "argv"))
+			return root, Query{}
+		}},
+		{name: "gate drifted", signal: "gate", detail: "stale (gated tree", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			writeFullGateCache(t, root, gitRun(t, root, "write-tree"), "green")
+			write(t, root, "tracked.txt", "moved\n", 0o644)
+			gitRun(t, root, "add", "tracked.txt")
+			return root, Query{}
+		}},
+		{name: "gate partial", signal: "gate", detail: "partial green", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			writePartialGateCache(t, root, gitRun(t, root, "write-tree"), "docs")
+			return root, Query{}
+		}},
+		{name: "gate interrupted", signal: "gate", detail: "interrupted-pending", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			writePendingGate(t, root)
+			return root, Query{}
+		}},
+		{name: "gate locked", signal: "gate", detail: "locked-pending", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			started, release := filepath.Join(t.TempDir(), "started"), filepath.Join(t.TempDir(), "release")
+			write(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n", 0o644)
+			write(t, root, ".bench/gate.sh", fmt.Sprintf("#!/bin/sh\nset -eu\n: > %q\nwhile [ ! -e %q ]; do sleep 0.01; done\n", started, release), 0o755)
+			commit(t, root)
+			done := make(chan struct{})
+			go func() {
+				gate.Execute(context.Background(), root, io.Discard, io.Discard)
+				close(done)
+			}()
+			deadline := time.Now().Add(5 * time.Second)
+			for {
+				if _, err := os.Stat(started); err == nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					t.Fatal("gate fixture did not acquire its lock")
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+			t.Cleanup(func() {
+				_ = os.WriteFile(release, nil, 0o600)
+				select {
+				case <-done:
+				case <-time.After(5 * time.Second):
+					t.Error("gate fixture did not release its lock")
+				}
+			})
+			return root, Query{}
+		}},
+		{name: "git unavailable", signal: "git", detail: "git state unavailable", setup: func(t *testing.T) (string, Query) {
+			return t.TempDir(), Query{}
+		}, exact: []Signal{testSignal(1, "git", "git state unavailable", "git status")}},
+		{name: "git dirty", signal: "git", detail: "dirty path", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "tracked.txt", "dirty\n", 0o644)
+			return root, Query{}
+		}},
+		{name: "git unpushed", signal: "git", detail: "unpushed commit", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			branch := gitRun(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+			gitRun(t, root, "remote", "add", "origin", root)
+			gitRun(t, root, "update-ref", "refs/remotes/origin/"+branch, "HEAD")
+			gitRun(t, root, "config", "branch."+branch+".remote", "origin")
+			gitRun(t, root, "config", "branch."+branch+".merge", "refs/heads/"+branch)
+			write(t, root, "ahead.txt", "ahead\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}, exact: []Signal{testSignal(1, "git", "1 unpushed commit", "git push")}},
+		{name: "git unique branch", signal: "git", detail: "unique branch", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			gitRun(t, root, "checkout", "-b", "feature")
+			write(t, root, "feature.txt", "feature\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}, exact: []Signal{testSignal(1, "git", "1 unique branch", "git push")}},
+		{name: "worktree leased and out of pool", signal: "worktree", count: 2, setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			t.Setenv("BENCH_HOME", t.TempDir())
+			leased := filepath.Join(worktree.Pool(root), "leased")
+			if err := os.MkdirAll(filepath.Dir(leased), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			gitRun(t, root, "worktree", "add", "-q", "--detach", leased, "HEAD")
+			lease, err := worktree.LeaseFile(leased)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(lease, []byte("leased\n"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			outside := filepath.Join(t.TempDir(), "outside")
+			gitRun(t, root, "worktree", "add", "-q", "--detach", outside, "HEAD")
+			return root, Query{}
+		}, exact: []Signal{
+			testSignal(2, "worktree", "1 out-of-pool worktree", "bench worktree clean <path>"),
+			testSignal(2, "worktree", "1 leased pool worktree", "bench worktree list"),
+		}},
+		{name: "worktree typed failure", signal: "worktree", detail: "rev-parse", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			gittest.StubGit(t, root, "fail-rev-parse", filepath.Join(t.TempDir(), "argv"))
+			return root, Query{}
+		}},
+		{name: "worktree porcelain failure", signal: "worktree", detail: "git worktree list failed", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			gittest.StubGit(t, root, "fail-worktree", filepath.Join(t.TempDir(), "argv"))
+			return root, Query{}
+		}},
+		{name: "intent live", signal: "intent", detail: "correlated", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			if err := intent.Upsert(root, intent.Entry{Key: "live", Kind: intent.KindWorktree, CreatedAt: time.Unix(1, 0), Worktree: root}); err != nil {
+				t.Fatal(err)
+			}
+			return root, Query{}
+		}, exact: []Signal{testSignal(2, "intent", "1 correlated, 0 uncorrelated; oldest: live", "bench status --all")}},
+		{name: "intent unavailable", signal: "intent", detail: "intent ledger unavailable", setup: func(t *testing.T) (string, Query) {
+			return t.TempDir(), Query{}
+		}},
+		{name: "guards", signal: "guards", detail: "pre-push missing", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, ".bench/lines.env", "BENCH_CODEX_MID=test\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}},
+		{name: "one staged spec", signal: "specs", detail: "1 staged spec", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "specs/my spec/spec.md", "Status: staged\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}},
+		{name: "multiple staged specs", signal: "specs", detail: "2 staged spec", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "specs/one/spec.md", "Status: staged\n", 0o644)
+			write(t, root, "specs/two/spec.md", "Status: staged\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}},
+		{name: "drain", signal: "drain", detail: "1 idea", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "capture/IDEAS.md", "- 2026-08-18  pending\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}},
+		{name: "structure", signal: "structure", detail: "1 issue", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "long.go", strings.Repeat("x\n", 401), 0o644)
+			commit(t, root)
+			return root, Query{}
+		}, exact: []Signal{testSignal(5, "structure", "1 issue(s)", "bench structure")}},
+		{name: "unresolved map", signal: "decisions", detail: "unresolved map", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "decisions/shaping.md", maps.DecisionMapTemplate(), 0o644)
+			commit(t, root)
+			return root, Query{}
+		}, exact: []Signal{testSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")},
+			board: "▶ /bench-shape-idea  (decisions)\n  decisions  1 unresolved map(s)            → /bench-shape-idea\n",
+			route: &RouteResult{Lead: testSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")}},
+		{name: "one ready map", signal: "decisions", detail: "1 ready map", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "decisions/my map.md", readyMap(), 0o644)
+			commit(t, root)
+			return root, Query{}
+		}, exact: []Signal{testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")},
+			board: "▶ /bench-write-spec decisions/my map.md  (decisions)\n  decisions  1 ready map(s)                 → /bench-write-spec decisions/my map.md\n",
+			route: &RouteResult{Lead: testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}},
+		{name: "multiple ready maps", signal: "decisions", detail: "2 ready map", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "decisions/one.md", readyMap(), 0o644)
+			write(t, root, "decisions/two.md", readyMap(), 0o644)
+			commit(t, root)
+			return root, Query{}
+		}},
+		{name: "map scan failure", signal: "decisions", detail: "unknown", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			if err := syscall.Mkfifo(filepath.Join(root, "decisions"), 0o600); err != nil {
+				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			}
+			return root, Query{}
+		}, exact: []Signal{testSignal(6, "decisions", "unknown (decisions is wrong-type)", "bench maps")}},
+		{name: "implemented spec", signal: "specs", detail: "awaiting retirement", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "specs/implemented/spec.md", "Status: implemented\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}},
+		{name: "orphaned review", signal: "reviews", detail: "orphaned review", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "reviews/orphan.md", "pickup\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}, exact: []Signal{{Severity: 9, Name: "reviews", Detail: "1 orphaned review pickup", Action: ""}}},
+		{name: "roadmap reconcile", signal: "roadmap", detail: "retired spec", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, roadmap.RoadmapFile, "specs/retired/spec.md\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}},
+		{name: "roadmap scan failure", signal: "roadmap", detail: "unknown", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			if err := syscall.Mkfifo(filepath.Join(root, roadmap.RoadmapFile), 0o600); err != nil {
+				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			}
+			return root, Query{}
+		}},
+		{name: "handoff", signal: "handoff", detail: "commit behind", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			commitHandoff(t, root, "current")
+			commitFile(t, root, "after.txt")
+			return root, Query{}
+		}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root, query := tc.setup(t)
+			matched := 0
+			var exact []Signal
+			producedSignals := SignalsWith(root, query)
+			for _, produced := range producedSignals {
+				if produced.Name == tc.signal {
+					exact = append(exact, produced)
+				}
+				if produced.Name == tc.signal && (tc.detail == "" || strings.Contains(produced.Detail, tc.detail)) {
+					matched++
+				}
+				if produced.Action == "" {
+					if produced.actionID != noAction || produced.invocable() {
+						t.Errorf("%s empty board action is not explicitly advisory", produced.Name)
+					}
+					continue
+				}
+				if !produced.invocable() || !IsInvocable(produced.Action) {
+					t.Errorf("%s board action %q is not typed and parser-invocable", produced.Name, produced.Action)
+				}
+			}
+			want := tc.count
+			if want == 0 {
+				want = 1
+			}
+			if matched != want {
+				t.Fatalf("fixture produced %d matching %s row(s), want %d", matched, tc.signal, want)
+			}
+			if tc.exact != nil && !reflect.DeepEqual(exact, tc.exact) {
+				t.Fatalf("%s rows = %#v, want %#v", tc.signal, exact, tc.exact)
+			}
+			if tc.board != "" {
+				if got := render(root, false); got != tc.board {
+					t.Fatalf("board = %q, want %q", got, tc.board)
+				}
+			}
+			if tc.route != nil {
+				if got := RouteFor(root, producedSignals, HarnessClaude); !reflect.DeepEqual(got, *tc.route) {
+					t.Fatalf("route = %#v, want %#v", got, *tc.route)
+				}
+			}
+		})
 	}
 }
 
@@ -181,8 +869,8 @@ func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
 	if detail != "stale (gated tree 0123456, work tree none)" {
 		t.Fatalf("detail = %q, want strong stale detail", detail)
 	}
-	if action != "re-run the gate" {
-		t.Fatalf("action = %q, want re-run the gate", action)
+	if action.render() != "bench gate" {
+		t.Fatalf("action = %q, want bench gate", action.render())
 	}
 }
 
@@ -285,8 +973,8 @@ func TestPartialRowActionIsFresh(t *testing.T) {
 	if len(rows) != 1 {
 		t.Fatalf("rows = %#v, want one gate row", rows)
 	}
-	if !strings.Contains(rows[0].action, "bench gate --fresh") {
-		t.Errorf("action = %q, want the fresh whole-tree action", rows[0].action)
+	if !strings.Contains(rows[0].action.render(), "bench gate --fresh") {
+		t.Errorf("action = %q, want the fresh whole-tree action", rows[0].action.render())
 	}
 }
 
@@ -310,7 +998,7 @@ func TestDriftedRedVerdictRendersAsStaleRatherThanRed(t *testing.T) {
 	if len(rows) != 1 {
 		t.Fatalf("rows = %#v, want one gate row", rows)
 	}
-	if !strings.HasPrefix(rows[0].detail, "stale (gated tree") || rows[0].action != "re-run the gate" {
+	if !strings.HasPrefix(rows[0].detail, "stale (gated tree") || rows[0].action.render() != "bench gate" {
 		t.Fatalf("rows = %#v, want the drift row rather than a red one", rows)
 	}
 }
@@ -459,6 +1147,9 @@ func initRepo(t *testing.T) string {
 	if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	return root
 }
 
@@ -505,10 +1196,10 @@ func TestRenderDirtyLeadsGitOverDrainRow(t *testing.T) {
 
 	out := render(root, false)
 	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
-	if !strings.HasPrefix(lines[0], "▶ commit on green  (git)") {
+	if !strings.HasPrefix(lines[0], "▶ /bench-final-check  (git)") {
 		t.Errorf("lead line = %q, want git action lead", lines[0])
 	}
-	if !strings.Contains(out, "1 idea(s), 0 open learning(s)") || !strings.Contains(out, "/bench-what-next") {
+	if !strings.Contains(out, "1 idea(s), 0 open learning(s)") || !strings.Contains(out, "/bench-drain") {
 		t.Errorf("drain row missing from:\n%s", out)
 	}
 }
@@ -563,7 +1254,7 @@ func TestAppendWorktreeSurfacesClassifyFailure(t *testing.T) {
 	if len(rows) == 0 {
 		t.Fatal("appendWorktree dropped the classify failure instead of surfacing a row")
 	}
-	if !strings.Contains(rows[0].detail, "git common directory") || rows[0].action != "investigate the git failure" {
+	if !strings.Contains(rows[0].detail, "git common directory") || rows[0].action.render() != "bench worktree list" {
 		t.Errorf("row = %#v, want typed resolution refusal", rows[0])
 	}
 }
@@ -572,14 +1263,14 @@ func TestAppendWorktreeKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T
 	for _, tc := range []struct {
 		mode, detail, action string
 	}{
-		{"fail-rev-parse", "rev-parse", "investigate the git failure"},
-		{"fail-worktree", "git worktree list failed", "run git worktree list and retry"},
+		{"fail-rev-parse", "rev-parse", "bench worktree list"},
+		{"fail-worktree", "git worktree list failed", "git worktree list"},
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
 			root := initRepo(t)
 			gittest.StubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
 			rows := appendWorktree(nil, root)
-			if len(rows) != 1 || !strings.Contains(rows[0].detail, tc.detail) || rows[0].action != tc.action {
+			if len(rows) != 1 || !strings.Contains(rows[0].detail, tc.detail) || rows[0].action.render() != tc.action {
 				t.Fatalf("%s row = %#v", tc.mode, rows)
 			}
 		})
@@ -592,7 +1283,7 @@ func TestAppendWorktreeRendersBoundExpiryAsTypedFailure(t *testing.T) {
 	root := initRepo(t)
 	gittest.StubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
 	rows := appendWorktree(nil, root)
-	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktree list") || rows[0].action != "investigate the git failure" || strings.Contains(rows[0].action, "retry") {
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktree list") || rows[0].action.render() != "bench worktree list" {
 		t.Fatalf("bound row = %#v", rows)
 	}
 }
@@ -601,7 +1292,7 @@ func TestAppendWorktreeRendersTypedAdminRefusal(t *testing.T) {
 	root := initRepo(t)
 	gittest.FIFOWorktreeAdmin(t, root, "typed")
 	rows := appendWorktree(nil, root)
-	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action != "inspect and remove it" {
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action.render() != "bench worktree list" {
 		t.Fatalf("typed row = %#v", rows)
 	}
 }
@@ -616,15 +1307,169 @@ func TestCommandArgs(t *testing.T) {
 	if r, c := Command([]string{"-h"}); c != 0 || !strings.Contains(r, "usage: bench status") {
 		t.Errorf("help: report %q exit %d", r, c)
 	}
-	if r, c := Command([]string{"-h"}); !strings.Contains(r, "[--all]") {
-		t.Errorf("help usage should advertise [--all], got %q exit %d", r, c)
+	if r, c := Command([]string{"-h"}); !strings.Contains(r, "[--route [--harness claude|codex]]") {
+		t.Errorf("help usage should advertise route grammar, got %q exit %d", r, c)
 	}
 	if r, c := Command([]string{"--all"}); c != 0 {
 		t.Errorf("--all should be accepted with exit 0, got report %q exit %d", r, c)
 	}
-	for _, bad := range [][]string{{"--all", "extra"}, {"--allx"}, {"-a"}} {
+	for _, bad := range [][]string{{"--all", "extra"}, {"--allx"}, {"-a"}, {"--route", "--all"}, {"--harness", "codex"}, {"--route", "--harness", "opencode"}, {"--route", "extra"}} {
 		if r, c := Command(bad); c != 2 || !strings.Contains(r, "usage:") {
 			t.Errorf("args %q: report %q exit %d, want usage exit 2", bad, r, c)
 		}
+	}
+}
+
+func TestCommandMalformedRoutePrintsExactGrammar(t *testing.T) {
+	want := grammar.Help + "\n"
+	for _, args := range [][]string{
+		{"--route", "--all"},
+		{"--harness", "codex"},
+		{"--route", "--harness", "opencode"},
+		{"--route", "extra"},
+	} {
+		if got, code := Command(args); code != 2 || got != want {
+			t.Errorf("Command(%q) = (%q, %d), want (%q, 2)", args, got, code, want)
+		}
+	}
+}
+
+func TestCommandRouteOutsideRepositoryReturnsStructuredError(t *testing.T) {
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+
+	if got, code := Command([]string{"--route"}); code != 1 || got != "error: not in a git repository — run inside a Bench-linked repo\n" {
+		t.Fatalf("Command(--route) = (%q, %d)", got, code)
+	}
+}
+
+func TestCommandRoutePrintsLeadAndRunnersUp(t *testing.T) {
+	root := initRepo(t)
+	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "capture", "IDEAS.md"), []byte("- 2026-08-18 pending\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nexit 7\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "tracked.txt")
+	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 7 {
+		t.Fatalf("gate exit = %d, want red 7", result.ActionExit)
+	}
+
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+
+	want := "next[1]{state,why,command}:\n" +
+		"  gate,red,/bench-debug\n" +
+		"also: git (1 dirty path) → /bench-final-check; drain (1 idea(s), 0 open learning(s), 0 pending retro(s)) → /bench-drain\n"
+	if got, code := Command([]string{"--route"}); code != 0 || got != want {
+		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
+	}
+}
+
+func TestCommandRouteEscapesControlBytesInProducerPaths(t *testing.T) {
+	root := initRepo(t)
+	writeFile := func(path, body string, mode os.FileMode) {
+		t.Helper()
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeFile(".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n", 0o644)
+	writeFile(".bench/gate.sh", "#!/bin/sh\nexit 7\n", 0o755)
+	writeFile("specs/my [draft]\x1b/spec.md", "Status: staged\n", 0o644)
+	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
+	writeFile("decisions/my * map\x07.md", ready, 0o644)
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 7 {
+		t.Fatalf("gate exit = %d, want red 7", result.ActionExit)
+	}
+
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+
+	want := "next[1]{state,why,command}:\n" +
+		"  gate,red,/bench-debug\n" +
+		"also: specs (1 staged spec(s)) → /bench-implement-spec specs/my [draft]\\u001b/spec.md; decisions (1 ready map(s)) → /bench-write-spec decisions/my * map\\u0007.md\n"
+	if got, code := Command([]string{"--route"}); code != 0 || got != want {
+		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
+	}
+}
+
+func TestCommandRouteEscapesControlByteInLeadStagedSpecPath(t *testing.T) {
+	want := "next[1]{state,why,command}:\n" +
+		"  specs,1 staged spec(s),\"/bench-implement-spec specs/lead\\\\u001b/spec.md\"\n" +
+		"also: none\n"
+	assertLeadControlRoute(t, "specs/lead\x1b/spec.md", "Status: staged\n", want)
+}
+
+func TestCommandRouteEscapesControlByteInLeadReadyMapPath(t *testing.T) {
+	ready := strings.Replace(maps.DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	ready = strings.Replace(ready, "Status: shaping", "Status: ready", 1)
+	want := "next[1]{state,why,command}:\n" +
+		"  decisions,1 ready map(s),\"/bench-write-spec decisions/lead\\\\u0007.md\"\n" +
+		"also: none\n"
+	assertLeadControlRoute(t, "decisions/lead\x07.md", ready, want)
+}
+
+func assertLeadControlRoute(t *testing.T, relativePath, body, want string) {
+	t.Helper()
+	root := initRepo(t)
+	path := filepath.Join(root, filepath.FromSlash(relativePath))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+
+	if got, code := Command([]string{"--route"}); code != 0 || got != want {
+		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
 	}
 }

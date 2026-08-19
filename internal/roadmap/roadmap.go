@@ -222,7 +222,7 @@ func renderRoadmapBoard(doc Document, diagnostics []Diagnostic, drain Drain, abs
 			name   string
 			fields []string
 			rows   [][]any
-		}{"help", []string{"cmd", "why"}, [][]any{{"/bench-what-next", "create or drain the working roadmap"}}})
+		}{"help", []string{"cmd", "why"}, [][]any{{"/bench-drain", "create or drain the working roadmap"}}})
 	} else {
 		blocks = append(blocks, struct {
 			name   string

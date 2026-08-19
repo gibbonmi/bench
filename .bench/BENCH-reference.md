@@ -69,8 +69,10 @@ not the list:
 The canonical phase bodies live in `.agents/commands/`. Harnesses may expose those
 phases differently:
 
-- **Claude Code:** invoke the phase directly as a slash command, e.g. `/bench-write-spec`.
-- **Codex:** invoke the matching explicit skill, e.g. `$bench-write-spec`; each `$bench-*`
+- **Claude Code:** invoke `/bench` to route from observed state, or invoke a phase
+  directly as a slash command, e.g. `/bench-write-spec`.
+- **Codex:** invoke `$bench` to route from observed state, or invoke the matching
+  explicit skill, e.g. `$bench-write-spec`; each `$bench-*`
   adapter reads the canonical command file and follows it. These adapters are
   explicit-only (`allow_implicit_invocation: false`) because workflow phases are
   reviewer-chosen entry points, not background generation guidance.
@@ -84,6 +86,7 @@ form lives with the communication rules in `.bench/BENCH.md`.
 
 Codex phase adapters installed by Bench:
 
+- `$bench` → `.agents/commands/bench.md` (front door; routes with `--harness codex`)
 - `$bench-setup-repo` → `.agents/commands/bench-setup-repo.md`
 - `$bench-shape-idea` → `.agents/commands/bench-shape-idea.md`
 - `$bench-write-spec` → `.agents/commands/bench-write-spec.md`
@@ -92,13 +95,15 @@ Codex phase adapters installed by Bench:
 - `$bench-review-implementation` → `.agents/commands/bench-review-implementation.md`
 - `$bench-final-check` → `.agents/commands/bench-final-check.md`
 - `$bench-update-kit` → `.agents/commands/bench-update-kit.md`
-- `$bench-what-next` → `.agents/commands/bench-what-next.md`
+- `$bench-drain` → `.agents/commands/bench-drain.md`
+- `/bench-what-next`, `$bench-what-next` → `.agents/commands/bench-drain.md` (one-release alias)
 - `$bench-assess` → `.agents/commands/bench-assess.md`
 - `$bench-deepen` → `.agents/commands/bench-deepen.md`
 
 ## Command Notes
 
-The canonical CLI inventory lives in `.bench/BENCH.md`, not in `HANDOFF.md`.
+`bench help`, rendered from the Go `commandRegistry`, is the executable inventory.
+`.bench/BENCH.md` provides category-level operational guidance, not a second command list.
 Detailed output contracts for the AXI query surfaces live in the project
 profile (`projects/<name>.md`);
 hook and adapter plumbing is described in the sections below.
@@ -111,11 +116,9 @@ help owns its flags and positional grammar.
 
 ## Plumbing subcommands
 
-Driven by hooks and adapters, never typed by sessions — the one enumeration
-(the always-loaded inventory in `.bench/BENCH.md` points here): `bench tree-hash`,
-`bench gate-run`, `bench freshness-check`, `bench gate-phases`, `bench gate-go`, `bench release-preflight`, `bench guard-git`, `bench resolve-model`,
-`bench check-agent-line`, `bench stop-verdict`, `bench session-inspect`, `bench worktree-pool`,
-`bench worktree-lease-file`, `bench worktree-hook`, `bench resume-clean`.
+Definitions classified as internal inventory support hooks and adapters rather than
+interactive sessions. Their exact set is registry-owned so visibility changes cannot
+drift from `bench help`; inspect the registry when maintaining those callers.
 
 ## Phase manifest
 

@@ -13,11 +13,11 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 - **Skills** shape *how* you generate — guidance, not rules — in
   `.agents/skills/` (and `.claude/skills/` for Claude Code);
   `.bench/BENCH-reference.md` indexes them.
-- **Commands** are the workflow phases below: `/bench-setup-repo` on adoption,
-  `/bench-what-next` when a drain is pending. `/bench-update-kit`,
-  `/bench-assess`, and `craft-synthesis` ship only in the Bench kit repository;
-  a linked repo upgrades with `bench upgrade` instead, and the skills index
-  marks the rows it does not receive.
+- **Commands:** `/bench` (Claude Code) and `$bench` (Codex) route observed state;
+  `/bench-setup-repo` handles adoption and `/bench-drain` pending capture.
+  `/bench-update-kit`, `/bench-assess`, and `craft-synthesis`
+  ship only in the Bench kit repository; a linked repo upgrades with `bench upgrade`.
+  The skills index marks omitted rows.
 - **The gate and the hooks** enforce, with authority you do not have:
   `bench shift` gates every iteration and commits only on green; a `pre-push`
   hook protects the default branch.
@@ -28,28 +28,14 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 
 ## CLI Inventory
 
-- Setup: `bench setup`, `bench link`, `bench init`, `bench unlink`,
-  `bench doctor`, `bench repair` (`--prune`), `bench upgrade` (`--check`,
-  `--force`).
-- Context: `bench status`, `bench handoff`, `bench commands --brief`,
-  `bench dashboard`, `bench idea`, `bench roadmap`, `bench learnings`,
-  `bench maps`.
-- Oracle: `bench gate` (`--fresh`), `bench gate pin`, `bench prep-release`,
-  `bench release`, `bench canary`, `bench preflight review|build <slug>`,
-  `bench structure`, `bench anchors`, `bench guards`, `bench diff`,
-  `bench coverage`, `bench outline`, `bench models`, `bench skills-index`
-  (`--check`, `--write`), `bench version`, and `bench test [--full] [package]`
-  for package, failure, and skip evidence as TOON.
-- Work: `bench worktree` (`bench worktree list`, `bench worktree path <target>`,
-  `bench worktree exec <target> -- <command>`, `bench worktree create`, `bench worktree release` by the creating request,
-  `bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>]` for plan/apply removal,
-  `bench worktree reauthorize`, `bench worktree land`),
-  `bench shift`, path-scoped `bench commit -m <msg> <path>...` (`--spec <slug>`
-  semantics in `bench commit --help`), `bench spec implemented`,
-  `bench spec retire`, `bench spec history`.
-- Plumbing subcommands, driven by hooks and adapters, live in
-  `.bench/BENCH-reference.md`; this inventory tracks `bin/bench.sh`. Run `bench`
-  exactly as its executable help spells it. Never append extra subcommands,
+- Setup and adoption connect a repository to the kit and maintain that installation.
+- Context commands expose current state, navigation, capture, and planning evidence.
+- Oracle commands inspect or enforce readiness from development through release.
+- Work commands own isolated execution, gated changes, and spec lifecycle operations.
+
+`bench help` is the complete executable inventory. Plumbing subcommands, driven by
+hooks and adapters, live in `.bench/BENCH-reference.md`. Run `bench` exactly as its
+executable help spells it. Never append extra subcommands,
   `</dev/null`, `2>&1`, a pipeline, or a shell follow-on: Bench owns
   non-interactive input, complete output, and required next actions. The complete
   output is the evidence (on a red gate, the failure attribution), and output too
@@ -124,12 +110,12 @@ convergence, a call `craft-line` owns.
 
 ## Workflow
 
+0. `/bench` in Claude Code or `$bench` in Codex to route from observed state.
 1. `/bench-shape-idea` for a multi-session unresolved decision tree.
 2. `/bench-write-spec` to lock stories, seams, and gate expectations, and slice the tickets.
 3. `/bench-implement-spec` to implement at the chosen seams.
 4. `/bench-review-implementation` for semantic review before the final landing.
-5. `/bench-final-check` to gate, commit on green, and report the landing
-   evidence.
+5. `/bench-final-check` to gate, commit on green, and report the landing evidence.
 
 **Right-size the process; ask before deviating.** A few-line change doesn't need
 the full pipeline, and you may propose a lighter path — but skipping a canonical
@@ -160,7 +146,7 @@ flagging contestable calls. Absent one, spec sign-off is a hard stop.
 deviate, make a judgment call you're unsure about, or catch a should-have-asked
 in hindsight, append one entry to `capture/learnings.md`: what happened, the
 right behavior, and a proposed rule change if any — you capture, I decide.
-`/bench-what-next` verdicts every open entry into roadmap items with my
+`/bench-drain` verdicts every open entry into roadmap items with my
 sign-off. A harness's auto-memory holds user and preference facts; a process or
 judgment learning lands in `capture/learnings.md`, whose reviewed drain is its
 only path in.
@@ -171,10 +157,10 @@ Parking an idea is conversational, never a CLI chore for the reviewer: when the
 reviewer wants to set one aside, or you spot a tangent worth keeping, **you** run
 `bench idea "<text>"`. Offer once, then let it go. Parked ideas land in
 `capture/IDEAS.md` and graduate to the board — an index line in `ROADMAP.md`,
-body and ledger in `roadmap/FT<n>.md` — only through a reviewed `/bench-what-next`
+body and ledger in `roadmap/FT<n>.md` — only through a reviewed `/bench-drain`
 drain, or close by implementation during that same drain. If `bench` isn't on
 PATH, append the dated line (`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yourself.
 
 Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`
 and refreshes affected `capture/agent-performance/` scorecards;
-`/bench-what-next` owns their reviewed drain and its capture commit.
+`/bench-drain` owns their reviewed drain and its capture commit.

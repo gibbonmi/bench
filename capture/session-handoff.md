@@ -1,36 +1,29 @@
 # Session handoff
 
-Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — HEAD `dae4387`, clean tree, 3 unpushed commits
+Repository: `9a43f8b9d7384e58ad06b1bcea12e3c0-47e4fe85241ecdf736dfbcb48a8117db` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/9a43f8b9d7384e58ad06b1bcea12e3c0-47e4fe85241ecdf736dfbcb48a8117db`
+Branch: `bench/assign/9a43f8b9d7384e58ad06b1bcea12e3c0/47e4fe85241ecdf736dfbcb48a8117db` — HEAD `0d32a9b`, clean tree, 4 unpushed commits
 Spec: `specs/bench-front-door/spec.md` (Status: staged)
-Gate: green at `e3f0e62` — stale, work tree `19c0b52`
+Gate: green at `20dcb24` — stale, work tree `f071524`
 
 ## State
 
-**Reviewer override standing for this repo:** the 2026-08 capability audit's own priority
-order (`docs/audits/2026-08-bench-capability/results-fable-high/proposed-roadmap.md`)
-supersedes `ROADMAP.md`'s `## Recommended sequence` until A1–A11 are exhausted; recorded
-in `ROADMAP.md`. A1 and A2 are landed; A3 (`bench-front-door`) is staged, unstarted.
+**`/bench-implement-spec specs/bench-front-door/spec.md --full` resumed on the retained
+integration source.** `bench preflight build bench-front-door` was green. Ticket 01
+(`e6d5e623`) extracted the route owner into `internal/status`; ticket 02 (`0d32a9bf`)
+normalized all current status actions and the dashboard's empty cell. Each commit passed
+the whole gate. Ticket 02's first all-actions test was repaired when an independent
+mutation of the live intent producer left it green; it now drives the actual producers.
 
-**`/bench-implement-spec specs/bench-front-door/spec.md --full` was invoked and stopped
-before the first ticket landed.** Sequence: created integration worktree at `dae4387`
-(request `bench-front-door-impl`) → `bench preflight build bench-front-door` green →
-charged ticket `01-extract-route-owner.md` (Line: opus/mid-tier, high effort) to a
-write-delegate three times in a row. All three failed identically on API 529
-(Overloaded) with nothing written to the worktree — same failure mode already recorded
-in this spec's own verification log for the write-spec phase. This is a service
-availability issue, not a diff-owned red; there is nothing to fix in the ticket or spec.
-On asking, the reviewer chose to stop and hand off rather than keep retrying, wait, or
-try a one-off top-tier delegate. The now-unused integration worktree was released
-(`bench worktree release`); `main` is untouched and clean at `dae4387`.
-
-**No decisions were closed or reopened this session.** The spec's five reviewer-visible
-calls (Further notes) are all still open, unchanged from staging.
+**Next frontier:** `03-setup-and-staged-signals.md`, dependent on `02-normalize-actions.md`.
+The retained source is clean at `0d32a9bf`; `main` remains at `408faf50`. The reviewer-visible
+decisions in the spec's Further notes remain open and unchanged. Ticket 01's advisory
+`Writes:` list omitted its necessary conformance-location repair; the spec ownership fence
+authorizes it, and it is reviewer-veto surface rather than a behavior change.
 
 ## Next command
 
-`/bench-final-check` — the board's leading invocable signal (`git`).
+`$bench-implement-spec specs/bench-front-door/spec.md --full --reviewer sol high`
 
 ## Shape
 

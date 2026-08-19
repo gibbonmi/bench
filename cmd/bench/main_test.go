@@ -44,6 +44,208 @@ func TestRunUnknownExits2(t *testing.T) {
 	}
 }
 
+func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
+	stdout := tempFile(t)
+	if code := (Command{Stdout: stdout}).Run([]string{"status", "--route"}); code != 0 {
+		t.Fatalf("status --route exit = %d, want 0", code)
+	}
+	if got := readFile(t, stdout); !strings.HasPrefix(got, "next[1]{state,why,command}:\n") {
+		t.Fatalf("status --route = %q, want one next row", got)
+	}
+}
+
+func TestHelpRendersPublicCommandRegistryRows(t *testing.T) {
+	old := commandRegistry
+	t.Cleanup(func() { commandRegistry = old })
+	commandRegistry = []commandDefinition{
+		{Name: "help", Inventory: publicInventory(), Kind: commandHelp},
+		{
+			Name:      "status",
+			Inventory: publicInventory(helpRow{Order: 1, Description: "prove the public command owns this row"}),
+		},
+	}
+
+	for _, spelling := range []string{"help", "--help", "-h"} {
+		t.Run(spelling, func(t *testing.T) {
+			var stdout bytes.Buffer
+			if code := (Command{Stdout: &stdout}).Run([]string{spelling}); code != 0 {
+				t.Fatalf("%s exit = %d, want 0", spelling, code)
+			}
+			if want := helpInventoryTitle + "\n  bench status               prove the public command owns this row\n"; stdout.String() != want {
+				t.Fatalf("%s stdout = %q, want registry rows %q", spelling, stdout.String(), want)
+			}
+		})
+	}
+}
+
+func TestHelpInventoryIsComplete(t *testing.T) {
+	// The independently authored expectation is the omission oracle: deriving it from
+	// commandRegistry would let a deleted public or child row disappear from both sides.
+	const want = `bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
+  bench setup [--plan|--yes]  inspect, preview, and converge the current repository
+  bench link [copy|symlink]  safely wire the kit into this repo for every harness
+  bench init                 scaffold .bench/gate.sh in the current repo
+  bench unlink [--dry-run]   remove the per-repo Bench footprint the manifest records
+  bench upgrade [--check] [--force]  plan and apply a relink onto the installed kit version
+  bench models               list advisory model-id candidates for the line binding
+  bench structure            flag oversized files + crowded dirs (wire into the gate)
+  bench skills-index [--check|--write]  print skills-index drift (default) or regenerate it
+  bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
+  bench roadmap              show the top 10 roadmap rows + drain state
+  bench status               ambient dashboard: what needs attention + the next action
+  bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite capture/session-handoff.md
+  bench commands --brief     print the direct, read-only command probe
+  bench dashboard [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
+  bench canary [root]        validate fixture inventory
+  bench anchors <path>       anchors pinning a repo-relative path as TOON (kind, section, needle)
+  bench learnings            open journal entries as a TOON table (date, title)
+  bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
+  bench guards               every guard's deny surface as TOON (guard, boundary, denies)
+  bench diff                 review base + changed files as TOON (--full appends log + diff body; --base freezes source)
+  bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
+  bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
+  bench test [--full] [package]  run fresh Go tests and render package, failure, and skip evidence as TOON
+  bench outline [path]       locate candidate seams (file:line) as TOON; does not identify the project's blessed seams
+  bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
+  bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
+  bench gate [--fresh]       run the project gate (the oracle; --fresh ignores a reusable green)
+  bench prep-release         ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
+  bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
+  bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--message text]  governed npm publication
+  bench gate pin             pin HEAD's .bench tree for pre-push verification
+  bench worktree [--refresh] [objective] create an owned worktree subshell and release it on exit
+  bench worktree list        list assignments and registered worktrees as TOON
+  bench worktree path <target>  print one active owned worktree's portable path
+  bench worktree exec <target> -- <command> [args...]  run a child directly in an active owned worktree
+  bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
+  bench worktree --help      show exact list, path, exec, create, release, clean, and reauthorize grammar
+  bash bin/bench.sh gate --fresh  run the current worktree's gate
+  bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
+  bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)
+  bench spec implemented <slug>    flip a spec's Status: staged line to implemented
+  bench spec retire <slug>         delete a merged spec + its review pickup (validated)
+  bench spec history <slug>        retire/delete commits for a spec, newest first (TOON)
+  bench version              print the installed Bench version (os/arch)
+`
+
+	var stdout bytes.Buffer
+	if code := (Command{Stdout: &stdout}).Run([]string{"help"}); code != 0 {
+		t.Fatalf("help exit = %d, want 0", code)
+	}
+	if stdout.String() != want {
+		t.Fatalf("help inventory:\n%s\nwant complete public inventory:\n%s", stdout.String(), want)
+	}
+}
+
+func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
+	var directRoot bytes.Buffer
+	if code := (Command{Stdout: &directRoot}).Run(nil); code != 0 {
+		t.Fatalf("in-process root exit = %d, want 0", code)
+	}
+	if !strings.HasPrefix(directRoot.String(), "next[1]{state,why,command}:\n") {
+		t.Fatalf("in-process root = %q, want next route table", directRoot.String())
+	}
+
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	binary := filepath.Join(t.TempDir(), "bench")
+	build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, binary)
+	cleanEnv := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	build.Env = cleanEnv
+	if out, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build bench: %v\n%s", err, out)
+	}
+
+	command := func(path string, args ...string) *exec.Cmd {
+		t.Helper()
+		cmd := exec.Command(path, args...)
+		cmd.Env = cleanEnv
+		if path != binary {
+			cmd.Env = append(capability.WithoutEnvironment(runbinary.WithEnv(cleanEnv, binary), "BENCH_KIT"), "BENCH_KIT="+root)
+		}
+		return cmd
+	}
+	run := func(path string, args ...string) string {
+		t.Helper()
+		cmd := command(path, args...)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("%s %v: %v\n%s", path, args, err, out)
+		}
+		return string(out)
+	}
+
+	binaryRoot := run(binary)
+	if !strings.HasPrefix(binaryRoot, "next[1]{state,why,command}:\n") {
+		t.Fatalf("binary root = %q, want next route table", binaryRoot)
+	}
+	if binaryRoot != directRoot.String() {
+		t.Fatalf("binary root = %q, in-process root = %q", binaryRoot, directRoot.String())
+	}
+	wrapper := filepath.Join(root, "bin", "bench.sh")
+	if wrapperRoot := run(wrapper); wrapperRoot != binaryRoot {
+		t.Fatalf("wrapper root = %q, binary root = %q", wrapperRoot, binaryRoot)
+	}
+
+	binaryHelp := run(binary, "help")
+	if !strings.HasPrefix(binaryHelp, "bench — Pocock"+" pipeline") {
+		t.Fatalf("binary help = %q, want inventory", binaryHelp)
+	}
+	if !strings.Contains(binaryHelp, "bench canary [root]        validate fixture inventory") {
+		t.Fatalf("binary help missing canary inventory wording:\n%s", binaryHelp)
+	}
+	if strings.Contains(binaryHelp, "run the gate against known-broken fixtures") {
+		t.Fatalf("binary help retained stale canary execution wording:\n%s", binaryHelp)
+	}
+	for _, spelling := range []string{"help", "--help", "-h"} {
+		if spellingHelp := run(binary, spelling); spellingHelp != binaryHelp {
+			t.Errorf("binary %s = %q, binary help = %q", spelling, spellingHelp, binaryHelp)
+		}
+		if wrapperHelp := run(wrapper, spelling); wrapperHelp != binaryHelp {
+			t.Errorf("wrapper %s = %q, binary help = %q", spelling, wrapperHelp, binaryHelp)
+		}
+	}
+
+	cmd := command(wrapper, "help", "extra")
+	out, err := cmd.CombinedOutput()
+	exit, ok := err.(*exec.ExitError)
+	if !ok || exit.ExitCode() != 2 || string(out) != "usage: bench help (unknown argument: extra)\n" {
+		t.Fatalf("wrapper help extra = (output %q, error %v), want help usage and exit 2", out, err)
+	}
+}
+
+func TestRunHelpRejectsTrailingArguments(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"help", "extra"})
+	if code != 2 || stdout.String() != "usage: bench help (unknown argument: extra)\n" || stderr.Len() != 0 {
+		t.Fatalf("help extra = (stdout %q, stderr %q, exit %d), want help usage on stdout and exit 2", stdout.String(), stderr.String(), code)
+	}
+}
+
+func TestHelpKeepsStatusPublicRoute(t *testing.T) {
+	t.Run("inventory", func(t *testing.T) {
+		var stdout bytes.Buffer
+		if code := (Command{Stdout: &stdout}).Run([]string{"help"}); code != 0 {
+			t.Fatalf("help exit = %d, want 0", code)
+		}
+		const row = "  bench status               ambient dashboard: what needs attention + the next action\n"
+		if !strings.Contains(stdout.String(), row) {
+			t.Fatalf("help omitted independently required public status row %q", row)
+		}
+	})
+	t.Run("dispatch", func(t *testing.T) {
+		var stdout bytes.Buffer
+		if code := (Command{Stdout: &stdout}).Run([]string{"status", "--help"}); code != 0 {
+			t.Fatalf("status --help exit = %d, want 0", code)
+		}
+		if !strings.HasPrefix(stdout.String(), "usage: bench status") {
+			t.Fatalf("status --help = %q, want status grammar", stdout.String())
+		}
+	})
+}
+
 // TestResolveModelHarnessFlag drives the CLI's argument surface: --harness selects the
 // column, and the retired --alias / --provider-model spellings are rejected rather than
 // quietly resolving a model, so there is only one way to ask the binding a question.
@@ -137,20 +339,6 @@ func TestRunCanaryRetainsPositionalGrammar(t *testing.T) {
 	stderr = tempFile(t)
 	if rc := (Command{Stderr: stderr}).Run([]string{"canary", filepath.Join(t.TempDir(), "missing")}); rc != 1 {
 		t.Fatalf("run canary invalid root exit = %d, want 1", rc)
-	}
-}
-
-func TestShellWrapperHelpAdvertisesCanaryInventory(t *testing.T) {
-	out, err := exec.Command("bash", filepath.Join("..", "..", "bin", "bench.sh"), "--help").CombinedOutput()
-	if err != nil {
-		t.Fatalf("bench.sh --help failed: %v\n%s", err, out)
-	}
-	help := string(out)
-	if !strings.Contains(help, "bench canary [root]        validate fixture inventory") {
-		t.Fatalf("wrapper help missing canary inventory wording:\n%s", help)
-	}
-	if strings.Contains(help, "run the gate against known-broken fixtures") {
-		t.Fatalf("wrapper help retained stale canary execution wording:\n%s", help)
 	}
 }
 

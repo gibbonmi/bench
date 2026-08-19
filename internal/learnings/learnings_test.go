@@ -21,7 +21,7 @@ func TestCommandAppendsTypedDrainActionsAndHonestEmptyHelp(t *testing.T) {
 		want    string
 		code    int
 	}{
-		{name: "open", journal: "# Learnings — usage journal\n\n## 2026-01-01 — first [open]\n\n## 2026-01-02 — second [open]\n\n## 2026-01-01 — first [open]\n", want: "learnings[3]{date,title}:\n  2026-01-01,first\n  2026-01-02,second\n  2026-01-01,first\nhelp[2]{cmd,why}:\n  /bench-what-next,\"verdict 2026-01-01: first\"\n  /bench-what-next,\"verdict 2026-01-02: second\"\n", code: 0},
+		{name: "open", journal: "# Learnings — usage journal\n\n## 2026-01-01 — first [open]\n\n## 2026-01-02 — second [open]\n\n## 2026-01-01 — first [open]\n", want: "learnings[3]{date,title}:\n  2026-01-01,first\n  2026-01-02,second\n  2026-01-01,first\nhelp[2]{cmd,why}:\n  /bench-drain,\"verdict 2026-01-01: first\"\n  /bench-drain,\"verdict 2026-01-02: second\"\n", code: 0},
 		{name: "drained", journal: "# Learnings — usage journal\n", want: "learnings[0]{date,title}:\nhelp[0]{cmd,why}:\n", code: 0},
 		{name: "absent", want: "learnings[0]{date,title}:\nhelp[0]{cmd,why}:\n", code: 0},
 	} {
@@ -40,7 +40,7 @@ func TestCommandAppendsTypedDrainActionsAndHonestEmptyHelp(t *testing.T) {
 			if code != tc.code || got != tc.want {
 				t.Fatalf("Command = (%d, %q), want (%d, %q)", code, got, tc.code, tc.want)
 			}
-			if strings.Contains(got, "bench /bench-what-next") {
+			if strings.Contains(got, "bench /bench-drain") {
 				t.Fatal("harness phase rendered as shell command")
 			}
 		})
@@ -51,7 +51,7 @@ func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
 	for _, tc := range []struct {
 		name, fixture, journal, help string
 	}{
-		{"open", "pre-disclosure-open.stdout", "# Learnings — usage journal\n\n## 2026-01-01 — first [open]\n", "help[1]{cmd,why}:\n  /bench-what-next,\"verdict 2026-01-01: first\"\n"},
+		{"open", "pre-disclosure-open.stdout", "# Learnings — usage journal\n\n## 2026-01-01 — first [open]\n", "help[1]{cmd,why}:\n  /bench-drain,\"verdict 2026-01-01: first\"\n"},
 		{"drained", "pre-disclosure-drained.stdout", "# Learnings — usage journal\n", "help[0]{cmd,why}:\n"},
 		{"absent", "pre-disclosure-absent.stdout", "", "help[0]{cmd,why}:\n"},
 	} {
