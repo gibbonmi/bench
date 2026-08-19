@@ -32,32 +32,55 @@ didn't author does.
 
 ## Phase 1 — build the loop (this is the whole skill)
 
-Before reading code to form a theory, build **one command** — a test, a curl, a CLI
-invocation, a replay of a captured trace, a throwaway harness — that you have
-**already run once** (paste the invocation and its output) and that is:
+Before reading code to form a theory, build **one command** that you have
+**already run once** (paste the invocation and its output).
+`.agents/skills/bench-debug/references/loop-constructions.md` lists ten ways to
+construct one, tried in roughly that order, plus the structured
+human-in-the-loop last resort. The right loop is most of the fix.
 
-- **red-capable** — drives the real bug path through the accused command — the
+### Tighten the loop
+
+Treat the loop as a product. Make it faster (cache setup, skip unrelated
+init, narrow the scope), sharper (assert the specific symptom, not "didn't
+crash"), and more deterministic (pin time, seed the RNG, isolate the filesystem).
+
+Phase 1 is complete when every box is checked. The command is:
+
+- [ ] **red-capable** — drives the real bug path through the accused command — the
   surface the claim names, invoked as reported, never a lookalike (a raw
   `git add` is not `bench commit`) — and asserts the user's *exact* symptom,
   so it goes red now and green when fixed. Not "runs without erroring."
-- **deterministic** — same verdict every run. Flaky bug? Raise the reproduction rate
+- [ ] **deterministic** — same verdict every run. Flaky bug? Raise the reproduction rate
   (loop the trigger, parallelize, inject stress) until it's debuggable; 50% is
   workable, 1% is not.
-- **fast** — seconds, not minutes. A 2-second loop is a debugging superpower.
-- **agent-runnable** — unattended, no human click.
+- [ ] **fast** — seconds, not minutes. A 2-second loop is a debugging superpower.
+- [ ] **agent-runnable** — unattended, no human click.
 
 If you catch yourself theorizing before this command exists, stop — jumping to a
 hypothesis without a red loop is the exact failure this prevents. If you genuinely
 can't build a loop, say so, list what you tried, and ask for an environment, a
-captured artifact (HAR, log dump, trace), or permission to instrument. Don't
-proceed on a theory.
+captured artifact (HAR, log dump, trace), or permission to instrument.
+No red-capable command, no Phase 2.
 
 ## Phase 2 — reproduce and minimise
 
-Run it red. Confirm it's the *user's* symptom, not a nearby one. Then shrink the
-repro one element at a time, re-running after each cut, until every remaining piece
-is load-bearing. A minimal repro shrinks the suspect space and becomes the
-regression test.
+Run it red. Confirm:
+
+- [ ] the loop produces the failure mode the *user* described — not a nearby
+  one. Wrong bug means wrong fix.
+- [ ] the failure reproduces across runs — or, for a flaky bug, at a rate high
+  enough to debug against.
+- [ ] the exact symptom (error message, wrong output, slow timing) is captured,
+  so later phases can verify the fix addresses it.
+
+A green proxy only narrows a hypothesis — it never confirms one. A load- or
+environment-sensitive failure is reproduced through the accused command under
+the conditions that expose it before any other stand-in is trusted.
+
+Then shrink the repro one element at a time, re-running after each cut, until
+every remaining piece is load-bearing. A minimal repro shrinks the suspect
+space and becomes the regression test.
+Do not proceed until you have reproduced and minimised.
 
 ## Phase 3 — hypothesise
 
@@ -90,11 +113,15 @@ architecture finding instead of patching every caller.
 
 ## Phase 6 — close out
 
-Done means: the Phase 1 loop no longer reproduces, the regression test passes (or its
-absence is documented), all `[DEBUG-...]` logs are gone, throwaways deleted, and the
-correct hypothesis is named in the commit so the next debugger learns. Then ask what
-would have *prevented* this — if the answer is architectural (no seam, tangled
-callers), say so as a separate finding, after the fix is in.
+Done means:
+
+- [ ] the Phase 1 loop no longer reproduces.
+- [ ] the regression test passes, or its absence is documented.
+- [ ] all `[DEBUG-...]` logs are gone (one grep on the prefix) and throwaways deleted.
+- [ ] the correct hypothesis is named in the commit, so the next debugger learns.
+
+Then ask what would have *prevented* this — if the answer is architectural (no
+seam, tangled callers), say so as a separate finding, after the fix is in.
 
 ## Finding a retired spec
 
