@@ -2,47 +2,47 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `d4a46f82` pre-commit, clean but for this drain's own batch, 37 unpushed commits
-Spec: none staged — `specs/` is empty
-Gate: green at `d4a46f82`
+Branch: `main` — HEAD `cd355f45`, tree carries the uncommitted spec below, this handoff, one `capture/learnings.md` entry from the review round, and one ambient parked idea in `capture/IDEAS.md`
+Spec: `specs/ft226-test-home-isolation/spec.md` — `Status: staged`, awaiting reviewer sign-off on the spec-and-tickets pair
+Gate: green at `cd355f45`
 
 ## State
 
-**The opt-in `--restructure` board pass ran.** Capture was already empty — no ideas, no
-learnings, no retros, no staged specs — so this pass was reconcile plus restructure only.
-The board went from 73 rows to 71 while gaining seven new ones, because ten merged away.
+**FT226 is specified, not approved.** The spec and its three serial tickets are
+written, `bench coverage --check` is green (12 rows), `bench preflight build` is
+green on every row-ownership check, and the mid-tier review round took two
+iterations to accept (folded; see the spec's `Verification log` and the dated
+`capture/learnings.md` entry). Nothing is committed: the spec
+directory is untracked until you sign off.
 
-The structural change worth knowing: the 2026-08 capability audit's action items drove the
-recommended sequence while existing only inside the audit directory, so the board could not
-be read on its own. They are rows now — FT226 (A6, `BENCH_HOME` leak), FT227 (A4, adoption
-smoke), FT228 (A5, `/bench-debug`), FT229 (A9, hygiene batch), FT230 (A7, release
-workflow), FT231 (A11, measurement harness), FT232 (A10, repair-loop tripwire) — and the
-sequence names board rows rather than external audit IDs.
+What the build does: `reauthorizeFixture` binds a per-test `BENCH_HOME` like its
+siblings (ticket 01); `internal/worktree` gains a `TestMain` that runs the
+package under a process-private `BENCH_HOME` and exits red on residue, naming the
+leaking test (ticket 02, proven by mutation); the operator's 1,690 orphaned
+`001-<digits>` pool keys (63 MB) are swept once, plan-before-apply, under a
+dangling-`gitdir:` predicate (ticket 03, destructive, outside the tree — your
+spec sign-off is its approval).
 
-Merges, each over one owner surface: FT205 + FT221 into FT213 (one `craft-delegate` visit),
-FT192 + FT209 into FT214 (one `craft-spec` visit), FT111 into FT179 (one comments visit),
-FT206 into the new FT233, FT112 into FT228, FT138 + FT170 into FT231, FT180 and FT177's
-landing-guard clause into FT229. FT199 split: the coordinator stayed, its six landing
-diagnostics became FT233.
+Decisions left open for you, flagged in the spec: the oracle seam is in-package
+`TestMain` rather than a gate-level private home for the test/race phases (priced
+in Out of scope); the sweep is a throwaway script, not a `bench worktree` verb
+(priced). Measured facts: the full ordinary suite under an empty sentinel
+`BENCH_HOME` writes exactly ten `worktrees/001-*` entries, all from
+`TestReauthorize*`, and nothing else.
 
-Thirteen accreted rows were pruned to what is genuinely open, each verified against the
-tree by a read-only delegate and spot-checked here — not taken on the audit's word. Two of
-the audit's own dispositions were stale and were not followed: FT89's registry half had
-already shipped with the front door (only `commands --brief` and the guide's CLI inventory
-remain), and FT197's premise is inverted, since the Go runner now owns the process group and
-calls the gate script rather than sitting behind it, so FT197 dropped to LOW and parked.
-
-One finding landed as evidence rather than prose: this file's previous pins, `HEAD 0ee2106`
-and `green at 761a839`, both resolve to *trees*, not commits — they never named anything.
-That is now FT162's second occurrence, and it is why the pins above were generated from the
-tree.
+`capture/IDEAS.md` holds one uncommitted parked idea from the drain session
+(occurrence-ledger freeze check). `bench preflight build` reds on it as an
+unauthorized dirty path until it is committed; commit it before the build starts.
 
 ## Next command
 
-`/bench-write-spec` for FT226 — kit tests stop writing into the operator's real
-`BENCH_HOME`. Rank 1 on the refreshed sequence, no dependencies, and the only actionable
-row whose defect damages the operator's own machine (759 orphaned pool directories, 41 MB,
-roughly ten added per gate run).
+Sign off the spec and tickets (the approval table is in the write-spec session's
+closing message; the spec file itself is the veto surface), commit the spec
+directory, then start a fresh session with:
+
+`/bench-implement-spec ft226-test-home-isolation`
+
+Line for the build: `opus` / medium per the spec's story groups.
 
 ## Shape
 
