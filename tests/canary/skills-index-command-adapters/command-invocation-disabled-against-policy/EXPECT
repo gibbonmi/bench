@@ -1,0 +1,1 @@
+command 'bench-write-spec' frontmatter carries disable-model-invocation though the invocation policy makes it model-invocable on Claude
