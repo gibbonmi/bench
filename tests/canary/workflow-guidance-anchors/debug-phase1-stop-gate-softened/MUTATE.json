@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-debug.md",
+    "old": "No red-capable command, no Phase 2.",
+    "new": "Don't proceed on a theory."
+  }
+]
