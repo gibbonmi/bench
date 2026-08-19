@@ -100,7 +100,7 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 33, Suffix: " path <target>", Description: "print one active owned worktree's portable path"},
 		helpRow{Order: 34, Suffix: " exec <target> -- <command> [args...]", Description: "run a child directly in an active owned worktree"},
 		helpRow{Order: 35, Suffix: " reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>", Description: "replace one lost request token after identity proof"},
-		helpRow{Order: 36, Suffix: " --help", Description: "show exact list, path, exec, create, release, clean, and reauthorize grammar"},
+		helpRow{Order: 36, Suffix: " --help", Description: "show exact list, path, exec, create, release, clean, reclaim, and reauthorize grammar"},
 	), Run: worktreeCommand},
 	{Name: "resume-clean", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return worktree.ResumeCleanCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "session-inspect", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
@@ -534,6 +534,9 @@ func worktreeCommand(c Command, args []string) int {
 	}
 	if len(args) > 0 && args[0] == "clean" {
 		return worktree.CleanCommand(args[1:], c.Stdout, c.Stderr)
+	}
+	if len(args) > 0 && args[0] == "reclaim" {
+		return worktree.ReclaimCommand(args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "reauthorize" {
 		root, err := git.Root()

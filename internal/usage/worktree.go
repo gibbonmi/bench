@@ -9,6 +9,7 @@ const (
 	WorktreeCreate      = "bench worktree create [--refresh] --request <opaque-id> --label <work-item>"
 	WorktreeRelease     = "bench worktree release --request <opaque-id> <path>"
 	WorktreeClean       = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>]"
+	WorktreeReclaim     = "bench worktree reclaim"
 	WorktreeReauthorize = "bench worktree reauthorize --assignment <assignment-id> --request <opaque-id> --base <commit> --source-tip <commit> <path>"
 	WorktreeLand        = "bench worktree land --request <opaque-id> --base <commit> --source-tip <commit> --spec <slug> -m <message> <path>"
 	WorktreeLandResume  = "bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> --spec <slug> <path>"
@@ -21,6 +22,7 @@ var worktreeCommands = []string{
 	WorktreeCreate,
 	WorktreeRelease,
 	WorktreeClean,
+	WorktreeReclaim,
 	WorktreeReauthorize,
 	WorktreeLand,
 	WorktreeLandResume,
