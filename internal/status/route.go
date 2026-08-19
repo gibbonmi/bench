@@ -66,9 +66,9 @@ func RouteFor(root string, signals []Signal, harness string) RouteResult {
 	if len(signals) != 0 {
 		return route
 	}
-	command := "/bench-drain"
+	command := commandAction(drainPhaseAction)
 	if _, err := os.Stat(filepath.Join(root, "ROADMAP.md")); err == nil {
-		command = "bench roadmap"
+		command = commandAction(roadmapAction)
 	}
 	route.Lead = translateSignal(newSignal(0, "clean", "nothing pending", command), harness)
 	return route
@@ -84,6 +84,9 @@ func firstInvocable(signals []Signal) (index int, signal Signal, ok bool) {
 }
 
 func translateSignal(signal Signal, harness string) Signal {
+	if signal.actionID.kind() != actionPhase {
+		return signal
+	}
 	prefix, ok := harnessPrefix[harness]
 	if !ok {
 		return signal

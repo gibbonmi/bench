@@ -59,7 +59,7 @@ var grammar = usage.Grammar{
 type row struct {
 	sev            int
 	signal, detail string
-	action         string
+	action         statusAction
 }
 
 type actionKind uint8
@@ -75,88 +75,212 @@ const (
 	actionGit
 )
 
+type actionID uint8
+
+const (
+	noAction actionID = iota
+	setupAction
+	gateAction
+	freshGateAction
+	statusAllAction
+	benchWorktreeListAction
+	cleanWorktreeAction
+	linkAction
+	mapsAction
+	roadmapAction
+	structureAction
+	retireSpecAction
+	handoffAction
+	gitPushAction
+	gitStatusAction
+	gitWorktreeListAction
+	debugPhaseAction
+	drainPhaseAction
+	finalCheckPhaseAction
+	implementSpecPhaseAction
+	shapeIdeaPhaseAction
+	writeSpecPhaseAction
+	otherPhaseAction
+	actionCount
+)
+
+type argumentShape uint8
+
+const (
+	noArgument argumentShape = iota
+	oneWordArgument
+	optionalSpecPath
+	optionalDecisionPath
+	anyPhaseCommand
+)
+
+type actionDefinition struct {
+	kind     actionKind
+	command  string
+	argument argumentShape
+}
+
+var actionDefinitions = [actionCount]actionDefinition{
+	setupAction:             {kind: actionBench, command: "bench setup"},
+	gateAction:              {kind: actionBench, command: "bench gate"},
+	freshGateAction:         {kind: actionBench, command: "bench gate --fresh"},
+	statusAllAction:         {kind: actionBench, command: "bench status --all"},
+	benchWorktreeListAction: {kind: actionBench, command: "bench worktree list"},
+	cleanWorktreeAction:     {kind: actionBench, command: "bench worktree clean", argument: oneWordArgument},
+	linkAction:              {kind: actionBench, command: "bench link"},
+	mapsAction:              {kind: actionBench, command: "bench maps"},
+	roadmapAction:           {kind: actionBench, command: "bench roadmap"},
+	structureAction:         {kind: actionBench, command: "bench structure"},
+	retireSpecAction:        {kind: actionBench, command: "bench spec retire", argument: oneWordArgument},
+	handoffAction:           {kind: actionBench, command: "bench handoff"},
+	gitPushAction:           {kind: actionGit, command: "git push"},
+	gitStatusAction:         {kind: actionGit, command: "git status"},
+	gitWorktreeListAction:   {kind: actionGit, command: "git worktree list"},
+	debugPhaseAction:        {kind: actionPhase, command: "/bench-debug"},
+	drainPhaseAction:        {kind: actionPhase, command: "/bench-drain"},
+	finalCheckPhaseAction:   {kind: actionPhase, command: "/bench-final-check"},
+	implementSpecPhaseAction: {
+		kind: actionPhase, command: "/bench-implement-spec", argument: optionalSpecPath,
+	},
+	shapeIdeaPhaseAction: {kind: actionPhase, command: "/bench-shape-idea"},
+	writeSpecPhaseAction: {
+		kind: actionPhase, command: "/bench-write-spec", argument: optionalDecisionPath,
+	},
+	otherPhaseAction: {kind: actionPhase, argument: anyPhaseCommand},
+}
+
 type statusAction struct {
-	text string
-	kind actionKind
+	id       actionID
+	argument string
+	advisory string
 }
 
 func parseAction(text string) statusAction {
-	a := statusAction{text: text}
 	if strings.Contains(text, StepSeparator) {
-		return a
+		return statusAction{advisory: text}
 	}
-	if strings.HasPrefix(text, harnessPrefix[HarnessClaude]) {
+	for id := actionID(1); id < actionCount; id++ {
+		if argument, ok := actionDefinitions[id].match(text); ok {
+			return statusAction{id: id, argument: argument}
+		}
+	}
+	return statusAction{advisory: text}
+}
+
+func (definition actionDefinition) match(text string) (string, bool) {
+	if definition.command == "" && definition.argument != anyPhaseCommand {
+		return "", false
+	}
+	switch definition.argument {
+	case noArgument:
+		if definition.kind == actionPhase {
+			return "", text == definition.command
+		}
+		return "", strings.HasPrefix(text, strings.Fields(definition.command)[0]+" ") &&
+			strings.Join(strings.Fields(text), " ") == definition.command
+	case oneWordArgument:
+		parts := strings.Fields(text)
+		command := strings.Fields(definition.command)
+		if !strings.HasPrefix(text, command[0]+" ") || len(parts) != len(command)+1 {
+			return "", false
+		}
+		for i := range command {
+			if parts[i] != command[i] {
+				return "", false
+			}
+		}
+		return parts[len(parts)-1], true
+	case optionalSpecPath:
+		return matchOptionalPath(text, definition.command, "specs/", "/spec.md")
+	case optionalDecisionPath:
+		return matchOptionalPath(text, definition.command, "decisions/", ".md")
+	case anyPhaseCommand:
 		command, argument, hasArgument := strings.Cut(text, " ")
-		if command == harnessPrefix[HarnessClaude] || strings.Contains(strings.TrimPrefix(command, harnessPrefix[HarnessClaude]), "/") {
-			return a
+		if command == harnessPrefix[HarnessClaude] || !strings.HasPrefix(command, harnessPrefix[HarnessClaude]) ||
+			strings.Contains(strings.TrimPrefix(command, harnessPrefix[HarnessClaude]), "/") {
+			return "", false
 		}
 		if hasArgument && !((strings.HasPrefix(argument, "specs/") && strings.HasSuffix(argument, "/spec.md")) ||
 			(strings.HasPrefix(argument, "decisions/") && strings.HasSuffix(argument, ".md"))) {
-			return a
+			return "", false
 		}
-		a.kind = actionPhase
-		return a
+		return text, true
 	}
-	if strings.HasPrefix(text, "git ") && isGitAction(strings.Fields(strings.TrimPrefix(text, "git "))) {
-		a.kind = actionGit
-		return a
-	}
-	if strings.HasPrefix(text, "bench ") && isBenchAction(strings.Fields(strings.TrimPrefix(text, "bench "))) {
-		a.kind = actionBench
-	}
-	return a
+	return "", false
 }
 
-func isGitAction(parts []string) bool {
-	if len(parts) == 1 {
-		return parts[0] == "push" || parts[0] == "status"
+func matchOptionalPath(text, command, prefix, suffix string) (string, bool) {
+	if text == command {
+		return "", true
 	}
-	return len(parts) == 2 && parts[0] == "worktree" && parts[1] == "list"
+	argument, ok := strings.CutPrefix(text, command+" ")
+	if !ok || !strings.HasPrefix(argument, prefix) || !strings.HasSuffix(argument, suffix) {
+		return "", false
+	}
+	return argument, true
 }
 
-func isBenchAction(parts []string) bool {
-	if len(parts) == 1 {
-		switch parts[0] {
-		case "gate", "handoff", "link", "maps", "roadmap", "setup", "structure":
-			return true
-		}
-		return false
+func commandAction(id actionID) statusAction {
+	return statusAction{id: id}
+}
+
+func commandActionWithArgument(id actionID, argument string) statusAction {
+	return statusAction{id: id, argument: argument}
+}
+
+func advisoryAction(text string) statusAction {
+	return statusAction{advisory: text}
+}
+
+func (action statusAction) render() string {
+	if action.id == noAction {
+		return action.advisory
 	}
-	if len(parts) == 2 {
-		return (parts[0] == "gate" && parts[1] == "--fresh") ||
-			(parts[0] == "status" && parts[1] == "--all") ||
-			(parts[0] == "worktree" && parts[1] == "list")
+	definition := actionDefinitions[action.id]
+	if definition.argument == anyPhaseCommand {
+		return action.argument
 	}
-	return len(parts) == 3 &&
-		((parts[0] == "spec" && parts[1] == "retire") ||
-			(parts[0] == "worktree" && parts[1] == "clean"))
+	if action.argument == "" {
+		return definition.command
+	}
+	return definition.command + " " + action.argument
+}
+
+func (action statusAction) invocable() bool {
+	return action.id.kind() != actionNone
+}
+
+func (id actionID) kind() actionKind {
+	if id <= noAction || id >= actionCount {
+		return actionNone
+	}
+	return actionDefinitions[id].kind
 }
 
 // IsInvocable reports whether action is one command accepted by the status action grammar.
 func IsInvocable(text string) bool {
-	return parseAction(text).kind != actionNone
+	return parseAction(text).invocable()
 }
 
 // Signal is one ambient-board row exposed as structured data — the severity sort key
 // plus the signal/detail/action triple. Action remains the rendered string contract while
-// actionKind carries the producer grammar's typed validity into routing. It is the shared
+// actionID carries the producer's definition into routing. It is the shared
 // accessor the text board and the human dashboard both consume, so the two views cannot
 // rank or drop signals differently.
 type Signal struct {
-	Severity   int
-	Name       string
-	Detail     string
-	Action     string
-	actionKind actionKind
+	Severity int
+	Name     string
+	Detail   string
+	Action   string
+	actionID actionID
 }
 
-func newSignal(severity int, name, detail, text string) Signal {
-	a := parseAction(text)
-	return Signal{Severity: severity, Name: name, Detail: detail, Action: a.text, actionKind: a.kind}
+func newSignal(severity int, name, detail string, action statusAction) Signal {
+	return Signal{Severity: severity, Name: name, Detail: detail, Action: action.render(), actionID: action.id}
 }
 
 func (s Signal) invocable() bool {
-	return s.actionKind != actionNone
+	return s.actionID.kind() != actionNone
 }
 
 // GateInfo is the structured gate-verdict cache read, shared by the status board and the
@@ -232,10 +356,10 @@ func appendSetup(rows []row, root string) []row {
 		if !os.IsNotExist(err) {
 			return rows
 		}
-		return append(rows, row{0, "setup", "no .bench/", "bench setup"})
+		return append(rows, row{0, "setup", "no .bench/", commandAction(setupAction)})
 	}
 	if !info.IsDir() {
-		return append(rows, row{0, "setup", "no .bench/", "bench setup"})
+		return append(rows, row{0, "setup", "no .bench/", commandAction(setupAction)})
 	}
 	return rows
 }
@@ -245,9 +369,9 @@ func appendStagedSpecs(rows []row, root string) []row {
 	if n == 0 {
 		return rows
 	}
-	command := "/bench-implement-spec"
+	command := commandAction(implementSpecPhaseAction)
 	if n == 1 {
-		command += " specs/" + slug + "/spec.md"
+		command = commandActionWithArgument(implementSpecPhaseAction, "specs/"+slug+"/spec.md")
 	}
 	return append(rows, row{4, "specs", fmt.Sprintf("%d staged spec(s)", n), command})
 }
@@ -361,15 +485,15 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 	}
 	if gv.State == string(gate.Pending) {
 		if gv.PendingStatus == "locked-pending" {
-			return append(rows, row{1, "gate", "locked-pending", ""})
+			return append(rows, row{1, "gate", "locked-pending", advisoryAction("")})
 		}
-		return append(rows, row{2, "gate", "interrupted-pending", "bench gate"})
+		return append(rows, row{2, "gate", "interrupted-pending", commandAction(gateAction)})
 	}
 	if gv.State == string(gate.Invalid) {
-		return append(rows, row{3, "gate", "invalid verdict", "bench gate"})
+		return append(rows, row{3, "gate", "invalid verdict", commandAction(gateAction)})
 	}
 	if gv.State == string(gate.Unavailable) {
-		return append(rows, row{3, "gate", "verdict unavailable", "bench gate --fresh"})
+		return append(rows, row{3, "gate", "verdict unavailable", commandAction(freshGateAction)})
 	}
 	// Staleness outranks the verdict the record carries: a red the gate has retired names a
 	// tree the reader has left, and "fix before commit" would send them after work that is
@@ -379,16 +503,16 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 		// longer composes it as a whole-tree green. A moved tree is drift instead.
 		if gv.CachedTree == gv.WorkTree && (gv.Partition != nil || gv.CheckPartition != nil) {
 			detail := partialGreenDetail(gv.Partition, gv.CheckPartition)
-			return append(rows, row{7, "gate", detail, "bench gate --fresh"})
+			return append(rows, row{7, "gate", detail, commandAction(freshGateAction)})
 		}
 		detail, command := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
 		return append(rows, row{7, "gate", detail, command})
 	}
 	if gv.Status == "timeout" {
-		return append(rows, row{0, "gate", "timeout", "bench gate --fresh"})
+		return append(rows, row{0, "gate", "timeout", commandAction(freshGateAction)})
 	}
 	if gv.Status == "red" {
-		return append(rows, row{0, "gate", "red", "/bench-debug"})
+		return append(rows, row{0, "gate", "red", commandAction(debugPhaseAction)})
 	}
 	return rows
 }
@@ -418,8 +542,8 @@ func GateVerdict(root string) GateInfo {
 	return gi
 }
 
-func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action string) {
-	return fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree)), "bench gate"
+func staleGateDetailAction(root, cachedTree, currentTree string) (detail string, action statusAction) {
+	return fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree)), commandAction(gateAction)
 }
 
 func skippedComponentNames(p *gate.Partition) []string {
@@ -450,7 +574,7 @@ func componentNames(components []gate.ComponentSkip) []string {
 func appendGit(rows []row, root string, query Query) []row {
 	fact, err := git.LandedState(root, query.ExcludeDirtyPaths...)
 	if err != nil {
-		return append(rows, row{1, "git", "git state unavailable", "git status"})
+		return append(rows, row{1, "git", "git state unavailable", commandAction(gitStatusAction)})
 	}
 	var details []string
 	if fact.DirtyPaths > 0 {
@@ -465,9 +589,9 @@ func appendGit(rows []row, root string, query Query) []row {
 	if len(details) == 0 {
 		return rows
 	}
-	command := "git push"
+	command := commandAction(gitPushAction)
 	if fact.DirtyPaths > 0 {
-		command = "/bench-final-check"
+		command = commandAction(finalCheckPhaseAction)
 	}
 	return append(rows, row{1, "git", strings.Join(details, ", "), command})
 }
@@ -493,7 +617,7 @@ func objectiveDisplay(entry intent.Entry) string {
 func appendIntent(rows []row, root string) []row {
 	live, err := intent.Snapshot(root)
 	if err != nil {
-		return append(rows, row{2, "intent", "intent ledger unavailable", "bench status --all"})
+		return append(rows, row{2, "intent", "intent ledger unavailable", commandAction(statusAllAction)})
 	}
 	if len(live) == 0 {
 		return rows
@@ -510,7 +634,7 @@ func appendIntent(rows []row, root string) []row {
 	if r := live[0].Recovery; r != "" && r != shift.RecoveryNone {
 		detail += "; recovery: " + sanitize.Preview(r)
 	}
-	return append(rows, row{2, "intent", detail, "bench status --all"})
+	return append(rows, row{2, "intent", detail, commandAction(statusAllAction)})
 }
 
 func expandIntentSignals(root string, signals []Signal) []Signal {
@@ -536,7 +660,7 @@ func expandIntentSignals(root string, signals []Signal) []Signal {
 			parts = append(parts, "recovery="+sanitize.Preview(entry.Recovery))
 		}
 		parts = append(parts, "objective="+objectiveDisplay(entry))
-		out = append(out, newSignal(2, "intent", strings.Join(parts, " "), "bench status --all"))
+		out = append(out, newSignal(2, "intent", strings.Join(parts, " "), commandAction(statusAllAction)))
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Severity < out[j].Severity })
 	return out
@@ -553,9 +677,9 @@ func appendWorktree(rows []row, root string) []row {
 		// falling through to an empty-looking board (the false-empty class FT29 swept).
 		var typed git.WorktreeFailure
 		if errors.As(err, &typed) {
-			return append(rows, row{2, "worktree", typed.Error(), "bench worktree list"})
+			return append(rows, row{2, "worktree", typed.Error(), commandAction(benchWorktreeListAction)})
 		}
-		return append(rows, row{2, "worktree", fmt.Sprintf("git worktree list failed: %v", err), "git worktree list"})
+		return append(rows, row{2, "worktree", fmt.Sprintf("git worktree list failed: %v", err), commandAction(gitWorktreeListAction)})
 	}
 	outOfPool, leased := 0, 0
 	for _, wt := range registered {
@@ -567,10 +691,10 @@ func appendWorktree(rows []row, root string) []row {
 		}
 	}
 	if outOfPool > 0 {
-		rows = append(rows, row{2, "worktree", Plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), "bench worktree clean <path>"})
+		rows = append(rows, row{2, "worktree", Plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), commandActionWithArgument(cleanWorktreeAction, "<path>")})
 	}
 	if leased > 0 {
-		rows = append(rows, row{2, "worktree", Plural(leased, "leased pool worktree", "leased pool worktrees"), "bench worktree list"})
+		rows = append(rows, row{2, "worktree", Plural(leased, "leased pool worktree", "leased pool worktrees"), commandAction(benchWorktreeListAction)})
 	}
 	return rows
 }
@@ -602,7 +726,7 @@ func appendGuards(rows []row, root string) []row {
 	if health.State == adopt.PrePushManaged && health.Currency == adopt.PrePushCurrent {
 		return rows
 	}
-	return append(rows, row{3, "guards", prePushDetail(health), "bench link"})
+	return append(rows, row{3, "guards", prePushDetail(health), commandAction(linkAction)})
 }
 
 // prePushDetail names the pre-push gap the guards row reports, mirroring the adopt classifier's
@@ -660,7 +784,7 @@ func appendDrain(rows []row, root string) []row {
 		if ideas == 0 && open == 0 && retroCount == 0 {
 			return rows
 		}
-		return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s), %d pending retro(s)", ideas, open, retroCount), "/bench-drain"})
+		return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s), %d pending retro(s)", ideas, open, retroCount), commandAction(drainPhaseAction)})
 	}
 	var parts []string
 	if ideasFailed {
@@ -678,13 +802,13 @@ func appendDrain(rows []row, root string) []row {
 	} else {
 		parts = append(parts, fmt.Sprintf("%d pending retro(s)", retroCount))
 	}
-	return append(rows, row{4, "drain", strings.Join(parts, ", "), "/bench-drain"})
+	return append(rows, row{4, "drain", strings.Join(parts, ", "), commandAction(drainPhaseAction)})
 }
 
 // appendStructure adds the structural-debt signal (sev 5) when the violation count is positive.
 func appendStructure(rows []row, root string) []row {
 	if n := structure.ViolationCount(root); n > 0 {
-		return append(rows, row{5, "structure", fmt.Sprintf("%d issue(s)", n), "bench structure"})
+		return append(rows, row{5, "structure", fmt.Sprintf("%d issue(s)", n), commandAction(structureAction)})
 	}
 	return rows
 }
@@ -695,13 +819,13 @@ func appendStructure(rows []row, root string) []row {
 func appendMaps(rows []row, root string) []row {
 	n, ready, state := maps.ActiveCounts(root)
 	if state.Failed() {
-		return append(rows, row{6, "decisions", toon.UnknownCell(maps.DecisionsDir, state), "bench maps"})
+		return append(rows, row{6, "decisions", toon.UnknownCell(maps.DecisionsDir, state), commandAction(mapsAction)})
 	}
 	if n > 0 {
-		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "/bench-shape-idea"})
+		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), commandAction(shapeIdeaPhaseAction)})
 	}
 	if ready > 0 {
-		command := "/bench-write-spec"
+		command := commandAction(writeSpecPhaseAction)
 		if ready == 1 {
 			candidates, err := maps.DiscoverDecisionMapCandidates(root)
 			if err != nil {
@@ -709,7 +833,7 @@ func appendMaps(rows []row, root string) []row {
 			}
 			for _, candidate := range candidates {
 				if !candidate.Compiled {
-					command += " " + candidate.Path
+					command = commandActionWithArgument(writeSpecPhaseAction, candidate.Path)
 					break
 				}
 			}
@@ -730,7 +854,7 @@ func appendRetirement(rows []row, root string) []row {
 		return rows
 	}
 	if n := retirementCount(root); n > 0 {
-		return append(rows, row{8, "specs", fmt.Sprintf("%d merged spec(s) awaiting retirement", n), "bench spec retire <slug>"})
+		return append(rows, row{8, "specs", fmt.Sprintf("%d merged spec(s) awaiting retirement", n), commandActionWithArgument(retireSpecAction, "<slug>")})
 	}
 	return rows
 }
@@ -742,7 +866,7 @@ func appendRetirement(rows []row, root string) []row {
 // gate/git rows in the budget. A paired pickup (its spec still present) is expected state.
 func appendOrphanedPickup(rows []row, root string) []row {
 	if n := orphanedPickupCount(root); n > 0 {
-		return append(rows, row{9, "reviews", Plural(n, "orphaned review pickup", "orphaned review pickups"), ""})
+		return append(rows, row{9, "reviews", Plural(n, "orphaned review pickup", "orphaned review pickups"), advisoryAction("")})
 	}
 	return rows
 }
@@ -763,7 +887,7 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	}
 	merged, dangling, state := roadmapReconcileCounts(root)
 	if state.Failed() {
-		return append(rows, row{10, "roadmap", toon.UnknownCell(roadmap.RoadmapFile, state), "/bench-drain"})
+		return append(rows, row{10, "roadmap", toon.UnknownCell(roadmap.RoadmapFile, state), commandAction(drainPhaseAction)})
 	}
 	if merged == 0 && dangling == 0 {
 		return rows
@@ -775,7 +899,7 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	if dangling > 0 {
 		details = append(details, Plural(dangling, "row names a retired spec", "rows name a retired spec"))
 	}
-	return append(rows, row{10, "roadmap", strings.Join(details, ", "), "/bench-drain"})
+	return append(rows, row{10, "roadmap", strings.Join(details, ", "), commandAction(drainPhaseAction)})
 }
 
 // retirementCount counts live folder specs that spec.AwaitsRetirement marks — a merged spec

@@ -80,8 +80,8 @@ func TestAppendHandoffBehindHeadReportsDistance(t *testing.T) {
 	// A row naming the work in words can never be selected as a next command by a reader
 	// that requires an invocation, which left this signal invisible to the handoff's own
 	// Next-command field.
-	if rows[0].action != "bench handoff" {
-		t.Errorf("action = %q, want the command that rewrites it", rows[0].action)
+	if rows[0].action.render() != "bench handoff" {
+		t.Errorf("action = %q, want the command that rewrites it", rows[0].action.render())
 	}
 }
 

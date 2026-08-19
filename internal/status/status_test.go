@@ -27,14 +27,14 @@ import (
 
 func TestTimeoutGateIsDistinctHighestSeveritySignal(t *testing.T) {
 	rows := appendGateInfo(nil, GateInfo{Present: true, State: "ready", Status: "timeout"}, t.TempDir())
-	if len(rows) != 1 || rows[0].detail != "timeout" || rows[0].sev != 0 || rows[0].action != "bench gate --fresh" {
+	if len(rows) != 1 || rows[0].detail != "timeout" || rows[0].sev != 0 || rows[0].action.render() != "bench gate --fresh" {
 		t.Fatalf("timeout rows = %#v", rows)
 	}
 }
 
 func TestAppendSetupReportsOnlyUnadoptedRoots(t *testing.T) {
 	root := t.TempDir()
-	if got := appendSetup(nil, root); len(got) != 1 || got[0] != (row{0, "setup", "no .bench/", "bench setup"}) {
+	if got := appendSetup(nil, root); len(got) != 1 || got[0] != (row{0, "setup", "no .bench/", commandAction(setupAction)}) {
 		t.Fatalf("unadopted setup row = %#v", got)
 	}
 	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
@@ -124,8 +124,8 @@ func TestAppendStagedSpecsRoutesAndOrdersBeforeRetirement(t *testing.T) {
 	rows := appendStagedSpecs(nil, root)
 	rows = appendRetirement(rows, root)
 	want := []row{
-		{4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/staged/spec.md"},
-		{8, "specs", "1 merged spec(s) awaiting retirement", "bench spec retire <slug>"},
+		{4, "specs", "1 staged spec(s)", commandActionWithArgument(implementSpecPhaseAction, "specs/staged/spec.md")},
+		{8, "specs", "1 merged spec(s) awaiting retirement", commandActionWithArgument(retireSpecAction, "<slug>")},
 	}
 	if !reflect.DeepEqual(rows, want) {
 		t.Fatalf("staged and retirement rows = %#v, want %#v", rows, want)
@@ -139,7 +139,7 @@ func TestAppendStagedSpecsRoutesAndOrdersBeforeRetirement(t *testing.T) {
 		t.Fatal(err)
 	}
 	rows = appendStagedSpecs(nil, root)
-	if got := rows[0].action; got != "/bench-implement-spec" {
+	if got := rows[0].action.render(); got != "/bench-implement-spec" {
 		t.Fatalf("multiple staged action = %q, want bare command", got)
 	}
 }
@@ -155,13 +155,13 @@ func TestAppendMapsRoutesReadyOnlyWithoutUnresolvedOrInvalidMaps(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "ready.md"), []byte(ready), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/ready.md"}}) {
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 ready map(s)", commandActionWithArgument(writeSpecPhaseAction, "decisions/ready.md")}}) {
 		t.Fatalf("ready-only maps row = %#v", got)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "second.md"), []byte(ready), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "2 ready map(s)", "/bench-write-spec"}}) {
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "2 ready map(s)", commandAction(writeSpecPhaseAction)}}) {
 		t.Fatalf("multiple-ready maps row = %#v", got)
 	}
 	if err := os.Remove(filepath.Join(dir, "second.md")); err != nil {
@@ -172,7 +172,7 @@ func TestAppendMapsRoutesReadyOnlyWithoutUnresolvedOrInvalidMaps(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "shaping.md"), []byte(shaping), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", "/bench-shape-idea"}}) {
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", commandAction(shapeIdeaPhaseAction)}}) {
 		t.Fatalf("ready plus shaping maps row = %#v", got)
 	}
 
@@ -182,7 +182,7 @@ func TestAppendMapsRoutesReadyOnlyWithoutUnresolvedOrInvalidMaps(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "invalid.md"), []byte("# invalid\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", "/bench-shape-idea"}}) {
+	if got := appendMaps(nil, root); !reflect.DeepEqual(got, []row{{6, "decisions", "1 unresolved map(s)", commandAction(shapeIdeaPhaseAction)}}) {
 		t.Fatalf("ready plus invalid maps row = %#v", got)
 	}
 }
@@ -197,7 +197,7 @@ func TestRenderSetupLeadsAnUnadoptedRepository(t *testing.T) {
 	if got := render(root, false); got != wantBoard {
 		t.Fatalf("unadopted board = %q, want %q", got, wantBoard)
 	}
-	wantRoute := RouteResult{Lead: newSignal(0, "setup", "no .bench/", "bench setup")}
+	wantRoute := RouteResult{Lead: testSignal(0, "setup", "no .bench/", "bench setup")}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, wantRoute) {
 		t.Fatalf("unadopted route = %#v, want %#v", got, wantRoute)
 	}
@@ -254,7 +254,7 @@ func TestRenderedBoardAndRouteForStagedSpecWithReviewPickup(t *testing.T) {
 	if got := render(root, false); got != wantBoard {
 		t.Fatalf("paired-review staged-spec board = %q, want %q", got, wantBoard)
 	}
-	wantRoute := RouteResult{Lead: newSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/staged/spec.md")}
+	wantRoute := RouteResult{Lead: testSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/staged/spec.md")}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, wantRoute) {
 		t.Fatalf("paired-review staged-spec route = %#v, want %#v", got, wantRoute)
 	}
@@ -273,7 +273,7 @@ func TestSignalsRenderDirtyAndUnpushedTogether(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := []Signal{newSignal(1, "git", "1 dirty path, 1 unpushed commit", "/bench-final-check")}
+	want := []Signal{testSignal(1, "git", "1 dirty path, 1 unpushed commit", "/bench-final-check")}
 	if got := Signals(root); !reflect.DeepEqual(got, want) {
 		t.Fatalf("Signals = %#v, want %#v", got, want)
 	}
@@ -297,9 +297,9 @@ func TestRouteForInvokesStagedSpecWhosePathContainsSpacesAheadOfDrain(t *testing
 	gitRun(t, root, "commit", "-m", "base")
 
 	want := RouteResult{
-		Lead: newSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/my spec/spec.md"),
+		Lead: testSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/my spec/spec.md"),
 		RunnersUp: []Signal{
-			newSignal(4, "drain", "1 idea(s), 0 open learning(s), 0 pending retro(s)", "/bench-drain"),
+			testSignal(4, "drain", "1 idea(s), 0 open learning(s), 0 pending retro(s)", "/bench-drain"),
 		},
 	}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
@@ -321,7 +321,7 @@ func TestRouteForInvokesReadyMapWhosePathContainsSpaces(t *testing.T) {
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 
-	want := RouteResult{Lead: newSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}
+	want := RouteResult{Lead: testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
 		t.Fatalf("spaced ready-map route = %#v, want %#v", got, want)
 	}
@@ -344,7 +344,7 @@ func TestGateActionNormalization(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rows := appendGateInfo(nil, tc.gate, t.TempDir())
-			if len(rows) != 1 || rows[0].action != tc.want {
+			if len(rows) != 1 || rows[0].action.render() != tc.want {
 				t.Fatalf("action = %#v, want %q", rows, tc.want)
 			}
 		})
@@ -504,7 +504,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		}},
 		{name: "git unavailable", signal: "git", detail: "git state unavailable", setup: func(t *testing.T) (string, Query) {
 			return t.TempDir(), Query{}
-		}, exact: []Signal{newSignal(1, "git", "git state unavailable", "git status")}},
+		}, exact: []Signal{testSignal(1, "git", "git state unavailable", "git status")}},
 		{name: "git dirty", signal: "git", detail: "dirty path", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "tracked.txt", "dirty\n", 0o644)
@@ -520,14 +520,14 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			write(t, root, "ahead.txt", "ahead\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{newSignal(1, "git", "1 unpushed commit", "git push")}},
+		}, exact: []Signal{testSignal(1, "git", "1 unpushed commit", "git push")}},
 		{name: "git unique branch", signal: "git", detail: "unique branch", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			gitRun(t, root, "checkout", "-b", "feature")
 			write(t, root, "feature.txt", "feature\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{newSignal(1, "git", "1 unique branch", "git push")}},
+		}, exact: []Signal{testSignal(1, "git", "1 unique branch", "git push")}},
 		{name: "worktree leased and out of pool", signal: "worktree", count: 2, setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			t.Setenv("BENCH_HOME", t.TempDir())
@@ -547,8 +547,8 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			gitRun(t, root, "worktree", "add", "-q", "--detach", outside, "HEAD")
 			return root, Query{}
 		}, exact: []Signal{
-			newSignal(2, "worktree", "1 out-of-pool worktree", "bench worktree clean <path>"),
-			newSignal(2, "worktree", "1 leased pool worktree", "bench worktree list"),
+			testSignal(2, "worktree", "1 out-of-pool worktree", "bench worktree clean <path>"),
+			testSignal(2, "worktree", "1 leased pool worktree", "bench worktree list"),
 		}},
 		{name: "worktree typed failure", signal: "worktree", detail: "rev-parse", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
@@ -566,7 +566,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				t.Fatal(err)
 			}
 			return root, Query{}
-		}, exact: []Signal{newSignal(2, "intent", "1 correlated, 0 uncorrelated; oldest: live", "bench status --all")}},
+		}, exact: []Signal{testSignal(2, "intent", "1 correlated, 0 uncorrelated; oldest: live", "bench status --all")}},
 		{name: "intent unavailable", signal: "intent", detail: "intent ledger unavailable", setup: func(t *testing.T) (string, Query) {
 			return t.TempDir(), Query{}
 		}},
@@ -600,23 +600,23 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			write(t, root, "long.go", strings.Repeat("x\n", 401), 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{newSignal(5, "structure", "1 issue(s)", "bench structure")}},
+		}, exact: []Signal{testSignal(5, "structure", "1 issue(s)", "bench structure")}},
 		{name: "unresolved map", signal: "decisions", detail: "unresolved map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "decisions/shaping.md", maps.DecisionMapTemplate(), 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{newSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")},
+		}, exact: []Signal{testSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")},
 			board: "▶ /bench-shape-idea  (decisions)\n  decisions  1 unresolved map(s)            → /bench-shape-idea\n",
-			route: &RouteResult{Lead: newSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")}},
+			route: &RouteResult{Lead: testSignal(6, "decisions", "1 unresolved map(s)", "/bench-shape-idea")}},
 		{name: "one ready map", signal: "decisions", detail: "1 ready map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "decisions/my map.md", readyMap(), 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{newSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")},
+		}, exact: []Signal{testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")},
 			board: "▶ /bench-write-spec decisions/my map.md  (decisions)\n  decisions  1 ready map(s)                 → /bench-write-spec decisions/my map.md\n",
-			route: &RouteResult{Lead: newSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}},
+			route: &RouteResult{Lead: testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}},
 		{name: "multiple ready maps", signal: "decisions", detail: "2 ready map", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "decisions/one.md", readyMap(), 0o644)
@@ -630,7 +630,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
 			}
 			return root, Query{}
-		}, exact: []Signal{newSignal(6, "decisions", "unknown (decisions is wrong-type)", "bench maps")}},
+		}, exact: []Signal{testSignal(6, "decisions", "unknown (decisions is wrong-type)", "bench maps")}},
 		{name: "implemented spec", signal: "specs", detail: "awaiting retirement", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "specs/implemented/spec.md", "Status: implemented\n", 0o644)
@@ -677,8 +677,14 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				if produced.Name == tc.signal && (tc.detail == "" || strings.Contains(produced.Detail, tc.detail)) {
 					matched++
 				}
-				if produced.Action != "" && !IsInvocable(produced.Action) {
-					t.Errorf("%s board action %q is not invocable", produced.Name, produced.Action)
+				if produced.Action == "" {
+					if produced.actionID != noAction || produced.invocable() {
+						t.Errorf("%s empty board action is not explicitly advisory", produced.Name)
+					}
+					continue
+				}
+				if !produced.invocable() || !IsInvocable(produced.Action) {
+					t.Errorf("%s board action %q is not typed and parser-invocable", produced.Name, produced.Action)
 				}
 			}
 			want := tc.count
@@ -863,8 +869,8 @@ func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
 	if detail != "stale (gated tree 0123456, work tree none)" {
 		t.Fatalf("detail = %q, want strong stale detail", detail)
 	}
-	if action != "bench gate" {
-		t.Fatalf("action = %q, want bench gate", action)
+	if action.render() != "bench gate" {
+		t.Fatalf("action = %q, want bench gate", action.render())
 	}
 }
 
@@ -967,8 +973,8 @@ func TestPartialRowActionIsFresh(t *testing.T) {
 	if len(rows) != 1 {
 		t.Fatalf("rows = %#v, want one gate row", rows)
 	}
-	if !strings.Contains(rows[0].action, "bench gate --fresh") {
-		t.Errorf("action = %q, want the fresh whole-tree action", rows[0].action)
+	if !strings.Contains(rows[0].action.render(), "bench gate --fresh") {
+		t.Errorf("action = %q, want the fresh whole-tree action", rows[0].action.render())
 	}
 }
 
@@ -992,7 +998,7 @@ func TestDriftedRedVerdictRendersAsStaleRatherThanRed(t *testing.T) {
 	if len(rows) != 1 {
 		t.Fatalf("rows = %#v, want one gate row", rows)
 	}
-	if !strings.HasPrefix(rows[0].detail, "stale (gated tree") || rows[0].action != "bench gate" {
+	if !strings.HasPrefix(rows[0].detail, "stale (gated tree") || rows[0].action.render() != "bench gate" {
 		t.Fatalf("rows = %#v, want the drift row rather than a red one", rows)
 	}
 }
@@ -1248,7 +1254,7 @@ func TestAppendWorktreeSurfacesClassifyFailure(t *testing.T) {
 	if len(rows) == 0 {
 		t.Fatal("appendWorktree dropped the classify failure instead of surfacing a row")
 	}
-	if !strings.Contains(rows[0].detail, "git common directory") || rows[0].action != "bench worktree list" {
+	if !strings.Contains(rows[0].detail, "git common directory") || rows[0].action.render() != "bench worktree list" {
 		t.Errorf("row = %#v, want typed resolution refusal", rows[0])
 	}
 }
@@ -1264,7 +1270,7 @@ func TestAppendWorktreeKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T
 			root := initRepo(t)
 			gittest.StubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
 			rows := appendWorktree(nil, root)
-			if len(rows) != 1 || !strings.Contains(rows[0].detail, tc.detail) || rows[0].action != tc.action {
+			if len(rows) != 1 || !strings.Contains(rows[0].detail, tc.detail) || rows[0].action.render() != tc.action {
 				t.Fatalf("%s row = %#v", tc.mode, rows)
 			}
 		})
@@ -1277,7 +1283,7 @@ func TestAppendWorktreeRendersBoundExpiryAsTypedFailure(t *testing.T) {
 	root := initRepo(t)
 	gittest.StubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
 	rows := appendWorktree(nil, root)
-	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktree list") || rows[0].action != "bench worktree list" {
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktree list") || rows[0].action.render() != "bench worktree list" {
 		t.Fatalf("bound row = %#v", rows)
 	}
 }
@@ -1286,7 +1292,7 @@ func TestAppendWorktreeRendersTypedAdminRefusal(t *testing.T) {
 	root := initRepo(t)
 	gittest.FIFOWorktreeAdmin(t, root, "typed")
 	rows := appendWorktree(nil, root)
-	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action != "bench worktree list" {
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action.render() != "bench worktree list" {
 		t.Fatalf("typed row = %#v", rows)
 	}
 }
