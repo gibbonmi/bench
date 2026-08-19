@@ -25,6 +25,7 @@ func TestIsInvocable(t *testing.T) {
 		{"git push", true},
 		{"bench spec retire <slug>", true},
 		{"/bench-drain", true},
+		{"/bench-review-implementation", true},
 		{"/bench-implement-spec specs/my [draft]/spec.md", true},
 		{"/bench-write-spec decisions/my * map.md", true},
 	}

@@ -397,6 +397,9 @@ func stagedSpecCount(root string) (int, string) {
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
+		if code == 2 && (usage.FlagPresent(grammar, args, "--route") || usage.FlagPresent(grammar, args, "--harness")) {
+			return grammar.Help + "\n", code
+		}
 		return line + "\n", code
 	}
 	_, all := parsed.Flags["--all"]
@@ -404,12 +407,12 @@ func Command(args []string) (string, int) {
 	harness := HarnessClaude
 	if value, present := parsed.Flags["--harness"]; present {
 		if !route || !ValidHarness(value) {
-			return toon.Usage(grammar.Cmd, "--harness "+value) + "\n", 2
+			return grammar.Help + "\n", 2
 		}
 		harness = value
 	}
 	if all && route {
-		return toon.Usage(grammar.Cmd, "--all") + "\n", 2
+		return grammar.Help + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -422,7 +425,11 @@ func Command(args []string) (string, int) {
 }
 
 func renderRoute(route RouteResult) (string, int) {
-	out, err := toon.Table("next", []string{"state", "why", "command"}, [][]string{{route.Lead.Name, route.Lead.Detail, route.Lead.Action}})
+	out, err := toon.Table("next", []string{"state", "why", "command"}, [][]string{{
+		sanitize.Controls(route.Lead.Name),
+		sanitize.Controls(route.Lead.Detail),
+		sanitize.Controls(route.Lead.Action),
+	}})
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

@@ -46,16 +46,31 @@ func TestRenderPathOutsideHome(t *testing.T) {
 }
 
 func TestCommandUsesCleanBoardRouteFallback(t *testing.T) {
+	got := runHandoffCommand(t, nil, map[string]string{"ROADMAP.md": "# Roadmap\n"})
+	if !strings.Contains(string(got), "## Next command\n\n`bench roadmap`") {
+		t.Fatalf("handoff next command = %q, want bench roadmap", got)
+	}
+}
+
+func TestCommandUsesCodexRouteForPhase(t *testing.T) {
+	got := runHandoffCommand(t, []string{"--harness", "codex"}, map[string]string{
+		"capture/IDEAS.md": "- 2026-08-18  pending\n",
+	})
+	if !strings.Contains(string(got), "## Next command\n\n`$bench-drain`") {
+		t.Fatalf("handoff next command = %q, want $bench-drain", got)
+	}
+}
+
+func runHandoffCommand(t *testing.T, commandArgs []string, files map[string]string) []byte {
+	t.Helper()
 	root := t.TempDir()
 	for _, args := range [][]string{{"init", "-q", root}, {"-C", root, "config", "user.email", "t@example.com"}, {"-C", root, "config", "user.name", "t"}} {
 		if out, err := exec.Command("git", args...).CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v: %s", args, err, out)
 		}
 	}
-	for path, content := range map[string]string{
-		"ROADMAP.md":  "# Roadmap\n",
-		".bench/keep": "\n",
-	} {
+	files[".bench/keep"] = "\n"
+	for path, content := range files {
 		full := filepath.Join(root, path)
 		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
 			t.Fatal(err)
@@ -80,14 +95,12 @@ func TestCommandUsesCleanBoardRouteFallback(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(oldWD) })
 
-	if out, code := Command(nil); code != 0 {
+	if out, code := Command(commandArgs); code != 0 {
 		t.Fatalf("handoff = (%q, %d), want exit 0", out, code)
 	}
 	got, err := os.ReadFile(filepath.Join(root, "capture", "session-handoff.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(got), "## Next command\n\n`bench roadmap`") {
-		t.Fatalf("handoff next command = %q, want bench roadmap", got)
-	}
+	return got
 }
