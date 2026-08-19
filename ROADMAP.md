@@ -23,11 +23,25 @@ their active findings. Each finding still open appears exactly once on a
 `Sources` line below. `RR:` means the release-readiness assessment and `RC:`
 means the repository-controlled compliance assessment.
 
+## Next — the 2026-08 capability audit's active portfolio
+
+The audit's remaining action items, now board rows rather than an external
+pointer. A1, A2, and A3 landed; these four are what is left of the portfolio
+that is actionable today. The `## Recommended sequence` draws from here first.
+
+**FT226 (HIGH) — kit tests stop writing into the operator's real `BENCH_HOME`.**
+
+**FT227 (HIGH) — adoption smoke: a newly adopted repository's scaffolded gate goes green.**
+
+**FT228 (HIGH) — `/bench-debug` recovers its upstream constraints and settles its trigger on both harnesses.**
+
+**FT229 (MEDIUM) — hygiene batch: residue, stale prose, and small CLI sharp edges.**
+
 ## Features, in priority order
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
 
-**FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject and handoff.**
+**FT162 (MEDIUM, decision required) — the handoff's pins resolve, and its shape has one owner.**
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 
@@ -37,7 +51,7 @@ means the repository-controlled compliance assessment.
 
 **FT98 (MEDIUM) — one preserve-then-discard primitive; four faces.**
 
-**FT169 (MEDIUM) — one sanctioned worktree landing command owns the stale-base dance.**
+**FT169 (MEDIUM) — the landing command's refusals name what to do next, and its authority is decided.**
 
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
@@ -47,9 +61,11 @@ means the repository-controlled compliance assessment.
 
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
 
+**FT233 (MEDIUM) — landing refusals say what to do next.**
+
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
 
-**FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's non-recurrence evidence complete.**
+**FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
 
 **FT173 (MEDIUM, decision required) — AXI residual: the active-assignment-with-deleted-tree disclosure class.**
 
@@ -63,27 +79,19 @@ means the repository-controlled compliance assessment.
 
 **FT191 (MEDIUM) — a fixture-and-seam inventory a charge can carry for free.**
 
-**FT192 (MEDIUM) — one source per fact reaches spec and ticket prose.**
+**FT213 (MEDIUM) — `craft-delegate` visit: worktree isolation, end-of-life, and probes that prove something.**
 
-**FT206 (MEDIUM) — exact-candidate review sees destination metadata before it freezes.**
+**FT214 (MEDIUM) — `craft-spec` visit: fences the build may not move, one source per fact, and rows that prove what they claim.**
 
 **FT208 (MEDIUM, decision required) — skills-index producer-hardening residuals: one refusal grammar, per-shape marker diagnostics, and HI14's seam.**
 
-**FT209 (MEDIUM) — a behavior-preserving refactor proves itself by differential, and a new grouping fixes its cardinality.**
-
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
-
-**FT205 (LOW) — `craft-delegate` names the delegate-worktree end-of-life pair.**
-
-**FT213 (MEDIUM) — a read-only delegate reading a graded tree gets its own worktree, and a delegate's claim about a gate signal gets an oracle-verified probe.**
 
 **FT58 (LOW) — hardened pool roots.**
 
 **FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
 
 **FT99 (LOW) — spec problem-premise verification.**
-
-**FT214 (MEDIUM) — a build may not edit its own spec's acceptance rows, budget targets, or ownership fences.**
 
 **FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
 
@@ -95,8 +103,6 @@ means the repository-controlled compliance assessment.
 
 **FT220 (LOW) — `/bench-write-spec` censuses shared decision readers before ticket slicing.**
 
-**FT221 (LOW) — `craft-delegate`'s cp-aside mutation-probe guidance becomes a named checklist step.**
-
 **FT222 (LOW, decision required) — a standing per-repair-class delegate-tier preference in `projects/benchkit.md`.**
 
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.**
@@ -107,25 +113,15 @@ means the repository-controlled compliance assessment.
 
 **FT108 (LOW) — a refactor lane with a mechanical exit test.**
 
-**FT111 (LOW) — provenance tags that outlive their specs.**
-
-**FT112 (LOW) — an approximation that stays green is not a cleared bug.**
-
 **FT113 (LOW) — `bench commit --spec` residuals: the flip counts as a path, and the flip has one author.**
 
-**FT130 (MEDIUM) — a capture write mid-lifecycle voids or blocks the run.**
-
-**FT138 (LOW) — instrument Bench so build economics are measurable.**
+**FT130 (MEDIUM, decision required) — a capture write mid-lifecycle voids or blocks the run.**
 
 **FT164 (MEDIUM) — repair-lane charges, and a done-claim that resolves its named owners.**
 
 **FT200 (MEDIUM, decision required) — make preflight mechanical at the landing chokepoint.**
 
-**FT180 (LOW) — a spec-optional route decided at shape-idea's exit.**
-
 **FT182 (LOW) — a Planned-phase receipt over an absent target wedges the abandon retry.**
-
-**FT197 (MEDIUM) — the Go core owns gate invocation and process lifetime.**
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture set.**
 
@@ -156,7 +152,7 @@ Five rows, one failure class: a red that answers for something other than the
 diff in front of the gate — an inherited baseline, machine contention and a
 flaky oracle, a literal deadline, a harness defect.
 
-**FT141 (MEDIUM) — `bench gate pin` records red verdicts, so inherited reds stop reading as caused.**
+**FT141 (MEDIUM, decision required) — red verdicts are recorded against a baseline, so inherited reds stop reading as caused.**
 
 **FT223 (LOW, decision required) — `bench commit`'s inherited-verdict refusal misreads as a red gate.**
 
@@ -187,6 +183,9 @@ transcript evidence and builds on surfaces that already exist.
 **FT125 (LOW) — reader surfaces that return the slice, not the file.**
 
 ## Release and bank reassessment gate
+
+The row below blocks the next release outright; the numbered conditions are the
+reassessment gate itself.
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
 to one immutable version and its generated manifest after:
@@ -220,6 +219,8 @@ Host IAM, OS sandboxing, endpoint controls, firewalls, server-side branch
 protection, central CI administration, SIEM/retention, registry administration,
 and signing-key custody remain outside this repository-controlled roadmap.
 
+**FT230 (MEDIUM, release track) — the release workflow publishes only through `bench release submit/promote`.**
+
 ## Parked and scheduled work
 
 **FT6 (LOW, parked pending evidence — leave parked):**
@@ -230,7 +231,11 @@ and signing-key custody remain outside this repository-controlled roadmap.
 
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
-**FT170 (LOW, decision required) — behavioral red/green evaluation for skill guidance.**
+**FT197 (LOW) — the wrapper's gate hop.**
+
+**FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
+
+**FT232 (EXPERIMENT, decision required) — repair-loop tripwire: an advisory signal from gate records.**
 
 ## Dependencies
 
@@ -241,6 +246,8 @@ recommended table is sequencing advice.
 
 | FT | Depends on | Why |
 |---|---|---|
+| FT100 | FT231 | Editorial cuts to the guidance surface without measurement are coin flips; the harness is what tells a cut from a regression. |
+
 ### Recommended
 
 | FT | Better specified after | Why |
@@ -248,31 +255,29 @@ recommended table is sequencing advice.
 | FT71 | FT169 | The event schema should record the settled landing and recovery lifecycle rather than version an interim one. |
 | FT100 | FT89 | Cut prose after the correctness and coherence pass establishes which guidance is still authoritative. |
 | FT108 | FT89 | FT89 single-sources the skills index the new skill must join; the expand–migrate–contract and gate-cadence rules it builds on are already settled in `craft-tickets`. |
-| FT111 | FT179 | FT179 reopens FT111's edit-in-place-only ruling on an order-larger measured count; land them as one `craft-comments`/`craft-review` visit. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
-| FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
+| FT174 | FT229 | The light-path close step dispositions the orphaned tickets the grammar would otherwise be designed around. |
+| FT233 | FT199 | Both edit the landing refusal surface; the coordinator settles which refusals survive. |
 
 ### Goal track: guidance prose
 
 The guidance-prose backlog follows one path. Its process precursor is landed:
-FT164's ticket-contract core shipped 2026-08-03,
-so every later build slices independently green tickets through the current
-`craft-tickets` grammar. The payoff
-facts shaping the order, verified in-tree 2026-08-02 with an independent
-mid-tier refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the
-gate's reduced scope, so every separately-landed prose diff pays a full gate
-— rows batch on the shared full gate, not just shared files; anchor-pinned
-files couple prose diffs to conformance fixture updates (`craft-delegate` 14
-anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17). The reviewed
-Pocock-alignment Spec C has shipped and FT107 is retired.
+FT164's ticket-contract core shipped, so every later build slices independently
+green tickets through the current `craft-tickets` grammar. The payoff facts
+shaping the order, verified in-tree 2026-08-02 with an independent mid-tier
+refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the gate's reduced
+scope, so every separately-landed prose diff pays a full gate — rows batch on the
+shared full gate, not just shared files; anchor-pinned files couple prose diffs to
+conformance fixture updates. The reviewed Pocock-alignment Spec C has shipped and
+FT107 is retired.
 
-1. FT100's remaining work grills and builds last, after FT89 establishes which
-   guidance is authoritative and the reviewer resolves FT170's benchmark route.
+FT100 builds last: after FT89 establishes which guidance is authoritative, and
+after FT231 supplies the measurement that tells a cut from a regression.
 
-FT99 rides prose batch 1. FT106 and FT162 remain independently sequenced by
+FT99 rides the prose batch. FT106 and FT162 remain independently sequenced by
 their existing dependencies. FT133 remains parallel evidence hardening; FT71
 stays deferred behind its existing FT169 recommendation. FT172 is outside this
 critical path; the FT156 anchor registry shipped, so section-scoped
@@ -281,13 +286,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-The 2026-08 capability audit's priority order
-(`docs/audits/2026-08-bench-capability/results-fable-high/proposed-roadmap.md`) is the
-board's near-term order until its active items are exhausted; this section now carries
-that ranking directly rather than pointing at it. A1 landed (`a2914fd5`, `f1135fd6`),
-A2 landed (`2915fcc0`), and A3 landed as `bench-front-door` (`b3dfb922`). The rows below
-this section remain the board's contents; the audit decides what runs next.
-
-1. `/bench-write-spec` — A6 (rank 3, P1): kit tests stop writing into the operator's real `BENCH_HOME`. No dependencies, and it is the last unblocked P1 that touches the operator's own machine.
-2. `/bench-write-spec` — A4 (rank 4, P1): adoption smoke — a scaffolded gate goes green. No dependencies; it is the outcome evidence adoption currently lacks.
-3. `/bench-write-spec` — A5 (rank 6, P1): restore the `/bench-debug` constraints, decide the Codex trigger, check Claude parity, and drop the inert key. Unblocked now that A1 has landed; folds in FT112 and FT24.
+1. `/bench-write-spec` — FT226: kit tests stop writing into the operator's real `BENCH_HOME`. Highest severity actionable row — the only one whose defect damages the operator's own machine, and it has no dependencies.
+2. `/bench-write-spec` — FT227: adoption smoke, so a newly adopted repository's scaffolded gate can go green. No dependencies; it is the outcome evidence adoption currently lacks.
+3. `/bench-write-spec` — FT228: restore `/bench-debug`'s constraints, settle the Codex trigger, check Claude parity. Unblocked, and it folds in the reproduction-economics rule and leaves FT24 parked as the upstream re-check.

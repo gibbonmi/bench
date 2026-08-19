@@ -2,43 +2,47 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `0ee2106` pre-commit, clean but for this drain's own batch, 38 unpushed commits
+Branch: `main` — HEAD `d4a46f82` pre-commit, clean but for this drain's own batch, 37 unpushed commits
 Spec: none staged — `specs/` is empty
-Gate: green at `761a839`
+Gate: green at `d4a46f82`
 
 ## State
 
-**`bench-front-door` (audit item A3) landed, retired, and drained.** The reviewed source
-`408faf50..c7a0a1b1` composed onto `main` as `b3dfb922`, publishing the spec at
-`Status: implemented`; the source worktree is released and removed. `bench status --route`,
-the `setup` and `specs: staged` signals, invocable board actions, the `/bench` and `$bench`
-adapters, registry-projected root help, and the `/bench-what-next` → `/bench-drain` rename
-are all live. The front door works: the bare wrapper and the binary now give the same
-routed answer.
+**The opt-in `--restructure` board pass ran.** Capture was already empty — no ideas, no
+learnings, no retros, no staged specs — so this pass was reconcile plus restructure only.
+The board went from 73 rows to 71 while gaining seven new ones, because ten merged away.
 
-Landing was blocked twice and both blocks are now roadmap rows rather than folklore.
-`worktree land --request` had been given the assignment ID instead of the request token,
-and the refusal named four possible causes without saying which — repaired through
-`bench worktree reauthorize` (FT224). Review had also amended the staged spec in the
-source, which the byte-identity check refuses; the amendment landed on the destination
-first as `a1d31f4d` under reviewer confirmation (FT225).
+The structural change worth knowing: the 2026-08 capability audit's action items drove the
+recommended sequence while existing only inside the audit directory, so the board could not
+be read on its own. They are rows now — FT226 (A6, `BENCH_HOME` leak), FT227 (A4, adoption
+smoke), FT228 (A5, `/bench-debug`), FT229 (A9, hygiene batch), FT230 (A7, release
+workflow), FT231 (A11, measurement harness), FT232 (A10, repair-loop tripwire) — and the
+sequence names board rows rather than external audit IDs.
 
-**This drain's batch:** FT212, FT190, and FT165 removed as shipped, each verified against
-the tree rather than taken from the audit's word. FT224 and FT225 added. FT89, FT215,
-FT177, and FT162 took merged retro evidence. The open learning was dismissed as already
-implemented at `f8d1dd4c`. `capture/` is empty — no ideas, no learnings, no retros. The
-`Recommended sequence` now carries the audit's ranking directly instead of pointing at it,
-as its own standing note asked the next full drain to do.
+Merges, each over one owner surface: FT205 + FT221 into FT213 (one `craft-delegate` visit),
+FT192 + FT209 into FT214 (one `craft-spec` visit), FT111 into FT179 (one comments visit),
+FT206 into the new FT233, FT112 into FT228, FT138 + FT170 into FT231, FT180 and FT177's
+landing-guard clause into FT229. FT199 split: the coordinator stayed, its six landing
+diagnostics became FT233.
 
-**Not applied, named instead:** the audit's full row-by-row board restructure
-(`roadmap-dispositions.yaml` — rewrites, folds, and the deferred backlog) is a
-`--restructure` pass and needs the reviewer to invoke it.
+Thirteen accreted rows were pruned to what is genuinely open, each verified against the
+tree by a read-only delegate and spot-checked here — not taken on the audit's word. Two of
+the audit's own dispositions were stale and were not followed: FT89's registry half had
+already shipped with the front door (only `commands --brief` and the guide's CLI inventory
+remain), and FT197's premise is inverted, since the Go runner now owns the process group and
+calls the gate script rather than sitting behind it, so FT197 dropped to LOW and parked.
+
+One finding landed as evidence rather than prose: this file's previous pins, `HEAD 0ee2106`
+and `green at 761a839`, both resolve to *trees*, not commits — they never named anything.
+That is now FT162's second occurrence, and it is why the pins above were generated from the
+tree.
 
 ## Next command
 
-`/bench-write-spec` for A6 — kit tests stop writing into the operator's real `BENCH_HOME`
-(`docs/audits/2026-08-bench-capability/results-fable-high/proposed-roadmap.md`, rank 3, P1,
-no dependencies).
+`/bench-write-spec` for FT226 — kit tests stop writing into the operator's real
+`BENCH_HOME`. Rank 1 on the refreshed sequence, no dependencies, and the only actionable
+row whose defect damages the operator's own machine (759 orphaned pool directories, 41 MB,
+roughly ten added per gate run).
 
 ## Shape
 
