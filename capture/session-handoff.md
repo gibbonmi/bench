@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `cd355f45`, tree carries the uncommitted spec below, this handoff, one `capture/learnings.md` entry from the review round, and one ambient parked idea in `capture/IDEAS.md`
+Branch: `main` — HEAD `f3027f58` (spec staged, capture and output style committed), clean but for this handoff rewrite
 Spec: `specs/ft226-test-home-isolation/spec.md` — `Status: staged`, awaiting reviewer sign-off on the spec-and-tickets pair
-Gate: green at `cd355f45`
+Gate: green at `f3027f58`
 
 ## State
 
@@ -12,8 +12,9 @@ Gate: green at `cd355f45`
 written, `bench coverage --check` is green (12 rows), `bench preflight build` is
 green on every row-ownership check, and the mid-tier review round took two
 iterations to accept (folded; see the spec's `Verification log` and the dated
-`capture/learnings.md` entry). Nothing is committed: the spec
-directory is untracked until you sign off.
+`capture/learnings.md` entry). The spec directory is committed at `f3027f58`;
+the reviewer's sign-off on the approval table is still the gate to the build, and
+the spec file itself is the veto surface.
 
 What the build does: `reauthorizeFixture` binds a per-test `BENCH_HOME` like its
 siblings (ticket 01); `internal/worktree` gains a `TestMain` that runs the
@@ -30,15 +31,15 @@ in Out of scope); the sweep is a throwaway script, not a `bench worktree` verb
 `BENCH_HOME` writes exactly ten `worktrees/001-*` entries, all from
 `TestReauthorize*`, and nothing else.
 
-`capture/IDEAS.md` holds one uncommitted parked idea from the drain session
-(occurrence-ledger freeze check). `bench preflight build` reds on it as an
-unauthorized dirty path until it is committed; commit it before the build starts.
+The gate run that landed `f3027f58` added ten more `001-*` keys to the operator's
+pool (1,699 → 1,709): live evidence for ticket 03's sweep count, which should be
+taken fresh at apply time.
 
 ## Next command
 
 Sign off the spec and tickets (the approval table is in the write-spec session's
-closing message; the spec file itself is the veto surface), commit the spec
-directory, then start a fresh session with:
+closing message; the spec file itself is the veto surface), then start a fresh
+session with:
 
 `/bench-implement-spec ft226-test-home-isolation`
 
