@@ -230,7 +230,9 @@ a check the gate failed to stage has no verdict, so it cannot be counted as gree
 verifies every registry sentinel executed. The tagged system package has one
 `TestMain` owner, at most three disposable repositories, one selected executable
 identity ledger, teardown on green/red/interrupt/timeout, and exactly one
-stripped-distribution journey.
+stripped-distribution journey beside one adoption journey, which adopts a
+disposable repository with `bench setup --yes` and drives its scaffolded gate
+through the installed wrapper under a private `BENCH_HOME`.
 
 The five command decision domains—gate, adopt, preflight, canary,
 and freshness—consume immutable values in process. Their ordinary tests create no

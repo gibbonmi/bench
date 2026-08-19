@@ -1,6 +1,6 @@
 # ft227-adoption-smoke
 
-Status: staged
+Status: implemented
 
 Decision source: `roadmap/FT227.md` — the board row the reviewer opened from the 2026-08 capability audit (ledger L-14) and reconciled onto the board in the drain committed as `eefc96f4` on 2026-08-19; its one occurrence is the audit's end-to-end reproduction, re-run in a scratch repository while this spec was authored.
 

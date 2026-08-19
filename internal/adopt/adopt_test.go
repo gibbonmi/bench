@@ -303,12 +303,18 @@ func TestDoctorDirSelectionAndShimRoundTrip(t *testing.T) {
 	}
 }
 
+// guardedCanaryCall is the exact guarded inventory call scaffoldGate must emit and
+// bench init must write: rooted at $root, never relative.
+const guardedCanaryCall = `if [ -d "$root/tests/canary" ]; then
+  "$bench" canary "$root" || err "canary inventory validation failed"
+fi`
+
 func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 	gate := scaffoldGate()
 	mustContain := []string{
 		"BENCH_SENTINEL",
 		"bench=\"$(dirname \"$0\")/bin/bench.sh\"; [ -x \"$bench\" ] || bench=bench",
-		"\"$bench\" canary \"$root\" || err \"canary inventory validation failed\"",
+		guardedCanaryCall,
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(gate, want) {
@@ -319,6 +325,31 @@ func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 		if strings.Contains(gate, forbidden) {
 			t.Fatalf("scaffold gate still contains retired sourcing API %q:\n%s", forbidden, gate)
 		}
+	}
+}
+
+func TestInitWritesGuardedCanaryCall(t *testing.T) {
+	root := t.TempDir()
+	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v\n%s", err, out)
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(wd, "..", "..")))
+	t.Chdir(root)
+
+	var stdout, stderr bytes.Buffer
+	if code := Init(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("Init exit = %d, stderr:\n%s", code, stderr.String())
+	}
+	gate := readFile(t, filepath.Join(root, ".bench", "gate.sh"))
+	if !strings.Contains(gate, guardedCanaryCall) {
+		t.Fatalf("bench init gate.sh missing guarded canary call:\n%s", gate)
+	}
+	if !strings.Contains(gate, SentinelMarker) {
+		t.Fatalf("bench init gate.sh missing %s sentinel:\n%s", SentinelMarker, gate)
 	}
 }
 

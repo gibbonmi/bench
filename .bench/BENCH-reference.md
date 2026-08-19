@@ -191,7 +191,8 @@ progress evidence (the gate stays the oracle). The adapter launches with a
 documented **passlisted environment**, not the parent's full environment; widen it
 only by committing extra names under the `[agent]` section (the only section) of
 `.bench/env.allow` — a variable the *gate* needs is declared in
-`.bench/gate-inputs.json` instead. There is no default — an unset `BENCH_AGENT`
+`.bench/gate-inputs.json` instead, which `bench setup` seeds with the names the
+installed wrapper needs (`BENCH_HOME` and `HOME`). There is no default — an unset `BENCH_AGENT`
 fails fast before the loop with a configure-your-adapter error. Reference adapters
 ship in `.bench/adapters/` (`claude`, `codex`, `opencode`); point `BENCH_AGENT` at
 one, or at your own wrapper that pipes its stdin to your harness's noninteractive
