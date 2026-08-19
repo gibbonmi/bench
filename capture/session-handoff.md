@@ -2,37 +2,35 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5fc748b` at the time this was written, clean but for this drain batch
-Spec: none staged; `specs/` is empty
-Gate: green
+Branch: `main` — HEAD `eefc96f4` at the time this was written; the tree holds
+`specs/ft227-adoption-smoke/` and this file uncommitted
+Spec: `specs/ft227-adoption-smoke/spec.md`, `Status: staged`, awaiting sign-off
+Gate: green at HEAD; the uncommitted files are prose and tickets only
 
 ## State
 
-Two specs shipped and retired this session. FT226 stopped the kit's own tests
-writing into the operator's `BENCH_HOME` — the reauthorize fixture binds its own
-home, and `internal/worktree` runs under a process-private one that reds on
-residue and names the leaking test. FT234 added `bench worktree reclaim`, the
-first reader over the pool parent, so a key whose source repository is deleted
-can be recovered at all. The operator's pool went from 1,719 keys and 91 MB to
-one key and 120 KB, and the FT234 acceptance demo ran against that real pool.
+`/bench-write-spec` for FT227 ran to its sign-off stop. The spec and its three
+tickets are written and the one review round accepted them at the first
+iteration with ten partials, all folded (the `Verification log:` line names
+them). `bench coverage --check` is green on 15 rows. Nothing is committed yet:
+the reviewer has not signed off the spec-and-tickets pair.
 
-This drain reconciled both shipped rows off the board, drained two ideas, four
-learnings, and two retros, and opened FT235 from the pool-directory-naming idea.
-Every capture source is empty.
+The decision source is `roadmap/FT227.md`. The spec's grounding repro was
+re-run in a scratch repository this session: `bench setup --yes`, sentinel
+removed, `bench gate` through the installed wrapper — red on `HOME`, then red on
+the empty inventory; green once a manifest declaring `BENCH_HOME` and `HOME`
+existed and the stub's canary call was guarded on `tests/canary` existing.
 
-The board's most-evidenced open thread is the reviewed-landing spec-byte
-question: FT225 (decide whether a review may amend the spec in its own source)
-and FT233 (landing refusals name their remedy) each took new occurrences today,
-and FT233's wording depends on FT225's decision. That is why the sequence puts
-FT225 third despite two HIGH rows above it.
-
-`dist/bench` was a day stale for most of this session; it is rebuilt. Rebuild it
-before hand-running any newly landed verb.
+Decisions that stay closed in the spec: the manifest is a `seed` kind (never
+managed); the guard is the stub's, `bench canary` does not change; the sentinel
+stays; the journey adopts `owner.repos[1]` and binds a private `BENCH_HOME` on
+every launch; every green leg asserts the exact `gate: green` line.
 
 ## Next command
 
-`/bench-write-spec` — FT227: adoption smoke, so a newly adopted repository's
-scaffolded gate can go green.
+After sign-off: `bench commit -m "spec: stage ft227-adoption-smoke" -- specs/ft227-adoption-smoke capture/session-handoff.md`,
+then a fresh mid-tier session runs
+`/bench-implement-spec specs/ft227-adoption-smoke/spec.md`.
 
 ## Shape
 
