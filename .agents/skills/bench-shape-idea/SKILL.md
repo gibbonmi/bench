@@ -1,7 +1,6 @@
 ---
 name: bench-shape-idea
 description: Explicit Codex adapter for the /bench-shape-idea phase. Use only when the reviewer invokes $bench-shape-idea; read .agents/commands/bench-shape-idea.md and follow it.
-disable-model-invocation: true
 ---
 
 # $bench-shape-idea

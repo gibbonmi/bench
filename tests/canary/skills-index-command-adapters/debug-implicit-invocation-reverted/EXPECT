@@ -1,0 +1,1 @@
+Codex adapter 'bench-debug' agents/openai.yaml spells allow_implicit_invocation: false against the invocation policy's true

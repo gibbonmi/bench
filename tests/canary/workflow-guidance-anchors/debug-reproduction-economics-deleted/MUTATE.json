@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-debug.md",
+    "old": "A green proxy only narrows a hypothesis — it never confirms one. A load- or\n",
+    "new": "A load- or\n"
+  }
+]

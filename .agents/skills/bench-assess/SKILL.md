@@ -1,7 +1,6 @@
 ---
 name: bench-assess
 description: Explicit Codex adapter for the /bench-assess phase. Use only when the reviewer invokes $bench-assess; read .agents/commands/bench-assess.md and follow it.
-disable-model-invocation: true
 ---
 
 # $bench-assess

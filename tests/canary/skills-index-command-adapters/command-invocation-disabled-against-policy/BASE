@@ -1,0 +1,5 @@
+.agents/commands/bench-write-spec.md
+.agents/skills/bench-write-spec/SKILL.md
+.agents/skills/bench-write-spec/agents/openai.yaml
+.bench/BENCH.md
+.bench/BENCH-reference.md

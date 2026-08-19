@@ -8,6 +8,25 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- The `/bench-debug` (`$bench-debug`) phase restores the upstream discipline a
+  silent compression lost: Phase 1 points at a shipped ten-entry
+  loop-construction menu (`.agents/skills/bench-debug/references/loop-constructions.md`),
+  the two hard stop-gates return verbatim ("No red-capable command, no
+  Phase 2"; "Do not proceed until you have reproduced and minimised"),
+  "Tighten the loop" returns as a named step, the Phase 1 completion criteria,
+  Phase 2 confirmations, and Phase 6 close-out return as checkbox forms, and
+  Phase 2 gains the reproduction-economics rule — a green proxy only narrows a
+  hypothesis. Every Bench-specific addition survives unchanged.
+- Every Bench phase now carries a reviewed invocation policy graded on both harness
+  surfaces: one table records, per phase, whether the Claude model may reach for the
+  command on its own and whether Codex may invoke the adapter implicitly, and the
+  gate reds when either surface drifts from it, when a command file has no policy
+  row, or when a row names no command file. `$bench-debug` is now implicitly
+  invocable on Codex — a reported symptom routes to the bug path without the
+  operator naming the phase — and its adapter description carries the symptom
+  trigger instead of an explicit-only clause. The inert `disable-model-invocation`
+  key leaves every Codex adapter, where `agents/openai.yaml` is the real policy
+  surface.
 - Bare wrapper and binary invocations now render the `bench status --route`
   recommendation, `/bench` and `$bench` follow that route, help spellings show the
   command inventory, and capture maintenance is now `/bench-drain` (`$bench-drain`)

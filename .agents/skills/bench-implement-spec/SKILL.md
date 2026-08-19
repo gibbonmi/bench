@@ -1,7 +1,6 @@
 ---
 name: bench-implement-spec
 description: Explicit Codex adapter for the /bench-implement-spec phase. Use only when the reviewer invokes $bench-implement-spec; read .agents/commands/bench-implement-spec.md and follow it.
-disable-model-invocation: true
 ---
 
 # $bench-implement-spec

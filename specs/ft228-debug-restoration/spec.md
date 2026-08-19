@@ -1,6 +1,6 @@
 # ft228-debug-restoration
 
-Status: staged
+Status: implemented
 
 Decision source: `roadmap/FT228.md` — the board row the reviewer opened from the 2026-08 capability audit (ledger L-10, L-11, L-30, action item A5), carrying the 2026-07-23 trustworthy-gate-under-load occurrence. The row's one open fork — the Codex trigger — was closed by the reviewer in this session on 2026-08-19: `$bench-debug` becomes implicitly invocable on Codex.
 

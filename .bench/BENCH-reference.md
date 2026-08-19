@@ -72,14 +72,22 @@ phases differently:
 - **Claude Code:** invoke `/bench` to route from observed state, or invoke a phase
   directly as a slash command, e.g. `/bench-write-spec`.
 - **Codex:** invoke `$bench` to route from observed state, or invoke the matching
-  explicit skill, e.g. `$bench-write-spec`; each `$bench-*`
-  adapter reads the canonical command file and follows it. These adapters are
-  explicit-only (`allow_implicit_invocation: false`) because workflow phases are
-  reviewer-chosen entry points, not background generation guidance.
-  Model-invoked Bench guidance uses visible `craft-*` skill names, leaving `$bench`
-  for phases a reviewer deliberately runs.
+  skill, e.g. `$bench-write-spec`; each `$bench-*` adapter reads the canonical
+  command file and follows it.
 - **Other AGENTS.md harnesses:** read the phase file in `.agents/commands/` and
   follow it when no native command or skill surface exists.
+
+Each phase's trigger on each harness is a reviewed decision, not ambient
+frontmatter: one invocation-policy table records, per phase, whether the Claude
+model may reach for the command on its own and whether Codex may invoke the
+adapter implicitly, and the gate grades both surfaces against it. Most phases are
+reviewer-chosen entry points a model does not start unbidden, and the maintenance
+phases are off the model's reach entirely on Claude — read a phase's own row for
+which it is. `$bench-debug` is the exception: it is
+implicitly invocable on Codex, because a reported symptom should route to the bug
+path without the operator remembering the phase name. Model-invoked Bench guidance
+otherwise uses the visible `craft-*` skill names, leaving `$bench` for phases a
+reviewer deliberately runs.
 
 The rule for translating a recommended phase into *this* harness's invocation
 form lives with the communication rules in `.bench/BENCH.md`.

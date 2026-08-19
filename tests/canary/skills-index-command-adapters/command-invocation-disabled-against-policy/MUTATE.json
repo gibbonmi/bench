@@ -1,0 +1,1 @@
+[{"path": ".agents/commands/bench-write-spec.md", "old": "description: Turn a reviewed decision source into a build spec", "new": "disable-model-invocation: true\ndescription: Turn a reviewed decision source into a build spec"}]

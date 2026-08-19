@@ -202,6 +202,64 @@ func checkCommandGuideReferences(root string) []string {
 	return diags
 }
 
+// explicitOnlyDescriptionMarker is the phrasing that tells Codex a phase fires only on
+// a typed invocation. On a row the policy marks implicitly invocable it is the one
+// sentence that would keep the flip from ever firing, so it is graded as an anti-trigger.
+const explicitOnlyDescriptionMarker = "Use only when the reviewer invokes"
+
+// phaseInvocationPolicy is the reviewed invocation posture of every Bench phase: whether
+// the Claude model may reach for the command on its own, and whether Codex may invoke the
+// adapter skill implicitly. It restates the frontmatter facts it grades on purpose — that
+// independence is what turns a silent flip of either surface red, the named exception to
+// the one-source rule, and the canary fixtures beside it demonstrate the reds.
+var phaseInvocationPolicy = map[string]struct {
+	claudeModelInvocable bool
+	codexImplicit        bool
+}{
+	// The reviewer's 2026-08-19 settle: the bug path fires on symptoms, on both harnesses.
+	"bench-debug": {claudeModelInvocable: true, codexImplicit: true},
+
+	"bench":                       {claudeModelInvocable: true},
+	"bench-final-check":           {claudeModelInvocable: true},
+	"bench-implement-spec":        {claudeModelInvocable: true},
+	"bench-review-implementation": {claudeModelInvocable: true},
+	"bench-shape-idea":            {claudeModelInvocable: true},
+	"bench-write-spec":            {claudeModelInvocable: true},
+
+	"bench-assess":     {},
+	"bench-deepen":     {},
+	"bench-drain":      {},
+	"bench-setup-repo": {},
+	"bench-update-kit": {},
+	"bench-what-next":  {},
+}
+
+// invocationYAMLValue spells the openai.yaml line a policy value demands. Both the match
+// and the mismatch branch read it, so the file's grammar has one spelling in the check.
+func invocationYAMLValue(implicit bool) string {
+	return fmt.Sprintf("allow_implicit_invocation: %t", implicit)
+}
+
+// frontmatterHasKey reports whether a frontmatter block declares key at all, empty value
+// included — the presence question FrontmatterField cannot answer, since it returns the
+// same empty string for an absent key and a declared-but-blank one. A mention in the body
+// is not frontmatter and stays inert.
+func frontmatterHasKey(text, key string) bool {
+	lines := strings.Split(text, "\n")
+	if len(lines) == 0 || lines[0] != "---" {
+		return false
+	}
+	for _, line := range lines[1:] {
+		if line == "---" {
+			return false
+		}
+		if strings.HasPrefix(line, key+":") {
+			return true
+		}
+	}
+	return false
+}
+
 func checkCodexCommandAdapters(root string) []string {
 	var diags []string
 	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md")) + "\n" + readIfExists(filepath.Join(root, ".bench", "BENCH-reference.md"))
@@ -209,6 +267,21 @@ func checkCodexCommandAdapters(root string) []string {
 	sort.Strings(commandFiles)
 	for _, file := range commandFiles {
 		name := strings.TrimSuffix(filepath.Base(file), ".md")
+		// The policy lookup runs ahead of every adapter check: a phase nobody declared a
+		// trigger for reds as undeclared even when its adapter is missing too, so a new
+		// command cannot arrive triggerless behind a louder diagnostic.
+		policy, declared := phaseInvocationPolicy[name]
+		if !declared {
+			diags = append(diags, fmt.Sprintf("command '%s' has no invocation-policy row; every phase declares its Claude and Codex trigger before it ships", name))
+			continue
+		}
+		if hasKey := frontmatterHasKey(readIfExists(file), "disable-model-invocation"); hasKey == policy.claudeModelInvocable {
+			if hasKey {
+				diags = append(diags, fmt.Sprintf("command '%s' frontmatter carries disable-model-invocation though the invocation policy makes it model-invocable on Claude", name))
+			} else {
+				diags = append(diags, fmt.Sprintf("command '%s' frontmatter declares no disable-model-invocation though the invocation policy disables it on Claude", name))
+			}
+		}
 		adapter := filepath.Join(root, ".agents", "skills", name, "SKILL.md")
 		metadata := filepath.Join(root, ".agents", "skills", name, "agents", "openai.yaml")
 		if !exists(adapter) {
@@ -226,15 +299,43 @@ func checkCodexCommandAdapters(root string) []string {
 		if !strings.Contains(adapterText, ".agents/commands/"+commandName+".md") {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' does not reference .agents/commands/%s.md", name, commandName))
 		}
+		if frontmatterHasKey(adapterText, "disable-model-invocation") {
+			diags = append(diags, fmt.Sprintf("Codex adapter '%s' SKILL.md frontmatter carries the inert disable-model-invocation key; agents/openai.yaml is the Codex invocation-policy surface", name))
+		}
 		if !exists(metadata) {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' missing agents/openai.yaml explicit-invocation metadata", name))
 			continue
 		}
-		if !strings.Contains(readIfExists(metadata), "allow_implicit_invocation: false") {
-			diags = append(diags, fmt.Sprintf("Codex adapter '%s' does not disable implicit invocation", name))
+		metadataText := readIfExists(metadata)
+		switch {
+		case strings.Contains(metadataText, invocationYAMLValue(policy.codexImplicit)):
+		case strings.Contains(metadataText, invocationYAMLValue(!policy.codexImplicit)):
+			diags = append(diags, fmt.Sprintf("Codex adapter '%s' agents/openai.yaml spells allow_implicit_invocation: %t against the invocation policy's %t", name, !policy.codexImplicit, policy.codexImplicit))
+		default:
+			diags = append(diags, fmt.Sprintf("Codex adapter '%s' agents/openai.yaml declares no allow_implicit_invocation value (undeclared invocation policy)", name))
+		}
+		if policy.codexImplicit && strings.Contains(collapseSpace(frontmatterField(adapter, "description")), explicitOnlyDescriptionMarker) {
+			diags = append(diags, fmt.Sprintf("Codex adapter '%s' description carries explicit-only phrasing (%q) though the invocation policy makes it implicitly invocable", name, explicitOnlyDescriptionMarker))
 		}
 		if !strings.Contains(guide, "$"+name) {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' is not documented in the operating guide (.bench/BENCH.md or .bench/BENCH-reference.md)", name))
+		}
+	}
+	// The other completeness direction: a row survives the command file it grades.
+	// The pass is unconditional over the whole table, so a narrow root — every canary
+	// fixture in this family materializes one phase, not thirteen — collects a stale
+	// row for each phase it does not carry. Scoping the pass to roots that look
+	// complete would make the check guess which absences are real, so the noise stays
+	// and the fixtures isolate their own red by its text rather than by the diagnostic
+	// count.
+	phases := make([]string, 0, len(phaseInvocationPolicy))
+	for name := range phaseInvocationPolicy {
+		phases = append(phases, name)
+	}
+	sort.Strings(phases)
+	for _, name := range phases {
+		if !exists(filepath.Join(root, ".agents", "commands", name+".md")) {
+			diags = append(diags, fmt.Sprintf("invocation policy declares phase '%s' but .agents/commands/%s.md is absent (stale policy row)", name, name))
 		}
 	}
 	return diags
@@ -304,4 +405,160 @@ func TestSkillsIndexConformanceCarriesNoSecondReader(t *testing.T) {
 			})
 		}
 	}
+}
+
+// TestCodexAdapterInvocationPolicyGradesParseEdges pins the two policy edges no canary
+// fixture can reach from the real tree: an agents/openai.yaml that declares nothing is
+// red as undeclared rather than passing as "not the wrong value", and the explicit-only
+// description clause is red on a row the policy marks implicitly invocable — the
+// anti-trigger that would leave a flipped yaml unable to fire.
+func TestCodexAdapterInvocationPolicyGradesParseEdges(t *testing.T) {
+	adapterBody := func(name, description string) string {
+		return fmt.Sprintf("---\nname: %s\ndescription: %s\n---\n\nRead `.agents/commands/%s.md`.\n", name, description, name)
+	}
+	for _, tc := range []struct {
+		name        string
+		phase       string
+		description string
+		yaml        string
+		want        string
+	}{
+		{
+			name:        "empty yaml",
+			phase:       "bench-write-spec",
+			description: "Explicit Codex adapter. Use only when the reviewer invokes $bench-write-spec.",
+			yaml:        "",
+			want:        "Codex adapter 'bench-write-spec' agents/openai.yaml declares no allow_implicit_invocation value (undeclared invocation policy)",
+		},
+		{
+			name:        "yaml spelling neither value",
+			phase:       "bench-write-spec",
+			description: "Explicit Codex adapter. Use only when the reviewer invokes $bench-write-spec.",
+			yaml:        "policy:\n  allow_implicit_invocation: maybe\n",
+			want:        "Codex adapter 'bench-write-spec' agents/openai.yaml declares no allow_implicit_invocation value (undeclared invocation policy)",
+		},
+		{
+			name:        "explicit-only description on an implicit row",
+			phase:       "bench-debug",
+			description: "Codex adapter for the bug path. Use only when the reviewer invokes $bench-debug.",
+			yaml:        "policy:\n  allow_implicit_invocation: true\n",
+			want:        `Codex adapter 'bench-debug' description carries explicit-only phrasing ("Use only when the reviewer invokes") though the invocation policy makes it implicitly invocable`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			write := func(rel, content string) {
+				t.Helper()
+				path := filepath.Join(root, filepath.FromSlash(rel))
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			write(".bench/BENCH.md", fmt.Sprintf("/%s and $%s\n", tc.phase, tc.phase))
+			write(".bench/BENCH-reference.md", "reference\n")
+			write(".agents/commands/"+tc.phase+".md", "---\ndescription: phase\n---\n")
+			write(".agents/skills/"+tc.phase+"/SKILL.md", adapterBody(tc.phase, tc.description))
+			write(".agents/skills/"+tc.phase+"/agents/openai.yaml", tc.yaml)
+
+			if diags := checkCodexCommandAdapters(root); !containsDiagnostic(diags, tc.want) {
+				t.Fatalf("diagnostics = %q, want one containing %q", diags, tc.want)
+			}
+		})
+	}
+}
+
+// TestCommandInvocationPolicyGradesTableCompleteness pins the two directions no canary
+// fixture can reach: a policy row whose command file left the tree reds as stale (the
+// table is compiled in, so omitting the file is the only way to age a row), and a
+// command body that merely quotes the frontmatter key keeps its declared policy green.
+func TestCommandInvocationPolicyGradesTableCompleteness(t *testing.T) {
+	write := func(t *testing.T, root, rel, content string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// materializePolicyRoot writes a BASE-style tree for every declared phase except the
+	// ones named, each phase carrying the frontmatter its own policy row demands.
+	materializePolicyRoot := func(t *testing.T, omit ...string) string {
+		t.Helper()
+		omitted := map[string]bool{}
+		for _, name := range omit {
+			omitted[name] = true
+		}
+		root := t.TempDir()
+		var guide strings.Builder
+		for name, policy := range phaseInvocationPolicy {
+			fmt.Fprintf(&guide, "/%s and $%s\n", name, name)
+			if omitted[name] {
+				continue
+			}
+			disable := ""
+			if !policy.claudeModelInvocable {
+				disable = "disable-model-invocation: true\n"
+			}
+			write(t, root, ".agents/commands/"+name+".md", fmt.Sprintf("---\ndescription: the %s phase\n%s---\n\nBody.\n", name, disable))
+			target := name
+			if name == "bench-what-next" {
+				target = "bench-drain"
+			}
+			write(t, root, ".agents/skills/"+name+"/SKILL.md", fmt.Sprintf("---\nname: %s\ndescription: Codex adapter for %s.\n---\n\nRead `.agents/commands/%s.md`.\n", name, name, target))
+			write(t, root, ".agents/skills/"+name+"/agents/openai.yaml", fmt.Sprintf("policy:\n  %s\n", invocationYAMLValue(policy.codexImplicit)))
+		}
+		write(t, root, ".bench/BENCH.md", guide.String())
+		write(t, root, ".bench/BENCH-reference.md", "reference\n")
+		return root
+	}
+
+	t.Run("intact policy root is green", func(t *testing.T) {
+		if diags := checkCodexCommandAdapters(materializePolicyRoot(t)); len(diags) != 0 {
+			t.Fatalf("diagnostics over an intact policy root = %q, want none", diags)
+		}
+	})
+
+	t.Run("stale table row", func(t *testing.T) {
+		diags := checkCodexCommandAdapters(materializePolicyRoot(t, "bench-debug"))
+		const want = "invocation policy declares phase 'bench-debug' but .agents/commands/bench-debug.md is absent (stale policy row)"
+		if !containsDiagnostic(diags, want) {
+			t.Fatalf("diagnostics = %q, want one containing %q", diags, want)
+		}
+		for _, diag := range diags {
+			if strings.Contains(diag, "bench-write-spec") {
+				t.Fatalf("stale-row grading also red on a present phase: %q", diag)
+			}
+		}
+	})
+
+	t.Run("body prose mention of the key is inert", func(t *testing.T) {
+		root := materializePolicyRoot(t)
+		// bench-write-spec is model-invocable, so a graded key would red the phase; the
+		// mention lands in the body, below the closing frontmatter fence.
+		write(t, root, ".agents/commands/bench-write-spec.md",
+			"---\ndescription: the bench-write-spec phase\n---\n\nA command file disables Claude's own reach for a phase with the\n`disable-model-invocation: true` frontmatter key.\n")
+		if diags := checkCodexCommandAdapters(root); len(diags) != 0 {
+			t.Fatalf("body-prose mention of disable-model-invocation reddened the check: %q", diags)
+		}
+	})
+
+	t.Run("undeclared phase reds ahead of its missing adapter", func(t *testing.T) {
+		root := materializePolicyRoot(t)
+		write(t, root, ".agents/commands/ghost.md", "---\ndescription: undeclared\n---\n")
+		diags := checkCodexCommandAdapters(root)
+		const want = "command 'ghost' has no invocation-policy row; every phase declares its Claude and Codex trigger before it ships"
+		if !containsDiagnostic(diags, want) {
+			t.Fatalf("diagnostics = %q, want one containing %q", diags, want)
+		}
+		for _, diag := range diags {
+			if strings.Contains(diag, "command 'ghost' has no Codex adapter skill") {
+				t.Fatalf("adapter-existence grading preempted the undeclared-policy red: %q", diag)
+			}
+		}
+	})
 }

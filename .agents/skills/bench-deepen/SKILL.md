@@ -1,7 +1,6 @@
 ---
 name: bench-deepen
 description: Explicit Codex adapter for the /bench-deepen phase. Use only when the reviewer invokes $bench-deepen; read .agents/commands/bench-deepen.md and follow it.
-disable-model-invocation: true
 ---
 
 # $bench-deepen
