@@ -1,49 +1,42 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — HEAD `f3027f58` (spec staged, capture and output style committed), clean but for this handoff rewrite
-Spec: `specs/ft226-test-home-isolation/spec.md` — `Status: staged`, awaiting reviewer sign-off on the spec-and-tickets pair
-Gate: green at `f3027f58`
+Path: `~/workspace/bench`; the build runs in the integration worktree with label
+`ft226 implementation` (assignment `6a22e66f47a693f42e306c0ec030e1ba`, request
+`ft226-build`) — address it by label, never by a pasted path
+Branch: `main` — destination HEAD `a9e8e232`; the source's frozen review base is
+`b2d3d625`, which a concurrent session has since moved past
+Spec: `specs/ft226-test-home-isolation/spec.md` — `Status: staged`, verification log written
+Phase reached: `/bench-implement-spec --full`, implementation complete, all three tickets landed green in the source; review not yet run
 
 ## State
 
-**FT226 is specified, not approved.** The spec and its three serial tickets are
-written, `bench coverage --check` is green (12 rows), `bench preflight build` is
-green on every row-ownership check, and the mid-tier review round took two
-iterations to accept (folded; see the spec's `Verification log` and the dated
-`capture/learnings.md` entry). The spec directory is committed at `f3027f58`;
-the reviewer's sign-off on the approval table is still the gate to the build, and
-the spec file itself is the veto surface.
+All three tickets are committed on green in the integration source. Ticket 01
+binds `reauthorizeFixture`'s `BENCH_HOME`. Ticket 02 adds
+`internal/worktree/main_test.go` — a `TestMain` running the package under a
+process-private `BENCH_HOME`, a residue predicate, and two tests. Ticket 03 swept
+1,710 orphaned pool keys, 91 MB down to 51 MB, and wrote the spec's verification
+log. Every acceptance row is covered; the evidence is in that log.
 
-What the build does: `reauthorizeFixture` binds a per-test `BENCH_HOME` like its
-siblings (ticket 01); `internal/worktree` gains a `TestMain` that runs the
-package under a process-private `BENCH_HOME` and exits red on residue, naming the
-leaking test (ticket 02, proven by mutation); the operator's 1,690 orphaned
-`001-<digits>` pool keys (63 MB) are swept once, plan-before-apply, under a
-dangling-`gitdir:` predicate (ticket 03, destructive, outside the tree — your
-spec sign-off is its approval).
+**A concurrent session landed `e1b44e62` and `a9e8e232` on `main` during this
+build.** The source's review base `b2d3d625` is therefore behind the destination,
+so the landing needs `bench worktree reauthorize` to the current base before
+`bench worktree land`. Those two gate runs also leaked ten fresh `001-<digits>`
+keys, because `main` does not yet carry ticket 01; a second sweep pass clears them
+once this spec lands. The sweep script is throwaway and was never committed, so a
+fresh session regenerates it from the spec's SW1 predicate.
 
-Decisions left open for you, flagged in the spec: the oracle seam is in-package
-`TestMain` rather than a gate-level private home for the test/race phases (priced
-in Out of scope); the sweep is a throwaway script, not a `bench worktree` verb
-(priced). Measured facts: the full ordinary suite under an empty sentinel
-`BENCH_HOME` writes exactly ten `worktrees/001-*` entries, all from
-`TestReauthorize*`, and nothing else.
-
-The gate run that landed `f3027f58` added ten more `001-*` keys to the operator's
-pool (1,699 → 1,709): live evidence for ticket 03's sweep count, which should be
-taken fresh at apply time.
+Open for the reviewer, flagged in the verification log: the spec's probe (b)
+command never reaches `TestMain`, because `TMPDIR=/nonexistent` fails in the go
+driver first. The `GOTMPDIR=/tmp TMPDIR=/nonexistent` form does reach it and reds
+correctly. DT4 holds; only the spec's probe text is wrong, and the log records the
+correction as a finding for veto.
 
 ## Next command
 
-Sign off the spec and tickets (the approval table is in the write-spec session's
-closing message; the spec file itself is the veto surface), then start a fresh
-session with:
-
-`/bench-implement-spec ft226-test-home-isolation`
-
-Line for the build: `opus` / medium per the spec's story groups.
+`/bench-review-implementation` over the frozen base `b2d3d625` and the source tip,
+then `bench worktree reauthorize` to the current destination HEAD, then
+`bench worktree land`, then `/bench-final-check`.
 
 ## Shape
 

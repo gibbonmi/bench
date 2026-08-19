@@ -263,6 +263,86 @@ this spec's verification log; its target is `$HOME/.bench/worktrees`.
   two-fixture-repo tests needing a stable per-test home first.
 - **`HOME` isolation** for the package (see Won't handle).
 
+## Build verification log
+
+**EV1 — the ordinary suite under an empty sentinel `BENCH_HOME`.** Before ticket
+01, `BENCH_HOME=<sentinel> go test -count=1 ./internal/worktree` passed and left
+exactly ten `worktrees/001-<digits>` entries in the sentinel. After ticket 01,
+`BENCH_HOME=<sentinel> go test -count=1 ./...` passed and left the sentinel with
+zero entries (`find <sentinel> -mindepth 1` empty). Captured at ticket 01, before
+the `TestMain` landed, so the sentinel was the only oracle in play.
+
+**Probe (a) — the fixture binding removed.** Run twice: once by the write
+delegate, once independently by the coordinator. With the `t.Setenv` line deleted
+from `reauthorizeFixture`, `go test -count=1 ./internal/worktree -run Reauthorize`
+exits 1 and prints one residue entry (the top-level `worktrees` directory under
+the private home) with ten `gitdir:` origin lines, each naming a
+`TestReauthorizeCommand…` temporary root. Restoring the line returns exit 0 with a
+clean tree. The detector bites.
+
+**Probe (b) — the private home cannot be created.** The command the spec named,
+`TMPDIR=/nonexistent go test -count=1 ./internal/worktree -run TestPool`, does not
+exercise `TestMain`: the go driver fails creating its own work directory before
+the test binary compiles, so the exit is 1 but the message is the toolchain's.
+The form that does exercise it keeps the toolchain's work directory valid:
+`GOTMPDIR=/tmp TMPDIR=/nonexistent go test -count=1 ./internal/worktree -run TestPool`
+exits 1 with `private BENCH_HOME: stat /nonexistent: no such file or directory`
+and no test output, as does `TMPDIR=/nonexistent ./worktree.test -test.run TestPool`
+against a prebuilt binary. DT4 holds; the probe command in Testing decisions is
+what the finding corrects, and the correction is the reviewer's to veto.
+
+**Probe (c) — exit-code combination.** A temporary `t.Fatal` in `TestPool` under a
+clean private home makes the package FAIL with exit 1; removed, the package
+passes with exit 0. The residue verdict does not mask a failing test.
+
+**IS3 lifetime.** After `go test -count=1 ./internal/worktree`,
+`ls -d /tmp/bench-worktree-home-*` finds no directory: the private home is removed.
+
+**Driver runs, all exit 0.** `go test -count=1 ./internal/worktree`;
+`go test -count=1 -v ./internal/worktree -run TestPoolDefaultBenchHome` (EX1,
+unchanged and passing); `go test -count=1 ./internal/worktree -run TestActualSIGINT`
+(the re-exec'd helper child takes its own private home, so the short-circuit the
+spec priced as a contingency was not needed); `go test -race -count=1 -v
+./internal/worktree -run TestConcurrentCleanupRecordsOneTransaction`. Both ticket
+commits ran the full six-phase gate green.
+
+**SW1 predicate, proven before the real run.** A scratch pool planted all four
+hostile shapes: a key whose child `.git` is a directory, a key with an extra
+top-level entry, a key whose `gitdir:` target exists, and a key named `001-abc`.
+All four survived the plan, along with the `bench-…` and `project with spaces`
+keys; only the fully-dangling `001-<digits>` key was targeted.
+
+**SW2 plan and apply.** Plan against `$HOME/.bench/worktrees`: 1,719 keys total,
+1,710 targets, 9 non-targets, 91 MB. Every sampled target carried one child with a
+dangling `gitdir:` naming a `TestReauthorizeCommand…` temporary root. No `001-*`
+key survived the predicate. The nine survivors, printed before the apply, were
+`bench-2826441890` (this build's own integration worktree),
+`bench-dogfood-20260710-459PYf-2003174707`,
+`bench-dogfood-gl-axi-20260712-3579930476`,
+`bench-dogfood-gl-axi-20260712-r2-722800923`,
+`bench-luna-dogfood-mx8bDj-2174529179`,
+`bench-mandatory-delegation-dogfood-1057428268`,
+`c65757ef284c706c00622d7e181844b8-e4f58d5d86f77bdf927e119a15eb421c-1941573793`,
+`ft87-refresh-probe.US84JO-3910988020`, and `project with spaces-2317837872`.
+After the apply the script reported 9 keys remaining — 1,719 minus 1,710 — and
+every named survivor was present. The pool fell to 51 MB. The reviewer ran the
+destructive step; the auto-mode classifier denied it to the agent.
+
+**Ten keys arrived after the apply, and they confirm the diagnosis.** A concurrent
+session landed two commits on `main` (`e1b44e62`, `a9e8e232`) during this build.
+`main` does not carry ticket 01, so those two gate runs leaked ten fresh
+`001-<digits>` keys with `TestReauthorizeCommand…` origins — the same signature,
+from the only tree still able to produce it. They remain in the pool and are swept
+by a second pass once this spec lands.
+
+**SW3 — one gate run leaves the pool listing identical.** Sorted `ls` of
+`$HOME/.bench/worktrees` before and after `bench gate` in the integration worktree,
+which carries both tickets: identical, 19 keys, no diff. The leak is closed under
+the real driver, not only under a sentinel. That gate reported red solely because
+`BENCH_CONFORMANCE_ROOT` was unset for `TestRootConformance`, an absent-environment
+verdict; every test phase ran green, and both ticket commits gated green through
+`bench commit`, which stages that environment.
+
 ## Further notes
 
 The residue report is the guidance for the next fixture author: it names the
