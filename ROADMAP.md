@@ -39,6 +39,8 @@ that is actionable today. The `## Recommended sequence` draws from here first.
 
 ## Features, in priority order
 
+**FT234 (HIGH) — a pool key whose source repository is gone can be reclaimed.**
+
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
 
 **FT162 (MEDIUM, decision required) — the handoff's pins resolve, and its shape has one owner.**
