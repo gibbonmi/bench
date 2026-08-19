@@ -21,6 +21,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -138,23 +139,16 @@ func (r Resolution) command(root string) *exec.Cmd {
 
 // gateEnv returns the caller's environment with wrapper-routing internals removed.
 // `bench gate` reaches this package through bin/bench.sh -> route_binary, which sets
-// BENCH_KIT/BENCH_WRAPPER so the binary can find its assets. Those are not part of the
-// project gate's contract; leaking them into the gate makes fixture wrappers resolve the
-// live kit instead of their own fabricated layout.
+// them so the binary can find its assets. Those are not part of the project gate's
+// contract; leaking them into the gate makes fixture wrappers resolve the live kit
+// instead of their own fabricated layout. The selected executable is not among them:
+// the gate's phase children are contracted to inherit it.
 //
-// The capability skip log goes with them: a run owns the log its own phases append to,
-// so an inherited path must never survive into a child. A collecting run sets its own
-// value back on each phase.
+// The capability skip log goes too: a run owns the log its own phases append to, so an
+// inherited path must never survive into a child. A collecting run sets its own value
+// back on each phase.
 func gateEnv() []string {
-	var env []string
-	for _, kv := range capability.WithoutEnvironment(os.Environ(), capability.LogEnv) {
-		if strings.HasPrefix(kv, "BENCH_KIT=") ||
-			strings.HasPrefix(kv, "BENCH_WRAPPER=") {
-			continue
-		}
-		env = append(env, kv)
-	}
-	return env
+	return env.WithoutWrapperRouting(capability.WithoutEnvironment(os.Environ(), capability.LogEnv))
 }
 
 // Run executes the resolved gate from the repo root and returns its exit code, with

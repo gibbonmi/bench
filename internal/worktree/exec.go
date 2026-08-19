@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/env"
+	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -44,6 +47,7 @@ func runWorktreeChild(argv []string, dir string, stdin io.Reader, stdout, stderr
 	defer stop()
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = dir, stdin, stdout, stderr
+	cmd.Env = execEnv()
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(stderr, "bench worktree exec: %v\n", err)
@@ -65,6 +69,15 @@ func runWorktreeChild(argv []string, dir string, stdin io.Reader, stdout, stderr
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 		return 130
 	}
+}
+
+// execEnv returns the operator's environment with the invoking wrapper's routing
+// internals removed. The child runs in a different tree than the wrapper that reached
+// this call, so it has to resolve its own kit; an inherited BENCH_KIT names the caller's
+// checkout instead. The selected executable goes with them for the same reason — it was
+// built for the caller's run, not this child's. Everything else the operator set stays.
+func execEnv() []string {
+	return env.WithoutWrapperRouting(os.Environ(), runbinary.Env)
 }
 
 func childExitCode(cmd *exec.Cmd, err error) int {
