@@ -67,10 +67,50 @@ resolve_script_path() {
   printf '%s/%s\n' "$dir" "$(basename "$source")"
 }
 
+# git_common_dir_abs <dir> — echo <dir>'s git common directory as an absolute path, or
+# fail non-zero when <dir> is outside a repository or git is unavailable. `rev-parse
+# --git-common-dir` answers relatively (a bare `.git`) inside a plain checkout, so the
+# result is anchored at <dir> before it is handed back: two of these compare equal only
+# for two working trees of the SAME repository.
+git_common_dir_abs() {
+  local dir="$1" common base
+  command -v git >/dev/null 2>&1 || return 1
+  common="$(git -C "$dir" rev-parse --git-common-dir 2>/dev/null)" || return 1
+  [[ -n "$common" ]] || return 1
+  if [[ "$common" != /* ]]; then
+    base="$(cd -P "$dir" >/dev/null 2>&1 && pwd)" || return 1
+    common="$base/$common"
+  fi
+  common="$(cd -P "$(dirname "$common")" >/dev/null 2>&1 && pwd)/$(basename "$common")" || return 1
+  printf '%s\n' "$common"
+}
+
+# kit_dir — the kit THIS INVOCATION serves. Normally the parent of this script's bin/,
+# the tree the wrapper file lives in. The exception: when the current directory sits in
+# a git worktree of that same repository, the kit is that worktree's top level, because
+# an operator running the main checkout's `bench` from PATH with a worktree as CWD is
+# working on the worktree — and a BENCH_KIT naming the main checkout while the graded
+# root is the worktree makes the gate drop its kit-only phases over a clean tree.
+# Two conditions guard it, and a linked project repo fails both. The kit must be its own
+# tree's top level — an adopted repo carries the kit at `<repo>/.bench`, a subdirectory,
+# so its wrapper keeps naming `<repo>/.bench`. And sameness is identity of the git common
+# directory, never a path prefix, so a CWD in an unrelated repository is never mistaken
+# for a second working tree of this one. Every git failure — no repo, an unrelated repo,
+# no git on PATH — falls back to the wrapper's own tree.
 kit_dir() {
-  local script
+  local script wrapper_kit wrapper_root cwd_common wrapper_common cwd_root
   script="$(resolve_script_path)"
-  cd "$(dirname "$script")/.." && pwd
+  wrapper_kit="$(cd -P "$(dirname "$script")/.." && pwd)"
+  wrapper_root="$(git -C "$wrapper_kit" rev-parse --show-toplevel 2>/dev/null)" || { printf '%s\n' "$wrapper_kit"; return 0; }
+  wrapper_root="$(cd -P "$wrapper_root" >/dev/null 2>&1 && pwd)" || { printf '%s\n' "$wrapper_kit"; return 0; }
+  [[ "$wrapper_root" == "$wrapper_kit" ]] || { printf '%s\n' "$wrapper_kit"; return 0; }
+  cwd_common="$(git_common_dir_abs .)" || { printf '%s\n' "$wrapper_kit"; return 0; }
+  wrapper_common="$(git_common_dir_abs "$wrapper_kit")" || { printf '%s\n' "$wrapper_kit"; return 0; }
+  [[ "$cwd_common" == "$wrapper_common" ]] || { printf '%s\n' "$wrapper_kit"; return 0; }
+  cwd_root="$(git -C . rev-parse --show-toplevel 2>/dev/null)" || { printf '%s\n' "$wrapper_kit"; return 0; }
+  [[ -n "$cwd_root" ]] || { printf '%s\n' "$wrapper_kit"; return 0; }
+  cwd_root="$(cd -P "$cwd_root" >/dev/null 2>&1 && pwd)" || { printf '%s\n' "$wrapper_kit"; return 0; }
+  printf '%s\n' "$cwd_root"
 }
 
 # ---- strangler router: send a ported subcommand to the Go binary ------------
@@ -131,9 +171,10 @@ valid_package_version() {
   [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
 }
 
-# main_tree_kit <kit> — when <kit> sits inside a linked git worktree, echo the same
-# kit path re-anchored under the main worktree's root; echo nothing when <kit> is the
-# main tree itself, outside any repo, or the mapping is degenerate. Linked worktrees
+# main_tree_kit <kit> — when <kit> sits inside a linked git worktree — which kit_dir
+# names whenever the invocation's CWD is one — echo the same kit path re-anchored under
+# the main worktree's root; echo nothing when <kit> is the main tree itself, outside any
+# repo, or the mapping is degenerate. Linked worktrees
 # carry the tracked tree but not untracked artifacts (dist/, node_modules/), so the
 # binary that serves a worktree lives in the main tree. Always returns 0: a failed
 # resolution degrades to "no extra candidates", never to a caller-visible error.
