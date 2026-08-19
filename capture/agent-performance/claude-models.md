@@ -1,28 +1,29 @@
 # Claude model scorecard
 
-Last incorporated landing: `ft234-pool-key-reclaim` (`50495a81`, 2026-08-19) —
-Opus/medium orchestrated two spec-backed landings back to back (FT226 then FT234)
-with six write delegates and six review axes; the review's worst finding was a
-relative-`gitdir:` path that would have deleted a live worktree, and the
-coordinator confirmed it by planting the shape rather than by reading.
+Last incorporated landing: `ft227-adoption-smoke` (`e1bddfe4`, 2026-08-19) —
+Opus/medium orchestrated three serial write delegates on one retained integration
+worktree with zero repair rounds, and Sonnet ran the three review axes for the
+first time under the 2026-08-19 routing change; both axes that filed findings had
+them refuted by the spec's own Edge inventory and Testing decisions.
 
-Nine completed landings are now recorded. Sonnet now carries a large,
+Ten completed landings are now recorded. Sonnet now carries a large,
 higher-stakes implementer sample spanning medium and high effort on real
 production Go refactor work, not only low-effort tickets. Opus has a large
-implementer sample across three effort tiers and a five-landing
-orchestrator sample alongside a four-landing reviewer sample. Routing still follows the project's
-harness-to-tier binding.
+implementer sample across three effort tiers and an eight-landing orchestrator
+sample. Its four-landing reviewer sample is now closed in favor of Sonnet, which
+has its first. Routing still follows the project's harness-to-tier binding.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
 | Fable / high | orchestrator on 1 landing (tickets 6–8, review, landing) + implementer, 1 prose ticket | every done-claim probed with a distinct mutation kind and site; caught three false enforcement claims in spec rows and two unattributed-writer events; as implementer it surfaced an unreachable acceptance criterion instead of forcing it | Top tier for guidance prose and for coordination when the spec's own claims are suspect; not yet observed on Go |
-| Opus / medium, low | implementer, 24 medium-effort charges across 6 landings + 2 low-effort polish-repair charges (`worktree-cleanup-eligibility`) | medium: 20 of 24 first-pass accepted, 4 coordinator catches (one described a preflight-red diff as clean; one omitted a test its own production change needed), every required mutation bit and production restored exactly; low (n=2): 2 of 2 first-pass accepted, one delegate exceeded its charge with a more diagnostic mutation probe than requested | Medium is mid-tier default for gate and conformance logic; low is promising for small, low-risk polish/hardening repairs specifically — too small a sample yet to set a default there |
+| Opus / medium, low | implementer, 27 medium-effort charges across 7 landings + 2 low-effort polish-repair charges (`worktree-cleanup-eligibility`) | medium: 23 of 27 first-pass accepted, 4 coordinator catches (one described a preflight-red diff as clean; one omitted a test its own production change needed), every required mutation bit and production restored exactly; on `ft227` all 3 charges landed first-pass including a 7-leg tagged system journey against an owner harness read cold, and each self-reported a judgment call rather than burying it; low (n=2): 2 of 2 first-pass accepted, one delegate exceeded its charge with a more diagnostic mutation probe than requested | Medium is mid-tier default for gate and conformance logic; low is promising for small, low-risk polish/hardening repairs specifically — too small a sample yet to set a default there |
 | Opus / high | implementer, 13 charges (2 process-lifecycle, 4 guidance-prose/anchor, 3 inline light-path, 2 Go-seam parser/conformance-oracle rewrites, 1 conformance-correctness repair) | all 13 first-pass accepted; on `ft234-pool-key-reclaim` the single high charge (the destructive apply) returned two independent removal guards and, unprompted, showed that its own acceptance row's specified seam was unreachable rather than writing a test that could not fail; the largest single charge on `spec-ticket-fence-reduction` (a full parser rewrite plus a 67-row repo migration with an empty differential proof) still self-probed cleanly and flagged a spec-vs-charge disagreement rather than silently resolving it either way | Use high for process-lifecycle, cleanup-authority, destructive-command, anchored guidance-prose, and large/foundational Go-seam rewrites |
-| Opus / medium | orchestrator, 7 landings | verified every done-claim independently with a mutation at a distinct site/kind from the delegate's own each time; caught 1 silent oracle regression, 1 partial-ordering hole, 1 dependency inversion, 1 under-declared ownership fence, 1 cross-ticket merge conflict from parallel repair porting, 1 resolved review-pickup artifact left uncommitted-for-deletion that hard-blocked landing, a blocked landing whose opaque four-cause refusal it resolved from the intent ledger rather than by trial, and (these two landings) a destructive-command predicate that would have deleted a live worktree, caught by planting the shape rather than reading the code; it also probed its own two repair fixes and found both unpinned | Continue; deliberate site/kind variance per probe is holding up, and reading the authoritative state record before theorizing is the same discipline applied to operational blocks |
+| Opus / medium | orchestrator, 8 landings | verified every done-claim independently with a mutation at a distinct site/kind from the delegate's own each time; caught 1 silent oracle regression, 1 partial-ordering hole, 1 dependency inversion, 1 under-declared ownership fence, 1 cross-ticket merge conflict from parallel repair porting, 1 resolved review-pickup artifact left uncommitted-for-deletion that hard-blocked landing, a blocked landing whose opaque four-cause refusal it resolved from the intent ledger rather than by trial, and (these two landings) a destructive-command predicate that would have deleted a live worktree, caught by planting the shape rather than reading the code; it also probed its own two repair fixes and found both unpinned; on `ft227` it refuted both surviving review findings from cited spec text rather than opening repair tickets | Continue; deliberate site/kind variance per probe is holding up, and reading the authoritative state record before theorizing is the same discipline applied to operational blocks |
 | Opus / medium–high | reviewer, 3 read-only axes on 6 landings + 1 delta re-review + 1 scoped low-effort follow-up | 21+19+12(3-axis)+7(follow-up) raw findings across landings; every finding cites file:line or story/row ID; `worktree-cleanup-eligibility`'s Coverage axis found a real production regression (a derived-after operator override that had migrated outside its original guard, reachable but exercised by no test or coordinator mutation probe) and Standards+Spec independently converged on the same under-closed spec row from two different angles; on `ft234` the Coverage axis found the relative-`gitdir:` deletion path that three write delegates, seven mutation probes, and a green gate all missed, while the Spec axis was wrong on one duplication claim the Standards axis got right | Reviewer default at mid tier for a first full pass; a narrowly-scoped low-effort follow-up (verify specific named fixes, not re-hunt the whole diff) held up as a real second-pass discount, not just a smaller sample |
 | Sonnet / medium–high | implementer, 10 ticket-sized charges (`worktree-cleanup-eligibility`: 8 build tickets + 2 regression/seam repairs) | 10 of 10 first-pass accepted at the diff level, including that landing's two highest-risk charges (an ordered-decision-logic extraction and its final cross-file consolidation); one delegate caught and discarded its own wrong initial hypothesis via direct testing rather than reporting it as fact; one delegate flagged a judgment call already resolved in its charge rather than silently picking a different answer | Effort should scale with the seam's behavior-preservation risk, not the ticket's line count — the two highest-effort charges here were both refactors of already-correct logic, not new logic |
+| Sonnet / low | reviewer, 3 read-only axes on 1 landing | 3 raw findings, 0 repair targets: Spec audited all 15 acceptance rows and cross-checked one asserted CLI string against its production source rather than trusting the test; Standards and Coverage each filed one finding a cited source refuted, and Coverage's worst finding misread an independently authored string expectation as weaker than a behavioral one, missing that the literal is itself the mutation catch | First Sonnet reviewer sample; citation discipline held and no axis needed a re-run, but a generated-script seam is where it under-reads its own evidence |
 
 ## Representative evidence
 
@@ -42,8 +43,9 @@ harness-to-tier binding.
 - Change routing only after two comparable runs or one controlled model comparison.
 - **Review axes now route to Sonnet** at the reviewer's direction (2026-08-19). The Opus
   reviewer row above is the closing sample for that role, not the current routing; the
-  next landing supplies the first Sonnet reviewer evidence. Write and orchestrator
-  routing is unchanged.
+  first Sonnet reviewer sample (`ft227`) held its citation standard at 3 axes with no
+  re-run; keep the routing and watch whether it under-reads string-expectation seams.
+  Write and orchestrator routing is unchanged.
 - Opus/medium now has a four-landing implementer sample and a five-landing orchestrator sample; keep it as the mid-tier default
   and stop treating it as provisional.
 - Opus/high is the routing for process-lifecycle, signal, cleanup-authority, and
@@ -76,3 +78,9 @@ harness-to-tier binding.
 - Drive Bench through its own wrapper, never `go run ./cmd/bench`. The wrapper supplies
   the run-binary variable the gate requires; without it a full gate run reports green
   phases and then refuses authorization as `infrastructure`.
+- When production text is a generated script, an independently authored string expectation
+  is the mutation catch, not a weaker substitute for a behavioral test. One review axis
+  discounted exactly that and filed a finding its own cited literal already refuted.
+- Serial delegates on one retained integration worktree cost wall-clock and buy one author
+  per diff. Disjoint fence files across tickets are not a licence to write concurrently in
+  one tree; the lever is separate worktrees.

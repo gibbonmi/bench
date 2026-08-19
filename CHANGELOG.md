@@ -41,6 +41,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- An adopted repository can now run its own gate green. `bench setup` seeds
+  `.bench/gate-inputs.json` declaring `BENCH_HOME` and `HOME`, so the scaffolded
+  gate's wrapper call survives the closed gate environment instead of dying on an
+  unbound variable, and the scaffolded gate skips inventory validation until
+  `tests/canary` exists. An existing `.bench/gate-inputs.json` is left untouched
+  and stays out of the link manifest. The sentinel still keeps a fresh stub red
+  until the operator removes it.
 - `bench link` now adopts only same-file converged adapter symlinks on first link.
 - `bench skills-index` now refuses hostile or malformed producer files instead of
   acting on them: a symlinked, special, oversized, or non-UTF-8 `SKILL.md`,
