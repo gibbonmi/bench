@@ -1,6 +1,6 @@
 # ft234-pool-key-reclaim
 
-Status: staged
+Status: implemented
 
 Decision source: roadmap/FT234.md, opened by the reviewer in conversation on 2026-08-19 immediately after the FT226 landing, with the `/bench-debug` repro recorded below as its root-cause evidence and the FT226 build verification log (`specs/ft226-test-home-isolation/spec.md`, SW2 survivor list) naming the eight surviving keys this spec's population is drawn from. Those keys are deliberately held back unswept as this build's acceptance fixture.
 
