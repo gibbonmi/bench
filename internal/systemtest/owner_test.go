@@ -411,7 +411,7 @@ func TestWorktreeReauthorizeJourney(t *testing.T) {
 		t.Fatalf("worktree create = (%d, %q, %q)", created.code, created.stdout, created.stderr)
 	}
 	lines := strings.Split(strings.TrimSpace(created.stdout), "\n")
-	if len(lines) != 2 {
+	if len(lines) != 5 {
 		t.Fatalf("worktree create output = %q", created.stdout)
 	}
 	fields := strings.Split(strings.TrimSpace(lines[1]), ",")
@@ -639,7 +639,7 @@ func systemCreateLandingWorktree(t *testing.T, root, home, label, request string
 		t.Fatalf("worktree create %s = (%d, %q, %q)", label, result.code, result.stdout, result.stderr)
 	}
 	lines := strings.Split(strings.TrimSpace(result.stdout), "\n")
-	if len(lines) != 2 {
+	if len(lines) != 5 {
 		t.Fatalf("worktree create %s output = %q", label, result.stdout)
 	}
 	fields := strings.Split(lines[1], ",")

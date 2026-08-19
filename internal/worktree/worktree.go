@@ -442,6 +442,7 @@ func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	fmt.Fprint(stdout, out)
+	fmt.Fprintf(stdout, "next[2]:\n  bench worktree exec \"%s\" -- <command>\n  bench worktree path \"%s\"\n", label, label)
 	return 0
 }
 func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {

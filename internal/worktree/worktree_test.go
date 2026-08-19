@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"bytes"
 	"errors"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -177,6 +178,29 @@ func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
 			t.Fatalf("clean compaction assignments = %#v, %v", assignments, err)
 		}
 	})
+}
+
+// TestCreateCommandPrintsNextHint pins the next-step hint CreateCommand appends after
+// its worktree_create table: two literal lines addressing the freshly created worktree
+// by the actual --label value, so a caller never has to invent the exec/path syntax.
+func TestCreateCommandPrintsNextHint(t *testing.T) {
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	var stdout, stderr bytes.Buffer
+	code := CreateCommand(root, []string{"--request", "next-hint", "--label", "next hint label"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("CreateCommand exit = %d, stderr = %q", code, stderr.String())
+	}
+	got := stdout.String()
+	if !strings.Contains(got, "next[2]:\n") {
+		t.Fatalf("CreateCommand output missing next[2] header: %q", got)
+	}
+	if !strings.Contains(got, `  bench worktree exec "next hint label" -- <command>`+"\n") {
+		t.Fatalf("CreateCommand output missing exec hint line: %q", got)
+	}
+	if !strings.Contains(got, `  bench worktree path "next hint label"`+"\n") {
+		t.Fatalf("CreateCommand output missing path hint line: %q", got)
+	}
 }
 
 // TestReleaseSurfacesRetainedVerdict pins FT93(a): when the automatic plan retains

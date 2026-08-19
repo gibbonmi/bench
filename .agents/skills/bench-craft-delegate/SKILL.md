@@ -79,15 +79,15 @@ One delegate, one coherent unit: one axis, one story, one search question.
 
 ## Isolation
 
-A write-delegation runs in an isolated worktree (`bench worktree`), so
-stray edits can't land in reviewer-owned files. Concurrent delegates get
-separate worktrees, one each — the harness's own `isolation: worktree`
-cannot cut a second one (its request ID derives from the session ID alone),
-so the coordinator runs `bench worktree create --request <opaque-id>
---label <work-item>` once per delegate. Share a worktree only when a
-delegate's work depends on another's output; reviewed dependent tickets share
-one retained integration source, and each charge names its root and expected tip. The whole-tree gate is
-serialized: a write-delegate stops at diff-ready with focused tests green;
+A write-delegation runs in an isolated worktree (`bench worktree`), so stray edits can't
+land in reviewer-owned files. Concurrent delegates get separate worktrees, one each — the
+harness's own `isolation: worktree` cannot cut a second one (its request ID derives from the session ID alone),
+so the coordinator runs `bench worktree create --request <opaque-id> --label <work-item>`
+once per delegate, then addresses it by label (`bench worktree exec "<label>" -- <command>`,
+`bench worktree path "<label>"`), never a cached path.
+Share a worktree only when a delegate's work depends on another's output; reviewed dependent
+tickets share one retained integration source, and each charge names its root and expected tip.
+The whole-tree gate is serialized: a write-delegate stops at diff-ready with focused tests green;
 the coordinator runs `bench commit` per worktree, one at a time.
 A worktree isolates the working tree, not the repo-global stash stack a
 concurrent delegate shares. A charge bans `git stash` — the destructive-git
