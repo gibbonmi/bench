@@ -21,3 +21,21 @@ the ticket's planted cases from that sentence.
 workflow writes at phase close — name `capture/session-handoff.md` as the standing
 example. Optionally `bench preflight build` could mark the handoff path as
 workflow-owned so its dirt never reads as a fence breach.
+
+## 2026-08-19 — `bench worktree path` prints a `~` path, so a composed `cd` failed and an edit landed in the main checkout [open]
+
+**What happened.** Verifying a delegate's ticket, I ran
+`cd "$(bench worktree path <label>)" && git show HEAD:<file> > <file> && <edit>`. The
+verb printed `~/.bench/worktrees/...`; a quoted `~` is not expanded by bash, so the
+`cd` failed — but the `&&` chain's later steps ran anyway, in the main checkout,
+rewriting a skill file there. Caught by `git status`; restored from HEAD, no harm.
+
+**Right behavior.** Never compose a `cd` from a printed path in one chain; use
+`bench worktree exec <label> -- <cmd>` for anything inside the worktree, and run
+`git status` on main after any worktree session. If a path must be used, `$HOME`-expand
+it explicitly.
+
+**Proposed rule change.** `bench worktree path` should print the absolute path it
+resolved (`$HOME` expanded), the same form `worktree create` prints — an agent-facing
+verb's output is meant to be pasted into a shell. If the `~` form is deliberate for
+display, add `--absolute`; either way the two verbs should agree.
