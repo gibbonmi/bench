@@ -100,10 +100,18 @@ func unquoteCell(field string) string {
 // reclaimRows returns the plan table's raw data rows.
 func reclaimRows(t *testing.T, out string) []string {
 	t.Helper()
+	return reclaimTableRows(t, out, "pool_reclaim[")
+}
+
+// reclaimTableRows returns the raw data rows indented under the named table header. Every
+// table this package reads is located through here, so "rows live indented under their
+// header" is stated once.
+func reclaimTableRows(t *testing.T, out, header string) []string {
+	t.Helper()
 	var rows []string
 	inTable := false
 	for _, line := range strings.Split(out, "\n") {
-		if strings.HasPrefix(line, "pool_reclaim[") {
+		if strings.HasPrefix(line, header) {
 			inTable = true
 			continue
 		}
@@ -116,6 +124,32 @@ func reclaimRows(t *testing.T, out string) []string {
 		}
 	}
 	return rows
+}
+
+// reclaimAggregate parses the single row under an aggregate header into its four unquoted
+// counts-and-fingerprint fields. Asserting on the parsed fields rather than a substring is
+// what keeps the assertion independent of whether TOON quoted a cell: a fingerprint that
+// reads as a number arrives quoted, and a substring match on the bare digits would red on a
+// counting failure that never happened.
+func reclaimAggregate(t *testing.T, out, header string) [4]string {
+	t.Helper()
+	rows := reclaimTableRows(t, out, header)
+	requireTest(t, len(rows) == 1, "want exactly one %s row, got %v: %q", header, rows, out)
+	fields := strings.SplitN(rows[0], ",", 4)
+	requireTest(t, len(fields) == 4, "aggregate row %q does not carry four fields: %q", rows[0], out)
+	var parsed [4]string
+	for i, field := range fields {
+		parsed[i] = unquoteCell(field)
+	}
+	return parsed
+}
+
+// requireReclaimAggregate asserts the aggregate row's counts and fingerprint.
+func requireReclaimAggregate(t *testing.T, out, header, keys, first, retained, fingerprint string) {
+	t.Helper()
+	got := reclaimAggregate(t, out, header)
+	want := [4]string{keys, first, retained, fingerprint}
+	requireTest(t, got == want, "%s row = %v, want %v: %q", header, got, want, out)
 }
 
 func mustReclaim(t *testing.T, args ...string) (string, int) {
@@ -142,8 +176,8 @@ func TestReclaimCommandPlansOnlyTheProvablyDeadKeys(t *testing.T) {
 	for key, want := range map[string]string{"dead-key": poolVerdictReclaim, "empty-key": poolVerdictReclaim, "live-key": poolVerdictRetain} {
 		requireTest(t, verdicts[key][0] == want, "key %s verdict = %q, want %q", key, verdicts[key][0], want)
 	}
-	requireTest(t, strings.Contains(out, "pool_reclaim_aggregate[1]{keys,reclaimable,retained,fingerprint}:") && strings.Contains(out, "\n  3,2,1,"),
-		"reclaim aggregate did not count 3 keys, 2 reclaimable, 1 retained: %q", out)
+	requireTest(t, strings.Contains(out, "pool_reclaim_aggregate[1]{keys,reclaimable,retained,fingerprint}:"), "plan printed no aggregate header: %q", out)
+	requireReclaimAggregate(t, out, "pool_reclaim_aggregate[", "3", "2", "1", reclaimFingerprint(t, out))
 }
 
 // [PL2][SH1][SH2][SH3] A retained key the operator expected to be reclaimed has to say
@@ -351,8 +385,8 @@ func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 	for key, want := range map[string]string{"dead-key": poolVerdictRemoved, "empty-key": poolVerdictRemoved, "live-key": poolVerdictRetained} {
 		requireTest(t, verdicts[key][0] == want, "key %s verdict = %q, want %q (%s)", key, verdicts[key][0], want, verdicts[key][1])
 	}
-	requireTest(t, strings.Contains(out, "pool_reclaim_applied[1]{keys,removed,retained,fingerprint}:") && strings.Contains(out, "\n  3,2,1,"+fingerprint),
-		"apply aggregate did not count 3 keys, 2 removed, 1 retained: %q", out)
+	requireTest(t, strings.Contains(out, "pool_reclaim_applied[1]{keys,removed,retained,fingerprint}:"), "apply printed no applied aggregate header: %q", out)
+	requireReclaimAggregate(t, out, "pool_reclaim_applied[", "3", "2", "1", fingerprint)
 	for _, key := range []string{"dead-key", "empty-key"} {
 		target := filepath.Join(pool, key)
 		requireTest(t, filepath.Dir(target) == poolKeysDir(), "removed %s whose parent is not the pool", target)
@@ -361,6 +395,27 @@ func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 	}
 	requireTest(t, poolListing(t, filepath.Join(pool, "live-key")) == liveListing,
 		"the retained key changed across the apply:\nbefore\n%s\nafter\n%s", liveListing, poolListing(t, filepath.Join(pool, "live-key")))
+}
+
+// The writer quotes an aggregate cell that would otherwise read as a number, so a
+// fingerprint of all digits arrives quoted. Which spelling a run gets is luck — an
+// all-digit digest is roughly one in a thousand — so both are exercised here directly
+// rather than waited for.
+func TestReclaimAggregateReadsAFingerprintInEitherSpelling(t *testing.T) {
+	digits := strings.Repeat("0123456789", 6) + "0123"
+	hex := strings.Repeat("0123456789abcdef", 4)
+	for name, out := range map[string]string{
+		"quoted":   "pool_reclaim_applied[1]{keys,removed,retained,fingerprint}:\n  3,2,1,\"" + digits + "\"\n",
+		"unquoted": "pool_reclaim_applied[1]{keys,removed,retained,fingerprint}:\n  3,2,1," + hex + "\n",
+	} {
+		fingerprint := hex
+		if name == "quoted" {
+			fingerprint = digits
+		}
+		t.Run(name, func(t *testing.T) {
+			requireReclaimAggregate(t, out, "pool_reclaim_applied[", "3", "2", "1", fingerprint)
+		})
+	}
 }
 
 // [AP2] A fingerprint the pool no longer matches is a reading that has stopped being true.
@@ -427,7 +482,7 @@ func TestReclaimApplyOverNothingToReclaimIsASuccessfulNoOp(t *testing.T) {
 
 	out, code := mustReclaim(t, "--apply", plan.fingerprint)
 	requireTest(t, code == 0, "no-op apply code=%d out=%q", code, out)
-	requireTest(t, strings.Contains(out, "\n  1,0,1,"+plan.fingerprint), "no-op apply aggregate = %q, want zero removed", out)
+	requireReclaimAggregate(t, out, "pool_reclaim_applied[", "1", "0", "1", plan.fingerprint)
 	requireTest(t, poolListing(t, pool) == before, "a no-op apply changed the pool:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
 }
 
