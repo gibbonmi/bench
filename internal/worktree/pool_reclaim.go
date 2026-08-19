@@ -1,8 +1,6 @@
 package worktree
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -174,6 +172,12 @@ func classifyPoolChild(path, name string) (target, retain string) {
 	if !ok {
 		return "", fmt.Sprintf("child %s .git carries no gitdir: target", name)
 	}
+	// A relative target is resolved by git against the child directory, not against
+	// whatever directory this process happens to be in. Reading it here would answer a
+	// question about the wrong path, and an absent answer would be proof of nothing.
+	if !filepath.IsAbs(target) {
+		return "", fmt.Sprintf("child %s gitdir: target %q is not absolute", name, target)
+	}
 	if _, err := os.Lstat(target); err == nil {
 		return "", fmt.Sprintf("child %s gitdir: target exists", name)
 	} else if !os.IsNotExist(err) {
@@ -187,11 +191,14 @@ func classifyPoolChild(path, name string) (target, retain string) {
 // is never proof that anything is absent.
 func gitdirTarget(body string) (string, bool) {
 	for line := range strings.SplitSeq(body, "\n") {
-		rest, found := strings.CutPrefix(strings.TrimSpace(line), "gitdir:")
+		// Only the line terminator and the separator git writes after the colon are
+		// stripped. A repository path may legitimately end in a space, and trimming that
+		// away would make a live worktree read as absent — proof of nothing.
+		rest, found := strings.CutPrefix(strings.TrimLeft(strings.TrimRight(line, "\r"), " \t"), "gitdir:")
 		if !found {
 			continue
 		}
-		if target := strings.TrimSpace(rest); target != "" {
+		if target := strings.TrimLeft(rest, " \t"); strings.TrimSpace(target) != "" {
 			return target, true
 		}
 	}
@@ -256,12 +263,29 @@ func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stdout, out)
 		return 1
 	}
-	out, err := renderPoolReclaimApplied(applyPoolReclaim(plan), plan.fingerprint)
+	applied := applyPoolReclaim(plan)
+	out, err := renderPoolReclaimApplied(applied, plan.fingerprint)
 	if err != nil {
 		fmt.Fprintln(stdout, toon.RenderError(err))
 		return 1
 	}
 	fmt.Fprint(stdout, out)
+	// A key the plan named and the apply could not remove — a failed RemoveAll, or a key
+	// that stopped qualifying between the re-plan and its own re-check — leaves the
+	// operator's intent unsatisfied. A key the plan retained was never a target, so it
+	// does not make a clean run look failed. The rows say which and why; the exit code is
+	// what a script reads.
+	planned := map[string]bool{}
+	for _, verdict := range plan.verdicts {
+		if verdict.reclaimable() {
+			planned[verdict.key] = true
+		}
+	}
+	for _, verdict := range applied {
+		if planned[verdict.key] && verdict.verdict != poolVerdictRemoved {
+			return 1
+		}
+	}
 	return 0
 }
 
@@ -293,14 +317,6 @@ func parseReclaimArgs(args []string, stdout io.Writer) (applying bool, fingerpri
 	return applying, fingerprint, 0
 }
 
-// wellFormedFingerprint accepts exactly what fingerprintParts emits — lowercase hex of a
-// sha256 digest — so a value that could never have been printed by a plan is refused as
-// usage before any pool is read.
-func wellFormedFingerprint(value string) bool {
-	decoded, err := hex.DecodeString(value)
-	return err == nil && len(decoded) == sha256.Size && value == strings.ToLower(value)
-}
-
 // applyPoolReclaim removes the keys the plan named and reports what it did per key. The
 // keys the plan retained are reported untouched, so the destructive step leaves evidence
 // covering the whole pool rather than only the part it acted on.
@@ -316,13 +332,10 @@ func applyPoolReclaim(plan poolReclaimPlan) []poolKeyVerdict {
 	return applied
 }
 
-// removePoolKey is the only place in the tree that deletes pool bytes. Two independent
-// guards stand in front of the RemoveAll and neither substitutes for the other: the
-// fingerprint the caller already matched proves the plan as a whole is current, and this
-// re-check against the same predicate proves this individual key still qualifies at the
-// instant of removal — a key that went live in the window survives. The parent is
-// asserted to be exactly the pool rather than assumed, so a key name that is not a plain
-// direct child can never aim the removal outside it.
+// removePoolKey is the only place in the tree that deletes pool bytes. The caller has
+// already matched the fingerprint, which speaks for the plan as a whole; the re-check here
+// speaks for this one key at the instant of removal, and the parent assertion bounds the
+// target to a direct child of the pool.
 func removePoolKey(key string) poolKeyVerdict {
 	pool := poolKeysDir()
 	target := filepath.Join(pool, key)
@@ -341,18 +354,26 @@ func removePoolKey(key string) poolKeyVerdict {
 	return poolKeyVerdict{key: key, verdict: poolVerdictRemoved, reason: "key removed"}
 }
 
+// poolRows projects verdicts into the one row shape poolReclaimFields names, so the plan
+// and the apply cannot drift into two shapes for one schema.
+func poolRows(verdicts []poolKeyVerdict) [][]string {
+	rows := make([][]string, 0, len(verdicts))
+	for _, verdict := range verdicts {
+		rows = append(rows, []string{verdict.key, verdict.verdict, verdict.reason})
+	}
+	return rows
+}
+
 // renderPoolReclaimApplied projects the apply in the plan's row shape, with an aggregate
 // naming what was removed rather than what could be.
 func renderPoolReclaimApplied(applied []poolKeyVerdict, fingerprint string) (string, error) {
-	rows := make([][]string, 0, len(applied))
 	removed := 0
 	for _, verdict := range applied {
 		if verdict.verdict == poolVerdictRemoved {
 			removed++
 		}
-		rows = append(rows, []string{verdict.key, verdict.verdict, verdict.reason})
 	}
-	table, err := toon.Table("pool_reclaim", poolReclaimFields, rows)
+	table, err := toon.Table("pool_reclaim", poolReclaimFields, poolRows(applied))
 	if err != nil {
 		return "", err
 	}
@@ -386,10 +407,7 @@ func renderPoolReclaimStale() (string, error) {
 // advertised only when there is something to apply, so a clean pool reads as an answer
 // rather than an invitation.
 func renderPoolReclaim(plan poolReclaimPlan) (string, error) {
-	rows := make([][]string, 0, len(plan.verdicts))
-	for _, verdict := range plan.verdicts {
-		rows = append(rows, []string{verdict.key, verdict.verdict, verdict.reason})
-	}
+	rows := poolRows(plan.verdicts)
 	table, err := toon.Table("pool_reclaim", poolReclaimFields, rows)
 	if err != nil {
 		return "", err

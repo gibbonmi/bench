@@ -141,6 +141,14 @@ func classifyPath(root, pool, path string) Class {
 	}
 	return ClassOutOfPool
 }
+
+// wellFormedFingerprint accepts exactly what fingerprintParts emits — lowercase hex of a
+// sha256 digest — so a value no plan could have printed is refused before any work begins.
+func wellFormedFingerprint(value string) bool {
+	decoded, err := hex.DecodeString(value)
+	return err == nil && len(decoded) == sha256.Size && value == strings.ToLower(value)
+}
+
 func insidePool(pool, path string) bool {
 	rel, err := filepath.Rel(pool, path)
 	return err == nil && rel != "." && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
@@ -260,11 +268,8 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	if target == "" && !landed || target != "" && landed {
 		return cleanInvocationError(stdout)
 	}
-	if fingerprint != "" {
-		decoded, err := hex.DecodeString(fingerprint)
-		if err != nil || len(decoded) != sha256.Size || fingerprint != strings.ToLower(fingerprint) {
-			return cleanInvocationError(stdout)
-		}
+	if fingerprint != "" && !wellFormedFingerprint(fingerprint) {
+		return cleanInvocationError(stdout)
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -369,7 +374,9 @@ func renderResumeSummary(result ResumeResult) string {
 	if result.Retained[ReasonLanded] > 0 {
 		summary.WriteString("landed: bench worktree clean --landed (plans only; re-run with --apply <fingerprint> to remove)\n")
 	}
-	if result.ReclaimableKeys > 0 {
+	if result.PoolUnreadable != nil {
+		fmt.Fprintf(&summary, "pool: not read (%v); bench worktree reclaim reports it properly\n", result.PoolUnreadable)
+	} else if result.ReclaimableKeys > 0 {
 		fmt.Fprintf(&summary, "pool: %d reclaimable keys; bench worktree reclaim (plans only; re-run with --apply <fingerprint> to remove)\n", result.ReclaimableKeys)
 	}
 	listCapped(&summary, len(result.Orphans), func(i int) string { return orphanLine(result.Orphans[i]) })

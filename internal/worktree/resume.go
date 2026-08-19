@@ -357,6 +357,8 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 	// whose other work is unaffected — the verb itself reports that failure properly.
 	if plan, planErr := planPoolReclaim(root); planErr == nil {
 		result.ReclaimableKeys = plan.reclaimableCount()
+	} else {
+		result.PoolUnreadable = planErr
 	}
 	result.SweptRefs, result.Reconciled, err = reconcileLifecycleDebris(root, registered)
 	if err != nil {

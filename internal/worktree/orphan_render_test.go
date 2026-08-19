@@ -3,6 +3,7 @@ package worktree
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -228,4 +229,26 @@ func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 	requireTest(t, resumeReclaimableCount(t, summary) > 0, "the fixture pool reported nothing reclaimable:\n%s", summary)
 	requireTest(t, poolListing(t, pool) == before,
 		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
+}
+
+// [P4] A resume that cannot read the pool still succeeds at its own work, but it must not
+// report a zero it has no basis for — that is the one state where the ambient count could
+// disagree with what the verb would say.
+func TestResumeReportsAnUnreadablePoolRatherThanZero(t *testing.T) {
+	root := newWorktreeRepo(t)
+	home := filepath.Join(root, ".bench-home")
+	t.Setenv("BENCH_HOME", home)
+	pool := filepath.Join(home, "worktrees")
+	mustMkdirAll(t, pool, 0o700)
+	mustNoError(t, os.Chmod(pool, 0o000))
+	t.Cleanup(func() { _ = os.Chmod(pool, 0o700) })
+
+	result, err := ConservativeCleanup(root)
+	requireTest(t, err == nil, "resume failed over an unreadable pool: %v", err)
+	requireTest(t, result.PoolUnreadable != nil, "an unreadable pool reported no failure")
+	requireTest(t, result.ReclaimableKeys == 0, "an unreadable pool reported %d keys", result.ReclaimableKeys)
+
+	summary := renderResumeSummary(result)
+	requireTest(t, strings.Contains(summary, "pool: not read"), "summary %q does not report the unreadable pool", summary)
+	requireTest(t, !strings.Contains(summary, "0 reclaimable"), "summary %q reports a zero it cannot support", summary)
 }

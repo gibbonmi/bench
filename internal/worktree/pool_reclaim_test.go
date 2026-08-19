@@ -2,11 +2,13 @@ package worktree
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
@@ -496,4 +498,79 @@ func TestReclaimReclaimsTheKeyOfADeletedRepository(t *testing.T) {
 	requireTest(t, code == 0, "apply code=%d out=%q", code, out)
 	_, err := os.Lstat(filepath.Join(pool, key))
 	requireTest(t, os.IsNotExist(err), "the deleted repository's key survived the apply: %v", err)
+}
+
+// [C1] Git writes a relative `gitdir:` under worktree.useRelativePaths, and git resolves
+// it against the child directory. Statting it from wherever this process happens to be
+// answers a question about a different path, so a live worktree read as absent is exactly
+// the destruction this predicate exists to prevent. A non-absolute target proves nothing.
+func TestPoolKeyRetainsAChildWhoseGitdirTargetIsRelative(t *testing.T) {
+	pool, _ := newReclaimPool(t)
+	live := t.TempDir()
+	admin := filepath.Join(live, ".git", "worktrees", "wt")
+	mustMkdirAll(t, admin, 0o755)
+	child := filepath.Join(pool, "relative-pointer", "wt")
+	mustMkdirAll(t, child, 0o755)
+	relative, err := filepath.Rel(child, admin)
+	requireTest(t, err == nil, "relative target: %v", err)
+	mustWrite(t, filepath.Join(child, ".git"), []byte("gitdir: "+relative+"\n"), 0o644)
+
+	verdict := classifyPoolKey(filepath.Join(pool, "relative-pointer"), "relative-pointer")
+	requireTest(t, verdict.verdict == poolVerdictRetain, "relative pointer = %q/%q, want a retain", verdict.verdict, verdict.reason)
+	requireTest(t, strings.Contains(verdict.reason, "not absolute"), "reason = %q, want it to name the unresolvable target", verdict.reason)
+}
+
+// [C2] A repository path may legitimately end in a space. Trimming it away would make the
+// pointer name a path that does not exist, which reads as proof of absence and takes a
+// live key — the same failure mode as the relative pointer above.
+func TestPoolKeyRetainsAChildWhoseTargetEndsInASpace(t *testing.T) {
+	pool, _ := newReclaimPool(t)
+	spaced := filepath.Join(t.TempDir(), "repo ")
+	mustMkdirAll(t, spaced, 0o755)
+	child := filepath.Join(pool, "spaced-target", "wt")
+	mustMkdirAll(t, child, 0o755)
+	mustWrite(t, filepath.Join(child, ".git"), []byte("gitdir: "+spaced+"\n"), 0o644)
+
+	verdict := classifyPoolKey(filepath.Join(pool, "spaced-target"), "spaced-target")
+	requireTest(t, verdict.verdict == poolVerdictRetain, "spaced target = %q/%q, want a retain", verdict.verdict, verdict.reason)
+	requireTest(t, strings.Contains(verdict.reason, "exists"), "reason = %q, want it to name the surviving target", verdict.reason)
+}
+
+// [C4] The Edge inventory claims a special file where a `.git` belongs is retained unread.
+// Without this, deleting the regular-file check leaves the suite green while the predicate
+// would open a FIFO and block.
+func TestPoolKeyRetainsAChildWhoseGitEntryIsAFifo(t *testing.T) {
+	pool, _ := newReclaimPool(t)
+	child := filepath.Join(pool, "fifo-git", "wt")
+	mustMkdirAll(t, child, 0o755)
+	if err := syscall.Mkfifo(filepath.Join(child, ".git"), 0o644); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+	}
+	verdict := classifyPoolKey(filepath.Join(pool, "fifo-git"), "fifo-git")
+	requireTest(t, verdict.verdict == poolVerdictRetain, "fifo .git = %q/%q, want a retain", verdict.verdict, verdict.reason)
+	requireTest(t, strings.Contains(verdict.reason, "not a regular file"), "reason = %q, want it to name the file shape", verdict.reason)
+}
+
+// [S4] A key the plan named and the apply could not remove leaves the operator's intent
+// unsatisfied. The rows say which and why, but a script reads the exit code, so a partial
+// apply that exited 0 would be read as complete. A write-denied pool fails the RemoveAll
+// without changing any key's classification, so the plan's fingerprint still matches and
+// the drift refusal does not fire first.
+func TestReclaimApplyExitsNonZeroWhenAPlannedKeySurvives(t *testing.T) {
+	pool, _ := newReclaimPool(t)
+	plantDeadChild(t, pool, "really-dead", "wt")
+
+	plan, planCode := mustReclaim(t)
+	requireTest(t, planCode == 0, "plan code=%d out=%q", planCode, plan)
+	fingerprint := reclaimFingerprint(t, plan)
+
+	mustNoError(t, os.Chmod(pool, 0o500))
+	t.Cleanup(func() { _ = os.Chmod(pool, 0o700) })
+
+	out, code := mustReclaim(t, "--apply", fingerprint)
+	requireTest(t, !strings.Contains(out, "stale"), "the drift refusal fired; this test must reach the apply: %q", out)
+	requireTest(t, code == 1, "partial apply code=%d out=%q, want 1", code, out)
+	requireTest(t, strings.Contains(out, "removal failed"), "out=%q, want a row naming the failed removal", out)
+	_, err := os.Lstat(filepath.Join(pool, "really-dead"))
+	requireTest(t, err == nil, "the key was removed despite a write-denied pool: %v", err)
 }
