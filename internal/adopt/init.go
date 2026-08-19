@@ -62,11 +62,12 @@ func Init(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// benchSentinelMarker is the fail-closed-stub trailer scaffoldGate embeds as a shell
-// comment. Doctor's gate row (detection) and setup's zero-signal message (the printed
-// remedy) both key off this same literal so the gate script, the doctor row, and the
-// printed remedy never drift apart.
-const benchSentinelMarker = "BENCH_SENTINEL"
+// SentinelMarker is the fail-closed-stub trailer scaffoldGate embeds as a shell
+// comment. Doctor's gate row (detection), setup's zero-signal message (the printed
+// remedy), and out-of-package readers that retire the sentinel line all key off this
+// same literal so the gate script, the doctor row, and the printed remedy never drift
+// apart.
+const SentinelMarker = "BENCH_SENTINEL"
 
 // gateScriptPreamble is the one shebang/set/git-root-guard preamble every generated
 // gate.sh carries. scaffoldGate's fail-closed stub and setup's detected-ecosystem
@@ -94,17 +95,22 @@ err() { echo "gate: $*" >&2; fail=1; }
 
 # Sentinel - keeps a fresh gate RED until you configure it, so you cannot commit real
 # work against an empty gate. Delete this one line once a real check exists above.
-err "configure .bench/gate.sh - replace this sentinel with real checks"  # ` + benchSentinelMarker + `
+err "configure .bench/gate.sh - replace this sentinel with real checks"  # ` + SentinelMarker + `
 
 # Structural debt is NOT checked here. ` + "`bench shift`" + ` runs ` + "`bench structure`" + ` after the
 # loop and refactors only when a file or dir is over budget. Uncomment to hard-block
 # structure at every commit:
 #   bench structure || err "structure over budget"
 
-# Validate the configured fixture inventory. Resolve the repo-local CLI before a global
-# bench on PATH so a machine with no global bench still reaches the inventory command.
+# Validate the configured fixture inventory, but only once the repo has one: a project
+# with no tests/canary directory skips validation entirely, while a directory that
+# exists - even empty - falls through to bench canary and is validated. Resolve the
+# repo-local CLI before a global bench on PATH so a machine with no global bench still
+# reaches the inventory command.
 bench="$(dirname "$0")/bin/bench.sh"; [ -x "$bench" ] || bench=bench
-"$bench" canary "$root" || err "canary inventory validation failed"
+if [ -d "$root/tests/canary" ]; then
+  "$bench" canary "$root" || err "canary inventory validation failed"
+fi
 
 if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi
 exit "$fail"

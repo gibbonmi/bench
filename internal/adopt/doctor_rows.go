@@ -119,8 +119,8 @@ func evalGateRow(root string) (bool, string) {
 	// real check replaces it. A fabricated green oracle must never hide behind a
 	// green doctor row either: the row stays red until the sentinel is gone, not just
 	// until the gate happens to be present and executable.
-	if content, err := os.ReadFile(path); err == nil && strings.Contains(string(content), benchSentinelMarker) {
-		return false, ".bench/gate.sh is still the unconfigured fail-closed stub (replace the " + benchSentinelMarker + " sentinel with real checks)"
+	if content, err := os.ReadFile(path); err == nil && strings.Contains(string(content), SentinelMarker) {
+		return false, ".bench/gate.sh is still the unconfigured fail-closed stub (replace the " + SentinelMarker + " sentinel with real checks)"
 	}
 	return ok, msg
 }

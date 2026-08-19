@@ -16,7 +16,7 @@ func finishSetup(stdout io.Writer, facts setupFacts, priorPartial bool) int {
 	red := reportDoctorRows(stdout)
 	fmt.Fprintln(stdout, "reload your harness session so it picks up the converged AGENTS.md / CLAUDE.md instructions")
 	if facts.zeroSignal {
-		fmt.Fprintln(stdout, "next: configure .bench/gate.sh - replace the "+benchSentinelMarker+" sentinel with your project's real checks, then re-run bench setup")
+		fmt.Fprintln(stdout, "next: configure .bench/gate.sh - replace the "+SentinelMarker+" sentinel with your project's real checks, then re-run bench setup")
 	} else {
 		fmt.Fprintln(stdout, "next: continue the /bench-setup-repo conversation to fill in the gate command, seams, and lines")
 	}
