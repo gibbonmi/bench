@@ -1,6 +1,8 @@
 package worktree
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -26,6 +28,11 @@ var poolReclaimFields = []string{"key", "verdict", "reason"}
 const (
 	poolVerdictReclaim = "reclaim"
 	poolVerdictRetain  = "retain"
+	// The apply's verdicts are past tense: the plan says what may happen, the apply says
+	// what did. Sharing the plan's two words would leave an operator unable to tell a
+	// printed intention from a completed removal.
+	poolVerdictRemoved  = "removed"
+	poolVerdictRetained = "retained"
 )
 
 // poolKeyVerdict is one key's classification. targets holds the gitdir: pointers that
@@ -209,13 +216,14 @@ func fingerprintPoolReclaim(verdicts []poolKeyVerdict) string {
 	return fingerprintParts(parts...)
 }
 
-// ReclaimCommand plans the reclaimable keys in `$BENCH_HOME/worktrees` and removes
-// nothing. It runs inside a repository like every other `bench worktree` subcommand,
-// because the current repository's key is the one key it may never name.
+// ReclaimCommand plans the reclaimable keys in `$BENCH_HOME/worktrees`, and with
+// `--apply <fingerprint>` removes the ones that plan named. It runs inside a repository
+// like every other `bench worktree` subcommand, because the current repository's key is
+// the one key it may never name.
 func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
-	if len(args) > 0 {
-		fmt.Fprintln(stdout, toon.Usage(usage.WorktreeReclaim, args[0]))
-		return 2
+	applying, fingerprint, code := parseReclaimArgs(args, stdout)
+	if code != 0 {
+		return code
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -227,13 +235,150 @@ func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, toon.Errorf("cannot read the worktree pool", "make "+poolKeysDir()+" readable and retry"))
 		return 1
 	}
-	out, err := renderPoolReclaim(plan)
+	if !applying {
+		out, err := renderPoolReclaim(plan)
+		if err != nil {
+			fmt.Fprintln(stdout, toon.RenderError(err))
+			return 1
+		}
+		fmt.Fprint(stdout, out)
+		return 0
+	}
+	// The plan just re-read the pool. A supplied fingerprint that no longer matches it
+	// means the pool moved since the operator read the plan, so nothing is removed on the
+	// strength of that stale reading.
+	if fingerprint != plan.fingerprint {
+		out, err := renderPoolReclaimStale()
+		if err != nil {
+			fmt.Fprintln(stdout, toon.RenderError(err))
+			return 1
+		}
+		fmt.Fprint(stdout, out)
+		return 1
+	}
+	out, err := renderPoolReclaimApplied(applyPoolReclaim(plan), plan.fingerprint)
 	if err != nil {
 		fmt.Fprintln(stdout, toon.RenderError(err))
 		return 1
 	}
 	fmt.Fprint(stdout, out)
 	return 0
+}
+
+// parseReclaimArgs accepts the bare plan and exactly one `--apply <fingerprint>`. A
+// missing, empty, or malformed value is a usage refusal rather than a weaker apply:
+// a parser that read an absent value as "apply everything" would turn a fumbled flag
+// into a destructive run.
+func parseReclaimArgs(args []string, stdout io.Writer) (applying bool, fingerprint string, code int) {
+	for i := 0; i < len(args); i++ {
+		if args[i] != "--apply" {
+			fmt.Fprintln(stdout, toon.Usage(usage.WorktreeReclaim, args[i]))
+			return false, "", 2
+		}
+		if applying {
+			fmt.Fprintln(stdout, toon.Usage(usage.WorktreeReclaim, args[i]))
+			return false, "", 2
+		}
+		if i+1 >= len(args) {
+			fmt.Fprintln(stdout, toon.MissingArg(usage.WorktreeReclaim, "fingerprint"))
+			return false, "", 2
+		}
+		i++
+		if !wellFormedFingerprint(args[i]) {
+			fmt.Fprintln(stdout, toon.Usage(usage.WorktreeReclaim, args[i]))
+			return false, "", 2
+		}
+		applying, fingerprint = true, args[i]
+	}
+	return applying, fingerprint, 0
+}
+
+// wellFormedFingerprint accepts exactly what fingerprintParts emits — lowercase hex of a
+// sha256 digest — so a value that could never have been printed by a plan is refused as
+// usage before any pool is read.
+func wellFormedFingerprint(value string) bool {
+	decoded, err := hex.DecodeString(value)
+	return err == nil && len(decoded) == sha256.Size && value == strings.ToLower(value)
+}
+
+// applyPoolReclaim removes the keys the plan named and reports what it did per key. The
+// keys the plan retained are reported untouched, so the destructive step leaves evidence
+// covering the whole pool rather than only the part it acted on.
+func applyPoolReclaim(plan poolReclaimPlan) []poolKeyVerdict {
+	applied := make([]poolKeyVerdict, 0, len(plan.verdicts))
+	for _, verdict := range plan.verdicts {
+		if !verdict.reclaimable() {
+			applied = append(applied, poolKeyVerdict{key: verdict.key, verdict: poolVerdictRetained, reason: verdict.reason})
+			continue
+		}
+		applied = append(applied, removePoolKey(verdict.key))
+	}
+	return applied
+}
+
+// removePoolKey is the only place in the tree that deletes pool bytes. Two independent
+// guards stand in front of the RemoveAll and neither substitutes for the other: the
+// fingerprint the caller already matched proves the plan as a whole is current, and this
+// re-check against the same predicate proves this individual key still qualifies at the
+// instant of removal — a key that went live in the window survives. The parent is
+// asserted to be exactly the pool rather than assumed, so a key name that is not a plain
+// direct child can never aim the removal outside it.
+func removePoolKey(key string) poolKeyVerdict {
+	pool := poolKeysDir()
+	target := filepath.Join(pool, key)
+	retained := func(format string, args ...any) poolKeyVerdict {
+		return poolKeyVerdict{key: key, verdict: poolVerdictRetained, reason: fmt.Sprintf(format, args...)}
+	}
+	if filepath.Dir(target) != pool {
+		return retained("removal target is not a direct child of %s", pool)
+	}
+	if current := classifyPoolKey(target, key); !current.reclaimable() {
+		return retained("key stopped qualifying before removal: %s", current.reason)
+	}
+	if err := os.RemoveAll(target); err != nil {
+		return retained("removal failed: %v", err)
+	}
+	return poolKeyVerdict{key: key, verdict: poolVerdictRemoved, reason: "key removed"}
+}
+
+// renderPoolReclaimApplied projects the apply in the plan's row shape, with an aggregate
+// naming what was removed rather than what could be.
+func renderPoolReclaimApplied(applied []poolKeyVerdict, fingerprint string) (string, error) {
+	rows := make([][]string, 0, len(applied))
+	removed := 0
+	for _, verdict := range applied {
+		if verdict.verdict == poolVerdictRemoved {
+			removed++
+		}
+		rows = append(rows, []string{verdict.key, verdict.verdict, verdict.reason})
+	}
+	table, err := toon.Table("pool_reclaim", poolReclaimFields, rows)
+	if err != nil {
+		return "", err
+	}
+	aggregate, err := toon.TableTyped("pool_reclaim_applied", []string{"keys", "removed", "retained", "fingerprint"},
+		[][]any{{len(applied), removed, len(applied) - removed, fingerprint}})
+	if err != nil {
+		return "", err
+	}
+	help, err := axi.RenderHelp(nil)
+	if err != nil {
+		return "", err
+	}
+	return table + aggregate + help, nil
+}
+
+// renderPoolReclaimStale is the drift refusal. It removes nothing and names the re-plan
+// through the same action renderer the plan advertises its apply with, so the command an
+// operator is sent back to cannot drift from the command that printed the fingerprint.
+func renderPoolReclaimStale() (string, error) {
+	help, err := axi.RenderHelp([]axi.Action{axi.ExecutableInvocation("re-plan the pool and apply the fingerprint it prints",
+		axi.KnownArgument("worktree"), axi.KnownArgument("reclaim"))})
+	if err != nil {
+		return "", err
+	}
+	return toon.Errorf("worktree pool reclaim plan is stale",
+		"the pool changed since that plan; nothing was removed") + "\n" + help, nil
 }
 
 // renderPoolReclaim projects the plan: one row per key, an aggregate carrying the

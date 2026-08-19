@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // newReclaimPool binds a BENCH_HOME under the test's own temporary directory, creates the
@@ -314,4 +316,184 @@ func TestReclaimCommandRefusesOutsideARepository(t *testing.T) {
 	out, code := mustReclaim(t)
 	requireTest(t, code == 1 && strings.Contains(out, "not in a git repository"),
 		"reclaim outside a repository code=%d out=%q", code, out)
+}
+
+// reclaimFingerprint reads the fingerprint out of the apply invocation the plan printed.
+// Feeding the apply the value an operator would copy is what makes the handshake a tested
+// round trip rather than two independently asserted strings.
+func reclaimFingerprint(t *testing.T, out string) string {
+	t.Helper()
+	match := regexp.MustCompile(`bench worktree reclaim --apply ([0-9a-f]{64})`).FindStringSubmatch(out)
+	requireTest(t, match != nil, "plan printed no apply invocation: %q", out)
+	return match[1]
+}
+
+// [AP1][PL3][SH7] The apply is the whole point of the plan and the only destructive step
+// this command has. It must remove exactly what the plan named, leave every other key
+// present, count what it did, and aim every removal at a direct child of the pool.
+func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
+	pool, _ := newReclaimPool(t)
+	plantDeadChild(t, pool, "dead-key", "wt")
+	mustMkdirAll(t, filepath.Join(pool, "empty-key"), 0o700)
+	plantLiveChild(t, pool, "live-key", "wt")
+	liveListing := poolListing(t, filepath.Join(pool, "live-key"))
+
+	plan, planCode := mustReclaim(t)
+	requireTest(t, planCode == 0, "plan code=%d out=%q", planCode, plan)
+	fingerprint := reclaimFingerprint(t, plan)
+
+	out, code := mustReclaim(t, "--apply", fingerprint)
+	requireTest(t, code == 0, "apply code=%d out=%q", code, out)
+	keys, verdicts := reclaimVerdicts(t, out)
+	requireTest(t, len(keys) == 3, "apply keys = %v, want one row per key", keys)
+	for key, want := range map[string]string{"dead-key": poolVerdictRemoved, "empty-key": poolVerdictRemoved, "live-key": poolVerdictRetained} {
+		requireTest(t, verdicts[key][0] == want, "key %s verdict = %q, want %q (%s)", key, verdicts[key][0], want, verdicts[key][1])
+	}
+	requireTest(t, strings.Contains(out, "pool_reclaim_applied[1]{keys,removed,retained,fingerprint}:") && strings.Contains(out, "\n  3,2,1,"+fingerprint),
+		"apply aggregate did not count 3 keys, 2 removed, 1 retained: %q", out)
+	for _, key := range []string{"dead-key", "empty-key"} {
+		target := filepath.Join(pool, key)
+		requireTest(t, filepath.Dir(target) == poolKeysDir(), "removed %s whose parent is not the pool", target)
+		_, err := os.Lstat(target)
+		requireTest(t, os.IsNotExist(err), "planned key %s survived the apply: %v", key, err)
+	}
+	requireTest(t, poolListing(t, filepath.Join(pool, "live-key")) == liveListing,
+		"the retained key changed across the apply:\nbefore\n%s\nafter\n%s", liveListing, poolListing(t, filepath.Join(pool, "live-key")))
+}
+
+// [AP2] A fingerprint the pool no longer matches is a reading that has stopped being true.
+// Removing on the strength of it is the failure the handshake exists to prevent, so the
+// apply refuses, names the re-plan, and touches nothing.
+func TestReclaimApplyRefusesAFingerprintThePoolNoLongerMatches(t *testing.T) {
+	pool, _ := newReclaimPool(t)
+	plantDeadChild(t, pool, "dead-key", "wt")
+
+	plan, planCode := mustReclaim(t)
+	requireTest(t, planCode == 0, "plan code=%d out=%q", planCode, plan)
+	fingerprint := reclaimFingerprint(t, plan)
+
+	plantDeadChild(t, pool, "arrived-later", "wt")
+	before := poolListing(t, pool)
+
+	out, code := mustReclaim(t, "--apply", fingerprint)
+	requireTest(t, code == 1, "stale apply code=%d out=%q", code, out)
+	requireTest(t, strings.Contains(out, "worktree pool reclaim plan is stale") && strings.Contains(out, "bench worktree reclaim,"),
+		"stale refusal did not name the re-plan command: %q", out)
+	requireTest(t, poolListing(t, pool) == before, "a stale apply changed the pool:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
+}
+
+// [AP3] The fingerprint proves the plan as a whole is current; it cannot see a change made
+// inside a key it already counted. Only the re-check immediately before the RemoveAll can,
+// which is why a key that goes live in that window survives while its neighbours are still
+// removed. The seam is the apply itself, because a plan whose fingerprint still matches is
+// exactly the state the fingerprint cannot distinguish.
+func TestReclaimApplyRetainsAKeyThatWentLiveAfterThePlan(t *testing.T) {
+	pool, root := newReclaimPool(t)
+	plantDeadChild(t, pool, "still-dead", "wt")
+	mustMkdirAll(t, filepath.Join(pool, "went-live"), 0o700)
+
+	plan, err := planPoolReclaim(root)
+	mustNoError(t, err)
+	requireTest(t, plan.reclaimableCount() == 2, "plan = %#v, want both keys reclaimable", plan.verdicts)
+
+	plantLiveChild(t, pool, "went-live", "wt")
+
+	applied := applyPoolReclaim(plan)
+	verdicts := make(map[string]poolKeyVerdict, len(applied))
+	for _, verdict := range applied {
+		verdicts[verdict.key] = verdict
+	}
+	requireTest(t, verdicts["went-live"].verdict == poolVerdictRetained && strings.Contains(verdicts["went-live"].reason, "stopped qualifying"),
+		"went-live = %q/%q, want a retain naming the re-check", verdicts["went-live"].verdict, verdicts["went-live"].reason)
+	_, statErr := os.Lstat(filepath.Join(pool, "went-live", "wt", ".git"))
+	requireTest(t, statErr == nil, "the key that went live was removed anyway: %v", statErr)
+	requireTest(t, verdicts["still-dead"].verdict == poolVerdictRemoved, "still-dead = %q/%q, want it removed", verdicts["still-dead"].verdict, verdicts["still-dead"].reason)
+	_, statErr = os.Lstat(filepath.Join(pool, "still-dead"))
+	requireTest(t, os.IsNotExist(statErr), "still-dead survived: %v", statErr)
+}
+
+// [AP4] A repeat invocation has to be safe to run. An apply over a pool holding nothing
+// reclaimable is a successful no-op, not an error an operator has to interpret.
+func TestReclaimApplyOverNothingToReclaimIsASuccessfulNoOp(t *testing.T) {
+	pool, root := newReclaimPool(t)
+	plantLiveChild(t, pool, "live-key", "wt")
+	before := poolListing(t, pool)
+
+	plan, err := planPoolReclaim(root)
+	mustNoError(t, err)
+	requireTest(t, plan.reclaimableCount() == 0, "plan = %#v, want nothing reclaimable", plan.verdicts)
+
+	out, code := mustReclaim(t, "--apply", plan.fingerprint)
+	requireTest(t, code == 0, "no-op apply code=%d out=%q", code, out)
+	requireTest(t, strings.Contains(out, "\n  1,0,1,"+plan.fingerprint), "no-op apply aggregate = %q, want zero removed", out)
+	requireTest(t, poolListing(t, pool) == before, "a no-op apply changed the pool:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
+}
+
+// [AP5] A fumbled flag must never become a destructive run. An absent, empty, or malformed
+// value — and a repeated flag — are all usage refusals that read nothing and remove nothing.
+func TestReclaimApplyRefusesAFumbledFingerprint(t *testing.T) {
+	pool, root := newReclaimPool(t)
+	plantDeadChild(t, pool, "dead-key", "wt")
+	plan, err := planPoolReclaim(root)
+	mustNoError(t, err)
+	before := poolListing(t, pool)
+
+	for _, args := range [][]string{
+		{"--apply"},
+		{"--apply", ""},
+		{"--apply", strings.Repeat("a", 63)},
+		{"--apply", strings.Repeat("a", 65)},
+		{"--apply", strings.Repeat("g", 64)},
+		{"--apply", strings.ToUpper(plan.fingerprint)},
+		{"--apply", plan.fingerprint, "--apply", plan.fingerprint},
+		{"--apply", plan.fingerprint, "extra"},
+		{"--force"},
+	} {
+		out, code := mustReclaim(t, args...)
+		requireTest(t, code == 2 && strings.Contains(out, usage.WorktreeReclaim),
+			"args=%q code=%d out=%q, want a usage refusal", args, code, out)
+		requireTest(t, poolListing(t, pool) == before, "args=%q changed the pool:\nbefore\n%s\nafter\n%s", args, before, poolListing(t, pool))
+	}
+}
+
+// [SH7] The pool is what bounds this command's blast radius, so the removal asserts its
+// target's parent rather than trusting the key name it was handed. A name that is not a
+// plain direct child leaves the bytes it points at alone.
+func TestRemovePoolKeyRefusesATargetOutsideThePool(t *testing.T) {
+	pool, _ := newReclaimPool(t)
+	decoy := filepath.Join(filepath.Dir(pool), "decoy")
+	mustMkdirAll(t, decoy, 0o700)
+	mustWrite(t, filepath.Join(decoy, "keep.txt"), []byte("keep\n"), 0o644)
+
+	for _, key := range []string{"", ".", "..", filepath.Join("..", "decoy"), "nested/child", decoy} {
+		verdict := removePoolKey(key)
+		requireTest(t, verdict.verdict == poolVerdictRetained && strings.Contains(verdict.reason, "not a direct child of "+pool),
+			"key %q = %q/%q, want a retain naming the pool boundary", key, verdict.verdict, verdict.reason)
+	}
+	_, err := os.Lstat(filepath.Join(decoy, "keep.txt"))
+	requireTest(t, err == nil, "a removal escaped the pool: %v", err)
+	_, err = os.Lstat(pool)
+	requireTest(t, err == nil, "the pool itself was removed: %v", err)
+}
+
+// [RP1] The bug this spec exists for, end to end and through the real command: a repository
+// that genuinely existed, genuinely leased a pool key, and was then deleted leaves a key no
+// repository-anchored path can reach. It must be planned and then actually removed.
+func TestReclaimReclaimsTheKeyOfADeletedRepository(t *testing.T) {
+	pool, _ := newReclaimPool(t)
+	source := newWorktreeRepo(t)
+	key := filepath.Base(Pool(canonicalRoot(source)))
+	created := mustCreate(t, source, "reclaim-repro", "repro")
+	requireTest(t, filepath.Dir(created.Path) == filepath.Join(pool, key), "created worktree %q is not under the source's pool key %q", created.Path, key)
+	mustNoError(t, os.RemoveAll(source))
+
+	plan, planCode := mustReclaim(t)
+	requireTest(t, planCode == 0, "plan code=%d out=%q", planCode, plan)
+	_, verdicts := reclaimVerdicts(t, plan)
+	requireTest(t, verdicts[key][0] == poolVerdictReclaim, "deleted repository key %s = %q/%q, want reclaim", key, verdicts[key][0], verdicts[key][1])
+
+	out, code := mustReclaim(t, "--apply", reclaimFingerprint(t, plan))
+	requireTest(t, code == 0, "apply code=%d out=%q", code, out)
+	_, err := os.Lstat(filepath.Join(pool, key))
+	requireTest(t, os.IsNotExist(err), "the deleted repository's key survived the apply: %v", err)
 }
