@@ -148,13 +148,22 @@ func TestSetupInteractiveResolvesAmbiguityOneAtATime(t *testing.T) {
 
 func setupPromptTestRepo(t *testing.T) string {
 	t.Helper()
+	root := setupBareTestRepo(t)
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/fixture\n\ngo 1.22\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
+// setupBareTestRepo is setupPromptTestRepo without the go.mod: a zero-signal
+// repository carrying no build-system file at all, which is what the seeded gate
+// input manifest has to survive alongside the fail-closed gate stub.
+func setupBareTestRepo(t *testing.T) string {
+	t.Helper()
 	root := t.TempDir()
 	cmd := exec.Command("git", "-C", root, "init", "-q")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("git init: %v\n%s", err, out)
-	}
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/fixture\n\ngo 1.22\n"), 0o644); err != nil {
-		t.Fatal(err)
 	}
 	wd, err := os.Getwd()
 	if err != nil {
@@ -163,4 +172,30 @@ func setupPromptTestRepo(t *testing.T) string {
 	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(wd, "..", "..")))
 	t.Chdir(root)
 	return root
+}
+
+// TestSetupPreviewNamesGateInputs pins SD2: the plan preview names
+// .bench/gate-inputs.json in both states, in the profile line's voice.
+func TestSetupPreviewNamesGateInputs(t *testing.T) {
+	root := setupPromptTestRepo(t)
+	kit := os.Getenv("BENCH_KIT")
+
+	absent := renderSetupPreview(root, inspectRepo(root, kit))
+	if !strings.Contains(absent, "  .bench/gate-inputs.json absent -> will be seeded declaring BENCH_HOME and HOME\n") {
+		t.Fatalf("preview does not announce the seed when absent:\n%s", absent)
+	}
+
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	present := renderSetupPreview(root, inspectRepo(root, kit))
+	if !strings.Contains(present, "  .bench/gate-inputs.json exists -> left as-is (reviewer-owned content)\n") {
+		t.Fatalf("preview does not report the existing file as left as-is:\n%s", present)
+	}
+	if strings.Contains(present, "will be seeded") {
+		t.Fatalf("preview still announces a seed for an existing file:\n%s", present)
+	}
 }

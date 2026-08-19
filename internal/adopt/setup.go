@@ -117,16 +117,17 @@ func isAffirmative(line string) bool {
 // beyond the gate table (harness-file matrix, foreign-gate detail, etc.) are the later
 // stories' territory; this stays the honest subset stories 1/2/6/7/9 need.
 type setupFacts struct {
-	agentsExists   bool
-	claudeExists   bool
-	gateExists     bool
-	profileExists  bool
-	profileName    string
-	gateCandidates []gateCandidate
-	gateCommand    string // resolved command when exactly one candidate matched
-	zeroSignal     bool
-	openQuestions  []string
-	ignoredSignals []string // preview-only fact lines for a candidate a read/parse error excluded
+	agentsExists     bool
+	claudeExists     bool
+	gateExists       bool
+	gateInputsExists bool
+	profileExists    bool
+	profileName      string
+	gateCandidates   []gateCandidate
+	gateCommand      string // resolved command when exactly one candidate matched
+	zeroSignal       bool
+	openQuestions    []string
+	ignoredSignals   []string // preview-only fact lines for a candidate a read/parse error excluded
 }
 
 type gateCandidate struct {
@@ -144,11 +145,12 @@ func inspectRepo(root, kit string) setupFacts {
 	name := filepath.Base(root)
 	profileRel := filepath.Join("projects", name+".md")
 	facts := setupFacts{
-		agentsExists:  fileExists(filepath.Join(root, "AGENTS.md")),
-		claudeExists:  fileExists(filepath.Join(root, "CLAUDE.md")),
-		gateExists:    fileExists(filepath.Join(root, ".bench", "gate.sh")),
-		profileExists: fileExists(filepath.Join(root, profileRel)),
-		profileName:   name,
+		agentsExists:     fileExists(filepath.Join(root, "AGENTS.md")),
+		claudeExists:     fileExists(filepath.Join(root, "CLAUDE.md")),
+		gateExists:       fileExists(filepath.Join(root, ".bench", "gate.sh")),
+		gateInputsExists: fileExists(filepath.Join(root, ".bench", "gate-inputs.json")),
+		profileExists:    fileExists(filepath.Join(root, profileRel)),
+		profileName:      name,
 	}
 	facts.gateCandidates, facts.ignoredSignals = detectGateCandidates(root)
 	switch len(facts.gateCandidates) {
@@ -276,6 +278,12 @@ func renderSetupPreview(root string, facts setupFacts) string {
 		fmt.Fprintln(&b, "  .bench/gate.sh already exists -> converged if bench-managed, preserved as a conflict otherwise")
 	}
 
+	if facts.gateInputsExists {
+		fmt.Fprintln(&b, "  .bench/gate-inputs.json exists -> left as-is (reviewer-owned content)")
+	} else {
+		fmt.Fprintln(&b, "  .bench/gate-inputs.json absent -> will be seeded declaring BENCH_HOME and HOME")
+	}
+
 	if facts.profileExists {
 		fmt.Fprintf(&b, "  projects/%s.md exists -> left as-is (reviewer-owned content)\n", facts.profileName)
 	} else {
@@ -302,6 +310,7 @@ func convergeSetup(root, kit, version string, facts setupFacts, stdout, stderr i
 	plan = append(plan, planEntry{rel: ".bench/gate.sh", kind: "inline-exec", content: setupGateScript(facts)})
 	profileRel := filepath.Join("projects", facts.profileName+".md")
 	plan = append(plan, planEntry{rel: filepath.ToSlash(profileRel), kind: "seed", content: scaffoldProfile(facts)})
+	plan = append(plan, planEntry{rel: ".bench/gate-inputs.json", kind: "seed", content: scaffoldGateInputs()})
 
 	result, changed := transactionalLink(root, kit, "copy", version, plan, stdout, stderr)
 	if result != 0 && result != 3 {
@@ -329,6 +338,24 @@ func setupGateScript(facts setupFacts) string {
 		return scaffoldGate()
 	}
 	return gateScriptPreamble("# Written by bench setup from the gate-inference table (see /bench-setup-repo to refine).\n") + facts.gateCommand + "\n"
+}
+
+// scaffoldGateInputs is the seeded gate input manifest every adopted repository
+// starts from. The gate launches its script with PATH plus only the names declared
+// here, and the installed wrapper's first statement reads HOME (to derive
+// BENCH_HOME) under set -u - so a repository with no manifest cannot run its own
+// gate at all. The declared tools are the ones that wrapper and the scaffolded gate
+// invoke; paths stays empty because the seeded gate closes over no tracked file
+// beyond the script the gate already reads itself.
+func scaffoldGateInputs() string {
+	return `{
+  "schema": 1,
+  "closure": "local",
+  "environment": ["BENCH_HOME", "HOME"],
+  "paths": [],
+  "tools": ["bash", "basename", "dirname", "git", "readlink", "uname"]
+}
+`
 }
 
 func scaffoldProfile(facts setupFacts) string {
