@@ -26,10 +26,8 @@ means the repository-controlled compliance assessment.
 ## Next — the 2026-08 capability audit's active portfolio
 
 The audit's remaining action items, now board rows rather than an external
-pointer. A1, A2, A3, and A6 landed; these three are what is left of the portfolio
+pointer. A1, A2, A3, A6, and FT228 landed; this is what is left of the portfolio
 that is actionable today. The `## Recommended sequence` draws from here first.
-
-**FT228 (HIGH) — `/bench-debug` recovers its upstream constraints and settles its trigger on both harnesses.**
 
 **FT229 (MEDIUM) — hygiene batch: residue, stale prose, and small CLI sharp edges.**
 
@@ -286,6 +284,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT228: restore `/bench-debug`'s constraints, settle the Codex trigger, check Claude parity. Highest severity actionable row now that FT227 has shipped; it folds in the reproduction-economics rule and leaves FT24 parked as the upstream re-check.
-2. `/bench-shape-idea` — FT225: decide whether a review may amend the spec in the source it reviewed. Decision-required and the most-evidenced blocker in the landing path — every reviewed landing that amends its spec pays a hand-committed detour, and FT233's remedy wording depends on which way this goes.
-3. `/bench-write-spec` — FT229: the hygiene batch. Actionable, batched under one gate, and it now carries the preflight-grammar mismatch FT227's review phase hit.
+1. `/bench-shape-idea` — FT225: decide whether a review may amend the spec in the source it reviewed. Decision-required and the most-evidenced blocker in the landing path — every reviewed landing that amends its spec pays a hand-committed detour, and FT233's remedy wording depends on which way this goes.
+2. `/bench-write-spec` — FT229: the hygiene batch. Actionable, batched under one gate, and it now carries the preflight-grammar mismatch FT227's review phase hit.
