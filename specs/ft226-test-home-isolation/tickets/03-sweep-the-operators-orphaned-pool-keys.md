@@ -22,15 +22,15 @@ apply step; the plan output is still shown before apply.
 
 ## Acceptance
 
-- [ ] The plan prints before any removal: target count, five sampled targets
+- [x] The plan prints before any removal: target count, five sampled targets
       with dangling `gitdir:` lines, non-target count, surviving non-`001`
       key names (`bench-…`, `project with spaces`, the dogfood keys are among
       them).
-- [ ] A key whose child `.git` is a directory, a key with an extra top-level
+- [x] A key whose child `.git` is a directory, a key with an extra top-level
       entry, a key whose pointer target exists, and a key not matching
       `001-<digits>` are all absent from the target list (each either observed
       in the real pool or planted in a scratch copy of it before the real run).
-- [ ] After apply, the remaining key count equals the pre-apply count minus
+- [x] After apply, the remaining key count equals the pre-apply count minus
       the target count, and every surviving key name from the plan is present.
-- [ ] One subsequent `bench gate` run leaves the sorted `$HOME/.bench/worktrees`
+- [x] One subsequent `bench gate` run leaves the sorted `$HOME/.bench/worktrees`
       key listing byte-identical (SW3).

@@ -15,10 +15,10 @@ binding half), EV1.
 
 ## Acceptance
 
-- [ ] `BENCH_HOME=<empty sentinel dir> go test -count=1 ./internal/worktree`
+- [x] `BENCH_HOME=<empty sentinel dir> go test -count=1 ./internal/worktree`
       passes and the sentinel holds no entries afterwards.
-- [ ] Every `TestReauthorize*` creation path lies under `Pool(root)` for the
+- [x] Every `TestReauthorize*` creation path lies under `Pool(root)` for the
       fixture's own root, which resolves under that root.
-- [ ] `BENCH_HOME=<empty sentinel dir> go test -count=1 ./...` passes and the
+- [x] `BENCH_HOME=<empty sentinel dir> go test -count=1 ./...` passes and the
       sentinel holds no entries afterwards; the before/after `find` output is
       recorded in the spec's verification log (EV1).
