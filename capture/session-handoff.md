@@ -2,35 +2,34 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `eefc96f4` at the time this was written; the tree holds
-`specs/ft227-adoption-smoke/` and this file uncommitted
-Spec: `specs/ft227-adoption-smoke/spec.md`, `Status: staged`, awaiting sign-off
-Gate: green at HEAD; the uncommitted files are prose and tickets only
+Branch: `main` — HEAD `c3cb914`, 11 dirty paths (the FT227 drain's staged
+edits plus this spec), 6 unpushed commits
+Spec: `specs/ft228-debug-restoration/spec.md` — staged, awaiting sign-off.
+Gate: stale (last green `cff00da`).
 
 ## State
 
-`/bench-write-spec` for FT227 ran to its sign-off stop. The spec and its three
-tickets are written and the one review round accepted them at the first
-iteration with ten partials, all folded (the `Verification log:` line names
-them). `bench coverage --check` is green on 15 rows. Nothing is committed yet:
-the reviewer has not signed off the spec-and-tickets pair.
+`/bench-write-spec` for FT228 is authored and reviewed: 24 stories, a 22-row
+coverage map (`bench coverage --check` green), four serial tickets, and a
+2-iteration verification log. The round's learnings entry is appended to
+`capture/learnings.md` (open, undrained). The FT227 drain's edits
+(`CHANGELOG.md`, `ROADMAP.md`, roadmap detail files) are staged but
+uncommitted from the prior phase.
 
-The decision source is `roadmap/FT227.md`. The spec's grounding repro was
-re-run in a scratch repository this session: `bench setup --yes`, sentinel
-removed, `bench gate` through the installed wrapper — red on `HOME`, then red on
-the empty inventory; green once a manifest declaring `BENCH_HOME` and `HOME`
-existed and the stub's canary call was guarded on `tests/canary` existing.
+Decisions closed in this phase, dated 2026-08-19: `$bench-debug` becomes
+implicitly invocable on Codex — the yaml flips, the adapter description gets a
+symptom-bearing trigger, and a per-phase invocation-policy table graded on
+both harness surfaces records every other phase at today's posture.
 
-Decisions that stay closed in the spec: the manifest is a `seed` kind (never
-managed); the guard is the stub's, `bench canary` does not change; the sentinel
-stays; the journey adopts `owner.repos[1]` and binds a private `BENCH_HOME` on
-every launch; every green leg asserts the exact `gate: green` line.
+Contestable calls left standing for veto at sign-off: the prose-budget row for
+`.agents/commands/bench-debug.md` (story 12 / DP3) is a promise beyond the
+decision source, flagged in the spec's Further notes; the ticket-03/04 split
+of the trigger work follows the review round's quiz.
 
 ## Next command
 
-After sign-off: `bench commit -m "spec: stage ft227-adoption-smoke" -- specs/ft227-adoption-smoke capture/session-handoff.md`,
-then a fresh mid-tier session runs
-`/bench-implement-spec specs/ft227-adoption-smoke/spec.md`.
+Sign off on the spec-and-tickets pair, then in a fresh mid-tier session:
+`/bench-implement-spec --full specs/ft228-debug-restoration/spec.md`
 
 ## Shape
 
