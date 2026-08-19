@@ -41,11 +41,13 @@ means the repository-controlled compliance assessment.
 
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
+**FT224 (MEDIUM) — a lifecycle refusal names the component that failed and the command that fixes it.**
+
+**FT225 (MEDIUM, decision required) — reviewed landing has no path for a spec the review amended.**
+
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
-
-**FT212 (LOW) — `bench worktree clean --landed` fails "invalid invocation" though `.bench/BENCH.md`'s inventory advertises the form.**
 
 **FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's non-recurrence evidence complete.**
 
@@ -58,8 +60,6 @@ means the repository-controlled compliance assessment.
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.**
 
 **FT106 (MEDIUM) — doc claims re-verified against the tree.**
-
-**FT190 (MEDIUM) — every injected interface has a real-producer test or a written exemption.**
 
 **FT191 (MEDIUM) — a fixture-and-seam inventory a charge can carry for free.**
 
@@ -120,8 +120,6 @@ means the repository-controlled compliance assessment.
 **FT164 (MEDIUM) — repair-lane charges, and a done-claim that resolves its named owners.**
 
 **FT200 (MEDIUM, decision required) — make preflight mechanical at the landing chokepoint.**
-
-**FT165 (LOW) — fold the domain-modeling discipline into `/bench-shape-idea`.**
 
 **FT180 (LOW) — a spec-optional route decided at shape-idea's exit.**
 
@@ -283,16 +281,13 @@ fixture-proven.
 
 ## Recommended sequence
 
-Reviewer override, 2026-08-18: the 2026-08 capability audit's own priority order
-(`docs/audits/2026-08-bench-capability/results-fable-high/proposed-roadmap.md`) supersedes
-everything below until its active items (A1–A11, A12 is a decision not a build) are
-exhausted; the rows below stay as the board's contents, not its near-term order. A1 landed
-(`a2914fd5`, `f1135fd6`). A2 (one staleness rule for gate verdicts — status/handoff agree
-with `bench gate`) is next: P0, no dependencies. This note is a standing instruction, not
-a `/bench-drain` reconcile; the next full drain should fold the audit's ranking into
-this section properly (`roadmap-dispositions.yaml` has the row-by-row mapping) rather than
-carry this pointer forward.
+The 2026-08 capability audit's priority order
+(`docs/audits/2026-08-bench-capability/results-fable-high/proposed-roadmap.md`) is the
+board's near-term order until its active items are exhausted; this section now carries
+that ranking directly rather than pointing at it. A1 landed (`a2914fd5`, `f1135fd6`),
+A2 landed (`2915fcc0`), and A3 landed as `bench-front-door` (`b3dfb922`). The rows below
+this section remain the board's contents; the audit decides what runs next.
 
-1. `/bench-shape-idea` — FT100 cuts prose weight from `AGENTS.md`/`.bench/BENCH.md` and the craft-skill library to demonstrated-delta clauses; reviewer-prioritized to the top of the queue 2026-08-17, ahead of its recommended-after-FT89 sequencing.
-2. `/bench-shape-idea` — FT207 decides whether worktree-mutating paths share FT189's malformed-admin refusal before Git can block; unblocked now that FT189 has landed.
-3. `/bench-write-spec` — FT213 gives a read-only delegate its own worktree when it reads a tree also being graded, and requires an oracle-verified probe before trusting a delegate's gate-skip claim; reproduced twice in the spec-ticket-fence-reduction retro.
+1. `/bench-write-spec` — A6 (rank 3, P1): kit tests stop writing into the operator's real `BENCH_HOME`. No dependencies, and it is the last unblocked P1 that touches the operator's own machine.
+2. `/bench-write-spec` — A4 (rank 4, P1): adoption smoke — a scaffolded gate goes green. No dependencies; it is the outcome evidence adoption currently lacks.
+3. `/bench-write-spec` — A5 (rank 6, P1): restore the `/bench-debug` constraints, decide the Codex trigger, check Claude parity, and drop the inert key. Unblocked now that A1 has landed; folds in FT112 and FT24.

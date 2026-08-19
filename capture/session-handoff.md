@@ -1,29 +1,44 @@
 # Session handoff
 
-Repository: `9a43f8b9d7384e58ad06b1bcea12e3c0-47e4fe85241ecdf736dfbcb48a8117db` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/9a43f8b9d7384e58ad06b1bcea12e3c0-47e4fe85241ecdf736dfbcb48a8117db`
-Branch: `bench/assign/9a43f8b9d7384e58ad06b1bcea12e3c0/47e4fe85241ecdf736dfbcb48a8117db` — HEAD `0d32a9b`, clean tree, 4 unpushed commits
-Spec: `specs/bench-front-door/spec.md` (Status: staged)
-Gate: green at `20dcb24` — stale, work tree `f071524`
+Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `0ee2106` pre-commit, clean but for this drain's own batch, 38 unpushed commits
+Spec: none staged — `specs/` is empty
+Gate: green at `761a839`
 
 ## State
 
-**`/bench-implement-spec specs/bench-front-door/spec.md --full` resumed on the retained
-integration source.** `bench preflight build bench-front-door` was green. Ticket 01
-(`e6d5e623`) extracted the route owner into `internal/status`; ticket 02 (`0d32a9bf`)
-normalized all current status actions and the dashboard's empty cell. Each commit passed
-the whole gate. Ticket 02's first all-actions test was repaired when an independent
-mutation of the live intent producer left it green; it now drives the actual producers.
+**`bench-front-door` (audit item A3) landed, retired, and drained.** The reviewed source
+`408faf50..c7a0a1b1` composed onto `main` as `b3dfb922`, publishing the spec at
+`Status: implemented`; the source worktree is released and removed. `bench status --route`,
+the `setup` and `specs: staged` signals, invocable board actions, the `/bench` and `$bench`
+adapters, registry-projected root help, and the `/bench-what-next` → `/bench-drain` rename
+are all live. The front door works: the bare wrapper and the binary now give the same
+routed answer.
 
-**Next frontier:** `03-setup-and-staged-signals.md`, dependent on `02-normalize-actions.md`.
-The retained source is clean at `0d32a9bf`; `main` remains at `408faf50`. The reviewer-visible
-decisions in the spec's Further notes remain open and unchanged. Ticket 01's advisory
-`Writes:` list omitted its necessary conformance-location repair; the spec ownership fence
-authorizes it, and it is reviewer-veto surface rather than a behavior change.
+Landing was blocked twice and both blocks are now roadmap rows rather than folklore.
+`worktree land --request` had been given the assignment ID instead of the request token,
+and the refusal named four possible causes without saying which — repaired through
+`bench worktree reauthorize` (FT224). Review had also amended the staged spec in the
+source, which the byte-identity check refuses; the amendment landed on the destination
+first as `a1d31f4d` under reviewer confirmation (FT225).
+
+**This drain's batch:** FT212, FT190, and FT165 removed as shipped, each verified against
+the tree rather than taken from the audit's word. FT224 and FT225 added. FT89, FT215,
+FT177, and FT162 took merged retro evidence. The open learning was dismissed as already
+implemented at `f8d1dd4c`. `capture/` is empty — no ideas, no learnings, no retros. The
+`Recommended sequence` now carries the audit's ranking directly instead of pointing at it,
+as its own standing note asked the next full drain to do.
+
+**Not applied, named instead:** the audit's full row-by-row board restructure
+(`roadmap-dispositions.yaml` — rewrites, folds, and the deferred backlog) is a
+`--restructure` pass and needs the reviewer to invoke it.
 
 ## Next command
 
-`$bench-implement-spec specs/bench-front-door/spec.md --full --reviewer sol high`
+`/bench-write-spec` for A6 — kit tests stop writing into the operator's real `BENCH_HOME`
+(`docs/audits/2026-08-bench-capability/results-fable-high/proposed-roadmap.md`, rank 3, P1,
+no dependencies).
 
 ## Shape
 
