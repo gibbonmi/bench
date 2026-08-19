@@ -2,30 +2,46 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean tree, 8 unpushed commits
-Spec: `specs/ft228-debug-restoration/spec.md` — staged, signed off 2026-08-19.
-Gate: green.
+Branch: `main` — HEAD `432a018`, clean tree, 12 unpushed commits
+Spec: `specs/ft228-debug-restoration/spec.md` (Status: staged)
+Gate: green at `ce1be93` — stale, work tree `a3e89fc`
 
 ## State
 
-`/bench-write-spec` for FT228 is done: 24 stories, a 22-row coverage map
-(`bench coverage --check` green), four serial tickets, a 2-iteration
-verification log, and reviewer sign-off. The spec landed as `8d41cb0` and the
-FT227 drain's dispositions as `9fa41819`, both on a green gate. The round's
-learnings entry sits in `capture/learnings.md` (open, undrained).
+FT228 is implemented and reviewed. All four tickets plus one repair commit are
+green on the retained integration source, addressed as `ft228-integration`:
+frozen review base `c09a7d64`, source tip `fad39a89`. Three axes ran; Spec and
+Coverage returned clean, Standards returned one finding, and the repair commit
+carries it. Nothing of FT228 has reached `main` yet — `bench worktree land` is
+the remaining step, then `/bench-final-check`.
 
-Decisions closed in this phase, dated 2026-08-19: `$bench-debug` becomes
-implicitly invocable on Codex — the yaml flips, the adapter description gets a
-symptom-bearing trigger, and a per-phase invocation-policy table graded on
-both harness surfaces records every other phase at today's posture.
+Three unplanned fixes landed on `main` first (`ba23d877`, `23cdfc29`,
+`432a018b`), under `specs/light-path-worktree-exec-kit-leak/`: `bench worktree
+exec` leaked the caller's wrapper routing into a differently-rooted child,
+`kit_dir` named the wrapper's tree rather than the tree being worked on, and a
+reclaim test substring-matched a randomly quoted fingerprint. Together the
+first two made any gate run inside a worktree of this kit drop its `race` and
+`system` phases and report red over a clean tree. `dist/bench` was rebuilt and the
+end-to-end proof ran: `bench worktree exec` now reaches a full-shape green gate
+with no environment workaround.
 
-The sign-off approved the pair as staged, including the flagged prose-budget
-row (story 12 / DP3) and the ticket-03/04 split.
+Two open items for the reviewer, neither blocking:
+
+`bench worktree land` refuses a light-path worktree — it requires a reviewed
+spec's `spec.md` and ownership fence, and a light-path spec is a tickets-only
+directory. The three fixes reached `main` by fast-forward instead.
+
+Ticket 04's stale-row pass gives a narrow canary root a dozen diagnostics beside
+its intended red. Coverage confirmed no fixture `EXPECT` collides with that
+text, so none passes for the wrong reason; the repair commit states the
+behavior where the pass is written rather than scoping the check, which would
+make it guess which absences are real.
+
+Undrained: `capture/learnings.md` carries the FT228 spec round's entry.
 
 ## Next command
 
-In a fresh mid-tier session:
-`/bench-implement-spec --full specs/ft228-debug-restoration/spec.md`
+`git push` — the board's leading invocable signal (`git`).
 
 ## Shape
 
