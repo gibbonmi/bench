@@ -156,9 +156,12 @@ standing approval for the destructive step.
 - Mutation probes recorded in the verification log, not retained: (a) remove
   the fixture binding → `go test -count=1 ./internal/worktree -run Reauthorize`
   exits non-zero with residue naming a `TestReauthorize…` temporary root;
-  restore → green. (b) `TMPDIR=/nonexistent go test -count=1
-  ./internal/worktree -run TestPool` → exits non-zero with the `TestMain`
-  creation error and no test output. (c) a temporary `t.Fatal` in any test with
+  restore → green. (b) `GOTMPDIR=/tmp TMPDIR=/nonexistent go test
+  -count=1 ./internal/worktree -run TestPool` → exits non-zero with the
+  `TestMain` creation error and no test output. `GOTMPDIR` keeps the go driver's
+  own work directory valid; without it the driver fails before the binary
+  compiles and the probe never reaches `TestMain` (reviewer-approved correction,
+  build finding P1). (c) a temporary `t.Fatal` in any test with
   a clean home → package FAIL (exit code combination).
 
 ### Seam diagram

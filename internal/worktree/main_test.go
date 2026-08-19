@@ -9,9 +9,8 @@ import (
 	"testing"
 )
 
-// inheritedBenchHome records the operator's BENCH_HOME before TestMain replaces it, so
-// TestPackageHomeIsPrivate can prove the tests never resolve a pool there. Package
-// variables initialize before TestMain runs, which is what makes the record honest.
+// inheritedBenchHome records the operator's BENCH_HOME before TestMain replaces it.
+// Package variables initialize before TestMain runs, so this is the pre-swap value.
 var inheritedBenchHome = os.Getenv("BENCH_HOME")
 
 // privateBenchHome is the process-private BENCH_HOME every test in this package runs
@@ -21,10 +20,8 @@ var privateBenchHome string
 
 // TestMain gives the package a BENCH_HOME of its own: created empty in the OS temp
 // directory, exported before the first test, checked for residue after the last, and
-// removed. The exit code combines the three verdicts — a failing test, residue, or a
-// home that will not remove — so neither can mask the others. Creation failure is
-// fail-closed: running the package against the inherited home is the leak this exists
-// to prevent.
+// removed. Creation failure is fail-closed, because running the package against the
+// inherited home is the leak this exists to prevent.
 func TestMain(m *testing.M) {
 	home, err := os.MkdirTemp("", "bench-worktree-home-")
 	if err != nil {
@@ -34,18 +31,21 @@ func TestMain(m *testing.M) {
 	privateBenchHome = home
 	if err := os.Setenv("BENCH_HOME", home); err != nil {
 		fmt.Fprintln(os.Stderr, "private BENCH_HOME:", err)
+		os.RemoveAll(home)
 		os.Exit(1)
 	}
 	code := m.Run()
-	report, err := homeResidue(home)
+	entries, err := homeResidue(home)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "private BENCH_HOME residue:", err)
 		code = 1
 	}
-	if len(report.entries) > 0 {
-		fmt.Fprintf(os.Stderr, "%d residue entries under private BENCH_HOME %s — a test created a worktree under a home it did not bind itself\n", len(report.entries), home)
-		for _, line := range report.lines {
-			fmt.Fprintln(os.Stderr, line)
+	if len(entries) > 0 {
+		fmt.Fprintf(os.Stderr, "%d residue entries under private BENCH_HOME %s — a test created a worktree under a home it did not bind itself\n", len(entries), home)
+		for _, entry := range entries {
+			for _, line := range entry.render() {
+				fmt.Fprintln(os.Stderr, line)
+			}
 		}
 		code = 1
 	}
@@ -56,34 +56,37 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// residueReport is what remains under a home after a run. The unit is the top-level
-// entry — a stray file, or a directory such as worktrees/ whether or not it holds
-// anything — because nothing legitimate materializes any of them.
-type residueReport struct {
-	entries []string
-	lines   []string
+// residueEntry is one top-level entry left under a home after a run — a stray file,
+// or a directory such as worktrees/ whether or not it holds anything, since nothing
+// legitimate materializes any of them. origins carries the gitdir: line of every
+// leaked pool worktree beneath it, which names the test that created it.
+type residueEntry struct {
+	path    string
+	origins []string
 }
 
-// homeResidue computes the report for one home. Each leaked pool worktree beneath a
-// top-level entry contributes its .git pointer's gitdir: line, which carries the
-// temporary root of the test that created it and so names the offender.
-func homeResidue(home string) (residueReport, error) {
+func (e residueEntry) render() []string {
+	return append([]string{e.path}, e.origins...)
+}
+
+// homeResidue computes the residue for one home. A directory it cannot walk costs
+// that entry its origin lines, never the entry itself: the report has to name the
+// leak even when it cannot name the leaker.
+func homeResidue(home string) ([]residueEntry, error) {
 	names, err := os.ReadDir(home)
 	if err != nil {
-		return residueReport{}, err
+		return nil, err
 	}
-	var report residueReport
+	var entries []residueEntry
 	for _, name := range names {
-		entry := filepath.Join(home, name.Name())
-		report.entries = append(report.entries, entry)
-		report.lines = append(report.lines, entry)
-		origins, err := residueOrigins(entry)
+		path := filepath.Join(home, name.Name())
+		origins, err := residueOrigins(path)
 		if err != nil {
-			return residueReport{}, err
+			origins = append(origins, "  origin scan: "+err.Error())
 		}
-		report.lines = append(report.lines, origins...)
+		entries = append(entries, residueEntry{path: path, origins: origins})
 	}
-	return report, nil
+	return entries, nil
 }
 
 func residueOrigins(entry string) ([]string, error) {
@@ -116,6 +119,8 @@ func TestPackageHomeIsPrivate(t *testing.T) {
 	entries, err := os.ReadDir(home)
 	requireTest(t, err == nil && len(entries) == 0, "private home entries = %#v, %v, want empty", entries, err)
 	requireTest(t, home != inheritedBenchHome, "private home equals the inherited BENCH_HOME %q", inheritedBenchHome)
+	// An empty inherited value means benchHome falls back to the operator's ~/.bench,
+	// which the next assertion covers unconditionally, so the pair is never both vacuous.
 	if inheritedBenchHome != "" {
 		requireTest(t, !withinDir(inheritedBenchHome, home), "private home %q is under the inherited BENCH_HOME %q", home, inheritedBenchHome)
 	}
@@ -138,30 +143,66 @@ func TestHomeResidueListsLeakedWorktreesWithOrigin(t *testing.T) {
 	onlyPool := t.TempDir()
 	mustMkdirAll(t, filepath.Join(onlyPool, "worktrees"), 0o755)
 
+	// A .git that is a full repository rather than a pointer, and a pointer carrying no
+	// gitdir: line: both are still residue, both simply have no origin to name.
+	malformed := t.TempDir()
+	mustMkdirAll(t, filepath.Join(malformed, "worktrees", "001-2", "repo", ".git"), 0o755)
+	mustMkdirAll(t, filepath.Join(malformed, "worktrees", "001-3", "blank"), 0o755)
+	mustWrite(t, filepath.Join(malformed, "worktrees", "001-3", "blank", ".git"), []byte("not a pointer\n"), 0o644)
+
 	for _, tc := range []struct {
 		name    string
 		home    string
 		entries int
+		origins int
 	}{
-		{"leaked worktree and stray file", leaked, 2},
-		{"empty pool directory", onlyPool, 1},
-		{"clean home", empty, 0},
+		{"leaked worktree and stray file", leaked, 2, 1},
+		{"empty pool directory", onlyPool, 1, 0},
+		{"clean home", empty, 0, 0},
+		{"malformed git pointers", malformed, 1, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			report, err := homeResidue(tc.home)
+			entries, err := homeResidue(tc.home)
 			requireTest(t, err == nil, "homeResidue: %v", err)
-			requireTest(t, len(report.entries) == tc.entries, "entries = %#v, want %d", report.entries, tc.entries)
+			requireTest(t, len(entries) == tc.entries, "entries = %#v, want %d", entries, tc.entries)
+			origins := 0
+			for _, entry := range entries {
+				origins += len(entry.origins)
+			}
+			requireTest(t, origins == tc.origins, "origin lines = %d, want %d", origins, tc.origins)
 		})
 	}
 
-	report, err := homeResidue(leaked)
+	entries, err := homeResidue(leaked)
 	requireTest(t, err == nil, "homeResidue: %v", err)
-	joined := strings.Join(report.lines, "\n")
+	var lines []string
+	for _, entry := range entries {
+		lines = append(lines, entry.render()...)
+	}
+	joined := strings.Join(lines, "\n")
 	requireTest(t, strings.Contains(joined, "gitdir: "+origin), "report %q does not name the origin %q", joined, origin)
 }
 
-// withinDir reports whether path is parent itself or lies beneath it.
+// withinDir reports whether path is parent itself or lies beneath it. It stays
+// independent of the production insidePool so that the Pool assertion above cannot
+// be satisfied by a bug the two share.
 func withinDir(parent, path string) bool {
 	rel, err := filepath.Rel(parent, path)
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func TestWithinDir(t *testing.T) {
+	for _, tc := range []struct {
+		parent, path string
+		want         bool
+	}{
+		{"/a/b", "/a/b", true},
+		{"/a/b", "/a/b/c", true},
+		{"/a/b", "/a/bc", false},
+		{"/a/b", "/a", false},
+		{"/a/b", "/", false},
+	} {
+		got := withinDir(tc.parent, tc.path)
+		requireTest(t, got == tc.want, "withinDir(%q, %q) = %t, want %t", tc.parent, tc.path, got, tc.want)
+	}
 }

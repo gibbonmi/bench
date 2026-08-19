@@ -36,9 +36,11 @@ probe.
       `go test -count=1 ./internal/worktree -run Reauthorize` exits non-zero
       and the report names a `TestReauthorize…` temporary root; restored, it
       exits zero.
-- [x] Probe (b), recorded: `TMPDIR=/nonexistent go test -count=1
+- [x] Probe (b), recorded: `GOTMPDIR=/tmp TMPDIR=/nonexistent go test -count=1
       ./internal/worktree -run TestPool` exits non-zero with the `TestMain`
-      creation error and runs no test.
+      creation error and runs no test. The `GOTMPDIR` half keeps the go driver's
+      own work directory valid; without it the driver fails first and the probe
+      never reaches `TestMain` (reviewer-approved correction to the spec).
 - [x] Probe (c), recorded: a temporary `t.Fatal` in one test with a clean home
       makes the package FAIL; removed, the package passes.
 - [x] After `go test -count=1 ./internal/worktree`, the private home path the
