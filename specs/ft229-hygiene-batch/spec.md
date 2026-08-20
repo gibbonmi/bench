@@ -303,6 +303,7 @@ Live classes and their disposition:
 - `internal/systemtest/`
 - `internal/anchors/registry_data.go`
 - `internal/conformance/`
+- `projects/benchkit.md` — the input-source row a new conformance check must carry
 - `internal/structure/`
 - `.bench/hooks/block-dangerous-git.sh`
 - `.bench/hooks/session-start.sh`

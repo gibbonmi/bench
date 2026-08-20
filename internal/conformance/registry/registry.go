@@ -139,6 +139,7 @@ var Checks = []Check{
 	{Name: "injected-port-registry", Implementation: "checkInjectedPortRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "guidance-prose-budgets", Implementation: "checkGuidanceProseBudgets", Tier: Dev, Subject: SubjectRoot, Inputs: InputBenchkitProfile},
 	{Name: "roadmap-detail-integrity", Implementation: "ValidateRoadmapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputRoadmapBoard},
+	{Name: "structure-accept-currency", Implementation: "ValidateAcceptGrants", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
