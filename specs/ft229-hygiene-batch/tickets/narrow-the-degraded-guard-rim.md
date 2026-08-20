@@ -22,3 +22,4 @@ unreachable and `bench` off PATH.
 - [ ] with no reachable core, a command whose `git` text appears only in a path or an unrelated envelope field is allowed (H21).
 - [ ] an envelope carrying no readable command field is refused (H22).
 - [ ] the guard's documented honest-mistake threat model is unchanged (H33).
+- [ ] an escaped shell operator decodes to the operator, and an escape the decoder cannot read refuses (H35).
