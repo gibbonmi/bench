@@ -249,7 +249,9 @@ bite (the FT106 discipline).
 - `internal/conformance/workflow_checks_test.go`
 - `internal/conformance/native_workflow_test.go`
 - `internal/conformance/registry_test.go`
+- `internal/conformance/tier_test.go`
 - `tests/canary/package-core-guard/preflight-publish-order-bypassed/`
+- `tests/canary/compliance-hardening/mutable-workflow-action/MUTATE.json`
 - `decisions/assets/gate-pipeline-fixture-inventory.md`
 - `docs/release-runbook.md`
 - `specs/ft230-release-through-bench/`
