@@ -75,6 +75,8 @@ means the repository-controlled compliance assessment.
 
 **FT222 (MEDIUM, decision required) — delegate-tier routing has one source in `projects/benchkit.md`.**
 
+**FT239 (MEDIUM, decision required) — the adapter seam: a versioned capability matrix, and parity tests that prove one core.**
+
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 
 **FT58 (LOW) — hardened pool roots.**
@@ -82,6 +84,8 @@ means the repository-controlled compliance assessment.
 **FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
 
 **FT99 (LOW) — spec problem-premise verification.**
+
+**FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
 
 **FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
 
@@ -229,6 +233,8 @@ and signing-key custody remain outside this repository-controlled roadmap.
 
 **FT232 (EXPERIMENT, decision required) — repair-loop tripwire: an advisory signal from gate records.**
 
+**FT240 (EXPERIMENT, decision required) — iq retrieval experiment: token-budgeted search against the EKS monorepo.**
+
 ## Dependencies
 
 The dependent FT is named first. Only the literal table blocks work; the
@@ -239,6 +245,7 @@ recommended table is sequencing advice.
 | FT | Depends on | Why |
 |---|---|---|
 | FT100 | FT231 | Editorial cuts to the guidance surface without measurement are coin flips; the harness is what tells a cut from a regression. |
+| FT240 | FT231 | The adoption rule is a measured three-arm comparison; without the harness the experiment cannot grade its result. |
 
 ### Recommended
 
@@ -252,6 +259,8 @@ recommended table is sequencing advice.
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT233 | FT199 | Both edit the landing refusal surface; the coordinator settles which refusals survive. |
+| FT239 | FT222 | FT222 decides where routing's one source lives; the capability record joins that file rather than opening a second one. |
+| FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
 
 ### Goal track: guidance prose
 
