@@ -23,6 +23,13 @@ type NPMCLIRegistry struct {
 	// Registry is the npm registry URL npm publishes against (defaults to the
 	// npm CLI's own configured registry when empty).
 	Registry string
+	// Access is the --access value publish carries; empty leaves npm's own
+	// default. Scoped @redbench/* packages need "public" or they publish
+	// private.
+	Access string
+	// Provenance appends --provenance to publish. It is opt-in: a CI runner
+	// can attest a build, an operator's laptop generally cannot.
+	Provenance bool
 }
 
 func NewNPMCLIRegistry(registry string) *NPMCLIRegistry {
@@ -59,6 +66,12 @@ func (n *NPMCLIRegistry) Publish(ctx context.Context, name, version, tag string,
 		return "", err
 	}
 	args := append([]string{"publish", file, "--tag", tag}, n.registryArgs()...)
+	if n.Access != "" {
+		args = append(args, "--access", n.Access)
+	}
+	if n.Provenance {
+		args = append(args, "--provenance")
+	}
 	if _, err := n.run(ctx, dir, args...); err != nil {
 		return "", err
 	}
