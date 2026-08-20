@@ -14,7 +14,7 @@ import (
 // it, so the staleness signal and the emitter can never watch different files.
 const HandoffFile = "capture/session-handoff.md"
 
-// appendHandoff adds the handoff-staleness signal (sev 11): the commits that landed since
+// appendHandoff adds the handoff-staleness signal (sev 12): the commits that landed since
 // the handoff was last written. It turns "trust git over the handoff" from a rule the next
 // session must recall into an ambient fact the SessionStart hook already prints.
 //
@@ -37,7 +37,7 @@ func appendHandoff(rows []row, root string) []row {
 		return rows
 	}
 	detail := fmt.Sprintf("written at %s, %s behind", Short(written), Plural(behind, "commit", "commits"))
-	return append(rows, row{11, "handoff", detail, commandAction(handoffAction)})
+	return append(rows, row{12, "handoff", detail, commandAction(handoffAction)})
 }
 
 // handoffWrittenAt returns the commit that last wrote the handoff, and whether the age is

@@ -29,6 +29,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/retros"
@@ -90,6 +91,7 @@ const (
 	roadmapAction
 	structureAction
 	retireSpecAction
+	closeTicketsAction
 	handoffAction
 	gitPushAction
 	gitStatusAction
@@ -132,6 +134,7 @@ var actionDefinitions = [actionCount]actionDefinition{
 	roadmapAction:           {kind: actionBench, command: "bench roadmap"},
 	structureAction:         {kind: actionBench, command: "bench structure"},
 	retireSpecAction:        {kind: actionBench, command: "bench spec retire", argument: oneWordArgument},
+	closeTicketsAction:      {kind: actionBench, command: "bench commit --spec", argument: oneWordArgument},
 	handoffAction:           {kind: actionBench, command: "bench handoff"},
 	gitPushAction:           {kind: actionGit, command: "git push"},
 	gitStatusAction:         {kind: actionGit, command: "git status"},
@@ -337,6 +340,7 @@ func SignalsWith(root string, query Query) []Signal {
 	rows = appendRetirement(rows, root)
 	rows = appendOrphanedPickup(rows, root)
 	rows = appendRoadmapReconcile(rows, root)
+	rows = appendTicketsOnly(rows, root)
 	rows = appendHandoff(rows, root)
 
 	// Ascending numeric sort by severity; each severity is unique, so ordering is
@@ -907,6 +911,26 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 		details = append(details, Plural(dangling, "row names a retired spec", "rows name a retired spec"))
 	}
 	return append(rows, row{10, "roadmap", strings.Join(details, ", "), commandAction(drainPhaseAction)})
+}
+
+// appendTicketsOnly adds the tickets-only residue signal (sev 11): a specs/<slug>/ that a
+// light-path landing wrote and never consumed. It names the command that closes one, so the
+// row is actionable without a lookup, and it fires only on a nonzero count — residue is
+// debt, and a clean tree must not spend a row of the five-row budget saying so. It closes
+// the housekeeping band below retirement (8) and orphaned pickups (9), so a count of
+// residue never displaces a more urgent row.
+//
+// The tickets-only shape comes from landing.TicketsOnlyFolders, the same predicate
+// `bench commit --spec` consumes — one definition, so the count and the close step can
+// never disagree about what residue is. An unreadable specs/ counts nothing, the posture
+// the other advisory housekeeping rows take.
+func appendTicketsOnly(rows []row, root string) []row {
+	slugs, err := landing.TicketsOnlyFolders(root)
+	if err != nil || len(slugs) == 0 {
+		return rows
+	}
+	detail := Plural(len(slugs), "tickets-only spec folder", "tickets-only spec folders")
+	return append(rows, row{11, "specs", detail, commandActionWithArgument(closeTicketsAction, "<slug>")})
 }
 
 // retirementCount counts live folder specs that spec.AwaitsRetirement marks — a merged spec
