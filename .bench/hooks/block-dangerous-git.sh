@@ -80,7 +80,7 @@ fail_closed_no_core() {
 # decode. Failing is a refusal upstream, so an envelope this cannot read is never an
 # empty command.
 envelope_command() {
-  local rest before value ch esc i n
+  local rest before value ch esc i n hex dec oct chr
   rest=${input#*'"tool_input"'}
   [[ "$rest" == "$input" ]] && return 1
   before=$rest
@@ -108,9 +108,27 @@ envelope_command() {
         t) value=$value$'\t' ;;
         r) value=$value$'\r' ;;
         b | f) value="$value " ;;
-        # A \uXXXX escape decodes to one opaque placeholder: it keeps the word
-        # structure the scan below reads without decoding UTF-16 in shell.
-        u) value="${value}_"; i=$(( i + 4 )) ;;
+        # A \uXXXX escape in the ASCII range decodes to its own byte: Go's
+        # encoding/json escapes & < > by default, so a control operator or a
+        # command name reaches this decoder escaped as often as literal, and a
+        # placeholder there hides the operator the scan below looks for. Above
+        # ASCII the placeholder stands, since no such rune is a shell operator.
+        # \u0000 refuses: bash cannot carry NUL, so decoding it would silently
+        # truncate the command this guard is deciding about.
+        u)
+          hex=${rest:i+2:4}
+          [[ "$hex" == [0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f] ]] || return 1
+          if [[ "$hex" == 00[0-7][0-9A-Fa-f] ]]; then
+            printf -v dec '%d' "0x$hex"
+            (( dec == 0 )) && return 1
+            printf -v oct '%03o' "$dec"
+            printf -v chr "\\$oct"
+            value=$value$chr
+          else
+            value="${value}_"
+          fi
+          i=$(( i + 4 ))
+          ;;
         '"' | '\' | /) value="$value$esc" ;;
         *) return 1 ;;
       esac

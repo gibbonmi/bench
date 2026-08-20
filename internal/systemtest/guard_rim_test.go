@@ -77,6 +77,32 @@ func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
 		t.Errorf("nested wrapper = (%d, %q, %q), want the core's one-level depth (exit 0)", nested.code, nested.stdout, nested.stderr)
 	}
 
+	// H35 — the decoder the narrowing introduced. Go's encoding/json HTML-escapes
+	// & < > by default, so a shell operator reaches this rim escaped at least as
+	// often as literal. A \uXXXX branch that collapses to a placeholder welds two
+	// commands into one token, `git` stops being in command position, and the
+	// destructive half is allowed — the exact fail-open this row exists to hold shut.
+	// The allowed cases pin the other half: decoding must not turn an ordinary
+	// escaped byte into a refusal.
+	for _, escaped := range []struct {
+		name, envelope string
+		want           int
+	}{
+		{"escaped && before a destructive verb", `{"tool_name":"Bash","tool_input":{"command":"cat notes.md \u0026\u0026 git push --force"}}`, 2},
+		{"escaped semicolon before a destructive verb", `{"tool_name":"Bash","tool_input":{"command":"ls \u003b git reset --hard"}}`, 2},
+		{"escaped pipe before a destructive verb", `{"tool_name":"Bash","tool_input":{"command":"echo x \u007c\u007c git clean -fd"}}`, 2},
+		{"escaped && before a benign command", `{"tool_name":"Bash","tool_input":{"command":"cat notes.md \u0026\u0026 ls .github"}}`, 0},
+		{"escaped redirect", `{"tool_name":"Bash","tool_input":{"command":"echo hi \u003e out.txt"}}`, 0},
+		{"non-ascii escape stays a placeholder", `{"tool_name":"Bash","tool_input":{"command":"echo \u00e9 cafe"}}`, 0},
+		{"NUL escape refuses rather than truncating", `{"tool_name":"Bash","tool_input":{"command":"git \u0000 push"}}`, 2},
+		{"malformed escape refuses", `{"tool_name":"Bash","tool_input":{"command":"ls \u00zz"}}`, 2},
+	} {
+		result := run(escaped.envelope)
+		if result.code != escaped.want {
+			t.Errorf("H35 %s = (%d, %q, %q), want exit %d", escaped.name, result.code, result.stdout, result.stderr, escaped.want)
+		}
+	}
+
 	// H22 — the narrowing must not turn an unreadable envelope into an empty command.
 	// Each of these carries no command the rim can read, and each must refuse.
 	for _, unreadable := range []struct{ name, envelope string }{
