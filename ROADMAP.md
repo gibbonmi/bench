@@ -215,8 +215,6 @@ Host IAM, OS sandboxing, endpoint controls, firewalls, server-side branch
 protection, central CI administration, SIEM/retention, registry administration,
 and signing-key custody remain outside this repository-controlled roadmap.
 
-**FT230 (MEDIUM, release track) — the release workflow publishes only through `bench release submit/promote`.**
-
 ## Parked and scheduled work
 
 **FT6 (LOW, parked pending evidence — leave parked):**
