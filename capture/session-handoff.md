@@ -2,41 +2,49 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `8c8aca6`, 3 dirty paths, 2 unpushed commits
-Spec: `specs/worktree-exec-run-binary/spec.md` (Status: staged)
-Gate: green at `6d5bd7a` — stale, work tree `fc6abe7`
+Branch: `main`
 
 ## State
 
-**This session's build — `worktree-exec-run-binary`, reviewed and ready to land.**
-The spec is staged at 22 rows. Three commits sit green on the retained
-integration source, addressed by label as `worktree-exec-run-binary`:
+`worktree-exec-run-binary` is landed, published, and retired. Nothing about it
+is open.
 
-- frozen review base `8c8aca66`
-- source tip `99bf27ee` — `ebf1ac7b` (exec roots the child at the worktree's own
-  wrapper), `290febc7` (the gate entry names its next action), `99bf27ee`
-  (closes the review's three accepted findings)
+`bench worktree exec <target> -- ./dist/bench gate` now runs. It refused every
+time before: `craft-delegate` addresses a worktree through `exec`, the profile
+says to exercise a worktree artifact through that worktree's own `./dist/bench`,
+and composed they produced a command the gate entry always refused. The child is
+now marked wrapper-rooted so its gate owns a private exact-source build, and the
+gate entry's refusal names the wrapper invocation instead of a variable no
+operator sets.
 
-Three-axis review ran and its pickup file is resolved and deleted. A Coverage
-re-review of the repair returned zero findings. WX20 is demonstrated by a
-controlled A/B: exec driven by the unfixed binary refuses with the reworded
-message, exec driven by the fixed binary runs all six phases green. That
-evidence still needs recording in the retro.
+The reviewer reopened the resolution fork once, on a `fable`/high finding:
+pointing the child at the worktree's `dist/bench` would make it *inherit*, and an
+inherited selection is verified against its own seal rather than its source, so a
+stale artifact could grade the tree.
 
-Main carries two spec commits (`8c8aca66`, `529956b7`) that the source
-deliberately does not have — spec edits red `paths-authorized` inside a build
-diff. The two file sets are disjoint, so they compose at land.
+**Everything now open is capture, and all of it belongs to `/bench-drain`:**
 
-**Blocking the landing:** the destination is not clean. `capture/learnings.md`,
-`capture/agent-performance/claude-models.md`, and the untracked
-`capture/retros/` are the prior FT229 session's, uncommitted since roughly
-05:00 and waiting on the drain. This session has not touched them.
+- 6 open learnings — three from FT229, three from this build. The load-bearing
+  one is the landing's undocumented ordering rule: a mid-build spec amendment
+  must become the source's base, never a commit inside the reviewed range.
+- 4 parked ideas, including the `bench worktree path` tilde form that its own
+  sibling verbs reject, and a CONTEXT.md glossary term for the executable the
+  gate authorizes and runs.
+- 2 pending retros: `ft229-hygiene-batch` and `worktree-exec-run-binary`.
+- `capture/agent-performance/claude-models.md`, refreshed and uncommitted.
+- `ROADMAP.md` still carries three FT229 references including the FT174
+  dependency row FT229 unblocks. FT223 has a fourth occurrence to record.
 
-Two learnings this session owes, still unwritten for the same reason: asserting
-a repo convention from artifacts rather than from the check that grades them,
-and reaching for raw `git merge --ff-only` because no Bench verb moves a
-worktree to a new base. A third is worth capturing: a gate verdict reused from
-cache proves nothing about the path under test, so evidence runs need `--fresh`.
+The retro and scorecard are uncommitted by design — `/bench-final-check` is
+forbidden from committing them, and the drain owns their capture commit.
+
+Eight landed worktrees remain, all from FT229. `bench worktree clean --landed`
+plans `retain` for every one: each carries uncommitted tracked changes, so the
+sweep refuses to remove work. They need per-path resolution by whoever owns them.
+
+## Next command
+
+`/bench-drain`
 
 ## Shape
 
