@@ -25,7 +25,7 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, a commit dry-run, the heredoc guard gap, and a run-binary glossary term.**
+**FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, two `bench commit` gaps, the heredoc guard gap, and a run-binary glossary term.**
 
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
@@ -46,8 +46,6 @@ means the repository-controlled compliance assessment.
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
 **FT224 (MEDIUM) — a lifecycle refusal names the component that failed and the command that fixes it.**
-
-**FT225 (MEDIUM, decision required) — reviewed landing has no path for a spec the review amended.**
 
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
 
@@ -75,6 +73,8 @@ means the repository-controlled compliance assessment.
 
 **FT208 (MEDIUM, decision required) — skills-index producer-hardening residuals: one refusal grammar, per-shape marker diagnostics, and HI14's seam.**
 
+**FT222 (MEDIUM, decision required) — delegate-tier routing has one source in `projects/benchkit.md`.**
+
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 
 **FT58 (LOW) — hardened pool roots.**
@@ -92,8 +92,6 @@ means the repository-controlled compliance assessment.
 **FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
 
 **FT220 (LOW) — `/bench-write-spec` censuses shared decision readers before ticket slicing.**
-
-**FT222 (LOW, decision required) — a standing per-repair-class delegate-tier preference in `projects/benchkit.md`.**
 
 **FT236 (LOW) — `craft-review` visit: what a string expectation proves, and where an axis under-reads.**
 
@@ -279,6 +277,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT225: decide whether a review may amend the spec in the source it reviewed. Decision-required and the most-evidenced blocker in the landing path — every reviewed landing that amends its spec pays a hand-committed detour, and a rebase is the only route through today's checks until this is decided.
-2. `/bench-write-spec` — FT233: landing refusals say what to do next. Now the most-evidenced landing row at seven occurrences, including a five-refusal chain in one attempt where no two refusals named the same precondition.
-3. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. FT228 added the two worst faces: a mis-rooted gate that reports an environment skip, and a `release` refusal naming a flag `release` rejects.
+1. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at seven occurrences, and now the top of the path FT225 vacated: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
+2. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. The spec-byte face closed with FT225; what remains is the four-cause identity string and a `release` refusal naming a flag `release` rejects.
+3. `/bench-write-spec` — FT238: the hygiene batch, now five pieces at six occurrences. Cheapest actionable row on the board, and every piece is a friction the last three builds paid.
