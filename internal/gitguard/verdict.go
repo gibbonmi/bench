@@ -19,7 +19,7 @@ func classify(sub string, args []string, viaXargs bool, chk Checker) string {
 			return denyLabels["reset"]
 		}
 	case "clean":
-		if contains(args, "--force") || anyShortFlagHas(args, "f") {
+		if forced(args) {
 			return denyLabels["clean"]
 		}
 	case "branch":
@@ -202,12 +202,16 @@ func stashVerdict(args []string) string {
 // file work and stay allowed. git rm spells recursion only as `-r`/`-R`, so there is no
 // long form to test beside the cluster.
 func rmVerdict(args []string) bool {
-	forced := contains(args, "--force") || anyShortFlagHas(args, "f")
-	recursive := anyShortFlagHas(args, "rR")
-	return forced && recursive
+	return forced(args) && anyShortFlagHas(args, "rR")
 }
 
 // --- shared helpers -----------------------------------------------------------
+
+// forced reports whether the invocation carries git's force option in either spelling.
+// clean and rm both deny on it, so the two rules read it from one place.
+func forced(args []string) bool {
+	return contains(args, "--force") || anyShortFlagHas(args, "f")
+}
 
 func hasExplicitPathspec(args []string) bool {
 	idx := indexOf(args, "--")

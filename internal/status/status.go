@@ -921,9 +921,8 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 // residue never displaces a more urgent row.
 //
 // The tickets-only shape comes from landing.TicketsOnlyFolders, the same predicate
-// `bench commit --spec` consumes — one definition, so the count and the close step can
-// never disagree about what residue is. An unreadable specs/ counts nothing, the posture
-// the other advisory housekeeping rows take.
+// `bench commit --spec` consumes. An unreadable specs/ counts nothing, the posture the
+// other advisory housekeeping rows take.
 func appendTicketsOnly(rows []row, root string) []row {
 	slugs, err := landing.TicketsOnlyFolders(root)
 	if err != nil || len(slugs) == 0 {

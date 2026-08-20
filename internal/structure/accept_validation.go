@@ -9,15 +9,13 @@ import (
 
 // ValidateAcceptGrants grades the accept list of a live tree: every reviewer grant in
 // <root>/.bench/structure-accept must still name a scanned subject and must still carry
-// its reason. It exists because `bench structure` prints those two conditions as report
-// text and leaves the exit code alone — deliberately, so an ambient run is never reddened
-// by list hygiene — which means nothing observed them. This is the observer: the gate's
-// conformance registry runs it against the graded root, so a grant that outlived its file
-// or lost its reason reds the oracle instead of scrolling past in a report.
+// its reason. `bench structure` prints those two conditions as report text and leaves the
+// exit code alone, so an ambient run is never reddened by list hygiene; the gate's
+// conformance registry runs this against the graded root, where a grant that outlived its
+// file or lost its reason reds the oracle.
 //
-// It re-derives nothing. The parse, the staleness rule, and the diagnostic wording all
-// come from the same loadAccepts/filterSources/staleAcceptWarnings the report uses, so the
-// check cannot drift from the command it grades.
+// The parse, the staleness rule, and the diagnostic wording come from the same
+// loadAccepts/filterSources/staleAcceptWarnings the report uses.
 //
 // An absent or grant-free accept file is silence, not a finding: the registry grades roots
 // that are not the kit, and a tree with no grants has nothing to keep current. Only once a
