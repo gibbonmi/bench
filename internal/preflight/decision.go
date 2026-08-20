@@ -29,10 +29,17 @@ type Facts struct {
 	ReviewBaseResolved bool
 	ReviewBaseHint     string
 
-	// SourceBase and SourceTip are the full identities pinned by an explicit-base
-	// invocation. Empty values preserve the existing implicit-base presentation.
+	// SourceBase is the base an explicit-base invocation pinned; it alone gates the
+	// `source` presentation, so an implicit-base invocation still prints no source
+	// table. SourceTip is the derived source tip either way — the snapshot head an
+	// explicit range captured, or HEAD.
 	SourceBase string
 	SourceTip  string
+
+	// PinnedSourceTip is the commit --source-tip named, already resolved to its full
+	// identity by the gatherer, and empty when the flag is omitted. Resolving it is
+	// the gatherer's job; whether it agrees with SourceTip is Decide's.
+	PinnedSourceTip string
 
 	// ExplicitSourceRange records that the invocation supplied --base. Its validity
 	// comes from the same resolved source range that supplies ReviewBaseResolved,
@@ -81,7 +88,7 @@ const (
 	modeBuild = "build"
 )
 
-// Verdict is Decide's complete answer: the five check rows, in fixed order, and
+// Verdict is Decide's complete answer: the check rows, in fixed order, and
 // whether any of them is red — the caller's exit-code source. A not-applicable row
 // never contributes to Red: it is a printed, definitive verdict in its own right,
 // not a soft pass standing in for a real one.
@@ -90,22 +97,30 @@ type Verdict struct {
 	Red    bool
 }
 
-// Decide classifies immutable Facts into the five-check verdict. It performs no I/O
-// and consults nothing but its argument, so the same Facts value always yields the
-// same Verdict — the byte-identical-rerun guarantee lives here. Mode applicability
-// lives here rather than in the gatherer: an explicit source range makes
-// base-current grade that range's validity, while a bare invocation grades default
-// branch ancestry. Build mode always runs paths-authorized, runs rows-owned and
+// Decide classifies immutable Facts into the verdict. It performs no I/O and
+// consults nothing but its argument, so the same Facts value always yields the same
+// Verdict — the byte-identical-rerun guarantee lives here. Mode applicability lives
+// here rather than in the gatherer: an explicit source range makes base-current
+// grade that range's validity, while a bare invocation grades default branch
+// ancestry. Build mode always runs paths-authorized, runs rows-owned and
 // rows-membership for real only when specs/<slug>/tickets/ exists, and never runs
 // diff-nonempty.
+//
+// tip-current is the one conditional row: it appears only when --source-tip pinned a
+// tip, directly after base-current, so the two halves of the source identity are
+// graded together and ahead of every check that presupposes that identity. An
+// invocation with no pin renders exactly the five rows it always has.
 func Decide(f Facts) Verdict {
-	checks := []CheckResult{
-		baseCurrentCheck(f),
+	checks := []CheckResult{baseCurrentCheck(f)}
+	if f.PinnedSourceTip != "" {
+		checks = append(checks, tipCurrentCheck(f))
+	}
+	checks = append(checks,
 		pathsAuthorizedCheck(f),
 		rowsOwnedRow(f),
 		rowsMembershipRow(f),
 		diffNonemptyRow(f),
-	}
+	)
 	red := false
 	for _, c := range checks {
 		if c.Verdict == verdictRed {
@@ -163,6 +178,20 @@ func baseCurrentCheck(f Facts) CheckResult {
 		return red("base-current", "default branch tip is not an ancestor of HEAD")
 	}
 	return green("base-current")
+}
+
+// tipCurrentCheck verifies the reviewer's frozen tip against the one preflight
+// derived. Both values are already-resolved full identities, so a pin spelled as a
+// branch or as HEAD is green whenever it names the same commit — the check grades
+// agreement, not spelling.
+func tipCurrentCheck(f Facts) CheckResult {
+	if f.SourceTip == "" {
+		return red("tip-current", "source tip does not resolve, so --source-tip "+f.PinnedSourceTip+" cannot be verified")
+	}
+	if f.PinnedSourceTip != f.SourceTip {
+		return red("tip-current", "--source-tip "+f.PinnedSourceTip+" is not the derived source tip "+f.SourceTip)
+	}
+	return green("tip-current")
 }
 
 func pathsAuthorizedCheck(f Facts) CheckResult {
