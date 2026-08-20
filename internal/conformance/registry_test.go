@@ -144,7 +144,6 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"preflight-native-upload-bypassed":       conformanceFixture(".bench/gate.sh"),
 	"preflight-release-call-bypassed":        conformanceFixture(".bench/gate.sh"),
 	"preflight-publish-needs-bypassed":       conformanceFixture(".bench/gate.sh"),
-	"preflight-publish-order-bypassed":       conformanceFixture(".bench/gate.sh"),
 	"reproducibility-byte-compare-bypassed":  conformanceFixture(".bench/gate.sh"),
 	"release-future-owner-omitted":           conformanceFixture(".bench/gate.sh"),
 	"release-public-profile-omitted":         conformanceFixture(".bench/gate.sh"),

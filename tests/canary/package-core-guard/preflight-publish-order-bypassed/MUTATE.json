@@ -1,1 +1,0 @@
-[{"path":".github/workflows/release.yml","old":"      - name: Publish wrapper","new":"      - name: Publish final package"}]

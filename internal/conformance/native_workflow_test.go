@@ -155,12 +155,6 @@ func checkReleasePreflight(root string) []string {
 			diags = append(diags, "publication does not wait for finalized evidence and every native proof row")
 		}
 	}
-	if release != "" {
-		platform, wrapper := strings.Index(release, "name: Publish platform packages"), strings.Index(release, "name: Publish wrapper")
-		if platform < 0 || wrapper < platform {
-			diags = append(diags, "release publication is not platform-first and wrapper-last")
-		}
-	}
 	if !regexp.MustCompile(`(?m)^toolchain go[0-9]+\.[0-9]+\.[0-9]+$`).MatchString(readIfExists(filepath.Join(root, "go.mod"))) {
 		diags = append(diags, "release preflight requires an exact Go patch toolchain")
 	}

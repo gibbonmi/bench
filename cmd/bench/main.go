@@ -137,7 +137,7 @@ var commandRegistry = []commandDefinition{
 
 	{Name: "release-preflight", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 28, Suffix: " --mode verify|publish [--profile public|bank] [--phase name]", Description: "run repository release authorization"}), Run: func(c Command, args []string) int { return releasepreflight.Command(args, version, c.Stderr) }},
 	{Name: "prep-release", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 27, Description: "ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary"}), Run: func(c Command, args []string) int { return preprelease.Command(args, c.Stdout, c.Stderr) }},
-	{Name: "release", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 29, Suffix: " prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--message text]", Description: "governed npm publication"}), Run: func(c Command, args []string) int { return publication.Command(args, c.Stdout, c.Stderr) }},
+	{Name: "release", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 29, Suffix: " prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]", Description: "governed npm publication"}), Run: func(c Command, args []string) int { return publication.Command(args, c.Stdout, c.Stderr) }},
 }
 
 func outputCommand(fn func([]string) (string, int)) commandHandler {

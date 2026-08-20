@@ -12,6 +12,11 @@ type workflowTriggerShape struct {
 	pullRequest, pushBranches, mainBranch bool
 }
 
+// releaseSubmitInvocation is the whole publish command, binary path included: the
+// verifier CI runs must be the one it compiled from the tag's checkout, and the
+// adapter and provenance selections are what make the run reach real npm.
+const releaseSubmitInvocation = `dist/bench release submit --version "${GITHUB_REF_NAME#v}" --profile public --path first --adapter npm --provenance --registry https://registry.npmjs.org`
+
 // The workflow seam is the job body: these checks parse job ownership before
 // asserting that evidence follows all native proof rows.
 func checkReleaseWorkflow(root string) []string {
@@ -30,8 +35,23 @@ func checkReleaseWorkflow(root string) []string {
 	if !strings.Contains(readIfExists(filepath.Join(root, "scripts", "build-artifacts.sh")), "scripts/release-plan.mjs") {
 		diags = append(diags, "artifact builder does not derive targets from the canonical release plan")
 	}
-	for message, anchor := range map[string]string{"release workflow does not run full publish preflight": "scripts/release-preflight.sh --mode publish", "release workflow does not publish to npm": "npm publish", "release workflow does not publish with provenance": "provenance", "release workflow does not require capabilities on the gate step": requireCapabilitiesGateStep("--mode publish --profile public")} {
+	for message, anchor := range map[string]string{"release workflow does not run full publish preflight": "scripts/release-preflight.sh --mode publish", "release workflow does not publish through bench release submit": releaseSubmitInvocation, "release workflow does not require capabilities on the gate step": requireCapabilitiesGateStep("--mode publish --profile public")} {
 		if !strings.Contains(text, anchor) {
+			diags = append(diags, message)
+		}
+	}
+	// Publication authority is the state machine alone: a raw publish bypasses the
+	// resumable, digest-verified path, and promotion is the reviewer's attended act.
+	for message, anchor := range map[string]string{"release workflow publishes with raw npm publish": "npm publish", "release workflow promotes from CI": "release promote"} {
+		if strings.Contains(text, anchor) {
+			diags = append(diags, message)
+		}
+	}
+	// Scoped to the publish job, never the file: the authorize job uploads
+	// publish-preflight-evidence itself, so a file-wide contains passes on its bytes.
+	publish := workflowJob(text, "publish")
+	for message, anchor := range map[string]string{"release workflow publish job does not download the publish preflight evidence": "name: publish-preflight-evidence\n", "release workflow publish job does not upload the publication record": "name: publication-record\n"} {
+		if !strings.Contains(publish, anchor) {
 			diags = append(diags, message)
 		}
 	}
@@ -153,6 +173,88 @@ func nativeWorkflowTriggers(text string) workflowTriggerShape {
 		}
 	}
 	return shape
+}
+
+// TestReleaseWorkflowPublicationBites proves every publication-authority diagnostic
+// red-capable: each case mutates the live release workflow into a temp root whose
+// only other content is the release plan the check gates on.
+func TestReleaseWorkflowPublicationBites(t *testing.T) {
+	kit, err := findKitRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	plan, err := os.ReadFile(filepath.Join(kit, "scripts", "release-plan.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "scripts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "scripts", "release-plan.json"), plan, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	workflowBytes, err := os.ReadFile(filepath.Join(kit, ".github", "workflows", "release.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := string(workflowBytes)
+	path := filepath.Join(root, ".github", "workflows", "release.yml")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	diagnose := func(t *testing.T, broken string) string {
+		t.Helper()
+		if broken == workflow {
+			t.Fatal("release workflow mutation changed nothing")
+		}
+		if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return strings.Join(checkReleaseWorkflow(root), "\n")
+	}
+	// The publish job's own bytes are what must carry the evidence handoff, so both
+	// scoping cases leave the artifact name present elsewhere in the file.
+	for _, bite := range []struct {
+		name, broken, want, cheat string
+	}{
+		{
+			name:   "raw npm publish returns",
+			broken: workflow + "      - run: npm publish dist/artifacts/redbench-0.0.0.tgz --access public\n",
+			want:   "release workflow publishes with raw npm publish",
+		},
+		{
+			name:   "submit invocation drops the npm adapter",
+			broken: strings.Replace(workflow, "--adapter npm ", "", 1),
+			want:   "release workflow does not publish through bench release submit",
+		},
+		{
+			name:   "publish job stops downloading preflight evidence",
+			broken: strings.Replace(workflow, "          name: publish-preflight-evidence\n          path: dist/preflight\n", "", 1),
+			want:   "release workflow publish job does not download the publish preflight evidence",
+			cheat:  "name: publish-preflight-evidence",
+		},
+		{
+			name:   "publish job stops uploading the publication record",
+			broken: strings.Replace(strings.Replace(workflow, "          name: publication-record\n", "", 1), "          name: publish-preflight-evidence\n          path: dist/preflight/\n", "          name: publication-record\n          path: dist/preflight/\n", 1),
+			want:   "release workflow publish job does not upload the publication record",
+			cheat:  "name: publication-record",
+		},
+		{
+			name:   "CI promotes",
+			broken: workflow + "      - run: dist/bench release promote --version \"${GITHUB_REF_NAME#v}\"\n",
+			want:   "release workflow promotes from CI",
+		},
+	} {
+		t.Run(bite.name, func(t *testing.T) {
+			if bite.cheat != "" && !strings.Contains(bite.broken, bite.cheat) {
+				t.Fatalf("mutation removed %q file-wide, so it does not exercise the unscoped-contains cheat", bite.cheat)
+			}
+			if diagnostics := diagnose(t, bite.broken); !strings.Contains(diagnostics, bite.want) {
+				t.Fatalf("mutation did not bite with %q:\n%s", bite.want, diagnostics)
+			}
+		})
+	}
 }
 
 func TestNativeWorkflowEvidenceEdgeBites(t *testing.T) {

@@ -11,7 +11,14 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const usageLine = "usage: bench release prepare|submit|promote|rollback|status --version <version> [--profile public|bank] [--root <dir>] [--registry <base-url>] [--path first|staged] [--message <text>]"
+const usageLine = "usage: bench release prepare|submit|promote|rollback|status --version <version> [--profile public|bank] [--root <dir>] [--registry <base-url>] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message <text>]"
+
+// The two registry adapters --adapter selects between. The default is the
+// hermetic fixture: reaching the real registry is always an explicit opt-in.
+const (
+	adapterFixture = "fixture"
+	adapterNPM     = "npm"
+)
 
 // Command is the `bench release <prepare|submit|promote|rollback|status>`
 // entry point. It is idempotent and non-interactive: prepare only verifies
@@ -28,88 +35,122 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	sub := args[0]
-	root, version, profile, registryBase, path, message, usageErr := parseCommandArgs(args[1:])
+	parsed, usageErr := parseCommandArgs(args[1:])
 	if usageErr != nil {
 		fmt.Fprintln(stdout, usageErr.Error())
 		return 2
 	}
-	if root == "" {
-		var err error
-		root, err = os.Getwd()
+	if parsed.root == "" {
+		root, err := os.Getwd()
 		if err != nil {
 			fmt.Fprintln(stdout, toon.Errorf("input", "could not resolve the working directory"))
 			return 1
 		}
+		parsed.root = root
 	}
-	root, _ = filepath.Abs(root)
+	parsed.root, _ = filepath.Abs(parsed.root)
 
 	switch sub {
 	case "prepare":
-		return runPrepare(root, version, stdout, stderr)
+		return runPrepare(parsed.root, parsed.version, stdout, stderr)
 	case "submit":
-		return runSubmit(root, version, profile, registryBase, path, stdout, stderr)
+		return runSubmit(parsed, stdout, stderr)
 	case "promote":
-		return runPromote(root, version, profile, registryBase, stdout, stderr)
+		return runPromote(parsed, stdout, stderr)
 	case "rollback":
-		return runRollback(root, version, profile, registryBase, message, stdout, stderr)
+		return runRollback(parsed, stdout, stderr)
 	case "status":
-		return runStatus(root, stdout)
+		return runStatus(parsed.root, stdout)
 	default:
 		fmt.Fprintln(stdout, toon.Usage("bench release", sub))
 		return 2
 	}
 }
 
-func parseCommandArgs(args []string) (root, version, profile, registryBase, path, message string, err error) {
+// releaseArgs is one parsed `bench release` invocation. adapter is always
+// resolved (it defaults to the fixture, with no environment twin — a real
+// publish is spelled out on the command line or it does not happen).
+type releaseArgs struct {
+	root         string
+	version      string
+	profile      string
+	registryBase string
+	path         string
+	message      string
+	adapter      string
+	provenance   bool
+}
+
+func parseCommandArgs(args []string) (releaseArgs, error) {
+	parsed := releaseArgs{adapter: adapterFixture}
 	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--root":
-			i++
-			if i >= len(args) {
-				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--root value"))
-			}
-			root = args[i]
-		case "--version":
-			i++
-			if i >= len(args) {
-				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--version value"))
-			}
-			version = args[i]
-		case "--profile":
-			i++
-			if i >= len(args) {
-				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--profile value"))
-			}
-			profile = args[i]
-		case "--registry":
-			i++
-			if i >= len(args) {
-				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--registry value"))
-			}
-			registryBase = args[i]
-		case "--path":
-			i++
-			if i >= len(args) {
-				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--path value"))
-			}
-			path = args[i]
-		case "--message":
-			i++
-			if i >= len(args) {
-				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--message value"))
-			}
-			message = args[i]
-		default:
-			return "", "", "", "", "", "", fmt.Errorf("%s", toon.Usage("bench release", args[i]))
+		flag := args[i]
+		if flag == "--provenance" {
+			parsed.provenance = true
+			continue
 		}
+		var target *string
+		switch flag {
+		case "--root":
+			target = &parsed.root
+		case "--version":
+			target = &parsed.version
+		case "--profile":
+			target = &parsed.profile
+		case "--registry":
+			target = &parsed.registryBase
+		case "--path":
+			target = &parsed.path
+		case "--message":
+			target = &parsed.message
+		case "--adapter":
+			target = &parsed.adapter
+		default:
+			return releaseArgs{}, fmt.Errorf("%s", toon.Usage("bench release", flag))
+		}
+		i++
+		if i >= len(args) {
+			return releaseArgs{}, fmt.Errorf("%s", toon.MissingArg("bench release", flag+" value"))
+		}
+		*target = args[i]
 	}
-	if profile != "" && profile != "public" && profile != "bank" {
-		return "", "", "", "", "", "", fmt.Errorf("%s", toon.Usage("bench release", "--profile "+profile))
+	if parsed.profile != "" && parsed.profile != "public" && parsed.profile != "bank" {
+		return releaseArgs{}, fmt.Errorf("%s", toon.Usage("bench release", "--profile "+parsed.profile))
 	}
-	if path != "" && path != "first" && path != "staged" {
-		return "", "", "", "", "", "", fmt.Errorf("%s", toon.Usage("bench release", "--path "+path))
+	if parsed.path != "" && parsed.path != "first" && parsed.path != "staged" {
+		return releaseArgs{}, fmt.Errorf("%s", toon.Usage("bench release", "--path "+parsed.path))
 	}
-	return root, version, profile, registryBase, path, message, nil
+	if parsed.adapter != adapterFixture && parsed.adapter != adapterNPM {
+		return releaseArgs{}, fmt.Errorf("%s", toon.Usage("bench release", "--adapter "+parsed.adapter))
+	}
+	return parsed, nil
+}
+
+// resolveRegistryBase applies the BENCH_RELEASE_REGISTRY fallback once, so
+// submit, promote, and rollback share one answer for which registry base this
+// invocation addresses — the same value the selected adapter is built from.
+func (a *releaseArgs) resolveRegistryBase() string {
+	if a.registryBase == "" {
+		a.registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
+	}
+	return a.registryBase
+}
+
+// newRegistry resolves the one adapter selection into the registry the state
+// machine drives. Selection is a CLI concern: every state-machine entry point
+// takes the Registry port and never learns which adapter it got. Credentials
+// stay ambient — the npm adapter reads the npm config/environment itself, and
+// nothing here ever holds or records a token.
+func newRegistry(args releaseArgs) Registry {
+	if args.adapter != adapterNPM {
+		return NewFixtureRegistry(args.registryBase)
+	}
+	registry := NewNPMCLIRegistry(args.registryBase)
+	registry.Provenance = args.provenance
+	if args.profile == "public" {
+		registry.Access = "public"
+	}
+	return registry
 }
 
 func runPrepare(root, version string, stdout, stderr io.Writer) int {
@@ -142,7 +183,8 @@ func runPrepare(root, version string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func runSubmit(root, version, profile, registryBase, path string, stdout, stderr io.Writer) int {
+func runSubmit(args releaseArgs, stdout, stderr io.Writer) int {
+	root, version, profile, path := args.root, args.version, args.profile, args.path
 	if version == "" {
 		fmt.Fprintln(stdout, toon.MissingArg("bench release submit", "--version"))
 		return 2
@@ -151,15 +193,18 @@ func runSubmit(root, version, profile, registryBase, path string, stdout, stderr
 		fmt.Fprintln(stdout, toon.MissingArg("bench release submit", "--profile"))
 		return 2
 	}
-	if registryBase == "" {
-		registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
-	}
-	if registryBase == "" {
+	if args.resolveRegistryBase() == "" {
 		fmt.Fprintln(stdout, toon.MissingArg("bench release submit", "--registry or BENCH_RELEASE_REGISTRY"))
 		return 2
 	}
 	if path == "" {
 		path = "first"
+	}
+	if path == "staged" && args.adapter == adapterNPM {
+		// Refused up front — before the release lock and before any registry
+		// call — so a staged run can never die in the middle of a publication.
+		fmt.Fprintln(stdout, toon.Errorf("unsatisfied release intent", "staged submission is not implemented for the npm adapter; publish with --path first"))
+		return 1
 	}
 	release, err := AcquireReleaseLock(root)
 	if err != nil {
@@ -169,8 +214,8 @@ func runSubmit(root, version, profile, registryBase, path string, stdout, stderr
 	defer release()
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
-	registry := NewFixtureRegistry(registryBase)
-	fmt.Fprintf(stderr, "release submit: publishing %s (profile %s, path %s) against %s\n", version, profile, path, registryBase)
+	registry := newRegistry(args)
+	fmt.Fprintf(stderr, "release submit: publishing %s (profile %s, path %s) against %s via the %s adapter\n", version, profile, path, args.registryBase, args.adapter)
 
 	var record Record
 	var nextAction string
@@ -199,7 +244,8 @@ func runSubmit(root, version, profile, registryBase, path string, stdout, stderr
 	return exit
 }
 
-func runPromote(root, version, profile, registryBase string, stdout, stderr io.Writer) int {
+func runPromote(args releaseArgs, stdout, stderr io.Writer) int {
+	root, version, profile := args.root, args.version, args.profile
 	if version == "" {
 		fmt.Fprintln(stdout, toon.MissingArg("bench release promote", "--version"))
 		return 2
@@ -208,10 +254,7 @@ func runPromote(root, version, profile, registryBase string, stdout, stderr io.W
 		fmt.Fprintln(stdout, toon.MissingArg("bench release promote", "--profile"))
 		return 2
 	}
-	if registryBase == "" {
-		registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
-	}
-	if registryBase == "" {
+	if args.resolveRegistryBase() == "" {
 		fmt.Fprintln(stdout, toon.MissingArg("bench release promote", "--registry or BENCH_RELEASE_REGISTRY"))
 		return 2
 	}
@@ -223,8 +266,8 @@ func runPromote(root, version, profile, registryBase string, stdout, stderr io.W
 	defer release()
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
-	registry := NewFixtureRegistry(registryBase)
-	fmt.Fprintf(stderr, "release promote: promoting %s against %s\n", version, registryBase)
+	registry := newRegistry(args)
+	fmt.Fprintf(stderr, "release promote: promoting %s against %s via the %s adapter\n", version, args.registryBase, args.adapter)
 	record, err := RunPromotion(ctx, root, version, profile, registry)
 	nextAction := "release-complete"
 	exit := 0
@@ -239,7 +282,8 @@ func runPromote(root, version, profile, registryBase string, stdout, stderr io.W
 	return exit
 }
 
-func runRollback(root, version, profile, registryBase, message string, stdout, stderr io.Writer) int {
+func runRollback(args releaseArgs, stdout, stderr io.Writer) int {
+	root, version, profile, message := args.root, args.version, args.profile, args.message
 	if version == "" {
 		fmt.Fprintln(stdout, toon.MissingArg("bench release rollback", "--version"))
 		return 2
@@ -248,10 +292,7 @@ func runRollback(root, version, profile, registryBase, message string, stdout, s
 		fmt.Fprintln(stdout, toon.MissingArg("bench release rollback", "--profile"))
 		return 2
 	}
-	if registryBase == "" {
-		registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
-	}
-	if registryBase == "" {
+	if args.resolveRegistryBase() == "" {
 		fmt.Fprintln(stdout, toon.MissingArg("bench release rollback", "--registry or BENCH_RELEASE_REGISTRY"))
 		return 2
 	}
@@ -266,8 +307,8 @@ func runRollback(root, version, profile, registryBase, message string, stdout, s
 	defer release()
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
-	registry := NewFixtureRegistry(registryBase)
-	fmt.Fprintf(stderr, "release rollback: rolling back %s against %s\n", version, registryBase)
+	registry := newRegistry(args)
+	fmt.Fprintf(stderr, "release rollback: rolling back %s against %s via the %s adapter\n", version, args.registryBase, args.adapter)
 	record, err := RunRollback(ctx, root, version, profile, message, registry)
 	nextAction := "prepare"
 	exit := 0

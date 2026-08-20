@@ -1,6 +1,6 @@
 # FT230 — the release workflow publishes only through `bench release submit`
 
-Status: staged
+Status: implemented
 
 Decision source: named reviewed artifact — `roadmap/FT230.md` (drained from the 2026-08 capability audit, item A7 in `docs/audits/2026-08-bench-capability/results-fable-high/action-items.yaml`), plus the reviewer's 2026-08-20 adapter-seam confirmation (`--adapter` flag, default `fixture`).
 
