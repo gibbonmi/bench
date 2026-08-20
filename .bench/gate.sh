@@ -14,7 +14,9 @@ kit="${BENCH_KIT:-$(cd "$gate_dir/.." && pwd)}"
 bench="${BENCH_RUN_BINARY:-}"
 case "$bench" in
   /*) ;;
-  *) echo "error: BENCH_RUN_BINARY must name the owner's absolute Bench executable" >&2; exit 1 ;;
+  *) echo "error: start the gate through the Bench wrapper: run 'bash bin/bench.sh gate' from the repository root" >&2
+     echo "       the wrapper selects the Bench executable and exports BENCH_RUN_BINARY, which is unset or not absolute here" >&2
+     exit 1 ;;
 esac
 if [[ ! -f "$bench" || ! -x "$bench" || -L "$bench" ]]; then
   echo "error: BENCH_RUN_BINARY is not a regular executable" >&2

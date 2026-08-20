@@ -75,45 +75,72 @@ func checkGateEntryContract(root string) []string {
 	return diags
 }
 
+// gateEntryWrapperAction is the invocation the wrapper-less refusal must name. The
+// run-binary variable is wrapper-owned, so naming it alone leaves a session that
+// meets the refusal with no next action.
+const gateEntryWrapperAction = "bash bin/bench.sh gate"
+
 func TestGateEntryRefusesUnverifiedBinaryBeforeGatePhases(t *testing.T) {
 	h := NewHarness(t)
-	root := t.TempDir()
-	if probe := runAt(root, "git", "init", "-q"); probe == nil || probe.ExitCode != 0 {
-		t.Fatalf("git init failed: %+v", probe)
-	}
-	nested := filepath.Join(root, "nested [*] path")
-	if err := os.MkdirAll(nested, 0o755); err != nil {
-		t.Fatalf("mkdir nested gate cwd: %v", err)
-	}
-	kit := filepath.Join(t.TempDir(), "kit [*] path")
-	gatePath := writeGateEntryFixture(t, h, kit)
+	_, _, nested, gatePath := newGateEntryFixture(t, h)
 
-	env := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
-	probe := runAtEnv(nested, env, "bash", gatePath)
-	if probe == nil || probe.ExitCode == 0 {
-		t.Fatalf("gate entry exit = %+v, want an untrusted-binary refusal", probe)
+	stripped := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	absent := gateEntryRefusal(t, nested, stripped, gatePath)
+	if !strings.Contains(absent, runbinary.Env) {
+		t.Fatalf("gate entry missing selected-path refusal:\n%s", absent)
 	}
-	output := probe.Stdout + probe.Stderr
-	if !strings.Contains(output, runbinary.Env) {
-		t.Fatalf("gate entry missing selected-path refusal:\n%s", output)
+	if !strings.Contains(absent, gateEntryWrapperAction) {
+		t.Fatalf("gate entry refusal names no next action, want %q:\n%s", gateEntryWrapperAction, absent)
 	}
-	if strings.Contains(output, "phase ") {
-		t.Fatalf("gate entry resolved phases before refusing its unverified binary:\n%s", output)
+	if strings.Contains(strings.ToLower(absent), "worktree") {
+		t.Fatalf("gate entry refusal names a worktree, but it fires for every wrapper-less caller:\n%s", absent)
+	}
+	if strings.Contains(absent, "phase ") {
+		t.Fatalf("gate entry resolved phases before refusing its unverified binary:\n%s", absent)
+	}
+
+	relative := gateEntryRefusal(t, nested, runbinary.WithEnv(stripped, "dist/bench"), gatePath)
+	if relative != absent {
+		t.Fatalf("relative run-binary refusal = %q, want the absent-value refusal %q", relative, absent)
+	}
+}
+
+// TestGateEntryKeepsTheLaterRefusalWording pins the two refusals after the
+// wrapper-less one: each already names a condition an operator can act on, so a
+// reword of the first must not reach them.
+func TestGateEntryKeepsTheLaterRefusalWording(t *testing.T) {
+	h := NewHarness(t)
+	_, kit, nested, gatePath := newGateEntryFixture(t, h)
+	stripped := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+
+	plain := filepath.Join(kit, "dist", "not [*] executable")
+	writeFixtureFile(t, plain, "#!/usr/bin/env bash\nexit 0\n")
+	if got, want := gateEntryRefusal(t, nested, runbinary.WithEnv(stripped, plain), gatePath), "error: "+runbinary.Env+" is not a regular executable"; !strings.Contains(got, want) {
+		t.Fatalf("non-executable refusal = %q, want it to contain %q", got, want)
+	}
+
+	physical := filepath.Join(kit, "physical [*] dir")
+	linked := filepath.Join(kit, "linked [*] dir")
+	if err := os.MkdirAll(physical, 0o755); err != nil {
+		t.Fatalf("mkdir physical gate dir: %v", err)
+	}
+	if err := os.Symlink(physical, linked); err != nil {
+		capability.Environment(t, "symbolic links unavailable: "+err.Error())
+	}
+	staged := filepath.Join(physical, "bench")
+	writeFixtureFile(t, staged, "#!/usr/bin/env bash\nexit 0\n")
+	if err := os.Chmod(staged, 0o755); err != nil {
+		t.Fatalf("chmod staged gate binary: %v", err)
+	}
+	viaLink := filepath.Join(linked, "bench")
+	if got, want := gateEntryRefusal(t, nested, runbinary.WithEnv(stripped, viaLink), gatePath), "error: "+runbinary.Env+" must be a cleaned physical path"; !strings.Contains(got, want) {
+		t.Fatalf("physical-path refusal = %q, want it to contain %q", got, want)
 	}
 }
 
 func TestGateEntryRejectsLegacyBeforeRunningOldTableAndRunsReplacementOnce(t *testing.T) {
 	h := NewHarness(t)
-	root := t.TempDir()
-	if probe := runAt(root, "git", "init", "-q"); probe == nil || probe.ExitCode != 0 {
-		t.Fatalf("git init failed: %+v", probe)
-	}
-	nested := filepath.Join(root, "nested [*] path")
-	if err := os.MkdirAll(nested, 0o755); err != nil {
-		t.Fatalf("mkdir nested gate cwd: %v", err)
-	}
-	kit := filepath.Join(t.TempDir(), "kit [*] path")
-	gatePath := writeGateEntryFixture(t, h, kit)
+	root, kit, nested, gatePath := newGateEntryFixture(t, h)
 	publishGateFixtureBench(t, kit, fmt.Sprintf("#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) test \"$2\" = %q || exit 97; exit 2 ;;\ngate-phases) test \"$BENCH_KIT\" = %q || exit 98; printf 'old phase\\n'; printf 'old\\n' >> \"$2/.git/gate-phases-ran\" ;;\nesac\n", kit, kit))
 	selected := filepath.Join(kit, "dist", "bench")
 	env := runbinary.WithEnv(os.Environ(), selected)
@@ -153,6 +180,34 @@ func TestGateEntryRejectsLegacyBeforeRunningOldTableAndRunsReplacementOnce(t *te
 	if got, want := string(runs), "replacement\nreplacement\n"; got != want {
 		t.Fatalf("phase table runs = %q, want %q", got, want)
 	}
+}
+
+// gateEntryRefusal runs the gate entry as a real subprocess and returns the
+// combined output of a run that must refuse before reaching the phase table.
+func gateEntryRefusal(t *testing.T, dir string, env []string, gatePath string) string {
+	t.Helper()
+	probe := runAtEnv(dir, env, "bash", gatePath)
+	if probe == nil || probe.ExitCode == 0 {
+		t.Fatalf("gate entry exit = %+v, want a refusal", probe)
+	}
+	return probe.Stdout + probe.Stderr
+}
+
+// newGateEntryFixture stages a gate entry under a git root, returning the root, the
+// kit it reads, a nested working directory whose glob characters must survive
+// quoting, and the script path.
+func newGateEntryFixture(t *testing.T, h Harness) (root, kit, nested, gatePath string) {
+	t.Helper()
+	root = t.TempDir()
+	if probe := runAt(root, "git", "init", "-q"); probe == nil || probe.ExitCode != 0 {
+		t.Fatalf("git init failed: %+v", probe)
+	}
+	nested = filepath.Join(root, "nested [*] path")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatalf("mkdir nested gate cwd: %v", err)
+	}
+	kit = filepath.Join(t.TempDir(), "kit [*] path")
+	return root, kit, nested, writeGateEntryFixture(t, h, kit)
 }
 
 func writeGateEntryFixture(t *testing.T, h Harness, kit string) string {

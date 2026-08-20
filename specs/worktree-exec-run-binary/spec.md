@@ -1,6 +1,6 @@
 # Worktree exec run binary
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation, 2026-08-20. Three forks closed by the reviewer: the contradiction resolves in code rather than in prose; the ticket set is rewritten whole to cover that resolution, the gate-entry reword, and an explicit FT223 exclusion; and, after the first review round found that pointing the child at the worktree's own `dist/bench` would make `bench test` and `bench commit` reuse a possibly-stale artifact against the profile's private-exact-source rule, the child is marked wrapper-rooted so its gate owns a private exact-source build instead.
 
