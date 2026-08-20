@@ -2,15 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main`
+Branch: `main` — HEAD `f8f90cc`, clean tree, 18 unpushed commits
+Spec: `specs/land-spec-amendments/spec.md` (Status: staged)
+Gate: green at `97e6b15` — stale, work tree `01d3cd8`
 
 ## State
 
-FT225 is specified and signed off. `specs/land-spec-amendments/spec.md`
-(`Status: staged`, 13 coverage rows, verification log: 2 iterations to accept)
-and its three tickets are committed at `58bac422`. The reviewer approved the
-spec, the ticket breakdown, and the `fable / high` line for the guidance
-ticket. FT225's roadmap row stays until shipped.
+FT225 is implemented and awaiting semantic review. `/bench-implement-spec --full`
+is mid-run: all three tickets of `specs/land-spec-amendments/spec.md` committed
+green, serially, on one retained integration source.
+
+Retained integration source: assignment `5cb7d3bb7fd94540461c8951ba854102`,
+request id `ft225-land-spec-amendments`, label `land-spec-amendments`.
+Frozen review base `f8f90cc5`; source tip `7664600c`. The destination (`main`)
+is still at `f8f90cc5` and clean. Both preflight modes are green on that source.
+
+Landed on the source, in order: `12194544` implicit `specs/<slug>/`
+authorization in `pathsAuthorizedCheck` (LS7-LS11); `cb1462a6` the landing
+publishes the source's spec bytes and neutralizes the spec path before the
+merge (LS1-LS6, LS12, LS13); `7664600c` the review-phase guidance names the
+landing source as where a spec amendment commits (story 14).
+
+Each ticket was probed twice — once by its author, once by the coordinator at a
+different site and mutation kind — and every probe came back red. The published
+commit's parents are asserted at both the unit and end-to-end seams.
 
 Closed decisions that stay closed (also recorded in the spec): the landing
 publishes `Implemented(source-tip spec bytes)` and the composition neutralizes
@@ -20,16 +35,15 @@ existing spec-path fact; the reviewer's typed `--base` and `--source-tip` are
 the acceptance; the in-range fence-widening exposure is a named Won't handle
 with the typed range as the control.
 
-Ticket order on one retained integration source: 1
-`authorize-the-spec-folder-implicitly`, 2 `publish-the-source-spec-bytes`
-(blocked by 1), 3 `name-the-amendment-cadence-in-review-guidance`. The spec's
-explicit self-fence entry is deliberate bootstrap — this build is the last one
-that needs it.
+Two calls this run made, both flagged for veto: review axes run at the cheap
+tier per standing preference rather than the profile's mid, and that drift is
+queued for `capture/learnings.md`; the landing runs without a further pause
+because `--full` over a signed-off spec is its standing approval. Nothing is
+pushed — that stays reviewer-owned.
 
 ## Next command
 
-`/bench-implement-spec` — land-spec-amendments, in a fresh mid-tier session on
-one retained integration source
+`/bench-review-implementation`
 
 ## Shape
 
