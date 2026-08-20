@@ -354,6 +354,7 @@ func discardIgnored(plan CleanupPlan) error {
 		if _, err := ignoredLstat(full); err != nil {
 			return errStaleFingerprint
 		}
+		warnBeforeRemovingLiveBinary(plan.Target, full)
 		if err := os.Remove(full); err != nil {
 			return fmt.Errorf("discard ignored path: %w", err)
 		}
