@@ -6,45 +6,40 @@ Branch: `main`
 
 ## State
 
-`worktree-exec-run-binary` is landed, published, and retired. Nothing about it
-is open.
+`/bench-drain` reconciled the board and emptied every capture source. Pinned
+pre-commit HEAD: `f297ec4d`.
 
-`bench worktree exec <target> -- ./dist/bench gate` now runs. It refused every
-time before: `craft-delegate` addresses a worktree through `exec`, the profile
-says to exercise a worktree artifact through that worktree's own `./dist/bench`,
-and composed they produced a command the gate entry always refused. The child is
-now marked wrapper-rooted so its gate owns a private exact-source build, and the
-gate entry's refusal names the wrapper invocation instead of a variable no
-operator sets.
-
-The reviewer reopened the resolution fork once, on a `fable`/high finding:
-pointing the child at the worktree's `dist/bench` would make it *inherit*, and an
-inherited selection is verified against its own seal rather than its source, so a
-stale artifact could grade the tree.
-
-**Everything now open is capture, and all of it belongs to `/bench-drain`:**
-
-- 6 open learnings — three from FT229, three from this build. The load-bearing
-  one is the landing's undocumented ordering rule: a mid-build spec amendment
-  must become the source's base, never a commit inside the reviewed range.
-- 4 parked ideas, including the `bench worktree path` tilde form that its own
-  sibling verbs reject, and a CONTEXT.md glossary term for the executable the
-  gate authorizes and runs.
-- 2 pending retros: `ft229-hygiene-batch` and `worktree-exec-run-binary`.
-- `capture/agent-performance/claude-models.md`, refreshed and uncommitted.
-- `ROADMAP.md` still carries three FT229 references including the FT174
-  dependency row FT229 unblocks. FT223 has a fourth occurrence to record.
-
-The retro and scorecard are uncommitted by design — `/bench-final-check` is
-forbidden from committing them, and the drain owns their capture commit.
-
-Eight landed worktrees remain, all from FT229. `bench worktree clean --landed`
-plans `retain` for every one: each carries uncommitted tracked changes, so the
-sweep refuses to remove work. They need per-path resolution by whoever owns them.
+- `ft229-hygiene-batch` verified shipped (`5a9f3a54`) and removed from the
+  board; its `## Next` audit-portfolio section is gone (A1, A2, A3, A6, FT228,
+  FT229 all landed). FT174's audit-gated rewrite (drop the orphaned-ticket
+  half now that FT229's close step shipped) applied per
+  `docs/audits/2026-08-bench-capability/.../roadmap-dispositions.yaml`.
+- 4 ideas and both pending retros drained into existing rows (FT213, FT214,
+  FT223, FT225, FT233, FT169) and one new row, **FT238** (worktree-path
+  ergonomics, `bench commit --dry-run`, the heredoc guard gap, a run-binary
+  glossary term).
+- 6 open learnings plus one untracked legacy entry verdicted and removed; all
+  merged into the same existing rows above — none stood alone.
+- Repair-attribution tally from both retros: 13 tickets, 5 one-shots, 10
+  repair rounds (6 `spec-row`, 3 `other`, 1 `tree-drift`).
+- `## Recommended sequence` refreshed: FT225 stays #1 (decision-required
+  landing-amendment blocker); FT233 (7 occurrences) replaces the shipped
+  FT229 at #2, ahead of FT224 by occurrence-count tie-break — both MEDIUM,
+  both actionable, no stated dependency between them.
+- Flagged, not applied: FT169/FT224/FT233/FT225 all edit the landing-refusal
+  surface and are a restructure candidate for a future `--restructure` pass.
+  FT223's fourth occurrence (a reused-cache gate verdict) is a thematic
+  stretch onto a row about `bench commit`'s specific message, not `bench
+  gate`'s — flagged for veto rather than moved to FT213.
+- Eight landed worktrees remain from FT229, all `retain` under `bench worktree
+  clean --landed` (uncommitted tracked changes). Untouched by this drain;
+  still need per-path resolution by whoever owns them.
+- `capture/agent-performance/claude-models.md` was already refreshed and
+  uncommitted by `/bench-final-check`; included in this commit as-is.
 
 ## Next command
 
-`/bench-drain`
+`/bench-shape-idea`
 
 ## Shape
 

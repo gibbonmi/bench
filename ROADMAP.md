@@ -23,15 +23,9 @@ their active findings. Each finding still open appears exactly once on a
 `Sources` line below. `RR:` means the release-readiness assessment and `RC:`
 means the repository-controlled compliance assessment.
 
-## Next — the 2026-08 capability audit's active portfolio
-
-The audit's remaining action items, now board rows rather than an external
-pointer. A1, A2, A3, A6, and FT228 landed; this is what is left of the portfolio
-that is actionable today. The `## Recommended sequence` draws from here first.
-
-**FT229 (MEDIUM) — hygiene batch: residue, stale prose, and small CLI sharp edges.**
-
 ## Features, in priority order
+
+**FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, a commit dry-run, the heredoc guard gap, and a run-binary glossary term.**
 
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
@@ -259,7 +253,6 @@ recommended table is sequencing advice.
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
-| FT174 | FT229 | The light-path close step dispositions the orphaned tickets the grammar would otherwise be designed around. |
 | FT233 | FT199 | Both edit the landing refusal surface; the coordinator settles which refusals survive. |
 
 ### Goal track: guidance prose
@@ -286,6 +279,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT225: decide whether a review may amend the spec in the source it reviewed. Decision-required and the most-evidenced blocker in the landing path — every reviewed landing that amends its spec pays a hand-committed detour, and FT233's remedy wording depends on which way this goes.
-2. `/bench-write-spec` — FT229: the hygiene batch. Actionable, batched under one gate, and it now carries the preflight-grammar mismatch FT227's review phase hit.
-3. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. Now the most-evidenced diagnostic row, and FT228 added the two worst faces: a mis-rooted gate that reports an environment skip, and a `release` refusal naming a flag `release` rejects.
+1. `/bench-shape-idea` — FT225: decide whether a review may amend the spec in the source it reviewed. Decision-required and the most-evidenced blocker in the landing path — every reviewed landing that amends its spec pays a hand-committed detour, and a rebase is the only route through today's checks until this is decided.
+2. `/bench-write-spec` — FT233: landing refusals say what to do next. Now the most-evidenced landing row at seven occurrences, including a five-refusal chain in one attempt where no two refusals named the same precondition.
+3. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. FT228 added the two worst faces: a mis-rooted gate that reports an environment skip, and a `release` refusal naming a flag `release` rejects.
