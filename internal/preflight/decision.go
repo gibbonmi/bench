@@ -199,8 +199,9 @@ func pathsAuthorizedCheck(f Facts) CheckResult {
 		return red("paths-authorized", "review base does not resolve: "+f.ReviewBaseHint)
 	}
 	var unauthorized []string
+	entries := authorizingEntries(f)
 	for _, p := range f.ChangedPaths {
-		if !fenceAuthorizes(p, f.FenceEntries) {
+		if !fenceAuthorizes(p, entries) {
 			unauthorized = append(unauthorized, p)
 		}
 	}
@@ -208,6 +209,33 @@ func pathsAuthorizedCheck(f Facts) CheckResult {
 		return red("paths-authorized", "not authorized by any ownership fence: "+strings.Join(unauthorized, ", "))
 	}
 	return green("paths-authorized")
+}
+
+// authorizingEntries is every entry paths-authorized consults: the spec's declared
+// fence entries plus the active spec's own folder, which authorizes an in-range
+// amendment of the spec without a self-fence entry. The implicit entry is derived
+// from SpecPath rather than carried as its own fact, so the printed spec path and
+// the authorized folder cannot disagree, and it is appended to a copy so the gathered
+// FenceEntries slice is never mutated. Mode is deliberately not consulted: build
+// preflight, review preflight, and the landing's final source authorization all get
+// the same answer.
+func authorizingEntries(f Facts) []string {
+	folder := specFolder(f.SpecPath)
+	if folder == "" {
+		return f.FenceEntries
+	}
+	return append(append([]string{}, f.FenceEntries...), folder)
+}
+
+// specFolder is the directory containing the resolved spec, empty when the spec path
+// carries no directory at all. The result is an ordinary fence entry, so the
+// segment-boundary rule below is the one that grades it — never a second prefix rule.
+func specFolder(specPath string) string {
+	i := strings.LastIndex(specPath, "/")
+	if i < 0 {
+		return ""
+	}
+	return specPath[:i]
 }
 
 // fenceAuthorizes reports whether path is covered by one of the spec's declared

@@ -191,3 +191,53 @@ func TestDecideDiffNonempty(t *testing.T) {
 		t.Fatalf("diff-nonempty with an unresolved review base = %+v, want red", c)
 	}
 }
+
+// TestDecidePathsAuthorizedImplicitSpecFolder covers LS7-LS11: the active spec's own
+// folder authorizes changed paths without a declared fence entry, in every mode, at a
+// path-segment boundary, and beside the declared entries rather than in place of them.
+func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
+	// LS7: build preflight authorizes a path under the active spec's folder with no
+	// self-fence entry.
+	f := baseFacts()
+	f.Mode = "build"
+	f.ChangedPaths = []string{"specs/example/spec.md"}
+	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictGreen {
+		t.Errorf("LS7: build mode, path under the spec's own folder = %+v, want green", c)
+	}
+
+	// LS8: review preflight authorizes that same path the same way — a mode-keyed
+	// implicit entry leaves one of these two rows red.
+	f = baseFacts()
+	f.Mode = "review"
+	f.ChangedPaths = []string{"specs/example/spec.md"}
+	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictGreen {
+		t.Errorf("LS8: review mode, path under the spec's own folder = %+v, want green", c)
+	}
+
+	// LS9: a path under a different spec's folder stays unauthorized.
+	f = baseFacts()
+	f.ChangedPaths = []string{"specs/other/spec.md"}
+	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictRed {
+		t.Errorf("LS9: path under a foreign spec's folder = %+v, want red", c)
+	}
+
+	// LS10: a sibling folder whose name merely extends the slug stays unauthorized —
+	// the boundary is a path segment, not a string prefix.
+	f = baseFacts()
+	f.ChangedPaths = []string{"specs/example-two/notes.md"}
+	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictRed {
+		t.Errorf("LS10: sibling folder extending the slug = %+v, want red", c)
+	}
+
+	// LS11: declared entries keep their exact semantics — a path authorized only by a
+	// declared fence stays green, and one outside every fence and the spec folder is red.
+	f = baseFacts()
+	f.ChangedPaths = []string{"internal/example/foo.go"}
+	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictGreen {
+		t.Errorf("LS11: declared-fence-only path = %+v, want green", c)
+	}
+	f.ChangedPaths = []string{"unfenced/path.go"}
+	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictRed {
+		t.Errorf("LS11: path outside every fence and the spec folder = %+v, want red", c)
+	}
+}
