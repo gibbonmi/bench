@@ -7,28 +7,36 @@ Writes: internal/worktree/exec.go, internal/worktree/exec_test.go
 
 `bench worktree exec` strips the caller's kit, wrapper, and run-binary variables
 from its child, correctly — the caller's selection was built for the caller's
-run. But the gate's owner lookup reads the absence of both routing variables as
-"nobody owns this run" and returns nothing, so the gate plan's environment never
-gains a selection and the gate entry refuses. A child invoked as the profile
-directs, through the worktree's own `./dist/bench`, cannot reach a gate.
+run. The gate's owner lookup then reads the absence of both routing variables as
+"no one owns this run" and returns nothing, so the gate never selects a binary
+and the gate entry refuses. A child invoked as the profile directs, through the
+worktree's own `./dist/bench`, cannot reach a gate.
 
-After the strip, point the run-binary variable at the child worktree's own
-`dist/bench` when a regular file is present there. The worktree path arrives
-already absolute and cleaned — the assignment ledger refuses one that is not —
-so the artifact path inherits both properties rather than re-deriving them.
+After the strip, point `BENCH_WRAPPER` at the child worktree's own wrapper when
+a regular file sits at that path. The gate's owner lookup then owns the run and
+builds one private binary from the child's own source, which is what the profile
+requires of every gate and `bench test` run.
 
-Exec's added knowledge is exactly one predicate: a regular file exists at the
-artifact path. Every trust condition stays where it already lives, in the gate
-entry: absolute, executable, not a symbolic link, physical path equal to the
-given path, and fresh against the kit. Do not restate any of them here. A live
-symbolic link at the artifact path is therefore emitted, not filtered, and the
-gate entry refuses it — that split is the point, and the acceptance rows pin it.
-A component that names a path cannot authenticate that path, so the validator
-that launches the binary stays the independent one.
+Do not set the run-binary variable instead. That makes the child inherit, and
+the inherited path verifies the binary's own seal rather than checking it
+against its source, so an exec child's `bench test` or `bench commit` could
+reuse an artifact that had fallen behind the tree it grades.
 
-When no regular file sits at the artifact path — absent, a directory, a FIFO, a
+Discovery is one predicate: a regular file exists at the wrapper path. Do not
+inspect its content — an empty wrapper still sets the marker, because the
+marker's only readers are an owner lookup testing for non-emptiness and a doctor
+reporting a path. Nothing executes the value, so this ticket authenticates no
+executable and adds no third spelling of the launch-trust predicate.
+
+The worktree path arrives absolute and cleaned, canonicalized through symbolic
+links at creation and validated by the assignment ledger, so the wrapper path
+inherits both properties rather than re-deriving them.
+
+When no regular file sits at the wrapper path — absent, a directory, a FIFO, a
 device, a socket, or a dangling symbolic link — leave the variable unset and the
-child behaves as it does today.
+child behaves as it does today. A worktree of a linked project repository, whose
+wrapper sits under the vendored kit rather than at the worktree's own wrapper
+path, falls in that unset case by design.
 
 This ticket does not stop every abandonment of `bench worktree exec`. A child
 can still meet the inherited-verdict refusal that FT223 tracks, which also
@@ -36,19 +44,22 @@ misreports a partial verdict as a failure. FT223 owns that trigger and its own
 competing fixes; this ticket removes the other one.
 
 Evidence comes from running a real child through the exec path and reading the
-assignments it received, plus one composed run against a real worktree.
+assignments it received, plus one composed run against a real worktree recorded
+as ticket evidence.
 
 ## Acceptance
 
-- [ ] A child in a worktree holding a regular-file artifact receives the run-binary variable naming that worktree's artifact path.
+- [ ] A child in a worktree holding a regular-file wrapper receives the wrapper variable naming that worktree's wrapper path.
 - [ ] The emitted value is an absolute path.
-- [ ] A child never receives the caller's run-binary value.
-- [ ] A child receives neither the caller's kit nor the caller's wrapper variable.
+- [ ] A child's gate selects an owned binary rather than an inherited one.
+- [ ] A child never receives the caller's wrapper value.
+- [ ] A child receives neither the caller's kit nor the caller's run-binary variable.
 - [ ] A child receives every unrelated variable the caller set.
-- [ ] A child in a worktree with no artifact path receives no run-binary variable.
-- [ ] A child in a worktree whose artifact path is a directory receives no run-binary variable.
-- [ ] A child in a worktree whose artifact path is a FIFO receives no run-binary variable.
-- [ ] A child in a worktree whose artifact path is a dangling symbolic link receives no run-binary variable.
-- [ ] A child in a worktree whose artifact path is a live symbolic link to a regular file receives the variable, and the gate entry refuses that value.
-- [ ] A child's environment differs from today's by the run-binary assignment alone.
-- [ ] `bench worktree exec <target> -- ./dist/bench gate` over a clean worktree of this kit reports green.
+- [ ] A child in a worktree with no wrapper path receives no wrapper variable.
+- [ ] A child in a worktree whose wrapper path is a directory receives no wrapper variable.
+- [ ] A child in a worktree whose wrapper path is a FIFO receives no wrapper variable.
+- [ ] A child in a worktree whose wrapper path is a dangling symbolic link receives no wrapper variable.
+- [ ] A child in a worktree whose wrapper path is an empty regular file receives the wrapper variable.
+- [ ] A child running a verb that already owned its binary is unaffected.
+- [ ] A child's environment differs from today's by the wrapper assignment alone.
+- [ ] `bench worktree exec <target> -- ./dist/bench gate` over a clean worktree of this kit reports green, recorded as ticket evidence.

@@ -13,8 +13,10 @@ routing — is named. A session that reads it concludes the command it just ran 
 unusable and stops using it. That is observed behavior, not a hypothesis.
 
 Reword that one refusal in operator terms, naming the wrapper invocation as the
-next action. Leave the three later refusals in the block as they are; each
-already names a condition an operator can act on.
+next action. Leave the two later refusals in the block as they are — the
+regular-executable refusal, which covers the non-executable and symbolic-link
+cases in one message, and the physical-path refusal. Each already names a
+condition an operator can act on.
 
 Two constraints bound the wording. The refusal is not specific to
 `bench worktree exec` — any invocation reaching the gate entry without a wrapper
@@ -39,5 +41,5 @@ condition.
 - [ ] The refusal names no worktree.
 - [ ] The refusal text still contains the run-binary variable's name.
 - [ ] The gate entry with a valid absolute executable proceeds exactly as it does today.
-- [ ] The non-executable, symbolic-link, and uncleaned-path refusals keep their present wording.
+- [ ] The regular-executable and physical-path refusals keep their present wording.
 - [ ] The gate-entry test reds when the refusal drops the wrapper invocation, and that red is demonstrated and recorded.
