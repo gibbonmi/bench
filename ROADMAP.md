@@ -103,6 +103,8 @@ that is actionable today. The `## Recommended sequence` draws from here first.
 
 **FT236 (LOW) — `craft-review` visit: what a string expectation proves, and where an axis under-reads.**
 
+**FT237 (LOW) — `craft-line` states the common case behind ceiling-not-binding.**
+
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.**
 
 **FT101 (LOW) — per-context scope for monorepos: domain docs and profile.**
@@ -286,3 +288,4 @@ fixture-proven.
 
 1. `/bench-shape-idea` — FT225: decide whether a review may amend the spec in the source it reviewed. Decision-required and the most-evidenced blocker in the landing path — every reviewed landing that amends its spec pays a hand-committed detour, and FT233's remedy wording depends on which way this goes.
 2. `/bench-write-spec` — FT229: the hygiene batch. Actionable, batched under one gate, and it now carries the preflight-grammar mismatch FT227's review phase hit.
+3. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. Now the most-evidenced diagnostic row, and FT228 added the two worst faces: a mis-rooted gate that reports an environment skip, and a `release` refusal naming a flag `release` rejects.

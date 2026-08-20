@@ -2,46 +2,35 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `432a018`, clean tree, 12 unpushed commits
-Spec: `specs/ft228-debug-restoration/spec.md` (Status: staged)
-Gate: green at `ce1be93` — stale, work tree `a3e89fc`
+Branch: `main` — 21 unpushed commits, clean tree.
+Gate: green.
 
 ## State
 
-FT228 is implemented and reviewed. All four tickets plus one repair commit are
-green on the retained integration source, addressed as `ft228-integration`:
-frozen review base `c09a7d64`, source tip `fad39a89`. Three axes ran; Spec and
-Coverage returned clean, Standards returned one finding, and the repair commit
-carries it. Nothing of FT228 has reached `main` yet — `bench worktree land` is
-the remaining step, then `/bench-final-check`.
+The FT228 drain is closed. The retro, the refreshed Claude scorecard, and the
+one open learnings entry all took verdicts in one commit; `capture/IDEAS.md`,
+`capture/learnings.md`, and `capture/retros/` are empty.
 
-Three unplanned fixes landed on `main` first (`ba23d877`, `23cdfc29`,
-`432a018b`), under `specs/light-path-worktree-exec-kit-leak/`: `bench worktree
-exec` leaked the caller's wrapper routing into a differently-rooted child,
-`kit_dir` named the wrapper's tree rather than the tree being worked on, and a
-reclaim test substring-matched a randomly quoted fingerprint. Together the
-first two made any gate run inside a worktree of this kit drop its `race` and
-`system` phases and report red over a clean tree. `dist/bench` was rebuilt and the
-end-to-end proof ran: `bench worktree exec` now reaches a full-shape green gate
-with no environment workaround.
+Dispositions: FT224 gained the two worst diagnostic faces FT228 exposed — a
+mis-rooted gate that drops phases and reports an unstaged environment instead,
+and a `worktree release` refusal pointing at `--discard-ignored`, a flag
+`release` rejects — plus the `worktree land` light-path refusal, which carries a
+reviewer decision on whether the verb should serve a tickets-only spec. FT213
+took the red-attribution and probe-derivation occurrences. FT214 took the
+spec-authoring learning: a spec flipping an invocation policy enumerates every
+surface the harness matches, and a spec adding fixtures verifies the family's
+registration or fences the registry. FT237 is new and LOW: `craft-line` states
+the common case behind ceiling-not-binding.
 
-Two open items for the reviewer, neither blocking:
+No spec was retired — `specs/` holds only light-path directories with no
+`spec.md`, which sit outside `bench spec retire`'s universe.
 
-`bench worktree land` refuses a light-path worktree — it requires a reviewed
-spec's `spec.md` and ownership fence, and a light-path spec is a tickets-only
-directory. The three fixes reached `main` by fast-forward instead.
-
-Ticket 04's stale-row pass gives a narrow canary root a dozen diagnostics beside
-its intended red. Coverage confirmed no fixture `EXPECT` collides with that
-text, so none passes for the wrong reason; the repair commit states the
-behavior where the pass is written rather than scoping the check, which would
-make it guess which absences are real.
-
-Undrained: `capture/learnings.md` carries the FT228 spec round's entry.
+Nothing is pushed. The push is the reviewer's.
 
 ## Next command
 
-`git push` — the board's leading invocable signal (`git`).
+`/bench-shape-idea` — FT225: decide whether a review may amend the spec in the
+source it reviewed.
 
 ## Shape
 
