@@ -2,41 +2,36 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `bef5248`, 4 dirty paths, 25 unpushed commits
-Spec: none staged.
-Gate: green at `e4f2fcc` — stale.
+Branch: `main` — HEAD `883aa362`, clean tree, 3 unpushed commits
+Spec: `specs/ft230-release-through-bench/spec.md` — Status: staged, reviewer-approved 2026-08-20, two tickets.
+Gate: green at `883aa362`.
 
 ## State
 
-The drain is complete and committed. `capture/IDEAS.md`, `capture/learnings.md`,
-and `capture/retros/` are all empty; the roadmap is reconciled against the tree.
-Nothing is pushed — 26 unpushed commits on `main` await the reviewer.
+FT230's spec is staged, reviewed (2 iterations to accept), signed off, and
+committed. The build has not started. Two tickets under
+`specs/ft230-release-through-bench/tickets/`: `wire-adapter-selection.md`
+(frontier) then `swap-workflow-and-flip-conformance.md` (blocked by the first).
+Lines: group A opus/high, groups B and C opus/medium.
 
-FT225 shipped and its row is retired. Its shipped behavior invalidated a face in
-two other rows, both corrected here: FT233 no longer carries the staged-spec
-byte-difference diagnostic, and FT224 no longer carries the spec-byte refusal.
-The landing now publishes the reviewed source's spec bytes, so a spec amendment
-commits inside the reviewed range like any other change.
+Decisions that stay closed: `--adapter npm|fixture` defaults to `fixture` with
+no environment twin; the tag push is the reviewer's attended act, so CI submit
+does not violate the runbook's presence rule; promotion stays out of CI. The
+build retires two step-name byte contracts (the platform-first diagnostic in
+`native_workflow_test.go` and the `preflight-publish-order-bypassed` canary)
+after ticket 1 lands their replacement ordering assertion — retirements are
+approved, recorded in the spec.
 
-Two reviewer decisions are queued on the board rather than in capture. FT162 now
-carries the handoff-timing collision: committing the handoff at a phase boundary
-puts the destination ahead of a retained source's frozen base and reds the next
-review preflight's `base-current`, harmless to the landing but training sessions
-to read past red. FT222 now carries the competing delegate-tier source:
-`projects/benchkit.md` routes review axes mid, one harness's private memory
-routes them cheap, and nothing in the tree reconciles them. FT222 moved from LOW
-to MEDIUM on that second face — a contestable call, open to veto.
-
-Once FT222 is decided, the losing routing is deleted rather than left in place.
-If the profile wins, the harness memory entry naming cheap-tier review axes goes.
-
-`bench worktree clean --landed` plans zero removals: eight pre-existing worktrees
-are retained as dirty on ignored `dist/` artifacts, none from a recent landing,
-each needing its own per-path resolution.
+Earlier this session, the reviewed IntenTIC assessment folded into the board:
+FT231 and FT106 amended, FT239–FT241 created, FT239 cross-referenced to audit
+items A3/A12. The audit's P0/P1 spine is landed except A7, which is this FT230
+spec. `capture/learnings.md` holds one undrained entry (the FT230 review-miss
+learning with a proposed `craft-spec` rule change).
 
 ## Next command
 
-`/bench-write-spec` — FT233, landing refusals say what to do next.
+`/bench-implement-spec ft230-release-through-bench` — fresh mid-tier session,
+tickets serial on one retained integration source.
 
 ## Shape
 
