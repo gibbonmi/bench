@@ -40,6 +40,8 @@ func classify(sub string, args []string, viaXargs bool, chk Checker) string {
 		}
 	case "rebase":
 		return denyLabels["rebase"]
+	case "filter-branch":
+		return denyLabels["filter-branch"]
 	case "commit":
 		if contains(args, "--amend") {
 			return denyLabels["amend"]
@@ -59,6 +61,14 @@ func classify(sub string, args []string, viaXargs bool, chk Checker) string {
 	case "worktree":
 		if worktreeVerdict(args) {
 			return denyLabels["worktree"]
+		}
+	case "stash":
+		if key := stashVerdict(args); key != "" {
+			return denyLabels[key]
+		}
+	case "rm":
+		if rmVerdict(args) {
+			return denyLabels["rm-force"]
 		}
 	}
 	return ""
@@ -165,6 +175,36 @@ func worktreeVerdict(args []string) bool {
 		}
 	}
 	return false
+}
+
+// stashVerdict blocks the two stash operations that discard work, leaving the rest of
+// the verb (bare, list, pop, push, apply, …) usable. The operation is the first free
+// arg, resolved the way reflog resolves `expire`: options are skipped but their values
+// are not, and neither is anything after `--`, so `git stash -m drop` and
+// `git stash -- drop` reach the same verdict as the positional spelling.
+func stashVerdict(args []string) string {
+	op, ok := firstFreeArg(args)
+	if !ok {
+		return ""
+	}
+	switch op {
+	case "drop":
+		return "stash-drop"
+	case "clear":
+		return "stash-clear"
+	}
+	return ""
+}
+
+// rmVerdict blocks only the recursive-and-forced combination, reading short-flag
+// clusters the way clean's force test does (so `-rf` counts as both). An ordinary
+// `git rm <path>`, a `git rm -r <dir>`, and a `git rm --cached <path>` are ordinary
+// file work and stay allowed. git rm spells recursion only as `-r`/`-R`, so there is no
+// long form to test beside the cluster.
+func rmVerdict(args []string) bool {
+	forced := contains(args, "--force") || anyShortFlagHas(args, "f")
+	recursive := anyShortFlagHas(args, "rR")
+	return forced && recursive
 }
 
 // --- shared helpers -----------------------------------------------------------
@@ -295,12 +335,13 @@ func hasAny(args []string, opts ...string) bool {
 	return false
 }
 
-// anyShortFlagHas reports whether any `-…` short-flag cluster contains one of the given
-// letters (the `clean -f`/`-fd` test: an arg starting with `-` whose remainder contains
-// the letter).
+// anyShortFlagHas reports whether any short-flag cluster contains one of the given
+// letters (the `clean -f`/`-fd` test: an arg starting with a single `-` whose remainder
+// contains the letter). A `--long` option is not a cluster — the `r` in `--force` is
+// part of a name, not a flag — so each rule spells its long forms out separately.
 func anyShortFlagHas(args []string, letters string) bool {
 	for _, arg := range args {
-		if strings.HasPrefix(arg, "-") && strings.ContainsAny(arg[1:], letters) {
+		if strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--") && strings.ContainsAny(arg[1:], letters) {
 			return true
 		}
 	}

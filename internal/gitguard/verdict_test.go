@@ -86,6 +86,25 @@ func TestClassifyVerdicts(t *testing.T) {
 		{"worktree remove mixed blocks", "git worktree remove --force .claude/worktrees/a wt2", refYes, "git worktree remove --force"},
 		{"worktree remove bare blocks", "git worktree remove --force", refYes, "git worktree remove --force"},
 
+		// stash discard, filter-branch, rm -rf
+		{"stash drop", "git stash drop", refYes, "git stash drop"},
+		{"stash drop with a flag", "git stash drop -q", refYes, "git stash drop"},
+		{"stash clear", "git stash clear", refYes, "git stash clear"},
+		{"stash drop only as a flag value", "git stash -m drop", refYes, "git stash drop"},
+		{"stash clear only after a double dash", "git stash -- clear", refYes, "git stash clear"},
+		{"stash bare allowed", "git stash", refYes, ""},
+		{"stash list allowed", "git stash list", refYes, ""},
+		{"stash pop allowed", "git stash pop", refYes, ""},
+		{"filter-branch bare", "git filter-branch", refYes, "git filter-branch"},
+		{"filter-branch with filters", "git filter-branch --index-filter x HEAD", refYes, "git filter-branch"},
+		{"rm -rf cluster", "git rm -rf build", refYes, "git rm -rf"},
+		{"rm -r -f split", "git rm -r -f build", refYes, "git rm -rf"},
+		{"rm --force -r", "git rm --force -r build", refYes, "git rm -rf"},
+		{"rm path allowed", "git rm stale.txt", refYes, ""},
+		{"rm -r allowed", "git rm -r vendor", refYes, ""},
+		{"rm --cached allowed", "git rm --cached secrets.env", refYes, ""},
+		{"rm --force without recursion allowed", "git rm --force stale.txt", refYes, ""},
+
 		// non-command git words, prefixes, wrappers
 		{"echo git push allowed", "echo git push", refYes, ""},
 		{"env prefix", "env git push", refYes, "git push"},
@@ -106,6 +125,9 @@ func TestClassifyVerdicts(t *testing.T) {
 	}
 }
 
+// TestClassifyStashOperationsAllowed pins the working half of the verb. `drop` and
+// `clear` discard work and are denied in TestClassifyVerdicts; every other stash form
+// stays usable, including one whose args merely mention a safe operation name.
 func TestClassifyStashOperationsAllowed(t *testing.T) {
 	commands := []string{
 		"git stash",
@@ -124,9 +146,6 @@ func TestClassifyStashOperationsAllowed(t *testing.T) {
 		"git -c foo=bar stash pop",
 		"bash -c 'git stash pop'",
 		"xargs git stash",
-		"git stash drop",
-		"git stash clear",
-		"git stash drop -q",
 	}
 	for _, command := range commands {
 		if got := Classify(command, refYes); got != "" {
