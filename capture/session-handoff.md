@@ -2,36 +2,28 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `883aa362`, clean tree, 3 unpushed commits
-Spec: `specs/ft230-release-through-bench/spec.md` — Status: staged, reviewer-approved 2026-08-20, two tickets.
-Gate: green at `883aa362`.
+Branch: `main` — HEAD `1766e4d`, clean tree, 4 unpushed commits
+Spec: `specs/ft230-release-through-bench/spec.md` (Status: staged)
+Gate: green at `269e698` — stale, work tree `ec20e95`
 
 ## State
 
-FT230's spec is staged, reviewed (2 iterations to accept), signed off, and
-committed. The build has not started. Two tickets under
-`specs/ft230-release-through-bench/tickets/`: `wire-adapter-selection.md`
-(frontier) then `swap-workflow-and-flip-conformance.md` (blocked by the first).
-Lines: group A opus/high, groups B and C opus/medium.
+FT230's `--full` run is in the review phase. The integration worktree (request
+id `ft230-build`, label `ft230-release-through-bench`) holds three green
+commits over frozen base `1766e4d1`: T1 `ca6e071f` (adapter selection), T2
+`bc18b824` (workflow swap and conformance flip), and `2277209b` (fence
+amendment — `tier_test.go` and the `mutable-workflow-action` canary anchor,
+both gate-forced, flagged for reviewer veto). Review preflight is green at
+base `1766e4d1` / tip `2277209b`; three sonnet axis delegates are reviewing.
 
-Decisions that stay closed: `--adapter npm|fixture` defaults to `fixture` with
-no environment twin; the tag push is the reviewer's attended act, so CI submit
-does not violate the runbook's presence rule; promotion stays out of CI. The
-build retires two step-name byte contracts (the platform-first diagnostic in
-`native_workflow_test.go` and the `preflight-publish-order-bypassed` canary)
-after ticket 1 lands their replacement ordering assertion — retirements are
-approved, recorded in the spec.
-
-Earlier this session, the reviewed IntenTIC assessment folded into the board:
-FT231 and FT106 amended, FT239–FT241 created, FT239 cross-referenced to audit
-items A3/A12. The audit's P0/P1 spine is landed except A7, which is this FT230
-spec. `capture/learnings.md` holds one undrained entry (the FT230 review-miss
-learning with a proposed `craft-spec` rule change).
+Decisions that stay closed: `--adapter` defaults to `fixture` with no
+environment twin; the reviewer's tag push is the attended act; promotion stays
+out of CI; both step-name contract retirements are recorded in T2's commit.
+`capture/learnings.md` holds one undrained entry.
 
 ## Next command
 
-`/bench-implement-spec ft230-release-through-bench` — fresh mid-tier session,
-tickets serial on one retained integration source.
+`git push` — the board's leading invocable signal (`git`).
 
 ## Shape
 
