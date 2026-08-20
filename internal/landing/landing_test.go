@@ -841,13 +841,19 @@ const (
 type reviewedLanding struct {
 	root, sourceWorktree      string
 	base, destination, source string
+	specMode                  os.FileMode
 }
 
 // newReviewedLanding stages baseSpec at the shared review base, commits sourceSpec on
 // the reviewed source branch, and advances the destination with destinationSpec. An
-// empty spec string means that side wrote no spec at all.
-func newReviewedLanding(t *testing.T, baseSpec, destinationSpec, sourceSpec string) reviewedLanding {
+// empty spec string means that side wrote no spec at all. A zero specMode means the
+// 0o644 default; a non-zero one is applied to the source's spec before it is committed,
+// so the source tip and the request agree on the mode the composition must carry.
+func newReviewedLanding(t *testing.T, baseSpec, destinationSpec, sourceSpec string, specMode os.FileMode) reviewedLanding {
 	t.Helper()
+	if specMode == 0 {
+		specMode = 0o644
+	}
 	root := fixture(t)
 	if baseSpec != "" {
 		write(t, root, reviewedFixtureSpecPath, baseSpec)
@@ -860,6 +866,9 @@ func newReviewedLanding(t *testing.T, baseSpec, destinationSpec, sourceSpec stri
 	write(t, sourceWorktree, "reviewed", "source bytes\n")
 	if sourceSpec != "" {
 		write(t, sourceWorktree, reviewedFixtureSpecPath, sourceSpec)
+		if err := os.Chmod(filepath.Join(sourceWorktree, reviewedFixtureSpecPath), specMode); err != nil {
+			t.Fatal(err)
+		}
 	}
 	git(t, sourceWorktree, "add", "-A")
 	git(t, sourceWorktree, "commit", "-qm", "reviewed source")
@@ -873,6 +882,7 @@ func newReviewedLanding(t *testing.T, baseSpec, destinationSpec, sourceSpec stri
 	return reviewedLanding{
 		root: root, sourceWorktree: sourceWorktree, base: base,
 		destination: destination, source: git(t, sourceWorktree, "rev-parse", "HEAD"),
+		specMode: specMode,
 	}
 }
 
@@ -891,20 +901,25 @@ func (f reviewedLanding) request(t *testing.T, specBytes, message string) Review
 		Source: "refs/heads/reviewed-source", SourceTip: f.source, ReviewBase: f.base,
 		SourceWorktree: f.sourceWorktree, SourceFingerprint: sourceFingerprint,
 		DestinationFingerprint: destinationFingerprint,
-		SpecPath:               reviewedFixtureSpecPath, SpecBytes: []byte(specBytes), SpecMode: 0o644,
+		SpecPath:               reviewedFixtureSpecPath, SpecBytes: []byte(specBytes), SpecMode: f.specMode,
 		Message: message,
 	}
 }
 
 func TestLandReviewedPublishesSourceSpecBytesOverAnyDestinationCopy(t *testing.T) {
-	for _, tc := range []struct{ name, baseSpec, destinationSpec, sourceSpec string }{
+	for _, tc := range []struct {
+		name, baseSpec, destinationSpec, sourceSpec string
+		specMode                                    os.FileMode
+	}{
 		{name: "destination-copy-is-stale", baseSpec: reviewedBaseSpec, sourceSpec: reviewedAmendedSpec},
 		{name: "destination-moved-after-the-review-base", baseSpec: reviewedBaseSpec, destinationSpec: reviewedHeadingSpec, sourceSpec: reviewedAmendedSpec},
 		{name: "destination-never-carried-the-spec", sourceSpec: reviewedBaseSpec},
 		{name: "destination-overlaps-the-amendment", baseSpec: reviewedBaseSpec, destinationSpec: reviewedOverlapSpec, sourceSpec: reviewedAmendedSpec},
+		{name: "source-spec-is-executable", baseSpec: reviewedBaseSpec, destinationSpec: reviewedHeadingSpec, sourceSpec: reviewedAmendedSpec, specMode: 0o755},
+		{name: "source-spec-is-executable-and-the-destination-never-carried-it", sourceSpec: reviewedBaseSpec, specMode: 0o755},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newReviewedLanding(t, tc.baseSpec, tc.destinationSpec, tc.sourceSpec)
+			f := newReviewedLanding(t, tc.baseSpec, tc.destinationSpec, tc.sourceSpec, tc.specMode)
 			o := New()
 			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
 				return authorization.Result{Kind: authorization.Green}
@@ -919,6 +934,13 @@ func TestLandReviewedPublishesSourceSpecBytesOverAnyDestinationCopy(t *testing.T
 			}
 			if published := gitBytes(t, f.root, "show", got.Commit+":"+reviewedFixtureSpecPath); !bytes.Equal(published, want) {
 				t.Fatalf("published spec = %q, want %q", published, want)
+			}
+			wantMode := "100644"
+			if f.specMode.Perm()&0o111 != 0 {
+				wantMode = "100755"
+			}
+			if mode := gitMode(t, f.root, "ls-tree", got.Commit, "--", reviewedFixtureSpecPath); mode != wantMode {
+				t.Fatalf("published spec mode = %q, want %q", mode, wantMode)
 			}
 			if got.DestinationBase != f.destination {
 				t.Fatalf("destination base = %s, want the real destination %s", got.DestinationBase, f.destination)
@@ -938,7 +960,7 @@ func TestLandReviewedSpecStateTableRefusesBeforeAuthorization(t *testing.T) {
 		{name: "supplied-bytes-no-commit-carries", sourceSpec: "Status: staged\nsource\n", suppliedSpec: "Status: staged\nnever committed\n", want: specProvenanceRefusal},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newReviewedLanding(t, "", "", tc.sourceSpec)
+			f := newReviewedLanding(t, "", "", tc.sourceSpec, 0)
 			supplied := tc.suppliedSpec
 			if supplied == "" {
 				supplied = tc.sourceSpec
