@@ -184,7 +184,11 @@ func withoutGateRunLogEnv(base []string) []string {
 	return env
 }
 
-func gateLogPathIgnored(root string) bool {
+// gateLogPathIgnored reports whether the repository ignores the log directory, which is
+// the precondition for writing a record there at all. It is a var so a test can drive
+// the run below it without standing up a repository: internal/gate's ordinary tests own
+// no repository adapter and start no processes.
+var gateLogPathIgnored = func(root string) bool {
 	cmd := exec.Command("git", "-C", root, "check-ignore", "-q", "--no-index", ".logs/gate.jsonl")
 	return cmd.Run() == nil
 }
