@@ -2,36 +2,38 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `364f34f`, clean tree, 23 unpushed commits
-Spec: `specs/ft229-hygiene-batch/spec.md` (Status: staged)
-Gate: green at `3f874fa` — stale, work tree `2500b4d`
+Branch: `main` — HEAD `5a9f3a5`, 3 dirty paths, 51 unpushed commits
+Spec: `specs/worktree-exec-run-binary/spec.md` (Status: staged)
+Gate: green at `18401c8` — stale, work tree `6737ac9`
 
 ## State
 
-FT229 is fully implemented on one retained integration source, not on `main`.
-The worktree is assignment `20cdb730430599105cf9a2970250945a`, label
-`ft229-integration`. Its frozen review pair is base `364f34fa` (main's HEAD) and
-tip `7c05e8e1`. Fifteen commits, 102 files, clean tree, gate green at the tip.
+FT229 is landed and retired. Published commit `c8a3fad2`, gate green, spec
+flipped to `Status: implemented` by that commit; `specs/ft229-hygiene-batch/`
+is gone and its two durable hostile-input classes are promoted into
+`projects/benchkit.md`. The integration source was released and removed. Zero
+tickets-only folders remain.
 
-All eleven tickets have landed. The last two landed this session: a fence repair
-that spells `internal/gate/run_log_prune_test.go` in backticks so the preflight
-fence parser sees it, and the deletion of all 37 tickets-only folders under
-`specs/`. `bench status` renders no tickets-only row at the tip.
+Review found two fail-opens at the enforcement boundary that the gate could not
+reach, both introduced by this spec's own narrowing of the degraded guard rim.
+Both are closed and graded. That is the result worth carrying forward, not the
+seven features.
 
-Two calls are open for reviewer veto. The fence repair widens nothing but makes
-an intended authorization machine-readable. The residue deletion also removed
-two measurement receipts under `light-path-shared-fixture-staged-binary`, whose
-work already landed and whose text git history keeps.
+Pending capture, uncommitted by design, all waiting on the drain:
 
-The phase reached is implementation-complete, review not started. The diff is
-~2,200 insertions across ten feature tickets, which is large enough that the
-tier and a cross-harness falsification pass are the reviewer's call.
+- `capture/retros/ft229-hygiene-batch.md` — untracked.
+- `capture/agent-performance/claude-models.md` — refreshed, uncommitted.
+- `capture/learnings.md` — three open entries from this build.
+- `capture/IDEAS.md` — three parked CLI gaps.
+- `ROADMAP.md` carries three FT229 references, including the FT174 dependency
+  row that FT229 unblocks. Reconcile is the drain's, deliberately left.
 
-`capture/learnings.md` carries one open entry from the spec-authoring round.
+`specs/worktree-exec-run-binary/` is a staged spec authored in a parallel
+session. It is not this session's work and nothing here has touched it.
 
 ## Next command
 
-`/bench-review-implementation`
+`/bench-drain`
 
 ## Shape
 
