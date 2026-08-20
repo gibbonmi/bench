@@ -6,37 +6,30 @@ Branch: `main`
 
 ## State
 
-`/bench-shape-idea` resolved FT225 in one grilled session at commit `c08ab77e`.
-No decision map exists: the frontier emptied live, so the shape source is the
-decision set below. FT225's roadmap row stays until shipped.
+FT225 is specified and signed off. `specs/land-spec-amendments/spec.md`
+(`Status: staged`, 13 coverage rows, verification log: 2 iterations to accept)
+and its three tickets are committed at `58bac422`. The reviewer approved the
+spec, the ticket breakdown, and the `fable / high` line for the guidance
+ticket. FT225's roadmap row stays until shipped.
 
-Closed reviewer decisions for the FT225 spec — these stay closed:
+Closed decisions that stay closed (also recorded in the spec): the landing
+publishes `Implemented(source-tip spec bytes)` and the composition neutralizes
+the spec path so a destination-side amendment — overlapping included — never
+conflicts; `paths-authorized` implicitly authorizes `specs/<slug>/` via the
+existing spec-path fact; the reviewer's typed `--base` and `--source-tip` are
+the acceptance; the in-range fence-widening exposure is a named Won't handle
+with the typed range as the control.
 
-- **Composition.** An in-range spec amendment in the reviewed source is
-  legitimate regardless of who wrote it (review, build, coordinator).
-  `LandReviewed` publishes `Implemented(<source-tip spec bytes>)`; the demand
-  that the destination carry identical staged-spec bytes is dropped
-  (`stagedSpecMatches`, internal/landing/landing.go).
-- **Destination divergence.** Source spec bytes win unconditionally. A
-  destination-side amendment made after the review base is overwritten, as
-  `replaceTreeFile` already does mechanically. No divergence refusal.
-- **Own-spec fence.** `pathsAuthorizedCheck` implicitly authorizes
-  `specs/<slug>/` for the active slug in both build and review preflight
-  modes; self-fence entries become unnecessary boilerplate.
-- **Acceptance.** The reviewer typing `--base` and `--source-tip` at
-  `bench worktree land` accepts every commit up to that tip; no re-delivery
-  or re-review step exists for post-review source movement.
-- **Scope.** One spec covers both behaviors (landing composition + implicit
-  own-spec authorization); a split into two specs was considered and rejected.
-
-Spec-writer discretion (bounded, non-behavioral beyond the decided surface):
-whether `stagedSpecMatches` disappears entirely or keeps a source-side sanity
-half, the refusal-message wording, and updating review/build phase guidance to
-say spec amendments commit to the source on the finding cadence.
+Ticket order on one retained integration source: 1
+`authorize-the-spec-folder-implicitly`, 2 `publish-the-source-spec-bytes`
+(blocked by 1), 3 `name-the-amendment-cadence-in-review-guidance`. The spec's
+explicit self-fence entry is deliberate bootstrap — this build is the last one
+that needs it.
 
 ## Next command
 
-`/bench-write-spec` — FT225, from the decision set above
+`/bench-implement-spec` — land-spec-amendments, in a fresh mid-tier session on
+one retained integration source
 
 ## Shape
 
