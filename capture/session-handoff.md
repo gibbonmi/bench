@@ -2,38 +2,41 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5a9f3a5`, 3 dirty paths, 51 unpushed commits
+Branch: `main` — HEAD `8c8aca6`, 3 dirty paths, 2 unpushed commits
 Spec: `specs/worktree-exec-run-binary/spec.md` (Status: staged)
-Gate: green at `18401c8` — stale, work tree `6737ac9`
+Gate: green at `6d5bd7a` — stale, work tree `fc6abe7`
 
 ## State
 
-FT229 is landed and retired. Published commit `c8a3fad2`, gate green, spec
-flipped to `Status: implemented` by that commit; `specs/ft229-hygiene-batch/`
-is gone and its two durable hostile-input classes are promoted into
-`projects/benchkit.md`. The integration source was released and removed. Zero
-tickets-only folders remain.
+**This session's build — `worktree-exec-run-binary`, reviewed and ready to land.**
+The spec is staged at 22 rows. Three commits sit green on the retained
+integration source, addressed by label as `worktree-exec-run-binary`:
 
-Review found two fail-opens at the enforcement boundary that the gate could not
-reach, both introduced by this spec's own narrowing of the degraded guard rim.
-Both are closed and graded. That is the result worth carrying forward, not the
-seven features.
+- frozen review base `8c8aca66`
+- source tip `99bf27ee` — `ebf1ac7b` (exec roots the child at the worktree's own
+  wrapper), `290febc7` (the gate entry names its next action), `99bf27ee`
+  (closes the review's three accepted findings)
 
-Pending capture, uncommitted by design, all waiting on the drain:
+Three-axis review ran and its pickup file is resolved and deleted. A Coverage
+re-review of the repair returned zero findings. WX20 is demonstrated by a
+controlled A/B: exec driven by the unfixed binary refuses with the reworded
+message, exec driven by the fixed binary runs all six phases green. That
+evidence still needs recording in the retro.
 
-- `capture/retros/ft229-hygiene-batch.md` — untracked.
-- `capture/agent-performance/claude-models.md` — refreshed, uncommitted.
-- `capture/learnings.md` — three open entries from this build.
-- `capture/IDEAS.md` — three parked CLI gaps.
-- `ROADMAP.md` carries three FT229 references, including the FT174 dependency
-  row that FT229 unblocks. Reconcile is the drain's, deliberately left.
+Main carries two spec commits (`8c8aca66`, `529956b7`) that the source
+deliberately does not have — spec edits red `paths-authorized` inside a build
+diff. The two file sets are disjoint, so they compose at land.
 
-`specs/worktree-exec-run-binary/` is a staged spec authored in a parallel
-session. It is not this session's work and nothing here has touched it.
+**Blocking the landing:** the destination is not clean. `capture/learnings.md`,
+`capture/agent-performance/claude-models.md`, and the untracked
+`capture/retros/` are the prior FT229 session's, uncommitted since roughly
+05:00 and waiting on the drain. This session has not touched them.
 
-## Next command
-
-`/bench-drain`
+Two learnings this session owes, still unwritten for the same reason: asserting
+a repo convention from artifacts rather than from the check that grades them,
+and reaching for raw `git merge --ff-only` because no Bench verb moves a
+worktree to a new base. A third is worth capturing: a gate verdict reused from
+cache proves nothing about the path under test, so evidence runs need `--fresh`.
 
 ## Shape
 
