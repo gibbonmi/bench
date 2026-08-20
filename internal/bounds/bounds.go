@@ -34,7 +34,6 @@ const (
 	ModelReadLimit            int64 = 5 << 20
 	OutlineFileLimit          int64 = 2 << 20
 	ControlRecordLimit        int64 = 2 << 20
-	OutlineRowLimit                 = 200
 	IterationMin                    = 1
 	IterationMax                    = 100
 	MainIterationsDefault           = 12

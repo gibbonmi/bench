@@ -1,8 +1,15 @@
-// Package outline implements `bench outline [path]` — an on-demand repo seam map.
-// It walks the tracked files (optionally scoped to a path), runs a hand-rolled
-// per-language pattern scan, and emits an AXI-conformant `outline[N]{file,line,kind,name}:`
-// TOON table so an agent can locate a candidate seam by name and jump to `file:line`.
-// It is regenerated on every call and writes nothing to the tree.
+// Package outline implements `bench outline [path] [--full]` — an on-demand repo seam
+// map. It walks the tracked files (optionally scoped to a path), runs a hand-rolled
+// per-language pattern scan, and emits an AXI-conformant TOON table so an agent can
+// locate a candidate seam by name and jump to `file:line`. It is regenerated on every
+// call and writes nothing to the tree.
+//
+// The form decides the table. A path argument or `--full` emits the symbol rows
+// `outline[N]{file,line,kind,name}:` — scoped to the path, or repository-wide. The bare
+// invocation emits the summary `outline_dirs[N]{dir,symbols}:` instead: one row per
+// scanned top-level directory carrying that directory's total symbol count, so a cold
+// probe costs a screen. Every form emits its complete answer; none truncates to a
+// silent prefix.
 //
 // The tool LOCATES candidate seams; it does not IDENTIFY which are the project's
 // blessed seams — `projects/<name>.md` owns that. It is a line-regex indexer, not a
@@ -41,7 +48,7 @@ var grammar = usage.Grammar{
 // with the same verbs in bin/bench.sh's help block.
 const promise = "outline locates candidate seams (file:line); it does not identify which are the project's blessed seams — projects/<name>.md owns that."
 
-const usageLine = "usage: bench outline [path]"
+const usageLine = "usage: bench outline [path] [--full]"
 
 var openOutlineFile = os.Open
 
@@ -170,12 +177,13 @@ func listFiles(root, path string, havePath bool) ([]string, error) {
 	return files, nil
 }
 
-// Command implements `bench outline [path]`: it walks the tracked files (scoped to an
-// optional path), dispatches each by extension through Symbols, drops any row a control
-// byte would make unrepresentable, and renders the `outline[N]{file,line,kind,name}:`
-// TOON table — the definitive empty state when nothing matches, a structured stdout
-// error with exit 1 outside a repo or on a git failure, and usage on stdout with exit 2
-// for an unknown flag or a second positional argument.
+// Command implements `bench outline [path] [--full]`: it walks the tracked files (scoped
+// to an optional path), dispatches each by extension through Symbols, drops any row a
+// control byte would make unrepresentable, and renders the symbol table for a path or
+// `--full` and the per-directory summary for the bare form — each with the definitive
+// empty state when nothing matches, a structured stdout error with exit 1 outside a repo
+// or on a git failure, and usage on stdout with exit 2 for an unknown flag or a second
+// positional argument.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -199,6 +207,12 @@ func Command(args []string) (string, int) {
 	}
 
 	var rows, skips [][]string
+	// dirOrder/dirCount are the bare form's ledger: every scanned top-level directory
+	// in first-seen order (so one holding no declarations still reports a zero) and the
+	// symbols its whole subtree contributed. They index the same rows the symbol table
+	// carries, so both forms report one accounting rather than two.
+	var dirOrder []string
+	dirCount := map[string]int{}
 	scanned := 0
 	totalSymbols := 0
 	for _, rel := range files {
@@ -233,23 +247,27 @@ func Command(args []string) (string, int) {
 			continue
 		}
 		scanned++
+		dir := topLevel(rel)
+		if toon.Representable(rel) {
+			if _, seen := dirCount[dir]; !seen {
+				dirOrder = append(dirOrder, dir)
+				dirCount[dir] = 0
+			}
+		}
 		for _, s := range Symbols(rel, content) {
 			totalSymbols++
 			if !toon.Representable(rel) || !toon.Representable(s.Name) {
 				continue // one poisoned path or name drops only its own row
 			}
 			rows = append(rows, []string{rel, strconv.Itoa(s.Line), s.Kind, s.Name})
+			dirCount[dir]++
 		}
 	}
 
 	emitted := len(rows)
-	if !full && emitted > bounds.OutlineRowLimit {
-		emitted = bounds.OutlineRowLimit
-		rows = rows[:emitted]
-	}
 	omitted := totalSymbols - emitted
 	truncated := omitted > 0 || len(skips) > 0
-	tbl, err := toon.Table("outline", []string{"file", "line", "kind", "name"}, rows)
+	tbl, err := resultTable(havePath || full, rows, dirOrder, dirCount)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -262,6 +280,31 @@ func Command(args []string) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	return tbl + meta + skipTable, 0
+}
+
+// topLevel is the bare summary's grouping key: the first segment of git's
+// slash-separated path, or "." for a file at the repository root. The summary collapses
+// to this depth because a row per scanned directory is larger than the symbol rows it
+// replaces once a tree is deep, which defeats the one-screen probe it exists to give.
+func topLevel(rel string) string {
+	if i := strings.Index(rel, "/"); i >= 0 {
+		return rel[:i]
+	}
+	return "."
+}
+
+// resultTable renders the block the invoked form answers with: the symbol rows when a
+// path or --full asked for them, the top-level summary otherwise. Both go through the
+// shared flat-table emitter, so the block contract has one source.
+func resultTable(wantSymbols bool, rows [][]string, dirOrder []string, dirCount map[string]int) (string, error) {
+	if wantSymbols {
+		return toon.Table("outline", []string{"file", "line", "kind", "name"}, rows)
+	}
+	summary := make([][]string, 0, len(dirOrder))
+	for _, dir := range dirOrder {
+		summary = append(summary, []string{dir, strconv.Itoa(dirCount[dir])})
+	}
+	return toon.Table("outline_dirs", []string{"dir", "symbols"}, summary)
 }
 
 func appendSkip(rows [][]string, file, reason string) [][]string {
