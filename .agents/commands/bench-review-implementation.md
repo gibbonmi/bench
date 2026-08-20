@@ -23,9 +23,10 @@ Accepted findings become slim repair tickets with an advisory `Writes:` note,
 and return to `/bench-implement-spec`; findings that need a later fix pass use
 the pickup-file route in step 5, and a clean review proceeds to `/bench-final-check`.
 
-The gate is deterministic: tests, types, lint, conformance. It catches regressions
-and rule violations. It cannot tell whether you built the *right* thing the *right*
-way. `/bench-review-implementation` is the semantic pass that can — and it's advisory: it surfaces
+The gate is deterministic: the phases its table declares — in the Bench kit,
+the conformance registry's checks run inside the ordinary test phase, not as a
+phase of their own. It catches regressions and rule violations. It cannot tell
+whether you built the *right* thing the *right* way. `/bench-review-implementation` is the semantic pass that can — and it's advisory: it surfaces
 findings for you, it has no authority to call anything done. The gate and you do.
 
 Run it on the branch diff against its
