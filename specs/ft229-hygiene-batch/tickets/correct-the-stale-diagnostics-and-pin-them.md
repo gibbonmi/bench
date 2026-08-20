@@ -14,7 +14,7 @@ pins each corrected passage so it reds when the wording drifts back.
 
 ## Acceptance
 
-- [ ] `bench structure` prints no stale accept row.
-- [ ] every surviving accept grant resolves to a scanned source file and keeps its reason text.
-- [ ] the review-phase and reference passages describe the conformance shape the phase table runs.
-- [ ] removing a corrected passage turns the anchors check red.
+- [ ] `bench structure` prints no stale accept row (H08).
+- [ ] every surviving accept grant resolves to a scanned source file and keeps its reason text (H09).
+- [ ] the review-phase and reference passages describe the conformance shape the phase table runs (H10).
+- [ ] removing a corrected passage turns the anchors check red (H11).

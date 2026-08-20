@@ -18,7 +18,7 @@ Both tickets read that predicate from one place.
 
 ## Acceptance
 
-- [ ] a green landing on a tickets-only slug publishes a commit in which the folder is gone.
-- [ ] a green landing on a slug holding `spec.md` flips its status and keeps the folder.
-- [ ] a slug naming no folder returns a structured error and no commit lands.
-- [ ] a red gate leaves the tickets-only folder present in the tree.
+- [ ] a green landing on a tickets-only slug publishes a commit in which the folder is gone (H01).
+- [ ] a green landing on a slug holding `spec.md` flips its status and keeps the folder (H02).
+- [ ] a slug naming no folder returns a structured error and no commit lands (H03).
+- [ ] a red gate leaves the tickets-only folder present in the tree (H04).

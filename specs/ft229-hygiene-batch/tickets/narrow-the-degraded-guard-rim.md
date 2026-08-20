@@ -18,7 +18,7 @@ unreachable and `bench` off PATH.
 
 ## Acceptance
 
-- [ ] with no reachable core, a destructive git command is refused with exit 2.
-- [ ] with no reachable core, a command whose `git` text appears only in a path or an unrelated envelope field is allowed.
-- [ ] an envelope carrying no readable command field is refused.
-- [ ] the guard's documented honest-mistake threat model is unchanged.
+- [ ] with no reachable core, a destructive git command is refused with exit 2 (H20).
+- [ ] with no reachable core, a command whose `git` text appears only in a path or an unrelated envelope field is allowed (H21).
+- [ ] an envelope carrying no readable command field is refused (H22).
+- [ ] the guard's documented honest-mistake threat model is unchanged (H33).

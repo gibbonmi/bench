@@ -17,4 +17,4 @@ assertion would red on every future light-path change.
 ## Acceptance
 
 - [ ] no direct child of `specs/` holds tickets without a `spec.md`.
-- [ ] `bench status` renders no tickets-only row at the landing commit.
+- [ ] `bench status` renders no tickets-only row at the landing commit (H06).

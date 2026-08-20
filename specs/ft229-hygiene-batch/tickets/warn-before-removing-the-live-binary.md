@@ -16,5 +16,5 @@ is removed without the warning.
 
 ## Acceptance
 
-- [ ] a `dist/bench` matching the resolved binary produces the warning before removal, naming the `scripts/go-build.sh` invocation.
-- [ ] a `dist/bench` that is not the resolved binary is removed with no warning.
+- [ ] a `dist/bench` matching the resolved binary produces the warning before removal, naming the `scripts/go-build.sh` invocation (H25).
+- [ ] a `dist/bench` that is not the resolved binary is removed with no warning (H26).

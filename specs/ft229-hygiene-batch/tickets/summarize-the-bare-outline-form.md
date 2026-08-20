@@ -15,8 +15,8 @@ AXI-conformant TOON with a definitive empty state.
 
 ## Acceptance
 
-- [ ] bare `bench outline` emits meta and one row per scanned directory with its symbol count.
-- [ ] `bench outline <path>` emits symbol rows for that path.
-- [ ] `bench outline --full` emits symbol rows repository-wide.
-- [ ] the bare form's row count equals the scanned directory count, with no cap applied.
-- [ ] a tree with no scannable source yields the definitive empty state.
+- [ ] bare `bench outline` emits meta and one row per scanned directory with its symbol count (H12).
+- [ ] `bench outline <path>` emits symbol rows for that path (H13).
+- [ ] `bench outline --full` emits symbol rows repository-wide (H14).
+- [ ] the bare form's row count equals the scanned directory count, with no cap applied (H15).
+- [ ] a tree with no scannable source yields the definitive empty state (H16).
