@@ -28,7 +28,6 @@ stray (other check) 7. gofmt/vet/race/cross-compile: **zero fixtures today**.
 | preflight-native-{call,upload}-bypassed | `native verification does not finalize full release evidence…` | native_workflow_test.go:139 | residual (2) |
 | preflight-release-call-bypassed, release-public-profile-omitted | `tag publication bypasses full release preflight` | native_workflow_test.go:146–148 | residual (2) |
 | preflight-publish-needs-bypassed | `publication does not wait for finalized evidence…` | native_workflow_test.go:155 | residual |
-| preflight-publish-order-bypassed | `release publication is not platform-first and wrapper-last` | native_workflow_test.go:161 | residual |
 | reproducibility-byte-compare-bypassed | `reproducibility comparator does not require exact byte equality` | native_workflow_test.go:169 | residual |
 | offline-network-repair-allowed | `offline smoke permits repair or network fallback` | native_workflow_test.go:173 | residual |
 | offline-stage-interruption-ignored | `offline smoke omits stage interruption recovery` | native_workflow_test.go:176 | residual |

@@ -26,8 +26,10 @@ is optional polish. Automation submits and verifies; only a person authorizes.
    the operator machine. Older npm has no `stage` command; do not substitute
    direct publish for a staged release because the tool is missing.
 4. **Reviewer presence.** First publication, staged approval or rejection, and
-   final promotion each require the reviewer present. No unattended run performs
-   any of the three.
+   final promotion each require the reviewer present. For the first publication
+   the attended act is the reviewer's own tag push, which the workflow's submit
+   job then carries out (see below); staged approval and promotion are
+   interactive and have no unattended path at all.
 
 ## First publication (identities do not exist yet)
 
@@ -41,6 +43,20 @@ approved release directory:
 2. The wrapper publishes last and is verified the same way.
 3. A candidate tag is public, not private: an exact version or the tag remains
    installable. Treat the release as live from the first successful publish.
+
+The reviewer's presence is spent on the tag, not on the publish. Only the
+reviewer cuts and pushes a release tag; that push is the attended act, and the
+release workflow's publish job is its mechanical arm, running exactly one
+command from the tag's own checkout:
+
+    dist/bench release submit --version "${GITHUB_REF_NAME#v}" --profile public \
+      --path first --adapter npm --provenance --registry https://registry.npmjs.org
+
+The job compiles that binary from the checked-out tag, downloads the
+publish-preflight evidence the `authorize` job produced, and uploads
+`dist/publication/` as the `publication-record` artifact even when the run
+fails, so a partial publication is diagnosable and resumable. CI never
+promotes.
 
 ## Live integrity re-verification (before any promotion)
 
