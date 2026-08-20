@@ -18,6 +18,6 @@ supplied only as a flag value or after `--` cannot land on an allow.
 
 ## Acceptance
 
-- [ ] each of the four spellings returns a block verdict carrying its class label.
-- [ ] bare `git stash`, `git stash list`, `git stash pop`, and `git rm <path>` return an allow verdict.
-- [ ] a sought token supplied only as a flag value reaches the destructive verdict, not an allow.
+- [ ] each of the four spellings returns a block verdict carrying its class label (H17).
+- [ ] bare `git stash`, `git stash list`, `git stash pop`, and `git rm <path>` return an allow verdict (H18).
+- [ ] a sought token supplied only as a flag value reaches the destructive verdict, not an allow (H19).

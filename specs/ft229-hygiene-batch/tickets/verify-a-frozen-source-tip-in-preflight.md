@@ -15,7 +15,7 @@ behavior exactly.
 
 ## Acceptance
 
-- [ ] `bench preflight review <slug> --source-tip <commit>` and the `build` form are accepted.
-- [ ] a `--source-tip` disagreeing with the derived tip renders a red verdict row.
-- [ ] a `--source-tip` that does not resolve returns a grammar error distinct from the mismatch red.
-- [ ] omitting `--source-tip` leaves both forms behaving as they do today.
+- [ ] `bench preflight review <slug> --source-tip <commit>` and the `build` form are accepted (H30).
+- [ ] a `--source-tip` disagreeing with the derived tip renders a red verdict row (H31).
+- [ ] a `--source-tip` that does not resolve returns a grammar error distinct from the mismatch red (H32).
+- [ ] omitting `--source-tip` leaves both forms behaving as they do today (H30).

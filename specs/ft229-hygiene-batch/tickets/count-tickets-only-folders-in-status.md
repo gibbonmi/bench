@@ -17,6 +17,6 @@ holding no `spec.md`. Read it from that source rather than restating it.
 
 ## Acceptance
 
-- [ ] a specs tree holding tickets-only folders renders one row with the count and the closing command.
-- [ ] a specs tree with no tickets-only folder renders no such row.
-- [ ] the row ranks below the retirement and orphaned-pickup rows.
+- [ ] a specs tree holding tickets-only folders renders one row with the count and the closing command (H05).
+- [ ] a specs tree with no tickets-only folder renders no such row (H06).
+- [ ] the row ranks below the retirement and orphaned-pickup rows (H05).

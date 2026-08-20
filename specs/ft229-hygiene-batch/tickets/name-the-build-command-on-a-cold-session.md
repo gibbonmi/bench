@@ -16,6 +16,6 @@ Evidence comes from running the hook as a real subprocess with the core absent.
 
 ## Acceptance
 
-- [ ] a session start with an unreachable core prints the `scripts/go-build.sh` invocation and exits zero.
-- [ ] a session start with a reachable core is unchanged.
-- [ ] a session start outside a repository prints nothing.
+- [ ] a session start with an unreachable core prints the `scripts/go-build.sh` invocation and exits zero (H23).
+- [ ] a session start with a reachable core is unchanged (H23).
+- [ ] a session start outside a repository prints nothing (H24).
