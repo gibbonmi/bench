@@ -293,8 +293,10 @@ Live classes and their disposition:
 - `internal/landing/`
 - `internal/status/`
 - `internal/outline/`
+- `internal/bounds/` — the retirement of the row limit the bare form no longer needs
+- `cmd/bench/` — the help inventory row that advertises `--full`
 - `internal/gitguard/`
-- `internal/gate/run_log.go`
+- `internal/gate/run_log.go`, and the test file that grades it
 - `internal/preflight/`
 - `internal/worktree/`
 - `internal/sessioninspect/`
