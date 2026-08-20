@@ -2,35 +2,42 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — 21 unpushed commits, clean tree.
+Branch: `main` — 22 unpushed commits, clean tree.
 Gate: green.
 
 ## State
 
-The FT228 drain is closed. The retro, the refreshed Claude scorecard, and the
-one open learnings entry all took verdicts in one commit; `capture/IDEAS.md`,
-`capture/learnings.md`, and `capture/retros/` are empty.
+FT229's spec is staged at `specs/ft229-hygiene-batch/spec.md` — 46 stories in
+seven groups, 33 coverage rows, one named `Not covered` exception, eleven
+tickets. Reviewer approved the spec-and-tickets pair on 2026-08-19. It is the
+last actionable row of the 2026-08 capability audit portfolio; A1, A2, A3, A6,
+and FT228 already landed.
 
-Dispositions: FT224 gained the two worst diagnostic faces FT228 exposed — a
-mis-rooted gate that drops phases and reports an unstaged environment instead,
-and a `worktree release` refusal pointing at `--discard-ignored`, a flag
-`release` rejects — plus the `worktree land` light-path refusal, which carries a
-reviewer decision on whether the verb should serve a tickets-only spec. FT213
-took the red-attribution and probe-derivation occurrences. FT214 took the
-spec-authoring learning: a spec flipping an invocation policy enumerates every
-surface the harness matches, and a spec adding fixtures verifies the family's
-registration or fences the registry. FT237 is new and LOW: `craft-line` states
-the common case behind ceiling-not-binding.
+Two forks are closed and stay closed. Every tickets-only spec folder is deleted
+in this build, and `bench preflight` gains `--source-tip` on both `review` and
+`build` rather than the review phase dropping the word. The reviewer also
+confirmed the `build` extension and the retention count of 20 gate run records.
 
-No spec was retired — `specs/` holds only light-path directories with no
-`spec.md`, which sit outside `bench spec retire`'s universe.
+L-30 is out of scope: FT228 already removed the inert Codex invocation key and
+added the Claude-side parity grading. The residue count is 37 folders, not the
+34 the audit recorded or the 30 quoted during shaping — re-count at ticket entry,
+because a light-path landing adds one.
+
+The ticket graph has three edges. `count-tickets-only-folders-in-status` blocks
+on `close-the-light-path-ticket-on-landing` for the tickets-only predicate;
+`delete-the-landed-tickets-only-residue` blocks on both; and
+`name-the-build-command-on-a-cold-session` blocks on
+`narrow-the-degraded-guard-rim` only because both write `internal/systemtest`.
+The other seven tickets are frontier.
+
+`capture/learnings.md` carries one open entry from this phase's review round.
 
 Nothing is pushed. The push is the reviewer's.
 
 ## Next command
 
-`/bench-shape-idea` — FT225: decide whether a review may amend the spec in the
-source it reviewed.
+`/bench-implement-spec specs/ft229-hygiene-batch/spec.md` — a fresh mid-tier
+session on one retained integration source.
 
 ## Shape
 
