@@ -2,42 +2,36 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — 22 unpushed commits, clean tree.
-Gate: green.
+Branch: `main` — HEAD `364f34f`, clean tree, 23 unpushed commits
+Spec: `specs/ft229-hygiene-batch/spec.md` (Status: staged)
+Gate: green at `3f874fa` — stale, work tree `2500b4d`
 
 ## State
 
-FT229's spec is staged at `specs/ft229-hygiene-batch/spec.md` — 46 stories in
-seven groups, 33 coverage rows, one named `Not covered` exception, eleven
-tickets. Reviewer approved the spec-and-tickets pair on 2026-08-19. It is the
-last actionable row of the 2026-08 capability audit portfolio; A1, A2, A3, A6,
-and FT228 already landed.
+FT229 is fully implemented on one retained integration source, not on `main`.
+The worktree is assignment `20cdb730430599105cf9a2970250945a`, label
+`ft229-integration`. Its frozen review pair is base `364f34fa` (main's HEAD) and
+tip `7c05e8e1`. Fifteen commits, 102 files, clean tree, gate green at the tip.
 
-Two forks are closed and stay closed. Every tickets-only spec folder is deleted
-in this build, and `bench preflight` gains `--source-tip` on both `review` and
-`build` rather than the review phase dropping the word. The reviewer also
-confirmed the `build` extension and the retention count of 20 gate run records.
+All eleven tickets have landed. The last two landed this session: a fence repair
+that spells `internal/gate/run_log_prune_test.go` in backticks so the preflight
+fence parser sees it, and the deletion of all 37 tickets-only folders under
+`specs/`. `bench status` renders no tickets-only row at the tip.
 
-L-30 is out of scope: FT228 already removed the inert Codex invocation key and
-added the Claude-side parity grading. The residue count is 37 folders, not the
-34 the audit recorded or the 30 quoted during shaping — re-count at ticket entry,
-because a light-path landing adds one.
+Two calls are open for reviewer veto. The fence repair widens nothing but makes
+an intended authorization machine-readable. The residue deletion also removed
+two measurement receipts under `light-path-shared-fixture-staged-binary`, whose
+work already landed and whose text git history keeps.
 
-The ticket graph has three edges. `count-tickets-only-folders-in-status` blocks
-on `close-the-light-path-ticket-on-landing` for the tickets-only predicate;
-`delete-the-landed-tickets-only-residue` blocks on both; and
-`name-the-build-command-on-a-cold-session` blocks on
-`narrow-the-degraded-guard-rim` only because both write `internal/systemtest`.
-The other seven tickets are frontier.
+The phase reached is implementation-complete, review not started. The diff is
+~2,200 insertions across ten feature tickets, which is large enough that the
+tier and a cross-harness falsification pass are the reviewer's call.
 
-`capture/learnings.md` carries one open entry from this phase's review round.
-
-Nothing is pushed. The push is the reviewer's.
+`capture/learnings.md` carries one open entry from the spec-authoring round.
 
 ## Next command
 
-`/bench-implement-spec specs/ft229-hygiene-batch/spec.md` — a fresh mid-tier
-session on one retained integration source.
+`/bench-review-implementation`
 
 ## Shape
 
