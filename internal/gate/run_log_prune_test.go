@@ -2,6 +2,7 @@ package gate
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -220,4 +221,90 @@ func TestGateRunLogFinishSurvivesPruningFailure(t *testing.T) {
 			}
 		})
 	}
+}
+
+// H27/story 39: pruning is a side effect of a gate run, not of a separate chore, so
+// this drives the closure beginGateRunLog hands back rather than calling the pruner.
+// A build that keeps the pruner correct but never wires it into the run leaves .logs
+// unbounded exactly as before, and every direct-call assertion above still passes.
+// H27/story 39: pruning is a side effect of a gate run, not of a separate chore, so this
+// drives the closure beginGateRunLog hands back rather than calling the pruner. A build
+// that keeps the pruner correct but never wires it into the run leaves .logs unbounded
+// exactly as before, and every direct-call assertion above still passes.
+func TestGateRunPrunesThroughTheClosureBeginHandsBack(t *testing.T) {
+	root := newLoggingPruneRoot(t)
+	seeded := seedRecords(t, root, ages(0, 24)...)
+
+	var stderr bytes.Buffer
+	_, finish := beginGateRunLog(context.Background(), root, &stderr, "dev")
+	if strings.Contains(stderr.String(), "progress logging unavailable") {
+		t.Fatalf("the run never opened a record, so this asserts nothing: %q", stderr.String())
+	}
+	finish(Result{GateExit: 0, ActionExit: 0})
+
+	survivors := logDirEntries(t, root)
+	if len(survivors) != gateLogRetainedRecords {
+		t.Fatalf("after one gate run: %d records retained, want %d\n%v", len(survivors), gateLogRetainedRecords, survivors)
+	}
+	// The record this run wrote is the newest of all, so it must have survived its own
+	// pruning: a pruner that counts before the write would drop it.
+	seededNames := strings.Join(seeded, "\n")
+	own := 0
+	for _, name := range survivors {
+		if !strings.Contains(seededNames, name) {
+			own++
+		}
+	}
+	if own != 1 {
+		t.Errorf("survivors hold %d records this run wrote, want exactly 1\n%v", own, survivors)
+	}
+}
+
+// H27's ordering rule when two runs share a start instant. seededRun spaces records a
+// minute apart, so the tiebreak below sort.Slice's comparator is unreached there; without
+// it the sort is unstable on ties and two gates starting in the same instant get
+// nondeterministic retention.
+func TestPruneGateRunLogsBreaksTimestampTiesDeterministically(t *testing.T) {
+	root := newPruneRoot(t)
+	// The tie sits at the retention cut: 19 newer records plus 3 sharing one instant is
+	// 22, so exactly two of the tied three are dropped. Which two is a fact about the
+	// name, not about readdir order.
+	instant := pruneEpoch.Add(-10 * time.Minute)
+	tied := make([]string, 0, 3)
+	for _, pid := range []int{7001, 7002, 7003} {
+		run := gateLogRunToken(instant, pid)
+		if err := os.WriteFile(gateLogRecordPath(root, run), []byte("{}\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		tied = append(tied, gateLogRecordName(run))
+	}
+	sort.Strings(tied)
+	seedRecords(t, root, ages(0, 18)...)
+
+	pruneGateRunLogs(root, "", io.Discard)
+	survivors := strings.Join(logDirEntries(t, root), "\n")
+
+	if got := len(logDirEntries(t, root)); got != gateLogRetainedRecords {
+		t.Fatalf("retained %d, want %d", got, gateLogRetainedRecords)
+	}
+	if !strings.Contains(survivors, tied[2]) {
+		t.Errorf("the greatest-named tied record was dropped; the comparator must keep it\n%s", survivors)
+	}
+	for _, dropped := range tied[:2] {
+		if strings.Contains(survivors, dropped) {
+			t.Errorf("tied record %s survived; only the greatest name may\n%s", dropped, survivors)
+		}
+	}
+}
+
+// newLoggingPruneRoot is newPruneRoot with the ignore precondition satisfied. It stubs
+// the predicate rather than building a repository, because internal/gate's ordinary
+// tests create none and start no processes — the architecture census enforces that.
+func newLoggingPruneRoot(t *testing.T) string {
+	t.Helper()
+	root := newPruneRoot(t)
+	previous := gateLogPathIgnored
+	gateLogPathIgnored = func(string) bool { return true }
+	t.Cleanup(func() { gateLogPathIgnored = previous })
+	return root
 }

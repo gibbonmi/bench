@@ -2,11 +2,15 @@ package worktree
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
@@ -68,6 +72,60 @@ func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 	requireTest(t, strings.Contains(warned, live), "warning %q does not name the binary it removed (%s)", warned, live)
 	requireTest(t, strings.Contains(warned, rebuild), "warning %q does not name the rebuild invocation (%s)", warned, rebuild)
 	requireTest(t, !strings.Contains(warned, "go build "), "warning %q names plain `go build`, which leaves the package version unstamped", warned)
+	if _, err := os.Stat(live); !os.IsNotExist(err) {
+		t.Errorf("H25 live binary still present after release (stat err=%v); a guard that warns and then skips the removal would pass on the warning text alone", err)
+	}
+}
+
+// TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown pins the two branches that decide
+// the guard's posture when it cannot learn which binary is running. Both answer "warn",
+// because nothing has been shown about the candidate: flipping either to "remove
+// silently" is exactly the incident this guard exists to prevent, and no fixture reaches
+// them through ReleaseCommand, whose stub always resolves.
+func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
+	candidate := filepath.Join(t.TempDir(), "bench")
+	mustWrite(t, candidate, []byte("binary\n"), 0o755)
+
+	t.Run("executable unresolvable", func(t *testing.T) {
+		previous := resolveRunningBinary
+		resolveRunningBinary = func() (string, error) { return "", errors.New("no executable") }
+		t.Cleanup(func() { resolveRunningBinary = previous })
+		if !isRunningBinary(candidate) {
+			t.Error("isRunningBinary = false when the running executable is unresolvable, want true (unknown is not absent)")
+		}
+	})
+
+	t.Run("running path unstattable", func(t *testing.T) {
+		stubRunningBinary(t, filepath.Join(t.TempDir(), "vanished", "bench"))
+		if !isRunningBinary(candidate) {
+			t.Error("isRunningBinary = false when the running path cannot be stat'd, want true (unknown is not absent)")
+		}
+	})
+
+	t.Run("candidate absent", func(t *testing.T) {
+		stubRunningBinary(t, candidate)
+		if isRunningBinary(filepath.Join(t.TempDir(), "absent")) {
+			t.Error("isRunningBinary = true for a candidate that does not exist, want false (no live file there to lose)")
+		}
+	})
+}
+
+// TestIsRunningBinaryResolvesThroughASymlink is the profile's "invocation through a
+// symlink rather than the real path" class. The wrapper may exec a link, so the guard
+// normalizes before comparing; without that step the link and its target are two
+// different files and the live binary is removed in silence.
+func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
+	dir := t.TempDir()
+	real := filepath.Join(dir, "bench")
+	mustWrite(t, real, []byte("binary\n"), 0o755)
+	link := filepath.Join(dir, "bench-link")
+	if err := os.Symlink(real, link); err != nil {
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("cannot create a symlink: %v", err))
+	}
+	stubRunningBinary(t, link)
+	if !isRunningBinary(real) {
+		t.Error("isRunningBinary = false for the target of the resolved symlink, want true")
+	}
 }
 
 // TestResidueGuardRemovesForeignBinariesWithoutWarning is H26. A path-shaped predicate
