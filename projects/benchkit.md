@@ -157,6 +157,18 @@ coverage map; a class skipped here returns as a regression.
   through raw Git anyway; swap the route while preserving all command tokens, so
   a token-presence check cannot pass synthesized commit, ref, replay, or worktree
   plumbing
+- an operator or a command name arriving JSON-escaped, where a hook or guard reads a
+  tool envelope rather than a shell: Go's `encoding/json` HTML-escapes `&`, `<`, and `>`
+  by default, so `&&` reaches the reader as `\u0026\u0026` at least as often as literal.
+  A decoder that maps every escape to one opaque placeholder preserves word structure and
+  destroys separator structure, which welds two commands into one token and takes the
+  second verb out of command position. Assert the escaped spelling of a separator, not
+  only the literal one
+- an operator *run* read against a list of spellings: a lexer emits `|&`, `;;`, and `;&`
+  as one token each, and a membership test over the common operators matches none of
+  them, so the word after the run stays out of command position. Decide the class by
+  shape — a token made only of operator characters — and name the exception (redirection
+  opens no command position) rather than enumerating the inclusions
 - a flag's value read as a positional: a parser resolving a subcommand or
   positional as "first token not `-`-prefixed" skips flags but not their values
   or anything after `--`, so `git stash -m list` and `git stash -- list` resolve
