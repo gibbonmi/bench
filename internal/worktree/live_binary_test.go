@@ -111,9 +111,10 @@ func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
 }
 
 // TestIsRunningBinaryResolvesThroughASymlink is the profile's "invocation through a
-// symlink rather than the real path" class. The wrapper may exec a link, so the guard
-// normalizes before comparing; without that step the link and its target are two
-// different files and the live binary is removed in silence.
+// symlink rather than the real path" class: the wrapper may exec a link, and the guard
+// must still recognize the target as the live binary. Two things deliver that today —
+// the EvalSymlinks normalization and os.Stat following the link — so no single mutation
+// reddens this. It pins the behavior, not either mechanism.
 func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
 	dir := t.TempDir()
 	real := filepath.Join(dir, "bench")

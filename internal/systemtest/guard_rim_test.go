@@ -77,6 +77,29 @@ func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
 		t.Errorf("nested wrapper = (%d, %q, %q), want the core's one-level depth (exit 0)", nested.code, nested.stdout, nested.stderr)
 	}
 
+	// H20, the operator-run half. The lexer emits a whole run of operator characters as
+	// one token, so a membership test over the common spellings misses `|&`, `;;`, and
+	// `;&` — each one token no list matched, which took the following word out of command
+	// position and read a destructive verb there as an argument. Redirection is the
+	// deliberate exception: it opens no command position, so a file named git stays a
+	// file. These are the cases that separate the two.
+	for _, opRun := range []struct {
+		name, envelope string
+		want           int
+	}{
+		{"pipe-with-stderr", `{"tool_name":"Bash","tool_input":{"command":"ls |\u0026 git reset --hard"}}`, 2},
+		{"double semicolon", `{"tool_name":"Bash","tool_input":{"command":"ls ;; git reset --hard"}}`, 2},
+		{"semicolon-ampersand", `{"tool_name":"Bash","tool_input":{"command":"ls ;\u0026 git reset --hard"}}`, 2},
+		{"subshell", `{"tool_name":"Bash","tool_input":{"command":"(git push --force)"}}`, 2},
+		{"redirect to a file named git", `{"tool_name":"Bash","tool_input":{"command":"printf hi \u003e git"}}`, 0},
+		{"append to a file named git", `{"tool_name":"Bash","tool_input":{"command":"printf hi \u003e\u003e git"}}`, 0},
+	} {
+		result := run(opRun.envelope)
+		if result.code != opRun.want {
+			t.Errorf("H20 operator-run %s = (%d, %q, %q), want exit %d", opRun.name, result.code, result.stdout, result.stderr, opRun.want)
+		}
+	}
+
 	// H35 — the decoder the narrowing introduced. Go's encoding/json HTML-escapes
 	// & < > by default, so a shell operator reaches this rim escaped at least as
 	// often as literal. A \uXXXX branch that collapses to a placeholder welds two

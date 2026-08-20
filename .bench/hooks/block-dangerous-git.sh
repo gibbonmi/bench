@@ -196,10 +196,18 @@ invokes_git() {
 # is_control_op reports whether a token ends the current command, so the next word is a
 # fresh command position.
 is_control_op() {
-  case "$1" in
-    ';' | '&&' | '||' | '|' | '&' | '(' | ')') return 0 ;;
-    *) return 1 ;;
-  esac
+  local op=$1
+  [[ -z "$op" ]] && return 1
+  # An enumeration of spellings misses the ones it did not think of, and the lexer emits
+  # a whole operator run as one token: `|&`, `;;`, and `;&` are each a single token no
+  # list of the common spellings matches, so the word after them left command position
+  # and a destructive verb there was read as an argument. The test is therefore shape,
+  # not membership: a token made only of operator characters is an operator.
+  [[ "$op" == *[!'();<>|&']* ]] && return 1
+  # Redirection is the exception: it opens no command position, so `printf hi > git`
+  # names a file rather than invoking one.
+  [[ "$op" != *[!'<>']* ]] && return 1
+  return 0
 }
 
 # is_keyword reports whether a token is a shell keyword skipped in command position, so

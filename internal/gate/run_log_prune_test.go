@@ -223,10 +223,6 @@ func TestGateRunLogFinishSurvivesPruningFailure(t *testing.T) {
 	}
 }
 
-// H27/story 39: pruning is a side effect of a gate run, not of a separate chore, so
-// this drives the closure beginGateRunLog hands back rather than calling the pruner.
-// A build that keeps the pruner correct but never wires it into the run leaves .logs
-// unbounded exactly as before, and every direct-call assertion above still passes.
 // H27/story 39: pruning is a side effect of a gate run, not of a separate chore, so this
 // drives the closure beginGateRunLog hands back rather than calling the pruner. A build
 // that keeps the pruner correct but never wires it into the run leaves .logs unbounded
@@ -297,9 +293,9 @@ func TestPruneGateRunLogsBreaksTimestampTiesDeterministically(t *testing.T) {
 	}
 }
 
-// newLoggingPruneRoot is newPruneRoot with the ignore precondition satisfied. It stubs
-// the predicate rather than building a repository, because internal/gate's ordinary
-// tests create none and start no processes — the architecture census enforces that.
+// newLoggingPruneRoot is newPruneRoot with the ignore precondition satisfied, stubbed
+// rather than built — see gateLogPathIgnored for why this package's tests stand up no
+// repository.
 func newLoggingPruneRoot(t *testing.T) string {
 	t.Helper()
 	root := newPruneRoot(t)
