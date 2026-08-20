@@ -16,7 +16,7 @@ import (
 
 // specHelp is the single source for --spec's semantics, shown both on a bare
 // --help request and folded into a grammar-error hint.
-const specHelp = "--spec <slug> marks the named spec implemented on the green landing commit"
+const specHelp = "--spec <slug> marks the named spec implemented on the green landing commit, or deletes its folder when that folder holds only tickets"
 
 // Command runs a path-attributed prospective landing. Help exits 0, grammar errors exit
 // 2, and operational refusals exit 1; the landing owner alone composes, authorizes, and
