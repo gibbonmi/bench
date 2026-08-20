@@ -286,10 +286,14 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 	if _, kind, _ := diff.ResolveSourceRange(r.Root, r.ReviewBase, source); kind != "" {
 		return ReviewedResult{}, errors.New("reviewed source base is invalid")
 	}
-	if err := stagedSpecMatches(r.Root, destination, source, r.SpecPath, r.SpecBytes); err != nil {
+	if err := stagedSpecMatches(r.Root, source, r.SpecPath, r.SpecBytes); err != nil {
 		return ReviewedResult{}, err
 	}
-	composition, err := o.Compose(CompositionRequest{Root: r.Root, Destination: destination, Source: source, ReviewBase: r.ReviewBase})
+	composed, err := specNeutralizedDestination(r.Root, destination, r.SpecPath, r.SpecBytes, r.SpecMode)
+	if err != nil {
+		return ReviewedResult{}, err
+	}
+	composition, err := o.Compose(CompositionRequest{Root: r.Root, Destination: composed, Source: source, ReviewBase: r.ReviewBase})
 	if err != nil {
 		return ReviewedResult{}, err
 	}
@@ -391,14 +395,39 @@ func fingerprintStatus(raw []byte) ([]byte, error) {
 	return filtered.Bytes(), nil
 }
 
-func stagedSpecMatches(root, destination, source, path string, want []byte) error {
-	for _, commit := range []string{destination, source} {
-		got, err := benchgit.Raw("-C", root, "show", commit+":"+path)
-		if err != nil || !bytes.Equal(got, want) {
-			return errors.New("source and destination do not carry identical staged spec bytes")
-		}
+// stagedSpecMatches proves provenance, not agreement: the bytes the landing will
+// transition must be the reviewed source tip's committed spec. The destination's copy
+// is never read for comparison — the source's bytes win, so a stale, amended, or
+// absent destination spec is not a landing question.
+func stagedSpecMatches(root, source, path string, want []byte) error {
+	got, err := benchgit.Raw("-C", root, "show", source+":"+path)
+	if err != nil || !bytes.Equal(got, want) {
+		return errors.New("staged spec bytes are not the reviewed source tip's committed spec")
 	}
 	return nil
+}
+
+// specNeutralizedDestination returns a commit to compose against whose tree already
+// carries the source's spec bytes, so the spec path is a one-sided change no merge can
+// conflict on. Its parent is the real destination, leaving the merge base unchanged;
+// the returned commit is a composition input only and never becomes a published parent.
+func specNeutralizedDestination(root, destination, path string, want []byte, mode os.FileMode) (string, error) {
+	baseTree, err := output(root, "rev-parse", destination+"^{tree}")
+	if err != nil {
+		return "", fmt.Errorf("read destination tree: %w", err)
+	}
+	tree, err := replaceTreeFile(root, baseTree, path, want, mode)
+	if err != nil {
+		return "", fmt.Errorf("neutralize spec path: %w", err)
+	}
+	if tree == baseTree {
+		return destination, nil
+	}
+	commit, err := output(root, "commit-tree", tree, "-p", destination, "-m", "compose against the reviewed source spec")
+	if err != nil {
+		return "", fmt.Errorf("neutralize spec path: %w", err)
+	}
+	return commit, nil
 }
 
 func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMode) (string, error) {

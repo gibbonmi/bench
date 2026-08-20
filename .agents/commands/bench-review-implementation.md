@@ -107,10 +107,13 @@ true base, on three axes that stay separate.
    same green fix commit that closes them, so resolved findings cannot resurface.
 
 6. **Hand off, don't repair.** This phase makes no fixes and runs no gate.
-   Accepted findings become slim repair tickets carrying an advisory
-   `Writes:` note and return to `/bench-implement-spec` on the same integration
-   source. A clean review hands its frozen base and reviewed tip to
-   `bench worktree land`; `/bench-final-check` reports that landing's oracle.
+   Accepted findings become slim repair tickets carrying an advisory `Writes:`
+   note and return to `/bench-implement-spec` on the same integration source. A
+   spec amendment commits to that same source on the finding cadence — the
+   landing publishes the source's spec bytes, so an amendment never routes
+   through a hand commit on the destination. A clean review hands its frozen
+   base and reviewed tip to `bench worktree land`; `/bench-final-check`
+   reports that landing's oracle.
 
 ## Where it sits
 

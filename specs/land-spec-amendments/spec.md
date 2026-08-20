@@ -1,6 +1,6 @@
 # Land spec amendments
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation, 2026-08-20 (FT225). Five forks closed by the reviewer: an in-range spec amendment in the landing source is legitimate regardless of author and the landing composes it; the source's spec bytes win unconditionally over a destination-side amendment, with no divergence refusal; `paths-authorized` implicitly authorizes the active spec's own folder in both preflight modes; the reviewer typing `--base` and `--source-tip` at `bench worktree land` is the acceptance of every commit up to that tip, with no re-delivery step; one spec ships both behaviors rather than two.
 
