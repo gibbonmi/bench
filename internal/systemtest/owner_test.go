@@ -145,12 +145,20 @@ func (o *systemOwner) observeSelected() error {
 }
 
 func (o *systemOwner) runAt(dir string, overrides []string, program string, args ...string) processResult {
+	return o.runWithInput(dir, overrides, "", program, args...)
+}
+
+// runWithInput is the package's one owned process start: runAt is the no-stdin form, so
+// a launch that feeds a hook its envelope on stdin joins the same starts ledger rather
+// than opening a second launch path beside it.
+func (o *systemOwner) runWithInput(dir string, overrides []string, input string, program string, args ...string) processResult {
 	o.mu.Lock()
 	o.starts++
 	o.mu.Unlock()
 	cmd := exec.Command(program, args...)
 	cmd.Dir = dir
 	cmd.Env = mergeEnvironment(os.Environ(), overrides)
+	cmd.Stdin = strings.NewReader(input)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
