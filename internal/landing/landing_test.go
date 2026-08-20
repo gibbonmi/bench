@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/spec"
 )
 
 func TestLandStreamsProspectiveGateOutputOnce(t *testing.T) {
@@ -512,54 +513,6 @@ func TestLandReviewedAuthorizationKindTablePreservesState(t *testing.T) {
 	}
 }
 
-func TestLandReviewedSpecStateTableRefusesBeforeAuthorization(t *testing.T) {
-	for _, tc := range []struct {
-		name, sourceSpec, destinationSpec string
-	}{
-		{name: "invalid", sourceSpec: "Status: staged\nStatus: staged\n", destinationSpec: "Status: staged\nStatus: staged\n"},
-		{name: "absent", sourceSpec: ""},
-		{name: "divergent", sourceSpec: "Status: staged\nsource\n", destinationSpec: "Status: staged\ndestination\n"},
-		{name: "implemented", sourceSpec: "Status: implemented\n", destinationSpec: "Status: implemented\n"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			root := fixture(t)
-			if tc.destinationSpec != "" {
-				write(t, root, "specs/x/spec.md", tc.destinationSpec)
-				git(t, root, "add", "specs/x/spec.md")
-				git(t, root, "commit", "-qm", "destination spec")
-			}
-			destination := git(t, root, "rev-parse", "HEAD")
-			sourceWorktree := filepath.Join(t.TempDir(), "source")
-			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
-			if tc.sourceSpec != "" {
-				write(t, sourceWorktree, "specs/x/spec.md", tc.sourceSpec)
-				git(t, sourceWorktree, "add", "specs/x/spec.md")
-			}
-			write(t, sourceWorktree, "reviewed", "source bytes\n")
-			git(t, sourceWorktree, "add", "reviewed")
-			git(t, sourceWorktree, "commit", "-qm", "source")
-			source := git(t, sourceWorktree, "rev-parse", "HEAD")
-			sourceFingerprint, _ := CheckoutFingerprint(sourceWorktree)
-			destinationFingerprint, _ := CheckoutFingerprint(root)
-			calls := 0
-			o := New()
-			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
-				calls++
-				return authorization.Result{Kind: authorization.Green}
-			}
-			_, err := o.LandReviewed(context.Background(), ReviewedRequest{
-				Root: root, Destination: "refs/heads/main", DestinationBase: destination,
-				Source: "refs/heads/reviewed-source", SourceTip: source, ReviewBase: destination,
-				SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
-				SpecPath: "specs/x/spec.md", SpecBytes: []byte(tc.sourceSpec), SpecMode: 0o644, Message: "must refuse",
-			})
-			if err == nil || calls != 0 || git(t, root, "rev-parse", "main") != destination {
-				t.Fatalf("spec state %s = error %v calls %d", tc.name, err, calls)
-			}
-		})
-	}
-}
-
 func TestLandReviewedDestinationCASLossThenRecomposition(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "specs/x/spec.md", "Status: staged\n")
@@ -871,4 +824,138 @@ func gitMode(t *testing.T, root string, args ...string) string {
 		t.Fatal("git mode output is empty")
 	}
 	return fields[0]
+}
+
+// The reviewed-landing fixtures below vary one axis: which side edited the spec.
+// Every published-tree row shares this builder so a fixture change cannot make two
+// rows disagree about what a reviewed landing composes.
+const (
+	reviewedBaseSpec        = "# X\n\nStatus: staged\n\n## Stories\n\nstory one\nstory two\n"
+	reviewedAmendedSpec     = "# X\n\nStatus: staged\n\n## Stories\n\nstory one, amended by the review\nstory two\n"
+	reviewedHeadingSpec     = "# X, moved on the destination\n\nStatus: staged\n\n## Stories\n\nstory one\nstory two\n"
+	reviewedOverlapSpec     = "# X\n\nStatus: staged\n\n## Stories\n\nstory one, rewritten on the destination\nstory two\n"
+	specProvenanceRefusal   = "staged spec bytes are not the reviewed source tip's committed spec"
+	reviewedFixtureSpecPath = "specs/x/spec.md"
+)
+
+type reviewedLanding struct {
+	root, sourceWorktree      string
+	base, destination, source string
+}
+
+// newReviewedLanding stages baseSpec at the shared review base, commits sourceSpec on
+// the reviewed source branch, and advances the destination with destinationSpec. An
+// empty spec string means that side wrote no spec at all.
+func newReviewedLanding(t *testing.T, baseSpec, destinationSpec, sourceSpec string) reviewedLanding {
+	t.Helper()
+	root := fixture(t)
+	if baseSpec != "" {
+		write(t, root, reviewedFixtureSpecPath, baseSpec)
+		git(t, root, "add", reviewedFixtureSpecPath)
+	}
+	git(t, root, "commit", "--allow-empty", "-qm", "review base")
+	base := git(t, root, "rev-parse", "HEAD")
+	sourceWorktree := filepath.Join(t.TempDir(), "source")
+	git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, base)
+	write(t, sourceWorktree, "reviewed", "source bytes\n")
+	if sourceSpec != "" {
+		write(t, sourceWorktree, reviewedFixtureSpecPath, sourceSpec)
+	}
+	git(t, sourceWorktree, "add", "-A")
+	git(t, sourceWorktree, "commit", "-qm", "reviewed source")
+	destination := base
+	if destinationSpec != "" {
+		write(t, root, reviewedFixtureSpecPath, destinationSpec)
+		git(t, root, "add", reviewedFixtureSpecPath)
+		git(t, root, "commit", "-qm", "destination spec movement")
+		destination = git(t, root, "rev-parse", "HEAD")
+	}
+	return reviewedLanding{
+		root: root, sourceWorktree: sourceWorktree, base: base,
+		destination: destination, source: git(t, sourceWorktree, "rev-parse", "HEAD"),
+	}
+}
+
+func (f reviewedLanding) request(t *testing.T, specBytes, message string) ReviewedRequest {
+	t.Helper()
+	sourceFingerprint, err := CheckoutFingerprint(f.sourceWorktree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	destinationFingerprint, err := CheckoutFingerprint(f.root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ReviewedRequest{
+		Root: f.root, Destination: "refs/heads/main", DestinationBase: f.destination,
+		Source: "refs/heads/reviewed-source", SourceTip: f.source, ReviewBase: f.base,
+		SourceWorktree: f.sourceWorktree, SourceFingerprint: sourceFingerprint,
+		DestinationFingerprint: destinationFingerprint,
+		SpecPath:               reviewedFixtureSpecPath, SpecBytes: []byte(specBytes), SpecMode: 0o644,
+		Message: message,
+	}
+}
+
+func TestLandReviewedPublishesSourceSpecBytesOverAnyDestinationCopy(t *testing.T) {
+	for _, tc := range []struct{ name, baseSpec, destinationSpec, sourceSpec string }{
+		{name: "destination-copy-is-stale", baseSpec: reviewedBaseSpec, sourceSpec: reviewedAmendedSpec},
+		{name: "destination-moved-after-the-review-base", baseSpec: reviewedBaseSpec, destinationSpec: reviewedHeadingSpec, sourceSpec: reviewedAmendedSpec},
+		{name: "destination-never-carried-the-spec", sourceSpec: reviewedBaseSpec},
+		{name: "destination-overlaps-the-amendment", baseSpec: reviewedBaseSpec, destinationSpec: reviewedOverlapSpec, sourceSpec: reviewedAmendedSpec},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newReviewedLanding(t, tc.baseSpec, tc.destinationSpec, tc.sourceSpec)
+			o := New()
+			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+				return authorization.Result{Kind: authorization.Green}
+			}
+			got, err := o.LandReviewed(context.Background(), f.request(t, tc.sourceSpec, "land the amended source"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			want, err := spec.Implemented([]byte(tc.sourceSpec))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if published := gitBytes(t, f.root, "show", got.Commit+":"+reviewedFixtureSpecPath); !bytes.Equal(published, want) {
+				t.Fatalf("published spec = %q, want %q", published, want)
+			}
+			if got.DestinationBase != f.destination {
+				t.Fatalf("destination base = %s, want the real destination %s", got.DestinationBase, f.destination)
+			}
+			if parents := git(t, f.root, "rev-list", "--parents", "-n", "1", got.Commit); parents != got.Commit+" "+f.destination+" "+f.source {
+				t.Fatalf("published parents = %q, want %s and %s", parents, f.destination, f.source)
+			}
+		})
+	}
+}
+
+func TestLandReviewedSpecStateTableRefusesBeforeAuthorization(t *testing.T) {
+	for _, tc := range []struct{ name, sourceSpec, suppliedSpec, want string }{
+		{name: "two-staged-lines", sourceSpec: "Status: staged\nStatus: staged\n", want: "more than one Status: staged line"},
+		{name: "absent-at-the-source-tip", want: specProvenanceRefusal},
+		{name: "already-implemented", sourceSpec: "Status: implemented\n", want: "no Status: staged line"},
+		{name: "supplied-bytes-no-commit-carries", sourceSpec: "Status: staged\nsource\n", suppliedSpec: "Status: staged\nnever committed\n", want: specProvenanceRefusal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newReviewedLanding(t, "", "", tc.sourceSpec)
+			supplied := tc.suppliedSpec
+			if supplied == "" {
+				supplied = tc.sourceSpec
+			}
+			calls := 0
+			o := New()
+			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+				calls++
+				return authorization.Result{Kind: authorization.Green}
+			}
+			_, err := o.LandReviewed(context.Background(), f.request(t, supplied, "must refuse"))
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("spec state %s = %v, want %q", tc.name, err, tc.want)
+			}
+			if calls != 0 || git(t, f.root, "rev-parse", "main") != f.destination {
+				t.Fatalf("spec state %s authorized %d times or moved the destination", tc.name, calls)
+			}
+		})
+	}
 }
