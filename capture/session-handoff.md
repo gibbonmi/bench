@@ -2,28 +2,28 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `1766e4d`, clean tree, 4 unpushed commits
-Spec: `specs/ft230-release-through-bench/spec.md` (Status: staged)
-Gate: green at `269e698` — stale, work tree `ec20e95`
+Branch: `main` — clean tree once the closing capture commit lands; unpushed commits pending review.
+Spec: none staged — FT230 is implemented, landed (`b48c4609`), and retired.
+Gate: green at the retirement commit.
 
 ## State
 
-FT230's `--full` run is in the review phase. The integration worktree (request
-id `ft230-build`, label `ft230-release-through-bench`) holds three green
-commits over frozen base `1766e4d1`: T1 `ca6e071f` (adapter selection), T2
-`bc18b824` (workflow swap and conformance flip), and `2277209b` (fence
-amendment — `tier_test.go` and the `mutable-workflow-action` canary anchor,
-both gate-forced, flagged for reviewer veto). Review preflight is green at
-base `1766e4d1` / tip `2277209b`; three sonnet axis delegates are reviewing.
-
-Decisions that stay closed: `--adapter` defaults to `fixture` with no
-environment twin; the reviewer's tag push is the attended act; promotion stays
-out of CI; both step-name contract retirements are recorded in T2's commit.
-`capture/learnings.md` holds one undrained entry.
+FT230 is done end to end: adapter selection (`--adapter npm|fixture`,
+`--provenance`) through `bench release`, the workflow's publish job swapped to
+one `bench release submit` invocation, the conformance contract flipped with
+red-capable bites, the two step-name contracts retired to a record-level
+ordering test, the runbook amended, the spec retired, and all landed
+worktrees cleaned. The retro (`capture/retros/ft230-release-through-bench.md`),
+two learnings entries, and refreshed `capture/agent-performance/claude-models.md`
+await `/bench-drain`. The newer learnings entry flags a contract contradiction
+for reviewer decision: `bench worktree land` refuses on divergent staged spec
+bytes while the review skill and a scorecard decision say the landing
+publishes the source's bytes.
 
 ## Next command
 
-`git push` — the board's leading invocable signal (`git`).
+`git push` — then `/bench-drain` for the retro, the two learnings entries, and
+the scorecard refresh.
 
 ## Shape
 
