@@ -185,6 +185,10 @@ type composedSnapshot struct {
 	tree            string
 	specPath        string
 	specPermissions os.FileMode
+	// closePath is the repository-relative tickets-only folder this landing consumes,
+	// empty on every other landing. It is composed out of the published tree and
+	// removed from the checkout only after that tree is authorized and published.
+	closePath string
 }
 
 // Owner composes only Request.Paths from Request.Expected, authorizes that tree, then
@@ -210,19 +214,28 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	// --spec has two effects on one green landing. A folder carrying a spec.md takes
+	// the staged->implemented flip; a tickets-only folder is deleted instead, in the
+	// same commit. The close path stays out of paths: it is composed and reconciled by
+	// removal, not by attribution.
+	closePath := ""
 	if r.Spec != "" {
-		resolved, err := spec.CheckStaged(r.Root, r.Spec)
-		if err != nil {
-			return Result{}, err
+		if TicketsOnlyFolder(r.Root, r.Spec) {
+			closePath = specsDir + "/" + r.Spec
+		} else {
+			resolved, err := spec.CheckStaged(r.Root, r.Spec)
+			if err != nil {
+				return Result{}, err
+			}
+			rel, err := repositoryPath(r.Root, resolved)
+			if err != nil {
+				return Result{}, err
+			}
+			paths = append(paths, rel)
 		}
-		rel, err := repositoryPath(r.Root, resolved)
-		if err != nil {
-			return Result{}, err
-		}
-		paths = append(paths, rel)
 	}
 	paths = unique(paths)
-	snapshot, err := compose(r, paths)
+	snapshot, err := compose(r, paths, closePath)
 	if err != nil {
 		return Result{}, err
 	}
@@ -514,7 +527,7 @@ func gitlinkAt(root, expected, path string) bool {
 	return false
 }
 
-func compose(r Request, paths []string) (composedSnapshot, error) {
+func compose(r Request, paths []string, closePath string) (composedSnapshot, error) {
 	dir, err := os.MkdirTemp("", "bench-landing-index-")
 	if err != nil {
 		return composedSnapshot{}, err
@@ -531,8 +544,12 @@ func compose(r Request, paths []string) (composedSnapshot, error) {
 			}
 		}
 	}
-	snapshot := composedSnapshot{}
-	if r.Spec != "" {
+	snapshot := composedSnapshot{closePath: closePath}
+	if closePath != "" {
+		if err := removeIndexTree(r.Root, idx, closePath); err != nil {
+			return composedSnapshot{}, err
+		}
+	} else if r.Spec != "" {
 		resolved, content, fileMode, err := transitionedSpec(r.Root, r.Spec)
 		if err != nil {
 			return composedSnapshot{}, err
@@ -607,8 +624,33 @@ func reconcile(r Request, paths []string, snapshot composedSnapshot) error {
 			return fmt.Errorf("named path %q still has untracked content", path)
 		}
 	}
+	if snapshot.closePath != "" {
+		if err := os.RemoveAll(filepath.Join(r.Root, filepath.FromSlash(snapshot.closePath))); err != nil {
+			return fmt.Errorf("remove closed spec folder %q: %w", snapshot.closePath, err)
+		}
+	}
 	if snapshot.specPath != "" {
 		return os.Chmod(snapshot.specPath, snapshot.specPermissions)
+	}
+	return nil
+}
+
+// removeIndexTree drops every entry beneath rel from the prospective index, so the
+// published tree carries the deletion rather than the checkout carrying it afterwards.
+// The pathspec is literal and the removals name exact index paths, so a folder name
+// holding a space or a glob character resolves to itself.
+func removeIndexTree(root, idx, rel string) error {
+	listed, err := indexOutputRaw(root, idx, "ls-files", "-z", "--cached", "--", ":(literal)"+rel)
+	if err != nil {
+		return fmt.Errorf("list tracked entries under %q: %w", rel, err)
+	}
+	for _, path := range strings.Split(string(listed), "\x00") {
+		if path == "" {
+			continue
+		}
+		if err := indexRun(root, idx, "update-index", "--force-remove", "--", path); err != nil {
+			return fmt.Errorf("remove %q from prospective index: %w", path, err)
+		}
 	}
 	return nil
 }
@@ -660,6 +702,11 @@ func indexRun(root, idx string, args ...string) error {
 	c := exec.Command("git", append([]string{"-C", root}, args...)...)
 	c.Env = append(os.Environ(), "GIT_INDEX_FILE="+idx)
 	return c.Run()
+}
+func indexOutputRaw(root, idx string, args ...string) ([]byte, error) {
+	c := exec.Command("git", append([]string{"-C", root}, args...)...)
+	c.Env = append(os.Environ(), "GIT_INDEX_FILE="+idx)
+	return c.Output()
 }
 func indexOutput(root, idx string, args ...string) (string, error) {
 	c := exec.Command("git", append([]string{"-C", root}, args...)...)

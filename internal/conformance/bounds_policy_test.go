@@ -17,7 +17,7 @@ func checkBoundsPolicy(root string) []string {
 	if registry == "" {
 		return []string{"internal/bounds policy registry is absent"}
 	}
-	required := []string{"ProviderTimeout", "GitRefreshTimeout", "WorktreeListTimeout", "GuardScanTimeout", "GateTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "OutlineRowLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale"}
+	required := []string{"ProviderTimeout", "GitRefreshTimeout", "WorktreeListTimeout", "GuardScanTimeout", "GateTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "AssignmentStale"}
 	var diags []string
 	for _, name := range required {
 		if !strings.Contains(registry, name) {
@@ -27,7 +27,7 @@ func checkBoundsPolicy(root string) []string {
 	owners := map[string][]string{
 		"internal/models/models.go":                 {"bounds.ProviderTimeout", "bounds.ModelReadLimit"},
 		"internal/sessioninspect/sessioninspect.go": {"bounds.ProviderTimeout"},
-		"internal/outline/outline.go":               {"bounds.OutlineFileLimit", "bounds.OutlineRowLimit"},
+		"internal/outline/outline.go":               {"bounds.OutlineFileLimit"},
 		"internal/learnings/learnings.go":           {"bounds.ControlRecordLimit"},
 		"internal/maps/maps.go":                     {"bounds.ControlRecordLimit"},
 		"internal/roadmap/roadmap.go":               {"bounds.ControlRecordLimit"},
@@ -156,7 +156,6 @@ func boundLikeName(name, owner string) bool {
 		"ModelReadLimit":            {"model", "limit"},
 		"OutlineFileLimit":          {"outline", "file", "limit"},
 		"ControlRecordLimit":        {"control", "record", "limit"},
-		"OutlineRowLimit":           {"outline", "row"},
 		"IterationMin":              {"iteration", "min"},
 		"IterationMax":              {"iteration", "max"},
 		"MainIterationsDefault":     {"main", "iteration", "default"},

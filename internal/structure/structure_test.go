@@ -371,6 +371,52 @@ func TestAcceptWhitespacePathIsStale(t *testing.T) {
 	}
 }
 
+// ValidateAcceptGrants is the gate's observer of the two conditions the report only
+// narrates. `bench structure` prints a stale row and a reasonless row and still exits 0,
+// so a grant can outlive its file forever without anything going red; these assertions
+// pin that the conformance entry point sees them as diagnostics rather than as prose.
+func TestValidateAcceptGrantsReportsStaleAndReasonlessRows(t *testing.T) {
+	root := initRepo(t)
+	write(t, root, "long.go", lines(401))
+	write(t, root, ".bench/structure-accept", "long.go cohesive and barely over budget\ngone.go it moved away\nreasonless.go\n")
+	add(t, root)
+
+	diags := ValidateAcceptGrants(root)
+	for _, want := range []string{
+		"structure-accept: ignoring malformed line (no reason): reasonless.go",
+		"structure-accept: stale accept row (not a scanned source file): gone.go",
+	} {
+		if !containsLine(diags, want) {
+			t.Errorf("missing diagnostic %q in:\n%s", want, strings.Join(diags, "\n"))
+		}
+	}
+	for _, diag := range diags {
+		if strings.Contains(diag, "long.go") {
+			t.Errorf("a resolving grant with its reason intact was reported: %q", diag)
+		}
+	}
+}
+
+// A tree with no grants is silence, not a finding: the conformance registry grades roots
+// that are not the kit at all, and a check that spoke up there would red an innocent tree.
+// The absent file also has to short-circuit before the tracked-source query, so a root
+// that is not a repository never reaches git.
+func TestValidateAcceptGrantsSilentWithoutGrants(t *testing.T) {
+	root := t.TempDir()
+	if diags := ValidateAcceptGrants(root); len(diags) != 0 {
+		t.Errorf("a root with no accept file produced diagnostics: %v", diags)
+	}
+}
+
+func containsLine(lines []string, want string) bool {
+	for _, line := range lines {
+		if line == want {
+			return true
+		}
+	}
+	return false
+}
+
 // A present-but-unreadable accept file is LOUD — a non-zero result with a named line
 // — never a silently empty list at exit 0 (the FT29 false-empty defect). The forced
 // non-zero flows through the same count both the report and ViolationCount read.

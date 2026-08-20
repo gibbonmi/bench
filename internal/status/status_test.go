@@ -643,6 +643,12 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			commit(t, root)
 			return root, Query{}
 		}, exact: []Signal{{Severity: 9, Name: "reviews", Detail: "1 orphaned review pickup", Action: ""}}},
+		{name: "tickets-only residue", signal: "specs", detail: "tickets-only spec folder", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			write(t, root, "specs/landed-ticket/tickets/one.md", "ticket\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}, exact: []Signal{testSignal(11, "specs", "1 tickets-only spec folder", "bench commit --spec <slug>")}},
 		{name: "roadmap reconcile", signal: "roadmap", detail: "retired spec", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, roadmap.RoadmapFile, "specs/retired/spec.md\n", 0o644)
@@ -809,6 +815,73 @@ func TestOrphanedPickupCount(t *testing.T) {
 	}
 	if got := orphanedPickupCount(root); got != 1 {
 		t.Fatalf("orphanedPickupCount = %d, want 1", got)
+	}
+}
+
+// ticketsOnlyRepo commits files into a repository parked on its default branch — the
+// branch the retirement row requires — so a residue fixture can be ranked against the
+// housekeeping rows it joins.
+func ticketsOnlyRepo(t *testing.T, files map[string]string) string {
+	t.Helper()
+	root := initRepo(t)
+	files["tracked.txt"] = "base\n"
+	for name, body := range files {
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "fixture")
+	gitRun(t, root, "branch", "-M", "main")
+	return root
+}
+
+// H05 — the residue row carries the count and the command that closes one, and ranks below
+// the two housekeeping rows it joins, so a count of residue never displaces a retirement or
+// an orphaned pickup inside the five-row budget.
+func TestTicketsOnlyResidueRowCountsAndRanksBelowItsBand(t *testing.T) {
+	root := ticketsOnlyRepo(t, map[string]string{
+		"specs/landed-ticket/tickets/one.md": "ticket\n",
+		"specs/second-ticket/tickets/two.md": "ticket\n",
+		"specs/merged/spec.md":               "Status: implemented\n",
+		"reviews/orphan.md":                  "pickup\n",
+	})
+
+	signals := Signals(root)
+	position := func(name, detail string) int {
+		t.Helper()
+		for i, s := range signals {
+			if s.Name == name && strings.Contains(s.Detail, detail) {
+				return i
+			}
+		}
+		t.Fatalf("no %s row containing %q in %#v", name, detail, signals)
+		return -1
+	}
+	residue := position("specs", "tickets-only")
+	if got, want := signals[residue], testSignal(11, "specs", "2 tickets-only spec folders", "bench commit --spec <slug>"); got != want {
+		t.Fatalf("residue row = %#v, want %#v", got, want)
+	}
+	retirement, orphaned := position("specs", "awaiting retirement"), position("reviews", "orphaned review")
+	if residue < retirement || residue < orphaned {
+		t.Fatalf("residue row at %d outranks retirement %d / orphaned pickup %d", residue, retirement, orphaned)
+	}
+}
+
+// H06 — a specs tree holding no tickets-only folder renders no residue row at all. A
+// spec-backed folder is not residue, so the fixture also pins that the row reads the
+// tickets-only predicate rather than counting every child of specs/.
+func TestNoTicketsOnlyFolderRendersNoResidueRow(t *testing.T) {
+	root := ticketsOnlyRepo(t, map[string]string{"specs/spec-backed/spec.md": "Status: staged\n"})
+
+	for _, s := range Signals(root) {
+		if strings.Contains(s.Detail, "tickets-only") {
+			t.Fatalf("clean specs tree produced residue row %#v", s)
+		}
 	}
 }
 

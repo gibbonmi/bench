@@ -12,7 +12,8 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
-func TestCommandBoundsRowsAndFullRetainsMetadata(t *testing.T) {
+// H14: --full emits symbol rows repository-wide, uncapped, with completeness metadata.
+func TestFullFormEmitsSymbolRowsRepositoryWide(t *testing.T) {
 	root := outlineRepo(t)
 	var source strings.Builder
 	source.WriteString("package x\n")
@@ -22,20 +23,122 @@ func TestCommandBoundsRowsAndFullRetainsMetadata(t *testing.T) {
 	writeOutlineFile(t, root, "many.go", source.String())
 	gitAddOutline(t, root)
 
-	bounded, code := Command(nil)
-	if code != 0 || !strings.HasPrefix(bounded, "outline[200]{") {
-		t.Fatalf("bounded code/output = %d\n%s", code, bounded)
+	full, code := Command([]string{"--full"})
+	if code != 0 || !strings.HasPrefix(full, "outline[201]{file,line,kind,name}:\n") {
+		t.Fatalf("full code/output = %d\n%s", code, headOf(full))
 	}
-	for _, want := range []string{"tracked_files,scanned_files,skipped_files,total_symbols,emitted_symbols,omitted_symbols,truncated", `  "1","1","0","201","200","1","true"`} {
-		if !strings.Contains(bounded, want) {
-			t.Fatalf("bounded metadata missing %q:\n%s", want, bounded)
+	for _, want := range []string{"tracked_files,scanned_files,skipped_files,total_symbols,emitted_symbols,omitted_symbols,truncated", `  "1","1","0","201","201","0","false"`} {
+		if !strings.Contains(full, want) {
+			t.Fatalf("full metadata missing %q:\n%s", want, headOf(full))
 		}
+	}
+}
+
+// H12: the bare form emits meta and one row per scanned top-level directory carrying
+// that directory's whole-subtree symbol count, and no symbol rows. The nested file makes
+// the collapse observable: a per-scanned-directory roll-up would report a/deep separately.
+func TestBareFormSummarizesTopLevelDirectories(t *testing.T) {
+	root := outlineRepo(t)
+	writeOutlineFile(t, root, "a/deep/x.go", "package a\nfunc One() {}\nfunc Two() {}\n")
+	writeOutlineFile(t, root, "a/y.go", "package a\nfunc Three() {}\n")
+	writeOutlineFile(t, root, "b/z.go", "package b\nfunc Four() {}\n")
+	writeOutlineFile(t, root, "root.go", "package main\nfunc Five() {}\n")
+	gitAddOutline(t, root)
+
+	out, code := Command(nil)
+	if code != 0 || !strings.HasPrefix(out, "outline_dirs[3]{dir,symbols}:\n") {
+		t.Fatalf("bare form is not a top-level summary: code=%d\n%s", code, headOf(out))
+	}
+	for _, want := range []string{`  a,"3"`, `  b,"1"`, `  .,"1"`, "outline_meta[1]{"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("bare output missing %q:\n%s", want, headOf(out))
+		}
+	}
+	if strings.Contains(out, "outline[") || strings.Contains(out, "a/deep") {
+		t.Fatalf("bare form did not collapse to top level:\n%s", headOf(out))
+	}
+}
+
+// H13: a path argument keeps emitting symbol rows scoped to that path, including a path
+// carrying spaces and glob characters.
+func TestPathFormEmitsSymbolRowsForThatPath(t *testing.T) {
+	root := outlineRepo(t)
+	writeOutlineFile(t, root, "a/x.go", "package a\nfunc One() {}\n")
+	writeOutlineFile(t, root, "weird [dir] name/z.go", "package w\nfunc Odd() {}\n")
+	gitAddOutline(t, root)
+
+	scoped, code := Command([]string{"a"})
+	if code != 0 || !strings.HasPrefix(scoped, "outline[1]{file,line,kind,name}:\n") {
+		t.Fatalf("path form code/output = %d\n%s", code, headOf(scoped))
+	}
+	if !strings.Contains(scoped, "One") || strings.Contains(scoped, "Odd") {
+		t.Fatalf("path form did not scope to the path:\n%s", headOf(scoped))
+	}
+
+	globbed, code := Command([]string{"weird [dir] name"})
+	if code != 0 || !strings.HasPrefix(globbed, "outline[1]{file,line,kind,name}:\n") {
+		t.Fatalf("glob-charactered path code/output = %d\n%s", code, headOf(globbed))
+	}
+	if !strings.Contains(globbed, "Odd") {
+		t.Fatalf("glob-charactered path lost its rows:\n%s", headOf(globbed))
+	}
+}
+
+// H15: the bare form's row count equals the scanned top-level directory count, with no
+// cap applied. The fixture crosses the retired 200-row limit so a reintroduced cap is
+// observable, and nests each file so the count is a subtree roll-up.
+func TestBareFormRowCountEqualsTopLevelDirectoryCount(t *testing.T) {
+	root := outlineRepo(t)
+	for i := 0; i < 201; i++ {
+		writeOutlineFile(t, root, fmt.Sprintf("d%03d/nested/x.go", i), "package x\nfunc Only() {}\n")
+	}
+	gitAddOutline(t, root)
+
+	out, code := Command(nil)
+	if code != 0 || !strings.HasPrefix(out, "outline_dirs[201]{dir,symbols}:\n") {
+		t.Fatalf("bare row count is bounded rather than complete: code=%d\n%s", code, headOf(out))
+	}
+	if !strings.Contains(out, `  d200,"1"`) {
+		t.Fatalf("the last scanned top-level directory is missing from the summary:\n%s", headOf(out))
+	}
+}
+
+// H16: absent and present-but-empty are distinct definitive empty states, and the
+// row-bearing forms keep their own typed zero-row table.
+func TestEmptyStatesDistinguishAbsentFromPresentButEmpty(t *testing.T) {
+	outlineRepo(t)
+	absent, code := Command(nil)
+	if code != 0 || !strings.HasPrefix(absent, "outline_dirs[0]{dir,symbols}:\n") {
+		t.Fatalf("absent tree code/output = %d\n%s", code, headOf(absent))
+	}
+	if !strings.Contains(absent, `  "0","0","0","0","0","0","false"`) {
+		t.Fatalf("absent tree lost its zeroed metadata:\n%s", headOf(absent))
+	}
+
+	root := outlineRepo(t)
+	writeOutlineFile(t, root, "notes.rs", "fn main() {}\n")
+	gitAddOutline(t, root)
+	present, code := Command(nil)
+	if code != 0 || !strings.HasPrefix(present, "outline_dirs[1]{dir,symbols}:\n") {
+		t.Fatalf("present-but-empty tree code/output = %d\n%s", code, headOf(present))
+	}
+	if !strings.Contains(present, `  .,"0"`) || !strings.Contains(present, `  "1","1","0","0","0","0","false"`) {
+		t.Fatalf("present-but-empty tree is not distinct from absent:\n%s", headOf(present))
 	}
 
 	full, code := Command([]string{"--full"})
-	if code != 0 || !strings.HasPrefix(full, "outline[201]{") || !strings.Contains(full, `  "1","1","0","201","201","0","false"`) {
-		t.Fatalf("full code/output = %d\n%s", code, full)
+	if code != 0 || !strings.HasPrefix(full, "outline[0]{file,line,kind,name}:\n") {
+		t.Fatalf("row-bearing empty state = %d\n%s", code, headOf(full))
 	}
+}
+
+// headOf keeps a failure message readable when the subject is a long table.
+func headOf(out string) string {
+	lines := strings.Split(out, "\n")
+	if len(lines) > 12 {
+		lines = append(lines[:12], "...")
+	}
+	return strings.Join(lines, "\n")
 }
 
 func TestCommandNamesSizeBinaryAndNonregularSkips(t *testing.T) {
@@ -50,7 +153,8 @@ func TestCommandNamesSizeBinaryAndNonregularSkips(t *testing.T) {
 		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlink unavailable: %v", err))
 	}
 	gitAddOutline(t, root)
-	out, code := Command(nil)
+	// --full is the row-bearing repository-wide form; skips ride the same envelope.
+	out, code := Command([]string{"--full"})
 	if code != 0 {
 		t.Fatalf("code = %d; out=%s", code, out)
 	}

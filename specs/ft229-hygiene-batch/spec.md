@@ -1,6 +1,6 @@
 # FT229 — hygiene batch: residue, stale prose, and small CLI sharp edges
 
-Status: staged
+Status: implemented
 
 Decision source: named reviewed artifact — `roadmap/FT229.md`, whose evidence is the 2026-08 capability audit's reconciliation ledger (`docs/audits/2026-08-bench-capability/results-fable-high/reconciliation-ledger.md`, rows L-17 through L-20, L-29, L-30) and action item A9 (`action-items.yaml`). Two forks were closed by the reviewer on 2026-08-19: the existing tickets-only residue is deleted in this build, and `bench preflight` gains `--source-tip` rather than the review phase losing the word.
 

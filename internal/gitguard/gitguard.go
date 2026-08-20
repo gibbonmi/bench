@@ -35,11 +35,15 @@ var denyTable = []struct{ key, label string }{
 	{"switch", "git switch --force"},
 	{"restore", "git restore path"},
 	{"rebase", "history rewrite"},
+	{"filter-branch", "git filter-branch"},
 	{"amend", "git commit --amend"},
 	{"update-ref", "git update-ref -d"},
 	{"tag", "git tag -d"},
 	{"reflog", "git reflog expire"},
 	{"worktree", "git worktree remove --force"},
+	{"stash-drop", "git stash drop"},
+	{"stash-clear", "git stash clear"},
+	{"rm-force", "git rm -rf"},
 }
 
 var denyLabels = func() map[string]string {

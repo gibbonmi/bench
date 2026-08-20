@@ -39,13 +39,25 @@ var fencesEndRe = regexp.MustCompile(`^#{2,} `)
 // immutable Facts value ready for Decide, or the one BootstrapFailure that explains
 // why no Facts value can be trusted. Exactly one of the two return values is non-zero.
 func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapFailure) {
-	if len(explicitBase) > 0 && explicitBase[0] != "" {
+	base := ""
+	if len(explicitBase) > 0 {
+		base = explicitBase[0]
+	}
+	return GatherPinned(root, mode, slug, base, "")
+}
+
+// GatherPinned is Gather with the reviewer's frozen source tip supplied. The pin is
+// resolved here, never classified: an unresolvable value is the gatherer's own
+// structured failure, the same grammar-level answer an unresolvable --base gets,
+// while a resolvable one that names the wrong commit is a verdict row Decide owns.
+func GatherPinned(root, mode, slug, explicitBase, sourceTipPin string) (Facts, *BootstrapFailure) {
+	if explicitBase != "" {
 		var gathered Facts
 		var gatherFailure *BootstrapFailure
 		result := diff.MovementCheckedRetry(root, func(snapshot diff.MovementSnapshot) (string, string) {
 			var err error
 			var resolveKind, resolveHint string
-			source, resolveKind, resolveHint := snapshot.ResolveSourceRange(explicitBase[0])
+			source, resolveKind, resolveHint := snapshot.ResolveSourceRange(explicitBase)
 			if resolveKind != "" {
 				return resolveKind, resolveHint
 			}
@@ -62,7 +74,7 @@ func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapF
 					return "source not clean", "review source has uncommitted changes"
 				}
 			}
-			gathered, gatherFailure = gather(root, mode, slug, &source, paths)
+			gathered, gatherFailure = gather(root, mode, slug, &source, paths, sourceTipPin)
 			if gatherFailure != nil {
 				return gatherFailure.Kind, gatherFailure.Hint
 			}
@@ -79,10 +91,14 @@ func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapF
 		}
 		return gathered, nil
 	}
-	return gather(root, mode, slug, nil, nil)
+	return gather(root, mode, slug, nil, nil, sourceTipPin)
 }
 
-func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string) (Facts, *BootstrapFailure) {
+func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin string) (Facts, *BootstrapFailure) {
+	pinnedTip, pinErr := resolvePin(root, sourceTipPin)
+	if pinErr != nil {
+		return Facts{}, pinErr
+	}
 	content, resolved, tried, ok, err := specref.Resolve(root, slug)
 	if err != nil {
 		return Facts{}, &BootstrapFailure{"spec not readable", "spec " + slug + ": " + err.Error()}
@@ -129,6 +145,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		reviewBase, reviewBaseResolved = resolvedSource.Base, true
 	} else {
 		defaultBranchResolved, defaultBranchCurrent = baseCurrentFacts(root)
+		resolvedSource.Tip = headTip(root)
 		reviewBase, reviewBaseResolved, reviewBaseHint = reviewBaseFacts(root)
 		if reviewBaseResolved {
 			changedPaths, err = diff.ChangedFilePathsAt(root, reviewBase)
@@ -147,6 +164,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		ReviewBaseHint:        reviewBaseHint,
 		SourceBase:            resolvedSource.Base,
 		SourceTip:             resolvedSource.Tip,
+		PinnedSourceTip:       pinnedTip,
 		ExplicitSourceRange:   source != nil,
 		ChangedPaths:          changedPaths,
 		FenceEntries:          fenceEntries,
@@ -155,6 +173,33 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		SpecTag:               specTag(ids),
 		TicketsDirExists:      ticketsDirExists,
 	}, nil
+}
+
+// resolvePin resolves a --source-tip value to its full commit identity. An empty pin
+// is the flag's absence, not a failure; an unresolvable one is refused in the same
+// shape ResolveSourceRange refuses an unreachable --base, so a typo never reaches
+// the verdict table as a drift.
+func resolvePin(root, pin string) (string, *BootstrapFailure) {
+	if pin == "" {
+		return "", nil
+	}
+	resolved, err := git.Output("-C", root, "rev-parse", "--verify", pin+"^{commit}")
+	if err != nil {
+		return "", &BootstrapFailure{"cannot resolve --source-tip", "'" + pin + "' does not name a commit reachable in this repository"}
+	}
+	return resolved, nil
+}
+
+// headTip is the derived source tip of a bare invocation, the counterpart to the
+// snapshot head an explicit source range captures. An unreadable HEAD answers empty;
+// tip-current renders that as its own red rather than a bootstrap failure, since a
+// bare invocation with no pin has no use for the value at all.
+func headTip(root string) string {
+	tip, err := git.Output("-C", root, "rev-parse", "HEAD")
+	if err != nil {
+		return ""
+	}
+	return tip
 }
 
 // AuthorizeReviewedSource returns the one shared range fact after checking its

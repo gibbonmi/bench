@@ -145,12 +145,20 @@ func (o *systemOwner) observeSelected() error {
 }
 
 func (o *systemOwner) runAt(dir string, overrides []string, program string, args ...string) processResult {
+	return o.runWithInput(dir, overrides, "", program, args...)
+}
+
+// runWithInput is the package's one owned process start: runAt is the no-stdin form, so
+// a launch that feeds a hook its envelope on stdin joins the same starts ledger rather
+// than opening a second launch path beside it.
+func (o *systemOwner) runWithInput(dir string, overrides []string, input string, program string, args ...string) processResult {
 	o.mu.Lock()
 	o.starts++
 	o.mu.Unlock()
 	cmd := exec.Command(program, args...)
 	cmd.Dir = dir
 	cmd.Env = mergeEnvironment(os.Environ(), overrides)
+	cmd.Stdin = strings.NewReader(input)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -301,6 +309,10 @@ func (o *systemOwner) cleanup() error {
 	return nil
 }
 
+// mergeEnvironment layers overrides over base. An override spelled as a bare NAME with
+// no `=` removes that variable instead of setting it: a resolution path the ambient test
+// environment short-circuits — the wrapper's own binary search, which BENCH_RUN_BINARY
+// pre-empts — can only be driven with the variable genuinely absent.
 func mergeEnvironment(base, overrides []string) []string {
 	want := map[string]string{}
 	for _, entry := range overrides {
@@ -316,7 +328,9 @@ func mergeEnvironment(base, overrides []string) []string {
 		out = append(out, entry)
 	}
 	for _, entry := range overrides {
-		out = append(out, entry)
+		if strings.Contains(entry, "=") {
+			out = append(out, entry)
+		}
 	}
 	return out
 }

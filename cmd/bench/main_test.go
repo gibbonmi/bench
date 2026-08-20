@@ -105,7 +105,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
   bench test [--full] [package]  run fresh Go tests and render package, failure, and skip evidence as TOON
-  bench outline [path]       locate candidate seams (file:line) as TOON; does not identify the project's blessed seams
+  bench outline [path] [--full]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate [--fresh]       run the project gate (the oracle; --fresh ignores a reusable green)

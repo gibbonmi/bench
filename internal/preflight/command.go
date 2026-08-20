@@ -11,14 +11,18 @@ import (
 )
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand —
-// two required positionals (mode, slug) and an optional explicit base. Both `review`
+// two required positionals (mode, slug), an optional explicit base, and the optional
+// frozen source tip the review phase pins. Both `review`
 // and `build` are
 // accepted modes; anything else is rejected by the mode-validity check below the same
 // way an unknown word always is.
 var grammar = usage.Grammar{
-	Cmd:     "bench preflight",
-	Help:    "usage: bench preflight review <slug> [--base <commit>]\n       bench preflight build <slug> [--base <commit>]\n",
-	Flags:   []usage.Flag{{Name: "--base", HasValue: true, NoEmptyValue: true}},
+	Cmd:  "bench preflight",
+	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n",
+	Flags: []usage.Flag{
+		{Name: "--base", HasValue: true, NoEmptyValue: true},
+		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
+	},
 	MinArgs: 2,
 	MaxArgs: 2,
 }
@@ -26,7 +30,7 @@ var grammar = usage.Grammar{
 // Command implements `bench preflight review <slug>` and `bench preflight build
 // <slug>`. It is the CLI-contract seam: grammar and usage errors ride usage.Parse
 // (exit 2); a not-in-repo cwd or a bootstrap failure is one toon.Errorf line (exit
-// 1); otherwise the five-check verdict renders as TOON and the exit code follows
+// 1); otherwise the verdict renders as TOON and the exit code follows
 // Verdict.Red (0 green, 1 red).
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
@@ -35,6 +39,7 @@ func Command(args []string) (string, int) {
 	}
 	mode, slug := parsed.Positionals[0], parsed.Positionals[1]
 	base := parsed.Flags["--base"]
+	sourceTip := parsed.Flags["--source-tip"]
 	if mode != "review" && mode != modeBuild {
 		return toon.Usage(grammar.Cmd, mode) + "\n", 2
 	}
@@ -43,7 +48,11 @@ func Command(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 
-	facts, bootErr := Gather(root, mode, slug, base)
+	if err := unrepresentableCell("--source-tip", sourceTip); err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+
+	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
 	if bootErr != nil {
 		if bootErr.Kind == "snapshot drift" {
 			return snapshotDriftRefusal(args, bootErr.Hint), 1
@@ -103,9 +112,20 @@ func snapshotDriftRefusal(args []string, hint string) string {
 // which row a later check happens to sort it into.
 func unrepresentableChangedPath(paths []string) error {
 	for _, p := range paths {
-		if !toon.Representable(p) {
-			return fmt.Errorf("changed path %q contains a byte spec-TOON cannot represent", p)
+		if err := unrepresentableCell("changed path", p); err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+// unrepresentableCell is that refusal for one value, shared by the changed-path sweep
+// and by --source-tip: a pin reaches a detail cell and the snapshot-drift retry
+// action, so a control byte in it is refused rather than rendered. The %q quoting
+// keeps the offending byte out of the message it explains.
+func unrepresentableCell(what, value string) error {
+	if toon.Representable(value) {
+		return nil
+	}
+	return fmt.Errorf("%s %q contains a byte spec-TOON cannot represent", what, value)
 }

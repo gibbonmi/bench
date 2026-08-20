@@ -139,14 +139,12 @@ Go-toolchain phases materialize only when the graded root carries what each step
 grades. The manifest is a capability for projects whose gate is not shaped like
 the kit's, not the route the kit takes.
 
-The ordinary test phase carries the graded root and the dev tier to the conformance
-entry point, which receives a gate-authored, registry-ordered ordinary-check set. An ordinary dev gate may inherit exact per-check evidence,
-but meta checks always execute in the same aggregate process and validate the
-complete, disjoint executed/inherited partition. `gate --fresh`, prospective
-execution, and ship remain full boundaries. A mixed verdict lists every
-executed check and carries the identity and authorship time for every inherited
-check; it can compose to the exact tree's landing green but is never reusable
-as a later whole-tree green.
+The ordinary test phase carries the graded root and the dev tier to the
+conformance entry point, and the conformance registry owns check order,
+subject, and tier. The complete dev-tier check set executes inside that one
+ordinary test run, meta checks included, validating the registry itself:
+there is no separate conformance phase, driver, or per-check evidence partition.
+`gate --fresh`, prospective execution, and ship remain full boundaries.
 
 The document is one object with a `phases` array. Per phase:
 

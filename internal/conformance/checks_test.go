@@ -25,6 +25,7 @@ import (
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/skillsindex"
+	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -73,6 +74,7 @@ func init() {
 		"injected-port-registry":        {checkInjectedPortRegistry, registry.Dev, registry.SubjectRoot},
 		"guidance-prose-budgets":        {checkGuidanceProseBudgets, registry.Dev, registry.SubjectRoot},
 		"roadmap-detail-integrity":      {roadmap.ValidateRoadmapTree, registry.Dev, registry.SubjectRoot},
+		"structure-accept-currency":     {structure.ValidateAcceptGrants, registry.Dev, registry.SubjectRoot},
 	}
 }
 
