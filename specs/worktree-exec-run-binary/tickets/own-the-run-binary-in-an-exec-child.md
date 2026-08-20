@@ -49,17 +49,17 @@ as ticket evidence.
 
 ## Acceptance
 
-- [ ] A child in a worktree holding a regular-file wrapper receives the wrapper variable naming that worktree's wrapper path.
-- [ ] The emitted value is an absolute path.
-- [ ] A child's gate selects an owned binary rather than an inherited one.
-- [ ] A child never receives the caller's wrapper value.
-- [ ] A child receives neither the caller's kit nor the caller's run-binary variable.
-- [ ] A child receives every unrelated variable the caller set.
-- [ ] A child in a worktree with no wrapper path receives no wrapper variable.
-- [ ] A child in a worktree whose wrapper path is a directory receives no wrapper variable.
-- [ ] A child in a worktree whose wrapper path is a FIFO receives no wrapper variable.
-- [ ] A child in a worktree whose wrapper path is a dangling symbolic link receives no wrapper variable.
-- [ ] A child in a worktree whose wrapper path is an empty regular file receives the wrapper variable.
-- [ ] A child running a verb that already owned its binary is unaffected.
-- [ ] A child's environment differs from today's by the wrapper assignment alone.
-- [ ] `bench worktree exec <target> -- ./dist/bench gate` over a clean worktree of this kit reports green, recorded as ticket evidence.
+- [ ] A child in a worktree holding a regular-file wrapper receives the wrapper variable naming that worktree's wrapper path (WX1).
+- [ ] The emitted value is an absolute path (WX2).
+- [ ] A child's gate selects an owned binary rather than an inherited one (WX3).
+- [ ] A child never receives the caller's wrapper value (WX4).
+- [ ] A child receives neither the caller's kit nor the caller's run-binary variable (WX5).
+- [ ] A child receives every unrelated variable the caller set (WX6).
+- [ ] A child in a worktree with no wrapper path receives no wrapper variable (WX7).
+- [ ] A child in a worktree whose wrapper path is a directory receives no wrapper variable (WX8).
+- [ ] A child in a worktree whose wrapper path is a FIFO receives no wrapper variable (WX9).
+- [ ] A child in a worktree whose wrapper path is a dangling symbolic link receives no wrapper variable (WX10).
+- [ ] A child in a worktree whose wrapper path is an empty regular file receives the wrapper variable (WX11).
+- [ ] A child running a verb that already owned its binary is unaffected (WX12).
+- [ ] A child's environment differs from today's by the wrapper assignment alone (WX13).
+- [ ] `bench worktree exec <target> -- ./dist/bench gate` over a clean worktree of this kit reports green, recorded as ticket evidence (WX20).

@@ -36,10 +36,10 @@ condition.
 
 ## Acceptance
 
-- [ ] The gate entry with no run-binary variable refuses and names the wrapper invocation.
-- [ ] The gate entry with a relative run-binary value refuses with that same message.
-- [ ] The refusal names no worktree.
-- [ ] The refusal text still contains the run-binary variable's name.
-- [ ] The gate entry with a valid absolute executable proceeds exactly as it does today.
-- [ ] The regular-executable and physical-path refusals keep their present wording.
+- [ ] The gate entry with no run-binary variable refuses and names the wrapper invocation (WX14).
+- [ ] The gate entry with a relative run-binary value refuses with that same message (WX15).
+- [ ] The refusal names no worktree (WX16).
+- [ ] The refusal text still contains the run-binary variable's name (WX17).
+- [ ] The gate entry with a valid absolute executable proceeds exactly as it does today (WX18).
+- [ ] The regular-executable and physical-path refusals keep their present wording (WX19).
 - [ ] The gate-entry test reds when the refusal drops the wrapper invocation, and that red is demonstrated and recorded.
