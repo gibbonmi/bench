@@ -72,8 +72,7 @@ func runWorktreeChild(argv []string, dir string, stdin io.Reader, stdout, stderr
 	}
 }
 
-// execEnv returns the operator's environment with the invoking wrapper's routing
-// internals removed, then marks the child as rooted at the worktree's own wrapper.
+// execEnv is the environment a worktree child runs under, with that child owning its run.
 // The child runs in a different tree than the wrapper that reached this call, so it has
 // to resolve its own kit; an inherited BENCH_KIT names the caller's checkout instead.
 // The selected executable goes with them for the same reason — it was built for the

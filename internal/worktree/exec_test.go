@@ -11,18 +11,38 @@ import (
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
-// childEnvironment runs a real child through the exec path against worktree and returns
-// the environment that child actually received, one assignment per line.
-func childEnvironment(t *testing.T, worktree string) string {
+// childOutput runs a real child through the exec path against worktree, with the caller's
+// routing variables set, and returns what that child wrote.
+func childOutput(t *testing.T, worktree, script string) string {
 	t.Helper()
 	t.Setenv("BENCH_KIT", "/caller/kit")
 	t.Setenv("BENCH_WRAPPER", "/caller/bin/bench")
 	t.Setenv(runbinary.Env, "/caller/run/bench")
 	t.Setenv("BENCH_EXEC_TEST_CARRIED", "carried-value")
 	var stdout, stderr bytes.Buffer
-	code := runWorktreeChild([]string{"sh", "-c", "env"}, worktree, nil, &stdout, &stderr)
+	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "child exit = %d, stderr %q", code, stderr.String())
 	return stdout.String()
+}
+
+// childEnvironment returns the environment the child actually received, one assignment
+// per line. That format cannot frame a value holding a newline, so it grades presence and
+// absence over known-safe values only; childWrapper grades the marker's exact value.
+func childEnvironment(t *testing.T, worktree string) string {
+	t.Helper()
+	return childOutput(t, worktree, "env")
+}
+
+// childWrapper returns the exact wrapper marker the child received, and whether it
+// received one. The child emits the presence flag and the value as NUL-terminated fields,
+// a frame no environment value can forge, so a path holding a newline, a space, or a glob
+// character arrives byte-for-byte instead of being re-split by the reader.
+func childWrapper(t *testing.T, worktree string) (string, bool) {
+	t.Helper()
+	emitted := childOutput(t, worktree, `printf '%s\0%s\0' "${BENCH_WRAPPER+set}" "${BENCH_WRAPPER-}"`)
+	fields := strings.Split(emitted, "\x00")
+	requireTest(t, len(fields) == 3 && fields[2] == "", "child emitted %q, want two NUL-terminated fields", emitted)
+	return fields[1], fields[0] == "set"
 }
 
 // wrapperPathIn is the path exec inspects inside a worktree, with its parent created.
@@ -54,9 +74,8 @@ func assignment(seen, name string) (string, bool) {
 // TestExecChildIsRootedAtTheWorktreeWrapper covers WX1 and WX2.
 func TestExecChildIsRootedAtTheWorktreeWrapper(t *testing.T) {
 	worktree, wrapper := worktreeWithWrapper(t)
-	seen := childEnvironment(t, worktree)
-	value, ok := assignment(seen, "BENCH_WRAPPER")
-	requireTest(t, ok, "child received no BENCH_WRAPPER:\n%s", seen)
+	value, ok := childWrapper(t, worktree)
+	requireTest(t, ok, "child received no BENCH_WRAPPER")
 	requireTest(t, value == wrapper, "child saw BENCH_WRAPPER=%q, want %q", value, wrapper)
 	requireTest(t, filepath.IsAbs(value), "child saw a relative BENCH_WRAPPER=%q", value)
 }
@@ -68,8 +87,8 @@ func TestExecChildIsRootedAtTheWorktreeWrapper(t *testing.T) {
 func TestExecChildOwnsRatherThanInheritsItsRunBinary(t *testing.T) {
 	worktree, _ := worktreeWithWrapper(t)
 	seen := childEnvironment(t, worktree)
-	marker, ok := assignment(seen, "BENCH_WRAPPER")
-	requireTest(t, ok && marker != "", "child received no non-empty wrapper marker:\n%s", seen)
+	marker, ok := childWrapper(t, worktree)
+	requireTest(t, ok && marker != "", "child received no non-empty wrapper marker")
 	_, inherited := assignment(seen, runbinary.Env)
 	requireTest(t, !inherited, "child received %s, so its gate would inherit a binary:\n%s", runbinary.Env, seen)
 }
@@ -82,8 +101,8 @@ func TestExecChildDropsWrapperRouting(t *testing.T) {
 		_, ok := assignment(seen, name)
 		requireTest(t, !ok, "child saw %s in its environment:\n%s", name, seen)
 	}
-	value, _ := assignment(seen, "BENCH_WRAPPER")
-	requireTest(t, value != "/caller/bin/bench", "child inherited the caller's wrapper value:\n%s", seen)
+	value, _ := childWrapper(t, worktree)
+	requireTest(t, value != "/caller/bin/bench", "child inherited the caller's wrapper value: %q", value)
 }
 
 // TestExecChildKeepsUnrelatedCallerVariables covers WX6.
@@ -117,9 +136,8 @@ func TestExecChildTakesNoMarkerFromANonWrapper(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			worktree := t.TempDir()
 			tc.build(t, worktree)
-			seen := childEnvironment(t, worktree)
-			value, ok := assignment(seen, "BENCH_WRAPPER")
-			requireTest(t, !ok, "a %s wrapper path became the marker BENCH_WRAPPER=%q:\n%s", tc.name, value, seen)
+			value, ok := childWrapper(t, worktree)
+			requireTest(t, !ok, "a %s wrapper path became the marker BENCH_WRAPPER=%q", tc.name, value)
 		})
 	}
 }
@@ -130,8 +148,7 @@ func TestExecChildTakesTheMarkerFromAnEmptyWrapper(t *testing.T) {
 	worktree := t.TempDir()
 	wrapper := wrapperPathIn(t, worktree)
 	requireTest(t, os.WriteFile(wrapper, nil, 0o755) == nil, "write empty wrapper")
-	seen := childEnvironment(t, worktree)
-	value, ok := assignment(seen, "BENCH_WRAPPER")
+	value, ok := childWrapper(t, worktree)
 	requireTest(t, ok && value == wrapper, "an empty wrapper gave BENCH_WRAPPER=%q (present=%v), want %q", value, ok, wrapper)
 }
 
@@ -162,4 +179,31 @@ func TestExecChildDiffersByTheWrapperAssignmentAlone(t *testing.T) {
 	}
 	requireTest(t, len(difference) == 1 && difference[0] == "BENCH_WRAPPER="+wrapper,
 		"the marked child differs from today's by %q, want the wrapper assignment alone", difference)
+}
+
+// TestExecChildTakesTheMarkerThroughALiveWrapperLink covers WX21: the predicate follows
+// links, so a link to a regular file is a wrapper, and the marker names the link path the
+// child's own wrapper resolution will walk rather than the target behind it.
+func TestExecChildTakesTheMarkerThroughALiveWrapperLink(t *testing.T) {
+	worktree := t.TempDir()
+	target := filepath.Join(worktree, "linked-wrapper.sh")
+	requireTest(t, os.WriteFile(target, []byte("#!/bin/sh\n"), 0o755) == nil, "write link target")
+	wrapper := wrapperPathIn(t, worktree)
+	requireTest(t, os.Symlink(target, wrapper) == nil, "create live wrapper link")
+	value, ok := childWrapper(t, worktree)
+	requireTest(t, ok, "a live wrapper link took no marker, want BENCH_WRAPPER=%q", wrapper)
+	requireTest(t, value == wrapper, "a live wrapper link gave BENCH_WRAPPER=%q, want the link path %q", value, wrapper)
+}
+
+// TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName covers WX22: the marker is a
+// joined path handed to the child as one value, so a space cannot split it and a glob
+// character cannot expand.
+func TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName(t *testing.T) {
+	worktree := filepath.Join(t.TempDir(), "nested [*] path")
+	requireTest(t, os.MkdirAll(worktree, 0o755) == nil, "create awkward worktree")
+	wrapper := wrapperPathIn(t, worktree)
+	requireTest(t, os.WriteFile(wrapper, []byte("#!/bin/sh\n"), 0o755) == nil, "write wrapper")
+	value, ok := childWrapper(t, worktree)
+	requireTest(t, ok, "an awkwardly named worktree took no marker, want BENCH_WRAPPER=%q", wrapper)
+	requireTest(t, value == wrapper, "child saw BENCH_WRAPPER=%q, want the exact path %q", value, wrapper)
 }
