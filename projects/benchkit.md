@@ -189,6 +189,14 @@ coverage map; a class skipped here returns as a regression.
 - destructive worktree state: foreign or identity-mismatched registrations, reused
   paths, the primary checkout, ignored residuals, dirty nested repositories, and
   plan/apply drift all fail closed without losing recovery state
+- a two-sided merge of a path the tool itself rewrites before composing: when
+  the path exists at the merge base and only one side changes an attribute —
+  file mode is the live case — the merge silently auto-resolves to the changed
+  side, so a wrong value on the rewritten side raises no conflict and an
+  edit-shaped fixture stays green with the plumbing broken. Only the shape where
+  both sides add a path absent from base and destination turns a differing
+  attribute into a real conflict, so a red-capable assertion drives that add/add
+  shape — the edit shape proves nothing about what the rewrite carried
 - interrupt (SIGINT) mid-loop: leftover scratch state, leases, worktrees
 - re-run idempotency: relink, reused worktree, second `init`, second `setup`
 - state serialized by one process and reloaded by a fresh one: the writer's
