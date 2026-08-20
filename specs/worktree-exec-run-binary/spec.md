@@ -204,6 +204,8 @@ launching it.
 | WX18 | 19 | the gate entry with a valid absolute executable proceeds as it does today | gate entry subprocess | a build whose reword changes the accept path alters a verdict |
 | WX19 | 20 | the regular-executable and physical-path refusals keep their present wording | gate entry subprocess | a build rewording the whole block changes messages an operator can already act on |
 | WX20 | 1 | `bench worktree exec <target> -- ./dist/bench gate` over a clean worktree of this kit reports green | ticket evidence, one composed run | a build correct at each seam separately can still fail composed |
+| WX21 | 12 | a child in a worktree whose wrapper path is a live symbolic link to a regular file receives the wrapper variable naming the link path | exec child environment | a build hardening the predicate to reject links inverts the decided disposition with nothing red |
+| WX22 | 2 | a child in a worktree whose path contains a space and a glob character receives the exact wrapper path | exec child environment | a build composing the path through a shell lets the glob expand or the space split it |
 
 Not covered: story 21 — FT223 is a separate decision-required item with its own competing fixes; this spec adds no code on that path.
 Not covered: story 22 — the tilde form is existing behavior this spec does not touch; `expandHomeTarget` owns it.
@@ -221,8 +223,8 @@ Walked against the profile's hostile-input checklist for shell CLIs.
 - Wrapper path absent versus present-but-empty: distinct behaviors, both asserted — WX7 leaves the marker unset, WX11 sets it.
 - Special file at the wrapper path: FIFO covered by WX9; device and socket share its predicate.
 - Dangling symbolic link at the wrapper path: WX10.
-- Live symbolic link at the wrapper path: emitted as given, because nothing executes the value and the doctor resolves what it reports.
-- Worktree path containing spaces or glob characters: exec passes the path as one argument to the child process rather than through a shell, and the ledger stores it cleaned.
+- Live symbolic link at the wrapper path: WX21 — emitted as given, because nothing executes the value and the doctor resolves what it reports. Asserted rather than reasoned, because the neighbouring dangling-link refusal reads as "reject links" and invites a hardening change that would invert this.
+- Worktree path containing spaces or glob characters: WX22 — exec passes the path as one argument to the child process rather than through a shell, and the ledger stores it cleaned.
 - Control bytes in the target: refused before resolution by the existing target check.
 - A path read out of a file: worktree creation canonicalizes through symbolic links and the ledger refuses a stored path that is not absolute and cleaned, so this class is disposed of before exec reads it.
 - Required tool missing from PATH: unchanged — exec launches the operator's argv and adds no tool lookup.

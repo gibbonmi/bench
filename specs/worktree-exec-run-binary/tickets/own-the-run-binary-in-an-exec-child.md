@@ -62,4 +62,6 @@ as ticket evidence.
 - [ ] A child in a worktree whose wrapper path is an empty regular file receives the wrapper variable (WX11).
 - [ ] A child running a verb that already owned its binary is unaffected (WX12).
 - [ ] A child's environment differs from today's by the wrapper assignment alone (WX13).
+- [ ] A child in a worktree whose wrapper path is a live symbolic link to a regular file receives the wrapper variable naming the link path (WX21).
+- [ ] A child in a worktree whose path contains a space and a glob character receives the exact wrapper path (WX22).
 - [ ] `bench worktree exec <target> -- ./dist/bench gate` over a clean worktree of this kit reports green, recorded as ticket evidence (WX20).
