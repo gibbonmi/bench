@@ -3,7 +3,10 @@ package publication
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -19,7 +22,15 @@ const unreachableRegistry = "http://127.0.0.1:1"
 // on its first view and reports its integrity on every later one, which is the
 // sequence a publish run observes. markLive skips straight to the live answer
 // for the paths (promote, rollback) that act on an already-published release.
-// Every other subcommand — publish, dist-tag, deprecate — succeeds silently.
+// Every other subcommand — dist-tag, deprecate — succeeds silently.
+//
+// publish counts its calls and, when failPublishAt armed BENCH_NPM_STUB_FAIL_
+// PUBLISH, exits non-zero on that call — a real npm failure on one package of
+// a multi-package run. That branch also undoes the live marker the immediately
+// preceding view optimistically wrote: the "absent on first view, live after"
+// sequence assumes the publish between them succeeded, so without the undo the
+// stub would report a package live that was never published, and a resume
+// could never retry it.
 type npmStub struct {
 	state string
 	log   string
@@ -38,7 +49,18 @@ if [ "$1" = view ]; then
   [ -f "$integrity" ] || exit 1
   if [ -f "$live" ]; then cat "$integrity"; exit 0; fi
   : > "$live"
+  printf '%s' "$live" > "$BENCH_NPM_STUB_STATE/last-marked"
   exit 1
+fi
+if [ "$1" = publish ]; then
+  count=$(cat "$BENCH_NPM_STUB_STATE/publish-count" 2>/dev/null || echo 0)
+  count=$((count + 1))
+  printf '%s' "$count" > "$BENCH_NPM_STUB_STATE/publish-count"
+  if [ -n "$BENCH_NPM_STUB_FAIL_PUBLISH" ] && [ "$count" -eq "$BENCH_NPM_STUB_FAIL_PUBLISH" ]; then
+    if [ -f "$BENCH_NPM_STUB_STATE/last-marked" ]; then rm -f "$(cat "$BENCH_NPM_STUB_STATE/last-marked")"; fi
+    echo "npm ERR! code E500" >&2
+    exit 1
+  fi
 fi
 exit 0
 `
@@ -52,6 +74,19 @@ exit 0
 	t.Setenv("BENCH_NPM_STUB_STATE", stub.state)
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	return stub
+}
+
+// failPublishAt arms the stub to exit non-zero on the nth `npm publish` call of
+// the whole stub's lifetime; call is 0 to disarm for a later resume run. The
+// call counter is never reset, so a resume re-run continues counting where the
+// failed run stopped.
+func (s *npmStub) failPublishAt(t *testing.T, call int) {
+	t.Helper()
+	value := ""
+	if call > 0 {
+		value = strconv.Itoa(call)
+	}
+	t.Setenv("BENCH_NPM_STUB_FAIL_PUBLISH", value)
 }
 
 func (s *npmStub) key(name, version string) string {
@@ -302,6 +337,194 @@ func TestSubmitStagedNPMAdapterRefusesBeforeTheLock(t *testing.T) {
 	}
 	if got := stub.invocations(t); len(got) != 0 {
 		t.Fatalf("the refused staged run spawned npm %d time(s): %v", len(got), got)
+	}
+}
+
+// publicationOrder is the tarball file names in the order a first publication
+// publishes them: every platform package release-plan.mjs names, then the
+// wrapper last.
+func publicationOrder(t *testing.T, root, version string) []string {
+	t.Helper()
+	var order []string
+	for _, kind := range []string{"platform", "wrapper"} {
+		for _, record := range releasePlanArtifacts(t, root, version) {
+			if record.Kind == kind {
+				order = append(order, record.Name)
+			}
+		}
+	}
+	return order
+}
+
+// approvedByFile indexes the approved set by the tarball file name the publish
+// argv carries, so a test can go from a publication-order position to the
+// registry package name the record's transitions are keyed by.
+func approvedByFile(packages []ApprovedPackage) map[string]ApprovedPackage {
+	byFile := make(map[string]ApprovedPackage, len(packages))
+	for _, pkg := range packages {
+		byFile[filepath.Base(pkg.FilePath)] = pkg
+	}
+	return byFile
+}
+
+func transitionsFor(record Record, pkg string) []Transition {
+	var matched []Transition
+	for _, transition := range record.Transitions {
+		if transition.Package == pkg {
+			matched = append(matched, transition)
+		}
+	}
+	return matched
+}
+
+func hasTransition(record Record, pkg, action, result string) bool {
+	for _, transition := range transitionsFor(record, pkg) {
+		if transition.Action == action && transition.Result == result {
+			return true
+		}
+	}
+	return false
+}
+
+func loadTestRecord(t *testing.T, root string) Record {
+	t.Helper()
+	record, err := LoadRecord(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return record
+}
+
+// structuredNPMFailure matches the npm adapter's own error shape — `npm <argv>
+// failed:` — which is what has to reach the operator when the CLI call itself
+// could not run.
+var structuredNPMFailure = regexp.MustCompile(`npm \[[^\]]*\] failed:`)
+
+// TestSubmitNPMAdapterWithoutNPMBinaryFails is the spec's absent-binary edge:
+// with --adapter npm and no `npm` anywhere on PATH, submit exits 1 and the
+// adapter's structured `npm ... failed` error surfaces as unsatisfied release
+// intent — never a silent success or an unattributed crash.
+func TestSubmitNPMAdapterWithoutNPMBinaryFails(t *testing.T) {
+	const version = "9.9.9"
+	root := approvedReleaseRoot(t, version)
+
+	// The narrowed PATH keeps only `node`: VerifyApprovedSet shells
+	// scripts/release-plan.mjs for the artifact inventory before any registry
+	// call, so a PATH without node would fail the run short of the adapter.
+	node, err := exec.LookPath("node")
+	if err != nil {
+		t.Fatalf("node is required to run the release plan: %v", err)
+	}
+	pathDir := t.TempDir()
+	if err := os.Symlink(node, filepath.Join(pathDir, "node")); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", pathDir)
+	if found, err := exec.LookPath("npm"); err == nil {
+		t.Fatalf("npm is still on PATH at %s; the absent-binary row needs it gone", found)
+	}
+
+	code, stdout := runRelease(t, "submit", "--root", root, "--version", version, "--profile", "public",
+		"--path", "first", "--adapter", "npm", "--registry", "https://registry.example.invalid")
+	if code != 1 {
+		t.Fatalf("submit exit = %d, want 1; stdout:\n%s", code, stdout)
+	}
+	if !strings.Contains(stdout, "error: unsatisfied release intent") {
+		t.Fatalf("stdout does not report unsatisfied release intent:\n%s", stdout)
+	}
+	if !structuredNPMFailure.MatchString(stdout) {
+		t.Fatalf("stdout does not carry the adapter's structured npm failure:\n%s", stdout)
+	}
+}
+
+// TestSubmitNPMAdapterResumesAfterMidSequencePublishFailure is the
+// resumability guarantee the workflow's always-upload of the record depends
+// on: an npm publish that fails on an interior platform package exits 1 with a
+// durable record naming the published prefix and the failure, and a re-run
+// against a then-healthy npm resumes — already-published packages are verified
+// as resumed rather than republished, the failed one is retried, and the run
+// completes with the set awaiting an explicit promote.
+func TestSubmitNPMAdapterResumesAfterMidSequencePublishFailure(t *testing.T) {
+	const version = "9.9.9"
+	// The third publish call is an interior platform package: packages before
+	// it are already live, packages after it were never addressed.
+	const failAt = 3
+	root := approvedReleaseRoot(t, version)
+	stub := stubNPM(t)
+	approved := registerApproved(t, stub, root, version, false)
+	byFile := approvedByFile(approved)
+
+	order := publicationOrder(t, root, version)
+	if len(order) != 5 {
+		t.Fatalf("publication order names %d packages, want 4 platforms plus the wrapper", len(order))
+	}
+	submit := []string{"submit", "--root", root, "--version", version, "--profile", "public",
+		"--path", "first", "--adapter", "npm", "--registry", "https://registry.example.invalid"}
+
+	stub.failPublishAt(t, failAt)
+	code, stdout := runRelease(t, submit...)
+	if code != 1 {
+		t.Fatalf("failed submit exit = %d, want 1; stdout:\n%s", code, stdout)
+	}
+	if !structuredNPMFailure.MatchString(stdout) {
+		t.Fatalf("stdout does not carry the adapter's structured npm failure:\n%s", stdout)
+	}
+
+	record := loadTestRecord(t, root)
+	if record.Result != "failed" {
+		t.Fatalf("record result = %q after a mid-sequence publish failure, want failed", record.Result)
+	}
+	for _, file := range order[:failAt-1] {
+		if pkg := byFile[file]; !hasTransition(record, pkg.Name, "verify", "success") {
+			t.Fatalf("record does not mark %s published before the failure: %+v", pkg.Name, record.Transitions)
+		}
+	}
+	failedPackage := byFile[order[failAt-1]]
+	if !hasTransition(record, failedPackage.Name, "publish", "failed") {
+		t.Fatalf("record does not mark the failed publish of %s: %+v", failedPackage.Name, record.Transitions)
+	}
+	for _, file := range order[failAt:] {
+		if pkg := byFile[file]; len(transitionsFor(record, pkg.Name)) != 0 {
+			t.Fatalf("publication continued past the failure to %s: %+v", pkg.Name, record.Transitions)
+		}
+	}
+
+	stub.failPublishAt(t, 0)
+	code, stdout = runRelease(t, submit...)
+	if code != 0 {
+		t.Fatalf("resumed submit exit = %d, want 0; stdout:\n%s", code, stdout)
+	}
+	if !strings.Contains(stdout, "promote") {
+		t.Fatalf("resumed submit does not report the promote next action:\n%s", stdout)
+	}
+
+	record = loadTestRecord(t, root)
+	if record.Result != "in_progress" {
+		t.Fatalf("record result = %q after the resume, want in_progress", record.Result)
+	}
+	for _, file := range order[:failAt-1] {
+		if pkg := byFile[file]; !hasTransition(record, pkg.Name, "verify", "resumed") {
+			t.Fatalf("resume did not treat already-published %s as resumed: %+v", pkg.Name, record.Transitions)
+		}
+	}
+
+	published := map[string]int{}
+	for _, argv := range stub.subcommandInvocations(t, "publish") {
+		published[filepath.Base(argv[1])]++
+	}
+	want := map[string]int{}
+	for _, file := range order {
+		want[file] = 1
+	}
+	// Only the package whose publish failed is ever published twice.
+	want[order[failAt-1]] = 2
+	for file, wantCount := range want {
+		if published[file] != wantCount {
+			t.Fatalf("npm published %s %d time(s), want %d; log: %v", file, published[file], wantCount, stub.invocations(t))
+		}
+	}
+	if len(published) != len(want) {
+		t.Fatalf("npm published %d distinct tarballs, want %d; log: %v", len(published), len(want), stub.invocations(t))
 	}
 }
 
