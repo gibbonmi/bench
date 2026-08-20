@@ -296,7 +296,7 @@ Live classes and their disposition:
 - `internal/bounds/` — the retirement of the row limit the bare form no longer needs
 - `cmd/bench/` — the help inventory row that advertises `--full`
 - `internal/gitguard/`
-- `internal/gate/run_log.go`, and the test file that grades it
+- `internal/gate/run_log.go` and `internal/gate/run_log_prune_test.go` — the pruner and the test that grades it
 - `internal/preflight/`
 - `internal/worktree/`
 - `internal/sessioninspect/`
