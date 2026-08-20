@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -47,7 +48,7 @@ func runWorktreeChild(argv []string, dir string, stdin io.Reader, stdout, stderr
 	defer stop()
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = dir, stdin, stdout, stderr
-	cmd.Env = execEnv()
+	cmd.Env = execEnv(dir)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(stderr, "bench worktree exec: %v\n", err)
@@ -72,12 +73,32 @@ func runWorktreeChild(argv []string, dir string, stdin io.Reader, stdout, stderr
 }
 
 // execEnv returns the operator's environment with the invoking wrapper's routing
-// internals removed. The child runs in a different tree than the wrapper that reached
-// this call, so it has to resolve its own kit; an inherited BENCH_KIT names the caller's
-// checkout instead. The selected executable goes with them for the same reason — it was
-// built for the caller's run, not this child's. Everything else the operator set stays.
-func execEnv() []string {
-	return env.WithoutWrapperRouting(os.Environ(), runbinary.Env)
+// internals removed, then marks the child as rooted at the worktree's own wrapper.
+// The child runs in a different tree than the wrapper that reached this call, so it has
+// to resolve its own kit; an inherited BENCH_KIT names the caller's checkout instead.
+// The selected executable goes with them for the same reason — it was built for the
+// caller's run, not this child's. Everything else the operator set stays.
+//
+// Stripping both routing variables would leave the child's gate with no owner for its
+// run, so it would never select a binary and refuse at the gate entry. BENCH_WRAPPER is
+// the variable that already means "Bench rooted this run", and re-pointing it at the
+// child's own wrapper makes the child's gate own the run: it builds one private binary
+// from the tree it is about to grade. Naming the worktree's built executable instead
+// would make the child inherit, and an inherited selection is verified against its own
+// seal rather than against its source, so a stale artifact could grade the tree.
+//
+// Nothing here executes the value — the owner lookup tests it for non-emptiness and the
+// adoption doctor reports it as a path — so exec authenticates no executable and the
+// only predicate is that a regular file sits at the wrapper path. Content is not read:
+// an empty wrapper is still the marker. dir arrives absolute and cleaned from the
+// assignment ledger, so the joined path inherits both properties.
+func execEnv(dir string) []string {
+	base := env.WithoutWrapperRouting(os.Environ(), runbinary.Env)
+	wrapper := filepath.Join(dir, "bin", "bench.sh")
+	if !isRegularFile(wrapper) {
+		return base
+	}
+	return append(base, "BENCH_WRAPPER="+wrapper)
 }
 
 func childExitCode(cmd *exec.Cmd, err error) int {
