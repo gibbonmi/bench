@@ -164,7 +164,7 @@ how `clean` already reads its short-flag clusters, so an ordinary `git rm
 <path>` is untouched.
 
 **Bare `bench outline` changes shape, not contract.** It stays AXI-conformant
-TOON on stdout: a meta line and one row per scanned directory carrying its
+TOON on stdout: a meta line and one row per top-level directory carrying its
 symbol count. `--full` restores repository-wide symbol rows. A path argument is
 unchanged. The 200-row cap disappears with the bare form that needed it, so no
 form emits a silent prefix.
@@ -240,10 +240,10 @@ prose anchors and command grammar red inside the same run as the Go units.
 | H09 | 11 | every surviving accept grant resolves to a scanned source file and keeps its reason text | internal/structure | dropping four rows by hand can take a live grant with them |
 | H10 | 12, 13 | the review-phase and reference passages match the phase table the gate runs | internal/conformance | prose corrected without a pin drifts back at the next edit |
 | H11 | 14 | removing a corrected passage reds the anchors check | internal/anchors | an anchor that does not bite is decoration |
-| H12 | 15 | bare bench outline emits meta and one row per scanned directory with its symbol count | internal/outline | the cheapest wrong build truncates the symbol rows instead of changing shape |
+| H12 | 15 | bare bench outline emits meta and one row per top-level directory with its symbol count | internal/outline | the cheapest wrong build truncates the symbol rows instead of changing shape |
 | H13 | 16 | bench outline with a path emits symbol rows for that path | internal/outline | a shape change applied to every form removes the targeted probe |
 | H14 | 17 | bench outline --full emits symbol rows repository-wide | internal/outline | without the escape hatch the old capability is gone rather than moved |
-| H15 | 18 | the bare form's row count equals the scanned directory count with no cap applied | internal/outline | a surviving 200-row cap makes the summary a silent prefix |
+| H15 | 18 | the bare form's row count equals the top-level directory count with no cap applied | internal/outline | a surviving 200-row cap makes the summary a silent prefix |
 | H16 | 19 | a tree with no scannable source yields the definitive empty state | internal/outline | an empty summary and a broken scan are indistinguishable otherwise |
 | H17 | 20, 21, 22, 23 | each of the four spellings returns a block verdict with its class label | internal/gitguard | the audit reproduced all four as allowed at HEAD |
 | H18 | 24, 25 | the safe stash forms and an ordinary git rm path return an allow verdict | internal/gitguard | a rule written on the verb alone blocks the working half of the command |
@@ -263,6 +263,7 @@ prose anchors and command grammar red inside the same run as the Go units.
 | H31 | 43 | a --source-tip disagreeing with the derived tip renders a red verdict row | internal/preflight | a flag that is parsed and ignored looks identical to a verified one |
 | H32 | 44 | a --source-tip that does not resolve returns a grammar error distinct from the mismatch red | internal/preflight | one message for both diagnoses sends a typo to the drift investigation |
 | H33 | 31 | the guard documentation states the honest-mistake threat model unchanged | internal/conformance | a narrowed rim invites reading the guard as evasion-resistant |
+| H35 | 29, 30 | the rim decodes an escaped shell operator to the operator, and refuses an escape it cannot decode | internal/systemtest | a placeholder decode welds two commands into one token, so the destructive half leaves command position and is allowed |
 
 Not covered: story 9 — the residue deletion is a one-time tree edit with no durable predicate. A standing zero-count check would red on every future light-path ticket, because the close step requires that folder to survive the landing's own green gate run. H06 observes the resulting zero at the landing commit.
 
