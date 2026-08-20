@@ -309,6 +309,10 @@ func (o *systemOwner) cleanup() error {
 	return nil
 }
 
+// mergeEnvironment layers overrides over base. An override spelled as a bare NAME with
+// no `=` removes that variable instead of setting it: a resolution path the ambient test
+// environment short-circuits — the wrapper's own binary search, which BENCH_RUN_BINARY
+// pre-empts — can only be driven with the variable genuinely absent.
 func mergeEnvironment(base, overrides []string) []string {
 	want := map[string]string{}
 	for _, entry := range overrides {
@@ -324,7 +328,9 @@ func mergeEnvironment(base, overrides []string) []string {
 		out = append(out, entry)
 	}
 	for _, entry := range overrides {
-		out = append(out, entry)
+		if strings.Contains(entry, "=") {
+			out = append(out, entry)
+		}
 	}
 	return out
 }
