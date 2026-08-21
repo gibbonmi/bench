@@ -63,7 +63,10 @@ owner at an existing command seam, with dense prior art in both packages.
   landing root. Only not-exist skips the check. A present manifest of any form
   — empty, symlink, special — routes to the owner, whose own reading discipline
   refuses what it cannot trust. Presence, not content, is the predicate, so a
-  broken link is never classified as an authoritative absence.
+  broken link is never classified as an authoritative absence. That predicate
+  lives beside the manifest path it reads, in the freshness owner, because the
+  path already has exactly one source there; land asks the owner rather than
+  repeating the literal.
 - Placement: in `LandCommand`, after the resume dispatch, the grammar parse,
   and the `canonicalPath` argument proof, and before `landingDestination` —
   the first repository proof. Input-shape refusals (grammar, canonical path)
@@ -191,6 +194,7 @@ accidents, not adversaries; see the Won't handle lines.
 
 ## Ownership fences
 
+- `internal/freshness/freshness.go`
 - `internal/worktree/land.go`
 - `internal/worktree/land_test.go`
 - `cmd/bench/main.go`
