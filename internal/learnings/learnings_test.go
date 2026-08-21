@@ -188,3 +188,86 @@ func TestRows(t *testing.T) {
 		}
 	}
 }
+
+// TestParseReportsDatedLineThatMissesHeadingShape covers DL1, DL2, DL3, DL6, DL32,
+// DL7, DL8, DL9, DL10, DL11, DL12, DL20, and DL21: a line that leads with a date but
+// is not a well-formed dated heading becomes its own malformed record, while the two
+// pre-existing `## ` dispositions keep exactly their current single record.
+func TestParseReportsDatedLineThatMissesHeadingShape(t *testing.T) {
+	const schema = JournalSchemaHeading + "\n\n"
+	for _, tc := range []struct {
+		name, in string
+		want     []Malformed
+	}{
+		{"DL1,DL2,DL3 bullet under the schema heading", schema + "- 2026-08-21 — first thing\n",
+			[]Malformed{{Reason: "dated learning entry is not a heading", Raw: "- 2026-08-21 — first thing", Line: 3}}},
+		{"DL6 every markdown marker", "- 2026-01-01 a\n* 2026-01-02 b\n+ 2026-01-03 c\n> 2026-01-04 d\n# 2026-01-05 e\n",
+			[]Malformed{
+				{Reason: "dated learning entry is not a heading", Raw: "- 2026-01-01 a", Line: 1},
+				{Reason: "dated learning entry is not a heading", Raw: "* 2026-01-02 b", Line: 2},
+				{Reason: "dated learning entry is not a heading", Raw: "+ 2026-01-03 c", Line: 3},
+				{Reason: "dated learning entry is not a heading", Raw: "> 2026-01-04 d", Line: 4},
+				{Reason: "dated learning entry is not a heading", Raw: "# 2026-01-05 e", Line: 5},
+			}},
+		{"DL32 flush at column one", "2026-08-21 — flush\n",
+			[]Malformed{{Reason: "dated learning entry is not a heading", Raw: "2026-08-21 — flush", Line: 1}}},
+		{"DL7 no-break space separator", "- 2026-08-21 — nbsp\n",
+			[]Malformed{{Reason: "dated learning entry is not a heading", Raw: "- 2026-08-21 — nbsp", Line: 1}}},
+		{"DL8 ideographic space separator", "-　2026-08-21 — ideographic\n",
+			[]Malformed{{Reason: "dated learning entry is not a heading", Raw: "-　2026-08-21 — ideographic", Line: 1}}},
+		{"DL8 zero-width space is not a separator", "-​2026-08-21 — zero width\n", nil},
+		{"DL9 dated bullet inside an open entry's body", schema + "## 2026-01-01 — first [open]\n- body\n- 2026-08-21 — appended\n",
+			[]Malformed{{Reason: "dated learning entry is not a heading", Raw: "- 2026-08-21 — appended", Line: 5}}},
+		{"DL10 broken heading keeps its one record", "## broken\n",
+			[]Malformed{{Reason: "malformed learning heading", Raw: "## broken", Line: 1}}},
+		{"DL11 dated heading without [open] keeps its one record", "## 2026-01-01 — x\n",
+			[]Malformed{{Reason: "dated learning heading must end with [open]", Raw: "## 2026-01-01 — x", Line: 1}}},
+		{"DL12 digit-shaped non-calendar date", "- 2026-88-88 — x\n",
+			[]Malformed{{Reason: "dated learning entry is not a heading", Raw: "- 2026-88-88 — x", Line: 1}}},
+		{"DL20 final line with no trailing newline", schema + "- 2026-08-21 — tail",
+			[]Malformed{{Reason: "dated learning entry is not a heading", Raw: "- 2026-08-21 — tail", Line: 3}}},
+		{"DL21 CRLF line loses its carriage return", "- 2026-08-21 — crlf\r\n",
+			[]Malformed{{Reason: "dated learning entry is not a heading", Raw: "- 2026-08-21 — crlf", Line: 1}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, got := Parse([]byte(tc.in))
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("Parse malformed = %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestCommandSurfacesLostDatedLinesAndLeavesTheQuietPosturesAlone covers DL4, DL5,
+// DL15, DL16, and DL17: the journal shape that produced the 2026-08-21 drop exits 1
+// with one `line <n>` row per lost entry, byte-exact against a checked-in fixture,
+// while the freshly scaffolded, drained, and well-formed journals stay green.
+func TestCommandSurfacesLostDatedLinesAndLeavesTheQuietPosturesAlone(t *testing.T) {
+	scaffold, err := os.ReadFile(filepath.Join("testdata", "scaffold-learnings.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	lostRows, err := os.ReadFile(filepath.Join("testdata", "candidate-dated-lines.stdout"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name, journal, want string
+		code                int
+	}{
+		{name: "DL4,DL5 the two-bullet journal", journal: JournalSchemaHeading + "\n\n- 2026-08-21 — spec anchor drift\n- 2026-08-21 — worktree tip mismatch\n", want: string(lostRows), code: 1},
+		{name: "DL15 freshly scaffolded journal", journal: string(scaffold), want: "learnings[0]{date,title}:\nhelp[0]{cmd,why}:\n", code: 0},
+		{name: "DL16 schema heading only", journal: JournalSchemaHeading + "\n", want: "learnings[0]{date,title}:\nhelp[0]{cmd,why}:\n", code: 0},
+		{name: "DL17 well-formed open entry", journal: JournalSchemaHeading + "\n\n## 2026-01-01 — first [open]\n", want: "learnings[1]{date,title}:\n  2026-01-01,first\nhelp[1]{cmd,why}:\n  /bench-drain,\"verdict 2026-01-01: first\"\n", code: 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := gittest.Repo(t)
+			writeJournal(t, root, []byte(tc.journal))
+			t.Chdir(root)
+			got, code := Command(nil)
+			if code != tc.code || got != tc.want {
+				t.Fatalf("Command = (%d, %q), want (%d, %q)", code, got, tc.code, tc.want)
+			}
+		})
+	}
+}
