@@ -17,7 +17,8 @@ reds it. A4's other two pieces shipped earlier, so no residual remains.
 `docs/audits/2026-08-bench-capability/results-fable-high/next-ticket.md` is stale —
 it still names A1, which shipped 2026-08-18.
 
-Two learnings are open in `capture/learnings.md`, both from this build.
+Pending capture for the next drain: `capture/retros/light-path-wrapper-home-guard.md`
+and two `capture/learnings.md` entries, all from this build.
 `bench commit --spec` exits `landed-but-checkout-incomplete` on a tickets-only
 light-path spec: the commit is correct and green, but the retired ticket folder
 stays on disk as untracked residue that the session removes by hand. Its fix needs
