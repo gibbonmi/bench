@@ -53,6 +53,8 @@ means the repository-controlled compliance assessment.
 
 **FT233 (MEDIUM) — landing refusals say what to do next.**
 
+**FT113 (MEDIUM) — `bench commit --spec` residuals: the flip counts as a path, the flip has one author, and the retirement completes or names its remainder.**
+
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
 
 **FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
@@ -110,8 +112,6 @@ means the repository-controlled compliance assessment.
 **FT102 (LOW) — escalation-policy cross-check in the synthesis consistency and dogfood loops.**
 
 **FT108 (LOW) — a refactor lane with a mechanical exit test.**
-
-**FT113 (LOW) — `bench commit --spec` residuals: the flip counts as a path, and the flip has one author.**
 
 **FT130 (MEDIUM, decision required) — a capture write mid-lifecycle voids or blocks the run.**
 
@@ -286,6 +286,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT243: a capture entry the parser cannot see is reported as zero, not as a failure. Ranked first on severity rather than evidence: the other two rows cost diagnosis time on a refusal the operator can read, while this one silently discards capture the reviewer never learns was written. Both journal entries drained this pass were invisible to every surface that counts them.
-2. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at nine occurrences, two added this pass: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
-3. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. Five occurrences: the `bench worktree release` refusal again pointed at a `--discard-ignored` flag its own help does not list, the same face recorded two days earlier.
+1. `/bench-write-spec` — FT243: a capture entry the parser cannot see is reported as zero, not as a failure. Still first on severity: every other row costs diagnosis time on a message the operator can read, while this one discards capture nobody learns was written. The face repeated one drain after the row was opened — two more bullet-shaped entries were invisible to `bench status` and to `bench roadmap --context`, which the drain reads as its complete inventory.
+2. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at nine occurrences: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
+3. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names the remainder. Raised to MEDIUM this pass on a third face reproduced twice in one day, the second time through the accused command in the drain itself: a green, fully correct commit exits 1 on `landed-but-checkout-incomplete` and leaves `specs/<slug>/` as untracked residue, costing a false alarm, a manual removal, and another full gate run on the cheapest path Bench has.

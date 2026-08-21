@@ -2,38 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean, two commits ahead of `origin/main`.
+Branch: `main` — clean, one commit ahead of `origin/main` before this drain's own commit.
 Spec: none staged.
-Gate: green at `ba48496f`.
+Gate: green at `f63384b3`.
 
 ## State
 
-Audit item A4 is closed. `bin/bench.sh` derives the pool home through
-`${BENCH_HOME:-${HOME:?...}/.bench}`, so a session with neither variable set gets
-the wrapper's own message naming both inputs instead of `HOME: unbound variable`.
-`BENCH_HOME` still wins when set. A `internal/systemtest` test pins the wording
-independently of the wrapper; a mutation probe confirmed that reverting the guard
-reds it. A4's other two pieces shipped earlier, so no residual remains.
-`docs/audits/2026-08-bench-capability/results-fable-high/next-ticket.md` is stale —
-it still names A1, which shipped 2026-08-18.
+The drain is closed. `capture/IDEAS.md`, `capture/learnings.md`, and
+`capture/retros/` are all empty, and the board carries the evidence instead. Four
+rows took occurrences from the `light-path-wrapper-home-guard` retro and its two
+journal entries: FT113, FT243, FT215, and FT106.
 
-Pending capture for the next drain: `capture/retros/light-path-wrapper-home-guard.md`
-and two `capture/learnings.md` entries, all from this build.
-`bench commit --spec` exits `landed-but-checkout-incomplete` on a tickets-only
-light-path spec: the commit is correct and green, but the retired ticket folder
-stays on disk as untracked residue that the session removes by hand. Its fix needs
-a reviewer call on retry-versus-report. The second is a seam learning —
-`internal/conformance` admits a live-tree test only through its own registry, so a
-policy assertion on the live wrapper belongs in `internal/systemtest`.
+FT113 rose from LOW to MEDIUM. `bench commit --spec` exits 1 on
+`landed-but-checkout-incomplete` for a tickets-only light-path spec, after a
+fully correct green commit, and leaves `specs/<slug>/` as untracked residue. The
+drain reproduced that exit through the accused command on its own implement-now
+commit, so the row now has two same-day occurrences of the face. The fix still
+needs the reviewer's call on retry-versus-report. Expect the residue and remove
+it by hand after any `--spec` landing until the row ships.
 
-The branch had diverged this session; the reviewer reconciled it with
-`git pull --rebase` before the build. Nothing is pushed yet.
+The retro's `craft-seams` recommendation shipped in this session as an
+implement-now light-path item at `f63384b3`: a registry-owning package carries an
+admission rule that a test's author reads before placing a test there. It was
+implemented inline rather than through a write-delegate, which follows the
+right-size table and departs from this phase's own delegate wording — flagged for
+veto.
 
 ## Next command
 
 `/bench-write-spec` — FT243: a capture entry the parser cannot see is reported as
-zero, not as a failure. This was the drain's top-ranked row before the A4 residual
-jumped ahead of it, and it is next again.
+zero, not as a failure. Top-ranked for a second drain running, and the face
+repeated during this one.
 
 ## Shape
 
