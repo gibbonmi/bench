@@ -48,10 +48,40 @@ func Entries(content []byte) []Entry {
 // Parse returns typed entries plus every malformed heading fragment.
 func Parse(content []byte) ([]Entry, []Malformed) {
 	lines := strings.Split(string(content), "\n")
+	unaccountedStart, unaccountedEnd := unaccountedRegion(lines)
 	var out []Entry
 	var malformed []Malformed
+	// runStart holds the first line index of the open unaccounted run, or -1 when none is
+	// open. The record is emitted when the run ends, so one pasted block is one row rather
+	// than one per line, and it carries the run's first line — where the writer repairs it.
+	runStart := -1
+	flushRun := func() {
+		if runStart < 0 {
+			return
+		}
+		malformed = append(malformed, Malformed{Reason: unaccountedReason, Raw: strings.TrimSuffix(lines[runStart], "\r"), Line: runStart + 1})
+		runStart = -1
+	}
 	for i := 0; i < len(lines); {
 		line := strings.TrimSuffix(lines[i], "\r")
+		if i >= unaccountedStart && i < unaccountedEnd {
+			switch {
+			case strings.TrimSpace(line) == "":
+				// A whitespace-only line is blank: a record whose text is invisible spaces
+				// names nothing the writer can repair.
+				flushRun()
+			case isLostDatedLine(line):
+				// The dated rule owns every dated line, here as well as in an entry body, so
+				// the two rules cannot disagree about what a date is.
+				flushRun()
+				malformed = append(malformed, Malformed{Reason: lostDatedLineReason, Raw: line, Line: i + 1})
+			case runStart < 0:
+				runStart = i
+			}
+			i++
+			continue
+		}
+		flushRun()
 		if !isDatedHeading(line) {
 			switch {
 			case strings.HasPrefix(line, "## "):
@@ -89,7 +119,44 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 		}
 		malformed = append(malformed, bodyLost...)
 	}
+	flushRun()
 	return out, malformed
+}
+
+// unaccountedReason is the reason content below the entries marker carries. It names
+// the boundary the writer crossed rather than the parser's disappointment, and it is
+// distinct from the dated reason so a reader can tell "this is not dated" from "this
+// is dated but is not a heading".
+const unaccountedReason = "learning content below the entries marker is not an entry"
+
+// unaccountedRegion returns the half-open line-index range below an opening entries
+// marker, or (-1, -1) when no marker opens the rule.
+//
+// The marker opens the rule only above the first real entry heading — a `## ` line that
+// isTemplatePlaceholder does not claim. That exclusion is load-bearing: the shipped
+// scaffold prints its worked example `## <date>` above the marker, so an anchor that
+// counted that line would never open the rule on the one journal shape it serves. A
+// marker below a real heading (pasted into an entry body) is ordinary text, and a second
+// marker below the first joins the run rather than restarting the region, so the lines
+// between the two are never silently dropped.
+func unaccountedRegion(lines []string) (start, end int) {
+	marker := -1
+	for i, raw := range lines {
+		line := strings.TrimSuffix(raw, "\r")
+		if strings.HasPrefix(line, "## ") && !isTemplatePlaceholder(line) {
+			if marker < 0 {
+				return -1, -1
+			}
+			return marker + 1, i
+		}
+		if marker < 0 && strings.TrimSpace(line) == JournalEntriesMarker {
+			marker = i
+		}
+	}
+	if marker < 0 {
+		return -1, -1
+	}
+	return marker + 1, len(lines)
 }
 
 // Rows parses the open headings of a learnings journal into date/title rows. A
@@ -235,6 +302,12 @@ func isSpace(r rune) bool { return r < 0x80 && toon.IsSpace(byte(r)) }
 
 // JournalSchemaHeading identifies a zero-entry learnings journal.
 const JournalSchemaHeading = "# Learnings — usage journal"
+
+// JournalEntriesMarker is the scaffold's boundary comment: the line below which a
+// writer is meant to append entries. It is exported because the boundary the parser
+// enforces and the boundary a fresh repo receives are one fact — a second copy of the
+// literal in internal/adopt's scaffold is how the two drift apart.
+const JournalEntriesMarker = "<!-- entries below -->"
 
 // JournalPath is the repo-relative journal. It is exported because the name is one
 // fact with three readers — this command, the roadmap drain that counts its open

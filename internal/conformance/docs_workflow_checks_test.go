@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/handoff"
+	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
@@ -456,7 +457,7 @@ func checkStaleCommandReferences(root string) []string {
 		}
 		switch rel {
 		case "capture/learnings.md":
-			text = strings.Split(text, "<!-- entries below -->")[0]
+			text = strings.Split(text, learnings.JournalEntriesMarker)[0]
 		case "CHANGELOG.md":
 			if idx := strings.Index(text, "\n## "); idx >= 0 {
 				text = text[:idx]

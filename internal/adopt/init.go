@@ -140,6 +140,5 @@ Format per entry:
 
 An entry leaves this file only via /bench-drain.
 
-<!-- entries below -->
-`
+` + learnings.JournalEntriesMarker + "\n"
 }

@@ -271,3 +271,83 @@ func TestCommandSurfacesLostDatedLinesAndLeavesTheQuietPosturesAlone(t *testing.
 		})
 	}
 }
+
+// TestParseReportsUnaccountedContentBelowTheEntriesMarker covers DL22, DL23, DL24,
+// DL33, DL25, DL26, DL27, DL34, DL28, DL18, DL19, and DL31: content below the entries
+// marker and above the first real entry heading is reported one record per contiguous
+// run, while every posture the scaffold ships or a pruned journal reaches stays quiet.
+func TestParseReportsUnaccountedContentBelowTheEntriesMarker(t *testing.T) {
+	const (
+		schema      = JournalSchemaHeading + "\n\n"
+		unaccounted = "learning content below the entries marker is not an entry"
+		lostDated   = "dated learning entry is not a heading"
+	)
+	for _, tc := range []struct {
+		name, in string
+		want     []Malformed
+	}{
+		{"DL22 one undated line below the marker", schema + JournalEntriesMarker + "\nplain note\n",
+			[]Malformed{{Reason: unaccounted, Raw: "plain note", Line: 4}}},
+		{"DL23 three contiguous lines are one record", schema + JournalEntriesMarker + "\nfirst\nsecond\nthird\n",
+			[]Malformed{{Reason: unaccounted, Raw: "first", Line: 4}}},
+		{"DL24 a blank line below the marker is quiet", schema + JournalEntriesMarker + "\n\n\n", nil},
+		{"DL33 a whitespace-only line below the marker is quiet", schema + JournalEntriesMarker + "\n \t \n", nil},
+		{"DL24 a blank line ends the run", schema + JournalEntriesMarker + "\nfirst\n\nsecond\n",
+			[]Malformed{
+				{Reason: unaccounted, Raw: "first", Line: 4},
+				{Reason: unaccounted, Raw: "second", Line: 6},
+			}},
+		{"DL25 an undated bullet inside an open entry's body", schema + JournalEntriesMarker + "\n\n## 2026-01-01 — first [open]\n- body bullet\n", nil},
+		{"DL30 the scaffold's worked example above the marker does not close the region", schema + "## <date> - <short title>  [open]\n" + JournalEntriesMarker + "\nplain note\n",
+			[]Malformed{{Reason: unaccounted, Raw: "plain note", Line: 5}}},
+		{"DL26 a journal with no entries marker", schema + "plain note\n", nil},
+		{"DL27 a marker below a real entry heading", schema + "## 2026-01-01 — first [open]\n" + JournalEntriesMarker + "\nplain note\n", nil},
+		{"DL34 a second marker joins the open run", schema + JournalEntriesMarker + "\nfirst\n" + JournalEntriesMarker + "\nsecond\n",
+			[]Malformed{{Reason: unaccounted, Raw: "first", Line: 4}}},
+		{"DL28 CRLF run loses its carriage return", strings.ReplaceAll(schema+JournalEntriesMarker+"\nplain note\n", "\n", "\r\n"),
+			[]Malformed{{Reason: unaccounted, Raw: "plain note", Line: 4}}},
+		{"DL18 an undated line above the marker", schema + "plain note\n" + JournalEntriesMarker + "\n", nil},
+		{"DL19 four reasons in ascending source-line order", schema + JournalEntriesMarker + "\nloose note\n- 2026-08-21 — lost\n## broken\n## 2026-01-01 — x\n- 2026-02-02 — body lost\n",
+			[]Malformed{
+				{Reason: unaccounted, Raw: "loose note", Line: 4},
+				{Reason: lostDated, Raw: "- 2026-08-21 — lost", Line: 5},
+				{Reason: "malformed learning heading", Raw: "## broken", Line: 6},
+				{Reason: "dated learning heading must end with [open]", Raw: "## 2026-01-01 — x", Line: 7},
+				{Reason: lostDated, Raw: "- 2026-02-02 — body lost", Line: 8},
+			}},
+		{"DL31 a dated bullet inside a fenced block below the marker", schema + JournalEntriesMarker + "\n```text\n- 2026-08-21 — inside fence\n```\n",
+			[]Malformed{
+				{Reason: unaccounted, Raw: "```text", Line: 4},
+				{Reason: lostDated, Raw: "- 2026-08-21 — inside fence", Line: 5},
+				{Reason: unaccounted, Raw: "```", Line: 6},
+			}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, got := Parse([]byte(tc.in))
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("Parse malformed = %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestCommandSurfacesAnUndatedNoteAppendedToAScaffoldedJournal covers DL30: the
+// journal a fresh repo receives, with one undated note appended below its marker,
+// exits 1 with one `line <n>` row, byte-exact against a checked-in fixture.
+func TestCommandSurfacesAnUndatedNoteAppendedToAScaffoldedJournal(t *testing.T) {
+	scaffold, err := os.ReadFile(filepath.Join("testdata", "scaffold-learnings.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := os.ReadFile(filepath.Join("testdata", "candidate-unaccounted.stdout"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := gittest.Repo(t)
+	writeJournal(t, root, append(append([]byte{}, scaffold...), "a note I forgot to date\n"...))
+	t.Chdir(root)
+	got, code := Command(nil)
+	if code != 1 || got != string(want) {
+		t.Fatalf("Command = (%d, %q), want (1, %q)", code, got, want)
+	}
+}
