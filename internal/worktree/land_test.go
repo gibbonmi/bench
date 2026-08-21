@@ -1405,6 +1405,7 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 }
 
 func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T) {
+	request := "landed-release-refusal-paths"
 	root, creation := newOwnedAssignment(t, "release-refusal-paths")
 	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residue-*\n"), 0o644)
 	for i := 0; i < 1003; i++ {
@@ -1416,12 +1417,12 @@ func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T
 	}
 
 	var stdout, stderr bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", "landed-release-refusal-paths", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, []string{"--request", request, creation.Path}, &stdout, &stderr)
 	out := stderr.String()
-	wantNext := "next=bench worktree release --request 'landed-release-refusal-paths' '" + creation.Path + "'"
+	wantNext := "next=bench worktree release --request <request> '" + creation.Path + "'"
 	if code != 1 || stdout.Len() != 0 || !strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):") ||
 		!strings.Contains(out, "paths_total=1003\n") || !strings.Contains(out, "refusal_paths[1000]{path}:") ||
-		!strings.Contains(out, "residue-0000 space[*]") || strings.Contains(out, "residue-1000") || !strings.Contains(out, wantNext) {
+		!strings.Contains(out, "residue-0000 space[*]") || strings.Contains(out, "residue-1000") || !strings.Contains(out, wantNext) || strings.Contains(out, request) {
 		t.Fatalf("release refusal: code=%d stdout=%q prefix=%t total=%t table=%t hostile=%t bounded=%t next=%t", code, stdout.String(),
 			strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):"), strings.Contains(out, "paths_total=1003\n"),
 			strings.Contains(out, "refusal_paths[1000]{path}:"), strings.Contains(out, "residue-0000 space[*]"), !strings.Contains(out, "residue-1000"), strings.Contains(out, wantNext))
@@ -1430,22 +1431,22 @@ func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T
 
 func TestReleaseCommandRefusalPointsThroughAssignmentForControlBearingPath(t *testing.T) {
 	for _, tc := range []struct {
-		name, request, requestArg string
+		name, request string
 	}{
-		{name: "line-safe request", request: "release request[*]", requestArg: "'release request[*]'"},
-		{name: "control-bearing request", request: "release\n\x1brequest", requestArg: "<request>"},
+		{name: "line-safe request", request: "release request[*]"},
+		{name: "control-bearing request", request: "release\n\x1brequest"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
 			t.Setenv("BENCH_HOME", filepath.Join(root, "home\n\x1bunsafe"))
 			creation := mustCreate(t, root, tc.request, "unsafe release pointer")
-			wantNext := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree release --request " + tc.requestArg + " ."
+			wantNext := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree release --request <request> ."
 
 			var stdout, stderr bytes.Buffer
 			code := ReleaseCommand(root, []string{"--request", tc.request, creation.Path}, &stdout, &stderr)
 			out := stderr.String()
 			unsafe := strings.ContainsFunc(out, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
-			if code != 1 || stdout.Len() != 0 || unsafe || strings.Count(out, "\n") != 1 || !strings.Contains(out, "; next="+wantNext+"\n") {
+			if code != 1 || stdout.Len() != 0 || unsafe || strings.Count(out, "\n") != 1 || !strings.Contains(out, "; next="+wantNext+"\n") || strings.Contains(out, tc.request) {
 				t.Fatalf("release pointer: code=%d stdout=%q safe=%t one-line=%t next=%t stderr=%q", code, stdout.String(), !unsafe,
 					strings.Count(out, "\n") == 1, strings.Contains(out, "; next="+wantNext+"\n"), out)
 			}

@@ -405,7 +405,12 @@ func landingMarker(root, branch, destination string) (string, error) {
 }
 
 func landingAssignment(root, path, request, base, requestedTip string) (intent.Assignment, error) {
-	a, err := assignmentForRequest(root, request, path, "request, assignment, or path mismatch", base, requestedTip)
+	a, err := assignmentForRequest(root, request, assignmentRecoveryContext{
+		target: path,
+		detail: "request, assignment, or path mismatch",
+		base:   base,
+		tip:    requestedTip,
+	})
 	if err != nil || a.State != intent.StateActive || a.Worktree != path {
 		if err != nil {
 			return intent.Assignment{}, err

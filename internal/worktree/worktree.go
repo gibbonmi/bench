@@ -427,9 +427,16 @@ func orphanLine(orphan OrphanCandidate) string {
 // terminal renders one line.
 func lineSafe(value string) bool { return !strings.ContainsFunc(value, unicode.IsControl) }
 
+type assignmentRecoveryContext struct {
+	target string
+	detail string
+	base   string
+	tip    string
+}
+
 // assignmentForRequest keeps opaque-token resolution in intent. Only an unmatched
 // token permits path-derived recovery discovery.
-func assignmentForRequest(root, request, target, detail, base, tip string) (intent.Assignment, error) {
+func assignmentForRequest(root, request string, recoveryContext assignmentRecoveryContext) (intent.Assignment, error) {
 	assignment, found, err := intent.FindAssignmentForRequest(root, request)
 	if err != nil {
 		return intent.Assignment{}, err
@@ -441,16 +448,16 @@ func assignmentForRequest(root, request, target, detail, base, tip string) (inte
 	if err != nil {
 		return intent.Assignment{}, err
 	}
-	recovery := refusal{detail: detail}
+	recovery := refusal{detail: recoveryContext.detail}
 	candidate, count := intent.Assignment{}, 0
 	for _, assignment := range assignments {
-		if assignment.State == intent.StateActive && assignment.Worktree == target {
+		if assignment.State == intent.StateActive && assignment.Worktree == recoveryContext.target {
 			candidate, count = assignment, count+1
 		}
 	}
 	if count == 1 {
 		recovery.observed = "assignment:" + candidate.ID
-		recovery.next = reauthorizeRecoveryNext(candidate.ID, target, base, tip)
+		recovery.next = reauthorizeRecoveryNext(candidate.ID, recoveryContext.target, recoveryContext.base, recoveryContext.tip)
 	}
 	return intent.Assignment{}, refusalError{recovery}
 }
