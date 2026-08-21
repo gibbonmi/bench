@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	"github.com/gibbonmi/bench/internal/git"
@@ -60,10 +61,11 @@ var advanceLandingMarker = authorization.AdvanceMarker
 var reconcileLanding = reconcileLandingDestination
 var releaseLandingAssignment = ReleaseCommand
 var authorizeLandingSource = preflight.AuthorizeReviewedSource
+var verifyLandingExecutable = freshness.Verify
 
 // LandCommand is the first-run reviewed-source landing operation. It performs every
 // reversible proof before the exact-tree owner receives authority to publish.
-func LandCommand(root string, args []string, stdout, stderr io.Writer) int {
+func LandCommand(root, executable string, args []string, stdout, stderr io.Writer) int {
 	if hasResumeFlag(args) {
 		return ResumeLandCommand(root, args, stdout, stderr)
 	}
@@ -75,6 +77,15 @@ func LandCommand(root string, args []string, stdout, stderr io.Writer) int {
 	path, err := canonicalPath(parsed.Positionals[0])
 	if err != nil {
 		return landRefusal(stdout, "worktree path is not canonical")
+	}
+	// A stale executable enforces whatever landing contract it was built with, so its own
+	// freshness is proven before any repository proof — a repository that would also refuse
+	// for its own state still gets the rebuild remedy rather than that later proof's message.
+	// The owner's message carries that remedy, so it passes through unchanged.
+	if freshness.DeclaresBuildInputs(root) {
+		if err := verifyLandingExecutable(root, executable); err != nil {
+			return landRefusal(stdout, err.Error())
+		}
 	}
 	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(root)
 	if err != nil {

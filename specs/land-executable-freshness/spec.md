@@ -1,6 +1,6 @@
 # Land executable freshness
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation, 2026-08-20 (FT242, re-scoped). The reviewer confirmed three closures in this session: FT242's original ask — a spec amendment reaches the destination through one sanctioned step — already shipped as FT225 (`cb1462a6`, `33aa5258`, retired `bef52480`), so the amendment path is closed and stays closed; the residual defect is `bench worktree land` executing from a stale dev binary, which is what enforced the retired identical-bytes refusal during the ft230 landing and turned a two-line spec amendment into roughly twenty minutes of detour; the fix scopes to the land command, not to a wrapper-wide or porcelain-wide sweep.
 
@@ -63,7 +63,10 @@ owner at an existing command seam, with dense prior art in both packages.
   landing root. Only not-exist skips the check. A present manifest of any form
   — empty, symlink, special — routes to the owner, whose own reading discipline
   refuses what it cannot trust. Presence, not content, is the predicate, so a
-  broken link is never classified as an authoritative absence.
+  broken link is never classified as an authoritative absence. That predicate
+  lives beside the manifest path it reads, in the freshness owner, because the
+  path already has exactly one source there; land asks the owner rather than
+  repeating the literal.
 - Placement: in `LandCommand`, after the resume dispatch, the grammar parse,
   and the `canonicalPath` argument proof, and before `landingDestination` —
   the first repository proof. Input-shape refusals (grammar, canonical path)
@@ -160,9 +163,12 @@ accidents, not adversaries; see the Won't handle lines.
   session in `internal/freshness/freshness_test.go`.
 - Manifest absent versus present-but-empty: distinct behaviors, both rowed
   (LF3, LF8).
-- Manifest as a dangling or live symlink: `Lstat` reports presence, so the
-  landing routes to the owner rather than skipping; the owner's reading
-  discipline decides from there. Never classified as absent.
+- Manifest as a dangling or live symlink, a directory, or an empty file:
+  `Lstat` reports presence, so the landing routes to the owner rather than
+  skipping; the owner's reading discipline decides from there. Never classified
+  as absent. Graded directly by
+  `TestDeclaresBuildInputsReadsPresenceRatherThanContent`, since the owner's
+  own symlink suite covers the seal and the executable, never the manifest.
 - Seal or executable as FIFO or other special file: the owner refuses before
   reading (`TestVerifyRefusesSpecialArtifactsBeforeReading`, named from the
   owner's suite this session).
@@ -191,12 +197,29 @@ accidents, not adversaries; see the Won't handle lines.
 
 ## Ownership fences
 
+- `internal/freshness/freshness.go`
+- `internal/freshness/freshness_test.go`
 - `internal/worktree/land.go`
 - `internal/worktree/land_test.go`
 - `cmd/bench/main.go`
 - `cmd/bench/command_registry_test.go`
 - `ROADMAP.md`
 - `roadmap/FT242.md`
+- `README.md`
+
+Reviewer-directed housekeeping, folded into this landing at the reviewer's
+explicit choice rather than because it belongs to the feature. It retires the
+shipped `regroup` example profile across every registry that names it, drops a
+superseded self-assessment document, and untracks a local reference image:
+
+- `projects/regroup.md`
+- `internal/packagesurface/assets.go`
+- `.bench/consumer-payload.json`
+- `package.json`
+- `projects/benchkit.md`
+- `.gitignore`
+- `COMPLIANCE_ASSESSMENT.md`
+- `ui_example/`
 
 ## Out of scope
 

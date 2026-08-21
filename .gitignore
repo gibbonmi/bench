@@ -8,7 +8,6 @@ npm-debug.log*
 # produces the shipped binaries into the platform packages instead.
 dist/
 .logs/
-projects/regroup.md
 projects/gl-axi.md
 # OS cruft
 .DS_Store
@@ -23,5 +22,9 @@ projects/gl-axi.md
 .bench-objective
 .bench-notes.md
 research/
+
+# Local design reference images — kept on disk, never committed.
+ui_example/
+
 # Repo-local profiles are tracked (see projects/benchkit.md) but excluded from the
 # published package via package.json "files" — not ignored here.

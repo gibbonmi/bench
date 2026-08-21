@@ -406,6 +406,11 @@ func runAXIGit(t *testing.T, args ...string) string {
 
 func runAXICommandAt(t *testing.T, cwd string, argv []string) axiCommandResult {
 	t.Helper()
+	return runAXICommandAsAt(t, cwd, "bench", argv)
+}
+
+func runAXICommandAsAt(t *testing.T, cwd, executable string, argv []string) axiCommandResult {
+	t.Helper()
 	oldWD, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -419,8 +424,23 @@ func runAXICommandAt(t *testing.T, cwd string, argv []string) axiCommandResult {
 		}
 	}()
 	var stdout, stderr bytes.Buffer
-	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
+	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: executable}.Run(argv)
 	return axiCommandResult{stdout: stdout.String(), stderr: stderr.String(), code: code}
+}
+
+// TestWorktreeLandVerifiesTheInvokedExecutable drives the real dispatcher in a repository
+// that declares Go build inputs, so the landing's freshness proof runs and names the
+// executable it was given. A closure that forwarded a literal or an empty path would
+// verify some other file and never name the sentinel.
+func TestWorktreeLandVerifiesTheInvokedExecutable(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	writeAXIFixture(t, filepath.Join(root, "scripts", "go-build.inputs"), "build_script=scripts/go-build.sh\n")
+	sentinel := filepath.Join(t.TempDir(), "invoked-bench")
+	argv := []string{"worktree", "land", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "land", root}
+	result := runAXICommandAsAt(t, root, sentinel, argv)
+	if result.code != 1 || result.stderr != "" || !strings.HasPrefix(result.stdout, "refused{detail=") || !strings.Contains(result.stdout, sentinel) {
+		t.Fatalf("land = stdout=%q stderr=%q exit=%d, want a refusal naming %s", result.stdout, result.stderr, result.code, sentinel)
+	}
 }
 
 // keptRoutes is the surface a removal may not take with it, written down rather than

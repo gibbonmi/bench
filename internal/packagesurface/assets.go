@@ -14,7 +14,6 @@ var RequiredPackAssets = []string{
 	"bin/bench-repair-binary.mjs",
 	"bin/bench-postinstall.sh",
 	"projects/gl-axi.md",
-	"projects/regroup.md",
 	".agents/commands/bench-implement-spec.md",
 	".agents/skills/bench-craft-seams/SKILL.md",
 	".agents/skills/bench-implement-spec/SKILL.md",

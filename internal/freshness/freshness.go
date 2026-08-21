@@ -39,6 +39,15 @@ type seal struct {
 	Executable string `json:"executable"`
 }
 
+// DeclaresBuildInputs reports whether root declares Go build inputs, which is what makes
+// a rebuildable dev executable possible. Presence decides, not content: a manifest that is
+// a broken link or a special file routes to Verify, whose reading discipline refuses what
+// it cannot trust, so nothing unreadable is ever read as an authoritative absence.
+func DeclaresBuildInputs(root string) bool {
+	_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(auxiliaryInputsManifest)))
+	return !errors.Is(err, os.ErrNotExist)
+}
+
 // Digest returns the deterministic content digest of Bench's local build inputs.
 func Digest(root string) (string, error) {
 	root, err := filepath.Abs(root)

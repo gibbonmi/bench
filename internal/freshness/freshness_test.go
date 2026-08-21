@@ -1037,3 +1037,73 @@ func writeBuildFixtureAt(t *testing.T, root string) string {
 	}
 	return root
 }
+
+// TestDeclaresBuildInputsReadsPresenceRatherThanContent grades the applicability gate
+// the landing consults before it proves its own executable. Only a not-exist manifest
+// may report absence: every other artifact state routes to Verify, whose reading
+// discipline refuses what it cannot trust. An implementation that followed the link —
+// Stat rather than Lstat — would read a dangling symlink as an authoritative absence
+// and skip the proof in exactly the repository that needs it.
+func TestDeclaresBuildInputsReadsPresenceRatherThanContent(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		place   func(*testing.T, string)
+		declare bool
+	}{
+		{name: "absent", place: func(*testing.T, string) {}},
+		{name: "regular", declare: true, place: func(t *testing.T, path string) {
+			if err := os.WriteFile(path, []byte("build_script=scripts/go-build.sh\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "empty", declare: true, place: func(t *testing.T, path string) {
+			if err := os.WriteFile(path, nil, 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "live-symlink", declare: true, place: func(t *testing.T, path string) {
+			target := filepath.Join(filepath.Dir(path), "elsewhere.inputs")
+			if err := os.WriteFile(target, []byte("build_script=scripts/go-build.sh\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(target, path); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "dangling-symlink", declare: true, place: func(t *testing.T, path string) {
+			if err := os.Symlink(filepath.Join(filepath.Dir(path), "no-such-file"), path); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "directory", declare: true, place: func(t *testing.T, path string) {
+			if err := os.Mkdir(path, 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		// An unusable parent is the case that separates "not-exist" from "errored at all".
+		// A predicate that asked only whether Lstat succeeded would read this repository as
+		// declaring nothing and skip the proof, which is the one direction that must never
+		// happen: an unreadable tree is untrusted, not exempt.
+		{name: "parent-is-not-a-directory", declare: true, place: func(t *testing.T, path string) {
+			parent := filepath.Dir(path)
+			if err := os.Remove(parent); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(parent, []byte("not a directory\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			manifest := filepath.Join(root, filepath.FromSlash(auxiliaryInputsManifest))
+			if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			tc.place(t, manifest)
+			if got := DeclaresBuildInputs(root); got != tc.declare {
+				t.Fatalf("DeclaresBuildInputs(%s manifest) = %v, want %v", tc.name, got, tc.declare)
+			}
+		})
+	}
+}
