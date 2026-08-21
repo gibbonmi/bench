@@ -2,29 +2,36 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean once the spec-staging commit lands.
-Spec: `specs/land-executable-freshness/spec.md`, Status: staged, reviewer-approved with its one ticket.
-Gate: green at the staging commit; `dist/bench` rebuilt fresh this session.
+Branch: `main` — HEAD `60d1154`, clean tree, 2 unpushed commits
+Spec: `specs/land-executable-freshness/spec.md` (Status: staged)
+Gate: green at `9bda612` — stale, work tree `71c000e`
 
 ## State
 
-FT242 was re-scoped this session: its original ask (a spec amendment reaches
-the destination through one sanctioned step) already shipped as FT225
-(`cb1462a6`/`33aa5258`, retired `bef52480`); the ft230 detour came from a stale
-`dist/bench` enforcing the retired refusal. The staged spec carries the
-residual: `bench worktree land` proves its own executable through
-`freshness.Verify` before any repository proof, skips where
-`scripts/go-build.inputs` is absent, and exempts `--resume`. One ticket
-(`01-refuse-stale-landing-executable`, blocked by none) delivers the slice,
-including the FT242 board rewrite in `roadmap/FT242.md` and `ROADMAP.md`.
-Review: 2 iterations to accept; the ordering-row learning is in
-`capture/learnings.md` awaiting the next drain. One commit remains unpushed
-from before this session.
+`/bench-implement-spec --full` is mid-run. The one ticket
+(`01-refuse-stale-landing-executable`) is built and committed green on the
+retained integration source: worktree request `land-exec-freshness-01`, label
+`land-executable-freshness integration`. Frozen review base
+`60d1154b`, source tip `afcc2a3b`. The diff touches seven files: the freshness
+owner gains a presence-only `DeclaresBuildInputs`, `LandCommand` gains the
+invoked-executable parameter and proves it before any repository proof, the
+registry closure forwards `Command.Executable`, and `roadmap/FT242.md` plus its
+`ROADMAP.md` index and sequence lines carry the re-scope. All eight acceptance
+rows have tests. Six mutation probes were run and each turned its row red,
+including the coordinator's own probe of the check moved before the resume
+dispatch.
+
+One contestable call to veto or keep: the delegate also rewrote the
+`ROADMAP.md` recommended-sequence item 1, which still pointed at the ask that
+closed as FT225. That is beyond the ticket's literal wording.
+
+The phase reached is review. Nothing is landed to the destination yet.
 
 ## Next command
 
-`/bench-implement-spec` — specs/land-executable-freshness, fresh mid-tier
-(opus) session, one retained integration source, one ticket.
+`/bench-review-implementation` — base `60d1154b`, source tip `afcc2a3b`, in the
+integration worktree; then `bench worktree land` from `~/workspace/bench`, then
+`/bench-final-check`.
 
 ## Shape
 
