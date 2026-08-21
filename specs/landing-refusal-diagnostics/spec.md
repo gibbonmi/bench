@@ -345,28 +345,28 @@ unconditionally → LR23.
 
 ## Ownership fences
 
-- specs/landing-refusal-diagnostics/
-- internal/worktree/land.go
-- internal/worktree/land_test.go
-- internal/worktree/reauthorize.go
-- internal/worktree/reauthorize_test.go
-- internal/worktree/build_outputs.go
-- internal/worktree/subshell.go
-- internal/worktree/eligibility.go
-- internal/worktree/eligibility_test.go
-- internal/worktree/classifier.go
-- internal/worktree/classifier_shape_test.go
-- internal/worktree/ownership.go
-- internal/worktree/ownership_test.go
-- internal/worktree/worktree.go
-- internal/worktree/worktree_test.go
-- internal/worktree/lifecycle_test.go
-- internal/landing/landing.go
-- internal/landing/landing_test.go
-- internal/systemtest/owner_test.go
-- .bench/BENCH-reference.md
-- CHANGELOG.md
-- capture/session-handoff.md
+- `specs/landing-refusal-diagnostics/`
+- `internal/worktree/land.go`
+- `internal/worktree/land_test.go`
+- `internal/worktree/reauthorize.go`
+- `internal/worktree/reauthorize_test.go`
+- `internal/worktree/build_outputs.go`
+- `internal/worktree/subshell.go`
+- `internal/worktree/eligibility.go`
+- `internal/worktree/eligibility_test.go`
+- `internal/worktree/classifier.go`
+- `internal/worktree/classifier_shape_test.go`
+- `internal/worktree/ownership.go`
+- `internal/worktree/ownership_test.go`
+- `internal/worktree/worktree.go`
+- `internal/worktree/worktree_test.go`
+- `internal/worktree/lifecycle_test.go`
+- `internal/landing/landing.go`
+- `internal/landing/landing_test.go`
+- `internal/systemtest/owner_test.go`
+- `.bench/BENCH-reference.md`
+- `CHANGELOG.md`
+- `capture/session-handoff.md`
 
 ## Out of scope
 
