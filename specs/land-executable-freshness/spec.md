@@ -198,6 +198,7 @@ accidents, not adversaries; see the Won't handle lines.
 ## Ownership fences
 
 - `internal/freshness/freshness.go`
+- `internal/freshness/freshness_test.go`
 - `internal/worktree/land.go`
 - `internal/worktree/land_test.go`
 - `cmd/bench/main.go`
