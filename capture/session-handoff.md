@@ -2,37 +2,45 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean, one commit ahead of `origin/main` before this drain's own commit.
-Spec: none staged.
-Gate: green at `f63384b3`.
+Branch: `main` — HEAD `b2deece`, 2 dirty paths, 0 unpushed commits
+Spec: `specs/learnings-dated-line-visibility/spec.md` (Status: staged)
+Gate: green at `4cd77bc` — stale, work tree `7352eeb`
 
 ## State
 
-The drain is closed. `capture/IDEAS.md`, `capture/learnings.md`, and
-`capture/retros/` are all empty, and the board carries the evidence instead. Four
-rows took occurrences from the `light-path-wrapper-home-guard` retro and its two
-journal entries: FT113, FT243, FT215, and FT106.
+`/bench-implement-spec specs/learnings-dated-line-visibility/spec.md --full`
+stopped at phase entry and wrote no code. Two things block the build.
 
-FT113 rose from LOW to MEDIUM. `bench commit --spec` exits 1 on
-`landed-but-checkout-incomplete` for a tickets-only light-path spec, after a
-fully correct green commit, and leaves `specs/<slug>/` as untracked residue. The
-drain reproduced that exit through the accused command on its own implement-now
-commit, so the row now has two same-day occurrences of the face. The fix still
-needs the reviewer's call on retry-versus-report. Expect the residue and remove
-it by hand after any `--spec` landing until the row ships.
+The reviewer widened the spec's scope. The spec narrowed FT243's clause "a
+capture entry the parser cannot see" to dated lines only and raised that
+narrowing for disposition; the reviewer rejected the narrowing and asked for
+undated content to be reported too. That reaches past the spec's ownership
+fence: the `<!-- entries below -->` boundary must become a parser-owned export
+of `internal/learnings` consumed by `internal/adopt`, and the fresh-repo quiet
+posture (a scaffold whose prose preamble is exactly that shape) needs its own
+stories, coverage rows, and regressions. The spec's own "Out of scope" section
+already priced this at 3 edits and 2 gate runs. It needs new stories, new rows,
+and a re-sliced ticket.
 
-The retro's `craft-seams` recommendation shipped in this session as an
-implement-now light-path item at `f63384b3`: a registry-owning package carries an
-admission rule that a test's author reads before placing a test there. It was
-implemented inline rather than through a write-delegate, which follows the
-right-size table and departs from this phase's own delegate wording — flagged for
-veto.
+The reviewer accepted the spec's other two dispositions, and both stand: the
+Line stays mid (`opus` / medium) against the cached cheap-tier routing for
+parser logic at a known seam, and the build runs a write delegate at that tier.
+
+`bench preflight build learnings-dated-line-visibility` is also red:
+`rows-owned,red,"declared row(s) cited by no ticket file: DL1 … DL21"`. The one
+ticket's acceptance lines carry no row IDs. The exemplar shape is
+`specs/land-executable-freshness/tickets/01-refuse-stale-landing-executable.md`,
+which prefixes each line with its row ID. The reviewer approved repairing that
+in place, but the scope widening rewrites the ticket anyway, so leave it to the
+spec phase.
+
+`capture/learnings.md` holds one new open entry on that preflight escape: the
+write-spec phase exits without running the build phase's own entry check, so the
+red lands in the phase that cannot fix it.
 
 ## Next command
 
-`/bench-write-spec` — FT243: a capture entry the parser cannot see is reported as
-zero, not as a failure. Top-ranked for a second drain running, and the face
-repeated during this one.
+`/bench-write-spec`
 
 ## Shape
 
