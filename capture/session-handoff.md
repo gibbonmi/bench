@@ -2,28 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean tree once the closing capture commit lands; unpushed commits pending review.
-Spec: none staged — FT230 is implemented, landed (`b48c4609`), and retired.
-Gate: green at the retirement commit.
+Branch: `main` — clean once the drain batch commit lands on `61f1db8c`.
+Spec: none staged.
+Gate: green.
 
 ## State
 
-FT230 is done end to end: adapter selection (`--adapter npm|fixture`,
-`--provenance`) through `bench release`, the workflow's publish job swapped to
-one `bench release submit` invocation, the conformance contract flipped with
-red-capable bites, the two step-name contracts retired to a record-level
-ordering test, the runbook amended, the spec retired, and all landed
-worktrees cleaned. The retro (`capture/retros/ft230-release-through-bench.md`),
-two learnings entries, and refreshed `capture/agent-performance/claude-models.md`
-await `/bench-drain`. The newer learnings entry flags a contract contradiction
-for reviewer decision: `bench worktree land` refuses on divergent staged spec
-bytes while the review skill and a scorecard decision say the landing
-publishes the source's bytes.
+The 2026-08-20 `/bench-drain` pass is the batch this commit carries: the FT230
+retro and both learnings entries are drained and removed, all capture sources
+are empty, and no spec is staged. Dispositions: FT242 is new (decision
+required — a spec amendment reaches the destination through one sanctioned
+step: land adopts the source's spec bytes, or a `bench spec sync` verb);
+merges landed on FT224 (spec-retire next-step omits the detail-file deletion),
+FT162 (`bench handoff` overwrites the Next-command section), FT214 (two
+craft-spec map clauses: name the test function you read, sweep for deleted
+bytes), FT215 (capture-only fast lane joins the scoped-gate decision), and
+FT238 (sixth piece: the phase-close capture-batch rule). The board otherwise
+reconciled clean — nothing shipped since the last drain. The reviewer priced
+FT242 to the front of the sequence.
 
 ## Next command
 
-`git push` — then `/bench-drain` for the retro, the two learnings entries, and
-the scorecard refresh.
+`/bench-write-spec` — FT242: a spec amendment reaches the destination through
+one sanctioned step. The spec's first question is the shape: land adopts the
+source's spec bytes, or a `bench spec sync` verb.
 
 ## Shape
 

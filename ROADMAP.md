@@ -25,7 +25,9 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, two `bench commit` gaps, the heredoc guard gap, and a run-binary glossary term.**
+**FT242 (MEDIUM, decision required) — a spec amendment reaches the destination through one sanctioned step.**
+
+**FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, two `bench commit` gaps, the heredoc guard gap, a run-binary glossary term, and the phase-close capture-batch rule.**
 
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
@@ -284,6 +286,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at seven occurrences, and now the top of the path FT225 vacated: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
-2. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. The spec-byte face closed with FT225; what remains is the four-cause identity string and a `release` refusal naming a flag `release` rejects.
-3. `/bench-write-spec` — FT238: the hygiene batch, now five pieces at six occurrences. Cheapest actionable row on the board, and every piece is a friction the last three builds paid.
+1. `/bench-write-spec` — FT242: a spec amendment reaches the destination through one sanctioned step. Reviewer-priced to the front; the spec's first question is the shape — land adopts the source's spec bytes, or a `bench spec sync` verb — and the losing contract sentence (skill or land) changes with it.
+2. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at seven occurrences: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
+3. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. Now four occurrences and a fourth face: `bench spec retire`'s next-step omits the `roadmap/FT<n>.md` deletion, which the FT230 retirement paid a full gate run to discover.
