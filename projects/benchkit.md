@@ -126,6 +126,14 @@ coverage map; a class skipped here returns as a regression.
   splits its own field. Assert the permitted bytes, not only the refused ones —
   a test that exercises only what the predicate rejects proves nothing about the
   half that reaches the document
+- a whitespace predicate applied to hand-edited text, where the class boundary
+  is what a reader can see. `unicode.IsSpace` carries the whole `White_Space`
+  property, so every `Zs` separator — U+00A0, U+2000 through U+200A, U+3000 —
+  is a separator, while U+200B and U+FEFF are not. An ASCII-only predicate
+  borrowed from a wire-format class silently drops the first group; a predicate
+  widened to zero-width characters makes the rule unreadable to the person
+  repairing the line. Name the exact predicate and assert both sides of it — a
+  test that only exercises the accepted side cannot tell the two apart
 - a command whose own write changes a fact it reports: an artifact-rewriting
   command that also states tree cleanliness, staleness, or a derived next step
   falsifies its own output the moment it lands. Assert repeated application in
