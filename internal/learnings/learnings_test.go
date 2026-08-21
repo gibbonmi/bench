@@ -273,7 +273,7 @@ func TestCommandSurfacesLostDatedLinesAndLeavesTheQuietPosturesAlone(t *testing.
 }
 
 // TestParseReportsUnaccountedContentBelowTheEntriesMarker covers DL22, DL23, DL24,
-// DL33, DL25, DL26, DL27, DL34, DL28, DL18, DL19, and DL31: content below the entries
+// DL33, DL25, DL26, DL27, DL34, DL35, DL36, DL28, DL18, DL19, and DL31: content below the entries
 // marker and above the first real entry heading is reported one record per contiguous
 // run, while every posture the scaffold ships or a pruned journal reaches stays quiet.
 func TestParseReportsUnaccountedContentBelowTheEntriesMarker(t *testing.T) {
@@ -304,6 +304,10 @@ func TestParseReportsUnaccountedContentBelowTheEntriesMarker(t *testing.T) {
 		{"DL27 a marker below a real entry heading", schema + "## 2026-01-01 — first [open]\n" + JournalEntriesMarker + "\nplain note\n", nil},
 		{"DL34 a second marker joins the open run", schema + JournalEntriesMarker + "\nfirst\n" + JournalEntriesMarker + "\nsecond\n",
 			[]Malformed{{Reason: unaccounted, Raw: "first", Line: 4}}},
+		{"DL35 a journal ending without a trailing newline still reports its open run", schema + JournalEntriesMarker + "\nplain note",
+			[]Malformed{{Reason: unaccounted, Raw: "plain note", Line: 4}}},
+		{"DL36 a marker with trailing whitespace still opens the rule", schema + JournalEntriesMarker + "   \nplain note\n",
+			[]Malformed{{Reason: unaccounted, Raw: "plain note", Line: 4}}},
 		{"DL28 CRLF run loses its carriage return", strings.ReplaceAll(schema+JournalEntriesMarker+"\nplain note\n", "\n", "\r\n"),
 			[]Malformed{{Reason: unaccounted, Raw: "plain note", Line: 4}}},
 		{"DL18 an undated line above the marker", schema + "plain note\n" + JournalEntriesMarker + "\n", nil},

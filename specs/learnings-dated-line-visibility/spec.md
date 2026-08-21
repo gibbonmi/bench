@@ -220,7 +220,10 @@ from the marker to end of file. A journal that holds no marker keeps today's
 behavior for undated content entirely: only the dated rule applies to it. This
 is what keeps a pruned journal and every pre-marker journal quiet. A second
 marker below the first is an ordinary line and joins the unaccounted run, which
-is the honest reading: the boundary was already declared once.
+is the honest reading: the boundary was already declared once. The marker is
+matched after `strings.TrimSpace`, so a marker carrying trailing whitespace still
+opens the rule: requiring an exact match would let one invisible space disable
+the diagnostic silently, which is the failure class this spec exists to close.
 
 **Unaccounted content is a contiguous run, reported once.** Below the marker and
 above the first real entry heading, each line is classified in order: a blank
@@ -315,6 +318,8 @@ rendered rows read against the file top to bottom.
 | DL26 | 15 | a journal with no entries marker produces no record for its undated lines | `internal/learnings` unit test on `Parse` | a rule anchored at the schema heading instead of the marker reds every pruned and pre-marker journal |
 | DL27 | 16 | a marker appearing below a real entry heading does not open the rule | `internal/learnings` unit test on `Parse` | a whole-file search for the literal re-anchors on a marker pasted into an entry body |
 | DL34 | 16 | a second marker below the first joins the open run's record rather than starting a new region | `internal/learnings` unit test on `Parse` | a `strings.LastIndex` anchor restarts the preamble at the second marker and silently drops every line between the two |
+| DL35 | 12 | a run still open at end of file, in a journal with no trailing newline, still yields its record | `internal/learnings` unit test on `Parse` | every other run is closed by the empty final element a trailing newline produces, so the walk's own end-of-input flush is otherwise unasserted and can be deleted whole |
+| DL36 | 16 | a marker carrying trailing whitespace still opens the rule | `internal/learnings` unit test on `Parse` | an exact-match anchor lets one invisible space disable the diagnostic silently, which is the failure class this spec exists to close |
 | DL28 | 17 | a CRLF-terminated unaccounted run's record carries the line without its trailing carriage return | `internal/learnings` unit test on `Parse` | the new rule is a second `Raw` writer, so it needs its own normalization or it splits its own field |
 | DL29 | 19 | the bytes `internal/adopt` scaffolds parse with zero records, and the scaffold's marker is `learnings.JournalEntriesMarker` | `internal/adopt` scaffold test | a scaffold holding its own copy of the literal drifts from the parser's boundary, and the first fresh repo then reads red |
 | DL30 | 11 | `bench learnings` exits 1 and renders a `line <n>` row for a scaffolded journal with one undated note appended below its marker | `internal/learnings` command test with a byte-exact stdout fixture | that journal exits 0 today; it also goes red on an anchor that lets the scaffold's own worked example close the preamble, which is the cheapest wrong reading of the marker rule |
@@ -329,7 +334,8 @@ refusal, so a row here would assert someone else's behavior.
 
 The walk covers the shell-CLI hostile-input classes that reach a markdown line
 parser: hand-edited files with no trailing newline (DL20), CRLF line endings
-(DL21, DL28), non-ASCII whitespace in hand-edited markdown (DL7, DL8), control
+(DL21, DL28), hand-edited files with no trailing newline while an unaccounted run
+is still open (DL35), non-ASCII whitespace in hand-edited markdown (DL7, DL8), control
 bytes a sink permits but cannot survive (excluded below), and the absent-versus-empty
 pair (unchanged — classification runs before the parser and its cases are already
 asserted). The classes about paths, processes, worktrees, and TTYs do not reach
