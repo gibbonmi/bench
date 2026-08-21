@@ -5,7 +5,6 @@
   { "source": "bin/bench-repair-binary.mjs", "mode": "0644", "audience": "consumer" },
   { "source": "bin/bench.sh", "mode": "0755", "audience": "consumer" },
   { "source": "projects/gl-axi.md", "mode": "0644", "audience": "consumer" },
-  { "source": "projects/regroup.md", "mode": "0644", "audience": "consumer" },
   { "source": ".agents/commands", "mode": "0644", "tree": true, "audience": "consumer" },
   { "source": ".agents/commands/bench-assess.md", "mode": "0644", "audience": "kit-only" },
   { "source": ".agents/commands/bench-update-kit.md", "mode": "0644", "audience": "kit-only" },

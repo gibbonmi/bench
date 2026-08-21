@@ -26,7 +26,6 @@
     "!cmd/**/*_test.go",
     "!internal/**/*_test.go",
     "projects/gl-axi.md",
-    "projects/regroup.md",
     "README.md",
     ".agents/",
     "!.agents/commands/bench-assess.md",

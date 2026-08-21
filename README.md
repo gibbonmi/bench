@@ -162,7 +162,6 @@ bench/
 │   └── git/                  # shared git subprocess helpers + gate tree-hash
 └── projects/
     ├── benchkit.md           # seams, gate, lines for this kit
-    ├── regroup.md            # seams, gate, lines for Regroup
     └── gl-axi.md             # seams, gate, AXI conformance for gl-axi
 ```
 
@@ -198,6 +197,14 @@ yet — it's not published — so use the git-dependency form above until it lan
 Run from `npx`, `setup` copies the kit in (the npx cache is ephemeral, so it won't
 leave dangling symlinks). Prefer to install once and get a durable `bench` command?
 Clone the repo, build the core, and symlink the launcher:
+
+That build command is also the one you rerun after you change the Go sources.
+Only `scripts/go-build.sh` refreshes the dev build and reseals it, so a plain
+`go build` leaves an executable Bench will not trust. In a repository that
+declares Go build inputs — the kit itself — `bench worktree land` proves its own
+executable before it enforces any landing contract, and refuses with the exact
+rebuild command rather than enforcing a contract that has since been retired. A
+linked repository declares no build inputs and never pays that proof.
 
 ```sh
 git clone https://github.com/gibbonmi/bench ~/src/bench
@@ -347,44 +354,19 @@ implement, review, final-check, debug, or run an autonomous shift.
 
 ---
 
-## Integrating it into Regroup
+## The design system as a visual oracle
 
-`projects/regroup.md` is the profile. The seams are the phase/game-state machine,
-`CoordinateProvider`, and the event store; UI is gated by the screenshot loop, not
-unit tests.
-
-A typical feature — say, adding zone-entry events to the phase taxonomy:
-
-```sh
-cd ~/src/regroup
-# 1. is the domain change a multi-session decision tree? if so, map it.
-#    /bench-shape-idea  →  grills decision tickets, writes decisions/zone-entries.md
-# 2. spec it — this picks the seam (the state machine) and the tests up front
-#    /bench-write-spec →  specs/zone-entries/spec.md with stories + the transition-test seam
-#                         and moves the map to specs/zone-entries/decisions/
-# 3. run the shift. implementation first derives independently-green tickets
-#    beside the spec, then works the frontier with one fresh write-delegate per ticket.
-#    heavy line, because the ontology is the uncertain seam.
-BENCH_MAX_ITERS=8 bench shift "add zone-entry events to the phase taxonomy per specs/zone-entries/spec.md"
-# each iteration commits only if mypy + pytest + ruff pass. you review the branch.
-```
-
-For a UI shift (e.g., a zone-entry marker on the timeline) the gate's green suite
-is necessary but not sufficient: the `regroup-ui` skill triggers automatically,
-the screenshot loop runs, and the two chasms plus the five interaction states are
-the real review. The shuttle slider stays canonical — composed, never regenerated.
-Route UI shifts to a mid line; the screenshot loop, not raw model strength, is
-what catches the failures there.
-
-### The design system (separate repo)
-
-Your Regroup design system lives in its own repo and plugs in as the **visual
+A UI project's design system lives in its own repo and plugs in as the **visual
 oracle** — the third gate axis after tests (behavior) and the screenshot loop
-(interaction). Regroup consumes it as a submodule/package/pinned path; the
-`craft-design-system` skill makes the agent consume it rather than reinvent it: every
-value references a token, every component composes from the inventory, and the
-design-conformance check fails the build on raw hex, hardcoded spacing, or a
-duplicated component.
+(interaction). The project consumes it as a submodule, package, or pinned path;
+the `craft-design-system` skill makes the agent consume it rather than reinvent
+it: every value references a token, every component composes from the inventory,
+and the design-conformance check fails the build on raw hex, hardcoded spacing,
+or a duplicated component.
+
+For a UI shift the gate's green suite is necessary but not sufficient. Route UI
+shifts to a mid line; the screenshot loop, not raw model strength, is what
+catches the failures there.
 
 The handoff is repo-to-repo, which is what makes it harness-agnostic. When a shift
 needs a token or variant that doesn't exist, you add it in the design repo — via

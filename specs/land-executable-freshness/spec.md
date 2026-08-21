@@ -205,6 +205,21 @@ accidents, not adversaries; see the Won't handle lines.
 - `cmd/bench/command_registry_test.go`
 - `ROADMAP.md`
 - `roadmap/FT242.md`
+- `README.md`
+
+Reviewer-directed housekeeping, folded into this landing at the reviewer's
+explicit choice rather than because it belongs to the feature. It retires the
+shipped `regroup` example profile across every registry that names it, drops a
+superseded self-assessment document, and untracks a local reference image:
+
+- `projects/regroup.md`
+- `internal/packagesurface/assets.go`
+- `.bench/consumer-payload.json`
+- `package.json`
+- `projects/benchkit.md`
+- `.gitignore`
+- `COMPLIANCE_ASSESSMENT.md`
+- `ui_example/`
 
 ## Out of scope
 

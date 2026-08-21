@@ -417,8 +417,8 @@ escalation.
   adapters are interactive layers on top of shared `.bench/hooks/` scripts and the
   harness-independent substrate (the `bench shift` loop + the git `pre-push` hook) —
   never the only thing enforcing an invariant.
-- The two `projects/*.md` example profiles (gl-axi, regroup) are shipped templates,
-  not live projects. This file (`benchkit.md`) is the profile for this repo.
+- The `projects/gl-axi.md` example profile is a shipped template, not a live
+  project. This file (`benchkit.md`) is the profile for this repo.
 - A symbolic link inside an allowlisted kit payload tree is refused, not followed.
   Closed decision (2026-07-23): following the link would ship bytes the allowlist
   never named, so the allowlist would stop being the complete statement of what a
