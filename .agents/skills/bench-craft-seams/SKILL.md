@@ -51,6 +51,10 @@ internal is something the agent can game.
 ## Picking the seam for a feature
 
 - Prefer an existing seam to a new one.
+- Before you place a test in a package that owns a registry or an inventory,
+  read that package's own admission rule. Such a package carries a seam
+  contract, not only a location, so a test that compiles and passes there can
+  still be inadmissible.
 - Use the **highest** seam that still exercises the real behavior — *and at which
   the failure modes are still observable*. If an error path can't go red from the
   high seam, add one lower coverage row or make the failure observable there;
