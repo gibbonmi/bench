@@ -207,7 +207,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	facts.nestedState, facts.nestedErr = nested, nestedErr
 	ignored, ignoredCanonical, ignoredErr := inventoryIgnored(target, options.Full)
 	plan.Ignored = ignored
-	declaredIgnored := buildOutputErr == nil && ignoredWithinBuildOutputs(ignored, buildOutputs)
+	declaredIgnored := buildOutputErr == nil && ignoredWithinLandingAllowance(ignored, buildOutputs)
 	facts.buildOutputErr = buildOutputErr
 	facts.ignoredErr = ignoredErr
 	facts.ignoredOverLimit = ignored.OverLimit

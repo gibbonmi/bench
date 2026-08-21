@@ -70,10 +70,6 @@ func validBuildOutputPath(entry string) bool {
 		filepath.ToSlash(native) == base && native != ".." && !strings.HasPrefix(native, ".."+string(filepath.Separator))
 }
 
-func ignoredWithinBuildOutputs(inventory IgnoredInventory, declared []string) bool {
-	return ignoredWithinDeclaredOutputs(inventory, declared, func(string) bool { return false })
-}
-
 func ignoredWithinLandingAllowance(inventory IgnoredInventory, declared []string) bool {
 	return ignoredWithinDeclaredOutputs(inventory, declared, landing.RuntimeIgnoredPath)
 }

@@ -27,15 +27,36 @@ import (
 func TestLandCommandPublicRealGitJourney(t *testing.T) {
 	binary := buildLandingBinary(t)
 	for _, tc := range []struct {
-		name, ignored, declaration, wantState string
+		name, ignored, declaration, foreignIgnored, wantState string
+		runtime, emptyDeclaration                             bool
 	}{
 		{name: "clean", wantState: "released"},
 		{name: "declared-output", ignored: "dist/output", declaration: "dist/", wantState: "released"},
+		{name: "runtime-log", ignored: ".logs/gate.jsonl", wantState: "released", runtime: true},
+		{name: "runtime-log-empty-declaration", ignored: ".logs/gate.jsonl", wantState: "released", runtime: true, emptyDeclaration: true},
+		{name: "runtime-and-unknown-ignored", ignored: ".logs/gate.jsonl", foreignIgnored: "private/output", wantState: "incomplete:release", runtime: true},
 		{name: "unknown-ignored", ignored: "private/output", declaration: "dist/", wantState: "incomplete:release"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "public-land-" + tc.name
 			root, creation, base, tip, tally := publicLandingFixture(t, request, tc.ignored, tc.declaration)
+			if tc.emptyDeclaration || tc.foreignIgnored != "" {
+				if tc.emptyDeclaration {
+					mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[]}\n"), 0o644)
+				}
+				if tc.foreignIgnored != "" {
+					mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".logs/\nprivate/\n"), 0o644)
+				}
+				gitRun(t, root, "add", "-A")
+				gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "configure ignored residue")
+				base = gitOutput(t, root, "rev-parse", "HEAD")
+				gitRun(t, creation.Path, "rebase", "main")
+				tip = gitOutput(t, creation.Path, "rev-parse", "HEAD")
+				if tc.foreignIgnored != "" {
+					mustMkdirAll(t, filepath.Dir(filepath.Join(creation.Path, filepath.FromSlash(tc.foreignIgnored))), 0o755)
+					mustWrite(t, filepath.Join(creation.Path, filepath.FromSlash(tc.foreignIgnored)), []byte("residue\n"), 0o600)
+				}
+			}
 			disclosure := "landing source{review_base=" + base + ",assignment_start=" + creation.Assignment.Start + "}\n"
 			var stdout, stderr bytes.Buffer
 			cmd := exec.Command(binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
@@ -85,7 +106,7 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 			}
 			_, statErr := os.Stat(creation.Path)
 			if tc.wantState == "released" {
-				if len(assignments) != 0 || !os.IsNotExist(statErr) || stderr.String() != disclosure {
+				if len(assignments) != 0 || !os.IsNotExist(statErr) || (!tc.runtime && stderr.String() != disclosure) || (tc.runtime && !strings.HasPrefix(stderr.String(), disclosure)) {
 					t.Fatalf("released state assignments=%#v stat=%v stderr=%q", assignments, statErr, stderr.String())
 				}
 			} else {
@@ -1072,18 +1093,29 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 	}
 }
 
-func TestLandingDestinationAllowsOnlyDeclaredIgnoredOutput(t *testing.T) {
-	root := newWorktreeRepo(t)
-	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
-	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
-	mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"dist/\"]}\n"), 0o644)
-	gitRun(t, root, "add", ".gitignore", ".bench/build-outputs.json")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare output")
-	mustMkdirAll(t, filepath.Join(root, "dist"), 0o755)
-	mustWrite(t, filepath.Join(root, "dist", "bench"), []byte("output\n"), 0o755)
-	tip, branch, marker, fingerprint, err := landingDestination(root)
-	if err != nil || tip == "" || branch != "main" || marker != "" || fingerprint == "" {
-		t.Fatalf("declared destination output = (%q, %q, %q, %q, %v)", tip, branch, marker, fingerprint, err)
+func TestLandingDestinationAllowsDeclaredAndRuntimeIgnoredOutput(t *testing.T) {
+	for _, tc := range []struct {
+		name, ignore, output, declaration string
+	}{
+		{name: "declared", ignore: "dist/", output: "dist/bench", declaration: "{\"schema\":1,\"paths\":[\"dist/\"]}\n"},
+		{name: "runtime", ignore: ".logs/", output: ".logs/gate.jsonl"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
+			mustWrite(t, filepath.Join(root, ".gitignore"), []byte(tc.ignore+"\n"), 0o644)
+			if tc.declaration != "" {
+				mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte(tc.declaration), 0o644)
+			}
+			gitRun(t, root, "add", "-A")
+			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare output")
+			mustMkdirAll(t, filepath.Dir(filepath.Join(root, tc.output)), 0o755)
+			mustWrite(t, filepath.Join(root, tc.output), []byte("output\n"), 0o755)
+			tip, branch, marker, fingerprint, err := landingDestination(root)
+			if err != nil || tip == "" || branch != "main" || marker != "" || fingerprint == "" {
+				t.Fatalf("destination %s = (%q, %q, %q, %q, %v)", tc.name, tip, branch, marker, fingerprint, err)
+			}
+		})
 	}
 }
 
