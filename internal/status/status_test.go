@@ -19,6 +19,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
@@ -1545,4 +1546,27 @@ func assertLeadControlRoute(t *testing.T, relativePath, body, want string) {
 	if got, code := Command([]string{"--route"}); code != 0 || got != want {
 		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
 	}
+}
+
+// TestSignalsRendersDrainLearningsUnknownForALostDatedLine covers DL14: a journal
+// holding a dated bullet is a failed read, so the drain row names the journal as
+// unknown instead of the fabricated `0 open learning(s)` the decision source records.
+func TestSignalsRendersDrainLearningsUnknownForALostDatedLine(t *testing.T) {
+	root := initRepo(t)
+	journal := learnings.JournalSchemaHeading + "\n\n- 2026-08-21 — spec anchor drift\n"
+	if err := os.WriteFile(filepath.Join(root, learnings.JournalPath), []byte(journal), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+	want := "0 idea(s), unknown (capture/learnings.md is malformed), 0 pending retro(s)"
+	for _, s := range Signals(root) {
+		if s.Name == "drain" {
+			if s.Detail != want {
+				t.Fatalf("drain detail = %q, want %q", s.Detail, want)
+			}
+			return
+		}
+	}
+	t.Fatalf("Signals = %#v, want a drain row", Signals(root))
 }

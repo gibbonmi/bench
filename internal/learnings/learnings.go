@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -47,16 +48,51 @@ func Entries(content []byte) []Entry {
 // Parse returns typed entries plus every malformed heading fragment.
 func Parse(content []byte) ([]Entry, []Malformed) {
 	lines := strings.Split(string(content), "\n")
+	unaccountedStart, unaccountedEnd := unaccountedRegion(lines)
 	var out []Entry
 	var malformed []Malformed
+	// runStart holds the first line index of the open unaccounted run, or -1 when none is
+	// open. The record is emitted when the run ends, so one pasted block is one row rather
+	// than one per line, and it carries the run's first line — where the writer repairs it.
+	runStart := -1
+	flushRun := func() {
+		if runStart < 0 {
+			return
+		}
+		malformed = append(malformed, Malformed{Reason: unaccountedReason, Raw: strings.TrimSuffix(lines[runStart], "\r"), Line: runStart + 1})
+		runStart = -1
+	}
 	for i := 0; i < len(lines); {
 		line := strings.TrimSuffix(lines[i], "\r")
+		if i >= unaccountedStart && i < unaccountedEnd {
+			switch {
+			case strings.TrimSpace(line) == "":
+				// A whitespace-only line is blank: a record whose text is invisible spaces
+				// names nothing the writer can repair.
+				flushRun()
+			case isLostDatedLine(line):
+				// The dated rule owns every dated line, here as well as in an entry body, so
+				// the two rules cannot disagree about what a date is.
+				flushRun()
+				malformed = append(malformed, Malformed{Reason: lostDatedLineReason, Raw: line, Line: i + 1})
+			case runStart < 0:
+				runStart = i
+			}
+			i++
+			continue
+		}
+		flushRun()
 		if !isDatedHeading(line) {
-			// The shipped scaffold's own worked example (internal/adopt seeds every fresh
-			// repo with it under "Format per entry:") is documentation, not a broken record,
-			// so an unedited template never counts as malformed.
-			if strings.HasPrefix(line, "## ") && !isTemplatePlaceholder(line) {
-				malformed = append(malformed, Malformed{Reason: "malformed learning heading", Raw: line, Line: i + 1})
+			switch {
+			case strings.HasPrefix(line, "## "):
+				// The shipped scaffold's own worked example (internal/adopt seeds every fresh
+				// repo with it under "Format per entry:") is documentation, not a broken record,
+				// so an unedited template never counts as malformed.
+				if !isTemplatePlaceholder(line) {
+					malformed = append(malformed, Malformed{Reason: "malformed learning heading", Raw: line, Line: i + 1})
+				}
+			case isLostDatedLine(line):
+				malformed = append(malformed, Malformed{Reason: lostDatedLineReason, Raw: line, Line: i + 1})
 			}
 			i++
 			continue
@@ -64,18 +100,63 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 		date, title, state := parseHeading(line)
 		start := i + 1
 		i = start
+		// A dated line inside the body is collected rather than appended as it is found,
+		// so a heading that is itself malformed keeps its record ahead of the body's and
+		// every reason stays in ascending source-line order.
+		var bodyLost []Malformed
 		for i < len(lines) && !strings.HasPrefix(strings.TrimSuffix(lines[i], "\r"), "## ") {
+			if bodyLine := strings.TrimSuffix(lines[i], "\r"); isLostDatedLine(bodyLine) {
+				bodyLost = append(bodyLost, Malformed{Reason: lostDatedLineReason, Raw: bodyLine, Line: i + 1})
+			}
 			i++
 		}
 		body := strings.Join(lines[start:i], "\n")
 		body = strings.Trim(body, "\n")
 		if state != "open" {
 			malformed = append(malformed, Malformed{Reason: "dated learning heading must end with [open]", Raw: line, Line: start})
-			continue
+		} else {
+			out = append(out, Entry{Date: date, Title: title, State: state, Body: body, Line: start})
 		}
-		out = append(out, Entry{Date: date, Title: title, State: state, Body: body, Line: start})
+		malformed = append(malformed, bodyLost...)
 	}
+	flushRun()
 	return out, malformed
+}
+
+// unaccountedReason is the reason content below the entries marker carries. It names
+// the boundary the writer crossed rather than the parser's disappointment, and it is
+// distinct from the dated reason so a reader can tell "this is not dated" from "this
+// is dated but is not a heading".
+const unaccountedReason = "learning content below the entries marker is not an entry"
+
+// unaccountedRegion returns the half-open line-index range below an opening entries
+// marker, or (-1, -1) when no marker opens the rule.
+//
+// The marker opens the rule only above the first real entry heading — a `## ` line that
+// isTemplatePlaceholder does not claim. That exclusion is load-bearing: the shipped
+// scaffold prints its worked example `## <date>` above the marker, so an anchor that
+// counted that line would never open the rule on the one journal shape it serves. A
+// marker below a real heading (pasted into an entry body) is ordinary text, and a second
+// marker below the first joins the run rather than restarting the region, so the lines
+// between the two are never silently dropped.
+func unaccountedRegion(lines []string) (start, end int) {
+	marker := -1
+	for i, raw := range lines {
+		line := strings.TrimSuffix(raw, "\r")
+		if strings.HasPrefix(line, "## ") && !isTemplatePlaceholder(line) {
+			if marker < 0 {
+				return -1, -1
+			}
+			return marker + 1, i
+		}
+		if marker < 0 && strings.TrimSpace(line) == JournalEntriesMarker {
+			marker = i
+		}
+	}
+	if marker < 0 {
+		return -1, -1
+	}
+	return marker + 1, len(lines)
 }
 
 // Rows parses the open headings of a learnings journal into date/title rows. A
@@ -113,11 +194,45 @@ func parseHeading(line string) (date, title, state string) {
 }
 
 func isDatedHeading(line string) bool {
-	if !strings.HasPrefix(line, "## ") || len(line) < len("## 2006-01-02") {
+	return strings.HasPrefix(line, "## ") && opensWithDate(line[len("## "):])
+}
+
+// lostDatedLineReason is the reason a dated line that is not a well-formed heading
+// carries. It names the writer's repair — use a heading — rather than the parser's
+// disappointment, and it is distinct from the two `## ` reasons so a reader can tell
+// "you used the wrong marker" from "your heading is broken".
+const lostDatedLineReason = "dated learning entry is not a heading"
+
+// isLostDatedLine reports whether line leads with a date but is not a heading, which
+// is how a writer loses an entry: appended as a bullet, a quote, or plain text, it
+// parses to nothing today. A line already starting `## ` is excluded outright, because
+// the two heading reasons own it and a second record would double-report it.
+//
+// The prefix walk strips a run — possibly empty, so a date flush at column one is
+// still reached — of runes that are each either whitespace or one of the markdown
+// markers a writer reaches for. unicode.IsSpace is the exact predicate rather than the
+// ASCII isSpace below: this serves hand-edited markdown, where a pasted U+00A0 or
+// U+3000 must not re-open the silent drop, while the zero-width U+200B and U+FEFF are
+// not White_Space and stay non-separators a reader can see.
+func isLostDatedLine(line string) bool {
+	if strings.HasPrefix(line, "## ") {
 		return false
 	}
-	date := line[len("## "):len("## 2006-01-02")]
-	for i, b := range []byte(date) {
+	return opensWithDate(strings.TrimLeftFunc(line, func(r rune) bool {
+		return unicode.IsSpace(r) || strings.ContainsRune("-*+>#", r)
+	}))
+}
+
+// opensWithDate reports whether s begins with a `YYYY-MM-DD` digit shape. It is the one
+// definition of the journal's date grammar, shared by the heading rule and the lost-line
+// rule so the two cannot drift apart, and it is deliberately shape-only: a calendar parse
+// here would judge `2026-88-88` differently from the heading rule that already accepts it.
+func opensWithDate(s string) bool {
+	const shape = "2006-01-02"
+	if len(s) < len(shape) {
+		return false
+	}
+	for i, b := range []byte(s[:len(shape)]) {
 		if i == 4 || i == 7 {
 			if b != '-' {
 				return false
@@ -187,6 +302,12 @@ func isSpace(r rune) bool { return r < 0x80 && toon.IsSpace(byte(r)) }
 
 // JournalSchemaHeading identifies a zero-entry learnings journal.
 const JournalSchemaHeading = "# Learnings — usage journal"
+
+// JournalEntriesMarker is the scaffold's boundary comment: the line below which a
+// writer is meant to append entries. It is exported because the boundary the parser
+// enforces and the boundary a fresh repo receives are one fact — a second copy of the
+// literal in internal/adopt's scaffold is how the two drift apart.
+const JournalEntriesMarker = "<!-- entries below -->"
 
 // JournalPath is the repo-relative journal. It is exported because the name is one
 // fact with three readers — this command, the roadmap drain that counts its open

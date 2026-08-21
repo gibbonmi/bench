@@ -938,3 +938,37 @@ func TestBuildContextRequiresUsableCaptureSourcesForOccurrenceTrust(t *testing.T
 		})
 	}
 }
+
+// TestContextCommandRendersLostDatedLearningLineAsParseFailure covers DL13: a dated
+// bullet in capture/learnings.md reaches the drain's inventory as its own
+// parse_failures row sourced at the journal, so the block the drain reads as complete
+// stops omitting the entry.
+func TestContextCommandRendersLostDatedLearningLineAsParseFailure(t *testing.T) {
+	root := newRepo(t)
+	journal := learnings.JournalSchemaHeading + "\n\n- 2026-08-21 — spec anchor drift\n"
+	if err := os.WriteFile(filepath.Join(root, learnings.JournalPath), []byte(journal), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := ContextCommand([]string{"--context", "--full"}, func(string) GateCacheFact { return GateCacheFact{} })
+	if code != 0 {
+		t.Fatalf("exit = %d, output=%q", code, out)
+	}
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("parse_failures")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, r := range rows {
+		row := r.(map[string]any)
+		if row["source"] == learnings.JournalPath && row["reason"] == "dated learning entry is not a heading" && row["raw"] == "- 2026-08-21 — spec anchor drift" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("parse_failures = %#v, want the lost dated line sourced at %s", rows, learnings.JournalPath)
+	}
+}

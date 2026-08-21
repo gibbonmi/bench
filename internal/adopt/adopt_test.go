@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/learnings"
 )
 
 func TestRewriteAgentsBlockEdges(t *testing.T) {
@@ -473,4 +474,26 @@ func readFile(t *testing.T, path string) string {
 		t.Fatalf("ReadFile(%s): %v", path, err)
 	}
 	return string(data)
+}
+
+// TestScaffoldLearningsMirrorsTheParserBoundary covers DL29: the bytes a fresh repo
+// receives parse with zero malformed records, the scaffold's boundary line is the
+// parser's own exported marker rather than a second literal, and the journal fixture
+// internal/learnings checks in is a mirror of this scaffold rather than a hand-copied
+// second source of the same bytes.
+func TestScaffoldLearningsMirrorsTheParserBoundary(t *testing.T) {
+	got := scaffoldLearnings()
+	if _, malformed := learnings.Parse([]byte(got)); len(malformed) != 0 {
+		t.Fatalf("scaffolded journal parses with %d malformed records, want 0: %#v", len(malformed), malformed)
+	}
+	if !strings.Contains(got, "\n"+learnings.JournalEntriesMarker+"\n") {
+		t.Fatalf("scaffold does not carry learnings.JournalEntriesMarker on its own line: %q", got)
+	}
+	mirror, err := os.ReadFile(filepath.Join("..", "learnings", "testdata", "scaffold-learnings.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(mirror) != got {
+		t.Fatalf("internal/learnings/testdata/scaffold-learnings.md has drifted from scaffoldLearnings()\nfixture = %q\nscaffold = %q", mirror, got)
+	}
 }
