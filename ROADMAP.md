@@ -25,8 +25,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT243 (MEDIUM) — a capture entry the parser cannot see is reported as zero, not as a failure.**
-
 **FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, two `bench commit` gaps, the heredoc guard gap, a run-binary glossary term, and the phase-close capture-batch rule.**
 
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
@@ -286,6 +284,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT243: a capture entry the parser cannot see is reported as zero, not as a failure. Still first on severity: every other row costs diagnosis time on a message the operator can read, while this one discards capture nobody learns was written. The face repeated one drain after the row was opened — two more bullet-shaped entries were invisible to `bench status` and to `bench roadmap --context`, which the drain reads as its complete inventory.
-2. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at nine occurrences: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
-3. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names the remainder. Raised to MEDIUM this pass on a third face reproduced twice in one day, the second time through the accused command in the drain itself: a green, fully correct commit exits 1 on `landed-but-checkout-incomplete` and leaves `specs/<slug>/` as untracked residue, costing a false alarm, a manual removal, and another full gate run on the cheapest path Bench has.
+1. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced actionable defect: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
+2. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder. The defect reproduced through the accused command: a green correct commit exited `landed-but-checkout-incomplete`, left `specs/<slug>/` as untracked residue, and required manual cleanup plus another full gate run.
+3. `/bench-write-spec` — FT214: `craft-spec` fences the build and makes coverage rows prove their claims. Two current learnings and the retro agree: ticket evidence must pass the build entry check before handoff, and a rule anchored on a generator-emitted literal must be walked over that generator's real output before rows are locked.

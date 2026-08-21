@@ -2,42 +2,25 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `a1cb0ed`, 2 dirty paths, 2 unpushed commits
-Spec: `specs/learnings-dated-line-visibility/spec.md` (Status: staged)
-Gate: green at `602a9d0` — stale, work tree `e1e379d`
+Branch: `main` — HEAD `3f37bf73`
+Spec: none (roadmap maintenance proposed)
+Gate: unavailable
 
 ## State
 
-FT243 is implemented, landed, reviewed, retired, and clean. Nothing is in
-flight; the integration worktree is released and the pool is empty.
+This uncommitted drain batch removes shipped FT243 and its retired detail file,
+clears the three journal entries and the `learnings-dated-line-visibility` retro,
+and refreshes the sequence. The journal and retro evidence merge into existing
+rows: FT238, FT214, FT233, FT224, FT113, and FT215.
 
-`capture/learnings.md` no longer reports a false zero. `learnings.Parse` reports
-a dated line that is not a heading, and content below the exported
-`JournalEntriesMarker` that belongs to no entry. `bench learnings`,
-`bench roadmap --context`, and `bench status` all flipped without a production
-edit of their own; production changed in two files only. The observed red was
-flipped through the built binary, not just in tests.
-
-The spec is retired. Its durable hostile-input edge — name the exact whitespace
-predicate and assert both sides of it, because `White_Space` and zero-width are
-different classes — is promoted into `projects/benchkit.md`'s checklist. That
-one-bullet profile edit was written inline rather than at the top tier the
-leverage override asks for; flagged for veto.
-
-FT243's `ROADMAP.md` row is deliberately left standing. `bench spec retire`'s
-own `next:` line says to remove it, and `/bench-final-check`'s post-merge tail
-says roadmap rows belong to `/bench-drain`. The phase text won; the
-contradiction is recorded in the retro.
-
-Uncommitted and waiting for the drain: `capture/retros/learnings-dated-line-visibility.md`
-and the refreshed `capture/agent-performance/claude-models.md`. The OpenAI
-scorecard is untouched, because no OpenAI model served on this landing.
-
-Ten commits are unpushed. Pushing is the reviewer's call.
+The batch needs reviewer approval before its one green capture commit. FT214's
+guidance change and FT215's scoped-gate design remain roadmap work; neither is
+implemented by this maintenance pass. The Claude scorecard already carries the
+landing evidence and remains persistent.
 
 ## Next command
 
-`/bench-drain`
+`$bench-write-spec`
 
 ## Shape
 
