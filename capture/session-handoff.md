@@ -2,36 +2,38 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `b2deece`, 2 dirty paths, 0 unpushed commits
+Branch: `main` — HEAD `a1cb0ed`, 2 dirty paths, 2 unpushed commits
 Spec: `specs/learnings-dated-line-visibility/spec.md` (Status: staged)
-Gate: green at `4cd77bc` — stale, work tree `7352eeb`
+Gate: green at `602a9d0` — stale, work tree `e1e379d`
 
 ## State
 
-`specs/learnings-dated-line-visibility/spec.md` is revised, re-sliced into two
-tickets, and awaiting reviewer sign-off. Nothing is implemented.
+Phase reached: review complete and accepted, landing next.
 
-The spec now carries both halves of FT243. Ticket 01 reports a dated line that
-misses heading shape; ticket 02 exports `<!-- entries below -->` from
-`internal/learnings` and reports content below it that belongs to no entry.
-Ticket 02 is blocked by ticket 01. `bench coverage --check` reads 34 rows valid
-and all four `bench preflight build learnings-dated-line-visibility` checks are
-green.
+The build runs in a retained integration worktree labelled `ft243-integration`,
+frozen review base `a1cb0ed5`, source tip `3c8fd1ea`. Address it as
+`bench worktree exec "ft243-integration" -- <command>`; never use the path
+`bench worktree path` prints, which begins with an unexpanded `~`. The worktree
+carries its own `./dist/bench`.
 
-The reviewer's three entry-round dispositions are closed and stay closed: the
-Line is mid (`opus` / medium) against the cached cheap-tier routing, the scope
-is widened past dated lines to undated content below the marker, and the ticket
-row-ID citation was repaired here rather than routed back.
+Four commits stand there, each gated green: ticket 01 (the dated-line rule),
+ticket 02 (the entries-marker export and the unaccounted-run rule), the staged
+spec, and repair ticket 03. The three-axis review returned three raw findings
+that collapsed to one repair target — `Parse`'s end-of-input flush was
+deletable with the whole suite green. Ticket 03 closed it with DL35 and DL36,
+and the coordinator re-ran both target mutations independently: each reds its
+own row and nothing else.
 
-Two dispositions are open and named in the spec. The review round observed that
-ticket 01 is a narrower capability that could ship on its own gate, with ticket
-02 deferred. The kit's own journal has been pruned past its marker, so ticket
-02's rule is inert in this repo until the marker is restored — restoring it also
-narrows `internal/conformance`'s stale-slash-reference scan, so the spec puts
-that pair in Out of scope rather than in the build.
+Declined and recorded rather than fixed: `Parse` is now 76 lines with four
+inline responsibilities, which `bench structure` does not flag; and no test
+enforces the "one marker literal in Go sources" claim, which is review's to
+grade.
 
-`specs/` is untracked, which is the veto surface. `capture/learnings.md` holds
-two open entries, both about this phase.
+The destination is the main checkout. Its stale untracked `specs/` copy is
+removed, because the source carries the amended spec and ticket 03.
+`capture/learnings.md` holds three open entries raised this session and is
+uncommitted — it must land before `bench worktree land`, which needs a clean
+destination.
 
 ## Next command
 

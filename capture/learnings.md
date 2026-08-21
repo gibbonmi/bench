@@ -34,3 +34,20 @@ scaffold's real output before locking the rows. Proposed rule change:
 `craft-spec` gains one line under the coverage map — a row whose fixture is
 produced by a generator in the tree is written against that generator's actual
 output, not against a hand-written idea of it.
+
+## 2026-08-21 — a tilde-prefixed worktree path made cp build a stray directory [open]
+
+`bench worktree path "<label>"` prints a portable path that begins with a
+literal `~`. The session used it as `WT=$(bench worktree path …)` and then
+`cp -r specs/<slug> "$WT/specs/"`, so the shell never expanded the tilde and
+`cp` created `./~/.bench/worktrees/…/specs/` inside the repository. The mistake
+was invisible until the next command failed for a missing spec, and it left an
+untracked `~/` directory one `rm -rf` away from looking like a home-directory
+wipe. What happened: a command whose output is documented as portable was
+consumed as if it were a shell-ready path. Right behavior: expand the tilde
+before use, or address the worktree only through
+`bench worktree exec "<label>" -- <command>`, which resolves the path itself.
+Proposed rule change: none for the agent yet — the reviewer's call is whether
+`bench worktree path` should emit an absolute path, or name the expansion in
+its own help, since a portable path that no shell accepts has one safe consumer
+and many unsafe ones.
