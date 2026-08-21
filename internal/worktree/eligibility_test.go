@@ -266,6 +266,22 @@ func newUnsafeTargetOwnedWorktree(t *testing.T, request string) (root, target st
 	return root, target
 }
 
+func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
+	root := newWorktreeRepo(t)
+	gitRun(t, root, "branch", "-M", "main")
+	mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".logs/\n"), 0o644)
+	gitRun(t, root, "add", ".gitignore")
+	gitRun(t, root, "commit", "-qm", "ignore runtime records")
+	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	creation := mustCreate(t, root, "runtime-eligibility", "runtime eligibility")
+	mustMkdirAll(t, filepath.Join(creation.Path, ".logs"), 0o755)
+	mustWrite(t, filepath.Join(creation.Path, ".logs", "gate.jsonl"), []byte("record\n"), 0o644)
+	plan, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{})
+	if err != nil || plan.Action != ActionDiscardRemove || plan.ReasonCode != "" {
+		t.Fatalf("runtime residue plan = (%#v, %v), want discard-remove without refusal", plan, err)
+	}
+}
+
 // TestAutomaticEligibilityOutcomeMatrix is a characterization oracle for PlanAutomatic:
 // it pins the thirteen reachable automatic `(Action, ReasonCode)` tuples. PlanAutomatic
 // always calls PlanExplicit with an empty CleanupOptions{} first and then applies its own
@@ -753,7 +769,7 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 	facts.ignoredErr = ignoredErr
 	facts.ignoredOverLimit = ignored.OverLimit
 	facts.ignoredCount = ignored.Count
-	facts.declaredIgnored = buildOutputErr == nil && ignoredWithinBuildOutputs(ignored, buildOutputs)
+	facts.declaredIgnored = buildOutputErr == nil && ignoredWithinLandingAllowance(ignored, buildOutputs)
 
 	defaultRef, defaultOID := "none", "none"
 	if def, ok := git.ResolvedDefault(root); ok {

@@ -89,15 +89,15 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	}
 	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(root)
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
-	assignment, err := landingAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
+	assignment, err := landingAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--base"], parsed.Flags["--source-tip"])
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
 	source, err := landingSource(root, assignment, parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
 	result, err := landReviewed(context.Background(), landing.ReviewedRequest{
@@ -113,17 +113,17 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source; first-run never attempts to publish again.
 	if err := advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
-		return landedIncomplete(stdout, result, "marker")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker")
 	}
 	if err := reconcileLanding(root, result.Commit); err != nil {
-		return landedIncomplete(stdout, result, "reconcile")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile")
 	}
 	var releaseDiagnostic bytes.Buffer
 	if release := releaseLandingAssignment(root, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
 		if releaseDiagnostic.Len() > 0 {
 			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
 		}
-		return landedIncomplete(stdout, result, "release")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release")
 	}
 	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=released}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree)
 	return 0
@@ -151,36 +151,40 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	}
 	published, sourceBase, destinationBase, tree, err := resumePublished(root, destination, parsed.Flags["--resume"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
+	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
 	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], spec.LiveSpecSlug(parsed.Flags["--spec"]))
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
+	assignmentID := assignment.ID
 	if !active {
-		if _, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"]); err != nil {
-			return landRefusal(stdout, err.Error())
+		receipt, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
+		if err != nil {
+			return landRefusalError(stdout, err)
 		}
+		assignmentID = receipt.Tracked
 	}
 	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
 		return landRefusal(stdout, err.Error())
 	}
 	if destination == published {
 		if err := advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
-			return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "marker")
+			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker")
 		}
 	} else if marker == "" || !git.OK("-C", root, "merge-base", "--is-ancestor", published, marker) {
 		return landRefusal(stdout, "project-green marker is absent, behind, or divergent from the published landing")
 	}
 	if err := reconcileLanding(root, destination); err != nil {
-		return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "reconcile")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile")
 	}
 	if !active {
 		fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=already-complete}\n", sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree)
 		return 0
 	}
 	if releaseLandingAssignment(root, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
-		return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "release")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release")
 	}
 	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=released}\n", sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree)
 	return 0
@@ -192,8 +196,11 @@ func terminalResumeReceipt(root, path, request, sourceTip string) (intent.Cleanu
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}
 	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, target, intent.RequestDigest(request))
-	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) || receipt.Branch == "" || !strings.HasSuffix(receipt.Branch, "/"+receipt.Tracked) || receipt.BranchOID != sourceTip {
+	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) || receipt.Branch == "" || !strings.HasSuffix(receipt.Branch, "/"+receipt.Tracked) {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
+	}
+	if receipt.BranchOID != sourceTip {
+		return intent.CleanupReceipt{}, identityRefusal("--source-tip", sourceTip, receipt.BranchOID, "terminal receipt source tip mismatch")
 	}
 	return receipt, nil
 }
@@ -278,10 +285,22 @@ func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assig
 		return intent.Assignment{}, false, err
 	}
 	if !found {
+		recovery, recoverable, err := unmatchedRequestRecovery(root, assignmentRecoveryContext{
+			target: path,
+			detail: assignmentMismatchDetail,
+			base:   base,
+			tip:    tip,
+		})
+		if err != nil {
+			return intent.Assignment{}, false, err
+		}
+		if recoverable {
+			return intent.Assignment{}, false, refusalError{recovery}
+		}
 		return intent.Assignment{}, false, nil
 	}
 	if (a.State != intent.StateActive && a.State != intent.StateCleanupPending) || a.Worktree != path {
-		return intent.Assignment{}, false, errors.New("request, assignment, or path mismatch")
+		return intent.Assignment{}, false, errors.New(assignmentMismatchDetail)
 	}
 	evidence, markerErr := validateOwnerMarker(root, path)
 	if markerErr != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree || evidence.registration.BranchRef != a.Branch || !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
@@ -295,8 +314,11 @@ func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assig
 
 func resumePublished(root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {
 	published, err = git.Output("-C", root, "rev-parse", "--verify", value+"^{commit}")
-	if err != nil || published != value {
+	if err != nil {
 		return "", "", "", "", errors.New("published commit is not an exact commit identity")
+	}
+	if published != value {
+		return "", "", "", "", identityRefusal("--resume", value, published, "published commit is not an exact commit identity")
 	}
 	if !git.OK("-C", root, "merge-base", "--is-ancestor", published, destination) {
 		return "", "", "", "", errors.New("published commit is not reachable from the destination")
@@ -306,10 +328,16 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 		return "", "", "", "", errors.New("published commit parents are unreadable")
 	}
 	parts := strings.Fields(parents)
-	if len(parts) != 3 || parts[2] != source {
+	if len(parts) != 3 {
 		return "", "", "", "", errors.New("published commit does not authenticate the reviewed source parent")
 	}
+	if parts[2] != source {
+		return "", "", "", "", identityRefusal("--source-tip", source, parts[2], "published commit does not authenticate the reviewed source parent")
+	}
 	destinationBase = parts[1]
+	if err := abbreviatedRevisionRefusal(root, "--base", base); err != nil {
+		return "", "", "", "", err
+	}
 	sourceRange, kind, _ := diff.ResolveSourceRange(root, base, source)
 	if kind != "" {
 		return "", "", "", "", errors.New("review base does not authenticate the published source")
@@ -329,11 +357,6 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 	return published, sourceBase, destinationBase, tree, nil
 }
 
-func resumeIncomplete(stdout io.Writer, base, source, destinationBase, published, tree, step string) int {
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=incomplete:%s}\n", base, source, destinationBase, published, tree, step)
-	return 1
-}
-
 type landingSourceFact struct {
 	base, tip, specPath string
 	fingerprint         string
@@ -350,12 +373,21 @@ func landingDestination(root string) (string, string, string, string, error) {
 	if err != nil || current != branch {
 		return "", "", "", "", errors.New("landing checkout is not attached to the default branch")
 	}
-	if dirty, err := git.Output("-C", root, "status", "--porcelain=v1", "--untracked-files=all"); err != nil || dirty != "" {
+	if raw, err := git.Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all"); err != nil {
 		return "", "", "", "", errors.New("landing destination is not clean")
+	} else if entries, err := git.ParsePorcelainZStrict(raw); err != nil || len(entries) > 0 {
+		paths := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			paths = append(paths, entry.Path)
+		}
+		return "", "", "", "", refusalError{refusal{detail: "landing destination is not clean", paths: paths}}
 	}
 	ignored, _, ignoredErr := inventoryIgnored(root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
 	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinLandingAllowance(ignored, declared)) {
+		if ignoredErr == nil && declarationErr == nil {
+			return "", "", "", "", refusalError{refusal{detail: "landing destination has undeclared ignored residue", paths: ignored.Paths}}
+		}
 		return "", "", "", "", errors.New("landing destination has undeclared ignored residue")
 	}
 	tip, err := git.Output("-C", root, "rev-parse", "HEAD^{commit}")
@@ -384,10 +416,18 @@ func landingMarker(root, branch, destination string) (string, error) {
 	return marker, nil
 }
 
-func landingAssignment(root, path, request, requestedTip string) (intent.Assignment, error) {
-	a, found, err := intent.FindAssignmentForRequest(root, request)
-	if err != nil || !found || a.State != intent.StateActive || a.Worktree != path {
-		return intent.Assignment{}, errors.New("request, assignment, or path mismatch")
+func landingAssignment(root, path, request, base, requestedTip string) (intent.Assignment, error) {
+	a, err := assignmentForRequest(root, request, assignmentRecoveryContext{
+		target: path,
+		detail: assignmentMismatchDetail,
+		base:   base,
+		tip:    requestedTip,
+	})
+	if err != nil || a.State != intent.StateActive || a.Worktree != path {
+		if err != nil {
+			return intent.Assignment{}, err
+		}
+		return intent.Assignment{}, errors.New(assignmentMismatchDetail)
 	}
 	evidence, err := validateOwnerMarker(root, path)
 	if err != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree || evidence.registration.BranchRef != a.Branch || !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
@@ -400,24 +440,36 @@ func landingAssignment(root, path, request, requestedTip string) (intent.Assignm
 }
 
 func landingSource(root string, a intent.Assignment, base, requestedTip, slug string) (landingSourceFact, error) {
+	if err := abbreviatedRevisionRefusal(a.Worktree, "--base", base); err != nil {
+		return landingSourceFact{}, err
+	}
 	branch, err := git.Output("-C", a.Worktree, "symbolic-ref", "--quiet", "HEAD")
 	if err != nil || branch != a.Branch {
 		return landingSourceFact{}, errors.New("assignment branch is not checked out")
 	}
 	head, err := git.Output("-C", a.Worktree, "rev-parse", "HEAD^{commit}")
-	if err != nil || head != requestedTip {
+	if err != nil {
 		return landingSourceFact{}, errors.New("worktree source tip mismatch")
 	}
+	if head != requestedTip {
+		return landingSourceFact{}, identityRefusal("--source-tip", requestedTip, head, "worktree source tip mismatch")
+	}
 	branchTip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
-	if err != nil || branchTip != requestedTip {
+	if err != nil {
 		return landingSourceFact{}, errors.New("assignment branch source tip mismatch")
+	}
+	if branchTip != requestedTip {
+		return landingSourceFact{}, identityRefusal("--source-tip", requestedTip, branchTip, "assignment branch source tip mismatch")
 	}
 	if dirty, err := git.Output("-C", a.Worktree, "status", "--porcelain=v1", "--untracked-files=all"); err != nil || dirty != "" {
 		return landingSourceFact{}, errors.New("reviewed source is not clean")
 	}
 	rangeFact, err := authorizeLandingSource(a.Worktree, slug, base)
-	if err != nil || rangeFact.Tip != requestedTip {
+	if err != nil {
 		return landingSourceFact{}, errors.New("reviewed source range or ownership fence is invalid")
+	}
+	if rangeFact.Tip != requestedTip {
+		return landingSourceFact{}, identityRefusal("--source-tip", requestedTip, rangeFact.Tip, "reviewed source range or ownership fence is invalid")
 	}
 	bytes, resolved, _, ok, err := spec.Resolve(a.Worktree, slug)
 	if err != nil || !ok {
@@ -441,6 +493,31 @@ func landingSource(root string, a intent.Assignment, base, requestedTip, slug st
 	return landingSourceFact{base: rangeFact.Base, tip: rangeFact.Tip, fingerprint: fingerprint, specPath: filepath.ToSlash(rel), specBytes: bytes, specMode: info.Mode().Perm()}, nil
 }
 
+func identityRefusal(flag, observed, wanted, detail string) error {
+	if abbreviatedIdentity(observed, wanted) {
+		return refusalError{refusal{detail: flag + " is an abbreviated commit identity", observed: observed, wanted: wanted}}
+	}
+	return refusalError{refusal{detail: detail, observed: observed, wanted: wanted}}
+}
+
+func abbreviatedRevisionRefusal(repository, flag, value string) error {
+	full, err := git.Output("-C", repository, "rev-parse", "--verify", value+"^{commit}")
+	if err == nil && abbreviatedIdentity(value, full) {
+		return identityRefusal(flag, value, full, "commit identity mismatch")
+	}
+	return nil
+}
+
+func abbreviatedIdentity(value, full string) bool {
+	if len(value) < 4 || len(value) > 39 || !fullCommitIdentity(full) {
+		return false
+	}
+	if !hexIdentity(value) {
+		return false
+	}
+	return strings.HasPrefix(strings.ToLower(full), strings.ToLower(value))
+}
+
 func reconcileLandingDestination(root, commit string) error {
 	if err := exec.Command("git", "-C", root, "reset", "--hard", commit).Run(); err != nil {
 		return err
@@ -448,12 +525,37 @@ func reconcileLandingDestination(root, commit string) error {
 	return nil
 }
 
-func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, step string) int {
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=incomplete:%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, step)
-	return 1
+func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, specArg, path, assignment, step string) int {
+	next := landingResumeNext(result, specArg, path, assignment)
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=incomplete:%s,next=%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, step, sanitize.Controls(next))
+	return 3
+}
+
+func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment string) string {
+	values := []string{result.Commit, result.SourceBase, result.SourceTip, specArg}
+	for _, value := range values {
+		if !lineSafe(value) {
+			return "bench worktree exec " + assignment + " -- bench worktree land --resume <full-published-commit> --request <request> --base <full-review-base> --source-tip <full-source-tip> --spec <spec> ."
+		}
+	}
+	command := "bench worktree land --resume " + sanitize.ShellQuote(result.Commit) + " --request <request> --base " + sanitize.ShellQuote(result.SourceBase) + " --source-tip " + sanitize.ShellQuote(result.SourceTip) + " --spec " + sanitize.ShellQuote(specArg)
+	if lineSafe(path) {
+		return command + " " + sanitize.ShellQuote(path)
+	}
+	return "bench worktree exec " + assignment + " -- " + command + " ."
 }
 
 func landRefusal(stdout io.Writer, detail string) int {
 	fmt.Fprintln(stdout, "refused{detail="+sanitize.Controls(detail)+"}")
+	return 1
+}
+
+func landRefusalError(stdout io.Writer, err error) int {
+	var typed refusalError
+	if !errors.As(err, &typed) {
+		return landRefusal(stdout, err.Error())
+	}
+	fmt.Fprintln(stdout, "refused{"+typed.fields()+"}")
+	fmt.Fprint(stdout, typed.table())
 	return 1
 }

@@ -1,6 +1,6 @@
 # landing-refusal-diagnostics
 
-Status: staged
+Status: implemented
 
 Decision source: named reviewed artifact — `roadmap/FT233.md` (FT233, graduated through reviewed drains; nine dated occurrences 2026-08-19..20; Group E's occurrence evidence sits in `roadmap/FT169.md`, 2026-08-18, while the diagnostic itself is FT233's fifth)
 

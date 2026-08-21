@@ -426,6 +426,82 @@ func orphanLine(orphan OrphanCandidate) string {
 // invalid UTF-8 — pass, so this guards the summary's line structure rather than how a
 // terminal renders one line.
 func lineSafe(value string) bool { return !strings.ContainsFunc(value, unicode.IsControl) }
+
+type assignmentRecoveryContext struct {
+	target string
+	detail string
+	base   string
+	tip    string
+}
+
+const assignmentMismatchDetail = "request, assignment, or path mismatch"
+const retainedAssignmentMismatchDetail = assignmentMismatchDetail + "; checkout retained"
+
+// assignmentForRequest keeps opaque-token resolution in intent. Only an unmatched
+// token permits path-derived recovery discovery.
+func assignmentForRequest(root, request string, recoveryContext assignmentRecoveryContext) (intent.Assignment, error) {
+	assignment, found, err := intent.FindAssignmentForRequest(root, request)
+	if err != nil {
+		return intent.Assignment{}, err
+	}
+	if found {
+		return assignment, nil
+	}
+	recovery, _, err := unmatchedRequestRecovery(root, recoveryContext)
+	if err != nil {
+		return intent.Assignment{}, err
+	}
+	return intent.Assignment{}, refusalError{recovery}
+}
+
+func unmatchedRequestRecovery(root string, recoveryContext assignmentRecoveryContext) (refusal, bool, error) {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return refusal{}, false, err
+	}
+	recovery := refusal{detail: recoveryContext.detail}
+	candidate, count := intent.Assignment{}, 0
+	for _, assignment := range assignments {
+		if assignment.State == intent.StateActive && assignment.Worktree == recoveryContext.target {
+			candidate, count = assignment, count+1
+		}
+	}
+	if count == 1 {
+		recovery.observed = "assignment:" + candidate.ID
+		recovery.next = reauthorizeRecoveryNext(candidate.ID, recoveryContext.target, recoveryContext.base, recoveryContext.tip)
+		return recovery, true, nil
+	}
+	return recovery, false, nil
+}
+
+func reauthorizeRecoveryNext(assignment, target, base, tip string) string {
+	baseArg := reauthorizeIdentityArg(base, "<full-base-commit>")
+	tipArg := reauthorizeIdentityArg(tip, "<full-source-tip-commit>")
+	command := "bench worktree reauthorize --assignment " + assignment + " --request <new-request> --base " + baseArg + " --source-tip " + tipArg
+	if lineSafe(target) {
+		return command + " " + sanitize.ShellQuote(target)
+	}
+	return "bench worktree exec " + assignment + " -- " + command + " ."
+}
+
+func reauthorizeIdentityArg(value, placeholder string) string {
+	if !fullCommitIdentity(value) {
+		return placeholder
+	}
+	return sanitize.ShellQuote(value)
+}
+
+func fullCommitIdentity(value string) bool { return len(value) == 40 && hexIdentity(value) }
+
+func hexIdentity(value string) bool {
+	for _, b := range []byte(value) {
+		if !((b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')) {
+			return false
+		}
+	}
+	return true
+}
+
 func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	var request, label string
 	args, startRef := refreshop.Consume(root, args, stdout)

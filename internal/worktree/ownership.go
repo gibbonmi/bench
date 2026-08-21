@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"io"
 	"os"
@@ -350,12 +351,15 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		return intent.CleanupReceipt{}, statErr
 	}
 	if assignment == nil {
-		foundAssignment, ok, findErr := intent.FindAssignmentByRequest(root, request)
+		foundAssignment, findErr := assignmentForRequest(root, requestArg, assignmentRecoveryContext{
+			target: target,
+			detail: retainedAssignmentMismatchDetail,
+		})
 		if findErr != nil {
 			return intent.CleanupReceipt{}, findErr
 		}
-		if !ok || foundAssignment.Worktree != target {
-			return intent.CleanupReceipt{}, errors.New("request, assignment, or path mismatch; checkout retained")
+		if foundAssignment.Worktree != target {
+			return intent.CleanupReceipt{}, errors.New(retainedAssignmentMismatchDetail)
 		}
 		assignment = &foundAssignment
 	}
@@ -372,7 +376,7 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 			return intent.CleanupReceipt{}, leaseErr
 		}
 		if _, statErr := os.Lstat(lease); statErr == nil && ProbeLease(lease) == LeaseUnknown {
-			return intent.CleanupReceipt{}, retainedReleaseError(retainedPlan(target, ReasonUncertain, unknownLeaseReason), requestArg, targetArg)
+			return intent.CleanupReceipt{}, retainedReleaseError(retainedPlan(target, ReasonUncertain, unknownLeaseReason), targetArg, assignment.ID)
 		}
 		if err := validateCreationBundle(root, *assignment); err != nil {
 			return intent.CleanupReceipt{}, fmt.Errorf("%w; checkout retained", err)
@@ -402,7 +406,7 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		return intent.CleanupReceipt{}, err
 	}
 	if plan.Action == ActionRetain {
-		return intent.CleanupReceipt{}, retainedReleaseError(plan, requestArg, targetArg)
+		return intent.CleanupReceipt{}, retainedReleaseError(plan, targetArg, assignment.ID)
 	}
 	receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request)
 	if readErr != nil {
@@ -415,17 +419,23 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 }
 
 // retainedReleaseError turns a retain plan — the safe planner declining to remove the
-// tree — into the verdict a session can act on: what blocked, and the exact command to
+// tree — into the verdict a session can act on: what blocked, and a route to
 // re-run once it is cleared. It never points at `bench worktree clean --discard-ignored`,
 // whose request-less form orphans the assignment (FT93b); the tree stays for the caller
 // to resolve, then release again.
-func retainedReleaseError(plan CleanupPlan, request, target string) error {
+func retainedReleaseError(plan CleanupPlan, target, assignment string) error {
 	reason := plan.Reason
 	if reason == "" {
 		reason = string(plan.ReasonCode)
 	}
-	return fmt.Errorf("worktree retained (%s): %s; resolve the retained state in %s, then re-run: bench worktree release --request %s %s",
-		plan.ReasonCode, reason, target, request, target)
+	return refusalError{refusal{detail: fmt.Sprintf("worktree retained (%s): %s", plan.ReasonCode, reason), next: releaseNext(target, assignment), paths: plan.Ignored.Paths}}
+}
+
+func releaseNext(target, assignment string) string {
+	if lineSafe(target) {
+		return "bench worktree release --request <request> " + sanitize.ShellQuote(target)
+	}
+	return "bench worktree exec " + assignment + " -- bench worktree release --request <request> ."
 }
 
 // residualAssignment reports whether a record preserves no work and is therefore safe

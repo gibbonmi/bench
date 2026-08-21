@@ -553,15 +553,30 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 		t.Fatalf("loser gate tally = %q, %v", got, readErr)
 	}
 
+	if err := os.WriteFile(filepath.Join(loser.path, "retained-output"), []byte("retained\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	rerun := systemLand(t, root, home, tally, trees, ready, release, loser, base)
-	if rerun.code != 0 || !strings.Contains(rerun.stderr, "command-registry:worktree") {
+	if rerun.code != 3 || !strings.Contains(rerun.stderr, "command-registry:worktree") {
 		t.Fatalf("rerun land = (%d, %q, %q)", rerun.code, rerun.stdout, rerun.stderr)
 	}
 	published := systemGitOutput(t, root, "rev-parse", "main")
 	publishedTree := systemGitOutput(t, root, "rev-parse", published+"^{tree}")
-	rerunEnvelope := "landed{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=released}\n"
+	next := "bench worktree land --resume '" + published + "' --request <request> --base '" + base + "' --source-tip '" + loser.tip + "' --spec 'x' '" + loser.path + "'"
+	rerunEnvelope := "landed{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=incomplete:release,next=" + next + "}\n"
 	if rerun.stdout != rerunEnvelope {
 		t.Fatalf("rerun terminal envelope = %q, want %q", rerun.stdout, rerunEnvelope)
+	}
+	if strings.Contains(rerun.stdout, loser.request) {
+		t.Fatalf("rerun terminal envelope echoed caller token: %q", rerun.stdout)
+	}
+	if err := os.Remove(filepath.Join(loser.path, "retained-output")); err != nil {
+		t.Fatal(err)
+	}
+	resumed := systemSelected(t, root, systemLandEnv(root, home, tally, trees, ready, release), "worktree", "land", "--resume", published, "--request", loser.request, "--base", base, "--source-tip", loser.tip, "--spec", "x", loser.path)
+	releasedEnvelope := "landed{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=released}\n"
+	if resumed.code != 0 || resumed.stdout != releasedEnvelope || !strings.Contains(resumed.stderr, "command-registry:worktree") {
+		t.Fatalf("resume land = (%d, %q, %q), want %q", resumed.code, resumed.stdout, resumed.stderr, releasedEnvelope)
 	}
 	if parents := strings.Fields(systemGitOutput(t, root, "rev-list", "--parents", "-n", "1", published)); len(parents) != 3 || parents[1] != winnerCommit || parents[2] != loser.tip {
 		t.Fatalf("recomposed parents = %q, want winner %s and source %s", parents, winnerCommit, loser.tip)
@@ -637,6 +652,9 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "specs", "x", "tickets", "one.md"), []byte("Ticket covers LX1.\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("retained-output\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	systemGit(t, root, "add", ".")
