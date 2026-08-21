@@ -1080,6 +1080,19 @@ func TestDeclaresBuildInputsReadsPresenceRatherThanContent(t *testing.T) {
 				t.Fatal(err)
 			}
 		}},
+		// An unusable parent is the case that separates "not-exist" from "errored at all".
+		// A predicate that asked only whether Lstat succeeded would read this repository as
+		// declaring nothing and skip the proof, which is the one direction that must never
+		// happen: an unreadable tree is untrusted, not exempt.
+		{name: "parent-is-not-a-directory", declare: true, place: func(t *testing.T, path string) {
+			parent := filepath.Dir(path)
+			if err := os.Remove(parent); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(parent, []byte("not a directory\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
