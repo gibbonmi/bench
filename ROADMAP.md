@@ -25,7 +25,7 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT242 (MEDIUM, decision required) — a spec amendment reaches the destination through one sanctioned step.**
+**FT242 (MEDIUM) — `bench worktree land` refuses a stale dev executable.**
 
 **FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, two `bench commit` gaps, the heredoc guard gap, a run-binary glossary term, and the phase-close capture-batch rule.**
 
@@ -286,6 +286,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT242: a spec amendment reaches the destination through one sanctioned step. Reviewer-priced to the front; the spec's first question is the shape — land adopts the source's spec bytes, or a `bench spec sync` verb — and the losing contract sentence (skill or land) changes with it.
+1. `/bench-implement-spec` — FT242: `bench worktree land` refuses a stale dev executable. Re-scoped and specced as `specs/land-executable-freshness/spec.md`; the original ask closed as FT225, and what remains is the land command proving its own executable before it enforces any landing contract.
 2. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at seven occurrences: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
 3. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. Now four occurrences and a fourth face: `bench spec retire`'s next-step omits the `roadmap/FT<n>.md` deletion, which the FT230 retirement paid a full gate run to discover.

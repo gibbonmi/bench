@@ -552,7 +552,7 @@ func worktreeCommand(c Command, args []string) int {
 			fmt.Fprintln(c.Stderr, toon.NotInRepo())
 			return 1
 		}
-		return worktree.LandCommand(root, args[1:], c.Stdout, c.Stderr)
+		return worktree.LandCommand(root, c.Executable, args[1:], c.Stdout, c.Stderr)
 	}
 	// `recovery` left the grammar with the preservation refs it acted on. This family's
 	// fallback is a free-form objective, so without naming the removed verb here it would
