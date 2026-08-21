@@ -8,36 +8,36 @@ Gate: green at `602a9d0` — stale, work tree `e1e379d`
 
 ## State
 
-Phase reached: review complete and accepted, landing next.
+FT243 is implemented, landed, reviewed, retired, and clean. Nothing is in
+flight; the integration worktree is released and the pool is empty.
 
-The build runs in a retained integration worktree labelled `ft243-integration`,
-frozen review base `a1cb0ed5`, source tip `3c8fd1ea`. Address it as
-`bench worktree exec "ft243-integration" -- <command>`; never use the path
-`bench worktree path` prints, which begins with an unexpanded `~`. The worktree
-carries its own `./dist/bench`.
+`capture/learnings.md` no longer reports a false zero. `learnings.Parse` reports
+a dated line that is not a heading, and content below the exported
+`JournalEntriesMarker` that belongs to no entry. `bench learnings`,
+`bench roadmap --context`, and `bench status` all flipped without a production
+edit of their own; production changed in two files only. The observed red was
+flipped through the built binary, not just in tests.
 
-Four commits stand there, each gated green: ticket 01 (the dated-line rule),
-ticket 02 (the entries-marker export and the unaccounted-run rule), the staged
-spec, and repair ticket 03. The three-axis review returned three raw findings
-that collapsed to one repair target — `Parse`'s end-of-input flush was
-deletable with the whole suite green. Ticket 03 closed it with DL35 and DL36,
-and the coordinator re-ran both target mutations independently: each reds its
-own row and nothing else.
+The spec is retired. Its durable hostile-input edge — name the exact whitespace
+predicate and assert both sides of it, because `White_Space` and zero-width are
+different classes — is promoted into `projects/benchkit.md`'s checklist. That
+one-bullet profile edit was written inline rather than at the top tier the
+leverage override asks for; flagged for veto.
 
-Declined and recorded rather than fixed: `Parse` is now 76 lines with four
-inline responsibilities, which `bench structure` does not flag; and no test
-enforces the "one marker literal in Go sources" claim, which is review's to
-grade.
+FT243's `ROADMAP.md` row is deliberately left standing. `bench spec retire`'s
+own `next:` line says to remove it, and `/bench-final-check`'s post-merge tail
+says roadmap rows belong to `/bench-drain`. The phase text won; the
+contradiction is recorded in the retro.
 
-The destination is the main checkout. Its stale untracked `specs/` copy is
-removed, because the source carries the amended spec and ticket 03.
-`capture/learnings.md` holds three open entries raised this session and is
-uncommitted — it must land before `bench worktree land`, which needs a clean
-destination.
+Uncommitted and waiting for the drain: `capture/retros/learnings-dated-line-visibility.md`
+and the refreshed `capture/agent-performance/claude-models.md`. The OpenAI
+scorecard is untouched, because no OpenAI model served on this landing.
+
+Ten commits are unpushed. Pushing is the reviewer's call.
 
 ## Next command
 
-`/bench-implement-spec specs/learnings-dated-line-visibility/spec.md --full`
+`/bench-drain`
 
 ## Shape
 
