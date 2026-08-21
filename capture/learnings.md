@@ -15,3 +15,22 @@ behavior: `/bench-write-spec` runs `bench preflight build <slug>` before it
 exits, so a red lands in the phase that owns the ticket file. Proposed rule
 change: `/bench-write-spec`'s exit adds that command as a required check, the
 same way the build phase requires it at entry.
+
+## 2026-08-21 — a spec anchored a rule on a literal without tracing the scaffold that emits it [open]
+
+The FT243 spec's second rule opens on `capture/learnings.md`'s
+`<!-- entries below -->` marker. The spec pinned the anchor as "the marker
+appears above the first line starting `## `". Review round 1 caught that
+`internal/adopt`'s `scaffoldLearnings` prints the marker *below* its worked
+example `## <date> - <short title>  [open]`, so under the written predicate the
+rule would never open on a freshly scaffolded journal — and that journal was the
+rule's only red. Two coverage rows, DL27 and DL30, were mutually unsatisfiable.
+What happened: the author read the scaffold to find the marker's literal and
+read the parser to find `isTemplatePlaceholder`, but never traced the anchor
+against the scaffold's actual byte order, so a contradiction between two
+already-read files survived into the map. Right behavior: when a rule anchors on
+a literal that a scaffold or template also emits, walk the rule over that
+scaffold's real output before locking the rows. Proposed rule change:
+`craft-spec` gains one line under the coverage map — a row whose fixture is
+produced by a generator in the tree is written against that generator's actual
+output, not against a hand-written idea of it.

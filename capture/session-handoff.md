@@ -8,39 +8,34 @@ Gate: green at `4cd77bc` — stale, work tree `7352eeb`
 
 ## State
 
-`/bench-implement-spec specs/learnings-dated-line-visibility/spec.md --full`
-stopped at phase entry and wrote no code. Two things block the build.
+`specs/learnings-dated-line-visibility/spec.md` is revised, re-sliced into two
+tickets, and awaiting reviewer sign-off. Nothing is implemented.
 
-The reviewer widened the spec's scope. The spec narrowed FT243's clause "a
-capture entry the parser cannot see" to dated lines only and raised that
-narrowing for disposition; the reviewer rejected the narrowing and asked for
-undated content to be reported too. That reaches past the spec's ownership
-fence: the `<!-- entries below -->` boundary must become a parser-owned export
-of `internal/learnings` consumed by `internal/adopt`, and the fresh-repo quiet
-posture (a scaffold whose prose preamble is exactly that shape) needs its own
-stories, coverage rows, and regressions. The spec's own "Out of scope" section
-already priced this at 3 edits and 2 gate runs. It needs new stories, new rows,
-and a re-sliced ticket.
+The spec now carries both halves of FT243. Ticket 01 reports a dated line that
+misses heading shape; ticket 02 exports `<!-- entries below -->` from
+`internal/learnings` and reports content below it that belongs to no entry.
+Ticket 02 is blocked by ticket 01. `bench coverage --check` reads 34 rows valid
+and all four `bench preflight build learnings-dated-line-visibility` checks are
+green.
 
-The reviewer accepted the spec's other two dispositions, and both stand: the
-Line stays mid (`opus` / medium) against the cached cheap-tier routing for
-parser logic at a known seam, and the build runs a write delegate at that tier.
+The reviewer's three entry-round dispositions are closed and stay closed: the
+Line is mid (`opus` / medium) against the cached cheap-tier routing, the scope
+is widened past dated lines to undated content below the marker, and the ticket
+row-ID citation was repaired here rather than routed back.
 
-`bench preflight build learnings-dated-line-visibility` is also red:
-`rows-owned,red,"declared row(s) cited by no ticket file: DL1 … DL21"`. The one
-ticket's acceptance lines carry no row IDs. The exemplar shape is
-`specs/land-executable-freshness/tickets/01-refuse-stale-landing-executable.md`,
-which prefixes each line with its row ID. The reviewer approved repairing that
-in place, but the scope widening rewrites the ticket anyway, so leave it to the
-spec phase.
+Two dispositions are open and named in the spec. The review round observed that
+ticket 01 is a narrower capability that could ship on its own gate, with ticket
+02 deferred. The kit's own journal has been pruned past its marker, so ticket
+02's rule is inert in this repo until the marker is restored — restoring it also
+narrows `internal/conformance`'s stale-slash-reference scan, so the spec puts
+that pair in Out of scope rather than in the build.
 
-`capture/learnings.md` holds one new open entry on that preflight escape: the
-write-spec phase exits without running the build phase's own entry check, so the
-red lands in the phase that cannot fix it.
+`specs/` is untracked, which is the veto surface. `capture/learnings.md` holds
+two open entries, both about this phase.
 
 ## Next command
 
-`/bench-write-spec`
+`/bench-implement-spec specs/learnings-dated-line-visibility/spec.md --full`
 
 ## Shape
 
