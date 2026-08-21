@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"testing"
 	"time"
+	"unicode"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
@@ -1088,6 +1089,104 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			if code := LandCommand(root, "", args, &stdout, &stderr); code != 1 || calls != 0 || !strings.HasPrefix(stdout.String(), "refused{detail=") || stderr.Len() != 0 {
 				t.Fatalf("pre-gate refusal = (%d, calls=%d, stdout=%q, stderr=%q)", code, calls, stdout.String(), stderr.String())
+			}
+		})
+	}
+}
+
+func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	creation := mustCreate(t, root, "refusal-destination", "refusal")
+	stageLandSpec(t, root, creation.Path)
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
+	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "dirty") || stderr.Len() != 0 {
+		t.Fatalf("destination refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	creation := mustCreate(t, root, "refusal-ignored", "refusal")
+	stageLandSpec(t, root, creation.Path)
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
+	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored/\n"), 0o644)
+	mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
+	mustWrite(t, filepath.Join(root, "ignored", "residue"), []byte("residue\n"), 0o600)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs("refusal-ignored", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "ignored/residue") || stderr.Len() != 0 {
+		t.Fatalf("ignored refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	creation := mustCreate(t, root, "refusal-controls", "refusal")
+	stageLandSpec(t, root, creation.Path)
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
+	path := "bad\n\x1b,comma"
+	mustWrite(t, filepath.Join(root, path), []byte("residue\n"), 0o600)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs("refusal-controls", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+	unsafe := strings.ContainsFunc(stdout.String(), func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
+	if code != 1 || unsafe || !strings.Contains(stdout.String(), "refused{") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || strings.Count(stdout.String(), "\n") != 4 || stderr.Len() != 0 {
+		t.Fatalf("control refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "release-refusal-paths")
+	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residue-*\n"), 0o644)
+	for i := 0; i < 1003; i++ {
+		name := fmt.Sprintf("residue-%04d", i)
+		if i == 0 {
+			name += " space[*]"
+		}
+		mustWrite(t, filepath.Join(creation.Path, name), []byte("residue\n"), 0o600)
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := ReleaseCommand(root, []string{"--request", "landed-release-refusal-paths", creation.Path}, &stdout, &stderr)
+	out := stderr.String()
+	wantNext := "next=bench worktree release --request 'landed-release-refusal-paths' '" + creation.Path + "'"
+	if code != 1 || stdout.Len() != 0 || !strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):") ||
+		!strings.Contains(out, "paths_total=1003\n") || !strings.Contains(out, "refusal_paths[1000]{path}:") ||
+		!strings.Contains(out, "residue-0000 space[*]") || strings.Contains(out, "residue-1000") || !strings.Contains(out, wantNext) {
+		t.Fatalf("release refusal: code=%d stdout=%q prefix=%t total=%t table=%t hostile=%t bounded=%t next=%t", code, stdout.String(),
+			strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):"), strings.Contains(out, "paths_total=1003\n"),
+			strings.Contains(out, "refusal_paths[1000]{path}:"), strings.Contains(out, "residue-0000 space[*]"), !strings.Contains(out, "residue-1000"), strings.Contains(out, wantNext))
+	}
+}
+
+func TestReleaseCommandRefusalPointsThroughAssignmentForControlBearingPath(t *testing.T) {
+	for _, tc := range []struct {
+		name, request, requestArg string
+	}{
+		{name: "line-safe request", request: "release request[*]", requestArg: "'release request[*]'"},
+		{name: "control-bearing request", request: "release\n\x1brequest", requestArg: "<request>"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			t.Setenv("BENCH_HOME", filepath.Join(root, "home\n\x1bunsafe"))
+			creation := mustCreate(t, root, tc.request, "unsafe release pointer")
+			wantNext := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree release --request " + tc.requestArg + " ."
+
+			var stdout, stderr bytes.Buffer
+			code := ReleaseCommand(root, []string{"--request", tc.request, creation.Path}, &stdout, &stderr)
+			out := stderr.String()
+			unsafe := strings.ContainsFunc(out, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
+			if code != 1 || stdout.Len() != 0 || unsafe || strings.Count(out, "\n") != 1 || !strings.Contains(out, "; next="+wantNext+"\n") {
+				t.Fatalf("release pointer: code=%d stdout=%q safe=%t one-line=%t next=%t stderr=%q", code, stdout.String(), !unsafe,
+					strings.Count(out, "\n") == 1, strings.Contains(out, "; next="+wantNext+"\n"), out)
 			}
 		})
 	}

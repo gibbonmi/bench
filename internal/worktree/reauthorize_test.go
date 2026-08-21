@@ -77,6 +77,23 @@ func TestReauthorizeCommandEscapesControlBearingBase(t *testing.T) {
 	}
 }
 
+func TestReauthorizeCommandNamesRecordedStartWhenNotAncestor(t *testing.T) {
+	root, creation, base, tip := reauthorizeFixture(t)
+	commitInWorktree(t, root, "later.txt", "later\n", "later")
+	a := creation.Assignment
+	a.Start = gitOutput(t, root, "rev-parse", "HEAD")
+	if err := intent.PutAssignment(root, a); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "worktree", "unlock", creation.Path)
+	gitRun(t, root, "worktree", "lock", "--reason", lockReason(a), creation.Path)
+	var stdout, stderr bytes.Buffer
+	want := "bench worktree reauthorize: recorded start is not an ancestor of source tip; wanted=" + a.Start + "\n"
+	if code := ReauthorizeCommand(root, []string{"--assignment", a.ID, "--request", "replacement", "--base", base, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
+		t.Fatalf("ancestry refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T) {
 	root, creation, base, tip := reauthorizeFixture(t)
 	before := reauthorizeEvidence(t, root, creation.Path)

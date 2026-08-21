@@ -89,13 +89,18 @@ func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) in
 		}
 		start, startKind, _ := diff.ResolveSourceRange(root, a.Start, resolvedTip)
 		if startKind != "" || start.Base != a.Start {
-			return errors.New("recorded start is not an ancestor of source tip")
+			return refusalError{refusal{detail: "recorded start is not an ancestor of source tip", wanted: a.Start}}
 		}
 		return nil
 	}, func(old, next intent.Assignment) (func(), error) {
 		return refreshReauthorizeLock(root, path, old, next)
 	}, reauthorizeBeforeCAS)
 	if err != nil {
+		var typed refusalError
+		if errors.As(err, &typed) {
+			fmt.Fprintln(stderr, "bench worktree reauthorize: "+typed.Error())
+			return 1
+		}
 		fmt.Fprintln(stderr, "bench worktree reauthorize: "+sanitize.Controls(err.Error()))
 		return 1
 	}

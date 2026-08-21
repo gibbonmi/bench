@@ -89,7 +89,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	}
 	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(root)
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
 	assignment, err := landingAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
 	if err != nil {
@@ -350,12 +350,21 @@ func landingDestination(root string) (string, string, string, string, error) {
 	if err != nil || current != branch {
 		return "", "", "", "", errors.New("landing checkout is not attached to the default branch")
 	}
-	if dirty, err := git.Output("-C", root, "status", "--porcelain=v1", "--untracked-files=all"); err != nil || dirty != "" {
+	if raw, err := git.Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all"); err != nil {
 		return "", "", "", "", errors.New("landing destination is not clean")
+	} else if entries, err := git.ParsePorcelainZStrict(raw); err != nil || len(entries) > 0 {
+		paths := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			paths = append(paths, entry.Path)
+		}
+		return "", "", "", "", refusalError{refusal{detail: "landing destination is not clean", paths: paths}}
 	}
 	ignored, _, ignoredErr := inventoryIgnored(root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
 	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinLandingAllowance(ignored, declared)) {
+		if ignoredErr == nil && declarationErr == nil {
+			return "", "", "", "", refusalError{refusal{detail: "landing destination has undeclared ignored residue", paths: ignored.Paths}}
+		}
 		return "", "", "", "", errors.New("landing destination has undeclared ignored residue")
 	}
 	tip, err := git.Output("-C", root, "rev-parse", "HEAD^{commit}")
@@ -455,5 +464,15 @@ func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, step stri
 
 func landRefusal(stdout io.Writer, detail string) int {
 	fmt.Fprintln(stdout, "refused{detail="+sanitize.Controls(detail)+"}")
+	return 1
+}
+
+func landRefusalError(stdout io.Writer, err error) int {
+	var typed refusalError
+	if !errors.As(err, &typed) {
+		return landRefusal(stdout, err.Error())
+	}
+	fmt.Fprintln(stdout, "refused{"+typed.fields()+"}")
+	fmt.Fprint(stdout, typed.table())
 	return 1
 }
