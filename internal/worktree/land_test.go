@@ -561,6 +561,30 @@ func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
 	}
 }
 
+func TestResumeLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
+	request := "resume-reauthorize-recovery"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	oldMarker := advanceLandingMarker
+	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+		return errors.New("injected marker interruption")
+	}
+	t.Cleanup(func() { advanceLandingMarker = oldMarker })
+	var stdout, stderr bytes.Buffer
+	if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	advanceLandingMarker = oldMarker
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", "unknown-request", "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
+	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'"
+	want := "refused{detail=request, assignment, or path mismatch,observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "}\n"
+	if code := LandCommand(root, "", args, &stdout, &stderr); code != 1 || stdout.String() != want || stderr.Len() != 0 {
+		t.Fatalf("unknown-request resume = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
 func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -1451,6 +1475,23 @@ func TestReleaseCommandRefusalPointsThroughAssignmentForControlBearingPath(t *te
 					strings.Count(out, "\n") == 1, strings.Contains(out, "; next="+wantNext+"\n"), out)
 			}
 		})
+	}
+}
+
+func TestReleaseCommandRefusalHidesControlBearingRequestForSafePath(t *testing.T) {
+	request := "release\n\x1brequest"
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	creation := mustCreate(t, root, request, "safe release pointer")
+	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residue\n"), 0o644)
+	mustWrite(t, filepath.Join(creation.Path, "residue"), []byte("retained\n"), 0o600)
+	var stdout, stderr bytes.Buffer
+	code := ReleaseCommand(root, []string{"--request", request, creation.Path}, &stdout, &stderr)
+	out := stderr.String()
+	wantNext := "next=bench worktree release --request <request> '" + creation.Path + "'"
+	unsafe := strings.ContainsFunc(out, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
+	if code != 1 || stdout.Len() != 0 || unsafe || !strings.Contains(out, wantNext) || strings.Contains(out, request) {
+		t.Fatalf("safe-path release refusal = (%d, %q, %q), want stderr recovery %q without caller token or controls", code, stdout.String(), out, wantNext)
 	}
 }
 

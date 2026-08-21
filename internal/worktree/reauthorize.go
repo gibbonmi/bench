@@ -59,11 +59,7 @@ func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) in
 		fmt.Fprintln(stderr, "bench worktree reauthorize: source tip is not a commit")
 		return 1
 	}
-	rangeTip, kind, hint := diff.ResolveSourceRange(root, base, resolvedTip)
-	if kind != "" {
-		fmt.Fprintf(stderr, "bench worktree reauthorize: %s: %s\n", sanitize.Controls(kind), sanitize.Controls(hint))
-		return 1
-	}
+	approvedBase := ""
 	old, err := intent.ReauthorizeAssignment(root, id, request, func(a intent.Assignment) error {
 		if a.State != intent.StateActive || a.Worktree != path {
 			return errors.New("assignment identity mismatch")
@@ -91,6 +87,14 @@ func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) in
 		if startKind != "" || start.Base != a.Start {
 			return refusalError{refusal{detail: "recorded start is not an ancestor of source tip", wanted: a.Start}}
 		}
+		rangeTip, kind, hint := diff.ResolveSourceRange(root, base, resolvedTip)
+		if kind == "--base is not an ancestor" {
+			return refusalError{refusal{detail: "review base is not an ancestor of source tip", wanted: a.Start}}
+		}
+		if kind != "" {
+			return errors.New(kind + ": " + hint)
+		}
+		approvedBase = rangeTip.Base
 		return nil
 	}, func(old, next intent.Assignment) (func(), error) {
 		return refreshReauthorizeLock(root, path, old, next)
@@ -104,7 +108,7 @@ func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) in
 		fmt.Fprintln(stderr, "bench worktree reauthorize: "+sanitize.Controls(err.Error()))
 		return 1
 	}
-	fmt.Fprintf(stdout, "reauthorized{assignment=%s,recorded_start=%s,approved_base=%s,source_tip=%s,state=%s}\n", old.ID, old.Start, rangeTip.Base, resolvedTip, old.State)
+	fmt.Fprintf(stdout, "reauthorized{assignment=%s,recorded_start=%s,approved_base=%s,source_tip=%s,state=%s}\n", old.ID, old.Start, approvedBase, resolvedTip, old.State)
 	return 0
 }
 

@@ -156,7 +156,7 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
 	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], spec.LiveSpecSlug(parsed.Flags["--spec"]))
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
 	assignmentID := assignment.ID
 	if !active {
@@ -285,10 +285,22 @@ func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assig
 		return intent.Assignment{}, false, err
 	}
 	if !found {
+		recovery, recoverable, err := unmatchedRequestRecovery(root, assignmentRecoveryContext{
+			target: path,
+			detail: assignmentMismatchDetail,
+			base:   base,
+			tip:    tip,
+		})
+		if err != nil {
+			return intent.Assignment{}, false, err
+		}
+		if recoverable {
+			return intent.Assignment{}, false, refusalError{recovery}
+		}
 		return intent.Assignment{}, false, nil
 	}
 	if (a.State != intent.StateActive && a.State != intent.StateCleanupPending) || a.Worktree != path {
-		return intent.Assignment{}, false, errors.New("request, assignment, or path mismatch")
+		return intent.Assignment{}, false, errors.New(assignmentMismatchDetail)
 	}
 	evidence, markerErr := validateOwnerMarker(root, path)
 	if markerErr != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree || evidence.registration.BranchRef != a.Branch || !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
@@ -407,7 +419,7 @@ func landingMarker(root, branch, destination string) (string, error) {
 func landingAssignment(root, path, request, base, requestedTip string) (intent.Assignment, error) {
 	a, err := assignmentForRequest(root, request, assignmentRecoveryContext{
 		target: path,
-		detail: "request, assignment, or path mismatch",
+		detail: assignmentMismatchDetail,
 		base:   base,
 		tip:    requestedTip,
 	})
@@ -415,7 +427,7 @@ func landingAssignment(root, path, request, base, requestedTip string) (intent.A
 		if err != nil {
 			return intent.Assignment{}, err
 		}
-		return intent.Assignment{}, errors.New("request, assignment, or path mismatch")
+		return intent.Assignment{}, errors.New(assignmentMismatchDetail)
 	}
 	evidence, err := validateOwnerMarker(root, path)
 	if err != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree || evidence.registration.BranchRef != a.Branch || !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {

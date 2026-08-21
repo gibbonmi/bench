@@ -434,6 +434,9 @@ type assignmentRecoveryContext struct {
 	tip    string
 }
 
+const assignmentMismatchDetail = "request, assignment, or path mismatch"
+const retainedAssignmentMismatchDetail = assignmentMismatchDetail + "; checkout retained"
+
 // assignmentForRequest keeps opaque-token resolution in intent. Only an unmatched
 // token permits path-derived recovery discovery.
 func assignmentForRequest(root, request string, recoveryContext assignmentRecoveryContext) (intent.Assignment, error) {
@@ -444,9 +447,17 @@ func assignmentForRequest(root, request string, recoveryContext assignmentRecove
 	if found {
 		return assignment, nil
 	}
-	assignments, err := intent.Assignments(root)
+	recovery, _, err := unmatchedRequestRecovery(root, recoveryContext)
 	if err != nil {
 		return intent.Assignment{}, err
+	}
+	return intent.Assignment{}, refusalError{recovery}
+}
+
+func unmatchedRequestRecovery(root string, recoveryContext assignmentRecoveryContext) (refusal, bool, error) {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return refusal{}, false, err
 	}
 	recovery := refusal{detail: recoveryContext.detail}
 	candidate, count := intent.Assignment{}, 0
@@ -458,8 +469,9 @@ func assignmentForRequest(root, request string, recoveryContext assignmentRecove
 	if count == 1 {
 		recovery.observed = "assignment:" + candidate.ID
 		recovery.next = reauthorizeRecoveryNext(candidate.ID, recoveryContext.target, recoveryContext.base, recoveryContext.tip)
+		return recovery, true, nil
 	}
-	return intent.Assignment{}, refusalError{recovery}
+	return recovery, false, nil
 }
 
 func reauthorizeRecoveryNext(assignment, target, base, tip string) string {
