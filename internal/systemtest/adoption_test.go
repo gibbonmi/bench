@@ -85,8 +85,12 @@ func TestAdoptionSmokeJourney(t *testing.T) {
 	if err := os.Remove(manifest); err != nil {
 		t.Fatal(err)
 	}
+	// Dropping the manifest stops HOME from reaching the gate's environment, so the
+	// wrapper's own pool-home refusal fires. Its exact wording is pinned once, by the
+	// conformance wrapper-pool-home test; this leg asserts only that an undeclared
+	// input reds the gate on HOME.
 	unbound := gate("gate", "--fresh")
-	if unbound.code != 1 || !strings.Contains(unbound.stderr, "HOME: unbound variable") {
+	if unbound.code != 1 || !strings.Contains(unbound.stderr, "HOME:") {
 		t.Fatalf("gate without the seeded manifest = (%d, %q, %q)", unbound.code, unbound.stdout, unbound.stderr)
 	}
 	assertPrivateHomeEmpty(t, home)

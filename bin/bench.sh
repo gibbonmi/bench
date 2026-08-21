@@ -10,8 +10,11 @@
 set -euo pipefail
 
 # Exported so the Go core's worktree/shift/gate commands resolve the same pool home the
-# shell did (they read BENCH_HOME from the environment).
-export BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
+# shell did (they read BENCH_HOME from the environment). The :? form names the missing
+# input itself: under set -u a bare $HOME dies on "HOME: unbound variable", which is a
+# variable name and no action for the adopter meeting it on their first command. It is
+# only reached when BENCH_HOME is unset, so the existing precedence is unchanged.
+export BENCH_HOME="${BENCH_HOME:-${HOME:?the Bench pool home needs BENCH_HOME set, or HOME set to derive it from}/.bench}"
 
 # ---- gate: the oracle -------------------------------------------------------
 # run_gate — the one-glance adapter over the Go core's `bench gate-run`. Resolution of
