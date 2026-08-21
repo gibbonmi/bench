@@ -1228,6 +1228,20 @@ func TestLandCommandStoredRequestDigestCannotAuthenticate(t *testing.T) {
 	}
 }
 
+func TestLandCommandAuthenticatesDigestShapedRequestToken(t *testing.T) {
+	request := strings.Repeat("a", 64)
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	restore := stubLandJoins(t, base, tip)
+	defer restore()
+	releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 0 }
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+		t.Fatalf("digest-shaped request land = (%d, %q, %q), want successful authentication", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestLandCommandUnknownRequestWithoutAssignmentOmitsRecovery(t *testing.T) {
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
@@ -1423,7 +1437,8 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, "", landArgs("refusal-controls", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
 	unsafe := strings.ContainsFunc(stdout.String(), func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
-	if code != 1 || unsafe || !strings.Contains(stdout.String(), "refused{") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || strings.Count(stdout.String(), "\n") != 4 || stderr.Len() != 0 {
+	wantPathRow := `  "bad\\n\\u001b,comma"` + "\n"
+	if code != 1 || unsafe || !strings.Contains(stdout.String(), "refused{") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n"+wantPathRow) || strings.Count(stdout.String(), "\n") != 4 || stderr.Len() != 0 {
 		t.Fatalf("control refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
