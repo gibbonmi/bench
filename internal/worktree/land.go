@@ -97,7 +97,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	}
 	source, err := landingSource(root, assignment, parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
 	result, err := landReviewed(context.Background(), landing.ReviewedRequest{
@@ -151,7 +151,7 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	}
 	published, sourceBase, destinationBase, tree, err := resumePublished(root, destination, parsed.Flags["--resume"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
 	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], spec.LiveSpecSlug(parsed.Flags["--spec"]))
 	if err != nil {
@@ -159,7 +159,7 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	}
 	if !active {
 		if _, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"]); err != nil {
-			return landRefusal(stdout, err.Error())
+			return landRefusalError(stdout, err)
 		}
 	}
 	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
@@ -192,8 +192,11 @@ func terminalResumeReceipt(root, path, request, sourceTip string) (intent.Cleanu
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}
 	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, target, intent.RequestDigest(request))
-	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) || receipt.Branch == "" || !strings.HasSuffix(receipt.Branch, "/"+receipt.Tracked) || receipt.BranchOID != sourceTip {
+	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) || receipt.Branch == "" || !strings.HasSuffix(receipt.Branch, "/"+receipt.Tracked) {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
+	}
+	if receipt.BranchOID != sourceTip {
+		return intent.CleanupReceipt{}, identityRefusal("--source-tip", sourceTip, receipt.BranchOID, "terminal receipt source tip mismatch")
 	}
 	return receipt, nil
 }
@@ -295,8 +298,11 @@ func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assig
 
 func resumePublished(root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {
 	published, err = git.Output("-C", root, "rev-parse", "--verify", value+"^{commit}")
-	if err != nil || published != value {
+	if err != nil {
 		return "", "", "", "", errors.New("published commit is not an exact commit identity")
+	}
+	if published != value {
+		return "", "", "", "", identityRefusal("--resume", value, published, "published commit is not an exact commit identity")
 	}
 	if !git.OK("-C", root, "merge-base", "--is-ancestor", published, destination) {
 		return "", "", "", "", errors.New("published commit is not reachable from the destination")
@@ -306,10 +312,16 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 		return "", "", "", "", errors.New("published commit parents are unreadable")
 	}
 	parts := strings.Fields(parents)
-	if len(parts) != 3 || parts[2] != source {
+	if len(parts) != 3 {
 		return "", "", "", "", errors.New("published commit does not authenticate the reviewed source parent")
 	}
+	if parts[2] != source {
+		return "", "", "", "", identityRefusal("--source-tip", source, parts[2], "published commit does not authenticate the reviewed source parent")
+	}
 	destinationBase = parts[1]
+	if err := abbreviatedRevisionRefusal(root, "--base", base); err != nil {
+		return "", "", "", "", err
+	}
 	sourceRange, kind, _ := diff.ResolveSourceRange(root, base, source)
 	if kind != "" {
 		return "", "", "", "", errors.New("review base does not authenticate the published source")
@@ -409,24 +421,36 @@ func landingAssignment(root, path, request, requestedTip string) (intent.Assignm
 }
 
 func landingSource(root string, a intent.Assignment, base, requestedTip, slug string) (landingSourceFact, error) {
+	if err := abbreviatedRevisionRefusal(a.Worktree, "--base", base); err != nil {
+		return landingSourceFact{}, err
+	}
 	branch, err := git.Output("-C", a.Worktree, "symbolic-ref", "--quiet", "HEAD")
 	if err != nil || branch != a.Branch {
 		return landingSourceFact{}, errors.New("assignment branch is not checked out")
 	}
 	head, err := git.Output("-C", a.Worktree, "rev-parse", "HEAD^{commit}")
-	if err != nil || head != requestedTip {
+	if err != nil {
 		return landingSourceFact{}, errors.New("worktree source tip mismatch")
 	}
+	if head != requestedTip {
+		return landingSourceFact{}, identityRefusal("--source-tip", requestedTip, head, "worktree source tip mismatch")
+	}
 	branchTip, err := git.Output("-C", root, "rev-parse", "--verify", a.Branch+"^{commit}")
-	if err != nil || branchTip != requestedTip {
+	if err != nil {
 		return landingSourceFact{}, errors.New("assignment branch source tip mismatch")
+	}
+	if branchTip != requestedTip {
+		return landingSourceFact{}, identityRefusal("--source-tip", requestedTip, branchTip, "assignment branch source tip mismatch")
 	}
 	if dirty, err := git.Output("-C", a.Worktree, "status", "--porcelain=v1", "--untracked-files=all"); err != nil || dirty != "" {
 		return landingSourceFact{}, errors.New("reviewed source is not clean")
 	}
 	rangeFact, err := authorizeLandingSource(a.Worktree, slug, base)
-	if err != nil || rangeFact.Tip != requestedTip {
+	if err != nil {
 		return landingSourceFact{}, errors.New("reviewed source range or ownership fence is invalid")
+	}
+	if rangeFact.Tip != requestedTip {
+		return landingSourceFact{}, identityRefusal("--source-tip", requestedTip, rangeFact.Tip, "reviewed source range or ownership fence is invalid")
 	}
 	bytes, resolved, _, ok, err := spec.Resolve(a.Worktree, slug)
 	if err != nil || !ok {
@@ -448,6 +472,33 @@ func landingSource(root string, a intent.Assignment, base, requestedTip, slug st
 		return landingSourceFact{}, errors.New("reviewed source fingerprint is unavailable")
 	}
 	return landingSourceFact{base: rangeFact.Base, tip: rangeFact.Tip, fingerprint: fingerprint, specPath: filepath.ToSlash(rel), specBytes: bytes, specMode: info.Mode().Perm()}, nil
+}
+
+func identityRefusal(flag, observed, wanted, detail string) error {
+	if abbreviatedIdentity(observed, wanted) {
+		return refusalError{refusal{detail: flag + " is an abbreviated commit identity", observed: observed, wanted: wanted}}
+	}
+	return refusalError{refusal{detail: detail, observed: observed, wanted: wanted}}
+}
+
+func abbreviatedRevisionRefusal(repository, flag, value string) error {
+	full, err := git.Output("-C", repository, "rev-parse", "--verify", value+"^{commit}")
+	if err == nil && abbreviatedIdentity(value, full) {
+		return identityRefusal(flag, value, full, "commit identity mismatch")
+	}
+	return nil
+}
+
+func abbreviatedIdentity(value, full string) bool {
+	if len(value) < 4 || len(value) > 39 || len(full) != 40 {
+		return false
+	}
+	for _, b := range []byte(value) {
+		if !((b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')) {
+			return false
+		}
+	}
+	return strings.HasPrefix(strings.ToLower(full), strings.ToLower(value))
 }
 
 func reconcileLandingDestination(root, commit string) error {
