@@ -120,7 +120,11 @@ A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip;
 from the destination, `bench worktree land` is the operational handoff that
 composes and gates that pair before publication and source release. Executable
-help owns its flags and positional grammar.
+help owns its flags and positional grammar. Its exit meanings follow the
+publication boundary: 0 means the source was released, 1 means a refusal before
+publication, 2 means invalid command usage, and 3 means publication succeeded but
+marker, checkout reconciliation, or source release remains incomplete. An exit-3
+record carries the `bench worktree land --resume` invocation needed to continue.
 
 ## Plumbing subcommands
 

@@ -8,6 +8,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- `bench worktree land` now exits 3 when publication succeeded but marker,
+  checkout reconciliation, or source release remains incomplete, and its terminal
+  record includes a token-safe resume invocation. Pre-publication refusals, usage
+  errors, and completed releases retain exits 1, 2, and 0 respectively.
 - The `/bench-debug` (`$bench-debug`) phase restores the upstream discipline a
   silent compression lost: Phase 1 points at a shipped ten-entry
   loop-construction menu (`.agents/skills/bench-debug/references/loop-constructions.md`),

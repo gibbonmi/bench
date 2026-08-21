@@ -113,17 +113,17 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source; first-run never attempts to publish again.
 	if err := advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
-		return landedIncomplete(stdout, result, "marker")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker")
 	}
 	if err := reconcileLanding(root, result.Commit); err != nil {
-		return landedIncomplete(stdout, result, "reconcile")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile")
 	}
 	var releaseDiagnostic bytes.Buffer
 	if release := releaseLandingAssignment(root, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
 		if releaseDiagnostic.Len() > 0 {
 			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
 		}
-		return landedIncomplete(stdout, result, "release")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release")
 	}
 	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=released}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree)
 	return 0
@@ -153,34 +153,38 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	if err != nil {
 		return landRefusalError(stdout, err)
 	}
+	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
 	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], spec.LiveSpecSlug(parsed.Flags["--spec"]))
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
+	assignmentID := assignment.ID
 	if !active {
-		if _, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"]); err != nil {
+		receipt, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
+		if err != nil {
 			return landRefusalError(stdout, err)
 		}
+		assignmentID = receipt.Tracked
 	}
 	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
 		return landRefusal(stdout, err.Error())
 	}
 	if destination == published {
 		if err := advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
-			return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "marker")
+			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker")
 		}
 	} else if marker == "" || !git.OK("-C", root, "merge-base", "--is-ancestor", published, marker) {
 		return landRefusal(stdout, "project-green marker is absent, behind, or divergent from the published landing")
 	}
 	if err := reconcileLanding(root, destination); err != nil {
-		return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "reconcile")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile")
 	}
 	if !active {
 		fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=already-complete}\n", sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree)
 		return 0
 	}
 	if releaseLandingAssignment(root, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
-		return resumeIncomplete(stdout, sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree, "release")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release")
 	}
 	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=released}\n", sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree)
 	return 0
@@ -339,11 +343,6 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 		return "", "", "", "", errors.New("published tree is unreadable")
 	}
 	return published, sourceBase, destinationBase, tree, nil
-}
-
-func resumeIncomplete(stdout io.Writer, base, source, destinationBase, published, tree, step string) int {
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=incomplete:%s}\n", base, source, destinationBase, published, tree, step)
-	return 1
 }
 
 type landingSourceFact struct {
@@ -508,9 +507,24 @@ func reconcileLandingDestination(root, commit string) error {
 	return nil
 }
 
-func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, step string) int {
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=incomplete:%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, step)
-	return 1
+func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, specArg, path, assignment, step string) int {
+	next := landingResumeNext(result, specArg, path, assignment)
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=incomplete:%s,next=%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, step, sanitize.Controls(next))
+	return 3
+}
+
+func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment string) string {
+	values := []string{result.Commit, result.SourceBase, result.SourceTip, specArg}
+	for _, value := range values {
+		if !lineSafe(value) {
+			return "bench worktree exec " + assignment + " -- bench worktree land --resume <full-published-commit> --request <request> --base <full-review-base> --source-tip <full-source-tip> --spec <spec> ."
+		}
+	}
+	command := "bench worktree land --resume " + sanitize.ShellQuote(result.Commit) + " --request <request> --base " + sanitize.ShellQuote(result.SourceBase) + " --source-tip " + sanitize.ShellQuote(result.SourceTip) + " --spec " + sanitize.ShellQuote(specArg)
+	if lineSafe(path) {
+		return command + " " + sanitize.ShellQuote(path)
+	}
+	return "bench worktree exec " + assignment + " -- " + command + " ."
 }
 
 func landRefusal(stdout io.Writer, detail string) int {
