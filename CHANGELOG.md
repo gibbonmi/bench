@@ -60,6 +60,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Workflow: repair re-reviews now block only on accepted repair predicates and
+  repair-induced changes, so unrelated findings cannot restart full discovery.
 - An adopted repository can now run its own gate green. `bench setup` seeds
   `.bench/gate-inputs.json` declaring `BENCH_HOME` and `HOME`, so the scaffolded
   gate's wrapper call survives the closed gate environment instead of dying on an

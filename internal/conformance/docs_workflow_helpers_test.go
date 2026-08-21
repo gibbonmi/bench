@@ -33,6 +33,9 @@ func checkWorkflowAnchors(root string) []string {
 	diags = append(diags, checkRoadmapContextQuery(whatNext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterRoadmapContext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterImplementSpec)...)
+	implementSpec := readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md"))
+	reviewImplementation := readIfExists(filepath.Join(root, ".agents", "commands", "bench-review-implementation.md"))
+	diags = append(diags, checkReviewConvergenceContract(implementSpec, reviewImplementation)...)
 	diags = append(diags, checkIntegrationSourceWorkflowCurrency(root)...)
 	diags = append(diags, checkSpecAuthorizationContract(root)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterSpecAuthorization)...)
@@ -52,7 +55,7 @@ func checkWorkflowAnchors(root string) []string {
 		}
 	}
 
-	if text := readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md")); text != "" && !strings.Contains(text, "craft-line") {
+	if text := implementSpec; text != "" && !strings.Contains(text, "craft-line") {
 		diags = append(diags, "bench-implement-spec.md does not reference craft-line")
 	}
 	if text := readIfExists(filepath.Join(root, ".agents", "commands", "bench-write-spec.md")); text != "" {
@@ -77,6 +80,67 @@ func checkWorkflowAnchors(root string) []string {
 		diags = append(diags, "BENCH-reference.md adapter contract does not document BENCH_MODEL")
 	}
 	return diags
+}
+
+func checkReviewConvergenceContract(implementSpec, reviewImplementation string) []string {
+	if implementSpec == "" || reviewImplementation == "" {
+		return nil
+	}
+	normalize := func(text string) string {
+		text = strings.ToLower(collapseSpace(stripHTMLComments(text)))
+		return strings.NewReplacer("`", "", "<code>", "", "</code>", "").Replace(text)
+	}
+	implementSpec = normalize(implementSpec)
+	reviewImplementation = normalize(reviewImplementation)
+
+	reviewRequirements := []string{
+		"initial review blocks on the full frozen-base..reviewed-tip diff across standards, spec, and coverage",
+		"full frozen-base..current-tip diff only as context",
+		"blocking scope is the accepted repair predicates plus changes after the prior reviewed tip",
+		"checked for repair-induced standards, spec, and coverage problems",
+		"outside both is a non-blocking follow-on and cannot reopen the phase",
+		"stays scoped to that predicate and repair delta; it never restarts initial discovery",
+	}
+	for _, requirement := range reviewRequirements {
+		if !strings.Contains(reviewImplementation, requirement) {
+			return []string{"bench-review-implementation dropped the repair-scoped convergence contract: " + requirement}
+		}
+	}
+	for _, requirement := range []string{
+		"run /bench-review-implementation in repair-scoped mode",
+		"accepted repair predicates and the prior reviewed tip",
+	} {
+		if !strings.Contains(implementSpec, requirement) {
+			return []string{"bench-implement-spec does not invoke repair-scoped re-review: " + requirement}
+		}
+	}
+	return nil
+}
+
+func TestReviewConvergenceContractCurrentDocs(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	implementSpec := readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md"))
+	reviewImplementation := readIfExists(filepath.Join(root, ".agents", "commands", "bench-review-implementation.md"))
+	if diags := checkReviewConvergenceContract(implementSpec, reviewImplementation); len(diags) != 0 {
+		t.Fatalf("review convergence contract is incomplete:\n%s", strings.Join(diags, "\n"))
+	}
+
+	normalizedReview := strings.ToLower(collapseSpace(reviewImplementation))
+	mutated := strings.Replace(
+		normalizedReview,
+		"blocking scope is the accepted repair predicates plus changes after the prior reviewed tip",
+		"blocking scope is the full frozen-base..current-tip diff",
+		1,
+	)
+	if mutated == normalizedReview {
+		t.Fatal("scope-widening mutation did not apply")
+	}
+	if !containsDiagnostic(checkReviewConvergenceContract(implementSpec, mutated), "repair-scoped convergence contract") {
+		t.Fatal("widening repair scope back to the full diff did not bite")
+	}
 }
 
 func checkRoadmapContextQuery(whatNext string) []string {

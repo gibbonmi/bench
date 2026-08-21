@@ -28,8 +28,20 @@ and nothing else. It catches regressions and rule violations. It cannot tell
 whether you built the *right* thing the *right* way. `/bench-review-implementation` is the semantic pass that can — and it's advisory: it surfaces
 findings for you, it has no authority to call anything done. The gate and you do.
 
-Run it on the branch diff against its
-true base, on three axes that stay separate.
+## Review modes
+
+Initial review blocks on the full `frozen-base..reviewed-tip` diff across
+Standards, Spec, and Coverage. It is the discovery pass described below.
+
+After accepted findings are repaired, a repair-scoped re-review takes the
+accepted repair predicates and the prior reviewed tip. It uses the full
+`frozen-base..current-tip` diff only as context. Its blocking scope is the
+accepted repair predicates plus changes after the prior reviewed tip, checked
+for repair-induced Standards, Spec, and Coverage problems. A finding outside
+both is a non-blocking follow-on and cannot reopen the phase; landing proceeds
+when the repair-scoped result is clean. If a repair-induced problem is fixed,
+the next check stays scoped to that predicate and repair delta; it never
+restarts initial discovery over the original range.
 
 ## Process
 

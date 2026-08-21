@@ -50,9 +50,11 @@ coordinator independently verifies the returned diff before landing it.
 Tickets commit green serially in `Blocked by:` order on the retained integration
 source. Then run `/bench-review-implementation` over its explicit frozen base
 and source tip. Accepted findings commit there as repair tickets and move the
-tip, so review runs again. From the clean destination, hand the accepted pair to
-`bench worktree land`; it composes, gates, publishes `Status: implemented`, and
-releases the source. Then run `/bench-final-check`.
+tip. Then run `/bench-review-implementation` in repair-scoped mode with the
+accepted repair predicates and the prior reviewed tip; that command owns the
+scope and convergence rule. From the clean destination, hand the accepted pair
+to `bench worktree land`; it composes, gates, publishes `Status: implemented`,
+and releases the source. Then run `/bench-final-check`.
 
 ## When the build stops short
 
