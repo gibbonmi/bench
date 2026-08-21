@@ -91,9 +91,9 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	if err != nil {
 		return landRefusalError(stdout, err)
 	}
-	assignment, err := landingAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
+	assignment, err := landingAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--base"], parsed.Flags["--source-tip"])
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, err)
 	}
 	source, err := landingSource(root, assignment, parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
 	if err != nil {
@@ -404,9 +404,12 @@ func landingMarker(root, branch, destination string) (string, error) {
 	return marker, nil
 }
 
-func landingAssignment(root, path, request, requestedTip string) (intent.Assignment, error) {
-	a, found, err := intent.FindAssignmentForRequest(root, request)
-	if err != nil || !found || a.State != intent.StateActive || a.Worktree != path {
+func landingAssignment(root, path, request, base, requestedTip string) (intent.Assignment, error) {
+	a, err := assignmentForRequest(root, request, path, "request, assignment, or path mismatch", base, requestedTip)
+	if err != nil || a.State != intent.StateActive || a.Worktree != path {
+		if err != nil {
+			return intent.Assignment{}, err
+		}
 		return intent.Assignment{}, errors.New("request, assignment, or path mismatch")
 	}
 	evidence, err := validateOwnerMarker(root, path)
@@ -489,13 +492,11 @@ func abbreviatedRevisionRefusal(repository, flag, value string) error {
 }
 
 func abbreviatedIdentity(value, full string) bool {
-	if len(value) < 4 || len(value) > 39 || len(full) != 40 {
+	if len(value) < 4 || len(value) > 39 || !fullCommitIdentity(full) {
 		return false
 	}
-	for _, b := range []byte(value) {
-		if !((b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')) {
-			return false
-		}
+	if !hexIdentity(value) {
+		return false
 	}
 	return strings.HasPrefix(strings.ToLower(full), strings.ToLower(value))
 }

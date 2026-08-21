@@ -351,11 +351,11 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		return intent.CleanupReceipt{}, statErr
 	}
 	if assignment == nil {
-		foundAssignment, ok, findErr := intent.FindAssignmentByRequest(root, request)
+		foundAssignment, findErr := assignmentForRequest(root, requestArg, target, "request, assignment, or path mismatch; checkout retained", "", "")
 		if findErr != nil {
 			return intent.CleanupReceipt{}, findErr
 		}
-		if !ok || foundAssignment.Worktree != target {
+		if foundAssignment.Worktree != target {
 			return intent.CleanupReceipt{}, errors.New("request, assignment, or path mismatch; checkout retained")
 		}
 		assignment = &foundAssignment

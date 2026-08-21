@@ -1145,6 +1145,96 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 	}
 }
 
+func TestLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
+	request := "land-reauthorize-recovery"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
+	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'"
+	want := "refused{detail=request, assignment, or path mismatch,observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "}\n"
+	if code != 1 || stdout.String() != want {
+		t.Fatalf("unknown-request land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
+func TestLandCommandReauthorizeRecoveryRequiresFullIdentityInputs(t *testing.T) {
+	request := "reauthorize-full-identities"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs("unknown-request", base[:12], tip[:12], creation.Path), &stdout, &stderr)
+	wantNext := "next=bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + creation.Path + "'}\n"
+	if code != 1 || !strings.HasSuffix(stdout.String(), wantNext) || strings.Contains(stdout.String(), base[:12]) || strings.Contains(stdout.String(), tip[:12]) {
+		t.Fatalf("abbreviated-identity recovery = (%d, %q, %q), want suffix %q without abbreviations", code, stdout.String(), stderr.String(), wantNext)
+	}
+}
+
+func TestLandCommandReauthorizeRecoveryPointsThroughUnsafePath(t *testing.T) {
+	request := "reauthorize-unsafe-path"
+	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
+	root, creation, base, tip, _ := publicLandingFixtureAtHome(t, request, "", "", home)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
+	wantNext := "next=bench worktree exec " + creation.Assignment.ID + " -- bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' .}\n"
+	unsafe := strings.ContainsRune(stdout.String(), '\x1b') || strings.Count(stdout.String(), "\n") != 1
+	if code != 1 || unsafe || !strings.HasSuffix(stdout.String(), wantNext) {
+		t.Fatalf("unsafe-path recovery = (%d, %q, %q), want one safe record ending %q", code, stdout.String(), stderr.String(), wantNext)
+	}
+}
+
+func TestLandCommandStoredRequestDigestCannotAuthenticate(t *testing.T) {
+	request := "stored-digest-is-not-a-token"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	gitRun(t, root, "update-ref", "refs/bench/green/main", base)
+	beforeDestination := gitOutput(t, root, "rev-parse", "refs/heads/main")
+	beforeSource := gitOutput(t, root, "rev-parse", creation.Assignment.Branch)
+	beforeMarker := gitOutput(t, root, "rev-parse", "refs/bench/green/main")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(creation.Assignment.Request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=request, assignment, or path mismatch") {
+		t.Fatalf("stored-digest land = (%d, %q, %q), want refusal", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/heads/main"); got != beforeDestination {
+		t.Fatalf("stored digest published destination: got %s want %s", got, beforeDestination)
+	}
+	if got := gitOutput(t, root, "rev-parse", creation.Assignment.Branch); got != beforeSource {
+		t.Fatalf("stored digest moved source branch: got %s want %s", got, beforeSource)
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != beforeMarker {
+		t.Fatalf("stored digest moved project-green marker: got %s want %s", got, beforeMarker)
+	}
+}
+
+func TestLandCommandUnknownRequestWithoutAssignmentOmitsRecovery(t *testing.T) {
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs("unknown-request", base, base, root), &stdout, &stderr)
+	want := "refused{detail=request, assignment, or path mismatch}\n"
+	if code != 1 || stdout.String() != want || strings.Contains(stdout.String(), "reauthorize") {
+		t.Fatalf("assignment-free land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
+func TestLandCommandUnknownRequestWithAmbiguousAssignmentsOmitsRecovery(t *testing.T) {
+	request := "ambiguous-reauthorize-recovery"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	second := creation.Assignment
+	second.ID = strings.Repeat("f", 32)
+	second.Request = intent.RequestDigest("second-request")
+	second.Label = "second assignment"
+	second.Branch = intent.AssignmentBranchRef(second.OwnerID, second.ID)
+	if err := intent.PutAssignment(root, second); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
+	want := "refused{detail=request, assignment, or path mismatch}\n"
+	if code != 1 || stdout.String() != want || strings.Contains(stdout.String(), "reauthorize") {
+		t.Fatalf("ambiguous-assignment land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
 func TestLandCommandNamesAbbreviatedSourceTip(t *testing.T) {
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))

@@ -233,6 +233,17 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 	requireTest(t, code == 0, "recovery release exit = %d, want 0; out=%q", code, out2.String())
 }
 
+func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "release-reauthorize-recovery")
+	var stdout, stderr strings.Builder
+	code := ReleaseCommand(root, []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
+	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + creation.Path + "'"
+	want := "bench worktree release: request, assignment, or path mismatch; checkout retained; observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "\n"
+	if code != 1 || stdout.String() != "" || stderr.String() != want {
+		t.Fatalf("unknown-request release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
 // removeOutOfBand simulates a request-less `bench worktree clean --discard-ignored
 // --apply` that removed an owned tree: it drops the git registration and directory and
 // writes the completed explicit-clean cleanup receipt (owned, request-bound, no
