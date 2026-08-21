@@ -2,42 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean once the drain commit lands.
+Branch: `main` — clean, two commits ahead of `origin/main`.
 Spec: none staged.
-Gate: green at the drain commit.
+Gate: green at `ba48496f`.
 
 ## State
 
-FT242 shipped at `84b7c4b0` and is retired: `bench worktree land` proves its own
-executable before any repository proof, only where the repository declares Go
-build inputs, with `--resume` exempt. That landing also carried reviewer-directed
-housekeeping — the `regroup` example profile retired across all four registries,
-`COMPLIANCE_ASSESSMENT.md` removed, `ui_example/` untracked but kept on disk.
+Audit item A4 is closed. `bin/bench.sh` derives the pool home through
+`${BENCH_HOME:-${HOME:?...}/.bench}`, so a session with neither variable set gets
+the wrapper's own message naming both inputs instead of `HOME: unbound variable`.
+`BENCH_HOME` still wins when set. A `internal/systemtest` test pins the wording
+independently of the wrapper; a mutation probe confirmed that reverting the guard
+reds it. A4's other two pieces shipped earlier, so no residual remains.
+`docs/audits/2026-08-bench-capability/results-fable-high/next-ticket.md` is stale —
+it still names A1, which shipped 2026-08-18.
 
-The drain that follows it emptied every capture source. Both journal entries and
-every retro recommendation have a disposition; the retro file is deleted and the
-journal is back to its schema heading. Most of it merged as occurrence evidence
-onto rows that already carried the same face: FT162 (`bench handoff` overwriting
-the next command), FT224 (the `--discard-ignored` flag the release verb rejects),
-FT233 (gate logs blocking release, and exit 1 after a completed publication),
-FT236 (citation line drift), FT238 (`bench diff` rejecting `--source-tip`).
-FT214 gained three map-discipline clauses and three occurrences.
+Two learnings are open in `capture/learnings.md`, both from this build.
+`bench commit --spec` exits `landed-but-checkout-incomplete` on a tickets-only
+light-path spec: the commit is correct and green, but the retired ticket folder
+stays on disk as untracked residue that the session removes by hand. Its fix needs
+a reviewer call on retry-versus-report. The second is a seam learning —
+`internal/conformance` admits a live-tree test only through its own registry, so a
+policy assertion on the live wrapper belongs in `internal/systemtest`.
 
-One new row, FT243, and it is the sequence's top line: a dated `capture/learnings.md`
-entry written as a bullet rather than a heading is skipped with no entry, no
-malformed record, and no parse failure, while the source still reports as parsed
-at full byte count. Both entries drained this pass were invisible that way.
-
-Contestable calls left for veto: FT243 ranked above the two better-evidenced
-refusal rows on severity rather than evidence; the retro's
-housekeeping-convention recommendation dismissed rather than rowed; and FT233
-and FT224 named as a restructure candidate but not merged, since a default drain
-names rather than applies.
+The branch had diverged this session; the reviewer reconciled it with
+`git pull --rebase` before the build. Nothing is pushed yet.
 
 ## Next command
 
-`/bench-write-spec` — FT243: a capture entry the parser cannot see is reported
-as zero, not as a failure.
+`/bench-write-spec` — FT243: a capture entry the parser cannot see is reported as
+zero, not as a failure. This was the drain's top-ranked row before the A4 residual
+jumped ahead of it, and it is next again.
 
 ## Shape
 
