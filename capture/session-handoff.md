@@ -2,30 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean once the drain batch commit lands on `61f1db8c`.
-Spec: none staged.
-Gate: green.
+Branch: `main` — clean once the spec-staging commit lands.
+Spec: `specs/land-executable-freshness/spec.md`, Status: staged, reviewer-approved with its one ticket.
+Gate: green at the staging commit; `dist/bench` rebuilt fresh this session.
 
 ## State
 
-The 2026-08-20 `/bench-drain` pass is the batch this commit carries: the FT230
-retro and both learnings entries are drained and removed, all capture sources
-are empty, and no spec is staged. Dispositions: FT242 is new (decision
-required — a spec amendment reaches the destination through one sanctioned
-step: land adopts the source's spec bytes, or a `bench spec sync` verb);
-merges landed on FT224 (spec-retire next-step omits the detail-file deletion),
-FT162 (`bench handoff` overwrites the Next-command section), FT214 (two
-craft-spec map clauses: name the test function you read, sweep for deleted
-bytes), FT215 (capture-only fast lane joins the scoped-gate decision), and
-FT238 (sixth piece: the phase-close capture-batch rule). The board otherwise
-reconciled clean — nothing shipped since the last drain. The reviewer priced
-FT242 to the front of the sequence.
+FT242 was re-scoped this session: its original ask (a spec amendment reaches
+the destination through one sanctioned step) already shipped as FT225
+(`cb1462a6`/`33aa5258`, retired `bef52480`); the ft230 detour came from a stale
+`dist/bench` enforcing the retired refusal. The staged spec carries the
+residual: `bench worktree land` proves its own executable through
+`freshness.Verify` before any repository proof, skips where
+`scripts/go-build.inputs` is absent, and exempts `--resume`. One ticket
+(`01-refuse-stale-landing-executable`, blocked by none) delivers the slice,
+including the FT242 board rewrite in `roadmap/FT242.md` and `ROADMAP.md`.
+Review: 2 iterations to accept; the ordering-row learning is in
+`capture/learnings.md` awaiting the next drain. One commit remains unpushed
+from before this session.
 
 ## Next command
 
-`/bench-write-spec` — FT242: a spec amendment reaches the destination through
-one sanctioned step. The spec's first question is the shape: land adopts the
-source's spec bytes, or a `bench spec sync` verb.
+`/bench-implement-spec` — specs/land-executable-freshness, fresh mid-tier
+(opus) session, one retained integration source, one ticket.
 
 ## Shape
 
