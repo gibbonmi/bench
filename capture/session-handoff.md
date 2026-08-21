@@ -2,42 +2,42 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean once the spec-retire commit lands; commits unpushed.
-Spec: none staged. `land-executable-freshness` landed and is retired.
-Gate: green at the landing commit.
+Branch: `main` — clean once the drain commit lands.
+Spec: none staged.
+Gate: green at the drain commit.
 
 ## State
 
-FT242 shipped at `84b7c4b0`: `bench worktree land` proves its own executable
-through `freshness.Verify` before any repository proof, only where the
-repository declares Go build inputs, with `--resume` exempt. FT242 is closed on
-the board and `roadmap/FT242.md` is deleted. Durable content promoted to
-`projects/benchkit.md`'s cold-session notes: the proof is self-attestation, so
-the gate's private exact-source build and the operator's sanctioned rebuild stay
-the independent roots.
+FT242 shipped at `84b7c4b0` and is retired: `bench worktree land` proves its own
+executable before any repository proof, only where the repository declares Go
+build inputs, with `--resume` exempt. That landing also carried reviewer-directed
+housekeeping — the `regroup` example profile retired across all four registries,
+`COMPLIANCE_ASSESSMENT.md` removed, `ui_example/` untracked but kept on disk.
 
-Folded into that landing at the reviewer's explicit direction: the `regroup`
-example profile is retired across the packed-asset list, the consumer payload,
-the npm files list, the profile note, and its gitignore line;
-`COMPLIANCE_ASSESSMENT.md` is removed; `ui_example/` is untracked but kept on
-disk; the README lost the Regroup walkthrough, kept the design-system oracle it
-documented, and gained a dev-build freshness note.
+The drain that follows it emptied every capture source. Both journal entries and
+every retro recommendation have a disposition; the retro file is deleted and the
+journal is back to its schema heading. Most of it merged as occurrence evidence
+onto rows that already carried the same face: FT162 (`bench handoff` overwriting
+the next command), FT224 (the `--discard-ignored` flag the release verb rejects),
+FT233 (gate logs blocking release, and exit 1 after a completed publication),
+FT236 (citation line drift), FT238 (`bench diff` rejecting `--source-tip`).
+FT214 gained three map-discipline clauses and three occurrences.
 
-Pending capture for the next drain: `capture/retros/land-executable-freshness.md`,
-a refreshed `capture/agent-performance/claude-models.md`, and two open
-`capture/learnings.md` entries (the spec-map ordering row, and `bench handoff`
-overwriting a mid-phase next command). The retro names two further CLI defects
-worth roadmap items — `bench worktree release` refusing with a `--discard-ignored`
-flag its own help does not list, and `bench diff` rejecting the `--source-tip`
-that `bench preflight` accepts.
+One new row, FT243, and it is the sequence's top line: a dated `capture/learnings.md`
+entry written as a bullet rather than a heading is skipped with no entry, no
+malformed record, and no parse failure, while the source still reports as parsed
+at full byte count. Both entries drained this pass were invisible that way.
 
-`ASSESSMENT.md:99` now cites a README example this landing removed; left alone
-because that document is a dated record, not live guidance.
+Contestable calls left for veto: FT243 ranked above the two better-evidenced
+refusal rows on severity rather than evidence; the retro's
+housekeeping-convention recommendation dismissed rather than rowed; and FT233
+and FT224 named as a restructure candidate but not merged, since a default drain
+names rather than applies.
 
 ## Next command
 
-`/bench-drain` — verdict the retro, the scorecard, and the two learnings
-entries into roadmap items.
+`/bench-write-spec` — FT243: a capture entry the parser cannot see is reported
+as zero, not as a failure.
 
 ## Shape
 

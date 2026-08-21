@@ -25,6 +25,8 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
+**FT243 (MEDIUM) — a capture entry the parser cannot see is reported as zero, not as a failure.**
+
 **FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, two `bench commit` gaps, the heredoc guard gap, a run-binary glossary term, and the phase-close capture-batch rule.**
 
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
@@ -284,5 +286,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at seven occurrences: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
-2. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. Now four occurrences and a fourth face: `bench spec retire`'s next-step omits the `roadmap/FT<n>.md` deletion, which the FT230 retirement paid a full gate run to discover.
+1. `/bench-write-spec` — FT243: a capture entry the parser cannot see is reported as zero, not as a failure. Ranked first on severity rather than evidence: the other two rows cost diagnosis time on a refusal the operator can read, while this one silently discards capture the reviewer never learns was written. Both journal entries drained this pass were invisible to every surface that counts them.
+2. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced landing row at nine occurrences, two added this pass: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
+3. `/bench-write-spec` — FT224: lifecycle refusals name their failed component and their remedy. Five occurrences: the `bench worktree release` refusal again pointed at a `--discard-ignored` flag its own help does not list, the same face recorded two days earlier.
