@@ -163,9 +163,12 @@ accidents, not adversaries; see the Won't handle lines.
   session in `internal/freshness/freshness_test.go`.
 - Manifest absent versus present-but-empty: distinct behaviors, both rowed
   (LF3, LF8).
-- Manifest as a dangling or live symlink: `Lstat` reports presence, so the
-  landing routes to the owner rather than skipping; the owner's reading
-  discipline decides from there. Never classified as absent.
+- Manifest as a dangling or live symlink, a directory, or an empty file:
+  `Lstat` reports presence, so the landing routes to the owner rather than
+  skipping; the owner's reading discipline decides from there. Never classified
+  as absent. Graded directly by
+  `TestDeclaresBuildInputsReadsPresenceRatherThanContent`, since the owner's
+  own symlink suite covers the seal and the executable, never the manifest.
 - Seal or executable as FIFO or other special file: the owner refuses before
   reading (`TestVerifyRefusesSpecialArtifactsBeforeReading`, named from the
   owner's suite this session).
