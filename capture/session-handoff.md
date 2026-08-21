@@ -2,36 +2,42 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `60d1154`, clean tree, 2 unpushed commits
-Spec: `specs/land-executable-freshness/spec.md` (Status: staged)
-Gate: green at `9bda612` — stale, work tree `71c000e`
+Branch: `main` — clean once the spec-retire commit lands; commits unpushed.
+Spec: none staged. `land-executable-freshness` landed and is retired.
+Gate: green at the landing commit.
 
 ## State
 
-`/bench-implement-spec --full` is mid-run. The one ticket
-(`01-refuse-stale-landing-executable`) is built and committed green on the
-retained integration source: worktree request `land-exec-freshness-01`, label
-`land-executable-freshness integration`. Frozen review base
-`60d1154b`, source tip `afcc2a3b`. The diff touches seven files: the freshness
-owner gains a presence-only `DeclaresBuildInputs`, `LandCommand` gains the
-invoked-executable parameter and proves it before any repository proof, the
-registry closure forwards `Command.Executable`, and `roadmap/FT242.md` plus its
-`ROADMAP.md` index and sequence lines carry the re-scope. All eight acceptance
-rows have tests. Six mutation probes were run and each turned its row red,
-including the coordinator's own probe of the check moved before the resume
-dispatch.
+FT242 shipped at `84b7c4b0`: `bench worktree land` proves its own executable
+through `freshness.Verify` before any repository proof, only where the
+repository declares Go build inputs, with `--resume` exempt. FT242 is closed on
+the board and `roadmap/FT242.md` is deleted. Durable content promoted to
+`projects/benchkit.md`'s cold-session notes: the proof is self-attestation, so
+the gate's private exact-source build and the operator's sanctioned rebuild stay
+the independent roots.
 
-One contestable call to veto or keep: the delegate also rewrote the
-`ROADMAP.md` recommended-sequence item 1, which still pointed at the ask that
-closed as FT225. That is beyond the ticket's literal wording.
+Folded into that landing at the reviewer's explicit direction: the `regroup`
+example profile is retired across the packed-asset list, the consumer payload,
+the npm files list, the profile note, and its gitignore line;
+`COMPLIANCE_ASSESSMENT.md` is removed; `ui_example/` is untracked but kept on
+disk; the README lost the Regroup walkthrough, kept the design-system oracle it
+documented, and gained a dev-build freshness note.
 
-The phase reached is review. Nothing is landed to the destination yet.
+Pending capture for the next drain: `capture/retros/land-executable-freshness.md`,
+a refreshed `capture/agent-performance/claude-models.md`, and two open
+`capture/learnings.md` entries (the spec-map ordering row, and `bench handoff`
+overwriting a mid-phase next command). The retro names two further CLI defects
+worth roadmap items — `bench worktree release` refusing with a `--discard-ignored`
+flag its own help does not list, and `bench diff` rejecting the `--source-tip`
+that `bench preflight` accepts.
+
+`ASSESSMENT.md:99` now cites a README example this landing removed; left alone
+because that document is a dated record, not live guidance.
 
 ## Next command
 
-`/bench-review-implementation` — base `60d1154b`, source tip `afcc2a3b`, in the
-integration worktree; then `bench worktree land` from `~/workspace/bench`, then
-`/bench-final-check`.
+`/bench-drain` — verdict the retro, the scorecard, and the two learnings
+entries into roadmap items.
 
 ## Shape
 

@@ -425,7 +425,14 @@ escalation.
   consumer receives. Don't reopen it as a link/upgrade ergonomics fix.
 - Never build `dist/bench` with plain `go build`; use
   `bash scripts/go-build.sh <root> <out>` so the binary carries the package
-  version required by the version and upgrade contracts.
+  version required by the version and upgrade contracts. `bench worktree land`
+  now refuses a dev executable that was not built from the current sources, and
+  names that command as the remedy. The proof is self-attestation, so it cannot
+  catch an executable that predates it or one patched to skip its own check, and
+  the seal cannot authenticate its own writer: a hand `go build` plus a hand
+  `freshness-publish` produces a seal the check accepts. The independent roots
+  that survive both are the gate's private exact-source build and the operator's
+  sanctioned rebuild.
 - To exercise or measure a durable worktree artifact directly, invoke that
   worktree's own `./dist/bench`. `bench` on PATH resolves to the main checkout's
   wrapper and may belong to a different source tree. Gate and `bench test` runs
