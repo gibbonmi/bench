@@ -8,9 +8,10 @@ was run.
 ## Compatibility boundary
 
 The published [AXI contract](https://axi.md/) requires bounded content with a size
-hint and `--full`, pre-computed totals, explicit empty results, structured stdout
-errors with honest exits, live content at query homes, contextual `help[]`, and
-consistent leaf help. Bench's current local contract applies AXI to selected surfaces
+hint and `--full`, plus pre-computed totals and explicit empty results. It also
+requires structured stdout errors with honest exits, live content at query homes,
+contextual `help[]`, and consistent leaf help. Bench's current local contract
+applies AXI to selected surfaces
 and gives operational commands a different stderr/exit contract
 (`.agents/skills/bench-craft-cli/SKILL.md:7-16,45-75`). FT173 therefore cannot use
 "AXI conformance" as permission to change an existing operational stream. Ticket #4
@@ -121,8 +122,8 @@ the whole old argv matrix is identical:
 
 The foundation is not allowed to consolidate by flattening distinctions. In particular,
 it cannot replace roadmap/worktree/outline behavior with `sanitize.Preview`, turn
-unknown into zero, turn spec-build's empty state into an empty table, move operational
-stderr, or advertise prose `next` values as commands.
+unknown into zero, or turn spec-build's empty state into an empty table. It also
+cannot move operational stderr or advertise prose `next` values as commands.
 
 ### Necessarily output-changing slices
 
@@ -157,7 +158,7 @@ Its matrix must include:
 For byte-changing slices, comparison is not equality. Each fixture needs an approved
 old-to-new delta naming the exact added/removed blocks, stream/exit change, and action
 template. Everything outside that approved delta remains byte-equal. A semantic review
-can judge whether the new suggestion is useful, but only the executable paired-delta
+can judge whether the new suggestion is useful. But only the executable paired-delta
 and mutation probes prove the formatter, parser, and exit contract bite.
 
 ## Resulting seam judgment

@@ -6,11 +6,11 @@ Status: shaping
 
 A successor spec-build workflow in which each ownership-fenced ticket earns
 focused executable evidence and a durable orchestrator review before provisional
-integration, the exact composed candidate is pinned for one fresh semantic review,
-and promotion alone pays the whole-project gate and authors the landing. The
-successor consumes FT173's full AXI lifecycle contract and FT130's capture
-accounting contract after both have shipped; it does not reopen the terminal
-single-build serial-gate work.
+integration. The exact composed candidate is pinned for one fresh semantic
+review, and promotion alone pays the whole-project gate and authors the
+landing. The successor consumes FT173's full AXI lifecycle contract and
+FT130's capture accounting contract after both have shipped. It does not
+reopen the terminal single-build serial-gate work.
 
 ## #1: What evidence admits a ticket into the composed candidate?
 
@@ -27,14 +27,15 @@ or become durable checkpoint evidence and lifecycle preconditions?
 Each assignment worktree and its assignment branch are one provisional
 construct: neither runs the whole-project gate nor authors an ordinary commit.
 Before checkpoint, the delegate supplies focused executable evidence and its
-mutation probe; the orchestrator independently probes and reviews the exact
-assignment tree on separate Standards, Spec, and Coverage axes against the
-ticket's requirements, ownership fence, coverage rows, and declared integration
-surfaces.
+mutation probe. The orchestrator independently probes and reviews the exact
+assignment tree on separate Standards, Spec, and Coverage axes. It checks
+those axes against the ticket's requirements, ownership fence, coverage rows,
+and declared integration surfaces.
 
 The checkpoint receipt durably binds those axis results and every finding's
-reviewer disposition, alongside the focused checks and independent probe, to the
-run, assignment, ticket digest, base, and tree. The lifecycle validates presence,
+reviewer disposition, alongside the focused checks and independent probe. It
+binds them to the run, assignment, ticket digest, base, and tree. The
+lifecycle validates presence,
 shape, exact binding, and that no repair-required finding remains. It does not
 judge whether the semantic review is correct or treat checkpointing as project
 green. Only a verified checkpoint may integrate provisionally.
@@ -53,9 +54,9 @@ genuinely require an exact Bench executable?
 
 Ticket scope is defined by its acceptance rows and declared integration surfaces,
 not by a file-only compilation boundary. A ticket with no Go change and no Go
-process seam compiles nothing. Ordinary Go behavior uses direct package or unit
-tests, which may compile and run Go's package-specific test executable and the
-unchanged dependencies required to exercise the declared seam.
+process seam compiles nothing. Ordinary Go behavior uses direct package or
+unit tests. These may compile and run Go's package-specific test executable
+and the unchanged dependencies required to exercise the declared seam.
 
 An exact Bench executable is required only when an acceptance row observes an
 operating-system process seam: wrapper routing, executable identity or freshness,
@@ -82,8 +83,8 @@ registered owners and input derivations participate?
 Ticket-local conformance runs only the exact checks that own the ticket's changed
 inputs or declared integration surfaces. Ticket-local canary runs only the exact
 affected fixture-owner mutations. A canary is affected when the ticket changes
-its fixture, registered owner, routing, or input derivation; an artificial fixture
-edit is not required to trigger an owner check. Unrelated conformance and canary
+its fixture, registered owner, routing, or input derivation. An artificial
+fixture edit is not required to trigger an owner check. Unrelated conformance and canary
 inventory stays out of ticket evidence and remains covered by promotion's complete
 gate.
 
@@ -101,16 +102,16 @@ review and the promotion gate?
 
 Final review is a two-step lifecycle transition. `bench spec build review <slug>
 --begin` atomically pins the current candidate only after every assignment is
-integrated and released, and returns the exact run and candidate review subject.
-Candidate-changing assign, checkpoint, integrate, refresh, and recomposition
+integrated and released. It returns the exact run and candidate review
+subject. Candidate-changing assign, checkpoint, integrate, refresh, and recomposition
 operations refuse while that subject is pinned. The orchestrator submits the exact-candidate
 three-axis result through `review --evidence`.
 
 A repair-required result releases the candidate into ownership-fenced repair
 assignment, checkpoint, and integration. A clean or explicitly risk-accepted
 result stays pinned through promotion. If the working branch moves, promotion
-recomposes before any gate begins, invalidates the pin and receipt, and returns
-the entire changed composition for a fresh review.
+recomposes before any gate begins, and invalidates the pin and receipt. It
+returns the entire changed composition for a fresh review.
 
 ## #5: Which harness phase owns final review and promotion?
 
@@ -127,9 +128,10 @@ Bench add a separate finalize-spec phase?
 `$bench-implement-spec --full` remains the end-to-end wrapper and composes the
 standalone `$bench-review-implementation` phase immediately before promotion.
 There is no separate finalize-spec phase. A clean or risk-accepted exact-candidate
-receipt proceeds to `bench spec build promote`; an accepted defect pays no gate,
-becomes a fenced repair ticket, and returns through the ordinary provisional
-lifecycle before the complete changed composition is pinned and reviewed again.
+receipt proceeds to `bench spec build promote`. An accepted defect pays no
+gate, and becomes a fenced repair ticket. It returns through the ordinary
+provisional lifecycle before the complete changed composition is pinned and
+reviewed again.
 That composed review specifically hunts cross-ticket knowledge duplication, dual
 ownership, unresolved integration surfaces, incomplete composition, and coverage
 gaps that no ticket-local review can see.
@@ -179,9 +181,10 @@ build lifecycle family, and which roadmap item owns it?
 
 FT173 is a separate required predecessor and the only owner of all ten AXI
 principles for every `bench spec build` operation. In particular, lifecycle
-results and refusals use the shared structured stdout and error helpers, honest
-exit codes, idempotent retries, and contextual `help[]` actions populated with
-the known slug, run, candidate, assignment, and exact next command. The shared
+results and refusals use the shared structured stdout and error helpers,
+honest exit codes, and idempotent retries. They also use contextual `help[]`
+actions populated with the known slug, run, candidate, assignment, and exact
+next command. The shared
 AXI helpers and schema are not re-derived in the cadence successor.
 
 FT185 continues to own the reusable gate-phase result payload consumed by gate,
@@ -233,9 +236,9 @@ Type: Task
 
 ### Question
 
-Verify that FT173 and FT130 have shipped their decided AXI and capture contracts,
-then re-read the lifecycle, workflow guidance, and project profile against this
-map before handing it to spec authoring.
+Verify that FT173 and FT130 have shipped their decided AXI and capture
+contracts. Then re-read the lifecycle, workflow guidance, and project profile
+against this map before handing it to spec authoring.
 
 ### Answer
 
@@ -249,8 +252,8 @@ map before handing it to spec authoring.
   the public `review --begin` and `review --evidence` behavior and invalidation
   predicates remain exact.
 - Exact focused Go test filters and package groupings within each ticket's
-  acceptance rows and declared integration surfaces, provided they do not widen
-  into a whole-project gate or omit an affected registered owner.
+  acceptance rows and declared integration surfaces. They must not widen into
+  a whole-project gate or omit an affected registered owner.
 - Receipt field and TOON table layout only where FT173 leaves reversible freedom;
   the cadence spec must consume, not fork, FT173's shared AXI contract.
 

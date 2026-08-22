@@ -17,9 +17,9 @@ setsid env GOMAXPROCS=2 GOFLAGS=-p=2 bench gate --fresh
 ```
 
 The sampler recorded `/proc/meminfo`, cgroup `memory.current`, `memory.peak`,
-`memory.stat`, and `io.stat`, per-process RSS and `smaps_rollup` PSS, process
-ancestry and command lines, Go/compiler/linker/gate/canary/contract process
-counts, Go-cache size, and new temporary-tree sizes. The cgroup's pre-existing
+`memory.stat`, and `io.stat`. It also recorded per-process RSS, `smaps_rollup`
+PSS, process ancestry, command lines, Go/compiler/linker/gate/canary/contract
+process counts, Go-cache size, and new temporary-tree sizes. The cgroup's pre-existing
 `memory.peak` was not reset, so the run's peak is the maximum sampled
 `memory.current`, not the retained 7.514 GB historical peak.
 
@@ -51,8 +51,8 @@ after exit while 436 MB of additional file cache remained. The absolute peak was
 file-dominated, but duplicated process heaps were the larger transient increment.
 
 At the corrected descendant-PSS peak, 29 seconds into the run, the gate had 80
-descendants with 3.033 GB RSS, 1.943 GB PSS, 1.720 GB anonymous PSS, and 222 MB
-file PSS. The sample carried 17 `go`, seven `compile`, 33 `bench`, eight
+descendants. RSS reached 3.033 GB, PSS reached 1.943 GB, anonymous PSS reached
+1.720 GB, and file PSS reached 222 MB. The sample carried 17 `go`, seven `compile`, 33 `bench`, eight
 canary-related, and 21 contract/artifact-related processes, including six
 simultaneous fixture inner gates. The seven compiler processes alone accounted
 for roughly 875 MB PSS.
@@ -60,8 +60,9 @@ for roughly 875 MB PSS.
 ## Storage and I/O result
 
 The cgroup wrote 4.25 GB and read 142 MB over the run. During the first 34
-seconds it wrote 2.153 GB, an average of about 63 MB/s, consistent with the
-operator-observed 22 MB/s sustained activity and 130 MB/s burst. Live new
+seconds it wrote 2.153 GB, an average of about 63 MB/s. This rate is
+consistent with the operator-observed 22 MB/s sustained activity and 130 MB/s
+burst. Live new
 temporary trees peaked at 333 MB and the Go build cache grew by 152 MB. Repeated
 creation, reading, and deletion therefore creates substantially more I/O and
 page-cache population than the live generated-tree footprint suggests.

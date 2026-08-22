@@ -7,10 +7,11 @@ run.
 
 ## Contract boundary
 
-The published [AXI contract](https://axi.md/) currently names ten principles:
-token-efficient output, minimal default schemas, content truncation, pre-computed
-aggregates, definitive empty states, structured errors and exit codes, ambient
-context, content first, contextual disclosure, and a consistent way to get help.
+The published [AXI contract](https://axi.md/) currently names ten
+principles. These are token-efficient output, minimal default schemas,
+content truncation, pre-computed aggregates, and definitive empty states.
+The remaining five are structured errors and exit codes, ambient context,
+content first, contextual disclosure, and a consistent way to get help.
 
 Bench has three different statements of that boundary today:
 
@@ -24,7 +25,7 @@ Bench has three different statements of that boundary today:
   operation while leaving other operational families outside that automatic
   widening (`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md:124-148`).
 
-The production registry contains 48 root names, but a command definition carries
+The production registry contains 48 root names. A command definition carries
 only `Name`, `Attachment`, and `Run`; it cannot declare AXI scope, output schema,
 empty-state behavior, no-argument behavior, or help/disclosure metadata
 (`cmd/bench/main.go:66-118`; `cmd/bench/command_registry.go:21-27`). AXI is

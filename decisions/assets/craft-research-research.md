@@ -14,9 +14,9 @@ the kit checkout's `.claude/skills/` symlink are derived integration surfaces
 (`.bench/BENCH-reference.md:36-59`, `projects/benchkit.md:485-492`).
 
 The narrow new owner is factual-reading execution: split a question into
-independent source questions, coordinate read-only returns, verify claims and
-their composition, preserve conflicts and unknowns, and synthesize the selected
-output. Existing owners remain authoritative:
+independent source questions, coordinate read-only returns, and verify claims
+and their composition. It also preserves conflicts and unknowns, and
+synthesizes the selected output. Existing owners remain authoritative:
 
 - `craft-delegate` owns complete charges, one coherent question per delegate,
   read-only isolation, and coordinator verification
@@ -52,12 +52,13 @@ shaping and `craft-spec`; adding a third copy would deepen that defect
 
 ## R2 — upstream contract and the useful comparator
 
-Matt Pocock's current skill has four essential moves: it fires when work becomes
-factual reading legwork, delegates that reading to a background agent, restricts
-evidence to primary sources, and leaves one cited Markdown file in the repo's
-existing notes location. It specifies neither fan-out nor coordinator
-re-verification, citation syntax, drift fields, a fixed path, or a completion
-rubric ([current skill](https://raw.githubusercontent.com/mattpocock/skills/main/skills/engineering/research/SKILL.md),
+Matt Pocock's current skill has four essential moves. It fires when work becomes
+factual reading legwork, and delegates that reading to a background agent. It
+also restricts evidence to primary sources, and leaves one cited Markdown file
+in the repo's existing notes location. It specifies no fan-out and no coordinator
+re-verification. It also specifies no citation syntax, drift fields, fixed
+path, or completion rubric
+([current skill](https://raw.githubusercontent.com/mattpocock/skills/main/skills/engineering/research/SKILL.md),
 [first-party documentation](https://raw.githubusercontent.com/mattpocock/skills/main/docs/engineering/research.md),
 both retrieved 2026-08-02).
 Its durable boundary is that reading is delegated while judgment stays with the
@@ -65,13 +66,16 @@ caller; “background agent” and slash-command syntax are harness particulars.
 
 Anthropic's production Research system is the directly relevant primary-source
 fan-out comparator. It uses an orchestrator-worker pattern: the lead splits a
-question into specialized independent searches, parallel workers return
-findings, the lead synthesizes and decides whether another round is needed, and
-a citation pass attaches sources. It reports that multi-agent research works
-best for breadth-first independent directions, costs roughly fifteen times a
-chat interaction in tokens, and is a poor fit for dependency-heavy or shared-
-context work. Its learned safeguards are complete non-overlapping charges,
-effort scaled to question complexity, and evaluation of accuracy, citation
+question into specialized independent searches, and parallel workers return
+findings. The lead then synthesizes, decides whether another round is needed,
+and runs a citation pass that attaches sources. It reports that multi-agent
+research works best for breadth-first independent directions, and costs
+roughly fifteen times a chat interaction in tokens. It also reports that
+multi-agent research is a poor fit for dependency-heavy or shared-context
+work.
+
+Its learned safeguards are complete non-overlapping charges and effort scaled
+to question complexity. They also include evaluation of accuracy, citation
 accuracy, completeness, source quality, and tool efficiency
 ([Anthropic engineering report](https://www.anthropic.com/engineering/multi-agent-research-system),
 retrieved 2026-08-02).
@@ -110,14 +114,15 @@ Other resolved Research tickets show when fan-out is the wrong tool:
   (`decisions/cost-follows-project-size.md:33-72`).
 
 The evidence-backed execution shape is therefore: fan out only independent
-reading questions; give each one a bounded return schema; synthesize one durable
-asset; verify both claims and cross-return composition; preserve contradictions,
-unknowns, and drift; and serialize measurement or compatibility probes whose
-results interfere with one another.
+reading questions, give each one a bounded return schema, and synthesize one
+durable asset. It must also verify both claims and cross-return composition,
+and preserve contradictions, unknowns, and drift. It must serialize
+measurement or compatibility probes whose results interfere with one another.
 
 ## Remaining decisions
 
 The sources do not decide the activation breadth, fan-out threshold and cap,
-durable artifact contract, judgment boundary, compatibility-probe owner, or the
-exact clauses migrated from current phase guidance. Those remain reviewer-owned
-tickets #4 through #8 in `decisions/craft-research.md`.
+or durable artifact contract. They also do not decide the judgment boundary,
+compatibility-probe owner, or the exact clauses migrated from current phase
+guidance. Those remain reviewer-owned tickets #4 through #8 in
+`decisions/craft-research.md`.

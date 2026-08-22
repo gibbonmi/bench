@@ -6,12 +6,14 @@ Status: ready
 
 Build the approved AXI behavior forward through Bench's existing CLI seams —
 the `Command` registry, the domain owners, their renderers, `internal/toon`,
-and `internal/usage` — in independently useful behavior-first slices, rather
-than staging a broad byte-preserving migration through universal carriers
-first. The work retains `bench diff` as the coherent Git-inspection owner and
-extends full AXI behavior to every `bench spec build` operation so lifecycle
-success, refusal, and recovery output is structured, deterministic, and
-directly actionable. AXI stays scoped to the already approved surfaces: the
+and `internal/usage`. Deliver it in independently useful behavior-first
+slices, rather than staging a broad byte-preserving migration through
+universal carriers first. The work retains `bench diff` as the coherent
+Git-inspection owner. It extends full AXI behavior to every
+`bench spec build` operation, so lifecycle success, refusal, and recovery
+output is structured, deterministic, and directly actionable.
+
+AXI stays scoped to the already approved surfaces: the
 six root queries (`anchors`, `learnings`, `maps`, `guards`, `diff`,
 `coverage`), nested `worktree list`, and the complete `bench spec build`
 family. Shared machinery is added only where an observable enhancement
@@ -37,17 +39,18 @@ Type: Research
 
 Re-read the current published AXI contract, `craft-cli`, command registry, output
 helpers, and contract tests. Record every principle, its current documented and
-implemented owner, all independent derivations, uncovered surfaces, and the exact
-compatibility or gate assertion that constrains consolidation in
+implemented owner, and all independent derivations. Also record uncovered
+surfaces and the exact compatibility or gate assertion that constrains
+consolidation, in
 `decisions/byte-preserving-axi-foundation/assets/ft173-axi-surface-census.md`.
 
 ### Answer
 
 The current implementation is a set of strong local owners rather than one
 ten-principle contract. `internal/toon` owns flat-table bytes, `internal/usage`
-owns the 23 shared-parser call sites, SessionStart owns ambient status, and spec
-build already owns ordered operation grammar, structured success/refusal, explicit
-empty status, and one lifecycle-next derivation. Four independent truncation
+owns the 23 shared-parser call sites, and SessionStart owns ambient status.
+Spec build already owns ordered operation grammar, structured success/refusal,
+explicit empty status, and one lifecycle-next derivation. Four independent truncation
 policies and command-local aggregate, empty-state, schema, and next-action
 renderers remain. There are no production `help[]` emitters, no registry metadata
 for AXI scope or help, and no standalone ten-principle gate matrix.
@@ -68,17 +71,17 @@ Type: Research
 
 Build an exhaustive command-by-command inventory from the named Claude and Codex
 usage logs plus the current CLI registry. For each command, record success, empty,
-refusal, stale-state, and recovery cases; the state already known to the command;
-the exact useful next action; and whether a contextual `help[]` row would have
-prevented another turn. Name any unavailable log source rather than substituting
+refusal, stale-state, and recovery cases, plus the state already known to the
+command. Record the exact useful next action, and whether a contextual `help[]`
+row would have prevented another turn. Name any unavailable log source rather than substituting
 sampled commands. Store the evidence in
 `decisions/byte-preserving-axi-foundation/assets/ft173-command-help-inventory.md`.
 
 ### Answer
 
-The complete production surface is larger than either current advertisement:
-the Go registry has 48 root names, the wrapper adds no-argument help and
-`repair`, and the nested grammars expand worktree, spec, spec-build, release,
+The complete production surface is larger than either current advertisement.
+The Go registry has 48 root names, and the wrapper adds no-argument help and
+`repair`. The nested grammars expand worktree, spec, spec-build, release,
 release-preflight, gate-go, and hook operations. `bench commands --brief` cannot
 serve as the inventory owner because it hard-codes only `version`, itself, and
 `status`.
@@ -89,8 +92,9 @@ and plumbing surfaces. The available Claude corpus supplies the decisive
 wrong-remedy trace: `bench spec build start` knew exact-green evidence was absent
 but suggested plain `bench gate` where only `bench gate --fresh` could satisfy
 the precondition. The inventory therefore distinguishes exact state-derived
-actions, plan/apply actions that still require a second call, terminal results
-that should not invent busywork, and plumbing whose caller owns continuation.
+actions and plan/apply actions that still require a second call. It also
+distinguishes terminal results that should not invent busywork, and plumbing
+whose caller owns continuation.
 
 The promised reviewer-named Codex usage-log set is unavailable: no manifest,
 session-id list, or archive was supplied. The locally available Codex project
@@ -107,14 +111,14 @@ Type: Research
 Trace truncation, aggregate, structured success, structured error, empty-state,
 exit-code, and contextual-help derivations to their current owners and consumers.
 Identify which moves can preserve bytes, which necessarily change public output,
-which consumers parse that output, and which exact mutation or paired-delta probe
-proves each shared helper still bites. Store the result in
+and which consumers parse that output. Also identify which exact mutation or
+paired-delta probe proves each shared helper still bites. Store the result in
 `decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`.
 
 ### Answer
 
 Bench already has strong shared mechanics for exact flat-table TOON bytes and common
-argv grammar, while semantic totals, completeness, empty-state meaning, and next
+argv grammar. Semantic totals, completeness, empty-state meaning, and next
 actions remain correctly owned by their command domains. The four truncation policies
 are incompatible as policies: they differ in caps, units, escaping, metadata,
 `--full`, and—in worktree cleanup—authority-bearing safety and fingerprint behavior.
@@ -122,22 +126,22 @@ They can route through one byte-preserving call only if it is a parameterized
 projection mechanic that leaves those facts with their current owners.
 
 No production consumer decodes Bench's TOON stdout. In-repo composition uses typed
-values or forwards bytes: handoff reads status signals, dashboard gathers typed facts,
-spec build renders service values, and SessionStart forwards status output. Tests and
-external agents are still public byte consumers, so the foundation must pair baseline
-and candidate stdout, stderr, exit, argv, and default/`--full` results exactly and
-independently mutate every cap, unit, total, unknown, empty, sink, exit, and action
-derivation.
+values or forwards bytes. Handoff reads status signals, dashboard gathers typed
+facts, spec build renders service values, and SessionStart forwards status output.
+Tests and external agents are still public byte consumers. The foundation must
+pair baseline and candidate stdout, stderr, exit, and argv, plus default and
+`--full` results, exactly. It must also independently mutate every cap, unit,
+total, unknown, empty, sink, exit, and action derivation.
 
 Typed carriers, registry metadata, parameterized bounds, and owner-supplied aggregate
 rendering can remain byte-preserving behind current renderers. `help[]`, changed
-actions or refusals, new family homes/flags/schemas, coherent Git snapshots, and the
-full spec-build AXI envelope necessarily change output and require separately approved
-paired deltas. The complete owner/consumer ledger and mutation matrix are recorded in
+actions or refusals, and new family homes/flags/schemas necessarily change output.
+So do coherent Git snapshots and the full spec-build AXI envelope, each requiring
+separately approved paired deltas. The complete owner/consumer ledger and mutation matrix are recorded in
 `decisions/byte-preserving-axi-foundation/assets/ft173-helper-compatibility-census.md`.
-The byte-preserving-foundation obligation this census derived is superseded by the
-Destination and #7 — no paired baseline/candidate oracle is built; the census's
-owner, consumer, and seam facts remain the current record.
+The byte-preserving-foundation obligation this census derived is superseded by
+the Destination and #7. No paired baseline/candidate oracle is built; the
+census's owner, consumer, and seam facts remain the current record.
 
 ## #4: Which CLI surfaces must satisfy the complete AXI contract?
 
@@ -146,9 +150,9 @@ Type: Grill
 
 ### Question
 
-Does FT173 retain the old query-only scope, widen every operational command, or
-make a bounded operational exception for the lifecycle family that now depends on
-agent-actable refusals and recovery?
+Does FT173 retain the old query-only scope, or widen every operational
+command? Or does it make a bounded operational exception for the lifecycle
+family that now depends on agent-actable refusals and recovery?
 
 ### Answer
 
@@ -156,9 +160,10 @@ FT173 remains the one AXI owner for the complete Bench CLI, with high-frequency
 query surfaces migrated under its existing priority model. In addition, every
 operation in the complete `bench spec build` family must satisfy all ten AXI
 principles. That bounded operational expansion includes shared success and error
-helpers, definitive empty states, honest exit codes, idempotent retries where the
-operation is retryable, and contextual `help[]` rows populated with the known
-slug, run, candidate, assignment, and exact next command.
+helpers, definitive empty states, and honest exit codes. It also includes
+idempotent retries where the operation is retryable. It includes contextual
+`help[]` rows populated with the known slug, run, candidate, assignment, and
+exact next command.
 
 This decision does not silently widen every other operational command. Each such
 family still requires its own evidence and reviewer decision. The spec-build
@@ -195,11 +200,12 @@ Should FT173 extend `bench diff` or introduce another Git-oriented command famil
 ### Answer
 
 Extend `bench diff`. It remains the single coherent owner for review-base
-resolution, checkout facts, changed-file inventory, revision and aggregate facts,
-whitespace status, landed-commit log, and exact patch bodies. It reuses the
-existing Git-facts and diff-range owners, includes untracked regular-file bodies
-under `--full`, and refuses or retries a snapshot whose HEAD, index, or worktree
-moves mid-read. FT173 does not add `bench git` or a second porcelain parser.
+resolution, checkout facts, and changed-file inventory. It also owns revision
+and aggregate facts, whitespace status, landed-commit log, and exact patch
+bodies. It reuses the
+existing Git-facts and diff-range owners, and includes untracked regular-file
+bodies under `--full`. It refuses or retries a snapshot whose HEAD, index, or
+worktree moves mid-read. FT173 does not add `bench git` or a second porcelain parser.
 
 ## #7: How should the enlarged FT173 work be sliced and ordered?
 
@@ -216,8 +222,8 @@ twice, and makes the cadence predecessor explicitly shippable.
 ### Answer
 
 FT173 ships as three independently reviewed behavior-first specs. There is no
-separate horizontal carrier, registry, or migration layer: each spec delivers
-one product outcome through the existing CLI seams and introduces only the
+separate horizontal carrier, registry, or migration layer. Each spec delivers
+one product outcome through the existing CLI seams, and introduces only the
 shared machinery that outcome requires.
 
 1. `axi-spec-build-complete` makes every `bench spec build` operation
@@ -232,17 +238,18 @@ shared machinery that outcome requires.
    migration. It composes the action owner from the first spec, so it follows
    `axi-spec-build-complete` in sequence; FT185 blocks neither slice.
 3. `axi-query-disclosure` completes contextual disclosure and any necessary
-   schema/help improvements across the remaining approved query surfaces —
-   `anchors`, `learnings`, `maps`, `guards`, `coverage`, and `worktree
-   list` — after the wide schemas are stable, and closes registry-derived
-   conformance plus the ten-principle guidance advertisement over the whole
-   approved set. It consumes the exhaustive command inventory, leaves
+   schema/help improvements across the remaining approved query surfaces,
+   after the wide schemas are stable. Those surfaces are `anchors`,
+   `learnings`, `maps`, `guards`, `coverage`, and `worktree
+   list`. It also
+   closes registry-derived conformance plus the ten-principle guidance
+   advertisement over the whole approved set. It consumes the exhaustive command inventory, leaves
    terminal and caller-owned plumbing without invented busywork, and does
    not rewrite the already-migrated spec-build or diff contracts.
 
-This ordering gives each wide surface one public-output rewrite, puts the
-highest-frequency observed family first, and keeps every byte-changing slice
-under its own reviewed old-to-new fixture set.
+This ordering gives each wide surface one public-output rewrite, and puts the
+highest-frequency observed family first. It also keeps every byte-changing
+slice under its own reviewed old-to-new fixture set.
 
 ## #8: What compatibility contract governs byte-changing output migrations?
 
@@ -251,17 +258,18 @@ Type: Grill
 
 ### Question
 
-For contextual help, coherent diff snapshots, and full-AXI spec-build responses,
-which existing stdout shapes remain supported, which receive a versioned or
-additive transition, and which may change atomically? Base the ruling on observed
+For contextual help, coherent diff snapshots, and full-AXI spec-build
+responses: which existing stdout shapes remain supported, and which receive
+a versioned or additive transition? Which may change atomically? Base the
+ruling on observed
 consumers and failure modes rather than preserving accidental prose by default.
 
 ### Answer
 
 There is no broad byte-preservation precondition. Every command outside an
 approved delta simply keeps its existing behavior, protected by the exact
-domain tests that already pin it; no universal compatibility oracle stands in
-front of the work. An intentional output change is approved per slice and
+domain tests that already pin it. No universal compatibility oracle stands
+in front of the work. An intentional output change is approved per slice and
 proved by reviewed old-to-new fixtures that name the exact delta.
 
 Contextual disclosure on a surface whose primary response is otherwise stable is an
@@ -269,22 +277,23 @@ additive transition. The existing primary bytes, stream, exit, and argv behavior
 exact, and one typed `help[]` block is appended after that response. An empty help set
 is valid for a terminal result or caller-owned plumbing; compatibility does not justify
 inventing a low-value command. Existing prose may remain visible during this slice, but
-it is not a second action owner: the typed action derivation supplies `help[]` and any
+it is not a second action owner. The typed action derivation supplies `help[]`, and any
 later removal of redundant prose requires another explicit compatibility decision.
 
 The coherent `bench diff` response and the complete spec-build family each receive one
 atomic output migration under their existing command names. They do not ship a
-`--legacy` flag, dual renderer, or parallel versioned schema: no production consumer
+`--legacy` flag, dual renderer, or parallel versioned schema. No production consumer
 decodes current Bench TOON, and maintaining two public derivations would create
 unwarranted compatibility sediment. `bench diff --commit` retains its post-landing
 meaning. Every spec-build operation migrates together so the family never exposes a
 mixed old/new contract.
 
 Those atomic migrations preserve durable lifecycle and Git facts, command identity,
-gate and landing authority, and the 0/1/2 taxonomy: success/help/no-op is 0, an
-unsatisfied intent is 1, and invalid argv is 2. A slice may change schemas, block order,
-error stream, accepted new argv, or the spec-build family home's former usage/2 result
-only where its reviewed old-to-new fixture names that exact delta. Everything outside
+and gate and landing authority. They also preserve the 0/1/2 taxonomy:
+success/help/no-op is 0, an unsatisfied intent is 1, and invalid argv is 2. A
+slice may change schemas, block order, error stream, accepted new argv, or the
+spec-build family home's former usage/2 result. This is allowed only where its
+reviewed old-to-new fixture names that exact delta. Everything outside
 the approved delta remains byte-equal. A future machine decoder must bind to an
 explicit schema version when it is introduced; its hypothetical existence does not
 force a legacy mode now.
@@ -296,19 +305,19 @@ Type: Grill
 
 ### Question
 
-Which behaviors require contract conformance, which are better proved by exact
-unit or paired-delta fixtures, and which independent mutations demonstrate that
-errors, empty states, help actions, truncation, aggregates, coherent Git snapshots,
-and spec-build lifecycle responses fail red without expanding every command into
-the full conformance matrix?
+Which behaviors require contract conformance, and which are better proved by
+exact unit or paired-delta fixtures? Which independent mutations demonstrate
+that errors, empty states, help actions, truncation, aggregates, and coherent
+Git snapshots fail red? Which mutations do the same for spec-build lifecycle
+responses, without expanding every command into the full conformance matrix?
 
 ### Answer
 
 Proof attaches at the smallest owner that can independently falsify the behavior.
 Shared action, renderer, and grammar mechanics receive focused unit tests and one
 independent mutation per owned fact. Each intentionally changed surface receives
-reviewed old-to-new fixtures naming the exact delta — added blocks, stream or
-exit changes, accepted new argv — while everything outside the delta keeps its
+reviewed old-to-new fixtures naming the exact delta: added blocks, stream or
+exit changes, and accepted new argv. Everything outside the delta keeps its
 existing exact domain tests. No spec expands every command into a duplicate
 conformance suite and no whole-CLI byte-equality oracle is built.
 
@@ -322,30 +331,33 @@ Contextual actions are derived from the same typed success, refusal, or precondi
 result that knows the next authorized transition. Every known fixed argument is carried
 forward; only genuinely unknown future input remains a placeholder. A terminal result
 or caller-owned plumbing may emit no action. A focused owner test must turn red when a
-useful action is removed, a known value becomes a placeholder, an unknown value is
-guessed, a fixed flag is dropped, a stale fingerprint is carried, or prose is advertised
-as an executable command. The exhaustive usage inventory judges whether the derived
+useful action is removed, a known value becomes a placeholder, or an unknown value is
+guessed. It must also turn red when a fixed flag is dropped, a stale fingerprint is
+carried, or prose is advertised as an executable command. The exhaustive usage inventory judges whether the derived
 action is useful; it is evidence, not a second action derivation.
 
-The coherent-diff slice is proved against raw Git over committed, staged, unstaged,
-untracked, nested-new-directory, rename, deletion, binary, hostile-filename, clean, and mid-read-drift
-fixtures. The spec-build slice uses an in-process operation/state matrix for lifecycle
-semantics and exact old-to-new response deltas across success, no-op, empty, refusal,
-stale, recovery, plan/apply, review, and promotion states. An exact Bench executable is
+The coherent-diff slice is proved against raw Git over these fixture classes:
+committed, staged, unstaged, untracked, nested-new-directory, rename, deletion,
+binary, hostile-filename, clean, and mid-read-drift. The spec-build slice uses an
+in-process operation/state matrix for lifecycle semantics and exact old-to-new
+response deltas. These span success, no-op, empty, refusal, stale, recovery,
+plan/apply, review, and promotion states. An exact Bench executable is
 required only for an acceptance row that observes wrapper routing, executable identity,
 environment, signals/teardown, or installed/stripped behavior.
 
 The final `axi-query-disclosure` spec stages now on the exhaustive command
-inventory in `assets/ft173-command-help-inventory.md`; the incremental review of the
+inventory in `assets/ft173-command-help-inventory.md`. The incremental review of the
 Codex and Claude harness session logs accumulated across the FT173 builds runs
-at that build's entry as its first ticket, since those logs cannot exist before
-the builds. Its dispositions receive reviewer sign-off before implementation
+at that build's entry as its first ticket. This is because those logs cannot
+exist before the builds. Its dispositions receive reviewer sign-off before implementation
 tickets start, and a fold that changes locked coverage lands as a
 reviewer-approved spec amendment. The review looks for CLI leverage rather than a closed keyword checklist.
-Its required examples are useful additions or corrections to a command's `help[]`,
-repeated shell or tool-call sequences that one coherent Bench query could replace, and
-output transformations agents repeatedly perform themselves—such as `head` or `tail`—
-that belong in a bounded default, `--full` escape hatch, pre-computed aggregate, or other
+
+Its required examples are useful additions or corrections to a command's `help[]`.
+They are also repeated shell or tool-call sequences that one coherent Bench
+query could replace. They are also output transformations agents repeatedly
+perform themselves—such as `head` or `tail`. Such transformations belong in a
+bounded default, `--full` escape hatch, pre-computed aggregate, or other
 CLI-owned projection. The resulting evidence asset gives every observed opportunity one
 disposition: fold into the final spec, already owned, decline with a reason, or route to
 a named roadmap item when it is a separate capability or would reopen a closed decision.
@@ -364,10 +376,11 @@ Type: Task
 
 ### Question
 
-Verify the three evidence assets against the current tree, record the chosen spec
-sequence and compatibility boundary, and confirm that each slice has independently
-useful acceptance behavior, a named red signal, an ownership fence, and a
-proportional mutation probe before handing the first slice to spec authoring.
+Verify the three evidence assets against the current tree, and record the
+chosen spec sequence and compatibility boundary. Confirm that each slice has
+independently useful acceptance behavior, a named red signal, and an ownership
+fence. Also confirm it has a proportional mutation probe, before handing the
+first slice to spec authoring.
 
 ### Answer
 
@@ -398,13 +411,14 @@ Each approved slice is independently useful and falsifiable:
 - **Remaining contextual disclosure (`axi-query-disclosure`):** acceptance is
   registry-complete additive
   `help[]` on every approved stable surface where the command inventory names a useful
-  next action, and an honest empty set for terminal or caller-owned results. Its fence is
+  next action. It is also an honest empty set for terminal or caller-owned results.
+  Its fence is
   the typed action owner's consumers, the registry-derived conformance closure, the
   guidance advertisements, and the remaining approved
-  surfaces; it does not rewrite spec-build or diff output or widen other operational
+  surfaces. It does not rewrite spec-build or diff output, or widen other operational
   families to full AXI. Removing a useful row, losing a fixed argument, guessing an
   unknown value, carrying stale authority, or advertising prose as a command is red. Its
-  spec starts from the command inventory and harness-log evidence required by #9 and
+  spec starts from the command inventory and harness-log evidence #9 requires, and
   accounts for every finding through an acceptance row or an explicit disposition.
 
 `axi-spec-build-complete` lands first, then `axi-coherent-diff`, then

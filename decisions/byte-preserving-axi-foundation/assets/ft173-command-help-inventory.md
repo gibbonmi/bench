@@ -15,12 +15,12 @@ The executable census has three current owners:
 - the wrapper adds the public no-argument/help view, `--version`/`-v` aliases,
   and wrapper-only `repair`, but does not route the registry-only `freshness-publish` name
   (`bin/bench.sh:284-390`); and
-- nested grammars add eight worktree modes, three ordinary spec operations, nine
-  spec-build operations, five release operations, two release-preflight modes,
-  two gate-go modes, one gate `pin` operation, and two worktree-hook modes
-  (`internal/usage/worktree.go:5-26`; `internal/spec/spec.go:291-302`;
-  `internal/spec/build.go:16-59`; `internal/publication/command.go:15-61`;
-  `internal/gate/gate.go:231-240`).
+- nested grammars add eight worktree modes, three ordinary spec operations, and
+  nine spec-build operations. They also add five release operations, two
+  release-preflight modes, two gate-go modes, one gate `pin` operation, and two
+  worktree-hook modes. Sources: `internal/usage/worktree.go:5-26`,
+  `internal/spec/spec.go:291-302`, `internal/spec/build.go:16-59`,
+  `internal/publication/command.go:15-61`, and `internal/gate/gate.go:231-240`.
 
 `bench commands --brief` is not an inventory source: it prints only `version`,
 `commands --brief`, and `status` from a hard-coded body
@@ -45,17 +45,20 @@ The available usage evidence is:
   asset names that missing source instead of substituting selected Codex sessions
   or interpreting a zero local match as evidence that a command is unused.
 
-Log marks below are `Cl` for a direct Claude Bash invocation, `Cx` for a direct
-Codex command execution, and `—` when the project-scoped extraction found none.
-They are lower-bound occurrence marks, not popularity scores: variable-held
-executables, hook-owned calls, and commands inside a child process are not
-reconstructed. Case marks are `S` success, `E` empty/no-op, `R` refusal or usage,
-`St` stale/drift, and `Rc` recovery. “Yes” means contextual disclosure can remove
-a discovery or wrong-remedy turn; “Direct” means the next action still needs its
-own call but `help[]` can make that call copy-paste exact; “No” means the answer is
-terminal or the next action belongs to a caller rather than this command. An
-omitted case mark means the current owner has no distinct semantic projection for
-that case; it does not mean the logs proved the case impossible.
+Log marks below are `Cl` for a direct Claude Bash invocation and `Cx` for a
+direct Codex command execution. A `—` mark means the project-scoped
+extraction found none. They are lower-bound occurrence marks, not
+popularity scores: variable-held executables, hook-owned calls, and
+commands inside a child process are not reconstructed. Case marks are `S`
+success, `E` empty/no-op, `R` refusal or usage, `St` stale/drift, and `Rc`
+recovery.
+
+“Yes” means contextual disclosure can remove a discovery or wrong-remedy
+turn. “Direct” means the next action still needs its own call, but `help[]`
+can make that call copy-paste exact. “No” means the answer is terminal, or
+the next action belongs to a caller rather than this command. An omitted
+case mark means the current owner has no distinct semantic projection for
+that case. It does not mean the logs proved the case impossible.
 
 ## Home, query, capture, and diagnostics
 
@@ -232,5 +235,5 @@ one.
 - Claude session `0b2828ac-933f-404e-8de4-c785735406ac`, JSONL lines 257, 266,
   and 288 — wrong exact-green remediation and reviewer acceptance boundary.
 - Local Claude Bench project archive (100 JSONL transcripts) and local Codex
-  session archive (626 rollouts; 91 with project-scoped command executions) —
-  lower-bound direct invocation marks, inspected 2026-08-09.
+  session archive (626 rollouts; 91 with project-scoped command executions).
+  These are lower-bound direct invocation marks, inspected 2026-08-09.

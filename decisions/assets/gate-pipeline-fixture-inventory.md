@@ -46,26 +46,27 @@ stray (other check) 7. gofmt/vet/race/cross-compile: **zero fixtures today**.
 ### No seam will emit after the split
 
 - **go-build-broken** — `go build failed` is `formatProbeFailure` framing
-  (package_core_diagnostics_test.go:10), not compiler output; the serial build
-  phase streams raw child output plus `phase build: red (exit N)`. Compounding:
-  the build phase materializes only when both `scripts/go-build.sh` and
-  `go.mod` exist (gate/phases.go:61–67) and the fixture tree ships only
-  `go.mod` + `cmd/` — unchanged, it goes green after the collapse.
+  (package_core_diagnostics_test.go:10), not compiler output. The serial build
+  phase streams raw child output plus `phase build: red (exit N)`. The build
+  phase materializes only when both `scripts/go-build.sh` and `go.mod` exist
+  (gate/phases.go:61–67). The fixture tree ships only `go.mod` and `cmd/`.
+  Unchanged, the fixture goes green after the collapse.
 - **go-test-failing** — same framing; a standalone test phase emits Go's own
   `--- FAIL` lines, never the literal.
 - **Routing gap:** `FixturePhase` (canary/canary.go:32–41) pins every
-  conformance family to the `conformance` phase and `phasesForMode`
-  (gate/phases.go:271–290) honours only `conformance`/`contract` — new phases
-  are invisible to fixtures until both widen; an unknown family name falls
-  through to owner `""` (runs every non-canary phase).
+  conformance family to the `conformance` phase. `phasesForMode`
+  (gate/phases.go:271–290) honours only `conformance` and `contract`. New
+  phases stay invisible to fixtures until both widen. An unknown family name
+  falls through to owner `""` and runs every non-canary phase.
 - **Uncanaried seams the split creates:** `gofmt: unformatted Go files`
   (:189), `go vet failed` (:208), race-test failures (:227, :229), `go list
   failed` (:212), `go build setup failed` (:197), `cross-compile failed`
   (cross_compile_stress_test.go:35) — no fixture today.
 - **Coupled assertion:** `TestCoreSubprocessFailuresUseProbeFormatter`
   (package_core_diagnostics_test.go:99–128) text-scans the checks file for the
-  exact label inventory; every label that leaves `checkGoCore` breaks it —
-  mechanical build casualty, update in the migration.
+  exact label inventory. Every label that leaves `checkGoCore` breaks this
+  assertion. Treat the break as a mechanical build casualty and update it in
+  the migration.
 
 ## Part B — family→check mapping (verified by emitter, not name)
 
