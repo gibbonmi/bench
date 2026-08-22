@@ -105,8 +105,8 @@ type axiEnvelopeCase struct {
 	setupSuccess, setupEmpty                       func(*testing.T, string)
 }
 
-// resultBlock is the table whose rows the member's success and empty cases differ over —
-// the block its identifying marker names, so the two do not drift apart.
+// resultBlock names the table whose rows differ between the success and empty cases.
+// The name comes from the identifying marker, so the two stay in step.
 func (tc axiEnvelopeCase) resultBlock(t *testing.T) string {
 	t.Helper()
 	name, _, found := strings.Cut(tc.successMarker, "[")
@@ -117,9 +117,9 @@ func (tc axiEnvelopeCase) resultBlock(t *testing.T) string {
 }
 
 // axiEnvelopeRows decodes a member's whole stdout as one TOON document and returns its
-// result rows. Decoding the complete output is the envelope claim: bytes before, between,
-// or after the blocks fail the decode, the recovered block order pins what the command
-// emitted and in what order, and the help table has to be schema-correct and terminal.
+// result rows. The decode fails on any byte before, between, or after the blocks. The
+// recovered block order pins the order the command emitted, and the help table must be
+// schema-correct and terminal.
 func axiEnvelopeRows(t *testing.T, tc axiEnvelopeCase, result axiCommandResult) []any {
 	t.Helper()
 	document, err := axitest.DecodeDocument(result.stdout)
@@ -429,9 +429,9 @@ func runAXICommandAsAt(t *testing.T, cwd, executable string, argv []string) axiC
 }
 
 // TestWorktreeLandVerifiesTheInvokedExecutable drives the real dispatcher in a repository
-// that declares Go build inputs, so the landing's freshness proof runs and names the
+// that declares Go build inputs. The landing's freshness proof runs and names the
 // executable it was given. A closure that forwarded a literal or an empty path would
-// verify some other file and never name the sentinel.
+// verify a different file and never name the sentinel.
 func TestWorktreeLandVerifiesTheInvokedExecutable(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "scripts", "go-build.inputs"), "build_script=scripts/go-build.sh\n")
@@ -443,12 +443,11 @@ func TestWorktreeLandVerifiesTheInvokedExecutable(t *testing.T) {
 	}
 }
 
-// keptRoutes is the surface a removal may not take with it, written down rather than
-// derived. Every other routing check reads commandRegistry, so deleting a route deletes it
-// from the expectation in the same edit and the check stays green; an enumeration authored
-// against the reviewer's keep list is the only thing an over-broad deletion turns red. Each
-// entry drives the real dispatcher and asserts the route answers its own grammar at exit 0,
-// so a surviving-but-misrouted verb fails as loudly as a deleted one.
+// keptRoutes names the surface a removal must not take with it. This list stands apart
+// from commandRegistry, so deleting a route there does not also delete the expectation
+// here; only an enumeration against the reviewer's keep list turns an over-broad deletion
+// red. Each entry drives the real dispatcher and asserts that the route answers its own
+// grammar at exit 0, so a surviving but misrouted verb fails as loudly as a deleted one.
 var keptRoutes = []struct {
 	argv []string
 	help string
@@ -466,9 +465,9 @@ var keptRoutes = []struct {
 	{[]string{"spec", "history", "--help"}, "usage: bench spec history"},
 }
 
-// keptWorktreeGrammars are the pool operations the worktree family help has to keep naming.
-// The family route surviving says nothing about the operations under it, and each one is
-// reached only through that dispatcher, so the grammar line is where their survival shows.
+// keptWorktreeGrammars are the pool operations the worktree family help must keep naming.
+// The surviving family route says nothing about the operations under it. Each operation is
+// reachable only through that dispatcher, so the grammar line is where its survival shows.
 var keptWorktreeGrammars = []string{
 	"bench worktree create",
 	"bench worktree path",
@@ -514,9 +513,9 @@ func TestWorktreeHelpNamesLandedGrammar(t *testing.T) {
 	}
 }
 
-// removedGrammars are the verbs the lifecycle removal took out, written down rather than
-// derived: a restored route answers its own grammar instead of its family's refusal, and
-// the registry a derived check would read is exactly what such a restoration changes.
+// removedGrammars are the verbs the lifecycle removal took out. This list stands apart
+// from the registry, because a restored route answers its own grammar instead of its
+// family's refusal, and a check derived from the registry would miss such a restoration.
 var removedGrammars = []struct {
 	argv  []string
 	usage string
@@ -526,10 +525,10 @@ var removedGrammars = []struct {
 	{[]string{"worktree", "recovery", "x"}, "usage: bench worktree (unknown argument: recovery)"},
 }
 
-// TestRemovedGrammarsRefuseThroughTheirFamily pins both halves of a removal: the verb
+// TestRemovedGrammarsRefuseThroughTheirFamily pins both halves of a removal. The verb
 // refuses at its family's unknown-argument error, and the family help no longer advertises
 // it. The worktree family's fallback is a free-form objective, so a route that merely
-// stopped being routed would open a subshell named for the removed verb instead.
+// stopped being routed would instead open a subshell named for the removed verb.
 func TestRemovedGrammarsRefuseThroughTheirFamily(t *testing.T) {
 	for _, removed := range removedGrammars {
 		name := strings.Join(removed.argv, " ")
@@ -552,13 +551,13 @@ func TestRemovedGrammarsRefuseThroughTheirFamily(t *testing.T) {
 	}
 }
 
-// TestSkillsIndexRoutesThroughDispatch drives the verb where the wrapper sends it: the
-// registry route, the module's grammar, and the reference-file bytes a later invocation
-// reads back rather than a value held over from the write.
+// TestSkillsIndexRoutesThroughDispatch drives the verb where the wrapper sends it. It
+// covers the registry route, the module's grammar, and the reference-file bytes a later
+// invocation reads back rather than a value held over from the write.
 func TestSkillsIndexRoutesThroughDispatch(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, ".agents", "skills", "alpha", "SKILL.md"), "---\nname: alpha\nindex: doing alpha things\n---\n")
-	// The markers are the fixture's own text: cmd/bench grades routing, so it seeds a
+	// The markers are the fixture's own text. cmd/bench grades routing, so it seeds a
 	// reference file rather than reaching into the module for the block's shape.
 	writeAXIFixture(t, filepath.Join(root, ".bench", "BENCH-reference.md"),
 		"# Reference\n\n<!-- bench:skills-index:start -->\n<!-- bench:skills-index:end -->\n")
@@ -585,8 +584,8 @@ func TestSkillsIndexRoutesThroughDispatch(t *testing.T) {
 	}
 }
 
-// runKeptRoute joins both sinks: help lands on stdout for some grammars and stderr for
-// others, and which sink a route picked is not what its callers are grading.
+// runKeptRoute joins both sinks. Help lands on stdout for some grammars and stderr for
+// others, and callers do not grade which sink a route picked.
 func runKeptRoute(argv []string) (string, int) {
 	var stdout, stderr bytes.Buffer
 	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
@@ -594,9 +593,9 @@ func runKeptRoute(argv []string) (string, int) {
 }
 
 // TestSkillsIndexDistinguishesMissingGitFromOutsideRepository grades the two ways
-// repository discovery fails as one partition: an unlaunchable `git` and an executed
-// `git` outside a work tree must name different recovery actions, and they are asserted
-// together so a missing-tool special case cannot regress the outside-repository line.
+// repository discovery fails as one partition. An unlaunchable `git` and a `git` executed
+// outside a work tree must name different recovery actions. The test asserts both
+// together, so a missing-tool special case cannot regress the outside-repository line.
 func TestSkillsIndexDistinguishesMissingGitFromOutsideRepository(t *testing.T) {
 	for _, tc := range []struct {
 		name   string

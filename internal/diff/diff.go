@@ -1,7 +1,7 @@
 // Package diff owns the coherent Git review snapshot. A live response resolves its
-// branch range once, renders every bounded and complete section from that attempt,
-// and compares each patch-observable identity before emitting any bytes. A named
-// commit remains an immutable first-parent view and omits unrelated checkout facts.
+// branch range once, renders every bounded and complete section from that attempt, and
+// compares each patch-observable identity before emitting any bytes. A named commit
+// stays an immutable first-parent view and omits unrelated checkout facts.
 package diff
 
 import (
@@ -34,7 +34,7 @@ func SetSnapshotAfterReadForTest(after func()) func() {
 	return func() { snapshotAfterRead = previous }
 }
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// grammar is the declared argument shape usage.Parse enforces for this subcommand:
 // arity, flag recognition, `--`, repeated flags, and help all come from there rather
 // than a local switch.
 // Help is fullHelp without its trailing newline, because the caller appends one.
@@ -62,11 +62,11 @@ func parseNameStatusZ(raw []byte) [][]string {
 }
 
 // changedFiles renders the files table for a `git diff` range. rangeArgs is passed
-// straight through to `git diff --name-status --no-renames -z`: the resolved base
-// alone for the branch-relative path, so Git includes index and tracked worktree
-// changes, or two bare refs ("base", "head") for the commit-relative path — `git diff` treats
-// two positional refs the same as an explicit two-dot range, which is the exact
-// two-commit diff `--commit` needs.
+// straight through to `git diff --name-status --no-renames -z`: the resolved base alone
+// for the branch-relative path, so Git includes index and tracked worktree changes, or
+// two bare refs ("base", "head") for the commit-relative path. `git diff` treats two
+// positional refs the same as an explicit two-dot range, which is the exact two-commit
+// diff `--commit` needs.
 func changedFiles(rangeArgs ...string) ([][]string, error) {
 	args := append([]string{"diff", "--name-status", "--no-renames", "-z"}, rangeArgs...)
 	raw, err := git.Raw(args...)
@@ -77,11 +77,11 @@ func changedFiles(rangeArgs ...string) ([][]string, error) {
 }
 
 // parseLogFormat turns `git log --format=%h%x00%s` output into sha/subject rows. Each
-// commit is one line (a subject is, by definition, the first line of the commit
-// message and carries no embedded newline); the NUL between sha and subject is a
-// delimiter git itself never puts in either field, so a comma or quote in the
-// subject arrives raw for the caller to TOON-escape a single layer downstream — the
-// same NUL-framing discipline parseNameStatusZ uses for paths.
+// commit is one line, because a subject is by definition the first line of the commit
+// message and carries no embedded newline. The NUL between sha and subject is a
+// delimiter git itself never puts in either field, so a comma or quote in the subject
+// arrives raw for the caller to TOON-escape a single layer downstream, the same
+// NUL-framing discipline parseNameStatusZ uses for paths.
 func parseLogFormat(raw []byte) [][]string {
 	s := strings.TrimRight(string(raw), "\n")
 	if s == "" {
@@ -99,9 +99,9 @@ func parseLogFormat(raw []byte) [][]string {
 	return rows
 }
 
-// commitLog renders the log table for a `git log` range expression — always a
-// literal two-dot range string ("base..HEAD" or "base..head"), since `git log`'s
-// two-dot form (unlike `git diff`'s) has a distinct meaning from two bare refs.
+// commitLog renders the log table for a `git log` range expression: always a literal
+// two-dot range string ("base..HEAD" or "base..head"). `git log`'s two-dot form, unlike
+// `git diff`'s, has a distinct meaning from two bare refs.
 func commitLog(rangeExpr string) ([][]string, error) {
 	raw, err := git.Raw("log", "--format=%h%x00%s", rangeExpr)
 	if err != nil {
@@ -461,7 +461,7 @@ func MovementChecked(root string, read func(MovementSnapshot) (kind, hint string
 
 // MovementCheckedRetry is the movement-retry policy every drift-sensitive read shares:
 // one retry when the only thing that failed was repository movement, then the second
-// attempt's answer stands — including its terminal drift hint, which no caller spells
+// attempt's answer stands, including its terminal drift hint, which no caller spells
 // for itself. A read failure is never retried, so a caller cannot turn a broken read
 // into a drift refusal.
 func MovementCheckedRetry(root string, read func(MovementSnapshot) (kind, hint string)) MovementResult {
@@ -506,9 +506,9 @@ func ResolveSourceRange(root, base, tip string) (SourceRange, string, string) {
 }
 
 // resolveCommitRange builds the diffRange for `--commit <sha>`: base is <sha>'s
-// resolved first parent. The sha is verified before anything renders — an
-// unresolvable sha and a root commit's missing parent are each their own
-// structured error (kind, hint), never a leaked git failure.
+// resolved first parent. The sha is verified before anything renders. An unresolvable
+// sha and a root commit's missing parent are each their own structured error (kind,
+// hint), never a leaked git failure.
 func resolveCommitRange(root, commitArg string) (dr diffRange, errKind, errHint string) {
 	headSha, err := git.Output("-C", root, "rev-parse", "--verify", commitArg+"^{commit}")
 	if err != nil {
@@ -532,7 +532,7 @@ func resolveCommitRange(root, commitArg string) (dr diffRange, errKind, errHint 
 
 // resolveBranchRange builds the diffRange for bare `bench diff`/`--full`: the
 // recorded-key base when it names a reachable ancestor, else merge-base with the
-// default branch — byte-identical to the pre-`--commit` behavior.
+// default branch, byte-identical to the pre-`--commit` behavior.
 func resolveBranchRange(root string) (dr diffRange, errKind, errHint string) {
 	base, method, errKind, errHint := ResolveReviewBase(root)
 	if errKind != "" {
@@ -830,10 +830,10 @@ func resolveBranchRangeFromFacts(root string, facts git.DiffFacts) (dr diffRange
 // ResolveReviewBase is the single source of the resolved review base for
 // bench diff and its consumers: the recorded `branch.<name>.benchBase` key when
 // it names a reachable ancestor of HEAD, else merge-base with the resolved
-// default branch, with method carrying which path answered — `recorded`,
-// `merge-base`, or one of the loud fallback labels when a recorded key is
-// present but unusable. A non-empty errKind/errHint with an empty base is the
-// only absence shape; base is never empty on a nil error.
+// default branch. method carries which path answered: `recorded`, `merge-base`, or one
+// of the loud fallback labels when a recorded key is present but unusable. A non-empty
+// errKind/errHint with an empty base is the only absence shape; base is never empty on
+// a nil error.
 func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 	base, method = resolveBase()
 	if base != "" {
@@ -857,9 +857,9 @@ func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 
 // ChangedFilePaths is the single source of the changed-path set for bench diff and
 // its consumers: the path half of changedFiles' rows for a resolved review base,
-// carrying bench diff's exact committed+index+tracked-worktree semantics — `git diff
-// --name-status --no-renames -z <base>` — so a consumer never re-derives that git
-// invocation or the NUL-pair parse.
+// carrying bench diff's exact committed+index+tracked-worktree semantics through
+// `git diff --name-status --no-renames -z <base>`, so a consumer never re-derives that
+// git invocation or the NUL-pair parse.
 func ChangedFilePaths(base string) ([]string, error) {
 	return ChangedFilePathsAt("", base)
 }

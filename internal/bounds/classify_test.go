@@ -323,7 +323,7 @@ func requireUnreadableDir(t *testing.T, path string) {
 
 // TestClassifyNoFollowStates grades the no-follow form's complete disposition in one
 // table. It is separate from TestClassifyStates because the two forms disagree on
-// exactly one input — a live symlink — and a shared table could not assert both
+// exactly one input, a live symlink, and a shared table could not assert both
 // contracts. Every row is a real filesystem object: a synthetic mode seam would let an
 // implementation pass the table while still opening the path it refuses.
 func TestClassifyNoFollowStates(t *testing.T) {

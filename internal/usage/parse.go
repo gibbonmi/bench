@@ -12,7 +12,7 @@ import (
 //
 // NoEmptyValue applies the empty-positional rule to a flag's value: an empty
 // string is what an unset shell variable expands to inside quotes, so a flag
-// whose value names something — a command, a path, a message — treats it as
+// whose value names something, a command, a path, a message, treats it as
 // the mistyped invocation it almost always is. Declaring it here keeps the
 // rule in the shared parser rather than having each subcommand re-derive it.
 type Flag struct {
@@ -137,8 +137,8 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 				continue
 			}
 		}
-		// An empty positional names nothing — it is what an unset shell variable
-		// expands to inside quotes — and a subcommand that resolves it against the
+		// An empty positional names nothing. It is what an unset shell variable
+		// expands to inside quotes, and a subcommand that resolves it against the
 		// filesystem silently widens to the cwd. Rejecting it here gives every
 		// grammar the guard instead of each path-taking subcommand re-deriving it.
 		if a == "" {

@@ -19,21 +19,21 @@ const (
 	StateMalformed  FileState = "malformed"
 	StateUnreadable FileState = "unreadable"
 	StateWrongType  FileState = "wrong-type"
-	// StateUnsupportedSchema belongs to the parsers, not to this package: it means the
+	// StateUnsupportedSchema belongs to the parsers, not to this package. It means the
 	// bytes read cleanly but their structure is not the document the consumer expects,
 	// and only a parser owns that predicate. It is declared here so every parser names
 	// one vocabulary.
 	StateUnsupportedSchema FileState = "unsupported-schema"
 )
 
-// Failed reports whether a state means the read yielded nothing a consumer may trust:
-// the path could not be opened, it was not the kind of thing a control record is, or its
+// Failed reports whether a state means the read yielded nothing a consumer may trust: the
+// path could not be opened, it was not the kind of thing a control record is, or its
 // bytes are not valid UTF-8. Absence and emptiness are authoritative answers rather than
-// failures, so they are not included. Every surface's fail-closed exit and every
-// dashboard `unknown` row keys on this one predicate, so a new state cannot be honored
-// by some surfaces and fall through the default branch of others. StateUnsupportedSchema
-// is deliberately outside it: the classifier never returns it, and each parser decides
-// what an unrecognized shape costs its own command.
+// failures, so they are excluded. Every surface's fail-closed exit and every dashboard
+// `unknown` row keys on this one predicate, so a new state cannot be honored by some
+// surfaces and fall through the default branch of others. StateUnsupportedSchema stays
+// outside it: the classifier never returns it, and each parser decides what an
+// unrecognized shape costs its own command.
 func (s FileState) Failed() bool {
 	switch s {
 	case StateUnreadable, StateWrongType, StateMalformed:
@@ -90,10 +90,10 @@ func ClassifyDir(path string) ClassifiedDir {
 }
 
 // resolve stats path without opening it, returning the target's info for a caller to
-// type-check, or the state that ends the classification. Lstat comes first because a read
-// of a dangling symlink reports ENOENT, which would answer authoritative absence for a
-// link whose target is gone: only a path with no link at all is absent, so once Lstat has
-// succeeded a vanished target is unreadable. The link itself is then followed, because a
+// type-check, or the state that ends the classification. Lstat comes first, because a
+// read of a dangling symlink reports ENOENT, which would answer authoritative absence for
+// a link whose target is gone. Only a path with no link at all is absent, so once Lstat
+// succeeds, a vanished target is unreadable. The link itself is then followed, because a
 // control record linked elsewhere is still a control record.
 func resolve(path string) (fs.FileInfo, FileState, string) {
 	info, err := os.Lstat(path)
@@ -113,15 +113,15 @@ func resolve(path string) (fs.FileInfo, FileState, string) {
 	return info, "", ""
 }
 
-// ClassifyNoFollow reports the state of a producer file at path without ever following
-// a link or opening a non-regular object, reading at most ControlRecordLimit. It sits
-// beside Classify rather than replacing it because the two answer one input
-// differently on purpose: a control record behind a live link is still that record, but
-// a producer file is authoritative input to generated output, so a link there redirects
-// the generator at bytes outside the tree it is grading. Both link forms are therefore
-// wrong-type, and the type check precedes every open so a FIFO cannot block the gate in
-// open(2). The limit is not a parameter: one producer read under two bounds is the
-// divergence ControlRecordLimit exists to forbid.
+// ClassifyNoFollow reports the state of a producer file at path without ever following a
+// link or opening a non-regular object, reading at most ControlRecordLimit. It sits
+// beside Classify rather than replacing it, because the two deliberately answer one input
+// differently: a control record behind a live link is still that record, but a producer
+// file is authoritative input to generated output, so a link there redirects the
+// generator at bytes outside the tree it is grading. Both link forms are therefore
+// wrong-type, and the type check precedes every open, so a FIFO cannot block the gate in
+// open(2). The limit is not a parameter, because one producer read under two bounds is
+// the divergence ControlRecordLimit forbids.
 func ClassifyNoFollow(path string) Classified {
 	info, err := os.Lstat(path)
 	if err != nil {
@@ -134,11 +134,11 @@ func ClassifyNoFollow(path string) Classified {
 }
 
 // gradeBytes is what both public forms mean by "read this and say what it is". The two
-// differ only in how they resolve the path — followed or refused — and in which limit
-// they bind; everything from the regular-file check onward is one fact about how bounded
-// bytes are graded, and splitting it would let the oversized or UTF-8 disposition drift
-// between the forms one edit at a time. info must already be the caller's resolved
-// stat: this helper does not decide whether a link is a control record.
+// differ only in how they resolve the path, followed or refused, and in which limit they
+// bind. Everything from the regular-file check onward is one fact about how bounded bytes
+// are graded, and splitting it would let the oversized or UTF-8 disposition drift between
+// the forms one edit at a time. info must already be the caller's resolved stat: this
+// helper does not decide whether a link is a control record.
 func gradeBytes(path string, info fs.FileInfo, limit int64) Classified {
 	if !info.Mode().IsRegular() {
 		return Classified{State: StateWrongType, Reason: fmt.Sprintf("not a regular file: %s", info.Mode().Type())}

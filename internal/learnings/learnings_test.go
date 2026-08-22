@@ -82,8 +82,8 @@ func TestRefusalEvidencePreservesPrimaryAndDisclosesOnlyRepairableMalformed(t *t
 	type fixtureCase struct {
 		name, pre, candidate, journal string
 		setup                         func(*testing.T, string)
-		// resolve supplies the run-scoped bytes a fixture cannot check in — an OS error
-		// naming an absolute temp path — for substitution into journalPathToken.
+		// resolve supplies the run-scoped bytes a fixture cannot check in, an OS error
+		// naming an absolute temp path, for substitution into journalPathToken.
 		resolve func(*testing.T) string
 		code    int
 	}

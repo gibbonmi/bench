@@ -8,7 +8,7 @@ import (
 
 // testGrammar is the shared fixture for the parse tests: a small subcommand
 // taking a value flag, a boolean flag, and one required plus one optional
-// positional — enough shape to exercise every grammar rule below.
+// positional, enough shape to exercise every grammar rule below.
 func testGrammar() Grammar {
 	return Grammar{
 		Cmd:  "bench frobnicate",
@@ -24,7 +24,7 @@ func testGrammar() Grammar {
 
 // TestParseHelpSpellings pins that each of the three help spellings
 // short-circuits to the declared help text at exit 0, ahead of an otherwise
-// satisfied grammar — a partial implementation that only recognizes --help
+// satisfied grammar. A partial implementation that only recognizes --help
 // must fail on the other two.
 func TestParseHelpSpellings(t *testing.T) {
 	g := testGrammar()
@@ -186,7 +186,7 @@ func TestParseReservedPositionalsPrecedeHelpFlagsAndTerminator(t *testing.T) {
 // TestParseBareDashAndSecondDoubleDash pins the two tokens a naive
 // dash-prefix check mis-parses as flags: a lone "-" is a positional (a legal
 // filename) both in ordinary flag position and after flag parsing has ended,
-// and a second "--" — once flag parsing has already ended — is an ordinary
+// and a second "--", once flag parsing has already ended, is an ordinary
 // positional rather than being treated specially again.
 func TestParseBareDashAndSecondDoubleDash(t *testing.T) {
 	g := testGrammar()
@@ -213,7 +213,7 @@ func TestParseBareDashAndSecondDoubleDash(t *testing.T) {
 }
 
 // TestParseMissingFlagValueDistinctFromUnknownFlag pins that a value flag with
-// nothing following renders MissingArg, not Usage — collapsing the two labels
+// nothing following renders MissingArg, not Usage. Collapsing the two labels
 // is the cheapest wrong implementation and it still exits 2, so the rendered
 // line is asserted alongside the code.
 func TestParseMissingFlagValueDistinctFromUnknownFlag(t *testing.T) {
@@ -318,7 +318,7 @@ func TestParseRepeatedFlagAfterDoubleDashIsPositional(t *testing.T) {
 
 // TestParseRepeatedHelpIsHelp pins the interaction with the help rule: help is
 // checked before any flag bookkeeping and is always success, so a repeated help
-// spelling — or help repeated alongside a repeated flag — still exits 0 with the
+// spelling, or help repeated alongside a repeated flag, still exits 0 with the
 // declared help text rather than becoming a duplicate-flag error.
 func TestParseRepeatedHelpIsHelp(t *testing.T) {
 	g := testGrammar()

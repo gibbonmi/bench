@@ -44,8 +44,8 @@ func TestDeadlineExceedsEveryRegistryDuration(t *testing.T) {
 
 // TestDeadlineHoldsAtItsBoundaries grades the inputs the registry can never supply: a
 // negative bound, a zero bound, and the top of the duration range where inner + inner/2
-// overflows. The overflow case is the one that matters most — a wrapped sum is a negative
-// deadline, which expires before the wait it is supposed to contain even begins.
+// overflows. The overflow case matters most: a wrapped sum is a negative deadline, which
+// expires before the wait it is supposed to contain even begins.
 func TestDeadlineHoldsAtItsBoundaries(t *testing.T) {
 	for _, inner := range []time.Duration{
 		-time.Hour, -1, 0, 1, time.Second,
@@ -76,7 +76,7 @@ func TestDeadlineHoldsAtItsBoundaries(t *testing.T) {
 
 // registryDurations type-checks the policy registry's own declarations and returns every
 // time.Duration entry by name. It reads the const block instead of restating a sample of
-// it, so a duration bound added later is graded here without anyone remembering to add it.
+// it, so a duration bound added later is graded here with no one needing to add it.
 func registryDurations(t *testing.T) map[string]time.Duration {
 	t.Helper()
 	fset := token.NewFileSet()

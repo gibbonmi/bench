@@ -155,8 +155,8 @@ func TestResolveReviewBase_Unresolvable(t *testing.T) {
 	}
 }
 
-// TestResolveBranchRangeConsumesExport is DX5: resolveBranchRange (and therefore bare
-// `bench diff`) agrees byte-for-byte with the exported resolution — no second,
+// TestResolveBranchRangeConsumesExport is DX5: resolveBranchRange, and therefore bare
+// `bench diff`, agrees byte-for-byte with the exported resolution. No second,
 // divergence-capable derivation survives inline.
 func TestResolveBranchRangeConsumesExport(t *testing.T) {
 	_, _, c1, _ := seedDivergedRepo(t)

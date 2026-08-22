@@ -17,7 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// grammar is the declared argument shape usage.Parse enforces for this subcommand:
 // arity, flag recognition, `--`, and help all come from there rather than a local switch.
 var grammar = usage.Grammar{
 	Cmd:  "bench learnings",
@@ -53,7 +53,7 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 	var malformed []Malformed
 	// runStart holds the first line index of the open unaccounted run, or -1 when none is
 	// open. The record is emitted when the run ends, so one pasted block is one row rather
-	// than one per line, and it carries the run's first line — where the writer repairs it.
+	// than one per line, and it carries the run's first line, where the writer repairs it.
 	runStart := -1
 	flushRun := func() {
 		if runStart < 0 {
@@ -132,7 +132,7 @@ const unaccountedReason = "learning content below the entries marker is not an e
 // unaccountedRegion returns the half-open line-index range below an opening entries
 // marker, or (-1, -1) when no marker opens the rule.
 //
-// The marker opens the rule only above the first real entry heading — a `## ` line that
+// The marker opens the rule only above the first real entry heading, a `## ` line that
 // isTemplatePlaceholder does not claim. That exclusion is load-bearing: the shipped
 // scaffold prints its worked example `## <date>` above the marker, so an anchor that
 // counted that line would never open the rule on the one journal shape it serves. A
@@ -165,7 +165,7 @@ func unaccountedRegion(lines []string) (start, end int) {
 // em-dash), and the trailing `[open]…`, with surrounding whitespace removed.
 func Rows(content []byte) [][]string { return openRows(Entries(content)) }
 
-// openRows projects the open-state entries to date/title rows — the one source Rows
+// openRows projects the open-state entries to date/title rows: the one source Rows
 // and Command both narrow to, so the listing and the open-count agree by construction.
 func openRows(entries []Entry) [][]string {
 	var rows [][]string
@@ -198,7 +198,7 @@ func isDatedHeading(line string) bool {
 }
 
 // lostDatedLineReason is the reason a dated line that is not a well-formed heading
-// carries. It names the writer's repair — use a heading — rather than the parser's
+// carries. It names the writer's repair, use a heading, rather than the parser's
 // disappointment, and it is distinct from the two `## ` reasons so a reader can tell
 // "you used the wrong marker" from "your heading is broken".
 const lostDatedLineReason = "dated learning entry is not a heading"
@@ -208,8 +208,8 @@ const lostDatedLineReason = "dated learning entry is not a heading"
 // parses to nothing today. A line already starting `## ` is excluded outright, because
 // the two heading reasons own it and a second record would double-report it.
 //
-// The prefix walk strips a run — possibly empty, so a date flush at column one is
-// still reached — of runes that are each either whitespace or one of the markdown
+// The prefix walk strips a run, possibly empty so a date flush at column one is
+// still reached, of runes that are each either whitespace or one of the markdown
 // markers a writer reaches for. unicode.IsSpace is the exact predicate rather than the
 // ASCII isSpace below: this serves hand-edited markdown, where a pasted U+00A0 or
 // U+3000 must not re-open the silent drop, while the zero-width U+200B and U+FEFF are
@@ -257,7 +257,7 @@ func isTemplatePlaceholder(line string) bool {
 	return date == "<date>"
 }
 
-// hasAnyHeading reports whether content attempts the journal shape at all — any line
+// hasAnyHeading reports whether content attempts the journal shape at all: any line
 // beginning `## `, dated, malformed, or the template placeholder alike. Its absence is
 // what unsupported-schema means for this document: bytes that never attempt a heading,
 // as distinct from a heading attempt that failed to parse.
@@ -305,25 +305,26 @@ const JournalSchemaHeading = "# Learnings — usage journal"
 
 // JournalEntriesMarker is the scaffold's boundary comment: the line below which a
 // writer is meant to append entries. It is exported because the boundary the parser
-// enforces and the boundary a fresh repo receives are one fact — a second copy of the
+// enforces and the boundary a fresh repo receives are one fact. A second copy of the
 // literal in internal/adopt's scaffold is how the two drift apart.
 const JournalEntriesMarker = "<!-- entries below -->"
 
 // JournalPath is the repo-relative journal. It is exported because the name is one
-// fact with three readers — this command, the roadmap drain that counts its open
-// headings, and the status row that names it when the read fails — and a literal
-// repeated at each of them is how the three drift apart.
+// fact with three readers: this command, the roadmap drain that counts its open
+// headings, and the status row that names it when the read fails. A literal repeated
+// at each of them is how the three drift apart.
 const JournalPath = "capture/learnings.md"
 
-// Command implements `bench learnings`. Unknown argument → usage on stdout, exit 2;
-// outside a repo → structured error on stdout, exit 1. Absence is the only
-// authoritative empty state: a missing journal renders the empty table at exit 0. Any
-// other non-parsed classifier state — empty, malformed bytes, unreadable, wrong-type —
-// or a document that never attempts a `## ` heading at all (unsupported-schema) exits 1
-// with a structured `error:` line naming the state, so a read failure can never print
-// as an empty table. A parsed document with malformed headings among its well-formed
-// entries renders every well-formed row plus one row per malformed heading and still
-// exits 1 (story 9): a broken entry is surfaced, never silently dropped.
+// Command implements `bench learnings`. An unknown argument prints usage on stdout at
+// exit 2, and outside a repo it prints a structured error on stdout at exit 1. Absence
+// is the only authoritative empty state: a missing journal renders the empty table at
+// exit 0. Any other non-parsed classifier state (empty, malformed bytes, unreadable, or
+// wrong-type) exits 1 with a structured `error:` line naming the state; so does a
+// document that never attempts a `## ` heading at all (unsupported-schema). A read
+// failure can therefore never print as an empty table. A parsed document with malformed
+// headings among its well-formed entries renders every well-formed row plus one row per
+// malformed heading and still exits 1 (story 9): a broken entry is surfaced, never
+// silently dropped.
 func Command(args []string) (string, int) {
 	if _, line, code := usage.Parse(grammar, args); line != "" {
 		return line + "\n", code

@@ -51,14 +51,14 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
-// version is stamped at build time via -ldflags "-X main.version=<pkg.json version>"
-// (see scripts/go-build.sh — the one source of build flags). An unstamped build
-// prints "dev", which is the tell that the binary was not produced by the gate or
-// the release workflow.
+// version is stamped at build time via -ldflags "-X main.version=<pkg.json version>";
+// scripts/go-build.sh is the one source of build flags. An unstamped build prints "dev",
+// which tells the reader that the binary did not come from the gate or the release
+// workflow.
 var version = "dev"
 
 func main() {
-	// The wrapper's implicit-repair grant is spent once it execs this binary; scrub it so
+	// The wrapper's implicit-repair grant is spent once it execs this binary. Scrub it so
 	// gate phases and their fixtures never inherit an invocation-dependent privilege.
 	os.Unsetenv("BENCH_ALLOW_IMPLICIT_REPAIR")
 	var observation io.Writer
@@ -243,7 +243,7 @@ func testCommand(args []string) (string, int) {
 }
 
 // commandsGrammar is the declared argument shape usage.Parse enforces for `bench
-// commands` — arity, flag recognition, `--`, and help all come from there rather than a
+// commands`. Arity, flag recognition, `--`, and help all come from there rather than a
 // local switch. `--brief` is the only form that lists anything, so an invocation without
 // it keeps its exit-2 usage answer.
 var commandsGrammar = usage.Grammar{
@@ -280,9 +280,9 @@ func roadmapCommand(args []string) (string, int) {
 	})
 }
 
-// linesEnv resolves the repo's .bench/lines.env for the two binding consumers
-// (resolve-model and check-agent-line). A cwd outside a repo reads as no binding, so the
-// verdicts take their unrouted branch rather than denying against an absent oracle; a
+// linesEnv resolves the repo's .bench/lines.env for the two binding consumers,
+// resolve-model and check-agent-line. A cwd outside a repo reads as no binding, so the
+// verdicts take their unrouted branch rather than denying against an absent oracle. A
 // file that is present but fails to read is reported as unreadable rather than absent,
 // because a corrupt oracle must announce itself instead of silently disabling
 // enforcement.
@@ -319,13 +319,13 @@ var checkAgentLineGrammar = usage.Grammar{
 	Flags: []usage.Flag{harnessFlag},
 }
 
-// resolveModel is the `bench resolve-model` plumbing subcommand for the shift adapters:
-// it prints the model to pass via the harness --model flag (empty for passthrough) to
-// stdout and returns an exit code. Any warning/error goes to os.Stderr directly — the
-// map signature carries only stdout, and the adapter captures stdout AS the model, so a
-// warning must never ride there. BENCH_MODEL names a tier and --harness names the column;
-// in a routed repo an unset or unbound tier exits 1 and the adapter refuses to launch.
-// The verdict lives in internal/lines so it is unit-tested without a repo.
+// resolveModel is the `bench resolve-model` plumbing subcommand for the shift adapters.
+// It prints the model to pass via the harness --model flag, empty for passthrough, to
+// stdout and returns an exit code. Any warning or error goes to os.Stderr directly: the
+// map signature carries only stdout, and the adapter captures stdout as the model, so a
+// warning must never ride there. BENCH_MODEL names a tier and --harness names the column.
+// In a routed repo an unset or unbound tier exits 1 and the adapter refuses to launch.
+// The verdict lives in internal/lines, so it is unit-tested without a repo.
 func resolveModel(args []string) (string, int) {
 	harness, line, code := parseHarness(resolveModelGrammar, args)
 	if line != "" {
@@ -359,11 +359,11 @@ func parseHarness(g usage.Grammar, args []string) (harness, line string, code in
 	return harness, "", 0
 }
 
-// checkAgentLine is the delegation guard subcommand: it reads the Agent PreToolUse
+// checkAgentLine is the delegation guard subcommand. It reads the Agent PreToolUse
 // envelope on stdin, reads the binding through internal/lines, and yields the verdict as
-// an exit code — 0 allow (or any degraded warn-and-allow, with its WARNING on stderr), 2
-// deny (with the DENIED message on stderr). The deferred recover maps any panic to 3, so
-// exit 2 means only an intentional deny and the shim's fail-open rim catches a crash.
+// an exit code: 0 allow, including a degraded warn-and-allow with its WARNING on stderr,
+// or 2 deny, with the DENIED message on stderr. The deferred recover maps any panic to 3,
+// so exit 2 means only an intentional deny, and the shim's fail-open rim catches a crash.
 func checkAgentLine(args []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -405,8 +405,8 @@ func captureClaudeAgentIntent(data []byte, stderr io.Writer) {
 	if envelope.ToolName != "" && envelope.ToolName != "Agent" {
 		return
 	}
-	// objective is a capture-quality guard only — the ledger stores the entry key, not the
-	// text — so a missing objective still skips a meaningless capture.
+	// objective is a capture-quality guard only. The ledger stores the entry key, not the
+	// text, so a missing objective still skips a meaningless capture.
 	objective := envelope.ToolInput.Description
 	if objective == "" {
 		objective = sanitize.Preview(envelope.ToolInput.Prompt)
@@ -427,12 +427,12 @@ func captureClaudeAgentIntent(data []byte, stderr io.Writer) {
 	}
 }
 
-// stopVerdict is the completion-oracle subcommand: it reads the Stop envelope on stdin,
-// takes the resolved wrapper as args[0] (the shim passes it so gate resolution stays in
-// bin/bench.sh), and orchestrates the verdict through internal/stophook — honoring
-// stop_hook_active, enforcing only when BENCH_SHIFT=1, running `<wrapper> gate`, writing
-// the verdict cache, and returning 0 allow / 2 block. A panic maps to 3, which the shim
-// treats as a core error and fails open (no forged verdict), exactly like a missing core.
+// stopVerdict is the completion-oracle subcommand. It reads the Stop envelope on stdin
+// and takes the resolved wrapper as args[0], because the shim passes it so gate
+// resolution stays in bin/bench.sh. It orchestrates the verdict through internal/stophook:
+// honoring stop_hook_active, enforcing only when BENCH_SHIFT=1, running `<wrapper> gate`,
+// writing the verdict cache, and returning 0 allow or 2 block. A panic maps to 3, which
+// the shim treats as a core error and fails open, with no forged verdict, like a missing core.
 func stopVerdict(args []string, stdin io.Reader, stderr io.Writer) (code int) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -449,11 +449,10 @@ func stopVerdict(args []string, stdin io.Reader, stderr io.Writer) (code int) {
 }
 
 // treeHash exposes git.TreeHash as the `bench tree-hash [root]` plumbing subcommand:
-// gate subject's tree identity, kept as a standalone subcommand for external callers.
+// the gate subject's tree identity, kept as a standalone subcommand for external callers.
 // The gate owner calls git.TreeHash directly, so the hash still has one source. Root is
-// args[0] when given, else the cwd's
-// repo. It prints the content hash or `none`; a non-hash tells the caller to fail safe
-// rather than forge.
+// args[0] when given, else the cwd's repo. It prints the content hash or `none`; a
+// non-hash tells the caller to fail safe rather than forge.
 func treeHash(args []string) (string, int) {
 	var root string
 	if len(args) > 0 && args[0] != "" {
@@ -468,11 +467,11 @@ func treeHash(args []string) (string, int) {
 	return git.TreeHash(root) + "\n", 0
 }
 
-// guardGit is the destructive-git guard subcommand: it reads the PreToolUse envelope on
-// stdin, classifies through internal/gitguard, and yields the verdict as an exit code —
-// 0 allow, 2 block (with the `BLOCKED:` message on stderr), 3 a genuine failure to run.
+// guardGit is the destructive-git guard subcommand. It reads the PreToolUse envelope on
+// stdin, classifies through internal/gitguard, and yields the verdict as an exit code:
+// 0 allow, 2 block, with the `BLOCKED:` message on stderr, or 3 a genuine failure to run.
 // The deferred recover maps any panic to 3, not Go's default exit-2, so exit 2 means
-// only an intentional block and the shim can trust it.
+// only an intentional block, and the shim can trust it.
 func guardGit(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
 	defer func() {
 		if r := recover(); r != nil {
