@@ -1,25 +1,25 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`; integration worktree `bench worktree path spec-ste`
-Branch: `bench/assign/e10f369f24649fcd21dedc65f5e36350/d5bd1e58c5c0e89e21ea6c277d0aab46` — review base `ba67efc4` (reviewed graph `4d8aa66e` merged with `main` `9618dde8`); tickets 01–03 landed through `55ed7a0c`
-Spec: `specs/roadmap-flow/spec.md` — Status: staged, five tickets approved
-Gate: green at every ticket commit on the integration worktree
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `5f1b245`, 17 dirty paths, 14 unpushed commits
+Spec: `specs/inherited-toolchain-environment/spec.md` (Status: staged)
+Gate: green at `f10e405` — stale, work tree `befab75`
 
 ## State
 
-`/bench-implement-spec --full` is in its build phase. Tickets 01 (`bench
-roadmap --flow`), 02 (`Next:` grammar, missing-line class behind the
-`rowNextMissingEnforced` switch), and 03 (`retro-improvement-markers` check)
-landed green. Ticket 04 builds on fable/high in its own worktree; ticket 05
-then runs on sonnet/medium by reviewer decision (spec said opus). Reviewer for
-the review phase: sonnet/high. Cap 3 fix loops per ticket. The delegate
-worktrees `roadmap-flow-t01..t04` hold landed or in-flight diffs and are not
-yet released.
+The 2026-08-22 drain retired `specs/roadmap-flow/`, drained its retro (eight
+items: three fed FT238 and FT120, two built as the light-path kit edit, three
+dismissed), verdicted three journal entries (FT214 fed; STE experiment and
+blocked-chain entries dismissed after the kit edit), reworded FT172 for the
+shipped `Next:` grammar half, and refreshed the sequence. The board holds 72
+rows; the flow window reports a net delta of 0. Delegate worktrees
+`roadmap-flow-t01..t05`, `spec-std`, and `shape-roadmap-growth` still exist;
+`bench worktree clean` is the reviewer's call.
 
 ## Next command
 
-`/bench-implement-spec --full specs/roadmap-flow/spec.md --reviewer sonnet high`
+`/bench-implement-spec specs/inherited-toolchain-environment/spec.md`
 
 ## Shape
 

@@ -284,6 +284,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT242: inherited environment markers cannot hide a required toolchain. A reproduced Codex-client environment omitted native Go while claiming initialization was loaded, and the resulting Git-source build or Go-backed gate can fail weakly.
-2. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder. The defect reproduced through the accused command: a green correct commit exited `landed-but-checkout-incomplete`, left `specs/<slug>/` as untracked residue, and required manual cleanup plus another full gate run.
-3. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms. The current learning showed an occurrence-sourced row naming an unreachable producer path; producer reachability must be settled before the row locks.
+1. `/bench-implement-spec` — FT242: inherited environment markers cannot hide a required toolchain. The spec `inherited-toolchain-environment` is staged with two approved tickets; build it.
+2. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder. The defect reproduced again on 2026-08-22: a green light-path commit exited `landed-but-checkout-incomplete` and left `specs/<slug>/` as untracked residue.
+3. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now carrying the two FT242-review checks (real-environment evidence, descendant-survival oracle).
