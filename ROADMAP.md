@@ -125,13 +125,10 @@ means the repository-controlled compliance assessment.
 
 ## False greens — verdicts that credit unchecked work
 
-Six rows, one failure class: a green whose warrant is missing — a stale
+Five rows, one failure class: a green whose warrant is missing — a stale
 binary, a dead or skipping citation, a vacuous baseline, an unchecked absence,
-a dependency edge nothing resolves, or a required toolchain hidden from the
-harness environment. Each hardens a different oracle surface, so
+a dependency edge nothing resolves. Each hardens a different oracle surface, so
 they stay separate builds, but they read and prioritize as one theme.
-
-**FT242 (HIGH) — inherited environment markers cannot hide a required toolchain.**
 
 **FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations resolve.**
 
@@ -284,6 +281,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT242: inherited environment markers cannot hide a required toolchain. The spec `inherited-toolchain-environment` is staged with two approved tickets; build it.
-2. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder. The defect reproduced again on 2026-08-22: a green light-path commit exited `landed-but-checkout-incomplete` and left `specs/<slug>/` as untracked residue.
-3. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now carrying the two FT242-review checks (real-environment evidence, descendant-survival oracle).
+1. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder. The defect reproduced again on 2026-08-22: a green light-path commit exited `landed-but-checkout-incomplete` and left `specs/<slug>/` as untracked residue.
+2. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now carrying the two FT242-review checks (real-environment evidence, descendant-survival oracle).
