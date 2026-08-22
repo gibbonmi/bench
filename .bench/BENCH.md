@@ -19,9 +19,9 @@ hooks and adapters, live in `.bench/BENCH-reference.md`. Run `bench` exactly as 
 executable help spells it.
 
 Bench owns non-interactive input, complete output, and required next actions. The
-complete output is the evidence (on a red gate, the failure attribution), and output
-too long to read is CLI-owned projection work, not call-site shaping. Never append
-extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on.
+complete output is the evidence, and on a red gate it is the failure attribution.
+Output too long to read is CLI-owned projection work, not call-site shaping. Never
+append extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on.
 `bench gate` is valid. `bench gate 2>&1 | tail -20` is not valid.
 
 ## The four invariants (these override convenience, always)
@@ -68,7 +68,7 @@ convergence. `craft-line` owns that call.
 - This rule governs your **conversational output**; artifacts stay as full as
   their templates need. Every written artifact — a doc, an ADR, a roadmap row,
   a handoff, a retro, a journal entry, a spec, a ticket — uses ASD-STE100
-  prose; the rules are in
+  prose. The rules are in
   `.agents/skills/bench-craft-spec/references/ste-prose.md`.
 - Give me what I need to decide, nothing more. Lead with the result; skip the
   preamble and the filler. Cut the derivation; keep the context and the
@@ -78,9 +78,9 @@ convergence. `craft-line` owns that call.
   guess wide. Recommend one option; do not offer a blind menu.
 - Recommend in the form *this* harness can invoke: a `/bench-*` phase becomes
   the Claude Code slash command, the Codex `$bench-*` skill, or
-  `.agents/commands/<name>.md` elsewhere — a surface it lacks is a dead key.
-- A claim resting on a source outside the tree — a reference repo, a vendored
-  kit, an upstream doc — names what you read and what you did not.
+  `.agents/commands/<name>.md` elsewhere. A surface it lacks is a dead key.
+- A claim can rest on a source outside the tree: a reference repo, a vendored
+  kit, or an upstream doc. Such a claim names what you read and what you did not.
 - Format for scan: use a list or a table for genuinely parallel facts, and
   prose otherwise.
 - **Structured Bench phase conversation:** on a `/bench-*` or `$bench-*` call,
@@ -113,10 +113,10 @@ convergence. `craft-line` owns that call.
 5. `/bench-final-check` to gate, commit on green, and report the landing evidence.
 
 **Right-size the process; ask before deviating.** A few-line change does not
-need the full pipeline, and you may propose a lighter path — but skipping a
-canonical step needs a standing approval (the table below, a size rule I have
-given you, the fix-and-gate path for review findings) or my explicit OK.
-Behavior defects run focused regression checks, then the gate.
+need the full pipeline. You may propose a lighter path. Skipping a canonical
+step needs a standing approval: the table below, a size rule I have given
+you, or the fix-and-gate path for review findings. My explicit OK also
+counts. Behavior defects run focused regression checks, then the gate.
 
 | Observable | Route |
 |---|---|
@@ -129,25 +129,28 @@ land`; `.bench/BENCH-reference.md` holds that landing shape.
 **Fix, don't park.** A small defect you find mid-work is not backlog: the
 fix lands in the active workflow as its own commit. Park a fix to
 `capture/IDEAS.md` or `capture/learnings.md` only when it needs a reviewer
-decision, a new seam, or spec-level design. **A batch approval covers per-spec
-sign-offs when I'm unreachable:** if I approved a batch plan and went AFK,
-build on rather than stall; leave each spec in `specs/` as post-hoc veto
-surface and flag contestable calls. Absent one, spec sign-off is a hard stop.
+decision, a new seam, or spec-level design.
+
+**A batch approval covers per-spec sign-offs when I'm unreachable.** If I
+approved a batch plan and went AFK, build on rather than stall. Leave each
+spec in `specs/` as post-hoc veto surface and flag contestable calls. Absent
+one, spec sign-off is a hard stop.
 
 **Capture what you learn; never silently rewrite your own rules.** When you
-deviate, make a judgment call you're unsure about, or catch a
-should-have-asked in hindsight, append one entry to `capture/learnings.md`:
-name what happened, the right behavior, and a proposed rule change if any —
-you capture, I decide. `/bench-drain` verdicts every open entry into roadmap
-items with my sign-off. A harness's auto-memory holds user and preference
-facts; a process or judgment learning lands in `capture/learnings.md`, whose
-reviewed drain is its only path in.
+deviate, make an unsure judgment call, or catch a should-have-asked in
+hindsight, append one entry to `capture/learnings.md`. Name what happened,
+the right behavior, and a proposed rule change if any. You capture; I decide.
+`/bench-drain` verdicts every open entry into roadmap items with my sign-off.
+A harness's auto-memory holds user and preference facts; a process or
+judgment learning lands in `capture/learnings.md`, whose reviewed drain is
+its only path in.
 
 ## Capture
 
-Parking an idea is conversational, never a CLI chore for the reviewer: when
+Parking an idea is conversational, never a CLI chore for the reviewer. When
 the reviewer wants to set one aside, or you spot a tangent worth keeping,
 **you** run `bench idea "<text>"`. Offer once, then let it go. Parked ideas
-land in `capture/IDEAS.md` and graduate to the board — an index line in
-`ROADMAP.md`, body and ledger in `roadmap/FT<n>.md` — only through a reviewed
-`/bench-drain` drain, or close by implementation during that same drain.
+land in `capture/IDEAS.md` and graduate to the board: an index line in
+`ROADMAP.md`, body and ledger in `roadmap/FT<n>.md`. That graduation runs
+only through a reviewed `/bench-drain` drain, or closes by implementation
+during that same drain.

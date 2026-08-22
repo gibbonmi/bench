@@ -9,8 +9,6 @@ capture/IDEAS.md an inbox of verbatim parked text
 #
 # Temporary rows. Each migration ticket removes its own rows in the commit that
 # makes its files pass. No ticket adds a row.
-.bench/BENCH.md migrates in ticket 02b
-.bench/BENCH-reference.md migrates in ticket 02b
 .agents/skills/bench-craft-spec/SKILL.md migrates in ticket 04
 .agents/skills/bench-craft-spec/references/bootstrap-authority.md migrates in ticket 04
 .agents/skills/bench-craft-seams/ migrates in ticket 04
