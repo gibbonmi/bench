@@ -77,6 +77,7 @@ func init() {
 		"roadmap-detail-integrity":      {roadmap.ValidateRoadmapTree, registry.Dev, registry.SubjectRoot},
 		"structure-accept-currency":     {structure.ValidateAcceptGrants, registry.Dev, registry.SubjectRoot},
 		"retro-improvement-markers":     {retros.ValidateImprovementMarkers, registry.Dev, registry.SubjectRoot},
+		"row-next-grammar":              {checkRowNextGrammar, registry.Dev, registry.SubjectRoot},
 	}
 }
 

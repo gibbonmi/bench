@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -121,5 +122,64 @@ func TestRetroFeedsMarkerAnchorRedsOnRemoval(t *testing.T) {
 	}
 	if diags := evaluate(t, fmt.Sprintf(template, "")); !slices.Contains(diags, want) {
 		t.Fatalf("template without the destination-marker clause = %v, want %q", diags, want)
+	}
+}
+
+// TestDrainFlowRuleAnchorsRedOnRemoval pins RF26 and RF27. Each drain rule is written here
+// independently of the registry, next to the diagnostic that must name it, so the anchor
+// cannot be re-derived green from a command file that dropped one rule while the rest
+// survived.
+func TestDrainFlowRuleAnchorsRedOnRemoval(t *testing.T) {
+	rules := []struct{ row, rule, want string }{
+		{"RF26", "Run `bench roadmap --flow` once and quote its flow block in the exit.", ".agents/commands/bench-drain.md dropped the flow-quote rule: the exit quotes bench roadmap --flow"},
+		{"RF26", "An entry feeds a row only when it changes the row's priority, scope, or `Next:`.", ".agents/commands/bench-drain.md dropped the feeds-a-row test: priority, scope, or Next:"},
+		{"RF26", "Dismiss an occurrence-only entry with one line of why.", ".agents/commands/bench-drain.md dropped the occurrence-only dismissal rule"},
+		{"RF26", "A new row needs a `Next:` token and a class before it opens.", ".agents/commands/bench-drain.md dropped the new-row rule: a Next: token and a class"},
+		{"RF27", "When the flow report shows a positive net delta, propose reducing moves in the next batch diff.", ".agents/commands/bench-drain.md dropped the positive-delta restructure rule"},
+		{"RF27", "build the item in this session (\"implement now\") by default; open a `ROADMAP.md` row only when the reviewer declines", ".agents/commands/bench-drain.md dropped the build-in-session default for a light-path item"},
+	}
+
+	evaluate := func(t *testing.T, body string) []string {
+		t.Helper()
+		root := t.TempDir()
+		dir := filepath.Join(root, ".agents", "commands")
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "bench-drain.md"), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+	command := func(dropped int) string {
+		var b strings.Builder
+		b.WriteString("# /bench-drain\n\n")
+		for i, r := range rules {
+			if i == dropped {
+				continue
+			}
+			b.WriteString(r.rule + "\n\n")
+		}
+		return b.String()
+	}
+
+	// Other rows of the group fire against this minimal tree; only the six rule rows are
+	// this test's subject, so both directions are read by membership.
+	full := evaluate(t, command(-1))
+	for _, r := range rules {
+		if slices.Contains(full, r.want) {
+			t.Errorf("%s: command carrying every rule raised %q", r.row, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, command(i))
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("%s: command without %q = %v, want %q", r.row, r.rule, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("%s: dropping %q also raised %q", r.row, r.rule, other.want)
+			}
+		}
 	}
 }

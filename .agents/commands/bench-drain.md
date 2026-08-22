@@ -37,9 +37,10 @@ or a sequence from partial sources.
 
 Close by reporting the reconcile verdicts (rows removed or reworded), the drained
 idea count, each retro recommendation disposition, each journal verdict, and the
-refreshed sequence — with judgment calls flagged for veto. On approval, commit
-on green, once, over everything the pass touched; the recommended next command
-is the top line of the refreshed `## Recommended sequence`.
+refreshed sequence — with judgment calls flagged for veto. Run
+`bench roadmap --flow` once and quote its flow block in the exit. On approval,
+commit on green, once, over everything the pass touched; the recommended next
+command is the top line of the refreshed `## Recommended sequence`.
 
 ## 1. Reconcile first
 
@@ -64,6 +65,9 @@ its roadmap row first, and leave that row naming no spec path — the row surviv
 only as the residual work the spec did not ship.
 
 ## 2. Drain occurrence evidence
+
+An entry feeds a row only when it changes the row's priority, scope, or `Next:`.
+Dismiss an occurrence-only entry with one line of why.
 
 ### Normalize touched rows
 
@@ -91,6 +95,18 @@ disposition in the roadmap — a new prioritized row, a merge into the row that
 already covers it, or a drop as already-triaged — and the parked-pending-evidence
 tier is a valid destination for items awaiting a real trigger. No line stays
 parked in the inbox; partial drains would kill the empty-state trigger.
+
+A new row needs a `Next:` token and a class before it opens. Write the token as
+the row's `Next:` line in `roadmap/FT<n>.md`; step 6 gives the class. Each
+token maps to one phase:
+
+| token | phase |
+|---|---|
+| `shape` | `/bench-shape-idea` |
+| `spec` | `/bench-write-spec` |
+| `ticket` | the light-path ticket |
+| `decide` | a reviewer decision |
+| `kit-edit` | a `craft-synthesis` kit edit |
 
 ## 4. Drain implementation retros
 
@@ -133,12 +149,13 @@ raw `git add` standing in for `bench commit`) proves nothing about the accused
 path: without the real repro, dismiss the entry as unreproduced, or re-park it
 with the missing repro named as its graduation trigger.
 
-For a drained item that meets the light-path observables, offer the reviewer
-"implement now" instead of a `ROADMAP.md` row: write its one ticket file, spawn a
-write-delegate charged with that ticket under `craft-delegate` isolation and
-`craft-line` routing, then verify the returned diff in the main session against
-the ticket's acceptance rows and the gate. Items needing a reviewer decision, a
-new seam, or spec-level design still graduate to `ROADMAP.md`.
+For a drained item that meets the light-path observables, build the item in this
+session ("implement now") by default; open a `ROADMAP.md` row only when the
+reviewer declines. Write its one ticket file. Spawn a write-delegate charged with
+that ticket under `craft-delegate` isolation and `craft-line` routing. Then verify
+the returned diff in the main session against the ticket's acceptance rows and
+the gate. Items needing a reviewer decision, a new seam, or spec-level design
+still graduate to `ROADMAP.md`.
 
 ## 6. Classify every run; restructure on request
 
@@ -157,7 +174,9 @@ rows that are faces of one missing primitive, fold a leftover clause into its
 parent row, and group rows sharing one failure class under a theme header —
 the board otherwise accretes near-duplicates that each pay a full pipeline
 and gate separately. A default run that spots a restructure candidate names
-it in the exit rather than applying it.
+it in the exit rather than applying it. When the flow report shows a positive
+net delta, propose reducing moves in the next batch diff. That obligation does
+not wait for `--restructure`.
 
 ## 7. Refresh the sequence
 

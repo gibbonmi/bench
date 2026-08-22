@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-drain.md",
+    "old": "| `kit-edit` | a `craft-synthesis` kit edit |\n",
+    "new": ""
+  }
+]

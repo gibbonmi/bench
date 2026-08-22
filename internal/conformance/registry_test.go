@@ -185,6 +185,11 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/retros/recommendations.go",
 		"internal/conformance/checks_test.go",
 	),
+	"row-next-grammar": conformanceGoFixture(
+		"internal/roadmap/roadmap.go",
+		"internal/conformance/row_next_grammar_test.go",
+		"internal/conformance/checks_test.go",
+	),
 	"roadmap-detail-integrity": conformanceGoFixture(
 		"internal/roadmap/tree.go",
 		"internal/roadmap/tree_validation.go",
