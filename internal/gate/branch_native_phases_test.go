@@ -4,10 +4,74 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
+
+func TestPhaseTableRequiresGoForBuiltInGoModule(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/graded\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", t.TempDir())
+
+	phases, err := phaseTable(root, root)
+	if err == nil {
+		t.Fatalf("phase table = %#v, want missing Go refusal", phases)
+	}
+	for _, want := range []string{"go", "PATH", root} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("phase-table error = %q, want %q", err, want)
+		}
+	}
+}
+
+func TestPhaseTableWithoutGoModuleKeepsBuiltInNonGoPhases(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("PATH", t.TempDir())
+
+	phases, err := phaseTable(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"shellcheck"}; !reflect.DeepEqual(phaseNames(phases), want) {
+		t.Fatalf("phase names = %v, want %v", phaseNames(phases), want)
+	}
+}
+
+func TestPhaseTableManifestRemainsAuthoritativeWithoutGo(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/graded\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := []byte(`{"phases":[{"name":"declared","argv":["true"]}]}`)
+	if err := os.WriteFile(filepath.Join(root, ".bench", "phases.json"), manifest, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", t.TempDir())
+
+	phases, err := phaseTable(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Phase{{Name: "declared", Argv: []string{"true"}, Dir: root}}
+	if !reflect.DeepEqual(phases, want) {
+		t.Fatalf("phases = %#v, want %#v", phases, want)
+	}
+}
+
+func phaseNames(phases []Phase) []string {
+	names := make([]string, 0, len(phases))
+	for _, phase := range phases {
+		names = append(names, phase.Name)
+	}
+	return names
+}
 
 func TestBenchkitPhasesUseBranchNativeDrivers(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
