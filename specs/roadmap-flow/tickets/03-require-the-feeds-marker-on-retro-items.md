@@ -12,7 +12,7 @@ item ends with one line that matches `^Feeds: (FT[1-9][0-9]*|new|none)$`. The
 check reuses `retros.Facts` and `retros.Recommendations`. The
 `/bench-final-check` retro template carries the marker and the one-sentence
 change test, and one anchors-registry entry pins the template clause. Spec
-group C and story 35, rows RF20 to RF25 and RF28.
+group C and story 35, rows RF20, RF21, RF22, RF23, RF24, RF25, RF28.
 
 ## Acceptance
 

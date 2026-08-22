@@ -13,8 +13,8 @@ duplicate line. A row under a `## ` heading that contains `Parked` is exempt.
 The unknown-token, unanchored-line, and duplicate-line classes reach the gate
 through `roadmap-detail-integrity` now, each with one canary fixture. The
 missing-line class exists in the parser but reaches the gate only in ticket 05,
-so the live board stays green. Spec group B, rows RF11 to RF13, RF15, RF17 to
-RF19, RF30 to RF32.
+so the live board stays green. Spec group B, rows RF11, RF12, RF13, RF15, RF17, RF18,
+RF19, RF30, RF31, RF32.
 
 ## Acceptance
 

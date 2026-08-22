@@ -11,7 +11,7 @@ query over `roadmap/`, selects the window that spans the last three drain
 commits, and derives opened, fed, retired, net, open mass, the target, and the
 two boundary commits. The open mass comes from `roadmap.ParseDocument` over the
 live board. The bare verb and `--context` keep their current output. Spec group
-A, rows RF1 to RF10.
+A, rows RF1, RF2, RF3, RF4, RF5, RF6, RF7, RF8, RF9, RF10.
 
 ## Acceptance
 

@@ -1,24 +1,24 @@
 # Session handoff
 
-Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — continuation baseline `ee9c4c10`; the staged-spec commit follows it
-Spec: `specs/inherited-toolchain-environment/spec.md` — Status: staged, Terra/medium review accepted in 3 iterations
-Gate: the atomic staged-spec commit owns the full development-gate result
+Repository: `e10f369f24649fcd21dedc65f5e36350-d5bd1e58c5c0e89e21ea6c277d0aab46` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/e10f369f24649fcd21dedc65f5e36350-d5bd1e58c5c0e89e21ea6c277d0aab46`
+Branch: `bench/assign/e10f369f24649fcd21dedc65f5e36350/d5bd1e58c5c0e89e21ea6c277d0aab46` — HEAD `51d1da4`, 3 dirty paths, 2 unpushed commits
+Spec: `specs/inherited-toolchain-environment/spec.md` (Status: staged), `specs/roadmap-flow/spec.md` (Status: staged)
+Gate: green at `ba38063` — stale, work tree `4dac3bb`
 
 ## State
 
-FT242 is specified as two independently green tickets on one frontier. The
-gate slice makes a Go module fail closed when the built-in phase table cannot
-resolve Go. The SessionStart slice adds bounded clean-login discovery,
-PATH-preserving recovery, descendant teardown evidence, and a manual real
-Codex-client/CLI WSL evidence gate before any portability claim. Terra/medium
-accepted the combined spec-and-ticket review after three iterations; the
-required review learning is open for the next `/bench-drain`.
+`/bench-implement-spec --full` is in its build phase. Line: opus/medium for
+tickets 01, 02, 03, 05; fable/high for ticket 04; reviewer sonnet/high; cap 3
+fix loops per ticket. Tickets 01, 02, 03 run as parallel write delegates in
+their own worktrees and land serially on the integration source in ticket
+order; 04 then 05 follow. The light-path kit edit requiring ASD-STE100 prose in
+specs and tickets landed on `main` at `9618dde8`. `capture/learnings.md` holds
+an open two-arm spec experiment entry for the next `/bench-drain`.
 
 ## Next command
 
-`$bench-implement-spec`
+`/bench-implement-spec --full specs/roadmap-flow/spec.md --reviewer sonnet high`
 
 ## Shape
 
