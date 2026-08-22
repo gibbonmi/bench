@@ -8,18 +8,18 @@ import (
 	"testing"
 )
 
-// wrapperPoolHomeRefusal is the wrapper's own diagnostic for a missing pool home,
-// written here independently of bin/bench.sh so reverting the guard to a bare $HOME
-// reds this test rather than passing on a re-derived expectation. bash prefixes the
-// message with the script, the line, and the variable name, so only the wrapper-authored
-// remainder is asserted.
+// wrapperPoolHomeRefusal is the wrapper's own diagnostic for a missing pool home. It is
+// written here independently of bin/bench.sh, so a guard reverted to a bare $HOME reds
+// this test rather than passing against a re-derived expectation. bash prefixes the
+// message with the script, the line, and the variable name. The test asserts only the
+// wrapper-authored remainder.
 const wrapperPoolHomeRefusal = "the Bench pool home needs BENCH_HOME set, or HOME set to derive it from"
 
 // TestWrapperNamesTheMissingPoolHome covers the first command an adopter runs. The
-// wrapper derives BENCH_HOME from HOME under set -u, so an environment carrying neither
-// must name the missing input rather than die on a raw bash diagnostic that gives no
-// action. An already-set BENCH_HOME still wins, which is the precedence the guard sits
-// behind, so both legs run.
+// wrapper derives BENCH_HOME from HOME under set -u. An environment carrying neither must
+// name the missing input rather than die on a raw bash diagnostic that gives no action.
+// An already-set BENCH_HOME still wins. This is the precedence the guard sits behind, so
+// both legs run.
 func TestWrapperNamesTheMissingPoolHome(t *testing.T) {
 	repo := owner.repos[0]
 	wrapper := filepath.Join(owner.kit, "bin", "bench.sh")

@@ -11,13 +11,13 @@ import (
 	"github.com/gibbonmi/bench/internal/adopt"
 )
 
-// TestAdoptionSmokeJourney adopts one disposable repository with `bench setup --yes`
-// and then drives its scaffolded gate through the installed wrapper, so the adopter's
-// side of adoption is observed by the kit's own oracle rather than by an audit. Every
-// launch binds one private BENCH_HOME under the test's temporary directory:
-// runSelected and runWrapper carry fixed environments with no BENCH_HOME override, so
-// this journey composes observeSelected plus runAt the way TestWorktreeReauthorizeJourney
-// does, and asserts after every leg that the private home stayed empty.
+// TestAdoptionSmokeJourney adopts one disposable repository with `bench setup --yes` and
+// drives its scaffolded gate through the installed wrapper. The kit's own oracle observes
+// the adopter's side of adoption, not an audit. Every launch binds one private BENCH_HOME
+// under the test's temporary directory. runSelected and runWrapper carry fixed
+// environments with no BENCH_HOME override. This journey composes observeSelected plus
+// runAt the way TestWorktreeReauthorizeJourney does. It asserts after every leg that the
+// private home stayed empty.
 func TestAdoptionSmokeJourney(t *testing.T) {
 	repo := owner.repos[1]
 	home := filepath.Join(t.TempDir(), "bench-home")
@@ -85,10 +85,10 @@ func TestAdoptionSmokeJourney(t *testing.T) {
 	if err := os.Remove(manifest); err != nil {
 		t.Fatal(err)
 	}
-	// Dropping the manifest stops HOME from reaching the gate's environment, so the
-	// wrapper's own pool-home refusal fires. Its exact wording is pinned once, by the
-	// conformance wrapper-pool-home test; this leg asserts only that an undeclared
-	// input reds the gate on HOME.
+	// The test removes the manifest so HOME cannot reach the gate's environment. The
+	// wrapper's own pool-home refusal fires in response. The conformance wrapper-pool-home
+	// test pins the exact wording once. This leg asserts only that an undeclared input
+	// reds the gate on HOME.
 	unbound := gate("gate", "--fresh")
 	if unbound.code != 1 || !strings.Contains(unbound.stderr, "HOME:") {
 		t.Fatalf("gate without the seeded manifest = (%d, %q, %q)", unbound.code, unbound.stdout, unbound.stderr)
@@ -108,8 +108,8 @@ func TestAdoptionSmokeJourney(t *testing.T) {
 	assertPrivateHomeEmpty(t, home)
 }
 
-// retireSentinelLine performs the one documented operator step: removing exactly the
-// line that carries the sentinel marker, leaving the rest of the scaffolded gate intact.
+// retireSentinelLine performs the one documented operator step. It removes exactly the
+// line that carries the sentinel marker and leaves the rest of the scaffolded gate intact.
 func retireSentinelLine(t *testing.T, path string) {
 	t.Helper()
 	content, err := os.ReadFile(path)
@@ -134,9 +134,9 @@ func retireSentinelLine(t *testing.T, path string) {
 	}
 }
 
-// hasExactLine matches a whole output line, never a substring: a reused verdict prints
-// "gate: green (fresh verdict reused for this tree)", which a substring check on
-// "gate: green" would wrongly accept as a real green run.
+// hasExactLine matches a whole output line, never a substring. A reused verdict prints
+// "gate: green (fresh verdict reused for this tree)". A substring check on "gate: green"
+// would wrongly accept that line as a real green run.
 func hasExactLine(output, want string) bool {
 	for _, line := range strings.Split(output, "\n") {
 		if line == want {

@@ -320,12 +320,12 @@ func runHookWithDeadline(t *testing.T, dir string, overrides []string, hook stri
 }
 
 // TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable drives
-// .bench/hooks/session-start.sh as a real subprocess in the state the hint exists for:
-// a session opening in a repository whose Bench core cannot be reached, which the
-// wrapper answers with exit 127 and no dashboard. Every launch goes through the owner's
-// process ledger. The expected hint is read from freshness.RebuildAction — the one
-// source of the rebuild invocation — so the shell copy in the hook is pinned to the Go
-// source rather than asserted against a second hand-written spelling of it.
+// .bench/hooks/session-start.sh as a subprocess in the state the hint exists for: a
+// session opening in a repository whose Bench core cannot be reached. The wrapper answers
+// with exit 127 and no dashboard. Every launch goes through the owner's process ledger.
+// The expected hint is read from freshness.RebuildAction, the one source of the rebuild
+// invocation. This pins the shell copy in the hook to the Go source rather than to a
+// second hand-written spelling of it.
 func TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable(t *testing.T) {
 	hook := sessionStartHook(t)
 	repo := owner.repos[2]
@@ -336,11 +336,11 @@ func TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable(t *testing.T) 
 	}
 	rebuild := freshness.RebuildAction(root)
 
-	// H23 — the unreachable half. BENCH_KIT names a directory holding no binary and
-	// BENCH_RUN_BINARY is removed outright (a bare name in the overrides), so the
-	// wrapper runs its real no-binary resolution instead of the ambient one the test
-	// process was launched with. PATH carries only the tools the hook and the wrapper
-	// themselves run, so `bench` cannot be reached that way either.
+	// H23 — the unreachable half. BENCH_KIT names a directory holding no binary. The
+	// overrides remove BENCH_RUN_BINARY outright as a bare name. The wrapper then runs its
+	// real no-binary resolution instead of the ambient one the test process launched with.
+	// PATH carries only the tools the hook and the wrapper themselves run, so `bench`
+	// cannot be reached that way either.
 	missing := []string{
 		"BENCH_KIT=" + filepath.Join(t.TempDir(), "missing-kit"),
 		"BENCH_HOME=" + filepath.Join(t.TempDir(), "home"),
@@ -355,7 +355,7 @@ func TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable(t *testing.T) 
 		t.Errorf("H23 unreachable core stdout = %q, want the rebuild invocation %q", cold.stdout, rebuild)
 	}
 
-	// The hint replaces silence, not the dashboard: a reachable core still routes to
+	// The hint replaces silence, not the dashboard. A reachable core still routes to
 	// `bench session-inspect` and says nothing about rebuilding.
 	warm := runHook(t, repo, []string{
 		"BENCH_KIT=" + owner.kit,
@@ -374,10 +374,10 @@ func TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable(t *testing.T) 
 }
 
 // TestSessionStartIsSilentOutsideARepository pins H24. The launch deliberately makes a
-// wrapper reachable — `bench` resolves on PATH — so the assertion is that the hook
-// declines to say anything because the working directory is not a repository, not that
-// it had nothing to say. Without that distinction the row would pass on a hook whose
-// repository guard had been deleted.
+// wrapper reachable: `bench` resolves on PATH. The assertion is that the hook declines to
+// say anything because the working directory is not a repository, not because it had
+// nothing to say. Without that distinction, the row would pass on a hook whose repository
+// guard had been deleted.
 func TestSessionStartIsSilentOutsideARepository(t *testing.T) {
 	hook := sessionStartHook(t)
 	outside := t.TempDir()
@@ -425,8 +425,8 @@ func runHook(t *testing.T, dir string, overrides []string, hook string) processR
 }
 
 // installWrapper puts the kit's real wrapper where the shared resolver looks for it in
-// repo, so both halves of H23 resolve a wrapper regardless of what other journeys in
-// this package have installed there.
+// repo. This lets both halves of H23 resolve a wrapper regardless of what other journeys
+// in this package have installed there.
 func installWrapper(t *testing.T, repo string) {
 	t.Helper()
 	source, err := os.ReadFile(filepath.Join(owner.kit, "bin", "bench.sh"))

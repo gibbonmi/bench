@@ -10,15 +10,14 @@ import (
 	"testing"
 )
 
-// TestDegradedGuardRimDecidesFromTheCommandField drives
-// .bench/hooks/block-dangerous-git.sh as a real subprocess in the one state the rim
-// exists for: no wrapper reachable on disk and no `bench` on PATH, so the shim cannot
-// hand the envelope to internal/gitguard and has to decide alone. The working
-// directory is deliberately not a repository and PATH carries only the tools the shim
-// itself runs, which is exactly the "required tool missing from PATH" edge class. Every
-// launch goes through the owner's process ledger; the assertions read the exit code the
-// PreToolUse contract defines (2 blocks, 0 allows) plus the degraded message, which only
-// the rim emits, so a verdict that came from a reachable core could not pass as one.
+// TestDegradedGuardRimDecidesFromTheCommandField drives .bench/hooks/block-dangerous-git.sh
+// as a real subprocess in the state the rim exists for: no wrapper reachable on disk and
+// no `bench` on PATH. The shim cannot hand the envelope to internal/gitguard and must
+// decide alone. The working directory is deliberately not a repository, and PATH carries
+// only the tools the shim runs — the "required tool missing from PATH" edge class. Every
+// launch goes through the owner's process ledger. The assertions read the exit code the
+// PreToolUse contract defines — 2 blocks, 0 allows — and the degraded message that only
+// the rim emits. A verdict from a reachable core cannot pass as one.
 func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
 	hook := filepath.Join(owner.kit, ".bench", "hooks", "block-dangerous-git.sh")
 	if _, err := os.Stat(hook); err != nil {
@@ -37,9 +36,10 @@ func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
 		return owner.runWithInput(outside, []string{"PATH=" + path}, envelope, shell, hook)
 	}
 
-	// H20 — the fail-closed half. A destructive git command is refused even though
-	// nothing can classify it, including through the one-level wrapper the core
-	// documents and behind the honest-mistake prefixes an agent reflexively types.
+	// H20 — the fail-closed half. The rim refuses a destructive git command even when
+	// nothing can classify it. This includes a command hidden behind the one-level
+	// wrapper the core documents, and a command behind the honest-mistake prefixes an
+	// agent reflexively types.
 	for _, blocked := range []struct{ name, envelope string }{
 		{"bare destructive verb", `{"tool_name":"Bash","tool_input":{"command":"git reset --hard HEAD~1"}}`},
 		{"push", `{"tool_name":"Bash","tool_input":{"command":"cd /srv && git push --force origin main"}}`},
@@ -53,9 +53,9 @@ func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
 		}
 	}
 
-	// H21 — the defect. `git` in a path, in an argument, or in an unrelated envelope
-	// field is not a git invocation, and the rim runs during exactly the cold session
-	// that needs to read those files.
+	// H21 — the defect. `git` in a path, in an argument, or in an unrelated envelope field
+	// is not a git invocation. The rim runs during exactly the cold session that needs to
+	// read those files.
 	for _, allowed := range []struct{ name, envelope string }{
 		{"path under .github", `{"session_id":"git-recovery","transcript_path":"/home/u/.claude/git.jsonl","tool_name":"Bash","tool_input":{"command":"cat .github/workflows/gate.yml"}}`},
 		{"git as an argument", `{"tool_name":"Bash","tool_input":{"command":"rg git AGENTS.md"}}`},
@@ -69,20 +69,20 @@ func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
 		}
 	}
 
-	// The rim's wrapper recursion stops where internal/gitguard's does — exactly one
-	// level — so this pins the shell copy's depth to the core's rather than letting it
-	// drift. It is a depth statement, not a safety claim: the threat model is honest
-	// mistakes, and the pre-push hook is the backstop.
+	// The rim's wrapper recursion stops where internal/gitguard's does — exactly one level.
+	// This pins the shell copy's depth to the core's depth rather than letting it drift.
+	// It is a depth statement, not a safety claim. The threat model is honest mistakes,
+	// and the pre-push hook is the backstop.
 	if nested := run(`{"tool_name":"Bash","tool_input":{"command":"bash -c 'sh -c \"git push\"'"}}`); nested.code != 0 {
 		t.Errorf("nested wrapper = (%d, %q, %q), want the core's one-level depth (exit 0)", nested.code, nested.stdout, nested.stderr)
 	}
 
-	// H20, the operator-run half. The lexer emits a whole run of operator characters as
-	// one token, so a membership test over the common spellings misses `|&`, `;;`, and
-	// `;&` — each one token no list matched, which took the following word out of command
-	// position and read a destructive verb there as an argument. Redirection is the
-	// deliberate exception: it opens no command position, so a file named git stays a
-	// file. These are the cases that separate the two.
+	// H20, the operator-run half. The lexer emits a whole run of operator characters as one
+	// token. A membership test over the common spellings misses `|&`, `;;`, and `;&` for
+	// this reason. Each miss takes the following word out of command position, so the rim
+	// reads a destructive verb there as a plain argument. Redirection is the deliberate
+	// exception: it opens no command position, so a file named git stays a file. These
+	// cases separate the two groups.
 	for _, opRun := range []struct {
 		name, envelope string
 		want           int
@@ -100,13 +100,12 @@ func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
 		}
 	}
 
-	// H35 — the decoder the narrowing introduced. Go's encoding/json HTML-escapes
-	// & < > by default, so a shell operator reaches this rim escaped at least as
-	// often as literal. A \uXXXX branch that collapses to a placeholder welds two
-	// commands into one token, `git` stops being in command position, and the
-	// destructive half is allowed — the exact fail-open this row exists to hold shut.
-	// The allowed cases pin the other half: decoding must not turn an ordinary
-	// escaped byte into a refusal.
+	// H35 — the decoder the narrowing introduced. Go's encoding/json HTML-escapes & < > by
+	// default, so a shell operator reaches this rim escaped at least as often as literal. A
+	// \uXXXX branch that collapses to a placeholder welds two commands into one token.
+	// `git` then stops being in command position, and the rim allows the destructive half —
+	// the exact fail-open this row exists to hold shut. The allowed cases pin the other
+	// half: decoding must not turn an ordinary escaped byte into a refusal.
 	for _, escaped := range []struct {
 		name, envelope string
 		want           int
