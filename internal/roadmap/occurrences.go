@@ -73,11 +73,11 @@ func projectCaptureOccurrences(doc *Document, units []captureUnit) ([]CaptureOcc
 	return occurrences, pairs
 }
 
-// occurrenceSequenceTrusted reports whether the recommended sequence rests on
-// evidence the reader may act on. Any structural discrepancy, any integrity
-// diagnostic over the split board, or any capture source that did not read cleanly
-// withdraws that trust: a sequence derived from an unread row file or a broken tree
-// is a guess, and the index may never look clean over one.
+// occurrenceSequenceTrusted reports whether the recommended sequence rests on evidence
+// the reader may act on. A structural discrepancy, an integrity diagnostic over the split
+// board, or a capture source that did not read cleanly withdraws that trust. A sequence
+// derived from an unread row file or a broken tree is a guess. The index must never look
+// clean over such a guess.
 func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy, diagnostics []Diagnostic, sources []SourceFact) bool {
 	if len(diagnostics) != 0 {
 		return false

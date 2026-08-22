@@ -14,9 +14,9 @@ import (
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
-// diagnosticStrings renders ParseDocument's typed diagnostics the way every reader
-// before the Diagnostic type saw them, so a test can keep asserting the exact
-// "<path>: <reason>" text without re-deriving it from the struct fields itself.
+// diagnosticStrings renders ParseDocument's typed diagnostics the way every reader saw
+// them before the Diagnostic type existed. A test can therefore keep asserting the exact
+// "<path>: <reason>" text, without re-deriving it from the struct fields.
 func diagnosticStrings(diagnostics []Diagnostic) []string {
 	if diagnostics == nil {
 		return nil
@@ -28,9 +28,9 @@ func diagnosticStrings(diagnostics []Diagnostic) []string {
 	return rendered
 }
 
-// TestTreeParseAcceptsHeadingOnlyRowFile covers PR1: an index of one physical heading
-// line per row plus a row file repeating that heading with nothing after it is a clean
-// board — the row carries the index title and an empty body, and nothing is reported.
+// TestTreeParseAcceptsHeadingOnlyRowFile pins PR1: an index of one physical heading line
+// per row, plus a row file repeating that heading with nothing after it, is a clean
+// board. The row carries the index title and an empty body, and nothing is reported.
 func TestTreeParseAcceptsHeadingOnlyRowFile(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
 	tree := splitTree("# Roadmap\n\n"+heading+"\n", map[string]string{"FT7.md": heading + "\nNext: spec\n"})
@@ -43,9 +43,9 @@ func TestTreeParseAcceptsHeadingOnlyRowFile(t *testing.T) {
 	}
 }
 
-// TestTreeParseProjectsRowFileLedger covers PR2: the occurrence ledger is read from the
-// row-file body under today's rules, and a descending ledger yields the same
-// malformed-ledger discrepancy, now sourced at the row file that carries it.
+// TestTreeParseProjectsRowFileLedger pins PR2: the occurrence ledger is read from the
+// row-file body. A descending ledger yields the same malformed-ledger discrepancy, now
+// sourced at the row file that carries it.
 func TestTreeParseProjectsRowFileLedger(t *testing.T) {
 	const heading = "**FT1 — one.**"
 	body := "Next: spec\nOccurrence: 2026-08-14 FT189 refused a malformed admin file.\nOccurrences: baseline-01, baseline-02\n"
@@ -68,9 +68,9 @@ func TestTreeParseProjectsRowFileLedger(t *testing.T) {
 	}
 }
 
-// TestTreeParseDerivesSpecAndTriggerFromRowFile covers PR3: the spec slug, its status,
-// and the external-trigger words come from the row-file body, which is where the prose
-// that names them now lives.
+// TestTreeParseDerivesSpecAndTriggerFromRowFile pins PR3: the spec slug, its status, and
+// the external-trigger words come from the row-file body. That body is where this prose
+// now lives.
 func TestTreeParseDerivesSpecAndTriggerFromRowFile(t *testing.T) {
 	const heading = "**FT1 — one.**"
 	body := "Blocked until the deploy is scheduled; the spec is `specs/foo/spec.md`.\n"
@@ -80,9 +80,9 @@ func TestTreeParseDerivesSpecAndTriggerFromRowFile(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsMissingDetailOwner covers PR4 and the index-side half of PR10: an
-// index row with no detail owner is named, and the row survives so rows_total still
-// counts the work the board is tracking.
+// TestTreeParseReportsMissingDetailOwner pins PR4 and the index-side half of PR10: an
+// index row with no detail owner is named. The row survives, so rows_total still counts
+// the work the board is tracking.
 func TestTreeParseReportsMissingDetailOwner(t *testing.T) {
 	doc, _, diagnostics := ParseDocument(indexTree("**FT7 (LOW) — x.**\n"), nil, true)
 	want := []string{"roadmap/FT7.md: missing detail owner for ROADMAP.md row FT7"}
@@ -94,8 +94,9 @@ func TestTreeParseReportsMissingDetailOwner(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsOrphanRowFile covers PR5: a detail file with no index row is an
-// orphan, whether the index merely omits it or is absent from the tree entirely.
+// TestTreeParseReportsOrphanRowFile pins PR5: a detail file with no index row is an
+// orphan. This holds whether the index merely omits it or is absent from the tree
+// entirely.
 func TestTreeParseReportsOrphanRowFile(t *testing.T) {
 	const orphan = "**FT8 (LOW) — y.**\n"
 	want := "roadmap/FT8.md: orphan detail file with no ROADMAP.md row FT8"
@@ -115,8 +116,8 @@ func TestTreeParseReportsOrphanRowFile(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsInlineBody covers PR6: a non-blank line under an index line is a
-// body that belongs in the row file, and the index text is not the row's body.
+// TestTreeParseReportsInlineBody pins PR6: a non-blank line under an index line is a body
+// that belongs in the row file. The index text is not the row's body.
 func TestTreeParseReportsInlineBody(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
 	tree := splitTree(heading+"\nBody text.\n\n**FT8 (LOW) — y.**\n", map[string]string{
@@ -133,9 +134,9 @@ func TestTreeParseReportsInlineBody(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsHeadingMismatch covers PR7: a row file whose first line has
-// drifted from its index line is named with the file and the row, so the two copies
-// cannot diverge unnoticed.
+// TestTreeParseReportsHeadingMismatch pins PR7: a row file whose first line has drifted
+// from its index line is named with the file and the row. The two copies therefore cannot
+// diverge unnoticed.
 func TestTreeParseReportsHeadingMismatch(t *testing.T) {
 	tree := splitTree("**FT7 (LOW) — x.**\n", map[string]string{"FT7.md": "**FT7 (LOW) — y.**\nbody\nNext: spec\n"})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
@@ -148,8 +149,8 @@ func TestTreeParseReportsHeadingMismatch(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsUnrecognizedFiles covers PR8: a basename that is not `<row ID>.md`
-// is loud, and the row-ID grammar is today's, so a non-FT ID is simply a row.
+// TestTreeParseReportsUnrecognizedFiles pins PR8: a basename other than `<row ID>.md` is
+// loud. The row-ID grammar is the current one, so a non-FT ID is simply a row.
 func TestTreeParseReportsUnrecognizedFiles(t *testing.T) {
 	tree := splitTree("**AB1 (LOW) — z.**\n", map[string]string{
 		"AB1.md":   "**AB1 (LOW) — z.**\nNext: spec\n",
@@ -169,8 +170,8 @@ func TestTreeParseReportsUnrecognizedFiles(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsDuplicateIndexID covers PR9: an ID on two index lines names the
-// duplicate and its position, and only the first position keeps a row.
+// TestTreeParseReportsDuplicateIndexID pins PR9: an ID on two index lines names the
+// duplicate and its position. Only the first position keeps a row.
 func TestTreeParseReportsDuplicateIndexID(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
 	tree := splitTree(heading+"\n\n"+heading+"\n", map[string]string{"FT7.md": heading + "\nNext: spec\n"})
@@ -184,9 +185,9 @@ func TestTreeParseReportsDuplicateIndexID(t *testing.T) {
 	}
 }
 
-// TestTreeParseDropsWrappedHeadingAndKeepsMissingOwnerRow covers PR10: a heading whose
-// close is on the next physical line yields no row at all, while the index-side
-// missing-owner fault beside it keeps its row and its place in rows_total.
+// TestTreeParseDropsWrappedHeadingAndKeepsMissingOwnerRow pins PR10: a heading whose
+// close is on the next physical line yields no row at all. The index-side missing-owner
+// fault beside it keeps its row and its place in rows_total.
 func TestTreeParseDropsWrappedHeadingAndKeepsMissingOwnerRow(t *testing.T) {
 	index := "**FT7 (LOW) — a\nlong title.**\n\n**FT8 (LOW) — y.**\n"
 	doc, _, diagnostics := ParseDocument(indexTree(index), nil, true)
@@ -202,8 +203,8 @@ func TestTreeParseDropsWrappedHeadingAndKeepsMissingOwnerRow(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsUnreadRowFile covers story 44: a row file the classifier could not
-// read is named, so its unread ledger is never silently counted as zero.
+// TestTreeParseReportsUnreadRowFile pins story 44: a row file the classifier could not
+// read is named. Its unread ledger is never silently counted as zero.
 func TestTreeParseReportsUnreadRowFile(t *testing.T) {
 	tree := indexTree("**FT7 (LOW) — x.**\n")
 	tree.DirState = bounds.StateParsed
@@ -218,9 +219,10 @@ func TestTreeParseReportsUnreadRowFile(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsEmptyRowFileAsHeadingMismatch covers the other half of PR7: a row
-// file that exists with no bytes is an owner whose heading is gone, not an absent owner,
-// so it reports the mismatch rather than staying silent behind the missing-owner class.
+// TestTreeParseReportsEmptyRowFileAsHeadingMismatch pins the other half of PR7: a row
+// file that exists with no bytes. That file is an owner whose heading is gone, not an
+// absent owner. It reports the mismatch, rather than staying silent behind the
+// missing-owner class.
 func TestTreeParseReportsEmptyRowFileAsHeadingMismatch(t *testing.T) {
 	tree := splitTree("**FT7 (LOW) — x.**\n", map[string]string{"FT7.md": ""})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
@@ -236,9 +238,9 @@ func TestTreeParseReportsEmptyRowFileAsHeadingMismatch(t *testing.T) {
 	}
 }
 
-// TestTreeParseWrappedHeadingWithRowFilePresentReportsOnce pins the wrapped-heading
-// class to one message: the index names FT7, so its detail file has an owner on the
-// board and the directory pass must not also call it an orphan.
+// TestTreeParseWrappedHeadingWithRowFilePresentReportsOnce pins the wrapped-heading class
+// to one message. The index names FT7, so its detail file has an owner on the board. The
+// directory pass must not also call it an orphan.
 func TestTreeParseWrappedHeadingWithRowFilePresentReportsOnce(t *testing.T) {
 	index := "**FT7 (LOW) — a\nlong title.**\n"
 	tree := splitTree(index, map[string]string{"FT7.md": "**FT7 (LOW) — a long title.**\n"})
@@ -252,10 +254,10 @@ func TestTreeParseWrappedHeadingWithRowFilePresentReportsOnce(t *testing.T) {
 	}
 }
 
-// TestTreeParseReportsDegradedRowDirectory covers the directory's own state: a roadmap/
-// the classifier could not read is named once, with the cause, and no row is told its
-// detail owner is missing over a listing nobody was able to take. The index-absent case
-// is the half that was silently clean before.
+// TestTreeParseReportsDegradedRowDirectory checks the directory's own state. A roadmap/
+// the classifier could not read is named once, with the cause. No row is told its detail
+// owner is missing over a listing nobody was able to take. The index-absent case is the
+// half that was silently clean before.
 func TestTreeParseReportsDegradedRowDirectory(t *testing.T) {
 	want := []string{"roadmap/: wrong-type detail directory: not a directory: ----------"}
 	for _, tc := range []struct {
@@ -285,10 +287,9 @@ func TestTreeParseReportsDegradedRowDirectory(t *testing.T) {
 	}
 }
 
-// TestTreeParseRefusesSymlinkRowFile covers the row-file read's refusal to follow a
-// link: a detail owner is authoritative input to the board's grade, so bytes reached
-// through a link are not that owner's bytes and grade wrong-type like any other
-// non-regular entry.
+// TestTreeParseRefusesSymlinkRowFile checks the row-file read's refusal to follow a link.
+// A detail owner is authoritative input to the board's grade. Bytes reached through a
+// link are not that owner's bytes, and grade wrong-type like any other non-regular entry.
 func TestTreeParseRefusesSymlinkRowFile(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
 	root := t.TempDir()
@@ -310,9 +311,9 @@ func TestTreeParseRefusesSymlinkRowFile(t *testing.T) {
 }
 
 // TestOccurrenceSequenceTrustedRefusesDegradedRowDirectorySource pins the roadmap/ entry
-// of the trust list itself: a sources block reporting a degraded directory withdraws
-// trust on its own, so the entry carries weight rather than shadowing the diagnostics
-// check that runs before it.
+// of the trust list itself. A sources block reporting a degraded directory withdraws
+// trust on its own. The entry carries weight, rather than shadowing the diagnostics check
+// that runs before it.
 func TestOccurrenceSequenceTrustedRefusesDegradedRowDirectorySource(t *testing.T) {
 	sources := []SourceFact{
 		{Source: RoadmapFile, State: string(bounds.StateParsed)},
@@ -330,7 +331,7 @@ func TestOccurrenceSequenceTrustedRefusesDegradedRowDirectorySource(t *testing.T
 	}
 }
 
-// TestTreeParseAbsentBoardIsQuiet covers PR16 and PR19 at the parse: a repository with
+// TestTreeParseAbsentBoardIsQuiet pins PR16 and PR19 at the parse: a repository with
 // neither the index nor the directory is a repository without a board, not a broken one.
 func TestTreeParseAbsentBoardIsQuiet(t *testing.T) {
 	doc, failures, diagnostics := ParseDocument(Tree{Index: bounds.Classified{State: bounds.StateAbsent}, DirState: bounds.StateAbsent}, nil, true)
@@ -339,8 +340,8 @@ func TestTreeParseAbsentBoardIsQuiet(t *testing.T) {
 	}
 }
 
-// TestIdeaOwnerValidatesThroughTheSplitTree covers PR16: `bench idea --owner` refuses an
-// owner whose detail file is missing with the untrusted-tree line, and appends once the
+// TestIdeaOwnerValidatesThroughTheSplitTree pins PR16: `bench idea --owner` refuses an
+// owner whose detail file is missing, with the untrusted-tree line. It appends once the
 // tree is whole.
 func TestIdeaOwnerValidatesThroughTheSplitTree(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
@@ -369,8 +370,8 @@ func TestIdeaOwnerValidatesThroughTheSplitTree(t *testing.T) {
 	}
 }
 
-// TestRowNextAcceptsEveryToken covers RF13 and RF19: each of the five decided tokens
-// passes, and the last line of a hand-edited file needs no trailing newline to be read.
+// TestRowNextAcceptsEveryToken pins RF13 and RF19: each of the five decided tokens
+// passes. The last line of a hand-edited file needs no trailing newline to be read.
 func TestRowNextAcceptsEveryToken(t *testing.T) {
 	for _, token := range RowNextTokens() {
 		t.Run(token, func(t *testing.T) {
@@ -388,9 +389,8 @@ func TestRowNextAcceptsEveryToken(t *testing.T) {
 	})
 }
 
-// TestRowNextReportsUnknownToken covers RF12: a value outside the token set is named,
-// so a typo cannot pass as a decision, and an empty value is a value rather than an
-// absence.
+// TestRowNextReportsUnknownToken pins RF12: a value outside the token set is named. A
+// typo therefore cannot pass as a decision. An empty value is a value, not an absence.
 func TestRowNextReportsUnknownToken(t *testing.T) {
 	for _, tc := range []struct{ name, body, want string }{
 		{"typo", "Next: refactor\n", `roadmap/FT1.md: unknown Next: token "refactor" at line 2; expected one of shape, spec, ticket, decide, kit-edit`},
@@ -405,9 +405,9 @@ func TestRowNextReportsUnknownToken(t *testing.T) {
 	}
 }
 
-// TestRowNextReportsMissingLine covers RF11 and RF17: a detail file with no marker is
-// named with its path, and a marker inside a fenced code block is a documented example
-// rather than a live row grammar, so it leaves the row missing its line.
+// TestRowNextReportsMissingLine pins RF11 and RF17: a detail file with no marker is named
+// with its path. A marker inside a fenced code block is a documented example, not a live
+// row grammar. It therefore leaves the row missing its line.
 func TestRowNextReportsMissingLine(t *testing.T) {
 	const want = "roadmap/FT1.md: missing Next: line; expected one of shape, spec, ticket, decide, kit-edit"
 	for _, tc := range []struct{ name, body string }{
@@ -423,8 +423,8 @@ func TestRowNextReportsMissingLine(t *testing.T) {
 	}
 }
 
-// TestRowNextExemptsParkedSection covers RF15: a row under the parked section carries no
-// next action honestly, while the same row under the features section must.
+// TestRowNextExemptsParkedSection pins RF15: a row under the parked section may honestly
+// carry no next action. The same row under the features section must carry one.
 func TestRowNextExemptsParkedSection(t *testing.T) {
 	if _, _, diagnostics := ParseDocument(rowNextTree("## Parked and scheduled work", "The row's body.\n"), nil, true); len(diagnostics) != 0 {
 		t.Fatalf("parked row diagnostics = %#v, want none", diagnosticStrings(diagnostics))
@@ -436,9 +436,9 @@ func TestRowNextExemptsParkedSection(t *testing.T) {
 	}
 }
 
-// TestRowNextRefusesUnanchoredLine covers RF30, RF31, and RF18: a line the parser would
-// have to trim, join, or read past an invisible separator to accept is refused and named,
-// so the marker sits where the reader sees it.
+// TestRowNextRefusesUnanchoredLine pins RF30, RF31, and RF18: the parser refuses and
+// names a line it would have to trim, join, or read past an invisible separator to
+// accept. The marker therefore sits exactly where the reader sees it.
 func TestRowNextRefusesUnanchoredLine(t *testing.T) {
 	want := "roadmap/FT1.md: unanchored Next: line at line 2; expected Next: <token> at column zero on one line"
 	for _, tc := range []struct{ name, body string }{
@@ -456,8 +456,9 @@ func TestRowNextRefusesUnanchoredLine(t *testing.T) {
 	}
 }
 
-// TestRowNextReportsDuplicateLine covers RF32: a second marker is named at its own line
-// rather than resolved first-wins, which would leave a stale marker with nothing red.
+// TestRowNextReportsDuplicateLine pins RF32: a second marker is named at its own line,
+// rather than resolved first-wins. First-wins would leave a stale marker with nothing
+// red.
 func TestRowNextReportsDuplicateLine(t *testing.T) {
 	_, _, diagnostics := ParseDocument(rowNextTree("", "Next: spec\nNext: shape\n"), nil, true)
 	want := []string{"roadmap/FT1.md: duplicate Next: line at line 3; a row carries one"}

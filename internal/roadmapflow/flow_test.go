@@ -41,9 +41,9 @@ func newFlowRepo(t *testing.T) string {
 	return root
 }
 
-// commitChange applies one planned change and returns the resulting commit identity.
-// Each write carries the subject in its bytes, so a modify is always a real content
-// change and never a no-op commit git would refuse.
+// commitChange applies one planned change and returns the resulting commit identity. Each
+// write carries the subject in its bytes, so a modify is always a real content change. It
+// is never a no-op commit git would refuse.
 func commitChange(t *testing.T, root string, c change) string {
 	t.Helper()
 	dir := filepath.Join(root, "roadmap")
@@ -75,8 +75,8 @@ func commitChanges(t *testing.T, root string, changes ...change) []string {
 	return ids
 }
 
-// writeBoard writes an index of n rows and the detail owner of each, so the open mass
-// the command reports is a real parsed board rather than a count the test asserts twice.
+// writeBoard writes an index of n rows and the detail owner of each. The open mass the
+// command reports is thus a real parsed board, not a count the test asserts twice.
 func writeBoard(t *testing.T, root string, n int) {
 	t.Helper()
 	var index strings.Builder
@@ -130,9 +130,9 @@ func requireCells(t *testing.T, cells map[string]string, want map[string]string)
 	}
 }
 
-// windowFixture is the shared history for the window's counts: one drain older than the
-// window, then three drains and the modify commits between them. The oldest drain is
-// what an implementation that counts the whole history would wrongly include.
+// windowFixture is the shared history for the window's counts. It holds one drain older
+// than the window, then three drains and the modify commits between them. The oldest
+// drain is what an implementation that counts the whole history would wrongly include.
 func windowFixture(t *testing.T, root string) (first, last string) {
 	t.Helper()
 	ids := commitChanges(t, root,
@@ -147,7 +147,7 @@ func windowFixture(t *testing.T, root string) (first, last string) {
 	return ids[1], ids[6]
 }
 
-// TestFlowCountsDetailFilesOverTheWindow covers RF1, RF2, and RF3.
+// TestFlowCountsDetailFilesOverTheWindow pins RF1, RF2, and RF3.
 func TestFlowCountsDetailFilesOverTheWindow(t *testing.T) {
 	root := newFlowRepo(t)
 	windowFixture(t, root)
@@ -161,7 +161,7 @@ func TestFlowCountsDetailFilesOverTheWindow(t *testing.T) {
 	})
 }
 
-// TestFlowNamesTheWindowBoundaries covers RF5.
+// TestFlowNamesTheWindowBoundaries pins RF5.
 func TestFlowNamesTheWindowBoundaries(t *testing.T) {
 	root := newFlowRepo(t)
 	ids := commitChanges(t, root,
@@ -182,7 +182,7 @@ func TestFlowNamesTheWindowBoundaries(t *testing.T) {
 	})
 }
 
-// TestFlowReportsAYoungBoard covers RF6.
+// TestFlowReportsAYoungBoard pins RF6.
 func TestFlowReportsAYoungBoard(t *testing.T) {
 	root := newFlowRepo(t)
 	ids := commitChanges(t, root,
@@ -201,8 +201,8 @@ func TestFlowReportsAYoungBoard(t *testing.T) {
 	})
 }
 
-// TestFlowStatesWhetherTheTargetHolds covers RF4: a net delta of zero holds the target
-// and a positive one does not.
+// TestFlowStatesWhetherTheTargetHolds pins RF4: a net delta of zero holds the target and
+// a positive one does not.
 func TestFlowStatesWhetherTheTargetHolds(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
@@ -237,7 +237,7 @@ func TestFlowStatesWhetherTheTargetHolds(t *testing.T) {
 	}
 }
 
-// TestFlowWithNoEventIsDefinitivelyEmpty covers RF7.
+// TestFlowWithNoEventIsDefinitivelyEmpty pins RF7.
 func TestFlowWithNoEventIsDefinitivelyEmpty(t *testing.T) {
 	root := newFlowRepo(t)
 	writeBoard(t, root, 3)
@@ -251,7 +251,7 @@ func TestFlowWithNoEventIsDefinitivelyEmpty(t *testing.T) {
 	}
 }
 
-// TestFlowOutsideARepositoryRefuses covers RF8.
+// TestFlowOutsideARepositoryRefuses pins RF8.
 func TestFlowOutsideARepositoryRefuses(t *testing.T) {
 	t.Chdir(t.TempDir())
 	out, code := Command([]string{"--flow"})
@@ -260,7 +260,7 @@ func TestFlowOutsideARepositoryRefuses(t *testing.T) {
 	}
 }
 
-// TestFlowReportsADegradedBoardAsUnknown covers RF9.
+// TestFlowReportsADegradedBoardAsUnknown pins RF9.
 func TestFlowReportsADegradedBoardAsUnknown(t *testing.T) {
 	root := newFlowRepo(t)
 	commitChanges(t, root,

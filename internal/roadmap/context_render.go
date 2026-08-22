@@ -10,10 +10,10 @@ import (
 
 func contextUsage() string { return roadmapUsage() }
 
-// contextGrammar is the declared argument shape usage.Parse enforces for the
-// `bench roadmap --context` form — arity, flag recognition, `--`, repeated flags, and
-// help all come from there rather than a local switch. Help is contextUsage without
-// its trailing newline, because the caller appends one.
+// contextGrammar declares the argument shape usage.Parse enforces for the `bench roadmap
+// --context` form. Arity, flag recognition, `--`, repeated flags, and help all come from
+// this grammar, not a local switch. The Help field strips the trailing newline that
+// contextUsage returns, because the caller adds its own.
 var contextGrammar = usage.Grammar{
 	Cmd:   "bench roadmap --context",
 	Help:  strings.TrimSuffix(contextUsage(), "\n"),
@@ -26,9 +26,9 @@ func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int
 	if line != "" {
 		return line + "\n", code
 	}
-	// --context is the mode selector, not an optional flag: --full alone names no mode
-	// and is the misuse this reports. Arity, unknown flags, and a repeated --context are
-	// already answered by the grammar above.
+	// --context is the mode selector, not an optional flag. --full alone names no mode, and
+	// this check reports that misuse. The grammar above already answers arity, unknown
+	// flags, and a repeated --context.
 	if _, context := parsed.Flags["--context"]; !context {
 		arg := "arguments"
 		if len(args) > 0 {
@@ -69,8 +69,8 @@ func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int
 		}
 	}
 	if selectRows {
-		// Selector mode needs a full parse to retain selected roadmap bodies, but
-		// never transports complete capture-unit bodies as a side effect.
+		// Selector mode needs a full parse to retain the selected roadmap bodies. It never
+		// transports complete capture-unit bodies as a side effect.
 		present := make(map[string]bool, len(s.Roadmap.Rows))
 		for _, row := range s.Roadmap.Rows {
 			present[row.ID] = true

@@ -1,8 +1,8 @@
-// Package roadmapflow derives the board's flow — the rows opened, fed, and retired
-// over a window of recent history — from the detail files each commit touched.
-// It lives beside package roadmap rather than inside it: package roadmap sits at 11
-// source files against a reviewer-owned directory budget of 12, and the open mass this
-// package reports is read back through roadmap.LoadTree so the row count keeps one source.
+// Package roadmapflow derives the board's flow from the detail files each commit touched.
+// The flow is the rows opened, fed, and retired over a window of recent history. This
+// package lives beside package roadmap, not inside it. Package roadmap sits at 11 source
+// files against a reviewer-owned directory budget of 12. The open mass this package
+// reports is read back through roadmap.LoadTree, so the row count keeps one source.
 package roadmapflow
 
 import (
@@ -26,9 +26,10 @@ const windowDrains = 3
 const unknownMass = "unknown"
 
 // isDetailPath reports whether a `git log --name-status` path names one row's detail
-// owner: a `.md` file directly under the roadmap directory whose basename is a row ID.
-// The row-ID grammar stays with package roadmap, so a file whose basename falls outside
-// it contributes to no count by the board parser's own rule rather than a second one.
+// owner. A detail owner is a `.md` file directly under the roadmap directory whose
+// basename is a row ID. The row-ID grammar stays with package roadmap. A file whose
+// basename falls outside it contributes to no count, by the board parser's own rule
+// rather than a second one.
 func isDetailPath(path string) bool {
 	name, found := strings.CutPrefix(path, roadmap.RoadmapDir+"/")
 	if !found || strings.Contains(name, "/") {
@@ -49,16 +50,16 @@ var flowGrammar = usage.Grammar{
 	Flags: []usage.Flag{{Name: "--flow", Required: true}},
 }
 
-// event is one commit that touched at least one detail file: its identity and the
-// per-status counts of the detail files it touched. A commit that only modifies detail
-// files is an event too — it feeds rows — even though it opens none.
+// event is one commit that touched at least one detail file. It carries its identity and
+// the per-status counts of the detail files it touched. A commit that only modifies
+// detail files is an event too, since it feeds rows even though it opens none.
 type event struct {
 	id                   string
 	opened, fed, retired int
 }
 
-// span is the window's summed evidence. found is false when the history holds no event
-// at all, which is the definitive empty flow rather than a window of zeroes.
+// span is the window's summed evidence. found is false when the history holds no event at
+// all. That is the definitive empty flow, not a window of zeroes.
 type span struct {
 	opened, fed, retired int
 	drains               int
@@ -83,13 +84,13 @@ func Command(args []string) (string, int) {
 	return render(selectWindow(events), openMass(root))
 }
 
-// history returns every commit that touched a detail file, newest first. The query
-// reads file status rather than commit subjects, so no subject grammar can inflate or
-// hide a count, and --no-renames keeps a move inside the directory as one add plus one
-// delete rather than a rename git would report as neither.
+// history returns every commit that touched a detail file, newest first. The query reads
+// file status rather than commit subjects, so no subject grammar can inflate or hide a
+// count. --no-renames keeps a move inside the directory as one add plus one delete,
+// rather than a rename git would report as neither.
 func history(root string) ([]event, error) {
-	// An unborn HEAD is a repository with no history rather than a failed query, and
-	// `git log` exits nonzero on it, so it is answered before the query runs.
+	// An unborn HEAD is a repository with no history, not a failed query. `git log` exits
+	// nonzero on it, so this code answers it before the query runs.
 	if !git.OK("-C", root, "rev-parse", "--verify", "--quiet", "HEAD") {
 		return nil, nil
 	}
@@ -127,11 +128,11 @@ func history(root string) ([]event, error) {
 	return kept, nil
 }
 
-// selectWindow walks the events newest first and sums them through the third drain
-// commit inclusive. A drain commit is one that adds a detail file, so the boundary is
-// derived from the same file evidence as the counts. A history holding fewer than three
-// drains yields the whole history and reports the drain count it found, because a young
-// board still has a flow to report.
+// selectWindow walks the events newest first and sums them through the third drain commit
+// inclusive. A drain commit is one that adds a detail file, so the boundary derives from
+// the same file evidence as the counts. A history holding fewer than three drains yields
+// the whole history and reports the drain count it found. A young board still has a flow
+// to report.
 func selectWindow(events []event) span {
 	var window span
 	for _, e := range events {
@@ -153,9 +154,9 @@ func selectWindow(events []event) span {
 	return window
 }
 
-// openMass returns the number of index rows the current board holds, or the unknown
-// cell when the board did not read. An unreadable index and a detail directory that
-// could not be listed both leave the count underived rather than zero.
+// openMass returns the number of index rows the current board holds, or the unknown cell
+// when the board did not read. An unreadable index and a detail directory that could not
+// be listed both leave the count underived, not zero.
 func openMass(root string) any {
 	tree := roadmap.LoadTree(root)
 	if tree.Index.State != bounds.StateParsed || tree.DirState.Failed() {
@@ -166,8 +167,8 @@ func openMass(root string) any {
 }
 
 // render emits the flow block and the help envelope. The block's cells are counts, a
-// boolean, and two hexadecimal identities, so no git-sourced text — a branch name, a
-// path, or a subject — reaches a field.
+// boolean, and two hexadecimal identities. No git-sourced text, such as a branch name, a
+// path, or a subject, reaches a field.
 func render(window span, mass any) (string, int) {
 	fields := []string{"opened", "fed", "retired", "net", "open_mass", "target_met", "drains", "window_from", "window_to"}
 	var rows [][]any
