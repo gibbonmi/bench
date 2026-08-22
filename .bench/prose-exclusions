@@ -63,9 +63,6 @@ docs/release-runbook.md migrates in ticket 11
 docs/reporesident-distillation.md migrates in ticket 11
 README.md migrates in ticket 12
 projects/benchkit.md migrates in ticket 12
-ASSESSMENT.md migrates in ticket 13
-skills-assessment.md migrates in ticket 13
-docs/adr/ migrates in ticket 13
 ROADMAP.md migrates in ticket 14
 roadmap/ migrates in ticket 14
 decisions/gate-budget.md migrates in ticket 15
