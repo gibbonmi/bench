@@ -1,11 +1,13 @@
 package gate
 
-// The project-owned phase table: <graded root>/.bench/phases.json. A repo that ships
-// one declares its whole gate as data; a repo that ships none keeps the built-in kit
-// table. Those are the only two states the loader accepts. Everything between them — a
-// truncated write, a broken link, a typo'd key, an edge to nowhere — is a manifest whose
-// author meant something the loader cannot know, so it reds before any phase runs
-// rather than grade the tree with the wrong oracle.
+// This file loads the project-owned phase table: <graded root>/.bench/phases.json. A
+// repo that ships one declares its whole gate as data; a repo that ships none keeps the
+// built-in kit table. Those are the only two states the loader accepts.
+//
+// Everything between them is a manifest whose author meant something the loader
+// cannot know. Examples: a truncated write, a broken link, a typo'd key, an edge to
+// nowhere. The loader reds before any phase runs, rather than grade the tree with the
+// wrong oracle.
 
 import (
 	"errors"
@@ -58,10 +60,12 @@ func phaseTable(root, kit string) ([]Phase, error) {
 }
 
 // readManifest reports the manifest bytes, or that no manifest exists at all. Statting
-// before opening is load-bearing: a FIFO left at the path blocks an open forever, so the
-// mode has to be known before anything opens it. os.Stat follows the link, so a symlink
-// whose target is gone answers ErrNotExist exactly like an honest absence — os.Lstat is
-// what tells the two apart, and only the honest absence may fall back.
+// before opening is load-bearing: a FIFO left at the path blocks an open forever, so
+// the mode must be known before anything opens it.
+//
+// os.Stat follows the link, so a symlink whose target is gone answers ErrNotExist
+// exactly like an honest absence. os.Lstat tells the two apart, and only the honest
+// absence may fall back.
 func readManifest(path string) ([]byte, bool, error) {
 	if _, err := os.Lstat(path); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -110,9 +114,9 @@ func parseManifest(path, root string, data []byte) ([]Phase, error) {
 	return validateManifest(path, root, doc.Phases)
 }
 
-// unknownField lifts the rejected key out of encoding/json's strict-decoding error. The
-// class is worth separating from a syntax error because it is the one a reader will not
-// see: "need" for "needs" is valid JSON that silently drops an edge.
+// unknownField lifts the rejected key out of encoding/json's strict-decoding error.
+// This class is worth separating from a syntax error, because it is the one a reader
+// will not see. "need" for "needs" is valid JSON that silently drops an edge.
 func unknownField(err error) (string, bool) {
 	const marker = "json: unknown field "
 	msg := err.Error()
@@ -151,14 +155,14 @@ func validateManifest(path, root string, declared []manifestPhase) ([]Phase, err
 			Optional: decl.Optional,
 			Needs:    dedupe(decl.Needs),
 			// The runner's own root is the kit checkout, which in a linked repo is a
-			// different tree from the one under grade. Anchoring here — for an
-			// undeclared dir too — is what keeps a manifest phase in the graded tree,
-			// where the directories it names actually exist.
+			// different tree from the one under grade. Anchoring here, for an undeclared
+			// dir too, keeps a manifest phase in the graded tree, where the directories
+			// it names actually exist.
 			Dir: filepath.Join(root, dir),
 		})
 	}
-	// The scheduler reads a need naming no phase in the table as already satisfied, so
-	// only the loader can tell a legitimately filtered edge apart from a typo.
+	// The scheduler reads a need naming no phase in the table as already satisfied.
+	// Only the loader can tell a legitimately filtered edge apart from a typo.
 	for _, phase := range phases {
 		for _, need := range phase.Needs {
 			if !declaredNames[need] {
@@ -172,9 +176,10 @@ func validateManifest(path, root string, declared []manifestPhase) ([]Phase, err
 	return phases, nil
 }
 
-// validPhaseName holds a name to bytes that survive the three contracts it is
-// addressable through — the "phase <name>:" summary lines and the
-// "[name] " output prefixes. Whitespace or a control byte splits at least one of them.
+// validPhaseName holds a name to bytes that survive the contracts it must remain
+// addressable through. Those contracts are the "phase <name>:" summary lines and the
+// "[name] " output prefixes. Whitespace or a control byte splits at least one of
+// them.
 func validPhaseName(name string) bool {
 	if name == "" {
 		return false
@@ -188,9 +193,9 @@ func validPhaseName(name string) bool {
 }
 
 // containedDir reduces a declared dir to its cleaned root-relative form and reports
-// whether it stays inside the root. Containment is lexical: the manifest already
-// runs arbitrary argv from the graded tree, so this catches a mistake rather than an
-// attacker, and resolving symlinks would buy nothing against either.
+// whether it stays inside the root. Containment is lexical: the manifest already runs
+// arbitrary argv from the graded tree, so this catches a mistake rather than an
+// attacker. Resolving symlinks would buy nothing against either.
 func containedDir(dir string) (string, bool) {
 	if dir == "" {
 		return "", true
@@ -244,7 +249,7 @@ func dedupe(names []string) []string {
 }
 
 // cycleNode names a phase on the first cycle reachable in declaration order, or "" when
-// the graph is acyclic. A cycle never reaches the scheduler: there it would settle as
+// the graph is acyclic. A cycle never reaches the scheduler. There it would settle as
 // phases that silently never launch, which reports as skipped rather than as the
 // manifest defect it is.
 func cycleNode(phases []Phase) string {

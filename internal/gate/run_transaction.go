@@ -93,10 +93,10 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	if err != nil || !sameSubject(plan, underLock) {
 		return operational(storageRoot, 0, stderr, "gate subject changed before execution")
 	}
-	// A reusable green is answered from the record without touching it: re-recording the
+	// A reusable green is answered from the record without touching it. Re-recording the
 	// verdict would push RecordedAt forward on every read and make the freshness window
-	// unbounded. The check sits ahead of the pending replace so a reuse returns with nothing
-	// written — no pending record to leave behind, no verdict to restore.
+	// unbounded. The check sits ahead of the pending replace, so a reuse returns with
+	// nothing written: no pending record to leave behind, no verdict to restore.
 	if mode == reuseFreshGreen {
 		if reuse := reusableEvidence(storageRoot, plan, time.Now().UTC()); reuse.ReusableGreen {
 			logGateEvent(ctx, gateLogRecord{Event: "gate.reused", Root: storageRoot})

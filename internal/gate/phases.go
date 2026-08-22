@@ -29,11 +29,13 @@ import (
 
 // Phase is one benchkit gate check. Argv is passed directly to exec.Command; callers
 // must not smuggle shell-interpolated command strings through it. Needs names the
-// phases that must complete green before this one starts — a need that ends red or
+// phases that must complete green before this one starts. A need that ends red or
 // skipped skips this phase too, because it would grade an artifact its need never
 // produced. Dir is the phase's absolute working directory; empty means the runner's
-// root. Anchoring a declared directory is the producer's job — the graded root and the
-// runner's root are different trees in a linked repo, and only the producer knows which
+// root.
+//
+// Anchoring a declared directory is the producer's job. The graded root and the
+// runner's root are different trees in a linked repo. Only the producer knows which
 // one a path was written against.
 type Phase struct {
 	Name         string
@@ -68,11 +70,12 @@ func BenchkitPhases(root, kit string) []Phase {
 	})
 }
 
-// toolchainPhases are the Go steps that grade source rather than the built binary. Each
-// materializes only when the graded root carries what the step grades, so a linked repo
-// never reds on a check the kit wrote for itself. Gofmt, vet, and test need a Go module
-// and a toolchain to run it; the kit-only race step additionally probes for its sentinel
-// declaration rather than assuming a colliding package path carries the same tests.
+// toolchainPhases are the Go steps that grade source rather than the built binary.
+// Each materializes only when the graded root carries what the step grades. So a
+// linked repo never reds on a check the kit wrote for itself. Gofmt, vet, and test
+// need a Go module and a toolchain to run it. The kit-only race step additionally
+// probes for its sentinel declaration, rather than assuming a colliding package path
+// carries the same tests.
 func toolchainPhases(root, kit string) []Phase {
 	goModule, err := goModuleToolchain(root)
 	if !goModule || err != nil {
@@ -101,18 +104,20 @@ func goModuleToolchain(root string) (bool, error) {
 	return true, nil
 }
 
-// rootConformanceEnv points the ordinary test phase at the tree under grade, so the
-// conformance registry's checks run inside the oracle instead of skipping for an unset
-// root. There is no separate conformance phase or driver: Go owns package scheduling
-// inside the one ordinary test driver, and this is what makes that driver grade the
-// live tree rather than only the fixtures.
+// rootConformanceEnv points the ordinary test phase at the tree under grade. This way
+// the conformance registry's checks run inside the oracle, instead of skipping for an
+// unset root. There is no separate conformance phase or driver. Go owns package
+// scheduling inside the one ordinary test driver. This is what makes that driver
+// grade the live tree rather than only the fixtures.
 //
-// It materializes on the same terms as the race and system phases — only where the
-// graded root is the kit, and only where that kit actually declares the entry test, so
-// a linked repo (or a root whose package path merely collides) never inherits a
-// variable its test binaries cannot honor. The tier is pinned rather than left to its
-// unset default: the phase inherits the operator's environment, and an ambient ship
-// tier would otherwise widen what the dev gate grades.
+// It materializes on the same terms as the race and system phases. It requires the
+// graded root to be the kit, and requires that kit to actually declare the entry
+// test. So a linked repo, or a root whose package path merely collides, never
+// inherits a variable its test binaries cannot honor.
+//
+// The tier is pinned rather than left to its unset default. The phase inherits the
+// operator's environment, and an ambient ship tier would otherwise widen what the dev
+// gate grades.
 func rootConformanceEnv(root, kit string) []string {
 	if !sameDirectory(root, kit) {
 		return nil
@@ -148,11 +153,13 @@ func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 
 // declaresTest reports whether dir holds a test file declaring a top-level func named
 // name. Both filtered steps ask this rather than looking at the directory, because a
-// `-run` filter that matches nothing exits 0 and the did-it-run guard behind it would
-// then red a repo that never asked for the check. The answer comes from parsed syntax:
-// a byte scan counts the name inside a comment or a string literal, which materializes
-// a phase that can only red — precisely the harm the probe exists to prevent. Parsing
-// one directory is cheap enough to pay before every gate run.
+// `-run` filter that matches nothing exits 0. The did-it-run guard behind it would
+// then red a repo that never asked for the check.
+//
+// The answer comes from parsed syntax. A byte scan counts the name inside a comment
+// or a string literal. That materializes a phase that can only red, precisely the
+// harm the probe exists to prevent. Parsing one directory is cheap enough to pay
+// before every gate run.
 func declaresTest(dir, name string) bool {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -160,7 +167,7 @@ func declaresTest(dir, name string) bool {
 	}
 	fset := token.NewFileSet()
 	for _, entry := range entries {
-		// Only a regular file is opened: a FIFO named like a test file would block the
+		// Only a regular file is opened. A FIFO named like a test file would block the
 		// read forever, wedging the phase table before the gate starts.
 		if !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), "_test.go") {
 			continue
@@ -253,18 +260,19 @@ func shellcheckArgv(root string) []string {
 
 // shellcheckFiles is the exact file list the shellcheck phase lints, apart from the
 // invocation itself. shellcheckArgv builds its argv on top of this, and so does the
-// shellcheck component's input declaration — the one enumeration both read, so neither
+// shellcheck component's input declaration. Both read the same enumeration, so neither
 // can drift from where the linted paths actually start.
 func shellcheckFiles(root string) []string {
 	files := []string{"bin/bench.sh"}
 	for _, dir := range []string{".bench/hooks", ".bench/lib"} {
 		files = append(files, shellFilesIn(root, dir)...)
 	}
-	// Load-bearing enforcement shell that suffix-scanning misses by extension or
-	// location: the extensionless shift adapters (named explicitly, not discovered
-	// by suffix — they carry no .sh by contract), the gate entry script, and the
-	// embedded pre-push hook asset. A missing file here is a conformance concern,
-	// not a shellcheck one, so only present files are linted.
+	// This list also carries enforcement shell that suffix-scanning misses by
+	// extension or location. The extensionless shift adapters carry no .sh by
+	// contract, so this list names them explicitly rather than discovering them by
+	// suffix. It also names the gate entry script and the embedded pre-push hook
+	// asset. A missing file here is a conformance concern, not a shellcheck one, so
+	// shellcheckFiles lints only the files present.
 	for _, named := range []string{
 		".bench/adapters/claude",
 		".bench/adapters/codex",

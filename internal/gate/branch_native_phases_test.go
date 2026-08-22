@@ -115,7 +115,7 @@ func TestBenchkitPhasesUseBranchNativeDrivers(t *testing.T) {
 }
 
 // TestLinkedRootTestPhaseCarriesNoConformanceEnv holds the materialization rule the
-// race and system phases already follow: a graded root that does not declare the
+// race and system phases already follow. A graded root that does not declare the
 // conformance entry test gets no variable its test binaries cannot honor. Dropping the
 // probe and setting the env unconditionally turns this red.
 func TestLinkedRootTestPhaseCarriesNoConformanceEnv(t *testing.T) {

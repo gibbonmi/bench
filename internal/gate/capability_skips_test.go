@@ -30,11 +30,11 @@ func writeSkipLog(t *testing.T, skips ...capability.Skip) string {
 }
 
 // TestEnvironmentSkipIsRedInsideTheOracle pins the posture that makes the gate's own
-// contracts enforceable: a test that found its staging absent has no verdict, and the
-// gate is what stages it, so folding that into a green footer count is what let the
-// conformance suite go unenforced. The red message names the test and the reason —
-// a reader who has to go hunt for which check stopped running got a number, not a
-// diagnosis. Making environmentFailure return "" is the mutant this pins against.
+// contracts enforceable. A test that found its staging absent has no verdict, and the
+// gate is what stages it. Folding that fact into a green footer count leaves the
+// conformance suite unenforced. The red message names the test and the reason. A
+// reader who must hunt for which check stopped running needs a diagnosis, not a
+// number. This test pins against environmentFailure returning "".
 func TestEnvironmentSkipIsRedInsideTheOracle(t *testing.T) {
 	t.Setenv(requireCapabilitiesEnv, "")
 	path := writeSkipLog(t,
@@ -56,9 +56,9 @@ func TestEnvironmentSkipIsRedInsideTheOracle(t *testing.T) {
 	}
 }
 
-// TestCapabilitySkipsStayInformational holds the other half of the posture: a host that
+// TestCapabilitySkipsStayInformational holds the other half of the posture. A host that
 // genuinely cannot make a security assertion is not the gate's staging failure, so those
-// rows stay green outside strict mode. A blanket red on any skip would turn this red.
+// rows stay green outside strict mode. A blanket red on any skip turns this test red.
 func TestCapabilitySkipsStayInformational(t *testing.T) {
 	t.Setenv(requireCapabilitiesEnv, "")
 	path := writeSkipLog(t,
