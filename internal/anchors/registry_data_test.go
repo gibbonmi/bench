@@ -1,6 +1,12 @@
 package anchors
 
-import "testing"
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"slices"
+	"testing"
+)
 
 // TestFinalCommunicationMarkerTuples keeps the final required tuples and
 // retired-marker policy independent of production values, so omissions cannot
@@ -82,5 +88,38 @@ func TestLandedRetirementAnchorTuples(t *testing.T) {
 		if matches != 1 {
 			t.Errorf("registry has %d rows matching %+v; want exactly one", matches, want)
 		}
+	}
+}
+
+// TestRetroFeedsMarkerAnchorRedsOnRemoval pins RF28. The needle and the diagnostic are
+// written here independently of the registry, so a needle edited to match a template that
+// dropped the destination marker cannot define itself green.
+func TestRetroFeedsMarkerAnchorRedsOnRemoval(t *testing.T) {
+	const (
+		clause = "End the item with one line that reads `Feeds: FT<n>`, `Feeds: new`, or `Feeds: none`."
+		want   = ".agents/commands/bench-final-check.md dropped the implementation-retro improvement-item destination marker"
+	)
+	const template = "# Final check\n\n## Capture the implementation retro\n\nWrite each improvement item as one list item. %s\n"
+
+	evaluate := func(t *testing.T, body string) []string {
+		t.Helper()
+		root := t.TempDir()
+		dir := filepath.Join(root, ".agents", "commands")
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "bench-final-check.md"), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	// Other rows of the group fire against this minimal tree; only the marker row is
+	// this test's subject, so both directions are read by membership.
+	if diags := evaluate(t, fmt.Sprintf(template, clause)); slices.Contains(diags, want) {
+		t.Fatalf("template carrying the destination-marker clause raised %q", want)
+	}
+	if diags := evaluate(t, fmt.Sprintf(template, "")); !slices.Contains(diags, want) {
+		t.Fatalf("template without the destination-marker clause = %v, want %q", diags, want)
 	}
 }
