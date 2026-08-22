@@ -49,6 +49,9 @@ func phaseTable(root, kit string) ([]Phase, error) {
 		return nil, err
 	}
 	if !present {
+		if _, err := goModuleToolchain(root); err != nil {
+			return nil, err
+		}
 		return benchkitPhasesForCommand(root, kit), nil
 	}
 	return parseManifest(path, root, data)

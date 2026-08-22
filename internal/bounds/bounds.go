@@ -24,8 +24,9 @@ import (
 // markdown file read whole into memory, so it is deliberately far below ModelReadLimit,
 // which bounds an untrusted provider response instead.
 const (
-	ProviderTimeout   = 10 * time.Second
-	GitRefreshTimeout = 30 * time.Second
+	ProviderTimeout             = 10 * time.Second
+	EnvironmentDiscoveryTimeout = 2000 * time.Millisecond
+	GitRefreshTimeout           = 30 * time.Second
 	// Git 2.43.0 can block while reading malformed worktree admin files; this
 	// backstop retires when upstream bounds those reads itself.
 	WorktreeListTimeout             = 15 * time.Second
