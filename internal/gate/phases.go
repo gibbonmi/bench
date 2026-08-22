@@ -74,10 +74,8 @@ func BenchkitPhases(root, kit string) []Phase {
 // and a toolchain to run it; the kit-only race step additionally probes for its sentinel
 // declaration rather than assuming a colliding package path carries the same tests.
 func toolchainPhases(root, kit string) []Phase {
-	if !isRegularFile(filepath.Join(root, "go.mod")) {
-		return nil
-	}
-	if _, err := exec.LookPath("go"); err != nil {
+	goModule, err := goModuleToolchain(root)
+	if !goModule || err != nil {
 		return nil
 	}
 	phases := []Phase{
@@ -91,6 +89,16 @@ func toolchainPhases(root, kit string) []Phase {
 		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: raceDriverArgv(), Dir: root, ExpectedRuns: raceTestNames()})
 	}
 	return phases
+}
+
+func goModuleToolchain(root string) (bool, error) {
+	if !isRegularFile(filepath.Join(root, "go.mod")) {
+		return false, nil
+	}
+	if _, err := exec.LookPath("go"); err != nil {
+		return true, fmt.Errorf("gate: Go executable go is required by %s but is not on PATH", root)
+	}
+	return true, nil
 }
 
 // rootConformanceEnv points the ordinary test phase at the tree under grade, so the

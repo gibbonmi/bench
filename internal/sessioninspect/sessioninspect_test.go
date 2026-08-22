@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 func TestInspectDeadlineWarnsAndReturnsZero(t *testing.T) {
@@ -25,6 +29,25 @@ func TestInspectDeadlineWarnsAndReturnsZero(t *testing.T) {
 	const warning = "warning: bench session-inspect: deadline exceeded; session inspection stopped\n"
 	if got := out.String(); got != warning {
 		t.Fatalf("Inspect warning = %q, want %q", got, warning)
+	}
+}
+
+func TestEnvironmentPhaseTE15StopsAtDiscoveryBound(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bin := t.TempDir()
+	if err := os.WriteFile(filepath.Join(bin, "bash"), []byte("#!/bin/sh\n/bin/sleep 30\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin)
+	started := time.Now()
+	if code := environmentPhase(context.Background(), io.Discard, io.Discard, root); code != 0 {
+		t.Fatalf("environmentPhase exit = %d, want 0", code)
+	}
+	if elapsed := time.Since(started); elapsed >= bounds.EnvironmentDiscoveryTimeout+time.Second {
+		t.Fatalf("environmentPhase elapsed = %s, want discovery stopped near %s", elapsed, bounds.EnvironmentDiscoveryTimeout)
 	}
 }
 

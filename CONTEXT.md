@@ -49,6 +49,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,
   OpenCode, …). The kit is harness-agnostic by design.
+- **environment closure** — the harness process carries the toolchain effects
+  implied by its inherited initialization state. Not "loaded environment" or
+  "working PATH" — both names hide partial propagation.
 - **kit** — benchkit itself: the shipped workflow (CLI + working agreement + skills +
   commands + hooks). Not "framework", not "tool" — kit.
 - **profile** — the per-repo file at `projects/<name>.md` a cold session reads to
@@ -161,3 +164,4 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - "boundary" / "abstraction point" when you mean a **seam**.
 - "framework" / "tooling" when you mean the **kit**.
 - "icebox" / "backlog" when you mean the **roadmap**.
+- "loaded environment" / "working PATH" when you mean **environment closure**.

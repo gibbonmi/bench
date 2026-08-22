@@ -457,6 +457,9 @@ escalation.
   as `prospective authorization refused: infrastructure`.
 - Never mutate the repository while a gate is running. The gate binds its
   verdict to the starting subject and rejects a run whose subject changes.
+- When SessionStart diagnoses incomplete environment closure, prepend the
+  recovered tool directory to the ambient PATH. Do not replace the harness
+  toolchain that is already present.
 - Canary mutation tests are ordinary in-process checks. Do not add a gate, wrapper,
   `go test`, or `go run` constructor to a fixture owner; the architecture census treats
   that as a regression.

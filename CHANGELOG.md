@@ -72,6 +72,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- SessionStart now diagnoses a Go repository whose harness PATH lost the
+  toolchain effects promised by its initialization marker. It asks the clean
+  Bash login under a two-second process-group bound, validates but never runs
+  the reported executable, and prints a shell-quoted PATH prepend while keeping
+  session startup informational.
 - Workflow: repair re-reviews now block only on accepted repair predicates and
   repair-induced changes, so unrelated findings cannot restart full discovery.
 - An adopted repository can now run its own gate green. `bench setup` seeds
