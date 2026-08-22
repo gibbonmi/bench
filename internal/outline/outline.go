@@ -1,21 +1,21 @@
-// Package outline implements `bench outline [path] [--full]` — an on-demand repo seam
-// map. It walks the tracked files (optionally scoped to a path), runs a hand-rolled
-// per-language pattern scan, and emits an AXI-conformant TOON table so an agent can
-// locate a candidate seam by name and jump to `file:line`. It is regenerated on every
-// call and writes nothing to the tree.
+// Package outline implements `bench outline [path] [--full]`, an on-demand repo seam
+// map. It walks the tracked files, optionally scoped to a path, and runs a hand-rolled
+// per-language pattern scan. It emits an AXI-conformant TOON table, so an agent can
+// locate a candidate seam by name and jump to `file:line`. It regenerates on every call
+// and writes nothing to the tree.
 //
 // The form decides the table. A path argument or `--full` emits the symbol rows
-// `outline[N]{file,line,kind,name}:` — scoped to the path, or repository-wide. The bare
-// invocation emits the summary `outline_dirs[N]{dir,symbols}:` instead: one row per
-// scanned top-level directory carrying that directory's total symbol count, so a cold
-// probe costs a screen. Every form emits its complete answer; none truncates to a
-// silent prefix.
+// `outline[N]{file,line,kind,name}:`, scoped to the path, or repository-wide. The bare
+// invocation emits the summary `outline_dirs[N]{dir,symbols}:` instead. This summary
+// carries one row per scanned top-level directory with that directory's total symbol
+// count, so a cold probe costs a screen. Every form emits its complete answer; no form
+// truncates to a silent prefix.
 //
-// The tool LOCATES candidate seams; it does not IDENTIFY which are the project's
-// blessed seams — `projects/<name>.md` owns that. It is a line-regex indexer, not a
-// language parser: it does not track comments, string literals, or Markdown code
-// fences, so a commented-out or fenced declaration is indexed as a benign candidate
-// the agent confirms by reading the line.
+// The tool LOCATES candidate seams; it does not IDENTIFY the project's blessed seams.
+// `projects/<name>.md` owns that identification. The tool is a line-regex indexer, not
+// a language parser. It does not track comments, string literals, or Markdown code
+// fences, so a commented-out or fenced declaration indexes as a benign candidate. The
+// agent confirms the candidate by reading the line.
 package outline
 
 import (
@@ -139,10 +139,10 @@ func Symbols(path string, content []byte) []Symbol {
 }
 
 // listFiles returns the tracked files git reports, root-relative, in git's ls-files
-// order. With no path argument it is the whole repo; with one, the argument is
-// resolved from the process cwd to a root-relative `:(literal,top)` pathspec so a glob
-// character or space in the path is matched literally, a directory scopes to the files
-// beneath it, and a path outside the repo scopes to nothing. The -z framing is
+// order. With no path argument it lists the whole repo. With one, it resolves the
+// argument from the process cwd to a root-relative `:(literal,top)` pathspec. A glob
+// character or space in the path then matches literally, a directory scopes to the
+// files beneath it, and a path outside the repo scopes to nothing. The -z framing is
 // NUL-delimited and never C-quotes, so a path with spaces or an embedded newline
 // survives whole.
 func listFiles(root, path string, havePath bool) ([]string, error) {
@@ -177,13 +177,13 @@ func listFiles(root, path string, havePath bool) ([]string, error) {
 	return files, nil
 }
 
-// Command implements `bench outline [path] [--full]`: it walks the tracked files (scoped
-// to an optional path), dispatches each by extension through Symbols, drops any row a
-// control byte would make unrepresentable, and renders the symbol table for a path or
-// `--full` and the per-directory summary for the bare form — each with the definitive
-// empty state when nothing matches, a structured stdout error with exit 1 outside a repo
-// or on a git failure, and usage on stdout with exit 2 for an unknown flag or a second
-// positional argument.
+// Command implements `bench outline [path] [--full]`. It walks the tracked files, scoped
+// to an optional path, and dispatches each by extension through Symbols. It drops any
+// row a control byte would make unrepresentable, and renders the symbol table for a
+// path or `--full`, and the per-directory summary for the bare form. Each form has the
+// definitive empty state when nothing matches, a structured stdout error with exit 1
+// outside a repo or on a git failure, and usage on stdout with exit 2 for an unknown
+// flag or a second positional argument.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -207,8 +207,8 @@ func Command(args []string) (string, int) {
 	}
 
 	var rows, skips [][]string
-	// dirOrder/dirCount are the bare form's ledger: every scanned top-level directory
-	// in first-seen order (so one holding no declarations still reports a zero) and the
+	// dirOrder/dirCount form the bare form's ledger: every scanned top-level directory in
+	// first-seen order, so one holding no declarations still reports a zero, and the
 	// symbols its whole subtree contributed. They index the same rows the symbol table
 	// carries, so both forms report one accounting rather than two.
 	var dirOrder []string

@@ -21,9 +21,8 @@ func containsControl(s string) bool {
 }
 
 // TestPreviewBoundariesAndControls pins Preview's escaping, its 120-code-point cap, and
-// its byte-count suffix — the escaping policy moved here from internal/intent. Control
-// runes are constructed from their code points and escape tokens from bs, so no fragile
-// backslash literal is typed inline.
+// its byte-count suffix. Control runes are constructed from their code points and
+// escape tokens from bs, so no fragile backslash literal is typed inline.
 func TestPreviewBoundariesAndControls(t *testing.T) {
 	if got := Preview(""); got != "" {
 		t.Errorf("Preview(empty) = %q", got)
@@ -74,10 +73,10 @@ func TestControlsEscapesWithoutCapping(t *testing.T) {
 	}
 }
 
-// TestPreformattedPreservesLayoutWhitespace pins the <pre>-panel variant: newline and tab
-// pass through verbatim (so multi-line layout survives), while carriage return and every
-// other control rune still escape through the same \uXXXX mechanism Controls uses — a raw
-// C0 byte must never reach the output.
+// TestPreformattedPreservesLayoutWhitespace pins the <pre>-panel variant. Newline and
+// tab pass through verbatim, so multi-line layout survives. Carriage return and every
+// other control rune still escape through the same \uXXXX mechanism Controls uses. A
+// raw C0 byte must never reach the output.
 func TestPreformattedPreservesLayoutWhitespace(t *testing.T) {
 	in := "a" + string(rune(0x0a)) + "b" + string(rune(0x09)) + "c" + string(rune(0x0d)) + "d" + string(rune(0x07)) + "e"
 	got := Preformatted(in)

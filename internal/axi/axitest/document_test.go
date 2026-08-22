@@ -49,9 +49,9 @@ func TestDecodeDocumentAcceptsZeroRowEnvelope(t *testing.T) {
 	}
 }
 
-// TestDecodeDocumentRejectsUnstructuredOutput pins what the substring checks this helper
-// replaced could not see: bytes outside the blocks, and a help table that is malformed,
-// misschematized, or not the document's last block.
+// TestDecodeDocumentRejectsUnstructuredOutput pins what a substring check cannot see:
+// bytes outside the blocks, and a help table that is malformed, misschematized, or not
+// the document's last block.
 func TestDecodeDocumentRejectsUnstructuredOutput(t *testing.T) {
 	for name, output := range map[string]string{
 		"trailing prose":     helpEnvelopeDocument + "rendered by bench\n",

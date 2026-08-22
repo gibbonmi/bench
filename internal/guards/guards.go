@@ -1,17 +1,17 @@
-// Package guards ports `bench guards` (and `--brief`): every deny-capable guard's
-// manifest aggregated into a `guards[N]{guard,boundary,denies,wired}:` TOON table, so the
-// block surface is learnable without a collision. Guards are discovered by convention
-// (each .bench/hooks/*.sh and the installed git pre-push hook), and their manifests are
+// Package guards ports `bench guards` (and `--brief`). It aggregates every deny-capable
+// guard's manifest into a `guards[N]{guard,boundary,denies,wired}:` TOON table, so the
+// block surface is learnable without a collision. Guards are discovered by convention:
+// each .bench/hooks/*.sh and the installed git pre-push hook. Their manifests are
 // parsed from static leading-comment headers. Discovery reads scripts only as data and
 // never executes them.
 //
 // The `wired` cell names which harness configs actually reference a hook script, so the
-// deny surface the reader sees matches the hooks that can fire here: it is derived (never
-// declared) by scanning .claude/settings.json and .codex/hooks.json for the script's
-// relative path token, the same substring convention conformance uses. The pre-push hook
-// is wired through git rather than a harness config, so its wired cell is the constant
-// `git` and its install posture (managed/unmanaged/not installed) stays in the denies
-// column.
+// deny surface the reader sees matches the hooks that can fire here. This cell is
+// derived, never declared, by scanning .claude/settings.json and .codex/hooks.json for
+// the script's relative path token, the same substring convention conformance uses.
+// The pre-push hook is wired through git rather than a harness config, so its wired
+// cell is the constant `git`, and its install posture (managed/unmanaged/not
+// installed) stays in the denies column.
 package guards
 
 import (
@@ -199,13 +199,13 @@ func Scan(ctx context.Context, root string) ScanResult {
 	return ScanResult{Rows: rows, Status: "complete", Inspected: strconv.Itoa(inspected), Total: strconv.Itoa(len(candidates)), Omitted: "0", Reason: "none"}
 }
 
-// wiredHarnesses names the harness configs that reference scriptRel — its relative
-// path token — scanning .claude/settings.json and .codex/hooks.json with the same
-// substring convention conformance uses. An absent config contributes nothing (a repo
-// without .codex/ cannot wire Codex); an unparseable config scans as not-wired, because
+// wiredHarnesses names the harness configs that reference scriptRel, its relative
+// path token. It scans .claude/settings.json and .codex/hooks.json with the same
+// substring convention conformance uses. An absent config contributes nothing; a repo
+// without .codex/ cannot wire Codex. An unparseable config scans as not-wired, because
 // guards is a read-only wiring reporter and the JSON-validity conformance family owns
-// malformedness. Returns "claude", "codex", the comma-joined "claude,codex", or the
-// definitive "none" — never a blank cell.
+// malformedness. It returns "claude", "codex", the comma-joined "claude,codex", or the
+// definitive "none", never a blank cell.
 func wiredHarnesses(root, scriptRel string) string {
 	token := []byte(scriptRel)
 	var wired []string

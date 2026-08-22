@@ -241,7 +241,7 @@ var registry = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Require, Section: "", Needle: "remove every drained `capture/retros/*.md` file in the same reviewer-approved batch", Diagnostic: ".agents/commands/bench-drain.md dropped the delete-all implementation-retro drain rule"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Require, Section: "", Needle: "report tickets total, one-shots, and per-cause counts, reading causes only from the drained tables", Diagnostic: ".agents/commands/bench-drain.md dropped the implementation-retro repair-attribution tally report"},
 	{Group: AfterImplementSpec, File: ".bench/BENCH.md", Kind: Require, Section: "", Needle: "/bench-drain` owns their reviewed drain", Diagnostic: ".bench/BENCH.md dropped the implementation-retro drain owner"},
-	// The roadmap-flow drain rules: one anchor per rule, so a prose edit that drops one rule
+	// Each roadmap-flow drain rule gets one anchor, so a prose edit that drops one rule
 	// while the rest survive names the dropped rule.
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Require, Section: "", Needle: "Run `bench roadmap --flow` once and quote its flow block in the exit.", Diagnostic: ".agents/commands/bench-drain.md dropped the flow-quote rule: the exit quotes bench roadmap --flow"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-drain.md", Kind: Require, Section: "", Needle: "An entry feeds a row only when it changes the row's priority, scope, or `Next:`.", Diagnostic: ".agents/commands/bench-drain.md dropped the feeds-a-row test: priority, scope, or Next:"},

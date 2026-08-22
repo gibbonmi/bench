@@ -2,11 +2,11 @@ package toon
 
 import "testing"
 
-// The adapter's spec-TOON quoting and escaping is pinned here at the pure-function seam:
-// one row per special-value trigger class the library quotes, plus the carried-over
-// cases (leading/trailing space, comma, inner quote — now backslash — and newline —
-// now \n). A one-field table isolates the cell bytes; the header wrapping is exercised
-// by TestTable below.
+// This test pins the adapter's spec-TOON quoting and escaping at the pure-function seam.
+// It runs one row per special-value trigger class the library quotes, plus the
+// carried-over cases: leading or trailing space, comma, an inner quote (now a
+// backslash), and a newline (now \n). A one-field table isolates the cell bytes.
+// TestTable below exercises the header wrapping.
 func TestTableCellEscaping(t *testing.T) {
 	cases := []struct{ in, wantCell string }{
 		// bare — no trigger
@@ -47,10 +47,10 @@ func TestTableCellEscaping(t *testing.T) {
 	}
 }
 
-// A control byte spec-TOON cannot represent (anything below 0x20 that is not the
-// escapable tab/newline/return) has no valid cell form, so the library refuses and the
-// adapter returns an error instead of panicking or forging a lossy block. A form-feed
-// is the concrete carrier — it can ride in a git path through `bench diff`.
+// A control byte spec-TOON cannot represent — anything below 0x20 except the escapable
+// tab, newline, or return — has no valid cell form. The library refuses it, so the
+// adapter returns an error instead of a panic or a lossy block. A form-feed is the
+// concrete carrier: it can ride in a git path through `bench diff`.
 func TestTableUnrepresentableCellErrors(t *testing.T) {
 	for _, in := range []string{"a\x0cb", "esc\x1b", "\x00nul"} {
 		got, err := Table("t", []string{"v"}, [][]string{{in}})
@@ -63,12 +63,12 @@ func TestTableUnrepresentableCellErrors(t *testing.T) {
 	}
 }
 
-// Representable is the one predicate row-filtering callers consult instead of failing
-// a whole table on one cell, so it must agree with the encoder's actual refusal
-// behavior byte-for-byte. This pin sweeps every C0 control, DEL, and a spread of
-// ordinary cells, asserting predicate-true == Table-renders: if the library's refusal
-// rule ever moves (say, it starts refusing DEL), this goes red instead of the two
-// rules drifting apart silently.
+// Representable is the one predicate a row-filtering caller consults instead of
+// failing a whole table on one cell. It must agree with the encoder's actual refusal
+// behavior byte-for-byte. This test sweeps every C0 control, DEL, and a spread of
+// ordinary cells, and asserts predicate-true equals Table-renders. If the library's
+// refusal rule ever moves — say, it starts refusing DEL — this test goes red instead
+// of letting the two rules drift apart silently.
 func TestRepresentableMatchesEncoder(t *testing.T) {
 	probes := []string{"plain", "em—dash", "🚀 emoji", `quo"te`, "has,comma", "del\x7fbyte"}
 	for b := byte(0); b < 0x20; b++ {
@@ -99,8 +99,8 @@ func TestTable(t *testing.T) {
 	}
 }
 
-// TableTyped keeps a genuine int cell bare while quoting a numeric-looking string in
-// the same column — the mixed-column contract the maps `ticket` field relies on.
+// TableTyped keeps a genuine int cell bare while it quotes a numeric-looking string in
+// the same column. This is the mixed-column contract the maps `ticket` field relies on.
 func TestTableTyped(t *testing.T) {
 	// Empty typed table keeps its schema too.
 	if got, _ := TableTyped("maps", []string{"map", "ticket"}, nil); got != "maps[0]{map,ticket}:\n" {

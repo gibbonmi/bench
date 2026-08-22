@@ -1,12 +1,12 @@
-// Package stophook is the ported Stop hook — the completion oracle that decides
-// whether an armed shift may stop. It exists because a stop that blocks a green
-// gate or allows a red one is the worst class of bug: message wording, exit codes,
-// and the no-forged-verdict cache guarantee are load-bearing, so they live in one
-// unit-tested place rather than scattered through .bench/hooks/stop.sh.
+// Package stophook is the ported Stop hook, the completion oracle that decides
+// whether an armed shift may stop. It exists because a stop that blocks a green gate,
+// or allows a red one, is the worst class of bug. Message wording, exit codes, and the
+// no-forged-verdict cache guarantee are load-bearing, so they live in one unit-tested
+// place instead of scattered through .bench/hooks/stop.sh.
 //
-// The pure seams (Active, Tail, BlockMessage) are table-tested; Run does the I/O
-// (exec the standalone wrapper once) and is exercised end-to-end by the shell gate
-// contracts. Verdict ownership remains entirely behind that wrapper.
+// The pure seams (Active, Tail, BlockMessage) are table-tested. Run does the I/O: it
+// execs the standalone wrapper once, and the shell gate contracts exercise it
+// end-to-end. Verdict ownership remains entirely behind that wrapper.
 package stophook
 
 import (
@@ -78,9 +78,9 @@ func BlockMessage(gateOutput string) string {
 
 // Run is the Stop-hook orchestration. When the shift is not armed, or the envelope
 // says the hook is already active, it allows the stop (exit 0) without touching the
-// cache. Otherwise it runs `<wrapper> gate` exactly once and
-// returns 0 on green or 2 (after writing the BLOCKED message to stderr) on red. The
-// wrapper gate's no-gate exit 3 is not a verdict and must not seed a red cache.
+// cache. Otherwise it runs `<wrapper> gate` exactly once. It returns 0 on green, or 2
+// on red after it writes the BLOCKED message to stderr. The wrapper gate's no-gate
+// exit 3 is not a verdict and must not seed a red cache.
 func Run(stdin []byte, wrapper string, armed bool, stderr io.Writer) int {
 	if root, err := git.Root(); err == nil {
 		if err := intent.Compact(root); err != nil {
