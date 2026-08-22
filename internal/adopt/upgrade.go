@@ -14,15 +14,15 @@ import (
 
 // upgrade.go is the consumer's supported route onto a newer kit, replacing the
 // maintainer-only /bench-update-kit surface the payload allowlist withholds. It owns no
-// write path: the plan it prints is a read-only summary, and the tree, the manifest
-// rows, and the manifest's #kit version header all move together inside the same
-// transactionalLink that bench link uses — so an interrupt can never strand a new tree
-// under an old version claim.
+// write path: the plan it prints is a read-only summary. The tree, the manifest rows, and
+// the manifest's #kit version header all move together inside the same transactionalLink
+// that bench link uses. This keeps an interrupt from ever stranding a new tree under an
+// old version claim.
 
-// Upgrade compares the linked repo's pinned kit version against the installed one,
-// prints the plan, and applies the relink. --check reports the plan and applies
-// nothing; an equal version is a definitive no-op success; a lower installed version is
-// a downgrade and fails closed until --force performs it.
+// Upgrade compares the linked repo's pinned kit version against the installed one, prints
+// the plan, and applies the relink. --check reports the plan and applies nothing. An
+// equal version is a definitive no-op success. A lower installed version is a downgrade
+// and fails closed until --force performs it.
 func Upgrade(args []string, stdout, stderr io.Writer, version string) int {
 	check, force := false, false
 	for _, arg := range args {
@@ -65,8 +65,8 @@ func Upgrade(args []string, stdout, stderr io.Writer, version string) int {
 	}
 	fmt.Fprint(stdout, block)
 
-	// The downgrade refusal precedes the --check return: a dry run that reported a plan
-	// the applying run would refuse would be a promise the command cannot keep.
+	// The downgrade refusal precedes the --check return. A dry run that reported a plan the
+	// applying run would refuse would be a promise the command cannot keep.
 	if direction < 0 && !force {
 		fmt.Fprintln(stderr, toon.Errorf("installed kit is older than the linked kit", "re-run 'bench upgrade --force' to accept the downgrade"))
 		return 1
@@ -78,10 +78,10 @@ func Upgrade(args []string, stdout, stderr io.Writer, version string) int {
 	return result
 }
 
-// pinnedManifest reads the linked repo's manifest and its #kit header, distinguishing
-// the two absent states a consumer can be in: no manifest at all means the repo was
-// never linked and the remedy is bench link, while a manifest that exists but carries
-// no version is a malformed state a relink has to repair rather than a missing linkage.
+// pinnedManifest reads the linked repo's manifest and its #kit header, distinguishing the
+// two absent states a consumer can be in. No manifest at all means the repo was never
+// linked, and the remedy is bench link. A manifest that exists but carries no version is
+// a malformed state a relink has to repair rather than a missing linkage.
 func pinnedManifest(path string, stderr io.Writer) (Manifest, int) {
 	info, err := os.Stat(path)
 	if os.IsNotExist(err) {
@@ -108,14 +108,15 @@ func pinnedManifest(path string, stderr io.Writer) (Manifest, int) {
 	return manifest, 0
 }
 
-// upgradePlanCounts summarizes what applying plan to a repo owning manifest would do: a
-// plan entry the manifest does not own is added, a manifest row the plan no longer
-// carries is removed, and an owned file entry whose kit-side bytes no longer match the
-// recorded hash is changed. Only file entries can drift — an adapter symlink and an
-// inline entry are generated from the destination path and from constant content — so
-// this reads the same inputs transactionalLink reconciles without deciding anything a
-// second time. CLAUDE.md is manifest-owned but conditionally, never planned, so it is
-// not a withdrawal.
+// upgradePlanCounts summarizes what applying plan to a repo owning manifest would do:
+//   - a plan entry the manifest does not own is added
+//   - a manifest row the plan no longer carries is removed
+//   - an owned file entry whose kit-side bytes no longer match the recorded hash is changed
+//
+// Only file entries can drift; an adapter symlink and an inline entry are generated from
+// the destination path and from constant content. This reads the same inputs
+// transactionalLink reconciles without deciding anything a second time. CLAUDE.md is
+// manifest-owned but conditionally, never planned, so it is not a withdrawal.
 func upgradePlanCounts(manifest Manifest, plan []planEntry) (added, changed, removed int) {
 	current := make([]Asset, 0, len(manifest.hashes))
 	for _, row := range manifest.Rows() {
@@ -152,15 +153,14 @@ func upgradePlanCounts(manifest Manifest, plan []planEntry) (added, changed, rem
 }
 
 // compareKitVersions orders two kit versions by their numeric release components and,
-// when those tie, by prerelease precedence: -1 when a precedes b, 1 when it follows, 0
-// when they are the same version. A release outranks its own prerelease, so a repo
-// pinned at 1.2.3-rc1 upgrades onto 1.2.3 instead of reading as an equal version and
-// leaving the manifest stamped at the prerelease. Two differing prereleases of one
-// release order by their suffix bytes — a deterministic tiebreak, not full
-// dot-separated prerelease semantics — and build metadata never affects precedence. A
-// version neither side can parse (an unstamped "dev" build, a hand-edited header) is
-// never reported as a downgrade, so a malformed stamp cannot make upgrade refuse an
-// install it should do.
+// when those tie, by prerelease precedence. It returns -1 when a precedes b, 1 when it
+// follows, and 0 when they are the same version. A release outranks its own prerelease,
+// so a repo pinned at 1.2.3-rc1 upgrades onto 1.2.3 rather than reading as equal and
+// staying stamped there. Two differing prereleases of one release order by their suffix
+// bytes, a deterministic tiebreak rather than full dot-separated semantics, and build
+// metadata never affects precedence. A version neither side can parse, such as an
+// unstamped "dev" build or a hand-edited header, is never reported as a downgrade. This
+// keeps a malformed stamp from making upgrade refuse an install it should do.
 func compareKitVersions(a, b string) int {
 	if a == b {
 		return 0
@@ -182,7 +182,7 @@ func compareKitVersions(a, b string) int {
 }
 
 // prereleaseOf returns the prerelease field: the text after the first '-' and before any
-// '+' build metadata, empty for a plain release.
+// '+' build metadata. It is empty for a plain release.
 func prereleaseOf(version string) string {
 	core := version
 	if i := strings.IndexByte(core, '+'); i >= 0 {

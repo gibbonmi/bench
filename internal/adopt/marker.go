@@ -125,10 +125,11 @@ func RewriteAgentsBlock(content string) (string, error) {
 }
 
 // StripAgentsBlock removes the unfenced Bench managed block from AGENTS.md while leaving
-// fenced marker examples and project-owned prose intact — the reverse of RewriteAgentsBlock,
-// sharing its fence-aware scan so the two agree on what "the managed block" is. Content with
-// no managed block returns unchanged; unlink reads a resulting whitespace-only file as the
-// signal to remove an AGENTS.md that link created with no user content.
+// fenced marker examples and project-owned prose intact. It is the reverse of
+// RewriteAgentsBlock, sharing its fence-aware scan so the two agree on what "the managed
+// block" is. Content with no managed block returns unchanged. unlink reads a resulting
+// whitespace-only file as the signal to remove an AGENTS.md that link created with no
+// user content.
 func StripAgentsBlock(content string) (string, error) {
 	if err := validateAgentsContent(content); err != nil {
 		return "", err
@@ -182,10 +183,10 @@ func legacyClaudeMD() string {
 }
 
 // claudeImportLines returns the marker-owned import lines every reclaimable CLAUDE.md
-// form must carry, derived from legacyClaudeMD (the minimal form) rather than
-// re-declaring the "@AGENTS.md" literal a second time. The canonical form
-// (benchClaudeMD) is legacy plus one more import line, so requiring only the legacy
-// set is the single check that accepts both forms.
+// form must carry. It derives them from legacyClaudeMD, the minimal form, rather than
+// re-declaring the "@AGENTS.md" literal a second time. The canonical form, benchClaudeMD,
+// is legacy plus one more import line, so the legacy set alone is the single check that
+// accepts both forms.
 func claudeImportLines() []string {
 	var lines []string
 	for _, line := range strings.Split(legacyClaudeMD(), "\n") {
@@ -196,8 +197,8 @@ func claudeImportLines() []string {
 	return lines
 }
 
-// claudeHasImports reports whether content carries every marker-owned import line —
-// true for both the canonical and legacy forms, false for a preserved CLAUDE.md whose
+// claudeHasImports reports whether content carries every marker-owned import line. It is
+// true for both the canonical and legacy forms, and false for a preserved CLAUDE.md whose
 // imports were stripped (doctor's row-11 red cell).
 func claudeHasImports(content string) bool {
 	for _, line := range claudeImportLines() {

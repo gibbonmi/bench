@@ -11,13 +11,12 @@ import (
 	"github.com/gibbonmi/bench/internal/lines"
 )
 
-// doctorRow evaluates one independent per-harness health signal. Each row prints its
-// own ok/red line and answers only for itself — never folded into one aggregate green
-// — so a broken row (a preserved CLAUDE.md without its imports, a missing profile)
-// stays visible even when every other signal, including the shim, is healthy. An empty
-// message is a row with nothing to say about this repo and prints no line at all, which
-// is how a row scoped to an optional asset stays quiet where the asset is absent.
-// Adding a row is one more entry in doctorRows plus one evaluator function.
+// doctorRow evaluates one independent per-harness health signal. Each row prints its own
+// ok/red line and answers only for itself, never folded into one aggregate green. A
+// broken row stays visible even when every other signal, including the shim, is healthy.
+// Examples are a preserved CLAUDE.md without its imports, or a missing profile. An empty
+// message is a row with nothing to say about this repo, and it prints no line at all.
+// This is how a row scoped to an optional asset stays quiet where the asset is absent.
 type doctorRow struct {
 	label string
 	eval  func(root string) (ok bool, message string)
@@ -35,11 +34,12 @@ var doctorRows = []doctorRow{
 	{"worktree admin", evalWorktreeAdminRow},
 }
 
-// reportDoctorRows renders every per-harness row when doctor runs inside a git
-// worktree that bench has touched (a `.bench` directory exists — `bench init` or
-// `bench link` has run), and returns whether any row is red. An untouched plain git
-// repo has nothing bench-adopted to check yet, so the rows stay silent rather than
-// reporting every asset absent — the shim/missing row already covers that case.
+// reportDoctorRows renders every per-harness row when doctor runs inside a git worktree
+// that bench has touched. A touched worktree is one where a `.bench` directory exists,
+// because `bench init` or `bench link` has run. It returns whether any row is red. An
+// untouched plain git repo has nothing bench-adopted to check yet, so the rows stay
+// silent rather than reporting every asset absent. The shim/missing row already covers
+// that case.
 func reportDoctorRows(stdout io.Writer) bool {
 	root, err := git.Root()
 	if err != nil {
@@ -114,21 +114,21 @@ func evalGateRow(root string) (bool, string) {
 	if !ok {
 		return ok, msg
 	}
-	// The fail-closed scaffold (bench init's scaffoldGate, and bench setup's
-	// zero-signal stub - the same content, one source) carries this sentinel until a
-	// real check replaces it. A fabricated green oracle must never hide behind a
-	// green doctor row either: the row stays red until the sentinel is gone, not just
-	// until the gate happens to be present and executable.
+	// The fail-closed scaffold carries this sentinel until a real check replaces it. Bench
+	// init's scaffoldGate and bench setup's zero-signal stub are the same content, one
+	// source. A fabricated green oracle must never hide behind a green doctor row. The row
+	// stays red until the sentinel is gone, not just until the gate is present and
+	// executable.
 	if content, err := os.ReadFile(path); err == nil && strings.Contains(string(content), SentinelMarker) {
 		return false, ".bench/gate.sh is still the unconfigured fail-closed stub (replace the " + SentinelMarker + " sentinel with real checks)"
 	}
 	return ok, msg
 }
 
-// evalSetupPointersRow validates the pointer setup's own next-action print relies on
-// (FT76's deferred row-11 sub-row): the /bench-setup-repo command file finishSetup
-// tells a converged user to go continue. A missing pointer would make that print a
-// dead end, so doctor catches it rather than a cold user discovering it by hand.
+// evalSetupPointersRow validates the pointer setup's own next-action print relies on.
+// finishSetup tells a converged user to continue at the /bench-setup-repo command file. A
+// missing pointer would make that print a dead end. Doctor catches it rather than a cold
+// user discovering it by hand.
 func evalSetupPointersRow(root string) (bool, string) {
 	path := filepath.Join(root, ".agents", "commands", "bench-setup-repo.md")
 	if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() {
@@ -156,11 +156,11 @@ func evalRepoLocalBenchRow(root string) (bool, string) {
 
 // evalBindingMigrationRow reports the hand rewrite that moves a retired
 // BENCH_TIER_*/BENCH_ALIAS_* binding onto the BENCH_<HARNESS>_<TIER> matrix. Those keys
-// bind nothing, so a file carrying only them is a repo with no line binding at all rather
-// than one on an older schema — which is why the row is red and why it names every retired
-// key it finds: an unnamed one is a silent survivor of the migration. Reporting is the
-// whole remedy. Doctor never writes .bench/lines.env, because the binding is reviewer-owned
-// and a tool that edited it would be deciding the line on the reviewer's behalf.
+// bind nothing, so a file carrying only them is a repo with no line binding at all, not
+// one on an older schema. This is why the row is red and why it names every retired key
+// it finds. An unnamed key is a silent survivor of the migration. Reporting is the whole
+// remedy. Doctor never writes .bench/lines.env, because the binding is reviewer-owned,
+// and a tool that edited it would decide the line on the reviewer's behalf.
 func evalBindingMigrationRow(root string) (bool, string) {
 	content, err := os.ReadFile(bindingPath(root))
 	if err != nil {
@@ -180,9 +180,9 @@ func evalBindingMigrationRow(root string) (bool, string) {
 }
 
 // evalBindingColumnsRow names every known harness whose column binds no model, with the
-// keys that would bind it. An unadopted harness is not a defect — its adapter refuses to
-// launch, which is the safe posture for a family nobody chose — so the row is green; what
-// it prevents is an operator meeting that refusal with no route forward.
+// keys that would bind it. An unadopted harness is not a defect. Its adapter refuses to
+// launch, the safe posture for a family nobody chose, so the row is green. What it
+// prevents is an operator meeting that refusal with no route forward.
 func evalBindingColumnsRow(root string) (bool, string) {
 	content, err := os.ReadFile(bindingPath(root))
 	if err != nil {

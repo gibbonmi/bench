@@ -62,19 +62,18 @@ func Init(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// SentinelMarker is the fail-closed-stub trailer scaffoldGate embeds as a shell
-// comment. Doctor's gate row (detection), setup's zero-signal message (the printed
-// remedy), and out-of-package readers that retire the sentinel line all key off this
-// same literal so the gate script, the doctor row, and the printed remedy never drift
-// apart.
+// SentinelMarker is the fail-closed-stub trailer scaffoldGate embeds as a shell comment.
+// Doctor's gate row, setup's zero-signal message, and out-of-package readers that retire
+// the sentinel line all key off this same literal. This keeps the gate script, the doctor
+// row, and the printed remedy from drifting apart.
 const SentinelMarker = "BENCH_SENTINEL"
 
 // gateScriptPreamble is the one shebang/set/git-root-guard preamble every generated
-// gate.sh carries. scaffoldGate's fail-closed stub and setup's detected-ecosystem
-// script both compose it here rather than re-authoring it, so the opening lines of a
-// written gate.sh never drift between the two writers - see setupGateScript in
-// setup.go for the second caller. comment is the writer-identifying line(s) that
-// follow the shebang, each already newline-terminated.
+// gate.sh carries. scaffoldGate's fail-closed stub and setup's detected-ecosystem script
+// both compose it here rather than re-authoring it. This keeps the opening lines of a
+// written gate.sh from drifting between the two writers; see setupGateScript in setup.go
+// for the second caller. comment is the writer-identifying line(s) that follow the
+// shebang, each already newline-terminated.
 func gateScriptPreamble(comment string) string {
 	return `#!/usr/bin/env bash
 ` + comment + `set -uo pipefail

@@ -18,10 +18,10 @@ type planEntry struct {
 }
 
 // distGitignore is written into a linked repo's .bench/dist/.gitignore. It ignores the
-// arch-specific binary link copies next to it (.bench/dist/bench) so a consumer who
-// commits .bench/dist/ can't hand a different-arch teammate a broken CLI and a silently
-// fail-open Stop hook. A single unanchored line — not "/bench" — and it must not ignore
-// itself: the ignore file is meant to be committed and travel with the repo.
+// arch-specific binary link copies next to it (.bench/dist/bench). This keeps a consumer
+// who commits .bench/dist/ from handing a different-arch teammate a broken CLI and a
+// silently fail-open Stop hook. The line stays unanchored, not "/bench", and it must not
+// ignore itself. The ignore file is meant to be committed and travel with the repo.
 const distGitignore = "bench\n"
 
 func Link(args []string, stdout, stderr io.Writer, version string) int {
@@ -35,10 +35,10 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 	}
 	root, err := git.Root()
 	if err != nil {
-		// link's whole job is to create the Bench linkage, so the shared AXI
-		// toon.NotInRepo() ("run inside a Bench-linked repo") is nonsensical here —
-		// point at the actual remedy instead. Every genuine AXI query command keeps
-		// the shared phrasing; this is link's own message, not a second source of it.
+		// link's whole job is to create the Bench linkage. The shared AXI toon.NotInRepo()
+		// wording, "run inside a Bench-linked repo", is nonsensical here, so this message
+		// points at the actual remedy instead. Every genuine AXI query command keeps the shared
+		// phrasing; this is link's own message, not a second source of it.
 		fmt.Fprintln(stderr, toon.Errorf("not a git repository", "run inside a git repository (e.g. run 'git init' first)"))
 		return 1
 	}
@@ -73,12 +73,12 @@ func isEphemeralKit(kit string) bool {
 }
 
 // buildLinkPlan is the sole reader of the consumer-payload allowlist for the link
-// destination: every row it writes, and the audience filter that keeps kit-only rows
-// out of every destination (including the .claude/ adapter mirrors), come from the
-// root-level kitpayload package (embedding .bench/consumer-payload.json) rather than a
-// second hand-listed plan. A consumer row's destination is its source path unchanged,
-// except the top-level bin/ tree which lands under the linked repo's .bench/bin/ so a
-// consumer's own bin/ stays untouched.
+// destination. Every row it writes comes from the root-level kitpayload package, which
+// embeds .bench/consumer-payload.json, rather than a second hand-listed plan. The same
+// package supplies the audience filter that keeps kit-only rows out of every destination,
+// including the .claude/ adapter mirrors. A consumer row's destination is its source path
+// unchanged, except the top-level bin/ tree. That tree lands under the linked repo's
+// .bench/bin/, so a consumer's own bin/ stays untouched.
 func buildLinkPlan(kit string) ([]planEntry, error) {
 	rows, err := kitpayload.PayloadRows()
 	if err != nil {
@@ -99,11 +99,11 @@ func buildLinkPlan(kit string) ([]planEntry, error) {
 		}
 		src := filepath.Join(kit, filepath.FromSlash(row.Source))
 		if !row.Tree {
-			// A row absent from this kit checkout is skipped, not a hard failure:
-			// a minimal or partial kit tree (a stripped fixture, an in-progress
-			// checkout) omits assets it does not carry rather than promising ones
-			// it cannot deliver. transactionalLink still catches a source that
-			// disappears between planning and promotion.
+			// A row absent from this kit checkout is skipped, not a hard failure. A minimal or
+			// partial kit tree, such as a stripped fixture or an in-progress checkout, omits
+			// assets it does not carry. It never promises an asset it cannot deliver.
+			// transactionalLink still catches a source that disappears between planning and
+			// promotion.
 			if _, statErr := os.Stat(src); statErr != nil {
 				continue
 			}
@@ -132,13 +132,12 @@ func buildLinkPlan(kit string) ([]planEntry, error) {
 }
 
 // linkDestination maps an allowlist row's kit-relative source path to the path it is
-// written at inside a linked repo. Every row's destination equals its source, except
-// the top-level bin/ tree (npm's install-time surface), which is written under the
-// linked repo's own .bench/bin/ instead of colliding with a consumer's bin/. A row
-// outside the linked destinations this function names (README.md, CHANGELOG.md,
-// projects/*.md) is not part of the link plan at all — it ships only in the npm
-// tarball, via the same allowlist read by the release-evidence and package.json
-// derivations.
+// written at inside a linked repo. Every row's destination equals its source, except the
+// top-level bin/ tree, npm's install-time surface. That tree is written under the linked
+// repo's own .bench/bin/ instead of colliding with a consumer's bin/. A row outside the
+// linked destinations this function names, such as README.md, CHANGELOG.md, or
+// projects/*.md, is not part of the link plan at all. It ships only in the npm tarball,
+// via the same allowlist read by the release-evidence and package.json derivations.
 func linkDestination(src string) (string, bool) {
 	switch {
 	case strings.HasPrefix(src, "bin/"):
@@ -150,14 +149,13 @@ func linkDestination(src string) (string, bool) {
 	}
 }
 
-// treeEntries walks srcRoot (the on-disk directory for the allowlist row named by
-// srcRel) and returns one planEntry per regular file, skipping any path the allowlist
-// marks kit-only. A non-regular file (FIFO, device, socket) is refused by name instead
-// of being silently skipped or blocking a later open — the kit's own source tree must
-// never be able to wedge the plan builder. A symbolic link is refused on the same path
-// and named as one: following it would copy bytes the allowlist never named, from
-// wherever the link points, so the payload stays limited to files that are what they
-// appear to be.
+// treeEntries walks srcRoot, the on-disk directory for the allowlist row named by srcRel.
+// It returns one planEntry per regular file, skipping any path the allowlist marks
+// kit-only. A non-regular file, such as a FIFO, device, or socket, is refused by name
+// instead of being silently skipped or blocking a later open. This keeps the kit's own
+// source tree from wedging the plan builder. A symbolic link is refused on the same path
+// and named as one, because following it would copy bytes the allowlist never named. This
+// keeps the payload limited to files that are what they appear to be.
 func treeEntries(srcRoot, destRoot, kind, srcRel string, excludedPrefixes []string) ([]planEntry, error) {
 	info, err := os.Stat(srcRoot)
 	if err != nil || !info.IsDir() {
@@ -198,9 +196,9 @@ func treeEntries(srcRoot, destRoot, kind, srcRel string, excludedPrefixes []stri
 	return entries, nil
 }
 
-// claudeSkillsEntries mirrors .agents/skills into .claude/skills for skills that have
-// no same-named command (a skill with a command already reaches Claude Code through the
-// command mirror). It reuses treeEntries for the walk, the kit-only exclusion, and the
+// claudeSkillsEntries mirrors .agents/skills into .claude/skills for skills that have no
+// same-named command. A skill with a command already reaches Claude Code through the
+// command mirror. It reuses treeEntries for the walk, the kit-only exclusion, and the
 // non-regular-file refusal, then drops the skills a command mirror already covers.
 func claudeSkillsEntries(kit string, excludedPrefixes []string) ([]planEntry, error) {
 	entries, err := treeEntries(filepath.Join(kit, ".agents", "skills"), ".claude/skills", "adapter", ".agents/skills", excludedPrefixes)

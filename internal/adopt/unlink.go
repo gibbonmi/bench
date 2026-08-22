@@ -12,14 +12,17 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// Unlink reverses `bench link`: it consumes the link manifest and removes every managed file
-// whose fingerprint still matches, prunes managed directories left empty, strips the fenced
-// AGENTS.md block, and removes the pre-push hook when it carries the managed marker — sparing
-// anything the user has made theirs. A file edited since link is kept and reported; the
-// manifest is removed last and only when nothing was refused, so a partial run stays
-// resumable. `--dry-run` computes the same verdicts but writes nothing. With no manifest to
-// consume — or one it cannot read — unlink fails loudly (exit 1) rather than silently
-// no-op'ing on a repo it cannot account for.
+// Unlink reverses `bench link`. It consumes the link manifest and does the following,
+// sparing anything the user has made theirs:
+//   - removes every managed file whose fingerprint still matches
+//   - prunes managed directories left empty
+//   - strips the fenced AGENTS.md block
+//   - removes the pre-push hook when it carries the managed marker
+//
+// A file edited since link is kept and reported. The manifest is removed last and only
+// when nothing was refused, so a partial run stays resumable. `--dry-run` computes the
+// same verdicts but writes nothing. With no manifest to consume, or one it cannot read,
+// unlink fails loudly (exit 1). It never silently no-ops on a repo it cannot account for.
 func Unlink(args []string, stdout, stderr io.Writer) int {
 	dryRun := false
 	for _, a := range args {
@@ -39,7 +42,7 @@ func Unlink(args []string, stdout, stderr io.Writer) int {
 
 	manifestPath := filepath.Join(root, ".bench", "link-manifest.tsv")
 	// Explicit absence guard: the shared reader maps an absent manifest to an empty one with
-	// no error; unlink must not inherit that false-empty and exit 0 on a repo it cannot
+	// no error. unlink must not inherit that false-empty and exit 0 on a repo it cannot
 	// account for. Absent or unreadable is a loud exit 1 with the documented manual path.
 	if _, err := os.Stat(manifestPath); err != nil {
 		fmt.Fprintln(stderr, "bench unlink: no link manifest at .bench/link-manifest.tsv; nothing to consume.")
@@ -179,12 +182,13 @@ func collectAncestors(dirs *[]string, root, full string) {
 	}
 }
 
-// sweepEmptyDirs prunes managed directories left empty, deepest-first with a non-recursive
-// rmdir that only succeeds on an empty directory — so any directory still holding a
-// kept-modified file or a user artifact survives untouched. It runs the same simulation for
-// both modes: a directory is empty when every current entry is itself already gone (a removed
-// file or an already-swept child), which for dry-run consults removedSet since nothing was
-// written, and for a real run matches the on-disk reality after removals. Returns the count.
+// sweepEmptyDirs prunes managed directories left empty, deepest-first with a
+// non-recursive rmdir that only succeeds on an empty directory. Any directory still
+// holding a kept-modified file or a user artifact survives untouched. It runs the same
+// simulation for both modes. A directory is empty when every current entry is itself
+// already gone, a removed file or an already-swept child. For dry-run this consults
+// removedSet since nothing was written, and for a real run it matches the on-disk reality
+// after removals. Returns the count.
 func sweepEmptyDirs(candidateDirs []string, removedSet map[string]bool, dryRun bool) int {
 	seen := map[string]bool{}
 	dirs := candidateDirs[:0:0]
@@ -229,10 +233,11 @@ func sweepEmptyDirs(candidateDirs []string, removedSet map[string]bool, dryRun b
 }
 
 // stripAgentsForUnlink removes the fenced Bench block from AGENTS.md while preserving the
-// user's surrounding prose. When stripping leaves the file whitespace-only — the case where
-// link created it with no user content — the file is removed, mirroring link's create-if-absent
-// symmetry. A malformed managed block is left in place and counted as a refusal so the manifest
-// survives for a manual fix. AGENTS.md is bespoke, not a manifest row.
+// user's surrounding prose. When stripping leaves the file whitespace-only, the case
+// where link created it with no user content, the file is removed, mirroring link's
+// create-if-absent symmetry. A malformed managed block is left in place and counted as a
+// refusal, so the manifest survives for a manual fix. AGENTS.md is bespoke, not a
+// manifest row.
 func stripAgentsForUnlink(root string, dryRun bool, p *unlinkPlan) string {
 	path := filepath.Join(root, "AGENTS.md")
 	content, err := os.ReadFile(path)
@@ -260,9 +265,9 @@ func stripAgentsForUnlink(root string, dryRun bool, p *unlinkPlan) string {
 }
 
 // removeManagedHook removes the pre-push hook only when it carries the managed marker. It
-// resolves the effective hooks directory the same way link does (honoring core.hooksPath). A
-// hook without the marker is a foreign hook: left in place, and its presence is not a refusal
-// because it was never Bench's. The hook is bespoke, not a manifest row.
+// resolves the effective hooks directory the same way link does, honoring core.hooksPath.
+// A hook without the marker is a foreign hook, left in place; its presence is not a
+// refusal because it was never Bench's. The hook is bespoke, not a manifest row.
 func removeManagedHook(root string, dryRun bool) string {
 	path := filepath.Join(hooksDir(root), "pre-push")
 	content, err := os.ReadFile(path)
@@ -303,9 +308,9 @@ func writeUnlinkReport(w io.Writer, root string, dryRun bool, p unlinkPlan) erro
 	for _, rel := range p.refused {
 		fmt.Fprintf(w, "  refused: %s\n", rel)
 	}
-	// Keep the prose above for humans, and expose the exact same verdict data once
-	// for automation.  Link and unlink deliberately share toon.Table rather than
-	// growing bespoke parsers for their partial outcomes.
+	// The prose above serves humans; the block below exposes the exact same verdict data
+	// once for automation. Link and unlink deliberately share toon.Table rather than growing
+	// bespoke parsers for their partial outcomes.
 	verdicts := make([]lifecycleVerdict, 0, len(p.keptModified)+len(p.refused))
 	for _, rel := range p.keptModified {
 		verdicts = append(verdicts, lifecycleVerdict{rel, "modified"})
