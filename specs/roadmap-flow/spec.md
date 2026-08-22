@@ -378,6 +378,8 @@ RF29.
 - `internal/roadmap/tree_test.go`
 - `internal/roadmap/tree_helpers_test.go`
 - `internal/roadmap/roadmap.go`
+- `internal/roadmap/roadmap_test.go`
+- `internal/roadmap/context_test.go`
 - `internal/roadmap/roadmaptest`
 - `internal/retros/retros.go`
 - `internal/retros/retros_test.go`
@@ -387,6 +389,7 @@ RF29.
 - `internal/conformance/checks.go`
 - `internal/conformance/checks_test.go`
 - `internal/conformance/registry_test.go`
+- `internal/conformance/tier_test.go`
 - `internal/conformance/roadmap_detail_integrity_test.go`
 - `internal/conformance/retro_improvement_markers_test.go`
 - `internal/conformance/row_next_grammar_test.go`
