@@ -5,10 +5,17 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/guards"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -17,7 +24,7 @@ type phase func(context.Context, io.Writer, io.Writer, string) int
 
 type stderrKey struct{}
 
-var phases = []phase{resumePhase, statusPhase, guardsPhase}
+var phases = []phase{environmentPhase, resumePhase, statusPhase, guardsPhase}
 var runInspect = Inspect
 
 func Inspect(ctx context.Context, w io.Writer, root string) int {
@@ -58,6 +65,62 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	defer cancel()
 	ctx = context.WithValue(ctx, stderrKey{}, stderr)
 	return runInspect(ctx, stdout, root)
+}
+
+func environmentPhase(ctx context.Context, stdout, _ io.Writer, root string) int {
+	info, err := os.Lstat(filepath.Join(root, "go.mod"))
+	if err != nil || !info.Mode().IsRegular() {
+		return 0
+	}
+	if _, err := exec.LookPath("go"); err == nil {
+		return 0
+	}
+	command := exec.Command("bash", "-c", "exec bash -lc 'command -v go' 2>/dev/null")
+	command.Dir = root
+	command.Env = environmentWithout(os.Environ(), "ENVMAN_LOAD")
+	result := bounds.Run(ctx, bounds.EnvironmentDiscoveryTimeout, command)
+	executable, valid := discoveredExecutable(result)
+	if !valid {
+		fmt.Fprintln(stdout, "bench: Go is absent from PATH and the clean Bash login did not resolve an executable Go toolchain.")
+		return 0
+	}
+	fmt.Fprintf(stdout, "bench: environment closure is partial: Go is absent from PATH, but the clean Bash login resolves %s (ENVMAN_LOAD=%q).\n", executable, os.Getenv("ENVMAN_LOAD"))
+	fmt.Fprintf(stdout, "bench: recover without replacing harness tools: export PATH=%s:\"$PATH\"\n", sanitize.ShellQuote(filepath.Dir(executable)))
+	return 0
+}
+
+func environmentWithout(environment []string, name string) []string {
+	clean := make([]string, 0, len(environment))
+	for _, entry := range environment {
+		key, _, _ := strings.Cut(entry, "=")
+		if key != name {
+			clean = append(clean, entry)
+		}
+	}
+	return clean
+}
+
+func discoveredExecutable(result bounds.ProcessResult) (string, bool) {
+	if result.Status != bounds.ProcessComplete {
+		return "", false
+	}
+	line := string(result.Output)
+	if strings.HasSuffix(line, "\n") {
+		line = strings.TrimSuffix(line, "\n")
+	}
+	if line == "" || !utf8.ValidString(line) || !filepath.IsAbs(line) {
+		return "", false
+	}
+	for _, char := range line {
+		if unicode.IsControl(char) {
+			return "", false
+		}
+	}
+	info, err := os.Stat(line)
+	if err != nil || !info.Mode().IsRegular() || info.Mode()&0o111 == 0 {
+		return "", false
+	}
+	return line, true
 }
 
 func resumePhase(ctx context.Context, stdout, stderr io.Writer, root string) int {
