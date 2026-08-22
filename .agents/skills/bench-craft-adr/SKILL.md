@@ -9,7 +9,8 @@ index: recording a decision or writing docs
 Every agent session starts cold. It has no memory of how the project got here, so
 documentation that narrates history actively confuses the reader you're writing
 for. Document the **current decided state**, addressed to someone seeing the
-project for the first time.
+project for the first time, in ASD-STE100 prose per `craft-spec`'s
+`references/ste-prose.md`.
 
 ## When to write one
 

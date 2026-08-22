@@ -75,7 +75,9 @@ convergence, a call `craft-line` owns.
 ## How to talk to me
 
 - This governs your **conversational output**; artifacts stay as full as their
-  templates need.
+  templates need. Every written artifact — a doc, an ADR, a roadmap row, a
+  handoff, a retro, a journal entry, a spec, a ticket — uses ASD-STE100 prose;
+  the rules are in `.agents/skills/bench-craft-spec/references/ste-prose.md`.
 - Give me what I need to decide, nothing more. Lead with the result; no preamble
   or filler. Cut the derivation, keep the context and the one-clause *why*.
 - Write so I can pick it up cold: what this is, where it stands, the next
