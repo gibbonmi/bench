@@ -6,11 +6,11 @@ Writes: internal/worktree/worktree.go, internal/worktree/*_test.go, .agents/skil
 ## What to build
 
 After the `worktree_create` table, `bench worktree create` prints a `next[2]:`
-block naming the label-addressed verbs (`bench worktree exec "<label>" -- <command>`
-and `bench worktree path "<label>"`), so a caller never caches the path in a
-scratch variable. The `bench-craft-delegate` skill's Isolation passage says the
-same in one sentence: address a created worktree by label through
-`bench worktree exec`/`path`, never a cached `$WT`.
+block. The block names the label-addressed verbs: `bench worktree exec "<label>" -- <command>`
+and `bench worktree path "<label>"`. A caller never caches the path in a
+scratch variable. The `bench-craft-delegate` skill's Isolation passage states
+the same rule. A caller addresses a created worktree by label
+through `bench worktree exec`/`path`, never through a cached `$WT`.
 
 ## Acceptance
 

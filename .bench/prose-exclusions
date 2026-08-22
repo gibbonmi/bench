@@ -87,10 +87,4 @@ decisions/spec-build-review-gate-cadence.md migrates in ticket 18
 decisions/worktree-orphan-retirement.md migrates in ticket 18
 decisions/ft144-post-approval-edits.md migrates in ticket 18
 decisions/assets/ft171-shared-fixture-staged-binary.md migrates in ticket 18
-tickets/ migrates in ticket 19
-capture/agent-performance/ migrates in ticket 19
-capture/audits/ migrates in ticket 19
-capture/FIXES.md migrates in ticket 19
-capture/parallel-session-friction.md migrates in ticket 19
-capture/learnings.md migrates in ticket 19
 capture/session-handoff.md migrates in ticket 28b

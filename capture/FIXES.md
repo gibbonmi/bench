@@ -1,9 +1,10 @@
 # Prioritized roadmap fixes
 
 Assessed 2026-08-13 against `main` at `7d22a29f`. This is the fix-only triage
-view of the 24 live defect rows in `ROADMAP.md`; features, decision-only items,
-parked work, and already-shipped rows do not appear here. The roadmap remains
-the canonical board, and every fix still needs live revalidation at build entry.
+view of the 24 live defect rows in `ROADMAP.md`. Features, decision-only
+items, parked work, and already-shipped rows do not appear here. The roadmap
+remains the canonical board, and every fix still needs live revalidation at
+build entry.
 
 ## Reading the queue
 

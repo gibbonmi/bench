@@ -1,10 +1,11 @@
 # Audit — injected-interface composition (2026-08-03)
 
 Decision source for the junction-test spec. Sweep charge: every injected
-interface on a Service-like type repo-wide; for each, the production wiring,
-whether any test drives the real implementation through the consuming surface,
-and any written exemption. Delegate findings spot-verified by the coordinator
-at the four load-bearing citations.
+interface on a Service-like type repo-wide. For each interface, the audit
+records the production wiring, whether any test drives the real
+implementation through the consuming surface, and any written exemption.
+Delegate findings spot-verified by the coordinator at the four load-bearing
+citations.
 
 ## Inventory
 
@@ -25,10 +26,10 @@ at the four load-bearing citations.
 
 Service-like types confirmed to carry no injected port (sweep completeness):
 internal/worktree (free functions — the producer side, no seam by design),
-internal/shift, internal/adopt, internal/preflight, internal/preprelease
-(static step table), internal/contract harness types, and the data/pure
-packages. `FixtureRegistry.Client *http.Client` is concrete with a default,
-never overridden.
+internal/shift, internal/adopt, and internal/preflight. The list also
+includes internal/preprelease (static step table), internal/contract harness
+types, and the data/pure packages. `FixtureRegistry.Client *http.Client` is
+concrete with a default, never overridden.
 
 ## Triage
 
@@ -43,8 +44,9 @@ never overridden.
    claim that names no control reaching this surface; under craft-spec's
    existing-control rule it becomes a row.
 3. `canary.Runner`: the fake is a second derivation of the production
-   runner's path resolution — exactly what craft-gate's run-the-real-path
-   rule forbids in a check; a cwd/arg change in `defaultRunner` stays green.
+   runner's path resolution. This is exactly what craft-gate's
+   run-the-real-path rule forbids in a check; a cwd/arg change in
+   `defaultRunner` stays green.
 4. `gitguard.Checker`: two real probes with opposite fail-safe polarities,
    composed with `Classify`'s clobber logic by nobody.
 5. `ShapeUnknown`: privilege-free deterministic fixture exists — `os.Lstat`
@@ -55,9 +57,9 @@ never overridden.
 
 **Priced-out — leave with reason (registry exemption line):**
 
-- `GateOwner` / `PromotionGateOwner` / `buildService`: composition covered by
-  the binary-level runtime contract suite, which drives the real wiring end
-  to end — the fake is below the seam the contract phase tests. One cheap
+- `GateOwner` / `PromotionGateOwner` / `buildService`: composition is covered
+  by the binary-level runtime contract suite, which drives the real wiring
+  end to end. The fake is below the seam the contract phase tests. One cheap
   addition: a compile-time `var _ specbuild.PromotionGateOwner =
   productionGateOwner{}` pin in cmd/bench so the `assign.go:300` type
   assertion can never silently downgrade.
@@ -65,6 +67,6 @@ never overridden.
 - `WorktreeOwner.Create`, specbuild `Runner`, internal/gate ports: covered.
 
 **Gate check (parked idea, recommended in scope):** a conformance check that
-every injected interface names its real-producer test or its exemption —
-registry single-sourced, existence-verified, canary-proven per craft-gate —
-so this audit never re-runs by hand.
+every injected interface names its real-producer test or its exemption.
+This registry stays single-sourced, existence-verified, and canary-proven
+per craft-gate, so this audit never re-runs by hand.

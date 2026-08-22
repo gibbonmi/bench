@@ -1,14 +1,14 @@
 # Commit/promote friction observed 2026-08-03 (injected-interface-junctions build)
 
-Grill input for a shape-idea on multi-session parallelism. Every item below was
-hit live in one session sharing a tree with one human writer; each names the
-observed refusal and the design question it raises.
+Grill input for a shape-idea on multi-session parallelism. Every item below
+was hit live in one session sharing a tree with one human writer. Each item
+names the observed refusal and the design question it raises.
 
 1. **Whole-tree cleanliness is a global writer lock.** `bench spec build
    start`/`assign` require a clean working checkout, and `bench commit` fails
    closed on any dirty path outside its named set. The reviewer's in-flight
    drafts (`ROADMAP.md`, an unstaged spec) blocked an unrelated one-file ticket
-   commit; the only exits were a mixed-authorship commit naming the reviewer's
+   commit. The only exits were a mixed-authorship commit naming the reviewer's
    files (needed explicit authorization) or waiting. Question: what is the
    smallest unit that must be exclusively locked for a green landing — the
    tree, or the diff plus its gate inputs?
@@ -43,15 +43,16 @@ observed refusal and the design question it raises.
 
 6. **`promote` conflates recompose with publish.** Recomposing onto a moved
    tip is routine maintenance, but it ships inside the publish-authority
-   command, so the harness permission layer (correctly protective of publish)
-   also blocks the maintenance half; a human had to run a promote whose only
+   command. So the harness permission layer (correctly protective of publish)
+   also blocks the maintenance half. A human had to run a promote whose only
    effect was recomposition. Splitting recompose from publish would let
    sessions maintain their runs without publish authority.
 
 7. **Ticket files must be committed to main before assign** ("ticket no longer
-   matches committed subject"), so ticket authoring re-enters the item-1 tree
-   lock and the item-3 tip-movement cascade — the cycle observed live:
-   commit ticket → tip moves → recompose required → human-gated promote.
+   matches committed subject"). This makes ticket authoring re-enter the
+   item-1 tree lock and the item-3 tip-movement cascade. The cycle observed
+   live: commit ticket → tip moves → recompose required → human-gated
+   promote.
 
 Ambient: session start reported 48 open assignments and dozens of preserved
 recovery refs — assignment sprawl is already multi-session shaped; the

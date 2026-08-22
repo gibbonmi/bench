@@ -1,10 +1,11 @@
 # Claude model scorecard
 
-Last incorporated landing: `roadmap-flow` (`2bcd682d`, 2026-08-22) — Fable/high
-orchestrated a two-arm spec experiment (STE prose won), a five-ticket build with
-three parallel Opus/medium charges, a Fable/high guidance ticket, a Sonnet/medium
-64-row migration, a Sonnet/high three-axis review (1 finding, 1 repair target),
-and the landing; five of five tickets first-pass, ten full gate runs.
+Last incorporated landing: `roadmap-flow` (`2bcd682d`, 2026-08-22). Fable/high
+orchestrated a two-arm spec experiment (STE prose won). The five-ticket build ran
+three parallel Opus/medium charges, a Fable/high guidance ticket, and a
+Sonnet/medium 64-row migration. It also ran a Sonnet/high three-axis review
+(1 finding, 1 repair target) and the landing itself. Five of five tickets
+landed first-pass, across ten full gate runs.
 
 Eighteen completed landings are now recorded. Fable has Go-seam and
 spec-and-tickets reviewer samples, prose, and two full-lifecycle orchestrations.
@@ -37,16 +38,16 @@ large implementer sample. Routing follows the harness-to-tier binding.
 - A delegate's reading of a gate skip is a claim: plant a break and run the oracle.
 - Change routing only after two comparable runs or one controlled model comparison.
 - **Review axes now route to Sonnet** at the reviewer's direction (2026-08-19). The Opus
-  reviewer row above is the closing sample for that role, not the current routing; the
+  reviewer row above is the closing sample for that role, not the current routing. The
   two Sonnet reviewer samples (`ft227`, `ft228`) held the citation standard at 3 axes
-  each with no re-run; keep the routing and watch whether it under-reads
-  string-expectation seams. Write and orchestrator routing is unchanged.
+  each with no re-run. Keep the routing, and watch whether it under-reads
+  string-expectation seams. Write and orchestrator routing stays unchanged.
 - Route a ticket from the decision table at charge time, not from its story's line. On
-  `ft228` every ticket derived from mid-routed stories ran cleanly at low effort, because
-  an exact spec, a known seam, and a covering gate is the cheap row — which is what a good
-  spec produces. The ceiling-not-binding rule is worth a real discount, not a formality.
+  `ft228` every ticket derived from mid-routed stories ran cleanly at low effort. An exact
+  spec, a known seam, and a covering gate make the cheap row, which is what a good spec
+  produces. The ceiling-not-binding rule is worth a real discount, not a formality.
 - A red is attributed or it is not resolved. A delegate reporting red-then-green as a
-  flake is making an attribution claim; here that claim concealed both a genuine
+  flake is making an attribution claim. Here that claim concealed both a genuine
   one-in-a-thousand test flake and a structural defect dropping two phases from every
   worktree gate run. A second green run establishes nothing about the first red.
 - A self-probe derived from the implementation cannot find a missing half of a
@@ -56,29 +57,30 @@ large implementer sample. Routing follows the harness-to-tier binding.
   large/foundational Go-seam work until a medium-effort sample contradicts it.
 - Charges should name every state reaching a branch, not only the state the acceptance
   row tests — both observed repair rounds share that shape.
-- A parallel-repair-ticket batch (multiple delegates from one shared stale base, ported
-  onto the retained source serially) is real leverage but shifts merge-conflict cost onto
-  the coordinator's port step; a charge for one should declare its expected touched-file
-  overlap with sibling charges so ports can be sequenced deliberately.
+- A parallel-repair-ticket batch pulls multiple delegates from one shared stale base and
+  ports each one onto the retained source serially. This batch is real leverage, but it
+  shifts merge-conflict cost onto the coordinator's port step. A charge for one should
+  declare its expected touched-file overlap with sibling charges so ports can be
+  sequenced deliberately.
 - The zero-delegate light-path shape produces self-catches, not accepted-claim catches;
   treat its evidence as weaker in kind, not merely smaller, when comparing to delegated
   landings.
 - Sonnet at medium-high effort handled an 8-ticket behavior-preserving Go refactor,
-  including its two highest-risk seams, with zero coordinator-found defects; effort choice
+  including its two highest-risk seams, with zero coordinator-found defects. Effort choice
   tracked behavior-preservation risk correctly even though every ticket's line count was
   modest. Treat Sonnet as viable for real production refactor work at the right effort,
   not only for known-shape low-effort tickets.
-- Mutation probes and a full green gate both missed a real regression that an adversarial
-  review pass caught by asking "what combination of evidence has nothing exercised" rather
-  than "does the changed logic behave as charged." A review pass earns its cost distinctly
-  from probing: probing verifies a claimed fix; review hunts for the untested combination
-  nobody claimed to have covered.
-- A resolved review-pickup artifact (`reviews/<slug>.md`) left in the tree past its last
-  finding's fix is now a hard `bench worktree land` refusal, not merely a style miss —
-  delete it in the same commit that closes the last finding, every time.
+- Mutation probes and a full green gate both missed a real regression. An adversarial
+  review pass caught it by asking "what combination of evidence has nothing exercised"
+  rather than "does the changed logic behave as charged." A review pass earns its cost
+  distinctly from probing. Probing verifies a claimed fix, and review hunts for the
+  untested combination nobody claimed to have covered.
+- A resolved review-pickup artifact (`reviews/<slug>.md`) can linger in the tree past its
+  last finding's fix. That is now a hard `bench worktree land` refusal, not merely a style
+  miss. Delete it in the same commit that closes the last finding, every time.
 - An operational refusal is diagnosable from the state record the tool itself reads. A
-  message that conflates several causes is a CLI defect to file, not a reason to guess:
-  dump the authoritative record, falsify causes against it, and confirm the survivor.
+  message that conflates several causes is a CLI defect to file, not a reason to guess.
+  Dump the authoritative record, falsify causes against it, and confirm the survivor.
 - Drive Bench through its own wrapper, never `go run ./cmd/bench`. The wrapper supplies
   the run-binary variable the gate requires; without it a full gate run reports green
   phases and then refuses authorization as `infrastructure`.
@@ -87,32 +89,32 @@ large implementer sample. Routing follows the harness-to-tier binding.
   discounted exactly that and filed a finding its own cited literal already refuted.
 - Rows inherited from the surface a ticket replaces cannot grade the surface replacing
   it. Narrowing a blunt check into a precise one creates parse surface the blunt check
-  never had; on `ft229` that shipped two fail-opens at the enforcement boundary under a
-  green gate, and seven of ten repair rounds in that build were `spec-row`. A ticket that
-  replaces a check adds a row for the new surface, at spec time.
+  never had. On `ft229` that narrowing shipped two fail-opens at the enforcement boundary
+  under a green gate. Seven of ten repair rounds in that build were `spec-row`. A ticket
+  that replaces a check adds a row for the new surface, at spec time.
 - A mutation probe that reds proves nothing until the red is attributed. Two probes here
-  reported a kill that was a compile error or a harness bug, and in one of them the
+  reported a kill. The kill was a compile error or a harness bug, and in one of them the
   delegate the coordinator was overruling had been right.
 - A stale session handoff is corrected by the tree, not trusted. `ft229` opened with a
-  handoff claiming nothing was implemented while ten tickets had landed on a retained
-  source; the commit-age row is what made the disagreement visible.
+  handoff claiming nothing was implemented, while ten tickets had landed on a retained
+  source. The commit-age row is what made the disagreement visible.
 - Serial delegates on one retained integration worktree cost wall-clock and buy one author
   per diff. Disjoint fence files across tickets are not a licence to write concurrently in
   one tree; the lever is separate worktrees.
 - A gate verdict carrying "reused for this tree" is evidence about the tree's last real
   run, not about any code path. An evidence run aimed at a specific path uses `--fresh`;
   the provenance prints on the same line as the verdict and reads as a pass.
-- The `ft230` amendment refusal was never a contract disagreement: FT225 had retired that
+- The `ft230` amendment refusal was never a contract disagreement. FT225 had retired that
   refusal hours earlier, and a `dist/bench` built the day before was still enforcing it.
   A stale executable enforces the contract it was built with, and the land command refuses
   before any gate runs, so nothing downstream could catch it. `land-executable-freshness`
-  closed the residual; the surviving lesson is that a refusal quoting a rule you believe is
+  closed the residual. The surviving lesson: a refusal quoting a rule you believe is
   retired is evidence about the binary, not about the rule.
 - A delegate citing a file and line it did not re-read produces a claim that looks
   checkable and is not. Three axes here held every substantive claim while two drifted on
   line numbers. Weigh the claim, verify the location.
 - A charge that prescribes a fixture *shape* can buy a vacuous test. Name the property
-  that must be red-capable and let the delegate derive the shape: here the prescribed
+  that must be red-capable and let the delegate derive the shape. Here the prescribed
   shape stayed green under the exact mutation it was meant to catch, and only the
   delegate's own derived shape bit.
 - Assert a repo convention from the check that enforces it, not from a sample of artifacts
