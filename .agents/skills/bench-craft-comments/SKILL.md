@@ -8,7 +8,8 @@ index: writing or reviewing code comments
 
 A comment is addressed to the teammate who just walked in — the next reader of
 the *current* code, with no memory of the conversation, spec, or diff that
-produced it. Everything below follows from that reader.
+produced it. Everything below follows from that reader. Write the sentences in
+ASD-STE100 prose per `craft-spec`'s `references/ste-prose.md`.
 
 ## What earns a comment
 

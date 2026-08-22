@@ -8,7 +8,9 @@ index: writing or pruning a skill
 
 A skill exists to wrangle determinism out of a stochastic system. The root virtue
 is **predictability** — the agent taking the same *process* every run, not the same
-output. Every rule below serves that.
+output. Every rule below serves that. Write a skill's prose in ASD-STE100 per
+`craft-spec`'s `references/ste-prose.md`; a rule read the same way every run is
+the point.
 
 ## Invocation: model-invoked vs user-invoked
 

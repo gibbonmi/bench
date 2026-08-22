@@ -1,34 +1,35 @@
 # Project: benchkit
 
-The Bench kit itself — a harness-agnostic agent-development workflow shipped as the
-npm package `redbench`. It is not an application: it is shell + markdown + JSON that
-other repos consume. The deliverable is the `bench` CLI (`bin/bench.sh`), the working
-agreement (`AGENTS.md`), the portable `.agents/` skills and commands, and harness
-adapters that call shared `.bench/hooks/` scripts. Because the artifacts are plain
-files, the kit must work identically under Claude Code, Codex, and any other
-AGENTS.md harness — that portability is the product.
+Bench kit is the harness-agnostic agent-development workflow. The npm package
+`redbench` ships it. Bench kit is not an application. It is shell, markdown, and
+JSON that other repos consume. The deliverable is the `bench` CLI (`bin/bench.sh`),
+the working agreement (`AGENTS.md`), the portable `.agents/` skills and commands, and
+the harness adapters that call the shared `.bench/hooks/` scripts. The artifacts are
+plain files, so the kit must work identically under Claude Code, Codex, and any other
+AGENTS.md harness. This portability is the product.
 
 ## Working branch
 
-`main`. (The commit-on-green policy is canonical in `/bench-final-check`; the
-default-branch guard is the pre-push hook, not commit-time — `bench commit` is
-branch-agnostic. This line is only the binding.)
+`main`. (`/bench-final-check` names the commit-on-green policy as canonical. The
+pre-push hook, not the commit step, guards the default branch, so `bench commit`
+works on any branch. This line only states the binding.)
 
 ## Seams (test here; everything else is free to change)
 
-- **The gate contract** (`.bench/gate.sh` / `bench gate`). The oracle surface. Everything
-  in Bench routes through its exit code: 0 = shippable, non-zero = not done. The
-  highest seam — if the gate is weak, the whole system is weak. Test by feeding it a
-  conformant tree (green) and a broken one (red); never by trusting a reading of the
-  diff. The gate package is the single deep owner of reusable-verdict authorization
-  and durable execution; the accepted trust posture is recorded in ADR 0002.
-- **The `bench` CLI subcommands.** The operational shell surface; `bench help`,
-  rendered from Go `commandRegistry`, is the executable inventory, while
-  `.bench/BENCH.md` keeps category-level operational guidance. Stable command names
-  and exit codes are the contract; the
-  implementation behind each is free to change. Keep gate resolution
+- **The gate contract** (`.bench/gate.sh` / `bench gate`). This is the oracle surface.
+  Every Bench operation routes through its exit code: 0 means shippable, and non-zero
+  means not done. This is the highest seam: a weak gate weakens the whole system.
+  Test it by feeding it a conformant tree (green) and a broken tree (red); never trust
+  a reading of the diff. The gate package is the single deep owner of
+  reusable-verdict authorization and durable execution; ADR 0002 records the
+  accepted trust posture.
+- **The `bench` CLI subcommands.** This is the operational shell surface. `bench help`,
+  rendered from the Go `commandRegistry`, is the executable inventory, while
+  `.bench/BENCH.md` keeps category-level operational guidance. The contract is the
+  stable command names and exit codes; the
+  implementation behind each stays free to change. Keep the gate resolution
   (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.
-  Missing-binary resolution is network-silent by default and names the explicit
+  Missing-binary resolution stays network-silent by default and names the explicit
   `bench repair` action; automation opts into the same repair path with exactly
   `BENCH_REPAIR=1`, while `BENCH_OFFLINE=1` and `BENCH_NO_REPAIR` suppress it.
   Reviewed spec-backed builds keep serial green ticket commits on one retained
@@ -36,17 +37,17 @@ branch-agnostic. This line is only the binding.)
   `bench worktree land` composes and gates that pair on the destination, and its
   published commit owns the spec's `Status: implemented` flip.
   `bench worktree reclaim` is the one reader of the `$BENCH_HOME/worktrees` pool
-  parent: bare it plans reclaimable keys and removes nothing, and
+  parent: bare, it plans reclaimable keys and removes nothing, and
   `--apply <fingerprint>` removes exactly what that plan named. It owns the single
   reclaimability predicate; `bench resume-clean` counts through that same predicate,
   reports the count and the verb, and never removes a pool key itself.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench roadmap`, and `bench worktree list`, and the
-  shared flat-table TOON emitter behind them). The agent-facing read-only
+  shared flat-table TOON emitter behind them). This is the agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract: TOON stdout,
-  definitive empty states, structured errors on stdout, exit 0/1/2. Gate-tested by
-  the AXI contract fragments. Guard manifests come from each guard script's static
-  leading-comment header (read as data, never executed), and
+  definitive empty states, structured errors on stdout, exit 0/1/2. The AXI contract
+  fragments gate-test it. Each guard script's static leading-comment header supplies
+  the guard manifest (Bench reads it as data and never executes it), and
   `bench guards --brief` is the surface the SessionStart hook injects.
   `bench diff` is the single coherent review snapshot: it reports the revision,
   aggregate, inventory, checkout, whitespace, and optional complete patch from
@@ -55,44 +56,48 @@ branch-agnostic. This line is only the binding.)
   work. `bench coverage --check` is
   the one parser for the acceptance-coverage-map convention; the gate's docs
   fragment consumes it instead of carrying its own.
-- **The ambient dashboard** (`bench status`). The single deterministic renderer the
-  SessionStart hook and the user both call: it ranks the signals that fire on a fixed
-  severity ladder and leads with the next action. Reads gate state from the **gate cache**
-  (`<git-dir>/bench-last-gate`, written durably by gate execution) — never a cold gate run. The
-  contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
-  not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
-  pointing at `/bench-drain`. A stale exact verdict always remains the strong stale
-  row; there is no path-based reduced-scope softening. Its severity-1 git
-  signal reports dirty paths from the named/current checkout while aggregating
-  unpushed commits and unique local branches across the repository; severity-2 intent
-  joins the shared common-directory ledger, compact by default and expanded by `--all`.
+- **The ambient dashboard** (`bench status`). This is the single deterministic renderer
+  the SessionStart hook and the user both call: it ranks the signals that fire on a
+  fixed severity ladder and leads with the next action. It reads gate state from the
+  **gate cache** (`<git-dir>/bench-last-gate`, written durably by gate execution) —
+  never from a cold gate run. The
+  contract (gate-tested) shows only on signal, keeps a five-row budget, treats a
+  stale-green as not a clean bill, and gives one combined capture-drain row (parked
+  ideas plus open learnings) pointing at `/bench-drain`. A stale exact verdict always
+  stays the strong stale row; no path-based reduced-scope softening applies. Its
+  severity-1 git signal reports dirty paths from the named or current checkout while
+  aggregating unpushed commits and unique local branches across the repository;
+  severity-2 intent joins the shared common-directory ledger, compact by default and
+  expanded by `--all`.
 - **The capture inbox and working roadmap** (`bench idea` → `capture/IDEAS.md`;
   `bench roadmap` → the `ROADMAP.md` index and its `roadmap/FT<n>.md` detail
   owners, one per row, each holding that row's body, `Occurrence:` ledger, and
-  `Sources:` line). Capture-and-forget: park an out-of-scope idea,
+  `Sources:` line). This is capture-and-forget: park an out-of-scope idea and
   commit to nothing; ideas graduate only through a `/bench-drain` drain into the
   working roadmap. The contract (gate-tested in a throwaway repo): `idea` appends one
   dated line and creates the inbox; a no-arg `idea` errors without appending;
   `roadmap` prints the working document plus drain status, or its
   `## Recommended sequence` when nothing needs draining. `capture/IDEAS.md`,
-  `ROADMAP.md`, and `roadmap/` are per-consumer content — never in the kit's
+  `ROADMAP.md`, and `roadmap/` stay per-consumer content — never in the kit's
   `package.json` `files[]`.
 - **The kit content surface** (`.agents/skills/*/SKILL.md`, `.agents/commands/*.md`).
-  Portable harness-facing content. The contract is structural: every skill carries YAML
-  frontmatter (name + description) and follows progressive disclosure; every command
-  is a phase the index names. The `.bench/BENCH.md` skills index is generated
+  This is portable harness-facing content. The contract is structural: every skill
+  carries YAML frontmatter (name and description) and follows progressive
+  disclosure; every command is a phase the index names. The `.bench/BENCH.md` skills
+  index is generated
   from each skill's `index:` frontmatter (`bench skills-index --write`);
-  craft skills' visible names use `craft-*` so `$bench` menus show
-  only human-run phase adapters. Codex command-adapter skills are derived from
-  `.agents/commands/` and documented in `.bench/BENCH.md`. The gate's conformance
+  craft skills use `craft-*` visible names so `$bench` menus show
+  only human-run phase adapters. Codex derives command-adapter skills from
+  `.agents/commands/` and documents them in `.bench/BENCH.md`. The gate's conformance
   layer enforces those contracts so disk, docs, and adapters do not drift.
   `.claude/` paths are adapters, not a second source of truth.
-- **The safe managed-asset lifecycle** (`bench link` and `bench unlink`). The adoption
-  surface preflights and stages the complete write set, syncs durable content, and
-  atomically promotes it or rolls the repository back. Relink reconciles old and new
-  manifests: clean removed assets leave, while modified or project-owned collisions
-  remain in place and produce a machine-readable partial result. Unlink removes only
-  clean manifest-owned assets and reports any residuals with the same partial posture.
+- **The safe managed-asset lifecycle** (`bench link` and `bench unlink`). This is the
+  adoption surface: it preflights and stages the complete write set, syncs durable
+  content, and atomically promotes it or rolls the repository back. Relink reconciles
+  old and new manifests: clean removed assets leave, while modified or project-owned
+  collisions remain in place and produce a machine-readable partial result. Unlink
+  removes only clean manifest-owned assets and reports any residuals with the same
+  partial posture.
   The lifecycle preserves project-owned `AGENTS.md` text and installs the `.bench/bin/`
   local CLI set the shared hooks use when no global `bench` command is on PATH.
 - **The distributable artifact contract** (wrapper and native package tarballs).
@@ -100,10 +105,10 @@ branch-agnostic. This line is only the binding.)
   the canonical asset manifest and platform matrix, artifact tests inspect and install
   its output, and the native workflow executes the same host smoke used locally. The
   installed shim keeps maintenance on the installed kit and routes operations through
-  the linked repository's tracked launcher; staging details remain free to change.
+  the linked repository's tracked launcher; staging details stay free to change.
 - **AGENTS.md** — the canonical working agreement for project-owned content. `CLAUDE.md`
   imports it (and `.bench/BENCH.md`); never duplicate content there. The four invariants
-  and the communication rules are canonical in `.bench/BENCH.md`; the craft skill and
+  and the communication rules stay canonical in `.bench/BENCH.md`; the craft skill and
   command indexes live here. The gate checks those indexes, checks command-adapter skills
   against `.bench/BENCH.md`, and checks that no shared rule's literal marker phrase
   reappears in AGENTS.md — a substring check, so it reds a verbatim copy; a
@@ -113,7 +118,7 @@ No UI. There is **no design source** for this repo.
 
 ## Hostile-input checklist (shell CLI)
 
-The edge classes `/bench-write-spec`'s edge inventory walks for this domain —
+`/bench-write-spec`'s edge inventory walks these edge classes for this domain —
 the hostile inputs shell CLIs actually meet. Walk every class before locking a
 coverage map; a class skipped here returns as a regression.
 
@@ -205,8 +210,6 @@ coverage map; a class skipped here returns as a regression.
   both sides add a path absent from base and destination turns a differing
   attribute into a real conflict, so a red-capable assertion drives that add/add
   shape — the edit shape proves nothing about what the rewrite carried
-- interrupt (SIGINT) mid-loop: leftover scratch state, leases, worktrees
-- re-run idempotency: relink, reused worktree, second `init`, second `setup`
 - state serialized by one process and reloaded by a fresh one: the writer's
   in-memory value and the reader's re-parse agree at unit level and diverge
   across the boundary, so the assertion drives a second process rather than
@@ -222,7 +225,7 @@ coverage map; a class skipped here returns as a regression.
   even when guest-side CPU, memory, and `fsync` stress stay green
 
 Known residual risk: `bench setup`'s real-TTY confirm wiring is one untested
-constructor line binding stdin — testing it needs a pty dependency, which is a
+constructor line binding stdin. Testing it needs a pty dependency, which is a
 reviewer decision the FT76 spec deliberately left open.
 
 ## Gate (`.bench/gate.sh`)
@@ -249,12 +252,12 @@ Go owns package scheduling inside the one ordinary test driver, and that driver 
 the live tree: the `test` phase carries the graded root and the dev tier to the
 conformance entry point, so the registry's checks run inside the oracle rather than only
 under `prep-release`. The phase materializes that environment on the same terms as race
-and system — kit-only, and only where the entry test is declared — so a linked repo is
+and system — kit-only, and only where the entry test is declared — so a linked repo stays
 unaffected. There is no separate
 contract or conformance dev driver, per-package loop, nested Go test, fixture-executing
 canary phase, component partition, or stripped-subject phase schedule. An
 environment-class skip observed by the oracle is red and names the test that emitted it:
-a check the gate failed to stage has no verdict, so it cannot be counted as green. The race runner
+a check the gate failed to stage has no verdict, so it cannot count as green. The race runner
 verifies every registry sentinel executed. The tagged system package has one
 `TestMain` owner, at most three disposable repositories, one selected executable
 identity ledger, teardown on green/red/interrupt/timeout, and exactly one
@@ -262,8 +265,8 @@ stripped-distribution journey beside one adoption journey, which adopts a
 disposable repository with `bench setup --yes` and drives its scaffolded gate
 through the installed wrapper under a private `BENCH_HOME`.
 
-The five command decision domains—gate, adopt, preflight, canary,
-and freshness—consume immutable values in process. Their ordinary tests create no
+The five command decision domains — gate, adopt, preflight, canary,
+and freshness — consume immutable values in process. Their ordinary tests create no
 repositories and start no operating-system processes. `internal/git` owns the one
 ordinary repository adapter; `internal/gate` owns the one ordinary controlled process
 group adapter.
@@ -325,7 +328,7 @@ phase architecture. A stale exact verdict stays stale rather than being softened
 classification.
 
 `BENCH_REQUIRE_CAPABILITIES=1` makes capability skips fatal. Without it, capability
-rows remain informational because a developer host may legitimately lack optional
+rows stay informational because a developer host may legitimately lack optional
 facilities. The release workflows enable strict capability posture.
 
 The ship tier remains `bench prep-release`, run once per release. It requires a current
@@ -351,8 +354,8 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 | `.agents/skills/bench-craft-spec/SKILL.md` | 150 |
 | `.agents/skills/*/SKILL.md` | 120 |
 
-The glob row is what classifies a newly added skill, so a skill arrives budgeted without
-anybody editing the checker. Every other `.agents/commands/*.md` file is outside the
+The glob row classifies a newly added skill, so a skill arrives budgeted without
+anybody editing the checker. Every other `.agents/commands/*.md` file stays outside the
 reviewed universe, and the `.claude/skills/*` adapter symlinks are distribution surfaces
 rather than subjects — a symbolic link or special file found where a subject belongs is
 refused unread.
@@ -360,7 +363,7 @@ refused unread.
 ## Lines (model + effort routing)
 
 The routing rubric — the three-signal decision table and the escalation ladder —
-is the `craft-line` skill. This section holds what is project-specific: the
+lives in the `craft-line` skill. This section holds what is project-specific: the
 binding, the cached routings, and the escalation policy.
 
 **Harness × tier binding** (advisory candidates from `bench models`; set
@@ -374,7 +377,7 @@ column — no family is canonical.
 | cheap | `gpt-5.6-luna` | `sonnet` | unbound |
 
 These opaque safe tokens are this repo's current choices, not a namespace rule;
-the token grammar and discovery posture live in `craft-line`. OpenCode is
+the token grammar and discovery posture live in `craft-line`. OpenCode stays
 unadopted here, so its column stays unbound and its adapter refuses to launch
 rather than borrowing another harness's ids. Machine-readable source:
 `.bench/lines.env`, read by the Agent-tool hook and the shift adapters, each
@@ -385,8 +388,8 @@ headless shift declares the tier — `BENCH_MODEL=cheap` — and the adapter's o
 column supplies the id.
 
 **Escalation policy:** no standing top-tier opt-out — any bump to the table's top
-row pauses and asks the reviewer, whichever harness column you are running in
-(the ladder is in `craft-line`). Tier moves still get declared — no silent
+row pauses and asks the reviewer, whichever harness column you run in
+(the ladder lives in `craft-line`). Tier moves still get declared — no silent
 escalation.
 
 - **Skill / command / doc authoring** → **top model, high effort**. This is the
@@ -402,7 +405,7 @@ escalation.
   mid-tier session starts the build. Distinct from the doc-authoring leverage
   override above: that spends the top tier on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
-  Mechanical once the gate-resolution and worktree-pool shapes exist.
+  This stays mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed — a wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
@@ -413,29 +416,29 @@ escalation.
   operating protocol.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).
-  Read-heavy: each takes the full diff plus standards docs and runs verification
-  commands.
+  This stays read-heavy: each delegate takes the full diff plus standards docs and
+  runs verification commands.
 
 ## Notes for cold sessions
 
 - Read `AGENTS.md` first — the working agreement. The four invariants and the
-  communication rules are canonical in `.bench/BENCH.md` (AGENTS.md points there); read
+  communication rules stay canonical in `.bench/BENCH.md` (AGENTS.md points there); read
   that too. `CLAUDE.md` imports both; edit `AGENTS.md` or `.bench/BENCH.md`, not it.
 - `CONTEXT.md` pins the ubiquitous language (gate, oracle, shift, seam, line, …). Use
-  those terms exactly; don't invent synonyms.
+  those terms exactly; do not invent synonyms.
 - The kit's portability across harnesses is a closed decision. Claude and Codex hook
   adapters are interactive layers on top of shared `.bench/hooks/` scripts and the
-  harness-independent substrate (the `bench shift` loop + the git `pre-push` hook) —
+  harness-independent substrate (the `bench shift` loop and the git `pre-push` hook) —
   never the only thing enforcing an invariant.
 - The `projects/gl-axi.md` example profile is a shipped template, not a live
   project. This file (`benchkit.md`) is the profile for this repo.
-- A symbolic link inside an allowlisted kit payload tree is refused, not followed.
+- A symbolic link inside an allowlisted kit payload tree gets refused, not followed.
   Closed decision (2026-07-23): following the link would ship bytes the allowlist
   never named, so the allowlist would stop being the complete statement of what a
-  consumer receives. Don't reopen it as a link/upgrade ergonomics fix.
+  consumer receives. Do not reopen it as a link/upgrade ergonomics fix.
 - Never build `dist/bench` with plain `go build`; use
   `bash scripts/go-build.sh <root> <out>` so the binary carries the package
-  version required by the version and upgrade contracts. `bench worktree land`
+  version the version and upgrade contracts require. `bench worktree land`
   now refuses a dev executable that was not built from the current sources, and
   names that command as the remedy. The proof is self-attestation, so it cannot
   catch an executable that predates it or one patched to skip its own check, and

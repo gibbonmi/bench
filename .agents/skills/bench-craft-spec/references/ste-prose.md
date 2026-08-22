@@ -1,12 +1,13 @@
 # Written-artifact prose: ASD-STE100
 
 The one source for the prose standard `.bench/BENCH.md` names. It is charged
-from `craft-spec`, `craft-tickets`, and `craft-adr`, and it governs every
-written artifact: a doc, an ADR, a roadmap row, a handoff, a retro, a journal
-entry, a spec, a ticket. Write every sentence in ASD-STE100 Simplified
+from `craft-spec`, `craft-tickets`, `craft-adr`, `craft-comments`, and
+`craft-skills`, and it governs every written artifact: a doc, an ADR, a roadmap
+row, a handoff, a retro, a journal entry, a spec, a ticket, a skill, a comment. Write every sentence in ASD-STE100 Simplified
 Technical English. The rules govern the sentences; a template's headings,
 labels, identifiers, paths, commands, and table cells stay as the template
-fixes them. Code comments keep the register `craft-comments` owns.
+fixes them. A code comment obeys these rules too, inside the register
+`craft-comments` owns.
 
 - Use the active voice and name the agent: "The gate reds the row", not "The
   row is rejected".
