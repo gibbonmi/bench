@@ -2,33 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `57ffe0a3`
-Spec: `specs/landing-refusal-diagnostics/spec.md` — Status: staged, review round accepted, awaiting reviewer sign-off
-Gate: stale (last gated tree matches HEAD)
+Branch: `main` — HEAD `48f93ed7`
+Spec: none active
+Gate: stale; the pending drain batch requires a fresh commit gate
 
 ## State
 
-The FT233 spec and its five tickets are written and uncommitted, plus one
-learnings entry for the two-iteration review round. `bench coverage --check`
-passes at 23 rows. The one review round (opus/high) accepted after the author
-folded its findings; the verification log in the spec records it.
-
-Two flagged decisions gate sign-off, both marked in the spec's implementation
-decisions and on their tickets: (1) refusing an abbreviated `--base` is a new
-refusal precondition — the tree accepts a short `--base` today (story 2, LR2);
-(2) the runtime-root allowance lets `bench worktree clean` plan
-`discard-remove` over the gate's `.logs/` records without `--discard-ignored`
-(plan/apply still gates the removal). A veto on either cuts the marked story
-and row; nothing else depends on them.
-
-Ticket frontier after sign-off: `enrich-refusals-through-one-emitter.md` and
-`allow-runtime-root-residue-everywhere.md` (Blocked by: none); the other three
-block on the emitter ticket.
+The landing-refusal-diagnostics spec is implemented and retired at `48f93ed7`.
+The pending drain batch removes shipped FT233, folds its retro into FT164,
+FT215, and FT224, folds the spec-review learning into FT214, and creates FT242
+for the reproduced inherited-environment false green. No ideas, retros, or open
+learnings remain after the batch.
 
 ## Next command
 
-`/bench-implement-spec` — in a fresh mid-tier session, after reviewer sign-off
-of the spec-and-tickets pair; commit the spec first.
+`$bench-write-spec` — FT242.
 
 ## Shape
 

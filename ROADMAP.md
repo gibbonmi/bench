@@ -49,8 +49,6 @@ means the repository-controlled compliance assessment.
 
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
 
-**FT233 (MEDIUM) — landing refusals say what to do next.**
-
 **FT113 (MEDIUM) — `bench commit --spec` residuals: the flip counts as a path, the flip has one author, and the retirement completes or names its remainder.**
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
@@ -127,10 +125,13 @@ means the repository-controlled compliance assessment.
 
 ## False greens — verdicts that credit unchecked work
 
-Five rows, one failure class: a green whose warrant is missing — a stale
+Six rows, one failure class: a green whose warrant is missing — a stale
 binary, a dead or skipping citation, a vacuous baseline, an unchecked absence,
-a dependency edge nothing resolves. Each hardens a different oracle surface, so
+a dependency edge nothing resolves, or a required toolchain hidden from the
+harness environment. Each hardens a different oracle surface, so
 they stay separate builds, but they read and prioritize as one theme.
+
+**FT242 (HIGH) — inherited environment markers cannot hide a required toolchain.**
 
 **FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations resolve.**
 
@@ -256,7 +257,6 @@ recommended table is sequencing advice.
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
-| FT233 | FT199 | Both edit the landing refusal surface; the coordinator settles which refusals survive. |
 | FT239 | FT222 | FT222 decides where routing's one source lives; the capability record joins that file rather than opening a second one. |
 | FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
 
@@ -284,6 +284,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT233: landing refusals say what to do next. The most-evidenced actionable defect: a published-but-unreleased landing still exits 1 and reads as a failure, and the gate's own logs still block the release behind it.
+1. `/bench-write-spec` — FT242: inherited environment markers cannot hide a required toolchain. A reproduced Codex-client environment omitted native Go while claiming initialization was loaded, and the resulting Git-source build or Go-backed gate can fail weakly.
 2. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder. The defect reproduced through the accused command: a green correct commit exited `landed-but-checkout-incomplete`, left `specs/<slug>/` as untracked residue, and required manual cleanup plus another full gate run.
-3. `/bench-write-spec` — FT214: `craft-spec` fences the build and makes coverage rows prove their claims. Two current learnings and the retro agree: ticket evidence must pass the build entry check before handoff, and a rule anchored on a generator-emitted literal must be walked over that generator's real output before rows are locked.
+3. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms. The current learning showed an occurrence-sourced row naming an unreachable producer path; producer reachability must be settled before the row locks.
