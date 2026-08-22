@@ -12,9 +12,9 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
-// The verb's mode contract: --check (the default) reports drift and exits 1, the
-// conflicting pair is refused with usage and touches nothing, --write clears the drift
-// and exits 0, and a following --check on the freshly written tree reports nothing.
+// The verb's mode contract: --check, the default, reports drift and exits 1. The
+// conflicting pair is refused with usage and touches nothing. --write clears the drift
+// and exits 0. A following --check on the freshly written tree reports nothing.
 func TestCommand(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
@@ -95,8 +95,8 @@ func run(t *testing.T, root string, args ...string) {
 
 // barrierMarker is the one byte sequence the interrupted-write handshake speaks. The
 // child publishes it on an inherited pipe once the real replacement has created and
-// written its sibling temp, so the parent learns the process is inside the vulnerable
-// interval instead of guessing at it with a sleep or a directory scan.
+// written its sibling temp. This lets the parent learn the process is inside the
+// vulnerable interval, instead of guessing with a sleep or a directory scan.
 const barrierMarker = "skills-index:pre-replacement\n"
 
 // barrierPipeFD is the descriptor the marker arrives on: ExtraFiles[0] is fd 3 in the
@@ -105,8 +105,8 @@ const barrierPipeFD = 3
 
 // TestWriteBarrierHelperProcess is the child half of the handshake, inert unless the
 // parent selects it. It installs the barrier the production replacement path reaches
-// after the temp exists, publishes the marker there, and then blocks on the same
-// cancellation context `bench skills-index --write` derives from SIGINT — so the signal
+// after the temp exists, and publishes the marker there. It then blocks on the same
+// cancellation context `bench skills-index --write` derives from SIGINT. The signal
 // lands exactly inside the interval where an unguarded replacement would leave residue.
 func TestWriteBarrierHelperProcess(t *testing.T) {
 	root := os.Getenv("BENCH_SKILLS_INDEX_BARRIER_ROOT")
@@ -128,9 +128,10 @@ func TestWriteBarrierHelperProcess(t *testing.T) {
 }
 
 // TestSIGINTBeforeReplacementLeavesNoResidueAndKeepsReferenceBytes is HI10: a fresh
-// process interrupted between the temp's creation and the rename exits nonzero, leaves
-// the reference authoritative, and takes its temp with it. Timing is a handshake, not a
-// guess: the parent blocks reading the child's marker and signals only after it arrives.
+// process interrupted between the temp's creation and the rename exits nonzero. It
+// leaves the reference authoritative, and takes its temp with it. Timing is a
+// handshake, not a guess: the parent blocks reading the child's marker and signals
+// only after it arrives.
 func TestSIGINTBeforeReplacementLeavesNoResidueAndKeepsReferenceBytes(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
@@ -149,7 +150,7 @@ func TestSIGINTBeforeReplacementLeavesNoResidueAndKeepsReferenceBytes(t *testing
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	// The parent's copy of the write end must go, or a child that dies before the
+	// The parent's copy of the write end must go. A child that dies before the
 	// barrier would leave this read blocked on a descriptor the parent holds open.
 	writer.Close()
 	defer cmd.Process.Kill()

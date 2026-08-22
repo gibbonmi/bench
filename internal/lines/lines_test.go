@@ -41,7 +41,7 @@ func TestTierValue(t *testing.T) {
 }
 
 // TestTierValueEdgeCasesReachTheMatrix drives the same shell-compatible parsing through
-// ParseBinding, so a schema migration that dropped quoted, CRLF, last-wins, or
+// ParseBinding. A schema migration that dropped quoted, CRLF, last-wins, or
 // no-final-newline handling fails at the cell a caller actually reads.
 func TestTierValueEdgeCasesReachTheMatrix(t *testing.T) {
 	b := ParseBinding([]byte(pinContent))
@@ -73,7 +73,7 @@ func TestTierValueEdgeCases(t *testing.T) {
 		// Value is everything after the FIRST '='.
 		{"equals-in-value", "K", "K=a=b=c\n", "a=b=c"},
 		// [[:space:]] includes CR, so a trailing run of CRs is trimmed like any
-		// whitespace — matching the shell, whose trailing-whitespace strip removes
+		// whitespace. This matches the shell, whose trailing-whitespace strip removes
 		// everything after the last non-space char.
 		{"double-cr", "K", "K=v\r\r\n", "v"},
 		// A CR followed by a space: the whole trailing whitespace run goes.
@@ -200,10 +200,10 @@ func TestParseBinding(t *testing.T) {
 	}
 }
 
-// TestParseBindingRejectsForeignHarnessKeys pins the closed harness set: a
-// BENCH_<HARNESS>_<TIER>-shaped key naming a harness outside it creates no column and is
-// reported, and the retired schema is exactly such a key — so a lines.env carrying only
-// retired keys binds nothing at all rather than reading as a legacy binding.
+// TestParseBindingRejectsForeignHarnessKeys pins the closed harness set. A
+// BENCH_<HARNESS>_<TIER>-shaped key naming a harness outside it creates no column and
+// is reported. The retired schema is exactly such a key. So a lines.env carrying only
+// retired keys binds nothing at all, rather than reading as a legacy binding.
 func TestParseBindingRejectsForeignHarnessKeys(t *testing.T) {
 	for _, tt := range []struct {
 		name, content string
@@ -213,9 +213,9 @@ func TestParseBindingRejectsForeignHarnessKeys(t *testing.T) {
 		{"retired schema", retiredBinding, []string{"BENCH_TIER_TOP", "BENCH_TIER_MID", "BENCH_TIER_CHEAP", "BENCH_ALIAS_TOP", "BENCH_ALIAS_MID", "BENCH_ALIAS_CHEAP"}},
 		// A key is a cell only under the canonical spelling Key renders, so a lowercased
 		// harness segment is foreign. The two readings have to agree: Cell looks up the
-		// canonical key and nothing else, so a spelling counted as naming a known harness
-		// here would be a key neither path ever reads — ignored by the reader and unreported
-		// by the gate at once.
+		// canonical key and nothing else. A spelling counted as naming a known harness
+		// here would be a key neither path ever reads. It would be ignored by the reader
+		// and unreported by the gate at once.
 		{"non-canonical harness case", "BENCH_CODEX_TOP=a\nBENCH_CODEX_MID=b\nBENCH_CODEX_CHEAP=c\nBENCH_claude_TOP=f\n", []string{"BENCH_claude_TOP"}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -230,7 +230,7 @@ func TestParseBindingRejectsForeignHarnessKeys(t *testing.T) {
 	}
 }
 
-// TestRetiredSchemaBindsNothing drives the hard cut through both verdicts: a lines.env
+// TestRetiredSchemaBindsNothing drives the hard cut through both verdicts. A lines.env
 // carrying only retired keys must resolve nothing and enforce nothing, exactly as if it
 // bound no cell.
 func TestRetiredSchemaBindsNothing(t *testing.T) {
@@ -239,7 +239,7 @@ func TestRetiredSchemaBindsNothing(t *testing.T) {
 		t.Errorf("ResolveModelVerdict on retired keys = (%q, %d, %q), want no model and exit 1", model, exit, stderr)
 	}
 	// The retired ids and aliases are no longer bound tokens, so enforcement is not run
-	// against them; the guard keeps its fail-open rim instead of denying on a stale column.
+	// against them. The guard keeps its fail-open rim instead of denying on a stale column.
 	for _, model := range []string{"gpt-5.6-sol", "fable"} {
 		exit, stderr := AgentLineVerdict(envelope(model), "claude", src)
 		if exit != 0 || !contains(stderr, "unknown harness key") {
@@ -348,9 +348,9 @@ func TestResolveModelVerdictNamesTheBindingPath(t *testing.T) {
 	}
 }
 
-// TestCellFault pins the per-harness cell grammar: every cell is an opaque safe token, and
-// opencode's provider-qualified namespace is a rule on ITS cells rather than a filter on a
-// resolved value.
+// TestCellFault pins the per-harness cell grammar: every cell is an opaque safe token.
+// opencode's provider-qualified namespace is a rule on ITS cells rather than a filter on
+// a resolved value.
 func TestCellFault(t *testing.T) {
 	for _, tt := range []struct {
 		harness, value, want string
@@ -407,12 +407,12 @@ func TestAgentLineVerdict(t *testing.T) {
 		{"unbound-model-denies", envelope("gpt-9"), "claude", bound(fullBinding), 2, "is not a bound tier"},
 		{"malformed-stdin", []byte(`not json`), "claude", bound(fullBinding), 0, "not parseable as JSON"},
 		// Routed + a complete column for the asking harness: an omitted or whitespace-only
-		// model is the attack path the guard exists for (a silent inherit of the session's
-		// model) and denies.
+		// model is the attack path the guard exists for. It silently inherits the session's
+		// model and denies.
 		{"missing-model-routed-complete-denies", []byte(`{"tool_input":{}}`), "claude", bound(fullBinding), 2, "missing or empty model field"},
 		{"whitespace-model-routed-complete-denies", envelope("   "), "claude", bound(fullBinding), 2, "missing or empty model field"},
 		// Regression rims: a missing model with no column to enforce stays fail-open.
-		// A non-fork delegation type is not the fork branch: the routed missing-model deny
+		// A non-fork delegation type is not the fork branch. The routed missing-model deny
 		// and the fail-open rims below own every envelope that is not exactly a fork.
 		{"missing-model-non-fork-denies", agentEnvelope(`"general-purpose"`, ""), "claude", bound(fullBinding), 2, "missing or empty model field"},
 		{"missing-model-unrouted-fails-open", []byte(`{"tool_input":{}}`), "claude", Source{Path: ".bench/lines.env"}, 0, "no resolvedModel/model field"},
@@ -442,10 +442,10 @@ func TestAgentLineVerdict(t *testing.T) {
 	}
 }
 
-// TestAgentLineVerdictDenyMessage pins the denial in full for each asking harness: the
-// advice is the asking harness's own column AS PARSED, and no other family's tokens ride
-// along. The fixture's claude cells differ from this repo's, so a renderer hard-coded to
-// the live binding fails here.
+// TestAgentLineVerdictDenyMessage pins the denial in full for each asking harness. The
+// advice is the asking harness's own column AS PARSED, and no other family's tokens
+// ride along. The fixture's claude cells differ from this repo's, so a renderer
+// hard-coded to the live binding fails here.
 func TestAgentLineVerdictDenyMessage(t *testing.T) {
 	for _, tt := range []struct {
 		harness, want, absent string
@@ -503,12 +503,12 @@ func TestAgentLineVerdictMissingModelDenyMessage(t *testing.T) {
 	}
 }
 
-// TestAgentLineVerdictForkDelegation pins both fork verdicts, which are opposite policies
-// on the same delegation type: a declared model is a claim the harness discards, so it
-// denies, while an omitted one is the honest signal for behavior nobody can avoid, so it
-// allows. Collapsing them into a single deny-all-forks or allow-all-forks branch fails one
-// half. The warning states the inheritance without naming a model — the invoking session's
-// tier is unknowable at this hook event.
+// TestAgentLineVerdictForkDelegation pins both fork verdicts, which are opposite
+// policies on the same delegation type. A declared model is a claim the harness
+// discards, so it denies. An omitted one is the honest signal for behavior nobody can
+// avoid, so it allows. Collapsing them into a single deny-all-forks or allow-all-forks
+// branch fails one half. The warning states the inheritance without naming a model —
+// the invoking session's tier is unknowable at this hook event.
 func TestAgentLineVerdictForkDelegation(t *testing.T) {
 	exit, stderr := AgentLineVerdict(forkEnvelope(`"sonnet-5"`), "claude", bound(fullBinding))
 	if exit != 2 {
@@ -531,12 +531,14 @@ func TestAgentLineVerdictForkDelegation(t *testing.T) {
 }
 
 // TestAgentLineVerdictForkDenyNeedsARoutedCompleteBinding drives both fork verdicts across
-// all three binding states. Without a complete column there is no bound tier, so a declared
-// model has nothing to escalate off, and a repo that never opted into line enforcement must
-// not have its delegations blocked — the fork deny therefore rides the same
-// routed-and-complete condition as the missing-model deny, and every other state takes the
-// fail-open rim. The inheritance warning stays unconditional: it is a warning either way,
-// and gating it would cost the operator a true statement about what a fork does.
+// all three binding states. Without a complete column there is no bound tier, so a
+// declared model has nothing to escalate off. A repo that never opted into line
+// enforcement must not have its delegations blocked. The fork deny therefore rides the
+// same routed-and-complete condition as the missing-model deny.
+//
+// Every other state takes the fail-open rim. The inheritance warning stays
+// unconditional: it is a warning either way. Gating it would cost the operator a true
+// statement about what a fork does.
 func TestAgentLineVerdictForkDenyNeedsARoutedCompleteBinding(t *testing.T) {
 	const inheritanceWarning = "WARNING: check-agent-line: a fork delegation inherits this session's model, " +
 		"which no hook event reports — allowing delegation."
@@ -565,8 +567,8 @@ func TestAgentLineVerdictForkDenyNeedsARoutedCompleteBinding(t *testing.T) {
 }
 
 // TestAgentLineVerdictAllowsEveryBoundCell pins permissive enforcement across the whole
-// matrix through ONE harness's guard: a Claude session may legitimately name the tier a
-// Codex delegate will run on, so narrowing enforcement to the asking harness's column
+// matrix through ONE harness's guard. A Claude session may legitimately name the tier a
+// Codex delegate will run on. So narrowing enforcement to the asking harness's column
 // would deny half of these.
 func TestAgentLineVerdictAllowsEveryBoundCell(t *testing.T) {
 	for _, model := range []string{
@@ -581,12 +583,13 @@ func TestAgentLineVerdictAllowsEveryBoundCell(t *testing.T) {
 	}
 }
 
-// TestSubagentTypeNeverImpersonatesAFork pins the exact-string discriminator. tool_input is
-// attacker-shaped text, so only the literal selects the fork branch; anything else — absent,
-// blank, the wrong JSON type, padded, recased, or merely containing the word — keeps the
-// non-fork postures. Each value is driven twice, because the two fork branches sit on
-// opposite sides of the non-fork verdicts: a bound model must still allow, and an omitted
-// one must still hit the routed deny rather than the fork warning.
+// TestSubagentTypeNeverImpersonatesAFork pins the exact-string discriminator. tool_input
+// is attacker-shaped text, so only the literal selects the fork branch. Anything else,
+// absent, blank, the wrong JSON type, padded, recased, or merely containing the word,
+// keeps the non-fork postures. Each value is driven twice, because the two fork
+// branches sit on opposite sides of the non-fork verdicts. A bound model must still
+// allow, and an omitted one must still hit the routed deny rather than the fork
+// warning.
 func TestSubagentTypeNeverImpersonatesAFork(t *testing.T) {
 	for _, subagentType := range []string{
 		``, `""`, `5`, `{}`, `[]`, `null`, `true`,

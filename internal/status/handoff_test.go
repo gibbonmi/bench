@@ -53,7 +53,7 @@ func TestAppendHandoffWrittenAtHeadIsSilent(t *testing.T) {
 	}
 }
 
-// The failure this signal exists for, and the one this repo actually hit: commits landed
+// The failure this signal exists for is the one this repo actually hit. Commits landed
 // after the handoff was written and nobody rewrote it, so a cold session would trust a
 // document the tree has moved past.
 func TestAppendHandoffBehindHeadReportsDistance(t *testing.T) {
@@ -78,7 +78,7 @@ func TestAppendHandoffBehindHeadReportsDistance(t *testing.T) {
 	}
 	// The action is the command that rewrites the handoff, not prose describing the job.
 	// A row naming the work in words can never be selected as a next command by a reader
-	// that requires an invocation, which left this signal invisible to the handoff's own
+	// that requires an invocation. That left this signal invisible to the handoff's own
 	// Next-command field.
 	if rows[0].action.render() != "bench handoff" {
 		t.Errorf("action = %q, want the command that rewrites it", rows[0].action.render())
@@ -86,7 +86,7 @@ func TestAppendHandoffBehindHeadReportsDistance(t *testing.T) {
 }
 
 // The distance is measured from the handoff's own last write, not from whatever the tree
-// most recently committed: a later commit elsewhere must not reset the handoff's age.
+// most recently committed. A later commit elsewhere must not reset the handoff's age.
 func TestAppendHandoffDistanceIgnoresUnrelatedCommits(t *testing.T) {
 	root := initRepo(t)
 	commitFile(t, root, "base.txt")
@@ -105,7 +105,7 @@ func TestAppendHandoffDistanceIgnoresUnrelatedCommits(t *testing.T) {
 }
 
 // A handoff being written right now is not stale: the session is mid-rewrite and its age
-// is about to be reset, so a row here would fire on the very act that fixes it.
+// is about to be reset. A row here would fire on the very act that fixes it.
 func TestAppendHandoffInFlightEditIsSilent(t *testing.T) {
 	root := initRepo(t)
 	commitFile(t, root, "base.txt")
@@ -134,7 +134,7 @@ func TestAppendHandoffUntrackedIsSilent(t *testing.T) {
 }
 
 // The row has to be visible where it matters: on the otherwise-clean tree a cold session
-// picks up, a stale handoff leads the board rather than being budgeted off it.
+// picks up. A stale handoff leads the board rather than being budgeted off it.
 func TestRenderStaleHandoffLeadsCleanBoard(t *testing.T) {
 	root := initRepo(t)
 	commitFile(t, root, "base.txt")

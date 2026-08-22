@@ -1,16 +1,16 @@
 // Package status ports `bench status`: the ambient dashboard a session-start hook
-// consumes verbatim. It is the composition crux of the slice — every sibling query
-// package (maps, structure, worktree, roadmap) contributes one signal, and this
-// package renders them into the single severity-sorted board the shell renderer
-// produced. The output format is stable because a hook parses it: the lead line,
-// the fixed-width rows, and the `+N more` overflow.
+// consumes verbatim. It is the composition crux of the slice. Every sibling query
+// package, maps, structure, worktree, roadmap, contributes one signal. This package
+// renders them into the single severity-sorted board the shell renderer produced.
+// The output format is stable because a hook parses it: the lead line, the
+// fixed-width rows, and the `+N more` overflow.
 //
 // One rule per signal lives in its own package; status only orders the signals by
-// severity and formats them. The specs housekeeping signals are counted here —
-// retirementCount over specs/ (applying the shared spec.AwaitsRetirement predicate),
-// orphanedPickupCount pairing reviews/ against specs/, and roadmapReconcileCounts
-// classifying ROADMAP.md's spec-path tokens against the tree — but the merged-implemented
-// predicate itself is spec.AwaitsRetirement, one source shared with `bench spec retire`.
+// severity and formats them. The specs housekeeping signals are counted here.
+// retirementCount scans specs/ and applies the shared spec.AwaitsRetirement predicate.
+// orphanedPickupCount pairs reviews/ against specs/. roadmapReconcileCounts classifies
+// ROADMAP.md's spec-path tokens against the tree. The merged-implemented predicate
+// itself is spec.AwaitsRetirement, one source shared with `bench spec retire`.
 package status
 
 import (
@@ -43,8 +43,8 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
-// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+// grammar is the declared argument shape usage.Parse enforces for this subcommand.
+// Arity, flag recognition, `--`, and help all come from there rather than a local switch.
 var grammar = usage.Grammar{
 	Cmd:  "bench status",
 	Help: "usage: bench status [--all] [--route [--harness " + HarnessChoices() + "]]",
@@ -288,11 +288,11 @@ func (s Signal) invocable() bool {
 
 // GateInfo is the structured gate-verdict cache read, shared by the status board and the
 // dashboard so neither re-parses `<git-dir>/bench-last-gate`. Present is false when no
-// cache file exists; Stale marks a ready verdict the gate no longer stands behind for this
-// subject — a record whose tree or oracle has drifted, whatever verdict it carries, or an
-// exact-tip non-reusable green the gate cannot compose as a whole-tree verdict. Partition
-// carries narrowness at component granularity: non-nil for a partial verdict that graded
-// only the components whose inputs moved, nil for a full record.
+// cache file exists. Stale marks a ready verdict the gate no longer stands behind for
+// this subject: a record whose tree or oracle has drifted. It also covers an exact-tip
+// non-reusable green the gate cannot compose as a whole-tree verdict. Partition carries
+// narrowness at component granularity: non-nil for a partial verdict that graded only
+// the components whose inputs moved, nil for a full record.
 // Status/CachedTree/WorkTree/Timestamp carry the raw fields for a human view; the board
 // reduces them to its severity rows.
 type GateInfo struct {
@@ -316,8 +316,8 @@ type Query struct {
 }
 
 // Signals gathers every ambient signal under root and returns them severity-sorted
-// ascending — the one severity ladder `bench status` renders. render (the text board) and
-// the dashboard gatherer both call this, so a signal added or reordered here reaches both
+// ascending, the one severity ladder `bench status` renders. render, the text board, and
+// the dashboard gatherer both call this. A signal added or reordered here reaches both
 // surfaces from one source.
 func Signals(root string) []Signal {
 	return SignalsWith(root, Query{})
@@ -456,8 +456,8 @@ func renderRoute(route RouteResult) (string, int) {
 
 // render gathers every signal under root, sorts ascending by severity, and formats the
 // board. This is the byte-for-byte counterpart of the shell `status()` renderer. When all
-// is false it applies the five-row budget and appends the overflow line; when all is true
-// (`bench status --all`) it prints every row and emits no overflow line. The SessionStart
+// is false it applies the five-row budget and appends the overflow line. When all is true,
+// `bench status --all`, it prints every row and emits no overflow line. The SessionStart
 // hook calls with all=false so the ambient surface stays bounded.
 func render(root string, all bool) string {
 	signals := Signals(root)
@@ -506,9 +506,10 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 	if gv.State == string(gate.Unavailable) {
 		return append(rows, row{3, "gate", "verdict unavailable", commandAction(freshGateAction)})
 	}
-	// Staleness outranks the verdict the record carries: a red the gate has retired names a
-	// tree the reader has left, and "fix before commit" would send them after work that is
-	// no longer in the tree. Only a verdict the gate still stands behind reaches the rows below.
+	// Staleness outranks the verdict the record carries. A red the gate has retired names
+	// a tree the reader has left. "Fix before commit" would then send them after work that
+	// is no longer in the tree. Only a verdict the gate still stands behind reaches the
+	// rows below.
 	if gv.Stale {
 		// An exact-tip narrow verdict stays distinct from drift even when the gate no
 		// longer composes it as a whole-tree green. A moved tree is drift instead.
@@ -541,10 +542,10 @@ func GateVerdict(root string) GateInfo {
 	}
 	gi.Partition = in.Partition
 	gi.CheckPartition = in.CheckPartition
-	// A drifted record is stale whatever verdict it carries — the gate has already decided it
-	// describes another tree or another oracle — while a green the gate will not reuse is
-	// stale on the reuse rule alone. A composed whole-tree green can only rescue the second:
-	// it holds exactly when the record matches the subject, which is when drift is absent.
+	// A drifted record is stale whatever verdict it carries: the gate has already decided it
+	// describes another tree or another oracle. A green the gate will not reuse is stale on
+	// the reuse rule alone. A composed whole-tree green can only rescue the second case: it
+	// holds exactly when the record matches the subject, which is when drift is absent.
 	nonReusableGreen := in.State == gate.Ready && in.Status == "green" && !in.ReusableGreen
 	gi.Stale = nonReusableGreen || (in.State == gate.Ready && in.Drifted)
 	if gi.Stale && in.CachedTree == in.CurrentTree && gate.ComposedGreen(root) {
@@ -608,12 +609,12 @@ func appendGit(rows []row, root string, query Query) []row {
 }
 
 // objectiveDisplay resolves the human-facing objective text for an intent entry. The
-// ledger no longer stores objective text; a live shift keeps its full objective only in
-// <worktree>/.bench-objective (mode 0600), which exists for exactly as long as the entry is
-// live. For a shift entry with a recorded worktree the renderer reads it back and previews
-// it; when the file or the worktree is gone — the normal end state — it degrades to the
-// entry key and never propagates the read error. Every other kind (claude-agent, worktree)
-// has no such file and renders the key alone.
+// ledger no longer stores objective text. A live shift keeps its full objective only in
+// <worktree>/.bench-objective (mode 0600), which exists for exactly as long as the entry
+// is live. For a shift entry with a recorded worktree the renderer reads it back and
+// previews it. When the file or the worktree is gone, the normal end state, it degrades
+// to the entry key and never propagates the read error. Every other kind (claude-agent,
+// worktree) has no such file and renders the key alone.
 func objectiveDisplay(entry intent.Entry) string {
 	if entry.Kind == intent.KindShift && entry.Worktree != "" {
 		if data, err := os.ReadFile(filepath.Join(entry.Worktree, ".bench-objective")); err == nil {
@@ -684,8 +685,8 @@ func appendWorktree(rows []row, root string) []row {
 	registered, err := worktree.ClassifyRegisteredWorktrees(root)
 	if err != nil {
 		// A classify failure means the pool/leased/out-of-pool counts below are
-		// unknowable, not zero: surface the git failure itself as the row rather than
-		// falling through to an empty-looking board (the false-empty class FT29 swept).
+		// unknowable, not zero. It surfaces the git failure itself as the row, rather
+		// than falling through to an empty-looking board, the false-empty class FT29 swept.
 		var typed git.WorktreeFailure
 		if errors.As(err, &typed) {
 			return append(rows, row{2, "worktree", typed.Error(), commandAction(benchWorktreeListAction)})
@@ -711,7 +712,7 @@ func appendWorktree(rows []row, root string) []row {
 }
 
 // Plural renders a count with the unit its number takes. It is exported so a surface
-// rendering board-derived counts states them in the board's own words rather than in a
+// rendering board-derived counts states them in the board's own words. That avoids a
 // second phrasing of the same fact.
 func Plural(n int, one, many string) string {
 	if n == 1 {
@@ -721,11 +722,12 @@ func Plural(n int, one, many string) string {
 }
 
 // appendGuards adds the pre-push backstop signal (sev 3), ranked just below the worktree
-// signals and above the drain row. git does not clone hooks, so a fresh clone silently loses
-// the harness-independent default-branch backstop; this surfaces the gap ambiently rather
-// than only under `bench doctor`. It fires only on the primary checkout of a routed repo
-// (`.bench/lines.env` present) — pool and linked worktrees share the main `.git` and must not
-// double-report the same hook — and stays quiet when its managed bytes are current. Remedy: bench link.
+// signals and above the drain row. git does not clone hooks, so a fresh clone silently
+// loses the harness-independent default-branch backstop. This surfaces the gap ambiently
+// rather than only under `bench doctor`. It fires only on the primary checkout of a
+// routed repo, where `.bench/lines.env` is present. Pool and linked worktrees share the
+// main `.git` and must not double-report the same hook. It stays quiet when its managed
+// bytes are current; the remedy is bench link.
 func appendGuards(rows []row, root string) []row {
 	if !isPrimaryCheckout(root) {
 		return rows
@@ -740,8 +742,9 @@ func appendGuards(rows []row, root string) []row {
 	return append(rows, row{3, "guards", prePushDetail(health), commandAction(linkAction)})
 }
 
-// prePushDetail names the pre-push gap the guards row reports, mirroring the adopt classifier's
-// states so the ambient signal and the doctor row describe the same condition.
+// prePushDetail names the pre-push gap the guards row reports. It mirrors the adopt
+// classifier's states, so the ambient signal and the doctor row describe the same
+// condition.
 func prePushDetail(health adopt.PrePushHealth) string {
 	if health.State == adopt.PrePushManaged && health.Currency == adopt.PrePushStale {
 		return "pre-push stale"
@@ -776,10 +779,10 @@ func isPrimaryCheckout(root string) bool {
 // learnings component shows only at or above the floor (env BENCH_LEARNINGS_FLOOR,
 // default 1); parked ideas always count.
 //
-// Each capture source carries its own readability state. A source whose read failed
-// (the FileState.Failed test appendMaps also applies) renders as toon.UnknownCell's
-// explicit `unknown (<path> is <state>)` segment instead of a fabricated 0, and the
-// good source's count still renders alongside it: one source failing must not hide the
+// Each capture source carries its own readability state. A source whose read failed,
+// the FileState.Failed test appendMaps also applies, renders as toon.UnknownCell's
+// explicit `unknown (<path> is <state>)` segment instead of a fabricated 0. The good
+// source's count still renders alongside it: one source failing must not hide the
 // other's number.
 // The row only disappears when every source reads cleanly and every count is zero.
 func appendDrain(rows []row, root string) []row {
@@ -825,8 +828,9 @@ func appendStructure(rows []row, root string) []row {
 }
 
 // appendMaps adds the unresolved-decision-map signal (sev 6): a positive count when
-// the scan ran cleanly, or an explicit unknown row naming the decisions/ read failure
-// when it did not — a scan that could not run must never render as zero unresolved.
+// the scan ran cleanly. It adds an explicit unknown row naming the decisions/ read
+// failure when the scan did not run cleanly. A scan that could not run must never
+// render as zero unresolved.
 func appendMaps(rows []row, root string) []row {
 	n, ready, state := maps.ActiveCounts(root)
 	if state.Failed() {
@@ -857,9 +861,9 @@ func appendMaps(rows []row, root string) []row {
 // appendRetirement adds the merged-spec-awaiting-retirement signal (sev 8), but only on
 // the default branch — a topic branch's spec is still in flight, not awaiting retirement.
 func appendRetirement(rows []row, root string) []row {
-	// Audit #5 — tolerate: an unreadable branch or an unresolvable default reads as "not
-	// the default branch", skipping this advisory housekeeping signal; non-fatal on the
-	// ambient board.
+	// Audit #5: tolerate. An unreadable branch or an unresolvable default reads as "not
+	// the default branch". This skips this advisory housekeeping signal; it is non-fatal
+	// on the ambient board.
 	cur, _ := git.Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
 	if def, ok := git.ResolvedDefault(root); !ok || cur != def {
 		return rows
@@ -882,16 +886,18 @@ func appendOrphanedPickup(rows []row, root string) []row {
 	return rows
 }
 
-// appendRoadmapReconcile adds the roadmap-reconcile signal (sev 9): a ROADMAP.md row naming a
-// specs/<slug>/spec.md whose work has already shipped — the spec file is merged-implemented
-// (spec.AwaitsRetirement) or was retired out of the tree entirely — has outlived the drain that
-// should have removed it. Like appendRetirement, it fires only on the default branch: a topic
-// branch's roadmap is mid-build, so a row there names in-flight work, not a shipped-work leak.
-// Severity 10 ranks it below the housekeeping rows (retirement 8, orphaned-pickup 9) and far
-// below gate/git, so it never displaces a red-gate or dirty-tree row in the budget.
+// appendRoadmapReconcile adds the roadmap-reconcile signal (sev 9). It fires on a
+// ROADMAP.md row naming a specs/<slug>/spec.md whose work has already shipped. The spec
+// file is merged-implemented, spec.AwaitsRetirement, or was retired out of the tree
+// entirely. Such a row has outlived the drain that should have removed it.
+//
+// Like appendRetirement, it fires only on the default branch. A topic branch's roadmap
+// is mid-build, so a row there names in-flight work, not a shipped-work leak. Severity
+// 10 ranks it below the housekeeping rows, retirement 8 and orphaned-pickup 9, and far
+// below gate/git. So it never displaces a red-gate or dirty-tree row in the budget.
 func appendRoadmapReconcile(rows []row, root string) []row {
-	// Audit #6 — tolerate: as in appendRetirement, an unreadable branch or an unresolvable
-	// default reads as "not the default branch" and skips this advisory reconcile signal.
+	// Audit #6: tolerate. As in appendRetirement, an unreadable branch or an unresolvable
+	// default reads as "not the default branch". This skips this advisory reconcile signal.
 	cur, _ := git.Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
 	if def, ok := git.ResolvedDefault(root); !ok || cur != def {
 		return rows
@@ -914,8 +920,8 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 }
 
 // appendTicketsOnly adds the tickets-only residue signal (sev 11): a specs/<slug>/ that a
-// light-path landing wrote and never consumed. It names the command that closes one, so the
-// row is actionable without a lookup, and it fires only on a nonzero count — residue is
+// light-path landing wrote and never consumed. It names the command that closes one, so
+// the row is actionable without a lookup. It fires only on a nonzero count: residue is
 // debt, and a clean tree must not spend a row of the five-row budget saying so. It closes
 // the housekeeping band below retirement (8) and orphaned pickups (9), so a count of
 // residue never displaces a more urgent row.
@@ -932,12 +938,12 @@ func appendTicketsOnly(rows []row, root string) []row {
 	return append(rows, row{11, "specs", detail, commandActionWithArgument(closeTicketsAction, "<slug>")})
 }
 
-// retirementCount counts live folder specs that spec.AwaitsRetirement marks — a merged spec
-// awaiting retirement. Absent `specs/` → 0. The unfenced-marker predicate is
-// spec.AwaitsRetirement's one source. Every read goes through the classifier: this signal
-// is advisory and stays quiet about a spec it could not read, but a FIFO parked at
-// specs/*/spec.md never yields EOF, and a board that blocks forever is worse than one missing a
-// housekeeping row — `bench status` is what the SessionStart hook runs.
+// retirementCount counts live folder specs that spec.AwaitsRetirement marks, a merged
+// spec awaiting retirement. Absent `specs/` returns 0. The unfenced-marker predicate is
+// spec.AwaitsRetirement's one source. Every read goes through the classifier: this
+// signal is advisory and stays quiet about a spec it could not read. A FIFO parked at
+// specs/*/spec.md never yields EOF. A board that blocks forever is worse than one
+// missing a housekeeping row, since `bench status` is what the SessionStart hook runs.
 func retirementCount(root string) int {
 	dir := filepath.Join(root, "specs")
 	cd := bounds.ClassifyDir(dir)
@@ -989,17 +995,19 @@ func orphanedPickupCount(root string) int {
 }
 
 // roadmapReconcileCounts scans ROADMAP.md's index plus every roadmap/ row-file body for
-// live spec-path tokens — a row's spec path lives in its row file now, not the index line
-// — and classifies each distinct path against the tree: a missing file is a dangling row
-// (the spec retired but its roadmap row survived); a present file that spec.AwaitsRetirement
-// marks is a merged row (the work shipped but the drain missed it). A present, still-staged
-// spec is the normal open-work state and counts nothing. Absent or empty ROADMAP.md → 0, 0,
-// bounds.StateParsed, the ordinary quiet-roadmap posture; a ROADMAP.md whose read failed
-// reports that state instead, so appendRoadmapReconcile renders the failed read as unknown
-// rather than a fabricated clean board. Each named live spec goes through the classifier
-// too, so a FIFO cannot block the board; a spec path that yields no content at all is the
-// dangling case, whether nothing is there or what is there could not be read. The merged
-// predicate is spec.AwaitsRetirement, the same one source the retirement counter applies.
+// live spec-path tokens. A row's spec path lives in its row file now, not the index
+// line. It classifies each distinct path against the tree. A missing file is a dangling
+// row, the spec retired but its roadmap row survived. A present file that
+// spec.AwaitsRetirement marks is a merged row, the work shipped but the drain missed it.
+// A present, still-staged spec is the normal open-work state and counts nothing.
+//
+// Absent or empty ROADMAP.md returns 0, 0, bounds.StateParsed, the ordinary
+// quiet-roadmap posture. A ROADMAP.md whose read failed reports that state instead, so
+// appendRoadmapReconcile renders the failed read as unknown rather than a fabricated
+// clean board. Each named live spec goes through the classifier too, so a FIFO cannot
+// block the board. A spec path that yields no content at all is the dangling case,
+// whether nothing is there or what is there could not be read. The merged predicate is
+// spec.AwaitsRetirement, the same one source the retirement counter applies.
 func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.FileState) {
 	tree := roadmap.LoadTree(root)
 	switch {
@@ -1045,9 +1053,9 @@ func learningsFloor() int {
 	return n
 }
 
-// Short returns the first up-to-7 bytes of s (the shell `${var:0:7}` tree-prefix slice),
+// Short returns the first up-to-7 bytes of s, the shell `${var:0:7}` tree-prefix slice,
 // guarding a short or "none" hash so the slice never panics. It is exported as the one
-// source of the prefix width, so every surface that renders a tree or commit reference
+// source of the prefix width. Every surface that renders a tree or commit reference
 // cuts it at the same place.
 func Short(s string) string {
 	return s[:min(7, len(s))]

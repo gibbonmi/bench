@@ -10,7 +10,7 @@ import (
 )
 
 // Outcome is one of the six truthful shift result states. It is the only thing a Loop
-// exit path chooses; the exit code and the shift_result block are both derived from it,
+// exit path chooses. The exit code and the shift_result block are both derived from it,
 // never picked separately, so the taxonomy stays one source.
 type Outcome string
 
@@ -23,7 +23,7 @@ const (
 	OutcomeInterrupted Outcome = "interrupted"
 )
 
-// exitCodes is the one map from outcome to process exit code — the taxonomy pinned by
+// exitCodes is the one map from outcome to process exit code, the taxonomy pinned by
 // the spec. Every exit path resolves through Result.ExitCode rather than returning a
 // bare int, so this map is the single place the mapping can drift.
 var exitCodes = map[Outcome]int{
@@ -38,9 +38,9 @@ var exitCodes = map[Outcome]int{
 // resultFields is the shift_result block's field order, pinned by the spec.
 var resultFields = []string{"outcome", "exit", "branch", "committed", "iterations_used", "recovery", "detail"}
 
-// RecoveryNone is the one recovery-pointer sentinel meaning "nothing to preserve" — used
-// by the shift_result block, the intent-ledger record, and bench status's rendering, so
-// the three surfaces never drift on what "no recovery" looks like.
+// RecoveryNone is the one recovery-pointer sentinel meaning "nothing to preserve". The
+// shift_result block, the intent-ledger record, and bench status's rendering all use it,
+// so the three surfaces never drift on what "no recovery" looks like.
 const RecoveryNone = "none"
 
 // recoveryWorktree is the recovery pointer's only non-"none" constructor: a preserving
@@ -68,7 +68,7 @@ func (r Result) ExitCode() int {
 // Emit writes the shift_result TOON block to stdout exactly once. An empty branch or
 // recovery reads as "none"; numbers render as decimal strings. The detail is the one
 // operator-influenced cell, so it renders through the shared sanitizer before it reaches
-// the block — a control sequence in it is escaped, one policy with every other terminal
+// the block. A control sequence in it is escaped, one policy with every other terminal
 // render, and toon.Table's own cell refusal remains as the backstop.
 func (r Result) Emit(stdout io.Writer) {
 	branch := r.Branch
@@ -99,7 +99,7 @@ func (r Result) Emit(stdout io.Writer) {
 // evidenceOutcome splits a post-mutation failure by committed evidence: failed when
 // nothing landed this shift, incomplete when at least one green iteration did. Every
 // commit, staging, gate, or adapter failure after the first adapter run resolves
-// through this one rule — the gate stays the oracle for work, committed count is the
+// through this one rule. The gate stays the oracle for work; committed count is the
 // evidence for progress.
 func evidenceOutcome(committed int) Outcome {
 	if committed == 0 {

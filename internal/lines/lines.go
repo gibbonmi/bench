@@ -1,17 +1,18 @@
-// Package lines is the tier-binding parser and verdict engine behind invariant #2
-// (the declared line). Tier is the only shared identity: .bench/lines.env binds a closed
-// BENCH_<HARNESS>_<TIER> matrix over Harnesses, every runtime caller names its own
-// harness, and no family is canonical. It is the single source that both the agent-line
-// PreToolUse guard (check-agent-line) and the headless-shift adapters consult, so the
-// model-tier enforcement and its advertised binding cannot drift. The cmd layer reads
-// .bench/lines.env and the PreToolUse envelope from disk/stdin and passes the bytes in;
-// everything here is pure, so the load-bearing message wording and exit codes are unit
-// testable without a repo.
+// Package lines is the tier-binding parser and verdict engine behind invariant #2, the
+// declared line. Tier is the only shared identity. .bench/lines.env binds a closed
+// BENCH_<HARNESS>_<TIER> matrix over Harnesses. Every runtime caller names its own
+// harness, and no family is canonical.
 //
-// This is a faithful port of .bench/lib/lines-env.sh: last assignment wins, the value is
-// the text after the first '=', with one trailing CR stripped, whitespace trimmed
-// (trailing then leading), and one surrounding double-quote pair then one single-quote
-// pair removed independently.
+// It is the single source that both the agent-line PreToolUse guard, check-agent-line,
+// and the headless-shift adapters consult. This keeps the model-tier enforcement and its
+// advertised binding from drifting. The cmd layer reads .bench/lines.env and the
+// PreToolUse envelope from disk/stdin, and passes the bytes in. Everything here is pure,
+// so the load-bearing message wording and exit codes are unit testable without a repo.
+//
+// This is a faithful port of .bench/lib/lines-env.sh: last assignment wins. The value is
+// the text after the first '='. One trailing CR is stripped, and whitespace is trimmed,
+// trailing then leading. One surrounding double-quote pair is removed, then one
+// single-quote pair, independently.
 package lines
 
 import (
@@ -23,20 +24,21 @@ import (
 )
 
 // TierValue is the pure port of bench_tier_value, operating on file content rather than a
-// path. It returns the value bound to key — the LAST line matching `^[[:space:]]*<key>=` —
+// path. It returns the value bound to key, the LAST line matching `^[[:space:]]*<key>=`,
 // or "" when the key is absent or its value is empty. Ordering is load-bearing: last
-// assignment wins; value is the text after the first '='; then one trailing CR, whitespace
-// trim (trailing then leading), one surrounding double-quote pair, one surrounding
-// single-quote pair — the last two stripped independently, not as a matched pair.
+// assignment wins. Value is the text after the first '='. Then one trailing CR is
+// stripped, and whitespace is trimmed, trailing then leading. One surrounding
+// double-quote pair, then one surrounding single-quote pair, are stripped independently,
+// not as a matched pair.
 func TierValue(key string, content []byte) string {
 	value, _ := tierValue(key, content)
 	return value
 }
 
-// tierValue is TierValue plus the presence bit the matrix parser needs: a key assigned an
-// empty value is present but unbound, which is what separates a declared-but-incomplete
-// column from an undeclared one. Both readings come from one scan so the key-matching rule
-// has a single source.
+// tierValue is TierValue plus the presence bit the matrix parser needs. A key assigned
+// an empty value is present but unbound, which separates a declared-but-incomplete
+// column from an undeclared one. Both readings come from one scan so the key-matching
+// rule has a single source.
 func tierValue(key string, content []byte) (string, bool) {
 	prefix := key + "="
 	found := false
@@ -59,8 +61,8 @@ func tierValue(key string, content []byte) (string, bool) {
 	// Step 3: strip exactly ONE trailing carriage return (the shell's `%$'\r'`).
 	value = strings.TrimSuffix(value, "\r")
 	// Step 4: trim trailing then leading whitespace. The shell's `[[:space:]]`
-	// includes CR/FF/VT, so a value like `x\r ` (a CR followed by a space) collapses
-	// to `x` there — the trailing-trim must match that cutset, not just space+tab, or
+	// includes CR/FF/VT, so a value like `x\r ` — a CR followed by a space — collapses
+	// to `x` there. The trailing-trim must match that cutset, not just space+tab, or
 	// a hand-edited binding with interleaved CRs would flip an allow/deny.
 	const ws = " \t\r\v\f"
 	value = strings.TrimRight(value, ws)
@@ -77,10 +79,10 @@ func tierValue(key string, content []byte) (string, bool) {
 // ModelFromEnvelope parses the Claude Code Agent PreToolUse envelope, returning
 // tool_input.resolvedModel if non-empty, else tool_input.model if non-empty, else "". A
 // PreToolUse envelope carries tool_input.model; resolvedModel is a PostToolUse
-// tool_response field, so reading it first is a defensive fallback against an envelope
+// tool_response field. Reading it first is a defensive fallback against an envelope
 // shape this event is not documented to send, not the contract the guard relies on. It
 // returns a non-nil error ONLY when data is not valid JSON, mirroring the Python shim
-// raising on unparseable stdin; valid JSON with no matching field returns ("", nil).
+// raising on unparseable stdin. Valid JSON with no matching field returns ("", nil).
 func ModelFromEnvelope(data []byte) (model string, err error) {
 	e, err := parseDelegation(data)
 	if err != nil {
@@ -90,9 +92,9 @@ func ModelFromEnvelope(data []byte) (model string, err error) {
 }
 
 // forkSubagentType is the one delegation type the harness runs on the invoking session's
-// model, discarding any declared one. It is an experimental, feature-gated value: where fork
-// mode is not deployed no envelope carries it, and if it is renamed upstream the comparison
-// simply stops matching and the guard keeps its other verdicts.
+// model, discarding any declared one. It is an experimental, feature-gated value. Where
+// fork mode is not deployed no envelope carries it. If it is renamed upstream, the
+// comparison simply stops matching, and the guard keeps its other verdicts.
 const forkSubagentType = "fork"
 
 // delegation is the one reading of an Agent PreToolUse envelope the guard branches on: the
@@ -102,10 +104,10 @@ type delegation struct {
 	isFork bool
 }
 
-// parseDelegation reads tool_input once. subagent_type is decoded separately from the raw
-// bytes because it is untrusted text of an unpromised type: a number, object, or null there
-// must leave the model reading intact rather than failing the whole envelope, and only a
-// JSON string exactly equal to forkSubagentType may select the fork branch.
+// parseDelegation reads tool_input once. subagent_type is decoded separately from the
+// raw bytes because it is untrusted text of an unpromised type. A number, object, or
+// null there must leave the model reading intact rather than failing the whole envelope.
+// Only a JSON string exactly equal to forkSubagentType may select the fork branch.
 func parseDelegation(data []byte) (delegation, error) {
 	var e struct {
 		ToolInput struct {
@@ -168,15 +170,16 @@ func knownTier(name string) bool {
 
 // foreignKeyRe matches any BENCH_<WORD>_<TIER> assignment, whatever the harness segment
 // says. Anything it matches that is not one of the keys the cell reader looks up is a
-// foreign key — which includes the retired BENCH_TIER_* / BENCH_ALIAS_* schema, so a binding
-// carrying only retired keys reads as no binding rather than as a legacy one.
+// foreign key. This includes the retired BENCH_TIER_* / BENCH_ALIAS_* schema. A binding
+// carrying only retired keys reads as no binding, rather than as a legacy one.
 var foreignKeyRe = regexp.MustCompile(`(?m)^[ \t]*(BENCH_[A-Za-z0-9]+_(?:TOP|MID|CHEAP))=`)
 
-// matrixKey reports whether key is one of the keys ParseBinding reads cells from. The test
-// is exact-string against Key's own output rather than a case-folded reading of the harness
-// segment: a segment matched case-insensitively would let a non-canonical spelling like
-// BENCH_claude_TOP count as naming a known harness while no cell lookup ever reads it,
-// leaving the key ignored by the reader and unreported by the foreign-key arm alike.
+// matrixKey reports whether key is one of the keys ParseBinding reads cells from. The
+// test is exact-string against Key's own output, rather than a case-folded reading of
+// the harness segment. A segment matched case-insensitively would let a non-canonical
+// spelling like BENCH_claude_TOP count as naming a known harness, while no cell lookup
+// ever reads it. This leaves the key ignored by the reader and unreported by the
+// foreign-key arm alike.
 func matrixKey(key string) bool {
 	for _, harness := range Harnesses {
 		for _, tier := range Tiers {
@@ -289,22 +292,23 @@ func (b Binding) UnboundKeys(harness string) []string {
 	return keys
 }
 
-// retiredFamilies pairs each key prefix of the retired schema with the harness column that
-// now holds what it used to bind: BENCH_TIER_* held one family's concrete ids, which is the
-// codex column, and BENCH_ALIAS_* held the tokens the dissolved alias concept projected,
-// which are the claude column. These keys bind nothing — the matrix is a hard cut with no
-// dual read — so the pairing is migration advice and never a second reading of a binding.
+// retiredFamilies pairs each key prefix of the retired schema with the harness column
+// that now holds what it used to bind. BENCH_TIER_* held one family's concrete ids,
+// which is the codex column. BENCH_ALIAS_* held the tokens the dissolved alias concept
+// projected, which are the claude column. These keys bind nothing: the matrix is a
+// hard cut with no dual read. So the pairing is migration advice, and never a second
+// reading of a binding.
 var retiredFamilies = []struct{ prefix, harness string }{
 	{"BENCH_TIER_", "codex"},
 	{"BENCH_ALIAS_", "claude"},
 }
 
-// RetiredKeyPrefixes returns the retired schema's key stems in schema order, so consumers
-// outside this package read the retired families off retiredFamilies above rather than
+// RetiredKeyPrefixes returns the retired schema's key stems in schema order. Consumers
+// outside this package read the retired families off retiredFamilies above, rather than
 // declaring their own copy. The doctor migration report walks that declaration for the
-// rewrites it offers and the guidance sweep builds its prose matcher from this list, so the
-// two cannot come to disagree about which schema is retired. Only the stems are exported:
-// the harness each family migrates to is the report's business alone.
+// rewrites it offers. The guidance sweep builds its prose matcher from this list, so the
+// two cannot come to disagree about which schema is retired. Only the stems are
+// exported: the harness each family migrates to is the report's business alone.
 func RetiredKeyPrefixes() []string {
 	prefixes := make([]string, 0, len(retiredFamilies))
 	for _, family := range retiredFamilies {
@@ -313,8 +317,9 @@ func RetiredKeyPrefixes() []string {
 	return prefixes
 }
 
-// RetiredKeyRewrite is one retired assignment and the matrix assignment replacing it, both
-// carrying Value: the migration moves a token between keys and changes no model choice.
+// RetiredKeyRewrite is one retired assignment and the matrix assignment replacing it,
+// both carrying Value. The migration moves a token between keys and changes no model
+// choice.
 type RetiredKeyRewrite struct {
 	Retired     string
 	Replacement string
@@ -343,9 +348,9 @@ func RetiredKeyRewrites(content []byte) []RetiredKeyRewrite {
 }
 
 // CellFault reports why value cannot serve as harness's bound cell, or "" when it can.
-// Every cell is an opaque safe token; opencode's namespace is provider-qualified, so that
-// requirement is a rule on opencode's own cells rather than a filter applied to whatever a
-// resolution returns.
+// Every cell is an opaque safe token. opencode's namespace is provider-qualified, so
+// that requirement is a rule on opencode's own cells rather than a filter applied to
+// whatever a resolution returns.
 func CellFault(harness, value string) string {
 	if !modelid.SafeToken(value) {
 		return "is not a safe model token"
@@ -357,8 +362,8 @@ func CellFault(harness, value string) string {
 }
 
 // Source is the read state of .bench/lines.env. Unreadable is distinct from absent: an
-// absent binding means the repo is unrouted, while a binding that fails to read is a
-// corrupt oracle, and folding the two together would silently disable enforcement.
+// absent binding means the repo is unrouted. A binding that fails to read is a corrupt
+// oracle, and folding the two together would silently disable enforcement.
 type Source struct {
 	Path       string
 	Exists     bool
@@ -366,8 +371,8 @@ type Source struct {
 	Content    []byte
 }
 
-// state is the one reading of a Source both verdicts branch on, so the fail-open guard and
-// the fail-closed resolver never disagree about what the binding says.
+// state is the one reading of a Source both verdicts branch on. So the fail-open guard
+// and the fail-closed resolver never disagree about what the binding says.
 type state int
 
 const (
@@ -398,9 +403,9 @@ func classify(src Source) (state, Binding) {
 }
 
 // enforceable reports whether the asking harness has a column the guard can hold a
-// delegation to. It is the single condition every deny in AgentLineVerdict is gated on:
-// outside it there is no bound tier, so nothing can be named as the line the delegation
-// should have carried, and the guard fails open rather than bricking a repo that never
+// delegation to. It is the single condition every deny in AgentLineVerdict is gated on.
+// Outside it there is no bound tier, so nothing can be named as the line the delegation
+// should have carried. The guard fails open rather than bricking a repo that never
 // opted into line enforcement.
 func enforceable(st state, b Binding, harness string) bool {
 	return st == stateBound && b.Complete(harness)
@@ -421,12 +426,14 @@ func foreignKeyText(b Binding) string {
 }
 
 // AgentLineVerdict is the pure agent-line verdict for a delegation asked from harness.
-// Every degraded branch is fail-OPEN (exit 0) with a one-line stderr warning; ONLY a
-// present model bound nowhere in the matrix denies (exit 2), and an unknown harness is a
-// wiring error (exit 1) the shim treats as a core error. Enforcement is permissive across
-// every bound cell in the whole matrix — a Claude session may legitimately name a Codex
-// delegate's tier — while the denial's advice names only the asking harness's own tokens.
-// The returned stderr carries no trailing newline — the caller adds one.
+// Every degraded branch is fail-OPEN, exit 0, with a one-line stderr warning. Only a
+// present model bound nowhere in the matrix denies, exit 2. An unknown harness is a
+// wiring error, exit 1, the shim treats as a core error.
+//
+// Enforcement is permissive across every bound cell in the whole matrix. A Claude
+// session may legitimately name a Codex delegate's tier. The denial's advice names
+// only the asking harness's own tokens. The returned stderr carries no trailing
+// newline; the caller adds one.
 func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, stderr string) {
 	if !KnownHarness(harness) {
 		return 1, unknownHarness("check-agent-line", harness)
@@ -438,16 +445,19 @@ func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, s
 	model := e.model
 	st, b := classify(src)
 	if e.isFork {
-		// A fork runs on this session's model whatever it declares, so the binding is not
+		// A fork runs on this session's model whatever it declares. The binding is not
 		// what settles the declaration: it is a claim the harness discards and the guard
-		// cannot check, while an omitted model is the honest signal for behavior no
-		// delegation can avoid. Neither verdict can name the session's own model — only
-		// SessionStart is documented to receive one, it is not guaranteed there, and a
-		// mid-session switch is re-reported by no hook event. The deny waits for a column
-		// to enforce: with no bound tier there is nothing to escalate off, so a repo that
-		// never opted into line enforcement keeps its delegations. The warning does not
-		// wait — it is a warning either way, and withholding it would cost the operator a
-		// true statement about inheritance.
+		// cannot check. An omitted model is the honest signal for behavior no delegation
+		// can avoid.
+		//
+		// Neither verdict can name the session's own model. Only SessionStart is
+		// documented to receive one, and it is not guaranteed there. A mid-session switch
+		// is re-reported by no hook event.
+		//
+		// The deny waits for a column to enforce: with no bound tier there is nothing to
+		// escalate off. A repo that never opted into line enforcement keeps its
+		// delegations. The warning does not wait; it is a warning either way. Withholding
+		// it would cost the operator a true statement about inheritance.
 		if model != "" && enforceable(st, b, harness) {
 			return 2, "DENIED: delegation model '" + model + "' is declared on a fork, which runs on this session's " +
 				"model and ignores the declaration — the guard cannot verify a line the harness will not honor. " +
@@ -457,8 +467,8 @@ func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, s
 		return 0, warn("a fork delegation inherits this session's model, which no hook event reports")
 	}
 	if model == "" {
-		// The one degraded branch that is also the attack path the guard exists for: an
-		// omitted or empty model inherits the invoking session's model, the silent
+		// The one degraded branch that is also the attack path the guard exists for is an
+		// omitted or empty model. It inherits the invoking session's model, the silent
 		// escalation invariant #2 forbids. Deny it. Every other missing-model branch keeps
 		// the fail-open rim — there is no column to enforce, and a broken guard must never
 		// brick delegation.
@@ -496,8 +506,8 @@ func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, s
 
 // describeColumn formats the asking harness's own three bound tokens, the only tokens a
 // denial advertises. The rest of the matrix stays out of the message: enforcement is
-// permissive across it, but a recovery instruction is executable only where it names what
-// this harness can actually pass, and the whole matrix is human-readable in the profile.
+// permissive across it. A recovery instruction is executable only where it names what
+// this harness can actually pass. The whole matrix is human-readable in the profile.
 func describeColumn(harness string, b Binding) string {
 	column := b.Column(harness)
 	parts := make([]string, 0, len(Tiers))
@@ -509,8 +519,8 @@ func describeColumn(harness string, b Binding) string {
 
 // ResolveModelVerdict is the shift adapters' model resolution for harness: BENCH_MODEL
 // names a tier and the harness's own column names the model. Unlike the fail-open agent
-// guard, an unusable binding refuses (exit 1) so an adapter never launches unguarded — the
-// one exception is a binding that declares no cell at all, which degrades to the
+// guard, an unusable binding refuses, exit 1, so an adapter never launches unguarded.
+// The one exception is a binding that declares no cell at all, which degrades to the
 // BENCH_MODEL passthrough an unadopted repo relies on. The returned stderr carries no
 // trailing newline.
 func ResolveModelVerdict(harness, benchModel string, benchModelSet bool, src Source) (model string, exitCode int, stderr string) {

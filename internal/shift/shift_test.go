@@ -21,10 +21,10 @@ func rec(status, path string) []byte {
 	return append([]byte(status+" "+path), 0)
 }
 
-// TestParseDirtyPaths pins the native porcelain -z parse: NUL-delimited paths keep
-// spaces, glob characters, and — the case the shell's `printf | sort` pipeline misread
-// by splitting it across two lines — a literal newline, while the scratch files are
-// excluded and the result is sorted.
+// TestParseDirtyPaths pins the native porcelain -z parse. NUL-delimited paths keep
+// spaces, glob characters, and a literal newline, the case the shell's `printf | sort`
+// pipeline misread by splitting it across two lines. The scratch files are excluded and
+// the result is sorted.
 func TestParseDirtyPaths(t *testing.T) {
 	var raw []byte
 	raw = append(raw, rec(" M", "step 2 [a].txt")...)
@@ -81,8 +81,8 @@ func TestRequireAdapter(t *testing.T) {
 
 // shiftCollisionFixture builds a bare repo plus a passing gate and agent, and points
 // timeNow at a fixed instant so the derived branch name is deterministic. preExisting
-// names additional branches (relative to the base bench/shift-<ts> name, e.g. "-2") to
-// pre-create so the loop's collision retry is exercised.
+// names additional branches, relative to the base bench/shift-<ts> name (e.g. "-2"), for
+// the fixture to pre-create. This exercises the loop's collision retry.
 func shiftCollisionFixture(t *testing.T, preExisting ...string) (tmp, baseBranch string) {
 	t.Helper()
 	tmp = t.TempDir()
@@ -133,10 +133,10 @@ func shiftCollisionFixture(t *testing.T, preExisting ...string) (tmp, baseBranch
 	return tmp, baseBranch
 }
 
-// TestLoopRetriesBranchCreationOnCollision covers spec row 18: when the derived
-// bench/shift-<ts> branch already exists (two shifts landing in the same second), the
-// loop retries with a disambiguating "-2" suffix rather than failing the shift, and the
-// recovery ref path (built from s.branch) follows the resolved, suffixed name.
+// TestLoopRetriesBranchCreationOnCollision covers spec row 18. When the derived
+// bench/shift-<ts> branch already exists, because two shifts land in the same second,
+// the loop retries with a disambiguating "-2" suffix. It does not fail the shift. The
+// recovery ref path, built from s.branch, follows the resolved, suffixed name.
 func TestLoopRetriesBranchCreationOnCollision(t *testing.T) {
 	_, baseBranch := shiftCollisionFixture(t)
 
@@ -155,7 +155,7 @@ func TestLoopRetriesBranchCreationOnCollision(t *testing.T) {
 }
 
 // TestLoopReportsBranchCreationFailureAfterExhaustingRetries covers the bound on row
-// 18's retry: once every suffix through -10 is already taken, the loop gives up and
+// 18's retry. Once every suffix through -10 is already taken, the loop gives up and
 // reports the failure exactly as it always has for an unresolvable collision.
 func TestLoopReportsBranchCreationFailureAfterExhaustingRetries(t *testing.T) {
 	var taken []string
@@ -210,11 +210,11 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	}
 }
 
-// TestRunGateReportsRed pins runGate's contract after FT79 folded runPreservingGate
-// into it: it reports a red gate's exit code straight through and does nothing to the
-// session itself. Preservation (snapshot-and-release, or retain-and-lock on a snapshot
-// failure) is the caller's job, done once explicitly via preserveAndRecover at the
-// return site — never implied by a flag runGate sets on its way out.
+// TestRunGateReportsRed pins runGate's contract: it reports a red gate's exit code
+// straight through and does nothing to the session itself. Preservation, whether
+// snapshot-and-release or retain-and-lock on a snapshot failure, is the caller's job.
+// It happens once, explicitly, via preserveAndRecover at the return site, never
+// implied by a flag runGate sets on its way out.
 func TestRunGateReportsRed(t *testing.T) {
 	root := t.TempDir()
 	gitCmd := func(args ...string) {
@@ -246,8 +246,8 @@ func TestRunGateReportsRed(t *testing.T) {
 }
 
 // TestCheckpointOutcomeDeadlineWinsOverInterrupt pins the decided precedence when a
-// wall deadline and a pulled line race and both flags land before the next checkpoint:
-// the deadline outcome (incomplete/3) wins over interrupted/130. checkpoint's decision
+// wall deadline and a pulled line race and both flags land before the next checkpoint.
+// The deadline outcome, incomplete/3, wins over interrupted/130. checkpoint's decision
 // is exercised through checkpointOutcome directly, since checkpoint itself exits the
 // process on a hit.
 func TestCheckpointOutcomeDeadlineWinsOverInterrupt(t *testing.T) {
@@ -268,11 +268,11 @@ func TestCheckpointOutcomeDeadlineWinsOverInterrupt(t *testing.T) {
 	}
 }
 
-// TestObjectiveBannerEscapesControls covers story 14's banner row: a control sequence in
-// the objective renders escaped in the shift-start banner rather than raw, because the
-// banner routes through the shared sanitizer. Red before the banner was wired to
-// sanitize.Preview, when it interpolated the raw objective. The " — objective:" delimiter
-// the branch parser depends on must survive.
+// TestObjectiveBannerEscapesControls covers story 14's banner row: a control sequence
+// in the objective renders escaped in the shift-start banner rather than raw. This
+// happens because the banner routes through the shared sanitizer. The banner never
+// interpolates the raw objective. The " — objective:" delimiter the branch parser
+// depends on must survive.
 func TestObjectiveBannerEscapesControls(t *testing.T) {
 	esc := string(rune(0x1b))
 	got := objectiveBanner("bench/shift-x", "paint it "+esc+"[31mred")

@@ -18,15 +18,14 @@ import (
 	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 )
 
-// finish emits the shift_result block, records the outcome on the intent entry when one
-// exists (a validation failure exits before an entry is created, and that is correct —
-// there is nothing yet to enrich), and resolves res to its process exit code. Every
-// Loop return, and checkpoint's os.Exit path (via exitPreserving), funnels through this
-// one path — the single source for the emit → record → exit-code sequence. A failed
-// Upsert does not change the outcome or the exit code (the gate's verdict already
-// happened; the ledger record is enrichment, not the oracle) but is not silently
-// swallowed either: it is reported to stderr so an operator can see the ledger fell out
-// of sync.
+// finish emits the shift_result block and resolves res to its process exit code. When
+// entry is non-nil, it records the outcome on the intent entry. A validation failure
+// exits before an entry exists, so there is nothing yet to enrich. Every Loop return, and
+// checkpoint's os.Exit path through exitPreserving, funnels through this one path, the
+// single source for the emit-record-exit-code sequence. A failed Upsert changes neither
+// the outcome nor the exit code: the gate already decided, and the ledger record is
+// enrichment, not the oracle. It is not silently swallowed; it is reported to stderr so
+// an operator can see the ledger fell out of sync.
 func finish(stdout, stderr io.Writer, mainRoot string, entry *intent.Entry, res Result) int {
 	res.Emit(stdout)
 	if entry != nil {
@@ -43,17 +42,18 @@ func finish(stdout, stderr io.Writer, mainRoot string, entry *intent.Entry, res 
 	return res.ExitCode()
 }
 
-// usage is the exit-2 shorthand for every setup failure before the first adapter run —
-// there is no intent entry yet, so nothing is enriched.
+// usage is the exit-2 shorthand for every setup failure before the first adapter run.
+// There is no intent entry yet, so nothing is enriched.
 func usage(stdout, stderr io.Writer, detail string) int {
 	return finish(stdout, stderr, "", nil, Result{Outcome: OutcomeUsage, Detail: detail})
 }
 
-// evidenceResult is the one place a post-mutation failure both preserves the dirty tree
-// (snapshot-and-release, or retain-and-lock on a snapshot failure — preserveAndRecover's
-// uniform rule) and builds the Result, split by the session's committed count per the
-// evidence rule. A teardown failure on the release side still resolves to failed/1,
-// regardless of the evidence split, per teardownFailureResult.
+// evidenceResult is the one place a post-mutation failure preserves the dirty tree and
+// builds the Result. Preservation follows preserveAndRecover's uniform rule: snapshot-
+// and-release, or retain-and-lock on a snapshot failure. The Result splits by the
+// session's committed count, per the evidence rule. A teardown failure on the release
+// side still resolves to failed/1, regardless of the evidence split, per
+// teardownFailureResult.
 func evidenceResult(s *session, detail string) Result {
 	recovery, teardownErr := s.preserveAndRecover(detail)
 	if teardownErr != nil {
@@ -69,19 +69,19 @@ func evidenceResult(s *session, detail string) Result {
 	}
 }
 
-// branchCollisionRetries bounds how many disambiguating suffixes createShiftBranch will
-// try before giving up and reporting the creation failure — ten total attempts (the
-// bare per-second name, then -2 through -10) is generous headroom for concurrent
-// same-second shifts while still failing fast on a genuinely broken repo.
+// branchCollisionRetries bounds how many disambiguating suffixes createShiftBranch tries
+// before it gives up and reports the creation failure. Ten total attempts, the bare
+// per-second name then -2 through -10, gives generous headroom for concurrent same-second
+// shifts. It still fails fast on a genuinely broken repo.
 const branchCollisionRetries = 10
 
 // createShiftBranch derives the bench/shift-<timestamp> branch name and switches wt
-// onto a freshly created branch of that name. A same-second collision (two shifts
-// deriving the same timestamp) is not fatal: it retries with a disambiguating "-2",
-// "-3", … suffix — appended to the per-second name, so the recovery ref path, which is
-// built from the resolved branch name, gets a fresh, non-colliding pair too — until
-// creation succeeds or branchCollisionRetries is exhausted, at which point it reports
-// the same creation failure this always reported for an unresolvable collision.
+// onto a freshly created branch of that name. A same-second collision, two shifts
+// deriving the same timestamp, is not fatal: it retries with a disambiguating "-2",
+// "-3", suffix appended to the per-second name. The recovery ref path, built from the
+// resolved branch name, then gets a fresh, non-colliding pair too. Retries continue
+// until creation succeeds or branchCollisionRetries is exhausted; at that point it
+// reports the same creation failure it always reported for an unresolvable collision.
 func createShiftBranch(wt, timestamp string) (string, error) {
 	base := "bench/shift-" + timestamp
 	var lastErr error
@@ -99,10 +99,11 @@ func createShiftBranch(wt, timestamp string) (string, error) {
 	return "", lastErr
 }
 
-// Loop runs the gated shift: validate the objective and env, preflight the adapter,
-// acquire a pooled worktree, branch, iterate (commit on green, preserve on a red gate)
-// to the objective or the iteration cap, pay down touched-scope structural debt at
-// green, then release. Acquire → loop → release run in one process because lease
+// Loop runs the gated shift: it validates the objective and the environment, preflights
+// the adapter, and acquires a pooled worktree. It then branches and iterates: it commits
+// on a green gate and preserves work on a red one. Iteration continues to the objective
+// or the iteration cap. At green, it pays down touched-scope structural debt, then
+// releases the worktree. Acquire, loop, and release run in one process, because lease
 // ownership is this process's pid. Every exit path resolves through finish, which emits
 // the shift_result TOON block and records the outcome on the intent entry.
 func Loop(objective string, stdout, stderr io.Writer) int {
@@ -139,8 +140,8 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return usage(stdout, stderr, "not in a git repository")
 	}
-	// Audit #10 — tolerate: an empty parse reads as a clean tree, but the very next
-	// `rev-parse HEAD` fails the loop loudly on a broken repo, so no broken repo slips past.
+	// Audit #10: tolerate an empty parse as a clean tree. The very next `rev-parse HEAD`
+	// call fails the loop loudly on a broken repo, so no broken repo slips past.
 	if dirty, _ := git.Output("-C", mainRoot, "status", "--porcelain"); dirty != "" {
 		fmt.Fprintln(stderr, "working tree not clean; commit or move the change aside first")
 		return usage(stdout, stderr, "working tree not clean")
@@ -184,15 +185,15 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		s.teardown()
 		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not enrich shift intent"})
 	}
-	// The true review base for this branch: `bench diff` resolves it from here, and
-	// worktrees share repo config so the key is visible wherever review runs.
+	// This is the true review base for this branch. `bench diff` resolves it from here,
+	// and worktrees share repo config, so the key is visible wherever review runs.
 	if err := exec.Command("git", "-C", wt, "config", "branch."+branch+".benchBase", base).Run(); err != nil {
 		fmt.Fprintf(stderr, "could not configure shift branch %s: %v\n", branch, err)
 		s.teardown()
 		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not configure shift branch " + branch})
 	}
-	// 0600: the worktree scratch file is the one place the full objective text persists,
-	// so it is readable only by the user who started the shift.
+	// 0600: the worktree scratch file is the one place the full objective text persists.
+	// It is readable only by the user who started the shift.
 	if err := os.WriteFile(wt+"/.bench-objective", objective.scratch(), 0o600); err != nil {
 		fmt.Fprintf(stderr, "could not write shift objective: %v\n", err)
 		s.teardown()
@@ -225,9 +226,9 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		}
 	}()
 
-	// The wall deadline: on expiry it acts like a pulled line — kill the adapter process
-	// group and cancel a running gate — but sets deadline rather than interrupted, so the
-	// next checkpoint resolves incomplete/3 with a deadline detail, not interrupted/130.
+	// The wall deadline: on expiry it acts like a pulled line, killing the adapter process
+	// group and cancelling a running gate. It sets deadline rather than interrupted, so
+	// the next checkpoint resolves incomplete/3 with a deadline detail, not interrupted/130.
 	if wallDur > 0 {
 		wallTimer := time.AfterFunc(wallDur, func() {
 			s.deadline.Store(true)
@@ -242,9 +243,10 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 	fmt.Fprintf(stdout, "  cap: %d iterations. Ctrl-C to pull the line.\n", maxIters)
 	started := time.Now()
 
-	// stopReason distinguishes how the loop left its for-range: "" means it ran to the
-	// iteration cap (incomplete), "stopped" means it broke clean (complete, or no-op if
-	// nothing landed), "adapter-failed" means an adapter spawn/exit failure ended it.
+	// stopReason distinguishes how the loop left its for-range. An empty value means it
+	// ran to the iteration cap, which is incomplete. "stopped" means it broke clean,
+	// either complete or no-op if nothing landed. "adapter-failed" means an adapter spawn
+	// or exit failure ended it.
 	var stopReason, stopDetail string
 	for i := 1; i <= maxIters; i++ {
 		s.checkpoint()
@@ -297,10 +299,10 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 		} else {
 			s.checkpoint()
 			// Neither the human line nor the detail may name the pool worktree as the
-			// preservation site: on the snapshot path it is released and cleaned right
-			// after. The location is the "recovery:" line preserveAndRecover prints
-			// (the ref, or the retained worktree path on the fallback) plus the
-			// shift_result recovery cell — never this message.
+			// preservation site: the snapshot path releases and cleans it right after.
+			// The location is the "recovery:" line preserveAndRecover prints, the ref or
+			// the retained worktree path on the fallback, plus the shift_result recovery
+			// cell. It is never this message.
 			fmt.Fprintf(stdout, "  ✗ gate failed — snapshotting iteration %d\n", i)
 			return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("gate failed on iteration %d", i)))
 		}
