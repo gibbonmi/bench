@@ -156,6 +156,16 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   prompt, scratch, predicate argument, durable commit subject) issued by the objective
   module; no surface receives the unprojected text. Not "the objective string" —
   objective projection.
+- **prose mechanics check** — the `prose-mechanics` conformance check, which grades the
+  two ASD-STE100 rules a program can measure: sentence length and paragraph length. Not
+  "STE lint", not "prose lint", not "grammar check" — prose mechanics check.
+- **prose exclusion row** — one line of `.bench/prose-exclusions`: a path the prose
+  mechanics check does not grade, and a one-clause reason. The reviewer owns that file.
+  Not "allowlist", not "skip list" — prose exclusion row.
+- **always-loaded core** — `.bench/BENCH.md`, which holds the six rule families every
+  session loads; the mechanics live in `.bench/BENCH-reference.md`. Not "the guide"
+  unqualified, and not "progressive loading" (the split is progressive disclosure) —
+  always-loaded core.
 
 ## Avoid
 

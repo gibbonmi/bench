@@ -223,6 +223,11 @@ coverage map; a class skipped here returns as a regression.
 - host-backed filesystems under host-side I/O pressure: on WSL2, ext4 lives
   behind a VHDX whose file and directory `fsync` calls can stall for seconds
   even when guest-side CPU, memory, and `fsync` stress stay green
+- an unterminated delimiter in authored Markdown: a fence, an HTML comment, or
+  a frontmatter block that never closes. A parser that strips or skips such a
+  region must decide where the region ends. Name that decision and assert it. A
+  parser that swallows the rest of the file grades nothing after the opening
+  marker
 
 Known residual risk: `bench setup`'s real-TTY confirm wiring is one untested
 constructor line binding stdin. Testing it needs a pty dependency, which is a
@@ -360,6 +365,15 @@ anybody editing the checker. Every other `.agents/commands/*.md` file stays outs
 reviewed universe, and the `.claude/skills/*` adapter symlinks are distribution surfaces
 rather than subjects — a symbolic link or special file found where a subject belongs is
 refused unread.
+
+### Prose mechanics
+
+The `prose-mechanics` check grades the two ASD-STE100 rules a program can measure. It
+reds a sentence longer than 25 words and a paragraph with more than six sentences. The
+check reads every authored Markdown file under the graded root. `.bench/prose-exclusions`
+names the paths the check does not grade. Each prose exclusion row gives one path and a
+one-clause reason, and the reviewer owns that file. The semantic STE rules stay with
+top-tier review.
 
 ## Lines (model + effort routing)
 
