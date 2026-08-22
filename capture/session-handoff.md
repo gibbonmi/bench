@@ -2,21 +2,23 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `48f93ed7`
-Spec: none active
-Gate: stale; the pending drain batch requires a fresh commit gate
+Branch: `main` — continuation baseline `ee9c4c10`; the staged-spec commit follows it
+Spec: `specs/inherited-toolchain-environment/spec.md` — Status: staged, Terra/medium review accepted in 3 iterations
+Gate: the atomic staged-spec commit owns the full development-gate result
 
 ## State
 
-The landing-refusal-diagnostics spec is implemented and retired at `48f93ed7`.
-The pending drain batch removes shipped FT233, folds its retro into FT164,
-FT215, and FT224, folds the spec-review learning into FT214, and creates FT242
-for the reproduced inherited-environment false green. No ideas, retros, or open
-learnings remain after the batch.
+FT242 is specified as two independently green tickets on one frontier. The
+gate slice makes a Go module fail closed when the built-in phase table cannot
+resolve Go. The SessionStart slice adds bounded clean-login discovery,
+PATH-preserving recovery, descendant teardown evidence, and a manual real
+Codex-client/CLI WSL evidence gate before any portability claim. Terra/medium
+accepted the combined spec-and-ticket review after three iterations; the
+required review learning is open for the next `/bench-drain`.
 
 ## Next command
 
-`$bench-write-spec` — FT242.
+`$bench-implement-spec`
 
 ## Shape
 

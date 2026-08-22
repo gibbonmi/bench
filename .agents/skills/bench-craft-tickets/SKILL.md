@@ -57,15 +57,15 @@ Writes: <paths this ticket expects to touch, advisory>
 - [ ] <observable behavioral criterion>
 ```
 
+Write the prose in ASD-STE100 per `craft-spec`'s `references/ste-prose.md`.
 `Blocked by:` is `none`, or the sibling basenames that must land first — a
 basename survives a retitle and is what `--ticket` already names. `What to
 build` states the end-to-end behavior, including any contract shared with a
-sibling: a meaningful crossing lives in this prose and in `Acceptance`, never
-a separate schema field, re-derived from the tree by review rather than
-trusted from the ticket's account. `Acceptance` rows are observable
-behavioral criteria, not a project-gate checkbox. `Writes:` is advisory only,
-judging whether two frontier tickets are disjoint enough to parallelize —
-never enforced.
+sibling: a meaningful crossing lives in this prose and in `Acceptance`, never a
+separate schema field, re-derived from the tree by review rather than trusted
+from the ticket's account. `Acceptance` rows are observable behavioral
+criteria, not a project-gate checkbox. `Writes:` is advisory only, judging
+whether two frontier tickets are disjoint enough to parallelize — never enforced.
 
 Good:
 

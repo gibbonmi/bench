@@ -12,8 +12,9 @@ Turn the authorized decision source and what you know of the codebase into
 1. **Explore the repo**; use the glossary's terms and respect the area's ADRs.
 2. **Sketch the seams** (`craft-seams`): existing over new, the highest that
    still shows the failure, ideally one; confirm them with the reviewer first.
-3. **Write the spec** from the template below and run
-   `bench coverage --check`. The spec file is the published artifact.
+3. **Write the spec** from the template below, in ASD-STE100 prose per
+   `references/ste-prose.md`, and run `bench coverage --check`. The spec file
+   is the published artifact.
 
 ## User stories
 
