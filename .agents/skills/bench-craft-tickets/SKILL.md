@@ -64,8 +64,10 @@ build` states the end-to-end behavior, including any contract shared with a
 sibling: a meaningful crossing lives in this prose and in `Acceptance`, never a
 separate schema field, re-derived from the tree by review rather than trusted
 from the ticket's account. `Acceptance` rows are observable behavioral
-criteria, not a project-gate checkbox. `Writes:` is advisory only, judging
-whether two frontier tickets are disjoint enough to parallelize — never enforced.
+criteria, not a project-gate checkbox; cite each coverage row id in full, because
+preflight reads ids, not ranges. `Writes:` is advisory only, judging whether two
+frontier tickets are disjoint enough to parallelize — never enforced — and each
+path it names exists in the tree or is marked new.
 
 Good:
 
@@ -91,10 +93,8 @@ demoable path from parsed record to rendered row, sized to a fresh context.
 ## Land the frontier
 
 Spec-backed builds work the unblocked frontier. One ticket equals **one fresh write-delegate
-charge**; independent frontier tickets run in parallel only where their
-`Writes:` notes are disjoint, and dependent tickets run sequentially.
+charge**; independent frontier tickets run in parallel only where their `Writes:` notes are disjoint, and dependent tickets run sequentially.
 
-Run focused checks during the ticket, not a standalone full gate. For a
-reviewed spec chain, commit tickets serially on one retained integration source,
+Run focused checks during the ticket, not a standalone full gate. For a reviewed spec chain, commit tickets serially on one retained integration source,
 one full-project gate per commit; review freezes that source's base and tip,
 `bench worktree land` composes and gates it, and final-check reports the evidence.

@@ -65,6 +65,8 @@ something the next session has to think to check.
   permission prompt. Only `cd` when genuinely moving to a *different* directory.
 - Wait on a PID or a sentinel file, never by polling a self-matching pattern —
   `pgrep -f` of your own command text matches the command that's doing the polling.
+- A preserve step (a copy aside) runs as its own command and is verified before
+  any discard step; a chain that a hook refuses runs none of its steps.
 - A destructive or bulk-rewrite script runs plan-before-apply: print the exact
   target list, sample it, then apply.
 - A repository-wide sweep uses `rg --hidden` (excluding `.git/`) so dot-directories
