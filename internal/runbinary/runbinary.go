@@ -21,8 +21,8 @@ import (
 const Env = "BENCH_RUN_BINARY"
 
 // BuilderCancelGrace is how long a cancelled builder group has to exit on SIGTERM
-// before it is killed. Exported so a test waiting out the drain derives its own
-// deadline from this window instead of guessing a literal.
+// before it is killed. This constant is exported, so a test waiting out the drain
+// derives its own deadline from this window, instead of guessing a literal.
 const BuilderCancelGrace = 2 * time.Second
 
 type Builder func(context.Context, string, string) error
@@ -37,7 +37,7 @@ type Factory struct {
 }
 
 // Selection is the exact source-bound executable used by one run. Close removes bytes
-// only for an owner-authored selection; an inherited consumer never owns its lifetime.
+// only for an owner-authored selection. An inherited consumer never owns its lifetime.
 type Selection struct {
 	Path       string
 	SourceRoot string

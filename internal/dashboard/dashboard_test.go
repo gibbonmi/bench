@@ -14,14 +14,14 @@ import (
 
 var fixedClock = time.Date(2026, 7, 7, 13, 30, 0, 0, time.UTC)
 
-// baseSnapshot is a fully-empty snapshot at the fixed clock; each test overrides the one
-// field it exercises so the assertions read against a known-otherwise-empty page.
+// baseSnapshot is a fully-empty snapshot at the fixed clock. Each test overrides the one
+// field it exercises, so the assertions read against a known-otherwise-empty page.
 func baseSnapshot() Snapshot {
 	return Snapshot{GeneratedAt: fixedClock}
 }
 
-// Row 3: the gate section shows the cached tree sha and marks a stale verdict as stale
-// rather than rendering a stale green as a clean bill.
+// Row 3: the gate section shows the cached tree sha. It marks a stale verdict as
+// stale, instead of rendering a stale green as a clean bill.
 func TestRenderGateStaleShowsShaAndStale(t *testing.T) {
 	s := baseSnapshot()
 	s.Gate = status.GateInfo{
@@ -41,9 +41,10 @@ func TestRenderGateStaleShowsShaAndStale(t *testing.T) {
 	}
 }
 
-// Row 3 age: a past timestamp renders a humanized age against the injected clock; a
-// future or unparseable one omits the age instead of rendering a negative or nonsense
-// duration. Pins gateAge's guard branches so dropping one turns red here.
+// Row 3 age: a past timestamp renders a humanized age against the injected clock. A
+// future or unparseable timestamp omits the age, instead of rendering a negative or
+// nonsense duration. This test pins gateAge's guard branches, so dropping one turns
+// this test red.
 func TestRenderGateAge(t *testing.T) {
 	cases := []struct {
 		name, timestamp, want string
@@ -77,8 +78,8 @@ func TestRenderGateAbsent(t *testing.T) {
 	}
 }
 
-// Row 4: signals render in the ascending-severity order and membership they arrive in —
-// none dropped, none re-sorted.
+// Row 4: signals render in the ascending-severity order and membership they arrive in.
+// Render drops none and re-sorts none.
 func TestRenderSignalsOrderedMembership(t *testing.T) {
 	s := baseSnapshot()
 	s.Signals = []status.Signal{
@@ -121,9 +122,9 @@ func TestRenderRoadmapRowsAndSequence(t *testing.T) {
 	}
 }
 
-// Review finding P1: RoadmapText and Sequence render inside <pre>, where html/template
-// already neutralizes markup, so a multi-line value must keep its real newlines rather
-// than flattening to literal \n escape tokens.
+// RoadmapText and Sequence render inside <pre>, where html/template already neutralizes
+// markup. So a multi-line value must keep its real newlines, instead of flattening to
+// literal \n escape tokens.
 func TestRenderRoadmapAndSequencePreserveNewlinesInPre(t *testing.T) {
 	s := baseSnapshot()
 	s.RoadmapPresent = true
@@ -144,12 +145,12 @@ func TestRenderRoadmapAndSequencePreserveNewlinesInPre(t *testing.T) {
 }
 
 // TestGatherRenderRoadmapTextAndSequenceFromSplitTree covers story 21 (PR18) through the
-// dashboard's own composition and render path: gather() calling the roadmap package's
-// readers, then Render formatting the resulting Snapshot — rather than asserting
-// roadmap.RoadmapText/roadmap.RecommendedSequence directly, so a dashboard-side reader
-// swap or sequence-format regression reds here. Both readers already parse ROADMAP.md's
-// index only, so a split tree (index plus a roadmap/ row file) must render unchanged —
-// this is a regression pin, not a behavior change.
+// dashboard's own composition and render path. gather() calls the roadmap package's
+// readers. Render then formats the resulting Snapshot. The test does not assert
+// roadmap.RoadmapText or roadmap.RecommendedSequence directly, so a dashboard-side reader
+// swap or sequence-format regression reds here. Both readers already parse only
+// ROADMAP.md's index, so a split tree, an index plus a roadmap/ row file, must render
+// unchanged. This is a regression pin, not a behavior change.
 func TestGatherRenderRoadmapTextAndSequenceFromSplitTree(t *testing.T) {
 	root := t.TempDir()
 	const heading = "**FT7 (LOW) — x.**"
@@ -258,8 +259,8 @@ func TestRenderEscapesAndSanitizes(t *testing.T) {
 	}
 }
 
-// Row 11: the page is one self-contained document — inline <style> with a dark palette, no
-// external URL, no <script>.
+// Row 11: the page is one self-contained document, with inline <style>, a dark palette,
+// no external URL, and no <script>.
 func TestRenderSelfContained(t *testing.T) {
 	out := Render(baseSnapshot())
 	if !strings.Contains(out, "prefers-color-scheme: dark") {
@@ -298,10 +299,10 @@ func TestRenderPathWithSpaceAndGlob(t *testing.T) {
 	}
 }
 
-// A worktree-classify failure must render as a visible error, not as the empty-pool
-// message a reader would otherwise mistake for "no worktrees" — the false-empty class
-// FT29 swept. It takes precedence even when Worktrees is non-empty (stale/partial data
-// alongside the error is still not the truth to show).
+// A worktree-classify failure renders as a visible error, not the empty-pool message a
+// reader could mistake for "no worktrees" (the false-empty class from FT29). This error
+// takes precedence even when Worktrees is non-empty. Stale or partial data alongside the
+// error is still not the truth to show.
 func TestRenderWorktreeClassifyFailureIsVisible(t *testing.T) {
 	s := baseSnapshot()
 	s.WorktreesErr = "exit status 128: fatal: not a git repository"
@@ -318,22 +319,23 @@ func TestRenderWorktreeClassifyFailureIsVisible(t *testing.T) {
 	}
 }
 
-// Row 13 (unit) + Row 2 (unit): --stdout is the only accepted flag. An unknown argument or
-// a trailing token is a usage error (exit 2); --stdout renders an HTML document (exit 0).
+// Row 13 (unit) and Row 2 (unit): --stdout is the only accepted flag. An unknown argument
+// or a trailing token gives a usage error, exit 2. --stdout renders an HTML document,
+// exit 0.
 func TestCommandArgs(t *testing.T) {
 	for _, bad := range [][]string{{"--bogus"}, {"--stdout", "extra"}, {"status"}} {
 		if r, c := Command(bad); c != 2 || !strings.Contains(r, "usage:") {
 			t.Errorf("args %v: report %q exit %d, want usage exit 2", bad, r, c)
 		}
 	}
-	// --stdout runs inside this repo (the test cwd) and emits the document, writing nothing.
+	// --stdout runs inside this repo, the test cwd, and emits the document. It writes nothing.
 	if r, c := Command([]string{"--stdout"}); c != 0 || !strings.HasPrefix(r, "<!DOCTYPE html>") {
 		t.Errorf("--stdout: exit %d, prefix %q, want exit 0 and an HTML document", c, r[:min(20, len(r))])
 	}
 }
 
 // section returns a rough slice of out around the first occurrence of marker, for readable
-// failure output; it is a test aid only.
+// failure output. It is a test aid only.
 func section(out, marker string) string {
 	i := strings.Index(out, marker)
 	if i < 0 {

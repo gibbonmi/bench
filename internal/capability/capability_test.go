@@ -10,9 +10,9 @@ import (
 	"testing"
 )
 
-// TestRenderCapabilityLine pins the exact structured line a capability skip writes:
-// kind, class, name, and reason must all be recoverable by a downstream collector that
-// prefix-matches bench-skip and reads the leading key=value tokens.
+// TestRenderCapabilityLine pins the exact structured line a capability skip writes.
+// kind, class, name, and reason must all be recoverable by a downstream collector. This
+// collector prefix-matches bench-skip and reads the leading key=value tokens.
 func TestRenderCapabilityLine(t *testing.T) {
 	got, err := Render(Skip{Kind: KindCapability, Class: Symlink, Name: "TestSymlinkRefusal", Reason: "requires unprivileged symlink support"})
 	if err != nil {
@@ -24,11 +24,11 @@ func TestRenderCapabilityLine(t *testing.T) {
 	}
 }
 
-// TestRenderRejectsUnusableName proves an unnamed or space-carrying skip is refused
-// rather than formatted. The gate reds on the environment population and quotes the
-// name in that verdict, so an empty name would hand a reader the same bare count the
-// named line replaced; a name carrying a space would make the reason token unparseable.
-// Dropping the name guard is the mutant this pins against.
+// TestRenderRejectsUnusableName proves an unnamed or space-carrying skip is refused,
+// instead of formatted. The gate reds on the environment population and quotes the name
+// in that verdict. So an empty name would hand a reader the same bare count the named
+// line replaced. A name carrying a space would make the reason token unparseable.
+// Dropping the name guard is the mutant this test pins against.
 func TestRenderRejectsUnusableName(t *testing.T) {
 	for _, name := range []string{"", "Test With Space", "Test\tTabbed"} {
 		got, err := Render(Skip{Kind: KindEnvironment, Name: name, Reason: "no root"})
@@ -42,9 +42,9 @@ func TestRenderRejectsUnusableName(t *testing.T) {
 }
 
 // TestRenderCapabilityLineRejectsUnknownClass proves a class outside the enumerated
-// seven is refused rather than formatted — an open vocabulary would let a typo
-// silently mint a class the strict count never tallies. Making Class.valid always
-// report true is the mutant this pins against: it turns this red.
+// seven is refused, instead of formatted. An open vocabulary would let a typo silently
+// mint a class that the strict count never tallies. Making Class.valid always report
+// true is the mutant this test pins against. It turns this test red.
 func TestRenderCapabilityLineRejectsUnknownClass(t *testing.T) {
 	got, err := Render(Skip{Kind: KindCapability, Class: Class("network"), Name: "TestNetworkSkip", Reason: "needs a socket"})
 	if err == nil {
@@ -55,10 +55,10 @@ func TestRenderCapabilityLineRejectsUnknownClass(t *testing.T) {
 	}
 }
 
-// TestParseLine pins the reader against the writer: every line Render produces must
-// come back with its fields intact, and anything else must be refused. A parser that
-// accepts a reason-less or unenumerated-class line would let the gate's tally credit
-// a class no writer can emit.
+// TestParseLine pins the reader against the writer. Every line Render produces must come
+// back with its fields intact. Anything else must be refused. A parser that accepts a
+// reason-less or unenumerated-class line would let the gate's tally credit a class that
+// no writer can emit.
 func TestParseLine(t *testing.T) {
 	for _, want := range []Skip{
 		{Kind: KindCapability, Class: Symlink, Name: "TestSymlinkRefusal", Reason: "requires unprivileged symlink support"},
@@ -101,12 +101,11 @@ func TestWithoutEnvironment(t *testing.T) {
 
 // TestCapabilityWritesLineBeforeSkip proves the write lands before t.Skip fires, for
 // both transports, by driving the real exported Capability entry point. t.Skip calls
-// runtime.Goexit, so a line written after it — or folded only into the skip message
-// — would never be delivered; a mutant that reorders Capability's write after its
-// t.Skip turns both subtests red because the destination (file or buffer) stays
-// empty.
+// runtime.Goexit. So a line written after it, or folded only into the skip message,
+// would never be delivered. A mutant that reorders Capability's write after its t.Skip
+// turns both subtests red, because the destination, file or buffer, stays empty.
 func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
-	// The name on the line is the emitting subtest's own t.Name(), which is what makes a
+	// The name on the line is the emitting subtest's own t.Name(). This name makes a
 	// skip traceable back to the assertion it dropped.
 	want := func(t *testing.T) string {
 		return "bench-skip kind=capability class=fifo name=" + t.Name() + "/skips reason=requires a host fifo\n"
@@ -155,9 +154,8 @@ func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
 }
 
 // TestEnvironmentWritesLineBeforeSkip mirrors the capability ordering proof for the
-// non-capability kind, driving the real exported Environment entry point, since it
-// carries the same load-bearing write-then-skip contract through the file
-// transport.
+// non-capability kind. It drives the real exported Environment entry point. The file
+// transport carries the same load-bearing write-then-skip contract.
 func TestEnvironmentWritesLineBeforeSkip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "skip.log")
 	t.Setenv(LogEnv, path)
@@ -180,11 +178,11 @@ func TestEnvironmentWritesLineBeforeSkip(t *testing.T) {
 	}
 }
 
-// TestAppendSkipLogConcurrentWriters pins the atomic-single-write requirement: many
-// goroutines (standing in for many test binaries sharing one BENCH_SKIP_LOG) append
-// at once, and every line must survive intact — none interleaved with another, none
-// truncated. Splitting a line across two Write calls reopens exactly this race,
-// which is why appendSkipLog issues one Write per line.
+// TestAppendSkipLogConcurrentWriters pins the atomic-single-write requirement. Many
+// goroutines, standing in for many test binaries sharing one BENCH_SKIP_LOG, append at
+// once. Every line must survive intact: none interleaved with another, none truncated.
+// Splitting a line across two Write calls reopens exactly this race. This is why
+// appendSkipLog issues one Write per line.
 func TestAppendSkipLogConcurrentWriters(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "skip.log")
 	const writers = 40

@@ -350,9 +350,9 @@ func TestCommandSuppressesUnsafeProviderIDs(t *testing.T) {
 	}
 }
 
-// An unknown argument is rejected with a usage line at exit 2 — the sibling porcelain
-// norm — driven directly since the usage rides stdout. Keys are pinned empty so the
-// pre-guard path (which reaches inventory) never touches the network.
+// An unknown argument gives a usage line at exit 2, the sibling porcelain norm. The
+// test drives this directly, since the usage rides stdout. Keys are pinned empty, so
+// the pre-guard path, which reaches inventory, never touches the network.
 func TestCommandRejectsUnknownArg(t *testing.T) {
 	t.Setenv("OPENAI_API_KEY", "")
 	t.Setenv("ANTHROPIC_API_KEY", "")

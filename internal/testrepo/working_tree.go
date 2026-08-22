@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// CommitWorkingTree copies tracked and visible untracked files into destination and
+// CommitWorkingTree copies tracked and visible untracked files into destination. It
 // commits that exact snapshot, so tests can authenticate the tree they are grading.
 func CommitWorkingTree(source, destination string) error {
 	listed := exec.Command("git", "-C", source, "ls-files", "-z", "--cached", "--others", "--exclude-standard")

@@ -1,6 +1,6 @@
 // Package gittest owns the shared git test scaffolds package tests use.
-// Repository setup and file-backed command fixtures live here; package-specific fixture
-// bytes stay with the test that grades them. Only tests import this package.
+// Repository setup and file-backed command fixtures live here. Package-specific
+// fixture bytes stay with the test that grades them. Only tests import this package.
 package gittest
 
 import (
@@ -15,14 +15,15 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
-// Repo initializes an empty repository in a fresh temporary directory and returns its root.
-// A test that commits wants RepoOnBranch instead, which also pins the branch and an identity.
+// Repo initializes an empty repository in a fresh temporary directory. It returns that
+// directory's root. A test that commits wants RepoOnBranch instead. RepoOnBranch also
+// pins the branch and an identity.
 func Repo(t testing.TB) string {
 	t.Helper()
 	return initialize(t)
 }
 
-// StubGit installs a pure file-backed git stub for worktree-resolution tests and
+// StubGit installs a pure file-backed git stub for worktree-resolution tests. It
 // returns the common-directory path emitted by successful resolution modes.
 func StubGit(t testing.TB, root, mode, logPath string) string {
 	t.Helper()
@@ -45,8 +46,9 @@ func StubGit(t testing.TB, root, mode, logPath string) string {
 	return commonDir
 }
 
-// RepoOnBranch initializes an empty repository on branch with a commit identity configured,
-// so a committing test neither inherits nor depends on the developer's own git config.
+// RepoOnBranch initializes an empty repository on branch, with a commit identity
+// configured. So a committing test neither inherits nor depends on the developer's own
+// git config.
 func RepoOnBranch(t testing.TB, branch string) string {
 	t.Helper()
 	root := initialize(t, "-b", branch)

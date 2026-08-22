@@ -21,11 +21,11 @@ func TestSafeToken(t *testing.T) {
 			}
 		})
 	}
-	// The newline-class rejects pin that the grammar's `$` anchor is end-of-text
-	// (Go's default `\z`), not multiline: a token carrying a shell newline stays
-	// rejected. They ride their own slice because RejectedTokens' second consumer
-	// (the conformance line-binding check) would sanitize the newline away before
-	// SafeToken saw it — see modelidtest.NewlineRejectedTokens.
+	// The newline-class rejects pin that the grammar's `$` anchor is end-of-text, Go's
+	// default `\z`, not multiline. A token carrying a shell newline stays rejected.
+	// These rejects ride their own slice. RejectedTokens' second consumer, the
+	// conformance line-binding check, would sanitize the newline away before SafeToken
+	// saw it. See modelidtest.NewlineRejectedTokens.
 	for _, token := range modelidtest.NewlineRejectedTokens {
 		t.Run("reject "+token.Name, func(t *testing.T) {
 			if SafeToken(token.Value) {

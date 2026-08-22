@@ -31,15 +31,19 @@ var RejectedTokens = []RejectedToken{
 	{Name: "leading-dash", Value: "-gpt-5"},
 }
 
-// NewlineRejectedTokens holds the newline-class rejects (trailing "\n", embedded
-// "\n", CR) that pin the grammar's `$` anchor as end-of-text — Go's default `\z`
-// semantics, not multiline. They live in their own slice, consumed ONLY by the
-// direct SafeToken seam. They must NOT join RejectedTokens: that slice has a second
-// consumer, the conformance line-binding check, which writes each value into a temp
-// lines.env and parses it through lines.TierValue — and TierValue truncates at the
-// first newline and strips a trailing CR. A newline-bearing value would therefore
-// reach SafeToken already sanitized, so the "is not a safe model token" diagnostic
-// would never fire and the check would false-green or false-red.
+// NewlineRejectedTokens holds the newline-class rejects: a trailing "\n", an embedded
+// "\n", and a CR. These rejects pin the grammar's `$` anchor as end-of-text, Go's
+// default `\z` semantics, not multiline.
+//
+// NewlineRejectedTokens lives in its own slice. Only the direct SafeToken seam
+// consumes it. It must not join RejectedTokens.
+//
+// RejectedTokens has a second consumer, the conformance line-binding check. This check
+// writes each value into a temp lines.env and parses it through lines.TierValue.
+// TierValue truncates at the first newline and strips a trailing CR. So a
+// newline-bearing value would reach SafeToken already sanitized. The "is not a safe
+// model token" diagnostic would then never fire. The check would then false-green or
+// false-red.
 var NewlineRejectedTokens = []RejectedToken{
 	{Name: "trailing-newline", Value: "gpt\n"},
 	{Name: "embedded-newline", Value: "gpt\n5"},

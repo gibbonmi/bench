@@ -2,9 +2,10 @@ package bench
 
 import "testing"
 
-// TestValidatePayloadRows pins the fail-closed shapes: the allowlist is the one source
-// of what every destination may write, so a row that could escape the destination root
-// or that names a source twice is rejected before any reader acts on it.
+// TestValidatePayloadRows pins the fail-closed shapes. The allowlist is the one source
+// of what every destination may write. So validatePayloadRows rejects a row that could
+// escape the destination root, or that names a source twice, before any reader acts on
+// it.
 func TestValidatePayloadRows(t *testing.T) {
 	consumer := func(source string) PayloadRow {
 		return PayloadRow{Source: source, Mode: "0644", Audience: PayloadAudienceConsumer}
@@ -44,8 +45,8 @@ func TestValidatePayloadRows(t *testing.T) {
 }
 
 // TestPayloadRowsAcceptsTheShippedAllowlist keeps the validator honest against the real
-// tracked file: a rule tightened past what the kit itself ships would otherwise turn
-// every link and pack red only once a consumer ran it.
+// tracked file. A rule tightened past what the kit itself ships would otherwise turn
+// every link and pack red, only once a consumer ran it.
 func TestPayloadRowsAcceptsTheShippedAllowlist(t *testing.T) {
 	rows, err := PayloadRows()
 	if err != nil {
@@ -56,10 +57,10 @@ func TestPayloadRowsAcceptsTheShippedAllowlist(t *testing.T) {
 	}
 }
 
-// TestPayloadRowsFromRejectsInvalidBytes pins the one parser every consumer reaches:
-// syntax and row semantics are refused together, so a reader that decoded the JSON
-// itself and skipped the row predicates cannot admit a row the allowlist forbids.
-// Empty bytes are a present, unusable allowlist, not an absent one.
+// TestPayloadRowsFromRejectsInvalidBytes pins the one parser every consumer reaches.
+// Syntax and row semantics are refused together. So a reader that decoded the JSON
+// itself, and skipped the row predicates, cannot admit a row the allowlist forbids.
+// Empty bytes count as a present, unusable allowlist, not an absent one.
 func TestPayloadRowsFromRejectsInvalidBytes(t *testing.T) {
 	cases := []struct {
 		name    string

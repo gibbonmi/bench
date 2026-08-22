@@ -1,19 +1,20 @@
 // Package capability owns skipping for the gate's test suite. A bare t.Skip is
-// invisible under non-verbose `go test` — a skip and a pass print the same nothing,
-// and `go test` without -v discards a package's stdout and stderr entirely — so
-// every skip here writes a structured line to the file named by BENCH_SKIP_LOG
-// first and only then calls t.Skip. The gate sets that variable to a run-scoped
-// path, reads it back once the phase's `go test` invocations exit, and tallies skips
-// by kind and class. With BENCH_SKIP_LOG unset — a developer's hand-run
-// `go test -v` — the line falls back to stdout.
+// invisible under non-verbose `go test`. A skip and a pass print the same output.
+// Without -v, `go test` discards a package's stdout and stderr.
 //
-// Render and ParseLine are the two halves of one line shape, kept in this package so
-// the writer and the gate's collector cannot drift apart.
+// Every skip here writes a structured line to the file named by BENCH_SKIP_LOG,
+// then calls t.Skip. The gate sets that variable to a run-scoped path. It reads
+// the file back after the phase's `go test` runs exit, and it tallies skips by
+// kind and class. When BENCH_SKIP_LOG is unset, for example under a developer's
+// hand-run `go test -v`, the line falls back to stdout.
 //
-// Two kinds cover every skip in the suite: Capability, for a security assertion the
-// host cannot run (missing symlink support, no privilege to drop, ...), and
-// Environment, for everything else (an absent subject binary, an unset conformance
-// root, an unmaterialized fixture).
+// Render and ParseLine are the two halves of one line shape. They stay in this
+// package so the writer and the gate's collector cannot drift apart.
+//
+// Two kinds cover every skip in the suite. Capability marks a security assertion
+// the host cannot run, for example missing symlink support or no privilege to
+// drop. Environment marks every other case, for example an absent subject binary,
+// an unset conformance root, or an unmaterialized fixture.
 package capability
 
 import (
@@ -23,9 +24,10 @@ import (
 	"strings"
 )
 
-// TB is the subset of testing.TB the skip helpers use. Depending on this interface
-// rather than on testing.TB is what keeps the testing package out of every binary
-// that links this one: the gate's collector imports it for Render and ParseLine.
+// TB is the subset of testing.TB the skip helpers use. This interface, not
+// testing.TB itself, keeps the testing package out of every binary that links
+// this one. The gate's collector imports this package only for Render and
+// ParseLine.
 type TB interface {
 	Helper()
 	Fatalf(format string, args ...any)
@@ -34,8 +36,8 @@ type TB interface {
 }
 
 // Class enumerates the capability categories a security test can require from its
-// host. The set is closed: a strict release mode will count skips by class, and an
-// open vocabulary would let a typo silently mint a class nothing counts. Capability
+// host. The set stays closed. A strict release mode counts skips by class. An open
+// vocabulary would let a typo silently mint a class that nothing counts. Capability
 // rejects any Class outside this list instead of formatting it.
 type Class string
 
@@ -49,8 +51,9 @@ const (
 	Tool      Class = "tool"
 )
 
-// classOrder is the closed vocabulary and the order every consumer reports classes
-// in, so a tally's rows are stable run to run rather than map-iteration order.
+// classOrder holds the closed vocabulary in the order every consumer reports
+// classes. This order keeps a tally's rows stable from run to run, instead of
+// map-iteration order.
 var classOrder = []Class{Symlink, Fifo, PID, CPU, Privilege, Signal, Tool}
 
 // Classes returns the enumerated capability classes in reporting order.
@@ -66,7 +69,8 @@ func (c Class) valid() bool {
 }
 
 // Kind separates the two skip populations. Only KindCapability describes a security
-// assertion the host could not make, so only it belongs in a strict-mode count.
+// assertion the host could not make. Only KindCapability belongs in a strict-mode
+// count.
 type Kind string
 
 const (
@@ -74,10 +78,10 @@ const (
 	KindEnvironment Kind = "environment"
 )
 
-// Skip is one skip's structured content. Class is empty for KindEnvironment. Name is
-// the emitting test, carried because a count cannot tell a reader which assertion went
-// unmade — the gate reports skips long after the test binary that emitted them exited,
-// so the name has to travel on the line or be lost.
+// Skip is one skip's structured content. Class stays empty for KindEnvironment. Name
+// carries the emitting test. A count alone cannot tell a reader which assertion went
+// unmade. The gate reads skips long after the emitting test binary exits, so the
+// name must travel on the line.
 type Skip struct {
 	Kind   Kind
 	Class  Class
@@ -85,17 +89,20 @@ type Skip struct {
 	Reason string
 }
 
-// linePrefix opens every line this package writes, so a downstream collector can
-// recognize one with a prefix match before parsing the key=value tokens that follow.
+// linePrefix opens every line this package writes. A downstream collector matches
+// this prefix to recognize a line before it parses the key=value tokens that
+// follow.
 const linePrefix = "bench-skip"
 
 // LogEnv names the environment variable the gate sets to a run-scoped absolute file
-// path. Many test binaries append to that one file concurrently from separate
-// processes, so writers must go through appendSkipLog rather than opening it by hand.
+// path. Many test binaries append to that one file concurrently, from separate
+// processes. A writer must go through appendSkipLog instead of opening the file by
+// hand.
 const LogEnv = "BENCH_SKIP_LOG"
 
-// WithoutEnvironment returns env without entries for name, preserving every other entry
-// byte-for-byte so a child cannot inherit a caller-owned capability side channel.
+// WithoutEnvironment returns env without entries for name. It preserves every other
+// entry byte-for-byte, so a child process cannot inherit a caller-owned capability
+// side channel.
 func WithoutEnvironment(env []string, name string) []string {
 	prefix := name + "="
 	filtered := make([]string, 0, len(env))
@@ -107,18 +114,20 @@ func WithoutEnvironment(env []string, name string) []string {
 	return filtered
 }
 
-// stdout is the stdout-fallback destination, held behind a var so this package's own
-// tests can swap it for a buffer and assert on the emitted bytes without touching the
-// process's real stdout.
+// stdout is the stdout-fallback destination. This package holds it behind a var so
+// its own tests can swap in a buffer. A test then asserts on the emitted bytes
+// without touching the process's real stdout.
 var stdout io.Writer = os.Stdout
 
 // Render is the one place a skip line is built, newline included. Reason takes the
-// remainder of the line verbatim (no escaping), so a reader need only split the
-// leading kind, class, and name tokens off the front. A class outside the enumerated
-// set is refused rather than formatted: an open vocabulary would let a typo mint a
-// class nothing counts. An empty or space-carrying name is refused for a narrower
-// reason: name is a fixed-width token in a space-delimited line, and an unnamed skip
-// is exactly the unactionable count this line shape exists to replace.
+// remainder of the line verbatim, with no escaping. A reader needs only to split the
+// leading kind, class, and name tokens off the front. Render refuses a class outside
+// the enumerated set instead of formatting it. An open vocabulary would let a typo
+// mint a class that nothing counts. Render also refuses an empty or space-carrying
+// name.
+//
+// Name is a fixed-width token in a space-delimited line. An unnamed skip is exactly
+// the unactionable count this line shape exists to replace.
 func Render(skip Skip) (string, error) {
 	if skip.Name == "" || strings.ContainsAny(skip.Name, " \t") {
 		return "", fmt.Errorf("capability: skip name %q must be a single non-empty token", skip.Name)
@@ -135,11 +144,11 @@ func Render(skip Skip) (string, error) {
 	return "", fmt.Errorf("capability: unknown kind %q", skip.Kind)
 }
 
-// ParseLine reads back one line Render produced, reporting false for anything else —
-// a phase's ordinary output shares the log with nothing, but the gate's collector
-// must not mistake a stray line for evidence. A capability line naming a class
-// outside the enumerated set is refused for the same reason Render refuses to write
-// one.
+// ParseLine reads back one line that Render produced. It reports false for anything
+// else. A phase's ordinary output never shares the log. Still, the gate's collector
+// must not mistake a stray line for evidence. ParseLine refuses a capability line
+// that names a class outside the enumerated set, for the same reason Render refuses
+// to write one.
 func ParseLine(line string) (Skip, bool) {
 	rest, ok := strings.CutPrefix(strings.TrimRight(line, "\r\n"), linePrefix+" ")
 	if !ok {
@@ -185,11 +194,11 @@ func cutField(rest, name string) (value, tail string, ok bool) {
 }
 
 // appendSkipLog lands one skip line in the shared log with a single Write call. The
-// gate runs many `go test` binaries concurrently, each appending to the same
-// BENCH_SKIP_LOG path; a write under 4096 bytes made through one Write to an
-// O_APPEND-opened file descriptor is atomic on Linux, so one call per line is what
-// keeps two writers' lines from interleaving or clobbering each other. Splitting the
-// line across multiple Write calls would reopen that race.
+// gate runs many `go test` binaries concurrently. Each binary appends to the same
+// BENCH_SKIP_LOG path. A write under 4096 bytes, made through one Write call to an
+// O_APPEND-opened file descriptor, is atomic on Linux. This atomicity keeps two
+// writers' lines from interleaving or clobbering each other. Splitting the line
+// across multiple Write calls would reopen that race.
 func appendSkipLog(path, line string) error {
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
@@ -201,8 +210,8 @@ func appendSkipLog(path, line string) error {
 }
 
 // writeSkipLine delivers one rendered line to BENCH_SKIP_LOG, or to w when that
-// variable is unset. A failure to deliver the line fails the test loudly rather than
-// silently swallowing the evidence a skip is supposed to leave behind.
+// variable is unset. A failure to deliver the line fails the test loudly, instead of
+// silently swallowing the evidence a skip must leave behind.
 func writeSkipLine(t TB, w io.Writer, line string) {
 	t.Helper()
 	if path := os.Getenv(LogEnv); path != "" {
@@ -217,10 +226,11 @@ func writeSkipLine(t TB, w io.Writer, line string) {
 }
 
 // Capability skips t for a host that cannot run a security assertion in the named
-// class, after delivering a structured line so the skip still shows once
-// BENCH_SKIP_LOG is read back (or, unset, under a hand-run `go test -v`). class must
-// be one of the enumerated Classes; an unrecognized class fails the test rather than
-// vanishing from the line silently.
+// class. It first delivers a structured line, so the skip still shows once
+// BENCH_SKIP_LOG is read back. Under a hand-run `go test -v`, with BENCH_SKIP_LOG
+// unset, the line falls back to stdout instead. class must be one of the
+// enumerated Classes. An unrecognized class fails the test instead of silently
+// vanishing from the line.
 func Capability(t TB, class Class, reason string) {
 	t.Helper()
 	line, err := Render(Skip{Kind: KindCapability, Class: class, Name: t.Name(), Reason: reason})
@@ -231,9 +241,9 @@ func Capability(t TB, class Class, reason string) {
 	t.Skip(reason)
 }
 
-// Environment skips t for a non-capability reason: an absent subject binary, an
-// unset conformance root, an unmaterialized fixture. It delivers its structured line
-// before skipping, for the same reason Capability does.
+// Environment skips t for a non-capability reason, for example an absent subject
+// binary, an unset conformance root, or an unmaterialized fixture. It delivers its
+// structured line before skipping, for the same reason Capability does.
 func Environment(t TB, reason string) {
 	t.Helper()
 	line, err := Render(Skip{Kind: KindEnvironment, Name: t.Name(), Reason: reason})
