@@ -253,7 +253,7 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	}
 	commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
 	// LF4: the destination declares Go build inputs only after publication, so the resume
-	// faces a freshness proof it could not pass — this fixture's executable has no seal
+	// faces a freshness proof it could not pass. This fixture's executable has no seal
 	// these sources could match. It is committed because an untracked file would trip the
 	// resume's own untracked-collision proof and hide the exemption behind another refusal.
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
@@ -1538,8 +1538,8 @@ func TestLandingDestinationAllowsDeclaredAndRuntimeIgnoredOutput(t *testing.T) {
 
 // commitLandingBuildInputs commits the Go build-input manifest whose presence puts a
 // landing in the dev context, where the command has to prove its own executable. It is
-// committed rather than dropped in place so the destination stays clean and the freshness
-// refusal is the only thing a landing can fail on.
+// committed rather than dropped in place so the destination stays clean. The freshness
+// refusal is then the only thing a landing can fail on.
 func commitLandingBuildInputs(t *testing.T, root, body string) {
 	t.Helper()
 	mustMkdirAll(t, filepath.Join(root, "scripts"), 0o755)
@@ -1549,7 +1549,7 @@ func commitLandingBuildInputs(t *testing.T, root, body string) {
 }
 
 // landingAssignmentState renders the assignment records a landing would consume, without
-// the creation timestamp's address — the pointer differs between two reads of the same
+// the creation timestamp's address. The pointer differs between two reads of the same
 // unchanged state and would report every comparison as a change.
 func landingAssignmentState(t *testing.T, root string) string {
 	t.Helper()
@@ -1565,10 +1565,10 @@ func landingAssignmentState(t *testing.T, root string) string {
 }
 
 // TestLandCommandRefusesAnUntrustedExecutableBeforeAnyRepositoryProof grades the refusal
-// (LF1), the state it leaves behind (LF2), the empty manifest that a content-sniffing
-// applicability predicate would skip (LF8), and the ordering against a destination that
-// would independently refuse (LF9) — that last case is what pins the remedy the operator
-// reads to the rebuild command rather than to a later proof's message.
+// (LF1) and the state it leaves behind (LF2). It also grades the empty manifest that a
+// content-sniffing applicability predicate would skip (LF8), and the ordering against a
+// destination that would independently refuse (LF9). That last case pins the remedy the
+// operator reads to the rebuild command rather than to a later proof's message.
 func TestLandCommandRefusesAnUntrustedExecutableBeforeAnyRepositoryProof(t *testing.T) {
 	const untrusted = "bench binary is untrusted; rebuild with the sanctioned build"
 	for _, tc := range []struct {
@@ -1623,9 +1623,9 @@ func TestLandCommandRefusesAnUntrustedExecutableBeforeAnyRepositoryProof(t *test
 	}
 }
 
-// TestLandCommandSkipsTheFreshnessProofWithoutDeclaredBuildInputs is LF3: a repository
-// that declares no Go build inputs — every linked repository — never consults the owner,
-// so a substituted seam that fails the test on any call proves non-consultation while the
+// TestLandCommandSkipsTheFreshnessProofWithoutDeclaredBuildInputs is LF3. A repository
+// that declares no Go build inputs — every linked repository — never consults the owner.
+// A substituted seam that fails the test on any call proves non-consultation while the
 // landing runs to completion around it.
 func TestLandCommandSkipsTheFreshnessProofWithoutDeclaredBuildInputs(t *testing.T) {
 	request := "landed-no-build-inputs"

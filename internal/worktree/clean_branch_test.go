@@ -12,12 +12,12 @@ import (
 )
 
 // unprovableLandedAssignment returns one owned, cleanup-pending assignment whose branch
-// commits were composed into a single commit on the default branch, one of them a mode
+// commits were composed into a single commit on the default branch. One commit is a mode
 // change on a file that survives the landing. Every byte of the branch is in the default
-// branch and still no derived proof can say so: ancestry fails, no merge exists, the
-// composed commit shares no patch-id with either original, and reverse-apply refuses a
-// mode change on a surviving entry because git apply reports a preimage mode mismatch as
-// a warning rather than a failure. It is the exact case the operator override exists for.
+// branch, and still no derived proof can say so. Ancestry fails, no merge exists, and the
+// composed commit shares no patch-id with either original. Reverse-apply also refuses the
+// mode change on a surviving entry, because git apply reports a preimage mode mismatch as
+// a warning rather than a failure. This is the exact case the operator override exists for.
 func unprovableLandedAssignment(t *testing.T, request string) (string, Creation) {
 	t.Helper()
 	root, creation := newOwnedAssignment(t, request)
@@ -173,10 +173,10 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 	})
 }
 
-// A detached HEAD has no branch for the DiscardBranch override to name, so a registered,
-// detached-HEAD worktree planned with DiscardBranch leaves deleteBranch and branchRef at
-// their zero values — the contrast with the attached-branch cases above, which do carry
-// branch-deletion authority.
+// A detached HEAD has no branch for the DiscardBranch override to name. A registered,
+// detached-HEAD worktree planned with DiscardBranch leaves deleteBranch and branchRef
+// at their zero values. This contrasts with the attached-branch cases above, which do
+// carry branch-deletion authority.
 func TestDiscardBranchLeavesADetachedHeadUnaffected(t *testing.T) {
 	root := newWorktreeRepo(t)
 	target := filepath.Join(filepath.Dir(root), "detached discard target")

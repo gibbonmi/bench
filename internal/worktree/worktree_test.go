@@ -180,9 +180,10 @@ func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
 	})
 }
 
-// TestCreateCommandPrintsNextHint pins the next-step hint CreateCommand appends after
-// its worktree_create table: two literal lines addressing the freshly created worktree
-// by the actual --label value, so a caller never has to invent the exec/path syntax.
+// TestCreateCommandPrintsNextHint pins the next-step hint CreateCommand appends
+// after its worktree_create table: two literal lines addressing the freshly
+// created worktree by the actual --label value. A caller never has to invent
+// the exec/path syntax.
 func TestCreateCommandPrintsNextHint(t *testing.T) {
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
@@ -203,11 +204,12 @@ func TestCreateCommandPrintsNextHint(t *testing.T) {
 	}
 }
 
-// TestReleaseSurfacesRetainedVerdict pins FT93(a): when the automatic plan retains
-// (here, an ignored residual the safe planner will not discard), release must report
-// the retained verdict and the exact next command, not the internal-bookkeeping
-// "terminal receipt missing". The pre-fix path discards the retain plan, finds no
-// terminal receipt, and returns the masking error; this goes red on that message.
+// TestReleaseSurfacesRetainedVerdict pins FT93(a). Here the automatic plan
+// retains an ignored residual the safe planner will not discard. Release must
+// report the retained verdict and the exact next command, not the
+// internal-bookkeeping "terminal receipt missing". A path that discards the
+// retain plan finds no terminal receipt and returns the masking error; this
+// test goes red on that message.
 func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
@@ -244,10 +246,11 @@ func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	}
 }
 
-// removeOutOfBand simulates a request-less `bench worktree clean --discard-ignored
-// --apply` that removed an owned tree: it drops the git registration and directory and
-// writes the completed explicit-clean cleanup receipt (owned, request-bound, no
-// automatic-registration fingerprint), leaving the assignment record stranded.
+// removeOutOfBand simulates a request-less `bench worktree clean
+// --discard-ignored --apply` that removed an owned tree. It drops the git
+// registration and directory, and writes the completed explicit-clean cleanup
+// receipt (owned, request-bound, no automatic-registration fingerprint),
+// leaving the assignment record stranded.
 func removeOutOfBand(t *testing.T, root string, a intent.Assignment, action CleanupAction) {
 	t.Helper()
 	gitRun(t, root, "worktree", "remove", "-f", "-f", a.Worktree)
@@ -262,10 +265,10 @@ func removeOutOfBand(t *testing.T, root string, a intent.Assignment, action Clea
 	}))
 }
 
-// TestReleaseReconcilesOutOfBandResidue pins FT93(b), residue path: a release whose
-// tree was removed out of band, holding no preserved work, reconciles and compacts the
-// record instead of dead-ending on "cleanup receipt does not authorize release
-// reconciliation". Replay is idempotent.
+// TestReleaseReconcilesOutOfBandResidue pins FT93(b), residue path. Here a
+// release's tree was removed out of band and holds no preserved work. It
+// reconciles and compacts the record instead of dead-ending on "cleanup
+// receipt does not authorize release reconciliation". Replay is idempotent.
 func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "oob-residue")
 	a, err := assignmentByID(root, creation.Assignment.ID)
@@ -285,10 +288,10 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 	requireTest(t, code == 0 && replay.String() == out.String(), "replay exit=%d out=%q", code, replay.String())
 }
 
-// TestReleaseNamesRecoveryForPreservedOrphan pins FT93(b), preserved path: a release
-// whose tree was removed out of band but still holds preserved work returns a verdict
-// handing over the ref itself and leaves the record and its recovery pointer intact —
-// release never silently discards preserved work.
+// TestReleaseNamesRecoveryForPreservedOrphan pins FT93(b), preserved path. Here
+// a release's tree was removed out of band but still holds preserved work. It
+// returns a verdict handing over the ref itself and leaves the record and its
+// recovery pointer intact: release never silently discards preserved work.
 func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "oob-preserved")
 	a, err := assignmentByID(root, creation.Assignment.ID)
@@ -307,16 +310,16 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	requireTest(t, err == nil && len(got.Recovery) == 1, "preserved record was mutated or deleted: %v", err)
 }
 
-// TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive pins the standing cleaner's
-// blast radius over the ledger: a tree-gone record is dropped whether it was mid-cleanup
-// or holding preserved work the removed lifecycle wrote, while a record whose tree still
-// exists survives untouched.
+// TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive pins the standing
+// cleaner's blast radius over the ledger. A tree-gone record is dropped
+// whether it was mid-cleanup or holding preserved work the removed lifecycle
+// wrote. A record whose tree still exists survives untouched.
 //
-// What holds the active, tree-gone record here is its age, not its state: the reconcile
-// drops an orphaned active record, and this one survives only because it was stamped
-// moments ago and so is not aged. That is the race this fixture guards — a reconcile that
-// dropped on tree-absence alone would catch a session between `worktree add` and its
-// first write.
+// What holds the active, tree-gone record here is its age, not its state. The
+// reconcile drops an orphaned active record, but this one survives only
+// because it was stamped moments ago and so is not aged. That is the race
+// this fixture guards: a reconcile that dropped on tree-absence alone would
+// catch a session between `worktree add` and its first write.
 func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))

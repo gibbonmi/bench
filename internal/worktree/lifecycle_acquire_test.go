@@ -70,8 +70,8 @@ func TestAcquireTightensExistingPool(t *testing.T) {
 }
 
 // TestAcquireWithUnresolvableDefaultAddsAtHead covers the empty-remote-ref end of the
-// pool-minting fallback: with no default branch to start from, the first add is already
-// the HEAD one, so the mint still succeeds rather than spending its attempt twice.
+// pool-minting fallback. With no default branch to start from, the first add is already
+// the HEAD one. So the mint still succeeds rather than spending its attempt twice.
 func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("BENCH_HOME", home)
@@ -191,10 +191,10 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 				t.Fatal(err)
 			}
 			branchBefore := gitOutput(t, root, "rev-parse", creation.Assignment.Branch)
-			// Preservation is the explicit path-addressed clean's: the automatic planner an
-			// unattended resume or release drives retains a checkout it could only remove by
-			// preserving first, so the layer capture is driven through the surface that
-			// still reaches it.
+			// Preservation belongs to the explicit path-addressed clean. The automatic planner
+			// an unattended resume or release drives retains a checkout it could only remove
+			// by preserving first. So the layer capture runs through the surface that still
+			// reaches it.
 			restore := cleanupTransactionBoundary
 			defer func() { cleanupTransactionBoundary = restore }()
 			plan, err := PlanExplicit(root, creation.Path)

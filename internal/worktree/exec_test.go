@@ -34,9 +34,9 @@ func childEnvironment(t *testing.T, worktree string) string {
 }
 
 // childWrapper returns the exact wrapper marker the child received, and whether it
-// received one. The child emits the presence flag and the value as NUL-terminated fields,
-// a frame no environment value can forge, so a path holding a newline, a space, or a glob
-// character arrives byte-for-byte instead of being re-split by the reader.
+// received one. The child emits the presence flag and the value as NUL-terminated fields.
+// No environment value can forge that frame. A path holding a newline, a space, or a
+// glob character arrives byte-for-byte instead of being re-split by the reader.
 func childWrapper(t *testing.T, worktree string) (string, bool) {
 	t.Helper()
 	emitted := childOutput(t, worktree, `printf '%s\0%s\0' "${BENCH_WRAPPER+set}" "${BENCH_WRAPPER-}"`)
@@ -80,8 +80,8 @@ func TestExecChildIsRootedAtTheWorktreeWrapper(t *testing.T) {
 	requireTest(t, filepath.IsAbs(value), "child saw a relative BENCH_WRAPPER=%q", value)
 }
 
-// TestExecChildOwnsRatherThanInheritsItsRunBinary covers the environment half of WX3:
-// the owner lookup returns an owning selection exactly when the wrapper marker is
+// TestExecChildOwnsRatherThanInheritsItsRunBinary covers the environment half of WX3.
+// The owner lookup returns an owning selection exactly when the wrapper marker is
 // non-empty and the run-binary variable is absent. The lookup itself is graded by the
 // composed run recorded as WX20 evidence.
 func TestExecChildOwnsRatherThanInheritsItsRunBinary(t *testing.T) {
@@ -113,7 +113,7 @@ func TestExecChildKeepsUnrelatedCallerVariables(t *testing.T) {
 	requireTest(t, ok && value == "carried-value", "child lost the caller's unrelated variable:\n%s", seen)
 }
 
-// TestExecChildTakesNoMarkerFromANonWrapper covers WX7 through WX10: the marker follows
+// TestExecChildTakesNoMarkerFromANonWrapper covers WX7 through WX10. The marker follows
 // one predicate, so every path that is not a regular file leaves the child as it is
 // today.
 func TestExecChildTakesNoMarkerFromANonWrapper(t *testing.T) {
@@ -153,7 +153,7 @@ func TestExecChildTakesTheMarkerFromAnEmptyWrapper(t *testing.T) {
 }
 
 // TestExecChildDiffersByTheWrapperAssignmentAlone covers WX13, and with it the unit half
-// of WX12: an unmarked child is exactly today's child, so the whole change to any verb's
+// of WX12. An unmarked child is exactly today's child, so the whole change to any verb's
 // environment is the one assignment. Both children run in one worktree so nothing
 // path-derived varies between them.
 func TestExecChildDiffersByTheWrapperAssignmentAlone(t *testing.T) {
@@ -181,8 +181,8 @@ func TestExecChildDiffersByTheWrapperAssignmentAlone(t *testing.T) {
 		"the marked child differs from today's by %q, want the wrapper assignment alone", difference)
 }
 
-// TestExecChildTakesTheMarkerThroughALiveWrapperLink covers WX21: the predicate follows
-// links, so a link to a regular file is a wrapper, and the marker names the link path the
+// TestExecChildTakesTheMarkerThroughALiveWrapperLink covers WX21. The predicate follows
+// links, so a link to a regular file is a wrapper. The marker names the link path the
 // child's own wrapper resolution will walk rather than the target behind it.
 func TestExecChildTakesTheMarkerThroughALiveWrapperLink(t *testing.T) {
 	worktree := t.TempDir()
@@ -195,7 +195,7 @@ func TestExecChildTakesTheMarkerThroughALiveWrapperLink(t *testing.T) {
 	requireTest(t, value == wrapper, "a live wrapper link gave BENCH_WRAPPER=%q, want the link path %q", value, wrapper)
 }
 
-// TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName covers WX22: the marker is a
+// TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName covers WX22. The marker is a
 // joined path handed to the child as one value, so a space cannot split it and a glob
 // character cannot expand.
 func TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName(t *testing.T) {

@@ -44,11 +44,11 @@ func TestClassifyPathShapeUnknownSelfSymlink(t *testing.T) {
 }
 
 // TestClassifyPathShapeUnknownUnreadableGitEntry pins the third ShapeUnknown return
-// site: the path itself resolves to a directory (Lstat and Stat both succeed, since
-// traversing to a path needs permission on its parents, not on the path itself), but
-// listing the .git entry inside it fails, because the directory's own mode denies
-// search access into it. Root bypasses that mode entirely, so the fixture is skipped
-// under root rather than silently passing without exercising the site.
+// site. The path itself resolves to a directory: Lstat and Stat both succeed.
+// Traversing to a path needs permission on its parents, not on the path itself.
+// But listing the .git entry inside it fails, because the directory's own mode
+// denies search access into it. Root bypasses that mode entirely, so the fixture
+// is skipped under root rather than silently passing without exercising the site.
 func TestClassifyPathShapeUnknownUnreadableGitEntry(t *testing.T) {
 	if os.Geteuid() == 0 {
 		capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny search access to simulate the site")
@@ -63,10 +63,10 @@ func TestClassifyPathShapeUnknownUnreadableGitEntry(t *testing.T) {
 }
 
 // TestClassifyPathShapeRefusesSpecialGitEntry plants a no-writer FIFO at the checkout's
-// .git entry: the exact shape a fail-open classifier would hand to `git -C <path>
-// rev-parse` without ever finishing, since git opens .git to follow a gitfile pointer.
-// ClassifyPathShape must decide by shape alone, so it runs off the test goroutine and
-// fails the moment it misses the deadline instead of wedging the suite.
+// .git entry. This is the exact shape a fail-open classifier would hand to `git -C
+// <path> rev-parse` without ever finishing. Git opens .git to follow a gitfile
+// pointer. ClassifyPathShape must decide by shape alone, so it runs off the test
+// goroutine. It fails the moment it misses the deadline instead of wedging the suite.
 func TestClassifyPathShapeRefusesSpecialGitEntry(t *testing.T) {
 	_, creation := newOwnedAssignment(t, "special-git-fifo")
 	mustRemove(t, filepath.Join(creation.Path, ".git"))

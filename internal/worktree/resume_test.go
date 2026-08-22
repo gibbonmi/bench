@@ -52,9 +52,9 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	lease, err := LeaseFile(pool)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte("123 2026-07-11T00:00:00Z\n"), 0o600)
-	// Three unclaimed orphans covering what the prune path may and may not delete: one
-	// landed by ancestry, one whose commit is distinct but whose tree is the default
-	// branch's own, and one carrying content that is nowhere else.
+	// Three unclaimed orphans cover what the prune path may and may not delete.
+	// One is landed by ancestry, one has a distinct commit but a tree the
+	// default branch holds, and one carries content that is nowhere else.
 	gitRun(t, root, "branch", "worktree-agent-landed")
 	empty := gitOutput(t, root, "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "empty scratch")
 	gitRun(t, root, "update-ref", "refs/heads/worktree-agent-empty", empty)
@@ -112,10 +112,10 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 	for _, automatic := range []bool{false, true} {
 		t.Run(fmt.Sprintf("automatic=%t", automatic), func(t *testing.T) {
 			root, creation := newOwnedAssignment(t, fmt.Sprintf("concurrent-%t", automatic))
-			// The two planners now differ on dirt: only the explicit one preserves it, so
-			// each side of this race is driven with the dirtiest tree its planner still
-			// removes — which is what makes the recovery-ref count below meaningful for one
-			// and zero for the other.
+			// The two planners differ on dirt: only the explicit one preserves it. Each
+			// side of this race is driven with the dirtiest tree its planner still
+			// removes. That is what makes the recovery-ref count below meaningful for
+			// one and zero for the other.
 			wantAction := ActionRecoverRemove
 			wantRefs := 1
 			if automatic {
@@ -240,12 +240,12 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 	})
 }
 
-// TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck proves the lock-scoped replan
-// is authoritative over applyAutomaticWithTerminal's pre-lock fast path: the pre-lock plan
-// says remove, but state changes once the transaction lock is held (the deterministic
-// StepApplyLocked seam) so the fresh replan under lock says retain. Execution must honor
-// the later, authoritative verdict rather than the earlier one that let it through the
-// fast path.
+// TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck proves the lock-scoped
+// replan is authoritative over applyAutomaticWithTerminal's pre-lock fast path.
+// The pre-lock plan says remove, but state changes once the transaction lock is
+// held (the deterministic StepApplyLocked seam). So the fresh replan under lock
+// says retain. Execution must honor the later, authoritative verdict rather than
+// the earlier one that let it through the fast path.
 func TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck(t *testing.T) {
 	root, creation := newPendingAssignment(t, "lock-scoped-replan")
 	requirePlanAction(t, root, creation.Path, ActionRemove)
@@ -353,9 +353,9 @@ func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
 		markPending(t, root, creation.Assignment)
 		requirePlanAction(t, root, creation.Path, ActionRemove)
 	})
-	// Ordinary dirt is classified, not undecided: the automatic planner names it as the
-	// reason it retains, which is what separates a checkout holding uncommitted work from
-	// one whose state it could not read.
+	// Ordinary dirt is classified, not undecided: the automatic planner names it
+	// as the reason it retains. This separates a checkout holding uncommitted
+	// work from one whose state it could not read.
 	t.Run("ordinary parent dirt remains classifiable", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "ordinary-dirt")
 		mustWrite(t, filepath.Join(creation.Path, "ordinary.txt"), []byte("ordinary\n"), 0o644)

@@ -13,8 +13,9 @@ import (
 )
 
 // seedLifecycleDebris writes the state a repository carries out of the removed
-// provisional lifecycle — one ref in each swept namespace and the gate's verdict ref
-// beside them — and returns the green ref's object name for the survival assertion.
+// provisional lifecycle: one ref in each swept namespace, plus the gate's
+// verdict ref. It returns the green ref's object name for the survival
+// assertion.
 func seedLifecycleDebris(t *testing.T, root string) string {
 	t.Helper()
 	gitRun(t, root, "update-ref", "refs/bench/specbuild/candidate/deadbeef", "HEAD")
@@ -23,10 +24,11 @@ func seedLifecycleDebris(t *testing.T, root string) string {
 	return gitOutput(t, root, "rev-parse", "refs/bench/green/main")
 }
 
-// seedLegacyAssignments splices records the removed lifecycle left in the ledger into an
-// existing one: a recovered row naming preserved work, and a row this build's decoder
-// cannot read at all. They are written as raw JSON because every ledger writer refuses
-// them — an older binary is the only thing that could have produced them.
+// seedLegacyAssignments splices records the removed lifecycle left in the ledger
+// into an existing one. It adds a recovered row naming preserved work, and a
+// row this build's decoder cannot read. They are written as raw JSON because
+// every ledger writer refuses them; only an older binary could have produced
+// them.
 func seedLegacyAssignments(t *testing.T, root string) {
 	t.Helper()
 	path := filepath.Join(root, ".git", intent.Filename)
@@ -76,10 +78,10 @@ func runResume(t *testing.T, root string) string {
 	return stdout.String()
 }
 
-// TestResumeReconcileSparesGreenVerdictRefs is the RM10 guard: the sweep's blast radius is the two
-// lifecycle namespaces and nothing else, because the gate's verdict store shares the
-// refs/bench/ prefix and an over-broad delete would destroy green evidence at every
-// session start.
+// TestResumeReconcileSparesGreenVerdictRefs is the RM10 guard: the sweep's blast
+// radius is the two lifecycle namespaces and nothing else. The gate's verdict
+// store shares the refs/bench/ prefix, so an over-broad delete would destroy
+// green evidence at every session start.
 func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
 	t.Setenv("BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
@@ -95,10 +97,10 @@ func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
 	requireTest(t, gitOutput(t, root, "rev-parse", diagnostic) == green, "reconcile deleted a diagnostic ref outside the lifecycle namespaces")
 }
 
-// TestResumeReconcileIsIdempotent covers RM3's re-run half. The first run is the settling
-// one — it reports what it swept and so legitimately differs — and the two after it are
-// the compared pair: once the tree has settled, a reconcile writes nothing and reports
-// exactly what its predecessor did.
+// TestResumeReconcileIsIdempotent covers RM3's re-run half. The first run is the
+// settling one; it reports what it swept and so legitimately differs. The two
+// after it are the compared pair: once the tree has settled, a reconcile writes
+// nothing and reports exactly what its predecessor did.
 func TestResumeReconcileIsIdempotent(t *testing.T) {
 	t.Setenv("BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
@@ -117,9 +119,10 @@ func TestResumeReconcileIsIdempotent(t *testing.T) {
 	requireTest(t, bytes.Equal(ledgerBefore, ledgerAfter), "a settled reconcile rewrote the ledger")
 }
 
-// TestResumeReconcilePurgesLegacyAssignments is RM5 and RM3's ledger half: a reconcile
-// over records the removed lifecycle wrote — including one no current decoder can read —
-// exits zero, drops them, leaves the pool's own record alone, and authors nothing.
+// TestResumeReconcilePurgesLegacyAssignments is RM5 and RM3's ledger half. A
+// reconcile over records the removed lifecycle wrote, including one no current
+// decoder can read, exits zero and drops them. It leaves the pool's own record
+// alone and authors nothing.
 func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 	t.Setenv("BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)

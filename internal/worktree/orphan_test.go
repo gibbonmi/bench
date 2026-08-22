@@ -49,9 +49,9 @@ func TestOrphanedRequiresAge(t *testing.T) {
 	requireTest(t, !orphaned(young, orphanNow), "orphaned(active, stamped 6 days ago) = true, want false")
 }
 
-// The window's edge is a decision rather than an accident of the comparison: a record
-// aged exactly AssignmentStale is still inside the window, and only a strictly older one
-// is abandoned.
+// The window's edge is a decision rather than an accident of the comparison.
+// A record aged exactly AssignmentStale is still inside the window, and only a strictly
+// older one is abandoned.
 func TestOrphanedExcludesTheExactWindowEdge(t *testing.T) {
 	edge := intent.Assignment{State: intent.StateActive, CreatedAt: stampedAt(orphanNow.Add(-bounds.AssignmentStale))}
 	requireTest(t, !orphaned(edge, orphanNow), "orphaned(active, stamped exactly AssignmentStale ago) = true, want false")
@@ -71,9 +71,9 @@ func TestOrphanedOnlyActiveState(t *testing.T) {
 	}
 }
 
-// An unparseable stamp is unknown age, and unknown must not read as abandoned:
-// ValidateAssignment rejects such a record on every ledger read, so reaching here at
-// all means the caller bypassed the ledger.
+// An unparseable stamp is unknown age, and unknown must not read as abandoned.
+// ValidateAssignment rejects such a record on every ledger read.
+// A caller that reaches this point therefore bypassed the ledger.
 func TestOrphanedRejectsUnparseableStamp(t *testing.T) {
 	for _, stamp := range []string{"", "yesterday", "2026-07-\x0027T12:00:00Z"} {
 		t.Run(fmt.Sprintf("%q", stamp), func(t *testing.T) {
@@ -83,9 +83,10 @@ func TestOrphanedRejectsUnparseableStamp(t *testing.T) {
 	}
 }
 
-// backdate ages a live assignment by rewriting its ledger stamp, which is how a test
-// reaches an aged record through PlanAutomatic — the planner reads the ledger and the
-// clock itself, so neither is an argument a caller can set.
+// backdate ages a live assignment by rewriting its ledger stamp.
+// That is how a test reaches an aged record through PlanAutomatic.
+// The planner reads the ledger and the clock itself, so neither is an argument a caller
+// can set.
 func backdate(t *testing.T, root string, assignment intent.Assignment, age time.Duration) {
 	t.Helper()
 	assignment.CreatedAt = stampedAt(time.Now().Add(-age))
@@ -116,10 +117,10 @@ func TestPlanAutomaticKeepsEarlierRetainReason(t *testing.T) {
 		"PlanAutomatic over an aged assignment holding ignored residue = action %q reason %q, %v", plan.Action, plan.ReasonCode, err)
 }
 
-// A record carrying no creation stamp is what every worktree cut before the field
-// existed looks like, and its git lock was written from the same fields. Release and
-// explicit cleanup both re-derive that lock string, so this pins that neither path
-// reads the stamp.
+// A record with no creation stamp is what every worktree cut before the field existed
+// looks like. Its git lock was written from the same fields.
+// Release and explicit cleanup both re-derive that lock string, so this pins that neither
+// path reads the stamp.
 func TestReleaseAndPlanExplicitAcceptUnstampedAssignment(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "unstamped-lock")
 	unstamped := creation.Assignment

@@ -15,11 +15,13 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// newReclaimPool binds a BENCH_HOME under the test's own temporary directory, creates the
-// pool parent inside it, chdirs into a fresh repository, and returns the pool path. Every
-// fixture here goes through it: the package's TestMain reds on residue under the shared
-// private home, so a test that reached the operator's pool would be caught, and binding
-// per test is what keeps it from having to be.
+// newReclaimPool binds a BENCH_HOME under the test's own temporary directory and creates
+// the pool parent inside it.
+// It chdirs into a fresh repository and returns the pool path.
+// Every fixture here goes through it.
+// The package's TestMain reds on residue under the shared private home.
+// A test that reached the operator's pool would be caught.
+// Binding per test is what keeps it from having to be.
 func newReclaimPool(t *testing.T) (pool, root string) {
 	t.Helper()
 	root = newWorktreeRepo(t)
@@ -31,8 +33,9 @@ func newReclaimPool(t *testing.T) (pool, root string) {
 }
 
 // plantDeadChild writes one pool child whose `.git` pointer names a repository that was
-// never created — the shape a deleted source repository leaves behind, and the only one
-// the predicate may act on.
+// never created.
+// That is the shape a deleted source repository leaves behind, and the only one the
+// predicate may act on.
 func plantDeadChild(t *testing.T, pool, key, child string) string {
 	t.Helper()
 	target := filepath.Join(t.TempDir(), "deleted-"+key+"-"+child, ".git", "worktrees", child)
@@ -127,10 +130,10 @@ func reclaimTableRows(t *testing.T, out, header string) []string {
 }
 
 // reclaimAggregate parses the single row under an aggregate header into its four unquoted
-// counts-and-fingerprint fields. Asserting on the parsed fields rather than a substring is
-// what keeps the assertion independent of whether TOON quoted a cell: a fingerprint that
-// reads as a number arrives quoted, and a substring match on the bare digits would red on a
-// counting failure that never happened.
+// counts-and-fingerprint fields. The assertion reads the parsed fields rather than a
+// substring, which keeps it independent of whether TOON quoted a cell.
+// A fingerprint that reads as a number arrives quoted.
+// A substring match on the bare digits would red on a counting failure that never happened.
 func reclaimAggregate(t *testing.T, out, header string) [4]string {
 	t.Helper()
 	rows := reclaimTableRows(t, out, header)
@@ -161,8 +164,8 @@ func mustReclaim(t *testing.T, args ...string) (string, int) {
 }
 
 // [PL1][PL5] The plan's whole job is to separate the keys a deleted repository left behind
-// from the ones still holding work. A plan that names every key, or none, is useless; a
-// plan that names the live key is the destructive bug this command must never have.
+// from the ones still holding work. A plan that names every key, or none, is useless.
+// A plan that names the live key is the destructive bug this command must never have.
 func TestReclaimCommandPlansOnlyTheProvablyDeadKeys(t *testing.T) {
 	pool, _ := newReclaimPool(t)
 	plantDeadChild(t, pool, "dead-key", "wt")
@@ -182,9 +185,10 @@ func TestReclaimCommandPlansOnlyTheProvablyDeadKeys(t *testing.T) {
 
 // [PL2][SH1][SH2][SH3] A retained key the operator expected to be reclaimed has to say
 // what protected it. One shared reason string for every retention would leave the operator
-// unable to tell a correct retention from a predicate bug, so each protecting shape gets
-// its own — including the key that mixes a live and a dead pointer, which is retained
-// whole rather than half-reclaimed.
+// unable to tell a correct retention from a predicate bug.
+// Each protecting shape therefore gets its own reason, including the key that mixes a live
+// and a dead pointer.
+// That key is retained whole rather than half-reclaimed.
 func TestReclaimCommandNamesWhatProtectedEachRetainedKey(t *testing.T) {
 	pool, _ := newReclaimPool(t)
 	plantLiveChild(t, pool, "live-pointer", "wt")
@@ -222,9 +226,10 @@ func TestReclaimCommandNamesWhatProtectedEachRetainedKey(t *testing.T) {
 	}
 }
 
-// [SH4] Unknown is not absence. A child whose `.git` cannot be read, and a `gitdir:` target
-// whose stat fails for any reason other than absence, both leave existence undecided —
-// counting either as proof of deadness is the one direction that destroys work.
+// [SH4] Unknown is not absence. A child whose `.git` cannot be read leaves existence
+// undecided. So does a `gitdir:` target whose stat fails for any reason other than
+// absence. To count either as proof of deadness is the one direction that destroys
+// work.
 func TestPoolKeyPredicateRetainsAKeyWhoseExistenceItCannotProve(t *testing.T) {
 	if os.Geteuid() == 0 {
 		capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny the stat that leaves existence unknown")
@@ -250,8 +255,8 @@ func TestPoolKeyPredicateRetainsAKeyWhoseExistenceItCannotProve(t *testing.T) {
 }
 
 // [SH5] A symlink is never followed. If one at the key, the child, or the `.git` were
-// traversed, the pool would stop bounding what an apply can remove and bytes outside it
-// would become the subject.
+// traversed, the pool would stop bounding what an apply can remove.
+// Bytes outside the pool would then become the subject of the removal.
 func TestPoolKeyPredicateRetainsSymlinksUnfollowed(t *testing.T) {
 	pool, _ := newReclaimPool(t)
 	empty := t.TempDir()
@@ -280,7 +285,8 @@ func TestPoolKeyPredicateRetainsSymlinksUnfollowed(t *testing.T) {
 }
 
 // [SH6] A session that has acquired its pool directory but not yet checked anything out
-// holds an empty key, which the empty-key clause would otherwise take out from under it.
+// holds an empty key.
+// The empty-key clause would otherwise take that key out from under it.
 // The current repository's key is excluded before the predicate ever runs.
 func TestReclaimCommandRetainsTheCurrentRepositorysEmptyKey(t *testing.T) {
 	pool, root := newReclaimPool(t)
@@ -295,8 +301,8 @@ func TestReclaimCommandRetainsTheCurrentRepositorysEmptyKey(t *testing.T) {
 }
 
 // [PL4] "Nothing to do" is an answer. A clean pool, and a home that never leased a
-// worktree at all, both have to produce a definitive zero-row table and exit zero, because
-// silence or an error there turns a successful absence into a failure an operator chases.
+// worktree at all, both have to produce a definitive zero-row table and exit zero.
+// Silence or an error there would turn a successful absence into a failure an operator chases.
 func TestReclaimCommandAnswersAnEmptyPoolWithZeroRows(t *testing.T) {
 	t.Run("empty pool", func(t *testing.T) {
 		newReclaimPool(t)
@@ -328,8 +334,9 @@ func TestReclaimCommandRemovesNothing(t *testing.T) {
 	requireTest(t, poolListing(t, pool) == before, "the pool changed across a bare plan:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
 }
 
-// [PL3] Acting on the plan must need no invention: the printed apply invocation carries the
-// fingerprint the apply will demand, and that value is the one the plan itself derived.
+// [PL3] Acting on the plan must need no invention.
+// The printed apply invocation carries the fingerprint the apply will demand, and that
+// value is the one the plan itself derived.
 func TestReclaimCommandPrintsTheApplyInvocationCarryingTheFingerprint(t *testing.T) {
 	pool, root := newReclaimPool(t)
 	plantDeadChild(t, pool, "dead-key", "wt")
@@ -366,7 +373,8 @@ func reclaimFingerprint(t *testing.T, out string) string {
 
 // [AP1][PL3][SH7] The apply is the whole point of the plan and the only destructive step
 // this command has. It must remove exactly what the plan named, leave every other key
-// present, count what it did, and aim every removal at a direct child of the pool.
+// present, and count what it did.
+// It must also aim every removal at a direct child of the pool.
 func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 	pool, _ := newReclaimPool(t)
 	plantDeadChild(t, pool, "dead-key", "wt")
@@ -398,9 +406,9 @@ func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 }
 
 // The writer quotes an aggregate cell that would otherwise read as a number, so a
-// fingerprint of all digits arrives quoted. Which spelling a run gets is luck — an
-// all-digit digest is roughly one in a thousand — so both are exercised here directly
-// rather than waited for.
+// fingerprint of all digits arrives quoted. Which spelling a run gets is luck: an
+// all-digit digest is roughly one in a thousand.
+// Both are therefore exercised here directly rather than waited for.
 func TestReclaimAggregateReadsAFingerprintInEitherSpelling(t *testing.T) {
 	digits := strings.Repeat("0123456789", 6) + "0123"
 	hex := strings.Repeat("0123456789abcdef", 4)
@@ -440,8 +448,8 @@ func TestReclaimApplyRefusesAFingerprintThePoolNoLongerMatches(t *testing.T) {
 }
 
 // [AP3] The fingerprint proves the plan as a whole is current; it cannot see a change made
-// inside a key it already counted. Only the re-check immediately before the RemoveAll can,
-// which is why a key that goes live in that window survives while its neighbours are still
+// inside a key it already counted. Only the re-check immediately before the RemoveAll can.
+// That is why a key that goes live in that window survives while its neighbours are still
 // removed. The seam is the apply itself, because a plan whose fingerprint still matches is
 // exactly the state the fingerprint cannot distinguish.
 func TestReclaimApplyRetainsAKeyThatWentLiveAfterThePlan(t *testing.T) {
@@ -513,7 +521,7 @@ func TestReclaimApplyRefusesAFumbledFingerprint(t *testing.T) {
 	}
 }
 
-// [SH7] The pool is what bounds this command's blast radius, so the removal asserts its
+// [SH7] The pool is what bounds this command's blast radius. The removal asserts its
 // target's parent rather than trusting the key name it was handed. A name that is not a
 // plain direct child leaves the bytes it points at alone.
 func TestRemovePoolKeyRefusesATargetOutsideThePool(t *testing.T) {
@@ -533,9 +541,10 @@ func TestRemovePoolKeyRefusesATargetOutsideThePool(t *testing.T) {
 	requireTest(t, err == nil, "the pool itself was removed: %v", err)
 }
 
-// [RP1] The bug this spec exists for, end to end and through the real command: a repository
-// that genuinely existed, genuinely leased a pool key, and was then deleted leaves a key no
-// repository-anchored path can reach. It must be planned and then actually removed.
+// [RP1] This is the bug this spec exists for, end to end and through the real command.
+// A repository that genuinely existed, genuinely leased a pool key, and was then deleted
+// leaves a key no repository-anchored path can reach.
+// It must be planned and then actually removed.
 func TestReclaimReclaimsTheKeyOfADeletedRepository(t *testing.T) {
 	pool, _ := newReclaimPool(t)
 	source := newWorktreeRepo(t)
@@ -556,9 +565,10 @@ func TestReclaimReclaimsTheKeyOfADeletedRepository(t *testing.T) {
 }
 
 // [C1] Git writes a relative `gitdir:` under worktree.useRelativePaths, and git resolves
-// it against the child directory. Statting it from wherever this process happens to be
-// answers a question about a different path, so a live worktree read as absent is exactly
-// the destruction this predicate exists to prevent. A non-absolute target proves nothing.
+// it against the child directory. To stat it from wherever this process happens to be
+// answers a question about a different path.
+// A live worktree read as absent is exactly the destruction this predicate exists to prevent.
+// A non-absolute target proves nothing.
 func TestPoolKeyRetainsAChildWhoseGitdirTargetIsRelative(t *testing.T) {
 	pool, _ := newReclaimPool(t)
 	live := t.TempDir()
@@ -575,9 +585,10 @@ func TestPoolKeyRetainsAChildWhoseGitdirTargetIsRelative(t *testing.T) {
 	requireTest(t, strings.Contains(verdict.reason, "not absolute"), "reason = %q, want it to name the unresolvable target", verdict.reason)
 }
 
-// [C2] A repository path may legitimately end in a space. Trimming it away would make the
-// pointer name a path that does not exist, which reads as proof of absence and takes a
-// live key — the same failure mode as the relative pointer above.
+// [C2] A repository path may legitimately end in a space. If it is trimmed away, the
+// pointer names a path that does not exist, which reads as proof of absence and takes a
+// live key.
+// That is the same failure mode as the relative pointer above.
 func TestPoolKeyRetainsAChildWhoseTargetEndsInASpace(t *testing.T) {
 	pool, _ := newReclaimPool(t)
 	spaced := filepath.Join(t.TempDir(), "repo ")

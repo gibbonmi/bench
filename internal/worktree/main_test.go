@@ -15,13 +15,13 @@ var inheritedBenchHome = os.Getenv("BENCH_HOME")
 
 // privateBenchHome is the process-private BENCH_HOME every test in this package runs
 // under. A fixture that forgets to bind its own home lands here instead of the
-// operator's pool, and the post-run residue check turns that into a red.
+// operator's pool. The post-run residue check turns that into a red.
 var privateBenchHome string
 
-// TestMain gives the package a BENCH_HOME of its own: created empty in the OS temp
-// directory, exported before the first test, checked for residue after the last, and
-// removed. Creation failure is fail-closed, because running the package against the
-// inherited home is the leak this exists to prevent.
+// TestMain gives the package its own BENCH_HOME, created empty in the OS temp
+// directory and exported before the first test. It checks the home for residue after
+// the last test, then removes it. Creation failure is fail-closed, because running the
+// package against the inherited home is the leak this exists to prevent.
 func TestMain(m *testing.M) {
 	home, err := os.MkdirTemp("", "bench-worktree-home-")
 	if err != nil {
@@ -56,10 +56,10 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// residueEntry is one top-level entry left under a home after a run — a stray file,
-// or a directory such as worktrees/ whether or not it holds anything, since nothing
-// legitimate materializes any of them. origins carries the gitdir: line of every
-// leaked pool worktree beneath it, which names the test that created it.
+// residueEntry is one top-level entry left under a home after a run: a stray file, or
+// a directory such as worktrees/, empty or not. Nothing legitimate materializes any of
+// them. origins carries the gitdir: line of every leaked pool worktree beneath it,
+// which names the test that created it.
 type residueEntry struct {
 	path    string
 	origins []string
@@ -70,7 +70,7 @@ func (e residueEntry) render() []string {
 }
 
 // homeResidue computes the residue for one home. A directory it cannot walk costs
-// that entry its origin lines, never the entry itself: the report has to name the
+// that entry its origin lines, never the entry itself. The report has to name the
 // leak even when it cannot name the leaker.
 func homeResidue(home string) ([]residueEntry, error) {
 	names, err := os.ReadDir(home)
@@ -144,7 +144,7 @@ func TestHomeResidueListsLeakedWorktreesWithOrigin(t *testing.T) {
 	mustMkdirAll(t, filepath.Join(onlyPool, "worktrees"), 0o755)
 
 	// A .git that is a full repository rather than a pointer, and a pointer carrying no
-	// gitdir: line: both are still residue, both simply have no origin to name.
+	// gitdir: line — both are still residue. Both simply have no origin to name.
 	malformed := t.TempDir()
 	mustMkdirAll(t, filepath.Join(malformed, "worktrees", "001-2", "repo", ".git"), 0o755)
 	mustMkdirAll(t, filepath.Join(malformed, "worktrees", "001-3", "blank"), 0o755)

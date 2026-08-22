@@ -8,9 +8,10 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 )
 
-// The fixtures here exercise git.LandedInDefault at the seam every cleanup path asks:
-// its verdict is the only thing standing between a branch and deletion, so these tests
-// pin both the squash-landing it must prove and every ambiguity it must refuse.
+// The fixtures here exercise git.LandedInDefault at the seam every cleanup
+// path asks. Its verdict is the only thing standing between a branch and
+// deletion. These tests pin both the squash-landing it must prove and every
+// ambiguity it must refuse.
 
 // onNewBranch cuts name from main, runs build inside it, and returns to main.
 func onNewBranch(t *testing.T, root, name string, build func()) {
@@ -184,9 +185,9 @@ func TestLandedInDefaultRefusesUnlandedContent(t *testing.T) {
 		landed, _ := verdict(t, root, "feature")
 		requireTest(t, !landed, "a symlink was proven landed by a same-content regular file")
 	})
-	// The squash shape keeps this case away from git cherry, whose patch-id is
-	// whitespace-blind and would prove a lone CRLF commit landed by its LF counterpart;
-	// the content proof itself must stay byte-exact.
+	// The squash shape keeps this case away from git cherry: its patch-id is
+	// whitespace-blind and would prove a CRLF commit landed by its LF twin. The
+	// content proof itself must stay byte-exact.
 	t.Run("line-ending divergence inside a squash", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		onNewBranch(t, root, "feature", func() {

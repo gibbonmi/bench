@@ -167,11 +167,11 @@ func TestListCommandCheckedInPresentForeignTerminalPair(t *testing.T) {
 
 // TestListCommandCheckedInCompletedAssignmentTerminalPair pins the owned completed
 // assignment row, the state the present-foreign pair above never reaches. The release
-// transaction compacts a completed record on its way out, so the state a listing can
-// observe is the one a release interrupted at its terminal-receipt boundary leaves —
-// reached here through ReleaseCommand rather than a hand-written ledger entry. A
-// completed assignment is non-actionable, so its disclosure is exactly one empty help
-// block.
+// transaction compacts a completed record on its way out. A listing can then observe
+// only the state a release interrupted at its terminal-receipt boundary leaves. This
+// fixture reaches that state through ReleaseCommand rather than a hand-written ledger
+// entry. A completed assignment is non-actionable, so its disclosure is exactly one
+// empty help block.
 func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 	data, err := os.ReadFile("testdata/pre-disclosure-complete-assignment-pair.json")
 	if err != nil {
