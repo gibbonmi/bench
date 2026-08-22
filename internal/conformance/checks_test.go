@@ -78,6 +78,7 @@ func init() {
 		"structure-accept-currency":     {structure.ValidateAcceptGrants, registry.Dev, registry.SubjectRoot},
 		"retro-improvement-markers":     {retros.ValidateImprovementMarkers, registry.Dev, registry.SubjectRoot},
 		"row-next-grammar":              {checkRowNextGrammar, registry.Dev, registry.SubjectRoot},
+		"prose-mechanics":               {checkProseMechanics, registry.Dev, registry.SubjectRoot},
 	}
 }
 
@@ -574,6 +575,7 @@ var hostileSkillReaders = []struct {
 	{"line-routing", "bench-craft-hostile"},
 	{"guidance-prose-budgets", "bench-craft-hostile"},
 	{"axi-query-registry", "bench-craft-cli"},
+	{"prose-mechanics", "bench-craft-hostile"},
 }
 
 // TestRegisteredSkillReadersRefuseHostileSkillFiles is the composition row: every
@@ -628,6 +630,11 @@ func writeHostileSkillRoot(t *testing.T, plant func(*testing.T, string)) string 
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(guidanceFixtureEnv), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// The prose check refuses a root with no exclusion file before it reaches any
+	// subject, so an empty list is what lets it walk as far as the hostile skill.
+	if err := os.WriteFile(filepath.Join(root, ".bench", "prose-exclusions"), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	for _, reader := range hostileSkillReaders {

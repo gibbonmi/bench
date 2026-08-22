@@ -1,0 +1,101 @@
+# Rows the prose-mechanics check does not grade. Each row is a repository-relative
+# path, one space, and a one-clause reason. A trailing slash names a directory prefix.
+#
+# Permanent rows.
+tests/canary/ fixtures carry planted content
+docs/audits/ the audit record keeps model inputs and outputs verbatim
+CHANGELOG.md append-only release history
+capture/IDEAS.md an inbox of verbatim parked text
+#
+# Temporary rows. Each migration ticket removes its own rows in the commit that
+# makes its files pass. No ticket adds a row.
+.bench/BENCH.md migrates in ticket 02b
+.bench/BENCH-reference.md migrates in ticket 02b
+.agents/skills/bench-craft-spec/references/ste-prose.md migrates in ticket 03
+.agents/skills/bench-craft-skills/ migrates in ticket 03
+.agents/skills/bench-craft-comments/ migrates in ticket 03
+.agents/skills/bench-craft-spec/SKILL.md migrates in ticket 04
+.agents/skills/bench-craft-spec/references/bootstrap-authority.md migrates in ticket 04
+.agents/skills/bench-craft-seams/ migrates in ticket 04
+.agents/skills/bench-craft-line/ migrates in ticket 04
+.agents/skills/bench-craft-domain/ migrates in ticket 04
+.agents/skills/bench-craft-gate/ migrates in ticket 04
+.agents/skills/bench-craft-tickets/ migrates in ticket 05
+.agents/skills/bench-craft-tdd/ migrates in ticket 05
+.agents/skills/bench-craft-delegate/ migrates in ticket 05
+.agents/skills/bench-craft-grill/ migrates in ticket 05
+.agents/skills/bench-craft-adr/ migrates in ticket 05
+.agents/skills/bench-craft-review/ migrates in ticket 06
+.agents/skills/bench-craft-synthesis/ migrates in ticket 06
+.agents/skills/bench-craft-cli/ migrates in ticket 07
+.agents/skills/bench-craft-design-system/ migrates in ticket 07
+.agents/skills/prototype/ migrates in ticket 07
+.agents/commands/bench.md migrates in ticket 08
+.agents/commands/bench-write-spec.md migrates in ticket 08
+.agents/commands/bench-implement-spec.md migrates in ticket 08
+.agents/commands/bench-review-implementation.md migrates in ticket 08
+.agents/commands/bench-final-check.md migrates in ticket 08
+.agents/commands/bench-debug.md migrates in ticket 08
+.agents/commands/bench-what-next.md migrates in ticket 08
+.agents/commands/bench-drain.md migrates in ticket 09
+.agents/commands/bench-setup-repo.md migrates in ticket 09
+.agents/commands/bench-shape-idea.md migrates in ticket 09
+.agents/commands/bench-deepen.md migrates in ticket 09
+.agents/commands/bench-assess.md migrates in ticket 09
+.agents/commands/bench-update-kit.md migrates in ticket 09
+.agents/skills/bench/ migrates in ticket 10
+.agents/skills/bench-assess/ migrates in ticket 10
+.agents/skills/bench-debug/ migrates in ticket 10
+.agents/skills/bench-deepen/ migrates in ticket 10
+.agents/skills/bench-drain/ migrates in ticket 10
+.agents/skills/bench-final-check/ migrates in ticket 10
+.agents/skills/bench-implement-spec/ migrates in ticket 10
+.agents/skills/bench-review-implementation/ migrates in ticket 10
+.agents/skills/bench-setup-repo/ migrates in ticket 10
+.agents/skills/bench-shape-idea/ migrates in ticket 10
+.agents/skills/bench-update-kit/ migrates in ticket 10
+.agents/skills/bench-what-next/ migrates in ticket 10
+.agents/skills/bench-write-spec/ migrates in ticket 10
+AGENTS.md migrates in ticket 11
+CLAUDE.md migrates in ticket 11
+CONTEXT.md migrates in ticket 11
+.claude/ migrates in ticket 11
+DATA_HANDLING.md migrates in ticket 11
+SECURITY.md migrates in ticket 11
+projects/gl-axi.md migrates in ticket 11
+docs/greenfield-build-sequence.md migrates in ticket 11
+docs/release-runbook.md migrates in ticket 11
+docs/reporesident-distillation.md migrates in ticket 11
+README.md migrates in ticket 12
+projects/benchkit.md migrates in ticket 12
+ASSESSMENT.md migrates in ticket 13
+skills-assessment.md migrates in ticket 13
+docs/adr/ migrates in ticket 13
+ROADMAP.md migrates in ticket 14
+roadmap/ migrates in ticket 14
+decisions/gate-budget.md migrates in ticket 15
+decisions/assets/gate-budget-cpu-wall-census.md migrates in ticket 15
+decisions/assets/gate-budget-memory-profile.md migrates in ticket 15
+decisions/gate-pipeline.md migrates in ticket 16
+decisions/gate-critical-path.md migrates in ticket 16
+decisions/gate-concurrency.md migrates in ticket 16
+decisions/assets/gate-pipeline-fixture-inventory.md migrates in ticket 16
+decisions/ft183-gate-scoping-residuals.md migrates in ticket 16
+decisions/assets/ft183-derivation-binding.md migrates in ticket 16
+decisions/byte-preserving-axi-foundation/ migrates in ticket 17
+decisions/bounded-network-resource-cli.md migrates in ticket 17
+decisions/craft-research.md migrates in ticket 18
+decisions/assets/craft-research-research.md migrates in ticket 18
+decisions/cost-follows-project-size.md migrates in ticket 18
+decisions/diff-visual.md migrates in ticket 18
+decisions/spec-build-review-gate-cadence.md migrates in ticket 18
+decisions/worktree-orphan-retirement.md migrates in ticket 18
+decisions/ft144-post-approval-edits.md migrates in ticket 18
+decisions/assets/ft171-shared-fixture-staged-binary.md migrates in ticket 18
+tickets/ migrates in ticket 19
+capture/agent-performance/ migrates in ticket 19
+capture/audits/ migrates in ticket 19
+capture/FIXES.md migrates in ticket 19
+capture/parallel-session-friction.md migrates in ticket 19
+capture/learnings.md migrates in ticket 19
+capture/session-handoff.md migrates in ticket 28b

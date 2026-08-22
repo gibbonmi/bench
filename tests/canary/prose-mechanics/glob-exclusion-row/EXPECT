@@ -1,0 +1,1 @@
+prose: ".bench/prose-exclusions" line 2: exclusion row "prose-fixture/*.md" uses a glob character
