@@ -12,37 +12,36 @@ import (
 	"github.com/gibbonmi/bench/internal/env"
 )
 
-// DATA_HANDLING.md carries a machine-parseable passlist listing between these
-// markers; the derivation check reads the same env constants the adapter launch
-// enforces from, so the advertisement cannot drift from the enforcement.
+// DATA_HANDLING.md carries a machine-parseable passlist listing between these markers.
+// The derivation check reads the same env constants the adapter launch enforces from. The
+// advertisement therefore cannot drift from the enforcement.
 const (
 	passlistBegin = "<!-- passlist:begin -->"
 	passlistEnd   = "<!-- passlist:end -->"
 )
 
-// passlistTokenRe matches a backtick-quoted environment name or PREFIX* glob
-// anchored to a markdown table row's Pattern column — the row's first cell,
-// immediately after the leading `|`. Anchoring to the row start (rather than
-// matching any backtick-quoted token in the region) excludes an incidental
-// backtick-quoted mention in the Family or Doc columns, e.g. the
-// `XDG_CONFIG_HOME` aside in the `XDG_*` row's Family prose: that mention must
-// not be able to stand in for a real Pattern-column row.
+// passlistTokenRe matches a backtick-quoted environment name or PREFIX* glob anchored to
+// a markdown table row's Pattern column. The Pattern column is the row's first cell,
+// immediately after the leading `|`. Anchoring to the row start, rather than matching any
+// backtick-quoted token in the region, excludes an incidental backtick-quoted mention in
+// the Family or Doc columns. One example is the `XDG_CONFIG_HOME` aside in the `XDG_*`
+// row's Family prose. That mention must not stand in for a real Pattern-column row.
 var passlistTokenRe = regexp.MustCompile(`(?m)^\|\s*` + "`([A-Z][A-Z0-9_]*\\*?)`" + `\s*\|`)
 
-// checkDataHandlingDerivation asserts DATA_HANDLING.md's variable listing and
-// the internal/env passlist name exactly the same pattern set, in both
-// directions. The constants are the compiled-in enforcement values
-// (env.AgentPasslist, which is SharedBasics plus the agent additions):
-//   - a pattern added to the code without a Pattern-column row in the doc turns
-//     the gate red with a diagnostic naming that pattern (constants → doc);
-//   - a Pattern-column row in the doc naming a pattern the code doesn't admit
-//     turns the gate red with a diagnostic naming that pattern too (doc →
-//     constants), so the advertisement can't claim a passlist entry the
-//     enforcement doesn't grant.
+// checkDataHandlingDerivation asserts that DATA_HANDLING.md's variable listing and the
+// internal/env passlist name exactly the same pattern set, in both directions. The
+// constants are the compiled-in enforcement values: env.AgentPasslist, which is
+// SharedBasics plus the agent additions.
 //
-// The check fails loudly — not vacuously — when the marked region is absent
-// or empty, so a doc that dropped the listing cannot pass by carrying nothing
-// to check.
+//   - A pattern may be added to the code without a Pattern-column row in the doc. That
+//     pattern turns the gate red with a diagnostic naming it (constants to doc). - A
+//     Pattern-column row in the doc may name a pattern the code doesn't admit. That row
+//     turns the gate red with a diagnostic naming that pattern too (doc to constants).
+//
+// The advertisement cannot claim a passlist entry the enforcement doesn't grant.
+//
+// The check fails loudly, not vacuously, when the marked region is absent or empty. A doc
+// that dropped the listing cannot pass by carrying nothing to check.
 func checkDataHandlingDerivation(root string) []string {
 	doc := readIfExists(filepath.Join(root, "DATA_HANDLING.md"))
 	region, ok := passlistRegion(doc)
@@ -91,17 +90,17 @@ func passlistTokens(region string) map[string]bool {
 	return set
 }
 
-// controlEscapeRe is the fingerprint of control-rune escaping: rendering a
-// control rune into a readable \uXXXX form. Detection code (shift.hasControlByte,
-// toon's cell predicate) reports a bool and never emits this escape, so keying on
-// the emission separates the single escaping policy from every detector.
+// controlEscapeRe is the fingerprint of control-rune escaping: rendering a control rune
+// into a readable \uXXXX form. Detection code, such as shift.hasControlByte and toon's
+// cell predicate, reports a bool and never emits this escape. Keying on the emission
+// separates the single escaping policy from every detector.
 var controlEscapeRe = regexp.MustCompile(`\\u%04[xX]`)
 
-// checkSingleControlEscaper asserts exactly one non-test package outside
-// internal/toon implements control-rune escaping, so the policy stays
-// single-sourced in internal/sanitize instead of being re-copied for a new
-// render path. internal/toon is excluded because its cell policy *refuses* a
-// control-bearing cell (a closed AXI decision) rather than escaping it.
+// checkSingleControlEscaper asserts that exactly one non-test package outside
+// internal/toon implements control-rune escaping. The policy stays single-sourced in
+// internal/sanitize instead of being re-copied for a new render path. internal/toon is
+// excluded, because its cell policy refuses a control-bearing cell, a closed AXI
+// decision, rather than escaping it.
 func checkSingleControlEscaper(root string) []string {
 	pkgs := controlEscaperPackages(root)
 	switch len(pkgs) {
@@ -148,12 +147,11 @@ func controlEscaperPackages(root string) []string {
 }
 
 // TestDataHandlingDerivationBites is the recorded bite proof for
-// checkDataHandlingDerivation (per craft-gate): a doc whose region lists every
-// env.AgentPasslist pattern passes clean; dropping one pattern fires a diagnostic
-// naming exactly that pattern; removing the marked region fails loudly rather
-// than passing vacuously; a doc pattern the code doesn't admit fires the reverse
-// diagnostic; and a backtick-quoted mention in the Family column (not the
-// Pattern column) does not count as documenting a pattern.
+// checkDataHandlingDerivation. A doc whose region lists every env.AgentPasslist pattern
+// passes clean. Dropping one pattern fires a diagnostic naming exactly that pattern.
+// Removing the marked region fails loudly rather than passing vacuously. A doc pattern
+// the code doesn't admit fires the reverse diagnostic. A backtick-quoted mention in the
+// Family column, not the Pattern column, does not count as documenting a pattern.
 func TestDataHandlingDerivationBites(t *testing.T) {
 	writeDoc := func(t *testing.T, body string) string {
 		t.Helper()
@@ -198,9 +196,9 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 		t.Fatalf("empty region: want a loud region-empty diagnostic, got %v", diags)
 	}
 
-	// Reverse direction (S1): a doc that documents a pattern env.AgentPasslist
-	// doesn't admit must fire its own diagnostic, not just pass because every
-	// constant happens to be covered.
+	// Reverse direction (S1): a doc that documents a pattern env.AgentPasslist doesn't admit
+	// must fire its own diagnostic. The check must not pass just because every constant
+	// happens to be covered.
 	orphan := "FAKE_ORPHAN_VAR"
 	withOrphan := region(append(append([]string(nil), env.AgentPasslist...), orphan))
 	diags = checkDataHandlingDerivation(writeDoc(t, withOrphan))
@@ -209,10 +207,10 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 		t.Fatalf("orphan documented pattern %q: want diagnostic %q, got %v", orphan, wantOrphan, diags)
 	}
 
-	// Tightened capture (S3): a backtick-quoted name in the Family column must
-	// not stand in for a real Pattern-column row. Build a doc that documents
-	// every pattern except one, but mentions the dropped pattern only in Family
-	// prose on an unrelated row — the derivation must still report it missing.
+	// Tightened capture (S3): a backtick-quoted name in the Family column must not stand in
+	// for a real Pattern-column row. This test builds a doc that documents every pattern
+	// except one, and mentions the dropped pattern only in Family prose on an unrelated row.
+	// The derivation must still report the pattern missing.
 	familyMention := passlistBegin + "\n\n| Pattern | Family | Doc |\n|---|---|---|\n"
 	for _, p := range partial {
 		familyMention += fmt.Sprintf("| `%s` | fam | doc |\n", p)
@@ -225,14 +223,13 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 	}
 }
 
-// TestSingleControlEscaperBites is the recorded bite proof for
-// checkSingleControlEscaper (per craft-gate): a tree with one escaper package
-// passes; a second package that grows its own escaper fires a diagnostic naming
-// it; a package that only *detects* control bytes does not count as an escaper;
-// and a tree with no escaper at all fails loudly.
+// TestSingleControlEscaperBites is the recorded bite proof for checkSingleControlEscaper.
+// A tree with one escaper package passes. A second package that grows its own escaper
+// fires a diagnostic naming it. A package that only detects control bytes does not count
+// as an escaper. A tree with no escaper at all fails loudly.
 func TestSingleControlEscaperBites(t *testing.T) {
-	// escaperBody carries the escape-emission idiom (the \uXXXX format verb); it
-	// must not be passed through fmt.Sprintf, whose verbs would consume the %04x.
+	// escaperBody carries the escape-emission idiom, the \uXXXX format verb. It must not be
+	// passed through fmt.Sprintf, whose verbs would consume the %04x.
 	escaperBody := "\n\nimport \"fmt\"\n\n// escape renders a control rune in readable form.\nfunc escape(r rune) string {\n\treturn fmt.Sprintf(`" + `\u%04x` + "`, r)\n}\n"
 	detectionBody := "\n\n// hasControl reports whether s carries a control byte; it never escapes.\nfunc hasControl(s string) bool {\n\tfor i := 0; i < len(s); i++ {\n\t\tif s[i] < 0x20 {\n\t\t\treturn true\n\t\t}\n\t}\n\treturn false\n}\n"
 
@@ -248,7 +245,8 @@ func TestSingleControlEscaperBites(t *testing.T) {
 		}
 	}
 
-	// Sole escaper plus a detector and an excluded toon escaper: exactly one owner.
+	// The tree holds a sole escaper plus a detector and an excluded toon escaper, so exactly
+	// one owner remains.
 	single := t.TempDir()
 	writePkg(t, single, "internal/sanitize", escaperBody)
 	writePkg(t, single, "internal/shift", detectionBody)
@@ -257,7 +255,7 @@ func TestSingleControlEscaperBites(t *testing.T) {
 		t.Fatalf("single escaper: want no diagnostics, got %v", diags)
 	}
 
-	// A second package grows its own escaper: red, naming the extra owner.
+	// A second package grows its own escaper, so the check reds and names the extra owner.
 	dupe := t.TempDir()
 	writePkg(t, dupe, "internal/sanitize", escaperBody)
 	writePkg(t, dupe, "internal/dashboard", escaperBody)
@@ -266,7 +264,7 @@ func TestSingleControlEscaperBites(t *testing.T) {
 		t.Fatalf("second escaper: want a more-than-one-owner diagnostic naming internal/dashboard, got %v", diags)
 	}
 
-	// No escaper anywhere: loud, not vacuous.
+	// No escaper exists anywhere, so the check reports loudly, not vacuously.
 	none := t.TempDir()
 	writePkg(t, none, "internal/shift", detectionBody)
 	if diags := checkSingleControlEscaper(none); !containsDiagnostic(diags, "has no owner") {

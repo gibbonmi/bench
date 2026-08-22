@@ -14,10 +14,10 @@ import (
 	"github.com/gibbonmi/bench/internal/preprelease"
 )
 
-// crossCompileMatrix is a no-op on the every-commit gate: the four-platform cross-compile
+// crossCompileMatrix is a no-op on the every-commit gate. The four-platform cross-compile
 // is portability gold-plating that runs only under `go test -tags stress` (see the stress
-// variant), with the release workflow as the standing backstop. This keeps the default
-// conformance run — the one the gate invokes — free of the ~8s cross-compile cost.
+// variant). The release workflow is the standing backstop. This keeps the default
+// conformance run, the one the gate invokes, free of the ~8s cross-compile cost.
 func crossCompileMatrix(root, buildHelper string) []string { return nil }
 
 // residualCheckFunc and crossCompileFunc are the call site the tripwire below reads.
@@ -27,14 +27,14 @@ const (
 )
 
 // TestResidualCheckCallsCrossCompileMatrix is the dev-tier tripwire for a call the dev
-// tier cannot otherwise see: here the matrix returns nil, so a residual check that
-// stopped calling it behaves identically and every other assertion in the package stays
-// green while ship silently loses the four-platform build. The source is the only
+// tier cannot otherwise see. Here the matrix returns nil. A residual check that stopped
+// calling the matrix behaves identically, and every other assertion in the package stays
+// green. Ship would then silently lose the four-platform build. The source is the only
 // evidence available where the callee does nothing.
 //
-// The stress-tagged TestResidualCheckKeepsCrossCompile grades a different fact — that
-// the matrix, when it is real, reports a refused target — so neither test stands in for
-// the other and neither restates the other's knowledge.
+// The stress-tagged TestResidualCheckKeepsCrossCompile grades a different fact: that the
+// matrix, when it is real, reports a refused target. Neither test stands in for the
+// other. Neither test restates the other's knowledge.
 func TestResidualCheckCallsCrossCompileMatrix(t *testing.T) {
 	h := NewHarness(t)
 	decls := packageTestFuncs(t, filepath.Join(h.KitRoot, filepath.FromSlash("internal/conformance")))
@@ -55,9 +55,9 @@ func TestResidualCheckCallsCrossCompileMatrix(t *testing.T) {
 }
 
 // TestShipConformanceRunNamesDeclaredTests closes the gap a `-run` filter opens on its
-// own: naming a test the package does not declare is not an error anywhere, so the step
-// runs whatever is left, exits 0, and reports ship green over an assertion that no
-// longer exists.
+// own. Naming a test the package does not declare is not an error anywhere. The step then
+// runs whatever is left, exits 0, and reports ship green over an assertion that no longer
+// exists.
 func TestShipConformanceRunNamesDeclaredTests(t *testing.T) {
 	h := NewHarness(t)
 	decls := packageTestFuncs(t, filepath.Join(h.KitRoot, filepath.FromSlash("internal/conformance")))
@@ -68,9 +68,10 @@ func TestShipConformanceRunNamesDeclaredTests(t *testing.T) {
 	}
 }
 
-// packageTestFuncs maps every top-level function this package's test files declare to
-// its declaration. It parses rather than builds, so the stress-tagged files the dev tier
-// excludes are still in the answer — those are exactly the ones no dev run can observe.
+// packageTestFuncs maps every top-level function this package's test files declare to its
+// declaration. It parses rather than builds. The stress-tagged files the dev tier
+// excludes are still in the answer, because those are exactly the ones no dev run can
+// observe.
 func packageTestFuncs(t *testing.T, dir string) map[string]*ast.FuncDecl {
 	t.Helper()
 	entries, err := os.ReadDir(dir)

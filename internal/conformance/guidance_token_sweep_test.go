@@ -17,26 +17,26 @@ import (
 	"github.com/gibbonmi/bench/internal/modelid"
 )
 
-// guidanceDirs are the two trees kit guidance prose lives in. Their contents are discovered
-// at run time rather than listed here: a list grades only the files its author knew about,
-// and the skill somebody adds next month is exactly where a hard-coded binding rots back in
-// with nothing watching it.
+// guidanceDirs are the two trees kit guidance prose lives in. Their contents are
+// discovered at run time rather than listed here. A list grades only the files its author
+// knew about. The skill somebody adds next month is exactly where a hard-coded binding
+// rots back in with nothing watching it.
 var guidanceDirs = []string{
 	filepath.Join(".agents", "commands"),
 	filepath.Join(".agents", "skills"),
 }
 
-// retiredKeyRe matches a retired key by its concrete tier and by the `*` glob prose writes a
-// key family with. Both spellings teach the retired schema, and the glob is how the drift
-// this check was written against was actually spelled. The stems come from
-// lines.RetiredKeyPrefixes rather than a second list here: prose still naming a retired
-// family teaches a schema nothing reads, and which families those are is one fact that the
+// retiredKeyRe matches a retired key by its concrete tier and by the `*` glob prose
+// writes a key family with. Both spellings teach the retired schema. The glob is how the
+// drift this check was written against was actually spelled. The stems come from
+// lines.RetiredKeyPrefixes rather than a second list here. Prose still naming a retired
+// family teaches a schema nothing reads. Which families those are is one fact that the
 // doctor's migration report already owns.
 var retiredKeyRe = regexp.MustCompile(`(?:` + strings.Join(quotedRetiredPrefixes(), "|") +
 	`)(?:` + strings.Join(upperTiers(), "|") + `|\*)`)
 
-// quotedRetiredPrefixes renders the retired stems as regexp literals, so a stem carrying a
-// metacharacter would match itself rather than silently widening the matcher.
+// quotedRetiredPrefixes renders the retired stems as regexp literals. A stem carrying a
+// metacharacter then matches itself, rather than silently widening the matcher.
 func quotedRetiredPrefixes() []string {
 	prefixes := lines.RetiredKeyPrefixes()
 	quoted := make([]string, 0, len(prefixes))
@@ -46,8 +46,8 @@ func quotedRetiredPrefixes() []string {
 	return quoted
 }
 
-// upperTiers renders lines.Tiers in the case a binding key spells them, so the tier
-// vocabulary keeps one declaration and a tier added there reaches this sweep unedited.
+// upperTiers renders lines.Tiers in the case a binding key spells them. The tier
+// vocabulary keeps one declaration, so a tier added there reaches this sweep unedited.
 func upperTiers() []string {
 	upper := make([]string, 0, len(lines.Tiers))
 	for _, tier := range lines.Tiers {
@@ -59,14 +59,16 @@ func upperTiers() []string {
 // codeSpanRe captures the content of one inline code span.
 var codeSpanRe = regexp.MustCompile("`([^`\n]*)`")
 
-// checkGuidanceTokens sweeps kit guidance prose for a binding hard-coded where nothing else
-// grades it. Two token classes fail: a model-id literal naming no cell of the parsed matrix,
-// and a retired schema key. The allowlist is the parse itself, never a written list of
-// tokens, so rebinding a tier stays a one-file edit and cannot leave this check behind
-// asserting the previous binding. The model-literal arm is guarded on .bench/lines.env being
-// present: with no binding there is no allowlist, and reporting every literal in the tree
-// would bury the one diagnostic checkLineBinding already emits for the missing file. The
-// retired-key arm needs no binding and runs either way.
+// checkGuidanceTokens sweeps kit guidance prose for a binding hard-coded where nothing
+// else grades it. Two token classes fail: a model-id literal naming no cell of the parsed
+// matrix, and a retired schema key. The allowlist is the parse itself, never a written
+// list of tokens. Rebinding a tier therefore stays a one-file edit and cannot leave this
+// check behind asserting the previous binding.
+//
+// The model-literal arm is guarded on .bench/lines.env being present. With no binding
+// there is no allowlist. Reporting every literal in the tree would bury the one
+// diagnostic checkLineBinding already emits for the missing file. The retired-key arm
+// needs no binding and runs either way.
 func checkGuidanceTokens(root string) []string {
 	bindingPath := filepath.Join(root, ".bench", "lines.env")
 	binding, bound := lines.ParseBinding([]byte(readIfExists(bindingPath))), exists(bindingPath)
@@ -76,9 +78,9 @@ func checkGuidanceTokens(root string) []string {
 		diags = append(diags, discovery...)
 		for _, path := range files {
 			rel := slashRel(root, path)
-			// Discovery classified the entry's shape; this classifies its bytes, so an
-			// oversized or non-UTF-8 guidance file is reported rather than swept as an
-			// empty document that trivially carries no offending token.
+			// Discovery classified the entry's shape; this classifies its bytes. An oversized or
+			// non-UTF-8 guidance file is reported, rather than swept as an empty document that
+			// trivially carries no offending token.
 			text := bounds.ClassifyNoFollow(path)
 			if text.State.Failed() {
 				diags = append(diags, fmt.Sprintf("guidance file refused: %s could not be read (%s)", rel, text.Reason))
@@ -90,11 +92,12 @@ func checkGuidanceTokens(root string) []string {
 	return diags
 }
 
-// discoverGuidanceFiles returns dir's regular files in sorted order, plus one diagnostic per
-// entry that is neither a regular file nor a directory. Classification is by Lstat and
-// precedes every read: a FIFO with no writer blocks forever in open(2) for a reader that
-// opens before it looks, and following a symlink would pull bytes from outside the swept tree
-// into a diagnostic naming a path inside it. An absent directory yields nothing.
+// discoverGuidanceFiles returns dir's regular files in sorted order. It also returns one
+// diagnostic per entry that is neither a regular file nor a directory. Classification is
+// by Lstat and precedes every read. A FIFO with no writer blocks forever in open(2) for a
+// reader that opens before it looks. Following a symlink would pull bytes from outside
+// the swept tree into a diagnostic naming a path inside it. An absent directory yields
+// nothing.
 func discoverGuidanceFiles(root, dir string) (files, diags []string) {
 	// os.ReadDir sorts by filename, so the sweep reports in one order run to run.
 	entries, err := os.ReadDir(dir)
@@ -121,9 +124,9 @@ func discoverGuidanceFiles(root, dir string) (files, diags []string) {
 	return files, diags
 }
 
-// guidanceFileDiags reports one diagnostic per distinct offending token in one file, each
-// naming the file, the token, and .bench/lines.env — the fix is an edit to one of the two,
-// and the reader has to be told which.
+// guidanceFileDiags reports one diagnostic per distinct offending token in one file. Each
+// diagnostic names the file, the token, and .bench/lines.env. The fix is an edit to one
+// of the two, and the reader must be told which.
 func guidanceFileDiags(rel, text string, binding lines.Binding, bound bool) []string {
 	var diags []string
 	for _, key := range uniqueSorted(retiredKeyRe.FindAllString(text, -1)) {
@@ -144,9 +147,9 @@ func guidanceFileDiags(rel, text string, binding lines.Binding, bound bool) []st
 	return diags
 }
 
-// bindsToken reports whether token is some harness's bound cell. Acceptance spans the whole
-// matrix on purpose: guidance may legitimately quote another harness's column, and which
-// harness owns which cell is checkLineBinding's question, not this sweep's.
+// bindsToken reports whether token is some harness's bound cell. Acceptance spans the
+// whole matrix on purpose, because guidance may legitimately quote another harness's
+// column. Which harness owns which cell is checkLineBinding's question, not this sweep's.
 func bindsToken(binding lines.Binding, token string) bool {
 	for _, harness := range lines.Harnesses {
 		for _, tier := range lines.Tiers {
@@ -158,29 +161,33 @@ func bindsToken(binding lines.Binding, token string) bool {
 	return false
 }
 
-// modelLiteral reports whether span is shaped like a concrete model id: a safe token, at
-// most one `provider/` prefix, non-empty hyphen-separated segments starting with a letter,
-// a version digit, and either that provider prefix or three or more segments. The boundary
-// is drawn tight because the expensive failure here is the opposite one: a matcher broad
-// enough to catch every id turns ordinary guidance red, and a prose oracle that cries wolf
-// gets weakened rather than obeyed. The version digit separates a model id from every
-// hyphenated English compound, the three-segment floor keeps `utf-8` and `schema-3` out, and
-// the single-slash rule keeps a path like `docs/adr/0001-tripwire.md` out.
+// modelLiteral reports whether span is shaped like a concrete model id. The shape is a
+// safe token, at most one `provider/` prefix, non-empty hyphen-separated segments
+// starting with a letter, and a version digit. The shape also needs either that provider
+// prefix or three or more segments.
+//
+// The boundary is drawn tight, because the expensive failure here is the opposite one. A
+// matcher broad enough to catch every id turns ordinary guidance red, and a prose oracle
+// that cries wolf gets weakened rather than obeyed. The version digit separates a model
+// id from every hyphenated English compound. The three-segment floor keeps `utf-8` and
+// `schema-3` out, and the single-slash rule keeps a path like `docs/adr/0001-tripwire.md`
+// out.
 //
 // Where the version digit may sit depends on the shape around it. Normally it must open a
-// later segment, because a leading numbered word is how ordinary slugs are spelled
-// (`ft128-agent-line-binding`) and reading that as a version would report them. The one
-// exception is a provider-qualified id of exactly two segments, where the digit may sit
-// inside the first: that is how the `openai/o3-mini` family is spelled, and holding the
-// exception to two segments is what keeps a qualified slug like
-// `specs/ft128-agent-line-binding` accepted — the two shapes are otherwise identical, and
+// later segment. A leading numbered word is how ordinary slugs are spelled, such as
+// `ft128-agent-line-binding`, and reading that as a version would report them.
+//
+// The one exception is a provider-qualified id of exactly two segments. There, the digit
+// may sit inside the first segment, the way the `openai/o3-mini` family is spelled.
+// Holding the exception to two segments is what keeps a qualified slug like
+// `specs/ft128-agent-line-binding` accepted. The two shapes are otherwise identical, and
 // prose writes far more slugs than ids.
 //
-// The accepted misses: a two-segment dotted id (`gpt-5.6`), a provider-qualified id of three
-// or more segments carrying its only digit in the first (`openai/o3-mini-high`), and an id
-// written outside a code span. The third is the boundary's price — a matcher wide enough to
-// close it reports the slugs above, and a prose oracle that cries wolf gets weakened rather
-// than obeyed.
+// The accepted misses are three shapes. A two-segment dotted id, like `gpt-5.6`, is one.
+// A provider-qualified id of three or more segments carrying its only digit in the first,
+// like `openai/o3-mini-high`, is another. An id written outside a code span is the third.
+// The third is the boundary's price. A matcher wide enough to close it reports the slugs
+// above, and a prose oracle that cries wolf gets weakened rather than obeyed.
 func modelLiteral(span string) bool {
 	if !modelid.SafeToken(span) {
 		return false
@@ -223,21 +230,18 @@ func containsDigit(s string) bool {
 	return strings.ContainsAny(s, "0123456789")
 }
 
-// guidanceFixtureEnv is the fixture binding every sweep case is graded against. Its tokens
-// are deliberately unlike the repo's own, so a check that fell back to the live binding
-// rather than the parsed fixture would fail these cases rather than pass them.
+// guidanceFixtureEnv is the fixture binding every sweep case is graded against. Its
+// tokens are deliberately unlike the repo's own. A check that fell back to the live
+// binding rather than the parsed fixture would fail these cases rather than pass them.
 const guidanceFixtureEnv = "BENCH_CODEX_TOP=alpha-9.1-sol\nBENCH_CODEX_MID=alpha-9.1-terra\n" +
 	"BENCH_CODEX_CHEAP=alpha-9.1-luna\nBENCH_CLAUDE_TOP=fable\nBENCH_CLAUDE_MID=opus\n" +
 	"BENCH_CLAUDE_CHEAP=sonnet\n"
 
-// ordinaryGuidanceSpans are non-model literals kit prose really writes in code spans. Each
-// is a shape a broader matcher would report, so they ride the clean baseline and the
-// accepted side of the boundary is asserted rather than assumed.
-// ordinaryGuidanceSpans are non-model literals kit prose really writes in code spans. Each
-// is a shape a broader matcher would report, so they ride the clean baseline and the
-// accepted side of the boundary is asserted rather than assumed. The last two are the shapes
-// the provider-qualified first-segment rule brings closest to the line: a numbered slug
-// under a one-segment path keeps its later segments free of a version digit, and a
+// ordinaryGuidanceSpans are non-model literals kit prose really writes in code spans.
+// Each is a shape a broader matcher would report. They ride the clean baseline, so the
+// accepted side of the boundary is asserted rather than assumed. The last two are the
+// shapes the provider-qualified first-segment rule brings closest to the line. A numbered
+// slug under a one-segment path keeps its later segments free of a version digit. A
 // provider-shaped path whose leading word carries no digit has no version at all.
 var ordinaryGuidanceSpans = []string{
 	"schema-3", "utf-8", "sha-256", "x86-64", "bench-craft-line", "red/green",
@@ -247,13 +251,15 @@ var ordinaryGuidanceSpans = []string{
 }
 
 // writeGuidanceFixture builds the clean baseline: a binding, a command file, and a nested
-// skill whose prose names every bound cell of the matrix and every ordinary literal above.
-// The bound cells are rendered from the same parse the check reads, so the fixture's tokens
-// have one author. Every mutation case starts from a fresh copy of this tree and adds
-// exactly one defect, which is what makes a diagnostic attributable to that defect. The root
-// is a short temp path rather than t.TempDir's test-named one: a Unix socket address is
-// capped near 108 bytes, and a subtest's name in the path would push the non-regular case
-// past it and turn a real coverage row into a host-capability skip.
+// skill. The skill's prose names every bound cell of the matrix and every ordinary
+// literal above. The bound cells are rendered from the same parse the check reads, so the
+// fixture's tokens have one author.
+//
+// Every mutation case starts from a fresh copy of this tree and adds exactly one defect.
+// That single defect is what makes a diagnostic attributable to it. The root is a short
+// temp path rather than t.TempDir's test-named one. A Unix socket address is capped near
+// 108 bytes. A subtest's name in the path would push the non-regular case past that cap,
+// and turn a real coverage row into a host-capability skip.
 func writeGuidanceFixture(t *testing.T) string {
 	t.Helper()
 	root, err := os.MkdirTemp("", "bench-guidance-*")
@@ -284,7 +290,7 @@ func writeGuidanceFixture(t *testing.T) string {
 }
 
 // writeGuidanceFile writes one fixture file at a slash-free relative path, creating its
-// parents. It returns the absolute path so a case can mutate what it just planted.
+// parents. It returns the absolute path, so a case can mutate what it just planted.
 func writeGuidanceFile(t *testing.T, root, rel, body string) string {
 	t.Helper()
 	path := filepath.Join(root, rel)
@@ -297,9 +303,10 @@ func writeGuidanceFile(t *testing.T, root, rel, body string) string {
 	return path
 }
 
-// TestGuidanceSweepAcceptsBoundTokensAndOrdinaryProse is the clean-baseline row that stops
-// this check from becoming a broad text matcher: every bound matrix cell and every ordinary
-// hyphenated literal stays accepted, and it fails for any allowlist but the parsed binding.
+// TestGuidanceSweepAcceptsBoundTokensAndOrdinaryProse is the clean-baseline row that
+// stops this check from becoming a broad text matcher. Every bound matrix cell and every
+// ordinary hyphenated literal stays accepted. The test fails for any allowlist but the
+// parsed binding.
 func TestGuidanceSweepAcceptsBoundTokensAndOrdinaryProse(t *testing.T) {
 	if diags := checkGuidanceTokens(writeGuidanceFixture(t)); len(diags) != 0 {
 		t.Fatalf("the clean fixture got diagnostics:\n%s", strings.Join(diags, "\n"))
@@ -315,9 +322,10 @@ func TestGuidanceSweepAcceptsBoundTokensAndOrdinaryProse(t *testing.T) {
 	}
 }
 
-// TestGuidanceSweepBitesOneUnboundModelLiteral plants exactly one unbound id in an otherwise
-// clean copy and asserts its file-and-token diagnostic arrives alone. The clean baseline is
-// what makes one diagnostic proof rather than coincidence: collateral would be a second.
+// TestGuidanceSweepBitesOneUnboundModelLiteral plants exactly one unbound id in an
+// otherwise clean copy. It asserts that its file-and-token diagnostic arrives alone. The
+// clean baseline is what makes one diagnostic proof rather than coincidence, because
+// collateral would be a second.
 func TestGuidanceSweepBitesOneUnboundModelLiteral(t *testing.T) {
 	for _, token := range []string{"beta-9.9-sol", "openai/gpt-9", "claude-opus-9-20991231", "openai/o3-mini"} {
 		t.Run(token, func(t *testing.T) {
@@ -337,10 +345,10 @@ func TestGuidanceSweepBitesOneUnboundModelLiteral(t *testing.T) {
 	}
 }
 
-// TestGuidanceSweepScansAFileAddedAfterTheCheck is the run-time-discovery row: the defect
+// TestGuidanceSweepScansAFileAddedAfterTheCheck is the run-time-discovery row. The defect
 // rides a file this check has never named, in a directory it has never named, nested one
-// level deeper than the fixture's own. A hard-coded inventory or a single-level scan misses
-// it, which is why production discovery owns the universal set.
+// level deeper than the fixture's own. A hard-coded inventory or a single-level scan
+// misses it. That is why production discovery owns the universal set.
 func TestGuidanceSweepScansAFileAddedAfterTheCheck(t *testing.T) {
 	for _, rel := range []string{
 		filepath.Join(".agents", "commands", "bench-invented-later.md"),
@@ -357,9 +365,10 @@ func TestGuidanceSweepScansAFileAddedAfterTheCheck(t *testing.T) {
 	}
 }
 
-// TestGuidanceSweepBitesEveryRetiredSchemaKey walks the retired schema one key at a time —
-// the six concrete keys plus the two glob spellings prose uses for a key family — because a
-// check catching one spelling lets the rest rot. Each is planted alone; no sibling may fire.
+// TestGuidanceSweepBitesEveryRetiredSchemaKey walks the retired schema one key at a time:
+// the six concrete keys plus the two glob spellings prose uses for a key family. A check
+// catching one spelling lets the rest rot. Each key is planted alone, and no sibling may
+// fire.
 func TestGuidanceSweepBitesEveryRetiredSchemaKey(t *testing.T) {
 	var keys []string
 	for _, prefix := range lines.RetiredKeyPrefixes() {
@@ -391,11 +400,12 @@ func TestGuidanceSweepBitesEveryRetiredSchemaKey(t *testing.T) {
 	}
 }
 
-// TestGuidanceSweepRejectsNonRegularEntriesBeforeReading covers the four non-regular kinds a
-// swept directory can hold. The FIFO case carries the load-bearing half: it has no writer, so
-// an implementation that opens before it classifies blocks in open(2) forever and fails this
-// row by expiring its deadline rather than by returning a wrong answer. A character device
-// needs mknod privilege a host may not grant, so that kind skips visibly rather than green.
+// TestGuidanceSweepRejectsNonRegularEntriesBeforeReading covers the four non-regular
+// kinds a swept directory can hold. The FIFO case carries the load-bearing half: it has
+// no writer. An implementation that opens before it classifies blocks in open(2) forever.
+// It fails this row by expiring its deadline, rather than by returning a wrong answer. A
+// character device needs mknod privilege a host may not grant, so that kind skips visibly
+// rather than green.
 func TestGuidanceSweepRejectsNonRegularEntriesBeforeReading(t *testing.T) {
 	install := map[string]func(t *testing.T, path string){
 		"fifo": func(t *testing.T, path string) {

@@ -26,11 +26,11 @@ bench_resolve_wrapper() {
 }
 `
 
-// writeShim materializes a git-guard shim fixture from a resolver function name,
-// an optional in-body comment line, and the ordered (already-quoted) wrapper
-// candidates its `for ... in` loop tries. Every shim fixture in this file derives
-// from it so the fixtures can't drift from one another the way three hand-pasted
-// heredocs would.
+// writeShim materializes a git-guard shim fixture from a resolver function name, an
+// optional in-body comment line, and the ordered, already-quoted wrapper candidates its
+// `for ... in` loop tries. Every shim fixture in this file derives from writeShim. This
+// keeps the fixtures from drifting from one another the way three hand-pasted heredocs
+// would.
 func writeShim(t *testing.T, root, funcName, bodyComment string, candidates []string) {
 	t.Helper()
 	var b strings.Builder
@@ -103,10 +103,10 @@ func TestCheckGuardResolverOrderDriftAcceptsMatchingOrder(t *testing.T) {
 	}
 }
 
-// TestCheckGuardResolverOrderDriftRedsOnForeignCandidate covers the drift class
-// the check exists to catch: a NEW search candidate inserted into the shim loop.
-// A foreign path whose tail is "bin/bench.sh" must not alias the kit-wrapper
-// token — it must red loudly, naming the offending candidate.
+// TestCheckGuardResolverOrderDriftRedsOnForeignCandidate covers the drift class the check
+// exists to catch: a new search candidate inserted into the shim loop. A foreign path
+// whose tail is "bin/bench.sh" must not alias the kit-wrapper token. The check must red
+// loudly and name the offending candidate.
 func TestCheckGuardResolverOrderDriftRedsOnForeignCandidate(t *testing.T) {
 	root := t.TempDir()
 	writeShim(t, root, "resolve_wrapper", "", []string{
@@ -125,10 +125,9 @@ func TestCheckGuardResolverOrderDriftRedsOnForeignCandidate(t *testing.T) {
 	}
 }
 
-// TestCheckGuardResolverOrderDriftIgnoresBodyComments proves candidate extraction
-// reads the operative `for` list, not in-body comments: a canonical-order comment
-// above a swapped loop must still red, and a comment above a correct loop must
-// stay green.
+// TestCheckGuardResolverOrderDriftIgnoresBodyComments proves that candidate extraction
+// reads the operative `for` list, not in-body comments. A canonical-order comment above a
+// swapped loop must still red. A comment above a correct loop must stay green.
 func TestCheckGuardResolverOrderDriftIgnoresBodyComments(t *testing.T) {
 	comment := "# tries .bench/bin/bench.sh then bin/bench.sh"
 
@@ -161,10 +160,10 @@ func TestCheckGuardResolverOrderDriftIgnoresBodyComments(t *testing.T) {
 	})
 }
 
-// guardShimRelPath and guardResolveLibRelPath anchor checkGuardResolverOrderDrift:
-// the git guard shim deliberately inlines its wrapper resolver rather than
-// sourcing the shared lib (sourcing would add a fail-open mode), so this check
-// is the only thing keeping the two search orders honest.
+// guardShimRelPath and guardResolveLibRelPath anchor checkGuardResolverOrderDrift. The
+// git guard shim deliberately inlines its wrapper resolver rather than sourcing the
+// shared lib, because sourcing would add a fail-open mode. This check is the only thing
+// keeping the two search orders honest.
 const (
 	guardShimRelPath       = ".bench/hooks/block-dangerous-git.sh"
 	guardResolveLibRelPath = ".bench/lib/resolve-bench.sh"
@@ -172,14 +171,14 @@ const (
 	guardLibResolverFunc   = "bench_resolve_wrapper"
 )
 
-// checkGuardResolverOrderDrift compares the ordered wrapper-search candidates the
-// git guard shim's inlined resolve_wrapper() tries against the shared lib's
-// bench_resolve_wrapper(): repo wrapper (.bench/bin/bench.sh) -> kit wrapper
-// (bin/bench.sh) -> PATH fallback (command -v bench). It reds on any order
-// mismatch, reds on any unrecognized search candidate (a newly inserted path is
-// exactly the drift class this check exists to catch), and reds honestly (never a
-// vacuous pass) when a file, a resolver function, or an expected candidate can't
-// be found — so renaming the resolver can't amputate the check.
+// checkGuardResolverOrderDrift compares the ordered wrapper-search candidates the git
+// guard shim's inlined resolve_wrapper() tries against the shared lib's
+// bench_resolve_wrapper(). The expected order is: repo wrapper (.bench/bin/bench.sh), kit
+// wrapper (bin/bench.sh), PATH fallback (command -v bench). The check reds on any order
+// mismatch. The check reds on any unrecognized search candidate, exactly the drift class
+// it exists to catch. The check reds honestly, never a vacuous pass, when a file, a
+// resolver function, or an expected candidate cannot be found. A renamed resolver
+// therefore cannot amputate the check.
 func checkGuardResolverOrderDrift(root string) []string {
 	shimText, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(guardShimRelPath)))
 	if err != nil {
@@ -220,10 +219,10 @@ func checkGuardResolverOrderDrift(root string) []string {
 	return nil
 }
 
-// extractResolverFunctionBody returns the text between a `name() {` signature
-// (anchored to its own line) and the next line that is a bare `}` closing brace.
-// Both resolvers in this repo close on a line of their own, so this doesn't need
-// to track brace nesting for the inline `{ ...; }` group inside the shim's loop.
+// extractResolverFunctionBody returns the text between a `name() {` signature, anchored
+// to its own line, and the next line that is a bare `}` closing brace. Both resolvers in
+// this repo close on a line of their own. This function therefore does not need to track
+// brace nesting for the inline `{ ...; }` group inside the shim's loop.
 func extractResolverFunctionBody(text, funcName string) (string, bool) {
 	sigRe := regexp.MustCompile(`(?m)^` + regexp.QuoteMeta(funcName) + `\s*\(\)\s*\{\s*$`)
 	sigLoc := sigRe.FindStringIndex(text)
@@ -247,15 +246,16 @@ var (
 	guardResolverPathFallback  = regexp.MustCompile(`command -v bench`)
 )
 
-// extractResolverCandidateOrder returns the operative wrapper-search candidates
-// in the order the resolver body tries them, plus the first candidate token it
-// does not recognize (empty when all are known). Comment lines are stripped
-// before matching so a stale in-body comment can't masquerade as an operative
-// line. Candidates come from the `for ... in <list>` word list (each quoted word
-// classified by path shape) and the `command -v bench` PATH fallback. Any loop
-// candidate that is neither the repo wrapper ($root/.bench/bin/bench.sh) nor the
-// kit wrapper ($root/bin/bench.sh) is reported as unrecognized, so a newly
-// inserted or substring-aliasing search path reds instead of passing green.
+// extractResolverCandidateOrder returns the operative wrapper-search candidates in the
+// order the resolver body tries them. It also returns the first candidate token it does
+// not recognize, empty when all are known. Comment lines are stripped before matching, so
+// a stale in-body comment cannot masquerade as an operative line. Candidates come from
+// the `for ... in <list>` word list, each quoted word classified by path shape, and the
+// `command -v bench` PATH fallback.
+//
+// Any loop candidate that is neither the repo wrapper ($root/.bench/bin/bench.sh) nor the
+// kit wrapper ($root/bin/bench.sh) is reported as unrecognized. A newly inserted or
+// substring-aliasing search path therefore reds instead of passing green.
 func extractResolverCandidateOrder(body string) (order []string, unrecognized string) {
 	stripped := stripShellCommentLines(body)
 
@@ -298,8 +298,8 @@ func extractResolverCandidateOrder(body string) (order []string, unrecognized st
 	return order, ""
 }
 
-// stripShellCommentLines drops every line whose first non-blank character is `#`,
-// so a comment can never be read as an operative resolver line.
+// stripShellCommentLines drops every line whose first non-blank character is `#`. A
+// comment can never be read as an operative resolver line.
 func stripShellCommentLines(body string) string {
 	lines := strings.Split(body, "\n")
 	kept := lines[:0]

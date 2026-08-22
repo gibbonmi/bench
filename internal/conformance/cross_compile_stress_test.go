@@ -9,12 +9,12 @@ import (
 	"testing"
 )
 
-// crossCompileMatrix builds the binary for every platform in scripts/release-plan.json and
-// reports any target that fails to build. It is heavy (~8s, four serial toolchain builds)
-// and portability rarely breaks on an ordinary code change, so it is gold-plating on the
-// every-commit gate. It runs only under `go test -tags stress`; the release workflow,
-// which cross-compiles every target to ship the platform packages, is the standing
-// backstop that catches a real portability break before it can ship.
+// crossCompileMatrix builds the binary for every platform in scripts/release-plan.json.
+// It reports any target that fails to build. It is heavy, at about 8s across four serial
+// toolchain builds, and portability rarely breaks on an ordinary code change. It runs
+// only under `go test -tags stress`. The release workflow cross-compiles every target to
+// ship the platform packages. That workflow is the standing backstop that catches a real
+// portability break before it can ship.
 func crossCompileMatrix(root, buildHelper string) []string {
 	if !exists(filepath.Join(root, "scripts", "release-plan.json")) || !exists(buildHelper) {
 		return nil
@@ -40,17 +40,17 @@ func crossCompileMatrix(root, buildHelper string) []string {
 }
 
 // TestResidualCheckKeepsCrossCompile grades that the residual check drives a matrix that
-// works. It runs only under `-tags stress`, where the matrix is not the dev tier's
-// no-op, and prep-release's ship `-run` filter is what executes it. The dev tier's
-// TestResidualCheckCallsCrossCompileMatrix grades the other fact — that the call site is
-// still there — which is all a tier whose matrix returns nil can observe.
+// works. It runs only under `-tags stress`, where the matrix is not the dev tier's no-op.
+// prep-release's ship `-run` filter executes it. The dev tier's
+// TestResidualCheckCallsCrossCompileMatrix grades a different fact: that the call site is
+// still there. That fact is all a tier whose matrix returns nil can observe.
 func TestResidualCheckKeepsCrossCompile(t *testing.T) {
 	root := t.TempDir()
 	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
 	writeFixtureFile(t, filepath.Join(root, "scripts", "release-plan.json"),
 		`{"targets":[{"goos":"linux","goarch":"amd64"}]}`+"\n")
-	// A helper that refuses every target: the assertion is that the matrix is reached,
-	// not that a real cross-compile succeeds, and a real one would cost four builds.
+	// This helper refuses every target. The assertion is that the matrix is reached, not
+	// that a real cross-compile succeeds. A real cross-compile would cost four builds.
 	writeFixtureFile(t, filepath.Join(root, "scripts", "go-build.sh"),
 		"#!/usr/bin/env bash\nexit 1\n")
 

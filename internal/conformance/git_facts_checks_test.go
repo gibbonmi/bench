@@ -11,17 +11,17 @@ import (
 )
 
 // defaultBranchFuncRe matches a declaration or call of a DefaultBranch function. The
-// trailing `\(` is what scopes the sweep to the function: RepoFacts.DefaultBranch is the
-// surviving struct field, and its selector reads (`gf.DefaultBranch`) carry no paren, so
-// a sweep on the bare identifier would report every honest reader of the field.
+// trailing `\(` scopes the sweep to the function. RepoFacts.DefaultBranch is the
+// surviving struct field. A selector read, like `gf.DefaultBranch`, carries no paren. A
+// sweep on the bare identifier would report every honest reader of the field.
 var defaultBranchFuncRe = regexp.MustCompile(`\bDefaultBranch\b\s*\(`)
 
-// checkDefaultBranchSingleSource asserts no shipped Go source declares or calls a
+// checkDefaultBranchSingleSource asserts that no shipped Go source declares or calls a
 // DefaultBranch function. git.ResolvedDefault owns the default-branch fact and reports
-// ok=false when nothing resolves; a helper that answers with a name instead lets one
-// caller fabricate a default the repository does not have. Test files are exempt: a
-// reintroduced helper is caught at its declaration, and test identifiers legitimately
-// end in DefaultBranch.
+// ok=false when nothing resolves. A helper that answers with a name instead lets one
+// caller fabricate a default the repository does not have. Test files are exempt. A
+// reintroduced helper is caught at its declaration. Test identifiers legitimately end in
+// DefaultBranch.
 func checkDefaultBranchSingleSource(root string) []string {
 	var diags []string
 	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
@@ -45,9 +45,9 @@ func checkDefaultBranchSingleSource(root string) []string {
 	return diags
 }
 
-// TestDefaultBranchSweepScopesToTheFunction is the recorded scoping proof: the sweep must
-// fire on a reintroduced function and stay silent on RepoFacts.DefaultBranch, the field
-// every renderer still reads.
+// TestDefaultBranchSweepScopesToTheFunction is the recorded scoping proof. The sweep must
+// fire on a reintroduced function. The sweep must stay silent on RepoFacts.DefaultBranch,
+// the field every renderer still reads.
 func TestDefaultBranchSweepScopesToTheFunction(t *testing.T) {
 	root := t.TempDir()
 	write := func(name, body string) {

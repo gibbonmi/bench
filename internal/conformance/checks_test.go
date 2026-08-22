@@ -30,12 +30,12 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
-// checkBinding is the executable half of a registry row. The map below deliberately repeats
-// only the facts an independent mutation oracle needs: the name-to-function binding, tier,
-// and subject. Registry order, meta membership, and inputs stay single-sourced in
-// registry.Checks. Keeping these three facts independent is what makes the named CM5/CM6/CM7
-// mutations red when functions are swapped or the advertised tier or subject drifts while
-// the executable binding is unchanged.
+// checkBinding is the executable half of a registry row. The map below deliberately
+// repeats only the facts an independent mutation oracle needs: the name-to-function
+// binding, tier, and subject. Registry order, meta membership, and inputs stay single-
+// sourced in registry.Checks. Keeping these three facts independent makes the named
+// CM5/CM6/CM7 mutations red. They red when functions are swapped, or when the advertised
+// tier or subject drifts while the executable binding is unchanged.
 type checkBinding struct {
 	implementation any
 	tier           registry.Tier
@@ -113,13 +113,13 @@ func (b checkBinding) run(root, kitRoot string, tier registry.Tier) []string {
 }
 
 // RunConformance grades root against the checks tier runs, timing each one. An empty
-// scope runs the whole tier; otherwise it names the single check to run. Callers name
-// a tier and learn nothing about which check belongs to which.
+// scope runs the whole tier; otherwise it names the single check to run. Callers name a
+// tier and learn nothing about which check belongs to which.
 //
-// A scope the tier will not execute is a diagnostic and runs nothing at all, because
-// the alternative — falling back to the full tier or to zero checks in silence — hands
-// a stale binding a green verdict. All three postures live here so no entry point has
-// to restate them.
+// A scope the tier will not execute is a diagnostic and runs nothing at all. The
+// alternative, falling back to the full tier or to zero checks in silence, would hand a
+// stale binding a green verdict. All three postures live here, so no entry point has to
+// restate them.
 func RunConformance(root, kitRoot string, tier registry.Tier, scope string) []string {
 	return RunConformanceSelection(root, kitRoot, tier, scope, nil, nil)
 }
@@ -128,8 +128,8 @@ func RunConformance(root, kitRoot string, tier registry.Tier, scope string) []st
 // selected/inherited ordinary-check partition as distinct authorities.
 func RunConformanceSelection(root, kitRoot string, tier registry.Tier, scope string, selected, inheritedControl *string) []string {
 	// The writer clears the root's timing file, so it is established before the scope
-	// postures return: a run that executes nothing still has to leave the file empty,
-	// or a reader attributes the previous run's lines to this one.
+	// postures return. A run that executes nothing still has to leave the file empty, or a
+	// reader attributes the previous run's lines to this one.
 	timing := registry.NewTimingWriter(root)
 	if scope != "" && (selected != nil || inheritedControl != nil) {
 		return []string{"conformance selection carries both inner and outer controls"}
@@ -144,7 +144,7 @@ func RunConformanceSelection(root, kitRoot string, tier registry.Tier, scope str
 		}
 	}
 	// Ship is a lifecycle-final rehearsal, so only the canary-owned singular control may
-	// narrow it. An outer ordered set is ignored and the complete ship tier runs.
+	// narrow it. An outer ordered set is ignored, and the complete ship tier runs.
 	if tier == registry.Ship {
 		selected = nil
 		inheritedControl = nil
@@ -214,7 +214,7 @@ func orderedConformanceSelection(tier registry.Tier, selected *string) (map[stri
 
 // checkCanaryFixtureCompliance grades kit-compliance rules directly against a marked
 // immutable fixture tree. An ordinary live root has no marker and pays no duplicate
-// check; a mutation test supplies the marker and calls this owner without another gate.
+// check. A mutation test supplies the marker and calls this owner without another gate.
 func checkCanaryFixtureCompliance(root string) []string {
 	if !exists(filepath.Join(root, ".bench-compliance-canary")) {
 		return nil
@@ -222,13 +222,14 @@ func checkCanaryFixtureCompliance(root string) []string {
 	return checkKitCompliance(root)
 }
 
-// benchShRoutes are the top-level bin/bench.sh case labels that must reach the Go core so
-// every shipped surface (kit CLI, linked by-path CLI, hooks) hits one implementation. The
-// route-anchor: dropping a route sends a shipped command to a dead key, and this fires.
+// benchShRoutes are the top-level bin/bench.sh case labels that must reach the Go core.
+// Every shipped surface, the kit CLI, the linked by-path CLI, and the hooks, must hit one
+// implementation. This is the route anchor: dropping a route sends a shipped command to a
+// dead key, and this check fires.
 var benchShRoutes = []string{"commit", "spec", "resume-clean", "worktree-hook"}
 
-// checkBenchShRoutes asserts bin/bench.sh carries a case route for each command in
-// benchShRoutes. It bites when a route is removed (the `<name>)` label disappears).
+// checkBenchShRoutes asserts that bin/bench.sh carries a case route for each command in
+// benchShRoutes. It bites when a route is removed, when the `<name>)` label disappears.
 func checkBenchShRoutes(root string) []string {
 	bench := readIfExists(filepath.Join(root, "bin", "bench.sh"))
 	if bench == "" {
@@ -243,9 +244,9 @@ func checkBenchShRoutes(root string) []string {
 	return diags
 }
 
-// TestBenchShRouteAnchorBites is the recorded bite proof for checkBenchShRoutes (per
-// craft-gate): a bin/bench.sh with a route present passes; removing that route's case
-// label makes the anchor fire. It runs against a synthetic script, not the repo tree.
+// TestBenchShRouteAnchorBites is the recorded bite proof for checkBenchShRoutes. A
+// bin/bench.sh with a route present passes. Removing that route's case label makes the
+// anchor fire. It runs against a synthetic script, not the repo tree.
 func TestBenchShRouteAnchorBites(t *testing.T) {
 	root := t.TempDir()
 	binDir := filepath.Join(root, "bin")
@@ -289,14 +290,14 @@ func checkConformanceCanaryFamilies(kitRoot string) []string {
 			diags = append(diags, fmt.Sprintf("canary conformance family %q has no fixture directories under %s", family, filepath.ToSlash(filepath.Join("tests", "canary", family))))
 		}
 	}
-	// The canary package owns fixture-tree and unbound-family derivation; conformance
+	// The canary package owns fixture-tree and unbound-family derivation. conformance
 	// consumes that single source.
 	return append(diags, canary.UnboundConformanceFamilies(kitRoot)...)
 }
 
-// familyIsBound reports whether the registry's family table binds family to a check,
-// which is a separate question from whether the directory is a family at all — the
-// canary package answers that one.
+// familyIsBound reports whether the registry's family table binds family to a check. That
+// is a separate question from whether the directory is a family at all. The canary
+// package answers that one.
 func familyIsBound(family string) bool {
 	_, bound := registry.FamilyCheck(family)
 	return bound
@@ -316,16 +317,16 @@ func frontmatterField(path, key string) string {
 }
 
 // hardenedProducerRe matches the three producer classes whose bytes are authoritative
-// input to generated output. Only these delegate to the no-follow classifier: widening
-// the set would quietly change what every other check in this package reads, and the
-// producer contract is what was reviewed, not "every file a check happens to open".
+// input to generated output. Only these delegate to the no-follow classifier. Widening
+// the set would quietly change what every other check in this package reads. The producer
+// contract is what was reviewed, not "every file a check happens to open."
 var hardenedProducerRe = regexp.MustCompile(`(^|/)(\.agents/skills/[^/]+/SKILL\.md|\.bench/BENCH-reference\.md|\.bench/consumer-payload\.json)$`)
 
 // readIfExists returns a file's text, or "" for anything a caller may not trust. A
-// producer path goes through the no-follow classifier first, so a link is refused
-// rather than followed, a FIFO cannot block the check in open(2), and oversized or
-// non-UTF-8 bytes never reach a parser. Every other path keeps the plain read: this
-// helper is shared by checks whose subjects are ordinary tracked sources.
+// producer path goes through the no-follow classifier first. A link is refused rather
+// than followed, a FIFO cannot block the check in open(2), and oversized or non-UTF-8
+// bytes never reach a parser. Every other path keeps the plain read. This helper is
+// shared by checks whose subjects are ordinary tracked sources.
 func readIfExists(path string) string {
 	if hardenedProducerRe.MatchString(filepath.ToSlash(path)) {
 		classified := bounds.ClassifyNoFollow(path)
@@ -390,9 +391,9 @@ func uniqueSorted(values []string) []string {
 	return out
 }
 
-// runProbe captures stdout and stderr separately: probes like the npm pack
-// JSON parse read stdout alone, and subprocess stderr chatter (npm's update
-// notifier, warnings) must not corrupt it.
+// runProbe captures stdout and stderr separately. Probes like the npm pack JSON parse
+// read stdout alone. Subprocess stderr chatter, such as npm's update notifier and
+// warnings, must not corrupt it.
 func runProbe(cmd *exec.Cmd, args []string) *Probe {
 	r := subprocess.Capture(cmd)
 	return &Probe{Args: append([]string(nil), args...), ExitCode: r.ExitCode, Stdout: r.Stdout, Stderr: r.Stderr, Err: r.Err}
@@ -446,8 +447,8 @@ func conformanceSubprocessEnv() []string {
 	env := make([]string, 0, len(os.Environ()))
 	hasNpmCache := false
 	for _, kv := range os.Environ() {
-		// The scrub is symmetric across every conformance control var: any one
-		// leaking into a probe subprocess is the recursive-cascade shape.
+		// The scrub is symmetric across every conformance control var. Any one leaking into a
+		// probe subprocess is the recursive-cascade shape.
 		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") ||
 			strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") ||
 			strings.HasPrefix(kv, registry.ConformanceChecksEnv+"=") ||
@@ -485,9 +486,9 @@ func adapterStubDir(realBench string) (string, func(), error) {
 		return "", cleanup, err
 	}
 	// Under the shipped prompt-on-stdin contract, claude and codex receive the prompt on
-	// their stdin, so their stubs echo argv (which still carries the routed model flag) and
-	// then their stdin (the prompt). opencode's CLI documents only a positional prompt, so
-	// its adapter reads stdin and re-emits it positionally — its stub echoes argv alone.
+	// their stdin. Their stubs echo argv, which still carries the routed model flag, and
+	// then their stdin, the prompt. opencode's CLI documents only a positional prompt, so
+	// its adapter reads stdin and re-emits it positionally. Its stub echoes argv alone.
 	bodies := map[string]string{
 		"claude":   "#!/usr/bin/env bash\nprintf '%s\\n' \"$@\"\ncat\n",
 		"codex":    "#!/usr/bin/env bash\nprintf '%s\\n' \"$@\"\ncat\n",
@@ -523,11 +524,11 @@ func tempGitRepoWithLines(linesEnv string) (string, func(), error) {
 	return dir, cleanup, nil
 }
 
-// hostileSkillPlanters build one hostile SKILL.md each. The FIFO carries the
-// load-bearing half — it has no writer, so a reader that opens before it classifies
-// blocks in open(2) forever and fails by expiring the deadline rather than by returning
-// a wrong answer. The two link forms cover redirection at a target inside and outside
-// the graded tree, and the byte cases cover the two bounded-read refusals.
+// hostileSkillPlanters build one hostile SKILL.md each. The FIFO carries the load-bearing
+// half: it has no writer. A reader that opens before it classifies blocks in open(2)
+// forever, and fails by expiring the deadline rather than by returning a wrong answer.
+// The two link forms cover redirection at a target inside and outside the graded tree.
+// The byte cases cover the two bounded-read refusals.
 var hostileSkillPlanters = map[string]func(*testing.T, string){
 	"fifo": func(t *testing.T, path string) {
 		if err := syscall.Mkfifo(path, 0o644); err != nil {
@@ -560,11 +561,11 @@ var hostileSkillPlanters = map[string]func(*testing.T, string){
 	},
 }
 
-// hostileSkillReaders names each registered check that reads a SKILL.md and the skill
+// hostileSkillReaders names each registered check that reads a SKILL.md, and the skill
 // whose file that check is the reader of. Running the registered function rather than a
-// replica is the whole point: a replica would prove only that the copy was hardened,
-// while the composition failure this row exists to catch is a check that goes green in
-// its own package and then hangs behind the gate.
+// replica is the whole point. A replica would prove only that the copy was hardened. The
+// composition failure this row exists to catch is a check that goes green in its own
+// package and then hangs behind the gate.
 var hostileSkillReaders = []struct {
 	check string
 	skill string
@@ -578,10 +579,10 @@ var hostileSkillReaders = []struct {
 	{"prose-mechanics", "bench-craft-hostile"},
 }
 
-// TestRegisteredSkillReadersRefuseHostileSkillFiles is the composition row: every
-// registered reader of a skill file has to complete over a hostile one and say which
-// path it refused. Completion alone is not enough — a reader that swallows the refusal
-// silently reports a clean skill it never read — so each case asserts the offending
+// TestRegisteredSkillReadersRefuseHostileSkillFiles is the composition row. Every
+// registered reader of a skill file must complete over a hostile one and say which path
+// it refused. Completion alone is not enough: a reader that swallows the refusal silently
+// reports a clean skill it never read. Each case therefore asserts that the offending
 // path appears in the check's own diagnostics.
 func TestRegisteredSkillReadersRefuseHostileSkillFiles(t *testing.T) {
 	for kind, plant := range hostileSkillPlanters {
@@ -611,9 +612,9 @@ func TestRegisteredSkillReadersRefuseHostileSkillFiles(t *testing.T) {
 }
 
 // writeHostileSkillRoot plants one hostile SKILL.md per skill each registered reader
-// owns, plus the minimum profile the budget check needs to have a policy at all. Every
-// other subject the checks look for is absent on purpose: this root grades the reader's
-// refusal, not the tree's completeness.
+// owns. It also plants the minimum profile the budget check needs to have a policy at
+// all. Every other subject the checks look for is absent on purpose. This root grades the
+// reader's refusal, not the tree's completeness.
 func writeHostileSkillRoot(t *testing.T, plant func(*testing.T, string)) string {
 	t.Helper()
 	root := t.TempDir()
@@ -624,8 +625,8 @@ func writeHostileSkillRoot(t *testing.T, plant func(*testing.T, string)) string 
 	if err := os.WriteFile(filepath.Join(root, "projects", "benchkit.md"), []byte(profile), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// The guidance sweep grades model literals only against a present binding, so
-	// without lines.env the line-routing check would return before it reached a skill.
+	// The guidance sweep grades model literals only against a present binding. Without
+	// lines.env, the line-routing check would return before it reached a skill.
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -651,11 +652,11 @@ func writeHostileSkillRoot(t *testing.T, plant func(*testing.T, string)) string 
 	return root
 }
 
-// hostileReferenceReaders names each registered check that reads .bench/BENCH-reference.md
-// and the refusal it owns. The two wordings differ because the diagnostic belongs to the
-// consumer, not to the classifier: skills-index refuses a producer it cannot generate
-// from, while the anchor registry refuses a prose subject it cannot evaluate. Both are
-// sourced from their owner so this row cannot drift into a copy of either.
+// hostileReferenceReaders names each registered check that reads .bench/BENCH-
+// reference.md, and the refusal it owns. The two wordings differ because the diagnostic
+// belongs to the consumer, not to the classifier. skills-index refuses a producer it
+// cannot generate from. The anchor registry refuses a prose subject it cannot evaluate.
+// Both are sourced from their owner, so this row cannot drift into a copy of either.
 var hostileReferenceReaders = []struct {
 	check string
 	want  string
@@ -664,10 +665,10 @@ var hostileReferenceReaders = []struct {
 	{"docs-currency-workflow", anchors.RefusalPrefix + ".bench/BENCH-reference.md"},
 }
 
-// TestRegisteredReferenceReadersRefuseHostileReferenceFiles is the reference half of
-// the composition row: docs-currency-workflow evaluates bespoke reference checks and
-// the anchor registry in the same run, so one reader still opening the path directly
-// hangs or misreports the whole gate phase after skills-index has already refused.
+// TestRegisteredReferenceReadersRefuseHostileReferenceFiles is the reference half of the
+// composition row. docs-currency-workflow evaluates bespoke reference checks and the
+// anchor registry in the same run. One reader still opening the path directly hangs or
+// misreports the whole gate phase after skills-index has already refused.
 func TestRegisteredReferenceReadersRefuseHostileReferenceFiles(t *testing.T) {
 	for kind, plant := range hostileSkillPlanters {
 		t.Run(kind, func(t *testing.T) {
@@ -696,15 +697,15 @@ func TestRegisteredReferenceReadersRefuseHostileReferenceFiles(t *testing.T) {
 
 // writeHostileReferenceRoot plants one hostile .bench/BENCH-reference.md beside the
 // minimum tree these two checks need to reach it. Every other subject is absent on
-// purpose: this root grades the reference reader's refusal, not the tree.
+// purpose. This root grades the reference reader's refusal, not the tree.
 func writeHostileReferenceRoot(t *testing.T, plant func(*testing.T, string)) string {
 	t.Helper()
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	// The token-diet and anchor routes both look past the reference unless the guide
-	// that points at it exists, so a bare hostile file alone would leave them unreached.
+	// The token-diet and anchor routes both look past the reference unless the guide that
+	// points at it exists. A bare hostile file alone would leave them unreached.
 	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), []byte("# Guide\n\nSee .bench/BENCH-reference.md\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

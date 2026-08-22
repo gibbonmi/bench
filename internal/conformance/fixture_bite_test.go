@@ -435,10 +435,10 @@ func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
 	}
 }
 
-// TestRunConformanceReportsUnboundCanaryFamily grades the direction the derived
-// family list cannot see: a family directory on disk that the table does not bind.
-// Its fixtures would have no production check owner, so the kit's tree and its table
-// have to agree in both directions.
+// TestRunConformanceReportsUnboundCanaryFamily grades the direction the derived family
+// list cannot see. That direction is a family directory on disk that the table does not
+// bind. Its fixtures would have no production check owner. The kit's tree and its table
+// must agree in both directions.
 func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
@@ -456,14 +456,14 @@ func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 	}
 }
 
-// TestSymlinkedCanaryFamilyIsInvisibleToInventory pins the agreement that makes
-// skipping a symlinked family directory the right answer rather than a hole. os.ReadDir
-// reports a symlink by its own type, so neither the unbound-family read nor the canary
-// package's fixture walk descends into one — a symlinked family therefore contributes
-// no fixture to inventory binding resolution and cannot be unbound. Reporting it would
-// demand a table binding no fixture can resolve. The two sides share one reading of the
-// tree; changing either alone reds a family with no fixtures or leaves a real family's
-// fixtures without a binding.
+// TestSymlinkedCanaryFamilyIsInvisibleToInventory pins the agreement that makes skipping
+// a symlinked family directory the right answer rather than a hole. os.ReadDir reports a
+// symlink by its own type, so neither the unbound-family read nor the canary package's
+// fixture walk descends into one. A symlinked family therefore contributes no fixture to
+// inventory binding resolution and cannot be unbound. Reporting it would demand a table
+// binding no fixture can resolve. The two sides share one reading of the tree. Changing
+// either side alone reds a family with no fixtures, or leaves a real family's fixtures
+// without a binding.
 func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
@@ -472,9 +472,9 @@ func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 	for _, family := range registry.Families() {
 		writeCanaryFixture(t, filepath.Join(canaryDir, family, family+"-fx"))
 	}
-	// The target sits outside tests/canary, so only the link can make it read as a
-	// family — and it holds a real fixture, so a walk that followed the link would both
-	// report the family unbound and add the fixture to the inventory.
+	// The target sits outside tests/canary. Only the link can make it read as a family. It
+	// holds a real fixture. A walk that followed the link would both report the family
+	// unbound and add the fixture to the inventory.
 	target := filepath.Join(kitRoot, "outside", "linked-family")
 	writeCanaryFixture(t, filepath.Join(target, "linked-fixture"))
 	if err := os.Symlink(target, filepath.Join(canaryDir, "symlinked-family")); err != nil {
@@ -496,9 +496,9 @@ func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 }
 
 // TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable pins the direction the
-// unbound-family read cannot cover. It returns nothing when tests/canary will not open,
-// which is safe only because the family-presence loop iterates the registry table and
-// reports every family it cannot find fixtures for — an absent or unreadable tree is
+// unbound-family read cannot cover. The read returns nothing when tests/canary will not
+// open. That is safe only because the family-presence loop iterates the registry table
+// and reports every family it cannot find fixtures for. An absent or unreadable tree is
 // therefore the loudest red the check has, not a silent skip.
 func TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable(t *testing.T) {
 	tests := []struct {
@@ -510,8 +510,8 @@ func TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable(t *testing.T
 			for _, family := range registry.Families() {
 				writeCanaryFixture(t, filepath.Join(canaryDir, family, family+"-fx"))
 			}
-			// The restore is registered before the strip so it runs ahead of TempDir's
-			// own removal, which cannot descend into a directory it cannot enter.
+			// The restore is registered before the strip, so it runs ahead of TempDir's own
+			// removal. TempDir's removal cannot descend into a directory it cannot enter.
 			t.Cleanup(func() { _ = os.Chmod(canaryDir, 0o700) })
 			if err := os.Chmod(canaryDir, 0o000); err != nil {
 				capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip directory permissions: %v", err))
@@ -644,7 +644,8 @@ func TestCheckPackageFilesToleratesNpmStderrNotice(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"files":["bin/bench.sh"]}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// npm's update notifier writes stderr chatter; the pack JSON must survive while the stub replays both streams.
+	// npm's update notifier writes stderr chatter. The pack JSON must survive while the stub
+	// replays both streams.
 	stub := t.TempDir()
 	script := "#!/usr/bin/env bash\n" +
 		"printf '[{\"files\":[{\"path\":\"bin/bench.sh\"}]}]\\n'\n" +

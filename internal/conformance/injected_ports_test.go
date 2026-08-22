@@ -12,33 +12,34 @@ import (
 	"testing"
 )
 
-// The injected-interface composition audit found the same gap at five seams at once: a
-// port injected into a consumer whose tests only ever drive a fake, so softening the real
-// producer left the gate green. Junction tests close the seams that were open; this check
-// is what keeps them closed, by refusing a derived port that names neither a test driving
+// The injected-interface composition audit found the same gap at five seams at once. A
+// port injected into a consumer whose tests only ever drive a fake lets a softened real
+// producer leave the gate green. Junction tests close the seams that were open. This
+// check keeps them closed. It refuses a derived port that names neither a test driving
 // its real producer nor a written reason it does not.
 //
-// The two halves are deliberately independent. The inventory is *derived* from the audited
+// The two halves are deliberately independent. The inventory is derived from the audited
 // packages' Go source, so a port added tomorrow appears without anyone remembering to say
-// so; the registry below is the *advertisement*, and disagreement between them is the red.
+// so. The registry below is the advertisement, and disagreement between them is the red.
 // A single hand-maintained list would satisfy itself.
 //
-// The named-test-exists half is a **tripwire**, not a behavior check: it catches a junction
-// test deleted or renamed, and it cannot catch one gutted back to driving a fake. The
+// The named-test-exists half is a tripwire, not a behavior check. It catches a junction
+// test deleted or renamed, but it cannot catch one gutted back to driving a fake. The
 // behavior half of the defense is the junction tests themselves and the canary fixture
-// under tests/canary/injected-ports, which keeps the unregistered-port red alive.
+// under tests/canary/injected-ports. That fixture keeps the unregistered-port red alive.
 
-// auditedPortPackages are the packages whose injected ports the registry covers — the
-// audit's inventory, no wider. A package outside it declaring a port is out of scope until
-// a reviewer binds it in; a package inside it that derives nothing fails closed.
+// auditedPortPackages are the packages whose injected ports the registry covers, the
+// audit's inventory, no wider. A package outside it that declares a port is out of scope
+// until a reviewer binds it in. A package inside it that derives nothing fails closed.
 var auditedPortPackages = []string{
 	"internal/gitguard",
 	"internal/publication",
 }
 
-// The five failure modes, each with its own message so a red names its cause without
-// archaeology. They are constants because the canary fixture's EXPECT and the bite proof
-// both quote them, and a message typed a second time drifts from the one that fires.
+// This block names the five failure modes, each with its own message, so a red names its
+// cause without archaeology. They are constants because the canary fixture's EXPECT and
+// the bite proof both quote them. A message typed a second time drifts from the one that
+// fires.
 const (
 	unregisteredPortMessage   = "injected port has no registry row"
 	missingPortTestMessage    = "injected port registry row names a test the tree does not declare"
@@ -47,18 +48,19 @@ const (
 	orphanPortRowMessage      = "injected port registry row names a port the derivation no longer reports"
 )
 
-// injectedPortRow is one derived port's disposition: either a real-producer test — a test
-// that drives the actual producer through the consuming surface — or an exemption whose
-// reason someone had to write down. A row carrying neither is the empty-exemption red.
+// injectedPortRow is one derived port's disposition. The disposition is either a real-
+// producer test or an exemption whose reason someone had to write down. A real-producer
+// test drives the actual producer through the consuming surface. A row carrying neither
+// is the empty-exemption red.
 type injectedPortRow struct {
 	pkg, port          string
 	testFile, testName string
 	exempt             string
 }
 
-// injectedPortRegistry is the advertisement half: one row per port the derivation finds in
-// auditedPortPackages. Rows are grouped by package and ordered as the derivation reports
-// them, so a diff against a re-derived inventory reads straight down.
+// injectedPortRegistry is the advertisement half: one row per port the derivation finds
+// in auditedPortPackages. Rows are grouped by package and ordered as the derivation
+// reports them. A diff against a re-derived inventory therefore reads straight down.
 var injectedPortRegistry = []injectedPortRow{
 	{
 		pkg: "internal/gitguard", port: "Checker",
@@ -70,8 +72,8 @@ var injectedPortRegistry = []injectedPortRow{
 	},
 }
 
-// derivedPort is one port the source sweep found, carrying the site that injected it so a
-// red says where the port entered the package rather than only that it did.
+// derivedPort is one port the source sweep found, carrying the site that injected it. A
+// red then says where the port entered the package, not only that it did.
 type derivedPort struct {
 	pkg, name, site string
 }
@@ -81,19 +83,21 @@ func checkInjectedPortRegistry(root string) []string {
 	return injectedPortDiags(root, auditedPortPackages, injectedPortRegistry)
 }
 
-// injectedPortDiags is the graded core, taking the package list and the rows as arguments so
-// the bite proof can drive a mutated registry without editing the real one.
+// injectedPortDiags is the graded core. It takes the package list and the rows as
+// arguments, so the bite proof can drive a mutated registry without editing the real one.
 //
-// A package the graded tree does not hold is not graded at all: an adopting repo has none of
-// these directories, and a check that reds there is a check nobody keeps. A package it does
-// hold has to yield ports, which is the fail-closed posture — see zeroPortInventoryMessage.
+// A package the graded tree does not hold is not graded at all. An adopting repo has none
+// of these directories, and a check that reds there is a check nobody keeps. A package
+// the tree does hold must yield ports, the fail-closed posture; see
+// zeroPortInventoryMessage.
 //
-// The registry→derived direction is graded here too, not only derived→registry: every row of
-// a package whose derivation is non-zero must name a port that derivation still reports, or it
-// fires orphanPortRowMessage. Without this half, deleting an injection arm together with its
-// junction test leaves a green row behind for as long as the package's other ports keep the
-// inventory non-zero — the same silence zeroPortInventoryMessage closes for a package that
-// derives nothing at all.
+// The registry-to-derived direction is graded here too, not only derived-to-registry.
+// Every row of a package whose derivation is non-zero must name a port that derivation
+// still reports, or it fires orphanPortRowMessage. Without this half, deleting an
+// injection arm together with its junction test leaves a green row behind. That row stays
+// green for as long as the package's other ports keep the inventory non-zero.
+// zeroPortInventoryMessage closes that same silence for a package that derives nothing at
+// all.
 func injectedPortDiags(root string, packages []string, rows []injectedPortRow) []string {
 	registered := make(map[string]injectedPortRow, len(rows))
 	for _, row := range rows {
@@ -160,13 +164,15 @@ func injectedPortRowDiags(root string, row injectedPortRow) []string {
 
 // derivedInjectedPorts reports the injected ports one package's non-test source declares.
 //
-// A **port** is a named type whose shape is port-shaped — a non-empty interface, a func
-// type, or a struct whose every field is a func — and which the package injects: passes as
-// a function parameter, or narrows to by type assertion or type switch. The assertion arm
-// is not decoration: a capability widened out of an already-injected owner is never a
-// parameter at all, so a parameter-only rule would leave exactly the silently-downgradable
-// capabilities out of the inventory. Exportedness is not part of the rule either — a
-// package main declares nothing exported, and its ports are ports all the same.
+// A port is a named type whose shape is port-shaped: a non-empty interface, a func type,
+// or a struct whose every field is a func. The package must also inject it, by passing it
+// as a function parameter or by narrowing to it through a type assertion or type switch.
+//
+// The assertion arm is not decoration. A capability widened out of an already-injected
+// owner is never a parameter at all. A parameter-only rule would therefore leave exactly
+// the silently-downgradable capabilities out of the inventory. Exportedness is not part
+// of the rule either. A package main declares nothing exported, and its ports are ports
+// all the same.
 func derivedInjectedPorts(dir, pkg string) ([]derivedPort, []string) {
 	fset := token.NewFileSet()
 	shaped := map[string]bool{}
@@ -228,8 +234,8 @@ func derivedInjectedPorts(dir, pkg string) ([]derivedPort, []string) {
 	return ports, diags
 }
 
-// recordInjectionSite keeps the first site a name is injected at; a port injected twice is
-// still one port, and the first site is the stable one to name in a diagnostic.
+// recordInjectionSite keeps the first site a name is injected at. A port injected twice
+// is still one port, and the first site is the stable one to name in a diagnostic.
 func recordInjectionSite(sites map[string]string, expr ast.Expr, site string) {
 	name := typeIdentName(expr)
 	if name == "" {
@@ -241,8 +247,8 @@ func recordInjectionSite(sites map[string]string, expr ast.Expr, site string) {
 }
 
 // typeIdentName reduces a type expression to the package-local name it names, seeing
-// through a pointer. A qualified type belongs to another package and is not this package's
-// port to register.
+// through a pointer. A qualified type belongs to another package and is not this
+// package's port to register.
 func typeIdentName(expr ast.Expr) string {
 	switch typed := expr.(type) {
 	case *ast.Ident:
@@ -276,8 +282,8 @@ func portShapedType(expr ast.Expr) bool {
 }
 
 // fileDeclaresTest reports whether path declares a top-level func of the given name. It
-// parses rather than searches so the name written in a comment or a string is not a match —
-// the tripwire has to answer for the test the binary would run.
+// parses rather than searches, so a name written in a comment or a string is not a match.
+// The tripwire must answer for the test the binary would run.
 func fileDeclaresTest(path, name string) bool {
 	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
 	if err != nil {
@@ -298,12 +304,12 @@ func isDirectory(path string) bool {
 }
 
 // TestInjectedPortRegistryCheckBites is the recorded bite proof for
-// checkInjectedPortRegistry (per craft-gate). The unregistered-port red is retained
-// permanently by the tests/canary/injected-ports fixture; the other four modes have no
-// fixture of their own and are proved here, each against a synthetic tree.
+// checkInjectedPortRegistry. The unregistered-port red is retained permanently by the
+// tests/canary/injected-ports fixture. The other four modes have no fixture of their own
+// and are proved here, each against a synthetic tree.
 func TestInjectedPortRegistryCheckBites(t *testing.T) {
-	// One package, one port-shaped type, one injection site — the smallest tree the
-	// derivation reports anything at all for.
+	// This tree holds one package, one port-shaped type, and one injection site. It is the
+	// smallest tree the derivation reports anything at all for.
 	const portSource = "package sample\n\n// Port is the fixture's injected port.\ntype Port interface {\n\tDo() error\n}\n\nfunc use(p Port) error { return p.Do() }\n"
 	const testSource = "package sample\n\nimport \"testing\"\n\nfunc TestRealProducer(t *testing.T) {}\n"
 
@@ -423,10 +429,10 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 		}
 	})
 
-	// twoPortTree carries two ports, PortA and PortB, both derived and honestly rowed;
-	// the fixtures below pair them with orphanRow, a registry row naming PortC, a port
-	// the tree never declares. The two honest ports sit beside the orphan so the check
-	// must fire only for the underived row, not collaterally for the derived ones.
+	// twoPortTree carries two ports, PortA and PortB, both derived and honestly rowed. The
+	// fixtures below pair them with orphanRow, a registry row naming PortC, a port the tree
+	// never declares. The two honest ports sit beside the orphan, so the check must fire
+	// only for the underived row, not collaterally for the derived ones.
 	twoPortTree := map[string]string{
 		"internal/sample2/sample2.go":      "package sample2\n\ntype PortA interface {\n\tDo() error\n}\n\ntype PortB interface {\n\tDo() error\n}\n\nfunc use(a PortA, b PortB) error {\n\tif err := a.Do(); err != nil {\n\t\treturn err\n\t}\n\treturn b.Do()\n}\n",
 		"internal/sample2/sample2_test.go": "package sample2\n\nimport \"testing\"\n\nfunc TestRealProducerA(t *testing.T) {}\nfunc TestRealProducerB(t *testing.T) {}\n",
@@ -454,10 +460,10 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 	})
 
 	t.Run("the orphan and missing-test diagnostics coexist without masking each other", func(t *testing.T) {
-		// PortB's injection arm and its named test both survive here, but the row points
-		// at a test name the tree does not declare, so it takes the missing-test path.
-		// A row whose arm was deleted along with its test would instead fall to the
-		// orphan path above. Both are exercised together to prove neither masks the other.
+		// PortB's injection arm and its named test both survive here. The row points at a test
+		// name the tree does not declare, so it takes the missing-test path. A row whose arm
+		// was deleted along with its test would instead fall to the orphan path above. Both
+		// cases run together to prove neither masks the other.
 		staleTestRow := injectedPortRow{
 			pkg: "internal/sample2", port: "PortB",
 			testFile: "internal/sample2/sample2_test.go", testName: "TestRealProducerBRenamedAway",
@@ -471,12 +477,13 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 	})
 }
 
-// TestInjectedPortDerivationSeesEveryPortShape pins the shape and injection rules against a
-// synthetic package carrying every shape the audit found — interface, func type, struct of
-// func fields — reached by every injection route it found, including the type assertion and
-// type switch that are the only way a widened owner capability is ever named. A rule that
-// dropped one of those routes would silently shrink the inventory the
-// registry is graded against, which is the same silence the fail-closed posture refuses.
+// TestInjectedPortDerivationSeesEveryPortShape pins the shape and injection rules against
+// a synthetic package. The package carries every shape the audit found: interface, func
+// type, struct of func fields. The package reaches each shape by every injection route
+// the audit found. Those routes include the type assertion and type switch, the only way
+// a widened owner capability is ever named. A rule that dropped one of those routes would
+// silently shrink the inventory the registry is graded against. That is the same silence
+// the fail-closed posture refuses.
 func TestInjectedPortDerivationSeesEveryPortShape(t *testing.T) {
 	source := strings.Join([]string{
 		"package sample",
@@ -519,7 +526,7 @@ func TestInjectedPortDerivationSeesEveryPortShape(t *testing.T) {
 	for _, port := range ports {
 		names = append(names, port.name)
 	}
-	// Empty, Data, and Mixed are injected but not port-shaped; Unused is port-shaped but
+	// Empty, Data, and Mixed are injected but not port-shaped. Unused is port-shaped but
 	// never injected. Both exclusions are the rule, not an accident of the fixture.
 	want := "FieldsPort,FuncPort,Iface,Switched,Widened"
 	if strings.Join(names, ",") != want {

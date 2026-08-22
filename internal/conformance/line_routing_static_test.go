@@ -23,10 +23,10 @@ func checkLineRouting(root string) []string {
 	return diags
 }
 
-// checkLineBinding grades the reviewer-owned matrix and the profile's rendering of it from
-// the same parse the runtime reads. Only a DECLARED harness owes all three cells, so an
-// unadopted harness leaves the matrix complete instead of reddening the gate for a harness
-// nobody runs here.
+// checkLineBinding grades the reviewer-owned matrix and the profile's rendering of it
+// from the same parse the runtime reads. Only a DECLARED harness owes all three cells. An
+// unadopted harness leaves the matrix complete, instead of reddening the gate for a
+// harness nobody runs here.
 func checkLineBinding(root string) []string {
 	path := filepath.Join(root, ".bench", "lines.env")
 	if !exists(path) {
@@ -63,31 +63,31 @@ func checkLineBinding(root string) []string {
 			case anchored && !strings.Contains(section, value):
 				diags = append(diags, fmt.Sprintf("profile Lines prose stale: projects/benchkit.md does not name bound model id '%s' (%s in lines.env)", value, key))
 			case anchored && tabled && rendered[tier][harness] != value:
-				// Reached only when the token IS in the section, so this is placement and
-				// nothing else: the table binds it to some other harness or tier.
+				// This case is reached only when the token is in the section, so it is placement and
+				// nothing else. The table binds the token to some other harness or tier.
 				diags = append(diags, fmt.Sprintf("profile Lines cell misbound: projects/benchkit.md renders the %s %s cell as '%s', but %s='%s' in lines.env", harness, tier, rendered[tier][harness], key, value))
 			}
 		}
 	}
 	if !declared {
-		// A binding that declares no harness at all is unusable. The diagnostic names the
-		// first cell so an operator receives a key to write rather than a category.
+		// A binding that declares no harness at all is unusable. The diagnostic names the first
+		// cell, so an operator receives a key to write rather than a category.
 		key := lines.Key(lines.Harnesses[0], lines.Tiers[0])
 		diags = append(diags, fmt.Sprintf("lines.env cell unset: %s has no value in .bench/lines.env (%s='')", key, key))
 	}
 	return diags
 }
 
-// profileLinesSection returns the body under the profile's `Lines` heading and whether that
-// heading exists. The cross-check is anchored here rather than run over the whole file
-// because an unanchored search lets any passing mention keep the check green while the table
-// that renders the binding for a human rots.
+// profileLinesSection returns the body under the profile's `Lines` heading, and whether
+// that heading exists. The cross-check is anchored here rather than run over the whole
+// file. An unanchored search would let any passing mention keep the check green while the
+// table that renders the binding for a human rots.
 func profileLinesSection(profile string) (string, bool) {
 	return profileSection(profile, "Lines")
 }
 
 // profileSection returns the body under the profile heading named title, and whether that
-// heading exists. A heading matches on its first word so a parenthetical subtitle can be
+// heading exists. A heading matches on its first word, so a parenthetical subtitle can be
 // reworded without moving the anchor. The section runs to the next heading of the same or
 // shallower depth, so its own subsections stay inside it.
 func profileSection(profile, title string) (string, bool) {
@@ -114,12 +114,14 @@ func profileSection(profile, title string) (string, bool) {
 }
 
 // profileLinesCells parses the profile's binding matrix table into cells[tier][harness],
-// reporting whether such a table was found. Placement has to be read rather than membership:
-// a matrix whose columns are swapped still carries every bound token somewhere in the Lines
-// section, so a substring search over the section stays green while the table tells a reader
-// the wrong binding for every cell it names. The table is found by its `tier` corner cell,
-// its header row names the harness columns, and each row's first cell names the tier — the
-// check reads the rendering the way the human it exists for does.
+// reporting whether such a table was found. Placement has to be read rather than
+// membership. A matrix whose columns are swapped still carries every bound token
+// somewhere in the Lines section. A substring search over the section therefore stays
+// green while the table tells a reader the wrong binding for every cell it names.
+//
+// The table is found by its `tier` corner cell. Its header row names the harness columns,
+// and each row's first cell names the tier. The check reads the rendering the way the
+// human it exists for does.
 func profileLinesCells(section string) (map[string]map[string]string, bool) {
 	var harnesses []string
 	cells := map[string]map[string]string{}
@@ -129,8 +131,8 @@ func profileLinesCells(section string) (map[string]map[string]string, bool) {
 			continue
 		}
 		if harnesses == nil {
-			// Rows before the matrix belong to some other table; only the one cornered
-			// `tier` renders the binding.
+			// Rows before the matrix belong to some other table. Only the one cornered `tier`
+			// renders the binding.
 			if strings.ToLower(row[0]) == "tier" {
 				harnesses = make([]string, 0, len(row)-1)
 				for _, name := range row[1:] {
@@ -155,8 +157,9 @@ func profileLinesCells(section string) (map[string]map[string]string, bool) {
 	return cells, harnesses != nil
 }
 
-// markdownRow splits one pipe-delimited table row into its cells, stripping the code-span
-// backticks the profile renders a model id inside so the cell compares as the bare token.
+// markdownRow splits one pipe-delimited table row into its cells. It strips the code-span
+// backticks the profile renders a model id inside, so the cell compares as the bare
+// token.
 func markdownRow(line string) ([]string, bool) {
 	trimmed := strings.TrimSpace(line)
 	if !strings.HasPrefix(trimmed, "|") {
@@ -182,9 +185,9 @@ func isRuleRow(row []string) bool {
 	return true
 }
 
-// TestLineBindingGradesDeclaredHarnessesOnly pins the declared-versus-known distinction in
-// both directions: an absent opencode column is silent while codex and claude are complete,
-// and a declared column missing one cell is not.
+// TestLineBindingGradesDeclaredHarnessesOnly pins the declared-versus-known distinction
+// in both directions. An absent opencode column is silent while codex and claude are
+// complete. A declared column missing one cell is not silent.
 func TestLineBindingGradesDeclaredHarnessesOnly(t *testing.T) {
 	write := func(t *testing.T, content string) string {
 		t.Helper()
@@ -223,19 +226,20 @@ func TestLineBindingGradesDeclaredHarnessesOnly(t *testing.T) {
 	}
 }
 
-// linesMatrixFixtureEnv binds a full codex and claude matrix in distinct, mutually
-// non-containing tokens: a substring collision would let one cell's rendering satisfy
-// another's cross-check and hide a missed mutation. The tier name inside each token is what
-// makes a swapped rendering readable in a failure message.
+// linesMatrixFixtureEnv binds a full codex and claude matrix in distinct, mutually non-
+// containing tokens. A substring collision would let one cell's rendering satisfy
+// another's cross-check and hide a missed mutation. The tier name inside each token is
+// what makes a swapped rendering readable in a failure message.
 const linesMatrixFixtureEnv = "BENCH_CODEX_TOP=alpha-top\nBENCH_CODEX_MID=alpha-mid\n" +
 	"BENCH_CODEX_CHEAP=alpha-cheap\nBENCH_CLAUDE_TOP=beta-top\nBENCH_CLAUDE_MID=beta-mid\n" +
 	"BENCH_CLAUDE_CHEAP=beta-cheap\n"
 
-// renderLinesProfile builds a profile whose Lines section carries the binding matrix as the
-// markdown table the real profile renders it with, taking each cell's text from cell and
-// appending trailer after the section. The table shape is load-bearing, not decoration: the
-// cross-check reads a tier per row and a harness per column, so a fixture that listed the
-// same tokens some other way would grade a rendering the profile does not have.
+// renderLinesProfile builds a profile whose Lines section carries the binding matrix as
+// the markdown table the real profile renders it with. It takes each cell's text from
+// cell and appends trailer after the section. The table shape is load-bearing, not
+// decoration. The cross-check reads a tier per row and a harness per column. A fixture
+// that listed the same tokens some other way would grade a rendering the profile does not
+// have.
 func renderLinesProfile(cell func(harness, tier string) string, trailer string) string {
 	var b strings.Builder
 	b.WriteString("# benchkit\n\n## Lines (model + effort routing)\n\n| tier")
@@ -277,13 +281,13 @@ func writeLinesRoot(t *testing.T, env, profile string) string {
 	return root
 }
 
-// TestLineBindingCatchesSwappedProfileCells is the placement half of the cross-check, and the
-// mutation the per-cell absence rows structurally cannot make: a swap moves no token out of
-// the Lines section, so every membership test still passes while the table tells a reader
-// the wrong binding. One case per unordered pair of declared cells covers both axes — two
-// harnesses at one tier and two tiers in one harness — because a check that reads only the
-// row or only the column satisfies one axis while the other rots, which is the same
-// single-sample failure the per-cell rows exist to kill.
+// TestLineBindingCatchesSwappedProfileCells is the placement half of the cross-check. It
+// is the mutation the per-cell absence rows structurally cannot make. A swap moves no
+// token out of the Lines section, so every membership test still passes while the table
+// tells a reader the wrong binding. One case per unordered pair of declared cells covers
+// both axes: two harnesses at one tier, and two tiers in one harness. A check that reads
+// only the row or only the column satisfies one axis while the other rots. That is the
+// same single-sample failure the per-cell rows exist to kill.
 func TestLineBindingCatchesSwappedProfileCells(t *testing.T) {
 	binding := lines.ParseBinding([]byte(linesMatrixFixtureEnv))
 	type ref struct{ harness, tier string }
@@ -312,8 +316,8 @@ func TestLineBindingCatchesSwappedProfileCells(t *testing.T) {
 					return "unbound"
 				}, "")
 				diags := checkLineBinding(writeLinesRoot(t, linesMatrixFixtureEnv, profile))
-				// A stale diagnostic would mean a token left the section, which would make
-				// the swap provable by membership alone and this case prove nothing.
+				// A stale diagnostic would mean a token left the section. That would make the swap
+				// provable by membership alone, and this case would prove nothing.
 				if containsDiagnostic(diags, "profile Lines prose stale") {
 					t.Fatalf("the swap moved a token out of the section, so placement was not what bit:\n%s", strings.Join(diags, "\n"))
 				}
@@ -333,10 +337,10 @@ func TestLineBindingCatchesSwappedProfileCells(t *testing.T) {
 	}
 }
 
-// TestLineBindingRequiresTheProfileToRenderTheMatrixAsATable pins the placement check's own
-// precondition. Without it, deleting the table and scattering the six ids through the
-// section's prose would silently retire the placement arm while every membership test
-// stayed green — the check would lose its teeth with nothing turning red.
+// TestLineBindingRequiresTheProfileToRenderTheMatrixAsATable pins the placement check's
+// own precondition. Without it, deleting the table and scattering the six ids through the
+// section's prose would silently retire the placement arm. Every membership test would
+// stay green. The check would lose its teeth with nothing turning red.
 func TestLineBindingRequiresTheProfileToRenderTheMatrixAsATable(t *testing.T) {
 	binding := lines.ParseBinding([]byte(linesMatrixFixtureEnv))
 	var b strings.Builder
@@ -355,17 +359,17 @@ func TestLineBindingRequiresTheProfileToRenderTheMatrixAsATable(t *testing.T) {
 }
 
 // TestLineBindingCrossChecksEveryCellAgainstTheLinesSection proves the quantifier and the
-// anchor in one pass, one mutation per declared cell: a checker that samples a single cell
-// passes a one-cell test while the other five rot, and an unanchored substring search over
-// the whole profile accepts a cell that survives only in an unrelated paragraph. The fixture
-// renders its profile from the same parse the check reads, so the cells have one author here
-// rather than a second hand-written list.
+// anchor in one pass, one mutation per declared cell. A checker that samples a single
+// cell passes a one-cell test while the other five rot. An unanchored substring search
+// over the whole profile accepts a cell that survives only in an unrelated paragraph. The
+// fixture renders its profile from the same parse the check reads, so the cells have one
+// author here rather than a second hand-written list.
 func TestLineBindingCrossChecksEveryCellAgainstTheLinesSection(t *testing.T) {
 	binding := lines.ParseBinding([]byte(linesMatrixFixtureEnv))
-	// profile renders every declared cell inside the Lines section except omit, whose cell
-	// reads `unbound` the way the real profile spells an unadopted column. When elsewhere is
-	// set, omit is still named after the section, which is the only shape that separates an
-	// anchored check from a whole-file search.
+	// profile renders every declared cell inside the Lines section except omit. omit's cell
+	// reads `unbound`, the way the real profile spells an unadopted column. When elsewhere
+	// is set, omit is still named after the section. That is the only shape that separates
+	// an anchored check from a whole-file search.
 	profile := func(omit string, elsewhere bool) string {
 		trailer := ""
 		if elsewhere {
@@ -421,8 +425,8 @@ func TestLineBindingCrossChecksEveryCellAgainstTheLinesSection(t *testing.T) {
 		}
 	}
 
-	// A profile carrying no Lines heading has nothing to anchor to; the check names that
-	// rather than reporting six cells stale for one cause.
+	// A profile carrying no Lines heading has nothing to anchor to. The check names that
+	// cause, rather than reporting six cells stale for one cause.
 	noSection := checkLineBinding(write(t, "# benchkit\n\n## Notes for cold sessions\n\nalpha-top beta-top\n"))
 	if !containsDiagnostic(noSection, "profile Lines section missing") {
 		t.Fatalf("a profile with no Lines heading was accepted:\n%s", strings.Join(noSection, "\n"))
@@ -477,15 +481,15 @@ func TestLineBindingRejectsUnsafeModelTokens(t *testing.T) {
 	}
 }
 
-// checkClaudeHookWiring holds .claude/settings.json to at least the Codex hook
-// standard: one parse feeds every wiring assertion. Absent file skips (parity
-// with checkCodexHooks — the kit always ships the file and canary fixtures hide
-// dot-dirs, so fail-closed-on-absent would misfire); malformed JSON is the
-// JSON-validity check's fact, so unmarshal failure returns nothing. Matching is
-// by the .bench/hooks/<name>.sh command substring, the stable token under
-// Claude's $CLAUDE_PROJECT_DIR prefix. Stop and SessionStart are event-wide (an
-// empty matcher filter accepts any group); PreToolUse Bash and Agent filter by
-// matcher.
+// checkClaudeHookWiring holds .claude/settings.json to at least the Codex hook standard.
+// One parse feeds every wiring assertion. An absent file skips, for parity with
+// checkCodexHooks: the kit always ships the file, and canary fixtures hide dot-dirs, so
+// fail-closed-on-absent would misfire. Malformed JSON is the JSON-validity check's fact,
+// so an unmarshal failure returns nothing.
+//
+// Matching is by the .bench/hooks/<name>.sh command substring, the stable token under
+// Claude's $CLAUDE_PROJECT_DIR prefix. Stop and SessionStart are event-wide; an empty
+// matcher filter accepts any group. PreToolUse Bash and Agent filter by matcher.
 func checkClaudeHookWiring(root string) []string {
 	path := filepath.Join(root, ".claude", "settings.json")
 	data, err := os.ReadFile(path)
@@ -543,14 +547,13 @@ func checkClaudeHookWiring(root string) []string {
 	return diags
 }
 
-// TestClaudeHookWiringBites is the recorded bite proof for checkClaudeHookWiring
-// (per craft-gate): the intact kit-shaped settings.json — two PreToolUse groups
-// (Bash, Agent) plus Stop and SessionStart, each carrying the real
-// $CLAUDE_PROJECT_DIR command prefix — passes clean; dropping any one wiring fires
-// exactly its diagnostic and no sibling. The absent-file case pins the skip-on-
-// absent posture (parity with checkCodexHooks) as a regression guard: it passes on
-// day one and must keep yielding nothing so a later fail-closed change is a
-// deliberate edit, not drift.
+// TestClaudeHookWiringBites is the recorded bite proof for checkClaudeHookWiring. The
+// intact kit-shaped settings.json passes clean: two PreToolUse groups (Bash, Agent) plus
+// Stop and SessionStart, each carrying the real $CLAUDE_PROJECT_DIR command prefix.
+// Dropping any one wiring fires exactly its diagnostic and no sibling. The absent-file
+// case pins the skip-on-absent posture, for parity with checkCodexHooks, as a regression
+// guard. It passes on day one and must keep yielding nothing. A later fail-closed change
+// must then be a deliberate edit, not drift.
 func TestClaudeHookWiringBites(t *testing.T) {
 	type hook struct {
 		Type    string   `json:"type"`
@@ -568,8 +571,8 @@ func TestClaudeHookWiringBites(t *testing.T) {
 	worktreeCommand := func(action string) []hook {
 		return []hook{{Type: "command", Command: "${CLAUDE_PROJECT_DIR}/.bench/hooks/worktree-lifecycle.sh", Args: []string{action}}}
 	}
-	// intact returns a fresh healthy wiring shape each call so a case can mutate
-	// its own copy without disturbing the others.
+	// intact returns a fresh healthy wiring shape each call. A case can then mutate its own
+	// copy without disturbing the others.
 	intact := func() map[string][]group {
 		return map[string][]group{
 			"SessionStart":   {{Matcher: matcher(""), Hooks: command("session-start.sh")}},
