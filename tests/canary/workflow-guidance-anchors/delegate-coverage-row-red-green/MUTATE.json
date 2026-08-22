@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "It requires the delegate to show each row red before the edit and green\nafter.",
+    "new": "It expects the delegate to sanity-check each row."
+  }
+]

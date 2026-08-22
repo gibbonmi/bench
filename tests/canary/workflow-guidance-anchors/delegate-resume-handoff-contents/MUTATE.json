@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "The handoff names the repository path, the working branch or worktree, the\nspec or change name, the destination harness, and that harness's exact invocation.",
+    "new": "The handoff names the destination harness."
+  }
+]
