@@ -460,13 +460,6 @@ escalation.
 - When SessionStart diagnoses incomplete environment closure, prepend the
   recovered tool directory to the ambient PATH. Do not replace the harness
   toolchain that is already present.
-- The 2026-08-22 WSL observation is host-specific evidence, not a portability
-  claim. In the same retained Bench repository, the Codex client carried
-  `ENVMAN_LOAD=loaded` but no PATH Go and SessionStart found
-  `/home/mgibs/.local/opt/go/bin/go`; a clean-login CLI using the same
-  `/home/mgibs/.profile`, `/home/mgibs/.bashrc`, and
-  `/home/mgibs/.config/envman/load.sh` resolved that executable and printed no
-  recovery warning.
 - Canary mutation tests are ordinary in-process checks. Do not add a gate, wrapper,
   `go test`, or `go run` constructor to a fixture owner; the architecture census treats
   that as a regression.

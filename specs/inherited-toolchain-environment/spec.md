@@ -263,6 +263,14 @@ Kill only the login-shell parent → TE16.
 
 ## Further notes
 
+On 2026-08-22, the Codex client opened the retained Bench repository with
+`ENVMAN_LOAD=loaded` and no Go executable on PATH. SessionStart resolved
+`/home/mgibs/.local/opt/go/bin/go` through the clean Bash login. A clean-login
+CLI session used the same repository, Go executable, `/home/mgibs/.profile`,
+`/home/mgibs/.bashrc`, and `/home/mgibs/.config/envman/load.sh`. It resolved Go
+and printed no recovery warning. These WSL observations are host-specific
+evidence, not a portability claim.
+
 The reproduced commit failure (`gate-20260822T145702.664532004Z-8472`) reached
 private executable selection and recorded `env: ‘go’: Permission denied`; after
 prepending `/home/mgibs/.local/opt/go/bin` to the existing PATH, the identical

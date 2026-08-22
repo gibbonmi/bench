@@ -11,20 +11,30 @@ import (
 )
 
 func TestPhaseTableRequiresGoForBuiltInGoModule(t *testing.T) {
-	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/graded\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", t.TempDir())
+	for _, test := range []struct {
+		name  string
+		goMod string
+	}{
+		{name: "module declaration", goMod: "module example.com/graded\n"},
+		{name: "empty regular file"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte(test.goMod), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("PATH", t.TempDir())
 
-	phases, err := phaseTable(root, root)
-	if err == nil {
-		t.Fatalf("phase table = %#v, want missing Go refusal", phases)
-	}
-	for _, want := range []string{"go", "PATH", root} {
-		if !strings.Contains(err.Error(), want) {
-			t.Fatalf("phase-table error = %q, want %q", err, want)
-		}
+			phases, err := phaseTable(root, root)
+			if err == nil {
+				t.Fatalf("phase table = %#v, want missing Go refusal", phases)
+			}
+			for _, want := range []string{"go", "PATH", root} {
+				if !strings.Contains(err.Error(), want) {
+					t.Fatalf("phase-table error = %q, want %q", err, want)
+				}
+			}
+		})
 	}
 }
 

@@ -29,6 +29,25 @@ func TestSessionStartTE5DiagnosesPartialEnvironment(t *testing.T) {
 	}
 }
 
+func TestSessionStartTE5DiscoversGoWithMarkerAbsentOrEmpty(t *testing.T) {
+	fixture := newSessionEnvironmentFixture(t)
+	for _, marker := range []struct {
+		name, override string
+	}{
+		{name: "absent", override: "ENVMAN_LOAD"},
+		{name: "empty", override: "ENVMAN_LOAD="},
+	} {
+		t.Run(marker.name, func(t *testing.T) {
+			result := fixture.run(t, []string{marker.override})
+			for _, want := range []string{"environment closure is partial", fixture.goExecutable} {
+				if !strings.Contains(result.stdout, want) {
+					t.Fatalf("TE5 %s-marker stdout missing %q: %q", marker.name, want, result.stdout)
+				}
+			}
+		})
+	}
+}
+
 func TestSessionStartTE6PrependsTheDiscoveredDirectory(t *testing.T) {
 	fixture := newSessionEnvironmentFixture(t)
 	result := fixture.run(t, nil)
@@ -47,6 +66,25 @@ func TestSessionStartTE7DoesNotExecuteDiscoveredGo(t *testing.T) {
 	}
 	if _, err := os.Stat(sentinel); !os.IsNotExist(err) {
 		t.Fatalf("TE7 discovered Go execution sentinel exists: %v", err)
+	}
+}
+
+func TestSessionStartTE7AcceptsSymlinkWithoutExecutingTarget(t *testing.T) {
+	fixture := newSessionEnvironmentFixture(t)
+	target := fixture.goExecutable + "-target"
+	if err := os.Rename(fixture.goExecutable, target); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Base(target), fixture.goExecutable); err != nil {
+		t.Fatal(err)
+	}
+	sentinel := filepath.Join(t.TempDir(), "symlink-target-executed")
+	result := fixture.run(t, []string{"GO_EXECUTION_SENTINEL=" + sentinel})
+	if result.code != 0 || !strings.Contains(result.stdout, fixture.goExecutable) {
+		t.Fatalf("TE7 symlink discovery = (%d, %q, %q), want accepted path %q", result.code, result.stdout, result.stderr, fixture.goExecutable)
+	}
+	if _, err := os.Stat(sentinel); !os.IsNotExist(err) {
+		t.Fatalf("TE7 symlink target execution sentinel exists: %v", err)
 	}
 }
 
@@ -121,6 +159,19 @@ func TestSessionStartTE14RejectsUnsafeDiscoveryOutput(t *testing.T) {
 	}
 }
 
+func TestSessionStartNonzeroDiscoveryPrintsNoRecovery(t *testing.T) {
+	fixture := newSessionEnvironmentFixture(t)
+	path := discoveryShellPath(t) + string(os.PathListSeparator) + fixture.harnessPath
+	result := fixture.run(t, []string{
+		"PATH=" + path,
+		"DISCOVERY_OUTPUT=" + fixture.goExecutable,
+		"DISCOVERY_EXIT=23",
+	})
+	if result.code != 0 || !strings.Contains(result.stdout, "Go is absent from PATH") || strings.Contains(result.stdout, "export PATH=") {
+		t.Fatalf("nonzero discovery result = (%d, %q, %q), want zero exit and no recovery assignment", result.code, result.stdout, result.stderr)
+	}
+}
+
 func TestSessionStartTE15BoundsDiscoveryAndContinues(t *testing.T) {
 	fixture := newSessionEnvironmentFixture(t)
 	path := hangingDiscoveryShellPath(t) + string(os.PathListSeparator) + fixture.harnessPath
@@ -167,7 +218,7 @@ func TestSessionStartTE16KillsDiscoveryDescendants(t *testing.T) {
 func discoveryShellPath(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	script := "#!/bin/sh\nif [ \"${1:-}\" != -c ]; then exec /bin/bash \"$@\"; fi\nprintf '%s' \"$DISCOVERY_OUTPUT\"\n"
+	script := "#!/bin/sh\nif [ \"${1:-}\" != -c ]; then exec /bin/bash \"$@\"; fi\nprintf '%s' \"$DISCOVERY_OUTPUT\"\nexit \"${DISCOVERY_EXIT:-0}\"\n"
 	if err := os.WriteFile(filepath.Join(dir, "bash"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
