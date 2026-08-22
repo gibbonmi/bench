@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-// TreeHash returns the content hash of tracked-plus-untracked-unignored files under
-// root, computed through a THROWAWAY index so the real index is never touched — this
-// is the gate verdict cache key. It returns the literal "none" on any failure or an
-// empty result. The temp index lives outside the repo so it can't join the tree it
-// hashes; `git add -A` respects .gitignore, which is the intended scope.
+// TreeHash returns the content hash of tracked and untracked, unignored files under root.
+// It computes the hash through a THROWAWAY index, so the real index stays untouched; the
+// gate uses this hash as its verdict cache key. It returns the literal "none" on any
+// failure or an empty result. The temp index lives outside the repo, so it cannot join
+// the tree it hashes. `git add -A` respects .gitignore, which is the intended scope.
 func TreeHash(root string) string {
 	dir, err := os.MkdirTemp("", "bench-tree")
 	if err != nil {
@@ -21,8 +21,8 @@ func TreeHash(root string) string {
 	defer os.RemoveAll(dir)
 	idx := filepath.Join(dir, "index")
 
-	// Seed the throwaway index from HEAD, falling back to an empty tree in a repo
-	// with no commits yet, then stage everything on disk and write the tree.
+	// Seed the throwaway index from HEAD. In a repo with no commits yet, fall back to an
+	// empty tree. Then stage everything on disk and write the tree.
 	if !idxOK(root, idx, "read-tree", "HEAD") {
 		if !idxOK(root, idx, "read-tree", "--empty") {
 			return "none"
@@ -56,19 +56,19 @@ func ChangedPathsBetweenTrees(root, fromTree, toTree string) ([]string, bool) {
 	return strings.Split(out, "\n"), true
 }
 
-// reverseAppliesToDefault reports whether branch's cumulative diff against its merge
-// base with def applies in reverse to def's tree — proof the branch's content is
-// already present in def however it landed, which is what survives a squash. The apply
-// runs against a throwaway index seeded from def, the TreeHash idiom, so no working
-// tree and no real index is touched.
+// reverseAppliesToDefault reports whether branch's cumulative diff against its merge base
+// with def applies in reverse to def's tree. A true result proves the branch's content is
+// already present in def, however it landed, which is what survives a squash. The apply
+// runs against a throwaway index seeded from def, the TreeHash idiom, so it touches
+// neither the working tree nor the real index.
 //
-// A true verdict authorizes branch deletion, so every step refuses rather than guesses:
-// no merge base, a diff that fails to generate, or an apply that fails for any reason
-// is not landed. A submodule pointer is refused outright — a patch cannot carry the
-// subproject's content, only its sha, so "applies cleanly" would not mean "work is
-// present". The apply itself is kept byte- and mode-exact (--full-index binary patches,
-// no rename detection, whitespace leniency explicitly off): loosening any of these
-// trades an orphaned branch for silently destroyed work, which is the wrong direction.
+// A true verdict authorizes branch deletion, so every step refuses rather than guesses.
+// A missing merge base, a diff that fails to generate, or an apply that fails for any
+// reason all refuse the branch. The function refuses a submodule pointer outright. A
+// patch carries only the subproject's sha, not its content, so a clean apply would not
+// prove the work is present. The apply itself stays byte- and mode-exact — full-index
+// binary patches, no rename detection, and whitespace leniency off. Loosening any of
+// these trades an orphaned branch for silently destroyed work, the wrong direction.
 func reverseAppliesToDefault(root, branch, def string) bool {
 	base, err := Output("-C", root, "merge-base", def, branch)
 	if err != nil || base == "" {
@@ -87,10 +87,10 @@ func reverseAppliesToDefault(root, branch, def string) bool {
 		if len(fields) < 2 || fields[0] == ":160000" || fields[1] == "160000" {
 			return false
 		}
-		// A mode change on a surviving entry (chmod, or a file/symlink typechange) is
-		// refused: git apply treats a preimage mode mismatch as a warning, not a failure,
-		// so "applies cleanly" would not prove the mode landed. Adds and deletes keep one
-		// side at 000000 and their modes are verified by the apply itself.
+		// The function refuses a mode change on a surviving entry — a chmod, or a
+		// file/symlink typechange. git apply treats a preimage mode mismatch as a warning,
+		// not a failure, so a clean apply would not prove the mode landed. Adds and deletes
+		// keep one side at 000000, and the apply itself verifies their modes.
 		if fields[0] != ":000000" && fields[1] != "000000" && fields[0][1:] != fields[1] {
 			return false
 		}
@@ -114,7 +114,8 @@ func reverseAppliesToDefault(root, branch, def string) bool {
 }
 
 // idxCommand builds a `git -C root <args>` command whose index is the throwaway idx
-// file rather than the repository's own — the shared invocation form for TreeHash.
+// file rather than the repository's own. This is the shared invocation form for
+// TreeHash.
 func idxCommand(root, idx string, args ...string) *exec.Cmd {
 	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
 	cmd.Env = append(os.Environ(), "GIT_INDEX_FILE="+idx)

@@ -1,7 +1,7 @@
 // Package git is the one source of git subprocess invocation for the AXI query
-// commands. Every ported parser shells out to git through here — git stays the
-// source of repository truth (root, config, merge-base, diff), exactly as the shell
-// commands did, so there is one place the invocation form lives.
+// commands. Every ported parser shells out to git through here. Git stays the source of
+// repository truth — root, config, merge-base, diff — exactly as the shell commands did,
+// so the invocation form lives in one place.
 package git
 
 import (
@@ -21,11 +21,11 @@ import (
 )
 
 // refCheckTimeout is the hook-scoped fail-safe for destructive-git classification,
-// unlike the policy-owned worktree discovery bound below. It bounds the ref/branch
-// existence probes the destructive-git guard
-// runs per classification (internal/gitguard's checkout and forced-creation verdicts):
-// a hung git must never stall a PreToolUse Bash hook, so each probe is bounded at two
-// seconds and then resolves to its caller's fail-safe default.
+// unlike the policy-owned worktree discovery bound below. It bounds the ref and branch
+// existence probes the destructive-git guard runs per classification — internal/gitguard's
+// checkout and forced-creation verdicts. A hung git must never stall a PreToolUse Bash
+// hook, so the code bounds each probe at two seconds and resolves it to its caller's
+// fail-safe default.
 const refCheckTimeout = 2 * time.Second
 
 var worktreeListTimeout = bounds.WorktreeListTimeout
@@ -38,11 +38,11 @@ func SetWorktreeListTimeoutForTest(limit time.Duration) func() {
 }
 
 // RefResolves reports whether arg names a commit-ish that resolves in the process
-// working directory — the agent's cwd, where the guarded Bash command would run, not a
-// fixed root (`git rev-parse --verify --quiet <arg>^{commit}`). On a timeout or a
-// failure to run git at all it returns false: an undeterminable target is treated as
-// unresolvable, so a checkout of it fails closed (blocks) — the fail-toward-blocking
-// default is deliberate, not incidental.
+// working directory. That directory is the agent's cwd, where the guarded Bash command
+// runs, not a fixed root: the check runs `git rev-parse --verify --quiet
+// <arg>^{commit}`. On a timeout, or a failure to run git at all, it returns false. The
+// function treats an undeterminable target as unresolvable, so a checkout of it fails
+// closed and blocks; the fail-toward-blocking default is deliberate.
 func RefResolves(arg string) bool {
 	exitZero, ran := refCheck(arg + "^{commit}")
 	if !ran {
@@ -51,10 +51,10 @@ func RefResolves(arg string) bool {
 	return exitZero
 }
 
-// BranchExists reports whether refs/heads/<name> exists in the cwd repo. On a timeout
-// or a failure to run git it returns TRUE — the opposite default from RefResolves —
-// because its only caller (forced branch/switch creation) must block when it cannot
-// rule out that the force would clobber an existing branch.
+// BranchExists reports whether refs/heads/<name> exists in the cwd repo. On a timeout or
+// a failure to run git, it returns TRUE, the opposite default from RefResolves. Its only
+// caller — forced branch or switch creation — must block when it cannot rule out that the
+// force would clobber an existing branch.
 func BranchExists(name string) bool {
 	exitZero, ran := refCheck("refs/heads/" + name)
 	if !ran {
@@ -64,9 +64,9 @@ func BranchExists(name string) bool {
 }
 
 // refCheck runs `git rev-parse --verify --quiet <ref>` under the time bound and reports
-// (git exited zero, git ran to a verdict). ran is false when the probe timed out or
-// git could not be executed — the undeterminable branch each caller resolves to its own
-// fail-safe default.
+// (git exited zero, git ran to a verdict). ran is false when the probe timed out or git
+// could not run — the undeterminable branch each caller resolves to its own fail-safe
+// default.
 func refCheck(ref string) (exitZero, ran bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), refCheckTimeout)
 	defer cancel()
@@ -84,8 +84,9 @@ func refCheck(ref string) (exitZero, ran bool) {
 	return false, false
 }
 
-// Root returns the working tree's top-level directory, or an error when the cwd is
-// not inside a git repository (the `not in a git repository` posture of every command).
+// Root returns the working tree's top-level directory. It returns an error when the cwd
+// is not inside a git repository — the `not in a git repository` posture of every
+// command.
 func Root() (string, error) {
 	return Output("rev-parse", "--show-toplevel")
 }
@@ -106,9 +107,9 @@ type PorcelainEntry struct {
 }
 
 // RepoFacts is the typed local repository state used by read-only query owners.
-// DefaultResolved is what makes the default-branch cells readable: when it is false,
-// DefaultBranch is empty and Ahead/Behind are zero because there is no branch to measure
-// against — an unknown, not a measurement.
+// DefaultResolved makes the default-branch cells readable. When it is false,
+// DefaultBranch is empty and Ahead/Behind are zero, because there is no branch to
+// measure against — an unknown, not a measurement.
 type RepoFacts struct {
 	Branch, DefaultBranch string
 	DefaultResolved       bool
@@ -117,9 +118,9 @@ type RepoFacts struct {
 	Changes               []PorcelainEntry
 }
 
-// DiffFacts is the additive facts path for bench diff. It intentionally leaves Facts
-// unchanged for existing consumers while expanding untracked directories into the
-// individual entries a coherent patch can actually show.
+// DiffFacts is the additive facts path for bench diff. It leaves Facts unchanged for
+// existing consumers. It expands untracked directories into the individual entries a
+// coherent patch can actually show.
 type DiffFacts struct {
 	RepoFacts
 	Head, DefaultTip, RecordedBase string
@@ -165,7 +166,7 @@ type WorktreeFailure interface {
 }
 
 // WorktreeAdminError identifies an admin entry whose filesystem shape is not
-// safe for git's worktree enumeration. The entry is intentionally only lstat'd.
+// safe for git's worktree enumeration. The code only lstats the entry.
 type WorktreeAdminError struct {
 	Path   string
 	Shape  string
@@ -195,8 +196,8 @@ func (e *WorktreeScanError) WorktreeAction() string { return e.Action }
 
 // ScanWorktreeAdmin refuses malformed entries before git can open them. Every
 // direct entry must be a regular file or directory.
-// Git 2.43.0 blocking-open-for-read behavior on FIFO admin files is the upstream
-// reason this remains a preflight until git bounds those reads itself.
+// Git 2.43.0 blocks open-for-read on FIFO admin files, which is why this check remains a
+// preflight until git bounds those reads itself.
 func ScanWorktreeAdmin(commonDir string) error {
 	base := filepath.Join(commonDir, "worktrees")
 	info, err := os.Lstat(base)
@@ -327,8 +328,8 @@ func boundedGit(args ...string) ([]byte, error) {
 	return nil, &ResolutionError{Err: fmt.Errorf("%s failed to start or was canceled: %w", invocation, result.Err), Action: investigateGitFailureAction}
 }
 
-// Worktrees returns every registered checkout using NUL-framed porcelain. The
-// framing is required because a valid worktree path may contain a newline.
+// Worktrees returns every registered checkout using NUL-framed porcelain. The framing
+// matters because a valid worktree path may contain a newline.
 func Worktrees(root string) ([]Worktree, error) {
 	commonRaw, err := boundedGit(commonDirArgs(root)...)
 	if err != nil {
@@ -399,10 +400,10 @@ func DeleteBranchExact(root, ref, oid string) error {
 	return nil
 }
 
-// PruneLandedBranches removes local non-default branches whose work is already
-// contained in the default branch and which are neither checked out in a registered
-// worktree nor named by a caller-protected lifecycle record. The exact old OID makes
-// each deletion fail closed if the branch moves after classification.
+// PruneLandedBranches removes local non-default branches whose work the default branch
+// already contains. It skips a branch checked out in a registered worktree or named by a
+// caller-protected lifecycle record. The exact old OID makes each deletion fail closed if
+// the branch moves after classification.
 func PruneLandedBranches(root string, protectedBranches []string) (int, error) {
 	def, ok := ResolvedDefault(root)
 	if !ok {
@@ -449,8 +450,8 @@ func PruneLandedBranches(root string, protectedBranches []string) (int, error) {
 	return pruned, nil
 }
 
-// LandedState derives checkout-local dirtiness and repository-wide commit and branch facts.
-// excludedDirtyPaths are omitted only from the named checkout's dirty count.
+// LandedState derives checkout-local dirtiness and repository-wide commit and branch
+// facts. The dirty count omits excludedDirtyPaths, but only for the named checkout.
 func LandedState(root string, excludedDirtyPaths ...string) (LandedStateFact, error) {
 	excluded := make(map[string]bool, len(excludedDirtyPaths))
 	for _, path := range excludedDirtyPaths {
@@ -509,11 +510,11 @@ func LandedState(root string, excludedDirtyPaths ...string) (LandedStateFact, er
 
 // CheckedOutBranch names the branch HEAD points at, or the literal "HEAD" when detached.
 // `rev-parse --abbrev-ref` fails outright on an unborn branch, so the symbolic ref settles
-// that case: a repository with no commits still has a named branch, and losing the whole
-// snapshot over a missing commit is the worse answer. It is exported because the probe
-// chain, not the phrasing built from it, is what every caller shares — a caller that wants
-// detachment reported as "no branch" tests the returned literal rather than running the
-// two git queries a second time.
+// that case. A repository with no commits still has a named branch, and losing the whole
+// snapshot over a missing commit is the worse answer. The function is exported because
+// every caller shares the probe chain, not the phrasing built from it. A caller that wants
+// detachment reported as "no branch" tests the returned literal instead of running the two
+// git queries again.
 func CheckedOutBranch(root string) (string, error) {
 	if name, err := Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD"); err == nil && name != "" {
 		return name, nil
@@ -535,9 +536,9 @@ func Facts(root string) (RepoFacts, error) {
 	f.Dirty = len(f.Changes) > 0
 	def, ok := ResolvedDefault(root)
 	if !ok {
-		// Divergence is derived from `rev-list <default>...HEAD`, which errors against a
-		// branch that does not exist; the caller gets the unresolved state and the rest of
-		// the snapshot instead of a failed read of the whole thing.
+		// The code derives divergence from `rev-list <default>...HEAD`, which errors against
+		// a branch that does not exist. The caller gets the unresolved state and the rest
+		// of the snapshot instead of a failed read of the whole thing.
 		return f, nil
 	}
 	f.DefaultBranch, f.DefaultResolved = def, true
@@ -593,10 +594,10 @@ func AllFilesFacts(root string) (DiffFacts, error) {
 	return f, nil
 }
 
-// AllFilesStatus returns Git's raw all-files porcelain plus untracked special
-// entries that Git omits from that stream. The supplemental walk only classifies
-// non-regular, non-directory, non-symlink nodes and asks Git whether each is tracked
-// or ignored; it never opens the node.
+// AllFilesStatus returns Git's raw all-files porcelain plus untracked special entries
+// that Git omits from that stream. The supplemental walk only classifies non-regular,
+// non-directory, non-symlink nodes. It asks Git whether each is tracked or ignored, and
+// it never opens the node.
 func AllFilesStatus(root string) ([]byte, []PorcelainEntry, error) {
 	raw, err := Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
 	if err != nil {
@@ -647,17 +648,18 @@ func AllFilesStatus(root string) ([]byte, []PorcelainEntry, error) {
 }
 
 // ParsePorcelainZ splits `git status --porcelain -z --no-renames` output into entries.
-// The -z framing is NUL-delimited and never C-quotes, so a path with spaces, glob
-// characters, or a literal newline survives whole — the one source of that framing
-// knowledge for every caller (the shift staging diff and the commit block-check).
+// The -z framing is NUL-delimited and never C-quotes. A path with spaces, glob
+// characters, or a literal newline survives whole. This function is the one source of
+// that framing knowledge for every caller — the shift staging diff and the commit
+// block-check.
 func ParsePorcelainZ(raw []byte) []PorcelainEntry {
 	entries, _ := ParsePorcelainZStrict(raw)
 	return entries
 }
 
-// ParsePorcelainZStrict parses and validates NUL-framed porcelain-v1 records.
-// Rename and copy records carry a second, path-only NUL record; it is returned
-// with an empty Status so callers can preserve the framing while filtering.
+// ParsePorcelainZStrict parses and validates NUL-framed porcelain-v1 records. A rename
+// or copy record carries a second, path-only NUL record. The parser returns that record
+// with an empty Status, so callers can preserve the framing while filtering.
 func ParsePorcelainZStrict(raw []byte) ([]PorcelainEntry, error) {
 	var entries []PorcelainEntry
 	for offset := 0; offset < len(raw); {
@@ -690,17 +692,17 @@ func ParsePorcelainZStrict(raw []byte) ([]PorcelainEntry, error) {
 const GateCacheFile = "bench-last-gate"
 
 // LandedInDefault proves a local branch landed by ancestry, patch containment, or
-// reverse-applying the branch's cumulative diff to def's tree — the last is what
-// proves a squash-landing, where the branch's commits were composed into one commit
-// no other proof can see. Merge-only content cannot be proven by git cherry and is
-// deliberately kept; the merge check runs before either content proof so that
-// conservatism holds for the fourth proof too.
+// reverse-applying the branch's cumulative diff to def's tree. The reverse-apply proof
+// alone proves a squash-landing, where the branch's commits compose into one commit no
+// other proof can see. git cherry cannot prove merge-only content, so the function keeps
+// the merge check. It runs that check before either content proof, which keeps
+// conservatism for the fourth proof too.
 //
 // A true verdict is the sole authority every cleanup path deletes a branch on, so
-// ambiguity never rounds up: whatever the reverse-apply proof cannot generate, apply
-// cleanly, or represent byte-for-byte (reverseAppliesToDefault names the forms) is
-// reported not landed. The cost of refusing is an orphaned branch; the cost of a
-// wrong true is lost work with nothing standing behind it.
+// ambiguity never rounds up. The function reports not landed whenever the reverse-apply
+// proof cannot generate, apply cleanly, or represent the diff byte-for-byte —
+// reverseAppliesToDefault names the exact forms. The cost of refusing is an orphaned
+// branch. The cost of a wrong true is lost work with nothing standing behind it.
 func LandedInDefault(root, branch, def string) (landed, byContent bool, err error) {
 	ancestor := exec.Command("git", "-C", root, "merge-base", "--is-ancestor", branch, def)
 	if err := ancestor.Run(); err == nil {
@@ -730,9 +732,9 @@ func LandedInDefault(root, branch, def string) (landed, byContent bool, err erro
 	return true, true, nil
 }
 
-// Output runs `git <args>` and returns stdout with a single trailing newline trimmed;
-// err is non-nil on a nonzero exit. Used for single-value reads (root, a config key,
-// a resolved sha) where the trailing newline is noise.
+// Output runs `git <args>` and returns stdout with a single trailing newline trimmed.
+// err is non-nil on a nonzero exit. Callers use it for single-value reads — a root, a
+// config key, a resolved sha — where the trailing newline is noise.
 func Output(args ...string) (string, error) {
 	var out bytes.Buffer
 	cmd := exec.Command("git", args...)
@@ -741,14 +743,15 @@ func Output(args ...string) (string, error) {
 	return strings.TrimRight(out.String(), "\n"), err
 }
 
-// OK reports whether `git <args>` exits zero, discarding all output — the test form
-// (cat-file -e, merge-base --is-ancestor) where only the exit code matters.
+// OK reports whether `git <args>` exits zero. It discards all output. This is the test
+// form — cat-file -e, merge-base --is-ancestor — where only the exit code matters.
 func OK(args ...string) bool {
 	return exec.Command("git", args...).Run() == nil
 }
 
-// Raw runs `git <args>` and returns stdout verbatim (no trimming) with the exit
-// status; used for `diff -z` output whose NUL framing and any trailing bytes are load-bearing.
+// Raw runs `git <args>` and returns stdout verbatim, with no trimming, along with the
+// exit status. Callers use it for `diff -z` output, whose NUL framing and trailing bytes
+// are load-bearing.
 func Raw(args ...string) ([]byte, error) {
 	var out bytes.Buffer
 	cmd := exec.Command("git", args...)
