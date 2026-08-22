@@ -4,13 +4,13 @@ The working prioritization document: every row is open work, verified against
 the tree; a row leaves when the work ships (spec-retire) or a
 `/bench-drain` reconcile removes it. Raw capture never lands here — it
 goes to `capture/IDEAS.md` and enters only through a reviewed drain. A row for spec'd
-work names its spec path (`specs/<slug>/spec.md`) — that path is what `bench status`
+work names its spec path (`specs/<slug>/spec.md`). That path is what `bench status`
 cross-checks against the tree, so a row that omits it is a visible choice to
 stay outside the ambient check.
 
 FT-to-FT ordering is single-sourced in `## Dependencies`. A literal dependency
 blocks the dependent row until its prerequisite lands. A recommended dependency
-does not block work; it says the dependent row will be cheaper or less likely to
+does not block work. It says the dependent row will be cheaper or less likely to
 churn when it is specified after the prerequisite.
 
 ## Release-readiness status
@@ -125,10 +125,11 @@ means the repository-controlled compliance assessment.
 
 ## False greens — verdicts that credit unchecked work
 
-Five rows, one failure class: a green whose warrant is missing — a stale
-binary, a dead or skipping citation, a vacuous baseline, an unchecked absence,
-a dependency edge nothing resolves. Each hardens a different oracle surface, so
-they stay separate builds, but they read and prioritize as one theme.
+Five rows share one failure class: a green whose warrant is missing. The
+missing warrant is a stale binary, a dead or skipping citation, a vacuous
+baseline, an unchecked absence, or a dependency edge nothing resolves. Each
+hardens a different oracle surface. They stay separate builds, but they read
+and prioritize as one theme.
 
 **FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations resolve.**
 
@@ -142,9 +143,10 @@ they stay separate builds, but they read and prioritize as one theme.
 
 ## Reds the diff doesn't own — inheritance, load, and harness defects
 
-Five rows, one failure class: a red that answers for something other than the
-diff in front of the gate — an inherited baseline, machine contention and a
-flaky oracle, a literal deadline, a harness defect.
+Five rows share one failure class: a red that answers for something other
+than the diff in front of the gate. The cause is an inherited baseline,
+machine contention and a flaky oracle, a literal deadline, or a harness
+defect.
 
 **FT141 (MEDIUM, decision required) — red verdicts are recorded against a baseline, so inherited reds stop reading as caused.**
 
@@ -159,8 +161,8 @@ flaky oracle, a literal deadline, a harness defect.
 ## Standards debt — one batched light-path pass
 
 Three rows plus FT142's standards track are shippable together as small
-one-source-per-fact and cleanup sweeps under one gate; FT117's parser-routing
-half is the largest item in the batch. FT142 itself stays on the main list
+one-source-per-fact and cleanup sweeps under one gate. FT117's parser-routing
+half is the largest item in the batch. FT142 itself stays on the main list,
 because its ship track belongs to a separate `prep-release` hardening visit.
 
 **FT117 (MEDIUM) — FT87 parser-surface follow-ups.**
@@ -195,17 +197,17 @@ to one immutable version and its generated manifest after:
 4. Publication is staged, resumable, digest-verified, wrapper-last, and bound
    to the repository-owned evidence bundle.
 5. Setup, doctor, relink, fresh clone, an operational command, and unlink pass
-   from an isolated prefix without a source checkout; setup preserves existing
-   instructions, settings, and hooks and is idempotent and reversible (shipped
-   with FT76; re-verified at reassessment).
+   from an isolated prefix without a source checkout. Setup preserves existing
+   instructions, settings, and hooks, and it is idempotent and reversible
+   (shipped with FT76; re-verified at reassessment).
 6. Consumer artifacts exclude maintainer-only capabilities and include the
    supported-platform, security, data-handling, threat, support/EOL, network,
    rollback/recovery, license/notice, SBOM, checksum, and package-inventory
    records.
 7. Bank evidence includes redacted local events for success, failure,
-   interruption, and recovery, plus the preservation, oracle-change,
-   post-agent recovery, unknown-hook, environment-minimization, offline, and
-   transactional lifecycle contract results.
+   interruption, and recovery. It also includes the preservation,
+   oracle-change, post-agent recovery, unknown-hook, environment-minimization,
+   offline, and transactional lifecycle contract results.
 8. A clean-room user can complete setup from the README in one shell command
    plus at most one harness-native conversation.
 
@@ -264,10 +266,10 @@ FT164's ticket-contract core shipped, so every later build slices independently
 green tickets through the current `craft-tickets` grammar. The payoff facts
 shaping the order, verified in-tree 2026-08-02 with an independent mid-tier
 refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the gate's reduced
-scope, so every separately-landed prose diff pays a full gate — rows batch on the
-shared full gate, not just shared files; anchor-pinned files couple prose diffs to
-conformance fixture updates. The reviewed Pocock-alignment Spec C has shipped and
-FT107 is retired.
+scope, so every separately-landed prose diff pays a full gate. Rows batch on the
+shared full gate, not just shared files, and anchor-pinned files couple prose
+diffs to conformance fixture updates. The reviewed Pocock-alignment Spec C has
+shipped and FT107 is retired.
 
 FT100 builds last: after FT89 establishes which guidance is authoritative, and
 after FT231 supplies the measurement that tells a cut from a regression.
