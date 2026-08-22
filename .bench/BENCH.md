@@ -46,34 +46,35 @@ executable help spells it. Never append extra subcommands,
 
 1. **The gate is the oracle — you never grade your own work.** "Done" means
    `bench gate` exits zero. Never edit, skip, weaken, or delete a test or a
-   check to make it pass; if a check is wrong, stop and say so. A subagent's
-   done-claim is a claim, not a result — verify it against the gate and
-   `git status`, and run write-delegations in isolated worktrees. When another
-   writer's edits are in flight, take side-work to a `bench worktree`: one
+   check to make it pass. If a check is wrong, stop and say so. A subagent's
+   done-claim is a claim, not a result. Verify the claim against the gate and
+   `git status`. Run every write delegation in an isolated worktree. If another
+   writer's edits are in flight, take the side work to a `bench worktree`: one
    verdict, one diff.
-2. **Declare the line before a long run.** State the model, the effort, the
-   iteration cap, and a one-clause justification in one line before any
-   multi-cycle stage; `craft-line` owns the tier judgment. Never escalate
-   silently; on an exhausted cap, stop and report. Tiers (cheap / mid / top)
-   bind to opaque model-id tokens in `projects/<name>.md` and
-   `.bench/lines.env`; an unavailable model sends you back to that binding,
-   never a replacement.
+2. **Declare the line before a long run.** Before any multi-cycle stage, state
+   the model, the effort, the iteration cap, and a one-clause justification in
+   one line. `craft-line` owns the tier judgment. Never escalate silently. If
+   the cap is exhausted, stop and report. The tiers (cheap / mid / top) bind to
+   opaque model-id tokens in `projects/<name>.md` and `.bench/lines.env`. If a
+   model is unavailable, return to that binding; never substitute a replacement.
 3. **Document for the teammate who just walked in.** Docs and ADRs give the
-   current decided state to someone with no memory of how we got here — the
-   decision, not its history. No file paths or code snippets in ADRs; they rot.
+   current decided state to a reader with no memory of how we got here. Record
+   the decision, not its history. Put no file paths and no code snippets in an
+   ADR; they rot.
 4. **One small change at a time, repo stays green.** Make the smallest diff
-   that advances the objective; commit on green, never on red. Read the
-   surrounding code first — no API or function is called before its
-   definition has been read this session. Compose an existing seam rather
-   than inventing one; if reframing the task would make a shortcut feel
-   acceptable, stop and ask instead.
+   that advances the objective. Commit on green, never on red. Read the
+   surrounding code first:
+   do not call an API or a function before you read its definition in this session.
+   Compose an existing seam; do not invent one. If a reframed task makes a
+   shortcut feel acceptable, stop and ask.
 
-Three predicates ride with them. On a **non-behavioral spec contradiction**,
-follow the current tree convention and flag it for reviewer veto; a behavioral
-one asks. On a **material acceptance shortfall**, a build that cannot meet an
-acceptance row exits and reports rather than landing a silent partial. Under
-**owned-red convergence**, only diff-owned reds count toward fix-loop
-convergence, a call `craft-line` owns.
+Three predicates ride with them. If you find a **non-behavioral spec
+contradiction**, follow the current tree convention and flag it for reviewer veto.
+If the contradiction is behavioral, ask. If a build cannot meet an acceptance
+row, that is a **material acceptance shortfall**:
+the build exits and reports. It does not land a silent partial.
+Under **owned-red convergence**, only diff-owned reds count toward fix-loop
+convergence. `craft-line` owns that call.
 
 ## How to talk to me
 
