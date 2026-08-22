@@ -28,7 +28,8 @@ const (
 func (source InputSource) Valid() bool {
 	switch source {
 	case InputCatchAll, InputGoSource, InputGoAndDataHandling, InputGateEntry, InputOfflineSmoke,
-		InputBenchRoutes, InputDecisionDocuments, InputRoadmapBoard, InputBenchkitProfile:
+		InputBenchRoutes, InputDecisionDocuments, InputRoadmapBoard, InputBenchkitProfile,
+		InputCaptureRetros:
 		return true
 	default:
 		return false
@@ -94,6 +95,9 @@ const (
 	// InputRoadmapBoard binds the split roadmap board: the ROADMAP.md index and the
 	// roadmap/ detail owners its rows name.
 	InputRoadmapBoard InputSource = "roadmap-board"
+	// InputCaptureRetros binds the pending retrospective capture directory inspected by
+	// the improvement-marker check.
+	InputCaptureRetros InputSource = "capture-retros"
 	// InputBenchkitProfile binds the checks a profile-owned table drives, each reading that
 	// table and the subjects it names.
 	InputBenchkitProfile InputSource = "benchkit-profile"
@@ -140,6 +144,8 @@ var Checks = []Check{
 	{Name: "guidance-prose-budgets", Implementation: "checkGuidanceProseBudgets", Tier: Dev, Subject: SubjectRoot, Inputs: InputBenchkitProfile},
 	{Name: "roadmap-detail-integrity", Implementation: "ValidateRoadmapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputRoadmapBoard},
 	{Name: "structure-accept-currency", Implementation: "ValidateAcceptGrants", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "retro-improvement-markers", Implementation: "ValidateImprovementMarkers", Tier: Dev, Subject: SubjectRoot, Inputs: InputCaptureRetros},
+	{Name: "row-next-grammar", Implementation: "checkRowNextGrammar", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
@@ -164,6 +170,8 @@ var familyChecks = map[string]string{
 	"injected-ports":                "injected-port-registry",
 	"guidance-prose-budgets":        "guidance-prose-budgets",
 	"roadmap-detail-integrity":      "roadmap-detail-integrity",
+	"retro-improvement-markers":     "retro-improvement-markers",
+	"row-next-grammar":              "row-next-grammar",
 }
 
 // Families lists the family names this table binds, in sorted order. They are the

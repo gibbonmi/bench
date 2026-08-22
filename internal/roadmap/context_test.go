@@ -153,7 +153,7 @@ func TestContextCommandCarriesCaptureLineNumbersInEveryMode(t *testing.T) {
 
 func TestContextCommandFullCarriesCompleteBodiesAtSchemaFour(t *testing.T) {
 	root := newRepo(t)
-	writeBoard(t, root, Row{"**FT1 — first.**", "roadmap evidence\n"})
+	writeBoard(t, root, Row{"**FT1 — first.**", "roadmap evidence\nNext: spec\n"})
 	files := map[string]string{
 		IdeasFile:                     "- 2026-01-02  idea evidence\nmalformed idea\n",
 		learnings.JournalPath:         "## 2026-01-03 — lesson  [open]\nlearning evidence\n",
@@ -181,7 +181,7 @@ func TestContextCommandFullCarriesCompleteBodiesAtSchemaFour(t *testing.T) {
 		t.Fatalf("context rows = %#v, %v", contextRows, err)
 	}
 	for _, want := range []struct{ block, field, body string }{
-		{"roadmap_rows", "body", "roadmap evidence"},
+		{"roadmap_rows", "body", "roadmap evidence\nNext: spec"},
 		{"ideas", "text", "idea evidence"},
 		{"learnings", "body", "learning evidence"},
 		{"retros", "body", "retro evidence\n"},
@@ -626,7 +626,7 @@ func TestOccurrenceLedgerMalformedAndLineEndings(t *testing.T) {
 	// The row file's first line is the index line byte-for-byte, so a CRLF row file
 	// under an LF index really has drifted: the ledger still parses across the line
 	// endings, and the stray carriage return is a heading mismatch rather than nothing.
-	valid, failures, diagnostics := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\r\nOccurrences: alpha-1, beta-2"}), nil, false)
+	valid, failures, diagnostics := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\r\nNext: spec\r\nOccurrences: alpha-1, beta-2"}), nil, false)
 	wantDiagnostics := []string{"roadmap/FT1.md: heading does not match ROADMAP.md row FT1"}
 	if len(failures) != 0 || valid.Rows[0].OccurrenceCount != 2 {
 		t.Fatalf("CRLF newline-less ledger = %#v, %#v", valid, failures)
@@ -635,7 +635,7 @@ func TestOccurrenceLedgerMalformedAndLineEndings(t *testing.T) {
 		t.Fatalf("CRLF row-file diagnostics = %#v, want %#v", diagnostics, wantDiagnostics)
 	}
 	for _, ledger := range []string{"Occurrences:", "Occurrences: alpha_1", "Occurrences: beta, alpha", "Occurrences: alpha, alpha", "Occurrences: alpha\nOccurrences: beta"} {
-		doc, got, diagnostics := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\n" + ledger + "\n"}), nil, false)
+		doc, got, diagnostics := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\nNext: spec\n" + ledger + "\n"}), nil, false)
 		if len(got) != 1 || got[0].Reason != "malformed-ledger" || len(doc.OccurrenceDiscrepancies) != 1 {
 			t.Fatalf("ledger %q accepted: %#v, %#v", ledger, doc, got)
 		}
@@ -838,7 +838,7 @@ func TestBuildContextKeepsSameIncidentForSeparateOwners(t *testing.T) {
 
 func TestBuildContextProjectsEveryRecordedSourceWithoutPendingPair(t *testing.T) {
 	root := newRepo(t)
-	writeBoard(t, root, Row{"**FT1 — one.**", "Occurrences: recorded\n"})
+	writeBoard(t, root, Row{"**FT1 — one.**", "Next: spec\nOccurrences: recorded\n"})
 	if err := os.WriteFile(filepath.Join(root, IdeasFile), []byte("- 2026-07-10  first [occurrence:FT1/recorded]\n- 2026-07-10  second [occurrence:FT1/recorded]\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

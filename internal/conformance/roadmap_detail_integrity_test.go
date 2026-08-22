@@ -29,6 +29,10 @@ var roadmapDetailIntegrityFixtureClasses = map[string]string{
 	"roadmap-wrapped-heading":        "wrapped heading",
 	"roadmap-unreadable-detail":      "detail file: not a regular file",
 	"roadmap-degraded-row-directory": "detail directory",
+	"roadmap-next-unknown-token":     "unknown Next: token",
+	"roadmap-next-unanchored-line":   "unanchored Next: line",
+	"roadmap-next-duplicate-line":    "duplicate Next: line",
+	"roadmap-next-missing-line":      "missing Next: line",
 }
 
 func validateRoadmapDetailIntegrityFixtureInventory(fixtures map[string]canary.Fixture) error {
@@ -36,8 +40,8 @@ func validateRoadmapDetailIntegrityFixtureInventory(fixtures map[string]canary.F
 	for name := range roadmapDetailIntegrityFixtureClasses {
 		expected = append(expected, name)
 	}
-	if len(expected) != 9 {
-		return fmt.Errorf("roadmap-detail-integrity fixture inventory has %d entries, want 9", len(expected))
+	if len(expected) != 13 {
+		return fmt.Errorf("roadmap-detail-integrity fixture inventory has %d entries, want 13", len(expected))
 	}
 	sort.Strings(expected)
 	actual := make([]string, 0, len(expected))

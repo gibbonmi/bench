@@ -22,6 +22,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/maps"
+	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/skillsindex"
@@ -75,6 +76,8 @@ func init() {
 		"guidance-prose-budgets":        {checkGuidanceProseBudgets, registry.Dev, registry.SubjectRoot},
 		"roadmap-detail-integrity":      {roadmap.ValidateRoadmapTree, registry.Dev, registry.SubjectRoot},
 		"structure-accept-currency":     {structure.ValidateAcceptGrants, registry.Dev, registry.SubjectRoot},
+		"retro-improvement-markers":     {retros.ValidateImprovementMarkers, registry.Dev, registry.SubjectRoot},
+		"row-next-grammar":              {checkRowNextGrammar, registry.Dev, registry.SubjectRoot},
 	}
 }
 

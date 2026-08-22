@@ -19,7 +19,7 @@ import (
 )
 
 func roadmapUsage() string {
-	return "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...>\n"
+	return "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...> | bench roadmap --flow\n"
 }
 
 // ideaGrammar is the declared argument shape usage.Parse enforces for this subcommand —
@@ -326,3 +326,13 @@ func ideaLines(file string) ([]string, bounds.FileState) {
 	_, _, out := parseIdeas(c.Data, true)
 	return out, bounds.StateParsed
 }
+
+// rowNextTokens is the ordered set of values a row's `Next:` line may carry, one token
+// per phase a row can be routed to. It is the one source for the grammar: the split-board
+// parser validates against it, and the drain's token table is graded against it, so the
+// enforcement and its documentation cannot drift apart.
+var rowNextTokens = []string{"shape", "spec", "ticket", "decide", "kit-edit"}
+
+// RowNextTokens returns the ordered row-token set. It hands back a fresh slice, so a
+// caller that sorts or trims its copy cannot rewrite the grammar for everyone else.
+func RowNextTokens() []string { return append([]string(nil), rowNextTokens...) }

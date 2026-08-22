@@ -3,8 +3,10 @@ package roadmap
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -92,6 +94,11 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 	// duplicate; claimed is every ID the index names at all, faulted lines included, so
 	// the directory pass never calls a claimed row's file an orphan.
 	rowed, claimed := map[string]bool{}, map[string]bool{}
+	// section is the index heading the current row sits under, and indexFence keeps a
+	// heading inside a fenced block from becoming that section. The parked section is the
+	// one place a row may carry no next action, so the row grammar needs to know which
+	// section claimed the row.
+	section, indexFence := "", false
 	// A directory the classifier could not read yields no listing, so every row would
 	// otherwise be told its detail owner is missing. Name the directory once instead:
 	// nobody looked, so no row's owner is known to be absent.
@@ -102,6 +109,12 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 
 	for i := 0; i < len(lines); {
 		line := lines[i]
+		if strings.HasPrefix(strings.TrimRight(line, " \t\r"), "```") {
+			indexFence = !indexFence
+		}
+		if !indexFence && strings.HasPrefix(line, "## ") {
+			section = line
+		}
 		m := roadmapStartRe.FindStringSubmatch(line)
 		if m == nil {
 			if strings.HasPrefix(line, "**") {
@@ -144,6 +157,12 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 				diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("heading does not match %s row %s", RoadmapFile, id)})
 			}
 			row.Body, row.BodyBytes = projectBody(strings.TrimSpace(body), full)
+			for _, d := range rowNextDiagnostics(rowFilePath(id), rowText, strings.Contains(section, parkedSectionWord)) {
+				if d.Reason == rowNextMissingReason && !rowNextMissingEnforced {
+					continue
+				}
+				diagnostics = append(diagnostics, d)
+			}
 		case unread[id], dirDegraded:
 			// The listing pass has already named the file — or the directory — it could
 			// not read; the row keeps its place on the board with the body nobody was
@@ -296,4 +315,84 @@ func parseSequence(lines []string) (rows []SequenceRow, text string, hasSection 
 		}
 	}
 	return rows, text, hasSection
+}
+
+// rowNextMarker is the column-zero prefix of a row's next-action line, and
+// parkedSectionWord is the word an index section heading carries when the rows under it
+// are exempt from that line: a row parked or waiting on someone else has no honest next
+// action, and the parked section is its legal home.
+const (
+	rowNextMarker     = "Next:"
+	parkedSectionWord = "Parked"
+)
+
+// rowNextMissingEnforced gates the missing-line fault class at the one boundary that
+// decides what the gate reds on. The parser derives the class either way; the migration
+// that gave every existing row a token flipped this to true in the same commit, so the
+// tree was never red between the check and the board it grades. The class is now a live
+// gate fault: any row outside the parked section with no `Next:` line reds
+// roadmap-detail-integrity. It stays a var so tests can observe it through ParseDocument,
+// where the parked exemption and the fence rule that feed it live.
+var rowNextMissingEnforced = true
+
+// rowNextMissingReason is the whole reason text of the missing-line class, so the
+// enforcement gate matches the class itself rather than a prefix another class could grow
+// into.
+var rowNextMissingReason = "missing " + rowNextMarker + " line; expected one of " + strings.Join(RowNextTokens(), ", ")
+
+// rowNextDiagnostics grades one detail file's next-action marker and returns the fault
+// classes it found, in line order: a missing line, a value outside the token set, an
+// unanchored line, and a second line. parked exempts the row from carrying the line at
+// all, but never from the grammar of a line it does carry — a parked row with a typo is
+// still a typo.
+//
+// The match is position-anchored. `Next: <token>` starts at column zero, on one physical
+// line, outside a fenced code block, separated by one ASCII space: an indented line, a
+// line broken after the marker, and a separator a reader cannot see all read as the
+// unanchored class rather than passing, so the marker is where the reader sees it and
+// nowhere else. A fenced line is not a marker at all, which is what keeps a documented
+// example out of the grammar.
+func rowNextDiagnostics(path, text string, parked bool) []Diagnostic {
+	var diagnostics []Diagnostic
+	inFence, seen := false, 0
+	for index, raw := range strings.Split(text, "\n") {
+		line := strings.TrimRight(raw, "\r")
+		if strings.HasPrefix(strings.TrimRight(line, " \t"), "```") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+		at := index + 1
+		if !strings.HasPrefix(line, rowNextMarker) {
+			if strings.HasPrefix(strings.TrimLeftFunc(line, unicode.IsSpace), rowNextMarker) {
+				seen++
+				diagnostics = append(diagnostics, Diagnostic{path, rowNextUnanchored(at)})
+			}
+			continue
+		}
+		seen++
+		switch value, spaced := strings.CutPrefix(line, rowNextMarker+" "); {
+		case seen > 1:
+			diagnostics = append(diagnostics, Diagnostic{path, fmt.Sprintf("duplicate %s line at line %d; a row carries one", rowNextMarker, at)})
+		case !spaced, strings.ContainsFunc(value, unicode.IsSpace):
+			// Everything the marker line can hold other than exactly one token: no
+			// separator, a separator that is not one ASCII space, a value the reader
+			// finds on the next line, or a trailing remainder.
+			diagnostics = append(diagnostics, Diagnostic{path, rowNextUnanchored(at)})
+		case !slices.Contains(rowNextTokens, value):
+			diagnostics = append(diagnostics, Diagnostic{path, fmt.Sprintf("unknown %s token %q at line %d; expected one of %s", rowNextMarker, value, at, strings.Join(RowNextTokens(), ", "))})
+		}
+	}
+	if seen == 0 && !parked {
+		diagnostics = append(diagnostics, Diagnostic{path, rowNextMissingReason})
+	}
+	return diagnostics
+}
+
+// rowNextUnanchored is the one reason text of the unanchored class, which four distinct
+// mis-writings of the marker line share: the reader's repair is the same for all of them.
+func rowNextUnanchored(at int) string {
+	return fmt.Sprintf("unanchored %s line at line %d; expected %s <token> at column zero on one line", rowNextMarker, at, rowNextMarker)
 }

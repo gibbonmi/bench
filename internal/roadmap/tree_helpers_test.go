@@ -83,3 +83,14 @@ func board(rows ...Row) (string, map[string]string) {
 	}
 	return index.String(), files
 }
+
+// rowNextTree is the one-row split board the marker tests drive: FT1's index line under
+// section, and a detail file whose body is the given text.
+func rowNextTree(section, body string) Tree {
+	const heading = "**FT1 — one.**"
+	index := heading + "\n"
+	if section != "" {
+		index = section + "\n\n" + index
+	}
+	return splitTree(index, map[string]string{"FT1.md": heading + "\n" + body})
+}

@@ -315,6 +315,8 @@ current-state advertisement of its non-meta input bindings:
 | `guidance-prose-budgets` | `benchkit-profile` |
 | `roadmap-detail-integrity` | `roadmap-board` |
 | `structure-accept-currency` | `catch-all` |
+| `retro-improvement-markers` | `capture-retros` |
+| `row-next-grammar` | `catch-all` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
 current exact green; partial/component and reduced-scope records are legacy input classes

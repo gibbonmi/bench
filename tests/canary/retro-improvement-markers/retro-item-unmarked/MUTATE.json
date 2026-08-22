@@ -1,0 +1,7 @@
+[
+  {
+    "path": "capture/retros/canary-spec.md",
+    "old": "- Report the board flow in the drain exit.\n  Feeds: FT9001\n",
+    "new": "- Report the board flow in the drain exit.\n"
+  }
+]

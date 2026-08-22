@@ -2,6 +2,7 @@
 package retros
 
 import (
+	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -63,4 +64,41 @@ func Facts(root string) Result {
 		break
 	}
 	return result
+}
+
+// MissingMarkerDiagnostic opens the diagnostic an improvement item without a well-formed
+// destination marker raises. The repair is in the message because the retro author reads
+// it in a gate report, away from the template that states the grammar.
+const MissingMarkerDiagnostic = "improvement item carries no destination marker"
+
+// ValidateImprovementMarkers grades every pending retrospective for the destination marker
+// its improvement items carry, and returns one diagnostic per fault.
+//
+// An absent or an empty capture directory is the ordinary no-pending posture and stays
+// quiet. A directory or a file the classifier refuses is a diagnostic rather than a skip:
+// an unreadable retro that graded green would be an unmarked retro nobody sees.
+func ValidateImprovementMarkers(root string) []string {
+	facts := Facts(root)
+	if len(facts.Entries) == 0 {
+		if facts.State.Failed() {
+			return []string{fmt.Sprintf("%s: retro capture directory is %s (%s)", Directory, facts.State, facts.Reason)}
+		}
+		return nil
+	}
+	var diags []string
+	for _, entry := range facts.Entries {
+		if entry.State.Failed() {
+			diags = append(diags, fmt.Sprintf("%s: retro file is %s (%s)", entry.Path, entry.State, entry.Reason))
+			continue
+		}
+		for _, item := range Recommendations(entry.Body) {
+			if item.FeedsMarked() {
+				continue
+			}
+			diags = append(diags, fmt.Sprintf(
+				"%s:%d: %s; end the item with one line reading 'Feeds: FT<n>', 'Feeds: new', or 'Feeds: none'",
+				entry.Path, item.Line, MissingMarkerDiagnostic))
+		}
+	}
+	return diags
 }

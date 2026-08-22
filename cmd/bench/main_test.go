@@ -11,6 +11,9 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -608,5 +611,31 @@ printf '%s\n' "$BENCH_KIT" > "$BENCH_TEST_ARGV"
 				t.Fatalf("BENCH_KIT = %q, want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+// TestRoadmapFlagsRouteToTheirOwners covers RF10: the flow flag adds a surface and
+// moves none. The bare form is byte-compared against its owner, and the context form is
+// pinned to the schema `/bench-drain` accepts.
+func TestRoadmapFlagsRouteToTheirOwners(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	const heading = "**FT1 — fixture.**"
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT1.md": heading + "\n"})
+	t.Chdir(root)
+
+	wantBare, wantCode := roadmap.RoadmapCommand(nil)
+	gotBare, gotCode := roadmapCommand(nil)
+	if gotBare != wantBare || gotCode != wantCode {
+		t.Fatalf("bare roadmap = %q, %d; want its owner's %q, %d", gotBare, gotCode, wantBare, wantCode)
+	}
+
+	context, code := roadmapCommand([]string{"--context"})
+	if code != 0 || !strings.Contains(context, "context[1]{schema,full,sequence_trusted}:\n  4,") {
+		t.Fatalf("roadmap --context = %q, %d; want the schema-4 snapshot on exit 0", context, code)
+	}
+
+	flow, code := roadmapCommand([]string{"--flow"})
+	if code != 0 || !strings.HasPrefix(flow, "flow[") {
+		t.Fatalf("roadmap --flow = %q, %d; want the flow block on exit 0", flow, code)
 	}
 }

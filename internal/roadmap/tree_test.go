@@ -33,12 +33,12 @@ func diagnosticStrings(diagnostics []Diagnostic) []string {
 // board — the row carries the index title and an empty body, and nothing is reported.
 func TestTreeParseAcceptsHeadingOnlyRowFile(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
-	tree := splitTree("# Roadmap\n\n"+heading+"\n", map[string]string{"FT7.md": heading + "\n"})
+	tree := splitTree("# Roadmap\n\n"+heading+"\n", map[string]string{"FT7.md": heading + "\nNext: spec\n"})
 	doc, failures, diagnostics := ParseDocument(tree, nil, true)
 	if len(failures) != 0 || len(diagnostics) != 0 {
 		t.Fatalf("clean split board reported failures=%#v diagnostics=%#v", failures, diagnostics)
 	}
-	if got, want := doc.Rows, []RoadmapRow{{ID: "FT7", Title: "(LOW) — x."}}; !reflect.DeepEqual(got, want) {
+	if got, want := doc.Rows, []RoadmapRow{{ID: "FT7", Title: "(LOW) — x.", Body: "Next: spec", BodyBytes: 10}}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("rows = %#v, want %#v", got, want)
 	}
 }
@@ -48,7 +48,7 @@ func TestTreeParseAcceptsHeadingOnlyRowFile(t *testing.T) {
 // malformed-ledger discrepancy, now sourced at the row file that carries it.
 func TestTreeParseProjectsRowFileLedger(t *testing.T) {
 	const heading = "**FT1 — one.**"
-	body := "Occurrence: 2026-08-14 FT189 refused a malformed admin file.\nOccurrences: baseline-01, baseline-02\n"
+	body := "Next: spec\nOccurrence: 2026-08-14 FT189 refused a malformed admin file.\nOccurrences: baseline-01, baseline-02\n"
 	doc, failures, diagnostics := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\n" + body}), nil, true)
 	if len(failures) != 0 || len(diagnostics) != 0 {
 		t.Fatalf("row-file ledger reported failures=%#v diagnostics=%#v", failures, diagnostics)
@@ -57,7 +57,7 @@ func TestTreeParseProjectsRowFileLedger(t *testing.T) {
 		t.Fatalf("ledger row = %#v, want count 2 and both keys", got)
 	}
 
-	descending := "Occurrences: baseline-02, baseline-01\n"
+	descending := "Next: spec\nOccurrences: baseline-02, baseline-01\n"
 	doc, failures, _ = ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\n" + descending}), nil, true)
 	if len(failures) != 1 || failures[0].Reason != "malformed-ledger" || failures[0].Source != "roadmap/FT1.md" {
 		t.Fatalf("descending ledger failures = %#v, want one malformed-ledger sourced roadmap/FT1.md", failures)
@@ -120,15 +120,15 @@ func TestTreeParseReportsOrphanRowFile(t *testing.T) {
 func TestTreeParseReportsInlineBody(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
 	tree := splitTree(heading+"\nBody text.\n\n**FT8 (LOW) — y.**\n", map[string]string{
-		"FT7.md": heading + "\nOwned body.\n",
-		"FT8.md": "**FT8 (LOW) — y.**\n",
+		"FT7.md": heading + "\nOwned body.\nNext: spec\n",
+		"FT8.md": "**FT8 (LOW) — y.**\nNext: spec\n",
 	})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
 	want := []string{"ROADMAP.md: row FT7 carries an inline body; move it to roadmap/FT7.md"}
 	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
-	if len(doc.Rows) != 2 || doc.Rows[0].Body != "Owned body." {
+	if len(doc.Rows) != 2 || doc.Rows[0].Body != "Owned body.\nNext: spec" {
 		t.Fatalf("rows = %#v, want both rows kept and FT7's body from its file", doc.Rows)
 	}
 }
@@ -137,13 +137,13 @@ func TestTreeParseReportsInlineBody(t *testing.T) {
 // drifted from its index line is named with the file and the row, so the two copies
 // cannot diverge unnoticed.
 func TestTreeParseReportsHeadingMismatch(t *testing.T) {
-	tree := splitTree("**FT7 (LOW) — x.**\n", map[string]string{"FT7.md": "**FT7 (LOW) — y.**\nbody\n"})
+	tree := splitTree("**FT7 (LOW) — x.**\n", map[string]string{"FT7.md": "**FT7 (LOW) — y.**\nbody\nNext: spec\n"})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
 	want := []string{"roadmap/FT7.md: heading does not match ROADMAP.md row FT7"}
 	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
-	if len(doc.Rows) != 1 || doc.Rows[0].Title != "(LOW) — x." || doc.Rows[0].Body != "body" {
+	if len(doc.Rows) != 1 || doc.Rows[0].Title != "(LOW) — x." || doc.Rows[0].Body != "body\nNext: spec" {
 		t.Fatalf("rows = %#v, want the index title over the file body", doc.Rows)
 	}
 }
@@ -152,7 +152,7 @@ func TestTreeParseReportsHeadingMismatch(t *testing.T) {
 // is loud, and the row-ID grammar is today's, so a non-FT ID is simply a row.
 func TestTreeParseReportsUnrecognizedFiles(t *testing.T) {
 	tree := splitTree("**AB1 (LOW) — z.**\n", map[string]string{
-		"AB1.md":   "**AB1 (LOW) — z.**\n",
+		"AB1.md":   "**AB1 (LOW) — z.**\nNext: spec\n",
 		"FT7.txt":  "**FT7 (LOW) — x.**\n",
 		"notes.md": "scratch\n",
 	})
@@ -173,7 +173,7 @@ func TestTreeParseReportsUnrecognizedFiles(t *testing.T) {
 // duplicate and its position, and only the first position keeps a row.
 func TestTreeParseReportsDuplicateIndexID(t *testing.T) {
 	const heading = "**FT7 (LOW) — x.**"
-	tree := splitTree(heading+"\n\n"+heading+"\n", map[string]string{"FT7.md": heading + "\n"})
+	tree := splitTree(heading+"\n\n"+heading+"\n", map[string]string{"FT7.md": heading + "\nNext: spec\n"})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
 	want := []string{"ROADMAP.md: duplicate row FT7 at line 3"}
 	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
@@ -224,7 +224,10 @@ func TestTreeParseReportsUnreadRowFile(t *testing.T) {
 func TestTreeParseReportsEmptyRowFileAsHeadingMismatch(t *testing.T) {
 	tree := splitTree("**FT7 (LOW) — x.**\n", map[string]string{"FT7.md": ""})
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
-	want := []string{"roadmap/FT7.md: heading does not match ROADMAP.md row FT7"}
+	want := []string{
+		"roadmap/FT7.md: heading does not match ROADMAP.md row FT7",
+		"roadmap/FT7.md: missing Next: line; expected one of shape, spec, ticket, decide, kit-edit",
+	}
 	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
 	}
@@ -353,7 +356,7 @@ func TestIdeaOwnerValidatesThroughTheSplitTree(t *testing.T) {
 	}
 
 	root = newRepo(t)
-	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT7.md": heading + "\n"})
+	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT7.md": heading + "\nNext: spec\n"})
 	if out, code := IdeaCommand([]string{"--owner", "FT7", "--incident", "signal", "text"}); code != 0 {
 		t.Fatalf("whole tree = %q/%d, want exit 0", out, code)
 	}
@@ -363,5 +366,102 @@ func TestIdeaOwnerValidatesThroughTheSplitTree(t *testing.T) {
 	}
 	if !regexp.MustCompile(`(?m)^- [0-9-]{10}  text \[occurrence:FT7/signal\]$`).Match(got) {
 		t.Fatalf("appended entry = %q", got)
+	}
+}
+
+// TestRowNextAcceptsEveryToken covers RF13 and RF19: each of the five decided tokens
+// passes, and the last line of a hand-edited file needs no trailing newline to be read.
+func TestRowNextAcceptsEveryToken(t *testing.T) {
+	for _, token := range RowNextTokens() {
+		t.Run(token, func(t *testing.T) {
+			_, _, diagnostics := ParseDocument(rowNextTree("", "Next: "+token+"\n"), nil, true)
+			if len(diagnostics) != 0 {
+				t.Fatalf("token %q diagnostics = %#v, want none", token, diagnosticStrings(diagnostics))
+			}
+		})
+	}
+	t.Run("no trailing newline", func(t *testing.T) {
+		_, _, diagnostics := ParseDocument(rowNextTree("", "Next: spec"), nil, true)
+		if len(diagnostics) != 0 {
+			t.Fatalf("unterminated marker diagnostics = %#v, want none", diagnosticStrings(diagnostics))
+		}
+	})
+}
+
+// TestRowNextReportsUnknownToken covers RF12: a value outside the token set is named,
+// so a typo cannot pass as a decision, and an empty value is a value rather than an
+// absence.
+func TestRowNextReportsUnknownToken(t *testing.T) {
+	for _, tc := range []struct{ name, body, want string }{
+		{"typo", "Next: refactor\n", `roadmap/FT1.md: unknown Next: token "refactor" at line 2; expected one of shape, spec, ticket, decide, kit-edit`},
+		{"empty", "Next: \n", `roadmap/FT1.md: unknown Next: token "" at line 2; expected one of shape, spec, ticket, decide, kit-edit`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, diagnostics := ParseDocument(rowNextTree("", tc.body), nil, true)
+			if got := diagnosticStrings(diagnostics); !reflect.DeepEqual(got, []string{tc.want}) {
+				t.Fatalf("diagnostics = %#v, want %#v", got, []string{tc.want})
+			}
+		})
+	}
+}
+
+// TestRowNextReportsMissingLine covers RF11 and RF17: a detail file with no marker is
+// named with its path, and a marker inside a fenced code block is a documented example
+// rather than a live row grammar, so it leaves the row missing its line.
+func TestRowNextReportsMissingLine(t *testing.T) {
+	const want = "roadmap/FT1.md: missing Next: line; expected one of shape, spec, ticket, decide, kit-edit"
+	for _, tc := range []struct{ name, body string }{
+		{"no marker", "The row's body.\n"},
+		{"fenced marker", "```\nNext: shape\n```\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, diagnostics := ParseDocument(rowNextTree("", tc.body), nil, true)
+			if got := diagnosticStrings(diagnostics); !reflect.DeepEqual(got, []string{want}) {
+				t.Fatalf("diagnostics = %#v, want %#v", got, []string{want})
+			}
+		})
+	}
+}
+
+// TestRowNextExemptsParkedSection covers RF15: a row under the parked section carries no
+// next action honestly, while the same row under the features section must.
+func TestRowNextExemptsParkedSection(t *testing.T) {
+	if _, _, diagnostics := ParseDocument(rowNextTree("## Parked and scheduled work", "The row's body.\n"), nil, true); len(diagnostics) != 0 {
+		t.Fatalf("parked row diagnostics = %#v, want none", diagnosticStrings(diagnostics))
+	}
+	_, _, diagnostics := ParseDocument(rowNextTree("## Features", "The row's body.\n"), nil, true)
+	want := []string{"roadmap/FT1.md: missing Next: line; expected one of shape, spec, ticket, decide, kit-edit"}
+	if got := diagnosticStrings(diagnostics); !reflect.DeepEqual(got, want) {
+		t.Fatalf("features-section diagnostics = %#v, want %#v", got, want)
+	}
+}
+
+// TestRowNextRefusesUnanchoredLine covers RF30, RF31, and RF18: a line the parser would
+// have to trim, join, or read past an invisible separator to accept is refused and named,
+// so the marker sits where the reader sees it.
+func TestRowNextRefusesUnanchoredLine(t *testing.T) {
+	want := "roadmap/FT1.md: unanchored Next: line at line 2; expected Next: <token> at column zero on one line"
+	for _, tc := range []struct{ name, body string }{
+		{"indented", " Next: spec\n"},
+		{"leading non-ascii space", "\u00a0Next: spec\n"},
+		{"non-ascii separator", "Next:\u00a0spec\n"},
+		{"wrapped", "Next:\nspec\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, diagnostics := ParseDocument(rowNextTree("", tc.body), nil, true)
+			if got := diagnosticStrings(diagnostics); !reflect.DeepEqual(got, []string{want}) {
+				t.Fatalf("diagnostics = %#v, want %#v", got, []string{want})
+			}
+		})
+	}
+}
+
+// TestRowNextReportsDuplicateLine covers RF32: a second marker is named at its own line
+// rather than resolved first-wins, which would leave a stale marker with nothing red.
+func TestRowNextReportsDuplicateLine(t *testing.T) {
+	_, _, diagnostics := ParseDocument(rowNextTree("", "Next: spec\nNext: shape\n"), nil, true)
+	want := []string{"roadmap/FT1.md: duplicate Next: line at line 3; a row carries one"}
+	if got := diagnosticStrings(diagnostics); !reflect.DeepEqual(got, want) {
+		t.Fatalf("diagnostics = %#v, want %#v", got, want)
 	}
 }

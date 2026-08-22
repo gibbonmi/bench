@@ -81,6 +81,18 @@ spec slice; what the coordinator caught while accepting delegate claims; and
 specific improvements to Bench CLI, skills, and process, with the friction and
 expected effect named.
 
+Write each improvement item as one list item. Give the item one sentence that
+states the change to make. End the item with one line that reads `Feeds: FT<n>`,
+`Feeds: new`, or `Feeds: none`. Use `FT<n>` for the roadmap row the change
+feeds, `new` for a row the drain must open, and `none` for a change that needs
+no row. The gate reds an item that ends without that line. Each item under the
+three improvement headings takes this shape:
+
+```markdown
+- <one sentence that states the change to make>
+  Feeds: none
+```
+
 Under that repair-attribution heading, write one table row per ticket in the
 build: the ticket, how many repair rounds it took to land, and one cause per
 round. A ticket that landed in one pass records `none`. Causes come from this

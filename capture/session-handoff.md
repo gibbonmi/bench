@@ -1,24 +1,25 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — continuation baseline `ee9c4c10`; the staged-spec commit follows it
-Spec: `specs/inherited-toolchain-environment/spec.md` — Status: staged, Terra/medium review accepted in 3 iterations
-Gate: the atomic staged-spec commit owns the full development-gate result
+Path: `~/workspace/bench`; integration worktree `bench worktree path spec-ste`
+Branch: `bench/assign/e10f369f24649fcd21dedc65f5e36350/d5bd1e58c5c0e89e21ea6c277d0aab46` — review base `ba67efc4` (reviewed graph `4d8aa66e` merged with `main` `9618dde8`); tickets 01–03 landed through `55ed7a0c`
+Spec: `specs/roadmap-flow/spec.md` — Status: staged, five tickets approved
+Gate: green at every ticket commit on the integration worktree
 
 ## State
 
-FT242 is specified as two independently green tickets on one frontier. The
-gate slice makes a Go module fail closed when the built-in phase table cannot
-resolve Go. The SessionStart slice adds bounded clean-login discovery,
-PATH-preserving recovery, descendant teardown evidence, and a manual real
-Codex-client/CLI WSL evidence gate before any portability claim. Terra/medium
-accepted the combined spec-and-ticket review after three iterations; the
-required review learning is open for the next `/bench-drain`.
+`/bench-implement-spec --full` is in its build phase. Tickets 01 (`bench
+roadmap --flow`), 02 (`Next:` grammar, missing-line class behind the
+`rowNextMissingEnforced` switch), and 03 (`retro-improvement-markers` check)
+landed green. Ticket 04 builds on fable/high in its own worktree; ticket 05
+then runs on sonnet/medium by reviewer decision (spec said opus). Reviewer for
+the review phase: sonnet/high. Cap 3 fix loops per ticket. The delegate
+worktrees `roadmap-flow-t01..t04` hold landed or in-flight diffs and are not
+yet released.
 
 ## Next command
 
-`$bench-implement-spec`
+`/bench-implement-spec --full specs/roadmap-flow/spec.md --reviewer sonnet high`
 
 ## Shape
 
