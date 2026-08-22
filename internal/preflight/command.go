@@ -10,12 +10,11 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
-// two required positionals (mode, slug), an optional explicit base, and the optional
-// frozen source tip the review phase pins. Both `review`
-// and `build` are
-// accepted modes; anything else is rejected by the mode-validity check below the same
-// way an unknown word always is.
+// grammar is the declared argument shape usage.Parse enforces for this
+// subcommand. Two required positionals (mode, slug), an optional explicit
+// base, and the optional frozen source tip the review phase pins. Both
+// `review` and `build` are accepted modes. The mode-validity check below
+// rejects anything else the same way it rejects any unknown word.
 var grammar = usage.Grammar{
 	Cmd:  "bench preflight",
 	Help: "usage: bench preflight review <slug> [--base <commit>] [--source-tip <commit>]\n       bench preflight build <slug> [--base <commit>] [--source-tip <commit>]\n",
@@ -28,10 +27,10 @@ var grammar = usage.Grammar{
 }
 
 // Command implements `bench preflight review <slug>` and `bench preflight build
-// <slug>`. It is the CLI-contract seam: grammar and usage errors ride usage.Parse
-// (exit 2); a not-in-repo cwd or a bootstrap failure is one toon.Errorf line (exit
-// 1); otherwise the verdict renders as TOON and the exit code follows
-// Verdict.Red (0 green, 1 red).
+// <slug>`. It is the CLI-contract seam. Grammar and usage errors ride
+// usage.Parse (exit 2). A not-in-repo cwd or a bootstrap failure is one
+// toon.Errorf line (exit 1). Otherwise the verdict renders as TOON and the
+// exit code follows Verdict.Red (0 green, 1 red).
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -106,10 +105,10 @@ func snapshotDriftRefusal(args []string, hint string) string {
 }
 
 // unrepresentableChangedPath refuses a changed path spec-TOON cannot render as a
-// cell, before the verdict table is ever built. PF7's contract is unconditional: a
-// path carrying a control byte exits 1 the same way whether it would land in a green
-// row (never rendered) or a red one's detail cell — the refusal cannot depend on
-// which row a later check happens to sort it into.
+// cell, before the verdict table is ever built. PF7's contract is unconditional.
+// A path carrying a control byte exits 1 the same way in every case: a
+// green row (never rendered) or a red row's detail cell. The refusal
+// never depends on which row a later check sorts it into.
 func unrepresentableChangedPath(paths []string) error {
 	for _, p := range paths {
 		if err := unrepresentableCell("changed path", p); err != nil {
@@ -119,10 +118,11 @@ func unrepresentableChangedPath(paths []string) error {
 	return nil
 }
 
-// unrepresentableCell is that refusal for one value, shared by the changed-path sweep
-// and by --source-tip: a pin reaches a detail cell and the snapshot-drift retry
-// action, so a control byte in it is refused rather than rendered. The %q quoting
-// keeps the offending byte out of the message it explains.
+// unrepresentableCell is that refusal for one value. The changed-path
+// sweep and --source-tip both share it: a pin reaches a detail cell and
+// the snapshot-drift retry action. So a control byte in it gets refused,
+// not rendered. The %q quoting keeps the offending byte out of the
+// message it explains.
 func unrepresentableCell(what, value string) error {
 	if toon.Representable(value) {
 		return nil

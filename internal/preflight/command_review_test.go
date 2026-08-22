@@ -63,12 +63,15 @@ func TestCommandOutOfFencePath(t *testing.T) {
 	}
 }
 
-// TestCommandUnstagedOutOfFenceRed is RS1: a tracked file outside every fence entry,
-// already identical between the review base and HEAD, edited in the worktree with no
-// `git add` or commit, still makes paths-authorized red naming the path — proving the
-// changed-set resolution folds in tracked-worktree edits and not just the base..HEAD
-// commit range. The file is committed at the shared base commit itself (never
-// recommitted on feature) so a base..HEAD diff sees no change to it at all; only the
+// TestCommandUnstagedOutOfFenceRed is RS1. A tracked file sits outside
+// every fence entry, already identical between the review base and HEAD.
+// It gets edited in the worktree with no `git add` or commit. It still
+// makes paths-authorized red naming the path. This proves the
+// changed-set resolution folds in tracked-worktree edits and not just
+// the base..HEAD commit range.
+//
+// The file is committed at the shared base commit itself (never recommitted
+// on feature), so a base..HEAD diff sees no change to it at all. Only the
 // uncommitted worktree edit distinguishes it.
 func TestCommandUnstagedOutOfFenceRed(t *testing.T) {
 	slug := "example"
@@ -239,12 +242,15 @@ func TestCommandEmptyDiff(t *testing.T) {
 	}
 }
 
-// TestCommandControlBytePath is C7's refusal half: a changed path carrying an ESC
-// control byte exits 1 with the unrepresentable-TOON-cell error rather than a mangled
-// table or a silently sanitized path. The refusal is unconditional — it fires before
-// verdict rendering over every changed path, not only one that would otherwise reach
-// a red row's detail cell (see TestCommandFencedControlBytePathReds for the fenced,
-// otherwise-all-green case that exercises that distinction directly).
+// TestCommandControlBytePath is C7's refusal half. A changed path
+// carrying an ESC control byte exits 1 with the unrepresentable-TOON-cell
+// error rather than a mangled table or a silently sanitized path.
+//
+// The refusal is unconditional. It fires before verdict rendering over
+// every changed path, not only one that would otherwise reach a red
+// row's detail cell. See TestCommandFencedControlBytePathReds for the
+// fenced, otherwise-all-green case that exercises that distinction
+// directly.
 func TestCommandControlBytePath(t *testing.T) {
 	_, slug := seedConformant(t)
 	hostile := "unfenced/a\x1bb.go"
@@ -264,10 +270,11 @@ func TestCommandControlBytePath(t *testing.T) {
 	}
 }
 
-// TestCommandFencedControlBytePathReds is RG3/fenced-esc-path-reds: a changed path
-// carrying an ESC control byte still exits 1 with the unrepresentable-TOON-cell error
-// even when the path is authorized by an ownership fence and every check would
-// otherwise be green — PF7's refusal is unconditional, not gated on the path reaching
+// TestCommandFencedControlBytePathReds is RG3/fenced-esc-path-reds. A
+// changed path carrying an ESC control byte still exits 1 with the
+// unrepresentable-TOON-cell error. This holds even when the path is
+// authorized by an ownership fence and every check would otherwise be
+// green. PF7's refusal is unconditional, not gated on the path reaching
 // a red row's rendered detail cell.
 func TestCommandFencedControlBytePathReds(t *testing.T) {
 	_, slug := seedConformant(t)
@@ -306,10 +313,11 @@ func TestCommandSpaceAndGlobPath(t *testing.T) {
 	}
 }
 
-// TestCommandRecordedBaseKey is C8: a recorded branch.<name>.benchBase past an
-// out-of-fence commit keeps paths-authorized green; removing the key falls back to
-// merge-base and turns the same tree red — the CLI observably consumes the recorded-
-// key resolution bench diff itself uses. Bare bench diff output stays byte-identical.
+// TestCommandRecordedBaseKey is C8: a recorded branch.<name>.benchBase past
+// an out-of-fence commit keeps paths-authorized green. Removing the key
+// falls back to merge-base and turns the same tree red. The CLI observably
+// consumes the recorded-key resolution bench diff itself uses. Bare bench
+// diff output stays byte-identical.
 func TestCommandRecordedBaseKey(t *testing.T) {
 	_, slug := seedConformant(t) // HEAD = c1 on feature, base commit = c0
 	mustWriteFile(t, "unfenced/other.go", "package other\n")

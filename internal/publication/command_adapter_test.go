@@ -11,26 +11,26 @@ import (
 	"testing"
 )
 
-// unreachableRegistry is a base URL nothing listens on: the fixture adapter
+// unreachableRegistry is a base URL nothing listens on. The fixture adapter
 // fails its first HTTP call there, which is all a "no npm process spawned" row
 // needs from it.
 const unreachableRegistry = "http://127.0.0.1:1"
 
 // npmStub is an `npm` executable prepended to PATH that logs every invocation's
 // argv and answers `npm view <name>@<version> dist.integrity --json` from
-// test-registered state: a registered package reports absent (npm's E404 exit)
-// on its first view and reports its integrity on every later one, which is the
-// sequence a publish run observes. markLive skips straight to the live answer
-// for the paths (promote, rollback) that act on an already-published release.
-// Every other subcommand — dist-tag, deprecate — succeeds silently.
+// test-registered state. A registered package reports absent (npm's E404 exit)
+// on its first view. It reports its integrity on every later one; that is
+// the sequence a publish run observes. markLive skips straight to the live
+// answer for the paths (promote, rollback) that act on an already-published
+// release. Every other subcommand — dist-tag, deprecate — succeeds silently.
 //
-// publish counts its calls and, when failPublishAt armed BENCH_NPM_STUB_FAIL_
-// PUBLISH, exits non-zero on that call — a real npm failure on one package of
-// a multi-package run. That branch also undoes the live marker the immediately
-// preceding view optimistically wrote: the "absent on first view, live after"
-// sequence assumes the publish between them succeeded, so without the undo the
-// stub would report a package live that was never published, and a resume
-// could never retry it.
+// publish counts its calls. When failPublishAt armed BENCH_NPM_STUB_FAIL_
+// PUBLISH, publish exits non-zero on that call, simulating a real npm failure
+// on one package of a multi-package run. That branch also undoes the live
+// marker the immediately preceding view optimistically wrote. The "absent on
+// first view, live after" sequence assumes the publish between them
+// succeeded. Without the undo the stub would report a package live that was
+// never published, and a resume could never retry it.
 type npmStub struct {
 	state string
 	log   string
@@ -76,10 +76,10 @@ exit 0
 	return stub
 }
 
-// failPublishAt arms the stub to exit non-zero on the nth `npm publish` call of
-// the whole stub's lifetime; call is 0 to disarm for a later resume run. The
-// call counter is never reset, so a resume re-run continues counting where the
-// failed run stopped.
+// failPublishAt arms the stub to exit non-zero on the nth `npm publish` call
+// of the whole stub's lifetime. call is 0 to disarm for a later resume run.
+// The call counter never resets, so a resume re-run continues counting where
+// the failed run stopped.
 func (s *npmStub) failPublishAt(t *testing.T, call int) {
 	t.Helper()
 	value := ""
@@ -190,7 +190,7 @@ func runRelease(t *testing.T, args ...string) (code int, stdout string) {
 	return code, out.String()
 }
 
-// TestSubmitNPMAdapterPublishesApprovedTarballs is rows R1 and R4: with
+// TestSubmitNPMAdapterPublishesApprovedTarballs is rows R1 and R4. With
 // --adapter npm the command drives the real npm CLI, publishing every approved
 // tarball under the candidate tag with the public profile's --access public.
 func TestSubmitNPMAdapterPublishesApprovedTarballs(t *testing.T) {
@@ -310,9 +310,9 @@ func TestSubmitNPMAdapterProvenanceIsOptIn(t *testing.T) {
 }
 
 // TestSubmitStagedNPMAdapterRefusesBeforeTheLock is row R6: the staged path is
-// refused up front. The lock is held by another operation for the whole test —
-// a refusal that ran after the lock would report the held lock instead, so the
-// staged diagnostic is proof the refusal came first.
+// refused up front. Another operation holds the lock for the whole test. A
+// refusal that ran after the lock would report the held lock instead, so the
+// staged diagnostic proves the refusal came first.
 func TestSubmitStagedNPMAdapterRefusesBeforeTheLock(t *testing.T) {
 	const version = "9.9.9"
 	root := approvedReleaseRoot(t, version)
@@ -357,8 +357,8 @@ func publicationOrder(t *testing.T, root, version string) []string {
 }
 
 // approvedByFile indexes the approved set by the tarball file name the publish
-// argv carries, so a test can go from a publication-order position to the
-// registry package name the record's transitions are keyed by.
+// argv carries. A test can then go from a publication-order position to the
+// registry package name the record's transitions key by.
 func approvedByFile(packages []ApprovedPackage) map[string]ApprovedPackage {
 	byFile := make(map[string]ApprovedPackage, len(packages))
 	for _, pkg := range packages {
@@ -395,9 +395,9 @@ func loadTestRecord(t *testing.T, root string) Record {
 	return record
 }
 
-// structuredNPMFailure matches the npm adapter's own error shape — `npm <argv>
-// failed:` — which is what has to reach the operator when the CLI call itself
-// could not run.
+// structuredNPMFailure matches the npm adapter's own error shape — `npm
+// <argv> failed:`. This is the message that must reach the operator when
+// the CLI call itself could not run.
 var structuredNPMFailure = regexp.MustCompile(`npm \[[^\]]*\] failed:`)
 
 // TestSubmitNPMAdapterWithoutNPMBinaryFails is the spec's absent-binary edge:
@@ -408,7 +408,7 @@ func TestSubmitNPMAdapterWithoutNPMBinaryFails(t *testing.T) {
 	const version = "9.9.9"
 	root := approvedReleaseRoot(t, version)
 
-	// The narrowed PATH keeps only `node`: VerifyApprovedSet shells
+	// The narrowed PATH keeps only `node`. VerifyApprovedSet shells
 	// scripts/release-plan.mjs for the artifact inventory before any registry
 	// call, so a PATH without node would fail the run short of the adapter.
 	node, err := exec.LookPath("node")
@@ -439,11 +439,12 @@ func TestSubmitNPMAdapterWithoutNPMBinaryFails(t *testing.T) {
 
 // TestSubmitNPMAdapterResumesAfterMidSequencePublishFailure is the
 // resumability guarantee the workflow's always-upload of the record depends
-// on: an npm publish that fails on an interior platform package exits 1 with a
-// durable record naming the published prefix and the failure, and a re-run
-// against a then-healthy npm resumes — already-published packages are verified
-// as resumed rather than republished, the failed one is retried, and the run
-// completes with the set awaiting an explicit promote.
+// on. An npm publish that fails on an interior platform package exits 1 with a
+// durable record naming the published prefix and the failure.
+//
+// A re-run against a then-healthy npm resumes. Already-published packages
+// verify as resumed rather than republished, the failed one retries, and the
+// run completes with the set awaiting an explicit promote.
 func TestSubmitNPMAdapterResumesAfterMidSequencePublishFailure(t *testing.T) {
 	const version = "9.9.9"
 	// The third publish call is an interior platform package: packages before
@@ -529,7 +530,7 @@ func TestSubmitNPMAdapterResumesAfterMidSequencePublishFailure(t *testing.T) {
 }
 
 // TestPromoteAndRollbackHonorAdapterSelection is row R7: the whole lifecycle
-// addresses one registry — --adapter npm drives the npm CLI for promote and
+// addresses one registry. --adapter npm drives the npm CLI for promote and
 // rollback too, and their default stays the fixture.
 func TestPromoteAndRollbackHonorAdapterSelection(t *testing.T) {
 	const version = "9.9.9"

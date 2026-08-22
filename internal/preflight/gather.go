@@ -15,18 +15,21 @@ import (
 	specref "github.com/gibbonmi/bench/internal/spec"
 )
 
-// BootstrapFailure is the fail-closed bootstrap answer: an artifact preflight cannot
-// load or parse never becomes a green-by-omission, it becomes exactly one structured
-// error naming what failed — the missing or dangling spec path, the coverage
-// validator's own message or the row-ID opt-in hint, the empty fences section, or the
-// found (non-staged) status — every case fail-closed.
+// BootstrapFailure is the fail-closed bootstrap answer. An artifact
+// preflight cannot load or parse never becomes a green-by-omission; it
+// becomes exactly one structured error naming what failed.
+//
+// Named failures include the missing or dangling spec path, and the
+// coverage validator's message or the row-ID opt-in hint. They also
+// include the empty fences section, and the found (non-staged) status.
+// Every case fail-closed.
 type BootstrapFailure struct {
 	Kind, Hint string
 }
 
-// tokenRe is the one grammar for a row-ID-shaped token in ticket-file prose: an
-// uppercase tag plus digits, word-boundary matched so "PF1a" never mistakes itself
-// for "PF1".
+// tokenRe is the one grammar for a row-ID-shaped token in ticket-file
+// prose: an uppercase tag plus digits, word-boundary matched. So "PF1a"
+// never mistakes itself for "PF1".
 var tokenRe = regexp.MustCompile(`\b[A-Z]+[0-9]+\b`)
 
 // fencesEndRe bounds the `## Ownership fences` section the same way coverage.go
@@ -34,10 +37,11 @@ var tokenRe = regexp.MustCompile(`\b[A-Z]+[0-9]+\b`)
 // section itself is opened by an exact `## Ownership fences` line match.
 var fencesEndRe = regexp.MustCompile(`^#{2,} `)
 
-// Gather is the thin gatherer: it reads git, the exported diff-base resolution, the
-// spec resolver, the coverage parser, and tickets/ enumeration, and returns either an
-// immutable Facts value ready for Decide, or the one BootstrapFailure that explains
-// why no Facts value can be trusted. Exactly one of the two return values is non-zero.
+// Gather is the thin gatherer: it reads git, the exported diff-base
+// resolution, the spec resolver, the coverage parser, and tickets/
+// enumeration. It returns either an immutable Facts value ready for
+// Decide, or the one BootstrapFailure that explains why no Facts value can
+// be trusted. Exactly one of the two return values is non-zero.
 func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapFailure) {
 	base := ""
 	if len(explicitBase) > 0 {
@@ -46,10 +50,11 @@ func Gather(root, mode, slug string, explicitBase ...string) (Facts, *BootstrapF
 	return GatherPinned(root, mode, slug, base, "")
 }
 
-// GatherPinned is Gather with the reviewer's frozen source tip supplied. The pin is
-// resolved here, never classified: an unresolvable value is the gatherer's own
-// structured failure, the same grammar-level answer an unresolvable --base gets,
-// while a resolvable one that names the wrong commit is a verdict row Decide owns.
+// GatherPinned is Gather with the reviewer's frozen source tip supplied.
+// The pin is resolved here, never classified. An unresolvable value is the
+// gatherer's own structured failure, the same grammar-level answer an
+// unresolvable --base gets. A resolvable one that names the wrong commit
+// is a verdict row Decide owns.
 func GatherPinned(root, mode, slug, explicitBase, sourceTipPin string) (Facts, *BootstrapFailure) {
 	if explicitBase != "" {
 		var gathered Facts
@@ -175,10 +180,10 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	}, nil
 }
 
-// resolvePin resolves a --source-tip value to its full commit identity. An empty pin
-// is the flag's absence, not a failure; an unresolvable one is refused in the same
-// shape ResolveSourceRange refuses an unreachable --base, so a typo never reaches
-// the verdict table as a drift.
+// resolvePin resolves a --source-tip value to its full commit identity. An
+// empty pin is the flag's absence, not a failure. An unresolvable one is
+// refused in the same shape ResolveSourceRange refuses an unreachable
+// --base, so a typo never reaches the verdict table as a drift.
 func resolvePin(root, pin string) (string, *BootstrapFailure) {
 	if pin == "" {
 		return "", nil
@@ -190,10 +195,11 @@ func resolvePin(root, pin string) (string, *BootstrapFailure) {
 	return resolved, nil
 }
 
-// headTip is the derived source tip of a bare invocation, the counterpart to the
-// snapshot head an explicit source range captures. An unreadable HEAD answers empty;
-// tip-current renders that as its own red rather than a bootstrap failure, since a
-// bare invocation with no pin has no use for the value at all.
+// headTip is the derived source tip of a bare invocation, the counterpart
+// to the snapshot head an explicit source range captures. An unreadable
+// HEAD answers empty. tip-current renders that as its own red rather than
+// a bootstrap failure. A bare invocation with no pin has no use for the
+// value at all.
 func headTip(root string) string {
 	tip, err := git.Output("-C", root, "rev-parse", "HEAD")
 	if err != nil {
@@ -220,9 +226,9 @@ func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) 
 	return diff.SourceRange{Base: facts.SourceBase, Tip: facts.SourceTip, CommittedPaths: facts.ChangedPaths}, nil
 }
 
-// specStatus resolves the typed Status: value for slug via the spec package's Facts —
-// the one source of typed spec status — matched by slug rather than re-parsing the
-// content this package already holds.
+// specStatus resolves the typed Status: value for slug via the spec
+// package's Facts, the one source of typed spec status. It matches by
+// slug rather than re-parsing the content this package already holds.
 func specStatus(root, slug, resolved string) (string, *BootstrapFailure) {
 	facts, err := specref.Facts(root)
 	if err != nil {
@@ -233,8 +239,9 @@ func specStatus(root, slug, resolved string) (string, *BootstrapFailure) {
 			return f.Status, nil
 		}
 	}
-	// resolved may point at a path Facts' folder-spec enumeration does not cover (e.g. a
-	// non-standard argument); either way, no typed status is available to trust.
+	// resolved may point at a path Facts' folder-spec enumeration does not
+	// cover (e.g. a non-standard argument). Either way, no typed status is
+	// available to trust.
 	return "", &BootstrapFailure{"spec status not readable", resolved + " did not resolve through folder-spec enumeration"}
 }
 
@@ -248,12 +255,14 @@ func specTag(ids []string) string {
 	return tagOf(ids[0])
 }
 
-// fenceTokens extracts every backticked token in the `## Ownership fences` section
-// that is not inside parentheses — parenthetical prose is annotation, never
-// authorization. Paren depth and backtick state carry across line boundaries: a
-// parenthetical that opens on one line and closes on a later one still shields every
-// token inside it, and depth returns to zero once it closes so a later real entry
-// authorizes normally.
+// fenceTokens extracts every backticked token in the `## Ownership fences`
+// section that is not inside parentheses; parenthetical prose is
+// annotation, never authorization.
+//
+// Paren depth and backtick state carry across line boundaries. A
+// parenthetical that opens on one line and closes on a later one still
+// shields every token inside it. Depth returns to zero once it closes, so
+// a later real entry authorizes normally.
 func fenceTokens(content []byte) []string {
 	var tokens []string
 	inSection := false
@@ -277,12 +286,15 @@ func fenceTokens(content []byte) []string {
 	return tokens
 }
 
-// fenceTokensInLine is one line's pass through the fence-section state machine:
-// paren depth, backtick state, and the token under construction are threaded in by
-// pointer so the caller can carry them across every line of the section. A
-// backtick-quoted token is captured into tokens only when the depth at the moment its
-// opening backtick appeared was zero — inside an open paren, whether opened on this
-// line or an earlier one, never authorizes.
+// fenceTokensInLine is one line's pass through the fence-section state
+// machine. Paren depth, backtick state, and the token under construction
+// are threaded in by pointer. The caller carries them across every line
+// of the section this way.
+//
+// A backtick-quoted token is captured into tokens only when the depth at
+// the moment its opening backtick appeared was zero. Inside an open
+// paren, whether opened on this line or an earlier one, a token never
+// authorizes.
 func fenceTokensInLine(line string, depth *int, inTick *bool, depthAtOpen *int, cur *strings.Builder, tokens *[]string) {
 	for _, r := range line {
 		switch r {
@@ -311,14 +323,18 @@ func fenceTokensInLine(line string, depth *int, inTick *bool, depthAtOpen *int, 
 	}
 }
 
-// gatherTicketTokens enumerates specs/<slug>/tickets/, recursing into subdirectories
-// so a token cited only under tickets/sub/ is found the same as one at the top level.
-// Every entry — file or subdirectory, at every depth — is lstat-classified before it
-// is opened or descended into, so a FIFO or other special file is refused rather than
-// blocking no matter how deep it sits. Review mode requires the top-level directory to
-// exist; build mode instead reports whether it exists at all (the second return value)
-// so the verdict core can tell an absent directory (row checks not-applicable) from a
-// present-but-empty one (row checks run for real and read as unowned rows).
+// gatherTicketTokens enumerates specs/<slug>/tickets/, recursing into
+// subdirectories so a token cited only under tickets/sub/ is found the
+// same as one at the top level. Every entry — file or subdirectory, at
+// every depth — is lstat-classified before it is opened or descended
+// into. So a FIFO or other special file is refused rather than blocking,
+// no matter how deep it sits.
+//
+// Review mode requires the top-level directory to exist. Build mode
+// instead reports whether it exists at all (the second return value).
+// This lets the verdict core tell an absent directory (row checks
+// not-applicable) from a present-but-empty one (row checks run for real,
+// reading as unowned rows).
 func gatherTicketTokens(dir, mode string) (tokens []string, exists bool, err *BootstrapFailure) {
 	d := bounds.ClassifyDir(dir)
 	switch d.State {
@@ -342,10 +358,11 @@ func gatherTicketTokens(dir, mode string) (tokens []string, exists bool, err *Bo
 	return tokens, true, nil
 }
 
-// scanTicketEntries walks one already-classified directory listing, scanning files
-// for tokens and recursing into subdirectories with the same lstat-first
-// classification gatherTicketTokens applies at the top level — so the special-file
-// refusal holds at every depth, not only the first.
+// scanTicketEntries walks one already-classified directory listing,
+// scanning files for tokens and recursing into subdirectories with the
+// same lstat-first classification gatherTicketTokens applies at the top
+// level. The special-file refusal holds at every depth, not only the
+// first.
 func scanTicketEntries(dir string, entries []fs.DirEntry) ([]string, *BootstrapFailure) {
 	var tokens []string
 	for _, entry := range entries {
@@ -379,11 +396,13 @@ func scanTicketEntries(dir string, entries []fs.DirEntry) ([]string, *BootstrapF
 	return tokens, nil
 }
 
-// baseCurrentFacts backs the base-current check: it resolves the default branch and
-// reports whether its tip is an ancestor of HEAD — merge-base(default, HEAD) equal to
-// rev-parse(default). An unresolved default branch answers (false, false): the check
-// itself renders that as red without a separate bootstrap failure, since map #7 names
-// this a per-check red rather than a bootstrap precondition.
+// baseCurrentFacts backs the base-current check: it resolves the default
+// branch and reports whether its tip is an ancestor of HEAD:
+// merge-base(default, HEAD) equal to rev-parse(default).
+//
+// An unresolved default branch answers (false, false). The check itself
+// renders that as red without a separate bootstrap failure, since map #7
+// names this a per-check red rather than a bootstrap precondition.
 func baseCurrentFacts(root string) (resolved, current bool) {
 	def, ok := git.ResolvedDefault(root)
 	if !ok {
@@ -397,9 +416,9 @@ func baseCurrentFacts(root string) (resolved, current bool) {
 	return true, mergeBase == tip
 }
 
-// reviewBaseFacts wraps the exported diff-base resolution — the single source `bench
-// diff` itself consumes — so preflight and `bench diff` can never disagree about the
-// base.
+// reviewBaseFacts wraps the exported diff-base resolution, the single
+// source `bench diff` itself consumes. So preflight and `bench diff` can
+// never disagree about the base.
 func reviewBaseFacts(root string) (base string, resolved bool, hint string) {
 	base, _, errKind, errHint := diff.ResolveReviewBase(root)
 	if errKind != "" {

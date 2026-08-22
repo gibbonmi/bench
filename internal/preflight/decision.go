@@ -1,26 +1,28 @@
-// Package preflight is the start-oracle over artifacts-vs-reality: the gate answers
-// "is the tree done?", and this package answers "do the declared artifacts still
-// describe reality?" at the moment a phase starts. It follows the decision-domain
-// split — a thin gatherer (git, the exported diff-base resolution, the spec resolver,
-// the coverage parser, tickets/ enumeration) collects immutable Facts, and Decide is a
-// pure function over those facts with no I/O of its own, so the five checks are
-// table-tested without a repository.
+// Package preflight is the start-oracle over artifacts-vs-reality. The
+// gate answers "is the tree done?"; this package answers "do the declared
+// artifacts still describe reality?" at the moment a phase starts.
+//
+// It follows the decision-domain split. A thin gatherer (git, the exported
+// diff-base resolution, the spec resolver, the coverage parser, tickets/
+// enumeration) collects immutable Facts. Decide is a pure function over
+// those facts with no I/O of its own, so the five checks are table-tested
+// without a repository.
 package preflight
 
 import "strings"
 
-// Facts is the immutable evidence Decide classifies. Every field is gathered once,
-// up front, by Gather — never re-read mid-verdict, so a rerun over the same Facts
-// value always answers the same way.
+// Facts is the immutable evidence Decide classifies. Every field is
+// gathered once, up front, by Gather, and never re-read mid-verdict. So a
+// rerun over the same Facts value always answers the same way.
 type Facts struct {
 	Mode string
 
 	// SpecPath is the resolved spec's repo-relative path, printed on the `spec:` line.
 	SpecPath string
 
-	// DefaultBranchResolved and DefaultBranchCurrent back base-current: an unresolved
-	// default branch is red on its own; a resolved one is current only when its tip is
-	// an ancestor of HEAD.
+	// DefaultBranchResolved and DefaultBranchCurrent back base-current. An
+	// unresolved default branch is red on its own; a resolved one is current
+	// only when its tip is an ancestor of HEAD.
 	DefaultBranchResolved bool
 	DefaultBranchCurrent  bool
 
@@ -67,15 +69,17 @@ type Facts struct {
 	// foreign-tag token (FT93) is ignored rather than flagged.
 	SpecTag string
 
-	// TicketsDirExists reports whether specs/<slug>/tickets/ exists at all —
-	// present-but-empty counts as existing. Build mode uses it to tell an absent
-	// tickets/ (row checks not-applicable) from a present one (row checks run for
-	// real, so an empty directory reads as unowned rows rather than a pass).
+	// TicketsDirExists reports whether specs/<slug>/tickets/ exists at all;
+	// present-but-empty counts as existing. Build mode uses it to tell an
+	// absent tickets/ (row checks not-applicable) from a present one. A
+	// present, empty directory runs row checks for real, reading as
+	// unowned rows rather than a pass.
 	TicketsDirExists bool
 }
 
-// CheckResult is one verdict row: the check's name, its verdict ("green" or "red"),
-// and a detail string — empty for green, naming the offending path/ID(s) for red.
+// CheckResult is one verdict row: the check's name, its verdict ("green" or
+// "red"), and a detail string. The detail is empty for green, and names the
+// offending path/ID(s) for red.
 type CheckResult struct {
 	Check, Verdict, Detail string
 }
@@ -89,27 +93,30 @@ const (
 )
 
 // Verdict is Decide's complete answer: the check rows, in fixed order, and
-// whether any of them is red — the caller's exit-code source. A not-applicable row
-// never contributes to Red: it is a printed, definitive verdict in its own right,
-// not a soft pass standing in for a real one.
+// whether any of them is red, the caller's exit-code source. A
+// not-applicable row never contributes to Red. It is a printed,
+// definitive verdict in its own right, not a soft pass standing in for a
+// real one.
 type Verdict struct {
 	Checks []CheckResult
 	Red    bool
 }
 
-// Decide classifies immutable Facts into the verdict. It performs no I/O and
-// consults nothing but its argument, so the same Facts value always yields the same
-// Verdict — the byte-identical-rerun guarantee lives here. Mode applicability lives
-// here rather than in the gatherer: an explicit source range makes base-current
-// grade that range's validity, while a bare invocation grades default branch
-// ancestry. Build mode always runs paths-authorized, runs rows-owned and
-// rows-membership for real only when specs/<slug>/tickets/ exists, and never runs
-// diff-nonempty.
+// Decide classifies immutable Facts into the verdict. It performs no I/O
+// and consults nothing but its argument, so the same Facts value always
+// yields the same Verdict; the byte-identical-rerun guarantee lives here.
 //
-// tip-current is the one conditional row: it appears only when --source-tip pinned a
-// tip, directly after base-current, so the two halves of the source identity are
-// graded together and ahead of every check that presupposes that identity. An
-// invocation with no pin renders exactly the five rows it always has.
+// Mode applicability lives here rather than in the gatherer. An explicit
+// source range makes base-current grade that range's validity, while a
+// bare invocation grades default branch ancestry. Build mode always runs
+// paths-authorized, runs rows-owned and rows-membership for real only when
+// specs/<slug>/tickets/ exists, and never runs diff-nonempty.
+//
+// tip-current is the one conditional row. It appears only when
+// --source-tip pinned a tip, directly after base-current. So the two
+// halves of the source identity are graded together, ahead of every
+// check that presupposes that identity. An invocation with no pin renders
+// exactly the five rows it always has.
 func Decide(f Facts) Verdict {
 	checks := []CheckResult{baseCurrentCheck(f)}
 	if f.PinnedSourceTip != "" {
@@ -180,10 +187,10 @@ func baseCurrentCheck(f Facts) CheckResult {
 	return green("base-current")
 }
 
-// tipCurrentCheck verifies the reviewer's frozen tip against the one preflight
-// derived. Both values are already-resolved full identities, so a pin spelled as a
-// branch or as HEAD is green whenever it names the same commit — the check grades
-// agreement, not spelling.
+// tipCurrentCheck verifies the reviewer's frozen tip against the one
+// preflight derived. Both values are already-resolved full identities.
+// So a pin spelled as a branch or as HEAD is green whenever it names
+// the same commit; the check grades agreement, not spelling.
 func tipCurrentCheck(f Facts) CheckResult {
 	if f.SourceTip == "" {
 		return red("tip-current", "source tip does not resolve, so --source-tip "+f.PinnedSourceTip+" cannot be verified")
@@ -211,13 +218,16 @@ func pathsAuthorizedCheck(f Facts) CheckResult {
 	return green("paths-authorized")
 }
 
-// authorizingEntries is every entry paths-authorized consults: the spec's declared
-// fence entries plus the active spec's own folder, which authorizes an in-range
-// amendment of the spec without a self-fence entry. The implicit entry is derived
-// from SpecPath rather than carried as its own fact, so the printed spec path and
-// the authorized folder cannot disagree, and it is appended to a copy so the gathered
-// FenceEntries slice is never mutated. Mode is deliberately not consulted: build
-// preflight, review preflight, and the landing's final source authorization all get
+// authorizingEntries is every entry paths-authorized consults. This is
+// the spec's declared fence entries, plus the active spec's own folder,
+// which authorizes an in-range amendment of the spec without a
+// self-fence entry.
+//
+// The implicit entry is derived from SpecPath rather than carried as its
+// own fact, so the printed spec path and the authorized folder cannot
+// disagree. It is appended to a copy so the gathered FenceEntries slice is
+// never mutated. Mode is deliberately not consulted: build preflight,
+// review preflight, and the landing's final source authorization all get
 // the same answer.
 func authorizingEntries(f Facts) []string {
 	folder := specFolder(f.SpecPath)
@@ -227,9 +237,10 @@ func authorizingEntries(f Facts) []string {
 	return append(append([]string{}, f.FenceEntries...), folder)
 }
 
-// specFolder is the directory containing the resolved spec, empty when the spec path
-// carries no directory at all. The result is an ordinary fence entry, so the
-// segment-boundary rule below is the one that grades it — never a second prefix rule.
+// specFolder is the directory containing the resolved spec, empty when the
+// spec path carries no directory at all. The result is an ordinary fence
+// entry, so the segment-boundary rule below is the one that grades it,
+// never a second prefix rule.
 func specFolder(specPath string) string {
 	i := strings.LastIndex(specPath, "/")
 	if i < 0 {
@@ -238,12 +249,14 @@ func specFolder(specPath string) string {
 	return specPath[:i]
 }
 
-// fenceAuthorizes reports whether path is covered by one of the spec's declared
-// fence entries: an exact match, or a `/`-separated prefix — `internal/git` never
-// authorizes `internal/git2`, only `internal/git` itself or anything under
-// `internal/git/`. A fence entry conventionally spelled with its own trailing slash
-// (a directory marker, e.g. `internal/preflight/`) is normalized before comparison so
-// the trailing slash is never itself an extra path segment.
+// fenceAuthorizes reports whether path is covered by one of the spec's
+// declared fence entries: an exact match, or a `/`-separated prefix.
+// `internal/git` never authorizes `internal/git2`, only `internal/git`
+// itself or anything under `internal/git/`.
+//
+// A fence entry conventionally spelled with its own trailing slash (a
+// directory marker, e.g. `internal/preflight/`) is normalized before
+// comparison, so the trailing slash is never itself an extra path segment.
 func fenceAuthorizes(path string, fences []string) bool {
 	for _, fence := range fences {
 		trimmed := strings.TrimSuffix(fence, "/")

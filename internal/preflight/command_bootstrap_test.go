@@ -119,9 +119,9 @@ func TestCommandMissingSpecNamesPath(t *testing.T) {
 }
 
 // TestCommandDanglingSymlinkClassifiedBroken is H1's symlink half (mutation
-// H1/dangling-symlink-classified): a dangling symlink where the spec should be is
-// classified broken, not an authoritative empty state — a distinct error from the
-// missing-spec case, naming the spec path.
+// H1/dangling-symlink-classified): a dangling symlink where the spec should
+// be is classified broken, not an authoritative empty state. This is a
+// distinct error from the missing-spec case, naming the spec path.
 func TestCommandDanglingSymlinkClassifiedBroken(t *testing.T) {
 	slug := "example"
 	initRepo(t)
@@ -175,8 +175,8 @@ func TestCommandInvalidCoverageMapCarriesMessage(t *testing.T) {
 }
 
 // TestCommandNoRowIDMapNamesOptIn is H2's no-row-ID half (mutation
-// H2/optin-hint-named): a valid reduced 4-cell map (no `row` header column) is
-// refused with an error naming the row-ID opt-in, exit 1.
+// H2/optin-hint-named): a valid reduced 4-cell map (no `row` header
+// column) is refused. The error names the row-ID opt-in, exit 1.
 func TestCommandNoRowIDMapNamesOptIn(t *testing.T) {
 	slug := "example"
 	initRepo(t)
@@ -222,9 +222,10 @@ func TestCommandFencesAbsentError(t *testing.T) {
 	}
 }
 
-// TestCommandFencesEmptyError is H3's empty half (mutation H3/fences-empty-error):
-// an `## Ownership fences` section present but holding no entry answers the same
-// structured error as the absent case, exit 1.
+// TestCommandFencesEmptyError is H3's empty half (mutation
+// H3/fences-empty-error). An `## Ownership fences` section present but
+// holding no entry answers the same structured error as the absent case.
+// Exit is 1.
 func TestCommandFencesEmptyError(t *testing.T) {
 	slug := "example"
 	initRepo(t)
@@ -246,9 +247,10 @@ func TestCommandFencesEmptyError(t *testing.T) {
 }
 
 // TestCommandFencesParenTokenNeverAuthorizes is H3's parenthesized-token half
-// (mutation H3/paren-token-never-authorizes): a fences section whose only
-// backticked token sits inside parentheses answers the same structured error as an
-// empty section, exit 1 — a parenthetical mention is never an authorization.
+// (mutation H3/paren-token-never-authorizes). A fences section whose only
+// backticked token sits inside parentheses answers the same structured error
+// as an empty section. Exit is 1. A parenthetical mention is never an
+// authorization.
 func TestCommandFencesParenTokenNeverAuthorizes(t *testing.T) {
 	slug := "example"
 	initRepo(t)
@@ -269,12 +271,15 @@ func TestCommandFencesParenTokenNeverAuthorizes(t *testing.T) {
 	}
 }
 
-// TestCommandFencesWrappedParenNeverAuthorizes is RG1/wrapped-paren-never-authorizes:
-// a parenthetical that opens on one line and closes on a later one must never
-// authorize the backticked token it wraps, even though the token's own line, read in
-// isolation, starts at depth zero. A tracked change under the wrapped path stays
-// unauthorized — paths-authorized red naming it — while the section's other, real
-// entry keeps the section itself non-empty.
+// TestCommandFencesWrappedParenNeverAuthorizes is
+// RG1/wrapped-paren-never-authorizes: a parenthetical that opens on one
+// line and closes on a later one must never authorize the backticked
+// token it wraps. This holds even though the token's own line, read in
+// isolation, starts at depth zero.
+//
+// A tracked change under the wrapped path stays unauthorized:
+// paths-authorized red naming it. The section's other, real entry keeps
+// the section itself non-empty.
 func TestCommandFencesWrappedParenNeverAuthorizes(t *testing.T) {
 	slug := "example"
 	initRepo(t)
@@ -298,9 +303,9 @@ func TestCommandFencesWrappedParenNeverAuthorizes(t *testing.T) {
 }
 
 // TestCommandFencesEntryAfterClosedParenAuthorizes is
-// RG1/entry-after-closed-paren-authorizes: once a parenthetical that opened across
-// lines closes, depth tracking must return to zero — a real entry on a later line
-// authorizes normally rather than reading as still-nested.
+// RG1/entry-after-closed-paren-authorizes: once a parenthetical that opened
+// across lines closes, depth tracking must return to zero. A real entry on
+// a later line authorizes normally rather than reading as still-nested.
 func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
 	slug := "example"
 	initRepo(t)
@@ -344,9 +349,9 @@ func TestCommandNonStagedNamesFoundStatus(t *testing.T) {
 	}
 }
 
-// TestCommandTrailingNewlineParity is C14: a spec whose last line lacks a trailing
-// newline, and a ticket file whose last line lacks one, each parse identically to
-// their terminated forms.
+// TestCommandTrailingNewlineParity is C14. A spec whose last line lacks a
+// trailing newline, and a ticket file whose last line lacks one, parse
+// identically to their terminated forms.
 func TestCommandTrailingNewlineParity(t *testing.T) {
 	slug := "example"
 	terminated := specBody(slug)

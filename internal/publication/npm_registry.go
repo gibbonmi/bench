@@ -17,7 +17,7 @@ import (
 // scratch directory. It is runbook-only — the gate never exercises it, since
 // the gate has no network egress and no publish credential. Auth material
 // (an npm token, OIDC trust) lives in the ambient npm config/environment the
-// CLI reads itself; this adapter never reads a credential value into memory,
+// CLI reads itself. This adapter never reads a credential value into memory,
 // the record, or any evidence.
 type NPMCLIRegistry struct {
 	// Registry is the npm registry URL npm publishes against (defaults to the
@@ -87,9 +87,9 @@ func (n *NPMCLIRegistry) Publish(ctx context.Context, name, version, tag string,
 
 // minStagedNPMVersion and minStagedNodeVersion are the tool floors the public
 // npm OIDC trusted-publishing staged flow requires. This precondition belongs
-// only to this adapter: the fixture path (FixtureRegistry) never shells npm or
-// node, so it must never be made to depend on a locally installed tool
-// version the gate cannot control.
+// only to this adapter. The fixture path (FixtureRegistry) never shells npm or
+// node, so it must never depend on a locally installed tool version the gate
+// cannot control.
 const (
 	minStagedNPMVersion  = "11.15.0"
 	minStagedNodeVersion = "22.14.0"
@@ -158,7 +158,7 @@ func semverParts(v string) [3]int {
 func (n *NPMCLIRegistry) StageSubmit(ctx context.Context, name, version string, tarball []byte) (string, error) {
 	// Public npm has no staged-submit primitive of its own; the OIDC trusted-
 	// publishing flow performs an authenticated exchange the CLI drives
-	// end-to-end. This adapter is construct-only for now — the state machine's
+	// end-to-end. This adapter is construct-only for now. The state machine's
 	// staged path is exercised against the fixture adapter, never this one.
 	if err := n.checkStagedToolPreconditions(ctx); err != nil {
 		return "", err
@@ -232,9 +232,9 @@ func (n *NPMCLIRegistry) Deprecate(ctx context.Context, name, version, message s
 	return err
 }
 
-// sriIntegrity computes the sha512-<base64> SRI string for data — the one
-// source both adapters and the state machine use to compare local approved
-// bytes against a registry's reported integrity.
+// sriIntegrity computes the sha512-<base64> SRI string for data. It is the
+// one source both adapters and the state machine use to compare local
+// approved bytes against a registry's reported integrity.
 func sriIntegrity(data []byte) string {
 	sum := sha512.Sum512(data)
 	return "sha512-" + base64.StdEncoding.EncodeToString(sum[:])

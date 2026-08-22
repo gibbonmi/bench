@@ -5,9 +5,10 @@ import (
 	"testing"
 )
 
-// TestSourceTipOmittedKeepsTodaysVerdict is H30's control half: without the flag both
-// modes render exactly the five rows they render today, in order, and no tip row
-// appears — the flag is an addition, not a new requirement.
+// TestSourceTipOmittedKeepsTodaysVerdict is H30's control half: without
+// the flag both modes render exactly the five rows they render today, in
+// order, and no tip row appears. The flag is an addition, not a new
+// requirement.
 func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {
@@ -26,9 +27,9 @@ func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 	}
 }
 
-// TestSourceTipAcceptedByBothModes is H30's accepting half: `review` and `build` both
-// take the flag, in bare and explicit-base form, and a pin that agrees with the
-// derived tip is green.
+// TestSourceTipAcceptedByBothModes is H30's accepting half: `review` and
+// `build` both take the flag, in bare and explicit-base form. A pin that
+// agrees with the derived tip is green.
 func TestSourceTipAcceptedByBothModes(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {
@@ -57,9 +58,9 @@ func TestSourceTipAcceptedByBothModes(t *testing.T) {
 	}
 }
 
-// TestSourceTipMismatchRendersRedRow is H31: a resolvable pin that names a different
-// commit than the derived tip is a verdict row, so a flag that were parsed and
-// ignored could not pass.
+// TestSourceTipMismatchRendersRedRow is H31: a resolvable pin that names a
+// different commit than the derived tip is a verdict row. A flag that
+// were parsed and ignored could not pass.
 func TestSourceTipMismatchRendersRedRow(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {

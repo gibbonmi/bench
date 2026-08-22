@@ -13,7 +13,8 @@ import (
 
 // ApprovedPackage is one package from the locally verified approved release
 // directory: its registry name, the exact file on disk, and its bytes' SRI
-// integrity, checked against dist/preflight/SHA256SUMS before any publish call.
+// integrity. The checked value comes from dist/preflight/SHA256SUMS, verified
+// before any publish call.
 type ApprovedPackage struct {
 	Name      string
 	Version   string
@@ -25,7 +26,7 @@ type ApprovedPackage struct {
 
 // VerifyApprovedSet locally verifies the complete immutable release set —
 // every platform package plus the wrapper named by release-plan.mjs — against
-// dist/preflight/SHA256SUMS, and returns the release-index digest alongside
+// dist/preflight/SHA256SUMS. It returns the release-index digest alongside
 // the verified packages in release-plan order. It never rewrites
 // dist/preflight/ or package bytes; this is a read-only check.
 func VerifyApprovedSet(root, version string) (releaseIndexSHA256 string, packages []ApprovedPackage, err error) {
@@ -90,11 +91,11 @@ func VerifyApprovedSet(root, version string) (releaseIndexSHA256 string, package
 }
 
 // releaseIndexAuthority is the narrow slice of dist/preflight/release-index.json
-// publication needs to compose the preflight publish-mode authority: it never
-// re-reads internal/releaseevidence/requirements.json or re-derives which
-// producer records a profile requires. That requiredness policy is owned
-// entirely by internal/releasepreflight; publication trusts only the index's already-
-// computed verdict.
+// publication needs to compose the preflight publish-mode authority. It never
+// re-reads internal/releaseevidence/requirements.json and never re-derives which
+// producer records a profile requires. internal/releasepreflight owns that
+// requiredness policy entirely; publication trusts only the index's
+// already-computed verdict.
 type releaseIndexAuthority struct {
 	Mode    string `json:"mode"`
 	Scope   string `json:"scope"`
@@ -105,7 +106,7 @@ type releaseIndexAuthority struct {
 // VerifyPublishAuthority refuses to proceed unless the approved release
 // directory's release-index.json is a full (non-focused) green publish-mode
 // preflight run whose recorded profile matches profile. It is the one gate
-// bench release submit composes on top of the preflight authority; it does no
+// bench release submit composes on top of the preflight authority. It does no
 // registry I/O and must run before any registry call.
 func VerifyPublishAuthority(root, profile string) error {
 	indexPath := filepath.Join(root, "dist", "preflight", "release-index.json")
@@ -134,13 +135,14 @@ func VerifyPublishAuthority(root, profile string) error {
 
 // releaseIndexArtifactDigests reads the per-artifact sha256 the release-index
 // records for each named artifact ("artifacts": [{"name":..., "sha256":...}]),
-// the immutable plan preflight froze. It never re-derives an artifact digest —
-// only compares the plan's own recorded value against what SHA256SUMS/dist/
-// artifacts now say, so a release-index.json + SHA256SUMS pair that has
-// drifted apart (e.g. a tampered SHA256SUMS matching a swapped-in artifact)
-// is caught even though each file individually parses and is self-consistent.
+// the immutable plan preflight froze. It never re-derives an artifact digest.
+// It only compares the plan's own recorded value against what SHA256SUMS/dist/
+// artifacts now say. So it catches a release-index.json + SHA256SUMS pair
+// that has drifted apart (e.g. a tampered SHA256SUMS matching a swapped-in
+// artifact), even though each file individually parses and is self-consistent.
+//
 // An index that names no artifacts array at all (an older or synthetic index)
-// is tolerated with no drift check — the plan simply made no claim to check.
+// is tolerated with no drift check. The plan simply made no claim to check.
 func releaseIndexArtifactDigests(indexData []byte) (map[string]string, error) {
 	var parsed struct {
 		Artifacts []struct {

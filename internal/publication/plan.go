@@ -1,8 +1,10 @@
-// Package publication owns governed npm publication: a registry port with two
-// adapters (a hermetic fixture adapter the gate exercises, and a public-npm
-// adapter that shells the npm CLI for the runbook), a resumable first-publication
-// state machine, and the durable publication-record.json that makes a retry
-// idempotent. The package never reads a credential into evidence or the record.
+// Package publication owns governed npm publication. It owns a registry port
+// with two adapters. The hermetic fixture adapter is the one the gate
+// exercises; the public-npm adapter shells the npm CLI for the runbook. It
+// also owns a resumable first-publication state machine, and the durable
+// publication-record.json that makes a retry idempotent.
+//
+// The package never reads a credential into evidence or the record.
 package publication
 
 import (
@@ -23,11 +25,11 @@ type ArtifactRecord struct {
 }
 
 // PublicationSet returns the exact four platform packages plus one wrapper —
-// the build set a first publication must publish — filtered from the full
-// release-plan artifact-records (which also lists offline .tar.gz archives).
-// Order is whatever release-plan.mjs emits (sorted by file name); callers that
-// need the platform-then-wrapper publication order impose it themselves so the
-// ordering policy lives in the state machine, not here.
+// the build set a first publication must publish. It filters them from the
+// full release-plan artifact-records (which also lists offline .tar.gz
+// archives). Order is whatever release-plan.mjs emits (sorted by file name).
+// Callers that need the platform-then-wrapper publication order impose it
+// themselves, so the ordering policy lives in the state machine, not here.
 func PublicationSet(root, version string) ([]ArtifactRecord, error) {
 	data, err := exec.Command("node", filepath.Join(root, "scripts", "release-plan.mjs"), root, "artifact-records", version).Output()
 	if err != nil {

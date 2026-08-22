@@ -7,10 +7,10 @@ import (
 	"testing"
 )
 
-// TestCommandBuildFresh is B1 (the fresh-build contract test): with no tickets/
-// directory at all, `build` prints a not-applicable row for each of rows-owned,
-// rows-membership, and diff-nonempty — individually asserted — runs the rest for
-// real, and exits 0 when they are green.
+// TestCommandBuildFresh is B1 (the fresh-build contract test). With no
+// tickets/ directory at all, `build` prints a not-applicable row for each
+// of rows-owned, rows-membership, and diff-nonempty, individually
+// asserted. It runs the rest for real, and exits 0 when they are green.
 func TestCommandBuildFresh(t *testing.T) {
 	_, slug := seedBuildFresh(t)
 
@@ -31,9 +31,9 @@ func TestCommandBuildFresh(t *testing.T) {
 }
 
 // TestCommandBuildResumedTicketsRunForReal is B2's present-tickets half (the
-// resumed-build contract test): with a present tickets/ directory citing every
-// declared row, `build` runs rows-owned and rows-membership for real — green, not
-// not-applicable — while diff-nonempty stays not-applicable.
+// resumed-build contract test). With a present tickets/ directory citing
+// every declared row, `build` runs rows-owned and rows-membership for real
+// — green, not not-applicable — while diff-nonempty stays not-applicable.
 func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
 	_, slug := seedConformant(t) // seedConformant's tickets/one.md cites PF1 and PF2
 

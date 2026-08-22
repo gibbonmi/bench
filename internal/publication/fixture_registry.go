@@ -13,8 +13,8 @@ import (
 
 // FixtureRegistry drives the hermetic offline-registry.mjs test fixture over
 // HTTP. It is the adapter the gate exercises: no credential, no network egress
-// beyond the given base URL, no claim about public npm's real behavior. base is
-// a BENCH_RELEASE_REGISTRY-style URL, e.g. http://127.0.0.1:PORT.
+// beyond the given base URL, and no claim about public npm's real behavior.
+// base is a BENCH_RELEASE_REGISTRY-style URL, e.g. http://127.0.0.1:PORT.
 type FixtureRegistry struct {
 	Base   string
 	Client *http.Client
