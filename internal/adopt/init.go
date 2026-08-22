@@ -83,29 +83,31 @@ cd "$root"
 }
 
 func scaffoldGate() string {
-	return gateScriptPreamble(`# The external oracle for this repo - correctness only. Exit 0 = done is allowed.
-# No `+"`set -e`"+`: the canary command is allowed to fail while the gate keeps collecting errors.
+	return gateScriptPreamble(`# This is the external oracle for this repo, and it checks correctness only. Exit 0
+# means the work is done.
+# This gate skips `+"`set -e`"+`: the canary command may fail, and the gate still keeps
+# collecting errors.
 `) + `fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
-# Stack checks - replace the sentinel below with what fits your project, e.g.:
+# Add stack checks that fit your project. Replace the sentinel below, for example:
 #   mypy . && pytest -q && ruff check .        || err "python checks failed"
 #   pnpm -s typecheck && pnpm -s test && pnpm -s lint  || err "js checks failed"
 
-# Sentinel - keeps a fresh gate RED until you configure it, so you cannot commit real
-# work against an empty gate. Delete this one line once a real check exists above.
+# This sentinel keeps a fresh gate red until you configure it, so you cannot commit
+# real work against an empty gate. Delete this line once a real check exists above.
 err "configure .bench/gate.sh - replace this sentinel with real checks"  # ` + SentinelMarker + `
 
-# Structural debt is NOT checked here. ` + "`bench shift`" + ` runs ` + "`bench structure`" + ` after the
-# loop and refactors only when a file or dir is over budget. Uncomment to hard-block
-# structure at every commit:
+# This gate does not check structural debt. ` + "`bench shift`" + ` runs ` + "`bench structure`" + ` after the
+# loop, and it refactors only when a file or directory is over budget. Uncomment this
+# line to hard-block structure at every commit:
 #   bench structure || err "structure over budget"
 
-# Validate the configured fixture inventory, but only once the repo has one: a project
-# with no tests/canary directory skips validation entirely, while a directory that
-# exists - even empty - falls through to bench canary and is validated. Resolve the
-# repo-local CLI before a global bench on PATH so a machine with no global bench still
-# reaches the inventory command.
+# This validates the configured fixture inventory, but only once the repo has one. A
+# project with no tests/canary directory skips validation entirely. A directory that
+# exists, even empty, falls through to bench canary and gets validated. Resolve the
+# repo-local CLI before a global bench on PATH, so a machine with no global bench
+# still reaches the inventory command.
 bench="$(dirname "$0")/bin/bench.sh"; [ -x "$bench" ] || bench=bench
 if [ -d "$root/tests/canary" ]; then
   "$bench" canary "$root" || err "canary inventory validation failed"

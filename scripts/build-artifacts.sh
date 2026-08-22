@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Build the complete npm artifact set from explicit regular-file inputs. Nothing is
-# written to the requested output until every wrapper and platform tarball is ready.
+# This builds the complete npm artifact set from explicit regular-file inputs.
+# Nothing is written to the requested output until every wrapper and platform
+# tarball is ready.
 set -euo pipefail
 
 source_root="${1:?usage: build-artifacts.sh <source-root> <output-dir>}"
@@ -32,8 +33,8 @@ commit_complete=0
 artifacts_promoted=0
 reproducibility_promoted=0
 promote_reproducibility=0
-# Armed before anything below can fail, so every later exit takes the staging
-# directory with it. Everything cleanup touches is initialized above.
+# This trap arms before anything below can fail, so every later exit takes the
+# staging directory with it. Everything cleanup touches is initialized above.
 cleanup() {
   if [[ "$commit_complete" != 1 ]]; then
     if [[ "$artifacts_promoted" == 1 ]]; then
@@ -51,22 +52,24 @@ cleanup() {
   [[ -z "$repro_backup" || ! -e "$repro_backup" ]] || rm -f "$repro_backup"
   [[ -z "$lock" || ! -d "$lock" ]] || rmdir "$lock"
   [[ -z "$second_parent" || ! -d "$second_parent" ]] || rm -rf "$second_parent"
-  # Go's isolated module cache makes downloaded modules read-only. Restore
-  # owner write/search before removal, including newly-created descendants.
+  # Go's isolated module cache makes a downloaded module read-only. Restore owner
+  # write and search permission before removal, including a newly created
+  # descendant.
   chmod -R u+rwX "$stage" 2>/dev/null || true
   rm -rf "$stage"
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
-# Dev-tier posture opt-in, matched exactly against 1. Absent, empty, and every other
-# value resolve hermetic, so no environment accident can hand a release build the
-# ambient caches or drop its reproducibility evidence.
+# This is the dev-tier posture opt-in, matched exactly against 1. An absent, empty,
+# or other value resolves hermetic, so no environment accident can hand a release
+# build the ambient caches or drop its reproducibility evidence.
 shared_build_cache=0
 [[ "${BENCH_SHARED_BUILD_CACHE:-}" != 1 ]] || shared_build_cache=1
 if [[ "$shared_build_cache" == 1 ]]; then
-  # Resolve while HOME is still ambient: go env reports the environment's value when
-  # one is set and the computed default otherwise, and that default sits under HOME.
+  # Resolve this while HOME is still ambient. `go env` reports the environment's
+  # value when one is set, and the computed default otherwise; that default sits
+  # under HOME.
   ambient_go_caches=""
   if ! ambient_go_caches="$(go env GOCACHE GOMODCACHE)"; then
     printf 'bench artifacts: could not read the ambient Go caches\n' >&2
@@ -77,9 +80,9 @@ if [[ "$shared_build_cache" == 1 ]]; then
     exit 1
   fi
 fi
-# npm writes pack bookkeeping even for local, script-free packs. Keep that mutable
-# state, TMPDIR, and HOME inside the private generation under both postures so
-# HOME/cache/locale perturbations cannot affect release bytes.
+# npm writes pack bookkeeping even for a local, script-free pack. Keep that mutable
+# state, TMPDIR, and HOME inside the private generation, under both postures, so a
+# HOME, cache, or locale perturbation cannot affect release bytes.
 export npm_config_cache="$stage/npm-cache"
 export TMPDIR="$stage/tmp"
 export HOME="$stage/home"
@@ -138,8 +141,8 @@ else
   pin_path="$(node -p 'require(process.argv[1]).binary_pin_manifest.path' "$source_root/internal/releaseevidence/requirements.json")"
   if [[ "${BENCH_TEST_SKIP_PIN_MANIFEST:-0}" != 1 ]]; then
     node "$source_root/scripts/build-binary-pins.mjs" "$source_root" "$wrapper" "$npm_artifacts" "$version"
-    # Refresh the wrapper component inventory now that the declared late-bound
-    # manifest exists; platform tarballs are already closed and remain unchanged.
+    # Refresh the wrapper component inventory, now that the declared late-bound
+    # manifest exists. The platform tarballs are already closed and stay unchanged.
     node "$source_root/scripts/build-release-evidence.mjs" "$source_root" "$wrapper" "$packages"
   fi
   [[ -f "$wrapper/$pin_path" && ! -L "$wrapper/$pin_path" && -s "$wrapper/$pin_path" ]] || { printf 'bench artifacts: binary pin manifest is missing or empty\n' >&2; exit 1; }
@@ -178,8 +181,8 @@ if [[ -e "$output" ]]; then
   mv "$output" "$backup"
 fi
 # A shared-cache build compares nothing, so any record beside the output grades bytes
-# it never saw. Either posture moves that record aside with the artifacts it replaces,
-# and cleanup returns both together if the promotion does not complete.
+# it never saw. Either posture moves that record aside with the artifacts it
+# replaces. Cleanup returns both together if the promotion does not complete.
 if [[ "$promote_reproducibility" == 1 || "$shared_build_cache" == 1 ]] && [[ -e "$repro_file" ]]; then
   repro_backup="$(mktemp "$parent/.bench-reproducibility.previous.XXXXXX")"
   mv "$repro_file" "$repro_backup"

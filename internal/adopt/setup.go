@@ -336,7 +336,7 @@ func setupGateScript(facts setupFacts) string {
 	if facts.zeroSignal {
 		return scaffoldGate()
 	}
-	return gateScriptPreamble("# Written by bench setup from the gate-inference table (see /bench-setup-repo to refine).\n") + facts.gateCommand + "\n"
+	return gateScriptPreamble("# bench setup wrote this gate from the gate-inference table. Run /bench-setup-repo\n# to refine it.\n") + facts.gateCommand + "\n"
 }
 
 // scaffoldGateInputs is the seeded gate input manifest every adopted repository starts

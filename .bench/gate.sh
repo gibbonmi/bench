@@ -5,7 +5,7 @@
 # "Shippable" means root conformance, behavior contracts, and the canary meta-gate
 # all agree that the kit is still portable and self-defending.
 #
-# This file is NOT in package.json files[], so it never ships to consumers.
+# This file is not listed in package.json's `files` array, so it never ships to consumers.
 set -uo pipefail
 
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not in a git repository — run inside a Bench-linked repo" >&2; exit 3; }

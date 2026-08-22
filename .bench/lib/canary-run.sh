@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# Compatibility shim for gates that still source .bench/lib/canary-run.sh.
+# This is a compatibility shim for gates that still source .bench/lib/canary-run.sh.
 #
 # Contract: the sourcing gate defines `root`, `err`, and `fail`, and does not use
-# `set -e`. New scaffolded gates call `bench canary "$root"` directly; this file
-# remains shipped so already-linked gates keep working after relink.
+# `set -e`. A new scaffolded gate calls `bench canary "$root"` directly. This file
+# stays shipped, so an already-linked gate keeps working after a relink.
 
 _canary_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -21,7 +21,7 @@ if [ -z "$_canary_bench" ]; then
   _canary_bench="$(command -v bench 2>/dev/null)" || _canary_bench=
 fi
 
-# `root` is provided by the sourcing gate; see the contract above.
+# The sourcing gate provides `root`; see the contract above.
 # shellcheck disable=SC2154
 if [ -z "$_canary_bench" ]; then
   err "canary inventory unavailable: Bench command was not found"

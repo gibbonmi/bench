@@ -1,16 +1,17 @@
 #!/bin/sh
-# Mutation testing over the Go packages changed since a base ref.
+# This runs mutation testing over the Go packages changed since a base ref.
 #
 # usage: scripts/gremlins-diff.sh [base-ref]        (default: HEAD~1)
 #
-# The automated referee for red-mutation-free experiment runs
-# (BENCH_RED_MUTATIONS_OPTIONAL=1): after a green landing, it selects the Go
-# packages changed since base, asks gremlins to grade every covered mutant in
-# each selected package, and reports per-package and overall test efficacy —
-# killed over killed-plus-lived — for the retro. Advisory by default; set
-# BENCH_GREMLINS_THRESHOLD to a percentage to make a lower overall efficacy
-# exit 1. A package gremlins cannot grade at all exits 2: a broken referee must
-# be loud, never a silent pass.
+# This is the automated referee for a red-mutation-free experiment run
+# (BENCH_RED_MUTATIONS_OPTIONAL=1). After a green landing, it selects the Go
+# packages changed since base, asks gremlins to grade every covered mutant in each
+# selected package, and reports per-package and overall test efficacy — killed over
+# killed-plus-lived — for the retro.
+#
+# This referee is advisory by default. Set BENCH_GREMLINS_THRESHOLD to a percentage
+# to make a lower overall efficacy exit 1. A package gremlins cannot grade at all
+# exits 2: a broken referee must be loud, never a silent pass.
 
 set -u
 
@@ -24,8 +25,8 @@ if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
   echo "gremlins-diff: base ref '$base' does not name a commit" >&2
   exit 2
 fi
-# Multi-package coverage needs the covdata tool, which trimmed module
-# toolchains omit; fall back to the local toolchain when it has one.
+# Multi-package coverage needs the covdata tool, which a trimmed module toolchain
+# omits. Fall back to the local toolchain when it has one.
 if ! go tool -n covdata >/dev/null 2>&1 && GOTOOLCHAIN=local go tool -n covdata >/dev/null 2>&1; then
   export GOTOOLCHAIN=local
 fi

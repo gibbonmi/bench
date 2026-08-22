@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Exercise direct, local-tarball npm, and loopback-registry journeys from one
-# extracted archive with empty state and public egress unavailable.
+# This exercises the direct, local-tarball npm, and loopback-registry journeys
+# from one extracted archive, with empty state and public egress unavailable.
 set -euo pipefail
 
 artifacts="${1:?usage: smoke-offline.sh <artifact-dir> <release-evidence-dir>}"
@@ -212,7 +212,7 @@ HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR="$repair_disa
 installed="$local_prefix/node_modules/redbench/bin/bench.sh"
 [[ -x "$installed" ]] || { printf 'offline smoke: local npm install did not produce wrapper\n' >&2; exit 1; }
 
-# Exercise every slice-1 suppression through shipped surfaces. These live
+# This exercises every slice-1 suppression through shipped surfaces. These live
 # zero-attempt sentinels feed the stable FT87 record after every public journey.
 repair_bin="$local_prefix/node_modules/@redbench/${target}/bin/bench"
 repair_hold="$repair_bin.offline-smoke"
