@@ -30,7 +30,7 @@ func canonicalPath(path string) (string, error) {
 // resolveOperand canonicalizes an operator-supplied target, resolving the portable `~`
 // form the worktree commands print. Both the plan and the apply that follows it route
 // through this, so a fingerprint taken from one addresses the same checkout as the
-// other; the errors it returns are the operator-facing reasons verbatim.
+// other. The errors it returns are the operator-facing reasons verbatim.
 func resolveOperand(path string) (string, error) {
 	expanded, isHome, err := expandHomeTarget(path)
 	if err != nil {
@@ -51,7 +51,7 @@ func PlanExplicit(root, path string) (CleanupPlan, error) {
 }
 
 // explicitRetainFingerprint binds a refusal decided before the registration is known to
-// the repository facts and to the invocation options it was decided under, so an apply
+// the repository facts and to the invocation options it was decided under. An apply
 // carrying it can never be replayed against a differently-asked question.
 func explicitRetainFingerprint(common, defaultRef, defaultOID, target string, plan CleanupPlan, options CleanupOptions) string {
 	return fingerprintParts(
@@ -230,15 +230,16 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	plan.landedTyped = verdict.Landed
 	plan.deleteBranch, plan.branchRef, plan.branchOID = verdict.DeleteBranch, verdict.BranchRef, verdict.BranchOID
 	// The derivation above reads ancestry, then merges, then patch-equivalence, then
-	// reverse-applicability — which proves a squash-landing but still refuses whatever it
-	// cannot represent byte- and mode-exactly, so a fully-landed branch can read as
+	// reverse-applicability. That proves a squash-landing but still refuses whatever it
+	// cannot represent byte- and mode-exactly. A fully-landed branch can therefore read as
 	// unmerged. DiscardBranch is the operator supplying that missing proof by hand, applied
-	// here rather than fed into the decision, so the recorded landedness — typed and wire
-	// form alike — reports what the tool concluded on its own. The automatic path plans with
-	// an empty CleanupOptions, so this override never reaches it. The detached conjunct holds
-	// because a detached HEAD has no branch for the operator to authorize deleting: headRef is
-	// the "detached" sentinel rather than a ref, so dropping the conjunct would hand that
-	// sentinel to the branch deletion as if it named something.
+	// here rather than fed into the decision. The recorded landedness — typed and wire
+	// form alike — reports what the tool concluded on its own.
+	//
+	// The automatic path plans with an empty CleanupOptions, so this override never reaches
+	// it. The detached conjunct holds because a detached HEAD has no branch for the operator
+	// to authorize deleting. headRef is the "detached" sentinel rather than a ref. Dropping
+	// the conjunct would hand that sentinel to the branch deletion as if it named something.
 	if options.DiscardBranch && !facts.headDetached {
 		plan.deleteBranch = true
 		plan.branchRef, plan.branchOID = headRef, head

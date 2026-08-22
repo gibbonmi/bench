@@ -142,8 +142,8 @@ func classifyPath(root, pool, path string) Class {
 	return ClassOutOfPool
 }
 
-// wellFormedFingerprint accepts exactly what fingerprintParts emits — lowercase hex of a
-// sha256 digest — so a value no plan could have printed is refused before any work begins.
+// wellFormedFingerprint accepts exactly what fingerprintParts emits: lowercase hex of a
+// sha256 digest. A value no plan could have printed is refused before any work begins.
 func wellFormedFingerprint(value string) bool {
 	decoded, err := hex.DecodeString(value)
 	return err == nil && len(decoded) == sha256.Size && value == strings.ToLower(value)
@@ -390,7 +390,7 @@ const resumeListingCap = 3
 
 // listCapped writes at most resumeListingCap lines and, when the cap bites, one line
 // naming both how many it withheld and the true total. Stating the total is what keeps a
-// bounded listing from reading as the whole set; every record stays listable through
+// bounded listing from reading as the whole set. Every record stays listable through
 // `bench worktree list`.
 func listCapped(summary *strings.Builder, count int, line func(int) string) {
 	for i := 0; i < count && i < resumeListingCap; i++ {
@@ -402,15 +402,15 @@ func listCapped(summary *strings.Builder, count int, line func(int) string) {
 }
 
 // orphanLine renders one abandoned assignment's retirement command. The bare
-// `bench worktree clean` prints a plan and a fingerprint and removes nothing, so the line
+// `bench worktree clean` prints a plan and a fingerprint and removes nothing. The line
 // names the apply half rather than reading as one destructive step. It never suggests
-// `--discard-ignored`, whose request-less form orphans the assignment (FT93b) — the
-// remedy would manufacture the next generation of the residue reported here.
+// `--discard-ignored`, whose request-less form orphans the assignment. That remedy would
+// manufacture the next generation of the residue reported here.
 //
 // A path this sink cannot carry verbatim is replaced by a pointer rather than escaped or
-// digested. Quoting alone is not enough — single quotes make a newline literal but still
-// emit the byte, which forges an extra line — and an escaped path would name a tree that
-// does not exist, so the reader would paste a command that cannot work.
+// digested. Quoting alone is not enough: single quotes make a newline literal but still
+// emit the byte, which forges an extra line. An escaped path would name a tree that does
+// not exist, so the reader would paste a command that cannot work.
 func orphanLine(orphan OrphanCandidate) string {
 	if !lineSafe(orphan.Path) {
 		return fmt.Sprintf("orphan %s: worktree path holds control bytes; find its id row in bench worktree list\n", orphan.ID)
@@ -419,12 +419,11 @@ func orphanLine(orphan OrphanCandidate) string {
 }
 
 // lineSafe reports whether a value carries no control rune. It is deliberately stricter
-// than cleanupOutputSafe: toon.Representable admits tab, newline, and return because the
-// TOON encoder escapes them, while the resume summary writes raw lines and escapes
-// nothing, so a newline forges a line and an ESC drives the terminal that prints it.
-// Display-hostile runes outside the control categories — a bidi override, U+2028,
-// invalid UTF-8 — pass, so this guards the summary's line structure rather than how a
-// terminal renders one line.
+// than cleanupOutputSafe: toon.Representable admits tab, newline, and return, because the
+// TOON encoder escapes them. The resume summary writes raw lines and escapes nothing, so
+// a newline forges a line and an ESC drives the terminal that prints it. Display-hostile
+// runes outside the control categories — a bidi override, U+2028, invalid UTF-8 — pass.
+// This guards the summary's line structure rather than how a terminal renders one line.
 func lineSafe(value string) bool { return !strings.ContainsFunc(value, unicode.IsControl) }
 
 type assignmentRecoveryContext struct {

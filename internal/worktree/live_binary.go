@@ -9,15 +9,16 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
-// resolveRunningBinary answers which executable this process is. bin/bench.sh resolves
-// exactly one binary and execs it, so the running process *is* that resolution's answer:
-// consulting it here reads the wrapper's own choice instead of restating the order it
-// searched, and it stays right for the inherited-BENCH_RUN_BINARY branch too.
+// resolveRunningBinary answers which executable this process is.
+// bin/bench.sh resolves exactly one binary and execs it, so the running process is that
+// resolution's answer. Reading it here reuses the wrapper's own choice instead of
+// restating the search order, and it stays correct for the inherited-BENCH_RUN_BINARY
+// branch too.
 var resolveRunningBinary = os.Executable
 
 // liveBinaryWarnings is where the residue guard announces a removal that would take the
-// CLI down with it. The guard runs below every command's writer, and the warning has to
-// land while the removal is being proposed rather than in a plan the caller reads after.
+// CLI down with it. The guard runs below every command's writer. The warning must land
+// while the removal is proposed, not in a plan the caller reads afterward.
 var liveBinaryWarnings io.Writer = os.Stderr
 
 // warnBeforeRemovingLiveBinary tells the caller that removing candidate out of root
@@ -35,13 +36,12 @@ func warnBeforeRemovingLiveBinary(root, candidate string) {
 // isRunningBinary reports whether candidate is the very file this process is running.
 //
 // The predicate is identity, not path. A dist/bench in an unrelated checkout is ordinary
-// residue, and a path-shaped predicate would warn on every checkout that has ever been
-// built — training the warning away before the one removal that matters arrives.
+// residue. A path-shaped predicate would warn on every checkout ever built. That trains
+// the warning away before the one removal that matters arrives.
 //
-// An executable this process cannot resolve is unknown, never absent: nothing has been
-// shown about the candidate, so the guard warns rather than removing in silence. A
-// candidate that cannot be stat'd is the other way round — there is no live file there to
-// lose.
+// An executable this process cannot resolve is unknown, never absent. Nothing has been
+// shown about the candidate, so the guard warns rather than remove in silence. A candidate
+// that cannot be stat'd is the other way round — there is no live file there to lose.
 func isRunningBinary(candidate string) bool {
 	running, err := resolveRunningBinary()
 	if err != nil {

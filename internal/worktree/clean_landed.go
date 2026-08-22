@@ -65,8 +65,8 @@ func planLandedSet(root string, options CleanupOptions) (landedCleanupSet, error
 	return set, nil
 }
 
-// selectLandedCleanupRow is the selector's single per-assignment proof: the set plan
-// and every pre-mutation row re-plan use it, so a row cannot become removable through a
+// selectLandedCleanupRow is the selector's single per-assignment proof. The set plan and
+// every pre-mutation row re-plan use it. A row cannot become removable through a
 // different route after its shared fingerprint was validated.
 func selectLandedCleanupRow(root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions) (landedCleanupRow, bool) {
 	if assignment.State != intent.StateActive || assignment.Branch == "" {
@@ -96,7 +96,7 @@ func selectLandedCleanupRow(root string, assignment intent.Assignment, defaultRe
 }
 
 func planLandedAssignment(root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
-	// Only the checkout shape licenses the explicit planner: it invokes git against the
+	// Only the checkout shape licenses the explicit planner. It invokes git against the
 	// target, which can block forever when a ledger path has decayed into a FIFO or socket.
 	shape, shapeErr := ClassifyPathShape(assignment.Worktree)
 	if shapeErr != nil || shape != ShapeCheckoutDirectory {
@@ -120,10 +120,10 @@ func planLandedAssignment(root string, assignment intent.Assignment, options Cle
 }
 
 // retainForLandedPreservation is the landed-set's single site for the preservation
-// refusal: it calls the same automaticPreservationVerdict (eligibility.go) decideAutomatic's
-// own dirty-refusal branch consults, so the two never derive "would removing this strand
-// uncommitted work" differently, even though each still projects its own operator-facing
-// message for its own command surface.
+// refusal. It calls the same automaticPreservationVerdict (eligibility.go) that
+// decideAutomatic's own dirty-refusal branch consults, so the two routes never derive
+// "would removing this strand uncommitted work" differently. Each still projects its own
+// operator-facing message for its own command surface.
 func retainForLandedPreservation(plan CleanupPlan) CleanupPlan {
 	retain, action, reasonCode, reason := automaticPreservationVerdict(plan, "per-path cleanup is required to preserve work")
 	if !retain {
@@ -183,8 +183,8 @@ func assignmentLeaseStates(root string) (map[string]string, error) {
 }
 
 // fingerprintLandedSet binds both membership and every removal-relevant row fact. A
-// later apply compares this digest before touching the first checkout, so adding a row
-// or changing one preserving verdict must change the value shared by every output row.
+// later apply compares this digest before touching the first checkout. Adding a row or
+// changing one preserving verdict must change the value shared by every output row.
 func fingerprintLandedSet(rows []landedCleanupRow, options CleanupOptions) string {
 	parts := [][]byte{
 		[]byte(landedSetFingerprintVersion),

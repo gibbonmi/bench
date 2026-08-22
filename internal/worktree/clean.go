@@ -143,9 +143,9 @@ func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault
 	return assignment, nil
 }
 
-// readRecoveryManifest is the one reader of a recovery envelope: it answers with a
-// manifest only when the commit carries a well-formed one of this schema, so no caller
-// has to decide for itself what a usable envelope is.
+// readRecoveryManifest is the one reader of a recovery envelope. It answers with a
+// manifest only when the commit carries a well-formed one of this schema. No caller has
+// to decide for itself what a usable envelope is.
 func readRecoveryManifest(root, commitish string) (recoveryManifest, bool) {
 	body, err := git.Output("-C", root, "show", commitish+":manifest.json")
 	if err != nil {

@@ -50,8 +50,8 @@ const (
 	// recovery ref is deleted and only the assignment row is left to close.
 	StepRecoveryRowClose LifecycleStep = "recovery-row-close"
 	// StepLifecycleSweep names the boundary the standing cleaner crosses once per debris
-	// ref, so an interruption can be placed between two deletions rather than only around
-	// the whole sweep.
+	// ref. An interruption can then be placed between two deletions rather than only
+	// around the whole sweep.
 	StepLifecycleSweep  LifecycleStep = "lifecycle-sweep"
 	StepUnlock          LifecycleStep = "unlock"
 	StepRemovalAttempt  LifecycleStep = "removal-attempt"
@@ -68,7 +68,7 @@ var creationLockAttempt = func(string) {}
 
 // CleanupOptions carries the operator's invocation choices into every plan and the apply
 // that must reproduce it. DiscardBranch is an assertion, not a force: it supplies the
-// landedness proof git.LandedInDefault refuses to derive from an ambiguous shape, and it
+// landedness proof git.LandedInDefault refuses to derive from an ambiguous shape. It
 // authorizes nothing else — every ownership, identity, and path-safety refusal is decided
 // without reading it.
 type CleanupOptions struct {
@@ -419,10 +419,10 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 }
 
 // retainedReleaseError turns a retain plan — the safe planner declining to remove the
-// tree — into the verdict a session can act on: what blocked, and a route to
-// re-run once it is cleared. It never points at `bench worktree clean --discard-ignored`,
-// whose request-less form orphans the assignment (FT93b); the tree stays for the caller
-// to resolve, then release again.
+// tree — into the verdict a session can act on. That verdict names what blocked, and a
+// route to re-run once it is cleared. It never points at
+// `bench worktree clean --discard-ignored`, whose request-less form orphans the
+// assignment. The tree stays for the caller to resolve, then release again.
 func retainedReleaseError(plan CleanupPlan, target, assignment string) error {
 	reason := plan.Reason
 	if reason == "" {
@@ -439,16 +439,16 @@ func releaseNext(target, assignment string) string {
 }
 
 // residualAssignment reports whether a record preserves no work and is therefore safe
-// to compact. Its recovery set is the single source of that judgment — an empty set
-// means residue; a non-empty set means preserved work that must never be silently
+// to compact. Its recovery set is the single source of that judgment: an empty set
+// means residue. A non-empty set means preserved work that must never be silently
 // discarded. Both the release reconcile and the resume sweep consult this one predicate.
 func residualAssignment(a intent.Assignment) bool { return len(a.Recovery) == 0 }
 
-// reconcileOutOfBand resolves a release whose tree was removed out of band — a completed,
-// owned cleanup receipt that does not match the automatic-registration reconcile shape
-// (e.g. a request-less `bench worktree clean --discard-ignored --apply`). A residue
-// record is compacted to a terminal release receipt; a record still holding preserved
-// work is left intact and its recovery command named — the FT93(c) contract.
+// reconcileOutOfBand resolves a release whose tree was removed out of band. Its input is
+// a completed, owned cleanup receipt that does not match the automatic-registration
+// reconcile shape (e.g. a request-less `bench worktree clean --discard-ignored --apply`).
+// A residue record is compacted to a terminal release receipt. A record still holding
+// preserved work is left intact, and its recovery command is named.
 func reconcileOutOfBand(root, repo, request, target string, cleanup intent.CleanupReceipt) (intent.CleanupReceipt, error) {
 	unauthorized := errors.New("cleanup receipt does not authorize release reconciliation")
 	if cleanup.State != intent.ReceiptComplete || !cleanup.Owned || cleanup.Assignment == "" {
@@ -456,7 +456,7 @@ func reconcileOutOfBand(root, repo, request, target string, cleanup intent.Clean
 	}
 	assignment, err := assignmentByID(root, cleanup.Assignment)
 	if err != nil {
-		// The record was already compacted out of band; synthesize the terminal receipt
+		// The record was already compacted out of band. Synthesize the terminal receipt
 		// so a replay of this release is idempotent.
 		completed := intent.Assignment{ID: cleanup.Assignment, Worktree: target, State: intent.StateComplete}
 		receipt := receiptFromRelease(repo, request, completed, string(ActionRemoved), cleanup.Branch, cleanup.BranchOID)
@@ -478,8 +478,8 @@ func reconcileOutOfBand(root, repo, request, target string, cleanup intent.Clean
 
 // recoveryPendingError names what a release cannot compact: its tree was removed out of
 // band while the record still points at preserved work. No command retires that ref any
-// more, and the standing cleaner sweeps the namespace at the next session start, so the
-// line hands over the ref itself — the only handle left for reading the work back.
+// more. The standing cleaner sweeps the namespace at the next session start. The line
+// hands over the ref itself instead — the only handle left for reading the work back.
 func recoveryPendingError(a intent.Assignment) error {
 	ref := "(none)"
 	if len(a.Recovery) > 0 {
