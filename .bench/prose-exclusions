@@ -61,8 +61,6 @@ projects/gl-axi.md migrates in ticket 11
 docs/greenfield-build-sequence.md migrates in ticket 11
 docs/release-runbook.md migrates in ticket 11
 docs/reporesident-distillation.md migrates in ticket 11
-README.md migrates in ticket 12
-projects/benchkit.md migrates in ticket 12
 ROADMAP.md migrates in ticket 14
 roadmap/ migrates in ticket 14
 capture/session-handoff.md migrates in ticket 28b
