@@ -132,7 +132,7 @@ func TestIdeaNewlineNormalization(t *testing.T) {
 
 func TestIdeaOwnedOccurrence(t *testing.T) {
 	root := newRepo(t)
-	writeBoard(t, root, Row{"**FT98 — active work replaces retired FT97.**", "Occurrences: baseline-01\n"})
+	writeBoard(t, root, Row{"**FT98 — active work replaces retired FT97.**", "Next: spec\nOccurrences: baseline-01\n"})
 	if err := os.WriteFile(ideasPath(t, root), []byte("- 2026-07-30  hand added"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -219,7 +219,7 @@ func TestRoadmapBoardDocument(t *testing.T) {
 	root := newRepo(t)
 	board11 := make([]Row, 0, 11)
 	for i := 1; i <= 11; i++ {
-		board11 = append(board11, Row{fmt.Sprintf("**FT%d — row %d.**", i, i), ""})
+		board11 = append(board11, Row{fmt.Sprintf("**FT%d — row %d.**", i, i), "Next: spec\n"})
 	}
 	index, files := board(board11...)
 	roadmaptest.WriteSplitBoard(t, root, "# Roadmap\n\n"+index+"## Recommended sequence\n\n1. First item - /bench-shape-idea\n", files)

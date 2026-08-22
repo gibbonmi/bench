@@ -84,16 +84,6 @@ func board(rows ...Row) (string, map[string]string) {
 	return index.String(), files
 }
 
-// enforceRowNextMissing turns the deferred missing-line class on for one test and
-// restores the shipped default afterwards. The class is derived either way; the switch is
-// what the migration flips, and a test that covers the class has to observe it where the
-// parked exemption and the fence rule that feed it live.
-func enforceRowNextMissing(t *testing.T) {
-	t.Helper()
-	rowNextMissingEnforced = true
-	t.Cleanup(func() { rowNextMissingEnforced = false })
-}
-
 // rowNextTree is the one-row split board the marker tests drive: FT1's index line under
 // section, and a detail file whose body is the given text.
 func rowNextTree(section, body string) Tree {

@@ -8,6 +8,14 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Every existing `ROADMAP.md` row outside `## Parked and scheduled work` now
+  carries a `Next: <token>` line in its detail file (`roadmap/FT<n>.md`) —
+  `shape`, `spec`, `ticket`, `decide`, or `kit-edit` — under the position-anchored
+  `Next:` row grammar `bench roadmap --flow` and the `Feeds:` retro marker both
+  read. The missing-line fault class is now enforced: the `row-next-grammar`
+  and `roadmap-detail-integrity` checks red a row with no `Next:` line and no
+  parked-section exemption, closing the gap between the check and the board it
+  grades.
 - `bench worktree land` now exits 3 when publication succeeded but marker,
   checkout reconciliation, or source release remains incomplete, and its terminal
   record includes a token-safe resume invocation. Pre-publication refusals, usage

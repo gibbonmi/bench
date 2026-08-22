@@ -328,11 +328,12 @@ const (
 
 // rowNextMissingEnforced gates the missing-line fault class at the one boundary that
 // decides what the gate reds on. The parser derives the class either way; the migration
-// that gives every existing row a token flips this to true in the same commit, so the
-// tree is never red between the check and the board it grades. It is a var so the tests
-// that cover the class can observe it through ParseDocument, where the parked exemption
-// and the fence rule that feed it live.
-var rowNextMissingEnforced = false
+// that gave every existing row a token flipped this to true in the same commit, so the
+// tree was never red between the check and the board it grades. The class is now a live
+// gate fault: any row outside the parked section with no `Next:` line reds
+// roadmap-detail-integrity. It stays a var so tests can observe it through ParseDocument,
+// where the parked exemption and the fence rule that feed it live.
+var rowNextMissingEnforced = true
 
 // rowNextMissingReason is the whole reason text of the missing-line class, so the
 // enforcement gate matches the class itself rather than a prefix another class could grow
