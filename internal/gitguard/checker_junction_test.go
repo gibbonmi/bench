@@ -11,10 +11,11 @@ import (
 
 // TestClassifyRealCheckerResolvedComposition composes Classify with the real
 // Checker{git.RefResolves, git.BranchExists} over a temp repo with one commit and one
-// branch, pinning the resolved-answer corner of the polarity matrix that the constant
-// refYes/refNo fakes in verdict_test.go cannot reach: real ref resolution and real
-// branch existence, not a hand-set boolean. The probes resolve in the process working
-// directory, so this test t.Chdir's into the fixture repo and must not run parallel.
+// branch. It pins the resolved-answer corner of the polarity matrix that the constant
+// refYes/refNo fakes in verdict_test.go cannot reach. That corner is real ref
+// resolution and real branch existence, not a hand-set boolean. The probes resolve in
+// the process working directory. So this test t.Chdir's into the fixture repo and
+// must not run parallel.
 func TestClassifyRealCheckerResolvedComposition(t *testing.T) {
 	root := gc1Repo(t)
 	t.Chdir(root)
@@ -40,12 +41,12 @@ func TestClassifyRealCheckerResolvedComposition(t *testing.T) {
 
 // TestClassifyRealCheckerTimeoutComposition composes Classify with the real Checker
 // against a PATH-front stub `git` that sleeps past the 2s refCheckTimeout bound
-// (internal/git.refCheckTimeout), pinning that both probes' opposite fail-safe
-// defaults land on "block" under composition: RefResolves times out to false (an
-// unresolvable-looking ref blocks checkout) and BranchExists times out to true (an
-// undeterminable branch is presumed present, blocking forced creation). Tolerates the
-// wall-clock cost of two ~2s probe timeouts. t.Chdir and no t.Parallel for the same
-// process-cwd reason as the resolved-composition test above.
+// (internal/git.refCheckTimeout). It pins that both probes' opposite fail-safe
+// defaults land on "block" under composition. RefResolves times out to false (an
+// unresolvable-looking ref blocks checkout), and BranchExists times out to true (an
+// undeterminable branch is presumed present, blocking forced creation). The test
+// tolerates the wall-clock cost of two ~2s probe timeouts. It uses t.Chdir and no
+// t.Parallel, for the same process-cwd reason as the resolved-composition test above.
 func TestClassifyRealCheckerTimeoutComposition(t *testing.T) {
 	stubDir := t.TempDir()
 	stubGit(t, stubDir)

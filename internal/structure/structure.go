@@ -1,14 +1,14 @@
-// Package structure ports `bench structure`: the FILE TOO LONG / DIR CROWDED
-// structural-debt check over the tracked source tree, plus the violation count
-// `bench status` reads. One engine (Check) drives the human report, the status
-// count, and the `--since <base>` touched-scope run, so the length/crowding rules,
-// the per-path budget overrides, and the two caps have a single definition — the
-// two-derivations bug class this slice ends.
+// Package structure ports `bench structure`. It is the FILE TOO LONG / DIR
+// CROWDED structural-debt check over the tracked source tree, plus the
+// violation count `bench status` reads. One engine (Check) drives the human
+// report, the status count, and the `--since <base>` touched-scope run. The
+// length/crowding rules, the per-path budget overrides, and the two caps have
+// a single definition — the two-derivations bug class this slice ends.
 //
-// The shell sent its debt summary and malformed-budget warnings to stderr; this
-// command layer folds every line (violations, warnings, the debt summary, the ok /
-// no-source messages) into one stdout report, which is behavior-preserving because
-// every CLI contract captures the command with 2>&1.
+// The shell sent its debt summary and malformed-budget warnings to stderr. This
+// command layer folds every line (violations, warnings, the debt summary, the
+// ok / no-source messages) into one stdout report. This is behavior-preserving
+// because every CLI contract captures the command with 2>&1.
 package structure
 
 import (
@@ -26,8 +26,8 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
-// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+// grammar is the declared argument shape usage.Parse enforces for this subcommand.
+// Arity, flag recognition, `--`, and help all come from there rather than a local switch.
 var grammar = usage.Grammar{
 	Cmd:   "bench structure",
 	Help:  "usage: bench structure [--since <base>]",
@@ -42,13 +42,13 @@ var sourceRe = regexp.MustCompile(`\.(py|ts|tsx|js|jsx|go|rs|java|rb|kt|scala|cs
 // Check runs the structural-debt length/crowding rules over the given file list (the raw
 // split of a git query, filtered to source extensions here). Querying git and propagating
 // its error is the caller's job — checkAll for the whole tracked tree, Touched for the
-// touched scope — so the rules have one home and each git query owns its own error. It
-// returns the full human report the CLI prints and the violation count; exit-code mapping
+// touched scope. So the rules have one home, and each git query owns its own error. It
+// returns the full human report the CLI prints and the violation count. Exit-code mapping
 // is the caller's (Command's) job.
 //
 // allMode is set for the whole-tree scan and cleared for the touched (--since) scope. Both
-// honor the .bench/structure-accept exclusion (an accepted over-budget file drops out of the
-// count), but only the whole-tree scan can judge the accept list's completeness, so the
+// honor the .bench/structure-accept exclusion (an accepted over-budget file drops out of
+// the count). Only the whole-tree scan can judge the accept list's completeness. So the
 // accepted: section, the malformed-row warnings, and the stale-row warnings are all-mode only.
 func Check(root string, rawFiles []string, allMode bool) (report string, violations int) {
 	report, violations, _ = evaluate(root, rawFiles, allMode)
@@ -63,9 +63,9 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 
 	lines := append([]string(nil), budgetWarnings...)
 
-	// Fail-closed read error (FT29): a present-but-unreadable accept file is loud — a named
-	// line and a forced non-zero count returned through the same path both the report and
-	// ViolationCount read, so no surface can silently observe an empty accept list. This is
+	// Fail-closed read error (FT29): a present-but-unreadable accept file is loud. A named
+	// line and a forced non-zero count return through the same path both the report and
+	// ViolationCount read. No surface can silently observe an empty accept list. This is
 	// the one intentional exception to "non-zero only on real violations"; the ordinary
 	// accept states (absent, malformed, stale) never change the exit code.
 	if acceptErr != nil {
@@ -88,8 +88,9 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 	var acceptedLines []string
 
 	// FILE TOO LONG: a file whose newline count exceeds its cap (its exact-path budget
-	// override, else the global BENCH_MAX_LINES). Missing/non-regular paths are skipped. An
-	// accepted subject is excluded from the count and recorded for the accepted: section.
+	// override, else the global BENCH_MAX_LINES). Missing and non-regular paths are
+	// skipped. An accepted subject is excluded from the count and recorded for the
+	// accepted: section.
 	for _, f := range files {
 		info, err := os.Stat(filepath.Join(root, f))
 		if err != nil || !info.Mode().IsRegular() {
@@ -170,12 +171,12 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 }
 
 // ViolationCount is the count `bench status` reads: the violation count of an all-files
-// check through the same engine so the figure cannot drift from the report.
+// check through the same engine. So the figure cannot drift from the report.
 func ViolationCount(root string) int {
 	_, violations, err := checkAll(root)
 	if err != nil {
 		// EXPLICIT tolerate (audit #1, read side): `bench status` is an ambient advisory
-		// board the SessionStart hook consumes, so a git-query failure degrades this count
+		// board the SessionStart hook consumes. A git-query failure degrades this count
 		// to zero rather than crashing the hook. `bench structure` is the loud-error path
 		// for the same query.
 		return 0
@@ -198,7 +199,7 @@ func filterSources(files []string) []string {
 // loadBudgets reads <root>/.bench/structure.budgets into a path→budget map plus the
 // warnings for malformed lines. Each line is stripped from its first '#'; a blank or
 // whitespace-only remainder is skipped; the rest splits on whitespace into (path,
-// budget); a non-digit budget yields a warning and is dropped, so the global cap
+// budget). A non-digit budget yields a warning and is dropped, so the global cap
 // stands. A missing file is not an error. The last line may lack a trailing newline.
 // A path listed twice keeps its first budget, matching the shell's `awk … {exit}`.
 func loadBudgets(path string) (map[string]int, []string) {
@@ -231,16 +232,17 @@ func loadBudgets(path string) (map[string]int, []string) {
 }
 
 // loadAccepts reads <root>/.bench/structure-accept into a path→reason map plus warnings for
-// malformed rows. It mirrors loadBudgets' comment/whitespace discipline (strip from the first
-// '#'; a blank remainder is skipped; the last line may lack a trailing newline; a path listed
-// twice keeps its first reason) with three deliberate differences:
-//   - The reason is the whole remainder after the first whitespace-delimited path token, not a
-//     Fields split, so a one-clause reason keeps its internal spaces.
-//   - A row with a path but no reason is malformed: warned and not honored — a reason is the
+// malformed rows. It mirrors loadBudgets' comment/whitespace discipline: strip from the first
+// '#'; a blank remainder is skipped; the last line may lack a trailing newline. A path
+// listed twice keeps its first reason. Three deliberate differences apply.
+//
+//   - The reason is the whole remainder after the first whitespace-delimited path token, not
+//     a Fields split, so a one-clause reason keeps its internal spaces.
+//   - A row with a path but no reason is malformed: warned and not honored. A reason is the
 //     price of acceptance.
-//   - The read-error posture is fail-closed: a missing file is an empty list with no error, but
-//     any other read error (present but unreadable) is returned so Check is loud (FT29), never a
-//     silent empty list at exit 0.
+//   - The read-error posture is fail-closed: a missing file is an empty list with no error.
+//     Any other read error (present but unreadable) is returned so Check is loud (FT29),
+//     never a silent empty list at exit 0.
 func loadAccepts(path string) (map[string]string, []string, error) {
 	accepts := map[string]string{}
 	var warnings []string
@@ -276,11 +278,12 @@ func loadAccepts(path string) (map[string]string, []string, error) {
 	return accepts, warnings, nil
 }
 
-// staleAcceptWarnings reports each accept row whose subject is not a known scanned subject —
-// neither a scanned source file nor a scanned `<dir>/` key — so the accept list cannot quietly
-// accumulate dead entries. A subject present but under budget suppresses nothing yet is not
-// stale; warning on that inert case is a separate honesty check left out of scope. Sorted for
-// a deterministic report over the map's random iteration order.
+// staleAcceptWarnings reports each accept row whose subject is not a known scanned subject:
+// neither a scanned source file nor a scanned `<dir>/` key. So the accept list cannot
+// quietly accumulate dead entries. A subject present but under budget suppresses nothing,
+// yet is not stale. Warning on that inert case is a separate honesty check left out of
+// scope. The result is sorted for a deterministic report, since the map's own iteration
+// order is random.
 func staleAcceptWarnings(accepts map[string]string, files []string) []string {
 	known := make(map[string]bool, len(files)*2)
 	for _, f := range files {
@@ -366,20 +369,21 @@ func Command(args []string) (string, int) {
 	return report, exitOf(violations)
 }
 
-// gitOpError builds the stderr line for a failed git query: `git <op> failed: <err>`. A
-// pure helper so a package unit test pins the exact message shape while the os.Stderr
-// write in Command stays the thin process-boundary rim — map-dispatched commands return
-// only stdout, so a command reaching stderr writes it directly (the resolveModel pattern).
+// gitOpError builds the stderr line for a failed git query: `git <op> failed: <err>`. It
+// is a pure helper. A package unit test pins the exact message shape, while the
+// os.Stderr write in Command stays the thin process-boundary rim. Map-dispatched
+// commands return only stdout, so a command reaching stderr writes it directly (the
+// resolveModel pattern).
 func gitOpError(op string, err error) string {
 	return fmt.Sprintf("git %s failed: %v", op, err)
 }
 
 // Touched runs the length/crowding rules over only the files changed between base and HEAD
-// (`git diff --diff-filter=ACMR base..HEAD`), returning the report, the violation count,
-// and the git error if the diff query itself failed. It is the one diff call site and the
-// one source of the touched-scope query the `--since` subcommand and the shift loop's
-// refactor gate both read: Command propagates the error (loud stderr + exit 1), the shift
-// gate tolerates it because its own gate run is that worktree's loud oracle.
+// (`git diff --diff-filter=ACMR base..HEAD`). It returns the report, the violation count,
+// and the git error if the diff query itself failed. It is the one diff call site. It is
+// also the one source of the touched-scope query. The `--since` subcommand and the shift
+// loop's refactor gate both read it. Command propagates the error (loud stderr + exit 1);
+// the shift gate tolerates it because its own gate run is that worktree's loud oracle.
 func Touched(root, base string) (report string, violations int, err error) {
 	out, err := git.Output("-C", root, "diff", "--name-only", "--diff-filter=ACMR", base+"..HEAD")
 	if err != nil {

@@ -4,7 +4,7 @@ import "strings"
 
 // WrapperRouting names the variables bin/bench.sh exports before it execs the Bench
 // binary, so the binary can find the kit its wrapper belongs to. They describe the
-// wrapper that started this process, not the tree a child runs in: a child launched
+// wrapper that started this process, not the tree a child runs in. A child launched
 // against a different tree has to resolve its own kit, and an inherited value points
 // it silently back at the caller's.
 var WrapperRouting = []string{"BENCH_KIT", "BENCH_WRAPPER"}

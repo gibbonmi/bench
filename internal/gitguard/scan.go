@@ -7,7 +7,7 @@ import (
 )
 
 // The scanner walks the token stream command by command (splitting on control
-// operators), strips the honest-mistake prefixes an agent reflexively types
+// operators). It strips the honest-mistake prefixes an agent reflexively types
 // (env/xargs/timeout/…), and hands each `git <subcommand>` to classify. Wrapper strings
 // (`sh|bash|zsh -c '…'`) are re-tokenized and scanned exactly one level deep, by design:
 // this is an honest-mistake layer, not an evasion-resistant boundary.
@@ -91,9 +91,9 @@ func commandEnd(tokens []string, i int) int {
 }
 
 // resolvePrefixes advances past leading env assignments and the honest-mistake command
-// wrappers (env/command/nohup/timeout/xargs), returning the index of the real verb and
-// whether an xargs prefix was seen (xargs feeds paths from stdin, so a pathspec-less
-// checkout/restore under it is treated as destructive).
+// wrappers (env/command/nohup/timeout/xargs). It returns the index of the real verb and
+// whether an xargs prefix was seen. xargs feeds paths from stdin, so a pathspec-less
+// checkout/restore under it is treated as destructive.
 func resolvePrefixes(tokens []string, i, end int) (int, bool) {
 	viaXargs := false
 	for i < end {
@@ -134,8 +134,8 @@ func resolvePrefixes(tokens []string, i, end int) (int, bool) {
 	return i, viaXargs
 }
 
-// findSubcommand skips git's global options (and their values) after the `git` token
-// and returns the subcommand, the index its args start at, and whether one was found.
+// findSubcommand skips git's global options (and their values) after the `git` token.
+// It returns the subcommand, the index its args start at, and whether one was found.
 func findSubcommand(tokens []string, start, end int) (string, int, bool) {
 	j := start
 	for j < end {

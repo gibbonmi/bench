@@ -126,7 +126,7 @@ func TestClassifyVerdicts(t *testing.T) {
 }
 
 // TestClassifyStashOperationsAllowed pins the working half of the verb. `drop` and
-// `clear` discard work and are denied in TestClassifyVerdicts; every other stash form
+// `clear` discard work and are denied in TestClassifyVerdicts. Every other stash form
 // stays usable, including one whose args merely mention a safe operation name.
 func TestClassifyStashOperationsAllowed(t *testing.T) {
 	commands := []string{

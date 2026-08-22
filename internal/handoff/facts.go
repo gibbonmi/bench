@@ -11,8 +11,8 @@ import (
 )
 
 // facts is the pin block's field set, already reduced to the strings the renderer places.
-// Each field is either a fact or an explicit statement that the fact is unavailable —
-// never an empty value, which a cold reader cannot tell apart from a deliberate blank.
+// Each field is either a fact or an explicit statement that the fact is unavailable.
+// Never an empty value, which a cold reader cannot tell apart from a deliberate blank.
 type facts struct {
 	Repo     string // the repository's directory name
 	Origin   string // the origin remote's URL, or "" when the repo has none
@@ -27,7 +27,7 @@ type facts struct {
 	Signal   string // the board signal Action came from; "" when Action was overridden
 
 	// NoInvocable marks the board that had signals but no command among them. It is a
-	// third state, distinct from an empty Action on a clean board: collapsing the two
+	// third state, distinct from an empty Action on a clean board. Collapsing the two
 	// would report a clean board to a session that has work waiting on it.
 	NoInvocable bool
 }
@@ -42,8 +42,8 @@ const (
 )
 
 // collect gathers every pin fact under root. It never fails: each query that cannot answer
-// degrades to its explicit unknown, because a session resuming into a half-initialized repo
-// still needs the fields that do resolve.
+// degrades to its explicit unknown. A session resuming into a half-initialized repo still
+// needs the fields that do resolve.
 func collect(root string) facts {
 	f := facts{
 		Repo:   filepath.Base(root),
@@ -61,7 +61,7 @@ func collect(root string) facts {
 }
 
 // branch renders the checked-out branch for the pin block. git.CheckedOutBranch owns the
-// probe; this adds the two things the pin block wants and the probe does not answer — the
+// probe; this adds the two things the pin block wants and the probe does not answer. The
 // literal "HEAD" is detachment rather than a branch name, and a real name is backticked
 // for the markdown the block is written in.
 func branch(root string) string {
@@ -94,8 +94,8 @@ func landedState(root string) (dirty, unpushed string) {
 }
 
 // liveSpecs names the staged spec with its Status line, in path order. An implemented spec
-// is finished work and tells a resuming session nothing about what to build, and a spec
-// carrying no Status line is malformed rather than staged — naming it with an invented
+// is finished work and tells a resuming session nothing about what to build. A spec
+// carrying no Status line is malformed rather than staged. Naming it with an invented
 // status would state something the file does not say.
 func liveSpecs(root string) []string {
 	all, err := spec.Facts(root)
@@ -113,13 +113,13 @@ func liveSpecs(root string) []string {
 }
 
 // gateField renders the verdict together with the tree it was computed on and whether that
-// tree is still the work tree. The three parts travel as one: a bare verdict invites a cold
+// tree is still the work tree. The three parts travel as one. A bare verdict invites a cold
 // session to read a cached green as a statement about the tree it actually inherited.
 //
-// Staleness is the inspection's own, never a comparison made here — internal/status owns
+// Staleness is the inspection's own, never a comparison made here. internal/status owns
 // that rule, and a second derivation of it is how the two surfaces come to disagree. A
-// verdict in any state other than ready is a statement about the gate run rather than about
-// a tree, so it carries its cached tree without a staleness clause.
+// verdict in any state other than ready is a statement about the gate run rather than
+// about a tree. So it carries its cached tree without a staleness clause.
 //
 // An invalid or unavailable inspection classified the cache without ever parsing a record,
 // so it has no cached tree to name. That case says so and falls back to the work tree the
@@ -145,9 +145,10 @@ func gateField(gv status.GateInfo) string {
 	return field + " — current"
 }
 
-// treeRef renders a tree hash as an inline reference, or names its absence. Every tree the
-// gate field prints goes through here, so no path can emit the empty inline-code span a
-// reader would take for a deliberate blank rather than for a fact that does not exist.
+// treeRef renders a tree hash as an inline reference, or names its absence. Every tree
+// the gate field prints goes through here. So no path can emit the empty inline-code
+// span. A reader would take that span for a deliberate blank, rather than for a fact
+// that does not exist.
 func treeRef(tree string) string {
 	if tree == "" {
 		return "unknown"

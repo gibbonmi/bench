@@ -35,9 +35,9 @@ func TestParseAllowFileMissingIsDefaultsOnly(t *testing.T) {
 	}
 }
 
-// TestParseAllowFileEmptyIsAcceptedAsDefaults covers the edge row: an env.allow
-// that is present but empty is accepted and yields the defaults (distinct from
-// the absent-file case, per the profile checklist).
+// TestParseAllowFileEmptyIsAcceptedAsDefaults covers the edge row. An env.allow
+// that is present but empty is accepted and yields the defaults, distinct from
+// the absent-file case.
 func TestParseAllowFileEmptyIsAcceptedAsDefaults(t *testing.T) {
 	root := writeAllow(t, "")
 	got, err := parseAllowFile(filepath.Join(root, ".bench", "env.allow"))
@@ -49,7 +49,7 @@ func TestParseAllowFileEmptyIsAcceptedAsDefaults(t *testing.T) {
 	}
 }
 
-// TestParseAllowMissingFinalNewlineParsesLastLine covers the edge row: a file
+// TestParseAllowMissingFinalNewlineParsesLastLine covers the edge row. A file
 // whose last line lacks a trailing newline still parses that line normally,
 // against a naive split that drops the final entry.
 func TestParseAllowMissingFinalNewlineParsesLastLine(t *testing.T) {
@@ -101,11 +101,12 @@ func TestValidateEntryRejectsBareAndMidNameGlob(t *testing.T) {
 	}
 }
 
-// TestParseAllowRejectsMalformedLines walks the remaining rejection reasons
-// the grammar names, each pinned to its offending line number: an entry
-// before any section header, an unknown section name (including a stale [gate],
-// whose opt-in home is the manifest and not this file), an entry containing /
-// or =, and a character outside the portable environment-name set.
+// TestParseAllowRejectsMalformedLines walks the remaining rejection reasons the
+// grammar names, each pinned to its offending line number. One reason is an
+// entry before any section header. A second is an unknown section name,
+// including a stale [gate], whose opt-in home is the manifest and not this
+// file. Two more: an entry containing / or =, and a character outside the
+// portable environment-name set.
 func TestParseAllowRejectsMalformedLines(t *testing.T) {
 	cases := []struct {
 		name string
@@ -149,9 +150,9 @@ func TestParseAllowSkipsCommentLines(t *testing.T) {
 	}
 }
 
-// TestParseAllowAcceptsCRLFLineEndings covers the edge row (review C3): a file
-// with CRLF line endings parses the same as LF-only, because TrimSpace strips
-// the trailing \r along with the line's other whitespace.
+// TestParseAllowAcceptsCRLFLineEndings covers the edge row: a file with CRLF
+// line endings parses the same as LF-only. TrimSpace strips the trailing \r
+// along with the line's other whitespace.
 func TestParseAllowAcceptsCRLFLineEndings(t *testing.T) {
 	got, err := parseAllow("[agent]\r\nMY_VAR\r\n")
 	if err != nil {
@@ -162,11 +163,11 @@ func TestParseAllowAcceptsCRLFLineEndings(t *testing.T) {
 	}
 }
 
-// TestParseAllowRejectsUTF8BOMByName covers the edge row (review C3): a file
-// that opens with a UTF-8 byte-order mark is rejected fail-closed, and the
-// error names the BOM directly rather than reporting the garbled first line
-// as an "entry before any section header" — the BOM is not Unicode
-// whitespace, so a naive TrimSpace-only diagnosis would misname the cause.
+// TestParseAllowRejectsUTF8BOMByName covers the edge row: a file that opens
+// with a UTF-8 byte-order mark is rejected fail-closed. The error names the
+// BOM directly, rather than reporting the garbled first line as an "entry
+// before any section header". The BOM is not Unicode whitespace, so a naive
+// TrimSpace-only diagnosis would misname the cause.
 func TestParseAllowRejectsUTF8BOMByName(t *testing.T) {
 	_, err := parseAllow("\ufeff[agent]\nMY_VAR\n")
 	if err == nil {
@@ -177,10 +178,10 @@ func TestParseAllowRejectsUTF8BOMByName(t *testing.T) {
 	}
 }
 
-// TestParseAllowDuplicateEntriesAreAppendedAsIs covers the edge row (review
-// C4): a duplicate entry is not deduplicated — both copies are appended,
-// which is harmless because matchesAny only needs one match. This pins
-// current behavior; there is no dedup branch to change.
+// TestParseAllowDuplicateEntriesAreAppendedAsIs covers the edge row: a
+// duplicate entry is not deduplicated — both copies are appended, which is
+// harmless because matchesAny only needs one match. This pins current
+// behavior; there is no dedup branch to change.
 func TestParseAllowDuplicateEntriesAreAppendedAsIs(t *testing.T) {
 	got, err := parseAllow("[agent]\nMY_VAR\nMY_VAR\n")
 	if err != nil {
@@ -191,10 +192,10 @@ func TestParseAllowDuplicateEntriesAreAppendedAsIs(t *testing.T) {
 	}
 }
 
-// TestParseAllowLeadingWhitespaceEntryIsLenientlyAccepted covers the edge row
-// (review C4): an entry line with leading whitespace is accepted, not
-// rejected — TrimSpace normalizes it before the grammar checks run. This
-// pins current lenient behavior as-is.
+// TestParseAllowLeadingWhitespaceEntryIsLenientlyAccepted covers the edge row:
+// an entry line with leading whitespace is accepted, not rejected — TrimSpace
+// normalizes it before the grammar checks run. This pins current lenient
+// behavior as-is.
 func TestParseAllowLeadingWhitespaceEntryIsLenientlyAccepted(t *testing.T) {
 	got, err := parseAllow("[agent]\n   MY_VAR\n")
 	if err != nil {
@@ -206,12 +207,13 @@ func TestParseAllowLeadingWhitespaceEntryIsLenientlyAccepted(t *testing.T) {
 }
 
 // TestDefaultGlobsDoNotStraddleFamilies covers the edge row: no default glob in
-// the agent passlist matches a name belonging to a different family, checked by
-// enumerating each default glob against a fixture of foreign names. The
-// GOOGLE_* Vertex-routing glob is the concrete GO* versus GOOGLE_* hazard the
-// retired Go-toolchain enumeration draft existed to avoid; it legitimately
-// admits GOOGLE_* here, so the fixture keeps foreign names that no default glob
-// should match and asserts GOOGLE_APPLICATION_CREDENTIALS is admitted rather
+// the agent passlist matches a name belonging to a different family. This is
+// checked by enumerating each default glob against a fixture of foreign names.
+//
+// The GOOGLE_* Vertex-routing glob is the concrete GO* versus GOOGLE_* hazard
+// the retired Go-toolchain enumeration draft existed to avoid; it legitimately
+// admits GOOGLE_* here. So the fixture keeps foreign names that no default glob
+// should match, and asserts GOOGLE_APPLICATION_CREDENTIALS is admitted rather
 // than treated as foreign.
 func TestDefaultGlobsDoNotStraddleFamilies(t *testing.T) {
 	foreign := []string{
@@ -277,7 +279,7 @@ func TestBuildPassesMultilineAndLargeValuesUnaltered(t *testing.T) {
 }
 
 // TestBuildFiltersToPasslistByName pins Build as a filter over parent names,
-// not a wholesale inherit and not a wipe: a marker name is absent while a
+// not a wholesale inherit and not a wipe. A marker name is absent while a
 // passlisted name survives.
 func TestBuildFiltersToPasslistByName(t *testing.T) {
 	root := t.TempDir()
@@ -331,7 +333,7 @@ func TestBuildOptInGlobAdmitsAllMatchingNames(t *testing.T) {
 	}
 }
 
-// TestBuildMalformedAllowFailsClosed covers story 4: a malformed env.allow
+// TestBuildMalformedAllowFailsClosed covers story 4. A malformed env.allow
 // refuses to build an environment at all, returning an error naming the line
 // number rather than degrading to defaults.
 func TestBuildMalformedAllowFailsClosed(t *testing.T) {

@@ -1,23 +1,23 @@
 // Package env is the deep module behind the subprocess environment Bench
 // constructs for the harness adapter a shift launches. That launch builds its
-// environment from a documented passlist instead of inheriting the parent
-// process's environment verbatim, with a committed `.bench/env.allow` as the
+// environment from a documented passlist, instead of inheriting the parent
+// process's environment verbatim. A committed `.bench/env.allow` is the
 // only way to widen it. Build is the one call: policy, opt-in parsing, and
 // construction all sit behind it, so a second ad hoc filter never drifts from
 // this one.
 //
 // This package serves the harness-adapter (agent) launch only. The project
 // gate's environment is a separate, already-closed subject: FT78's
-// manifest-declared closure, owned by internal/gate, which launches the gate
-// script with PATH plus only the names declared under `environment` in
+// manifest-declared closure, owned by internal/gate. That closure launches the
+// gate script with PATH plus only the names declared under `environment` in
 // `.bench/gate-inputs.json`. This feature pins that closure with a sentinel
 // contract rather than rebuilding it here, so there is no gate passlist in this
 // package.
 //
-// The default passlist is exported as data (SharedBasics, AgentPasslist) so a
-// conformance check can read the exact values the enforcement uses rather than
-// a second transcription of them — the single-source requirement this package
-// exists to satisfy.
+// The default passlist is exported as data (SharedBasics, AgentPasslist). This
+// lets a conformance check read the exact values the enforcement uses, rather
+// than a second transcription of them. That is the single-source requirement
+// this package exists to satisfy.
 package env
 
 import (
@@ -40,19 +40,20 @@ var SharedBasics = []string{
 const benchFamily = "BENCH_*"
 
 // agentAdditions is what the agent class adds beyond SharedBasics: its own
-// BENCH_* namespace, and the shipped adapters' documented harness variables —
-// Claude Code, Codex, opencode, and the cloud credential chains Claude Code
-// documents for Bedrock and Vertex routing. Every name here is cited to an
-// official page in DATA_HANDLING.md.
+// BENCH_* namespace, and the shipped adapters' documented harness variables.
+// These cover Claude Code, Codex, opencode, and the cloud credential chains
+// Claude Code documents for Bedrock and Vertex routing. Every name here is
+// cited to an official page in DATA_HANDLING.md.
 //
-// A default glob must not straddle two families: every glob here covers a
+// A default glob must not straddle two families. Every glob here covers a
 // namespace a single owner controls, so a name whose prefix is shared with a
 // foreign family is enumerated exactly instead. This is the rule that kept a
-// `GO*` glob out of the retired gate-class draft — it would also have matched
-// GOOGLE_APPLICATION_CREDENTIALS and handed a subprocess a cloud credential —
-// and it binds every future addition to this list. A unit-test edge row checks
-// each default glob against a fixture of foreign names, so an exact set cannot
-// later be "simplified" into a wider glob.
+// `GO*` glob out of the retired gate-class draft. That glob would also have
+// matched GOOGLE_APPLICATION_CREDENTIALS and handed a subprocess a cloud
+// credential, and it binds every future addition to this list.
+//
+// A unit-test edge row checks each default glob against a fixture of foreign
+// names. So an exact set cannot later be "simplified" into a wider glob.
 var agentAdditions = []string{
 	benchFamily,
 	"ANTHROPIC_*", "CLAUDE_CODE_*", "CLAUDE_CONFIG_DIR", "API_TIMEOUT_MS",
@@ -74,12 +75,12 @@ func concat(lists ...[]string) []string {
 }
 
 // Build returns the ordered environment the harness adapter should launch with:
-// every parent-environment name matching the default passlist plus any matching
-// .bench/env.allow [agent] entry, in the parent's own order, values passed
-// through byte for byte. repoRoot is the resolved repo root — this package never
-// discovers it. A malformed .bench/env.allow fails closed: Build returns a nil
-// slice and an error naming the offending line and reason, and never degrades to
-// defaults.
+// every parent-environment name matching the default passlist, plus any matching
+// .bench/env.allow [agent] entry. Both come in the parent's own order, with
+// values passed through byte for byte. repoRoot is the resolved repo root; this
+// package never discovers it. A malformed .bench/env.allow fails closed. Build
+// returns a nil slice and an error naming the offending line and reason. It
+// never degrades to defaults.
 func Build(repoRoot string) ([]string, error) {
 	allow, err := parseAllowFile(filepath.Join(repoRoot, ".bench", "env.allow"))
 	if err != nil {
