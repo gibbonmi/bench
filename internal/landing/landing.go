@@ -355,7 +355,8 @@ func CheckoutFingerprint(root string) (string, error) {
 	return fmt.Sprintf("%x", sum), nil
 }
 
-// RuntimeIgnoredPath reports whether path is a safe spelling within Bench's ignored runtime log root.
+// RuntimeIgnoredPath reports whether path is a safe spelling within Bench's ignored
+// runtime log root.
 func RuntimeIgnoredPath(path string) bool {
 	for _, r := range path {
 		if r < 0x20 || r == 0x7f {
@@ -396,9 +397,9 @@ func fingerprintStatus(raw []byte) ([]byte, error) {
 }
 
 // stagedSpecMatches proves provenance, not agreement: the bytes the landing will
-// transition must be the reviewed source tip's committed spec. The destination's copy
-// is never read for comparison — the source's bytes win, so a stale, amended, or
-// absent destination spec is not a landing question.
+// transition must be the reviewed source tip's committed spec. The function never
+// reads the destination's copy for comparison; the source's bytes win. A stale,
+// amended, or absent destination spec is not a landing question.
 func stagedSpecMatches(root, source, path string, want []byte) error {
 	got, err := benchgit.Raw("-C", root, "show", source+":"+path)
 	if err != nil || !bytes.Equal(got, want) {
@@ -408,9 +409,10 @@ func stagedSpecMatches(root, source, path string, want []byte) error {
 }
 
 // specNeutralizedDestination returns a commit to compose against whose tree already
-// carries the source's spec bytes, so the spec path is a one-sided change no merge can
-// conflict on. Its parent is the real destination, leaving the merge base unchanged;
-// the returned commit is a composition input only and never becomes a published parent.
+// carries the source's spec bytes. The spec path is then a one-sided change no merge
+// can conflict on. Its parent is the real destination, so the merge base stays
+// unchanged. The returned commit is a composition input only; it never becomes a
+// published parent.
 func specNeutralizedDestination(root, destination, path string, want []byte, mode os.FileMode) (string, error) {
 	baseTree, err := output(root, "rev-parse", destination+"^{tree}")
 	if err != nil {

@@ -18,8 +18,8 @@ const AssignmentRecordSchema = "bench-assignment/v1"
 const assignmentBranchNamespace = "refs/heads/bench/assign/"
 
 // RecoveryRefNamespace is the one name for the namespace preserved work lives under.
-// Both the writer that puts refs there and the standing cleaner that sweeps it read this
-// constant, so neither can address a namespace the other does not.
+// Both the writer that puts refs there and the standing cleaner that sweeps it read
+// this constant. Neither can address a namespace the other does not.
 const RecoveryRefNamespace = "refs/bench/recovery/"
 
 func AssignmentBranchRef(ownerID, assignmentID string) string {
@@ -50,8 +50,8 @@ type Recovery struct {
 }
 
 // Assignment is the persisted half of a Bench-owned registration. The worktree
-// marker proves immutable owner identity; this record binds that owner to exactly one
-// caller request, branch, start commit, path, lifecycle state, and recovery set.
+// marker proves immutable owner identity. This record binds that owner to exactly
+// one caller request, branch, start commit, path, lifecycle state, and recovery set.
 type Assignment struct {
 	Schema   string          `json:"schema"`
 	ID       string          `json:"id"`
@@ -287,8 +287,8 @@ func ValidateAssignment(a Assignment) error {
 		return fmt.Errorf("assignment %q has non-canonical worktree", a.ID)
 	}
 	// A stamp ahead of the reading host's clock stays valid here: skew is the age
-	// predicate's to interpret, and rejecting it would make one skewed write
-	// unreadable to every command, since this runs on every ledger read.
+	// predicate's to interpret. Rejecting it would make one skewed write unreadable
+	// to every command, since this runs on every ledger read.
 	if a.CreatedAt != nil {
 		if _, err := time.Parse(time.RFC3339, *a.CreatedAt); err != nil {
 			return fmt.Errorf("assignment %q has unparseable created_at", a.ID)
@@ -456,11 +456,11 @@ func compareAndSwapRequestDigest(assignment *Assignment, expectedOld, replacemen
 
 // PurgeAssignments drops every assignment record keep rejects, plus every record this
 // build can no longer read at all, and reports how many it dropped. Read is strict
-// because a record it cannot account for must not authorize anything; the purge is
-// deliberately not, because a ledger written by an older binary is unreadable exactly
-// when the standing cleaner is the only thing that can clear it — refusing there would
-// leave every later command reading the same unreadable file. A purge that drops nothing
-// leaves the file's bytes untouched, so a re-run over converged state is a no-op.
+// because a record it cannot account for must not authorize anything. The purge is
+// deliberately not. A ledger written by an older binary is unreadable exactly when the
+// standing cleaner is the only thing able to clear it. Refusing there would leave every
+// later command reading the same unreadable file. A purge that drops nothing leaves the
+// file's bytes untouched, so a re-run over converged state is a no-op.
 func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
 	path, err := Address(root)
 	if err != nil {
@@ -492,9 +492,9 @@ func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
 	}
 	kept := make([]Assignment, 0, len(stored.Assignments))
 	ids, requests := map[string]bool{}, map[string]bool{}
-	// A record the legacy schema carries was never authorized to be there — Read refuses the
-	// whole file over one — so under that schema every record is debris, whatever it says
-	// about itself, and the loop that would judge them individually is skipped.
+	// A record the legacy schema carries was never authorized to be there: Read refuses the
+	// whole file over one. Under that schema every record is debris, whatever it says about
+	// itself, so the loop that would judge them individually is skipped.
 	if stored.Schema != LegacySchema {
 		for _, record := range stored.Assignments {
 			var assignment Assignment

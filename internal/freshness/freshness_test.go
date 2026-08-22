@@ -269,8 +269,8 @@ func TestPublishLeavesNoArtifactsWhenFirstSealPromotionFails(t *testing.T) {
 }
 
 // The child answers a termination signal only once the publication's own step grace has
-// elapsed, so every deadline the parent holds is derived from that bound instead of
-// restating a wall-clock guess that could silently fall inside it.
+// elapsed. Every deadline the parent holds derives from that bound instead of restating
+// a wall-clock guess that could silently fall inside it.
 const (
 	publicationInterruptDeadline = 5 * publicationStepGrace
 	publicationInterruptBlock    = 2 * publicationInterruptDeadline
@@ -284,10 +284,10 @@ const (
 )
 
 // TestPublishRestoresPriorPairWhenInterruptedBeforeItsSealLands runs the publication in a
-// child process: answering a termination signal ends the process that received it, so an
+// child process. Answering a termination signal ends the process that received it, so an
 // in-process exercise would take the test binary down with it. The child holds the
 // publication open at the one point where the new executable is installed and the seal
-// still describes the old one, which is the only state a signal can leave inconsistent.
+// still describes the old one. That is the only state a signal can leave inconsistent.
 func TestPublishRestoresPriorPairWhenInterruptedBeforeItsSealLands(t *testing.T) {
 	if root := os.Getenv(publicationInterruptRootEnv); root != "" {
 		runInterruptedPublicationChild(t, root)
@@ -357,8 +357,8 @@ func runInterruptedPublicationChild(t *testing.T, root string) {
 
 // TestPublishRemovesBackupPairWhenInterruptedAfterItsSealLands covers the other side of a
 // handled termination: the seal has landed, so the publication stands and nothing is
-// restored, but the backups of the pair it replaced are still on disk. The child drives
-// the transaction directly and signals itself, because that window closes as soon as the
+// restored. The backups of the pair it replaced are still on disk. The child drives the
+// transaction directly and signals itself, because that window closes as soon as the
 // transaction does.
 func TestPublishRemovesBackupPairWhenInterruptedAfterItsSealLands(t *testing.T) {
 	if root := os.Getenv(publicationInterruptRootEnv); root != "" {
@@ -951,7 +951,7 @@ func TestVerifyRefusesNamedPipeSealBeforeReading(t *testing.T) {
 }
 
 // publicationResidue lists every temporary a publication of executable can leave beside
-// it, matched by the publisher's own naming rather than a glob restated here, so a new
+// it, matched by the publisher's own naming rather than a glob restated here. A new
 // temporary family is covered the moment the publisher can create one.
 func publicationResidue(t *testing.T, executable string) []string {
 	t.Helper()
@@ -1042,8 +1042,8 @@ func writeBuildFixtureAt(t *testing.T, root string) string {
 // the landing consults before it proves its own executable. Only a not-exist manifest
 // may report absence: every other artifact state routes to Verify, whose reading
 // discipline refuses what it cannot trust. An implementation that followed the link —
-// Stat rather than Lstat — would read a dangling symlink as an authoritative absence
-// and skip the proof in exactly the repository that needs it.
+// Stat rather than Lstat — would read a dangling symlink as an authoritative absence.
+// It would then skip the proof in exactly the repository that needs it.
 func TestDeclaresBuildInputsReadsPresenceRatherThanContent(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -1082,7 +1082,7 @@ func TestDeclaresBuildInputsReadsPresenceRatherThanContent(t *testing.T) {
 		}},
 		// An unusable parent is the case that separates "not-exist" from "errored at all".
 		// A predicate that asked only whether Lstat succeeded would read this repository as
-		// declaring nothing and skip the proof, which is the one direction that must never
+		// declaring nothing and skip the proof. That is the one direction that must never
 		// happen: an unreadable tree is untrusted, not exempt.
 		{name: "parent-is-not-a-directory", declare: true, place: func(t *testing.T, path string) {
 			parent := filepath.Dir(path)

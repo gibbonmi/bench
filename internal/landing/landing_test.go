@@ -863,8 +863,8 @@ type reviewedLanding struct {
 // newReviewedLanding stages baseSpec at the shared review base, commits sourceSpec on
 // the reviewed source branch, and advances the destination with destinationSpec. An
 // empty spec string means that side wrote no spec at all. A zero specMode means the
-// 0o644 default; a non-zero one is applied to the source's spec before it is committed,
-// so the source tip and the request agree on the mode the composition must carry.
+// 0o644 default. The function applies a non-zero mode to the source's spec before the
+// commit. The source tip and the request then agree on the mode the composition carries.
 func newReviewedLanding(t *testing.T, baseSpec, destinationSpec, sourceSpec string, specMode os.FileMode) reviewedLanding {
 	t.Helper()
 	if specMode == 0 {

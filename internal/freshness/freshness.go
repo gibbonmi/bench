@@ -40,9 +40,10 @@ type seal struct {
 }
 
 // DeclaresBuildInputs reports whether root declares Go build inputs, which is what makes
-// a rebuildable dev executable possible. Presence decides, not content: a manifest that is
-// a broken link or a special file routes to Verify, whose reading discipline refuses what
-// it cannot trust, so nothing unreadable is ever read as an authoritative absence.
+// a rebuildable dev executable possible. Presence decides, not content. A manifest that is
+// a broken link or a special file routes to Verify instead, whose reading discipline
+// refuses what it cannot trust. Nothing unreadable is ever read as an authoritative
+// absence.
 func DeclaresBuildInputs(root string) bool {
 	_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(auxiliaryInputsManifest)))
 	return !errors.Is(err, os.ErrNotExist)
@@ -77,7 +78,8 @@ func Digest(root string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-// BuildInputs returns the repository-relative, slash-separated, sorted paths that Digest hashes for root.
+// BuildInputs returns the repository-relative, slash-separated, sorted paths that Digest
+// hashes for root.
 func BuildInputs(root string) ([]string, error) {
 	root, err := filepath.Abs(root)
 	if err != nil {
@@ -98,7 +100,8 @@ func BuildInputs(root string) ([]string, error) {
 	return relative, nil
 }
 
-// SealDigests returns the source and executable digests recorded in executable's published seal.
+// SealDigests returns the source and executable digests recorded in executable's
+// published seal.
 func SealDigests(executable string) (sources, digest string, err error) {
 	data, err := secureContents(sealPath(executable), false)
 	if err != nil {
@@ -167,15 +170,15 @@ func sealContents(root, staged string) ([]byte, error) {
 }
 
 // publicationStepGrace bounds how long an arriving termination waits for a publication
-// step to finish before restoring anyway. A step is one rename or one small write, so a
-// step still running after the grace means the filesystem is wedged, and honoring the
-// termination then matters more than waiting for a step that may never return.
+// step to finish before restoring anyway. A step is one rename or one small write. A step
+// still running after the grace means the filesystem is wedged. Honoring the termination
+// then matters more than waiting for a step that may never return.
 const publicationStepGrace = 2 * time.Second
 
 // publication owns replacing an executable and its seal as one outcome. The pair is only
-// consistent before the executable moves and after the seal lands, so the transaction
-// both restores the prior pair when the seal fails and answers a termination arriving in
-// between — the invoking shell holds no rollback state and needs none.
+// consistent before the executable moves and after the seal lands. The transaction both
+// restores the prior pair when the seal fails and answers a termination arriving in
+// between. The invoking shell holds no rollback state and needs none.
 type publication struct {
 	executable    string
 	backup        string
@@ -188,8 +191,8 @@ type publication struct {
 	resolved atomic.Bool
 	signals  chan os.Signal
 	// sealTemporary holds the staging file of a seal write that has not yet landed. The
-	// termination handler reads it while that write is still in flight, so the name lives
-	// on the transaction rather than only in the writer's own frame.
+	// termination handler reads it while that write is still in flight. The name lives on
+	// the transaction rather than only in the writer's own frame.
 	sealTemporary atomic.Pointer[string]
 }
 
@@ -211,9 +214,9 @@ func beginPublication(executable string) (*publication, error) {
 }
 
 // watch arms the transaction against the terminations an operator or a supervisor sends.
-// The restore has to run before the process ends, and a process cannot honor a signal and
-// keep running as if it had not arrived, so the handler exits under the shell convention
-// for the signal it received.
+// The restore has to run before the process ends. A process cannot honor a signal and
+// keep running as if it had not arrived. The handler therefore exits under the shell
+// convention for the signal it received.
 func (p *publication) watch() {
 	p.signals = make(chan os.Signal, 1)
 	signal.Notify(p.signals, subprocess.CancelSignals...)
@@ -259,8 +262,8 @@ func (p *publication) sealWith(encoded []byte) error {
 	if err := writeSeal(sealPath(p.executable), encoded, p.trackSealTemporary); err != nil {
 		return err
 	}
-	// Resolving under the same lock the restore takes is what stops a termination
-	// arriving on the heels of a landed seal from undoing a complete publication.
+	// Resolving under the same lock the restore takes stops a termination arriving on
+	// the heels of a landed seal from undoing a complete publication.
 	p.resolved.Store(true)
 	return nil
 }
@@ -288,8 +291,8 @@ func (p *publication) close() {
 }
 
 // removeTemporaries deletes every temporary the transaction owns. Both the termination
-// handler and close call it, and either may run after the other, so a removal of what is
-// already gone is the normal case rather than a failure.
+// handler and close call it, and either may run after the other. A removal of what is
+// already gone is the normal case, not a failure.
 func (p *publication) removeTemporaries() {
 	p.remove(p.backup)
 	p.remove(p.sealBackup)
@@ -669,10 +672,10 @@ func parseSeal(data []byte) (seal, error) {
 	return stored, nil
 }
 
-// writeSeal promotes data into path through a staging file, reporting that file's name to
-// track for as long as it is in flight: a termination answered mid-write ends the process
-// before any deferred cleanup here can run, so the staging file needs an owner that
-// outlives this call.
+// writeSeal promotes data into path through a staging file, and it reports that file's
+// name to track for as long as it is in flight. A termination answered mid-write ends the
+// process before any deferred cleanup here can run. The staging file therefore needs an
+// owner that outlives this call.
 func writeSeal(path string, data []byte, track func(string)) (err error) {
 	temporary, err := os.CreateTemp(filepath.Dir(path), sealTemporaryPattern(path))
 	if err != nil {
