@@ -15,10 +15,9 @@ import (
 const roadmapDetailIntegrityFamily = "roadmap-detail-integrity"
 
 // roadmapDetailIntegrityFixtureClasses names the diagnostic class each fixture in the
-// family plants — one fixture per class the split-board loader can report. The bite proof
+// family plants. The split-board loader can report one fixture per class. The bite proof
 // derives its corpus from the fixture directories themselves, so it cannot see a class
-// whose fixture is gone; this independently authored inventory is what makes that
-// omission red.
+// whose fixture is gone. This independently authored inventory makes that omission red.
 var roadmapDetailIntegrityFixtureClasses = map[string]string{
 	"roadmap-missing-detail-owner":   "missing detail owner",
 	"roadmap-orphan-detail":          "orphan detail file",

@@ -331,9 +331,9 @@ func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]canary.Fixt
 		if !family.IsDir() {
 			continue
 		}
-		// A family is canonical when inventory resolution can identify it: through a
+		// A family is canonical when inventory resolution can identify it, through a
 		// family binding or through its own fixture marker. Only a family with neither
-		// is unattributable; a flat fixture carries its own binding rather than a family.
+		// is unattributable. A flat fixture carries its own binding, not a family.
 		if canary.IsConformanceFamily(filepath.Join(fixturesDir, family.Name())) && !familyIsBound(family.Name()) {
 			t.Errorf("canary family %q is not canonical", family.Name())
 		}

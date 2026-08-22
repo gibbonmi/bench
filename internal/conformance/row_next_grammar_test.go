@@ -24,7 +24,7 @@ const (
 
 // checkRowNextGrammar binds the drain command's token table to the parser's token set, so
 // the grammar and its documentation cannot drift apart. The table is the human-facing
-// form; `roadmap.RowNextTokens` is the one source.
+// form. `roadmap.RowNextTokens` is the one source.
 func checkRowNextGrammar(root string) []string {
 	body := readIfExists(filepath.Join(root, filepath.FromSlash(rowNextGrammarCommand)))
 	if body == "" {
@@ -83,7 +83,7 @@ func rowNextGrammarTable(body string) ([]string, bool) {
 }
 
 // rowNextGrammarFixtureClasses names the diagnostic class each fixture in the family
-// plants; the independently authored inventory is what makes a deleted fixture red.
+// plants. The independently authored inventory makes a deleted fixture red.
 var rowNextGrammarFixtureClasses = map[string]string{
 	"token-table-lacks-kit-edit": "token table lacks token 'kit-edit'",
 }
@@ -139,8 +139,8 @@ func TestRowNextGrammarFixtureInventoryRejectsDeletion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The family holds one fixture, so removing its directory would empty the family;
-	// dropping the entry from the loaded inventory presents the validator with the same
+	// The family holds one fixture, so removing its directory would empty the family.
+	// Dropping the entry from the loaded inventory presents the validator with the same
 	// absence.
 	delete(fixtures, "token-table-lacks-kit-edit")
 	err = validateRowNextGrammarFixtureInventory(fixtures)
@@ -150,7 +150,7 @@ func TestRowNextGrammarFixtureInventoryRejectsDeletion(t *testing.T) {
 }
 
 // TestRowNextGrammarBindsTableToParserTokens pins RF16: the live command's table agrees
-// with the parser, and a table that lacks `kit-edit` or carries a stranger yields a drift
+// with the parser. A table that lacks `kit-edit` or carries a stranger yields a drift
 // diagnostic naming that token.
 func TestRowNextGrammarBindsTableToParserTokens(t *testing.T) {
 	h := NewHarness(t)

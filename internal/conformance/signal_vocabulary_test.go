@@ -10,31 +10,30 @@ import (
 )
 
 // signalRowRe matches the emitted signal-name literal in internal/status/status.go's
-// row{<severity>, "<name>", …} constructor: the first string after the integer
-// severity is the signal name shown on the ambient dashboard.
+// row{<severity>, "<name>", …} constructor. The first string after the integer severity is
+// the signal name shown on the ambient dashboard.
 var signalRowRe = regexp.MustCompile(`row\{\s*\d+\s*,\s*"([a-z][a-z-]*)"`)
 
-// checkSignalVocabulary cross-checks the signal names internal/status/status.go
-// emits against CONTEXT.md's signal-definition enumeration, so the file that pins
-// the ubiquitous language can't silently drift when a signal is added to status.go
-// (the drift the assessment actually observed). Prior art checkLineBinding: read
-// the graded tree's machine source, assert the prose names each value.
+// checkSignalVocabulary cross-checks the signal names that internal/status/status.go emits
+// against CONTEXT.md's signal-definition enumeration. This stops the file that pins the
+// ubiquitous language from drifting silently when a signal is added to status.go.
+// checkLineBinding is the prior art: it reads the graded tree's machine source and asserts
+// that the prose names each value.
 //
-//   - Forward only — every emitted signal name must appear in CONTEXT.md — matching
+//   - Forward only: every emitted signal name must appear in CONTEXT.md, matching
 //     checkLineBinding's one-directional prose check.
-//   - Scoped match, not whole-file Contains: signal names are common words (git,
-//     specs, reviews) that recur throughout CONTEXT.md, so a whole-file substring
-//     test false-passes. Each name is matched as a delimited token within the
-//     parenthesized enumeration on the `signal` term, nowhere else.
-//   - Absent source no-ops: an unreadable status.go or CONTEXT.md (or a signal term
-//     with no parenthesized enumeration) returns nothing, mirroring checkLineBinding
-//     skipping an empty profile — the compiled-core build/test check already fails a
-//     tree missing status.go.
+//   - Scoped match, not a whole-file Contains: signal names are common words (git, specs,
+//     reviews) that recur throughout CONTEXT.md, so a whole-file substring test
+//     false-passes. The check matches each name as a delimited token, only within the
+//     parenthesized enumeration on the `signal` term.
+//   - Absent source no-ops: an unreadable status.go or CONTEXT.md, or a signal term with no
+//     parenthesized enumeration, returns nothing. This mirrors checkLineBinding skipping an
+//     empty profile; the compiled-core build/test check already fails a tree that is
+//     missing status.go.
 //   - Zero-extraction floor: a present status.go whose row shape has drifted from
-//     signalRowRe (a named-const severity, a helper constructor, …) yields zero
-//     matches. That must not silently pass as "nothing to check" — it reds with one
-//     diagnostic naming the extraction as stale, so the drift is caught instead of
-//     going quiet.
+//     signalRowRe (a named-const severity, a helper constructor) yields zero matches. This
+//     must not silently pass as "nothing to check". It reds with one diagnostic naming the
+//     extraction as stale, so the check catches the drift instead of going quiet.
 func checkSignalVocabulary(root string) []string {
 	status := readIfExists(filepath.Join(root, "internal", "status", "status.go"))
 	context := readIfExists(filepath.Join(root, "CONTEXT.md"))
@@ -64,8 +63,8 @@ func checkSignalVocabulary(root string) []string {
 	return diags
 }
 
-// signalEnumeration returns the parenthesized list on CONTEXT.md's `signal` term —
-// the first "(...)" group after the "**signal**" marker. Empty when the term or its
+// signalEnumeration returns the parenthesized list on CONTEXT.md's `signal` term: the first
+// "(...)" group after the "**signal**" marker. It returns empty when the term or its
 // enumeration is absent.
 func signalEnumeration(context string) string {
 	idx := strings.Index(context, "**signal**")
@@ -84,19 +83,17 @@ func signalEnumeration(context string) string {
 	return rest[open+1 : open+end]
 }
 
-// tokenInEnumeration reports whether name appears in enum delimited by non-letters,
-// so a common name (git, specs) matches only as a whole word and never inside a
-// longer word.
+// tokenInEnumeration reports whether name appears in enum, delimited by non-letters. A
+// common name (git, specs) then matches only as a whole word, never inside a longer word.
 func tokenInEnumeration(enum, name string) bool {
 	return regexp.MustCompile(`(^|[^a-zA-Z])` + regexp.QuoteMeta(name) + `([^a-zA-Z]|$)`).MatchString(enum)
 }
 
-// TestSignalVocabularyBites is the recorded bite proof (per craft-gate): an intact
-// tree whose CONTEXT.md enumeration names every emitted signal passes clean;
-// dropping one name from the enumeration fires exactly that signal's diagnostic and
-// no sibling; the scoped match refuses a whole-file false-pass (a dropped name that
-// still occurs elsewhere in CONTEXT.md outside the enumeration stays red); and an
-// absent status.go no-ops.
+// TestSignalVocabularyBites is the recorded bite proof. An intact tree whose CONTEXT.md
+// enumeration names every emitted signal passes clean. Dropping one name from the
+// enumeration fires exactly that signal's diagnostic, and no sibling diagnostic. The scoped
+// match refuses a whole-file false-pass: a dropped name that still occurs elsewhere in
+// CONTEXT.md, outside the enumeration, stays red. An absent status.go no-ops.
 func TestSignalVocabularyBites(t *testing.T) {
 	const statusSrc = "package status\n" +
 		"func rows() {\n" +
@@ -104,9 +101,9 @@ func TestSignalVocabularyBites(t *testing.T) {
 		"\t_ = row{1, \"git\", d, a}\n" +
 		"\t_ = row{10, \"roadmap\", d, a}\n" +
 		"}\n"
-	// enum builds a CONTEXT.md whose signal term names exactly the given signals,
-	// with a decoy sentence afterward that mentions git/roadmap outside the
-	// enumeration so a whole-file Contains impl would false-pass.
+	// enum builds a CONTEXT.md whose signal term names exactly the given signals. A
+	// decoy sentence afterward mentions git and roadmap outside the enumeration, so a
+	// whole-file Contains implementation would false-pass.
 	enum := func(names ...string) string {
 		return "# Context\n\n" +
 			"- **signal** — one ranked line on the ambient dashboard (" + strings.Join(names, ", ") + "). Not \"check\".\n" +
@@ -151,7 +148,8 @@ func TestSignalVocabularyBites(t *testing.T) {
 				}
 			}
 			// The decoy line in enum() still mentions git and roadmap outside the
-			// parenthesized list, so a whole-file Contains impl would miss this.
+			// parenthesized list. A whole-file Contains implementation would miss this
+			// case.
 			diags := checkSignalVocabulary(write(t, statusSrc, enum(kept...)))
 			if !containsDiagnostic(diags, tc.want) {
 				t.Fatalf("want %q in diagnostics, got %v", tc.want, diags)
@@ -169,9 +167,9 @@ func TestSignalVocabularyBites(t *testing.T) {
 	}
 
 	// Zero-extraction floor: a present status.go whose row shape has drifted from
-	// signalRowRe (here a named-const severity, `row{sevGate, ...}`, instead of the
-	// integer literal the regex requires) must not silently pass with zero
-	// diagnostics — it must red with a diagnostic naming the extraction as stale.
+	// signalRowRe must not silently pass with zero diagnostics. Here a named-const
+	// severity, `row{sevGate, ...}`, replaces the integer literal the regex requires.
+	// It reds with a diagnostic naming the extraction as stale.
 	const driftedStatusSrc = "package status\n" +
 		"func rows() {\n" +
 		"\t_ = row{sevGate, \"gate\", d, a}\n" +

@@ -156,8 +156,8 @@ func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The ledger the mutation drops a key from lives in the row's own detail file, so
-	// the fixture copies the live board's index beside a mutated roadmap/FT158.md.
+	// The mutation drops a key from the ledger, which lives in the row's own detail file.
+	// The fixture copies the live board's index beside a mutated roadmap/FT158.md.
 	rowFile := filepath.Join(kit, "roadmap", "FT158.md")
 	row, err := os.ReadFile(rowFile)
 	if err != nil {

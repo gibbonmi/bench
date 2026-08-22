@@ -53,11 +53,10 @@ func checkPackageFiles(root string, tier registry.Tier) []string {
 		if exists(filepath.Join(root, filepath.FromSlash(file))) {
 			continue
 		}
-		// A gitignored files[] entry (dist/, the repo-local Go build) exists only once
-		// something has built it — a bare or prospective checkout never carries one, so
-		// its completeness is a built-payload concern below ship tier, not a tree-shape
-		// one. Ship-tier grading keeps the strict check: the release rehearsal build
-		// precedes it.
+		// A gitignored files[] entry, such as dist/, the repo-local Go build, exists only
+		// after a build. A bare or prospective checkout never carries one. Below ship
+		// tier, its absence is a built-payload concern, not a tree-shape defect. Ship-tier
+		// grading keeps the strict check, because the release rehearsal build runs first.
 		if tier != registry.Ship && benchgit.OK("-C", root, "check-ignore", "-q", "--", file) {
 			continue
 		}
@@ -67,10 +66,10 @@ func checkPackageFiles(root string, tier registry.Tier) []string {
 		return diags
 	}
 
-	// --ignore-scripts: inspect files[] membership only. The prepare build (npx-from-git
-	// enablement) is a lifecycle side effect the git-install probe exercises for real;
-	// running it here would rebuild dist/bench and defeat the built/unbuilt determinism
-	// this shape check is meant to hold.
+	// --ignore-scripts inspects files[] membership only. The prepare build, the npx-from-git
+	// enablement, is a lifecycle side effect that the git-install probe exercises for real.
+	// Running it here would rebuild dist/bench and defeat the built/unbuilt determinism this
+	// shape check must hold.
 	probe := runAtCleanEnv(root, "npm", "pack", "--dry-run", "--json", "--ignore-scripts")
 	if probe != nil && probe.ExitCode != 0 {
 		diags = append(diags, formatProbeFailure("npm pack --dry-run failed", probe, root))
@@ -83,20 +82,21 @@ func checkPackageFiles(root string, tier registry.Tier) []string {
 			required = append(required, buildAssets...)
 			diags = append(diags, checkNpmPackAssets(probe.Stdout, required)...)
 		}
-		// Independent of whether the build-input inventory resolved: the kit-only
-		// guard only needs the packed file list and the allowlist, both already in
-		// hand, so a fixture too minimal to carry cmd/ and internal/ still exercises it.
+		// This check runs independent of the build-input inventory. The kit-only guard needs
+		// only the packed file list and the allowlist, both already in hand. A fixture too
+		// minimal to carry cmd/ and internal/ still exercises it.
 		diags = append(diags, checkNoKitOnlyPackedAssets(root, probe.Stdout)...)
 	}
 	return append(diags, checkRepoOnlyPackageClaims(root)...)
 }
 
 // TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier pins the prospective-checkout
-// repro: a files[] entry that is both absent and gitignored (dist/, in the real tree) is
-// exactly what any bare `git worktree add` + `read-tree` checkout produces, since a build
-// artifact never rides along with tracked content. Dev tier must not flag it — it is not a
-// tree-shape defect — while ship tier, the release rehearsal, keeps the strict check. A
-// genuinely missing tracked entry still flags at both tiers, so the exemption stays narrow.
+// repro. A files[] entry can be both absent and gitignored, like dist/ in the real tree.
+// This is what a bare `git worktree add` plus `read-tree` checkout produces, because a
+// build artifact never rides along with tracked content. Dev tier must not flag it,
+// because it is not a tree-shape defect. Ship tier, the release rehearsal, keeps the
+// strict check. A genuinely missing tracked entry still flags at both tiers, so the
+// exemption stays narrow.
 func TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier(t *testing.T) {
 	root := t.TempDir()
 	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
@@ -108,8 +108,8 @@ func TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"files":["dist/","README.md"]}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// README.md is deliberately left absent and untracked (not gitignored): a genuinely
-	// missing tracked entry, the case the check must keep catching at every tier.
+	// README.md stays absent and untracked, not gitignored. It is the genuinely missing
+	// tracked entry that the check must keep catching at every tier.
 
 	dev := checkPackageFiles(root, registry.Dev)
 	if containsDiagnostic(dev, "missing dist/") {
@@ -128,25 +128,24 @@ func TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier(t *testing.T) {
 	}
 }
 
-// checkNoKitOnlyPackedAssets is the FT85 story 3 forbidden-asset guard: it derives the
-// kit-only prefix set from the same canonical allowlist buildLinkPlan and
-// build-release-evidence.mjs read, and grades the real npm pack --dry-run output
-// against it, so a kit-only path readmitted anywhere in package.json's files[] (not
-// just the wholesale .agents/ case the allowlist itself replaced) still turns the gate
+// checkNoKitOnlyPackedAssets is the FT85 story 3 forbidden-asset guard. It derives the
+// kit-only prefix set from the canonical allowlist that buildLinkPlan and
+// build-release-evidence.mjs read. It grades the real npm pack --dry-run output against
+// that prefix set, so a kit-only path readmitted anywhere in files[] still turns the gate
 // red. It reads .bench/consumer-payload.json from the graded root, not the running
-// binary's own copy, so a canary fixture's mutated allowlist is what gets graded. An
-// allowlist present but declaring no kit-only rows is itself a diagnostic: with an
-// empty prefix set every packed path passes vacuously, so the emptied-allowlist case
-// must be caught here rather than silently skipped alongside the missing-file case.
+// binary's own copy, so a canary fixture's mutated allowlist gets graded. An allowlist
+// that declares no kit-only rows is itself a diagnostic, because an empty prefix set lets
+// every packed path pass vacuously. This emptied-allowlist case must be caught here, not
+// silently skipped alongside the missing-file case.
 func checkNoKitOnlyPackedAssets(root, packJSON string) []string {
 	rows, absent, err := kitpayload.PayloadRowsAt(filepath.Join(root, ".bench", "consumer-payload.json"))
 	if absent {
 		return nil
 	}
 	if err != nil {
-		// A present allowlist that does not resolve cannot be silently skipped the way
-		// an absent one is: the prefix set would be empty and every packed path would
-		// pass vacuously, which is the exact failure this guard exists to catch.
+		// A present allowlist that does not resolve cannot be silently skipped the way an
+		// absent one is. The prefix set would be empty, and every packed path would pass
+		// vacuously, which is the exact failure this guard exists to catch.
 		return []string{err.Error()}
 	}
 	prefixes := kitpayload.PayloadKitOnlyPrefixes(rows)
@@ -201,7 +200,8 @@ func checkNpmPackAssets(packJSON string, required []string) []string {
 }
 
 func checkRepoOnlyPackageClaims(root string) []string {
-	// Mirrors the package fragment's lightweight prose sweep over shipped markdown.
+	// This check mirrors the package fragment's lightweight prose sweep over shipped
+	// markdown.
 	var diags []string
 	files := packageMarkdownFiles(root)
 	claimRe := regexp.MustCompile(`(?i)\b(ship|ships|shipped|shipping|package|packaged|tarball|installable|included|includes)\b`)
@@ -227,11 +227,10 @@ func checkRepoOnlyPackageClaims(root string) []string {
 	return diags
 }
 
-// checkGoToolchain grades the two Go facts no gate phase can own. A toolchain absent
-// from PATH is the condition under which every probed phase silently declines to
-// materialize, so the diagnostic naming it has to come from a check that runs without
-// Go. The cross-compile matrix is ship-tier, which the dev phase table does not reach.
-// Both grade any root cheaply.
+// checkGoToolchain grades the two Go facts no gate phase can own. When a toolchain is
+// absent from PATH, every probed phase declines to run silently. A check that itself
+// needs no Go must name that diagnostic. The cross-compile matrix is ship-tier, which the
+// dev phase table does not reach. Both checks grade any root cheaply.
 func checkGoToolchain(root string) []string {
 	if !exists(filepath.Join(root, "go.mod")) {
 		return nil
@@ -243,14 +242,14 @@ func checkGoToolchain(root string) []string {
 }
 
 // TestResidualCheckBuildsNothing keeps the residual check from competing with the run
-// owner's single build. An assertion about dist/bench alone would miss a build aimed at
-// a throwaway path.
+// owner's single build. An assertion about dist/bench alone would miss a build aimed at a
+// throwaway path.
 func TestResidualCheckBuildsNothing(t *testing.T) {
 	root := t.TempDir()
 	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
 	writeFixtureFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() {}\n")
-	// Records the invocation instead of building, so the assertion reads whether the
-	// check reached the helper at all rather than what it asked it to produce.
+	// This records the invocation instead of building. The assertion then reads whether the
+	// check reached the helper, not what it asked the helper to produce.
 	writeFixtureFile(t, filepath.Join(root, "scripts", "go-build.sh"),
 		"#!/usr/bin/env bash\nprintf '%s\\n' \"$2\" > \"$1/recorded-out\"\n")
 
@@ -264,9 +263,9 @@ func TestResidualCheckBuildsNothing(t *testing.T) {
 	}
 }
 
-// TestResidualCheckReportsAbsentToolchain keeps the only diagnostic a host with no Go
-// can produce. Without it such a host grades green on a tree whose compiled core is
-// load-bearing, because every phase that would have noticed is gated on the same absent
+// TestResidualCheckReportsAbsentToolchain keeps the only diagnostic a host with no Go can
+// produce. Without it, such a host grades green on a tree whose compiled core is
+// load-bearing. Every phase that would notice the gap is gated on the same absent
 // toolchain.
 func TestResidualCheckReportsAbsentToolchain(t *testing.T) {
 	root := t.TempDir()
@@ -365,11 +364,11 @@ func platformMatrix(path string) ([]platformTarget, error) {
 	return plan.Targets, nil
 }
 
-// hostilePayloadPlanters extends the shared producer partition to the allowlist: the
-// byte-shape half reuses hostileSkillPlanters (one owner for FIFO, both link forms,
-// oversized, and invalid UTF-8), and the semantic half adds the row defects only the
-// canonical parser can see. A JSON-decode-only reader survives the first group and
-// admits the second.
+// hostilePayloadPlanters extends the shared producer partition to the allowlist. The
+// byte-shape half reuses hostileSkillPlanters, the one owner for FIFO, both link forms,
+// oversized, and invalid UTF-8. The semantic half adds the row defects only the canonical
+// parser can see. A JSON-decode-only reader survives the first group and admits the
+// second.
 func hostilePayloadPlanters(t *testing.T) map[string]func(*testing.T, string) {
 	t.Helper()
 	planters := map[string]func(*testing.T, string){}
@@ -396,14 +395,14 @@ func hostilePayloadPlanters(t *testing.T) map[string]func(*testing.T, string) {
 
 // TestRegisteredPayloadConsumersRefuseHostilePayload is the allowlist composition row.
 // The package-core guard, the registered package-shipped-surface check, and the
-// packagesurface contract-document inventory all read the same tracked file, so each
-// has to complete over a hostile or invalid one and name the path it refused —
-// otherwise skills-index can go green while a package reader hangs in open(2) or ships
+// packagesurface contract-document inventory all read the same tracked file. Each
+// consumer must complete over a hostile or invalid file and name the path it refused.
+// Otherwise skills-index can go green while a package reader hangs in open(2), or ships
 // an inventory derived from rows the allowlist forbids.
 func TestRegisteredPayloadConsumersRefuseHostilePayload(t *testing.T) {
 	const rel = ".bench/consumer-payload.json"
-	// One packed file list, enough for the guard to have something to grade: the
-	// refusal under test happens before it is consulted.
+	// This is one packed file list, enough for the guard to have something to grade. The
+	// refusal under test happens before the guard consults it.
 	const packJSON = `[{"files":[{"path":"package/AGENTS.md"}]}]`
 	for kind, plant := range hostilePayloadPlanters(t) {
 		t.Run(kind, func(t *testing.T) {
@@ -411,17 +410,17 @@ func TestRegisteredPayloadConsumersRefuseHostilePayload(t *testing.T) {
 			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			// package.json is the shipped-surface check's own entry condition; without
-			// it that consumer returns before it reaches the allowlist.
+			// package.json is the shipped-surface check's own entry condition. Without it, that
+			// consumer returns before it reaches the allowlist.
 			if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"files":[".agents/"]}`), 0o644); err != nil {
 				t.Fatal(err)
 			}
 			plant(t, filepath.Join(root, ".bench", "consumer-payload.json"))
 
 			consumers := map[string]func() []string{
-				// The guard function itself, not the registered package-core-guard
-				// binding: that binding reaches this reader only through a real
-				// `npm pack`, which a fixture root cannot satisfy.
+				// This calls the guard function itself, not the registered package-core-guard
+				// binding. That binding reaches this reader only through a real `npm pack`, which a
+				// fixture root cannot satisfy.
 				"package-core-guard": func() []string { return checkNoKitOnlyPackedAssets(root, packJSON) },
 				"package-shipped-surface": func() []string {
 					binding, bound := conformanceChecks["package-shipped-surface"]
