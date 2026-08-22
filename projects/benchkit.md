@@ -25,7 +25,7 @@ works on any branch. This line only states the binding.)
   accepted trust posture.
 - **The `bench` CLI subcommands.** This is the operational shell surface. `bench help`,
   rendered from the Go `commandRegistry`, is the executable inventory, while
-  `.bench/BENCH.md` keeps category-level operational guidance. The contract is the
+  `.bench/BENCH-reference.md` keeps category-level operational guidance. The contract is the
   stable command names and exit codes; the
   implementation behind each stays free to change. Keep the gate resolution
   (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.

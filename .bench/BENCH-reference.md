@@ -8,12 +8,37 @@ no tokens until you open it. Read it when you need a file's role, how a harness
 invokes a phase, or how git safety is layered. The generation-steering rules stay
 in `.bench/BENCH.md`. What lives here is reference material you consult on demand.
 
+**`bench`** is the operational layer over the Go core. Read `CONTEXT.md` for
+the mental model and `projects/<name>.md` for seams, gate command, and line
+assignments; the file map, adapter contracts, and hook layers live below.
+
+## How the pieces fit
+
+- **Skills** shape *how* you generate — guidance, not rules — in
+  `.agents/skills/` (and `.claude/skills/` for Claude Code);
+  `.bench/BENCH-reference.md` indexes them.
+- **Commands:** `/bench` (Claude Code) and `$bench` (Codex) route observed state;
+  `/bench-setup-repo` handles adoption and `/bench-drain` pending capture.
+  `/bench-update-kit`, `/bench-assess`, and `craft-synthesis`
+  ship only in the Bench kit repository; a linked repo upgrades with `bench upgrade`.
+  The skills index marks omitted rows.
+- **The gate and the hooks** enforce, with authority you do not have:
+  `bench shift` gates every iteration and commits only on green; a `pre-push`
+  hook protects the default branch.
+
 ## Files
 
 - `AGENTS.md` contains the project-owned working agreement plus a small
   Bench-managed block.
 - `.bench/gate.sh` is the project gate.
 - `capture/learnings.md` is the usage journal for process learnings.
+- `capture/IDEAS.md` is the parked-idea sink `bench idea` writes. If
+  `bench` isn't on PATH, append the dated line (`- YYYY-MM-DD  <text>`) to
+  `capture/IDEAS.md` yourself.
+- `capture/retros/` holds one retro per spec: `/bench-final-check` writes
+  `capture/retros/<spec-slug>.md` and refreshes affected
+  `capture/agent-performance/` scorecards, and `/bench-drain` owns their
+  reviewed drain and its capture commit.
 - `ROADMAP.md` is the working roadmap's index. It holds board prose plus one
   heading line per row, with no bodies. `roadmap/` holds one detail owner per
   row, `roadmap/FT<n>.md`, carrying that row's body, `Occurrence:` ledger, and
@@ -111,14 +136,19 @@ Codex phase adapters installed by Bench:
 ## Command Notes
 
 Bench renders `bench help` from the Go `commandRegistry`; it is the executable
-inventory. `.bench/BENCH.md` gives category-level operational guidance, not a
-second command list. The project profile (`projects/<name>.md`) carries the
+inventory. `.bench/BENCH-reference.md` gives category-level operational guidance,
+not a second command list. The project profile (`projects/<name>.md`) carries the
 detailed output contracts for the AXI query surfaces. The sections below
 describe the hook and adapter plumbing.
 
+- Setup and adoption connect a repository to the kit and maintain that installation.
+- Context commands expose current state, navigation, capture, and planning evidence.
+- Oracle commands inspect or enforce readiness from development through release.
+- Work commands own isolated execution, gated changes, and spec lifecycle operations.
+
 A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip.
-From the destination, `bench worktree land` is the operational handoff: it
+Accepted findings commit there on the same cadence. From the destination, `bench worktree land` is the operational handoff: it
 composes and gates that pair before publication and source release. Executable
 help owns its flags and positional grammar. Its exit meanings follow the
 publication boundary: 0 means the source was released, 1 means a refusal before

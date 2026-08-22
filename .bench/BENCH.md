@@ -1,6 +1,9 @@
 # Bench Operating Guide
 
 Bench is this repo's local agent-development workflow. `AGENTS.md` points here.
+The lookup material — the file map, the pieces, the skills index, the harness
+invocations, the command notes, and the hook layers — lives in
+`.bench/BENCH-reference.md`. Read that file on demand; it is never imported.
 
 ## Roles
 
@@ -9,54 +12,36 @@ ships, what the spec says, and any hard-to-reverse choice; surface these
 decisions to me, then stop.
 Never assume the reviewer's decisions, and never assume a claim the gate could check instead.
 
-## How the pieces fit
-
-- **Skills** shape *how* you generate — guidance, not rules — in
-  `.agents/skills/` (and `.claude/skills/` for Claude Code);
-  `.bench/BENCH-reference.md` indexes them.
-- **Commands:** `/bench` (Claude Code) and `$bench` (Codex) route observed state;
-  `/bench-setup-repo` handles adoption and `/bench-drain` pending capture.
-  `/bench-update-kit`, `/bench-assess`, and `craft-synthesis`
-  ship only in the Bench kit repository; a linked repo upgrades with `bench upgrade`.
-  The skills index marks omitted rows.
-- **The gate and the hooks** enforce, with authority you do not have:
-  `bench shift` gates every iteration and commits only on green; a `pre-push`
-  hook protects the default branch.
-- **`bench`** is the operational layer over the Go core. Read `CONTEXT.md` for
-  the mental model and `projects/<name>.md` for seams, gate command, and line
-  assignments; the file map, adapter contracts, and hook layers live in
-  `.bench/BENCH-reference.md`.
-
-## CLI Inventory
-
-- Setup and adoption connect a repository to the kit and maintain that installation.
-- Context commands expose current state, navigation, capture, and planning evidence.
-- Oracle commands inspect or enforce readiness from development through release.
-- Work commands own isolated execution, gated changes, and spec lifecycle operations.
+## The Bench CLI contract
 
 `bench help` is the complete executable inventory. Plumbing subcommands, driven by
 hooks and adapters, live in `.bench/BENCH-reference.md`. Run `bench` exactly as its
-executable help spells it. Never append extra subcommands,
-  `</dev/null`, `2>&1`, a pipeline, or a shell follow-on: Bench owns
-  non-interactive input, complete output, and required next actions. The complete
-  output is the evidence (on a red gate, the failure attribution), and output too
-  long to read is CLI-owned projection work, not call-site shaping.
+executable help spells it.
+
+Bench owns non-interactive input, complete output, and required next actions. The
+complete output is the evidence (on a red gate, the failure attribution), and output
+too long to read is CLI-owned projection work, not call-site shaping. Never append
+extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on.
+`bench gate` is valid. `bench gate 2>&1 | tail -20` is not valid.
 
 ## The four invariants (these override convenience, always)
 
 1. **The gate is the oracle — you never grade your own work.** "Done" means
    `bench gate` exits zero. Never edit, skip, weaken, or delete a test or a
-   check to make it pass. If a check is wrong, stop and say so. A subagent's
-   done-claim is a claim, not a result. Verify the claim against the gate and
-   `git status`. Run every write delegation in an isolated worktree. If another
-   writer's edits are in flight, take the side work to a `bench worktree`: one
-   verdict, one diff.
+   check to make it pass. If a check is wrong, stop and say so.
+
+   A subagent's done-claim is a claim, not a result. Verify the claim against
+   the gate and `git status`. Run every write delegation in an isolated
+   worktree. If another writer's edits are in flight, take the side work to a
+   `bench worktree`: one verdict, one diff.
 2. **Declare the line before a long run.** Before any multi-cycle stage, state
    the model, the effort, the iteration cap, and a one-clause justification in
    one line. `craft-line` owns the tier judgment. Never escalate silently. If
-   the cap is exhausted, stop and report. The tiers (cheap / mid / top) bind to
-   opaque model-id tokens in `projects/<name>.md` and `.bench/lines.env`. If a
-   model is unavailable, return to that binding; never substitute a replacement.
+   the cap is exhausted, stop and report.
+
+   The tiers (cheap / mid / top) bind to opaque model-id tokens in
+   `projects/<name>.md` and `.bench/lines.env`. If a model is unavailable,
+   return to that binding; never substitute a replacement.
 3. **Document for the teammate who just walked in.** Docs and ADRs give the
    current decided state to a reader with no memory of how we got here. Record
    the decision, not its history. Put no file paths and no code snippets in an
@@ -70,7 +55,9 @@ executable help spells it. Never append extra subcommands,
 
 Three predicates ride with them. If you find a **non-behavioral spec
 contradiction**, follow the current tree convention and flag it for reviewer veto.
-If the contradiction is behavioral, ask. If a build cannot meet an acceptance
+If the contradiction is behavioral, ask.
+
+If a build cannot meet an acceptance
 row, that is a **material acceptance shortfall**:
 the build exits and reports. It does not land a silent partial.
 Under **owned-red convergence**, only diff-owned reds count toward fix-loop
@@ -136,11 +123,8 @@ Behavior defects run focused regression checks, then the gate.
 | Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template), then implement it inline in this session — no breakdown-approval pause, write-delegate, or worktree. This table is the standing approval to skip the spec phase; gate and commit on green. |
 | Either observable is false | Normal full workflow. |
 
-Reviewed spec-backed implementation keeps one retained integration source:
-tickets commit green there serially, then semantic review freezes its base and
-tip. Accepted findings commit there on the same cadence. From the destination,
-`bench worktree land` composes and gates that reviewed source, publishes the
-implemented spec, and releases the source only after publication completes.
+A reviewed spec-backed build lands from the destination with `bench worktree
+land`; `.bench/BENCH-reference.md` holds that landing shape.
 
 **Fix, don't park.** A small defect you find mid-work is not backlog: the
 fix lands in the active workflow as its own commit. Park a fix to
@@ -166,10 +150,4 @@ the reviewer wants to set one aside, or you spot a tangent worth keeping,
 **you** run `bench idea "<text>"`. Offer once, then let it go. Parked ideas
 land in `capture/IDEAS.md` and graduate to the board — an index line in
 `ROADMAP.md`, body and ledger in `roadmap/FT<n>.md` — only through a reviewed
-`/bench-drain` drain, or close by implementation during that same drain. If
-`bench` isn't on PATH, append the dated line (`- YYYY-MM-DD  <text>`) to
-`capture/IDEAS.md` yourself.
-
-Retros are capture: `/bench-final-check` writes `capture/retros/<spec-slug>.md`
-and refreshes affected `capture/agent-performance/` scorecards;
-`/bench-drain` owns their reviewed drain and its capture commit.
+`/bench-drain` drain, or close by implementation during that same drain.
