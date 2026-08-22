@@ -25,10 +25,18 @@ const windowDrains = 3
 // must never render as an empty one, so the count degrades to a word rather than to zero.
 const unknownMass = "unknown"
 
-// detailPath matches one row's detail owner as `git log --name-status` spells it,
-// repo-relative. A file under the directory whose basename is outside the row-ID
-// grammar contributes to no count, which is the board parser's own rule.
-var detailPath = regexp.MustCompile(`^` + roadmap.RoadmapDir + `/FT[1-9][0-9]*\.md$`)
+// isDetailPath reports whether a `git log --name-status` path names one row's detail
+// owner: a `.md` file directly under the roadmap directory whose basename is a row ID.
+// The row-ID grammar stays with package roadmap, so a file whose basename falls outside
+// it contributes to no count by the board parser's own rule rather than a second one.
+func isDetailPath(path string) bool {
+	name, found := strings.CutPrefix(path, roadmap.RoadmapDir+"/")
+	if !found || strings.Contains(name, "/") {
+		return false
+	}
+	id, found := strings.CutSuffix(name, ".md")
+	return found && roadmap.ValidOccurrenceOwner(id)
+}
 
 // commitID matches the `%H` line that opens each record of the history query. Every
 // other line of that output is a status letter and a path, so a hexadecimal identity is
@@ -98,7 +106,7 @@ func history(root string) ([]event, error) {
 			continue
 		}
 		status, path, found := strings.Cut(line, "\t")
-		if current == nil || !found || !detailPath.MatchString(path) {
+		if current == nil || !found || !isDetailPath(path) {
 			continue
 		}
 		switch status {
