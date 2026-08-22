@@ -19,7 +19,7 @@ import (
 )
 
 func roadmapUsage() string {
-	return "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...>\n"
+	return "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...> | bench roadmap --flow\n"
 }
 
 // ideaGrammar is the declared argument shape usage.Parse enforces for this subcommand —

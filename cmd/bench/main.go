@@ -36,6 +36,7 @@ import (
 	"github.com/gibbonmi/bench/internal/publication"
 	"github.com/gibbonmi/bench/internal/releasepreflight"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/roadmapflow"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/sessioninspect"
 	"github.com/gibbonmi/bench/internal/shift"
@@ -267,6 +268,11 @@ var gatePhasesCommand = gate.PhasesCommand
 func roadmapCommand(args []string) (string, int) {
 	if len(args) == 0 || len(args) == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help") {
 		return roadmap.RoadmapCommand(args)
+	}
+	// --flow is a mode selector like --context, so it is routed on its leading position
+	// and its own grammar reports any misuse that follows.
+	if args[0] == "--flow" {
+		return roadmapflow.Command(args)
 	}
 	return roadmap.ContextCommand(args, func(root string) roadmap.GateCacheFact {
 		g := status.GateVerdict(root)

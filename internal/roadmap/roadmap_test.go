@@ -372,7 +372,7 @@ func TestRoadmapBoardInputStates(t *testing.T) {
 }
 
 func TestRoadmapUsesOneUsageAcrossForms(t *testing.T) {
-	want := "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...>\n"
+	want := "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...> | bench roadmap --flow\n"
 	for _, command := range []func() (string, int){
 		func() (string, int) { return RoadmapCommand([]string{"--help"}) },
 		func() (string, int) {
