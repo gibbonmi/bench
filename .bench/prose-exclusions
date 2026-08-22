@@ -11,9 +11,6 @@ capture/IDEAS.md an inbox of verbatim parked text
 # makes its files pass. No ticket adds a row.
 .bench/BENCH.md migrates in ticket 02b
 .bench/BENCH-reference.md migrates in ticket 02b
-.agents/skills/bench-craft-spec/references/ste-prose.md migrates in ticket 03
-.agents/skills/bench-craft-skills/ migrates in ticket 03
-.agents/skills/bench-craft-comments/ migrates in ticket 03
 .agents/skills/bench-craft-spec/SKILL.md migrates in ticket 04
 .agents/skills/bench-craft-spec/references/bootstrap-authority.md migrates in ticket 04
 .agents/skills/bench-craft-seams/ migrates in ticket 04

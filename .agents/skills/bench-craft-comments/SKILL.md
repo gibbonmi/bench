@@ -7,9 +7,9 @@ index: writing or reviewing code comments
 # Writing comments
 
 A comment is addressed to the teammate who just walked in — the next reader of
-the *current* code, with no memory of the conversation, spec, or diff that
-produced it. Everything below follows from that reader. Write the sentences in
-ASD-STE100 prose per `craft-spec`'s `references/ste-prose.md`.
+the *current* code. That reader has no memory of the conversation, spec, or
+diff that produced it. Everything below follows from that reader. Write the
+sentences in ASD-STE100 prose per `craft-spec`'s `references/ste-prose.md`.
 
 ## What earns a comment
 
@@ -22,9 +22,9 @@ A comment earns its place only for what remains:
   wrong.
 - **The warning** — an invariant the next editor could silently break, at the
   point where they'd break it.
-- **Doc comments on public symbols**, in the language's own convention (Go: a
-  full sentence starting with the symbol's name; shell: a one-line contract
-  above the function).
+- **Doc comments on public symbols** use the language's own convention. Go
+  starts a full sentence with the symbol's name; shell writes a one-line
+  contract above the function.
 
 A comment that restates the line below it carries nothing — delete it.
 
@@ -54,9 +54,9 @@ reader learns nothing about when or why the retry matters.
 
 ## Aging
 
-Comments rot when they duplicate what code already enforces — a *what*
-comment must be updated in lockstep with every edit, a *why* comment stays
-true until the constraint itself moves. Writing only the why is what keeps
-the comment cheap to own. When editing code under an existing comment, read
-the comment as part of the diff: update it or delete it, never leave it
-describing the code that was.
+Comments rot when they duplicate what code already enforces. A *what* comment
+needs an update in lockstep with every edit; a *why* comment stays true until
+the constraint itself moves. A comment that states only the why stays cheap
+to own. When editing code under an existing comment, read the comment as
+part of the diff. Update it or delete it, and never leave it describing the
+code that was.
