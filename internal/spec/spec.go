@@ -401,6 +401,10 @@ func implementedCommand(rest []string) (string, int) {
 // refuses when it is not merged-implemented: staged, or implemented only in the
 // working tree and not yet at HEAD. An unknown slug refuses, and so does an orphaned
 // review pickup with no spec.
+//
+// The printed next: line names the board remainder. It reads the spec's Roadmap:
+// value, through metadata, before any deletion happens, and roadmapRemainder renders
+// the exact row and detail-file clause from that value.
 func retireCommand(rest []string) (string, int) {
 	arg, out, code, ok := specArg("bench spec retire", "usage: bench spec retire <spec.md | slug>\n", rest)
 	if !ok {
@@ -464,8 +468,29 @@ func retireCommand(rest []string) (string, int) {
 	} else {
 		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, resolved))
 	}
-	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row, commit as `spec-retire: %s`\n", slug)
+	_, roadmapID := metadata(content)
+	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row%s, commit as `spec-retire: %s`\n", roadmapRemainder(base, roadmapID), slug)
 	return b.String(), 0
+}
+
+// roadmapRe matches a well-formed Roadmap: value: `FT` followed by one or more ASCII
+// digits, nothing else. metadata already trims surrounding whitespace, including NBSP.
+var roadmapRe = regexp.MustCompile(`^FT[0-9]+$`)
+
+// roadmapRemainder renders the retire next: line's board-remainder clause. A
+// well-formed roadmapID names the exact ROADMAP.md row, and, when
+// roadmap/<roadmapID>.md exists as a regular file under base, names that path too.
+// Any other value, including empty, falls back to the generic `FT<n>` placeholder
+// naming both the row and its detail file.
+func roadmapRemainder(base, roadmapID string) string {
+	if !roadmapRe.MatchString(roadmapID) {
+		return " FT<n> and its roadmap/FT<n>.md detail file"
+	}
+	detail := filepath.Join(base, "roadmap", roadmapID+".md")
+	if fileExists(detail) {
+		return fmt.Sprintf(" %s and its roadmap/%s.md detail file", roadmapID, roadmapID)
+	}
+	return " " + roadmapID
 }
 
 // folderResidue identifies the terminal interrupted-retire state: a folder remains but

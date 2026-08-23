@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -457,5 +458,152 @@ func TestResolveRefusesIncompleteFolderWithoutFlat(t *testing.T) {
 	_, _, _, ok, err := Resolve(root, "partial")
 	if ok || err == nil || !strings.Contains(err.Error(), missing) {
 		t.Fatalf("incomplete folder resolve = ok %v, err %v", ok, err)
+	}
+}
+
+// retireRepo builds the minimal repository bench spec retire reads and deletes from: a
+// folder spec committed at HEAD with body, plus any extraFiles (repo-relative path to
+// content) committed alongside it — used to place a roadmap/FT<n>.md detail file.
+func retireRepo(t *testing.T, slug, body string, extraFiles map[string]string) (root string) {
+	t.Helper()
+	root = t.TempDir()
+	runGit(t, root, "init", "-q", "-b", "main")
+	runGit(t, root, "config", "user.email", "a@b.c")
+	runGit(t, root, "config", "user.name", "a")
+	writeFolderSpec(t, root, slug, body)
+	for path, content := range extraFiles {
+		full := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	runGit(t, root, "add", "-A")
+	runGit(t, root, "commit", "-qm", "base")
+	return root
+}
+
+// runGit runs one git subcommand against root, failing the test on error.
+func runGit(t *testing.T, root string, args ...string) {
+	t.Helper()
+	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, out)
+	}
+}
+
+// runRetire runs retireCommand from root, the way the CLI does: RepoBase resolves
+// through the process cwd.
+func runRetire(t *testing.T, root, arg string) (string, int) {
+	t.Helper()
+	oldwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(oldwd)
+	return retireCommand([]string{arg})
+}
+
+// TestRetireNextLineNamesTheBoardRemainder covers FC1-FC4 and FC6, and the last-line
+// and NBSP edges: the next: line's exact text as a function of the spec's Roadmap:
+// value and whether roadmap/FT<n>.md exists on disk.
+func TestRetireNextLineNamesTheBoardRemainder(t *testing.T) {
+	generic := "next: promote durable content, remove the ROADMAP row FT<n> and its roadmap/FT<n>.md detail file, commit as `spec-retire: s`\n"
+	cases := []struct {
+		name       string
+		body       string
+		extraFiles map[string]string
+		want       string
+	}{
+		{
+			name:       "FC1: FT7 with existing detail file names both",
+			body:       "Status: implemented\nRoadmap: FT7\n",
+			extraFiles: map[string]string{"roadmap/FT7.md": "row\n"},
+			want:       "next: promote durable content, remove the ROADMAP row FT7 and its roadmap/FT7.md detail file, commit as `spec-retire: s`\n",
+		},
+		{
+			name: "FC2: no Roadmap line prints the generic line",
+			body: "Status: implemented\n",
+			want: generic,
+		},
+		{
+			name: "FC3: FT7 with no detail file names FT7 and no detail path",
+			body: "Status: implemented\nRoadmap: FT7\n",
+			want: "next: promote durable content, remove the ROADMAP row FT7, commit as `spec-retire: s`\n",
+		},
+		{
+			name: "FC4: lowercase ft7 prints the generic line",
+			body: "Status: implemented\nRoadmap: ft7\n",
+			want: generic,
+		},
+		{
+			name: "FC4: internal space FT 7 prints the generic line",
+			body: "Status: implemented\nRoadmap: FT 7\n",
+			want: generic,
+		},
+		{
+			name: "FC4: empty Roadmap value prints the generic line",
+			body: "Status: implemented\nRoadmap:\n",
+			want: generic,
+		},
+		{
+			name:       "FC6: fenced Roadmap line is not read",
+			body:       "Status: implemented\n\n```\nRoadmap: FT7\n```\n",
+			extraFiles: map[string]string{"roadmap/FT7.md": "row\n"},
+			want:       generic,
+		},
+		{
+			name:       "edge: Roadmap line is the last line with no trailing newline",
+			body:       "Status: implemented\nRoadmap: FT7",
+			extraFiles: map[string]string{"roadmap/FT7.md": "row\n"},
+			want:       "next: promote durable content, remove the ROADMAP row FT7 and its roadmap/FT7.md detail file, commit as `spec-retire: s`\n",
+		},
+		{
+			name:       "edge: NBSP around the id trims like a space",
+			body:       "Status: implemented\nRoadmap:  FT7 \n",
+			extraFiles: map[string]string{"roadmap/FT7.md": "row\n"},
+			want:       "next: promote durable content, remove the ROADMAP row FT7 and its roadmap/FT7.md detail file, commit as `spec-retire: s`\n",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := retireRepo(t, "s", tc.body, tc.extraFiles)
+			out, code := runRetire(t, root, "s")
+			if code != 0 {
+				t.Fatalf("code = %d, want 0; out = %q", code, out)
+			}
+			lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+			got := lines[len(lines)-1] + "\n"
+			if got != tc.want {
+				t.Errorf("next line = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestRetireStagedRefusesAndDeletesNothing pins FC5: a staged spec still refuses at
+// exit 1, and the spec file survives untouched.
+func TestRetireStagedRefusesAndDeletesNothing(t *testing.T) {
+	root := retireRepo(t, "s", "Status: staged\nRoadmap: FT7\n", nil)
+	specPath := filepath.Join(root, "specs", "s", "spec.md")
+	before, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, code := runRetire(t, root, "s")
+	if code != 1 {
+		t.Fatalf("code = %d, want 1; out = %q", code, out)
+	}
+	after, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatalf("spec file was deleted: %v", err)
+	}
+	if string(after) != string(before) {
+		t.Errorf("spec file content changed on refusal")
 	}
 }
