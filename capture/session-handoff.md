@@ -2,37 +2,24 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` once the landing runs; the source is the `ft113-build` worktree (request id in the scratchpad of the building session), base `0e17d428`
-Spec: `specs/landing-authors-the-flip/spec.md`, `Status: staged`, five tickets built
-Gate: green on every ticket commit (2026-08-23)
+Branch: `main`; the tail source is the `ft113-tail` worktree on base `148f3a68`
+Spec: `specs/landing-authors-the-flip/` retired in this tail; it landed as `148f3a68` with `Status: implemented`
+Gate: green on `148f3a68` (2026-08-23)
 
 ## State
 
-The FT113 build is implemented in the `ft113-build` integration worktree. Ticket
-commits, in order: `624ffb5b` (Group C), `9d84030a` (Group D, merged as
-`41be490c`), `66bbc334` (Group A commit route), `c2e7951c` (Group A spec verb),
-`0b29bd9c` (Group B, merged as `42eb3bec`). The `/bench-implement-spec --full`
-run stands at the review boundary.
+FT113 landed as `148f3a68` from source `0e17d428..e673e2d5`. This tail retires
+the spec folder, adds ADR 0015 (the landing verb is the one flip author), writes
+the retro, and refreshes the Claude scorecard. The retire verb now names the
+board remainder: the `ROADMAP.md` row `FT113` and `roadmap/FT113.md` stay for
+the drain.
 
-Open flags for the reviewer:
-
-- the spec fence list gained `internal/spec/history.go`,
-  `internal/sanitize/sanitize.go`, and `internal/worktree/worktree.go`: the
-  build exported `sanitize.LineSafe` as the one line-safe predicate and
-  fixed a stale comment
-- `capture/IDEAS.md` holds one parked idea about the landing verb's `next=`
-  sanitizer
-
-Closed decisions, dated 2026-08-23:
-
-- `bench worktree land --spec` is the one author of the flip and the tickets-only close
-- `bench commit` has no `--spec`, and `bench spec implemented` is gone
-- a retirement that does not complete names its remainder, with no retry verb
-- Bench does not remove the board row or the detail file
+Pending for the drain: one parked idea about the landing verb's `next=`
+sanitizer, one retro, and the FT113 board row and detail file.
 
 ## Next command
 
-`/bench-review-implementation` — specs/landing-authors-the-flip/spec.md over base `0e17d428` and the `ft113-build` source tip; then `bench worktree land --spec landing-authors-the-flip`; then `/bench-final-check`
+`/bench-drain`
 
 ## Shape
 
