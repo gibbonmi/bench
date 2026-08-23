@@ -280,6 +280,9 @@ Cheapest wrong implementation per group, and the row that reds it:
 - `internal/landing/close.go`
 - `internal/spec/spec.go`
 - `internal/spec/spec_test.go`
+- `internal/spec/history.go`
+- `internal/sanitize/sanitize.go`
+- `internal/worktree/worktree.go`
 - `cmd/bench/main.go`
 - `cmd/bench/main_test.go`
 - `cmd/bench/command_registry_test.go`
