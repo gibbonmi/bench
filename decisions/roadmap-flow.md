@@ -5,9 +5,9 @@ Status: ready
 ## Destination
 
 Every drain reports the board's flow — rows opened, fed, retired, and open
-mass — from one CLI source, and the drain's verdicts, the retro's improvement
-items, and the row grammar carry the markers that keep the net flow at or
-below zero over a window. The gate checks the markers. A one-time reviewed
+mass — from one CLI source. The drain's verdicts, the retro's improvement
+items, and the row grammar carry the markers. The markers keep the net flow at
+or below zero over a window. The gate checks the markers. A one-time reviewed
 pass brings the existing rows under the grammar.
 
 ## #1: What is the measured baseline?
@@ -54,7 +54,7 @@ When does an entry feed a row, open a row, or get dismissed?
 ### Answer
 
 An entry feeds a row only when it changes that row's priority, scope, or
-`Next:`; an entry that only adds an occurrence line is dismissed with one line
+`Next:`. An entry that only adds an occurrence line is dismissed with one line
 of why. A new row must carry a `Next:` token and a class (fix, feature,
 decision-only); without a `Next:` the entry is dismissed or parked in
 `capture/IDEAS.md`. A drained item that meets the light-path observables is
@@ -89,12 +89,12 @@ Advisory or gate-enforced; which predicates; how does it relate to FT172?
 
 ### Answer
 
-Gate-enforced from the start, on mechanical markers only: (a) every
+Gate-enforced from the start, on mechanical markers only. (a) Every
 `ROADMAP.md` row carries a `Next:` line whose value is one of
-`shape | spec | ticket | decide | kit-edit`, mapping to `/bench-shape-idea`,
-`/bench-write-spec`, a light-path ticket, a reviewer decision, and a
-`craft-synthesis` edit; (b) every retro improvement item carries a `Feeds:`
-marker. The "changes the row" judgment and the restructure trigger stay
+`shape | spec | ticket | decide | kit-edit`. These values map to
+`/bench-shape-idea`, `/bench-write-spec`, a light-path ticket, a reviewer
+decision, and a `craft-synthesis` edit. (b) Every retro improvement item
+carries a `Feeds:` marker. The "changes the row" judgment and the restructure trigger stay
 advisory phase text. This work absorbs FT172's grammar half: it documents and
 tests the row grammar as a contract; FT172 keeps only its `roadmap_id` half.
 
@@ -112,7 +112,7 @@ How wide is the window, and what is a flow event?
 A flow event is any commit that adds or deletes a `roadmap/FT<n>.md` file; the
 report derives from file adds and deletes, not commit subjects. A drain commit
 is a flow event that adds at least one row. The window is the commit range
-spanning the last three drain commits; the target is opened minus retired, at
+spanning the last three drain commits. The target is opened minus retired, at
 or below zero, summed over every flow event in that range. A positive sum
 forces the #3 restructure proposal on the next drain.
 

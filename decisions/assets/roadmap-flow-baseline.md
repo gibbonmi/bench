@@ -11,6 +11,6 @@ Source: `git log -- roadmap/ ROADMAP.md` on `main` at ee9c4c10, counting
   rows; 10 of the 20 retirements sit in one `--restructure` pass (cd355f45).
   Spec-retire commits retired 8 more rows in the same window.
 - Without the restructure pass, a drain opens about 1.5 rows and feeds about 5
-  rows while it retires under 1; the board grows by size as well as count.
+  rows while it retires under 1. The board grows by size as well as count.
 
 Supports: #1 (baseline), #6 (window and target).
