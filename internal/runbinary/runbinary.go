@@ -189,6 +189,13 @@ func canonicalSourceRoot(root string) (string, error) {
 	return filepath.Clean(resolved), nil
 }
 
+// Build publishes one Bench executable from sourceRoot at output through the sanctioned
+// build script, the same build the run owner uses for its private selection. It is the
+// one Go seam onto that script.
+func Build(ctx context.Context, sourceRoot, output string) error {
+	return canonicalBuild(ctx, sourceRoot, output)
+}
+
 func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
 	cmd := exec.Command("bash", filepath.Join(sourceRoot, "scripts", "go-build.sh"), sourceRoot, output)
 	cmd.Dir = sourceRoot

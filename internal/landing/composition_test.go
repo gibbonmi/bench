@@ -266,7 +266,7 @@ func TestComposeClassifiesRealGitConflictsWithoutMutation(t *testing.T) {
 }
 
 func TestConflictKindRejectsEmptyMergeTreeOutput(t *testing.T) {
-	if _, err := conflictKind(""); err == nil {
+	if _, _, err := parseConflict(""); err == nil {
 		t.Fatal("empty merge-tree output classified without an error")
 	}
 }

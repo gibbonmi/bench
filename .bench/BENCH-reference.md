@@ -159,8 +159,17 @@ A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip.
 Accepted findings commit there on the same cadence. From the destination, `bench worktree land` is the operational handoff: it
 composes and gates that pair before publication and source release. Executable
-help owns its flags and positional grammar. Its exit meanings follow the
-publication boundary:
+help owns its flags and positional grammar.
+
+An abbreviated commit identity expands to the exact commit before any proof
+runs. One preflight prints every refusal the caller must clear, and each
+refusal names its paths. A stale Bench executable is rebuilt, and the landing
+re-runs under it. A conflicted `capture/` path composes by policy: the source
+wins the session handoff, and the destination wins every other capture file.
+The landing discloses each resolution, and `capture/` is authorized for every
+reviewed range.
+
+Its exit meanings follow the publication boundary:
 
 - `0` — the source was released
 - `1` — a refusal before publication

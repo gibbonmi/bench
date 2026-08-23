@@ -58,13 +58,47 @@ type CompositionRequest struct {
 }
 
 // CompositionResult is either a prospective tree or one bounded conflict kind.
+// Resolved lists every capture path the composition policy settled, as
+// "<path>:<side>", so the landing can disclose what the merge did not decide.
 type CompositionResult struct {
 	Base, Tree string
 	Conflict   Conflict
+	Resolved   []string
 }
 
-// Conflict describes why Git could not produce one prospective tree.
-type Conflict struct{ Kind string }
+// Conflict describes why Git could not produce one prospective tree, and names
+// every path it could not merge.
+type Conflict struct {
+	Kind  string
+	Paths []string
+}
+
+// ConflictError is the refusal a conflicted reviewed landing returns. Its message is
+// the bounded kind; the paths ride typed so the caller can render them.
+type ConflictError struct{ Conflict }
+
+func (e ConflictError) Error() string { return "composition conflict: " + e.Kind }
+
+// stageRecord is one conflicted-file line of `merge-tree -z`: the mode and object of
+// one stage (1 base, 2 destination, 3 source) at one path.
+type stageRecord struct {
+	mode, oid, path string
+	stage           int
+}
+
+// CaptureSide names which side a conflicted capture path takes. The phase handoff
+// is the source session's closing state, so the source wins it; every other capture
+// file is the destination's running ledger, so the destination wins. Any path
+// outside capture/ is not covered, and the conflict stays a refusal.
+func CaptureSide(path string) (stage int, side string, ok bool) {
+	switch {
+	case path == "capture/session-handoff.md":
+		return 3, "source", true
+	case strings.HasPrefix(path, "capture/"):
+		return 2, "destination", true
+	}
+	return 0, "", false
+}
 
 // Compose performs Git's three-way tree merge using the repository's real merge base.
 // ReviewBase is metadata only and is never used as the merge base.
@@ -92,11 +126,73 @@ func (o Owner) Compose(r CompositionRequest) (CompositionResult, error) {
 		}
 		return CompositionResult{Base: base, Tree: tree}, nil
 	}
-	kind, parseErr := conflictKind(out)
+	conflict, records, parseErr := parseConflict(out)
 	if parseErr != nil {
 		return CompositionResult{}, parseErr
 	}
-	return CompositionResult{Base: base, Conflict: Conflict{Kind: kind}}, nil
+	tree, resolved, ok, err := resolveCaptureConflict(r.Root, out, records)
+	if err != nil {
+		return CompositionResult{}, err
+	}
+	if ok {
+		return CompositionResult{Base: base, Tree: tree, Resolved: resolved}, nil
+	}
+	return CompositionResult{Base: base, Conflict: conflict}, nil
+}
+
+// resolveCaptureConflict settles a conflict whose every path is a regular file under
+// capture/ by taking the side CaptureSide names. The merge's own written tree carries
+// Git's conflict markers at those paths; each is replaced by the chosen stage's object,
+// or removed when that side deleted the file. A conflict touching any other path is
+// left for the caller to refuse.
+func resolveCaptureConflict(root, mergeOutput string, records []stageRecord) (string, []string, bool, error) {
+	chosen := map[string]*stageRecord{}
+	var order []string
+	for i := range records {
+		record := records[i]
+		stage, _, ok := CaptureSide(record.path)
+		if !ok || (record.mode != "100644" && record.mode != "100755") {
+			return "", nil, false, nil
+		}
+		if _, seen := chosen[record.path]; !seen {
+			chosen[record.path] = nil
+			order = append(order, record.path)
+		}
+		if record.stage == stage {
+			chosen[record.path] = &records[i]
+		}
+	}
+	if len(order) == 0 {
+		return "", nil, false, nil
+	}
+	baseTree, err := mergeTreeResult(mergeOutput)
+	if err != nil {
+		return "", nil, false, err
+	}
+	tree, err := editTree(root, baseTree, func(idx string) error {
+		for _, path := range order {
+			record := chosen[path]
+			if record == nil {
+				if err := indexRun(root, idx, "update-index", "--force-remove", "--", path); err != nil {
+					return fmt.Errorf("resolve %q: %w", path, err)
+				}
+				continue
+			}
+			if err := indexRun(root, idx, "update-index", "--add", "--cacheinfo", record.mode+","+record.oid+","+path); err != nil {
+				return fmt.Errorf("resolve %q: %w", path, err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return "", nil, false, err
+	}
+	resolved := make([]string, 0, len(order))
+	for _, path := range order {
+		_, side, _ := CaptureSide(path)
+		resolved = append(resolved, path+":"+side)
+	}
+	return tree, resolved, true, nil
 }
 
 func compositionCommit(root, value, role string) (string, error) {
@@ -120,7 +216,11 @@ func mergeTreeResult(output string) (string, error) {
 	return tree, nil
 }
 
-func conflictKind(output string) (string, error) {
+// parseConflict reads `merge-tree --write-tree -z` conflict output: the written tree,
+// one stage record per conflicted file (`<mode> <object> <stage>\t<path>`), a NUL
+// separator, then the informational messages that carry the conflict kind. It
+// returns the bounded kind with every conflicted path, and the stage records.
+func parseConflict(output string) (Conflict, []stageRecord, error) {
 	parts := bytes.Split([]byte(output), []byte{0})
 	separator := -1
 	for i, part := range parts {
@@ -130,36 +230,47 @@ func conflictKind(output string) (string, error) {
 		}
 	}
 	if separator < 1 {
-		return "", errors.New("merge-tree returned no conflict records")
+		return Conflict{}, nil, errors.New("merge-tree returned no conflict records")
 	}
+	records := make([]stageRecord, 0, separator-1)
 	modes := make([]string, 0, separator-1)
-	for _, record := range parts[1:separator] {
-		fields := strings.Fields(string(record))
-		if len(fields) < 3 || fields[2][0] < '1' || fields[2][0] > '3' {
-			return "", errors.New("merge-tree returned malformed conflict record")
+	var paths []string
+	seen := map[string]bool{}
+	for _, raw := range parts[1:separator] {
+		header, path, found := strings.Cut(string(raw), "\t")
+		fields := strings.Fields(header)
+		if !found || path == "" || len(fields) != 3 || len(fields[2]) != 1 || fields[2][0] < '1' || fields[2][0] > '3' {
+			return Conflict{}, nil, errors.New("merge-tree returned malformed conflict record")
 		}
+		records = append(records, stageRecord{mode: fields[0], oid: fields[1], stage: int(fields[2][0] - '0'), path: path})
 		modes = append(modes, fields[0])
+		if !seen[path] {
+			seen[path] = true
+			paths = append(paths, path)
+		}
 	}
 	for _, record := range parts[separator+1:] {
-		kind := string(record)
-		switch kind {
+		kind := ""
+		switch string(record) {
 		case "CONFLICT (modify/delete)":
-			return "modify/delete", nil
+			kind = "modify/delete"
 		case "CONFLICT (rename/rename)":
-			return "rename/rename", nil
+			kind = "rename/rename"
 		case "CONFLICT (directory/file)", "CONFLICT (file/directory)":
-			return "file/directory", nil
+			kind = "file/directory"
 		case "CONFLICT (distinct modes)":
-			kind := contentConflictKind(modes)
+			kind = contentConflictKind(modes)
 			if kind == "textual" {
-				return "mode", nil
+				kind = "mode"
 			}
-			return kind, nil
 		case "CONFLICT (contents)":
-			return contentConflictKind(modes), nil
+			kind = contentConflictKind(modes)
+		}
+		if kind != "" {
+			return Conflict{Kind: kind, Paths: paths}, records, nil
 		}
 	}
-	return "", errors.New("merge-tree returned an unrecognized conflict kind")
+	return Conflict{}, nil, errors.New("merge-tree returned an unrecognized conflict kind")
 }
 
 func contentConflictKind(modes []string) string {
@@ -298,7 +409,10 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 		return ReviewedResult{}, err
 	}
 	if composition.Conflict.Kind != "" {
-		return ReviewedResult{}, fmt.Errorf("composition conflict: %s", composition.Conflict.Kind)
+		return ReviewedResult{}, ConflictError{composition.Conflict}
+	}
+	if len(composition.Resolved) > 0 && r.Stderr != nil {
+		fmt.Fprintf(r.Stderr, "landing composition{resolved=%s}\n", strings.Join(composition.Resolved, ","))
 	}
 	implemented, err := spec.Implemented(r.SpecBytes)
 	if err != nil {
@@ -433,6 +547,18 @@ func specNeutralizedDestination(root, destination, path string, want []byte, mod
 }
 
 func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMode) (string, error) {
+	return editTree(root, baseTree, func(idx string) error {
+		blob, err := outputInput(root, content, "hash-object", "-w", "--stdin")
+		if err != nil {
+			return err
+		}
+		return indexRun(root, idx, "update-index", "--add", "--cacheinfo", gitRegularFileMode(mode)+","+blob+","+path)
+	})
+}
+
+// editTree reads baseTree into a private index, applies edit to that index, and
+// writes the resulting tree. No checkout or repository index is touched.
+func editTree(root, baseTree string, edit func(idx string) error) (string, error) {
 	dir, err := os.MkdirTemp("", "bench-reviewed-landing-index-")
 	if err != nil {
 		return "", err
@@ -442,11 +568,7 @@ func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMo
 	if err := indexRun(root, idx, "read-tree", baseTree); err != nil {
 		return "", err
 	}
-	blob, err := outputInput(root, content, "hash-object", "-w", "--stdin")
-	if err != nil {
-		return "", err
-	}
-	if err := indexRun(root, idx, "update-index", "--add", "--cacheinfo", gitRegularFileMode(mode)+","+blob+","+path); err != nil {
+	if err := edit(idx); err != nil {
 		return "", err
 	}
 	return indexOutput(root, idx, "write-tree")

@@ -218,23 +218,28 @@ func pathsAuthorizedCheck(f Facts) CheckResult {
 	return green("paths-authorized")
 }
 
+// captureEntry is the phase-owned capture folder. Every phase close writes the
+// handoff, the learnings, or the ideas there, so a reviewed range always carries it,
+// and no spec fences it. It is authorized for every range.
+const captureEntry = "capture"
+
 // authorizingEntries is every entry paths-authorized consults. This is
-// the spec's declared fence entries, plus the active spec's own folder,
-// which authorizes an in-range amendment of the spec without a
-// self-fence entry.
+// the spec's declared fence entries, the phase-owned capture folder, plus
+// the active spec's own folder, which authorizes an in-range amendment of
+// the spec without a self-fence entry.
 //
-// The implicit entry is derived from SpecPath rather than carried as its
-// own fact, so the printed spec path and the authorized folder cannot
-// disagree. It is appended to a copy so the gathered FenceEntries slice is
-// never mutated. Mode is deliberately not consulted: build preflight,
-// review preflight, and the landing's final source authorization all get
-// the same answer.
+// The implicit entries are derived rather than carried as their own facts,
+// so the printed spec path and the authorized folder cannot disagree. They
+// are appended to a copy so the gathered FenceEntries slice is never
+// mutated. Mode is deliberately not consulted: build preflight, review
+// preflight, and the landing's final source authorization all get the same
+// answer.
 func authorizingEntries(f Facts) []string {
-	folder := specFolder(f.SpecPath)
-	if folder == "" {
-		return f.FenceEntries
+	entries := append(append([]string{}, f.FenceEntries...), captureEntry)
+	if folder := specFolder(f.SpecPath); folder != "" {
+		entries = append(entries, folder)
 	}
-	return append(append([]string{}, f.FenceEntries...), folder)
+	return entries
 }
 
 // specFolder is the directory containing the resolved spec, empty when the
