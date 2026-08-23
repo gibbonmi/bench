@@ -79,7 +79,7 @@ func selectLandedCleanupRow(root string, assignment intent.Assignment, defaultRe
 	if lease == "" {
 		lease = "none"
 	}
-	classifierPlan := CleanupPlan{Target: root, landedTyped: landedness{kind: landednessProven, landed: true, byContent: byContent}}
+	classifierPlan := CleanupPlan{Target: root, landedTyped: landedness{Kind: landednessProven, Landed: true, ByContent: byContent}}
 	if lease == string(LeaseLive) {
 		classifierPlan.ReasonCode = ReasonLiveLease
 	}
@@ -216,7 +216,7 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 	}
 	actions := make([]axi.Action, 0, len(set.rows)+1)
 	for _, row := range set.rows {
-		if row.plan.Action.removes() {
+		if row.plan.Action.Removes() {
 			arguments := []axi.InvocationArgument{axi.KnownArgument("worktree"), axi.KnownArgument("clean")}
 			if options.DiscardIgnored {
 				arguments = append(arguments, axi.KnownArgument("--discard-ignored"))
@@ -303,7 +303,7 @@ func replanLandedCleanupRow(root, assignmentID string, options CleanupOptions) (
 func applyLandedSet(root string, set landedCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	for _, planned := range set.rows {
-		if !planned.plan.Action.removes() {
+		if !planned.plan.Action.Removes() {
 			plans = append(plans, planned.plan)
 			continue
 		}

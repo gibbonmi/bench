@@ -9,6 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,18 +45,20 @@ type OrphanCandidate struct{ ID, Path string }
 
 var ErrCleanupInterrupted = errors.New("cleanup interrupted")
 
-const leaseTimeLayout = "2006-01-02T15:04:05Z"
+const leaseTimeLayout = lifecyclepolicy.LeaseTimeLayout
 
-const unknownLeaseReason = "assignment lease state is unknown"
+const unknownLeaseReason = lifecyclepolicy.UnknownLeaseReason
 
 var chmodPool = os.Chmod
 
-type LeaseState string
+// LeaseState is the policy package's lease liveness verdict;
+// internal/worktree/lifecyclepolicy owns its values and semantics.
+type LeaseState = lifecyclepolicy.LeaseState
 
 const (
-	LeaseLive    LeaseState = "live"
-	LeaseDead    LeaseState = "dead"
-	LeaseUnknown LeaseState = "unknown"
+	LeaseLive    = lifecyclepolicy.LeaseLive
+	LeaseDead    = lifecyclepolicy.LeaseDead
+	LeaseUnknown = lifecyclepolicy.LeaseUnknown
 )
 
 // pidAlive treats kill-0 success and EPERM as alive. Only ESRCH means gone.
@@ -64,21 +67,8 @@ func pidAlive(pid int) bool {
 	return err == nil || errors.Is(err, syscall.EPERM)
 }
 
-func leaseOwnerPID(content []byte) (int, bool) {
-	if len(content) == 0 || content[len(content)-1] != '\n' || bytes.Count(content, []byte{'\n'}) != 1 {
-		return 0, false
-	}
-	fields := strings.Split(string(content[:len(content)-1]), " ")
-	if len(fields) != 2 {
-		return 0, false
-	}
-	pid, err := strconv.Atoi(fields[0])
-	if err != nil || pid <= 0 || strconv.Itoa(pid) != fields[0] {
-		return 0, false
-	}
-	stamp, err := time.Parse(leaseTimeLayout, fields[1])
-	return pid, err == nil && stamp.Format(leaseTimeLayout) == fields[1]
-}
+// leaseOwnerPID is the policy lease-content parse.
+func leaseOwnerPID(content []byte) (int, bool) { return lifecyclepolicy.LeaseOwnerPID(content) }
 
 // ProbeLease reports whether a well-formed lease's recorded owner is live.
 // Every unreadable or malformed lease is unknown so lifecycle consumers fail closed.
@@ -101,13 +91,11 @@ func ProbeLease(leasePath string) LeaseState {
 	return LeaseDead
 }
 
-// reclaimable requires a dead recorded pid or a lease aged past bounds.LeaseStale,
-// the window that separates a crashed legacy lease from a fresh writer mid-claim.
+// reclaimable is the policy staleness decision over a lease's translated
+// content, mtime, and the caller's liveness probe, judged against the
+// bounds.LeaseStale window this boundary supplies.
 func reclaimable(content []byte, mtime, now time.Time, alive func(int) bool) bool {
-	if pid, ok := leaseOwnerPID(content); ok {
-		return !alive(pid)
-	}
-	return now.Sub(mtime) > bounds.LeaseStale
+	return lifecyclepolicy.Reclaimable(content, mtime, now, alive, bounds.LeaseStale)
 }
 
 // candidateName keeps each unique mint attempt inside the pool.

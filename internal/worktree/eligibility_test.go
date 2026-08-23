@@ -701,41 +701,44 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 	mustNoError(t, err)
 
 	facts := explicitFacts{
-		registrationBranchRef:  registration.BranchRef,
-		registrationLockReason: registration.LockReason,
-		registrationLocked:     registration.Locked,
-		registrationDetached:   registration.Detached,
-		discardIgnored:         options.DiscardIgnored,
+		RegistrationBranchRef:  registration.BranchRef,
+		RegistrationLockReason: registration.LockReason,
+		RegistrationLocked:     registration.Locked,
+		RegistrationDetached:   registration.Detached,
+		DiscardIgnored:         options.DiscardIgnored,
 	}
 	_, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
 	if markerStatErr == nil {
-		facts.markerPresent = true
+		facts.MarkerPresent = true
 		evidence, markerErr := validateOwnerMarker(root, target)
 		if markerErr != nil {
-			facts.markerErr = markerErr
+			facts.MarkerErr = markerErr
 		} else {
 			assignments, assignmentErr := intent.Assignments(root)
 			if assignmentErr != nil {
-				facts.assignmentLedgerErr = assignmentErr
+				facts.AssignmentLedgerErr = assignmentErr
 			} else {
 				var matched *intent.Assignment
 				for i := range assignments {
 					if assignments[i].Worktree == target && assignments[i].OwnerID == evidence.marker.OwnerID {
 						if matched != nil {
-							facts.assignmentAmbiguous = true
+							facts.AssignmentAmbiguous = true
 							break
 						}
 						candidate := assignments[i]
 						matched = &candidate
 					}
 				}
-				facts.matchedAssignment = matched
+				facts.MatchedAssignment = matched
+				if matched != nil {
+					facts.AssignmentLockReason = lockReason(*matched)
+				}
 			}
 		}
 	} else if !errors.Is(markerStatErr, os.ErrNotExist) {
 		t.Fatalf("stat owner marker: %v", markerStatErr)
 	} else if !registration.Locked {
-		facts.foreignAssignment = foreignRecoveryAssignment(root, target)
+		facts.ForeignAssignment = foreignRecoveryAssignment(root, target)
 	}
 
 	head, err := git.Output("-C", target, "rev-parse", "HEAD")
@@ -755,27 +758,27 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 			}
 		}
 	}
-	facts.initialTracked = tracked
+	facts.InitialTracked = tracked
 
 	leasePath, err := LeaseFile(target)
 	mustNoError(t, err)
 	if _, statErr := os.Lstat(leasePath); statErr == nil {
-		facts.leasePresent = true
-		facts.leaseState = ProbeLease(leasePath)
+		facts.LeasePresent = true
+		facts.LeaseState = ProbeLease(leasePath)
 	} else if !errors.Is(statErr, os.ErrNotExist) {
-		facts.leaseStatErr = statErr
+		facts.LeaseStatErr = statErr
 	}
 
 	nested, nestedErr := classifyNestedState(target)
-	facts.nestedState, facts.nestedErr = nested, nestedErr
+	facts.NestedState, facts.NestedErr = nested, nestedErr
 
 	buildOutputs, _, buildOutputErr := loadBuildOutputs(root)
 	ignored, _, ignoredErr := inventoryIgnored(target, options.Full)
-	facts.buildOutputErr = buildOutputErr
-	facts.ignoredErr = ignoredErr
-	facts.ignoredOverLimit = ignored.OverLimit
-	facts.ignoredCount = ignored.Count
-	facts.declaredIgnored = buildOutputErr == nil && ignoredWithinLandingAllowance(ignored, buildOutputs)
+	facts.BuildOutputErr = buildOutputErr
+	facts.IgnoredErr = ignoredErr
+	facts.IgnoredOverLimit = ignored.OverLimit
+	facts.IgnoredCount = ignored.Count
+	facts.DeclaredIgnored = buildOutputErr == nil && ignoredWithinLandingAllowance(ignored, buildOutputs)
 
 	defaultRef, defaultOID := "none", "none"
 	if def, ok := git.ResolvedDefault(root); ok {
@@ -784,12 +787,12 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 			defaultOID = oid
 		}
 	}
-	facts.headDetached = headRef == "detached"
-	facts.defaultKnown = defaultOID != "none"
-	facts.headRef, facts.head = headRef, head
-	if !facts.headDetached && facts.defaultKnown {
-		facts.landedOK, facts.landedByContent, facts.landedErr = git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef)
+	facts.HeadDetached = headRef == "detached"
+	facts.DefaultKnown = defaultOID != "none"
+	facts.HeadRef, facts.Head = headRef, head
+	if !facts.HeadDetached && facts.DefaultKnown {
+		facts.LandedOK, facts.LandedByContent, facts.LandedErr = git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef)
 	}
-	facts.unsafeTarget = !cleanupOutputSafe(target)
+	facts.UnsafeTarget = !cleanupOutputSafe(target)
 	return facts
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 	"io"
 	"os"
@@ -167,9 +168,17 @@ func isRegularFile(path string) bool {
 	return err == nil && info.Mode().IsRegular()
 }
 
-type nestedState string
+// nestedState is the policy package's nested-repository verdict;
+// internal/worktree/lifecyclepolicy owns its values.
+type nestedState = lifecyclepolicy.NestedState
 
-const nestedClean, nestedDirty, nestedEmbeddedClean, nestedEmbeddedDirty, nestedUnknown nestedState = "clean", "dirty", "embedded-clean", "embedded-dirty", "unknown"
+const (
+	nestedClean         = lifecyclepolicy.NestedClean
+	nestedDirty         = lifecyclepolicy.NestedDirty
+	nestedEmbeddedClean = lifecyclepolicy.NestedEmbeddedClean
+	nestedEmbeddedDirty = lifecyclepolicy.NestedEmbeddedDirty
+	nestedUnknown       = lifecyclepolicy.NestedUnknown
+)
 
 func classifyNestedState(root string) (state nestedState, err error) {
 	state = nestedClean

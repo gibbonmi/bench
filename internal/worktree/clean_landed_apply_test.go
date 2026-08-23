@@ -128,7 +128,7 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 	}
 	removable := make([]landedCleanupRow, 0, 2)
 	for _, row := range set.rows {
-		if row.plan.Action.removes() {
+		if row.plan.Action.Removes() {
 			removable = append(removable, row)
 		}
 	}
