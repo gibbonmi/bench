@@ -1,6 +1,6 @@
 # worktree-test-latency
 
-Status: implemented
+Status: staged
 
 Decision source: `specs/worktree-test-latency/decisions/worktree-test-latency.md`, ready on 2026-08-23, with its owned invocation census.
 
