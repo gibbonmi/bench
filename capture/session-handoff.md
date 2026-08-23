@@ -2,24 +2,25 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — the spec commit after `6db0ada0`; tree clean after it
+Branch: the `parallel-landings` integration worktree, base `1a135f1b` (the spec commit); `main` is at that commit
 Spec: `specs/parallel-landings/spec.md` — `Status: staged`, reviewer-approved 2026-08-23
 Gate: green on the spec commit (2026-08-23)
 
 ## State
 
-`parallel-landings` is staged and approved with its five tickets. The review
-round (opus / high, one iteration) returned REVISE; every finding is folded,
-and the verification log records it. The reviewer kept the tickets-only close
-(story 6, WL8, ticket `close-a-tickets-only-folder-on-the-landing`). The
-build has not started; the reviewer handed it to a fresh session.
+`/bench-implement-spec --full parallel-landings --reviewer opus medium` is in
+the build phase. The integration worktree (label `parallel-landings`) holds the
+build; `bench preflight build parallel-landings` was green before the first
+edit. Tickets commit serially in `Blocked by:` order on the worktree. The
+reviewer pre-approved the worker's judgement on build-time decisions and capped
+the review at two loops (opus / medium).
 
 Ticket order: `make-spec-optional-on-the-landing`, then
 `close-a-tickets-only-folder-on-the-landing`, then
 `union-merge-the-phase-owned-journals`, then
 `name-the-source-repair-in-the-conflict-refusal`, then
 `route-every-phase-through-a-worktree` (fable / high; the other four opus /
-medium). Tickets 1 and 3 share `internal/landing/landing.go` and run serially.
+medium).
 
 Closed decisions: merge composition stays the landing primitive, no rebase;
 the journal union and the destination default; the light path joins the
@@ -28,7 +29,7 @@ ideas in `capture/IDEAS.md` close by implementation at the next drain.
 
 ## Next command
 
-`/bench-implement-spec --full parallel-landings`
+`/bench-implement-spec --full parallel-landings --reviewer opus medium` (resumes from the worktree's committed tickets)
 
 ## Shape
 

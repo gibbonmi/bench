@@ -112,6 +112,42 @@ func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {
 	}
 }
 
+// WL4 and WL21: the fence rides with the spec. A spec-backed landing still refuses a
+// path no fence names; the same source lands when no spec names a fence.
+func TestLandCommandFenceRidesWithTheSpec(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		specArg bool
+	}{
+		{name: "spec-backed", specArg: true},
+		{name: "spec-less"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request := "land-surface-fence-" + tc.name
+			root, creation, base, _, _ := specLessLandingFixture(t, request)
+			commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
+			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+			args := specLessLandArgs(request, base, tip, creation.Path)
+			if tc.specArg {
+				args = landArgs(request, base, tip, creation.Path)
+			}
+			code, stdout, stderr := landIn(t, root, args)
+			if tc.specArg {
+				if code != 1 || !strings.Contains(stdout, "ownership fence is invalid") || !strings.Contains(stdout, "stray.txt") {
+					t.Fatalf("spec-backed fence refusal = (%d, %q, %q), want the offending path named", code, stdout, stderr)
+				}
+				return
+			}
+			if code != 0 || !strings.Contains(stdout, "worktree=released}") {
+				t.Fatalf("spec-less out-of-fence landing = (%d, %q, %q), want released", code, stdout, stderr)
+			}
+			if got := gitOutput(t, root, "show", "main:stray.txt"); got != "stray" {
+				t.Fatalf("published stray path = %q", got)
+			}
+		})
+	}
+}
+
 func TestLandCommandConflictRefusalNamesThePath(t *testing.T) {
 	request := "land-surface-conflict-path"
 	root, creation, base, tip := landSurface(t, request)

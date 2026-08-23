@@ -379,7 +379,7 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 // The worktree lifecycle owns authentication, marker advancement, reconciliation,
 // and release around this irreversible operation.
 func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedResult, error) {
-	if r.Root == "" || r.Destination == "" || r.DestinationBase == "" || r.Source == "" || r.SourceTip == "" || r.ReviewBase == "" || r.SourceWorktree == "" || r.SourceFingerprint == "" || r.DestinationFingerprint == "" || r.SpecPath == "" || strings.TrimSpace(r.Message) == "" {
+	if r.Root == "" || r.Destination == "" || r.DestinationBase == "" || r.Source == "" || r.SourceTip == "" || r.ReviewBase == "" || r.SourceWorktree == "" || r.SourceFingerprint == "" || r.DestinationFingerprint == "" || strings.TrimSpace(r.Message) == "" {
 		return ReviewedResult{}, errors.New("reviewed landing request is incomplete")
 	}
 	destination, err := compositionCommit(r.Root, r.DestinationBase, "destination")
@@ -397,12 +397,17 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 	if _, kind, _ := diff.ResolveSourceRange(r.Root, r.ReviewBase, source); kind != "" {
 		return ReviewedResult{}, errors.New("reviewed source base is invalid")
 	}
-	if err := stagedSpecMatches(r.Root, source, r.SpecPath, r.SpecBytes); err != nil {
-		return ReviewedResult{}, err
-	}
-	composed, err := specNeutralizedDestination(r.Root, destination, r.SpecPath, r.SpecBytes, r.SpecMode)
-	if err != nil {
-		return ReviewedResult{}, err
+	// An empty SpecPath is the spec-less landing: it has no staged spec to prove, to
+	// neutralize, or to transition, so it composes against the destination itself and
+	// publishes the composition unchanged.
+	composed := destination
+	if r.SpecPath != "" {
+		if err := stagedSpecMatches(r.Root, source, r.SpecPath, r.SpecBytes); err != nil {
+			return ReviewedResult{}, err
+		}
+		if composed, err = specNeutralizedDestination(r.Root, destination, r.SpecPath, r.SpecBytes, r.SpecMode); err != nil {
+			return ReviewedResult{}, err
+		}
 	}
 	composition, err := o.Compose(CompositionRequest{Root: r.Root, Destination: composed, Source: source, ReviewBase: r.ReviewBase})
 	if err != nil {
@@ -414,13 +419,15 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 	if len(composition.Resolved) > 0 && r.Stderr != nil {
 		fmt.Fprintf(r.Stderr, "landing composition{resolved=%s}\n", strings.Join(composition.Resolved, ","))
 	}
-	implemented, err := spec.Implemented(r.SpecBytes)
-	if err != nil {
-		return ReviewedResult{}, err
-	}
-	tree, err := replaceTreeFile(r.Root, composition.Tree, r.SpecPath, implemented, r.SpecMode)
-	if err != nil {
-		return ReviewedResult{}, fmt.Errorf("transition staged spec: %w", err)
+	tree := composition.Tree
+	if r.SpecPath != "" {
+		implemented, err := spec.Implemented(r.SpecBytes)
+		if err != nil {
+			return ReviewedResult{}, err
+		}
+		if tree, err = replaceTreeFile(r.Root, composition.Tree, r.SpecPath, implemented, r.SpecMode); err != nil {
+			return ReviewedResult{}, fmt.Errorf("transition staged spec: %w", err)
+		}
 	}
 	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); got.Kind != authorization.Green {
 		return ReviewedResult{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)

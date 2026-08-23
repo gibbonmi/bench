@@ -36,7 +36,7 @@ var landGrammar = usage.Grammar{
 		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
 		{Name: "--base", HasValue: true, NoEmptyValue: true, Required: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true, Required: true},
-		{Name: "--spec", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--spec", HasValue: true, NoEmptyValue: true},
 		{Name: "-m", HasValue: true, NoEmptyValue: true, Required: true},
 	},
 }
@@ -51,7 +51,7 @@ var resumeLandGrammar = usage.Grammar{
 		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
 		{Name: "--base", HasValue: true, NoEmptyValue: true, Required: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true, Required: true},
-		{Name: "--spec", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--spec", HasValue: true, NoEmptyValue: true},
 	},
 }
 
@@ -184,7 +184,7 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 		return landRefusalError(stdout, err)
 	}
 	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
-	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], spec.LiveSpecSlug(parsed.Flags["--spec"]))
+	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
 	if err != nil {
 		return landRefusalError(stdout, err)
 	}
@@ -370,12 +370,17 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 		return "", "", "", "", errors.New("review base does not authenticate the published source")
 	}
 	sourceBase = sourceRange.Base
-	specPath := spec.LiveSpecPath(slug)
-	staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
-	implemented, implementedErr := spec.Implemented(staged)
-	publishedSpec, publishedErr := git.Raw("-C", root, "show", published+":"+specPath)
-	if stagedErr != nil || implementedErr != nil || publishedErr != nil || !bytes.Equal(implemented, publishedSpec) {
-		return "", "", "", "", errors.New("published commit does not carry the source staged spec transition")
+	// A spec-less first run published no transition, so a resume without a spec has no
+	// transition to authenticate. The parents and the range already bind the same
+	// published commit either way, so no second publication can follow from the skip.
+	if slug != "" {
+		specPath := spec.LiveSpecPath(slug)
+		staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
+		implemented, implementedErr := spec.Implemented(staged)
+		publishedSpec, publishedErr := git.Raw("-C", root, "show", published+":"+specPath)
+		if stagedErr != nil || implementedErr != nil || publishedErr != nil || !bytes.Equal(implemented, publishedSpec) {
+			return "", "", "", "", errors.New("published commit does not carry the source staged spec transition")
+		}
 	}
 	tree, err = git.Output("-C", root, "rev-parse", published+"^{tree}")
 	if err != nil {
@@ -488,33 +493,59 @@ func landingSource(root string, a intent.Assignment, base, requestedTip, slug st
 	if dirty, err := git.Output("-C", a.Worktree, "status", "--porcelain=v1", "--untracked-files=all"); err != nil || dirty != "" {
 		return landingSourceFact{}, errors.New("reviewed source is not clean")
 	}
-	rangeFact, err := authorizeLandingSource(a.Worktree, slug, base)
+	rangeFact, detail, err := landingSourceRange(a.Worktree, slug, base, head)
 	if err != nil {
-		return landingSourceFact{}, fmt.Errorf("reviewed source range or ownership fence is invalid: %s", err)
-	}
-	if rangeFact.Tip != requestedTip {
-		return landingSourceFact{}, identityRefusal(requestedTip, rangeFact.Tip, "reviewed source range or ownership fence is invalid")
-	}
-	bytes, resolved, _, ok, err := spec.Resolve(a.Worktree, slug)
-	if err != nil || !ok {
-		return landingSourceFact{}, errors.New("staged spec is unreadable")
-	}
-	if _, err := spec.Implemented(bytes); err != nil {
 		return landingSourceFact{}, err
 	}
-	rel, err := filepath.Rel(a.Worktree, resolved)
-	if err != nil || rel == "." {
-		return landingSourceFact{}, errors.New("staged spec path is invalid")
+	if rangeFact.Tip != requestedTip {
+		return landingSourceFact{}, identityRefusal(requestedTip, rangeFact.Tip, detail)
 	}
-	info, err := os.Lstat(resolved)
-	if err != nil || !info.Mode().IsRegular() {
-		return landingSourceFact{}, errors.New("staged spec is not a regular file")
+	fact := landingSourceFact{base: rangeFact.Base, tip: rangeFact.Tip}
+	if slug != "" {
+		bytes, resolved, _, ok, err := spec.Resolve(a.Worktree, slug)
+		if err != nil || !ok {
+			return landingSourceFact{}, errors.New("staged spec is unreadable")
+		}
+		if _, err := spec.Implemented(bytes); err != nil {
+			return landingSourceFact{}, err
+		}
+		rel, err := filepath.Rel(a.Worktree, resolved)
+		if err != nil || rel == "." {
+			return landingSourceFact{}, errors.New("staged spec path is invalid")
+		}
+		info, err := os.Lstat(resolved)
+		if err != nil || !info.Mode().IsRegular() {
+			return landingSourceFact{}, errors.New("staged spec is not a regular file")
+		}
+		fact.specPath, fact.specBytes, fact.specMode = filepath.ToSlash(rel), bytes, info.Mode().Perm()
 	}
 	fingerprint, err := landing.CheckoutFingerprint(a.Worktree)
 	if err != nil {
 		return landingSourceFact{}, errors.New("reviewed source fingerprint is unavailable")
 	}
-	return landingSourceFact{base: rangeFact.Base, tip: rangeFact.Tip, fingerprint: fingerprint, specPath: filepath.ToSlash(rel), specBytes: bytes, specMode: info.Mode().Perm()}, nil
+	fact.fingerprint = fingerprint
+	return fact, nil
+}
+
+// landingSourceRange resolves the reviewed range and returns the refusal detail its
+// identity mismatch carries. A spec names an ownership fence, so its range comes from
+// the authorization owner. Without a spec there is no fence to authorize, so only the
+// range resolves; every other source proof is unchanged either way.
+func landingSourceRange(worktree, slug, base, head string) (diff.SourceRange, string, error) {
+	if slug == "" {
+		const detail = "reviewed source range is invalid"
+		resolved, kind, hint := diff.ResolveSourceRange(worktree, base, head)
+		if kind != "" {
+			return diff.SourceRange{}, detail, fmt.Errorf("%s: %s: %s", detail, kind, hint)
+		}
+		return resolved, detail, nil
+	}
+	const detail = "reviewed source range or ownership fence is invalid"
+	resolved, err := authorizeLandingSource(worktree, slug, base)
+	if err != nil {
+		return diff.SourceRange{}, detail, fmt.Errorf("%s: %s", detail, err)
+	}
+	return resolved, detail, nil
 }
 
 func identityRefusal(observed, wanted, detail string) error {
@@ -572,6 +603,15 @@ func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, specArg, 
 	return 3
 }
 
+// landingSlug is the spec slug a landing argument names, and the empty slug for the
+// spec-less landing that named no argument.
+func landingSlug(arg string) string {
+	if arg == "" {
+		return ""
+	}
+	return spec.LiveSpecSlug(arg)
+}
+
 func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment string) string {
 	values := []string{result.Commit, result.SourceBase, result.SourceTip, specArg}
 	for _, value := range values {
@@ -579,7 +619,13 @@ func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment 
 			return "bench worktree exec " + assignment + " -- bench worktree land --resume <full-published-commit> --request <request> --base <full-review-base> --source-tip <full-source-tip> --spec <spec> ."
 		}
 	}
-	command := "bench worktree land --resume " + sanitize.ShellQuote(result.Commit) + " --request <request> --base " + sanitize.ShellQuote(result.SourceBase) + " --source-tip " + sanitize.ShellQuote(result.SourceTip) + " --spec " + sanitize.ShellQuote(specArg)
+	// A spec-less landing resumes spec-less, so the resume command it names carries no
+	// --spec at all rather than an empty value the grammar refuses.
+	specFlag := ""
+	if specArg != "" {
+		specFlag = " --spec " + sanitize.ShellQuote(specArg)
+	}
+	command := "bench worktree land --resume " + sanitize.ShellQuote(result.Commit) + " --request <request> --base " + sanitize.ShellQuote(result.SourceBase) + " --source-tip " + sanitize.ShellQuote(result.SourceTip) + specFlag
 	if lineSafe(path) {
 		return command + " " + sanitize.ShellQuote(path)
 	}
