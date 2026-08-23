@@ -5,6 +5,6 @@ description: Explicit Codex adapter for the /bench-review-implementation phase. 
 
 # $bench-review-implementation
 
-Read `.agents/commands/bench-review-implementation.md` completely and follow it as the active Bench
-phase. The command file is canonical; do not substitute this adapter for the phase
+Read `.agents/commands/bench-review-implementation.md` completely. Follow it as the active Bench
+phase. The command file is canonical. Do not substitute this adapter for the phase
 instructions.
