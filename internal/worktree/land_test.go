@@ -186,6 +186,81 @@ func TestLandCommandRefusesPostGateUnknownIgnoredMutation(t *testing.T) {
 	}
 }
 
+func TestLandCommandRetainsJustInTimeTrackedDestinationEdit(t *testing.T) {
+	request := "land-last-moment-tracked-edit"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	commitInWorktree(t, root, "victim.txt", "saved\n", "track victim")
+	base = gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip = gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	victim := filepath.Join(root, "victim.txt")
+	injectLandingResetEdit(t, root, victim)
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if code != 3 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
+		t.Fatalf("last-moment tracked edit landing = (%d, %q, %q), want published incomplete reconciliation", code, stdout.String(), stderr.String())
+	}
+	if got, err := os.ReadFile(victim); err != nil || string(got) != "caller bytes\n" {
+		t.Fatalf("last-moment tracked edit = %q, %v, want caller bytes", got, err)
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil || len(assignments) != 1 || assignments[0].ID != creation.Assignment.ID || assignments[0].State != intent.StateActive {
+		t.Fatalf("incomplete reconciliation retained assignments = %#v, %v", assignments, err)
+	}
+	if _, err := os.Stat(creation.Path); err != nil {
+		t.Fatalf("incomplete reconciliation removed source assignment: %v", err)
+	}
+}
+
+func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
+	request := "land-last-moment-overlapping-edit"
+	root, creation, _, _, _ := publicLandingFixture(t, request, "", "")
+	commitInWorktree(t, root, "victim.txt", "saved\n", "track victim")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	mustWrite(t, filepath.Join(creation.Path, "victim.txt"), []byte("reviewed bytes\n"), 0o600)
+	specPath := filepath.Join(creation.Path, "specs", "x", "spec.md")
+	specBytes, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, specPath, append(specBytes, []byte("- `victim.txt`\n")...), 0o644)
+	gitRun(t, creation.Path, "add", "victim.txt", "specs/x/spec.md")
+	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "review victim change")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	victim := filepath.Join(root, "victim.txt")
+	injectLandingResetEdit(t, root, victim)
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if code != 3 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
+		t.Fatalf("last-moment overlapping edit landing = (%d, %q, %q), want published incomplete reconciliation", code, stdout.String(), stderr.String())
+	}
+	if got, err := os.ReadFile(victim); err != nil || string(got) != "caller bytes\n" {
+		t.Fatalf("last-moment overlapping edit = %q, %v, want caller bytes", got, err)
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil || len(assignments) != 1 || assignments[0].ID != creation.Assignment.ID || assignments[0].State != intent.StateActive {
+		t.Fatalf("incomplete overlapping reconciliation retained assignments = %#v, %v", assignments, err)
+	}
+}
+
+func injectLandingResetEdit(t *testing.T, root, victim string) {
+	t.Helper()
+	shimDir := t.TempDir()
+	realGit, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, filepath.Join(shimDir, "git"), []byte("#!/bin/sh\nset -eu\nwanted_mode=${LAND_RESET_MODE:---merge}\nsaw_reset=false\nsaw_mode=false\nsaw_destination=false\nfor arg in \"$@\"; do\n  [ \"$arg\" = reset ] && saw_reset=true\n  [ \"$arg\" = \"$wanted_mode\" ] && saw_mode=true\n  [ \"$arg\" = \"$LAND_RESET_DESTINATION\" ] && saw_destination=true\ndone\nif [ \"$saw_reset\" = true ] && [ \"$saw_mode\" = true ] && [ \"$saw_destination\" = true ]; then\n  printf 'caller bytes\\n' > \"$LAND_RESET_VICTIM\"\nfi\nexec "+realGit+" \"$@\"\n"), 0o755)
+	t.Setenv("LAND_RESET_DESTINATION", root)
+	t.Setenv("LAND_RESET_VICTIM", victim)
+	t.Setenv("PATH", shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+}
+
 func TestLandCommandPublishedReleaseFailureExitsIncomplete(t *testing.T) {
 	request := "published-release-incomplete"
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "private/output", "dist/")
@@ -480,7 +555,7 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 	request := "resume-reconcile"
 	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
 	oldReconcile := reconcileLanding
-	reconcileLanding = func(string, string) error { return errors.New("injected reconciliation interruption") }
+	reconcileLanding = func(string, string, string, string) error { return errors.New("injected reconciliation interruption") }
 	t.Cleanup(func() { reconcileLanding = oldReconcile })
 	var stdout, stderr bytes.Buffer
 	if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
@@ -970,7 +1045,9 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 		{"marker", "marker", func() {
 			advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("marker fault") }
 		}},
-		{"reconcile", "reconcile", func() { reconcileLanding = func(string, string) error { return errors.New("reconcile fault") } }},
+		{"reconcile", "reconcile", func() {
+			reconcileLanding = func(string, string, string, string) error { return errors.New("reconcile fault") }
+		}},
 		{"release", "release", func() { releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 1 } }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1924,7 +2001,7 @@ func stubLandJoins(t *testing.T, base, tip string) func() {
 		return landing.ReviewedResult{SourceBase: base, SourceTip: tip, DestinationBase: base, Commit: strings.Repeat("a", 40), Tree: strings.Repeat("b", 40)}, nil
 	}
 	advanceLandingMarker = func(context.Context, string, string, string, string) error { return nil }
-	reconcileLanding = func(string, string) error { return nil }
+	reconcileLanding = func(string, string, string, string) error { return nil }
 	releaseLandingAssignment = ReleaseCommand
 	authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
 		return diff.SourceRange{Base: base, Tip: tip}, nil

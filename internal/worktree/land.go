@@ -146,7 +146,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	if err := advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker")
 	}
-	if err := reconcileLanding(root, result.Commit); err != nil {
+	if err := reconcileLanding(root, result.Commit, result.Commit, result.DestinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile")
 	}
 	var releaseDiagnostic bytes.Buffer
@@ -210,7 +210,7 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	} else if marker == "" || !git.OK("-C", root, "merge-base", "--is-ancestor", published, marker) {
 		return landRefusal(stdout, "project-green marker is absent, behind, or divergent from the published landing")
 	}
-	if err := reconcileLanding(root, destination); err != nil {
+	if err := reconcileLanding(root, destination, published, destinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile")
 	}
 	if !active {
@@ -619,8 +619,14 @@ func abbreviatedIdentity(value, full string) bool {
 	return strings.HasPrefix(strings.ToLower(full), strings.ToLower(value))
 }
 
-func reconcileLandingDestination(root, commit string) error {
-	if err := exec.Command("git", "-C", root, "reset", "--hard", commit).Run(); err != nil {
+func reconcileLandingDestination(root, destination, published, destinationBase string) error {
+	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
+		return err
+	}
+	if err := exec.Command("git", "-C", root, "reset", "--merge", destination).Run(); err != nil {
+		return err
+	}
+	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
 		return err
 	}
 	return nil
