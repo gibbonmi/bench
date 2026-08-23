@@ -236,4 +236,18 @@ func TestWorktreeRuleAnchorsRedOnRemoval(t *testing.T) {
 			}
 		}
 	}
+
+	// The worktree rule binds to the Workflow section: the same sentence under Capture
+	// leaves Workflow without it, so the section-bound row still fires.
+	root := t.TempDir()
+	misplaced := "# Bench Operating Guide\n\n## Workflow\n\n## Capture\n\n" + rules[0].needle + "\n"
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), []byte(misplaced), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diags := EvaluateGroup(root, AfterSpecAuthorization); !slices.Contains(diags, rules[0].want) {
+		t.Errorf("guide with the worktree rule under Capture = %v, want %q", diags, rules[0].want)
+	}
 }

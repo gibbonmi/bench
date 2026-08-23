@@ -505,6 +505,16 @@ func TestComposeRefusesConflictsTheRuleTableCannotSettle(t *testing.T) {
 			}, func() { write(t, root, "capture/learnings.md", "shared\nsource\n") })
 		}},
 		{name: "gitlink-under-capture", wantKind: "gitlink", wantPaths: []string{"capture/nested"}, setup: captureGitlinkConflict},
+		// The rule table keys on the capture/ prefix; a sibling that merely starts
+		// with "capture" has no rule and stays a refusal.
+		{name: "capture-prefix-boundary", wantKind: "textual", wantPaths: []string{"capture.md"}, setup: func(t *testing.T, root, base string) (string, string) {
+			write(t, root, "capture.md", "shared\n")
+			git(t, root, "add", "-A")
+			git(t, root, "commit", "-qm", "capture sibling base")
+			base = git(t, root, "rev-parse", "HEAD")
+			return commitSides(t, root, base, func() { write(t, root, "capture.md", "shared\ndestination\n") },
+				func() { write(t, root, "capture.md", "shared\nsource\n") })
+		}},
 		{name: "mode-conflict-on-a-phase-owned-path", wantKind: "mode", wantPaths: []string{"capture/learnings.md"}, setup: func(t *testing.T, root, base string) (string, string) {
 			write(t, root, "capture/learnings.md", "shared\n")
 			git(t, root, "add", "-A")

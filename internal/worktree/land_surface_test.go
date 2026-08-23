@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"bytes"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -70,9 +71,12 @@ func TestLandCommandComposesCaptureOntoMovedDestination(t *testing.T) {
 	if got := gitOutput(t, root, "show", "main:capture/session-handoff.md"); got != "handoff source" {
 		t.Fatalf("published handoff = %q, want the source's", got)
 	}
-	published := gitOutput(t, root, "show", "main:capture/learnings.md")
-	if !strings.Contains(published, "learnings destination") || !strings.Contains(published, "learnings source") {
-		t.Fatalf("published learnings = %q, want both sides' appended lines", published)
+	// `git merge-file --union` publishes the base lines, then the destination side,
+	// then the source side; both sides replaced the one base line, so only the two
+	// appended lines remain, in that order.
+	published, err := exec.Command("git", "-C", root, "show", "main:capture/learnings.md").Output()
+	if want := "learnings destination\nlearnings source\n"; err != nil || string(published) != want {
+		t.Fatalf("published learnings = %q (%v), want exactly %q", published, err, want)
 	}
 }
 
@@ -266,5 +270,29 @@ func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
 		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> .}"
 	if code != 1 || strings.ContainsRune(stdout, '\x1b') || !strings.Contains(stdout, wantNext) {
 		t.Fatalf("unsafe-path conflict next = (%d, %q, %q), want the pointer form %q", code, stdout, stderr, wantNext)
+	}
+}
+
+// Edge under WL18: a --spec slug that is not line-safe cannot be pasted, so the
+// conflict next carries the `<spec>` placeholder and no raw control byte. A
+// tickets-only folder is the one spec shape whose name reaches the landing verbatim.
+func TestLandCommandConflictNextPlaceholdsAnUnsafeSpec(t *testing.T) {
+	request := "land-surface-conflict-unsafe-spec"
+	root, creation, base, _ := landSurface(t, request)
+	slug := "close\x1bme"
+	mustMkdirAll(t, filepath.Join(creation.Path, "specs", slug, "tickets"), 0o755)
+	commitInWorktree(t, creation.Path, filepath.Join("specs", slug, "tickets", "one.md"), "Ticket.\n", "tickets-only folder")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+	args := []string{"--request", request, "--base", base, "--source-tip", tip, "--spec", slug, "-m", "land", creation.Path}
+	code, stdout, stderr := landIn(t, root, args)
+	wantNext := "bench worktree land --request <request> --base '" + destination +
+		"' --source-tip <repaired-source-tip> --spec <spec> -m <message> '" + creation.Path + "'}"
+	if code != 1 || !strings.Contains(stdout, "composition conflict: textual") || !strings.Contains(stdout, wantNext) {
+		t.Fatalf("unsafe-spec conflict next = (%d, %q, %q), want the placeholder form %q", code, stdout, stderr, wantNext)
+	}
+	if strings.ContainsRune(stdout, '\x1b') {
+		t.Fatalf("unsafe-spec conflict next leaked a raw control byte: %q", stdout)
 	}
 }

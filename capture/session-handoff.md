@@ -2,25 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: the `parallel-landings` integration worktree, base `1a135f1b` (the spec commit); `main` is at that commit
+Branch: `bench/assign/b31c954120124fec3e44dd4d9ca17ffa/b0fec9471b338b985b1c9ea1f2be89ab` (the `parallel-landings` integration worktree, label `parallel-landings`), frozen base `1a135f1b`; the tip is the last `build:`/`review:` commit on that branch, and `main` is at the base
 Spec: `specs/parallel-landings/spec.md` — `Status: staged`, reviewer-approved 2026-08-23
 Gate: green on the spec commit (2026-08-23)
 
 ## State
 
 `/bench-implement-spec --full parallel-landings --reviewer opus medium` is in
-the build phase. The integration worktree (label `parallel-landings`) holds the
-build; `bench preflight build parallel-landings` was green before the first
-edit. Tickets commit serially in `Blocked by:` order on the worktree. The
-reviewer pre-approved the worker's judgement on build-time decisions and capped
-the review at two loops (opus / medium).
+the review-repair phase. All five tickets are committed on the worktree
+(`64646d3f`..`9ffb8278`). Review loop 1 of 2 (opus / medium, three axes)
+found 15 advisory findings and no blocking one. The 8 accepted repair targets
+are repaired and committed on the worktree.
 
-Ticket order: `make-spec-optional-on-the-landing`, then
-`close-a-tickets-only-folder-on-the-landing`, then
-`union-merge-the-phase-owned-journals`, then
-`name-the-source-repair-in-the-conflict-refusal`, then
-`route-every-phase-through-a-worktree` (fable / high; the other four opus /
-medium).
+Loop 2 runs repair-scoped over the accepted predicates. Then the landing runs from `main` with `bench worktree
+land --base 1a135f1b --source-tip <tip> --spec parallel-landings`. The reviewer
+pre-approved the worker's judgement on build-time decisions.
 
 Closed decisions: merge composition stays the landing primitive, no rebase;
 the journal union and the destination default; the light path joins the

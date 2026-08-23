@@ -269,6 +269,7 @@ Cheapest wrong implementation per group, and the row that reds it:
 - `.bench/BENCH-reference.md`
 - `.agents/commands/bench-debug.md`
 - `AGENTS.md`
+- `internal/conformance/validity_checks_test.go`
 
 ## Out of scope
 
