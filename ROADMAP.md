@@ -91,6 +91,8 @@ means the repository-controlled compliance assessment.
 
 **FT244 (LOW) — a standard scratch directory for worktree runs.**
 
+**FT245 (LOW) — partial gate output is progress, not a process boundary.**
+
 **FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**

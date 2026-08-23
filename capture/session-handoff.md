@@ -2,18 +2,22 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5e5ba55`, 18 dirty paths, 1 unpushed commit
+Branch: `main` — HEAD `8923d86`, 5 dirty paths, 1 unpushed commit
 Spec: none staged.
-Gate: green at `2108505` — stale, work tree `c23acc8`
+Gate: red at `4bc4e72` — stale, work tree `7afa7d9`
 
 ## State
 
-The 2026-08-22 drain is staged and uncommitted. It reconciles 71 rows (none
-shipped), drains six ideas and seven journal entries, disposes both pending retros,
-opens FT243 and FT244, and refreshes the sequence. The light-path item from the
-journal (the `ste-prose.md` field-line note) landed on its own as the commit before
-this one. The batch waits for the reviewer's approval, then one `bench commit` over
-every touched path.
+The drain batch reconciles 73 existing rows and retires none. It records the
+2026-08-22 prose pass as a partial FT100 shipment. It merges the deferred STE
+semicolon experiment into FT231. It also graduates the gate-process-boundary
+learning into FT245 with `Next: kit-edit`. The idea inbox and learning journal
+are empty. The recommended sequence remains FT169, FT113, then FT214.
+
+Closed decisions: evaluate the semicolon rule only after FT231's harness lands;
+do not treat partial gate output as a process boundary. The positive roadmap
+flow delta requires a later reducing-moves proposal; this default drain does not
+silently restructure the board.
 
 ## Next command
 
