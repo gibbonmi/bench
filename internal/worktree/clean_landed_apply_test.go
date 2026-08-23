@@ -14,7 +14,7 @@ import (
 )
 
 func TestCleanLandedApplyRemovesAndSettles(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	root, first, second, dirty := landedSetFixture(t)
 	plan, planErr, planCode := runCleanLanded(t, root, "--landed")
 	if planCode != 0 || planErr != "" {

@@ -26,7 +26,7 @@ import (
 )
 
 func TestLandCommandPublicRealGitJourney(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	for _, tc := range []struct {
 		name, ignored, declaration, foreignIgnored, wantState string
 		runtime, emptyDeclaration                             bool
@@ -125,7 +125,7 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 }
 
 func TestLandCommandPublicPreservesHistoricalRuntimeLogs(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	request := "public-land-runtime-logs"
 	root, creation, _, _, tally := publicLandingFixture(t, request, "", "")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".logs/\n"), 0o644)
@@ -160,7 +160,7 @@ func TestLandCommandPublicPreservesHistoricalRuntimeLogs(t *testing.T) {
 }
 
 func TestLandCommandRefusesPostGateUnknownIgnoredMutation(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	request := "public-land-post-gate-ignored"
 	root, creation, _, _, tally := publicLandingFixture(t, request, "foreign-generated/output", "")
 	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nrg -q '^Status: implemented$' specs/x/spec.md\n[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\nmkdir -p \"$LAND_DESTINATION/foreign-generated\"\nprintf injected > \"$LAND_DESTINATION/foreign-generated/output\"\n"), 0o755)
@@ -309,7 +309,7 @@ func TestLandCommandIncompleteNextUsesAssignmentPointerForUnsafePath(t *testing.
 }
 
 func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	request := "public-land-resume"
 	root, creation, base, tip, tally := publicLandingFixture(t, request, "private/output", "dist/")
 	land := func(args ...string) (int, string, string) {
@@ -350,7 +350,7 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 }
 
 func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	request := "public-resume-identity"
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "private/output", "dist/")
 	land := func(args ...string) (int, string, string) {
@@ -435,7 +435,7 @@ func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
 }
 
 func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	for _, journey := range []struct {
 		name  string
 		later bool
@@ -521,7 +521,7 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 }
 
 func TestResumeLandCommandRefusesNonAncestorReviewBaseWithoutMutation(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	request := "resume-nonancestor-base"
 	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
 	run := func(args ...string) (int, string, string) {
@@ -773,7 +773,7 @@ func TestResumeLandCommandPreauthenticatesCompletedRequestAndPath(t *testing.T) 
 }
 
 func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	request := "public-land-conflict-repair"
 	root, creation, base, reviewedTip, tally := publicLandingFixture(t, request, "", "")
 	disclosure := "landing source{review_base=" + base + ",assignment_start=" + creation.Assignment.Start + "}\n"
@@ -815,18 +815,6 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
 		t.Fatalf("repaired gate tally = %q, %v", got, err)
 	}
-}
-
-func buildLandingBinary(t *testing.T) string {
-	t.Helper()
-	source := gitOutput(t, ".", "rev-parse", "--show-toplevel")
-	output := filepath.Join(t.TempDir(), "bench")
-	cmd := exec.Command("bash", filepath.Join(source, "scripts", "go-build.sh"), source, output)
-	cmd.Dir = source
-	if got, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("build exact landing binary: %v\n%s", err, got)
-	}
-	return output
 }
 
 func resumeDestinationState(t *testing.T, root string) string {
@@ -1766,7 +1754,7 @@ func TestLandCommandPublicRefusesASeallessExecutable(t *testing.T) {
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
 	published := gitOutput(t, root, "rev-parse", "main")
 	sealless := filepath.Join(t.TempDir(), "bench")
-	built, err := os.ReadFile(buildLandingBinary(t))
+	built, err := os.ReadFile(testRunBinary(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2030,7 +2018,7 @@ func landingSpecAmendment(t *testing.T, source string) []byte {
 }
 
 func TestLandCommandPublicLandsAnInRangeSpecAmendment(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	request := "public-land-spec-amendment"
 	root, creation, base, _, tally := publicLandingFixture(t, request, "", "")
 	amended := landingSpecAmendment(t, creation.Path)
@@ -2054,7 +2042,7 @@ func TestLandCommandPublicLandsAnInRangeSpecAmendment(t *testing.T) {
 }
 
 func TestResumeLandCommandPublicCompletesAnAmendedSourceLanding(t *testing.T) {
-	binary := buildLandingBinary(t)
+	binary := testRunBinary(t)
 	request := "public-resume-spec-amendment"
 	root, creation, base, _, tally := publicLandingFixture(t, request, "private/output", "dist/")
 	amended := landingSpecAmendment(t, creation.Path)

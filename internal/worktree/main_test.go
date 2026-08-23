@@ -35,6 +35,9 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	code := m.Run()
+	// The one test-run executable owner outlives every journey; release its private
+	// directory only after the last child has returned.
+	packageRunBinary.close()
 	entries, err := homeResidue(home)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "private BENCH_HOME residue:", err)
