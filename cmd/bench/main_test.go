@@ -125,9 +125,8 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bash bin/bench.sh gate --fresh  run the current worktree's gate
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green
-  bench spec implemented <slug>    flip a spec's Status: staged line to implemented
-  bench spec retire <slug>         delete a merged spec + its review pickup (validated)
-  bench spec history <slug>        retire/delete commits for a spec, newest first (TOON)
+  bench spec retire <slug>   delete a merged spec + its review pickup (validated)
+  bench spec history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench version              print the installed Bench version (os/arch)
 `
 

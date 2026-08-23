@@ -108,9 +108,8 @@ var commandRegistry = []commandDefinition{
 	{Name: "shift", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " [--refresh] \"<objective>\"", Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "commit", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 39, Suffix: " -m <msg> <path>...", Description: "gate, then commit named paths on green"}), Run: func(c Command, args []string) int { return commit.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "spec", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(
-		helpRow{Order: 40, Suffix: " implemented <slug>", Gap: 4, Description: "flip a spec's Status: staged line to implemented"},
-		helpRow{Order: 41, Suffix: " retire <slug>", Gap: 9, Description: "delete a merged spec + its review pickup (validated)"},
-		helpRow{Order: 42, Suffix: " history <slug>", Gap: 8, Description: "retire/delete commits for a spec, newest first (TOON)"},
+		helpRow{Order: 41, Suffix: " retire <slug>", Description: "delete a merged spec + its review pickup (validated)"},
+		helpRow{Order: 42, Suffix: " history <slug>", Description: "retire/delete commits for a spec, newest first (TOON)"},
 	), Run: outputCommand(spec.Command)},
 	{Name: "gate-go", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "guard-git", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},

@@ -45,50 +45,27 @@ func writeFolderSpec(t *testing.T, dir, slug, content string) string {
 	return path
 }
 
-func TestFlipRewritesOnlyTheStatusLine(t *testing.T) {
+// TestImplementedPreservesEveryOtherByte pins the surviving flip source: Implemented
+// rewrites the one line-start `Status: staged` and nothing else, whatever separator,
+// trailing whitespace, or final newline the file carries.
+func TestImplementedPreservesEveryOtherByte(t *testing.T) {
 	cases := []struct {
 		name string
 		in   string
 		want string
 	}{
-		{
-			name: "space separator, trailing newline",
-			in:   "# spec\n\nStatus: staged\n\n## body\n",
-			want: "# spec\n\nStatus: implemented\n\n## body\n",
-		},
-		{
-			name: "tab separator preserved",
-			in:   "Status:\tstaged\nbody\n",
-			want: "Status:\timplemented\nbody\n",
-		},
-		{
-			name: "no trailing newline preserved",
-			in:   "# spec\nStatus: staged",
-			want: "# spec\nStatus: implemented",
-		},
-		{
-			name: "trailing whitespace on status line preserved",
-			in:   "Status:  staged  \n",
-			want: "Status:  implemented  \n",
-		},
-		{
-			name: "other staged word untouched",
-			in:   "Status: staged\nThe work is staged elsewhere.\n",
-			want: "Status: implemented\nThe work is staged elsewhere.\n",
-		},
+		{"space separator, trailing newline", "# spec\n\nStatus: staged\n\n## body\n", "# spec\n\nStatus: implemented\n\n## body\n"},
+		{"tab separator preserved", "Status:\tstaged\nbody\n", "Status:\timplemented\nbody\n"},
+		{"no trailing newline preserved", "# spec\nStatus: staged", "# spec\nStatus: implemented"},
+		{"trailing whitespace on status line preserved", "Status:  staged  \n", "Status:  implemented  \n"},
+		{"other staged word untouched", "Status: staged\nThe work is staged elsewhere.\n", "Status: implemented\nThe work is staged elsewhere.\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			dir := t.TempDir()
-			path := writeSpec(t, dir, "s", tc.in)
-			resolved, err := Flip(dir, "s")
+			got, err := Implemented([]byte(tc.in))
 			if err != nil {
-				t.Fatalf("Flip: %v", err)
+				t.Fatalf("Implemented: %v", err)
 			}
-			if resolved != path {
-				t.Errorf("resolved = %q, want %q", resolved, path)
-			}
-			got, _ := os.ReadFile(path)
 			if string(got) != tc.want {
 				t.Errorf("content = %q, want %q", got, tc.want)
 			}
@@ -108,47 +85,40 @@ func TestImplementedDerivesExactBytesAndRefusesMalformedStatus(t *testing.T) {
 	}
 }
 
-func TestFlipErrors(t *testing.T) {
-	cases := []struct {
-		name    string
-		content string // "" means don't create the file (not-found)
-		wantSub string
-	}{
-		{"not found", "", "not found"},
-		{"no staged line", "# spec\nStatus: draft\n", "no `Status: staged`"},
-		{"already implemented", "# spec\nStatus: implemented\n", "no `Status: staged`"},
-		{"more than one staged line", "Status: staged\nStatus: staged\n", "expected exactly one"},
+// TestSpecImplementedIsAnUnknownSubcommand pins FA3: the retired subcommand exits 2
+// through the unknown-subcommand branch, and the named spec keeps every byte.
+func TestSpecImplementedIsAnUnknownSubcommand(t *testing.T) {
+	dir := t.TempDir()
+	path := writeSpec(t, dir, "x", "# spec\n\nStatus: staged\n")
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			dir := t.TempDir()
-			if tc.content != "" {
-				writeSpec(t, dir, "s", tc.content)
-			}
-			_, err := Flip(dir, "s")
-			if err == nil {
-				t.Fatal("Flip: expected error, got nil")
-			}
-			if !strings.Contains(err.Error(), tc.wantSub) {
-				t.Errorf("error = %q, want substring %q", err.Error(), tc.wantSub)
-			}
-		})
+	out, code := Command([]string{"implemented", "x"})
+	if code != 2 {
+		t.Fatalf("code = %d, want 2; out = %q", code, out)
+	}
+	if !strings.Contains(out, "usage: bench spec (unknown argument: implemented)") {
+		t.Errorf("out = %q, want the unknown-subcommand usage line", out)
+	}
+	after, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != string(before) {
+		t.Errorf("spec content changed: %q -> %q", before, after)
 	}
 }
 
-func TestFlipReRunIsNonDestructive(t *testing.T) {
-	dir := t.TempDir()
-	path := writeSpec(t, dir, "s", "Status: staged\n")
-	if _, err := Flip(dir, "s"); err != nil {
-		t.Fatalf("first flip: %v", err)
+// TestSpecUsageNamesTheSurvivingSubcommands pins FA3's bare-argv half: the usage line
+// offers retire and history only.
+func TestSpecUsageNamesTheSurvivingSubcommands(t *testing.T) {
+	out, code := Command(nil)
+	if code != 2 {
+		t.Fatalf("code = %d, want 2", code)
 	}
-	after, _ := os.ReadFile(path)
-	if _, err := Flip(dir, "s"); err == nil {
-		t.Fatal("second flip: expected error on already-implemented spec")
-	}
-	again, _ := os.ReadFile(path)
-	if string(again) != string(after) {
-		t.Errorf("second flip mutated the file: %q -> %q", after, again)
+	if !strings.Contains(out, "expected a subcommand: retire, history") {
+		t.Errorf("out = %q, want the retire/history usage line", out)
 	}
 }
 
@@ -605,5 +575,18 @@ func TestRetireStagedRefusesAndDeletesNothing(t *testing.T) {
 	}
 	if string(after) != string(before) {
 		t.Errorf("spec file content changed on refusal")
+	}
+}
+
+// TestRetireDeletesTheFolderAndExitsZero pins FA4: the surviving verb still removes a
+// merged-implemented spec's whole folder at exit 0.
+func TestRetireDeletesTheFolderAndExitsZero(t *testing.T) {
+	root := retireRepo(t, "s", "Status: implemented\nRoadmap: FT7\n", nil)
+	out, code := runRetire(t, root, "s")
+	if code != 0 {
+		t.Fatalf("code = %d, want 0; out = %q", code, out)
+	}
+	if _, err := os.Stat(filepath.Join(root, "specs", "s")); !os.IsNotExist(err) {
+		t.Errorf("specs/s still present: err = %v", err)
 	}
 }
