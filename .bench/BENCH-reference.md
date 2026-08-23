@@ -287,7 +287,7 @@ Bench layers git safety:
 - The agent-line guard (`check-agent-line`) wires on Claude Code only. Codex
   cannot host it: a delegation (`spawn_agent`) never surfaces as a matchable
   `tool_name` on a deny-capable event. `SubagentStart` carries the active
-  model through its common input fields, but it cannot deny the spawn:
+  model through its common input fields. It cannot deny the spawn:
   `continue: false` does not stop the subagent (Codex hooks docs, checked
   2026-07-11). The line's harness-independent backstop is the shift adapters'
   refusal to run with an unset or unbound `BENCH_MODEL`. Re-check this if the

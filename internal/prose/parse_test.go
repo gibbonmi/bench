@@ -170,6 +170,23 @@ func TestFindings(t *testing.T) {
 			name: "PD41 twenty label lines are twenty paragraphs",
 			doc:  repeatLine("Occurrence: FT100 names this spec.", 20),
 		},
+		{
+			name: "C1 a colon inside a code span does not make a field line",
+			doc:  "Run `foo: bar` " + words(38) + "\n",
+			want: []Finding{{Kind: KindSentence, Line: 1, Count: 40}},
+		},
+		{
+			name: "C1 a label line inside a run does not hide a deep paragraph",
+			doc:  "One. Two. Three.\nin fact: four. Five. Six. Seven. Eight.\n",
+		},
+		{
+			name: "C3 a double-backtick span with an inner backtick is one token",
+			doc:  "``a ` b`` " + words(24) + ".\n",
+		},
+		{
+			name: "C3 a triple-backtick span with an inner backtick is one token",
+			doc:  "See ```a ` b``` " + words(23) + ".\n",
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Findings(tt.doc)

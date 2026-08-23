@@ -37,13 +37,15 @@ the fitting repair command: usually `/bench-implement-spec` for feature work,
 or `/bench-debug` for a bug.
 
 **The post-merge tail (exit duty).** After the green landing reaches the
-default branch, read `bench status`. Run the housekeeping rows it flags
+default branch, read `bench status` and run the housekeeping rows it flags
 before closing. A merged spec awaiting retirement gets `bench spec retire <slug>`
 and its `spec-retire: <slug>` commit. Promote durable content first,
 for example a decision to an ADR or a hostile edge to the profile. Retiring
 the whole `specs/<slug>/` folder removes its compiled decision provenance
 with its tickets, so there is no separate top-level decision-map delete.
-Promote or delete an orphaned review pickup by hand. Scratch branches go through `bench worktree clean`.
+Promote or delete an orphaned review pickup by hand.
+
+Scratch branches go through `bench worktree clean`.
 Leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report.
 
 Leave the roadmap and capture rows to
@@ -94,7 +96,7 @@ Record concrete evidence:
 Write each improvement item as one list item. Give the item one sentence that
 states the change to make. End the item with one line that reads `Feeds: FT<n>`,
 `Feeds: new`, or `Feeds: none`. Use `FT<n>` for the roadmap row the change
-feeds, `new` for a row the drain must open, and `none` for a change that needs
+feeds, `new` for a row the drain opens, and `none` for a change that needs
 no row. The gate reds an item that ends without that line. Each item under the
 three improvement headings takes this shape:
 

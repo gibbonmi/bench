@@ -45,7 +45,7 @@ func TestProseMechanicsHoldsOnTheLiveTree(t *testing.T) {
 // the row itself is well formed and its path exists.
 func TestProseExclusionRowsStayInsideTheApprovedSet(t *testing.T) {
 	h := NewHarness(t)
-	rows := readProseExclusionRows(t, filepath.Join(h.KitRoot, filepath.FromSlash(prose.ExclusionFile)))
+	rows := readProseExclusionRows(t, h.KitRoot)
 	if len(rows) == 0 {
 		t.Fatalf("%s names no row", prose.ExclusionFile)
 	}
@@ -61,29 +61,14 @@ func TestProseExclusionRowsStayInsideTheApprovedSet(t *testing.T) {
 	}
 }
 
-// readProseExclusionRows returns the subject of every row, under the same grammar the
-// engine parses: a `#` starts a comment, a blank line is skipped, and the subject ends
-// at the first space.
-func readProseExclusionRows(t *testing.T, path string) []string {
+// readProseExclusionRows returns the subject of every row under root. The grammar lives
+// in internal/prose, so this test reads the rows through that package rather than
+// parsing the file a second time.
+func readProseExclusionRows(t *testing.T, root string) []string {
 	t.Helper()
-	data, err := os.ReadFile(path)
+	rows, err := prose.ExclusionRows(root)
 	if err != nil {
 		t.Fatalf("read %s: %v", prose.ExclusionFile, err)
-	}
-	var rows []string
-	for _, line := range strings.Split(string(data), "\n") {
-		if index := strings.IndexByte(line, '#'); index >= 0 {
-			line = line[:index]
-		}
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" {
-			continue
-		}
-		subject := trimmed
-		if index := strings.IndexAny(trimmed, " \t"); index >= 0 {
-			subject = trimmed[:index]
-		}
-		rows = append(rows, subject)
 	}
 	return rows
 }

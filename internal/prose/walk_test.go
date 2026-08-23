@@ -193,6 +193,15 @@ func TestGrade(t *testing.T) {
 			wantSub: "names an absent path",
 		},
 		{
+			name: "C2 a directory row with no trailing slash reds",
+			build: func(t *testing.T, root string) {
+				write(t, root, "docs/guide.md", longSentence())
+				write(t, root, ".bench/prose-exclusions", "docs the record keeps its text\n")
+			},
+			count:   1,
+			wantSub: "directory row needs a trailing slash",
+		},
+		{
 			name: "a row with no trailing newline parses",
 			build: func(t *testing.T, root string) {
 				write(t, root, "docs/guide.md", longSentence())

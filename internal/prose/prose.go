@@ -1,6 +1,5 @@
-// Package prose grades the mechanics of authored Markdown against two bounds: a
-// sentence of at most 25 words and a paragraph of at most 6 sentences. It owns the
-// document parser, the tree walk, the exclusion grammar, and the subject
+// Package prose grades the mechanics of authored Markdown against two bounds,
+// MaxSentenceWords and MaxParagraphSentences. It owns the document parser, the tree walk, the exclusion grammar, and the subject
 // classification, so one caller passes a root and receives diagnostics.
 //
 // The package is fail-closed. Every state that stops a grade — a refused subject, an

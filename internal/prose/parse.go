@@ -6,13 +6,13 @@ import (
 	"unicode"
 )
 
-// codeSpanToken replaces every inline code span before the split into sentences, so a
-// period inside a span never ends a sentence and a long span counts as one word. The
-// NUL bytes keep the placeholder outside any authored token.
+// codeSpanToken replaces every inline code span before the label test and before the
+// split into sentences, so a colon or a period inside a span never ends a field line or
+// a sentence, and a long span counts as one word. The NUL bytes keep the placeholder
+// outside any authored token.
 const codeSpanToken = "\x00code\x00"
 
 var (
-	codeSpanPattern    = regexp.MustCompile("`+[^`]*`+")
 	inlineLinkPattern  = regexp.MustCompile(`!?\[([^\]]*)\]\([^)]*\)`)
 	refLinkPattern     = regexp.MustCompile(`!?\[([^\]]*)\]\[[^\]]*\]`)
 	linkDefPattern     = regexp.MustCompile(`^\[[^\]]+\]:`)
@@ -29,6 +29,51 @@ var abbreviations = map[string]bool{
 	"etc.": true,
 	"vs.":  true,
 	"cf.":  true,
+}
+
+// foldCodeSpans replaces every inline code span with one token. A span opens at a run
+// of backticks and closes at the next run of the same length, so a shorter run inside
+// the span stays part of the span. An unclosed run is literal text.
+func foldCodeSpans(content string) string {
+	var out strings.Builder
+	for i := 0; i < len(content); {
+		if content[i] != '`' {
+			out.WriteByte(content[i])
+			i++
+			continue
+		}
+		open := backtickRun(content, i)
+		end := -1
+		for j := i + open; j < len(content); {
+			if content[j] != '`' {
+				j++
+				continue
+			}
+			run := backtickRun(content, j)
+			if run == open {
+				end = j
+				break
+			}
+			j += run
+		}
+		if end < 0 {
+			out.WriteString(content[i : i+open])
+			i += open
+			continue
+		}
+		out.WriteString(codeSpanToken)
+		i = end + open
+	}
+	return out.String()
+}
+
+// backtickRun returns the length of the run of backticks that starts at index i.
+func backtickRun(content string, i int) int {
+	n := 0
+	for i+n < len(content) && content[i+n] == '`' {
+		n++
+	}
+	return n
 }
 
 // token is one word candidate and the physical line it came from. The line travels with
@@ -202,7 +247,9 @@ func gradeBlocks(lines []string) []Finding {
 			flush()
 			continue
 		}
-		content := trimmed
+		// The fold comes before the label test, so a colon inside a code span never makes a
+		// field line. Only a field line is skipped.
+		content := foldCodeSpans(trimmed)
 		if m := listMarkerPattern.FindString(content); m != "" {
 			flush()
 			content = content[len(m):]
@@ -313,7 +360,7 @@ func hasTerminator(content string, line int) bool {
 // tokenize turns one line of prose into tokens. It folds each code span into one token,
 // keeps link text, drops link targets, and removes the emphasis marks around a word.
 func tokenize(content string, line int) []token {
-	s := codeSpanPattern.ReplaceAllString(content, codeSpanToken)
+	s := foldCodeSpans(content)
 	s = inlineLinkPattern.ReplaceAllString(s, "$1")
 	s = refLinkPattern.ReplaceAllString(s, "$1")
 	var out []token
