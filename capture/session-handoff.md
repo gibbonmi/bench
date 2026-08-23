@@ -2,28 +2,35 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` once this drain lands; the source is the `drain-2026-08-23` worktree on base `a128cd3e`
-Spec: none; `specs/` is empty
-Gate: green on `a128cd3e` (2026-08-23)
+Branch: `main` once this spec phase lands; the source is the `ft113-commit-spec-residuals` worktree on base `d3390d20`
+Spec: `specs/landing-authors-the-flip/spec.md`, `Status: staged`, five tickets under `specs/landing-authors-the-flip/tickets/`
+Gate: green on `d3390d20` (2026-08-23)
 
 ## State
 
-The 2026-08-23 drain is complete. The inbox, the journal, and the retro
-folder are empty. The three parked ideas closed by implementation in
-`parallel-landings`. The retro fed FT169, FT162, FT213, and FT238. The board
-merge rule deferred by ADR 0014 now sits in FT169's authority decision.
+The FT113 spec is staged and awaits the reviewer's sign-off on the approval
+table. The review round (opus / high, read-only) ran once; the author folded
+its eight blocking findings and the spec names them in its verification log.
+`bench coverage --check` passes with 24 rows, and the conformance package is
+green on the worktree.
 
-The flow report shows a positive net delta (+2 over the window), so the next
-drain owes reducing moves. The candidates are FT169, FT162, and FT238, which
-each carry one face of the worktree request-token problem.
+Closed decisions, dated 2026-08-23:
 
-Closed decisions: merge composition stays the landing primitive, no rebase;
-the journal union and the destination default; every phase lands through the
-landing verb as guidance, not a hook.
+- `bench worktree land --spec` is the one author of the flip and the tickets-only close
+- `bench commit` drops `--spec`, and `bench spec implemented` retires
+- a retirement that does not complete names its remainder, with no retry verb
+- Bench does not remove the board row or the detail file
+
+Ticket order: `retire-names-the-board-remainder.md` lands first on its own
+gate; then `retire-the-commit-route-flip-and-close.md`,
+`retire-bench-spec-implemented.md`, `commit-exit-3-names-the-remainder.md`,
+and `guidance-names-one-author.md` in blocker order. The build runs in a
+fresh mid-tier session in a bench worktree and lands through `bench worktree
+land --spec landing-authors-the-flip`.
 
 ## Next command
 
-`/bench-write-spec` — FT113
+`/bench-implement-spec` — specs/landing-authors-the-flip/spec.md
 
 ## Shape
 
