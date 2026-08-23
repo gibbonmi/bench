@@ -1,2 +1,0 @@
-- 2026-08-23  Extend the one-selected-executable owner to the other binary-building test packages (runbinary, freshness, adopt, diff, intent); the gate already exports BENCH_RUN_BINARY
-- 2026-08-23  Apply the worktree pure-policy extraction pattern (typed facts, pure decision children, adapter proofs) to the next slowest gate packages: landing, diff, intent
