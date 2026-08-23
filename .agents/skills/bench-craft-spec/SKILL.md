@@ -50,8 +50,7 @@ or executable cannot authenticate itself. Without an independent trust root the 
 
 ## Scope cuts
 
-Price every cut as `<n> edits, <n> gate runs`. A cut must be a separate capability with its own future
-spec, never "the rest of this feature".
+Price every cut as `<n> edits, <n> gate runs`. A cut must be a separate capability with its own future spec, never "the rest of this feature".
 
 ## Slicing a build for delegates
 
@@ -63,8 +62,7 @@ or an implementation ticket. An empty or invalid fence section is incomplete.
 fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build`
 and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
 
-After a pass that touches many sections, reread the complete artifact end to end and reconcile contradictions
-before the handoff.
+After a pass that touches many sections, reread the complete artifact end to end and reconcile contradictions before the handoff.
 
 ## Review rubric
 
@@ -88,6 +86,8 @@ unflagged addition for removal rather than demanding rows for it.
 # <feature>
 
 Status: staged
+
+Roadmap: <optional — the FT<n> row this spec settles; `bench spec retire` names that row's detail file>
 
 Decision source: <one ready compiled map, reviewer-confirmed conversation with date, or named reviewed artifact>
 
