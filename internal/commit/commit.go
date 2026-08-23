@@ -35,6 +35,15 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
+	primary, err := git.IsPrimaryCheckout(root)
+	if err != nil {
+		fmt.Fprintln(stderr, toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree"))
+		return 1
+	}
+	if primary {
+		fmt.Fprintln(stderr, toon.Errorf("primary checkout is read-only for Bench phases", "run "+usage.WorktreeCreate))
+		return 1
+	}
 
 	// Capture publication identity before reading attributed content. A detached checkout
 	// updates literal HEAD; an attached checkout updates its full branch ref.

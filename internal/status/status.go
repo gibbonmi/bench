@@ -729,7 +729,8 @@ func Plural(n int, one, many string) string {
 // main `.git` and must not double-report the same hook. It stays quiet when its managed
 // bytes are current; the remedy is bench link.
 func appendGuards(rows []row, root string) []row {
-	if !isPrimaryCheckout(root) {
+	primary, err := git.IsPrimaryCheckout(root)
+	if err != nil || !primary {
 		return rows
 	}
 	if _, err := os.Stat(filepath.Join(root, ".bench", "lines.env")); err != nil {
@@ -757,20 +758,6 @@ func prePushDetail(health adopt.PrePushHealth) string {
 	default: // PrePushAbsent
 		return "pre-push missing"
 	}
-}
-
-// isPrimaryCheckout reports whether root is the repository's primary checkout — the git dir
-// equals the git-common-dir. A linked or pool worktree's git dir is `.git/worktrees/<name>`
-// while its common dir is the main `.git`, so the two differ there. The same test the
-// worktree classifier's canonicalRoot uses. An undeterminable repo returns false, so the
-// low-noise signal stays quiet rather than double-reporting.
-func isPrimaryCheckout(root string) bool {
-	gitDir, err1 := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-dir")
-	common, err2 := git.CommonDir(root)
-	if err1 != nil || err2 != nil {
-		return false
-	}
-	return filepath.Clean(gitDir) == filepath.Clean(common)
 }
 
 // appendDrain adds the capture-drain signal (sev 4): parked ideas in capture/IDEAS.md plus open

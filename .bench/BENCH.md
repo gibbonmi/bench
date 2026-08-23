@@ -125,12 +125,13 @@ regression checks, then the gate.
 | Either observable is false | Normal full workflow. |
 
 **Every phase runs in a bench worktree and lands through `bench worktree land`.**
-The landing is spec-less when the phase has no spec, and `main` receives
-writes only through landings. Merge composition is the landing primitive; a
-rebase rewrites the reviewed tip, so the workflow rejects it. This rule is
-guidance, not a hook: no hook refuses a commit on the default branch, and
-`bench commit` works on any branch. `.bench/BENCH-reference.md` holds the
-landing shape.
+`bench commit` enforces this boundary: it refuses the primary checkout and
+directs the user to create a Bench worktree. The landing is spec-less when the
+phase has no spec, and within Bench, `main` receives writes only through
+landings. Merge composition is the landing primitive because a rebase rewrites
+the reviewed tip, so the workflow rejects rebases. Editors and raw Git remain
+outside Bench's command boundary. `.bench/BENCH-reference.md` holds the landing
+shape.
 
 **Fix, don't park.** A small defect you find mid-work is not roadmap work: the
 fix lands in the active workflow as its own commit. Park a fix to

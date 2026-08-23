@@ -251,3 +251,27 @@ func TestWorktreeRuleAnchorsRedOnRemoval(t *testing.T) {
 		t.Errorf("guide with the worktree rule under Capture = %v, want %q", diags, rules[0].want)
 	}
 }
+
+func TestWorktreeEnforcementAnchorRedOnRemoval(t *testing.T) {
+	const enforcement = "`bench commit` enforces this boundary: it refuses the primary checkout"
+	const want = ".bench/BENCH.md Workflow section dropped worktree enforcement; bench commit refuses the primary checkout"
+	evaluate := func(t *testing.T, enforcement string) []string {
+		t.Helper()
+		root := t.TempDir()
+		bench := "# Bench Operating Guide\n\n## Workflow\n\n" + WorktreeRuleMarker + "\n" + enforcement + "\n\n## Capture\n"
+		path := filepath.Join(root, ".bench", "BENCH.md")
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(bench), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterSpecAuthorization)
+	}
+	if diags := evaluate(t, enforcement); slices.Contains(diags, want) {
+		t.Fatalf("guide carrying enforcement raised %q", want)
+	}
+	if diags := evaluate(t, ""); !slices.Contains(diags, want) {
+		t.Fatalf("guide without enforcement = %v, want %q", diags, want)
+	}
+}
