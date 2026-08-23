@@ -127,7 +127,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
 		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
-		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode,
+		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
 	})
 	if err != nil {
@@ -375,11 +375,21 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 	// published commit either way, so no second publication can follow from the skip.
 	if slug != "" {
 		specPath := spec.LiveSpecPath(slug)
+		folder := landing.ClosedFolderPath(landingSlug(slug))
 		staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
-		implemented, implementedErr := spec.Implemented(staged)
-		publishedSpec, publishedErr := git.Raw("-C", root, "show", published+":"+specPath)
-		if stagedErr != nil || implementedErr != nil || publishedErr != nil || !bytes.Equal(implemented, publishedSpec) {
-			return "", "", "", "", errors.New("published commit does not carry the source staged spec transition")
+		// A source folder with no spec.md published a close, not a transition. The
+		// authentication is then the folder's absence from the published tree: it
+		// demands no spec.md the first run never had.
+		if stagedErr != nil && git.OK("-C", root, "cat-file", "-e", source+":"+folder) {
+			if git.OK("-C", root, "cat-file", "-e", published+":"+folder) {
+				return "", "", "", "", errors.New("published commit does not close the source tickets-only folder")
+			}
+		} else {
+			implemented, implementedErr := spec.Implemented(staged)
+			publishedSpec, publishedErr := git.Raw("-C", root, "show", published+":"+specPath)
+			if stagedErr != nil || implementedErr != nil || publishedErr != nil || !bytes.Equal(implemented, publishedSpec) {
+				return "", "", "", "", errors.New("published commit does not carry the source staged spec transition")
+			}
 		}
 	}
 	tree, err = git.Output("-C", root, "rev-parse", published+"^{tree}")
@@ -391,9 +401,11 @@ func resumePublished(root, destination, value, base, source, slug string) (publi
 
 type landingSourceFact struct {
 	base, tip, specPath string
-	fingerprint         string
-	specBytes           []byte
-	specMode            os.FileMode
+	// closePath is the tickets-only folder the landing consumes, empty otherwise.
+	closePath   string
+	fingerprint string
+	specBytes   []byte
+	specMode    os.FileMode
 }
 
 func landingDestination(root string) (string, string, string, string, error) {
@@ -493,7 +505,18 @@ func landingSource(root string, a intent.Assignment, base, requestedTip, slug st
 	if dirty, err := git.Output("-C", a.Worktree, "status", "--porcelain=v1", "--untracked-files=all"); err != nil || dirty != "" {
 		return landingSourceFact{}, errors.New("reviewed source is not clean")
 	}
-	rangeFact, detail, err := landingSourceRange(a.Worktree, slug, base, head)
+	// A --spec naming a tickets-only folder is a close, not a staged spec. It names no
+	// ownership fence and carries no transition, so its range resolves and its proof
+	// runs exactly as the spec-less landing's do.
+	closeSlug := ""
+	if slug != "" && landing.TicketsOnlyFolder(a.Worktree, landingSlug(slug)) {
+		closeSlug = landingSlug(slug)
+	}
+	rangeSlug := slug
+	if closeSlug != "" {
+		rangeSlug = ""
+	}
+	rangeFact, detail, err := landingSourceRange(a.Worktree, rangeSlug, base, head)
 	if err != nil {
 		return landingSourceFact{}, err
 	}
@@ -501,7 +524,9 @@ func landingSource(root string, a intent.Assignment, base, requestedTip, slug st
 		return landingSourceFact{}, identityRefusal(requestedTip, rangeFact.Tip, detail)
 	}
 	fact := landingSourceFact{base: rangeFact.Base, tip: rangeFact.Tip}
-	if slug != "" {
+	if closeSlug != "" {
+		fact.closePath = landing.ClosedFolderPath(closeSlug)
+	} else if slug != "" {
 		bytes, resolved, _, ok, err := spec.Resolve(a.Worktree, slug)
 		if err != nil || !ok {
 			return landingSourceFact{}, errors.New("staged spec is unreadable")

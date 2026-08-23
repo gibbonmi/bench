@@ -2021,3 +2021,113 @@ func requirePublishedSpec(t *testing.T, root, published string, staged []byte) {
 		t.Fatalf("published spec = %q (%v), want %q", got, err, want)
 	}
 }
+
+// ticketsOnlyLandingFixture is the spec-less landing fixture with a tickets-only
+// `specs/t/` folder committed at the review base and carried into the source. A
+// light-path change has exactly this shape: tickets, no spec.md.
+func ticketsOnlyLandingFixture(t *testing.T, request string) (string, Creation, string, string, string) {
+	t.Helper()
+	root, creation, _, _, tally := specLessLandingFixture(t, request)
+	mustMkdirAll(t, filepath.Join(root, "specs", "t", "tickets"), 0o755)
+	mustWrite(t, filepath.Join(root, "specs", "t", "tickets", "one.md"), []byte("Light path ticket.\n"), 0o644)
+	gitRun(t, root, "add", "specs/t")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "tickets-only folder")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, root, "update-ref", "refs/bench/green/main", base)
+	gitRun(t, creation.Path, "rebase", "main")
+	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally
+}
+
+func ticketsOnlyLandArgs(request, base, tip, slug, path string) []string {
+	return append([]string{"--spec", slug}, specLessLandArgs(request, base, tip, path)...)
+}
+
+// WL8: a --spec naming a tickets-only folder closes that folder on the landing rather
+// than refusing it as an unreadable staged spec.
+func TestLandCommandTicketsOnlySpecClosesTheFolder(t *testing.T) {
+	request := "tickets-only-close"
+	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if code != 0 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.HasSuffix(stdout.String(), "worktree=released}\n") {
+		t.Fatalf("tickets-only close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
+	}
+	if exec.Command("git", "-C", root, "cat-file", "-e", published+":specs/t").Run() == nil {
+		t.Fatalf("published tree still carries specs/t")
+	}
+	if _, err := os.Stat(filepath.Join(root, "specs", "t")); !os.IsNotExist(err) {
+		t.Fatalf("destination checkout still carries specs/t: %v", err)
+	}
+	if got := gitOutput(t, root, "show", published+":specs/x/spec.md"); strings.Contains(got, "Status: implemented") {
+		t.Fatalf("tickets-only close transitioned a spec: %q", got)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v", got, err)
+	}
+}
+
+// Edge under WL8: the destination already removed the folder, so the close composes as
+// a no-op and the landing still publishes and releases.
+func TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolder(t *testing.T) {
+	request := "tickets-only-already-removed"
+	root, creation, base, tip, _ := ticketsOnlyLandingFixture(t, request)
+	gitRun(t, root, "rm", "-r", "-q", "specs/t")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination closed the folder")
+	gitRun(t, root, "update-ref", "refs/bench/green/main", gitOutput(t, root, "rev-parse", "HEAD"))
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if code != 0 || !strings.HasSuffix(stdout.String(), "worktree=released}\n") {
+		t.Fatalf("already-removed close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
+	}
+	if exec.Command("git", "-C", root, "cat-file", "-e", published+":specs/t").Run() == nil {
+		t.Fatalf("published tree still carries specs/t")
+	}
+}
+
+// Edge under WL8: a --spec naming a folder absent from the source is neither a staged
+// spec.md nor a tickets-only folder, so it keeps the refusal it has today, which names
+// the unreadable spec through the fence resolve.
+func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
+	request := "tickets-only-absent"
+	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", ticketsOnlyLandArgs(request, base, tip, "absent", creation.Path), &stdout, &stderr)
+	if code != 1 || !strings.Contains(stdout.String(), "reviewed source range or ownership fence is invalid: spec not found: no spec resolved for absent") {
+		t.Fatalf("absent spec folder = (%d, %q, %q), want the unreadable staged-spec refusal", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("unreadable-spec refusal ran the gate: %v", err)
+	}
+}
+
+// Edge under WL8: a --resume carrying the tickets-only slug authenticates the folder's
+// absence from the published commit, never a spec.md transition the first run never made.
+func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.T) {
+	request := "tickets-only-resume"
+	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	oldMarker := advanceLandingMarker
+	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+		return errors.New("injected marker interruption")
+	}
+	t.Cleanup(func() { advanceLandingMarker = oldMarker })
+	var stdout, stderr bytes.Buffer
+	if code := LandCommand(root, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+		t.Fatalf("interrupted tickets-only landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	advanceLandingMarker = oldMarker
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "t", creation.Path}
+	if code := LandCommand(root, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+		t.Fatalf("tickets-only resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+		t.Fatalf("project-green = %s, want %s", got, published)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("tickets-only resume reran the gate: tally=%q error=%v", got, err)
+	}
+}

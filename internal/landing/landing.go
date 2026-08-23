@@ -43,8 +43,12 @@ type ReviewedRequest struct {
 	SpecPath                           string
 	SpecBytes                          []byte
 	SpecMode                           os.FileMode
-	Message                            string
-	Stdout, Stderr                     io.Writer
+	// ClosePath is the repository-relative tickets-only folder this landing closes,
+	// empty on every other landing. It never coexists with SpecPath: one --spec names
+	// either a staged spec.md to transition or a tickets-only folder to close.
+	ClosePath      string
+	Message        string
+	Stdout, Stderr io.Writer
 }
 
 // ReviewedResult is the immutable publication receipt needed by the lifecycle owner.
@@ -332,7 +336,7 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	closePath := ""
 	if r.Spec != "" {
 		if TicketsOnlyFolder(r.Root, r.Spec) {
-			closePath = specsDir + "/" + r.Spec
+			closePath = ClosedFolderPath(r.Spec)
 		} else {
 			resolved, err := spec.CheckStaged(r.Root, r.Spec)
 			if err != nil {
@@ -427,6 +431,14 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 		}
 		if tree, err = replaceTreeFile(r.Root, composition.Tree, r.SpecPath, implemented, r.SpecMode); err != nil {
 			return ReviewedResult{}, fmt.Errorf("transition staged spec: %w", err)
+		}
+	}
+	// The close consumes the tickets-only folder from the published tree with the same
+	// index removal the commit path composes. A folder the destination already removed
+	// lists no entries, so the removal writes the composed tree back unchanged.
+	if r.ClosePath != "" {
+		if tree, err = removeTreeFolder(r.Root, tree, r.ClosePath); err != nil {
+			return ReviewedResult{}, fmt.Errorf("close tickets-only folder: %w", err)
 		}
 	}
 	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); got.Kind != authorization.Green {
@@ -561,6 +573,12 @@ func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMo
 		}
 		return indexRun(root, idx, "update-index", "--add", "--cacheinfo", gitRegularFileMode(mode)+","+blob+","+path)
 	})
+}
+
+// removeTreeFolder writes baseTree without every entry beneath rel. The removal itself
+// is removeIndexTree's, so the composed close and the commit-path close stay one fact.
+func removeTreeFolder(root, baseTree, rel string) (string, error) {
+	return editTree(root, baseTree, func(idx string) error { return removeIndexTree(root, idx, rel) })
 }
 
 // editTree reads baseTree into a private index, applies edit to that index, and

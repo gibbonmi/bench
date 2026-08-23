@@ -61,3 +61,10 @@ func TicketsOnlyFolders(root string) ([]string, error) {
 	sort.Strings(slugs)
 	return slugs, nil
 }
+
+// ClosedFolderPath is the repository-relative slash path of the tickets-only folder a
+// close consumes. Both close steps — the commit path's composition and the reviewed
+// landing's — name the folder through this one spelling.
+func ClosedFolderPath(name string) string {
+	return specsDir + "/" + name
+}
