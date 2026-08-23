@@ -2,33 +2,34 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — the spec commit after `6db0ada0`; tree clean after it
-Spec: `specs/parallel-landings/spec.md` — `Status: staged`, reviewer-approved 2026-08-23
-Gate: green on the spec commit (2026-08-23)
+Branch: `main` once this build lands; the reviewed source is the `parallel-landings` worktree branch `bench/assign/b31c954120124fec3e44dd4d9ca17ffa/b0fec9471b338b985b1c9ea1f2be89ab`, frozen base `1a135f1b`, reviewed code tip `7e0a3e00`, and this handoff commit on top of it
+Spec: `specs/parallel-landings/spec.md` — `Status: implemented` once the landing publishes; `staged` on the source
+Gate: green on every worktree commit (2026-08-23)
 
 ## State
 
-`parallel-landings` is staged and approved with its five tickets. The review
-round (opus / high, one iteration) returned REVISE; every finding is folded,
-and the verification log records it. The reviewer kept the tickets-only close
-(story 6, WL8, ticket `close-a-tickets-only-folder-on-the-landing`). The
-build has not started; the reviewer handed it to a fresh session.
+The `parallel-landings` build is complete and reviewed. Five tickets and one
+repair commit sit on the worktree (`64646d3f`..`7e0a3e00`). Review loop 1
+(opus / medium, three axes) found 15 advisory findings and no blocking one;
+all 8 accepted repair targets are repaired. Loop 2 (repair-scoped) was clean
+on every predicate except the handoff's missing commit pin, which this commit
+fixes. The reviewer capped the review at two loops, so this prose-only commit
+sits past the reviewed tip; the gate grades it.
 
-Ticket order: `make-spec-optional-on-the-landing`, then
-`close-a-tickets-only-folder-on-the-landing`, then
-`union-merge-the-phase-owned-journals`, then
-`name-the-source-repair-in-the-conflict-refusal`, then
-`route-every-phase-through-a-worktree` (fable / high; the other four opus /
-medium). Tickets 1 and 3 share `internal/landing/landing.go` and run serially.
+This handoff lands with the build through `bench worktree land` from `main`.
+Once it lands, `main` carries the spec-less landing, the tickets-only close,
+the capture rule table, the repair `next=`, and the worktree-rule guidance.
+Drain notes for the next `/bench-drain` are the newest entry in
+`capture/learnings.md`. The three parked ideas in `capture/IDEAS.md` close by
+implementation at that drain.
 
 Closed decisions: merge composition stays the landing primitive, no rebase;
 the journal union and the destination default; the light path joins the
-worktree rule; the worktree rule is guidance, not a hook. The three parked
-ideas in `capture/IDEAS.md` close by implementation at the next drain.
+worktree rule; the worktree rule is guidance, not a hook.
 
 ## Next command
 
-`/bench-implement-spec --full parallel-landings`
+`/bench-drain`
 
 ## Shape
 

@@ -184,3 +184,70 @@ func TestDrainFlowRuleAnchorsRedOnRemoval(t *testing.T) {
 		}
 	}
 }
+
+// TestWorktreeRuleAnchorsRedOnRemoval pins the parallel-landings guidance. Each needle and
+// its diagnostic are written here independently of the registry, so a guide that dropped the
+// worktree rule or the optional-spec sentence cannot define itself green.
+func TestWorktreeRuleAnchorsRedOnRemoval(t *testing.T) {
+	rules := []struct{ file, needle, want string }{
+		{".bench/BENCH.md", "**Every phase runs in a bench worktree and lands through `bench worktree land`.**", ".bench/BENCH.md Workflow section dropped the worktree rule; every phase runs in a bench worktree and lands through bench worktree land"},
+		{".bench/BENCH-reference.md", "The spec is optional on the landing and on its resume: a spec-less phase lands with no `--spec`.", ".bench/BENCH-reference.md landing paragraph dropped the optional spec; a spec-less phase lands with no --spec"},
+	}
+	templates := map[string]string{
+		".bench/BENCH.md":           "# Bench Operating Guide\n\n## Workflow\n\n%s\n\n## Capture\n",
+		".bench/BENCH-reference.md": "# Bench reference\n\n%s\n",
+	}
+
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		for i, r := range rules {
+			needle := r.needle
+			if i == dropped {
+				needle = ""
+			}
+			path := filepath.Join(root, filepath.FromSlash(r.file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(fmt.Sprintf(templates[r.file], needle)), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterSpecAuthorization)
+	}
+
+	// Other rows of the group fire against this minimal tree; only the two needle rows are
+	// this test's subject, so both directions are read by membership.
+	full := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(full, r.want) {
+			t.Errorf("guide carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("guide without %q = %v, want %q", r.needle, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+
+	// The worktree rule binds to the Workflow section: the same sentence under Capture
+	// leaves Workflow without it, so the section-bound row still fires.
+	root := t.TempDir()
+	misplaced := "# Bench Operating Guide\n\n## Workflow\n\n## Capture\n\n" + rules[0].needle + "\n"
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), []byte(misplaced), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diags := EvaluateGroup(root, AfterSpecAuthorization); !slices.Contains(diags, rules[0].want) {
+		t.Errorf("guide with the worktree rule under Capture = %v, want %q", diags, rules[0].want)
+	}
+}

@@ -12,10 +12,11 @@ external signal for diagnosis and for the fix.
 
 The debug work may write something — a throwaway harness, an instrumented
 copy, an edit under test. In that case, create or select its isolated worktree
-*before* the first repro artifact exists. If a clean checkout picks up writes
-during the debug work, it becomes dirty in an unattributable way. Do
-not decide isolation after Phase 1 already produced artifacts; that decision
-comes too late.
+*before* the first repro artifact exists. A clean checkout that picks up debug
+writes becomes dirty in an unattributable way. A fix lands from that bench
+worktree through `bench worktree land` with no `--spec`; it is the spec-less
+landing. Do not decide isolation after Phase 1 already produced artifacts; that
+decision comes too late.
 
 ## Exit handoff
 

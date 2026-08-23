@@ -232,6 +232,7 @@ func checkSharedRuleSingleSource(root string) []string {
 		anchors.ReviewerDecisionBoundaryMarker,
 		anchors.FixDontParkMarker,
 		anchors.SourceWarrantMarker,
+		anchors.WorktreeRuleMarker,
 	} {
 		if !strings.Contains(bench, marker) {
 			diags = append(diags, fmt.Sprintf("shared rule missing from canonical .bench/BENCH.md: %q", marker))

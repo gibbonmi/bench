@@ -1,6 +1,6 @@
 # parallel-landings
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation, 2026-08-23 — the reviewer named parallel landings as the goal, parked three ideas (the spec-less landing, the phase-owned file merge rules, all work in a worktree), and authorized immediate action; `roadmap/FT169.md` holds the undecided authority half this spec settles in part
 
@@ -269,6 +269,7 @@ Cheapest wrong implementation per group, and the row that reds it:
 - `.bench/BENCH-reference.md`
 - `.agents/commands/bench-debug.md`
 - `AGENTS.md`
+- `internal/conformance/validity_checks_test.go`
 
 ## Out of scope
 

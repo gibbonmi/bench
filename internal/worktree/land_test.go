@@ -711,7 +711,7 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 		return exitCode(cmd.Run()), stdout.String(), stderr.String()
 	}
 	code, stdout, stderr := run(reviewedTip)
-	if code != 1 || !strings.Contains(stdout, "refused{detail=composition conflict: textual}") || stderr != disclosure {
+	if code != 1 || !strings.Contains(stdout, "refused{detail=composition conflict: textual,next=") || stderr != disclosure {
 		t.Fatalf("conflict result = (%d, %q, %q)", code, stdout, stderr)
 	}
 	if _, err := os.Stat(tally); !os.IsNotExist(err) || gitOutput(t, root, "rev-parse", "HEAD") != destination || gitOutput(t, creation.Path, "rev-parse", "HEAD") != reviewedTip || gitOutput(t, root, "status", "--porcelain=v1") != "" || gitOutput(t, creation.Path, "status", "--porcelain=v1") != "" {
@@ -819,14 +819,32 @@ func publicLandingFixture(t *testing.T, request, ignored, declaration string) (s
 
 func publicLandingFixtureAtHome(t *testing.T, request, ignored, declaration, home string) (string, Creation, string, string, string) {
 	t.Helper()
+	return landingFixtureAtHome(t, request, ignored, declaration, home, true)
+}
+
+// specLessLandingFixture is the public landing fixture whose gate grades the landed
+// source alone. A spec-less landing publishes no transition, so a gate that demanded
+// `Status: implemented` would refuse every spec-less composition for the wrong reason.
+func specLessLandingFixture(t *testing.T, request string) (string, Creation, string, string, string) {
+	t.Helper()
+	return landingFixtureAtHome(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), false)
+}
+
+func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) (string, Creation, string, string, string) {
+	t.Helper()
+	gateSpec, prospectiveSpec := "", ""
+	if gradeSpec {
+		gateSpec = "IFS= read -r status < specs/x/spec.md\n[ \"$status\" = \"Status: implemented\" ]\n"
+		prospectiveSpec = "rg -q '^Status: implemented$' specs/x/spec.md\n"
+	}
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", home)
 	common := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
 	tally := filepath.Join(common, "bench-land-gate-tally")
 	t.Setenv("LAND_GATE_TALLY", tally)
 	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nset -eu\nIFS= read -r status < specs/x/spec.md\n[ \"$status\" = \"Status: implemented\" ]\n[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\n"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nrg -q '^Status: implemented$' specs/x/spec.md\n[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\n"), 0o755)
+	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nset -eu\n"+gateSpec+"[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\n"), 0o755)
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\n"), 0o755)
 	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[\"LAND_GATE_TALLY\"],\"paths\":[],\"tools\":[]}\n"), 0o644)
 	if declaration != "" {
 		mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\""+declaration+"\"]}\n"), 0o644)
@@ -888,12 +906,10 @@ func TestLandCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 		{"first request", []string{"--base", "b", "--source-tip", "s", "--spec", "x", "-m", "m", "path"}, landGrammar.Help},
 		{"first base", []string{"--request", "r", "--source-tip", "s", "--spec", "x", "-m", "m", "path"}, landGrammar.Help},
 		{"first source tip", []string{"--request", "r", "--base", "b", "--spec", "x", "-m", "m", "path"}, landGrammar.Help},
-		{"first spec", []string{"--request", "r", "--base", "b", "--source-tip", "s", "-m", "m", "path"}, landGrammar.Help},
 		{"first message", []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "path"}, landGrammar.Help},
 		{"resume request", []string{"--resume", "p", "--base", "b", "--source-tip", "s", "--spec", "x", "path"}, resumeLandGrammar.Help},
 		{"resume base", []string{"--resume", "p", "--request", "r", "--source-tip", "s", "--spec", "x", "path"}, resumeLandGrammar.Help},
 		{"resume source tip", []string{"--resume", "p", "--request", "r", "--base", "b", "--spec", "x", "path"}, resumeLandGrammar.Help},
-		{"resume spec", []string{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "s", "path"}, resumeLandGrammar.Help},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
@@ -1698,6 +1714,197 @@ func landArgs(request, base, tip, path string) []string {
 	return []string{"--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", path}
 }
 
+func specLessLandArgs(request, base, tip, path string) []string {
+	return []string{"--request", request, "--base", base, "--source-tip", tip, "-m", "land", path}
+}
+
+// WL1, WL2, WL5, and WL10: the spec-less landing publishes and releases like a spec
+// landing, keeps both reviewed parents and the marker, transitions no spec, and prints
+// the same record.
+func TestLandCommandSpecLessLandsPublishesAndReleases(t *testing.T) {
+	request := "spec-less-land"
+	root, creation, base, tip, tally := specLessLandingFixture(t, request)
+	specsBefore := gitOutput(t, creation.Path, "rev-parse", tip+":specs")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	tree := gitOutput(t, root, "rev-parse", published+"^{tree}")
+	want := "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=released}\n"
+	if code != 0 || stdout.String() != want {
+		t.Fatalf("spec-less land = (%d, %q, %q), want (0, %q)", code, stdout.String(), stderr.String(), want)
+	}
+	parents := strings.Fields(gitOutput(t, root, "rev-list", "--parents", "-n", "1", published))
+	if len(parents) != 3 || parents[1] != base || parents[2] != tip {
+		t.Fatalf("published parents = %q, want destination %s and source %s", parents, base, tip)
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+		t.Fatalf("project-green = %s, want %s", got, published)
+	}
+	if got := gitOutput(t, root, "rev-parse", published+":specs"); got != specsBefore {
+		t.Fatalf("published specs tree = %s, want the composed %s", got, specsBefore)
+	}
+	if got := gitOutput(t, root, "show", published+":specs/x/spec.md"); strings.Contains(got, "Status: implemented") {
+		t.Fatalf("spec-less landing transitioned a spec: %q", got)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v", got, err)
+	}
+	if _, err := os.Stat(creation.Path); !os.IsNotExist(err) {
+		t.Fatalf("spec-less landing retained the worktree: %v", err)
+	}
+}
+
+// WL3 and WL22: the gate still owns the spec-less path, and its refusal exits 1 with
+// nothing published.
+func TestLandCommandSpecLessGateRefusalPublishesNothing(t *testing.T) {
+	request := "spec-less-gate-red"
+	root, creation, _, _, tally := specLessLandingFixture(t, request)
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nprintf g >> \"$LAND_GATE_TALLY\"\nexit 1\n"), 0o755)
+	gitRun(t, root, "add", ".bench/gate-prospective.sh")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "red prospective gate")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=prospective authorization refused") {
+		t.Fatalf("spec-less gate refusal = (%d, %q, %q), want exit 1 and an authorization refusal", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "main"); got != base {
+		t.Fatalf("gate refusal published main=%s, want %s", got, base)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v", got, err)
+	}
+}
+
+// WL6: the identity proofs still run without a spec, and the refusal names both sides.
+func TestLandCommandSpecLessRefusesSourceTipMismatch(t *testing.T) {
+	request := "spec-less-tip-mismatch"
+	root, creation, base, tip, tally := specLessLandingFixture(t, request)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", specLessLandArgs(request, base, base, creation.Path), &stdout, &stderr)
+	want := "refused{detail=worktree source tip mismatch,observed=" + base + ",wanted=" + tip + "}\n"
+	if code != 1 || stdout.String() != want || stderr.Len() != 0 {
+		t.Fatalf("spec-less tip mismatch = (%d, %q, %q), want (1, %q, empty)", code, stdout.String(), stderr.String(), want)
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("identity refusal ran the gate: %v", err)
+	}
+}
+
+// WL23: the range proof still runs without a spec, and it refuses before the gate.
+func TestLandCommandSpecLessRefusesNonAncestorBaseBeforeTheGate(t *testing.T) {
+	request := "spec-less-nonancestor-base"
+	root, creation, _, tip, tally := specLessLandingFixture(t, request)
+	commitInWorktree(t, root, "destination-only", "destination\n", "destination movement")
+	unrelated := gitOutput(t, root, "rev-parse", "HEAD")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", specLessLandArgs(request, unrelated, tip, creation.Path), &stdout, &stderr)
+	if code != 1 || !strings.Contains(stdout.String(), "reviewed source range is invalid") || !strings.Contains(stdout.String(), "not an ancestor") {
+		t.Fatalf("spec-less non-ancestor base = (%d, %q, %q), want an invalid-range refusal", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("range refusal ran the gate: %v", err)
+	}
+}
+
+// WL24: the landed record carries the resolved review base, never the flag's spelling.
+func TestLandCommandSpecLessLandedSourceBaseIsTheResolvedBase(t *testing.T) {
+	request := "spec-less-resolved-base"
+	root, creation, base, tip, _ := specLessLandingFixture(t, request)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", specLessLandArgs(request, base[:12], tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.Contains(stdout.String(), "landed{source_base="+base+",") || strings.Contains(stdout.String(), base[:12]+",") {
+		t.Fatalf("abbreviated spec-less base = (%d, %q, %q), want the resolved base in the record", code, stdout.String(), stderr.String())
+	}
+}
+
+// WL7: a spec-less landing interrupted after publication resumes without a spec.
+func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
+	request := "spec-less-resume"
+	root, creation, base, tip, tally := specLessLandingFixture(t, request)
+	oldMarker := advanceLandingMarker
+	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+		return errors.New("injected marker interruption")
+	}
+	t.Cleanup(func() { advanceLandingMarker = oldMarker })
+	var stdout, stderr bytes.Buffer
+	if code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+		t.Fatalf("interrupted spec-less landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if strings.Contains(stdout.String(), "--spec") {
+		t.Fatalf("spec-less resume instruction named a spec: %q", stdout.String())
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	advanceLandingMarker = oldMarker
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
+	if code := LandCommand(root, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+		t.Fatalf("spec-less resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+		t.Fatalf("project-green = %s, want %s", got, published)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("spec-less resume reran the gate: tally=%q error=%v", got, err)
+	}
+}
+
+// WL25: a resume without a spec completes a published spec-backed landing's marker and
+// release, and publishes nothing a second time.
+func TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding(t *testing.T) {
+	request := "spec-backed-spec-less-resume"
+	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	oldMarker := advanceLandingMarker
+	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+		return errors.New("injected marker interruption")
+	}
+	t.Cleanup(func() { advanceLandingMarker = oldMarker })
+	var stdout, stderr bytes.Buffer
+	if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	advanceLandingMarker = oldMarker
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
+	if code := LandCommand(root, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+		t.Fatalf("spec-less resume of a spec landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "main"); got != published {
+		t.Fatalf("resume republished: main=%s, want %s", got, published)
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+		t.Fatalf("project-green = %s, want %s", got, published)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("resume reran the gate: tally=%q error=%v", got, err)
+	}
+}
+
+// The edge under WL1: the flag is optional, but an empty value stays a usage error.
+func TestLandCommandRefusesAnEmptySpecValue(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		args []string
+	}{
+		{"first run", []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "", "-m", "m", "path"}},
+		{"resume", []string{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "", "path"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := LandCommand("", "", tc.args, &stdout, &stderr)
+			if code != 2 || stdout.Len() != 0 || !strings.Contains(stderr.String(), `--spec ""`) {
+				t.Fatalf("empty --spec = (%d, %q, %q), want (2, empty, a usage line naming the empty value)", code, stdout.String(), stderr.String())
+			}
+		})
+	}
+}
+
 func stageLandSpec(t *testing.T, root, source string) {
 	t.Helper()
 	path := filepath.Join(root, "specs", "x", "spec.md")
@@ -1812,5 +2019,115 @@ func requirePublishedSpec(t *testing.T, root, published string, staged []byte) {
 	got, err := git.Raw("-C", root, "show", published+":specs/x/spec.md")
 	if err != nil || !bytes.Equal(got, want) {
 		t.Fatalf("published spec = %q (%v), want %q", got, err, want)
+	}
+}
+
+// ticketsOnlyLandingFixture is the spec-less landing fixture with a tickets-only
+// `specs/t/` folder committed at the review base and carried into the source. A
+// light-path change has exactly this shape: tickets, no spec.md.
+func ticketsOnlyLandingFixture(t *testing.T, request string) (string, Creation, string, string, string) {
+	t.Helper()
+	root, creation, _, _, tally := specLessLandingFixture(t, request)
+	mustMkdirAll(t, filepath.Join(root, "specs", "t", "tickets"), 0o755)
+	mustWrite(t, filepath.Join(root, "specs", "t", "tickets", "one.md"), []byte("Light path ticket.\n"), 0o644)
+	gitRun(t, root, "add", "specs/t")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "tickets-only folder")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, root, "update-ref", "refs/bench/green/main", base)
+	gitRun(t, creation.Path, "rebase", "main")
+	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally
+}
+
+func ticketsOnlyLandArgs(request, base, tip, slug, path string) []string {
+	return append([]string{"--spec", slug}, specLessLandArgs(request, base, tip, path)...)
+}
+
+// WL8: a --spec naming a tickets-only folder closes that folder on the landing rather
+// than refusing it as an unreadable staged spec.
+func TestLandCommandTicketsOnlySpecClosesTheFolder(t *testing.T) {
+	request := "tickets-only-close"
+	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if code != 0 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.HasSuffix(stdout.String(), "worktree=released}\n") {
+		t.Fatalf("tickets-only close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
+	}
+	if exec.Command("git", "-C", root, "cat-file", "-e", published+":specs/t").Run() == nil {
+		t.Fatalf("published tree still carries specs/t")
+	}
+	if _, err := os.Stat(filepath.Join(root, "specs", "t")); !os.IsNotExist(err) {
+		t.Fatalf("destination checkout still carries specs/t: %v", err)
+	}
+	if got := gitOutput(t, root, "show", published+":specs/x/spec.md"); strings.Contains(got, "Status: implemented") {
+		t.Fatalf("tickets-only close transitioned a spec: %q", got)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v", got, err)
+	}
+}
+
+// Edge under WL8: the destination already removed the folder, so the close composes as
+// a no-op and the landing still publishes and releases.
+func TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolder(t *testing.T) {
+	request := "tickets-only-already-removed"
+	root, creation, base, tip, _ := ticketsOnlyLandingFixture(t, request)
+	gitRun(t, root, "rm", "-r", "-q", "specs/t")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination closed the folder")
+	gitRun(t, root, "update-ref", "refs/bench/green/main", gitOutput(t, root, "rev-parse", "HEAD"))
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if code != 0 || !strings.HasSuffix(stdout.String(), "worktree=released}\n") {
+		t.Fatalf("already-removed close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
+	}
+	if exec.Command("git", "-C", root, "cat-file", "-e", published+":specs/t").Run() == nil {
+		t.Fatalf("published tree still carries specs/t")
+	}
+}
+
+// Edge under WL8: a --spec naming a folder absent from the source is neither a staged
+// spec.md nor a tickets-only folder, so it keeps the refusal it has today, which names
+// the unreadable spec through the fence resolve.
+func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
+	request := "tickets-only-absent"
+	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", ticketsOnlyLandArgs(request, base, tip, "absent", creation.Path), &stdout, &stderr)
+	if code != 1 || !strings.Contains(stdout.String(), "reviewed source range or ownership fence is invalid: spec not found: no spec resolved for absent") {
+		t.Fatalf("absent spec folder = (%d, %q, %q), want the unreadable staged-spec refusal", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("unreadable-spec refusal ran the gate: %v", err)
+	}
+}
+
+// Edge under WL8: a --resume carrying the tickets-only slug authenticates the folder's
+// absence from the published commit, never a spec.md transition the first run never made.
+func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.T) {
+	request := "tickets-only-resume"
+	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	oldMarker := advanceLandingMarker
+	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+		return errors.New("injected marker interruption")
+	}
+	t.Cleanup(func() { advanceLandingMarker = oldMarker })
+	var stdout, stderr bytes.Buffer
+	if code := LandCommand(root, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+		t.Fatalf("interrupted tickets-only landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	advanceLandingMarker = oldMarker
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "t", creation.Path}
+	if code := LandCommand(root, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+		t.Fatalf("tickets-only resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+		t.Fatalf("project-green = %s, want %s", got, published)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("tickets-only resume reran the gate: tally=%q error=%v", got, err)
 	}
 }

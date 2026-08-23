@@ -43,8 +43,12 @@ type ReviewedRequest struct {
 	SpecPath                           string
 	SpecBytes                          []byte
 	SpecMode                           os.FileMode
-	Message                            string
-	Stdout, Stderr                     io.Writer
+	// ClosePath is the repository-relative tickets-only folder this landing closes,
+	// empty on every other landing. It never coexists with SpecPath: one --spec names
+	// either a staged spec.md to transition or a tickets-only folder to close.
+	ClosePath      string
+	Message        string
+	Stdout, Stderr io.Writer
 }
 
 // ReviewedResult is the immutable publication receipt needed by the lifecycle owner.
@@ -86,15 +90,25 @@ type stageRecord struct {
 	stage           int
 }
 
-// CaptureSide names which side a conflicted capture path takes. The phase handoff
-// is the source session's closing state, so the source wins it; every other capture
-// file is the destination's running ledger, so the destination wins. Any path
-// outside capture/ is not covered, and the conflict stays a refusal.
+// unionStage is the CaptureSide stage of a path the rule table settles by union
+// rather than by taking one side; no merge-tree stage carries that number.
+const unionStage = 0
+
+// CaptureSide is the rule table for a conflicted phase-owned path: it names the verb
+// that settles the path and, for a take-a-side verb, the merge-tree stage that wins.
+// The phase handoff is the source session's closing state, so the source wins it. The
+// two append-only journals compose as the union of both sides, so no appended entry is
+// lost. Every other capture file is the destination's running ledger, so the
+// destination wins. A path outside the table has no rule, and the conflict stays a
+// refusal.
 func CaptureSide(path string) (stage int, side string, ok bool) {
-	switch {
-	case path == "capture/session-handoff.md":
+	switch path {
+	case "capture/session-handoff.md":
 		return 3, "source", true
-	case strings.HasPrefix(path, "capture/"):
+	case "capture/learnings.md", "capture/IDEAS.md":
+		return unionStage, "union", true
+	}
+	if strings.HasPrefix(path, "capture/") {
 		return 2, "destination", true
 	}
 	return 0, "", false
@@ -140,30 +154,57 @@ func (o Owner) Compose(r CompositionRequest) (CompositionResult, error) {
 	return CompositionResult{Base: base, Conflict: conflict}, nil
 }
 
-// resolveCaptureConflict settles a conflict whose every path is a regular file under
-// capture/ by taking the side CaptureSide names. The merge's own written tree carries
-// Git's conflict markers at those paths; each is replaced by the chosen stage's object,
-// or removed when that side deleted the file. A conflict touching any other path is
-// left for the caller to refuse.
+// resolveCaptureConflict settles a conflict whose every path is a regular file the
+// rule table names, by applying that path's verb. The merge's own written tree carries
+// Git's conflict markers at those paths; each is replaced by the settled object, or
+// removed when the settled verb takes a side that deleted the file. A conflict touching
+// any path the table does not name, any non-regular stage, any mode disagreement, or
+// any union content Git cannot merge as text is left for the caller to refuse.
 func resolveCaptureConflict(root, mergeOutput string, records []stageRecord) (string, []string, bool, error) {
-	chosen := map[string]*stageRecord{}
+	stages := map[string]map[int]stageRecord{}
 	var order []string
-	for i := range records {
-		record := records[i]
-		stage, _, ok := CaptureSide(record.path)
-		if !ok || (record.mode != "100644" && record.mode != "100755") {
+	for _, record := range records {
+		if _, _, ok := CaptureSide(record.path); !ok {
 			return "", nil, false, nil
 		}
-		if _, seen := chosen[record.path]; !seen {
-			chosen[record.path] = nil
+		if record.mode != "100644" && record.mode != "100755" {
+			return "", nil, false, nil
+		}
+		if _, seen := stages[record.path]; !seen {
+			stages[record.path] = map[int]stageRecord{}
 			order = append(order, record.path)
 		}
-		if record.stage == stage {
-			chosen[record.path] = &records[i]
-		}
+		stages[record.path][record.stage] = record
 	}
 	if len(order) == 0 {
 		return "", nil, false, nil
+	}
+	// settled holds the object each path publishes; a nil entry publishes a removal.
+	settled := map[string]*stageRecord{}
+	for _, path := range order {
+		// Two sides that disagree on the file mode leave no settled mode to publish,
+		// so the conflict stays a refusal under every verb.
+		destination, hasDestination := stages[path][2]
+		source, hasSource := stages[path][3]
+		if hasDestination && hasSource && destination.mode != source.mode {
+			return "", nil, false, nil
+		}
+		if stage, _, _ := CaptureSide(path); stage != unionStage {
+			if record, ok := stages[path][stage]; ok {
+				settled[path] = &record
+			} else {
+				settled[path] = nil
+			}
+			continue
+		}
+		record, ok, err := unionStages(root, path, stages[path])
+		if err != nil {
+			return "", nil, false, err
+		}
+		if !ok {
+			return "", nil, false, nil
+		}
+		settled[path] = record
 	}
 	baseTree, err := mergeTreeResult(mergeOutput)
 	if err != nil {
@@ -171,7 +212,7 @@ func resolveCaptureConflict(root, mergeOutput string, records []stageRecord) (st
 	}
 	tree, err := editTree(root, baseTree, func(idx string) error {
 		for _, path := range order {
-			record := chosen[path]
+			record := settled[path]
 			if record == nil {
 				if err := indexRun(root, idx, "update-index", "--force-remove", "--", path); err != nil {
 					return fmt.Errorf("resolve %q: %w", path, err)
@@ -193,6 +234,54 @@ func resolveCaptureConflict(root, mergeOutput string, records []stageRecord) (st
 		resolved = append(resolved, path+":"+side)
 	}
 	return tree, resolved, true, nil
+}
+
+// unionStages composes one union path from its merge-tree stages. With both sides
+// present, the result is Git's own three-way union merge over the three stage blobs,
+// with an absent merge base standing in as empty content. With one side absent, the
+// present side's blob is the result, so a deletion cannot erase the other side's
+// entries. A false ok is a refusal: Git could not merge the content as text.
+func unionStages(root, path string, stages map[int]stageRecord) (*stageRecord, bool, error) {
+	destination, hasDestination := stages[2]
+	source, hasSource := stages[3]
+	switch {
+	case !hasDestination && !hasSource:
+		return nil, false, nil
+	case !hasSource:
+		return &destination, true, nil
+	case !hasDestination:
+		return &source, true, nil
+	}
+	dir, err := os.MkdirTemp("", "bench-landing-union-")
+	if err != nil {
+		return nil, false, err
+	}
+	defer os.RemoveAll(dir)
+	names := map[int]string{}
+	for _, stage := range []int{1, 2, 3} {
+		file := filepath.Join(dir, fmt.Sprintf("stage%d", stage))
+		content := []byte(nil)
+		if record, ok := stages[stage]; ok {
+			if content, err = blobContent(root, record.oid); err != nil {
+				return nil, false, err
+			}
+		}
+		if err := os.WriteFile(file, content, 0o600); err != nil {
+			return nil, false, err
+		}
+		names[stage] = file
+	}
+	merged, err := outputRaw(root, "merge-file", "-p", "--union", names[2], names[1], names[3])
+	if err != nil {
+		// merge-file refuses content it cannot read as text, so the union has no
+		// result and the whole conflict returns to the caller as a refusal.
+		return nil, false, nil
+	}
+	oid, err := hashBlob(root, merged)
+	if err != nil {
+		return nil, false, fmt.Errorf("write union of %q: %w", path, err)
+	}
+	return &stageRecord{mode: source.mode, oid: oid, path: path, stage: 3}, true, nil
 }
 
 func compositionCommit(root, value, role string) (string, error) {
@@ -332,7 +421,7 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	closePath := ""
 	if r.Spec != "" {
 		if TicketsOnlyFolder(r.Root, r.Spec) {
-			closePath = specsDir + "/" + r.Spec
+			closePath = ClosedFolderPath(r.Spec)
 		} else {
 			resolved, err := spec.CheckStaged(r.Root, r.Spec)
 			if err != nil {
@@ -379,7 +468,7 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 // The worktree lifecycle owns authentication, marker advancement, reconciliation,
 // and release around this irreversible operation.
 func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedResult, error) {
-	if r.Root == "" || r.Destination == "" || r.DestinationBase == "" || r.Source == "" || r.SourceTip == "" || r.ReviewBase == "" || r.SourceWorktree == "" || r.SourceFingerprint == "" || r.DestinationFingerprint == "" || r.SpecPath == "" || strings.TrimSpace(r.Message) == "" {
+	if r.Root == "" || r.Destination == "" || r.DestinationBase == "" || r.Source == "" || r.SourceTip == "" || r.ReviewBase == "" || r.SourceWorktree == "" || r.SourceFingerprint == "" || r.DestinationFingerprint == "" || strings.TrimSpace(r.Message) == "" {
 		return ReviewedResult{}, errors.New("reviewed landing request is incomplete")
 	}
 	destination, err := compositionCommit(r.Root, r.DestinationBase, "destination")
@@ -397,12 +486,17 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 	if _, kind, _ := diff.ResolveSourceRange(r.Root, r.ReviewBase, source); kind != "" {
 		return ReviewedResult{}, errors.New("reviewed source base is invalid")
 	}
-	if err := stagedSpecMatches(r.Root, source, r.SpecPath, r.SpecBytes); err != nil {
-		return ReviewedResult{}, err
-	}
-	composed, err := specNeutralizedDestination(r.Root, destination, r.SpecPath, r.SpecBytes, r.SpecMode)
-	if err != nil {
-		return ReviewedResult{}, err
+	// An empty SpecPath is the spec-less landing: it has no staged spec to prove, to
+	// neutralize, or to transition, so it composes against the destination itself and
+	// publishes the composition unchanged.
+	composed := destination
+	if r.SpecPath != "" {
+		if err := stagedSpecMatches(r.Root, source, r.SpecPath, r.SpecBytes); err != nil {
+			return ReviewedResult{}, err
+		}
+		if composed, err = specNeutralizedDestination(r.Root, destination, r.SpecPath, r.SpecBytes, r.SpecMode); err != nil {
+			return ReviewedResult{}, err
+		}
 	}
 	composition, err := o.Compose(CompositionRequest{Root: r.Root, Destination: composed, Source: source, ReviewBase: r.ReviewBase})
 	if err != nil {
@@ -414,13 +508,23 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 	if len(composition.Resolved) > 0 && r.Stderr != nil {
 		fmt.Fprintf(r.Stderr, "landing composition{resolved=%s}\n", strings.Join(composition.Resolved, ","))
 	}
-	implemented, err := spec.Implemented(r.SpecBytes)
-	if err != nil {
-		return ReviewedResult{}, err
+	tree := composition.Tree
+	if r.SpecPath != "" {
+		implemented, err := spec.Implemented(r.SpecBytes)
+		if err != nil {
+			return ReviewedResult{}, err
+		}
+		if tree, err = replaceTreeFile(r.Root, composition.Tree, r.SpecPath, implemented, r.SpecMode); err != nil {
+			return ReviewedResult{}, fmt.Errorf("transition staged spec: %w", err)
+		}
 	}
-	tree, err := replaceTreeFile(r.Root, composition.Tree, r.SpecPath, implemented, r.SpecMode)
-	if err != nil {
-		return ReviewedResult{}, fmt.Errorf("transition staged spec: %w", err)
+	// The close consumes the tickets-only folder from the published tree with the same
+	// index removal the commit path composes. A folder the destination already removed
+	// lists no entries, so the removal writes the composed tree back unchanged.
+	if r.ClosePath != "" {
+		if tree, err = removeTreeFolder(r.Root, tree, r.ClosePath); err != nil {
+			return ReviewedResult{}, fmt.Errorf("close tickets-only folder: %w", err)
+		}
 	}
 	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); got.Kind != authorization.Green {
 		return ReviewedResult{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
@@ -554,6 +658,12 @@ func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMo
 		}
 		return indexRun(root, idx, "update-index", "--add", "--cacheinfo", gitRegularFileMode(mode)+","+blob+","+path)
 	})
+}
+
+// removeTreeFolder writes baseTree without every entry beneath rel. The removal itself
+// is removeIndexTree's, so the composed close and the commit-path close stay one fact.
+func removeTreeFolder(root, baseTree, rel string) (string, error) {
+	return editTree(root, baseTree, func(idx string) error { return removeIndexTree(root, idx, rel) })
 }
 
 // editTree reads baseTree into a private index, applies edit to that index, and
@@ -840,6 +950,22 @@ func output(root string, args ...string) (string, error) {
 func outputCombined(root string, args ...string) (string, error) {
 	c := exec.Command("git", append([]string{"-C", root}, args...)...)
 	b, err := c.CombinedOutput()
+	return strings.TrimSpace(string(b)), err
+}
+func outputRaw(root string, args ...string) ([]byte, error) {
+	return exec.Command("git", append([]string{"-C", root}, args...)...).Output()
+}
+func blobContent(root, oid string) ([]byte, error) {
+	content, err := outputRaw(root, "cat-file", "blob", oid)
+	if err != nil {
+		return nil, fmt.Errorf("read blob %s: %w", oid, err)
+	}
+	return content, nil
+}
+func hashBlob(root string, content []byte) (string, error) {
+	c := exec.Command("git", "-C", root, "hash-object", "-w", "--no-filters", "--stdin")
+	c.Stdin = bytes.NewReader(content)
+	b, err := c.Output()
 	return strings.TrimSpace(string(b)), err
 }
 func outputInput(root string, input []byte, args ...string) (string, error) {

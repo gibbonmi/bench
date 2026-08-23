@@ -402,6 +402,55 @@ func TestLandReviewedPublishesExactSourceParentAndProspectiveSpec(t *testing.T) 
 	}
 }
 
+// A spec-less reviewed landing publishes the composition unchanged: no staged spec is
+// proven, neutralized, or transitioned, and the two reviewed parents still bind.
+func TestLandReviewedWithoutASpecPublishesTheCompositionUntransitioned(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "specs/x/spec.md", "Status: staged\nbody\n")
+	git(t, root, "add", "specs/x/spec.md")
+	git(t, root, "commit", "-qm", "stage spec")
+	destination := git(t, root, "rev-parse", "HEAD")
+	sourceWorktree := filepath.Join(t.TempDir(), "source")
+	git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+	write(t, sourceWorktree, "reviewed", "source bytes\n")
+	git(t, sourceWorktree, "add", "reviewed")
+	git(t, sourceWorktree, "commit", "-qm", "reviewed work")
+	source := git(t, sourceWorktree, "rev-parse", "HEAD")
+	sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	destinationFingerprint, err := CheckoutFingerprint(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	o := New()
+	authorized := ""
+	o.authorize = func(_ context.Context, _, tree string, _ io.Writer, _ io.Writer) authorization.Result {
+		authorized = tree
+		return authorization.Result{Kind: authorization.Green}
+	}
+	got, err := o.LandReviewed(context.Background(), ReviewedRequest{
+		Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+		Source: "refs/heads/reviewed-source", SourceTip: source, ReviewBase: destination,
+		SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+		Message: "land the spec-less source",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Tree != authorized || got.Tree != git(t, root, "rev-parse", source+"^{tree}") {
+		t.Fatalf("published tree = %q, authorized %q, want the composition %q", got.Tree, authorized, git(t, root, "rev-parse", source+"^{tree}"))
+	}
+	if git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+destination+" "+source {
+		t.Fatalf("published parents = %q", git(t, root, "rev-list", "--parents", "-n", "1", got.Commit))
+	}
+	if published := git(t, root, "show", got.Commit+":specs/x/spec.md"); published != "Status: staged\nbody" {
+		t.Fatalf("spec-less landing transitioned the spec: %q", published)
+	}
+}
+
 func TestLandReviewedRefusesTreeEquivalentMovedSourceTip(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "specs/x/spec.md", "Status: staged\n")

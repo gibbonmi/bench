@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"bytes"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -70,8 +71,39 @@ func TestLandCommandComposesCaptureOntoMovedDestination(t *testing.T) {
 	if got := gitOutput(t, root, "show", "main:capture/session-handoff.md"); got != "handoff source" {
 		t.Fatalf("published handoff = %q, want the source's", got)
 	}
-	if got := gitOutput(t, root, "show", "main:capture/learnings.md"); got != "learnings destination" {
-		t.Fatalf("published learnings = %q, want the destination's", got)
+	// `git merge-file --union` publishes the base lines, then the destination side,
+	// then the source side. Both sides replaced the one base line, so only the two
+	// appended lines remain, in that order.
+	published, err := exec.Command("git", "-C", root, "show", "main:capture/learnings.md").Output()
+	if want := "learnings destination\nlearnings source\n"; err != nil || string(published) != want {
+		t.Fatalf("published learnings = %q (%v), want exactly %q", published, err, want)
+	}
+}
+
+// WL19: the landing discloses each settled phase-owned path with its verb, so a
+// union the merge did not decide is visible on stderr rather than silent.
+func TestLandCommandDisclosesAUnionResolution(t *testing.T) {
+	request := "land-surface-union-disclosure"
+	root, creation, _, _ := landSurface(t, request)
+	base := seedCaptureBase(t, root, creation.Path, map[string]string{"capture/learnings.md": "learnings base\n"})
+	commitInWorktree(t, creation.Path, "capture/learnings.md", "learnings base\nlearnings source\n", "source learnings")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, root, "capture/learnings.md", "learnings base\nlearnings destination\n", "destination learnings")
+	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
+	if code != 0 || !strings.Contains(stdout, "worktree=released}") {
+		t.Fatalf("union landing = (%d, %q, %q), want released", code, stdout, stderr)
+	}
+	lines := 0
+	for _, line := range strings.Split(stderr, "\n") {
+		if strings.HasPrefix(line, "landing composition{resolved=") {
+			lines++
+			if !strings.Contains(line, "capture/learnings.md:union") {
+				t.Fatalf("disclosure = %q, want capture/learnings.md settled by union", line)
+			}
+		}
+	}
+	if lines != 1 {
+		t.Fatalf("disclosure lines = %d in %q, want exactly one", lines, stderr)
 	}
 }
 
@@ -112,6 +144,42 @@ func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {
 	}
 }
 
+// WL4 and WL21: the fence rides with the spec. A spec-backed landing still refuses a
+// path no fence names; the same source lands when no spec names a fence.
+func TestLandCommandFenceRidesWithTheSpec(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		specArg bool
+	}{
+		{name: "spec-backed", specArg: true},
+		{name: "spec-less"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request := "land-surface-fence-" + tc.name
+			root, creation, base, _, _ := specLessLandingFixture(t, request)
+			commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
+			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+			args := specLessLandArgs(request, base, tip, creation.Path)
+			if tc.specArg {
+				args = landArgs(request, base, tip, creation.Path)
+			}
+			code, stdout, stderr := landIn(t, root, args)
+			if tc.specArg {
+				if code != 1 || !strings.Contains(stdout, "ownership fence is invalid") || !strings.Contains(stdout, "stray.txt") {
+					t.Fatalf("spec-backed fence refusal = (%d, %q, %q), want the offending path named", code, stdout, stderr)
+				}
+				return
+			}
+			if code != 0 || !strings.Contains(stdout, "worktree=released}") {
+				t.Fatalf("spec-less out-of-fence landing = (%d, %q, %q), want released", code, stdout, stderr)
+			}
+			if got := gitOutput(t, root, "show", "main:stray.txt"); got != "stray" {
+				t.Fatalf("published stray path = %q", got)
+			}
+		})
+	}
+}
+
 func TestLandCommandConflictRefusalNamesThePath(t *testing.T) {
 	request := "land-surface-conflict-path"
 	root, creation, base, tip := landSurface(t, request)
@@ -119,5 +187,112 @@ func TestLandCommandConflictRefusalNamesThePath(t *testing.T) {
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
 	if code != 1 || !strings.Contains(stdout, "composition conflict: textual") || !strings.Contains(stdout, "owned.txt") {
 		t.Fatalf("conflict refusal = (%d, %q, %q), want the conflicted path named", code, stdout, stderr)
+	}
+}
+
+// WL16: a board file is outside the rule table, so a conflict on ROADMAP.md refuses
+// and names the path the repair starts from.
+func TestLandCommandConflictOnTheBoardNamesTheBoardPath(t *testing.T) {
+	request := "land-surface-conflict-roadmap"
+	root, creation, base, _, _ := specLessLandingFixture(t, request)
+	commitInWorktree(t, creation.Path, "ROADMAP.md", "board source\n", "source board")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, root, "ROADMAP.md", "board destination\n", "destination board")
+	code, stdout, stderr := landIn(t, root, specLessLandArgs(request, base, tip, creation.Path))
+	if code != 1 || !strings.Contains(stdout, "composition conflict: textual") || !strings.Contains(stdout, "ROADMAP.md") {
+		t.Fatalf("board conflict refusal = (%d, %q, %q), want ROADMAP.md named", code, stdout, stderr)
+	}
+}
+
+// WL18: the conflict refusal names the source repair in order, and the re-run carries
+// the destination as the new base.
+func TestLandCommandConflictRefusalNamesTheSourceRepair(t *testing.T) {
+	request := "land-surface-conflict-repair"
+	root, creation, base, tip := landSurface(t, request)
+	commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
+	wantNext := "next=git -C '" + creation.Path + "' merge '" + destination +
+		"' (no Bench verb moves a retained worktree onto the destination yet); then bench commit; then /bench-review-implementation; then " +
+		"bench worktree land --request <request> --base '" + destination +
+		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> '" + creation.Path + "'}"
+	if code != 1 || !strings.Contains(stdout, "composition conflict: textual") || !strings.Contains(stdout, wantNext) {
+		t.Fatalf("conflict repair next = (%d, %q, %q), want %q", code, stdout, stderr, wantNext)
+	}
+	if strings.Contains(stdout, request) {
+		t.Fatalf("conflict next leaked the caller token: %q", stdout)
+	}
+}
+
+// A spec-less landing re-runs spec-less, so its conflict next names no --spec.
+func TestLandCommandSpecLessConflictNextNamesNoSpec(t *testing.T) {
+	request := "land-surface-conflict-spec-less"
+	root, creation, base, _, _ := specLessLandingFixture(t, request)
+	commitInWorktree(t, creation.Path, "ROADMAP.md", "board source\n", "source board")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, root, "ROADMAP.md", "board destination\n", "destination board")
+	code, stdout, stderr := landIn(t, root, specLessLandArgs(request, base, tip, creation.Path))
+	if code != 1 || !strings.Contains(stdout, " --source-tip <repaired-source-tip> -m <message> '") || strings.Contains(stdout, "--spec") {
+		t.Fatalf("spec-less conflict next = (%d, %q, %q), want no --spec", code, stdout, stderr)
+	}
+}
+
+// Edge under WL16: a conflicted path that carries a control byte renders through the
+// sanitized paths table, so no raw control byte reaches the terminal.
+func TestLandCommandConflictOnAControlBytePathRendersSanitized(t *testing.T) {
+	request := "land-surface-conflict-control-byte"
+	root, creation, base, _, _ := specLessLandingFixture(t, request)
+	name := "board\x1bfile.md"
+	commitInWorktree(t, creation.Path, name, "source bytes\n", "source control-byte path")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, root, name, "destination bytes\n", "destination control-byte path")
+	code, stdout, stderr := landIn(t, root, specLessLandArgs(request, base, tip, creation.Path))
+	if code != 1 || !strings.Contains(stdout, "composition conflict: textual") {
+		t.Fatalf("control-byte conflict = (%d, %q, %q), want a refusal", code, stdout, stderr)
+	}
+	if strings.ContainsRune(stdout, '\x1b') || !strings.Contains(stdout, `"board\\u001bfile.md"`) {
+		t.Fatalf("control-byte path render = %q, want the escaped path and no raw control byte", stdout)
+	}
+}
+
+// Edge under WL18: a source worktree path that is not line-safe cannot be pasted, so
+// both repair steps that address it take the assignment pointer form.
+func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
+	request := "land-surface-conflict-unsafe-path"
+	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
+	root, creation, base, tip, _ := publicLandingFixtureAtHome(t, request, "", "", home)
+	commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
+	wantNext := "next=bench worktree exec " + creation.Assignment.ID + " -- git merge '" + destination +
+		"' (no Bench verb moves a retained worktree onto the destination yet); then bench commit; then /bench-review-implementation; then " +
+		"bench worktree exec " + creation.Assignment.ID + " -- bench worktree land --request <request> --base '" + destination +
+		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> .}"
+	if code != 1 || strings.ContainsRune(stdout, '\x1b') || !strings.Contains(stdout, wantNext) {
+		t.Fatalf("unsafe-path conflict next = (%d, %q, %q), want the pointer form %q", code, stdout, stderr, wantNext)
+	}
+}
+
+// Edge under WL18: a --spec slug that is not line-safe cannot be pasted, so the
+// conflict next carries the `<spec>` placeholder and no raw control byte. A
+// tickets-only folder is the one spec shape whose name reaches the landing verbatim.
+func TestLandCommandConflictNextPlaceholdsAnUnsafeSpec(t *testing.T) {
+	request := "land-surface-conflict-unsafe-spec"
+	root, creation, base, _ := landSurface(t, request)
+	slug := "close\x1bme"
+	mustMkdirAll(t, filepath.Join(creation.Path, "specs", slug, "tickets"), 0o755)
+	commitInWorktree(t, creation.Path, filepath.Join("specs", slug, "tickets", "one.md"), "Ticket.\n", "tickets-only folder")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+	args := []string{"--request", request, "--base", base, "--source-tip", tip, "--spec", slug, "-m", "land", creation.Path}
+	code, stdout, stderr := landIn(t, root, args)
+	wantNext := "bench worktree land --request <request> --base '" + destination +
+		"' --source-tip <repaired-source-tip> --spec <spec> -m <message> '" + creation.Path + "'}"
+	if code != 1 || !strings.Contains(stdout, "composition conflict: textual") || !strings.Contains(stdout, wantNext) {
+		t.Fatalf("unsafe-spec conflict next = (%d, %q, %q), want the placeholder form %q", code, stdout, stderr, wantNext)
+	}
+	if strings.ContainsRune(stdout, '\x1b') {
+		t.Fatalf("unsafe-spec conflict next leaked a raw control byte: %q", stdout)
 	}
 }
