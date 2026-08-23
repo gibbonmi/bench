@@ -87,6 +87,10 @@ means the repository-controlled compliance assessment.
 
 **FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
 
+**FT243 (LOW, decision required) — a repository-maintenance skill group.**
+
+**FT244 (LOW) — a standard scratch directory for worktree runs.**
+
 **FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
@@ -283,5 +287,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder. The defect reproduced again on 2026-08-22: a green light-path commit exited `landed-but-checkout-incomplete` and left `specs/<slug>/` as untracked residue.
-2. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now carrying the two FT242-review checks (real-environment evidence, descendant-survival oracle).
+1. `/bench-debug` — FT169: the landing path, reviewer-classified as a bug on 2026-08-22 after six refusals for one source. The fix: abbreviated ids, self-rebuild, composition onto a moved destination, one preflight that names every refusal.
+2. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder; the orphaned roadmap detail file reproduced again on the inherited-toolchain retirement.
+3. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now with the per-row "name the check that reds it" rubric and the long-needle smell.
