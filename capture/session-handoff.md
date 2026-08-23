@@ -1,43 +1,31 @@
 # Session handoff
 
-Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` at `d5915574`
-Spec: none staged; `specs/` is empty
-Gate: green on `d5915574` (2026-08-23)
+Repository: `7e3c28702eb57ca1357eab2a37c5983b-8bcd0dd48a7788364b323e30dafa109b` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/7e3c28702eb57ca1357eab2a37c5983b-8bcd0dd48a7788364b323e30dafa109b`
+Branch: `bench/assign/7e3c28702eb57ca1357eab2a37c5983b/8bcd0dd48a7788364b323e30dafa109b` — HEAD `4fb6e2b`, 10 dirty paths, 20 unpushed commits
+Spec: none staged.
+Gate: red at `bb8b418` — current
 
 ## State
 
-`/bench-drain` reconciled the board against the tree. FT113 shipped in full.
-Its path counting, its one author, and its named remainder all landed under
-`148f3a68`/`bc3e9377`/`d5915574`. Its `ROADMAP.md` row and `roadmap/FT113.md`
-are retired.
+Destination reconciliation now preserves tracked edits that appear immediately
+before its reset. The fix landed as `4fb6e2b9a38570e2cd43c2316746a38ef060c7bf`.
 
-The one parked idea and the `landing-authors-the-flip` retro are both
-drained. The idea named a `sanitize.Controls`/`ShellQuote` ordering defect in
-`worktree.landedIncomplete`'s `next=` field. It merged onto FT169.
+Bench now enforces the worktree-only phase rule at publication. `bench commit`
+refuses the primary checkout and directs users to `bench worktree create`.
+Status and commit share one primary-checkout classifier.
 
-The retro's recommendations merged as `Occurrence:` evidence on four rows.
-FT169 gained the paste defect and an unnamed moved-destination refusal. FT238
-gained the missing worktree-rebase verb. FT177 gained the post-landing
-stale-`dist/bench` gap. FT89 gained `bench idea` writing to `main`'s checkout
-when run outside a worktree.
+The latency decision map and its invocation census remain intact. The first of
+two specs owns one selected test binary, explicit environment and directory
+inputs, worktree owner seams, and before-and-after demand measurements.
 
-One recommendation — the `craft-delegate` worktree-exec rule — was already
-documented, so it was dismissed rather than merged. The inbox and the retro
-directory are both empty. `capture/learnings.md` had no open entries.
-
-The `## Recommended sequence` is refreshed to drop the shipped FT113 line and
-add FT224 third. `FT166`'s recommended-dependency row dropped its shipped
-`FT113` half.
-
-Two files stay uncommitted outside this drain's scope: `decisions/worktree-test-latency.md`
-and `decisions/assets/worktree-test-invocation-census.md`, from an unrelated,
-still-open `/bench-shape-idea` decision map. This drain did not touch them.
+The second spec follows measured first-spec results. It owns only necessary
+pure-test parallelism and the slow-package regression budget. Descendant-spawning
+journeys remain serial, and fresh runs keep `-count=1`.
 
 ## Next command
 
-`/bench-implement-spec`
+`$bench-write-spec decisions/worktree-test-latency.md --reviewer terra high`
 
 ## Shape
 

@@ -17,12 +17,26 @@ import (
 // so a folder name a shell would expand must land unchanged.
 const ticketsSlug = "ft900 tickets [x]*"
 
-// landingRepo builds the minimal repository `bench commit` lands into: a gate with the
-// named exit code, one staged tracked change to attribute, and whatever tree shape
-// write leaves behind. It returns the root and the pre-landing HEAD.
+// landingRepo builds the minimal linked worktree `bench commit` lands into. It returns
+// that worktree and its pre-landing HEAD.
 func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root string)) (root, before string) {
 	t.Helper()
+	primary := t.TempDir()
+	initializeLandingRepo(t, primary, gateExit)
+	root = filepath.Join(t.TempDir(), "linked")
+	runGit(t, primary, "worktree", "add", "-q", "-b", "topic", root)
+	return prepareLandingCheckout(t, root, write)
+}
+
+func primaryLandingRepo(t *testing.T, gateExit int, write func(t *testing.T, root string)) (root, before string) {
+	t.Helper()
 	root = t.TempDir()
+	initializeLandingRepo(t, root, gateExit)
+	return prepareLandingCheckout(t, root, write)
+}
+
+func initializeLandingRepo(t *testing.T, root string, gateExit int) {
+	t.Helper()
 	git := func(args ...string) { t.Helper(); runGit(t, root, args...) }
 	git("init", "-q", "-b", "main")
 	git("config", "user.email", "a@b.c")
@@ -31,11 +45,17 @@ func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root strin
 	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), "#!/bin/sh\nexit "+strconv.Itoa(gateExit)+"\n", 0o755)
 	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`, 0o644)
 	mustWrite(t, filepath.Join(root, "tracked.txt"), "base\n", 0o644)
-	write(t, root)
 	git("add", "-A")
-	git("commit", "-qm", "base")
+	git("commit", "-qm", "bootstrap")
+}
+
+func prepareLandingCheckout(t *testing.T, root string, write func(t *testing.T, root string)) (string, string) {
+	t.Helper()
+	write(t, root)
+	runGit(t, root, "add", "-A")
+	runGit(t, root, "commit", "--allow-empty", "-qm", "base")
 	mustWrite(t, filepath.Join(root, "tracked.txt"), "changed\n", 0o644)
-	git("add", "tracked.txt")
+	runGit(t, root, "add", "tracked.txt")
 	return root, strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
 }
 
@@ -131,6 +151,23 @@ func TestGreenLandingPublishesTheNamedPath(t *testing.T) {
 	}
 	if !headHasPrefix(t, root, "a.txt") {
 		t.Fatalf("published commit does not track a.txt: %v", headPaths(t, root))
+	}
+}
+
+func TestPrimaryCheckoutRefusesBeforePublication(t *testing.T) {
+	root, before := primaryLandingRepo(t, 0, func(t *testing.T, root string) {})
+	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	mustWrite(t, filepath.Join(root, "a.txt"), "must stay uncommitted\n", 0o644)
+
+	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stderr, "bench worktree create") {
+		t.Fatalf("stderr = %q, want the worktree creation action", stderr)
+	}
+	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+		t.Fatalf("HEAD moved from %s to %s", before, after)
 	}
 }
 

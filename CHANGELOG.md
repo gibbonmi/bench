@@ -8,6 +8,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- `bench commit` now refuses the primary checkout and directs users to
+  `bench worktree create`. This makes the worktree-only phase rule executable
+  at Bench's publication boundary.
 - The source wrapper now recovers an executable Go path from a bounded clean
   Bash login when the harness PATH is partial. It preserves the harness PATH and
   gives an actionable refusal when no safe Go path is available.

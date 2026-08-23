@@ -13,6 +13,8 @@ const (
 	RightSizeProcessMarker = "Right-size the process"
 	// WorktreeRuleMarker pins the workflow rule that every phase runs in a bench worktree and lands through the verb.
 	WorktreeRuleMarker = "Every phase runs in a bench worktree and lands through `bench worktree land`."
+	// WorktreeEnforcementMarker pins the command boundary that makes the worktree rule executable.
+	WorktreeEnforcementMarker = "`bench commit` enforces this boundary: it refuses the primary checkout"
 )
 
 var registry = []Anchor{
@@ -341,6 +343,7 @@ var registry = []Anchor{
 	{Group: AfterSpecAuthorization, File: ".agents/commands/bench-review-implementation.md", Kind: Forbid, Section: "", Needle: "tests, types, lint, conformance", Diagnostic: ".agents/commands/bench-review-implementation.md reintroduced the retired gate-shape enumeration; the gate runs its phase table, with no separate conformance phase"},
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Require, Section: "", Needle: "no separate conformance phase, driver, or per-check evidence partition", Diagnostic: ".bench/BENCH-reference.md dropped the gate's conformance shape; the registry's complete dev-tier set runs inside the one ordinary test run"},
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "Workflow", Needle: WorktreeRuleMarker, Diagnostic: ".bench/BENCH.md Workflow section dropped the worktree rule; every phase runs in a bench worktree and lands through bench worktree land"},
+	{Group: AfterSpecAuthorization, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "Workflow", Needle: WorktreeEnforcementMarker, Diagnostic: ".bench/BENCH.md Workflow section dropped worktree enforcement; bench commit refuses the primary checkout"},
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Require, Section: "", Needle: "The spec is optional on the landing and on its resume", Diagnostic: ".bench/BENCH-reference.md landing paragraph dropped the optional spec; a spec-less phase lands with no --spec"},
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Forbid, Section: "", Needle: "may inherit exact per-check evidence", Diagnostic: ".bench/BENCH-reference.md reintroduced the retired per-check evidence inheritance; no surface authors a check partition"},
 	{Group: AfterSpecAuthorization, File: ".bench/hooks/block-dangerous-git.sh", Kind: Require, Section: "", Needle: "this is an honest-mistake layer, not an evasion-resistant", Diagnostic: ".bench/hooks/block-dangerous-git.sh dropped the honest-mistake threat-model classification; the guard is an honest-mistake layer, not an evasion-resistant boundary"},
