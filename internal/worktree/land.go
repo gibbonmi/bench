@@ -133,7 +133,11 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	if err != nil {
 		var conflict landing.ConflictError
 		if errors.As(err, &conflict) {
-			return landRefusalError(stdout, refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths}})
+			return landRefusalError(stdout, refusalError{refusal{
+				detail: conflict.Error(),
+				paths:  conflict.Paths,
+				next:   landingConflictNext(destination, assignment.ID, parsed.Flags["--spec"], path),
+			}})
 		}
 		return landRefusal(stdout, err.Error())
 	}
@@ -651,6 +655,40 @@ func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment 
 		specFlag = " --spec " + sanitize.ShellQuote(specArg)
 	}
 	command := "bench worktree land --resume " + sanitize.ShellQuote(result.Commit) + " --request <request> --base " + sanitize.ShellQuote(result.SourceBase) + " --source-tip " + sanitize.ShellQuote(result.SourceTip) + specFlag
+	return atSourceWorktree(command, path, assignment)
+}
+
+// landingConflictNext names the source repair a conflict outside the rule table
+// demands, in the order the operator runs it: merge the destination into the source
+// worktree, commit the repair, review the new range, and re-run the landing with the
+// repaired tip. No Bench verb moves a retained worktree onto the destination yet, so
+// the merge step is raw Git and the value says so.
+func landingConflictNext(destination, assignment, specArg, path string) string {
+	destinationArg := "<full-destination-commit>"
+	if lineSafe(destination) {
+		destinationArg = sanitize.ShellQuote(destination)
+	}
+	// A spec-less landing re-runs spec-less, so it names no --spec at all rather than an
+	// empty value the grammar refuses.
+	specFlag := ""
+	if specArg != "" {
+		specFlag = " --spec <spec>"
+		if lineSafe(specArg) {
+			specFlag = " --spec " + sanitize.ShellQuote(specArg)
+		}
+	}
+	merge := "git -C " + sanitize.ShellQuote(path) + " merge " + destinationArg
+	if !lineSafe(path) {
+		merge = "bench worktree exec " + assignment + " -- git merge " + destinationArg
+	}
+	rerun := atSourceWorktree("bench worktree land --request <request> --base "+destinationArg+" --source-tip <repaired-source-tip>"+specFlag+" -m <message>", path, assignment)
+	return merge + " (no Bench verb moves a retained worktree onto the destination yet); then bench commit; then /bench-review-implementation; then " + rerun
+}
+
+// atSourceWorktree addresses the source worktree a command's trailing positional
+// names. A path that is not line-safe takes the pointer form every next= uses: the
+// assignment id addresses the worktree that the unpasteable path cannot.
+func atSourceWorktree(command, path, assignment string) string {
 	if lineSafe(path) {
 		return command + " " + sanitize.ShellQuote(path)
 	}

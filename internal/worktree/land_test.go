@@ -711,7 +711,7 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 		return exitCode(cmd.Run()), stdout.String(), stderr.String()
 	}
 	code, stdout, stderr := run(reviewedTip)
-	if code != 1 || !strings.Contains(stdout, "refused{detail=composition conflict: textual}") || stderr != disclosure {
+	if code != 1 || !strings.Contains(stdout, "refused{detail=composition conflict: textual,next=") || stderr != disclosure {
 		t.Fatalf("conflict result = (%d, %q, %q)", code, stdout, stderr)
 	}
 	if _, err := os.Stat(tally); !os.IsNotExist(err) || gitOutput(t, root, "rev-parse", "HEAD") != destination || gitOutput(t, creation.Path, "rev-parse", "HEAD") != reviewedTip || gitOutput(t, root, "status", "--porcelain=v1") != "" || gitOutput(t, creation.Path, "status", "--porcelain=v1") != "" {
