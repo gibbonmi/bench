@@ -26,6 +26,10 @@ comment obeys these rules too, inside the register `craft-comments` owns.
 - Do not make a noun cluster of more than three nouns.
 - Use a vertical list for three or more parallel items.
 
+A short label with a colon and no sentence terminator is a field line; the
+prose mechanics check does not grade it. Keep a grammar field, a marker phrase,
+and an anchor needle on one physical line.
+
 Why: a coverage row or an acceptance row written as one short active sentence
 is one predicate, and a ticket lifts it unchanged. A 2026-08-22 two-arm
 comparison of the same decision map found the STE spec shorter, more exact
