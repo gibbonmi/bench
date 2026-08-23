@@ -8,6 +8,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- The source wrapper now recovers an executable Go path from a bounded clean
+  Bash login when the harness PATH is partial. It preserves the harness PATH and
+  gives an actionable refusal when no safe Go path is available.
 - Every existing `ROADMAP.md` row outside `## Parked and scheduled work` now
   carries a `Next: <token>` line in its detail file (`roadmap/FT<n>.md`) —
   `shape`, `spec`, `ticket`, `decide`, or `kit-edit` — under the position-anchored

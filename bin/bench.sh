@@ -124,6 +124,39 @@ kit_dir() {
   printf '%s\n' "$cwd_root"
 }
 
+# recover_source_go_path repairs only this wrapper process when a source kit needs
+# Go and the harness environment is partial. The bounded clean-login probe supplies
+# data only. Every invalid result leaves PATH unchanged for the selected binary.
+recover_source_go_path() {
+  local kit="$1" timeout_cmd env_cmd bash_cmd raw marker status output executable dir old_path
+  [[ -f "$kit/go.mod" && -f "$kit/scripts/go-build.sh" ]] || return 0
+  command -v go >/dev/null 2>&1 && return 0
+  timeout_cmd="$(command -v timeout 2>/dev/null)" || return 0
+  env_cmd="$(command -v env 2>/dev/null)" || return 0
+  bash_cmd="$(command -v bash 2>/dev/null)" || return 0
+  marker=$'\036'
+  raw="$(
+    status=0
+    "$timeout_cmd" -s KILL 2 "$env_cmd" -u ENVMAN_LOAD "$bash_cmd" -lc 'command -v go' 2>/dev/null || status=$?
+    printf '%s%d' "$marker" "$status"
+  )"
+  status="${raw##*"$marker"}"
+  output="${raw%"$marker"*}"
+  [[ "$status" == 0 && "$output" == *$'\n' ]] || return 0
+  executable="${output%$'\n'}"
+  [[ -n "$executable" && "$executable" != *$'\n'* && ! "$executable" =~ [[:cntrl:]] ]] || return 0
+  [[ "$executable" == /* && "${executable##*/}" == go && -f "$executable" && -x "$executable" ]] || return 0
+  dir="${executable%/*}"
+  [[ -n "$dir" ]] || dir=/
+  old_path="$PATH"
+  PATH="$dir:$PATH"
+  export PATH
+  if [[ "$(command -v go 2>/dev/null)" != "$executable" ]]; then
+    PATH="$old_path"
+    export PATH
+  fi
+}
+
 # ---- strangler router: send a ported subcommand to the Go binary ------------
 # This dispatch is the one seam that grows across the port: a later slice adds
 # subcommand names here, never a second resolver. platform_pkg maps this host to its
@@ -287,6 +320,7 @@ route_binary() {
   local bin rc kit wrapper repair_rc physical
   kit="${BENCH_KIT:-$(kit_dir)}"
   wrapper="$(resolve_script_path)"
+  recover_source_go_path "$kit"
   if [[ -n "${BENCH_RUN_BINARY+x}" ]]; then
     bin="${BENCH_RUN_BINARY:-}"
     case "$bin" in
