@@ -396,6 +396,7 @@ The cheapest wrong implementations and the rows that red on them:
 - `capture/audits/`
 - `capture/FIXES.md`
 - `capture/parallel-session-friction.md`
+- `capture/retros/`
 - `capture/learnings.md`
 - `capture/session-handoff.md`
 - `cmd/`
