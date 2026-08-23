@@ -338,6 +338,12 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 // inapplicable. It calls decideAutomatic exactly once, then projects the returned
 // verdict onto the plan.
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
+	return planAutomaticAt(root, path, currentTime())
+}
+
+// planAutomaticAt is PlanAutomatic with the instant resolved explicitly at the
+// caller's effect boundary; PlanAutomatic is its temporary compatibility form.
+func planAutomaticAt(root, path string, now time.Time) (CleanupPlan, error) {
 	explicitPlan, explicitErr := PlanExplicit(root, path)
 	facts := automaticFacts{explicitErr: explicitErr, explicit: explicitPlan}
 
@@ -352,7 +358,7 @@ func PlanAutomatic(root, path string) (CleanupPlan, error) {
 		facts.liveLease = planHasLiveLease(explicitPlan)
 		facts.landed = assignmentLanded(*explicitPlan.assignment, explicitPlan)
 		if explicitPlan.assignment.State == intent.StateActive {
-			facts.orphanedActive = orphaned(*explicitPlan.assignment, time.Now())
+			facts.orphanedActive = orphaned(*explicitPlan.assignment, now)
 		}
 		if explicitPlan.owned && explicitPlan.assignment.State == intent.StateCleanupPending {
 			facts.recoveryMatches = recoveryMetadataMatches(root, *explicitPlan.assignment)

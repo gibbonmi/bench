@@ -347,6 +347,13 @@ func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanup
 // that can make a ledger an older binary wrote readable again. Every step below reads
 // that ledger.
 func ConservativeCleanup(root string) (ResumeResult, error) {
+	return conservativeCleanupAt(root, benchHome(), currentTime())
+}
+
+// conservativeCleanupAt is ConservativeCleanup with the Bench home and the instant
+// resolved explicitly at the caller's effect boundary; ConservativeCleanup is its
+// temporary compatibility form.
+func conservativeCleanupAt(root, home string, now time.Time) (ResumeResult, error) {
 	registered, err := ClassifyRegisteredWorktrees(root)
 	if err != nil {
 		return ResumeResult{}, fmt.Errorf("worktree discovery failed: %w", err)
@@ -356,12 +363,12 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 	// posture, where the sweep names the debris and the explicit command acts on it. A
 	// pool this process cannot read leaves the count at zero rather than failing a resume
 	// whose other work is unaffected. The verb itself reports that failure properly.
-	if plan, planErr := planPoolReclaim(root); planErr == nil {
+	if plan, planErr := planPoolReclaim(root, home); planErr == nil {
 		result.ReclaimableKeys = plan.reclaimableCount()
 	} else {
 		result.PoolUnreadable = planErr
 	}
-	result.SweptRefs, result.Reconciled, err = reconcileLifecycleDebris(root, registered)
+	result.SweptRefs, result.Reconciled, err = reconcileLifecycleDebris(root, registered, now)
 	if err != nil {
 		return result, err
 	}
@@ -377,7 +384,7 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 			result.Retained[ReasonUncertain]++
 			continue
 		}
-		plan, err := PlanAutomatic(root, wt.Path)
+		plan, err := planAutomaticAt(root, wt.Path, now)
 		if err != nil {
 			return result, err
 		}
@@ -395,7 +402,7 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 		}
 		result.Removed++
 	}
-	if err := sweepOrphanAssignments(root, &result); err != nil {
+	if err := sweepOrphanAssignments(root, &result, now); err != nil {
 		return result, err
 	}
 	result.PrunedBranches, err = intent.PruneUnclaimedLandedBranches(root)
@@ -416,14 +423,13 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 // A record whose tree is gone is not this sweep's to judge. The reconcile that already
 // ran is the one place a record is dropped. The two can therefore never disagree about
 // which ones the pool still answers for.
-func sweepOrphanAssignments(root string, result *ResumeResult) error {
+// The instant is the caller's explicit boundary resolution: one instant for the whole
+// pass, so two records of the same age cannot straddle the window and disagree.
+func sweepOrphanAssignments(root string, result *ResumeResult, now time.Time) error {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return err
 	}
-	// One instant for the whole pass, so two records of the same age cannot straddle the
-	// window and disagree.
-	now := time.Now()
 	for _, a := range assignments {
 		if !orphaned(a, now) {
 			continue

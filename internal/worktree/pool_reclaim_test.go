@@ -25,8 +25,9 @@ import (
 func newReclaimPool(t *testing.T) (pool, root string) {
 	t.Helper()
 	root = newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
-	pool = poolKeysDir()
+	home := filepath.Join(root, ".bench-home")
+	t.Setenv("BENCH_HOME", home)
+	pool = poolKeysDirAt(home)
 	mustMkdirAll(t, pool, 0o700)
 	t.Chdir(root)
 	return pool, root
@@ -343,7 +344,7 @@ func TestReclaimCommandPrintsTheApplyInvocationCarryingTheFingerprint(t *testing
 
 	out, code := mustReclaim(t)
 	requireTest(t, code == 0, "reclaim code=%d out=%q", code, out)
-	plan, err := planPoolReclaim(root)
+	plan, err := planPoolReclaim(root, filepath.Dir(pool))
 	mustNoError(t, err)
 	requireTest(t, len(plan.fingerprint) == 64, "plan fingerprint = %q, want a sha256 digest", plan.fingerprint)
 	requireTest(t, strings.Contains(out, "bench worktree reclaim --apply "+plan.fingerprint),
@@ -397,7 +398,7 @@ func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 	requireReclaimAggregate(t, out, "pool_reclaim_applied[", "3", "2", "1", fingerprint)
 	for _, key := range []string{"dead-key", "empty-key"} {
 		target := filepath.Join(pool, key)
-		requireTest(t, filepath.Dir(target) == poolKeysDir(), "removed %s whose parent is not the pool", target)
+		requireTest(t, filepath.Dir(target) == pool, "removed %s whose parent is not the pool", target)
 		_, err := os.Lstat(target)
 		requireTest(t, os.IsNotExist(err), "planned key %s survived the apply: %v", key, err)
 	}
@@ -457,13 +458,13 @@ func TestReclaimApplyRetainsAKeyThatWentLiveAfterThePlan(t *testing.T) {
 	plantDeadChild(t, pool, "still-dead", "wt")
 	mustMkdirAll(t, filepath.Join(pool, "went-live"), 0o700)
 
-	plan, err := planPoolReclaim(root)
+	plan, err := planPoolReclaim(root, filepath.Dir(pool))
 	mustNoError(t, err)
 	requireTest(t, plan.reclaimableCount() == 2, "plan = %#v, want both keys reclaimable", plan.verdicts)
 
 	plantLiveChild(t, pool, "went-live", "wt")
 
-	applied := applyPoolReclaim(plan)
+	applied := applyPoolReclaim(plan, filepath.Dir(pool))
 	verdicts := make(map[string]poolKeyVerdict, len(applied))
 	for _, verdict := range applied {
 		verdicts[verdict.key] = verdict
@@ -484,7 +485,7 @@ func TestReclaimApplyOverNothingToReclaimIsASuccessfulNoOp(t *testing.T) {
 	plantLiveChild(t, pool, "live-key", "wt")
 	before := poolListing(t, pool)
 
-	plan, err := planPoolReclaim(root)
+	plan, err := planPoolReclaim(root, filepath.Dir(pool))
 	mustNoError(t, err)
 	requireTest(t, plan.reclaimableCount() == 0, "plan = %#v, want nothing reclaimable", plan.verdicts)
 
@@ -499,7 +500,7 @@ func TestReclaimApplyOverNothingToReclaimIsASuccessfulNoOp(t *testing.T) {
 func TestReclaimApplyRefusesAFumbledFingerprint(t *testing.T) {
 	pool, root := newReclaimPool(t)
 	plantDeadChild(t, pool, "dead-key", "wt")
-	plan, err := planPoolReclaim(root)
+	plan, err := planPoolReclaim(root, filepath.Dir(pool))
 	mustNoError(t, err)
 	before := poolListing(t, pool)
 
@@ -531,7 +532,7 @@ func TestRemovePoolKeyRefusesATargetOutsideThePool(t *testing.T) {
 	mustWrite(t, filepath.Join(decoy, "keep.txt"), []byte("keep\n"), 0o644)
 
 	for _, key := range []string{"", ".", "..", filepath.Join("..", "decoy"), "nested/child", decoy} {
-		verdict := removePoolKey(key)
+		verdict := removePoolKey(filepath.Dir(pool), key)
 		requireTest(t, verdict.verdict == poolVerdictRetained && strings.Contains(verdict.reason, "not a direct child of "+pool),
 			"key %q = %q/%q, want a retain naming the pool boundary", key, verdict.verdict, verdict.reason)
 	}

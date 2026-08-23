@@ -66,14 +66,14 @@ func (p poolReclaimPlan) reclaimableCount() int {
 // poolKeysDir is the pool parent this command reads. Nothing else in the tree enumerates
 // it: every other reclamation path is anchored at a repository root. That is exactly why
 // a key whose repository was deleted is unreachable from all of them.
-func poolKeysDir() string { return filepath.Join(benchHome(), "worktrees") }
+func poolKeysDirAt(home string) string { return filepath.Join(home, "worktrees") }
 
 // planPoolReclaim classifies every key under the pool parent. An absent pool parent is
 // the zero-row answer rather than an error. A home that has never leased a worktree is a
-// clean pool, not a broken one.
-func planPoolReclaim(root string) (poolReclaimPlan, error) {
-	current := filepath.Base(Pool(canonicalRoot(root)))
-	pool := poolKeysDir()
+// clean pool, not a broken one. The home is the caller's explicit boundary resolution.
+func planPoolReclaim(root, home string) (poolReclaimPlan, error) {
+	current := filepath.Base(poolAt(home, canonicalRoot(root)))
+	pool := poolKeysDirAt(home)
 	entries, err := os.ReadDir(pool)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -237,9 +237,10 @@ func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, toon.NotInRepo())
 		return 1
 	}
-	plan, err := planPoolReclaim(root)
+	home := benchHome()
+	plan, err := planPoolReclaim(root, home)
 	if err != nil {
-		fmt.Fprintln(stdout, toon.Errorf("cannot read the worktree pool", "make "+poolKeysDir()+" readable and retry"))
+		fmt.Fprintln(stdout, toon.Errorf("cannot read the worktree pool", "make "+poolKeysDirAt(home)+" readable and retry"))
 		return 1
 	}
 	if !applying {
@@ -263,7 +264,7 @@ func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stdout, out)
 		return 1
 	}
-	applied := applyPoolReclaim(plan)
+	applied := applyPoolReclaim(plan, home)
 	out, err := renderPoolReclaimApplied(applied, plan.fingerprint)
 	if err != nil {
 		fmt.Fprintln(stdout, toon.RenderError(err))
@@ -320,14 +321,14 @@ func parseReclaimArgs(args []string, stdout io.Writer) (applying bool, fingerpri
 // applyPoolReclaim removes the keys the plan named and reports what it did per key. The
 // keys the plan retained are reported untouched, so the destructive step leaves evidence
 // covering the whole pool, not only the part it acted on.
-func applyPoolReclaim(plan poolReclaimPlan) []poolKeyVerdict {
+func applyPoolReclaim(plan poolReclaimPlan, home string) []poolKeyVerdict {
 	applied := make([]poolKeyVerdict, 0, len(plan.verdicts))
 	for _, verdict := range plan.verdicts {
 		if !verdict.reclaimable() {
 			applied = append(applied, poolKeyVerdict{key: verdict.key, verdict: poolVerdictRetained, reason: verdict.reason})
 			continue
 		}
-		applied = append(applied, removePoolKey(verdict.key))
+		applied = append(applied, removePoolKey(home, verdict.key))
 	}
 	return applied
 }
@@ -336,8 +337,8 @@ func applyPoolReclaim(plan poolReclaimPlan) []poolKeyVerdict {
 // already matched the fingerprint, which speaks for the plan as a whole. The re-check
 // here speaks for this one key at the instant of removal. The parent assertion bounds
 // the target to a direct child of the pool.
-func removePoolKey(key string) poolKeyVerdict {
-	pool := poolKeysDir()
+func removePoolKey(home, key string) poolKeyVerdict {
+	pool := poolKeysDirAt(home)
 	target := filepath.Join(pool, key)
 	retained := func(format string, args ...any) poolKeyVerdict {
 		return poolKeyVerdict{key: key, verdict: poolVerdictRetained, reason: fmt.Sprintf(format, args...)}

@@ -93,7 +93,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	// still fails the proof surfaces the owner's message, which carries the remedy.
 	if freshness.DeclaresBuildInputs(root) {
 		if err := verifyLandingExecutable(root, executable); err != nil {
-			if os.Getenv(rebuiltLandingEnv) != "" {
+			if landingAlreadyRebuilt() {
 				return landRefusal(stdout, err.Error())
 			}
 			return rebuildAndRerunLanding(root, args, err, stdout, stderr)

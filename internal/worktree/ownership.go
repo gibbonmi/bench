@@ -128,6 +128,12 @@ func lockCreationRequest(root, digest string) (func(), error) {
 
 // Create makes one request-idempotent owned registration and persists its bundle.
 func Create(root, request, label string, fault Fault, requestedStart ...string) (Creation, error) {
+	return createAt(root, request, label, fault, currentTime(), requestedStart...)
+}
+
+// createAt is Create with the creation instant resolved explicitly at the caller's
+// effect boundary; Create is its temporary compatibility form.
+func createAt(root, request, label string, fault Fault, now time.Time, requestedStart ...string) (Creation, error) {
 	if request == "" || label == "" {
 		return Creation{}, errors.New("worktree create requires request and label")
 	}
@@ -182,7 +188,7 @@ func Create(root, request, label string, fault Fault, requestedStart ...string) 
 	}
 	branch := intent.AssignmentBranchRef(ownerID, assignmentID)
 	shortBranch := strings.TrimPrefix(branch, "refs/heads/")
-	createdAt := time.Now().UTC().Format(time.RFC3339)
+	createdAt := now.UTC().Format(time.RFC3339)
 	assignment := intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: assignmentID, OwnerID: ownerID,
 		Request: digest, Label: label, Start: start, Branch: branch, Worktree: path,

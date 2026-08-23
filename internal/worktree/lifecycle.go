@@ -116,24 +116,30 @@ func candidateName(pool string, unixSecs int64, pid, try int) string {
 }
 
 // leaseLine is the bytes an owner writes into its lease: "<pid> <utc-time>\n".
-func leaseLine() []byte {
-	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), time.Now().UTC().Format(leaseTimeLayout)))
+// The instant is the caller's explicit boundary resolution, never an ambient read.
+func leaseLine(now time.Time) []byte {
+	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), now.UTC().Format(leaseTimeLayout)))
 }
 
 // tryCreate wins a lease only through an atomic O_EXCL create.
-func tryCreate(leasePath string) bool {
+func tryCreate(leasePath string, now time.Time) bool {
 	f, err := os.OpenFile(leasePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return false
 	}
-	_, werr := f.Write(leaseLine())
+	_, werr := f.Write(leaseLine(now))
 	cerr := f.Close()
 	return werr == nil && cerr == nil
 }
 
-// Claim atomically creates a lease or identity-checks a provably stale takeover.
-func Claim(leasePath string) bool {
-	if tryCreate(leasePath) {
+// Claim is the temporary compatibility form of claimAt: it resolves the instant at
+// the effect boundary for callers that have not migrated to an explicit time.
+func Claim(leasePath string) bool { return claimAt(leasePath, currentTime()) }
+
+// claimAt atomically creates a lease or identity-checks a provably stale takeover,
+// judging staleness against the caller's explicitly resolved instant.
+func claimAt(leasePath string, now time.Time) bool {
+	if tryCreate(leasePath, now) {
 		return true
 	}
 	info, err := os.Stat(leasePath)
@@ -141,7 +147,7 @@ func Claim(leasePath string) bool {
 		return false // lease vanished under us (a racing reclaim); respect and rescan
 	}
 	content, _ := os.ReadFile(leasePath)
-	if !reclaimable(content, info.ModTime(), time.Now(), pidAlive) {
+	if !reclaimable(content, info.ModTime(), now, pidAlive) {
 		return false
 	}
 	claimTakeoverGap(leasePath)
@@ -159,7 +165,7 @@ func Claim(leasePath string) bool {
 		return false
 	}
 	os.Remove(stale)
-	return tryCreate(leasePath)
+	return tryCreate(leasePath, now)
 }
 
 // claimTakeoverGap drives the post-judgment, pre-rename reclaimer interleave.
@@ -180,10 +186,17 @@ func isClean(dir string) bool {
 	return err == nil && out == ""
 }
 
-// Acquire claims a clean pool entry or mints one in three bounded attempts. It
-// resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref.
+// Acquire is the temporary compatibility form of acquireAt: it resolves the Bench
+// home and the instant at the effect boundary for callers that have not migrated.
 func Acquire(root, resetRef, resetMode string) (string, error) {
-	pool := Pool(root)
+	return acquireAt(root, resetRef, resetMode, benchHome(), currentTime())
+}
+
+// acquireAt claims a clean pool entry or mints one in three bounded attempts. It
+// resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref.
+// The home and the instant are the caller's explicit boundary resolutions.
+func acquireAt(root, resetRef, resetMode, home string, now time.Time) (string, error) {
+	pool := poolAt(home, root)
 	if err := os.MkdirAll(pool, 0o700); err != nil {
 		return "", err
 	}
@@ -196,14 +209,14 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 			continue
 		}
 		lease, err := LeaseFile(d)
-		if err != nil || !Claim(lease) {
+		if err != nil || !claimAt(lease, now) {
 			continue
 		}
 		wt = d
 		break
 	}
 	for try := 1; wt == "" && try <= 3; try++ {
-		cand := candidateName(pool, time.Now().Unix(), os.Getpid(), try)
+		cand := candidateName(pool, now.Unix(), os.Getpid(), try)
 		// An unresolved default makes the first attempt the HEAD one already. The HEAD
 		// fallback is a genuine second attempt only when the remote ref was non-empty.
 		remote := git.RemoteDefaultRef(root)
@@ -214,7 +227,7 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 		if err != nil {
 			continue
 		}
-		if Claim(lease) {
+		if claimAt(lease, now) {
 			wt = cand
 		}
 	}

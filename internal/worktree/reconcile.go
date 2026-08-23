@@ -89,14 +89,13 @@ func poolAssignment(a intent.Assignment, registered []Registered, now time.Time)
 // left behind, reporting what each half removed. Refs go first, so a run killed between
 // the halves leaves records whose refs are already gone. That is the same state a
 // repository carrying only ledger debris is in, one the next run finishes from.
-func reconcileLifecycleDebris(root string, registered []Registered) (int, int, error) {
+// The instant is the caller's explicit boundary resolution: one instant for the whole
+// pass, so two records of the same age cannot straddle the staleness window and disagree.
+func reconcileLifecycleDebris(root string, registered []Registered, now time.Time) (int, int, error) {
 	swept, err := sweepLifecycleRefs(root)
 	if err != nil {
 		return swept, 0, err
 	}
-	// One instant for the whole pass, so two records of the same age cannot straddle the
-	// staleness window and disagree.
-	now := time.Now()
 	purged, err := intent.PurgeAssignments(root, func(a intent.Assignment) bool {
 		return poolAssignment(a, registered, now)
 	})
