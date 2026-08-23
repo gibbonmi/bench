@@ -27,6 +27,10 @@ means the repository-controlled compliance assessment.
 
 **FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, two `bench commit` gaps, the heredoc guard gap, a run-binary glossary term, and the phase-close capture-batch rule.**
 
+**FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
+
+**FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
+
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
@@ -55,7 +59,7 @@ means the repository-controlled compliance assessment.
 
 **FT173 (MEDIUM, decision required) — AXI residual: the active-assignment-with-deleted-tree disclosure class.**
 
-**FT202 (MEDIUM, decision required) — a standing test-support fence, and the census scope for process-backed fixtures.**
+**FT202 (MEDIUM, decision required) — a shared purity-census helper, and the census scope for process-backed fixtures.**
 
 **FT185 (MEDIUM) — gate results join the structured Bench output contract.**
 
@@ -287,6 +291,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT238: the hygiene batch; the request-token gap reproduced a fourth time on the parallel-landings landing, and every piece is a light-path ticket.
+1. `/bench-implement-spec` — FT238: the hygiene batch; worktree assignments retain and print their request token, and every piece is a light-path ticket.
 2. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now with the per-row "name the check that reds it" rubric and the long-needle smell.
 3. `/bench-write-spec` — FT224: a lifecycle refusal names the component that failed and the command that fixes it; the landing-authors-the-flip retro added a fresh moved-destination case.
