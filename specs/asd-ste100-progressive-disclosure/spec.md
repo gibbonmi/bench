@@ -171,11 +171,12 @@ The parser works in this order:
 3. Skip every fenced code block.
 4. Skip headings, table rows, thematic breaks, link reference definitions, and HTML blocks.
 5. Skip an indented block of four or more spaces that starts after a blank line.
-6. Treat every label line — a physical line that opens with a short label and a colon — as its own paragraph. Skip it when it holds no sentence terminator; that is a field line.
-7. Split the rest into paragraphs at blank lines, and start a new paragraph at each list item, with the list marker removed.
-8. Replace each inline code span with one token, keep link text, drop link targets, and strip emphasis markers.
-9. Split each paragraph into sentences at `.`, `!`, `?`, or an ellipsis followed by whitespace, a closing quote or bracket, or the end.
-10. Count a token as one word when it holds a letter or a digit; split tokens at Unicode whitespace. A list marker is not a token.
+6. Replace each inline code span with one token, so a colon inside a span never opens a label.
+7. Treat every label line — a physical line that opens with a short label and a colon — as its own paragraph. Skip it when it holds no sentence terminator; that is a field line.
+8. Split the rest into paragraphs at blank lines, and start a new paragraph at each list item, with the list marker removed.
+9. Keep link text, drop link targets, and strip emphasis markers.
+10. Split each paragraph into sentences at `.`, `!`, `?`, or an ellipsis followed by whitespace, a closing quote or bracket, or the end.
+11. Count a token as one word when it holds a letter or a digit; split tokens at Unicode whitespace. A list marker is not a token.
 
 A period inside a token is not a boundary. The tokens `e.g.`, `i.e.`, `etc.`, `vs.`, and `cf.` are not boundaries. A list-item continuation line that follows a non-blank line is prose, not code. A `\r` is whitespace. The predicate for a word boundary is Go's `unicode.IsSpace`; a no-break space splits and a zero-width space does not.
 
