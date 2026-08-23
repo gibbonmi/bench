@@ -2,34 +2,28 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` once this build lands; the reviewed source is the `parallel-landings` worktree branch `bench/assign/b31c954120124fec3e44dd4d9ca17ffa/b0fec9471b338b985b1c9ea1f2be89ab`, frozen base `1a135f1b`, reviewed code tip `7e0a3e00`, and this handoff commit on top of it
-Spec: `specs/parallel-landings/spec.md` — `Status: implemented` once the landing publishes; `staged` on the source
-Gate: green on every worktree commit (2026-08-23)
+Branch: `main` once this drain lands; the source is the `drain-2026-08-23` worktree on base `a128cd3e`
+Spec: none; `specs/` is empty
+Gate: green on `a128cd3e` (2026-08-23)
 
 ## State
 
-The `parallel-landings` build is complete and reviewed. Five tickets and one
-repair commit sit on the worktree (`64646d3f`..`7e0a3e00`). Review loop 1
-(opus / medium, three axes) found 15 advisory findings and no blocking one;
-all 8 accepted repair targets are repaired. Loop 2 (repair-scoped) was clean
-on every predicate except the handoff's missing commit pin, which this commit
-fixes. The reviewer capped the review at two loops, so this prose-only commit
-sits past the reviewed tip; the gate grades it.
+The 2026-08-23 drain is complete. The inbox, the journal, and the retro
+folder are empty. The three parked ideas closed by implementation in
+`parallel-landings`. The retro fed FT169, FT162, FT213, and FT238. The board
+merge rule deferred by ADR 0014 now sits in FT169's authority decision.
 
-This handoff lands with the build through `bench worktree land` from `main`.
-Once it lands, `main` carries the spec-less landing, the tickets-only close,
-the capture rule table, the repair `next=`, and the worktree-rule guidance.
-Drain notes for the next `/bench-drain` are the newest entry in
-`capture/learnings.md`. The three parked ideas in `capture/IDEAS.md` close by
-implementation at that drain.
+The flow report shows a positive net delta (+2 over the window), so the next
+drain owes reducing moves. The candidates are FT169, FT162, and FT238, which
+each carry one face of the worktree request-token problem.
 
 Closed decisions: merge composition stays the landing primitive, no rebase;
-the journal union and the destination default; the light path joins the
-worktree rule; the worktree rule is guidance, not a hook.
+the journal union and the destination default; every phase lands through the
+landing verb as guidance, not a hook.
 
 ## Next command
 
-`/bench-drain`
+`/bench-write-spec` — FT113
 
 ## Shape
 

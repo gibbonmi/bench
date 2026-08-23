@@ -289,6 +289,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-debug` — FT169: the landing path, reviewer-classified as a bug on 2026-08-22 after six refusals for one source. The fix: abbreviated ids, self-rebuild, composition onto a moved destination, one preflight that names every refusal.
-2. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder; the orphaned roadmap detail file reproduced again on the inherited-toolchain retirement.
+1. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder; the orphaned roadmap detail file reproduced again on the inherited-toolchain retirement.
+2. `/bench-implement-spec` — FT238: the hygiene batch; the request-token gap reproduced a fourth time on the parallel-landings landing, and every piece is a light-path ticket.
 3. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now with the per-row "name the check that reds it" rubric and the long-needle smell.
