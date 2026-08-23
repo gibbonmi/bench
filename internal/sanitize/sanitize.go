@@ -100,3 +100,14 @@ func writeEscaped(b *strings.Builder, runes []rune, preserveLayout bool) {
 		}
 	}
 }
+
+// LineSafe reports whether value carries no control rune. It is the predicate a sink
+// that writes raw lines uses before it embeds an operator-influenced value: a newline
+// there forges a line and an ESC drives the terminal that prints it. Quoting does not
+// substitute, because single quotes make a newline literal but still emit the byte, and
+// escaping does not substitute either, because an escaped path names a tree that does
+// not exist. A caller that fails this predicate emits a pointer instead of the value.
+//
+// Display-hostile runes outside the control categories — a bidi override, U+2028,
+// invalid UTF-8 — pass. This guards line structure, not how a terminal renders one line.
+func LineSafe(value string) bool { return !strings.ContainsFunc(value, unicode.IsControl) }

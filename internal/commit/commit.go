@@ -3,6 +3,7 @@ package commit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -10,17 +11,19 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // Command runs a path-attributed prospective landing. Help exits 0, grammar errors exit
-// 2, and operational refusals exit 1; the landing owner alone composes, authorizes, and
-// publishes the prospective tree.
+// 2, operational refusals exit 1, and a commit that published without reconciling its
+// checkout exits 3; the landing owner alone composes, authorizes, and publishes the
+// prospective tree.
 func Command(args []string, stdout, stderr io.Writer) int {
 	msg, paths, help, usageErr := parseArgs(args)
 	if help != "" {
-		fmt.Fprintln(stdout, help)
+		fmt.Fprintln(stdout, helpText)
 		return 0
 	}
 	if usageErr != "" {
@@ -58,12 +61,53 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
 		Message: msg, Paths: named, Stdout: stdout, Stderr: stderr,
 	}); err != nil {
+		var remainder *landing.PublishedUnreconciledError
+		if errors.As(err, &remainder) {
+			return publicationRemainder(stdout, remainder)
+		}
 		fmt.Fprintf(stderr, "error: %v\n", err)
 		return 1
 	}
 	fmt.Fprintf(stdout, "committed %d path(s)\n", len(named))
 	return 0
 }
+
+// publicationRemainder reports the publication boundary the landing owner reached: the
+// commit exists and the checkout does not match it. The record uses the landing verb's
+// name{key=value,...} grammar, and its exit code separates this outcome from a refusal
+// that published nothing.
+func publicationRemainder(stdout io.Writer, remainder *landing.PublishedUnreconciledError) int {
+	fmt.Fprintf(stdout, "committed{published_commit=%s,path=%s,next=%s}\n",
+		remainder.Commit, sanitize.Controls(remainder.Path), restoreNext(remainder.Commit, remainder.Paths))
+	return 3
+}
+
+// restoreNext names the one restore that reconciles every named path against the
+// published commit. The restore is idempotent, so it covers the paths that already
+// reconciled as well as the remainder. A path that is not line-safe takes the landing
+// verb's pointer form: quoting would still emit the raw byte into a line-structured
+// record, and escaping would name a path that does not exist.
+//
+// The value is line-safe by construction, so it reaches the record unescaped; the
+// sanitizer's backslash escaping would break the quoting a reader pastes.
+func restoreNext(commit string, paths []string) string {
+	command := "git restore --source=" + commit + " --staged --worktree --"
+	quoted := make([]string, 0, len(paths))
+	for _, path := range paths {
+		if !sanitize.LineSafe(path) {
+			return command + " <named-paths>"
+		}
+		quoted = append(quoted, sanitize.ShellQuote(path))
+	}
+	return command + " " + strings.Join(quoted, " ")
+}
+
+// helpText adds the exit-code meanings the grammar line cannot carry. A usage error
+// prints the grammar line alone, so only a help request pays for them.
+var helpText = grammar.Help + "\n" +
+	"exit 1: refused before publication; nothing was committed\n" +
+	"exit 2: grammar error\n" +
+	"exit 3: published; the checkout did not reconcile — paste next= to repair"
 
 var grammar = usage.Grammar{
 	Cmd:     "bench commit",
