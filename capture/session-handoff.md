@@ -1,31 +1,35 @@
 # Session handoff
 
-Repository: `7e3c28702eb57ca1357eab2a37c5983b-8bcd0dd48a7788364b323e30dafa109b` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/7e3c28702eb57ca1357eab2a37c5983b-8bcd0dd48a7788364b323e30dafa109b`
-Branch: `bench/assign/7e3c28702eb57ca1357eab2a37c5983b/8bcd0dd48a7788364b323e30dafa109b` — HEAD `4fb6e2b`, 10 dirty paths, 20 unpushed commits
-Spec: none staged.
-Gate: red at `bb8b418` — current
+Repository: `dcb9a3236bed02ce621939bf4d8821b5-fa4b747ff712a5b67f4f226c573d84e5` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/dcb9a3236bed02ce621939bf4d8821b5-fa4b747ff712a5b67f4f226c573d84e5`
+Branch: `bench/assign/dcb9a3236bed02ce621939bf4d8821b5/fa4b747ff712a5b67f4f226c573d84e5` — HEAD `5f4796d`, 4 dirty paths, 22 unpushed commits
+Spec: `specs/worktree-test-latency/spec.md` (Status: staged)
+Gate: no gate has run.
 
 ## State
 
-Destination reconciliation now preserves tracked edits that appear immediately
-before its reset. The fix landed as `4fb6e2b9a38570e2cd43c2316746a38ef060c7bf`.
+The ready decision map and its invocation census moved into the staged spec.
+One read-only `gpt-5.6-terra` high review accepted the spec and seven-ticket
+graph after two iterations.
 
-Bench now enforces the worktree-only phase rule at publication. `bench commit`
-refuses the primary checkout and directs users to `bench worktree create`.
-Status and commit share one primary-checkout classifier.
+The first spec removes deterministic demand. It selects one Bench binary,
+introduces explicit effect inputs, extracts landing, lifecycle, and reclaim
+policy owners, and contracts tests to representative serial journeys.
 
-The latency decision map and its invocation census remain intact. The first of
-two specs owns one selected test binary, explicit environment and directory
-inputs, worktree owner seams, and before-and-after demand measurements.
+The first spec adds no scheduler or `t.Parallel`. It preserves `-count=1`,
+records before-and-after demand, and leaves measured pure-test parallelism plus
+the slow-package budget to the second spec.
 
-The second spec follows measured first-spec results. It owns only necessary
-pure-test parallelism and the slow-package regression budget. Descendant-spawning
-journeys remain serial, and fresh runs keep `-count=1`.
+Publication's uncontrolled connection wait and the WSL Go bootstrap defect
+remain separate debug tracks. Neither may count as worktree latency improvement.
+
+Tickets 01 and 02 are the initial frontier. Their writes overlap, so work them
+serially on one retained integration source even though neither semantically
+blocks the other.
 
 ## Next command
 
-`$bench-write-spec decisions/worktree-test-latency.md --reviewer terra high`
+`$bench-implement-spec --full worktree-test-latency`
 
 ## Shape
 
