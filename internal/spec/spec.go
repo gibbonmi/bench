@@ -253,17 +253,6 @@ func locateStaged(base, arg string) (resolved string, implemented []byte, err er
 	return resolved, implemented, nil
 }
 
-// CheckStaged resolves arg and confirms it carries exactly one line-start `Status:
-// staged`, returning the resolved path. It never writes. `bench commit --spec` runs it
-// as fail-fast validation before the gate. This rejects a bad or already-implemented
-// spec before the gate burns rather than after Flip runs on a green tree. Flip
-// re-checks the file, which may have changed, before it rewrites, so the two share
-// locateStaged's one validation rule.
-func CheckStaged(base, arg string) (resolved string, err error) {
-	resolved, _, err = locateStaged(base, arg)
-	return resolved, err
-}
-
 // Flip resolves arg — base anchors the specs/<slug>/spec.md fallback — and requires
 // exactly one line-start `Status: staged`. It rewrites that one line to `Status:
 // implemented` in place, preserving every other byte, including a missing final

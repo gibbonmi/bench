@@ -124,7 +124,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree --help      show exact list, path, exec, create, release, clean, reclaim, and reauthorize grammar
   bash bin/bench.sh gate --fresh  run the current worktree's gate
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
-  bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)
+  bench commit -m <msg> <path>...  gate, then commit named paths on green
   bench spec implemented <slug>    flip a spec's Status: staged line to implemented
   bench spec retire <slug>         delete a merged spec + its review pickup (validated)
   bench spec history <slug>        retire/delete commits for a spec, newest first (TOON)

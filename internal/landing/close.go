@@ -1,8 +1,8 @@
-// close.go owns the tickets-only predicate and the light-path close it drives.
-// A light-path change writes specs/<slug>/ with tickets and no spec.md. Its green
-// landing commit consumes that folder and does not flip a status line. This file
-// exports the predicate: `bench status` counts the same shape this step closes.
-// One definition of "tickets-only" serves both steps.
+// close.go owns the tickets-only predicate and the close the reviewed landing drives.
+// A light-path change writes specs/<slug>/ with tickets and no spec.md. The reviewed
+// landing commit consumes that folder and flips no status line. This file exports the
+// predicate: `bench status` counts the same shape that close consumes. One definition
+// of "tickets-only" serves both readers.
 package landing
 
 import (
@@ -62,9 +62,9 @@ func TicketsOnlyFolders(root string) ([]string, error) {
 	return slugs, nil
 }
 
-// ClosedFolderPath is the repository-relative slash path of the tickets-only folder a
-// close consumes. Both close steps — the commit path's composition and the reviewed
-// landing's — name the folder through this one spelling.
+// ClosedFolderPath is the repository-relative slash path of the tickets-only folder the
+// reviewed landing's close consumes. Every caller names the folder through this one
+// spelling.
 func ClosedFolderPath(name string) string {
 	return specsDir + "/" + name
 }

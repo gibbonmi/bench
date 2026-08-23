@@ -156,8 +156,7 @@ func TestLandPreservesWholeUnnamedFingerprintAndCleansOwnedPaths(t *testing.T) {
 	write(t, root, "unnamed-staged", "base")
 	write(t, root, "unnamed-staged-plus-unstaged", "base")
 	write(t, root, "unnamed-unstaged", "base")
-	write(t, root, "specs/x/spec.md", "Status: staged\nbody\n")
-	git(t, root, "add", "--", ".gitignore", "unnamed-staged", "unnamed-staged-plus-unstaged", "unnamed-unstaged", "specs/x/spec.md")
+	git(t, root, "add", "--", ".gitignore", "unnamed-staged", "unnamed-staged-plus-unstaged", "unnamed-unstaged")
 	git(t, root, "commit", "-qm", "fingerprint base")
 
 	write(t, root, "named", "named landed bytes")
@@ -173,7 +172,7 @@ func TestLandPreservesWholeUnnamedFingerprintAndCleansOwnedPaths(t *testing.T) {
 	before := fingerprintUnnamedState(t, root)
 	base := git(t, root, "rev-parse", "HEAD")
 	o := greenOwner()
-	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "fingerprint", Paths: []string{"named"}, Spec: "x"})
+	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "fingerprint", Paths: []string{"named"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,14 +180,11 @@ func TestLandPreservesWholeUnnamedFingerprintAndCleansOwnedPaths(t *testing.T) {
 	if !reflect.DeepEqual(after, before) {
 		t.Fatalf("unnamed fingerprint changed\nbefore: %#v\nafter:  %#v", before, after)
 	}
-	if status := git(t, root, "status", "--porcelain=v1", "--", "named", "specs/x/spec.md"); status != "" {
+	if status := git(t, root, "status", "--porcelain=v1", "--", "named"); status != "" {
 		t.Fatalf("owned paths are not clean: %q", status)
 	}
-	if got := git(t, root, "show", got.Commit+":specs/x/spec.md"); got != "Status: implemented\nbody" {
-		t.Fatalf("published transitioned spec = %q", got)
-	}
-	if got := string(mustRead(t, filepath.Join(root, "specs/x/spec.md"))); got != "Status: implemented\nbody\n" {
-		t.Fatalf("checkout transitioned spec = %q", got)
+	if published := git(t, root, "show", got.Commit+":named"); published != "named landed bytes" {
+		t.Fatalf("published named bytes = %q", published)
 	}
 }
 
