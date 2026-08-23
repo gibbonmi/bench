@@ -18,7 +18,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unicode"
 )
 
 func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
@@ -418,13 +417,11 @@ func orphanLine(orphan OrphanCandidate) string {
 	return fmt.Sprintf("orphan %s: bench worktree clean %s (plans only; re-run with --apply <fingerprint> to remove)\n", orphan.ID, sanitize.ShellQuote(orphan.Path))
 }
 
-// lineSafe reports whether a value carries no control rune. It is deliberately stricter
-// than cleanupOutputSafe: toon.Representable admits tab, newline, and return, because the
-// TOON encoder escapes them. The resume summary writes raw lines and escapes nothing, so
-// a newline forges a line and an ESC drives the terminal that prints it. Display-hostile
-// runes outside the control categories — a bidi override, U+2028, invalid UTF-8 — pass.
-// This guards the summary's line structure rather than how a terminal renders one line.
-func lineSafe(value string) bool { return !strings.ContainsFunc(value, unicode.IsControl) }
+// lineSafe is the package-local spelling of the shared line-structure predicate. It is
+// deliberately stricter than cleanupOutputSafe: toon.Representable admits tab, newline,
+// and return, because the TOON encoder escapes them, while the resume summary writes raw
+// lines and escapes nothing.
+func lineSafe(value string) bool { return sanitize.LineSafe(value) }
 
 type assignmentRecoveryContext struct {
 	target string

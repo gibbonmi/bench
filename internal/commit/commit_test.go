@@ -15,20 +15,18 @@ func TestParseArgs(t *testing.T) {
 		name     string
 		args     []string
 		wantMsg  string
-		wantSpec string
 		wantPath string // first positional path; "" means none expected
 		wantN    int    // number of positional paths
 		wantErr  string // substring of usageErr; "" means no error
 	}{
 		{name: "message and one path", args: []string{"-m", "msg", "a.txt"}, wantMsg: "msg", wantPath: "a.txt", wantN: 1},
-		{name: "spec flag consumes its value", args: []string{"-m", "m", "--spec", "feature", "a.txt"}, wantMsg: "m", wantSpec: "feature", wantPath: "a.txt", wantN: 1},
 		{name: "paths on both sides of flags", args: []string{"a.txt", "-m", "m", "b.txt"}, wantMsg: "m", wantPath: "a.txt", wantN: 2},
 		{name: "-- makes a leading-dash token a path", args: []string{"-m", "m", "--", "-weird.txt"}, wantMsg: "m", wantPath: "-weird.txt", wantN: 1},
 		{name: "no message", args: []string{"a.txt"}, wantErr: "-m <msg> is required"},
 		{name: "no paths", args: []string{"-m", "m"}, wantErr: "at least one <path> is required"},
 		{name: "unknown flag", args: []string{"-m", "m", "--nope", "a.txt"}, wantErr: "usage: bench commit (unknown argument: --nope)"},
 		{name: "dangling -m", args: []string{"-m"}, wantErr: "usage: bench commit (missing argument: -m)"},
-		{name: "dangling --spec", args: []string{"-m", "m", "--spec"}, wantErr: "usage: bench commit (missing argument: --spec)"},
+		{name: "the retired --spec is unknown", args: []string{"-m", "m", "--spec", "x", "a.txt"}, wantErr: "usage: bench commit (unknown argument: --spec)"},
 		// The two shapes an unset or blank shell variable produces. An empty path is
 		// caught by the shared grammar (it would otherwise resolve to the cwd and
 		// widen the commit); an empty or blank message is caught here, so it is
@@ -39,7 +37,7 @@ func TestParseArgs(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, specSlug, paths, help, usageErr := parseArgs(tc.args)
+			msg, paths, help, usageErr := parseArgs(tc.args)
 			if help != "" {
 				t.Fatalf("unexpected help %q", help)
 			}
@@ -52,8 +50,8 @@ func TestParseArgs(t *testing.T) {
 			if usageErr != "" {
 				t.Fatalf("unexpected usageErr %q", usageErr)
 			}
-			if msg != tc.wantMsg || specSlug != tc.wantSpec || len(paths) != tc.wantN {
-				t.Errorf("got msg=%q spec=%q paths=%v, want msg=%q spec=%q n=%d", msg, specSlug, paths, tc.wantMsg, tc.wantSpec, tc.wantN)
+			if msg != tc.wantMsg || len(paths) != tc.wantN {
+				t.Errorf("got msg=%q paths=%v, want msg=%q n=%d", msg, paths, tc.wantMsg, tc.wantN)
 			}
 			if len(paths) > 0 && paths[0] != tc.wantPath {
 				t.Errorf("first path = %q, want %q", paths[0], tc.wantPath)
@@ -67,7 +65,7 @@ func TestParseArgs(t *testing.T) {
 func TestParseArgsHelpIsSuccess(t *testing.T) {
 	for _, spelling := range []string{"help", "--help", "-h"} {
 		t.Run(spelling, func(t *testing.T) {
-			_, _, _, help, usageErr := parseArgs([]string{spelling})
+			_, _, help, usageErr := parseArgs([]string{spelling})
 			if usageErr != "" {
 				t.Fatalf("usageErr = %q, want none", usageErr)
 			}

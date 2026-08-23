@@ -24,7 +24,6 @@ import (
 type Request struct {
 	Root, Destination, Expected, Message string
 	Paths                                []string
-	Spec                                 string
 	Stdout, Stderr                       io.Writer
 }
 
@@ -44,8 +43,9 @@ type ReviewedRequest struct {
 	SpecBytes                          []byte
 	SpecMode                           os.FileMode
 	// ClosePath is the repository-relative tickets-only folder this landing closes,
-	// empty on every other landing. It never coexists with SpecPath: one --spec names
-	// either a staged spec.md to transition or a tickets-only folder to close.
+	// empty on every other landing. It never coexists with SpecPath: the landing's
+	// --spec names either a staged spec.md to transition or a tickets-only folder to
+	// close.
 	ClosePath      string
 	Message        string
 	Stdout, Stderr io.Writer
@@ -381,15 +381,36 @@ func contentConflictKind(modes []string) string {
 	return "textual"
 }
 
-type composedSnapshot struct {
-	tree            string
-	specPath        string
-	specPermissions os.FileMode
-	// closePath is the repository-relative tickets-only folder this landing consumes,
-	// empty on every other landing. It is composed out of the published tree and
-	// removed from the checkout only after that tree is authorized and published.
-	closePath string
+type composedSnapshot struct{ tree string }
+
+// ReconcileError names the attributed path whose checkout reconciliation failed. Every
+// return of the reconcile step carries one, so a caller renders the remaining path from
+// a value rather than by parsing the message.
+type ReconcileError struct {
+	Path string
+	Err  error
 }
+
+func (e *ReconcileError) Error() string {
+	return fmt.Sprintf("reconcile named path %q: %v", e.Path, e.Err)
+}
+func (e *ReconcileError) Unwrap() error { return e.Err }
+
+// PublishedUnreconciledError is the publication boundary: the commit is published and
+// the checkout is not reconciled. It carries the published commit, the path that did not
+// reconcile, and every named path in the owner's sorted, deduplicated order, so a caller
+// reports the remainder and the repair without a second read.
+type PublishedUnreconciledError struct {
+	Commit string
+	Path   string
+	Paths  []string
+	Err    error
+}
+
+func (e *PublishedUnreconciledError) Error() string {
+	return fmt.Sprintf("landed-but-checkout-incomplete: %v", e.Err)
+}
+func (e *PublishedUnreconciledError) Unwrap() error { return e.Err }
 
 // Owner composes only Request.Paths from Request.Expected, authorizes that tree, then
 // publishes it by expected-old update. The function fields are narrow operational seams
@@ -414,28 +435,7 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	// --spec has two effects on one green landing. A folder carrying a spec.md takes
-	// the staged->implemented flip; a tickets-only folder is deleted instead, in the
-	// same commit. The close path stays out of paths: it is composed and reconciled by
-	// removal, not by attribution.
-	closePath := ""
-	if r.Spec != "" {
-		if TicketsOnlyFolder(r.Root, r.Spec) {
-			closePath = ClosedFolderPath(r.Spec)
-		} else {
-			resolved, err := spec.CheckStaged(r.Root, r.Spec)
-			if err != nil {
-				return Result{}, err
-			}
-			rel, err := repositoryPath(r.Root, resolved)
-			if err != nil {
-				return Result{}, err
-			}
-			paths = append(paths, rel)
-		}
-	}
-	paths = unique(paths)
-	snapshot, err := compose(r, paths, closePath)
+	snapshot, err := compose(r, paths)
 	if err != nil {
 		return Result{}, err
 	}
@@ -458,7 +458,12 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 		return Result{}, destinationUpdateFailure(r.Root, r.Destination, r.Expected, err)
 	}
 	if err := o.reconcile(r, paths, snapshot); err != nil {
-		return Result{Base: r.Expected, Commit: commit, Tree: tree}, fmt.Errorf("landed-but-checkout-incomplete: %w", err)
+		var failed *ReconcileError
+		remainder := &PublishedUnreconciledError{Commit: commit, Paths: paths, Err: err}
+		if errors.As(err, &failed) {
+			remainder.Path = failed.Path
+		}
+		return Result{Base: r.Expected, Commit: commit, Tree: tree}, remainder
 	}
 	return Result{Base: r.Expected, Commit: commit, Tree: tree}, nil
 }
@@ -518,9 +523,9 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 			return ReviewedResult{}, fmt.Errorf("transition staged spec: %w", err)
 		}
 	}
-	// The close consumes the tickets-only folder from the published tree with the same
-	// index removal the commit path composes. A folder the destination already removed
-	// lists no entries, so the removal writes the composed tree back unchanged.
+	// The close consumes the tickets-only folder from the published tree by index
+	// removal. A folder the destination already removed lists no entries, so the removal
+	// writes the composed tree back unchanged.
 	if r.ClosePath != "" {
 		if tree, err = removeTreeFolder(r.Root, tree, r.ClosePath); err != nil {
 			return ReviewedResult{}, fmt.Errorf("close tickets-only folder: %w", err)
@@ -660,8 +665,8 @@ func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMo
 	})
 }
 
-// removeTreeFolder writes baseTree without every entry beneath rel. The removal itself
-// is removeIndexTree's, so the composed close and the commit-path close stay one fact.
+// removeTreeFolder writes baseTree without every entry beneath rel, through
+// removeIndexTree's one spelling of the removal.
 func removeTreeFolder(root, baseTree, rel string) (string, error) {
 	return editTree(root, baseTree, func(idx string) error { return removeIndexTree(root, idx, rel) })
 }
@@ -790,7 +795,7 @@ func gitlinkAt(root, expected, path string) bool {
 	return false
 }
 
-func compose(r Request, paths []string, closePath string) (composedSnapshot, error) {
+func compose(r Request, paths []string) (composedSnapshot, error) {
 	dir, err := os.MkdirTemp("", "bench-landing-index-")
 	if err != nil {
 		return composedSnapshot{}, err
@@ -807,27 +812,7 @@ func compose(r Request, paths []string, closePath string) (composedSnapshot, err
 			}
 		}
 	}
-	snapshot := composedSnapshot{closePath: closePath}
-	if closePath != "" {
-		if err := removeIndexTree(r.Root, idx, closePath); err != nil {
-			return composedSnapshot{}, err
-		}
-	} else if r.Spec != "" {
-		resolved, content, fileMode, err := transitionedSpec(r.Root, r.Spec)
-		if err != nil {
-			return composedSnapshot{}, err
-		}
-		rel, _ := repositoryPath(r.Root, resolved)
-		blob, err := outputInput(r.Root, content, "hash-object", "-w", "--stdin")
-		if err != nil {
-			return composedSnapshot{}, err
-		}
-		if err := indexRun(r.Root, idx, "update-index", "--add", "--cacheinfo", gitRegularFileMode(fileMode)+","+blob+","+rel); err != nil {
-			return composedSnapshot{}, err
-		}
-		snapshot.specPath = resolved
-		snapshot.specPermissions = fileMode
-	}
+	var snapshot composedSnapshot
 	snapshot.tree, err = indexOutput(r.Root, idx, "write-tree")
 	return snapshot, err
 }
@@ -839,61 +824,34 @@ func gitRegularFileMode(mode os.FileMode) string {
 	return "100644"
 }
 
-func transitionedSpec(root, slug string) (string, []byte, os.FileMode, error) {
-	resolved, err := spec.CheckStaged(root, slug)
-	if err != nil {
-		return "", nil, 0, err
-	}
-	content, err := os.ReadFile(resolved)
-	if err != nil {
-		return "", nil, 0, err
-	}
-	info, err := os.Stat(resolved)
-	if err != nil {
-		return "", nil, 0, err
-	}
-	content, err = spec.Implemented(content)
-	if err != nil {
-		return "", nil, 0, err
-	}
-	return resolved, content, info.Mode().Perm(), nil
-}
-
 func reconcile(r Request, paths []string, snapshot composedSnapshot) error {
 	for _, path := range paths {
 		literal := ":(literal)" + path
+		failed := func(err error) error { return &ReconcileError{Path: path, Err: err} }
 		if err := run(r.Root, "restore", "--source="+snapshot.tree, "--staged", "--worktree", "--", literal); err != nil {
 			if resetErr := run(r.Root, "reset", "-q", r.Expected, "--", literal); resetErr != nil {
-				return err
+				return failed(err)
 			}
 			if retryErr := run(r.Root, "restore", "--source="+snapshot.tree, "--staged", "--worktree", "--", literal); retryErr != nil {
-				return retryErr
+				return failed(retryErr)
 			}
 		}
 		if err := run(r.Root, "clean", "-f", "-d", "--", literal); err != nil {
-			return err
+			return failed(err)
 		}
 		if err := run(r.Root, "diff", "--quiet", "--cached", snapshot.tree, "--", literal); err != nil {
-			return err
+			return failed(err)
 		}
 		if err := run(r.Root, "diff", "--quiet", "--ignore-submodules=dirty", snapshot.tree, "--", literal); err != nil {
-			return err
+			return failed(err)
 		}
 		untracked, err := output(r.Root, "ls-files", "--others", "--exclude-standard", "--", literal)
 		if err != nil {
-			return err
+			return failed(err)
 		}
 		if untracked != "" {
-			return fmt.Errorf("named path %q still has untracked content", path)
+			return failed(errors.New("named path still has untracked content"))
 		}
-	}
-	if snapshot.closePath != "" {
-		if err := os.RemoveAll(filepath.Join(r.Root, filepath.FromSlash(snapshot.closePath))); err != nil {
-			return fmt.Errorf("remove closed spec folder %q: %w", snapshot.closePath, err)
-		}
-	}
-	if snapshot.specPath != "" {
-		return os.Chmod(snapshot.specPath, snapshot.specPermissions)
 	}
 	return nil
 }

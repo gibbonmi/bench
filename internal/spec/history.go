@@ -2,7 +2,7 @@
 // incantation `/bench-debug` and `/bench-write-spec` both name: `git log
 // --grep=spec-retire: <slug>` plus `git log --diff-filter=D -- specs/<slug>.md`. It
 // merges the two into one compiled, deduped, AXI-conformant query. It never writes. It
-// is a read-only sibling of Flip and retireCommand, and shares their slugOf/specArg
+// is a read-only sibling of retireCommand, and shares its slugOf/specArg
 // argument convention.
 package spec
 

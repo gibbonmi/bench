@@ -1,0 +1,1 @@
+- 2026-08-23  worktree.landedIncomplete applies sanitize.Controls after ShellQuote on the next= restore; a path with a backslash pastes wrong. Found during FT113; commit's restoreNext skips Controls because the value is line-safe by construction.

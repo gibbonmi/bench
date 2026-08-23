@@ -1,16 +1,15 @@
-// Package spec owns spec-file addressing and the two spec-lifecycle operations. Flip
-// implements the `bench spec implemented <slug>` status flip, and retire implements
-// the `bench spec retire <slug>` deletion. Resolve is the one source of the
+// Package spec owns spec-file addressing and the two spec-lifecycle operations.
+// Retire implements the `bench spec retire <slug>` deletion, and history reports the
+// commits that retired or deleted a spec. Resolve is the one source of the
 // spec-argument convention: path-first, then a specs/<slug>/spec.md fallback.
-// `bench coverage`, `bench commit --spec`, and both operations resolve their argument
-// through it.
+// `bench coverage` and both operations resolve their argument through it.
 //
-// Flip is the single source of the status-line flip. It turns exactly one line-start
-// `Status: staged` into the retirement-detector form `Status: implemented`, preserving
-// every other byte, and `bench commit` composes it. AwaitsRetirement is the source of
-// the merged-implemented predicate — the `implemented` twin of the staged form —
-// shared by retire's validation and the `bench status` specs-awaiting-retirement
-// counter.
+// Implemented is the single source of the status-line flip. It derives the bytes that
+// turn exactly one line-start `Status: staged` into the retirement-detector form
+// `Status: implemented`, preserving every other byte, and `bench worktree land --spec`
+// — the one author of the flip — composes them. AwaitsRetirement is the source of the
+// merged-implemented predicate — the `implemented` twin of the staged form — shared by
+// retire's validation and the `bench status` specs-awaiting-retirement counter.
 package spec
 
 import (
@@ -230,65 +229,8 @@ func isDir(path string) bool {
 	return err == nil && fi.IsDir()
 }
 
-// locateStaged resolves arg — base anchors the spec fallback — and requires exactly
-// one line-start `Status: staged`. It returns the resolved path and the implemented
-// bytes, and it never writes. The error names the file and the reason: not-found,
-// not-readable, no `Status: staged` line (missing or already implemented), or more
-// than one.
-func locateStaged(base, arg string) (resolved string, implemented []byte, err error) {
-	content, resolved, tried, ok, readErr := Resolve(base, arg)
-	if readErr != nil {
-		return "", nil, fmt.Errorf("spec not readable: %s: %v", resolved, readErr)
-	}
-	if !ok {
-		return "", nil, fmt.Errorf("spec not found: %s", strings.Join(tried, ", "))
-	}
-	implemented, matches := deriveImplemented(content)
-	if matches == 0 {
-		return "", nil, fmt.Errorf("no `Status: staged` line in %s (already implemented, or missing)", resolved)
-	}
-	if matches > 1 {
-		return "", nil, fmt.Errorf("%d `Status: staged` lines in %s (expected exactly one)", matches, resolved)
-	}
-	return resolved, implemented, nil
-}
-
-// CheckStaged resolves arg and confirms it carries exactly one line-start `Status:
-// staged`, returning the resolved path. It never writes. `bench commit --spec` runs it
-// as fail-fast validation before the gate. This rejects a bad or already-implemented
-// spec before the gate burns rather than after Flip runs on a green tree. Flip
-// re-checks the file, which may have changed, before it rewrites, so the two share
-// locateStaged's one validation rule.
-func CheckStaged(base, arg string) (resolved string, err error) {
-	resolved, _, err = locateStaged(base, arg)
-	return resolved, err
-}
-
-// Flip resolves arg — base anchors the specs/<slug>/spec.md fallback — and requires
-// exactly one line-start `Status: staged`. It rewrites that one line to `Status:
-// implemented` in place, preserving every other byte, including a missing final
-// newline. It writes the file and returns the resolved path. It edits the file only
-// and never stages it. The error names the file and the reason: not-found,
-// not-readable, no `Status: staged` line (missing or already implemented), or more
-// than one — so a typo or a re-run is non-destructive.
-func Flip(base, arg string) (resolved string, err error) {
-	resolved, out, err := locateStaged(base, arg)
-	if err != nil {
-		return "", err
-	}
-	mode := os.FileMode(0o644)
-	if fi, statErr := os.Stat(resolved); statErr == nil {
-		mode = fi.Mode().Perm()
-	}
-	if err := os.WriteFile(resolved, out, mode); err != nil {
-		return "", fmt.Errorf("write %s: %v", resolved, err)
-	}
-	return resolved, nil
-}
-
-// Implemented derives the exact bytes that Flip would write without mutating a
-// checkout. Prospective composition uses it, so the caller authorizes lifecycle bytes
-// before publication.
+// Implemented derives the flipped bytes without mutating a checkout. Prospective
+// composition uses it, so the caller authorizes lifecycle bytes before publication.
 func Implemented(content []byte) ([]byte, error) {
 	implemented, matches := deriveImplemented(content)
 	if matches > 1 {
@@ -316,10 +258,9 @@ func deriveImplemented(content []byte) ([]byte, int) {
 	return bytes.Join(lines, []byte("\n")), matches
 }
 
-// Command implements `bench spec <subcommand> <slug>`. `implemented` flips the status
-// line through Flip. `retire` deletes a merged spec and its review pickup. `history`
-// reports the commits that retired or deleted it — a read-only AXI query; see
-// history.go.
+// Command implements `bench spec <subcommand> <slug>`. `retire` deletes a merged spec
+// and its review pickup. `history` reports the commits that retired or deleted it — a
+// read-only AXI query; see history.go.
 //
 // The slug's specs/<slug>/spec.md fallback is anchored at the repo root, so it
 // resolves from any cwd inside the repo, while a path argument stays cwd-relative. A
@@ -328,11 +269,9 @@ func deriveImplemented(content []byte) ([]byte, int) {
 // file and the reason.
 func Command(args []string) (string, int) {
 	if len(args) == 0 {
-		return toon.Usage("bench spec", "expected a subcommand: implemented, retire, history") + "\n", 2
+		return toon.Usage("bench spec", "expected a subcommand: retire, history") + "\n", 2
 	}
 	switch args[0] {
-	case "implemented":
-		return implementedCommand(args[1:])
 	case "retire":
 		return retireCommand(args[1:])
 	case "history":
@@ -379,20 +318,6 @@ func RepoBase() string {
 	return ""
 }
 
-// implementedCommand runs `bench spec implemented <slug>`: it flips the one `Status: staged`
-// line to `Status: implemented`. A resolve/validate/write failure exits 1 naming the file.
-func implementedCommand(rest []string) (string, int) {
-	arg, out, code, ok := specArg("bench spec implemented", "usage: bench spec implemented <spec.md | slug>\n", rest)
-	if !ok {
-		return out, code
-	}
-	resolved, err := Flip(RepoBase(), arg)
-	if err != nil {
-		return toon.Errorf(err.Error(), "pass a spec with a single `Status: staged` line") + "\n", 1
-	}
-	return fmt.Sprintf("spec implemented: %s\n", resolved), 0
-}
-
 // retireCommand runs `bench spec retire <slug>`. On a merged-implemented spec, it
 // deletes the review pickup when present, the tickets, the spec file, and the
 // complete folder, and it prints what it removed plus the judgment duties that
@@ -401,6 +326,10 @@ func implementedCommand(rest []string) (string, int) {
 // refuses when it is not merged-implemented: staged, or implemented only in the
 // working tree and not yet at HEAD. An unknown slug refuses, and so does an orphaned
 // review pickup with no spec.
+//
+// The printed next: line names the board remainder. It reads the spec's Roadmap:
+// value, through metadata, before any deletion happens, and roadmapRemainder renders
+// the exact row and detail-file clause from that value.
 func retireCommand(rest []string) (string, int) {
 	arg, out, code, ok := specArg("bench spec retire", "usage: bench spec retire <spec.md | slug>\n", rest)
 	if !ok {
@@ -464,8 +393,29 @@ func retireCommand(rest []string) (string, int) {
 	} else {
 		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, resolved))
 	}
-	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row, commit as `spec-retire: %s`\n", slug)
+	_, roadmapID := metadata(content)
+	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row%s, commit as `spec-retire: %s`\n", roadmapRemainder(base, roadmapID), slug)
 	return b.String(), 0
+}
+
+// roadmapRe matches a well-formed Roadmap: value: `FT` followed by one or more ASCII
+// digits, nothing else. metadata already trims surrounding whitespace, including NBSP.
+var roadmapRe = regexp.MustCompile(`^FT[0-9]+$`)
+
+// roadmapRemainder renders the retire next: line's board-remainder clause. A
+// well-formed roadmapID names the exact ROADMAP.md row, and, when
+// roadmap/<roadmapID>.md exists as a regular file under base, names that path too.
+// Any other value, including empty, falls back to the generic `FT<n>` placeholder
+// naming both the row and its detail file.
+func roadmapRemainder(base, roadmapID string) string {
+	if !roadmapRe.MatchString(roadmapID) {
+		return " FT<n> and its roadmap/FT<n>.md detail file"
+	}
+	detail := filepath.Join(base, "roadmap", roadmapID+".md")
+	if fileExists(detail) {
+		return fmt.Sprintf(" %s and its roadmap/%s.md detail file", roadmapID, roadmapID)
+	}
+	return " " + roadmapID
 }
 
 // folderResidue identifies the terminal interrupted-retire state: a folder remains but

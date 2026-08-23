@@ -460,7 +460,6 @@ var keptRoutes = []struct {
 	{[]string{"guards", "--help"}, "usage: bench guards"},
 	{[]string{"idea", "--help"}, "usage: bench idea"},
 	{[]string{"roadmap", "--help"}, "usage: bench roadmap"},
-	{[]string{"spec", "implemented", "--help"}, "usage: bench spec implemented"},
 	{[]string{"spec", "retire", "--help"}, "usage: bench spec retire"},
 	{[]string{"spec", "history", "--help"}, "usage: bench spec history"},
 }
@@ -612,5 +611,19 @@ func TestSkillsIndexDistinguishesMissingGitFromOutsideRepository(t *testing.T) {
 				t.Fatalf("skills-index with PATH=%q = stdout=%q stderr=%q exit=%d, want stdout=%q exit=1", tc.path, result.stdout, result.stderr, result.code, tc.stdout)
 			}
 		})
+	}
+}
+
+// TestHelpSpecRowsNameRetireAndHistoryOnly pins FA9: the retired subcommand keeps no
+// help row, while the two surviving spec rows stay advertised.
+func TestHelpSpecRowsNameRetireAndHistoryOnly(t *testing.T) {
+	help := renderCommandHelp()
+	if strings.Contains(help, "bench spec implemented") {
+		t.Errorf("bench help still advertises a retired subcommand:\n%s", help)
+	}
+	for _, want := range []string{"bench spec retire <slug>", "bench spec history <slug>"} {
+		if !strings.Contains(help, want) {
+			t.Errorf("bench help is missing %q:\n%s", want, help)
+		}
 	}
 }

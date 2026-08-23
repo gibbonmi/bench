@@ -2,35 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` once this spec phase lands; the source is the `ft113-commit-spec-residuals` worktree on base `d3390d20`
-Spec: `specs/landing-authors-the-flip/spec.md`, `Status: staged`, five tickets under `specs/landing-authors-the-flip/tickets/`
-Gate: green on `d3390d20` (2026-08-23)
+Branch: `main` once the landing runs; the source is the `ft113-build` worktree (request id in the scratchpad of the building session), base `0e17d428`
+Spec: `specs/landing-authors-the-flip/spec.md`, `Status: staged`, five tickets built
+Gate: green on every ticket commit (2026-08-23)
 
 ## State
 
-The FT113 spec is staged and awaits the reviewer's sign-off on the approval
-table. The review round (opus / high, read-only) ran once; the author folded
-its eight blocking findings and the spec names them in its verification log.
-`bench coverage --check` passes with 24 rows, and the conformance package is
-green on the worktree.
+The FT113 build is implemented in the `ft113-build` integration worktree. Ticket
+commits, in order: `624ffb5b` (Group C), `9d84030a` (Group D, merged as
+`41be490c`), `66bbc334` (Group A commit route), `c2e7951c` (Group A spec verb),
+`0b29bd9c` (Group B, merged as `42eb3bec`). The `/bench-implement-spec --full`
+run stands at the review boundary.
+
+Open flags for the reviewer:
+
+- the spec fence list gained `internal/spec/history.go`,
+  `internal/sanitize/sanitize.go`, and `internal/worktree/worktree.go`: the
+  build exported `sanitize.LineSafe` as the one line-safe predicate and
+  fixed a stale comment
+- `capture/IDEAS.md` holds one parked idea about the landing verb's `next=`
+  sanitizer
 
 Closed decisions, dated 2026-08-23:
 
 - `bench worktree land --spec` is the one author of the flip and the tickets-only close
-- `bench commit` drops `--spec`, and `bench spec implemented` retires
+- `bench commit` has no `--spec`, and `bench spec implemented` is gone
 - a retirement that does not complete names its remainder, with no retry verb
 - Bench does not remove the board row or the detail file
 
-Ticket order: `retire-names-the-board-remainder.md` lands first on its own
-gate; then `retire-the-commit-route-flip-and-close.md`,
-`retire-bench-spec-implemented.md`, `commit-exit-3-names-the-remainder.md`,
-and `guidance-names-one-author.md` in blocker order. The build runs in a
-fresh mid-tier session in a bench worktree and lands through `bench worktree
-land --spec landing-authors-the-flip`.
-
 ## Next command
 
-`/bench-implement-spec` — specs/landing-authors-the-flip/spec.md
+`/bench-review-implementation` — specs/landing-authors-the-flip/spec.md over base `0e17d428` and the `ft113-build` source tip; then `bench worktree land --spec landing-authors-the-flip`; then `/bench-final-check`
 
 ## Shape
 
