@@ -134,8 +134,8 @@ func TestGreenLandingPublishesTheNamedPath(t *testing.T) {
 	}
 }
 
-// FA8: specs/<slug> is a named path like any other. The folder a landing once closed
-// now publishes its files and reconciles, so the checkout is clean afterwards.
+// FA8: specs/<slug> is a named path like any other. A tickets-only folder named as
+// a path publishes its files and reconciles, so the checkout is clean afterwards.
 func TestGreenLandingPublishesATicketsOnlyFolderNamedAsAPath(t *testing.T) {
 	root, before := landingRepo(t, 0, func(t *testing.T, root string) {})
 	runGit(t, root, "reset", "-q", "--hard", "HEAD")
