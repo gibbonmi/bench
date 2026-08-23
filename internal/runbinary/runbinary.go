@@ -197,6 +197,9 @@ func Build(ctx context.Context, sourceRoot, output string) error {
 }
 
 func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
+	if _, err := exec.LookPath("go"); err != nil {
+		return errors.New("Go is absent from PATH; prepend an executable Go toolchain directory to PATH and retry")
+	}
 	cmd := exec.Command("bash", filepath.Join(sourceRoot, "scripts", "go-build.sh"), sourceRoot, output)
 	cmd.Dir = sourceRoot
 	cmd.Env = buildEnvironment(os.Environ())
