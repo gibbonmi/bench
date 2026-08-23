@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "Charge `craft-tickets` and write the breakdown under `specs/<slug>/tickets/`. Carry",
+    "new": "Write a ticket breakdown wherever it fits. Carry"
+  }
+]

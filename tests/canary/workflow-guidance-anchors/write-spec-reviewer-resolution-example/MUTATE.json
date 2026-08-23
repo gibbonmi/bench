@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "For example,\n   `--reviewer top high` under Codex resolves `BENCH_CODEX_TOP` at high.",
+    "new": "Each\n   harness resolves its own column."
+  }
+]

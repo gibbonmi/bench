@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "A model id is an invocation error.",
+    "new": "A bound model id is accepted."
+  }
+]
