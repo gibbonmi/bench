@@ -2,23 +2,26 @@
 
 Repository: `d72c470fdf58bc0747305add9ff619f2-5880409cc8f500d39e38170e2485eef7` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/.bench/worktrees/bench-2826441890/d72c470fdf58bc0747305add9ff619f2-5880409cc8f500d39e38170e2485eef7`
-Branch: `bench/assign/d72c470fdf58bc0747305add9ff619f2/5880409cc8f500d39e38170e2485eef7` — retained integration tip `03a5f736` (tickets 01–06 landed), plus the uncommitted ticket-07 evidence work
+Branch: `bench/assign/d72c470fdf58bc0747305add9ff619f2/5880409cc8f500d39e38170e2485eef7` — HEAD `f19f592`, clean tree, 26 unpushed commits
 Spec: `specs/worktree-test-latency/spec.md` (Status: staged)
-Frozen review base: `4a8aa16a`
+Gate: green at `4d30573` — current
 
 ## State
 
-Tickets 01–06 are landed on the integration tip. The suite selects one Bench
-executable and resolves effect inputs explicitly. Three pure packages own
-landing, lifecycle, and reclaim policy, and one harness runs serial
+All seven tickets are landed on the integration tip. The suite selects one
+Bench executable and resolves effect inputs explicitly. Three pure packages
+own landing, lifecycle, and reclaim policy, and one harness runs serial
 proof-backed journeys.
 
-Ticket 07 evidence is written and uncommitted:
-`specs/worktree-test-latency/evidence/demand-reduction.md`, one `CHANGELOG.md`
-entry, and this handoff. Measured at `03a5f736`: package spans 58.022, 56.779,
-and 56.898 seconds (baseline median 125.790), whole suite 70.122 seconds. The
-publication connection wait was not visible; the evidence claims nothing from
-it.
+The evidence is committed at
+`specs/worktree-test-latency/evidence/demand-reduction.md`, with the coverage
+ledger beside it and one `CHANGELOG.md` entry. Measured at `03a5f736`:
+package spans 58.022, 56.779, and 56.898 seconds (baseline median 125.790),
+whole suite 70.122 seconds. The publication connection wait was not visible;
+the evidence claims nothing from it.
+
+The implementation phase is closed. The semantic review runs next over the
+frozen base `4a8aa16a` and the source tip.
 
 These decisions stay closed: no `t.Parallel`, no scheduler, `-count=1` and the
 one ordinary gate driver retained, real Git kept at representative journeys,
