@@ -12,6 +12,12 @@ The clean pre-FT113 package run recorded during the initiating diagnosis was
 137.86 seconds wall / 130.39 seconds reported by Go. The coordinator's later
 clean delegate gate reported `internal/worktree` at 136.319 seconds.
 
+Three sequential clean gates during the prerequisite landing repair and the
+worktree-rule enforcement reported `internal/worktree` at 130.013, 125.779,
+and 125.790 seconds. Their median is 125.790 seconds. The commits differ by
+those small repairs, so this confirms the current magnitude without replacing
+the first spec's exact-subject before measurement.
+
 A JSON timing sample reported 167.41 seconds wall, 157.548 seconds from Go, and
 65.98 seconds CPU (39% CPU/wall). It overlapped another delegate's Go
 verification and the checkout advanced during the run. That result demonstrates

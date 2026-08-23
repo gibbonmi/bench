@@ -101,7 +101,8 @@ publication wait.
 ### Answer
 
 Resolved 2026-08-23. The invocation census is
-`decisions/assets/worktree-test-invocation-census.md`. There is no nested
+`specs/worktree-test-latency/decisions/assets/worktree-test-invocation-census.md`.
+There is no nested
 `go test`, recursive whole gate, or one fixed wait inside `internal/worktree`.
 The topology has 12 repeated selected-binary builds. They expand to 12
 `go build` and 12 seal-producing `go list` calls. Those build-bearing tests
@@ -314,7 +315,7 @@ into arbitrary red gates.
 - Path: `decisions/gate-concurrency.md`
   Supports: #5 and #6's closed product-budget and no-weakening constraints.
   Drift: re-read if the machine-wide budget owner or canary arithmetic changes.
-- Path: `decisions/assets/worktree-test-invocation-census.md`
+- Path: `specs/worktree-test-latency/decisions/assets/worktree-test-invocation-census.md`
   Supports: #7's process topology, timing attribution, historical comparison, and the factual premises of #3, #5, and #6.
   Drift: re-run the clean timing census after the first demand-reduction spec lands; re-count if worktree test helpers, run-binary ownership, or publication transport changes first.
 - URL: `https://pkg.go.dev/cmd/go#hdr-Test_packages`
