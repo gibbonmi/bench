@@ -1,8 +1,8 @@
 # Session handoff
 
-Repository: `dcb9a3236bed02ce621939bf4d8821b5-fa4b747ff712a5b67f4f226c573d84e5` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/dcb9a3236bed02ce621939bf4d8821b5-fa4b747ff712a5b67f4f226c573d84e5`
-Branch: `bench/assign/dcb9a3236bed02ce621939bf4d8821b5/fa4b747ff712a5b67f4f226c573d84e5` — HEAD `5f4796d`, 4 dirty paths, 22 unpushed commits
+Repository: `bb58d4b8d4aa5ed80918cccb02fff107-e1075dc2c4acd378f8872299228f6f27` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/bb58d4b8d4aa5ed80918cccb02fff107-e1075dc2c4acd378f8872299228f6f27`
+Branch: `bench/assign/bb58d4b8d4aa5ed80918cccb02fff107/e1075dc2c4acd378f8872299228f6f27` — HEAD `da751af`, 1 dirty path, 24 unpushed commits
 Spec: `specs/worktree-test-latency/spec.md` (Status: staged)
 Gate: no gate has run.
 
