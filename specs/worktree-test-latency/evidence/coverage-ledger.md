@@ -12,8 +12,8 @@ Base: e00b74e1. Package under contraction: `internal/worktree`.
 
 | removed test (file) | disposition | surviving test |
 |---|---|---|
-| TestExplicitEligibilityOutcomeMatrix (eligibility_test.go) | pure table | lifecyclepolicy TestExplicitDecisionTable, with the plan projection held by TestEligibilityVerdictProjectsWithoutSecondDecision |
-| TestAutomaticEligibilityOutcomeMatrix (eligibility_test.go) | pure table | lifecyclepolicy TestAutomaticDecisionTable, with fact translation held by the lifecycle fact adapters |
+| TestExplicitEligibilityOutcomeMatrix (eligibility_test.go) | pure table | lifecyclepolicy TestExplicitDecisionTable, with the plan projection held by TestEligibilityVerdictProjectsWithoutSecondDecision; its combined-fact cases "ignored/declaration-overrides-marker-malformed", "lease/live-overrides-lock-mismatch", and "ignored/undeclared-overrides-live-lease" are the precedence survivors of the EX3, EX5, and EX6 subtests |
+| TestAutomaticEligibilityOutcomeMatrix (eligibility_test.go) | pure table | lifecyclepolicy TestAutomaticDecisionTable, with fact translation held by the lifecycle fact adapters; its combined-fact cases "lease/live-overrides-everything" and "eligibility/retain-landed-swap" are the precedence survivors |
 | TestReleaseMalformedLeaseRetainsAsUncertain (lifecycle_policy_test.go) | adapter | TestLifecycleLeaseFactAdapterTranslatesRealLeases (malformed lease reads LeaseUnknown), verdict row in lifecyclepolicy TestExplicitDecisionTable |
 | TestReleaseNumericLeaseWithBadTimestampAndExtraFieldsRetainsAsUncertain (lifecycle_policy_test.go) | pure table | lifecyclepolicy TestLeaseOwnerPIDTable content partitions |
 | TestReleasePartialNumericLeaseRetainsAsUncertain (lifecycle_policy_test.go) | pure table | lifecyclepolicy TestLeaseOwnerPIDTable content partitions |
@@ -62,6 +62,14 @@ and exited non-zero. Restoring the line returned the package to green.
 `os.Chdir` was appended to `snapshot_test.go`; `TestSerialJourneyHarnessCensus`
 failed naming both sites and the required harness route. Removing the probe
 returned the census to green.
+
+**PR1 — explicit precedence repair red/green.** Recorded 2026-08-23. The
+repair added the three combined-fact cases above to
+`TestExplicitDecisionTable`. A temporary probe then short-circuited the
+ignored/build-output block in `DecideExplicit` to skip a verdict that already
+retains. The probe turned "ignored/declaration-overrides-marker-malformed"
+and "ignored/undeclared-overrides-live-lease" red with the earlier block's
+reason. The restore returned the package to green.
 
 **NP1 — concurrency census.** A source sweep over the changed
 `internal/worktree/` tree finds no `t.Parallel` call and no scheduler import

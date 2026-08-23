@@ -21,16 +21,8 @@ Count: 0. Clean. The per-row audit found all 13 rows covered.
 
 ## Coverage
 
-Count: 2. Worst issue: lost precedence coverage in the explicit decision table.
+Count: 1. Worst issue: the no-op ledger wording on symlink shapes.
 
-- **Lost precedence coverage.** The deleted `TestExplicitEligibilityOutcomeMatrix`
-  pinned cross-block precedence with competing facts (its EX3, EX5, and EX6
-  subtests). Every case of `TestExplicitDecisionTable` in
-  `internal/worktree/lifecyclepolicy/lifecyclepolicy_test.go` sets one fact,
-  so a block reorder in `DecideExplicit` passes every current test. The
-  automatic table already carries combined-fact cases; the explicit table
-  does not. Disposition: **auto-fix** — add combined-fact cases that
-  reproduce the EX3, EX5, and EX6 precedence verdicts.
 - **Ledger wording on symlink shapes.** The ledger labels the deleted
   symlink test "adapter", but the adapter test covers only the key-level
   symlink with a real link. The shared `lstatShape` helper covers the other

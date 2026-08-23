@@ -80,6 +80,23 @@ func TestExplicitDecisionTable(t *testing.T) {
 			f.MatchedAssignment.Recovery = []intent.Recovery{{Ref: "refs/bench/r1"}}
 		}, ActionRecoverRemove, "", ""},
 		{"eligibility/unsafe-target-override", func(f *ExplicitFacts) { f.UnsafeTarget = true }, ActionRetain, ReasonUncertain, "target contains unsafe control bytes"},
+		// The three combined-fact cases below pin cross-block precedence in the
+		// explicit decision: two conflicting facts are set together, and the
+		// later block's reason must win. They carry forward the EX3, EX5, and
+		// EX6 verdicts of the deleted real-Git outcome matrix, so a block
+		// reorder in DecideExplicit turns at least one of them red.
+		{"ignored/declaration-overrides-marker-malformed", func(f *ExplicitFacts) {
+			f.MarkerErr = errors.New("owner marker is malformed")
+			f.BuildOutputErr = errors.New("bad json")
+		}, ActionRetain, ReasonMalformed, "build-output declaration is malformed"},
+		{"lease/live-overrides-lock-mismatch", func(f *ExplicitFacts) {
+			f.RegistrationLockReason = "foreign reason"
+			f.LeasePresent, f.LeaseState = true, LeaseLive
+		}, ActionRetain, ReasonLiveLease, "assignment has a live lease"},
+		{"ignored/undeclared-overrides-live-lease", func(f *ExplicitFacts) {
+			f.LeasePresent, f.LeaseState = true, LeaseLive
+			f.IgnoredCount = 1
+		}, ActionRetain, ReasonIgnored, "ignored residuals require --discard-ignored"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
