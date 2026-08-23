@@ -161,13 +161,27 @@ Accepted findings commit there on the same cadence. From the destination, `bench
 composes and gates that pair before publication and source release. Executable
 help owns its flags and positional grammar.
 
-An abbreviated commit identity expands to the exact commit before any proof
-runs. One preflight prints every refusal the caller must clear, and each
-refusal names its paths. A stale Bench executable is rebuilt, and the landing
-re-runs under it. A conflicted `capture/` path composes by policy: the source
-wins the session handoff, and the destination wins every other capture file.
-The landing discloses each resolution, and `capture/` is authorized for every
-reviewed range.
+The spec is optional on the landing and on its resume: a spec-less phase lands
+with no `--spec`, and a tickets-only `--spec` closes its folder. Every phase
+lands this way; the rule is guidance, not a hook, so `bench commit` still works
+on any branch. An abbreviated commit identity expands to the exact commit
+before any proof runs. One preflight prints every refusal the caller must
+clear, and each refusal names its paths. A stale Bench executable is rebuilt,
+and the landing re-runs under it.
+
+A conflicted `capture/` path composes by a rule table with three verbs:
+`source`, `destination`, and `union`. `capture/session-handoff.md` takes
+`source`; `capture/learnings.md` and `capture/IDEAS.md` take `union`; every
+other `capture/` path takes `destination`. The landing discloses each
+resolution, and `capture/` is authorized for every reviewed range. Any other
+conflict refuses and names every path, and its `next=` names the repair in
+order:
+
+- merge the destination into the source worktree with raw Git, because no
+  Bench verb moves a retained worktree onto the destination yet (FT238)
+- commit the repair with `bench commit`
+- review the new range
+- re-run the landing with the new source tip
 
 Its exit meanings follow the publication boundary:
 

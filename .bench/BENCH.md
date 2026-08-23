@@ -121,11 +121,16 @@ regression checks, then the gate.
 
 | Observable | Route |
 |---|---|
-| Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template), then implement it inline in this session — no breakdown-approval pause, write-delegate, or worktree. This table is the standing approval to skip the spec phase; gate and commit on green. |
+| Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template) in a bench worktree, then implement it inline in this session — no breakdown-approval pause, no write-delegate. This table is the standing approval to skip the spec phase; gate and commit on green. Land through `bench worktree land` with the tickets-only `--spec`; the landing closes the ticket folder. |
 | Either observable is false | Normal full workflow. |
 
-A reviewed spec-backed build lands from the destination with `bench worktree
-land`; `.bench/BENCH-reference.md` holds that landing shape.
+**Every phase runs in a bench worktree and lands through `bench worktree land`.**
+The landing is spec-less when the phase has no spec, and `main` receives
+writes only through landings. Merge composition is the landing primitive; a
+rebase rewrites the reviewed tip, so the workflow rejects it. This rule is
+guidance, not a hook: no hook refuses a commit on the default branch, and
+`bench commit` works on any branch. `.bench/BENCH-reference.md` holds the
+landing shape.
 
 **Fix, don't park.** A small defect you find mid-work is not roadmap work: the
 fix lands in the active workflow as its own commit. Park a fix to
