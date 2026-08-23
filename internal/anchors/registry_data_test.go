@@ -136,7 +136,8 @@ func TestDrainFlowRuleAnchorsRedOnRemoval(t *testing.T) {
 		{"RF26", "Dismiss an occurrence-only entry with one line of why.", ".agents/commands/bench-drain.md dropped the occurrence-only dismissal rule"},
 		{"RF26", "A new row needs a `Next:` token and a class before it opens.", ".agents/commands/bench-drain.md dropped the new-row rule: a Next: token and a class"},
 		{"RF27", "When the flow report shows a positive net delta, propose reducing moves in the next batch diff.", ".agents/commands/bench-drain.md dropped the positive-delta restructure rule"},
-		{"RF27", "build the item in this session (\"implement now\") by default; open a `ROADMAP.md` row only when the reviewer declines", ".agents/commands/bench-drain.md dropped the build-in-session default for a light-path item"},
+		{"RF27", "build the item in this session (\"implement now\") by default.", ".agents/commands/bench-drain.md dropped the build-in-session default for a light-path item"},
+		{"RF27", "Open a `ROADMAP.md` row only when the reviewer declines.", ".agents/commands/bench-drain.md dropped the roadmap-row fallback for a light-path item the reviewer declines"},
 	}
 
 	evaluate := func(t *testing.T, body string) []string {
@@ -163,7 +164,7 @@ func TestDrainFlowRuleAnchorsRedOnRemoval(t *testing.T) {
 		return b.String()
 	}
 
-	// Other rows of the group fire against this minimal tree; only the six rule rows are
+	// Other rows of the group fire against this minimal tree; only the seven rule rows are
 	// this test's subject, so both directions are read by membership.
 	full := evaluate(t, command(-1))
 	for _, r := range rules {
