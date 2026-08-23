@@ -1,6 +1,6 @@
 # Worktree fresh-test latency
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -100,11 +100,57 @@ publication wait.
 
 ### Answer
 
-— (open)
+Resolved 2026-08-23. The invocation census is
+`decisions/assets/worktree-test-invocation-census.md`. There is no nested
+`go test`, recursive whole gate, or one fixed wait inside `internal/worktree`.
+The topology has 12 repeated selected-binary builds. They expand to 12
+`go build` and 12 seal-producing `go list` calls. Those build-bearing tests
+start 55 private Bench commands.
+
+There are 123 static `newWorktreeRepo` call
+sites and hundreds of Git helper references whose table loops multiply
+execution.
+
+The package has 106 `t.Setenv`, 15 `t.Chdir`, two direct `os.Chdir`, and zero
+`t.Parallel` references. In the timing sample, 38 tests at or above one second
+contributed 99.45 seconds and the slowest single test was 12.27 seconds. The
+sample itself overlapped another Go verification and a moving checkout. Its
+167.41-second wall time is contention evidence, not a baseline. The independent
+clean gate observed `internal/worktree` at 136.319 seconds on the pre-FT113
+source. FT113 changed only 13 production lines in `worktree.go`, leaving the
+measured test topology intact.
+
+The historical 31.9-second whole test phase was a different floor:
+`internal/publication` spent 30.03 seconds waiting for a kernel connection retry
+against `127.0.0.1:1`. That uncontrolled wait remains present and must not be
+priced as acceptable worktree latency. The worktree repair therefore targets
+serialized process/filesystem churn; the publication wait is a separate bug.
+
+## #8: Is publication's uncontrolled 30-second wait a prerequisite bug?
+
+Blocked by: #7
+Type: Grill
+
+### Question
+
+The whole-suite latency target cannot honestly credit the kernel's connection
+retry to worktree architecture. Should the existing publication test become a
+separate `$bench-debug` repair? That repair would replace its background-context
+and default-client request before either worktree spec prices a whole-suite
+budget. The alternative is for this map to absorb that unrelated transport
+behavior.
+
+### Answer
+
+Yes: treat it as a separate prerequisite bug (reviewer, 2026-08-23).
+Repair publication's uncontrolled background-context/default-client request
+through `$bench-debug` before either worktree spec attaches a whole-suite
+timing budget. It is not part of the worktree specs, and no worktree change may
+hide it or claim its removal as worktree latency improvement.
 
 ## #3: What latency envelope counts as restored?
 
-Blocked by: #1, #7
+Blocked by: #1, #7, #8
 Type: Grill
 
 ### Question
@@ -118,7 +164,17 @@ nominal success.
 
 ### Answer
 
-— (open)
+Use the reference WSL host target recommended in the grill (reviewer,
+2026-08-23): across three fresh `go test -count=1` runs with normal
+`GOCACHE`/`GOMODCACHE`, an idle host, and no concurrent gates,
+`internal/worktree` has a median at or below 20 seconds and no run above 25
+seconds. After the separate publication repair lands, the whole suite has a
+median at or below 25 seconds. No run may exceed 35 seconds under the same
+conditions.
+
+The first spec records before/after demand measurements without pretending its
+seam extraction alone must reach the final number. The second spec must meet
+both envelopes without weakening `-count=1`.
 
 ## #4: Which behaviors still earn a real Git journey?
 
@@ -136,7 +192,18 @@ in-process facts behind those commands?
 
 ### Answer
 
-— (open)
+Retain real Git at each public command seam for behavior Git itself supplies
+(reviewer, 2026-08-23). Landing keeps representative publish/release,
+conflict/refusal-without-mutation, interrupted/resumed, and Git-dependent
+hostile-residue journeys. Lifecycle keeps native create/remove and actual Git
+registration and lock behavior. Pool/reclaim keeps journeys where a real
+process, lease file, registration, or worktree deletion determines the result.
+
+Each adapter that gathers repository facts gets focused real-Git coverage.
+Once those facts are typed, combinatorial ownership, lease, eligibility,
+ignored-output, age, and action partitions run in-process through the decision
+owner. A new policy partition does not earn another repository solely because
+its public caller ultimately uses Git.
 
 ## #5: How is parallel demand bounded after global state is removed?
 
@@ -153,7 +220,18 @@ new source of flakes.
 
 ### Answer
 
-— (open)
+Do not add a scheduler for this workload (reviewer, 2026-08-23). Keep every
+public journey that starts Git, Bench, Go, or another descendant process in one
+serial journey package. The landing, lifecycle, and pool/reclaim owner packages
+may use `t.Parallel` only for typed, in-process policy tests. Those tests start
+no descendants and mutate no process-global environment or working directory.
+
+This boundary avoids multiplying nested process demand while letting pure
+decision work overlap. Any future proposal to parallelize descendant-spawning
+journeys must reopen shaping, re-census the then-current workload, and adopt a
+measured shared product budget before introducing width. FT171's historical
+worker-by-`GOMAXPROCS` budget is precedent, not an active scheduler available
+to `internal/worktree`.
 
 ## #6: What regression budget becomes part of the oracle?
 
@@ -170,24 +248,32 @@ ordinary host variance produce arbitrary red gates.
 
 ### Answer
 
-— (open)
+Use the combined rule (reviewer, 2026-08-23). The ordinary gate hard-fails
+structural demand drift. Selected Bench binary construction has one owner and
+occurs once per top-level test run. Every test descendant start routes through
+the serial journey harness, which contains no `t.Parallel`. Tests outside it
+neither mutate process-global environment/CWD nor bypass their typed owner
+seams to start descendants. Each enforcement must be independently
+mutation-proven red without duplicating its production registry or parser.
+
+Wall time remains required acceptance evidence rather than an ordinary-host
+gate threshold. The second spec records three fresh reference-WSL runs and does
+not complete unless they meet #3's package and whole-suite envelopes. A miss
+reopens workload investigation; it does not authorize raising the limit or
+weakening `-count=1`. This combines a deterministic everyday oracle with a
+host-controlled slow-package regression budget without turning machine noise
+into arbitrary red gates.
 
 ## Not yet specified
 
-- The post-reduction timing distribution; it cannot be measured before the first
-  demand-reduction implementation exists.
-- The restored latency envelope; #7 must first separate nested work, useful CPU,
-  and intentional waits in the current and historical runs.
-- Exact package names and exported interfaces. The reviewer fixed the three
-  responsibility families, while spec authoring owns their engineering seams
-  once the fidelity and slicing decisions close.
-
 ## Spec-writer discretion
 
-- Reversible helper names and file placement inside each reviewer-approved
+- Exact package, interface, helper, and file names inside each reviewer-approved
   responsibility owner, provided no new public behavior or package cycle appears.
-- The exact bounded worker primitive, if #5 authorizes one and the selected limit
-  remains derived from the closed machine-wide resource owner.
+- How the first spec groups and presents its required post-reduction timing
+  distribution, provided the raw reference-host measurements remain reproducible.
+- Whether a pure owner test parallelizes at its top level or within subtests,
+  provided it obeys #5's no-descendant and no-process-global-state boundary.
 
 ## Out of scope
 
@@ -228,6 +314,9 @@ ordinary host variance produce arbitrary red gates.
 - Path: `decisions/gate-concurrency.md`
   Supports: #5 and #6's closed product-budget and no-weakening constraints.
   Drift: re-read if the machine-wide budget owner or canary arithmetic changes.
+- Path: `decisions/assets/worktree-test-invocation-census.md`
+  Supports: #7's process topology, timing attribution, historical comparison, and the factual premises of #3, #5, and #6.
+  Drift: re-run the clean timing census after the first demand-reduction spec lands; re-count if worktree test helpers, run-binary ownership, or publication transport changes first.
 - URL: `https://pkg.go.dev/cmd/go#hdr-Test_packages`
   Supports: #1 and #5's `-count=1`, package scheduling, and `t.Parallel` semantics; fetched 2026-08-23.
   Drift: mutable Go documentation; re-verify if the repository's declared toolchain changes from Go 1.25.
