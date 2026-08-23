@@ -16,11 +16,10 @@ conformance checks.
 ## Exit handoff
 
 Close by reporting the applicable oracle result plainly. A reviewed spec's
-published `bench worktree land` commit is the `Status: implemented` author. It
-gets no second gate or landing mutation afterward. Do not re-run `bench gate`
+published `bench worktree land` commit is the only `Status: implemented` author.
+It gets no second gate or landing mutation afterward. Do not re-run `bench gate`
 over its unchanged tree.
 
-Do not run `bench spec implemented` on top of it.
 Report the reviewed source pair, the landing commit, and the retained exact
 green evidence. Then capture the retro below.
 
@@ -145,6 +144,10 @@ The commit already is the gate run; the gate reuses a fresh green verdict for
 the identical tree and never re-pays it. Standalone `bench gate` has two jobs
 here: report the honest no-op, when nothing is left to commit, and diagnose a
 red run.
+
+Exit 3 means the commit is published but the checkout did not reconcile. Paste
+the `next=` restore command from the `committed{...}` record to repair the
+checkout.
 
 The gate itself is an executable `.bench/gate.sh` when present. Otherwise it
 is the `$BENCH_GATE` command string. Otherwise it is stack auto-detect:
