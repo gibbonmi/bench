@@ -2,24 +2,24 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5f1b245`, 17 dirty paths, 14 unpushed commits
-Spec: `specs/inherited-toolchain-environment/spec.md` (Status: staged)
-Gate: green at `f10e405` — stale, work tree `befab75`
+Branch: `main` — HEAD `3728719`, 3 dirty paths, 6 unpushed commits
+Spec: none staged.
+Gate: green at `e5ec6a3` — stale, work tree `02cfc81`
 
 ## State
 
-The 2026-08-22 drain retired `specs/roadmap-flow/`, drained its retro (eight
-items: three fed FT238 and FT120, two built as the light-path kit edit, three
-dismissed), verdicted three journal entries (FT214 fed; STE experiment and
-blocked-chain entries dismissed after the kit edit), reworded FT172 for the
-shipped `Next:` grammar half, and refreshed the sequence. The board holds 72
-rows; the flow window reports a net delta of 0. Delegate worktrees
-`roadmap-flow-t01..t05`, `spec-std`, and `shape-roadmap-growth` still exist;
-`bench worktree clean` is the reviewer's call.
+The full `inherited-toolchain-environment` lifecycle is complete. Reviewed pair
+`6c867eb5..d6918bad` landed green as `63dde6ae`; initial review found Standards
+1, Spec 0, Coverage 4, and repair-scoped re-review found 0/0/0. Post-merge spec
+and FT242 retirement landed green as `3728719d`. The retained source was released;
+the landed-worktree sweep found only the unrelated dirty
+`ste-prose-progressive-loading` assignment and retained it. The implementation
+retro and OpenAI scorecard are pending capture for drain alongside the reviewer's
+pre-existing `capture/IDEAS.md` entries; do not commit or revert them here.
 
 ## Next command
 
-`/bench-implement-spec specs/inherited-toolchain-environment/spec.md`
+`$bench-drain`
 
 ## Shape
 
