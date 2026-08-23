@@ -2,33 +2,33 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — the FT169 refusal-half fix lands as the commit after `9208c4a7`; tree clean after it
-Spec: none staged.
-Gate: green on the FT169 fix tree (2026-08-23)
+Branch: `main` — the spec commit after `6db0ada0`; tree clean after it
+Spec: `specs/parallel-landings/spec.md` — `Status: staged`, reviewer-approved 2026-08-23
+Gate: green on the spec commit (2026-08-23)
 
 ## State
 
-FT169's refusal half shipped through `/bench-debug`. The fix is identity
-expansion, a stale-executable rebuild and re-run, capture composition by
-policy, `capture/` authorization, and one preflight that names every refusal.
-The regression tests are `internal/worktree/land_surface_test.go`. The
-reviewer's authority half stays open under `Next: decide`.
+`parallel-landings` is staged and approved with its five tickets. The review
+round (opus / high, one iteration) returned REVISE; every finding is folded,
+and the verification log records it. The reviewer kept the tickets-only close
+(story 6, WL8, ticket `close-a-tickets-only-folder-on-the-landing`). The
+build has not started; the reviewer handed it to a fresh session.
 
-The reviewer parked three ideas on 2026-08-23: the spec-less landing, the
-phase-owned file merge rules, and all work in a worktree. They sit in
-`capture/IDEAS.md`. The reviewer asked that they be actioned right after their
-tickets are written.
-Two learnings are open: the debug fix ran in the main checkout as sole writer,
-and the capture policy takes one side per file (union for journals is the
-reviewer's call).
+Ticket order: `make-spec-optional-on-the-landing`, then
+`close-a-tickets-only-folder-on-the-landing`, then
+`union-merge-the-phase-owned-journals`, then
+`name-the-source-repair-in-the-conflict-refusal`, then
+`route-every-phase-through-a-worktree` (fable / high; the other four opus /
+medium). Tickets 1 and 3 share `internal/landing/landing.go` and run serially.
 
-Closed decisions: keep merge composition as the landing primitive, no rebase;
-the exact-identity posture of `landing-refusal-diagnostics` is reversed by FT169.
+Closed decisions: merge composition stays the landing primitive, no rebase;
+the journal union and the destination default; the light path joins the
+worktree rule; the worktree rule is guidance, not a hook. The three parked
+ideas in `capture/IDEAS.md` close by implementation at the next drain.
 
 ## Next command
 
-`/bench-write-spec` — decision source: the three parked ideas plus FT169's
-undecided half; the reviewer authorized immediate action on 2026-08-23.
+`/bench-implement-spec --full parallel-landings`
 
 ## Shape
 
