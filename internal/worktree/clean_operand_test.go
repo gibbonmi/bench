@@ -21,7 +21,7 @@ func TestCleanCommandRefusesAnOperandItCannotResolve(t *testing.T) {
 		{"tilde-prefixed", "~/.bench/worktrees/absent", "target is not registered"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Chdir(root)
+			chdir(t, root)
 			var stdout, stderr bytes.Buffer
 			code := CleanCommand([]string{tc.target}, &stdout, &stderr)
 			if code == 0 || !bytes.Contains(stdout.Bytes(), []byte(tc.detail)) {
@@ -39,7 +39,7 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 	mustWrite(t, filepath.Join(creation.Path, ".gitignore"), []byte("residual.log\n"), 0o644)
 	gitRun(t, creation.Path, "add", ".gitignore")
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore residual")
-	t.Chdir(root)
+	chdir(t, root)
 	var stdout, stderr bytes.Buffer
 	code := CleanCommand([]string{creation.Path}, &stdout, &stderr)
 	if code != 0 {
@@ -56,8 +56,8 @@ func TestCleanCommandAcceptsThePortablePathThatPathPrints(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "portable")
 	// The fixture worktree lives under BENCH_HOME inside root. Pointing HOME at root
 	// is what makes `path` print the portable form this test is about.
-	t.Setenv("HOME", root)
-	t.Chdir(root)
+	bindEnv(t, "HOME", root)
+	chdir(t, root)
 	var printed, stderr bytes.Buffer
 	if code := PathCommand(root, []string{creation.Assignment.Label}, &printed, &stderr); code != 0 {
 		t.Fatalf("path exited %d: %s", code, stderr.String())
@@ -91,7 +91,7 @@ func TestCleanCommandAcceptsThePortablePathThatPathPrints(t *testing.T) {
 // repo root.
 func TestCleanCommandRefusesAnUnsupportedHomeTarget(t *testing.T) {
 	root, _ := newOwnedAssignment(t, "homeform")
-	t.Chdir(root)
+	chdir(t, root)
 	var stdout, stderr bytes.Buffer
 	code := CleanCommand([]string{"~someone/else"}, &stdout, &stderr)
 	if code == 0 || !bytes.Contains(stdout.Bytes(), []byte("unsupported home target")) {

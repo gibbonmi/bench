@@ -15,10 +15,10 @@ import (
 // routing variables set, and returns what that child wrote.
 func childOutput(t *testing.T, worktree, script string) string {
 	t.Helper()
-	t.Setenv("BENCH_KIT", "/caller/kit")
-	t.Setenv("BENCH_WRAPPER", "/caller/bin/bench")
-	t.Setenv(runbinary.Env, "/caller/run/bench")
-	t.Setenv("BENCH_EXEC_TEST_CARRIED", "carried-value")
+	bindEnv(t, "BENCH_KIT", "/caller/kit")
+	bindEnv(t, "BENCH_WRAPPER", "/caller/bin/bench")
+	bindEnv(t, runbinary.Env, "/caller/run/bench")
+	bindEnv(t, "BENCH_EXEC_TEST_CARRIED", "carried-value")
 	var stdout, stderr bytes.Buffer
 	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "child exit = %d, stderr %q", code, stderr.String())

@@ -32,7 +32,7 @@ func ledgerIDs(t *testing.T, root string) string {
 func newSweepRepo(t *testing.T) string {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	return root
 }
 

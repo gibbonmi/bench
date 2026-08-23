@@ -2,16 +2,13 @@ package worktree
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
-	"syscall"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -26,10 +23,10 @@ func newReclaimPool(t *testing.T) (pool, root string) {
 	t.Helper()
 	root = newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	pool = poolKeysDirAt(home)
 	mustMkdirAll(t, pool, 0o700)
-	t.Chdir(root)
+	chdir(t, root)
 	return pool, root
 }
 
@@ -227,64 +224,6 @@ func TestReclaimCommandNamesWhatProtectedEachRetainedKey(t *testing.T) {
 	}
 }
 
-// [SH4] Unknown is not absence. A child whose `.git` cannot be read leaves existence
-// undecided. So does a `gitdir:` target whose stat fails for any reason other than
-// absence. To count either as proof of deadness is the one direction that destroys
-// work.
-func TestPoolKeyPredicateRetainsAKeyWhoseExistenceItCannotProve(t *testing.T) {
-	if os.Geteuid() == 0 {
-		capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny the stat that leaves existence unknown")
-	}
-	pool, _ := newReclaimPool(t)
-
-	plantDeadChild(t, pool, "unreadable-child", "wt")
-	sealed := filepath.Join(pool, "unreadable-child", "wt")
-	t.Cleanup(func() { _ = os.Chmod(sealed, 0o700) })
-	mustChmod(t, sealed, 0o000)
-
-	denied := filepath.Join(t.TempDir(), "denied")
-	mustMkdirAll(t, denied, 0o700)
-	plantChild(t, pool, "unstattable-target", "wt", filepath.Join(denied, "gone", ".git"))
-	t.Cleanup(func() { _ = os.Chmod(denied, 0o700) })
-	mustChmod(t, denied, 0o000)
-
-	for _, key := range []string{"unreadable-child", "unstattable-target"} {
-		verdict := classifyPoolKey(filepath.Join(pool, key), key)
-		requireTest(t, verdict.Verdict == poolVerdictRetain && strings.Contains(verdict.Reason, "cannot be read"),
-			"key %s = %q/%q, want a retain naming the unreadable step", key, verdict.Verdict, verdict.Reason)
-	}
-}
-
-// [SH5] A symlink is never followed. If one at the key, the child, or the `.git` were
-// traversed, the pool would stop bounding what an apply can remove.
-// Bytes outside the pool would then become the subject of the removal.
-func TestPoolKeyPredicateRetainsSymlinksUnfollowed(t *testing.T) {
-	pool, _ := newReclaimPool(t)
-	empty := t.TempDir()
-
-	mustNoError(t, os.Symlink(empty, filepath.Join(pool, "symlinked-key")))
-
-	mustMkdirAll(t, filepath.Join(pool, "symlinked-child"), 0o700)
-	mustNoError(t, os.Symlink(empty, filepath.Join(pool, "symlinked-child", "wt")))
-
-	dead := plantDeadChild(t, pool, "symlinked-git", "wt")
-	pointer := filepath.Join(pool, "symlinked-git", "wt", ".git")
-	mustRemove(t, pointer)
-	elsewhere := filepath.Join(t.TempDir(), "pointer")
-	mustWrite(t, elsewhere, []byte("gitdir: "+dead+"\n"), 0o644)
-	mustNoError(t, os.Symlink(elsewhere, pointer))
-
-	for key, want := range map[string]string{
-		"symlinked-key":   "key is a symlink",
-		"symlinked-child": "entry wt is a symlink",
-		"symlinked-git":   "child wt .git is a symlink",
-	} {
-		verdict := classifyPoolKey(filepath.Join(pool, key), key)
-		requireTest(t, verdict.Verdict == poolVerdictRetain && verdict.Reason == want,
-			"key %s = %q/%q, want a retain reading %q", key, verdict.Verdict, verdict.Reason, want)
-	}
-}
-
 // [SH6] A session that has acquired its pool directory but not yet checked anything out
 // holds an empty key.
 // The empty-key clause would otherwise take that key out from under it.
@@ -299,6 +238,7 @@ func TestReclaimCommandRetainsTheCurrentRepositorysEmptyKey(t *testing.T) {
 	keys, verdicts := reclaimVerdicts(t, out)
 	requireTest(t, len(keys) == 1 && keys[0] == current && verdicts[current][0] == poolVerdictRetain,
 		"reclaim rows = %v/%v, want the current repository's empty key retained", keys, verdicts)
+	markProof(t, "reclaim/journey/registration")
 }
 
 // [PL4] "Nothing to do" is an answer. A clean pool, and a home that never leased a
@@ -355,8 +295,8 @@ func TestReclaimCommandPrintsTheApplyInvocationCarryingTheFingerprint(t *testing
 // other `bench worktree` subcommand. Refusing with the shared structured error is what lets
 // a caller tell "you are in the wrong directory" from "your pool is clean".
 func TestReclaimCommandRefusesOutsideARepository(t *testing.T) {
-	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "home"))
-	t.Chdir(t.TempDir())
+	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "home"))
+	chdir(t, t.TempDir())
 	out, code := mustReclaim(t)
 	requireTest(t, code == 1 && strings.Contains(out, "not in a git repository"),
 		"reclaim outside a repository code=%d out=%q", code, out)
@@ -404,6 +344,7 @@ func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 	}
 	requireTest(t, poolListing(t, filepath.Join(pool, "live-key")) == liveListing,
 		"the retained key changed across the apply:\nbefore\n%s\nafter\n%s", liveListing, poolListing(t, filepath.Join(pool, "live-key")))
+	markProof(t, "reclaim/journey/deletion")
 }
 
 // The writer quotes an aggregate cell that would otherwise read as a number, so a
@@ -476,6 +417,7 @@ func TestReclaimApplyRetainsAKeyThatWentLiveAfterThePlan(t *testing.T) {
 	requireTest(t, verdicts["still-dead"].Verdict == poolVerdictRemoved, "still-dead = %q/%q, want it removed", verdicts["still-dead"].Verdict, verdicts["still-dead"].Reason)
 	_, statErr = os.Lstat(filepath.Join(pool, "still-dead"))
 	requireTest(t, os.IsNotExist(statErr), "still-dead survived: %v", statErr)
+	markProof(t, "reclaim/journey/process-liveness")
 }
 
 // [AP4] A repeat invocation has to be safe to run. An apply over a pool holding nothing
@@ -563,59 +505,7 @@ func TestReclaimReclaimsTheKeyOfADeletedRepository(t *testing.T) {
 	requireTest(t, code == 0, "apply code=%d out=%q", code, out)
 	_, err := os.Lstat(filepath.Join(pool, key))
 	requireTest(t, os.IsNotExist(err), "the deleted repository's key survived the apply: %v", err)
-}
-
-// [C1] Git writes a relative `gitdir:` under worktree.useRelativePaths, and git resolves
-// it against the child directory. To stat it from wherever this process happens to be
-// answers a question about a different path.
-// A live worktree read as absent is exactly the destruction this predicate exists to prevent.
-// A non-absolute target proves nothing.
-func TestPoolKeyRetainsAChildWhoseGitdirTargetIsRelative(t *testing.T) {
-	pool, _ := newReclaimPool(t)
-	live := t.TempDir()
-	admin := filepath.Join(live, ".git", "worktrees", "wt")
-	mustMkdirAll(t, admin, 0o755)
-	child := filepath.Join(pool, "relative-pointer", "wt")
-	mustMkdirAll(t, child, 0o755)
-	relative, err := filepath.Rel(child, admin)
-	requireTest(t, err == nil, "relative target: %v", err)
-	mustWrite(t, filepath.Join(child, ".git"), []byte("gitdir: "+relative+"\n"), 0o644)
-
-	verdict := classifyPoolKey(filepath.Join(pool, "relative-pointer"), "relative-pointer")
-	requireTest(t, verdict.Verdict == poolVerdictRetain, "relative pointer = %q/%q, want a retain", verdict.Verdict, verdict.Reason)
-	requireTest(t, strings.Contains(verdict.Reason, "not absolute"), "reason = %q, want it to name the unresolvable target", verdict.Reason)
-}
-
-// [C2] A repository path may legitimately end in a space. If it is trimmed away, the
-// pointer names a path that does not exist, which reads as proof of absence and takes a
-// live key.
-// That is the same failure mode as the relative pointer above.
-func TestPoolKeyRetainsAChildWhoseTargetEndsInASpace(t *testing.T) {
-	pool, _ := newReclaimPool(t)
-	spaced := filepath.Join(t.TempDir(), "repo ")
-	mustMkdirAll(t, spaced, 0o755)
-	child := filepath.Join(pool, "spaced-target", "wt")
-	mustMkdirAll(t, child, 0o755)
-	mustWrite(t, filepath.Join(child, ".git"), []byte("gitdir: "+spaced+"\n"), 0o644)
-
-	verdict := classifyPoolKey(filepath.Join(pool, "spaced-target"), "spaced-target")
-	requireTest(t, verdict.Verdict == poolVerdictRetain, "spaced target = %q/%q, want a retain", verdict.Verdict, verdict.Reason)
-	requireTest(t, strings.Contains(verdict.Reason, "exists"), "reason = %q, want it to name the surviving target", verdict.Reason)
-}
-
-// [C4] The Edge inventory claims a special file where a `.git` belongs is retained unread.
-// Without this, deleting the regular-file check leaves the suite green while the predicate
-// would open a FIFO and block.
-func TestPoolKeyRetainsAChildWhoseGitEntryIsAFifo(t *testing.T) {
-	pool, _ := newReclaimPool(t)
-	child := filepath.Join(pool, "fifo-git", "wt")
-	mustMkdirAll(t, child, 0o755)
-	if err := syscall.Mkfifo(filepath.Join(child, ".git"), 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
-	}
-	verdict := classifyPoolKey(filepath.Join(pool, "fifo-git"), "fifo-git")
-	requireTest(t, verdict.Verdict == poolVerdictRetain, "fifo .git = %q/%q, want a retain", verdict.Verdict, verdict.Reason)
-	requireTest(t, strings.Contains(verdict.Reason, "not a regular file"), "reason = %q, want it to name the file shape", verdict.Reason)
+	markProof(t, "reclaim/journey/lease")
 }
 
 // [S4] A key the plan named and the apply could not remove leaves the operator's intent

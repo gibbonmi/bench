@@ -60,7 +60,7 @@ func TestPlanAutomaticRejectsEveryInvalidMarkerWithoutMutation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			creation := mustCreate(t, root, "marker-"+tc.name, "marker validation")
 			markerFile, err := markerPath(creation.Path)
 			mustNoError(t, err)
@@ -112,7 +112,7 @@ func TestPlanAutomaticRequiresCompleteAssignmentJoin(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			creation := mustCreate(t, root, "assignment-"+tc.name, "assignment join")
 			assignment := creation.Assignment
 			assignment.State = intent.StateCleanupPending
@@ -127,7 +127,7 @@ func TestPlanAutomaticRequiresCompleteAssignmentJoin(t *testing.T) {
 	}
 	t.Run("complete", func(t *testing.T) {
 		root := newWorktreeRepo(t)
-		t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+		bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 		creation := mustCreate(t, root, "assignment-complete", "assignment join")
 		assignment := creation.Assignment
 		assignment.State = intent.StateCleanupPending
@@ -151,7 +151,7 @@ func writeAssignmentLedger(t *testing.T, root string, assignment intent.Assignme
 }
 func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	attempted, registered, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
 	oldAttempt := creationLockAttempt
 	creationLockAttempt = func(request string) { attempted <- request }
@@ -221,7 +221,7 @@ done
 exec "$REAL_GIT" "$@"
 `
 	mustWrite(t, filepath.Join(shimDir, "git"), []byte(shim), 0o755)
-	cmd := exec.Command(os.Args[0], "-test.run=^TestActualSIGINTAfterUnlockRestoresExactLockAndReplays$")
+	cmd := descendant(t, os.Args[0], "-test.run=^TestActualSIGINTAfterUnlockRestoresExactLockAndReplays$")
 	cmd.Env = append(os.Environ(), "BENCH_SIGINT_HELPER=1", "BENCH_SIGINT_ROOT="+root, "BENCH_SIGINT_PATH="+creation.Path, "REAL_GIT="+realGit, "PATH="+shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	out, err := cmd.CombinedOutput()
 	requireTest(t, err == nil, "SIGINT helper: %v\n%s", err, out)
@@ -244,7 +244,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 	} {
 		t.Run("create-"+tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			fault := errors.New("fault after " + string(tc.step))
 			creation, err := Create(root, "fault-"+tc.name, "fault creation", func(got LifecycleStep) error {
 				if got == tc.step {
@@ -298,7 +298,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 			requireTest(t, errors.Is(err, fault), "ApplyAutomatic error = %v, want %v", err, fault)
 			_, statErr := os.Stat(creation.Path)
 			requireTest(t, (statErr == nil) == tc.wantExists, "checkout existence = %v, want %v", statErr == nil, tc.wantExists)
-			branchExists := exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", creation.Assignment.Branch).Run() == nil
+			branchExists := descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", creation.Assignment.Branch).Run() == nil
 			requireTest(t, branchExists == tc.wantBranch, "assignment branch existence = %v, want %v", branchExists, tc.wantBranch)
 			assignments, readErr := intent.Assignments(root)
 			requireTest(t, readErr == nil && len(assignments) == 1 && assignments[0].State == intent.StateCleanupPending,

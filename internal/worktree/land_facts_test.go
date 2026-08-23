@@ -57,6 +57,7 @@ func TestLandingResidueFactAdapterTranslatesRealDestination(t *testing.T) {
 	if facts.IgnoredDeclared() {
 		t.Fatalf("ignored-declared fact = true with no build-output declaration")
 	}
+	markProof(t, "landing/adapter/facts")
 }
 
 // TestLandingMarkerFactAdapterTranslatesGreenMarker is the resume fact group.
@@ -144,7 +145,7 @@ func TestLandingDestinationFactAdapterTranslatesCleanCheckout(t *testing.T) {
 // base, tip, and fingerprint facts, with no spec named.
 func TestLandingSourceFactAdapterTranslatesRealWorktree(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	creation := mustCreate(t, root, "source-fact-adapter", "source facts")
 	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")

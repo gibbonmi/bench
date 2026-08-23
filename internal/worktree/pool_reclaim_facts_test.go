@@ -69,6 +69,7 @@ func TestReclaimFactAdapterTranslatesARealRegistrationKey(t *testing.T) {
 	orphaned := gatherPoolKeyFacts(filepath.Join(pool, key), key)
 	requireTest(t, orphaned.Children[0].Pointer.TargetExistence == reclaimpolicy.ExistenceAbsent,
 		"orphaned facts = %+v, want the deleted repository's target absent", orphaned)
+	markProof(t, "reclaim/adapter/facts")
 }
 
 // TestReclaimFactAdapterTranslatesHostileShapesUnopened is the shape fact

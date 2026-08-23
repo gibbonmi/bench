@@ -120,10 +120,6 @@ func tryCreate(leasePath string, now time.Time) bool {
 	return werr == nil && cerr == nil
 }
 
-// Claim is the temporary compatibility form of claimAt: it resolves the instant at
-// the effect boundary for callers that have not migrated to an explicit time.
-func Claim(leasePath string) bool { return claimAt(leasePath, currentTime()) }
-
 // claimAt atomically creates a lease or identity-checks a provably stale takeover,
 // judging staleness against the caller's explicitly resolved instant.
 func claimAt(leasePath string, now time.Time) bool {

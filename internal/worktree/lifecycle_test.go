@@ -6,7 +6,6 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/intent"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -57,7 +56,7 @@ func leasedRepo(t *testing.T, leaseContent string) (dir, lease string) {
 		{"config", "user.email", "t@t"},
 		{"config", "user.name", "t"},
 	} {
-		if out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
+		if out, err := descendant(t, "git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v: %s", args, err, out)
 		}
 	}
@@ -65,7 +64,7 @@ func leasedRepo(t *testing.T, leaseContent string) (dir, lease string) {
 		t.Fatal(err)
 	}
 	for _, args := range [][]string{{"add", "."}, {"commit", "-qm", "init"}} {
-		if out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
+		if out, err := descendant(t, "git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v: %s", args, err, out)
 		}
 	}
@@ -103,12 +102,13 @@ func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 		t.Errorf("lease still present after owner release: %v", err)
 	}
 	if !isClean(dir) {
-		out, _ := exec.Command("git", "-C", dir, "status", "--porcelain").CombinedOutput()
+		out, _ := descendant(t, "git", "-C", dir, "status", "--porcelain").CombinedOutput()
 		t.Errorf("worktree dirty after release:\n%s", out)
 	}
 	if got, err := os.ReadFile(filepath.Join(dir, "tracked.txt")); err != nil || string(got) != "clean\n" {
 		t.Errorf("tracked.txt = %q, %v; want restored %q", got, err, "clean\n")
 	}
+	markProof(t, "lifecycle/journey/create-remove")
 }
 
 // TestReleaseRespectsLiveForeignLease pins the non-owner path. A lease held by a
@@ -149,7 +149,7 @@ func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 	t.Cleanup(func() { restoreClean = real })
 	claimedMidCleanup := false
 	restoreClean = func(wt string) {
-		claimedMidCleanup = Claim(lease)
+		claimedMidCleanup = claimAt(lease, time.Now())
 		real(wt)
 	}
 	Release(dir)
@@ -166,7 +166,7 @@ func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 // real pid. This is exactly the crashed-owner case reclaimable takes over.
 func deadPidLine(t *testing.T) string {
 	t.Helper()
-	cmd := exec.Command("true")
+	cmd := descendant(t, "true")
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("spawn reap victim: %v", err)
 	}
@@ -204,9 +204,9 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 			return // the nested reclaimer's own gap is a no-op
 		}
 		reentered = true
-		nestedWon = Claim(leasePath)
+		nestedWon = claimAt(leasePath, time.Now())
 	}
-	outerWon := Claim(lease)
+	outerWon := claimAt(lease, time.Now())
 	if !nestedWon {
 		t.Error("first (nested) reclaimer did not win the dead-pid lease")
 	}
@@ -260,7 +260,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 			return // B's own pass through this gap must not recurse again
 		}
 		inNestedTakeover = true
-		nestedWon = Claim(lp)
+		nestedWon = claimAt(lp, time.Now())
 		inNestedTakeover = false
 	}
 	realSteal := claimStealGap
@@ -278,7 +278,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	outerWon := Claim(lease)
+	outerWon := claimAt(lease, time.Now())
 	if outerWon {
 		t.Error("outer Claim = true, want false (it must concede to the first-writer)")
 	}

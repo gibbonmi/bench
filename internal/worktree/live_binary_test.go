@@ -25,7 +25,7 @@ func newResidueGuardFixture(t *testing.T, request string) (string, Creation) {
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore build output")
 	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
 	mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"dist/\"]}\n"), 0o644)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	creation := mustCreate(t, root, request, "residue guard")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
 	return root, creation

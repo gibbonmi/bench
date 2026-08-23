@@ -17,14 +17,13 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
 func TestListCommandRendersTypedAdminRefusal(t *testing.T) {
-	root := gittest.RepoOnBranch(t, "main")
-	gittest.FIFOWorktreeAdmin(t, root, "typed")
-	t.Chdir(root)
+	root := journeyRepoOnBranch(t, "main")
+	journeyFIFOWorktreeAdmin(t, root, "typed")
+	chdir(t, root)
 	out, code := ListCommand(nil)
 	if code == 0 || !strings.Contains(out, "worktrees/typed/gitdir") || !strings.Contains(out, "fifo") || !strings.Contains(out, "inspect and remove it") {
 		t.Fatalf("typed list output code=%d out=%q", code, out)
@@ -39,9 +38,9 @@ func TestListCommandKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T) {
 		{"fail-worktree", "cannot read registered worktrees", "run git worktree list and retry"},
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
-			root := gittest.RepoOnBranch(t, "main")
-			gittest.StubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
-			t.Chdir(root)
+			root := journeyRepoOnBranch(t, "main")
+			journeyStubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
+			chdir(t, root)
 			out, code := ListCommand(nil)
 			if code != 1 || !strings.Contains(out, tc.detail) || !strings.Contains(out, tc.action) {
 				t.Fatalf("%s list output code=%d out=%q", tc.mode, code, out)
@@ -53,9 +52,9 @@ func TestListCommandKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T) {
 func TestListCommandRendersBoundExpiryAsTypedFailure(t *testing.T) {
 	restore := git.SetWorktreeListTimeoutForTest(100 * time.Millisecond)
 	t.Cleanup(restore)
-	root := gittest.RepoOnBranch(t, "main")
-	gittest.StubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
-	t.Chdir(root)
+	root := journeyRepoOnBranch(t, "main")
+	journeyStubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
+	chdir(t, root)
 	out, code := ListCommand(nil)
 	if code != 1 || !strings.Contains(out, "worktree list") || !strings.Contains(out, "investigate the git failure") || strings.Contains(out, "inspect and remove it") || strings.Contains(out, "retry") {
 		t.Fatalf("bound list output code=%d out=%q", code, out)
@@ -95,8 +94,8 @@ func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
 	if err := json.Unmarshal(data, &pairs); err != nil {
 		t.Fatal(err)
 	}
-	root := gittest.Repo(t)
-	t.Chdir(root)
+	root := journeyRepo(t)
+	chdir(t, root)
 	for _, pair := range pairs {
 		out, code := ListCommand(pair.Argv)
 		if out != pair.New.Stdout || pair.New.Stderr != "" || code != pair.New.Exit {
@@ -111,8 +110,8 @@ func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
 }
 
 func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
-	root := gittest.Repo(t)
-	t.Chdir(root)
+	root := journeyRepo(t)
+	chdir(t, root)
 	for _, arg := range []string{"--help", "-h", "help"} {
 		out, code := ListCommand([]string{arg})
 		if code != 0 || out != "usage: bench worktree list\n" {
@@ -133,8 +132,8 @@ func TestListCommandPreservesCheckedInEmptyPrimaryResponse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	root := gittest.Repo(t)
-	t.Chdir(root)
+	root := journeyRepo(t)
+	chdir(t, root)
 	out, code := ListCommand(nil)
 	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
 		t.Fatalf("ListCommand = (%d, %q), want checked-in primary plus exactly one help block", code, out)
@@ -182,7 +181,7 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)))
 	creation := mustCreate(t, root, "landed-complete-assignment", "complete assignment")
 	boundary := cleanupTransactionBoundary
@@ -244,7 +243,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)+strings.Repeat("\x20", 16)+strings.Repeat("\x02", 16)))
 	mustCreate(t, root, "request-a", "alpha")
 	mustCreate(t, root, "request-b", "beta")

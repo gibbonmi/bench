@@ -3,7 +3,6 @@ package worktree
 import (
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -42,7 +41,7 @@ func TestCleanLandedApplyRemovesAndSettles(t *testing.T) {
 	if err != nil || len(assignments) != 1 || assignments[0].ID != dirty.Assignment.ID {
 		t.Fatalf("assignments after apply = %#v, %v; want only dirty row", assignments, err)
 	}
-	list := exec.Command(binary, "worktree", "list")
+	list := descendant(t, binary, "worktree", "list")
 	list.Dir = root
 	listing, listErr := list.Output()
 	if listErr != nil || strings.Contains(string(listing), first.Assignment.ID) || strings.Contains(string(listing), second.Assignment.ID) || !strings.Contains(string(listing), dirty.Assignment.ID) {
@@ -250,7 +249,7 @@ func TestCleanLandedPlanRetainsPreservedRowThroughEligibilityOwner(t *testing.T)
 
 func TestCleanLandedApplyCarriesModifiersAndDeletesProvenBranches(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore landed residue")
@@ -284,7 +283,7 @@ func TestCleanLandedApplyCarriesModifiersAndDeletesProvenBranches(t *testing.T) 
 
 func TestCleanLandedDiscardBranchOnlyChangesDetail(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	creation := mustCreate(t, root, "landed-branch-assertion", "branch assertion")
 	landAssignment(t, root, creation, "branch.txt")
 	plan, planErr, planCode := runCleanLanded(t, root, "--discard-branch", "--landed")
@@ -302,7 +301,7 @@ func TestCleanLandedDiscardBranchOnlyChangesDetail(t *testing.T) {
 
 func TestCleanLandedRetainsUnparseableLeaseAndSkipsUnprovableBranch(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	unknown := mustCreate(t, root, "landed-unknown-lease", "unknown lease")
 	unprovable := mustCreate(t, root, "landed-unprovable", "unprovable")
 	landAssignment(t, root, unknown, "unknown.txt")

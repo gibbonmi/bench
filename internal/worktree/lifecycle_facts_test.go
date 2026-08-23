@@ -60,6 +60,7 @@ func TestLifecycleLeaseFactAdapterTranslatesRealLeases(t *testing.T) {
 	mustWrite(t, lease, []byte("junk\n"), 0o600)
 	malformed := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
 	requireTest(t, malformed.LeasePresent && malformed.LeaseState == LeaseUnknown, "malformed-lease facts = %+v, want an unknown lease", malformed)
+	markProof(t, "lifecycle/adapter/facts")
 }
 
 // TestLifecycleEligibilityFactAdapterTranslatesTrackedState is the eligibility
@@ -109,7 +110,7 @@ func TestLifecycleIgnoredFactAdapterTranslatesDeclaration(t *testing.T) {
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore build output")
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	creation := mustCreate(t, root, "fa-ignored", "ignored declaration")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
 	mustWrite(t, filepath.Join(creation.Path, "dist", "bench"), []byte("binary\n"), 0o755)
