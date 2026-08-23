@@ -27,8 +27,7 @@ works on any branch. This line only states the binding.)
   accepted trust posture.
 - **The `bench` CLI subcommands.** This is the operational shell surface.
 
-  `bench help`,
-  rendered from the Go `commandRegistry`, is the executable inventory, while
+  `bench help`, rendered from the Go `commandRegistry`, is the executable inventory, while
   `.bench/BENCH-reference.md` keeps category-level operational guidance. The contract is the
   stable command names and exit codes; the
   implementation behind each stays free to change. Keep the gate resolution
@@ -69,8 +68,7 @@ works on any branch. This line only states the binding.)
   **gate cache** (`<git-dir>/bench-last-gate`, written durably by gate execution),
   never from a cold gate run.
 
-  The
-  contract (gate-tested) shows only on signal, keeps a five-row budget, and treats a
+  The contract (gate-tested) shows only on signal, keeps a five-row budget, and treats a
   stale-green as not a clean bill. It also gives one combined capture-drain row (parked
   ideas plus open learnings) pointing at `/bench-drain`. A stale exact verdict always
   stays the strong stale row; no path-based reduced-scope softening applies. Its
@@ -94,9 +92,8 @@ works on any branch. This line only states the binding.)
   carries YAML frontmatter (name and description) and follows progressive
   disclosure; every command is a phase the index names.
 
-  The `.bench/BENCH.md` skills
-  index is generated
-  from each skill's `index:` frontmatter (`bench skills-index --write`). Craft
+  The `.bench/BENCH.md` skills index is generated from each skill's `index:`
+  frontmatter (`bench skills-index --write`). Craft
   skills use `craft-*` visible names so `$bench` menus show only human-run phase
   adapters. Codex derives command-adapter skills from `.agents/commands/` and
   documents them in `.bench/BENCH.md`. The gate's conformance layer enforces those
@@ -276,14 +273,12 @@ under `prep-release`. The phase materializes that environment on the same terms 
 and system — kit-only, and only where the entry test is declared. So a linked repo stays
 unaffected.
 
-There is no separate
-contract or conformance dev driver, per-package loop, nested Go test, fixture-executing
+There is no separate contract or conformance dev driver, per-package loop, nested Go test, fixture-executing
 canary phase, component partition, or stripped-subject phase schedule. An
 environment-class skip observed by the oracle is red and names the test that emitted it.
 A check the gate failed to stage has no verdict, so it cannot count as green.
 
-The race
-runner verifies every registry sentinel executed. The tagged system package has one
+The race runner verifies every registry sentinel executed. The tagged system package has one
 `TestMain` owner, at most three disposable repositories, one selected executable
 identity ledger, and teardown on green/red/interrupt/timeout. It also has exactly one
 stripped-distribution journey beside one adoption journey. That adoption journey adopts a
@@ -512,4 +507,3 @@ escalation.
   `.claude/skills/` symlink entry created. Read "mirror" in any artifact as
   "symlink"; FT152's spec and map both assumed copied trees and specified
   mirror work that did not exist.
-</content>

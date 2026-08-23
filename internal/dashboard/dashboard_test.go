@@ -150,7 +150,7 @@ func TestRenderRoadmapAndSequencePreserveNewlinesInPre(t *testing.T) {
 // roadmap.RoadmapText or roadmap.RecommendedSequence directly, so a dashboard-side reader
 // swap or sequence-format regression reds here. Both readers already parse only
 // ROADMAP.md's index, so a split tree, an index plus a roadmap/ row file, must render
-// unchanged. This is a regression pin, not a behavior change.
+// unchanged.
 func TestGatherRenderRoadmapTextAndSequenceFromSplitTree(t *testing.T) {
 	root := t.TempDir()
 	const heading = "**FT7 (LOW) — x.**"

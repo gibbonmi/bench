@@ -426,9 +426,8 @@ var (
 // fragment is refused for what it is missing, rather than read as a wider class
 // carrying something extra.
 //
-// A retired class's fields (the reduced verdict's reduced/phases/ancestor family) are
-// unknown fields now. So a legacy reduced record fails the exact-field-set validation
-// below and reads as non-reusable, rather than as a full green.
+// The exact-field-set validation rejects the retired reduced-verdict field family.
+// A legacy reduced record therefore reads as non-reusable, rather than as a full green.
 func (r verdictRecord) partitions() bool {
 	return r.Executed != nil || r.Skipped != nil || r.SkipEvidence != nil
 }

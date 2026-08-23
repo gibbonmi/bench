@@ -141,8 +141,8 @@ else
   pin_path="$(node -p 'require(process.argv[1]).binary_pin_manifest.path' "$source_root/internal/releaseevidence/requirements.json")"
   if [[ "${BENCH_TEST_SKIP_PIN_MANIFEST:-0}" != 1 ]]; then
     node "$source_root/scripts/build-binary-pins.mjs" "$source_root" "$wrapper" "$npm_artifacts" "$version"
-    # Refresh the wrapper component inventory, now that the declared late-bound
-    # manifest exists. The platform tarballs are already closed and stay unchanged.
+    # The declared late-bound manifest completes the wrapper component inventory.
+    # The platform tarballs are already closed and stay unchanged.
     node "$source_root/scripts/build-release-evidence.mjs" "$source_root" "$wrapper" "$packages"
   fi
   [[ -f "$wrapper/$pin_path" && ! -L "$wrapper/$pin_path" && -s "$wrapper/$pin_path" ]] || { printf 'bench artifacts: binary pin manifest is missing or empty\n' >&2; exit 1; }

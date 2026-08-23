@@ -80,20 +80,20 @@ lives in `craft-line`; this rule is about the prose itself.)
 
 ## Pruning
 
-- **Single source of truth** — one authoritative place per meaning, so a change is a
+- **Duplication** — keep one authoritative place per meaning, so a change is a
   one-place edit.
 - **Relevance** — does each line still bear on what the skill does?
-- **Hunt no-ops sentence by sentence.** Run the no-op test on each sentence in
+- **No-op** — run the no-op test on each sentence in
   isolation; when one fails, delete the whole sentence, don't trim words. Be
   aggressive — most failing prose should go, not be rewritten.
+- **Sediment** — treat growth as a cost. Delete stale layers instead of keeping
+  them because removal feels risky.
 
 ## Failure modes
 
 - **Premature completion** — ending a step before it's done, attention slipping to
   *being done*. Fix the completion criterion first (cheap, local); only if it's
   irreducibly fuzzy *and* you see the rush, split to hide the later steps.
-- **Duplication** — the same meaning in two places; costs maintenance and inflates a
-  meaning's apparent rank.
 - **Harness echo** — restating what the harness layer already carries (the
   system prompt, a tool description). Single source of truth spans layers.
   Before a rule lands, check the harness surfaces it will ride beside. An
@@ -101,8 +101,6 @@ lives in `craft-line`; this rule is about the prose itself.)
   own across harnesses is not an echo; name the harness gap it covers.
 - **Sprawl** — one skill accreting unrelated jobs until no description can say
   when to fire it; split by trigger, not by topic.
-- **No-op** — a sentence no reader can act on; the pruning hunt above exists to
-  catch these — delete on sight.
 - **Negation** — steering by prohibition drags the forbidden behavior into
   context and makes it *more* available ("don't think of an elephant"). Prompt
   the positive target instead. A prohibition earns its place only as a hard
@@ -112,6 +110,3 @@ lives in `craft-line`; this rule is about the prose itself.)
   delegated to the model's priors, not left neutral. Read a draft for its
   silences and decide each omission deliberately: fill it, or leave it open
   as a real branch.
-- **Sediment** — stale layers that accrete because adding feels safe and removing
-  feels risky. The default fate of any skill without a pruning discipline. Run this
-  skill against the others periodically.

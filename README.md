@@ -95,77 +95,9 @@ together. README is only the onboarding surface.
 
 Lookup material lives on demand in `.bench/BENCH-reference.md`: the file map,
 the generated skills index, and harness invocation forms. It also holds the
-CLI command list, the shift adapter contract, and the hook layers.
-
----
-
-## Layout
-
-```
-bench/
-├── AGENTS.md                 # canonical working agreement — every harness reads this
-├── CLAUDE.md                 # imports AGENTS.md + .bench/BENCH.md (for Claude Code)
-├── .agents/
-│   ├── commands/             # portable workflow phases + maintenance commands
-│   │   ├── bench-setup-repo.md
-│   │   ├── bench-update-kit.md
-│   │   ├── bench-drain.md
-│   │   ├── bench-shape-idea.md
-│   │   ├── bench-write-spec.md
-│   │   ├── bench-debug.md
-│   │   ├── bench-implement-spec.md
-│   │   ├── bench-review-implementation.md
-│   │   └── bench-final-check.md
-│   └── skills/               # portable generation-shaping skills; generated index in .bench/BENCH-reference.md
-├── .bench/
-│   ├── BENCH.md              # full Bench operating guide installed into projects
-│   ├── BENCH-reference.md    # on-demand lookup: file map, skills index, adapter + hook detail
-│   ├── gate.sh               # the project gate (oracle); kept out of the shipped npm package
-│   ├── lines.env             # machine-readable tier->model binding read by hooks + adapters
-│   ├── adapters/             # reference BENCH_AGENT adapters for bench shift
-│   │   ├── claude
-│   │   ├── codex
-│   │   └── opencode
-│   ├── hooks/                # shared hook scripts used by harness adapters
-│   │   ├── session-start.sh
-│   │   ├── stop.sh
-│   │   ├── block-dangerous-git.sh
-│   │   └── check-agent-line.sh   # denies Agent delegations off the bound line
-│   ├── lib/                  # shared shell helpers the hooks and gate source
-│   └── bin/                  # link-installed local CLI set (consumer repos; not in the kit)
-├── .claude/
-│   ├── README.md             # explains Claude adapter paths -> .agents and .bench/hooks
-│   ├── settings.json         # Claude Code adapter pointing at .bench/hooks
-│   ├── commands -> ../.agents/commands
-│   ├── skills -> ../.agents/skills
-│   └── hooks -> ../.bench/hooks
-├── .codex/
-│   └── hooks.json            # Codex adapter pointing at .bench/hooks
-├── bin/
-│   ├── bench.sh              # strangler router to the Go core + one-glance run_gate adapter
-│   └── bench-postinstall.sh  # best-effort global shim installer
-├── cmd/bench/                # the compiled core's main: dispatch + version
-├── dist/                     # gitignored dev build; the gate rebuilds bench here (never committed)
-├── internal/                 # the Go core: AXI query surface, status, structure + plumbing
-│   ├── adopt/                # link/init/doctor adoption mutators
-│   ├── toon/                 # the shared flat-table TOON emitter (one escaping rule)
-│   ├── learnings/            # bench learnings parser
-│   ├── maps/                 # bench maps engine (decision tickets + close-readiness + count)
-│   ├── guards/               # bench guards aggregation
-│   ├── diff/                 # bench diff review-base resolution
-│   ├── coverage/             # bench coverage extraction + --check validation
-│   ├── outline/              # bench outline candidate-seam indexer (file:line as TOON)
-│   ├── status/               # bench status renderer + merged-spec retirement counter
-│   ├── dashboard/            # bench dashboard: the dashboard page (self-contained static HTML)
-│   ├── structure/            # structure checker + budgets parser (whole-tree + touched)
-│   ├── worktree/             # worktree pool-path + lease-file conventions
-│   ├── models/               # bench models advisory discovery inventory
-│   ├── roadmap/              # capture/IDEAS.md + ROADMAP.md index + roadmap/ detail owner
-│   └── git/                  # shared git subprocess helpers + gate tree-hash
-└── projects/
-    ├── benchkit.md           # seams, gate, lines for this kit
-    └── gl-axi.md             # seams, gate, AXI conformance for gl-axi
-```
+category-level CLI notes, the shift adapter contract, and the hook layers.
+`bin/bench.sh`, `.bench/hooks/session-start.sh`, and `projects/benchkit.md` are
+key entry points. The reference explains their roles.
 
 ---
 
@@ -273,12 +205,10 @@ deterministic and idempotent. `/bench-setup-repo` confirms whether those steps
 already happened, and runs or reports the worker-facing step that is still
 needed. It then continues into the **project-specific** half.
 
-That half
-explores the repo and walks the reviewer through the gate (the load-bearing
+That half explores the repo and walks the reviewer through the gate (the load-bearing
 choice) and the profile (seams + lines + design-source path). It also covers
-an optional `CONTEXT.md`, one decision at a time, and writes them. That
-second half is the part that
-can't be hardcoded — the gate command, the seams, and the lines differ in
+an optional `CONTEXT.md`, one decision at a time, and writes them. The second
+half cannot be hardcoded because the gate command, seams, and lines differ in
 every repo. So it's an interview, not a script.
 
 `bench link` is idempotent and harness-neutral. It preserves project-owned
@@ -288,11 +218,10 @@ and commands into `.agents/`, and installs Claude and Codex hook adapters
 that call shared `.bench/hooks/` scripts. It installs a local hook CLI set
 under `.bench/bin/`, and installs a git `pre-push` guard.
 
-Copy mode is the
-default;
-use `bench link symlink` only when you intentionally want a dogfood repo to
-follow live edits in a central kit checkout. If a project already owns a same-named
-skill, command, or pre-push hook, `bench link` fails with a conflict report
+Copy mode is the default. Use `bench link symlink` only when you intentionally
+want a dogfood repo to follow live edits in a central kit checkout. If a project
+already owns a same-named skill, command, or pre-push hook, `bench link` fails
+with a conflict report
 instead of overwriting it. If you copy `bench` somewhere by hand, set
 `BENCH_KIT=/path/to/kit`.
 
@@ -307,11 +236,10 @@ non-conflicting project assets. It also writes the `CLAUDE.md` imports when
 absent (retrofitting only the exact file an older link wrote); an edited
 `CLAUDE.md` is project-owned and stays untouched.
 
-The pieces line up
-directly: a Pocock `CONTEXT.md` is read as-is (Bench's cold-session
-convention is the same file). And `docs/adr/` is exactly where Bench's
-`craft-adr` skill already writes, so your decision records carry over
-untouched. Where Pocock's `setup-matt-pocock-skills` recorded an issue
+The pieces line up directly. Bench reads a Pocock `CONTEXT.md` as-is because
+both workflows use that file for cold sessions. The `craft-adr` skill already
+writes to `docs/adr/`, so your decision records carry over untouched. Where
+Pocock's `setup-matt-pocock-skills` recorded an issue
 tracker and domain layout under `docs/agents/`, `/bench-setup-repo` reads
 those if present and won't re-ask.
 
@@ -321,8 +249,7 @@ loop** that commits only on green. It also adds the **declared line**
 (model + effort) per run, and the **profile** (`projects/<name>.md`) that
 names the seams.
 
-So migration is: ask the agent to run
-`/bench-setup-repo`. It confirms the
+For migration, ask the agent to run `/bench-setup-repo`. It confirms the
 link/init mechanics, detects the existing Pocock structure, and reuses it.
 It only asks for the things Bench introduces (the gate command, the seams,
 the lines). Nothing about Pocock's planning flow is replaced; Bench wraps it in
@@ -347,31 +274,15 @@ changed. It proposes; you own the merge.
 
 ## Switching harnesses
 
-You switch harnesses with no extra step, by design. After `bench link`, the same repo
-is wired for all of them at once:
-
-- **Claude Code** reads `CLAUDE.md` (which imports `AGENTS.md` and
-  `.bench/BENCH.md`), auto-loads skills through `.claude/skills/`, runs
-  `/bench-shape-idea`, `/bench-write-spec`, … as slash commands, and fires
-  the Stop and PreToolUse hooks through `.claude/settings.json`.
-- **Codex** reads `AGENTS.md`, finds skills in `.agents/skills/`, and uses
-  the `$bench-*` phase adapters documented in `.bench/BENCH.md`.
-  Model-invoked Bench guidance uses visible `craft-*` names so `$bench` stays
-  phase-only.
-- **OpenCode / other AGENTS.md harnesses** read `AGENTS.md` natively. They
-  run commands by reading the file in `.agents/commands/` when they do not
-  expose a native command or skill invocation surface.
-
-There is one portable content surface: `.agents/{skills,commands}`. Claude
-Code uses adapter paths under `.claude/`; Codex uses `.codex/hooks.json`;
-both hook adapters call the same shared scripts in `.bench/hooks/`. The
-enforcement that matters remains harness-independent too: the `bench shift`
-loop runs the gate after every iteration and commits only on green. The
-git `pre-push` hook protects the branch it resolves no matter which agent
-(or human) pushes.
+`bench link` wires every supported harness to the same portable
+`.agents/{skills,commands}` content. You can switch harnesses without changing
+the repository. Read the Harness Invocation section in
+`.bench/BENCH-reference.md` when you need a harness's phase syntax or adapter
+details. The pre-push hook protects the branch it resolves, whichever harness
+or human pushes.
 
 Env knobs: `BENCH_AGENT` (required for `bench shift` — a harness adapter
-executable that takes the prompt as `$1`; reference adapters ship in
+executable that reads the prompt from stdin; reference adapters ship in
 `.bench/adapters/`), `BENCH_MAX_ITERS`, `BENCH_GATE` (a gate command if you'd
 rather not ship `.bench/gate.sh`).
 
@@ -454,4 +365,3 @@ real target (seams and stories chosen up front). Kun Chen's substrate
 gives the target real teeth (an isolated, gated, autonomous loop). Your
 invariants decide that when the agent's judgment and the gate disagree, the
 gate wins. That single rule makes an autonomous loop safe to leave running.
-</content>

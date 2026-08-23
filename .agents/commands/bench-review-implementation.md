@@ -25,11 +25,8 @@ and they return to `/bench-implement-spec`. Findings that need a later fix pass
 use the pickup-file route in step 5. A clean review proceeds to `/bench-final-check`.
 
 The gate is deterministic: it runs the phase table the project profile declares,
-and nothing else. It catches regressions and rule violations. It cannot tell
-whether you built the *right* thing in the *right* way. `/bench-review-implementation`
-is the semantic pass that can tell you this. It is advisory: it surfaces
-findings for you, but it has no authority to call anything done. You and the
-gate hold that authority.
+and nothing else. Review supplies the semantic judgment that phase table cannot
+perform. The gate decides done; the reviewer decides whether a green change ships.
 
 ## Review modes
 
@@ -147,11 +144,3 @@ it never restarts initial discovery over the original range.
    through a hand commit on the destination. A clean review hands its frozen
    base and reviewed tip to `bench worktree land`; `/bench-final-check`
    reports that landing's oracle.
-
-## Where it sits
-
-`/bench-review-implementation` is generation-shaping, not enforcement: run it,
-read the findings, and decide what to fix. Final-check
-runs the gate and commits on green. Review tells you whether the work is
-*good*; the applicable oracle tells you whether it is *done*; you decide
-whether it ships.

@@ -292,8 +292,8 @@ func (b Binding) UnboundKeys(harness string) []string {
 	return keys
 }
 
-// retiredFamilies pairs each key prefix of the retired schema with the harness column
-// that now holds what it used to bind. BENCH_TIER_* held one family's concrete ids,
+// retiredFamilies pairs each retired key prefix with its replacement harness column.
+// BENCH_TIER_* held one family's concrete ids,
 // which is the codex column. BENCH_ALIAS_* held the tokens the dissolved alias concept
 // projected, which are the claude column. These keys bind nothing: the matrix is a
 // hard cut with no dual read. So the pairing is migration advice, and never a second

@@ -19,10 +19,9 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
-// iterationPrompt is the text a shift iteration writes to its adapter's stdin. It has
-// always lived inside the executable, as a heredoc in the shell. It is reviewer-facing
-// content only through the running loop, never a tunable file. %s is the objective. It
-// travels on stdin, never argv, so it never appears in a process listing.
+// iterationPrompt is the text a shift iteration writes to its adapter's stdin. It is
+// immutable reviewer-facing content compiled into the executable. %s is the objective.
+// The prompt travels on stdin, never argv, so it never appears in a process listing.
 const iterationPrompt = `You are one iteration of a Bench shift. Objective: %s
 First read .bench-notes.md for what prior iterations learned, did, and left
 unfinished. Then make ONE small, self-contained change toward the objective, at

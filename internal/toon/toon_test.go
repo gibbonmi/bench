@@ -4,8 +4,8 @@ import "testing"
 
 // This test pins the adapter's spec-TOON quoting and escaping at the pure-function seam.
 // It runs one row per special-value trigger class the library quotes, plus the
-// carried-over cases: leading or trailing space, comma, an inner quote (now a
-// backslash), and a newline (now \n). A one-field table isolates the cell bytes.
+// established cases: leading or trailing space, comma, an inner quote, a backslash,
+// and a newline (\n). A one-field table isolates the cell bytes.
 // TestTable below exercises the header wrapping.
 func TestTableCellEscaping(t *testing.T) {
 	cases := []struct{ in, wantCell string }{
@@ -25,7 +25,7 @@ func TestTableCellEscaping(t *testing.T) {
 		{"[x]", `"[x]"`},
 		{"{y}", `"{y}"`},
 		{"-lead", `"-lead"`},
-		// carried-over cases
+		// established compatibility cases
 		{" leading", `" leading"`},
 		{"trailing ", `"trailing "`},
 		{" padded ", `" padded "`},

@@ -349,8 +349,7 @@ func packageMarkdownFiles(root string) []string {
 func checkShippedIdentityStrings(root string) []string {
 	// The spec names three examples: @benchkit, npx benchkit, and npm i -g benchkit. The
 	// profile's "npm package `benchkit`" claim and the README/doctor uninstall line are the
-	// same class of unowned-identity string on surfaces this rename touched. They join the
-	// net.
+	// same class of unowned-identity string across the shipped surfaces. They join the net.
 	stale := []string{
 		"@benchkit",
 		"npx benchkit",

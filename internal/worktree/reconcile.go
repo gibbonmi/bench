@@ -11,9 +11,8 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// specbuildRefNamespace is where the removed provisional spec-build lifecycle wrote its
-// candidate, checkpoint, and refresh refs. Nothing writes it now, so the standing cleaner
-// is its only remaining reader.
+// specbuildRefNamespace holds refs from the retired provisional spec-build lifecycle.
+// The standing cleaner is its only remaining reader.
 const specbuildRefNamespace = "refs/bench/specbuild/"
 
 // lifecycleRefNamespaces bounds what the sweep may delete. Everything else under

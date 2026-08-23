@@ -59,8 +59,7 @@ Three predicates ride with them:
   tree convention and flag it for reviewer veto. If the contradiction is
   behavioral, ask.
 - If a build cannot meet an acceptance row, that is a **material acceptance
-  shortfall**: the build exits and reports. It does not land a silent
-  partial.
+  shortfall**: the build exits and reports. It does not land a silent partial.
 - Under **owned-red convergence**, only diff-owned reds count toward
   fix-loop convergence. `craft-line` owns that call.
 
