@@ -70,8 +70,36 @@ func TestLandCommandComposesCaptureOntoMovedDestination(t *testing.T) {
 	if got := gitOutput(t, root, "show", "main:capture/session-handoff.md"); got != "handoff source" {
 		t.Fatalf("published handoff = %q, want the source's", got)
 	}
-	if got := gitOutput(t, root, "show", "main:capture/learnings.md"); got != "learnings destination" {
-		t.Fatalf("published learnings = %q, want the destination's", got)
+	published := gitOutput(t, root, "show", "main:capture/learnings.md")
+	if !strings.Contains(published, "learnings destination") || !strings.Contains(published, "learnings source") {
+		t.Fatalf("published learnings = %q, want both sides' appended lines", published)
+	}
+}
+
+// WL19: the landing discloses each settled phase-owned path with its verb, so a
+// union the merge did not decide is visible on stderr rather than silent.
+func TestLandCommandDisclosesAUnionResolution(t *testing.T) {
+	request := "land-surface-union-disclosure"
+	root, creation, _, _ := landSurface(t, request)
+	base := seedCaptureBase(t, root, creation.Path, map[string]string{"capture/learnings.md": "learnings base\n"})
+	commitInWorktree(t, creation.Path, "capture/learnings.md", "learnings base\nlearnings source\n", "source learnings")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, root, "capture/learnings.md", "learnings base\nlearnings destination\n", "destination learnings")
+	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
+	if code != 0 || !strings.Contains(stdout, "worktree=released}") {
+		t.Fatalf("union landing = (%d, %q, %q), want released", code, stdout, stderr)
+	}
+	lines := 0
+	for _, line := range strings.Split(stderr, "\n") {
+		if strings.HasPrefix(line, "landing composition{resolved=") {
+			lines++
+			if !strings.Contains(line, "capture/learnings.md:union") {
+				t.Fatalf("disclosure = %q, want capture/learnings.md settled by union", line)
+			}
+		}
+	}
+	if lines != 1 {
+		t.Fatalf("disclosure lines = %d in %q, want exactly one", lines, stderr)
 	}
 }
 
