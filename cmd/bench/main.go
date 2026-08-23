@@ -559,9 +559,9 @@ func worktreeCommand(c Command, args []string) int {
 		}
 		return worktree.LandCommand(root, c.Executable, args[1:], c.Stdout, c.Stderr)
 	}
-	// `recovery` left the grammar with the preservation refs it acted on. This family's
-	// fallback is a free-form objective, so without naming the removed verb here it would
-	// open a subshell called "recovery" instead of saying the verb is gone.
+	// `recovery` is no longer a worktree subcommand. This family's fallback is a
+	// free-form objective, so naming it here reports the removed verb instead of
+	// opening a subshell called "recovery".
 	if len(args) > 0 && args[0] == "recovery" {
 		fmt.Fprintln(c.Stderr, toon.Usage("bench worktree", args[0]))
 		return 2

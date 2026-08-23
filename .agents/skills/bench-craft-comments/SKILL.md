@@ -6,7 +6,7 @@ index: writing or reviewing code comments
 
 # Writing comments
 
-A comment is addressed to the teammate who just walked in — the next reader of
+A comment addresses the teammate who just walked in — the next reader of
 the *current* code. That reader has no memory of the conversation, spec, or
 diff that produced it. Everything below follows from that reader. Write the
 sentences in ASD-STE100 prose per `craft-spec`'s `references/ste-prose.md`.
@@ -30,7 +30,7 @@ A comment that restates the line below it carries nothing — delete it.
 
 ## The register
 
-Timeless present tense, describing the current state of the code. The change
+Use the timeless present tense; describe the current state of the code. The change
 that produced the code is invisible to the next reader, so the comment never
 mentions it: no narration ("now handles", "fixed to use"), no provenance
 ("per the spec", "as requested in review"), no argument for its own
@@ -57,6 +57,6 @@ reader learns nothing about when or why the retry matters.
 Comments rot when they duplicate what code already enforces. A *what* comment
 needs an update in lockstep with every edit; a *why* comment stays true until
 the constraint itself moves. A comment that states only the why stays cheap
-to own. When editing code under an existing comment, read the comment as
+to own. When you edit code under an existing comment, read the comment as
 part of the diff. Update it or delete it, and never leave it describing the
 code that was.

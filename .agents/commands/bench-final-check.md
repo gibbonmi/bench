@@ -26,8 +26,8 @@ green evidence. Then capture the retro below.
 
 Everything else takes the gate-then-commit path. On green, land the named
 paths with `bench commit -m "<msg>" <path>...`. This command gates and commits
-them atomically. The honest no-op runs `bench gate` and reports its verdict
-when there is nothing to commit.
+them atomically. When there is nothing to commit, the honest no-op runs
+`bench gate` and reports its verdict.
 
 If the command refuses because of an
 unexplained working-tree file, surface that file. Do not commit or revert it.
@@ -38,10 +38,10 @@ or `/bench-debug` for a bug.
 
 **The post-merge tail (exit duty).** After the green landing reaches the
 default branch, read `bench status` and run the housekeeping rows it flags
-before closing. A merged spec awaiting retirement gets `bench spec retire <slug>`
+before you close. A merged spec awaiting retirement gets `bench spec retire <slug>`
 and its `spec-retire: <slug>` commit. Promote durable content first,
-for example a decision to an ADR or a hostile edge to the profile. Retiring
-the whole `specs/<slug>/` folder removes its compiled decision provenance
+for example a decision to an ADR or a hostile edge to the profile. Retirement
+of the whole `specs/<slug>/` folder removes its compiled decision provenance
 with its tickets, so there is no separate top-level decision-map delete.
 Promote or delete an orphaned review pickup by hand.
 
@@ -53,12 +53,12 @@ Leave the roadmap and capture rows to
 never restates it. On a topic branch these duties defer by design: the rows
 fire only on the default branch. The next default-branch session's
 SessionStart status re-surfaces them. State the deferral in the close instead
-of silently skipping it.
+of a silent skip.
 
 ## Capture the implementation retro
 
 After any applicable post-merge tail, an implemented spec has two final exit
-duties: rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
+duties. First, rewrite `capture/retros/<spec-slug>.md` in full. Do this only after the
 spec's final green landing commit has flipped it to `Status: implemented`. A
 re-run replaces that slug's whole file; it never appends,
 and it leaves other pending retros untouched.
@@ -114,12 +114,12 @@ single guidance source for that vocabulary; the anchors registry needle pinning
 those terms is its enforcement copy, not a second source. A later reader of the
 drained tables reads the terms from the tables themselves.
 
-Then read `capture/agent-performance/README.md` and both provider scorecards.
+Second, read `capture/agent-performance/README.md` and both provider scorecards.
 Refresh the scorecard for every provider whose models served as implementer,
 reviewer, or orchestrator on this landing. Update its
 last-incorporated-landing line and fold the new evidence into affected aggregates;
-leave an uninvolved provider unchanged. Completion means every participating
-model/effort/role is accounted for without adding a per-run diary row.
+leave an uninvolved provider unchanged. Completion means you accounted for
+every participating model/effort/role without a per-run diary row.
 
 These files are pending capture for `/bench-drain`, not
 a second roadmap. Do not run another gate or commit just to capture the retro.
@@ -167,12 +167,12 @@ covers; it never selects the gate. To change what runs, change
   only when the gate is green again.
 
 If a check itself looks wrong, for example a flaky test or an over-tight lint
-rule, say so explicitly and stop. Changing a gate check is my call, not a
+rule, say so explicitly and stop. A change to a gate check is my call, not a
 step inside `/bench-final-check`. When I approve one, the `craft-gate` skill
-governs how it is made.
+governs how you make it.
 
 ## Findings that the gate can't see
 
-If verifying surfaces a design problem that the tests pass through, name it
+If verification surfaces a design problem that the tests pass through, name it
 as a finding for `/bench-review-implementation`. That phase owns semantic
 review. Do not fold it silently into a fix.

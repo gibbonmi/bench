@@ -26,7 +26,7 @@ sequences as expand (new form beside the old), migrate (move callers
 in green batches), then contract. Contract removes the old form once every migrate
 ticket lands, `Blocked by:` naming them all.
 
-**Reviewer-approved breakdown**: before a spec-backed ticket is assigned, the coordinator
+**Reviewer-approved breakdown**: before the coordinator assigns a spec-backed ticket, it
 presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for
 every ticket. The coordinator asks: does the granularity feel right, too coarse or too fine,
 and are the blocking edges correct? Does each ticket depend only on tickets that genuinely
@@ -67,7 +67,7 @@ the ticket's account alone.
 `Acceptance` rows are observable behavioral criteria, not a project-gate checkbox. Cite each
 coverage row id in full, because preflight reads ids, not ranges. `Writes:` is advisory only. It
 helps judge whether two frontier tickets are disjoint enough to parallelize, and nothing enforces
-it. Each path it names exists in the tree, or the path is marked new.
+it. Each path it names exists in the tree, or the ticket marks the path new.
 
 Good:
 

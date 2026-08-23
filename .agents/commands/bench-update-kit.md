@@ -17,7 +17,7 @@ any adoption.
 Report the pulled refs, each candidate's classification, and which changes
 passed the synthesis loops. Report what record would change if the reviewer
 accepts the proposal. `/bench-final-check` is the recommended next command
-after accepted changes are applied. No build-phase command follows a rejected
+after you apply accepted changes. No build-phase command follows a rejected
 proposal.
 
 Bring *others'* improvements into the kit. This is the external, version-driven

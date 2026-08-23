@@ -41,7 +41,7 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   entry.
 - **landed assignment** — an assignment worktree whose ledger state is `active`
   and whose branch has landed on the default branch. Its lease is not live:
-  nobody released it. This is a derived classification, never a ledger state;
+  nobody released it. Bench derives this classification; it is never a ledger state.
   `bench worktree clean --landed` retires it. Not "orphan" (that names age
   alone), not "stale", "idle", "abandoned", or "unreleased" (true of every
   active row) — landed.
@@ -125,8 +125,8 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   semantic review binds to that pair and `bench worktree land` consumes it. Not
   a mutable review base, not a reconstructed path list.
 - **landing destination** — the expected tip of the branch that receives a
-  landing source. Moving it requires a new composition and gate verdict, not a
-  new source review by itself. Not the source's frozen base.
+  landing source. To move it, compose the tree again and get a new gate verdict; a
+  new source review alone is not enough. Not the source's frozen base.
 - **prospective landing tree** — the exact Git tree produced by composing a
   landing source onto an expected landing destination, including any authorized
   final transition. It is the whole-project gate subject. Not the source diff,

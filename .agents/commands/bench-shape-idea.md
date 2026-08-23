@@ -30,7 +30,7 @@ ticket.
 ## Ownership
 
 Shaping owns reviewer decisions, constraints, exclusions, research objects,
-rejected alternatives, and bounded discretion. Bounded discretion is limited to reversible technical choices. Such a choice
+rejected alternatives, and bounded discretion. Bounded discretion covers only reversible technical choices. Such a choice
 does not change observable behavior, scope, an architectural seam,
 compatibility, or what the gate proves.
 
@@ -43,8 +43,8 @@ choose an engineering seam while shaping. Record that choice in its decision
 ticket answer. Do not manufacture a seam decision simply to complete a map.
 
 The map stays top-level while shaping is open. It loads whole into each
-planning session, so keep it tight. Link to research assets instead of
-inlining them. `/bench-write-spec` moves a ready map and its owned assets into
+planning session, so keep it tight. Link to research assets instead of an
+inline copy. `/bench-write-spec` moves a ready map and its owned assets into
 `specs/<slug>/decisions/`. Compiled maps there are settled provenance, not the
 active shaping frontier.
 
@@ -60,8 +60,8 @@ IDs. Use the four schema-owned types:
 - **Prototype** — write throwaway code to make a reviewer choice concrete;
   charge the `prototype` skill.
 - **Grill** — run `craft-grill` frontier rounds to record the reviewer decision.
-- **Task** — complete manual work needed before a decision can be made, naming
-  who owns the work.
+- **Task** — complete manual work needed before the reviewer can decide, and
+  name who owns the work.
 
 Grill and Prototype decision tickets resolve only through live exchange with
 me. Research runs agent-alone. When the harness can delegate and another
@@ -104,7 +104,7 @@ When the conversation already carries a fresh idea, proceed with it without
 interrupting for the roadmap. If the roadmap is empty or absent, say so. Note
 that `/bench-drain` rebuilds it, and continue.
 
-Pulling an item leaves its roadmap row in place. Row presence is the
+A pulled item keeps its roadmap row in place. Row presence is the
 item's status as current open work. The row remains through shaping, spec,
 and build until shipped retirement removes it. This command never edits
 `ROADMAP.md` or `roadmap/`.
@@ -135,11 +135,9 @@ Run `bench maps` and re-read every decision ticket, constraint, exclusion,
 research object, and discretion item against the current conversation and
 tree. A conversation answer not written into the map is not recorded.
 
-When shaped scope contains two independently useful behaviors, apply this rule
-before one bundled spec becomes the default.
-
-A possible scope split is a reviewer decision, not an excuse to close shaping
-early. Surface it as a decision ticket and continue until the reviewer either
-chooses the split or rejects it. When the map reaches `ready`, recommend
+When shaped scope contains two independently useful behaviors, the possible
+split is a reviewer decision, not an excuse to close shaping early. Surface it
+as a decision ticket before one bundled spec becomes the default. Continue
+until the reviewer chooses or rejects the split. When the map reaches `ready`, recommend
 `/bench-write-spec` from the session holding the ready decision source, with one
 clause explaining why the source is ready.

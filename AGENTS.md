@@ -68,7 +68,7 @@ is pruned, not accreted, because a fresh session pays for every line it reads
 cold. Follow the shape already in the file. When the handoff and the tree
 disagree, the tree wins. `bench status` reports how many commits have landed
 since the last handoff update. So a stale handoff is only ambient
-information; the next session does not need to check it.
+information; the next session does not need to confirm it.
 
 **Shell conventions for agents in this repo.**
 

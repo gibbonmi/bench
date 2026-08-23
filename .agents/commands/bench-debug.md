@@ -12,8 +12,8 @@ external signal for diagnosis and for the fix.
 
 The debug work may write something — a throwaway harness, an instrumented
 copy, an edit under test. In that case, create or select its isolated worktree
-*before* the first repro artifact exists. A clean checkout at the start becomes
-dirty in an unattributable way, if it picks up writes during the debug work. Do
+*before* the first repro artifact exists. If a clean checkout picks up writes
+during the debug work, it becomes dirty in an unattributable way. Do
 not decide isolation after Phase 1 already produced artifacts; that decision
 comes too late.
 
@@ -57,7 +57,7 @@ Phase 1 is complete when you check every box. The command is:
 - [ ] **fast** — seconds, not minutes. A 2-second loop is a debugging superpower.
 - [ ] **agent-runnable** — runs unattended, with no human click.
 
-If you catch yourself theorizing before this command exists, stop. Jumping to a hypothesis
+If you catch yourself theorizing before this command exists, stop. A jump to a hypothesis
 without a red loop is the exact failure this rule prevents. If you genuinely cannot build a
 loop, say so and list what you tried. Ask for an environment, a captured artifact (HAR, log
 dump, trace), or permission to instrument.
@@ -71,7 +71,7 @@ Run it red. Confirm:
   one. The wrong bug means the wrong fix.
 - [ ] the failure reproduces across runs — or, for a flaky bug, at a rate high
   enough to debug against.
-- [ ] the exact symptom (error message, wrong output, slow timing) is captured,
+- [ ] you captured the exact symptom (error message, wrong output, slow timing),
   so later phases can verify the fix addresses it.
 
 A green proxy only narrows a hypothesis — it never confirms one. A load- or
@@ -87,8 +87,8 @@ Do not proceed until you have reproduced and minimised.
 
 Write **3–5 ranked, falsifiable** hypotheses before you test any: "if X is the cause,
 changing Y makes it disappear." A hypothesis with no prediction is a vibe; sharpen it or drop it.
-Show the ranked list before testing — I often re-rank it instantly ("we just shipped
-#3"). Do not block if I am away; proceed on your ranking.
+Show the ranked list before you test — I often re-rank it instantly ("we just shipped
+#3"). If I am away, do not block; proceed on your ranking.
 
 ## Phase 4 — instrument
 
@@ -98,10 +98,10 @@ first (set a baseline, then bisect); do not log.
 
 ## Phase 5 — fix at a correct seam
 
-Write the regression test **before** the fix, but only if a correct seam exists. A correct seam
+If a correct seam exists, write the regression test **before** the fix. A correct seam
 is one where the test exercises the real bug pattern at the call site. **If no correct seam
-exists, that absence is itself the finding** — note it; the architecture prevents the bug from
-being locked down. If a seam exists, follow this order: repro, failing test, fix, green, then
+exists, that absence is itself the finding** — note it; the architecture leaves the bug
+without a lock. If a seam exists, follow this order: repro, failing test, fix, green, then
 re-run the full Phase 1 loop.
 
 The regression-test seam and the edit owner may differ. Before you edit, list
@@ -117,8 +117,8 @@ architecture finding instead of patching every caller.
 Done means:
 
 - [ ] the Phase 1 loop no longer reproduces.
-- [ ] the regression test passes, or its absence is documented.
-- [ ] all `[DEBUG-...]` logs are gone (one grep on the prefix) and the throwaways are deleted.
+- [ ] the regression test passes, or you documented its absence.
+- [ ] all `[DEBUG-...]` logs are gone (one grep on the prefix) and you deleted the throwaways.
 - [ ] the commit names the correct hypothesis, so the next debugger learns.
 
 Then ask what would have *prevented* this bug. If the answer is architectural (no
@@ -128,17 +128,18 @@ seam, tangled callers), report it as a separate finding, after the fix lands.
 
 The feature you are debugging may have no live spec. Bench promotes a spec, then deletes
 it on merge, so a shipped feature's spec lives in git history, not in the working tree. Do not
-assume the behavior was never specified: `git log --diff-filter=D -- specs/` lists
+assume nobody specified the behavior: `git log --diff-filter=D -- specs/` lists
 every deleted spec, and `git log --grep=spec-retire` finds the retirement commits
 (and any decision it promoted). Recover the origin spec there before you hypothesise.
 For a single known slug, `bench spec history <slug>` runs both queries, merges and dedupes
-them, and renders one newest-first table. This is the sanctioned shortcut instead of
-hand-running the two commands above.
+them, and renders one newest-first table. This shortcut replaces a hand run of the two
+commands above.
 
 ## How it meets the rest of Bench
 
-The reviewer invokes this phase; a write delegate never charges it. When its repro proves the
-defect lives outside its ticket fence, the delegate stops implementation edits. It keeps its
+The reviewer invokes this phase; a write delegate never charges it. When a write delegate's
+repro proves the defect lives outside its ticket fence, the delegate stops implementation edits.
+It keeps its
 in-fence work dirty in its owned worktree. It returns a bounded blocked report: the repro
 command, the red output digest, the failing surface it observed, and its in-fence dirty paths.
 The reviewer runs this skill against that report to confirm the cause. The coordinator then
@@ -155,11 +156,11 @@ which destroys any uncommitted repro test. The fix's green commit removes the ma
 turns the repro into the live regression test.
 
 A project with no expected-failure form keeps the repro out of the shift and runs it by hand
-against the fix. State that fallback in the close rather than committing a red tree; invariant
+against the fix. State that fallback in the close rather than commit a red tree; invariant
 4 (commit only on green) has no red-commit exception. Route code authorship through
 `craft-delegate`, including a diagnosed single-seam fix; it owns the inline threshold, worktree
-isolation, and verification discipline. Replacing the gate with the repro weakens the oracle —
-that is my call, never a debug step. The `craft-seams` skill owns the seam decision in Phase 5.
+isolation, and verification discipline. A repro that replaces the gate weakens the oracle;
+that replacement is my call, never a debug step. The `craft-seams` skill owns the seam decision in Phase 5.
 Declare the line first — a hard bug runs a high-effort shift.
 
 Any delegation along the way (a fan-out search, a scoped fix) carries its own line. State an

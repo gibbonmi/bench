@@ -6,7 +6,7 @@ index: declaring the line / picking a delegate's model or effort
 
 # The line: route by signals, correct by ladder
 
-The line (model / effort / ~iteration cap) is declared before every
+Declare the line (model / effort / ~iteration cap) before every
 multi-cycle stage. Use the same three signals every time, not ad hoc
 judgment, and a ladder that corrects the line once the gate starts talking.
 
@@ -42,15 +42,15 @@ definition.
 | any | any | weak / uncovered | bump one tier |
 
 Rows read top-down, first match wins. A stage both genuinely uncertain and weakly gated takes the
-top row — uncertainty is never demoted to a bump. Tier and effort are one joint output. The last row
+top row — never demote uncertainty to a bump. Tier and effort are one joint output. The last row
 is the up-bias, and it is load-bearing. Where the gate can't catch a confidently wrong answer, buy
 insurance at the start rather than trust the ladder to correct later. Under-escalation is the
-expensive error; a wrong downgrade is caught cheaply by a covered gate.
+expensive error; a covered gate catches a wrong downgrade cheaply.
 
 A fourth signal, **leverage**, overrides the table. An artifact that steers future generation — a
 skill, a command phase, shared platform rules — routes top + high regardless of the rows above. A
-defect in guidance prose multiplies through every session that loads it. Check `Lines` for a cached
-routing before assessing from scratch; cache hits still get declared.
+defect in guidance prose multiplies through every session that loads it. Before you assess from
+scratch, read `Lines` for a cached routing; a cache hit still gets declared.
 
 ## Ticketed-build stage defaults
 
@@ -78,7 +78,7 @@ diff touches the tree. Before any retry or escalation, classify every red
 the gate reports. It is **diff-owned** (introduced or exposed by this
 diff), **inherited** (red at baseline, untouched by the diff), or
 **spec-predicted** (named as expected at this point). Only diff-owned reds
-count toward the ladder; the others are reported but never retried against.
+count toward the ladder; you report the others but never retry against them.
 1. **First diff-owned red** — retry the same tier, feeding the gate output
    back as guidance. Most reds are fixable feedback, not capability gaps.
 2. **Second diff-owned red at the same tier** — escalate one tier.
@@ -91,13 +91,13 @@ count toward the ladder; the others are reported but never retried against.
 5. **Any bump to the top tier pauses and asks the reviewer** — unless the
    project's `Lines` grants a standing opt-out. Top-tier spend is the
    reviewer's cost decision, not yours.
-Every move is reported in one line ("escalated to mid after 2 diff-owned
-reds"). The ladder is only trusted where the gate is; it never substitutes
+Report every move in one line ("escalated to mid after 2 diff-owned
+reds"). Trust the ladder only where you trust the gate; it never substitutes
 for the up-bias row.
 
 ## What is enforced vs. declared
 
-Model membership is enforced: the Agent-tool hook denies delegations to models outside `lines.env`,
+Two surfaces enforce model membership: the Agent-tool hook denies delegations to models outside `lines.env`,
 and the `BENCH_AGENT` adapters refuse an undeclared `BENCH_MODEL` in routed repos. Effort has no
 enforcement surface anywhere — it exists only in your declaration, which is why it isn't optional.
 
@@ -107,8 +107,8 @@ enforcement surface anywhere — it exists only in your declaration, which is wh
 > the stage dispatches delegates>. <one clause: the signals that chose this
 > row.>
 
-Fan-out is declared for the same reason model and effort are: visibility before spend. Exceeding the
-declared count is reported like any ladder move, never done silently. Derive the cap; don't feel it
+Declare fan-out for the same reason as model and effort: visibility before spend. Report an overrun of
+the declared count like any ladder move; never exceed it silently. Derive the cap; don't feel it
 out: expected red/green cycles plus a margin for one red. A review-axis delegate is one pass with no
 fix iteration, so it prices at ~1 iteration. A shift with a likely red and fix prices higher.
 

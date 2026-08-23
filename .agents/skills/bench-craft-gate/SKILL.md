@@ -8,8 +8,8 @@ index: adding, weakening, or removing a gate check / authoring the oracle
 
 The gate is the only authority on done — invariant #1 rests on it. This makes
 a gate check the highest-leverage code in a repo: every shift, every delegate,
-every review inherits its strength. Write checks knowing they will be trusted
-more than you are.
+every review inherits its strength. Write each check as code that earns more
+trust than you do.
 
 ## Prove it bites
 
@@ -22,8 +22,8 @@ disappear. A linked repo receives canary inventory validation from Bench and
 owns equivalent planted-reason proof in its native tests. Without a retained
 fixture, the one observed red is the minimum, stated in the spec or commit.
 
-Completion criterion for a new check: observed red once with the targeted
-message, green after the fix, and the red reproducible from the diff. Use a
+A new check is complete when you observed one red with the targeted
+message, green after the fix, and a red reproducible from the diff. Use a
 fixture, or a documented break-it command.
 
 ## Attribute every failure
@@ -41,13 +41,13 @@ A red gate must name its cause without archaeology.
 
 A check exercises the actual command, script, or parser against a fixture and
 asserts the external verdict — exit code, output, a file appearing. It never
-reimplements the checked logic: a second derivation can disagree with the
-real one. It can go green while the product is broken, or red while it is
+reimplements the checked logic. A second derivation can disagree with the
+real one: green while the product is broken, or red while it is
 fine. A claim
 can live in docs while its enforcement lives in code — a file list, an index,
-a deny surface. Generate one from the other, or check both directions. An
-advertisement without enforcement drifts, and an enforcement nothing
-advertises gets deleted by accident.
+a deny surface. Generate one from the other, or grade both directions. An
+advertisement without enforcement drifts, and an accident deletes an
+enforcement nothing advertises.
 
 ```
 ( cd "$tmp" && git init -q && bash "$root/bin/tool.sh" link )
@@ -84,10 +84,10 @@ config missing — what happens next is a decision, not an accident.
   the action. An unguarded pass-through is silent de-enforcement.
 - **Fail open** only for ergonomics-layer hooks that must never brick the
   workflow. Always add a one-line stderr warning, and enumerate the open
-  cases in the header, so adding one is a visible edit.
+  cases in the header, so a new one is a visible edit.
 - **Best-effort** (runs only when a tool is present) is legitimate for
-  supplementary lint. Say so in a comment, and make sure the check errs
-  rather than silently passing when the tool is present but the run fails.
+  supplementary lint. Say so in a comment, and when the tool is present but
+  the run fails, make sure the check errs rather than silently passes.
 
 ## Layer the gate
 
@@ -103,16 +103,16 @@ that edit loud: every retained kit fixture has direct ordinary-test proof, and
 an empty, invalid, or unbound canary inventory is red. Linked repos keep the
 same division of responsibility: Bench validates their inventory, while their
 native tests prove their checks bite. A scaffolded gate's configuration sentinel
-keeps it red until the project supplies real checks and bindings. Deleting or
-weakening this defense follows the same rule as any weakening (below), never a
-quiet step inside making a change pass. The threat this covers is the lazy
+keeps it red until the project supplies real checks and bindings. To delete or
+weaken this defense, follow the rule below for any weakening; it is never a
+quiet step that makes a change pass. The threat this covers is the lazy
 shortcut, not a determined adversary — the contract is loudness, not prevention.
 
 ## Weakening is a reviewer decision
 
 When a check blocks a change you believe is legitimate, do not edit, relax,
-or delete it as a step inside making that change pass. Stop and surface it
+or delete it as a step that makes that change pass. Stop and surface it
 instead. A deliberate weakening or removal ships as its
-own visible change with reviewer sign-off. Its fixture or canary is updated
-to match, never quietly inside a feature diff. This is invariant #1 read
+own visible change with reviewer sign-off. That same change updates its
+fixture or canary to match, never quietly inside a feature diff. This is invariant #1 read
 from the author's side.

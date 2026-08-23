@@ -50,15 +50,15 @@ The board is split, so every edit below has one owner.
 A row's body, its `Occurrence:` ledger, and its `Sources:` line are edited in `roadmap/FT<n>.md`.
 Retiring a row deletes its `ROADMAP.md` heading line and its `roadmap/FT<n>.md` together in the same batch.
 
-Before draining anything, verify every `ROADMAP.md` row against the tree. When a
+Before you drain anything, verify every `ROADMAP.md` row against the tree. When a
 row's spec may have shipped, use `bench spec history <slug>` for the shipped-row
-check. Shipped work is removed and stale wording is corrected. Row presence is
+check. Remove shipped work and correct stale wording. Row presence is
 status, so this pass is the backstop for anything spec-retire missed. The
-empty-state recommendation is only trustworthy if the roadmap is current. No
-completion markers — history lives in git.
+empty-state recommendation is only trustworthy if the roadmap is current. Write
+no completion markers; history lives in git.
 
-A spec whose work has landed but whose directory still sits under `specs/` is
-retired here rather than left for a later invocation. Run
+Retire here a spec whose work has landed but whose directory still sits under
+`specs/`; do not leave it for a later invocation. Run
 `bench spec retire <slug>` during this pass so its deletions join the batch
 below. Promote whatever of the spec stays durable onto its roadmap row first.
 Leave that row with no spec path named; the row survives only as the residual
@@ -114,7 +114,7 @@ The index is the sole retro inventory this run reads. Do not re-enumerate
 `capture/retros/` into a second, potentially different listing. The run reads
 each body at the path its index row names; that is required detail retrieval,
 not another inventory. Give every actionable recommendation in every body one
-explicit disposition. Choose one disposition: merge into an existing roadmap
+explicit disposition. The dispositions are a merge into an existing roadmap
 row, a new roadmap row, a learning-or-rule disposition, or an explicit
 dismissal. Give the dismissal one line of why.
 
@@ -126,15 +126,15 @@ behind itself.
 When drained bodies carry repair-attribution tables, also report tickets
 total, one-shots, and per-cause counts, reading causes only from the drained
 tables. The cause vocabulary belongs to the retro template
-`/bench-final-check` owns, so this run neither restates nor extends it. A
-term it does not recognize is still counted as written. The tally only
-reports. It adds no roadmap row grammar of its own. A body with no
+`/bench-final-check` owns, so this run neither restates nor extends it. The
+tally still counts a term it does not recognize, as written. The tally only
+reports; it adds no roadmap row grammar of its own. A body with no
 attribution table simply contributes nothing to it.
 
 After every recommendation has a disposition, remove every drained
 `capture/retros/*.md` file in the same reviewer-approved batch. A partial
-retro drain is not allowed. The pending count must reach zero, and no source
-file is removed before its dispositions are present for review.
+retro drain is not allowed. The pending count must reach zero, and remove no
+source file before its dispositions are present for review.
 
 ## 5. Verdict the journal
 
@@ -152,15 +152,15 @@ A defect-shaped entry claims a sanctioned command misbehaved. It becomes a
 roadmap row only after its red signal reproduces through the accused command
 itself, invoked as the entry quotes it. A repro through a lookalike surface —
 a raw `git add` standing in for `bench commit` — proves nothing about the
-accused path. Without the real repro, dismiss the entry as unreproduced. Or
-re-park it with the missing repro named as its graduation trigger.
+accused path. Without the real repro, dismiss the entry as unreproduced or
+re-park it. A re-parked entry names the missing repro as its graduation trigger.
 
 For a drained item that meets the light-path observables, build the item in this session ("implement now") by default.
-Open a `ROADMAP.md` row only when the reviewer declines.
 Write its one ticket file. Spawn a write-delegate charged with
 that ticket under `craft-delegate` isolation and `craft-line` routing. Then verify
 the returned diff in the main session against the ticket's acceptance rows and
-the gate. Items needing a reviewer decision, a new seam, or spec-level design
+the gate. Open a `ROADMAP.md` row only when the reviewer declines.
+Items needing a reviewer decision, a new seam, or spec-level design
 still graduate to `ROADMAP.md`.
 
 ## 6. Classify every run; restructure on request
@@ -168,8 +168,8 @@ still graduate to `ROADMAP.md`.
 While you walk the rows, classify each row. Use fix (a defect in existing
 behavior, with evidence), feature (new capability or guidance), or
 decision-only. Report the classification in the exit rather than write it
-into the row grammar. It exists to steer the sequence. Every run classifies.
-No invocation skips it.
+into the row grammar. It exists to steer the sequence. Every run classifies;
+no invocation skips it.
 
 The board-restructuring pass is opt-in. It runs only when the reviewer
 invokes the phase with `--restructure`, because the whole-board pass is
@@ -240,8 +240,8 @@ pass retires a spec, the commit subject **ends with** `spec-retire: <slug>`.
 That suffix is the exact grammar `bench spec history` matches. A subject that
 merely mentions the slug loses the retirement evidence a later run's
 shipped-row check reads. The suffix carries one slug, so a pass retiring two
-or more specs takes one extra commit per additional slug. It says so in the
-exit. That is rare, and correctness of the history query outranks the saved
+or more specs takes one extra commit per additional slug. The exit says so.
+That is rare, and correctness of the history query outranks the saved
 gate.
 
 The run writes the handoff last, immediately before the commit. Its pin

@@ -12,7 +12,7 @@ Charge `bench-craft-domain` before the first round — canonical terms, Avoid
 lists, and concept-edge scenarios sharpen what to ask and pin what each
 answer means.
 
-If a *fact* can be found by exploring the codebase, look it up rather than asking me. The *decisions*, though, are mine — put each one to me and wait for my answer. A grill that answers its own questions has stopped grilling.
+If the codebase holds a *fact*, look it up rather than ask me. The *decisions*, though, are mine — put each one to me and wait for my answer. A grill that answers its own questions has stopped grilling.
 
 ## The round
 
@@ -30,8 +30,8 @@ If a *fact* can be found by exploring the codebase, look it up rather than askin
    others obsolete: drop the obsolete ones, add the unblocked ones, and open
    the next numbered round. Repeat until the frontier is empty.
 
-Ask through the harness's structured question surface when it has one
-(Claude Code's AskUserQuestion): each question in the round rides as one entry,
+When the harness has a structured question surface (Claude Code's AskUserQuestion),
+ask through it: each question in the round rides as one entry,
 its recommendation as the first option marked as recommended, and the free-text
 escape keeps "adjust" open.
 

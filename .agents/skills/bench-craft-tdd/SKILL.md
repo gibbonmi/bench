@@ -18,7 +18,7 @@ minimum to pass its own tests, then stops. So:
 - TDD **only** at reviewer-confirmed seams. Spec-backed work consumes the seams
   `/bench-write-spec` named: spec sign-off already confirmed them, so it takes the
   signed-off seam without a second reviewer gate. At those seams the test target is
-  external — I chose it — so passing the test means matching my spec, not the agent's
+  external — I chose it — so a passing test matches my spec, not the agent's
   guess.
 - Light-path work names the test seam in its ticket file and starts without a live
   confirmation stop; the reviewer can veto the seam post-hoc. The right-size
@@ -33,7 +33,7 @@ minimum to pass its own tests, then stops. So:
   *correct* means (the reviewer chose the seam and the semantics), never which
   inputs get exercised. If a story isn't covered, that's a gap to fix, not a stop.
 
-The classes to walk: error path, empty/absent input, boundary values, malformed
+Walk these classes: error path, empty/absent input, boundary values, malformed
 input, interrupted or partial state, re-run idempotency, process-boundary
 lifecycle, hostile environment, plus the project profile's hostile-input
 checklist. A control resolving a class must exercise the **new** surface.
@@ -72,8 +72,8 @@ the spec, never from the loop.
    as a problem. Tests stay on the interface while helpers move beneath it.
 
 Inside a `bench shift` iteration, complete red→green within the same iteration.
-A red gate rolls the worktree back and deletes uncommitted work. A test left
-failing when the iteration ends is destroyed, not carried to the next one.
+A red gate rolls the worktree back and deletes uncommitted work. The rollback destroys a test
+left failing when the iteration ends; it does not carry to the next one.
 
 ## Acceptance rows
 
@@ -84,27 +84,29 @@ fields here, and classify a row only from the run that observes it:
 
 - Rows go red one at a time as each slice starts — never batched into an
   upfront all-red test file. The row's red signal runs immediately before
-  implementing that slice and fails because the mapped behavior is absent or
+  that slice's implementation and fails because the mapped behavior is absent or
   wrong.
 - If the signal already passes, classify the row as `already covered`; if it
   cannot run before implementation, classify it as `not TDD-able` with the
   reason.
 
-Reject a row or test that attaches below the chosen seam, tests private
-behavior, or mocks an internal collaborator. Reject one that uses an internal
-double to satisfy the test without the behavior, or that asserts call count or
-call order. Reject one that peeks around the interface, or that describes
-implementation shape instead of observable behavior. Reject nondeterminism
-too: a test whose verdict depends on wall-clock time, iteration order, or a
-live network is a broken oracle.
+Reject a row or test that:
+- attaches below the chosen seam
+- tests private behavior
+- mocks an internal collaborator
+- uses an internal double to satisfy the test without the behavior
+- asserts call count or call order
+- peeks around the interface
+- describes implementation shape instead of observable behavior
+- shows nondeterminism: a test whose verdict depends on wall-clock time, iteration order, or a live network is a broken oracle
 
 Mocks are fine at real system boundaries — time, randomness, network,
 filesystem, external APIs — when the seam requires them. But a boundary stub
 scripted to return exactly the success shape hollows the test out — the test
-passes while the real integration is never exercised. Keep stubs honest:
+passes while nothing exercises the real integration. Keep stubs honest:
 realistic shapes, and failure behaviors drawn from the edge inventory, not
 only the happy reply. The mock-or-not rules and the honest-stub good/bad pair
-are `references/mocking.md`.
+are in `references/mocking.md`.
 
 ## The oracle is the gate, not you
 

@@ -6,7 +6,7 @@ index: spawning a delegate / verifying a delegate's done-claim
 
 # Delegating without losing the plot
 
-A delegate buys parallelism and isolates a heavy read-set; misjudged, it
+A delegate buys parallelism and isolates a heavy read-set. A misjudged delegate
 costs the thing that matters: the work happens unseen.
 
 ## Delegate or inline
@@ -26,7 +26,7 @@ either stop. Either posture stops before editing and emits one executable resume
 subagent-capable harness. The handoff names the repository path, the working branch or worktree, the
 spec or change name, the destination harness, and that harness's exact invocation.
 
-Surface before spawn any delegation that changes who performs requested work.
+Before you spawn a delegation that changes who performs the requested work, surface it.
 
 ## The charge
 
@@ -46,7 +46,7 @@ registry the charge does not name is one the delegate will miss.
 
 A write-delegation from a spec carries its stories' coverage rows every time — behavior, seam, why
 it catches the failure. It requires the delegate to show each row red before the edit and green
-after. Check each slice against `craft-spec`'s "Slicing a build for delegates" first.
+after. First compare each slice with `craft-spec`'s "Slicing a build for delegates".
 
 Name the mutation that breaks the change's central property. Require the delegate to apply it to its
 own finished work and report the observed result. Require the delegate to add the missing row when
@@ -81,30 +81,32 @@ One delegate, one coherent unit: one axis, one story, one search question.
 A write-delegation runs in an isolated worktree (`bench worktree`), so stray edits can't
 land in reviewer-owned files. Concurrent delegates get separate worktrees, one each. The
 harness's own `isolation: worktree` cannot cut a second one, since its request ID derives
-from the session ID alone. So the coordinator runs
-`bench worktree create --request <opaque-id> --label <work-item>` once per delegate. Then it
+from the session ID alone. The coordinator therefore runs
+`bench worktree create --request <opaque-id> --label <work-item>` once per delegate. It
 addresses the worktree by label: `bench worktree exec "<label>" -- <command>`,
 `bench worktree path "<label>"`, never a cached path.
 
 Share a worktree only when a delegate's work depends on another's output. In that case, reviewed
 dependent tickets share one retained integration source, and each charge names its root and
-expected tip. The whole-tree gate is serialized: a write-delegate stops at diff-ready with focused tests
-green; the coordinator runs `bench commit` per worktree, one at a time. A worktree isolates the
+expected tip. The whole-tree gate runs serially: a write-delegate stops at diff-ready with focused tests
+green; the coordinator runs `bench commit` per worktree, one at a time.
+
+A worktree isolates the
 working tree, not the repo-global stash stack a concurrent delegate shares.
 A charge bans `git stash` — the destructive-git guard refuses it — and names the substitute.
-
 `cp` the working file aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it
 back. The copy lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a
 glob.
+
 Read-only delegations need no worktree; say "do not edit any file" and mean it. A large
-uncommitted build no worktree can hold may run in the main checkout under exactly four
-conditions: one writer, a named file allowlist. Also required: no commit authority, and
+uncommitted build that no worktree can hold may run in the main checkout under exactly four
+conditions. The conditions are one writer, a named file allowlist, no commit authority, and
 a `git status` check verified on return.
 
 ## Verifying the done-claim
 
 A delegate's done-claim is a claim, not a result. Before accepting one, run the gate against
-its work, and check every coverage row went red-then-green. Run `git status` in the worktree
+its work, and confirm every coverage row went red-then-green. Run `git status` in the worktree
 it used, and resolve every identifier in an absence or exclusion claim to a real thing. Probe
 one accepted behavior independently of the delegate's own tests, kept constant across a batch,
 and spot-check citations before folding a summary in.

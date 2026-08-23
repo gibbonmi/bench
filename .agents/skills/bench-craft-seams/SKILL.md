@@ -21,7 +21,7 @@ config, performance. Aim for leverage (callers learn a little, get a lot) and
 locality (changes concentrate in one place).
 
 - Can I drop a method? Simplify a parameter? Hide more inside?
-- **Deletion test:** imagine deleting the module. If complexity vanishes, it was a
+- **Deletion test:** imagine the module deleted. If complexity vanishes, it was a
   pass-through. If complexity reappears across callers, it earned its place.
 - **One adapter is a hypothetical seam; two adapters is a real one.** Don't add a
   seam until something actually varies across it.
@@ -45,7 +45,7 @@ Bad — the dependency is hardwired, so a test must patch `Date.now` behind the
 interface, binding itself to an internal.
 
 This is why `/bench-write-spec` picks seams before `/bench-implement-spec`
-runs. A test attached to a well-placed seam checks behavior the user cares
+runs. A test attached to a well-placed seam tests behavior the user cares
 about, so an agent can't satisfy it by over-fitting to incidental
 implementation detail. A test attached to an internal is something the agent
 can game.
@@ -69,23 +69,23 @@ can game.
 
 Avoid the word "boundary" (overloaded). Say **seam** or **interface**.
 
-Before exploring the tree for where a seam belongs, declare a small read budget
-— a number of files. If you spend it without finding traction, stop guessing
+Before you explore the tree for where a seam belongs, declare a small read budget
+— a number of files. If you spend it without traction, stop the guesswork
 and reroute through `bench outline`. Report the budget spent alongside the
 reroute; a silent, unbounded read loop is not an accepted way to find a seam.
 
-The edge classes a domain's inputs actually present — per surface: shell CLI,
-HTTP API, web UI, background jobs — are templated in
-`references/hostile-input-library.md`. Quarry it when an edge inventory or a new
-project profile needs a hostile-input checklist.
+`references/hostile-input-library.md` templates the edge classes a domain's
+inputs actually present, per surface: shell CLI, HTTP API, web UI, background
+jobs. When an edge inventory or a new project profile needs a hostile-input
+checklist, quarry it.
 
 ## Design it twice (for the genuinely uncertain seam)
 
 Your first interface idea is rarely the best. When a seam is the uncertain one
 — the one you declared a high-effort line for — don't settle on the first
-shape. Spawn 3+ parallel sub-agents, each designing a **radically different**
+shape. Spawn 3+ parallel delegates, each designing a **radically different**
 interface for the same module, then compare and recommend. The paste-ready
-sub-agent briefs and the comparison method are in
+delegate briefs and the comparison method are in
 `references/design-it-twice.md`. That is what a high-effort line buys at the
 uncertain seam: more interfaces considered before one is chosen. At a known
 seam, skip it — one design is fine.
@@ -96,8 +96,7 @@ seam, skip it — one design is fine.
 or a directory collects too many source files. Split along responsibility,
 never line count, and never fragment to dodge the limit. Before choosing split or grant, check both the file-length budget and the directory's file-count headroom: a split is free only when the directory has room.
 
-A
-genuinely deep module can instead earn a per-path grant. Propose a line in
+A genuinely deep module can instead earn a per-path grant. Propose a line in
 `.bench/structure.budgets` (`<path> <max>`, trailing `/` for a directory) for
 the reviewer to approve. The file is reviewer-owned; never edit it yourself.
 The full splitting method — the deletion test per split, crowded directories,

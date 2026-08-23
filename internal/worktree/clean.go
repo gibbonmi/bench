@@ -27,7 +27,7 @@ type indexEntry struct {
 	stage           int
 }
 
-// recoverAssignment writes every Git-visible layer through temporary indexes. It
+// recoverAssignmentWithFault writes every Git-visible layer through temporary indexes. It
 // never points HEAD elsewhere and never opens the real index for writing.
 func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault Fault) (intent.Assignment, error) {
 	if len(assignment.Recovery) > 0 {

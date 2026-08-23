@@ -63,15 +63,17 @@ or an implementation ticket. An empty or invalid fence section is incomplete.
 fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build`
 and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
 
-After a pass touching many sections, reread the complete artifact end to end and reconcile contradictions
-before handing off.
+After a pass that touches many sections, reread the complete artifact end to end and reconcile contradictions
+before the handoff.
 
 ## Review rubric
 
-The round asks five questions. Would the cheapest wrong implementation pass? Does every source behavior
-have a red-capable row? Does every line match cached routing? Does any behavior, why-it-catches clause,
-or decision answer name an outcome family instead of an exact predicate? Are the source and observed reds
-sound even when the source is same-session, conflicting, or mostly not observed?
+The round asks five questions:
+- Would the cheapest wrong implementation pass?
+- Does every source behavior have a red-capable row?
+- Does every line match cached routing?
+- Does any behavior, why-it-catches clause, or decision answer name an outcome family instead of an exact predicate?
+- Are the source and observed reds sound even when the source is same-session, conflicting, or mostly not observed?
 
 The degenerate standard is the cheapest plausible wrong implementation — a degenerate that needs deliberate
 contrivance is the build's mutation-probe target, never a new spec row. A finding blocks only when it changes

@@ -14,7 +14,7 @@ modules into deep ones, aimed at testability and agent-navigability. It renders 
 opportunities as a visual report, and walks the reviewer's pick through a grilling
 loop. It proposes; it never refactors in-phase.
 
-Charge `craft-seams` before exploring. It owns the vocabulary (module, interface,
+Charge `craft-seams` before you explore. It owns the vocabulary (module, interface,
 depth, seam, adapter, leverage, locality), the deletion test, and "the interface is
 the test surface." Use those terms exactly in every candidate; never use
 "component," "service," "API," or "boundary." Domain names come from `CONTEXT.md`
@@ -23,7 +23,7 @@ per `craft-domain`. ADRs record decisions this phase does not re-litigate.
 ## 1. Scope before you scan
 
 Deepening pays off where change keeps happening, so decide *where* to look before
-looking:
+you look:
 
 - A reviewer-named direction — a module, a subsystem, a pain point — wins. Take it
   and skip the inference below.
@@ -45,8 +45,8 @@ area organically, with no rigid heuristics, and note the friction:
 
 - Where does understanding one concept require bouncing between many small modules?
 - Where are modules shallow — interface nearly as complex as the implementation?
-- Where were pure functions extracted just for testability while the real bugs hide
-  in how they're called (no locality)?
+- Where did someone extract pure functions just for testability while the real bugs
+  hide in the call sites (no locality)?
 - Where do tightly-coupled modules leak across their seams?
 - What is untested, or hard to test through its current interface?
 
@@ -86,5 +86,5 @@ uncertain interface, use design-it-twice from `craft-seams`.
 A settled deepening becomes work through the normal workflow, right-sized per
 `.bench/BENCH.md`: the light path for a one-ticket deepening, `/bench-write-spec`
 past that threshold. Recommend the next command in this harness's invocation form.
-Park a candidate worth keeping but not pursuing now with `bench idea`; never write
-it into `ROADMAP.md` here.
+When a candidate is worth keeping but not pursued now, park it with `bench idea`;
+never write it into `ROADMAP.md` here.

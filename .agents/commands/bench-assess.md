@@ -32,11 +32,11 @@ invocation form.
 
 ## 1. Verify the previous assessment landed
 
-Before any new sweep, verify the previous assessment's backlog landed. Check it
-story by story against the current tree, not against commit messages. Mark each
+Before any new sweep, verify the previous assessment's backlog landed. Compare it
+story by story with the current tree, not with commit messages. Mark each
 prior ranked item FIXED, PARTIAL, or open, with a one-line evidence cite.
 Confirm each prior high or medium finding closed, or carry it forward. This reconciled
-baseline is what the new file builds on, so a shipped item is never re-listed as a
+baseline is what the new file builds on, so you never re-list a shipped item as a
 fresh finding. Treat a missing predecessor as a first run; there is nothing to
 reconcile.
 
@@ -69,7 +69,7 @@ not verify as an unknown in the verification notes; do not assert it.
 ## 4. Write the assessment (the output contract)
 
 Produce one dated `ASSESSMENT.md` at the repo root that **replaces its predecessor**.
-Git history is the archive, so overwrite the file rather than appending. Do not keep
+Git history is the archive, so overwrite the file rather than append to it. Do not keep
 a dated series or an archive folder. The file carries:
 
 - **A severity grammar**: **high** means an invariant or advertised guarantee does
@@ -78,7 +78,7 @@ a dated series or an archive folder. The file carries:
 - **Findings by area**, each cited to the source that proves it.
 - **A ranked improvement backlog**, ordered by platform leverage, each item sized
   in rough agent-time.
-- **A verification-notes section** recording what was re-verified (✓) and the
+- **A verification-notes section** that records what you re-verified (✓) and the
   known coverage limits. Name the unknowns the sweep could not execute or
   reproduce honestly rather than hide them.
 
@@ -86,5 +86,5 @@ a dated series or an archive folder. The file carries:
 
 Re-confirm an already tracked item — a parked roadmap row, an accepted posture in
 an ADR, an upstream-blocked feature — as still correct, and cite it. Do not
-re-file it as a new finding. Re-filing tracked work churns the backlog and
+re-file it as a new finding. A re-filed tracked item churns the backlog and
 hides the real deltas. The value of each run is the change since the last one.

@@ -24,12 +24,12 @@ working maps; compiled maps live under `specs/<slug>/decisions/`.
 
 - **Ready compiled map.** Validate it. Then move (do not copy) the source map and any map-owned assets from top-level
   `decisions/` into `specs/<slug>/decisions/`. Then update every reference to the moved paths in the same green change. A re-run reads the already-compiled spec-local map; it never recreates a top-level copy.
-- **Reviewer-confirmed current conversation.** Every load-bearing product or scope fork is closed here, dated. Do
+- **Reviewer-confirmed current conversation.** Close every load-bearing product or scope fork here, dated. Do
   not manufacture a map to restate it.
 - **Named reviewed artifact.** Name it. It holds settled decisions, not unresolved prompts.
 
 Record exactly one `Decision source:` line in the spec. For a map-backed source, re-read and re-verify every structured `## Sources`
-entry before choosing seams. Disclose what could not be re-read, and consume them in place without copying a research manifest into the spec. Ask at most two late clarification
+entry before you choose seams. Disclose what you could not re-read, and consume them in place without copying a research manifest into the spec. Ask at most two late clarification
 questions, one at a time, each with a recommended answer; route a dependency
 tree or multi-session fog to `$bench-shape-idea`.
 
@@ -43,11 +43,11 @@ compatibility, or a reviewer-chosen seam.
 ## Process
 
 1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the
-   enforcement surface before locking rows that touch it. Give each story group its resolved model and effort from
+   enforcement surface before you lock rows that touch it. Give each story group its resolved model and effort from
    `craft-line`. Write `specs/<feature>/spec.md` from `craft-spec`'s template and run `bench coverage --check`. The
    stale-command-reference sweep remains fail-closed across staged specs.
 
-   A spec shipping a phase declares it on one `Introduces commands:` line, valid in its own directory while staged.
+   A spec that ships a phase declares it on one `Introduces commands:` line, valid in its own directory while staged.
    When no hostile-input checklist class covers a surface, quarry the seams library and propose a tuned profile addition. Apply `craft-spec`'s named
    `Bootstrap authority before execution` rule.
 2. **Retire superseded work by promotion then deletion.** Leave no `Superseded by` marker: promote durable

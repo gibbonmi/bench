@@ -81,8 +81,8 @@ it never restarts initial discovery over the original range.
    give it the rows from `bench coverage <spec>`. The delegate must audit every
    mapped behavior there; that is part of its charge.
 
-   When one exists, give
-   Coverage the existing tests and the profile's hostile-input checklist.
+   Give Coverage the existing tests and, when one exists, the profile's
+   hostile-input checklist.
 
    If there is no spec, skip the Spec axis and say so. The Coverage axis still
    runs; it needs only the diff and the existing tests.
@@ -136,7 +136,7 @@ it never restarts initial discovery over the original range.
 
    The ordinary artifact is transient pickup state, not a review log. The
    `/bench-implement-spec` session that resolves the findings deletes it in
-   the same green fix commit that closes them. So resolved findings cannot
+   the same green fix commit that closes them, so resolved findings cannot
    resurface.
 
 6. **Hand off, don't repair.** This phase makes no fixes and runs no gate.

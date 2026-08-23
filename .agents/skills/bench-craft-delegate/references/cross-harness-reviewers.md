@@ -3,7 +3,7 @@
 Use a family CLI for a cross-family reviewer. A harness without a native
 subagent surface falls back to its own family's CLI.
 
-Close stdin on every one of these. A family CLI given both a prompt argument and
+Close stdin on every one of these. A family CLI that receives both a prompt argument and
 an open stdin waits for stdin to supply more prompt. So a backgrounded reviewer
 parks before it starts and reports no error — it looks launched. Redirect from
 `/dev/null` and check the process is alive before treating a fan-out as running.

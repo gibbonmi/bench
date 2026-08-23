@@ -269,7 +269,7 @@ $bench-setup-repo
 Setup is two halves, the same split as Pocock's `setup-matt-pocock-skills`.
 The **mechanical** half is the CLI: `link` wires the kit into the repo for
 every harness, and `init` scaffolds an empty `.bench/gate.sh`. Both are
-deterministic and idempotent. `/bench-setup-repo` checks whether those steps
+deterministic and idempotent. `/bench-setup-repo` confirms whether those steps
 already happened, and runs or reports the worker-facing step that is still
 needed. It then continues into the **project-specific** half.
 
@@ -322,7 +322,7 @@ loop** that commits only on green. It also adds the **declared line**
 names the seams.
 
 So migration is: ask the agent to run
-`/bench-setup-repo`. It checks the
+`/bench-setup-repo`. It confirms the
 link/init mechanics, detects the existing Pocock structure, and reuses it.
 It only asks for the things Bench introduces (the gate command, the seams,
 the lines). Nothing about Pocock's planning flow is replaced; Bench wraps it in
@@ -347,7 +347,7 @@ changed. It proposes; you own the merge.
 
 ## Switching harnesses
 
-Switching harnesses is a no-op, by design. After `bench link`, the same repo
+You switch harnesses with no extra step, by design. After `bench link`, the same repo
 is wired for all of them at once:
 
 - **Claude Code** reads `CLAUDE.md` (which imports `AGENTS.md` and
@@ -409,8 +409,7 @@ agent you're using; it depends only on the committed artifacts.
 ## Integrating it into gl-axi
 
 `projects/gl-axi.md` is the profile, and the `craft-cli` skill is the design
-spec. The key move: **AXI conformance is a gate check**, so the thing you're
-building is held to its own standard by an external oracle.
+spec. The key move: **AXI conformance is a gate check**, so an external oracle holds what you build to its own standard.
 
 ```sh
 cd ~/src/gl-axi

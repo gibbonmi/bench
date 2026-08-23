@@ -53,15 +53,16 @@ append extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on
    Compose an existing seam; do not invent one. If a reframed task makes a
    shortcut feel acceptable, stop and ask.
 
-Three predicates ride with them. If you find a **non-behavioral spec
-contradiction**, follow the current tree convention and flag it for reviewer veto.
-If the contradiction is behavioral, ask.
+Three predicates ride with them:
 
-If a build cannot meet an acceptance
-row, that is a **material acceptance shortfall**:
-the build exits and reports. It does not land a silent partial.
-Under **owned-red convergence**, only diff-owned reds count toward fix-loop
-convergence. `craft-line` owns that call.
+- If you find a **non-behavioral spec contradiction**, follow the current
+  tree convention and flag it for reviewer veto. If the contradiction is
+  behavioral, ask.
+- If a build cannot meet an acceptance row, that is a **material acceptance
+  shortfall**: the build exits and reports. It does not land a silent
+  partial.
+- Under **owned-red convergence**, only diff-owned reds count toward
+  fix-loop convergence. `craft-line` owns that call.
 
 ## How to talk to me
 
@@ -83,8 +84,8 @@ convergence. `craft-line` owns that call.
   kit, or an upstream doc. Such a claim names what you read and what you did not.
 - Format for scan: use a list or a table for genuinely parallel facts, and
   prose otherwise.
-- **Structured Bench phase conversation:** on a `/bench-*` or `$bench-*` call,
-  in force until that phase exits and off otherwise. Apply `progress`, `exit`,
+- **Structured Bench phase conversation:** this rule is in force from a `/bench-*` or `$bench-*` call
+  until that phase exits, and off otherwise. Apply `progress`, `exit`,
   `omission`, and `cohesion`.
   - **Progress:** Use compact bold **Status:** and **Next:** labels when an
     update reports meaningful intermediate state and continued work; a routine
@@ -113,10 +114,11 @@ convergence. `craft-line` owns that call.
 5. `/bench-final-check` to gate, commit on green, and report the landing evidence.
 
 **Right-size the process; ask before deviating.** A few-line change does not
-need the full pipeline. You may propose a lighter path. Skipping a canonical
-step needs a standing approval: the table below, a size rule I have given
-you, or the fix-and-gate path for review findings. My explicit OK also
-counts. Behavior defects run focused regression checks, then the gate.
+need the full pipeline. You may propose a lighter path. A skip of a
+canonical step needs a standing approval or my explicit OK. The standing
+approvals are the table below, a size rule I have given you, and the
+fix-and-gate path for review findings. Behavior defects run focused
+regression checks, then the gate.
 
 | Observable | Route |
 |---|---|
@@ -126,15 +128,15 @@ counts. Behavior defects run focused regression checks, then the gate.
 A reviewed spec-backed build lands from the destination with `bench worktree
 land`; `.bench/BENCH-reference.md` holds that landing shape.
 
-**Fix, don't park.** A small defect you find mid-work is not backlog: the
+**Fix, don't park.** A small defect you find mid-work is not roadmap work: the
 fix lands in the active workflow as its own commit. Park a fix to
 `capture/IDEAS.md` or `capture/learnings.md` only when it needs a reviewer
 decision, a new seam, or spec-level design.
 
 **A batch approval covers per-spec sign-offs when I'm unreachable.** If I
 approved a batch plan and went AFK, build on rather than stall. Leave each
-spec in `specs/` as post-hoc veto surface and flag contestable calls. Absent
-one, spec sign-off is a hard stop.
+spec in `specs/` as post-hoc veto surface and flag contestable calls. Without
+a batch approval, spec sign-off is a hard stop.
 
 **Capture what you learn; never silently rewrite your own rules.** When you
 deviate, make an unsure judgment call, or catch a should-have-asked in
@@ -147,10 +149,10 @@ its only path in.
 
 ## Capture
 
-Parking an idea is conversational, never a CLI chore for the reviewer. When
+The reviewer parks an idea in conversation; the CLI step is yours. When
 the reviewer wants to set one aside, or you spot a tangent worth keeping,
 **you** run `bench idea "<text>"`. Offer once, then let it go. Parked ideas
-land in `capture/IDEAS.md` and graduate to the board: an index line in
-`ROADMAP.md`, body and ledger in `roadmap/FT<n>.md`. That graduation runs
-only through a reviewed `/bench-drain` drain, or closes by implementation
-during that same drain.
+land in `capture/IDEAS.md`. They graduate to the board only through a
+reviewed `/bench-drain` drain, or close by implementation during that same
+drain. The board is an index line in `ROADMAP.md` plus a body and ledger in
+`roadmap/FT<n>.md`.

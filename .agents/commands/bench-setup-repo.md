@@ -11,7 +11,7 @@ This is the one-time setup phase. It first runs `bench setup`, one command
 that inspects the repo, previews every inferred fact, and converges the
 managed assets. That command also scaffolds a proposed gate and a starter
 profile. Then it fills in the parts that are specific to *this* repo and
-cannot be inferred: the real gate command, the profile's seams and lines, and
+that inference cannot supply: the real gate command, the profile's seams and lines, and
 the domain language. It ends with a refined `.bench/gate.sh`, a refined
 `projects/<name>.md` profile, and optionally `CONTEXT.md`.
 
@@ -20,7 +20,7 @@ the domain language. It ends with a refined `.bench/gate.sh`, a refined
 Report what setup wrote or confirmed, whether the gate ran green, and the
 configured profile path. Recommend `/bench-shape-idea` when unresolved product
 fog remains. Recommend `/bench-write-spec` when the first build is already clear.
-Recommend `/bench-debug` when setup was prompted by a concrete bug.
+Recommend `/bench-debug` when a concrete bug prompted setup.
 
 ## 0. Run `bench setup`
 
@@ -32,7 +32,7 @@ ambiguities. It then transactionally converges the managed assets, `AGENTS.md` /
 
 - If `bench setup` names this command (`/bench-setup-repo`) as the next action,
   pick up from here with the repo-specific interview below.
-- If it reports a conflict, stop and surface it — resolving ownership is the
+- If it reports a conflict, stop and surface it — ownership resolution is the
   reviewer's call, not something to route around.
 - If it names a different next action (a gate-configuration step for a
   zero-signal repo, for instance), do that first. Then return here for the
@@ -40,11 +40,11 @@ ambiguities. It then transactionally converges the managed assets, `AGENTS.md` /
 
 From here on, this command is prompt-driven, not a blind script: explore,
 present what you found, confirm with me, then write. Assume I might not
-remember what a term means. Explain each one briefly before asking.
+remember what a term means. Explain each one briefly before you ask.
 
 ## 1. Explore
 
-Read the repo first. Do not assume. Check, quietly:
+Read the repo first. Do not assume. Inspect, quietly:
 
 - `git remote -v` — is there a remote? GitHub, GitLab, or local-only?
 - the stack: `package.json` / `pyproject.toml` / `Cargo.toml` / `go.mod` — what
@@ -74,8 +74,8 @@ once.
 > Everything else in Bench enforces it. Nothing overrides it. This is the
 > load-bearing choice — if the gate is weak, the whole system is weak.
 
-`bench setup` already proposed (or, on zero signal, scaffolded a fail-closed
-stub for) the gate command from a small detection table. Confirm it is right,
+`bench setup` already proposed the gate command from a small detection table,
+or on zero signal scaffolded a fail-closed stub for it. Confirm it is right,
 then refine it. The real command is usually richer than the inferred one, e.g.:
 
 - Python: `mypy <pkg> && pytest -q && ruff check <pkg>`
@@ -109,7 +109,7 @@ failure. Run the real path. Choose its fail posture out loud.
 > the gate command, and — for UI repos — the design-source path. It's how a fresh
 > agent skips the archaeology.
 
-Ask for, with defaults proposed from exploration:
+Ask for these, with defaults proposed from exploration:
 
 - the 3–5 major seams — infer candidates from the codebase's module structure and
   propose them; a seam is wherever a stable interface already separates concerns
@@ -151,14 +151,14 @@ example profiles in the kit as a template for anything it left blank.
 
 Offer to seed it now, with a short `craft-grill` pass over the core nouns, or
 leave it for later. `/bench-shape-idea` and `/bench-write-spec` can create it
-lazily when terms get resolved. Do not force it.
+lazily when terms resolve. Do not force it.
 
 ## 3. Confirm, then write
 
 Show me drafts of `.bench/gate.sh`, `projects/<name>.md`, and (if chosen)
 `CONTEXT.md` before writing. Let me edit. Then write them, make
 `.bench/gate.sh` executable, and verify it runs (`bench gate`). If it errors
-for a reason other than real failing checks, fix the wiring before declaring
+for a reason other than real failing checks, fix the wiring before you declare
 done.
 
 ## 4. Done
@@ -166,10 +166,10 @@ done.
 Tell me what's now configured. Tell me that the working commands
 (`/bench-shape-idea`, `/bench-write-spec`, `/bench-debug`,
 `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`)
-and `bench shift` will read from these files. If headless runs are planned,
+and `bench shift` will read from these files. If you plan headless runs,
 note that `bench shift` needs `BENCH_AGENT` pointed at an adapter in
 `.bench/adapters/`; an env var setup does not write it. Note that I can edit
 `.bench/gate.sh` and the profile directly later. `bench setup` is safe to
-re-run; it converges and reports rather than starting over. Re-running
-`/bench-setup-repo` is for revisiting the judgment content, not for undoing
+re-run; it converges and reports rather than start over. A re-run of
+`/bench-setup-repo` revisits the judgment content; it does not undo
 existing edits.

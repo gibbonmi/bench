@@ -1,8 +1,8 @@
 # Loop constructions
 
 This list gives ten ways to build the Phase 1 feedback loop, in roughly this
-order. Stop at the first construction that yields a red-capable command. Move
-down the list only when the construction above cannot reach the bug.
+order. Stop at the first construction that yields a red-capable command. When
+the construction above cannot reach the bug, move to the next one.
 
 1. **Failing test** at whatever seam reaches the bug — unit, integration, e2e.
 2. **Curl / HTTP script** against a running dev server.
@@ -22,10 +22,10 @@ down the list only when the construction above cannot reach the bug.
    Then `git bisect run` can consume it.
 9. **Differential loop.** Run the same input through the old version and the
    new version (or two configs). Diff the outputs.
-10. **Structured human-in-the-loop.** Last resort: use this construction only
-    when a human must click or observe. Keep the loop structured by
+10. **Structured human-in-the-loop.** When a human must click or observe,
+    use this construction as the last resort. Keep the loop structured by
     scripting the human's side of the loop. The script prints the exact
     steps to perform, then waits for the human to paste or confirm what they
     saw. It records that output to a file, repeats, and feeds every round
     back into diagnosis so the conversation does not lose it. Write the
-    script for the project at hand. The kit ships no template.
+    script for the project at hand; the kit ships no template.

@@ -19,7 +19,7 @@ of artifact any agent can read:
 
 Because the source of truth is committed artifacts, not a tool's live state, this
 skill is the *visual* layer and is harness-agnostic. If the project also has an
-interaction-layer UI skill (its own `*-ui` skill), that governs behavior; both gate
+interaction-layer UI skill (its own `*-ui` skill), that governs behavior; both bind
 UI work and neither replaces the other.
 
 ## Rules (these are gate checks, not suggestions)
@@ -38,8 +38,8 @@ UI work and neither replaces the other.
    ```
 
 2. **Compose canonical components; never regenerate or restyle them.** If a needed
-   variant doesn't exist, **stop** and get the variant added to the design source
-   first, then build against it.
+   variant doesn't exist, **stop**, add the variant to the design source first,
+   then build against it.
 
 3. **The design system is current-state design documentation.** The ADR rule
    applies: the design source records what the design *is*, not how it changed.
@@ -68,7 +68,7 @@ tool's live state — that is the whole of the harness independence.
 
 ## Working method for a UI shift
 
-1. Read the design source's tokens and component inventory before generating.
+1. Read the design source's tokens and component inventory before you generate.
 2. If a token or variant is missing, stop — add it in the design source (via a
    design canvas or directly), commit, re-pin, then resume. On a headless run,
    no one resumes it. Fail the iteration and name the missing token or

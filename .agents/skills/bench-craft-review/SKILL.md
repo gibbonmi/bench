@@ -25,14 +25,14 @@ the diff itself introduces), ask what authenticates the verifier. A candidate's 
 proof of correctness is not evidence until something outside it confirms it.
 
 Review also treats a compiled map's defaulted decisions as authoritative unless the
-spec explicitly overrides them. A claimed repair is checked against both its
+spec explicitly overrides them. Grade a claimed repair against both its
 coverage row and the applicable defaulted-decision table.
 
 ## The axes stay separate
 
 Code can pass one axis and fail another. For example, the right thing built against
 the conventions, clean conventions around the wrong thing, or a correct happy path
-with open edges. Merging the axes lets one mask another. Findings are reported under
+with open edges. A merge of the axes lets one mask another. Report findings under
 separate headings, never reranked into a single list. Each axis ends with its count
 and its worst issue.
 
@@ -46,8 +46,8 @@ and its worst issue.
   independently-green tracer grouping and the advisory `Writes:` disjointness note;
   the smell baseline below applies here. A false disjointness claim across two
   tickets' `Writes:` notes is a Standards finding; separate hard violations from
-  judgment calls and skip what the gate enforces. Comment prose is graded against
-  `craft-comments` — a comment that narrates the change, cites provenance, or argues
+  judgment calls and skip what the gate enforces. Grade comment prose against
+  `craft-comments`: a comment that narrates the change, cites provenance, or argues
   its own correctness is a Standards finding.
 - **Spec** — the approved spec drives the behavior; quote the applicable spec line
   rather than trusting what a ticket or commit message claims was built. Hunt three
@@ -115,4 +115,4 @@ Before a finding lands, try to kill it with the repo. Grep for the test the Cove
 finding claims is missing, and re-read the convention the Standards finding cites.
 Run the command the Spec finding says is broken. A finding the repo refutes in one
 command wastes the reviewer's attention and teaches them to skim the rest. "No
-findings" is a real result — state what was examined, not a LGTM.
+findings" is a real result — state what you examined, not a LGTM.

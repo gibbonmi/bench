@@ -21,11 +21,11 @@ Close by reporting the implemented stories, each acceptance row's coverage statu
 the landed commits. A reviewed spec-backed build closes through `/bench-review-implementation`
 and `bench worktree land`, then `/bench-final-check`. A light-path build goes straight
 to `/bench-final-check`. A build that stops short exits through "When the build stops
-short" below. It recommends its one durable next action.
+short" below, which recommends its one durable next action.
 
 ## Declare the line, validate the tickets, route the venue
 
-Declare the line before touching code. `craft-line` owns the template, the tier decision,
+Declare the line before you touch code. `craft-line` owns the template, the tier decision,
 and the escalation ladder. After the write-spec-phase approval,
 create or retain one integration worktree at the reviewed graph commit; that
 commit is its frozen review base. Enter it and run `bench preflight build <slug>`
@@ -43,7 +43,7 @@ Work the user stories in vertical slices at the agreed seams. Use TDD only where
 harness's native task list from `bench coverage <spec>`, whose
 `rows[N]{story,behavior,seam}` projection is one task per row. Each write
 delegate runs its ticket's focused checks and its own mutation probe. The
-coordinator independently verifies the returned diff before landing it.
+coordinator independently verifies the returned diff before it lands.
 
 ## Land
 
