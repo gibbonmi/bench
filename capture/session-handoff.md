@@ -2,24 +2,42 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main`; the tail source is the `ft113-tail` worktree on base `148f3a68`
-Spec: `specs/landing-authors-the-flip/` retired in this tail; it landed as `148f3a68` with `Status: implemented`
-Gate: green on `148f3a68` (2026-08-23)
+Branch: `main` at `d5915574`
+Spec: none staged; `specs/` is empty
+Gate: green on `d5915574` (2026-08-23)
 
 ## State
 
-FT113 landed as `148f3a68` from source `0e17d428..e673e2d5`. This tail retires
-the spec folder, adds ADR 0015 (the landing verb is the one flip author), writes
-the retro, and refreshes the Claude scorecard. The retire verb now names the
-board remainder: the `ROADMAP.md` row `FT113` and `roadmap/FT113.md` stay for
-the drain.
+`/bench-drain` reconciled the board against the tree. FT113 shipped in full.
+Its path counting, its one author, and its named remainder all landed under
+`148f3a68`/`bc3e9377`/`d5915574`. Its `ROADMAP.md` row and `roadmap/FT113.md`
+are retired.
 
-Pending for the drain: one parked idea about the landing verb's `next=`
-sanitizer, one retro, and the FT113 board row and detail file.
+The one parked idea and the `landing-authors-the-flip` retro are both
+drained. The idea named a `sanitize.Controls`/`ShellQuote` ordering defect in
+`worktree.landedIncomplete`'s `next=` field. It merged onto FT169.
+
+The retro's recommendations merged as `Occurrence:` evidence on four rows.
+FT169 gained the paste defect and an unnamed moved-destination refusal. FT238
+gained the missing worktree-rebase verb. FT177 gained the post-landing
+stale-`dist/bench` gap. FT89 gained `bench idea` writing to `main`'s checkout
+when run outside a worktree.
+
+One recommendation — the `craft-delegate` worktree-exec rule — was already
+documented, so it was dismissed rather than merged. The inbox and the retro
+directory are both empty. `capture/learnings.md` had no open entries.
+
+The `## Recommended sequence` is refreshed to drop the shipped FT113 line and
+add FT224 third. `FT166`'s recommended-dependency row dropped its shipped
+`FT113` half.
+
+Two files stay uncommitted outside this drain's scope: `decisions/worktree-test-latency.md`
+and `decisions/assets/worktree-test-invocation-census.md`, from an unrelated,
+still-open `/bench-shape-idea` decision map. This drain did not touch them.
 
 ## Next command
 
-`/bench-drain`
+`/bench-implement-spec`
 
 ## Shape
 

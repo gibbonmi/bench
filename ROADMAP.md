@@ -49,8 +49,6 @@ means the repository-controlled compliance assessment.
 
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
 
-**FT113 (MEDIUM) — `bench commit --spec` residuals: the flip counts as a path, the flip has one author, and the retirement completes or names its remainder.**
-
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
 
 **FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
@@ -260,7 +258,7 @@ recommended table is sequencing advice.
 | FT108 | FT89 | FT89 single-sources the skills index the new skill must join; the expand–migrate–contract and gate-cadence rules it builds on are already settled in `craft-tickets`. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
-| FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
+| FT166 | FT98 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT239 | FT222 | FT222 decides where routing's one source lives; the capability record joins that file rather than opening a second one. |
 | FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
@@ -289,6 +287,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT113: `bench commit --spec` completes its retirement or names its remainder; the orphaned roadmap detail file reproduced again on the inherited-toolchain retirement.
-2. `/bench-implement-spec` — FT238: the hygiene batch; the request-token gap reproduced a fourth time on the parallel-landings landing, and every piece is a light-path ticket.
-3. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now with the per-row "name the check that reds it" rubric and the long-needle smell.
+1. `/bench-implement-spec` — FT238: the hygiene batch; the request-token gap reproduced a fourth time on the parallel-landings landing, and every piece is a light-path ticket.
+2. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now with the per-row "name the check that reds it" rubric and the long-needle smell.
+3. `/bench-write-spec` — FT224: a lifecycle refusal names the component that failed and the command that fixes it; the landing-authors-the-flip retro added a fresh moved-destination case.
