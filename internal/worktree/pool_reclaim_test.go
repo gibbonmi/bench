@@ -250,8 +250,8 @@ func TestPoolKeyPredicateRetainsAKeyWhoseExistenceItCannotProve(t *testing.T) {
 
 	for _, key := range []string{"unreadable-child", "unstattable-target"} {
 		verdict := classifyPoolKey(filepath.Join(pool, key), key)
-		requireTest(t, verdict.verdict == poolVerdictRetain && strings.Contains(verdict.reason, "cannot be read"),
-			"key %s = %q/%q, want a retain naming the unreadable step", key, verdict.verdict, verdict.reason)
+		requireTest(t, verdict.Verdict == poolVerdictRetain && strings.Contains(verdict.Reason, "cannot be read"),
+			"key %s = %q/%q, want a retain naming the unreadable step", key, verdict.Verdict, verdict.Reason)
 	}
 }
 
@@ -280,8 +280,8 @@ func TestPoolKeyPredicateRetainsSymlinksUnfollowed(t *testing.T) {
 		"symlinked-git":   "child wt .git is a symlink",
 	} {
 		verdict := classifyPoolKey(filepath.Join(pool, key), key)
-		requireTest(t, verdict.verdict == poolVerdictRetain && verdict.reason == want,
-			"key %s = %q/%q, want a retain reading %q", key, verdict.verdict, verdict.reason, want)
+		requireTest(t, verdict.Verdict == poolVerdictRetain && verdict.Reason == want,
+			"key %s = %q/%q, want a retain reading %q", key, verdict.Verdict, verdict.Reason, want)
 	}
 }
 
@@ -467,13 +467,13 @@ func TestReclaimApplyRetainsAKeyThatWentLiveAfterThePlan(t *testing.T) {
 	applied := applyPoolReclaim(plan, filepath.Dir(pool))
 	verdicts := make(map[string]poolKeyVerdict, len(applied))
 	for _, verdict := range applied {
-		verdicts[verdict.key] = verdict
+		verdicts[verdict.Key] = verdict
 	}
-	requireTest(t, verdicts["went-live"].verdict == poolVerdictRetained && strings.Contains(verdicts["went-live"].reason, "stopped qualifying"),
-		"went-live = %q/%q, want a retain naming the re-check", verdicts["went-live"].verdict, verdicts["went-live"].reason)
+	requireTest(t, verdicts["went-live"].Verdict == poolVerdictRetained && strings.Contains(verdicts["went-live"].Reason, "stopped qualifying"),
+		"went-live = %q/%q, want a retain naming the re-check", verdicts["went-live"].Verdict, verdicts["went-live"].Reason)
 	_, statErr := os.Lstat(filepath.Join(pool, "went-live", "wt", ".git"))
 	requireTest(t, statErr == nil, "the key that went live was removed anyway: %v", statErr)
-	requireTest(t, verdicts["still-dead"].verdict == poolVerdictRemoved, "still-dead = %q/%q, want it removed", verdicts["still-dead"].verdict, verdicts["still-dead"].reason)
+	requireTest(t, verdicts["still-dead"].Verdict == poolVerdictRemoved, "still-dead = %q/%q, want it removed", verdicts["still-dead"].Verdict, verdicts["still-dead"].Reason)
 	_, statErr = os.Lstat(filepath.Join(pool, "still-dead"))
 	requireTest(t, os.IsNotExist(statErr), "still-dead survived: %v", statErr)
 }
@@ -533,8 +533,8 @@ func TestRemovePoolKeyRefusesATargetOutsideThePool(t *testing.T) {
 
 	for _, key := range []string{"", ".", "..", filepath.Join("..", "decoy"), "nested/child", decoy} {
 		verdict := removePoolKey(filepath.Dir(pool), key)
-		requireTest(t, verdict.verdict == poolVerdictRetained && strings.Contains(verdict.reason, "not a direct child of "+pool),
-			"key %q = %q/%q, want a retain naming the pool boundary", key, verdict.verdict, verdict.reason)
+		requireTest(t, verdict.Verdict == poolVerdictRetained && strings.Contains(verdict.Reason, "not a direct child of "+pool),
+			"key %q = %q/%q, want a retain naming the pool boundary", key, verdict.Verdict, verdict.Reason)
 	}
 	_, err := os.Lstat(filepath.Join(decoy, "keep.txt"))
 	requireTest(t, err == nil, "a removal escaped the pool: %v", err)
@@ -582,8 +582,8 @@ func TestPoolKeyRetainsAChildWhoseGitdirTargetIsRelative(t *testing.T) {
 	mustWrite(t, filepath.Join(child, ".git"), []byte("gitdir: "+relative+"\n"), 0o644)
 
 	verdict := classifyPoolKey(filepath.Join(pool, "relative-pointer"), "relative-pointer")
-	requireTest(t, verdict.verdict == poolVerdictRetain, "relative pointer = %q/%q, want a retain", verdict.verdict, verdict.reason)
-	requireTest(t, strings.Contains(verdict.reason, "not absolute"), "reason = %q, want it to name the unresolvable target", verdict.reason)
+	requireTest(t, verdict.Verdict == poolVerdictRetain, "relative pointer = %q/%q, want a retain", verdict.Verdict, verdict.Reason)
+	requireTest(t, strings.Contains(verdict.Reason, "not absolute"), "reason = %q, want it to name the unresolvable target", verdict.Reason)
 }
 
 // [C2] A repository path may legitimately end in a space. If it is trimmed away, the
@@ -599,8 +599,8 @@ func TestPoolKeyRetainsAChildWhoseTargetEndsInASpace(t *testing.T) {
 	mustWrite(t, filepath.Join(child, ".git"), []byte("gitdir: "+spaced+"\n"), 0o644)
 
 	verdict := classifyPoolKey(filepath.Join(pool, "spaced-target"), "spaced-target")
-	requireTest(t, verdict.verdict == poolVerdictRetain, "spaced target = %q/%q, want a retain", verdict.verdict, verdict.reason)
-	requireTest(t, strings.Contains(verdict.reason, "exists"), "reason = %q, want it to name the surviving target", verdict.reason)
+	requireTest(t, verdict.Verdict == poolVerdictRetain, "spaced target = %q/%q, want a retain", verdict.Verdict, verdict.Reason)
+	requireTest(t, strings.Contains(verdict.Reason, "exists"), "reason = %q, want it to name the surviving target", verdict.Reason)
 }
 
 // [C4] The Edge inventory claims a special file where a `.git` belongs is retained unread.
@@ -614,8 +614,8 @@ func TestPoolKeyRetainsAChildWhoseGitEntryIsAFifo(t *testing.T) {
 		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
 	}
 	verdict := classifyPoolKey(filepath.Join(pool, "fifo-git"), "fifo-git")
-	requireTest(t, verdict.verdict == poolVerdictRetain, "fifo .git = %q/%q, want a retain", verdict.verdict, verdict.reason)
-	requireTest(t, strings.Contains(verdict.reason, "not a regular file"), "reason = %q, want it to name the file shape", verdict.reason)
+	requireTest(t, verdict.Verdict == poolVerdictRetain, "fifo .git = %q/%q, want a retain", verdict.Verdict, verdict.Reason)
+	requireTest(t, strings.Contains(verdict.Reason, "not a regular file"), "reason = %q, want it to name the file shape", verdict.Reason)
 }
 
 // [S4] A key the plan named and the apply could not remove leaves the operator's intent
