@@ -16,3 +16,8 @@
 - **What happened:** The reviewer-accepted STE sweep turned three long sentences into vertical lists. The lists pushed `bench-craft-spec/SKILL.md` to 152 lines, and `bench-craft-delegate/SKILL.md` and `bench-craft-tdd/SKILL.md` to 122 lines. The profile's budget table gained one exact row for each file at the new number.
 - **Right behavior:** Treat the three lifts as temporary. FT100 owns the budget measure and the cut line; its audit decides whether each file earns the lines or cuts back to the old bound.
 - **Proposed rule change:** none. The drain routes this entry to FT100 with the three files and the old numbers (150, 120, 120).
+
+## 2026-08-22 - delegates could not see the root conformance pass  [open]
+- **What happened:** Three gate reds in the asd-ste100 build came from checks that run only in the whole-tree conformance pass. The checks were the decision-map field grammar, the shared-rule raw-substring marker, and the docs-currency anchors on a shell header. Each delegate ran its package tests green, and `TestRootConformance` skips unless `BENCH_CONFORMANCE_ROOT` is set, so the red first appeared at the gate.
+- **Right behavior:** A write charge names the root pass with its env var as part of the focused seam. Better, the live-tree tests run the root pass by default inside a worktree, so a delegate sees the same reds the gate will.
+- **Proposed rule change:** `craft-delegate` gains one sentence: a charge's verification list includes the root conformance pass. A kit change makes `TestRootConformance` default its root to the repo root when the env var is unset; the drain decides between the two.
