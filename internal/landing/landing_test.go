@@ -3,6 +3,7 @@ package landing
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -629,11 +630,51 @@ func TestLandReportsPublishedCommitWhenReconciliationFails(t *testing.T) {
 	}
 	o.reconcile = func(Request, []string, composedSnapshot) error { return os.ErrPermission }
 	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "x", Paths: []string{"named"}})
-	if err == nil || !strings.Contains(err.Error(), "landed-but-checkout-incomplete") {
+	var remainder *PublishedUnreconciledError
+	if !errors.As(err, &remainder) || !strings.Contains(err.Error(), "landed-but-checkout-incomplete") || !errors.Is(err, os.ErrPermission) {
 		t.Fatalf("err = %v", err)
 	}
 	if got.Base != base || got.Commit == "" || got.Tree == "" || git(t, root, "rev-parse", "HEAD") != got.Commit {
 		t.Fatal("published identity was not retained")
+	}
+	if remainder.Commit != got.Commit || !reflect.DeepEqual(remainder.Paths, []string{"named"}) {
+		t.Fatalf("remainder = %+v, want the published commit and its named paths", remainder)
+	}
+}
+
+// FB3: the reconcile walks the named paths in order, and the path it fails on is the one
+// the publication boundary reports. A report that named the first path, or no path, would
+// send the repair at a path that already reconciled.
+func TestPublicationBoundaryNamesThePathTheReconcileFailedOn(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "a-first", "changed")
+	write(t, root, "b-second", "changed")
+	base := git(t, root, "rev-parse", "HEAD")
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+	o.reconcile = func(_ Request, paths []string, _ composedSnapshot) error {
+		for _, path := range paths {
+			if path == "b-second" {
+				return &ReconcileError{Path: path, Err: os.ErrPermission}
+			}
+		}
+		return nil
+	}
+	_, err := o.Land(context.Background(), Request{
+		Root: root, Destination: "refs/heads/main", Expected: base, Message: "x",
+		Paths: []string{"b-second", "a-first"},
+	})
+	var remainder *PublishedUnreconciledError
+	if !errors.As(err, &remainder) {
+		t.Fatalf("err = %v, want the publication boundary", err)
+	}
+	if remainder.Path != "b-second" {
+		t.Fatalf("Path = %q, want the second named path", remainder.Path)
+	}
+	if !reflect.DeepEqual(remainder.Paths, []string{"a-first", "b-second"}) {
+		t.Fatalf("Paths = %v, want the sorted named paths", remainder.Paths)
 	}
 }
 

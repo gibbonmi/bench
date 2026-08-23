@@ -383,6 +383,35 @@ func contentConflictKind(modes []string) string {
 
 type composedSnapshot struct{ tree string }
 
+// ReconcileError names the attributed path whose checkout reconciliation failed. Every
+// return of the reconcile step carries one, so a caller renders the remaining path from
+// a value rather than by parsing the message.
+type ReconcileError struct {
+	Path string
+	Err  error
+}
+
+func (e *ReconcileError) Error() string {
+	return fmt.Sprintf("reconcile named path %q: %v", e.Path, e.Err)
+}
+func (e *ReconcileError) Unwrap() error { return e.Err }
+
+// PublishedUnreconciledError is the publication boundary: the commit is published and
+// the checkout is not reconciled. It carries the published commit, the path that did not
+// reconcile, and every named path in the owner's sorted, deduplicated order, so a caller
+// reports the remainder and the repair without a second read.
+type PublishedUnreconciledError struct {
+	Commit string
+	Path   string
+	Paths  []string
+	Err    error
+}
+
+func (e *PublishedUnreconciledError) Error() string {
+	return fmt.Sprintf("landed-but-checkout-incomplete: %v", e.Err)
+}
+func (e *PublishedUnreconciledError) Unwrap() error { return e.Err }
+
 // Owner composes only Request.Paths from Request.Expected, authorizes that tree, then
 // publishes it by expected-old update. The function fields are narrow operational seams
 // for deterministic fault coverage; New supplies the real owners.
@@ -429,7 +458,12 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 		return Result{}, destinationUpdateFailure(r.Root, r.Destination, r.Expected, err)
 	}
 	if err := o.reconcile(r, paths, snapshot); err != nil {
-		return Result{Base: r.Expected, Commit: commit, Tree: tree}, fmt.Errorf("landed-but-checkout-incomplete: %w", err)
+		var failed *ReconcileError
+		remainder := &PublishedUnreconciledError{Commit: commit, Paths: paths, Err: err}
+		if errors.As(err, &failed) {
+			remainder.Path = failed.Path
+		}
+		return Result{Base: r.Expected, Commit: commit, Tree: tree}, remainder
 	}
 	return Result{Base: r.Expected, Commit: commit, Tree: tree}, nil
 }
@@ -793,29 +827,30 @@ func gitRegularFileMode(mode os.FileMode) string {
 func reconcile(r Request, paths []string, snapshot composedSnapshot) error {
 	for _, path := range paths {
 		literal := ":(literal)" + path
+		failed := func(err error) error { return &ReconcileError{Path: path, Err: err} }
 		if err := run(r.Root, "restore", "--source="+snapshot.tree, "--staged", "--worktree", "--", literal); err != nil {
 			if resetErr := run(r.Root, "reset", "-q", r.Expected, "--", literal); resetErr != nil {
-				return err
+				return failed(err)
 			}
 			if retryErr := run(r.Root, "restore", "--source="+snapshot.tree, "--staged", "--worktree", "--", literal); retryErr != nil {
-				return retryErr
+				return failed(retryErr)
 			}
 		}
 		if err := run(r.Root, "clean", "-f", "-d", "--", literal); err != nil {
-			return err
+			return failed(err)
 		}
 		if err := run(r.Root, "diff", "--quiet", "--cached", snapshot.tree, "--", literal); err != nil {
-			return err
+			return failed(err)
 		}
 		if err := run(r.Root, "diff", "--quiet", "--ignore-submodules=dirty", snapshot.tree, "--", literal); err != nil {
-			return err
+			return failed(err)
 		}
 		untracked, err := output(r.Root, "ls-files", "--others", "--exclude-standard", "--", literal)
 		if err != nil {
-			return err
+			return failed(err)
 		}
 		if untracked != "" {
-			return fmt.Errorf("named path %q still has untracked content", path)
+			return failed(errors.New("named path still has untracked content"))
 		}
 	}
 	return nil
