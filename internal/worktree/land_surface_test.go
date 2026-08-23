@@ -72,7 +72,7 @@ func TestLandCommandComposesCaptureOntoMovedDestination(t *testing.T) {
 		t.Fatalf("published handoff = %q, want the source's", got)
 	}
 	// `git merge-file --union` publishes the base lines, then the destination side,
-	// then the source side; both sides replaced the one base line, so only the two
+	// then the source side. Both sides replaced the one base line, so only the two
 	// appended lines remain, in that order.
 	published, err := exec.Command("git", "-C", root, "show", "main:capture/learnings.md").Output()
 	if want := "learnings destination\nlearnings source\n"; err != nil || string(published) != want {
