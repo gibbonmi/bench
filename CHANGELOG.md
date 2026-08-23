@@ -8,6 +8,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- The `internal/worktree` test suite now selects one Bench executable per run,
+  routes every repository, descendant, environment, and directory effect
+  through one serial journey harness, and tests landing, lifecycle, and
+  reclaim policy in three pure packages. The parent package span fell from a
+  125.790-second median to a 56.898-second median on the reference WSL host.
+  Raw runs and demand counts are recorded in
+  `specs/worktree-test-latency/evidence/demand-reduction.md`. The gate driver,
+  `-count=1`, and public command behavior are unchanged, and the spec adds no
+  `t.Parallel` and no scheduler.
 - `bench commit` now refuses the primary checkout and directs users to
   `bench worktree create`. This makes the worktree-only phase rule executable
   at Bench's publication boundary.

@@ -1,35 +1,33 @@
 # Session handoff
 
-Repository: `bb58d4b8d4aa5ed80918cccb02fff107-e1075dc2c4acd378f8872299228f6f27` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/bb58d4b8d4aa5ed80918cccb02fff107-e1075dc2c4acd378f8872299228f6f27`
-Branch: `bench/assign/bb58d4b8d4aa5ed80918cccb02fff107/e1075dc2c4acd378f8872299228f6f27` — HEAD `da751af`, 1 dirty path, 24 unpushed commits
+Repository: `d72c470fdf58bc0747305add9ff619f2-5880409cc8f500d39e38170e2485eef7` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/d72c470fdf58bc0747305add9ff619f2-5880409cc8f500d39e38170e2485eef7`
+Branch: `bench/assign/d72c470fdf58bc0747305add9ff619f2/5880409cc8f500d39e38170e2485eef7` — retained integration tip `03a5f736` (tickets 01–06 landed), plus the uncommitted ticket-07 evidence work
 Spec: `specs/worktree-test-latency/spec.md` (Status: staged)
-Gate: no gate has run.
+Frozen review base: `4a8aa16a`
 
 ## State
 
-The ready decision map and its invocation census moved into the staged spec.
-One read-only `gpt-5.6-terra` high review accepted the spec and seven-ticket
-graph after two iterations.
+Tickets 01–06 are landed on the integration tip. The suite selects one Bench
+executable and resolves effect inputs explicitly. Three pure packages own
+landing, lifecycle, and reclaim policy, and one harness runs serial
+proof-backed journeys.
 
-The first spec removes deterministic demand. It selects one Bench binary,
-introduces explicit effect inputs, extracts landing, lifecycle, and reclaim
-policy owners, and contracts tests to representative serial journeys.
+Ticket 07 evidence is written and uncommitted:
+`specs/worktree-test-latency/evidence/demand-reduction.md`, one `CHANGELOG.md`
+entry, and this handoff. Measured at `03a5f736`: package spans 58.022, 56.779,
+and 56.898 seconds (baseline median 125.790), whole suite 70.122 seconds. The
+publication connection wait was not visible; the evidence claims nothing from
+it.
 
-The first spec adds no scheduler or `t.Parallel`. It preserves `-count=1`,
-records before-and-after demand, and leaves measured pure-test parallelism plus
-the slow-package budget to the second spec.
-
-Publication's uncontrolled connection wait and the WSL Go bootstrap defect
-remain separate debug tracks. Neither may count as worktree latency improvement.
-
-Tickets 01 and 02 are the initial frontier. Their writes overlap, so work them
-serially on one retained integration source even though neither semantically
-blocks the other.
+These decisions stay closed: no `t.Parallel`, no scheduler, `-count=1` and the
+one ordinary gate driver retained, real Git kept at representative journeys,
+the publication wait and the WSL Go bootstrap owned by separate debug tracks.
+Measured parallelism and the regression budget belong to the second spec.
 
 ## Next command
 
-`$bench-implement-spec --full worktree-test-latency`
+`/bench-review-implementation` over frozen base `4a8aa16a` and the source tip.
 
 ## Shape
 
