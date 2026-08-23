@@ -389,8 +389,9 @@ refused unread.
 
 ### Prose mechanics
 
-The `prose-mechanics` check grades the two ASD-STE100 rules a program can measure. It
-reds a sentence longer than 25 words and a paragraph with more than six sentences. The
+The `prose-mechanics` check grades the two ASD-STE100 rules a program can measure. Those
+two rules bound the sentence length and the paragraph length, and
+`.agents/skills/bench-craft-spec/references/ste-prose.md` states both bounds. The
 check reads every authored Markdown file under the graded root. `.bench/prose-exclusions`
 names the paths the check does not grade. Each prose exclusion row gives one path and a
 one-clause reason, and the reviewer owns that file. The semantic STE rules stay with
