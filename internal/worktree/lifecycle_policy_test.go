@@ -40,7 +40,7 @@ func TestReleaseDeclaredBuildOutputRemoves(t *testing.T) {
 	declaration, err := os.ReadFile(filepath.Join(repositoryRoot, ".bench", "build-outputs.json"))
 	mustNoError(t, err)
 	mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), declaration, 0o644)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	creation := mustCreate(t, root, "landed-declared-output", "declared output")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
 	mustWrite(t, filepath.Join(creation.Path, "dist", "bench"), []byte("binary\n"), 0o755)
@@ -75,7 +75,7 @@ func TestReleaseBuildOutputContainmentRetainsUnknownResidue(t *testing.T) {
 			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore residue")
 			mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
 			mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"dist/\"]}\n"), 0o644)
-			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			request := "landed-containment-" + tc.name
 			creation := mustCreate(t, root, request, tc.name)
 			tc.build(t, creation.Path)
@@ -128,7 +128,7 @@ func TestBuildOutputDeclarationFailsClosed(t *testing.T) {
 				mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
 				mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte(tc.declaration), 0o644)
 			}
-			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			request := "landed-build-output-" + tc.name
 			creation := mustCreate(t, root, request, tc.name)
 			residual := filepath.Join(creation.Path, filepath.FromSlash(tc.residual))
@@ -151,7 +151,7 @@ func TestBuildOutputDeclarationFailsClosed(t *testing.T) {
 func TestResumeReconcilesDeadLeaseAndPreservesSafetyBranches(t *testing.T) {
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 
 	dead := mustCreate(t, root, "landed-resume-dead", "dead owner")
 	markPending(t, root, dead.Assignment)
@@ -205,35 +205,6 @@ func TestReleaseLiveLeaseRetains(t *testing.T) {
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (live-lease)"), "live-lease reason missing: %q", stderr.String())
 	_, statErr := os.Stat(creation.Path)
 	requireTest(t, statErr == nil, "live-lease worktree removed: %v", statErr)
-}
-
-func TestReleaseMalformedLeaseRetainsAsUncertain(t *testing.T) {
-	assertReleaseLeaseRetainedAsUncertain(t, "malformed-lease-release", func(lease string) {
-		mustWrite(t, lease, []byte("garbage\n"), 0o600)
-	})
-}
-
-func TestReleaseNumericLeaseWithBadTimestampAndExtraFieldsRetainsAsUncertain(t *testing.T) {
-	assertReleaseLeaseRetainedAsUncertain(t, "numeric-bad-timestamp-extra-lease-release", func(lease string) {
-		mustWrite(t, lease, []byte(fmt.Sprintf("%d not-a-time trailing\n", os.Getpid())), 0o600)
-	})
-}
-
-func TestReleasePartialNumericLeaseRetainsAsUncertain(t *testing.T) {
-	for _, tc := range []struct {
-		name    string
-		content string
-	}{
-		{"pid-only", fmt.Sprintf("%d", os.Getpid())},
-		{"missing-final-newline", fmt.Sprintf("%d 2026-07-15T00:00:00Z", os.Getpid())},
-		{"truncated-timestamp", fmt.Sprintf("%d 2026-07-15T00:00:\n", os.Getpid())},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			assertReleaseLeaseRetainedAsUncertain(t, "partial-"+tc.name+"-lease-release", func(lease string) {
-				mustWrite(t, lease, []byte(tc.content), 0o600)
-			})
-		})
-	}
 }
 
 func TestReleaseSymlinkLeaseRetainsAsUncertain(t *testing.T) {

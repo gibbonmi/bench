@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 	"io"
 	"os"
@@ -37,17 +38,16 @@ func cksum(data []byte) uint32 {
 	}
 	return ^crc
 }
-func benchHome() string {
-	if h := os.Getenv("BENCH_HOME"); h != "" {
-		return h
-	}
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".bench")
-}
-func Pool(root string) string {
+
+// Pool is the temporary compatibility form of poolAt: it resolves the Bench home
+// at the effect boundary. In-package callers below the boundary receive home explicitly.
+func Pool(root string) string { return poolAt(benchHome(), root) }
+
+// poolAt derives the repository's pool directory from an explicitly resolved home.
+func poolAt(home, root string) string {
 	sum := cksum([]byte(root + "\n"))
 	key := filepath.Base(root) + "-" + strconv.FormatUint(uint64(sum), 10)
-	return filepath.Join(benchHome(), "worktrees", key)
+	return filepath.Join(home, "worktrees", key)
 }
 func LeaseFile(path string) (string, error) {
 	lease, err := git.Output("-C", path, "rev-parse", "--git-path", git.BenchLeaseFilename)
@@ -168,9 +168,17 @@ func isRegularFile(path string) bool {
 	return err == nil && info.Mode().IsRegular()
 }
 
-type nestedState string
+// nestedState is the policy package's nested-repository verdict;
+// internal/worktree/lifecyclepolicy owns its values.
+type nestedState = lifecyclepolicy.NestedState
 
-const nestedClean, nestedDirty, nestedEmbeddedClean, nestedEmbeddedDirty, nestedUnknown nestedState = "clean", "dirty", "embedded-clean", "embedded-dirty", "unknown"
+const (
+	nestedClean         = lifecyclepolicy.NestedClean
+	nestedDirty         = lifecyclepolicy.NestedDirty
+	nestedEmbeddedClean = lifecyclepolicy.NestedEmbeddedClean
+	nestedEmbeddedDirty = lifecyclepolicy.NestedEmbeddedDirty
+	nestedUnknown       = lifecyclepolicy.NestedUnknown
+)
 
 func classifyNestedState(root string) (state nestedState, err error) {
 	state = nestedClean
@@ -513,7 +521,7 @@ func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 		}
 		args = args[2:]
 	}
-	creation, err := Create(root, request, label, nil, startRef)
+	creation, err := createAt(root, request, label, nil, currentTime(), startRef)
 	if err != nil {
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1
@@ -543,13 +551,13 @@ func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	creation, err := Create(root, request, objective, nil, startRef)
+	creation, err := createAt(root, request, objective, nil, currentTime(), startRef)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
 	fmt.Fprintf(stderr, "🪵 worktree: %s  (exit to release)\n", creation.Path)
-	shell := os.Getenv("SHELL")
+	shell := subshellShell()
 	if shell == "" {
 		shell = "bash"
 	}

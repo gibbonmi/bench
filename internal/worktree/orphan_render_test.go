@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -28,7 +27,7 @@ func summaryLines(summary string) []string {
 // The quoting rule is graded by the thing that will run it, not by a second copy of the rule.
 func oneShellArgument(t *testing.T, quoted string) (int, string) {
 	t.Helper()
-	out, err := exec.Command("sh", "-c", "set -- "+quoted+`; printf '%d\n%s' "$#" "$1"`).Output()
+	out, err := descendant(t, "sh", "-c", "set -- "+quoted+`; printf '%d\n%s' "$#" "$1"`).Output()
 	mustNoError(t, err)
 	count, rest, _ := strings.Cut(string(out), "\n")
 	var argc int
@@ -241,7 +240,7 @@ func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 func TestResumeReportsAnUnreadablePoolRatherThanZero(t *testing.T) {
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	pool := filepath.Join(home, "worktrees")
 	mustMkdirAll(t, pool, 0o700)
 	mustNoError(t, os.Chmod(pool, 0o000))

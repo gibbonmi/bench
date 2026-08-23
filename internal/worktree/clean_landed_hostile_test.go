@@ -15,7 +15,7 @@ import (
 
 func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, "home space *"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, "home space *"))
 	clean := mustCreate(t, root, "landed-hostile-clean", "clean")
 	dirty := mustCreate(t, root, "landed-hostile-dirty", "dirty")
 	landAssignment(t, root, clean, "clean.txt")
@@ -43,7 +43,7 @@ func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
 
 func TestCleanLandedControlBytePathRetained(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, "home\x1bunsafe"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, "home\x1bunsafe"))
 	creation := mustCreate(t, root, "landed-control", "control")
 	landAssignment(t, root, creation, "control.txt")
 
@@ -64,7 +64,7 @@ func TestCleanLandedControlBytePathRetained(t *testing.T) {
 
 func TestCleanLandedTabPathRendersOneRow(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, "home\tpath"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, "home\tpath"))
 	creation := mustCreate(t, root, "landed-tab", "tab")
 	landAssignment(t, root, creation, "tab.txt")
 
@@ -114,7 +114,7 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			}
 			t.Cleanup(func() { planLandedExplicitWithOptions = previousPlanner })
 			root := newWorktreeRepo(t)
-			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			creation := mustCreate(t, root, "landed-special-"+strings.ReplaceAll(tc.name, " ", "-"), tc.name)
 			landAssignment(t, root, creation, "special.txt")
 			if err := os.RemoveAll(creation.Path); err != nil {
@@ -139,6 +139,7 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			}
 		})
 	}
+	markProof(t, "landing/journey/hostile-residue")
 }
 
 func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
@@ -166,7 +167,7 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			creation := mustCreate(t, root, "landed-metadata-"+tc.name, tc.name)
 			landAssignment(t, root, creation, "metadata.txt")
 			metadata := filepath.Join(creation.Path, ".git")
@@ -186,10 +187,10 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 			if err := os.WriteFile(wrapperPath, []byte(wrapperSource), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			t.Setenv("BENCH_TEST_FORBIDDEN_GIT_C", creation.Path)
-			t.Setenv("BENCH_TEST_TARGET_GIT_LOG", log)
-			t.Setenv("BENCH_TEST_REAL_GIT", realGit)
-			t.Setenv("PATH", wrapper+string(os.PathListSeparator)+os.Getenv("PATH"))
+			bindEnv(t, "BENCH_TEST_FORBIDDEN_GIT_C", creation.Path)
+			bindEnv(t, "BENCH_TEST_TARGET_GIT_LOG", log)
+			bindEnv(t, "BENCH_TEST_REAL_GIT", realGit)
+			bindEnv(t, "PATH", wrapper+string(os.PathListSeparator)+os.Getenv("PATH"))
 			chdir(t, root)
 
 			if listing, code := ListCommand(nil); code != 0 || !strings.Contains(listing, creation.Assignment.ID) {

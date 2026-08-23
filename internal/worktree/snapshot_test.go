@@ -25,7 +25,7 @@ func mustAcquire(t *testing.T, root string) string {
 // file on disk stays untouched: no reset, no clean, no release.
 func TestRetainAndLockLocksDropsLeaseAndPreservesDirt(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	worktreePath := mustAcquire(t, root)
 
 	lease, err := LeaseFile(worktreePath)

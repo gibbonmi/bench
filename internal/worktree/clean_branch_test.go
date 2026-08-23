@@ -3,7 +3,6 @@ package worktree
 import (
 	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -33,8 +32,9 @@ func unprovableLandedAssignment(t *testing.T, request string) (string, Creation)
 	return root, creation
 }
 
-func branchExists(root, ref string) bool {
-	return exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", ref).Run() == nil
+func branchExists(t testing.TB, root, ref string) bool {
+	t.Helper()
+	return descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", ref).Run() == nil
 }
 
 func recoveryRefs(t *testing.T, root string, assignment intent.Assignment) string {
@@ -65,7 +65,7 @@ func TestDiscardBranchRetiresTheBranchAndLeavesNoRecoveryRef(t *testing.T) {
 	requireTest(t, applied.Action == ActionRemoved, "applied action = %q, want removed", applied.Action)
 	_, statErr := os.Lstat(creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "checkout survived the apply: %v", statErr)
-	requireTest(t, !branchExists(root, creation.Assignment.Branch), "assignment branch %s survived the apply", creation.Assignment.Branch)
+	requireTest(t, !branchExists(t, root, creation.Assignment.Branch), "assignment branch %s survived the apply", creation.Assignment.Branch)
 	refs := recoveryRefs(t, root, creation.Assignment)
 	requireTest(t, refs == "", "apply left recovery refs behind: %q", refs)
 }
@@ -81,7 +81,7 @@ func TestDiscardBranchPlanNamesTheBranchBeforeAnyRemoval(t *testing.T) {
 
 	_, statErr := os.Lstat(creation.Path)
 	requireTest(t, statErr == nil, "planning removed the checkout: %v", statErr)
-	requireTest(t, branchExists(root, creation.Assignment.Branch), "planning deleted the branch")
+	requireTest(t, branchExists(t, root, creation.Assignment.Branch), "planning deleted the branch")
 }
 
 // [RW3] The override is an argument to the explicit path only. This is the regression
@@ -108,7 +108,7 @@ func TestDiscardBranchLeavesTheDerivedClassificationUnchanged(t *testing.T) {
 		applied, err := ApplyExplicit(root, creation.Path, plan.Fingerprint)
 		mustNoError(t, err)
 		requireTest(t, applied.Action == ActionRemoved, "explicit applied action = %q, want removed", applied.Action)
-		requireTest(t, branchExists(root, creation.Assignment.Branch), "cleanup without the override deleted branch %s", creation.Assignment.Branch)
+		requireTest(t, branchExists(t, root, creation.Assignment.Branch), "cleanup without the override deleted branch %s", creation.Assignment.Branch)
 	})
 }
 
@@ -124,7 +124,7 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 		applied, err := ApplyExplicitWithOptions(root, root, plan.Fingerprint, options)
 		mustNoError(t, err)
 		requireTest(t, applied.Action == ActionRetain, "apply acted on the primary checkout: %q", applied.Action)
-		requireTest(t, branchExists(root, "refs/heads/main"), "apply deleted the default branch")
+		requireTest(t, branchExists(t, root, "refs/heads/main"), "apply deleted the default branch")
 	})
 	t.Run("path outside any registration", func(t *testing.T) {
 		root := newWorktreeRepo(t)
@@ -152,7 +152,7 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 		applied, err := ApplyExplicitWithOptions(root, target, plan.Fingerprint, options)
 		mustNoError(t, err)
 		requireTest(t, applied.Action == ActionRetain, "apply acted on a foreign worktree: %q", applied.Action)
-		requireTest(t, branchExists(root, "refs/heads/foreign-locked"), "apply deleted a foreign branch")
+		requireTest(t, branchExists(t, root, "refs/heads/foreign-locked"), "apply deleted a foreign branch")
 		_, statErr := os.Lstat(target)
 		requireTest(t, statErr == nil, "apply removed a foreign worktree: %v", statErr)
 	})
@@ -166,8 +166,8 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 		applied, err := ApplyExplicitWithOptions(root, creation.Path, plan.Fingerprint, options)
 		mustNoError(t, err)
 		requireTest(t, applied.Action == ActionRetain, "apply acted on a mismatched assignment: %q", applied.Action)
-		requireTest(t, branchExists(root, creation.Assignment.Branch), "apply deleted the assignment branch behind an identity refusal")
-		requireTest(t, branchExists(root, "refs/heads/drifted-identity"), "apply deleted the checked-out branch behind an identity refusal")
+		requireTest(t, branchExists(t, root, creation.Assignment.Branch), "apply deleted the assignment branch behind an identity refusal")
+		requireTest(t, branchExists(t, root, "refs/heads/drifted-identity"), "apply deleted the checked-out branch behind an identity refusal")
 		_, statErr := os.Lstat(creation.Path)
 		requireTest(t, statErr == nil, "apply removed a mismatched checkout: %v", statErr)
 	})

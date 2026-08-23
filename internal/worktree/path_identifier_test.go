@@ -15,7 +15,7 @@ var listPathAction = regexp.MustCompile(`bench worktree path (\S+),inspect activ
 // It is the only address an agent has for a worktree it did not create.
 func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "advertised")
-	t.Chdir(root)
+	chdir(t, root)
 	listed, code := ListCommand(nil)
 	if code != 0 {
 		t.Fatalf("list code=%d out=%q", code, listed)

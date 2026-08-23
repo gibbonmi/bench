@@ -1,6 +1,6 @@
 # worktree-test-latency
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/worktree-test-latency/decisions/worktree-test-latency.md`, ready on 2026-08-23, with its owned invocation census.
 
@@ -253,6 +253,12 @@ over the reduced implementation, without a timing-policy decision.
 - `decisions/worktree-test-latency.md`
 - `decisions/assets/worktree-test-invocation-census.md`
 - `specs/worktree-test-latency/`
+- `reviews/worktree-test-latency.md`
+- `capture/IDEAS.md`
+- `capture/learnings.md`
+
+The review phase added the last three paths on the finding cadence: the open
+review pickup file and the two capture journals this build wrote.
 
 No writer may change gate scheduling, `internal/runbinary`, another production
 package, or shared Bench rules without reviewer approval and a fence update.

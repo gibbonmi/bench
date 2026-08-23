@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"io"
 	"os"
@@ -43,8 +42,8 @@ func TestCksumMatchesSystemTool(t *testing.T) {
 	}
 	for _, g := range cksumGolden {
 		// printf '%s\n' "<root>" | cksum
-		printf := exec.Command("printf", "%s\n", g.root)
-		ck := exec.Command("cksum")
+		printf := descendant(t, "printf", "%s\n", g.root)
+		ck := descendant(t, "cksum")
 		pipe, err := printf.StdoutPipe()
 		if err != nil {
 			t.Fatal(err)
@@ -81,7 +80,7 @@ func TestCksumMatchesSystemTool(t *testing.T) {
 
 func TestPool(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	root := "/home/mgibs/workspace/bench"
 	want := filepath.Join(home, "worktrees", "bench-2826441890")
 	if got := Pool(root); got != want {
@@ -91,7 +90,7 @@ func TestPool(t *testing.T) {
 
 func TestPoolDefaultBenchHome(t *testing.T) {
 	// With BENCH_HOME unset, Pool falls back to <home>/.bench.
-	t.Setenv("BENCH_HOME", "")
+	bindEnv(t, "BENCH_HOME", "")
 	root := "/tmp/a b/c"
 	got := Pool(root)
 	suffix := filepath.Join(".bench", "worktrees", "c-889650394")
@@ -102,7 +101,7 @@ func TestPoolDefaultBenchHome(t *testing.T) {
 
 func TestClassifyRegisteredWorktrees(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	pool := Pool(root)
 	warm := filepath.Join(pool, "warm")
@@ -153,6 +152,7 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 			t.Errorf("class from linked cwd %q = %q, want %q", path, got[path], class)
 		}
 	}
+	markProof(t, "lifecycle/journey/registration")
 }
 
 func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
@@ -168,7 +168,7 @@ func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
 		if _, err := ApplyAutomatic(root, target.Path, nil); err != nil {
 			t.Fatal(err)
 		}
-		if exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", target.Assignment.Branch).Run() == nil {
+		if descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", target.Assignment.Branch).Run() == nil {
 			t.Fatal("exact cleanup left target branch")
 		}
 		gitRun(t, root, "show-ref", "--verify", "--quiet", sibling.Assignment.Branch)
@@ -186,7 +186,7 @@ func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
 // the exec/path syntax.
 func TestCreateCommandPrintsNextHint(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	var stdout, stderr bytes.Buffer
 	code := CreateCommand(root, []string{"--request", "next-hint", "--label", "next hint label"}, &stdout, &stderr)
 	if code != 0 {
@@ -214,7 +214,7 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residual.txt\n"), 0o644)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	creation := mustCreate(t, root, "retain-verdict", "retain verdict")
 	residual := filepath.Join(creation.Path, "residual.txt")
 	mustWrite(t, residual, []byte("build output\n"), 0o600)
@@ -322,7 +322,7 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 // catch a session between `worktree add` and its first write.
 func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	residue := mustCreate(t, root, "landed-sweep-residue", "residue")
 	preserved := mustCreate(t, root, "landed-sweep-preserved", "preserved")
 	activeGone := mustCreate(t, root, "landed-sweep-active", "active gone")
@@ -449,7 +449,7 @@ func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 }
 
 func TestLeaseFile(t *testing.T) {
-	dir := gittest.Repo(t)
+	dir := journeyRepo(t)
 	lease, err := LeaseFile(dir)
 	if err != nil {
 		t.Fatalf("LeaseFile: %v", err)
@@ -474,7 +474,7 @@ func TestLeaseFileCommandMissingArg(t *testing.T) {
 
 func TestPoolCommandExplicitRoot(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	out, code := PoolCommand([]string{"/home/mgibs/workspace/bench"})
 	if code != 0 {
 		t.Errorf("exit = %d, want 0", code)
@@ -482,45 +482,5 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 	want := filepath.Join(home, "worktrees", "bench-2826441890") + "\n"
 	if out != want {
 		t.Errorf("out = %q, want %q", out, want)
-	}
-}
-func newWorktreeRepo(t testing.TB) string {
-	t.Helper()
-	root := gittest.RepoOnBranch(t, "main")
-	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
-		t.Fatalf("write tracked.txt: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("initial\n"), 0o644); err != nil {
-		t.Fatalf("write README.md: %v", err)
-	}
-	gitRun(t, root, "add", "tracked.txt", "README.md")
-	gitRun(t, root, "commit", "-q", "-m", "base")
-	return root
-}
-func chdir(t testing.TB, dir string) {
-	t.Helper()
-	prev, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
-	if err := os.Chdir(dir); err != nil {
-		t.Fatalf("chdir %s: %v", dir, err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(prev) })
-}
-func gitOutput(t testing.TB, dir string, args ...string) string {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
-	out, err := cmd.Output()
-	if err != nil {
-		t.Fatalf("git %s: %v", strings.Join(args, " "), err)
-	}
-	return strings.TrimSpace(string(out))
-}
-func gitRun(t testing.TB, dir string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, out)
 	}
 }

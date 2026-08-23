@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -35,6 +36,9 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	code := m.Run()
+	// The one test-run executable owner outlives every journey; release its private
+	// directory only after the last child has returned.
+	packageRunBinary.close()
 	entries, err := homeResidue(home)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "private BENCH_HOME residue:", err)
@@ -52,6 +56,17 @@ func TestMain(m *testing.M) {
 	if err := os.RemoveAll(home); err != nil {
 		fmt.Fprintln(os.Stderr, "private BENCH_HOME removal:", err)
 		code = 1
+	}
+	// The proof inventory closes retained coverage: an unfiltered green package run
+	// must have marked every required journey and adapter proof. A -run filter or an
+	// already-red run skips the check, so attribution stays with the first failure.
+	if code == 0 && flag.Lookup("test.run").Value.String() == "" {
+		if missing := missingProofs(); len(missing) > 0 {
+			for _, line := range missing {
+				fmt.Fprintln(os.Stderr, line)
+			}
+			code = 1
+		}
 	}
 	os.Exit(code)
 }

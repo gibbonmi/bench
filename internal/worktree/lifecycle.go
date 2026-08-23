@@ -9,6 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,18 +45,20 @@ type OrphanCandidate struct{ ID, Path string }
 
 var ErrCleanupInterrupted = errors.New("cleanup interrupted")
 
-const leaseTimeLayout = "2006-01-02T15:04:05Z"
+const leaseTimeLayout = lifecyclepolicy.LeaseTimeLayout
 
-const unknownLeaseReason = "assignment lease state is unknown"
+const unknownLeaseReason = lifecyclepolicy.UnknownLeaseReason
 
 var chmodPool = os.Chmod
 
-type LeaseState string
+// LeaseState is the policy package's lease liveness verdict;
+// internal/worktree/lifecyclepolicy owns its values and semantics.
+type LeaseState = lifecyclepolicy.LeaseState
 
 const (
-	LeaseLive    LeaseState = "live"
-	LeaseDead    LeaseState = "dead"
-	LeaseUnknown LeaseState = "unknown"
+	LeaseLive    = lifecyclepolicy.LeaseLive
+	LeaseDead    = lifecyclepolicy.LeaseDead
+	LeaseUnknown = lifecyclepolicy.LeaseUnknown
 )
 
 // pidAlive treats kill-0 success and EPERM as alive. Only ESRCH means gone.
@@ -64,21 +67,8 @@ func pidAlive(pid int) bool {
 	return err == nil || errors.Is(err, syscall.EPERM)
 }
 
-func leaseOwnerPID(content []byte) (int, bool) {
-	if len(content) == 0 || content[len(content)-1] != '\n' || bytes.Count(content, []byte{'\n'}) != 1 {
-		return 0, false
-	}
-	fields := strings.Split(string(content[:len(content)-1]), " ")
-	if len(fields) != 2 {
-		return 0, false
-	}
-	pid, err := strconv.Atoi(fields[0])
-	if err != nil || pid <= 0 || strconv.Itoa(pid) != fields[0] {
-		return 0, false
-	}
-	stamp, err := time.Parse(leaseTimeLayout, fields[1])
-	return pid, err == nil && stamp.Format(leaseTimeLayout) == fields[1]
-}
+// leaseOwnerPID is the policy lease-content parse.
+func leaseOwnerPID(content []byte) (int, bool) { return lifecyclepolicy.LeaseOwnerPID(content) }
 
 // ProbeLease reports whether a well-formed lease's recorded owner is live.
 // Every unreadable or malformed lease is unknown so lifecycle consumers fail closed.
@@ -101,13 +91,11 @@ func ProbeLease(leasePath string) LeaseState {
 	return LeaseDead
 }
 
-// reclaimable requires a dead recorded pid or a lease aged past bounds.LeaseStale,
-// the window that separates a crashed legacy lease from a fresh writer mid-claim.
+// reclaimable is the policy staleness decision over a lease's translated
+// content, mtime, and the caller's liveness probe, judged against the
+// bounds.LeaseStale window this boundary supplies.
 func reclaimable(content []byte, mtime, now time.Time, alive func(int) bool) bool {
-	if pid, ok := leaseOwnerPID(content); ok {
-		return !alive(pid)
-	}
-	return now.Sub(mtime) > bounds.LeaseStale
+	return lifecyclepolicy.Reclaimable(content, mtime, now, alive, bounds.LeaseStale)
 }
 
 // candidateName keeps each unique mint attempt inside the pool.
@@ -116,24 +104,26 @@ func candidateName(pool string, unixSecs int64, pid, try int) string {
 }
 
 // leaseLine is the bytes an owner writes into its lease: "<pid> <utc-time>\n".
-func leaseLine() []byte {
-	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), time.Now().UTC().Format(leaseTimeLayout)))
+// The instant is the caller's explicit boundary resolution, never an ambient read.
+func leaseLine(now time.Time) []byte {
+	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), now.UTC().Format(leaseTimeLayout)))
 }
 
 // tryCreate wins a lease only through an atomic O_EXCL create.
-func tryCreate(leasePath string) bool {
+func tryCreate(leasePath string, now time.Time) bool {
 	f, err := os.OpenFile(leasePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return false
 	}
-	_, werr := f.Write(leaseLine())
+	_, werr := f.Write(leaseLine(now))
 	cerr := f.Close()
 	return werr == nil && cerr == nil
 }
 
-// Claim atomically creates a lease or identity-checks a provably stale takeover.
-func Claim(leasePath string) bool {
-	if tryCreate(leasePath) {
+// claimAt atomically creates a lease or identity-checks a provably stale takeover,
+// judging staleness against the caller's explicitly resolved instant.
+func claimAt(leasePath string, now time.Time) bool {
+	if tryCreate(leasePath, now) {
 		return true
 	}
 	info, err := os.Stat(leasePath)
@@ -141,7 +131,7 @@ func Claim(leasePath string) bool {
 		return false // lease vanished under us (a racing reclaim); respect and rescan
 	}
 	content, _ := os.ReadFile(leasePath)
-	if !reclaimable(content, info.ModTime(), time.Now(), pidAlive) {
+	if !reclaimable(content, info.ModTime(), now, pidAlive) {
 		return false
 	}
 	claimTakeoverGap(leasePath)
@@ -159,7 +149,7 @@ func Claim(leasePath string) bool {
 		return false
 	}
 	os.Remove(stale)
-	return tryCreate(leasePath)
+	return tryCreate(leasePath, now)
 }
 
 // claimTakeoverGap drives the post-judgment, pre-rename reclaimer interleave.
@@ -180,10 +170,17 @@ func isClean(dir string) bool {
 	return err == nil && out == ""
 }
 
-// Acquire claims a clean pool entry or mints one in three bounded attempts. It
-// resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref.
+// Acquire is the temporary compatibility form of acquireAt: it resolves the Bench
+// home and the instant at the effect boundary for callers that have not migrated.
 func Acquire(root, resetRef, resetMode string) (string, error) {
-	pool := Pool(root)
+	return acquireAt(root, resetRef, resetMode, benchHome(), currentTime())
+}
+
+// acquireAt claims a clean pool entry or mints one in three bounded attempts. It
+// resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref.
+// The home and the instant are the caller's explicit boundary resolutions.
+func acquireAt(root, resetRef, resetMode, home string, now time.Time) (string, error) {
+	pool := poolAt(home, root)
 	if err := os.MkdirAll(pool, 0o700); err != nil {
 		return "", err
 	}
@@ -196,14 +193,14 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 			continue
 		}
 		lease, err := LeaseFile(d)
-		if err != nil || !Claim(lease) {
+		if err != nil || !claimAt(lease, now) {
 			continue
 		}
 		wt = d
 		break
 	}
 	for try := 1; wt == "" && try <= 3; try++ {
-		cand := candidateName(pool, time.Now().Unix(), os.Getpid(), try)
+		cand := candidateName(pool, now.Unix(), os.Getpid(), try)
 		// An unresolved default makes the first attempt the HEAD one already. The HEAD
 		// fallback is a genuine second attempt only when the remote ref was non-empty.
 		remote := git.RemoteDefaultRef(root)
@@ -214,7 +211,7 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 		if err != nil {
 			continue
 		}
-		if Claim(lease) {
+		if claimAt(lease, now) {
 			wt = cand
 		}
 	}

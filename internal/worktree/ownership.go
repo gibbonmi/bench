@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"io"
 	"os"
 	"os/exec"
@@ -128,6 +129,12 @@ func lockCreationRequest(root, digest string) (func(), error) {
 
 // Create makes one request-idempotent owned registration and persists its bundle.
 func Create(root, request, label string, fault Fault, requestedStart ...string) (Creation, error) {
+	return createAt(root, request, label, fault, currentTime(), requestedStart...)
+}
+
+// createAt is Create with the creation instant resolved explicitly at the caller's
+// effect boundary; Create is its temporary compatibility form.
+func createAt(root, request, label string, fault Fault, now time.Time, requestedStart ...string) (Creation, error) {
 	if request == "" || label == "" {
 		return Creation{}, errors.New("worktree create requires request and label")
 	}
@@ -182,7 +189,7 @@ func Create(root, request, label string, fault Fault, requestedStart ...string) 
 	}
 	branch := intent.AssignmentBranchRef(ownerID, assignmentID)
 	shortBranch := strings.TrimPrefix(branch, "refs/heads/")
-	createdAt := time.Now().UTC().Format(time.RFC3339)
+	createdAt := now.UTC().Format(time.RFC3339)
 	assignment := intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: assignmentID, OwnerID: ownerID,
 		Request: digest, Label: label, Start: start, Branch: branch, Worktree: path,
@@ -438,11 +445,9 @@ func releaseNext(target, assignment string) string {
 	return "bench worktree exec " + assignment + " -- bench worktree release --request <request> ."
 }
 
-// residualAssignment reports whether a record preserves no work and is therefore safe
-// to compact. Its recovery set is the single source of that judgment: an empty set
-// means residue. A non-empty set means preserved work that must never be silently
-// discarded. Both the release reconcile and the resume sweep consult this one predicate.
-func residualAssignment(a intent.Assignment) bool { return len(a.Recovery) == 0 }
+// residualAssignment is the policy preservation-residue decision;
+// internal/worktree/lifecyclepolicy owns its judgment.
+func residualAssignment(a intent.Assignment) bool { return lifecyclepolicy.Residual(a) }
 
 // reconcileOutOfBand resolves a release whose tree was removed out of band. Its input is
 // a completed, owned cleanup receipt that does not match the automatic-registration

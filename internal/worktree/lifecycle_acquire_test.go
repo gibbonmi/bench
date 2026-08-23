@@ -8,7 +8,6 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -19,7 +18,7 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 	oldUmask := syscall.Umask(0)
 	t.Cleanup(func() { syscall.Umask(oldUmask) })
 	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	wt, err := Acquire(root, "", "")
 	if err != nil {
@@ -42,11 +41,12 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 		t.Fatalf("LeaseFile: %v", err)
 	}
 	assertMode(lease, 0o600)
+	markProof(t, "lifecycle/journey/lock")
 }
 
 func TestAcquireTightensExistingPool(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	pool := Pool(root)
 	if err := os.MkdirAll(pool, 0o777); err != nil {
@@ -74,7 +74,7 @@ func TestAcquireTightensExistingPool(t *testing.T) {
 // the HEAD one. So the mint still succeeds rather than spending its attempt twice.
 func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "master")
 	gitRun(t, root, "branch", "feature")
@@ -95,7 +95,7 @@ func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 
 func TestAcquireContinuesWhenPoolTightenFails(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	pool := Pool(root)
 	old := chmodPool
@@ -211,7 +211,7 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 			if readErr != nil || len(assignments) != 1 || len(assignments[0].Recovery) != 1 {
 				t.Fatalf("recovery metadata = %#v, %v", assignments, readErr)
 			}
-			if exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", assignments[0].Recovery[0].Ref).Run() == nil {
+			if descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", assignments[0].Recovery[0].Ref).Run() == nil {
 				t.Fatal("recovery ref exists before its metadata checkpoint replays")
 			}
 			stop = errors.New("stop after durable recovery ref")
@@ -275,7 +275,7 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 	newFixture := func(t *testing.T) fixture {
 		t.Helper()
 		root := newWorktreeRepo(t)
-		t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+		bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 		creation, err := Create(root, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -394,7 +394,7 @@ func setupConflict(t *testing.T, path string) {
 	input := "100644 " + base + " 1\tREADME.md\n" +
 		"100644 " + ours + " 2\tREADME.md\n" +
 		"100644 " + theirs + " 3\tREADME.md\n"
-	cmd := exec.Command("git", "-C", path, "update-index", "--index-info")
+	cmd := descendant(t, "git", "-C", path, "update-index", "--index-info")
 	cmd.Stdin = strings.NewReader(input)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("create conflict index: %v\n%s", err, out)
@@ -402,7 +402,7 @@ func setupConflict(t *testing.T, path string) {
 }
 func hashBlob(t *testing.T, root, contents string) string {
 	t.Helper()
-	cmd := exec.Command("git", "-C", root, "hash-object", "-w", "--stdin")
+	cmd := descendant(t, "git", "-C", root, "hash-object", "-w", "--stdin")
 	cmd.Stdin = strings.NewReader(contents)
 	out, err := cmd.Output()
 	if err != nil {
@@ -418,7 +418,7 @@ func requireBlob(t *testing.T, root, commit, path, want string) {
 }
 func requireMissingBlob(t *testing.T, root, commit, path string) {
 	t.Helper()
-	if exec.Command("git", "-C", root, "cat-file", "-e", commit+":"+path).Run() == nil {
+	if descendant(t, "git", "-C", root, "cat-file", "-e", commit+":"+path).Run() == nil {
 		t.Fatalf("%s unexpectedly contains %s", commit, path)
 	}
 }

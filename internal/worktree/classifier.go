@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,7 +16,9 @@ import (
 	"time"
 )
 
-type CleanupAction string
+// CleanupAction and CleanupReason are the policy package's action and reason
+// types; internal/worktree/lifecyclepolicy owns their values and semantics.
+type CleanupAction = lifecyclepolicy.Action
 
 type refusal struct {
 	detail, observed, wanted, next string
@@ -103,7 +106,7 @@ func cleanupRow(plan CleanupPlan) []string {
 	// nothing else in the row implies. The plan half names the exact ref it spends that
 	// assertion on. The derived case stays silent: its deletion follows from the landedness
 	// the tool proved for itself, and its row is a settled output contract.
-	if plan.discardBranch && plan.deleteBranch && plan.Action.removes() {
+	if plan.discardBranch && plan.deleteBranch && plan.Action.Removes() {
 		detail = "discards branch " + plan.branchRef + "; " + detail
 	}
 	ignored := plan.ignoredSummary
@@ -133,51 +136,34 @@ func renderIgnoredPreview(stdout io.Writer, plan CleanupPlan) error {
 	return err
 }
 
-type CleanupReason string
+type CleanupReason = lifecyclepolicy.Reason
 
 const (
-	ActionRetain         CleanupAction = "retain"
-	ActionRemove         CleanupAction = "remove"
-	ActionRecoverRemove  CleanupAction = "recover-remove"
-	ActionDiscardRemove  CleanupAction = "discard-remove"
-	ActionRemoved        CleanupAction = "removed"
-	ActionError          CleanupAction = "error"
-	ReasonForeign        CleanupReason = "foreign"
-	ReasonActive         CleanupReason = "active"
-	ReasonLiveLease      CleanupReason = "live-lease"
-	ReasonUnmerged       CleanupReason = "unmerged"
-	ReasonIgnored        CleanupReason = "ignored"
-	ReasonMalformed      CleanupReason = "malformed"
-	ReasonUncertain      CleanupReason = "uncertain"
-	ReasonUnexpectedLock CleanupReason = "unexpected-lock"
-	ReasonOrphaned       CleanupReason = "orphaned"
-	ReasonDirty          CleanupReason = "dirty"
-	ReasonLanded         CleanupReason = "landed"
+	ActionRetain         = lifecyclepolicy.ActionRetain
+	ActionRemove         = lifecyclepolicy.ActionRemove
+	ActionRecoverRemove  = lifecyclepolicy.ActionRecoverRemove
+	ActionDiscardRemove  = lifecyclepolicy.ActionDiscardRemove
+	ActionRemoved        = lifecyclepolicy.ActionRemoved
+	ActionError          = lifecyclepolicy.ActionError
+	ReasonForeign        = lifecyclepolicy.ReasonForeign
+	ReasonActive         = lifecyclepolicy.ReasonActive
+	ReasonLiveLease      = lifecyclepolicy.ReasonLiveLease
+	ReasonUnmerged       = lifecyclepolicy.ReasonUnmerged
+	ReasonIgnored        = lifecyclepolicy.ReasonIgnored
+	ReasonMalformed      = lifecyclepolicy.ReasonMalformed
+	ReasonUncertain      = lifecyclepolicy.ReasonUncertain
+	ReasonUnexpectedLock = lifecyclepolicy.ReasonUnexpectedLock
+	ReasonOrphaned       = lifecyclepolicy.ReasonOrphaned
+	ReasonDirty          = lifecyclepolicy.ReasonDirty
+	ReasonLanded         = lifecyclepolicy.ReasonLanded
 )
-const actionReleaseRemove CleanupAction = "release-remove"
+const actionReleaseRemove = lifecyclepolicy.ActionReleaseRemove
+const actionReleaseLeftover = lifecyclepolicy.ActionReleaseLeftover
 
-// actionReleaseLeftover releases one assignment's registration and ledger entry while the
-// bytes at its path stay exactly where they are. It is deliberately outside removes().
-// Nothing proves what those bytes are: no checkout answers for them, and no recovery ref
-// holds them. Disposing of them stays with the path-addressed clean surface, whose
-// inventory is size-bounded.
-const actionReleaseLeftover CleanupAction = "release-leftover"
-
-// removes reports whether an action still has a removal ahead of it. It is not a
-// refusal, an invocation error, or a completed transaction.
-func (action CleanupAction) removes() bool {
-	return action == ActionRemove || action == ActionRecoverRemove || action == ActionDiscardRemove || action == actionReleaseRemove
-}
-
-// preserves reports whether executing this plan would write work to a recovery ref before
-// removing the checkout. The execution and the planners that must not reach it read the
-// same predicate. A plan can never be preserving to one and not to the other. A detached
-// registration counts whatever its tree holds: the checkout's HEAD is the only thing
-// naming its commits, so the removal would strand them.
+// preserves is the policy Preserves predicate read through this plan's own
+// action, tracked state, and registration shape.
 func (plan CleanupPlan) preserves() bool {
-	return plan.Action == ActionRecoverRemove ||
-		(plan.Action == ActionDiscardRemove && plan.Tracked != "clean") ||
-		plan.registration.Detached
+	return lifecyclepolicy.Preserves(plan.Action, plan.Tracked, plan.registration.Detached)
 }
 
 var ignoredLstat = os.Lstat
@@ -308,28 +294,11 @@ func (inventory IgnoredInventory) Summary() string {
 	return fmt.Sprintf("count=%s bytes=%d shown=%d truncated=%t", count, inventory.Bytes, inventory.Shown, inventory.Truncated)
 }
 
-// orphaned reports whether an assignment has been abandoned by the session that cut it.
-// Age is the whole test: nothing records liveness for a request-created worktree.
-// bounds.AssignmentStale is the only thing separating a long-running one from residue.
-// Every consumer must ask this one question, so the window has a single meaning.
-//
-// An absent stamp is aged, because a record written before the field existed carries
-// none and would otherwise be immortal. A stamp the reading host's clock has not
-// reached yet is not aged, so skew cannot manufacture an orphan. An unparseable stamp
-// is unknown age rather than infinite age. ValidateAssignment rejects one on every
-// ledger read, so a record reaching here with one never came from the ledger.
+// orphaned is the policy age decision over the bounds.AssignmentStale window
+// this boundary supplies; internal/worktree/lifecyclepolicy owns its edge
+// readings.
 func orphaned(a intent.Assignment, now time.Time) bool {
-	if a.State != intent.StateActive {
-		return false
-	}
-	if a.CreatedAt == nil {
-		return true
-	}
-	created, err := time.Parse(time.RFC3339, *a.CreatedAt)
-	if err != nil {
-		return false
-	}
-	return now.Sub(created) > bounds.AssignmentStale
+	return lifecyclepolicy.Orphaned(a, now, bounds.AssignmentStale)
 }
 
 // PlanAutomatic decides the automatic, unattended reading of eligibility. It calls
@@ -338,34 +307,42 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 // inapplicable. It calls decideAutomatic exactly once, then projects the returned
 // verdict onto the plan.
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
-	explicitPlan, explicitErr := PlanExplicit(root, path)
-	facts := automaticFacts{explicitErr: explicitErr, explicit: explicitPlan}
+	return planAutomaticAt(root, path, currentTime())
+}
 
+// planAutomaticAt is PlanAutomatic with the instant resolved explicitly at the
+// caller's effect boundary; PlanAutomatic is its temporary compatibility form.
+func planAutomaticAt(root, path string, now time.Time) (CleanupPlan, error) {
+	explicitPlan, explicitErr := PlanExplicit(root, path)
+	facts := automaticFacts{ExplicitErr: explicitErr, Explicit: explicitOutcome(explicitPlan)}
+
+	var missingBranchAssignment *intent.Assignment
 	if explicitErr != nil {
 		if assignment, missing := activeAssignmentWithMissingBranch(root, path); missing {
 			salvage := retainedPlan(path, ReasonActive, "assignment landedness is unknown")
 			salvage.owned, salvage.assignment = true, &assignment
-			facts.missingBranchAssignment = &assignment
-			facts.missingBranchLiveLease = planHasLiveLease(salvage)
+			missingBranchAssignment = &assignment
+			facts.MissingBranchAssignmentID = assignment.ID
+			facts.MissingBranchLiveLease = planHasLiveLease(salvage)
 		}
 	} else if explicitPlan.assignment != nil {
-		facts.liveLease = planHasLiveLease(explicitPlan)
-		facts.landed = assignmentLanded(*explicitPlan.assignment, explicitPlan)
+		facts.LiveLease = planHasLiveLease(explicitPlan)
+		facts.Landed = assignmentLanded(*explicitPlan.assignment, explicitPlan)
 		if explicitPlan.assignment.State == intent.StateActive {
-			facts.orphanedActive = orphaned(*explicitPlan.assignment, time.Now())
+			facts.OrphanedActive = orphaned(*explicitPlan.assignment, now)
 		}
 		if explicitPlan.owned && explicitPlan.assignment.State == intent.StateCleanupPending {
-			facts.recoveryMatches = recoveryMetadataMatches(root, *explicitPlan.assignment)
+			facts.RecoveryMatches = recoveryMetadataMatches(root, *explicitPlan.assignment)
 		}
 	}
 
 	verdict := decideAutomatic(facts)
 
 	if explicitErr != nil {
-		if facts.missingBranchAssignment != nil {
+		if missingBranchAssignment != nil {
 			plan := retainedPlan(path, verdict.ReasonCode, verdict.Reason)
 			plan.Assignment = verdict.AssignmentID
-			plan.owned, plan.assignment = true, facts.missingBranchAssignment
+			plan.owned, plan.assignment = true, missingBranchAssignment
 			return automaticFingerprint(plan), nil
 		}
 		return retainedPlan(path, verdict.ReasonCode, verdict.Reason), nil

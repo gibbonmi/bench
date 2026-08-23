@@ -83,7 +83,7 @@ func runResume(t *testing.T, root string) string {
 // store shares the refs/bench/ prefix, so an over-broad delete would destroy
 // green evidence at every session start.
 func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
-	t.Setenv("BENCH_HOME", t.TempDir())
+	bindEnv(t, "BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
 	green := seedLifecycleDebris(t, root)
 	diagnostic := "refs/bench/diagnostic/probe"
@@ -102,7 +102,7 @@ func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
 // after it are the compared pair: once the tree has settled, a reconcile writes
 // nothing and reports exactly what its predecessor did.
 func TestResumeReconcileIsIdempotent(t *testing.T) {
-	t.Setenv("BENCH_HOME", t.TempDir())
+	bindEnv(t, "BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
 	seedLifecycleDebris(t, root)
 
@@ -124,7 +124,7 @@ func TestResumeReconcileIsIdempotent(t *testing.T) {
 // decoder can read, exits zero and drops them. It leaves the pool's own record
 // alone and authors nothing.
 func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
-	t.Setenv("BENCH_HOME", t.TempDir())
+	bindEnv(t, "BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
 	pool := mustCreate(t, root, "reconcile-pool", "pool work")
 	green := seedLifecycleDebris(t, root)
@@ -154,7 +154,7 @@ func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 // TestResumeReconcileConvergesAfterInterruption is RM9: a reconcile killed between two ref
 // deletions leaves a partial namespace and an unpurged ledger, and re-entry finishes both.
 func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
-	t.Setenv("BENCH_HOME", t.TempDir())
+	bindEnv(t, "BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
 	pool := mustCreate(t, root, "interrupted-pool", "pool work")
 	green := seedLifecycleDebris(t, root)

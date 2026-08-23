@@ -12,7 +12,7 @@ import (
 
 func TestCreateStampsAssignment(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	before := time.Now().UTC().Truncate(time.Second)
 	creation := mustCreate(t, root, "stamped", "creation stamp")
 	after := time.Now().UTC()
@@ -104,7 +104,7 @@ func TestPlanAutomaticLabelsOrphaned(t *testing.T) {
 
 func TestPlanAutomaticKeepsEarlierRetainReason(t *testing.T) {
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore")

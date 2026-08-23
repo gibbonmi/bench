@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"io"
 	"os"
@@ -19,7 +18,7 @@ import (
 
 func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
 	root := newWorktreeRepo(t)
-	gittest.FIFOWorktreeAdmin(t, root, "resume")
+	journeyFIFOWorktreeAdmin(t, root, "resume")
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
 	done := make(chan int, 1)
@@ -36,7 +35,7 @@ func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
 
 func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	clean := filepath.Join(filepath.Dir(root), "auto clean")
@@ -88,7 +87,7 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 }
 
 func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
-	t.Setenv("BENCH_HOME", t.TempDir())
+	bindEnv(t, "BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
@@ -401,14 +400,14 @@ func TestExplicitApplyBindsRecoveryActionsAndDiscardFlag(t *testing.T) {
 func newOwnedSubmoduleAssignment(t *testing.T, request string) (string, Creation) {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	source := gittest.RepoOnBranch(t, "main")
+	source := journeyRepoOnBranch(t, "main")
 	mustWrite(t, filepath.Join(source, "sub.txt"), []byte("clean\n"), 0o644)
 	gitRun(t, source, "add", "sub.txt")
 	gitRun(t, source, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "submodule")
 	gitRun(t, root, "-c", "protocol.file.allow=always", "submodule", "add", "-q", source, "sub")
 	gitRun(t, root, "add", ".gitmodules", "sub")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "add submodule")
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	creation := mustCreate(t, root, "nested-"+request, "nested state")
 	gitRun(t, creation.Path, "-c", "protocol.file.allow=always", "submodule", "update", "--init", "-q")
 	return root, creation
@@ -416,7 +415,7 @@ func newOwnedSubmoduleAssignment(t *testing.T, request string) (string, Creation
 func newOwnedAssignment(t *testing.T, request string) (string, Creation) {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	creation := mustCreate(t, root, "landed-"+request, "landedness")
 	return root, creation
 }

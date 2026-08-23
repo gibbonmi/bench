@@ -9,7 +9,7 @@ import (
 
 func assignmentLanded(assignment intent.Assignment, plan CleanupPlan) bool {
 	return assignment.State == intent.StateActive &&
-		plan.landedTyped.provenLanded() &&
+		plan.landedTyped.ProvenLanded() &&
 		!planHasLiveLease(plan)
 }
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -35,7 +34,7 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 			requireTest(t, pending.State == intent.StateCleanupPending && len(pending.Recovery) == 1,
 				"interrupted assignment = %#v", pending)
 			recovery := pending.Recovery[0]
-			requireTest(t, exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", recovery.Ref).Run() != nil,
+			requireTest(t, descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", recovery.Ref).Run() != nil,
 				"recovery ref exists before retry: %s", recovery.Ref)
 			registration := gitOutput(t, root, "worktree", "list", "--porcelain")
 			requireTest(t, strings.Contains(registration, "worktree "+creation.Path) && strings.Contains(registration, "locked "+lockReason(pending)),
@@ -74,4 +73,5 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 				"final cleanup receipt = %#v, found=%t error=%v", receipt, found, err)
 		})
 	}
+	markProof(t, "lifecycle/journey/recovery")
 }

@@ -114,41 +114,44 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	}
 	plan := CleanupPlan{Target: target, Action: ActionRemove, Tracked: "clean", Recovery: "none", registration: *registration, discardIgnored: options.DiscardIgnored, discardBranch: options.DiscardBranch}
 	facts := explicitFacts{
-		registrationBranchRef:  registration.BranchRef,
-		registrationLockReason: registration.LockReason,
-		registrationLocked:     registration.Locked,
-		registrationDetached:   registration.Detached,
-		discardIgnored:         options.DiscardIgnored,
+		RegistrationBranchRef:  registration.BranchRef,
+		RegistrationLockReason: registration.LockReason,
+		RegistrationLocked:     registration.Locked,
+		RegistrationDetached:   registration.Detached,
+		DiscardIgnored:         options.DiscardIgnored,
 	}
 	_, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
 	if markerStatErr == nil {
-		facts.markerPresent = true
+		facts.MarkerPresent = true
 		evidence, markerErr := validateOwnerMarker(root, target)
 		if markerErr != nil {
-			facts.markerErr = markerErr
+			facts.MarkerErr = markerErr
 		} else {
 			assignments, assignmentErr := intent.Assignments(root)
 			if assignmentErr != nil {
-				facts.assignmentLedgerErr = assignmentErr
+				facts.AssignmentLedgerErr = assignmentErr
 			} else {
 				var matched *intent.Assignment
 				for i := range assignments {
 					if assignments[i].Worktree == target && assignments[i].OwnerID == evidence.marker.OwnerID {
 						if matched != nil {
-							facts.assignmentAmbiguous = true
+							facts.AssignmentAmbiguous = true
 							break
 						}
 						candidate := assignments[i]
 						matched = &candidate
 					}
 				}
-				facts.matchedAssignment = matched
+				facts.MatchedAssignment = matched
+				if matched != nil {
+					facts.AssignmentLockReason = lockReason(*matched)
+				}
 			}
 		}
 	} else if !errors.Is(markerStatErr, os.ErrNotExist) {
 		return CleanupPlan{}, markerStatErr
 	} else if !registration.Locked {
-		facts.foreignAssignment = foreignRecoveryAssignment(root, target)
+		facts.ForeignAssignment = foreignRecoveryAssignment(root, target)
 	}
 	head, err := git.Output("-C", target, "rev-parse", "HEAD")
 	if err != nil {
@@ -171,7 +174,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 			}
 		}
 	}
-	facts.initialTracked = initialTracked
+	facts.InitialTracked = initialTracked
 	contentIdentity, err := explicitContentIdentity(target)
 	if err != nil {
 		return CleanupPlan{}, err
@@ -194,32 +197,32 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	}
 	buildOutputs, buildOutputEvidence, buildOutputErr := loadBuildOutputs(root)
 	if _, statErr := os.Lstat(leasePath); statErr == nil {
-		facts.leasePresent = true
-		facts.leaseState = ProbeLease(leasePath)
+		facts.LeasePresent = true
+		facts.LeaseState = ProbeLease(leasePath)
 	} else if !errors.Is(statErr, os.ErrNotExist) {
-		facts.leaseStatErr = statErr
+		facts.LeaseStatErr = statErr
 	}
 	nested, nestedErr := classifyNestedState(target)
 	nestedEvidence := string(nested)
 	if nestedErr != nil {
 		nestedEvidence += ":" + nestedErr.Error()
 	}
-	facts.nestedState, facts.nestedErr = nested, nestedErr
+	facts.NestedState, facts.NestedErr = nested, nestedErr
 	ignored, ignoredCanonical, ignoredErr := inventoryIgnored(target, options.Full)
 	plan.Ignored = ignored
 	declaredIgnored := buildOutputErr == nil && ignoredWithinLandingAllowance(ignored, buildOutputs)
-	facts.buildOutputErr = buildOutputErr
-	facts.ignoredErr = ignoredErr
-	facts.ignoredOverLimit = ignored.OverLimit
-	facts.ignoredCount = ignored.Count
-	facts.declaredIgnored = declaredIgnored
-	facts.headDetached = headRef == "detached"
-	facts.defaultKnown = defaultOID != "none"
-	facts.headRef, facts.head = headRef, head
-	if !facts.headDetached && facts.defaultKnown {
-		facts.landedOK, facts.landedByContent, facts.landedErr = git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef)
+	facts.BuildOutputErr = buildOutputErr
+	facts.IgnoredErr = ignoredErr
+	facts.IgnoredOverLimit = ignored.OverLimit
+	facts.IgnoredCount = ignored.Count
+	facts.DeclaredIgnored = declaredIgnored
+	facts.HeadDetached = headRef == "detached"
+	facts.DefaultKnown = defaultOID != "none"
+	facts.HeadRef, facts.Head = headRef, head
+	if !facts.HeadDetached && facts.DefaultKnown {
+		facts.LandedOK, facts.LandedByContent, facts.LandedErr = git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef)
 	}
-	facts.unsafeTarget = unsafeTarget
+	facts.UnsafeTarget = unsafeTarget
 
 	verdict := decideExplicit(facts)
 	plan.Action, plan.ReasonCode, plan.Reason = verdict.Action, verdict.ReasonCode, verdict.Reason
@@ -240,7 +243,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	// it. The detached conjunct holds because a detached HEAD has no branch for the operator
 	// to authorize deleting. headRef is the "detached" sentinel rather than a ref. Dropping
 	// the conjunct would hand that sentinel to the branch deletion as if it named something.
-	if options.DiscardBranch && !facts.headDetached {
+	if options.DiscardBranch && !facts.HeadDetached {
 		plan.deleteBranch = true
 		plan.branchRef, plan.branchOID = headRef, head
 	}

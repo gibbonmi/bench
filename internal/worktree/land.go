@@ -24,6 +24,7 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/usage"
+	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
 )
 
 var landGrammar = usage.Grammar{
@@ -93,7 +94,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	// still fails the proof surfaces the owner's message, which carries the remedy.
 	if freshness.DeclaresBuildInputs(root) {
 		if err := verifyLandingExecutable(root, executable); err != nil {
-			if os.Getenv(rebuiltLandingEnv) != "" {
+			if landingAlreadyRebuilt() {
 				return landRefusal(stdout, err.Error())
 			}
 			return rebuildAndRerunLanding(root, args, err, stdout, stderr)
@@ -156,8 +157,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 		}
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release")
 	}
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=released}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree)
-	return 0
+	return landedComplete(stdout, result, true)
 }
 
 func hasResumeFlag(args []string) bool {
@@ -203,25 +203,24 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
 		return landRefusal(stdout, err.Error())
 	}
-	if destination == published {
+	switch landingpolicy.ResumeMarker(resumeMarkerFacts(root, destination, published, marker)) {
+	case landingpolicy.MarkerAdvance:
 		if err := advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
 			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker")
 		}
-	} else if marker == "" || !git.OK("-C", root, "merge-base", "--is-ancestor", published, marker) {
-		return landRefusal(stdout, "project-green marker is absent, behind, or divergent from the published landing")
+	case landingpolicy.MarkerRefuse:
+		return landRefusal(stdout, landingpolicy.MarkerRefusalDetail)
 	}
 	if err := reconcileLanding(root, destination, published, destinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile")
 	}
 	if !active {
-		fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=already-complete}\n", sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree)
-		return 0
+		return landedComplete(stdout, result, false)
 	}
 	if releaseLandingAssignment(root, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release")
 	}
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=released}\n", sourceBase, parsed.Flags["--source-tip"], destinationBase, published, tree)
-	return 0
+	return landedComplete(stdout, result, true)
 }
 
 func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {
@@ -260,44 +259,37 @@ func resumeLandingDestination(root string) (string, string, string, error) {
 }
 
 func resumeDestructiveDestinationState(root, destination, published, destinationBase string) error {
-	nested, err := classifyNestedState(root)
-	if err != nil || nested != nestedClean {
-		return errors.New("landing destination has nested repositories")
-	}
-	raw, err := git.Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all", "--ignored")
-	if err != nil {
-		return errors.New("landing destination status is unreadable")
-	}
-	entries, err := git.ParsePorcelainZStrict(raw)
-	if err != nil {
-		return errors.New("landing destination status is malformed")
-	}
-	staged := false
-	allowedIgnored, allowanceKnown := false, false
-	for _, entry := range entries {
-		switch entry.Status {
-		case "":
-			continue
-		case "!!":
-			if !allowanceKnown {
-				allowedIgnored, allowanceKnown = ignoredResidueDeclared(root), true
-			}
-			if allowedIgnored {
-				continue
-			}
-			return errors.New("landing destination has ignored residue")
-		case "??":
-			return errors.New("landing destination has untracked collisions")
-		}
-		if entry.Status[1] != ' ' {
-			return errors.New("landing destination has tracked-worktree changes")
-		}
-		staged = staged || entry.Status[0] != ' '
-	}
-	if staged && (destination != published || !git.OK("-C", root, "diff", "--cached", "--quiet", destinationBase, "--")) {
-		return errors.New("landing destination has staged changes")
+	if detail := landingpolicy.Residue(destinationResidueFacts(root, destination, published, destinationBase)); detail != "" {
+		return errors.New(detail)
 	}
 	return nil
+}
+
+// destinationResidueFacts translates the destination's Git and filesystem state
+// into the typed residue facts once at the boundary. The expensive allowance
+// and staged-content facts bind as lazy suppliers the policy consults on demand.
+func destinationResidueFacts(root, destination, published, destinationBase string) landingpolicy.ResidueFacts {
+	facts := landingpolicy.ResidueFacts{
+		DestinationAtPublished: destination == published,
+		IgnoredDeclared:        func() bool { return ignoredResidueDeclared(root) },
+		StagedMatchesPublished: func() bool { return git.OK("-C", root, "diff", "--cached", "--quiet", destinationBase, "--") },
+	}
+	nested, err := classifyNestedState(root)
+	facts.NestedClean = err == nil && nested == nestedClean
+	if !facts.NestedClean {
+		return facts
+	}
+	raw, err := git.Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all", "--ignored")
+	facts.StatusReadable = err == nil
+	if !facts.StatusReadable {
+		return facts
+	}
+	entries, err := git.ParsePorcelainZStrict(raw)
+	facts.StatusWellFormed = err == nil
+	for _, entry := range entries {
+		facts.Entries = append(facts.Entries, landingpolicy.StatusEntry{Status: entry.Status, Path: entry.Path})
+	}
+	return facts
 }
 
 // ignoredResidueDeclared reports whether the destination's ignored residue sits
@@ -347,60 +339,89 @@ func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assig
 }
 
 func resumePublished(root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {
-	published, err = git.Output("-C", root, "rev-parse", "--verify", value+"^{commit}")
-	if err != nil {
-		return "", "", "", "", errors.New("published commit is not an exact commit identity")
-	}
-	if published != value {
-		return "", "", "", "", identityRefusal(value, published, "published commit is not an exact commit identity")
-	}
-	if !git.OK("-C", root, "merge-base", "--is-ancestor", published, destination) {
-		return "", "", "", "", errors.New("published commit is not reachable from the destination")
-	}
-	parents, err := git.Output("-C", root, "rev-list", "--parents", "-n", "1", published)
-	if err != nil {
-		return "", "", "", "", errors.New("published commit parents are unreadable")
-	}
-	parts := strings.Fields(parents)
-	if len(parts) != 3 {
-		return "", "", "", "", errors.New("published commit does not authenticate the reviewed source parent")
-	}
-	if parts[2] != source {
-		return "", "", "", "", identityRefusal(source, parts[2], "published commit does not authenticate the reviewed source parent")
-	}
-	destinationBase = parts[1]
-	sourceRange, kind, _ := diff.ResolveSourceRange(root, base, source)
-	if kind != "" {
-		return "", "", "", "", errors.New("review base does not authenticate the published source")
-	}
-	sourceBase = sourceRange.Base
-	// A spec-less first run published no transition, so a resume without a spec has no
-	// transition to authenticate. The parents and the range already bind the same
-	// published commit either way, so no second publication can follow from the skip.
-	if slug != "" {
-		specPath := spec.LiveSpecPath(slug)
-		folder := landing.ClosedFolderPath(landingSlug(slug))
-		staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
-		// A source folder with no spec.md published a close, not a transition. The
-		// authentication is then the folder's absence from the published tree: it
-		// demands no spec.md the first run never had.
-		if stagedErr != nil && git.OK("-C", root, "cat-file", "-e", source+":"+folder) {
-			if git.OK("-C", root, "cat-file", "-e", published+":"+folder) {
-				return "", "", "", "", errors.New("published commit does not close the source tickets-only folder")
-			}
-		} else {
-			implemented, implementedErr := spec.Implemented(staged)
-			publishedSpec, publishedErr := git.Raw("-C", root, "show", published+":"+specPath)
-			if stagedErr != nil || implementedErr != nil || publishedErr != nil || !bytes.Equal(implemented, publishedSpec) {
-				return "", "", "", "", errors.New("published commit does not carry the source staged spec transition")
-			}
+	facts, sourceBase, destinationBase := publicationFacts(root, destination, value, base, source, slug)
+	if refusal := landingpolicy.Publication(facts); refusal.Detail != "" {
+		if refusal.Observed != "" || refusal.Wanted != "" {
+			return "", "", "", "", identityRefusal(refusal.Observed, refusal.Wanted, refusal.Detail)
 		}
+		return "", "", "", "", errors.New(refusal.Detail)
 	}
-	tree, err = git.Output("-C", root, "rev-parse", published+"^{tree}")
+	tree, err = git.Output("-C", root, "rev-parse", facts.Published+"^{tree}")
 	if err != nil {
 		return "", "", "", "", errors.New("published tree is unreadable")
 	}
-	return published, sourceBase, destinationBase, tree, nil
+	return facts.Published, sourceBase, destinationBase, tree, nil
+}
+
+// publicationFacts translates the repository's view of a claimed published
+// landing into the typed publication facts once at the boundary. Gathering
+// stops at the first fact the policy will refuse on, so no later repository
+// read depends on state an earlier failure left unresolved. It also returns
+// the resolved review-source base and the published commit's destination base.
+func publicationFacts(root, destination, value, base, source, slug string) (landingpolicy.PublicationFacts, string, string) {
+	facts := landingpolicy.PublicationFacts{Requested: value, RequestedSource: source}
+	published, err := git.Output("-C", root, "rev-parse", "--verify", value+"^{commit}")
+	if err != nil {
+		return facts, "", ""
+	}
+	facts.Resolved, facts.Published = true, published
+	if published != value {
+		return facts, "", ""
+	}
+	facts.ReachableFromDestination = git.OK("-C", root, "merge-base", "--is-ancestor", published, destination)
+	if !facts.ReachableFromDestination {
+		return facts, "", ""
+	}
+	parents, err := git.Output("-C", root, "rev-list", "--parents", "-n", "1", published)
+	if err != nil {
+		return facts, "", ""
+	}
+	facts.ParentsReadable, facts.Parents = true, strings.Fields(parents)
+	if len(facts.Parents) != 3 || facts.Parents[2] != source {
+		return facts, "", ""
+	}
+	destinationBase := facts.Parents[1]
+	sourceRange, kind, _ := diff.ResolveSourceRange(root, base, source)
+	facts.RangeAuthenticates = kind == ""
+	if !facts.RangeAuthenticates {
+		return facts, "", destinationBase
+	}
+	facts.Spec = specTransitionFacts(root, published, source, slug)
+	return facts, sourceRange.Base, destinationBase
+}
+
+// specTransitionFacts translates what the source and published trees carry for
+// the landing's named spec. A spec-less first run published no transition, so
+// a resume without a spec has no transition to authenticate. A source folder
+// with no spec.md published a close, not a transition; its authentication is
+// the folder's absence from the published tree.
+func specTransitionFacts(root, published, source, slug string) landingpolicy.SpecTransition {
+	transition := landingpolicy.SpecTransition{Named: slug != ""}
+	if !transition.Named {
+		return transition
+	}
+	specPath := spec.LiveSpecPath(slug)
+	folder := landing.ClosedFolderPath(landingSlug(slug))
+	staged, stagedErr := git.Raw("-C", root, "show", source+":"+specPath)
+	if stagedErr != nil && git.OK("-C", root, "cat-file", "-e", source+":"+folder) {
+		transition.TicketsOnlyClose = true
+		transition.PublishedHasFolder = git.OK("-C", root, "cat-file", "-e", published+":"+folder)
+		return transition
+	}
+	implemented, implementedErr := spec.Implemented(staged)
+	publishedSpec, publishedErr := git.Raw("-C", root, "show", published+":"+specPath)
+	transition.TransitionMatches = stagedErr == nil && implementedErr == nil && publishedErr == nil && bytes.Equal(implemented, publishedSpec)
+	return transition
+}
+
+// resumeMarkerFacts translates the destination, published commit, and recorded
+// green marker into the typed resume-marker facts once at the boundary.
+func resumeMarkerFacts(root, destination, published, marker string) landingpolicy.MarkerFacts {
+	return landingpolicy.MarkerFacts{
+		DestinationAtPublished: destination == published,
+		MarkerPresent:          marker != "",
+		MarkerReachesPublished: func() bool { return git.OK("-C", root, "merge-base", "--is-ancestor", published, marker) },
+	}
 }
 
 type landingSourceFact struct {
@@ -634,8 +655,17 @@ func reconcileLandingDestination(root, destination, published, destinationBase s
 
 func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, specArg, path, assignment, step string) int {
 	next := landingResumeNext(result, specArg, path, assignment)
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=incomplete:%s,next=%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, step, sanitize.Controls(next))
-	return 3
+	outcome := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: step, Active: true})
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=%s,next=%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, outcome.WorktreeState, sanitize.Controls(next))
+	return outcome.ExitCode
+}
+
+// landedComplete renders the terminal landed record for a landing whose
+// follow-up steps all completed, in this run (active) or a prior one.
+func landedComplete(stdout io.Writer, result landing.ReviewedResult, active bool) int {
+	outcome := landingpolicy.Terminal(landingpolicy.TerminalFacts{Active: active})
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, outcome.WorktreeState)
+	return outcome.ExitCode
 }
 
 // landingSlug is the spec slug a landing argument names, and the empty slug for the

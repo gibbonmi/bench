@@ -255,7 +255,7 @@ func reauthorizeEvidence(t *testing.T, root, path string) reauthorizeState {
 func reauthorizeFixture(t *testing.T) (string, Creation, string, string) {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	if err := os.WriteFile(filepath.Join(root, "reviewed.txt"), []byte("reviewed source\n"), 0o644); err != nil {
 		t.Fatal(err)
