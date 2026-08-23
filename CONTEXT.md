@@ -28,6 +28,15 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **seam** — a stable interface where a test attaches and where you compose rather
   than invent. Each repo lists its seams in `projects/<name>.md`. Not "boundary",
   not "interface layer" — seam.
+- **fresh test run** — one Go test run with successful test-result reuse disabled
+  while the ordinary build and module caches remain available. For this kit, the
+  whole-tree form is `go test -count=1 ./...`. Not "cold test" or "clean-cache
+  run" — those also discard compilation or dependency state and measure a
+  different workload.
+- **real Git journey** — a behavioral test that materializes an actual Git
+  repository and crosses a public command seam. It proves Git composition and
+  process behavior, not every equivalence partition behind the command. Not
+  "integration test" alone — that label does not state whether real Git runs.
 - **line** — the declared model, effort, and rough token cap for a stage, with one
   clause of justification. "Declare the line" means state this before a long run.
   Not "budget" alone — the line is the whole routing decision.
