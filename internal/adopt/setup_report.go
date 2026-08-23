@@ -5,13 +5,13 @@ import (
 	"io"
 )
 
-// finishSetup is the exit contract every convergeSetup path ends through (FT76 story
-// 10): it invokes the one doctor rendering source (reportDoctorRows - no second
-// renderer), then prints the harness reload instruction and the exact next action.
-// priorPartial carries a partial verdict convergeSetup already knows about (a written
-// conflict block, the zero-signal stub) so the exit code answers for the whole run,
-// never just the doctor rows in isolation. Setup exits zero only when everything -
-// the transaction and doctor - is green.
+// finishSetup is the exit contract every convergeSetup path ends through. It invokes the
+// one doctor rendering source, reportDoctorRows, with no second renderer, then prints the
+// harness reload instruction and the exact next action. priorPartial carries a partial
+// verdict convergeSetup already knows about, such as a written conflict block or the
+// zero-signal stub. This makes the exit code answer for the whole run, never just the
+// doctor rows in isolation. Setup exits zero only when everything, the transaction and
+// doctor, is green.
 func finishSetup(stdout io.Writer, facts setupFacts, priorPartial bool) int {
 	red := reportDoctorRows(stdout)
 	fmt.Fprintln(stdout, "reload your harness session so it picks up the converged AGENTS.md / CLAUDE.md instructions")

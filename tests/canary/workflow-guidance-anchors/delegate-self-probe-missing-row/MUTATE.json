@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "Require the delegate to add the missing row when\nthe mutation comes back silently green.",
+    "new": "Note the result when the mutation comes back silently green."
+  }
+]

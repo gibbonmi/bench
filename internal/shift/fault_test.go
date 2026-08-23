@@ -12,7 +12,7 @@ import (
 )
 
 // shiftBranchName extracts the branch a Loop run started, from its "▶ shift on <branch>"
-// line — the same pattern runtime_gate_shift_proof_test.go's shiftBranchFromStart uses.
+// line. This is the same pattern runtime_gate_shift_proof_test.go's shiftBranchFromStart uses.
 func shiftBranchName(t *testing.T, output string) string {
 	t.Helper()
 	re := regexp.MustCompile(`(?m)^▶ shift on (\S+) `)
@@ -70,11 +70,12 @@ func requireRetainedWorktree(t *testing.T, root, stdout string) {
 	}
 }
 
-// faultFixtureCore builds a throwaway repo with a gate and chdirs the test into it — the
-// shared repo-setup every in-process Seam B fault test in this file drives Loop against.
-// extra runs after the gate is written but before the init commit, so a caller can add
-// its own tracked files (an agent script) to that same commit; nil skips it. Every
-// caller still owns its own BENCH_AGENT: this only sets the env both fixtures share.
+// faultFixtureCore builds a throwaway repo with a gate and chdirs the test into it. This
+// is the shared repo-setup every in-process Seam B fault test in this file drives Loop
+// against. extra runs after the gate is written but before the init commit. It lets a
+// caller add its own tracked files, such as an agent script, to that same commit; nil
+// skips it. Every caller still owns its own BENCH_AGENT: this only sets the env both
+// fixtures share.
 func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) (root string) {
 	t.Helper()
 	root = t.TempDir()
@@ -115,8 +116,8 @@ func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) 
 }
 
 // faultFixture is faultFixtureCore plus an agent that writes work.txt, with BENCH_AGENT
-// set to it — the shared setup every in-process Seam B fault test in this file that
-// wants a mutating adapter drives Loop against.
+// set to it. This is the shared setup every in-process Seam B fault test in this file
+// that wants a mutating adapter drives Loop against.
 func faultFixture(t *testing.T, gateScript string) (root string) {
 	t.Helper()
 	var agentPath string
@@ -131,7 +132,7 @@ func faultFixture(t *testing.T, gateScript string) (root string) {
 }
 
 // armFault sets the package-level fault seam for the duration of the test and restores
-// it on cleanup — the same discipline internal/worktree's Fault tests use.
+// it on cleanup, the same discipline internal/worktree's Fault tests use.
 func armFault(t *testing.T, f fault) {
 	t.Helper()
 	old := shiftFault
@@ -139,10 +140,10 @@ func armFault(t *testing.T, f fault) {
 	t.Cleanup(func() { shiftFault = old })
 }
 
-// TestLoopStagingFaultPreservesAndSplitsEvidence covers row 14 (TDD): a fault injected
-// at the staging step must propagate — retain the dirty tree and split by evidence —
-// rather than being swallowed the way stageTouched ignored a real `git add` failure
-// before FT79. No partial commit lands on the branch.
+// TestLoopStagingFaultPreservesAndSplitsEvidence covers row 14 (TDD) and pins FT79's
+// rule. A fault injected at the staging step must propagate, retaining the dirty tree
+// and splitting by evidence, rather than being swallowed. No partial commit lands on
+// the branch.
 func TestLoopStagingFaultPreservesAndSplitsEvidence(t *testing.T) {
 	root := faultFixture(t, "#!/usr/bin/env bash\nexit 0\n") // gate is green; only staging fails
 	armFault(t, func(step shiftStep) error {
@@ -166,11 +167,11 @@ func TestLoopStagingFaultPreservesAndSplitsEvidence(t *testing.T) {
 }
 
 // TestLoopTeardownFaultReportsFailed covers row 15 (TDD): a fault at teardown must exit
-// failed/1 with a detail naming the branch (and any recovery ref) rather than reporting
+// failed/1 with a detail naming the branch, and any recovery ref. It must not report
 // the shift's own outcome while silently swallowing a real cleanup failure.
 func TestLoopTeardownFaultReportsFailed(t *testing.T) {
 	// A no-op adapter (`true`) leaves nothing dirty, so the only failure this run can hit
-	// is the teardown fault itself — isolating the row's assertion from the evidence split.
+	// is the teardown fault itself. This isolates the row's assertion from the evidence split.
 	t.Setenv("BENCH_AGENT", "true")
 	faultFixtureNoAgentOverride(t, "#!/usr/bin/env bash\nexit 0\n")
 	armFault(t, func(step shiftStep) error {
@@ -193,17 +194,17 @@ func TestLoopTeardownFaultReportsFailed(t *testing.T) {
 }
 
 // faultFixtureNoAgentOverride is faultFixtureCore without an agent file, for a test that
-// wants its own no-op adapter (BENCH_AGENT set by the caller).
+// wants its own no-op adapter, with BENCH_AGENT set by the caller.
 func faultFixtureNoAgentOverride(t *testing.T, gateScript string) (root string) {
 	t.Helper()
 	return faultFixtureCore(t, gateScript, nil)
 }
 
-// TestFinishReportsUpsertFailure covers C2: a finish-time intent.Upsert failure (forced
-// here via the stepIntentUpsert fault, since a real ledger write only fails on a broken
-// BENCH_HOME, a much harder repro) must not be swallowed with `_ =`. The outcome and
-// exit code still resolve from the gate's real verdict — the ledger record is
-// enrichment, not the oracle — but a warning naming the failure lands on stderr.
+// TestFinishReportsUpsertFailure covers C2: a finish-time intent.Upsert failure must not
+// be swallowed with `_ =`. It is forced here via the stepIntentUpsert fault, since a
+// real ledger write only fails on a broken BENCH_HOME, a much harder repro. The outcome
+// and exit code still resolve from the gate's real verdict; the ledger record is
+// enrichment, not the oracle. A warning naming the failure lands on stderr.
 func TestFinishReportsUpsertFailure(t *testing.T) {
 	faultFixture(t, "#!/usr/bin/env bash\nexit 0\n")
 	armFault(t, func(step shiftStep) error {
@@ -225,8 +226,8 @@ func TestFinishReportsUpsertFailure(t *testing.T) {
 }
 
 // TestLoopRetainsAndLocksDirtyWorktree covers row 4's Seam B half: a preserving failure
-// retains and locks the charged worktree instead of releasing it, drops the lease, and
-// names the worktree path as the recovery pointer. Nothing is written to a ref — the
+// retains and locks the charged worktree instead of releasing it. It drops the lease,
+// and names the worktree path as the recovery pointer. Nothing is written to a ref; the
 // dirty tree stays where an operator can read it.
 func TestLoopRetainsAndLocksDirtyWorktree(t *testing.T) {
 	root := faultFixture(t, "#!/usr/bin/env bash\nexit 1\n") // red gate: forces the preserving path

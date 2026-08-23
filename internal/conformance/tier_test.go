@@ -1,9 +1,10 @@
 package conformance
 
-// The tier registry itself: which checks each tier runs, that metadata and bound
-// functions cannot drift apart, that the selected/inherited ordinary-check partition
-// selects real tests, and that every executed check leaves one timing line in a stable
-// order.
+// This file tests the tier registry. It verifies:
+// - which checks each tier runs
+// - that metadata and bound functions never drift apart
+// - that the selected and inherited ordinary-check partition selects real tests
+// - that every executed check leaves one timing line in a stable order
 
 import (
 	"fmt"
@@ -420,9 +421,9 @@ func expressionUsesLiveRoot(expr ast.Expr, liveRoots map[string]bool) bool {
 }
 
 // classifiedLiveTreeTests is the sole classification of tests that read the live tree only
-// to construct a mutation or driver fixture rather than enforce policy directly. The
-// staleness test below requires every entry still to be a detected live-tree reader; the
-// hidden-inventory check supplies the reverse direction by rejecting every detected reader
+// to construct a mutation or driver fixture, not to enforce policy directly. The staleness
+// test below requires every entry to still be a detected live-tree reader. The
+// hidden-inventory check supplies the reverse direction: it rejects every detected reader
 // absent from this classification or the executable registry.
 var classifiedLiveTreeTests = map[string]bool{
 	"TestCanaryFixtureRegistryClassifiesEveryFixture":              true,
@@ -434,6 +435,9 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestFixtureBiteProofArchitecture":                             true,
 	"TestGuidanceProseBudgetCanaryFixtureBites":                    true,
 	"TestGuidanceProseBudgetsHoldOnTheLiveTree":                    true,
+	"TestProseMechanicsCanaryFixturesBite":                         true,
+	"TestProseMechanicsHoldsOnTheLiveTree":                         true,
+	"TestProseExclusionRowsStayInsideTheApprovedSet":               true,
 	"TestHarnessUsesBenchConformanceRootAsGradedRoot":              true,
 	"TestInjectedPortRegistryCheckBites":                           true,
 	"TestInvalidOrderedSetRedsAndWidensToTheFullTier":              true,
@@ -527,11 +531,11 @@ func TestTierMembership(t *testing.T) {
 	}
 }
 
-// TestEveryCheckCarriesATier closes the gap Tier's string underlying type leaves open:
-// a row whose tier is misspelled or omitted holds "", which RunsAt reads as neither dev
-// nor ship, so the check silently stops running on every commit and survives every
-// membership assertion — those compare against name lists the untiered check is in or
-// out of on both sides.
+// TestEveryCheckCarriesATier closes the gap Tier's string underlying type leaves open. A row
+// whose tier is misspelled or omitted holds an empty string, which RunsAt reads as neither
+// dev nor ship. The check then stops running on every commit. It survives every membership
+// assertion, since those compare against name lists the untiered check sits in or out of,
+// on both sides.
 func TestEveryCheckCarriesATier(t *testing.T) {
 	for _, check := range registry.Checks {
 		switch check.Tier {
@@ -903,10 +907,10 @@ func inheritedSelection(tier registry.Tier, selected string) string {
 	return strings.Join(inherited, ",")
 }
 
-// TestUnknownScopeIsRedAndRunsNothing pins the posture a silent fallback would break:
-// a scope naming no check re-pays the full run and hides the drift that renamed it.
-// The hostile value is deliberate — the diagnostic quotes the scope, so control bytes
-// have to survive as escapes rather than as a mangled line.
+// TestUnknownScopeIsRedAndRunsNothing pins the posture a silent fallback would break: a
+// scope naming no check re-pays the full run and hides the drift that renamed it. The
+// hostile value is deliberate: the diagnostic quotes the scope, so control bytes must
+// survive as escapes, not as a mangled line.
 func TestUnknownScopeIsRedAndRunsNothing(t *testing.T) {
 	root := recordedScopeRoot(t)
 	const scope = "no-such-check\x01\n"
@@ -920,9 +924,9 @@ func TestUnknownScopeIsRedAndRunsNothing(t *testing.T) {
 	}
 }
 
-// TestScopeOutsideTierIsRedAndRunsNothing covers the scope that exists but sits on a
-// tier this run does not grade: executing zero checks in silence would read as green
-// and leave the fixture reporting a baffling did-not-bite.
+// TestScopeOutsideTierIsRedAndRunsNothing covers the scope that exists but sits on a tier
+// this run does not grade. Executing zero checks in silence would read as green and leave
+// the fixture reporting a baffling did-not-bite.
 func TestScopeOutsideTierIsRedAndRunsNothing(t *testing.T) {
 	root := recordedScopeRoot(t)
 	diags := RunConformance(root, NewHarness(t).KitRoot, registry.Dev, releaseEvidenceProbeCheck)
@@ -936,8 +940,8 @@ func TestScopeOutsideTierIsRedAndRunsNothing(t *testing.T) {
 }
 
 // recordedScopeRoot is a graded root whose timing file already holds a completed run's
-// lines. Against a pristine root a red posture cannot be told from one that left the
-// last run's record standing; against this one, only an emptied file passes.
+// lines. Against a pristine root, a red posture cannot be told from one that left the
+// last run's record standing. Against this one, only an emptied file passes.
 func recordedScopeRoot(t *testing.T) string {
 	t.Helper()
 	root := gitInitedRoot(t)
@@ -948,7 +952,7 @@ func recordedScopeRoot(t *testing.T) string {
 	return root
 }
 
-// gitInitedRoot is a graded root a timing file can live in: the file sits under the
+// gitInitedRoot is a graded root where a timing file can live. The file sits under the
 // root's own git dir, so a bare temp dir gives it nowhere to go.
 func gitInitedRoot(t *testing.T) string {
 	t.Helper()

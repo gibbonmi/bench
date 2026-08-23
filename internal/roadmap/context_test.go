@@ -315,11 +315,11 @@ func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
 	}
 }
 
-// TestContextCommandSourcesListsRoadmapDirectory covers PR11 (stories 13, 26): the
+// TestContextCommandSourcesListsRoadmapDirectory pins PR11 (stories 13 and 26): the
 // sources block gains a roadmap/ row reporting the split directory's state and byte
-// total, and the context row still reads schema 4. A directory that is not there and one
-// that holds nothing are authoritative answers, not degraded reads, so each is pinned
-// beside the parsed row rather than left to the one healthy state.
+// total. The context row still reads schema 4. A directory that is not there and one that
+// holds nothing are authoritative answers, not degraded reads. Each is therefore pinned
+// beside the parsed row, rather than left to the one healthy state.
 func TestContextCommandSourcesListsRoadmapDirectory(t *testing.T) {
 	const heading, body = "**FT1 — first.**", "row detail\n"
 	for _, tc := range []struct {
@@ -373,11 +373,11 @@ func TestContextCommandSourcesListsRoadmapDirectory(t *testing.T) {
 	}
 }
 
-// TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed covers PR12
-// (story 14): a missing detail owner renders as a parse_failures row sourced at the
-// offending row file, ROADMAP.md's own sources row flips to malformed, and the
-// context row's sequence_trusted goes false — a general predicate over any
-// diagnostic, not only this fault class.
+// TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed pins PR12 (story
+// 14): a missing detail owner renders as a parse_failures row sourced at the offending
+// row file. ROADMAP.md's own sources row flips to malformed. The context row's
+// sequence_trusted goes false. This is a general predicate over any diagnostic, not only
+// this fault class.
 func TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed(t *testing.T) {
 	root := newRepo(t)
 	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT7 (LOW) — x.**\n"), 0o644); err != nil {
@@ -425,8 +425,8 @@ func TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed(t *testi
 	}
 }
 
-// TestContextCommandRowSelectorRendersRowFileBody covers PR13 (story 15): --row
-// returns the requested row's body straight from its row file, with body_bytes.
+// TestContextCommandRowSelectorRendersRowFileBody pins PR13 (story 15): --row returns the
+// requested row's body straight from its row file, with body_bytes.
 func TestContextCommandRowSelectorRendersRowFileBody(t *testing.T) {
 	root := newRepo(t)
 	writeBoard(t, root, Row{"**FT7 (LOW) — x.**", "row detail\n"})
@@ -448,10 +448,10 @@ func TestContextCommandRowSelectorRendersRowFileBody(t *testing.T) {
 	}
 }
 
-// TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence covers PR27
-// (story 44, the render side): a row file the classifier reports wrong-type — a
-// directory sitting where the row file belongs — renders a parse_failures row naming
-// it and drops sequence_trusted.
+// TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence pins PR27 (story
+// 44, the render side): a row file the classifier reports wrong-type. That is a directory
+// sitting where the row file belongs. It renders a parse_failures row naming it and drops
+// sequence_trusted.
 func TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence(t *testing.T) {
 	root := newRepo(t)
 	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT7 (LOW) — x.**\n"), 0o644); err != nil {
@@ -488,12 +488,13 @@ func TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence(t *test
 	}
 }
 
-// TestContextCommandUnrecognizedFileColonInPathRendersFullSource covers the
-// repair-typed-diagnostic ticket: an unrecognized-file basename that legally
-// contains ": " (nothing in the roadmap/ listing grammar forbids it) must render its
-// whole path as parse_failures.source. The old strings.Cut(d, ": ")-on-the-formatted-
-// string approach cut at the basename's own ": " and reported a truncated,
-// nonexistent path instead.
+// TestContextCommandUnrecognizedFileColonInPathRendersFullSource pins the
+// repair-typed-diagnostic ticket: an unrecognized-file basename that legally contains ":
+// ". Nothing in the roadmap/ listing grammar forbids that basename. This basename must
+// render its whole path as parse_failures.source.
+//
+// The old strings.Cut(d, ": ")-on-the-formatted-string approach cut at the basename's own
+// ": " and reported a truncated, nonexistent path instead.
 func TestContextCommandUnrecognizedFileColonInPathRendersFullSource(t *testing.T) {
 	root := newRepo(t)
 	writeBoard(t, root, Row{Heading: "**FT7 (LOW) — x.**", Body: ""})
@@ -623,9 +624,9 @@ func TestOccurrenceIncidentGrammar(t *testing.T) {
 
 func TestOccurrenceLedgerMalformedAndLineEndings(t *testing.T) {
 	const heading = "**FT1 — one.**"
-	// The row file's first line is the index line byte-for-byte, so a CRLF row file
-	// under an LF index really has drifted: the ledger still parses across the line
-	// endings, and the stray carriage return is a heading mismatch rather than nothing.
+	// The row file's first line is the index line byte-for-byte. A CRLF row file under an LF
+	// index has therefore really drifted. The ledger still parses across the line endings.
+	// The stray carriage return is a heading mismatch, not nothing.
 	valid, failures, diagnostics := ParseDocument(splitTree(heading+"\n", map[string]string{"FT1.md": heading + "\r\nNext: spec\r\nOccurrences: alpha-1, beta-2"}), nil, false)
 	wantDiagnostics := []string{"roadmap/FT1.md: heading does not match ROADMAP.md row FT1"}
 	if len(failures) != 0 || valid.Rows[0].OccurrenceCount != 2 {
@@ -939,10 +940,10 @@ func TestBuildContextRequiresUsableCaptureSourcesForOccurrenceTrust(t *testing.T
 	}
 }
 
-// TestContextCommandRendersLostDatedLearningLineAsParseFailure covers DL13: a dated
-// bullet in capture/learnings.md reaches the drain's inventory as its own
-// parse_failures row sourced at the journal, so the block the drain reads as complete
-// stops omitting the entry.
+// TestContextCommandRendersLostDatedLearningLineAsParseFailure pins DL13: a dated bullet
+// in capture/learnings.md reaches the drain's inventory as its own parse_failures row
+// sourced at the journal. The block the drain reads as complete therefore stops omitting
+// the entry.
 func TestContextCommandRendersLostDatedLearningLineAsParseFailure(t *testing.T) {
 	root := newRepo(t)
 	journal := learnings.JournalSchemaHeading + "\n\n- 2026-08-21 — spec anchor drift\n"

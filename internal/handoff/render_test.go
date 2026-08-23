@@ -28,7 +28,7 @@ func TestRenderPathAbbreviates(t *testing.T) {
 }
 
 // TestRenderPathOutsideHome pins the other side of the boundary. A prefix match on the
-// raw string would turn /home/abc into ~bc, a path that resolves nowhere.
+// raw string would turn /home/abc into ~bc: a path that resolves nowhere.
 func TestRenderPathOutsideHome(t *testing.T) {
 	cases := []struct{ root, home, want string }{
 		{"/home/abc", "/home/a", "/home/abc"},

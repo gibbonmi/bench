@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "The entry names the stage that missed,\n   what review caught, why it was missed, and the proposed rule change.",
+    "new": "The entry names whatever the author thinks is relevant."
+  }
+]

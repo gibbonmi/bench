@@ -21,9 +21,9 @@ func TestParseHistoryLogEmpty(t *testing.T) {
 }
 
 // TestMergeHistoryDedupes pins story 3: a commit present in both the retire list and
-// the delete list (the common case — a `bench spec retire` commit both deletes the
-// file and carries the message) appears exactly once, keeping the retire-list's kind
-// because retire is passed first.
+// the delete list appears exactly once. The common case is a `bench spec retire`
+// commit that both deletes the file and carries the message. The merge keeps the
+// retire-list's kind because retire is passed first.
 func TestMergeHistoryDedupes(t *testing.T) {
 	retire := []historyEntry{
 		{full: "shared111", short: "shared1", iso: "2026-07-01T10:00:00-04:00", kind: "retire", subject: "spec-retire: foo"},
@@ -40,9 +40,9 @@ func TestMergeHistoryDedupes(t *testing.T) {
 	}
 }
 
-// TestMergeHistoryDeleteOnlyKeepsDeleteKind pins story 3's edge: a delete-only commit
-// (the file was removed without a `spec-retire:` message) is tagged delete, not
-// retire — a degenerate always-retire implementation would mislabel it.
+// TestMergeHistoryDeleteOnlyKeepsDeleteKind pins story 3's edge. A delete-only commit —
+// the file was removed without a `spec-retire:` message — is tagged delete, not retire.
+// A degenerate always-retire implementation would mislabel it.
 func TestMergeHistoryDeleteOnlyKeepsDeleteKind(t *testing.T) {
 	del := []historyEntry{
 		{full: "deleteonly", short: "delonly", iso: "2026-05-01T00:00:00Z", kind: "delete", subject: "drop old spec"},
@@ -54,8 +54,8 @@ func TestMergeHistoryDeleteOnlyKeepsDeleteKind(t *testing.T) {
 }
 
 // TestMergeHistorySortsNewestFirst pins the newest-first ordering across a merge of
-// both lists, using the full ISO-8601 timestamp (not just the date) so same-day
-// commits still order correctly.
+// both lists. The sort uses the full ISO-8601 timestamp, not just the date, so
+// same-day commits still order correctly.
 func TestMergeHistorySortsNewestFirst(t *testing.T) {
 	retire := []historyEntry{
 		{full: "old", short: "old", iso: "2026-01-01T00:00:00Z", kind: "retire", subject: "old retire"},
@@ -77,8 +77,8 @@ func TestMergeHistorySortsNewestFirst(t *testing.T) {
 }
 
 // TestRetireTokenMatches pins the exact retire-token cut layered over the coarse
-// --grep contains filter: the token must extend to the end of the subject, so a slug
-// that is a string prefix of another slug (`dash` vs `dashboard`) never claims the
+// --grep contains filter. The token must extend to the end of the subject. A slug
+// that is a string prefix of another slug — `dash` vs `dashboard` — never claims the
 // longer slug's retirement commit, and a spaced slug still terminates soundly.
 func TestRetireTokenMatches(t *testing.T) {
 	cases := []struct {

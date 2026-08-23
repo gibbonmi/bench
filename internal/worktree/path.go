@@ -68,7 +68,7 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 	var selected *intent.Assignment
 	for i := range assignments {
 		// The id is the address `bench worktree list` advertises in its executable help
-		// rows, and it is the only unique one: labels can collide, and the ambiguity
+		// rows, and it is the only unique one. Labels can collide, and the ambiguity
 		// guard below is what answers when they do.
 		matches := assignments[i].Label == target || assignments[i].ID == target
 		if isPath {
@@ -91,8 +91,8 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 
 // expandHomeTarget resolves the portable `~`-prefixed form that every worktree command
 // prints, and owns that grammar for all of them. The second result reports whether the
-// target used the home form at all, so a caller can leave an ordinary path untouched;
-// `~user` stays unsupported because the address this expands is one Bench itself
+// target used the home form at all, so a caller can leave an ordinary path untouched.
+// `~user` stays unsupported, because the address this expands is one Bench itself
 // printed, and Bench never prints another account's home.
 func expandHomeTarget(target string) (string, bool, error) {
 	if target != "~" && !strings.HasPrefix(target, "~/") {

@@ -155,7 +155,7 @@ func TestResolveConvention(t *testing.T) {
 	dir := t.TempDir()
 	slugPath := writeSpec(t, dir, "mine", "Status: staged\n")
 
-	// bare slug resolves to <base>/specs/<slug>/spec.md
+	// a bare slug resolves to <base>/specs/<slug>/spec.md
 	_, resolved, _, ok, err := Resolve(dir, "mine")
 	if err != nil || !ok {
 		t.Fatalf("bare slug: ok=%v err=%v", ok, err)

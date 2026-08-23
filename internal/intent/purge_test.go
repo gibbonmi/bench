@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-// writeLedgerBody puts body at the ledger address verbatim, which is how a record no
-// current writer would produce — one an older binary wrote — reaches the purge.
+// writeLedgerBody puts body at the ledger address verbatim. This is how a record no
+// current writer would produce, such as one an older binary wrote, reaches the purge.
 func writeLedgerBody(t *testing.T, root, body string) string {
 	t.Helper()
 	path, err := Address(root)
@@ -23,8 +23,8 @@ func writeLedgerBody(t *testing.T, root, body string) string {
 func keepAll(Assignment) bool { return true }
 
 // TestPurgeAssignmentsDropsRecordsReadRefuses holds the purge to the one thing Read
-// cannot do: a record this build's strict decoder rejects makes the whole ledger
-// unreadable, so the reconcile that clears it has to see past the rejection rather than
+// cannot do. A record this build's strict decoder rejects makes the whole ledger
+// unreadable. The reconcile that clears it has to see past the rejection rather than
 // inherit it. Everything the decoder does accept is left for the caller's predicate.
 func TestPurgeAssignmentsDropsRecordsReadRefuses(t *testing.T) {
 	root := newRepo(t)
@@ -65,7 +65,7 @@ func TestPurgeAssignmentsDropsRecordsReadRefuses(t *testing.T) {
 }
 
 // TestPurgeAssignmentsDropsEveryLegacySchemaRecord pins the schema rule the strict reader
-// already states: the legacy schema authorizes no lifecycle record at all, so the purge
+// already states: the legacy schema authorizes no lifecycle record at all. The purge
 // drops them without asking the caller's predicate, which would otherwise keep a record
 // the reader refuses to admit.
 func TestPurgeAssignmentsDropsEveryLegacySchemaRecord(t *testing.T) {
@@ -88,8 +88,8 @@ func TestPurgeAssignmentsDropsEveryLegacySchemaRecord(t *testing.T) {
 }
 
 // TestPurgeAssignmentsIsANoOpWithoutALedger keeps the reconcile silent in a repository
-// that has never written one: it runs at every session start, and creating a ledger there
-// would manufacture the state it exists to clean up.
+// that has never written one. It runs at every session start, and creating a ledger
+// there would manufacture the state it exists to clean up.
 func TestPurgeAssignmentsIsANoOpWithoutALedger(t *testing.T) {
 	root := newRepo(t)
 	dropped, err := PurgeAssignments(root, keepAll)

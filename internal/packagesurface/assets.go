@@ -32,9 +32,9 @@ var RequiredPackAssets = []string{
 }
 
 // ForbiddenPackAssets are paths the npm tarball must never carry: build/dev-only
-// files and the kit's own working docs (adoption generates a consumer's AGENTS.md,
+// files and the kit's own working docs. Adoption generates a consumer's AGENTS.md,
 // CLAUDE.md, and HANDOFF equivalents from constants, so shipping the kit's copies
-// would export a stale handoff and a duplicate agreement). Both the surface contract
+// would export a stale handoff and a duplicate agreement. Both the surface contract
 // test and the conformance package check iterate this one list.
 var ForbiddenPackAssets = []string{
 	"projects/benchkit.md",
@@ -48,11 +48,11 @@ var ForbiddenPackAssets = []string{
 
 // RequiredBuildPackAssets derives the Go build inputs that an npm git install's
 // prepare script needs. Source directories are packaged recursively, so a split
-// package automatically joins this expectation without a second file registry;
-// root-level non-test sources (the module root can carry its own package
-// alongside cmd/ and internal/) and every source's //go:embed targets are
-// derived the same way, so a new root package or a new embed joins the
-// expectation without a second registry.
+// package automatically joins this expectation without a second file registry.
+// Root-level non-test sources (the module root can carry its own package alongside
+// cmd/ and internal/) and every source's //go:embed targets are derived the same way,
+// so a new root package or a new embed joins the expectation without a second
+// registry.
 func RequiredBuildPackAssets(root string) ([]string, error) {
 	assets := []string{
 		"go.mod",

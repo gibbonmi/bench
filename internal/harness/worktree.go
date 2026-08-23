@@ -1,6 +1,6 @@
 // Package harness owns deterministic adapters from harness event envelopes to
 // Bench's harness-neutral lifecycle. It parses events and derives opaque request
-// IDs; ownership, assignment, locking, recovery, and cleanup remain in worktree.
+// IDs. Ownership, assignment, locking, recovery, and cleanup remain in worktree.
 package harness
 
 import (
@@ -28,8 +28,8 @@ type claudeRemoveEvent struct {
 }
 
 // WorktreeCommand implements the plumbing-only `bench worktree-hook create|remove`
-// surface. The shell hook passes stdin through unchanged; all event validation and
-// request derivation happen here before the shared lifecycle is called.
+// surface. The shell hook passes stdin through unchanged. All event validation and
+// request derivation happen here, before the shared lifecycle is called.
 func WorktreeCommand(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) != 1 || (args[0] != "create" && args[0] != "remove") {
 		fmt.Fprintln(stderr, "usage: bench worktree-hook create|remove")

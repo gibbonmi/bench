@@ -7,10 +7,10 @@ Status: ready
 A worktree cut by a session that later dies must stop being immortal. Today
 nothing retires it: `bench worktree release` matches only the exact plaintext
 request string that created the assignment, the ledger stores a one-way digest
-of that string, and the harness hook derives it from the session id — so once
+of that string, and the harness hook derives it from the session id. So once
 the creating session is gone its worktrees are structurally unreleasable. The
-pool accreted from 2026-07-09 to 2026-07-27, every entry was re-preserved at
-every resume sweep, and draining it by hand took a staged script and a full
+pool accreted from 2026-07-09 to 2026-07-27, and every entry was re-preserved
+at every resume sweep. Draining it by hand took a staged script and a full
 session.
 
 ## Provenance
@@ -33,9 +33,9 @@ type; its decision-specific provenance is:
 - **#7:** Closed by reviewer, 2026-07-27 (roadmap row) for content; its seam
   was decided by the author.
 
-A mid-tier falsification pass on the first draft found that the original #2
-(a lease conjunct) was unimplementable, that #5 carried a sign-off the roadmap
-row does not give, and that several assertables were unobservable. Those
+A mid-tier falsification pass on the first draft found three faults. The
+original #2 (a lease conjunct) was unimplementable, #5 carried a sign-off the
+roadmap row does not give, and several assertables were unobservable. Those
 findings were verified against the tree and are folded in below.
 
 ## #1: Which command retires an orphan?
@@ -49,7 +49,7 @@ session's assignment, or route orphans to `bench worktree clean`?
 
 ### Answer
 `bench worktree clean`. A request-derivation override is rejected: the request
-digest *is* the ownership proof, and deriving it on demand voids the ownership
+digest *is* the ownership proof. Deriving it on demand voids the ownership
 model the whole lifecycle rests on.
 
 Verified in code: `bench worktree clean` runs `PlanExplicit`
@@ -59,9 +59,9 @@ no change to the cleanup path itself.
 
 Two caveats the first draft overstated. It is a **two-step** command: the bare
 form prints a plan and a fingerprint, and removal needs
-`--apply <fingerprint>`. And an orphan carrying ignored build output — the
+`--apply <fingerprint>`. An orphan carrying ignored build output — the
 normal state of a worktree a shift ran in — retains under `ignored` and needs
-`--discard-ignored`, whose request-less form the kit's own comment says orphans
+`--discard-ignored`. Its request-less form the kit's own comment says orphans
 the assignment (`internal/worktree/ownership.go`, FT93b). So the route out
 exists but is not one paste, and the surfaced command must not steer anyone
 into the `--discard-ignored` trap.
@@ -87,7 +87,7 @@ was what made the verdict safe. That is false, on two independent grounds found
 by the falsification pass and verified:
 
 - `ProbeLease` returns `LeaseUnknown` for an **absent** lease, the same verdict
-  it returns for an unreadable or malformed one, so a predicate taking only a
+  it returns for an unreadable or malformed one. A predicate taking only a
   three-valued `LeaseState` cannot separate "no liveness claim" from "cannot
   tell". `listLease` already works around this by stat-ing outside `ProbeLease`
   and returning a fourth value.
@@ -103,10 +103,10 @@ There is therefore no liveness signal available for request-created assignments
 and no cheap one to add. A heartbeat that a still-using session touches was
 considered and rejected as materially larger than the signed-off shape.
 
-Safety consequently rests on three things, none of them liveness: the window is
-long (7 days, not 24 hours, chosen because it now carries all the weight); the
-sweep only ever **reports** (#4); and the explicit cleanup an operator then runs
-recovers dirty work into a recovery ref before removing anything.
+Safety consequently rests on three things, none of them liveness. The window is
+long (7 days, not 24 hours), chosen because it now carries all the weight.
+The sweep only ever **reports** (#4). The explicit cleanup an operator then
+runs recovers dirty work into a recovery ref before removing anything.
 
 ## #3: How does an unstamped record age?
 
@@ -122,7 +122,7 @@ stamp on first read?
 Absent = aged. A record with no `created_at` was written before the field
 existed, so it is by construction older than any window this repo can set.
 Fail-closed would leave today's residue immortal — the exact failure this row
-exists to end — and backfilling silently mutates the ledger while delaying the
+exists to end. Backfilling silently mutates the ledger, while delaying the
 drain by a full window.
 
 ## #4: Does the resume sweep clean orphans, or only report them?
@@ -134,11 +134,11 @@ Type: Grill
 Auto-remove on the sweep, or surface a command?
 
 ### Answer
-Report only. The sweep runs unattended at every session start; auto-removing a
-tree that may hold uncommitted work is not a verdict a sweep gets to make alone.
-With the lease conjunct gone (#2) this is no longer a preference — it is the
-only thing standing between a long-lived legitimate worktree and a destructive
-command running against it unattended.
+Report only. The sweep runs unattended at every session start. Auto-removing a
+tree that may hold uncommitted work is not a verdict a sweep gets to make
+alone. With the lease conjunct gone (#2) this is no longer a preference. It is the
+only thing standing between a long-lived legitimate worktree and a
+destructive command running against it unattended.
 
 The sweep reports; the operator runs the explicit two-step cleanup.
 
@@ -164,7 +164,7 @@ not a closed decision. The signed-off (a)/(b)/(c) split does not contain it. It
 is the only state-destroying behavior in the build and it carries no sign-off,
 so the spec flags it.
 
-The 16 `recovered` rows are not this spec's to drain: their recovery refs are
+The 16 `recovered` rows are not this spec's to drain. Their recovery refs are
 retained because FT98's landed proof misses reshaped commits, so payloads main
 actually shipped still read as unlanded. That half rides FT98.
 
@@ -207,11 +207,11 @@ The observable red command is a scoped conformance run:
       go test ./internal/conformance -run TestRootConformance
 
 The first draft named `TestDocsWorkflowContracts`, which exists nowhere in the
-repository; `go test -run` with no match exits 0, so a builder following that
+repository. `go test -run` with no match exits 0, so a builder following that
 row would have seen green and concluded the row was satisfied.
 
 The reverse sweep `checkColdPickupCLILists` already forces `.bench/BENCH.md` or
-`BENCH-reference.md` to name every top-level `bench <cmd>` route, but it matches
+`BENCH-reference.md` to name every top-level `bench <cmd>` route. It matches
 top-level commands only, so `worktree release` / `clean` / `recovery` are
 unenforced today.
 

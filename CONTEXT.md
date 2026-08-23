@@ -15,10 +15,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   `bench canary` validates. It proves the inventory shape and one accepted binding
   per fixture, not owner execution or a planted red. Not “canary dispatch”, not
   “the sweep”.
-- **planted-reason proof** — a direct mutation test materializes one fixture,
-  invokes its exact owner, requires the fixture's `EXPECT` diagnostic, restores
-  the subject, and requires that diagnostic to disappear. Not inventory
-  validation, not an empty-tree collision screen.
+- **planted-reason proof** — a direct mutation test materializes one fixture
+  and invokes its exact owner. It requires the fixture's `EXPECT` diagnostic,
+  restores the subject, and requires that diagnostic to disappear. Not
+  inventory validation, not an empty-tree collision screen.
 - **linked repo** — a project that receives Bench's linked payload and local
   launcher, but not the kit's source-only ordinary test packages. Not “consumer
   repo”, not “the kit”.
@@ -39,9 +39,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   `commondir`, `locked`, …), read by `git worktree` subcommands. Git-owned state
   that Bench never writes. Not "metadata file", not "worktree config" — admin
   entry.
-- **landed assignment** — an assignment worktree whose ledger state is `active`,
-  whose branch has landed on the default branch, and whose lease is not live:
-  nobody released it. This is a derived classification, never a ledger state;
+- **landed assignment** — an assignment worktree whose ledger state is `active`
+  and whose branch has landed on the default branch. Its lease is not live:
+  nobody released it. Bench derives this classification; it is never a ledger state.
   `bench worktree clean --landed` retires it. Not "orphan" (that names age
   alone), not "stale", "idle", "abandoned", or "unreleased" (true of every
   active row) — landed.
@@ -64,14 +64,14 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   template" in prose — command.
 - **roadmap** — the working prioritization document, split between `ROADMAP.md`
   (repo root) and `roadmap/`: assessed open work in priority order, ending in a
-  `## Recommended sequence` that names the next actions. `ROADMAP.md` is the index
-  — one physical heading line per row, no bodies — and `roadmap/FT<n>.md` owns that
-  row's body, its `Occurrence:` ledger, and its `Sources:` line. `bench roadmap`
-  prints it. A row leaves — index line and detail file together — when the
+  `## Recommended sequence` that names the next actions. `ROADMAP.md` is the
+  index — one physical heading line per row, no bodies. `roadmap/FT<n>.md`
+  owns that row's body, its `Occurrence:` ledger, and its `Sources:` line.
+  `bench roadmap` prints it. A row leaves — index line and detail file together — when the
   work ships or a reconcile removes it. Not "icebox", not "backlog" — roadmap.
 - **roadmap index / roadmap detail** — schema-4 projections of the **roadmap** and
   its capture evidence. The index inventories every row and capture unit with
-  true body sizes but no bodies; detail is a complete body, read for a named row
+  true body sizes but no bodies. Detail is a complete body, read for a named row
   from its `roadmap/FT<n>.md` owner or from the capture paths the index names.
   Detail is not a truncated preview.
 - **ideas inbox** — the capture-and-forget sink at `capture/IDEAS.md` (repo root):
@@ -90,10 +90,11 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   a decision map, linked to other decision tickets by `Blocked by`. Distinct
   from an **implementation ticket**, the independently-green build unit under
   `specs/<slug>/tickets/`.
-- **coverage row** — one row of a spec's acceptance coverage map, tying one
-  story to one observable behavior at a seam: story, behavior, seam, why it
-  catches the failure, behind an optional leading row ID. Not "acceptance
-  criterion", not "test case", not "requirement" — coverage row.
+- **coverage row** — one row of a spec's acceptance coverage map. It ties one
+  story to one observable behavior at a seam, behind an optional leading row
+  ID. It carries four parts: story, behavior, seam, why it catches the
+  failure. Not "acceptance criterion", not "test case", not "requirement" —
+  coverage row.
 - **acceptance row** — the **coverage row** an implementation ticket claims as
   its own acceptance. Not "the ticket's checklist", not "definition of done" —
   acceptance row.
@@ -108,7 +109,7 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   of what needs attention. The feature that renders it is the *ambient-feedback surface*;
   the printed thing is the ambient dashboard. Not "status report", not "summary".
 - **the dashboard page** — the standalone HTML artifact `bench dashboard` renders, distinct
-  from the **ambient dashboard** (`bench status`): the page is the shareable rendered view,
+  from the **ambient dashboard** (`bench status`). The page is the shareable rendered view;
   the ambient dashboard is the terminal print. Not "the dashboard" unqualified — that name
   ambiguously means both.
 - **signal** — one ranked line on the **ambient dashboard** (setup, gate, git, worktree, intent, guards,
@@ -117,32 +118,33 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **severity ladder** — the fixed rank order that decides which **signal** leads the
   dashboard and which drop under the five-row budget. Not "priority queue".
 - **gate cache** — the durable ready or pending verdict that gate execution binds to
-  the closed oracle subject in the Git dir, so read-only consumers can project gate
+  the closed oracle subject in the Git dir. Read-only consumers can then project gate
   state without a cold run. Not "gate log".
 - **landing source** — a build-owned Git integration branch identified by its
   frozen base and current source tip. Serial green tickets accumulate there;
   semantic review binds to that pair and `bench worktree land` consumes it. Not
   a mutable review base, not a reconstructed path list.
 - **landing destination** — the expected tip of the branch that receives a
-  landing source. Moving it requires a new composition and gate verdict, not a
-  new source review by itself. Not the source's frozen base.
+  landing source. To move it, compose the tree again and get a new gate verdict; a
+  new source review alone is not enough. Not the source's frozen base.
 - **prospective landing tree** — the exact Git tree produced by composing a
   landing source onto an expected landing destination, including any authorized
   final transition. It is the whole-project gate subject. Not the source diff,
   not the ambient working tree.
 - **frontier round** — one numbered round of `craft-grill`: every question whose
-  prerequisites are already settled, asked together with a recommendation, before
-  the skill waits and recomputes the next round. Not "one question at a time".
-- **disposition** — the exactly-one next-action label a review finding carries:
-  `no-op` (the concern is refuted, no repair target remains), `auto-fix` (a
-  deterministic rule or exact spec predicate, repairable in already-approved
-  scope), or `ask-user` (needs judgment, scope, authority, or an oracle change).
-  It is a repair-routing label, not permission for the read-only review phase to edit.
+  prerequisites are already settled, asked together with a recommendation. The
+  skill then waits and recomputes the next round. Not "one question at a time".
+- **disposition** — the exactly-one next-action label a review finding carries.
+  `no-op` means the concern is refuted and no repair target remains. `auto-fix`
+  means a deterministic rule or exact spec predicate, repairable in
+  already-approved scope. `ask-user` means it needs judgment, scope, authority,
+  or an oracle change. It is a repair-routing label, not permission for the
+  read-only review phase to edit.
 - **prose budget** — the per-surface line-count ceiling in `projects/benchkit.md`'s
   one mechanically parseable budget table, enforced by a fail-closed conformance
   check. Not "line limit" in prose — prose budget.
 - **green marker** — the ref `refs/bench/green/<branch>` the gate advances to the tip
-  it graded green, read through one marker module that peels, classifies a dangling
+  it graded green. One marker module reads it: it peels, classifies a dangling
   ref, and answers whether the marker authorizes a tip. Not "green ref", not "the
   marker" unqualified — green marker.
 - **record class** — one registered shape of a gate verdict record: its name, exact
@@ -150,12 +152,22 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   kind", not "field set" — record class.
 - **eligibility verdict** — the one decided answer to "is this worktree Bench-owned and
   safe to remove", carrying its evidence, with refusal precedence declared as ordered
-  data; automatic cleanup is a stricter reading of it. Not "cleanup plan" (that is the
+  data. Automatic cleanup is a stricter reading of it. Not "cleanup plan" (that is the
   explicit plan/apply fingerprint), not "classification" — eligibility verdict.
 - **objective projection** — a per-surface rendering of a shift objective (banner,
   prompt, scratch, predicate argument, durable commit subject) issued by the objective
-  module; no surface receives the unprojected text. Not "the objective string" —
+  module. No surface receives the unprojected text. Not "the objective string" —
   objective projection.
+- **prose mechanics check** — the `prose-mechanics` conformance check, which grades the
+  two ASD-STE100 rules a program can measure: sentence length and paragraph length. Not
+  "STE lint", not "prose lint", not "grammar check" — prose mechanics check.
+- **prose exclusion row** — one line of `.bench/prose-exclusions`: a path the prose
+  mechanics check does not grade, and a one-clause reason. The reviewer owns that file.
+  Not "allowlist", not "skip list" — prose exclusion row.
+- **always-loaded core** — `.bench/BENCH.md`, which holds the six rule families every
+  session loads; the mechanics live in `.bench/BENCH-reference.md`. Not "the guide"
+  unqualified, and not "progressive loading" (the split is progressive disclosure) —
+  always-loaded core.
 
 ## Avoid
 

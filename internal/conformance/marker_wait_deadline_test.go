@@ -10,20 +10,19 @@ import (
 )
 
 // markerWaitHelper is the two-leg marker wait every cross-package caller reaches through
-// its package qualifier; the helper's own package calls it unqualified against a fake
-// clock, where a literal is the subject under test rather than a wall-clock deadline.
+// its package qualifier. The helper's own package calls it unqualified against a fake
+// clock, where a numeric literal is the subject under test, not a wall-clock deadline.
 const markerWaitHelper = "WaitForTwoLegMarkers"
 
-// slowDeadlineArg is the position of the slow leg's deadline. That leg is the one that
-// has to outlast a window the test already contains, so it is the argument a numeric
-// literal makes a coin flip; the fast leg is a startup handshake bounded by nothing else.
+// slowDeadlineArg is the position of the slow leg's deadline argument. This leg must
+// outlast a window the test already contains, so a numeric literal there is a coin flip.
+// The fast leg is a startup handshake with no other bound.
 const slowDeadlineArg = 3
 
-// checkMarkerWaitDeadlines fails a cross-package marker wait whose slow deadline is spelled
-// as a numeric duration. A literal there silently ties the outer wait to a window it must
-// outlast — the exact regression that made an outer deadline equal to its inner one — and
-// inspecting the helper's own definition would never see it, because the defect lives at
-// the call site.
+// checkMarkerWaitDeadlines fails a cross-package marker wait whose slow deadline is a
+// numeric duration. A literal there ties the outer wait to a window it must outlast.
+// This is the past regression that set an outer deadline equal to its inner one.
+// The helper's own definition cannot show this defect. The defect lives at the call site.
 func checkMarkerWaitDeadlines(root string) []string {
 	var diags []string
 	for _, top := range []string{"cmd", "internal"} {

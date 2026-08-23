@@ -7,32 +7,38 @@ disable-model-invocation: true
 
 ## Entry orientation
 
-This is the periodic assessment phase. Run it on the reviewer's cadence or explicit
-ask — never fire it autonomously; it is a deliberately-invoked phase, not a workflow
-step and not a build. One run re-baselines the whole platform: it confirms the last
-assessment's backlog actually shipped, sweeps the codebase area by area, synthesizes
-the findings under adversarial re-verification, and produces one dated `ASSESSMENT.md`
-at the repo root for the reviewer to read.
+This is the periodic assessment phase. Run it on the reviewer's cadence or on an
+explicit ask; never fire it on your own. It is a deliberately-invoked phase, not a
+workflow step and not a build. One run re-baselines the whole platform. It
+confirms that the last assessment's backlog actually shipped and sweeps the
+codebase area by area. It synthesizes the findings under adversarial
+re-verification and produces one dated `ASSESSMENT.md` at the repo root for
+the reviewer to read.
 
 ## Exit handoff
 
-Close by reporting the new assessment's headline: how the prior backlog verified, the
-count of high/med/low findings, and the top of the ranked backlog. Route findings by
-kind — operational items (drain a learning, delete a salvage branch) go to
-`/bench-drain`; new backlog items enter `ROADMAP.md` only through that reviewed
-drain, so park them with `bench idea` (or into `capture/IDEAS.md`) rather than editing the
-roadmap here. Architecture-shaped findings — a shallow module, a leaky seam, friction
-the sweeps hit reading the code — additionally feed `/bench-deepen`, which scopes its
-deepening survey from this file's findings; recommend it when the run surfaced any. Recommend the next command in this harness's invocation form.
+Report the new assessment's headline: how the prior backlog verified, the count of
+high, medium, and low findings, and the top of the ranked backlog. Route findings by
+kind. An operational item — drain a learning, delete a salvage branch — goes to
+`/bench-drain`. A new backlog item enters `ROADMAP.md` only through that reviewed
+drain, so park it with `bench idea`, or into `capture/IDEAS.md`, rather than editing
+the roadmap here.
+
+An architecture-shaped finding — a shallow module, a leaky seam, friction the
+sweeps hit while reading the code — additionally feeds `/bench-deepen`. That
+phase scopes its deepening survey from this file's findings. Recommend it
+when the run surfaces one. Recommend the next command in this harness's
+invocation form.
 
 ## 1. Verify the previous assessment landed
 
-Before any new sweep, verify the previous assessment's backlog landed — story by
-story, against the current tree, not against commit messages. Each prior ranked item
-is FIXED, PARTIAL, or open, with a one-line evidence cite; prior high/med findings are
-confirmed closed or carried forward. This reconciled baseline is what the new file
-builds on, so a shipped item is never re-listed as a fresh finding. Treat a missing
-predecessor as a first run — there is nothing to reconcile.
+Before any new sweep, verify the previous assessment's backlog landed. Compare it
+story by story with the current tree, not with commit messages. Mark each
+prior ranked item FIXED, PARTIAL, or open, with a one-line evidence cite.
+Confirm each prior high or medium finding closed, or carry it forward. This reconciled
+baseline is what the new file builds on, so you never re-list a shipped item as a
+fresh finding. Treat a missing predecessor as a first run; there is nothing to
+reconcile.
 
 ## 2. Fan out the area sweeps (mid tier)
 
@@ -49,36 +55,36 @@ source and running live commands but writing nothing. The six areas:
 6. **Live operational state** — a real gate run, the roadmap, open learnings, parked
    ideas, stray branches.
 
-The tier→model binding stays reviewer-owned in `projects/<name>.md` per invariant 2;
-this command names the tier, not the model.
+The tier-to-model binding stays reviewer-owned in `projects/<name>.md` per
+invariant 2. This command names the tier, not the model.
 
 ## 3. Synthesize adversarially (top tier)
 
 Synthesize adversarially on the top tier. A delegate's finding is a claim, not a
-result: re-verify every load-bearing claim against source or live output before it
-enters the file, and mark the ones you re-verified with a ✓. A claim that survives
-only in a delegate's summary does not make the assessment; a claim you could not
-verify is recorded as an unknown in the verification notes, not asserted.
+result. Re-verify every load-bearing claim against source or live output before it
+enters the file, and mark each re-verified claim with a ✓. A claim that survives
+only in a delegate's summary does not make the assessment. Record a claim you could
+not verify as an unknown in the verification notes; do not assert it.
 
 ## 4. Write the assessment (the output contract)
 
-Produce one dated `ASSESSMENT.md` at the repo root that **replaces its predecessor** —
-git history is the archive, so overwrite the file rather than appending; do not keep a
-dated series or an archive folder. The file carries:
+Produce one dated `ASSESSMENT.md` at the repo root that **replaces its predecessor**.
+Git history is the archive, so overwrite the file rather than append to it. Do not keep
+a dated series or an archive folder. The file carries:
 
-- **A severity grammar**: **high** = an invariant or advertised guarantee is not
-  actually held; **med** = a real defect or reachable unowned state; **low** =
-  friction, drift risk, or hygiene.
+- **A severity grammar**: **high** means an invariant or advertised guarantee does
+  not actually hold; **med** means a real defect or a reachable unowned state;
+  **low** means friction, drift risk, or hygiene.
 - **Findings by area**, each cited to the source that proves it.
-- **A ranked improvement backlog**, ordered by platform leverage, each item sized in
-  rough agent-time.
-- **A verification-notes section** recording what was re-verified (✓) and the known
-  coverage limits — the unknowns the sweep could not execute or reproduce, named
-  honestly rather than hidden.
+- **A ranked improvement backlog**, ordered by platform leverage, each item sized
+  in rough agent-time.
+- **A verification-notes section** that records what you re-verified (✓) and the
+  known coverage limits. Name the unknowns the sweep could not execute or
+  reproduce honestly rather than hide them.
 
 ## 5. Re-confirm the parked, don't re-file it
 
-Items already tracked — a parked roadmap row, an accepted posture in an ADR, an
-upstream-blocked feature — are re-confirmed still-correct and cited, not re-filed as
-new findings. Re-filing tracked work churns the backlog and hides the real deltas; the
-value of each run is the change since the last one.
+Re-confirm an already tracked item — a parked roadmap row, an accepted posture in
+an ADR, an upstream-blocked feature — as still correct, and cite it. Do not
+re-file it as a new finding. A re-filed tracked item churns the backlog and
+hides the real deltas. The value of each run is the change since the last one.

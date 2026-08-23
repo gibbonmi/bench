@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
-# Bench harness adapter: maps the shift prompt (read from stdin) to OpenCode's noninteractive mode.
-# The line binds the model to the declared line — in a routed repo (.bench/lines.env
-# present) BENCH_MODEL must name a bound tier or `bench resolve-model` refuses (exit
-# 1) and this adapter refuses to launch; see .bench/lib/resolve-bench.sh and
-# BENCH-reference.md "Harness adapter for the shift loop". The adapter fails CLOSED
-# when the wrapper resolver or the core is unreachable — an unguarded passthrough in
-# a routed repo is silent de-enforcement. The loop pipes the prompt on stdin, but
-# `opencode run` documents only a positional prompt (as of 2026-07-20), so this adapter
-# reads stdin into a variable and passes it positionally with `--` to keep a dash-leading
-# prompt out of flag parsing. That final-hop argv exposure is the documented residual
-# limitation, to drop once opencode documents a stdin contract. An unbound opencode column
-# refuses at the core, so an unadopted harness fails closed instead of borrowing another
-# harness's column.
+# This is the Bench harness adapter for OpenCode. It maps the shift prompt, read
+# from stdin, to OpenCode's noninteractive mode.
+#
+# The line binds the model to the declared line. In a routed repo — .bench/lines.env
+# present — BENCH_MODEL must name a bound tier. Otherwise `bench resolve-model`
+# refuses with exit 1, and this adapter refuses to launch. See
+# .bench/lib/resolve-bench.sh and BENCH-reference.md, "Harness adapter for the shift
+# loop".
+#
+# The adapter fails closed when the wrapper resolver or the core is unreachable. An
+# unguarded passthrough in a routed repo is silent de-enforcement.
+#
+# The loop pipes the prompt on stdin for the other harnesses, but `opencode run`
+# documents only a positional prompt, as of 2026-07-20. This adapter therefore reads
+# stdin into a variable and passes it positionally with `--`, to keep a dash-leading
+# prompt out of flag parsing.
+#
+# That final-hop argv exposure is the documented residual limitation. It will drop
+# once opencode documents a stdin contract. An unbound opencode column refuses at the
+# core, so an unadopted harness fails closed instead of borrowing another harness's
+# column.
 _lib="$(dirname "$0")/../lib/resolve-bench.sh"
 [ -f "$_lib" ] || { echo "bench adapter: wrapper resolver missing at $_lib — refusing to run unguarded" >&2; exit 1; }
 # shellcheck source=../lib/resolve-bench.sh

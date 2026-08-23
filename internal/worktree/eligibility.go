@@ -7,20 +7,21 @@ import (
 )
 
 // This file owns the ordered eligibility decisions: the single answer to "is this worktree
-// ours and safe to remove, and if not, why", for every consumer that decides one.
-// PlanExplicitWithOptions in subshell.go gathers every Git and filesystem fact, builds one
-// explicitFacts value from what it gathered, and calls decideExplicit exactly once.
+// ours and safe to remove, and if not, why". Every consumer that decides eligibility uses
+// it. PlanExplicitWithOptions in subshell.go gathers every Git and filesystem fact, builds
+// one explicitFacts value from what it gathered, and calls decideExplicit exactly once.
 // PlanAutomatic in classifier.go layers its own stricter reading on top: it calls
-// PlanExplicit first, gathers the automatic-specific facts decideAutomatic needs, and
-// calls decideAutomatic exactly once. Nothing outside this
-// file orders or selects an eligibility action or reason before execution; subshell.go and
-// classifier.go only project the returned verdict onto the operator-facing CleanupPlan,
-// including any lookup (a recovery ref prediction) that needs I/O the decision itself must
-// not perform.
+// PlanExplicit first, gathers the automatic-specific facts decideAutomatic needs, and calls
+// decideAutomatic exactly once.
+//
+// Nothing outside this file orders or selects an eligibility action or reason before
+// execution. subshell.go and classifier.go only project the returned verdict onto the
+// operator-facing CleanupPlan. This includes any lookup (a recovery ref prediction) that
+// needs I/O the decision itself must not perform.
 
 // landednessKind names which of the four ways PlanExplicitWithOptions can know a branch's
-// relationship to the default ref: never resolvable (detached), resolvable but never asked
-// (no default), asked and refused by the query itself, or asked and answered.
+// relationship to the default ref. The branch may be never resolvable (detached), resolvable
+// but never asked (no default), asked and refused by the query itself, or asked and answered.
 type landednessKind int
 
 const (
@@ -30,8 +31,8 @@ const (
 	landednessProven
 )
 
-// landedness carries a branch's proven relationship to the default ref as typed fields;
-// every decision reads those. String renders the "true:ancestry" / "unknown:<err>" wire
+// landedness carries a branch's proven relationship to the default ref as typed fields.
+// Every decision reads those. String renders the "true:ancestry" / "unknown:<err>" wire
 // form, whose only consumer is the explicit fingerprint, which hashes it as evidence.
 type landedness struct {
 	kind      landednessKind
@@ -40,9 +41,9 @@ type landedness struct {
 	byContent bool
 }
 
-// provenLanded reports whether the query was actually asked and answered yes — the one
-// reading that authorizes acting on a landing, as opposed to detachment, an absent default
-// ref, a failed query, or a proven non-landing.
+// provenLanded reports whether the query was actually asked and answered yes. That is the
+// one reading that authorizes acting on a landing, rather than detachment, an absent
+// default ref, a failed query, or a proven non-landing.
 func (l landedness) provenLanded() bool {
 	return l.kind == landednessProven && l.landed
 }
@@ -75,7 +76,7 @@ func boolLabel(ok bool) string {
 
 // recoveryLookupKind names whether a recovery ref still needs a git query, and which query,
 // once the verdict has decided a ref is needed at all. Predicting a ref is not itself a
-// decision — nextRecoveryRef and predictedForeignRef stay in subshell.go, called exactly
+// decision. nextRecoveryRef and predictedForeignRef stay in subshell.go, called exactly
 // once, after the eligibility call, using whichever kind the verdict returns.
 type recoveryLookupKind int
 
@@ -88,9 +89,9 @@ const (
 // explicitFacts carries every typed fact PlanExplicitWithOptions gathers before it can
 // answer "ours and safe to remove". Each field is evidence, not a conclusion: the same
 // facts feed decideExplicit whether the eventual verdict retains, removes, recovers, or
-// discards, and a field left at its zero value was never gathered because an earlier fact
-// already made it inapplicable — the assignment ledger, for one, is read only when a
-// marker validated.
+// discards. A field left at its zero value was never gathered, because an earlier fact
+// already made it inapplicable. The assignment ledger, for one, is read only when a marker
+// validated.
 type explicitFacts struct {
 	registrationBranchRef  string
 	registrationLockReason string
@@ -131,9 +132,9 @@ type explicitFacts struct {
 }
 
 // explicitVerdict is the decided answer plus every piece of evidence PlanExplicitWithOptions
-// needs to project it onto CleanupPlan and, for a RecoverRemove or DiscardRemove verdict,
-// to finish resolving the recovery ref. Every field is the one-time output of a single
-// decideExplicit call; no consumer decides over it again.
+// needs to project it onto CleanupPlan. For a RecoverRemove or DiscardRemove verdict, it
+// also finishes resolving the recovery ref. Every field is the one-time output of a single
+// decideExplicit call. No consumer decides over it again.
 type explicitVerdict struct {
 	Action     CleanupAction
 	ReasonCode CleanupReason
@@ -153,12 +154,13 @@ type explicitVerdict struct {
 	Recovery       string
 }
 
-// decideExplicit is the single place the explicit ordered eligibility decision is made:
-// ownership and marker agreement, assignment join, lock agreement, lease liveness, nested
-// or embedded repository state, ignored-residue authorization, the recover/discard-remove
-// promotion, and the final unsafe-target override. The order and the last-write-wins
-// collisions between blocks are pinned by TestExplicitEligibilityOutcomeMatrix and must not
-// change here without that characterization moving first.
+// decideExplicit is the single place the explicit ordered eligibility decision is made.
+// That decision covers ownership and marker agreement, assignment join, lock agreement,
+// lease liveness, and nested or embedded repository state. It also covers ignored-residue
+// authorization, the recover/discard-remove promotion, and the final unsafe-target override.
+// The order and the last-write-wins collisions between blocks are pinned by
+// TestExplicitEligibilityOutcomeMatrix and must not change here without that
+// characterization moving first.
 func decideExplicit(f explicitFacts) explicitVerdict {
 	v := explicitVerdict{Action: ActionRemove, Tracked: f.initialTracked, Recovery: "none"}
 
@@ -270,13 +272,13 @@ func decideExplicit(f explicitFacts) explicitVerdict {
 }
 
 // automaticFacts carries PlanExplicit's own result plus every automatic-specific fact
-// PlanAutomatic gathers on top of it before decideAutomatic can answer "is this eligible for
-// unattended, automatic cleanup, and if not, why not". explicitErr and explicit are mutually
-// exclusive with the missingBranch* fields: the missingBranch* fields are gathered only when
-// PlanExplicit itself failed and PlanAutomatic salvages one narrow fact from that failure;
-// every other field is gathered only when PlanExplicit succeeded, mirroring PlanAutomatic's
-// own conditional evidence-gathering — a field left at its zero value simply was never
-// gathered because an earlier fact already made it inapplicable.
+// PlanAutomatic gathers on top of it. decideAutomatic uses these to answer "is this
+// eligible for unattended, automatic cleanup, and if not, why not". explicitErr and
+// explicit are mutually exclusive with the missingBranch* fields. The missingBranch* fields
+// are gathered only when PlanExplicit itself failed and PlanAutomatic salvages one narrow
+// fact from that failure. Every other field is gathered only when PlanExplicit succeeded,
+// mirroring PlanAutomatic's own conditional evidence-gathering. A field left at its zero
+// value simply was never gathered, because an earlier fact already made it inapplicable.
 type automaticFacts struct {
 	explicitErr error
 	explicit    CleanupPlan
@@ -291,7 +293,7 @@ type automaticFacts struct {
 }
 
 // automaticVerdict is the decided answer for the automatic, unattended cleanup path. Action,
-// ReasonCode, and Reason are the decision itself; AssignmentID echoes the one piece of
+// ReasonCode, and Reason are the decision itself. AssignmentID echoes the one piece of
 // evidence PlanAutomatic projects onto CleanupPlan.Assignment that decideExplicit never sets
 // (subshell.go never assigns it). It stays empty on every branch that reaches its verdict
 // without a verified assignment to name, so the projection leaves CleanupPlan.Assignment
@@ -303,14 +305,14 @@ type automaticVerdict struct {
 	AssignmentID string
 }
 
-// decideAutomatic is the single place the automatic ordered eligibility decision is made:
-// the explicit-planning-error salvage (an active assignment whose branch cannot be
-// resolved), the live-lease override, retain-passthrough with a landed-reason swap, the
-// foreign/unowned refusal, the not-cleanup-pending reasons (with the orphaned-age override),
-// the recovery-metadata-match check, the unknown/unmerged landedness checks, and the final
-// preservation refusal. The order and every message are pinned by
-// TestAutomaticEligibilityOutcomeMatrix and must not change here without that
-// characterization moving first.
+// decideAutomatic is the single place the automatic ordered eligibility decision is made.
+// That decision covers the explicit-planning-error salvage (an active assignment whose
+// branch cannot be resolved), the live-lease override, and retain-passthrough with a
+// landed-reason swap. It also covers the foreign/unowned refusal, the not-cleanup-pending
+// reasons (with the orphaned-age override), the recovery-metadata-match check, the
+// unknown/unmerged landedness checks, and the final preservation refusal. The order and
+// every message are pinned by TestAutomaticEligibilityOutcomeMatrix and must not change
+// here without that characterization moving first.
 func decideAutomatic(f automaticFacts) automaticVerdict {
 	if f.explicitErr != nil {
 		if f.missingBranchAssignment != nil {
@@ -378,8 +380,8 @@ func decideAutomatic(f automaticFacts) automaticVerdict {
 // automaticPreservationVerdict is the one place automatic-flavored policy decides whether
 // a plan must be retained to avoid stranding uncommitted work, and what Action/ReasonCode
 // that refusal carries. decideAutomatic's own dirty-refusal branch and the landed-set's
-// retainForLandedPreservation (clean_landed.go) both call this — neither writes its own
-// ActionRetain/ReasonDirty literal — so the two routes can never derive "would removing
+// retainForLandedPreservation (clean_landed.go) both call this. Neither writes its own
+// ActionRetain/ReasonDirty literal, so the two routes can never derive "would removing
 // this strand uncommitted work" differently. Each caller still supplies its own
 // operator-facing message for its own command surface.
 func automaticPreservationVerdict(plan CleanupPlan, message string) (retain bool, action CleanupAction, reasonCode CleanupReason, reason string) {

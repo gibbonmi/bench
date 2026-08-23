@@ -9,9 +9,9 @@ import (
 	"testing"
 )
 
-// probeLogName is the spill target for full probe output, written beside the
-// gate cache in the graded root's git dir so the bounded diagnostic tail can
-// name where the untruncated output lives.
+// probeLogName is the spill target for full probe output. It sits beside the gate cache
+// in the graded root's git dir, so the bounded diagnostic tail can name where the
+// untruncated output lives.
 const probeLogName = "bench-conformance-probe.log"
 
 var (
@@ -19,11 +19,11 @@ var (
 	probeLogFresh = map[string]bool{}
 )
 
-// spillProbeOutput writes the full, unsanitized probe output to the graded
-// root's git-dir log and returns the path. A root with no resolvable git dir
-// (a bare fixture tree) skips the spill and the truncated diagnostic stays
-// the only surface. The first spill of a process truncates the previous
-// run's log; later spills append, so one run's failures share one file.
+// spillProbeOutput writes the full, unsanitized probe output to the graded root's git-dir
+// log and returns the path. A root with no resolvable git dir, such as a bare fixture
+// tree, skips the spill, and the truncated diagnostic stays the only surface. The first
+// spill of a process truncates the previous run's log. Later spills append, so one run's
+// failures share one file.
 func spillProbeOutput(root, label, output string) string {
 	if root == "" || output == "" {
 		return ""
@@ -205,9 +205,9 @@ func TestCoreSubprocessFailuresUseProbeFormatter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The npm pack probe is the one subprocess this file captures and has to frame. The
-	// Go steps run from gate phases, which stream the tool's own output instead, so they
-	// reach no formatter here and the total below stays exact.
+	// The npm pack probe is the one subprocess this file captures and must frame. The Go
+	// steps run from gate phases, which stream the tool's own output instead. They reach no
+	// formatter here, so the total below stays exact.
 	labels := map[string]int{
 		"npm pack --dry-run failed": 1,
 	}

@@ -5,6 +5,6 @@ description: Codex adapter for the /bench-debug phase, the bug path. Use wheneve
 
 # $bench-debug
 
-Read `.agents/commands/bench-debug.md` completely and follow it as the active
-Bench phase. The command file is canonical; do not substitute this adapter for the
+Read `.agents/commands/bench-debug.md` completely. Follow it as the active
+Bench phase. The command file is canonical. Do not substitute this adapter for the
 phase instructions.

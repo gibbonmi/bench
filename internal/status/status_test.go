@@ -819,9 +819,9 @@ func TestOrphanedPickupCount(t *testing.T) {
 	}
 }
 
-// ticketsOnlyRepo commits files into a repository parked on its default branch — the
-// branch the retirement row requires — so a residue fixture can be ranked against the
-// housekeeping rows it joins.
+// ticketsOnlyRepo commits files into a repository parked on its default branch, the
+// branch the retirement row requires. This lets a residue fixture be ranked against
+// the housekeeping rows it joins.
 func ticketsOnlyRepo(t *testing.T, files map[string]string) string {
 	t.Helper()
 	root := initRepo(t)
@@ -841,9 +841,9 @@ func ticketsOnlyRepo(t *testing.T, files map[string]string) string {
 	return root
 }
 
-// H05 — the residue row carries the count and the command that closes one, and ranks below
-// the two housekeeping rows it joins, so a count of residue never displaces a retirement or
-// an orphaned pickup inside the five-row budget.
+// H05: the residue row carries the count and the command that closes one. It ranks
+// below the two housekeeping rows it joins. A count of residue never displaces a
+// retirement or an orphaned pickup inside the five-row budget.
 func TestTicketsOnlyResidueRowCountsAndRanksBelowItsBand(t *testing.T) {
 	root := ticketsOnlyRepo(t, map[string]string{
 		"specs/landed-ticket/tickets/one.md": "ticket\n",
@@ -904,9 +904,10 @@ func TestRoadmapReconcileCounts(t *testing.T) {
 	}
 }
 
-// TestRoadmapReconcileCountsFromRowFile covers story 20 (PR17): the split board keeps a
-// row's spec path in roadmap/FT7.md's body, not ROADMAP.md's index line, so the reconcile
-// scan must classify a spec named only there — a scan of ROADMAP.md alone counts zero.
+// TestRoadmapReconcileCountsFromRowFile covers story 20 (PR17): the split board keeps
+// a row's spec path in roadmap/FT7.md's body, not ROADMAP.md's index line. So the
+// reconcile scan must classify a spec named only there. A scan of ROADMAP.md alone
+// counts zero.
 func TestRoadmapReconcileCountsFromRowFile(t *testing.T) {
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "specs", "merged"), 0o755); err != nil {
@@ -949,7 +950,7 @@ func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
 }
 
 // The reduced verdict class is retired. A legacy on-disk reduced record must read as an
-// invalid cache rather than as a green of any width, so the board reports it as invalid
+// invalid cache rather than as a green of any width. The board reports it as invalid,
 // instead of rendering a narrowness row for evidence nothing can validate.
 func TestLegacyReducedCacheReadsAsInvalid(t *testing.T) {
 	root := initRepo(t)
@@ -1053,8 +1054,9 @@ func TestPartialRowActionIsFresh(t *testing.T) {
 }
 
 // A red recorded against a tree the work tree has since left describes that run, not this
-// one. The board must send the reader back to the gate rather than headline a red for work
-// that is no longer in the tree — the drifted record is stale, whatever verdict it carries.
+// one. The board must send the reader back to the gate rather than headline a red for
+// work that is no longer in the tree. The drifted record is stale, whatever verdict it
+// carries.
 func TestDriftedRedVerdictRendersAsStaleRatherThanRed(t *testing.T) {
 	root := initRepo(t)
 	gated := treeOf(t, root, map[string]string{"f.txt": "x // red\n"})
@@ -1078,7 +1080,7 @@ func TestDriftedRedVerdictRendersAsStaleRatherThanRed(t *testing.T) {
 }
 
 // writeFullGateCache installs a ready full-class record naming cachedTree with the given
-// verdict, at the mode and field set the gate's loader requires of the full class.
+// verdict. It uses the mode and field set the gate's loader requires of the full class.
 func writeFullGateCache(t *testing.T, root, cachedTree, status string) {
 	t.Helper()
 	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
@@ -1091,9 +1093,9 @@ func writeFullGateCache(t *testing.T, root, cachedTree, status string) {
 }
 
 // writePartialGateCache installs a ready partial green naming cachedTree, skipping the
-// given components, at the mode and exact field set the gate's loader requires of the
-// partial class. Each skipped component carries ancestor-form evidence (an identity and
-// the time it was authored), the simpler of the two forms validatePartition accepts.
+// given components. It uses the mode and exact field set the gate's loader requires of
+// the partial class. Each skipped component carries ancestor-form evidence (an identity
+// and the time it was authored), the simpler of the two forms validatePartition accepts.
 func writePartialGateCache(t *testing.T, root, cachedTree string, skipped ...string) {
 	t.Helper()
 	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
@@ -1216,7 +1218,7 @@ func initRepo(t *testing.T) string {
 	gitRun(t, root, "config", "user.email", "t@example.com")
 	gitRun(t, root, "config", "user.name", "t")
 	// The capture surfaces moved under a directory the repository root no longer
-	// supplies for free, so a fixture root that omits it fails every write that used
+	// supplies for free. A fixture root that omits it fails every write that used
 	// to land beside ROADMAP.md.
 	if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
 		t.Fatal(err)
@@ -1371,9 +1373,9 @@ func TestAppendWorktreeRendersTypedAdminRefusal(t *testing.T) {
 	}
 }
 
-// Command rejects an unknown argument with a usage line and exit 2, prints usage on -h,
-// and accepts --all as the one added token — while --all plus junk and near-misses stay
-// usage errors so a typo never silently prints the default board.
+// Command rejects an unknown argument with a usage line and exit 2. It prints usage on
+// -h, and accepts --all as the one added token. --all plus junk and near-misses stay
+// usage errors, so a typo never silently prints the default board.
 func TestCommandArgs(t *testing.T) {
 	if r, c := Command([]string{"--bogus"}); c != 2 || !strings.Contains(r, "usage:") {
 		t.Errorf("unknown arg: report %q exit %d", r, c)
@@ -1549,8 +1551,8 @@ func assertLeadControlRoute(t *testing.T, relativePath, body, want string) {
 }
 
 // TestSignalsRendersDrainLearningsUnknownForALostDatedLine covers DL14: a journal
-// holding a dated bullet is a failed read, so the drain row names the journal as
-// unknown instead of the fabricated `0 open learning(s)` the decision source records.
+// holding a dated bullet is a failed read. The drain row names the journal as unknown,
+// instead of the fabricated `0 open learning(s)` the decision source records.
 func TestSignalsRendersDrainLearningsUnknownForALostDatedLine(t *testing.T) {
 	root := initRepo(t)
 	journal := learnings.JournalSchemaHeading + "\n\n- 2026-08-21 — spec anchor drift\n"

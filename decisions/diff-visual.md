@@ -4,9 +4,10 @@ Status: shaping
 
 ## Destination
 
-An opt-in Bench artifact that turns a finished change into an interactive visual:
-how the changes flow together, where to start, what to focus on, and confidence
-for production readiness. The agent writes a small structured report; kit
+An opt-in Bench artifact turns a finished change into an interactive visual. It
+shows how the changes flow together, where to start, and what to focus on, and
+it states confidence for production readiness. The agent writes a small
+structured report; kit
 scaffolding fills in the rest and renders it. Principle: you can outsource your
 thinking, but not your understanding. Show, don't tell. Context nodes are agent
 claims that the CLI does not verify.
@@ -35,7 +36,7 @@ language posture, and build size.
 
 ### Answer
 Agent-declared, over a CLI-emitted node skeleton. The CLI parses the diff and
-pre-lists every node with a short stable ID; the agent only draws typed edges
+pre-lists every node with a short stable ID. The agent only draws typed edges
 between handed IDs and adds annotations. The validator rejects any edge naming
 an unknown node ID, so invented nodes are structurally impossible. Token-cheap:
 agent output is a few dozen structured lines referencing short IDs. Static
@@ -68,8 +69,8 @@ File vs symbol altitude — fixes the skeleton schema and graph readability.
 
 ### Answer
 One node per changed file. Symbols revealed by git's hunk headers (built-in
-xfuncname patterns, no analysis dependency) are listed inside the node, shown
-on click/hover; an edge may name the symbol it attaches to.
+xfuncname patterns, no analysis dependency) are listed inside the node, and
+shown on click/hover. An edge may name the symbol it attaches to.
 
 ## #5: When is the report authored, and by whom?
 
@@ -97,12 +98,12 @@ Type: Grill
 Graph-wired signals vs a Greptile-style dimension panel.
 
 ### Answer
-Three signals, each with a visual job: an overall production-readiness
-confidence with a mandatory one-line justification (the headline); a per-node
-attention level (low / focus / hotspot) driving the graph's heat; a
-tested/untested badge per node. Standing rule: a score exists only if it drives
-a visual encoding or changes a reviewer action. Full dimension panels rejected —
-see Out of scope.
+Three signals, each with a visual job. An overall production-readiness
+confidence carries a mandatory one-line justification (the headline). A
+per-node attention level (low / focus / hotspot) drives the graph's heat, and
+a tested/untested badge marks each node. Standing rule: a score exists only if
+it drives a visual encoding or changes a reviewer action. Full dimension
+panels rejected — see Out of scope.
 
 Amended by #10: the coverage badge is three-valued — direct tests /
 end-to-end only / test-infrastructure — and names the covering test; and the
@@ -173,11 +174,11 @@ The visual: a single-file terminal-styled report. Sections in order:
 1. **THE PROBLEM / THE CHANGE** — two-three plain sentences each, no em
    dashes, written for a reader with marginal codebase context.
 2. **CONFIDENCE SCORE** — pct + verdict + one-line justification.
-3. **CALL CHAINS · BEFORE → AFTER** — one lane per trust path; before chain
-   all grey with its operational pain named in red; after chain marks
-   untouched context grey, modified amber with diffstat, new green-dashed,
-   artifacts dotted; decision forks show the refusal branch. This comparison
-   is the centerpiece.
+3. **CALL CHAINS · BEFORE → AFTER** — one lane per trust path. The before
+   chain is all grey, with its operational pain named in red. The after
+   chain marks untouched context grey, modified amber with diffstat, new
+   green-dashed, and artifacts dotted; decision forks show the refusal
+   branch. This comparison is the centerpiece.
 4. **CHANGE MAP** — hub-style node graph, nodes carry coverage badge and heat
    border, click-through to reading order.
 5. **OBSERVABILITY** — what an operator will see in operation, each entry
@@ -185,11 +186,12 @@ The visual: a single-file terminal-styled report. Sections in order:
 6. **RETRO** — from `capture/retros/<slug>.md` when present, omitted when
    absent; findings phrased "what was wrong. Now what."
 7. **READING ORDER** — numbered rows (heat chip, one-line guidance, coverage
-   badge, diffstat, NEW tag); expansion opens with a boxed blue `+ view diff`
+   badge, diffstat, NEW tag). Expansion opens with a boxed blue `+ view diff`
    toggle (GitHub-style two-gutter table, embedded), then role ("what this
-   file is"), what changed, why you should care, coverage naming the covering
-   test, observability, heat justification, symbols, connections. Tests and
-   config/docs ripple collapse into two expandable group rows.
+   file is"), what changed, and why you should care. It also shows coverage
+   naming the covering test, observability, heat justification, symbols, and
+   connections. Tests and config/docs ripple collapse into two expandable
+   group rows.
 
 Cross-cutting rules settled here: files tier into flow / tests / ripple, and
 only flow earns chain-actor and narrated-step slots; heat must argue its case
@@ -211,7 +213,7 @@ differentiate.
 Five kinds in the schema, three drawn. `calls`, `data-flow`, and `configures`
 render as styled edges in the chains and map. `tests` and `ripple` are
 member-to-owner links that render as group rows and badges, never as drawn
-lines — the FT131 prototype showed drawn test edges turn a 31-file map into
+lines. The FT131 prototype showed drawn test edges turn a 31-file map into
 spaghetti.
 
 ## #12: Which layout engine renders the map and chains?

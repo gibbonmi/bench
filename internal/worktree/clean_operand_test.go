@@ -9,8 +9,8 @@ import (
 )
 
 // A path-addressed clean is destructive. When its operand names nothing this repo can
-// act on, the caller must be able to tell that from the exit code alone: an agent that
-// scripts cleanup reads a zero as "planned" and moves on, so a silent no-op there loses
+// act on, the caller must be able to tell that from the exit code alone. An agent that
+// scripts cleanup reads a zero as "planned" and moves on. A silent no-op there loses
 // the work the operator meant to preserve.
 func TestCleanCommandRefusesAnOperandItCannotResolve(t *testing.T) {
 	root, _ := newOwnedAssignment(t, "operand")
@@ -47,14 +47,14 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 	}
 }
 
-// [CP1][CP2] `bench worktree path` prints a portable `~`-prefixed path and the help rows
-// steer the operator straight from it into `bench worktree clean`, so the two have to
-// compose. Plan and apply must also agree on one canonical target: a fingerprint taken
-// against the unexpanded path and applied against the expanded one would remove a
+// [CP1][CP2] `bench worktree path` prints a portable `~`-prefixed path, and the help
+// rows steer the operator straight from it into `bench worktree clean`. So the two
+// have to compose. Plan and apply must also agree on one canonical target: a fingerprint
+// taken against the unexpanded path and applied against the expanded one would remove a
 // checkout the operator never saw named.
 func TestCleanCommandAcceptsThePortablePathThatPathPrints(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "portable")
-	// The fixture worktree lives under BENCH_HOME inside root, so pointing HOME at root
+	// The fixture worktree lives under BENCH_HOME inside root. Pointing HOME at root
 	// is what makes `path` print the portable form this test is about.
 	t.Setenv("HOME", root)
 	t.Chdir(root)
@@ -86,8 +86,9 @@ func TestCleanCommandAcceptsThePortablePathThatPathPrints(t *testing.T) {
 	}
 }
 
-// [CP3] An unsupported home form is a bad operand in its own right, not a path that
-// merely happens to be unregistered once it has been canonicalized against the repo root.
+// [CP3] An unsupported home form is a bad operand in its own right. It is not a path
+// that merely happens to be unregistered once it has been canonicalized against the
+// repo root.
 func TestCleanCommandRefusesAnUnsupportedHomeTarget(t *testing.T) {
 	root, _ := newOwnedAssignment(t, "homeform")
 	t.Chdir(root)

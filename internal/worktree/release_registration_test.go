@@ -22,11 +22,11 @@ func decayToHusk(t *testing.T, path string) {
 // registration sweeps the whole pool, so a stranger's record is reached too, and reading
 // this one never returns.
 //
-// The release is driven directly rather than through a cleanup that reaches it: `git
-// worktree list` reads the same pool and blocks on the same FIFO, so no caller ever gets
-// far enough to show what this sweep does with it. The record is planted after the
-// assignment's own registration is known, which is also the only window a live repository
-// has for one.
+// The release is driven directly rather than through a cleanup that reaches it.
+// `git worktree list` reads the same pool and blocks on the same FIFO.
+// No caller therefore ever gets far enough to show what this sweep does with it.
+// The record is planted after the assignment's own registration is known, which is also
+// the only window a live repository has for one.
 func TestReleaseRegistrationSkipsUnrelatedSpecialControlRecords(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "husk-special-record")
 	decayToHusk(t, creation.Path)

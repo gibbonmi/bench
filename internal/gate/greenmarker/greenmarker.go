@@ -1,8 +1,8 @@
 // Package greenmarker is the one reader and writer of the project-green marker,
-// `refs/bench/green/<branch>` — the gate's durable record of the branch tip whose
-// exact tree last held green. Every consumer resolves the marker through Read, so
-// the peel and the dangling-symbolic-ref classification are decided once, and every
-// writer advances it through Advance, so the compare-and-swap lives once.
+// `refs/bench/green/<branch>`. This marker is the gate's durable record of the branch
+// tip whose exact tree last held green. Every consumer resolves the marker through
+// Read, so the peel and the dangling-symbolic-ref classification are decided once.
+// Every writer advances it through Advance, so the compare-and-swap lives once.
 package greenmarker
 
 import (
@@ -21,9 +21,9 @@ func Ref(branch string) string {
 }
 
 // Read resolves the marker to the full commit it peels to. present is false when the
-// marker does not exist; a marker that exists but does not resolve — a dangling
-// symbolic ref, or an object that does not peel to a commit — is present with an
-// error, never mistaken for absence.
+// marker does not exist. A marker that exists but does not resolve is present with an
+// error, never mistaken for absence. That case covers a dangling symbolic ref, or an
+// object that does not peel to a commit.
 func Read(root, branch string) (commit string, present bool, err error) {
 	marker := Ref(branch)
 	if _, err := benchgit.Output("-C", root, "rev-parse", "--verify", marker); err != nil {

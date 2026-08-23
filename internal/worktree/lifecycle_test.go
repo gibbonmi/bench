@@ -14,9 +14,9 @@ import (
 )
 
 // TestReclaimable pins the four-way lease decision the black-box lease-hardening
-// contract exercises but cannot cheaply enumerate: a canonical lease gates on pid
-// liveness, and unreadable/empty content reclaims only once aged past the threshold —
-// so a fresh-empty writer mid-claim is never stolen while a legacy/crashed lease is.
+// contract exercises but cannot cheaply enumerate. A canonical lease gates on pid
+// liveness, and unreadable/empty content reclaims only once aged past the threshold.
+// So a fresh-empty writer mid-claim is never stolen while a legacy/crashed lease is.
 
 func TestReclaimable(t *testing.T) {
 	now := time.Date(2026, 7, 4, 12, 0, 0, 0, time.UTC)
@@ -91,9 +91,9 @@ func dirty(t *testing.T, dir string) {
 	}
 }
 
-// TestReleaseOwnerRestoresCleanAndUnleases pins the owner path: after Release, the
-// worktree is back to a reusable clean state and the lease is gone — the pool-entry
-// invariant that an unleased entry is always claimably clean.
+// TestReleaseOwnerRestoresCleanAndUnleases pins the owner path. After Release, the
+// worktree is back to a reusable clean state and the lease is gone. This is the
+// pool-entry invariant: an unleased entry is always claimably clean.
 
 func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
@@ -111,9 +111,9 @@ func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 	}
 }
 
-// TestReleaseRespectsLiveForeignLease pins the non-owner path: a lease held by a
+// TestReleaseRespectsLiveForeignLease pins the non-owner path. A lease held by a
 // different live process means the entry was stale-reclaimed and belongs to that
-// owner, so Release must leave both the lease and the working state untouched.
+// owner. Release must then leave both the lease and the working state untouched.
 // Pid 1 is live for any test runner (kill -0 yields nil or EPERM, both alive).
 
 func TestReleaseRespectsLiveForeignLease(t *testing.T) {
@@ -136,9 +136,9 @@ func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 
 // TestReleaseNeverClaimableMidCleanup pins the release ordering: at the moment the
 // cleanup step runs, the owner's lease must still be held, so a concurrent Claim
-// fails. This is the whole race contract — if the entry is never claimable before
-// the single final lease removal, no claimant can win mid-cleanup (the dirty window)
-// and no lease exists afterwards for a trailing remove to delete. The restoreClean
+// fails. This is the whole race contract. If the entry is never claimable before
+// the single final lease removal, no claimant can win mid-cleanup (the dirty window).
+// And no lease exists afterwards for a trailing remove to delete. The restoreClean
 // seam is the interleave point; the pre-fix ordering (unlease, clean, unlease again)
 // goes red here because the simulated claimant's create succeeds mid-cleanup.
 
@@ -161,9 +161,9 @@ func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 	}
 }
 
-// deadPidLine returns a lease line whose recorded pid is provably dead: a child
-// process is spawned and reaped, so its pid is gone (kill -0 → ESRCH) yet was a real
-// pid, exactly the crashed-owner case reclaimable takes over.
+// deadPidLine returns a lease line whose recorded pid is provably dead. A child
+// process is spawned and reaped, so its pid is gone (kill -0 → ESRCH) yet was a
+// real pid. This is exactly the crashed-owner case reclaimable takes over.
 func deadPidLine(t *testing.T) string {
 	t.Helper()
 	cmd := exec.Command("true")
@@ -179,12 +179,14 @@ func deadPidLine(t *testing.T) string {
 
 // TestClaimSecondReclaimerConcedes pins the takeover identity check: two reclaimers of
 // the same dead-pid lease must not both win one worktree. The claimTakeoverGap seam
-// drives the second (outer) reclaimer to pause after judging the lease reclaimable, and
-// runs a first (nested) reclaimer to a full takeover — installing a fresh live lease —
-// before the outer's rename runs. The pre-fix takeover renames (and so steals) that
-// fresh lease and re-creates it, returning true: both reclaimers win, falsifying the
-// "cannot both win" guarantee. The fix sees the renamed bytes differ from the bytes it
-// judged reclaimable, restores the fresh lease, and concedes.
+// drives the second (outer) reclaimer to pause after judging the lease reclaimable.
+// It then runs a first (nested) reclaimer to a full takeover, installing a fresh live
+// lease, before the outer's rename runs.
+//
+// A blind takeover renames (and so steals) that fresh lease and re-creates it,
+// returning true. Both reclaimers then win and falsify the "cannot both win"
+// guarantee. The fix sees the renamed bytes differ from the bytes it judged
+// reclaimable, restores the fresh lease, and concedes.
 
 func TestClaimSecondReclaimerConcedes(t *testing.T) {
 	if os.Getpid() == 1 {
@@ -231,13 +233,15 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 	}
 }
 
-// TestClaimStealDuringTakeoverKeepsFirstWriter pins the three-party takeover race: a
-// concurrent reclaimer B wins the whole reclaim before the outer caller's rename runs,
-// and a fresh first-writer C then claims the slot the outer's rename vacates. The
+// TestClaimStealDuringTakeoverKeepsFirstWriter pins the three-party takeover race. A
+// concurrent reclaimer B wins the whole reclaim before the outer caller's rename runs.
+// A fresh first-writer C then claims the slot the outer's rename vacates. The
 // invariant is that C's lease survives: a first-writer that claims a vacated slot
-// during a conceded takeover keeps its lease. Pre-fix, the identity check's blind
-// rename-back clobbers C's lease with the stolen bytes it meant to restore; the fix
-// restores only into a still-empty slot (no-clobber link), leaving C's lease alone.
+// during a conceded takeover keeps its lease.
+//
+// A blind identity check clobbers C's lease with the stolen bytes it meant to
+// restore. The fix restores only into a still-empty slot (no-clobber link),
+// leaving C's lease alone.
 
 func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 	if os.Getpid() == 1 {
@@ -264,7 +268,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 	const sentinel = "999999 sentinel-first-writer\n"
 	wrote := false
 	claimStealGap = func(lp string) {
-		// Skip B's own pass (still inside the nested takeover) so the write lands only
+		// Skip B's own pass (still inside the nested takeover). The write must land only
 		// in the slot the outer's rename vacates, not the one B's rename vacates.
 		if inNestedTakeover || wrote {
 			return
@@ -392,10 +396,10 @@ func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
 
 // TestReleaseUnmergedAssignmentRetains pins CO4: ReleaseCommand decides purely through the
 // automatic verdict (PlanAutomatic), not a second, independently-authored policy. An
-// unlanded assignment branch is a retain PlanAutomatic itself decides — release must honor
-// it rather than removing, and the assignment must land in cleanup-pending (the automatic
-// transaction's own state, not a bespoke pre-transition refusal) so a retry replans through
-// the same verdict.
+// unlanded assignment branch is a retain PlanAutomatic itself decides, so release must
+// honor it rather than removing. The assignment must land in cleanup-pending (the
+// automatic transaction's own state, not a bespoke pre-transition refusal) so a retry
+// replans through the same verdict.
 func TestReleaseUnmergedAssignmentRetains(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "unmerged-release")
 	commitInWorktree(t, creation.Path, "unique.txt", "preserve\n", "unique work")

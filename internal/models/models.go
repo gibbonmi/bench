@@ -18,8 +18,9 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
-// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+// grammar is the declared argument shape usage.Parse enforces for this subcommand.
+// Arity, flag recognition, `--`, and help all come from there, instead of a local
+// switch.
 var grammar = usage.Grammar{
 	Cmd:  "bench models",
 	Help: "usage: bench models",
@@ -63,14 +64,15 @@ type modelRow struct {
 	source, freshness, id string
 }
 
-// Command implements `bench models`. Discovery is advisory: every per-source
-// failure becomes an unavailable row, and the command exits 0 unless rendering
-// its own structured output fails.
+// Command implements `bench models`. Discovery is advisory. Every per-source failure
+// becomes an unavailable row. The command exits 0, unless rendering its own
+// structured output fails.
 func Command(args []string) (string, int) {
-	// bench models takes no positional arguments; any is a misuse rejected at exit 2 —
-	// except a help spelling (--help, -h, or bare help), which is honored at exit 0.
-	// That is distinct from the discovery tolerance below (unreachable providers →
-	// unavailable rows at exit 0), which the no-arg path keeps unchanged.
+	// bench models takes no positional arguments. Any argument is a misuse, rejected
+	// at exit 2, except a help spelling: --help, -h, or bare help, which is honored
+	// at exit 0. This rule is distinct from the discovery tolerance below: unreachable
+	// providers give unavailable rows at exit 0. The no-arg path keeps that tolerance
+	// unchanged.
 	if _, line, code := usage.Parse(grammar, args); line != "" {
 		return line + "\n", code
 	}

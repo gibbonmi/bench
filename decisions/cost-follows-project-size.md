@@ -4,11 +4,12 @@ Status: shaping
 
 ## Destination
 
-One complaint — gate, context, and delegation cost grow with the tree while the
-value of a small change does not — decided across its three angles: FT91 (gate
-wall-clock), FT101 (ambient-surface scope), FT136 (delegate slicing). Each angle
-leaves this map spec-ready or explicitly deferred with a revive trigger; the
-roadmap rows stay separate because the owners differ.
+One complaint drives this map: gate, context, and delegation cost grow with
+the tree, while the value of a small change does not. This map decides that
+complaint across three angles: FT91 (gate wall-clock), FT101 (ambient-surface
+scope), and FT136 (delegate slicing). Each angle leaves this map spec-ready or
+explicitly deferred with a revive trigger. The roadmap rows stay separate
+because the owners differ.
 
 ## #1: Which FT91 arms are in scope for the next build cycle?
 
@@ -22,13 +23,15 @@ verdicts), and reviving the outer phase-concurrency cap.
 
 ### Answer
 Conformance arm only (reviewer, 2026-07-26). Conformance is ~94% of measured
-wall clock and its checks run strictly serially, so the pure-scheduling win is
-taken before any oracle-semantics or cache-infrastructure decision is spent.
-`-count=1` and caching are deferred until re-measurement after this arm lands
-shows conformance is no longer the long pole; the capping arm stays dormant per
-the roadmap. Superseded by #3 (2026-07-26): #2's timing showed one composite
-check owns 99.8% of the phase, so the conformance arm became the two-tier gate
-split instead of check fan-out.
+wall clock, and its checks run strictly serially. The pure-scheduling win is
+therefore taken before any oracle-semantics or cache-infrastructure decision
+is spent.
+
+`-count=1` and caching stay deferred until re-measurement after this arm
+lands shows conformance is no longer the long pole. The capping arm stays
+dormant per the roadmap. Superseded by #3 (2026-07-26): #2's timing showed one
+composite check owns 99.8% of the phase. The conformance arm therefore became
+the two-tier gate split instead of check fan-out.
 
 ## #2: How does conformance wall clock distribute across the fifteen checks?
 
@@ -38,25 +41,28 @@ Type: Research
 ### Question
 Instrument the conformance driver (`internal/conformance`) with per-check
 timing and run the gate once. If one check dominates the ~400–520 s phase,
-parallelization buys little and #1's chosen arm changes shape; if the time
-spreads, an indexed-slice fan-out recovers most of it. Each check is a pure
-function over a read-only tree, so ordering is recoverable by collecting into
-an indexed slice.
+parallelization buys little and #1's chosen arm changes shape. If the time
+spreads instead, an indexed-slice fan-out recovers most of it. Each check is a
+pure function over a read-only tree, so ordering is recoverable by collecting
+into an indexed slice.
 
 ### Answer
 Measured 2026-07-26 (throwaway probe on this tree). The phase is one composite
-check: `checkPackageCoreAndGuards` is ~99.8% of ~826 s; the other fourteen
-checks total ~1.3 s, so fifteen-check fan-out buys nothing. Inside the
+check: `checkPackageCoreAndGuards` is ~99.8% of ~826 s, and the other fourteen
+checks total ~1.3 s. Fifteen-check fan-out therefore buys nothing. Inside the
 composite: `checkReleasePreflight` ≈372 s (release artifact matrix build plus
-preflight verify) and `checkGoCore` owns the rest (inner `go test` over all
+preflight verify). `checkGoCore` owns the rest (inner `go test` over all
 non-contract packages, worktree race test, cross-compile matrix, build+vet).
-The inner `go test` runs without `-count=1` and leans on Go's test cache; on a
+
+The inner `go test` runs without `-count=1` and leans on Go's test cache. On a
 cache miss `internal/preflight` alone exceeds the 600 s go-test default
-package timeout (its subtests rebuild the preflight binary and exercise real
-archives — slow, not hung; 676 s measured uncached on an idle machine),
-pushing the phase past 1000 s. Second cache-miss hazard: the inner `go test`
-includes `internal/conformance` itself, and that package's suite (run
-unfiltered) invokes `checkGoCore`/`checkReleasePreflight` for real — on a
+package timeout. Its subtests rebuild the preflight binary and exercise real
+archives — slow, not hung. 676 s measured uncached on an idle machine pushes
+the phase past 1000 s.
+
+There is a second cache-miss hazard: the inner
+`go test` includes `internal/conformance` itself, and that package's suite
+(run unfiltered) invokes `checkGoCore`/`checkReleasePreflight` for real. On a
 cache miss the gate re-spawns the full suite recursively, with each
 generation's children outliving its 600 s timeout. The levers are staging
 (which checks run when) and cache behavior, not scheduling.
@@ -67,26 +73,28 @@ Blocked by: #2
 Type: Grill
 
 ### Question
-Go/no-go on the fan-out given the measured distribution; worker-width policy and
-its interaction with the canary concurrency budget (`bounds.CanaryInnerWidth`);
-whether per-check timing stays as permanent gate output or was a throwaway probe.
+Go/no-go on the fan-out given the measured distribution. Worker-width policy and
+its interaction with the canary concurrency budget (`bounds.CanaryInnerWidth`).
+Whether per-check timing stays as permanent gate output or was a throwaway probe.
 
 ### Answer
 No-go on the fan-out; the gate splits into two tiers instead (reviewer,
-2026-07-26). **Dev tier** (`bench gate`, the shift loop, final-check): drops
-`checkReleasePreflight` and the cross-compile matrix, and the inner `go test`
+2026-07-26). **Dev tier** (`bench gate`, the shift loop, final-check) drops
+`checkReleasePreflight` and the cross-compile matrix. The inner `go test`
 excludes release-only packages (`internal/preflight` and kin) the way it
-already excludes `contract` — dev green means the kit works from the tree, and
-is immune to the test-cache-miss blowup. **Ship tier** (`bench prep-release`,
-a new command): artifact matrix build, cross-compile matrix, release preflight
-verify, and the release-only package tests; the release path refuses without
-its evidence. Final-check on green prints a one-line ship-tier reminder, never
-a prompt; the pre-push hook stays fast-tier. Restaging is not check-weakening:
-every check keeps full authority at a boundary no release can bypass, and dev
-green is explicitly the narrower claim. Per-check timing becomes permanent
-gate observability, owned by the `RunConformance` driver in a stable format
-(the probe file is deleted). Worker-width policy and `CanaryInnerWidth`
-interaction: n/a — no fan-out.
+already excludes `contract`. Dev green means the kit works from the tree, and
+is immune to the test-cache-miss blowup.
+
+**Ship tier** (`bench prep-release`, a new command) runs the artifact matrix
+build, the cross-compile matrix, release preflight verify, and the
+release-only package tests. The release path refuses without its evidence.
+Final-check on green
+prints a one-line ship-tier reminder, never a prompt; the pre-push hook stays
+fast-tier. Restaging is not check-weakening: every check keeps full authority
+at a boundary no release can bypass, and dev green is explicitly the narrower
+claim. Per-check timing becomes permanent gate observability, owned by the
+`RunConformance` driver in a stable format (the probe file is deleted).
+Worker-width policy and `CanaryInnerWidth` interaction: n/a — no fan-out.
 
 ## #4: Does the FT136 slicing rule wait for the cheap-tier retest?
 
@@ -99,7 +107,7 @@ a cheap-tier retest as its acceptance trigger.
 
 ### Answer
 Rule lands now; retest runs separately (reviewer, 2026-07-26). The fence rule
-and shared-primitives-first are tier-independent — the FT86 evidence (zero
+and shared-primitives-first are tier-independent. The FT86 evidence (zero
 conflicts on fence-aligned slices vs ~25 min / 184k tokens on the theme-cut
 slice) supports them regardless of tier. The retest gates only whether
 mid-tier-by-default for build delegates is settled; it does not block the kit
@@ -116,8 +124,8 @@ and fence-boundary duplication is hunted at review time — one skill or three?
 
 ### Answer
 Three surfaces, one source (reviewer, 2026-07-26). `craft-spec` owns the rule:
-the slice boundary and the ownership fence must be the same line, and shared
-primitives are named up front and land as a deep-unit slice before the
+the slice boundary and the ownership fence must be the same line. Shared
+primitives are named up front, and land as a deep-unit slice before the
 consuming seams. `craft-review`'s Standards axis adds fence-boundary
 duplication as an explicit hunt. `craft-delegate` gets a one-line charge-time
 cross-reference pointing at `craft-spec`. Kit edit under `craft-synthesis`.
@@ -130,7 +138,7 @@ Type: Task
 ### Question
 Run one build delegate on the cheap tier against a slice whose boundary is a
 true ownership fence, charged per current `craft-delegate` (exemplar files
-included), and compare outcome quality against the mid-tier norm. The reviewer
+included). Compare outcome quality against the mid-tier norm. The reviewer
 picks the slice; the worker runs and reports. Opportunistic — waits for the
 next genuinely seam-shaped slice in normal work rather than manufacturing one.
 Resolves only mid-tier-by-default (the tier-binding memory and `craft-line`
@@ -145,15 +153,15 @@ Blocked by: none
 Type: Grill
 
 ### Question
-No linked repo is a monorepo yet — regroup-app, the first external validation
-target, is a single context — but the gate-scoping half was flagged as the
+No linked repo is a monorepo yet: regroup-app, the first external validation
+target, is a single context. The gate-scoping half was flagged as the
 contested part needing a reviewer decision.
 
 ### Answer
 Guardrails now, build deferred (reviewer, 2026-07-26). Decided and closed: a
 scoped gate is legitimate only on a reviewer-declared package boundary, never
-derived from a diff (FT91's diff-scoped ruling stands); a change touching two
-profiles takes the whole-tree gate; wall-clock is never the justification for
+derived from a diff (FT91's diff-scoped ruling stands). A change touching two
+profiles takes the whole-tree gate. Wall-clock is never the justification for
 scope — a scoped verdict is explicit evidence, never a silent skip. The docs
 half (`CONTEXT-MAP.md` layout, setup question, consumer teaching) and profile
 half (path ownership, ambient-surface scoping) are deferred undesigned. Revive
@@ -167,19 +175,20 @@ Type: Grill
 ### Question
 The re-measurement trigger the cache arms were parked behind fired 2026-07-27.
 `scripts/build-artifacts.sh` forces an empty private `GOCACHE` per invocation
-(line 39, and again for the reproducibility clone at line 135), so every build
-recompiles the standard library and dependencies: 4.79 s cold against 0.20 s
-warm, a 24x penalty. Each invocation is also two builds, not one — lines 129-143
-clone the source, rerun the whole script under `BENCH_REPRO_BUILD=1`, and compare
-bytes.
+(line 39, and again for the reproducibility clone at line 135). Every build
+therefore recompiles the standard library and dependencies: 4.79 s cold
+against 0.20 s warm, a 24x penalty. Each invocation is also two builds, not
+one — lines 129-143 clone the source, rerun the whole script under
+`BENCH_REPRO_BUILD=1`, and compare bytes.
 
 The dev gate pays this every run. `internal/contract/surface/artifact` is 133 s
 across roughly twenty invocations at host-only breadth;
 `internal/contract/surface` is 115 s, of which `TestPackageContracts` alone is
-112.9 s. Together that is 249 s of a ~291 s contract phase, against a whole gate
-of ~4m51s — and neither suite was touched by any of the six shipped arms. A
-throwaway clone honoring an inherited warm cache cut the artifact suite
-133.5 s to 73.2 s (-45%); the residual is npm pack, node, and git-clone work
+112.9 s. Together that is 249 s of a ~291 s contract phase, against a whole
+gate of ~4m51s. Neither suite was touched by any of the six shipped arms.
+
+A throwaway clone honoring an inherited warm cache cut the artifact suite
+133.5 s to 73.2 s (-45%). The residual is npm pack, node, and git-clone work
 rather than compilation, so the cache is the largest single cause and not the
 only one.
 
@@ -192,13 +201,15 @@ not weaken a check, which stays out of scope.
 
 ### Answer
 Move it to the ship tier (reviewer, 2026-07-27). The dev tier honors the
-ambient Go build and module caches and proves the generator's *logic*;
-`prep-release` keeps the private-cache, clone-and-compare hermetic proof at full
-breadth. This lands where the shipped split already put the artifact matrix —
-`internal/preprelease` runs `build-artifacts.sh` against the real root as its
-`artifacts` step, and its header says the surface exists for exactly that — so
-no coverage leaves the board, it changes tier. Re-tiering an explicit evidence
-obligation is #3's precedent, not the check-weakening ruled out of scope.
+ambient Go build and module caches and proves the generator's *logic*.
+`prep-release` keeps the private-cache, clone-and-compare hermetic proof at
+full breadth. This lands where the shipped split already put the artifact
+matrix: `internal/preprelease` runs `build-artifacts.sh` against the real
+root as its `artifacts` step. Its header says the surface exists for
+exactly that. No coverage leaves the board; it changes tier.
+
+Re-tiering an explicit evidence obligation is #3's precedent, not the
+check-weakening ruled out of scope.
 
 ## #9: Does the dev tier prove the generator at full four-platform breadth?
 
@@ -209,8 +220,9 @@ Type: Grill
 `scripts/gen-platform-packages.sh` is a seven-line `exec` shim onto
 `build-artifacts.sh` against the real release plan, with no way to narrow the
 matrix. `TestPackageContracts` runs it twice to prove idempotency, so four
-targets are built twice and each run double-builds — sixteen cold cross-compiles
-for a property two targets would demonstrate. The artifact suite already solved
+targets are built twice and each run double-builds. That is sixteen cold
+cross-compiles for a property two targets would demonstrate. The artifact
+suite already solved
 this for itself: `committedHostileArtifactSource` rewrites the staged release
 plan down to the host target, which is the retired host-only arm. The generator
 test has no equivalent seam. Breadth and hermeticity are independent levers on
@@ -218,10 +230,10 @@ the same test, so this stays separable from #8.
 
 ### Answer
 Host-only in dev (reviewer, 2026-07-27). `TestPackageContracts` proves
-generator logic and idempotency at the host target, reusing the staged-release-plan
-rewrite `committedHostileArtifactSource` already owns rather than growing a second
-copy; full four-platform breadth belongs to `prep-release`. Expected saving ~85 s
-on its own.
+generator logic and idempotency at the host target, reusing the
+staged-release-plan rewrite `committedHostileArtifactSource` already owns
+rather than growing a second copy. Full four-platform breadth belongs to
+`prep-release`. Expected saving ~85 s on its own.
 
 ## #10: Must the dev gate build without network egress?
 
@@ -230,25 +242,27 @@ Type: Grill
 
 ### Question
 Each invocation also sets a fresh `GOMODCACHE` (line 42, and line 135 for the
-clone), so every build re-downloads `github.com/toon-format/toon-go` from
-`proxy.golang.org`. Verified 2026-07-27: `GOPROXY=off bash
+clone). Every build therefore re-downloads `github.com/toon-format/toon-go`
+from `proxy.golang.org`. Verified 2026-07-27: `GOPROXY=off bash
 scripts/build-artifacts.sh` exits 1 with `module lookup disabled by
-GOPROXY=off` — the dev gate is unrunnable air-gapped, while the same package
+GOPROXY=off`. The dev gate is unrunnable air-gapped, while the same package
 asserts an offline posture three files away
 (`TestOfflineNetworkSentinelDeniesUndeclaredEgress`). This is a correctness
-question rather than a wall-clock one, but it shares #8's lever: a shared module
-cache answers both, while vendoring the dependency answers offline without
-touching build hermeticity. Recorded here rather than parked in `capture/IDEAS.md`
-because it constrains #8; drain it to its own roadmap row if it should be
-tracked separately from the cost work.
+question rather than a wall-clock one, but it shares #8's lever. A shared
+module cache answers both, while vendoring the dependency answers offline
+without touching build hermeticity.
+
+Recorded here rather than parked in
+`capture/IDEAS.md`, because it constrains #8. Drain it to its own roadmap row
+if it should be tracked separately from the cost work.
 
 ### Answer
 Yes — share the module cache (reviewer, 2026-07-27). The dev path stops
 forcing a fresh `GOMODCACHE`, which removes the per-invocation `toon-go` download
-and the air-gapped failure with one lever. Scope, stated honestly: this makes the
-gate offline-capable *given a populated ambient module cache*; a first-ever build
-on a bare machine still fetches. `prep-release` keeps its private module cache, so
-the hermetic proof is unchanged.
+and the air-gapped failure with one lever. Scope, stated honestly: this makes
+the gate offline-capable *given a populated ambient module cache*. A
+first-ever build on a bare machine still fetches. `prep-release` keeps its
+private module cache, so the hermetic proof is unchanged.
 
 ## Not yet specified
 

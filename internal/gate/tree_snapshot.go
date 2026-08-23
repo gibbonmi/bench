@@ -1,10 +1,12 @@
 package gate
 
-// The one capture of the tree every identity in this package is computed over. The stripped
-// whole-tree identity and the per-component identities both read it, so they answer for the
-// same `git add -A` snapshot rather than for two listings taken moments apart, and the
-// listing is parsed in exactly one place — a second parse beside it would let one identity
-// see a path the other did not.
+// This file holds the one capture of the tree every identity in this package is
+// computed over. The stripped whole-tree identity and the per-component identities
+// both read it. So they answer for the same `git add -A` snapshot, rather than for
+// two listings taken moments apart.
+//
+// The listing is parsed in exactly one place. A second parse beside it would let one
+// identity see a path the other did not.
 
 import (
 	"errors"
@@ -15,24 +17,25 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
-// treeEntryMetadataRE is the complete set of shapes a recursive listing records: a file or
-// symlink blob, or a gitlink commit, each with a full hex object id. An entry outside it is
-// data git never wrote, and a snapshot that kept it would hand identities a fact with no
-// source — refusal at parse is the fail-closed direction the blob-read check alone cannot
-// give, because entries are hashed whether or not their blobs are ever requested.
+// treeEntryMetadataRE is the complete set of shapes a recursive listing records. It
+// covers a file or symlink blob, or a gitlink commit, each with a full hex object id.
+// An entry outside it is data git never wrote, and a snapshot that kept it would hand
+// identities a fact with no source. Refusal at parse is the fail-closed direction the
+// blob-read check alone cannot give, because entries are hashed whether or not their
+// blobs are ever requested.
 var treeEntryMetadataRE = regexp.MustCompile(`^(100644 blob|100755 blob|120000 blob|160000 commit) ([0-9a-f]{40}|[0-9a-f]{64})$`)
 
-// treeEntry is one entry of the snapshot: the raw metadata git recorded — mode, type, and
-// object id — and the repository-relative path it recorded them under.
+// treeEntry is one entry of the snapshot: the raw metadata git recorded (mode, type,
+// and object id) and the repository-relative path it recorded them under.
 type treeEntry struct {
 	Path     string
 	Metadata string
 }
 
-// treeSnapshot is a parsed listing. Entries stay in listing order, because an identity that
-// hashes them in sequence needs an order that is the same on every read; they are indexed by
-// path as well, because a declaration that names one file resolves it by lookup rather than
-// by scanning the whole tree for it.
+// treeSnapshot is a parsed listing. Entries stay in listing order, because an
+// identity that hashes them in sequence needs an order that is the same on every
+// read. They are indexed by path as well. A declaration that names one file resolves
+// it by lookup, rather than by scanning the whole tree for it.
 type treeSnapshot struct {
 	entries []treeEntry
 	byPath  map[string]string
@@ -136,8 +139,9 @@ func captureTreeGeneration(source treeSource) (*treeGeneration, error) {
 	return &treeGeneration{tree: tree, snapshot: snapshot, source: source, blobs: map[string]blobResult{}}, nil
 }
 
-// parseTreeSnapshot consumes Git's NUL-delimited listing once, so every consumer sees the
-// same raw path spelling and malformed listings refuse before an identity can omit an entry.
+// parseTreeSnapshot consumes Git's NUL-delimited listing once, so every consumer sees
+// the same raw path spelling. A malformed listing refuses before an identity can omit
+// an entry.
 func parseTreeSnapshot(listing string) (treeSnapshot, error) {
 	snapshot := treeSnapshot{byPath: map[string]string{}}
 	for _, entry := range strings.Split(listing, "\x00") {

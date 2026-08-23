@@ -9,8 +9,8 @@ index-note: your project's design source
 
 When a project has a design system, it is the source of truth for every **visual**
 decision. It lives in a **design source you control** — a separate repo, a package,
-or a pinned path (the project profile names which) — materialized as two kinds of
-artifact any agent can read:
+or a pinned path (the project profile names which). This source holds two kinds
+of artifact any agent can read:
 
 - **Tokens** — the value scale: color, spacing, type, radius, motion. The only
   legal source of a visual value.
@@ -19,7 +19,7 @@ artifact any agent can read:
 
 Because the source of truth is committed artifacts, not a tool's live state, this
 skill is the *visual* layer and is harness-agnostic. If the project also has an
-interaction-layer UI skill (its own `*-ui` skill), that governs behavior; both gate
+interaction-layer UI skill (its own `*-ui` skill), that governs behavior; both bind
 UI work and neither replaces the other.
 
 ## Rules (these are gate checks, not suggestions)
@@ -38,8 +38,8 @@ UI work and neither replaces the other.
    ```
 
 2. **Compose canonical components; never regenerate or restyle them.** If a needed
-   variant doesn't exist, **stop** and get the variant added to the design source
-   first, then build against it.
+   variant doesn't exist, **stop**, add the variant to the design source first,
+   then build against it.
 
 3. **The design system is current-state design documentation.** The ADR rule
    applies: the design source records what the design *is*, not how it changed.
@@ -57,8 +57,8 @@ source**; the authoring surface is interchangeable, never a workflow
 dependency:
 
 - **A visual design canvas, when the harness offers one** (Claude Design in a
-  Claude session) — a fast surface for iterating the token or variant before
-  committing it.
+  Claude session) — a fast surface for the token or variant. Iterate it here
+  before you commit it.
 - **Any other harness** — edit the design source directly; it's tokens and
   components in files.
 
@@ -68,11 +68,11 @@ tool's live state — that is the whole of the harness independence.
 
 ## Working method for a UI shift
 
-1. Read the design source's tokens and component inventory before generating.
+1. Read the design source's tokens and component inventory before you generate.
 2. If a token or variant is missing, stop — add it in the design source (via a
-   design canvas or directly), commit, re-pin, then resume. On a headless run
-   there is no one to resume for: fail the iteration with the missing token or
-   variant named, so the shift ends red instead of a value getting invented.
+   design canvas or directly), commit, re-pin, then resume. On a headless run,
+   no one resumes it. Fail the iteration and name the missing token or
+   variant, so the shift ends red instead of an invented value.
 3. Compose canonical components; reference tokens for every value.
 4. Run the design-conformance gate (and the project's screenshot/interaction loop if
    it has one). Done is green on both, not either.

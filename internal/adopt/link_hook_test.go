@@ -123,11 +123,11 @@ func TestInspectPrePushRefusesSpecialFilesAndMissingGit(t *testing.T) {
 }
 
 // TestInspectPrePushRefusesSymlinkToSpecialFile plants a symlink to a writerless FIFO
-// where the hook belongs — the hostile shape a hooks directory can carry that a direct
-// FIFO does not. The inspection runs off the test goroutine behind a deadline because
-// opening a writerless FIFO never returns: without the deadline the failure is a wedged
-// suite rather than a named red, and every ambient surface that reads hook health hangs
-// with it.
+// where the hook belongs. This is the hostile shape a hooks directory can carry that a
+// direct FIFO does not. The inspection runs off the test goroutine behind a deadline
+// because opening a writerless FIFO never returns. Without the deadline the failure is a
+// wedged suite rather than a named red, and every ambient surface that reads hook health
+// hangs with it.
 func TestInspectPrePushRefusesSymlinkToSpecialFile(t *testing.T) {
 	root := hookTestRepo(t)
 	path := filepath.Join(root, ".git", "hooks", "pre-push")

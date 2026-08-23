@@ -1,8 +1,8 @@
 package shift
 
-// shiftStep names an injectable point in the loop's post-mutation path — mirroring
-// internal/worktree's Fault/LifecycleStep pattern so an in-process test can force a
-// failure the shell cannot reach (staging, teardown) without adding a shell-visible knob.
+// shiftStep names an injectable point in the loop's post-mutation path. It mirrors
+// internal/worktree's Fault/LifecycleStep pattern. An in-process test then forces a
+// failure the shell cannot reach, such as staging or teardown, without a shell-visible knob.
 type shiftStep string
 
 const (
@@ -11,8 +11,8 @@ const (
 	stepIntentUpsert shiftStep = "intent-upsert"
 )
 
-// fault is a step-keyed injection hook: nil in every production path, set only by tests
-// in this package to force an error at the named step.
+// fault is a step-keyed injection hook. It is nil in every production path; a test
+// in this package sets it to force an error at the named step.
 type fault func(shiftStep) error
 
 // shiftFault is the one seam var a test overrides. Production code never assigns it.

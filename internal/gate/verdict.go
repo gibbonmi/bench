@@ -45,19 +45,20 @@ type Inspection struct {
 	Reason        string
 	CacheBytes    int
 	ReusableGreen bool
-	// Drifted marks a record whose tree or oracle is not this subject's, whatever verdict it
-	// carries. It travels with the inspection so a consumer never decides for itself whether
-	// a record describes the tree its reader is on — a red graded elsewhere is not this
-	// tree's red.
+	// Drifted marks a record whose tree or oracle is not this subject's, whatever verdict
+	// it carries. It travels with the inspection so a consumer never decides for itself
+	// whether a record describes the tree its reader is on. A red graded elsewhere is not
+	// this tree's red.
 	Drifted        bool
 	Partition      *Partition
 	CheckPartition *CheckPartition
 }
 
-// ComponentSkip is one entry of a partition: a component that did not run, and the evidence
-// that covered it. The two evidence forms are alternatives — an ancestor slot's
-// content-address identity with the time that slot was authored, or the source digest of the
-// seal a reused build artifact was published under — so exactly one of them is populated.
+// ComponentSkip is one entry of a partition: a component that did not run, and the
+// evidence that covered it. The two evidence forms are alternatives. One is an
+// ancestor slot's content-address identity with the time that slot was authored. The
+// other is the source digest of the seal a reused build artifact was published under.
+// Exactly one of them is populated.
 type ComponentSkip struct {
 	Component  string
 	Identity   string
@@ -65,10 +66,11 @@ type ComponentSkip struct {
 	Seal       string
 }
 
-// Partition is what a partial verdict graded: the components the run executed for itself,
-// and the components it skipped with the evidence that stood in for each. A consumer reads
-// it to render the run's narrowness or to refuse a release for it, so the evidence travels
-// with the names rather than being looked up again against a store that has since moved.
+// Partition is what a partial verdict graded. It names the components the run
+// executed for itself, and the components it skipped with the evidence that stood in
+// for each. A consumer reads it to render the run's narrowness, or to refuse a
+// release for it. So the evidence travels with the names, rather than being looked up
+// again against a store that has since moved.
 type Partition struct {
 	Executed []string
 	Skipped  []ComponentSkip
@@ -99,9 +101,10 @@ type verdictRecord struct {
 	CheckEvidence  map[string]skipEvidence `json:"check_evidence,omitempty"`
 }
 
-// skipEvidence is one component's recorded skip evidence. Every field is optional in the
-// struct and exact in the bytes: an entry is graded against one of two exact field sets, so
-// an absent field is always a refusal here rather than a zero value some reader defaults.
+// skipEvidence is one component's recorded skip evidence. Every field is optional in
+// the struct and exact in the bytes. An entry is graded against one of two exact
+// field sets. So an absent field is always a refusal here, rather than a zero value
+// some reader defaults.
 type skipEvidence struct {
 	Identity   string `json:"identity,omitempty"`
 	AuthoredAt string `json:"authored_at,omitempty"`
@@ -217,9 +220,9 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	}
 	tm, _ := time.Parse(time.RFC3339, rec.RecordedAt)
 	gi.RecordedAt = tm
-	// Drift is graded ahead of the record's own status, and ahead of the closure check that
-	// refuses reuse: a record naming a tree or an oracle this subject does not have is
-	// evidence about some other run, and a red of another tree read as this one's sends a
+	// Drift is graded ahead of the record's own status, and ahead of the closure check
+	// that refuses reuse. A record naming a tree or an oracle this subject does not have
+	// is evidence about some other run. A red of another tree read as this one's sends a
 	// reader to fix work that is no longer here.
 	drift := driftReason(rec, s)
 	gi.Drifted = drift != ""
@@ -238,9 +241,10 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 		gi.Reason = "verdict expired"
 		return gi
 	}
-	// Checked after drift and expiry: those retire a narrow record exactly as they retire a
-	// full one, and naming the narrowness of an expired record would dress retired evidence
-	// as current. The Partition on the inspection carries the narrowness either way.
+	// This runs after drift and expiry: those retire a narrow record exactly as they
+	// retire a full one. Naming the narrowness of an expired record would dress
+	// retired evidence as current. The Partition on the inspection carries the
+	// narrowness either way.
 	if reason := narrowVerdictReason(loaded.class); reason != "" {
 		gi.Reason = reason
 		return gi
@@ -249,9 +253,10 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	return gi
 }
 
-// driftReason names how a record fails to describe the subject, and "" when it describes it.
-// One derivation answers both the reuse refusal and the Drifted flag consumers read, so no
-// surface can call a retired record current by comparing tree hashes for itself.
+// driftReason names how a record fails to describe the subject, and "" when it
+// describes it. One derivation answers both the reuse refusal and the Drifted flag
+// consumers read. So no surface can call a retired record current by comparing tree
+// hashes for itself.
 func driftReason(rec verdictRecord, s subject) string {
 	switch {
 	case rec.Tree != s.Tree:
@@ -278,9 +283,9 @@ type loadedVerdict struct {
 	bytes  int
 }
 
-// storeRecordBytes is one record file read from the evidence store. data is non-nil only
-// when the file cleared every check that holds whatever class the bytes turn out to name;
-// otherwise state and reason say why the store has nothing readable there.
+// storeRecordBytes is one record file read from the evidence store. data is non-nil
+// only when the file cleared every check that holds whatever class the bytes turn out
+// to name. Otherwise state and reason say why the store has nothing readable there.
 type storeRecordBytes struct {
 	data   []byte
 	bytes  int
@@ -288,11 +293,11 @@ type storeRecordBytes struct {
 	reason string
 }
 
-// readStoreRecord applies the file discipline every record class in the store shares: a
-// regular 0600 file, within the size cap, framed as a single JSON object. What the bytes
-// mean is the reading class's question — this answers only whether there are bytes worth
-// asking about, so a class added to the store cannot be given a laxer file than the
-// verdict cache gets.
+// readStoreRecord applies the file discipline every record class in the store
+// shares. It must be a regular 0600 file, within the size cap, framed as a single
+// JSON object. What the bytes mean is the reading class's question.
+// readStoreRecord answers only whether there are bytes worth asking about. So a
+// class added to the store cannot be given a laxer file than the verdict cache gets.
 func readStoreRecord(path string) storeRecordBytes {
 	info, err := os.Lstat(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -406,21 +411,24 @@ func rejectDuplicateNames(dec *json.Decoder) error {
 	return err
 }
 
-// The two exact field sets one skip-evidence entry may carry, under the same alternatives
-// discipline as the record classes: an ancestor slot's identity with the time it was
-// authored, or a reused build's seal digest. An entry holding parts of both describes no
-// evidence, and reading it as either would credit a component on a proof it never named.
+// These are the two exact field sets one skip-evidence entry may carry, under the
+// same alternatives discipline as the record classes. One is an ancestor slot's
+// identity with the time it was authored. The other is a reused build's seal digest.
+// An entry holding parts of both describes no evidence. Reading it as either would
+// credit a component on a proof it never named.
 var (
 	ancestorEvidenceFields = []string{"authored_at", "identity"}
 	sealEvidenceFields     = []string{"seal"}
 )
 
-// partitions reports whether the record reaches for the partial class at all: any single
-// partial field measures the record against the whole partial set, so a fragment is
-// refused for what it is missing rather than read as a wider class carrying something
-// extra. A retired class's fields (the reduced verdict's reduced/phases/ancestor family)
-// are unknown fields now, so a legacy reduced record fails the exact-field-set validation
-// below and reads as non-reusable rather than as a full green.
+// partitions reports whether the record reaches for the partial class at all. Any
+// single partial field measures the record against the whole partial set. So a
+// fragment is refused for what it is missing, rather than read as a wider class
+// carrying something extra.
+//
+// A retired class's fields (the reduced verdict's reduced/phases/ancestor family) are
+// unknown fields now. So a legacy reduced record fails the exact-field-set validation
+// below and reads as non-reusable, rather than as a full green.
 func (r verdictRecord) partitions() bool {
 	return r.Executed != nil || r.Skipped != nil || r.SkipEvidence != nil
 }
@@ -429,10 +437,11 @@ func (r verdictRecord) checkPartitions() bool {
 	return r.CheckExecuted != nil || r.CheckInherited != nil || r.CheckEvidence != nil
 }
 
-// partition projects the partial class onto the shape consumers read, and nil for every
-// other class — so "this verdict skipped something" is one nil check rather than a marker a
-// consumer could read without the evidence that explains it. It reads a record the loader
-// has already validated, where every skipped component has exactly one evidence entry.
+// partition projects the partial class onto the shape consumers read, and nil for
+// every other class. So "this verdict skipped something" is one nil check, rather than
+// a marker a consumer could read without the evidence that explains it. It reads a
+// record the loader has already validated, where every skipped component has exactly
+// one evidence entry.
 func (r verdictRecord) partition() *Partition {
 	if !r.partitions() {
 		return nil
@@ -466,15 +475,15 @@ func (r verdictRecord) checkPartition() *CheckPartition {
 	return partition
 }
 
-// validatePartition grades what a partial record claims: which components the run executed
-// for itself, and which evidence covered each one it skipped. The two collections are
-// cross-checked in both directions — a skip with no evidence credits a component nobody
-// graded, and evidence naming a component the record did not skip is a proof of nothing the
-// record claims.
+// validatePartition grades what a partial record claims: which components the run
+// executed for itself, and which evidence covered each one it skipped. The two
+// collections are cross-checked in both directions. A skip with no evidence credits a
+// component nobody graded. Evidence naming a component the record did not skip proves
+// nothing the record claims.
 //
-// Both lists are sorted and duplicate-free so one partition has exactly one spelling: reuse
-// compares records byte for byte, and two orderings of one partition would read as two
-// different verdicts of one run.
+// Both lists are sorted and duplicate-free, so one partition has exactly one spelling.
+// Reuse compares records byte for byte, and two orderings of one partition would read
+// as two different verdicts of one run.
 func validatePartition(data []byte, r verdictRecord, recordedAt time.Time) error {
 	if err := requireComponentSet(r.Executed); err != nil {
 		return err
@@ -491,7 +500,7 @@ func validatePartition(data []byte, r verdictRecord, recordedAt time.Time) error
 	if err != nil {
 		return err
 	}
-	// Equal cardinality closes the second direction: every skipped component is looked up
+	// Equal cardinality closes the second direction. Every skipped component is looked up
 	// below, so a map no larger than the skipped set holds evidence for nothing else.
 	if len(entries) != len(r.Skipped) {
 		return errors.New("invalid skip evidence")
@@ -508,9 +517,10 @@ func validatePartition(data []byte, r verdictRecord, recordedAt time.Time) error
 	return nil
 }
 
-// requireComponentSet holds a partition's halves to a non-empty, strictly ascending list of
-// named components. Strict ascent carries the duplicate refusal: a component named twice in
-// one half says nothing a reader can act on and would let two partitions share one spelling.
+// requireComponentSet holds a partition's halves to a non-empty, strictly ascending
+// list of named components. Strict ascent carries the duplicate refusal. A component
+// named twice in one half says nothing a reader can act on, and would let two
+// partitions share one spelling.
 func requireComponentSet(components []string) error {
 	if len(components) == 0 {
 		return errors.New("invalid component set")
@@ -531,10 +541,10 @@ func isContentAddress(value string) bool {
 	return err == nil
 }
 
-// validateSkipEvidence grades one entry against exactly one of the two evidence forms. The
-// seal form is dispatched on its own field so an entry reaching for both is measured against
-// the seal set and refused for the ancestor fields it also carries, rather than read as
-// whichever form the reader checked first.
+// validateSkipEvidence grades one entry against exactly one of the two evidence forms.
+// The seal form is dispatched on its own field. So an entry reaching for both is
+// measured against the seal set, and refused for the ancestor fields it also carries.
+// This rules out reading the entry as whichever form the reader checked first.
 func validateSkipEvidence(entry json.RawMessage, evidence skipEvidence, recordedAt time.Time) error {
 	if evidence.Seal != "" {
 		if requireObjectFields(entry, sealEvidenceFields) != nil || !isContentAddress(evidence.Seal) {
@@ -553,9 +563,9 @@ func validateSkipEvidence(entry json.RawMessage, evidence skipEvidence, recorded
 	return nil
 }
 
-// rawSkipEvidence returns the record's evidence entries as unparsed objects, which is what
-// grading an entry against an exact field set needs: the decoded struct cannot tell a field
-// that was absent from one that was present and empty.
+// rawSkipEvidence returns the record's evidence entries as unparsed objects, which is
+// what grading an entry against an exact field set needs. The decoded struct cannot
+// tell a field that was absent from one that was present and empty.
 func rawSkipEvidence(data []byte) (map[string]json.RawMessage, error) {
 	return rawEvidence(data, "skip_evidence")
 }

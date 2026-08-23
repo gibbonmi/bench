@@ -14,8 +14,8 @@ import (
 )
 
 // summaryFor renders the resume summary for a listing of orphans alone, which is the
-// surface these tests are about; the counted header is fixed for all of them and is
-// covered where the sweep produces it.
+// surface these tests are about.
+// The counted header is fixed for all of them and is covered where the sweep produces it.
 func summaryFor(orphans []OrphanCandidate) string {
 	return renderResumeSummary(ResumeResult{Orphans: orphans})
 }
@@ -24,8 +24,8 @@ func summaryLines(summary string) []string {
 	return strings.Split(strings.TrimSuffix(summary, "\n"), "\n")
 }
 
-// oneShellArgument asks a real shell what the quoted text parses to, so the quoting rule
-// is graded by the thing that will run it rather than by a second copy of the rule.
+// oneShellArgument asks a real shell what the quoted text parses to.
+// The quoting rule is graded by the thing that will run it, not by a second copy of the rule.
 func oneShellArgument(t *testing.T, quoted string) (int, string) {
 	t.Helper()
 	out, err := exec.Command("sh", "-c", "set -- "+quoted+`; printf '%d\n%s' "$#" "$1"`).Output()
@@ -39,9 +39,10 @@ func oneShellArgument(t *testing.T, quoted string) (int, string) {
 }
 
 // TestResumeSummaryQuotesHostilePaths grades the emitted argument twice: against the
-// POSIX single-quoting a reader would predict, and against a shell that parses it. A
-// pool path is operator-influenced, so an unquoted one splits on a space or expands on a
-// glob and the pasted command names a different tree, or none.
+// POSIX single-quoting a reader would predict, and against a shell that parses it.
+// A pool path is operator-influenced.
+// An unquoted one splits on a space or expands on a glob, and the pasted command names a
+// different tree, or none.
 func TestResumeSummaryQuotesHostilePaths(t *testing.T) {
 	cases := map[string]string{
 		"space":        "/pool/a b/wt",
@@ -69,10 +70,11 @@ func TestResumeSummaryQuotesHostilePaths(t *testing.T) {
 }
 
 // TestResumeSummaryPreservesLineStructure holds the summary's line count to its record
-// count. renderResumeSummary writes raw lines and escapes nothing, so quoting is not
-// enough: single-quoting makes a newline literal but still emits the byte, and one
-// embedded newline would forge a whole extra summary line for a reader — and a raw ESC
-// would drive the terminal that prints it.
+// count. renderResumeSummary writes raw lines and escapes nothing, so quoting alone is
+// not enough.
+// Single-quoting makes a newline literal but still emits the byte.
+// One embedded newline would forge a whole extra summary line for a reader.
+// A raw ESC byte would drive the terminal that prints it.
 func TestResumeSummaryPreservesLineStructure(t *testing.T) {
 	for name, path := range map[string]string{
 		"newline": "/pool/wt\nreconciled 999; failed 0",
@@ -93,10 +95,10 @@ func TestResumeSummaryPreservesLineStructure(t *testing.T) {
 }
 
 // TestResumeSummaryFallbackNamesTheLedgerRow grades the control-byte fallback's wording,
-// not only its line count. The line stands where a pasteable command cannot, so it has to
-// hand over the one handle that still resolves — the assignment ID, which is the key
-// `bench worktree list` reports — and must not send the reader after a path, because no
-// route emits one.
+// not only its line count. The line stands where a pasteable command cannot.
+// It hands over the one handle that still resolves: the assignment ID, which is the key
+// `bench worktree list` reports.
+// The fallback must not send the reader after a path, because no route emits one.
 func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
 	line := summaryLines(summaryFor([]OrphanCandidate{{ID: "a1", Path: "/pool/wt\nforged"}}))[1]
 	requireTest(t, strings.Contains(line, "orphan a1:") && strings.Contains(line, "id row in bench worktree list"),
@@ -105,9 +107,9 @@ func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
 		"fallback line sends the reader after a path no route emits: %q", line)
 }
 
-// TestResumeSummaryCapsListings pins the bound and its honesty together: a cap that did
-// not state what it withheld would read as "that is all of them", which is the one way
-// bounding this output could mislead rather than help.
+// TestResumeSummaryCapsListings pins the bound and its honesty together.
+// A cap that does not state what it withholds would read as "that is all of them".
+// That is the one way this output could mislead rather than help.
 func TestResumeSummaryCapsListings(t *testing.T) {
 	var orphans []OrphanCandidate
 	for i := range 5 {
@@ -140,9 +142,9 @@ func resumeReclaimableCount(t *testing.T, summary string) int {
 	return count
 }
 
-// planReclaimableCount reads the reclaimable column out of the plan's aggregate row, so
-// the comparison is against what `bench worktree reclaim` actually advertises as its
-// target count rather than against a second call of the predicate from the test.
+// planReclaimableCount reads the reclaimable column out of the plan's aggregate row.
+// The comparison is against what `bench worktree reclaim` actually advertises as its
+// target count, not against a second call of the predicate from the test.
 func planReclaimableCount(t *testing.T, out string) int {
 	t.Helper()
 	match := regexp.MustCompile(`(?m)^\s+\d+,(\d+),\d+,"?[0-9a-f]{64}"?$`).FindStringSubmatch(out)
@@ -174,7 +176,8 @@ func plantHostilePool(t *testing.T, pool, root string) {
 
 // [RS1] The debris is invisible without a line that both counts it and names the verb.
 // A resume that reports the count but not the command leaves the operator hunting for a
-// verb; one that prints the line over a clean pool trains them to ignore it.
+// verb.
+// One that prints the line over a clean pool trains the operator to ignore it.
 func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testing.T) {
 	summary := renderResumeSummary(ResumeResult{ReclaimableKeys: 2})
 	requireTest(t, strings.Contains(summary, "pool: 2 reclaimable keys") && strings.Contains(summary, "bench worktree reclaim"),
@@ -187,8 +190,8 @@ func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testin
 
 // [RS3] The ambient number is the one an operator trusts without re-checking, so it has to
 // be the verb's own target count. A second walk of the pool would drift from the predicate
-// the command plans with, and the drift would only show up as a plan that named a
-// different set than resume promised.
+// the command plans with.
+// The drift would only show up as a plan that names a different set than resume promised.
 func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 	t.Run("hostile pool", func(t *testing.T) {
 		pool, root := newReclaimPool(t)
@@ -218,8 +221,9 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 }
 
 // [RS2] Resume runs unattended at session start, outside any tree the gate observes. It
-// reports the pool and never touches it, so the whole recursive listing has to survive a
-// resume byte-identical — including the keys it just counted as reclaimable.
+// reports the pool and never touches it.
+// The whole recursive listing must survive a resume byte-identical, including the keys it
+// just counted as reclaimable.
 func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 	pool, root := newReclaimPool(t)
 	plantHostilePool(t, pool, root)
@@ -231,9 +235,9 @@ func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
 }
 
-// [P4] A resume that cannot read the pool still succeeds at its own work, but it must not
-// report a zero it has no basis for — that is the one state where the ambient count could
-// disagree with what the verb would say.
+// [P4] A resume that cannot read the pool still succeeds at its own work.
+// It must not report a zero it has no basis for.
+// That is the one state where the ambient count could disagree with what the verb would say.
 func TestResumeReportsAnUnreadablePoolRatherThanZero(t *testing.T) {
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")

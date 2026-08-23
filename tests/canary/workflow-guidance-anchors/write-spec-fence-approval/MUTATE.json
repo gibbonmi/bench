@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-spec/SKILL.md",
-    "old": "ownership fences with an explicit reviewer disposition, and out of scope.",
+    "old": "ownership fences with an explicit reviewer disposition, and out\nof scope.",
     "new": "and out of scope."
   },
   {

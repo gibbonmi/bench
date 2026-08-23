@@ -16,9 +16,10 @@ const (
 	structuredPhaseUnavailable = ".bench/BENCH.md cannot verify the structured Bench phase contract because shared rules are missing or empty"
 )
 
-// structuredPhaseClauseOrder is the contract itself, in declaration order: .bench/BENCH.md
-// must name exactly these clauses, once each. Reading the required set out of the document
-// instead lets a self-consistent deletion or addition define its own passing contract.
+// structuredPhaseClauseOrder is the contract itself, in declaration order.
+// .bench/BENCH.md must name exactly these clauses, once each. Reading the required set
+// out of the document instead would let a self-consistent deletion or addition define its
+// own passing contract.
 var structuredPhaseClauseOrder = []string{"progress", "exit", "omission", "cohesion"}
 
 func structuredPhaseClauseRequired(name string) bool {
@@ -223,9 +224,9 @@ func checkStructuredPhaseContract(sharedRules string) []string {
 			declaredOrder = append(declaredOrder, name)
 		}
 	}
-	// declaredOrder holds the first occurrence of each required name, so order is
-	// compared only once every required name appears; a missing name skips the
-	// comparison, while duplicate and unknown diagnostics can accompany it.
+	// declaredOrder holds the first occurrence of each required name. The check compares
+	// order only after every required name appears. A missing name skips the order
+	// comparison, but duplicate and unknown diagnostics can still accompany it.
 	if len(declaredOrder) == len(structuredPhaseClauseOrder) {
 		for i, name := range declaredOrder {
 			if name != structuredPhaseClauseOrder[i] {
@@ -324,8 +325,8 @@ var (
 
 // TestStructuredPhaseContractPinsTheFixedClauseSet enumerates the four required clause
 // names independently of the parser. A contract read out of the document stays green for
-// any self-consistent deletion, duplication, or addition, so the expectation has to name
-// the set the guide is required to carry.
+// any self-consistent deletion, duplication, or addition. The expectation must name the
+// set the guide is required to carry.
 func TestStructuredPhaseContractPinsTheFixedClauseSet(t *testing.T) {
 	bodyLines := map[string]string{
 		"progress": "  - **Progress:** Use compact bold **Status:** and **Next:** labels.",
@@ -401,8 +402,8 @@ func TestStructuredPhaseContractPinsTheFixedClauseSet(t *testing.T) {
 			[]string{`declares unknown clause "cadence"`},
 		},
 		{
-			// The rename keeps the declared count at four, so a membership-only contract
-			// stays green on it; both halves of the rename have to be attributed.
+			// The rename keeps the declared count at four. A membership-only contract stays green
+			// on it. The test must attribute both halves of the rename.
 			"renamed progress to cadence",
 			[]string{"cadence", "exit", "omission", "cohesion"},
 			[]string{"cadence", "exit", "omission", "cohesion"},
@@ -465,7 +466,7 @@ func checkIntegrationSourceWorkflowCurrency(root string) []string {
 
 func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
 	workflowAnchors := integrationSourceWorkflowAnchors()
-	if got, want := len(workflowAnchors), 12; got != want {
+	if got, want := len(workflowAnchors), 11; got != want {
 		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
 	}
 	seenFiles := map[string]bool{}

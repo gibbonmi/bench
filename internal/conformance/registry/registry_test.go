@@ -1,7 +1,8 @@
 package registry
 
-// The family→check table's own invariants: every binding resolves to a registered
-// check, the table is populated at all, and the derived family list is deterministic.
+// This block checks the family-check table's own invariants. Every binding must resolve
+// to a registered check. The table must hold at least one entry. The derived family list
+// must stay deterministic.
 
 import (
 	"slices"
@@ -9,8 +10,8 @@ import (
 	"testing"
 )
 
-// TestFamilyCheckTableBindsRegisteredChecks closes the phantom-check gap: a value
-// naming no registry row leaves that family's fixtures without a resolved binding.
+// TestFamilyCheckTableBindsRegisteredChecks closes the phantom-check gap. A value that
+// names no registry row leaves that family's fixtures without a resolved binding.
 func TestFamilyCheckTableBindsRegisteredChecks(t *testing.T) {
 	if len(familyChecks) == 0 {
 		t.Fatal("the family→check table is empty, so no conformance fixture resolves a binding")
@@ -21,9 +22,9 @@ func TestFamilyCheckTableBindsRegisteredChecks(t *testing.T) {
 			t.Errorf("family %q binds check %q, which no registry row carries", family, name)
 			continue
 		}
-		// A fixture with no CHECK file resolves a dev-tier binding from this table. A
-		// ship-tier family binding therefore leaves that fixture outside its declared
-		// tier, which the conformance driver rejects.
+		// A fixture with no CHECK file resolves a dev-tier binding from this table. A ship-tier
+		// family binding leaves that fixture outside its declared tier. The conformance driver
+		// rejects that fixture.
 		if check.Tier != Dev {
 			t.Errorf("family %q binds check %q at the %s tier; its CHECK-less fixtures require a dev-tier binding", family, name, check.Tier)
 		}
@@ -46,8 +47,8 @@ func TestFamiliesIsSortedAndComplete(t *testing.T) {
 }
 
 // TestTierForDefaultsToDev pins the asymmetry that keeps the default un-overridable by
-// accident: only the exact ship name widens a run, so an unset, misspelled, or
-// differently-cased value grades the dev tier instead of quietly reaching ship work.
+// accident. Only the exact ship name widens a run. An unset, misspelled, or differently
+// cased value grades the dev tier instead of quietly reaching ship work.
 func TestTierForDefaultsToDev(t *testing.T) {
 	for _, test := range []struct {
 		value string

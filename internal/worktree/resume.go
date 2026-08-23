@@ -86,9 +86,9 @@ type cleanupTerminal func(CleanupPlan) error
 
 // eligible reports whether plan is allowed to reach executeCleanup. A retain verdict is
 // never eligible, so the pre-lock fast path in applyAutomaticWithTerminal and the
-// lock-scoped gate in applyCleanupTransaction read the same predicate: the former only
+// lock-scoped gate in applyCleanupTransaction read the same predicate. The former only
 // skips acquiring the lock when a cheap early check already agrees with what the latter
-// would decide anyway, and the latter's fresh, under-lock replan is what actually governs
+// would decide anyway. The latter's fresh, under-lock replan is what actually governs
 // execution.
 func (plan CleanupPlan) eligible() bool {
 	return plan.Action != ActionRetain
@@ -206,13 +206,14 @@ func completeCleanupTransaction(root string, plan CleanupPlan, receipt intent.Cl
 }
 
 // interruptedCleanupIsPastReplanning reports whether an in-flight cleanup already spent
-// the thing its plan was decided from, leaving the receipt as the only thing that can
-// finish it. Re-planning such a target answers a different question and refuses the retry
-// on a stale fingerprint, wedging an abandon that has nothing left to do but land.
+// the thing its plan was decided from. That leaves the receipt as the only thing that
+// can finish it. Re-planning such a target answers a different question and refuses the
+// retry on a stale fingerprint. That wedges an abandon that has nothing left to do but
+// land.
 //
 // A removal proves it by the tree being gone. A release-leftover never removes the bytes,
-// so presence at the target says nothing about its progress; the registration is what it
-// spends, and a target this repository no longer registers carries the same proof.
+// so presence at the target says nothing about its progress. The registration is what it
+// spends instead, so a target this repository no longer registers carries the same proof.
 func interruptedCleanupIsPastReplanning(root string, receipt intent.CleanupReceipt, target string) (bool, error) {
 	shape, err := ClassifyPathShape(target)
 	if err != nil {
@@ -343,7 +344,7 @@ func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanup
 
 // ConservativeCleanup reconciles the lifecycle debris, then cleans owned worktrees and
 // unclaimed landed branch residue. The reconcile runs first because it is the only thing
-// that can make a ledger an older binary wrote readable again, and every step below reads
+// that can make a ledger an older binary wrote readable again. Every step below reads
 // that ledger.
 func ConservativeCleanup(root string) (ResumeResult, error) {
 	registered, err := ClassifyRegisteredWorktrees(root)
@@ -351,10 +352,10 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 		return ResumeResult{}, fmt.Errorf("worktree discovery failed: %w", err)
 	}
 	result := ResumeResult{Retained: map[CleanupReason]int{}}
-	// The pool count is a report, never an action: reclamation is the OrphanCandidate
+	// The pool count is a report, never an action. Reclamation follows the OrphanCandidate
 	// posture, where the sweep names the debris and the explicit command acts on it. A
 	// pool this process cannot read leaves the count at zero rather than failing a resume
-	// whose other work is unaffected — the verb itself reports that failure properly.
+	// whose other work is unaffected. The verb itself reports that failure properly.
 	if plan, planErr := planPoolReclaim(root); planErr == nil {
 		result.ReclaimableKeys = plan.reclaimableCount()
 	} else {
@@ -402,17 +403,19 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 }
 
 // sweepOrphanAssignments turns the ledger's own view of each record into a verdict. It
-// asks orphaned directly rather than reading a cleanup plan's reason code: PlanAutomatic
-// returns at its first retain reason, and ignored build output is the normal state of a
-// worktree a shift ran in, so a plan-derived sweep would report nothing for exactly the
-// population this exists for.
+// asks orphaned directly rather than reading a cleanup plan's reason code, because
+// PlanAutomatic returns at its first retain reason. Ignored build output is the normal
+// state of a worktree a shift ran in. A plan-derived sweep would therefore report nothing
+// for exactly the population this exists for.
 //
-// An active record is swept only once it is orphaned; a younger one is left alone
+// An active record is swept only once it is orphaned. A younger one is left alone
 // because a live session may still own it. An orphan whose tree survives is reported as
-// an OrphanCandidate and never touched; that type owns why removal stays behind an
-// explicit command. A record whose tree is gone is not this sweep's to judge — the
-// reconcile that already ran is the one place a record is dropped, so the two can never
-// disagree about which ones the pool still answers for.
+// an OrphanCandidate and never touched. That type owns why removal stays behind an
+// explicit command.
+//
+// A record whose tree is gone is not this sweep's to judge. The reconcile that already
+// ran is the one place a record is dropped. The two can therefore never disagree about
+// which ones the pool still answers for.
 func sweepOrphanAssignments(root string, result *ResumeResult) error {
 	assignments, err := intent.Assignments(root)
 	if err != nil {

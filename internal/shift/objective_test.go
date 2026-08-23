@@ -6,9 +6,9 @@ import (
 )
 
 // TestObjectiveCommitSubjectSharesBannerPolicy pins the one behavior change of the
-// objective owner: the durable commit subject carries the sanitizer's escaped, bounded
-// preview — the banner's policy — instead of the verbatim objective. Red while
-// loop.go interpolated the raw objective into the subject.
+// objective owner. The durable commit subject carries the sanitizer's escaped, bounded
+// preview, the banner's policy, instead of the verbatim objective. The commit subject
+// never carries the raw objective.
 func TestObjectiveCommitSubjectSharesBannerPolicy(t *testing.T) {
 	esc := string(rune(0x1b))
 	long := objective(strings.Repeat("x", 150))

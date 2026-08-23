@@ -1,11 +1,13 @@
-// Package bench embeds the consumer-payload allowlist, the single canonical source of
-// what a linked repo, the npm wrapper tarball, and the release-evidence pipeline are
-// permitted to ship. The tracked bytes live at .bench/consumer-payload.json — the one
-// copy — so shell and Node readers reach it without a Go build. go:embed cannot match a
-// pattern against a dot-prefixed directory's contents, but it can embed a file named
-// explicitly, so this root-level package (the module root carries no other .go files)
-// names the path directly and gives internal/adopt the allowlist compiled into the
-// binary rather than resolved against whatever kit directory happens to be on disk.
+// Package bench embeds the consumer-payload allowlist. This allowlist is the single
+// canonical source for what a linked repo, the npm wrapper tarball, and the
+// release-evidence pipeline may ship. The tracked bytes live at
+// .bench/consumer-payload.json, the one copy, so shell and Node readers reach it
+// without a Go build. go:embed cannot match a pattern against a dot-prefixed
+// directory's contents. But it can embed a file named explicitly.
+//
+// This root-level package, the only one at the module root, names the path
+// directly. It gives internal/adopt the allowlist compiled into the binary,
+// instead of resolved against whatever kit directory is on disk.
 package bench
 
 import (
@@ -20,8 +22,9 @@ import (
 //go:embed .bench/consumer-payload.json
 var consumerPayloadJSON []byte
 
-// PayloadRow is one allowlist entry: a source path relative to the kit root, its
-// shipped file mode, whether it names a directory to walk, and who receives it.
+// PayloadRow is one allowlist entry. It names a source path relative to the kit
+// root, its shipped file mode, whether it names a directory to walk, and its
+// audience.
 type PayloadRow struct {
 	Source   string `json:"source"`
 	Mode     string `json:"mode"`
@@ -37,19 +40,19 @@ const (
 	PayloadAudienceKitOnly = "kit-only"
 )
 
-// PayloadRows parses the embedded allowlist. buildLinkPlan is the Go caller; the Node
+// PayloadRows parses the embedded allowlist. buildLinkPlan is the Go caller. The Node
 // release-evidence builder and the package-shipped-surface conformance suite read the
-// same tracked bytes directly (a JSON file, not a Go call) rather than hand-listing the
-// payload a second time.
+// same tracked bytes directly, as a JSON file rather than a Go call. This direct read
+// avoids hand-listing the payload a second time.
 func PayloadRows() ([]PayloadRow, error) {
 	return PayloadRowsFrom(consumerPayloadJSON)
 }
 
-// PayloadRowsFrom is the one parser for allowlist bytes, wherever they came from:
-// decoding and row validation are a single step so that no reader can decode the JSON
-// and then act on rows the allowlist forbids. Empty bytes are a present, unusable
-// allowlist and are refused here; only a caller that never reaches this parser — an
-// absent file — may treat the allowlist as optional.
+// PayloadRowsFrom is the one parser for allowlist bytes, from any source. Decoding
+// and row validation happen as a single step, so no reader can decode the JSON and
+// then act on rows the allowlist forbids. Empty bytes count as a present, unusable
+// allowlist, and this parser refuses them. Only a caller that never reaches this
+// parser, for an absent file, may treat the allowlist as optional.
 func PayloadRowsFrom(data []byte) ([]PayloadRow, error) {
 	var rows []PayloadRow
 	if err := json.Unmarshal(data, &rows); err != nil {
@@ -61,13 +64,15 @@ func PayloadRowsFrom(data []byte) ([]PayloadRow, error) {
 	return rows, nil
 }
 
-// PayloadRowsAt reads the allowlist from the filesystem for every consumer that reads
-// the tracked file rather than the embedded copy. The path is attacker-shaped input to
-// checks that gate what ships, so it is classified before it is opened — a link is
-// refused rather than followed and a FIFO cannot block a check in open(2) — and the
-// classified bytes then go through the same parser the embedded copy uses. absent is
-// reported separately because only one caller (the skills index, which withholds
-// nothing when there is no allowlist) is allowed to continue on it.
+// PayloadRowsAt reads the allowlist from the filesystem, for every consumer that
+// reads the tracked file instead of the embedded copy. The path is attacker-shaped
+// input to checks that gate what ships, so PayloadRowsAt classifies it before
+// opening it. A link is refused rather than followed. A FIFO cannot block a check
+// inside open(2). The classified bytes then go through the same parser the embedded
+// copy uses. absent reports separately, because only one caller may continue on it.
+//
+// The skills index is that one caller. It withholds nothing when there is no
+// allowlist.
 func PayloadRowsAt(path string) (rows []PayloadRow, absent bool, err error) {
 	classified := bounds.ClassifyNoFollow(path)
 	switch classified.State {
@@ -88,12 +93,13 @@ func PayloadRowsAt(path string) (rows []PayloadRow, absent bool, err error) {
 	return rows, false, nil
 }
 
-// validatePayloadRows fails closed on the row shapes the readers downstream cannot
-// resolve safely. Every destination joins Source onto a root it owns — a linked repo, a
-// staged tarball, an evidence bundle — so an absolute path, a backslash separator, or a
-// ".." segment would write outside the tree the caller consented to. A source named
-// twice is rejected on the same footing: the two rows can disagree on mode or audience,
-// and which one wins would then depend on read order rather than on the allowlist.
+// validatePayloadRows fails closed on row shapes that downstream readers cannot
+// resolve safely. Every destination joins Source onto a root it owns, for example a
+// linked repo, a staged tarball, or an evidence bundle. So an absolute path, a
+// backslash separator, or a ".." segment would write outside the tree the caller
+// consented to. validatePayloadRows also rejects a source named twice. Two rows
+// naming the same source can disagree on mode or audience. Read order, not the
+// allowlist, would then decide which one wins.
 func validatePayloadRows(rows []PayloadRow) error {
 	seen := make(map[string]bool, len(rows))
 	for _, r := range rows {
@@ -136,9 +142,9 @@ func PayloadConsumerRows(rows []PayloadRow) []PayloadRow {
 	return out
 }
 
-// PayloadKitOnlyPrefixes returns each kit-only row's source path, for callers that need
-// to exclude a matching file (exact match) or tree (prefix match) while walking a
-// consumer-audience directory that contains both.
+// PayloadKitOnlyPrefixes returns each kit-only row's source path. A caller walking a
+// consumer-audience directory uses these paths to exclude a matching file or tree. A
+// file excludes by exact match; a tree excludes by prefix match.
 func PayloadKitOnlyPrefixes(rows []PayloadRow) []string {
 	var out []string
 	for _, r := range rows {
@@ -149,9 +155,9 @@ func PayloadKitOnlyPrefixes(rows []PayloadRow) []string {
 	return out
 }
 
-// PayloadExcluded reports whether sourcePath (a kit-relative path, forward-slash
-// separated) falls under one of the kit-only prefixes: an exact match (a withheld
-// file) or a path inside a withheld tree.
+// PayloadExcluded reports whether sourcePath, a kit-relative forward-slash path,
+// falls under one of the kit-only prefixes. It matches an exact withheld file or a
+// path inside a withheld tree.
 func PayloadExcluded(sourcePath string, kitOnlyPrefixes []string) bool {
 	for _, ex := range kitOnlyPrefixes {
 		if sourcePath == ex || len(sourcePath) > len(ex) && sourcePath[:len(ex)+1] == ex+"/" {

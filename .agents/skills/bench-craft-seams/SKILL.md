@@ -6,11 +6,12 @@ index: placing a test / designing an interface
 
 # Seams
 
-A **seam** is a place where you can change behavior without editing in that place
-— the location where a module's interface lives, and where both callers and tests
-cross. Where to put the seam is a design decision, separate from what goes behind
-it. Get it right and tests are cheap, stable, and survive refactors. Get it wrong
-and you test internals, the suite breaks on every change, and TDD becomes a tax.
+A **seam** is a place where you can change behavior without editing in that
+place. It is the location where a module's interface lives, and where both
+callers and tests cross. Where to put the seam is a design decision, separate
+from what goes behind it. Get it right and tests are cheap, stable, and
+survive refactors. Get it wrong and you test internals, the suite breaks on
+every change, and TDD becomes a tax.
 
 ## Design deep modules
 
@@ -20,7 +21,7 @@ config, performance. Aim for leverage (callers learn a little, get a lot) and
 locality (changes concentrate in one place).
 
 - Can I drop a method? Simplify a parameter? Hide more inside?
-- **Deletion test:** imagine deleting the module. If complexity vanishes, it was a
+- **Deletion test:** imagine the module deleted. If complexity vanishes, it was a
   pass-through. If complexity reappears across callers, it earned its place.
 - **One adapter is a hypothetical seam; two adapters is a real one.** Don't add a
   seam until something actually varies across it.
@@ -43,10 +44,11 @@ class Scheduler { nextRun() { return Date.now() + this.interval } }
 Bad — the dependency is hardwired, so a test must patch `Date.now` behind the
 interface, binding itself to an internal.
 
-This is why `/bench-write-spec` picks seams before `/bench-implement-spec` runs: a test attached to a
-well-placed seam checks behavior the user cares about, so an agent can't satisfy
-it by over-fitting to incidental implementation detail. A test attached to an
-internal is something the agent can game.
+This is why `/bench-write-spec` picks seams before `/bench-implement-spec`
+runs. A test attached to a well-placed seam tests behavior the user cares
+about, so an agent can't satisfy it by over-fitting to incidental
+implementation detail. A test attached to an internal is something the agent
+can game.
 
 ## Picking the seam for a feature
 
@@ -56,10 +58,10 @@ internal is something the agent can game.
   contract, not only a location, so a test that compiles and passes there can
   still be inadmissible.
 - Use the **highest** seam that still exercises the real behavior — *and at which
-  the failure modes are still observable*. If an error path can't go red from the
-  high seam, add one lower coverage row or make the failure observable there;
-  don't drop the case for the sake of seam height. Higher seams = fewer, more
-  stable tests = more of the implementation free to change.
+  the failure modes are still observable*. If an error path can't go red from
+  the high seam, add one lower coverage row, or make the failure observable
+  there. Don't drop the case for the sake of seam height. Higher seams mean
+  fewer, more stable tests, and more of the implementation stays free to change.
 - The ideal number of new seams for a feature is one. Justify any beyond that.
 - When the seam crosses a dependency, classify it — in-process,
   local-substitutable, remote-owned, or true-external — and take the test
@@ -67,36 +69,35 @@ internal is something the agent can game.
 
 Avoid the word "boundary" (overloaded). Say **seam** or **interface**.
 
-Before exploring the tree for where a seam belongs, declare a small read budget
-— a number of files. If you spend it without finding traction, stop guessing
-and reroute through `bench outline`, then report the budget spent alongside
-the reroute; a silent, unbounded read loop is not an accepted way to find a
-seam.
+Before you explore the tree for where a seam belongs, declare a small read budget
+— a number of files. If you spend it without traction, stop the guesswork
+and reroute through `bench outline`. Report the budget spent alongside the
+reroute; a silent, unbounded read loop is not an accepted way to find a seam.
 
-The edge classes a domain's inputs actually present — per surface: shell CLI,
-HTTP API, web UI, background jobs — are templated in
-`references/hostile-input-library.md`. Quarry it when an edge inventory or a new
-project profile needs a hostile-input checklist.
+`references/hostile-input-library.md` templates the edge classes a domain's
+inputs actually present, per surface: shell CLI, HTTP API, web UI, background
+jobs. When an edge inventory or a new project profile needs a hostile-input
+checklist, quarry it.
 
 ## Design it twice (for the genuinely uncertain seam)
 
-Your first interface idea is rarely the best. When a seam is the uncertain one —
-the one you declared a high-effort line for — don't settle on the first shape:
-spawn 3+ parallel sub-agents, each designing a **radically different** interface
-for the same module, then compare and recommend. The paste-ready sub-agent
-briefs and the comparison method are in `references/design-it-twice.md`. That
-is what a high-effort line buys at the uncertain seam: more interfaces
-considered before one is chosen. At a known seam, skip it — one design is fine.
+Your first interface idea is rarely the best. When a seam is the uncertain one
+— the one you declared a high-effort line for — don't settle on the first
+shape. Spawn 3+ parallel delegates, each designing a **radically different**
+interface for the same module, then compare and recommend. The paste-ready
+delegate briefs and the comparison method are in
+`references/design-it-twice.md`. That is what a high-effort line buys at the
+uncertain seam: more interfaces considered before one is chosen. At a known
+seam, skip it — one design is fine.
 
 ## Splitting when the structure gate fires
 
-`bench structure` flags structural debt when a file outgrows its line budget or a
-directory collects too many source files. Split along responsibility, never
-line count, and never fragment to dodge the limit. Before choosing split or grant,
-check both the file-length budget and the directory's file-count headroom: a split
-is free only when the directory has room. A genuinely deep module can instead
-earn a per-path grant: propose a line in `.bench/structure.budgets`
-(`<path> <max>`, trailing `/` for a directory) for the reviewer to approve —
-the file is reviewer-owned; never edit it yourself. The full splitting method —
-the deletion test per split, crowded directories, the deep pass — is in
-`references/structure-gate-splitting.md`.
+`bench structure` flags structural debt when a file outgrows its line budget
+or a directory collects too many source files. Split along responsibility,
+never line count, and never fragment to dodge the limit. Before choosing split or grant, check both the file-length budget and the directory's file-count headroom: a split is free only when the directory has room.
+
+A genuinely deep module can instead earn a per-path grant. Propose a line in
+`.bench/structure.budgets` (`<path> <max>`, trailing `/` for a directory) for
+the reviewer to approve. The file is reviewer-owned; never edit it yourself.
+The full splitting method — the deletion test per split, crowded directories,
+the deep pass — is in `references/structure-gate-splitting.md`.

@@ -13,9 +13,9 @@ import (
 // adopted repository with the environment declaration its installed wrapper needs.
 
 // wantSeededGateInputs is authored independently of scaffoldGateInputs on purpose.
-// Dropping a name from the seeded environment list reds nothing else in the tree —
-// the gate that would notice lives in the adopted repository, not here — so this is
-// the one place outside the function where the bytes are spelled out.
+// Dropping a name from the seeded environment list reds nothing else in the tree. The
+// gate that would notice lives in the adopted repository, not here. This is the one place
+// outside the function where the bytes are spelled out.
 const wantSeededGateInputs = `{
   "schema": 1,
   "closure": "local",
@@ -25,9 +25,9 @@ const wantSeededGateInputs = `{
 }
 `
 
-// runSetupYes runs a non-interactive converge and fails on anything but the two
-// success shapes: 0, or 3 for a zero-signal repository whose fail-closed gate stub
-// leaves the doctor legitimately red. Neither says anything about the seed itself —
+// runSetupYes runs a non-interactive converge and fails on anything but the two success
+// shapes. Those shapes are 0, or 3 for a zero-signal repository whose fail-closed gate
+// stub leaves the doctor legitimately red. Neither says anything about the seed itself;
 // the callers assert that on the written bytes.
 func runSetupYes(t *testing.T) {
 	t.Helper()

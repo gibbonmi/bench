@@ -114,7 +114,7 @@ func checkJSONValidity(root string) []string {
 
 // checkGateInputPathsNotIgnored asserts no path declared in .bench/gate-inputs.json
 // paths is gitignored: a gitignored declared input is either a gate-built output or
-// unreproducible state; declared inputs must be tree-pinned.
+// unreproducible state. Every declared input stays tree-pinned.
 func checkGateInputPathsNotIgnored(root string) []string {
 	data, err := os.ReadFile(filepath.Join(root, ".bench", "gate-inputs.json"))
 	if err != nil {

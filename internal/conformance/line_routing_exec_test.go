@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-// matrixBinding is the routed fixture every runtime check resolves against: codex and
-// claude hold their own columns, opencode is deliberately unadopted, and no cell is shared
-// between columns so a surface reading the wrong column names the wrong token.
+// matrixBinding is the routed fixture every runtime check resolves against. codex and
+// claude hold their own columns, and opencode is deliberately unadopted. No cell is
+// shared between columns, so a surface reading the wrong column names the wrong token.
 const matrixBinding = "BENCH_CODEX_TOP=gpt-5.4\n" +
 	"BENCH_CODEX_MID=gpt-5.3-codex-spark\n" +
 	"BENCH_CODEX_CHEAP=openai/gpt-5\n" +
@@ -26,8 +26,8 @@ const openCodeBinding = matrixBinding +
 	"BENCH_OPENCODE_MID=openai/gpt-5.6-terra\n" +
 	"BENCH_OPENCODE_CHEAP=openai/gpt-5.6-luna\n"
 
-// coreless returns env with a PATH carrying neither a bench wrapper nor the stub dir, so
-// the shims' wrapper search comes up empty and each one takes its own missing-core rim.
+// coreless returns env with a PATH carrying neither a bench wrapper nor the stub dir. The
+// shims' wrapper search then comes up empty, and each one takes its own missing-core rim.
 func coreless(env []string) []string {
 	out := make([]string, 0, len(env)+1)
 	for _, kv := range env {
@@ -82,7 +82,7 @@ func checkAgentHookBehavior(root string) []string {
 		}
 	}
 	hookCase("allows a bound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"opus-4-8"}}`, "", 0)
-	// Enforcement stays permissive across the whole matrix: another harness's bound cell is
+	// Enforcement stays permissive across the whole matrix. Another harness's bound cell is
 	// still a declared line, even though the advice narrows to the asking harness.
 	hookCase("allows another harness's bound cell", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-5.3-codex-spark"}}`, "", 0)
 	hookCase("captures allowed intent", routed, `{"tool_name":"Agent","tool_use_id":"allowed-1","tool_input":{"description":"ship safely","prompt":"fallback","model":"opus-4-8"}}`, "", 0)
@@ -96,11 +96,11 @@ func checkAgentHookBehavior(root string) []string {
 	if replayErr != nil || !bytes.Equal(ledger, replayed) {
 		diags = append(diags, fmt.Sprintf("check-agent-line intent capture contract failed: replay changed ledger bytes: before=%q after=%q err=%v", ledger, replayed, replayErr))
 	}
-	// A tier name is not a token the Agent tool can pass: only bound cells allow.
+	// A tier name is not a token the Agent tool can pass. Only bound cells allow it.
 	hookCase("denies a tier name", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"mid"}}`, "", 2)
 	hookCase("denies an unbound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, "harness claude binds top=fable-5", 2)
-	// The advice is the asking harness's own column and nothing else, so a Claude session
-	// never reads a recovery instruction naming ids it cannot pass.
+	// The advice is the asking harness's own column and nothing else. A Claude session never
+	// reads a recovery instruction naming ids it cannot pass.
 	if probe := runWithInputEnv(routed, env, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, "bash", hook); probe != nil && strings.Contains(probe.Stderr, "gpt-5.3-codex-spark") {
 		diags = append(diags, "check-agent-line.sh deny names another harness's column: "+probe.Stderr)
 	}
@@ -110,7 +110,7 @@ func checkAgentHookBehavior(root string) []string {
 	}
 	hookCase("does not fail open on malformed stdin", routed, `not json at all`, "not parseable as JSON", 0)
 	// Ratified posture flip (enforcement-verification): in a routed repo whose claude column
-	// is complete a missing model DENIES (exit 2) rather than warning — an omitted model
+	// is complete, a missing model DENIES (exit 2) rather than warning. An omitted model
 	// inherits the session's model, the silent-escalation path invariant #2 exists to stop.
 	hookCase("denies a missing model field in a routed repo", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x"}}`, "bound tier token", 2)
 
@@ -121,8 +121,8 @@ func checkAgentHookBehavior(root string) []string {
 	defer cleanupUnrouted()
 	os.Remove(filepath.Join(unrouted, ".bench", "lines.env"))
 	hookCase("does not fail open without lines.env", unrouted, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, "no .bench/lines.env", 0)
-	// The missing-model deny is gated on routing: with no binding to enforce, a missing
-	// model keeps the fail-open rim (the residual the decision deliberately preserves).
+	// The missing-model deny is gated on routing. With no binding to enforce, a missing
+	// model keeps the fail-open rim, the residual the decision deliberately preserves.
 	hookCase("does not fail open on a missing model without lines.env", unrouted, `{"tool_name":"Agent","tool_input":{"prompt":"x"}}`, "no resolvedModel/model field", 0)
 
 	partial, cleanupPartial, err := tempGitRepoWithLines("BENCH_CODEX_TOP=gpt-5.4\nBENCH_CODEX_MID=\nBENCH_CODEX_CHEAP=openai/gpt-5\n")
@@ -132,8 +132,8 @@ func checkAgentHookBehavior(root string) []string {
 	defer cleanupPartial()
 	hookCase("does not fail open on an incomplete claude column", partial, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, "claude column is incomplete", 0)
 
-	// The guard's own rim: with no reachable core the shim warns and ALLOWS, because a
-	// guard that dies with its core would block every delegation.
+	// This is the guard's own rim. With no reachable core, the shim warns and ALLOWS,
+	// because a guard that dies with its core would block every delegation.
 	corelessProbe := runWithInputEnv(routed, coreless(env), `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, "bash", hook)
 	if corelessProbe == nil || corelessProbe.ExitCode != 0 || !strings.Contains(corelessProbe.Stderr, "bench core not found") {
 		diags = append(diags, fmt.Sprintf("check-agent-line.sh does not fail open when the core is unreachable: %+v", corelessProbe))
@@ -218,8 +218,8 @@ func checkAdapterLineGuards(root string) []string {
 			boundRepo = openCodeRouted
 		}
 		// The adapter must launch on exactly what the core resolves for its own harness and
-		// tier: a shim that recomputes resolution passes a "calls resolve-model" check while
-		// drifting from the core, so the values are compared.
+		// tier. A shim that recomputes resolution passes a "calls resolve-model" check while
+		// drifting from the core. The test therefore compares the values directly.
 		core := runWithInputEnv(boundRepo, append(envBase, "BENCH_MODEL=mid"), "", filepath.Join(bindir, "bench"), "resolve-model", "--harness", harness)
 		if core == nil || core.ExitCode != 0 || strings.TrimSpace(core.Stdout) == "" {
 			diags = append(diags, fmt.Sprintf("adapter %s core comparison failed: bench resolve-model --harness %s produced %+v", name, harness, core))
@@ -234,7 +234,7 @@ func checkAdapterLineGuards(root string) []string {
 			diags = append(diags, "adapter codex routed path does not select the workspace-write sandbox")
 		}
 		if name == "opencode" {
-			// An unadopted harness fails closed: no fallback to another harness's column.
+			// An unadopted harness fails closed. It has no fallback to another harness's column.
 			unboundColumn := runWithInputEnv(routed, append(envBase, "BENCH_MODEL=mid"), "line probe prompt", "bash", path)
 			if unboundColumn == nil || unboundColumn.ExitCode == 0 || !strings.Contains(unboundColumn.Stderr, "opencode column is unbound") {
 				diags = append(diags, fmt.Sprintf("adapter opencode does not refuse to launch while its column is unbound: %+v", unboundColumn))
@@ -263,9 +263,8 @@ func checkAdapterLineGuards(root string) []string {
 		if unboundProbe == nil || unboundProbe.ExitCode != 0 || !strings.Contains(unboundProbe.Stdout, "gpt-anything-7") || !strings.Contains(unboundProbe.Stdout, "line probe prompt") {
 			diags = append(diags, fmt.Sprintf("adapter %s does not fall back to passthrough on a binding that binds no cell", name))
 		}
-		// The adapters' rim is the mirror of the guard's: where the hook fails open, an
-		// adapter refuses, because an unguarded passthrough in a routed repo is silent
-		// de-enforcement.
+		// The adapters' rim is the mirror of the guard's. Where the hook fails open, an adapter
+		// refuses, because an unguarded passthrough in a routed repo is silent de-enforcement.
 		corelessProbe := runWithInputEnv(boundRepo, coreless(append(envBase, "BENCH_MODEL=mid")), "line probe prompt", "bash", path)
 		if corelessProbe == nil || corelessProbe.ExitCode != 1 || !strings.Contains(corelessProbe.Stderr, "bench core not found") {
 			diags = append(diags, fmt.Sprintf("adapter %s does not refuse to launch when the core is unreachable: %+v", name, corelessProbe))
@@ -274,10 +273,10 @@ func checkAdapterLineGuards(root string) []string {
 	return diags
 }
 
-// checkLineHarnessSurfaces holds every runtime surface to one core: each names its own
-// harness and resolves that harness's column, so the kit CLI, a linked repo's wrapper, the
-// guard, and the three adapters cannot drift apart. Cases are per surface so an omitted one
-// names itself.
+// checkLineHarnessSurfaces holds every runtime surface to one core. Each surface names
+// its own harness and resolves that harness's column. The kit CLI, a linked repo's
+// wrapper, the guard, and the three adapters therefore cannot drift apart. Cases run per
+// surface, so an omitted one names itself.
 func checkLineHarnessSurfaces(root string) []string {
 	realBench := filepath.Join(root, "bin", "bench.sh")
 	hook := filepath.Join(root, ".bench", "hooks", "check-agent-line.sh")
@@ -305,7 +304,8 @@ func checkLineHarnessSurfaces(root string) []string {
 		input      string
 		wantExit   int
 	}{
-		// The kit's own CLI, invoked from the kit checkout the way a session runs it.
+		// This case is the kit's own CLI, invoked from the kit checkout the way a session runs
+		// it.
 		{name: "kit CLI", want: "gpt-5.3-codex-spark", args: []string{"bash", realBench, "resolve-model", "--harness", "codex"}},
 		// A linked repo reaches the same core through the resolved wrapper on PATH.
 		{name: "linked-repo CLI", want: "opus-4-8", args: []string{"bash", filepath.Join(bindir, "bench"), "resolve-model", "--harness", "claude"}},

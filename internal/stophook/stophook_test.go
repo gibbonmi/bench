@@ -173,11 +173,11 @@ func readCache(t *testing.T, dir string) (string, bool) {
 	return string(data), true
 }
 
-// TestRun drives the Stop-hook orchestration against a stub gate in a temp git repo
-// across the four verdict cases plus the two short-circuit guards, asserting the
-// return code, the BLOCKED-on-stderr posture, and the verdict-cache state. It pins
-// the rc→verdict mapping and the no-forged-verdict guarantee that the shell gate
-// contracts otherwise exercise only end-to-end.
+// TestRun drives the Stop-hook orchestration against a stub gate in a temp git repo,
+// across the four verdict cases plus the two short-circuit guards. It checks the
+// return code, the BLOCKED-on-stderr posture, and the verdict-cache state. It pins the
+// rc→verdict mapping and the no-forged-verdict guarantee that the shell gate contracts
+// otherwise exercise only end-to-end.
 func TestRun(t *testing.T) {
 	t.Run("green gate allows and caches green", func(t *testing.T) {
 		dir := newGitRepo(t)

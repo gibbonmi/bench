@@ -21,24 +21,24 @@ import (
 )
 
 const (
-	// proseBudgetProfile holds the reviewer-owned budget table. Raising a budget is an
-	// edit to this file and nowhere else.
+	// proseBudgetProfile holds the reviewer-owned budget table. Only this file changes
+	// when the reviewer raises a budget.
 	proseBudgetProfile = "projects/benchkit.md"
-	// proseBudgetSection anchors the parse, so the profile's other tables can never be
-	// read as budget policy.
+	// proseBudgetSection anchors the parse. This stops the profile's other tables from
+	// becoming budget policy.
 	proseBudgetSection = "Guidance prose budgets"
 	// proseBudgetSkillsDir is the guidance tree whose SKILL.md files join the universe
-	// structurally. Enumeration cannot come from the table's own glob rows: a table that
-	// lost its default row would then enumerate nothing, and the skill somebody adds next
-	// month would pass unbudgeted instead of being reported as unclassified.
+	// structurally. The table's own glob rows cannot enumerate this tree. If the table
+	// loses its default row, it enumerates nothing. A skill added next month then passes
+	// with no budget applied. The check does not report it as unclassified.
 	proseBudgetSkillsDir = ".agents/skills"
-	// proseBudgetSkillFile is the one file per skill directory the budget grades; a
-	// skill's references and assets are outside the reviewed universe.
+	// proseBudgetSkillFile is the one file per skill directory that the budget grades. A
+	// skill's references and assets stay outside the reviewed universe.
 	proseBudgetSkillFile = "SKILL.md"
 )
 
-// proseBudgetPolicy is the profile's table: exact subject rows, and glob rows that classify
-// whatever the enumeration finds.
+// proseBudgetPolicy is the profile's table. It holds exact subject rows and glob rows that
+// classify whatever the enumeration finds.
 type proseBudgetPolicy struct {
 	exact    map[string]int
 	patterns []proseBudgetPattern
@@ -49,8 +49,8 @@ type proseBudgetPattern struct {
 	limit int
 }
 
-// limitFor resolves one subject's budget. Exact rows are consulted before glob rows, so the
-// reviewer's specific number always beats the default the same subject also matches.
+// limitFor resolves one subject's budget. The check consults exact rows before glob rows, so
+// the reviewer's specific number always beats the default that also matches the same subject.
 func (p proseBudgetPolicy) limitFor(rel string) (int, bool) {
 	if limit, found := p.exact[rel]; found {
 		return limit, true
@@ -72,9 +72,9 @@ func checkGuidanceProseBudgets(root string) []string {
 	}
 	subjects, diags := proseBudgetSubjects(root, policy)
 	for _, rel := range subjects {
-		// One classification, not a second mode reader: the shared producer classifier
-		// owns shape and bounded bytes, and this check owns only what each state costs
-		// the budget report.
+		// This is one classification, not a second reader for the file mode. The shared
+		// producer classifier owns shape and bounded bytes; this check owns only the cost
+		// each state adds to the budget report.
 		subject := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(rel)))
 		switch {
 		case subject.State == bounds.StateAbsent:
@@ -101,8 +101,9 @@ func checkGuidanceProseBudgets(root string) []string {
 }
 
 // parseProseBudgetPolicy reads the reviewer's table out of the profile. Any policy fault
-// returns diagnostics and no policy: a table nobody can read cannot say which subject is
-// over, so grading a partial parse would report a clean tree for a broken policy.
+// returns diagnostics and no policy. A table nobody can read cannot say which subject is
+// over budget. If the check grades a partial parse, it reports a clean tree for a broken
+// policy.
 func parseProseBudgetPolicy(profile string) (proseBudgetPolicy, []string) {
 	section, anchored := profileSection(profile, proseBudgetSection)
 	if !anchored {
@@ -115,8 +116,8 @@ func parseProseBudgetPolicy(profile string) (proseBudgetPolicy, []string) {
 	for _, line := range strings.Split(section, "\n") {
 		row, isRow := markdownRow(line)
 		if !isRow {
-			// The table ends at the first line that is not a row; prose after it belongs
-			// to the section, not to the policy.
+			// The table ends at the first line that is not a row. Prose after that line
+			// belongs to the section, not to the policy.
 			if header {
 				break
 			}
@@ -164,10 +165,10 @@ func parseProseBudgetPolicy(profile string) (proseBudgetPolicy, []string) {
 	return policy, nil
 }
 
-// proseBudgetSubjects lists the canonical universe in stable order — every exact subject the
-// table names, plus every skill's SKILL.md — along with one diagnostic per skill directory
-// that is a symbolic link. That entry is refused rather than descended into because
-// `.claude/skills` is a tree of links to these very files, and following one would pull an
+// proseBudgetSubjects lists the canonical universe in stable order: every exact subject the
+// table names, plus every skill's SKILL.md. It also returns one diagnostic per skill directory
+// that is a symbolic link. The check refuses that entry instead of descending into it, because
+// `.claude/skills` is a tree of links to these same files. Following a link would pull an
 // adapter surface into the universe under a canonical path.
 func proseBudgetSubjects(root string, policy proseBudgetPolicy) (subjects, diags []string) {
 	seen := map[string]bool{}
@@ -194,8 +195,8 @@ func proseBudgetSubjects(root string, policy proseBudgetPolicy) (subjects, diags
 			continue
 		}
 		skill := path.Join(rel, proseBudgetSkillFile)
-		// A skill directory with no SKILL.md at all is some other check's fact; only
-		// a subject the table names is required to exist.
+		// A skill directory with no SKILL.md is a fact for a different check. Only a
+		// subject the table names must exist.
 		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(skill))); err == nil {
 			add(skill)
 		}
@@ -204,10 +205,11 @@ func proseBudgetSubjects(root string, policy proseBudgetPolicy) (subjects, diags
 	return subjects, diags
 }
 
-// proseBudgetSkillEntries classifies the skills root before anything reads through it, for
-// the same reason its children are classified: a `.agents/skills` that is itself a link
-// would enumerate whatever it points at under the canonical path. A root that is absent
-// yields no entries and no diagnostic — only a subject the table names is required to exist.
+// proseBudgetSkillEntries classifies the skills root before anything reads through it. The
+// check classifies the root for the same reason it classifies each child. A linked
+// `.agents/skills` would enumerate whatever it points at under the canonical path. An absent
+// root yields no entries and no diagnostic, because only a subject the table names must
+// exist.
 func proseBudgetSkillEntries(root string) ([]os.DirEntry, string) {
 	dir := filepath.Join(root, filepath.FromSlash(proseBudgetSkillsDir))
 	info, err := os.Lstat(dir)
@@ -236,8 +238,8 @@ func proseBudgetLineCount(body []byte) int {
 	return bytes.Count(bytes.TrimSuffix(body, []byte("\n")), []byte("\n")) + 1
 }
 
-// proseBudgetTable renders the profile subsection the checker parses, taking its rows
-// verbatim so a case can corrupt the header or a cell without a second table author.
+// proseBudgetTable renders the profile subsection that the checker parses. It takes the rows
+// verbatim, so a test case can corrupt the header or a cell without a second table author.
 func proseBudgetTable(header string, rows ...string) string {
 	body := "# benchkit\n\n## Gate\n\n### " + proseBudgetSection + "\n\n" + header + "\n|---|---|\n"
 	for _, row := range rows {
@@ -249,8 +251,8 @@ func proseBudgetTable(header string, rows ...string) string {
 // proseBudgetHeader is the header row the parser anchors the table on.
 const proseBudgetHeader = "| subject | limit |"
 
-// proseBudgetRows is a healthy policy: one exact row outside the skills tree, one exact
-// row inside it, and the all-skills default the exact row has to beat.
+// proseBudgetRows is a healthy policy. It holds one exact row outside the skills tree, one
+// exact row inside it, and the all-skills default that the exact row must beat.
 var proseBudgetRows = []string{
 	"| `.bench/BENCH.md` | 150 |",
 	"| `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |",
@@ -290,8 +292,8 @@ func writeProseBudgetRoot(t *testing.T, profile string, files map[string]string)
 	return root
 }
 
-// healthyProseBudgetFiles renders every subject proseBudgetRows names, each one line under
-// its limit, so a case can push exactly the subject it is about over the edge.
+// healthyProseBudgetFiles renders every subject that proseBudgetRows names, each one line
+// under its limit. This lets a test case push exactly the subject it is about over the edge.
 func healthyProseBudgetFiles() map[string]string {
 	return map[string]string{
 		".bench/BENCH.md": proseBudgetLines(149, true),
@@ -300,10 +302,10 @@ func healthyProseBudgetFiles() map[string]string {
 	}
 }
 
-// TestGuidanceProseBudgetsComeFromTheProfileTable is the single-source row: the limit the
-// checker enforces moves when the reviewer moves the cell, which a hard-coded constant
-// cannot do. The exact craft-tickets row also has to beat the all-skills default it
-// matches, so the two are checked in the same parse.
+// TestGuidanceProseBudgetsComeFromTheProfileTable is the single-source row. The limit the
+// checker enforces moves when the reviewer moves the cell; a hard-coded constant cannot do
+// this. The exact craft-tickets row must also beat the all-skills default it matches, so the
+// test checks both in the same parse.
 func TestGuidanceProseBudgetsComeFromTheProfileTable(t *testing.T) {
 	files := healthyProseBudgetFiles()
 	healthy := proseBudgetTable(proseBudgetHeader, proseBudgetRows...)
@@ -317,7 +319,7 @@ func TestGuidanceProseBudgetsComeFromTheProfileTable(t *testing.T) {
 		t.Fatalf("lowering the craft-tickets cell to 90 did not move the enforced limit:\n%s", strings.Join(diags, "\n"))
 	}
 
-	// The default row would allow 120; the exact row is what the subject is graded by.
+	// The default row allows 120, but the exact row grades this subject.
 	over := healthyProseBudgetFiles()
 	over[".agents/skills/bench-craft-tickets/SKILL.md"] = proseBudgetLines(110, true)
 	diags = checkGuidanceProseBudgets(writeProseBudgetRoot(t, healthy, over))
@@ -327,8 +329,8 @@ func TestGuidanceProseBudgetsComeFromTheProfileTable(t *testing.T) {
 }
 
 // TestGuidanceProseBudgetPolicyFaultsFailClosed covers the four ways the reviewer's table
-// can stop being readable. Each one stops the run rather than grading a partial parse: a
-// policy nobody can read cannot say which subject is over, and a clean verdict from a
+// can stop being readable. Each fault stops the run instead of grading a partial parse. A
+// policy nobody can read cannot say which subject is over budget. A clean verdict from a
 // broken table is the green-by-omission this check exists to prevent.
 func TestGuidanceProseBudgetPolicyFaultsFailClosed(t *testing.T) {
 	for _, tc := range []struct {
@@ -365,10 +367,9 @@ func TestGuidanceProseBudgetPolicyFaultsFailClosed(t *testing.T) {
 }
 
 // TestGuidanceProseBudgetClassifiesEverySkillItFinds pins the enumeration to the guidance
-// tree rather than to the table's own rows. A skill added next month is graded by the
-// default row without anybody editing the checker; with no default row it is reported
-// unclassified, which is the answer a table-driven enumeration structurally cannot give —
-// it would simply never look at the new directory.
+// tree, not to the table's own rows. The default row grades a skill added next month with
+// no editor change. With no default row, the check reports the skill as unclassified. A
+// table-driven enumeration cannot give this answer; it never looks at the new directory.
 func TestGuidanceProseBudgetClassifiesEverySkillItFinds(t *testing.T) {
 	files := healthyProseBudgetFiles()
 	files[".agents/skills/bench-craft-new/SKILL.md"] = proseBudgetLines(121, true)
@@ -386,9 +387,9 @@ func TestGuidanceProseBudgetClassifiesEverySkillItFinds(t *testing.T) {
 
 // TestGuidanceProseBudgetRefusesNonRegularSubjects covers the entry kinds the canonical
 // universe can hold besides a file. Classification precedes every read, so the FIFO case
-// fails by expiring its deadline rather than by a wrong answer when an implementation opens
-// first, and the symlink case points at a subject far over budget: a checker that followed
-// it would report the target's line count under the link's path.
+// fails by a deadline, not by a wrong answer from an implementation that opens the file
+// first. The symlink case points at a subject far over budget. A checker that follows it
+// reports the target's line count under the link's path.
 func TestGuidanceProseBudgetRefusesNonRegularSubjects(t *testing.T) {
 	for _, tc := range []struct {
 		kind, want string
@@ -449,9 +450,9 @@ func TestGuidanceProseBudgetRefusesNonRegularSubjects(t *testing.T) {
 }
 
 // TestGuidanceProseBudgetRefusesASymlinkedSkillDirectory keeps the refusal at the directory
-// level too. `.claude/skills` is a tree of symlinks to these very files, so a link planted
-// beside the canonical skills is the shape that would pull an adapter surface into the
-// budget universe under a canonical path.
+// level too. `.claude/skills` is a tree of symlinks to these same files. A link planted
+// beside the canonical skills would pull an adapter surface into the budget universe under
+// a canonical path.
 func TestGuidanceProseBudgetRefusesASymlinkedSkillDirectory(t *testing.T) {
 	root := writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows...), healthyProseBudgetFiles())
 	link := filepath.Join(root, ".agents", "skills", "bench-craft-adapter")
@@ -466,8 +467,8 @@ func TestGuidanceProseBudgetRefusesASymlinkedSkillDirectory(t *testing.T) {
 
 // TestGuidanceProseBudgetRefusesASymlinkedSkillsRoot keeps the refusal at the root of the
 // guidance tree, where a single link would redirect the whole enumeration. The linked tree
-// holds a skill far over budget, so a checker that read through the link would report that
-// subject under a canonical path instead of refusing the root.
+// holds a skill far over budget. A checker that reads through the link reports that subject
+// under a canonical path, instead of refusing the root.
 func TestGuidanceProseBudgetRefusesASymlinkedSkillsRoot(t *testing.T) {
 	root := writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows[0], proseBudgetRows[2]), map[string]string{
 		".bench/BENCH.md":                          proseBudgetLines(149, true),
@@ -488,8 +489,8 @@ func TestGuidanceProseBudgetRefusesASymlinkedSkillsRoot(t *testing.T) {
 	}
 }
 
-// TestGuidanceProseBudgetReportsAnAbsentTableSubject pins the missing-subject diagnostic: a
-// row the reviewer keeps for a file nobody ships is a stale table, not a clean tree.
+// TestGuidanceProseBudgetReportsAnAbsentTableSubject pins the missing-subject diagnostic. A
+// row the reviewer keeps for a file nobody ships marks a stale table, not a clean tree.
 func TestGuidanceProseBudgetReportsAnAbsentTableSubject(t *testing.T) {
 	files := healthyProseBudgetFiles()
 	delete(files, ".agents/skills/bench-craft-tickets/SKILL.md")
@@ -499,9 +500,9 @@ func TestGuidanceProseBudgetReportsAnAbsentTableSubject(t *testing.T) {
 	}
 }
 
-// TestGuidanceProseBudgetReportsAnUnreadableSubject pins the unreadable diagnostic: a
-// regular, classified subject whose bytes the check cannot get is reported rather than
-// silently counted as within budget.
+// TestGuidanceProseBudgetReportsAnUnreadableSubject pins the unreadable diagnostic. When the
+// check cannot get the bytes of a regular, classified subject, it reports this instead of
+// counting the subject as within budget.
 func TestGuidanceProseBudgetReportsAnUnreadableSubject(t *testing.T) {
 	root := writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows...), healthyProseBudgetFiles())
 	subject := filepath.Join(root, ".agents", "skills", "bench-craft-tickets", "SKILL.md")
@@ -518,9 +519,9 @@ func TestGuidanceProseBudgetReportsAnUnreadableSubject(t *testing.T) {
 	}
 }
 
-// TestGuidanceProseBudgetReportsAnUnreadableSkillsRoot pins the fail-closed diagnostic for
-// a skills root that Lstat classifies as a real directory but os.ReadDir cannot enumerate: a
-// permission fault must not silently drop every wildcard subject under it.
+// TestGuidanceProseBudgetReportsAnUnreadableSkillsRoot pins the fail-closed diagnostic for a
+// skills root that Lstat classifies as a real directory, but os.ReadDir cannot enumerate. A
+// permission fault must not silently drop every wildcard subject under this root.
 func TestGuidanceProseBudgetReportsAnUnreadableSkillsRoot(t *testing.T) {
 	root := writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows...), healthyProseBudgetFiles())
 	dir := filepath.Join(root, ".agents", "skills")
@@ -538,8 +539,8 @@ func TestGuidanceProseBudgetReportsAnUnreadableSkillsRoot(t *testing.T) {
 }
 
 // TestGuidanceProseBudgetReportsEverySubjectInOneRun pins the quantifier. A checker that
-// returns at its first hit sends a reviewer back for another run per violation, and the
-// second and third paths are exactly what a one-violation test cannot see.
+// stops at its first hit sends the reviewer back for another run per violation. A test with
+// only one violation cannot see the second and third paths.
 func TestGuidanceProseBudgetReportsEverySubjectInOneRun(t *testing.T) {
 	files := map[string]string{
 		".bench/BENCH.md": proseBudgetLines(151, true),
@@ -558,9 +559,9 @@ func TestGuidanceProseBudgetReportsEverySubjectInOneRun(t *testing.T) {
 	}
 }
 
-// TestGuidanceProseBudgetBoundaryIsNewlineIndifferent walks the edge from both sides under
-// both file endings. A count that reads the trailing newline as a fourth line would move
-// the whole boundary by one, so exactly-at-budget and one-over are asserted together.
+// TestGuidanceProseBudgetBoundaryIsNewlineIndifferent walks the edge from both sides, under
+// both file endings. A count that reads the trailing newline as an extra line moves the
+// whole boundary by one. The test asserts exactly-at-budget and one-over together.
 func TestGuidanceProseBudgetBoundaryIsNewlineIndifferent(t *testing.T) {
 	for _, trailing := range []bool{true, false} {
 		name := "with trailing newline"
@@ -583,7 +584,7 @@ func TestGuidanceProseBudgetBoundaryIsNewlineIndifferent(t *testing.T) {
 	}
 }
 
-// TestGuidanceProseBudgetsHoldOnTheLiveTree is the check's live-tree assertion: the kit's
+// TestGuidanceProseBudgetsHoldOnTheLiveTree is the check's live-tree assertion. The kit's
 // own guidance sits inside the budgets its profile publishes.
 func TestGuidanceProseBudgetsHoldOnTheLiveTree(t *testing.T) {
 	h := NewHarness(t)
@@ -592,10 +593,10 @@ func TestGuidanceProseBudgetsHoldOnTheLiveTree(t *testing.T) {
 	}
 }
 
-// TestGuidanceProseBudgetCanaryFixtureBites is the fixture owner: the family's mutation
-// pushes a classified guidance file over its limit, the bound check raises the fixture's
-// own diagnostic, and restoring the fixture takes that diagnostic away — so the red belongs
-// to the mutation rather than to ambient state in the materialized tree.
+// TestGuidanceProseBudgetCanaryFixtureBites is the fixture owner. The family's mutation
+// pushes a classified guidance file over its limit, and the bound check raises the
+// fixture's own diagnostic. Restoring the fixture removes that diagnostic. The red belongs
+// to the mutation, not to ambient state in the materialized tree.
 func TestGuidanceProseBudgetCanaryFixtureBites(t *testing.T) {
 	const fixtureName = "over-budget-skill"
 	h := NewHarness(t)

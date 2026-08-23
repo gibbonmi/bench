@@ -12,9 +12,9 @@ type workflowTriggerShape struct {
 	pullRequest, pushBranches, mainBranch bool
 }
 
-// releaseSubmitInvocation is the whole publish command, binary path included: the
-// verifier CI runs must be the one it compiled from the tag's checkout, and the
-// adapter and provenance selections are what make the run reach real npm.
+// releaseSubmitInvocation is the whole publish command, binary path included. The
+// verifier CI runs must be the one it compiled from the tag's checkout. The
+// adapter and provenance selections make the run reach real npm.
 const releaseSubmitInvocation = `dist/bench release submit --version "${GITHUB_REF_NAME#v}" --profile public --path first --adapter npm --provenance --registry https://registry.npmjs.org`
 
 // The workflow seam is the job body: these checks parse job ownership before
@@ -40,15 +40,15 @@ func checkReleaseWorkflow(root string) []string {
 			diags = append(diags, message)
 		}
 	}
-	// Publication authority is the state machine alone: a raw publish bypasses the
-	// resumable, digest-verified path, and promotion is the reviewer's attended act.
+	// Publication authority is the state machine alone. A raw publish bypasses the
+	// resumable, digest-verified path. Promotion is the reviewer's attended act.
 	for message, anchor := range map[string]string{"release workflow publishes with raw npm publish": "npm publish", "release workflow promotes from CI": "release promote"} {
 		if strings.Contains(text, anchor) {
 			diags = append(diags, message)
 		}
 	}
-	// Scoped to the publish job, never the file: the authorize job uploads
-	// publish-preflight-evidence itself, so a file-wide contains passes on its bytes.
+	// This check scopes to the publish job, not the file. The authorize job uploads
+	// publish-preflight-evidence itself, so a file-wide match would pass on its bytes.
 	publish := workflowJob(text, "publish")
 	for message, anchor := range map[string]string{"release workflow publish job does not download the publish preflight evidence": "name: publish-preflight-evidence\n", "release workflow publish job does not upload the publication record": "name: publication-record\n"} {
 		if !strings.Contains(publish, anchor) {
@@ -113,14 +113,14 @@ func checkNativeRuntimeWorkflow(root string) []string {
 }
 
 // requireCapabilitiesGateStep is the step shape both release paths must carry: the
-// strict capability flag bound to the same step that runs the gate. Matching the env
-// key against the run line rather than against the file is what makes the flag
-// provably reach the gate — a class silently skipped on a fully capable runner must
-// fail the release rather than ship.
+// strict capability flag bound to the same step that runs the gate. The check matches
+// the env key against the run line, not the file, so the flag provably reaches the
+// gate. A class silently skipped on a fully capable runner must fail the release, not
+// ship.
 //
 // The env block follows the run line rather than preceding it. Canary fixtures mutate
 // these workflows by anchoring on the exact bytes of a preflight run line, six-space
-// indent included; a leading env block re-indents that line into a continuation and
+// indent included. A leading env block re-indents that line into a continuation, and
 // those anchors stop occurring.
 func requireCapabilitiesGateStep(preflightArgs string) string {
 	return "run: bash scripts/release-preflight.sh " + preflightArgs + "\n        env:\n          BENCH_REQUIRE_CAPABILITIES: '1'\n"
@@ -176,7 +176,7 @@ func nativeWorkflowTriggers(text string) workflowTriggerShape {
 }
 
 // TestReleaseWorkflowPublicationBites proves every publication-authority diagnostic
-// red-capable: each case mutates the live release workflow into a temp root whose
+// red-capable. Each case mutates the live release workflow into a temp root whose
 // only other content is the release plan the check gates on.
 func TestReleaseWorkflowPublicationBites(t *testing.T) {
 	kit, err := findKitRoot()
@@ -213,7 +213,7 @@ func TestReleaseWorkflowPublicationBites(t *testing.T) {
 		}
 		return strings.Join(checkReleaseWorkflow(root), "\n")
 	}
-	// The publish job's own bytes are what must carry the evidence handoff, so both
+	// The publish job's own bytes must carry the evidence handoff, so both
 	// scoping cases leave the artifact name present elsewhere in the file.
 	for _, bite := range []struct {
 		name, broken, want, cheat string

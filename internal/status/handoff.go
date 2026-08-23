@@ -11,7 +11,7 @@ import (
 // cold session reads to resume without conversation history. Its shape is documented
 // inside the file itself so the template cannot drift from the artifact it describes. It
 // is exported as the one source of the artifact's name, shared with the command that emits
-// it, so the staleness signal and the emitter can never watch different files.
+// it. This way the staleness signal and the emitter can never watch different files.
 const HandoffFile = "capture/session-handoff.md"
 
 // appendHandoff adds the handoff-staleness signal (sev 12): the commits that landed since
@@ -20,13 +20,13 @@ const HandoffFile = "capture/session-handoff.md"
 //
 // The handoff's age is read from git history rather than from a line inside the document.
 // A self-reported date is the same remembered-not-computed defect this signal exists to
-// close — a session that rewrites the body and forgets the date leaves the check
-// confidently calling a stale document current — and it cannot name its own commit anyway,
+// close. A session that rewrites the body and forgets the date leaves the check
+// confidently calling a stale document current. It cannot name its own commit anyway,
 // since the handoff lands in the commit it describes.
 //
 // It ranks last deliberately. The value is at cold pickup, where the board is otherwise
-// quiet and this row leads; on a busy board a red gate or a dirty tree is the more urgent
-// read and must not be displaced by a document's age.
+// quiet and this row leads. On a busy board a red gate or a dirty tree is the more urgent
+// read, and must not be displaced by a document's age.
 func appendHandoff(rows []row, root string) []row {
 	written, ok := handoffWrittenAt(root)
 	if !ok {
@@ -43,12 +43,12 @@ func appendHandoff(rows []row, root string) []row {
 // handoffWrittenAt returns the commit that last wrote the handoff, and whether the age is
 // worth checking at all. Three states report nothing rather than a distance:
 //
-//   - an in-flight edit — the handoff is modified, staged, or untracked in the work tree,
-//     which means a session is writing it right now and its age is about to be reset;
-//   - no handoff in history, which covers both a repo that keeps none (absence is a
-//     choice, never a defect) and one whose handoff has never been committed;
-//   - a failed git query, tolerated the way the other advisory housekeeping rows tolerate
-//     one, because a broken query is not evidence of a stale document.
+//   - an in-flight edit: the handoff is modified, staged, or untracked in the work tree.
+//     A session is writing it right now, and its age is about to reset;
+//   - no handoff in history. This covers a repo that keeps none, a choice rather than a
+//     defect, and one whose handoff has never been committed;
+//   - a failed git query, tolerated the way other advisory housekeeping rows tolerate one.
+//     A broken query is not evidence of a stale document.
 func handoffWrittenAt(root string) (string, bool) {
 	dirty, err := git.Output("-C", root, "status", "--porcelain", "--", HandoffFile)
 	if err != nil || dirty != "" {

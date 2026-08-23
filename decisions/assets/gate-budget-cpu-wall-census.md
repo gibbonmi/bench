@@ -64,7 +64,7 @@ cores' worth. A core-denominated token pool bounds exactly this class.
 **Idle (ratio ≤ 0.2).** `contract/surface/publication` at 12% and
 `internal/publication` at 2% — the latter spends 30.4 seconds to burn 0.6
 seconds of CPU. Located example: `TestReleaseSubmitExitCodeTriple` is 30.2 s of
-its 39.4 s package, and its middle subtest points the release client at
+its 39.4 s package. Its middle subtest points the release client at
 `http://127.0.0.1:1` and waits for the connection to give up. A token pool
 cannot reclaim any of this; the processes are asleep, not contending.
 
@@ -79,8 +79,8 @@ but only `internal/gate` is a dev-gate cost. The earlier critical-path figures
 missed `internal/gate`; they did not miss 168 seconds of dev-gate preflight.
 
 `r` can only be priced against the saturating class. Measuring span inflation on
-an idle-class phase reads "no symptom" from a process that is merely waiting,
-which would let #6's acceptance rule certify a bad `r`. A ship-only saturating
+an idle-class phase reads "no symptom" from a process that is merely waiting.
+That gap would let #6's acceptance rule certify a bad `r`. A ship-only saturating
 package cannot price a dev-gate reserve either.
 
 ## Follow-up probes
@@ -141,11 +141,11 @@ top-level tests at or above two seconds; the other 21 total 14.46 seconds.
 | `TestBuiltCommandFocusedPublishRunsDiagnosticWithoutAuthorizing` | 2.31 |
 
 The 66.06-second leader is 38.9% of package wall. It copies the source to a
-fresh repository, then stubs every full-verify phase except `artifacts`; the
-real artifact phase runs without the shared-cache opt-in and the wrapper also
+fresh repository, then stubs every full-verify phase except `artifacts`. The
+real artifact phase runs without the shared-cache opt-in, and the wrapper also
 bootstraps a fresh `bench-preflight` binary. Its later focused and symlink calls
-reuse that binary. The direct vulnerability-policy test is effectively zero and
-the cancellation test is 0.38 seconds, while the leader stubs vulnerability, so
+reuse that binary. The direct vulnerability-policy test is effectively zero, and
+the cancellation test is 0.38 seconds, while the leader stubs vulnerability. So
 a live vulnerability scan does not explain this package's dominant cost.
 
 This cost is real but ship-only. It must not enter #8's reserve selection or
@@ -177,8 +177,8 @@ at or above two seconds carried 96.12 seconds.
 Six cancellation/runner cases sit at 2.01 seconds because they pay the real
 two-second process-group termination grace. The dominant 35.14-second test is
 a 21-row mapping matrix. Each row observes a real gate for a mutation and a
-deletion and forces a restoring green gate after each, about 84 gate-engine
-executions for the table.
+deletion, then forces a restoring green gate after each. The table costs about
+84 gate-engine executions.
 
 The `bench-debug` fast loop selected one row:
 
@@ -191,17 +191,19 @@ It was green in 2.90 seconds. PATH wrappers around Git and Go recorded 415 Git
 children and no nested Go command beyond the outer test. Counts were 118
 `rev-parse`, 94 `read-tree`, 84 `cat-file`, 47 each `add` and `write-tree`, 24
 `ls-tree`, and one `init`. The uncommitted fixture's same tree was therefore
-materialized 47 times. Its failed `read-tree HEAD` plus `read-tree --empty`
-fallback makes the test trace worse than a committed production root, but the
+materialized 47 times.
+
+Its failed `read-tree HEAD` plus `read-tree --empty`
+fallback makes the test trace worse than a committed production root. The
 re-derivation itself is production code: identity families, subject forms, and
-pre/post inspection each request their own snapshot, and repeated blob reads
+pre/post inspection each request their own snapshot. Repeated blob reads
 are not memoized.
 
 This is a missing gate-evaluation seam. A decision-wide immutable parsed tree
-and blob cache is one source for the fact; the current helper-local "snapshot
+and blob cache is one source for the fact. The current helper-local "snapshot
 once" promises do not compose across callers. The mapping matrix can then
-grade the resolver exhaustively and retain a small representative end-to-end
-bite set instead of invoking the whole engine four times per row.
+grade the resolver exhaustively. It can retain a small representative
+end-to-end bite set instead of invoking the whole engine four times per row.
 
 ### `internal/conformance`: broad fixture seams and cold gate entries
 
@@ -221,8 +223,8 @@ Eight tests at or above two seconds carried 71.59 seconds:
 
 The leader has 83 subtests totaling 35.13 seconds. Every documentation or
 workflow mutation calls `RunConformance(..., dev, "")`, the complete dev check
-table, even though the canary registry already binds its family to one check
-and `RunConformance` already accepts that single-check scope. The freshness
+table. It does this even though the canary registry already binds its family
+to one check, and `RunConformance` already accepts that single-check scope. The freshness
 leader has eight variants; each creates a new temporary kit module and reaches
 the shell gate entry, whose freshness check uses `go run`. The variants prove
 one interface but each pays cold module/process setup.
@@ -242,16 +244,16 @@ workload.
 repositories across lifecycle/fault matrices. Runtime's leaders are the
 58-case FT78 action proof ledger (13.68 s), the four-route freshness-refusal
 matrix (12.33 s), and cross-process gate/spec-build proofs. These are real
-integration matrices, but they explain why source-line count is unrelated to
-their elapsed time and identify where representative end-to-end coverage plus
-narrower interface matrices can replace repeated CLI setup.
+integration matrices. But they explain why source-line count is unrelated to
+their elapsed time. They also identify where representative end-to-end
+coverage plus narrower interface matrices can replace repeated CLI setup.
 
 ### Uncontrolled idle wait
 
 `internal/publication` reproduced its 30-second idle row: 30.49 seconds wall,
 0.46 seconds CPU. `TestFixtureRegistryStagedOpsNeverCheckToolVersions` alone
 was 30.03 seconds. It calls `StageSubmit(context.Background(), ...)` through
-`http.DefaultClient` against `http://127.0.0.1:1`; on this host that address is
+`http.DefaultClient` against `http://127.0.0.1:1`. On this host that address is
 packet-dropped rather than immediately refused, so the kernel's connect retry
 owns the test duration. The dev-tier contract publication matrix uses the same
 address and carries the same wait. This is FT87's bounded-network-test defect,
@@ -260,9 +262,9 @@ not gate scheduling or Go execution.
 ### Dev and ship workflow duplication
 
 The dev phase table does not accidentally run an ordinary package suite twice.
-Of 70 packages, 12 contract packages go only to the contract phase, conformance
-goes to its root/suite split, three release-only packages are absent, and the
-remaining 54 go to core tests. The conformance suite skips its root entry test;
+Of 70 packages, 12 contract packages go only to the contract phase, and
+conformance goes to its root/suite split. Three release-only packages are
+absent, and the remaining 54 go to core tests. The conformance suite skips its root entry test;
 dev race repeats only three registered tests under a distinct detector; canary
 runs distinct mutated trees. `bench commit` also asks for one verdict and
 reuses exact green evidence rather than pre-running a second gate.
@@ -283,14 +285,15 @@ Artifact work appears five times across the whole ship sequence, but only two
 are literal same-root jobs. Conformance ship builds the same snapshot in an
 authenticated clone as an independent release probe. The two ship canaries
 each build a distinct mutated tree to prove digest and package-evidence
-omissions; those cannot be merged, though the current full builder recompiles
-and repackages far more than the mutations change.
+omissions, and those builds cannot be merged. The current full builder
+recompiles and repackages far more than the mutations change.
 
 The direct collapse owners are therefore `CoreTestPackages`/the ship step
-(release-only enumeration), pre-release plus release-evidence (one artifact
-producer), gate evidence plus release-evidence (inherited exact vet proof), and
-the authoritative race registry (explicit ship additions instead of `./...`).
-Whether ship must reprove all dev conformance checks is a lifecycle-policy
+(release-only enumeration) and pre-release plus release-evidence (one
+artifact producer). A third owner is gate evidence plus release-evidence
+(inherited exact vet proof).
+The authoritative race registry adds explicit ship additions instead of
+`./...`. Whether ship must reprove all dev conformance checks is a lifecycle-policy
 decision, not an accidental duplicate call.
 
 ### Remaining optimization evidence
@@ -320,9 +323,10 @@ Intel i7-13620H under WSL2, using go1.25.0 and ambient build cache
 The worktree binary was built through `scripts/go-build.sh`. The process
 profile's outer `gate-run` appeared under the main-checkout binary path, but
 that binary and the worktree binary were byte-identical
-(`sha256:3626f711b029bc97201404b55ad870a8c15e28eb9942dae67b9b9f369105ae4c`),
-their seals were byte-identical, and both passed their own freshness check.
-`gate-phases` executed the worktree binary against the worktree subject.
+(`sha256:3626f711b029bc97201404b55ad870a8c15e28eb9942dae67b9b9f369105ae4c`).
+Their seals were byte-identical too, and both binaries passed their own
+freshness check. `gate-phases` executed the worktree binary against the
+worktree subject.
 
 ### Cache posture
 
@@ -342,7 +346,7 @@ reserve. The sampled fresh gate grew the warm cache from 4,312,994,789 to
 
 All 71 packages passed. Serial wall was 767.25 s and CPU was 1110.99 s, an
 aggregate CPU/wall ratio of 1.45. The earlier census was 777.0 s wall and
-1198.4 s CPU across 70 packages: the shipped reductions changed important
+1198.4 s CPU across 70 packages. The shipped reductions changed important
 rows, but subsequent test growth left total serial wall only 1.3% lower.
 
 | package | wall (s) | CPU (s) | ratio | tier/shape |
@@ -363,7 +367,7 @@ rows, but subsequent test growth left total serial wall only 1.3% lower.
 `internal/conformance` fell from the earlier 85.11 s focused probe to a
 three-run mean of 25.83 s after its fixture rows narrowed. The test-seam cut
 also reduced the public-document matrix from 35.14 s to 20.11–21.71 s, but
-`internal/gate` as a package did not fall: it now carries 241 top-level tests,
+`internal/gate` as a package did not fall. It now carries 241 top-level tests,
 and later work replaced the saved wall.
 
 ### Repetitions and focused floor
@@ -383,7 +387,7 @@ distribution from three samples.
 
 `internal/gate` alone exceeds the destination's 120-second whole-gate target
 in every focused repetition. The full matrix's 57 changed generations now
-each pay one `write-tree` capture and no per-row full-engine execution; even
+each pay one `write-tree` capture and no per-row full-engine execution. Even
 deleting its entire 20–22 s span would leave only 7–13 s for all gate setup
 at the observed package floor. One reduction at that seam is insufficient.
 
@@ -411,8 +415,8 @@ samples reached 23 `go`, 21 compiler, seven linker, 29 `bench`, ten
 canary-related, and 29 contract-related processes.
 
 At least 1,682 distinct child PIDs appeared in the two-second samples: 407
-`go`, 344 `bash`, 305 `bench`, 157 compiler, 82 linker, and 76 Git processes,
-plus test binaries and Node/npm work. This is a lower bound, not an exact spawn
+`go`, 344 `bash`, 305 `bench`, 157 compiler, 82 linker, and 76 Git processes.
+The count also includes test binaries and Node/npm work. This is a lower bound, not an exact spawn
 total: `strace`, `perf`, and `bpftrace` were unavailable, and processes shorter
 than the sampling interval can disappear between observations. Peak concurrent
 width is exact for the sampled instants; cumulative launch count is explicitly
@@ -427,18 +431,19 @@ zero.
 
 Contention is current and material, and the subprocess tree confirms that the
 unbounded outer scheduler is one source. It still cannot be priced yet. The
-longest focused dev package is mixed rather than saturating and exceeds the
-whole-gate target before any competing phase starts, so a token pool can bound
-peak demand but cannot make the stated destination achievable. Decision #21
+longest focused dev package is mixed rather than saturating, and it exceeds
+the whole-gate target before any competing phase starts. So a token pool can
+bound peak demand but cannot make the stated destination achievable. Decision #21
 must reduce the focused floor before #8 measures candidate reserves and grant
 splits.
 
 ## Focused demand trace: decision #21
 
 Measured 2026-08-07 local time on the same exact commit `eb6845f` (tree
-`cd2ece9`) as decision #20, same 12-online-CPU host, go1.25.0, ambient warm
-build cache, main checkout with documentation-only dirt — the Go workload is
-byte-identical to #20's subject. Compilation was warmed first (1.16 s). Timing
+`cd2ece9`) as decision #20. The host was the same 12-online-CPU host, on
+go1.25.0, with ambient warm build cache, on the main checkout with
+documentation-only dirt. The Go workload is byte-identical to #20's subject.
+Compilation was warmed first (1.16 s). Timing
 runs used clean `go test -count=1 -json`; process counts came from separate
 runs with a PATH shim logging every `git` argv. Shimmed runs are counting
 evidence only — the shim added roughly 10% wall.
@@ -450,7 +455,7 @@ its 140.80 s package wall (101.82 s CPU). `internal/specbuild` ran 192 tests
 at 57.38 s and 59.81 s sums against 57.80 s and 60.05 s walls in two runs.
 Nothing overlaps: the gate package carries three `t.Parallel` calls, specbuild
 none. The focused floor is therefore the arithmetic sum of every test's
-subprocess waits, and a token pool cannot shorten it — the pool can only stop
+subprocess waits, and a token pool cannot shorten it. The pool can only stop
 concurrent phases from inflating it toward #20's 230.663 s in-gate span.
 
 ### `internal/gate`: distributed demand, no dominator
@@ -487,19 +492,19 @@ Cost classes inside the package:
   Observing the grace through an injected duration while keeping at least one
   live-cascade proof would save roughly 8 s.
 - **Process materialization.** One package run spawns exactly 13,156 Git
-  processes (identical in both counted runs): 5,343 `rev-parse`, 2,182
-  `read-tree`, 1,817 `cat-file`, 1,324 `add`, 1,253 `write-tree`, 705
-  `ls-tree`, 300 `init`, 89 `commit`. The document matrix's 57 generation
-  captures explain most of its 18.65 s; synthesizing those generations at the
-  decision seam would save roughly 15 s.
+  processes, identical in both counted runs. The counts are 5,343
+  `rev-parse`, 2,182 `read-tree`, 1,817 `cat-file`, 1,324 `add`, 1,253
+  `write-tree`, 705 `ls-tree`, 300 `init`, and 89 `commit`. The document
+  matrix's 57 generation captures explain most of its 18.65 s. Synthesizing
+  those generations at the decision seam would save roughly 15 s.
 - **Toolchain closure derivation.** Every engine resolution re-runs
   `go list -buildvcs=false -json -deps -test ./...` (`moduleTestClosure`,
   memoized only within one resolution). On a fixture-shaped module the warm
   call costs 0.09–0.14 s (0.60 s first). Child `go` spawns could not be
-  PATH-counted — `go test` places `$GOROOT/bin` at the head of the test
-  process's `PATH` (documented in `cmd/go`'s test help), and no process
-  tracer is installed — so the package-wide count is an estimate from
-  structure: with engine resolutions in the low hundreds, this contributes an
+  PATH-counted: `go test` places `$GOROOT/bin` at the head of the test
+  process's `PATH` (documented in `cmd/go`'s test help). No process tracer
+  is installed either. So the package-wide count is an estimate from
+  structure. With engine resolutions in the low hundreds, this contributes an
   estimated 10–20 s.
 - **Real-engine integration.** The rest of the ≥0.5 s mass is deliberate
   representative coverage: proof ledgers, unsound-artifact sweeps, and
@@ -512,35 +517,38 @@ Cost classes inside the package:
 The flattest possible profile: the largest test is 4.28 s / 4.72 s across the
 two runs, only six tests reach 1 s (11.93 s / 12.66 s together), and the
 median test is under 0.2 s. One package run spawns 35,952–35,957 Git
-processes, about 187 per test at roughly 1.6 ms average: 21,531 `rev-parse`,
-2,049 `symbolic-ref`, 1,282 `worktree`, 1,223 `add`, 1,162 `show`, 1,158
-`update-ref`, 891 `status`, 825 `show-ref`, 717 `config`, 684 `write-tree`,
-683 `read-tree`, 678 `for-each-ref`, 669 `commit`. Sixty percent of all
-spawns re-derive repository facts through `rev-parse` — the repeated
-source-fact pattern decision #15 found in the gate, here spread across
-lifecycle operations and test helpers. There is no algorithm to speed up and
-no test to fix; the package cost is spawn count times spawn latency.
+processes, about 187 per test at roughly 1.6 ms average. The counts split as
+21,531 `rev-parse`, 2,049 `symbolic-ref`, 1,282 `worktree`, and 1,223 `add`.
+The rest are 1,162 `show`, 1,158 `update-ref`, 891 `status`, 825 `show-ref`,
+717 `config`, 684 `write-tree`, 683 `read-tree`, 678 `for-each-ref`, and 669
+`commit`.
+
+Sixty percent of all spawns re-derive repository facts through `rev-parse`.
+This is the repeated source-fact pattern decision #15 found in the gate,
+here spread across lifecycle operations and test helpers. There is no
+algorithm to speed up and no test to fix; the package cost is spawn count
+times spawn latency.
 
 ### Concurrency constraints
 
 Intra-package parallelism is blocked by process-global state, not by test
 isolation. Gate tests each own a private root, but production `kitRoot` reads
-ambient `BENCH_KIT`, the kit-shaped fixture claims it per test with
+ambient `BENCH_KIT`. The kit-shaped fixture claims it per test with
 `t.Setenv` (51 construction sites, and `t.Setenv` is mutually exclusive with
-`t.Parallel`), and two helpers change the process working directory.
+`t.Parallel`). Two helpers also change the process working directory.
 `internal/specbuild` has two `t.Setenv` tests and no chdir, so test-only
 `t.Parallel` is structurally available there today.
 
 ### Decision #21 result
 
-The enumerated serial cuts — grace observation (~8 s), synthesized matrix
-generations (~15 s), closure-derivation memoization (~10–20 s, estimate) —
-project a 105–125 s `internal/gate` floor from the observed 140.80–159.70 s
-range. That still exceeds the 120 s whole-gate target once any setup or
-sibling phase is added, so single-test fixes cannot reach the destination.
-The remaining structural lever is concurrency inside the package run, which
-is a workload-shape and seam decision the map's #22 owns, not a research
-finding this asset can select.
+The enumerated serial cuts are grace observation (~8 s), synthesized matrix
+generations (~15 s), and closure-derivation memoization (~10–20 s, estimate).
+Together they project a 105–125 s `internal/gate` floor from the observed
+140.80–159.70 s range. That still exceeds the 120 s whole-gate target once
+any setup or sibling phase is added, so single-test fixes cannot reach the
+destination. The remaining structural lever is concurrency inside the
+package run. That lever is a workload-shape and seam decision the map's #22
+owns, not a research finding this asset can select.
 
 ## Post-rebuild census: decision #26
 
@@ -582,37 +590,41 @@ subprocess latency.
 
 ### Fresh gates
 
-Two `bench gate --fresh` runs with 0.5 s descendant sampling: 38.26 s wall
-(green, 33.65 s user + 17.65 s sys) and 38.00 s wall (red, 32.01 s user +
-17.09 s sys). Phase spans from the gate's own progress log (green run):
-gofmt 0.08 s, vet 0.57 s, test 31.90 s, race 2.41 s, system 1.43 s,
-shellcheck 0.26 s — 36.63 s of serial phase time plus ~1.6 s of setup
-(selection, single subject build, freshness). Peak concurrent descendants:
+Two `bench gate --fresh` runs used 0.5 s descendant sampling. Wall time was
+38.26 s (green, 33.65 s user + 17.65 s sys) and 38.00 s (red, 32.01 s user +
+17.09 s sys).
+
+Phase spans from the gate's own progress log (green run) were
+gofmt 0.08 s and vet 0.57 s. Test took 31.90 s, race took 2.41 s, system
+took 1.43 s, and shellcheck took 0.26 s. Those phases sum to 36.63 s of
+serial phase time, plus ~1.6 s of setup (selection, single subject build,
+freshness). Peak concurrent descendants:
 25 in both runs, against 97 pre-rebuild. Average utilization is ~1.3 of 12
 cores; the box is nowhere near saturation.
 
 The test phase compresses the 105.2 s serial census into 31.9 s through `go
-test ./...`'s own package parallelism (`-p` defaulting to `GOMAXPROCS`) and
-is floored by `publication`'s 30 s idle wait — the phase's critical path is
+test ./...`'s own package parallelism (`-p` defaulting to `GOMAXPROCS`). It
+is floored by `publication`'s 30 s idle wait. The phase's critical path is
 FT87's timeout, not CPU contention.
 
 The red run's failure was `TestListCommandCheckedInCompletedAssignmentTerminalPair`
-in `internal/worktree`; the serial census also had one unattributed
+in `internal/worktree`. The serial census also had one unattributed
 `internal/worktree` red (output not captured), and the three focused
 repetitions passed. Two reds in six package runs this session matches
 FT203's ~1-in-6–7 profile, but this failing test is not FT203's named
-`TestListCommandPublicRowsAndDisclosure` — the flake family is wider than
+`TestListCommandPublicRowsAndDisclosure`. The flake family is wider than
 the roadmap row records.
 
 ### Fan-out inventory and the #25 residual
 
-Re-walk of every production `go func` site: the phase runner launches at
-most one phase and blocks on its completion (serial by construction);
-`guards` and `sessioninspect` wrap serial children in timeout selects;
+A re-walk covered every production `go func` site. The phase runner launches
+at most one phase and blocks on its completion (serial by construction).
+`guards` and `sessioninspect` wrap serial children in timeout selects, and
 `models` fans out network calls only; every other site is a single
 `cmd.Wait()` await. Bench-owned CPU fan-out sites: zero. The only remaining
 width owner is the Go toolchain's package parallelism inside the single test
-phase, which #10 already established does not read a token pool.
+phase. #10 already established that this parallelism does not read a token
+pool.
 
 The `go list -json -deps ./cmd/bench` module-closure derivation
 (`internal/freshness.buildInputs`) measures 0.10–0.31 s warm across three
@@ -621,11 +633,11 @@ this workload.
 
 ### Decision #26 result
 
-The destination's premise is structurally gone on this baseline: nothing
-oversubscribes the box, the ~123 load-average symptom cannot reproduce from
-a serial phase table peaking at 25 descendants, and the whole-gate target is
-exceeded at 38 s against 120 s. There is no dev-tier saturating class left
-for #8 to certify `r` against — the pool's would-be clients no longer exist.
+The destination's premise is structurally gone on this baseline. Nothing
+oversubscribes the box, and the ~123 load-average symptom cannot reproduce
+from a serial phase table peaking at 25 descendants. The whole-gate target
+is exceeded at 38 s against 120 s. There is no dev-tier saturating class left
+for #8 to certify `r` against: the pool's would-be clients no longer exist.
 Whether #8 and the pool destination retire as achieved-by-other-means is a
 policy choice routed to the map's #27, not selected here.
 
@@ -634,12 +646,14 @@ policy choice routed to the map's #27, not selected here.
 The 2026-08-04 section remains one box, one tree, and one repetition per
 package. Decision #20 adds a new exact tree, three focused repetitions for the
 decision-bearing packages, and one process-profiled fresh gate. The latter is
-mechanism and inflation evidence, not full-gate variance. Decision #21 adds
+mechanism and inflation evidence, not full-gate variance.
+
+Decision #21 adds
 per-test attribution and deterministic Git-spawn counts for the two long dev
-packages on #20's exact tree; its shimmed runs are counting evidence, never
+packages on #20's exact tree. Its shimmed runs are counting evidence, never
 timing evidence. Decisions #13–#21's figures describe the pre-rebuild
-fixture-driven workload and are historical after `3701c4a0`; decision #26's
-section is the only one measured on the current baseline, with two fresh-gate
-repetitions and three focused repetitions per long package on one host. No
-figure here authorizes a width constant; #27 ruled that none is needed and
-closed the map.
+fixture-driven workload and are historical after `3701c4a0`. Decision #26's
+section is the only one measured on the current baseline. It carries two
+fresh-gate repetitions and three focused repetitions per long package on one
+host. No figure here authorizes a width constant; #27 ruled that none is
+needed and closed the map.

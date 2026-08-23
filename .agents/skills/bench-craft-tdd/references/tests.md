@@ -6,18 +6,18 @@ test itself should say. Four properties decide it.
 - **Public-interface behavior.** The test calls the interface callers use and
   asserts what a caller observes — returned values, visible state, emitted
   errors. It never reaches for a private field, an internal helper, or the
-  call pattern between collaborators; a refactor that keeps behavior must
+  call pattern between collaborators. A refactor that keeps behavior must
   keep the test green.
 - **Independently derived expected values.** The expected value comes from
   the spec, a hand computation, or a trusted reference — written as a
-  literal. Never run the implementation and paste back what it returned, and
-  never recompute the expectation with the implementation's own algorithm:
+  literal. Never run the implementation and paste back what it returned.
+  Never recompute the expectation with the implementation's own algorithm:
   both pass by construction against any bug.
 - **One behavior per test.** One scenario, one logical assertion, a name that
   states the behavior. When it fails, the name alone says what broke; a test
   asserting five things reports only that the first one did.
 - **Realistic failure shapes.** Error cases assert the failure the caller
-  actually meets — the typed error, the message a user sees, the state left
+  meets — the typed error, the message a user sees, the state left
   behind — not merely "an error occurred". Draw the cases from the edge
   inventory, not from what the implementation happens to raise.
 
@@ -46,5 +46,5 @@ func TestClose(t *testing.T) {
 }
 ```
 Bad — the expectation is recomputed with the implementation's algorithm, so
-the test passes even when `statusLabel` is wrong, and the failure message
+the test passes even when `statusLabel` is wrong. The failure message
 names no observed value.

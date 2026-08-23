@@ -179,8 +179,8 @@ func worktreeVerdict(args []string) bool {
 
 // stashVerdict blocks the two stash operations that discard work, leaving the rest of
 // the verb (bare, list, pop, push, apply, …) usable. The operation is the first free
-// arg, resolved the way reflog resolves `expire`: options are skipped but their values
-// are not, and neither is anything after `--`, so `git stash -m drop` and
+// arg, resolved the way reflog resolves `expire`. Options are skipped but their
+// values are not, and neither is anything after `--`. So `git stash -m drop` and
 // `git stash -- drop` reach the same verdict as the positional spelling.
 func stashVerdict(args []string) string {
 	op, ok := firstFreeArg(args)
@@ -308,8 +308,8 @@ func checkoutFreeArgs(args []string) []string {
 }
 
 // isDelegateWorktreePath reports whether arg normalizes to a path under
-// .claude/worktrees/ (traversal out of it via `..` normalizes away and no longer
-// matches, so it still blocks).
+// .claude/worktrees/. Traversal out of it via `..` normalizes away and no longer
+// matches, so it still blocks.
 func isDelegateWorktreePath(arg string) bool {
 	norm := path.Clean(arg)
 	return strings.HasPrefix(norm, ".claude/worktrees/") || strings.Contains(norm, "/.claude/worktrees/")
@@ -340,9 +340,10 @@ func hasAny(args []string, opts ...string) bool {
 }
 
 // anyShortFlagHas reports whether any short-flag cluster contains one of the given
-// letters (the `clean -f`/`-fd` test: an arg starting with a single `-` whose remainder
-// contains the letter). A `--long` option is not a cluster — the `r` in `--force` is
-// part of a name, not a flag — so each rule spells its long forms out separately.
+// letters. Such a cluster is an arg starting with a single `-` whose remainder
+// contains the letter (the `clean -f`/`-fd` test). A `--long` option is not a cluster
+// — the `r` in `--force` is part of a name, not a flag. So each rule spells its long
+// forms out separately.
 func anyShortFlagHas(args []string, letters string) bool {
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--") && strings.ContainsAny(arg[1:], letters) {

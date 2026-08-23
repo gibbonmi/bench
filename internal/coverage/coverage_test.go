@@ -13,22 +13,22 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// stories declares three stories and, because most fixtures reference only story 1,
-// carries the reasoned exception line the checker requires for the other two; the
+// stories declares three stories. Because most fixtures reference only story 1, it
+// carries the reasoned exception line the checker requires for the other two. The
 // unreferenced-story rule has its own red cases below on bareStories.
 const stories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n\nNot covered: story 2 — fixture\nNot covered: story 3 — fixture\n"
 const bareStories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n4. As j, I want k, so l.\n5. As m, I want n, so o.\n"
 
 // hdrReducedID and hdrReduced are the only two accepted headers. hdrReducedID opts
-// into per-row IDs (five cells); hdrReduced does not (four cells) — the two widths
-// no longer collide, so no accepted header shares a width with another.
+// into per-row IDs and has five cells; hdrReduced does not, and has four cells. The
+// two widths no longer collide, so no accepted header shares a width with another.
 const hdrReducedID = "| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n"
 const hdrReduced = "| story | behavior | seam | why it catches the failure |\n|---|---|---|---|\n"
 
 // hdrRedSignal and hdrRedSignalID are the two retired headers: they carry the
-// `red signal` column no schema names anymore. Both are used only to prove Check
-// rejects them outright, naming them as missing the canonical header rather than
-// parsing them.
+// `red signal` column no schema names anymore. The tests use both only to prove
+// Check rejects them outright, naming them as missing the canonical header rather
+// than parsing them.
 const hdrRedSignal = "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|\n"
 const hdrRedSignalID = "| row | story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|---|\n"
 
@@ -37,9 +37,9 @@ const hdrRedSignalID = "| row | story | behavior | seam | red signal | why it ca
 const bareStoriesExcused = bareStories + "\nNot covered: story 5 — out of scope\n"
 
 // mapShape is one accepted header paired with the writer that places named cells
-// under it. The two shapes let one violation table run against both schemas, so a
-// check reading a literal offset — which passes under the header it was written
-// for and misreads under the other — cannot hide behind a single-header fixture.
+// under it. The two shapes let one violation table run against both schemas. A check
+// reading a literal offset passes under the header it was written for and misreads
+// under the other, so it cannot hide behind a single-header fixture.
 type mapShape struct {
 	name  string
 	hdr   string
@@ -98,7 +98,8 @@ func TestStateAndRows(t *testing.T) {
 	}
 }
 
-// Every validation phrasing is matched by substring downstream; pin each here.
+// Downstream consumers match every validation phrasing by substring; this test pins
+// each here.
 func TestCheck(t *testing.T) {
 	valid := spec("# v\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced + "| 1, 2–3 | b | s | w |\n")
 	if v := Check(valid); len(v) != 0 {
@@ -110,9 +111,9 @@ func TestCheck(t *testing.T) {
 	}
 	cases := []struct{ body, want string }{
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n| a | b |\n|---|---|\n| 1 | x |\n", "coverage map missing the canonical header"},
-		// Both retired red-signal headers are rejected outright, named as missing the
-		// canonical header rather than parsed — one row per accepted width they used to
-		// share (five cells, six cells).
+		// Check rejects both retired red-signal headers outright, naming them as missing
+		// the canonical header rather than parsed. One row covers each accepted width they
+		// used to share: five cells and six cells.
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrRedSignal + "| 1 | b | s | r | w |\n",
 			"coverage map missing the canonical header"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrRedSignalID + "| AB1 | 1 | b | s | r | w |\n",
@@ -130,9 +131,9 @@ func TestCheck(t *testing.T) {
 			"coverage map row 1 has 6 cells (want 5)"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced + "| 1 | b | s | r | w |\n",
 			"coverage map row 1 has 5 cells (want 4)"},
-		// The empty-cell case asserts the fourth cell (`seam`) rather than the last: the
-		// last cell is `why it catches the failure` under both schemas, so asserting it
-		// would not distinguish an offset slip from a correct read.
+		// The empty-cell case asserts the fourth cell, `seam`, rather than the last cell.
+		// The last cell — `why it catches the failure` — is identical in both schemas, so
+		// it could not catch an offset slip.
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID + "| AB1 | 1 | b |  | w |\n",
 			"coverage map row 1 has an empty 'seam' cell"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced + "| 1 | b |  | w |\n",
@@ -141,9 +142,9 @@ func TestCheck(t *testing.T) {
 			"coverage map row 1 behavior states more than one predicate (';' outside backticks); split the row"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced + "| 1 | prints x; removes y | s | w |\n",
 			"coverage map row 1 behavior states more than one predicate (';' outside backticks); split the row"},
-		// A header renaming only its last cell, at each accepted width. Every one is
-		// refused rather than parsed under a guess: a schema resolved by cell count
-		// whenever the names do not match would accept all three.
+		// Each case renames only the header's last cell, at every accepted width. Check
+		// refuses every one rather than parsing it under a guess. A schema resolved by
+		// cell count, when names do not match, would accept all three.
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n| story | behavior | seam | outcome |\n|---|---|---|---|\n| 1 | b | s | w |\n",
 			"coverage map missing the canonical header"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n| row | story | behavior | seam | outcome |\n|---|---|---|---|---|\n| AB1 | 1 | b | s | w |\n",
@@ -172,10 +173,11 @@ func TestCheck(t *testing.T) {
 
 // TestRowsProjectsShortRowUnderBothSchemas drives the projection over a data row
 // carrying fewer cells than its header declares. Check refuses such a row on width
-// and moves on, but Rows walks every data row regardless, so the projection resolves
-// fields that run past the row's last cell: those read as empty and the cells the row
-// does carry still land in their named slots. Asserting the projected triple rather
-// than absence-of-panic pins which cells those are.
+// and moves on. Rows walks every data row regardless, so the projection resolves
+// fields that run past the row's last cell. Those fields read as empty, and the
+// cells the row does carry still land in their named slots. This test asserts the
+// projected triple, rather than checking only for the absence of a panic, to pin
+// down which cells those are.
 func TestRowsProjectsShortRowUnderBothSchemas(t *testing.T) {
 	nonOptIn := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced +
 		"| 1 | does x |\n" +
@@ -204,8 +206,9 @@ func TestRowsProjectsShortRowUnderBothSchemas(t *testing.T) {
 }
 
 // TestCommandRendersShortRow drives the same shortfall through Command, the surface a
-// caller actually reads: a short row still renders as a full three-column TOON record
-// with its absent cells empty, alongside the repair action its width violation earns.
+// caller actually reads. A short row still renders as a full three-column TOON record,
+// with its absent cells empty. It also renders alongside the repair action its width
+// violation earns.
 func TestCommandRendersShortRow(t *testing.T) {
 	t.Chdir(t.TempDir())
 	mustWrite(t, "spec.md", "# t\n\n"+stories+"\n### Acceptance coverage map\n"+hdrReduced+"| 1 | does x |\n")
@@ -217,9 +220,9 @@ func TestCommandRendersShortRow(t *testing.T) {
 	}
 }
 
-// TestCheckOptIn covers the 5-cell opt-in canonical header on its own: a valid
-// opt-in map has no violations, and its Rows/State behave exactly as a non-opt-in
-// map's.
+// TestCheckOptIn covers the 5-cell opt-in canonical header on its own. A valid
+// opt-in map has no violations, and its Rows and State behave exactly as a
+// non-opt-in map's.
 func TestCheckOptIn(t *testing.T) {
 	p := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
 		"| AB1 | 1 | does x | cli seam | catches z |\n" +
@@ -237,8 +240,8 @@ func TestCheckOptIn(t *testing.T) {
 }
 
 // TestParseSpecOptIn drives ParseSpec, the package's exported entry point, over a
-// 5-cell opt-in map on disk: the opt-in verdict, the ordered row IDs, and no
-// violations.
+// 5-cell opt-in map on disk. It checks the opt-in verdict, the ordered row IDs, and
+// the absence of violations.
 func TestParseSpecOptIn(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "spec.md")
@@ -289,8 +292,8 @@ func mustWrite(t *testing.T, path, content string) {
 	}
 }
 
-// TestCommand drives Command through its public (args) -> (output, exit code) interface
-// only, per the spec's testing decision — never parse/Check directly.
+// TestCommand drives Command through its public (args) -> (output, exit code)
+// interface only, and never calls parse or Check directly.
 func TestCommand(t *testing.T) {
 	mapped := func(row string) string {
 		return "# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced + row
@@ -340,11 +343,11 @@ func TestCommand(t *testing.T) {
 		}
 	})
 
-	// An unrecognized header has no descriptor of its own, so its rows project through
-	// the four-cell reduced schema, the projection fallback: a caller still gets the
-	// story/behavior/seam it seeds tasks from, next to the repair action the unknown
-	// header earns. Dropping the rows would leave the map's content unreachable until
-	// someone fixes the header by hand.
+	// An unrecognized header has no descriptor of its own. Its rows project through the
+	// four-cell reduced schema, the projection fallback. A caller still gets the story,
+	// behavior, and seam it seeds tasks from, next to the repair action the unknown
+	// header earns. If the rows were dropped, the map's content would stay unreachable
+	// until someone fixes the header by hand.
 	t.Run("unrecognized header projects rows through the fallback schema", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		body := "# t\n\n" + stories + "\n### Acceptance coverage map\n" +
@@ -370,8 +373,8 @@ func TestCommand(t *testing.T) {
 	})
 
 	// The behavior cell is author-controlled prose that reaches the TOON encoder, so a
-	// control byte in it is refused whole: the AXI error contract replaces the response
-	// rather than a table with one lossy cell in it.
+	// control byte in it refuses the whole response. The AXI error contract replaces
+	// the response rather than rendering a table with one lossy cell in it.
 	t.Run("control-bearing behavior cell refuses the whole response", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		mustWrite(t, "spec.md", mapped("| 1 | b\x1bx | s | w |\n"))
@@ -383,7 +386,7 @@ func TestCommand(t *testing.T) {
 		}
 	})
 
-	// A comma is the row delimiter and a tab is an escapable control, so a behavior
+	// A comma is the row delimiter, and a tab is an escapable control. A behavior
 	// carrying either is the case where an unquoted cell would silently split or
 	// corrupt the record. Both stay one three-field row, quoted by the encoder.
 	for _, tc := range []struct{ name, behavior, row string }{
@@ -524,12 +527,13 @@ func TestCommand(t *testing.T) {
 }
 
 // TestCommandProjectsOneRowShapeAcrossSchemas pins the whole primary response as a
-// literal for every accepted header. The same named cells are written under each of
-// the two, so an agent seeding tasks from `bench coverage` reads one row shape and
-// never branches on the spec's schema — including the behavior cell, which every
-// header carries and which names what to build. The expectation is spelled out here
-// rather than recomputed from the implementation's own column list, which would
-// follow a projection change silently instead of going red on it.
+// literal for every accepted header. The test writes the same named cells under each
+// of the two. This lets an agent seeding tasks from `bench coverage` read one row
+// shape and never branch on the spec's schema. This includes the behavior cell,
+// which every header carries and which names what to build. The test spells out the
+// expectation here rather than recomputing it from the implementation's own column
+// list. That list would follow a projection change silently instead of going red on
+// it.
 func TestCommandProjectsOneRowShapeAcrossSchemas(t *testing.T) {
 	const want = "spec: spec.md\nstate: mapped\nrows[2]{story,behavior,seam}:\n" +
 		"  \"1\",does x,cli seam\n" +
@@ -553,10 +557,10 @@ func TestCommandProjectsOneRowShapeAcrossSchemas(t *testing.T) {
 
 // TestCommandActionListIsUnchangedByTheSchema drives the other half of the action
 // list — a map with violations — under every accepted header. Cutting a column
-// changes what the rows block projects, not what the AXI block offers: a violating
+// changes what the rows block projects, not what the AXI block offers. A violating
 // map still earns exactly one `retry after repairing coverage map` action, whichever
-// schema it was written under. The clean per-row case is asserted literally in
-// TestCommandProjectsOneRowShapeAcrossSchemas above.
+// schema it was written under. TestCommandProjectsOneRowShapeAcrossSchemas above
+// asserts the clean per-row case literally.
 func TestCommandActionListIsUnchangedByTheSchema(t *testing.T) {
 	const want = "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n" +
 		"  \"9\",does x,cli seam\n" +
@@ -655,7 +659,7 @@ func TestCommandAngleBracketSpecPathPreservesPrimaryAndHonestFallback(t *testing
 }
 
 // TestSchemaSelectionByHeaderNames drives every accepted header through State and
-// ParseSpec, the two verdicts a caller reads: each maps, and each reports the opt-in
+// ParseSpec, the two verdicts a caller reads. Each maps, and each reports the opt-in
 // and ordered row IDs its own header declares.
 func TestSchemaSelectionByHeaderNames(t *testing.T) {
 	dir := t.TempDir()
@@ -689,20 +693,20 @@ func TestSchemaSelectionByHeaderNames(t *testing.T) {
 }
 
 // TestFiveCellHeadersSelectSchemaByName is retired. It drove byte-identical rows
-// through the two legacy five-cell headers — the no-row-ID form and its row-ID
-// variant, which differed only in whether they named `red signal` — to prove the
-// parser resolves a schema by cell *names*, never by cell count. Deleting the
-// legacy pair left widths 5 (hdrReducedID) and 4 (hdrReduced) as the only accepted
-// forms, so no two accepted headers share a width anymore: the confusion class
-// this test guarded is now structurally impossible rather than merely untested. A
-// synthetic same-width header was deliberately not invented to keep it alive.
+// through the two legacy five-cell headers: the no-row-ID form and its row-ID
+// variant, which differed only in whether they named `red signal`. It proved the
+// parser resolves a schema by cell *names*, never by cell count. The legacy pair's
+// removal left widths 5, hdrReducedID, and 4, hdrReduced, as the only accepted
+// forms, so no two accepted headers share a width anymore. The confusion class
+// this test guarded is now structurally impossible rather than merely untested.
+// This suite does not invent a synthetic same-width header to keep it alive.
 
 // TestViolationsAreIdenticalAcrossSchemas runs one violation table against every
-// accepted header from one set of named cells. Cutting a column must not cut a
-// check, so each case asserts the *same* violation strings under every schema —
-// a check reading a literal offset would report a different message, or none, under
-// one of the two. Behaviors carry an escaped pipe, since a behavior legitimately
-// contains `|` and the parser's split sentinel has to survive the schema change.
+// accepted header from one set of named cells. A cut column must not cut a check,
+// so each case asserts the *same* violation strings under every schema. A check
+// reading a literal offset would report a different message, or none, under one of
+// the two. Behaviors carry an escaped pipe, since a behavior legitimately contains
+// `|` and the parser's split sentinel has to survive the schema change.
 func TestViolationsAreIdenticalAcrossSchemas(t *testing.T) {
 	const behavior = `does x \| y`
 	cases := []struct {
@@ -740,9 +744,9 @@ func TestViolationsAreIdenticalAcrossSchemas(t *testing.T) {
 		{name: "malformed row id", stories: stories, optInOnly: true,
 			rows: [][4]string{{"ab-1", "1", behavior, "cli seam"}},
 			want: "coverage map row 1 has a malformed row id 'ab-1'"},
-		// A malformed row ID at a later row, not just row 0, must still be rejected —
-		// the well-formed first row proves the check runs per row rather than only at
-		// the start of the loop.
+		// The check must still reject a malformed row ID at a later row, not just row 0.
+		// The well-formed first row proves the check runs per row rather than only at the
+		// start of the loop.
 		{name: "malformed row id at a later row", stories: stories, optInOnly: true,
 			rows: [][4]string{{"AB1", "1", behavior, "cli seam"}, {"not-an-id", "2", behavior, "gate"}},
 			want: "coverage map row 2 has a malformed row id 'not-an-id'"},

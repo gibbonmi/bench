@@ -22,10 +22,9 @@ func roadmapUsage() string {
 	return "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...> | bench roadmap --flow\n"
 }
 
-// ideaGrammar is the declared argument shape usage.Parse enforces for this subcommand —
-// arity, flag recognition, `--`, and help all come from there rather than a local switch.
-// The text is variadic, so MaxArgs is unbounded; `--` is what makes idea text that
-// begins with a dash expressible.
+// ideaGrammar declares the argument shape usage.Parse enforces for this subcommand.
+// Arity, flag recognition, `--`, and help all come from this grammar, not a local switch.
+// The text is variadic, so MaxArgs is unbounded. `--` lets idea text begin with a dash.
 var ideaGrammar = usage.Grammar{
 	Cmd:  "bench idea",
 	Help: `usage: bench idea "<text>"`,
@@ -42,28 +41,28 @@ var occurrenceOwner = regexp.MustCompile(`^FT[1-9][0-9]*$`)
 func ValidOccurrenceOwner(owner string) bool { return occurrenceOwner.MatchString(owner) }
 
 // roadmapGrammar is the bare `bench roadmap` form. Every argument-bearing invocation
-// is dispatched to the --context form, which declares its own grammar, so this one
-// takes nothing at all.
+// dispatches to the --context form, which declares its own grammar. This grammar
+// therefore takes no arguments.
 var roadmapGrammar = usage.Grammar{
 	Cmd:  "bench roadmap",
 	Help: strings.TrimSuffix(roadmapUsage(), "\n"),
 }
 
-// IdeasFile and RoadmapFile are the two repo-relative control records this package
-// owns. Both are exported because the status board names them in the rows it prints
-// when their reads fail, and a literal repeated there is a second derivation of a name
-// this package decides.
+// IdeasFile and RoadmapFile are the two repo-relative control records this package owns.
+// Both are exported because the status board names them in the rows it prints when their
+// reads fail. A literal repeated there would be a second derivation of a name this
+// package decides.
 const (
 	IdeasFile   = "capture/IDEAS.md"
 	RoadmapFile = "ROADMAP.md"
 )
 
-// IdeaCommand implements `bench idea <text...>`: it appends a dated line to capture/IDEAS.md.
-// The args are joined with single spaces; an empty or all-whitespace text yields the
-// usage string on exit 2 without touching the file. Otherwise it resolves the repo
-// root, normalizes a missing trailing newline (so a hand-edited last line without one
-// does not swallow the new entry onto its physical line), then appends
-// `- <ISO date>  <text>` — two spaces between date and text — creating the file if absent.
+// IdeaCommand implements `bench idea <text...>` and appends a dated line to
+// capture/IDEAS.md. It joins the args with single spaces. An empty or all-whitespace text
+// yields the usage string on exit 2 and does not touch the file. Otherwise it resolves
+// the repo root and normalizes a missing trailing newline, so a hand-edited last line
+// does not absorb the new entry. It then appends `- <ISO date>  <text>`, with two spaces
+// between date and text, and creates the file if absent.
 func IdeaCommand(args []string) (string, int) {
 	parsed, line, code := usage.Parse(ideaGrammar, args)
 	if line != "" {
@@ -96,8 +95,8 @@ func IdeaCommand(args []string) (string, int) {
 		text += " [occurrence:" + owner + "/" + incident + "]"
 	}
 	file := filepath.Join(root, IdeasFile)
-	// The inbox lives in a directory a fresh repo may not have yet, and parking an idea
-	// is often the first thing that touches it.
+	// The inbox lives in a directory a fresh repo may not have yet. A parked idea is often
+	// the first thing to touch this directory.
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 		return cannotWriteIdeas(err), 1
 	}
@@ -110,8 +109,8 @@ func IdeaCommand(args []string) (string, int) {
 
 	entry := "- " + time.Now().Format("2006-01-02") + "  " + text + "\n"
 	if needsNewline(file) {
-		// One write, not two: an interrupt between a separate newline write and the
-		// entry write would leave a bare blank line with no entry behind it.
+		// This code performs one write, not two. An interrupt between two separate writes would
+		// leave a bare blank line with no entry behind it.
 		entry = "\n" + entry
 	}
 	if _, err := f.WriteString(entry); err != nil {
@@ -142,8 +141,8 @@ func cannotWriteIdeas(err error) string {
 	return toon.Errorf("cannot write "+IdeasFile, err.Error()) + "\n"
 }
 
-// needsNewline reports whether the file is non-empty and its last byte is not a
-// newline — the case where an appended line would merge onto a hand-edited last line.
+// needsNewline reports whether the file is non-empty and its last byte is not a newline.
+// In that case, an appended line would merge onto a hand-edited last line.
 func needsNewline(file string) bool {
 	info, err := os.Stat(file)
 	if err != nil || info.Size() == 0 {
@@ -170,8 +169,8 @@ func RoadmapCommand(args []string) (string, int) {
 	case tree.Index.State == bounds.StateAbsent:
 		return renderRoadmapBoard(Document{}, nil, DrainCounts(root), true, tree.DirState)
 	case tree.Index.State == bounds.StateEmpty:
-		// The classifier carries no diagnostic for a clean read of nothing, so the
-		// error line supplies the one fact that separates this from absence.
+		// The classifier carries no diagnostic for a clean read of nothing. The error line
+		// supplies the one fact that separates this state from absence.
 		return toon.RecordError(RoadmapFile, tree.Index.State, "the file exists but holds no bytes") + "\n", 1
 	case tree.Index.State.Failed():
 		return toon.RecordError(RoadmapFile, tree.Index.State, tree.Index.Reason) + "\n", 1
@@ -241,9 +240,9 @@ func renderRoadmapBoard(doc Document, diagnostics []Diagnostic, drain Drain, abs
 	return out.String(), 0
 }
 
-// Drain is the typed capture-source snapshot `bench roadmap` and `bench status` project.
-// It carries each pending count and its source state so absence and empty remain the
-// ordinary quiet posture while failed reads render fail-closed unknown evidence.
+// Drain is the typed capture-source snapshot that `bench roadmap` and `bench status`
+// project. It carries each pending count with its source state. Absence and empty stay
+// the ordinary quiet posture, while a failed read renders fail-closed unknown evidence.
 type Drain struct {
 	Ideas, OpenLearnings, Retros            int
 	IdeasState, LearningsState, RetrosState bounds.FileState
@@ -261,9 +260,9 @@ func DrainCounts(root string) Drain {
 }
 
 // RoadmapText returns ROADMAP.md's rendered contents and whether the file yielded a
-// working document at all. The dashboard renders this text; a false present flag drives
-// its definitive empty state, which is where every state but a clean non-empty read
-// lands — the page degrades rather than failing, unlike the `bench roadmap` command.
+// working document. The dashboard renders this text. A false present flag drives the
+// dashboard's definitive empty state. Every state but a clean non-empty read lands there,
+// so the page degrades instead of failing, unlike the `bench roadmap` command.
 func RoadmapText(root string) (text string, present bool) {
 	tree := LoadTree(root)
 	if tree.Index.State != bounds.StateParsed {
@@ -273,26 +272,27 @@ func RoadmapText(root string) (text string, present bool) {
 	return doc.Text, true
 }
 
-// ParkedIdeas returns the parked idea lines from capture/IDEAS.md — every line beginning `- `, the
-// same lines DrainCounts tallies (both go through ideaLines, one source). A file that did
-// not read as a usable document yields nil, which the dashboard renders as its empty state.
+// ParkedIdeas returns the parked idea lines from capture/IDEAS.md, every line beginning
+// `- `. DrainCounts tallies these same lines, since both functions read through
+// ideaLines, one source. A file that did not read as a usable document yields nil, which
+// the dashboard renders as its empty state.
 func ParkedIdeas(root string) []string {
 	parked, _ := ideaLines(filepath.Join(root, IdeasFile))
 	return parked
 }
 
-// RecommendedSequence extracts the `## Recommended sequence` section, from its
-// heading (trailing whitespace tolerated) to the next `## ` heading or EOF. Fence
-// state is tracked throughout: a heading inside a fenced code block neither starts
-// the section nor terminates it. Both `bench roadmap`'s next-action callout and the
-// dashboard's sequence block read it, so the two share one parser.
+// RecommendedSequence extracts the `## Recommended sequence` section, from its heading,
+// with trailing whitespace tolerated, to the next `## ` heading or EOF. This function
+// tracks fence state throughout. A heading inside a fenced code block neither starts the
+// section nor ends it. Both `bench roadmap`'s next-action callout and the dashboard's
+// sequence block read this section, so the two share one parser.
 func RecommendedSequence(roadmap string) string {
 	_, text, _ := parseSequence(strings.Split(roadmap, "\n"))
 	return text
 }
 
 // learningCount classifies capture/learnings.md and counts its parser-approved open rows.
-// Absent is the quiet-journal posture; every present non-document state is retained so
+// Absent is the quiet-journal posture. Every present non-document state is retained, so
 // the drain surfaces unknown evidence instead of a fabricated clean journal.
 func learningCount(root string) (int, bounds.FileState) {
 	c := bounds.Classify(filepath.Join(root, filepath.FromSlash(learnings.JournalPath)), bounds.ControlRecordLimit)
@@ -309,12 +309,12 @@ func learningCount(root string) (int, bounds.FileState) {
 	return len(learnings.Rows(c.Data)), bounds.StateParsed
 }
 
-// ideaLines is the one reader of capture/IDEAS.md-style parked lines: every line beginning `- `,
-// returned with the file's own readability state. DrainCounts tallies them and
-// ParkedIdeas returns them for the dashboard, so the count and the rendered list can
-// never disagree about either the lines or what was readable. Absent or empty is no
-// lines at bounds.StateParsed (the ordinary quiet-inbox posture), the same
-// absent/empty-is-quiet, failed-read-is-reported contract as learningCount.
+// ideaLines is the one reader of capture/IDEAS.md-style parked lines, every line
+// beginning `- `. It returns the lines with the file's own readability state. DrainCounts
+// tallies these lines, and ParkedIdeas returns them for the dashboard, so the count and
+// the rendered list never disagree. Absent or empty yields no lines at
+// bounds.StateParsed, the ordinary quiet-inbox posture. This is the same
+// absent-and-empty-is-quiet, failed-read-is-reported contract as learningCount.
 func ideaLines(file string) ([]string, bounds.FileState) {
 	c := bounds.Classify(file, bounds.ControlRecordLimit)
 	switch {
@@ -328,9 +328,9 @@ func ideaLines(file string) ([]string, bounds.FileState) {
 }
 
 // rowNextTokens is the ordered set of values a row's `Next:` line may carry, one token
-// per phase a row can be routed to. It is the one source for the grammar: the split-board
-// parser validates against it, and the drain's token table is graded against it, so the
-// enforcement and its documentation cannot drift apart.
+// per phase a row can reach. It is the one source for this grammar. The split-board
+// parser validates against it, and the drain's token table is graded against it. The
+// enforcement and its documentation therefore cannot drift apart.
 var rowNextTokens = []string{"shape", "spec", "ticket", "decide", "kit-edit"}
 
 // RowNextTokens returns the ordered row-token set. It hands back a fresh slice, so a

@@ -1,8 +1,8 @@
 // Package gitguard is the destructive-git analyzer behind the PreToolUse guard
-// (.bench/hooks/block-dangerous-git.sh) — the single source that both classifies an
+// (.bench/hooks/block-dangerous-git.sh). It is the single source that both classifies an
 // agent's Bash command (deny label or "") and enumerates the deny classes for the guard
-// manifest, so enforcement and advertisement cannot drift. The shim pipes the PreToolUse
-// envelope to `bench guard-git`, which classifies through this package.
+// manifest. This is so enforcement and advertisement cannot drift. The shim pipes the
+// PreToolUse envelope to `bench guard-git`, which classifies through this package.
 //
 // Threat model: an honest-mistake layer, not an
 // evasion-resistant boundary. Wrapper scanning goes exactly one level deep; the
@@ -55,7 +55,7 @@ var denyLabels = func() map[string]string {
 }()
 
 // CommandFromEnvelope extracts tool_input.command from the PreToolUse JSON envelope on
-// stdin, returning "" when the envelope is malformed or the field is absent — the
+// stdin. It returns "" when the envelope is malformed or the field is absent. The
 // analyzer then classifies "" as allow, so a non-JSON or command-less envelope is
 // permitted exactly as the Python shim's `|| true` did.
 func CommandFromEnvelope(data []byte) string {

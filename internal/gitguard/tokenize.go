@@ -8,8 +8,8 @@ import (
 // The tokenizer reproduces the shell lexing of
 // shlex(posix=True, punctuation_chars="();<>|&\n", whitespace_split=True). Its job is
 // not a general shell parser: it splits a command line into the word and control-op
-// tokens scan() consumes, folding quotes and escapes into words so a wrapper's inner
-// `-c` string survives as one token, and lexing a bare newline as an operator so a
+// tokens scan() consumes. It folds quotes and escapes into words, so a wrapper's inner
+// `-c` string survives as one token. And it lexes a bare newline as an operator, so a
 // multi-line block scans as separate commands (the common way an agent batches git).
 
 // punctChars are the shell operator characters. A run of them forms one operator token,
@@ -17,10 +17,10 @@ import (
 // newline is here (not in whitespace) so a bare newline emits as its own operator.
 //
 // Deliberate divergence: `#` is NOT a comment char here (shlex's commenters would drop
-// `#`-to-end-of-line). Honoring it is unnecessary for an honest-mistake guard and only
-// fails safe when skipped — a `#`-commented destructive verb over-blocks rather than
-// slipping through, and shlex's own comment handling has the opposite hole (it eats the
-// newline separator, so `git status # x`⏎`git push` sneaks a push past the guard).
+// `#`-to-end-of-line). Honoring it is unnecessary for an honest-mistake guard, and it
+// only fails safe when skipped — a `#`-commented destructive verb over-blocks rather
+// than slipping through. shlex's own comment handling has the opposite hole: it eats
+// the newline separator, so `git status # x`⏎`git push` sneaks a push past the guard.
 const punctChars = "();<>|&\n"
 
 // spaceChars separate tokens without emitting one. shlex's default whitespace is
@@ -28,7 +28,7 @@ const punctChars = "();<>|&\n"
 const spaceChars = " \t\r"
 
 // redirectRe matches a redirection operator token (optionally fd-prefixed / fd-dup
-// suffixed): the token and its following target are dropped by stripRedirections, and a
+// suffixed). The token and its following target are dropped by stripRedirections, and a
 // bare leading fd digit is popped.
 var redirectRe = regexp.MustCompile(`^(?:[0-9]+)?(?:>>?|<<?<?)(?:[|&])?$|^&>>?$`)
 
@@ -49,9 +49,9 @@ func allPunct(tok string) bool {
 	return true
 }
 
-// tokenize splits s into scan()'s tokens. It lexes with quote/escape handling; on
-// unbalanced quoting (or a trailing escape) it falls back to a plain split that still
-// honors newlines as boundaries, so a multi-line block can't slip through unclassified.
+// tokenize splits s into scan()'s tokens. It lexes with quote/escape handling. On
+// unbalanced quoting (or a trailing escape) it falls back to a plain split. That split
+// still honors newlines as boundaries, so a multi-line block can't slip through unclassified.
 // It then collapses any operator-only token carrying a newline to a plain control op
 // (`\n`→`;`, `;\n`→`;`, `&&\n`→`&&`) and strips redirections.
 func tokenize(s string) []string {
@@ -74,9 +74,9 @@ func tokenize(s string) []string {
 
 // lex is the shlex-equivalent scanner. It returns the raw token list, or ok=false when
 // a quote is left open or a trailing backslash has nothing to escape (shlex's
-// ValueError), which routes the caller to fallbackSplit. Words accumulate non-space,
-// non-operator runs with single/double quotes and backslash escapes folded in; a run of
-// operator characters emits as one operator token.
+// ValueError). That case routes the caller to fallbackSplit. Words accumulate
+// non-space, non-operator runs with single/double quotes and backslash escapes folded
+// in; a run of operator characters emits as one operator token.
 func lex(s string) (tokens []string, ok bool) {
 	runes := []rune(s)
 	var cur strings.Builder
@@ -148,10 +148,10 @@ func lex(s string) (tokens []string, ok bool) {
 	return tokens, true
 }
 
-// fallbackSplit is the malformed-quoting path: split on newlines (each a `;` boundary
-// so a multi-line block still can't hide a destructive verb) and whitespace-split each
-// line. This is the shlex-ValueError fallback: it drops quote handling but never a
-// newline boundary.
+// fallbackSplit is the malformed-quoting path. It splits on newlines (each a `;`
+// boundary, so a multi-line block still can't hide a destructive verb), then
+// whitespace-splits each line. This is the shlex-ValueError fallback: it drops quote
+// handling but never a newline boundary.
 func fallbackSplit(s string) []string {
 	var raw []string
 	for idx, line := range strings.Split(s, "\n") {

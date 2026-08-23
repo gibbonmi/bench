@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
-# Bench harness adapter: maps the shift prompt (read from stdin) to Codex's noninteractive mode.
-# The line binds the model to the declared line — in a routed repo (.bench/lines.env
-# present) BENCH_MODEL must name a bound tier or `bench resolve-model` refuses (exit
-# 1) and this adapter refuses to launch; see .bench/lib/resolve-bench.sh and
-# BENCH-reference.md "Harness adapter for the shift loop". The adapter fails CLOSED
-# when the wrapper resolver or the core is unreachable — an unguarded passthrough in
-# a routed repo is silent de-enforcement. The loop pipes the prompt on stdin; `codex exec`
-# reads the instructions from stdin when none are given as an argument, so the prompt
-# never appears on argv.
+# This is the Bench harness adapter for Codex. It maps the shift prompt, read from
+# stdin, to Codex's noninteractive mode.
+#
+# The line binds the model to the declared line. In a routed repo — .bench/lines.env
+# present — BENCH_MODEL must name a bound tier. Otherwise `bench resolve-model`
+# refuses with exit 1, and this adapter refuses to launch. See
+# .bench/lib/resolve-bench.sh and BENCH-reference.md, "Harness adapter for the shift
+# loop".
+#
+# The adapter fails closed when the wrapper resolver or the core is unreachable. An
+# unguarded passthrough in a routed repo is silent de-enforcement.
+#
+# The loop pipes the prompt on stdin. `codex exec` reads the instructions from stdin
+# when none are given as an argument, so the prompt never appears on argv.
 _lib="$(dirname "$0")/../lib/resolve-bench.sh"
 [ -f "$_lib" ] || { echo "bench adapter: wrapper resolver missing at $_lib — refusing to run unguarded" >&2; exit 1; }
 # shellcheck source=../lib/resolve-bench.sh

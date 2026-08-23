@@ -15,8 +15,8 @@ import (
 )
 
 // newResidueGuardFixture builds a repository whose dist/ is both ignored and declared as
-// build output, plus one owned assignment holding an empty dist/ — the exact shape that
-// lets a release reach the residue guard's removal loop.
+// build output, plus one owned assignment holding an empty dist/. This is the exact shape
+// that lets a release reach the residue guard's removal loop.
 func newResidueGuardFixture(t *testing.T, request string) (string, Creation) {
 	t.Helper()
 	root := newWorktreeRepo(t)
@@ -51,10 +51,10 @@ func stubRunningBinary(t *testing.T, path string) {
 }
 
 // TestResidueGuardWarnsBeforeRemovingTheLiveBinary is H25. Removing the dist/bench the
-// wrapper resolved takes the CLI, the git guard that CLI backs, and the gate's
-// BENCH_RUN_BINARY down together, and the guard did it silently. The warning has to name
-// the scripts/go-build.sh invocation, because plain `go build` leaves the package version
-// the version and upgrade contracts read unstamped.
+// wrapper resolved takes down the CLI, the git guard that CLI backs, and the gate's
+// BENCH_RUN_BINARY together. Without this test, the guard does that silently. The
+// warning has to name the scripts/go-build.sh invocation, because plain `go build` leaves
+// the package version the version and upgrade contracts read unstamped.
 func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 	const request = "landed-live-binary"
 	root, creation := newResidueGuardFixture(t, request)
@@ -79,8 +79,8 @@ func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 
 // TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown pins the two branches that decide
 // the guard's posture when it cannot learn which binary is running. Both answer "warn",
-// because nothing has been shown about the candidate: flipping either to "remove
-// silently" is exactly the incident this guard exists to prevent, and no fixture reaches
+// because nothing has been shown about the candidate. Flipping either to "remove
+// silently" is exactly the incident this guard exists to prevent. No fixture reaches
 // them through ReleaseCommand, whose stub always resolves.
 func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
 	candidate := filepath.Join(t.TempDir(), "bench")
@@ -111,9 +111,9 @@ func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
 }
 
 // TestIsRunningBinaryResolvesThroughASymlink is the profile's "invocation through a
-// symlink rather than the real path" class: the wrapper may exec a link, and the guard
-// must still recognize the target as the live binary. Two things deliver that today —
-// the EvalSymlinks normalization and os.Stat following the link — so no single mutation
+// symlink rather than the real path" class. The wrapper may exec a link, and the guard
+// must still recognize the target as the live binary. Two things deliver that today: the
+// EvalSymlinks normalization and os.Stat following the link. So no single mutation
 // reddens this. It pins the behavior, not either mechanism.
 func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
 	dir := t.TempDir()
@@ -131,7 +131,7 @@ func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
 
 // TestResidueGuardRemovesForeignBinariesWithoutWarning is H26. A path-shaped predicate
 // warns on every checkout that has ever been built, which trains the warning away before
-// the one removal that matters arrives; identity keeps ordinary residue ordinary. The
+// the one removal that matters arrives. Identity keeps ordinary residue ordinary. The
 // space-and-glob name also pins that the guard resolves its candidate exactly rather than
 // through a shell-expanded pattern.
 func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {

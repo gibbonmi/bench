@@ -29,9 +29,9 @@ func stagePlanEntry(dir string, e planEntry, mode string) (string, error) {
 	if e.kind == "inline" || e.kind == "seed" {
 		return stageBytes(dir, name, []byte(e.content), 0o644)
 	}
-	// inline-exec carries generated content (bench setup's gate.sh) that must land
-	// executable, same staged-write path as "inline" with a different mode bit — not
-	// a second write mechanism.
+	// inline-exec carries generated content, such as bench setup's gate.sh, that must land
+	// executable. It follows the same staged-write path as "inline" with a different mode
+	// bit, not a second write mechanism.
 	if e.kind == "inline-exec" {
 		return stageBytes(dir, name, []byte(e.content), 0o755)
 	}
@@ -65,12 +65,12 @@ func stagedAgents(stage, root string) (string, error) {
 }
 
 // stagedClaude converges CLAUDE.md to the canonical Bench form when it is absent or
-// already one of the known bench-generated forms. Any other existing content -
-// including a pre-existing empty file - is project-owned and left untouched: bench
-// never writes into a CLAUDE.md path a user already claimed, even with zero bytes
-// (see the pre-existing-empty-CLAUDE.md regression guard in the link/unlink surface
-// contracts), and never injects the import lines into prose it didn't write (see the
-// "relink injected an import into a project-owned CLAUDE.md" guard).
+// already one of the known bench-generated forms. Any other existing content, including a
+// pre-existing empty file, is project-owned and left untouched. bench never writes into a
+// CLAUDE.md path a user already claimed, even with zero bytes; see the
+// pre-existing-empty-CLAUDE.md regression guard in the link/unlink surface contracts.
+// bench never injects the import lines into prose it did not write; see the "relink
+// injected an import into a project-owned CLAUDE.md" guard.
 func stagedClaude(stage, root string) (string, bool, error) {
 	b, err := os.ReadFile(filepath.Join(root, "CLAUDE.md"))
 	if os.IsNotExist(err) || string(b) == legacyClaudeMD() || string(b) == benchClaudeMD() {
@@ -180,16 +180,15 @@ func removeEmptyDirs(dirs []string) {
 	}
 }
 
-// isSpecialFile reports whether path exists and is something other than a regular
-// file or symlink — a FIFO, socket, device node, or directory. Lstat alone never
-// blocks, unlike opening the path for read, so callers can use this to route the path
-// straight to a conflict instead of ever attempting to read it. Every call site
-// (link_transaction.go's AGENTS.md/CLAUDE.md guards, doctor_rows.go's per-row checks)
-// fixes one of those two instruction-file paths; it never classifies a general plan
-// entry (those go through their own os.Stat(parent).IsDir() check above), so treating
-// a directory as "special" here cannot change how a legitimate directory plan entry is
-// handled - it only turns a directory sitting where AGENTS.md/CLAUDE.md belongs into
-// the same preserved conflict a FIFO already gets, instead of a raw read error.
+// isSpecialFile reports whether path exists and is something other than a regular file or
+// symlink: a FIFO, socket, device node, or directory. Lstat alone never blocks, unlike
+// opening the path for read. A caller uses this to route the path straight to a conflict
+// instead of ever attempting to read it. Every call site, link_transaction.go's
+// AGENTS.md/CLAUDE.md guards and doctor_rows.go's per-row checks, fixes one of those two
+// instruction-file paths. It never classifies a general plan entry; those go through
+// their own os.Stat(parent).IsDir() check above. A directory sitting where
+// AGENTS.md/CLAUDE.md belongs gets the same preserved conflict a FIFO already gets,
+// instead of a raw read error.
 func isSpecialFile(path string) bool {
 	info, err := os.Lstat(path)
 	if err != nil {

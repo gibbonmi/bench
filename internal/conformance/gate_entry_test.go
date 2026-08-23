@@ -75,9 +75,9 @@ func checkGateEntryContract(root string) []string {
 	return diags
 }
 
-// gateEntryWrapperAction is the invocation the wrapper-less refusal must name. The
-// run-binary variable is wrapper-owned, so naming it alone leaves a session that
-// meets the refusal with no next action.
+// gateEntryWrapperAction is the invocation the wrapper-less refusal must name. The run-
+// binary variable is wrapper-owned. Naming the variable alone leaves a session that meets
+// the refusal with no next action.
 const gateEntryWrapperAction = "bash bin/bench.sh gate"
 
 func TestGateEntryRefusesUnverifiedBinaryBeforeGatePhases(t *testing.T) {
@@ -105,9 +105,9 @@ func TestGateEntryRefusesUnverifiedBinaryBeforeGatePhases(t *testing.T) {
 	}
 }
 
-// TestGateEntryKeepsTheLaterRefusalWording pins the two refusals after the
-// wrapper-less one: each already names a condition an operator can act on, so a
-// reword of the first must not reach them.
+// TestGateEntryKeepsTheLaterRefusalWording pins the two refusals that follow the wrapper-
+// less one. Each refusal already names a condition an operator can act on. A reword of
+// the first refusal must not reach these two.
 func TestGateEntryKeepsTheLaterRefusalWording(t *testing.T) {
 	h := NewHarness(t)
 	_, kit, nested, gatePath := newGateEntryFixture(t, h)
@@ -182,8 +182,8 @@ func TestGateEntryRejectsLegacyBeforeRunningOldTableAndRunsReplacementOnce(t *te
 	}
 }
 
-// gateEntryRefusal runs the gate entry as a real subprocess and returns the
-// combined output of a run that must refuse before reaching the phase table.
+// gateEntryRefusal runs the gate entry as a real subprocess. It returns the combined
+// output of a run that must refuse before it reaches the phase table.
 func gateEntryRefusal(t *testing.T, dir string, env []string, gatePath string) string {
 	t.Helper()
 	probe := runAtEnv(dir, env, "bash", gatePath)
@@ -193,9 +193,9 @@ func gateEntryRefusal(t *testing.T, dir string, env []string, gatePath string) s
 	return probe.Stdout + probe.Stderr
 }
 
-// newGateEntryFixture stages a gate entry under a git root, returning the root, the
-// kit it reads, a nested working directory whose glob characters must survive
-// quoting, and the script path.
+// newGateEntryFixture stages a gate entry under a git root. It returns the root, the kit
+// it reads, a nested working directory whose glob characters must survive quoting, and
+// the script path.
 func newGateEntryFixture(t *testing.T, h Harness) (root, kit, nested, gatePath string) {
 	t.Helper()
 	root = t.TempDir()

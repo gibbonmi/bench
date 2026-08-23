@@ -3,41 +3,46 @@
 # boundary: PreToolUse:Bash
 # denies: destructive git operations
 # why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer, and discarding work detaches the gate verdict from the tree
-# PreToolUse guard: the agent has no destructive git authority. This makes
-# invariant #4 ("you assist, you don't decide where a decision is mine")
-# enforceable for the operations that can silently destroy a shift's work or
-# bypass the merge — not just aspirational.
+# This is a PreToolUse guard. The agent holds no destructive git authority. This
+# makes invariant #4 enforceable — the agent assists, and the reviewer decides —
+# for operations that can silently destroy a shift's work or bypass the merge.
 #
-# Threat model: this is an honest-mistake layer, not an evasion-resistant
-# boundary. It stops a well-meaning agent from reflexively running destructive
-# git; it does not try to survive deliberate evasion. Wrapper scanning goes
-# exactly one level deep by design (see internal/gitguard). The backstops for a
-# misaligned agent are the git pre-push hook and bench's pooled-worktree
+# Threat model: this is an honest-mistake layer, not an evasion-resistant boundary.
+# It stops a well-meaning agent from running a destructive git command by reflex. It
+# does not try to survive deliberate evasion.
+#
+# Wrapper scanning goes exactly one level deep by design (see internal/gitguard).
+#
+# The backstops for a misaligned agent are the git pre-push hook and bench's pooled-worktree
 # isolation, not this script.
 #
-# Note the boundary: this intercepts the AGENT's Bash tool calls. Bench's own
-# controlled rollback inside `bench shift` runs in-process (not through the
-# agent's shell), so the harness can still reset/clean a failed iteration while
-# the agent itself cannot. That asymmetry is the point.
+# Note the boundary: this intercepts the agent's Bash tool calls only. Bench's own
+# controlled rollback inside `bench shift` runs in-process, not through the agent's
+# shell, so the harness can still reset or clean a failed iteration. The agent
+# cannot. That asymmetry is the point.
 #
-# This is a thin shim over the Go core: it resolves the bench wrapper, pipes the
+# This is a thin shim over the Go core. It resolves the bench wrapper, pipes the
 # PreToolUse envelope to `bench guard-git`, and passes the verdict through. Every
-# classification the guard makes with a reachable core (tokenize, scan, verdict, the
-# BLOCKED message) lives in internal/gitguard. The shim owns exactly two fail-closed
-# rims — core unresolvable/missing, and core errored — and the first carries its own
-# coarser restatement of the question, because it runs precisely when the core cannot
-# answer it. Wire under
-# hooks.PreToolUse with matcher "Bash". Exit 2 blocks and returns the message to
-# the agent.
+# classification the guard makes with a reachable core — tokenize, scan, verdict, the
+# BLOCKED message — lives in internal/gitguard.
+#
+# The shim owns exactly two fail-closed rims: core unresolvable or missing, and core
+# errored. The first rim carries its own coarser restatement of the question, because
+# it runs precisely when the core cannot answer it.
+#
+# Wire this hook under hooks.PreToolUse with matcher "Bash". Exit 2 blocks the call
+# and returns the message to the agent.
 set -uo pipefail
 
-# resolve_wrapper echoes the bench.sh wrapper path (repo-local first, then a
-# global `bench`), or fails when none is reachable. The ~8-line search is inlined
-# rather than shared with .bench/hooks/stop.sh: sourcing a shared lib would give
-# this hook a new fail-OPEN mode (missing lib → the shim errors before its rims
-# run, and a non-2 PreToolUse exit is a non-blocking error that silently grants).
-# The conformance check in internal/conformance (checkGuardResolverOrderDrift)
-# reds if this inline's search order ever drifts from .bench/lib/resolve-bench.sh.
+# resolve_wrapper echoes the bench.sh wrapper path — the repo-local one first, then a
+# global `bench` — or fails when none is reachable. The eight-line search is inlined
+# rather than shared with .bench/hooks/stop.sh, to avoid a new fail-open mode.
+#
+# A missing shared lib would make the shim error before its rims run. A non-2
+# PreToolUse exit is a non-blocking error, and it would silently grant access.
+#
+# The conformance check in internal/conformance (checkGuardResolverOrderDrift) reds if
+# this inline's search order drifts from .bench/lib/resolve-bench.sh.
 resolve_wrapper() {
   local root candidate
   root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -52,15 +57,17 @@ resolve_wrapper() {
 input="$(cat)"
 
 # fail_closed_no_core is the "cannot classify" rim. It runs only when the core is
-# unreachable, so it cannot delegate to internal/gitguard and restates the question in
-# shell — deliberately coarser: it refuses *every* git invocation rather than only the
-# destructive ones, a strictly wider verdict than the core's, which is why it can stay
-# this small. It decides from the envelope's `tool_input.command` field, so `git` inside
-# a path, an argument, or another envelope field no longer refuses an ordinary read
-# during the one session that has to recover the core. An envelope with no readable
-# command field is refused, so the fail-closed posture survives the narrowing. Threat
-# model is unchanged: honest mistakes, with the pre-push hook and pooled-worktree
-# isolation as the backstops.
+# unreachable, so it cannot delegate to internal/gitguard. It restates the question in
+# shell, deliberately coarser: it refuses every git invocation, not only the destructive
+# ones. This verdict is strictly wider than the core's, which is why it can stay small.
+#
+# It decides from the envelope's `tool_input.command` field alone. A `git` token in a
+# path, an argument, or another field does not trigger a refusal for an ordinary read
+# during the recovery session. An envelope with no readable command field is refused,
+# so the fail-closed posture survives the narrowing.
+#
+# The threat model stays unchanged: honest mistakes, with the pre-push hook and the
+# pooled-worktree isolation as the backstops.
 fail_closed_no_core() {
   local command_text
   if ! command_text="$(envelope_command)"; then
@@ -75,9 +82,13 @@ fail_closed_no_core() {
 }
 
 # envelope_command prints the string value of the PreToolUse envelope's
-# `tool_input.command` and fails when the envelope carries no readable one — object
-# absent, field absent, value not a string, string unterminated, or an escape it cannot
-# decode. Failing is a refusal upstream, so an envelope this cannot read is never an
+# `tool_input.command` field. It fails when the envelope carries no readable value:
+#   - the object is absent
+#   - the field is absent
+#   - the value is not a string
+#   - the string is unterminated
+#   - an escape cannot be decoded
+# Failing here is a refusal upstream, so an unreadable envelope is never read as an
 # empty command.
 envelope_command() {
   local rest before value ch esc i n hex dec oct chr
@@ -108,13 +119,14 @@ envelope_command() {
         t) value=$value$'\t' ;;
         r) value=$value$'\r' ;;
         b | f) value="$value " ;;
-        # A \uXXXX escape in the ASCII range decodes to its own byte: Go's
-        # encoding/json escapes & < > by default, so a control operator or a
-        # command name reaches this decoder escaped as often as literal, and a
-        # placeholder there hides the operator the scan below looks for. Above
-        # ASCII the placeholder stands, since no such rune is a shell operator.
-        # \u0000 refuses: bash cannot carry NUL, so decoding it would silently
-        # truncate the command this guard is deciding about.
+        # A \uXXXX escape in the ASCII range decodes to its own byte. Go's
+        # encoding/json escapes &, <, and > by default, so a control operator or a
+        # command name reaches this decoder escaped as often as literal. A
+        # placeholder there would hide the operator the scan below looks for.
+        #
+        # Above ASCII, the placeholder stands, because no such rune is a shell
+        # operator. \u0000 refuses: bash cannot carry NUL, so decoding it would
+        # silently truncate the command this guard is deciding about.
         u)
           hex=${rest:i+2:4}
           [[ "$hex" == [0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f] ]] || return 1
@@ -141,10 +153,11 @@ envelope_command() {
   return 1
 }
 
-# invokes_git succeeds when the command text runs `git` in command position. $2 enables
-# the wrapper recursion, which goes exactly one level deep — the depth internal/gitguard
-# documents. The scan walks command by command, skipping the honest-mistake prefixes an
-# agent reflexively types, so `git` as an argument or a path component is not a match.
+# invokes_git succeeds when the command text runs `git` in command position. Argument $2
+# enables wrapper recursion, which goes exactly one level deep — the depth
+# internal/gitguard documents. The scan walks command by command and skips the
+# honest-mistake prefixes an agent types by reflex, so `git` as an argument or a path
+# component is not a match.
 invokes_git() {
   local allow_wrapper=$2 flag
   local -a tok
@@ -198,11 +211,11 @@ invokes_git() {
 is_control_op() {
   local op=$1
   [[ -z "$op" ]] && return 1
-  # An enumeration of spellings misses the ones it did not think of, and the lexer emits
-  # a whole operator run as one token: `|&`, `;;`, and `;&` are each a single token no
-  # list of the common spellings matches, so the word after them left command position
-  # and a destructive verb there was read as an argument. The test is therefore shape,
-  # not membership: a token made only of operator characters is an operator.
+  # An enumeration of spellings misses the ones it does not list. The lexer emits a
+  # whole operator run as one token. `|&`, `;;`, and `;&` are each a single token that no
+  # spelling list matches. The word after such a token stayed in command position, so a
+  # destructive verb there read as an argument. The test uses shape, not membership: a
+  # token made only of operator characters is an operator.
   [[ "$op" == *[!'();<>|&']* ]] && return 1
   # Redirection is the exception: it opens no command position, so `printf hi > git`
   # names a file rather than invoking one.
@@ -211,7 +224,7 @@ is_control_op() {
 }
 
 # is_keyword reports whether a token is a shell keyword skipped in command position, so
-# the verb after it is the one that gets read (`if git …`).
+# the scan reads the verb after it as the command (`if git …`).
 is_keyword() {
   case "$1" in
     if | then | elif | else | do | while | until | '!' | '{') return 0 ;;
@@ -219,9 +232,9 @@ is_keyword() {
   esac
 }
 
-# resolve_prefixes echoes the index of the real verb in tokens $3.. between $1 and $2,
-# stepping past leading environment assignments and the command wrappers an agent types
-# in front of the verb it means (env/command/nohup/timeout/xargs).
+# resolve_prefixes echoes the index of the real verb, among tokens $3.. between $1 and
+# $2. It steps past leading environment assignments and the command wrappers an agent
+# types in front of its intended verb: env, command, nohup, timeout, xargs.
 resolve_prefixes() {
   local i=$1 end=$2
   shift 2
@@ -252,11 +265,11 @@ resolve_prefixes() {
   printf '%s' "$i"
 }
 
-# lex_command splits a command line into LEXED: words with quotes and escapes folded in
-# so a wrapper's `-c` string survives as one token, and runs of the shell operator
-# characters as their own tokens. A bare newline lexes as an operator, so a multi-line
-# block scans as separate commands. Unbalanced quoting falls back to a plain split that
-# still honors newline boundaries.
+# lex_command splits a command line into LEXED, an array of words. Quotes and escapes
+# fold in, so a wrapper's `-c` string survives as one token. Runs of shell operator
+# characters form their own tokens, and a bare newline lexes as an operator, so a
+# multi-line block scans as separate commands. Unbalanced quoting falls back to a plain
+# split that still honors newline boundaries.
 lex_command() {
   local text=$1 cur='' active=0 i=0 start n ch
   LEXED=()
@@ -321,17 +334,18 @@ lex_command() {
   return 0
 }
 
-# collapse_operator drops the newlines from an operator-only token so `&&`+newline reads
-# as the control operator it is, and a bare newline reads as a command boundary.
+# collapse_operator drops the newlines from an operator-only token, so `&&` followed by
+# a newline still reads as the control operator it is. A bare newline alone reads as a
+# command boundary.
 collapse_operator() {
   local op=${1//$'\n'/}
   [[ -z "$op" ]] && op=';'
   printf '%s' "$op"
 }
 
-# lex_fallback is the unbalanced-quoting path: split each line on whitespace and keep
-# every newline as a command boundary, so a multi-line block still scans command by
-# command. It drops quote folding, exactly as internal/gitguard's tokenizer does.
+# lex_fallback is the unbalanced-quoting path. It splits each line on whitespace and
+# keeps every newline as a command boundary, so a multi-line block still scans command
+# by command. It drops quote folding, exactly as internal/gitguard's tokenizer does.
 lex_fallback() {
   local line first=1
   local -a words
@@ -345,12 +359,13 @@ lex_fallback() {
   done <<< "$1"
 }
 
-# Rim 1: core unresolvable. No wrapper on disk or PATH → cannot classify.
+# Rim 1: the core is unresolvable. No wrapper exists on disk or PATH, so the guard
+# cannot classify the command.
 cmd="$(resolve_wrapper)" || fail_closed_no_core
 
-# Hand the envelope to the core. The core writes its own BLOCKED message to stderr
-# and exits 2 on a block, 0 on allow; the wrapper exits 127 when no binary is
-# installed for this platform.
+# Hand the envelope to the core. The core writes its own BLOCKED message to stderr,
+# and it exits 2 on a block or 0 on allow. The wrapper exits 127 when this platform has
+# no installed binary.
 rc=0
 printf '%s' "$input" | "$cmd" guard-git || rc=$?
 case "$rc" in

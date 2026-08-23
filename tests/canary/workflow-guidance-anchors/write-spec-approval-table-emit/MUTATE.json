@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/SKILL.md",
+    "old": "Before a build starts, emit a scannable approval table.",
+    "new": "Before a build starts, emit an approval table."
+  }
+]

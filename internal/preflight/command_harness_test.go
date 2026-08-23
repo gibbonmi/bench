@@ -8,9 +8,10 @@ import (
 	"testing"
 )
 
-// --- fixture harness: mirrors internal/coverage's TestCommand and internal/diff's
-// review_base_test.go patterns — real git commands in a throwaway repo, exact
-// output/exit assertions against the public Command entry point only. ---
+// --- fixture harness: mirrors internal/coverage's TestCommand and
+// internal/diff's review_base_test.go patterns. Real git commands run in
+// a throwaway repo, with exact output/exit assertions against the public
+// Command entry point only. ---
 
 func runGit(t *testing.T, args ...string) string {
 	t.Helper()
@@ -34,9 +35,9 @@ func mustWriteFile(t *testing.T, path, body string) {
 	}
 }
 
-// specBody renders a bootstrap-conformant spec for slug: staged status, a valid
-// opted-in coverage map declaring row PF1 and PF2, and one backticked fence entry
-// authorizing internal/<slug>/.
+// specBody renders a bootstrap-conformant spec for slug. It has staged
+// status, a valid opted-in coverage map declaring row PF1 and PF2, and
+// one backticked fence entry authorizing internal/<slug>/.
 func specBody(slug string, extraFenceLines ...string) string {
 	var b strings.Builder
 	b.WriteString("# " + slug + "\n\nStatus: staged\n\n")
@@ -66,9 +67,10 @@ func initRepo(t *testing.T) string {
 	return root
 }
 
-// seedConformant builds the PF1 tracer fixture: a base commit on main carrying a
-// bootstrap-conformant spec and a ticket citing both declared rows, then a feature
-// branch with one authorized change — the tree every check should answer green over.
+// seedConformant builds the PF1 tracer fixture. A base commit on main
+// carries a bootstrap-conformant spec and a ticket citing both declared
+// rows, then a feature branch adds one authorized change. Every check
+// should answer green over this tree.
 func seedConformant(t *testing.T) (root, slug string) {
 	t.Helper()
 	slug = "example"
@@ -84,10 +86,10 @@ func seedConformant(t *testing.T) (root, slug string) {
 	return root, slug
 }
 
-// seedBuildFresh builds the build-mode fresh fixture: a base commit on main carrying
-// a bootstrap-conformant spec with no tickets/ directory at all, then a feature
-// branch with one authorized change — the tree B1 answers not-applicable ticket rows
-// over.
+// seedBuildFresh builds the build-mode fresh fixture. A base commit on
+// main carries a bootstrap-conformant spec with no tickets/ directory at
+// all, then a feature branch adds one authorized change. B1 answers
+// not-applicable ticket rows over this tree.
 func seedBuildFresh(t *testing.T) (root, slug string) {
 	t.Helper()
 	slug = "example"

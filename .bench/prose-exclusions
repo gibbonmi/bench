@@ -1,0 +1,11 @@
+# Rows the prose-mechanics check does not grade. Each row is a repository-relative
+# path, one space, and a one-clause reason. A trailing slash names a directory prefix.
+#
+# Permanent rows.
+tests/canary/ fixtures carry planted content
+docs/audits/ the audit record keeps model inputs and outputs verbatim
+CHANGELOG.md append-only release history
+capture/IDEAS.md an inbox of verbatim parked text
+#
+# Temporary rows. Each migration ticket removes its own rows in the commit that
+# makes its files pass. No ticket adds a row.

@@ -35,8 +35,8 @@ func processGroupGrace(ctx context.Context) time.Duration {
 type processGroupResult struct {
 	Code     int
 	StartErr error
-	// Cancelled reports that the context, not the command, decided the outcome — the
-	// only way to tell a killed command from one that chose the same exit code.
+	// Cancelled reports that the context, not the command, decided the outcome. It is
+	// the only way to tell a killed command from one that chose the same exit code.
 	Cancelled bool
 }
 
@@ -58,11 +58,12 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 		drainProcessGroup(cmd.Process.Pid)
 		return processGroupResult{Code: processExitCode(cmd, err)}
 	case <-ctx.Done():
-		// Both flavors of cancellation get the same cascade — a catchable signal, the
-		// grace, then SIGKILL — and differ only in which signal and which code. The
-		// deadline needs the grace most: it fires with no operator watching, so what
+		// Both flavors of cancellation get the same cascade: a catchable signal, the
+		// grace, then SIGKILL. They differ only in which signal and which code.
+		//
+		// The deadline needs the grace most. It fires with no operator watching. So what
 		// the child says on its way out is the only account of what the run was stuck
-		// on, and opening with SIGKILL takes that account with it.
+		// on. Opening with SIGKILL would take that account with it.
 		notice, code := syscall.SIGINT, 130
 		if errors.Is(context.Cause(ctx), errGateTimeout) {
 			notice, code = syscall.SIGTERM, 124
@@ -106,12 +107,12 @@ type phaseResult struct {
 	Skipped  bool
 	StartErr error
 	// SkippedBy names the need whose own red or skip kept this phase from launching.
-	// Such a phase is never red on its own: the verdict belongs to the phase that
+	// Such a phase is never red on its own. The verdict belongs to the phase that
 	// actually failed, so the red set a fix loop reads stays free of cascade noise.
 	SkippedBy string
 	// Interrupted marks a phase the cancellation caught mid-run, which is what the
 	// straggler report names. A phase that chose exit 130 itself carries the same code
-	// and is an ordinary red, so the code alone cannot identify the set.
+	// and is an ordinary red, so the code alone cannot identify the interrupted set.
 	Interrupted bool
 }
 
@@ -151,15 +152,15 @@ func prefixedPhaseWriters(stdout, stderr io.Writer) func(Phase) (io.Writer, io.W
 	}
 }
 
-// aggregateAndReport is the one verdict tail every settled schedule reports through:
-// the per-phase summaries, any extra red-reporting checks (capability skips, the
-// stripped-subject skip posture), and the `gate: red` / `gate: green` line. This is the
-// operator's view of one command whichever schedule produced the results, so an edit to
-// the reported shape lands everywhere at once.
+// aggregateAndReport is the one verdict tail every settled schedule reports through.
+// It carries the per-phase summaries, any extra red-reporting checks (capability
+// skips, the stripped-subject skip posture), and the `gate: red` / `gate: green`
+// line. This is the operator's view of one command whichever schedule produced the
+// results, so an edit to the reported shape lands everywhere at once.
 //
 // An interrupt is not a verdict, so a cancelled run publishes neither summaries nor a
-// gate line — reporting one would grade phases that never got to answer. Naming the
-// stragglers is not a verdict either: it says what the run was doing.
+// gate line. Reporting one would grade phases that never got to answer. Naming the
+// stragglers is not a verdict either; it only says what the run was doing.
 func aggregateAndReport(results []phaseResult, cancelled bool, stdout, stderr io.Writer, redReports ...func() bool) int {
 	if cancelled {
 		reportStragglers(results, stderr)
@@ -185,10 +186,11 @@ func aggregateAndReport(results []phaseResult, cancelled bool, stdout, stderr io
 	return 0
 }
 
-// reportStragglers names, in table order, the phases a cancellation caught mid-run —
-// the one thing a killed gate can still tell an operator about where it was stuck.
-// Reading it off the settled results is the only race-free way to ask, since a snapshot
-// taken in the launch loop would be stale by the time the reaping loop finished with it.
+// reportStragglers names, in table order, the phases a cancellation caught mid-run.
+// This is the one thing a killed gate can still tell an operator about where it was
+// stuck. Reading it off the settled results is the only race-free way to ask. A
+// snapshot taken in the launch loop would be stale by the time the reaping loop
+// finished with it.
 func reportStragglers(results []phaseResult, stderr io.Writer) {
 	var names []string
 	for _, result := range results {
@@ -203,15 +205,15 @@ func reportStragglers(results []phaseResult, stderr io.Writer) {
 }
 
 // schedule runs phases in dependency order and returns their results in table order,
-// plus whether the run was interrupted. A phase launches once every need present in the
-// table has settled green; a need that settled red or skipped resolves the dependent as
-// skipped-with-cause without launching it, so a red phase costs the run only the work
-// that actually depended on it. Sequential caps the run at one phase in flight and
-// takes the first ready phase in declaration order.
+// plus whether the run was interrupted. A phase launches once every need present in
+// the table has settled green. A need that settled red or skipped resolves the
+// dependent as skipped-with-cause without launching it. So a red phase costs the run
+// only the work that actually depended on it. Sequential caps the run at one phase in
+// flight and takes the first ready phase in declaration order.
 //
-// A need naming a phase absent from the table is already satisfied: phasesForMode
-// filters the table after the edges are declared, so an inner run legitimately carries
-// edges to phases it does not execute.
+// A need naming a phase absent from the table is already satisfied. phasesForMode
+// filters the table after the edges are declared, so an inner run legitimately
+// carries edges to phases it does not execute.
 func schedule(ctx context.Context, root string, phases []Phase, open func(Phase) (io.Writer, io.Writer, func())) ([]phaseResult, bool) {
 	index := make(map[string]int, len(phases))
 	for i, phase := range phases {
@@ -225,9 +227,9 @@ func schedule(ctx context.Context, root string, phases []Phase, open func(Phase)
 
 	for {
 		progressed := false
-		// Cancellation stops the launch loop rather than the whole scheduler: phases
-		// already in flight still have to be reaped before their output writers can
-		// be closed, but nothing new may start behind an interrupt.
+		// Cancellation stops the launch loop rather than the whole scheduler. Phases
+		// already in flight still have to be reaped before their output writers close,
+		// but nothing new may start behind an interrupt.
 		for i, phase := range phases {
 			if settled[i] || launched[i] || ctx.Err() != nil {
 				continue
@@ -271,10 +273,12 @@ func schedule(ctx context.Context, root string, phases []Phase, open func(Phase)
 	}
 
 	// The launch loop stops for exactly two reasons, and they settle the leftovers
-	// differently. Behind a stopped context a phase simply never got its turn; with the
-	// context live, no further progress means the table's own edges deadlock it — a
-	// defect the loader refuses but an injected table can still carry — and a phase the
-	// run can never launch has to be red, or a graph that executes nothing reports green.
+	// differently. Behind a stopped context a phase simply never got its turn.
+	//
+	// With the context live, no further progress means the table's own edges deadlock
+	// it. This is a defect the loader refuses, but an injected table can still carry
+	// it. A phase the run can never launch has to be red, or a graph that executes
+	// nothing reports green.
 	interrupted := ctx.Err() != nil
 	for i, phase := range phases {
 		if settled[i] {
@@ -293,7 +297,7 @@ func schedule(ctx context.Context, root string, phases []Phase, open func(Phase)
 }
 
 // errInterruptedBeforeLaunch is the cause a phase carries when the run was stopped
-// before its turn came. It is a skip rather than a red because nothing graded it, and it
+// before its turn came. It is a skip rather than a red because nothing graded it. It
 // is never the zero value, so no summary can call such a phase green.
 var errInterruptedBeforeLaunch = errors.New("interrupted before launch")
 
@@ -353,9 +357,9 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		result.StartErr = fmt.Errorf("empty argv")
 		return result
 	}
-	// A working directory the run cannot enter is checked before the binary is: chdir
-	// fails ENOENT exactly as a missing binary does, so an optional phase whose dir is a
-	// typo would otherwise report itself not installed and take its check off the gate.
+	// This checks the working directory before the binary. chdir fails ENOENT exactly
+	// as a missing binary does. So an optional phase whose dir is a typo would
+	// otherwise report itself not installed and take its check off the gate.
 	if phase.Dir != "" {
 		if err := usableDir(phase.Dir); err != nil {
 			result.Code = 1
@@ -419,7 +423,7 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 }
 
 // usableDir reports why a phase's working directory cannot be entered, or nil when it
-// can. The check is the one place a dir defect is named as itself; leaving it to exec
+// can. This is the one place a dir defect is named as itself. Leaving it to exec
 // hands back a bare ENOENT that reads like a missing binary.
 func usableDir(dir string) error {
 	info, err := os.Stat(dir)
@@ -432,10 +436,10 @@ func usableDir(dir string) error {
 	return nil
 }
 
-// mergeEnv applies overrides over base strip-then-set: every base entry for an
-// overridden key is dropped before the override is appended, so the child is handed one
-// value per key. Plain appending leaves both, and which one a program's getenv answers
-// with is not something a phase may be built on. withSkipLog rides the same path — the
+// mergeEnv applies overrides over base strip-then-set. Every base entry for an
+// overridden key is dropped before the override is appended, so the child is handed
+// one value per key. Plain appending leaves both, and a phase may not be built on
+// which one a program's getenv answers with. withSkipLog rides the same path; the
 // capability log variable is an override like any other.
 func mergeEnv(base, overrides []string) []string {
 	if len(overrides) == 0 {
@@ -462,14 +466,16 @@ func envKey(entry string) string {
 }
 
 // phaseToolAbsent reports that phase is optional and the tool it invokes is not on this
-// host, handing back the resolved path when it is. Absent is the one way a phase settles
-// green having graded nothing at all, so the per-component scoping withholds that
-// component's evidence on this same answer: two spellings of the condition would let the
-// runner skip a component the scoping had already credited with a slot, and the component
-// would then skip forever — its declared inputs do not move when the tool is installed.
+// host, handing back the resolved path when it is. Absent is the one way a phase
+// settles green having graded nothing at all. So the per-component scoping withholds
+// that component's evidence on this same answer.
 //
-// A required phase is never absent here. Its missing binary is that phase's own red, so the
-// run does grade the component, in the direction that costs no evidence.
+// Two spellings of the condition would let the runner skip a component the scoping
+// had already credited with a slot. The component would then skip forever, because
+// its declared inputs do not move when the tool is installed.
+//
+// A required phase is never absent here. Its missing binary is that phase's own red,
+// so the run does grade the component, in the direction that costs no evidence.
 func phaseToolAbsent(phase Phase) (resolved string, absent bool) {
 	if !phase.Optional || len(phase.Argv) == 0 || phase.Argv[0] == "" {
 		return "", false

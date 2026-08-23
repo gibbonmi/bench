@@ -1,28 +1,32 @@
 #!/usr/bin/env bash
-# bench — the operational substrate for the Bench workflow.
-# Fuses a warm worktree pool (treehouse-lite) with a gated loop (gnhf-lite),
-# where the gate is the external oracle: a shift only commits on green.
+# bench is the operational substrate for the Bench workflow. It fuses a warm
+# worktree pool (treehouse-lite) with a gated loop (gnhf-lite), where the gate is the
+# external oracle: a shift commits only on green.
 #
-# The worktree lifecycle, the gated loop, and the gate resolution/record all live in
-# the Go core now (internal/worktree, internal/shift, internal/gate); this wrapper is
-# routing plus a one-glance run_gate adapter. Gate config resolution, owned by
-# internal/gate, is: (1) ./.bench/gate.sh, (2) $BENCH_GATE, (3) auto-detect.
+# The worktree lifecycle, the gated loop, and the gate resolution and record all live
+# in the Go core now — internal/worktree, internal/shift, internal/gate. This wrapper
+# only routes, plus a one-glance run_gate adapter. internal/gate owns gate config
+# resolution: first ./.bench/gate.sh, then $BENCH_GATE, then auto-detect.
 set -euo pipefail
 
-# Exported so the Go core's worktree/shift/gate commands resolve the same pool home the
-# shell did (they read BENCH_HOME from the environment). The :? form names the missing
-# input itself: under set -u a bare $HOME dies on "HOME: unbound variable", which is a
-# variable name and no action for the adopter meeting it on their first command. It is
-# only reached when BENCH_HOME is unset, so the existing precedence is unchanged.
+# This export lets the Go core's worktree, shift, and gate commands resolve the same
+# pool home the shell did; they read BENCH_HOME from the environment. The `:?` form
+# names the missing input itself: under `set -u`, a bare $HOME dies on "HOME: unbound
+# variable", a variable name with no action for an adopter meeting it on their first
+# command. This form is reached only when BENCH_HOME is unset, so the existing
+# precedence is unchanged.
 export BENCH_HOME="${BENCH_HOME:-${HOME:?the Bench pool home needs BENCH_HOME set, or HOME set to derive it from}/.bench}"
 
 # ---- gate: the oracle -------------------------------------------------------
-# run_gate — the one-glance adapter over the Go core's `bench gate-run`. Resolution of
-# the gate (.bench/gate.sh → $BENCH_GATE → auto-detect), the run from the repo root, and
-# the verdict-cache record all live in internal/gate, so `bench gate` and the Stop hook's
-# `<wrapper> gate` path share exactly one resolver — never a second live implementation.
-# exec, not run: the gate case is terminal and the binary owns the exit code and the
-# record; a missing binary exits 127 via route_binary, which writes no forged verdict.
+# run_gate is the one-glance adapter over the Go core's `bench gate-run`. Resolution
+# of the gate — .bench/gate.sh, then $BENCH_GATE, then auto-detect — the run from the
+# repo root, and the verdict-cache record all live in internal/gate. So `bench gate`
+# and the Stop hook's `<wrapper> gate` path share exactly one resolver, never a
+# second live implementation.
+#
+# This function execs rather than runs: the gate case is terminal, and the binary
+# owns the exit code and the record. A missing binary exits 127 through
+# route_binary, which writes no forged verdict.
 run_gate() { route_porcelain gate-run "$@"; }
 
 gate_usage() { printf 'usage: bench gate [--fresh|pin]\n'; }
@@ -48,12 +52,13 @@ gate_command() {
   esac
 }
 
-# Resolve where the canonical kit lives (parent of this script's bin/), following
-# symlinks without relying on GNU-only `readlink -f`. Capped at ~40 hops (the
-# readlink -f / SYMLOOP_MAX convention) so a symlink cycle to the wrapper fails fast
-# with a structured error instead of chasing readlink targets forever: readlink
-# never ELOOPs on a cyclic target the way opening the file would, so an uncapped
-# loop here can spin even where the OS itself would have refused to open the path.
+# This resolves where the canonical kit lives — the parent of this script's bin/ —
+# by following symlinks without relying on the GNU-only `readlink -f`. It caps the
+# walk at about 40 hops, the readlink -f / SYMLOOP_MAX convention, so a symlink cycle
+# to the wrapper fails fast with a structured error instead of chasing targets
+# forever. Unlike opening the file, `readlink` never ELOOPs on a cyclic target, so an
+# uncapped loop here can spin even where the OS itself would refuse to open the
+# path.
 resolve_script_path() {
   local source="${BASH_SOURCE[0]:-$0}" dir target hops=0
   while [[ -L "$source" ]]; do
@@ -70,11 +75,11 @@ resolve_script_path() {
   printf '%s/%s\n' "$dir" "$(basename "$source")"
 }
 
-# git_common_dir_abs <dir> — echo <dir>'s git common directory as an absolute path, or
-# fail non-zero when <dir> is outside a repository or git is unavailable. `rev-parse
-# --git-common-dir` answers relatively (a bare `.git`) inside a plain checkout, so the
-# result is anchored at <dir> before it is handed back: two of these compare equal only
-# for two working trees of the SAME repository.
+# git_common_dir_abs <dir> echoes <dir>'s git common directory as an absolute path.
+# It fails non-zero when <dir> is outside a repository or git is unavailable.
+# `rev-parse --git-common-dir` answers relatively, a bare `.git`, inside a plain
+# checkout, so this anchors the result at <dir> before it returns it. Two of these
+# results compare equal only for two working trees of the same repository.
 git_common_dir_abs() {
   local dir="$1" common base
   command -v git >/dev/null 2>&1 || return 1
@@ -88,18 +93,21 @@ git_common_dir_abs() {
   printf '%s\n' "$common"
 }
 
-# kit_dir — the kit THIS INVOCATION serves. Normally the parent of this script's bin/,
-# the tree the wrapper file lives in. The exception: when the current directory sits in
-# a git worktree of that same repository, the kit is that worktree's top level, because
-# an operator running the main checkout's `bench` from PATH with a worktree as CWD is
-# working on the worktree — and a BENCH_KIT naming the main checkout while the graded
-# root is the worktree makes the gate drop its kit-only phases over a clean tree.
-# Two conditions guard it, and a linked project repo fails both. The kit must be its own
-# tree's top level — an adopted repo carries the kit at `<repo>/.bench`, a subdirectory,
-# so its wrapper keeps naming `<repo>/.bench`. And sameness is identity of the git common
-# directory, never a path prefix, so a CWD in an unrelated repository is never mistaken
-# for a second working tree of this one. Every git failure — no repo, an unrelated repo,
-# no git on PATH — falls back to the wrapper's own tree.
+# kit_dir echoes the kit this invocation serves. It is normally the parent of this
+# script's bin/, the tree the wrapper file lives in. The exception: when the current
+# directory sits in a git worktree of that same repository, the kit is that
+# worktree's top level. An operator who runs the main checkout's `bench` from PATH
+# with a worktree as CWD is working on the worktree, and a BENCH_KIT naming the main
+# checkout while the graded root is the worktree makes the gate drop its kit-only
+# phases over a clean tree.
+#
+# Two conditions guard the exception, and a linked project repo fails both. The kit
+# must be its own tree's top level: an adopted repo carries the kit at
+# `<repo>/.bench`, a subdirectory, so its wrapper keeps naming `<repo>/.bench`.
+# Sameness means identity of the git common directory, never a path prefix, so a CWD
+# in an unrelated repository is never mistaken for a second working tree of this one.
+# Every git failure — no repo, an unrelated repo, no git on PATH — falls back to the
+# wrapper's own tree.
 kit_dir() {
   local script wrapper_kit wrapper_root cwd_common wrapper_common cwd_root
   script="$(resolve_script_path)"
@@ -117,11 +125,11 @@ kit_dir() {
 }
 
 # ---- strangler router: send a ported subcommand to the Go binary ------------
-# The one seam that grows across the port: later slices add subcommand names to the
-# dispatch, never a second resolver. platform_pkg maps this host to its
-# @redbench/<os>-<arch> package (npm os/cpu spelling); an off-matrix host returns
-# non-zero so the caller can emit the "unsupported platform" error instead of naming
-# a package that does not exist.
+# This dispatch is the one seam that grows across the port: a later slice adds
+# subcommand names here, never a second resolver. platform_pkg maps this host to its
+# @redbench/<os>-<arch> package, using npm's os/cpu spelling. An off-matrix host
+# returns non-zero, so the caller can emit the "unsupported platform" error instead
+# of naming a package that does not exist.
 platform_pkg() {
   local os arch
   case "$(uname -s)" in
@@ -174,13 +182,15 @@ valid_package_version() {
   [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
 }
 
-# main_tree_kit <kit> — when <kit> sits inside a linked git worktree — which kit_dir
-# names whenever the invocation's CWD is one — echo the same kit path re-anchored under
-# the main worktree's root; echo nothing when <kit> is the main tree itself, outside any
-# repo, or the mapping is degenerate. Linked worktrees
-# carry the tracked tree but not untracked artifacts (dist/, node_modules/), so the
-# binary that serves a worktree lives in the main tree. Always returns 0: a failed
-# resolution degrades to "no extra candidates", never to a caller-visible error.
+# main_tree_kit <kit> handles the case where <kit> sits inside a linked git worktree
+# — kit_dir names one whenever the invocation's CWD is one. It echoes the same kit
+# path re-anchored under the main worktree's root. It echoes nothing when <kit> is
+# the main tree itself, is outside any repo, or the mapping is degenerate.
+#
+# A linked worktree carries the tracked tree but not untracked artifacts (dist/,
+# node_modules/), so the binary that serves a worktree lives in the main tree. This
+# function always returns 0: a failed resolution degrades to "no extra candidates",
+# never to a caller-visible error.
 main_tree_kit() {
   local kit="$1" common wt_root main
   common="$(git -C "$kit" rev-parse --git-common-dir 2>/dev/null)" || return 0
@@ -193,18 +203,21 @@ main_tree_kit() {
   return 0
 }
 
-# bench_binary_path — echo the resolved Go binary path, or fail with a distinct exit
-# code the caller maps to a message. Resolution order: (1) the platform package bundled
-# under the wrapper's node_modules, (2) the hoisted sibling npm produces for global
-# installs, (3) the exact version/target cache, then (4) a repo-local dev build — tried against the kit dir
-# itself, then re-anchored at the main tree when the kit dir is a linked git worktree
-# (worktrees carry the tracked wrapper but not the untracked binary). First executable,
-# non-empty match wins; a present-but-empty or non-executable file is treated as missing
-# (never named), so a torn build falls through rather than resolving to a non-runnable
-# path. Exit 2 = off-matrix platform (no package to name); 127 = no binary present for
-# this platform. One source of both the platform→package mapping and the resolution
-# order, shared by route_binary (which execs the path) and the status adapters (which
-# capture its output).
+# bench_binary_path echoes the resolved Go binary path, or fails with a distinct
+# exit code the caller maps to a message. The resolution order is: the platform
+# package bundled under the wrapper's node_modules; the hoisted sibling npm produces
+# for a global install; the exact version/target cache; then a repo-local dev build.
+# Each candidate is tried against the kit dir itself, then re-anchored at the main
+# tree when the kit dir is a linked git worktree, because a worktree carries the
+# tracked wrapper but not the untracked binary.
+#
+# The first executable, non-empty match wins. A present-but-empty or non-executable
+# file counts as missing, and this function never names it, so a torn build falls
+# through instead of resolving to a non-runnable path. Exit 2 means an off-matrix
+# platform with no package to name; exit 127 means no binary exists for this
+# platform. This is the one source of both the platform-to-package mapping and the
+# resolution order; route_binary, which execs the path, and the status adapters,
+# which capture its output, both share it.
 bench_binary_path() {
   local kit="${1:-$(kit_dir)}" pkg suffix version cache c k main
   platform_pkg >/dev/null || return 2
@@ -267,9 +280,9 @@ repair_command() {
   repair_binary "$kit" "$wrapper" "$mode"
 }
 
-# route_binary <subcommand> [args...] — resolve and exec the Go binary, passing the
-# whole argv through. The one seam the strangler grows: later slices add subcommand
-# names to the dispatch below, never a second resolver.
+# route_binary <subcommand> [args...] resolves and execs the Go binary, passing the
+# whole argv through. This is the one seam the strangler grows: a later slice adds
+# subcommand names to the dispatch below, never a second resolver.
 route_binary() {
   local bin rc kit wrapper repair_rc physical
   kit="${BENCH_KIT:-$(kit_dir)}"
@@ -378,9 +391,9 @@ case "${1:-}" in
   worktree-lease-file) route_binary "$@" ;;
   worktree-hook) route_porcelain "$@" ;;
   help|--help|-h) shift; route_porcelain help "$@" ;;
-  # An unrecognized token (a typo, not a help request) is not this shell's job to
-  # explain: route it to the Go binary so its own default-case "unknown subcommand"
-  # handler (cmd/bench/main.go's run()) renders the message and exit 2 — one source
-  # of that message, not a second copy here.
+  # Explaining an unrecognized token — a typo, not a help request — is not this
+  # shell's job. Route it to the Go binary, so its own default-case "unknown
+  # subcommand" handler (cmd/bench/main.go's run()) renders the message and exit 2.
+  # This keeps one source of that message, not a second copy here.
   *) route_binary "$@" ;;
 esac

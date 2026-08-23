@@ -2,10 +2,10 @@
 
 Status: shaping
 
-Assessed 2026-07-29 at working tree of `187bc36`, re-measured on the landed
-tree of `d91b709` once moves 1 and 2 shipped, and on the artifact-split landed
-tree of `6016be6`. Question: how fast can the dev
-gate get without sacrificing quality, including the oracle-semantics levers
+Assessed 2026-07-29 at the working tree of `187bc36`. Re-measured on the
+landed tree of `d91b709` once moves 1 and 2 shipped, and again on the
+artifact-split landed tree of `6016be6`. Question: how fast can the dev gate
+get without sacrificing quality? This includes the oracle-semantics levers
 FT91 parked as reviewer decisions — verdict reuse for the exact tree, canary
 narrowing, and freshness relaxation. This durable record incorporates the
 retired FT91 timeline's historical measurements, the instrumented run that located
@@ -29,16 +29,19 @@ Three moves take the gate from its ~135–172 s baseline; all are measured:
 | 2. gate-level verdict reuse + freshness ruling *(landed)* | same | **0.6 s** |
 | 3. artifact-suite restructure (parallelism) *(landed)* | **89.91 s** | 0.6 s |
 
-Moves 1 and 2 landed in FT91's gate-fastpath build: move 1 on semantics the
-reviewer had already ruled (stage 2's own wording), move 2 on an authority
-ADR 0002 already granted `bench commit` and now extends to gate execution.
-Move 3 exposed package-level parallelism without changing oracle semantics and
-removed 38.09 s from the measured changed-tree wall. The split's focused trace
-shows that repeated package processes are not the dominant residual cost. A
-reviewer decision is needed before reviving the dormant outer-width cap: the
-full gate's 85.415 s posture span is 34.498 s longer than the 50.917 s focused
-span while the 69.506 s test phase and other outer phases overlap it. A full
-gate re-write is **not** warranted (see "Re-design verdict").
+Moves 1 and 2 landed in FT91's gate-fastpath build. Move 1 rests on semantics
+the reviewer had already ruled (stage 2's own wording). Move 2 rests on an
+authority ADR 0002 already granted `bench commit`, now extended to gate
+execution.
+
+Move 3 exposed package-level parallelism without changing oracle semantics
+and removed 38.09 s from the measured changed-tree wall. The split's focused
+trace shows that repeated package processes are not the dominant residual
+cost. A reviewer decision is needed before reviving the dormant outer-width
+cap. The full gate's 85.415 s posture span is 34.498 s longer than the
+50.917 s focused span. The 69.506 s test phase and other outer phases
+overlap it. A full gate re-write is **not** warranted (see "Re-design
+verdict").
 
 ## Where the wall was (2026-07-29, this box, warm caches, session load present)
 
@@ -59,12 +62,12 @@ The idle-box equivalent measured for the same subject family was 135.3 s
 | contract | t+2 → t+140 | artifact **132.7 s**, runtime 52.1 s, surface 38.6 s, publication 20.1 s, axi 4.5 s |
 | canary | summary at t+172 | the gate's tail; decomposition below |
 
-Canary accounting (174 fixtures; 33 behavior-owned: 8 axi, 6 runtime,
-10 surface, 5 surface/artifact, 4 surface/publication): each behavior-owned
+Canary accounting: 174 fixtures, 33 of them behavior-owned (8 axi, 6 runtime,
+10 surface, 5 surface/artifact, 4 surface/publication). Each behavior-owned
 fixture invokes its owning package's compiled test binary over the fixture
-tree (`internal/canary/canary.go`, `RunBite`), so the sweep's worker-seconds
-are ≈ 5×133 + 6×52 + 10×39 + 4×20 + 8×4.5 ≈ **1,480**, plus the ~140
-conformance-scoped fixtures and baselines. At 8 workers that is ~185 s — which
+tree (`internal/canary/canary.go`, `RunBite`). The sweep's worker-seconds are
+therefore ≈ 5×133 + 6×52 + 10×39 + 4×20 + 8×4.5 ≈ **1,480**, plus the ~140
+conformance-scoped fixtures and baselines. At 8 workers that is ~185 s, which
 is the observed wall. The floor is the longest single fixture: an artifact
 fixture at `GOMAXPROCS=2`, ~110–133 s. The canary and the contract phase were
 floored by the same suite; lever 1 broke the canary half of that.
@@ -82,8 +85,8 @@ rebuilt via `scripts/go-build.sh` first.
 
 **Stop rule.** FT91's ≤60 s rule is **met on the canary critical path** the
 rule was written against — the sweep is 25 s. It is **not met on the
-changed-tree full gate**, which stands at 89.91 s, floored by the contract
-phase's `posture` package (85.415 s under the gate). The
+changed-tree full gate**. That gate stands at 89.91 s, floored by the
+contract phase's `posture` package (85.415 s under the gate). The
 unchanged-tree path beats its expected ~2–5 s by an order of magnitude: it
 prints `gate: green (fresh verdict reused for this tree)` and does no phase
 work.
@@ -106,31 +109,36 @@ rebuilt binary. Wall clock is evidence, not a timeout assertion.
 
 All four starts occur within 52 ms and every interval overlaps the others; a
 serialized trace would not satisfy this record. The focused envelope is 50.97
-s. Its 126.363 s of package spans is 17.363 s (16%, 15.93% rounded) above the former 109 s
-single-process package, while 75.393 s of that work overlaps. The repeated
-process overhead is therefore visible but not the remaining wall.
+s. Its 126.363 s of package spans is 17.363 s (16%, 15.93% rounded) above the
+former 109 s single-process package. 75.393 s of that work overlaps. The
+repeated process overhead is therefore visible but not the remaining wall.
 
 The fresh gate is green in **89.91 s**, a 38.09 s (30%) reduction from the
 128 s baseline. Its longest phase is contract: posture 85.415 s, offline
-70.327 s, prepared 68.353 s, and distributable 45.497 s; the concurrently
-running test phase is 69.506 s and conformance-suite is 36.696 s. The remaining
-critical path is contract/posture plus gate setup. The focused 50.917 s posture
-span becoming 85.415 s under those outer spans is an oversubscription signal,
-so the dormant outer-width cap should return as a **reviewer decision**. It is
-not implemented here: this single host-sensitive observation establishes the
-contention to price, not a scheduler policy or width.
+70.327 s, prepared 68.353 s, and distributable 45.497 s. The concurrently
+running test phase is 69.506 s, and conformance-suite is 36.696 s. The
+remaining critical path is contract/posture plus gate setup.
+
+The focused 50.917 s posture span becomes 85.415 s under those outer spans,
+an oversubscription signal. The dormant outer-width cap should therefore
+return as a **reviewer decision**. It is not implemented here: this single
+host-sensitive observation establishes the contention to price, not a
+scheduler policy or width.
 
 **The toolchain closure declares `go` and `node`, not `npm`.** Every subject
-hash walks each declared binary and its shebang chain, and the 0.57 s reuse
-timing covers that whole hash-and-look-up path, so on warm caches the hashing
-is an observed non-issue at this measurement. A cold cache or a slower
-filesystem is untested. `npm` is deliberately outside the closure on the
-reviewer's ruling, for two reasons: a host with node but no npm (the Debian
-split packaging) would hold a permanently open subject, which disables reuse
-and locks `bench prep-release`'s dev-green entry check with no operator
-escape; and npm's shebang chain re-hashes `node`, doubling the closure's cost
-for a signal already carried. Nothing is lost, because an npm upgrade ships
-with its node — a toolchain upgrade still changes the subject through `node`.
+hash walks each declared binary and its shebang chain. The 0.57 s reuse
+timing covers that whole hash-and-look-up path. On warm caches the hashing is
+an observed non-issue at this measurement. A cold cache or a slower
+filesystem is untested.
+
+`npm` is deliberately outside the closure, on the reviewer's ruling, for two
+reasons. First, a host with node but no npm (the Debian split packaging)
+would hold a permanently open subject. This disables reuse and locks
+`bench prep-release`'s dev-green entry check with no operator escape.
+Second, npm's
+shebang chain re-hashes `node`, doubling the closure's cost for a signal
+already carried. Nothing is lost, because an npm upgrade ships with its
+node — a toolchain upgrade still changes the subject through `node`.
 
 ## What already shipped (do not re-litigate)
 
@@ -145,48 +153,49 @@ with its node — a toolchain upgrade still changes the subject through `node`.
   (ADR 0002 posture 5).
 - Per-test canary bites (lever 1): canary ~152 s → 25 s.
 - Gate-level verdict reuse at a 60 min freshness window, over a subject
-  closure that now declares `go` and `node` (lever 2): a re-judged unchanged
-  tree → 0.6 s.
+  closure declaring `go` and `node` (lever 2): a re-judged unchanged tree →
+  0.6 s.
 
-Closed rulings that stay closed: diff-scoped gating is unsound; no check is
-weakened or dropped for wall-clock; canary skip-on-"inputs unchanged" key
-rejected as fail-dangerous (ADR 0003); fixture batching rejected
+Closed rulings that stay closed: diff-scoped gating is unsound. No check is
+weakened or dropped for wall-clock. The canary skip-on-"inputs unchanged" key
+is rejected as fail-dangerous (ADR 0003). Fixture batching is rejected too
 (cross-contamination, ADR 0003).
 
 ## Lever 1 — per-test canary bites (landed; not oracle-weakening)
 
 **What:** a behavior-owned fixture's bite run invokes its compiled package
 binary with `-test.run` pinned to the one contract test whose failure message
-its EXPECT is, instead of running every `Test*` in the package.
+its EXPECT is. This replaces running every `Test*` in the package.
 
-**Why it is not a semantics change:** stage 2's ruling (FT91 map #7) already
-narrowed the claim — *"a behavior-owned fixture's bite is proven at its
-owning contract test, not by a nested gate."* The EXPECT is, by the same
-ruling, "the owning contract test's own failure message." Running the other
-~25 tests in the package per fixture is incidental breadth left over from the
-compile-once implementation, not part of the declared claim. Scoping execution
-to the declared owner is the fifth-arm/#6/#7 precedent ("scoping a fixture to
-the check its EXPECT names is not weakening") applied one level deeper.
+**This is not a semantics change.** Stage 2's ruling (FT91 map #7) narrowed
+the claim — *"a behavior-owned fixture's bite is proven at its owning
+contract test, not by a nested gate."* The EXPECT is, by the same ruling,
+"the owning contract test's own failure message." Running the other ~25
+tests in the package per fixture is incidental breadth left over from the
+compile-once implementation, not part of the declared claim. Scoping
+execution to the declared owner is the fifth-arm/#6/#7 precedent ("scoping a
+fixture to the check its EXPECT names is not weakening"). Here it applies
+one level deeper.
 
-**What it bought:** the five artifact fixtures no longer pay ~133 s each;
-every behavior-owned fixture is binary startup plus one test (seconds; the
+**What it bought:** the five artifact fixtures no longer pay ~133 s each.
+Every behavior-owned fixture is binary startup plus one test (seconds; the
 worst single tests do one real build, ~5–15 s). Measured at `d91b709`: the
-solo sweep is 25.2 s wall against ~171 s of CPU, bounded by the
-conformance-scoped remainder, the baselines, and the slowest single test —
-and the gate is contract-phase-bound at 128 s.
+solo sweep is 25.2 s wall against ~171 s of CPU. It is bounded by the
+conformance-scoped remainder, the baselines, and the slowest single test. The
+gate is contract-phase-bound at 128 s.
 
 **Fail postures (all loud, matching stage 1/2):**
-- Binding: an explicit per-fixture `TEST` file naming the owning test,
-  mirroring the existing `CHECK` convention — a name the package does not
+- Binding: an explicit per-fixture `TEST` file names the owning test,
+  mirroring the existing `CHECK` convention. A name the package does not
   declare is a red at sweep start (same shape as `CHECK`'s unknown-check
-  error), never a silent fallback to the full package.
+  error). This never falls back silently to the full package.
 - A renamed or deleted owning test → did-not-bite red.
 - A contract group's vacuity baseline runs its package binary whole over the
-  empty tree — no `-test.run`, no `-test.v` — so it stays deliberately wider
-  than the scoped runs it grades, and no baseline carries a per-test twin.
-  The two directions fail differently: a baseline narrower than its runs lets
-  a vacuous EXPECT clear the screen in silence, while a wider one at worst
-  calls a sound EXPECT vacuous, which is a red someone reads. This is the
+  empty tree — no `-test.run`, no `-test.v`. It stays deliberately wider than
+  the scoped runs it grades, and no baseline carries a per-test twin. The two
+  directions fail differently. A baseline narrower than its runs lets a
+  vacuous EXPECT clear the screen in silence. A wider one at worst calls a
+  sound EXPECT vacuous, which is a red someone reads. This is the
   wide-baseline principle `scopeBaselines` already holds for phase pins, and
   it is the one place scoping stops.
 
@@ -195,10 +204,11 @@ precedent, aligning execution with semantics the map had already declared.
 
 ## Lever 2 — gate-level verdict reuse + freshness (landed)
 
-**What exists:** every gate run already builds a *closed oracle subject* —
-working-tree hash (untracked files included: `internal/git/tree.go:16` stages
-`add -A` into a throwaway index), resolved gate, execution-policy version,
-`PATH`, the gate script's full launcher closure, and every declared
+**What exists:** every gate run already builds a *closed oracle subject*.
+This subject includes the working-tree hash (untracked files included:
+`internal/git/tree.go:16` stages `add -A` into a throwaway index), the
+resolved gate, the execution-policy version, and `PATH`. It also includes
+the gate script's full launcher closure and every declared
 environment/path/tool input from `.bench/gate-inputs.json`
 (`internal/gate/subject.go:53`). The verdict is recorded durably under lock,
 pending-before-run, subject-rechecked after. `Inspect` computes
@@ -218,8 +228,8 @@ reused verdict: 0.57 s.
 **What "green" comes to mean:** "this exact closed subject was judged green
 within the freshness window," rather than "the oracle just ran." ADR 0002
 posture 5 already accepted exactly this claim for the commit path, with the
-same reopen trigger (a reused verdict authorizing what a run would have
-refused). Extending it to `bench gate` widens *where* the claim is made, not
+same reopen trigger. A reused verdict authorizes what a run would have
+refused. Extending it to `bench gate` widens *where* the claim is made, not
 *what* it claims.
 
 **Honest residuals:**
@@ -243,23 +253,26 @@ review-then-commit gap the old 10 min window defeated, while keeping a bound
 on ambient drift.
 
 **What this does not buy:** the first gate after any edit. The FT91 ≤60 s
-stop rule remains about a changed tree — the split took the observed first run
-to 89.91 s, while lever 2 makes the *second* judgment of the same tree free,
+stop rule remains about a changed tree. The split took the observed first
+run to 89.91 s. Lever 2 makes the *second* judgment of the same tree free,
 at 0.57 s.
 
 ## Lever 3 — `-count=1` on the contract phase (recommend: reject)
 
 Removing `-count=1` from `go test ./internal/contract/...`
 (`internal/gate/phases.go:100`) would let Go's per-package test cache skip
-unchanged packages — but Go's cache key sees the tested package's own inputs,
+unchanged packages. But Go's cache key sees the tested package's own inputs,
 not subprocess effects. These suites exec `dist/bench`, `git`, `npm`; a
 change in, say, `internal/adopt` changes `dist/bench` behavior without
 invalidating `surface`'s cached pass. That is a *stale green with an
 incomplete key* — precisely the unsoundness ADR 0003 rejected for the canary
-skip-key. Lever 2 delivers the same class of saving with a **complete** key
-(the whole tree plus the oracle closure), so per-package caching buys nothing
-sound on top of it. The `test` phase's existing use of the Go cache stays as
-is: its packages are unit-level and the posture is already accepted.
+skip-key.
+
+Lever 2 delivers the same class of saving with a **complete** key
+(the whole tree plus the oracle closure). So per-package caching buys
+nothing sound on top of it. The `test` phase's existing use of the Go cache
+stays as is: its packages are unit-level and the posture is already
+accepted.
 
 
 ## Destination
@@ -279,34 +292,37 @@ without weakening a check or changing oracle semantics?
 ### Answer
 
 With lever 1 landed, the wall was the contract phase ≈ the artifact package
-(~109 s solo) inside a 128 s changed-tree gate — which is why this became a
-separate capability (test-package architecture, not oracle semantics). The retired
-FT91 inventory established that the package's remaining cost is legitimate:
-the collapsible generations already share one build; what remains is posture
-subjects (4 hermetic double-builds, 3 GOPROXY-off, 2 stale-record),
-Distributable's host+non-host build, and npm/node/git-heavy offline-smoke
-work — none cuttable without changing what green proves.
+(~109 s solo) inside a 128 s changed-tree gate. This is why the split became
+a separate capability (test-package architecture, not oracle semantics). The
+retired FT91 inventory established that the package's remaining cost is
+legitimate. The collapsible generations already share one build. What
+remains is posture subjects (4 hermetic double-builds, 3 GOPROXY-off, 2
+stale-record), Distributable's host+non-host build, and npm/node/git-heavy
+offline-smoke work. None of it is cuttable without changing what green
+proves.
 
 The non-semantic lever left is **scheduling within the phase**: the package
 runs serially (no `t.Parallel`; `go test` parallelizes across packages, not
 within one). Splitting it by subject into 3–4 sub-packages (posture / offline
 journey / promotion+staging / distributable) lets the existing `go test`
 scheduler overlap them. Watch-outs from the inventory: `TestMain`'s
-shared-cache posture is package-wide and must travel with each split;
-posture tests must keep stripping it; the shared prepared-artifact singleton
-is per-package and would need one owner package or per-split sets (the
+shared-cache posture is package-wide and must travel with each split.
+Posture tests must keep stripping it. The shared prepared-artifact singleton
+is per-package and would need one owner package or per-split sets. The
 sharers all live on the inspection/promotion side, so keeping them together
-preserves the hoist). Alternative — introducing `t.Parallel` — changes the
-hazard analysis from ordering to races (inventory's explicit warning) and is
-the worse trade. Expected: artifact wall ~109 s → ~40–60 s, gate wall →
-~60–75 s (then jointly bound with the `test` phase at ~62 s).
+preserves the hoist.
+
+Alternative — introducing `t.Parallel` — changes the hazard analysis from
+ordering to races (inventory's explicit warning), and is the worse trade.
+Expected: artifact wall ~109 s → ~40–60 s, gate wall → ~60–75 s (then
+jointly bound with the `test` phase at ~62 s).
 
 The split's measurement changes the dormant outer conformance/contract
-width-cap posture. The focused package trace completes posture in 50.917 s,
-but the full gate leaves posture at 85.415 s while the 69.506 s test phase
-overlaps it. That is enough contention evidence to ask the reviewer whether a
-bounded outer scheduler is worth its policy and implementation cost; it is not
-enough authority to choose or install a cap.
+width-cap posture. The focused package trace completes posture in 50.917 s.
+The full gate leaves posture at 85.415 s while the 69.506 s test phase
+overlaps it. That is enough contention evidence to ask the reviewer whether
+a bounded outer scheduler is worth its policy and implementation cost. It is
+not enough authority to choose or install a cap.
 
 ## Re-design verdict
 
@@ -315,12 +331,12 @@ already: one thin entry (`.bench/gate.sh` → `gate-phases`), a DAG scheduler
 that runs every phase concurrently with only real edges (build → readers of
 `dist/bench`), per-phase attribution, durable subject-bound verdicts, and a
 self-defending canary. FT91 #4 already falsified "pipeline structure is the
-wall" once — the measured wall was (1) one serial test package and (2)
+wall" once. The measured wall was (1) one serial test package and (2)
 re-judging unchanged subjects, and no re-ordering of phase calls touches
 either. Lever 2 closed the second; the first is all that is left at 128 s.
 
 The one architectural idea a re-design would surface — memoizing verdicts at
-finer grain (per phase or per package) — collapses on inspection: the only
+finer grain (per phase or per package) — collapses on inspection. The only
 *closed* input key the system has is the whole-subject key (tree + oracle
 closure). Any finer key is a file→test map, which is diff-scoped gating,
 ruled unsound. So sound memoization is exactly lever 2, at whole-gate
@@ -334,6 +350,6 @@ granularity, and the machinery for it already exists.
 
 ## Out of scope
 
-- Rewriting gate sequencing, per-package verdict reuse, `-count=1` removal, canary input-key skipping, fixture batching, and diff-scoped gating; the record rejects or closes each as unsound or already decided.
+- Rewriting gate sequencing, per-package verdict reuse, `-count=1` removal, canary input-key skipping, fixture batching, and diff-scoped gating. The record rejects or closes each as unsound or already decided.
 
 ## Sources

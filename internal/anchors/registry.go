@@ -39,8 +39,9 @@ func EvaluateGroup(root string, group Group) []string {
 	var diagnostics []string
 	files := map[string]fileResult{}
 	sections := map[string]sectionResult{}
-	// One refusal per file, not one per anchor: a refused file fails every anchor it
-	// owns, and repeating the same repair a dozen times buries the rest of the report.
+	// The evaluator reports one refusal per file, not one per anchor. A refused file
+	// fails every anchor it owns, so the report does not repeat the same repair many
+	// times.
 	reported := map[string]bool{}
 	for _, anchor := range registry {
 		if anchor.Group != group {
@@ -93,9 +94,9 @@ func EvaluateGroup(root string, group Group) []string {
 type fileResult struct {
 	active string
 	exists bool
-	// refusal is set when the path is present but its bytes are untrustworthy. It is
-	// kept apart from exists because "the anchor file is missing" sends the reader to
-	// write one, while a link or a special file at that path is a different repair.
+	// refusal is set when the path exists but its bytes are untrustworthy. This field
+	// stays separate from exists. A missing anchor file tells the reader to write one.
+	// A link or a special file at that path needs a different repair.
 	refusal string
 }
 
@@ -118,13 +119,13 @@ func resolveSection(file, title, active string, exists bool) sectionResult {
 	return sectionResult{body: body}
 }
 
-// RefusalPrefix opens every refused-anchor-file diagnostic. It is exported so a
-// consumer composing this registry with its own checks can recognize the registry's
-// refusal without restating the wording.
+// RefusalPrefix opens every refused-anchor-file diagnostic. A consumer that composes
+// this registry with its own checks can use this prefix to recognize the registry's
+// refusal. The consumer does not need to restate the wording.
 const RefusalPrefix = "acceptance coverage anchor file refused: "
 
 // read classifies an anchor file before it opens one. Registry targets include skill
-// and reference producer files, so a link is refused rather than followed and a FIFO
+// and reference producer files. A link is refused rather than followed, so a FIFO
 // cannot block the gate in open(2).
 func read(path, rel string) fileResult {
 	classified := bounds.ClassifyNoFollow(path)

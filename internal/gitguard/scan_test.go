@@ -2,9 +2,9 @@ package gitguard
 
 import "testing"
 
-// TestScanWrapperDepthAndGlobalOpts pins two scan properties the verdict table does not:
-// wrapper recursion stops at exactly one level (a wrapper nested inside a wrapper string
-// is not re-expanded — the honest-mistake threat model), and git's global options and
+// TestScanWrapperDepthAndGlobalOpts pins two scan properties the verdict table does not.
+// Wrapper recursion stops at exactly one level: a wrapper nested inside a wrapper string
+// is not re-expanded (the honest-mistake threat model). And git's global options and
 // their values are skipped before the subcommand.
 func TestScanWrapperDepthAndGlobalOpts(t *testing.T) {
 	cases := []struct {

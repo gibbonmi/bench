@@ -6,8 +6,8 @@ import (
 )
 
 // TestSplitAmbiguousState walks the splitter's edge set. The refusals are the point: a
-// first-match splitter passes every well-formed body below and silently discards prose on
-// the ambiguous ones, which is the data-loss path the command must never take.
+// first-match splitter passes every well-formed body below and silently discards prose
+// on the ambiguous ones. That is the data-loss path the command must never take.
 func TestSplitAmbiguousState(t *testing.T) {
 	refusals := []struct {
 		name, content string

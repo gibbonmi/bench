@@ -13,8 +13,8 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
-// Harness is the shared test-only conformance fixture: Root is the tree being
-// graded, while KitRoot is the real Bench kit checkout that owns these helpers.
+// Harness is the shared test-only conformance fixture. Root holds the tree under grading.
+// KitRoot holds the real Bench kit checkout that owns these helpers.
 type Harness struct {
 	t       testing.TB
 	Root    string

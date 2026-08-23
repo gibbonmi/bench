@@ -25,12 +25,13 @@ type Transition struct {
 }
 
 // Provenance binds one package name to the sha256 of the approved local
-// tarball the run intended to publish — recorded once up front from
-// dist/preflight/SHA256SUMS, independent of whatever the registry later reports.
-// Kind ("wrapper"|"platform") is release-plan.mjs's own kind, carried through
-// unchanged from ApprovedPackage — the one source every wrapper-vs-platform
-// decision downstream of the record (next_action derivation included) reads,
-// instead of re-deriving wrapper identity from the package name.
+// tarball the run intended to publish. The record captures it once up front
+// from dist/preflight/SHA256SUMS, independent of whatever the registry later
+// reports. Kind ("wrapper"|"platform") is release-plan.mjs's own kind,
+// carried through unchanged from ApprovedPackage. It is the one source every
+// wrapper-vs-platform decision downstream of the record (next_action
+// derivation included) reads, instead of re-deriving wrapper identity from
+// the package name.
 type Provenance struct {
 	Package string `json:"package"`
 	SHA256  string `json:"sha256"`
@@ -72,9 +73,10 @@ func LoadRecord(root string) (Record, error) {
 	return record, nil
 }
 
-// SaveRecord writes record atomically (temp file + rename) so a crash mid-write
-// never leaves a torn record. It only ever touches dist/publication/ — never
-// dist/preflight/ (the immutable release index and SHA256SUMS) or package bytes.
+// SaveRecord writes record atomically (temp file + rename) so a crash
+// mid-write never leaves a torn record. It only ever touches
+// dist/publication/, never dist/preflight/ (the immutable release index and
+// SHA256SUMS) or package bytes.
 func SaveRecord(root string, record Record) error {
 	record.SchemaVersion = RecordSchemaVersion
 	path := RecordPath(root)
@@ -98,8 +100,8 @@ func SaveRecord(root string, record Record) error {
 
 // releaseLockPath is the one lock file every serialized release operation
 // (submit, promote, rollback) contends for, alongside the durable record it
-// protects — so two simultaneous invocations against the same release root
-// can never race a load-modify-SaveRecord cycle against each other.
+// protects. So two simultaneous invocations against the same release root can
+// never race a load-modify-SaveRecord cycle against each other.
 func releaseLockPath(root string) string {
 	return filepath.Join(root, "dist", "publication", "release.lock")
 }
@@ -107,8 +109,8 @@ func releaseLockPath(root string) string {
 // AcquireReleaseLock exclusively locks root for one release operation
 // (O_CREATE|O_EXCL: create-or-fail, never blocking) and returns a release func
 // the caller must defer. A lock already held by another process is reported
-// as an attributed error naming the lock path — never a bare "file exists" —
-// so a concurrent `bench release submit`/`promote`/`rollback` fails loudly
+// as an attributed error naming the lock path, never a bare "file exists".
+// So a concurrent `bench release submit`/`promote`/`rollback` fails loudly
 // instead of silently racing the last SaveRecord to win.
 func AcquireReleaseLock(root string) (release func(), err error) {
 	path := releaseLockPath(root)

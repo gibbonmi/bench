@@ -16,8 +16,8 @@ const retroImprovementMarkersFamily = "retro-improvement-markers"
 
 // retroImprovementMarkersFixtureClasses names the diagnostic class each fixture in the
 // family plants. The generic bite proof derives its corpus from the fixture directories
-// themselves, so it cannot see a class whose fixture is gone; this independently authored
-// inventory is what makes that omission red.
+// themselves, so it cannot see a class whose fixture is gone. This independently authored
+// inventory makes that omission red.
 var retroImprovementMarkersFixtureClasses = map[string]string{
 	"retro-item-unmarked": "improvement item carries no destination marker",
 }

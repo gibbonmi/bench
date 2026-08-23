@@ -52,9 +52,9 @@ commit subjects.
 ### Adoption and packaging
 
 **H-A1 — Release automation bypasses its governed publisher.** The runbook
-requires `bench release submit` and `promote` with live digest verification and
-resumption (`docs/release-runbook.md:35-78`), while the tag workflow directly
-loops over `npm publish` and then publishes the wrapper (`.github/workflows/release.yml:49-73`). A partial immutable publication therefore bypasses the state machine in
+requires `bench release submit` and `promote`, with live digest verification and
+resumption (`docs/release-runbook.md:35-78`). The tag workflow instead
+loops over `npm publish` directly and then publishes the wrapper (`.github/workflows/release.yml:49-73`). A partial immutable publication therefore bypasses the state machine in
 `internal/publication/statemachine.go`. **Tracked: FT142.** ✓
 
 **M-A1 — No supported public entry point exists.** There are no repository
@@ -63,13 +63,13 @@ tags, and README truthfully says `redbench` is not published
 ✓
 
 **M-A2 — First-hour guidance remains out of order and split on profiles.** The
-README begins with harness commands before installation (`README.md:9,176`),
-and the legacy `init` path still tells consumers to consult a kit-side project
-example (`internal/adopt/init.go:70-82`) even though `setup` can emit the
+README begins with harness commands before installation (`README.md:9,176`).
+The legacy `init` path still tells consumers to consult a kit-side project
+example (`internal/adopt/init.go:70-82`), even though `setup` can emit the
 project-local profile. ✓
 
 **M-A3 — Uninstall guidance can delete a foreign executable.** Doctor refuses
-to overwrite an unmarked shim (`internal/adopt/doctor.go:304-318`) but its
+to overwrite an unmarked shim (`internal/adopt/doctor.go:304-318`). Its
 status output still prints `npm uninstall -g redbench && rm -f <path>` for the
 resolved path (`internal/adopt/doctor.go:189-237`); README prints the same raw
 deletion (`README.md:232-239`). ✓
@@ -91,12 +91,12 @@ tests make this visible but do not satisfy one-source-per-fact. **Tracked:
 FT89.** ✓
 
 **M-W2 — Four workflow contracts remain mutually inconsistent.** Design-it-
-twice supplies bare briefs while `craft-delegate` requires a complete charge
+twice supplies bare briefs, but `craft-delegate` requires a complete charge
 (`.agents/skills/bench-craft-seams/references/design-it-twice.md:3-23`;
-`.agents/skills/bench-craft-delegate/SKILL.md:35-47`); `craft-synthesis`
-recognizes only upstream/learnings origins despite assessment-driven work
-(`.agents/skills/bench-craft-synthesis/SKILL.md:9-16`); `CONTEXT.md:18` says
-token cap while `craft-line` says iteration cap; README's uncertain Regroup
+`.agents/skills/bench-craft-delegate/SKILL.md:35-47`). `craft-synthesis`
+recognizes only upstream/learnings origins, despite assessment-driven work
+(`.agents/skills/bench-craft-synthesis/SKILL.md:9-16`). `CONTEXT.md:18` says
+token cap while `craft-line` says iteration cap. README's uncertain Regroup
 example routes to shift contrary to the cheap-and-observable rule
 (`README.md:356-369`; `.agents/commands/bench-write-spec.md:16-21`). **Tracked:
 FT89/FT102.** ✓
@@ -111,7 +111,7 @@ FT89/FT106.** ✓
 
 Planted-reason ownership is no longer a finding. Every retained kit fixture has
 direct mutation-specific proof through its owning in-process check or owning
-package coverage; `bench canary` remains inventory-only, and linked repositories
+package coverage. `bench canary` remains inventory-only, and linked repositories
 own proof in their native tests. Ambient status also projects the retained exact
 gate subject and identifies staleness rather than reporting the verdict
 unavailable. ✓

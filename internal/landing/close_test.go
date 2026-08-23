@@ -8,9 +8,9 @@ import (
 )
 
 // TestTicketsOnlyFolder pins the predicate both the close step and `bench status`
-// read. The shapes that matter are the two the close step branches on — tickets and
-// no spec.md versus a folder carrying one — plus the names that must never resolve to
-// a direct child of specs/.
+// read. The shapes that matter are the two the close step branches on: tickets with
+// no spec.md, against a folder carrying one. It also pins the names that must never
+// resolve to a direct child of specs/.
 func TestTicketsOnlyFolder(t *testing.T) {
 	root := t.TempDir()
 	write := func(rel, content string) {

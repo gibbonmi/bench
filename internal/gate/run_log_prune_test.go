@@ -79,7 +79,7 @@ func assertLogDirHolds(t *testing.T, root string, want []string) {
 }
 
 // H27: a gate run over a log directory holding more than 20 records leaves exactly
-// the newest 20 — asserted by the identity of the survivors, so a pruner that
+// the newest 20. This test asserts the identity of the survivors, so a pruner that
 // retains a bounded-but-wrong set cannot pass on the count alone.
 func TestPruneGateRunLogsRetainsExactlyTheNewestRecords(t *testing.T) {
 	root := newPruneRoot(t)
@@ -116,9 +116,9 @@ func TestPruneGateRunLogsNeverRemovesTheCurrentRun(t *testing.T) {
 	assertLogDirHolds(t, root, want)
 }
 
-// H29: a file in .logs outside the gate's name shape survives pruning, and a
-// candidate that is not a regular file is left alone rather than removed — the
-// pruner stats before it removes.
+// H29: a file in .logs outside the gate's name shape survives pruning. A candidate
+// that is not a regular file is also left alone rather than removed. The pruner
+// stats before it removes.
 func TestPruneGateRunLogsLeavesForeignEntriesAlone(t *testing.T) {
 	root := newPruneRoot(t)
 	logs := gateLogDir(root)
@@ -140,7 +140,7 @@ func TestPruneGateRunLogsLeavesForeignEntriesAlone(t *testing.T) {
 		}
 	}
 
-	// Special files carrying the gate's own name shape: age 0 and 1 would both be
+	// These special files carry the gate's own name shape. Age 0 and 1 would both be
 	// pruned on count, so removing them is exactly the failure the stat prevents.
 	dangling := gateLogRecordName(seededRun(0))
 	if err := os.Symlink(filepath.Join(logs, "gone.jsonl"), filepath.Join(logs, dangling)); err != nil {
@@ -164,8 +164,8 @@ func TestPruneGateRunLogsLeavesForeignEntriesAlone(t *testing.T) {
 }
 
 // H34: a pruning failure writes exactly one stderr warning and leaves the gate's
-// verdict and exit code unchanged — the run's own finish record still lands with
-// the Result's exit, and finish returns rather than reporting an error upward.
+// verdict and exit code unchanged. The run's own finish record still lands with the
+// Result's exit, and finish returns rather than reporting an error upward.
 func TestGateRunLogFinishSurvivesPruningFailure(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -223,10 +223,11 @@ func TestGateRunLogFinishSurvivesPruningFailure(t *testing.T) {
 	}
 }
 
-// H27/story 39: pruning is a side effect of a gate run, not of a separate chore, so this
-// drives the closure beginGateRunLog hands back rather than calling the pruner. A build
-// that keeps the pruner correct but never wires it into the run leaves .logs unbounded
-// exactly as before, and every direct-call assertion above still passes.
+// H27/story 39: pruning is a side effect of a gate run, not of a separate chore. So
+// this test drives the closure beginGateRunLog hands back, rather than calling the
+// pruner. A build that keeps the pruner correct but never wires it into the run
+// leaves .logs unbounded exactly as before. Every direct-call assertion above still
+// passes.
 func TestGateRunPrunesThroughTheClosureBeginHandsBack(t *testing.T) {
 	root := newLoggingPruneRoot(t)
 	seeded := seedRecords(t, root, ages(0, 24)...)
@@ -243,7 +244,7 @@ func TestGateRunPrunesThroughTheClosureBeginHandsBack(t *testing.T) {
 		t.Fatalf("after one gate run: %d records retained, want %d\n%v", len(survivors), gateLogRetainedRecords, survivors)
 	}
 	// The record this run wrote is the newest of all, so it must have survived its own
-	// pruning: a pruner that counts before the write would drop it.
+	// pruning. A pruner that counts before the write would drop it.
 	seededNames := strings.Join(seeded, "\n")
 	own := 0
 	for _, name := range survivors {
@@ -257,14 +258,14 @@ func TestGateRunPrunesThroughTheClosureBeginHandsBack(t *testing.T) {
 }
 
 // H27's ordering rule when two runs share a start instant. seededRun spaces records a
-// minute apart, so the tiebreak below sort.Slice's comparator is unreached there; without
-// it the sort is unstable on ties and two gates starting in the same instant get
-// nondeterministic retention.
+// minute apart, so the tiebreak below sort.Slice's comparator is unreached there.
+// Without it, the sort is unstable on ties, and two gates starting in the same
+// instant get nondeterministic retention.
 func TestPruneGateRunLogsBreaksTimestampTiesDeterministically(t *testing.T) {
 	root := newPruneRoot(t)
-	// The tie sits at the retention cut: 19 newer records plus 3 sharing one instant is
-	// 22, so exactly two of the tied three are dropped. Which two is a fact about the
-	// name, not about readdir order.
+	// The tie sits at the retention cut. 19 newer records plus 3 sharing one instant
+	// is 22, so exactly two of the tied three are dropped. Which two is a fact about
+	// the name, not about readdir order.
 	instant := pruneEpoch.Add(-10 * time.Minute)
 	tied := make([]string, 0, 3)
 	for _, pid := range []int{7001, 7002, 7003} {

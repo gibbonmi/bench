@@ -1,1 +1,7 @@
-[{"path": ".agents/commands/bench-write-spec.md", "old": "the tier resolves through the\n   invoking harness's own `.bench/lines.env` column and runs same-family through its native agent surface", "new": "a tier or a bound model id runs same-family or cross-family through any agent surface"}, {"path": ".agents/commands/bench-write-spec.md", "old": "a model id is an invocation error", "new": "a bound model id is accepted"}]
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "The tier resolves through the invoking harness's\n   own `.bench/lines.env` column and runs same-family through its native agent surface.",
+    "new": "A tier or a bound model id runs same-family or cross-family through any agent surface."
+  }
+]

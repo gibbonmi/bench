@@ -5,6 +5,6 @@ description: Explicit Codex adapter for the /bench front door. Use only when the
 
 # $bench
 
-Read `.agents/commands/bench.md` completely and follow it as the active Bench front
-door, using `bench status --route --harness codex` for its route command. The
-command file is canonical; do not substitute this adapter for its instructions.
+Read `.agents/commands/bench.md` completely. Follow it as the active Bench front
+door. Use `bench status --route --harness codex` for its route command. The
+command file is canonical. Do not substitute this adapter for its instructions.

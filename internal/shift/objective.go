@@ -10,11 +10,11 @@ import (
 )
 
 // objective is the one owner of the reviewer-authored shift objective. It is admitted
-// once through validateObjective and then hands out one projection per surface, so no
-// caller decides how the text is escaped, bounded, or written: the banner and the
-// durable commit subject share the sanitizer's escaped, 120-rune-bounded preview; the
-// prompt, the predicate argument, and the scratch bytes carry the text verbatim, and
-// the scratch file's 0600 mode is the only place that verbatim text persists.
+// once through validateObjective and then hands out one projection per surface. No
+// caller decides how the text is escaped, bounded, or written. The banner and the
+// durable commit subject share the sanitizer's escaped, 120-rune-bounded preview. The
+// prompt, the predicate argument, and the scratch bytes carry the text verbatim. The
+// scratch file's 0600 mode is the only place that verbatim text persists.
 type objective string
 
 // objectiveMaxRunes caps an objective in Unicode code points, not bytes, so a
@@ -25,9 +25,9 @@ const objectiveMaxRunes = 200
 
 // hasControlByte reports whether s carries any byte below 0x20 or the DEL byte 0x7f.
 // This is a stricter, single-purpose check than toon.Representable's cell-escaping
-// notion (which tolerates \n/\r/\t inside an already-escaped TOON cell): a shift
+// notion, which tolerates \n/\r/\t inside an already-escaped TOON cell. A shift
 // objective is one line of operator intent, never a pre-escaped cell, so every control
-// byte is rejected outright, no exceptions.
+// byte is rejected outright, with no exceptions.
 func hasControlByte(s string) bool {
 	for i := 0; i < len(s); i++ {
 		if b := s[i]; b < 0x20 || b == 0x7f {
@@ -37,10 +37,10 @@ func hasControlByte(s string) bool {
 	return false
 }
 
-// validateObjective rejects an empty or whitespace-only objective — the "improve the
-// codebase" default is gone, an operator must state one — or one carrying a control
-// byte, so hostile or accidental text is refused at entry, before it can reach the
-// intent ledger or the TOON emitter.
+// validateObjective rejects an empty or whitespace-only objective; the "improve the
+// codebase" default is gone, so an operator must state one. It also rejects an objective
+// carrying a control byte. Hostile or accidental text is refused at entry, before it can
+// reach the intent ledger or the TOON emitter.
 func validateObjective(objective string) error {
 	if strings.TrimSpace(objective) == "" {
 		return errors.New("objective required: bench shift <objective...>")
@@ -56,8 +56,8 @@ func validateObjective(objective string) error {
 
 // objectiveBanner formats the shift-start line. The objective is reviewer-authored and
 // already rejected at intake if it carries a control byte, but the banner renders it
-// through the shared sanitizer anyway — one policy for every terminal render of
-// operator-influenced text, no render path with a raw escape sequence behind it. The
+// through the shared sanitizer anyway. This is one policy for every terminal render of
+// operator-influenced text, with no render path carrying a raw escape sequence. The
 // " — objective:" delimiter is load-bearing: the shift-start parser splits the branch on it.
 func objectiveBanner(branch, objective string) string {
 	return fmt.Sprintf("▶ shift on %s — objective: %s", branch, sanitize.Preview(objective))
@@ -69,7 +69,7 @@ func (o objective) banner(branch string) string {
 }
 
 // commitSubject is the durable subject for iteration i. It carries the same escaped,
-// bounded preview as the banner: history is a terminal render too, and it outlives the
+// bounded preview as the banner. History is a terminal render too, and it outlives the
 // shift, so it never carries the verbatim text.
 func (o objective) commitSubject(i int) string {
 	return fmt.Sprintf("shift: iteration %d — %s", i, sanitize.Preview(string(o)))

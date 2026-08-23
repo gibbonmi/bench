@@ -16,11 +16,11 @@ import (
 	"github.com/gibbonmi/bench/internal/skillsindex"
 )
 
-// TestClaudeSkillMirrorClassifiesStandaloneSkillSymlinks pins the three
-// non-craft postures of checkClaudeSkillMirror: a symlink resolving to its own
-// .agents/skills/<name>/SKILL.md is a genuine standalone skill and passes; a
-// name shared with an .agents/commands file is a phase adapter and stays red;
-// anything else — a dangling link, a plain directory — stays red as well.
+// TestClaudeSkillMirrorClassifiesStandaloneSkillSymlinks pins the three non-craft postures of
+// checkClaudeSkillMirror. A symlink that resolves to its own .agents/skills/<name>/SKILL.md
+// is a genuine standalone skill, and passes. A name shared with an .agents/commands file is a
+// phase adapter, and stays red. Anything else, such as a dangling link or a plain directory,
+// stays red too.
 func TestClaudeSkillMirrorClassifiesStandaloneSkillSymlinks(t *testing.T) {
 	root := t.TempDir()
 	write := func(rel, content string) {
@@ -82,8 +82,9 @@ func checkSkillFrontmatter(root string) []string {
 	files, _ := filepath.Glob(filepath.Join(root, ".agents", "skills", "*", "SKILL.md"))
 	sort.Strings(files)
 	for _, path := range files {
-		// Classified before it is opened: this is the first check to touch a skill file,
-		// so a FIFO here would block the whole gate rather than one diagnostic.
+		// The check classifies the file before it opens it. This is the first check to
+		// touch a skill file, so a FIFO here would block the whole gate, not just report
+		// one diagnostic.
 		classified := bounds.ClassifyNoFollow(path)
 		if classified.State.Failed() {
 			diags = append(diags, fmt.Sprintf("%s refused: %s", slashRel(root, path), classified.Reason))
@@ -163,9 +164,9 @@ func checkClaudeSkillMirror(root string) []string {
 			}
 			continue
 		}
-		// A non-craft entry is admissible only as a standalone skill: a symlink
-		// resolving to its own .agents/skills/<name>/SKILL.md. A name shared with a
-		// command file is a phase adapter regardless of where its link points.
+		// A non-craft entry is admissible only as a standalone skill: a symlink that
+		// resolves to its own .agents/skills/<name>/SKILL.md. A name shared with a
+		// command file is a phase adapter, no matter where its link points.
 		if exists(filepath.Join(root, ".agents", "commands", base+".md")) {
 			diags = append(diags, fmt.Sprintf(".claude/skills/%s is not a craft skill (phase adapters are Codex-only; it duplicates the slash menu)", base))
 			continue
@@ -203,20 +204,20 @@ func checkCommandGuideReferences(root string) []string {
 }
 
 // explicitOnlyDescriptionMarker is the phrasing that tells Codex a phase fires only on
-// a typed invocation. On a row the policy marks implicitly invocable it is the one
-// sentence that would keep the flip from ever firing, so it is graded as an anti-trigger.
+// a typed invocation. On a row the policy marks implicitly invocable, this sentence alone
+// would keep the flip from ever firing. The check grades it as an anti-trigger.
 const explicitOnlyDescriptionMarker = "Use only when the reviewer invokes"
 
-// phaseInvocationPolicy is the reviewed invocation posture of every Bench phase: whether
-// the Claude model may reach for the command on its own, and whether Codex may invoke the
-// adapter skill implicitly. It restates the frontmatter facts it grades on purpose — that
-// independence is what turns a silent flip of either surface red, the named exception to
-// the one-source rule, and the canary fixtures beside it demonstrate the reds.
+// phaseInvocationPolicy is the reviewed invocation posture of every Bench phase. It states
+// whether the Claude model may reach for the command on its own, and whether Codex may
+// invoke the adapter skill implicitly. It restates the frontmatter facts it grades on
+// purpose. That independence turns a silent flip of either surface red. This is the named
+// exception to the one-source rule. The canary fixtures beside it demonstrate these reds.
 var phaseInvocationPolicy = map[string]struct {
 	claudeModelInvocable bool
 	codexImplicit        bool
 }{
-	// The reviewer's 2026-08-19 settle: the bug path fires on symptoms, on both harnesses.
+	// The bug path fires on symptoms, on both harnesses.
 	"bench-debug": {claudeModelInvocable: true, codexImplicit: true},
 
 	"bench":                       {claudeModelInvocable: true},
@@ -234,16 +235,17 @@ var phaseInvocationPolicy = map[string]struct {
 	"bench-what-next":  {},
 }
 
-// invocationYAMLValue spells the openai.yaml line a policy value demands. Both the match
-// and the mismatch branch read it, so the file's grammar has one spelling in the check.
+// invocationYAMLValue spells the openai.yaml line that a policy value demands. Both the
+// match branch and the mismatch branch read it, so the file's grammar has one spelling in
+// the check.
 func invocationYAMLValue(implicit bool) string {
 	return fmt.Sprintf("allow_implicit_invocation: %t", implicit)
 }
 
 // frontmatterHasKey reports whether a frontmatter block declares key at all, empty value
-// included — the presence question FrontmatterField cannot answer, since it returns the
-// same empty string for an absent key and a declared-but-blank one. A mention in the body
-// is not frontmatter and stays inert.
+// included. FrontmatterField cannot answer this presence question, because it returns the
+// same empty string for an absent key and for a declared-but-blank one. A mention in the
+// body is not frontmatter, and stays inert.
 func frontmatterHasKey(text, key string) bool {
 	lines := strings.Split(text, "\n")
 	if len(lines) == 0 || lines[0] != "---" {
@@ -267,9 +269,9 @@ func checkCodexCommandAdapters(root string) []string {
 	sort.Strings(commandFiles)
 	for _, file := range commandFiles {
 		name := strings.TrimSuffix(filepath.Base(file), ".md")
-		// The policy lookup runs ahead of every adapter check: a phase nobody declared a
-		// trigger for reds as undeclared even when its adapter is missing too, so a new
-		// command cannot arrive triggerless behind a louder diagnostic.
+		// The policy lookup runs ahead of every adapter check. A phase with no declared
+		// trigger reds as undeclared, even when its adapter is also missing. A new
+		// command cannot then arrive triggerless behind a louder diagnostic.
 		policy, declared := phaseInvocationPolicy[name]
 		if !declared {
 			diags = append(diags, fmt.Sprintf("command '%s' has no invocation-policy row; every phase declares its Claude and Codex trigger before it ships", name))
@@ -321,13 +323,13 @@ func checkCodexCommandAdapters(root string) []string {
 			diags = append(diags, fmt.Sprintf("Codex adapter '%s' is not documented in the operating guide (.bench/BENCH.md or .bench/BENCH-reference.md)", name))
 		}
 	}
-	// The other completeness direction: a row survives the command file it grades.
-	// The pass is unconditional over the whole table, so a narrow root — every canary
-	// fixture in this family materializes one phase, not thirteen — collects a stale
-	// row for each phase it does not carry. Scoping the pass to roots that look
-	// complete would make the check guess which absences are real, so the noise stays
-	// and the fixtures isolate their own red by its text rather than by the diagnostic
-	// count.
+	// This is the other completeness direction: a row survives the command file it
+	// grades. The pass runs unconditionally over the whole table, so a narrow root
+	// collects a stale row for each phase it does not carry. Each canary fixture in
+	// this family materializes one phase, not thirteen. Scoping the pass to roots
+	// that look complete would force the check to guess which absences are real, so
+	// the noise stays. Each fixture isolates its own red by diagnostic text, not by
+	// diagnostic count.
 	phases := make([]string, 0, len(phaseInvocationPolicy))
 	for name := range phaseInvocationPolicy {
 		phases = append(phases, name)
@@ -363,11 +365,11 @@ func checkRoadmapPromotionAnchors(root string) []string {
 	return diags
 }
 
-// TestSkillsIndexConformanceCarriesNoSecondReader keeps the skills index's derivable
-// facts — marker text, allowlist path, line format — out of the conformance files.
-// internal/skillsindex is their one source, so a copy in either file is a second reader
-// by definition. Every declaration except this function is in scope, so hoisting a
-// literal to a package-level const or a helper trips the guard rather than evading it.
+// TestSkillsIndexConformanceCarriesNoSecondReader keeps the skills index's derivable facts —
+// marker text, allowlist path, line format — out of the conformance files.
+// internal/skillsindex is the one source for these facts, so a copy in either file is a
+// second reader by definition. Every declaration except this function is in scope, so
+// hoisting a literal to a package-level const or a helper still trips the guard.
 func TestSkillsIndexConformanceCarriesNoSecondReader(t *testing.T) {
 	const guard = "TestSkillsIndexConformanceCarriesNoSecondReader"
 	banned := []string{
@@ -407,11 +409,11 @@ func TestSkillsIndexConformanceCarriesNoSecondReader(t *testing.T) {
 	}
 }
 
-// TestCodexAdapterInvocationPolicyGradesParseEdges pins the two policy edges no canary
-// fixture can reach from the real tree: an agents/openai.yaml that declares nothing is
-// red as undeclared rather than passing as "not the wrong value", and the explicit-only
-// description clause is red on a row the policy marks implicitly invocable — the
-// anti-trigger that would leave a flipped yaml unable to fire.
+// TestCodexAdapterInvocationPolicyGradesParseEdges pins the two policy edges that no canary
+// fixture can reach from the real tree. An agents/openai.yaml that declares nothing is red as
+// undeclared, rather than passing as "not the wrong value". The explicit-only description
+// clause is red on a row the policy marks implicitly invocable: the anti-trigger that would
+// leave a flipped yaml unable to fire.
 func TestCodexAdapterInvocationPolicyGradesParseEdges(t *testing.T) {
 	adapterBody := func(name, description string) string {
 		return fmt.Sprintf("---\nname: %s\ndescription: %s\n---\n\nRead `.agents/commands/%s.md`.\n", name, description, name)
@@ -470,10 +472,10 @@ func TestCodexAdapterInvocationPolicyGradesParseEdges(t *testing.T) {
 	}
 }
 
-// TestCommandInvocationPolicyGradesTableCompleteness pins the two directions no canary
-// fixture can reach: a policy row whose command file left the tree reds as stale (the
-// table is compiled in, so omitting the file is the only way to age a row), and a
-// command body that merely quotes the frontmatter key keeps its declared policy green.
+// TestCommandInvocationPolicyGradesTableCompleteness pins the two directions that no canary
+// fixture can reach. A policy row whose command file left the tree reds as stale. The table
+// is compiled in, so only a missing file can age a row. A command body that merely quotes
+// the frontmatter key keeps its declared policy green.
 func TestCommandInvocationPolicyGradesTableCompleteness(t *testing.T) {
 	write := func(t *testing.T, root, rel, content string) {
 		t.Helper()
@@ -486,7 +488,7 @@ func TestCommandInvocationPolicyGradesTableCompleteness(t *testing.T) {
 		}
 	}
 	// materializePolicyRoot writes a BASE-style tree for every declared phase except the
-	// ones named, each phase carrying the frontmatter its own policy row demands.
+	// ones named. Each phase carries the frontmatter that its own policy row demands.
 	materializePolicyRoot := func(t *testing.T, omit ...string) string {
 		t.Helper()
 		omitted := map[string]bool{}
@@ -538,7 +540,7 @@ func TestCommandInvocationPolicyGradesTableCompleteness(t *testing.T) {
 
 	t.Run("body prose mention of the key is inert", func(t *testing.T) {
 		root := materializePolicyRoot(t)
-		// bench-write-spec is model-invocable, so a graded key would red the phase; the
+		// bench-write-spec is model-invocable, so a graded key would red the phase. The
 		// mention lands in the body, below the closing frontmatter fence.
 		write(t, root, ".agents/commands/bench-write-spec.md",
 			"---\ndescription: the bench-write-spec phase\n---\n\nA command file disables Claude's own reach for a phase with the\n`disable-model-invocation: true` frontmatter key.\n")

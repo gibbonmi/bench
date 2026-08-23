@@ -13,8 +13,8 @@ type lifecycleVerdict struct{ rel, reason string }
 
 // stagedEntry pairs a plan entry with the staged file promotion will rename into place.
 // Classification stages every entry it inspects because the skip decision compares the
-// destination against exactly the bytes and mode this plan would write, and staging is
-// the only definition of those.
+// destination against exactly the bytes and mode this plan would write. Staging is the
+// only definition of those.
 type stagedEntry struct {
 	entry planEntry
 	stage string
@@ -23,7 +23,7 @@ type stagedEntry struct {
 // convergedFingerprint returns dest's fingerprint when dest already holds exactly what
 // promoting staged would leave there, and "" when the entry still needs a write. The
 // permission bits are compared alongside the fingerprint because a fingerprint covers
-// content only, so a kit asset can change its executable bit without changing a byte.
+// content only. A kit asset can change its executable bit without changing a byte.
 func convergedFingerprint(dest, staged string) string {
 	destInfo, err := os.Lstat(dest)
 	if err != nil {
@@ -52,11 +52,11 @@ func convergedFingerprint(dest, staged string) string {
 
 // convergedSymlinkFingerprint answers convergedFingerprint for a staged symlink, whose
 // own permission bits carry nothing to compare. An identical link at dest is not the only
-// converged shape: a repo may satisfy a whole adapter directory with one directory-level
-// symlink (.claude/commands -> ../.agents/commands), which leaves dest resolving through
-// that parent to the very file the staged link names. Both shapes are converged because
-// a reader of dest sees the same bytes either way, and refusing the second one would
-// send an untouched repo into the symlink-parent refusal on every entry.
+// converged shape. A repo may satisfy a whole adapter directory with one directory-level
+// symlink (.claude/commands -> ../.agents/commands). That symlink leaves dest resolving
+// through its parent to the very file the staged link names. Both shapes are converged,
+// because a reader of dest sees the same bytes either way. Refusing the second shape
+// would send an untouched repo into the symlink-parent refusal on every entry.
 func convergedSymlinkFingerprint(dest, staged string) string {
 	destPrint, err := fingerprintPath(dest)
 	if err != nil {
@@ -97,8 +97,8 @@ func sameAdapterTarget(dest, staged string) bool {
 }
 
 // sameRegularContent reports whether two paths resolve to regular files holding the same
-// bytes. Each is stat'd through its links first: a FIFO or device reached by either path
-// would block the read forever.
+// bytes. Each is stat'd through its links first, because a FIFO or device reached by
+// either path would block the read forever.
 func sameRegularContent(a, b string) bool {
 	for _, path := range []string{a, b} {
 		info, err := os.Stat(path)
@@ -115,7 +115,7 @@ func sameRegularContent(a, b string) bool {
 }
 
 // ownedUnmodified reports whether dest still carries the exact bytes recorded for it in
-// the previous manifest, where owned is that manifest's hash and "" means unowned.
+// the previous manifest. owned is that manifest's hash, and "" means unowned.
 func ownedUnmodified(dest, owned string) bool {
 	if owned == "" {
 		return false
@@ -124,11 +124,10 @@ func ownedUnmodified(dest, owned string) bool {
 	return err == nil && fp == owned
 }
 
-// transactionalLink stages and promotes plan into root as one FT84 transaction, and
-// reports whether anything on disk actually changed (the second return) alongside the
-// usual 0/1/2/3 result - a caller that wants to distinguish "converged, nothing to do"
-// from "converged, wrote something" (bench setup's already-converged report) reads the
-// bool; bench link ignores it.
+// transactionalLink stages and promotes plan into root as one transaction. It reports
+// whether anything on disk actually changed (the second return) alongside the usual
+// 0/1/2/3 result. bench setup's already-converged report reads the bool to distinguish
+// "converged, nothing to do" from "converged, wrote something". bench link ignores it.
 func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout, stderr io.Writer) (int, bool) {
 	old, err := ReadManifest(filepath.Join(root, ".bench", "link-manifest.tsv"))
 	if err != nil {
@@ -138,10 +137,10 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 	accepted := make([]stagedEntry, 0, len(plan))
 	planned := make(map[string]bool, len(plan))
 	conflicts := []lifecycleVerdict{}
-	// A FIFO/socket/device at AGENTS.md or CLAUDE.md must never be opened for read —
-	// os.ReadFile on a FIFO with no writer on the other end blocks forever. Both are
-	// read unconditionally below (validateAgentsPath, stagedAgents, stagedClaude), so
-	// the special-file check runs first and routes straight to a conflict instead.
+	// A FIFO/socket/device at AGENTS.md or CLAUDE.md must never be opened for read.
+	// os.ReadFile on a FIFO with no writer on the other end blocks forever. Both are read
+	// unconditionally below (validateAgentsPath, stagedAgents, stagedClaude), so the
+	// special-file check runs first and routes straight to a conflict instead.
 	agentsPath := filepath.Join(root, "AGENTS.md")
 	agentsSpecial := isSpecialFile(agentsPath)
 	if agentsSpecial {
@@ -170,11 +169,11 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 	rows := map[string]string{}
 	for _, e := range plan {
 		planned[e.rel] = true
-		// "seed" (seed-if-absent) entries - bench setup's profile - are neither a
-		// managed/converged asset nor a conflict candidate: an existing file at the
-		// path is reviewer-owned judgment content and is skipped silently (no
-		// conflict, no manifest row); an absent one is staged and promoted with the
-		// rest of the transaction like any other write.
+		// "seed" (seed-if-absent) entries, such as bench setup's profile, are neither a
+		// managed/converged asset nor a conflict candidate. An existing file at the path is
+		// reviewer-owned judgment content and is skipped silently, with no conflict and no
+		// manifest row. An absent one is staged and promoted with the rest of the transaction
+		// like any other write.
 		if e.kind == "seed" {
 			if hasSymlinkParent(root, e.rel) {
 				fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
@@ -202,19 +201,15 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			fmt.Fprintf(stderr, "conflict: parent path for %s is not a directory\n", e.rel)
 			return 1, false
 		}
-		// A manifest-owned destination that already holds what this plan would write needs
-		// no write at all, so it leaves the transaction here - never renamed over and never
-		// a conflict candidate - carrying its own fingerprint into the manifest. The
-		// comparison is against the incoming kit bytes rather than the recorded hash: an
-		// asset whose kit content changed between releases is untouched locally yet stale,
-		// and keying the skip on the old hash would make every release a content no-op.
-		// Ownership still gates the skip except when an unowned adapter under a symlink
-		// parent resolves to its canonical target's same regular file. Byte-identical foreign
-		// files remain conflicts. Everything past this point wants to
-		// write, which is what makes a symlink parent a hard refusal for the whole
-		// transaction: promoting through a deliberately symlinked directory would write
-		// outside the tree the manifest describes, and that outranks the soft per-entry
-		// conflict report.
+		// A manifest-owned destination that already holds what this plan would write needs no
+		// write at all. It leaves the transaction here, never renamed over and never a conflict
+		// candidate, carrying its own fingerprint into the manifest. The comparison uses the
+		// incoming kit bytes rather than the recorded hash, so a locally stale kit asset is
+		// still caught. Keying the skip on the old hash would make every release a content
+		// no-op instead. Ownership still gates the skip, except for a byte-identical adapter
+		// resolved through a symlink parent to its canonical target. Everything past this point
+		// wants to write, so a symlinked parent is a hard refusal that outranks the soft
+		// per-entry conflict report.
 		dest := filepath.Join(root, e.rel)
 		_, statErr := os.Lstat(dest)
 		exists := statErr == nil
@@ -236,10 +231,10 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
 			return 1, false
 		}
-		// An owned destination still carrying the bytes the manifest recorded is the
-		// consumer's untouched copy of an older kit, so it is rewritten rather than
-		// reported: only a destination that answers to neither the manifest nor the
-		// incoming kit is someone's local edit to preserve.
+		// An owned destination still carrying the bytes the manifest recorded is the consumer's
+		// untouched copy of an older kit. It is rewritten rather than reported. Only a
+		// destination that answers to neither the manifest nor the incoming kit is someone's
+		// local edit to preserve.
 		if exists && !ownedUnmodified(dest, owned) {
 			reason := "project-owned"
 			if owned != "" {
@@ -252,9 +247,9 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 	}
 	changes := []stagedChange{}
 	for _, a := range accepted {
-		// A seed entry is never recorded as a managed row: recording it would make a
-		// later reviewer hand-edit read back as a modified-managed conflict on the
-		// next run, which defeats "seed-if-absent, then reviewer-owned".
+		// A seed entry is never recorded as a managed row. A recorded row would make a later
+		// reviewer hand-edit read back as a modified-managed conflict on the next run, which
+		// defeats "seed-if-absent, then reviewer-owned".
 		if a.entry.kind != "seed" {
 			fp, err := fingerprintPath(a.stage)
 			if err != nil {

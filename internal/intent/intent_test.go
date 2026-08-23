@@ -247,9 +247,9 @@ func TestUnstampedAssignmentRoundTripsThroughLedger(t *testing.T) {
 	}
 }
 
-// An identical re-write must preserve the ledger bytes, which PutAssignment
-// decides with reflect.DeepEqual — so a stamp held behind a pointer has to
-// compare by its value, not by its address.
+// An identical re-write must preserve the ledger bytes. PutAssignment decides that
+// with reflect.DeepEqual, so a stamp held behind a pointer has to compare by its
+// value, not by its address.
 func TestIdenticalStampedAssignmentWritePreservesBytes(t *testing.T) {
 	root := newRepo(t)
 	first, second := "2026-07-27T00:00:00Z", "2026-07-27T00:00:00Z"

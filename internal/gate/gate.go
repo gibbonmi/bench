@@ -1,10 +1,13 @@
-// Package gate is the oracle's selection logic in one Go home: the ordered
-// resolution chain (`.bench/gate.sh` beats `$BENCH_GATE` beats auto-detect), the gate
-// run from the repo root, and the verdict-cache record keyed to git.TreeHash. Both the
-// standalone `bench gate` (via the shell's one-glance run_gate → `bench gate-run`) and
-// the in-process shift loop read this package, so gate resolution and the cache-write
-// format each live in exactly one place — a second live resolver, or a second cache
-// writer, is the worst class of bug in a kit whose premise is "the gate is the oracle".
+// Package gate holds the oracle's selection logic in one Go home. It holds the
+// ordered resolution chain (`.bench/gate.sh` beats `$BENCH_GATE` beats auto-detect),
+// the gate run from the repo root, and the verdict-cache record keyed to
+// git.TreeHash.
+//
+// Both the standalone `bench gate` (via the shell's one-glance run_gate →
+// `bench gate-run`) and the in-process shift loop read this package. So gate
+// resolution and the cache-write format each live in exactly one place. A second live
+// resolver, or a second cache writer, is the worst class of bug in this kit. This kit's
+// premise is "the gate is the oracle".
 package gate
 
 import (
@@ -57,14 +60,14 @@ func resolutionName(kind Kind) string {
 }
 
 // treeHashRE is the shape a real git tree hash must match before it is written to the
-// verdict cache. Anything else (notably git.TreeHash's "none" on failure) is refused,
-// so Record never forges a tree — the no-forged-verdict guarantee shared with the Stop
-// hook, whose recordGate delegates here.
+// verdict cache. treeHashRE refuses anything else, notably git.TreeHash's "none" on
+// failure, so Record never forges a tree. The Stop hook shares this no-forged-verdict
+// guarantee, because its recordGate delegates here.
 var treeHashRE = regexp.MustCompile(`^[0-9a-f]+$`)
 
-// FS injects the two filesystem probes Resolve needs — `-x` for the executable
-// `.bench/gate.sh` and `-f` for the auto-detect lockfiles — so the resolution
-// precedence is a pure function unit-testable without a real tree.
+// FS injects the two filesystem probes Resolve needs: `-x` for the executable
+// `.bench/gate.sh` and `-f` for the auto-detect lockfiles. This keeps the resolution
+// precedence a pure function, unit-testable without a real tree.
 type FS struct {
 	Executable func(path string) bool
 	Exists     func(path string) bool
@@ -85,11 +88,11 @@ func RealFS() FS {
 	}
 }
 
-// Resolve is the ordered chain as a pure function: an executable `.bench/gate.sh`
-// wins, then a non-empty `$BENCH_GATE`, then the first auto-detect lockfile in the
-// fixed order pnpm → npm → pyproject → cargo, then None. A reordered chain would
-// silently run the wrong oracle; this is the precedence the NEW resolution-order
-// contract and the table test both pin.
+// Resolve is the ordered chain as a pure function. An executable `.bench/gate.sh`
+// wins first, then a non-empty `$BENCH_GATE` wins next. After that, the first
+// auto-detect lockfile wins, in the fixed order pnpm → npm → pyproject → cargo, then
+// None wins. A reordered chain would silently run the wrong oracle. This is the
+// precedence the NEW resolution-order contract and the table test both pin.
 func Resolve(root, benchGate string, fs FS) Resolution {
 	if fs.Executable(filepath.Join(root, ".bench", "gate.sh")) {
 		return Resolution{Kind: GateSh}
@@ -139,12 +142,12 @@ func (r Resolution) command(root string) *exec.Cmd {
 
 // gateEnv returns the caller's environment with wrapper-routing internals removed.
 // `bench gate` reaches this package through bin/bench.sh -> route_binary, which sets
-// them so the binary can find its assets. Those are not part of the project gate's
-// contract; leaking them into the gate makes fixture wrappers resolve the live kit
-// instead of their own fabricated layout. The selected executable is not among them:
-// the gate's phase children are contracted to inherit it.
+// them so the binary can find its assets. Those variables are not part of the project
+// gate's contract. Leaking them into the gate makes fixture wrappers resolve the live
+// kit instead of their own fabricated layout. The selected executable is not among
+// them, because the gate's phase children are contracted to inherit it.
 //
-// The capability skip log goes too: a run owns the log its own phases append to, so an
+// The capability skip log goes too. A run owns the log its own phases append to, so an
 // inherited path must never survive into a child. A collecting run sets its own value
 // back on each phase.
 func gateEnv() []string {
@@ -152,18 +155,18 @@ func gateEnv() []string {
 }
 
 // Run executes the resolved gate from the repo root and returns its exit code, with
-// the gate's own output streamed to stdout/stderr. The gate is run from the working
-// tree by design (an agent can edit the file it is graded by; the canary tripwire, not
-// this call site, keeps that safe). None must not reach here — the caller handles the
-// no-gate exit-3-nothing-recorded case.
+// the gate's own output streamed to stdout/stderr. Run executes the gate from the
+// working tree by design. An agent can edit the file it is graded by. The canary
+// tripwire, not this call site, keeps that safe. None must not reach here; the caller
+// handles the no-gate exit-3-nothing-recorded case.
 func Run(root string, res Resolution, stdout, stderr io.Writer) int {
 	return runResolved(context.Background(), root, res, gateEnv(), stdout, stderr, false).Code
 }
 
 // RunContext executes the resolved gate like Run, but puts the gate in its own process
-// group and kills that group before returning when ctx is canceled. Shift uses this
-// path so an interrupt cannot release the pooled worktree while a gate child keeps
-// running and writing into it. Standalone `bench gate` uses Run, preserving normal
+// group. RunContext kills that group before returning when ctx is canceled. Shift uses
+// this path so an interrupt cannot release the pooled worktree while a gate child keeps
+// running and writing into it. Standalone `bench gate` uses Run, which preserves normal
 // foreground-process signal delivery.
 func RunContext(ctx context.Context, root string, res Resolution, stdout, stderr io.Writer) int {
 	result := runResolved(ctx, root, res, gateEnv(), stdout, stderr, true)
@@ -188,11 +191,11 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 	return Execute(ctx, root, stdout, stderr).ActionExit
 }
 
-// RunCommand is the `bench gate-run [--fresh] [root]` plumbing subcommand: the shell's
+// RunCommand is the `bench gate-run [--fresh] [root]` plumbing subcommand. The shell's
 // one-glance run_gate forwards here so gate resolution lives in exactly one place. Root
 // is the first non-flag argument when the shell passes the resolved repo root, else the
-// cwd's repo — resolved so the gate always runs from the top level even when invoked from
-// a subdirectory. `--fresh` may sit on either side of it.
+// cwd's repo. RunCommand resolves root this way so the gate always runs from the top
+// level, even when invoked from a subdirectory. `--fresh` may sit on either side of it.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	var root string
 	mode := reuseFreshGreen
@@ -257,11 +260,12 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 // ExecuteReusingFreshGreen answers for root's tree like Execute, but a verdict already
 // reusable for this subject answers before the execution lock is touched. A gate run in
 // progress elsewhere therefore neither refuses the caller nor demotes the green it would
-// have reused, which is what makes the gated commit safe to run beside one. The optimistic
-// subject comes from an evaluation-owned pre generation — the reuse decision authorizes
-// skipping the gate, so it answers from the same snapshot contract a real run accepts,
-// never from an independent capture. Everything else falls through to Execute and pays a
-// real run under the lock.
+// have reused. This is what makes the gated commit safe to run beside one.
+//
+// The optimistic subject comes from an evaluation-owned pre generation. The reuse
+// decision authorizes skipping the gate, so it answers from the same snapshot contract
+// a real run accepts, never from an independent capture. Everything else falls through
+// to Execute and pays for a real run under the lock.
 func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
 	if plan, err := newGateEvaluation(root).acceptPre(); err == nil {
 		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {
@@ -271,17 +275,17 @@ func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr i
 	return execute(ctx, root, stdout, stderr)
 }
 
-// reusedGreenResult is the one place a reused verdict is announced and shaped into a result.
-// The announcement is not optional: a skipped run that says nothing reads as a gate that
-// never ran, and the operator has no way to tell the difference.
+// reusedGreenResult is the one place a reused verdict is announced and shaped into a
+// result. The announcement is not optional. A skipped run that says nothing reads as a
+// gate that never ran, and the operator has no way to tell the difference.
 func reusedGreenResult(stdout io.Writer, reuse Inspection) Result {
 	fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
 	return Result{Inspection: reuse}
 }
 
 // runMode says whether a fresh green already recorded for this subject may answer the
-// execution. `bench gate --fresh` picks forceRun: it is the operator's only escape from a
-// green the closure still calls current but the oracle would no longer stand behind.
+// execution. `bench gate --fresh` picks forceRun. It is the operator's only escape from
+// a green the closure still calls current, but the oracle would no longer stand behind.
 type runMode int
 
 const (
@@ -306,9 +310,9 @@ func runBinarySource(runtimeRoot, storageRoot string, plan subject) string {
 }
 
 // sameDirectory reports whether two paths name the same directory, by file identity
-// rather than by string equality, so a symlinked or differently-spelled path to one tree
-// still matches. Either stat failing answers no — for the reduction guard that is the
-// fail-closed direction.
+// rather than by string equality. This way a symlinked or differently-spelled path to
+// one tree still matches. Either stat failing answers no, which is the fail-closed
+// direction for the reduction guard.
 func sameDirectory(a, b string) bool {
 	ai, err := os.Stat(a)
 	if err != nil {
@@ -322,14 +326,16 @@ func sameDirectory(a, b string) bool {
 }
 
 // phaseTableGate reports whether root's resolved gate provably routes through the
-// phase table this package runs. Only such a gate may be reduced: running the table
-// under a gate that never execs it would swap the repository's oracle — a hand-written
-// script — for one it never chose. A declared phase manifest chooses *which* table a
-// routed run resolves, never *whether* the gate routes through one, so the proof is the
-// same with or without a manifest: the resolved gate must be the script, and the script
-// must carry the gate-phases hand-off the kit's own entry uses (the exec line the
-// gate-entry conformance check pins). Anything else pays the full run — fail closed,
-// never fail cheap.
+// phase table this package runs. Only such a gate may be reduced. Running the table
+// under a gate that never execs it would swap the repository's oracle, a hand-written
+// script, for one it never chose.
+//
+// A declared phase manifest chooses *which* table a routed run resolves, never
+// *whether* the gate routes through one. So the proof is the same with or without a
+// manifest. The resolved gate must be the script. The script must also carry the
+// gate-phases hand-off the kit's own entry uses (the exec line the gate-entry
+// conformance check pins). Anything else pays the full run; phaseTableGate fails
+// closed, never fails cheap.
 func phaseTableGate(root string, res Resolution) bool {
 	if res.Kind != GateSh && res.Kind != ProspectiveGateSh {
 		return false

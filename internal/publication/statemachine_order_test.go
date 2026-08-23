@@ -6,8 +6,8 @@ import (
 )
 
 // memoryRegistry is an in-process Registry: publish stores the bytes and every
-// integrity query answers from them, so a complete first publication runs with
-// no process, no network, and no fixture server — leaving the durable record as
+// integrity query answers from them. So a complete first publication runs with
+// no process, no network, and no fixture server, leaving the durable record as
 // the only thing under test.
 type memoryRegistry struct {
 	published map[string][]byte
@@ -46,8 +46,8 @@ func (m *memoryRegistry) Deprecate(ctx context.Context, name, version, message s
 
 // TestFirstPublicationRecordsPlatformsBeforeWrapper is row R13: the durable
 // record proves every one of the four platform packages was published before
-// the wrapper. This is the live owner of the platform-first, wrapper-last
-// ordering — the release workflow's step-name check retires with the raw
+// the wrapper. This test is the live owner of the platform-first, wrapper-last
+// ordering; the release workflow's step-name check retires with the raw
 // publish steps.
 func TestFirstPublicationRecordsPlatformsBeforeWrapper(t *testing.T) {
 	const version = "9.9.9"

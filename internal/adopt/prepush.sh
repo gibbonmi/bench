@@ -4,16 +4,17 @@
 # boundary: pre-push
 # denies: direct push to the protected branch; .bench drift when pinned
 # why: the merge belongs to the reviewer; agents open a PR instead of pushing the protected branch
-# Installed by 'bench link'. The merge is the human's; agents don't push __BENCH_DEFAULT_BRANCH__.
-# Read the pin state once, at the top: the drift clause is armed only when a non-empty pin exists.
+# 'bench link' installs this hook. The merge belongs to the human; an agent does not
+# push __BENCH_DEFAULT_BRANCH__. Read the pin state once, at the top: the drift
+# clause arms only when a non-empty pin exists.
 pin_path="$(git rev-parse --git-path bench-gate-pin 2>/dev/null || true)"
 pin_tree=""
 if [[ -n "$pin_path" && -f "$pin_path" ]]; then
   IFS= read -r pin_tree < "$pin_path" || true
 fi
-# Resolve the protected branch live so a repo linked before its remote existed baked a
-# fabricated default, so query origin/HEAD and fall back to the baked token only when it
-# is unresolvable (no remote, or origin/HEAD unset).
+# Resolve the protected branch live, because a repo linked before its remote existed
+# baked in a fabricated default. Query origin/HEAD, and fall back to the baked token
+# only when it is unresolvable — no remote, or origin/HEAD unset.
 protected="__BENCH_DEFAULT_BRANCH__"
 live_head="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
 if [[ -n "$live_head" ]]; then

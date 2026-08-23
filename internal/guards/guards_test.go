@@ -97,12 +97,12 @@ func TestCommandPreservesCheckedInStaleAndUnwiredPrimaryResponse(t *testing.T) {
 	}
 }
 
-// TestCommandRendersRealStaleManagedPrePushHookAndRepairAction drives the whole disclosure
-// off a real fixture: the kit's own managed pre-push asset, installed at the hook path and
-// drifted the way an install left behind by an older kit drifts, so adopt's currency check
-// reads it as stale. Nothing is stubbed — the row's cells and the appended `bench link`
-// repair are the production scan's own derivation, which is what the stubbed stale/unwired
-// tests above cannot show.
+// TestCommandRendersRealStaleManagedPrePushHookAndRepairAction drives the whole
+// disclosure off a real fixture: the kit's own managed pre-push asset, installed at the
+// hook path and drifted the way an install left behind by an older kit drifts. Adopt's
+// currency check then reads it as stale. Nothing is stubbed. The row's cells and the
+// appended `bench link` repair are the production scan's own derivation, which the
+// stubbed stale/unwired tests above cannot show.
 func TestCommandRendersRealStaleManagedPrePushHookAndRepairAction(t *testing.T) {
 	// The fixture is the shipped hook body itself rather than a hand-copied one, so the
 	// only difference from a current install is the trailing drift line.

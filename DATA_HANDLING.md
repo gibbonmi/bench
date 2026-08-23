@@ -7,14 +7,14 @@ context: what data travels where, how durable it is, and who can read it.
 
 Bench runs as the invoking user; see `SECURITY.md` for the trust model. Nothing
 here is a sandbox. The controls below bound *which* data reaches
-repository-controlled subprocess code and *how long* it persists — they are not a
+repository-controlled subprocess code and *how long* it persists. They are not a
 boundary against a malicious process running as the same user.
 
 **No content-based secret detection anywhere.** Sensitivity is handled by
 documenting which paths are durable, never by inspecting values. The environment
 passlist below filters variable *names*; it never reads a value. A passlisted
 variable's value may still be sensitive — an API key under `ANTHROPIC_*`, a
-credential under `AWS_*` — and that is a documented fact, not a defect. If a
+credential under `AWS_*`. That is a documented fact, not a defect. If a
 value must not reach adapter code, do not export it, or narrow the passlist; Bench
 will not guess at it.
 
@@ -25,18 +25,18 @@ The iteration prompt is the text a shift hands its harness on each cycle.
 - **Loop to adapter — stdin, end to end.** The shift loop writes the full
   iteration prompt to the adapter process's standard input and passes no
   positional argument. The prompt therefore never appears in `argv` on any hop
-  Bench itself controls, so it is absent from the machine's process listing for
+  Bench itself controls. It is absent from the machine's process listing for
   the loop-to-adapter call.
 - **Adapter to harness CLI — stdin where the CLI documents it.** The Claude Code
   and Codex adapters forward stdin to their CLI's documented stdin path
-  (`claude -p` and `codex exec` both read a piped prompt), so the prompt stays
+  (`claude -p` and `codex exec` both read a piped prompt). The prompt stays
   out of `argv` on the final hop too.
 - **opencode adapter — residual positional final hop (documented harness
   limitation).** As of 2026-07-20 `opencode run` documents only a positional
   prompt argument. Its adapter reads the prompt from stdin and passes it to the
   CLI positionally after `--`. The prompt is therefore visible in that one final
   process's `argv` on the local machine. This is a known residual to drop when
-  upstream documents a stdin path; it is asserted as a deliberate state, not left
+  upstream documents a stdin path. It is asserted as a deliberate state, not left
   to drift.
 
 ## Environment
@@ -49,22 +49,22 @@ and are never inspected, truncated, or split.
 
 The project gate is a separate, already-closed subject: `bench gate` launches the
 gate script with `PATH` plus only the names declared under `environment` in
-`.bench/gate-inputs.json`, which is both the opt-in and part of the gate's verdict
-identity. A repo whose gate script needs an extra variable declares it there. The
-observable failure when it is missing is the gate turning red with the project's
-own error naming the absent variable — not a silent widening.
+`.bench/gate-inputs.json`. This file is both the opt-in and part of the gate's
+verdict identity. A repo whose gate script needs an extra variable declares it
+there. The observable failure when it is missing is the gate turning red with
+the project's own error naming the absent variable — not a silent widening.
 
 ### Default passlist
 
 Every pattern below is a default the adapter admits. Exact names match exactly; a
 `PREFIX*` token matches every name under that prefix. This listing is the single
 documented source paired with the exported `internal/env` constants
-(`SharedBasics` and `AgentPasslist`); a conformance check fails the gate if a
-constant pattern is added without a row here, so the advertisement cannot drift
+(`SharedBasics` and `AgentPasslist`). A conformance check fails the gate if a
+constant pattern is added without a row here. So the advertisement cannot drift
 from the enforcement.
 
 Provider keys for harnesses Bench ships no adapter for (Groq, Gemini, Azure,
-Cloudflare) are deliberately absent — each is a one-line `.bench/env.allow`
+Cloudflare) are deliberately absent. Each is a one-line `.bench/env.allow`
 addition, which is what the opt-in mechanism exists for.
 
 <!-- passlist:begin -->
@@ -102,7 +102,7 @@ addition, which is what the opt-in mechanism exists for.
 
 A default glob never straddles two families: every glob above covers a namespace
 one owner controls. A name whose prefix is shared with a foreign family is
-enumerated exactly instead — this is why there is no `GO*` glob, which would also
+enumerated exactly instead. This is why there is no `GO*` glob, which would also
 have matched `GOOGLE_APPLICATION_CREDENTIALS`.
 
 ### The opt-in: `.bench/env.allow`
@@ -111,8 +111,8 @@ A committed `.bench/env.allow` is the only sanctioned way to widen the adapter
 passlist. It is optional; absent means defaults only, never an error. It is
 line-oriented: `#` comments, blank lines, an `[agent]` section header (the only
 known section), and one entry per line that is either an exact name or a
-`PREFIX*` glob. A malformed or hostile file fails closed — the launch refuses and
-the error names the offending line and reason — rather than degrading to
+`PREFIX*` glob. A malformed or hostile file fails closed: the launch refuses and
+the error names the offending line and reason. It does not degrade to
 defaults, because a silently ignored opt-in is indistinguishable from a working
 one. A leading UTF-8 byte-order mark is rejected the same way, named explicitly
 rather than reported as a stray entry. A gate-side need is declared in
@@ -136,9 +136,9 @@ rather than reported as a stray entry. A gate-side need is declared in
   declarations of passlist and gate-subject widenings. They carry variable
   *names*, never values.
 
-An objective is capped at 200 runes and rejected at intake — before any ledger
-entry, scratch file, or commit — if it is over-long or carries a control byte,
-so unbounded or control-bearing text cannot flow into durable state.
+An objective is capped at 200 runes. It is rejected at intake — before any ledger
+entry, scratch file, or commit — if it is over-long or carries a control byte.
+So unbounded or control-bearing text cannot flow into durable state.
 
 ## Log and terminal output
 
@@ -149,16 +149,16 @@ the one control-sequence policy; a conformance check pins it as the sole escaper
 so a second, drifting copy cannot appear.
 
 The dashboard HTML renderer (`internal/dashboard`) uses this same escaper for
-every field it interpolates, with one composed exception: the two fields
+every field it interpolates, with one composed exception. The two fields
 rendered inside `<pre>` (the Roadmap panel's `RoadmapText` and `Sequence`) route
 through `sanitize.Preformatted` instead of `sanitize.Controls`. `Preformatted`
 shares the same escaping mechanism but leaves newline and tab literal so a
-multi-line panel keeps its layout — html/template's own markup neutralization
+multi-line panel keeps its layout. html/template's own markup neutralization
 already covers the injection risk inside `<pre>`, so flattening those two
 fields to single-line escape tokens was unnecessary collateral.
 
 TOON table output (`internal/toon`) is deliberately distinct: it *refuses* a
-control-bearing cell rather than escaping it, a closed AXI-contract decision, and
+control-bearing cell rather than escaping it, a closed AXI-contract decision. It
 is not folded into the sanitizer's escaping policy.
 
 ## Network
@@ -186,11 +186,11 @@ object store holds commit subjects as ordinary repository history.
 
 ## Retention
 
-- **Objective text** persists in exactly two places: the commit subject
-  (durable repository history, by design) and `.bench-objective` (mode 0600,
-  living only as long as its worktree). A retained or interrupted worktree keeps
-  its `.bench-objective` alive at mode 0600 until the worktree is cleaned up —
-  this is the one retention edge worth naming, and it stays user-readable-only
+- **Objective text** persists in exactly two places. The commit subject is
+  durable repository history, by design. `.bench-objective` is mode 0600,
+  living only as long as its worktree. A retained or interrupted worktree keeps
+  its `.bench-objective` alive at mode 0600 until the worktree is cleaned up.
+  This is the one retention edge worth naming, and it stays user-readable-only
   throughout.
 - **Intent ledger** retains objective *keys*, not text, for the life of the
   ledger.

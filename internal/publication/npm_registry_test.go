@@ -35,9 +35,10 @@ func withStubbedTools(t *testing.T, npmVersion, nodeVersion string) {
 }
 
 // TestNPMCLIRegistryRefusesStagedOpsBelowToolFloor asserts the staged-flow
-// precondition belongs only to the public npm adapter: an npm/node pair below
-// the documented floor must fail StageSubmit and Approve before ever shelling
-// out to `npm publish` or `npm ...` for the real operation.
+// precondition belongs only to the public npm adapter. An npm/node pair
+// below the documented floor must fail StageSubmit and Approve. This must
+// happen before either ever shells out to `npm publish` or `npm ...` for
+// the real operation.
 func TestNPMCLIRegistryRefusesStagedOpsBelowToolFloor(t *testing.T) {
 	withStubbedTools(t, "11.14.0", "22.14.0")
 	registry := NewNPMCLIRegistry("")
@@ -52,8 +53,8 @@ func TestNPMCLIRegistryRefusesStagedOpsBelowToolFloor(t *testing.T) {
 }
 
 // TestNPMCLIRegistryAcceptsStagedOpsAtToolFloor confirms a tool pair at or
-// above the floor passes the precondition (and only then hits the
-// construct-only "not implemented" stub, which is expected for this adapter).
+// above the floor passes the precondition. Only then does it hit the
+// construct-only "not implemented" stub, which is expected for this adapter.
 func TestNPMCLIRegistryAcceptsStagedOpsAtToolFloor(t *testing.T) {
 	withStubbedTools(t, "11.15.0", "22.14.0")
 	registry := NewNPMCLIRegistry("")
@@ -67,8 +68,8 @@ func TestNPMCLIRegistryAcceptsStagedOpsAtToolFloor(t *testing.T) {
 }
 
 // TestFixtureRegistryStagedOpsNeverCheckToolVersions is the row-1 precondition
-// isolation: the fixture adapter must never require a locally installed npm
-// or node version — that requirement belongs only to the public npm adapter.
+// isolation. The fixture adapter must never require a locally installed npm
+// or node version; that requirement belongs only to the public npm adapter.
 // A PATH with no npm/node binaries at all must not affect the fixture's
 // StageSubmit, since it never shells either tool.
 func TestFixtureRegistryStagedOpsNeverCheckToolVersions(t *testing.T) {
@@ -79,9 +80,9 @@ func TestFixtureRegistryStagedOpsNeverCheckToolVersions(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Setenv("PATH", original) })
 
-	// No HTTP server is reachable at this bogus base, so StageSubmit will
-	// fail on the network call — but it must fail there, never on a missing
-	// npm/node tool, proving the fixture adapter carries no such precondition.
+	// No HTTP server is reachable at this bogus base, so StageSubmit fails
+	// on the network call. It must fail there, never on a missing npm/node
+	// tool: that proves the fixture adapter carries no such precondition.
 	registry := NewFixtureRegistry("http://127.0.0.1:1")
 	_, err := registry.StageSubmit(context.Background(), "redbench", "1.0.0", []byte("x"))
 	if err == nil {
@@ -93,8 +94,8 @@ func TestFixtureRegistryStagedOpsNeverCheckToolVersions(t *testing.T) {
 }
 
 // stubNPMView writes an npm stub onto a fresh PATH directory that responds to
-// `npm view ...` as directed: exitCode != 0 simulates the real npm CLI's E404
-// on a missing version (Integrity's absent case); exitCode == 0 prints
+// `npm view ...` as directed. exitCode != 0 simulates the real npm CLI's E404
+// on a missing version (Integrity's absent case). exitCode == 0 prints
 // stdout, simulating `npm view ... dist.integrity --json` output for a
 // version that exists.
 func stubNPMView(t *testing.T, stdout string, exitCode int) {
@@ -152,11 +153,11 @@ func TestNPMCLIRegistryIntegrityPresentVersion(t *testing.T) {
 	}
 }
 
-// TestNPMCLIRegistryIntegrityPresentEmptyIsError is the review-fixed edge:
-// the version exists (npm view succeeded) but reports an empty/whitespace
-// integrity — a malformed/hostile registry response — must fail closed with
-// an attributed error, never be misread as live=true-with-empty-integrity or
-// as live=false-not-yet-published.
+// TestNPMCLIRegistryIntegrityPresentEmptyIsError is the malformed-integrity
+// edge: the version exists (npm view succeeded) but reports an empty or
+// whitespace integrity — a malformed or hostile registry response. Integrity
+// must fail closed with an attributed error here, never misread this as
+// live=true-with-empty-integrity or as live=false-not-yet-published.
 func TestNPMCLIRegistryIntegrityPresentEmptyIsError(t *testing.T) {
 	for name, stdout := range map[string]string{
 		"empty string":      `""`,

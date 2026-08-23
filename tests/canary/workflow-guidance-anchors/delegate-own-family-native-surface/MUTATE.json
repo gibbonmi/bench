@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "An own-family reviewer uses the harness's native agent\nsurface, never that family's CLI.",
+    "new": "An own-family reviewer uses any available surface."
+  }
+]

@@ -14,9 +14,9 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// Setup is the `bench setup` entry point (FT76): it composes the existing init,
-// link, and FT84 transaction seams into one inspect -> preview -> confirm -> write
-// flow. It adds no second transaction and no second asset installer.
+// Setup is the `bench setup` entry point. It composes the existing init, link, and
+// transaction seams into one inspect -> preview -> confirm -> write flow. It adds no
+// second transaction and no second asset installer.
 func Setup(args []string, stdin io.Reader, stdout, stderr io.Writer, version string) int {
 	return setup(args, stdin, stdout, stderr, version, terminal.IsTerminal)
 }
@@ -47,10 +47,10 @@ func setup(args []string, stdin io.Reader, stdout, stderr io.Writer, version str
 		return 1
 	}
 
-	// One shared bufio.Reader carries any interactive I/O: a bufio.Reader may buffer
-	// more of stdin than one ReadString('\n') consumes, so a second bufio.Reader
-	// created later for the confirm prompt would strand an already-typed answer in
-	// the first reader's internal buffer.
+	// One shared bufio.Reader carries any interactive I/O. A bufio.Reader may buffer more of
+	// stdin than one ReadString('\n') consumes. A second bufio.Reader created later for the
+	// confirm prompt would strand an already-typed answer in the first reader's internal
+	// buffer.
 	reader := bufio.NewReader(stdin)
 
 	if len(facts.openQuestions) > 0 {
@@ -61,9 +61,9 @@ func setup(args []string, stdin io.Reader, stdout, stderr io.Writer, version str
 			fmt.Fprintln(stderr, "bench setup: --yes refuses an ambiguous plan; resolve the open question(s) above, then re-run")
 			return 1
 		}
-		// Interactive one-at-a-time question sequencing (FT76 story 3): ask each open
-		// question in order over the shared reader, then fall through to the same
-		// single confirm an ambiguity-free plan uses.
+		// Interactive one-at-a-time question sequencing asks each open question in order over
+		// the shared reader. It then falls through to the same single confirm an ambiguity-free
+		// plan uses.
 		resolved, err := askSetupQuestions(facts, reader, stdout)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
@@ -135,7 +135,7 @@ type gateCandidate struct {
 }
 
 // label is the one "<command> (<source>)" rendering every candidate listing composes
-// from - the open-question text in inspectRepo and the interactive prompt in
+// from. The open-question text in inspectRepo and the interactive prompt in
 // setup_prompt.go both call this instead of each formatting the pair itself.
 func (c gateCandidate) label() string {
 	return fmt.Sprintf("%s (%s)", c.command, c.source)
@@ -169,12 +169,11 @@ func inspectRepo(root, kit string) setupFacts {
 	return facts
 }
 
-// detectGateCandidates is the one source for the gate-inference table: it drives both
-// the plan preview and the written gate.sh, so detection and proposal never drift
-// apart. The second return value carries one preview-only fact line per candidate a
-// read/parse error excluded - "nothing is acted on silently" (repos-aware-setup spec):
-// an unreadable or malformed package.json/Makefile is never just dropped from the
-// table with no trace.
+// detectGateCandidates is the one source for the gate-inference table. It drives both the
+// plan preview and the written gate.sh, so detection and proposal never drift apart. The
+// second return value carries one preview-only fact line per candidate a read/parse error
+// excluded. An unreadable or malformed package.json/Makefile is never just dropped from
+// the table with no trace: nothing is acted on silently.
 func detectGateCandidates(root string) ([]gateCandidate, []string) {
 	var out []gateCandidate
 	var ignored []string
@@ -197,10 +196,11 @@ func detectGateCandidates(root string) ([]gateCandidate, []string) {
 	return out, ignored
 }
 
-// packageJSONTestScript reports whether package.json declares a non-empty "test"
-// script. A non-empty note means the file exists but could not be inspected (unreadable
-// or malformed JSON): the candidate is excluded either way, but the note carries why so
-// the preview names the exclusion instead of silently dropping the signal.
+// packageJSONTestScript reports whether package.json declares a non-empty "test" script.
+// A non-empty note means the file exists but could not be inspected, because it is
+// unreadable or malformed JSON. The candidate is excluded either way, but the note
+// carries why, so the preview names the exclusion instead of silently dropping the
+// signal.
 func packageJSONTestScript(root string) (bool, string) {
 	data, err := os.ReadFile(filepath.Join(root, "package.json"))
 	if os.IsNotExist(err) {
@@ -242,9 +242,8 @@ func fileExists(path string) bool {
 	return err == nil && info.Mode().IsRegular()
 }
 
-// renderSetupPreview lists every inferred fact with its consequence (FT76 story 2).
-// Nothing here is acted on until confirm/--yes; a run that stops at --plan leaves the
-// tree untouched.
+// renderSetupPreview lists every inferred fact with its consequence. Nothing here is
+// acted on until confirm/--yes; a run that stops at --plan leaves the tree untouched.
 func renderSetupPreview(root string, facts setupFacts) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "bench setup: plan for %s\n", root)
@@ -294,13 +293,13 @@ func renderSetupPreview(root string, facts setupFacts) string {
 	return b.String()
 }
 
-// convergeSetup writes the confirmed plan. It composes buildLinkPlan (link's asset
-// list) plus one inline gate.sh entry plus one seed-if-absent profile entry, all
-// staged and promoted by the single FT84 transaction - no second transaction, no
-// second asset installer, and no write that lands outside it. The profile uses the
-// "seed" planEntry kind rather than "inline": a reviewer-authored profile already at
-// that path is left untouched and never recorded in the manifest, so a later hand-edit
-// can never read back as a modified-managed conflict.
+// convergeSetup writes the confirmed plan. It composes buildLinkPlan (link's asset list)
+// plus one inline gate.sh entry plus one seed-if-absent profile entry, all staged and
+// promoted by the single transaction. There is no second transaction, no second asset
+// installer, and no write that lands outside it. The profile uses the "seed" planEntry
+// kind rather than "inline". A reviewer-authored profile already at that path is left
+// untouched and never recorded in the manifest. A later hand-edit can never read back as
+// a modified-managed conflict.
 func convergeSetup(root, kit, version string, facts setupFacts, stdout, stderr io.Writer) int {
 	plan, err := buildLinkPlan(kit)
 	if err != nil {
@@ -329,24 +328,23 @@ func convergeSetup(root, kit, version string, facts setupFacts, stdout, stderr i
 	return finishSetup(stdout, facts, result == 3)
 }
 
-// setupGateScript embeds the proposed command for a detected ecosystem, or extends
-// init's fail-closed scaffoldGate() shape when nothing was detected - a fabricated
-// green gate is never written. Both branches compose the one gateScriptPreamble
-// (init.go) rather than each re-authoring the shebang/set/git-root-guard lines.
+// setupGateScript embeds the proposed command for a detected ecosystem, or extends init's
+// fail-closed scaffoldGate() shape when nothing was detected. A fabricated green gate is
+// never written. Both branches compose the one gateScriptPreamble (init.go) rather than
+// each re-authoring the shebang/set/git-root-guard lines.
 func setupGateScript(facts setupFacts) string {
 	if facts.zeroSignal {
 		return scaffoldGate()
 	}
-	return gateScriptPreamble("# Written by bench setup from the gate-inference table (see /bench-setup-repo to refine).\n") + facts.gateCommand + "\n"
+	return gateScriptPreamble("# bench setup wrote this gate from the gate-inference table. Run /bench-setup-repo\n# to refine it.\n") + facts.gateCommand + "\n"
 }
 
-// scaffoldGateInputs is the seeded gate input manifest every adopted repository
-// starts from. The gate launches its script with PATH plus only the names declared
-// here, and the installed wrapper's first statement reads HOME (to derive
-// BENCH_HOME) under set -u - so a repository with no manifest cannot run its own
-// gate at all. The declared tools are the ones that wrapper and the scaffolded gate
-// invoke; paths stays empty because the seeded gate closes over no tracked file
-// beyond the script the gate already reads itself.
+// scaffoldGateInputs is the seeded gate input manifest every adopted repository starts
+// from. The gate launches its script with PATH plus only the names declared here. The
+// installed wrapper's first statement reads HOME, to derive BENCH_HOME, under set -u. A
+// repository with no manifest cannot run its own gate at all. The declared tools are the
+// ones that wrapper and the scaffolded gate invoke. paths stays empty, because the seeded
+// gate closes over no tracked file beyond the script the gate already reads itself.
 func scaffoldGateInputs() string {
 	return `{
   "schema": 1,

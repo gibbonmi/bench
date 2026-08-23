@@ -100,9 +100,9 @@ func cleanupRow(plan CleanupPlan) []string {
 		detail = "apply with exact fingerprint"
 	}
 	// An operator-asserted branch deletion is the one removal this command performs that
-	// nothing else in the row implies, so the plan half names the exact ref it will spend
-	// that assertion on. The derived case stays silent: its deletion follows from the
-	// landedness the tool proved for itself, and its row is a settled output contract.
+	// nothing else in the row implies. The plan half names the exact ref it spends that
+	// assertion on. The derived case stays silent: its deletion follows from the landedness
+	// the tool proved for itself, and its row is a settled output contract.
 	if plan.discardBranch && plan.deleteBranch && plan.Action.removes() {
 		detail = "discards branch " + plan.branchRef + "; " + detail
 	}
@@ -157,23 +157,23 @@ const (
 const actionReleaseRemove CleanupAction = "release-remove"
 
 // actionReleaseLeftover releases one assignment's registration and ledger entry while the
-// bytes at its path stay exactly where they are. It is deliberately outside removes():
-// nothing proves what those bytes are — no checkout answers for them and no recovery ref
-// holds them — so disposing of them stays with the path-addressed clean surface, whose
+// bytes at its path stay exactly where they are. It is deliberately outside removes().
+// Nothing proves what those bytes are: no checkout answers for them, and no recovery ref
+// holds them. Disposing of them stays with the path-addressed clean surface, whose
 // inventory is size-bounded.
 const actionReleaseLeftover CleanupAction = "release-leftover"
 
-// removes reports whether an action still has a removal ahead of it, as opposed to
-// reporting a refusal, an invocation error, or a transaction that already completed.
+// removes reports whether an action still has a removal ahead of it. It is not a
+// refusal, an invocation error, or a completed transaction.
 func (action CleanupAction) removes() bool {
 	return action == ActionRemove || action == ActionRecoverRemove || action == ActionDiscardRemove || action == actionReleaseRemove
 }
 
 // preserves reports whether executing this plan would write work to a recovery ref before
 // removing the checkout. The execution and the planners that must not reach it read the
-// same predicate, so a plan can never be classified as preserving by one and not the
-// other. A detached registration counts whatever its tree holds: the checkout's HEAD is
-// the only thing naming its commits, so the removal would strand them.
+// same predicate. A plan can never be preserving to one and not to the other. A detached
+// registration counts whatever its tree holds: the checkout's HEAD is the only thing
+// naming its commits, so the removal would strand them.
 func (plan CleanupPlan) preserves() bool {
 	return plan.Action == ActionRecoverRemove ||
 		(plan.Action == ActionDiscardRemove && plan.Tracked != "clean") ||
@@ -192,25 +192,25 @@ const (
 	ShapeDecayedDirectory  PathShape = "directory-without-git-metadata"
 	ShapeCheckoutDirectory PathShape = "directory-with-git-metadata"
 	// ShapeSpecialMetadata names a directory whose .git entry exists but is neither a
-	// regular file (a gitfile worktree pointer) nor a directory (an embedded repository):
-	// a FIFO, device, socket, or a symlinked .git, any of which git itself refuses to
-	// treat as ordinary metadata. No consumer may invoke git against this path — a FIFO
-	// with no writer would block the invocation forever — so this shape fails closed
+	// regular file (a gitfile worktree pointer) nor a directory (an embedded repository).
+	// The entry is a FIFO, device, socket, or a symlinked .git — something git itself
+	// refuses to treat as ordinary metadata. No consumer may invoke git against this path:
+	// a FIFO with no writer would block the invocation forever. This shape fails closed
 	// rather than joining ShapeCheckoutDirectory or the decayed set.
 	ShapeSpecialMetadata PathShape = "special-git-metadata"
 	ShapeUnknown         PathShape = "unknown"
 )
 
-// ClassifyPathShape is the single source for the decayed-shape policy: every consumer
-// asking whether an assignment's checkout is still live, or whether an abandon is
-// releasing residue rather than removing a checkout, decides it here, so the two can
-// never answer differently for the same bytes.
+// ClassifyPathShape is the single source for the decayed-shape policy. Every consumer
+// asking whether an assignment's checkout is still live, or whether an abandon releases
+// residue rather than removing a checkout, decides it here. The two can never answer
+// differently for the same bytes.
 //
-// The path is never opened — a FIFO at an assignment path has no writer and would block a
-// reader forever — so the verdict rests on lstat and stat shape alone, and only
+// The path is never opened: a FIFO at an assignment path has no writer and would block a
+// reader forever. The verdict rests on lstat and stat shape alone. Only
 // ShapeCheckoutDirectory licenses a caller to run git against the path. Symlinks are
 // followed, because a resolvable one is already resolved away by the time a canonical
-// target names it, so one surviving here resolves to nothing.
+// target names it. One surviving here resolves to nothing.
 //
 // ShapeUnknown is the only shape carrying an error, the stat failure that left the shape
 // undecided. It is never absence: an unreadable live checkout stats exactly this way.
@@ -273,19 +273,19 @@ type CleanupPlan struct {
 	ignoredSummary       string
 	landed               string
 	// landedTyped carries the same landedness evidence as landed, but as the typed value
-	// decideExplicit produced, so a production reader can branch on its kind and proof
-	// fields rather than parsing the wire string. landed stays alongside it: subshell.go's
-	// fingerprint hashes the string as evidence, and a hand-built stub (clean_landed.go)
-	// may populate only the typed field when it has no need to fabricate the string.
+	// decideExplicit produced. A production reader can branch on its kind and proof fields
+	// rather than parse the wire string. landed stays alongside it, since subshell.go's
+	// fingerprint hashes the string as evidence. A hand-built stub (clean_landed.go) may
+	// populate only the typed field when it need not fabricate the string.
 	landedTyped landedness
 	// leftover names the present bytes a release-leftover plan hands on rather than
-	// removes; it is empty for every plan that answers for a checkout.
+	// removes. It is empty for every plan that answers for a checkout.
 	leftover string
 	// unresolved marks a plan whose operand named nothing this repository can act on,
 	// as opposed to a checkout it resolved and then declined to remove. Only the
-	// path-addressed command reads it, to keep a destructive call from reporting
-	// success it never earned; the automatic sweep addresses registrations it already
-	// holds and never produces one.
+	// path-addressed command reads it, to keep a destructive call from reporting success
+	// it never earned. The automatic sweep addresses registrations it already holds and
+	// never produces one.
 	unresolved bool
 }
 type IgnoredInventory struct {
@@ -309,14 +309,14 @@ func (inventory IgnoredInventory) Summary() string {
 }
 
 // orphaned reports whether an assignment has been abandoned by the session that cut it.
-// Age is the whole test: nothing records liveness for a request-created worktree, so
-// bounds.AssignmentStale is the only thing separating a long-running one from residue,
-// and every consumer must ask this one question so the window has a single meaning.
+// Age is the whole test: nothing records liveness for a request-created worktree.
+// bounds.AssignmentStale is the only thing separating a long-running one from residue.
+// Every consumer must ask this one question, so the window has a single meaning.
 //
 // An absent stamp is aged, because a record written before the field existed carries
 // none and would otherwise be immortal. A stamp the reading host's clock has not
 // reached yet is not aged, so skew cannot manufacture an orphan. An unparseable stamp
-// is unknown age rather than infinite age; ValidateAssignment rejects one on every
+// is unknown age rather than infinite age. ValidateAssignment rejects one on every
 // ledger read, so a record reaching here with one never came from the ledger.
 func orphaned(a intent.Assignment, now time.Time) bool {
 	if a.State != intent.StateActive {
@@ -332,10 +332,11 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 	return now.Sub(created) > bounds.AssignmentStale
 }
 
-// PlanAutomatic decides the automatic, unattended reading of eligibility: it calls
-// PlanExplicit for its own result, gathers every automatic-specific fact decideAutomatic
-// needs — a fact stays ungathered where an earlier one already made it inapplicable — and
-// calls decideAutomatic exactly once, then projects the returned verdict onto the plan.
+// PlanAutomatic decides the automatic, unattended reading of eligibility. It calls
+// PlanExplicit for its own result, then gathers every automatic-specific fact
+// decideAutomatic needs. A fact stays ungathered where an earlier one already made it
+// inapplicable. It calls decideAutomatic exactly once, then projects the returned
+// verdict onto the plan.
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
 	explicitPlan, explicitErr := PlanExplicit(root, path)
 	facts := automaticFacts{explicitErr: explicitErr, explicit: explicitPlan}

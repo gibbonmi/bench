@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "Carry\n   its numbered title, `Blocked by:`, and delivered outcome list into the approval table.",
+    "new": "Carry\n   the tickets into the approval table."
+  }
+]

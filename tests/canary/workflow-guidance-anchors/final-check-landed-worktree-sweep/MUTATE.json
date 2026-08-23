@@ -1,1 +1,1 @@
-[{"path":".agents/commands/bench-final-check.md","old":"leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report","new":"leftover worktrees are inspected after landing"}]
+[{"path":".agents/commands/bench-final-check.md","old":"Leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report","new":"leftover worktrees are inspected after landing"}]

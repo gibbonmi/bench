@@ -1,14 +1,17 @@
 package gate
 
-// The capability-skip side channel. The gate points every phase it launches at one
-// run-scoped log file, then reads that file back once the phases have exited and
-// reports what they skipped. A phase's own output stream cannot carry this: `go test`
-// without -v discards a passing or skipping package's stdout and stderr entirely, so
-// a collector teeing the stream would observe nothing on every green run.
+// This file implements the capability-skip side channel. The gate points every
+// phase at one run-scoped log file. Each phase appends what it skipped to that file.
 //
-// Concurrency lives at write time and is cross-process — many test binaries append to
-// the same path, which is why capability.Capability issues one atomic append per
-// line. Reading happens once, single-threaded, after the phases join.
+// The gate reads the file once, after every phase exits, and reports the skips.
+// A phase's own output stream cannot carry this fact. `go test` without -v discards
+// a passing or skipping package's stdout and stderr. A collector that tees the
+// stream then observes nothing on a green run.
+//
+// Many test binaries append to the same log file, so writes are concurrent and
+// cross-process. capability.Capability issues one atomic append per line for this
+// reason. The gate reads the log once, after every phase joins, so reads stay
+// single-threaded.
 
 import (
 	"errors"
@@ -21,22 +24,23 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
-// requireCapabilitiesEnv turns a nonzero capability-skip count red. Absent, or any
-// value other than "1", the rows stay informational: a developer's host legitimately
-// lacks capabilities, and an unconditional red would make the gate unusable locally.
+// requireCapabilitiesEnv turns a nonzero capability-skip count red. When the value is
+// absent, or is anything other than "1", the rows stay informational. A developer's
+// host legitimately lacks capabilities, so an unconditional red would make the gate
+// unusable locally.
 const requireCapabilitiesEnv = "BENCH_REQUIRE_CAPABILITIES"
 
 // skipRowPrefix opens every row this file writes. The canary matches EXPECT
-// substrings against inner-gate output, so these rows are added alongside the phase
-// verdicts rather than woven into them.
+// substrings against inner-gate output, so the gate adds these rows alongside the
+// phase verdicts instead of weaving them in.
 const skipRowPrefix = "capability-skips"
 
 type skipTally struct {
 	byClass    map[capability.Class]int
 	capability int
 	// environment keeps each environment skip whole, because a count cannot say which
-	// assertion went unmade: this population is red inside the oracle, and a verdict a
-	// reader cannot act on is the failure mode the count already had.
+	// assertion went unmade. This population is red inside the oracle. An actionless
+	// verdict is the same failure mode the count already had.
 	environment []capability.Skip
 }
 
@@ -68,9 +72,10 @@ func withSkipLog(phases []Phase, path string) []Phase {
 
 // readSkipTally counts the structured skips the phases left behind. An absent log is an
 // empty tally, not an error: a run whose phases all reported everything they could run
-// leaves nothing to append. Every other read failure is returned, because under strict
-// mode the tally is enforcement — a log that exists but cannot be read proves nothing,
-// and reporting it as zero would read exactly like a fully capable runner.
+// leaves nothing to append. readSkipTally returns every other read failure, because
+// under strict mode the tally is enforcement. A log that exists but cannot be read
+// proves nothing, and reporting it as zero would read exactly like a fully capable
+// runner.
 func readSkipTally(path string) (skipTally, error) {
 	tally := skipTally{byClass: map[capability.Class]int{}}
 	data, err := os.ReadFile(path)
@@ -96,12 +101,12 @@ func readSkipTally(path string) (skipTally, error) {
 	return tally, nil
 }
 
-// skipRows renders the tally. The totals row is unconditional — a run with nothing to
+// skipRows renders the tally. The totals row is unconditional; a run with nothing to
 // report says so, because absent output and zero skips must not read alike. Classes
 // follow the package's declared order so the rows are stable run to run. The
-// environment row names every skip it counts: this population is the one the gate reds
-// on, and a reader who has to go find which test stopped running has been handed a
-// number rather than a diagnosis.
+// environment row names every skip it counts, because this population is the one the
+// gate reds on. A reader who must go find which test stopped running has a number, not
+// a diagnosis.
 func skipRows(tally skipTally) []string {
 	rows := []string{fmt.Sprintf("%s: %d (capability=%d environment=%d)", skipRowPrefix, tally.capability+len(tally.environment), tally.capability, len(tally.environment))}
 	for _, class := range capability.Classes() {
@@ -126,11 +131,11 @@ func namedReasons(skips []capability.Skip) []string {
 }
 
 // environmentFailure is the red message for a check the oracle asked for and did not
-// get. Unlike a capability skip, an environment skip is never a fact about the host:
-// it says a test found its staging absent, and inside the gate the gate is what stages
-// it. Making this informational is what let the kit's own conformance suite go
-// unenforced behind a green verdict, so the posture is unconditional — there is no
-// developer-host exemption to grant, because the missing staging is the gate's own.
+// get. Unlike a capability skip, an environment skip is never a fact about the host. It
+// says a test found its staging absent, and inside the gate, the gate itself stages it.
+// Marking this informational lets the kit's own conformance suite go unenforced
+// behind a green verdict. So the posture is unconditional: there is no developer-host
+// exemption to grant, because the missing staging is the gate's own.
 func environmentFailure(tally skipTally) string {
 	if len(tally.environment) == 0 {
 		return ""
@@ -158,10 +163,11 @@ func strictFailure(tally skipTally) string {
 }
 
 // reportCapabilitySkips prints the rows and reports whether strict mode makes the run
-// red on their account. An unreadable log is diagnosed on every run and turns the run red
-// only under strict mode, matching the fail posture of the skips themselves: a developer's
-// host is not held to a population it never promised, and an unconditional red on a
-// transient read failure would make the gate unusable locally.
+// red on their account. reportCapabilitySkips diagnoses an unreadable log on every run,
+// but turns the run red only under strict mode. This matches the fail posture of the
+// skips themselves: a developer's host is not held to a population it never promised.
+// An unconditional red on a transient read failure would make the gate unusable
+// locally.
 func reportCapabilitySkips(path string, stdout, stderr io.Writer) bool {
 	tally, readErr := readSkipTally(path)
 	for _, row := range skipRows(tally) {

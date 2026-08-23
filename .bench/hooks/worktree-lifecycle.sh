@@ -3,9 +3,10 @@
 # boundary: WorktreeCreate/WorktreeRemove
 # denies: nothing (informational)
 # why: routes Claude worktree events through the deterministic Bench lifecycle
-# Claude WorktreeCreate/WorktreeRemove adapter. This shim resolves the launcher
-# through the shared resolver and passes the official stdin event to the Go adapter;
-# it owns no JSON parsing, request identity, ownership, lock, or cleanup policy.
+# This is the Claude WorktreeCreate/WorktreeRemove adapter. The shim resolves the
+# launcher through the shared resolver and passes the official stdin event to the Go
+# adapter. It owns no JSON parsing, request identity, ownership, lock, or cleanup
+# policy.
 set -uo pipefail
 
 case "${1:-}" in
@@ -18,8 +19,8 @@ fail_closed() {
   exit 1
 }
 
-# Lifecycle creation/removal is safety-sensitive: a missing resolver or core must
-# refuse the event rather than bypass ownership, locking, or recovery policy.
+# Lifecycle creation and removal are safety-sensitive. A missing resolver or core
+# must refuse the event rather than bypass ownership, locking, or recovery policy.
 hook_dir="$(cd -- "${BASH_SOURCE[0]%/*}" && pwd -P)" || fail_closed "cannot resolve hook directory"
 lib="$hook_dir/../lib/resolve-bench.sh"
 [[ -f "$lib" ]] || fail_closed "wrapper resolver missing at $lib"

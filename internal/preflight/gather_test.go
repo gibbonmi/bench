@@ -8,12 +8,15 @@ import (
 	"testing"
 )
 
-// TestFenceTokensTrailingNewlineParity is PF17's fenceTokens half, made real at the
-// gatherer seam itself (replacing the tautological Decide(x)==Decide(x) it used to
-// stand in for): a `## Ownership fences` section whose final line lacks a trailing
-// newline parses to the same token slice as its terminated form. fenceTokens splits
-// on "\n" directly, so the unterminated last element from strings.Split still carries
-// its content — a scanner keyed on a trailing "\n" per token instead would drop it.
+// TestFenceTokensTrailingNewlineParity is PF17's fenceTokens half, made
+// real at the gatherer seam itself. It replaces the tautological
+// Decide(x)==Decide(x) it used to stand in for. A `## Ownership fences`
+// section whose final line lacks a trailing newline parses to the same
+// token slice as its terminated form.
+//
+// fenceTokens splits on "\n" directly, so the unterminated last element
+// from strings.Split still carries its content. A scanner keyed on a
+// trailing "\n" per token instead would drop it.
 func TestFenceTokensTrailingNewlineParity(t *testing.T) {
 	terminated := []byte("## Ownership fences\n\n- `internal/example/`\n")
 	unterminated := bytes.TrimSuffix(terminated, []byte("\n"))
@@ -31,9 +34,10 @@ func TestFenceTokensTrailingNewlineParity(t *testing.T) {
 	}
 }
 
-// TestTicketTokenScanTrailingNewlineParity is PF17's ticket-token-scan half, made real
-// at the gatherer seam itself: a ticket file whose only citation sits on an
-// unterminated last line scans to the same token slice as its terminated form.
+// TestTicketTokenScanTrailingNewlineParity is PF17's ticket-token-scan
+// half, made real at the gatherer seam itself. A ticket file whose only
+// citation sits on an unterminated last line scans to the same token
+// slice as its terminated form.
 func TestTicketTokenScanTrailingNewlineParity(t *testing.T) {
 	terminated := "Ticket citing PF1.\n"
 	unterminated := strings.TrimSuffix(terminated, "\n")
@@ -63,12 +67,15 @@ func TestTicketTokenScanTrailingNewlineParity(t *testing.T) {
 	}
 }
 
-// TestGatherSpecStatusOutsideFolderEnumerationNotReadable reaches gather.go's spec-status
-// fallback branch: specref.Resolve succeeds (the argument is a literal path, tried
-// as-given) over a file that specref.Facts' folder-spec enumeration never covers because
-// it is not literally named spec.md — so no typed status is available to trust, and
-// Gather answers the "spec status not readable" BootstrapFailure naming the enumeration
-// mismatch, distinct from the specref.Facts-error half of the same Kind.
+// TestGatherSpecStatusOutsideFolderEnumerationNotReadable reaches
+// gather.go's spec-status fallback branch. specref.Resolve succeeds (the
+// argument is a literal path, tried as-given) over a file that
+// specref.Facts' folder-spec enumeration never covers. It is not
+// literally named spec.md.
+//
+// So no typed status is available to trust. Gather answers the "spec
+// status not readable" BootstrapFailure naming the enumeration mismatch.
+// This is distinct from the specref.Facts-error half of the same Kind.
 func TestGatherSpecStatusOutsideFolderEnumerationNotReadable(t *testing.T) {
 	root := t.TempDir()
 	t.Chdir(root)

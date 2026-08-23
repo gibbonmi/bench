@@ -14,21 +14,25 @@ project for the first time, in ASD-STE100 prose per `craft-spec`'s
 
 ## When to write one
 
-All three must be true — otherwise don't write an ADR, you'll just add noise:
+When all three are true, write an ADR; otherwise you only add noise:
 
-1. **Hard to reverse** — changing your mind later carries real cost.
+1. **Hard to reverse** — a later change of mind carries real cost.
 2. **Surprising without context** — a future reader will look at the code and
    wonder "why on earth did they do it this way?"
 3. **The result of a real trade-off** — there were genuine alternatives and you
    picked one for specific reasons.
 
-What qualifies: architectural shape (event-sourced write model), integration
-patterns between modules (events not synchronous calls), technology choices that
-carry lock-in (the ones that'd take a quarter to swap, not every library), boundary
-and scope decisions (the explicit no's matter as much as the yes's), deliberate
-deviations from the obvious path (raw SQL instead of an ORM, because X), and
-constraints not visible in the code (a compliance rule, a latency budget). If a
-decision is easy to reverse, unsurprising, or had no real alternative — skip it.
+What qualifies:
+
+- architectural shape (event-sourced write model)
+- integration patterns between modules (events not synchronous calls)
+- technology choices that carry lock-in (the ones that'd take a quarter to swap, not
+  every library)
+- boundary and scope decisions (the explicit no's matter as much as the yes's)
+- deliberate deviations from the obvious path (raw SQL instead of an ORM, because X)
+- constraints not visible in the code (a compliance rule, a latency budget)
+
+If a decision is easy to reverse, unsurprising, or had no real alternative, skip it.
 
 ## The rules
 
@@ -43,9 +47,9 @@ decision is easy to reverse, unsurprising, or had no real alternative — skip i
 
 ## Format
 
-`docs/adr/NNNN-<slug>.md`, numbered sequentially (scan the folder, increment).
-Default to a single paragraph — the value is recording *that* a decision was made
-and *why*, not filling out sections:
+An ADR lives at `docs/adr/NNNN-<slug>.md`; number it sequentially (scan the folder, increment).
+Default to a single paragraph: the value is the record *that* you decided and *why*,
+not a set of filled sections:
 
 ```markdown
 # <decision, as a present-tense statement>
@@ -53,17 +57,20 @@ and *why*, not filling out sections:
 <1–3 sentences: the forces in play now, what we decided, and why.>
 ```
 
-Add a section only when it earns its place: **Status** (`accepted | deprecated |
-superseded by NNNN`) when a decision gets revisited; **Consequences** when a
-non-obvious downstream effect needs calling out; **Considered options** when the
-rejected alternative is worth remembering so nobody re-litigates it in six months.
+Add a section only when it earns its place:
+
+- **Status** (`accepted | deprecated |
+  superseded by NNNN`) when a decision gets revisited
+- **Consequences** when a non-obvious downstream effect needs a mention
+- **Considered options** when the rejected alternative is worth remembering so nobody
+  re-litigates it in six months
 
 ADRs live in `docs/adr/`; decision *maps* from `/bench-shape-idea` live in `decisions/`. Keep
 them separate — one is a settled record, the other is a working plan.
 
 ## Why this compounds
 
-This is the same shape as a good ambient-context dashboard and a good skill: hand
+An ADR has the same shape as a good ambient-context dashboard and a good skill. Hand
 the fresh reader the current state, cheaply, so it can act immediately. The clearer
 your current-state docs, the better every cold session performs — which is most of
 why this discipline pays off so visibly.

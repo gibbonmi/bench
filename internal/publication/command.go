@@ -21,14 +21,17 @@ const (
 )
 
 // Command is the `bench release <prepare|submit|promote|rollback|status>`
-// entry point. It is idempotent and non-interactive: prepare only verifies
-// the approved release directory locally; submit runs (or resumes) the
-// first-publication or staged-submission state machine depending on --path;
-// promote moves the "latest" dist-tag once the complete set reverifies live;
-// rollback removes candidate tags and deprecates a bad version; status
-// reports the durable record without touching the registry. TOON tables go to
-// stdout, progress to stderr, structured errors to stdout. Exit 0
-// success/no-op, 1 unsatisfied release intent, 2 usage.
+// entry point. It is idempotent and non-interactive. prepare only verifies
+// the approved release directory locally. submit runs (or resumes) the
+// first-publication or staged-submission state machine depending on --path.
+//
+// promote moves the "latest" dist-tag once the complete set reverifies live.
+// rollback removes candidate tags and deprecates a bad version. status
+// reports the durable record without touching the registry.
+//
+// TOON tables go to stdout, and progress goes to stderr; structured errors go
+// to stdout. Exit 0 means success or no-op, 1 means unsatisfied release
+// intent, 2 means usage.
 func Command(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		fmt.Fprintln(stdout, toon.Usage("bench release", "<missing subcommand>"))
@@ -68,8 +71,8 @@ func Command(args []string, stdout, stderr io.Writer) int {
 }
 
 // releaseArgs is one parsed `bench release` invocation. adapter is always
-// resolved (it defaults to the fixture, with no environment twin — a real
-// publish is spelled out on the command line or it does not happen).
+// resolved: it defaults to the fixture, with no environment twin. A real
+// publish is spelled out on the command line or it does not happen.
 type releaseArgs struct {
 	root         string
 	version      string
@@ -126,9 +129,9 @@ func parseCommandArgs(args []string) (releaseArgs, error) {
 	return parsed, nil
 }
 
-// resolveRegistryBase applies the BENCH_RELEASE_REGISTRY fallback once, so
+// resolveRegistryBase applies the BENCH_RELEASE_REGISTRY fallback once. So
 // submit, promote, and rollback share one answer for which registry base this
-// invocation addresses — the same value the selected adapter is built from.
+// invocation addresses: the same value the selected adapter is built from.
 func (a *releaseArgs) resolveRegistryBase() string {
 	if a.registryBase == "" {
 		a.registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
@@ -201,8 +204,8 @@ func runSubmit(args releaseArgs, stdout, stderr io.Writer) int {
 		path = "first"
 	}
 	if path == "staged" && args.adapter == adapterNPM {
-		// Refused up front — before the release lock and before any registry
-		// call — so a staged run can never die in the middle of a publication.
+		// This check runs before the release lock and before any registry
+		// call. So a staged run can never die in the middle of a publication.
 		fmt.Fprintln(stdout, toon.Errorf("unsatisfied release intent", "staged submission is not implemented for the npm adapter; publish with --path first"))
 		return 1
 	}
@@ -343,11 +346,11 @@ func runStatus(root string, stdout io.Writer) int {
 	case "rolled_back":
 		nextAction = "prepare"
 	case "in_progress":
-		// Registry-free by construction: nextActionForInProgress reads only
-		// record.Transitions and record.Provenance, the exact ordering
-		// policy the staged state machine derives from the same fields
-		// after appending its own run's transitions — one source, never
-		// re-derived here.
+		// nextActionForInProgress reads only record.Transitions and
+		// record.Provenance, so it touches no registry. It is the exact
+		// ordering policy the staged state machine derives from the same
+		// fields after appending its own run's transitions. This code never
+		// re-derives that policy.
 		nextAction = nextActionForInProgress(record)
 	}
 	printRecord(stdout, record, nextAction)

@@ -15,11 +15,11 @@ Selection method: start with the parent session IDs named by the FT173 shaping,
 foundation, roadmap, forward-build, and coherent-diff records; do not include
 child transcripts merely because their parent prompt is copied into them. Add
 three later Bench sessions that respectively exercised an active AXI lifecycle,
-its fence repair, and a committed guidance spec. Search each selected transcript
-for (1) missing or wrong `help[]`, (2) repeated commands that form one query,
-and (3) agent-side output shaping (`head`, `tail`, `awk`, `sort`, and equivalent
-projections). The source directories and the selected IDs below are the complete
-corpus, not popularity samples.
+its fence repair, and a committed guidance spec. Search each selected transcript for three signals. These are missing or
+wrong `help[]`; repeated commands that form one query; and agent-side output
+shaping (`head`, `tail`, `awk`, `sort`, and equivalent projections). The
+source directories and the selected IDs below are the complete corpus, not
+popularity samples.
 
 | id | harness | source directory | transcript count | session-id time range and exact IDs | purpose |
 |---|---|---|---:|---|---|
@@ -35,10 +35,11 @@ corpus, not popularity samples.
 
 ## Opportunity ledger
 
-The two current FT173 evidence assets establish the relevant ownership boundary:
-the command-help inventory assigns useful next actions to the remaining query
-surfaces and `bench diff`; the FT173 contract keeps `bench diff` as the sole
-coherent Git inspection owner. A disposition is deliberately one value only.
+The two current FT173 evidence assets establish the relevant ownership
+boundary. The command-help inventory assigns useful next actions to the
+remaining query surfaces and `bench diff`. The FT173 contract keeps
+`bench diff` as the sole coherent Git inspection owner. A disposition is
+deliberately one value only.
 
 | id | class | observed opportunity | evidence in the selected corpus | disposition |
 |---|---|---|---|---|
@@ -52,11 +53,12 @@ Disposition counts: already-owned 3; routed 1; fold 0; decline 0.
 ## Completeness rule and sign-off
 
 This ledger is complete only when C1--C4 and U1--U2 each occur exactly once,
-L1--L4 each occur exactly once, and every L row has exactly one disposition from
-`fold`, `already-owned`, `decline`, or `routed`. The L4 route is not a
-coverage change. Were an observed opportunity to require a QD1--QD4 coverage
-change, its only permitted disposition here would be **proposed amendment** for
-reviewer approval; no spec edit would be made by this ticket.
+and when L1--L4 each occur exactly once. Every L row must then have exactly
+one disposition from `fold`, `already-owned`, `decline`, or `routed`. The L4
+route is not a coverage change. Were an observed opportunity to require a
+QD1--QD4 coverage change, its only permitted disposition here would be
+**proposed amendment** for reviewer approval. No spec edit would be made by
+this ticket.
 
 Reviewer sign-off: **approved.** The reviewer approved the complete ledger and
 the L4 `harness-transcript-query` roadmap route before QD1--QD4 assignment.

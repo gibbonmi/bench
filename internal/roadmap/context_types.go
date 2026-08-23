@@ -88,11 +88,11 @@ type ContextSnapshot struct {
 	Failures           []ParseFailure
 }
 
-// dirBytes sums the sizes of the regular-file entries in a classified directory
-// listing. A subdirectory contributes nothing: the figure reports the bytes of the
-// records the listing itself names, not a recursive tree size. An entry whose Info
-// call fails is skipped rather than failing the tally, because the directory's own
-// state already carries whether the listing could be trusted.
+// dirBytes sums the sizes of the regular-file entries in a classified directory listing.
+// A subdirectory contributes nothing. The figure reports the bytes of the records the
+// listing names, not a recursive tree size. An entry with a failed Info call is skipped,
+// not counted as a tally failure. The directory's own state already carries whether the
+// listing is trustworthy.
 func dirBytes(entries []fs.DirEntry) int {
 	total := 0
 	for _, e := range entries {

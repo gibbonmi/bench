@@ -69,14 +69,13 @@ func parseOccurrenceLedger(lines []string) (string, int, bool) {
 	return ledger, len(keys), true
 }
 
-// noRoadmapRowsReason is roadmap's unsupported-schema predicate — bytes that read
-// cleanly but in which ParseDocument recognized no roadmap structure at all: no
-// `**ID**` row and no unfenced `## ` section, Recommended sequence or otherwise. A
-// document with a section is a working roadmap, possibly an early-stage or fully
-// drained one, and that is "nothing to report" — the empty state, not
-// unsupported-schema. Named once so the AXI surface (RoadmapCommand) and the
-// --context snapshot (BuildContext) agree on exactly which parser failure means
-// "unsupported-schema" rather than "malformed".
+// noRoadmapRowsReason names the unsupported-schema failure. ParseDocument returns this
+// failure when the bytes read cleanly but contain no roadmap structure. Roadmap structure
+// is a `**ID**` row or an unfenced `## ` section, such as a Recommended sequence section.
+// A document with a section is a working roadmap, even an early-stage or fully drained
+// one. That state is the empty state, not unsupported-schema. RoadmapCommand and
+// BuildContext share this name so they agree on which parser failure is
+// unsupported-schema rather than malformed.
 const noRoadmapRowsReason = "no roadmap rows recognized"
 
 func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string) {
@@ -105,9 +104,9 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, error) {
 	s := ContextSnapshot{Full: full}
 	var diagnostics []Diagnostic
-	// The index is read through the loader, not the label sweep below: one classified
-	// tree feeds both this snapshot's ROADMAP.md source row and the parse, so the row
-	// and the rows it summarises can never come from two different reads.
+	// The loader reads the index instead of the label sweep below. One classified tree feeds
+	// both the ROADMAP.md source row and the parse. The row and the summarized rows
+	// therefore come from the same read.
 	tree := LoadTree(root)
 	s.Sources = append(s.Sources, SourceFact{RoadmapFile, string(tree.Index.State), len(tree.Index.Data)})
 	if degradedState(tree.Index.State) {
@@ -180,12 +179,11 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	var roadFails []ParseFailure
 	s.Roadmap, roadFails, diagnostics = ParseDocument(tree, statuses, full)
 	s.Failures = append(s.Failures, roadFails...)
-	// Each integrity diagnostic renders as its own parse_failures row, sourced at the
-	// path and reason ParseDocument already carried apart — never a re-parse of the
-	// formatted string, which a path containing ": " would cut wrong. Any diagnostic
-	// at all — not only one sourced at ROADMAP.md itself — withdraws trust from the
-	// index: a reader must never see ROADMAP.md's own row still reading clean over a
-	// tree the parser could not fully resolve.
+	// Each integrity diagnostic renders as its own parse_failures row. The row uses the path
+	// and reason ParseDocument already carried apart. A re-parse of the formatted string
+	// would cut wrong on a path containing ": ". Any diagnostic, even one not sourced at
+	// ROADMAP.md itself, withdraws trust from the index. A reader must never see the
+	// ROADMAP.md row as clean over a tree the parser could not fully resolve.
 	for _, d := range diagnostics {
 		s.Failures = append(s.Failures, ParseFailure{d.Path, d.Reason, "", 0})
 	}
@@ -234,8 +232,8 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	}
 	defaultBranch, ahead, behind := any(gf.DefaultBranch), any(gf.Ahead), any(gf.Behind)
 	if !gf.DefaultResolved {
-		// The three cells the unresolved default makes unknowable, named rather than
-		// rendered as the zeros they would otherwise fabricate.
+		// The three cells the unresolved default makes unknowable are named, not rendered as
+		// fabricated zeros.
 		defaultBranch, ahead, behind = "unknown", "unknown", "unknown"
 	}
 	s.Git = [][]any{{gf.Branch, defaultBranch, gf.Dirty, ahead, behind}}
@@ -245,9 +243,9 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	}
 	s.GateCache = [][]any{{gate.Present, gate.State, gate.PendingStatus, gate.Status, gate.CachedTree, gate.WorkTree, gate.Timestamp, gate.Stale}}
 	for i := range s.Sources {
-		// A source already carrying a classifier-level state (unreadable, wrong-type,
-		// a byte-level malformed read) keeps it: the parser-level failures below only
-		// ever fire against bytes the classifier already handed over as parsed.
+		// A source with a classifier-level state, such as unreadable, wrong-type, or malformed,
+		// keeps that state. The parser-level failures below fire only against bytes the
+		// classifier already parsed.
 		if s.Sources[i].State != string(bounds.StateParsed) {
 			continue
 		}
@@ -256,9 +254,9 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 				continue
 			}
 			if f.Reason == noRoadmapRowsReason {
-				// unsupported-schema is the parser's own state: the bytes read fine
-				// but roadmap.go recognized no row in them, distinct from a
-				// byte-level malformed read the classifier would have caught.
+				// unsupported-schema is the parser's own state. The bytes read fine, but roadmap.go
+				// recognized no row in them. This differs from a byte-level malformed read, which the
+				// classifier would catch.
 				s.Sources[i].State = string(bounds.StateUnsupportedSchema)
 			} else {
 				s.Sources[i].State = string(bounds.StateMalformed)
@@ -269,8 +267,8 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	return s, nil
 }
 
-// degradedState reports whether a classifier state needs its own parse_failures row
-// naming it — every state but the two that carry no problem to explain.
+// degradedState reports whether a classifier state needs its own parse_failures row.
+// Every state needs one except the two that carry no problem to explain.
 func degradedState(state bounds.FileState) bool {
 	return state != bounds.StateAbsent && state != bounds.StateEmpty && state != bounds.StateParsed
 }

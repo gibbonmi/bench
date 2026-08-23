@@ -19,10 +19,10 @@ import (
 // PlanExplicitWithOptions: it pins the nine reachable explicit `(Action,
 // ReasonCode)` tuples. Each expected tuple below is hand-authored from the
 // block order decideExplicit documents, never derived by calling production
-// decision code a second time. Where a rule's current position only matters
-// because a later block can overwrite an earlier one, the fixture carries
-// both pieces of evidence so the assertion pins the actual winner rather than
-// an idealized precedence.
+// decision code a second time. A rule's current position matters only when
+// a later block can overwrite an earlier one. There the fixture carries
+// both pieces of evidence, so the assertion pins the actual winner rather
+// than an idealized precedence.
 func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 	t.Run("retain-uncertain", func(t *testing.T) {
 		// EX1a: PlanExplicitWithOptions refuses the primary checkout before any
@@ -42,7 +42,7 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 		})
 		// EX1b: an otherwise-clean, otherwise-removable, correctly owned and
 		// locked registration would end `remove` with no reason code at every
-		// earlier block, but unsafe control bytes in the target path win
+		// earlier block. But unsafe control bytes in the target path win
 		// decideExplicit's final override, beating even a clean removal.
 		t.Run("unsafe-target-override", func(t *testing.T) {
 			root, target := newUnsafeTargetOwnedWorktree(t, "ex1-unsafe-override")
@@ -74,12 +74,12 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 		requireTest(t, before == after, "unregistered-target planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
 
-	// EX3: two different malformed-evidence sources compete — a malformed
+	// EX3: two different malformed-evidence sources compete: a malformed
 	// owner marker, decided in decideExplicit's early marker block, and a
 	// malformed build-output declaration, decided in its later ignored-residue
-	// block. Both land the same ReasonCode, but only the later block's
-	// Reason text survives, pinning the current later-rule winner rather than
-	// the marker block's own detail.
+	// block. Both land the same ReasonCode. Only the later block's Reason
+	// text survives, pinning the current later-rule winner rather than the
+	// marker block's own detail.
 	t.Run("retain-malformed", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
@@ -98,8 +98,8 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 		requireTest(t, before == after, "competing-malformed planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
 
-	// EX4: a foreign lock on an unmarked registration is isolated evidence —
-	// no lease, ignored residue, or nested-state condition present — so it
+	// EX4: a foreign lock on an unmarked registration is isolated evidence.
+	// No lease, ignored residue, or nested-state condition is present, so it
 	// survives to the end exactly as decideExplicit's ownership block decided it.
 	t.Run("retain-unexpected-lock", func(t *testing.T) {
 		root := newWorktreeRepo(t)
@@ -119,9 +119,9 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 
 	// EX5: decideExplicit's marker block first refuses on a lock-reason
 	// mismatch (an owned registration whose Bench lock no longer matches its
-	// assignment) — an earlier applicable refusal. A live lease on the same
-	// fixture is decided afterward in the lease block and overwrites it,
-	// pinning the lease block's effective position after the marker block
+	// assignment), an earlier applicable refusal. A live lease on the same
+	// fixture is decided afterward in the lease block and overwrites it. This
+	// pins the lease block's effective position after the marker block
 	// rather than an idealized order.
 	t.Run("retain-live-lease", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "ex5-live-lease")
@@ -184,7 +184,7 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// EX8: an otherwise-removable checkout carrying an untracked file is
-	// dirty rather than clean, so decideExplicit's recovery promotion chooses
+	// dirty rather than clean. So decideExplicit's recovery promotion chooses
 	// `recover-remove` and computes a fresh recovery ref rather than removing
 	// outright.
 	t.Run("recover-remove", func(t *testing.T) {
@@ -202,8 +202,8 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// EX9: bounded ignored residue that is declared as build output in
-	// .bench/build-outputs.json is authorized rather than undeclared — the
-	// opposite authorization path from EX6's --discard-ignored flag — so
+	// .bench/build-outputs.json is authorized rather than undeclared. This is
+	// the opposite authorization path from EX6's --discard-ignored flag, so
 	// decideExplicit's discard-remove promotion applies instead of the ignored
 	// refusal.
 	t.Run("discard-remove", func(t *testing.T) {
@@ -232,10 +232,10 @@ func TestExplicitEligibilityOutcomeMatrix(t *testing.T) {
 
 // newUnsafeTargetOwnedWorktree hand-builds one owned, correctly locked, clean
 // registration whose target path carries a control byte the toon output
-// encoder refuses. It mirrors the exact bundle Create writes — matching
-// marker, matching assignment join, matching branch, matching lock reason —
-// so that every block before the final unsafe-target override would resolve
-// this fixture to `remove` with an empty reason code, and only the override
+// encoder refuses. It mirrors the exact bundle Create writes: matching
+// marker, matching assignment join, matching branch, matching lock reason.
+// So every block before the final unsafe-target override would resolve
+// this fixture to `remove` with an empty reason code. Only the override
 // itself explains the retained result.
 func newUnsafeTargetOwnedWorktree(t *testing.T, request string) (root, target string) {
 	t.Helper()
@@ -285,24 +285,28 @@ func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
 // TestAutomaticEligibilityOutcomeMatrix is a characterization oracle for PlanAutomatic:
 // it pins the thirteen reachable automatic `(Action, ReasonCode)` tuples. PlanAutomatic
 // always calls PlanExplicit with an empty CleanupOptions{} first and then applies its own
-// ordered overrides on top — this structurally means DiscardBranch, an explicit-only operator
-// assertion, can never reach automatic evaluation. Each expected tuple below is
-// hand-authored from that ordering, never derived by calling production decision code a
-// second time. Where a case exists only because automatic's own check overrides — or
-// fails to override — what explicit alone already decided, the fixture carries both
-// pieces of evidence so the assertion pins the actual winner.
+// ordered overrides on top. This structurally means DiscardBranch, an explicit-only
+// operator assertion, can never reach automatic evaluation. Each expected tuple below
+// is hand-authored from that ordering, never derived by calling production decision
+// code a second time.
+//
+// A case can exist only because automatic's own check overrides,
+// or fails to override, what explicit alone already decided. There the fixture carries
+// both pieces of evidence, so the assertion pins the actual winner.
 func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	// AU1: an active assignment registered under its declared branch, whose branch
-	// object cannot actually be resolved (git object replacement corrupts the
+	// object cannot actually be resolved. Git object replacement corrupts the
 	// landedness query the same way TestPlanAutomaticUsesLandedInDefaultMatrix's
-	// "landedness query failure retained" case does). The corruption reaches deep
-	// enough that PlanExplicit itself returns a genuine error (a raw git failure,
-	// not a formatted "unknown:" landed string) rather than succeeding with an
-	// uncertain plan. decideAutomatic's explicit-planning-error fallback catches
+	// "landedness query failure retained" case does. The corruption reaches deep
+	// enough that PlanExplicit itself returns a genuine error: a raw git failure,
+	// not a formatted "unknown:" landed string. It does not succeed with an
+	// uncertain plan.
+	//
+	// decideAutomatic's explicit-planning-error fallback catches
 	// exactly this: an explicit-planning error whose text names neither
-	// "assignment" nor "intent ledger" retains uncertain rather than guessing
+	// "assignment" nor "intent ledger" retains uncertain, rather than guessing
 	// unmerged or removable from a fact it never obtained. The evidence pinned
-	// here is deliberately the tuple only — the exact git error string is not a
+	// here is deliberately the tuple only. The exact git error string is not a
 	// stable sentence to pin, and the acceptance row does not require one.
 	t.Run("retain-uncertain", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "au1-unknown-landed")
@@ -325,7 +329,7 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 
 	// AU2: a worktree git itself registers, carrying no owner marker at all, is
 	// clean and unlocked. Explicit's own registration-only reading (the same
-	// foreign-clean shape EX7 pins) would allow `remove` with no refusal — but
+	// foreign-clean shape EX7 pins) would allow `remove` with no refusal. But
 	// automatic never reaches that: since explicit's Action here is not Retain,
 	// decideAutomatic's stricter ownership join fires and refuses foreign
 	// regardless of what explicit alone permitted.
@@ -346,9 +350,9 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 
 	// AU3: a fully owned, cleanup-pending assignment whose ledger record carries a
 	// recovery entry that names no actual recovery manifest. Explicit itself never
-	// checks recovery agreement, so its own action here is `recover-remove` (the
+	// checks recovery agreement, so its own action here is `recover-remove`: the
 	// declared Recovery entry promotes it through decideExplicit's recovery
-	// promotion) — but decideAutomatic's recovery conjunct (ADR 0005) refuses
+	// promotion. But decideAutomatic's recovery conjunct (ADR 0005) refuses
 	// malformed instead of trusting a Recovery entry nothing on disk backs.
 	t.Run("retain-malformed", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "au3-recovery-mismatch")
@@ -371,9 +375,9 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 		requireTest(t, before == after, "recovery-mismatch planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
 
-	// AU4: a foreign lock on an unmarked, unregistered-by-marker registration —
-	// EX4's exact fixture — is isolated evidence with nothing later to override it
-	// in explicit planning, so explicit's own decision is already
+	// AU4: a foreign lock on an unmarked, unregistered-by-marker registration,
+	// EX4's exact fixture, is isolated evidence with nothing later to override it
+	// in explicit planning. So explicit's own decision is already
 	// retain/unexpected-lock. decideAutomatic's retain-passthrough passes any
 	// already-Retain explicit result straight through, so the reason survives
 	// rather than being replaced by the generic ownership refusal below it.
@@ -396,8 +400,8 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	// AU5: EX6's exact live-lease-plus-undeclared-ignored-residue fixture. Inside
 	// decideExplicit the ignored-residue block runs after the lease block and
 	// overwrites it, so explicit's own final answer here is retain/ignored, not
-	// retain/live-lease. PlanAutomatic reprobes the same lease file independently
-	// and decideAutomatic's live-lease override reads that reprobe before any
+	// retain/live-lease. PlanAutomatic reprobes the same lease file independently.
+	// decideAutomatic's live-lease override reads that reprobe before any
 	// retain-passthrough or ownership check, so it overrides explicit's ignored
 	// answer with live-lease regardless.
 	t.Run("retain-live-lease", func(t *testing.T) {
@@ -422,13 +426,13 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 		requireTest(t, before == after, "competing ignored/live-lease planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
 
-	// AU6: TestPlanAutomaticKeepsEarlierRetainReason's exact fixture — an aged,
+	// AU6: TestPlanAutomaticKeepsEarlierRetainReason's exact fixture: an aged,
 	// still-Active, unlanded assignment carrying undeclared ignored residue.
 	// decideExplicit's ignored-residue refusal already makes the plan Retain, so
-	// decideAutomatic's retain-passthrough passes it straight through: since the
-	// branch has not landed, assignmentLanded is false and no override fires, and
-	// the not-cleanup-pending block below — which would relabel an aged active
-	// assignment orphaned — is never reached because the function already
+	// decideAutomatic's retain-passthrough passes it straight through. The
+	// branch has not landed, so assignmentLanded is false and no override fires.
+	// The not-cleanup-pending block below, which would relabel an aged active
+	// assignment orphaned, is never reached because the function already
 	// returned.
 	t.Run("retain-ignored", func(t *testing.T) {
 		root := newWorktreeRepo(t)
@@ -453,8 +457,8 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 
 	// AU7: TestPlanAutomaticLabelsOrphaned's shape without the backdate. Explicit
 	// has no refusal here (a clean owned checkout, still Active rather than
-	// cleanup-pending), so decideAutomatic reaches its not-cleanup-pending block;
-	// the branch is unlanded so reason starts Active, and the assignment is young
+	// cleanup-pending), so decideAutomatic reaches its not-cleanup-pending block.
+	// The branch is unlanded, so reason starts Active. The assignment is young,
 	// so the orphaned age override never fires.
 	t.Run("retain-active", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "au7-young-active")
@@ -470,13 +474,13 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 		requireTest(t, before == after, "young active planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
 
-	// AU8: mirrors TestPlanAutomaticKeepsEarlierRetainReason's fixture shape
-	// (owned, Active, explicit already refusing on undeclared ignored residue),
-	// but with no divergent commit so the branch is trivially landed by ancestry.
+	// AU8 mirrors TestPlanAutomaticKeepsEarlierRetainReason's fixture shape:
+	// owned, Active, explicit already refusing on undeclared ignored residue.
+	// It carries no divergent commit, so the branch is trivially landed by ancestry.
 	// decideAutomatic's retain-passthrough still passes the plan through as
 	// Retain, but this time assignmentLanded is true, so the reason is overwritten
-	// to landed — the opposite of AU6, proving the override applies only when
-	// landed and discards whatever explicit refusal preceded it.
+	// to landed. This is the opposite of AU6: the override applies only when
+	// landed, and it discards whatever explicit refusal preceded it.
 	t.Run("retain-landed", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
@@ -497,8 +501,8 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	})
 
 	// AU9: TestPlanAutomaticLabelsOrphaned's exact fixture. Explicit again has no
-	// refusal, so automatic reaches the not-cleanup-pending block; the branch is
-	// unlanded so reason starts Active, but the assignment was backdated past
+	// refusal, so automatic reaches the not-cleanup-pending block. The branch is
+	// unlanded, so reason starts Active. But the assignment was backdated past
 	// bounds.AssignmentStale, so decideAutomatic's orphaned-age override relabels
 	// it before returning.
 	t.Run("retain-orphaned", func(t *testing.T) {
@@ -518,11 +522,13 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 
 	// AU10: a cleanup-pending, owned assignment whose branch carries a commit not
 	// reachable from the default branch. PlanAutomatic's signature takes only
-	// (root, path string) — it cannot accept CleanupOptions at all, so
+	// (root, path string). It cannot accept CleanupOptions at all, so
 	// DiscardBranch structurally cannot reach it. The assertion below pins that
-	// as behavior rather than as a signature reading: explicit planning over the
+	// as behavior rather than as a signature reading.
+	//
+	// Explicit planning over the
 	// identical fixture WITH DiscardBranch authorizes exact branch deletion
-	// (plan.deleteBranch), yet PlanAutomatic over the same fixture still retains
+	// (plan.deleteBranch). PlanAutomatic over the same fixture still retains
 	// unmerged and carries no branch-deletion authority.
 	t.Run("retain-unmerged", func(t *testing.T) {
 		root, creation := newPendingAssignment(t, "au10-unmerged-branch")
@@ -545,9 +551,9 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 	// AU11: a cleanup-pending assignment whose branch is trivially landed by
 	// ancestry but whose checkout carries an untracked file. decideExplicit's
 	// recovery promotion already makes this recover-remove, so plan.preserves()
-	// is true; decideAutomatic's final preservation check retains rather than
+	// is true. decideAutomatic's final preservation check retains rather than
 	// authoring a recovery ref unattended. The before/after lifecycle snapshot
-	// (which includes refs/bench/) is the proof that no recovery evidence gets
+	// (which includes refs/bench/) proves that no recovery evidence gets
 	// authored.
 	t.Run("retain-dirty", func(t *testing.T) {
 		root, creation := newPendingAssignment(t, "au11-dirty-landed")
@@ -563,10 +569,10 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 		requireTest(t, before == after, "dirty landed planning mutated durable state\nbefore:\n%s\nafter:\n%s", before, after)
 	})
 
-	// AU12: a verified, cleanup-pending, trivially-landed, clean assignment —
-	// the one case automatic's stricter reading still admits — falls through
-	// every retain check in decideAutomatic to its final passthrough, with an
-	// empty reason code.
+	// AU12: a verified, cleanup-pending, trivially-landed, clean assignment
+	// is the one case automatic's stricter reading still admits. It falls
+	// through every retain check in decideAutomatic to its final passthrough,
+	// with an empty reason code.
 	t.Run("remove", func(t *testing.T) {
 		root, creation := newPendingAssignment(t, "au12-remove")
 		marker, err := markerPath(creation.Path)
@@ -582,9 +588,9 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 
 	// AU13: AU12's exact fixture with declared bounded ignored build output added
 	// (EX9's declaration shape). decideExplicit's discard-remove promotion already
-	// applies since the residue is declared; automatic's preservation check does
-	// not fire because plan.preserves() requires DiscardRemove with a non-clean
-	// Tracked state, and Tracked stays "clean" here, so the plan falls through
+	// applies since the residue is declared. Automatic's preservation check does
+	// not fire, because plan.preserves() requires DiscardRemove with a non-clean
+	// Tracked state, and Tracked stays "clean" here. So the plan falls through
 	// unchanged.
 	t.Run("discard-remove", func(t *testing.T) {
 		root := newWorktreeRepo(t)
@@ -612,14 +618,14 @@ func TestAutomaticEligibilityOutcomeMatrix(t *testing.T) {
 }
 
 // TestEligibilityVerdictProjectsWithoutSecondDecision proves decideExplicit is the whole
-// decision: independently gathering the same typed facts PlanExplicitWithOptions gathers
-// (using the same package-private evidence functions — validateOwnerMarker, ProbeLease,
-// classifyNestedState, inventoryIgnored, git.LandedInDefault — never a copy of production's
-// own answer) and calling decideExplicit directly reproduces the exact action, reason,
-// typed landedness, and recovery/branch-deletion authority PlanExplicitWithOptions itself
-// returns. A second decision made in subshell.go, or a plan mutated after decideExplicit
-// returned, would make this independent comparison diverge from
-// PlanExplicitWithOptions's own projection.
+// decision. It independently gathers the same typed facts PlanExplicitWithOptions
+// gathers, through the same package-private evidence functions: validateOwnerMarker,
+// ProbeLease, classifyNestedState, inventoryIgnored, git.LandedInDefault. It never
+// copies production's own answer. Calling decideExplicit directly reproduces the exact
+// action, reason, typed landedness, and recovery/branch-deletion authority
+// PlanExplicitWithOptions itself returns. A second decision made in subshell.go, or a
+// plan mutated after decideExplicit returned, would make this independent comparison
+// diverge from PlanExplicitWithOptions's own projection.
 func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
 	t.Run("clean-remove", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "ev1-clean-remove")
@@ -633,9 +639,9 @@ func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
 }
 
 // assertVerdictMatchesPlan gathers explicitFacts for path independently of
-// PlanExplicitWithOptions, decides a verdict from them directly, and asserts every
-// field the projection is responsible for carrying onto CleanupPlan — action, reason,
-// typed landedness, and branch/recovery authority — agrees with what
+// PlanExplicitWithOptions and decides a verdict from them directly. It asserts every
+// field the projection is responsible for carrying onto CleanupPlan: action, reason,
+// typed landedness, and branch/recovery authority. Every field must agree with what
 // PlanExplicitWithOptions actually returns for the identical fixture.
 func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOptions) {
 	t.Helper()
@@ -674,8 +680,8 @@ func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOp
 }
 
 // gatherExplicitFactsForTest independently gathers the same explicitFacts
-// PlanExplicitWithOptions gathers for target, in the same order, so
-// TestEligibilityVerdictProjectsWithoutSecondDecision can call decideExplicit on them
+// PlanExplicitWithOptions gathers for target, in the same order. This lets
+// TestEligibilityVerdictProjectsWithoutSecondDecision call decideExplicit on them
 // without going through subshell.go's own projection at all.
 func gatherExplicitFactsForTest(t *testing.T, root, target string, options CleanupOptions) explicitFacts {
 	t.Helper()

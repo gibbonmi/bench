@@ -9,9 +9,9 @@ import (
 )
 
 // allowResult is the parsed contents of a .bench/env.allow file. Patterns are
-// stored in their validated on-disk form (an exact name, or a PREFIX* glob), so
-// they can be appended directly to the default passlist and matched with the
-// same matchesAny helper.
+// stored in their validated on-disk form (an exact name, or a PREFIX* glob).
+// This lets them be appended directly to the default passlist and matched with
+// the same matchesAny helper.
 type allowResult struct {
 	agent []string
 }
@@ -37,23 +37,29 @@ func parseAllowFile(path string) (allowResult, error) {
 	return parseAllow(string(data))
 }
 
-// utf8BOM is the UTF-8 byte-order mark. A file that opens with it is rejected
-// by name rather than falling through to the generic "entry before any
-// section header" error the BOM bytes would otherwise trigger (the BOM is not
-// Unicode whitespace, so TrimSpace leaves it attached to the first line) —
-// fail-closed either way, but a named reason beats a misleading one.
+// utf8BOM is the UTF-8 byte-order mark. A file that opens with it is rejected by
+// name. This avoids the generic "entry before any section header" error the BOM
+// bytes would otherwise trigger. The BOM is not Unicode whitespace, so TrimSpace
+// leaves it attached to the first line. Both paths fail closed, but a named
+// reason beats a misleading one.
 const utf8BOM = "\ufeff"
 
-// parseAllow implements the env.allow grammar: optional, line-oriented,
-// # comments and blank lines, an [agent] section header — the only known
-// section — and one entry per line that is either an exact name or a PREFIX*
-// glob. Any violation is rejected with an error naming the 1-indexed line and
-// the reason — an entry before any section header, an unknown section name
-// (including a stale [gate], since the gate opt-in is the manifest, not this
-// file), a bare *, a glob that is not a single trailing *, an entry containing
-// / or =, or any character outside the portable environment-name set, or a
-// leading UTF-8 byte-order mark. A present-but-empty file yields an
-// allowResult with no entries, which is not an error.
+// parseAllow implements the env.allow grammar. The grammar is optional and
+// line-oriented. It allows # comments and blank lines, and an [agent] section
+// header (the only known section). One entry appears per line, either an
+// exact name or a PREFIX* glob.
+//
+// Any violation is rejected with an error naming the 1-indexed line and the
+// reason. The first three reasons: an entry before any section header, an
+// unknown section name, and a bare *. A stale [gate] section counts as
+// unknown, since the gate opt-in lives in the manifest, not this file.
+//
+// Two more reasons: a glob that is not a single trailing *, or an entry
+// with a / or =. Another is a character outside the portable
+// environment-name set.
+//
+// A last reason is a leading UTF-8 byte-order mark. A present-but-empty
+// file yields an allowResult with no entries, which is not an error.
 func parseAllow(data string) (allowResult, error) {
 	if strings.HasPrefix(data, utf8BOM) {
 		return allowResult{}, errors.New(".bench/env.allow:1: file begins with a UTF-8 byte-order mark (BOM); save it as UTF-8 without a BOM")
@@ -103,9 +109,9 @@ func parseSectionHeader(line string) (string, bool) {
 	return "", false
 }
 
-// validateEntry checks one non-comment, non-header line against the grammar
-// and returns it unchanged (it is already in the PREFIX* or exact-name form
-// Build's matcher expects) or a reason it was rejected.
+// validateEntry checks one non-comment, non-header line against the grammar.
+// It returns the line unchanged (it is already in the PREFIX* or exact-name
+// form Build's matcher expects), or a reason it was rejected.
 func validateEntry(raw string) (string, error) {
 	if raw == "*" {
 		return "", errors.New("bare wildcard entry")

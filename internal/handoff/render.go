@@ -9,7 +9,7 @@ import (
 
 // renderPath renders the git root as a reader elsewhere should see it: abbreviated to `~`
 // when it is $HOME or sits beneath it, absolute otherwise. The containment test is by path
-// component, so a $HOME of /home/a leaves /home/abc absolute rather than turning it into
+// component. A $HOME of /home/a leaves /home/abc absolute rather than turning it into
 // the `~bc` a raw prefix match would produce. An unset $HOME abbreviates nothing.
 func renderPath(root, home string) string {
 	if home == "" || !filepath.IsAbs(home) {
@@ -68,9 +68,9 @@ func specField(specs []string) string {
 }
 
 // nextField states the next command. A board with signals but no command among them says
-// so and points at the override, because this field promises an invocation and the hints
-// left on such a board are not ones. An empty Signal marks an overridden action, which is
-// rendered alone: the board had nothing to do with it, so naming a signal would be a claim
+// so, and points at the override. This field promises an invocation, and the hints left
+// on such a board are not ones. An empty Signal marks an overridden action, rendered
+// alone — the board had nothing to do with it. Naming a signal would be a claim
 // about a derivation that never ran.
 func nextField(f facts) string {
 	if f.NoInvocable {
@@ -89,10 +89,10 @@ func nextField(f facts) string {
 // before a line is composed. A control byte reaching the rendered block would ride into
 // every downstream reader of the artifact, so the refusal is the whole answer.
 //
-// The sink is a line-structured markdown document, which is stricter than TOON:
+// The sink is a line-structured markdown document, which is stricter than TOON.
 // toon.Representable permits tab, newline, and return because the encoder escapes them,
-// and none of the three survives here. A newline is the sharp one — a value carrying it
-// splits its own field across lines, and a `--next` override carrying one can write a
+// and none of the three survives here. A newline is the sharp one: a value carrying it
+// splits its own field across lines. A `--next` override carrying one can write a
 // second `## State` heading that makes every later run refuse the document as ambiguous.
 func validate(f facts) error {
 	fields := append([]string{f.Repo, f.Origin, f.Path, f.Branch, f.Head, f.Dirty, f.Unpushed, f.Gate, f.Action, f.Signal}, f.Specs...)

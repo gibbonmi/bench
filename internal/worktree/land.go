@@ -79,7 +79,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 		return landRefusal(stdout, "worktree path is not canonical")
 	}
 	// A stale executable enforces whatever landing contract it was built with, so its own
-	// freshness is proven before any repository proof — a repository that would also refuse
+	// freshness is proven before any repository proof. A repository that would also refuse
 	// for its own state still gets the rebuild remedy rather than that later proof's message.
 	// The owner's message carries that remedy, so it passes through unchanged.
 	if freshness.DeclaresBuildInputs(root) {
@@ -111,7 +111,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 		return landRefusal(stdout, err.Error())
 	}
 	// The destination CAS above is the commit point. Later errors name the durable
-	// commit and retain the source; first-run never attempts to publish again.
+	// commit and retain the source. first-run never attempts to publish again.
 	if err := advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker")
 	}
@@ -268,8 +268,8 @@ func resumeDestructiveDestinationState(root, destination, published, destination
 
 // ignoredResidueDeclared reports whether the destination's ignored residue sits
 // entirely inside its declared build outputs. Resume applies the same allowance the
-// first run did, so a landing that validly proceeded with declared outputs and then
-// failed at release can still be completed rather than being permanently stuck.
+// first run did. A landing that validly proceeded with declared outputs and then
+// failed at release can still be completed, rather than being permanently stuck.
 func ignoredResidueDeclared(root string) bool {
 	ignored, _, ignoredErr := inventoryIgnored(root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)

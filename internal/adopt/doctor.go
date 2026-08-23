@@ -380,8 +380,9 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 }
 
 // restorePrePushExecuteMode adds execute bits to a hook that was already present when the
-// repair rewrote it: writing over an existing file leaves its mode untouched, and git skips
-// a pre-push it cannot execute. The other permission bits are the operator's, so they stay.
+// repair rewrote it. Writing over an existing file leaves its mode untouched, and git
+// skips a pre-push it cannot execute. The other permission bits are the operator's, so
+// they stay.
 func restorePrePushExecuteMode(path string) error {
 	if isExecutable(path) {
 		return nil

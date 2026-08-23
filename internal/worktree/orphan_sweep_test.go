@@ -12,9 +12,9 @@ import (
 )
 
 // cleanLineFor is the retirement command a reader is expected to paste for path. The
-// expected quoting is written out here rather than taken from the renderer's own helper,
-// so a change to that helper cannot make these tests agree with it by construction. Every
-// path a test hands it is free of quotes, which is what keeps the literal this simple.
+// expected quoting is written out here rather than taken from the renderer's own helper.
+// A change to that helper cannot then make these tests agree with it by construction.
+// Every path a test hands it is free of quotes, which is what keeps the literal this simple.
 func cleanLineFor(path string) string { return "bench worktree clean '" + path + "'" }
 
 func ledgerIDs(t *testing.T, root string) string {
@@ -63,9 +63,10 @@ func TestResumeSummaryNamesCleanCommand(t *testing.T) {
 
 // TestResumeSummaryReportsOrphanWithIgnoredResidue holds the sweep to the ledger rather
 // than to a cleanup plan. Ignored build output is the normal state of a worktree a shift
-// ran in, and PlanAutomatic returns at that retain reason long before it reaches the
-// assignment's state, so a sweep reading the plan's reason code reports nothing for
-// exactly the population this listing exists for.
+// ran in.
+// PlanAutomatic returns at that retain reason long before it reaches the assignment's state.
+// A sweep that reads the plan's reason code therefore reports nothing for exactly the
+// population this listing exists for.
 func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
 	root := newSweepRepo(t)
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
@@ -86,8 +87,8 @@ func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
 }
 
 // TestResumeSummaryNeverSuggestsDiscardIgnored keeps the emitted remedy off the flag
-// whose request-less form orphans the assignment (FT93b) — suggesting it would
-// manufacture the next generation of the residue this listing reports.
+// whose request-less form orphans the assignment (FT93b).
+// That suggestion would manufacture the next generation of the residue this listing reports.
 func TestResumeSummaryNeverSuggestsDiscardIgnored(t *testing.T) {
 	root := newSweepRepo(t)
 	orphan := mustCreate(t, root, "summary-no-discard", "aged, tree present")
@@ -101,10 +102,11 @@ func TestResumeSummaryNeverSuggestsDiscardIgnored(t *testing.T) {
 		"summary suggests --discard-ignored:\n%s", summary)
 }
 
-// TestSweepCompactsOrphanedActiveResidue covers both tree-gone verdicts for an orphan:
-// one git no longer registers is the sweep's to compact, and one git still registers is
-// the prune path's, because compacting a registration git is about to prune leaves the
-// ledger and the registration disagreeing.
+// TestSweepCompactsOrphanedActiveResidue covers both tree-gone verdicts for an orphan.
+// One git no longer registers is the sweep's to compact, and one git still registers is
+// the prune path's.
+// A registration is not compacted while git is about to prune it, because that would
+// leave the ledger and the registration disagreeing.
 func TestSweepCompactsOrphanedActiveResidue(t *testing.T) {
 	root := newSweepRepo(t)
 	residue := mustCreate(t, root, "orphan-residue-gone", "aged, tree gone, unregistered")
@@ -134,10 +136,10 @@ func unstamp(t *testing.T, root string, assignment intent.Assignment) {
 }
 
 // TestSweepHandlesPreStampLedgerRecords drives the pre-stamp ledger shape through the
-// sweep's destructive path. A record carrying no created_at key is the standing
-// population, and its age is inferred from the absent stamp rather than read, so both
-// verdicts for an aged record have to hold for it: tree gone and unregistered is
-// compacted, tree present is reported and left alone.
+// sweep's destructive path. A record with no created_at key is the standing population.
+// Its age is inferred from the absent stamp rather than read.
+// Both verdicts for an aged record therefore have to hold for it: a record whose tree is
+// gone and unregistered is compacted; one whose tree is present is reported and left alone.
 func TestSweepHandlesPreStampLedgerRecords(t *testing.T) {
 	root := newSweepRepo(t)
 	present := mustCreate(t, root, "prestamp-present", "unstamped, tree present")
@@ -172,8 +174,8 @@ func unregisterWorktree(t *testing.T, root, path string) {
 	mustNoError(t, os.RemoveAll(filepath.Join(root, ".git", "worktrees", filepath.Base(path))))
 }
 
-// denyStat makes every stat below dir fail for a reason other than absence, and restores
-// the mode before the enclosing TempDir cleanup tries to walk it.
+// denyStat makes every stat below dir fail for a reason other than absence.
+// It restores the mode before the enclosing TempDir cleanup tries to walk it.
 func denyStat(t *testing.T, dir string) {
 	t.Helper()
 	mustNoError(t, os.Chmod(dir, 0o000))
@@ -182,9 +184,10 @@ func denyStat(t *testing.T, dir string) {
 
 // TestSweepRetainsRecordWhenStatIsUnknown holds the sweep to the difference between a
 // tree that is gone and one it cannot see. An unreadable pool answers every stat with a
-// permission error, and reading that as absence compacts the ledger row out from under a
-// worktree that is still on disk holding uncommitted work — the one loss the sweep's
-// tree-gone verdicts exist to avoid.
+// permission error.
+// If the sweep reads that as absence, it compacts the ledger row out from under a
+// worktree that is still on disk holding uncommitted work.
+// That is the one loss the sweep's tree-gone verdicts exist to avoid.
 func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
 	root := newSweepRepo(t)
 	unknown := mustCreate(t, root, "orphan-stat-unknown", "aged, tree present but unreadable")
@@ -207,11 +210,12 @@ func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
 }
 
 // TestSweepPurgesRecoveredRecordsWhoseTreeIsGone pins the boundary of the reconcile's
-// destructive branch. No record is ever both orphaned and holding preserved work —
-// orphanhood requires state active, and ValidateAssignment refuses an active record with
-// recovery metadata on every ledger read — so the closest reachable record is a recovered
-// one, and the standing cleaner drops it: the state it names is one only the removed
-// lifecycle produced, and the ref it points at is one the same run sweeps.
+// destructive branch. No record is ever both orphaned and holding preserved work.
+// Orphanhood requires an active state, and ValidateAssignment refuses an active record with
+// recovery metadata on every ledger read.
+// The closest reachable record is therefore a recovered one, and the standing cleaner drops it.
+// The state it names is one only the removed lifecycle produced.
+// The ref it points at is one the same run sweeps.
 func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
 	root := newSweepRepo(t)
 	preserved := mustCreate(t, root, "orphan-preserved", "aged, holds preserved work")
@@ -237,9 +241,10 @@ func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
 }
 
 // TestSweepIsIdempotent pins what a reader actually sees: the summary reprints at every
-// session start, so once the ledger has settled, repeated sweeps must agree exactly and
-// delete nothing further. The first sweep is the settling run — it compacts the residue
-// and so legitimately differs — and the two runs after it are the compared pair.
+// session start.
+// Once the ledger has settled, repeated sweeps must agree exactly and delete nothing further.
+// The first sweep is the settling run — it compacts the residue and so legitimately
+// differs — and the two runs after it are the compared pair.
 func TestSweepIsIdempotent(t *testing.T) {
 	root := newSweepRepo(t)
 	present := mustCreate(t, root, "idempotent-orphan", "aged, tree present")

@@ -17,9 +17,9 @@ import (
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
-// The idiom-setting table test for the module: pure logic, table-driven, no process
-// boundary. Acceptance for the version line lives at the shell seam (the gate's
-// version-routing contract); this pins the format one layer down.
+// This is the idiom-setting table test for the module: pure logic, table-driven, no
+// process boundary. Acceptance for the version line lives at the shell seam, the gate's
+// version-routing contract, and this test pins the format one layer down.
 func TestVersionLine(t *testing.T) {
 	cases := []struct {
 		v, goos, goarch, want string
@@ -82,7 +82,7 @@ func TestHelpRendersPublicCommandRegistryRows(t *testing.T) {
 }
 
 func TestHelpInventoryIsComplete(t *testing.T) {
-	// The independently authored expectation is the omission oracle: deriving it from
+	// The independently authored expectation is the omission oracle. Deriving it from
 	// commandRegistry would let a deleted public or child row disappear from both sides.
 	const want = `bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench setup [--plan|--yes]  inspect, preview, and converge the current repository
@@ -249,8 +249,8 @@ func TestHelpKeepsStatusPublicRoute(t *testing.T) {
 	})
 }
 
-// TestResolveModelHarnessFlag drives the CLI's argument surface: --harness selects the
-// column, and the retired --alias / --provider-model spellings are rejected rather than
+// TestResolveModelHarnessFlag drives the CLI's argument surface. --harness selects the
+// column, and the retired --alias and --provider-model spellings are rejected rather than
 // quietly resolving a model, so there is only one way to ask the binding a question.
 func TestResolveModelHarnessFlag(t *testing.T) {
 	root := t.TempDir()
@@ -298,7 +298,7 @@ func TestResolveModelHarnessFlag(t *testing.T) {
 	}
 }
 
-// TestCheckAgentLineHarnessFlag pins the guard's own argument surface: it takes the same
+// TestCheckAgentLineHarnessFlag pins the guard's own argument surface. It takes the same
 // --harness flag, and a retired flag is a usage error rather than a silent allow.
 func TestCheckAgentLineHarnessFlag(t *testing.T) {
 	for _, tt := range []struct {
@@ -430,8 +430,8 @@ func TestCaptureClaudeAgentIntentReplayIsByteIdempotent(t *testing.T) {
 	}
 }
 
-// panicReader forces guardGit's stdin read to panic, exercising the recover→exit-3
-// rim so a crash can never masquerade as an exit-2 block.
+// panicReader forces guardGit's stdin read to panic, exercising the recover-to-exit-3
+// rim, so a crash can never masquerade as an exit-2 block.
 type panicReader struct{}
 
 func (panicReader) Read([]byte) (int, error) { panic("boom") }
@@ -513,8 +513,8 @@ func gitInitRepo(t *testing.T, dir string) {
 	}
 }
 
-// gitlessPATH builds a PATH holding the externals bin/bench.sh needs and no `git`, so the
-// wrapper's same-repository probe hits its no-git rim rather than an unrelated failure.
+// gitlessPATH builds a PATH holding the externals bin/bench.sh needs, with no `git`, so
+// the wrapper's same-repository probe hits its no-git rim rather than an unrelated failure.
 func gitlessPATH(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -533,20 +533,20 @@ func gitlessPATH(t *testing.T) string {
 	return dir
 }
 
-// The wrapper resolves the kit for THIS INVOCATION: a CWD inside a worktree of the
-// wrapper's own repository moves the kit to that worktree, and every other CWD — a
-// different repository (the linked-project case), no repository at all, or an
-// environment without git — keeps the wrapper's own tree. The same-repository test is
-// identity of the git common directory, so a linked project repo, which a path-prefix
-// test could not tell from a worktree, still gets the wrapper's tree.
+// The wrapper resolves the kit for this invocation. A CWD inside a worktree of the
+// wrapper's own repository moves the kit to that worktree. Every other CWD, a different
+// repository (the linked-project case), no repository at all, or an environment without
+// git, keeps the wrapper's own tree. The same-repository test compares the git common
+// directory's identity, so a linked project repo, which a path-prefix test could not
+// tell from a worktree, still gets the wrapper's tree.
 func TestShellWrapperResolvesKitForTheInvocation(t *testing.T) {
 	base := t.TempDir()
 	kit := filepath.Join(base, "kit")
 	argvFile := filepath.Join(base, "argv")
 	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
 	gitInitRepo(t, kit)
-	// dist/bench stays untracked, exactly as in a real checkout: the worktree case only
-	// reaches it because main_tree_kit re-anchors the binary lookup at the main tree.
+	// dist/bench stays untracked, exactly as in a real checkout. The worktree case reaches
+	// it only because main_tree_kit re-anchors the binary lookup at the main tree.
 	writeExecutable(t, filepath.Join(kit, "dist", "bench"), `#!/usr/bin/env bash
 printf '%s\n' "$BENCH_KIT" > "$BENCH_TEST_ARGV"
 `)
@@ -558,8 +558,8 @@ printf '%s\n' "$BENCH_KIT" > "$BENCH_TEST_ARGV"
 	}
 	project := filepath.Join(base, "project")
 	gitInitRepo(t, project)
-	// The adopted-repo layout: the kit is a subdirectory of the project repo, so the
-	// project's own CWD shares its common dir with the wrapper's tree and only the
+	// In the adopted-repo layout, the kit is a subdirectory of the project repo. The
+	// project's own CWD shares its common dir with the wrapper's tree, so only the
 	// "kit is its tree's top level" condition keeps the wrapper naming <repo>/.bench.
 	adopted := filepath.Join(base, "adopted")
 	adoptedKit := filepath.Join(adopted, ".bench")
@@ -614,9 +614,9 @@ printf '%s\n' "$BENCH_KIT" > "$BENCH_TEST_ARGV"
 	}
 }
 
-// TestRoadmapFlagsRouteToTheirOwners covers RF10: the flow flag adds a surface and
-// moves none. The bare form is byte-compared against its owner, and the context form is
-// pinned to the schema `/bench-drain` accepts.
+// TestRoadmapFlagsRouteToTheirOwners covers RF10. The flow flag adds a surface and moves
+// none. The bare form is byte-compared against its owner, and the context form is pinned
+// to the schema `/bench-drain` accepts.
 func TestRoadmapFlagsRouteToTheirOwners(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	const heading = "**FT1 — fixture.**"

@@ -1,13 +1,13 @@
 // Package preprelease owns `bench prep-release`, the ship-tier rehearsal. `bench gate`
-// answers the narrower question — does the kit work from this tree — and leaves the
+// answers the narrower question of whether the kit works from this tree. It leaves the
 // four-platform artifact matrix, the cross-compile matrix, the release-only package
-// suites, the release preflight verify, and ship-tier canary inventory validation to a surface
-// that runs once per release instead of once per commit. This is that surface, and its
-// exit code carries the authority the dev gate gave up.
+// suites, the release preflight verify, and ship-tier canary inventory validation to a
+// surface that runs once per release instead of once per commit. This is that surface,
+// and its exit code carries the authority the dev gate gave up.
 //
 // It invents no machinery: every step is an existing script, the existing conformance
-// suite at the ship tier, or the existing canary inventory validation. Ship green is exit 0 with
-// evidence at dist/preflight/release-index.json and dist/artifacts.
+// suite at the ship tier, or the existing canary inventory validation. Ship green is
+// exit 0 with evidence at dist/preflight/release-index.json and dist/artifacts.
 //
 // The dev-green precondition is an observer, not a second verdict-reuse grant: a green
 // observation lets the run start, and every ship-tier check still runs in full.
@@ -50,7 +50,7 @@ const preflightStep = "release-preflight"
 // the entry point, plus the stress-tagged assertions that no other surface builds. A
 // stress test left out of this list is compiled by the `-tags stress` step and then run
 // by nothing, so it exists without ever executing. Test functions are not importable, so
-// the names are literals — the conformance package grades that each one is declared.
+// the names are literals; the conformance package grades that each one is declared.
 var ShipConformanceTests = []string{registry.RootConformanceTest, "TestResidualCheckKeepsCrossCompile"}
 
 // ShipConformanceRun is the `go test -run` filter built from ShipConformanceTests.
@@ -63,7 +63,7 @@ func ShipConformanceRun() string {
 // an `exec: not found` surfacing from four levels inside a shell script.
 var requiredTools = []string{"bash", "git", "go", "node"}
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// grammar is the declared argument shape usage.Parse enforces for this subcommand:
 // arity, flag recognition, `--`, and help all come from there rather than a local switch.
 var grammar = usage.Grammar{
 	Cmd:  "bench prep-release",
@@ -79,12 +79,12 @@ type Step struct {
 	Run  func(root string) error
 }
 
-// Steps is the ship-tier sequence for root, in run order; kit is the checkout that owns
+// Steps is the ship-tier sequence for root, in run order. kit is the checkout that owns
 // the conformance suite, which is root itself everywhere but a linked repo. The order is
 // load-bearing: the preflight verify reads the artifact set the build stage promotes.
 //
 // This is the only enumeration of what `prep-release` runs. Anything that needs to know
-// the sequence — a test, a diagnostic — reads it from here.
+// the sequence, a test or a diagnostic, reads it from here.
 func Steps(root, kit string) []Step {
 	return []Step{
 		{
@@ -94,14 +94,14 @@ func Steps(root, kit string) []Step {
 		{
 			// -tags stress is what makes the cross-compile matrix more than a no-op;
 			// without it this step runs a check that silently returns nil. The suite
-			// grades no package suites of its own — the step below is what runs those.
+			// grades no package suites of its own; the step below runs those.
 			Name: "conformance-ship",
 			Argv: append(goTestArgv(kit), "-tags", "stress", "./internal/conformance", "-run", ShipConformanceRun()),
 			Env:  []string{registry.ConformanceRootEnv + "=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
 		},
 		{
-			// The release-only package suites — internal/releasepreflight,
-			// internal/releaseevidence, internal/publication — are excluded from the dev
+			// The release-only package suites (internal/releasepreflight,
+			// internal/releaseevidence, internal/publication) are excluded from the dev
 			// tier's package enumeration, so this ship-tier run is the only surface that
 			// executes them. Without it ship green covers three fewer suites than its
 			// exit code claims.
@@ -189,8 +189,8 @@ func Command(args []string, stdout, stderr io.Writer) int {
 }
 
 // Refusal is the one diagnostic for a tree prep-release cannot start from. The cause is
-// the gate's own classification of its cache, so the four rejected states — absent, red,
-// bound to another tree, expired — each report themselves without this package
+// the gate's own classification of its cache, so the four rejected states (absent, red,
+// bound to another tree, expired) each report themselves without this package
 // re-deriving any of them.
 //
 // A reduced or partial verdict each get their own sentence because the maintainer's next
@@ -199,8 +199,8 @@ func Command(args []string, stdout, stderr io.Writer) int {
 // narrow record back. The remedy is the escape from any reusable verdict, which is the
 // only way to reach a whole-tree green here.
 //
-// A release answers for the whole tree, so a partition — components the verdict skipped
-// and reused earlier evidence for instead of grading — cannot authorize one either. The
+// A release answers for the whole tree, so a partition (components the verdict skipped
+// and reused earlier evidence for instead of grading) cannot authorize one either. The
 // component names come from the partition itself rather than being restated here: a
 // refusal naming only "partial" would leave the maintainer guessing which components to
 // distrust.
@@ -218,7 +218,7 @@ func Refusal(inspection gate.Inspection) string {
 }
 
 // skippedComponentNames renders a partition's skipped components as the comma-joined list
-// the refusal names, and "" when there is nothing to name — a nil partition (nothing
+// the refusal names, and "" when there is nothing to name. A nil partition (nothing
 // skipped) and an empty one (nothing skipped, however the pointer got set) refuse alike.
 func skippedComponentNames(partition *gate.Partition) string {
 	if partition == nil || len(partition.Skipped) == 0 {
@@ -233,8 +233,8 @@ func skippedComponentNames(partition *gate.Partition) string {
 
 // PreflightAttributions names each verify phase whose promoted record is not green, with
 // that phase's own diagnostic. The preflight streams twenty minutes of phase output and
-// then exits 1, so its bare exit status leaves the cause somewhere in the scrollback;
-// the records it promoted already hold the attribution, and this reads it back rather
+// then exits 1, so its bare exit status leaves the cause somewhere in the scrollback.
+// The records it promoted already hold the attribution, and this reads it back rather
 // than re-deriving anything from that output.
 //
 // A record that is absent or undecodable yields no line: the phase sequence is the

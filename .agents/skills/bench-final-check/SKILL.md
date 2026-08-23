@@ -5,6 +5,6 @@ description: Explicit Codex adapter for the /bench-final-check phase. Use only w
 
 # $bench-final-check
 
-Read `.agents/commands/bench-final-check.md` completely and follow it as the active Bench
-phase. The command file is canonical; do not substitute this adapter for the phase
+Read `.agents/commands/bench-final-check.md` completely. Follow it as the active Bench
+phase. The command file is canonical. Do not substitute this adapter for the phase
 instructions.

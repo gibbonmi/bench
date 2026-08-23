@@ -274,9 +274,10 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 			}
 		})
 	}
-	// Every step reachable from the automatic path. StepRecoveryRef is not among them: the
-	// automatic planner retains a checkout it could only remove by preserving first, so the
-	// explicit-retry cases below are where that boundary is graded.
+	// Every step reachable from the automatic path. StepRecoveryRef is not among
+	// them: the automatic planner retains a checkout it could only remove by
+	// preserving first. The explicit-retry cases below are where that boundary
+	// is graded.
 	for _, tc := range []struct {
 		name       string
 		step       LifecycleStep

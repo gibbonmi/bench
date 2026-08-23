@@ -92,9 +92,9 @@ func CoreTestPackages(root string, tier registry.Tier) ([]string, string, error)
 	return packages, combined, nil
 }
 
-// gofmtStep reds on the files `gofmt -l` names, which it cannot do on its own: the
-// listing is a green exit with output. The verdict goes to stderr, where every other
-// red in this file writes, so a caller reading a step's stdout for the tool's own
+// gofmtStep reds on the files `gofmt -l` names, which `gofmt -l` cannot do on its own:
+// the listing is a green exit with output. The verdict goes to stderr, where every
+// other red in this file writes. So a caller reading a step's stdout for the tool's own
 // output never finds a policy line folded into it.
 func gofmtStep(root string, stdout, stderr io.Writer) int {
 	listed, combined, err := stepOutput(root, "gofmt", "-l", ".")
@@ -112,9 +112,9 @@ func gofmtStep(root string, stdout, stderr io.Writer) int {
 }
 
 // listedFiles splits a one-path-per-line tool listing. Splitting on whitespace instead
-// would report a path containing a space as two paths that do not exist, and neither
-// would name the file a reader has to go fix. A final line with no newline after it
-// still names a file, so the split is on the separator rather than on a terminator.
+// would report a path containing a space as two paths that do not exist. Neither would
+// name the file a reader has to go fix. A final line with no newline after it still
+// names a file, so the split is on the separator rather than on a terminator.
 func listedFiles(listed string) []string {
 	var files []string
 	for _, line := range strings.Split(listed, "\n") {
@@ -191,9 +191,9 @@ func runStep(root string, argv []string, stdout, stderr io.Writer) int {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err := cmd.Run()
-	// A tool that never started (ProcessState nil) wrote to neither stream, so without
-	// this the phase reds carrying no account of itself — the one shape a reader cannot
-	// diagnose from the output.
+	// A tool that never started (ProcessState nil) wrote to neither stream. Without this
+	// check the phase reds while carrying no account of itself, the one shape a reader
+	// cannot diagnose from the output.
 	if err != nil && cmd.ProcessState == nil {
 		fmt.Fprintf(stderr, "%s failed to start: %v\n", argv[0], err)
 		return 1
@@ -205,9 +205,9 @@ func runStep(root string, argv []string, stdout, stderr io.Writer) int {
 }
 
 // stepOutput runs a step whose output is read rather than streamed. It returns stdout
-// on its own — the tools here report their findings there, and a stderr line folded
-// in would be parsed as one more finding — and both streams together for the
-// diagnostic a failing invocation carries.
+// on its own, because the tools here report their findings there, and a folded-in
+// stderr line would parse as one more finding. It also returns both streams together,
+// for the diagnostic a failing invocation carries.
 func stepOutput(root string, argv ...string) (out, combined string, err error) {
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root

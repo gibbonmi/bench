@@ -78,9 +78,10 @@ func MaterializeMutationFixture(root, fixture, dst string) error {
 	return materializeMutationFixture(root, fixture, dst)
 }
 
-// RestoreMutationFixture removes the fixture overlay and recopies its immutable base.
-// The caller can then invoke the same owning check against the same subject and prove
-// the mutation, rather than ambient repository state, caused the red.
+// RestoreMutationFixture removes the fixture overlay. It recopies the fixture's
+// immutable base. The caller can then invoke the same owning check against the same
+// subject. This proves the mutation, rather than ambient repository state, caused
+// the red.
 func RestoreMutationFixture(root, fixture, dst string) error {
 	filesDir := filepath.Join(fixture, filesDirName)
 	if info, err := os.Stat(filesDir); err == nil && info.IsDir() {

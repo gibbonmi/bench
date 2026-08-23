@@ -117,6 +117,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- New `prose-mechanics` conformance check, with its approved exclusions in the
+  new `.bench/prose-exclusions` file. `.bench/BENCH.md` now splits into an
+  always-loaded core and separate reference material. The kit's guidance and
+  comments now carry the ASD-STE100 register throughout.
 - Added the `landed` assignment classification and `bench worktree clean --landed`
   plan/apply sweep for retiring landed worktrees as one fingerprinted set.
 - New `bench skills-index [--check|--write]` command — the operator's one skills-index

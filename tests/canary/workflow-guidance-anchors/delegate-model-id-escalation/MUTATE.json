@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+    "old": "An omission inherits your model and may silently escalate.",
+    "new": "An omission picks a default."
+  }
+]

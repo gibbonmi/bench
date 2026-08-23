@@ -32,7 +32,7 @@ func TestStepsNameScriptsThisRepoShips(t *testing.T) {
 }
 
 // TestStepsGradeTheRootTheyWereGiven pins the two arguments every scripted step is wrong
-// without: the graded root, and — for the conformance suite alone — the kit whose module
+// without: the graded root, and, for the conformance suite alone, the kit whose module
 // the suite compiles in. A linked repo is the case where those differ.
 func TestStepsGradeTheRootTheyWereGiven(t *testing.T) {
 	root, kit := filepath.Join("elsewhere", "graded root"), filepath.Join("other", "kit")
@@ -192,7 +192,7 @@ func runFilter(t *testing.T, argv []string) string {
 }
 
 // TestRefusalNamesTheCauseAndTheRemedy covers the state the gate reports with no reason
-// attached — an absent cache — where a message built only from Inspection.Reason would
+// attached (an absent cache), where a message built only from Inspection.Reason would
 // name nothing at all.
 func TestRefusalNamesTheCauseAndTheRemedy(t *testing.T) {
 	for _, test := range []struct {

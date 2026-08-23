@@ -3,12 +3,14 @@ package publication
 import "context"
 
 // Registry is the npm-registry port the state machine drives. Two adapters
-// implement it: FixtureRegistry (HTTP against the hermetic offline-registry.mjs
-// fixture, used by the gate) and NPMCLIRegistry (shells the real `npm` CLI, for
-// the runbook path only — never exercised by the gate). Neither adapter, nor
-// any caller, ever puts a credential into the durable record or the evidence
-// trail; auth material stays in the process environment/npm config and is
-// referenced only by an opaque auth_mode label.
+// implement it. FixtureRegistry works over HTTP against the hermetic
+// offline-registry.mjs fixture, used by the gate. NPMCLIRegistry shells the
+// real `npm` CLI, for the runbook path only, never exercised by the gate.
+//
+// Neither adapter, nor any caller, ever puts a credential into the durable
+// record or the evidence trail. Auth material stays in the process
+// environment/npm config and is referenced only by an opaque auth_mode
+// label.
 type Registry interface {
 	// Publish uploads tarball for name@version under the given non-default
 	// dist-tag in one call (direct publish — no staging). It returns the

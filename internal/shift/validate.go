@@ -8,10 +8,9 @@ import (
 )
 
 // parseBoundedInt reads name from the environment as an integer in [min,max],
-// returning def when the variable is unset or empty. A set-but-invalid value
-// (non-integer, or out of range) is an error naming the variable and the accepted
-// range — replacing envInt's silent fallback, which ran a shift the operator never
-// authorized.
+// returning def when the variable is unset or empty. A set-but-invalid value, either
+// non-integer or out of range, is an error naming the variable and the accepted range.
+// This replaces envInt's silent fallback, which ran a shift the operator never authorized.
 func parseBoundedInt(name string, def, min, max int) (int, error) {
 	v := os.Getenv(name)
 	if v == "" {
@@ -25,8 +24,8 @@ func parseBoundedInt(name string, def, min, max int) (int, error) {
 }
 
 // parseWallDuration reads name from the environment as a Go duration in (0,max],
-// returning def when the variable is unset or empty. A zero default means no timer;
-// a set-but-invalid value is an error naming the variable and the accepted range.
+// returning def when the variable is unset or empty. A zero default means no timer.
+// A set-but-invalid value is an error naming the variable and the accepted range.
 func parseWallDuration(name string, def, max time.Duration) (time.Duration, error) {
 	v := os.Getenv(name)
 	if v == "" {

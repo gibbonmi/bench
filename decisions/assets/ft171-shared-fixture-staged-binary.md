@@ -3,15 +3,15 @@
 Status: reviewed architecture input for the `shared-fixture-staged-binary` light-path build.
 
 Reviewer: Claude Fable, read-only architecture pass. The reviewer could inspect the
-primary checkout but not the isolated candidate worktree, so its code citations are to
-the primary checkout and its characterization of the parallel-marker draft uses the
-recorded evidence below.
+primary checkout but not the isolated candidate worktree. Its code citations are
+therefore to the primary checkout, and its characterization of the parallel-marker
+draft uses the recorded evidence below.
 
 ## Recommendation
 
 The repeated disk work is fixable at one bounded fixture seam. The active three-ticket
-spec build does not need to be restructured: finish the staged kit-root injection,
-fixture-pin retirement, and eligible-test parallelism work, then land fixture binary
+spec build does not need to be restructured. Finish the staged kit-root injection,
+fixture-pin retirement, and eligible-test parallelism work. Then land fixture binary
 reuse as one independently-green light-path ticket after the spec retires.
 
 Build the kit-shaped fixture's staged binary once per test process behind `sync.Once`.
@@ -66,7 +66,7 @@ a future constructor input diverges from the template.
 Use lazy `sync.Once` construction, with `TestMain` responsible only for removing the
 package-scoped temporary directory. A focused run that creates no kit-shaped fixture
 then pays nothing. The once stores both the staged artifact path and any construction
-error; every dependent caller reports the same error rather than allowing only the
+error. Every dependent caller reports the same error, rather than allowing only the
 first test to fail. The existing per-test Go-toolchain capability check remains at the
 fixture entry.
 
@@ -86,9 +86,9 @@ Use a portable copy, not a hardlink or reflink:
   one artifact-sized write.
 
 Do not introduce a template Git repository or nested worktree yet. That adds a
-recursive-copy contract, risks bypassing the single publication writer, and saves only
-small Git initialization and metadata writes after the link cost is removed. Measure
-the bounded binary-sharing fix first.
+recursive-copy contract, and risks bypassing the single publication writer. It also
+saves only small Git initialization and metadata writes after the link cost is
+removed. Measure the bounded binary-sharing fix first.
 
 Do not add a resource semaphore or a second eligibility taxonomy now. The current
 evidence shows flat total writes and flat peak RSS across widths; the large cost is
@@ -160,9 +160,11 @@ The bounded copy implementation proved correct but a fresh runtime census found 
 constructor materializations rather than the static estimate of about 51. Its serial
 package run still wrote roughly 1.3 million output blocks. The dependent
 `reduce-gate-fixture-materialization.md` ticket therefore supersedes only the ordinary-copy
-recommendation: initial executables hardlink the immutable template, in-place metadata
-mutation atomically detaches first, byte replacement uses an atomic root-local rename, and every Git directory, seal, and Bench evidence
-store remains private. This preserves the review's rejected-worktree conclusion while
-addressing the measured copy residual. Decision-only refusal tests seed private valid
-evidence through its production writers and call the scoping decision directly; they do not
+recommendation. Initial executables hardlink the immutable template. In-place metadata
+mutation atomically detaches first, and byte replacement uses an atomic root-local
+rename. Every Git directory, seal, and Bench evidence store remains private.
+
+This preserves the review's rejected-worktree conclusion while addressing the measured
+copy residual. Decision-only refusal tests seed private valid evidence through its
+production writers, and call the scoping decision directly. They do not
 execute a full marker-phase run merely to construct their baseline.

@@ -13,9 +13,9 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for `bench skills-index`:
-// `--check` (the default) prints the diagnostics Check would emit, `--write` regenerates
-// the block in place. Declaring both as plain flags rather than encoding a mode string
+// grammar is the declared argument shape usage.Parse enforces for `bench skills-index`.
+// `--check`, the default, prints the diagnostics Check would emit; `--write` regenerates
+// the block in place. Declaring both as plain flags, rather than encoding a mode string,
 // keeps a mistyped third spelling a usage error rather than a silently ignored no-op.
 var grammar = usage.Grammar{
 	Cmd:   "bench skills-index",
@@ -24,14 +24,14 @@ var grammar = usage.Grammar{
 }
 
 // Command implements `bench skills-index [--check|--write]`, the operator's regenerator
-// and drift check. `--check` (the default) prints Check's diagnostics one per line and
-// exits 1 if any, 0 if clean. `--write` regenerates the block via Write; a blocking
-// refusal (the allowlist unparseable, or the reference file missing or unmarked) prints
-// Write's own error and exits 1 without the file being touched — Write refuses before
+// and drift check. `--check`, the default, prints Check's diagnostics one per line and
+// exits 1 if any, 0 if clean; `--write` regenerates the block via Write. A blocking
+// refusal, the allowlist unparseable or the reference file missing or unmarked, prints
+// Write's own error and exits 1 without the file being touched. Write refuses before
 // any bytes are written, so the caller and the file agree on nothing having changed.
 // The two modes name opposite intents, so asking for both is a usage error rather than
-// a silent precedence rule, refused before repository discovery so the verdict on the
-// arguments does not depend on where the caller stands.
+// a silent precedence rule. This is refused before repository discovery, so the verdict
+// on the arguments does not depend on where the caller stands.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -46,9 +46,9 @@ func Command(args []string) (string, int) {
 		return discoveryRefusal(err) + "\n", 1
 	}
 	if write {
-		// The verb owns the interrupt for exactly as long as it is replacing bytes:
-		// an operator's Ctrl-C during a write is an instruction to abandon it, and the
-		// default handler would take the process down mid-replacement instead.
+		// The verb owns the interrupt for exactly as long as it is replacing bytes. An
+		// operator's Ctrl-C during a write is an instruction to abandon it, and the default
+		// handler would take the process down mid-replacement instead.
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 		defer stop()
 		if werr := Write(ctx, root); werr != nil {
@@ -64,7 +64,7 @@ func Command(args []string) (string, int) {
 }
 
 // discoveryRefusal names the recovery action the caller actually has. A discovery error
-// that never launched Git is an environment defect, not a location one: telling an
+// that never launched Git is an environment defect, not a location one. Telling an
 // operator with no `git` on PATH to stand somewhere else sends them after the wrong fix.
 // Only an executed probe reports the position it measured.
 func discoveryRefusal(err error) string {

@@ -5,5 +5,5 @@ description: Renamed Codex adapter for /bench-drain. Read and follow .agents/com
 
 # $bench-what-next
 
-Renamed to `$bench-drain`. Read `.agents/commands/bench-drain.md` completely and
-follow it as the active Bench phase.
+This skill now maps to `$bench-drain`. Read `.agents/commands/bench-drain.md`
+completely. Follow it as the active Bench phase.

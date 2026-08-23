@@ -44,10 +44,11 @@ type parsedAXIRegistry struct {
 }
 
 func checkAXIQueryRegistry(root string) []string {
-	// The guidance file is classified before anything else this check reads, because it
-	// is the one producer-shaped input here: refusing it must not depend on the Go
-	// sources parsing, and reading it as an empty document would report every AXI
-	// principle as deleted and send the reader to rewrite prose that is still there.
+	// The check classifies the guidance file before it reads anything else. The guidance
+	// file is the one producer-shaped input here. The check must refuse it without depending
+	// on the Go source parse. Treating it as an empty document would report every AXI
+	// principle as deleted. That false report would send the reader to rewrite prose that
+	// still exists.
 	const guidanceRel = ".agents/skills/bench-craft-cli/SKILL.md"
 	guidance := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(guidanceRel)))
 	var diags []string

@@ -167,11 +167,11 @@ func durableReplaceAt(dir, name string, rec verdictRecord) error {
 	return durableReplaceRecordAt(dir, name, data)
 }
 
-// durableReplaceRecordAt installs data as the store entry named name: written to a private
-// temporary beside it, synced, renamed over whatever was there, and the directory synced so
-// the rename itself survives a crash. Every record class in the store is published through
-// here, so a reader never observes a half-written or world-readable record whatever class
-// wrote it.
+// durableReplaceRecordAt installs data as the store entry named name. It writes a private
+// temporary file beside the entry, syncs it, and renames it over whatever was there. It
+// then syncs the directory so the rename itself survives a crash. Every record class in
+// the store publishes through here, so a reader never observes a half-written or
+// world-readable record, whatever class wrote it.
 func durableReplaceRecordAt(dir, name string, data []byte) error {
 	data = append(data, '\n')
 	tmp, err := os.CreateTemp(dir, ".bench-gate-evidence-")
@@ -203,9 +203,9 @@ func durableReplaceRecordAt(dir, name string, data []byte) error {
 	return file.Sync()
 }
 
-// reusableEvidence projects the verdict state from the plan the caller already accepted:
-// both call sites hold the current subject, so rebuilding one here would be a second
-// independent capture standing beside the generation that authorized the plan.
+// reusableEvidence projects the verdict state from the plan the caller already accepted.
+// Both call sites hold the current subject, so rebuilding one here would add a second,
+// independent capture beside the generation that authorized the plan.
 func reusableEvidence(root string, plan subject, now time.Time) Inspection {
 	projection := inspectSubjectAt(root, plan, now)
 	if projection.State == Pending || projection.State == Invalid || projection.State == Unavailable {

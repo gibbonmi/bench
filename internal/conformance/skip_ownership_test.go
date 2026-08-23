@@ -13,20 +13,20 @@ import (
 
 // skipOwnerDir is the one package allowed to call the testing package's skip methods.
 // Every other skip in the suite goes through its two helpers, so a skip always leaves a
-// structured line behind: a bare t.Skip is invisible under non-verbose `go test`, and a
-// skipped security assertion that prints nothing is indistinguishable from a passing one.
+// structured line behind. A bare t.Skip stays invisible under non-verbose `go test`, and a
+// skipped security assertion that prints nothing looks the same as a passing one.
 const skipOwnerDir = "internal/capability"
 
-// skipMethods are the testing.TB methods that end a test without running it. The check
-// matches any receiver, not the literal `t.`, because a skip is just as invisible through
-// a differently named variable and an owner allowlist that a rename evades is no allowlist.
+// skipMethods lists the testing.TB methods that end a test without running it. The check
+// matches any receiver, not only the literal `t.`, because a skip stays just as invisible
+// through a differently named variable. An allowlist a rename can evade is no allowlist.
 var skipMethods = map[string]bool{"Skip": true, "Skipf": true, "SkipNow": true}
 
-// checkSkipOwnership reports every skip call outside skipOwnerDir. It reads the module's
-// own Go source through the AST rather than by text search, so the forbidden call spelled
-// inside a string literal — this check's diagnostic, its bite proof's synthetic sources,
-// the canary fixture that reintroduces one — is data and never a violation; only a real
-// call expression is.
+// checkSkipOwnership reports every skip call outside skipOwnerDir. It reads the module's own
+// Go source through the AST, not by text search. A forbidden call spelled inside a string
+// literal is data, never a violation. This covers this check's own diagnostic, its bite
+// proof's synthetic sources, and the canary fixture that reintroduces one. Only a real call
+// expression counts as a violation.
 func checkSkipOwnership(root string) []string {
 	var diags []string
 	for _, path := range moduleGoFiles(root) {
@@ -91,11 +91,15 @@ func skipOwnershipDiags(rel, path string) []string {
 	return diags
 }
 
-// TestSkipOwnershipBites is the recorded bite proof for checkSkipOwnership (per
-// craft-gate). It runs against a synthetic tree rather than the repo, and walks the three
-// states that matter: the owner package skipping freely, one bare skip elsewhere, and the
-// same forbidden text present only as a string literal — the last because this check's own
-// source and its canary fixture both carry that text as data.
+// TestSkipOwnershipBites is the recorded bite proof for checkSkipOwnership. It runs against
+// a synthetic tree, not the repo, and walks three states:
+//
+//   - the owner package skips freely
+//   - one bare skip appears elsewhere
+//   - the same forbidden text appears only as a string literal
+//
+// The last case matters because this check's own source and its canary fixture both carry
+// that text as data.
 func TestSkipOwnershipBites(t *testing.T) {
 	root := t.TempDir()
 	write := func(rel, body string) {
@@ -129,15 +133,15 @@ func TestSkipOwnershipBites(t *testing.T) {
 		t.Fatalf("renamed receiver calling Skipf: want one diagnostic, got %v", diags)
 	}
 
-	// SkipNow ends the test with no message at all, which is the most invisible of the
-	// three and so the one the check most needs to reach.
+	// SkipNow ends the test with no message at all. It is the most invisible of the
+	// three, so the check must reach it.
 	write("internal/example/example_test.go", "package example\n\nimport \"testing\"\n\nfunc TestX(t *testing.T) {\n\tt.SkipNow()\n}\n")
 	if diags := checkSkipOwnership(root); len(diags) != 1 || !strings.Contains(diags[0], "calls t.SkipNow outside") {
 		t.Fatalf("bare SkipNow outside the owner: want one diagnostic, got %v", diags)
 	}
 
-	// The forbidden call as data, never as a call: this is the state that would make the
-	// check flag its own source and the canary fixture that reintroduces a bare skip.
+	// The forbidden call appears as data, never as a call. This is the state that would
+	// make the check flag its own source and the canary fixture that reintroduces a bare skip.
 	write("internal/example/example_test.go", "package example\n\nconst forbidden = \"t.Skip(\\\"reason\\\")\"\n\n// t.Skipf is also named in a comment here.\n")
 	if diags := checkSkipOwnership(root); len(diags) != 0 {
 		t.Fatalf("forbidden text in a literal and a comment: want no diagnostics, got %v", diags)

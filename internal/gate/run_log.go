@@ -125,7 +125,7 @@ func beginGateRunLog(ctx context.Context, root string, stderr io.Writer, mode st
 	return ctx, log.finish
 }
 
-// finish closes out the run's record and then prunes, in that order: the record
+// finish closes out the run's record and then prunes, in that order. The record
 // this run produced must exist on disk before anything counts what to retain.
 func (l *gateRunLog) finish(result Result) {
 	exit := result.ActionExit
@@ -186,7 +186,7 @@ func withoutGateRunLogEnv(base []string) []string {
 
 // gateLogPathIgnored reports whether the repository ignores the log directory, which is
 // the precondition for writing a record there at all. It is a var so a test can drive
-// the run below it without standing up a repository: internal/gate's ordinary tests own
+// the run below it without standing up a repository. internal/gate's ordinary tests own
 // no repository adapter and start no processes.
 var gateLogPathIgnored = func(root string) bool {
 	cmd := exec.Command("git", "-C", root, "check-ignore", "-q", "--no-index", ".logs/gate.jsonl")
@@ -227,11 +227,11 @@ func (l *gateRunLog) warn(err error) {
 }
 
 // pruneGateRunLogs bounds .logs to the newest gateLogRetainedRecords gate records.
-// Only files the gate itself named are candidates, and only regular ones — a
-// dangling symlink or special file wearing a record name is somebody else's
-// problem, so the pruner stats before it removes. The current run is ordered with
-// the rest but never removed: pruning must not truncate the evidence being written.
-// Every failure is housekeeping, not a verdict, so it warns once and returns.
+// Only files the gate itself named are candidates, and only regular ones. A dangling
+// symlink or special file wearing a record name is somebody else's problem, so the
+// pruner stats before it removes. The current run is ordered with the rest but never
+// removed, because pruning must not truncate the evidence being written. Every failure
+// is housekeeping, not a verdict, so pruneGateRunLogs warns once and returns.
 func pruneGateRunLogs(root, currentRun string, stderr io.Writer) {
 	dir := gateLogDir(root)
 	warned := false

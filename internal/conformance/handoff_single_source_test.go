@@ -15,18 +15,18 @@ import (
 	"github.com/gibbonmi/bench/internal/status"
 )
 
-// The Shape text lives in the binary; shapeSourceFile is the file that holds it and
+// The Shape text lives in the binary. shapeSourceFile is the file that holds it.
 // status.HandoffFile is the one document allowed to carry a rendered copy of it.
 const shapeSourceFile = "internal/handoff/text.go"
 
-// checkHandoffShape grades the Shape text's single-source claim two ways: the tracked
-// artifact must still be byte-equal to the constant the command renders from, and no other
-// tracked file may restate it. Untracked scratch and ignored build output are out of scope —
-// a copy only drifts once it is something the repo carries.
+// checkHandoffShape grades the Shape text's single-source claim two ways. The tracked
+// artifact must still be byte-equal to the constant the command renders from. No other
+// tracked file may restate it. Untracked scratch and ignored build output are out of
+// scope, because a copy only drifts once it is something the repo carries.
 //
-// The constant compared against is always the kit's own, which is why the check stays silent
-// unless the graded root is the kit: another tree cannot answer for a contract whose source
-// it does not contain.
+// The constant compared against is always the kit's own. The check stays silent unless
+// the graded root is the kit, because another tree cannot answer for a contract whose
+// source it does not contain.
 func checkHandoffShape(root string) []string {
 	if !exists(filepath.Join(root, filepath.FromSlash(shapeSourceFile))) {
 		return nil
@@ -57,9 +57,9 @@ func checkHandoffShape(root string) []string {
 	return uniqueSorted(diags)
 }
 
-// shapeSentence is the Shape text's opening sentence with its wrapping collapsed, read out
-// of the constant so this file carries no copy of the text it forbids copying. Collapsing
-// whitespace is what makes a re-wrapped restatement match the original.
+// shapeSentence is the Shape text's opening sentence with its wrapping collapsed. It
+// reads out of the constant, so this file carries no copy of the text it forbids copying.
+// Collapsing whitespace is what makes a re-wrapped restatement match the original.
 func shapeSentence() string {
 	sentence := collapseSpace(handoff.ShapeSection)
 	if end := strings.Index(sentence, ". "); end >= 0 {
@@ -69,9 +69,9 @@ func shapeSentence() string {
 }
 
 // shapeSectionBody returns the document's Shape body: everything below the heading, with
-// surrounding blank lines trimmed. It locates the heading by the writer's own constant and
-// runs to EOF because the writer places Shape last, so this restates no part of the
-// command's splitting rule — a second derivation of "where does a section end" is exactly
+// surrounding blank lines trimmed. It locates the heading by the writer's own constant.
+// It runs to EOF because the writer places Shape last. This function restates no part of
+// the command's splitting rule. A second derivation of where a section ends is exactly
 // what would let the check and the emitter drift.
 func shapeSectionBody(doc string) (string, bool) {
 	lines := strings.Split(doc, "\n")
@@ -95,10 +95,11 @@ func trackedPaths(root string) []string {
 	return strings.Split(listing, "\x00")
 }
 
-// TestHandoffShapeSingleSourcedBites is the recorded bite proof for checkHandoffShape (per
-// craft-gate). It runs against a synthetic repository rather than the kit tree and walks the
-// three states that matter: a derived artifact and no other copy, a second tracked file
-// carrying the text, and an artifact whose Shape body has drifted from the constant.
+// TestHandoffShapeSingleSourcedBites is the recorded bite proof for checkHandoffShape. It
+// runs against a synthetic repository rather than the kit tree. It walks the three states
+// that matter. The first two states are a derived artifact with no other copy, and a
+// second tracked file carrying the text. The third state is an artifact whose Shape body
+// has drifted from the constant.
 func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	root := t.TempDir()
 	write := func(rel, body string) {
@@ -113,7 +114,7 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 		runGit(t, root, "add", "-A")
 	}
 	runGit(t, root, "init")
-	// The source file is a presence sentinel: the text the check grades against comes from
+	// The source file is a presence sentinel. The text the check grades against comes from
 	// the imported constant, never from this tree.
 	write(shapeSourceFile, "package handoff\n")
 	write(status.HandoffFile, "# Session handoff\n\n"+handoff.ShapeHeading+"\n\n"+handoff.ShapeSection)
@@ -137,8 +138,8 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	}
 }
 
-// handoffPkgDir holds the consumer package, prefixTablePkgDir/File hold the route owner's
-// harness table, and prefixTableVar is its name.
+// handoffPkgDir holds the consumer package. prefixTablePkgDir and prefixTableFile hold
+// the route owner's harness table. prefixTableVar holds its name.
 const (
 	handoffPkgDir     = "internal/handoff"
 	prefixTablePkgDir = "internal/status"
@@ -146,15 +147,16 @@ const (
 	prefixTableVar    = "harnessPrefix"
 )
 
-// checkHarnessPrefix reports any string literal in the handoff package that writes a phase
-// invocation form the status route owner already owns — a trailing replacement with a
-// hardcoded target, an inline conditional, a second table. Each is a producer the table
-// cannot see, so a harness added as a row would leave it behind.
+// checkHarnessPrefix reports any string literal in the handoff package that writes a
+// phase invocation form the status route owner already owns. Examples include a trailing
+// replacement with a hardcoded target, an inline conditional, or a second table. Each is
+// a producer the table cannot see. A harness added as a row would leave any of them
+// behind.
 //
-// The literals are read through the AST for the reason packageReachesGrammar states: the
-// package's doc comments legitimately discuss these forms in prose, and a substring scan
+// The literals are read through the AST for the reason packageReachesGrammar states. The
+// package's doc comments legitimately discuss these forms in prose. A substring scan
 // would either fire on that prose or force it to be mangled. The forbidden forms are the
-// table's own values, so a new row is covered the moment it lands and this check restates
+// table's own values, so a new row is covered the moment it lands. This check restates
 // nothing the table already says.
 func checkHarnessPrefix(root string) []string {
 	fset := token.NewFileSet()
@@ -220,9 +222,9 @@ func checkHarnessPrefix(root string) []string {
 	return uniqueSorted(diags)
 }
 
-// prefixTable returns the harness table's values and the positions of the literals holding
-// them, so the table is both what the rest of the package is measured against and the only
-// place its own values are exempt.
+// prefixTable returns the harness table's values and the positions of the literals
+// holding them. The table is both what the rest of the package is measured against and
+// the only place its own values are exempt.
 func prefixTable(file *ast.File) ([]string, map[token.Pos]bool) {
 	var forms []string
 	owned := map[token.Pos]bool{}
@@ -262,12 +264,12 @@ func prefixTable(file *ast.File) ([]string, map[token.Pos]bool) {
 	return uniqueSorted(forms), owned
 }
 
-// TestHarnessPrefixSingleSourcedBites is the recorded bite proof for checkHarnessPrefix (per
-// craft-gate). It runs against a synthetic package whose table carries invented forms, which
-// is the whole mechanism under proof: the forms come from the table, so a fixture needs no
-// copy of the real ones and cannot go stale when a harness is added. It walks four states —
-// a table alone, the same forms named only in prose, an inline literal beside the table, and
-// a second table-shaped literal in another file.
+// TestHarnessPrefixSingleSourcedBites is the recorded bite proof for checkHarnessPrefix.
+// It runs against a synthetic package whose table carries invented forms. The forms come
+// from the table, so a fixture needs no copy of the real ones and cannot go stale when a
+// harness is added. It walks four states: a table alone, and the same forms named only in
+// prose. The other two states are an inline literal beside the table, and a second table-
+// shaped literal in another file.
 func TestHarnessPrefixSingleSourcedBites(t *testing.T) {
 	root := t.TempDir()
 	handoffDir := filepath.Join(root, filepath.FromSlash(handoffPkgDir))
@@ -294,8 +296,8 @@ func TestHarnessPrefixSingleSourcedBites(t *testing.T) {
 		t.Fatalf("table alone: want no diagnostics, got %v", diags)
 	}
 
-	// The state a substring scan cannot tell from a violation: the forms discussed in a doc
-	// comment, which every file in this package legitimately does.
+	// A substring scan cannot tell this state from a violation: the forms discussed in a doc
+	// comment. Every file in this package legitimately does that.
 	write(handoffDir, "sections.go", "package handoff\n\n// Phase invocations render as /synth- or $synth- depending on the harness.\nfunc split() {}\n")
 	if diags := checkHarnessPrefix(root); len(diags) != 0 {
 		t.Fatalf("forms named only in prose: want no diagnostics, got %v", diags)

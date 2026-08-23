@@ -38,11 +38,11 @@ type Entry struct {
 	CreatedAt time.Time `json:"created_at"`
 	Worktree  string    `json:"worktree,omitempty"`
 	Branch    string    `json:"branch,omitempty"`
-	// Outcome and Recovery record a shift's final result state — one of the FT79
-	// taxonomy's outcome names, and a recovery pointer ("ref:<name>" |
-	// "worktree:<path>" | "none") once a later slice adds snapshot machinery. Both are
-	// optional so every non-shift writer, and every entry created before its writer
-	// resolves an outcome, stays valid.
+	// Outcome and Recovery record a shift's final result state. Outcome is one of the
+	// FT79 taxonomy's outcome names. Recovery is a pointer ("ref:<name>" | "worktree:<path>"
+	// | "none") once a later slice adds snapshot machinery. Both fields are optional, so
+	// every non-shift writer stays valid, as does every entry created before its writer
+	// resolves an outcome.
 	Outcome  string `json:"outcome,omitempty"`
 	Recovery string `json:"recovery,omitempty"`
 }
@@ -135,8 +135,8 @@ func readPath(path string) (Ledger, error) {
 }
 
 // NewEntry creates the stable process/time key bench-owned writers persist before
-// acquire. The key is the objective's identifier — the ledger stores no free-form
-// objective text — so callers retain the returned value and enrich that same key later.
+// acquire. The key is the objective's identifier; the ledger stores no free-form
+// objective text. Callers retain the returned value and enrich that same key later.
 func NewEntry(kind Kind) Entry {
 	now := time.Now().UTC()
 	return Entry{

@@ -46,12 +46,12 @@ which is why superset swaps pass the "gained ≥1 path" clause
 | **D** AST bijection over the registry literal | textual pairing; bijection variant needs no table | yes (textual) | none; precedented pattern (`internal/conformance/cross_compile_default_test.go:23-53`) | ~100 lines | breaks on any registry-literal refactor; residual escape: a swap to a function no other row uses |
 | **E** extensional equality vs the *named* source | full-set behavioral match | no | none; generalizes an existing pattern (build already pinned to `freshness.BuildInputs` at `component_inputs_test.go:87-105`, shellcheck to `shellcheckFiles` at `:213-222`) | low-medium | in-package only (named sources unexported); couples test to derivation internals |
 
-Cross-cutting: A, B, and C each need a `Source → expected derivation` table — a
-second statement of a fact the registry already carries, admissible under the
-repo's one-source-per-fact standard only via the independently-authored-
-expectation exception (the table's independence is what makes a named swap red,
-and that red must be recorded and demonstrated). D's bijection variant and E
-avoid the table.
+Cross-cutting: mechanisms A, B, and C each need a `Source → expected derivation`
+table. This table restates a fact the registry already carries. The
+one-source-per-fact standard admits this restatement only under the
+independently-authored-expectation exception. That exception applies because
+the table's independence is what turns a named swap red, and someone must
+record and demonstrate that red. D's bijection variant and E avoid the table.
 
 Existing seams a check can reuse: in-package registry enumeration and direct
 `resolve` invocation (`component_inputs_test.go:181-192`); the AST-tripwire

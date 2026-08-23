@@ -58,11 +58,11 @@ func (d Document) Rows(block string) ([]any, error) {
 	return rows, nil
 }
 
-// HelpActions returns the envelope's help rows, requiring the help block to be terminal
-// and schema-correct: the document has to end with exactly what the kit's encoder renders
-// for the decoded rows under the `{cmd,why}` schema, so a reordered, misnamed, or
-// non-final help table fails — including the zero-row case, whose schema survives only in
-// the header line.
+// HelpActions returns the envelope's help rows. It requires the help block to be
+// terminal and schema-correct: the document has to end with exactly what the kit's
+// encoder renders for the decoded rows under the `{cmd,why}` schema. A reordered,
+// misnamed, or non-final help table fails, including the zero-row case, whose schema
+// survives only in the header line.
 func (d Document) HelpActions() ([]HelpAction, error) {
 	if len(d.Blocks) == 0 || d.Blocks[len(d.Blocks)-1] != "help" {
 		return nil, fmt.Errorf("document blocks = %q, want a terminal help block", d.Blocks)

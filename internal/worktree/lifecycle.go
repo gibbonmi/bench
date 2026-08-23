@@ -37,7 +37,7 @@ type ResumeResult struct {
 }
 
 // OrphanCandidate names an assignment the sweep judged abandoned while its worktree is
-// still on disk; Path is the argument `bench worktree clean` needs to start retiring it.
+// still on disk. Path is the argument `bench worktree clean` needs to start retiring it.
 // The sweep only reports these — removal stays behind that explicit path-addressed
 // command, which preserves dirty work before it removes anything.
 type OrphanCandidate struct{ ID, Path string }
@@ -58,7 +58,7 @@ const (
 	LeaseUnknown LeaseState = "unknown"
 )
 
-// pidAlive treats kill-0 success and EPERM as alive; only ESRCH means gone.
+// pidAlive treats kill-0 success and EPERM as alive. Only ESRCH means gone.
 func pidAlive(pid int) bool {
 	err := syscall.Kill(pid, 0)
 	return err == nil || errors.Is(err, syscall.EPERM)
@@ -181,7 +181,7 @@ func isClean(dir string) bool {
 }
 
 // Acquire claims a clean pool entry or mints one in three bounded attempts. It
-// resets to resetRef (HEAD when empty); soft mode tolerates an unresolved ref.
+// resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref.
 func Acquire(root, resetRef, resetMode string) (string, error) {
 	pool := Pool(root)
 	if err := os.MkdirAll(pool, 0o700); err != nil {
@@ -204,7 +204,7 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 	}
 	for try := 1; wt == "" && try <= 3; try++ {
 		cand := candidateName(pool, time.Now().Unix(), os.Getpid(), try)
-		// An unresolved default makes the first attempt the HEAD one already, so the HEAD
+		// An unresolved default makes the first attempt the HEAD one already. The HEAD
 		// fallback is a genuine second attempt only when the remote ref was non-empty.
 		remote := git.RemoteDefaultRef(root)
 		if !worktreeAdd(root, cand, remote) && (remote == "" || !worktreeAdd(root, cand, "")) {
@@ -249,7 +249,7 @@ func worktreeAdd(root, cand, ref string) bool {
 }
 
 // Release restores cleanliness before unleasing, and leaves a lease owned by another
-// live process untouched; once unleased, a concurrent Acquire owns the checkout.
+// live process untouched. Once unleased, a concurrent Acquire owns the checkout.
 func Release(wt string) {
 	if wt == "" {
 		return
@@ -338,7 +338,7 @@ func lockCleanupPersistence(repo, target string) (func(), error) {
 }
 
 // releaseLeftover completes a release-leftover plan: the registration and the ledger entry
-// go, the bytes at the leftover path stay. It never reaches the removal steps below —
+// go, the bytes at the leftover path stay. It never reaches the removal steps below.
 // `git worktree remove` deletes the tree it is pointed at, which is the one thing this
 // plan exists to avoid.
 func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
@@ -385,7 +385,7 @@ func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) erro
 
 // releaseRegistration deletes the private administration directory git keeps for exactly
 // one registered worktree, which is what stops git registering it. This is the scoped form
-// of `git worktree prune`: prune decides for every prunable registration at once, and an
+// of `git worktree prune`: prune decides for every prunable registration at once. An
 // abandon answers for one target, so a stranger's stale entry is never swept along with
 // it. Only a target with no git metadata entry reaches here, so the administration
 // directory it names is already dangling.

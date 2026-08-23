@@ -5,6 +5,6 @@ description: Explicit Codex adapter for the /bench-shape-idea phase. Use only wh
 
 # $bench-shape-idea
 
-Read `.agents/commands/bench-shape-idea.md` completely and follow it as the active Bench
-phase. The command file is canonical; do not substitute this adapter for the phase
+Read `.agents/commands/bench-shape-idea.md` completely. Follow it as the active Bench
+phase. The command file is canonical. Do not substitute this adapter for the phase
 instructions.

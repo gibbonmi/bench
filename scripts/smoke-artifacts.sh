@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Execute the host-native tarball through the same installed wrapper users receive.
+# Execute the host-native tarball through the same installed wrapper a user
+# receives.
 set -euo pipefail
 artifacts="${1:?usage: smoke-artifacts.sh <artifact-dir> [release-evidence-dir]}"
 evidence_dir="${2:-}"

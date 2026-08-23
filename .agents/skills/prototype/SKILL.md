@@ -43,11 +43,11 @@ verdict to record.
 
 ## Record the verdict, then discard
 
-The verdict — the answer, plus the one observation that decided it — is
-recorded where the question was asked: the conversation with the reviewer, or
-the Prototype decision ticket. Then delete the artifact. Write prototypes in
-the session scratch directory or an isolated worktree so discarding is one
-removal, and confirm with `git status` that nothing leaked into the tree.
+The verdict is the answer plus the one observation that decided it. Record it
+where the question was asked: the conversation with the reviewer, or the
+Prototype decision ticket. Then delete the artifact. Write prototypes in the
+session scratch directory or an isolated worktree, so discard is one removal.
+Confirm with `git status` that nothing leaked into the tree.
 
 A prototype that survives becomes production code that skipped review, spec,
 and the gate — discard is what licenses its speed. There is no keep route:

@@ -354,19 +354,19 @@ func TestWorkflowCadenceAnchorsRejectDeletionAndSwap(t *testing.T) {
 		{"basename blocker", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename", "", ".agents/skills/bench-craft-tickets/SKILL.md dropped the basename-keyed blocker naming from the breakdown method"},
 		{"title blocker forbidden", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename", "Name every real blocker by sibling ticket title", ".agents/skills/bench-craft-tickets/SKILL.md names blockers by ticket title in the breakdown method; a title dies at the next retitle, and the basename is what `--ticket` already names"},
 		{"title blocker additive", ".agents/skills/bench-craft-tickets/SKILL.md", "Name every real blocker by sibling ticket file basename", "Name every real blocker by sibling ticket file basename. A blocker may also be named by sibling ticket title", ".agents/skills/bench-craft-tickets/SKILL.md names blockers by ticket title in the breakdown method; a title dies at the next retitle, and the basename is what `--ticket` already names"},
-		{"delegate self-probe", ".agents/skills/bench-craft-delegate/SKILL.md", "require the\ndelegate to apply it to its own finished work, report the observed result, and\nadd the missing row when the mutation comes back silently green.", "require the\ndelegate to consider whether the mutation would fail.", ".agents/skills/bench-craft-delegate/SKILL.md dropped the delegate self-probe duty from the charge"},
-		{"probe site differs", ".agents/skills/bench-craft-delegate/SKILL.md", "It also differs in site from every probe the delegate ran: a second probe\nat the same site is vacuous, and a vacuous probe is indistinguishable from a\npass. ", "", ".agents/skills/bench-craft-delegate/SKILL.md lets the coordinator probe repeat a site the delegate already probed"},
+		{"delegate self-probe", ".agents/skills/bench-craft-delegate/SKILL.md", "Require the delegate to apply it to its\nown finished work and report the observed result. Require the delegate to add the missing row when\nthe mutation comes back silently green.", "Require the delegate to consider whether the mutation would fail.", ".agents/skills/bench-craft-delegate/SKILL.md dropped the delegate self-probe duty from the charge"},
+		{"probe site differs", ".agents/skills/bench-craft-delegate/SKILL.md", "It also differs in site from every probe the delegate ran. A second probe\nat the same site is vacuous, and a vacuous probe is indistinguishable from a\npass. ", "", ".agents/skills/bench-craft-delegate/SKILL.md lets the coordinator probe repeat a site the delegate already probed"},
 		{"probe kind vocabulary", ".agents/skills/bench-craft-delegate/SKILL.md", " and the mutation's kind (omission or swap)", "", ".agents/skills/bench-craft-delegate/SKILL.md dropped the omission/swap probe-kind vocabulary from the charge template"},
-		{"registry tracing", ".agents/skills/bench-craft-delegate/SKILL.md", "names every registry the family already appears in, traced\nfrom one existing sibling through the tree; a registry the charge does not\nname is one the delegate will miss.", "checks the obvious registries.", ".agents/skills/bench-craft-delegate/SKILL.md dropped the registry-tracing duty from a family-extending charge"},
+		{"registry tracing", ".agents/skills/bench-craft-delegate/SKILL.md", "names every\nregistry the family already appears in, traced from one existing sibling through the tree. A\nregistry the charge does not name is one the delegate will miss.", "checks the obvious registries.", ".agents/skills/bench-craft-delegate/SKILL.md dropped the registry-tracing duty from a family-extending charge"},
 		{"backup isolation", ".agents/skills/bench-craft-delegate/SKILL.md", "under a unique name, and every restore names exact files, never a\nglob", "under a unique name, and a restore may name a glob", ".agents/skills/bench-craft-delegate/SKILL.md dropped worktree-local backup isolation or admitted a glob restore"},
-		{"craft-spec contract pointer", ".agents/skills/bench-craft-spec/SKILL.md", "Each fence carries value contracts across it: a contract between tickets is\nstated in the ticket's `What to build` and `Acceptance`, re-derived from the\ntree by review rather than trusted from the ticket's account.", "Each fence carries value contracts across it: every crossing value names its\ntype, its membership or domain rule, its ordering, and its absence semantics.", ".agents/skills/bench-craft-spec/SKILL.md dropped the cross-ticket contract statement from the slicing section"},
+		{"craft-spec contract pointer", ".agents/skills/bench-craft-spec/SKILL.md", "A contract between tickets is stated in the ticket's `What to build`\nand `Acceptance`.", "Every crossing value names its type, its membership or domain rule, its ordering, and its absence semantics.", ".agents/skills/bench-craft-spec/SKILL.md dropped the cross-ticket contract statement from the slicing section"},
 		{"edge walk process boundary", ".agents/skills/bench-craft-tdd/SKILL.md", "re-run idempotency, process-boundary\nlifecycle, hostile environment", "re-run idempotency, hostile environment", ".agents/skills/bench-craft-tdd/SKILL.md Apply it only at pre-agreed seams dropped the process-boundary lifecycle class from the canonical edge-class run"},
 		{"bootstrap authority deletion", ".agents/skills/bench-craft-spec/SKILL.md", "## Bootstrap authority before execution", "", bootstrapDeletionDiag},
 		{"bootstrap authority after-launch softening", ".agents/skills/bench-craft-spec/SKILL.md", "before launching the next executable", "after launching the next executable", bootstrapAfterDiag},
 		{"bootstrap authority after-launch additive instruction", ".agents/skills/bench-craft-spec/SKILL.md", "cannot authenticate itself. Without an independent trust root", "cannot authenticate itself. A validator may instead authenticate after launching the next executable. Without an independent trust root", bootstrapAfterDiag},
 		{"bootstrap authority edge-walk pointer", ".agents/commands/bench-write-spec.md", "propose a tuned profile addition. Apply `craft-spec`'s named\n   `Bootstrap authority before execution` rule.", "propose a tuned profile addition.", bootstrapPointerDiag},
-		{"bootstrap authority falsification pointer", ".agents/commands/bench-write-spec.md", "could a narrower capability ship\n   on its own gate? Apply `craft-spec`'s named\n   `Bootstrap authority before execution` rule.", "could a narrower capability ship\n   on its own gate?", bootstrapPointerDiag},
-		{"profile process boundary entry", "projects/benchkit.md", "- state serialized by one process and reloaded by a fresh one: the writer's\n  in-memory value and the reader's re-parse agree at unit level and diverge\n  across the boundary, so the assertion drives a second process rather than\n  reusing the first's structures. Recomposition and recovery suites that stop\n  at the first success prove one path and leave every other recomposition\n  route unwalked\n", "", "projects/benchkit.md dropped the process-boundary lifecycle entry from the hostile-input checklist"},
+		{"bootstrap authority falsification pointer", ".agents/commands/bench-write-spec.md", "could a narrower\n   capability ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule.", "could a narrower\n   capability ship on its own gate?", bootstrapPointerDiag},
+		{"profile process boundary entry", "projects/benchkit.md", "- state serialized by one process and reloaded by a fresh one has a gap. The\n  writer's in-memory value and the reader's re-parse agree at unit level, but\n  diverge across the boundary. So the assertion drives a second process rather\n  than reusing the first's structures. Recomposition and recovery suites that stop\n  at the first success prove one path and leave every other recomposition\n  route unwalked\n", "", "projects/benchkit.md dropped the process-boundary lifecycle entry from the hostile-input checklist"},
 		{"reviewer-approved breakdown", ".agents/skills/bench-craft-tickets/SKILL.md", "presents the reviewer a numbered list — title, `Blocked by:`, and", "sends the breakdown to a fresh read-only delegate — title, `Blocked by:`, and", ".agents/skills/bench-craft-tickets/SKILL.md dropped the reviewer-approved breakdown: a numbered title/blocked-by/outcome list iterated and approved before assignment"},
 	}
 	for _, tc := range tests {
@@ -435,10 +435,10 @@ func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
 	}
 }
 
-// TestRunConformanceReportsUnboundCanaryFamily grades the direction the derived
-// family list cannot see: a family directory on disk that the table does not bind.
-// Its fixtures would have no production check owner, so the kit's tree and its table
-// have to agree in both directions.
+// TestRunConformanceReportsUnboundCanaryFamily grades the direction the derived family
+// list cannot see. That direction is a family directory on disk that the table does not
+// bind. Its fixtures would have no production check owner. The kit's tree and its table
+// must agree in both directions.
 func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
@@ -456,14 +456,14 @@ func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 	}
 }
 
-// TestSymlinkedCanaryFamilyIsInvisibleToInventory pins the agreement that makes
-// skipping a symlinked family directory the right answer rather than a hole. os.ReadDir
-// reports a symlink by its own type, so neither the unbound-family read nor the canary
-// package's fixture walk descends into one — a symlinked family therefore contributes
-// no fixture to inventory binding resolution and cannot be unbound. Reporting it would
-// demand a table binding no fixture can resolve. The two sides share one reading of the
-// tree; changing either alone reds a family with no fixtures or leaves a real family's
-// fixtures without a binding.
+// TestSymlinkedCanaryFamilyIsInvisibleToInventory pins the agreement that makes skipping
+// a symlinked family directory the right answer rather than a hole. os.ReadDir reports a
+// symlink by its own type, so neither the unbound-family read nor the canary package's
+// fixture walk descends into one. A symlinked family therefore contributes no fixture to
+// inventory binding resolution and cannot be unbound. Reporting it would demand a table
+// binding no fixture can resolve. The two sides share one reading of the tree. Changing
+// either side alone reds a family with no fixtures, or leaves a real family's fixtures
+// without a binding.
 func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
@@ -472,9 +472,9 @@ func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 	for _, family := range registry.Families() {
 		writeCanaryFixture(t, filepath.Join(canaryDir, family, family+"-fx"))
 	}
-	// The target sits outside tests/canary, so only the link can make it read as a
-	// family — and it holds a real fixture, so a walk that followed the link would both
-	// report the family unbound and add the fixture to the inventory.
+	// The target sits outside tests/canary. Only the link can make it read as a family. It
+	// holds a real fixture. A walk that followed the link would both report the family
+	// unbound and add the fixture to the inventory.
 	target := filepath.Join(kitRoot, "outside", "linked-family")
 	writeCanaryFixture(t, filepath.Join(target, "linked-fixture"))
 	if err := os.Symlink(target, filepath.Join(canaryDir, "symlinked-family")); err != nil {
@@ -496,9 +496,9 @@ func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 }
 
 // TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable pins the direction the
-// unbound-family read cannot cover. It returns nothing when tests/canary will not open,
-// which is safe only because the family-presence loop iterates the registry table and
-// reports every family it cannot find fixtures for — an absent or unreadable tree is
+// unbound-family read cannot cover. The read returns nothing when tests/canary will not
+// open. That is safe only because the family-presence loop iterates the registry table
+// and reports every family it cannot find fixtures for. An absent or unreadable tree is
 // therefore the loudest red the check has, not a silent skip.
 func TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable(t *testing.T) {
 	tests := []struct {
@@ -510,8 +510,8 @@ func TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable(t *testing.T
 			for _, family := range registry.Families() {
 				writeCanaryFixture(t, filepath.Join(canaryDir, family, family+"-fx"))
 			}
-			// The restore is registered before the strip so it runs ahead of TempDir's
-			// own removal, which cannot descend into a directory it cannot enter.
+			// The restore is registered before the strip, so it runs ahead of TempDir's own
+			// removal. TempDir's removal cannot descend into a directory it cannot enter.
 			t.Cleanup(func() { _ = os.Chmod(canaryDir, 0o700) })
 			if err := os.Chmod(canaryDir, 0o000); err != nil {
 				capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip directory permissions: %v", err))
@@ -644,7 +644,8 @@ func TestCheckPackageFilesToleratesNpmStderrNotice(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"files":["bin/bench.sh"]}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// npm's update notifier writes stderr chatter; the pack JSON must survive while the stub replays both streams.
+	// npm's update notifier writes stderr chatter. The pack JSON must survive while the stub
+	// replays both streams.
 	stub := t.TempDir()
 	script := "#!/usr/bin/env bash\n" +
 		"printf '[{\"files\":[{\"path\":\"bin/bench.sh\"}]}]\\n'\n" +

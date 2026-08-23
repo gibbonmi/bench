@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-final-check.md",
+    "old": "Scratch branches go through `bench worktree clean`.",
+    "new": "Scratch branches are removed by hand."
+  }
+]

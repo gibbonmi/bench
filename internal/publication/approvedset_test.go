@@ -12,17 +12,19 @@ import (
 )
 
 // approvedReleaseRoot, repoRoot, releasePlanArtifacts, and writeApprovedSet are
-// the one fixture harness every test in this package that needs a verifiable
-// approved release directory shares — the command-surface adapter tests, the
-// record-level ordering test, and any behavior canary compiled against this
-// package. A release root is a scratch directory holding a copy of the release
-// plan (so release-plan.mjs answers for the fixture, never for the working
-// tree) plus a full green publish-mode approved set.
+// the one fixture harness every test in this package shares that needs a
+// verifiable approved release directory. Sharers include the command-surface
+// adapter tests, the record-level ordering test, and any behavior canary
+// compiled against this package.
+//
+// A release root is a scratch directory holding a copy of the release plan,
+// plus a full green publish-mode approved set. release-plan.mjs answers for
+// the fixture from this copy, never from the working tree.
 
 // repoRoot locates the repository root two directories above this package
-// (internal/publication) — `go test` always runs with the package directory as
-// its working directory, regardless of where the test binary was invoked from,
-// so this is the one way to reach scripts/release-plan.mjs from here.
+// (internal/publication). `go test` always runs with the package directory as
+// its working directory, regardless of where the test binary was invoked from.
+// This is the one way to reach scripts/release-plan.mjs from here.
 func repoRoot(t *testing.T) string {
 	t.Helper()
 	wd, err := os.Getwd()
@@ -32,9 +34,10 @@ func repoRoot(t *testing.T) string {
 	return filepath.Dir(filepath.Dir(wd))
 }
 
-// approvedReleaseRoot builds a scratch release root for version: the release
-// plan copied out of the repository (release-plan.mjs refuses a symlinked
-// plan, so these are real copies) and the approved set that plan names.
+// approvedReleaseRoot builds a scratch release root for version. It copies
+// the release plan out of the repository (release-plan.mjs refuses a
+// symlinked plan, so these copies are real files). It then adds the
+// approved set that plan names.
 func approvedReleaseRoot(t *testing.T, version string) string {
 	t.Helper()
 	root := t.TempDir()

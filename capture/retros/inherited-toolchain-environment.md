@@ -2,9 +2,9 @@
 
 The reviewed source `6c867eb5..d6918bad` landed on `main` as `63dde6ae` and
 published the spec as implemented. The landing makes built-in Go-module phase
-selection fail closed when Go is absent, and SessionStart diagnoses a partial
-environment closure through a bounded clean-login lookup without executing the
-discovered tool. Post-merge retirement landed as `3728719d`.
+selection fail closed when Go is absent. SessionStart diagnoses a partial
+environment closure through a bounded clean-login lookup. It does not execute
+the discovered tool. Post-merge retirement landed as `3728719d`.
 
 ## Gate-stage timings
 
@@ -19,7 +19,7 @@ The two approved build tickets were effective vertical slices. Terra/medium
 landed the built-in gate refusal first-pass with an omission probe; its first
 whole-gate attempt exposed only the coordinator's incomplete repair PATH. Sol/high
 implemented the SessionStart slice, including real-hook timeout and descendant
-teardown evidence; the gate returned it once because the bounds-policy checker
+teardown evidence. The gate returned it once, because the bounds-policy checker
 requires the canonical duration expression. A separate Sol/high repair ticket
 closed all five accepted semantic-review findings in one pass. Terra/medium's
 three initial review axes found one Standards and four Coverage issues, and its
@@ -28,8 +28,8 @@ three repair-scoped axes returned zero findings.
 ## Coordinator catches
 
 The coordinator supplied the complete Go-plus-Codex tool PATH after the first
-gate attempt lacked `rg`, required the bounds constant to use the checker-owned
-canonical literal, and independently proved the nonzero-discovery predicate by
+gate attempt lacked `rg`. It required the bounds constant to use the checker-owned
+canonical literal. It independently proved the nonzero-discovery predicate by
 swapping exit 23 to exit 0. It also preserved the reviewer's `capture/IDEAS.md`
 and the phase handoff by digest while satisfying the landing destination's clean
 checkout requirement, then restored both byte-for-byte.

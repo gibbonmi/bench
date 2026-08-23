@@ -1,9 +1,9 @@
-// Package registry is the conformance check inventory: which checks exist, which
+// Package registry is the conformance check inventory. It names which checks exist, which
 // tier runs each one, and the timing contract for the ship rehearsal.
 //
-// It imports nothing from internal/conformance. That package's test files import
-// internal/canary, so anything internal/canary needs to read has to sit below that
-// edge or the conformance test binary refuses to build.
+// Package registry imports nothing from internal/conformance. That package's test files
+// import internal/canary. Anything internal/canary needs to read must sit below that
+// edge, or the conformance test binary refuses to build.
 package registry
 
 import (
@@ -15,8 +15,8 @@ import (
 	"time"
 )
 
-// Tier names an oracle surface: Dev is `bench gate` and the surfaces that stand in
-// for it, Ship is the release rehearsal.
+// Tier names an oracle surface. Dev is `bench gate` and the surfaces that stand in for
+// it. Ship is the release rehearsal.
 type Tier string
 
 const (
@@ -37,13 +37,13 @@ func (source InputSource) Valid() bool {
 }
 
 // ConformanceRootEnv names the tree the explicit conformance entry point grades. It is
-// the only way that entry point learns a root, so a surface that means to grade one has
-// to set it; unset, the entry point skips.
+// the only way that entry point learns a root. A surface that means to grade a root must
+// set it; unset, the entry point skips.
 const ConformanceRootEnv = "BENCH_CONFORMANCE_ROOT"
 
-// ConformanceTierEnv selects the tier the explicit conformance entry point runs at.
-// Absent, the surface grades the dev tier — the default stays un-overridable by
-// accident because a writer that means ship has to set it explicitly.
+// ConformanceTierEnv selects the tier the explicit conformance entry point runs at. When
+// absent, the surface grades the dev tier. The default stays un-overridable by accident,
+// because a writer that means ship must set it explicitly.
 const ConformanceTierEnv = "BENCH_CONFORMANCE_TIER"
 
 // ConformanceChecksEnv transports the executed half of the gate-authored ordered
@@ -53,9 +53,9 @@ const ConformanceChecksEnv = "BENCH_CONFORMANCE_CHECKS"
 // ConformanceInheritedEnv transports the half covered by retained evidence.
 const ConformanceInheritedEnv = "BENCH_CONFORMANCE_INHERITED"
 
-// TierFor resolves a tier name to a Tier. Anything but the ship name is the dev
-// tier, so a surface that means ship has to say so and an unset or misspelled value
-// can never quietly widen what a run grades.
+// TierFor resolves a tier name to a Tier. Anything but the ship name is the dev tier. A
+// surface that means ship must say so, and an unset or misspelled value can never quietly
+// widen what a run grades.
 func TierFor(name string) Tier {
 	if name == string(Ship) {
 		return Ship
@@ -92,8 +92,8 @@ const (
 	InputBenchRoutes InputSource = "bench-routes"
 	// InputDecisionDocuments binds active and compiled decision-map trees.
 	InputDecisionDocuments InputSource = "decision-documents"
-	// InputRoadmapBoard binds the split roadmap board: the ROADMAP.md index and the
-	// roadmap/ detail owners its rows name.
+	// InputRoadmapBoard binds the split roadmap board, the ROADMAP.md index and the roadmap/
+	// detail owners its rows name.
 	InputRoadmapBoard InputSource = "roadmap-board"
 	// InputCaptureRetros binds the pending retrospective capture directory inspected by
 	// the improvement-marker check.
@@ -146,16 +146,17 @@ var Checks = []Check{
 	{Name: "structure-accept-currency", Implementation: "ValidateAcceptGrants", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "retro-improvement-markers", Implementation: "ValidateImprovementMarkers", Tier: Dev, Subject: SubjectRoot, Inputs: InputCaptureRetros},
 	{Name: "row-next-grammar", Implementation: "checkRowNextGrammar", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "prose-mechanics", Implementation: "checkProseMechanics", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
 // diagnostics its fixtures grade. The binding follows the emitting code, not the
-// directory's name: three doc families share docs-currency-workflow, and
-// compliance-hardening grades canary-fixture-compliance against the immutable fixture
-// tree rather than kit-compliance against the live kit root.
+// directory's name. Three doc families share docs-currency-workflow. compliance-hardening
+// grades canary-fixture-compliance against the immutable fixture tree, rather than kit-
+// compliance against the live kit root.
 //
-// It is unexported because map iteration order is nondeterministic and the family
-// list feeds a diagnostic; Families is the ordered way in.
+// familyChecks is unexported, because map iteration order is nondeterministic and the
+// family list feeds a diagnostic. Families is the ordered way in.
 var familyChecks = map[string]string{
 	"package-core-guard":            "package-core-guard",
 	"line-routing":                  "line-routing",
@@ -172,11 +173,12 @@ var familyChecks = map[string]string{
 	"roadmap-detail-integrity":      "roadmap-detail-integrity",
 	"retro-improvement-markers":     "retro-improvement-markers",
 	"row-next-grammar":              "row-next-grammar",
+	"prose-mechanics":               "prose-mechanics",
 }
 
-// Families lists the family names this table binds, in sorted order. They are the
-// table's own keys, not a reading of tests/canary/, so a family directory the table
-// omits does not appear here; grading the tree against the table is a caller's job.
+// Families lists the family names this table binds, in sorted order. They are the table's
+// own keys, not a reading of tests/canary/. A family directory the table omits therefore
+// does not appear here. Grading the tree against the table is a caller's job.
 func Families() []string {
 	names := make([]string, 0, len(familyChecks))
 	for family := range familyChecks {
@@ -186,9 +188,9 @@ func Families() []string {
 	return names
 }
 
-// FamilyCheck names the check a conformance family's fixtures grade, and reports
-// false for a family the table does not bind — an unbound family is a caller's error
-// to raise, never a silent unscoped run.
+// FamilyCheck names the check a conformance family's fixtures grade. It reports false for
+// a family the table does not bind. An unbound family is a caller's error to raise, never
+// a silent unscoped run.
 func FamilyCheck(family string) (string, bool) {
 	check, bound := familyChecks[family]
 	return check, bound
@@ -216,9 +218,9 @@ func Find(name string) (Check, bool) {
 	return Check{}, false
 }
 
-// RunsAt reports whether tier executes the check. Ship is a superset of Dev: the
-// release rehearsal has to reprove everything dev green claims, and the
-// stress-tagged cross-compile matrix only a release runs sits inside a dev check.
+// RunsAt reports whether tier executes the check. Ship is a superset of Dev. The release
+// rehearsal must reprove everything dev green claims. The stress-tagged cross-compile
+// matrix only a release runs sits inside a dev check.
 func (c Check) RunsAt(tier Tier) bool { return c.Tier == Dev || tier == Ship }
 
 // Names lists, in execution order, the checks tier runs.
@@ -268,11 +270,11 @@ const RootConformanceTest = "TestRootConformance"
 
 const timingFileName = "bench-conformance-timing"
 
-// TimingPath is the per-check timing file for a graded root, or "" when that root
-// carries no git dir. Resolution reads <root>/.git alone: it never ascends and never
-// consults the working directory, because canary fixtures grade temp roots
-// concurrently while cwd sits in the host checkout, and an ascending lookup would
-// have every one of those runs truncating the host's single file.
+// TimingPath is the per-check timing file for a graded root, or "" when that root carries
+// no git dir. Resolution reads <root>/.git alone. It never ascends and never consults the
+// working directory. Canary fixtures grade temp roots concurrently while cwd sits in the
+// host checkout. An ascending lookup would have every one of those runs truncating the
+// host's single file.
 func TimingPath(root string) string {
 	if root == "" {
 		return ""
@@ -306,15 +308,15 @@ func TimingPath(root string) string {
 	return ""
 }
 
-// TimingLine is the one timing format: a zero-padded position, the check name
-// verbatim, and a duration. The index carries the ordering, so the line sequence
-// stays byte-stable while the durations vary; the absence of prose keeps a line
-// from swallowing a canary fixture's expectation and rendering it vacuous.
+// TimingLine is the one timing format: a zero-padded position, the check name verbatim,
+// and a duration. The index carries the ordering, so the line sequence stays byte-stable
+// while the durations vary. The absence of prose keeps a line from swallowing a canary
+// fixture's expectation and rendering it vacuous.
 func TimingLine(index int, name string, elapsed time.Duration) string {
 	return fmt.Sprintf("%02d %s %s", index, name, elapsed.Round(time.Millisecond))
 }
 
-// ReadTimingLines returns the timing lines recorded for a graded root, and nothing
+// ReadTimingLines returns the timing lines recorded for a graded root. It returns nothing
 // at all when the root has no git dir or no timing file. The print decorates a gate
 // verdict and must never be the thing that reds one.
 func ReadTimingLines(root string) []string {
@@ -335,19 +337,19 @@ func ReadTimingLines(root string) []string {
 	return lines
 }
 
-// TimingWriter appends one line per executed check, numbering them in call order.
-// A root with no git dir yields a writer that counts but discards: the driver grades
-// trees that are not repositories at all.
+// TimingWriter appends one line per executed check, numbering them in call order. A root
+// with no git dir yields a writer that counts but discards. The driver grades trees that
+// are not repositories at all.
 type TimingWriter struct {
 	path  string
 	count int
 }
 
-// ClearTiming empties whatever timing lines a root's file already holds, so no
-// reader can attribute an earlier run's lines to the current one. Whoever starts a
-// conformance run clears at the run boundary; a reader afterwards then sees that
-// run's lines or none at all. A root with no git dir clears nothing and reports no
-// error: the driver grades trees that are not repositories at all.
+// ClearTiming empties whatever timing lines a root's file already holds. No reader can
+// then attribute an earlier run's lines to the current one. Whoever starts a conformance
+// run clears at the run boundary. A reader afterward sees that run's lines or none at
+// all. A root with no git dir clears nothing and reports no error, because the driver
+// grades trees that are not repositories at all.
 func ClearTiming(root string) error {
 	path := TimingPath(root)
 	if path == "" {

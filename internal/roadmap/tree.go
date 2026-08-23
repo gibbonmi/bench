@@ -12,22 +12,22 @@ import (
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
-// RoadmapDir is RoadmapFile's sibling: the directory holding one detail owner per
-// index row, `roadmap/<ID>.md`, whose first line repeats that row's index line.
+// RoadmapDir is RoadmapFile's sibling, the directory holding one detail owner per index
+// row, `roadmap/<ID>.md`. Each detail file's first line repeats its row's index line.
 const RoadmapDir = "roadmap"
 
-// RowFile is one classified entry of the RoadmapDir listing — the basename as the
-// directory reported it, the state the classifier graded it, and its bytes when the
-// read completed.
+// RowFile is one classified entry of the RoadmapDir listing. It carries the basename as
+// the directory reported it, the state the classifier graded it, and the bytes it held
+// when the read completed.
 type RowFile struct {
 	Name, Reason string
 	State        bounds.FileState
 	Data         []byte
 }
 
-// Tree is the classified split board: RoadmapFile's read and the RoadmapDir listing.
-// It is the one shape the parse consumes, so a test drives the parser with in-memory
-// bytes and every command reaches the same parse through LoadTree.
+// Tree is the classified split board. It holds RoadmapFile's read and the RoadmapDir
+// listing. It is the one shape the parse consumes. A test can drive the parser with
+// in-memory bytes. Every command reaches the same parse through LoadTree.
 type Tree struct {
 	Index     bounds.Classified
 	DirState  bounds.FileState
@@ -36,17 +36,17 @@ type Tree struct {
 	Files     []RowFile
 }
 
-// LoadTree is the one filesystem read of the split board. Every roadmap surface —
-// the board command, the context snapshot, the owner check, status, the dashboard,
-// and the conformance check — reaches the parse through it, so no caller re-derives
-// where a row's detail lives.
+// LoadTree is the one filesystem read of the split board. Every roadmap surface reaches
+// the parse through it, including the board command, the context snapshot, the owner
+// check, status, the dashboard, and the conformance check. No caller re-derives where a
+// row's detail lives.
 func LoadTree(root string) Tree {
 	tree := Tree{Index: bounds.Classify(filepath.Join(root, RoadmapFile), bounds.ControlRecordLimit)}
 	dir := bounds.ClassifyDir(filepath.Join(root, RoadmapDir))
 	tree.DirState, tree.DirReason, tree.DirBytes = dir.State, dir.Reason, dirBytes(dir.Entries)
 	for _, entry := range dir.Entries {
-		// The producer form, not Classify: a row file is authoritative input the board
-		// is graded from, so a link here would grade bytes nobody put under roadmap/.
+		// This uses the producer form, not Classify. A row file is authoritative input the
+		// board is graded from, so a link here would grade bytes nobody put under roadmap/.
 		// Both link kinds land in the wrong-type state the listing pass already reports.
 		c := bounds.ClassifyNoFollow(filepath.Join(root, RoadmapDir, entry.Name()))
 		tree.Files = append(tree.Files, RowFile{Name: entry.Name(), Reason: c.Reason, State: c.State, Data: c.Data})
@@ -58,31 +58,31 @@ func LoadTree(root string) Tree {
 // migration, and every reader that names a row's file go through it.
 func rowFilePath(id string) string { return RoadmapDir + "/" + id + ".md" }
 
-// Diagnostic is one integrity fault ParseDocument found in the split board, carried
-// as its own path and reason rather than a formatted string a caller would have to
-// re-parse. A legal basename may itself contain ": " (the string String returns), so
-// a reader that wants the path or the reason separately takes the field, never a cut
-// of the rendered text.
+// Diagnostic is one integrity fault that ParseDocument found in the split board. It
+// carries its own path and reason, not a formatted string a caller would have to
+// re-parse. A legal basename may itself contain ": ", the string String returns. A reader
+// that wants the path or the reason separately takes the field, never a cut of the
+// rendered text.
 type Diagnostic struct {
 	Path, Reason string
 }
 
-// String renders a Diagnostic in the one format every roadmap surface has always
-// shown a reader: the path, then the reason. ValidateRoadmapTree's conformance
-// binding and every diagnostic-string test read this text.
+// String renders a Diagnostic in the one format every roadmap surface has always shown a
+// reader: the path, then the reason. ValidateRoadmapTree's conformance binding and every
+// diagnostic-string test read this text.
 func (d Diagnostic) String() string { return d.Path + ": " + d.Reason }
 
 // ParseDocument projects a classified tree into the Document every roadmap surface
-// renders, the parse failures the snapshot reports, and the ordered integrity
-// diagnostics the conformance check returns. A degraded RoadmapDir comes first because
-// it is the precondition every row-level finding rests on; the rest run in index order
-// and then in directory order, and each begins with the repo-relative path at fault.
+// renders. It also returns the parse failures the snapshot reports and the ordered
+// integrity diagnostics the conformance check returns. A degraded RoadmapDir comes first,
+// since it is the precondition every row-level finding rests on. The rest run in index
+// order and then in directory order. Each begins with the repo-relative path at fault.
 //
-// Row disposition is fixed per fault class rather than left to each caller, so
-// rows_total, the row selector, and the status board agree on what a faulted board
-// holds: a missing detail owner, a heading mismatch, an inline body, and every row of a
-// degraded directory keep the index row, while a wrapped heading, the second position of
-// a duplicated ID, an orphan, and an unrecognized file yield no row at all.
+// Row disposition is fixed per fault class, not left to each caller. This way rows_total,
+// the row selector, and the status board agree on what a faulted board holds. A missing
+// detail owner, a heading mismatch, an inline body, and every row of a degraded directory
+// keep the index row. A wrapped heading, the second position of a duplicated ID, an
+// orphan, and an unrecognized file yield no row at all.
 func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, []ParseFailure, []Diagnostic) {
 	content := tree.Index.Data
 	lines := strings.Split(string(content), "\n")
@@ -90,18 +90,18 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 	var failures []ParseFailure
 	var diagnostics []Diagnostic
 	owners, unread := rowFileOwners(tree.Files)
-	// rowed is the ID a row was built for, so the next index line carrying it is a
-	// duplicate; claimed is every ID the index names at all, faulted lines included, so
-	// the directory pass never calls a claimed row's file an orphan.
+	// rowed holds the ID each row was built for, so the next index line carrying it is a
+	// duplicate. claimed holds every ID the index names at all, faulted lines included. The
+	// directory pass therefore never calls a claimed row's file an orphan.
 	rowed, claimed := map[string]bool{}, map[string]bool{}
-	// section is the index heading the current row sits under, and indexFence keeps a
-	// heading inside a fenced block from becoming that section. The parked section is the
-	// one place a row may carry no next action, so the row grammar needs to know which
-	// section claimed the row.
+	// section holds the index heading the current row sits under. indexFence keeps a heading
+	// inside a fenced block from becoming that section. The parked section is the one place
+	// a row may carry no next action. The row grammar therefore needs to know which section
+	// claimed the row.
 	section, indexFence := "", false
-	// A directory the classifier could not read yields no listing, so every row would
-	// otherwise be told its detail owner is missing. Name the directory once instead:
-	// nobody looked, so no row's owner is known to be absent.
+	// A directory the classifier could not read yields no listing. Every row would otherwise
+	// be told its detail owner is missing. This code names the directory once instead, since
+	// nobody looked and no row's owner is known to be absent.
 	dirDegraded := degradedState(tree.DirState)
 	if dirDegraded {
 		diagnostics = append(diagnostics, Diagnostic{RoadmapDir + "/", fmt.Sprintf("%s detail directory: %s", tree.DirState, tree.DirReason)})
@@ -128,8 +128,8 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 		claimed[id] = true
 		closeAt := strings.Index(m[2], "**")
 		i++
-		// Whatever sits under the heading is consumed either way: the split shape has
-		// no body in the index, so these lines are only ever evidence of a fault.
+		// Whatever sits under the heading is consumed either way. The split shape has no body
+		// in the index, so these lines are only ever evidence of a fault.
 		under := i
 		for i < len(lines) && !strings.HasPrefix(lines[i], "**") && !strings.HasPrefix(lines[i], "## ") {
 			i++
@@ -148,9 +148,8 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 		rowText := line
 		switch file, owned := owners[id]; {
 		case owned:
-			// The row file is the whole row as a reader sees it: its first line
-			// repeats the index line, so the ledger, the spec path, and the
-			// trigger words are all read from this text.
+			// The row file is the whole row as a reader sees it. Its first line repeats the index
+			// line. The ledger, the spec path, and the trigger words are all read from this text.
 			rowText = string(file.Data)
 			first, body, _ := strings.Cut(rowText, "\n")
 			if first != line {
@@ -164,9 +163,8 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 				diagnostics = append(diagnostics, d)
 			}
 		case unread[id], dirDegraded:
-			// The listing pass has already named the file — or the directory — it could
-			// not read; the row keeps its place on the board with the body nobody was
-			// able to load.
+			// The listing pass already named the file, or the directory, it could not read. The
+			// row keeps its place on the board with the body nobody was able to load.
 		default:
 			diagnostics = append(diagnostics, Diagnostic{rowFilePath(id), fmt.Sprintf("missing detail owner for %s row %s", RoadmapFile, id)})
 		}
@@ -199,10 +197,10 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 	return doc, failures, diagnostics
 }
 
-// rowFileOwners splits the listing into the row files a row may be read from and the
-// row IDs whose file was there but could not be read. An empty file is an owner, not an
-// absence: its heading is missing rather than its detail, which is the heading mismatch
-// the row already reports.
+// rowFileOwners splits the listing into the row files a row may be read from. It also
+// returns the row IDs whose file was there but could not be read. An empty file is an
+// owner, not an absence. Its heading is missing rather than its detail, which is the
+// heading mismatch the row already reports.
 func rowFileOwners(files []RowFile) (owners map[string]RowFile, unread map[string]bool) {
 	owners, unread = map[string]RowFile{}, map[string]bool{}
 	for _, file := range files {
@@ -220,10 +218,10 @@ func rowFileOwners(files []RowFile) (owners map[string]RowFile, unread map[strin
 }
 
 // listingDiagnostics reports what the roadmap/ listing holds that no index row claimed,
-// in directory order: a basename outside the row-ID grammar, a row file the classifier
-// could not read, and a detail file whose row is not on the board. claimed carries every
-// ID the index named, not only the ones that became rows: a file whose index line is
-// itself faulted has an owner on the board and is not an orphan.
+// in directory order. It reports a basename outside the row-ID grammar and a row file the
+// classifier could not read. It also reports a detail file whose row is not on the board.
+// claimed carries every ID the index named, not only the ones that became rows. A file
+// whose index line is itself faulted has an owner on the board and is not an orphan.
 func listingDiagnostics(files []RowFile, claimed map[string]bool) []Diagnostic {
 	var diagnostics []Diagnostic
 	for _, file := range files {
@@ -259,11 +257,11 @@ func anyNonBlank(lines []string) bool {
 	return false
 }
 
-// parseSequence extracts the `## Recommended sequence` section, from its heading
-// (trailing whitespace tolerated) to the next `## ` heading or EOF, and reports
-// whether the index carries any unfenced `## ` heading at all. Fence state is tracked
-// throughout: a heading inside a fenced code block neither starts the section nor
-// terminates it.
+// parseSequence extracts the `## Recommended sequence` section, from its heading, with
+// trailing whitespace tolerated, to the next `## ` heading or EOF. It also reports
+// whether the index carries any unfenced `## ` heading at all. This function tracks fence
+// state throughout. A heading inside a fenced code block neither starts the section nor
+// ends it.
 func parseSequence(lines []string) (rows []SequenceRow, text string, hasSection bool) {
 	inSequence, inFence, sequenceStart, sequenceEnd := false, false, -1, len(lines)
 	for idx, line := range lines {
@@ -275,10 +273,9 @@ func parseSequence(lines []string) (rows []SequenceRow, text string, hasSection 
 		if inFence {
 			continue
 		}
-		// Any unfenced `## ` heading — not only Recommended sequence — is roadmap
-		// structure: a document with sections is a working roadmap the reader
-		// recognizes, possibly one with nothing due yet, never "not the document
-		// you think".
+		// Any unfenced `## ` heading, not only Recommended sequence, is roadmap structure. A
+		// document with sections is a working roadmap the reader recognizes, possibly one with
+		// nothing due yet. The reader never mistakes it for an unrelated document.
 		if strings.HasPrefix(trimmed, "## ") {
 			hasSection = true
 		}
@@ -317,41 +314,41 @@ func parseSequence(lines []string) (rows []SequenceRow, text string, hasSection 
 	return rows, text, hasSection
 }
 
-// rowNextMarker is the column-zero prefix of a row's next-action line, and
-// parkedSectionWord is the word an index section heading carries when the rows under it
-// are exempt from that line: a row parked or waiting on someone else has no honest next
-// action, and the parked section is its legal home.
+// rowNextMarker is the column-zero prefix of a row's next-action line. parkedSectionWord
+// is the word an index section heading carries when the rows under it are exempt from
+// that line. A row parked or waiting on someone else has no honest next action. The
+// parked section is its legal home.
 const (
 	rowNextMarker     = "Next:"
 	parkedSectionWord = "Parked"
 )
 
 // rowNextMissingEnforced gates the missing-line fault class at the one boundary that
-// decides what the gate reds on. The parser derives the class either way; the migration
-// that gave every existing row a token flipped this to true in the same commit, so the
-// tree was never red between the check and the board it grades. The class is now a live
-// gate fault: any row outside the parked section with no `Next:` line reds
+// decides what the gate reds on. The parser derives the class either way. The migration
+// that gave every existing row a token flipped this to true in the same commit. The tree
+// was therefore never red between the check and the board it grades. The class is now a
+// live gate fault: any row outside the parked section with no `Next:` line reds
 // roadmap-detail-integrity. It stays a var so tests can observe it through ParseDocument,
 // where the parked exemption and the fence rule that feed it live.
 var rowNextMissingEnforced = true
 
-// rowNextMissingReason is the whole reason text of the missing-line class, so the
-// enforcement gate matches the class itself rather than a prefix another class could grow
+// rowNextMissingReason is the whole reason text of the missing-line class. The
+// enforcement gate thus matches the class itself, not a prefix another class could grow
 // into.
 var rowNextMissingReason = "missing " + rowNextMarker + " line; expected one of " + strings.Join(RowNextTokens(), ", ")
 
 // rowNextDiagnostics grades one detail file's next-action marker and returns the fault
-// classes it found, in line order: a missing line, a value outside the token set, an
-// unanchored line, and a second line. parked exempts the row from carrying the line at
-// all, but never from the grammar of a line it does carry — a parked row with a typo is
-// still a typo.
+// classes it found, in line order. The classes are a missing line, a value outside the
+// token set, an unanchored line, and a second line. parked exempts the row from carrying
+// the line at all, but never from the grammar of a line it does carry. A parked row with
+// a typo is still a typo.
 //
 // The match is position-anchored. `Next: <token>` starts at column zero, on one physical
-// line, outside a fenced code block, separated by one ASCII space: an indented line, a
-// line broken after the marker, and a separator a reader cannot see all read as the
-// unanchored class rather than passing, so the marker is where the reader sees it and
-// nowhere else. A fenced line is not a marker at all, which is what keeps a documented
-// example out of the grammar.
+// line, outside a fenced code block, separated by one ASCII space. An indented line, a
+// line broken after the marker, and an invisible separator all read as the unanchored
+// class rather than passing. This keeps the marker exactly where the reader sees it, and
+// nowhere else. A fenced line is not a marker at all, which keeps a documented example
+// out of the grammar.
 func rowNextDiagnostics(path, text string, parked bool) []Diagnostic {
 	var diagnostics []Diagnostic
 	inFence, seen := false, 0
@@ -377,8 +374,8 @@ func rowNextDiagnostics(path, text string, parked bool) []Diagnostic {
 		case seen > 1:
 			diagnostics = append(diagnostics, Diagnostic{path, fmt.Sprintf("duplicate %s line at line %d; a row carries one", rowNextMarker, at)})
 		case !spaced, strings.ContainsFunc(value, unicode.IsSpace):
-			// Everything the marker line can hold other than exactly one token: no
-			// separator, a separator that is not one ASCII space, a value the reader
+			// This covers everything the marker line can hold other than exactly one token. That
+			// includes no separator, a separator that is not one ASCII space, a value the reader
 			// finds on the next line, or a trailing remainder.
 			diagnostics = append(diagnostics, Diagnostic{path, rowNextUnanchored(at)})
 		case !slices.Contains(rowNextTokens, value):
@@ -391,8 +388,9 @@ func rowNextDiagnostics(path, text string, parked bool) []Diagnostic {
 	return diagnostics
 }
 
-// rowNextUnanchored is the one reason text of the unanchored class, which four distinct
-// mis-writings of the marker line share: the reader's repair is the same for all of them.
+// rowNextUnanchored is the one reason text of the unanchored class. Four distinct
+// mis-writings of the marker line share this text, since the reader's repair is the same
+// for all of them.
 func rowNextUnanchored(at int) string {
 	return fmt.Sprintf("unanchored %s line at line %d; expected %s <token> at column zero on one line", rowNextMarker, at, rowNextMarker)
 }

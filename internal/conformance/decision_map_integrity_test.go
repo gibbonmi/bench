@@ -32,8 +32,9 @@ var decisionMapIntegrityFixtureCategories = map[string][]string{
 	},
 }
 
-// The inventory is independently authored omission coverage: deleting one named fixture
-// must red even though the fixture directories and EXPECT files remain the test corpus.
+// The inventory holds independently authored omission coverage. If an editor deletes one
+// named fixture, the gate must red, even though the fixture directories and EXPECT files
+// stay in the test corpus.
 func validateDecisionMapIntegrityFixtureInventory(fixtures map[string]canary.Fixture) error {
 	seen := make(map[string]bool)
 	expected := make([]string, 0, 49)

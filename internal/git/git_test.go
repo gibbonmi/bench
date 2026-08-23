@@ -580,8 +580,8 @@ func newRepo(t *testing.T) string {
 	return root
 }
 
-// TestTreeHashCleanTreeMatchesHEAD is the same-tree property the gate relies on:
-// a clean working tree hashes to HEAD's tree object.
+// TestTreeHashCleanTreeMatchesHEAD is the same-tree property the gate relies on. A
+// clean working tree hashes to HEAD's tree object.
 func TestTreeHashCleanTreeMatchesHEAD(t *testing.T) {
 	root := newRepo(t)
 	want := runGit(t, root, "rev-parse", "HEAD^{tree}")
@@ -673,7 +673,7 @@ func TestTreeHashNonRepoReturnsNone(t *testing.T) {
 	}
 }
 
-// TestTreeHashLeavesNoStrayIndex confirms the throwaway index is external: the call
+// TestTreeHashLeavesNoStrayIndex confirms the throwaway index is external. The call
 // must not drop an index file into the working tree.
 func TestTreeHashLeavesNoStrayIndex(t *testing.T) {
 	root := newRepo(t)
@@ -849,8 +849,8 @@ func listDir(t *testing.T, dir string) []string {
 	return names
 }
 
-// newTwoBranchRepo initialises a repo with one commit and exactly two local branches,
-// neither of which is a resolvable default candidate: there is no origin/HEAD, and no
+// newTwoBranchRepo initialises a repo with one commit and exactly two local branches.
+// Neither branch is a resolvable default candidate: there is no origin/HEAD, and no
 // branch named "main" for the candidate probe to verify.
 func newTwoBranchRepo(t *testing.T) string {
 	t.Helper()
@@ -888,8 +888,8 @@ func TestFactsUnresolvableDefault(t *testing.T) {
 	}
 }
 
-// TestResolvedDefaultSoleMaster is the sole-local-branch fallback: a master-only
-// repository has no origin/HEAD and no "main" to verify, and the lone local branch is
+// TestResolvedDefaultSoleMaster is the sole-local-branch fallback. A master-only
+// repository has no origin/HEAD and no "main" to verify. The lone local branch is
 // the only evidence of its default.
 func TestResolvedDefaultSoleMaster(t *testing.T) {
 	root := newRepo(t)
@@ -903,8 +903,9 @@ func TestResolvedDefaultSoleMaster(t *testing.T) {
 }
 
 // TestResolvedDefaultNoLocalBranches covers the empty end of the sole-local-branch
-// fallback: a repository with no commits has no branch to fall back to, and indexing the
-// list before counting it would panic rather than report the unresolved state.
+// fallback. A repository with no commits has no branch to fall back to. If the code
+// indexes the list before counting it, it panics instead of reporting the unresolved
+// state.
 func TestResolvedDefaultNoLocalBranches(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
@@ -916,8 +917,8 @@ func TestResolvedDefaultNoLocalBranches(t *testing.T) {
 	}
 }
 
-// TestResolvedDefaultUnresolvableNamesNothing pins the ok=false return: an empty name, so
-// no caller can put a branch this repository does not have into a message or a ref.
+// TestResolvedDefaultUnresolvableNamesNothing pins the ok=false return as an empty name.
+// No caller can put a branch this repository does not have into a message or a ref.
 func TestResolvedDefaultUnresolvableNamesNothing(t *testing.T) {
 	def, ok := ResolvedDefault(newTwoBranchRepo(t))
 

@@ -66,9 +66,9 @@ func checkPackageShippedSurface(root string) []string {
 			diags = append(diags, fmt.Sprintf("repair pin path does not match requirement %q", requirements.BinaryPinManifest.Path))
 		}
 	}
-	// The canonical payload reader, not a local open-and-decode: this check derives
-	// package.json's exclusion list from the allowlist, so it must refuse the same
-	// hostile shapes and the same invalid rows every other consumer refuses.
+	// This uses the canonical payload reader, not a local open-and-decode. It derives
+	// package.json's exclusion list from the allowlist, so it must refuse the same hostile
+	// shapes and the same invalid rows every other consumer refuses.
 	rows, absent, err := kitpayload.PayloadRowsAt(filepath.Join(root, ".bench", "consumer-payload.json"))
 	if absent {
 		return append(diags, ".bench/consumer-payload.json missing: the package exclusion check has no source")
@@ -266,8 +266,8 @@ func TestHelpInventorySingleSourceBites(t *testing.T) {
 }
 
 // shippedFiles returns every file the npm tarball would carry, expanding package.json
-// files[] directory entries recursively. It is the single source of the shipped-file
-// set; callers filter it (markdown prose sweep, identity-string sweep).
+// files[] directory entries recursively. It is the single source of the shipped-file set.
+// Callers, such as the markdown prose sweep and the identity-string sweep, filter it.
 func shippedFiles(root string) []string {
 	path := filepath.Join(root, "package.json")
 	data, err := os.ReadFile(path)
@@ -342,15 +342,15 @@ func packageMarkdownFiles(root string) []string {
 	return out
 }
 
-// checkShippedIdentityStrings sweeps the shipped surface plus the identity sources
-// (package.json, the release workflow) for npm strings naming a package the project
-// does not own. A half-done redbench rename leaves one behind; each survivor becomes a
-// diag rather than shipping. dist/ is a compiled artifact, not authored surface.
+// checkShippedIdentityStrings sweeps the shipped surface plus the identity sources,
+// package.json and the release workflow, for npm strings naming a package the project
+// does not own. A half-done redbench rename can leave one behind. Each survivor becomes a
+// diagnostic rather than shipping. dist/ is a compiled artifact, not authored surface.
 func checkShippedIdentityStrings(root string) []string {
-	// The spec enumerates three examples (@benchkit, npx benchkit, npm i -g benchkit);
-	// the profile's "npm package `benchkit`" claim and the README/doctor uninstall line
-	// are the same class of unowned-identity string on surfaces this rename touched, so
-	// they join the net (reviewer-approved).
+	// The spec names three examples: @benchkit, npx benchkit, and npm i -g benchkit. The
+	// profile's "npm package `benchkit`" claim and the README/doctor uninstall line are the
+	// same class of unowned-identity string on surfaces this rename touched. They join the
+	// net.
 	stale := []string{
 		"@benchkit",
 		"npx benchkit",
@@ -415,10 +415,9 @@ func TestUserFacingBenchkitSweepBites(t *testing.T) {
 }
 
 // TestShippedIdentityStringSweepBites is the recorded bite proof for
-// checkShippedIdentityStrings (per craft-gate): a clean shipped surface passes, a stale
-// string confined under dist/ is ignored, and each matched pattern —
-// in any of the swept locations (shipped doc, package.json, the release workflow) —
-// makes the sweep fire.
+// checkShippedIdentityStrings. A clean shipped surface passes, and a stale string
+// confined under dist/ is ignored. Each matched pattern, in any swept location such as a
+// shipped doc, package.json, or the release workflow, makes the sweep fire.
 func TestShippedIdentityStringSweepBites(t *testing.T) {
 	root := t.TempDir()
 	write := func(rel, body string) {
@@ -431,8 +430,8 @@ func TestShippedIdentityStringSweepBites(t *testing.T) {
 		}
 	}
 
-	// Clean surface: a stale string only under dist/ (a compiled artifact, not
-	// authored surface) must NOT fire.
+	// This is a clean surface. A stale string only under dist/, a compiled artifact and not
+	// authored surface, must not fire.
 	write("package.json", `{"files":["README.md","projects/","CHANGELOG.md","dist/"]}`+"\n")
 	write("README.md", "install with npx redbench link\n")
 	write("projects/benchkit.md", "the npm package `redbench`.\n")
@@ -447,8 +446,8 @@ func TestShippedIdentityStringSweepBites(t *testing.T) {
 		t.Fatalf("negated npm test source should not be shipped, got %v", diags)
 	}
 
-	// Each pattern must fire, and each swept location (shipped doc, the profile,
-	// package.json, the release workflow) must be reachable.
+	// Each pattern must fire, and each swept location, such as a shipped doc, the profile,
+	// package.json, or the release workflow, must be reachable.
 	cases := []struct{ file, body, want string }{
 		{"README.md", "run npx benchkit link\n", "npx benchkit"},
 		{"CHANGELOG.md", "changed npx benchkit link\n", "npx benchkit"},
@@ -460,7 +459,7 @@ func TestShippedIdentityStringSweepBites(t *testing.T) {
 	}
 	for _, c := range cases {
 		root := t.TempDir()
-		// A minimal files[] so shippedFiles resolves; package.json and release.yml are
+		// This is a minimal files[] so shippedFiles resolves. package.json and release.yml are
 		// swept whether or not files[] lists them.
 		write2 := func(rel, body string) {
 			full := filepath.Join(root, filepath.FromSlash(rel))

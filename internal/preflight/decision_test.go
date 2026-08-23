@@ -28,9 +28,9 @@ func checkRow(v Verdict, name string) (CheckResult, bool) {
 	return CheckResult{}, false
 }
 
-// TestDecideAllGreen is the tracer: every check present by name, all green, and a
-// second Decide over the same Facts is byte-identical — the rerun guarantee the
-// verdict core promises.
+// TestDecideAllGreen is the tracer: every check present by name, all
+// green, and a second Decide over the same Facts is byte-identical. This
+// is the rerun guarantee the verdict core promises.
 func TestDecideAllGreen(t *testing.T) {
 	f := baseFacts()
 	first := Decide(f)
@@ -120,8 +120,9 @@ func TestDecidePathsAuthorized(t *testing.T) {
 		t.Fatalf("paths-authorized with an out-of-fence path = %+v, want red naming the path", c)
 	}
 
-	// A path equal to a fence entry, or under a fence prefix with a "/" separator,
-	// stays green; a same-string-prefix path that lacks the separator does not.
+	// A path equal to a fence entry, or under a fence prefix with a "/"
+	// separator, stays green. A same-string-prefix path that lacks the
+	// separator does not.
 	f = baseFacts()
 	f.FenceEntries = []string{"internal/git"}
 	f.ChangedPaths = []string{"internal/git", "internal/git/sub.go"}
@@ -192,9 +193,10 @@ func TestDecideDiffNonempty(t *testing.T) {
 	}
 }
 
-// TestDecidePathsAuthorizedImplicitSpecFolder covers LS7-LS11: the active spec's own
-// folder authorizes changed paths without a declared fence entry, in every mode, at a
-// path-segment boundary, and beside the declared entries rather than in place of them.
+// TestDecidePathsAuthorizedImplicitSpecFolder covers LS7-LS11. The active
+// spec's own folder authorizes changed paths without a declared fence
+// entry, in every mode, at a path-segment boundary. It works beside the
+// declared entries rather than in place of them.
 func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
 	// LS7: build preflight authorizes a path under the active spec's folder with no
 	// self-fence entry.
@@ -205,8 +207,8 @@ func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
 		t.Errorf("LS7: build mode, path under the spec's own folder = %+v, want green", c)
 	}
 
-	// LS8: review preflight authorizes that same path the same way — a mode-keyed
-	// implicit entry leaves one of these two rows red.
+	// LS8: review preflight authorizes that same path the same way. A
+	// mode-keyed implicit entry leaves one of these two rows red.
 	f = baseFacts()
 	f.Mode = "review"
 	f.ChangedPaths = []string{"specs/example/spec.md"}
@@ -221,16 +223,17 @@ func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
 		t.Errorf("LS9: path under a foreign spec's folder = %+v, want red", c)
 	}
 
-	// LS10: a sibling folder whose name merely extends the slug stays unauthorized —
-	// the boundary is a path segment, not a string prefix.
+	// LS10: a sibling folder whose name merely extends the slug stays
+	// unauthorized. The boundary is a path segment, not a string prefix.
 	f = baseFacts()
 	f.ChangedPaths = []string{"specs/example-two/notes.md"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictRed {
 		t.Errorf("LS10: sibling folder extending the slug = %+v, want red", c)
 	}
 
-	// LS11: declared entries keep their exact semantics — a path authorized only by a
-	// declared fence stays green, and one outside every fence and the spec folder is red.
+	// LS11: declared entries keep their exact semantics. A path authorized
+	// only by a declared fence stays green, and one outside every fence and
+	// the spec folder is red.
 	f = baseFacts()
 	f.ChangedPaths = []string{"internal/example/foo.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictGreen {

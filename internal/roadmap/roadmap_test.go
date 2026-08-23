@@ -15,8 +15,9 @@ import (
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
-// newRepo initialises a git repo in a temp dir, chdirs into it (restored at test end,
-// via t.Chdir), and returns its root. git.Root() resolves from the working directory.
+// newRepo initialises a git repo in a temp dir and changes into it. t.Chdir restores the
+// previous directory at the end of the test. It returns the repo's root. git.Root()
+// resolves this root from the working directory.
 func newRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -24,16 +25,16 @@ func newRepo(t *testing.T) string {
 		t.Fatalf("git init: %v: %s", err, out)
 	}
 	t.Chdir(root)
-	// git.Root returns the symlink-resolved toplevel; on macOS TempDir is under a
-	// symlink, so resolve root the same way for comparisons/paths.
+	// git.Root returns the symlink-resolved toplevel. On macOS, TempDir is under a symlink,
+	// so this code resolves root the same way for comparisons and paths.
 	out, err := exec.Command("git", "-C", root, "rev-parse", "--show-toplevel").Output()
 	if err != nil {
 		t.Fatalf("rev-parse: %v", err)
 	}
 	toplevel := string(out[:len(out)-1])
-	// The capture surfaces live under a directory the repository root no longer
-	// supplies for free, so a fixture root that omits it fails every write that used
-	// to land beside ROADMAP.md.
+	// The capture surfaces live under a directory the repository root no longer supplies for
+	// free. A fixture root that omits it fails every write that used to land beside
+	// ROADMAP.md.
 	if err := os.MkdirAll(filepath.Join(toplevel, "capture"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -75,8 +76,8 @@ func TestIdeaCreatesDatedLine(t *testing.T) {
 }
 
 // TestIdeaEmptyExitsTwo covers empty and whitespace-only text: exit 2, no file created.
-// An empty argument is rejected by the shared grammar and names the empty token, so it
-// renders that line rather than the blank-text one the other two reach.
+// The shared grammar rejects an empty argument and names the empty token. It therefore
+// renders that line rather than the blank-text line the other two cases reach.
 func TestIdeaEmptyExitsTwo(t *testing.T) {
 	for _, tc := range []struct {
 		args []string
@@ -114,8 +115,9 @@ func TestIdeaMultiWordJoin(t *testing.T) {
 	}
 }
 
-// TestIdeaNewlineNormalization covers appending to a hand-written last line that lacks
-// a trailing newline: the new entry must not merge, so the inbox has two entries.
+// TestIdeaNewlineNormalization covers appending to a hand-written last line that lacks a
+// trailing newline. The new entry must not merge with it, so the inbox ends with two
+// entries.
 func TestIdeaNewlineNormalization(t *testing.T) {
 	root := newRepo(t)
 	if err := os.WriteFile(ideasPath(t, root), []byte("- 2026-06-01  hand added"), 0o644); err != nil {
@@ -261,9 +263,9 @@ func TestRoadmapBoardDocument(t *testing.T) {
 	}
 }
 
-// TestRoadmapBoardRendersDetailFromRowFile covers PR14 (story 16): title comes from
-// the index line while spec, occurrence_count, and occurrence_keys come from the
-// row-file body, and an empty ROADMAP.md still exits 1 with the record error.
+// TestRoadmapBoardRendersDetailFromRowFile pins PR14 (story 16). The title comes from the
+// index line, while spec, occurrence_count, and occurrence_keys come from the row-file
+// body. An empty ROADMAP.md still exits 1 with the record error.
 func TestRoadmapBoardRendersDetailFromRowFile(t *testing.T) {
 	root := newRepo(t)
 	body := "Blocked until the deploy is scheduled; the spec is `specs/foo/spec.md`.\nOccurrences: alpha-1, beta-2\n"

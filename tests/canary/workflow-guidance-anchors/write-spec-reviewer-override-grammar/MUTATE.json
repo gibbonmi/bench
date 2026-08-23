@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-write-spec.md",
+    "old": "`--reviewer <tier> [effort]` overrides the round's delegate.",
+    "new": "The reviewer flag overrides the round's delegate."
+  }
+]

@@ -58,7 +58,7 @@ func add(t *testing.T, root string) { run(t, root, "add", "-A") }
 // lines returns a body with exactly n newline bytes (wc -l semantics).
 func lines(n int) string { return strings.Repeat("x\n", n) }
 
-// A file over the line budget is flagged with the exact FILE TOO LONG substring; a
+// A file over the line budget is flagged with the exact FILE TOO LONG substring. A
 // granted higher per-path budget then suppresses it and the tree reports ok.
 func TestFileTooLongAndBudget(t *testing.T) {
 	root := initRepo(t)
@@ -123,7 +123,7 @@ func TestMalformedBudgetWarns(t *testing.T) {
 }
 
 // A path listed twice keeps its FIRST budget, matching the shell's first-wins awk
-// (`$1==p {print $2; exit}`) — a later duplicate line does not override it.
+// (`$1==p {print $2; exit}`). A later duplicate line does not override it.
 func TestDuplicateBudgetKeyFirstWins(t *testing.T) {
 	root := initRepo(t)
 	write(t, root, "dup.go", lines(401))
@@ -141,7 +141,7 @@ func TestDuplicateBudgetKeyFirstWins(t *testing.T) {
 	}
 }
 
-// A non-numeric env cap falls back to the default (400/12); the shell fed garbage
+// A non-numeric env cap falls back to the default (400/12). The shell fed garbage
 // into arithmetic (yielding cap 0), which this Go port deliberately does not preserve.
 func TestNonNumericEnvCapFallsBack(t *testing.T) {
 	t.Setenv("BENCH_MAX_LINES", "notanumber")
@@ -155,7 +155,7 @@ func TestNonNumericEnvCapFallsBack(t *testing.T) {
 	}
 }
 
-// DIR CROWDED fires strictly above the cap: 12 files ok, 13 over at the default; a
+// DIR CROWDED fires strictly above the cap: 12 files ok, 13 over at the default. A
 // granted directory budget (keyed with a trailing slash) then suppresses it.
 func TestDirCrowded(t *testing.T) {
 	root := initRepo(t)
@@ -274,8 +274,8 @@ func TestCommandSince(t *testing.T) {
 	}
 }
 
-// A valid accept row excludes its over-budget file from the violation count and
-// records it in the separate accepted: section with its reason and a count, so the
+// A valid accept row excludes its over-budget file from the violation count. It
+// records it in the separate accepted: section with its reason and a count. The
 // suppression is per-file, reasoned on the page, and reversible — not a silent bump.
 func TestAcceptExcludesAndPrints(t *testing.T) {
 	root := initRepo(t)
@@ -319,7 +319,7 @@ func TestAcceptAbsentIsEmpty(t *testing.T) {
 	}
 }
 
-// A row with a path but no reason is malformed: reported and NOT honored, so the
+// A row with a path but no reason is malformed: reported and NOT honored. The
 // file it names stays counted — a reason is the price of acceptance.
 func TestAcceptMalformedRowNotHonored(t *testing.T) {
 	root := initRepo(t)
@@ -372,9 +372,9 @@ func TestAcceptWhitespacePathIsStale(t *testing.T) {
 }
 
 // ValidateAcceptGrants is the gate's observer of the two conditions the report only
-// narrates. `bench structure` prints a stale row and a reasonless row and still exits 0,
-// so a grant can outlive its file forever without anything going red; these assertions
-// pin that the conformance entry point sees them as diagnostics rather than as prose.
+// narrates. `bench structure` prints a stale row and a reasonless row and still exits
+// 0. So a grant can outlive its file forever without anything going red. These
+// assertions pin that the conformance entry point sees them as diagnostics, not prose.
 func TestValidateAcceptGrantsReportsStaleAndReasonlessRows(t *testing.T) {
 	root := initRepo(t)
 	write(t, root, "long.go", lines(401))
@@ -397,10 +397,10 @@ func TestValidateAcceptGrantsReportsStaleAndReasonlessRows(t *testing.T) {
 	}
 }
 
-// A tree with no grants is silence, not a finding: the conformance registry grades roots
-// that are not the kit at all, and a check that spoke up there would red an innocent tree.
-// The absent file also has to short-circuit before the tracked-source query, so a root
-// that is not a repository never reaches git.
+// A tree with no grants is silence, not a finding. The conformance registry grades roots
+// that are not the kit at all, and a check that spoke up there would red an innocent
+// tree. The absent file also has to short-circuit before the tracked-source query, so a
+// root that is not a repository never reaches git.
 func TestValidateAcceptGrantsSilentWithoutGrants(t *testing.T) {
 	root := t.TempDir()
 	if diags := ValidateAcceptGrants(root); len(diags) != 0 {
@@ -417,8 +417,8 @@ func containsLine(lines []string, want string) bool {
 	return false
 }
 
-// A present-but-unreadable accept file is LOUD — a non-zero result with a named line
-// — never a silently empty list at exit 0 (the FT29 false-empty defect). The forced
+// A present-but-unreadable accept file is LOUD: a non-zero result with a named line,
+// never a silently empty list at exit 0 (the FT29 false-empty defect). The forced
 // non-zero flows through the same count both the report and ViolationCount read.
 func TestAcceptUnreadableIsLoud(t *testing.T) {
 	if os.Geteuid() == 0 {

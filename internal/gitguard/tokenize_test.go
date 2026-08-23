@@ -6,8 +6,8 @@ import (
 )
 
 // TestTokenizeEdges pins the subtle lexing the 79-case matrix samples but cannot
-// exhaust: newline-as-separator, operator-token collapsing, malformed-quote fallback,
-// redirection stripping, and a quoted newline surviving into a wrapper word.
+// exhaust. It covers newline-as-separator, operator-token collapsing, malformed-quote
+// fallback, redirection stripping, and a quoted newline surviving into a wrapper word.
 func TestTokenizeEdges(t *testing.T) {
 	nl := "\n"
 	cases := []struct {
@@ -28,9 +28,9 @@ func TestTokenizeEdges(t *testing.T) {
 		{"malformed quote falls back, newline still a boundary", "git 'unbalanced" + nl + "git push", []string{"git", "'unbalanced", ";", "git", "push"}},
 		{"env assignment stays one token", "GIT_TRACE=1 git push", []string{"GIT_TRACE=1", "git", "push"}},
 		// `#` is an ordinary word char here, NOT a shlex comment — a deliberate,
-		// fail-safe divergence from the Python original (see tokenize.go): the tokens
+		// fail-safe divergence from the Python original (see tokenize.go). The tokens
 		// after `#` survive, so a `#`-commented destructive verb over-blocks rather than
-		// slipping through. Pins that the divergence stays intentional.
+		// slipping through. This pins that the divergence stays intentional.
 		{"hash is a word, not a comment", "echo hi # x", []string{"echo", "hi", "#", "x"}},
 		{"tilde and slashes stay in word", "git checkout HEAD~1 /tmp/x", []string{"git", "checkout", "HEAD~1", "/tmp/x"}},
 	}

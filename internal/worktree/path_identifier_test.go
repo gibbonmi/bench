@@ -10,9 +10,9 @@ var listPathAction = regexp.MustCompile(`bench worktree path (\S+),inspect activ
 
 // Every help row `bench worktree list` emits is an exact executable invocation, so the
 // identifier it prints has to be the one the resolver accepts. The row is authored from
-// the id column rather than the label because ids are unique and labels can collide, and
-// a follow-up that fails is worse than no follow-up at all: it is the only address an
-// agent has for a worktree it did not create.
+// the id column rather than the label, because ids are unique and labels can collide.
+// A follow-up that fails is worse than no follow-up at all.
+// It is the only address an agent has for a worktree it did not create.
 func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "advertised")
 	t.Chdir(root)

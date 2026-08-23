@@ -9,11 +9,12 @@ index: evaluating a change to the kit itself
 This is the shared middle of `/bench-update-kit` (upstream changes) and the
 learnings-sourced roadmap items `/bench-drain` queues (learnings changes).
 Those paths gather candidates and record results; this skill is what happens in
-between — the same discipline regardless of where a candidate came from. The root virtue is **anti-sediment**: the kit growing is a *cost*, and a change
+between — the same discipline regardless of where a candidate came from. The
+root virtue is **anti-sediment**: growth of the kit is a *cost*. A change
 earns its place only by filling a real gap, never because it reads well in isolation.
 
 The candidates arrive already tagged by origin (`upstream` or `learnings`). Keep the
-tag on every one through every step, so the proposal shows where each came from. It
+tag on every one through every step, so the proposal shows where each came from. This skill
 **proposes; the reviewer merges.**
 
 ## Respect closed decisions
@@ -21,9 +22,9 @@ tag on every one through every step, so the proposal shows where each came from.
 Drop every candidate the baseline already settled and that hasn't materially changed.
 A rejected item does not reopen on a cosmetic change — only a material change reopens
 it, and then you show the diff that justifies reopening. For `upstream`, that's a
-source repo whose technique actually moved; for `learnings`, an entry already
-resolved (pruned from the journal — its verdict lives in the integration commit)
-is not re-litigated. A loop that re-opens settled calls every
+source repo whose technique actually moved. For `learnings`, do not re-litigate an
+entry already resolved (pruned from the journal — its verdict lives in the
+integration commit). A loop that re-opens settled calls every
 run is worse than no loop.
 
 ## Assess — propose, don't decide
@@ -40,25 +41,25 @@ goodness-in-isolation. Present the proposed set with each item's origin tag.
 
 ## Three quality loops — all must pass before adoption
 
-Run in order; a change that fails a loop is pruned or sent back, not shipped.
+Run in order; prune or send back a change that fails a loop, never ship it.
 
 1. **Legibility loop.** Run `craft-skills` against each change. No-op?
    Duplicates an existing piece? Pushes the kit past its legibility ceiling? Cut or
    fold it.
-2. **Consistency loop.** Apply to a working copy, then re-run the staleness audit:
-   grep for invariant drift, broken cross-references, stale paths, app-specific
+2. **Consistency loop.** Apply to a working copy, then re-run the staleness audit.
+   Grep for invariant drift, broken cross-references, stale paths, app-specific
    leakage into core files, an out-of-date provenance table. Fix every hit.
 3. **Dogfood loop — the oracle.** Run a real shift on a real repo with the changed
-   kit: `/bench-write-spec` a small task, `bench shift`, confirm the gate gates, the hooks
-   fire, `bench gate` ends green. A change that reads well but breaks a real run is
-   rejected. If you can't run a dogfood shift, the synthesis is **not complete** — say
-   so rather than adopting on paper. The kit does not grade its own update; a run does.
+   kit: `/bench-write-spec` a small task, `bench shift`, confirm the gate grades the
+   tree, the hooks fire, `bench gate` ends green. Reject a change that reads well but
+   breaks a real run. If you can't run a dogfood shift, the synthesis is **not complete** —
+   say so rather than adopt on paper. The kit does not grade its own update; a run does.
    A candidate that changes a skill or command trigger needs the dogfood run in a
-   fresh session, because this session loaded those surfaces before the edit.
-   Proportionality: a prose-only change — no hook, gate, CLI, or adapter touched —
-   may substitute a green gate verdict plus a read of every surface the prose
-   steers for the full shift; say which verification ran. Take that verdict from
-   the commit itself — `bench commit` gates the tree it lands, so a `bench gate`
+   fresh session. That is because this session loaded those surfaces before the edit.
+   Proportionality: a prose-only change (no hook, gate, CLI, or adapter touched)
+   may replace the full shift with a green gate verdict plus a read of every surface
+   the prose steers. Say which verification ran. Take that verdict from
+   the commit itself — `bench commit` gates the tree it lands. A `bench gate`
    run before it grades the same tree twice and pays the oracle twice. Reach for
    the standalone gate only when you need a verdict *without* a commit: a batch
    awaiting approval, or a red under diagnosis. Anything that touches behavior
@@ -67,7 +68,8 @@ Run in order; a change that fails a loop is pruned or sent back, not shipped.
 ## Propose; the reviewer merges
 
 Never auto-apply. After the loops pass and the reviewer has signed off, hand back to
-the calling path to record the result — `/bench-update-kit` to the current provenance
-table; a learnings-sourced build into the fixed artifact and the retired roadmap row.
+the calling path to record the result. For `/bench-update-kit`, the result is the
+current provenance table; for a learnings-sourced build, it is the fixed artifact
+and the retired roadmap row.
 User-visible behavior also gets one concise, typed `CHANGELOG.md` entry. The approved
 commit is the historical record; the merge is the reviewer's.

@@ -12,26 +12,26 @@ import (
 	"testing"
 )
 
-// dispatchFile is the one file that decides which subcommand names exist, and
-// dispatchRegistry is the identifier of the composite literal that carries them.
+// dispatchFile is the one file that decides which subcommand names exist. dispatchRegistry
+// is the identifier of the composite literal that carries them.
 const (
 	dispatchFile     = "cmd/bench/main.go"
 	dispatchRegistry = "commandRegistry"
 )
 
 // grammarPkg and grammarSel name the single owner of arity, flag recognition, `--`, and
-// help. A subcommand recorded as routed must reference it; anything else is hand-rolling a
-// second grammar. grammarHelper is the spelling the diagnostics use, derived from the two
-// halves the check matches on so the message can never name something else.
+// help. A subcommand recorded as routed must reference it; anything else hand-rolls a
+// second grammar. grammarHelper is the spelling the diagnostics use. The check derives it
+// from the two halves it matches on, so the message can never name something else.
 const (
 	grammarPkg    = "usage"
 	grammarSel    = "Parse"
 	grammarHelper = grammarPkg + "." + grammarSel
 )
 
-// routingEntry records how one dispatch name answers for its argument grammar: Pkg names
-// the directory whose entry point must reach the helper, or Exempt states why this name is
-// not required to.
+// routingEntry records how one dispatch name answers for its argument grammar. Pkg names
+// the directory whose entry point must reach the helper. Exempt instead states why this
+// name does not need to.
 type routingEntry struct {
 	Pkg    string
 	Exempt string
@@ -40,16 +40,16 @@ type routingEntry struct {
 func routed(pkg string) routingEntry { return routingEntry{Pkg: pkg} }
 func exempt(why string) routingEntry { return routingEntry{Exempt: why} }
 
-// Reasons shared by a whole class of dispatch names, so the class is stated once.
+// Each reason applies to a whole class of dispatch names, so the file states the reason once.
 const (
 	whyPlumbing = "hook- and adapter-driven plumbing: its argv is produced by the kit, never typed by an agent, so there is no misuse for a grammar to report"
 	whyNested   = "dispatches a subcommand tree rather than a flat argv; each leaf owns its own grammar"
 )
 
 // subcommandRouting is the explicit registry the routing check grades cmd/bench/main.go
-// against. It is deliberately exhaustive rather than a list of the interesting cases: a
-// name reaching either dispatch surface with no row here is red, which is what makes the
-// check fail closed against the next subcommand somebody adds.
+// against. It is deliberately exhaustive, not a list of only the interesting cases. A name
+// reaching either dispatch surface with no row here turns red. This makes the check fail
+// closed against the next subcommand someone adds.
 var subcommandRouting = map[string]routingEntry{
 	"anchors":   routed("cmd/bench"),
 	"commands":  routed("cmd/bench"),
@@ -65,8 +65,8 @@ var subcommandRouting = map[string]routingEntry{
 	"models":    routed("internal/models"),
 	"outline":   routed("internal/outline"),
 	"preflight": routed("internal/preflight"),
-	// prep-release takes a flat argv with no subcommand tree, so it is routed rather
-	// than exempt like the release commands beside it in the dispatch switch.
+	// prep-release takes a flat argv with no subcommand tree. It is routed, not exempt
+	// like the release commands beside it in the dispatch switch.
 	"prep-release": routed("internal/preprelease"),
 	"roadmap":      routed("internal/roadmap"),
 	"skills-index": routed("internal/skillsindex"),
@@ -109,11 +109,10 @@ var subcommandRouting = map[string]routingEntry{
 	"help":    exempt("takes no arguments: the command prints the top-level inventory and returns"),
 }
 
-// checkSubcommandRouting grades every dispatched subcommand name against the registry
-// above. A check that inspected only the names it already knows would pass vacuously on
-// exactly the case it exists to catch — the subcommand somebody just added — so the names
-// come from the dispatch file itself, read from both of its surfaces, and an unlisted one
-// is a violation.
+// checkSubcommandRouting grades every dispatched subcommand name against the registry above.
+// A check that inspected only known names would pass vacuously on the exact case it exists
+// to catch: the subcommand someone just added. So the names come from the dispatch file
+// itself, read from both of its surfaces, and an unlisted name is a violation.
 func checkSubcommandRouting(root string) []string {
 	path := filepath.Join(root, filepath.FromSlash(dispatchFile))
 	body := readIfExists(path)
@@ -137,7 +136,7 @@ func checkSubcommandRouting(root string) []string {
 		if entry.Exempt != "" {
 			continue
 		}
-		// The routed claim is verified only where the package is present: a canary
+		// The routed claim is verified only where the package is present. A canary
 		// fixture materializes the dispatch file without the tree behind it, and a
 		// partial tree must not manufacture violations it cannot answer for.
 		if pkg := filepath.Join(root, filepath.FromSlash(entry.Pkg)); exists(pkg) && !packageReachesGrammar(pkg) {
@@ -158,8 +157,8 @@ type commandRegistryEntry struct {
 }
 
 // parseCommandRegistry owns the syntax shared by registry-backed conformance checks. It
-// locates the named variable exactly once and preserves entry and repeated-field order; each
-// check remains responsible for the meaning of the fields it consumes.
+// locates the named variable exactly once and preserves entry and repeated-field order.
+// Each check stays responsible for the meaning of the fields it consumes.
 func parseCommandRegistry(path, body string) ([]commandRegistryEntry, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, body, 0)
@@ -315,10 +314,10 @@ func stringLiteral(expr ast.Expr) (string, bool) {
 
 // packageReachesGrammar reports whether any non-test Go source directly in dir carries a
 // real reference to the grammar helper, read through the AST. Every routed package's
-// grammar doc comment names the helper in prose, so a text search would stay green on
-// exactly the state this check exists to catch: the call deleted and the comment left
-// behind. The entry point and its grammar declaration live in the same package, so a
-// directory-level read is enough and no import graph has to be resolved.
+// grammar doc comment names the helper in prose. A text search would stay green on exactly
+// the state this check exists to catch: the call deleted and the comment left behind. The
+// entry point and its grammar declaration live in the same package, so a directory-level
+// read is enough. The check does not need to resolve an import graph.
 func packageReachesGrammar(dir string) bool {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -360,13 +359,15 @@ func fileReachesGrammar(path string) bool {
 	return found
 }
 
-// TestSubcommandRoutingRegistryBites is the recorded bite proof for
-// checkSubcommandRouting (per craft-gate). It runs against a synthetic dispatch file, not
-// the repo tree, and walks the states that matter: every dispatched name registered, an
-// unregistered name added to the registry, a registered row the synthetic registry omits,
-// and a same-shaped composite literal under a different identifier — because reading the
-// wrong surface, missing the no-longer-dispatched arm, or matching by literal shape instead
-// of by the commandRegistry identifier would each pass this exact case unnoticed.
+// TestSubcommandRoutingRegistryBites is the recorded bite proof for checkSubcommandRouting.
+// It runs against a synthetic dispatch file, not the repo tree, and walks the states that
+// matter:
+// - every dispatched name registered
+// - an unregistered name added to the registry
+// - a registered row the synthetic registry omits
+// - a same-shaped composite literal under a different identifier
+// Reading the wrong surface, missing the no-longer-dispatched arm, or matching by literal
+// shape instead of the commandRegistry identifier would each pass this exact case unnoticed.
 func TestSubcommandRoutingRegistryBites(t *testing.T) {
 	root := t.TempDir()
 	write := func(body string) {
@@ -378,11 +379,11 @@ func TestSubcommandRoutingRegistryBites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	// One registered name per disposition: "maps" is a routed row and "version" an exempt
-	// one, so a clean run proves both dispositions pass rather than only the exempt
+	// One registered name covers each disposition: maps is a routed row, and version is
+	// an exempt one. A clean run then proves both dispositions pass, not only the exempt
 	// shortcut. Every other real registry row is absent from this synthetic file, so the
-	// check's own "registry names a name the dispatch file no longer dispatches" arm fires
-	// for them; the second assertion below checks that arm still fires for one of them.
+	// check's own no-longer-dispatches arm fires for them. The second assertion below
+	// confirms that arm still fires for one of them.
 	clean := "package main\n\ntype commandDefinition struct {\n\tName string\n}\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"maps\"},\n\t{Name: \"version\"},\n}\n"
 
 	write(clean)
@@ -399,9 +400,9 @@ func TestSubcommandRoutingRegistryBites(t *testing.T) {
 		t.Fatalf("unregistered registry name: want a diagnostic naming newname, got %v", checkSubcommandRouting(root))
 	}
 
-	// A second composite literal beside commandRegistry, of the same element shape but
-	// under a different identifier: extraction that matched any composite literal rather
-	// than the commandRegistry identifier specifically would read this decoy's name too.
+	// A second composite literal sits beside commandRegistry, with the same element shape
+	// but a different identifier. Extraction that matched any composite literal, not the
+	// commandRegistry identifier specifically, would read this decoy's name too.
 	decoy := strings.Replace(clean,
 		"var commandRegistry = []commandDefinition{\n\t{Name: \"maps\"},\n\t{Name: \"version\"},\n}\n",
 		"var commandRegistry = []commandDefinition{\n\t{Name: \"maps\"},\n\t{Name: \"version\"},\n}\n\nvar decoyRegistry = []commandDefinition{\n\t{Name: \"decoyname\"},\n}\n",
@@ -412,9 +413,9 @@ func TestSubcommandRoutingRegistryBites(t *testing.T) {
 	}
 }
 
-// TestSubcommandRoutingRoutedClaimBites proves the routed disposition is verified rather
-// than merely asserted: a package recorded as routed that no longer reaches the grammar
-// helper is reported.
+// TestSubcommandRoutingRoutedClaimBites proves the routed disposition is verified, not
+// merely asserted. A package recorded as routed that no longer reaches the grammar helper
+// is reported.
 func TestSubcommandRoutingRoutedClaimBites(t *testing.T) {
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "cmd", "bench"), 0o755); err != nil {
@@ -443,9 +444,9 @@ func TestSubcommandRoutingRoutedClaimBites(t *testing.T) {
 		t.Fatalf("package no longer reaching the helper: want a routed-claim diagnostic, got %v", checkSubcommandRouting(root))
 	}
 
-	// The state a textual search cannot see: the call deleted, the doc comment that
-	// names the helper left behind. Every routed package carries such a comment, so a
-	// substring check would pass this exact case vacuously.
+	// This is the state a textual search cannot see: the call deleted, the doc comment
+	// that names the helper left behind. Every routed package carries such a comment, so
+	// a substring check would pass this exact case vacuously.
 	mentionOnly := "package maps\n\n// The declared argument shape usage.Parse enforces lives here.\nconst helper = \"usage.Parse\"\n"
 	if err := os.WriteFile(filepath.Join(pkg, "maps.go"), []byte(mentionOnly), 0o644); err != nil {
 		t.Fatal(err)

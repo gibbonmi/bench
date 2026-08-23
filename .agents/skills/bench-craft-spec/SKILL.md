@@ -18,67 +18,69 @@ Turn the authorized decision source and what you know of the codebase into
 
 ## User stories
 
-A long, numbered, extensive breadth floor grouped by outcome: one story per
-actor-want-benefit — `As an <actor>, I want <feature>, so that <benefit>` — for
-every behavior, edge, and reviewed exclusion the source promises; partial
-redundancy is the point. A story is a want, never an engineering layer
-(`craft-tickets` owns slice sizing); each group carries one `Line:`.
+Write a long, numbered list grouped by outcome, with an extensive breadth floor. One story per
+actor-want-benefit — `As an <actor>, I want <feature>, so that <benefit>` — covers every behavior, edge,
+and reviewed exclusion the source promises. Partial redundancy is the point. A story is a want, never an
+engineering layer (`craft-tickets` owns slice sizing). Each group carries one `Line:`.
 
 ## The acceptance coverage map
 
-Each row ties a story to one observable behavior at a seam: `story`,
-`behavior`, `seam`, `why it catches the failure`. An optional leading `row`
-column opts the spec into ticket covers traceability (new specs default to it).
-`bench coverage --check` refuses a row that references more than four stories or
-states two predicates (`;`), and a declared story no row references unless a
-`Not covered: story <n> — <reason>` line sits under the map.
-Name the cheapest wrong implementation per story and the row that goes red on
-it (across fences, the composition degenerate through the real producer);
-enumerate every quantifier; every source behavior becomes a row or an exception.
+Each row ties a story to one observable behavior at a seam: `story`, `behavior`, `seam`, `why it catches the failure`.
+An optional leading `row` column opts the spec into ticket covers traceability (new specs
+default to it). `bench coverage --check` refuses a row that references more than four stories, and it
+refuses a row that states two predicates (`;`). It also refuses a declared story that no row references,
+unless a `Not covered: story <n> — <reason>` line sits under the map.
+Name the cheapest wrong implementation per story. Name the row that goes red on it, across fences and through the composition
+degenerate to the real producer.
+
+Enumerate every quantifier; every source behavior becomes a row or an exception.
 
 ## The edge inventory
 
-`craft-tdd` walks the canonical edge classes at the seam. Attach the profile's
-hostile-input checklist to that walk, and give each edge the reviewer
-deliberately excludes a one-line **Won't handle** with a surviving in-scope
-caller.
+`craft-tdd` walks the canonical edge classes at the seam. Attach the profile's hostile-input checklist to
+that walk. Give each edge the reviewer deliberately excludes a one-line **Won't handle** with a surviving
+in-scope caller.
 
 ## Bootstrap authority before execution
 
-A trusted-execution or refusal-before-execution claim traces every executable
-hop, naming how each validator authenticates the next executable
-before launching the next executable. A path, record, digest, or executable
-cannot authenticate itself. Without an independent trust root the design is
-incomplete; see `references/bootstrap-authority.md`.
+A trusted-execution or refusal-before-execution claim traces every executable hop, naming how each
+validator authenticates the next executable before launching the next executable. A path, record, digest,
+or executable cannot authenticate itself. Without an independent trust root the design is incomplete; see
+`references/bootstrap-authority.md`.
 
 ## Scope cuts
 
-Price every cut as `<n> edits, <n> gate runs`; a cut must be a separate capability with its own future spec, never "the rest of this feature".
+Price every cut as `<n> edits, <n> gate runs`. A cut must be a separate capability with its own future
+spec, never "the rest of this feature".
 
 ## Slicing a build for delegates
 
 Record **who-writes-where** ownership fences at spec time, checkable at charge
-time. A fence entry is an exact repo-relative file or path prefix, never a glob or an
-implementation ticket, and an empty or invalid fence section is incomplete.
-`craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket
-receives the spec's fence. Each fence carries value contracts across it: a contract between tickets is
-stated in the ticket's `What to build` and `Acceptance`, re-derived from the
-tree by review rather than trusted from the ticket's account.
+time. A fence entry is an exact repo-relative file or path prefix, never a glob
+or an implementation ticket. An empty or invalid fence section is incomplete.
 
-After a pass touching many sections, reread the complete artifact end to end and reconcile contradictions before handing off.
+`craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket receives the spec's fence. Each
+fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build`
+and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
+
+After a pass that touches many sections, reread the complete artifact end to end and reconcile contradictions
+before the handoff.
 
 ## Review rubric
 
-The round asks: would the cheapest wrong implementation pass, does every source behavior have a
-red-capable row, does every line match cached routing, does any behavior, why-it-catches clause, or
-decision answer name an outcome family instead of an exact predicate, and are the source and observed
-reds sound even when the source is same-session, conflicting, or mostly not observed? The degenerate
-standard is the cheapest plausible wrong implementation — a degenerate that needs deliberate
-contrivance is the build's mutation-probe target, never a new spec row. A finding blocks only when it
-changes observable behavior, an ownership fence, or the ticket graph; a round returning only prose or
-accounting findings is the acceptance round — fold those fixes into the acceptance instead of another
-round. A revision may not add a promise beyond the decision source unless a blocking finding demands
-it; the review flags an unflagged addition for removal rather than demanding rows for it.
+The round asks five questions:
+- Would the cheapest wrong implementation pass?
+- Does every source behavior have a red-capable row?
+- Does every line match cached routing?
+- Does any behavior, why-it-catches clause, or decision answer name an outcome family instead of an exact predicate?
+- Are the source and observed reds sound even when the source is same-session, conflicting, or mostly not observed?
+
+The degenerate standard is the cheapest plausible wrong implementation — a degenerate that needs deliberate
+contrivance is the build's mutation-probe target, never a new spec row. A finding blocks only when it changes
+observable behavior, an ownership fence, or the ticket graph. A round that returns only prose or accounting
+findings is the acceptance round. Fold those fixes into the acceptance instead of another round. A revision
+may not add a promise beyond the decision source unless a blocking finding demands it. The review flags an
+unflagged addition for removal rather than demanding rows for it.
 
 ## Template
 
@@ -142,8 +144,9 @@ Each genuine separate capability includes its derived
 ## Further notes
 ```
 
-Before a build starts, emit a scannable approval table covering stories and
-their lines, seam diagrams, acceptance coverage including edge dispositions,
-ownership fences with an explicit reviewer disposition, and out of scope. Pause
-for sign-off. The user stories set breadth, engineering
-seams place tests, and the gate defines done.
+Before a build starts, emit a scannable approval table. The table covers
+stories and their lines, seam diagrams, acceptance coverage including edge
+dispositions, ownership fences with an explicit reviewer disposition, and out
+of scope. Pause for sign-off. The user stories set breadth, engineering seams
+place tests, and the gate defines done.
+

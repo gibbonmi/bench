@@ -1,8 +1,8 @@
 [
   {
     "path": ".agents/skills/bench-craft-spec/SKILL.md",
-    "old": "fence entry is an exact repo-relative file or path prefix, never a glob or an\nimplementation ticket, and an empty or invalid fence section is incomplete.\n",
-    "new": "A fence entry remains checkable at charge time, and an empty or invalid fence section is incomplete.\n"
+    "old": "A fence entry is an exact repo-relative file or path prefix, never a glob\nor an implementation ticket.",
+    "new": "A fence entry remains checkable at charge time."
   },
   {
     "path": ".agents/skills/bench-craft-spec/SKILL.md",

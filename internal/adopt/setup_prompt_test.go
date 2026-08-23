@@ -15,7 +15,7 @@ import (
 // prompt-I/O unit seam, plus the single-confirm default for an ambiguity-free plan.
 
 // TestAskQuestionsSequencing drives the low-level sequencing function directly with a
-// synthetic two-question set — proving order and per-question application without
+// synthetic two-question set. This proves order and per-question application without
 // depending on setup ever growing a second real ambiguity source.
 func TestAskQuestionsSequencing(t *testing.T) {
 	var order []string
@@ -111,9 +111,9 @@ func TestSetupInteractiveSingleConfirm(t *testing.T) {
 	}
 }
 
-// TestSetupInteractiveResolvesAmbiguityOneAtATime proves a genuinely ambiguous plan on
-// a real TTY asks the open question before the single confirm, and the chosen answer
-// lands in the written gate.sh.
+// TestSetupInteractiveResolvesAmbiguityOneAtATime proves a genuinely ambiguous plan on a
+// real TTY asks the open question before the single confirm. The chosen answer lands in
+// the written gate.sh.
 func TestSetupInteractiveResolvesAmbiguityOneAtATime(t *testing.T) {
 	root := setupPromptTestRepo(t)
 	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"name":"fixture","scripts":{"test":"echo ok"}}`+"\n"), 0o644); err != nil {
@@ -155,9 +155,9 @@ func setupPromptTestRepo(t *testing.T) string {
 	return root
 }
 
-// setupBareTestRepo is setupPromptTestRepo without the go.mod: a zero-signal
-// repository carrying no build-system file at all, which is what the seeded gate
-// input manifest has to survive alongside the fail-closed gate stub.
+// setupBareTestRepo is setupPromptTestRepo without the go.mod: a zero-signal repository
+// carrying no build-system file at all. This is what the seeded gate input manifest has
+// to survive alongside the fail-closed gate stub.
 func setupBareTestRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()

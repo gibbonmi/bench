@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// mustAcquire leases a fresh linked pool worktree from root, matching the
+// mustAcquire leases a fresh linked pool worktree from root. It matches the
 // shift-charged worktree shape: a real `git worktree add`, a lease file at
 // LeaseFile, reset and cleaned.
 func mustAcquire(t *testing.T, root string) string {
@@ -19,10 +19,10 @@ func mustAcquire(t *testing.T, root string) string {
 	return wt
 }
 
-// TestRetainAndLockLocksDropsLeaseAndPreservesDirt pins the shift's preservation path: after
-// RetainAndLock, `git worktree list --porcelain` reports the path locked with
-// the given reason, the pool lease file is gone, and the dirty file on disk is
-// untouched — no reset, no clean, no release.
+// TestRetainAndLockLocksDropsLeaseAndPreservesDirt pins the shift's preservation
+// path. After RetainAndLock, `git worktree list --porcelain` reports the path
+// locked with the given reason, and the pool lease file is gone. The dirty
+// file on disk stays untouched: no reset, no clean, no release.
 func TestRetainAndLockLocksDropsLeaseAndPreservesDirt(t *testing.T) {
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))

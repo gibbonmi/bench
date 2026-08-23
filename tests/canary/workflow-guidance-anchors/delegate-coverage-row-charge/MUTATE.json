@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/skills/bench-craft-delegate/SKILL.md",
-    "old": "A write-delegation from a spec carries its stories' coverage rows — behavior,\nseam, why it catches the failure — every time, and requires the delegate to\nshow each row red before the edit and green after;",
-    "new": "A write-delegation from a spec requires the delegate to\nshow each row red before the edit and green after;"
+    "old": "A write-delegation from a spec carries its stories' coverage rows every time — behavior, seam, why\nit catches the failure. It requires the delegate to show each row red before the edit and green\nafter.",
+    "new": "A write-delegation from a spec requires the delegate to show each row red before the edit and green\nafter."
   }
 ]

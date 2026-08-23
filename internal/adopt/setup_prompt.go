@@ -8,20 +8,20 @@ import (
 	"strings"
 )
 
-// setupQuestion is one genuine ambiguity setup cannot infer on its own: a labelled
-// prompt with an ordered list of candidate answers. Adding a second ambiguity source
-// beyond the gate-inference table (FT76 story 9) is one more entry in
-// setupQuestionSet, not a second sequencing mechanism — askSetupQuestions and
-// askQuestions stay the one seam every ambiguity resolves through.
+// setupQuestion is one genuine ambiguity setup cannot infer on its own: a labelled prompt
+// with an ordered list of candidate answers. Adding a second ambiguity source beyond the
+// gate-inference table is one more entry in setupQuestionSet, not a second sequencing
+// mechanism. askSetupQuestions and askQuestions stay the one seam every ambiguity
+// resolves through.
 type setupQuestion struct {
 	prompt  string
 	options []string
 	apply   func(choice int, facts *setupFacts)
 }
 
-// setupQuestionSet builds every open question this slice knows how to ask, from the
-// same facts the preview and the gate table already derive from — one source, so the
-// question text setup prints here never drifts from detectGateCandidates.
+// setupQuestionSet builds every open question this slice knows how to ask, from the same
+// facts the preview and the gate table already derive from. This one source keeps the
+// question text setup prints here from drifting from detectGateCandidates.
 func setupQuestionSet(facts setupFacts) []setupQuestion {
 	if len(facts.gateCandidates) < 2 {
 		return nil
@@ -40,11 +40,11 @@ func setupQuestionSet(facts setupFacts) []setupQuestion {
 	}}
 }
 
-// askSetupQuestions asks every genuine ambiguity in facts one at a time over the
-// injected reader/writer (FT76 story 3): an ambiguity-free plan calls this with zero
-// questions and returns facts unchanged, so the only interaction left is the single
-// final confirm. reader is shared with the confirm prompt that follows so a single
-// bufio buffer never strands an already-typed confirm answer.
+// askSetupQuestions asks every genuine ambiguity in facts one at a time over the injected
+// reader/writer. An ambiguity-free plan calls this with zero questions and returns facts
+// unchanged, so the only interaction left is the single final confirm. reader is shared
+// with the confirm prompt that follows, so a single bufio buffer never strands an
+// already-typed confirm answer.
 func askSetupQuestions(facts setupFacts, reader *bufio.Reader, stdout io.Writer) (setupFacts, error) {
 	if err := askQuestions(setupQuestionSet(facts), &facts, reader, stdout); err != nil {
 		return facts, err
@@ -53,7 +53,7 @@ func askSetupQuestions(facts setupFacts, reader *bufio.Reader, stdout io.Writer)
 }
 
 // askQuestions asks each question in qs in order, applying its answer to facts before
-// moving to the next — the one-at-a-time sequencing story 3 asks for, and the seam the
+// moving to the next. This is the one-at-a-time sequencing setup needs, and the seam the
 // unit tests drive directly with a synthetic question list.
 func askQuestions(qs []setupQuestion, facts *setupFacts, reader *bufio.Reader, stdout io.Writer) error {
 	for _, q := range qs {

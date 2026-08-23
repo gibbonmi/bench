@@ -1,6 +1,7 @@
 // render.go is the pure half of the dashboard: the sanitized view projection, the
-// HTML renderer, and the one self-contained page template. No IO, no clock, no git —
-// Command (dashboard.go) gathers the Snapshot; everything here is a function of it.
+// HTML renderer, and the one self-contained page template. It uses no IO, no clock,
+// and no git. Command, in dashboard.go, gathers the Snapshot. Everything here is a
+// function of that Snapshot.
 package dashboard
 
 import (
@@ -13,12 +14,14 @@ import (
 )
 
 // view is the sanitized, render-ready projection of a Snapshot. Every git- and file-sourced
-// string is run through sanitize.Controls before it lands here, so the template only ever
-// escapes control-byte-free text — control-rune escaping is the one step html/template does
-// not do. RoadmapText and Sequence are the exception: they render inside <pre>, where
-// html/template's markup neutralization is enough on its own, so they route through
-// sanitize.Preformatted instead, which keeps newline and tab literal so the panel's layout
-// survives while still escaping every other control rune.
+// string passes through sanitize.Controls before it lands here, so the template only ever
+// escapes control-byte-free text. Control-rune escaping is the one step html/template does
+// not do. RoadmapText and Sequence are the exception.
+//
+// RoadmapText and Sequence render inside <pre>, where html/template's markup
+// neutralization is enough on its own. They route through sanitize.Preformatted instead.
+// sanitize.Preformatted keeps newline and tab literal, so the panel's layout survives. It
+// still escapes every other control rune.
 type view struct {
 	GeneratedAt    string
 	HasGate        bool
@@ -42,12 +45,14 @@ type signalView struct{ Name, Detail, Action string }
 
 type worktreeView struct{ Class, Path string }
 
-// Render turns a Snapshot into the complete self-contained HTML document. It is pure: it
-// reads nothing but its argument. Escaping is contextual (html/template neutralizes markup
-// and quote injection in every interpolated field) plus a control-rune pass the template
-// cannot do itself — sanitize.Controls for every field, sanitize.Preformatted for the two
-// <pre>-rendered fields so their layout survives. A template-execution error is a
-// template-source bug, unreachable from repo data, so the seam stays a total function.
+// Render turns a Snapshot into the complete self-contained HTML document. It is pure.
+// It reads nothing but its argument. Escaping is contextual. html/template neutralizes
+// markup and quote injection in every interpolated field.
+//
+// Render adds a control-rune pass the template cannot do itself. sanitize.Controls
+// covers every field. sanitize.Preformatted covers the two <pre>-rendered fields, so
+// their layout survives. A template-execution error is a template-source bug,
+// unreachable from repo data, so the seam stays a total function.
 func Render(s Snapshot) string {
 	v := view{
 		GeneratedAt:    s.GeneratedAt.Format(time.RFC3339),
@@ -88,16 +93,17 @@ func Render(s Snapshot) string {
 	}
 	var b strings.Builder
 	if err := pageTemplate.Execute(&b, v); err != nil {
-		// Unreachable from repo data: the template is a compiled-in constant, so an error
-		// here is a source bug, not an input condition. Return whatever was written.
+		// Unreachable from repo data: the template is a compiled-in constant. An error
+		// here is a source bug, not an input condition. Render returns whatever was written.
 		return b.String()
 	}
 	return b.String()
 }
 
 // gateAge renders how long before generation the gate ran, from the cache timestamp. It is
-// pure — the "now" is the injected generation time, never the wall clock. An absent or
-// unparseable timestamp, or a future one, yields the empty string, which the template omits.
+// pure. The "now" is the injected generation time, never the wall clock. An absent or
+// unparseable timestamp, or a future one, yields the empty string. The template omits the
+// empty string.
 func gateAge(generatedAt time.Time, timestamp string) string {
 	if timestamp == "" {
 		return ""
@@ -121,9 +127,10 @@ func gateAge(generatedAt time.Time, timestamp string) string {
 	}
 }
 
-// pageTemplate is the one self-contained document: inline <style> only (light + a
-// prefers-color-scheme dark palette), neutral typography, no external request, no
-// JavaScript. Every interpolated field is auto-escaped by html/template in its context.
+// pageTemplate is the one self-contained document. It uses inline <style> only, with a
+// light palette and a prefers-color-scheme dark palette, neutral typography, no external
+// request, and no JavaScript. html/template auto-escapes every interpolated field in its
+// context.
 var pageTemplate = template.Must(template.New("dashboard").Parse(pageHTML))
 
 const pageHTML = `<!DOCTYPE html>

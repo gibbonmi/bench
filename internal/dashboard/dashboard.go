@@ -1,15 +1,16 @@
-// Package dashboard ports `bench dashboard`: it renders one self-contained static HTML
-// snapshot of the project board — the gate verdict, the ambient signals, the roadmap and
-// its recommended sequence, the parked ideas, the open-learnings count, and the worktree
-// pool — for a human to open in a browser. It is a consumer of the existing readers, never
-// a new source: the Snapshot is composed from status.Signals / status.GateVerdict, the
-// roadmap readers, and the worktree classifier, so the page can never diverge from what
-// the CLI surfaces already report.
+// Package dashboard implements `bench dashboard`. It renders one self-contained static
+// HTML snapshot of the project board. The page shows the gate verdict, the ambient
+// signals, the roadmap and its sequence, the parked ideas, the open-learnings count, and
+// the worktree pool. A human opens this page in a browser.
 //
-// Render is a pure function of its Snapshot — no IO, no clock, no git — so every case,
+// The package consumes the existing readers. It never adds a new source. The Snapshot is
+// composed from status.Signals, status.GateVerdict, the roadmap readers, and the worktree
+// classifier. So the page can never diverge from what the CLI surfaces already report.
+//
+// Render is a pure function of its Snapshot: no IO, no clock, no git. So every case,
 // including hostile input, is testable without a browser or a repo. Command gathers the
-// Snapshot (the one place IO and the wall clock live), renders it, and either writes the
-// file atomically under the git dir or emits it on stdout for `--stdout`.
+// Snapshot, the one place IO and the wall clock live. Command then renders it. It either
+// writes the file atomically under the git dir, or emits it on stdout for `--stdout`.
 package dashboard
 
 import (
@@ -25,17 +26,18 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
-// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+// grammar is the declared argument shape usage.Parse enforces for this subcommand.
+// Arity, flag recognition, `--`, and help all come from there, instead of a local
+// switch.
 var grammar = usage.Grammar{
 	Cmd:   "bench dashboard",
 	Help:  "usage: bench dashboard [--stdout]",
 	Flags: []usage.Flag{{Name: "--stdout"}},
 }
 
-// Snapshot is the complete data the page renders — everything time- or environment-
-// dependent gathered up front so Render stays pure. It is assembled by gather from the
-// existing readers and is hand-constructible in tests.
+// Snapshot is the complete data the page renders. It gathers everything time- or
+// environment-dependent up front, so Render stays pure. gather assembles it from the
+// existing readers. A test can construct it by hand.
 type Snapshot struct {
 	GeneratedAt    time.Time
 	Gate           status.GateInfo
@@ -46,17 +48,19 @@ type Snapshot struct {
 	Ideas          []string
 	OpenLearnings  int
 	Worktrees      []worktree.Registered
-	// WorktreesErr carries the git worktree-list query's error when the classify
-	// itself failed, so Render can show the failure rather than an empty pool pane
-	// that would otherwise read as "no worktrees" — the false-empty class FT29 swept.
+	// WorktreesErr carries the git worktree-list query's error, for when the classify
+	// step itself fails. Render then shows the failure, instead of an empty pool pane
+	// that would otherwise read as "no worktrees" (the false-empty class from FT29).
 	WorktreesErr string
 }
 
-// Command implements `bench dashboard [--stdout]`. With no argument it writes the rendered
-// page atomically to `<git-dir>/bench-dashboard.html` and prints that path (exit 0);
-// `--stdout` emits the HTML on stdout and writes nothing. `--stdout` is the only accepted
-// flag — any other argument is a usage error (exit 2); outside a git repository is the
-// structured not-in-repo error (exit 1), so a bad invocation never writes a stray file.
+// Command implements `bench dashboard [--stdout]`. With no argument, Command writes the
+// rendered page atomically to `<git-dir>/bench-dashboard.html`. Command then prints that
+// path, exit 0. `--stdout` emits the HTML on stdout instead. It writes nothing else.
+//
+// `--stdout` is the only accepted flag. Any other argument gives a usage error, exit 2.
+// Outside a git repository, Command gives the structured not-in-repo error, exit 1. So a
+// bad invocation never writes a stray file.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -82,14 +86,14 @@ func Command(args []string) (string, int) {
 	return target + "\n", 0
 }
 
-// gather composes the Snapshot from the existing readers — the one place IO and the wall
-// clock enter. It never re-parses a source: the signals ladder and the gate verdict come
-// from internal/status, the roadmap text/sequence, ideas, and learnings count from
-// internal/roadmap, and the worktree pool from the shared classifier.
+// gather composes the Snapshot from the existing readers. This is the one place IO and
+// the wall clock enter. gather never re-parses a source. The signals ladder and the gate
+// verdict come from internal/status. The roadmap text, sequence, ideas, and learnings
+// count come from internal/roadmap. The worktree pool comes from the shared classifier.
 func gather(root string) Snapshot {
 	text, present := roadmap.RoadmapText(root)
-	// The dashboard renders the count only; a failed learnings read degrades to 0 here,
-	// matching drainStatus's posture (the status board owns the fail-closed unknown row).
+	// The dashboard renders the count only. A failed learnings read degrades to 0 here,
+	// matching drainStatus's posture. The status board owns the fail-closed unknown row.
 	drain := roadmap.DrainCounts(root)
 	registered, werr := worktree.ClassifyRegisteredWorktrees(root)
 	snap := Snapshot{
@@ -109,7 +113,7 @@ func gather(root string) Snapshot {
 	return snap
 }
 
-// poolWorktrees drops the repo root — the expected primary checkout — and keeps the pool
+// poolWorktrees drops the repo root, the expected primary checkout. It keeps the pool
 // entries a reviewer wants to see: out-of-pool, leased, and warm worktrees.
 func poolWorktrees(regs []worktree.Registered) []worktree.Registered {
 	var out []worktree.Registered
@@ -123,9 +127,9 @@ func poolWorktrees(regs []worktree.Registered) []worktree.Registered {
 }
 
 // atomicWrite renders to a sibling temp file in the target's directory, then renames it
-// over the target — so an interrupt mid-write never leaves a half-written page at the
-// published path and a reader never sees a partial file. On any error the temp is removed,
-// leaving no leftover scratch.
+// over the target. So an interrupt mid-write never leaves a half-written page at the
+// published path. A reader never sees a partial file. On any error, atomicWrite removes
+// the temp file, leaving no leftover scratch.
 func atomicWrite(target, content string) error {
 	dir := filepath.Dir(target)
 	tmp, err := os.CreateTemp(dir, "bench-dashboard-*.html.tmp")

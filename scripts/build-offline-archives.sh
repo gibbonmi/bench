@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build the four deterministic, self-contained offline archives from the exact
-# npm tarballs already produced by the artifact builder.
+# This builds the four deterministic, self-contained offline archives from the
+# exact npm tarballs the artifact builder already produced.
 set -euo pipefail
 
 npm_artifacts="${1:?usage: build-offline-archives.sh <npm-artifact-dir> <output-dir>}"
@@ -41,10 +41,10 @@ if [[ -e "$output" ]]; then
     exit 1
   }
   # The swap below replaces this directory and deletes what was here. Only the
-  # archives this build emits and the npm tarballs it consumes are ours to
-  # destroy; anything else means the caller named a directory that is not a
-  # build output, and the refusal comes now rather than after the archives are
-  # built and the tree is already gone.
+  # archives this build emits, and the npm tarballs it consumes, are ours to
+  # destroy. Anything else means the caller named a directory that is not a build
+  # output, so the refusal comes now, not after the archives are built and the
+  # tree is already gone.
   while IFS= read -r -d '' entry; do
     case "${entry##*/}" in
       redbench-*.tar.gz|redbench-*.tgz)

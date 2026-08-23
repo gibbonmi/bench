@@ -34,17 +34,18 @@ func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 	return diags
 }
 
-// checkRemovedVerbSweep keeps the deleted provisional lifecycle out of kit
-// prose: the literal command tokens `spec build` and `worktree recovery` must
-// not reappear in any surface an agent reads for guidance. The stale-command
-// and cold-pickup sweeps match only slash-command and single-word `bench <cmd>`
-// tokens, so a leftover `bench spec build promote` passes both. Three surfaces
-// are exempt because their job is history, not guidance: CHANGELOG.md
-// (append-only — scrubbing it would falsify the record), capture/ (journal),
-// and specs/remove-spec-build-lifecycle/ (the removal's own record). Row bodies live
-// in roadmap/<ID>.md, so the directory is swept beside the index or the sweep misses
-// every row body. Retired spec residue without a `Status: staged` spec.md is history
-// too; only staged specs are guidance a build will act on.
+// checkRemovedVerbSweep keeps the deleted provisional lifecycle out of kit prose. The
+// literal command tokens `spec build` and `worktree recovery` must not reappear in any
+// surface an agent reads for guidance. The stale-command and cold-pickup sweeps match
+// only slash-command and single-word `bench <cmd>` tokens. A leftover `bench spec build
+// promote` therefore passes both sweeps. Three surfaces are exempt because their job is
+// history, not guidance: CHANGELOG.md, capture/, and specs/remove-spec-build-lifecycle/.
+// CHANGELOG.md is append-only, so scrubbing it would falsify the record; capture/ is a
+// journal; and specs/remove-spec-build-lifecycle/ holds the removal's own record.
+//
+// Row bodies live in roadmap/<ID>.md. The sweep must scan the roadmap directory beside
+// the index, or it misses every row body. Retired spec residue without a `Status: staged`
+// spec.md is history too. Only staged specs are guidance a build will act on.
 func checkRemovedVerbSweep(root string) []string {
 	var files []string
 	for _, rel := range []string{"README.md", "ROADMAP.md"} {
@@ -119,8 +120,8 @@ func TestRemovedVerbSweepBites(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			root := t.TempDir()
-			// A staged spec.md makes the folder's files sweep subjects; the
-			// removal record's own folder must stay exempt even when staged.
+			// A staged spec.md makes the folder's files sweep subjects. The removal record's own
+			// folder must stay exempt even when staged.
 			if strings.HasPrefix(tt.rel, "specs/") {
 				dir := filepath.Dir(strings.TrimPrefix(tt.rel, "specs/"))
 				for strings.Contains(dir, "/") {
@@ -146,8 +147,8 @@ func TestRemovedVerbSweepBites(t *testing.T) {
 	})
 }
 
-// TestIntroducedCommandsAllowanceIsNarrow pins every edge of the staged-spec
-// allowance: it admits only declared tokens, only inside the declaring spec's own
+// TestIntroducedCommandsAllowanceIsNarrow pins every edge of the staged-spec allowance.
+// The allowance admits only declared tokens, only inside the declaring spec's own
 // directory, only while the spec is staged. Each negative case is one way a broader
 // implementation would let a phantom phase into guidance.
 func TestIntroducedCommandsAllowanceIsNarrow(t *testing.T) {
@@ -293,9 +294,9 @@ func TestPrePushREADMEClaimBites(t *testing.T) {
 }
 
 // checkOccurrenceLedgerMigration grades the migrated ledger counts through the roadmap
-// loader, so the counts come from the row files that own the ledgers rather than from a
-// second parse of the index. The legacy-heading sweep stays on the index bytes: an
-// `evidence supplied` count was a heading qualifier, and headings live in ROADMAP.md.
+// loader. The counts come from the row files that own the ledgers, not from a second
+// parse of the index. The legacy-heading sweep stays on the index bytes. An `evidence
+// supplied` count was a heading qualifier, and headings live in ROADMAP.md.
 func checkOccurrenceLedgerMigration(root string) []string {
 	tree := roadmap.LoadTree(root)
 	if tree.Index.State != bounds.StateParsed {
@@ -483,17 +484,17 @@ func checkStaleCommandReferences(root string) []string {
 }
 
 // introducedCommandsRE is the one grammar for the header line a staged spec uses to
-// declare the phase commands it introduces: the sweep derives its valid tokens from
-// files present in .agents/commands/, so a spec whose deliverable is a new or renamed
-// phase would otherwise be red on every mention of its own deliverable.
+// declare the phase commands it introduces. The sweep derives its valid tokens from files
+// present in .agents/commands/. Without that allowance, a spec whose deliverable is a new
+// or renamed phase would be red on every mention of its own deliverable.
 var introducedCommandsRE = regexp.MustCompile(`(?m)^Introduces commands:[ \t]*(.+)$`)
 
 // introducedCommands maps each staged spec slug to the command tokens its spec.md
-// declares. The allowance is deliberately narrow: only a spec.md whose Status is
-// staged grants it, only tokens spelled as `/bench-…` or `$bench-…` count, and the
-// caller applies it only to files inside that spec's own directory. An implemented
-// spec grants nothing — by then the phase files exist, or the promise was never kept
-// and the sweep should say so.
+// declares. The allowance is deliberately narrow. Only a spec.md whose Status is staged
+// grants it. Only tokens spelled as `/bench-…` or `$bench-…` count. The caller applies
+// the allowance only to files inside that spec's own directory. An implemented spec
+// grants nothing: by then the phase files exist, or the promise was never kept and the
+// sweep should say so.
 func introducedCommands(root string) map[string]map[string]bool {
 	stagedRE := regexp.MustCompile(`(?m)^Status: staged$`)
 	out := map[string]map[string]bool{}
@@ -521,8 +522,8 @@ func introducedCommands(root string) map[string]map[string]bool {
 	return out
 }
 
-// specSlugOf returns the spec slug a swept path belongs to (`specs/<slug>/…`), or ""
-// for every other path — the key introducedCommands' allowance is looked up by.
+// specSlugOf returns the spec slug a swept path belongs to (`specs/<slug>/…`), or "" for
+// every other path. introducedCommands looks up its allowance by that key.
 func specSlugOf(rel string) string {
 	rest, ok := strings.CutPrefix(rel, "specs/")
 	if !ok {
@@ -560,20 +561,21 @@ func checkColdPickupCLILists(root string) []string {
 	}
 	docRef := regexp.MustCompile("`bench ([a-z][a-z-]*)\\b")
 	// The operating guide names the executable inventory without repeating it. Executable
-	// names come from the production dispatch surfaces; prose references are checked against
-	// that set so a documented command cannot outlive its route.
+	// names come from the production dispatch surfaces. The check compares prose references
+	// against that set, so a documented command cannot outlive its route.
 	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
 	if guide != "" && !strings.Contains(guide, "`bench help` is the complete executable inventory") {
 		diags = append(diags, ".bench/BENCH.md does not identify `bench help` as the executable inventory")
 	}
-	// Reverse check: a `bench <cmd>` reference that names no route is a dead pointer.
-	// Commands and skills alike route the reader to the CLI in prose, so the whole
-	// .agents markdown tree is in scope, and its file set comes from the same walk
-	// checkStaleCommandReferences uses, so both sweeps discover the same files. Two
-	// asymmetries are deliberate: the walk also yields shell, JSON, and YAML, where a
-	// regex written for prose invites a false positive, so only .md is scanned; and the
-	// `<!-- command-currency: historical -->` marker exempts a file from the stale-command
-	// sweep but not from this one, because a canary fixture can only assert red, so an
+	// This reverse check catches a `bench <cmd>` reference that names no route, a dead
+	// pointer. Commands and skills alike route the reader to the CLI in prose, so the whole
+	// .agents markdown tree is in scope. Its file set comes from the same walk
+	// checkStaleCommandReferences uses, so both sweeps discover the same files.
+	//
+	// Two asymmetries are deliberate. The walk also yields shell, JSON, and YAML files. A
+	// regex written for prose invites a false positive there, so the check scans only .md
+	// files. The `<!-- command-currency: historical -->` marker exempts a file from the
+	// stale-command sweep but not from this one. A canary fixture can only assert red, so an
 	// exemption that turns a diagnostic green cannot be proven to work.
 	refFiles := []string{"HANDOFF.md", ".bench/BENCH.md", ".bench/BENCH-reference.md"}
 	agentDocs := walkConformanceDocs(filepath.Join(root, ".agents"))
@@ -683,9 +685,9 @@ func checkBenchReferenceTokenDiet(root string) []string {
 }
 
 func checkShippedDogfoodReferents(root string) []string {
-	// Platform files installed verbatim into consumer repos must stay
-	// consumer-generic: a dogfood-only referent shipped here lands in every
-	// linked repo. AGENTS.md is exempt — consumers keep their own.
+	// Platform files installed verbatim into consumer repos must stay consumer-generic. A
+	// dogfood-only referent shipped here lands in every linked repo. AGENTS.md is exempt,
+	// because consumers keep their own.
 	needles := []string{"projects/benchkit"}
 	var files []string
 	for _, rel := range []string{".bench/BENCH.md", ".bench/BENCH-reference.md"} {

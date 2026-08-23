@@ -16,7 +16,7 @@ import (
 )
 
 // writeFile is the fixture builder every case below shares: a temp root grown one
-// tracked-path-shaped file at a time, so the tests drive the package through its
+// tracked-path-shaped file at a time. This drives the tests through the package's
 // public seam rather than through the fence scan's internals.
 func writeFile(t *testing.T, root, rel, content string) {
 	t.Helper()
@@ -57,7 +57,7 @@ func TestEntriesRenderAlphabeticallySkippingCommandAdapters(t *testing.T) {
 	writeFile(t, root, ".agents/commands/bench-write-spec.md", "command\n")
 	writeFile(t, root, ".agents/skills/bench-write-spec/SKILL.md", "---\nname: bench-write-spec\nindex: writing specs\n---\n")
 	writeFile(t, root, ".agents/skills/zeta/SKILL.md", "---\nname: zeta\nindex: doing zeta things\n---\n")
-	// The allowlist is JSON, so its key order carries no meaning: this row orders
+	// The allowlist is JSON, so its key order carries no meaning. This row orders
 	// "audience" before "source" precisely because a reader matching one fixed order
 	// would drop the marker and advertise a withheld skill to consumers.
 	writeFile(t, root, ".bench/consumer-payload.json",
@@ -138,7 +138,7 @@ func TestCheckAndWriteGenerateVerifyContract(t *testing.T) {
 }
 
 // TestUnterminatedFinalLineRoundTripsByteForByte covers the reference whose last line
-// carries no trailing newline: the generator rebuilds the file around the block, so a
+// carries no trailing newline. The generator rebuilds the file around the block, so a
 // tail it silently terminates would rewrite bytes outside the block it owns.
 func TestUnterminatedFinalLineRoundTripsByteForByte(t *testing.T) {
 	root := t.TempDir()
@@ -255,7 +255,7 @@ func TestUnparseableAllowlistRefusesBothWriteAndCheck(t *testing.T) {
 		t.Fatalf("refused write changed bytes:\n%q\nwant\n%q", after, before)
 	}
 	// Check refuses on the same footing as Write: an unresolved allowlist means every
-	// kit-only marker in the generated block would be missing, so grading the block
+	// kit-only marker in the generated block would be missing. Grading the block
 	// against it would attribute the reader's defect to the skills.
 	wantCheck := ".bench/consumer-payload.json unreadable: kit-only marking unresolved"
 	if got := Check(root); strings.Join(got, "\n") != wantCheck {
@@ -264,9 +264,9 @@ func TestUnparseableAllowlistRefusesBothWriteAndCheck(t *testing.T) {
 }
 
 // TestPresentInvalidAllowlistStatesRefuseCheckAndWrite walks the present-but-unusable
-// partition through the canonical parser. Only absence is optional — a tree with no
-// allowlist withholds nothing — while empty bytes, broken syntax, and every semantic
-// row defect leave kit-only marking unresolved and must stop both callers with the
+// partition through the canonical parser. Only absence is optional; a tree with no
+// allowlist withholds nothing. Empty bytes, broken syntax, and every semantic row
+// defect leave kit-only marking unresolved, and must stop both callers with the
 // reference bytes intact.
 func TestPresentInvalidAllowlistStatesRefuseCheckAndWrite(t *testing.T) {
 	for name, allowlist := range map[string]string{
@@ -357,8 +357,8 @@ func TestEntriesEnumerateLiterallyUnderAGlobShapedRoot(t *testing.T) {
 }
 
 // TestOrphanIsDiagnosedBeforeAdapterSuppression pairs the two command-named directories
-// on purpose: if suppression ran before classification, the orphan would vanish behind
-// its adapter and the index would report a clean tree with a missing producer in it.
+// on purpose. If suppression ran before classification, the orphan would vanish behind
+// its adapter. The index would then report a clean tree with a missing producer in it.
 func TestOrphanIsDiagnosedBeforeAdapterSuppression(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
@@ -393,8 +393,8 @@ func TestOrphanIsDiagnosedBeforeAdapterSuppression(t *testing.T) {
 }
 
 // TestEmptySkillBytesStayDistinctFromAbsence holds the two states apart: absence is an
-// orphan directory, while zero bytes are a readable skill that simply declared no
-// trigger, and each keeps its own diagnostic.
+// orphan directory. Zero bytes are a readable skill that simply declared no trigger,
+// and each keeps its own diagnostic.
 func TestEmptySkillBytesStayDistinctFromAbsence(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".agents/skills/empty/SKILL.md", "")
@@ -410,9 +410,10 @@ func TestEmptySkillBytesStayDistinctFromAbsence(t *testing.T) {
 	}
 }
 
-// TestRefusedCommandNamedSkillIsDiagnosedBeforeAdapterSuppression is the untrustworthy-bytes
-// half of the same ordering: suppression removes a row from the rendered block, it does not
-// grant amnesty from diagnosis, so a symlinked SKILL.md behind an adapter still refuses.
+// TestRefusedCommandNamedSkillIsDiagnosedBeforeAdapterSuppression is the
+// untrustworthy-bytes half of the same ordering. Suppression removes a row from the
+// rendered block; it does not grant amnesty from diagnosis, so a symlinked SKILL.md
+// behind an adapter still refuses.
 func TestRefusedCommandNamedSkillIsDiagnosedBeforeAdapterSuppression(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
@@ -444,7 +445,7 @@ func TestRefusedCommandNamedSkillIsDiagnosedBeforeAdapterSuppression(t *testing.
 }
 
 // A skill file is attacker-shaped input, so only a fence that opens at byte zero and
-// closes may authorize an index field: a late fence lets prose smuggle one in, and an
+// closes may authorize an index field. A late fence lets prose smuggle one in, and an
 // unclosed opener lets the whole body act as frontmatter.
 func TestFrontmatterFieldRequiresCompleteLeadingFence(t *testing.T) {
 	for _, row := range []struct {
@@ -473,7 +474,7 @@ func TestFrontmatterFieldRequiresCompleteLeadingFence(t *testing.T) {
 }
 
 // referenceSnapshot records what the reference is without ever reading a path the
-// classifier would refuse: a FIFO opened here would block the test itself, which is
+// classifier would refuse. A FIFO opened here would block the test itself, which is
 // the failure the production reader exists to avoid.
 func referenceSnapshot(t *testing.T, path string) string {
 	t.Helper()
@@ -499,8 +500,8 @@ func referenceSnapshot(t *testing.T, path string) string {
 }
 
 // await runs one reference-reading call under a deadline. A reader that reopens the
-// path directly blocks in open(2) on the FIFO row forever, and a hung package test
-// reports as a suite-wide timeout rather than as this row, so the bound is here.
+// path directly blocks in open(2) on the FIFO row forever. A hung package test reports
+// as a suite-wide timeout rather than as this row, so the bound is here.
 func await[T any](t *testing.T, what string, call func() T) T {
 	t.Helper()
 	done := make(chan T, 1)
@@ -515,9 +516,9 @@ func await[T any](t *testing.T, what string, call func() T) T {
 }
 
 // TestReferenceProducerStatesStayDistinctAndBlockWrite is HI4: every hostile or
-// degenerate reference disposition keeps its own diagnostic — empty is not missing,
-// and an untrustworthy object is neither — and none of them lets Write touch the
-// bytes it could not read.
+// degenerate reference disposition keeps its own diagnostic. Empty is not missing,
+// and an untrustworthy object is neither. None of them lets Write touch the bytes it
+// could not read.
 func TestReferenceProducerStatesStayDistinctAndBlockWrite(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -623,11 +624,11 @@ func TestReferenceProducerStatesStayDistinctAndBlockWrite(t *testing.T) {
 }
 
 // TestControlRunesNeverReachTheRenderedLine is the sink contract: the index line is
-// line-structured markdown, so any control rune in a rendered field could split or
-// forge an entry and is refused before rendering, while ordinary graphic Unicode —
-// accented Latin, CJK, emoji, arrows — still renders as exactly one line. The
-// permitted half is asserted alongside the refused one because an ASCII-only fix
-// passes the refusals and quietly loses the rest of the control partition.
+// line-structured markdown. Any control rune in a rendered field could split or forge
+// an entry, and is refused before rendering. Ordinary graphic Unicode, accented Latin,
+// CJK, emoji, arrows, still renders as exactly one line. The permitted half is
+// asserted alongside the refused one because an ASCII-only fix passes the refusals and
+// quietly loses the rest of the control partition.
 func TestControlRunesNeverReachTheRenderedLine(t *testing.T) {
 	for _, row := range []struct {
 		name    string
@@ -719,8 +720,8 @@ func hasPrefixed(diags []string, prefix string) bool {
 }
 
 // A newline cannot survive the fence scan's line split, so the sink table above cannot
-// construct one from a file; the predicate is asserted directly so a later parser that
-// does yield multi-line values still finds the sink closed.
+// construct one from a file. The predicate is asserted directly, so a later parser
+// that does yield multi-line values still finds the sink closed.
 func TestControlRefusalCoversTheNewlineTheParserCannotYield(t *testing.T) {
 	if controlRefusal("index", "safe\n- forged") == "" {
 		t.Fatal("newline accepted in an index field")

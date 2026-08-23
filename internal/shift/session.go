@@ -20,7 +20,7 @@ import (
 )
 
 // iterationPrompt is the text a shift iteration writes to its adapter's stdin. It has
-// always lived inside the executable (a heredoc in the shell); it is reviewer-facing
+// always lived inside the executable, as a heredoc in the shell. It is reviewer-facing
 // content only through the running loop, never a tunable file. %s is the objective. It
 // travels on stdin, never argv, so it never appears in a process listing.
 const iterationPrompt = `You are one iteration of a Bench shift. Objective: %s
@@ -34,7 +34,7 @@ decides if it counts.
 `
 
 // refactorPrompt scopes the refactor phase to the files this shift flagged. %s is the
-// structure report naming those files — never repo-wide debt.
+// structure report naming those files, never repo-wide debt.
 const refactorPrompt = `The implementation is complete and tests are green, but the structure budget is
 exceeded. These are the flagged files and directories this shift touched — fix only
 these, nothing else:
@@ -51,11 +51,11 @@ structure, not behavior. Make one split, then stop — the loop re-checks and co
 
 var timeNow = time.Now
 
-// session carries a running shift's state so the signal handler and the loop share one
-// view of the worktree root, the adapter child, and the once-only teardown. It also
-// carries the fields the interrupt checkpoint needs to emit an honest shift_result and
-// record the intent outcome itself — os.Exit skips deferred cleanup, so nothing at that
-// path can rely on a defer.
+// session carries a running shift's state. The signal handler and the loop share one
+// view of the worktree root, the adapter child, and the once-only teardown through it.
+// It also carries the fields the interrupt checkpoint needs to emit an honest
+// shift_result and record the intent outcome itself. os.Exit skips deferred cleanup, so
+// nothing at that path can rely on a defer.
 type session struct {
 	agent  string
 	root   string
@@ -72,33 +72,33 @@ type session struct {
 	interrupted atomic.Bool // set by the signal handler; parks the loop at its checkpoints
 	deadline    atomic.Bool // set by the wall timer; parks the loop like interrupted, but reads as incomplete
 	teardownOne sync.Once
-	// preserve marks that this session's charged worktree has already been finalized —
-	// snapshotted and released, or retained and locked — by preserveAndRecover. Every
-	// post-mutation exit path calls preserveAndRecover explicitly and sets this itself;
-	// the deferred cleanup in Loop only runs teardown when this is still false, so a
-	// retained worktree is never re-cleaned and a released one is never released twice.
+	// preserve marks that this session's charged worktree has already been finalized,
+	// either snapshotted and released or retained and locked, by preserveAndRecover. Every
+	// post-mutation exit path calls preserveAndRecover explicitly and sets this itself. The
+	// deferred cleanup in Loop only runs teardown when this is still false. A retained
+	// worktree is never re-cleaned, and a released one is never released twice.
 	preserve atomic.Bool
 
 	committed      int // main-loop commits this shift; the "committed" evidence for the taxonomy
 	iterationsUsed int // the highest iteration number this shift entered
 }
 
-// touchedViolations reads this shift's touched-scope structure result — the flagged-files
-// string and the violation count — tolerating a git-query failure as an empty scope (zero
-// violations). The tolerance is deliberate and single-sourced here for all three refactor-
-// gate reads: the shift loop's own `bench gate` run is this worktree's loud oracle, so a
-// broken diff degrades the refactor gate rather than crashing the loop; `bench structure`
-// is the loud-error path for the same query.
+// touchedViolations reads this shift's touched-scope structure result, the flagged-files
+// string and the violation count, tolerating a git-query failure as an empty scope with
+// zero violations. The tolerance is deliberate and single-sourced here for all three
+// refactor-gate reads. The shift loop's own `bench gate` run is this worktree's loud
+// oracle, so a broken diff degrades the refactor gate rather than crashing the loop.
+// `bench structure` is the loud-error path for the same query.
 func (s *session) touchedViolations(base string) (flagged string, violations int) {
 	flagged, violations, _ = structure.Touched(s.root, base)
 	return flagged, violations
 }
 
 // refactorPhase pays down structural debt this shift touched, but only once the touched
-// scope is over budget — never pre-existing debt, and never mid-implementation. It
-// runs within the rcap budget, scopes each prompt to the flagged files, and stops on a
-// no-op pass. A refactor commit failure is returned as an error rather than swallowed,
-// so the caller can map it onto the outcome taxonomy honestly.
+// scope is over budget, never pre-existing debt, and never mid-implementation. It runs
+// within the rcap budget, scopes each prompt to the flagged files, and stops on a no-op
+// pass. A refactor commit failure is returned as an error rather than swallowed, so the
+// caller can map it onto the outcome taxonomy honestly.
 func (s *session) refactorPhase(base string, rcap int) error {
 	if _, violations := s.touchedViolations(base); violations == 0 {
 		return nil
@@ -151,12 +151,13 @@ func (s *session) refactorPhase(base string, rcap int) error {
 }
 
 // runAdapter invokes the harness adapter with the prompt written to its stdin and no
-// positional argument, BENCH_SHIFT=1 armed (which arms the Stop hook so the agent cannot
-// declare done on red), from the worktree root. Stdin transport keeps the prompt out of
-// the machine's process listing on the hop Bench controls. The child runs in its own
-// process group so a pulled line can tear down the whole adapter tree, not just the
-// immediate child. The returned error — a spawn failure or a nonzero exit — is evidence
-// for progress, not the oracle: the gate still decides whether an iteration's work counts.
+// positional argument, with BENCH_SHIFT=1 armed, from the worktree root. BENCH_SHIFT=1
+// arms the Stop hook so the agent cannot declare done on red. Stdin transport keeps the
+// prompt out of the machine's process listing on the hop Bench controls. The child runs
+// in its own process group, so a pulled line can tear down the whole adapter tree, not
+// just the immediate child. The returned error, a spawn failure or a nonzero exit, is
+// evidence for progress, not the oracle. The gate still decides whether an iteration's
+// work counts.
 func (s *session) runAdapter(prompt string) error {
 	adapterEnv, err := env.Build(s.root)
 	if err != nil {
@@ -186,7 +187,7 @@ func (s *session) runAdapter(prompt string) error {
 }
 
 // killAdapter signals the in-flight adapter's whole process group, so a pulled line
-// reaches the adapter and everything it spawned. A no-op when no adapter is running.
+// reaches the adapter and everything it spawned. It is a no-op when no adapter is running.
 func (s *session) killAdapter(sig syscall.Signal) {
 	s.mu.Lock()
 	cmd := s.adapter
@@ -198,10 +199,10 @@ func (s *session) killAdapter(sig syscall.Signal) {
 
 // runGate runs the gate against the session's worktree and reports its exit code
 // straight through, doing nothing to the session itself. Both call sites share this one
-// implementation: the main loop's call propagates a red result through the evidence-
-// split preservation path (evidenceResult), while the refactor probe's call rolls a red
-// result back by design — preservation itself happens once, explicitly, at each
-// caller's own return site, never implied by a flag this method sets on its way out.
+// implementation. The main loop's call propagates a red result through the evidence-split
+// preservation path (evidenceResult). The refactor probe's call instead rolls a red
+// result back, by design. Preservation itself happens once, explicitly, at each caller's
+// own return site, never implied by a flag this method sets on its way out.
 func (s *session) runGate() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.mu.Lock()
@@ -224,12 +225,12 @@ func (s *session) cancelRunningGate() {
 	}
 }
 
-// checkpointOutcome resolves which exit (if either) a checkpoint takes, tested directly
+// checkpointOutcome resolves which exit, if either, a checkpoint takes, tested directly
 // since checkpoint itself exits the process. Decided precedence: the wall deadline wins
-// over an interrupt when both flags are set — a deadline that fires while a pulled line
-// is already in flight still resolves incomplete/3, not interrupted/130, because the
-// deadline is this shift's own bound, not an external signal, and the taxonomy should
-// not depend on which of two concurrent cancellations happened to set its flag first.
+// over an interrupt when both flags are set. A deadline that fires while a pulled line
+// is already in flight still resolves incomplete/3, not interrupted/130. The deadline is
+// this shift's own bound, not an external signal. The taxonomy should not depend on
+// which of two concurrent cancellations happened to set its flag first.
 func (s *session) checkpointOutcome() (outcome Outcome, detail string, ok bool) {
 	switch {
 	case s.deadline.Load():
@@ -241,10 +242,10 @@ func (s *session) checkpointOutcome() (outcome Outcome, detail string, ok bool) 
 }
 
 // checkpoint exits when a signal or the wall deadline has fired, after the running
-// adapter or gate has already been signaled/cancelled. This is the well-defined point
-// (mirroring bash's trap-between-commands) at which an interrupt or deadline takes
-// effect. os.Exit skips deferred cleanup, so preservation, the shift_result block, and
-// the intent outcome are all run and recorded explicitly here, never left to a defer.
+// adapter or gate has already been signaled or cancelled. This is the well-defined point,
+// mirroring bash's trap-between-commands, at which an interrupt or deadline takes effect.
+// os.Exit skips deferred cleanup, so preservation, the shift_result block, and the intent
+// outcome are all run and recorded explicitly here, never left to a defer.
 func (s *session) checkpoint() {
 	if outcome, detail, ok := s.checkpointOutcome(); ok {
 		s.exitPreserving(outcome, detail)
@@ -252,12 +253,12 @@ func (s *session) checkpoint() {
 }
 
 // exitPreserving is checkpoint's shared exit path for both a signal and a wall-deadline
-// trip: it preserves any dirty work, resolves the outcome (a teardown failure here still
-// resolves to failed/1, same as every other exit path), then hands off to finish for the
-// emit → record → exit-code sequence — the same single-sourced path every ordinary Loop
-// return uses — before exiting with its resolved code. os.Exit here (rather than a
-// return) is deliberate: this path is reached from inside the loop's own call stack via
-// checkpoint, and skips the deferred cleanup that a normal return would trigger, per the
+// trip. It preserves any dirty work and resolves the outcome; a teardown failure here
+// still resolves to failed/1, same as every other exit path. It then hands off to finish
+// for the emit-record-exit-code sequence, the same single-sourced path every ordinary
+// Loop return uses, before exiting with its resolved code. os.Exit here, rather than a
+// return, is deliberate. This path is reached from inside the loop's own call stack via
+// checkpoint, and skips the deferred cleanup a normal return would trigger. See the
 // session doc comment.
 func (s *session) exitPreserving(outcome Outcome, detail string) {
 	recovery, teardownErr := s.preserveAndRecover(detail)
@@ -270,10 +271,10 @@ func (s *session) exitPreserving(outcome Outcome, detail string) {
 
 // teardown removes the shift scratch and releases the pool lease, exactly once whether
 // reached by the normal path, the deferred cleanup, or preserveAndRecover. It returns
-// the first error hit — today only the injectable teardown fault, since worktree.Release
-// does not itself report git failures — so a real teardown problem is reported rather
-// than silently swallowed. A second call (the deferred safety net, once preserve is
-// already set) is a no-op via sync.Once and returns nil.
+// the first error hit, today only the injectable teardown fault, since worktree.Release
+// does not itself report git failures. A real teardown problem is reported rather than
+// silently swallowed. A second call, the deferred safety net once preserve is already
+// set, is a no-op via sync.Once and returns nil.
 func (s *session) teardown() error {
 	var err error
 	s.teardownOne.Do(func() {
@@ -291,7 +292,7 @@ func (s *session) teardown() error {
 // session's charged worktree leaves the process's hands. When nothing beyond scratch is
 // dirty, it releases through teardown and reports RecoveryNone. Otherwise it retains and
 // locks the worktree, leaving the dirty tree exactly where it is and never running
-// teardown/Release: the work stays visible at a path the operator can read, rather than
+// teardown/Release. The work stays visible at a path the operator can read, rather than
 // in a ref no command hands back. It always prints the resulting location and marks the
 // session so the deferred cleanup never re-finalizes this worktree.
 func (s *session) preserveAndRecover(reason string) (recovery string, teardownErr error) {
@@ -307,8 +308,8 @@ func (s *session) preserveAndRecover(reason string) (recovery string, teardownEr
 }
 
 // teardownFailureResult is the one Result a teardown error resolves to, regardless of
-// what post-mutation path reached it: outcome failed/1, with a detail naming what is
-// already safe — the branch, and the recovery pointer when one exists — since the
+// what post-mutation path reached it. Its outcome is failed/1, with a detail naming
+// what is already safe, the branch, and the recovery pointer when one exists. The
 // teardown failure is real even when the work is not lost.
 func teardownFailureResult(s *session, recovery string, err error) Result {
 	detail := fmt.Sprintf("teardown failed: %v; branch %s is safe", err, s.branch)
@@ -318,7 +319,7 @@ func teardownFailureResult(s *session, recovery string, err error) Result {
 	return Result{Outcome: OutcomeFailed, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}
 }
 
-// nothingStaged reports whether the index has no staged changes — the "gate green, no
+// nothingStaged reports whether the index has no staged changes, the "gate green, no
 // change this iteration" signal.
 func nothingStaged(root string) bool {
 	return exec.Command("git", "-C", root, "diff", "--cached", "--quiet").Run() == nil

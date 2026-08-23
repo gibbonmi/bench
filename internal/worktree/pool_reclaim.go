@@ -34,8 +34,8 @@ const (
 )
 
 // poolKeyVerdict is one key's classification. targets holds the gitdir: pointers that
-// proved the key dead, in child order; it is empty for every retained key and for an
-// empty one, and it feeds the fingerprint so a key whose children changed identity
+// proved the key dead, in child order. It is empty for every retained key and for an
+// empty one. It also feeds the fingerprint, so a key whose children changed identity
 // invalidates a plan that counted them.
 type poolKeyVerdict struct {
 	key     string
@@ -64,12 +64,12 @@ func (p poolReclaimPlan) reclaimableCount() int {
 }
 
 // poolKeysDir is the pool parent this command reads. Nothing else in the tree enumerates
-// it: every other reclamation path is anchored at a repository root, which is exactly why
+// it: every other reclamation path is anchored at a repository root. That is exactly why
 // a key whose repository was deleted is unreachable from all of them.
 func poolKeysDir() string { return filepath.Join(benchHome(), "worktrees") }
 
 // planPoolReclaim classifies every key under the pool parent. An absent pool parent is
-// the zero-row answer rather than an error — a home that has never leased a worktree is a
+// the zero-row answer rather than an error. A home that has never leased a worktree is a
 // clean pool, not a broken one.
 func planPoolReclaim(root string) (poolReclaimPlan, error) {
 	current := filepath.Base(Pool(canonicalRoot(root)))
@@ -86,7 +86,7 @@ func planPoolReclaim(root string) (poolReclaimPlan, error) {
 		name := entry.Name()
 		// The current repository's key is excluded before the predicate runs. A session
 		// between acquiring its pool directory and its first checkout holds an empty key,
-		// which the empty-key clause would otherwise take out from under it.
+		// which the empty-key clause would otherwise claim.
 		if name == current {
 			plan.verdicts = append(plan.verdicts, poolKeyVerdict{key: name, verdict: poolVerdictRetain, reason: "key belongs to the current repository"})
 			continue
@@ -98,14 +98,14 @@ func planPoolReclaim(root string) (poolReclaimPlan, error) {
 }
 
 // classifyPoolKey is the one reclaimability predicate in the tree. A key is reclaimable
-// when it holds nothing at top level, or when every top-level entry is a real directory
-// holding a regular `.git` file whose `gitdir:` target is provably absent. Everything else
-// retains and says what protected it.
+// when it holds nothing at top level. It is also reclaimable when every top-level entry
+// is a real directory holding a regular `.git` file whose `gitdir:` target is provably
+// absent. Everything else retains and says what protected it.
 //
 // Absence is proven only by os.IsNotExist. Every other error leaves existence unknown, and
 // unknown retains — treating a permission failure as absence is the one direction that
-// destroys work. Lstat throughout: a symlink where a key, a child, or a `.git` belongs is
-// retained unfollowed, so the pool keeps bounding what the apply can ever remove.
+// destroys work. Lstat is used throughout: a symlink where a key, a child, or a `.git`
+// belongs is retained unfollowed. The pool keeps bounding what the apply can ever remove.
 func classifyPoolKey(path, name string) poolKeyVerdict {
 	retain := func(format string, args ...any) poolKeyVerdict {
 		return poolKeyVerdict{key: name, verdict: poolVerdictRetain, reason: fmt.Sprintf(format, args...)}
@@ -138,7 +138,7 @@ func classifyPoolKey(path, name string) poolKeyVerdict {
 }
 
 // classifyPoolChild decides one top-level entry. It returns the child's dangling gitdir:
-// target, or the reason that entry protects the whole key — a key mixing one live and one
+// target, or the reason that entry protects the whole key. A key mixing one live and one
 // dead pointer is retained whole, because partial reclamation would amputate the live half.
 func classifyPoolChild(path, name string) (target, retain string) {
 	info, err := os.Lstat(path)
@@ -207,8 +207,8 @@ func gitdirTarget(body string) (string, bool) {
 
 // fingerprintPoolReclaim digests exactly what an apply would remove: the reclaimable key
 // names in pool order and each one's child gitdir: targets. A change elsewhere in the pool
-// leaves it alone, so an operator is not sent back to re-plan by a key the plan did not
-// name; a change to a target inside a counted key does move it.
+// leaves it alone, so an operator is not sent back to re-plan by an unrelated key. A
+// change to a target inside a counted key does move it.
 func fingerprintPoolReclaim(verdicts []poolKeyVerdict) string {
 	parts := [][]byte{[]byte(poolReclaimFingerprintVersion)}
 	for _, verdict := range verdicts {
@@ -252,7 +252,7 @@ func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	// The plan just re-read the pool. A supplied fingerprint that no longer matches it
-	// means the pool moved since the operator read the plan, so nothing is removed on the
+	// means the pool moved since the operator read the plan. Nothing is removed on the
 	// strength of that stale reading.
 	if fingerprint != plan.fingerprint {
 		out, err := renderPoolReclaimStale()
@@ -270,11 +270,11 @@ func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	fmt.Fprint(stdout, out)
-	// A key the plan named and the apply could not remove — a failed RemoveAll, or a key
-	// that stopped qualifying between the re-plan and its own re-check — leaves the
-	// operator's intent unsatisfied. A key the plan retained was never a target, so it
-	// does not make a clean run look failed. The rows say which and why; the exit code is
-	// what a script reads.
+	// A key the plan named and the apply could not remove leaves the operator's intent
+	// unsatisfied. That includes a failed RemoveAll, or a key that stopped qualifying
+	// between the re-plan and its own re-check. A key the plan retained was never a
+	// target, so it does not make a clean run look failed. The rows say which and why.
+	// The exit code is what a script reads.
 	planned := map[string]bool{}
 	for _, verdict := range plan.verdicts {
 		if verdict.reclaimable() {
@@ -290,8 +290,8 @@ func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
 }
 
 // parseReclaimArgs accepts the bare plan and exactly one `--apply <fingerprint>`. A
-// missing, empty, or malformed value is a usage refusal rather than a weaker apply:
-// a parser that read an absent value as "apply everything" would turn a fumbled flag
+// missing, empty, or malformed value is a usage refusal rather than a weaker apply. A
+// parser that read an absent value as "apply everything" would turn a fumbled flag
 // into a destructive run.
 func parseReclaimArgs(args []string, stdout io.Writer) (applying bool, fingerprint string, code int) {
 	for i := 0; i < len(args); i++ {
@@ -319,7 +319,7 @@ func parseReclaimArgs(args []string, stdout io.Writer) (applying bool, fingerpri
 
 // applyPoolReclaim removes the keys the plan named and reports what it did per key. The
 // keys the plan retained are reported untouched, so the destructive step leaves evidence
-// covering the whole pool rather than only the part it acted on.
+// covering the whole pool, not only the part it acted on.
 func applyPoolReclaim(plan poolReclaimPlan) []poolKeyVerdict {
 	applied := make([]poolKeyVerdict, 0, len(plan.verdicts))
 	for _, verdict := range plan.verdicts {
@@ -333,9 +333,9 @@ func applyPoolReclaim(plan poolReclaimPlan) []poolKeyVerdict {
 }
 
 // removePoolKey is the only place in the tree that deletes pool bytes. The caller has
-// already matched the fingerprint, which speaks for the plan as a whole; the re-check here
-// speaks for this one key at the instant of removal, and the parent assertion bounds the
-// target to a direct child of the pool.
+// already matched the fingerprint, which speaks for the plan as a whole. The re-check
+// here speaks for this one key at the instant of removal. The parent assertion bounds
+// the target to a direct child of the pool.
 func removePoolKey(key string) poolKeyVerdict {
 	pool := poolKeysDir()
 	target := filepath.Join(pool, key)
@@ -390,7 +390,7 @@ func renderPoolReclaimApplied(applied []poolKeyVerdict, fingerprint string) (str
 }
 
 // renderPoolReclaimStale is the drift refusal. It removes nothing and names the re-plan
-// through the same action renderer the plan advertises its apply with, so the command an
+// through the same action renderer the plan advertises its apply with. The command an
 // operator is sent back to cannot drift from the command that printed the fingerprint.
 func renderPoolReclaimStale() (string, error) {
 	help, err := axi.RenderHelp([]axi.Action{axi.ExecutableInvocation("re-plan the pool and apply the fingerprint it prints",

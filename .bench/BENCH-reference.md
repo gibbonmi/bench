@@ -1,12 +1,32 @@
 # Bench reference
 
-This file holds lookup material split out of `.bench/BENCH.md`. This split keeps
-the always-loaded operating guide lean. It holds the file map, the skills index,
+This file holds lookup material split out of `.bench/BENCH.md`, so the always-loaded
+operating guide stays lean. It holds the file map, the skills index,
 harness-invocation details, the CLI command notes, the shift adapter contract,
 and the hook layers. This file is **referenced by path, not imported**: it costs
-no tokens until you open it. Read it when you need a file's role, how a harness
-invokes a phase, or how git safety is layered. The generation-steering rules stay
-in `.bench/BENCH.md`. What lives here is reference material you consult on demand.
+no tokens until you open it.
+
+Read it when you need a file's role, how a harness
+invokes a phase, or how Bench layers git safety. The generation-steering rules stay
+in `.bench/BENCH.md`.
+
+**`bench`** is the operational layer over the Go core. Read `CONTEXT.md` for
+the mental model and `projects/<name>.md` for seams, gate command, and line
+assignments; the file map, adapter contracts, and hook layers live below.
+
+## How the pieces fit
+
+- **Skills** shape *how* you generate — guidance, not rules — in
+  `.agents/skills/` (and `.claude/skills/` for Claude Code);
+  `.bench/BENCH-reference.md` indexes them.
+- **Commands:** `/bench` (Claude Code) and `$bench` (Codex) route observed state;
+  `/bench-setup-repo` handles adoption and `/bench-drain` pending capture.
+  `/bench-update-kit`, `/bench-assess`, and `craft-synthesis`
+  ship only in the Bench kit repository; a linked repo upgrades with `bench upgrade`.
+  The skills index marks omitted rows.
+- **The gate and the hooks** enforce, with authority you do not have.
+  `bench shift` gates every iteration and commits only on green; a `pre-push`
+  hook protects the default branch.
 
 ## Files
 
@@ -14,6 +34,13 @@ in `.bench/BENCH.md`. What lives here is reference material you consult on deman
   Bench-managed block.
 - `.bench/gate.sh` is the project gate.
 - `capture/learnings.md` is the usage journal for process learnings.
+- `capture/IDEAS.md` is the parked-idea sink `bench idea` writes. If
+  `bench` isn't on PATH, append the dated line (`- YYYY-MM-DD  <text>`) to
+  `capture/IDEAS.md` yourself.
+- `capture/retros/` holds one retro per spec: `/bench-final-check` writes
+  `capture/retros/<spec-slug>.md` and refreshes affected
+  `capture/agent-performance/` scorecards, and `/bench-drain` owns their
+  reviewed drain and its capture commit.
 - `ROADMAP.md` is the working roadmap's index. It holds board prose plus one
   heading line per row, with no bodies. `roadmap/` holds one detail owner per
   row, `roadmap/FT<n>.md`, carrying that row's body, `Occurrence:` ledger, and
@@ -79,11 +106,14 @@ these phases in a different way:
 
 A reviewer decides each phase's trigger on each harness; the trigger is not
 ambient frontmatter. One invocation-policy table records, per phase, whether
-the Claude model may reach for the command on its own and whether Codex may
-invoke the adapter implicitly, and the gate grades both surfaces against the
-table. Most phases are reviewer-chosen entry points that a model does not
-start unbidden, and the maintenance phases stay off the model's reach entirely
-on Claude — read a phase's own row for which case applies. `$bench-debug` is
+the Claude model may reach for the command on its own. It also records
+whether Codex may invoke the adapter implicitly. The gate grades both
+surfaces against the table.
+
+Most phases are reviewer-chosen entry points that
+a model does not start unbidden. The maintenance phases stay off the model's
+reach entirely on Claude; read a phase's own row for which case applies.
+`$bench-debug` is
 the exception: Codex may invoke it implicitly, because a reported symptom
 should route to the bug path without the operator remembering the phase name.
 Model-invoked Bench guidance otherwise uses the visible `craft-*` skill names,
@@ -111,26 +141,34 @@ Codex phase adapters installed by Bench:
 ## Command Notes
 
 Bench renders `bench help` from the Go `commandRegistry`; it is the executable
-inventory. `.bench/BENCH.md` gives category-level operational guidance, not a
-second command list. The project profile (`projects/<name>.md`) carries the
+inventory. `.bench/BENCH-reference.md` gives category-level operational guidance,
+not a second command list. The project profile (`projects/<name>.md`) carries the
 detailed output contracts for the AXI query surfaces. The sections below
 describe the hook and adapter plumbing.
 
+- Setup and adoption connect a repository to the kit and maintain that installation.
+- Context commands expose current state, navigation, capture, and planning evidence.
+- Oracle commands inspect or enforce readiness from development through release.
+- Work commands own isolated execution, gated changes, and spec lifecycle operations.
+
 A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip.
-From the destination, `bench worktree land` is the operational handoff: it
+Accepted findings commit there on the same cadence. From the destination, `bench worktree land` is the operational handoff: it
 composes and gates that pair before publication and source release. Executable
 help owns its flags and positional grammar. Its exit meanings follow the
-publication boundary: 0 means the source was released, 1 means a refusal before
-publication, 2 means invalid command usage, and 3 means publication succeeded
-but marker, checkout reconciliation, or source release remains incomplete. An
-exit-3 record carries the `bench worktree land --resume` invocation you need
-to continue.
+publication boundary:
+
+- `0` — the source was released
+- `1` — a refusal before publication
+- `2` — invalid command usage
+- `3` — publication succeeded but marker, checkout reconciliation, or source
+  release remains incomplete; the exit-3 record carries the
+  `bench worktree land --resume` invocation you need
 
 ## Plumbing subcommands
 
-Definitions classified as internal inventory support hooks and adapters, not
-interactive sessions. The registry owns their exact set, so a visibility change
+The registry classifies some definitions as internal inventory; they support
+hooks and adapters, not interactive sessions. The registry owns their exact set, so a visibility change
 cannot drift from `bench help`. Inspect the registry when you maintain those
 callers.
 
@@ -140,15 +178,15 @@ callers.
 Exactly two states exist. A repo that ships a manifest replaces the built-in
 phase table entirely: there is no merge, so a partial manifest silently drops
 every phase it omits. A repo that ships no manifest keeps the built-in table.
-The Bench kit itself ships no manifest: it runs the built-in table, and its
+The Bench kit itself ships no manifest: it runs the built-in table. Its
 Go-toolchain phases materialize only when the graded root carries what each
 step grades. The manifest is a capability for a project whose gate is not
 shaped like the kit's; it is not the route the kit itself takes.
 
 The ordinary test phase carries the graded root and the dev tier to the
-conformance entry point, and the conformance registry owns check order,
+conformance entry point. The conformance registry owns check order,
 subject, and tier. That one ordinary test run executes the complete dev-tier
-check set, meta checks included, and so validates the registry itself: there
+check set, meta checks included, and so validates the registry itself. There
 is no separate conformance phase, driver, or per-check evidence partition.
 `gate --fresh`, prospective execution, and ship remain full boundaries.
 
@@ -163,7 +201,7 @@ The document is one object with a `phases` array. Each phase carries:
 - `env` (optional) — a string-to-string map set in the phase's environment; it
   overrides the gate's own values.
 - `needs` (optional) — names of phases that must end green before this phase
-  starts. When a needed phase ends red or skipped, this phase is skipped too,
+  starts. When a needed phase ends red or skipped, Bench skips this phase too,
   because it would grade an artifact its need never produced. Every name
   named here must exist in the manifest.
 - `optional` (optional, default false) — when the command is not installed,
@@ -171,7 +209,7 @@ The document is one object with a `phases` array. Each phase carries:
   command that fails still reports red.
 - `dir` (optional) — the phase's working directory, a relative path anchored
   to the graded root. In a linked repo the graded root is a different tree
-  from the kit checkout, so only a root-relative path lands where the
+  from the kit checkout. Only a root-relative path lands where the
   project's directories actually are. An empty value means the root itself.
 
 ```json
@@ -183,13 +221,20 @@ The document is one object with a `phases` array. Each phase carries:
 }
 ```
 
-The loader fails closed. Anything between the two valid states reds before any
-phase runs and names the path, the defect class, and the offending element:
-a truncated write or trailing content, a dangling symlink or non-regular file,
-an unknown field, a duplicate name, an empty argv, a `dir` that is absolute or
-escapes the root, a `needs` edge to a phase that does not exist, or a cycle.
+The loader fails closed. Anything between the two valid states reds before
+any phase runs. It names the path, the defect class, and the offending
+element. The offending element is one of:
+
+- a truncated write or trailing content
+- a dangling symlink or non-regular file
+- an unknown field
+- a duplicate name
+- an empty argv
+- a `dir` that is absolute or escapes the root
+- a `needs` edge to a phase that does not exist, or a cycle
+
 A manifest with any of these defects means the loader cannot know what its
-author intended, and a guessed-at table would grade the tree with the wrong
+author intended. A guessed-at table would grade the tree with the wrong
 oracle. If you hit one of these reds, the refusal is deliberate: fix the
 manifest. There is no lenient mode.
 
@@ -200,29 +245,35 @@ runs the adapter executable with the generated prompt written to its
 **stdin** — no positional argument — and with `BENCH_SHIFT=1` armed. The
 prompt is multi-line and may start with a dash. An adapter must read all of
 stdin, must not re-expose the prompt as a CLI argument, and exits with its
-harness's exit code; the loop takes that exit code as progress evidence, and
-the gate stays the oracle. The adapter launches with a documented
+harness's exit code. The loop takes that exit code as progress evidence, and
+the gate stays the oracle.
+
+The adapter launches with a documented
 **passlisted environment**, not the parent's full environment. Widen it only
 by committing extra names under the `[agent]` section (the only section) of
 `.bench/env.allow`. Declare a variable the *gate* needs in
 `.bench/gate-inputs.json` instead; `bench setup` seeds that file with the
 names the installed wrapper needs (`BENCH_HOME` and `HOME`). There is no
 default: an unset `BENCH_AGENT` fails fast before the loop with a
-configure-your-adapter error. Reference adapters ship in `.bench/adapters/`
-(`claude`, `codex`, `opencode`); point `BENCH_AGENT` at one, or at your own
+configure-your-adapter error.
+
+Reference adapters ship in `.bench/adapters/`
+(`claude`, `codex`, `opencode`). Point `BENCH_AGENT` at one, or at your own
 wrapper that pipes its stdin to your harness's noninteractive stdin-reading
-command. The `claude` and `codex` adapters do exactly this; `opencode` reads
+command. The `claude` and `codex` adapters do exactly this. `opencode` reads
 stdin and hands it to `opencode run` positionally after `--`, an upstream
 residual until opencode documents a stdin form. Use an absolute path or an
-on-`PATH` name; put harness flags inside the wrapper, because a multi-word
-`BENCH_AGENT` value is treated as one executable name and rejected.
+on-`PATH` name. Put harness flags inside the wrapper, because Bench treats a
+multi-word `BENCH_AGENT` value as one executable name and rejects it.
 
-The adapters also carry the line (see the `craft-line` skill). When set,
-`BENCH_MODEL` is passed to the harness's model flag. A repo with
-`.bench/lines.env` (the harness × tier binding matrix) is **routed**: there
+The adapters also carry the line (see the `craft-line` skill). When
+`BENCH_MODEL` is set, the adapter passes it to the harness's model flag. A repo with
+`.bench/lines.env` (the harness × tier binding matrix) is **routed**. There
 `BENCH_MODEL` names a tier — `top`, `mid`, or `cheap` — and each adapter asks
-the core for its own harness's column. The adapter refuses to run when the
-tier is unset or unknown, or when its harness's column is unbound, so a
+the core for its own harness's column.
+
+The adapter refuses to run when the
+tier is unset or unknown, or when its harness's column is unbound. A
 headless shift always carries an explicit, bound line. Without `lines.env`
 the adapters behave as plain pass-throughs and forward `BENCH_MODEL`
 verbatim. Effort has no harness flag and stays in the declared line.
@@ -237,17 +288,18 @@ Bench layers git safety:
   reports a static, generic deny surface while enforcement stays live.
 - Claude Code and Codex hook adapters call the shared scripts in
   `.bench/hooks/`. Codex loads `.codex/hooks.json` only after you trust it
-  once through `/hooks` (its project-hook trust step), and only on a Codex
-  build new enough to support hooks; an older Codex ignores the file and
-  keeps only the backstops below.
+  once through `/hooks` (its project-hook trust step). It loads only on a
+  Codex build new enough to support hooks. An older Codex ignores the file
+  and keeps only the backstops below.
 - The agent-line guard (`check-agent-line`) wires on Claude Code only. Codex
   cannot host it: a delegation (`spawn_agent`) never surfaces as a matchable
   `tool_name` on a deny-capable event. `SubagentStart` carries the active
-  model through its common input fields, but it cannot deny the spawn:
+  model through its common input fields. It cannot deny the spawn:
   `continue: false` does not stop the subagent (Codex hooks docs, checked
   2026-07-11). The line's harness-independent backstop is the shift adapters'
-  refusal to run with an unset or unbound `BENCH_MODEL`. Re-check this if the
-  Codex changelog adds a spawn tool name or a deny-capable SubagentStart.
+  refusal to run with an unset or unbound `BENCH_MODEL`. If the Codex
+  changelog adds a spawn tool name or a deny-capable SubagentStart, revisit
+  this rule.
 - Linked repos carry a local `.bench/bin/` CLI set for those hooks. A globally
   installed `bench` is convenient for a human; hook execution does not need
   it.

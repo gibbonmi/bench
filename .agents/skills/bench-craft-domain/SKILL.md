@@ -7,20 +7,20 @@ index: pinning domain terms / enumerating concept-edge scenarios
 # Domain modeling
 
 A domain model is the shared vocabulary plus the concrete scenarios that pin
-what each term means at its edges. Getting it right upstream is what makes
-completeness cheap downstream: a spec row or a review can only enumerate what
+what each term means at its edges. A model pinned upstream makes completeness
+cheap downstream: a spec row or a review can only enumerate what
 the vocabulary can name. This is a companion craft skill — not a phase, not a
 gate. It fires from `craft-grill`, `/bench-shape-idea`, and
 `/bench-write-spec`; every other phase consumes `CONTEXT.md` ambiently.
 
 ## Canonical terms and Avoid lists
 
-Give every load-bearing concept one canonical name and challenge the vague or
-overloaded ones on sight — a term that covers two meanings, or two terms that
-cover one, is a defect to surface now, not later. Record each canonical term
-with an Avoid list: the synonyms and near-misses sessions must not drift into.
-Complete when every load-bearing noun in the work at hand resolves to one
-canonical term or to an open question put to the reviewer.
+Give every load-bearing concept one canonical name, and challenge the vague
+or overloaded ones on sight. A term that covers two meanings, or two terms
+that cover one, is a defect to surface now, not later. Record each canonical
+term with an Avoid list: the synonyms and near-misses sessions must not
+drift into. Complete when every load-bearing noun in the work at hand
+resolves to one canonical term or to an open question put to the reviewer.
 
 > **worktree** — an isolated Git checkout leased for one assignment. Not
 > "sandbox", not "branch copy" — worktree.
@@ -43,7 +43,7 @@ a scenario sharp enough to become an acceptance row unchanged.
 
 Derive input families from what the real producer can emit, not from
 imagination. Read the producer — the caller, the CLI, the file format, the
-API — and take each output shape it can actually produce as one partition.
+API. Take each output shape it can actually produce as one partition.
 Imagined inputs pad the inventory while missing the shapes that occur;
 producer-derived partitions bound completeness because the producer's range
 is finite and readable. Complete when every partition traces to a producer
@@ -51,9 +51,9 @@ surface you read, and the producer's whole range is accounted for.
 
 ## Code-versus-claim comparison
 
-Check what the code actually does against what the glossary, spec, or
+Compare what the code actually does with what the glossary, spec, or
 conversation claims it does. On a conflict, resolve it explicitly: fix the
-code, fix the term, or put the fork to the reviewer as a decision — never
+code, fix the term, or put the fork to the reviewer as a decision. Never
 leave both meanings live, because each survives into different downstream
 artifacts and they drift apart.
 

@@ -29,15 +29,17 @@ Pick model-invocation only when the agent or another skill must reach it on its 
 
 ## Leading words
 
-A **leading word** is a compact concept already in the model's pretraining that the
-agent thinks *with* while running — `seam`, `fog of war`, `tracer bullets`, `the
+A **leading word** is a compact concept already in the model's pretraining that
+the agent thinks *with* while running. Examples: `seam`, `fog of war`, `tracer bullets`, `the
 line`, `the gate is the oracle`. Repeated across the text, it accumulates a
-distributed meaning and anchors a region of behavior in the fewest tokens by
-recruiting priors the model already holds. It pays twice: in the body it anchors
-*execution* (same word, same behavior every run); in the description it anchors
-*invocation* (when the word lives in your prompts and docs too, the agent links the
-shared language to the skill and fires it more reliably). Hunt for a triad spelled
-out three times — `fast, deterministic, low-overhead` → `tight` — and collapse it.
+distributed meaning. It anchors a region of behavior in the fewest tokens by
+recruiting priors the model already holds.
+
+It pays twice: in the body it anchors *execution*: same word, same behavior
+every run. In the description it anchors *invocation*. When the word lives in
+your prompts and docs too, the agent links the shared language to the skill
+and fires it more reliably. Hunt for a triad spelled out three times —
+`fast, deterministic, low-overhead` → `tight` — and collapse it.
 
 ## Information hierarchy
 
@@ -59,17 +61,17 @@ Inline what every branch needs; push behind a pointer what only some branches re
 ## Contrastive examples
 
 When a skill governs an output surface — an interface, a format, a prose
-register — it must carry one contrastive pair: a good example beside a bad one,
-each captioned with the one clause that separates them. A rule states the
-boundary; the pair *locates* it, and the weakest reader imitates an example
-more reliably than it interprets a rule. One pair per surface is the budget — a
+register — it must carry one contrastive pair. The pair is a good example
+beside a bad one, each captioned with the one clause that separates them.
+A rule states the boundary; the pair *locates* it, and the weakest reader
+imitates an example more reliably than it interprets a rule. One pair per surface is the budget — a
 gallery is sediment. Process skills (ordered steps, no output shape) get none;
 show the shape only where the shape is the point.
 
 ## Write for the weakest reader
 
 A skill is executed by every tier in the rotation, including the cheapest
-delegate on a headless run. Test each instruction against that reader: could
+delegate on a headless run. Test each instruction against that reader. Could
 the weakest model in the binding act on this sentence unambiguously, without
 the judgment you had while writing it? An instruction that needs the author's
 context to interpret is a defect that compounds — the skill fires thousands of
@@ -93,8 +95,8 @@ lives in `craft-line`; this rule is about the prose itself.)
 - **Duplication** — the same meaning in two places; costs maintenance and inflates a
   meaning's apparent rank.
 - **Harness echo** — restating what the harness layer already carries (the
-  system prompt, a tool description). Single source of truth spans layers:
-  before a rule lands, check the harness surfaces it will ride beside — an
+  system prompt, a tool description). Single source of truth spans layers.
+  Before a rule lands, check the harness surfaces it will ride beside. An
   echo is sediment, and a near-echo drifts into conflict. A rule the kit must
   own across harnesses is not an echo; name the harness gap it covers.
 - **Sprawl** — one skill accreting unrelated jobs until no description can say
@@ -103,7 +105,7 @@ lives in `craft-line`; this rule is about the prose itself.)
   catch these — delete on sight.
 - **Negation** — steering by prohibition drags the forbidden behavior into
   context and makes it *more* available ("don't think of an elephant"). Prompt
-  the positive target instead; a prohibition earns its place only as a hard
+  the positive target instead. A prohibition earns its place only as a hard
   guardrail you can't phrase positively, and even then it rides next to the
   positive.
 - **Negative space** — every decision a skill declines to make is silently

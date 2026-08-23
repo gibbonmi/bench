@@ -191,11 +191,10 @@ func TestAdapterTarget(t *testing.T) {
 	}
 }
 
-// TestLinkOutsideGitRepoNamesGitRepository pins link's own remedy: link's job is to
-// create the linkage, so pointing the user at "run inside a Bench-linked repo" (the
-// shared AXI query-command message) is nonsensical here — the message must instead
-// name a git repository / git init, and the shared toon.NotInRepo() phrasing must
-// not appear.
+// TestLinkOutsideGitRepoNamesGitRepository pins link's own remedy. Link's job is to
+// create the linkage. The shared AXI query-command wording, "run inside a Bench-linked
+// repo", is nonsensical here. The message must name a git repository or a git init
+// command instead, and the shared toon.NotInRepo() phrasing must not appear.
 func TestLinkOutsideGitRepoNamesGitRepository(t *testing.T) {
 	t.Chdir(t.TempDir())
 
@@ -435,9 +434,9 @@ func mustGetwd(t *testing.T) string {
 }
 
 // TestCompareKitVersions pins the ordering `bench upgrade` decides on. The prerelease
-// rows are the point: a repo pinned at a prerelease of the installed release must read
-// as behind it, not as equal, or the applying run returns success without relinking and
-// the manifest stays stamped at the prerelease forever.
+// rows are the point. A repo pinned at a prerelease of the installed release must read as
+// behind it, not as equal. Otherwise the applying run returns success without relinking,
+// and the manifest stays stamped at the prerelease forever.
 func TestCompareKitVersions(t *testing.T) {
 	cases := []struct {
 		a, b string
@@ -476,11 +475,11 @@ func readFile(t *testing.T, path string) string {
 	return string(data)
 }
 
-// TestScaffoldLearningsMirrorsTheParserBoundary covers DL29: the bytes a fresh repo
-// receives parse with zero malformed records, the scaffold's boundary line is the
-// parser's own exported marker rather than a second literal, and the journal fixture
-// internal/learnings checks in is a mirror of this scaffold rather than a hand-copied
-// second source of the same bytes.
+// TestScaffoldLearningsMirrorsTheParserBoundary proves the scaffold and the parser stay
+// one source. The bytes a fresh repo receives parse with zero malformed records. The
+// scaffold's boundary line is the parser's own exported marker rather than a second
+// literal. The journal fixture internal/learnings checks in is a mirror of this scaffold
+// rather than a hand-copied second source of the same bytes.
 func TestScaffoldLearningsMirrorsTheParserBoundary(t *testing.T) {
 	got := scaffoldLearnings()
 	if _, malformed := learnings.Parse([]byte(got)); len(malformed) != 0 {

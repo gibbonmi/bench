@@ -1,12 +1,12 @@
 # Hostile-input library — edge-class templates per domain
 
 Templates for the domain hostile-input checklist a project profile carries in
-`projects/<name>.md`. `/bench-setup-repo` seeds a new profile from the sections
-matching the stack; `/bench-write-spec`'s edge inventory reads the *profile's*
-checklist, not this file — the profile is the tuned instance, this is the
-quarry. Pick the matching sections, cut classes the stack can't meet, and add
-the classes only this project knows about. A project spanning domains takes a
-section per surface.
+`projects/<name>.md`. `/bench-setup-repo` seeds a new profile from the
+sections matching the stack. `/bench-write-spec`'s edge inventory reads the
+*profile's* checklist, not this file — the profile is the tuned instance,
+this is the quarry. Pick the matching sections, cut classes the stack can't
+meet, and add the classes only this project knows about. A project spanning
+domains takes a section per surface.
 
 ## Shell CLI
 
