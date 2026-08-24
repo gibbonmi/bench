@@ -52,8 +52,8 @@ func newPrimaryRepo(t *testing.T) string {
 }
 
 // newLinkedWorktree adds a linked worktree of primary and returns its resolved toplevel.
-// The idea verb refuses the primary checkout, so every write fixture lives in a linked
-// worktree, the shape a Bench phase runs in.
+// With a tracked inbox, the idea verb refuses the primary checkout, so every
+// tracked-inbox write fixture lives in a linked worktree, the shape a Bench phase runs in.
 func newLinkedWorktree(t *testing.T, primary string) string {
 	t.Helper()
 	root := filepath.Join(t.TempDir(), "linked")
@@ -84,8 +84,9 @@ func ideasPath(t *testing.T, root string) string {
 
 var datedLine = regexp.MustCompile(`(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$`)
 
-// TestIdeaRefusesPrimaryCheckout pins the checkout boundary: the primary checkout is
-// read-only for Bench verbs, so the idea verb refuses there and leaves the inbox alone.
+// TestIdeaRefusesPrimaryCheckout pins the checkout boundary for a tracked inbox: the
+// primary checkout is read-only for Bench verbs, so the idea verb refuses there and
+// leaves the inbox alone.
 func TestIdeaRefusesPrimaryCheckout(t *testing.T) {
 	primary := resolvedToplevel(t, newPrimaryRepo(t))
 	t.Chdir(primary)
@@ -95,6 +96,58 @@ func TestIdeaRefusesPrimaryCheckout(t *testing.T) {
 	}
 	if _, err := os.Stat(ideasPath(t, primary)); err == nil {
 		t.Fatal("refused idea still appended to the inbox")
+	}
+}
+
+// TestIdeaIgnoredInboxWritesPrimary covers an ignored inbox on the primary checkout:
+// the file can never dirty a landing, so the verb writes it in place and exits zero.
+func TestIdeaIgnoredInboxWritesPrimary(t *testing.T) {
+	primary := resolvedToplevel(t, newPrimaryRepo(t))
+	if err := os.WriteFile(filepath.Join(primary, ".gitignore"), []byte("capture/IDEAS.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(primary)
+	out, code := IdeaCommand([]string{"ship", "dark", "mode"})
+	if code != 0 || out != "parked: ship dark mode\n" {
+		t.Fatalf("ignored inbox on primary = %q/%d, want parked on exit 0", out, code)
+	}
+	data, err := os.ReadFile(ideasPath(t, primary))
+	if err != nil {
+		t.Fatalf("capture/IDEAS.md not created on primary: %v", err)
+	}
+	if !datedLine.Match(data) {
+		t.Fatalf("line does not match dated two-space shape: %q", data)
+	}
+}
+
+// TestIdeaIgnoredInboxRedirectsWorktreeWrite covers an ignored inbox from a linked
+// worktree: the append lands in the primary checkout's copy, not the worktree copy,
+// so a parked idea survives the worktree's release.
+func TestIdeaIgnoredInboxRedirectsWorktreeWrite(t *testing.T) {
+	primary := resolvedToplevel(t, newPrimaryRepo(t))
+	if err := os.WriteFile(filepath.Join(primary, ".gitignore"), []byte("capture/IDEAS.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"add", ".gitignore"}, {"commit", "-q", "-m", "ignore inbox"}} {
+		if out, err := exec.Command("git", append([]string{"-C", primary}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
+	}
+	linked := newLinkedWorktree(t, primary)
+	t.Chdir(linked)
+	out, code := IdeaCommand([]string{"ship", "dark", "mode"})
+	if code != 0 || out != "parked: ship dark mode\n" {
+		t.Fatalf("ignored inbox in worktree = %q/%d, want parked on exit 0", out, code)
+	}
+	if _, err := os.Stat(ideasPath(t, linked)); err == nil {
+		t.Fatal("append landed in the worktree copy, not the primary checkout")
+	}
+	data, err := os.ReadFile(ideasPath(t, primary))
+	if err != nil {
+		t.Fatalf("capture/IDEAS.md not created on primary: %v", err)
+	}
+	if !datedLine.Match(data) {
+		t.Fatalf("line does not match dated two-space shape: %q", data)
 	}
 }
 

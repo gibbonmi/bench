@@ -1,24 +1,23 @@
 # Session handoff
 
-Repository: `b35df3e36b4767b8d0d21b99ad0c0e41-b1a61bd8a7c055204b9db0b9364a942d` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/b35df3e36b4767b8d0d21b99ad0c0e41-b1a61bd8a7c055204b9db0b9364a942d`
-Branch: worktree `drain-2026-08-24` — base `76208d5b` on `main`, the light-path commit `7704626a` plus the drain batch staged for one landing
-Spec: none staged; the tickets-only folder `specs/spec-retire-primary-refusal/` closes at this landing
-Gate: green at `7704626a` — the light-path commit's own run
+Repository: `6351a9e422071a56729e899496249170-6351b5e29c34ff7e8496da98891c5834` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/6351a9e422071a56729e899496249170-6351b5e29c34ff7e8496da98891c5834`
+Branch: worktree `ignore-capture-inboxes` — base `26fac60f` on `main`, one light-path commit staged for one landing
+Spec: none staged; the tickets-only folder `specs/ignore-capture-inboxes/` closes at this landing
+Gate: green in the worktree before the commit
 
 ## State
 
-The 2026-08-24 drain is complete. The inbox was already empty. The three
-learnings and the retro drained. The stale-premise pair merged into FT99, and
-the request-token pair merged into FT238 as an occurrence.
+Git now ignores `capture/IDEAS.md` and `capture/learnings.md`, and both left
+the index. The files stay on disk as local working notes, and the drain still
+reads them. When the ideas inbox is ignored, `bench idea` writes the primary
+checkout's copy from any checkout. When the inbox is tracked, the verb keeps
+the primary-checkout refusal and the worktree-local write, so a linked repo
+keeps the old behavior.
 
-The prose-bound
-recommendation opened FT250 (`Next: kit-edit`). The retire-refusal
-recommendation was built in this session as the light path. `bench spec
-retire` now refuses the primary checkout, committed at `7704626a`.
-
-The flow target does not hold (net +4). Two fold candidates await a reviewer
-verdict: FT223 into FT141, and FT235 into FT238. Neither fold is applied.
+The primary checkout's inbox copies were preserved before the landing and
+restored after it, because the merge deletes tracked copies. Linked repos do
+not receive this ignore rule yet; that decision is open.
 
 ## Next command
 

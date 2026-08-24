@@ -159,8 +159,13 @@ the reviewer wants to set one aside, or you spot a tangent worth keeping,
 **you** run `bench idea "<text>"` inside the phase worktree. Offer once, then
 let it go.
 
-The verb refuses the primary checkout, so a parked idea lands with the phase
-and never dirties `main`. Parked ideas
+This repo git-ignores both capture inboxes (`capture/IDEAS.md` and
+`capture/learnings.md`); they stay local, and their content enters history
+only through a reviewed drain. With an ignored inbox, the verb writes the
+primary checkout's copy from any checkout, so a parked idea survives the
+worktree's release. With a tracked inbox, the verb refuses the primary
+checkout, so a parked idea lands with the phase and never dirties `main`.
+Parked ideas
 land in `capture/IDEAS.md`. They graduate to the board only through a
 reviewed `/bench-drain` drain, or close by implementation during that same
 drain. The board is an index line in `ROADMAP.md` plus a body and ledger in
