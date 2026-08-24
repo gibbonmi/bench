@@ -1,6 +1,6 @@
 # Stable-owner worktree landing
 
-Status: implemented
+Status: staged
 
 Decision source: reviewer-confirmed conversation on 2026-08-24
 
