@@ -31,6 +31,10 @@ means the repository-controlled compliance assessment.
 
 **FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
 
+**FT248 (MEDIUM) — a Bash guard denies a shell follow-on appended to a `bench` command, and the rule states why.**
+
+**FT249 (MEDIUM, decision required) — the idea inbox leaves the gated tree for a shared git ref.**
+
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
 **FT71 (HIGH on the bank track) — versioned local shift evidence.**
@@ -291,6 +295,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT238: the hygiene batch; worktree assignments retain and print their request token, and every piece is a light-path ticket.
-2. `/bench-write-spec` — FT214: `craft-spec` makes coverage rows prove their claimed mechanisms, now with the per-row "name the check that reds it" rubric and the long-needle smell.
-3. `/bench-write-spec` — FT224: a lifecycle refusal names the component that failed and the command that fixes it; the landing-authors-the-flip retro added a fresh moved-destination case.
+1. `/bench-implement-spec specs/module-size-split/spec.md` — the structure fix; the reviewer moved it to the front on 2026-08-23, and the spec is already staged.
+2. `/bench-implement-spec` — FT238: the hygiene batch; worktree assignments retain and print their request token, and every piece is a light-path ticket.
+3. `/bench-write-spec` — FT248: a Bash guard denies a shell follow-on appended to a `bench` command; today the rule is prose only.
