@@ -12,7 +12,9 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// PathCommand resolves one active Bench-owned assignment and prints its portable path.
+// PathCommand resolves one active Bench-owned assignment and prints its resolved
+// absolute path. A quoted `~` never expands in a shell, so the verb emits the form
+// every caller can paste; the path-taking verbs still accept the `~` form.
 func PathCommand(root string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 1 || strings.TrimSpace(args[0]) == "" {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreePath)
@@ -36,7 +38,7 @@ func resolvePath(root, target string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return compactHomePath(path)
+	return canonicalPath(path)
 }
 
 func resolveWorktree(root, target string) (string, error) {
@@ -127,27 +129,4 @@ func targetPath(target string) (string, bool, error) {
 		return "", false, errors.New("relative path targets are unsupported")
 	}
 	return "", false, nil
-}
-
-func compactHomePath(path string) (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	home, err = canonicalPath(home)
-	if err != nil {
-		return "", err
-	}
-	path, err = canonicalPath(path)
-	if err != nil {
-		return "", err
-	}
-	rel, err := filepath.Rel(home, path)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return path, nil
-	}
-	if rel == "." {
-		return "~", nil
-	}
-	return filepath.Join("~", rel), nil
 }

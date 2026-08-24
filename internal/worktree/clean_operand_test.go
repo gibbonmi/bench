@@ -47,15 +47,12 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 	}
 }
 
-// [CP1][CP2] `bench worktree path` prints a portable `~`-prefixed path, and the help
+// [CP1][CP2] `bench worktree path` prints the resolved absolute path, and the help
 // rows steer the operator straight from it into `bench worktree clean`. So the two
-// have to compose. Plan and apply must also agree on one canonical target: a fingerprint
-// taken against the unexpanded path and applied against the expanded one would remove a
-// checkout the operator never saw named.
-func TestCleanCommandAcceptsThePortablePathThatPathPrints(t *testing.T) {
+// have to compose, and the printed form has to work verbatim when quoted — which the
+// `~` form never does. Plan and apply must also agree on one canonical target.
+func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "portable")
-	// The fixture worktree lives under BENCH_HOME inside root. Pointing HOME at root
-	// is what makes `path` print the portable form this test is about.
 	bindEnv(t, "HOME", root)
 	chdir(t, root)
 	var printed, stderr bytes.Buffer
@@ -63,8 +60,8 @@ func TestCleanCommandAcceptsThePortablePathThatPathPrints(t *testing.T) {
 		t.Fatalf("path exited %d: %s", code, stderr.String())
 	}
 	portable := strings.TrimSpace(printed.String())
-	if !strings.HasPrefix(portable, "~/") {
-		t.Fatalf("path printed %q, want the portable home form", portable)
+	if !filepath.IsAbs(portable) {
+		t.Fatalf("path printed %q, want a resolved absolute path", portable)
 	}
 	var planned bytes.Buffer
 	if code := CleanCommand([]string{portable}, &planned, &stderr); code != 0 {
