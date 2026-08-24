@@ -13,6 +13,10 @@ entries, or `capture/retros/` has pending implementation retros. One run
 reconciles the roadmap against the tree, drains all three capture sources,
 refreshes the recommended sequence, and hands the reviewer one diff to approve.
 
+The "not a workflow phase" label above is scope, not an exemption. `main`
+still takes writes only through a landing. Open a bench worktree before the
+first edit, and close through `bench worktree land`.
+
 At entry, invoke `bench roadmap --context` exactly once. Its successful schema-4
 index is the complete local inventory for every step below. It covers every
 roadmap row and capture unit, each capture path, every true body byte count,
