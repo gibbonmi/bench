@@ -16,3 +16,4 @@ The helpers stay in package `worktree`, because they build the private `explicit
 - [ ] R08: `go test -list '.*' ./internal/worktree/` emits the same test-name set at base and tip.
 - [ ] R11: each moved helper has exactly one definition in the package.
 - [ ] R18: `bench gate` exits zero before the commit.
+- [ ] R13: the final `bench structure` total is at most 55 issues once every ticket has landed.
