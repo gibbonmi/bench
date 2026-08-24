@@ -174,8 +174,6 @@ It proves that the stable owner and prospective gate binary have different roles
 
 ## Ownership fences
 
-### Ticket 01
-
 - `bin/bench.sh`
 - `bin/bench-postinstall.sh`
 - `internal/adopt/`
@@ -185,15 +183,9 @@ It proves that the stable owner and prospective gate binary have different roles
 - `internal/worktree/land_identity.go`
 - `internal/worktree/land_identity_test.go`
 - `internal/systemtest/`
-
-### Ticket 02
-
 - `internal/landing/`
 - `internal/gate/`
-- `internal/worktree/land.go`
 - `internal/worktree/land_resume.go`
-- `internal/worktree/land_freshness_test.go`
-- `internal/systemtest/`
 - `CHANGELOG.md`
 - `projects/benchkit.md`
 
