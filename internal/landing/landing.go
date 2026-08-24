@@ -99,30 +99,48 @@ func New() Owner {
 	return Owner{authorize: authorization.AuthorizeWithWriters, updateRef: updateRef, reconcile: reconcile}
 }
 
-// Land publishes a commit only when the exact composed tree receives green authorization.
-func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
+// composeAuthorized runs the prospective half every landing verdict shares: attribute,
+// compose, refuse an empty diff, then authorize the exact composed tree.
+func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, composedSnapshot, error) {
 	if err := validRequest(r); err != nil {
-		return Result{}, err
+		return nil, composedSnapshot{}, err
 	}
 	paths, err := attributedPaths(r.Root, r.Expected, r.Paths)
 	if err != nil {
-		return Result{}, err
+		return nil, composedSnapshot{}, err
 	}
 	snapshot, err := compose(r, paths)
+	if err != nil {
+		return nil, composedSnapshot{}, err
+	}
+	baseTree, err := output(r.Root, "rev-parse", r.Expected+"^{tree}")
+	if err != nil {
+		return nil, composedSnapshot{}, fmt.Errorf("read expected base tree: %w", err)
+	}
+	if snapshot.tree == baseTree {
+		return nil, composedSnapshot{}, errors.New("nothing to commit")
+	}
+	if got := o.authorize(ctx, r.Root, snapshot.tree, r.Stdout, r.Stderr); got.Kind != authorization.Green {
+		return nil, composedSnapshot{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
+	}
+	return paths, snapshot, nil
+}
+
+// DryRun composes and authorizes exactly what Land would, then stops: no commit is
+// created and no ref moves. The verdict is the value, so a caller diagnoses a composed
+// path set without publishing a junk commit.
+func (o Owner) DryRun(ctx context.Context, r Request) error {
+	_, _, err := o.composeAuthorized(ctx, r)
+	return err
+}
+
+// Land publishes a commit only when the exact composed tree receives green authorization.
+func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
+	paths, snapshot, err := o.composeAuthorized(ctx, r)
 	if err != nil {
 		return Result{}, err
 	}
 	tree := snapshot.tree
-	baseTree, err := output(r.Root, "rev-parse", r.Expected+"^{tree}")
-	if err != nil {
-		return Result{}, fmt.Errorf("read expected base tree: %w", err)
-	}
-	if tree == baseTree {
-		return Result{}, errors.New("nothing to commit")
-	}
-	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); got.Kind != authorization.Green {
-		return Result{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
-	}
 	commit, err := output(r.Root, "commit-tree", tree, "-p", r.Expected, "-m", r.Message)
 	if err != nil {
 		return Result{}, fmt.Errorf("create landing commit: %w", err)
