@@ -8,6 +8,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- The `prose-mechanics` check now rejects unsupported, malformed, or unreadable
+  learning journals and reports the repair location. `capture/learnings.md` is no
+  longer tracked, so each journal remains local.
 - The `internal/worktree` test suite now selects one Bench executable per run,
   routes every repository, descendant, environment, and directory effect
   through one serial journey harness, and tests landing, lifecycle, and

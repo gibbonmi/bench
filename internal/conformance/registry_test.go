@@ -191,6 +191,7 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/conformance/checks_test.go",
 	),
 	"prose-mechanics": conformanceGoFixture(
+		"internal/learnings/learnings.go",
 		"internal/prose/prose.go",
 		"internal/prose/walk.go",
 		"internal/prose/exclusions.go",

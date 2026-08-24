@@ -281,6 +281,15 @@ func hasJournalSchema(content []byte) bool {
 	return false
 }
 
+// UnsupportedSchemaReason returns the parser reason when content does not attempt a
+// learning heading and does not start with the journal schema heading.
+func UnsupportedSchemaReason(content []byte) string {
+	if hasAnyHeading(content) || hasJournalSchema(content) {
+		return ""
+	}
+	return "no dated heading found"
+}
+
 func stripLeadingSeparators(s string) string {
 	for {
 		switch {
@@ -350,8 +359,8 @@ func Command(args []string) (string, int) {
 	default:
 		return toon.RecordError(JournalPath, c.State, c.Reason) + "\n", 1
 	}
-	if !hasAnyHeading(c.Data) && !hasJournalSchema(c.Data) {
-		return toon.RecordError(JournalPath, bounds.StateUnsupportedSchema, "no dated heading found") + "\n", 1
+	if reason := UnsupportedSchemaReason(c.Data); reason != "" {
+		return toon.RecordError(JournalPath, bounds.StateUnsupportedSchema, reason) + "\n", 1
 	}
 	entries, malformed := Parse(c.Data)
 	rows := openRows(entries)

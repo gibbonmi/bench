@@ -1,22 +1,46 @@
 package conformance
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/prose"
 )
 
-// checkProseMechanics is the registered wrapper over internal/prose. The package owns
-// the parser, the walk, the exclusion grammar, and the classification, so the check is
-// the binding and nothing else.
+// checkProseMechanics grades prose mechanics and learning-journal structure.
 func checkProseMechanics(root string) []string {
-	return prose.Grade(root)
+	diags := prose.Grade(root)
+	return append(diags, learningJournalDiagnostics(root)...)
+}
+
+func learningJournalDiagnostics(root string) []string {
+	path := filepath.Join(root, filepath.FromSlash(learnings.JournalPath))
+	c := bounds.ClassifyNoFollow(path)
+	switch c.State {
+	case bounds.StateAbsent, bounds.StateEmpty:
+		return nil
+	case bounds.StateParsed:
+		if reason := learnings.UnsupportedSchemaReason(c.Data); reason != "" {
+			return []string{fmt.Sprintf("learning journal: %q: refused %s: %s", learnings.JournalPath, bounds.StateUnsupportedSchema, reason)}
+		}
+		_, malformed := learnings.Parse(c.Data)
+		diags := make([]string, 0, len(malformed))
+		for _, entry := range malformed {
+			diags = append(diags, fmt.Sprintf("learning journal: %q line %d: %s", learnings.JournalPath, entry.Line, entry.Reason))
+		}
+		return diags
+	default:
+		return []string{fmt.Sprintf("learning journal: %q: refused %s: %s", learnings.JournalPath, c.State, c.Reason)}
+	}
 }
 
 // approvedProseExclusionRows is the reviewed set of paths .bench/prose-exclusions may
@@ -37,6 +61,64 @@ func TestProseMechanicsHoldsOnTheLiveTree(t *testing.T) {
 	h := NewHarness(t)
 	if diags := checkProseMechanics(h.KitRoot); len(diags) != 0 {
 		t.Fatalf("the kit's authored Markdown is over the prose mechanics bounds:\n%s", strings.Join(diags, "\n"))
+	}
+}
+
+func TestProseMechanicsGradesLearningJournal(t *testing.T) {
+	owner, bound := conformanceChecks["prose-mechanics"]
+	if !bound {
+		t.Fatal("prose-mechanics conformance owner is not bound")
+	}
+	for _, tc := range []struct {
+		name, journal, want  string
+		directory, oversized bool
+	}{
+		{name: "absent"},
+		{name: "empty", journal: ""},
+		{name: "valid", journal: "## 2026-08-24 — valid entry [open]\n"},
+		{name: "unsupported schema", journal: "not a learnings journal\n", want: "learning journal: \"capture/learnings.md\": refused unsupported-schema: no dated heading found"},
+		{name: "malformed", journal: "## malformed heading\n", want: "capture/learnings.md\" line 1: malformed learning heading"},
+		{name: "unaccounted content", journal: learnings.JournalSchemaHeading + "\n\n" + learnings.JournalEntriesMarker + "\n\norphaned content\n", want: "capture/learnings.md\" line 5: learning content below the entries marker is not an entry"},
+		{name: "invalid UTF-8", journal: learnings.JournalSchemaHeading + "\xff\n", want: "learning journal: \"capture/learnings.md\": refused malformed: invalid UTF-8"},
+		{name: "oversized", oversized: true, want: "learning journal: \"capture/learnings.md\": refused unreadable: read limit exceeded"},
+		{name: "wrong type", directory: true, want: "learning journal: \"capture/learnings.md\": refused wrong-type:"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			journal := filepath.Join(root, "capture", "learnings.md")
+			if err := os.MkdirAll(filepath.Dir(journal), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if tc.directory {
+				if err := os.Mkdir(journal, 0o755); err != nil {
+					t.Fatal(err)
+				}
+			} else if tc.name != "absent" {
+				content := []byte(tc.journal)
+				if tc.oversized {
+					content = bytes.Repeat([]byte("a"), int(bounds.ControlRecordLimit)+1)
+				}
+				if err := os.WriteFile(journal, content, 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(root, ".bench", "prose-exclusions"), nil, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			diags := owner.run(root, root, registry.Dev)
+			if tc.want == "" {
+				if len(diags) != 0 {
+					t.Fatalf("clean learning journal produced %q", diags)
+				}
+				return
+			}
+			if !containsDiagnostic(diags, tc.want) {
+				t.Fatalf("learning journal produced %q, want %q", diags, tc.want)
+			}
+		})
 	}
 }
 
