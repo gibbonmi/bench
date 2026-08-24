@@ -1,32 +1,28 @@
 # Session handoff
 
-Repository: `ee9e5c3e35405f8f069b565a5bf54054-e6c6a7f19db9134730d8cd924a19bfae` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/ee9e5c3e35405f8f069b565a5bf54054-e6c6a7f19db9134730d8cd924a19bfae`
-Branch: worktree `spec-retire-mss` — base `74ef1125` on `main`, retire and capture edits staged for one landing
-Spec: `specs/module-size-split/` retired (was `Status: implemented` at `74ef1125`)
-Gate: green at `74ef1125` — the landing's own run
+Repository: `b35df3e36b4767b8d0d21b99ad0c0e41-b1a61bd8a7c055204b9db0b9364a942d` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/b35df3e36b4767b8d0d21b99ad0c0e41-b1a61bd8a7c055204b9db0b9364a942d`
+Branch: worktree `drain-2026-08-24` — base `76208d5b` on `main`, the light-path commit `7704626a` plus the drain batch staged for one landing
+Spec: none staged; the tickets-only folder `specs/spec-retire-primary-refusal/` closes at this landing
+Gate: green at `7704626a` — the light-path commit's own run
 
 ## State
 
-The `module-size-split` spec is complete. The final landing `74ef1125` amended
-R13's scope and split `internal/lines/lines_test.go` (ticket 13, Opus/low,
-first-pass). `bench structure` reports 55 issues, within R13's bound. The three
-review axes returned zero findings.
+The 2026-08-24 drain is complete. The inbox was already empty. The three
+learnings and the retro drained. The stale-premise pair merged into FT99, and
+the request-token pair merged into FT238 as an occurrence.
 
-Final-check ran the post-merge tail. The spec folder is retired, and the
-roadmap sequence list no longer names the spec. The retro
-`capture/retros/module-size-split.md` is rewritten, the Claude scorecard is
-refreshed, and three learnings entries are appended. This worktree carries all
-of those edits in one retire landing.
+The prose-bound
+recommendation opened FT250 (`Next: kit-edit`). The retire-refusal
+recommendation was built in this session as the light path. `bench spec
+retire` now refuses the primary checkout, committed at `7704626a`.
 
-A `git stash` on the primary checkout holds the first, misplaced retire bytes;
-it is disposable once this landing reaches `main`. The 400-to-700-line
-remainder stays a decided out-of-scope follow-up. The reviewer pre-approved the
-drain recommendations on 2026-08-24.
+The flow target does not hold (net +4). Two fold candidates await a reviewer
+verdict: FT223 into FT141, and FT235 into FT238. Neither fold is applied.
 
 ## Next command
 
-`/bench-drain`
+`/bench-implement-spec` — FT238, per the recommended sequence.
 
 ## Shape
 
