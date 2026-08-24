@@ -49,7 +49,7 @@ func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) in
 	}
 	id, request := parsed.Flags["--assignment"], parsed.Flags["--request"]
 	base, tip := parsed.Flags["--base"], parsed.Flags["--source-tip"]
-	path, err := canonicalPath(parsed.Positionals[0])
+	path, err := canonicalPath(resolveVerbOperand(root, parsed.Positionals[0]))
 	if err != nil {
 		fmt.Fprintln(stderr, "bench worktree reauthorize: worktree path is not canonical")
 		return 1

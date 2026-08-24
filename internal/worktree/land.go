@@ -84,7 +84,7 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 		fmt.Fprintln(stderr, line)
 		return code
 	}
-	path, err := canonicalPath(parsed.Positionals[0])
+	path, err := canonicalPath(resolveVerbOperand(root, parsed.Positionals[0]))
 	if err != nil {
 		return landRefusal(stdout, "worktree path is not canonical")
 	}
