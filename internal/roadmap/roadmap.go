@@ -77,14 +77,26 @@ func IdeaCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	// The inbox is a tracked file, and main receives writes only through landings. An
-	// append here would dirty the landing destination, so the verb redirects like commit.
-	primary, err := git.IsPrimaryCheckout(root)
-	if err != nil {
-		return toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree") + "\n", 1
-	}
-	if primary {
-		return usage.PrimaryCheckoutRefusal() + "\n", 1
+	// An ignored inbox is a local working note. It can never dirty a landing
+	// destination, so the verb writes the primary checkout's copy from any
+	// checkout, and a worktree-parked idea survives the worktree's release. A
+	// tracked inbox keeps the landing boundary: main receives writes only
+	// through landings, so the verb refuses the primary checkout and appends
+	// to the phase worktree's copy, which lands with the phase.
+	if inboxIgnored(root) {
+		common, err := git.CommonDir(root)
+		if err != nil {
+			return toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry") + "\n", 1
+		}
+		root = filepath.Dir(common)
+	} else {
+		primary, err := git.IsPrimaryCheckout(root)
+		if err != nil {
+			return toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree") + "\n", 1
+		}
+		if primary {
+			return usage.PrimaryCheckoutRefusal() + "\n", 1
+		}
 	}
 	owner, hasOwner := parsed.Flags["--owner"]
 	incident, hasIncident := parsed.Flags["--incident"]
@@ -126,6 +138,13 @@ func IdeaCommand(args []string) (string, int) {
 		return cannotWriteIdeas(err), 1
 	}
 	return "parked: " + displayText + "\n", 0
+}
+
+// inboxIgnored reports whether Git ignores the ideas inbox at root. An ignored
+// inbox stays out of every landing, so the checkout boundary does not apply to it.
+func inboxIgnored(root string) bool {
+	_, err := git.Output("-C", root, "check-ignore", "-q", IdeasFile)
+	return err == nil
 }
 
 func validateOccurrenceOwner(root, owner string) error {
