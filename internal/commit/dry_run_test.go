@@ -44,6 +44,15 @@ func TestDryRunRedReportsRefusalAndMovesNothing(t *testing.T) {
 	}
 }
 
+// A grammar error prints the one-line usage alone; the example stays a help-only cost.
+func TestGrammarErrorPrintsNoExample(t *testing.T) {
+	root, _ := landingRepo(t, 0, func(t *testing.T, root string) {})
+	code, _, stderr := runCommand(t, root, "a.txt")
+	if code != 2 || strings.Contains(stderr, "example:") {
+		t.Fatalf("grammar error = (%d, %q), want exit 2 with no example line", code, stderr)
+	}
+}
+
 // The help text advertises the flag the grammar accepts.
 func TestHelpAdvertisesDryRun(t *testing.T) {
 	root, _ := landingRepo(t, 0, func(t *testing.T, root string) {})

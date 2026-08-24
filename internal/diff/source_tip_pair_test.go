@@ -33,18 +33,25 @@ func TestSourceTipPairReportsTheImmutableRange(t *testing.T) {
 }
 
 // The tip never comes from the checkout implicitly, and the pair never mixes with
-// --commit; each misuse is a grammar or structured refusal, not a leaked git failure.
+// --commit; a misuse of the grammar exits 2 with the usage line, and a bad value is a
+// structured error that blames the flag the caller got wrong.
 func TestSourceTipRefusals(t *testing.T) {
 	_, base, feature := seedCompatibilityRepo(t)
 	for _, args := range [][]string{
 		{"--source-tip", feature},
 		{"--commit", feature, "--source-tip", feature},
-		{"--base", base, "--source-tip", "missing"},
-		{"--base", feature, "--source-tip", base},
 	} {
 		out, code := Command(args)
-		if code == 0 || !strings.HasPrefix(out, "error:") && !strings.HasPrefix(out, "usage:") {
-			t.Fatalf("Command(%v) = (%d,%q), want refusal", args, code, out)
+		if code != 2 || !strings.HasPrefix(out, "usage:") {
+			t.Fatalf("Command(%v) = (%d,%q), want the usage refusal", args, code, out)
 		}
+	}
+	out, code := Command([]string{"--base", base, "--source-tip", "missing"})
+	if code != 1 || !strings.HasPrefix(out, "error:") || !strings.Contains(out, "--source-tip") {
+		t.Fatalf("unresolvable tip = (%d,%q), want an error blaming --source-tip", code, out)
+	}
+	out, code = Command([]string{"--base", feature, "--source-tip", base})
+	if code != 1 || !strings.HasPrefix(out, "error:") || !strings.Contains(out, "ancestor") {
+		t.Fatalf("non-ancestor base = (%d,%q), want the ancestor error", code, out)
 	}
 }

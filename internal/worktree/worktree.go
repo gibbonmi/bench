@@ -151,7 +151,7 @@ func wellFormedFingerprint(value string) bool {
 // `bench worktree clean --apply` takes this form; its plan carries exactly one digest,
 // so a vetted prefix stays unambiguous.
 func wellFormedFingerprintOrPrefix(value string) bool {
-	return len(value) >= 8 && len(value) <= sha256.Size*2 && lowercaseHex(value)
+	return len(value) >= minOperandPrefix && len(value) <= sha256.Size*2 && lowercaseHex(value)
 }
 
 func lowercaseHex(value string) bool {
@@ -167,7 +167,7 @@ func lowercaseHex(value string) bool {
 // wellFormedFingerprint has already vetted the shape, and a plan carries exactly one
 // digest, so a vetted prefix is unambiguous.
 func matchesFingerprint(full, given string) bool {
-	return given == full || len(given) >= 8 && strings.HasPrefix(full, given)
+	return given == full || len(given) >= minOperandPrefix && strings.HasPrefix(full, given)
 }
 
 func insidePool(pool, path string) bool {

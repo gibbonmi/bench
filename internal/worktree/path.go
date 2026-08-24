@@ -85,7 +85,7 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 		}
 		selected = &assignments[i]
 	}
-	if selected == nil && !isPath && len(target) >= 8 && len(target) <= 12 {
+	if selected == nil && !isPath && len(target) >= minOperandPrefix && len(target) <= maxIdentifierPrefix {
 		// An unambiguous 8-12 character prefix of the label or the id also resolves.
 		// Shorter prefixes stay unresolved so a short word cannot grab a worktree.
 		for i := range assignments {
@@ -103,6 +103,14 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 	}
 	return *selected, nil
 }
+
+// minOperandPrefix and maxIdentifierPrefix bound the unambiguous-prefix window. The
+// floor is one policy fact shared by the identifier form and the fingerprint form, so
+// it has one source; only the identifier form carries a ceiling.
+const (
+	minOperandPrefix    = 8
+	maxIdentifierPrefix = 12
+)
 
 // resolveVerbOperand widens every path-taking worktree verb's operand: a label, an
 // assignment id, or an unambiguous 8-12 character prefix of either resolves to the

@@ -18,6 +18,7 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 		creation.Assignment.ID,
 		creation.Assignment.Label,
 		creation.Assignment.ID[:10],
+		creation.Assignment.ID[:12],
 		creation.Assignment.Label[:8],
 	}
 	for _, target := range targets {
@@ -76,6 +77,15 @@ func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
 	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
 	if fingerprint == "" {
 		t.Fatalf("plan carried no fingerprint: %s", planned.String())
+	}
+	for name, bad := range map[string]string{
+		"seven-character prefix": fingerprint[:7],
+		"uppercase prefix":       "ABCDEF01",
+	} {
+		var refused bytes.Buffer
+		if code := CleanCommand([]string{creation.Path, "--apply", bad}, &refused, &stderr); code == 0 || strings.Contains(refused.String(), ",removed,") {
+			t.Fatalf("%s %q was not refused: %s", name, bad, refused.String())
+		}
 	}
 	var applied bytes.Buffer
 	if code := CleanCommand([]string{creation.Path, "--apply", fingerprint[:12]}, &applied, &stderr); code != 0 {

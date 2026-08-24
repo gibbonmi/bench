@@ -42,4 +42,7 @@ func TestListToleratesAPreTokenRecord(t *testing.T) {
 	if code != 0 || !strings.Contains(out, creation.Assignment.ID) {
 		t.Fatalf("list dropped the pre-token record (code=%d):\n%s", code, out)
 	}
+	if !strings.Contains(out, creation.Assignment.Label+",\"\",") {
+		t.Fatalf("pre-token row does not show an empty request cell:\n%s", out)
+	}
 }

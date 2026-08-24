@@ -17,6 +17,7 @@ func TestClassifyTreatsHeredocBodiesAsData(t *testing.T) {
 		{"verb after the delimiter line", "cat > f <<'EOF'\nx\nEOF\ngit push", "git push"},
 		{"verb on the operator's own line", "git push <<'EOF'\nx\nEOF", "git push"},
 		{"herestring keeps its classification", "git push <<< x", "git push"},
+		{"herestring never opens a body", "cat <<< x\ngit push", "git push"},
 		{"unterminated body stays data", "cat > f <<'EOF'\ngit push", ""},
 	}
 	for _, c := range cases {
