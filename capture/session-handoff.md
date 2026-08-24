@@ -1,30 +1,32 @@
 # Session handoff
 
-Repository: `b30c67dabf3a05462644ce3a222f1997-e88bc453ebc75b26ffb8060ff52d32fa` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/b30c67dabf3a05462644ce3a222f1997-e88bc453ebc75b26ffb8060ff52d32fa`
-Branch: `bench/assign` worktree `spec-amend-r13` — HEAD `a792d5e1`, clean tree, base `888babfe` on `main`
-Spec: `specs/module-size-split/spec.md` (Status: staged)
-Gate: green at `a792d5e1` — current
+Repository: `ee9e5c3e35405f8f069b565a5bf54054-e6c6a7f19db9134730d8cd924a19bfae` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/ee9e5c3e35405f8f069b565a5bf54054-e6c6a7f19db9134730d8cd924a19bfae`
+Branch: worktree `spec-retire-mss` — base `74ef1125` on `main`, retire and capture edits staged for one landing
+Spec: `specs/module-size-split/` retired (was `Status: implemented` at `74ef1125`)
+Gate: green at `74ef1125` — the landing's own run
 
 ## State
 
-Batch 2 of `module-size-split` landed on `main` at `888babfe`; tickets 03 to 12
-are done and `bench structure` reports 56 issues. The R13 decision is closed:
-on 2026-08-24 the reviewer widened the scope by one file instead of amending
-R13 to 56. The amendment at `a792d5e1` rewrites ticket 13 to split
-`internal/lines/lines_test.go` (612 lines). It adds story 27 and row R20,
-re-fences the ticket to `internal/lines/`, and keeps R13 at 55. One Sonnet review round
-returned two blocking consistency findings; both are folded. The gate and
-`bench coverage --check` are green on the amendment.
+The `module-size-split` spec is complete. The final landing `74ef1125` amended
+R13's scope and split `internal/lines/lines_test.go` (ticket 13, Opus/low,
+first-pass). `bench structure` reports 55 issues, within R13's bound. The three
+review axes returned zero findings.
 
-Ticket 13 is the only open ticket. It has no blocker, and its fence is disjoint
-from every landed ticket. The amendment sign-off is the pending reviewer action.
-The earlier veto flags (the `checks_test.go` cap at 692, the `buildLandingBinary`
-name, the ungraded `writeHostileSkillRoot` plant) stay open.
+Final-check ran the post-merge tail. The spec folder is retired, and the
+roadmap sequence list no longer names the spec. The retro
+`capture/retros/module-size-split.md` is rewritten, the Claude scorecard is
+refreshed, and three learnings entries are appended. This worktree carries all
+of those edits in one retire landing.
+
+A `git stash` on the primary checkout holds the first, misplaced retire bytes;
+it is disposable once this landing reaches `main`. The 400-to-700-line
+remainder stays a decided out-of-scope follow-up. The reviewer pre-approved the
+drain recommendations on 2026-08-24.
 
 ## Next command
 
-`/bench-implement-spec specs/module-size-split/spec.md --full`
+`/bench-drain`
 
 ## Shape
 
