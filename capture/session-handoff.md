@@ -1,32 +1,38 @@
 # Session handoff
 
 Repository: `77d1764072080892a27f7bfd09a71243-bf260a4fc120c3c5973ef54660eaede6` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/77d1764072080892a27f7bfd09a71243-bf260a4fc120c3c5973ef54660eaede6`
-Branch: `bench/assign/77d1764072080892a27f7bfd09a71243/bf260a4fc120c3c5973ef54660eaede6` — HEAD `5fc8c4b`, 24 dirty paths, 0 unpushed commits
+Path: `~/.bench/worktrees/bench-2826441890/881246de1c65ffcc8a4acb3ec49c6ff8-5f5b1987a92bcfa209d3dd9f26898586`
+Branch: `bench/assign/881246de1c65ffcc8a4acb3ec49c6ff8/5f5b1987a92bcfa209d3dd9f26898586` — HEAD `d46b315c`, 5 dirty paths, 0 unpushed commits
 Spec: `specs/module-size-split/spec.md` (Status: staged)
-Gate: red at `e544f52` — stale, work tree `d922abd`
+Gate: green (fresh, this worktree)
 
 ## State
 
-The drain batch retires the shipped worktree-test-latency spec and review
-pickup. Its landing evidence remains in Git and the changelog; no active
-evidence row is needed. FT202 now owns a shared purity-census helper with
-package-local wrappers. The process-backed-fixture census decision stays open.
-FT238 persists and prints the worktree request token.
+This drain reconciled the roadmap against the tree; no shipped rows and
+nothing new to retire. Both open capture entries merged into existing
+decision-required rows instead of opening new ones. FT169 gained a
+dirty-destination occurrence and a named sub-question — two candidate fixes —
+inside its already-open landing-authority decision. FT8 gained the
+escalation-ladder proposal and its evidence, with the review trigger brought
+forward to 2026-08-30. The capture inbox and journal are both empty.
 
-FT246 and FT247 hold the
-next executable-selection and pure-policy investigations. FT222 holds the
-implementer-routing decision.
+The flow report shows a positive net delta (opened 5, retired 1, target not
+met). Two restructure candidates stand for a future `/bench-drain
+--restructure`. Fold FT200, FT207, FT178, FT162, and FT173 into FT169's
+worktree/landing-authority theme. Fold FT213, FT214, FT236, and FT237 into
+the existing "Standards debt" craft-visit batch alongside FT117, FT179, and
+FT94.
 
-The pipeline learning is dismissed because the existing CLI rule is clear. The
-universal-coverage learning and the review-pickup retro feed FT214. The
-phase-close learning and request-token retro feed FT238. The capture inbox,
-journal, and implementation retro are empty in the batch. The Claude scorecard
-retains the review-routing evidence.
+`## Recommended sequence` line 1 names `/bench-implement-spec` for FT238.
+FT238's `Next:` is `ticket` (light path, no spec), and no `tickets/FT238*`
+file exists yet. Flagged for the reviewer, not corrected this pass, since it
+falls outside this drain's capture-and-journal scope.
+
+`specs/module-size-split` stays staged and untouched by this pass.
 
 ## Next command
 
-`/bench-implement-spec — FT238: the hygiene batch; worktree assignments retain and print their request token, and every piece is a light-path ticket.`
+`/bench-implement-spec specs/module-size-split/spec.md`
 
 ## Shape
 

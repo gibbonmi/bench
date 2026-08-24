@@ -229,7 +229,7 @@ and signing-key custody remain outside this repository-controlled roadmap.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.**
 
-**FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.**
+**FT8 (scheduled, decision required) — Sonnet 5 mid-tier revisit: a risk-based escalation ladder for the default implementer.**
 
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
