@@ -21,15 +21,17 @@ import (
 var grammar = usage.Grammar{
 	Cmd:   "bench diff",
 	Help:  strings.TrimSuffix(fullHelp, "\n"),
-	Flags: []usage.Flag{{Name: "--full"}, {Name: "--commit", HasValue: true}, {Name: "--base", HasValue: true, NoEmptyValue: true}},
+	Flags: []usage.Flag{{Name: "--full"}, {Name: "--commit", HasValue: true}, {Name: "--base", HasValue: true, NoEmptyValue: true}, {Name: "--source-tip", HasValue: true, NoEmptyValue: true}},
 }
 
-const fullHelp = `usage: bench diff [--full] [--commit <sha>] [--base <commit>]
+const fullHelp = `usage: bench diff [--full] [--commit <sha>] [--base <commit> [--source-tip <commit>]]
   Live mode reports one movement-checked revision, aggregate, files, checkout,
   and whitespace snapshot. --full also appends the commit log and verbatim
   tracked patch, then path-sorted raw Git patches for untracked regular files.
   --commit <sha> reports the immutable first-parent view of one resolved commit
-  and omits unrelated live-checkout facts. Bounded results advertise the exact
+  and omits unrelated live-checkout facts. --base with --source-tip reports the
+  immutable explicit pair that bench preflight review takes, and omits the same
+  live-checkout facts, so a frozen review never trusts the checkout for its tip. Bounded results advertise the exact
   --full invocation; complete and clean results advertise an empty help table.
 `
 
@@ -42,8 +44,12 @@ func Command(args []string) (string, int) {
 	_, full := parsed.Flags["--full"]
 	commitArg, hasCommit := parsed.Flags["--commit"]
 	baseArg, hasBase := parsed.Flags["--base"]
+	tipArg, hasTip := parsed.Flags["--source-tip"]
 	if hasCommit && hasBase {
 		return toon.Usage(grammar.Cmd, "--base") + "\n", 2
+	}
+	if hasTip && (hasCommit || !hasBase) {
+		return toon.Usage(grammar.Cmd, "--source-tip") + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -51,7 +57,7 @@ func Command(args []string) (string, int) {
 	}
 
 	invocation := append([]string{"diff"}, args...)
-	out, drift, driftHint, errKind, errHint := renderAttempt(root, hasCommit, commitArg, hasBase, baseArg, full)
+	out, drift, driftHint, errKind, errHint := renderAttempt(root, hasCommit, commitArg, hasBase, baseArg, hasTip, tipArg, full)
 	if errKind != "" {
 		return toon.Errorf(errKind, errHint) + "\n", 1
 	}
@@ -65,8 +71,16 @@ func Command(args []string) (string, int) {
 	return toon.Errorf("snapshot drift", driftHint) + "\n" + help, 1
 }
 
-func renderAttempt(root string, hasCommit bool, commitArg string, hasBase bool, baseArg string, full bool) (out, drift, driftHint, errKind, errHint string) {
+func renderAttempt(root string, hasCommit bool, commitArg string, hasBase bool, baseArg string, hasTip bool, tipArg string, full bool) (out, drift, driftHint, errKind, errHint string) {
 	var dr diffRange
+	if hasTip {
+		dr, errKind, errHint = resolvePairRange(root, baseArg, tipArg)
+		if errKind != "" {
+			return "", "", "", errKind, errHint
+		}
+		out, errKind, errHint := renderCommit(root, dr, full)
+		return out, "", "", errKind, errHint
+	}
 	if hasCommit {
 		dr, errKind, errHint = resolveCommitRange(root, commitArg)
 		if errKind != "" {
