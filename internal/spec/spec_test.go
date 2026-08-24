@@ -14,6 +14,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // writeSpec writes content to <dir>/specs/<slug>/spec.md and returns the path.
@@ -433,8 +434,16 @@ func TestResolveRefusesIncompleteFolderWithoutFlat(t *testing.T) {
 
 // retireRepo builds the minimal repository bench spec retire reads and deletes from: a
 // folder spec committed at HEAD with body, plus any extraFiles (repo-relative path to
-// content) committed alongside it — used to place a roadmap/FT<n>.md detail file.
+// content) committed alongside it — used to place a roadmap/FT<n>.md detail file. It
+// returns a linked worktree of that repository, because retire refuses the primary
+// checkout; retirePrimary returns the primary checkout instead.
 func retireRepo(t *testing.T, slug, body string, extraFiles map[string]string) (root string) {
+	t.Helper()
+	return retireWorktree(t, retirePrimary(t, slug, body, extraFiles))
+}
+
+// retirePrimary builds the repository itself and returns its primary checkout.
+func retirePrimary(t *testing.T, slug, body string, extraFiles map[string]string) (root string) {
 	t.Helper()
 	root = t.TempDir()
 	runGit(t, root, "init", "-q", "-b", "main")
@@ -453,6 +462,19 @@ func retireRepo(t *testing.T, slug, body string, extraFiles map[string]string) (
 	runGit(t, root, "add", "-A")
 	runGit(t, root, "commit", "-qm", "base")
 	return root
+}
+
+// retireWorktree adds a linked worktree of primary and returns its resolved toplevel —
+// the checkout shape a Bench phase runs a retire from.
+func retireWorktree(t *testing.T, primary string) string {
+	t.Helper()
+	root := filepath.Join(t.TempDir(), "linked")
+	runGit(t, primary, "worktree", "add", "-q", "-b", "topic", root)
+	out, err := exec.Command("git", "-C", root, "rev-parse", "--show-toplevel").Output()
+	if err != nil {
+		t.Fatalf("rev-parse: %v", err)
+	}
+	return strings.TrimSpace(string(out))
 }
 
 // runGit runs one git subcommand against root, failing the test on error.
@@ -588,5 +610,21 @@ func TestRetireDeletesTheFolderAndExitsZero(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, "specs", "s")); !os.IsNotExist(err) {
 		t.Errorf("specs/s still present: err = %v", err)
+	}
+}
+
+// TestRetireOnPrimaryCheckoutRefusesAndDeletesNothing pins the primary-checkout refusal:
+// retire prints the one shared refusal and leaves the merged-implemented spec on disk.
+func TestRetireOnPrimaryCheckoutRefusesAndDeletesNothing(t *testing.T) {
+	root := retirePrimary(t, "s", "Status: implemented\nRoadmap: FT7\n", nil)
+	out, code := runRetire(t, root, "s")
+	if code != 1 {
+		t.Fatalf("code = %d, want 1; out = %q", code, out)
+	}
+	if want := usage.PrimaryCheckoutRefusal() + "\n"; out != want {
+		t.Errorf("out = %q, want %q", out, want)
+	}
+	if _, err := os.Stat(filepath.Join(root, "specs", "s", "spec.md")); err != nil {
+		t.Errorf("spec was deleted on refusal: %v", err)
 	}
 }

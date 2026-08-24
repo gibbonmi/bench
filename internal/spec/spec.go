@@ -25,6 +25,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // stagedRe matches the flip's input: a `Status:` line whose sole value is `staged`,
@@ -325,7 +326,8 @@ func RepoBase() string {
 // discipline. Every unsafe input refuses at exit 1 without deleting anything. A spec
 // refuses when it is not merged-implemented: staged, or implemented only in the
 // working tree and not yet at HEAD. An unknown slug refuses, and so does an orphaned
-// review pickup with no spec.
+// review pickup with no spec. Inside a repository, the primary checkout refuses too,
+// because Bench write verbs run from a worktree.
 //
 // The printed next: line names the board remainder. It reads the spec's Roadmap:
 // value, through metadata, before any deletion happens, and roadmapRemainder renders
@@ -336,6 +338,15 @@ func retireCommand(rest []string) (string, int) {
 		return out, code
 	}
 	base := RepoBase()
+	if base != "" {
+		primary, err := git.IsPrimaryCheckout(base)
+		if err != nil {
+			return toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree") + "\n", 1
+		}
+		if primary {
+			return usage.PrimaryCheckoutRefusal() + "\n", 1
+		}
+	}
 	content, resolved, tried, found, err := Resolve(base, arg)
 	if err != nil {
 		folder := filepath.Join(base, filepath.FromSlash(LiveSpecPath(arg)))
