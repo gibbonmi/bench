@@ -102,13 +102,15 @@ func TestCommandRetriesThenRefusesSnapshotDrift(t *testing.T) {
 }
 
 func TestDiffPackageDoesNotOwnPorcelainInvocationOrParsing(t *testing.T) {
-	source, err := os.ReadFile("diff.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, forbidden := range []string{`"status", "--porcelain`, "ParsePorcelainZ("} {
-		if strings.Contains(string(source), forbidden) {
-			t.Errorf("internal/diff production owns forbidden porcelain knowledge %q", forbidden)
+	for _, file := range []string{"diff.go", "snapshot.go", "range.go"} {
+		source, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, forbidden := range []string{`"status", "--porcelain`, "ParsePorcelainZ("} {
+			if strings.Contains(string(source), forbidden) {
+				t.Errorf("internal/diff production file %s owns forbidden porcelain knowledge %q", file, forbidden)
+			}
 		}
 	}
 }
