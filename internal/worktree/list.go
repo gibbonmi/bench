@@ -11,7 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-var worktreeListFields = []string{"id", "label", "state", "source", "tree", "lease", "landed", "ignored"}
+var worktreeListFields = []string{"id", "label", "request", "state", "source", "tree", "lease", "landed", "ignored"}
 
 var worktreeListGrammar = usage.Grammar{Cmd: usage.WorktreeList, Help: "usage: " + usage.WorktreeList, HelpOnlyWhenSole: true, UnquotedEmptyPositional: true}
 
@@ -60,7 +60,7 @@ func ListCommand(args []string) (string, int) {
 			label = registration.Path
 		}
 		tree := listTree(registration.Path)
-		row := listRow{values: []any{"foreign", label, "foreign", "foreign", tree, listLease(registration.Path), listLanded(root, registration.Branch, def, defaultResolved)}}
+		row := listRow{values: []any{"foreign", label, "", "foreign", "foreign", tree, listLease(registration.Path), listLanded(root, registration.Branch, def, defaultResolved)}}
 		row.values = append(row.values, listIgnored(registration.Path))
 		if tree == "missing" {
 			row.orphanPath = registration.Path
@@ -99,10 +99,10 @@ func ListCommand(args []string) (string, int) {
 func actionsForRows(rows []listRow) []axi.Action {
 	actions := make([]axi.Action, 0, len(rows))
 	for _, row := range rows {
-		if len(row.values) < 3 {
+		if len(row.values) < 4 {
 			continue
 		}
-		if row.values[2] == string(intent.StateActive) {
+		if row.values[3] == string(intent.StateActive) {
 			id, ok := row.values[0].(string)
 			if !ok || id == "" {
 				continue
@@ -112,7 +112,7 @@ func actionsForRows(rows []listRow) []axi.Action {
 				axi.ExecutableInvocation("run a command in the active worktree", axi.KnownArgument("worktree"), axi.KnownArgument("exec"), axi.KnownArgument(id), axi.KnownArgument("--"), axi.FutureInput("command")))
 			continue
 		}
-		if row.values[2] == "foreign" && row.orphanPath != "" {
+		if row.values[3] == "foreign" && row.orphanPath != "" {
 			actions = append(actions, axi.ExecutableInvocation("clean the orphaned worktree", axi.KnownArgument("worktree"), axi.KnownArgument("clean"), axi.KnownArgument(row.orphanPath)))
 		}
 	}
@@ -120,7 +120,7 @@ func actionsForRows(rows []listRow) []axi.Action {
 }
 
 func listAssignmentRow(root string, assignment intent.Assignment, def string, defaultResolved bool) []any {
-	return []any{assignment.ID, assignment.Label, string(assignment.State), "assignment", listTree(assignment.Worktree), listLease(assignment.Worktree), listLanded(root, assignment.Branch, def, defaultResolved), listIgnored(assignment.Worktree)}
+	return []any{assignment.ID, assignment.Label, assignment.RequestToken, string(assignment.State), "assignment", listTree(assignment.Worktree), listLease(assignment.Worktree), listLanded(root, assignment.Branch, def, defaultResolved), listIgnored(assignment.Worktree)}
 }
 
 func listTree(path string) string {

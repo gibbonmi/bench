@@ -53,16 +53,21 @@ type Recovery struct {
 // marker proves immutable owner identity. This record binds that owner to exactly
 // one caller request, branch, start commit, path, lifecycle state, and recovery set.
 type Assignment struct {
-	Schema   string          `json:"schema"`
-	ID       string          `json:"id"`
-	OwnerID  string          `json:"owner_id"`
-	Request  string          `json:"request"`
-	Label    string          `json:"label"`
-	Start    string          `json:"start"`
-	Branch   string          `json:"branch"`
-	Worktree string          `json:"worktree"`
-	State    AssignmentState `json:"state"`
-	Recovery []Recovery      `json:"recovery"`
+	Schema  string `json:"schema"`
+	ID      string `json:"id"`
+	OwnerID string `json:"owner_id"`
+	Request string `json:"request"`
+	// RequestToken is the plain caller token the digest above derives from. The digest
+	// stays the authorization identity; the token is persisted so `bench worktree list`
+	// can hand a resumed landing the exact value to pass. Records written before the
+	// field existed carry none and serialize without the key.
+	RequestToken string          `json:"request_token,omitempty"`
+	Label        string          `json:"label"`
+	Start        string          `json:"start"`
+	Branch       string          `json:"branch"`
+	Worktree     string          `json:"worktree"`
+	State        AssignmentState `json:"state"`
+	Recovery     []Recovery      `json:"recovery"`
 	// CreatedAt is an RFC3339 creation time. A nil stamp is absence, which stays
 	// valid because records written before the field existed carry none and
 	// serialize without the key. A present stamp must parse, so the pointer is
@@ -423,6 +428,7 @@ func ReauthorizeAssignment(root, id, request string, verify func(Assignment) err
 		}
 		next := current
 		next.Request = newDigest
+		next.RequestToken = request
 		rollback, err := transition(current, next)
 		if err != nil {
 			return Assignment{}, err

@@ -192,7 +192,7 @@ func createAt(root, request, label string, fault Fault, now time.Time, requested
 	createdAt := now.UTC().Format(time.RFC3339)
 	assignment := intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: assignmentID, OwnerID: ownerID,
-		Request: digest, Label: label, Start: start, Branch: branch, Worktree: path,
+		Request: digest, RequestToken: request, Label: label, Start: start, Branch: branch, Worktree: path,
 		State: intent.StateActive, Recovery: []intent.Recovery{}, CreatedAt: &createdAt,
 	}
 	args := []string{"-C", root, "worktree", "add", "-q", "--lock", "--reason", lockReason(assignment), "-b", shortBranch, path, start}
