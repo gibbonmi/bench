@@ -2,7 +2,10 @@ package status
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
 )
@@ -28,6 +31,9 @@ const HandoffFile = "capture/session-handoff.md"
 // quiet and this row leads. On a busy board a red gate or a dirty tree is the more urgent
 // read, and must not be displaced by a document's age.
 func appendHandoff(rows []row, root string) []row {
+	if _, err := git.Output("-C", root, "check-ignore", "-q", HandoffFile); err == nil {
+		return appendIgnoredHandoff(rows, root)
+	}
 	written, ok := handoffWrittenAt(root)
 	if !ok {
 		return rows
@@ -37,6 +43,32 @@ func appendHandoff(rows []row, root string) []row {
 		return rows
 	}
 	detail := fmt.Sprintf("written at %s, %s behind", Short(written), Plural(behind, "commit", "commits"))
+	return append(rows, row{12, "handoff", detail, commandAction(handoffAction)})
+}
+
+// appendIgnoredHandoff is the age signal for a git-ignored handoff: a local file with
+// no commit of its own. The age comes from the file's own write time, the one computed
+// fact an ignored file still carries, and the distance counts the commits whose commit
+// date is after that write. A missing file reports nothing: keeping no handoff is a
+// choice rather than a defect.
+func appendIgnoredHandoff(rows []row, root string) []row {
+	info, err := os.Stat(filepath.Join(root, filepath.FromSlash(HandoffFile)))
+	if err != nil {
+		return rows
+	}
+	written := info.ModTime()
+	// The bound starts one second after the write. Commit dates carry one-second
+	// granularity, so the commit a handoff rewrite itself lands in must not count
+	// against the document it carries.
+	out, err := git.Output("-C", root, "rev-list", "--count", "--since="+written.Add(time.Second).Format(time.RFC3339), "HEAD")
+	if err != nil {
+		return rows
+	}
+	behind, err := strconv.Atoi(out)
+	if err != nil || behind == 0 {
+		return rows
+	}
+	detail := fmt.Sprintf("written at %s, %s behind", written.Format("2006-01-02 15:04"), Plural(behind, "commit", "commits"))
 	return append(rows, row{12, "handoff", detail, commandAction(handoffAction)})
 }
 

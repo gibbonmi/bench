@@ -51,7 +51,14 @@ func Command(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 
-	target := filepath.Join(root, status.HandoffFile)
+	// An ignored handoff is a local pin: the primary checkout's copy is the one a
+	// cold session reads, so the write goes there from any checkout. A tracked
+	// handoff keeps the caller's checkout and lands with its phase.
+	noteRoot, _, err := git.LocalNoteRoot(root, status.HandoffFile)
+	if err != nil {
+		return refusal{"cannot resolve the handoff checkout", err.Error()}.Error() + "\n", 1
+	}
+	target := filepath.Join(noteRoot, status.HandoffFile)
 	state, err := preservedState(target)
 	if err != nil {
 		return err.Error() + "\n", 1

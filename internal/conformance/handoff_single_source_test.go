@@ -33,6 +33,12 @@ func checkHandoffShape(root string) []string {
 	}
 
 	var diags []string
+	tracked := trackedPaths(root)
+	// The artifact is graded only while the repo carries it: an untracked handoff is
+	// local scratch, and a copy only drifts once it is something the repo carries.
+	if !contains(tracked, status.HandoffFile) {
+		return scanShapeCopies(root, tracked)
+	}
 	body, found := shapeSectionBody(readIfExists(filepath.Join(root, status.HandoffFile)))
 	switch {
 	case !found:
@@ -41,8 +47,16 @@ func checkHandoffShape(root string) []string {
 		diags = append(diags, fmt.Sprintf("%s has a %q section that no longer matches the text bench handoff renders, so the artifact has become a second source; run bench handoff to regenerate it", status.HandoffFile, handoff.ShapeHeading))
 	}
 
+	diags = append(diags, scanShapeCopies(root, tracked)...)
+	return uniqueSorted(diags)
+}
+
+// scanShapeCopies reports every tracked file, other than the source and the artifact,
+// that restates the Shape text.
+func scanShapeCopies(root string, tracked []string) []string {
+	var diags []string
 	needle := shapeSentence()
-	for _, rel := range trackedPaths(root) {
+	for _, rel := range tracked {
 		if rel == shapeSourceFile || rel == status.HandoffFile {
 			continue
 		}
@@ -55,6 +69,16 @@ func checkHandoffShape(root string) []string {
 		}
 	}
 	return uniqueSorted(diags)
+}
+
+// contains reports whether list carries exactly value.
+func contains(list []string, value string) bool {
+	for _, item := range list {
+		if item == value {
+			return true
+		}
+	}
+	return false
 }
 
 // shapeSentence is the Shape text's opening sentence with its wrapping collapsed. It
@@ -135,6 +159,13 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	write(status.HandoffFile, "# Session handoff\n\n"+handoff.ShapeHeading+"\n\nRewritten whenever somebody feels like it.\n")
 	if !containsDiagnostic(checkHandoffShape(root), "no longer matches the text bench handoff renders") {
 		t.Fatalf("drifted Shape body: want a drift diagnostic, got %v", checkHandoffShape(root))
+	}
+
+	// An untracked artifact is out of scope: a fresh worktree without the local handoff
+	// must stay green, drifted body and all.
+	runGit(t, root, "rm", "--cached", "-q", status.HandoffFile)
+	if diags := checkHandoffShape(root); len(diags) != 0 {
+		t.Fatalf("untracked artifact: want no diagnostics, got %v", diags)
 	}
 }
 
