@@ -77,6 +77,15 @@ func IdeaCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
+	// The inbox is a tracked file, and main receives writes only through landings. An
+	// append here would dirty the landing destination, so the verb redirects like commit.
+	primary, err := git.IsPrimaryCheckout(root)
+	if err != nil {
+		return toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree") + "\n", 1
+	}
+	if primary {
+		return usage.PrimaryCheckoutRefusal() + "\n", 1
+	}
 	owner, hasOwner := parsed.Flags["--owner"]
 	incident, hasIncident := parsed.Flags["--incident"]
 	if hasOwner != hasIncident {

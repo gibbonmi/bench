@@ -156,7 +156,11 @@ its only path in.
 
 The reviewer parks an idea in conversation; the CLI step is yours. When
 the reviewer wants to set one aside, or you spot a tangent worth keeping,
-**you** run `bench idea "<text>"`. Offer once, then let it go. Parked ideas
+**you** run `bench idea "<text>"` inside the phase worktree. Offer once, then
+let it go.
+
+The verb refuses the primary checkout, so a parked idea lands with the phase
+and never dirties `main`. Parked ideas
 land in `capture/IDEAS.md`. They graduate to the board only through a
 reviewed `/bench-drain` drain, or close by implementation during that same
 drain. The board is an index line in `ROADMAP.md` plus a body and ledger in
