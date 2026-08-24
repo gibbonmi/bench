@@ -239,3 +239,46 @@ func fingerprintUnnamedState(t *testing.T, root string) unnamedFingerprint {
 			"unnamed-staged", "unnamed-staged-plus-unstaged", "unnamed-unstaged", "unnamed-untracked", "unnamed-ignored"),
 	}
 }
+
+func TestLandReviewedRechecksCheckoutFingerprintsAfterAuthorization(t *testing.T) {
+	for _, tc := range []struct {
+		name, want string
+		mutate     func(*testing.T, string, string)
+	}{
+		{name: "destination", want: "destination checkout changed", mutate: func(t *testing.T, root, _ string) { write(t, root, "late", "destination dirt") }},
+		{name: "source", want: "source checkout changed", mutate: func(t *testing.T, _, source string) { write(t, source, "late", "source dirt") }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := fixture(t)
+			write(t, root, "specs/x/spec.md", "Status: staged\n")
+			git(t, root, "add", "specs/x/spec.md")
+			git(t, root, "commit", "-qm", "stage spec")
+			destination := git(t, root, "rev-parse", "HEAD")
+			sourceWorktree := filepath.Join(t.TempDir(), "source")
+			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			write(t, sourceWorktree, "reviewed", "source bytes\n")
+			git(t, sourceWorktree, "add", "reviewed")
+			git(t, sourceWorktree, "commit", "-qm", "reviewed")
+			source := git(t, sourceWorktree, "rev-parse", "HEAD")
+			sourceFingerprint, _ := CheckoutFingerprint(sourceWorktree)
+			destinationFingerprint, _ := CheckoutFingerprint(root)
+			o := New()
+			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+				tc.mutate(t, root, sourceWorktree)
+				return authorization.Result{Kind: authorization.Green}
+			}
+			_, err := o.LandReviewed(context.Background(), ReviewedRequest{
+				Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+				Source: "refs/heads/reviewed-source", SourceTip: source, ReviewBase: destination,
+				SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+				SpecPath: "specs/x/spec.md", SpecBytes: []byte("Status: staged\n"), SpecMode: 0o644, Message: "must refuse",
+			})
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("fingerprint mutation error = %v, want %q", err, tc.want)
+			}
+			if got := git(t, root, "rev-parse", "main"); got != destination {
+				t.Fatalf("destination moved to %s", got)
+			}
+		})
+	}
+}
