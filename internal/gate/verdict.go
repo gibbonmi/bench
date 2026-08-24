@@ -22,7 +22,7 @@ const (
 	cacheLimit    = 16 * 1024
 	manifestLimit = 16 * 1024
 	freshness     = 60 * time.Minute
-	policyVersion = "oracle-v2/freshness-v1/prospective-v1"
+	policyVersion = "oracle-v2/freshness-v1/prospective-v2"
 )
 
 type State string

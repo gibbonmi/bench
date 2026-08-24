@@ -5,10 +5,15 @@ package worktree
 
 import (
 	"bytes"
+	"context"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/landing"
 )
 
 // TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion is SOL01. The
@@ -145,4 +150,233 @@ func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 	if !strings.Contains(stderr.String(), "bench repair") {
 		t.Fatalf("broker-changing landing named no install step: %q", stderr.String())
 	}
+}
+
+// redProspectiveGateLanding is the public landing fixture whose composed prospective
+// tree carries a red gate. The refusal it produces is the gate's own verdict, so every
+// landing proof ahead of publication has already passed.
+func redProspectiveGateLanding(t *testing.T, request string) (root string, creation Creation, base, tip, tally string) {
+	t.Helper()
+	root, creation, _, _, tally = publicLandingFixture(t, request, "", "")
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nprintf g >> \"$LAND_GATE_TALLY\"\nexit 1\n"), 0o755)
+	gitRun(t, root, "add", ".bench/gate-prospective.sh")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "red prospective gate")
+	base = gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally
+}
+
+// temporaryProspectiveArtifacts lists the private prospective checkouts and gate
+// executables left under dir. Both are the landing's own temporary storage, so after a
+// landing settles either way none may remain.
+func temporaryProspectiveArtifacts(t *testing.T, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var residue []string
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), "bench-gate-subject-") || strings.HasPrefix(entry.Name(), "bench-run-") {
+			residue = append(residue, entry.Name())
+		}
+	}
+	return residue
+}
+
+// projectGreenMarker reads the destination's project-green marker, answering the empty
+// string when no marker is recorded. An absent marker is an ordinary state before the
+// first landing, so it is a value here rather than a test failure.
+func projectGreenMarker(t *testing.T, root string) string {
+	t.Helper()
+	output, err := descendant(t, "git", "-C", root, "rev-parse", "--verify", "--quiet", "refs/bench/green/main").Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(output))
+}
+
+// TestLandCommandLeavesTheDestinationUnchangedAfterARedProspectiveGate is SOL11. The
+// prospective gate is the only authority that can release the destination update. Its
+// red leaves the destination ref, the project-green marker, and the source assignment
+// exactly as the landing found them.
+func TestLandCommandLeavesTheDestinationUnchangedAfterARedProspectiveGate(t *testing.T) {
+	request := "land-owner-red-gate"
+	root, creation, base, tip, tally := redProspectiveGateLanding(t, request)
+	marker := projectGreenMarker(t, root)
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
+		t.Fatalf("red prospective gate = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "main"); got != base {
+		t.Fatalf("red gate published: main = %s, want %s", got, base)
+	}
+	if got := projectGreenMarker(t, root); got != marker {
+		t.Fatalf("red gate advanced the project-green marker: %q, want %q", got, marker)
+	}
+	if _, err := os.Stat(creation.Path); err != nil {
+		t.Fatalf("red gate released the reviewed source: %v", err)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
+	}
+}
+
+// TestLandCommandRemovesEveryTemporaryProspectiveArtifact is SOL15. The owner
+// materializes the prospective tree and its gate executable in private temporary
+// storage. Neither may outlive the landing, on the published path or on a refusal.
+func TestLandCommandRemovesEveryTemporaryProspectiveArtifact(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		red  bool
+		want int
+	}{
+		{name: "published", want: 0},
+		{name: "refused", red: true, want: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request := "land-owner-residue-" + tc.name
+			var root, base, tip string
+			var creation Creation
+			if tc.red {
+				root, creation, base, tip, _ = redProspectiveGateLanding(t, request)
+			} else {
+				root, creation, base, tip, _ = publicLandingFixture(t, request, "", "")
+			}
+			private := t.TempDir()
+			bindEnv(t, "TMPDIR", private)
+
+			var stdout, stderr bytes.Buffer
+			if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != tc.want {
+				t.Fatalf("landing exit = %d, want %d; stdout=%q stderr=%q", code, tc.want, stdout.String(), stderr.String())
+			}
+			if residue := temporaryProspectiveArtifacts(t, private); len(residue) != 0 {
+				t.Fatalf("landing left temporary prospective artifacts %v", residue)
+			}
+		})
+	}
+}
+
+// TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing is SOL14. The
+// destination update is the commit point: marker, reconcile, and release all run after
+// it. Each one's failure resumes to a released landing that composes and publishes
+// nothing a second time.
+func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *testing.T) {
+	// Each stage breaks by replacing its own seam and hands back the restore the resume
+	// runs under, so the resume faces a working stage exactly as a retry does.
+	for _, tc := range []struct {
+		name   string
+		break_ func() func()
+	}{
+		{name: "marker", break_: func() func() {
+			old := advanceLandingMarker
+			advanceLandingMarker = func(context.Context, string, string, string, string) error {
+				return errors.New("injected marker interruption")
+			}
+			return func() { advanceLandingMarker = old }
+		}},
+		{name: "reconcile", break_: func() func() {
+			old := reconcileLanding
+			reconcileLanding = func(string, string, string, string) error {
+				return errors.New("injected reconciliation interruption")
+			}
+			return func() { reconcileLanding = old }
+		}},
+		{name: "release", break_: func() func() {
+			old := releaseLandingAssignment
+			releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 1 }
+			return func() { releaseLandingAssignment = old }
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request := "land-owner-resume-" + tc.name
+			root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+			publications := 0
+			oldLand := landReviewed
+			landReviewed = func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
+				publications++
+				return oldLand(ctx, request)
+			}
+			t.Cleanup(func() { landReviewed = oldLand })
+			restore := tc.break_()
+			t.Cleanup(restore)
+
+			var stdout, stderr bytes.Buffer
+			if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.name) {
+				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			}
+			published := gitOutput(t, root, "rev-parse", "main")
+			restore()
+
+			stdout.Reset()
+			stderr.Reset()
+			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
+			if code := LandCommand(root, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+				t.Fatalf("resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			}
+			if got := gitOutput(t, root, "rev-parse", "main"); got != published {
+				t.Fatalf("resume republished: main = %s, want %s", got, published)
+			}
+			if publications != 1 {
+				t.Fatalf("landing compositions = %d, want exactly one publication", publications)
+			}
+		})
+	}
+}
+
+// TestLandCommandCarriesTheBaselineScheduleRootIntoTheProspectiveGate is SOL10 at the
+// owner-to-gate transport. The schedule-resolution tests in internal/gate name the
+// baseline themselves, so they grade the manifest lookup alone. Only a landing proves
+// the owner actually hands the destination to the gate it started; an omission there
+// silently returns phase selection to the candidate tree.
+func TestLandCommandCarriesTheBaselineScheduleRootIntoTheProspectiveGate(t *testing.T) {
+	request := "land-owner-baseline-transport"
+	root, creation, _, _, _ := publicLandingFixture(t, request, "", "")
+	recorded := filepath.Join(t.TempDir(), "baseline")
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"),
+		[]byte("#!/bin/sh\nset -eu\nprintf '%s' \"${BENCH_GATE_BASELINE:-}\" > "+recorded+"\nprintf g >> \"$LAND_GATE_TALLY\"\n"), 0o755)
+	gitRun(t, root, "add", ".bench/gate-prospective.sh")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "record the baseline schedule root")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+
+	var stdout, stderr bytes.Buffer
+	if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+		t.Fatalf("landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	}
+	got := strings.TrimSpace(fixtureFileText(t, recorded))
+	if got == "" {
+		t.Fatal("the landing owner handed the prospective gate no baseline schedule root")
+	}
+	if !sameDirectoryAs(t, got, root) {
+		t.Fatalf("baseline schedule root = %q, want the landing destination %q", got, root)
+	}
+}
+
+// fixtureFileText reads one recorded fixture value.
+func fixtureFileText(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(data)
+}
+
+// sameDirectoryAs compares two directory paths by file identity, so a differently
+// spelled path to the same destination still matches.
+func sameDirectoryAs(t *testing.T, a, b string) bool {
+	t.Helper()
+	ai, err := os.Stat(a)
+	if err != nil {
+		return false
+	}
+	bi, err := os.Stat(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return os.SameFile(ai, bi)
 }

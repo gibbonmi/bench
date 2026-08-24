@@ -151,6 +151,11 @@ func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	return selected
 }
 
+// baselinePolicyEnv carries the landing destination's root into the prospective gate.
+// The phase schedule comes from that baseline, never from the candidate tree under
+// grade, so a candidate manifest cannot omit the checks that grade it.
+const baselinePolicyEnv = "BENCH_GATE_BASELINE"
+
 // declaresTest reports whether dir holds a test file declaring a top-level func named
 // name. Both filtered steps ask this rather than looking at the directory, because a
 // `-run` filter that matches nothing exits 0. The did-it-run guard behind it would

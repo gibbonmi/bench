@@ -151,7 +151,10 @@ func (r Resolution) command(root string) *exec.Cmd {
 // inherited path must never survive into a child. A collecting run sets its own value
 // back on each phase.
 func gateEnv() []string {
-	return env.WithoutWrapperRouting(capability.WithoutEnvironment(os.Environ(), capability.LogEnv))
+	// The baseline phase-schedule selector goes too. It addresses the one gate-phases
+	// process the owner launched; a phase child that inherited it would resolve its own
+	// schedule against a root it was never handed.
+	return env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv))
 }
 
 // Run executes the resolved gate from the repo root and returns its exit code, with
@@ -351,11 +354,11 @@ func notifyGateSignals(ctx context.Context) (context.Context, func()) {
 }
 
 func execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, nil, reuseFreshGreen, newGateEvaluation(root), productionRunBinaryOwner())
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, nil, reuseFreshGreen, newGateEvaluation(root), productionRunBinaryOwner(), "")
 }
 
 func executeAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
-	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, arm, mode, newGateEvaluation(root), productionRunBinaryOwner())
+	return executeSubjectWithRunBinary(ctx, root, root, stdout, stderr, arm, mode, newGateEvaluation(root), productionRunBinaryOwner(), "")
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {
