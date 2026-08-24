@@ -135,6 +135,8 @@ means the repository-controlled compliance assessment.
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
+**FT250 (LOW) — the phase-close capture step names the prose bound.**
+
 ## False greens — verdicts that credit unchecked work
 
 Five rows share one failure class: a green whose warrant is missing. The
