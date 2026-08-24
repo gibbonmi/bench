@@ -1,34 +1,26 @@
 # Session handoff
 
-Repository: `77d1764072080892a27f7bfd09a71243-bf260a4fc120c3c5973ef54660eaede6` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/881246de1c65ffcc8a4acb3ec49c6ff8-5f5b1987a92bcfa209d3dd9f26898586`
-Branch: `bench/assign/881246de1c65ffcc8a4acb3ec49c6ff8/5f5b1987a92bcfa209d3dd9f26898586` — HEAD `d46b315c`, 5 dirty paths, 0 unpushed commits
+Repository: `/home/mgibs/workspace/bench` (origin `https://github.com/gibbonmi/bench.git`)
+Branch: `main` — HEAD `600d82a7` at drain start; this drain lands one commit on top
 Spec: `specs/module-size-split/spec.md` (Status: staged)
-Gate: green (fresh, this worktree)
+Gate: green (fresh, drain worktree)
 
 ## State
 
-This drain reconciled the roadmap against the tree; no shipped rows and
-nothing new to retire. Both open capture entries merged into existing
-decision-required rows instead of opening new ones. FT169 gained a
-dirty-destination occurrence and a named sub-question — two candidate fixes —
-inside its already-open landing-authority decision. FT8 gained the
-escalation-ladder proposal and its evidence, with the review trigger brought
-forward to 2026-08-30. The capture inbox and journal are both empty.
+This drain reconciled the roadmap against the tree: no shipped rows, nothing
+to retire, no learnings, no retros. The two parked ideas opened two rows.
+FT248 (`spec`) is the Bash guard that denies a shell follow-on appended to a
+`bench` command. FT249 (`decide`) moves the idea inbox to a shared git ref.
+The capture inbox and journal are both empty.
 
-The flow report shows a positive net delta (opened 5, retired 1, target not
-met). Two restructure candidates stand for a future `/bench-drain
---restructure`. Fold FT200, FT207, FT178, FT162, and FT173 into FT169's
-worktree/landing-authority theme. Fold FT213, FT214, FT236, and FT237 into
-the existing "Standards debt" craft-visit batch alongside FT117, FT179, and
-FT94.
+The reviewer moved the structure fix to the front of the sequence on
+2026-08-23; the earlier deferral of `module-size-split` is lifted. The flow
+report still shows a positive net delta. Two restructure candidates stand for
+a future `/bench-drain --restructure`: fold FT200, FT207, FT178, FT162, and
+FT173 into FT169's landing-authority theme, and fold FT213, FT214, FT236, and
+FT237 into the craft-visit batch beside FT117, FT179, and FT94.
 
-`## Recommended sequence` line 1 names `/bench-implement-spec` for FT238.
-FT238's `Next:` is `ticket` (light path, no spec), and no `tickets/FT238*`
-file exists yet. Flagged for the reviewer, not corrected this pass, since it
-falls outside this drain's capture-and-journal scope.
-
-`specs/module-size-split` stays staged and untouched by this pass.
+FT238's `Next:` is `ticket`, and no `tickets/FT238*` file exists yet.
 
 ## Next command
 
