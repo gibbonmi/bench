@@ -5,7 +5,8 @@
 # tree. Every path exits 0.
 #
 # The script only calls through: the real work happens in `bench doctor --fix` in the
-# compiled core. The script invokes bench.sh by its package-relative path, because
+# compiled core. That fix also publishes the promotion-broker manifest beside the
+# wrapper, so a fresh global install can land through `bench worktree land`. The script invokes bench.sh by its package-relative path, because
 # `bench` may not sit on PATH yet.
 #
 # Both guards must pass before the script writes anything.

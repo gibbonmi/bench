@@ -182,6 +182,7 @@ It proves that the stable owner and prospective gate binary have different roles
 - `internal/worktree/land_freshness_test.go`
 - `internal/worktree/land_identity.go`
 - `internal/worktree/land_identity_test.go`
+- `cmd/bench/command_registry_test.go`
 - `internal/systemtest/`
 - `internal/landing/`
 - `internal/gate/`

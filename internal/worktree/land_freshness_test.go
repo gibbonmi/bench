@@ -1,192 +1,148 @@
-// Freshness tests for the landing command: stale-executable rebuild, absent build inputs, and sealless refusal.
+// Stable-owner tests for the landing command: the public landing runs entirely under
+// the invoked owner process; repository executables, their seals, and candidate build
+// code never join the promotion.
 package worktree
 
 import (
 	"bytes"
-	"context"
-	"errors"
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/landing"
 )
 
-// landingAssignmentState renders the assignment records a landing would consume, without
-// the creation timestamp's address. The pointer differs between two reads of the same
-// unchanged state and would report every comparison as a change.
-func landingAssignmentState(t *testing.T, root string) string {
-	t.Helper()
-	assignments, err := intent.Assignments(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var state strings.Builder
-	for _, a := range assignments {
-		fmt.Fprintf(&state, "%s %s %s %s %s\n", assignmentString(a), a.State, a.Branch, a.Worktree, a.Start)
-	}
-	return state.String()
-}
-
-// TestLandCommandRefusesAnUntrustedExecutableBeforeAnyRepositoryProof grades the refusal
-// (LF1) and the state it leaves behind (LF2). It also grades the empty manifest that a
-// content-sniffing applicability predicate would skip (LF8), and the ordering against a
-// destination that would independently refuse (LF9). That last case pins the remedy the
-// operator reads to the rebuild command rather than to a later proof's message.
-// A stale executable is rebuilt through the sanctioned build and the landing re-runs
-// under the fresh binary, before any repository proof. Only a rebuild that fails, or
-// a re-run that is still stale, surfaces the owner's message.
-func TestLandCommandRebuildsAStaleExecutableBeforeAnyRepositoryProof(t *testing.T) {
-	const untrusted = "bench binary is untrusted; rebuild with the sanctioned build"
-	for _, tc := range []struct {
-		name, manifest string
-		setup          func(*testing.T, string)
-		rebuildErr     error
-		alreadyRebuilt bool
-		wantRefusal    string
-	}{
-		{name: "declared-build-inputs", manifest: "build_script=scripts/go-build.sh\n"},
-		{name: "empty-manifest"},
-		{name: "destination-would-also-refuse", manifest: "build_script=scripts/go-build.sh\n", setup: func(t *testing.T, root string) {
-			mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
-		}},
-		{name: "rebuild-fails", manifest: "build_script=scripts/go-build.sh\n", rebuildErr: errors.New("go: command not found"), wantRefusal: untrusted + "; rebuild failed: go: command not found"},
-		{name: "still-stale-after-rebuild", manifest: "build_script=scripts/go-build.sh\n", alreadyRebuilt: true, wantRefusal: untrusted},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			request := "landed-untrusted-" + tc.name
-			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-			if tc.alreadyRebuilt {
-				bindEnv(t, rebuiltLandingEnv, "1")
-			}
-			creation := mustCreate(t, root, request, "untrusted executable")
-			commitLandingBuildInputs(t, root, tc.manifest)
-			stageLandSpec(t, root, creation.Path)
-			base := gitOutput(t, root, "rev-parse", "HEAD")
-			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-			gitRun(t, root, "update-ref", "refs/bench/green/main", base)
-			if tc.setup != nil {
-				tc.setup(t, root)
-			}
-			before := landingAssignmentState(t, root)
-			calls, rebuilds := 0, 0
-			var rebuiltRoot, rebuiltOutput, execPath string
-			var execArgv, execEnv []string
-			oldLand, oldVerify, oldRebuild, oldExec := landReviewed, verifyLandingExecutable, rebuildLandingExecutable, reexecLanding
-			landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
-				calls++
-				return landing.ReviewedResult{}, errors.New("unexpected landing")
-			}
-			verifyLandingExecutable = func(string, string) error { return errors.New(untrusted) }
-			rebuildLandingExecutable = func(_ context.Context, sourceRoot, output string) error {
-				rebuilds++
-				rebuiltRoot, rebuiltOutput = sourceRoot, output
-				return tc.rebuildErr
-			}
-			reexecLanding = func(path string, argv, env []string) error {
-				execPath, execArgv, execEnv = path, argv, env
-				return nil
-			}
-			t.Cleanup(func() {
-				landReviewed, verifyLandingExecutable, rebuildLandingExecutable, reexecLanding = oldLand, oldVerify, oldRebuild, oldExec
-			})
-
-			args := landArgs(request, base, tip, creation.Path)
-			fresh := filepath.Join(root, "dist", "bench")
-			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, fresh, args, &stdout, &stderr)
-			if tc.wantRefusal != "" {
-				if code != 1 || calls != 0 || execPath != "" || stdout.String() != "refused{detail="+tc.wantRefusal+"}\n" || stderr.Len() != 0 {
-					t.Fatalf("stale refusal = (%d, calls=%d, exec=%q, stdout=%q, stderr=%q), want the owner's message", code, calls, execPath, stdout.String(), stderr.String())
-				}
-				if tc.alreadyRebuilt && rebuilds != 0 {
-					t.Fatalf("a re-run that is still stale rebuilt again (%d)", rebuilds)
-				}
-			} else {
-				wantArgv := strings.Join(append([]string{fresh, "worktree", "land"}, args...), "\x00")
-				rebuiltEnv := false
-				for _, item := range execEnv {
-					rebuiltEnv = rebuiltEnv || item == rebuiltLandingEnv+"=1"
-				}
-				if calls != 0 || rebuilds != 1 || rebuiltRoot != root || rebuiltOutput != fresh || execPath != fresh || strings.Join(execArgv, "\x00") != wantArgv || !rebuiltEnv || !strings.Contains(stderr.String(), "rebuilt "+fresh) {
-					t.Fatalf("stale rebuild = (calls=%d, rebuilds=%d, root=%q, output=%q, exec=%q, argv=%q, env-marked=%v, stderr=%q)", calls, rebuilds, rebuiltRoot, rebuiltOutput, execPath, execArgv, rebuiltEnv, stderr.String())
-				}
-			}
-			if got := gitOutput(t, root, "rev-parse", "main"); got != base {
-				t.Fatalf("refusal moved destination: got %s want %s", got, base)
-			}
-			if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != base {
-				t.Fatalf("refusal moved project-green: got %s want %s", got, base)
-			}
-			if after := landingAssignmentState(t, root); after != before {
-				t.Fatalf("refusal changed assignments:\nbefore: %safter:  %s", before, after)
-			}
-		})
-	}
-}
-
-// TestLandCommandSkipsTheFreshnessProofWithoutDeclaredBuildInputs is LF3. A repository
-// that declares no Go build inputs — every linked repository — never consults the owner.
-// A substituted seam that fails the test on any call proves non-consultation while the
-// landing runs to completion around it.
-func TestLandCommandSkipsTheFreshnessProofWithoutDeclaredBuildInputs(t *testing.T) {
-	request := "landed-no-build-inputs"
-	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	creation := mustCreate(t, root, request, "no declared build inputs")
-	stageLandSpec(t, root, creation.Path)
+// TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion is SOL01. The
+// candidate tree carries its own build entry point, a go-build.sh that records a
+// marker. A candidate-owned promotion rebuilds through that script and re-runs the
+// landing under the result; the stable owner completes the landing without ever
+// executing it.
+func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testing.T) {
+	request := "land-owner-no-candidate-code"
+	root, creation, _, _, tally := publicLandingFixture(t, request, "", "")
+	marker := filepath.Join(t.TempDir(), "candidate-ran")
+	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
+	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nprintf ran > "+marker+"\nexit 1\n"), 0o755)
+	gitRun(t, root, "add", "scripts/go-build.sh")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "candidate build entry")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
-	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
+	gitRun(t, creation.Path, "rebase", "main")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	restore := stubLandJoins(t, base, tip)
-	defer restore()
-	releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 0 }
-	oldVerify := verifyLandingExecutable
-	verifyLandingExecutable = func(string, string) error {
-		t.Error("landing consulted the freshness owner without declared build inputs")
-		return nil
-	}
-	t.Cleanup(func() { verifyLandingExecutable = oldVerify })
 
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, filepath.Join(root, "dist", "bench"), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
-		t.Fatalf("linked-repository landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+		t.Fatalf("stable-owner landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatalf("candidate landing code ran during its own promotion: %v", err)
+	}
+	if strings.Contains(stderr.String(), "rebuilt") {
+		t.Fatalf("landing rebuilt an executable: %q", stderr.String())
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
 	}
 }
 
-// TestLandCommandPublicRefusesASeallessExecutable is LF5: the real owner, reached through
-// the land surface. The copied executable has no adjacent seal, which the owner refuses
-// before it needs a Go toolchain in the fixture.
-func TestLandCommandPublicRefusesASeallessExecutable(t *testing.T) {
-	request := "public-land-sealless"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+// TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease is SOL04. The
+// invoked owner carries the complete landing — publication, marker, reconcile, and
+// release — in one process. A rebuild-and-re-exec path would either replace the
+// process or surface its rebuild disclosure; neither may appear.
+func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.T) {
+	request := "land-owner-single-process"
+	root, creation, _, _, tally := publicLandingFixture(t, request, "", "")
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
-	published := gitOutput(t, root, "rev-parse", "main")
-	sealless := filepath.Join(t.TempDir(), "bench")
-	built, err := os.ReadFile(testRunBinary(t))
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+
+	ownerPid := os.Getpid()
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, filepath.Join(root, "dist", "bench"), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+		t.Fatalf("single-owner landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	}
+	if os.Getpid() != ownerPid {
+		t.Fatalf("owner process identity changed: %d -> %d", ownerPid, os.Getpid())
+	}
+	if strings.Contains(stderr.String(), "rebuilt") {
+		t.Fatalf("owner re-executed through a rebuild: %q", stderr.String())
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v, want exactly one gate under one owner", got, err)
+	}
+	if _, err := os.Stat(creation.Path); !os.IsNotExist(err) {
+		t.Fatalf("release did not complete under the owner process: %v", err)
+	}
+}
+
+// TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal is SOL17, at the real owner
+// through the process seam. A forged dist/bench and adjacent seal sit at the primary
+// repository path; the stable owner completes the landing without consulting or
+// executing them.
+func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
+	binary := testRunBinary(t)
+	request := "land-owner-forged-primary"
+	root, creation, _, _, tally := publicLandingFixture(t, request, "dist/bench", "dist/")
+	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	marker := filepath.Join(t.TempDir(), "forged-ran")
+	mustMkdirAll(t, filepath.Join(root, "dist"), 0o755)
+	mustWrite(t, filepath.Join(root, "dist", "bench"), []byte("#!/bin/sh\nprintf ran > "+marker+"\n"), 0o755)
+	mustWrite(t, filepath.Join(root, "dist", "bench.seal"), []byte(`{"schema":1,"sources":"`+strings.Repeat("a", 64)+`","executable":"`+strings.Repeat("b", 64)+`"}`), 0o644)
+
+	var stdout, stderr bytes.Buffer
+	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
+	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+	code := exitCode(cmd.Run())
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+		t.Fatalf("forged-primary landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatalf("forged primary executable ran during promotion: %v", err)
+	}
+	if got := gitOutput(t, root, "rev-parse", "main"); got == base {
+		t.Fatal("landing published nothing")
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
+	}
+}
+
+// TestLandCommandReportsInstallStepForABrokerChangingDiff is SOL16. A reviewed diff
+// that changes the promotion broker's own build inputs lands as source, but the
+// installed broker keeps authority. The landing must name the install step so the
+// operator does not expect source publication to replace it.
+func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
+	request := "land-owner-broker-change"
+	root, creation, _, _, _ := publicLandingFixture(t, request, "", "")
+	mustWrite(t, filepath.Join(root, "go.mod"), []byte("module benchfixture\n\ngo 1.22\n"), 0o644)
+	mustMkdirAll(t, filepath.Join(root, "cmd", "bench"), 0o755)
+	mustWrite(t, filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644)
+	mustMkdirAll(t, filepath.Join(root, "scripts"), 0o755)
+	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	mustWrite(t, filepath.Join(root, "scripts", "go-build.inputs"), []byte("build_script=scripts/go-build.sh\n"), 0o644)
+	spec := filepath.Join(root, "specs", "x", "spec.md")
+	body, err := os.ReadFile(spec)
 	if err != nil {
 		t.Fatal(err)
 	}
-	mustWrite(t, sealless, built, 0o755)
+	mustWrite(t, spec, append(body, []byte("- `scripts/go-build.sh`\n")...), 0o644)
+	gitRun(t, root, "add", ".")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
+	gitRun(t, creation.Path, "rebase", "main")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	commitInWorktree(t, creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	cmd := descendant(t, sealless, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
-	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
-	code := exitCode(cmd.Run())
-	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=") || !strings.Contains(stdout.String(), sealless) || stderr.Len() != 0 {
-		t.Fatalf("sealless landing = (%d, %q, %q), want a refusal naming %s", code, stdout.String(), stderr.String(), sealless)
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+		t.Fatalf("broker-changing landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
-	if got := gitOutput(t, root, "rev-parse", "main"); got != published {
-		t.Fatalf("sealless refusal moved destination: got %s want %s", got, published)
-	}
-	if _, err := os.Stat(tally); !os.IsNotExist(err) {
-		t.Fatalf("sealless refusal ran the gate: %v", err)
+	if !strings.Contains(stderr.String(), "bench repair") {
+		t.Fatalf("broker-changing landing named no install step: %q", stderr.String())
 	}
 }

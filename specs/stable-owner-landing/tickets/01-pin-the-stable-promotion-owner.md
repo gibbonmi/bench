@@ -1,7 +1,7 @@
 # Pin the stable promotion owner
 
 Blocked by: none
-Writes: bin/bench.sh, bin/bench-postinstall.sh, internal/adopt, internal/runbinary, internal/worktree/land.go, internal/worktree/land_freshness_test.go, internal/worktree/land_identity.go, internal/worktree/land_identity_test.go, internal/systemtest
+Writes: bin/bench.sh, bin/bench-postinstall.sh, internal/adopt, internal/runbinary, internal/worktree/land.go, internal/worktree/land_freshness_test.go, internal/worktree/land_identity.go, internal/worktree/land_identity_test.go, internal/systemtest, cmd/bench/command_registry_test.go
 
 ## What to build
 
