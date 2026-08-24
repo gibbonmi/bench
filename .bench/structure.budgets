@@ -32,3 +32,15 @@ internal/worktree/worktree_test.go 533
 # Granted 2026-07-28 on reviewer authorization during the FT152 build; the exact
 # cap re-asks on the next line of growth.
 internal/conformance/docs_workflow_helpers_test.go 660
+
+# The remaining conformance test files, each one check family that FT152 ruled
+# indivisible: internal/conformance/ has no file-count headroom, so a split trades
+# a line breach for a directory breach. The six per-check throwaway-root builders
+# these files carried are now one shared builder in harness_test.go, so the counts
+# below are what the family costs after the duplication came out. Granted
+# 2026-08-24 under module-size-split, following the FT152 precedent above; each
+# exact cap re-asks on the next line of growth.
+internal/conformance/checks_test.go 692
+internal/conformance/docs_workflow_checks_test.go 786
+internal/conformance/fixture_bite_test.go 826
+internal/conformance/tier_test.go 972

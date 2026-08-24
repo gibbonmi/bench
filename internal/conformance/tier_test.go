@@ -12,7 +12,6 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -956,13 +955,7 @@ func recordedScopeRoot(t *testing.T) string {
 // root's own git dir, so a bare temp dir gives it nowhere to go.
 func gitInitedRoot(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	cmd := exec.Command("git", "init", "-q")
-	cmd.Dir = root
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
-	}
-	return root
+	return throwawayRoot{gitInit: true}.build(t)
 }
 
 func timingNames(t *testing.T, root string) []string {

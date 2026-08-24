@@ -266,19 +266,10 @@ func renderLinesProfile(cell func(harness, tier string) string, trailer string) 
 // writeLinesRoot plants a binding and a profile in a throwaway root the check can read.
 func writeLinesRoot(t *testing.T, env, profile string) string {
 	t.Helper()
-	root := t.TempDir()
-	for _, dir := range []string{".bench", "projects"} {
-		if err := os.MkdirAll(filepath.Join(root, dir), 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(env), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "projects", "benchkit.md"), []byte(profile), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	return root
+	return throwawayRoot{files: map[string]string{
+		".bench/lines.env":     env,
+		"projects/benchkit.md": profile,
+	}}.build(t)
 }
 
 // TestLineBindingCatchesSwappedProfileCells is the placement half of the cross-check. It
