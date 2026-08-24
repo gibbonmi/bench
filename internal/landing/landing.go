@@ -287,6 +287,16 @@ func RuntimeIgnoredPath(path string) bool {
 	return path == ".logs" || strings.HasPrefix(path, ".logs/")
 }
 
+// LocalCapturePath reports whether path is one exact project-local capture file.
+func LocalCapturePath(path string) bool {
+	switch path {
+	case "capture/IDEAS.md", "capture/learnings.md", "capture/session-handoff.md":
+		return true
+	default:
+		return false
+	}
+}
+
 func fingerprintStatus(raw []byte) ([]byte, error) {
 	entries, err := benchgit.ParsePorcelainZStrict(raw)
 	if err != nil {
@@ -299,7 +309,7 @@ func fingerprintStatus(raw []byte) ([]byte, error) {
 			filtered.WriteByte(0)
 			continue
 		}
-		if entry.Status == "!!" && RuntimeIgnoredPath(entry.Path) {
+		if entry.Status == "!!" && (RuntimeIgnoredPath(entry.Path) || LocalCapturePath(entry.Path)) {
 			continue
 		}
 		filtered.WriteString(entry.Status)

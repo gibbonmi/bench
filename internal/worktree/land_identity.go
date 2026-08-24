@@ -50,7 +50,7 @@ func landingDestination(root string) (string, string, string, string, error) {
 	declared, _, declarationErr := loadBuildOutputs(root)
 	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinLandingAllowance(ignored, declared)) {
 		if ignoredErr == nil && declarationErr == nil {
-			return "", "", "", "", refusalError{refusal{detail: "landing destination has undeclared ignored residue", paths: ignored.Paths}}
+			return "", "", "", "", refusalError{refusal{detail: "landing destination has undeclared ignored residue", paths: undeclaredLandingIgnoredPaths(ignored, declared)}}
 		}
 		return "", "", "", "", errors.New("landing destination has undeclared ignored residue")
 	}

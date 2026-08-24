@@ -40,6 +40,11 @@ func attributedPaths(root, expected string, raw []string) ([]string, error) {
 	return unique(paths), nil
 }
 
+// ResolveAttributedPaths returns the safe repository-relative ownership fence for raw.
+func ResolveAttributedPaths(root, expected string, raw []string) ([]string, error) {
+	return attributedPaths(root, expected, raw)
+}
+
 func repositoryPath(root, path string) (string, error) {
 	abs := path
 	if !filepath.IsAbs(abs) {

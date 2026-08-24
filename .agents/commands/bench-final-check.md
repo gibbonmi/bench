@@ -138,8 +138,10 @@ paths to land, the oracle run and landing are one command:
 bench commit -m "<msg>" <path>...
 ```
 
-`bench commit` runs the gate and commits only on green. A red run reports its
-own first failing phase and refuses to commit. Do not run `bench gate` first.
+`bench commit` formats changed Go files inside the named paths, then runs the
+gate and commits only on green. It does not format unnamed paths, and a dry run
+changes no files. A red run reports its own first failing phase and refuses to
+commit. Do not run `bench gate` first.
 The commit already is the gate run; the gate reuses a fresh green verdict for
 the identical tree and never re-pays it. Standalone `bench gate` has two jobs
 here: report the honest no-op, when nothing is left to commit, and diagnose a

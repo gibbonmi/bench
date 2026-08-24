@@ -39,7 +39,13 @@ works on any branch. This line only states the binding.)
   Reviewed spec-backed builds keep serial green ticket commits on one
   retained integration source. Semantic review binds its frozen base and tip.
   `bench worktree land` composes and gates that pair on the destination, and
-  its published commit owns the spec's `Status: implemented` flip.
+  its published commit owns the spec's `Status: implemented` flip. The landing
+  destination permits the three exact ignored local-capture files without
+  treating the broader `capture/` tree as disposable residue.
+
+  `bench commit` formats changed Go files inside its named ownership fence
+  before it composes and gates the prospective tree. It leaves unnamed files
+  and every dry-run checkout byte unchanged.
 
   `bench worktree reclaim` is the one reader of the `$BENCH_HOME/worktrees` pool
   parent. Bare, it plans reclaimable keys and removes nothing, and

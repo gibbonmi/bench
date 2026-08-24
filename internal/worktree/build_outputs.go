@@ -71,7 +71,28 @@ func validBuildOutputPath(entry string) bool {
 }
 
 func ignoredWithinLandingAllowance(inventory IgnoredInventory, declared []string) bool {
-	return ignoredWithinDeclaredOutputs(inventory, declared, landing.RuntimeIgnoredPath)
+	return len(undeclaredLandingIgnoredPaths(inventory, declared)) == 0 &&
+		inventory.Count > 0 && !inventory.Uncertain && !inventory.OverLimit && !inventory.AtLeast
+}
+
+func undeclaredLandingIgnoredPaths(inventory IgnoredInventory, declared []string) []string {
+	var foreign []string
+	for _, ignored := range inventory.Paths {
+		if landing.RuntimeIgnoredPath(ignored) || landing.LocalCapturePath(ignored) || ignoredWithinBuildOutput(ignored, declared) {
+			continue
+		}
+		foreign = append(foreign, ignored)
+	}
+	return foreign
+}
+
+func ignoredWithinBuildOutput(ignored string, declared []string) bool {
+	for _, entry := range declared {
+		if (strings.HasSuffix(entry, "/") && strings.HasPrefix(ignored, entry)) || ignored == entry {
+			return true
+		}
+	}
+	return false
 }
 
 func ignoredWithinDeclaredOutputs(inventory IgnoredInventory, declared []string, additional func(string) bool) bool {
@@ -82,18 +103,7 @@ func ignoredWithinDeclaredOutputs(inventory IgnoredInventory, declared []string,
 		if additional(ignored) {
 			continue
 		}
-		contained := false
-		for _, entry := range declared {
-			if strings.HasSuffix(entry, "/") {
-				contained = strings.HasPrefix(ignored, entry)
-			} else {
-				contained = ignored == entry
-			}
-			if contained {
-				break
-			}
-		}
-		if !contained {
+		if !ignoredWithinBuildOutput(ignored, declared) {
 			return false
 		}
 	}

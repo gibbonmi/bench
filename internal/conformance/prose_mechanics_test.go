@@ -44,14 +44,13 @@ func learningJournalDiagnostics(root string) []string {
 }
 
 // approvedProseExclusionRows is the reviewed set of paths .bench/prose-exclusions may
-// name. It holds exactly the four permanent rows. The set stays independent of the
+// name. It holds exactly the three permanent rows. The set stays independent of the
 // file it grades: a set derived from the file would accept every row somebody adds.
 // A later added row needs a visible edit here, or this test reds.
 var approvedProseExclusionRows = map[string]bool{
-	"tests/canary/":    true,
-	"docs/audits/":     true,
-	"CHANGELOG.md":     true,
-	"capture/IDEAS.md": true,
+	"tests/canary/": true,
+	"docs/audits/":  true,
+	"CHANGELOG.md":  true,
 }
 
 // TestProseMechanicsHoldsOnTheLiveTree is the check's live-tree assertion and the

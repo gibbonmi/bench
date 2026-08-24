@@ -2,11 +2,15 @@
 package commit
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"go/format"
 	"io"
+	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -57,14 +61,24 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	named := make([]string, 0, len(paths))
-	for _, path := range paths {
-		rel, relErr := rootRel(root, path)
-		if relErr != nil {
-			fmt.Fprintf(stderr, "error: cannot resolve path %q relative to repo root: %v\n", path, relErr)
+	named, err := landing.ResolveAttributedPaths(root, strings.TrimSpace(string(expectedBytes)), paths)
+	if err != nil {
+		fmt.Fprintf(stderr, "error: %v\n", err)
+		return 1
+	}
+	if !dryRun {
+		formatted, formatErr := formatNamedGoFiles(root, named)
+		if formatErr != nil {
+			fmt.Fprintf(stderr, "error: format named Go files: %v\n", formatErr)
 			return 1
 		}
-		named = append(named, rel)
+		if len(formatted) > 0 {
+			shown := make([]string, len(formatted))
+			for i, path := range formatted {
+				shown[i] = sanitize.Controls(path)
+			}
+			fmt.Fprintf(stdout, "formatted Go paths: %s\n", strings.Join(shown, " "))
+		}
 	}
 	if dryRun {
 		if err := landing.New().DryRun(context.Background(), landing.Request{
@@ -162,14 +176,62 @@ func parseArgs(args []string) (msg string, paths []string, dryRun bool, help str
 	return msg, parsed.Positionals, dryRun, "", ""
 }
 
-func rootRel(root, arg string) (string, error) {
-	abs, err := filepath.Abs(arg)
-	if err != nil {
-		return "", err
+func formatNamedGoFiles(root string, named []string) ([]string, error) {
+	args := []string{"-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all", "--"}
+	for _, path := range named {
+		args = append(args, ":(literal)"+path)
 	}
-	rel, err := filepath.Rel(root, abs)
+	raw, err := git.Raw(args...)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return filepath.ToSlash(rel), nil
+	entries, err := git.ParsePorcelainZStrict(raw)
+	if err != nil {
+		return nil, err
+	}
+	type edit struct {
+		path string
+		body []byte
+		mode os.FileMode
+	}
+	seen := map[string]bool{}
+	var edits []edit
+	for _, entry := range entries {
+		path := entry.Path
+		if seen[path] || !strings.HasSuffix(path, ".go") {
+			continue
+		}
+		seen[path] = true
+		full := filepath.Join(root, filepath.FromSlash(path))
+		info, statErr := os.Lstat(full)
+		if errors.Is(statErr, os.ErrNotExist) {
+			continue
+		}
+		if statErr != nil {
+			return nil, fmt.Errorf("inspect %q: %w", path, statErr)
+		}
+		if !info.Mode().IsRegular() {
+			continue
+		}
+		body, readErr := os.ReadFile(full)
+		if readErr != nil {
+			return nil, fmt.Errorf("read %q: %w", path, readErr)
+		}
+		formatted, formatErr := format.Source(body)
+		if formatErr != nil {
+			return nil, fmt.Errorf("%q: %w", path, formatErr)
+		}
+		if !bytes.Equal(body, formatted) {
+			edits = append(edits, edit{path: path, body: formatted, mode: info.Mode().Perm()})
+		}
+	}
+	sort.Slice(edits, func(i, j int) bool { return edits[i].path < edits[j].path })
+	formatted := make([]string, 0, len(edits))
+	for _, edit := range edits {
+		if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(edit.path)), edit.body, edit.mode); err != nil {
+			return formatted, fmt.Errorf("write %q: %w", edit.path, err)
+		}
+		formatted = append(formatted, edit.path)
+	}
+	return formatted, nil
 }
