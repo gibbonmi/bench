@@ -1,0 +1,314 @@
+// Real-git journey tests for the landing command: end-to-end publish, release, and destination-edit retention.
+package worktree
+
+import (
+	"bytes"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/intent"
+)
+
+func TestLandCommandPublicRealGitJourney(t *testing.T) {
+	binary := testRunBinary(t)
+	for _, tc := range []struct {
+		name, ignored, declaration, foreignIgnored, wantState string
+		runtime, emptyDeclaration                             bool
+	}{
+		{name: "clean", wantState: "released"},
+		{name: "declared-output", ignored: "dist/output", declaration: "dist/", wantState: "released"},
+		{name: "runtime-log", ignored: ".logs/gate.jsonl", wantState: "released", runtime: true},
+		{name: "runtime-log-empty-declaration", ignored: ".logs/gate.jsonl", wantState: "released", runtime: true, emptyDeclaration: true},
+		{name: "runtime-and-unknown-ignored", ignored: ".logs/gate.jsonl", foreignIgnored: "private/output", wantState: "incomplete:release", runtime: true},
+		{name: "unknown-ignored", ignored: "private/output", declaration: "dist/", wantState: "incomplete:release"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request := "public-land-" + tc.name
+			root, creation, base, tip, tally := publicLandingFixture(t, request, tc.ignored, tc.declaration)
+			if tc.emptyDeclaration || tc.foreignIgnored != "" {
+				if tc.emptyDeclaration {
+					mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[]}\n"), 0o644)
+				}
+				if tc.foreignIgnored != "" {
+					mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".logs/\nprivate/\n"), 0o644)
+				}
+				gitRun(t, root, "add", "-A")
+				gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "configure ignored residue")
+				base = gitOutput(t, root, "rev-parse", "HEAD")
+				gitRun(t, creation.Path, "rebase", "main")
+				tip = gitOutput(t, creation.Path, "rev-parse", "HEAD")
+				if tc.foreignIgnored != "" {
+					mustMkdirAll(t, filepath.Dir(filepath.Join(creation.Path, filepath.FromSlash(tc.foreignIgnored))), 0o755)
+					mustWrite(t, filepath.Join(creation.Path, filepath.FromSlash(tc.foreignIgnored)), []byte("residue\n"), 0o600)
+				}
+			}
+			disclosure := "landing source{review_base=" + base + ",assignment_start=" + creation.Assignment.Start + "}\n"
+			var stdout, stderr bytes.Buffer
+			cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
+			cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+			err := cmd.Run()
+			wantExit := 0
+			wantState := "worktree=" + tc.wantState + "}"
+			if tc.wantState != "released" {
+				wantExit = 3
+				wantState = "worktree=" + tc.wantState + ",next="
+			}
+			if exitCode(err) != wantExit || !strings.Contains(stdout.String(), wantState) {
+				t.Fatalf("land exit=%d stdout=%q stderr=%q", exitCode(err), stdout.String(), stderr.String())
+			}
+			published := gitOutput(t, root, "rev-parse", "main")
+			parents := strings.Fields(gitOutput(t, root, "rev-list", "--parents", "-n", "1", published))
+			if len(parents) != 3 || parents[1] != base || parents[2] != tip {
+				t.Fatalf("published parents = %q, want destination %s and source %s", parents, base, tip)
+			}
+			if got := gitOutput(t, root, "show", published+":specs/x/spec.md"); !strings.Contains(got, "Status: implemented") {
+				t.Fatalf("published spec = %q", got)
+			}
+			if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+				t.Fatalf("project-green = %s, want %s", got, published)
+			}
+			if got, readErr := os.ReadFile(tally); readErr != nil || string(got) != "g" {
+				t.Fatalf("gate tally = %q, %v", got, readErr)
+			}
+			if tc.name == "clean" {
+				tree := gitOutput(t, root, "rev-parse", published+"^{tree}")
+				if got := authorization.Authorize(t.Context(), root, tree); got.Kind != authorization.Green {
+					t.Fatalf("identical-tree authorization = %+v", got)
+				}
+				if got, readErr := os.ReadFile(tally); readErr != nil || string(got) != "g" {
+					t.Fatalf("identical tree reran gate: tally=%q error=%v", got, readErr)
+				}
+				commitInWorktree(t, root, "destination-only", "destination\n", "destination movement")
+				changedTree := gitOutput(t, root, "rev-parse", "HEAD^{tree}")
+				if got := authorization.Authorize(t.Context(), root, changedTree); got.Kind != authorization.Green {
+					t.Fatalf("changed-tree authorization = %+v", got)
+				}
+				if got, readErr := os.ReadFile(tally); readErr != nil || string(got) != "gg" {
+					t.Fatalf("changed tree did not rerun gate: tally=%q error=%v", got, readErr)
+				}
+			}
+			assignments, readErr := intent.Assignments(root)
+			if readErr != nil {
+				t.Fatal(readErr)
+			}
+			_, statErr := os.Stat(creation.Path)
+			if tc.wantState == "released" {
+				if len(assignments) != 0 || !os.IsNotExist(statErr) || (!tc.runtime && stderr.String() != disclosure) || (tc.runtime && !strings.HasPrefix(stderr.String(), disclosure)) {
+					t.Fatalf("released state assignments=%#v stat=%v stderr=%q", assignments, statErr, stderr.String())
+				}
+			} else {
+				if len(assignments) != 1 || statErr != nil || !strings.HasPrefix(stderr.String(), disclosure) || !strings.Contains(stderr.String(), "worktree retained (ignored)") || !strings.Contains(stderr.String(), "bench worktree release") {
+					t.Fatalf("retained state assignments=%#v stat=%v stderr=%q", assignments, statErr, stderr.String())
+				}
+				if got, readErr := os.ReadFile(filepath.Join(creation.Path, filepath.FromSlash(tc.ignored))); readErr != nil || string(got) != "residue\n" {
+					t.Fatalf("ignored residue = %q, %v", got, readErr)
+				}
+			}
+		})
+	}
+	markProof(t, "landing/journey/publish-release")
+}
+
+func TestLandCommandPublicPreservesHistoricalRuntimeLogs(t *testing.T) {
+	binary := testRunBinary(t)
+	request := "public-land-runtime-logs"
+	root, creation, _, _, tally := publicLandingFixture(t, request, "", "")
+	mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".logs/\n"), 0o644)
+	gitRun(t, root, "add", ".gitignore")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore runtime logs")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	mustMkdirAll(t, filepath.Join(root, ".logs"), 0o700)
+	history := filepath.Join(root, ".logs", "history.jsonl")
+	mustWrite(t, history, []byte("historical progress\n"), 0o600)
+
+	var stdout, stderr bytes.Buffer
+	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
+	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+	if code := exitCode(cmd.Run()); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+		t.Fatalf("runtime-log landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got, err := os.ReadFile(history); err != nil || string(got) != "historical progress\n" {
+		t.Fatalf("historical progress log = %q, %v", got, err)
+	}
+	logs, err := filepath.Glob(filepath.Join(root, ".logs", "gate-*.jsonl"))
+	if err != nil || len(logs) != 1 {
+		t.Fatalf("gate progress logs = %q, %v", logs, err)
+	}
+	if got, err := os.ReadFile(logs[0]); err != nil || !strings.Contains(string(got), `"event":"gate.start"`) || !strings.Contains(string(got), `"event":"gate.finish"`) {
+		t.Fatalf("durable gate progress log = %q, %v", got, err)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("gate tally = %q, %v", got, err)
+	}
+}
+
+func TestLandCommandRefusesPostGateUnknownIgnoredMutation(t *testing.T) {
+	binary := testRunBinary(t)
+	request := "public-land-post-gate-ignored"
+	root, creation, _, _, tally := publicLandingFixture(t, request, "foreign-generated/output", "")
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nrg -q '^Status: implemented$' specs/x/spec.md\n[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\nmkdir -p \"$LAND_DESTINATION/foreign-generated\"\nprintf injected > \"$LAND_DESTINATION/foreign-generated/output\"\n"), 0o755)
+	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[\"LAND_GATE_TALLY\",\"LAND_DESTINATION\"],\"paths\":[],\"tools\":[]}\n"), 0o644)
+	gitRun(t, root, "add", ".bench/gate-prospective.sh", ".bench/gate-inputs.json")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "inject post-gate ignored mutation")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+
+	var stdout, stderr bytes.Buffer
+	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
+	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+	cmd.Env = append(os.Environ(), "LAND_DESTINATION="+root)
+	if code := exitCode(cmd.Run()); code != 1 || !strings.Contains(stdout.String(), "landing destination checkout changed") {
+		t.Fatalf("post-gate ignored mutation = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if got := gitOutput(t, root, "rev-parse", "main"); got != base {
+		t.Fatalf("post-gate mutation published main=%s, want %s", got, base)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("post-gate mutation gate tally = %q, %v", got, err)
+	}
+}
+
+func TestLandCommandRetainsJustInTimeTrackedDestinationEdit(t *testing.T) {
+	request := "land-last-moment-tracked-edit"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	commitInWorktree(t, root, "victim.txt", "saved\n", "track victim")
+	base = gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	tip = gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	victim := filepath.Join(root, "victim.txt")
+	injectLandingResetEdit(t, root, victim)
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if code != 3 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
+		t.Fatalf("last-moment tracked edit landing = (%d, %q, %q), want published incomplete reconciliation", code, stdout.String(), stderr.String())
+	}
+	if got, err := os.ReadFile(victim); err != nil || string(got) != "caller bytes\n" {
+		t.Fatalf("last-moment tracked edit = %q, %v, want caller bytes", got, err)
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil || len(assignments) != 1 || assignments[0].ID != creation.Assignment.ID || assignments[0].State != intent.StateActive {
+		t.Fatalf("incomplete reconciliation retained assignments = %#v, %v", assignments, err)
+	}
+	if _, err := os.Stat(creation.Path); err != nil {
+		t.Fatalf("incomplete reconciliation removed source assignment: %v", err)
+	}
+}
+
+func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
+	request := "land-last-moment-overlapping-edit"
+	root, creation, _, _, _ := publicLandingFixture(t, request, "", "")
+	commitInWorktree(t, root, "victim.txt", "saved\n", "track victim")
+	base := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, creation.Path, "rebase", "main")
+	mustWrite(t, filepath.Join(creation.Path, "victim.txt"), []byte("reviewed bytes\n"), 0o600)
+	specPath := filepath.Join(creation.Path, "specs", "x", "spec.md")
+	specBytes, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, specPath, append(specBytes, []byte("- `victim.txt`\n")...), 0o644)
+	gitRun(t, creation.Path, "add", "victim.txt", "specs/x/spec.md")
+	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "review victim change")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	victim := filepath.Join(root, "victim.txt")
+	injectLandingResetEdit(t, root, victim)
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	published := gitOutput(t, root, "rev-parse", "main")
+	if code != 3 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
+		t.Fatalf("last-moment overlapping edit landing = (%d, %q, %q), want published incomplete reconciliation", code, stdout.String(), stderr.String())
+	}
+	if got, err := os.ReadFile(victim); err != nil || string(got) != "caller bytes\n" {
+		t.Fatalf("last-moment overlapping edit = %q, %v, want caller bytes", got, err)
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil || len(assignments) != 1 || assignments[0].ID != creation.Assignment.ID || assignments[0].State != intent.StateActive {
+		t.Fatalf("incomplete overlapping reconciliation retained assignments = %#v, %v", assignments, err)
+	}
+}
+
+func injectLandingResetEdit(t *testing.T, root, victim string) {
+	t.Helper()
+	shimDir := t.TempDir()
+	realGit, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, filepath.Join(shimDir, "git"), []byte("#!/bin/sh\nset -eu\nwanted_mode=${LAND_RESET_MODE:---merge}\nsaw_reset=false\nsaw_mode=false\nsaw_destination=false\nfor arg in \"$@\"; do\n  [ \"$arg\" = reset ] && saw_reset=true\n  [ \"$arg\" = \"$wanted_mode\" ] && saw_mode=true\n  [ \"$arg\" = \"$LAND_RESET_DESTINATION\" ] && saw_destination=true\ndone\nif [ \"$saw_reset\" = true ] && [ \"$saw_mode\" = true ] && [ \"$saw_destination\" = true ]; then\n  printf 'caller bytes\\n' > \"$LAND_RESET_VICTIM\"\nfi\nexec "+realGit+" \"$@\"\n"), 0o755)
+	bindEnv(t, "LAND_RESET_DESTINATION", root)
+	bindEnv(t, "LAND_RESET_VICTIM", victim)
+	bindEnv(t, "PATH", shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+}
+
+func TestLandCommandPublishedReleaseFailureExitsIncomplete(t *testing.T) {
+	request := "published-release-incomplete"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "private/output", "dist/")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 3 {
+		t.Fatalf("published release exit = %d, want 3; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	tree := gitOutput(t, root, "rev-parse", published+"^{tree}")
+	wantNext := "bench worktree land --resume '" + published + "' --request <request> --base '" + base + "' --source-tip '" + tip + "' --spec 'x' '" + creation.Path + "'"
+	want := "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=incomplete:release,next=" + wantNext + "}\n"
+	if stdout.String() != want || strings.Contains(stdout.String(), request) {
+		t.Fatalf("published release stdout = %q, want %q without caller token", stdout.String(), want)
+	}
+}
+
+func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
+	binary := testRunBinary(t)
+	request := "public-land-conflict-repair"
+	root, creation, base, reviewedTip, tally := publicLandingFixture(t, request, "", "")
+	disclosure := "landing source{review_base=" + base + ",assignment_start=" + creation.Assignment.Start + "}\n"
+	commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+	run := func(tip string) (int, string, string) {
+		var stdout, stderr bytes.Buffer
+		cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land repaired source", creation.Path)
+		cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+		return exitCode(cmd.Run()), stdout.String(), stderr.String()
+	}
+	code, stdout, stderr := run(reviewedTip)
+	if code != 1 || !strings.Contains(stdout, "refused{detail=composition conflict: textual,next=") || stderr != disclosure {
+		t.Fatalf("conflict result = (%d, %q, %q)", code, stdout, stderr)
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) || gitOutput(t, root, "rev-parse", "HEAD") != destination || gitOutput(t, creation.Path, "rev-parse", "HEAD") != reviewedTip || gitOutput(t, root, "status", "--porcelain=v1") != "" || gitOutput(t, creation.Path, "status", "--porcelain=v1") != "" {
+		t.Fatalf("conflict changed state or ran gate: tally=%v", err)
+	}
+	merge := descendant(t, "git", "-C", creation.Path, "merge", "--no-commit", "main")
+	if got, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(got), "CONFLICT") {
+		t.Fatalf("repair setup merge = %v, %s", err, got)
+	}
+	mustWrite(t, filepath.Join(creation.Path, "owned.txt"), []byte("destination bytes\nreviewed repair\n"), 0o644)
+	gitRun(t, creation.Path, "add", "owned.txt")
+	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "repair conflict")
+	repairedTip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	code, stdout, stderr = run(reviewedTip)
+	want := "refused{detail=worktree source tip mismatch,observed=" + reviewedTip + ",wanted=" + repairedTip + "}\n"
+	if code != 1 || stdout != want || stderr != "" {
+		t.Fatalf("old review after repair = (%d, %q, %q)", code, stdout, stderr)
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("old review ran gate: %v", err)
+	}
+	code, stdout, stderr = run(repairedTip)
+	if code != 0 || !strings.Contains(stdout, "worktree=released") || stderr != disclosure {
+		t.Fatalf("repaired landing = (%d, %q, %q)", code, stdout, stderr)
+	}
+	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+		t.Fatalf("repaired gate tally = %q, %v", got, err)
+	}
+	markProof(t, "landing/journey/conflict-refusal")
+}

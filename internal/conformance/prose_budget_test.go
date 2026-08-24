@@ -275,21 +275,11 @@ func proseBudgetLines(count int, trailing bool) string {
 // writeProseBudgetRoot plants a profile and the named guidance files in a throwaway root.
 func writeProseBudgetRoot(t *testing.T, profile string, files map[string]string) string {
 	t.Helper()
-	root := t.TempDir()
-	write := func(rel, content string) {
-		path := filepath.Join(root, filepath.FromSlash(rel))
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	write(proseBudgetProfile, profile)
+	planted := map[string]string{proseBudgetProfile: profile}
 	for rel, content := range files {
-		write(rel, content)
+		planted[rel] = content
 	}
-	return root
+	return throwawayRoot{files: planted}.build(t)
 }
 
 // healthyProseBudgetFiles renders every subject that proseBudgetRows names, each one line

@@ -617,39 +617,22 @@ func TestRegisteredSkillReadersRefuseHostileSkillFiles(t *testing.T) {
 // reader's refusal, not the tree's completeness.
 func writeHostileSkillRoot(t *testing.T, plant func(*testing.T, string)) string {
 	t.Helper()
-	root := t.TempDir()
-	profile := proseBudgetTable(proseBudgetHeader, proseBudgetRows...)
-	if err := os.MkdirAll(filepath.Join(root, "projects"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "projects", "benchkit.md"), []byte(profile), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	// The guidance sweep grades model literals only against a present binding. Without
-	// lines.env, the line-routing check would return before it reached a skill.
-	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(guidanceFixtureEnv), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	// The prose check refuses a root with no exclusion file before it reaches any
-	// subject, so an empty list is what lets it walk as far as the hostile skill.
-	if err := os.WriteFile(filepath.Join(root, ".bench", "prose-exclusions"), nil, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	plants := map[string]func(*testing.T, string){}
 	for _, reader := range hostileSkillReaders {
-		dir := filepath.Join(root, ".agents", "skills", reader.skill)
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			t.Fatal(err)
-		}
-		path := filepath.Join(dir, "SKILL.md")
-		if _, err := os.Lstat(path); err == nil {
-			continue
-		}
-		plant(t, path)
+		plants[".agents/skills/"+reader.skill+"/SKILL.md"] = plant
 	}
-	return root
+	return throwawayRoot{
+		files: map[string]string{
+			"projects/benchkit.md": proseBudgetTable(proseBudgetHeader, proseBudgetRows...),
+			// The guidance sweep grades model literals only against a present binding.
+			// Without lines.env, line-routing would return before it reached a skill.
+			".bench/lines.env": guidanceFixtureEnv,
+			// The prose check refuses a root with no exclusion file before it reaches any
+			// subject, so an empty list is what lets it walk as far as the hostile skill.
+			".bench/prose-exclusions": "",
+		},
+		plants: plants,
+	}.build(t)
 }
 
 // hostileReferenceReaders names each registered check that reads .bench/BENCH-
@@ -700,15 +683,10 @@ func TestRegisteredReferenceReadersRefuseHostileReferenceFiles(t *testing.T) {
 // purpose. This root grades the reference reader's refusal, not the tree.
 func writeHostileReferenceRoot(t *testing.T, plant func(*testing.T, string)) string {
 	t.Helper()
-	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	// The token-diet and anchor routes both look past the reference unless the guide that
-	// points at it exists. A bare hostile file alone would leave them unreached.
-	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), []byte("# Guide\n\nSee .bench/BENCH-reference.md\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	plant(t, filepath.Join(root, ".bench", "BENCH-reference.md"))
-	return root
+	return throwawayRoot{
+		// The token-diet and anchor routes both look past the reference unless the guide
+		// that points at it exists. A bare hostile file alone would leave them unreached.
+		files:  map[string]string{".bench/BENCH.md": "# Guide\n\nSee .bench/BENCH-reference.md\n"},
+		plants: map[string]func(*testing.T, string){".bench/BENCH-reference.md": plant},
+	}.build(t)
 }

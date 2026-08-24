@@ -217,3 +217,45 @@ func runGit(t *testing.T, root string, args ...string) {
 		t.Fatalf("git %v: %v\n%s", args, err, out)
 	}
 }
+
+// throwawayRoot is the shared throwaway-tree builder for this package's fixtures. It owns
+// the knowledge every per-check builder used to repeat: a temp root, a write loop that
+// creates each parent directory, and the git init a root needs before a timing file has
+// anywhere to live. A caller supplies only the content its own check grades.
+type throwawayRoot struct {
+	// gitInit runs `git init -q` in the root.
+	gitInit bool
+	// files maps a slash-relative path to the content planted there.
+	files map[string]string
+	// plants maps a slash-relative path to a planter the builder hands the absolute path,
+	// for a fixture whose bytes a hostile-input helper writes rather than this builder.
+	// Two readers naming one path collapse to a single plant, as the path is the key.
+	plants map[string]func(*testing.T, string)
+}
+
+func (spec throwawayRoot) build(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	if spec.gitInit {
+		runGit(t, root, "init", "-q")
+	}
+	for rel, content := range spec.files {
+		if err := os.WriteFile(rootFilePath(t, root, rel), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for rel, plant := range spec.plants {
+		plant(t, rootFilePath(t, root, rel))
+	}
+	return root
+}
+
+// rootFilePath resolves a slash-relative path under root and creates its parent directory.
+func rootFilePath(t *testing.T, root, rel string) string {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}

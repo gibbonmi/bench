@@ -179,9 +179,9 @@ func TestResolveBranchRangeConsumesExport(t *testing.T) {
 // second copy: its body must no longer reference the default-branch resolver or
 // derive a merge-base directly.
 func TestResolveBranchRangeHasNoInlineDerivation(t *testing.T) {
-	src, err := os.ReadFile("diff.go")
+	src, err := os.ReadFile("range.go")
 	if err != nil {
-		t.Fatalf("read diff.go: %v", err)
+		t.Fatalf("read range.go: %v", err)
 	}
 	body := funcBody(t, string(src), "resolveBranchRange")
 	for _, banned := range []string{"git.ResolvedDefault(", `"merge-base"`, `git.Output("merge-base"`} {
