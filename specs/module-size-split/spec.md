@@ -2,9 +2,9 @@
 
 Status: staged
 
-Decision source: reviewer-confirmed conversation, 2026-08-23 — scope is every source file over 700 lines; the reviewer authorized the landing in the same conversation.
+Decision source: reviewer-confirmed conversation, 2026-08-23 — scope is every source file over 700 lines; the reviewer authorized the landing in the same conversation. Amended by reviewer-confirmed conversation, 2026-08-24 — ticket 13's target already conforms, so the reviewer widened the scope by one file. The widened file is `internal/lines/lines_test.go`.
 
-Verification log: 1 iteration(s) to accept — the round returned one blocking ticket-graph finding and six advisory items. The blocking finding: the worktree ticket exceeded one context window. The author split that ticket and the two bundled multi-package tickets. The author also un-bundled row R04, added row R19, and folded the prose fixes before staging.
+Verification log: 1 iteration(s) to accept — the round returned one blocking ticket-graph finding and six advisory items. Amendment round, 2026-08-24: 1 iteration(s) to accept — the round returned two blocking consistency findings, folded before staging. The blocking finding: the worktree ticket exceeded one context window. The author split that ticket and the two bundled multi-package tickets. The author also un-bundled row R04, added row R19, and folded the prose fixes before staging.
 
 ## Problem
 
@@ -36,7 +36,7 @@ Line: gpt-5.6-terra / medium. Test moves risk silent test loss, so the mid tier 
 9. As a maintainer, I want `internal/git/git_test.go` split into helper, worktree-admin, and fact-family files, so that the admin matrix stands alone.
 10. As a maintainer, I want `internal/status/status_test.go` split by signal family with one shared fixture file, so that each family reads in one pass.
 11. As a maintainer, I want `internal/freshness/freshness_test.go` split into digest, publish, and verify files, so that the subprocess helpers sit with the publish tests.
-12. As a maintainer, I want `internal/worktree/land_test.go` and `internal/worktree/eligibility_test.go` split by journey family with one shared fixture file, so that the 2210-line file disappears.
+12. As a maintainer, I want `internal/worktree/land_test.go` and `internal/worktree/eligibility_test.go` split by journey family with one shared fixture file, so that the 2210-line file disappears. (Done-by-tree note, 2026-08-24: `eligibility_test.go` already conforms at 209 lines, so no ticket splits it.)
 13. As a maintainer, I want `internal/roadmap/context_test.go` split into command, row-selector, and occurrence files, so that the ledger grammar tests stand alone.
 14. As a maintainer, I want `internal/maps/maps_test.go` split into command, parse, and graph files, so that each validation family sits together.
 15. As a maintainer, I want `internal/systemtest/owner_test.go` split with the harness and `TestMain` kept whole, so that the sibling test files keep compiling.
@@ -44,6 +44,7 @@ Line: gpt-5.6-terra / medium. Test moves risk silent test loss, so the mid tier 
 17. As a maintainer, I want `internal/coverage/coverage_test.go` split into parse, command, and schema files, so that the fixtures live beside the parse tests.
 18. As a maintainer, I want every shared test helper moved once into one file per package, so that no helper is pasted twice.
 19. As a reviewer, I want the same test-name set per package before and after each split, so that no test is silently dropped.
+27. As a maintainer, I want `internal/lines/lines_test.go` split into parse, verdict-resolution, agent-line, and fixture files, so that each family reads in one pass. (The 2026-08-24 amendment added this story.)
 
 ### Group C — structure budgets respected
 
@@ -116,6 +117,7 @@ Line: gpt-5.6-terra / medium. The oracle work is verification, not construction;
 | R17 | 25 | `go test ./internal/freshness/...` exits zero after the freshness split | go toolchain | a new `Publish` caller or `package main` fails the topology test |
 | R18 | 26 | `bench gate` exits zero at each ticket commit | bench gate CLI | a red intermediate state cannot commit |
 | R19 | 22 | each granted conformance cap is at most 20 newlines above the file's count at the ticket tip | file content check | an inflated cap hides all future growth from the scan |
+| R20 | 27 | `bench structure` no longer lists `internal/lines/lines_test.go` | bench structure CLI | a partial test split leaves the file listed |
 
 ### Edge inventory
 
@@ -125,7 +127,7 @@ Line: gpt-5.6-terra / medium. The oracle work is verification, not construction;
 - Directory budgets at exactly 12: a count of 12 passes, 13 fails; the per-directory plans in the implementation decisions pin the counts.
 - Hostile-input checklist: the change adds no input surface. The only new parsed content is `.bench/structure.budgets` rows, and `loadBudgets` already drops malformed rows fail-soft. No tuned profile addition is needed.
 
-**Won't handle** — files between 400 and 700 lines (for example `internal/gate/verdict.go` at 673) — the reviewer scoped this spec to over-700 files. The flagged remainder survives for a follow-up spec, and every in-scope caller keeps working.
+**Won't handle** — files between 400 and 700 lines — the reviewer scoped this spec to over-700 files, except `internal/lines/lines_test.go` (amended 2026-08-24). The flagged remainder survives for a follow-up spec, and every in-scope caller keeps working.
 **Won't handle** — subpackage extraction for `internal/worktree/` eligibility or landing — the extraction must export private symbols and risks an import cycle. The in-package split keeps every caller green.
 **Won't handle** — files under standing accepts (`internal/status/status.go`, `internal/releaseevidence/`, `internal/releasepreflight/`) — the accept entries are reviewer decisions that stand.
 **Won't handle** — the pre-existing `DIR CROWDED` lines for `internal/adopt/`, `internal/gate/`, `internal/worktree/` — they predate this spec, and R12 pins that no new one appears.
@@ -138,7 +140,8 @@ Line: gpt-5.6-terra / medium. The oracle work is verification, not construction;
 - `internal/diff/` — ticket 03.
 - `internal/freshness/` — ticket 04.
 - `internal/status/` — ticket 05.
-- `internal/worktree/` — tickets 06 and 13; they share the fence, so they run sequentially, never in parallel.
+- `internal/worktree/` — ticket 06.
+- `internal/lines/` — ticket 13 (re-fenced by the 2026-08-24 amendment).
 - `internal/conformance/` — ticket 07.
 - `.bench/structure.budgets` — ticket 07 only.
 - `internal/roadmap/` — ticket 08.
