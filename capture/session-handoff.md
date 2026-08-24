@@ -1,30 +1,37 @@
 # Session handoff
 
-Repository: `/home/mgibs/workspace/bench` (origin `https://github.com/gibbonmi/bench.git`)
-Branch: `main` — HEAD `600d82a7` at drain start; this drain lands one commit on top
+Repository: `a461608be3817c9335b5591451410c2a-fb2a552a375c750a39ff7a12e76c2ccb` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/a461608be3817c9335b5591451410c2a-fb2a552a375c750a39ff7a12e76c2ccb`
+Branch: `bench/assign/a461608be3817c9335b5591451410c2a/fb2a552a375c750a39ff7a12e76c2ccb` — HEAD `b239bdd`, 1 dirty path, 6 unpushed commits
 Spec: `specs/module-size-split/spec.md` (Status: staged)
-Gate: green (fresh, drain worktree)
+Gate: green at `48ce423` — stale, work tree `105fefc`
 
 ## State
 
-This drain reconciled the roadmap against the tree: no shipped rows, nothing
-to retire, no learnings, no retros. The two parked ideas opened two rows.
-FT248 (`spec`) is the Bash guard that denies a shell follow-on appended to a
-`bench` command. FT249 (`decide`) moves the idea inbox to a shared git ref.
-The capture inbox and journal are both empty.
+Batch 1 of `module-size-split` landed tickets 01 (`internal/landing/`) and 02
+(`internal/git/`) as pure same-package moves. `bench structure` fell from 75 to 71
+issues. The review over base `bdc4dd6a` and tip `b239bdd1` returned 0 findings on
+all three axes, so no `reviews/` artifact exists. The landing is spec-less, because
+eleven tickets remain; the spec stays `staged`.
 
-The reviewer moved the structure fix to the front of the sequence on
-2026-08-23; the earlier deferral of `module-size-split` is lifted. The flow
-report still shows a positive net delta. Two restructure candidates stand for
-a future `/bench-drain --restructure`: fold FT200, FT207, FT178, FT162, and
-FT173 into FT169's landing-authority theme, and fold FT213, FT214, FT236, and
-FT237 into the craft-visit batch beside FT117, FT179, and FT94.
+The reviewer asked for a controlled comparison, Opus/low against Sonnet/medium, on
+two tickets. Both lines landed first-pass on both tickets; Opus/low made the better
+grouping call each time at about half the tokens. The verdict is folded into
+`capture/agent-performance/claude-models.md`. The reviewer's stop rule fired after
+two tickets, so no third comparison ran. Ticket 13 now cites R13; the build
+preflight had rejected the graph because no ticket owned that row.
 
-FT238's `Next:` is `ticket`, and no `tickets/FT238*` file exists yet.
+Four comparison worktrees (`mss-t01-opus`, `mss-t01-sonnet`, `mss-t02-opus`,
+`mss-t02-sonnet`) stay retained with uncommitted duplicate work. Their accepted
+diffs are already on the integration source. Discarding them is the reviewer's
+call: `bench worktree clean <path>` per worktree, paths from `bench worktree list`.
+
+The remaining tickets all have `Blocked by: none` except 13, which waits on 06.
+Route them at Opus/low per the scorecard decision.
 
 ## Next command
 
-`/bench-implement-spec specs/module-size-split/spec.md`
+`/bench-implement-spec specs/module-size-split/spec.md --full`
 
 ## Shape
 
