@@ -1,7 +1,7 @@
 # Enforce learning journal compliance
 
 Blocked by: none
-Writes: CHANGELOG.md, capture/learnings.md, internal/learnings, internal/conformance, tests/canary/prose-mechanics
+Writes: CHANGELOG.md, capture/learnings.md, internal/learnings, internal/conformance, projects/benchkit.md, tests/canary/prose-mechanics
 
 ## What to build
 
@@ -18,3 +18,4 @@ Remove the tracked learning journal so the ignore-listed journal remains local t
 - [ ] Valid, empty, and absent learning journals pass the registered check.
 - [ ] The existing prose-mechanics checks continue to grade the journal prose.
 - [ ] The repository no longer tracks `capture/learnings.md`; the ignored local journal remains outside commits.
+- [ ] The project profile describes the prose and learning-journal checks that the registered owner runs.

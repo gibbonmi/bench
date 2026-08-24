@@ -386,13 +386,16 @@ refused unread.
 
 ### Prose mechanics
 
-The `prose-mechanics` check grades the two ASD-STE100 rules a program can measure. Those
-two rules bound the sentence length and the paragraph length, and
-`.agents/skills/bench-craft-spec/references/ste-prose.md` states both bounds. The
-check reads every authored Markdown file under the graded root. `.bench/prose-exclusions`
-names the paths the check does not grade. Each prose exclusion row gives one path and a
-one-clause reason, and the reviewer owns that file. The semantic STE rules stay with
-top-tier review.
+The `prose-mechanics` check grades the two ASD-STE100 rules a program can measure and
+the learning-journal structure. The prose rules bound the sentence length and the
+paragraph length. The STE prose reference states both bounds. The journal check accepts
+an absent or empty journal. It rejects an unsupported schema, malformed entries, and a
+refused file state.
+
+The check reads every authored Markdown file under the graded root.
+`.bench/prose-exclusions` names the paths the check does not grade. Each prose exclusion
+row gives one path and a one-clause reason, and the reviewer owns that file. The semantic
+STE rules stay with top-tier review.
 
 ## Lines (model + effort routing)
 
