@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // commitFile makes one commit touching a uniquely-named file and returns its full sha.
@@ -130,6 +131,77 @@ func TestAppendHandoffUntrackedIsSilent(t *testing.T) {
 
 	if rows := appendHandoff(nil, root); len(rows) != 0 {
 		t.Fatalf("untracked handoff produced rows: %#v", rows)
+	}
+}
+
+// commitFileAt makes one commit whose committer date is pinned, so a test can place it
+// before or after a file's write time deterministically. The committer date is the one
+// `rev-list --since` filters on, and only the environment can set it.
+func commitFileAt(t *testing.T, root, name string, at time.Time) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(root, name), []byte(name+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	stamp := at.Format(time.RFC3339)
+	t.Setenv("GIT_AUTHOR_DATE", stamp)
+	t.Setenv("GIT_COMMITTER_DATE", stamp)
+	defer os.Unsetenv("GIT_AUTHOR_DATE")
+	defer os.Unsetenv("GIT_COMMITTER_DATE")
+	gitRun(t, root, "commit", "-m", name)
+}
+
+// An ignored handoff is a local file with no commit of its own, so its age comes from
+// the file's write time. Commits after that write still report a distance, and touching
+// the file resets it.
+func TestAppendHandoffIgnoredUsesFileTime(t *testing.T) {
+	root := initRepo(t)
+	commitFileAt(t, root, "base.txt", time.Now().Add(-2*time.Hour))
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("capture/session-handoff.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "capture/session-handoff.md")
+	if err := os.WriteFile(path, []byte("# Session handoff\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// The write sits one hour in the past, between the base commit (two hours back)
+	// and the fresh commit below, so exactly one commit follows it.
+	past := time.Now().Add(-time.Hour)
+	if err := os.Chtimes(path, past, past); err != nil {
+		t.Fatal(err)
+	}
+	commitFile(t, root, "one.txt")
+
+	rows := appendHandoff(nil, root)
+	if len(rows) != 1 || rows[0].signal != "handoff" {
+		t.Fatalf("rows = %#v, want one handoff row", rows)
+	}
+	if !strings.Contains(rows[0].detail, "1 commit behind") {
+		t.Errorf("detail = %q, want the 1-commit distance", rows[0].detail)
+	}
+
+	// A fresh write resets the age: nothing has landed since.
+	now := time.Now()
+	if err := os.Chtimes(path, now, now); err != nil {
+		t.Fatal(err)
+	}
+	if rows := appendHandoff(nil, root); len(rows) != 0 {
+		t.Fatalf("fresh ignored handoff produced rows: %#v", rows)
+	}
+}
+
+// An ignored repo that keeps no handoff at all reports nothing: absence stays a choice.
+func TestAppendHandoffIgnoredAbsentIsSilent(t *testing.T) {
+	root := initRepo(t)
+	commitFile(t, root, "base.txt")
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("capture/session-handoff.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if rows := appendHandoff(nil, root); len(rows) != 0 {
+		t.Fatalf("absent ignored handoff produced rows: %#v", rows)
 	}
 }
 

@@ -26,8 +26,9 @@ const ShapeSection = "Rewritten in full at every phase close, pruned rather than
 	"description of it. This section is the third.\n" +
 	"\n" +
 	"The handoff carries no date of its own. `bench status` computes its age from the\n" +
-	"commit that last wrote this file and reports a `handoff` row once anything has\n" +
-	"landed since. Where this document and the tree disagree, the tree wins.\n"
+	"file's last write and reports a `handoff` row once anything has landed since.\n" +
+	"That write is the commit that carried the file, or the file's own timestamp\n" +
+	"when git ignores it. Where this document and the tree disagree, the tree wins.\n"
 
 // scaffoldGuidance is rendered between the header block and the "## State"
 // heading only while State has no content. It is what the first session in

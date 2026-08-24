@@ -56,8 +56,9 @@ decision; it is not a default.
 **Phase-close handoff.** A Bench phase closes when a drain commits, a spec
 stages, a build lands, or a review delivers. The closing message must then
 do one of two things. It must emit a copy-paste fresh-session
-continuation prompt, or it must update `capture/session-handoff.md`. Write
-the handoff in the phase's worktree; it lands with the worktree.
+continuation prompt, or it must update `capture/session-handoff.md`. This
+repo git-ignores the handoff, so it is a local file. Write the primary
+checkout's copy from any checkout; `bench handoff` does this itself.
 
 The update must pin the repository, the branch, and the commit. It must also
 pin the spec path and status, the decisions that stay closed, and the exact

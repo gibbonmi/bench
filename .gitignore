@@ -32,3 +32,6 @@ ui_example/
 # Capture inboxes — local working notes; drained through /bench-drain, never committed.
 capture/IDEAS.md
 capture/learnings.md
+
+# Session handoff — local cold-start pin; the roadmap carries the shared next action.
+capture/session-handoff.md
