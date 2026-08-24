@@ -55,6 +55,7 @@ func allPunct(tok string) bool {
 // It then collapses any operator-only token carrying a newline to a plain control op
 // (`\n`→`;`, `;\n`→`;`, `&&\n`→`&&`) and strips redirections.
 func tokenize(s string) []string {
+	s = stripHeredocBodies(s)
 	raw, ok := lex(s)
 	if !ok {
 		raw = fallbackSplit(s)
@@ -194,4 +195,44 @@ func isDigits(s string) bool {
 		}
 	}
 	return true
+}
+
+// heredocOpRe finds each heredoc operator and its delimiter word on one line. `<<<` is
+// a herestring, not a heredoc, so the alternation consumes it first and the classifier
+// keeps its current handling for it.
+var heredocOpRe = regexp.MustCompile(`<<<|<<(-?)[ \t]*(?:'([^']+)'|"([^"]+)"|\\?([A-Za-z0-9_][A-Za-z0-9_-]*))`)
+
+// stripHeredocBodies removes each heredoc body before tokenization: the lines after
+// the operator's own line, through the delimiter line. The shell hands that text to a
+// command as data, so a git verb inside it is file content, not a command. The
+// operator's own line stays, so a verb beside the operator still classifies. An
+// unterminated body runs to the end of the string, which only over-drops data lines.
+func stripHeredocBodies(s string) string {
+	type opened struct {
+		delim string
+		dash  bool
+	}
+	lines := strings.Split(s, "\n")
+	out := make([]string, 0, len(lines))
+	var pending []opened
+	for _, line := range lines {
+		if len(pending) > 0 {
+			candidate := line
+			if pending[0].dash {
+				candidate = strings.TrimLeft(candidate, "\t")
+			}
+			if candidate == pending[0].delim {
+				pending = pending[1:]
+			}
+			continue
+		}
+		out = append(out, line)
+		for _, m := range heredocOpRe.FindAllStringSubmatch(line, -1) {
+			if m[0] == "<<<" {
+				continue
+			}
+			pending = append(pending, opened{delim: m[2] + m[3] + m[4], dash: m[1] == "-"})
+		}
+	}
+	return strings.Join(out, "\n")
 }

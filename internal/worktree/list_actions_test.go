@@ -215,12 +215,12 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 
 func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
 	rows := [][]any{
-		{"a", "active", "active"},
-		{"done", "complete", "complete"},
-		{"foreign", "one", "foreign", "foreign", "missing"},
-		{"b", "active", "active"},
-		{"foreign", "present", "foreign", "foreign", "present"},
-		{"foreign", "two", "foreign", "foreign", "missing"},
+		{"a", "active", "", "active"},
+		{"done", "complete", "", "complete"},
+		{"foreign", "one", "", "foreign", "foreign", "missing"},
+		{"b", "active", "", "active"},
+		{"foreign", "present", "", "foreign", "foreign", "present"},
+		{"foreign", "two", "", "foreign", "foreign", "missing"},
 	}
 	owned := make([]listRow, len(rows))
 	for i, row := range rows {
@@ -283,7 +283,7 @@ func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing
 			}
 			chdir(t, root)
 			out, code := ListCommand(nil)
-			if code != 0 || !strings.HasPrefix(out, "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n") {
+			if code != 0 || !strings.HasPrefix(out, "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n") {
 				t.Fatalf("ListCommand = (%d, %q), want primary worktree response and exit 0", code, out)
 			}
 			if !strings.Contains(out, "help[1]{cmd,why}:\n") {
@@ -312,7 +312,7 @@ func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *t
 			}
 			chdir(t, root)
 			out, code := ListCommand(nil)
-			primary := "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n  foreign," + missing + ",foreign,foreign,missing,none,unknown,unknown\n"
+			primary := "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n  foreign," + missing + ",\"\",foreign,foreign,missing,none,unknown,unknown\n"
 			want := primary + "help[0]{cmd,why}:\n"
 			if code != 0 || out != want {
 				t.Fatalf("ListCommand = (%d, %q), want checked primary plus honest empty help", code, out)

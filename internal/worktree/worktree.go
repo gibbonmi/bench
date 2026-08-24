@@ -3,7 +3,6 @@ package worktree
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
@@ -141,11 +140,34 @@ func classifyPath(root, pool, path string) Class {
 	return ClassOutOfPool
 }
 
-// wellFormedFingerprint accepts exactly what fingerprintParts emits: lowercase hex of a
-// sha256 digest. A value no plan could have printed is refused before any work begins.
+// wellFormedFingerprint accepts exactly what fingerprintParts emits: lowercase hex of
+// a sha256 digest. The destructive reclaim path keeps this strict form, so a truncated
+// paste never authorizes a removal there.
 func wellFormedFingerprint(value string) bool {
-	decoded, err := hex.DecodeString(value)
-	return err == nil && len(decoded) == sha256.Size && value == strings.ToLower(value)
+	return len(value) == sha256.Size*2 && lowercaseHex(value)
+}
+
+// wellFormedFingerprintOrPrefix additionally accepts a prefix of at least 8 characters.
+// `bench worktree clean --apply` takes this form; its plan carries exactly one digest,
+// so a vetted prefix stays unambiguous.
+func wellFormedFingerprintOrPrefix(value string) bool {
+	return len(value) >= minOperandPrefix && len(value) <= sha256.Size*2 && lowercaseHex(value)
+}
+
+func lowercaseHex(value string) bool {
+	for _, r := range value {
+		if (r < '0' || r > '9') && (r < 'a' || r > 'f') {
+			return false
+		}
+	}
+	return true
+}
+
+// matchesFingerprint accepts the full digest or a prefix of at least 8 characters;
+// wellFormedFingerprint has already vetted the shape, and a plan carries exactly one
+// digest, so a vetted prefix is unambiguous.
+func matchesFingerprint(full, given string) bool {
+	return given == full || len(given) >= minOperandPrefix && strings.HasPrefix(full, given)
 }
 
 func insidePool(pool, path string) bool {
@@ -275,13 +297,16 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	if target == "" && !landed || target != "" && landed {
 		return cleanInvocationError(stdout)
 	}
-	if fingerprint != "" && !wellFormedFingerprint(fingerprint) {
+	if fingerprint != "" && !wellFormedFingerprintOrPrefix(fingerprint) {
 		return cleanInvocationError(stdout)
 	}
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
+	}
+	if target != "" {
+		target = resolveVerbOperand(root, target)
 	}
 	if landed {
 		set, planErr := planLandedSet(root, options)
@@ -292,7 +317,7 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 		if fingerprint != "" && len(set.rows) == 0 {
 			return cleanInvocationError(stdout)
 		}
-		if fingerprint != "" && fingerprint != set.fingerprint {
+		if fingerprint != "" && !matchesFingerprint(set.fingerprint, fingerprint) {
 			_ = renderLandedStale(stdout, set, fingerprint)
 			return 1
 		}
@@ -354,7 +379,7 @@ func ReleaseCommand(root string, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreeRelease)
 		return 2
 	}
-	receipt, err := releaseAssignment(root, args[1], args[2])
+	receipt, err := releaseAssignment(root, args[1], resolveVerbOperand(root, args[2]))
 	if err == nil {
 		return finishReleaseReceipt(root, stdout, receipt)
 	}

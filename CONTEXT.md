@@ -11,6 +11,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   suite" — the gate.
 - **oracle** — the authority that decides done-ness. The gate is this repo's oracle.
   The model is never the oracle; the model does not grade its own work.
+- **run binary** — the exact source-bound executable the gate authorizes and runs;
+  `internal/runbinary` implements it as its `Selection`. Not "private binary", not
+  "selected executable" — run binary.
 - **canary inventory** — the non-empty set of immutable fixture bindings that
   `bench canary` validates. It proves the inventory shape and one accepted binding
   per fixture, not owner execution or a planted red. Not “canary dispatch”, not

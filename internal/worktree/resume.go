@@ -140,7 +140,7 @@ func applyCleanupTransaction(root, path, fingerprint string, planner cleanupPlan
 	if err != nil {
 		return plan, err
 	}
-	if plan.Fingerprint != fingerprint {
+	if !matchesFingerprint(plan.Fingerprint, fingerprint) {
 		if !found || receipt.State != intent.ReceiptInFlight || receipt.Checkpoint != plan.Fingerprint {
 			return plan, errStaleFingerprint
 		}

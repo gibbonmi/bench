@@ -1,1 +1,1 @@
-worktrees[0]{id,label,state,source,tree,lease,landed,ignored}:
+worktrees[0]{id,label,request,state,source,tree,lease,landed,ignored}:

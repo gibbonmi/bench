@@ -12,7 +12,9 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// PathCommand resolves one active Bench-owned assignment and prints its portable path.
+// PathCommand resolves one active Bench-owned assignment and prints its resolved
+// absolute path. A quoted `~` never expands in a shell, so the verb emits the form
+// every caller can paste; the path-taking verbs still accept the `~` form.
 func PathCommand(root string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 1 || strings.TrimSpace(args[0]) == "" {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreePath)
@@ -36,7 +38,7 @@ func resolvePath(root, target string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return compactHomePath(path)
+	return canonicalPath(path)
 }
 
 func resolveWorktree(root, target string) (string, error) {
@@ -83,10 +85,42 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 		}
 		selected = &assignments[i]
 	}
+	if selected == nil && !isPath && len(target) >= minOperandPrefix && len(target) <= maxIdentifierPrefix {
+		// An unambiguous 8-12 character prefix of the label or the id also resolves.
+		// Shorter prefixes stay unresolved so a short word cannot grab a worktree.
+		for i := range assignments {
+			if !strings.HasPrefix(assignments[i].ID, target) && !strings.HasPrefix(assignments[i].Label, target) {
+				continue
+			}
+			if selected != nil {
+				return intent.Assignment{}, errors.New("target is ambiguous")
+			}
+			selected = &assignments[i]
+		}
+	}
 	if selected == nil {
 		return intent.Assignment{}, errors.New("target is unassigned")
 	}
 	return *selected, nil
+}
+
+// minOperandPrefix and maxIdentifierPrefix bound the unambiguous-prefix window. The
+// floor is one policy fact shared by the identifier form and the fingerprint form, so
+// it has one source; only the identifier form carries a ceiling.
+const (
+	minOperandPrefix    = 8
+	maxIdentifierPrefix = 12
+)
+
+// resolveVerbOperand widens every path-taking worktree verb's operand: a label, an
+// assignment id, or an unambiguous 8-12 character prefix of either resolves to the
+// assignment's worktree path. A path-shaped or unresolvable operand returns unchanged,
+// so each verb keeps its own refusal for it.
+func resolveVerbOperand(root, operand string) string {
+	if path, err := resolveWorktree(root, operand); err == nil {
+		return path
+	}
+	return operand
 }
 
 // expandHomeTarget resolves the portable `~`-prefixed form that every worktree command
@@ -127,27 +161,4 @@ func targetPath(target string) (string, bool, error) {
 		return "", false, errors.New("relative path targets are unsupported")
 	}
 	return "", false, nil
-}
-
-func compactHomePath(path string) (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	home, err = canonicalPath(home)
-	if err != nil {
-		return "", err
-	}
-	path, err = canonicalPath(path)
-	if err != nil {
-		return "", err
-	}
-	rel, err := filepath.Rel(home, path)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return path, nil
-	}
-	if rel == "." {
-		return "~", nil
-	}
-	return filepath.Join("~", rel), nil
 }

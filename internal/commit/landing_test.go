@@ -132,6 +132,9 @@ func TestHelpAdvertisesNoSpecFlag(t *testing.T) {
 	if !strings.HasPrefix(stdout, "usage: bench commit") {
 		t.Fatalf("stdout = %q, want the help text", stdout)
 	}
+	if !strings.Contains(stdout, "example: bench commit -m") || !strings.Contains(stdout, " -- ") {
+		t.Fatalf("stdout = %q, want the first-line example with the trailing -- <path>... form", stdout)
+	}
 	if strings.Contains(stdout, "--spec") {
 		t.Fatalf("help still advertises --spec: %q", stdout)
 	}

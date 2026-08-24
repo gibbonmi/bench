@@ -65,6 +65,10 @@ pin the spec path and status, the decisions that stay closed, and the exact
 harness-native next command. This way, resumption never depends on
 conversation history.
 
+A phase close commits its tracked capture artifacts — the retro and the
+scorecard updates — together in one gate-priced commit. The git-ignored
+capture files stay local and never join that commit.
+
 Rewrite `capture/session-handoff.md` in full; do not append to it. The file
 is pruned, not accreted, because a fresh session pays for every line it reads
 cold. Follow the shape already in the file. When the handoff and the tree

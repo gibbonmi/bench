@@ -37,7 +37,7 @@ func TestParseArgs(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, paths, help, usageErr := parseArgs(tc.args)
+			msg, paths, _, help, usageErr := parseArgs(tc.args)
 			if help != "" {
 				t.Fatalf("unexpected help %q", help)
 			}
@@ -65,7 +65,7 @@ func TestParseArgs(t *testing.T) {
 func TestParseArgsHelpIsSuccess(t *testing.T) {
 	for _, spelling := range []string{"help", "--help", "-h"} {
 		t.Run(spelling, func(t *testing.T) {
-			_, _, help, usageErr := parseArgs([]string{spelling})
+			_, _, _, help, usageErr := parseArgs([]string{spelling})
 			if usageErr != "" {
 				t.Fatalf("usageErr = %q, want none", usageErr)
 			}

@@ -256,7 +256,7 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 		"worktree list": {
 			route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
 			blocks:        []string{"worktrees", "help"},
-			successMarker: "worktrees[1]{id,label,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
+			successMarker: "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,request,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
 		},
 		"roadmap": {
 			route: []string{"roadmap"}, successArgv: []string{"roadmap"}, emptyArgv: []string{"roadmap"},

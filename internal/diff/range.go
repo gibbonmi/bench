@@ -165,6 +165,21 @@ func resolveExplicitRange(root, base, head string) (diffRange, string, string) {
 	return diffRange{base: source.Base, head: source.Tip, method: "explicit", filesArgs: []string{source.Base}, logRange: source.Base + ".." + source.Tip, bodyArgs: []string{source.Base}}, "", ""
 }
 
+// resolvePairRange builds the immutable diffRange for the explicit --base/--source-tip
+// pair — the same pair `bench preflight review` takes. The tip is resolved before the
+// base so its refusal names the flag the caller got wrong.
+func resolvePairRange(root, base, tip string) (diffRange, string, string) {
+	resolvedTip, err := git.Output("-C", root, "rev-parse", "--verify", tip+"^{commit}")
+	if err != nil {
+		return diffRange{}, "cannot resolve --source-tip", "'" + tip + "' does not name a commit reachable in this repository"
+	}
+	source, kind, hint := ResolveSourceRange(root, base, resolvedTip)
+	if kind != "" {
+		return diffRange{}, kind, hint
+	}
+	return diffRange{base: source.Base, head: source.Tip, method: "explicit pair", filesArgs: []string{source.Base, source.Tip}, logRange: source.Base + ".." + source.Tip, bodyArgs: []string{source.Base, source.Tip}}, "", ""
+}
+
 // SourceSnapshotPaths returns the complete explicit-source inventory: committed,
 // index, tracked-worktree, and untracked paths. The committed half belongs to SourceRange.
 func SourceSnapshotPaths(root string, source SourceRange) ([]string, error) {

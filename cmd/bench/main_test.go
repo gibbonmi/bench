@@ -118,7 +118,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench gate pin             pin HEAD's .bench tree for pre-push verification
   bench worktree [--refresh] [objective] create an owned worktree subshell and release it on exit
   bench worktree list        list assignments and registered worktrees as TOON
-  bench worktree path <target>  print one active owned worktree's portable path
+  bench worktree path <target>  print one active owned worktree's absolute path
   bench worktree exec <target> -- <command> [args...]  run a child directly in an active owned worktree
   bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
   bench worktree --help      show exact list, path, exec, create, release, clean, reclaim, and reauthorize grammar

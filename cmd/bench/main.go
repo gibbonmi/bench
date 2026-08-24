@@ -98,7 +98,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "worktree", Attachment: attachmentDirect, AXI: axiApprovedChildren("list"), Inventory: publicInventory(
 		helpRow{Order: 31, Suffix: " [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
 		helpRow{Order: 32, Suffix: " list", Description: "list assignments and registered worktrees as TOON"},
-		helpRow{Order: 33, Suffix: " path <target>", Description: "print one active owned worktree's portable path"},
+		helpRow{Order: 33, Suffix: " path <target>", Description: "print one active owned worktree's absolute path"},
 		helpRow{Order: 34, Suffix: " exec <target> -- <command> [args...]", Description: "run a child directly in an active owned worktree"},
 		helpRow{Order: 35, Suffix: " reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>", Description: "replace one lost request token after identity proof"},
 		helpRow{Order: 36, Suffix: " --help", Description: "show exact list, path, exec, create, release, clean, reclaim, and reauthorize grammar"},
