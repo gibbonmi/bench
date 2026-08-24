@@ -2,6 +2,7 @@ package roadmap
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/usage"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,18 +21,9 @@ import (
 // resolves this root from the working directory.
 func newRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	if out, err := exec.Command("git", "-C", root, "init").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := newLinkedWorktree(t, newPrimaryRepo(t))
 	t.Chdir(root)
-	// git.Root returns the symlink-resolved toplevel. On macOS, TempDir is under a symlink,
-	// so this code resolves root the same way for comparisons and paths.
-	out, err := exec.Command("git", "-C", root, "rev-parse", "--show-toplevel").Output()
-	if err != nil {
-		t.Fatalf("rev-parse: %v", err)
-	}
-	toplevel := string(out[:len(out)-1])
+	toplevel := root
 	// The capture surfaces live under a directory the repository root no longer supplies for
 	// free. A fixture root that omits it fails every write that used to land beside
 	// ROADMAP.md.
@@ -39,6 +31,45 @@ func newRepo(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return toplevel
+}
+
+// newPrimaryRepo initializes a bare-history primary checkout with one commit, so a
+// linked worktree can branch from it.
+func newPrimaryRepo(t *testing.T) string {
+	t.Helper()
+	primary := t.TempDir()
+	for _, args := range [][]string{
+		{"init", "-q", "-b", "main"},
+		{"config", "user.email", "a@b.c"},
+		{"config", "user.name", "a"},
+		{"commit", "-q", "--allow-empty", "-m", "root"},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", primary}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
+	}
+	return primary
+}
+
+// newLinkedWorktree adds a linked worktree of primary and returns its resolved toplevel.
+// The idea verb refuses the primary checkout, so every write fixture lives in a linked
+// worktree, the shape a Bench phase runs in.
+func newLinkedWorktree(t *testing.T, primary string) string {
+	t.Helper()
+	root := filepath.Join(t.TempDir(), "linked")
+	if out, err := exec.Command("git", "-C", primary, "worktree", "add", "-q", "-b", "topic", root).CombinedOutput(); err != nil {
+		t.Fatalf("git worktree add: %v: %s", err, out)
+	}
+	return resolvedToplevel(t, root)
+}
+
+func resolvedToplevel(t *testing.T, root string) string {
+	t.Helper()
+	out, err := exec.Command("git", "-C", root, "rev-parse", "--show-toplevel").Output()
+	if err != nil {
+		t.Fatalf("rev-parse: %v", err)
+	}
+	return string(out[:len(out)-1])
 }
 
 func roadmapPath(t *testing.T, root string) string {
@@ -52,6 +83,20 @@ func ideasPath(t *testing.T, root string) string {
 }
 
 var datedLine = regexp.MustCompile(`(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$`)
+
+// TestIdeaRefusesPrimaryCheckout pins the checkout boundary: the primary checkout is
+// read-only for Bench verbs, so the idea verb refuses there and leaves the inbox alone.
+func TestIdeaRefusesPrimaryCheckout(t *testing.T) {
+	primary := resolvedToplevel(t, newPrimaryRepo(t))
+	t.Chdir(primary)
+	out, code := IdeaCommand([]string{"ship", "dark", "mode"})
+	if code != 1 || out != usage.PrimaryCheckoutRefusal()+"\n" {
+		t.Fatalf("primary checkout = %q/%d, want the shared refusal on exit 1", out, code)
+	}
+	if _, err := os.Stat(ideasPath(t, primary)); err == nil {
+		t.Fatal("refused idea still appended to the inbox")
+	}
+}
 
 // TestIdeaCreatesDatedLine covers idea creating the file with the dated two-space format.
 func TestIdeaCreatesDatedLine(t *testing.T) {

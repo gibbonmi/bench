@@ -1,6 +1,10 @@
 package usage
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/toon"
+)
 
 const (
 	WorktreeList        = "bench worktree list"
@@ -30,4 +34,11 @@ var worktreeCommands = []string{
 
 func WorktreeUsage() string {
 	return "usage: bench worktree [--refresh] [objective...]\n       " + strings.Join(worktreeCommands, "\n       ") + "\n       bash bin/bench.sh gate --fresh\n"
+}
+
+// PrimaryCheckoutRefusal is the one refusal a Bench write verb prints from the primary
+// checkout. Within Bench, main receives writes only through landings, so every verb
+// that writes the tree redirects to a worktree with this line.
+func PrimaryCheckoutRefusal() string {
+	return toon.Errorf("primary checkout is read-only for Bench phases", "run "+WorktreeCreate)
 }

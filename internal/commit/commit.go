@@ -41,7 +41,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	if primary {
-		fmt.Fprintln(stderr, toon.Errorf("primary checkout is read-only for Bench phases", "run "+usage.WorktreeCreate))
+		fmt.Fprintln(stderr, usage.PrimaryCheckoutRefusal())
 		return 1
 	}
 
