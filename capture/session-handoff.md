@@ -1,23 +1,21 @@
 # Session handoff
 
-Repository: `6351a9e422071a56729e899496249170-6351b5e29c34ff7e8496da98891c5834` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/6351a9e422071a56729e899496249170-6351b5e29c34ff7e8496da98891c5834`
-Branch: worktree `ignore-capture-inboxes` — base `26fac60f` on `main`, one light-path commit staged for one landing
-Spec: none staged; the tickets-only folder `specs/ignore-capture-inboxes/` closes at this landing
-Gate: green in the worktree before the commit
+Repository: `b288be00ab6c7185ed1ec38ee56d7a85-253130b56b7c625b08d484274fbd1250` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/b288be00ab6c7185ed1ec38ee56d7a85-253130b56b7c625b08d484274fbd1250`
+Branch: worktree `local-handoff` — base `a3e84401` on `main`, two light-path commits staged for one landing
+Spec: none staged; the tickets-only folder `specs/local-handoff/` closes at this landing
+Gate: green in the worktree before each commit
 
 ## State
 
-Git now ignores `capture/IDEAS.md` and `capture/learnings.md`, and both left
-the index. The files stay on disk as local working notes, and the drain still
-reads them. When the ideas inbox is ignored, `bench idea` writes the primary
-checkout's copy from any checkout. When the inbox is tracked, the verb keeps
-the primary-checkout refusal and the worktree-local write, so a linked repo
-keeps the old behavior.
-
-The primary checkout's inbox copies were preserved before the landing and
-restored after it, because the merge deletes tracked copies. Linked repos do
-not receive this ignore rule yet; that decision is open.
+The capture inboxes (`capture/IDEAS.md`, `capture/learnings.md`) are
+git-ignored since `a3e84401`; `bench idea` writes the primary checkout's copy
+when the inbox is ignored. This landing carries the same treatment for the
+session handoff, in two steps. Step one (this landing) ships the code with the handoff still
+tracked. The code adds the shared `git.LocalNoteRoot` helper, the
+`bench handoff` redirection, the mtime-based status age, and the
+tracked-only Shape check. Step two, a follow-up landing, unstages the file so the `.gitignore`
+line takes effect; until then the tracked file wins over the ignore rule.
 
 ## Next command
 
@@ -40,5 +38,6 @@ uncommitted. **Next command** holds the exact harness-native invocation, not a
 description of it. This section is the third.
 
 The handoff carries no date of its own. `bench status` computes its age from the
-commit that last wrote this file and reports a `handoff` row once anything has
-landed since. Where this document and the tree disagree, the tree wins.
+file's last write and reports a `handoff` row once anything has landed since.
+That write is the commit that carried the file, or the file's own timestamp
+when git ignores it. Where this document and the tree disagree, the tree wins.
