@@ -1,10 +1,14 @@
 # Claude model scorecard
 
-Last incorporated landing: `module-size-split` batch 1 (tickets 01 and 02, 2026-08-23).
-Fable/medium orchestrated a controlled comparison: each ticket ran twice in parallel
-worktrees, Opus/low against Sonnet/medium. All four charges landed first-pass with a
-proven pure move; Opus/low won both tickets on grouping and cost about half the tokens.
-Sonnet/medium ran the three review axes: 0 findings, 0 repair targets.
+Last incorporated landing: `module-size-split` batch 2 (tickets 03 to 12, 2026-08-24).
+Fable/medium orchestrated ten serial Opus charges on one retained source: nine at low
+for pure moves, one at medium for the builder consolidation. Nine landed first-pass with a
+proven identical body-line multiset. Ticket 10 took one diff-owned red, because a census
+check pins `owner_test.go` by path. The delegate repaired it inside its fence at the same
+tier. Every coordinator probe bit at a distinct kind and site, except one that exposed a
+pre-existing ungraded fixture plant. Sonnet/medium ran the three review axes: 7 raw
+findings, 0 repair targets; the Spec axis verified the coordinator's R13 shortfall call
+independently.
 
 Twenty-three completed landings are now recorded. Fable has an eight-charge Go implementer
 sample at medium, a reviewer sample, and five orchestrations. Opus has a large implementer
@@ -36,6 +40,9 @@ sample. Routing follows the harness-to-tier binding.
 - Change routing only after two comparable runs or one controlled model comparison.
 - Opus/low beats Sonnet/medium on exact-spec Go file moves (`module-size-split`, one controlled
   comparison, two tickets): equal correctness, better grouping, half the tokens. Keep Opus/low.
+  Batch 2 confirmed it over nine more charges at 37k to 78k tokens each. The one red came
+  from a path-pinned check the spec never named. A charge for a file split names every
+  check that reads the file by path.
 - **Review axes route to Sonnet** at the reviewer's direction (2026-08-19).
   The Opus reviewer sample closed on `parallel-landings` and no longer holds a
   routing row. `opus/medium` found 15 advisory items and eight repair targets.
