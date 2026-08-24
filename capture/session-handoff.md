@@ -1,41 +1,30 @@
 # Session handoff
 
-Repository: `8a4b5b1767e3a4edaad6e8fa8d4762ee-c7cd342784c033ee75f6f9003dc1dc7b` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/.bench/worktrees/bench-2826441890/8a4b5b1767e3a4edaad6e8fa8d4762ee-c7cd342784c033ee75f6f9003dc1dc7b`
-Branch: `bench/assign/8a4b5b1767e3a4edaad6e8fa8d4762ee/c7cd342784c033ee75f6f9003dc1dc7b` — HEAD `b2e4bec`, clean tree, 11 unpushed commits
+Repository: `b30c67dabf3a05462644ce3a222f1997-e88bc453ebc75b26ffb8060ff52d32fa` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/.bench/worktrees/bench-2826441890/b30c67dabf3a05462644ce3a222f1997-e88bc453ebc75b26ffb8060ff52d32fa`
+Branch: `bench/assign` worktree `spec-amend-r13` — HEAD `a792d5e1`, clean tree, base `888babfe` on `main`
 Spec: `specs/module-size-split/spec.md` (Status: staged)
-Gate: green at `393fc6b` — current
+Gate: green at `a792d5e1` — current
 
 ## State
 
-Batch 2 of `module-size-split` holds tickets 03 to 12 as ten green commits on the
-integration source `mss-batch2` (base `0585b31f`, tip `b2e4bec1`). Every ticket is
-a same-package move with a proven identical body-line multiset, except ticket 07.
-That ticket consolidates six throwaway-root builders into one `throwawayRoot` in
-`internal/conformance/harness_test.go` and grants four dated caps. `bench structure`
-fell from 71 to 56 issues. The review over that range returned Standards 0, Spec 1
-(the R13 shortfall below), Coverage 3 raw findings, all `no-op`; no `reviews/`
-artifact exists.
+Batch 2 of `module-size-split` landed on `main` at `888babfe`; tickets 03 to 12
+are done and `bench structure` reports 56 issues. The R13 decision is closed:
+on 2026-08-24 the reviewer widened the scope by one file instead of amending
+R13 to 56. The amendment at `a792d5e1` rewrites ticket 13 to split
+`internal/lines/lines_test.go` (612 lines). It adds story 27 and row R20,
+re-fences the ticket to `internal/lines/`, and keeps R13 at 55. One Sonnet review round
+returned two blocking consistency findings; both are folded. The gate and
+`bench coverage --check` are green on the amendment.
 
-Ticket 13 stops as a material acceptance shortfall. Its premise is stale:
-`internal/worktree/eligibility_test.go` has held 209 lines since before the spec's
-base, so there is no split to make. Row R13 asks for at most 55 issues, but the
-scoped files can reach only 56. The reviewer decides: amend R13 to 56 and close
-ticket 13 as done-by-tree, or widen the scope by one file from the 400-to-700
-remainder. Until then the spec stays `staged` and the batch lands spec-less.
-
-Three calls are flagged for veto. Ticket 07 granted `checks_test.go` a cap at 692,
-under the spec's over-700 phrasing, because R14 binds to the 400-line scan. Ticket
-06's `buildLandingBinary` fixture never existed in the package. The `.bench/lines.env`
-plant in `writeHostileSkillRoot` is not graded by any test; the base had the same gap.
-
-One diff-owned red occurred. The build census pins `owner_test.go` by path, and
-ticket 10's first cut moved the stripped-journey marker out. The delegate repaired it
-inside its fence.
+Ticket 13 is the only open ticket. It has no blocker, and its fence is disjoint
+from every landed ticket. The amendment sign-off is the pending reviewer action.
+The earlier veto flags (the `checks_test.go` cap at 692, the `buildLandingBinary`
+name, the ungraded `writeHostileSkillRoot` plant) stay open.
 
 ## Next command
 
-`/bench-write-spec specs/module-size-split/spec.md`
+`/bench-implement-spec specs/module-size-split/spec.md --full`
 
 ## Shape
 
