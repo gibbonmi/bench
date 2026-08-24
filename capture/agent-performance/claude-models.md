@@ -1,12 +1,17 @@
 # Claude model scorecard
 
-Last incorporated landing: `module-size-split` final (R13 amendment + ticket 13, 2026-08-24).
-Fable orchestrated the scope amendment (one Sonnet/medium round, two blocking findings
-folded) and one Opus/low charge. That charge split `lines_test.go` as a proven pure
-move, first-pass, with three attributed mutation probes. The coordinator probe bit at
-a distinct kind and site. Sonnet/medium ran the three axes: 0 raw findings; the Spec axis
-re-ran `bench structure` and confirmed 55. The orchestrator paid three prose-bound reds,
-one lost request token, and a primary-checkout retire that needed a stash.
+Last incorporated landing: `ft238-hygiene-batch` (FT238, 2026-08-24, commit d747b9ec).
+Fable ran the whole light-path batch inline with nine tickets and one review repair.
+The batch produced eight green commit gates. One mutation probe bit at the strip-call
+site. Two self-owned reds covered authored ticket prose bounds and a pinned AXI
+envelope.
+
+Fable reframed one
+stale piece against later landings and split a fingerprint predicate after the reclaim
+test caught its over-wide relaxation. Sonnet ran the three read-only axes at medium.
+The axes returned eleven raw findings and ten accepted findings. Each finding cited a
+file and line, and each axis refuted its weak leads. No delegate wrote code, so no
+done-claims needed probing.
 
 Twenty-three completed landings are now recorded. Fable has an eight-charge Go implementer
 sample at medium, a reviewer sample, and five orchestrations. Opus has a large implementer
