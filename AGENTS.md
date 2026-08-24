@@ -82,6 +82,10 @@ information; the next session does not need to confirm it.
   calls. Use plain `grep` only inside kit scripts, where the kit's own
   portability rules require POSIX grep. Prefer dedicated read tools over
   `cat`, `head`, `tail`, and `sed`.
+- Run `bench` commands with the default login-shell behavior. Do not set
+  `login: false` for a `bench` command. The login shell adds `$HOME/.local/bin`,
+  which contains `bench`, to `PATH`. Envman sandbox warnings are non-fatal when
+  the command itself succeeds.
 - Do not prefix Bash commands with `cd` into the working directory. The Bash
   tool's CWD already persists there, so the `cd` is a no-op. It can also
   trigger a needless permission prompt. Use `cd` only when you move to a
