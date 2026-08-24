@@ -295,6 +295,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec specs/module-size-split/spec.md` — the structure fix; the reviewer moved it to the front on 2026-08-23, and the spec is already staged.
-2. `/bench-implement-spec` — FT238: the hygiene batch; worktree assignments retain and print their request token, and every piece is a light-path ticket.
-3. `/bench-write-spec` — FT248: a Bash guard denies a shell follow-on appended to a `bench` command; today the rule is prose only.
+1. `/bench-implement-spec` — FT238: the hygiene batch; worktree assignments retain and print their request token, and every piece is a light-path ticket.
+2. `/bench-write-spec` — FT248: a Bash guard denies a shell follow-on appended to a `bench` command; today the rule is prose only.
