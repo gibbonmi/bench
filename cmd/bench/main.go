@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/coverage"
@@ -113,6 +114,7 @@ var commandRegistry = []commandDefinition{
 	), Run: outputCommand(spec.Command)},
 	{Name: "gate-go", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "guard-git", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "guard-bench-follow-on", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardBenchFollowOn(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "check-agent-line", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return checkAgentLine(args, c.Stdin, c.Stdout, c.Stderr) }},
 
 	{Name: "setup", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 0, Suffix: " [--plan|--yes]", Description: "inspect, preview, and converge the current repository"}), Run: adoptCommand("setup")},
@@ -491,6 +493,28 @@ func guardGit(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code 
 		return 0
 	}
 	fmt.Fprintln(stderr, gitguard.BlockMessage(label))
+	return 2
+}
+
+func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
+	defer func() {
+		if recover() != nil {
+			code = 3
+		}
+	}()
+	data, err := io.ReadAll(stdin)
+	if err != nil {
+		return 3
+	}
+	command, err := benchguard.CommandFromEnvelope(data)
+	if err != nil {
+		fmt.Fprintln(stderr, "WARNING: block-bench-follow-on: unreadable command field — allowing Bash.")
+		return 0
+	}
+	if !benchguard.Classify(command, benchguard.DefaultResolver()) {
+		return 0
+	}
+	fmt.Fprintln(stderr, benchguard.BlockMessage())
 	return 2
 }
 

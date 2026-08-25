@@ -206,10 +206,34 @@ func checkCodexHooks(root string) []string {
 	if !anyContains(preCommands, ".bench/hooks/block-dangerous-git.sh") {
 		diags = append(diags, "codex hooks.json PreToolUse does not run .bench/hooks/block-dangerous-git.sh")
 	}
+	if !anyContains(preCommands, ".bench/hooks/block-bench-follow-on.sh") {
+		diags = append(diags, "codex hooks.json PreToolUse does not run .bench/hooks/block-bench-follow-on.sh")
+	}
 	if hasAgentMatcher || anyContains(preCommands, ".bench/hooks/check-agent-line.sh") {
 		diags = append(diags, "codex hooks.json must not claim an Agent intent writer")
 	}
 	return diags
+}
+
+func TestCodexFollowOnHookWiringBites(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, ".codex")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	const intact = `{"hooks":{"Stop":[{"hooks":[{"type":"command","command":".bench/hooks/stop.sh"}]}],"SessionStart":[{"hooks":[{"type":"command","command":".bench/hooks/session-start.sh"}]}],"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":".bench/hooks/block-dangerous-git.sh"},{"type":"command","command":".bench/hooks/block-bench-follow-on.sh"}]}]}}`
+	if err := os.WriteFile(filepath.Join(dir, "hooks.json"), []byte(intact), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diags := checkCodexHooks(root); len(diags) != 0 {
+		t.Fatalf("intact Codex hook wiring = %v, want no diagnostics", diags)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "hooks.json"), []byte(strings.Replace(intact, `,{"type":"command","command":".bench/hooks/block-bench-follow-on.sh"}`, "", 1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !containsDiagnostic(checkCodexHooks(root), "codex hooks.json PreToolUse does not run .bench/hooks/block-bench-follow-on.sh") {
+		t.Fatal("missing follow-on hook did not produce its diagnostic")
+	}
 }
 
 func checkSharedRuleSingleSource(root string) []string {

@@ -8,6 +8,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Claude and Codex now run the shared follow-on guard before Bash calls. It refuses
+  outer shell composition after a Bench command, and `bench guards` reports the
+  manifest-derived harness wiring.
 - `bench commit` now formats only changed Go files inside its named paths before
   it composes and runs the unchanged full gate. Dry runs remain non-mutating.
 - The `prose-mechanics` check now rejects unsupported, malformed, or unreadable

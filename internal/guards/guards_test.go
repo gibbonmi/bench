@@ -330,6 +330,39 @@ func TestGuardRowReadsStaticHeader(t *testing.T) {
 	}
 }
 
+func TestRowsReportFollowOnManifestAndBothHarnessWires(t *testing.T) {
+	root := t.TempDir()
+	hooks := filepath.Join(root, ".bench", "hooks")
+	if err := os.MkdirAll(hooks, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	const script = "#!/usr/bin/env bash\n# name: block-bench-follow-on\n# boundary: PreToolUse:Bash\n# denies: Bench shell follow-ons\n# why: Bench responses are bounded, complete, and self-contained evidence\nexit 0\n"
+	if err := os.WriteFile(filepath.Join(hooks, "block-bench-follow-on.sh"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, cfg := range []string{filepath.Join(root, ".claude", "settings.json"), filepath.Join(root, ".codex", "hooks.json")} {
+		if err := os.MkdirAll(filepath.Dir(cfg), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(cfg, []byte(`{"hook":".bench/hooks/block-bench-follow-on.sh"}`), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	rows := Rows(root)
+	want := []string{"block-bench-follow-on", "PreToolUse:Bash", "Bench shell follow-ons", "", "", "", "claude,codex"}
+	if len(rows) < 1 || !reflect.DeepEqual(rows[0], want) {
+		t.Fatalf("Rows = %#v, want first row %#v", rows, want)
+	}
+
+	if err := os.WriteFile(filepath.Join(root, ".codex", "hooks.json"), []byte(`{"hook":"other"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := Rows(root); len(got) < 1 || got[0][6] != "claude" {
+		t.Fatalf("Rows after Codex wire omission = %#v, want Claude-only row", got)
+	}
+}
+
 func TestGuardRowRejectsFIFOWithoutOpening(t *testing.T) {
 	if fifo := os.Getenv("BENCH_TEST_GUARD_FIFO"); fifo != "" {
 		row, emit := guardRow(fifo, "fifo")

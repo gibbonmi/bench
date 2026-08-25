@@ -417,6 +417,7 @@ case "${1:-}" in
   prep-release) route_binary "$@" ;;
   release)  route_binary "$@" ;;
   guard-git) route_binary "$@" ;;
+  guard-bench-follow-on) route_binary "$@" ;;
   session-inspect) route_binary "$@" ;;
   resolve-model) route_binary "$@" ;;
   check-agent-line) route_binary "$@" ;;

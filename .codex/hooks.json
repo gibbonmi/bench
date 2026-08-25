@@ -30,6 +30,11 @@
             "type": "command",
             "command": "\"$(git rev-parse --show-toplevel)/.bench/hooks/block-dangerous-git.sh\"",
             "statusMessage": "Checking git safety"
+          },
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/.bench/hooks/block-bench-follow-on.sh\"",
+            "statusMessage": "Checking Bench response safety"
           }
         ]
       }
