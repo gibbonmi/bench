@@ -2,8 +2,11 @@ package worktree
 
 // This file owns the parallel census and the package's static pins. The census
 // parses a directory's _test.go files with the Go AST and derives the serial
-// set from one edge: a call to a serialHelpers harness helper. A top-level test
-// that reaches no such edge is eligible and must call t.Parallel().
+// set from two edges: a call to a serialHelpers harness helper, and an
+// assignment to an imported package's variable through a selector. Both edges
+// reach past the test process, so the test that holds one is serial. A
+// top-level test that reaches no such edge is eligible and must call
+// t.Parallel().
 //
 // An assignment to a package-level variable of a non-test file is a refusal, not
 // a serial edge. Every seam this package injects travels in a per-call joins
@@ -18,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -32,11 +36,14 @@ import (
 var serialHelpers = map[string]bool{"bindEnv": true, "chdir": true}
 
 // testFileFunc is one function declared in a test file: its declaration, the
-// file that holds it, and the line of its name.
+// file that holds it, the line of its name, and the package names that file
+// imports. The imports travel with the function because a selector on the left
+// of an assignment names a package only in the file that imports it.
 type testFileFunc struct {
-	decl *ast.FuncDecl
-	file string
-	line int
+	decl    *ast.FuncDecl
+	file    string
+	line    int
+	imports map[string]bool
 }
 
 // parseTestFiles parses every regular _test.go file in dir. A special file, for
@@ -189,6 +196,56 @@ func assignedPackageVar(decl *ast.FuncDecl, vars map[string]bool) string {
 	return found
 }
 
+// fileImportNames returns the package names file imports. The name is the
+// explicit alias when the import declares one, and the last element of the
+// import path otherwise. A blank or a dot import names no package, so the
+// census skips it.
+func fileImportNames(file *ast.File) map[string]bool {
+	names := map[string]bool{}
+	for _, spec := range file.Imports {
+		path, err := strconv.Unquote(spec.Path.Value)
+		if err != nil {
+			continue
+		}
+		name := path[strings.LastIndex(path, "/")+1:]
+		if spec.Name != nil {
+			name = spec.Name.Name
+		}
+		if name == "" || name == "_" || name == "." {
+			continue
+		}
+		names[name] = true
+	}
+	return names
+}
+
+// assignedImportedVar names the first imported package's variable the body of
+// decl assigns through a selector, a closure included, and is empty when it
+// assigns none. Such an assignment reaches past the test process, so it is a
+// serial edge in the class of bindEnv, not a refusal. The census reads the
+// assignment operator, so a := shadow of the package name declares a local and
+// is not an assignment.
+func assignedImportedVar(decl *ast.FuncDecl, imports map[string]bool) string {
+	found := ""
+	ast.Inspect(decl.Body, func(node ast.Node) bool {
+		assign, ok := node.(*ast.AssignStmt)
+		if !ok || assign.Tok == token.DEFINE {
+			return found == ""
+		}
+		for _, target := range assign.Lhs {
+			selector, ok := target.(*ast.SelectorExpr)
+			if !ok {
+				continue
+			}
+			if pkg, ok := selector.X.(*ast.Ident); ok && imports[pkg.Name] {
+				found = "assigns " + pkg.Name + "." + selector.Sel.Name
+			}
+		}
+		return found == ""
+	})
+	return found
+}
+
 // directCallees returns the names of the test-file functions the body of decl
 // calls, a subtest closure included.
 func directCallees(decl *ast.FuncDecl) []string {
@@ -241,21 +298,25 @@ func callsParallelDirectly(decl *ast.FuncDecl) bool {
 // another helper counts. The serial reason names the helper alone when the test
 // calls it, and names the helper the test reaches through a named helper
 // otherwise.
-func reachedEffects(decl *ast.FuncDecl, funcs map[string]testFileFunc, vars map[string]bool) (string, string) {
+func reachedEffects(entry testFileFunc, funcs map[string]testFileFunc, vars map[string]bool) (string, string) {
 	seen := map[string]bool{}
 	reason, assigned := "", ""
-	var walk func(*ast.FuncDecl, string)
-	walk = func(current *ast.FuncDecl, via string) {
-		if helper := serialHelperCalled(current); helper != "" && reason == "" {
-			reason = helper
+	var walk func(testFileFunc, string)
+	walk = func(current testFileFunc, via string) {
+		edge := serialHelperCalled(current.decl)
+		if edge == "" {
+			edge = assignedImportedVar(current.decl, current.imports)
+		}
+		if edge != "" && reason == "" {
+			reason = edge
 			if via != "" {
-				reason = helper + " through " + via
+				reason = edge + " through " + via
 			}
 		}
 		if assigned == "" {
-			assigned = assignedPackageVar(current, vars)
+			assigned = assignedPackageVar(current.decl, vars)
 		}
-		for _, name := range directCallees(current) {
+		for _, name := range directCallees(current.decl) {
 			if seen[name] {
 				continue
 			}
@@ -265,11 +326,11 @@ func reachedEffects(decl *ast.FuncDecl, funcs map[string]testFileFunc, vars map[
 				if hop == "" {
 					hop = name
 				}
-				walk(next.decl, hop)
+				walk(next, hop)
 			}
 		}
 	}
-	walk(decl, "")
+	walk(entry, "")
 	return reason, assigned
 }
 
@@ -305,13 +366,14 @@ func censusFacts(dir string) ([]testFact, error) {
 	funcs := map[string]testFileFunc{}
 	var tests []testFileFunc
 	for _, file := range files {
+		imports := fileImportNames(file)
 		for _, node := range file.Decls {
 			decl, ok := node.(*ast.FuncDecl)
 			if !ok || decl.Body == nil || decl.Name == nil {
 				continue
 			}
 			position := fset.Position(decl.Name.Pos())
-			entry := testFileFunc{decl: decl, file: filepath.Base(position.Filename), line: position.Line}
+			entry := testFileFunc{decl: decl, file: filepath.Base(position.Filename), line: position.Line, imports: imports}
 			funcs[decl.Name.Name] = entry
 			if isTopLevelTest(decl) {
 				tests = append(tests, entry)
@@ -320,7 +382,7 @@ func censusFacts(dir string) ([]testFact, error) {
 	}
 	var facts []testFact
 	for _, test := range tests {
-		reason, assigned := reachedEffects(test.decl, funcs, vars)
+		reason, assigned := reachedEffects(test, funcs, vars)
 		facts = append(facts, testFact{
 			name:         test.decl.Name.Name,
 			file:         test.file,
@@ -645,6 +707,105 @@ func TestStubPair(t *testing.T) {
 	if len(reports) != 1 || reports[0] != want {
 		t.Fatalf("census = %q, want exactly [%q]", reports, want)
 	}
+}
+
+// TestCensusTreatsImportedPackageVariableAssignmentAsSerial proves an assignment
+// to an imported package's variable through a selector is a serial edge in the
+// class of bindEnv: the test is serial and silent, and a := shadow or a read of
+// the same selector leaves the test eligible.
+func TestCensusTreatsImportedPackageVariableAssignmentAsSerial(t *testing.T) {
+	t.Parallel()
+	for _, row := range []struct {
+		name       string
+		importSpec string
+		body       string
+		want       string
+	}{
+		{
+			name: "body-assignment",
+			body: `	rand.Reader = nil
+`,
+			want: "",
+		},
+		{
+			name: "assignment-through-a-helper",
+			body: `	swapReader()
+}
+
+func swapReader() {
+	rand.Reader = nil
+`,
+			want: "",
+		},
+		{
+			name:       "aliased-import",
+			importSpec: `cryptorand "crypto/rand"`,
+			body: `	cryptorand.Reader = nil
+`,
+			want: "",
+		},
+		{
+			name: "read-only",
+			body: `	_ = rand.Reader
+`,
+			want: "reader_test.go:8: TestReader is eligible and does not call t.Parallel()",
+		},
+		{
+			name: "shadow-declaration",
+			body: `	rand := struct{ Reader int }{}
+	_ = rand.Reader
+`,
+			want: "reader_test.go:8: TestReader is eligible and does not call t.Parallel()",
+		},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			dir := plantTestFiles(t, map[string]string{"reader_test.go": syntheticReaderFile(row.importSpec, row.body)})
+			reports := censusOf(t, dir)
+			if row.want == "" {
+				if len(reports) != 0 {
+					t.Fatalf("census = %q, want no report for a serial test without t.Parallel()", reports)
+				}
+				return
+			}
+			if len(reports) != 1 || reports[0] != row.want {
+				t.Fatalf("census = %q, want exactly [%q]", reports, row.want)
+			}
+		})
+	}
+}
+
+// TestCensusReportsImportedPackageVariableAssignmentWithParallel proves the pair
+// report names the selector the test assigns, so a serial test that also calls
+// t.Parallel() is caught before Go runs it.
+func TestCensusReportsImportedPackageVariableAssignmentWithParallel(t *testing.T) {
+	t.Parallel()
+	dir := plantTestFiles(t, map[string]string{"reader_test.go": syntheticReaderFile("", `	t.Parallel()
+	rand.Reader = nil
+`)})
+	reports := censusOf(t, dir)
+	want := "reader_test.go:8: TestReader is serial and calls t.Parallel()"
+	if len(reports) != 1 || reports[0] != want {
+		t.Fatalf("census = %q, want exactly [%q]", reports, want)
+	}
+}
+
+// syntheticReaderFile is a synthetic test file that imports crypto/rand with
+// importSpec, an empty importSpec being the plain path, and holds body as the
+// whole body of its one top-level test.
+func syntheticReaderFile(importSpec, body string) string {
+	if importSpec == "" {
+		importSpec = `"crypto/rand"`
+	}
+	return `package worktree
+
+import (
+	` + importSpec + `
+	"testing"
+)
+
+func TestReader(t *testing.T) {
+` + body + `}
+`
 }
 
 // TestCensusWalksBuildTaggedFileAndSkipsTestMain proves a build-tagged file is

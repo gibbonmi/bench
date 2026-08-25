@@ -11,6 +11,7 @@ type Test struct {
 var Tests = []Test{
 	{PackagePath: "./internal/worktree", Name: "TestConcurrentCleanupRecordsOneTransaction"},
 	{PackagePath: "./internal/worktree", Name: "TestParallelJourneysShareTheHarnessSafely"},
+	{PackagePath: "./internal/worktree", Name: "TestParallelJourneysRecordEverySelection"},
 	{PackagePath: "./internal/guards", Name: "TestScanTimeoutPreservesPartialRowsAndHonestCounts"},
 	{PackagePath: "./internal/guards", Name: "TestScanEnumerationTimeoutUsesUnknownCounts"},
 }
