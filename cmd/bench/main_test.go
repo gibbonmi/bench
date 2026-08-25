@@ -48,6 +48,14 @@ func TestRunUnknownExits2(t *testing.T) {
 	}
 }
 
+func TestRunGateRejectsBriefUsage(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"gate", "--brief"})
+	if code != 2 || stdout.Len() != 0 || stderr.String() != "usage: bench gate [--fresh|pin]\n" {
+		t.Fatalf("gate --brief = (stdout %q, stderr %q, exit %d), want usage on stderr and exit 2", stdout.String(), stderr.String(), code)
+	}
+}
+
 func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
 	stdout := tempFile(t)
 	if code := (Command{Stdout: stdout}).Run([]string{"status", "--route"}); code != 0 {

@@ -16,7 +16,6 @@ func TestCommandHandlesPublicGateUsageWithoutStartingTheOracle(t *testing.T) {
 	}{
 		{name: "help", args: []string{"--help"}, wantExit: 0, wantStdout: commandUsage},
 		{name: "unknown", args: []string{"unexpected"}, wantExit: 2, wantStderr: commandUsage},
-		{name: "brief remains unsupported", args: []string{"--brief"}, wantExit: 2, wantStderr: commandUsage},
 		{name: "fresh extra argument", args: []string{"--fresh", "unexpected"}, wantExit: 2, wantStderr: commandUsage},
 		{name: "pin extra argument", args: []string{"pin", "unexpected"}, wantExit: 2, wantStderr: "usage: bench gate pin"},
 	} {
