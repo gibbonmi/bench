@@ -79,6 +79,31 @@ func TestRequireAdapter(t *testing.T) {
 	}
 }
 
+func TestCommandHelpPrecedesAdapterCheck(t *testing.T) {
+	t.Setenv("BENCH_AGENT", "")
+
+	for _, args := range [][]string{{"--help"}, {"-h"}} {
+		var stdout, stderr bytes.Buffer
+		if code := Command(args, &stdout, &stderr); code != 0 {
+			t.Fatalf("Command(%q) = %d, want 0; stderr: %s", args, code, stderr.String())
+		}
+		if stdout.String() != "usage: bench shift [--refresh] \"<objective>\"\n" {
+			t.Fatalf("Command(%q) stdout = %q", args, stdout.String())
+		}
+		if stderr.Len() != 0 {
+			t.Fatalf("Command(%q) wrote stderr: %s", args, stderr.String())
+		}
+	}
+
+	var stdout, stderr bytes.Buffer
+	if code := Command([]string{"ordinary shift"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("Command ordinary shift = %d, want 2", code)
+	}
+	if !contains(stderr.String(), "BENCH_AGENT") {
+		t.Fatalf("Command ordinary shift stderr = %q, want adapter refusal", stderr.String())
+	}
+}
+
 // shiftCollisionFixture builds a bare repo plus a passing gate and agent, and points
 // timeNow at a fixed instant so the derived branch name is deterministic. preExisting
 // names additional branches, relative to the base bench/shift-<ts> name (e.g. "-2"), for
