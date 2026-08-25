@@ -43,6 +43,7 @@ func oneShellArgument(t *testing.T, quoted string) (int, string) {
 // An unquoted one splits on a space or expands on a glob, and the pasted command names a
 // different tree, or none.
 func TestResumeSummaryQuotesHostilePaths(t *testing.T) {
+	t.Parallel()
 	cases := map[string]string{
 		"space":        "/pool/a b/wt",
 		"glob":         "/pool/wt*?[abc]",
@@ -75,6 +76,7 @@ func TestResumeSummaryQuotesHostilePaths(t *testing.T) {
 // One embedded newline would forge a whole extra summary line for a reader.
 // A raw ESC byte would drive the terminal that prints it.
 func TestResumeSummaryPreservesLineStructure(t *testing.T) {
+	t.Parallel()
 	for name, path := range map[string]string{
 		"newline": "/pool/wt\nreconciled 999; failed 0",
 		"escape":  "/pool/wt\x1b[2J\x1b[H",
@@ -99,6 +101,7 @@ func TestResumeSummaryPreservesLineStructure(t *testing.T) {
 // `bench worktree list` reports.
 // The fallback must not send the reader after a path, because no route emits one.
 func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
+	t.Parallel()
 	line := summaryLines(summaryFor([]OrphanCandidate{{ID: "a1", Path: "/pool/wt\nforged"}}))[1]
 	requireTest(t, strings.Contains(line, "orphan a1:") && strings.Contains(line, "id row in bench worktree list"),
 		"fallback line does not point at the ledger row `bench worktree list` reports: %q", line)
@@ -110,6 +113,7 @@ func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
 // A cap that does not state what it withholds would read as "that is all of them".
 // That is the one way this output could mislead rather than help.
 func TestResumeSummaryCapsListings(t *testing.T) {
+	t.Parallel()
 	var orphans []OrphanCandidate
 	for i := range 5 {
 		orphans = append(orphans, OrphanCandidate{ID: fmt.Sprintf("o%d", i), Path: fmt.Sprintf("/pool/o%d", i)})
@@ -178,6 +182,7 @@ func plantHostilePool(t *testing.T, pool, root string) {
 // verb.
 // One that prints the line over a clean pool trains the operator to ignore it.
 func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testing.T) {
+	t.Parallel()
 	summary := renderResumeSummary(ResumeResult{ReclaimableKeys: 2})
 	requireTest(t, strings.Contains(summary, "pool: 2 reclaimable keys") && strings.Contains(summary, "bench worktree reclaim"),
 		"resume summary does not count the reclaimable keys and name the verb:\n%s", summary)

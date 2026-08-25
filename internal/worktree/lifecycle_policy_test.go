@@ -183,6 +183,7 @@ func TestResumeReconcilesDeadLeaseAndPreservesSafetyBranches(t *testing.T) {
 }
 
 func TestRepositoryDeclaresDistBuildOutput(t *testing.T) {
+	t.Parallel()
 	root := gitOutput(t, ".", "rev-parse", "--show-toplevel")
 	paths, _, err := loadBuildOutputs(root)
 	mustNoError(t, err)

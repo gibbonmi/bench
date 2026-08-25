@@ -8,9 +8,24 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
+
+// claimGapMutex serializes the two parallel-eligible tests that swap the
+// package-level claimTakeoverGap and claimStealGap interleave hooks.
+// Both tests install their own hook for the call's duration; run either
+// concurrently with the other and each can observe or overwrite the other's
+// hook, producing a false takeover or steal result rather than a race in the
+// production code under test.
+var claimGapMutex sync.Mutex
+
+// restoreCleanMutex serializes the parallel-eligible tests that call Release,
+// which reads the package-level restoreClean hook, against the one test that
+// swaps it. Two Release calls never race each other; the swap does, so every
+// caller in this file takes the lock for the call's duration.
+var restoreCleanMutex sync.Mutex
 
 // TestReclaimable pins the four-way lease decision the black-box lease-hardening
 // contract exercises but cannot cheaply enumerate. A canonical lease gates on pid
@@ -18,6 +33,7 @@ import (
 // So a fresh-empty writer mid-claim is never stolen while a legacy/crashed lease is.
 
 func TestReclaimable(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 7, 4, 12, 0, 0, 0, time.UTC)
 	dead := func(int) bool { return false }
 	live := func(int) bool { return true }
@@ -95,9 +111,12 @@ func dirty(t *testing.T, dir string) {
 // pool-entry invariant: an unleased entry is always claimably clean.
 
 func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
+	t.Parallel()
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
+	restoreCleanMutex.Lock()
 	Release(dir)
+	restoreCleanMutex.Unlock()
 	if _, err := os.Stat(lease); !os.IsNotExist(err) {
 		t.Errorf("lease still present after owner release: %v", err)
 	}
@@ -117,12 +136,15 @@ func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 // Pid 1 is live for any test runner (kill -0 yields nil or EPERM, both alive).
 
 func TestReleaseRespectsLiveForeignLease(t *testing.T) {
+	t.Parallel()
 	if os.Getpid() == 1 {
 		capability.Capability(t, capability.PID, "running as pid 1")
 	}
 	dir, lease := leasedRepo(t, "1 2026-07-05T00:00:00Z\n")
 	dirty(t, dir)
+	restoreCleanMutex.Lock()
 	Release(dir)
+	restoreCleanMutex.Unlock()
 	if _, err := os.Stat(lease); err != nil {
 		t.Errorf("foreign live lease removed: %v", err)
 	}
@@ -143,8 +165,11 @@ func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 // goes red here because the simulated claimant's create succeeds mid-cleanup.
 
 func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
+	t.Parallel()
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
+	restoreCleanMutex.Lock()
+	t.Cleanup(restoreCleanMutex.Unlock)
 	real := restoreClean
 	t.Cleanup(func() { restoreClean = real })
 	claimedMidCleanup := false
@@ -189,6 +214,9 @@ func deadPidLine(t *testing.T) string {
 // reclaimable, restores the fresh lease, and concedes.
 
 func TestClaimSecondReclaimerConcedes(t *testing.T) {
+	t.Parallel()
+	claimGapMutex.Lock()
+	t.Cleanup(claimGapMutex.Unlock)
 	if os.Getpid() == 1 {
 		capability.Capability(t, capability.PID, "running as pid 1")
 	}
@@ -244,6 +272,9 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 // leaving C's lease alone.
 
 func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
+	t.Parallel()
+	claimGapMutex.Lock()
+	t.Cleanup(claimGapMutex.Unlock)
 	if os.Getpid() == 1 {
 		capability.Capability(t, capability.PID, "running as pid 1")
 	}
@@ -307,6 +338,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 // directory — a wrong name would mint outside the pool and silently break warm reuse.
 
 func TestCandidateNameStaysInPool(t *testing.T) {
+	t.Parallel()
 	pool := "/home/x/.bench/worktrees/bench-123"
 	got := candidateName(pool, 1751630400, 4242, 2)
 	if filepath.Dir(got) != pool {
@@ -321,6 +353,7 @@ func TestCandidateNameStaysInPool(t *testing.T) {
 }
 
 func TestIgnoredInventoryEntryAndByteBoundaries(t *testing.T) {
+	t.Parallel()
 	for _, count := range []int{0, 1, 20, 21, 1000, 1001} {
 		t.Run(fmt.Sprintf("entries-%d", count), func(t *testing.T) {
 			root := newWorktreeRepo(t)

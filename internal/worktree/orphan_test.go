@@ -35,16 +35,19 @@ func stampedAt(when time.Time) *string {
 }
 
 func TestOrphanedOnAgedRecord(t *testing.T) {
+	t.Parallel()
 	aged := intent.Assignment{State: intent.StateActive, CreatedAt: stampedAt(orphanNow.Add(-8 * 24 * time.Hour))}
 	requireTest(t, orphaned(aged, orphanNow), "orphaned(active, stamped 8 days ago) = false, want true")
 }
 
 func TestOrphanedTreatsAbsentStampAsAged(t *testing.T) {
+	t.Parallel()
 	unstamped := intent.Assignment{State: intent.StateActive}
 	requireTest(t, orphaned(unstamped, orphanNow), "orphaned(active, unstamped) = false, want true")
 }
 
 func TestOrphanedRequiresAge(t *testing.T) {
+	t.Parallel()
 	young := intent.Assignment{State: intent.StateActive, CreatedAt: stampedAt(orphanNow.Add(-6 * 24 * time.Hour))}
 	requireTest(t, !orphaned(young, orphanNow), "orphaned(active, stamped 6 days ago) = true, want false")
 }
@@ -53,16 +56,19 @@ func TestOrphanedRequiresAge(t *testing.T) {
 // A record aged exactly AssignmentStale is still inside the window, and only a strictly
 // older one is abandoned.
 func TestOrphanedExcludesTheExactWindowEdge(t *testing.T) {
+	t.Parallel()
 	edge := intent.Assignment{State: intent.StateActive, CreatedAt: stampedAt(orphanNow.Add(-bounds.AssignmentStale))}
 	requireTest(t, !orphaned(edge, orphanNow), "orphaned(active, stamped exactly AssignmentStale ago) = true, want false")
 }
 
 func TestOrphanedRejectsFutureStamp(t *testing.T) {
+	t.Parallel()
 	skewed := intent.Assignment{State: intent.StateActive, CreatedAt: stampedAt(orphanNow.Add(30 * 24 * time.Hour))}
 	requireTest(t, !orphaned(skewed, orphanNow), "orphaned(active, stamped 30 days ahead) = true, want false")
 }
 
 func TestOrphanedOnlyActiveState(t *testing.T) {
+	t.Parallel()
 	for _, state := range []intent.AssignmentState{intent.StateCleanupPending, intent.StateRecovered, intent.StateComplete} {
 		t.Run(string(state), func(t *testing.T) {
 			aged := intent.Assignment{State: state, CreatedAt: stampedAt(orphanNow.Add(-8 * 24 * time.Hour))}
@@ -75,6 +81,7 @@ func TestOrphanedOnlyActiveState(t *testing.T) {
 // ValidateAssignment rejects such a record on every ledger read.
 // A caller that reaches this point therefore bypassed the ledger.
 func TestOrphanedRejectsUnparseableStamp(t *testing.T) {
+	t.Parallel()
 	for _, stamp := range []string{"", "yesterday", "2026-07-\x0027T12:00:00Z"} {
 		t.Run(fmt.Sprintf("%q", stamp), func(t *testing.T) {
 			bad := intent.Assignment{State: intent.StateActive, CreatedAt: &stamp}
