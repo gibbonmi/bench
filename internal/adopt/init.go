@@ -135,13 +135,9 @@ in the drain commit. The journal holds open entries only; history lives in
 git. Never rewrite a kit rule yourself; that is the whole point of capturing
 here instead.
 
-Format per entry:
+Format per entry (the bench learning verb writes it; never type the heading by hand):
 
-## <date> - <short title>  [open]
-- **What happened:** ...
-- **Right behavior:** ...
-- **Proposed rule change:** ... (or "none")
-
+` + learnings.FormatEntry("<date>", "<short title>", "...", "...", "...") + `
 An entry leaves this file only via /bench-drain.
 
 ` + learnings.JournalEntriesMarker + "\n"

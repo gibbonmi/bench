@@ -73,29 +73,9 @@ func IdeaCommand(args []string) (string, int) {
 		return ideaGrammar.Help + "\n", 2
 	}
 	displayText := text
-	root, err := git.Root()
-	if err != nil {
-		return toon.NotInRepo() + "\n", 1
-	}
-	// An ignored inbox is a local working note the helper routes to the primary
-	// checkout, so a worktree-parked idea survives the worktree's release. A
-	// tracked inbox keeps the landing boundary: main receives writes only
-	// through landings, so the verb refuses the primary checkout and appends
-	// to the phase worktree's copy, which lands with the phase.
-	noteRoot, ignored, err := git.LocalNoteRoot(root, IdeasFile)
-	if err != nil {
-		return toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry") + "\n", 1
-	}
-	if ignored {
-		root = noteRoot
-	} else {
-		primary, err := git.IsPrimaryCheckout(root)
-		if err != nil {
-			return toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree") + "\n", 1
-		}
-		if primary {
-			return usage.PrimaryCheckoutRefusal() + "\n", 1
-		}
+	root, refusal, code := inboxRoot(IdeasFile)
+	if refusal != "" {
+		return refusal, code
 	}
 	owner, hasOwner := parsed.Flags["--owner"]
 	incident, hasIncident := parsed.Flags["--incident"]
@@ -157,9 +137,7 @@ func validateOccurrenceOwner(root, owner string) error {
 	return fmt.Errorf("owner %s is absent from the current roadmap", owner)
 }
 
-func cannotWriteIdeas(err error) string {
-	return toon.Errorf("cannot write "+IdeasFile, err.Error()) + "\n"
-}
+func cannotWriteIdeas(err error) string { return cannotWrite(IdeasFile, err) }
 
 // needsNewline reports whether the file is non-empty and its last byte is not a newline.
 // In that case, an appended line would merge onto a hand-edited last line.
