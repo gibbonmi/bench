@@ -14,10 +14,11 @@ import (
 // WL8: a --spec naming a tickets-only folder closes that folder on the landing rather
 // than refusing it as an unreadable staged spec.
 func TestLandCommandTicketsOnlySpecClosesTheFolder(t *testing.T) {
+	t.Parallel()
 	request := "tickets-only-close"
-	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
 	if code != 0 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.HasSuffix(stdout.String(), "worktree=released}\n") {
 		t.Fatalf("tickets-only close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
@@ -39,13 +40,14 @@ func TestLandCommandTicketsOnlySpecClosesTheFolder(t *testing.T) {
 // Edge under WL8: the destination already removed the folder, so the close composes as
 // a no-op and the landing still publishes and releases.
 func TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolder(t *testing.T) {
+	t.Parallel()
 	request := "tickets-only-already-removed"
-	root, creation, base, tip, _ := ticketsOnlyLandingFixture(t, request)
+	root, creation, base, tip, _, home := ticketsOnlyLandingFixture(t, request)
 	gitRun(t, root, "rm", "-r", "-q", "specs/t")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination closed the folder")
 	gitRun(t, root, "update-ref", "refs/bench/green/main", gitOutput(t, root, "rev-parse", "HEAD"))
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
 	if code != 0 || !strings.HasSuffix(stdout.String(), "worktree=released}\n") {
 		t.Fatalf("already-removed close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
@@ -59,10 +61,11 @@ func TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolde
 // spec.md nor a tickets-only folder, so it keeps the refusal it has today, which names
 // the unreadable spec through the fence resolve.
 func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
+	t.Parallel()
 	request := "tickets-only-absent"
-	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", ticketsOnlyLandArgs(request, base, tip, "absent", creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", ticketsOnlyLandArgs(request, base, tip, "absent", creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "reviewed source range or ownership fence is invalid: spec not found: no spec resolved for absent") {
 		t.Fatalf("absent spec folder = (%d, %q, %q), want the unreadable staged-spec refusal", code, stdout.String(), stderr.String())
 	}
@@ -75,14 +78,14 @@ func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
 // absence from the published commit, never a spec.md transition the first run never made.
 func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.T) {
 	request := "tickets-only-resume"
-	root, creation, base, tip, tally := ticketsOnlyLandingFixture(t, request)
+	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
 	oldMarker := advanceLandingMarker
 	advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
 	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, Home(), "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := LandCommand(root, home, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted tickets-only landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -90,7 +93,7 @@ func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "t", creation.Path}
-	if code := LandCommand(root, Home(), "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("tickets-only resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {

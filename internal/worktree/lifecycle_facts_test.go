@@ -21,7 +21,8 @@ import (
 // against the real registration: the matched assignment, its branch, and the
 // prescribed Bench lock reason the policy compares against the recorded one.
 func TestLifecycleOwnershipFactAdapterTranslatesRealBundle(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "fa-ownership")
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "fa-ownership")
 	facts := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
 	requireTest(t, facts.MarkerPresent && facts.MarkerErr == nil, "ownership facts = %+v, want a validated owner marker", facts)
 	requireTest(t, facts.MatchedAssignment != nil && facts.MatchedAssignment.ID == creation.Assignment.ID,
@@ -42,7 +43,8 @@ func TestLifecycleOwnershipFactAdapterTranslatesRealBundle(t *testing.T) {
 // Real lease files — live owner, dead owner, malformed content, absent — must
 // translate into the exact typed lease facts the policy consumes.
 func TestLifecycleLeaseFactAdapterTranslatesRealLeases(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "fa-lease")
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "fa-lease")
 	lease, err := LeaseFile(creation.Path)
 	mustNoError(t, err)
 
@@ -68,7 +70,8 @@ func TestLifecycleLeaseFactAdapterTranslatesRealLeases(t *testing.T) {
 // nested facts, and the production planner must reach the policy's verdict
 // over exactly those facts.
 func TestLifecycleEligibilityFactAdapterTranslatesTrackedState(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "fa-eligibility")
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "fa-eligibility")
 	clean := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
 	requireTest(t, clean.InitialTracked == "clean" && clean.NestedState == nestedClean && clean.NestedErr == nil,
 		"clean facts = %+v, want clean tracked and nested state", clean)
@@ -88,7 +91,8 @@ func TestLifecycleEligibilityFactAdapterTranslatesTrackedState(t *testing.T) {
 // boundary, which supplies the bounds.AssignmentStale window: a fresh record
 // is not orphaned, and the same record backdated past the window is.
 func TestLifecycleAgeFactAdapterTranslatesLedgerStamp(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "fa-age")
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "fa-age")
 	young, err := assignmentByID(root, creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, young.CreatedAt != nil, "created assignment carries no creation stamp")
@@ -111,7 +115,7 @@ func TestLifecycleIgnoredFactAdapterTranslatesDeclaration(t *testing.T) {
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore build output")
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, "fa-ignored", "ignored declaration")
+	creation := mustCreate(t, root, Home(), "fa-ignored", "ignored declaration")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
 	mustWrite(t, filepath.Join(creation.Path, "dist", "bench"), []byte("binary\n"), 0o755)
 
@@ -131,7 +135,8 @@ func TestLifecycleIgnoredFactAdapterTranslatesDeclaration(t *testing.T) {
 // Preserves predicate over the plan's own translated action, tracked state,
 // and registration shape.
 func TestLifecyclePreservationFactAdapterTranslatesPlanShape(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "fa-preservation")
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "fa-preservation")
 	clean, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{})
 	mustNoError(t, err)
 	requireTest(t, !clean.preserves() && !lifecyclepolicy.Preserves(clean.Action, clean.Tracked, clean.registration.Detached),
@@ -149,7 +154,8 @@ func TestLifecyclePreservationFactAdapterTranslatesPlanShape(t *testing.T) {
 // authorize branch deletion: a branch at the default tip is proven landed with
 // its exact ref and OID, and a diverged branch is proven unmerged.
 func TestLifecycleActionFactAdapterTranslatesLandedness(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "fa-action")
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "fa-action")
 	landed := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
 	head := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	requireTest(t, !landed.HeadDetached && landed.DefaultKnown && landed.LandedOK && landed.LandedErr == nil,

@@ -182,7 +182,7 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			root, creation := newOwnedAssignment(t, "recovery-"+tc.name)
+			root, creation, _ := newOwnedAssignment(t, "recovery-"+tc.name)
 			tc.setup(t, creation.Path)
 			markPending(t, root, creation.Assignment)
 			indexPath := gitOutput(t, creation.Path, "rev-parse", "--path-format=absolute", "--git-path", "index")

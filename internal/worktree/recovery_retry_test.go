@@ -14,7 +14,7 @@ import (
 func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 	for _, afterRemoval := range []bool{false, true} {
 		t.Run(fmt.Sprintf("after-removal=%t", afterRemoval), func(t *testing.T) {
-			root, creation := newOwnedAssignment(t, fmt.Sprintf("recovery-ref-clean-drift-%t", afterRemoval))
+			root, creation, _ := newOwnedAssignment(t, fmt.Sprintf("recovery-ref-clean-drift-%t", afterRemoval))
 			dirty := filepath.Join(creation.Path, "dirty.txt")
 			mustWrite(t, dirty, []byte("preserve once\n"), 0o644)
 			first, err := PlanExplicit(root, creation.Path)

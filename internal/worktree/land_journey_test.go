@@ -14,6 +14,7 @@ import (
 )
 
 func TestLandCommandPublicRealGitJourney(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	for _, tc := range []struct {
 		name, ignored, declaration, foreignIgnored, wantState string
@@ -28,7 +29,7 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "public-land-" + tc.name
-			root, creation, base, tip, tally := publicLandingFixture(t, request, tc.ignored, tc.declaration)
+			root, creation, base, tip, tally, _ := publicLandingFixture(t, request, tc.ignored, tc.declaration)
 			if tc.emptyDeclaration || tc.foreignIgnored != "" {
 				if tc.emptyDeclaration {
 					mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[]}\n"), 0o644)
@@ -114,9 +115,10 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 }
 
 func TestLandCommandPublicPreservesHistoricalRuntimeLogs(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-land-runtime-logs"
-	root, creation, _, _, tally := publicLandingFixture(t, request, "", "")
+	root, creation, _, _, tally, _ := publicLandingFixture(t, request, "", "")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".logs/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore runtime logs")
@@ -149,11 +151,12 @@ func TestLandCommandPublicPreservesHistoricalRuntimeLogs(t *testing.T) {
 }
 
 func TestLandCommandRefusesPostGateUnknownIgnoredMutation(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-land-post-gate-ignored"
-	root, creation, _, _, tally := publicLandingFixture(t, request, "foreign-generated/output", "")
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nrg -q '^Status: implemented$' specs/x/spec.md\n[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\nmkdir -p \"$LAND_DESTINATION/foreign-generated\"\nprintf injected > \"$LAND_DESTINATION/foreign-generated/output\"\n"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[\"LAND_GATE_TALLY\",\"LAND_DESTINATION\"],\"paths\":[],\"tools\":[]}\n"), 0o644)
+	root, creation, _, _, tally, _ := publicLandingFixture(t, request, "foreign-generated/output", "")
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nrg -q '^Status: implemented$' specs/x/spec.md\n[ -f owned.txt ]\nprintf g >> '"+tally+"'\nmkdir -p \"$LAND_DESTINATION/foreign-generated\"\nprintf injected > \"$LAND_DESTINATION/foreign-generated/output\"\n"), 0o755)
+	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[\"LAND_DESTINATION\"],\"paths\":[],\"tools\":[]}\n"), 0o644)
 	gitRun(t, root, "add", ".bench/gate-prospective.sh", ".bench/gate-inputs.json")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "inject post-gate ignored mutation")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
@@ -177,7 +180,7 @@ func TestLandCommandRefusesPostGateUnknownIgnoredMutation(t *testing.T) {
 
 func TestLandCommandRetainsJustInTimeTrackedDestinationEdit(t *testing.T) {
 	request := "land-last-moment-tracked-edit"
-	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 	commitInWorktree(t, root, "victim.txt", "saved\n", "track victim")
 	base = gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
@@ -186,7 +189,7 @@ func TestLandCommandRetainsJustInTimeTrackedDestinationEdit(t *testing.T) {
 	injectLandingResetEdit(t, root, victim)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
 	if code != 3 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
 		t.Fatalf("last-moment tracked edit landing = (%d, %q, %q), want published incomplete reconciliation", code, stdout.String(), stderr.String())
@@ -205,7 +208,7 @@ func TestLandCommandRetainsJustInTimeTrackedDestinationEdit(t *testing.T) {
 
 func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
 	request := "land-last-moment-overlapping-edit"
-	root, creation, _, _, _ := publicLandingFixture(t, request, "", "")
+	root, creation, _, _, _, home := publicLandingFixture(t, request, "", "")
 	commitInWorktree(t, root, "victim.txt", "saved\n", "track victim")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
@@ -223,7 +226,7 @@ func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
 	injectLandingResetEdit(t, root, victim)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
 	if code != 3 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
 		t.Fatalf("last-moment overlapping edit landing = (%d, %q, %q), want published incomplete reconciliation", code, stdout.String(), stderr.String())
@@ -251,10 +254,11 @@ func injectLandingResetEdit(t *testing.T, root, victim string) {
 }
 
 func TestLandCommandPublishedReleaseFailureExitsIncomplete(t *testing.T) {
+	t.Parallel()
 	request := "published-release-incomplete"
-	root, creation, base, tip, _ := publicLandingFixture(t, request, "private/output", "dist/")
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "private/output", "dist/")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 {
 		t.Fatalf("published release exit = %d, want 3; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -268,9 +272,10 @@ func TestLandCommandPublishedReleaseFailureExitsIncomplete(t *testing.T) {
 }
 
 func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-land-conflict-repair"
-	root, creation, base, reviewedTip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, reviewedTip, tally, _ := publicLandingFixture(t, request, "", "")
 	disclosure := "landing source{review_base=" + base + ",assignment_start=" + creation.Assignment.Start + "}\n"
 	commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
 	destination := gitOutput(t, root, "rev-parse", "HEAD")
@@ -319,7 +324,7 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 func TestLandGradesASourceCommittedByALanePass(t *testing.T) {
 	binary := testRunBinary(t)
 	request := "public-land-lane-source"
-	root, creation, base, _, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, _, tally, _ := publicLandingFixture(t, request, "", "")
 	// The kit-root selection must answer something other than this fixture, which is a
 	// linked project and declares its lane in its own phase manifest.
 	bindEnv(t, "BENCH_KIT", t.TempDir())

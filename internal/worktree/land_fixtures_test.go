@@ -14,9 +14,14 @@ import (
 	"github.com/gibbonmi/bench/internal/landing"
 )
 
-func publicLandingFixture(t *testing.T, request, ignored, declaration string) (string, Creation, string, string, string) {
+// publicLandingFixture mints one private Bench home and returns it last. The caller
+// hands that home to every verb it runs, so the fixture binds no process environment
+// and the test it serves stays parallel-eligible.
+func publicLandingFixture(t *testing.T, request, ignored, declaration string) (string, Creation, string, string, string, string) {
 	t.Helper()
-	return publicLandingFixtureAtHome(t, request, ignored, declaration, filepath.Join(t.TempDir(), "bench-home"))
+	home := filepath.Join(t.TempDir(), "bench-home")
+	root, creation, base, tip, tally := publicLandingFixtureAtHome(t, request, ignored, declaration, home)
+	return root, creation, base, tip, tally, home
 }
 
 func publicLandingFixtureAtHome(t *testing.T, request, ignored, declaration, home string) (string, Creation, string, string, string) {
@@ -27,9 +32,11 @@ func publicLandingFixtureAtHome(t *testing.T, request, ignored, declaration, hom
 // specLessLandingFixture is the public landing fixture whose gate grades the landed
 // source alone. A spec-less landing publishes no transition, so a gate that demanded
 // `Status: implemented` would refuse every spec-less composition for the wrong reason.
-func specLessLandingFixture(t *testing.T, request string) (string, Creation, string, string, string) {
+func specLessLandingFixture(t *testing.T, request string) (string, Creation, string, string, string, string) {
 	t.Helper()
-	return landingFixtureAtHome(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), false)
+	home := filepath.Join(t.TempDir(), "bench-home")
+	root, creation, base, tip, tally := landingFixtureAtHome(t, request, "", "", home, false)
+	return root, creation, base, tip, tally, home
 }
 
 func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) (string, Creation, string, string, string) {
@@ -40,14 +47,16 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 		prospectiveSpec = "rg -q '^Status: implemented$' specs/x/spec.md\n"
 	}
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", home)
 	common := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
 	tally := filepath.Join(common, "bench-land-gate-tally")
-	bindEnv(t, "LAND_GATE_TALLY", tally)
+	// The tally path is a literal in both gate scripts, so the fixture binds no name
+	// into the process environment and declares an empty gate environment. A gate that
+	// read the path from an exported name would make every caller serial.
+	count := "printf g >> '" + tally + "'\n"
 	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nset -eu\n"+gateSpec+"[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\n"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\nprintf g >> \"$LAND_GATE_TALLY\"\n"), 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[\"LAND_GATE_TALLY\"],\"paths\":[],\"tools\":[]}\n"), 0o644)
+	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nset -eu\n"+gateSpec+"[ -f owned.txt ]\n"+count), 0o755)
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\n"+count), 0o755)
+	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), []byte("{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n"), 0o644)
 	if declaration != "" {
 		mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\""+declaration+"\"]}\n"), 0o644)
 	}
@@ -63,7 +72,7 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 	gitRun(t, root, "add", ".")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "landing base")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
-	creation := mustCreate(t, root, request, "public landing")
+	creation := mustCreate(t, root, home, request, "public landing")
 	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	if ignored != "" {
@@ -136,9 +145,9 @@ func stubLandJoins(t *testing.T, base, tip string) func() {
 // ticketsOnlyLandingFixture is the spec-less landing fixture with a tickets-only
 // `specs/t/` folder committed at the review base and carried into the source. A
 // light-path change has exactly this shape: tickets, no spec.md.
-func ticketsOnlyLandingFixture(t *testing.T, request string) (string, Creation, string, string, string) {
+func ticketsOnlyLandingFixture(t *testing.T, request string) (string, Creation, string, string, string, string) {
 	t.Helper()
-	root, creation, _, _, tally := specLessLandingFixture(t, request)
+	root, creation, _, _, tally, home := specLessLandingFixture(t, request)
 	mustMkdirAll(t, filepath.Join(root, "specs", "t", "tickets"), 0o755)
 	mustWrite(t, filepath.Join(root, "specs", "t", "tickets", "one.md"), []byte("Light path ticket.\n"), 0o644)
 	gitRun(t, root, "add", "specs/t")
@@ -146,7 +155,7 @@ func ticketsOnlyLandingFixture(t *testing.T, request string) (string, Creation, 
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, root, "update-ref", "refs/bench/green/main", base)
 	gitRun(t, creation.Path, "rebase", "main")
-	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally
+	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally, home
 }
 
 func ticketsOnlyLandArgs(request, base, tip, slug, path string) []string {

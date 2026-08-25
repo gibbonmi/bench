@@ -135,13 +135,14 @@ func rewriteMarkerOwner(t *testing.T, path, owner string) {
 // TestLandCommandNamesEachIdentityComponent is LR01 and LR04 through LR08: one broken
 // dimension per case, and the whole refused record the operator reads for it.
 func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
+	t.Parallel()
 	for _, fixture := range identityComponentFixtures() {
 		t.Run(fixture.component, func(t *testing.T) {
 			request := "land-component-" + fixture.component
-			root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 			fixture.mutate(t, root, creation)
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, Home(), "", landArgs(fixture.request(request), base, tip, creation.Path), &stdout, &stderr)
+			code := LandCommand(root, home, "", landArgs(fixture.request(request), base, tip, creation.Path), &stdout, &stderr)
 			want := "refused{" + fixture.want(creation, base, tip) + "}\n"
 			if code != 1 || stdout.String() != want {
 				t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
@@ -156,12 +157,12 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 	for _, fixture := range identityComponentFixtures() {
 		t.Run(fixture.component, func(t *testing.T) {
 			request := "resume-component-" + fixture.component
-			root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 			published := interruptLandingAtMarker(t, root, creation, request, base, tip)
 			fixture.mutate(t, root, creation)
 			var stdout, stderr bytes.Buffer
 			args := []string{"--resume", published, "--request", fixture.request(request), "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			code := LandCommand(root, Home(), "", args, &stdout, &stderr)
+			code := LandCommand(root, home, "", args, &stdout, &stderr)
 			want := "refused{" + fixture.want(creation, base, tip) + "}\n"
 			if code != 1 || stdout.String() != want {
 				t.Fatalf("%s resume = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
@@ -307,13 +308,14 @@ func identityComponentFixtureFor(t *testing.T, component string) identityCompone
 // components that fail inside one bundle. The registration precedes the lock in the
 // registry, so the registration sentence is the one the operator reads.
 func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
+	t.Parallel()
 	request := "land-component-registration-and-lock"
-	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 	registration := identityComponentFixtureFor(t, componentRegistration)
 	registration.mutate(t, root, creation)
 	identityComponentFixtureFor(t, componentLock).mutate(t, root, creation)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	want := "refused{" + registration.want(creation, base, tip) + "}\n"
 	if code != 1 || stdout.String() != want {
 		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
@@ -324,12 +326,12 @@ func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 // A wrong owner id and a detached HEAD fail together, and the marker is the earlier
 // component, so the branch sentence must not win.
 func TestTargetVerbNamesTheOwnerMarkerBeforeTheBranch(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "marker-before-branch")
+	root, creation, home := newOwnedAssignment(t, "marker-before-branch")
 	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
 	gitRun(t, creation.Path, "checkout", "--detach")
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := PathCommand(root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := PathCommand(root, home, []string{creation.Assignment.Label}, &stdout, &stderr)
 	want := "bench worktree path: owner marker does not match assignment " + creation.Assignment.ID + "\n"
 	if code != 1 || stderr.String() != want {
 		t.Fatalf("double-fault path = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)

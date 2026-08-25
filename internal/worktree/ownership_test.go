@@ -61,7 +61,7 @@ func TestPlanAutomaticRejectsEveryInvalidMarkerWithoutMutation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-			creation := mustCreate(t, root, "marker-"+tc.name, "marker validation")
+			creation := mustCreate(t, root, Home(), "marker-"+tc.name, "marker validation")
 			markerFile, err := markerPath(creation.Path)
 			mustNoError(t, err)
 			valid := Marker{Schema: OwnerMarkerSchema, OwnerID: creation.Assignment.OwnerID, Path: creation.Path}
@@ -113,7 +113,7 @@ func TestPlanAutomaticRequiresCompleteAssignmentJoin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-			creation := mustCreate(t, root, "assignment-"+tc.name, "assignment join")
+			creation := mustCreate(t, root, Home(), "assignment-"+tc.name, "assignment join")
 			assignment := creation.Assignment
 			assignment.State = intent.StateCleanupPending
 			tc.mutate(t, root, &assignment)
@@ -128,7 +128,7 @@ func TestPlanAutomaticRequiresCompleteAssignmentJoin(t *testing.T) {
 	t.Run("complete", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-		creation := mustCreate(t, root, "assignment-complete", "assignment join")
+		creation := mustCreate(t, root, Home(), "assignment-complete", "assignment join")
 		assignment := creation.Assignment
 		assignment.State = intent.StateCleanupPending
 		mustNoError(t, intent.PutAssignment(root, assignment))
@@ -200,12 +200,13 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	requireTest(t, err == nil && len(assignments) == 3, "distinct request assignments = %#v, %v", assignments, err)
 }
 func TestActualSIGINTAfterUnlockRestoresExactLockAndReplays(t *testing.T) {
+	t.Parallel()
 	if os.Getenv("BENCH_SIGINT_HELPER") == "1" {
 		_, err := ApplyAutomatic(os.Getenv("BENCH_SIGINT_ROOT"), os.Getenv("BENCH_SIGINT_PATH"), nil)
 		requireTest(t, errors.Is(err, ErrCleanupInterrupted), "cleanup error = %v, want distinct interruption", err)
 		return
 	}
-	root, creation := newPendingAssignment(t, "actual-sigint")
+	root, creation, _ := newPendingAssignment(t, "actual-sigint")
 	shimDir := t.TempDir()
 	realGit, err := exec.LookPath("git")
 	mustNoError(t, err)
@@ -291,7 +292,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 		{"after-branch-removal", StepBranch, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root, creation := newOwnedAssignment(t, "fault-"+tc.name)
+			root, creation, _ := newOwnedAssignment(t, "fault-"+tc.name)
 			markPending(t, root, creation.Assignment)
 			fault := errors.New("fault " + tc.name)
 			_, err := ApplyAutomatic(root, creation.Path, failLifecycleStep(tc.step, fault))
@@ -311,7 +312,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 	}
 	for _, step := range []LifecycleStep{StepReceipt, StepRecoveryRef, StepUnlock, StepRemoval, StepBranch} {
 		t.Run("explicit-retry-"+string(step), func(t *testing.T) {
-			root, creation := newOwnedAssignment(t, "explicit-retry-"+string(step))
+			root, creation, _ := newOwnedAssignment(t, "explicit-retry-"+string(step))
 			if step != StepRecoveryRef {
 				markPending(t, root, creation.Assignment)
 			}

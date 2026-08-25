@@ -15,7 +15,7 @@ import (
 func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	creation := mustCreate(t, root, "refusal-destination", "refusal")
+	creation := mustCreate(t, root, Home(), "refusal-destination", "refusal")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -30,7 +30,7 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	creation := mustCreate(t, root, "refusal-ignored", "refusal")
+	creation := mustCreate(t, root, Home(), "refusal-ignored", "refusal")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -47,7 +47,7 @@ func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
 func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	creation := mustCreate(t, root, "refusal-controls", "refusal")
+	creation := mustCreate(t, root, Home(), "refusal-controls", "refusal")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -71,8 +71,9 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 }
 
 func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T) {
+	t.Parallel()
 	request := "landed-release-refusal-paths"
-	root, creation := newOwnedAssignment(t, "release-refusal-paths")
+	root, creation, home := newOwnedAssignment(t, "release-refusal-paths")
 	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residue-*\n"), 0o644)
 	for i := 0; i < 1003; i++ {
 		name := fmt.Sprintf("residue-%04d", i)
@@ -83,7 +84,7 @@ func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T
 	}
 
 	var stdout, stderr bytes.Buffer
-	code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, &stdout, &stderr)
 	out := stderr.String()
 	wantNext := "next=bench worktree release --request <request> '" + creation.Path + "'"
 	if code != 1 || stdout.Len() != 0 || !strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):") ||
@@ -105,7 +106,7 @@ func TestReleaseCommandRefusalPointsThroughAssignmentForControlBearingPath(t *te
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(root, "home\n\x1bunsafe"))
-			creation := mustCreate(t, root, tc.request, "unsafe release pointer")
+			creation := mustCreate(t, root, Home(), tc.request, "unsafe release pointer")
 			wantNext := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree release --request <request> ."
 
 			var stdout, stderr bytes.Buffer
@@ -124,7 +125,7 @@ func TestReleaseCommandRefusalHidesControlBearingRequestForSafePath(t *testing.T
 	request := "release\n\x1brequest"
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, request, "safe release pointer")
+	creation := mustCreate(t, root, Home(), request, "safe release pointer")
 	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residue\n"), 0o644)
 	mustWrite(t, filepath.Join(creation.Path, "residue"), []byte("retained\n"), 0o600)
 	var stdout, stderr bytes.Buffer

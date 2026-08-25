@@ -13,13 +13,14 @@ import (
 )
 
 func TestReleaseDeadLeaseRemovesAndCompacts(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "dead-lease-release")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "dead-lease-release")
 	lease, err := LeaseFile(creation.Path)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte(deadPidLine(t)), 0o600)
 
 	var stdout bytes.Buffer
-	code := ReleaseCommand(root, Home(), []string{"--request", "landed-dead-lease-release", creation.Path}, &stdout, io.Discard)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-dead-lease-release", creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "dead-lease release exit=%d stdout=%q", code, stdout.String())
 	_, statErr := os.Stat(creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "dead-lease worktree remains: %v", statErr)
@@ -41,7 +42,7 @@ func TestReleaseDeclaredBuildOutputRemoves(t *testing.T) {
 	mustNoError(t, err)
 	mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), declaration, 0o644)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, "landed-declared-output", "declared output")
+	creation := mustCreate(t, root, Home(), "landed-declared-output", "declared output")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
 	mustWrite(t, filepath.Join(creation.Path, "dist", "bench"), []byte("binary\n"), 0o755)
 
@@ -77,7 +78,7 @@ func TestReleaseBuildOutputContainmentRetainsUnknownResidue(t *testing.T) {
 			mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"dist/\"]}\n"), 0o644)
 			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			request := "landed-containment-" + tc.name
-			creation := mustCreate(t, root, request, tc.name)
+			creation := mustCreate(t, root, Home(), request, tc.name)
 			tc.build(t, creation.Path)
 
 			var stderr bytes.Buffer
@@ -130,7 +131,7 @@ func TestBuildOutputDeclarationFailsClosed(t *testing.T) {
 			}
 			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 			request := "landed-build-output-" + tc.name
-			creation := mustCreate(t, root, request, tc.name)
+			creation := mustCreate(t, root, Home(), request, tc.name)
 			residual := filepath.Join(creation.Path, filepath.FromSlash(tc.residual))
 			mustMkdirAll(t, filepath.Dir(residual), 0o755)
 			mustWrite(t, residual, []byte("output\n"), 0o600)
@@ -153,19 +154,19 @@ func TestResumeReconcilesDeadLeaseAndPreservesSafetyBranches(t *testing.T) {
 	gitRun(t, root, "branch", "-M", "main")
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 
-	dead := mustCreate(t, root, "landed-resume-dead", "dead owner")
+	dead := mustCreate(t, root, Home(), "landed-resume-dead", "dead owner")
 	markPending(t, root, dead.Assignment)
 	deadLease, err := LeaseFile(dead.Path)
 	mustNoError(t, err)
 	mustWrite(t, deadLease, []byte(deadPidLine(t)), 0o600)
 
-	live := mustCreate(t, root, "landed-resume-live", "live owner")
+	live := mustCreate(t, root, Home(), "landed-resume-live", "live owner")
 	markPending(t, root, live.Assignment)
 	liveLease, err := LeaseFile(live.Path)
 	mustNoError(t, err)
 	mustWrite(t, liveLease, []byte(fmt.Sprintf("%d 2026-07-15T00:00:00Z\n", os.Getpid())), 0o600)
 
-	unlanded := mustCreate(t, root, "landed-resume-unlanded", "preserved work")
+	unlanded := mustCreate(t, root, Home(), "landed-resume-unlanded", "preserved work")
 	commitInWorktree(t, unlanded.Path, "unique.txt", "preserve\n", "unique work")
 	markPending(t, root, unlanded.Assignment)
 
@@ -195,13 +196,14 @@ func TestRepositoryDeclaresDistBuildOutput(t *testing.T) {
 }
 
 func TestReleaseLiveLeaseRetains(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "live-lease-release")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "live-lease-release")
 	lease, err := LeaseFile(creation.Path)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte(fmt.Sprintf("%d 2026-07-15T00:00:00Z\n", os.Getpid())), 0o600)
 
 	var stderr bytes.Buffer
-	code := ReleaseCommand(root, Home(), []string{"--request", "landed-live-lease-release", creation.Path}, io.Discard, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-live-lease-release", creation.Path}, io.Discard, &stderr)
 	requireTest(t, code == 1, "live-lease release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (live-lease)"), "live-lease reason missing: %q", stderr.String())
 	_, statErr := os.Stat(creation.Path)
@@ -209,6 +211,7 @@ func TestReleaseLiveLeaseRetains(t *testing.T) {
 }
 
 func TestReleaseSymlinkLeaseRetainsAsUncertain(t *testing.T) {
+	t.Parallel()
 	assertReleaseLeaseRetainedAsUncertain(t, "symlink-lease-release", func(lease string) {
 		target := filepath.Join(t.TempDir(), "lease-target")
 		mustWrite(t, target, []byte(fmt.Sprintf("%d 2026-07-15T00:00:00Z\n", os.Getpid())), 0o600)
@@ -217,6 +220,7 @@ func TestReleaseSymlinkLeaseRetainsAsUncertain(t *testing.T) {
 }
 
 func TestReleaseDirectoryLeaseRetainsAsUncertain(t *testing.T) {
+	t.Parallel()
 	assertReleaseLeaseRetainedAsUncertain(t, "directory-lease-release", func(lease string) {
 		mustMkdirAll(t, lease, 0o700)
 	})
@@ -224,13 +228,13 @@ func TestReleaseDirectoryLeaseRetainsAsUncertain(t *testing.T) {
 
 func assertReleaseLeaseRetainedAsUncertain(t *testing.T, request string, makeLease func(string)) {
 	t.Helper()
-	root, creation := newOwnedAssignment(t, request)
+	root, creation, home := newOwnedAssignment(t, request)
 	lease, err := LeaseFile(creation.Path)
 	mustNoError(t, err)
 	makeLease(lease)
 
 	var stderr bytes.Buffer
-	code := ReleaseCommand(root, Home(), []string{"--request", "landed-" + request, creation.Path}, io.Discard, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-" + request, creation.Path}, io.Discard, &stderr)
 	requireTest(t, code == 1, "malformed-lease release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (uncertain)") && strings.Contains(stderr.String(), "lease state is unknown"),
 		"malformed-lease reason missing: %q", stderr.String())

@@ -2,8 +2,9 @@ package worktree
 
 // This file owns the parallel census and the package's static pins. The census
 // parses a directory's _test.go files with the Go AST and derives the serial
-// set from call edges to the serialHelpers harness helpers. A top-level test
-// that reaches no such helper is eligible and must call t.Parallel().
+// set from two edges: a call to a serialHelpers harness helper, and an
+// assignment to a package-level variable of a non-test file. A top-level test
+// that reaches neither edge is eligible and must call t.Parallel().
 // (Coverage rows WF02-WF05, WF12, WF14.)
 
 import (
@@ -26,6 +27,11 @@ import (
 // readers hold no lock. The census decides by bare identifier, not by type
 // resolution, because a synthetic file set has no harness to resolve the name
 // against. The census parses; it never builds.
+//
+// The assignment edge, not this table, is the rule for a package-level swap: a
+// test is serial when it assigns a package-level variable of a non-test file.
+// bindGlobal stays here as the effect record, so a test that only hands the
+// name to the harness is serial too.
 var serialHelpers = map[string]bool{"bindEnv": true, "chdir": true, "bindGlobal": true}
 
 // testFileFunc is one function declared in a test file: its declaration, the
@@ -40,6 +46,20 @@ type testFileFunc struct {
 // example a FIFO, is not regular and is skipped, so the walk never blocks on a
 // read.
 func parseTestFiles(dir string) ([]*ast.File, *token.FileSet, []string, error) {
+	return parseGoFiles(dir, func(name string) bool { return strings.HasSuffix(name, "_test.go") })
+}
+
+// parseSourceFiles parses every regular non-test .go file in dir. The census
+// reads these files for their package-level variable declarations only.
+func parseSourceFiles(dir string) ([]*ast.File, error) {
+	files, _, _, err := parseGoFiles(dir, func(name string) bool {
+		return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
+	})
+	return files, err
+}
+
+// parseGoFiles parses every regular file in dir whose name want accepts.
+func parseGoFiles(dir string, want func(string) bool) ([]*ast.File, *token.FileSet, []string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, nil, nil, err
@@ -49,7 +69,7 @@ func parseTestFiles(dir string) ([]*ast.File, *token.FileSet, []string, error) {
 	var names []string
 	for _, entry := range entries {
 		name := entry.Name()
-		if !strings.HasSuffix(name, "_test.go") {
+		if !want(name) {
 			continue
 		}
 		info, err := entry.Info()
@@ -121,6 +141,56 @@ func callsSerialHelper(decl *ast.FuncDecl) bool {
 	return found
 }
 
+// packageVarNames collects every package-level identifier declared with var in
+// the non-test files of dir, a grouped declaration included. A swap of one of
+// these names is a process-wide effect, so the test that makes it is serial.
+func packageVarNames(dir string) (map[string]bool, error) {
+	files, err := parseSourceFiles(dir)
+	if err != nil {
+		return nil, err
+	}
+	names := map[string]bool{}
+	for _, file := range files {
+		for _, node := range file.Decls {
+			decl, ok := node.(*ast.GenDecl)
+			if !ok || decl.Tok != token.VAR {
+				continue
+			}
+			for _, spec := range decl.Specs {
+				value, ok := spec.(*ast.ValueSpec)
+				if !ok {
+					continue
+				}
+				for _, ident := range value.Names {
+					names[ident.Name] = true
+				}
+			}
+		}
+	}
+	return names, nil
+}
+
+// assignsPackageVar reports whether the body of decl assigns a package-level
+// variable anywhere, a closure included. A restore inside t.Cleanup is such a
+// closure. The census reads the assignment operator, so a := shadow of the same
+// name declares a local and is not an effect.
+func assignsPackageVar(decl *ast.FuncDecl, vars map[string]bool) bool {
+	found := false
+	ast.Inspect(decl.Body, func(node ast.Node) bool {
+		assign, ok := node.(*ast.AssignStmt)
+		if !ok || assign.Tok == token.DEFINE {
+			return !found
+		}
+		for _, target := range assign.Lhs {
+			if ident, ok := target.(*ast.Ident); ok && vars[ident.Name] {
+				found = true
+			}
+		}
+		return !found
+	})
+	return found
+}
+
 // directCallees returns the names of the test-file functions the body of decl
 // calls, a subtest closure included.
 func directCallees(decl *ast.FuncDecl) []string {
@@ -167,14 +237,15 @@ func callsParallelDirectly(decl *ast.FuncDecl) bool {
 }
 
 // reachesSerialHelper walks the call edges from decl over the test-file
-// functions and reports whether any reached function calls a serialHelpers helper.
-// The walk is transitive, so a helper that reaches the helper through another
+// functions and reports whether any reached function holds a serial effect: a
+// call to a serialHelpers helper, or an assignment to a package-level variable.
+// The walk is transitive, so a helper that reaches the effect through another
 // helper is still a serial edge.
-func reachesSerialHelper(decl *ast.FuncDecl, funcs map[string]testFileFunc) bool {
+func reachesSerialHelper(decl *ast.FuncDecl, funcs map[string]testFileFunc, vars map[string]bool) bool {
 	seen := map[string]bool{}
 	var walk func(*ast.FuncDecl) bool
 	walk = func(current *ast.FuncDecl) bool {
-		if callsSerialHelper(current) {
+		if callsSerialHelper(current) || assignsPackageVar(current, vars) {
 			return true
 		}
 		for _, name := range directCallees(current) {
@@ -194,9 +265,13 @@ func reachesSerialHelper(decl *ast.FuncDecl, funcs map[string]testFileFunc) bool
 // parallelCensus reports every top-level test in dir that breaks the parallel
 // rule: an eligible test without t.Parallel(), or a serial test with it. A test
 // is serial when its body, or any test-file function it reaches through call
-// edges, calls a serialHelpers helper.
+// edges, calls a serialHelpers helper or assigns a package-level variable.
 func parallelCensus(dir string) ([]string, error) {
 	files, fset, _, err := parseTestFiles(dir)
+	if err != nil {
+		return nil, err
+	}
+	vars, err := packageVarNames(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +296,7 @@ func parallelCensus(dir string) ([]string, error) {
 	}
 	var reports []string
 	for _, test := range tests {
-		serial := reachesSerialHelper(test.decl, funcs)
+		serial := reachesSerialHelper(test.decl, funcs, vars)
 		parallel := callsParallelDirectly(test.decl)
 		switch {
 		case serial && parallel:
@@ -386,6 +461,91 @@ func TestGlobalPair(t *testing.T) {
 `})
 	reports := censusOf(t, dir)
 	want := "global_pair_test.go:5: TestGlobalPair is serial and calls t.Parallel()"
+	if len(reports) != 1 || reports[0] != want {
+		t.Fatalf("census = %q, want exactly [%q]", reports, want)
+	}
+}
+
+// syntheticHooksFile is the non-test file of a synthetic file set. It declares
+// the package-level variable the assignment edge reads.
+const syntheticHooksFile = `package worktree
+
+var hook = func() {}
+`
+
+// TestCensusFollowsAssignmentToPackageVariable proves a test that assigns a
+// package-level variable of a non-test file is serial, in the body and inside a
+// t.Cleanup closure alike, and that a read or a := shadow of the same name
+// leaves the test eligible.
+func TestCensusFollowsAssignmentToPackageVariable(t *testing.T) {
+	t.Parallel()
+	for _, row := range []struct {
+		name string
+		body string
+		want string
+	}{
+		{name: "body-assignment", body: `	hook = func() {}
+`},
+		{name: "cleanup-closure-assignment", body: `	old := hook
+	t.Cleanup(func() { hook = old })
+`},
+		{
+			name: "read-only",
+			body: `	_ = hook
+`,
+			want: "stub_test.go:5: TestStub is eligible and does not call t.Parallel()",
+		},
+		{
+			name: "shadow-declaration",
+			body: `	hook := func() {}
+	_ = hook
+`,
+			want: "stub_test.go:5: TestStub is eligible and does not call t.Parallel()",
+		},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			dir := plantTestFiles(t, map[string]string{
+				"hooks.go": syntheticHooksFile,
+				"stub_test.go": `package worktree
+
+import "testing"
+
+func TestStub(t *testing.T) {
+` + row.body + `}
+`,
+			})
+			reports := censusOf(t, dir)
+			if row.want == "" {
+				if len(reports) != 0 {
+					t.Fatalf("census = %q, want no report for a serial test without t.Parallel()", reports)
+				}
+				return
+			}
+			if len(reports) != 1 || reports[0] != row.want {
+				t.Fatalf("census = %q, want exactly [%q]", reports, row.want)
+			}
+		})
+	}
+}
+
+// TestCensusReportsPackageVariableAssignmentWithParallel proves the census names
+// a test that assigns a package-level variable and still calls t.Parallel().
+func TestCensusReportsPackageVariableAssignmentWithParallel(t *testing.T) {
+	t.Parallel()
+	dir := plantTestFiles(t, map[string]string{
+		"hooks.go": syntheticHooksFile,
+		"stub_pair_test.go": `package worktree
+
+import "testing"
+
+func TestStubPair(t *testing.T) {
+	t.Parallel()
+	hook = func() {}
+}
+`,
+	})
+	reports := censusOf(t, dir)
+	want := "stub_pair_test.go:5: TestStubPair is serial and calls t.Parallel()"
 	if len(reports) != 1 || reports[0] != want {
 		t.Fatalf("census = %q, want exactly [%q]", reports, want)
 	}

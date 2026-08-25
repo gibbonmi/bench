@@ -28,7 +28,8 @@ func decayToHusk(t *testing.T, path string) {
 // The record is planted after the assignment's own registration is known, which is also
 // the only window a live repository has for one.
 func TestReleaseRegistrationSkipsUnrelatedSpecialControlRecords(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "husk-special-record")
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "husk-special-record")
 	decayToHusk(t, creation.Path)
 	common := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
 	stranger := filepath.Join(filepath.Clean(common), "worktrees", "stranger")

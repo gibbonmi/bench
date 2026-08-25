@@ -19,9 +19,9 @@ func landedSetFixture(t *testing.T) (string, Creation, Creation, Creation) {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	first := mustCreate(t, root, "landed-set-first", "first label")
-	second := mustCreate(t, root, "landed-set-second", "second label")
-	dirty := mustCreate(t, root, "landed-set-dirty", "dirty label")
+	first := mustCreate(t, root, Home(), "landed-set-first", "first label")
+	second := mustCreate(t, root, Home(), "landed-set-second", "second label")
+	dirty := mustCreate(t, root, Home(), "landed-set-dirty", "dirty label")
 	landAssignment(t, root, first, "first.txt")
 	landAssignment(t, root, second, "second.txt")
 	landAssignment(t, root, dirty, "dirty.txt")
@@ -86,14 +86,14 @@ func TestCleanLandedPlanSharesOneFingerprint(t *testing.T) {
 func TestCleanLandedFingerprintBindsSetMembership(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	first := mustCreate(t, root, "fingerprint-member-first", "first")
+	first := mustCreate(t, root, Home(), "fingerprint-member-first", "first")
 	landAssignment(t, root, first, "first.txt")
 	before, beforeErr, beforeCode := runCleanLanded(t, root, "--landed")
 	if beforeCode != 0 || beforeErr != "" {
 		t.Fatalf("first plan exit=%d stdout=%q stderr=%q", beforeCode, before, beforeErr)
 	}
 
-	second := mustCreate(t, root, "fingerprint-member-second", "second")
+	second := mustCreate(t, root, Home(), "fingerprint-member-second", "second")
 	landAssignment(t, root, second, "second.txt")
 	after, afterErr, afterCode := runCleanLanded(t, root, "--landed")
 	if afterCode != 0 || afterErr != "" {
@@ -167,12 +167,12 @@ func TestCleanLandedRefusesMalformedFingerprint(t *testing.T) {
 func TestCleanLandedSelectorPartition(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	unknown := mustCreate(t, root, "selector-unknown", "unknown lease")
-	live := mustCreate(t, root, "selector-live", "live lease")
-	unlanded := mustCreate(t, root, "selector-unlanded", "unlanded")
-	pending := mustCreate(t, root, "selector-pending", "pending")
-	recovered := mustCreate(t, root, "selector-recovered", "recovered")
-	complete := mustCreate(t, root, "selector-complete", "complete")
+	unknown := mustCreate(t, root, Home(), "selector-unknown", "unknown lease")
+	live := mustCreate(t, root, Home(), "selector-live", "live lease")
+	unlanded := mustCreate(t, root, Home(), "selector-unlanded", "unlanded")
+	pending := mustCreate(t, root, Home(), "selector-pending", "pending")
+	recovered := mustCreate(t, root, Home(), "selector-recovered", "recovered")
+	complete := mustCreate(t, root, Home(), "selector-complete", "complete")
 	for i, creation := range []Creation{unknown, live, pending, recovered, complete} {
 		landAssignment(t, root, creation, fmt.Sprintf("landed-%d.txt", i))
 	}

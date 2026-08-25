@@ -181,7 +181,7 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)))
-	creation := mustCreate(t, root, "landed-complete-assignment", "complete assignment")
+	creation := mustCreate(t, root, Home(), "landed-complete-assignment", "complete assignment")
 	boundary := cleanupTransactionBoundary
 	t.Cleanup(func() { cleanupTransactionBoundary = boundary })
 	cleanupTransactionBoundary = func(step LifecycleStep) error {
@@ -243,8 +243,8 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)+strings.Repeat("\x20", 16)+strings.Repeat("\x02", 16)))
-	mustCreate(t, root, "request-a", "alpha")
-	mustCreate(t, root, "request-b", "beta")
+	mustCreate(t, root, Home(), "request-a", "alpha")
+	mustCreate(t, root, Home(), "request-b", "beta")
 	present := filepath.Join(t.TempDir(), "present foreign")
 	missing := filepath.Join(t.TempDir(), "missing foreign * path")
 	gitRun(t, root, "worktree", "add", "-q", "--detach", present, "HEAD")

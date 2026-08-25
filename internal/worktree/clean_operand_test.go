@@ -13,7 +13,8 @@ import (
 // scripts cleanup reads a zero as "planned" and moves on. A silent no-op there loses
 // the work the operator meant to preserve.
 func TestCleanCommandRefusesAnOperandItCannotResolve(t *testing.T) {
-	root, _ := newOwnedAssignment(t, "operand")
+	t.Parallel()
+	root, _, home := newOwnedAssignment(t, "operand")
 	for _, tc := range []struct {
 		name, target, detail string
 	}{
@@ -22,7 +23,7 @@ func TestCleanCommandRefusesAnOperandItCannotResolve(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
-			code := CleanCommand(root, Home(), []string{tc.target}, &stdout, &stderr)
+			code := CleanCommand(root, home, []string{tc.target}, &stdout, &stderr)
 			if code == 0 || !bytes.Contains(stdout.Bytes(), []byte(tc.detail)) {
 				t.Fatalf("%s clean code=%d stdout=%q", tc.name, code, stdout.String())
 			}
@@ -33,13 +34,14 @@ func TestCleanCommandRefusesAnOperandItCannotResolve(t *testing.T) {
 // A resolved operand that this repo declines to remove is a verdict, not a bad operand:
 // the plan is the answer and the exit code stays zero.
 func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
-	root, creation := newPendingAssignment(t, "verdict")
+	t.Parallel()
+	root, creation, home := newPendingAssignment(t, "verdict")
 	mustWrite(t, filepath.Join(creation.Path, "residual.log"), []byte("x\n"), 0o644)
 	mustWrite(t, filepath.Join(creation.Path, ".gitignore"), []byte("residual.log\n"), 0o644)
 	gitRun(t, creation.Path, "add", ".gitignore")
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore residual")
 	var stdout, stderr bytes.Buffer
-	code := CleanCommand(root, Home(), []string{creation.Path}, &stdout, &stderr)
+	code := CleanCommand(root, home, []string{creation.Path}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("resolved retain code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -50,10 +52,10 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 // have to compose, and the printed form has to work verbatim when quoted — which the
 // `~` form never does. Plan and apply must also agree on one canonical target.
 func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "portable")
+	root, creation, home := newOwnedAssignment(t, "portable")
 	bindEnv(t, "HOME", root)
 	var printed, stderr bytes.Buffer
-	if code := PathCommand(root, Home(), []string{creation.Assignment.Label}, &printed, &stderr); code != 0 {
+	if code := PathCommand(root, home, []string{creation.Assignment.Label}, &printed, &stderr); code != 0 {
 		t.Fatalf("path exited %d: %s", code, stderr.String())
 	}
 	portable := strings.TrimSpace(printed.String())
@@ -61,7 +63,7 @@ func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 		t.Fatalf("path printed %q, want a resolved absolute path", portable)
 	}
 	var planned bytes.Buffer
-	if code := CleanCommand(root, Home(), []string{portable}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(root, home, []string{portable}, &planned, &stderr); code != 0 {
 		t.Fatalf("clean %q exited %d: %s", portable, code, planned.String())
 	}
 	if !strings.Contains(planned.String(), ",remove,") {
@@ -72,7 +74,7 @@ func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 		t.Fatalf("plan carried no fingerprint: %s", planned.String())
 	}
 	var applied bytes.Buffer
-	if code := CleanCommand(root, Home(), []string{portable, "--apply", fingerprint}, &applied, &stderr); code != 0 {
+	if code := CleanCommand(root, home, []string{portable, "--apply", fingerprint}, &applied, &stderr); code != 0 {
 		t.Fatalf("apply against the portable path exited %d: %s", code, applied.String())
 	}
 	if !strings.Contains(applied.String(), ",removed,") {
@@ -84,9 +86,10 @@ func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 // that merely happens to be unregistered once it has been canonicalized against the
 // repo root.
 func TestCleanCommandRefusesAnUnsupportedHomeTarget(t *testing.T) {
-	root, _ := newOwnedAssignment(t, "homeform")
+	t.Parallel()
+	root, _, home := newOwnedAssignment(t, "homeform")
 	var stdout, stderr bytes.Buffer
-	code := CleanCommand(root, Home(), []string{"~someone/else"}, &stdout, &stderr)
+	code := CleanCommand(root, home, []string{"~someone/else"}, &stdout, &stderr)
 	if code == 0 || !bytes.Contains(stdout.Bytes(), []byte("unsupported home target")) {
 		t.Fatalf("unsupported home target code=%d stdout=%q", code, stdout.String())
 	}

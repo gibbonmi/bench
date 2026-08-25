@@ -159,12 +159,10 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 }
 
 func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
+	t.Parallel()
 	t.Run("clean assignment compacts and spares sibling", func(t *testing.T) {
-		root, target := newOwnedAssignment(t, "terminal-clean")
-		sibling, err := Create(root, "terminal-clean-sibling", "sibling", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
+		root, target, home := newOwnedAssignment(t, "terminal-clean")
+		sibling := mustCreate(t, root, home, "terminal-clean-sibling", "sibling")
 		siblingRef := "refs/bench/recovery/" + sibling.Assignment.OwnerID + "/" + sibling.Assignment.ID + "/1"
 		gitRun(t, root, "update-ref", siblingRef, target.Assignment.Start)
 		markPending(t, root, target.Assignment)
@@ -281,7 +279,7 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residual.txt\n"), 0o644)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, "retain-verdict", "retain verdict")
+	creation := mustCreate(t, root, Home(), "retain-verdict", "retain verdict")
 	residual := filepath.Join(creation.Path, "residual.txt")
 	mustWrite(t, residual, []byte("build output\n"), 0o600)
 	requirePlanAction(t, root, creation.Path, ActionRetain)
@@ -304,9 +302,10 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 // TestReleaseUnknownRequestNamesReauthorizeRecovery is LR19: release names the request
 // component, its own retained clause, and the same recovery command the landing names.
 func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "release-reauthorize-recovery")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "release-reauthorize-recovery")
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, Home(), []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
 	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + creation.Path + "'"
 	want := "bench worktree release: request token matches no assignment; checkout retained; observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
@@ -338,7 +337,8 @@ func removeOutOfBand(t *testing.T, root string, a intent.Assignment, action Clea
 // reconciles and compacts the record instead of dead-ending on "cleanup
 // receipt does not authorize release reconciliation". Replay is idempotent.
 func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "oob-residue")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "oob-residue")
 	a, err := assignmentByID(root, creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, len(a.Recovery) == 0, "fixture already holds recovery metadata")
@@ -346,13 +346,13 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 
 	args := []string{"--request", "landed-oob-residue", creation.Path}
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, Home(), args, &out, &errb)
+	code := ReleaseCommand(root, home, args, &out, &errb)
 	requireTest(t, code == 0, "residue release exit=%d stderr=%q", code, errb.String())
 	if _, err := assignmentByID(root, a.ID); err == nil {
 		t.Fatal("residue record survived reconcile")
 	}
 	var replay strings.Builder
-	code = ReleaseCommand(root, Home(), args, &replay, io.Discard)
+	code = ReleaseCommand(root, home, args, &replay, io.Discard)
 	requireTest(t, code == 0 && replay.String() == out.String(), "replay exit=%d out=%q", code, replay.String())
 }
 
@@ -361,7 +361,8 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 // returns a verdict handing over the ref itself and leaves the record and its
 // recovery pointer intact: release never silently discards preserved work.
 func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "oob-preserved")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "oob-preserved")
 	a, err := assignmentByID(root, creation.Assignment.ID)
 	mustNoError(t, err)
 	ref := intent.RecoveryRefPrefix(a.OwnerID, a.ID) + "1"
@@ -370,7 +371,7 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	removeOutOfBand(t, root, a, ActionRemoved)
 
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, Home(), []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
 	requireTest(t, code != 0, "preserved release exit=%d, want non-zero", code)
 	requireTest(t, strings.Contains(errb.String(), "git show "+ref),
 		"preserved verdict does not hand over the ref: %q", errb.String())
@@ -391,10 +392,10 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	residue := mustCreate(t, root, "landed-sweep-residue", "residue")
-	preserved := mustCreate(t, root, "landed-sweep-preserved", "preserved")
-	activeGone := mustCreate(t, root, "landed-sweep-active", "active gone")
-	live := mustCreate(t, root, "landed-sweep-live", "live present")
+	residue := mustCreate(t, root, Home(), "landed-sweep-residue", "residue")
+	preserved := mustCreate(t, root, Home(), "landed-sweep-preserved", "preserved")
+	activeGone := mustCreate(t, root, Home(), "landed-sweep-active", "active gone")
+	live := mustCreate(t, root, Home(), "landed-sweep-live", "live present")
 
 	ra, err := assignmentByID(root, residue.Assignment.ID)
 	mustNoError(t, err)
@@ -429,7 +430,8 @@ func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 }
 
 func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
-	root, creation := newPendingAssignment(t, "release-in-flight")
+	t.Parallel()
+	root, creation, home := newPendingAssignment(t, "release-in-flight")
 	stop := errors.New("crash after removal")
 	_, err := ApplyAutomatic(root, creation.Path, func(step LifecycleStep) error {
 		if step == StepRemoval {
@@ -440,13 +442,13 @@ func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
 	requireTest(t, errors.Is(err, stop), "automatic interruption = %v", err)
 	args := []string{"--request", "landed-release-in-flight", creation.Path}
 	var first, firstErr strings.Builder
-	code := ReleaseCommand(root, Home(), args, &first, &firstErr)
+	code := ReleaseCommand(root, home, args, &first, &firstErr)
 	requireTest(t, code == 0 && firstErr.String() == "", "in-flight release code=%d stderr=%q", code, firstErr.String())
 	var replay strings.Builder
-	code = ReleaseCommand(root, Home(), args, &replay, io.Discard)
+	code = ReleaseCommand(root, home, args, &replay, io.Discard)
 	requireTest(t, code == 0 && replay.String() == first.String(), "in-flight replay code=%d stdout=%q", code, replay.String())
-	requireTest(t, ReleaseCommand(root, Home(), []string{"--request", "changed", creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
-	requireTest(t, ReleaseCommand(root, Home(), []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
+	requireTest(t, ReleaseCommand(root, home, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
+	requireTest(t, ReleaseCommand(root, home, []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
 }
 func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 	t.Parallel()
@@ -580,10 +582,11 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 // bundle component other than the request token: a rewritten owner marker names the marker
 // and keeps the checkout.
 func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "release-owner-marker")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "release-owner-marker")
 	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, Home(), []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
 	want := "bench worktree release: owner marker does not match assignment " + creation.Assignment.ID + "; checkout retained\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
 		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)

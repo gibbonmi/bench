@@ -157,10 +157,10 @@ func planReclaimableCount(t *testing.T, out string) int {
 	return count
 }
 
-func mustResumeClean(t *testing.T, root string) (string, int) {
+func mustResumeClean(t *testing.T, root, home string) (string, int) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "resume-clean code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	return stdout.String(), code
 }
@@ -197,12 +197,13 @@ func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testin
 // the command plans with.
 // The drift would only show up as a plan that names a different set than resume promised.
 func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
+	t.Parallel()
 	t.Run("hostile pool", func(t *testing.T) {
-		pool, root := newReclaimPool(t)
+		pool, root, home := newReclaimPool(t)
 		plantHostilePool(t, pool, root)
 
-		summary, _ := mustResumeClean(t, root)
-		plan, code := mustReclaim(t, root)
+		summary, _ := mustResumeClean(t, root, home)
+		plan, code := mustReclaim(t, root, home)
 		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
 		want := planReclaimableCount(t, plan)
 		requireTest(t, want == 3, "the hostile pool plans %d reclaimable keys, want the two dead and the empty one: %q", want, plan)
@@ -210,12 +211,12 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 			"resume reported %d reclaimable keys, the plan targets %d:\n%s\n%s", resumeReclaimableCount(t, summary), want, summary, plan)
 	})
 	t.Run("clean pool", func(t *testing.T) {
-		pool, root := newReclaimPool(t)
+		pool, root, home := newReclaimPool(t)
 		plantLiveChild(t, pool, "live-key", "wt")
 		mustMkdirAll(t, filepath.Join(pool, filepath.Base(Pool(canonicalRoot(root)))), 0o700)
 
-		summary, _ := mustResumeClean(t, root)
-		plan, code := mustReclaim(t, root)
+		summary, _ := mustResumeClean(t, root, home)
+		plan, code := mustReclaim(t, root, home)
 		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
 		want := planReclaimableCount(t, plan)
 		requireTest(t, want == 0, "the clean pool plans %d reclaimable keys, want none: %q", want, plan)
@@ -229,11 +230,12 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 // The whole recursive listing must survive a resume byte-identical, including the keys it
 // just counted as reclaimable.
 func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
-	pool, root := newReclaimPool(t)
+	t.Parallel()
+	pool, root, home := newReclaimPool(t)
 	plantHostilePool(t, pool, root)
 	before := poolListing(t, pool)
 
-	summary, _ := mustResumeClean(t, root)
+	summary, _ := mustResumeClean(t, root, home)
 	requireTest(t, resumeReclaimableCount(t, summary) > 0, "the fixture pool reported nothing reclaimable:\n%s", summary)
 	requireTest(t, poolListing(t, pool) == before,
 		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))

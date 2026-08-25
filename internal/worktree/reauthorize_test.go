@@ -13,10 +13,11 @@ import (
 )
 
 func TestReauthorizeCommandGrammarKeepsFlagValuesOutOfPath(t *testing.T) {
+	t.Parallel()
 	flags := []string{"--assignment", "--request", "--base", "--source-tip"}
 	for _, flag := range flags {
 		t.Run(flag, func(t *testing.T) {
-			root, creation, base, tip := reauthorizeFixture(t)
+			root, creation, base, tip, home := reauthorizeFixture(t)
 			before := reauthorizeEvidence(t, root, creation.Path)
 			values := map[string]string{
 				"--assignment": creation.Assignment.ID,
@@ -34,7 +35,7 @@ func TestReauthorizeCommandGrammarKeepsFlagValuesOutOfPath(t *testing.T) {
 				args = append(args, other, values[other])
 			}
 			var stdout, stderr bytes.Buffer
-			if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 2 {
+			if code := ReauthorizeCommand(root, home, args, &stdout, &stderr); code != 2 {
 				t.Fatalf("path-only-as-%s exit = %d, want 2; stdout=%q stderr=%q", flag, code, stdout.String(), stderr.String())
 			}
 			if got := reauthorizeEvidence(t, root, creation.Path); got != before {
@@ -43,10 +44,10 @@ func TestReauthorizeCommandGrammarKeepsFlagValuesOutOfPath(t *testing.T) {
 		})
 	}
 
-	root, creation, base, tip := reauthorizeFixture(t)
+	root, creation, base, tip, home := reauthorizeFixture(t)
 	var stdout, stderr bytes.Buffer
 	args := []string{"--assignment", creation.Assignment.ID, "--request", "control-token", "--base", base, "--source-tip", tip, "--", creation.Path}
-	if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 0 {
+	if code := ReauthorizeCommand(root, home, args, &stdout, &stderr); code != 0 {
 		t.Fatalf("-- path control exit = %d; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }
@@ -67,10 +68,11 @@ func TestReauthorizeCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 }
 
 func TestReauthorizeCommandEscapesControlBearingBase(t *testing.T) {
-	root, creation, _, tip := reauthorizeFixture(t)
+	t.Parallel()
+	root, creation, _, tip, home := reauthorizeFixture(t)
 	var stdout, stderr bytes.Buffer
 	args := []string{"--assignment", creation.Assignment.ID, "--request", "replacement-request", "--base", "not-a-commit\nforged-output", "--source-tip", tip, creation.Path}
-	if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 1 {
+	if code := ReauthorizeCommand(root, home, args, &stdout, &stderr); code != 1 {
 		t.Fatalf("control-bearing base exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if strings.Count(stderr.String(), "\n") != 1 || !strings.Contains(stderr.String(), `\n`) {
@@ -79,18 +81,20 @@ func TestReauthorizeCommandEscapesControlBearingBase(t *testing.T) {
 }
 
 func TestReauthorizeCommandNamesRecordedStartWhenNotAncestor(t *testing.T) {
-	root, creation, _, tip := reauthorizeFixture(t)
+	t.Parallel()
+	root, creation, _, tip, home := reauthorizeFixture(t)
 	commitInWorktree(t, root, "later.txt", "later\n", "later")
 	nonAncestorBase := gitOutput(t, root, "rev-parse", "HEAD")
 	var stdout, stderr bytes.Buffer
 	want := "bench worktree reauthorize: review base is not an ancestor of source tip; wanted=" + creation.Assignment.Start + "\n"
-	if code := ReauthorizeCommand(root, Home(), []string{"--assignment", creation.Assignment.ID, "--request", "replacement", "--base", nonAncestorBase, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
+	if code := ReauthorizeCommand(root, home, []string{"--assignment", creation.Assignment.ID, "--request", "replacement", "--base", nonAncestorBase, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
 		t.Fatalf("ancestry refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
 
 func TestReauthorizeCommandRefusesRecordedStartOutsideSourceHistory(t *testing.T) {
-	root, creation, base, tip := reauthorizeFixture(t)
+	t.Parallel()
+	root, creation, base, tip, home := reauthorizeFixture(t)
 	commitInWorktree(t, root, "later.txt", "later\n", "later")
 	a := creation.Assignment
 	a.Start = gitOutput(t, root, "rev-parse", "HEAD")
@@ -101,19 +105,20 @@ func TestReauthorizeCommandRefusesRecordedStartOutsideSourceHistory(t *testing.T
 	gitRun(t, root, "worktree", "lock", "--reason", lockReason(a), creation.Path)
 	var stdout, stderr bytes.Buffer
 	want := "bench worktree reauthorize: recorded start is not an ancestor of source tip; wanted=" + a.Start + "\n"
-	if code := ReauthorizeCommand(root, Home(), []string{"--assignment", a.ID, "--request", "replacement", "--base", base, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
+	if code := ReauthorizeCommand(root, home, []string{"--assignment", a.ID, "--request", "replacement", "--base", base, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
 		t.Fatalf("recorded-start refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
 
 func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T) {
-	root, creation, base, tip := reauthorizeFixture(t)
+	t.Parallel()
+	root, creation, base, tip, home := reauthorizeFixture(t)
 	before := reauthorizeEvidence(t, root, creation.Path)
 	args := []string{"--assignment", creation.Assignment.ID, "--request", "replacement-request", "--base", base, "--source-tip", tip, creation.Path}
 	var stdout, stderr bytes.Buffer
 	unknown := append([]string(nil), args...)
 	unknown[1] = strings.Repeat("f", 32)
-	if code := ReauthorizeCommand(root, Home(), unknown, &stdout, &stderr); code != 1 {
+	if code := ReauthorizeCommand(root, home, unknown, &stdout, &stderr); code != 1 {
 		t.Fatalf("unknown assignment exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if got := reauthorizeEvidence(t, root, creation.Path); got != before {
@@ -121,7 +126,7 @@ func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T
 	}
 	stdout.Reset()
 	stderr.Reset()
-	if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 0 {
+	if code := ReauthorizeCommand(root, home, args, &stdout, &stderr); code != 0 {
 		t.Fatalf("reauthorize exit = %d; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if want := "reauthorized{assignment=" + creation.Assignment.ID + ",recorded_start=" + creation.Assignment.Start + ",approved_base=" + base + ",source_tip=" + tip + ",state=active}\n"; stdout.String() != want {
@@ -154,7 +159,7 @@ func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T
 	beforeDetached := reauthorizeEvidence(t, root, creation.Path)
 	stdout.Reset()
 	stderr.Reset()
-	if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 1 {
+	if code := ReauthorizeCommand(root, home, args, &stdout, &stderr); code != 1 {
 		t.Fatalf("detached assignment exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if got := reauthorizeEvidence(t, root, creation.Path); got != beforeDetached {
@@ -201,12 +206,12 @@ func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			root, creation, base, tip := reauthorizeFixture(t)
+			root, creation, base, tip, home := reauthorizeFixture(t)
 			before := reauthorizeEvidence(t, root, creation.Path)
 			testCase.install(t, creation)
 			var stdout, stderr bytes.Buffer
 			args := []string{"--assignment", creation.Assignment.ID, "--request", "replacement-request", "--base", base, "--source-tip", tip, creation.Path}
-			if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 1 {
+			if code := ReauthorizeCommand(root, home, args, &stdout, &stderr); code != 1 {
 				t.Fatalf("%s exit = %d, want 1; stdout=%q stderr=%q", testCase.name, code, stdout.String(), stderr.String())
 			}
 			if got := reauthorizeEvidence(t, root, creation.Path); got != before {
@@ -253,20 +258,23 @@ func reauthorizeEvidence(t *testing.T, root, path string) reauthorizeState {
 	}
 }
 
-func reauthorizeFixture(t *testing.T) (string, Creation, string, string) {
+// reauthorizeFixture returns the repository, its registration, the reviewed base and
+// tip, and the private home the registration lives under. The home is explicit, so
+// the fixture binds no process environment.
+func reauthorizeFixture(t *testing.T) (string, Creation, string, string, string) {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	if err := os.WriteFile(filepath.Join(root, "reviewed.txt"), []byte("reviewed source\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	gitRun(t, root, "add", "reviewed.txt")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "reviewed source")
-	creation := mustCreate(t, root, "lost-request", "reauthorize fixture")
+	creation := mustCreate(t, root, home, "lost-request", "reauthorize fixture")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	if creation.Assignment.Start != tip {
 		t.Fatalf("fixture start = %s, tip = %s, want equal", creation.Assignment.Start, tip)
 	}
-	return root, creation, base, tip
+	return root, creation, base, tip, home
 }

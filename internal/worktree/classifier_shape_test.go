@@ -71,7 +71,8 @@ func TestClassifyPathShapeUnknownUnreadableGitEntry(t *testing.T) {
 // pointer. ClassifyPathShape must decide by shape alone, so it runs off the test
 // goroutine. It fails the moment it misses the deadline instead of wedging the suite.
 func TestClassifyPathShapeRefusesSpecialGitEntry(t *testing.T) {
-	_, creation := newOwnedAssignment(t, "special-git-fifo")
+	t.Parallel()
+	_, creation, _ := newOwnedAssignment(t, "special-git-fifo")
 	mustRemove(t, filepath.Join(creation.Path, ".git"))
 	mustNoError(t, syscall.Mkfifo(filepath.Join(creation.Path, ".git"), 0o600))
 

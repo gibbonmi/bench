@@ -14,28 +14,30 @@ import (
 )
 
 func TestResumeLandCommandFollowupFailureExitsIncomplete(t *testing.T) {
+	t.Parallel()
 	request := "resume-release-incomplete"
-	root, creation, base, tip, _ := publicLandingFixture(t, request, "private/output", "dist/")
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "private/output", "dist/")
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
+	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
 		t.Fatalf("first incomplete exit = %d, want 3; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	code := LandCommand(root, Home(), "", args, &stdout, &stderr)
+	code := LandCommand(root, home, "", args, &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 		t.Fatalf("resume incomplete = (%d, %q, %q), want exit 3", code, stdout.String(), stderr.String())
 	}
 }
 
 func TestLandCommandIncompleteNextUsesAssignmentPointerForUnsafePath(t *testing.T) {
+	t.Parallel()
 	request := "incomplete-unsafe-path"
 	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
 	root, creation, base, tip, _ := publicLandingFixtureAtHome(t, request, "private/output", "dist/", home)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	wantNext := "next=bench worktree exec " + creation.Assignment.ID + " -- bench worktree land --resume '"
 	unsafe := strings.ContainsRune(stdout.String(), '\x1b') || strings.Count(stdout.String(), "\n") != 1
 	if code != 3 || unsafe || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), " --spec 'x' .}") {
@@ -44,9 +46,10 @@ func TestLandCommandIncompleteNextUsesAssignmentPointerForUnsafePath(t *testing.
 }
 
 func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-land-resume"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "private/output", "dist/")
+	root, creation, base, tip, tally, _ := publicLandingFixture(t, request, "private/output", "dist/")
 	land := func(args ...string) (int, string, string) {
 		var stdout, stderr bytes.Buffer
 		cmd := descendant(t, binary, append([]string{"worktree", "land"}, args...)...)
@@ -85,9 +88,10 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 }
 
 func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-resume-identity"
-	root, creation, base, tip, _ := publicLandingFixture(t, request, "private/output", "dist/")
+	root, creation, base, tip, _, _ := publicLandingFixture(t, request, "private/output", "dist/")
 	land := func(args ...string) (int, string, string) {
 		var stdout, stderr bytes.Buffer
 		cmd := descendant(t, binary, append([]string{"worktree", "land"}, args...)...)
@@ -171,12 +175,12 @@ func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
 
 func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T) {
 	request := "resume-reconcile"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 	oldReconcile := reconcileLanding
 	reconcileLanding = func(string, string, string, string) error { return errors.New("injected reconciliation interruption") }
 	t.Cleanup(func() { reconcileLanding = oldReconcile })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
+	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -184,7 +188,7 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := LandCommand(root, Home(), "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("resume reconciliation = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "HEAD"); got != published {
@@ -199,7 +203,7 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 	for _, specArg := range []string{"x", "./specs/x/spec.md"} {
 		t.Run(specArg, func(t *testing.T) {
 			request := "resume-spec-form-" + strings.ReplaceAll(specArg, "/", "-")
-			root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+			root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 			chdir(t, root)
 			oldMarker := advanceLandingMarker
 			advanceLandingMarker = func(context.Context, string, string, string, string) error {
@@ -208,7 +212,7 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 			t.Cleanup(func() { advanceLandingMarker = oldMarker })
 
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+			if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			published := gitOutput(t, root, "rev-parse", "main")
@@ -216,7 +220,7 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", specArg, creation.Path}
-			if code := LandCommand(root, Home(), "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+			if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 				t.Fatalf("resume with spec %q = (%d, %q, %q)", specArg, code, stdout.String(), stderr.String())
 			}
 			if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
@@ -228,14 +232,14 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 
 func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
 	request := "resume-marker"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 	oldMarker := advanceLandingMarker
 	advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
 	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -243,7 +247,7 @@ func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := LandCommand(root, Home(), "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("resume marker = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
@@ -256,6 +260,7 @@ func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
 }
 
 func TestResumeLandCommandPreauthenticatesCompletedRequestAndPath(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		args func(string, string, string, string, string) []string
@@ -269,16 +274,16 @@ func TestResumeLandCommandPreauthenticatesCompletedRequestAndPath(t *testing.T) 
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "resume-preauth-" + tc.name
-			root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+			if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
 				t.Fatalf("landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			published := gitOutput(t, root, "rev-parse", "main")
 			gitRun(t, root, "update-ref", "-d", "refs/bench/green/main")
 			stdout.Reset()
 			stderr.Reset()
-			if code := LandCommand(root, Home(), "", tc.args(published, base, tip, request, creation.Path), &stdout, &stderr); code != 1 || !strings.Contains(stdout.String(), "missing-terminal-receipt") || stderr.Len() != 0 {
+			if code := LandCommand(root, home, "", tc.args(published, base, tip, request, creation.Path), &stdout, &stderr); code != 1 || !strings.Contains(stdout.String(), "missing-terminal-receipt") || stderr.Len() != 0 {
 				t.Fatalf("preauthentication refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			if descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", "refs/bench/green/main").Run() == nil {

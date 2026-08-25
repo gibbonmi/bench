@@ -165,7 +165,6 @@ func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 // goes red here because the simulated claimant's create succeeds mid-cleanup.
 
 func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
-	t.Parallel()
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
 	restoreCleanMutex.Lock()
@@ -214,7 +213,6 @@ func deadPidLine(t *testing.T) string {
 // reclaimable, restores the fresh lease, and concedes.
 
 func TestClaimSecondReclaimerConcedes(t *testing.T) {
-	t.Parallel()
 	claimGapMutex.Lock()
 	t.Cleanup(claimGapMutex.Unlock)
 	if os.Getpid() == 1 {
@@ -272,7 +270,6 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 // leaving C's lease alone.
 
 func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
-	t.Parallel()
 	claimGapMutex.Lock()
 	t.Cleanup(claimGapMutex.Unlock)
 	if os.Getpid() == 1 {
@@ -412,15 +409,16 @@ func TestIgnoredInventoryEntryAndByteBoundaries(t *testing.T) {
 	}
 }
 func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
-	root, creation := newPendingAssignment(t, "release-crash-window")
+	t.Parallel()
+	root, creation, home := newPendingAssignment(t, "release-crash-window")
 	plan, err := ApplyAutomatic(root, creation.Path, nil)
 	requireTest(t, err == nil && plan.Action == ActionRemoved, "automatic cleanup = %#v, %v", plan, err)
 	args := []string{"--request", "landed-release-crash-window", creation.Path}
 	var first, firstErr strings.Builder
-	code := ReleaseCommand(root, Home(), args, &first, &firstErr)
+	code := ReleaseCommand(root, home, args, &first, &firstErr)
 	requireTest(t, code == 0 && firstErr.String() == "", "release reconciliation code=%d stderr=%q", code, firstErr.String())
 	var replay, replayErr strings.Builder
-	code = ReleaseCommand(root, Home(), args, &replay, &replayErr)
+	code = ReleaseCommand(root, home, args, &replay, &replayErr)
 	requireTest(t, code == 0 && replay.String() == first.String() && replayErr.String() == "", "release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
 	repo, _, _ := cleanupIdentity(root, creation.Path)
 	_, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, creation.Path, intent.RequestDigest("landed-release-crash-window"))
@@ -434,11 +432,12 @@ func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
 // automatic transaction's own state, not a bespoke pre-transition refusal) so a retry
 // replans through the same verdict.
 func TestReleaseUnmergedAssignmentRetains(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "unmerged-release")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "unmerged-release")
 	commitInWorktree(t, creation.Path, "unique.txt", "preserve\n", "unique work")
 
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, Home(), []string{"--request", "landed-unmerged-release", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-unmerged-release", creation.Path}, &stdout, &stderr)
 	requireTest(t, code == 1, "unmerged release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (unmerged)") && strings.Contains(stderr.String(), "assignment branch has not landed"),
 		"unmerged reason missing: %q", stderr.String())

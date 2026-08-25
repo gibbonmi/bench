@@ -122,7 +122,7 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-			creation := mustCreate(t, root, "landed-land-terminal-"+tc.name, "landing terminal")
+			creation := mustCreate(t, root, Home(), "landed-land-terminal-"+tc.name, "landing terminal")
 			mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".bench-home/\n"), 0o644)
 			gitRun(t, root, "add", ".gitignore")
 			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore fixture pool")
@@ -146,7 +146,7 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	creation := mustCreate(t, root, "landed-hostile-release", "hostile release")
+	creation := mustCreate(t, root, Home(), "landed-hostile-release", "hostile release")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -186,7 +186,7 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 			request := "landed-hostile-" + tc.name
-			creation := mustCreate(t, root, request, "hostile source")
+			creation := mustCreate(t, root, Home(), request, "hostile source")
 			stageLandSpec(t, root, creation.Path)
 			base := gitOutput(t, root, "rev-parse", "HEAD")
 			if tc.name != "control-bearing-committed-path" {
@@ -237,7 +237,7 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-			creation := mustCreate(t, root, "landed-marker-"+tc.name, "marker order")
+			creation := mustCreate(t, root, Home(), "landed-marker-"+tc.name, "marker order")
 			stageLandSpec(t, root, creation.Path)
 			base := gitOutput(t, root, "rev-parse", "HEAD")
 			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -304,7 +304,7 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 			request := "landed-pre-gate-" + tc.name
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-			creation := mustCreate(t, root, request, "pre-gate refusal")
+			creation := mustCreate(t, root, Home(), request, "pre-gate refusal")
 			stageLandSpec(t, root, creation.Path)
 			base := gitOutput(t, root, "rev-parse", "HEAD")
 			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")

@@ -19,7 +19,7 @@ import (
 // a warning rather than a failure. This is the exact case the operator override exists for.
 func unprovableLandedAssignment(t *testing.T, request string) (string, Creation) {
 	t.Helper()
-	root, creation := newOwnedAssignment(t, request)
+	root, creation, _ := newOwnedAssignment(t, request)
 	commitInWorktree(t, creation.Path, "one.txt", "one\n", "one")
 	if err := os.Chmod(filepath.Join(creation.Path, "tracked.txt"), 0o755); err != nil {
 		t.Fatal(err)
@@ -51,6 +51,7 @@ func renderedPlan(t *testing.T, plan CleanupPlan) string {
 
 // [RW1]
 func TestDiscardBranchRetiresTheBranchAndLeavesNoRecoveryRef(t *testing.T) {
+	t.Parallel()
 	root, creation := unprovableLandedAssignment(t, "rw1")
 	options := CleanupOptions{DiscardBranch: true}
 	plan, err := PlanExplicitWithOptions(root, creation.Path, options)
@@ -72,6 +73,7 @@ func TestDiscardBranchRetiresTheBranchAndLeavesNoRecoveryRef(t *testing.T) {
 
 // [RW2]
 func TestDiscardBranchPlanNamesTheBranchBeforeAnyRemoval(t *testing.T) {
+	t.Parallel()
 	root, creation := unprovableLandedAssignment(t, "rw2")
 	plan, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{DiscardBranch: true})
 	mustNoError(t, err)
@@ -87,6 +89,7 @@ func TestDiscardBranchPlanNamesTheBranchBeforeAnyRemoval(t *testing.T) {
 // [RW3] The override is an argument to the explicit path only. This is the regression
 // guard on that boundary: it passed before the override existed and must keep passing.
 func TestDiscardBranchLeavesTheDerivedClassificationUnchanged(t *testing.T) {
+	t.Parallel()
 	t.Run("automatic path retains an unproven branch and authorizes no deletion", func(t *testing.T) {
 		root, creation := unprovableLandedAssignment(t, "rw3-automatic")
 		plan, err := PlanAutomatic(root, creation.Path)
@@ -114,6 +117,7 @@ func TestDiscardBranchLeavesTheDerivedClassificationUnchanged(t *testing.T) {
 
 // [RW4]
 func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
+	t.Parallel()
 	options := CleanupOptions{DiscardBranch: true}
 	t.Run("primary checkout", func(t *testing.T) {
 		root, _ := unprovableLandedAssignment(t, "rw4-primary")

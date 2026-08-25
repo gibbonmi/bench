@@ -13,7 +13,7 @@ import (
 
 func landSurface(t *testing.T, request string) (string, Creation, string, string) {
 	t.Helper()
-	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, _, _ := publicLandingFixture(t, request, "", "")
 	return root, creation, base, tip
 }
 
@@ -39,6 +39,7 @@ func seedCaptureBase(t *testing.T, root, source string, files map[string]string)
 }
 
 func TestLandCommandAcceptsAbbreviatedIdentities(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-abbreviated"
 	root, creation, base, tip := landSurface(t, request)
 	code, stdout, stderr := landIn(t, root, landArgs(request, base[:12], tip[:12], creation.Path))
@@ -52,6 +53,7 @@ func TestLandCommandAcceptsAbbreviatedIdentities(t *testing.T) {
 }
 
 func TestLandCommandComposesCaptureOntoMovedDestination(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-capture-conflict"
 	root, creation, _, _ := landSurface(t, request)
 	base := seedCaptureBase(t, root, creation.Path, map[string]string{
@@ -82,6 +84,7 @@ func TestLandCommandComposesCaptureOntoMovedDestination(t *testing.T) {
 // WL19: the landing discloses each settled phase-owned path with its verb, so a
 // union the merge did not decide is visible on stderr rather than silent.
 func TestLandCommandDisclosesAUnionResolution(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-union-disclosure"
 	root, creation, _, _ := landSurface(t, request)
 	base := seedCaptureBase(t, root, creation.Path, map[string]string{"capture/learnings.md": "learnings base\n"})
@@ -107,6 +110,7 @@ func TestLandCommandDisclosesAUnionResolution(t *testing.T) {
 }
 
 func TestLandCommandAuthorizesCaptureOutsideTheFence(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-capture-fence"
 	root, creation, base, _ := landSurface(t, request)
 	mustMkdirAll(t, filepath.Join(creation.Path, "capture"), 0o755)
@@ -122,6 +126,7 @@ func TestLandCommandAuthorizesCaptureOutsideTheFence(t *testing.T) {
 }
 
 func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-one-preflight"
 	root, creation, base, tip := landSurface(t, request)
 	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
@@ -136,6 +141,7 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 // proof and the identity proof are independent, so one run has to name both; a
 // first-refusal-exits rewrite would hide the second for a whole run.
 func TestLandCommandReportsIdentityAndDestinationInOnePreflight(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-identity-preflight"
 	root, creation, base, tip := landSurface(t, request)
 	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
@@ -148,6 +154,7 @@ func TestLandCommandReportsIdentityAndDestinationInOnePreflight(t *testing.T) {
 }
 
 func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-fence-path"
 	root, creation, base, _ := landSurface(t, request)
 	commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
@@ -161,6 +168,7 @@ func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {
 // WL4 and WL21: the fence rides with the spec. A spec-backed landing still refuses a
 // path no fence names; the same source lands when no spec names a fence.
 func TestLandCommandFenceRidesWithTheSpec(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name    string
 		specArg bool
@@ -170,7 +178,7 @@ func TestLandCommandFenceRidesWithTheSpec(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "land-surface-fence-" + tc.name
-			root, creation, base, _, _ := specLessLandingFixture(t, request)
+			root, creation, base, _, _, _ := specLessLandingFixture(t, request)
 			commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
 			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 			args := specLessLandArgs(request, base, tip, creation.Path)
@@ -195,6 +203,7 @@ func TestLandCommandFenceRidesWithTheSpec(t *testing.T) {
 }
 
 func TestLandCommandConflictRefusalNamesThePath(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-conflict-path"
 	root, creation, base, tip := landSurface(t, request)
 	commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
@@ -207,8 +216,9 @@ func TestLandCommandConflictRefusalNamesThePath(t *testing.T) {
 // WL16: a board file is outside the rule table, so a conflict on ROADMAP.md refuses
 // and names the path the repair starts from.
 func TestLandCommandConflictOnTheBoardNamesTheBoardPath(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-conflict-roadmap"
-	root, creation, base, _, _ := specLessLandingFixture(t, request)
+	root, creation, base, _, _, _ := specLessLandingFixture(t, request)
 	commitInWorktree(t, creation.Path, "ROADMAP.md", "board source\n", "source board")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, root, "ROADMAP.md", "board destination\n", "destination board")
@@ -221,6 +231,7 @@ func TestLandCommandConflictOnTheBoardNamesTheBoardPath(t *testing.T) {
 // WL18: the conflict refusal names the source repair in order, and the re-run carries
 // the destination as the new base.
 func TestLandCommandConflictRefusalNamesTheSourceRepair(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-conflict-repair"
 	root, creation, base, tip := landSurface(t, request)
 	commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
@@ -240,8 +251,9 @@ func TestLandCommandConflictRefusalNamesTheSourceRepair(t *testing.T) {
 
 // A spec-less landing re-runs spec-less, so its conflict next names no --spec.
 func TestLandCommandSpecLessConflictNextNamesNoSpec(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-conflict-spec-less"
-	root, creation, base, _, _ := specLessLandingFixture(t, request)
+	root, creation, base, _, _, _ := specLessLandingFixture(t, request)
 	commitInWorktree(t, creation.Path, "ROADMAP.md", "board source\n", "source board")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, root, "ROADMAP.md", "board destination\n", "destination board")
@@ -254,8 +266,9 @@ func TestLandCommandSpecLessConflictNextNamesNoSpec(t *testing.T) {
 // Edge under WL16: a conflicted path that carries a control byte renders through the
 // sanitized paths table, so no raw control byte reaches the terminal.
 func TestLandCommandConflictOnAControlBytePathRendersSanitized(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-conflict-control-byte"
-	root, creation, base, _, _ := specLessLandingFixture(t, request)
+	root, creation, base, _, _, _ := specLessLandingFixture(t, request)
 	name := "board\x1bfile.md"
 	commitInWorktree(t, creation.Path, name, "source bytes\n", "source control-byte path")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
@@ -272,6 +285,7 @@ func TestLandCommandConflictOnAControlBytePathRendersSanitized(t *testing.T) {
 // Edge under WL18: a source worktree path that is not line-safe cannot be pasted, so
 // both repair steps that address it take the assignment pointer form.
 func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-conflict-unsafe-path"
 	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
 	root, creation, base, tip, _ := publicLandingFixtureAtHome(t, request, "", "", home)
@@ -291,6 +305,7 @@ func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
 // conflict next carries the `<spec>` placeholder and no raw control byte. A
 // tickets-only folder is the one spec shape whose name reaches the landing verbatim.
 func TestLandCommandConflictNextPlaceholdsAnUnsafeSpec(t *testing.T) {
+	t.Parallel()
 	request := "land-surface-conflict-unsafe-spec"
 	root, creation, base, _ := landSurface(t, request)
 	slug := "close\x1bme"

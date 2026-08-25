@@ -56,7 +56,7 @@ func TestCleanLandedApplyRefusesInitialDriftWithoutMutation(t *testing.T) {
 		args   func(string) []string
 	}{
 		{name: "new member", mutate: func(t *testing.T, root string, _ Creation) {
-			created := mustCreate(t, root, "landed-new-member", "new member")
+			created := mustCreate(t, root, Home(), "landed-new-member", "new member")
 			landAssignment(t, root, created, "member.txt")
 		}},
 		{name: "tracked dirt", mutate: func(t *testing.T, _ string, first Creation) {
@@ -253,8 +253,8 @@ func TestCleanLandedApplyCarriesModifiersAndDeletesProvenBranches(t *testing.T) 
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore landed residue")
-	clean := mustCreate(t, root, "landed-modifier-clean", "clean")
-	ignored := mustCreate(t, root, "landed-modifier-ignored", "ignored")
+	clean := mustCreate(t, root, Home(), "landed-modifier-clean", "clean")
+	ignored := mustCreate(t, root, Home(), "landed-modifier-ignored", "ignored")
 	landAssignment(t, root, clean, "clean.txt")
 	landAssignment(t, root, ignored, "landed.txt")
 	mustWrite(t, filepath.Join(ignored.Path, "ignored.txt"), []byte("residue\n"), 0o644)
@@ -284,7 +284,7 @@ func TestCleanLandedApplyCarriesModifiersAndDeletesProvenBranches(t *testing.T) 
 func TestCleanLandedDiscardBranchOnlyChangesDetail(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, "landed-branch-assertion", "branch assertion")
+	creation := mustCreate(t, root, Home(), "landed-branch-assertion", "branch assertion")
 	landAssignment(t, root, creation, "branch.txt")
 	plan, planErr, planCode := runCleanLanded(t, root, "--discard-branch", "--landed")
 	if planCode != 0 || planErr != "" || !strings.Contains(plan, "discards branch "+creation.Assignment.Branch) {
@@ -302,8 +302,8 @@ func TestCleanLandedDiscardBranchOnlyChangesDetail(t *testing.T) {
 func TestCleanLandedRetainsUnparseableLeaseAndSkipsUnprovableBranch(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	unknown := mustCreate(t, root, "landed-unknown-lease", "unknown lease")
-	unprovable := mustCreate(t, root, "landed-unprovable", "unprovable")
+	unknown := mustCreate(t, root, Home(), "landed-unknown-lease", "unknown lease")
+	unprovable := mustCreate(t, root, Home(), "landed-unprovable", "unprovable")
 	landAssignment(t, root, unknown, "unknown.txt")
 	commitInWorktree(t, unprovable.Path, "unprovable.txt", "unmerged\n", "unprovable")
 	lease, err := LeaseFile(unknown.Path)

@@ -19,7 +19,7 @@ func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore runtime records")
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, "runtime-eligibility", "runtime eligibility")
+	creation := mustCreate(t, root, Home(), "runtime-eligibility", "runtime eligibility")
 	mustMkdirAll(t, filepath.Join(creation.Path, ".logs"), 0o755)
 	mustWrite(t, filepath.Join(creation.Path, ".logs", "gate.jsonl"), []byte("record\n"), 0o644)
 	plan, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{})
@@ -38,12 +38,13 @@ func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
 // plan mutated after decideExplicit returned, would make this independent comparison
 // diverge from PlanExplicitWithOptions's own projection.
 func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
+	t.Parallel()
 	t.Run("clean-remove", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "ev1-clean-remove")
+		root, creation, _ := newOwnedAssignment(t, "ev1-clean-remove")
 		assertVerdictMatchesPlan(t, root, creation.Path, CleanupOptions{})
 	})
 	t.Run("dirty-recover-remove", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "ev1-dirty-recover-remove")
+		root, creation, _ := newOwnedAssignment(t, "ev1-dirty-recover-remove")
 		mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
 		assertVerdictMatchesPlan(t, root, creation.Path, CleanupOptions{})
 	})

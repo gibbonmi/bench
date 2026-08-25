@@ -16,8 +16,8 @@ import (
 func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, "home space *"))
-	clean := mustCreate(t, root, "landed-hostile-clean", "clean")
-	dirty := mustCreate(t, root, "landed-hostile-dirty", "dirty")
+	clean := mustCreate(t, root, Home(), "landed-hostile-clean", "clean")
+	dirty := mustCreate(t, root, Home(), "landed-hostile-dirty", "dirty")
 	landAssignment(t, root, clean, "clean.txt")
 	landAssignment(t, root, dirty, "dirty.txt")
 	mustWrite(t, filepath.Join(dirty.Path, "dirty.txt"), []byte("changed\n"), 0o644)
@@ -44,7 +44,7 @@ func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
 func TestCleanLandedControlBytePathRetained(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, "home\x1bunsafe"))
-	creation := mustCreate(t, root, "landed-control", "control")
+	creation := mustCreate(t, root, Home(), "landed-control", "control")
 	landAssignment(t, root, creation, "control.txt")
 
 	stdout, stderr, code := runCleanLanded(t, root, "--landed")
@@ -65,7 +65,7 @@ func TestCleanLandedControlBytePathRetained(t *testing.T) {
 func TestCleanLandedTabPathRendersOneRow(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, "home\tpath"))
-	creation := mustCreate(t, root, "landed-tab", "tab")
+	creation := mustCreate(t, root, Home(), "landed-tab", "tab")
 	landAssignment(t, root, creation, "tab.txt")
 
 	stdout, stderr, code := runCleanLanded(t, root, "--landed")
@@ -115,7 +115,7 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			t.Cleanup(func() { planLandedExplicitWithOptions = previousPlanner })
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-			creation := mustCreate(t, root, "landed-special-"+strings.ReplaceAll(tc.name, " ", "-"), tc.name)
+			creation := mustCreate(t, root, Home(), "landed-special-"+strings.ReplaceAll(tc.name, " ", "-"), tc.name)
 			landAssignment(t, root, creation, "special.txt")
 			if err := os.RemoveAll(creation.Path); err != nil {
 				t.Fatal(err)
@@ -168,7 +168,7 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
 			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-			creation := mustCreate(t, root, "landed-metadata-"+tc.name, tc.name)
+			creation := mustCreate(t, root, Home(), "landed-metadata-"+tc.name, tc.name)
 			landAssignment(t, root, creation, "metadata.txt")
 			metadata := filepath.Join(creation.Path, ".git")
 			if err := os.Remove(metadata); err != nil {

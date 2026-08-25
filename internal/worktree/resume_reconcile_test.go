@@ -126,7 +126,7 @@ func TestResumeReconcileIsIdempotent(t *testing.T) {
 func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 	bindEnv(t, "BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
-	pool := mustCreate(t, root, "reconcile-pool", "pool work")
+	pool := mustCreate(t, root, Home(), "reconcile-pool", "pool work")
 	green := seedLifecycleDebris(t, root)
 	seedLegacyAssignments(t, root)
 
@@ -156,7 +156,7 @@ func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
 	bindEnv(t, "BENCH_HOME", t.TempDir())
 	root := newWorktreeRepo(t)
-	pool := mustCreate(t, root, "interrupted-pool", "pool work")
+	pool := mustCreate(t, root, Home(), "interrupted-pool", "pool work")
 	green := seedLifecycleDebris(t, root)
 	seedLegacyAssignments(t, root)
 	for _, name := range []string{"refs/bench/specbuild/checkpoint/one", "refs/bench/specbuild/checkpoint/two"} {

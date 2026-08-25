@@ -31,9 +31,10 @@ func landingSpecAmendment(t *testing.T, source string) []byte {
 }
 
 func TestLandCommandPublicLandsAnInRangeSpecAmendment(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-land-spec-amendment"
-	root, creation, base, _, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, _, tally, _ := publicLandingFixture(t, request, "", "")
 	amended := landingSpecAmendment(t, creation.Path)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
@@ -55,9 +56,10 @@ func TestLandCommandPublicLandsAnInRangeSpecAmendment(t *testing.T) {
 }
 
 func TestResumeLandCommandPublicCompletesAnAmendedSourceLanding(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-resume-spec-amendment"
-	root, creation, base, _, tally := publicLandingFixture(t, request, "private/output", "dist/")
+	root, creation, base, _, tally, _ := publicLandingFixture(t, request, "private/output", "dist/")
 	amended := landingSpecAmendment(t, creation.Path)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	land := func(args ...string) (int, string, string) {

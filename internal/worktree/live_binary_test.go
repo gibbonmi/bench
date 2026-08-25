@@ -17,8 +17,9 @@ import (
 
 // newResidueGuardFixture builds a repository whose dist/ is both ignored and declared as
 // build output, plus one owned assignment holding an empty dist/. This is the exact shape
-// that lets a release reach the residue guard's removal loop.
-func newResidueGuardFixture(t *testing.T, request string) (string, Creation) {
+// that lets a release reach the residue guard's removal loop. It returns the private
+// home the registration lives under, so the fixture binds no process environment.
+func newResidueGuardFixture(t *testing.T, request string) (string, Creation, string) {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
@@ -26,10 +27,10 @@ func newResidueGuardFixture(t *testing.T, request string) (string, Creation) {
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore build output")
 	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
 	mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"dist/\"]}\n"), 0o644)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, request, "residue guard")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, request, "residue guard")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
-	return root, creation
+	return root, creation, home
 }
 
 // captureLiveBinaryWarnings redirects the guard's warning sink for one test.
@@ -71,14 +72,14 @@ func stubRunningBinary(t *testing.T, path string) {
 // the package version the version and upgrade contracts read unstamped.
 func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 	const request = "landed-live-binary"
-	root, creation := newResidueGuardFixture(t, request)
+	root, creation, home := newResidueGuardFixture(t, request)
 	live := filepath.Join(creation.Path, "dist", "bench")
 	mustWrite(t, live, []byte("binary\n"), 0o755)
 	warnings := captureLiveBinaryWarnings(t)
 	stubRunningBinary(t, live)
 
 	var stdout bytes.Buffer
-	code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, &stdout, io.Discard)
+	code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "live-binary release exit=%d stdout=%q", code, stdout.String())
 
 	warned := warnings.String()
@@ -97,7 +98,6 @@ func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 // silently" is exactly the incident this guard exists to prevent. No fixture reaches
 // them through ReleaseCommand, whose stub always resolves.
 func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
-	t.Parallel()
 	holdLiveBinaryStubs(t)
 	candidate := filepath.Join(t.TempDir(), "bench")
 	mustWrite(t, candidate, []byte("binary\n"), 0o755)
@@ -132,7 +132,6 @@ func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
 // EvalSymlinks normalization and os.Stat following the link. So no single mutation
 // reddens this. It pins the behavior, not either mechanism.
 func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
-	t.Parallel()
 	holdLiveBinaryStubs(t)
 	dir := t.TempDir()
 	real := filepath.Join(dir, "bench")
@@ -159,7 +158,7 @@ func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "landed-foreign-" + strings.ReplaceAll(tc.name, " ", "-")
-			root, creation := newResidueGuardFixture(t, request)
+			root, creation, home := newResidueGuardFixture(t, request)
 			foreign := filepath.Join(creation.Path, "dist", tc.residue)
 			mustWrite(t, foreign, []byte("binary\n"), 0o755)
 			elsewhere := filepath.Join(t.TempDir(), "bench")
@@ -168,7 +167,7 @@ func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {
 			stubRunningBinary(t, elsewhere)
 
 			var stdout bytes.Buffer
-			code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, &stdout, io.Discard)
+			code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, &stdout, io.Discard)
 			requireTest(t, code == 0, "foreign release exit=%d stdout=%q", code, stdout.String())
 			requireTest(t, warnings.Len() == 0, "foreign %s warned: %q", foreign, warnings.String())
 		})

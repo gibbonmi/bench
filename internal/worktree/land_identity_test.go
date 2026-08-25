@@ -33,11 +33,11 @@ func forbidLandingComposition(t *testing.T) *int {
 // TestLandCommandInvalidatesAChangedRequestBeforeComposition is SOL05.
 func TestLandCommandInvalidatesAChangedRequestBeforeComposition(t *testing.T) {
 	request := "land-identity-request"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 	composed := forbidLandingComposition(t)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs("land-identity-request-changed", base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs("land-identity-request-changed", base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
 		t.Fatalf("changed request = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
 	}
@@ -47,11 +47,11 @@ func TestLandCommandInvalidatesAChangedRequestBeforeComposition(t *testing.T) {
 // TestLandCommandInvalidatesAChangedReviewBaseBeforeComposition is SOL06.
 func TestLandCommandInvalidatesAChangedReviewBaseBeforeComposition(t *testing.T) {
 	request := "land-identity-base"
-	root, creation, _, tip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, _, tip, tally, home := publicLandingFixture(t, request, "", "")
 	composed := forbidLandingComposition(t)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, tip, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, tip, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
 		t.Fatalf("changed review base = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
 	}
@@ -61,12 +61,12 @@ func TestLandCommandInvalidatesAChangedReviewBaseBeforeComposition(t *testing.T)
 // TestLandCommandInvalidatesAChangedSourceTipBeforeComposition is SOL07.
 func TestLandCommandInvalidatesAChangedSourceTipBeforeComposition(t *testing.T) {
 	request := "land-identity-tip"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 	commitInWorktree(t, creation.Path, "moved.txt", "moved\n", "tip moved after review")
 	composed := forbidLandingComposition(t)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "source tip mismatch") {
 		t.Fatalf("changed source tip = (%d, %q, %q), want a tip-mismatch refusal", code, stdout.String(), stderr.String())
 	}
@@ -78,12 +78,12 @@ func TestLandCommandInvalidatesAChangedSourceTipBeforeComposition(t *testing.T) 
 // it before composition, so before the gate.
 func TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate(t *testing.T) {
 	request := "land-identity-fingerprint"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 	mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o600)
 	composed := forbidLandingComposition(t)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "reviewed source is not clean") {
 		t.Fatalf("changed source fingerprint = (%d, %q, %q), want a not-clean refusal", code, stdout.String(), stderr.String())
 	}
@@ -117,7 +117,7 @@ func requireIdentityRefusalState(t *testing.T, root, path, tally string, compose
 // authorized, and it refuses before composition.
 func TestLandCommandRefusesAReviewBaseBehindTheRecordedStart(t *testing.T) {
 	request := "land-identity-recorded-start"
-	root, creation, base, tip, tally := specLessLandingFixture(t, request)
+	root, creation, base, tip, tally, home := specLessLandingFixture(t, request)
 	earlier := gitOutput(t, root, "rev-parse", base+"~1")
 	if earlier == base {
 		t.Fatalf("fixture has no earlier ancestor than the recorded start %q", base)
@@ -128,7 +128,7 @@ func TestLandCommandRefusesAReviewBaseBehindTheRecordedStart(t *testing.T) {
 	composed := forbidLandingComposition(t)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", specLessLandArgs(request, earlier, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", specLessLandArgs(request, earlier, tip, creation.Path), &stdout, &stderr)
 	want := "detail=" + reviewedRangeDetail + ",observed=" + earlier + ",wanted=" + base
 	if code != 1 || !strings.Contains(stdout.String(), want) {
 		t.Fatalf("earlier ancestor base = (%d, %q, %q), want a refusal carrying %q", code, stdout.String(), stderr.String(), want)

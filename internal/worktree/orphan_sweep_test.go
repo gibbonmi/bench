@@ -50,7 +50,7 @@ func makeUnlandedAssignment(t *testing.T, creation Creation) {
 
 func TestResumeSummaryNamesCleanCommand(t *testing.T) {
 	root := newSweepRepo(t)
-	orphan := mustCreate(t, root, "summary-clean-command", "aged, tree present")
+	orphan := mustCreate(t, root, Home(), "summary-clean-command", "aged, tree present")
 	makeUnlandedAssignment(t, orphan)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
 
@@ -72,7 +72,7 @@ func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore")
-	orphan := mustCreate(t, root, "summary-ignored-residue", "aged, ignored residue")
+	orphan := mustCreate(t, root, Home(), "summary-ignored-residue", "aged, ignored residue")
 	makeUnlandedAssignment(t, orphan)
 	mustWrite(t, filepath.Join(orphan.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
@@ -91,7 +91,7 @@ func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
 // That suggestion would manufacture the next generation of the residue this listing reports.
 func TestResumeSummaryNeverSuggestsDiscardIgnored(t *testing.T) {
 	root := newSweepRepo(t)
-	orphan := mustCreate(t, root, "summary-no-discard", "aged, tree present")
+	orphan := mustCreate(t, root, Home(), "summary-no-discard", "aged, tree present")
 	makeUnlandedAssignment(t, orphan)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
 
@@ -109,8 +109,8 @@ func TestResumeSummaryNeverSuggestsDiscardIgnored(t *testing.T) {
 // leave the ledger and the registration disagreeing.
 func TestSweepCompactsOrphanedActiveResidue(t *testing.T) {
 	root := newSweepRepo(t)
-	residue := mustCreate(t, root, "orphan-residue-gone", "aged, tree gone, unregistered")
-	prunable := mustCreate(t, root, "orphan-residue-prunable", "aged, tree gone, still registered")
+	residue := mustCreate(t, root, Home(), "orphan-residue-gone", "aged, tree gone, unregistered")
+	prunable := mustCreate(t, root, Home(), "orphan-residue-prunable", "aged, tree gone, still registered")
 	backdate(t, root, residue.Assignment, 8*24*time.Hour)
 	backdate(t, root, prunable.Assignment, 8*24*time.Hour)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", residue.Path)
@@ -142,8 +142,8 @@ func unstamp(t *testing.T, root string, assignment intent.Assignment) {
 // gone and unregistered is compacted; one whose tree is present is reported and left alone.
 func TestSweepHandlesPreStampLedgerRecords(t *testing.T) {
 	root := newSweepRepo(t)
-	present := mustCreate(t, root, "prestamp-present", "unstamped, tree present")
-	gone := mustCreate(t, root, "prestamp-gone", "unstamped, tree gone")
+	present := mustCreate(t, root, Home(), "prestamp-present", "unstamped, tree present")
+	gone := mustCreate(t, root, Home(), "prestamp-gone", "unstamped, tree gone")
 	makeUnlandedAssignment(t, present)
 	makeUnlandedAssignment(t, gone)
 	unstamp(t, root, present.Assignment)
@@ -190,7 +190,7 @@ func denyStat(t *testing.T, dir string) {
 // That is the one loss the sweep's tree-gone verdicts exist to avoid.
 func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
 	root := newSweepRepo(t)
-	unknown := mustCreate(t, root, "orphan-stat-unknown", "aged, tree present but unreadable")
+	unknown := mustCreate(t, root, Home(), "orphan-stat-unknown", "aged, tree present but unreadable")
 	mustWrite(t, filepath.Join(unknown.Path, "work.txt"), []byte("uncommitted\n"), 0o644)
 	backdate(t, root, unknown.Assignment, 8*24*time.Hour)
 	unregisterWorktree(t, root, unknown.Path)
@@ -218,7 +218,7 @@ func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
 // The ref it points at is one the same run sweeps.
 func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
 	root := newSweepRepo(t)
-	preserved := mustCreate(t, root, "orphan-preserved", "aged, holds preserved work")
+	preserved := mustCreate(t, root, Home(), "orphan-preserved", "aged, holds preserved work")
 	a := preserved.Assignment
 	ref := intent.RecoveryRefPrefix(a.OwnerID, a.ID) + "1"
 	recovery := []intent.Recovery{{Ref: ref, Root: strings.Repeat("a", 40), Payloads: []string{strings.Repeat("b", 40)}}}
@@ -247,8 +247,8 @@ func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
 // differs — and the two runs after it are the compared pair.
 func TestSweepIsIdempotent(t *testing.T) {
 	root := newSweepRepo(t)
-	present := mustCreate(t, root, "idempotent-orphan", "aged, tree present")
-	gone := mustCreate(t, root, "idempotent-residue", "aged, tree gone")
+	present := mustCreate(t, root, Home(), "idempotent-orphan", "aged, tree present")
+	gone := mustCreate(t, root, Home(), "idempotent-residue", "aged, tree gone")
 	makeUnlandedAssignment(t, present)
 	makeUnlandedAssignment(t, gone)
 	backdate(t, root, present.Assignment, 8*24*time.Hour)
