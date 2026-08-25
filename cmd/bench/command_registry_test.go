@@ -466,6 +466,7 @@ var keptRoutes = []struct {
 	help string
 }{
 	{[]string{"worktree", "--help"}, "usage: bench worktree"},
+	{[]string{"worktree", "create", "--help"}, "usage: bench worktree create"},
 	{[]string{"worktree", "reauthorize", "--help"}, "usage: bench worktree reauthorize"},
 	{[]string{"gate", "--help"}, "usage: bench gate"},
 	{[]string{"commit", "--help"}, "usage: bench commit"},

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/usage"
 	"io"
 	"os"
 	"os/exec"
@@ -201,6 +202,65 @@ func TestCreateCommandPrintsNextHint(t *testing.T) {
 	}
 	if !strings.Contains(got, `  bench worktree path "next hint label"`+"\n") {
 		t.Fatalf("CreateCommand output missing path hint line: %q", got)
+	}
+}
+
+// TestCreateCommandAnswersHelpSpellings pins the create grammar move onto
+// usage.Parse: every help spelling prints the declared grammar on stdout and
+// exits 0, whether or not required flags are present.
+func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
+	want := "usage: " + usage.WorktreeCreate + "\n"
+	for _, args := range [][]string{
+		{"--help"},
+		{"-h"},
+		{"help"},
+		{"--request", "x", "--help"},
+	} {
+		var stdout, stderr bytes.Buffer
+		code := CreateCommand("", args, &stdout, &stderr)
+		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
+			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want (0, %q, empty)", args, code, stdout.String(), stderr.String(), want)
+		}
+	}
+}
+
+// TestCreateCommandHelpPerformsNoRefresh pins that a help request never fetches:
+// usage.Parse answers --help before refreshop.Consume ever sees the args, so a
+// --refresh alongside --help prints only the help line, not a worktree_refresh table.
+func TestCreateCommandHelpPerformsNoRefresh(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := CreateCommand("", []string{"--request", "x", "--refresh", "--help"}, &stdout, &stderr)
+	want := "usage: " + usage.WorktreeCreate + "\n"
+	if code != 0 || stdout.String() != want || stderr.Len() != 0 {
+		t.Fatalf("CreateCommand with --refresh --help = (%d, %q, %q), want (0, %q, empty)", code, stdout.String(), stderr.String(), want)
+	}
+}
+
+// TestCreateCommandRequiredFlagsKeepDeclaredHelp pins that a missing required
+// flag exits 2 with the declared grammar, matching the reauthorize sibling.
+func TestCreateCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
+	for _, args := range [][]string{
+		{"--request", "r"},
+		{"--label", "l"},
+	} {
+		var stdout, stderr bytes.Buffer
+		if code := CreateCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != createGrammar.Help+"\n" {
+			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), createGrammar.Help+"\n")
+		}
+	}
+}
+
+// TestCreateCommandRejectsEmptyFlagValues pins the shared empty-value rule on
+// --request and --label: an empty string names nothing and exits 2 naming it.
+func TestCreateCommandRejectsEmptyFlagValues(t *testing.T) {
+	for _, args := range [][]string{
+		{"--request", "", "--label", "l"},
+		{"--request", "r", "--label", ""},
+	} {
+		var stdout, stderr bytes.Buffer
+		if code := CreateCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 {
+			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want exit 2 with empty stdout", args, code, stdout.String(), stderr.String())
+		}
 	}
 }
 
