@@ -51,6 +51,8 @@ means the repository-controlled compliance assessment.
 
 **FT169 (MEDIUM) — the landing command's refusals name what to do next, and its authority is decided.**
 
+**FT253 (MEDIUM) — one landing lease in the intent ledger, from composition through publish.**
+
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
@@ -263,6 +265,7 @@ recommended table is sequencing advice.
 | FT166 | FT98 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT239 | FT222 | FT222 decides where routing's one source lives; the capability record joins that file rather than opening a second one. |
+| FT253 | FT169 | The lease is one answer to the landing's authority questions; decide those first so the lease keys on the settled lifecycle. |
 | FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
 
 ### Goal track: guidance prose
@@ -289,4 +292,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT215: the scoped gate path; two new faces (gofmt before the full gate, and evidence reuse) price the same decision.
+1. `/bench-shape-idea` — FT215: the scoped gate path; three faces (gofmt and the prose check before the full gate, and evidence reuse) price the same decision.
+2. `/bench-write-spec` — FT185: gate and commit output projection; two 2026-08-25 occurrences, and every run pays the unbounded output.
+3. `/bench-implement-spec` — FT120: the live-tree test sweep in `cmd/bench` as one light-path ticket.
