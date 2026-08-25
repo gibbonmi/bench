@@ -287,6 +287,17 @@ The kit phase table is exactly:
 | `system` | `go test -count=1 -tags=system ./internal/systemtest` |
 | `shellcheck` | the stable shell-file inventory, optional when shellcheck is absent |
 
+A worktree commit runs the fast lane, which is the short check list below. The
+landing runs the phase table above, and that whole-project gate stays the one
+full grade.
+
+| check | authoritative argv |
+|---|---|
+| `gofmt` | `bench gate-go gofmt` |
+| `prose` | `bench gate-prose <root> -- <named Markdown>` |
+| `vet` | `go vet ./...` |
+| `build` | `go build ./...` |
+
 Go owns package scheduling inside the one ordinary test driver, and that driver grades
 the live tree: the `test` phase carries the graded root and the dev tier to the
 conformance entry point, so the registry's checks run inside the oracle rather than only
@@ -361,6 +372,7 @@ current-state advertisement of its non-meta input bindings:
 | `decision-map-integrity` | `decision-documents` |
 | `injected-port-registry` | `go-source` |
 | `guidance-prose-budgets` | `benchkit-profile` |
+| `profile-lane-table` | `benchkit-profile` |
 | `roadmap-detail-integrity` | `roadmap-board` |
 | `structure-accept-currency` | `catch-all` |
 | `retro-improvement-markers` | `capture-retros` |

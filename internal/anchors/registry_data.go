@@ -15,6 +15,10 @@ const (
 	WorktreeRuleMarker = "Every phase runs in a bench worktree and lands through `bench worktree land`."
 	// WorktreeEnforcementMarker pins the command boundary that makes the worktree rule executable.
 	WorktreeEnforcementMarker = "`bench commit` enforces this boundary: it refuses the primary checkout"
+	// FastLaneRuleMarker pins the invariant-4 sentence that places the one full grade at the landing.
+	FastLaneRuleMarker = "Green is the landing's whole-project gate, and a worktree commit requires a lane pass, not a gate run."
+	// FastLaneLandingShapeMarker pins the reference's landing shape, which names the lane at the worktree commit.
+	FastLaneLandingShapeMarker = "runs the fast lane on a private checkout of the composed snapshot, and a lane pass"
 )
 
 var registry = []Anchor{
@@ -345,6 +349,8 @@ var registry = []Anchor{
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "Workflow", Needle: WorktreeRuleMarker, Diagnostic: ".bench/BENCH.md Workflow section dropped the worktree rule; every phase runs in a bench worktree and lands through bench worktree land"},
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "Workflow", Needle: WorktreeEnforcementMarker, Diagnostic: ".bench/BENCH.md Workflow section dropped worktree enforcement; bench commit refuses the primary checkout"},
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Require, Section: "", Needle: "The spec is optional on the landing and on its resume", Diagnostic: ".bench/BENCH-reference.md landing paragraph dropped the optional spec; a spec-less phase lands with no --spec"},
+	{Group: AfterSpecAuthorization, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "The four invariants (these override convenience, always)", Needle: FastLaneRuleMarker, Diagnostic: ".bench/BENCH.md invariant 4 dropped the fast-lane sentence; green is the landing's whole-project gate, and a worktree commit requires a lane pass, not a gate run"},
+	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: RequireInSection, Section: "Command Notes", Needle: FastLaneLandingShapeMarker, Diagnostic: ".bench/BENCH-reference.md landing shape dropped the fast lane; a worktree bench commit runs the lane, and the landing runs the one whole-project gate"},
 	{Group: AfterSpecAuthorization, File: ".bench/BENCH-reference.md", Kind: Forbid, Section: "", Needle: "may inherit exact per-check evidence", Diagnostic: ".bench/BENCH-reference.md reintroduced the retired per-check evidence inheritance; no surface authors a check partition"},
 	{Group: AfterSpecAuthorization, File: ".bench/hooks/block-dangerous-git.sh", Kind: Require, Section: "", Needle: "this is an honest-mistake layer, not an evasion-resistant", Diagnostic: ".bench/hooks/block-dangerous-git.sh dropped the honest-mistake threat-model classification; the guard is an honest-mistake layer, not an evasion-resistant boundary"},
 	{Group: AfterSpecAuthorization, File: ".bench/hooks/block-dangerous-git.sh", Kind: Require, Section: "", Needle: "exactly one level deep by design (see internal/gitguard)", Diagnostic: ".bench/hooks/block-dangerous-git.sh dropped the one-level-deep wrapper-scanning statement; the narrowed rim is a deliberate depth, not an evasion-resistant scan"},

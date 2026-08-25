@@ -275,3 +275,73 @@ func TestWorktreeEnforcementAnchorRedOnRemoval(t *testing.T) {
 		t.Fatalf("guide without enforcement = %v, want %q", diags, want)
 	}
 }
+
+// TestFastLaneAnchorsRedOnRemoval pins OG26 and OG27. Each needle and its diagnostic are
+// written here independently of the registry, so a guide that dropped the invariant-4
+// sentence, or a reference whose landing shape names only the gate, cannot define
+// itself green.
+func TestFastLaneAnchorsRedOnRemoval(t *testing.T) {
+	const invariants = "The four invariants (these override convenience, always)"
+	rules := []struct{ file, needle, want string }{
+		{".bench/BENCH.md", "Green is the landing's whole-project gate, and a worktree commit requires a lane pass, not a gate run.", ".bench/BENCH.md invariant 4 dropped the fast-lane sentence; green is the landing's whole-project gate, and a worktree commit requires a lane pass, not a gate run"},
+		{".bench/BENCH-reference.md", "A worktree `bench commit` runs the fast lane on a private checkout of the composed snapshot, and a lane pass publishes onto the worktree branch.", ".bench/BENCH-reference.md landing shape dropped the fast lane; a worktree bench commit runs the lane, and the landing runs the one whole-project gate"},
+	}
+	templates := map[string]string{
+		".bench/BENCH.md":           "# Bench Operating Guide\n\n## " + invariants + "\n\n4. Commit on green, never on red. %s\n\n## Workflow\n\n" + WorktreeRuleMarker + "\n" + WorktreeEnforcementMarker + "\n\n## Capture\n",
+		".bench/BENCH-reference.md": "# Bench reference\n\n## Command Notes\n\n%s\n\nThe spec is optional on the landing and on its resume.\n\n## Hook Layers\n",
+	}
+	if !strings.Contains(rules[1].needle, "lane") {
+		t.Fatalf("OG27 needle %q does not name the lane", rules[1].needle)
+	}
+
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		for i, r := range rules {
+			needle := r.needle
+			if i == dropped {
+				needle = ""
+			}
+			path := filepath.Join(root, filepath.FromSlash(r.file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(fmt.Sprintf(templates[r.file], needle)), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterSpecAuthorization)
+	}
+
+	full := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(full, r.want) {
+			t.Errorf("guide carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("guide without %q = %v, want %q", r.needle, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+
+	// The sentence binds to the invariants section: the same sentence under Workflow
+	// leaves the invariants without it, so the section-bound row still fires.
+	root := t.TempDir()
+	misplaced := "# Bench Operating Guide\n\n## " + invariants + "\n\n4. Commit on green, never on red.\n\n## Workflow\n\n" + rules[0].needle + "\n"
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), []byte(misplaced), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diags := EvaluateGroup(root, AfterSpecAuthorization); !slices.Contains(diags, rules[0].want) {
+		t.Errorf("guide with the fast-lane sentence under Workflow = %v, want %q", diags, rules[0].want)
+	}
+}

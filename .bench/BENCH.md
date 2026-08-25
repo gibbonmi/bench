@@ -47,8 +47,10 @@ append extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on
    the decision, not its history. Put no file paths and no code snippets in an
    ADR; they rot.
 4. **One small change at a time, repo stays green.** Make the smallest diff
-   that advances the objective. Commit on green, never on red. Read the
-   surrounding code first:
+   that advances the objective. Commit on green, never on red.
+   Green is the landing's whole-project gate, and a worktree commit requires a lane pass, not a gate run.
+
+   Read the surrounding code first:
    do not call an API or a function before you read its definition in this session.
    Compose an existing seam; do not invent one. If a reframed task makes a
    shortcut feel acceptable, stop and ask.
