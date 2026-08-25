@@ -239,7 +239,7 @@ live-tree conformance checks. The gate's `test` phase observes all of it.
 | OG33 | 5 | `bench gate-prose <root> -- <file>` exits 1 and names the file and the line for a 27-word sentence. | gate-prose command unit | A verb that exits 0 on findings lets the lane pass the sentence. |
 
 Not covered: story 17 — no behavior changes, and the existing stop-hook tests hold.
-Not covered: story 31 — an exclusion with no behavior; `decisions/worktree-test-floor.md` owns it.
+Not covered: story 31 — an exclusion with no behavior; `specs/worktree-test-floor/decisions/worktree-test-floor.md` owns it.
 
 ### Edge inventory
 
@@ -293,7 +293,7 @@ advertises the argv the gate ticket pins.
 
 - A `bench status` row that projects the lane record: 6 edits, 1 gate run.
 - Lane outcome reuse keyed to the tree: 8 edits, 2 gate runs.
-- The `internal/worktree` test floor, owned by `decisions/worktree-test-floor.md`: 30 edits, 4 gate runs.
+- The `internal/worktree` test floor, owned by `specs/worktree-test-floor/decisions/worktree-test-floor.md`: 30 edits, 4 gate runs.
 - The ticket-local evidence machinery of `spec-build-review-gate-cadence`, which waits on FT173 and FT130.
 - A gate path that selects packages from a diff. Four maps rule it unsound, and no estimate applies.
 - Reopening ADR 0016's evidence key. The map's #2 chose option D.

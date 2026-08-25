@@ -6,7 +6,7 @@ Status: ready
 
 A landed change pays the whole-project gate once, at the landing. A worktree
 commit records fast-lane evidence and never a whole-project verdict. Scope: `bench commit` in a worktree and `bench worktree land`. The floor of
-that one run is the second map, `decisions/worktree-test-floor.md`.
+that one run is the second map, `specs/worktree-test-floor/decisions/worktree-test-floor.md`.
 This map supersedes FT215's headline, a changed-package gate path, which prior
 rulings close.
 
@@ -100,7 +100,7 @@ Recommendation: two specs, cadence first.
 ### Answer
 
 Resolved 2026-08-25: two specs. This map is the cadence slice, and it is the
-first spec. The floor cut has its own map, `decisions/worktree-test-floor.md`,
+first spec. The floor cut has its own map, `specs/worktree-test-floor/decisions/worktree-test-floor.md`,
 and it is the second spec.
 
 ## #7: Multi-ticket specs under D
@@ -216,7 +216,7 @@ demand.
 - The ticket-local evidence machinery of `spec-build-review-gate-cadence`. It waits
   on FT173 and FT130.
 - Reopening ADR 0016's evidence key. #2 chose option D.
-- The `internal/worktree` test floor. `decisions/worktree-test-floor.md` owns it.
+- The `internal/worktree` test floor. `specs/worktree-test-floor/decisions/worktree-test-floor.md` owns it.
 
 ## Sources
 
