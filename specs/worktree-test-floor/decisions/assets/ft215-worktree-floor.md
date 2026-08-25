@@ -1,7 +1,7 @@
 # The `internal/worktree` test floor
 
 Measured on 2026-08-25 in the `ft215-shape` worktree with
-`go test -count=1 -json`. This asset supports `decisions/worktree-test-floor.md`.
+`go test -count=1 -json`. This asset supports `specs/worktree-test-floor/decisions/worktree-test-floor.md`.
 
 ## Findings
 
