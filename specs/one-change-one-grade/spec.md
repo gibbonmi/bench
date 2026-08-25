@@ -1,6 +1,6 @@
 # One change, one full grade
 
-Status: staged
+Status: implemented
 
 Roadmap: FT215
 
@@ -217,7 +217,7 @@ live-tree conformance checks. The gate's `test` phase observes all of it.
 | OG11 | 8 | `bench commit --dry-run` after a lane pass leaves the branch ref unchanged. | `git rev-parse` after commit.Command | A dry run that publishes is a commit. |
 | OG12 | 9 | The lane's stdout contains `outcome=pass` or `outcome=fail` and never the token `green`. | commit.Command stdout | Reusing the gate's `gate: green` line makes a lane pass read as green. |
 | OG13 | 10 | The kit root's lane argv for gofmt and prose names the run binary token. | gate lane table unit | A lane that calls the installed `bench` by name grades with the broker's code. |
-| OG14 | 11 | `bench worktree land` on a source committed by a lane pass prints `gate: green` before it publishes. | landing journey stdout | A landing that trusts the lane pass publishes with no gate run. |
+| OG14 | 11 | The gate tally is absent after a lane-pass commit and exactly `g` after the landing, which publishes. | landing journey stdout | A landing that trusts the lane pass publishes with no gate run. |
 | OG15 | 12 | The reviewed landing owner refuses an authority result of kind lane pass. | landing.Owner unit | An owner that accepts every non-failure kind publishes on a lane pass. |
 | OG16 | 13 | After a lane run, the gate cache holds no record for the composed tree. | gate package test on the Git dir | A lane that reuses the gate's verdict writer records a verdict. |
 | OG17 | 13 | After a lane run, the evidence store holds no record for the composed tree. | gate package test on the Git dir | A lane that writes evidence lets the landing reuse it. |
@@ -226,7 +226,7 @@ live-tree conformance checks. The gate's `test` phase observes all of it.
 | OG20 | 16 | After a lane commit, `bench status` reports the gate row from the last gate verdict. | status.GateVerdict unit | A status that reads the lane file shows a lane pass in the gate row. |
 | OG21 | 18 | At the kit root, the lane table is exactly gofmt, prose, vet, build with the profile's argv. | gate lane table unit | A table missing a check passes a commit that check would fail. |
 | OG22 | 19 | A phase manifest with a `lane` array yields a lane table of exactly those checks. | gate manifest unit | A loader that ignores the manifest lane runs the built-in one. |
-| OG23 | 20 | A fixture repo with a gate script and no lane prints `gate: green` at `bench commit`. | commit.Command stdout | A commit that skips the gate whenever no lane is declared publishes ungraded. |
+| OG23 | 20 | A fixture repo with a gate script and no lane leaves the tally exactly `g`, prints no `lane{` line, and publishes. | commit.Command stdout | A commit that skips the gate whenever no lane is declared publishes ungraded. |
 | OG24 | 21 | A `lane` entry with an empty argv makes `bench commit` exit 1 naming the defect. | commit.Command stderr and exit | A loader that drops malformed entries grades nothing and passes. |
 | OG25 | 22 | The lane record names the composed tree hash, the lane identity, and the outcome. | lane record read | A record without the tree cannot be tied to what passed. |
 | OG26 | 23, 28 | The anchor registry requires the invariant-4 sentence, and a removal of that sentence turns the anchor check red. | anchors EvaluateGroup unit | A sentence no anchor pins drifts silently. |

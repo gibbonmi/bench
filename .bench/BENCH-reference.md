@@ -157,9 +157,14 @@ describe the hook and adapter plumbing.
 
 A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip.
-Accepted findings commit there on the same cadence. From the destination, `bench worktree land` is the operational handoff: it
-composes and gates that pair before publication and source release. Executable
-help owns its flags and positional grammar.
+Accepted findings commit there on the same cadence.
+
+A worktree `bench commit`
+runs the fast lane on a private checkout of the composed snapshot, and a lane pass
+publishes onto the worktree branch. The lane writes a lane record and no gate
+verdict. From the destination, `bench worktree land` is the operational handoff: it
+composes and runs the one whole-project gate on that pair before publication and
+source release. Executable help owns its flags and positional grammar.
 
 The spec is optional on the landing and on its resume: a spec-less phase lands
 with no `--spec`, and a tickets-only `--spec` closes its folder. Every phase

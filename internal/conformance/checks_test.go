@@ -74,6 +74,7 @@ func init() {
 		"decision-map-integrity":        {maps.ValidateDecisionMapTree, registry.Dev, registry.SubjectRoot},
 		"injected-port-registry":        {checkInjectedPortRegistry, registry.Dev, registry.SubjectRoot},
 		"guidance-prose-budgets":        {checkGuidanceProseBudgets, registry.Dev, registry.SubjectRoot},
+		"profile-lane-table":            {checkProfileLaneTable, registry.Dev, registry.SubjectRoot},
 		"roadmap-detail-integrity":      {roadmap.ValidateRoadmapTree, registry.Dev, registry.SubjectRoot},
 		"structure-accept-currency":     {structure.ValidateAcceptGrants, registry.Dev, registry.SubjectRoot},
 		"retro-improvement-markers":     {retros.ValidateImprovementMarkers, registry.Dev, registry.SubjectRoot},

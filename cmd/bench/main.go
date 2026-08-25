@@ -113,6 +113,7 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 42, Suffix: " history <slug>", Description: "retire/delete commits for a spec, newest first (TOON)"},
 	), Run: outputCommand(spec.Command)},
 	{Name: "gate-go", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
+	{Name: "gate-prose", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateProseCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "guard-git", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "guard-bench-follow-on", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardBenchFollowOn(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "check-agent-line", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return checkAgentLine(args, c.Stdin, c.Stdout, c.Stderr) }},

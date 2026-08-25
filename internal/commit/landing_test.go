@@ -21,6 +21,7 @@ const ticketsSlug = "ft900 tickets [x]*"
 // that worktree and its pre-landing HEAD.
 func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root string)) (root, before string) {
 	t.Helper()
+	notTheKitRoot(t)
 	primary := t.TempDir()
 	initializeLandingRepo(t, primary, gateExit)
 	root = filepath.Join(t.TempDir(), "linked")
@@ -30,9 +31,19 @@ func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root strin
 
 func primaryLandingRepo(t *testing.T, gateExit int, write func(t *testing.T, root string)) (root, before string) {
 	t.Helper()
+	notTheKitRoot(t)
 	root = t.TempDir()
 	initializeLandingRepo(t, root, gateExit)
 	return prepareLandingCheckout(t, root, write)
+}
+
+// notTheKitRoot points the kit-root selection away from the fixture. Every fixture here
+// is a linked project, not the Bench kit, so it declares its lane in a phase manifest or
+// declares none. Without this the selection would answer the fixture itself and hand it
+// the kit's built-in lane.
+func notTheKitRoot(t *testing.T) {
+	t.Helper()
+	t.Setenv("BENCH_KIT", t.TempDir())
 }
 
 func initializeLandingRepo(t *testing.T, root string, gateExit int) {

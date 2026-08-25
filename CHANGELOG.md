@@ -8,6 +8,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- A worktree `bench commit` now runs the fast lane instead of the whole-project
+  gate: gofmt, the prose check on the named Markdown, `go vet`, and `go build`.
+  A lane pass publishes onto the worktree branch and writes a lane record, never
+  a gate verdict. `bench worktree land` stays the one whole-project gate, and a
+  repo with no declared lane keeps the full-gate commit.
 - Lifecycle identity refusals now name the one component that failed: the request
   token, the assignment state, the assignment path, the owner marker, the worktree
   registration, or the Bench lock. `bench worktree exec` and `bench worktree path`

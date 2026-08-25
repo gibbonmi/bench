@@ -312,3 +312,50 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	}
 	markProof(t, "landing/journey/conflict-refusal")
 }
+
+// OG14: a source the fast lane committed still pays the whole-project gate at the
+// landing. The lane pass authorizes the worktree commit alone, so the tally records
+// exactly one gate run, and that run is the landing's.
+func TestLandGradesASourceCommittedByALanePass(t *testing.T) {
+	binary := testRunBinary(t)
+	request := "public-land-lane-source"
+	root, creation, base, _, tally := publicLandingFixture(t, request, "", "")
+	// The kit-root selection must answer something other than this fixture, which is a
+	// linked project and declares its lane in its own phase manifest.
+	bindEnv(t, "BENCH_KIT", t.TempDir())
+	manifest := filepath.Join(creation.Path, ".bench", "phases.json")
+	mustWrite(t, manifest, []byte(`{"phases":[{"name":"build","argv":["true"]}],"lane":[{"name":"unit","argv":["true"]}]}`), 0o644)
+	mustWrite(t, filepath.Join(creation.Path, "owned.txt"), []byte("lane bytes\n"), 0o644)
+
+	var commitOut, commitErr bytes.Buffer
+	commit := descendant(t, binary, "commit", "-m", "commit through the lane", "--", "owned.txt")
+	commit.Dir, commit.Stdout, commit.Stderr = creation.Path, &commitOut, &commitErr
+	if err := commit.Run(); err != nil || !strings.Contains(commitOut.String(), "lane{outcome=pass") {
+		t.Fatalf("lane commit exit=%d stdout=%q stderr=%q", exitCode(err), commitOut.String(), commitErr.String())
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("the lane commit ran the whole-project gate (stat err %v)", err)
+	}
+	// The manifest is a fixture input, not landed bytes; the release refuses residue.
+	if err := os.Remove(manifest); err != nil {
+		t.Fatal(err)
+	}
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+
+	var stdout, stderr bytes.Buffer
+	land := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land the laned source", creation.Path)
+	land.Dir, land.Stdout, land.Stderr = root, &stdout, &stderr
+	if err := land.Run(); err != nil || !strings.Contains(stdout.String(), "worktree=released}") {
+		t.Fatalf("land exit=%d stdout=%q stderr=%q", exitCode(err), stdout.String(), stderr.String())
+	}
+	if recorded, err := os.ReadFile(tally); err != nil || string(recorded) != "g" {
+		t.Fatalf("gate tally = %q, %v; want the landing to be the one whole-project gate run", recorded, err)
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	if gitOutput(t, root, "rev-parse", "refs/bench/green/main") != published {
+		t.Fatal("the landing published without advancing the project-green marker")
+	}
+	if got := gitOutput(t, root, "show", published+":owned.txt"); got != "lane bytes" {
+		t.Fatalf("published owned.txt = %q, want the lane-committed bytes", got)
+	}
+}

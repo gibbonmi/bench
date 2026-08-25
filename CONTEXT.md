@@ -9,6 +9,15 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   auto-detected default). Exit 0 means the work is shippable. The gate is the
   *only* thing that can call work done. Not "the checks", not "CI", not "the
   suite" — the gate.
+- **fast lane** — the declared check list a worktree `bench commit` runs on a
+  private checkout of the composed snapshot. The kit's lane is gofmt, the prose
+  check on the named Markdown, `go vet`, and `go build ./...`. A lane pass authorizes the worktree
+  commit only; the gate alone authorizes a landing. Not "mini gate", not
+  "reduced gate", not "quick gate" — fast lane.
+- **lane record** — the one record a fast lane writes, in its own record class.
+  It names the tree, the lane identity, and a `pass` or `fail` outcome. It is never
+  reusable green, and no consumer reads it as a gate verdict. Not "lane verdict",
+  not "lane evidence", not "lane cache" — lane record.
 - **oracle** — the authority that decides done-ness. The gate is this repo's oracle.
   The model is never the oracle; the model does not grade its own work.
 - **run binary** — the exact source-bound executable the gate authorizes and runs;
@@ -191,6 +200,8 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 ## Avoid
 
 - "CI" / "the build" when you mean **the gate**.
+- "mini gate" / "reduced gate" when you mean the **fast lane**.
+- "lane verdict" / "lane evidence" when you mean a **lane record**.
 - "task" / "session" when you mean a **shift**.
 - "boundary" / "abstraction point" when you mean a **seam**.
 - "framework" / "tooling" when you mean the **kit**.

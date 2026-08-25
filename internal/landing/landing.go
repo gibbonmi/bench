@@ -90,13 +90,46 @@ func (e *PublishedUnreconciledError) Unwrap() error { return e.Err }
 // for deterministic fault coverage; New supplies the real owners.
 type Owner struct {
 	authorize func(context.Context, string, string, io.Writer, io.Writer) authorization.Result
-	updateRef func(string, string, string, string) error
-	reconcile func(Request, []string, composedSnapshot) error
+	// publishes and reviewedPublishes name the authorization kinds each of this owner's
+	// two landings publishes on. They are separate because the two landings answer to
+	// different oracles: the worktree commit's fast lane, and main's whole-project gate.
+	publishes         acceptedKinds
+	reviewedPublishes acceptedKinds
+	updateRef         func(string, string, string, string) error
+	reconcile         func(Request, []string, composedSnapshot) error
 }
 
-// New returns the production landing owner.
+// acceptedKinds is one landing's publication policy stated as data.
+type acceptedKinds []authorization.Kind
+
+func (k acceptedKinds) permits(kind authorization.Kind) bool {
+	for _, accepted := range k {
+		if kind == accepted {
+			return true
+		}
+	}
+	return false
+}
+
+// New returns the production landing owner. The prospective landing of a worktree commit
+// publishes on a graded green or on a fast-lane pass. The reviewed landing onto main
+// publishes on a graded green alone, so a lane pass never reaches main.
 func New() Owner {
-	return Owner{authorize: authorization.AuthorizeWithWriters, updateRef: updateRef, reconcile: reconcile}
+	return Owner{
+		authorize:         authorization.AuthorizeWithWriters,
+		publishes:         acceptedKinds{authorization.Green, authorization.LanePass},
+		reviewedPublishes: acceptedKinds{authorization.Green},
+		updateRef:         updateRef,
+		reconcile:         reconcile,
+	}
+}
+
+// NewLane returns the worktree-commit owner whose authority is the root's declared fast
+// lane rather than the whole-project gate.
+func NewLane(lane authorization.LaneAuthority) Owner {
+	owner := New()
+	owner.authorize = lane.Authorize
+	return owner
 }
 
 // composeAuthorized runs the prospective half every landing verdict shares: attribute,
@@ -120,7 +153,7 @@ func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, comp
 	if snapshot.tree == baseTree {
 		return nil, composedSnapshot{}, errors.New("nothing to commit")
 	}
-	if got := o.authorize(ctx, r.Root, snapshot.tree, r.Stdout, r.Stderr); got.Kind != authorization.Green {
+	if got := o.authorize(ctx, r.Root, snapshot.tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
 		return nil, composedSnapshot{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
 	}
 	return paths, snapshot, nil
@@ -222,7 +255,7 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 			return ReviewedResult{}, fmt.Errorf("close tickets-only folder: %w", err)
 		}
 	}
-	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); got.Kind != authorization.Green {
+	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); !o.reviewedPublishes.permits(got.Kind) {
 		return ReviewedResult{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
 	}
 	// Recheck the two moving identities after the gate and before creating an
