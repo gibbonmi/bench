@@ -35,3 +35,6 @@ capture/learnings.md
 
 # Session handoff — local cold-start pin; the roadmap carries the shared next action.
 capture/session-handoff.md
+
+# Dev-install promotion-broker manifest bench doctor --fix publishes beside the wrapper
+bin/bench-broker.manifest
