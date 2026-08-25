@@ -25,6 +25,7 @@ var RequiredPackAssets = []string{
 	".bench/adapters/opencode",
 	".bench/hooks/stop.sh",
 	".bench/hooks/worktree-lifecycle.sh",
+	".bench/hooks/block-bench-follow-on.sh",
 	".bench/lib/resolve-bench.sh",
 	".claude/README.md",
 	".claude/settings.json",

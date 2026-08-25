@@ -199,6 +199,16 @@ func checkNpmPackAssets(packJSON string, required []string) []string {
 	return diags
 }
 
+func TestFollowOnHookIsRequiredPackageAsset(t *testing.T) {
+	required := []string{".bench/hooks/block-bench-follow-on.sh"}
+	if diags := checkNpmPackAssets(`[{"files":[{"path":".bench/hooks/block-bench-follow-on.sh"}]}]`, required); len(diags) != 0 {
+		t.Fatalf("complete package asset inventory = %v, want no diagnostics", diags)
+	}
+	if !containsDiagnostic(checkNpmPackAssets(`[{"files":[]}]`, required), "npm package missing .bench/hooks/block-bench-follow-on.sh") {
+		t.Fatal("omitted follow-on hook did not make the package inventory red")
+	}
+}
+
 func checkRepoOnlyPackageClaims(root string) []string {
 	// This check mirrors the package fragment's lightweight prose sweep over shipped
 	// markdown.
@@ -320,6 +330,7 @@ func checkGuardHeaderManifests(root string) []string {
 		path string
 	}{
 		{"block-dangerous-git", filepath.Join(root, ".bench", "hooks", "block-dangerous-git.sh")},
+		{"block-bench-follow-on", filepath.Join(root, ".bench", "hooks", "block-bench-follow-on.sh")},
 		{"check-agent-line", filepath.Join(root, ".bench", "hooks", "check-agent-line.sh")},
 		{"stop", filepath.Join(root, ".bench", "hooks", "stop.sh")},
 		{"session-start", filepath.Join(root, ".bench", "hooks", "session-start.sh")},

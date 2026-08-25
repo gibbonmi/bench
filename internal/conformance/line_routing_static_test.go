@@ -508,6 +508,7 @@ func checkClaudeHookWiring(root string) []string {
 		{event: "Stop", needle: ".bench/hooks/stop.sh", diag: "claude settings.json Stop event does not run .bench/hooks/stop.sh"},
 		{event: "SessionStart", needle: ".bench/hooks/session-start.sh", diag: "claude settings.json SessionStart event does not run .bench/hooks/session-start.sh"},
 		{event: "PreToolUse", matcher: "Bash", needle: ".bench/hooks/block-dangerous-git.sh", diag: "claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-dangerous-git.sh"},
+		{event: "PreToolUse", matcher: "Bash", needle: ".bench/hooks/block-bench-follow-on.sh", diag: "claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-bench-follow-on.sh"},
 		{event: "PreToolUse", matcher: "Agent", needle: ".bench/hooks/check-agent-line.sh", diag: "claude settings.json PreToolUse Agent matcher missing or does not run .bench/hooks/check-agent-line.sh"},
 		{event: "WorktreeCreate", needle: "${CLAUDE_PROJECT_DIR}/.bench/hooks/worktree-lifecycle.sh", action: "create", diag: "claude settings.json WorktreeCreate event must use the brace project-dir placeholder, be matcher-free, and run worktree-lifecycle.sh with args [create]", matcherFree: true, exactCommand: true},
 		{event: "WorktreeRemove", needle: "${CLAUDE_PROJECT_DIR}/.bench/hooks/worktree-lifecycle.sh", action: "remove", diag: "claude settings.json WorktreeRemove event must use the brace project-dir placeholder, be matcher-free, and run worktree-lifecycle.sh with args [remove]", matcherFree: true, exactCommand: true},
@@ -571,7 +572,7 @@ func TestClaudeHookWiringBites(t *testing.T) {
 			"WorktreeCreate": {{Hooks: worktreeCommand("create")}},
 			"WorktreeRemove": {{Hooks: worktreeCommand("remove")}},
 			"PreToolUse": {
-				{Matcher: matcher("Bash"), Hooks: command("block-dangerous-git.sh")},
+				{Matcher: matcher("Bash"), Hooks: append(command("block-dangerous-git.sh"), command("block-bench-follow-on.sh")...)},
 				{Matcher: matcher("Agent"), Hooks: command("check-agent-line.sh")},
 			},
 		}
@@ -598,16 +599,18 @@ func TestClaudeHookWiringBites(t *testing.T) {
 	}
 
 	cases := []struct {
-		name   string
-		remove func(map[string][]group)
-		want   string
+		name          string
+		remove        func(map[string][]group)
+		want          string
+		allowSiblings bool
 	}{
-		{"stop dropped", func(h map[string][]group) { delete(h, "Stop") }, "claude settings.json Stop event does not run .bench/hooks/stop.sh"},
-		{"session-start dropped", func(h map[string][]group) { delete(h, "SessionStart") }, "claude settings.json SessionStart event does not run .bench/hooks/session-start.sh"},
-		{"bash group dropped", func(h map[string][]group) { h["PreToolUse"] = h["PreToolUse"][1:] }, "claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-dangerous-git.sh"},
-		{"agent group dropped", func(h map[string][]group) { h["PreToolUse"] = h["PreToolUse"][:1] }, "claude settings.json PreToolUse Agent matcher missing or does not run .bench/hooks/check-agent-line.sh"},
-		{"worktree create dropped", func(h map[string][]group) { delete(h, "WorktreeCreate") }, "claude settings.json WorktreeCreate event must use the brace project-dir placeholder, be matcher-free, and run worktree-lifecycle.sh with args [create]"},
-		{"worktree remove dropped", func(h map[string][]group) { delete(h, "WorktreeRemove") }, "claude settings.json WorktreeRemove event must use the brace project-dir placeholder, be matcher-free, and run worktree-lifecycle.sh with args [remove]"},
+		{"stop dropped", func(h map[string][]group) { delete(h, "Stop") }, "claude settings.json Stop event does not run .bench/hooks/stop.sh", false},
+		{"session-start dropped", func(h map[string][]group) { delete(h, "SessionStart") }, "claude settings.json SessionStart event does not run .bench/hooks/session-start.sh", false},
+		{"bash group dropped", func(h map[string][]group) { h["PreToolUse"] = h["PreToolUse"][1:] }, "claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-dangerous-git.sh", true},
+		{"follow-on hook dropped", func(h map[string][]group) { h["PreToolUse"][0].Hooks = h["PreToolUse"][0].Hooks[:1] }, "claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-bench-follow-on.sh", false},
+		{"agent group dropped", func(h map[string][]group) { h["PreToolUse"] = h["PreToolUse"][:1] }, "claude settings.json PreToolUse Agent matcher missing or does not run .bench/hooks/check-agent-line.sh", false},
+		{"worktree create dropped", func(h map[string][]group) { delete(h, "WorktreeCreate") }, "claude settings.json WorktreeCreate event must use the brace project-dir placeholder, be matcher-free, and run worktree-lifecycle.sh with args [create]", false},
+		{"worktree remove dropped", func(h map[string][]group) { delete(h, "WorktreeRemove") }, "claude settings.json WorktreeRemove event must use the brace project-dir placeholder, be matcher-free, and run worktree-lifecycle.sh with args [remove]", false},
 	}
 	for _, event := range []string{"WorktreeCreate", "WorktreeRemove"} {
 		hooks := intact()
@@ -634,6 +637,9 @@ func TestClaudeHookWiringBites(t *testing.T) {
 				t.Fatalf("want %q in diagnostics, got %v", tc.want, diags)
 			}
 			for _, other := range cases {
+				if tc.allowSiblings {
+					break
+				}
 				if other.want != tc.want && containsDiagnostic(diags, other.want) {
 					t.Fatalf("%s also fired sibling diagnostic %q: %v", tc.name, other.want, diags)
 				}

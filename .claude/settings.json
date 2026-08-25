@@ -65,7 +65,8 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.bench/hooks/block-dangerous-git.sh" }
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.bench/hooks/block-dangerous-git.sh" },
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.bench/hooks/block-bench-follow-on.sh" }
         ]
       },
       {

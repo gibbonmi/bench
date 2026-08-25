@@ -72,7 +72,9 @@ works on any branch. This line only states the binding.)
   stdout, definitive empty states, structured errors on stdout, and exit 0/1/2. The
   AXI contract fragments gate-test it. Each guard script's static leading-comment
   header supplies the guard manifest (Bench reads it as data and never executes it).
-  `bench guards --brief` is the surface the SessionStart hook injects.
+
+  `bench guards` reports each deny-capable hook's boundary, denial, and live Claude/Codex
+  wiring. `bench guards --brief` is the surface the SessionStart hook injects.
 
   `bench diff` is the single coherent review snapshot: it reports the revision,
   aggregate, inventory, checkout, whitespace, and optional complete patch from

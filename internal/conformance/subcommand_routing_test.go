@@ -74,18 +74,19 @@ var subcommandRouting = map[string]routingEntry{
 	"structure":    routed("internal/structure"),
 	"test":         routed("internal/testreport"),
 
-	"check-agent-line":    exempt(whyPlumbing),
-	"freshness-check":     exempt(whyPlumbing),
-	"freshness-publish":   exempt(whyPlumbing),
-	"gate-go":             exempt(whyPlumbing),
-	"gate-phases":         exempt(whyPlumbing),
-	"guard-git":           exempt(whyPlumbing),
-	"resolve-model":       exempt(whyPlumbing),
-	"stop-verdict":        exempt(whyPlumbing),
-	"tree-hash":           exempt(whyPlumbing),
-	"worktree-hook":       exempt(whyPlumbing),
-	"worktree-lease-file": exempt(whyPlumbing),
-	"worktree-pool":       exempt(whyPlumbing),
+	"check-agent-line":      exempt(whyPlumbing),
+	"freshness-check":       exempt(whyPlumbing),
+	"freshness-publish":     exempt(whyPlumbing),
+	"gate-go":               exempt(whyPlumbing),
+	"gate-phases":           exempt(whyPlumbing),
+	"guard-bench-follow-on": exempt(whyPlumbing),
+	"guard-git":             exempt(whyPlumbing),
+	"resolve-model":         exempt(whyPlumbing),
+	"stop-verdict":          exempt(whyPlumbing),
+	"tree-hash":             exempt(whyPlumbing),
+	"worktree-hook":         exempt(whyPlumbing),
+	"worktree-lease-file":   exempt(whyPlumbing),
+	"worktree-pool":         exempt(whyPlumbing),
 
 	"canary":            exempt(whyNested),
 	"doctor":            exempt(whyNested),
@@ -410,6 +411,29 @@ func TestSubcommandRoutingRegistryBites(t *testing.T) {
 	write(decoy)
 	if containsDiagnostic(checkSubcommandRouting(root), `"decoyname"`) {
 		t.Fatalf("decoy composite literal under a different identifier: want it ignored, got %v", checkSubcommandRouting(root))
+	}
+}
+
+func TestSubcommandRoutingRequiresFollowOnGuardEntry(t *testing.T) {
+	const name = "guard-bench-follow-on"
+	entry, found := subcommandRouting[name]
+	if !found {
+		t.Fatalf("subcommand routing lacks %q before its omission proof", name)
+	}
+	delete(subcommandRouting, name)
+	t.Cleanup(func() { subcommandRouting[name] = entry })
+
+	root := t.TempDir()
+	path := filepath.Join(root, filepath.FromSlash(dispatchFile))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("package main\nvar commandRegistry = []commandDefinition{{Name: \"guard-bench-follow-on\"}}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	want := `cmd/bench/main.go dispatches "guard-bench-follow-on" with no entry in the subcommand argument-routing registry; record it as routed through usage.Parse or as an exemption with its reason`
+	if !containsDiagnostic(checkSubcommandRouting(root), want) {
+		t.Fatalf("removed %q entry did not emit %q", name, want)
 	}
 }
 

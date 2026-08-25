@@ -8,6 +8,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Claude and Codex now run the shared follow-on guard before Bash calls. It refuses
+  outer shell composition after a Bench command, and `bench guards` reports the
+  manifest-derived harness wiring.
 - `bench worktree land` now runs under one installed promotion broker for the
   complete command. The wrapper selects that broker from the installation
   manifest, and it refuses `BENCH_KIT`, `BENCH_RUN_BINARY`, and `BENCH_WRAPPER`
