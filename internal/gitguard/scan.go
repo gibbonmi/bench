@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/shellcommand"
 )
 
 // The scanner walks the token stream command by command (splitting on control
@@ -11,9 +13,6 @@ import (
 // (env/xargs/timeout/…), and hands each `git <subcommand>` to classify. Wrapper strings
 // (`sh|bash|zsh -c '…'`) are re-tokenized and scanned exactly one level deep, by design:
 // this is an honest-mistake layer, not an evasion-resistant boundary.
-
-// controlOps end a command; after one, the next word is a fresh command position.
-var controlOps = map[string]bool{";": true, "&&": true, "||": true, "|": true, "&": true, "(": true, ")": true}
 
 // keywords are shell keywords skipped in command position so the verb after them is
 // found (`if git …`, `while git …`).
@@ -31,63 +30,70 @@ var wrapperCFlagRe = regexp.MustCompile(`^-[A-Za-z]*c[A-Za-z]*$`)
 
 // scan returns the deny label for the first destructive git command it finds, or "" if
 // none. allowWrapper gates the one-level wrapper recursion.
-func scan(tokens []string, chk Checker, allowWrapper bool) string {
-	expectCommand := true
-	i, n := 0, len(tokens)
-	for i < n {
-		tok := tokens[i]
-		if controlOps[tok] {
-			expectCommand = true
-			i++
+func scan(stream shellcommand.Stream, chk Checker, allowWrapper bool) string {
+	for _, span := range stream.Commands {
+		tokens := commandWords(stream.Tokens[span.Start:span.End])
+		if len(tokens) == 0 {
 			continue
 		}
-		if expectCommand && keywords[tok] {
-			i++
-			continue
+		for len(tokens) > 0 && keywords[tokens[0]] {
+			tokens = tokens[1:]
 		}
-		if expectCommand {
-			end := commandEnd(tokens, i)
-			j, viaXargs := resolvePrefixes(tokens, i, end)
-			if j < end {
-				base := filepath.Base(tokens[j])
-				if base == "git" {
-					sub, argsStart, ok := findSubcommand(tokens, j+1, end)
-					if ok {
-						if reason := classify(sub, tokens[argsStart:end], viaXargs, chk); reason != "" {
-							return reason
-						}
+		j, viaXargs := resolvePrefixes(tokens, 0, len(tokens))
+		if j < len(tokens) {
+			base := filepath.Base(tokens[j])
+			if base == "git" {
+				sub, argsStart, ok := findSubcommand(tokens, j+1, len(tokens))
+				if ok {
+					if reason := classify(sub, tokens[argsStart:], viaXargs, chk); reason != "" {
+						return reason
 					}
-				} else if allowWrapper && wrappers[base] {
-					for k := j + 1; k < end; k++ {
-						if wrapperCFlagRe.MatchString(tokens[k]) {
-							if k+1 < end {
-								inner := tokenize(tokens[k+1])
-								if reason := scan(inner, chk, false); reason != "" {
-									return reason
-								}
+				}
+			} else if allowWrapper && wrappers[base] {
+				for k := j + 1; k < len(tokens); k++ {
+					if wrapperCFlagRe.MatchString(tokens[k]) {
+						if k+1 < len(tokens) {
+							inner := shellcommand.Parse(tokens[k+1])
+							if reason := scan(inner, chk, false); reason != "" {
+								return reason
 							}
-							break
 						}
+						break
 					}
 				}
 			}
-			expectCommand = false
-			i = end
-			continue
 		}
-		i++
 	}
 	return ""
 }
 
-// commandEnd returns the index of the next control op at or after i (the end of the
-// current simple command).
-func commandEnd(tokens []string, i int) int {
-	j := i
-	for j < len(tokens) && !controlOps[tokens[j]] {
-		j++
+func commandWords(tokens []shellcommand.Token) []string {
+	words := make([]string, 0, len(tokens))
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Kind == shellcommand.Redirection {
+			if len(words) > 0 && isDigits(words[len(words)-1]) {
+				words = words[:len(words)-1]
+			}
+			i++
+			continue
+		}
+		if tokens[i].Kind == shellcommand.Word {
+			words = append(words, tokens[i].Text)
+		}
 	}
-	return j
+	return words
+}
+
+func isDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // resolvePrefixes advances past leading env assignments and the honest-mistake command

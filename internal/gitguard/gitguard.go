@@ -12,6 +12,8 @@ package gitguard
 
 import (
 	"encoding/json"
+
+	"github.com/gibbonmi/bench/internal/shellcommand"
 )
 
 // Checker resolves repository truth for the two verdicts that need it (checkout
@@ -74,7 +76,7 @@ func CommandFromEnvelope(data []byte) string {
 // with wrapper recursion enabled; chk supplies ref/branch truth to the two verdicts
 // that need it.
 func Classify(command string, chk Checker) string {
-	return scan(tokenize(command), chk, true)
+	return scan(shellcommand.Parse(command), chk, true)
 }
 
 // BlockMessage is the actionable refusal the guard returns to the agent for a blocked
