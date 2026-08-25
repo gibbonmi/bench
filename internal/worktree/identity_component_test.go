@@ -191,6 +191,7 @@ func interruptLandingAtMarker(t *testing.T, root string, creation Creation, requ
 // of the component set, so an entry added without a fixture is a red here rather than an
 // unproven sentence in production.
 func TestIdentityComponentRegistryHasAProducingFixture(t *testing.T) {
+	t.Parallel()
 	produced := map[string]bool{}
 	for _, fixture := range identityComponentFixtures() {
 		if produced[fixture.component] {
@@ -226,6 +227,7 @@ var deferredMergedDetails []string
 // TestPackageDetailSentencesNameOneComponent is LR17. It reads the package's own source
 // rather than its output, so a merged sentence at a site with no fixture is still caught.
 func TestPackageDetailSentencesNameOneComponent(t *testing.T) {
+	t.Parallel()
 	entries, err := os.ReadDir(".")
 	if err != nil {
 		t.Fatal(err)

@@ -25,6 +25,7 @@ var cksumGolden = []struct {
 }
 
 func TestCksumMatchesGolden(t *testing.T) {
+	t.Parallel()
 	for _, g := range cksumGolden {
 		got := cksum([]byte(g.root + "\n"))
 		if got != g.sum {
@@ -38,6 +39,7 @@ func TestCksumMatchesGolden(t *testing.T) {
 // skipped where `cksum` is unavailable, keeping the suite hermetic there.
 
 func TestCksumMatchesSystemTool(t *testing.T) {
+	t.Parallel()
 	if _, err := exec.LookPath("cksum"); err != nil {
 		capability.Capability(t, capability.Tool, "cksum not available")
 	}
@@ -209,6 +211,7 @@ func TestCreateCommandPrintsNextHint(t *testing.T) {
 // usage.Parse: every help spelling prints the declared grammar on stdout and
 // exits 0, whether or not required flags are present.
 func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
+	t.Parallel()
 	want := "usage: " + usage.WorktreeCreate + "\n"
 	for _, args := range [][]string{
 		{"--help"},
@@ -228,6 +231,7 @@ func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
 // usage.Parse answers --help before refreshop.Consume ever sees the args, so a
 // --refresh alongside --help prints only the help line, not a worktree_refresh table.
 func TestCreateCommandHelpPerformsNoRefresh(t *testing.T) {
+	t.Parallel()
 	var stdout, stderr bytes.Buffer
 	code := CreateCommand("", []string{"--request", "x", "--refresh", "--help"}, &stdout, &stderr)
 	want := "usage: " + usage.WorktreeCreate + "\n"
@@ -239,6 +243,7 @@ func TestCreateCommandHelpPerformsNoRefresh(t *testing.T) {
 // TestCreateCommandRequiredFlagsKeepDeclaredHelp pins that a missing required
 // flag exits 2 with the declared grammar, matching the reauthorize sibling.
 func TestCreateCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
+	t.Parallel()
 	for _, args := range [][]string{
 		{"--request", "r"},
 		{"--label", "l"},
@@ -253,6 +258,7 @@ func TestCreateCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 // TestCreateCommandRejectsEmptyFlagValues pins the shared empty-value rule on
 // --request and --label: an empty string names nothing and exits 2 naming it.
 func TestCreateCommandRejectsEmptyFlagValues(t *testing.T) {
+	t.Parallel()
 	for _, args := range [][]string{
 		{"--request", "", "--label", "l"},
 		{"--request", "r", "--label", ""},
@@ -443,6 +449,7 @@ func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
 	requireTest(t, ReleaseCommand(root, []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
 }
 func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	target := filepath.Join(filepath.Dir(root), "content drift target")
@@ -482,6 +489,7 @@ func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 }
 
 func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	if err := os.WriteFile(filepath.Join(root, ".git", "info", "exclude"), []byte("ignored.txt\n"), 0o644); err != nil {
@@ -511,6 +519,7 @@ func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 }
 
 func TestLeaseFile(t *testing.T) {
+	t.Parallel()
 	dir := journeyRepo(t)
 	lease, err := LeaseFile(dir)
 	if err != nil {
@@ -525,6 +534,7 @@ func TestLeaseFile(t *testing.T) {
 }
 
 func TestLeaseFileCommandMissingArg(t *testing.T) {
+	t.Parallel()
 	out, code := LeaseFileCommand(nil)
 	if code != 2 {
 		t.Errorf("exit = %d, want 2", code)
