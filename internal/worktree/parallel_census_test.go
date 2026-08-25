@@ -125,15 +125,15 @@ func calleeName(call *ast.CallExpr) string {
 	return ""
 }
 
-// callsSerialHelper reports whether the body of decl calls a serialHelpers
-// helper anywhere, a subtest closure included.
-func callsSerialHelper(decl *ast.FuncDecl) bool {
-	found := false
+// serialHelperCalled names the serialHelpers helper the body of decl calls, a
+// subtest closure included, and is empty when it calls none.
+func serialHelperCalled(decl *ast.FuncDecl) string {
+	found := ""
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
 		if call, ok := node.(*ast.CallExpr); ok && serialHelpers[calleeName(call)] {
-			found = true
+			found = calleeName(call)
 		}
-		return !found
+		return found == ""
 	})
 	return found
 }
@@ -235,16 +235,22 @@ func callsParallelDirectly(decl *ast.FuncDecl) bool {
 }
 
 // reachedEffects walks the call edges from decl over the test-file functions and
-// reports both effects any reached function holds: a call to a serialHelpers
-// helper, and the first package-level variable an assignment names. The walk is
-// transitive, so a helper that reaches an effect through another helper counts.
-func reachedEffects(decl *ast.FuncDecl, funcs map[string]testFileFunc, vars map[string]bool) (bool, string) {
+// reports both effects any reached function holds: the serialHelpers helper a
+// reached function calls, and the first package-level variable an assignment
+// names. The walk is transitive, so a helper that reaches an effect through
+// another helper counts. The serial reason names the helper alone when the test
+// calls it, and names the helper the test reaches through a named helper
+// otherwise.
+func reachedEffects(decl *ast.FuncDecl, funcs map[string]testFileFunc, vars map[string]bool) (string, string) {
 	seen := map[string]bool{}
-	serial, assigned := false, ""
-	var walk func(*ast.FuncDecl)
-	walk = func(current *ast.FuncDecl) {
-		if callsSerialHelper(current) {
-			serial = true
+	reason, assigned := "", ""
+	var walk func(*ast.FuncDecl, string)
+	walk = func(current *ast.FuncDecl, via string) {
+		if helper := serialHelperCalled(current); helper != "" && reason == "" {
+			reason = helper
+			if via != "" {
+				reason = helper + " through " + via
+			}
 		}
 		if assigned == "" {
 			assigned = assignedPackageVar(current, vars)
@@ -255,21 +261,36 @@ func reachedEffects(decl *ast.FuncDecl, funcs map[string]testFileFunc, vars map[
 			}
 			seen[name] = true
 			if next, ok := funcs[name]; ok {
-				walk(next.decl)
+				hop := via
+				if hop == "" {
+					hop = name
+				}
+				walk(next.decl, hop)
 			}
 		}
 	}
-	walk(decl)
-	return serial, assigned
+	walk(decl, "")
+	return reason, assigned
 }
 
-// parallelCensus reports every top-level test in dir that breaks the parallel
-// rule: an eligible test without t.Parallel(), or a serial test with it. A test
-// is serial when its body, or any test-file function it reaches through call
-// edges, calls a serialHelpers helper. A test that reaches an assignment to a
-// package-level variable of a non-test file is reported for that assignment
-// instead; the seam it wants belongs in the joins value it passes.
-func parallelCensus(dir string) ([]string, error) {
+// testFact is the census verdict for one top-level test: where it is declared,
+// why it is serial, the package-level variable it assigns, and whether it calls
+// t.Parallel() itself. An empty serialReason means the test is eligible.
+type testFact struct {
+	name         string
+	file         string
+	line         int
+	serialReason string
+	assigned     string
+	parallel     bool
+}
+
+// censusFacts walks dir once and returns one fact for every top-level test. The
+// parallel census and the serial set both read this walk, so the package
+// classifies a test in one place. A test is serial when its body, or any
+// test-file function it reaches through call edges, calls a serialHelpers
+// helper.
+func censusFacts(dir string) ([]testFact, error) {
 	files, fset, _, err := parseTestFiles(dir)
 	if err != nil {
 		return nil, err
@@ -297,23 +318,73 @@ func parallelCensus(dir string) ([]string, error) {
 			}
 		}
 	}
-	var reports []string
+	var facts []testFact
 	for _, test := range tests {
-		serial, assigned := reachedEffects(test.decl, funcs, vars)
-		parallel := callsParallelDirectly(test.decl)
-		if assigned != "" {
-			reports = append(reports, fmt.Sprintf("%s:%d: %s assigns package variable %s", test.file, test.line, test.decl.Name.Name, assigned))
+		reason, assigned := reachedEffects(test.decl, funcs, vars)
+		facts = append(facts, testFact{
+			name:         test.decl.Name.Name,
+			file:         test.file,
+			line:         test.line,
+			serialReason: reason,
+			assigned:     assigned,
+			parallel:     callsParallelDirectly(test.decl),
+		})
+	}
+	return facts, nil
+}
+
+// parallelCensus reports every top-level test in dir that breaks the parallel
+// rule: an eligible test without t.Parallel(), or a serial test with it. A test
+// that reaches an assignment to a package-level variable of a non-test file is
+// reported for that assignment instead; the seam it wants belongs in the joins
+// value it passes.
+func parallelCensus(dir string) ([]string, error) {
+	facts, err := censusFacts(dir)
+	if err != nil {
+		return nil, err
+	}
+	var reports []string
+	for _, fact := range facts {
+		serial := fact.serialReason != ""
+		if fact.assigned != "" {
+			reports = append(reports, fmt.Sprintf("%s:%d: %s assigns package variable %s", fact.file, fact.line, fact.name, fact.assigned))
 			continue
 		}
 		switch {
-		case serial && parallel:
-			reports = append(reports, fmt.Sprintf("%s:%d: %s is serial and calls t.Parallel()", test.file, test.line, test.decl.Name.Name))
-		case !serial && !parallel:
-			reports = append(reports, fmt.Sprintf("%s:%d: %s is eligible and does not call t.Parallel()", test.file, test.line, test.decl.Name.Name))
+		case serial && fact.parallel:
+			reports = append(reports, fmt.Sprintf("%s:%d: %s is serial and calls t.Parallel()", fact.file, fact.line, fact.name))
+		case !serial && !fact.parallel:
+			reports = append(reports, fmt.Sprintf("%s:%d: %s is eligible and does not call t.Parallel()", fact.file, fact.line, fact.name))
 		}
 	}
 	sort.Strings(reports)
 	return reports, nil
+}
+
+// serialSet returns one line for every serial test in facts, sorted, with the
+// reason the census classified it serial.
+func serialSet(facts []testFact) []string {
+	var serial []string
+	for _, fact := range facts {
+		if fact.serialReason == "" {
+			continue
+		}
+		serial = append(serial, fmt.Sprintf("%s:%d: %s (%s)", fact.file, fact.line, fact.name, fact.serialReason))
+	}
+	sort.Strings(serial)
+	return serial
+}
+
+// serialCeilingBreach returns the refusal for a serial set above ceiling, and is
+// empty when the set fits. The refusal lists the whole set with each reason, so
+// the reader sees which test is new.
+func serialCeilingBreach(facts []testFact, ceiling int) string {
+	serial := serialSet(facts)
+	if len(serial) <= ceiling {
+		return ""
+	}
+	return fmt.Sprintf("the package holds %d serial tests, above the ceiling of %d:\n%s",
+		len(serial), ceiling, strings.Join(serial, "\n"))
 }
 
 // --- census unit tests over synthetic file sets ---
@@ -678,6 +749,46 @@ func TestQuiet(t *testing.T) {
 	}
 }
 
+// TestCensusRefusesASerialSetAboveTheCeiling proves the ceiling check counts the
+// serial set and names every member with its reason, so one test above the
+// ceiling turns the check red. (Coverage row WF18.)
+func TestCensusRefusesASerialSetAboveTheCeiling(t *testing.T) {
+	t.Parallel()
+	dir := plantTestFiles(t, map[string]string{"serial_test.go": `package worktree
+
+import "testing"
+
+func TestBoundOne(t *testing.T) {
+	bindEnv(t, "BENCH_HOME", "value")
+}
+
+func TestBoundTwo(t *testing.T) {
+	moveAway(t)
+}
+
+func moveAway(t *testing.T) {
+	chdir(t, t.TempDir())
+}
+`})
+	facts, err := censusFacts(dir)
+	if err != nil {
+		t.Fatalf("census: %v", err)
+	}
+	if breach := serialCeilingBreach(facts, 2); breach != "" {
+		t.Fatalf("a set of two under a ceiling of two = %q, want no refusal", breach)
+	}
+	breach := serialCeilingBreach(facts, 1)
+	for _, want := range []string{
+		"the package holds 2 serial tests, above the ceiling of 1",
+		"serial_test.go:5: TestBoundOne (bindEnv)",
+		"serial_test.go:9: TestBoundTwo (chdir through moveAway)",
+	} {
+		if !strings.Contains(breach, want) {
+			t.Errorf("refusal = %q, want it to contain %q", breach, want)
+		}
+	}
+}
+
 // --- live-tree pins ---
 
 // TestParallelCensusOnTheLiveTree proves every eligible test in the package
@@ -691,6 +802,30 @@ func TestParallelCensusOnTheLiveTree(t *testing.T) {
 	if len(reports) != 0 {
 		t.Fatalf("the parallel census reports %d breaks:\n%s", len(reports), strings.Join(reports, "\n"))
 	}
+}
+
+// worktreeSerialCeiling is the package's pinned serial-test count. Four classes
+// hold the whole set. The boundary-default graders bind the process environment
+// because the default Home() resolves is what they grade. The exec child tests
+// bind the caller environment because the child's inherited environment is what
+// they grade. The stub tests bind PATH because the child under test reads it.
+// The operand tests change the working directory because a relative or a
+// prefixed operand is what they grade. A fixture that falls back to a process
+// bind instead of the home it owns raises the count above this ceiling.
+const worktreeSerialCeiling = 43
+
+// TestSerialSetStaysBelowTheCeiling proves no new test joins the serial set.
+// (Coverage row WF18.)
+func TestSerialSetStaysBelowTheCeiling(t *testing.T) {
+	t.Parallel()
+	facts, err := censusFacts(".")
+	if err != nil {
+		t.Fatalf("census the package: %v", err)
+	}
+	if breach := serialCeilingBreach(facts, worktreeSerialCeiling); breach != "" {
+		t.Fatal(breach)
+	}
+	t.Logf("the package holds %d serial tests, at or below the ceiling of %d", len(serialSet(facts)), worktreeSerialCeiling)
 }
 
 // worktreeTestFloor is the package's pinned top-level test count. A new test

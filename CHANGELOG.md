@@ -14,6 +14,9 @@ All notable user-facing changes to Bench are documented here. The format follows
   environment or changes directory calls it. The `clean`, `reclaim`, `list`, and
   `resume-clean` verbs now take their repository root at the command boundary.
   Their grammar and their output do not change.
+- Every `bench worktree` verb now resolves its Bench home once at the command
+  boundary and passes that home down. The `exec` child and the subshell carry
+  that home on their environment. Their grammar and their output do not change.
 - A worktree `bench commit` now runs the fast lane instead of the whole-project
   gate: gofmt, the prose check on the named Markdown, `go vet`, and `go build`.
   A lane pass publishes onto the worktree branch and writes a lane record, never
