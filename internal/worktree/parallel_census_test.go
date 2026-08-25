@@ -3,12 +3,12 @@ package worktree
 // This file owns the parallel census and the package's static pins. The census
 // parses a directory's _test.go files with the Go AST and derives the serial
 // set from two edges: a call to a serialHelpers harness helper, and an
-// assignment to an imported package's variable through a selector. Both edges
+// write to an imported package's variable through a selector. Both edges
 // reach past the test process, so the test that holds one is serial. A
 // top-level test that reaches no such edge is eligible and must call
 // t.Parallel().
 //
-// An assignment to a package-level variable of a non-test file is a refusal, not
+// A write to a package-level variable of a non-test file is a refusal, not
 // a serial edge. Every seam this package injects travels in a per-call joins
 // value, so a test that reaches for the package variable instead is reported.
 // (Coverage rows WF02-WF05, WF12, WF14.)
@@ -38,7 +38,7 @@ var serialHelpers = map[string]bool{"bindEnv": true, "chdir": true}
 // testFileFunc is one function declared in a test file: its declaration, the
 // file that holds it, the line of its name, and the package names that file
 // imports. The imports travel with the function because a selector on the left
-// of an assignment names a package only in the file that imports it.
+// of a write names a package only in the file that imports it.
 type testFileFunc struct {
 	decl    *ast.FuncDecl
 	file    string
@@ -174,7 +174,7 @@ func packageVarNames(dir string) (map[string]bool, error) {
 	return names, nil
 }
 
-// assignRoot resolves an assignment target to the identifier it ultimately
+// assignRoot resolves a write target to the identifier it ultimately
 // writes, and to the selector name that qualifies that identifier. The census
 // strips the index, pointer, and parenthesis wrappers and the outer selectors,
 // so pkg.Slice[0], pkg.Var.Field, and (*pkg.Ptr).Field all resolve to the root
@@ -182,7 +182,7 @@ func packageVarNames(dir string) (map[string]bool, error) {
 // target is a bare identifier or a wrapper around one, and the root name is
 // empty when the target roots in no identifier at all. A write through any of
 // these shapes reaches the same storage as a write to the bare name, so the
-// serial edge and the assignment refusal both read the root.
+// serial edge and the package-variable refusal both read the root.
 func assignRoot(target ast.Expr) (root string, sel string) {
 	for {
 		switch node := target.(type) {
@@ -203,19 +203,26 @@ func assignRoot(target ast.Expr) (root string, sel string) {
 	}
 }
 
+func writeTargets(node ast.Node) []ast.Expr {
+	switch write := node.(type) {
+	case *ast.AssignStmt:
+		if write.Tok != token.DEFINE {
+			return write.Lhs
+		}
+	case *ast.IncDecStmt:
+		return []ast.Expr{write.X}
+	}
+	return nil
+}
+
 // assignedPackageVar names the first package-level variable the body of decl
-// assigns anywhere, a closure included, and is empty when it assigns none. A
-// restore inside t.Cleanup is such a closure. The census reads the assignment
-// operator, so a := shadow of the same name declares a local and is not an
-// assignment.
+// writes anywhere, a closure included, and is empty when it writes none. A
+// restore inside t.Cleanup is such a closure. The census skips a := shadow
+// because it declares a local instead of writing the package variable.
 func assignedPackageVar(decl *ast.FuncDecl, vars map[string]bool) string {
 	found := ""
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
-		assign, ok := node.(*ast.AssignStmt)
-		if !ok || assign.Tok == token.DEFINE {
-			return found == ""
-		}
-		for _, target := range assign.Lhs {
+		for _, target := range writeTargets(node) {
 			if root, _ := assignRoot(target); vars[root] {
 				found = root
 			}
@@ -249,19 +256,14 @@ func fileImportNames(file *ast.File) map[string]bool {
 }
 
 // assignedImportedVar names the first imported package's variable the body of
-// decl assigns through a selector, a closure included, and is empty when it
-// assigns none. Such an assignment reaches past the test process, so it is a
-// serial edge in the class of bindEnv, not a refusal. The census reads the
-// assignment operator, so a := shadow of the package name declares a local and
-// is not an assignment.
+// decl writes through a selector, a closure included, and is empty when it
+// writes none. Such a write reaches past the test process, so it is a serial
+// edge in the class of bindEnv, not a refusal. The census skips a := shadow of
+// the package name because it declares a local instead of writing the import.
 func assignedImportedVar(decl *ast.FuncDecl, imports map[string]bool) string {
 	found := ""
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
-		assign, ok := node.(*ast.AssignStmt)
-		if !ok || assign.Tok == token.DEFINE {
-			return found == ""
-		}
-		for _, target := range assign.Lhs {
+		for _, target := range writeTargets(node) {
 			root, sel := assignRoot(target)
 			if sel != "" && imports[root] {
 				found = "assigns " + root + "." + sel
@@ -678,6 +680,18 @@ func TestCensusRefusesAssignmentToPackageVariable(t *testing.T) {
 			want: "stub_test.go:5: TestStub assigns package variable hook",
 		},
 		{
+			name: "increment",
+			body: `	hookBox.Field++
+`,
+			want: "stub_test.go:5: TestStub assigns package variable hookBox",
+		},
+		{
+			name: "decrement",
+			body: `	hookBox.Field--
+`,
+			want: "stub_test.go:5: TestStub assigns package variable hookBox",
+		},
+		{
 			name: "cleanup-closure-assignment",
 			body: `	old := hook
 	t.Cleanup(func() { hook = old })
@@ -774,6 +788,18 @@ func TestCensusTreatsImportedPackageVariableAssignmentAsSerial(t *testing.T) {
 		{
 			name: "body-assignment",
 			body: `	rand.Reader = nil
+`,
+			want: "",
+		},
+		{
+			name: "increment",
+			body: `	rand.Reader++
+`,
+			want: "",
+		},
+		{
+			name: "decrement",
+			body: `	rand.Reader--
 `,
 			want: "",
 		},
