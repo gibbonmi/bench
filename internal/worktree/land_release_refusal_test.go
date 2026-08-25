@@ -138,6 +138,7 @@ func TestReleaseCommandRefusalHidesControlBearingRequestForSafePath(t *testing.T
 }
 
 func TestLandingDestinationAllowsDeclaredAndRuntimeIgnoredOutput(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name, ignore, output, declaration string
 	}{
