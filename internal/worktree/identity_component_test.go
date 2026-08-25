@@ -221,7 +221,7 @@ var mergedDetailWords = []string{"request", "assignment", "state", "path", "owne
 // deferredMergedDetails are the merged sentences a later ticket of this spec retires.
 // The test requires each one to still be present, so the allowance cannot outlive the
 // sentence it covers.
-var deferredMergedDetails = []string{"registration or Bench lock does not match assignment"}
+var deferredMergedDetails []string
 
 // TestPackageDetailSentencesNameOneComponent is LR17. It reads the package's own source
 // rather than its output, so a merged sentence at a site with no fixture is still caught.

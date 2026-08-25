@@ -299,19 +299,25 @@ func decodeMarker(data []byte) (Marker, error) {
 	}
 	return marker, nil
 }
+
+// validateCreationBundle names the one identity component the assignment's own records
+// fail. The checked-out branch is the bundle's own predicate, not a registry component,
+// so it keeps its own sentence between the marker read and the recorded evidence.
 func validateCreationBundle(root string, assignment intent.Assignment) error {
-	evidence, err := validateOwnerMarker(root, assignment.Worktree)
-	if err != nil || evidence.marker.OwnerID != assignment.OwnerID {
-		return errors.New("owner marker does not match assignment")
+	// A bundle this verb cannot read at all is an owner-marker fault before the branch
+	// check, because the branch check decides nothing on unreadable evidence.
+	if _, err := validateOwnerMarker(root, assignment.Worktree); err != nil {
+		return componentRefusal(componentOwnerMarker, assignment.ID, "", "")
 	}
 	branch, err := git.Output("-C", assignment.Worktree, "symbolic-ref", "--quiet", "HEAD")
 	if err != nil || branch != assignment.Branch {
 		return errors.New("assignment branch is not checked out")
 	}
-	if evidence.registration.BranchRef == assignment.Branch && evidence.registration.LockReason == lockReason(assignment) {
-		return nil
-	}
-	return errors.New("registration or Bench lock does not match assignment")
+	// The marker, the registration, and the lock are the same records a landing checks,
+	// so the bundle refusal is the one source of their order and their sentences. The
+	// caller already holds the assignment, so every ledger state it reaches is accepted
+	// here and the state component stays the caller's own check.
+	return identityBundleRefusal(root, assignment.Worktree, assignment, func(intent.AssignmentState) bool { return true })
 }
 
 const releaseOperation = "worktree-release"

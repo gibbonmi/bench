@@ -8,6 +8,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Lifecycle identity refusals now name the one component that failed: the request
+  token, the assignment state, the assignment path, the owner marker, the worktree
+  registration, or the Bench lock. `bench worktree exec` and `bench worktree path`
+  now print the resolver's reason instead of one sentence for all of them.
 - Claude and Codex now run the shared follow-on guard before Bash calls. It refuses
   outer shell composition after a Bench command, and `bench guards` reports the
   manifest-derived harness wiring.
