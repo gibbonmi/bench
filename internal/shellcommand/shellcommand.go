@@ -2,6 +2,7 @@
 package shellcommand
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -36,10 +37,18 @@ type Stream struct {
 	Commands []SimpleCommand
 }
 
+// RoutinePrefix identifies the executable behind shell assignments and routine prefixes.
+type RoutinePrefix struct {
+	Index    int
+	ViaXargs bool
+	Executes bool
+}
+
 const punctChars = "();<>|&\n"
 const spaceChars = " \t\r"
 
 var redirectRe = regexp.MustCompile(`^(?:[0-9]+)?(?:>>?|<<?<?)(?:[|&])?$|^&>>?$`)
+var assignmentRe = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
 
 // Parse folds quotes, removes heredoc bodies, and returns the remaining shell tokens.
 // A heredoc's operator stays in the stream because it is an outer redirection.
@@ -78,6 +87,173 @@ func Parse(command string) Stream {
 		stream.Commands = append(stream.Commands, SimpleCommand{Start: start, End: len(stream.Tokens)})
 	}
 	return stream
+}
+
+// ProjectCommandWords removes redirections and their operands from a simple command.
+func ProjectCommandWords(tokens []Token) []string {
+	words := make([]string, 0, len(tokens))
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Kind == Redirection {
+			if len(words) > 0 && isDigits(words[len(words)-1]) {
+				words = words[:len(words)-1]
+			}
+			i++
+			continue
+		}
+		if tokens[i].Kind == Word {
+			words = append(words, tokens[i].Text)
+		}
+	}
+	return words
+}
+
+// ResolveRoutinePrefix finds the command word after shell assignments and routine prefixes.
+func ResolveRoutinePrefix(words []string) RoutinePrefix {
+	prefix := RoutinePrefix{Executes: true}
+	for prefix.Index < len(words) && assignmentRe.MatchString(words[prefix.Index]) {
+		prefix.Index++
+	}
+	for prefix.Index < len(words) {
+		if assignmentRe.MatchString(words[prefix.Index]) {
+			prefix.Index++
+			continue
+		}
+		switch filepath.Base(words[prefix.Index]) {
+		case "env":
+			prefix.Index = skipEnv(words, prefix.Index+1)
+		case "command":
+			var query bool
+			prefix.Index, query = skipCommand(words, prefix.Index+1)
+			if query {
+				prefix.Executes = false
+				return prefix
+			}
+		case "nohup":
+			prefix.Index = skipFlagOnly(words, prefix.Index+1)
+		case "timeout":
+			prefix.Index = skipTimeout(words, prefix.Index+1)
+		case "xargs":
+			prefix.ViaXargs = true
+			prefix.Index = skipXargs(words, prefix.Index+1)
+		default:
+			return prefix
+		}
+	}
+	return prefix
+}
+
+func skipEnv(words []string, i int) int {
+	for i < len(words) {
+		word := words[i]
+		if word == "--" {
+			return i + 1
+		}
+		if assignmentRe.MatchString(word) || !strings.HasPrefix(word, "-") {
+			if assignmentRe.MatchString(word) {
+				i++
+				continue
+			}
+			return i
+		}
+		i++
+		if word == "-u" || word == "--unset" || word == "-C" || word == "--chdir" {
+			if i < len(words) {
+				i++
+			}
+		}
+	}
+	return i
+}
+
+func skipCommand(words []string, i int) (int, bool) {
+	query := false
+	for i < len(words) {
+		word := words[i]
+		if word == "--" {
+			return i + 1, query
+		}
+		if !strings.HasPrefix(word, "-") || word == "-" {
+			return i, query
+		}
+		if strings.ContainsAny(strings.TrimLeft(word, "-"), "vV") {
+			query = true
+		}
+		i++
+	}
+	return i, query
+}
+
+func skipFlagOnly(words []string, i int) int {
+	for i < len(words) {
+		if words[i] == "--" {
+			return i + 1
+		}
+		if !strings.HasPrefix(words[i], "-") || words[i] == "-" {
+			return i
+		}
+		i++
+	}
+	return i
+}
+
+func skipTimeout(words []string, i int) int {
+	for i < len(words) {
+		word := words[i]
+		if word == "--" {
+			i++
+			break
+		}
+		if !strings.HasPrefix(word, "-") || word == "-" {
+			break
+		}
+		i++
+		if word == "-s" || word == "--signal" || word == "-k" || word == "--kill-after" {
+			if i < len(words) {
+				i++
+			}
+		}
+	}
+	if i < len(words) {
+		i++
+	}
+	return i
+}
+
+func skipXargs(words []string, i int) int {
+	for i < len(words) {
+		word := words[i]
+		if word == "--" {
+			return i + 1
+		}
+		if !strings.HasPrefix(word, "-") || word == "-" {
+			return i
+		}
+		i++
+		if xargsValueOption(word) && i < len(words) {
+			i++
+		}
+	}
+	return i
+}
+
+func xargsValueOption(word string) bool {
+	switch word {
+	case "-E", "-I", "-L", "-P", "-d", "-n", "-s", "--eof", "--replace", "--max-lines", "--max-procs", "--delimiter", "--max-args", "--max-chars":
+		return true
+	}
+	return false
+}
+
+func isDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func isSpace(r rune) bool { return strings.ContainsRune(spaceChars, r) }

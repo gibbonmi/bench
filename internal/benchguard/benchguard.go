@@ -13,8 +13,6 @@ import (
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
 
-var assignment = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
-var fileDescriptor = regexp.MustCompile(`^\d+$`)
 var wrapperFlag = regexp.MustCompile(`^-[A-Za-z]*c[A-Za-z]*$`)
 
 type Resolver struct {
@@ -58,16 +56,16 @@ func Classify(command string, resolver Resolver) bool {
 
 func scan(stream shellcommand.Stream, resolver Resolver, wrapper bool) bool {
 	for _, span := range stream.Commands {
-		words := commandWords(stream.Tokens[span.Start:span.End])
+		words := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
 		if len(words) == 0 {
 			continue
 		}
-		index := resolvePrefix(words)
-		if index < len(words) && isBench(words[index], resolver) {
+		prefix := shellcommand.ResolveRoutinePrefix(words)
+		if prefix.Executes && prefix.Index < len(words) && isBench(words[prefix.Index], resolver) {
 			return hasOuterSyntax(stream)
 		}
-		if wrapper && index < len(words) && isWrapper(words[index]) {
-			for i := index + 1; i+1 < len(words); i++ {
+		if wrapper && prefix.Executes && prefix.Index < len(words) && isWrapper(words[prefix.Index]) {
+			for i := prefix.Index + 1; i+1 < len(words); i++ {
 				child := shellcommand.Parse(words[i+1])
 				if wrapperFlag.MatchString(words[i]) && containsBench(child, resolver) && (hasOuterSyntax(stream) || scan(child, resolver, false)) {
 					return true
@@ -80,67 +78,15 @@ func scan(stream shellcommand.Stream, resolver Resolver, wrapper bool) bool {
 
 func containsBench(stream shellcommand.Stream, resolver Resolver) bool {
 	for _, span := range stream.Commands {
-		words := commandWords(stream.Tokens[span.Start:span.End])
-		index := resolvePrefix(words)
-		if index < len(words) && isBench(words[index], resolver) {
+		words := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
+		prefix := shellcommand.ResolveRoutinePrefix(words)
+		if prefix.Executes && prefix.Index < len(words) && isBench(words[prefix.Index], resolver) {
 			return true
 		}
 	}
 	return false
 }
 
-func commandWords(tokens []shellcommand.Token) []string {
-	words := make([]string, 0, len(tokens))
-	for i := 0; i < len(tokens); i++ {
-		if tokens[i].Kind == shellcommand.Redirection {
-			if len(words) > 0 && fileDescriptor.MatchString(words[len(words)-1]) {
-				words = words[:len(words)-1]
-			}
-			i++
-			continue
-		}
-		if tokens[i].Kind == shellcommand.Word {
-			words = append(words, tokens[i].Text)
-		}
-	}
-	return words
-}
-func resolvePrefix(words []string) int {
-	i := 0
-	for i < len(words) && assignment.MatchString(words[i]) {
-		i++
-	}
-	for i < len(words) {
-		switch filepath.Base(words[i]) {
-		case "env":
-			i++
-			for i < len(words) && (strings.HasPrefix(words[i], "-") || assignment.MatchString(words[i])) {
-				i++
-			}
-		case "command", "nohup":
-			i++
-			for i < len(words) && strings.HasPrefix(words[i], "-") {
-				i++
-			}
-		case "timeout":
-			i++
-			for i < len(words) && strings.HasPrefix(words[i], "-") {
-				i++
-			}
-			if i < len(words) {
-				i++
-			}
-		case "xargs":
-			i++
-			for i < len(words) && strings.HasPrefix(words[i], "-") {
-				i++
-			}
-		default:
-			return i
-		}
-	}
-	return i
-}
 func isWrapper(word string) bool {
 	switch filepath.Base(word) {
 	case "sh", "bash", "zsh":

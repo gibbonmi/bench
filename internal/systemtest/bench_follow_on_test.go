@@ -56,13 +56,17 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		{"FOG40 assignment prefix", "X=1 bench help | touch <marker>"},
 		{"leading descriptor redirect", "2>/dev/null bench help | touch <marker>"},
 		{"env options and end marker", "env -i -- X=1 bench help | touch <marker>"},
+		{"env unset option", "env -u X bench help | touch <marker>"},
 		{"command end marker", "command -- bench help | touch <marker>"},
 		{"nohup end marker", "nohup -- bench help | touch <marker>"},
 		{"timeout options and end marker", "timeout -- 5 bench help | touch <marker>"},
+		{"timeout signal and kill after", "timeout -s KILL -k 1 5 bench help | touch <marker>"},
 		{"xargs end marker", "xargs -- bench help | touch <marker>"},
+		{"xargs max args", "xargs -n 1 bench help | touch <marker>"},
 		{"FOG34 deeper relative", "../../bin/bench.sh help | touch <marker>"},
 		{"FOG35 absolute", filepath.Join(owner.kit, "bin", "bench.sh") + " help | touch <marker>"},
 		{"FOG37 output redirect", "bench help > <marker>"},
+		{"wrapper outer output redirect", "bash -lc 'bench help' > <marker>"},
 	} {
 		dir := repo
 		if tc.name == "FOG34 deeper relative" {
@@ -77,6 +81,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		{"FOG10 worktree pipeline", "bench worktree exec label -- bench gate --fresh | cat"},
 		{"FOG18 wrapper", "bash -lc 'bench help | cat'"},
 		{"FOG18 wrapper outer pipeline", "bash -lc 'bench help' | cat"},
+		{"wrapper outer and", "bash -lc 'bench help' && cat"},
 		{"FOG38 heredoc redirect", "bench gate <<'EOF'\ninput\nEOF"},
 	} {
 		result := run(repo, tc.command)
@@ -104,6 +109,8 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		"rg bench AGENTS.md",
 		"printf hi > bench",
 		"cat <<'EOF'\nbench gate | tail -20\nEOF",
+		"command -V bench | cat",
+		"command -v bench | cat",
 	} {
 		if result := run(repo, command); result.code != 0 || strings.Contains(result.stderr, "BLOCKED:") {
 			t.Errorf("allowed command %q = (%d, %q, %q)", command, result.code, result.stdout, result.stderr)

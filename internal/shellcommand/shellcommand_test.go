@@ -31,3 +31,32 @@ func TestParseFoldsQuotedOperators(t *testing.T) {
 		t.Errorf("Parse() = %#v, want %#v", got, want)
 	}
 }
+
+func TestProjectCommandWordsDropsRedirectionsAndDescriptors(t *testing.T) {
+	stream := Parse("2>/dev/null env -u X bench help")
+	if got, want := ProjectCommandWords(stream.Tokens), []string{"env", "-u", "X", "bench", "help"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("ProjectCommandWords() = %#v, want %#v", got, want)
+	}
+}
+
+func TestResolveRoutinePrefix(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		words    []string
+		index    int
+		viaXargs bool
+		executes bool
+	}{
+		{"env unset", []string{"env", "-u", "X", "bench"}, 3, false, true},
+		{"timeout signal and kill after", []string{"timeout", "-s", "KILL", "-k", "1", "5", "bench"}, 6, false, true},
+		{"xargs max args", []string{"xargs", "-n", "1", "bench"}, 3, true, true},
+		{"command query", []string{"command", "-V", "bench"}, 2, false, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := ResolveRoutinePrefix(tc.words)
+			if got.Index != tc.index || got.ViaXargs != tc.viaXargs || got.Executes != tc.executes {
+				t.Errorf("ResolveRoutinePrefix(%q) = %#v, want index %d, viaXargs %t, executes %t", tc.words, got, tc.index, tc.viaXargs, tc.executes)
+			}
+		})
+	}
+}
