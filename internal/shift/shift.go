@@ -124,10 +124,16 @@ func cleanupScratch(root string) {
 	}
 }
 
+const commandHelp = "usage: bench shift [--refresh] \"<objective>\""
+
 // Command is the `bench shift [objective...]` entry: the objective is every positional
 // argument joined, mirroring the shell's `$*`. An empty objective is not defaulted;
 // Loop's validation rejects it with exit 2.
 func Command(args []string, stdout, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
+		fmt.Fprintln(stdout, commandHelp)
+		return 0
+	}
 	refresh := len(args) > 0 && args[0] == "--refresh"
 	if refresh {
 		args = args[1:]
