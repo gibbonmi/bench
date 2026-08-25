@@ -178,6 +178,7 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 // at their zero values. This contrasts with the attached-branch cases above, which do
 // carry branch-deletion authority.
 func TestDiscardBranchLeavesADetachedHeadUnaffected(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	target := filepath.Join(filepath.Dir(root), "detached discard target")
 	gitRun(t, root, "worktree", "add", "-q", "--detach", target, "HEAD")

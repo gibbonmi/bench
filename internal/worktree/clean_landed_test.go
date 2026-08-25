@@ -31,7 +31,6 @@ func landedSetFixture(t *testing.T) (string, Creation, Creation, Creation) {
 
 func runCleanLanded(t *testing.T, root string, args ...string) (string, string, int) {
 	t.Helper()
-	chdir(t, root)
 	var stdout, stderr bytes.Buffer
 	code := CleanCommand(root, args, &stdout, &stderr)
 	return stdout.String(), stderr.String(), code

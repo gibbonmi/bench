@@ -44,6 +44,7 @@ func verdict(t *testing.T, root, branch string) (bool, bool) {
 
 // [RL1]
 func TestLandedInDefaultProvesSquashLanding(t *testing.T) {
+	t.Parallel()
 	t.Run("multi-form squash is proven landed", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		onNewBranch(t, root, "feature", func() {
@@ -107,6 +108,7 @@ func TestLandedInDefaultProvesSquashLanding(t *testing.T) {
 
 // [RL2]
 func TestLandedInDefaultRefusesUnlandedContent(t *testing.T) {
+	t.Parallel()
 	t.Run("strict superset of what landed", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		onNewBranch(t, root, "feature", func() {
@@ -206,6 +208,7 @@ func TestLandedInDefaultRefusesUnlandedContent(t *testing.T) {
 
 // [RL3]
 func TestLandedInDefaultReportsAmbiguityAsNotLanded(t *testing.T) {
+	t.Parallel()
 	t.Run("no merge base", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		gitRun(t, root, "switch", "-q", "--orphan", "lone")
@@ -250,6 +253,7 @@ func TestLandedInDefaultReportsAmbiguityAsNotLanded(t *testing.T) {
 
 // [RL4]
 func TestLandedInDefaultIsReadOnlyAndDeterministic(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	onNewBranch(t, root, "feature", func() {
 		mustWrite(t, filepath.Join(root, "feature.txt"), []byte("feature\n"), 0o644)

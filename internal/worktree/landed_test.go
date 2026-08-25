@@ -25,7 +25,6 @@ func TestResumeSummaryCountsLandedAssignments(t *testing.T) {
 	active := mustCreate(t, root, "count-active", "active")
 	landAssignment(t, root, landed, "landed.txt")
 	commitInWorktree(t, active.Path, "active.txt", "active\n", "active")
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
@@ -47,7 +46,6 @@ func TestResumeSummaryCountsLandedProofWithoutBranchAdvance(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	mustCreate(t, root, "landed-proof", "landed proof")
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
@@ -77,7 +75,6 @@ func TestResumeSummaryPartitionsLandedLeases(t *testing.T) {
 	unknownLease, err := LeaseFile(unknown.Path)
 	mustNoError(t, err)
 	mustWrite(t, unknownLease, []byte("not-a-lease\n"), 0o600)
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
@@ -102,7 +99,6 @@ func TestResumeSummaryLiveLeaseWinsOverResidue(t *testing.T) {
 	lease, err := LeaseFile(creation.Path)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte(strconv.Itoa(os.Getpid())+" 2026-07-15T00:00:00Z\n"), 0o600)
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 0 {
@@ -126,7 +122,6 @@ func TestResumeSummaryKeepsLandedClassificationAboveResidue(t *testing.T) {
 	landAssignment(t, root, dirty, "dirty-landed.txt")
 	mustWrite(t, filepath.Join(ignored.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	mustWrite(t, filepath.Join(dirty.Path, "dirty-landed.txt"), []byte("changed\n"), 0o644)
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
@@ -154,7 +149,6 @@ func TestResumeSummarySeparatesAgedLandedAndActiveAssignments(t *testing.T) {
 	commitInWorktree(t, active.Path, "aged-active.txt", "active\n", "active")
 	backdate(t, root, landed.Assignment, 8*24*time.Hour)
 	backdate(t, root, active.Assignment, 8*24*time.Hour)
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
@@ -172,7 +166,6 @@ func TestResumeSummaryAdvertisesLandedSweep(t *testing.T) {
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	creation := mustCreate(t, root, "advertise-landed", "advertised")
 	landAssignment(t, root, creation, "advertised.txt")
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
@@ -191,7 +184,6 @@ func TestLandedClassifierUnknownDefaultStaysActive(t *testing.T) {
 	creation := mustCreate(t, root, "unknown-default", "unknown default")
 	landAssignment(t, root, creation, "unknown-default.txt")
 	gitRun(t, root, "branch", "-m", "main", "trunk")
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 1 || !strings.Contains(stderr.String(), "no resolvable default branch") {
@@ -212,7 +204,6 @@ func TestLandedClassifierErroredProofStaysActive(t *testing.T) {
 	creation := mustCreate(t, root, "errored-proof", "errored proof")
 	landAssignment(t, root, creation, "errored-proof.txt")
 	gitRun(t, root, "update-ref", "-d", creation.Assignment.Branch)
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 0 {
@@ -246,7 +237,6 @@ func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
 	mustNoError(t, intent.PutAssignment(root, recovered.Assignment))
 	complete.Assignment.State = intent.StateComplete
 	mustNoError(t, intent.PutAssignment(root, complete.Assignment))
-	chdir(t, root)
 
 	var stdout, stderr bytes.Buffer
 	if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 0 {
@@ -267,7 +257,6 @@ func TestListCommandAdvertisesOneLandedSweep(t *testing.T) {
 	landed := mustCreate(t, root, "list-landed", "landed")
 	active := mustCreate(t, root, "list-active", "active")
 	landAssignment(t, root, landed, "list-landed.txt")
-	chdir(t, root)
 
 	out, code := ListCommand(root, nil)
 	if code != 0 {

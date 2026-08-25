@@ -191,7 +191,6 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 			bindEnv(t, "BENCH_TEST_TARGET_GIT_LOG", log)
 			bindEnv(t, "BENCH_TEST_REAL_GIT", realGit)
 			bindEnv(t, "PATH", wrapper+string(os.PathListSeparator)+os.Getenv("PATH"))
-			chdir(t, root)
 
 			if listing, code := ListCommand(root, nil); code != 0 || !strings.Contains(listing, creation.Assignment.ID) {
 				t.Fatalf("ListCommand = (%d, %q), want complete assignment row", code, listing)
