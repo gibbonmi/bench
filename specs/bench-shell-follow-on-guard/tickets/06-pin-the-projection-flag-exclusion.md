@@ -1,7 +1,7 @@
 # Pin the projection flag exclusion
 
 Blocked by: 02-refuse-bench-shell-follow-ons.md
-Writes: internal/gate
+Writes: cmd/bench
 
 ## What to build
 
