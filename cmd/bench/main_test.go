@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
@@ -54,6 +55,30 @@ func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
 	}
 	if got := readFile(t, stdout); !strings.HasPrefix(got, "next[1]{state,why,command}:\n") {
 		t.Fatalf("status --route = %q, want one next row", got)
+	}
+}
+
+func TestGuardsQueryReportsFollowOnGuardThroughCommandSeam(t *testing.T) {
+	root, err := git.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+
+	var stdout, stderr bytes.Buffer
+	code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"guards"})
+	if code != 0 || stderr.Len() != 0 {
+		t.Fatalf("bench guards = stdout=%q stderr=%q exit=%d, want stdout/0", stdout.String(), stderr.String(), code)
+	}
+	for _, want := range []string{
+		"block-bench-follow-on",
+		"PreToolUse:Bash",
+		"Bench shell follow-ons",
+		"claude,codex",
+	} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("bench guards = %q, want %q", stdout.String(), want)
+		}
 	}
 }
 
