@@ -13,6 +13,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -66,6 +68,14 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "error: %v\n", err)
 		return 1
 	}
+	// The lane is resolved before anything is graded. A declared lane replaces the
+	// whole-project gate for this commit; a malformed declaration refuses the run and
+	// names the defect, because a lane nobody can read grades nothing.
+	lane, laneKit, laneErr := gate.LaneForCommit(root)
+	if laneErr != nil {
+		fmt.Fprintf(stderr, "error: %v\n", laneErr)
+		return 1
+	}
 	if !dryRun {
 		formatted, formatErr := formatNamedGoFiles(root, named)
 		if formatErr != nil {
@@ -80,18 +90,30 @@ func Command(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintf(stdout, "formatted Go paths: %s\n", strings.Join(shown, " "))
 		}
 	}
+	owner := landing.New()
+	if lane != nil {
+		owner = landing.NewLane(authorization.LaneAuthority{
+			Checks: lane, Kit: laneKit, NamedMarkdown: namedMarkdown(named),
+		})
+	}
 	if dryRun {
-		if err := landing.New().DryRun(context.Background(), landing.Request{
+		if err := owner.DryRun(context.Background(), landing.Request{
 			Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
 			Message: msg, Paths: named, Stdout: stdout, Stderr: stderr,
 		}); err != nil {
 			fmt.Fprintf(stderr, "error: %v\n", err)
 			return 1
 		}
-		fmt.Fprintf(stdout, "dry run: composed %d path(s) authorized green; nothing committed\n", len(named))
+		// A lane pass is not green, and the lane already stated its own outcome, so the
+		// summary borrows neither the word nor a second verdict.
+		if lane != nil {
+			fmt.Fprintf(stdout, "dry run: composed %d path(s); nothing committed\n", len(named))
+		} else {
+			fmt.Fprintf(stdout, "dry run: composed %d path(s) authorized green; nothing committed\n", len(named))
+		}
 		return 0
 	}
-	if _, err := landing.New().Land(context.Background(), landing.Request{
+	if _, err := owner.Land(context.Background(), landing.Request{
 		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
 		Message: msg, Paths: named, Stdout: stdout, Stderr: stderr,
 	}); err != nil {
@@ -110,6 +132,19 @@ func Command(args []string, stdout, stderr io.Writer) int {
 // commit exists and the checkout does not match it. The record uses the landing verb's
 // name{key=value,...} grammar, and its exit code separates this outcome from a refusal
 // that published nothing.
+// namedMarkdown is the lane prose check's subject: the Markdown among the named paths.
+// The check itself is declared, so an empty list still runs it; only its subject follows
+// the commit.
+func namedMarkdown(named []string) []string {
+	var markdown []string
+	for _, path := range named {
+		if strings.HasSuffix(path, ".md") {
+			markdown = append(markdown, path)
+		}
+	}
+	return markdown
+}
+
 func publicationRemainder(stdout io.Writer, remainder *landing.PublishedUnreconciledError) int {
 	fmt.Fprintf(stdout, "committed{published_commit=%s,path=%s,next=%s}\n",
 		remainder.Commit, sanitize.Controls(remainder.Path), restoreNext(remainder.Commit, remainder.Paths))

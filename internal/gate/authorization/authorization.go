@@ -10,6 +10,7 @@ import (
 	"io"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/gate"
@@ -25,9 +26,15 @@ const (
 	Candidate      Kind = "candidate"
 	Inherited      Kind = "inherited"
 	Infrastructure Kind = "infrastructure"
+	// The two fast-lane outcomes. They are deliberately not spelled green or red: a
+	// lane grades a declared check list, so it decides the worktree commit alone and
+	// nothing the landing's whole-project gate decides.
+	LanePass Kind = "lane pass"
+	LaneFail Kind = "lane fail"
 )
 
-// Result is the gate owner's projection. Evidence is opaque to lifecycle callers.
+// Result is the gate owner's projection. Evidence is opaque to lifecycle callers, and
+// only a graded green carries any: a lane pass proves nothing a later reader may reuse.
 type Result struct {
 	Kind     Kind
 	Evidence string
@@ -167,4 +174,50 @@ func evidenceToken(kind Kind, tree string, inspection gate.EvidenceInspection) s
 		strconv.FormatBool(inspection.ReusableGreen)
 	sum := sha256.Sum256([]byte(fact))
 	return "v1:" + hex.EncodeToString(sum[:])
+}
+
+// LaneAuthority authorizes a composed tree by running a declared fast lane in place of
+// the whole-project gate. It is the worktree commit's authority. Checks is the lane the
+// root declares, resolved by the caller so one read answers both whether a lane exists
+// and what it is. Kit is the source root the Bench-owned checks are built from, empty
+// for the graded tree's own checkout. NamedMarkdown is the path list the lane's prose
+// placeholder resolves to.
+type LaneAuthority struct {
+	Checks        []gate.Phase
+	Kit           string
+	Lane          string
+	NamedMarkdown []string
+}
+
+// Authorize runs the lane on tree and attributes its outcome. It writes the one outcome
+// line the operator reads, and on a failure the failing check's first diagnostic line as
+// well, because the caller refuses without re-reading the stream. The result carries no
+// evidence token: a lane pass authorizes this commit alone.
+func (a LaneAuthority) Authorize(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
+	result, err := gate.RunLane(ctx, gate.LaneRequest{
+		Root: root, Kit: a.Kit, Tree: tree, Lane: a.Lane,
+		Checks: a.Checks, NamedMarkdown: a.NamedMarkdown,
+		Stdout: stdout, Stderr: stderr,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "error: %v\n", err)
+		return Result{Kind: LaneFail}
+	}
+	if !result.Passed() {
+		fmt.Fprintf(stdout, "lane{outcome=fail,check=%s}\n", result.Check)
+		if result.Diagnostic != "" {
+			fmt.Fprintln(stdout, result.Diagnostic)
+		}
+		return Result{Kind: LaneFail}
+	}
+	fmt.Fprintf(stdout, "lane{outcome=pass,checks=%s}\n", strings.Join(checkNames(a.Checks), ","))
+	return Result{Kind: LanePass}
+}
+
+func checkNames(checks []gate.Phase) []string {
+	names := make([]string, len(checks))
+	for i, check := range checks {
+		names[i] = check.Name
+	}
+	return names
 }
