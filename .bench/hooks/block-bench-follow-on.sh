@@ -7,6 +7,7 @@ set -uo pipefail
 warn() { echo "WARNING: block-bench-follow-on: $1 — allowing Bash." >&2; }
 lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/resolve-bench.sh"
 [[ -f "$lib" ]] || { warn "wrapper resolver missing"; exit 0; }
+# shellcheck source=../lib/resolve-bench.sh
 . "$lib"
 input="$(cat 2>/dev/null || true)"
 cmd="$(bench_resolve_wrapper)" || { warn "bench core not found"; exit 0; }
