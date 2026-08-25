@@ -6,7 +6,7 @@ Roadmap: FT215
 
 Decision source: ready compiled map `specs/worktree-test-floor/decisions/worktree-test-floor.md`, resolved 2026-08-25
 
-Verification log: 1 iteration to accept — the round accepted the eleven-ticket chain; the closing ticket carries the live-tree census so every ticket lands green
+Verification log: 1 iteration to accept — the round accepted the eleven-ticket chain; the closing ticket carries the live-tree census so every ticket lands green. Amended 2026-08-25 after the build measured a 73 s wall. The reviewer dropped the five-slowest pin and reopened the `BENCH_HOME` seam. The verbs take an explicit home, and the `BENCH_HOME`-bound tests join the parallel set.
 
 ## Problem
 
@@ -28,6 +28,12 @@ Four verbs resolve their root from the working directory today: `clean`,
 `reclaim`, `list`, and `resume clean`. They take an explicit root like the
 other seven verbs, so their tests need no `chdir`. No test is removed, merged,
 or weakened, and the gate's phase table does not change.
+
+Every verb reads `BENCH_HOME` inside the package today, so a test that runs a
+verb in-process binds the process environment and stays serial. The verbs
+take an explicit home in the shape of the explicit root, and a child a verb
+starts carries that home on its environment. The test fixtures pass a private
+home, so the `BENCH_HOME`-bound tests join the parallel set.
 
 ## User stories
 
@@ -54,6 +60,19 @@ The change composes the root-taking seam seven verbs already use.
 
 8. As a kit maintainer, I want `clean`, `reclaim`, `list`, and `resume clean` to take an explicit root, so that their tests need no `chdir`.
 9. As an operator, I want those four verbs to behave as before from any directory inside the repo, so that no grammar or output changes.
+
+### Every verb takes an explicit home
+
+Line: opus / high.
+
+The change hoists a process-environment read to thirteen verb boundaries and
+must carry the home into every child the verbs start. A leak reaches the
+operator's real home, so the top of the mid tier applies.
+
+14. As a kit maintainer, I want every verb to take an explicit home after its root, so that an in-process test binds no environment.
+15. As an operator, I want a child a verb starts to carry that home, so that a private home reaches the broker and the gate.
+16. As a kit maintainer, I want the shared fixtures to bind no environment, so that the tests they serve are eligible.
+17. As a reviewer, I want a ceiling pin on the serial set, so that a fixture cannot fall back to a process bind.
 
 ### What the gate proves does not change
 
@@ -97,10 +116,32 @@ output, and exit codes do not change.
 runs two parallel journeys against two repositories and reads the effect log.
 The gate's `race` phase runs it.
 
-**The five slowest tests stay serial.** Each of the five binds `BENCH_HOME` for an
-in-process `CreateCommand` or `LandCommand` call, through `landingFixtureAtHome` or
-`newOwnedAssignment`. A `BENCH_HOME` injection seam is a closed cut, so the marks
-pay across the eligible set instead, and the retro records the wall.
+**Every verb takes a home.** `effects.go` exports `Home()`, the one
+`BENCH_HOME` read. Each public verb gains a `home string` parameter after
+`root`, and each caller resolves the home once at the command boundary, as it
+resolves the root. Some package functions read the home and serve another
+package: `Pool`, `Acquire`, `Create`, `ConservativeCleanup`, and their kin.
+Each keeps its form for that caller and gains an `At` form that takes the
+home. A function this package alone calls takes the home outright. The tests
+call the form that takes the home. The verbs' grammar, output, and exit
+codes do not change.
+
+**A child carries the home.** A verb starts children: the landing's gate and
+broker, a `bench` child, and a git child that reads the pool. Each receives
+`BENCH_HOME=<home>` on its environment. The verb sets that entry from the
+resolved value, not from the process environment. The harness's home-residue guard turns red when
+a child writes below the operator's real home.
+
+**The fixtures stop binding.** `landingFixtureAtHome` writes the tally path
+into the gate scripts as a literal and declares no environment in
+`gate-inputs.json`, so it binds neither `BENCH_HOME` nor `LAND_GATE_TALLY`.
+`newOwnedAssignment`, `newPendingAssignment`, `mustCreate`, `newReclaimPool`,
+`reauthorizeFixture`, and `newResidueGuardFixture` pass the home they own. A
+test that grades the boundary default itself keeps its bind and stays serial.
+
+**The serial ceiling.** The census reports the serial set's size, and a pin
+requires it at or below the count the closing ticket observes. A fixture that
+falls back to a process bind raises the count above the pin.
 
 **The count pin.** The census requires at least 334 top-level tests in the
 package. A new test raises the count; a removal below the pin turns the gate
@@ -154,6 +195,10 @@ explicit root while the working directory is elsewhere. The gate's `test` and
 | WF12 | 10 | The census requires at least 334 top-level tests in the package. | package census test | A removal below the pin passes silently. |
 | WF13 | 11 | The harness effect census still reports an `exec.Command` outside the harness files. | existing census test | A relaxed regex lets a parallel test spawn outside the harness. |
 | WF14 | 13 | Every `internal/worktree` test file keeps `package worktree`. | package census test | An external test package is a sub-package split by another name. |
+| WF15 | 14 | `CreateCommand` with an explicit home writes its pool below that home while the process `BENCH_HOME` names a different directory. | package unit | A verb that still reads the environment writes to the wrong home. |
+| WF16 | 15 | A landing with an explicit home runs a gate script that records `$BENCH_HOME`, and the record names that home. | landing journey | A child that inherits the process environment grades under the wrong home. |
+| WF17 | 16 | The landing fixture binds no environment, and a test it serves calls `t.Parallel()` under the census. | package census test | A fixture that binds keeps every landing test serial. |
+| WF18 | 17 | The census reports the serial set's size, and a pin refuses a count above the ceiling. | package census test | A fixture that falls back to a bind passes silently. |
 
 Not covered: story 7 — retro evidence, not gate behavior.
 Not covered: story 12 — an exclusion; FT246 owns those packages.
@@ -172,7 +217,8 @@ Not covered: story 12 — an exclusion; FT246 owns those packages.
 
 **Won't handle** a sub-package split — every test file is `package worktree`, and the internal surface stays.
 
-**Won't handle** a `BENCH_HOME` injection seam in production code — the environment is process-global, and env-bound tests stay serial.
+- A test that grades the boundary default (`Home()` without `BENCH_HOME`) binds the environment and stays serial.
+- A `bench` child the landing starts reads `BENCH_HOME` from its own environment, so the verb sets it there from the resolved home.
 
 **Won't handle** conversion of in-process verb calls to child processes — 250 tests would change seam, and the census makes the serial set explicit instead.
 
@@ -186,15 +232,20 @@ Not covered: story 12 — an exclusion; FT246 owns those packages.
 - `cmd/bench/main.go`
 - `cmd/bench/command_registry_test.go`
 - `internal/sessioninspect/sessioninspect.go`
+- `internal/harness/worktree.go`
+- `internal/shift/`
+- `internal/status/status.go`
+- `internal/dashboard/dashboard.go`
 - `CHANGELOG.md`
 
 The tickets run serially on one source. The root ticket lands first, the
 harness and census ticket second, and the parallel marks follow file by file.
+The home seam lands after the marks: the verb ticket first, the fixture ticket
+second, the direct-bind tickets in parallel, and the ceiling ticket last.
 
 ## Out of scope
 
 - The `internal/freshness` and `internal/runbinary` floors: 10 edits, 2 gate runs, owned by FT246.
-- A `BENCH_HOME` injection seam in production code: 12 edits, 2 gate runs.
 - Conversion of in-process verb tests to child-process journeys: 250 edits, 6 gate runs.
 - A sub-package split with exported test seams: 80 edits, 4 gate runs, and it changes the package surface.
 - The gate's phase table and what green means. The cadence spec pins the `test` argv.
