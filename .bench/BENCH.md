@@ -18,8 +18,8 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 hooks and adapters, live in `.bench/BENCH-reference.md`. Run `bench` exactly as its
 executable help spells it.
 
-Bench owns non-interactive input, complete output, and required next actions. The
-complete output is the evidence, and on a red gate it is the failure attribution.
+Bench owns non-interactive input, complete output, required next actions, and
+red-gate failure attribution. Each Bench response is bounded and is the complete evidence.
 Output too long to read is CLI-owned projection work, not call-site shaping. Never
 append extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on.
 `bench gate` is valid. `bench gate 2>&1 | tail -20` is not valid.
