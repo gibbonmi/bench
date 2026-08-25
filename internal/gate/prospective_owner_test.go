@@ -5,6 +5,7 @@ package gate
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -161,5 +162,36 @@ func writeGateFixtureFile(t *testing.T, root, rel, body string, mode os.FileMode
 	}
 	if err := os.Chmod(path, mode); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// TestProspectiveGateReportsAFailedBuildWithNoResidue is the fail-closed half of the
+// graded-tree selection. Authoring the private gate executable fails, so the owner
+// returns the build cause instead of a selection, and the private directory it opened
+// for that executable does not survive the failure.
+func TestProspectiveGateReportsAFailedBuildWithNoResidue(t *testing.T) {
+	checkout := t.TempDir()
+	tempRoot := t.TempDir()
+	old := prospectiveRunBinary
+	prospectiveRunBinary = runbinary.Factory{
+		TempRoot: tempRoot,
+		Build:    func(context.Context, string, string) error { return errors.New("build refused") },
+		Verify:   func(string, string) error { return nil },
+	}
+	t.Cleanup(func() { prospectiveRunBinary = old })
+
+	selection, err := prospectiveRunBinaryOwner(checkout)(t.Context(), checkout)
+	if err == nil || selection != nil {
+		t.Fatalf("failed prospective build = (%#v, %v), want no selection and an error", selection, err)
+	}
+	if !strings.Contains(err.Error(), "build refused") {
+		t.Fatalf("prospective build error = %v, want the build cause", err)
+	}
+	entries, readErr := os.ReadDir(tempRoot)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("failed prospective build left %d entries under its temporary root", len(entries))
 	}
 }

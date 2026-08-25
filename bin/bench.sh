@@ -366,9 +366,11 @@ route_porcelain() {
 # every inherited routing override before any repository read, then authenticates the
 # broker through the installation manifest beside this wrapper — path, version,
 # platform, and executable digest. `bench doctor --fix` (and so the release install)
-# publishes the manifest and broker together. Current-directory state and repository
-# executables never join this selection, so repository code cannot authorize its own
-# publication.
+# publishes the manifest and broker together. The installer owns the platform fact and
+# writes it; the route requires the field but never derives a second copy to compare
+# against, because the digest binds the exact executable this host runs. Current-
+# directory state and repository executables never join this selection, so repository
+# code cannot authorize its own publication.
 land_repair_advice() {
   echo "bench: run 'bench doctor --fix' (or reinstall redbench) to republish the promotion broker" >&2
 }
@@ -415,11 +417,6 @@ land_route() {
   done < "$manifest"
   if [[ -z "$broker" || -z "$version" || -z "$platform" || -z "$digest" ]]; then
     echo "bench: promotion-broker manifest at $manifest is incomplete" >&2
-    land_repair_advice
-    exit 127
-  fi
-  if [[ "$platform" != "$(platform_suffix)" ]]; then
-    echo "bench: promotion broker platform $platform does not match this host" >&2
     land_repair_advice
     exit 127
   fi

@@ -59,6 +59,10 @@ var releaseLandingAssignment = ReleaseCommand
 
 var authorizeLandingSource = preflight.AuthorizeReviewedSource
 
+// reviewedRangeDetail names the refusal a `--base` outside the assignment's reviewed
+// range carries.
+const reviewedRangeDetail = "review base is outside the assignment's reviewed range"
+
 // rebuiltLandingEnv survives only for the retired rebuild guard in effects.go; the
 // stable owner never rebuilds or re-executes a landing, so nothing sets it.
 const rebuiltLandingEnv = "BENCH_LANDING_REBUILT"
@@ -97,6 +101,13 @@ func LandCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 		refusals = append(refusals, err)
 	} else if source, err = landingSource(root, assignment, base, tip, parsed.Flags["--spec"]); err != nil {
 		refusals = append(refusals, err)
+	} else if !git.OK("-C", root, "merge-base", "--is-ancestor", assignment.Start, source.base) {
+		// The review base binds to the assignment's recorded start or to a descendant
+		// of it. The destination advances while an assignment is open, so a landing
+		// rebases forward and names the moved base; a base behind the recorded start
+		// instead grades a range the assignment never authorized. `--is-ancestor`
+		// accepts the recorded start itself, which is the unmoved case.
+		refusals = append(refusals, identityRefusal(source.base, assignment.Start, reviewedRangeDetail))
 	} else if destination != "" && !git.OK("-C", root, "merge-base", "--is-ancestor", source.base, destination) {
 		// The review base binds before composition: a base outside the destination's
 		// history grades a range the destination never reviewed against.

@@ -9,7 +9,9 @@ import (
 
 // TestWriteBrokerManifestBindsTheRunningBrokerIdentity pins the published binding:
 // the manifest lands beside the wrapper and binds the running executable's path, the
-// given version, this host's platform, and the executable's content digest.
+// given version, this host's platform, and the executable's content digest. This
+// installer is the one writer of the platform value, so the assertion grades the
+// spelling the field must carry.
 func TestWriteBrokerManifestBindsTheRunningBrokerIdentity(t *testing.T) {
 	dir := t.TempDir()
 	wrapper := filepath.Join(dir, "bin", "bench.sh")

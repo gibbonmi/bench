@@ -60,8 +60,10 @@ func WriteBrokerManifest(version string) (string, string, error) {
 	return path, broker, nil
 }
 
-// brokerPlatform spells this host the way the wrapper's platform_suffix does, using
-// npm's os/cpu vocabulary.
+// brokerPlatform names the host this broker was installed for, in npm's os/cpu
+// vocabulary. This is the one derivation of that fact: the wrapper's land route reads
+// the value the manifest carries and never computes a second copy to compare it
+// against, because the manifest digest binds the exact executable instead.
 func brokerPlatform() string {
 	arch := runtime.GOARCH
 	if arch == "amd64" {

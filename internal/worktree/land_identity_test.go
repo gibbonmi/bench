@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 )
 
@@ -105,4 +106,32 @@ func requireIdentityRefusalState(t *testing.T, root, path, tally string, compose
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("identity refusal removed the source worktree: %v", err)
 	}
+}
+
+// TestLandCommandRefusesAReviewBaseBehindTheRecordedStart is the SOL06 mutation guard
+// the ancestry check alone cannot answer, and it closes C4. The base names an earlier
+// ancestor of the recorded start, so it is a valid ancestor of the destination and the
+// ancestry guard accepts it, and the spec-less landing names no ownership fence that
+// would refuse it for another reason. Only the recorded-start binding refuses it,
+// because that earlier base grades a range wider than the one the assignment
+// authorized, and it refuses before composition.
+func TestLandCommandRefusesAReviewBaseBehindTheRecordedStart(t *testing.T) {
+	request := "land-identity-recorded-start"
+	root, creation, base, tip, tally := specLessLandingFixture(t, request)
+	earlier := gitOutput(t, root, "rev-parse", base+"~1")
+	if earlier == base {
+		t.Fatalf("fixture has no earlier ancestor than the recorded start %q", base)
+	}
+	if !git.OK("-C", root, "merge-base", "--is-ancestor", earlier, base) {
+		t.Fatalf("premise failed: %q is not an ancestor of the destination", earlier)
+	}
+	composed := forbidLandingComposition(t)
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", specLessLandArgs(request, earlier, tip, creation.Path), &stdout, &stderr)
+	want := "detail=" + reviewedRangeDetail + ",observed=" + earlier + ",wanted=" + base
+	if code != 1 || !strings.Contains(stdout.String(), want) {
+		t.Fatalf("earlier ancestor base = (%d, %q, %q), want a refusal carrying %q", code, stdout.String(), stderr.String(), want)
+	}
+	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
 }
