@@ -44,8 +44,7 @@ census catch it, so the cached mid routing applies.
 4. As a kit maintainer, I want a test that binds environment or changes directory to stay serial, so that Go's rules hold.
 5. As a kit maintainer, I want the harness's shared state to stay correct under parallel siblings, so that the race phase stays green.
 6. As a kit maintainer, I want a race sentinel that runs parallel journeys under `-race`, so that a harness data race turns the gate red.
-7. As a kit maintainer, I want the five slowest tests to run in parallel, so that the priced cut lands where it pays most.
-8. As a kit maintainer, I want the build's retro to record the package's serial sum and wall, so that the destination is measured.
+7. As a kit maintainer, I want the build's retro to record the package's serial sum and wall, so that the destination is measured.
 
 ### Four verbs take an explicit root
 
@@ -53,8 +52,8 @@ Line: opus / medium.
 
 The change composes the root-taking seam seven verbs already use.
 
-9. As a kit maintainer, I want `clean`, `reclaim`, `list`, and `resume clean` to take an explicit root, so that their tests need no `chdir`.
-10. As an operator, I want those four verbs to behave as before from any directory inside the repo, so that no grammar or output changes.
+8. As a kit maintainer, I want `clean`, `reclaim`, `list`, and `resume clean` to take an explicit root, so that their tests need no `chdir`.
+9. As an operator, I want those four verbs to behave as before from any directory inside the repo, so that no grammar or output changes.
 
 ### What the gate proves does not change
 
@@ -62,10 +61,10 @@ Line: sonnet / low.
 
 Two pins keep the cut honest, and each is an exact static check.
 
-11. As a reviewer, I want the package's test count to stay at least 334, so that no test is removed or merged for wall-clock.
-12. As a reviewer, I want the harness effect census to keep forbidding effects outside the harness files, so that parallel tests cannot bypass the harness.
-13. As a reviewer, I want the `internal/freshness` and `internal/runbinary` floors left to FT246, so that this spec stays one capability.
-14. As a reviewer, I want no sub-package split and no export of internal identifiers, so that the package's surface does not change.
+10. As a reviewer, I want the package's test count to stay at least 334, so that no test is removed or merged for wall-clock.
+11. As a reviewer, I want the harness effect census to keep forbidding effects outside the harness files, so that parallel tests cannot bypass the harness.
+12. As a reviewer, I want the `internal/freshness` and `internal/runbinary` floors left to FT246, so that this spec stays one capability.
+13. As a reviewer, I want no sub-package split and no export of internal identifiers, so that the package's surface does not change.
 
 ## Implementation decisions
 
@@ -97,6 +96,11 @@ output, and exit codes do not change.
 **The race sentinel.** The race-test registry gains one worktree sentinel that
 runs two parallel journeys against two repositories and reads the effect log.
 The gate's `race` phase runs it.
+
+**The five slowest tests stay serial.** Each of the five binds `BENCH_HOME` for an
+in-process `CreateCommand` or `LandCommand` call, through `landingFixtureAtHome` or
+`newOwnedAssignment`. A `BENCH_HOME` injection seam is a closed cut, so the marks
+pay across the eligible set instead, and the retro records the wall.
 
 **The count pin.** The census requires at least 334 top-level tests in the
 package. A new test raises the count; a removal below the pin turns the gate
@@ -144,16 +148,15 @@ explicit root while the working directory is elsewhere. The gate's `test` and
 | WF05 | 4 | A synthetic serial test that calls `t.Parallel()` makes the census report the pair. | census unit on a temp dir | Go panics at run time, and the census names it statically first. |
 | WF06 | 5 | Two goroutines that call the run-binary selector record two journey lines. | selector unit under `-race` | An unguarded append loses a line or races. |
 | WF07 | 6 | The race-test registry names one worktree sentinel that runs two parallel journeys. | racetests registry test | A sentinel outside the registry never runs under `-race`. |
-| WF08 | 7 | The five tests the asset names each call `t.Parallel()`. | census unit on the live tree | The priced cut lands elsewhere. |
-| WF09 | 9 | `CleanCommand` with an explicit root acts on that root while the working directory is a temp dir. | package unit | A verb that still resolves the working directory acts on the wrong repo. |
-| WF10 | 9 | `ReclaimCommand`, `ListCommand`, and `ResumeCleanCommand` accept an explicit root in the same way. | package unit | One verb left on the working directory keeps its tests serial. |
-| WF11 | 10 | `bench worktree clean --help` and `bench worktree list` from a subdirectory print the same bytes as before. | command registry test | A caller that passes the subdirectory as root changes the output. |
-| WF12 | 11 | The census requires at least 334 top-level tests in the package. | package census test | A removal below the pin passes silently. |
-| WF13 | 12 | The harness effect census still reports an `exec.Command` outside the harness files. | existing census test | A relaxed regex lets a parallel test spawn outside the harness. |
-| WF14 | 14 | Every `internal/worktree` test file keeps `package worktree`. | package census test | An external test package is a sub-package split by another name. |
+| WF09 | 8 | `CleanCommand` with an explicit root acts on that root while the working directory is a temp dir. | package unit | A verb that still resolves the working directory acts on the wrong repo. |
+| WF10 | 8 | `ReclaimCommand`, `ListCommand`, and `ResumeCleanCommand` accept an explicit root in the same way. | package unit | One verb left on the working directory keeps its tests serial. |
+| WF11 | 9 | `bench worktree clean --help` and `bench worktree list` from a subdirectory print the same bytes as before. | command registry test | A caller that passes the subdirectory as root changes the output. |
+| WF12 | 10 | The census requires at least 334 top-level tests in the package. | package census test | A removal below the pin passes silently. |
+| WF13 | 11 | The harness effect census still reports an `exec.Command` outside the harness files. | existing census test | A relaxed regex lets a parallel test spawn outside the harness. |
+| WF14 | 13 | Every `internal/worktree` test file keeps `package worktree`. | package census test | An external test package is a sub-package split by another name. |
 
-Not covered: story 8 — retro evidence, not gate behavior.
-Not covered: story 13 — an exclusion; FT246 owns those packages.
+Not covered: story 7 — retro evidence, not gate behavior.
+Not covered: story 12 — an exclusion; FT246 owns those packages.
 
 ### Edge inventory
 
