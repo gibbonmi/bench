@@ -148,6 +148,17 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **gate cache** — the durable ready or pending verdict that gate execution binds to
   the closed oracle subject in the Git dir. Read-only consumers can then project gate
   state without a cold run. Not "gate log".
+- **census** — the hook-recorded count of **raw calls** per assignment worktree,
+  shown as the `census` **signal** and carried in the landing record. Not "log",
+  not "audit", not "trace" — census.
+- **raw call** — one Bash tool call that names a path under the repository's
+  pool directory with a **verb head** other than `bench`. A chain in one call
+  is one raw call. A Read, Edit, or Write tool call is never one. Not "path
+  leak", not "bypass" — raw call.
+- **verb head** — a command's first word after prefix resolution. Prefix
+  resolution steps over `env`, `timeout`, `xargs`, and leading assignments.
+  When the word is `git`, the head includes the subcommand: `git add`,
+  `python3`, `sed`. Not "command name" — verb head.
 - **landing source** — a build-owned Git integration branch identified by its
   frozen base and current source tip. Serial green tickets accumulate there;
   semantic review binds to that pair and `bench worktree land` consumes it. Not
