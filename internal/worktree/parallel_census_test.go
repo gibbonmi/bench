@@ -174,6 +174,35 @@ func packageVarNames(dir string) (map[string]bool, error) {
 	return names, nil
 }
 
+// assignRoot resolves an assignment target to the identifier it ultimately
+// writes, and to the selector name that qualifies that identifier. The census
+// strips the index, pointer, and parenthesis wrappers and the outer selectors,
+// so pkg.Slice[0], pkg.Var.Field, and (*pkg.Ptr).Field all resolve to the root
+// pkg and the selector the root qualifies. The selector name is empty when the
+// target is a bare identifier or a wrapper around one, and the root name is
+// empty when the target roots in no identifier at all. A write through any of
+// these shapes reaches the same storage as a write to the bare name, so the
+// serial edge and the assignment refusal both read the root.
+func assignRoot(target ast.Expr) (root string, sel string) {
+	for {
+		switch node := target.(type) {
+		case *ast.ParenExpr:
+			target = node.X
+		case *ast.StarExpr:
+			target = node.X
+		case *ast.IndexExpr:
+			target = node.X
+		case *ast.SelectorExpr:
+			sel = node.Sel.Name
+			target = node.X
+		case *ast.Ident:
+			return node.Name, sel
+		default:
+			return "", ""
+		}
+	}
+}
+
 // assignedPackageVar names the first package-level variable the body of decl
 // assigns anywhere, a closure included, and is empty when it assigns none. A
 // restore inside t.Cleanup is such a closure. The census reads the assignment
@@ -187,8 +216,8 @@ func assignedPackageVar(decl *ast.FuncDecl, vars map[string]bool) string {
 			return found == ""
 		}
 		for _, target := range assign.Lhs {
-			if ident, ok := target.(*ast.Ident); ok && vars[ident.Name] {
-				found = ident.Name
+			if root, _ := assignRoot(target); vars[root] {
+				found = root
 			}
 		}
 		return found == ""
@@ -233,12 +262,9 @@ func assignedImportedVar(decl *ast.FuncDecl, imports map[string]bool) string {
 			return found == ""
 		}
 		for _, target := range assign.Lhs {
-			selector, ok := target.(*ast.SelectorExpr)
-			if !ok {
-				continue
-			}
-			if pkg, ok := selector.X.(*ast.Ident); ok && imports[pkg.Name] {
-				found = "assigns " + pkg.Name + "." + selector.Sel.Name
+			root, sel := assignRoot(target)
+			if sel != "" && imports[root] {
+				found = "assigns " + root + "." + sel
 			}
 		}
 		return found == ""
@@ -626,6 +652,12 @@ func TestSubtest(t *testing.T) {
 const syntheticHooksFile = `package worktree
 
 var hook = func() {}
+
+var hooks []func()
+
+var hookBox struct{ Field int }
+
+var hookPtr *struct{ Field int }
 `
 
 // TestCensusRefusesAssignmentToPackageVariable proves a test that assigns a
@@ -651,6 +683,24 @@ func TestCensusRefusesAssignmentToPackageVariable(t *testing.T) {
 	t.Cleanup(func() { hook = old })
 `,
 			want: "stub_test.go:5: TestStub assigns package variable hook",
+		},
+		{
+			name: "index-assignment",
+			body: `	hooks[0] = nil
+`,
+			want: "stub_test.go:5: TestStub assigns package variable hooks",
+		},
+		{
+			name: "field-assignment",
+			body: `	hookBox.Field = 1
+`,
+			want: "stub_test.go:5: TestStub assigns package variable hookBox",
+		},
+		{
+			name: "pointer-field-assignment",
+			body: `	(*hookPtr).Field = 1
+`,
+			want: "stub_test.go:5: TestStub assigns package variable hookPtr",
 		},
 		{
 			name: "read-only",
@@ -741,6 +791,24 @@ func swapReader() {
 			name:       "aliased-import",
 			importSpec: `cryptorand "crypto/rand"`,
 			body: `	cryptorand.Reader = nil
+`,
+			want: "",
+		},
+		{
+			name: "index-assignment",
+			body: `	rand.Reader[0] = nil
+`,
+			want: "",
+		},
+		{
+			name: "field-assignment",
+			body: `	rand.Reader.Field = nil
+`,
+			want: "",
+		},
+		{
+			name: "pointer-field-assignment",
+			body: `	(*rand.Reader).Field = nil
 `,
 			want: "",
 		},
