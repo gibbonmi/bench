@@ -16,7 +16,7 @@ var listPathAction = regexp.MustCompile(`bench worktree path (\S+),inspect activ
 func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "advertised")
 	chdir(t, root)
-	listed, code := ListCommand(nil)
+	listed, code := ListCommand(root, nil)
 	if code != 0 {
 		t.Fatalf("list code=%d out=%q", code, listed)
 	}

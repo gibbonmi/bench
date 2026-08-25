@@ -21,13 +21,12 @@ type listRow struct {
 }
 
 // ListCommand implements the read-only AXI worktree population query.
-func ListCommand(args []string) (string, int) {
+func ListCommand(root string, args []string) (string, int) {
 	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
-	root, err := git.Root()
-	if err != nil {
+	if !inRepository(root) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	registrations, err := git.Worktrees(root)

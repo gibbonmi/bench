@@ -254,11 +254,23 @@ func classifyNestedState(root string) (state nestedState, err error) {
 	}
 	return state, nil
 }
+
+// inRepository reports whether an explicit root names a git repository. The four
+// verbs that receive a root refuse one that does not, in place of the
+// working-directory lookup they made before.
+func inRepository(root string) bool {
+	if root == "" {
+		return false
+	}
+	_, err := git.RootAt(root)
+	return err == nil
+}
+
 func cleanInvocationError(stdout io.Writer) int {
 	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run " + usage.WorktreeClean})
 	return 2
 }
-func CleanCommand(args []string, stdout, stderr io.Writer) int {
+func CleanCommand(root string, args []string, stdout, stderr io.Writer) int {
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
 	landed := false
@@ -300,8 +312,7 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	if fingerprint != "" && !wellFormedFingerprintOrPrefix(fingerprint) {
 		return cleanInvocationError(stdout)
 	}
-	root, err := git.Root()
-	if err != nil {
+	if !inRepository(root) {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}

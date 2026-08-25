@@ -193,12 +193,12 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 			bindEnv(t, "PATH", wrapper+string(os.PathListSeparator)+os.Getenv("PATH"))
 			chdir(t, root)
 
-			if listing, code := ListCommand(nil); code != 0 || !strings.Contains(listing, creation.Assignment.ID) {
+			if listing, code := ListCommand(root, nil); code != 0 || !strings.Contains(listing, creation.Assignment.ID) {
 				t.Fatalf("ListCommand = (%d, %q), want complete assignment row", code, listing)
 			}
 			assertNoTargetGitCalls(t, log, "ListCommand")
 			var stdout, stderr strings.Builder
-			if code := ResumeCleanCommand(nil, &stdout, &stderr); code != 0 {
+			if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 0 {
 				t.Fatalf("ResumeCleanCommand = (%d, %q, %q), want completion", code, stdout.String(), stderr.String())
 			}
 			assertNoTargetGitCalls(t, log, "ResumeCleanCommand")

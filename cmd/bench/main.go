@@ -104,7 +104,7 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 35, Suffix: " reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>", Description: "replace one lost request token after identity proof"},
 		helpRow{Order: 36, Suffix: " --help", Description: "show exact list, path, exec, create, release, clean, reclaim, and reauthorize grammar"},
 	), Run: worktreeCommand},
-	{Name: "resume-clean", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return worktree.ResumeCleanCommand(args, c.Stdout, c.Stderr) }},
+	{Name: "resume-clean", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
 	{Name: "session-inspect", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "shift", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " [--refresh] \"<objective>\"", Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "commit", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 39, Suffix: " -m <msg> <path>...", Description: "gate, then commit named paths on green"}), Run: func(c Command, args []string) int { return commit.Command(args, c.Stdout, c.Stderr) }},
@@ -519,6 +519,21 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 	return 2
 }
 
+// boundaryRoot resolves the repository root once for a verb that receives one. Outside a
+// repository it answers the empty string, and the verb prints its own refusal after it
+// reads its grammar. This keeps a help or usage answer available outside a repository.
+func boundaryRoot() string {
+	root, err := git.Root()
+	if err != nil {
+		return ""
+	}
+	return root
+}
+
+func resumeCleanCommand(c Command, args []string) int {
+	return worktree.ResumeCleanCommand(boundaryRoot(), args, c.Stdout, c.Stderr)
+}
+
 func worktreeCommand(c Command, args []string) int {
 	if len(args) > 0 && args[0] == "exec" {
 		root, err := git.Root()
@@ -537,7 +552,7 @@ func worktreeCommand(c Command, args []string) int {
 		return worktree.PathCommand(root, args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "list" {
-		out, code := worktree.ListCommand(args[1:])
+		out, code := worktree.ListCommand(boundaryRoot(), args[1:])
 		fmt.Fprint(c.Stdout, out)
 		return code
 	}
@@ -562,10 +577,10 @@ func worktreeCommand(c Command, args []string) int {
 		return worktree.ReleaseCommand(root, args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "clean" {
-		return worktree.CleanCommand(args[1:], c.Stdout, c.Stderr)
+		return worktree.CleanCommand(boundaryRoot(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "reclaim" {
-		return worktree.ReclaimCommand(args[1:], c.Stdout, c.Stderr)
+		return worktree.ReclaimCommand(boundaryRoot(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "reauthorize" {
 		root, err := git.Root()

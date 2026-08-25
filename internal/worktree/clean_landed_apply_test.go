@@ -314,7 +314,7 @@ func TestCleanLandedRetainsUnparseableLeaseAndSkipsUnprovableBranch(t *testing.T
 		t.Fatalf("plan = (%d, %q, %q), want unknown retain and no unprovable row", planCode, plan, planErr)
 	}
 	var summary, summaryErr strings.Builder
-	if code := ResumeCleanCommand(nil, &summary, &summaryErr); code != 0 || !strings.Contains(summary.String(), "landed=1") {
+	if code := ResumeCleanCommand(root, nil, &summary, &summaryErr); code != 0 || !strings.Contains(summary.String(), "landed=1") {
 		t.Fatalf("resume = (%d, %q, %q), want unknown lease counted landed", code, summary.String(), summaryErr.String())
 	}
 	_, applyErr, applyCode := runCleanLanded(t, root, "--landed", "--apply", landedRowFingerprint(t, plan))

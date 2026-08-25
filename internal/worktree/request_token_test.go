@@ -17,7 +17,7 @@ func TestListPrintsThePersistedRequestToken(t *testing.T) {
 		t.Fatal("create persisted no request token")
 	}
 	chdir(t, root)
-	out, code := ListCommand(nil)
+	out, code := ListCommand(root, nil)
 	if code != 0 {
 		t.Fatalf("list code=%d out=%q", code, out)
 	}
@@ -38,7 +38,7 @@ func TestListToleratesAPreTokenRecord(t *testing.T) {
 	if code := PathCommand(root, []string{creation.Assignment.ID}, &stdout, &stderr); code != 0 {
 		t.Fatalf("pre-token record no longer resolves: %s", stderr.String())
 	}
-	out, code := ListCommand(nil)
+	out, code := ListCommand(root, nil)
 	if code != 0 || !strings.Contains(out, creation.Assignment.ID) {
 		t.Fatalf("list dropped the pre-token record (code=%d):\n%s", code, out)
 	}

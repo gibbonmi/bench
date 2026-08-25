@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/axi"
-	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree/reclaimpolicy"
@@ -163,13 +162,12 @@ func fingerprintPoolReclaim(verdicts []poolKeyVerdict) string {
 // `--apply <fingerprint>` removes the ones that plan named. It runs inside a repository
 // like every other `bench worktree` subcommand, because the current repository's key is
 // the one key it may never name.
-func ReclaimCommand(args []string, stdout, stderr io.Writer) int {
+func ReclaimCommand(root string, args []string, stdout, stderr io.Writer) int {
 	applying, fingerprint, code := parseReclaimArgs(args, stdout)
 	if code != 0 {
 		return code
 	}
-	root, err := git.Root()
-	if err != nil {
+	if !inRepository(root) {
 		fmt.Fprintln(stdout, toon.NotInRepo())
 		return 1
 	}

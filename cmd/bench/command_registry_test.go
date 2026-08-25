@@ -641,3 +641,21 @@ func TestHelpSpecRowsNameRetireAndHistoryOnly(t *testing.T) {
 		}
 	}
 }
+
+// TestWorktreeRoutesKeepTheirBytesFromASubdirectory grades WF11. The four verbs that now
+// receive an explicit root must answer the same bytes from a subdirectory as from the
+// repository root, because the boundary resolves the root and the verb no longer reads
+// the working directory.
+func TestWorktreeRoutesKeepTheirBytesFromASubdirectory(t *testing.T) {
+	root := strings.TrimSpace(runAXIGit(t, "rev-parse", "--show-toplevel"))
+	subdirectory := filepath.Join(root, "cmd", "bench")
+	for _, argv := range [][]string{{"worktree", "clean", "--help"}, {"worktree", "list"}} {
+		t.Run(strings.Join(argv, " "), func(t *testing.T) {
+			atRoot := runAXICommandAt(t, root, argv)
+			below := runAXICommandAt(t, subdirectory, argv)
+			if atRoot != below {
+				t.Fatalf("%v from %s = %+v, from %s = %+v, want the same bytes and exit code", argv, root, atRoot, subdirectory, below)
+			}
+		})
+	}
+}

@@ -153,10 +153,10 @@ func planReclaimableCount(t *testing.T, out string) int {
 	return count
 }
 
-func mustResumeClean(t *testing.T) (string, int) {
+func mustResumeClean(t *testing.T, root string) (string, int) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "resume-clean code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	return stdout.String(), code
 }
@@ -196,8 +196,8 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 		pool, root := newReclaimPool(t)
 		plantHostilePool(t, pool, root)
 
-		summary, _ := mustResumeClean(t)
-		plan, code := mustReclaim(t)
+		summary, _ := mustResumeClean(t, root)
+		plan, code := mustReclaim(t, root)
 		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
 		want := planReclaimableCount(t, plan)
 		requireTest(t, want == 3, "the hostile pool plans %d reclaimable keys, want the two dead and the empty one: %q", want, plan)
@@ -209,8 +209,8 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 		plantLiveChild(t, pool, "live-key", "wt")
 		mustMkdirAll(t, filepath.Join(pool, filepath.Base(Pool(canonicalRoot(root)))), 0o700)
 
-		summary, _ := mustResumeClean(t)
-		plan, code := mustReclaim(t)
+		summary, _ := mustResumeClean(t, root)
+		plan, code := mustReclaim(t, root)
 		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
 		want := planReclaimableCount(t, plan)
 		requireTest(t, want == 0, "the clean pool plans %d reclaimable keys, want none: %q", want, plan)
@@ -228,7 +228,7 @@ func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 	plantHostilePool(t, pool, root)
 	before := poolListing(t, pool)
 
-	summary, _ := mustResumeClean(t)
+	summary, _ := mustResumeClean(t, root)
 	requireTest(t, resumeReclaimableCount(t, summary) > 0, "the fixture pool reported nothing reclaimable:\n%s", summary)
 	requireTest(t, poolListing(t, pool) == before,
 		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))

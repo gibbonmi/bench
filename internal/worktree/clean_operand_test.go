@@ -21,9 +21,8 @@ func TestCleanCommandRefusesAnOperandItCannotResolve(t *testing.T) {
 		{"tilde-prefixed", "~/.bench/worktrees/absent", "target is not registered"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			chdir(t, root)
 			var stdout, stderr bytes.Buffer
-			code := CleanCommand([]string{tc.target}, &stdout, &stderr)
+			code := CleanCommand(root, []string{tc.target}, &stdout, &stderr)
 			if code == 0 || !bytes.Contains(stdout.Bytes(), []byte(tc.detail)) {
 				t.Fatalf("%s clean code=%d stdout=%q", tc.name, code, stdout.String())
 			}
@@ -39,9 +38,8 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 	mustWrite(t, filepath.Join(creation.Path, ".gitignore"), []byte("residual.log\n"), 0o644)
 	gitRun(t, creation.Path, "add", ".gitignore")
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore residual")
-	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := CleanCommand([]string{creation.Path}, &stdout, &stderr)
+	code := CleanCommand(root, []string{creation.Path}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("resolved retain code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -54,7 +52,6 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "portable")
 	bindEnv(t, "HOME", root)
-	chdir(t, root)
 	var printed, stderr bytes.Buffer
 	if code := PathCommand(root, []string{creation.Assignment.Label}, &printed, &stderr); code != 0 {
 		t.Fatalf("path exited %d: %s", code, stderr.String())
@@ -64,7 +61,7 @@ func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 		t.Fatalf("path printed %q, want a resolved absolute path", portable)
 	}
 	var planned bytes.Buffer
-	if code := CleanCommand([]string{portable}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(root, []string{portable}, &planned, &stderr); code != 0 {
 		t.Fatalf("clean %q exited %d: %s", portable, code, planned.String())
 	}
 	if !strings.Contains(planned.String(), ",remove,") {
@@ -75,7 +72,7 @@ func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 		t.Fatalf("plan carried no fingerprint: %s", planned.String())
 	}
 	var applied bytes.Buffer
-	if code := CleanCommand([]string{portable, "--apply", fingerprint}, &applied, &stderr); code != 0 {
+	if code := CleanCommand(root, []string{portable, "--apply", fingerprint}, &applied, &stderr); code != 0 {
 		t.Fatalf("apply against the portable path exited %d: %s", code, applied.String())
 	}
 	if !strings.Contains(applied.String(), ",removed,") {
@@ -88,9 +85,8 @@ func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 // repo root.
 func TestCleanCommandRefusesAnUnsupportedHomeTarget(t *testing.T) {
 	root, _ := newOwnedAssignment(t, "homeform")
-	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := CleanCommand([]string{"~someone/else"}, &stdout, &stderr)
+	code := CleanCommand(root, []string{"~someone/else"}, &stdout, &stderr)
 	if code == 0 || !bytes.Contains(stdout.Bytes(), []byte("unsupported home target")) {
 		t.Fatalf("unsupported home target code=%d stdout=%q", code, stdout.String())
 	}

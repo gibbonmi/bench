@@ -171,7 +171,7 @@ func TestResumeReconcilesDeadLeaseAndPreservesSafetyBranches(t *testing.T) {
 
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
 	requireTest(t, code == 0 && stderr.String() == "", "resume exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	want := "bench resume: removed 1, swept refs 0; retained live-lease=1 unmerged=1; pruned branches 0; reconciled 0; failed 0; open assignments 2\n"
 	requireTest(t, stdout.String() == want, "resume summary=%q want=%q", stdout.String(), want)

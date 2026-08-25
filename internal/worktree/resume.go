@@ -3,15 +3,16 @@ package worktree
 import (
 	"errors"
 	"fmt"
-	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/toon"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 var errStaleFingerprint = errors.New("cleanup fingerprint is stale")
@@ -452,13 +453,12 @@ func isRegisteredWorktree(registered []Registered, path string) bool {
 	}
 	return false
 }
-func ResumeCleanCommand(args []string, stdout, stderr io.Writer) int {
+func ResumeCleanCommand(root string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 0 {
 		fmt.Fprintln(stderr, "usage: bench resume-clean")
 		return 2
 	}
-	root, err := git.Root()
-	if err != nil {
+	if !inRepository(root) {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}

@@ -33,7 +33,7 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 		}
 	}
 	var planned, stderr bytes.Buffer
-	if code := CleanCommand([]string{creation.Assignment.ID[:10]}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(root, []string{creation.Assignment.ID[:10]}, &planned, &stderr); code != 0 {
 		t.Fatalf("clean by id prefix exited %d: %s", code, planned.String())
 	}
 	if !strings.Contains(planned.String(), creation.Path) {
@@ -73,7 +73,7 @@ func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "fp-prefix")
 	chdir(t, root)
 	var planned, stderr bytes.Buffer
-	if code := CleanCommand([]string{creation.Path}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(root, []string{creation.Path}, &planned, &stderr); code != 0 {
 		t.Fatalf("plan exited %d: %s", code, planned.String())
 	}
 	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
@@ -85,12 +85,12 @@ func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
 		"uppercase prefix":       "ABCDEF01",
 	} {
 		var refused bytes.Buffer
-		if code := CleanCommand([]string{creation.Path, "--apply", bad}, &refused, &stderr); code == 0 || strings.Contains(refused.String(), ",removed,") {
+		if code := CleanCommand(root, []string{creation.Path, "--apply", bad}, &refused, &stderr); code == 0 || strings.Contains(refused.String(), ",removed,") {
 			t.Fatalf("%s %q was not refused: %s", name, bad, refused.String())
 		}
 	}
 	var applied bytes.Buffer
-	if code := CleanCommand([]string{creation.Path, "--apply", fingerprint[:12]}, &applied, &stderr); code != 0 {
+	if code := CleanCommand(root, []string{creation.Path, "--apply", fingerprint[:12]}, &applied, &stderr); code != 0 {
 		t.Fatalf("apply with a prefix exited %d: %s", code, applied.String())
 	}
 	if !strings.Contains(applied.String(), ",removed,") {

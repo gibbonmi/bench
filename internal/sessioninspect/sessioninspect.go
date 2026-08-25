@@ -125,8 +125,7 @@ func discoveredExecutable(result bounds.ProcessResult) (string, bool) {
 
 func resumePhase(ctx context.Context, stdout, stderr io.Writer, root string) int {
 	_ = ctx
-	_ = root
-	code := worktree.ResumeCleanCommand(nil, stdout, stderr)
+	code := worktree.ResumeCleanCommand(root, nil, stdout, stderr)
 	if code != 0 {
 		fmt.Fprintln(stderr, "warning: bench session-start: resume-clean failed; inspect retained worktree state")
 	}

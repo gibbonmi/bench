@@ -33,7 +33,7 @@ func runCleanLanded(t *testing.T, root string, args ...string) (string, string, 
 	t.Helper()
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := CleanCommand(args, &stdout, &stderr)
+	code := CleanCommand(root, args, &stdout, &stderr)
 	return stdout.String(), stderr.String(), code
 }
 

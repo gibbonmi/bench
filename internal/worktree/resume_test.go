@@ -19,10 +19,9 @@ import (
 func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
 	root := newWorktreeRepo(t)
 	journeyFIFOWorktreeAdmin(t, root, "resume")
-	chdir(t, root)
 	var stdout, stderr bytes.Buffer
 	done := make(chan int, 1)
-	go func() { done <- ResumeCleanCommand(nil, &stdout, &stderr) }()
+	go func() { done <- ResumeCleanCommand(root, nil, &stdout, &stderr) }()
 	select {
 	case code := <-done:
 		out := stdout.String() + stderr.String()
@@ -67,10 +66,9 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	mustNoError(t, intent.Upsert(root, intent.Entry{Key: "unrelated", Kind: intent.KindShift, CreatedAt: created}))
 	owned := mustCreate(t, root, "resume-owned", "owned cleanup")
 	markPending(t, root, owned.Assignment)
-	chdir(t, root)
 	before, _ := os.ReadFile(filepath.Join(dirty, "dirty.txt"))
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
 	requireTest(t, stdout.String() == "bench resume: removed 1, swept refs 0; retained foreign=2 live-lease=1 unexpected-lock=1; pruned branches 2; reconciled 0; failed 0; open assignments 0\n", "resume report = %q", stdout.String())
 	_, err = os.Stat(owned.Path)
@@ -98,9 +96,8 @@ func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
 	markPending(t, root, owned.Assignment)
 	ignored := filepath.Join(candidate, "ignored.txt")
 	mustWrite(t, ignored, []byte("retain me\n"), 0o644)
-	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	_, err := os.Stat(ignored)
 	requireTest(t, err == nil, "ignored-only WIP was not retained: %v", err)
