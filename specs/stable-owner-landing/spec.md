@@ -1,6 +1,6 @@
 # Stable-owner worktree landing
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation on 2026-08-24
 
@@ -172,6 +172,8 @@ It proves that the stable owner and prospective gate binary have different roles
 
 **Won't handle** a promotion-owner hot swap during one process — the next command is the surviving in-scope activation point.
 
+**Won't handle** a root path that contains a newline or a control byte — the reviewed decision of 2026-08-24 disposes of these shapes. Spaces and glob characters stay covered by the landing fixtures.
+
 ## Ownership fences
 
 - `bin/bench.sh`
@@ -182,6 +184,7 @@ It proves that the stable owner and prospective gate binary have different roles
 - `internal/worktree/land_freshness_test.go`
 - `internal/worktree/land_identity.go`
 - `internal/worktree/land_identity_test.go`
+- `cmd/bench/command_registry_test.go`
 - `internal/systemtest/`
 - `internal/landing/`
 - `internal/gate/`

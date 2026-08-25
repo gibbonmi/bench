@@ -361,6 +361,86 @@ route_porcelain() {
   BENCH_ALLOW_IMPLICIT_REPAIR=1 route_binary "$@"
 }
 
+# ---- worktree land: the stable promotion owner ------------------------------
+# Public landing runs only under the installed promotion broker. The route refuses
+# every inherited routing override before any repository read, then authenticates the
+# broker through the installation manifest beside this wrapper — path, version,
+# platform, and executable digest. `bench doctor --fix` (and so the release install)
+# publishes the manifest and broker together. The installer owns the platform fact and
+# writes it; the route requires the field but never derives a second copy to compare
+# against, because the digest binds the exact executable this host runs. Current-
+# directory state and repository executables never join this selection, so repository
+# code cannot authorize its own publication.
+land_repair_advice() {
+  echo "bench: run 'bench doctor --fix' (or reinstall redbench) to republish the promotion broker" >&2
+}
+
+file_sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    return 1
+  fi
+}
+
+land_route() {
+  local script bindir manifest key value broker='' version='' platform='' digest='' installed actual
+  if [[ -n "${BENCH_KIT+x}" ]]; then
+    echo 'bench: worktree land does not honor inherited BENCH_KIT; unset it and re-run' >&2
+    exit 1
+  fi
+  if [[ -n "${BENCH_RUN_BINARY+x}" ]]; then
+    echo 'bench: worktree land does not honor inherited BENCH_RUN_BINARY; unset it and re-run' >&2
+    exit 1
+  fi
+  if [[ -n "${BENCH_WRAPPER+x}" ]]; then
+    echo 'bench: worktree land does not honor inherited BENCH_WRAPPER; unset it and re-run' >&2
+    exit 1
+  fi
+  script="$(resolve_script_path)"
+  bindir="$(cd -P "$(dirname "$script")" && pwd)"
+  manifest="$bindir/bench-broker.manifest"
+  if [[ ! -f "$manifest" ]]; then
+    echo "bench: no promotion-broker manifest at $manifest" >&2
+    land_repair_advice
+    exit 127
+  fi
+  while IFS=$'\t' read -r key value || [[ -n "$key" ]]; do
+    case "$key" in
+      path) broker="$value" ;;
+      version) version="$value" ;;
+      platform) platform="$value" ;;
+      sha256) digest="$value" ;;
+    esac
+  done < "$manifest"
+  if [[ -z "$broker" || -z "$version" || -z "$platform" || -z "$digest" ]]; then
+    echo "bench: promotion-broker manifest at $manifest is incomplete" >&2
+    land_repair_advice
+    exit 127
+  fi
+  installed="$(package_version "$(cd -P "$bindir/.." && pwd)" 2>/dev/null || true)"
+  if [[ -n "$installed" && "$installed" != "$version" ]]; then
+    echo "bench: promotion broker version $version does not match installed package $installed" >&2
+    land_repair_advice
+    exit 127
+  fi
+  [[ "$broker" == /* ]] || broker="$(cd -P "$bindir/.." && pwd)/$broker"
+  if [[ ! -f "$broker" || ! -x "$broker" || ! -s "$broker" || -L "$broker" ]]; then
+    echo "bench: promotion broker at $broker is not a regular executable" >&2
+    land_repair_advice
+    exit 127
+  fi
+  actual="$(file_sha256 "$broker" 2>/dev/null || true)"
+  if [[ -z "$actual" || "$actual" != "$digest" ]]; then
+    echo "bench: promotion broker at $broker does not match its manifest digest" >&2
+    land_repair_advice
+    exit 127
+  fi
+  exec "$broker" "$@"
+}
+
 adoption_route() {
   local kit
   kit="${BENCH_KIT:-$(kit_dir)}"
@@ -379,7 +459,12 @@ case "${1:-}" in
   gate)     gate_command "$@" ;;
   doctor)   adoption_route "$@" ;;
   repair)   shift; repair_command "$@" ;;
-  worktree) route_porcelain "$@" ;;
+  worktree)
+    if [[ "${2:-}" == land ]]; then
+      land_route "$@"
+    fi
+    route_porcelain "$@"
+    ;;
   resume-clean) route_porcelain "$@" ;;
   shift)    route_porcelain "$@" ;;
   commit)   route_porcelain "$@" ;;

@@ -176,7 +176,7 @@ func Doctor(args []string, stdout, stderr io.Writer, version string) int {
 	case len(args) == 0:
 		return doctorReport(stdout, version)
 	case len(args) == 1 && args[0] == "--fix":
-		return doctorFix(stdout, stderr)
+		return doctorFix(stdout, stderr, version)
 	default:
 		fmt.Fprintln(stderr, "usage: bench doctor [--fix]")
 		return 2
@@ -290,7 +290,7 @@ func printSkewWarning(stdout io.Writer, version string) {
 	}
 }
 
-func doctorFix(stdout, stderr io.Writer) int {
+func doctorFix(stdout, stderr io.Writer, version string) int {
 	env := currentDoctorEnv()
 	dir, create := SelectDoctorDir(env)
 	if create {
@@ -309,6 +309,9 @@ func doctorFix(stdout, stderr io.Writer) int {
 			if string(existing) == content {
 				fmt.Fprintf(stdout, "  ok: shim already current at %s (no change)\n", targetPath)
 				doctorPathNotice(stdout, env, dir)
+				if publishBrokerManifest(stdout, stderr, version) != 0 {
+					return 1
+				}
 				return repairStalePrePush(stdout, stderr)
 			}
 		} else {
@@ -345,7 +348,23 @@ func doctorFix(stdout, stderr io.Writer) int {
 	}
 	fmt.Fprintf(stdout, "  wrote shim %s (exec -> %s)\n", targetPath, target)
 	doctorPathNotice(stdout, env, dir)
+	if publishBrokerManifest(stdout, stderr, version) != 0 {
+		return 1
+	}
 	return repairStalePrePush(stdout, stderr)
+}
+
+// publishBrokerManifest publishes the promotion-broker manifest as part of the fix,
+// so the install and repair owner ships the broker and its binding together. The
+// wrapper's `worktree land` route trusts only this binding.
+func publishBrokerManifest(stdout, stderr io.Writer, version string) int {
+	path, broker, err := WriteBrokerManifest(version)
+	if err != nil {
+		fmt.Fprintf(stderr, "  error: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "  wrote broker manifest %s (broker %s)\n", path, broker)
+	return 0
 }
 
 func repairStalePrePush(stdout, stderr io.Writer) int {

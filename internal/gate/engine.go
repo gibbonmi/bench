@@ -16,7 +16,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	benchgit "github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // EvidenceInspection reports whether retained gate evidence can authorize one tree.
@@ -36,7 +35,7 @@ func InspectTree(root, tree string) EvidenceInspection {
 // ExecuteTree runs or reuses the gate for an unpublished Git tree.
 func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, "prospective")
-	result := executeTreeWithOwner(ctx, root, tree, stdout, stderr, runbinary.ReuseOrOwn)
+	result := executeTreeWithOwner(ctx, root, tree, stdout, stderr, nil)
 	finishLog(result)
 	return result
 }
@@ -48,8 +47,11 @@ func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr
 		return Result{ActionExit: 1}
 	}
 	defer cleanup()
+	if owner == nil {
+		owner = prospectiveRunBinaryOwner(checkout)
+	}
 	evaluation := newProspectiveTreeEvaluation(checkout, root, tree)
-	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, nil, reuseFreshGreen, evaluation, owner)
+	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, nil, reuseFreshGreen, evaluation, owner, root)
 }
 
 // ValidateProjectGreen reports whether branch's tip and marker have retained exact green evidence.

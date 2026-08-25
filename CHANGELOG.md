@@ -8,6 +8,20 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- `bench worktree land` now runs under one installed promotion broker for the
+  complete command. The wrapper selects that broker from the installation
+  manifest, and it refuses `BENCH_KIT`, `BENCH_RUN_BINARY`, and `BENCH_WRAPPER`
+  for this command. Repository code thus cannot authorize its own publication,
+  and the landing no longer rebuilds and re-runs itself.
+- The promotion broker composes the prospective tree in private temporary
+  storage. It builds the gate executable from that exact tree. It takes the
+  phase schedule from the landing destination, so a candidate phase manifest
+  cannot omit the checks that grade it. The broker alone accepts the gate
+  evidence and updates the destination ref. A red gate leaves the destination
+  ref and the project-green marker unchanged, and no temporary tree or
+  executable stays after any outcome. A landing whose reviewed diff changes the
+  broker source names the `bench repair` or release install step that publishes
+  the new broker.
 - `bench commit` now formats only changed Go files inside its named paths before
   it composes and runs the unchanged full gate. Dry runs remain non-mutating.
 - The `prose-mechanics` check now rejects unsupported, malformed, or unreadable

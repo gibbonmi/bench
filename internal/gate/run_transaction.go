@@ -39,7 +39,10 @@ func productionRunBinaryOwner() runBinaryOwner {
 	return nil
 }
 
-func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner) Result {
+// baseline, when set, is the landing destination whose phase schedule grades the
+// prospective tree. It reaches the oracle as one environment entry, so the candidate's
+// own phase manifest never selects what runs against it.
+func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string) Result {
 	plan, err := evaluation.acceptPre()
 	if err != nil {
 		return operational(storageRoot, 0, stderr, "gate subject unavailable")
@@ -132,6 +135,9 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 		}()
 		plan.Env = runbinary.WithEnv(plan.Env, selection.Path)
 		plan.Env = mergeEnv(plan.Env, []string{"BENCH_KIT=" + selection.SourceRoot})
+	}
+	if baseline != "" {
+		plan.Env = mergeEnv(plan.Env, []string{baselinePolicyEnv + "=" + baseline})
 	}
 	plan.Env = withGateRunLogEnv(ctx, plan.Env)
 	// Persist the interrupted posture before the oracle starts. The branch-native gate

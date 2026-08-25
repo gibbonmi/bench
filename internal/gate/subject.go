@@ -77,7 +77,7 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 			s.open("launcher closure unavailable")
 		}
 	}
-	if err := hashProspectivePreparation(c, h, root, pathEnv); err != nil {
+	if err := hashProspectivePreparation(c, h, root, identityRoot, pathEnv); err != nil {
 		s.open("launcher closure unavailable")
 	}
 	if m != nil {

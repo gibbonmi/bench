@@ -27,6 +27,23 @@ func manifestPath(root string) string {
 	return filepath.Join(root, filepath.FromSlash(canary.PhaseManifestPath))
 }
 
+// phasePolicyRoot is the tree whose phase manifest selects the schedule. It is the
+// graded root for an ordinary run. A prospective landing names the baseline instead, so
+// the candidate tree under grade cannot omit the checks that grade it. A named baseline
+// that is not a usable directory refuses; falling back would reinstate the omission the
+// naming exists to prevent.
+func phasePolicyRoot(root string) (string, error) {
+	baseline := os.Getenv(baselinePolicyEnv)
+	if baseline == "" {
+		return root, nil
+	}
+	info, err := os.Stat(baseline)
+	if err != nil || !info.IsDir() {
+		return "", fmt.Errorf("gate: baseline phase schedule root %s is unusable", baseline)
+	}
+	return baseline, nil
+}
+
 type manifestDoc struct {
 	Phases []manifestPhase `json:"phases"`
 }
@@ -45,7 +62,11 @@ type manifestPhase struct {
 // grade, resolved through git by every caller and so absolute — a manifest phase's
 // working directory is anchored to it.
 func phaseTable(root, kit string) ([]Phase, error) {
-	path := manifestPath(root)
+	policy, err := phasePolicyRoot(root)
+	if err != nil {
+		return nil, err
+	}
+	path := manifestPath(policy)
 	data, present, err := readManifest(path)
 	if err != nil {
 		return nil, err
