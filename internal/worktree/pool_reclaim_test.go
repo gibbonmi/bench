@@ -350,6 +350,7 @@ func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 // all-digit digest is roughly one in a thousand.
 // Both are therefore exercised here directly rather than waited for.
 func TestReclaimAggregateReadsAFingerprintInEitherSpelling(t *testing.T) {
+	t.Parallel()
 	digits := strings.Repeat("0123456789", 6) + "0123"
 	hex := strings.Repeat("0123456789abcdef", 4)
 	for name, out := range map[string]string{

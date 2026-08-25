@@ -17,6 +17,7 @@ import (
 )
 
 func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	journeyFIFOWorktreeAdmin(t, root, "resume")
 	var stdout, stderr bytes.Buffer
@@ -364,6 +365,7 @@ func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
 }
 
 func TestExplicitApplyBindsRecoveryActionsAndDiscardFlag(t *testing.T) {
+	t.Parallel()
 	t.Run("recovery action", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		gitRun(t, root, "branch", "-M", "main")

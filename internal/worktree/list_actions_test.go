@@ -21,6 +21,7 @@ import (
 )
 
 func TestListCommandRendersTypedAdminRefusal(t *testing.T) {
+	t.Parallel()
 	root := journeyRepoOnBranch(t, "main")
 	journeyFIFOWorktreeAdmin(t, root, "typed")
 	out, code := ListCommand(root, nil)
@@ -83,6 +84,7 @@ func setRandomReader(t *testing.T, data []byte) {
 }
 
 func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("testdata/pre-disclosure-argv-pairs.json")
 	if err != nil {
 		t.Fatal(err)
@@ -106,6 +108,7 @@ func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
 }
 
 func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
+	t.Parallel()
 	root := journeyRepo(t)
 	for _, arg := range []string{"--help", "-h", "help"} {
 		out, code := ListCommand(root, []string{arg})
@@ -123,6 +126,7 @@ func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
 }
 
 func TestListCommandPreservesCheckedInEmptyPrimaryResponse(t *testing.T) {
+	t.Parallel()
 	primary, err := os.ReadFile("testdata/pre-disclosure-empty.stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -135,6 +139,7 @@ func TestListCommandPreservesCheckedInEmptyPrimaryResponse(t *testing.T) {
 }
 
 func TestListCommandCheckedInPresentForeignTerminalPair(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("testdata/pre-disclosure-present-foreign-pair.json")
 	if err != nil {
 		t.Fatal(err)
@@ -206,6 +211,7 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 }
 
 func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
+	t.Parallel()
 	rows := [][]any{
 		{"a", "active", "", "active"},
 		{"done", "complete", "", "complete"},
@@ -264,6 +270,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 }
 
 func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing.T) {
+	t.Parallel()
 	for _, control := range []string{"\t", "\n", "\r"} {
 		t.Run("control", func(t *testing.T) {
 			root := newWorktreeRepo(t)
@@ -292,6 +299,7 @@ func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing
 }
 
 func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *testing.T) {
+	t.Parallel()
 	for _, marker := range []string{"<", ">"} {
 		t.Run(marker, func(t *testing.T) {
 			root := newWorktreeRepo(t)
