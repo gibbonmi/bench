@@ -286,3 +286,50 @@ func namesAComponentWord(text string) bool {
 	}
 	return false
 }
+
+// identityComponentFixtureFor returns the one fixture that produces the named component.
+// A double-fault case composes two of these mutations, so the mutation logic stays in the
+// fixture table and no case copies it.
+func identityComponentFixtureFor(t *testing.T, component string) identityComponentFixture {
+	t.Helper()
+	for _, fixture := range identityComponentFixtures() {
+		if fixture.component == component {
+			return fixture
+		}
+	}
+	t.Fatalf("no producing fixture for component %q", component)
+	return identityComponentFixture{}
+}
+
+// TestLandCommandNamesTheEarlierComponentOfTwo covers the edge inventory row for two
+// components that fail inside one bundle. The registration precedes the lock in the
+// registry, so the registration sentence is the one the operator reads.
+func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
+	request := "land-component-registration-and-lock"
+	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
+	registration := identityComponentFixtureFor(t, componentRegistration)
+	registration.mutate(t, root, creation)
+	identityComponentFixtureFor(t, componentLock).mutate(t, root, creation)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	want := "refused{" + registration.want(creation, base, tip) + "}\n"
+	if code != 1 || stdout.String() != want {
+		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
+// TestTargetVerbNamesTheOwnerMarkerBeforeTheBranch pins the bundle validator's precedence.
+// A wrong owner id and a detached HEAD fail together, and the marker is the earlier
+// component, so the branch sentence must not win.
+func TestTargetVerbNamesTheOwnerMarkerBeforeTheBranch(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "marker-before-branch")
+	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
+	gitRun(t, creation.Path, "checkout", "--detach")
+	chdir(t, root)
+	var stdout, stderr bytes.Buffer
+	code := PathCommand(root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	want := "bench worktree path: owner marker does not match assignment " + creation.Assignment.ID + "\n"
+	if code != 1 || stderr.String() != want {
+		t.Fatalf("double-fault path = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
+	}
+}

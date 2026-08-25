@@ -61,6 +61,31 @@ func componentRefusal(name, assignment, observed, wanted string) refusalError {
 	}}
 }
 
+// ownerMarkerRefusal is the marker step of the bundle: it names the owner-marker component
+// when the evidence is unreadable or when the recorded owner or path is another
+// assignment's. A marker this verb cannot read at all is an owner-marker fault, because the
+// later components read the same evidence and so decide nothing. The evidence is the step's
+// result, so no caller reads the marker twice.
+func ownerMarkerRefusal(root, target string, a intent.Assignment) (ownerEvidence, error) {
+	evidence, err := validateOwnerMarker(root, target)
+	if err != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree {
+		return ownerEvidence{}, componentRefusal(componentOwnerMarker, a.ID, "", "")
+	}
+	return evidence, nil
+}
+
+// registrationRefusal is the recorded-evidence step of the bundle: the registration's branch
+// first, then the Bench lock, in registry order.
+func registrationRefusal(evidence ownerEvidence, a intent.Assignment) error {
+	if evidence.registration.BranchRef != a.Branch {
+		return componentRefusal(componentRegistration, a.ID, "", "")
+	}
+	if !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
+		return componentRefusal(componentLock, a.ID, "", "")
+	}
+	return nil
+}
+
 // identityBundleRefusal names the first component the assignment's own records fail, in
 // registry order. active decides which ledger states the calling verb accepts: a first
 // landing takes `active` alone, and a resume also takes `cleanup-pending`.
@@ -71,19 +96,11 @@ func identityBundleRefusal(root, target string, a intent.Assignment, active func
 	if a.Worktree != target {
 		return componentRefusal(componentAssignmentPath, a.ID, a.Worktree, target)
 	}
-	// A marker this verb cannot read at all is an owner-marker fault: the later
-	// components are read from the same evidence, so nothing downstream is decided.
-	evidence, err := validateOwnerMarker(root, target)
-	if err != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree {
-		return componentRefusal(componentOwnerMarker, a.ID, "", "")
+	evidence, err := ownerMarkerRefusal(root, target, a)
+	if err != nil {
+		return err
 	}
-	if evidence.registration.BranchRef != a.Branch {
-		return componentRefusal(componentRegistration, a.ID, "", "")
-	}
-	if !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
-		return componentRefusal(componentLock, a.ID, "", "")
-	}
-	return nil
+	return registrationRefusal(evidence, a)
 }
 
 func landingActiveState(state intent.AssignmentState) bool { return state == intent.StateActive }

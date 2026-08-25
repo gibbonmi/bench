@@ -546,3 +546,17 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 		t.Errorf("out = %q, want %q", out, want)
 	}
 }
+
+// TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout pins release's retained clause on a
+// bundle component other than the request token: a rewritten owner marker names the marker
+// and keeps the checkout.
+func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "release-owner-marker")
+	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
+	var stdout, stderr strings.Builder
+	code := ReleaseCommand(root, []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
+	want := "bench worktree release: owner marker does not match assignment " + creation.Assignment.ID + "; checkout retained\n"
+	if code != 1 || stdout.String() != "" || stderr.String() != want {
+		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
+	}
+}

@@ -53,7 +53,7 @@ func resolveWorktree(root, target string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if selected.State != intent.StateActive {
+	if !landingActiveState(selected.State) {
 		return "", componentRefusal(componentAssignmentState, selected.ID, string(selected.State), string(intent.StateActive))
 	}
 	if err := validateCreationBundle(root, selected); err != nil {
