@@ -9,7 +9,7 @@ The `internal/worktree` test package no longer sets the gate's wall. The gate's
 the build. `internal/worktree` at 51–87 s is that package. The destination is
 a package wall near 20 s, so the floor moves to the next package at about 14 s.
 What the gate proves does not change. This is the second spec that
-`decisions/one-change-one-grade.md` #6 splits out.
+`specs/one-change-one-grade/decisions/one-change-one-grade.md` #6 splits out.
 
 ## #1: What sets the `internal/worktree` test floor?
 

@@ -1,7 +1,7 @@
 # FT215 prior rulings and current gate shape
 
 Read on 2026-08-25 from the decision maps, the profile, ADR 0016, and the gate code.
-This asset supports `decisions/one-change-one-grade.md`.
+This asset supports `specs/one-change-one-grade/decisions/one-change-one-grade.md`.
 
 ## Closed rulings
 
