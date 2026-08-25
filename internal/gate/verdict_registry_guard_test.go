@@ -38,6 +38,10 @@ func TestVerdictRecordClassRegistryMatchesExpectation(t *testing.T) {
 			name:   "pending",
 			fields: []string{"oracle", "owner_pid", "schema", "started_at", "state", "tree"},
 		},
+		{
+			name:   "lane record",
+			fields: []string{"lane", "outcome", "recorded_at", "run_binary", "schema", "tree"},
+		},
 	}
 
 	if len(verdictRecordClasses) != len(want) {

@@ -46,6 +46,11 @@ func phasePolicyRoot(root string) (string, error) {
 
 type manifestDoc struct {
 	Phases []manifestPhase `json:"phases"`
+	// Lane is the project's declared fast lane, which a worktree commit runs in place
+	// of the whole-project gate. It carries the same entry schema as Phases, because a
+	// lane check and a gate phase are the same kind of thing run by the same runner.
+	// An absent array declares no lane, which keeps the full-gate commit.
+	Lane []manifestPhase `json:"lane"`
 }
 
 type manifestPhase struct {
@@ -112,22 +117,33 @@ func readManifest(path string) ([]byte, bool, error) {
 	return data, true, nil
 }
 
-func parseManifest(path, root string, data []byte) ([]Phase, error) {
-	if strings.TrimSpace(string(data)) == "" {
-		return nil, defect(path, "empty manifest", "no phases declared")
-	}
+// decodeManifest turns manifest bytes into the declaration document, or into the one
+// diagnostic shape a defect reports through. The phase table and the lane both read the
+// same document, so a defect in the file reads the same whichever array asked for it.
+func decodeManifest(path string, data []byte) (manifestDoc, error) {
 	var doc manifestDoc
 	if err := strictJSON(data, &doc); err != nil {
 		if key, ok := unknownField(err); ok {
-			return nil, defect(path, "unknown field", key)
+			return manifestDoc{}, defect(path, "unknown field", key)
 		}
 		if errors.Is(err, errTrailingJSON) {
 			// A second document is the classic half-written or double-appended
 			// manifest, and encoding/json alone would grade it as if only the first
 			// existed.
-			return nil, defect(path, "parse error", "unexpected trailing content")
+			return manifestDoc{}, defect(path, "parse error", "unexpected trailing content")
 		}
-		return nil, defect(path, "parse error", err.Error())
+		return manifestDoc{}, defect(path, "parse error", err.Error())
+	}
+	return doc, nil
+}
+
+func parseManifest(path, root string, data []byte) ([]Phase, error) {
+	if strings.TrimSpace(string(data)) == "" {
+		return nil, defect(path, "empty manifest", "no phases declared")
+	}
+	doc, err := decodeManifest(path, data)
+	if err != nil {
+		return nil, err
 	}
 	if len(doc.Phases) == 0 {
 		return nil, defect(path, "empty manifest", "no phases declared")
@@ -146,6 +162,29 @@ func unknownField(err error) (string, bool) {
 		return "", false
 	}
 	return strings.Trim(msg[idx+len(marker):], `"`), true
+}
+
+// LaneFor resolves the fast lane a root declares, and nil when it declares none. The
+// kit root carries the built-in lane, because the kit ships no manifest of its own.
+// Every other root declares its lane in the phase manifest. A root with no manifest,
+// and a manifest with no lane array, declare no lane and keep the full-gate commit.
+func LaneFor(root, kit string) ([]Phase, error) {
+	if sameDirectory(root, kit) {
+		return BenchkitLane(root, kit), nil
+	}
+	path := manifestPath(root)
+	data, present, err := readManifest(path)
+	if err != nil || !present {
+		return nil, err
+	}
+	doc, err := decodeManifest(path, data)
+	if err != nil {
+		return nil, err
+	}
+	if len(doc.Lane) == 0 {
+		return nil, nil
+	}
+	return validateManifest(path, root, doc.Lane)
 }
 
 // validateManifest converts declarations to phases, refusing the first defect it finds

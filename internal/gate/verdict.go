@@ -84,13 +84,20 @@ type CheckPartition struct {
 
 type verdictRecord struct {
 	Schema     int    `json:"schema"`
-	State      State  `json:"state"`
+	State      State  `json:"state,omitempty"`
 	Status     string `json:"status,omitempty"`
 	Tree       string `json:"tree"`
-	Oracle     string `json:"oracle"`
+	Oracle     string `json:"oracle,omitempty"`
 	RecordedAt string `json:"recorded_at,omitempty"`
 	StartedAt  string `json:"started_at,omitempty"`
 	OwnerPID   int    `json:"owner_pid,omitempty"`
+
+	// The lane class carries these three and none of the verdict fields above. A lane
+	// grades a declared check list rather than the oracle, so it has no state, no
+	// status, and no oracle identity to record.
+	Lane      string `json:"lane,omitempty"`
+	Outcome   string `json:"outcome,omitempty"`
+	RunBinary string `json:"run_binary,omitempty"`
 
 	Executed     []string                `json:"executed,omitempty"`
 	Skipped      []string                `json:"skipped,omitempty"`
@@ -200,6 +207,16 @@ func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	if gi.State != Ready && gi.State != Pending {
 		return gi
 	}
+	// A record that is not a gate verdict answers here and never reaches the reuse
+	// path below. It carries no oracle to compare and no status to read, so the reader
+	// names its class instead of grading it as a verdict of some other shape.
+	if !loaded.class.isGateVerdict() {
+		gi.CachedTree = loaded.record.Tree
+		gi.RecordedAt, _ = time.Parse(time.RFC3339, loaded.record.RecordedAt)
+		gi.Drifted = loaded.record.Tree != s.Tree
+		gi.Reason = loaded.class.reuseRefusal
+		return gi
+	}
 	rec := loaded.record
 	gi.Status, gi.CachedTree = rec.Status, rec.Tree
 	gi.Partition = rec.partition()
@@ -267,12 +284,12 @@ func driftReason(rec verdictRecord, s subject) string {
 	return ""
 }
 
-// narrowVerdictReason returns the reuse reason for the class the loader selected.
+// narrowVerdictReason returns the reuse reason for the class the loader selected, and
+// "" for a class whose green is reusable. The answer is the class's own declaration.
+// Deriving it from the class name instead would silently readmit any class whose name
+// happens to miss the spelling the derivation matched on.
 func narrowVerdictReason(class verdictRecordClass) string {
-	if strings.HasSuffix(class.name, "partial verdict") {
-		return "partial verdict"
-	}
-	return ""
+	return class.reuseRefusal
 }
 
 type loadedVerdict struct {
@@ -350,6 +367,12 @@ func loadVerdict(path string, now time.Time) loadedVerdict {
 	}
 	loaded.class = class
 	loaded.state = loaded.record.State
+	if !class.isGateVerdict() {
+		// A non-verdict class declares no state field, so the record's own State is
+		// empty. It is nonetheless a well-formed record the reader can name, which is
+		// what Ready means to every consumer of this state.
+		loaded.state = Ready
+	}
 	return loaded
 }
 
@@ -634,16 +657,25 @@ func validateCheckPartition(data []byte, r verdictRecord, recordedAt time.Time) 
 	return nil
 }
 
+// validateRecordBytes grades one record file against the class its exact field set
+// names. The class is selected first, because the oracle identity is a gate verdict's
+// field and not every class in the store is a gate verdict. Only the schema and the
+// tree are common to all of them.
 func validateRecordBytes(data []byte, r verdictRecord, now time.Time) (verdictRecordClass, error) {
-	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) || len(r.Oracle) != 64 {
-		return verdictRecordClass{}, errors.New("invalid record")
-	}
-	if _, err := hex.DecodeString(r.Oracle); err != nil || strings.ToLower(r.Oracle) != r.Oracle {
-		return verdictRecordClass{}, errors.New("invalid oracle")
-	}
 	class, err := selectVerdictRecordClass(data)
 	if err != nil {
 		return verdictRecordClass{}, err
+	}
+	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) {
+		return verdictRecordClass{}, errors.New("invalid record")
+	}
+	if class.isGateVerdict() {
+		if len(r.Oracle) != 64 {
+			return verdictRecordClass{}, errors.New("invalid record")
+		}
+		if _, err := hex.DecodeString(r.Oracle); err != nil || strings.ToLower(r.Oracle) != r.Oracle {
+			return verdictRecordClass{}, errors.New("invalid oracle")
+		}
 	}
 	return class, class.validate(data, r, now)
 }
