@@ -15,24 +15,24 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-func landedSetFixture(t *testing.T) (string, Creation, Creation, Creation) {
+func landedSetFixture(t *testing.T) (string, string, Creation, Creation, Creation) {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	first := mustCreate(t, root, Home(), "landed-set-first", "first label")
-	second := mustCreate(t, root, Home(), "landed-set-second", "second label")
-	dirty := mustCreate(t, root, Home(), "landed-set-dirty", "dirty label")
+	home := filepath.Join(root, ".bench-home")
+	first := mustCreate(t, root, home, "landed-set-first", "first label")
+	second := mustCreate(t, root, home, "landed-set-second", "second label")
+	dirty := mustCreate(t, root, home, "landed-set-dirty", "dirty label")
 	landAssignment(t, root, first, "first.txt")
 	landAssignment(t, root, second, "second.txt")
 	landAssignment(t, root, dirty, "dirty.txt")
 	mustWrite(t, filepath.Join(dirty.Path, "dirty.txt"), []byte("changed\n"), 0o644)
-	return root, first, second, dirty
+	return root, home, first, second, dirty
 }
 
-func runCleanLanded(t *testing.T, root string, args ...string) (string, string, int) {
+func runCleanLanded(t *testing.T, root, home string, args ...string) (string, string, int) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := CleanCommand(root, Home(), args, &stdout, &stderr)
+	code := CleanCommand(root, home, args, &stdout, &stderr)
 	return stdout.String(), stderr.String(), code
 }
 
@@ -46,8 +46,9 @@ func landedRowFingerprint(t *testing.T, output string) string {
 }
 
 func TestCleanLandedPlansRepositoryWideSet(t *testing.T) {
-	root, first, second, dirty := landedSetFixture(t)
-	stdout, stderr, code := runCleanLanded(t, root, "--landed")
+	t.Parallel()
+	root, home, first, second, dirty := landedSetFixture(t)
+	stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
 	if code != 0 {
 		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
@@ -72,8 +73,9 @@ func TestCleanLandedPlansRepositoryWideSet(t *testing.T) {
 }
 
 func TestCleanLandedPlanSharesOneFingerprint(t *testing.T) {
-	root, _, _, _ := landedSetFixture(t)
-	stdout, stderr, code := runCleanLanded(t, root, "--landed")
+	t.Parallel()
+	root, home, _, _, _ := landedSetFixture(t)
+	stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
 	if code != 0 {
 		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
@@ -84,18 +86,19 @@ func TestCleanLandedPlanSharesOneFingerprint(t *testing.T) {
 }
 
 func TestCleanLandedFingerprintBindsSetMembership(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	first := mustCreate(t, root, Home(), "fingerprint-member-first", "first")
+	home := filepath.Join(root, ".bench-home")
+	first := mustCreate(t, root, home, "fingerprint-member-first", "first")
 	landAssignment(t, root, first, "first.txt")
-	before, beforeErr, beforeCode := runCleanLanded(t, root, "--landed")
+	before, beforeErr, beforeCode := runCleanLanded(t, root, home, "--landed")
 	if beforeCode != 0 || beforeErr != "" {
 		t.Fatalf("first plan exit=%d stdout=%q stderr=%q", beforeCode, before, beforeErr)
 	}
 
-	second := mustCreate(t, root, Home(), "fingerprint-member-second", "second")
+	second := mustCreate(t, root, home, "fingerprint-member-second", "second")
 	landAssignment(t, root, second, "second.txt")
-	after, afterErr, afterCode := runCleanLanded(t, root, "--landed")
+	after, afterErr, afterCode := runCleanLanded(t, root, home, "--landed")
 	if afterCode != 0 || afterErr != "" {
 		t.Fatalf("second plan exit=%d stdout=%q stderr=%q", afterCode, after, afterErr)
 	}
@@ -105,8 +108,9 @@ func TestCleanLandedFingerprintBindsSetMembership(t *testing.T) {
 }
 
 func TestCleanLandedPlanAdvertisesApplyAndRemedies(t *testing.T) {
-	root, first, second, dirty := landedSetFixture(t)
-	stdout, stderr, code := runCleanLanded(t, root, "--landed")
+	t.Parallel()
+	root, home, first, second, dirty := landedSetFixture(t)
+	stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
 	if code != 0 {
 		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
@@ -122,10 +126,11 @@ func TestCleanLandedPlanAdvertisesApplyAndRemedies(t *testing.T) {
 }
 
 func TestCleanLandedEmptySetExitsClean(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	for attempt := 0; attempt < 2; attempt++ {
-		stdout, stderr, code := runCleanLanded(t, root, "--landed")
+		stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
 		if code != 0 || stdout != "worktree_cleanup[0]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n" || stderr != "" {
 			t.Fatalf("attempt %d exit=%d stdout=%q stderr=%q", attempt, code, stdout, stderr)
 		}
@@ -133,20 +138,22 @@ func TestCleanLandedEmptySetExitsClean(t *testing.T) {
 }
 
 func TestCleanLandedApplyOnEmptySetRefused(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	stdout, stderr, code := runCleanLanded(t, root, "--landed", "--apply", strings.Repeat("a", 64))
+	home := filepath.Join(root, ".bench-home")
+	stdout, stderr, code := runCleanLanded(t, root, home, "--landed", "--apply", strings.Repeat("a", 64))
 	if code != 2 || !strings.Contains(stdout, "invalid invocation; run "+usage.WorktreeClean) || stderr != "" {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 }
 
 func TestCleanLandedRefusesPathOperand(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	wantUsage := "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>]"
 	for _, args := range [][]string{{"--landed", root}, {root, "--landed"}} {
-		stdout, stderr, code := runCleanLanded(t, root, args...)
+		stdout, stderr, code := runCleanLanded(t, root, home, args...)
 		if code != 2 || !strings.Contains(stdout, wantUsage) || stderr != "" {
 			t.Fatalf("args=%q exit=%d stdout=%q stderr=%q", args, code, stdout, stderr)
 		}
@@ -154,10 +161,11 @@ func TestCleanLandedRefusesPathOperand(t *testing.T) {
 }
 
 func TestCleanLandedRefusesMalformedFingerprint(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	for _, fingerprint := range []string{strings.Repeat("a", 63), strings.Repeat("a", 65), strings.Repeat("g", 64), strings.Repeat("A", 64)} {
-		stdout, stderr, code := runCleanLanded(t, root, "--landed", "--apply", fingerprint)
+		stdout, stderr, code := runCleanLanded(t, root, home, "--landed", "--apply", fingerprint)
 		if code != 2 || !strings.Contains(stdout, usage.WorktreeClean) || stderr != "" {
 			t.Fatalf("fingerprint=%q exit=%d stdout=%q stderr=%q", fingerprint, code, stdout, stderr)
 		}
@@ -165,14 +173,15 @@ func TestCleanLandedRefusesMalformedFingerprint(t *testing.T) {
 }
 
 func TestCleanLandedSelectorPartition(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	unknown := mustCreate(t, root, Home(), "selector-unknown", "unknown lease")
-	live := mustCreate(t, root, Home(), "selector-live", "live lease")
-	unlanded := mustCreate(t, root, Home(), "selector-unlanded", "unlanded")
-	pending := mustCreate(t, root, Home(), "selector-pending", "pending")
-	recovered := mustCreate(t, root, Home(), "selector-recovered", "recovered")
-	complete := mustCreate(t, root, Home(), "selector-complete", "complete")
+	home := filepath.Join(root, ".bench-home")
+	unknown := mustCreate(t, root, home, "selector-unknown", "unknown lease")
+	live := mustCreate(t, root, home, "selector-live", "live lease")
+	unlanded := mustCreate(t, root, home, "selector-unlanded", "unlanded")
+	pending := mustCreate(t, root, home, "selector-pending", "pending")
+	recovered := mustCreate(t, root, home, "selector-recovered", "recovered")
+	complete := mustCreate(t, root, home, "selector-complete", "complete")
 	for i, creation := range []Creation{unknown, live, pending, recovered, complete} {
 		landAssignment(t, root, creation, fmt.Sprintf("landed-%d.txt", i))
 	}
@@ -191,7 +200,7 @@ func TestCleanLandedSelectorPartition(t *testing.T) {
 	complete.Assignment.State = intent.StateComplete
 	mustNoError(t, intent.PutAssignment(root, complete.Assignment))
 
-	stdout, stderr, code := runCleanLanded(t, root, "--landed")
+	stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
 	if code != 0 || stderr != "" || !strings.Contains(stdout, unknown.Path+",retain,") || !strings.Contains(stdout, "assignment lease state is unknown") {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}

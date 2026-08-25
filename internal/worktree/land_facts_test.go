@@ -148,10 +148,11 @@ func TestLandingDestinationFactAdapterTranslatesCleanCheckout(t *testing.T) {
 // A real reviewed assignment worktree must translate into the exact typed
 // base, tip, and fingerprint facts, with no spec named.
 func TestLandingSourceFactAdapterTranslatesRealWorktree(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	home := filepath.Join(t.TempDir(), "bench-home")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
-	creation := mustCreate(t, root, Home(), "source-fact-adapter", "source facts")
+	creation := mustCreate(t, root, home, "source-fact-adapter", "source facts")
 	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	fact, err := landingSource(root, creation.Assignment, base, tip, "")

@@ -121,11 +121,12 @@ func TestLandCommandAuthenticatesDigestShapedRequestToken(t *testing.T) {
 // active assignment at the target there is no id to reauthorize, so the route is the
 // listing that names which assignment owns which tree.
 func TestLandCommandUnknownRequestWithoutAssignmentNamesTheListing(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	home := filepath.Join(t.TempDir(), "bench-home")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs("unknown-request", base, base, root), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs("unknown-request", base, base, root), &stdout, &stderr)
 	want := "refused{detail=request token matches no assignment,next=bench worktree list}\n"
 	if code != 1 || stdout.String() != want || strings.Contains(stdout.String(), "reauthorize") {
 		t.Fatalf("assignment-free land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
@@ -158,9 +159,9 @@ func TestLandCommandUnknownRequestWithAmbiguousAssignmentsNamesTheListing(t *tes
 // so the proof that compares it sees the full value and the landing pins it.
 func TestLandCommandExpandsAbbreviatedSourceTip(t *testing.T) {
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	home := filepath.Join(t.TempDir(), "bench-home")
 	request := "landed-abbreviated-source-tip"
-	creation := mustCreate(t, root, Home(), request, "abbreviated source tip")
+	creation := mustCreate(t, root, home, request, "abbreviated source tip")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -170,7 +171,7 @@ func TestLandCommandExpandsAbbreviatedSourceTip(t *testing.T) {
 	releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 0 }
 	for _, abbreviated := range []string{tip[:4], tip[:12], tip[:39], strings.ToUpper(tip[:12])} {
 		var stdout, stderr bytes.Buffer
-		code := LandCommand(root, Home(), "", landArgs(request, base, abbreviated, creation.Path), &stdout, &stderr)
+		code := LandCommand(root, home, "", landArgs(request, base, abbreviated, creation.Path), &stdout, &stderr)
 		if code != 0 || !strings.Contains(stdout.String(), "source_tip="+tip+",") || !strings.Contains(stdout.String(), "worktree=released}") {
 			t.Fatalf("abbreviated source tip %q = (%d, %q, %q), want released with the full tip", abbreviated, code, stdout.String(), stderr.String())
 		}
@@ -179,9 +180,9 @@ func TestLandCommandExpandsAbbreviatedSourceTip(t *testing.T) {
 
 func TestLandCommandExpandsAbbreviatedBase(t *testing.T) {
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	home := filepath.Join(t.TempDir(), "bench-home")
 	request := "landed-abbreviated-base"
-	creation := mustCreate(t, root, Home(), request, "abbreviated base")
+	creation := mustCreate(t, root, home, request, "abbreviated base")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -195,7 +196,7 @@ func TestLandCommandExpandsAbbreviatedBase(t *testing.T) {
 		return diff.SourceRange{Base: base, Tip: tip}, nil
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base[:12], tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", landArgs(request, base[:12], tip, creation.Path), &stdout, &stderr)
 	if code != 0 || authorized != base || !strings.Contains(stdout.String(), "worktree=released}") {
 		t.Fatalf("abbreviated base = (%d, authorized=%q, %q, %q), want the full base authorized and released", code, authorized, stdout.String(), stderr.String())
 	}
@@ -220,17 +221,18 @@ func TestResumeLandCommandExpandsAbbreviatedIdentities(t *testing.T) {
 }
 
 func TestLandCommandDistinguishesSourceTipDriftFromAbbreviation(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+	home := filepath.Join(t.TempDir(), "bench-home")
 	request := "land-source-tip-drift"
-	creation := mustCreate(t, root, Home(), request, "source tip drift")
+	creation := mustCreate(t, root, home, request, "source tip drift")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	for _, observed := range []string{base, tip[:3], "not-a-commit"} {
 		var stdout, stderr bytes.Buffer
-		code := LandCommand(root, Home(), "", landArgs(request, base, observed, creation.Path), &stdout, &stderr)
+		code := LandCommand(root, home, "", landArgs(request, base, observed, creation.Path), &stdout, &stderr)
 		want := "refused{detail=worktree source tip mismatch,observed=" + observed + ",wanted=" + tip + "}\n"
 		if code != 1 || stdout.String() != want || stderr.Len() != 0 || strings.Contains(stdout.String(), "abbreviated") {
 			t.Fatalf("source tip drift %q = (%d, %q, %q), want (1, %q, empty)", observed, code, stdout.String(), stderr.String(), want)

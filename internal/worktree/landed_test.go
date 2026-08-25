@@ -19,15 +19,16 @@ func landAssignment(t *testing.T, root string, creation Creation, name string) {
 }
 
 func TestResumeSummaryCountsLandedAssignments(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	landed := mustCreate(t, root, Home(), "count-landed", "landed")
-	active := mustCreate(t, root, Home(), "count-active", "active")
+	home := filepath.Join(root, ".bench-home")
+	landed := mustCreate(t, root, home, "count-landed", "landed")
+	active := mustCreate(t, root, home, "count-active", "active")
 	landAssignment(t, root, landed, "landed.txt")
 	commitInWorktree(t, active.Path, "active.txt", "active\n", "active")
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -43,12 +44,13 @@ func TestResumeSummaryCountsLandedAssignments(t *testing.T) {
 }
 
 func TestResumeSummaryCountsLandedProofWithoutBranchAdvance(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	mustCreate(t, root, Home(), "landed-proof", "landed proof")
+	home := filepath.Join(root, ".bench-home")
+	mustCreate(t, root, home, "landed-proof", "landed proof")
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -58,11 +60,12 @@ func TestResumeSummaryCountsLandedProofWithoutBranchAdvance(t *testing.T) {
 }
 
 func TestResumeSummaryPartitionsLandedLeases(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	live := mustCreate(t, root, Home(), "lease-live", "live")
-	dead := mustCreate(t, root, Home(), "lease-dead", "dead")
-	unknown := mustCreate(t, root, Home(), "lease-unknown", "unknown")
+	home := filepath.Join(root, ".bench-home")
+	live := mustCreate(t, root, home, "lease-live", "live")
+	dead := mustCreate(t, root, home, "lease-dead", "dead")
+	unknown := mustCreate(t, root, home, "lease-unknown", "unknown")
 	landAssignment(t, root, live, "live.txt")
 	landAssignment(t, root, dead, "dead.txt")
 	landAssignment(t, root, unknown, "unknown.txt")
@@ -77,7 +80,7 @@ func TestResumeSummaryPartitionsLandedLeases(t *testing.T) {
 	mustWrite(t, unknownLease, []byte("not-a-lease\n"), 0o600)
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -88,12 +91,13 @@ func TestResumeSummaryPartitionsLandedLeases(t *testing.T) {
 }
 
 func TestResumeSummaryLiveLeaseWinsOverResidue(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore")
-	creation := mustCreate(t, root, Home(), "live-residue", "live residue")
+	creation := mustCreate(t, root, home, "live-residue", "live residue")
 	landAssignment(t, root, creation, "live-residue.txt")
 	mustWrite(t, filepath.Join(creation.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	lease, err := LeaseFile(creation.Path)
@@ -101,7 +105,7 @@ func TestResumeSummaryLiveLeaseWinsOverResidue(t *testing.T) {
 	mustWrite(t, lease, []byte(strconv.Itoa(os.Getpid())+" 2026-07-15T00:00:00Z\n"), 0o600)
 
 	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr); code != 0 {
+	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	summary := stdout.String()
@@ -111,20 +115,21 @@ func TestResumeSummaryLiveLeaseWinsOverResidue(t *testing.T) {
 }
 
 func TestResumeSummaryKeepsLandedClassificationAboveResidue(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore")
-	ignored := mustCreate(t, root, Home(), "landed-ignored", "ignored")
-	dirty := mustCreate(t, root, Home(), "landed-dirty", "dirty")
+	ignored := mustCreate(t, root, home, "landed-ignored", "ignored")
+	dirty := mustCreate(t, root, home, "landed-dirty", "dirty")
 	landAssignment(t, root, ignored, "ignored-landed.txt")
 	landAssignment(t, root, dirty, "dirty-landed.txt")
 	mustWrite(t, filepath.Join(ignored.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	mustWrite(t, filepath.Join(dirty.Path, "dirty-landed.txt"), []byte("changed\n"), 0o644)
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -141,17 +146,18 @@ func TestResumeSummaryKeepsLandedClassificationAboveResidue(t *testing.T) {
 }
 
 func TestResumeSummarySeparatesAgedLandedAndActiveAssignments(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	landed := mustCreate(t, root, Home(), "aged-landed", "aged landed")
-	active := mustCreate(t, root, Home(), "aged-active", "aged active")
+	home := filepath.Join(root, ".bench-home")
+	landed := mustCreate(t, root, home, "aged-landed", "aged landed")
+	active := mustCreate(t, root, home, "aged-active", "aged active")
 	landAssignment(t, root, landed, "aged-landed.txt")
 	commitInWorktree(t, active.Path, "aged-active.txt", "active\n", "active")
 	backdate(t, root, landed.Assignment, 8*24*time.Hour)
 	backdate(t, root, active.Assignment, 8*24*time.Hour)
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -162,13 +168,14 @@ func TestResumeSummarySeparatesAgedLandedAndActiveAssignments(t *testing.T) {
 }
 
 func TestResumeSummaryAdvertisesLandedSweep(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, Home(), "advertise-landed", "advertised")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "advertise-landed", "advertised")
 	landAssignment(t, root, creation, "advertised.txt")
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -179,51 +186,54 @@ func TestResumeSummaryAdvertisesLandedSweep(t *testing.T) {
 }
 
 func TestLandedClassifierUnknownDefaultStaysActive(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, Home(), "unknown-default", "unknown default")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "unknown-default", "unknown default")
 	landAssignment(t, root, creation, "unknown-default.txt")
 	gitRun(t, root, "branch", "-m", "main", "trunk")
 
 	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr); code != 1 || !strings.Contains(stderr.String(), "no resolvable default branch") {
+	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 1 || !strings.Contains(stderr.String(), "no resolvable default branch") {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q, want the existing no-default refusal", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "retained active=1") || strings.Contains(stdout.String(), "landed=") {
 		t.Fatalf("summary=%q, want unknown landedness under active", stdout.String())
 	}
-	list, code := ListCommand(root, Home(), nil)
+	list, code := ListCommand(root, home, nil)
 	if code != 0 || strings.Contains(list, "clean --landed") {
 		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
 	}
 }
 
 func TestLandedClassifierErroredProofStaysActive(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, Home(), "errored-proof", "errored proof")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "errored-proof", "errored proof")
 	landAssignment(t, root, creation, "errored-proof.txt")
 	gitRun(t, root, "update-ref", "-d", creation.Assignment.Branch)
 
 	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr); code != 0 {
+	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "retained active=1") || strings.Contains(stdout.String(), "landed=") {
 		t.Fatalf("summary=%q, want errored proof under active", stdout.String())
 	}
-	list, code := ListCommand(root, Home(), nil)
+	list, code := ListCommand(root, home, nil)
 	if code != 0 || strings.Contains(list, "clean --landed") {
 		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
 	}
 }
 
 func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	cleanupPending := mustCreate(t, root, Home(), "state-cleanup-pending", "cleanup pending")
-	recovered := mustCreate(t, root, Home(), "state-recovered", "recovered")
-	complete := mustCreate(t, root, Home(), "state-complete", "complete")
+	home := filepath.Join(root, ".bench-home")
+	cleanupPending := mustCreate(t, root, home, "state-cleanup-pending", "cleanup pending")
+	recovered := mustCreate(t, root, home, "state-recovered", "recovered")
+	complete := mustCreate(t, root, home, "state-complete", "complete")
 	landAssignment(t, root, cleanupPending, "cleanup-pending.txt")
 	landAssignment(t, root, recovered, "recovered.txt")
 	landAssignment(t, root, complete, "complete.txt")
@@ -239,26 +249,27 @@ func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
 	mustNoError(t, intent.PutAssignment(root, complete.Assignment))
 
 	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr); code != 0 {
+	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if strings.Contains(stdout.String(), "landed=") {
 		t.Fatalf("summary=%q, want no landed count for settled states", stdout.String())
 	}
-	list, code := ListCommand(root, Home(), nil)
+	list, code := ListCommand(root, home, nil)
 	if code != 0 || strings.Contains(list, "clean --landed") {
 		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
 	}
 }
 
 func TestListCommandAdvertisesOneLandedSweep(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	landed := mustCreate(t, root, Home(), "list-landed", "landed")
-	active := mustCreate(t, root, Home(), "list-active", "active")
+	home := filepath.Join(root, ".bench-home")
+	landed := mustCreate(t, root, home, "list-landed", "landed")
+	active := mustCreate(t, root, home, "list-active", "active")
 	landAssignment(t, root, landed, "list-landed.txt")
 
-	out, code := ListCommand(root, Home(), nil)
+	out, code := ListCommand(root, home, nil)
 	if code != 0 {
 		t.Fatalf("ListCommand exit=%d output=%q", code, out)
 	}

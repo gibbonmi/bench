@@ -121,8 +121,8 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-			creation := mustCreate(t, root, Home(), "landed-land-terminal-"+tc.name, "landing terminal")
+			home := filepath.Join(t.TempDir(), "bench-home")
+			creation := mustCreate(t, root, home, "landed-land-terminal-"+tc.name, "landing terminal")
 			mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".bench-home/\n"), 0o644)
 			gitRun(t, root, "add", ".gitignore")
 			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore fixture pool")
@@ -135,7 +135,7 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 			defer restore()
 			tc.setup()
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, Home(), "", []string{"--request", "landed-land-terminal-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+			code := LandCommand(root, home, "", []string{"--request", "landed-land-terminal-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 			if code != 3 || !strings.Contains(stdout.String(), "landed{") || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.step) {
 				t.Fatalf("LandCommand = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
@@ -145,8 +145,8 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 
 func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	creation := mustCreate(t, root, Home(), "landed-hostile-release", "hostile release")
+	home := filepath.Join(t.TempDir(), "bench-home")
+	creation := mustCreate(t, root, home, "landed-hostile-release", "hostile release")
 	stageLandSpec(t, root, creation.Path)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -158,7 +158,7 @@ func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
 		return 1
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", []string{"--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+	code := LandCommand(root, home, "", []string{"--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 	if code != 3 || strings.Count(stdout.String(), "landed{") != 1 || strings.Contains(stderr.String(), "\nlanded{") || strings.ContainsRune(stderr.String(), '\x1b') || !strings.Contains(stderr.String(), `unsafe\nlanded{forged=true}\u001b[31m`) {
 		t.Fatalf("hostile release result = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
@@ -184,9 +184,9 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+			home := filepath.Join(t.TempDir(), "bench-home")
 			request := "landed-hostile-" + tc.name
-			creation := mustCreate(t, root, Home(), request, "hostile source")
+			creation := mustCreate(t, root, home, request, "hostile source")
 			stageLandSpec(t, root, creation.Path)
 			base := gitOutput(t, root, "rev-parse", "HEAD")
 			if tc.name != "control-bearing-committed-path" {
@@ -208,7 +208,7 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 			done := make(chan outcome, 1)
 			go func() {
 				var stdout, stderr bytes.Buffer
-				code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+				code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 				done <- outcome{code: code, stdout: stdout.String(), err: stderr.String()}
 			}()
 			select {
@@ -236,8 +236,8 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-			creation := mustCreate(t, root, Home(), "landed-marker-"+tc.name, "marker order")
+			home := filepath.Join(t.TempDir(), "bench-home")
+			creation := mustCreate(t, root, home, "landed-marker-"+tc.name, "marker order")
 			stageLandSpec(t, root, creation.Path)
 			base := gitOutput(t, root, "rev-parse", "HEAD")
 			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -263,7 +263,7 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 				return nil
 			}
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, Home(), "", []string{"--request", "landed-marker-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+			code := LandCommand(root, home, "", []string{"--request", "landed-marker-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 			if tc.wantIncomplete {
 				if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 					t.Fatalf("moved marker result = (%d, %q, %q)", code, stdout.String(), stderr.String())
@@ -303,8 +303,8 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "landed-pre-gate-" + tc.name
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-			creation := mustCreate(t, root, Home(), request, "pre-gate refusal")
+			home := filepath.Join(t.TempDir(), "bench-home")
+			creation := mustCreate(t, root, home, request, "pre-gate refusal")
 			stageLandSpec(t, root, creation.Path)
 			base := gitOutput(t, root, "rev-parse", "HEAD")
 			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
@@ -324,7 +324,7 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 				args = tc.args(base, tip, creation)
 			}
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, Home(), "", args, &stdout, &stderr); code != 1 || calls != 0 || !strings.HasPrefix(stdout.String(), "refused{detail=") || stderr.Len() != 0 {
+			if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 1 || calls != 0 || !strings.HasPrefix(stdout.String(), "refused{detail=") || stderr.Len() != 0 {
 				t.Fatalf("pre-gate refusal = (%d, calls=%d, stdout=%q, stderr=%q)", code, calls, stdout.String(), stderr.String())
 			}
 		})
