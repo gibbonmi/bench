@@ -147,8 +147,9 @@ a batch approval, spec sign-off is a hard stop.
 
 **Capture what you learn; never silently rewrite your own rules.** When you
 deviate, make an unsure judgment call, or catch a should-have-asked in
-hindsight, append one entry to `capture/learnings.md`. Name what happened,
-the right behavior, and a proposed rule change if any. You capture; I decide.
+hindsight, run `bench learning "<title>" --what <text> --right <text>
+[--rule <text>]`. The verb writes the entry in the drain's shape; never
+type the heading by hand. You capture; I decide.
 `/bench-drain` verdicts every open entry into roadmap items with my sign-off.
 A harness's auto-memory holds user and preference facts; a process or
 judgment learning lands in `capture/learnings.md`, whose reviewed drain is
