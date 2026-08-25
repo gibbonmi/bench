@@ -145,7 +145,7 @@ and prioritize as one theme.
 
 **FT174 (MEDIUM) — ticket files have one enforced dependency, ownership, and mutation grammar.**
 
-**FT177 (MEDIUM) — a stale `dist/bench` makes contract-test mutation probes silent no-ops.**
+**FT177 (MEDIUM, decision required) — a stale `dist/bench` invalidates tests and its promotion-broker manifest.**
 
 **FT201 (LOW) — production cancel-signal registrations conform to one source.**
 
@@ -233,7 +233,7 @@ and signing-key custody remain outside this repository-controlled roadmap.
 
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
-**FT197 (LOW) — the wrapper's gate hop.**
+**FT197 (MEDIUM) — the promotion broker inherits the wrapper's recovered toolchain.**
 
 **FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
 
