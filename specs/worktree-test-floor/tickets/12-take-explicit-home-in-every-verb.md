@@ -28,11 +28,10 @@ form for that caller and gains an `At` form that takes the home. A function
 this package alone calls takes the home outright. Inside the package, no function below the boundary calls
 `Home()`; the effect census keeps that rule.
 
-A child a verb starts receives `BENCH_HOME=<home>` on its environment, set
-from the resolved value: the landing's gate plan and broker children, the
-`bench` child `exec` starts, and any git child whose command reads the pool.
-Read `internal/gate`'s plan environment seam before you set it; compose the
-existing merge, do not invent one.
+The child `ExecCommand` starts through `execEnv`, and the child `Subshell`
+starts, receive `BENCH_HOME=<home>` on their environment, set from the
+resolved value. `Subshell` calls `createAt`, so it takes the home too. The
+gate child keeps the closure rule: a verb never sets its environment.
 
 The tests compile by passing the home they already bind. They keep their
 binds in this ticket; the fixture ticket removes them.
@@ -40,6 +39,6 @@ binds in this ticket; the fixture ticket removes them.
 ## Acceptance
 
 - [ ] WF15 pins `CreateCommand` on an explicit home while the process `BENCH_HOME` names a different directory.
-- [ ] WF16 pins a landing whose gate script records `$BENCH_HOME`, and the record names the explicit home.
+- [ ] WF16 pins `ExecCommand` on a child that sees the explicit home while the process `BENCH_HOME` names another directory.
 - [ ] `bench worktree list`, `clean --help`, and `create` print the same bytes and exit codes as before.
 - [ ] The effect census stays green: no file below `effects.go` reads the environment.

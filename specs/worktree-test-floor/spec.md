@@ -70,7 +70,7 @@ must carry the home into every child the verbs start. A leak reaches the
 operator's real home, so the top of the mid tier applies.
 
 14. As a kit maintainer, I want every verb to take an explicit home after its root, so that an in-process test binds no environment.
-15. As an operator, I want a child a verb starts to carry that home, so that a private home reaches the broker and the gate.
+15. As an operator, I want the exec and subshell children to carry that home, so that a private home reaches them without a process bind.
 16. As a kit maintainer, I want the shared fixtures to bind no environment, so that the tests they serve are eligible.
 17. As a reviewer, I want a ceiling pin on the serial set, so that a fixture cannot fall back to a process bind.
 
@@ -126,10 +126,12 @@ home. A function this package alone calls takes the home outright. The tests
 call the form that takes the home. The verbs' grammar, output, and exit
 codes do not change.
 
-**A child carries the home.** A verb starts children: the landing's gate and
-broker, a `bench` child, and a git child that reads the pool. Each receives
-`BENCH_HOME=<home>` on its environment. The verb sets that entry from the
-resolved value, not from the process environment. The harness's home-residue guard turns red when
+**The exec and subshell children carry the home.** `ExecCommand` and
+`Subshell` start a child in the worktree. Each child receives
+`BENCH_HOME=<home>` on its environment, set from the resolved value. The gate
+child is different: the gate-inputs closure names its environment, the gate
+resolves each declared name from the process, and it hashes the value into
+the subject identity. A verb never overrides that closure. The harness's home-residue guard turns red when
 a child writes below the operator's real home.
 
 **The fixtures stop binding.** `landingFixtureAtHome` writes the tally path
@@ -196,7 +198,7 @@ explicit root while the working directory is elsewhere. The gate's `test` and
 | WF13 | 11 | The harness effect census still reports an `exec.Command` outside the harness files. | existing census test | A relaxed regex lets a parallel test spawn outside the harness. |
 | WF14 | 13 | Every `internal/worktree` test file keeps `package worktree`. | package census test | An external test package is a sub-package split by another name. |
 | WF15 | 14 | `CreateCommand` with an explicit home writes its pool below that home while the process `BENCH_HOME` names a different directory. | package unit | A verb that still reads the environment writes to the wrong home. |
-| WF16 | 15 | A landing with an explicit home runs a gate script that records `$BENCH_HOME`, and the record names that home. | landing journey | A child that inherits the process environment grades under the wrong home. |
+| WF16 | 15 | `ExecCommand` with an explicit home starts its child with `BENCH_HOME` set to that home while the process names another. | package unit | A child that inherits the process environment reads the wrong pool. |
 | WF17 | 16 | The landing fixture binds no environment, and a test it serves calls `t.Parallel()` under the census. | package census test | A fixture that binds keeps every landing test serial. |
 | WF18 | 17 | The census reports the serial set's size, and a pin refuses a count above the ceiling. | package census test | A fixture that falls back to a bind passes silently. |
 
@@ -218,7 +220,7 @@ Not covered: story 12 — an exclusion; FT246 owns those packages.
 **Won't handle** a sub-package split — every test file is `package worktree`, and the internal surface stays.
 
 - A test that grades the boundary default (`Home()` without `BENCH_HOME`) binds the environment and stays serial.
-- A `bench` child the landing starts reads `BENCH_HOME` from its own environment, so the verb sets it there from the resolved home.
+- A gate child reads `BENCH_HOME` only when `gate-inputs.json` declares it; the fixture's gate scripts never read it.
 
 **Won't handle** conversion of in-process verb calls to child processes — 250 tests would change seam, and the census makes the serial set explicit instead.
 
