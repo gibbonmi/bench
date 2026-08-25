@@ -417,10 +417,10 @@ func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
 	requireTest(t, err == nil && plan.Action == ActionRemoved, "automatic cleanup = %#v, %v", plan, err)
 	args := []string{"--request", "landed-release-crash-window", creation.Path}
 	var first, firstErr strings.Builder
-	code := ReleaseCommand(root, args, &first, &firstErr)
+	code := ReleaseCommand(root, Home(), args, &first, &firstErr)
 	requireTest(t, code == 0 && firstErr.String() == "", "release reconciliation code=%d stderr=%q", code, firstErr.String())
 	var replay, replayErr strings.Builder
-	code = ReleaseCommand(root, args, &replay, &replayErr)
+	code = ReleaseCommand(root, Home(), args, &replay, &replayErr)
 	requireTest(t, code == 0 && replay.String() == first.String() && replayErr.String() == "", "release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
 	repo, _, _ := cleanupIdentity(root, creation.Path)
 	_, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, creation.Path, intent.RequestDigest("landed-release-crash-window"))
@@ -438,7 +438,7 @@ func TestReleaseUnmergedAssignmentRetains(t *testing.T) {
 	commitInWorktree(t, creation.Path, "unique.txt", "preserve\n", "unique work")
 
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, []string{"--request", "landed-unmerged-release", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, Home(), []string{"--request", "landed-unmerged-release", creation.Path}, &stdout, &stderr)
 	requireTest(t, code == 1, "unmerged release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (unmerged)") && strings.Contains(stderr.String(), "assignment branch has not landed"),
 		"unmerged reason missing: %q", stderr.String())

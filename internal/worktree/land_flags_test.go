@@ -29,7 +29,7 @@ func TestLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
 		{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "would-be-path"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := LandCommand("", "", args, &stdout, &stderr); code != 2 {
+		if code := LandCommand("", Home(), "", args, &stdout, &stderr); code != 2 {
 			t.Fatalf("LandCommand(%q) = %d, stdout=%q stderr=%q", args, code, stdout.String(), stderr.String())
 		}
 	}
@@ -52,7 +52,7 @@ func TestLandCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand("", "", tc.args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != tc.help+"\n" {
+			if code := LandCommand("", Home(), "", tc.args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != tc.help+"\n" {
 				t.Fatalf("LandCommand(%q) = (%d, %q, %q), want (2, empty, %q)", tc.args, code, stdout.String(), stderr.String(), tc.help+"\n")
 			}
 		})
@@ -60,7 +60,7 @@ func TestLandCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "path"}
-	if code := ResumeLandCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != resumeLandGrammar.Help+"\n" {
+	if code := ResumeLandCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != resumeLandGrammar.Help+"\n" {
 		t.Fatalf("ResumeLandCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), resumeLandGrammar.Help+"\n")
 	}
 }
@@ -75,13 +75,13 @@ func TestResumeLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
 		{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "would-be-path"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := LandCommand("", "", args, &stdout, &stderr); code != 2 {
+		if code := LandCommand("", Home(), "", args, &stdout, &stderr); code != 2 {
 			t.Fatalf("LandCommand(%q) = %d, stdout=%q stderr=%q", args, code, stdout.String(), stderr.String())
 		}
 	}
 	args := []string{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "--", "-path"}
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand("", "", args, &stdout, &stderr); code == 2 {
+	if code := LandCommand("", Home(), "", args, &stdout, &stderr); code == 2 {
 		t.Fatalf("LandCommand(%q) rejected parsed resume path: stdout=%q stderr=%q", args, stdout.String(), stderr.String())
 	}
 }
@@ -90,7 +90,7 @@ func TestLandCommandDoesNotTreatMessageValueAsResumeFlag(t *testing.T) {
 	t.Parallel()
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "--resume", "path"}
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand("", "", args, &stdout, &stderr); code == 2 {
+	if code := LandCommand("", Home(), "", args, &stdout, &stderr); code == 2 {
 		t.Fatalf("LandCommand(%q) selected resume grammar: stdout=%q stderr=%q", args, stdout.String(), stderr.String())
 	}
 }
@@ -99,7 +99,7 @@ func TestLandCommandAcceptsDashPathOnlyAfterTerminator(t *testing.T) {
 	t.Parallel()
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "m", "--", "-path"}
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand("", "", args, &stdout, &stderr); code == 2 {
+	if code := LandCommand("", Home(), "", args, &stdout, &stderr); code == 2 {
 		t.Fatalf("LandCommand(%q) rejected parsed path: stdout=%q stderr=%q", args, stdout.String(), stderr.String())
 	}
 }
@@ -115,7 +115,9 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 		{"reconcile", "reconcile", func() {
 			reconcileLanding = func(string, string, string, string) error { return errors.New("reconcile fault") }
 		}},
-		{"release", "release", func() { releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 1 } }},
+		{"release", "release", func() {
+			releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 1 }
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
@@ -133,7 +135,7 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 			defer restore()
 			tc.setup()
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, "", []string{"--request", "landed-land-terminal-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+			code := LandCommand(root, Home(), "", []string{"--request", "landed-land-terminal-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 			if code != 3 || !strings.Contains(stdout.String(), "landed{") || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.step) {
 				t.Fatalf("LandCommand = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
@@ -151,12 +153,12 @@ func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	restore := stubLandJoins(t, base, tip)
 	defer restore()
-	releaseLandingAssignment = func(_ string, _ []string, _ io.Writer, stderr io.Writer) int {
+	releaseLandingAssignment = func(_ string, _ string, _ []string, _ io.Writer, stderr io.Writer) int {
 		fmt.Fprint(stderr, "unsafe\nlanded{forged=true}\x1b[31m\n")
 		return 1
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", []string{"--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+	code := LandCommand(root, Home(), "", []string{"--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 	if code != 3 || strings.Count(stdout.String(), "landed{") != 1 || strings.Contains(stderr.String(), "\nlanded{") || strings.ContainsRune(stderr.String(), '\x1b') || !strings.Contains(stderr.String(), `unsafe\nlanded{forged=true}\u001b[31m`) {
 		t.Fatalf("hostile release result = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
@@ -206,7 +208,7 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 			done := make(chan outcome, 1)
 			go func() {
 				var stdout, stderr bytes.Buffer
-				code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+				code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 				done <- outcome{code: code, stdout: stdout.String(), err: stderr.String()}
 			}()
 			select {
@@ -245,7 +247,7 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 			}
 			restore := stubLandJoins(t, base, tip)
 			defer restore()
-			releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 0 }
+			releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 0 }
 			published := strings.Repeat("a", 40)
 			advanceLandingMarker = func(_ context.Context, gotRoot, branch, destination, expected string) error {
 				wantExpected := ""
@@ -261,7 +263,7 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 				return nil
 			}
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, "", []string{"--request", "landed-marker-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+			code := LandCommand(root, Home(), "", []string{"--request", "landed-marker-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 			if tc.wantIncomplete {
 				if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 					t.Fatalf("moved marker result = (%d, %q, %q)", code, stdout.String(), stderr.String())
@@ -322,7 +324,7 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 				args = tc.args(base, tip, creation)
 			}
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, "", args, &stdout, &stderr); code != 1 || calls != 0 || !strings.HasPrefix(stdout.String(), "refused{detail=") || stderr.Len() != 0 {
+			if code := LandCommand(root, Home(), "", args, &stdout, &stderr); code != 1 || calls != 0 || !strings.HasPrefix(stdout.String(), "refused{detail=") || stderr.Len() != 0 {
 				t.Fatalf("pre-gate refusal = (%d, calls=%d, stdout=%q, stderr=%q)", code, calls, stdout.String(), stderr.String())
 			}
 		})

@@ -22,7 +22,7 @@ func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
 	journeyFIFOWorktreeAdmin(t, root, "resume")
 	var stdout, stderr bytes.Buffer
 	done := make(chan int, 1)
-	go func() { done <- ResumeCleanCommand(root, nil, &stdout, &stderr) }()
+	go func() { done <- ResumeCleanCommand(root, Home(), nil, &stdout, &stderr) }()
 	select {
 	case code := <-done:
 		out := stdout.String() + stderr.String()
@@ -69,7 +69,7 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	markPending(t, root, owned.Assignment)
 	before, _ := os.ReadFile(filepath.Join(dirty, "dirty.txt"))
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
 	requireTest(t, stdout.String() == "bench resume: removed 1, swept refs 0; retained foreign=2 live-lease=1 unexpected-lock=1; pruned branches 2; reconciled 0; failed 0; open assignments 0\n", "resume report = %q", stdout.String())
 	_, err = os.Stat(owned.Path)
@@ -98,7 +98,7 @@ func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
 	ignored := filepath.Join(candidate, "ignored.txt")
 	mustWrite(t, ignored, []byte("retain me\n"), 0o644)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	_, err := os.Stat(ignored)
 	requireTest(t, err == nil, "ignored-only WIP was not retained: %v", err)
@@ -182,7 +182,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 			}
 			return nil
 		}
-		code := ReleaseCommand(orderRoot, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
+		code := ReleaseCommand(orderRoot, Home(), []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
 		requireTest(t, code != 0, "terminal receipt fault unexpectedly succeeded")
 		cleanupTransactionBoundary = oldOrderBoundary
 		repo, _, _ := cleanupIdentity(orderRoot, ordered.Path)
@@ -190,7 +190,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		requireTest(t, err == nil && found && receipt.Branch == ordered.Assignment.Branch && receipt.BranchOID == tip, "terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
 		_, err = assignmentByID(orderRoot, ordered.Assignment.ID)
 		requireTest(t, err == nil, "assignment compacted before terminal receipt checkpoint: %v", err)
-		code = ReleaseCommand(orderRoot, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
+		code = ReleaseCommand(orderRoot, Home(), []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
 		requireTest(t, code == 0, "terminal receipt replay exit=%d", code)
 		receipt, found, err = intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, intent.RequestDigest("landed-release-receipt-order"))
 		requireTest(t, err == nil && found && receipt.Branch == ordered.Assignment.Branch && receipt.BranchOID == tip, "replayed terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
@@ -213,7 +213,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		results := make(chan outcome, 2)
 		apply := func() {
 			var stdout, stderr bytes.Buffer
-			code := ReleaseCommand(root, []string{"--request", "landed-concurrent-release", creation.Path}, &stdout, &stderr)
+			code := ReleaseCommand(root, Home(), []string{"--request", "landed-concurrent-release", creation.Path}, &stdout, &stderr)
 			results <- outcome{code, stdout.String(), stderr.String()}
 		}
 		go apply()
@@ -226,11 +226,11 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		requireTest(t, first.code == 0 && second.code == 0 && first.stderr == "" && second.stderr == "" && first.stdout == second.stdout,
 			"concurrent release = %#v / %#v", first, second)
 		var replay, replayErr bytes.Buffer
-		code = ReleaseCommand(root, []string{"--request", "landed-concurrent-release", creation.Path}, &replay, &replayErr)
+		code = ReleaseCommand(root, Home(), []string{"--request", "landed-concurrent-release", creation.Path}, &replay, &replayErr)
 		requireTest(t, code == 0 && replay.String() == first.stdout, "compacted release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
-		code = ReleaseCommand(root, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard)
+		code = ReleaseCommand(root, Home(), []string{"--request", "changed", creation.Path}, io.Discard, io.Discard)
 		requireTest(t, code != 0, "changed request replay was authorized")
-		code = ReleaseCommand(root, []string{"--request", "landed-concurrent-release", root}, io.Discard, io.Discard)
+		code = ReleaseCommand(root, Home(), []string{"--request", "landed-concurrent-release", root}, io.Discard, io.Discard)
 		requireTest(t, code != 0, "changed path replay was authorized")
 		_, err = assignmentByID(root, creation.Assignment.ID)
 		requireTest(t, err != nil, "terminal release did not compact assignment")

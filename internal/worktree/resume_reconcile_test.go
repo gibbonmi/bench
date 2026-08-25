@@ -73,7 +73,7 @@ func runResume(t *testing.T, root string) string {
 	t.Helper()
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
 	return stdout.String()
 }
@@ -175,7 +175,7 @@ func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
 	}
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	cleanupTransactionBoundary = restore
 	requireTest(t, code != 0, "interrupted reconcile exit=%d stdout=%s", code, stdout.String())
 	partial := refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/")

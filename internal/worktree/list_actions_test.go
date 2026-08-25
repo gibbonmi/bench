@@ -24,7 +24,7 @@ func TestListCommandRendersTypedAdminRefusal(t *testing.T) {
 	t.Parallel()
 	root := journeyRepoOnBranch(t, "main")
 	journeyFIFOWorktreeAdmin(t, root, "typed")
-	out, code := ListCommand(root, nil)
+	out, code := ListCommand(root, Home(), nil)
 	if code == 0 || !strings.Contains(out, "worktrees/typed/gitdir") || !strings.Contains(out, "fifo") || !strings.Contains(out, "inspect and remove it") {
 		t.Fatalf("typed list output code=%d out=%q", code, out)
 	}
@@ -40,7 +40,7 @@ func TestListCommandKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T) {
 		t.Run(tc.mode, func(t *testing.T) {
 			root := journeyRepoOnBranch(t, "main")
 			journeyStubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
-			out, code := ListCommand(root, nil)
+			out, code := ListCommand(root, Home(), nil)
 			if code != 1 || !strings.Contains(out, tc.detail) || !strings.Contains(out, tc.action) {
 				t.Fatalf("%s list output code=%d out=%q", tc.mode, code, out)
 			}
@@ -53,7 +53,7 @@ func TestListCommandRendersBoundExpiryAsTypedFailure(t *testing.T) {
 	t.Cleanup(restore)
 	root := journeyRepoOnBranch(t, "main")
 	journeyStubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
-	out, code := ListCommand(root, nil)
+	out, code := ListCommand(root, Home(), nil)
 	if code != 1 || !strings.Contains(out, "worktree list") || !strings.Contains(out, "investigate the git failure") || strings.Contains(out, "inspect and remove it") || strings.Contains(out, "retry") {
 		t.Fatalf("bound list output code=%d out=%q", code, out)
 	}
@@ -95,7 +95,7 @@ func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
 	}
 	root := journeyRepo(t)
 	for _, pair := range pairs {
-		out, code := ListCommand(root, pair.Argv)
+		out, code := ListCommand(root, Home(), pair.Argv)
 		if out != pair.New.Stdout || pair.New.Stderr != "" || code != pair.New.Exit {
 			t.Fatalf("ListCommand(%q) = stdout=%q stderr=%q exit=%d, want checked-in new response", pair.Argv, out, "", code)
 		}
@@ -111,13 +111,13 @@ func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
 	t.Parallel()
 	root := journeyRepo(t)
 	for _, arg := range []string{"--help", "-h", "help"} {
-		out, code := ListCommand(root, []string{arg})
+		out, code := ListCommand(root, Home(), []string{arg})
 		if code != 0 || out != "usage: bench worktree list\n" {
 			t.Errorf("ListCommand(%q) = (%d, %q)", arg, code, out)
 		}
 	}
 	for _, args := range [][]string{{"--unknown"}, {"extra"}, {"--"}} {
-		out, code := ListCommand(root, args)
+		out, code := ListCommand(root, Home(), args)
 		want := "usage: bench worktree list (unknown argument: " + args[0] + ")\n"
 		if code != 2 || out != want {
 			t.Errorf("ListCommand(%q) = (%d, %q), want usage exit 2", args, code, out)
@@ -132,7 +132,7 @@ func TestListCommandPreservesCheckedInEmptyPrimaryResponse(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := journeyRepo(t)
-	out, code := ListCommand(root, nil)
+	out, code := ListCommand(root, Home(), nil)
 	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
 		t.Fatalf("ListCommand = (%d, %q), want checked-in primary plus exactly one help block", code, out)
 	}
@@ -151,7 +151,7 @@ func TestListCommandCheckedInPresentForeignTerminalPair(t *testing.T) {
 	root := newWorktreeRepo(t)
 	present := filepath.Join(t.TempDir(), "present foreign")
 	gitRun(t, root, "worktree", "add", "-q", "--detach", present, "HEAD")
-	out, code := ListCommand(root, nil)
+	out, code := ListCommand(root, Home(), nil)
 	pair.Old.Stdout = strings.ReplaceAll(pair.Old.Stdout, "{{PRESENT}}", present)
 	pair.New.Stdout = strings.ReplaceAll(pair.New.Stdout, "{{PRESENT}}", present)
 	if pair.Old.Stderr != "" || pair.New.Stderr != "" || pair.Old.Exit != 0 || pair.New.Exit != 0 || pair.New.Stdout != pair.Old.Stdout+"help[0]{cmd,why}:\n" {
@@ -190,7 +190,7 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 		}
 		return nil
 	}
-	if code := ReleaseCommand(root, []string{"--request", "landed-complete-assignment", creation.Path}, io.Discard, io.Discard); code == 0 {
+	if code := ReleaseCommand(root, Home(), []string{"--request", "landed-complete-assignment", creation.Path}, io.Discard, io.Discard); code == 0 {
 		t.Fatalf("interrupted release exit = %d, want non-zero", code)
 	}
 	cleanupTransactionBoundary = boundary
@@ -198,7 +198,7 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 	if err != nil || len(assignments) != 1 || assignments[0].State != intent.StateComplete {
 		t.Fatalf("Assignments = %#v, %v, want one completed assignment", assignments, err)
 	}
-	out, code := ListCommand(root, nil)
+	out, code := ListCommand(root, Home(), nil)
 	materialize := strings.NewReplacer("{{LABEL}}", assignments[0].Label)
 	pair.Old.Stdout = materialize.Replace(pair.Old.Stdout)
 	pair.New.Stdout = materialize.Replace(pair.New.Stdout)
@@ -252,7 +252,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 	if err := os.RemoveAll(missing); err != nil {
 		t.Fatal(err)
 	}
-	out, code := ListCommand(root, nil)
+	out, code := ListCommand(root, Home(), nil)
 	assignments, err := intent.Assignments(root)
 	if err != nil || len(assignments) != 2 {
 		t.Fatalf("Assignments = %#v, %v, want two producer-ordered rows", assignments, err)
@@ -279,7 +279,7 @@ func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing
 			if err := os.RemoveAll(missing); err != nil {
 				t.Fatal(err)
 			}
-			out, code := ListCommand(root, nil)
+			out, code := ListCommand(root, Home(), nil)
 			if code != 0 || !strings.HasPrefix(out, "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n") {
 				t.Fatalf("ListCommand = (%d, %q), want primary worktree response and exit 0", code, out)
 			}
@@ -308,7 +308,7 @@ func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *t
 			if err := os.RemoveAll(missing); err != nil {
 				t.Fatal(err)
 			}
-			out, code := ListCommand(root, nil)
+			out, code := ListCommand(root, Home(), nil)
 			primary := "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n  foreign," + missing + ",\"\",foreign,foreign,missing,none,unknown,unknown\n"
 			want := primary + "help[0]{cmd,why}:\n"
 			if code != 0 || out != want {

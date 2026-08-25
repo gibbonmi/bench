@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -25,7 +26,7 @@ var worktreeExecGrammar = usage.Grammar{
 }
 
 // ExecCommand runs a direct child argv from one active Bench-owned worktree.
-func ExecCommand(root string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func ExecCommand(root, home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(worktreeExecGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -39,15 +40,15 @@ func ExecCommand(root string, args []string, stdin io.Reader, stdout, stderr io.
 	if err != nil {
 		return printTargetRefusal(stderr, "bench worktree exec", err)
 	}
-	return runWorktreeChild(parsed.Positionals[1:], path, stdin, stdout, stderr)
+	return runWorktreeChild(parsed.Positionals[1:], path, home, stdin, stdout, stderr)
 }
 
-func runWorktreeChild(argv []string, dir string, stdin io.Reader, stdout, stderr io.Writer) int {
+func runWorktreeChild(argv []string, dir, home string, stdin io.Reader, stdout, stderr io.Writer) int {
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = dir, stdin, stdout, stderr
-	cmd.Env = execEnv(dir)
+	cmd.Env = execEnv(dir, home)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(stderr, "bench worktree exec: %v\n", err)
@@ -92,13 +93,23 @@ func runWorktreeChild(argv []string, dir string, stdin io.Reader, stdout, stderr
 // predicate is that a regular file sits at the wrapper path. Content is not read: an
 // empty wrapper is still the marker. dir arrives absolute and cleaned from the assignment
 // ledger, so the joined path inherits both properties.
-func execEnv(dir string) []string {
-	base := env.WithoutWrapperRouting(os.Environ(), runbinary.Env)
+//
+// BENCH_HOME comes from the verb's resolved home, not from the caller's process. A
+// child that inherited the name would read a different pool than the verb that
+// started it.
+func execEnv(dir, home string) []string {
+	base := withHome(env.WithoutWrapperRouting(os.Environ(), runbinary.Env), home)
 	wrapper := filepath.Join(dir, "bin", "bench.sh")
 	if !isRegularFile(wrapper) {
 		return base
 	}
 	return append(base, "BENCH_WRAPPER="+wrapper)
+}
+
+// withHome puts the caller's resolved home on a child environment. The inherited
+// assignment is dropped first, so the child reads exactly one value for the name.
+func withHome(base []string, home string) []string {
+	return append(capability.WithoutEnvironment(base, homeEnv), homeEnv+"="+home)
 }
 
 func childExitCode(cmd *exec.Cmd, err error) int {

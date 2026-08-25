@@ -191,7 +191,7 @@ func TestCreateCommandPrintsNextHint(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
 	var stdout, stderr bytes.Buffer
-	code := CreateCommand(root, []string{"--request", "next-hint", "--label", "next hint label"}, &stdout, &stderr)
+	code := CreateCommand(root, Home(), []string{"--request", "next-hint", "--label", "next hint label"}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("CreateCommand exit = %d, stderr = %q", code, stderr.String())
 	}
@@ -220,7 +220,7 @@ func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
 		{"--request", "x", "--help"},
 	} {
 		var stdout, stderr bytes.Buffer
-		code := CreateCommand("", args, &stdout, &stderr)
+		code := CreateCommand("", Home(), args, &stdout, &stderr)
 		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
 			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want (0, %q, empty)", args, code, stdout.String(), stderr.String(), want)
 		}
@@ -233,7 +233,7 @@ func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
 func TestCreateCommandHelpPerformsNoRefresh(t *testing.T) {
 	t.Parallel()
 	var stdout, stderr bytes.Buffer
-	code := CreateCommand("", []string{"--request", "x", "--refresh", "--help"}, &stdout, &stderr)
+	code := CreateCommand("", Home(), []string{"--request", "x", "--refresh", "--help"}, &stdout, &stderr)
 	want := "usage: " + usage.WorktreeCreate + "\n"
 	if code != 0 || stdout.String() != want || stderr.Len() != 0 {
 		t.Fatalf("CreateCommand with --refresh --help = (%d, %q, %q), want (0, %q, empty)", code, stdout.String(), stderr.String(), want)
@@ -249,7 +249,7 @@ func TestCreateCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 		{"--label", "l"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := CreateCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != createGrammar.Help+"\n" {
+		if code := CreateCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != createGrammar.Help+"\n" {
 			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), createGrammar.Help+"\n")
 		}
 	}
@@ -264,7 +264,7 @@ func TestCreateCommandRejectsEmptyFlagValues(t *testing.T) {
 		{"--request", "r", "--label", ""},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := CreateCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 {
+		if code := CreateCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 {
 			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want exit 2 with empty stdout", args, code, stdout.String(), stderr.String())
 		}
 	}
@@ -288,7 +288,7 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 
 	args := []string{"--request", "retain-verdict", creation.Path}
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, args, &out, &errb)
+	code := ReleaseCommand(root, Home(), args, &out, &errb)
 	msg := errb.String()
 	requireTest(t, code != 0, "retained release exit = %d, want non-zero", code)
 	requireTest(t, !strings.Contains(msg, "terminal receipt missing"), "masking error still present: %q", msg)
@@ -297,7 +297,7 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 
 	mustNoError(t, os.Remove(residual))
 	var out2 strings.Builder
-	code = ReleaseCommand(root, args, &out2, io.Discard)
+	code = ReleaseCommand(root, Home(), args, &out2, io.Discard)
 	requireTest(t, code == 0, "recovery release exit = %d, want 0; out=%q", code, out2.String())
 }
 
@@ -306,7 +306,7 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "release-reauthorize-recovery")
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, Home(), []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
 	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + creation.Path + "'"
 	want := "bench worktree release: request token matches no assignment; checkout retained; observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
@@ -346,13 +346,13 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 
 	args := []string{"--request", "landed-oob-residue", creation.Path}
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, args, &out, &errb)
+	code := ReleaseCommand(root, Home(), args, &out, &errb)
 	requireTest(t, code == 0, "residue release exit=%d stderr=%q", code, errb.String())
 	if _, err := assignmentByID(root, a.ID); err == nil {
 		t.Fatal("residue record survived reconcile")
 	}
 	var replay strings.Builder
-	code = ReleaseCommand(root, args, &replay, io.Discard)
+	code = ReleaseCommand(root, Home(), args, &replay, io.Discard)
 	requireTest(t, code == 0 && replay.String() == out.String(), "replay exit=%d out=%q", code, replay.String())
 }
 
@@ -370,7 +370,7 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	removeOutOfBand(t, root, a, ActionRemoved)
 
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
+	code := ReleaseCommand(root, Home(), []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
 	requireTest(t, code != 0, "preserved release exit=%d, want non-zero", code)
 	requireTest(t, strings.Contains(errb.String(), "git show "+ref),
 		"preserved verdict does not hand over the ref: %q", errb.String())
@@ -440,13 +440,13 @@ func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
 	requireTest(t, errors.Is(err, stop), "automatic interruption = %v", err)
 	args := []string{"--request", "landed-release-in-flight", creation.Path}
 	var first, firstErr strings.Builder
-	code := ReleaseCommand(root, args, &first, &firstErr)
+	code := ReleaseCommand(root, Home(), args, &first, &firstErr)
 	requireTest(t, code == 0 && firstErr.String() == "", "in-flight release code=%d stderr=%q", code, firstErr.String())
 	var replay strings.Builder
-	code = ReleaseCommand(root, args, &replay, io.Discard)
+	code = ReleaseCommand(root, Home(), args, &replay, io.Discard)
 	requireTest(t, code == 0 && replay.String() == first.String(), "in-flight replay code=%d stdout=%q", code, replay.String())
-	requireTest(t, ReleaseCommand(root, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
-	requireTest(t, ReleaseCommand(root, []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
+	requireTest(t, ReleaseCommand(root, Home(), []string{"--request", "changed", creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
+	requireTest(t, ReleaseCommand(root, Home(), []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
 }
 func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 	t.Parallel()
@@ -544,10 +544,29 @@ func TestLeaseFileCommandMissingArg(t *testing.T) {
 	}
 }
 
+// TestCreateCommandWritesBelowTheExplicitHome covers WF15. The verb takes its home from
+// the caller, so the bound environment naming a different directory changes nothing. A
+// verb that still read the environment would put the pool under the bound home, and the
+// second assertion names that directory empty. The bind keeps this test serial.
+func TestCreateCommandWritesBelowTheExplicitHome(t *testing.T) {
+	root := newWorktreeRepo(t)
+	bound, explicit := t.TempDir(), t.TempDir()
+	bindEnv(t, homeEnv, bound)
+	var stdout, stderr bytes.Buffer
+	code := CreateCommand(root, explicit, []string{"--request", "wf15-explicit-home", "--label", "explicit home"}, &stdout, &stderr)
+	requireTest(t, code == 0, "create exit = %d, stderr %q", code, stderr.String())
+	canonical, err := canonicalPath(root)
+	requireTest(t, err == nil, "canonical root: %v", err)
+	entries, err := os.ReadDir(poolAt(explicit, canonical))
+	requireTest(t, err == nil && len(entries) == 1, "explicit home pool holds %d entries (%v), want one worktree", len(entries), err)
+	_, err = os.Stat(poolKeysDirAt(bound))
+	requireTest(t, os.IsNotExist(err), "the verb wrote below the bound home %s: %v", bound, err)
+}
+
 func TestPoolCommandExplicitRoot(t *testing.T) {
 	home := t.TempDir()
 	bindEnv(t, "BENCH_HOME", home)
-	out, code := PoolCommand([]string{"/home/mgibs/workspace/bench"})
+	out, code := PoolCommand(home, []string{"/home/mgibs/workspace/bench"})
 	if code != 0 {
 		t.Errorf("exit = %d, want 0", code)
 	}
@@ -564,7 +583,7 @@ func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "release-owner-marker")
 	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, Home(), []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
 	want := "bench worktree release: owner marker does not match assignment " + creation.Assignment.ID + "; checkout retained\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
 		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)

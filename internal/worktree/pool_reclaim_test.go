@@ -155,7 +155,7 @@ func requireReclaimAggregate(t *testing.T, out, header, keys, first, retained, f
 func mustReclaim(t *testing.T, root string, args ...string) (string, int) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := ReclaimCommand(root, args, &stdout, &stderr)
+	code := ReclaimCommand(root, Home(), args, &stdout, &stderr)
 	requireTest(t, stderr.Len() == 0, "reclaim wrote to stderr: %q", stderr.String())
 	return stdout.String(), code
 }

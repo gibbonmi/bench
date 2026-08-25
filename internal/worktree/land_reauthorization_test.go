@@ -23,7 +23,7 @@ func TestResumeLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	}
 	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
+	if code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -33,7 +33,7 @@ func TestResumeLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	args := []string{"--resume", published, "--request", "unknown-request", "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
 	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'"
 	want := "refused{detail=request token matches no assignment,observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "}\n"
-	if code := LandCommand(root, "", args, &stdout, &stderr); code != 1 || stdout.String() != want || stderr.Len() != 0 {
+	if code := LandCommand(root, Home(), "", args, &stdout, &stderr); code != 1 || stdout.String() != want || stderr.Len() != 0 {
 		t.Fatalf("unknown-request resume = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
 	}
 }
@@ -44,7 +44,7 @@ func TestLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	request := "land-reauthorize-recovery"
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
 	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'"
 	want := "refused{detail=request token matches no assignment,observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "}\n"
 	if code != 1 || stdout.String() != want {
@@ -56,7 +56,7 @@ func TestLandCommandReauthorizeRecoveryExpandsAbbreviatedIdentityInputs(t *testi
 	request := "reauthorize-full-identities"
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs("unknown-request", base[:12], tip[:12], creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs("unknown-request", base[:12], tip[:12], creation.Path), &stdout, &stderr)
 	wantNext := "next=bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'}\n"
 	if code != 1 || !strings.HasSuffix(stdout.String(), wantNext) {
 		t.Fatalf("abbreviated-identity recovery = (%d, %q, %q), want suffix %q with the expanded identities", code, stdout.String(), stderr.String(), wantNext)
@@ -68,7 +68,7 @@ func TestLandCommandReauthorizeRecoveryPointsThroughUnsafePath(t *testing.T) {
 	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
 	root, creation, base, tip, _ := publicLandingFixtureAtHome(t, request, "", "", home)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
 	wantNext := "next=bench worktree exec " + creation.Assignment.ID + " -- bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' .}\n"
 	unsafe := strings.ContainsRune(stdout.String(), '\x1b') || strings.Count(stdout.String(), "\n") != 1
 	if code != 1 || unsafe || !strings.HasSuffix(stdout.String(), wantNext) {
@@ -84,7 +84,7 @@ func TestLandCommandStoredRequestDigestCannotAuthenticate(t *testing.T) {
 	beforeSource := gitOutput(t, root, "rev-parse", creation.Assignment.Branch)
 	beforeMarker := gitOutput(t, root, "rev-parse", "refs/bench/green/main")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs(creation.Assignment.Request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs(creation.Assignment.Request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=request token matches no assignment") {
 		t.Fatalf("stored-digest land = (%d, %q, %q), want refusal", code, stdout.String(), stderr.String())
 	}
@@ -104,10 +104,10 @@ func TestLandCommandAuthenticatesDigestShapedRequestToken(t *testing.T) {
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
 	restore := stubLandJoins(t, base, tip)
 	defer restore()
-	releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 0 }
+	releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 0 }
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
 		t.Fatalf("digest-shaped request land = (%d, %q, %q), want successful authentication", code, stdout.String(), stderr.String())
 	}
@@ -121,7 +121,7 @@ func TestLandCommandUnknownRequestWithoutAssignmentNamesTheListing(t *testing.T)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs("unknown-request", base, base, root), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs("unknown-request", base, base, root), &stdout, &stderr)
 	want := "refused{detail=request token matches no assignment,next=bench worktree list}\n"
 	if code != 1 || stdout.String() != want || strings.Contains(stdout.String(), "reauthorize") {
 		t.Fatalf("assignment-free land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
@@ -142,7 +142,7 @@ func TestLandCommandUnknownRequestWithAmbiguousAssignmentsNamesTheListing(t *tes
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
 	want := "refused{detail=request token matches no assignment,next=bench worktree list}\n"
 	if code != 1 || stdout.String() != want || strings.Contains(stdout.String(), "reauthorize") {
 		t.Fatalf("ambiguous-assignment land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
@@ -162,10 +162,10 @@ func TestLandCommandExpandsAbbreviatedSourceTip(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	restore := stubLandJoins(t, base, tip)
 	defer restore()
-	releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 0 }
+	releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 0 }
 	for _, abbreviated := range []string{tip[:4], tip[:12], tip[:39], strings.ToUpper(tip[:12])} {
 		var stdout, stderr bytes.Buffer
-		code := LandCommand(root, "", landArgs(request, base, abbreviated, creation.Path), &stdout, &stderr)
+		code := LandCommand(root, Home(), "", landArgs(request, base, abbreviated, creation.Path), &stdout, &stderr)
 		if code != 0 || !strings.Contains(stdout.String(), "source_tip="+tip+",") || !strings.Contains(stdout.String(), "worktree=released}") {
 			t.Fatalf("abbreviated source tip %q = (%d, %q, %q), want released with the full tip", abbreviated, code, stdout.String(), stderr.String())
 		}
@@ -183,14 +183,14 @@ func TestLandCommandExpandsAbbreviatedBase(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	restore := stubLandJoins(t, base, tip)
 	defer restore()
-	releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 0 }
+	releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 0 }
 	authorized := ""
 	authorizeLandingSource = func(_, _ string, reviewBase string) (diff.SourceRange, error) {
 		authorized = reviewBase
 		return diff.SourceRange{Base: base, Tip: tip}, nil
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs(request, base[:12], tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs(request, base[:12], tip, creation.Path), &stdout, &stderr)
 	if code != 0 || authorized != base || !strings.Contains(stdout.String(), "worktree=released}") {
 		t.Fatalf("abbreviated base = (%d, authorized=%q, %q, %q), want the full base authorized and released", code, authorized, stdout.String(), stderr.String())
 	}
@@ -200,14 +200,14 @@ func TestResumeLandCommandExpandsAbbreviatedIdentities(t *testing.T) {
 	request := "resume-abbreviated-published"
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "private/output", "dist/")
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
+	if code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published[:12], "--request", request, "--base", base[:12], "--source-tip", tip[:12], "--spec", "x", creation.Path}
-	code := ResumeLandCommand(root, args, &stdout, &stderr)
+	code := ResumeLandCommand(root, Home(), args, &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), "source_base="+base+",source_tip="+tip+",destination_base="+base+",published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 		t.Fatalf("abbreviated resume = (%d, %q, %q), want the published landing resumed under its full identities", code, stdout.String(), stderr.String())
 	}
@@ -224,7 +224,7 @@ func TestLandCommandDistinguishesSourceTipDriftFromAbbreviation(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	for _, observed := range []string{base, tip[:3], "not-a-commit"} {
 		var stdout, stderr bytes.Buffer
-		code := LandCommand(root, "", landArgs(request, base, observed, creation.Path), &stdout, &stderr)
+		code := LandCommand(root, Home(), "", landArgs(request, base, observed, creation.Path), &stdout, &stderr)
 		want := "refused{detail=worktree source tip mismatch,observed=" + observed + ",wanted=" + tip + "}\n"
 		if code != 1 || stdout.String() != want || stderr.Len() != 0 || strings.Contains(stdout.String(), "abbreviated") {
 			t.Fatalf("source tip drift %q = (%d, %q, %q), want (1, %q, empty)", observed, code, stdout.String(), stderr.String(), want)

@@ -89,7 +89,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "skills-index", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 7, Suffix: " [--check|--write]", Description: "print skills-index drift (default) or regenerate it"}), Run: outputCommand(skillsindex.Command)},
 	{Name: "tree-hash", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(treeHash)},
 	{Name: "resolve-model", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(resolveModel)},
-	{Name: "worktree-pool", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(worktree.PoolCommand)},
+	{Name: "worktree-pool", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(poolCommand)},
 	{Name: "worktree-lease-file", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(worktree.LeaseFileCommand)},
 	{Name: "test", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 22, Suffix: " [--full] [package]", Description: "run fresh Go tests and render package, failure, and skip evidence as TOON"}), Run: outputCommand(testCommand)},
 	{Name: "help", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(), Kind: commandHelp},
@@ -530,8 +530,15 @@ func boundaryRoot() string {
 	return root
 }
 
+// poolCommand resolves the Bench home at this command boundary, in the shape of
+// boundaryRoot. The registry entry takes an argv-only handler, so the resolution sits
+// here rather than in the entry.
+func poolCommand(args []string) (string, int) {
+	return worktree.PoolCommand(worktree.Home(), args)
+}
+
 func resumeCleanCommand(c Command, args []string) int {
-	return worktree.ResumeCleanCommand(boundaryRoot(), args, c.Stdout, c.Stderr)
+	return worktree.ResumeCleanCommand(boundaryRoot(), worktree.Home(), args, c.Stdout, c.Stderr)
 }
 
 func worktreeCommand(c Command, args []string) int {
@@ -541,7 +548,7 @@ func worktreeCommand(c Command, args []string) int {
 			fmt.Fprintln(c.Stderr, toon.NotInRepo())
 			return 1
 		}
-		return worktree.ExecCommand(root, args[1:], c.Stdin, c.Stdout, c.Stderr)
+		return worktree.ExecCommand(root, worktree.Home(), args[1:], c.Stdin, c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "path" {
 		root, err := git.Root()
@@ -549,10 +556,10 @@ func worktreeCommand(c Command, args []string) int {
 			fmt.Fprintln(c.Stderr, toon.NotInRepo())
 			return 1
 		}
-		return worktree.PathCommand(root, args[1:], c.Stdout, c.Stderr)
+		return worktree.PathCommand(root, worktree.Home(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "list" {
-		out, code := worktree.ListCommand(boundaryRoot(), args[1:])
+		out, code := worktree.ListCommand(boundaryRoot(), worktree.Home(), args[1:])
 		fmt.Fprint(c.Stdout, out)
 		return code
 	}
@@ -566,7 +573,7 @@ func worktreeCommand(c Command, args []string) int {
 			fmt.Fprintln(c.Stderr, toon.NotInRepo())
 			return 1
 		}
-		return worktree.CreateCommand(root, args[1:], c.Stdout, c.Stderr)
+		return worktree.CreateCommand(root, worktree.Home(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "release" {
 		root, err := git.Root()
@@ -574,13 +581,13 @@ func worktreeCommand(c Command, args []string) int {
 			fmt.Fprintln(c.Stderr, toon.NotInRepo())
 			return 1
 		}
-		return worktree.ReleaseCommand(root, args[1:], c.Stdout, c.Stderr)
+		return worktree.ReleaseCommand(root, worktree.Home(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "clean" {
-		return worktree.CleanCommand(boundaryRoot(), args[1:], c.Stdout, c.Stderr)
+		return worktree.CleanCommand(boundaryRoot(), worktree.Home(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "reclaim" {
-		return worktree.ReclaimCommand(boundaryRoot(), args[1:], c.Stdout, c.Stderr)
+		return worktree.ReclaimCommand(boundaryRoot(), worktree.Home(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "reauthorize" {
 		root, err := git.Root()
@@ -588,7 +595,7 @@ func worktreeCommand(c Command, args []string) int {
 			fmt.Fprintln(c.Stderr, toon.NotInRepo())
 			return 1
 		}
-		return worktree.ReauthorizeCommand(root, args[1:], c.Stdout, c.Stderr)
+		return worktree.ReauthorizeCommand(root, worktree.Home(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "land" {
 		root, err := git.Root()
@@ -596,7 +603,7 @@ func worktreeCommand(c Command, args []string) int {
 			fmt.Fprintln(c.Stderr, toon.NotInRepo())
 			return 1
 		}
-		return worktree.LandCommand(root, c.Executable, args[1:], c.Stdout, c.Stderr)
+		return worktree.LandCommand(root, worktree.Home(), c.Executable, args[1:], c.Stdout, c.Stderr)
 	}
 	// `recovery` is no longer a worktree subcommand. This family's fallback is a
 	// free-form objective, so naming it here reports the removed verb instead of
@@ -605,7 +612,7 @@ func worktreeCommand(c Command, args []string) int {
 		fmt.Fprintln(c.Stderr, toon.Usage("bench worktree", args[0]))
 		return 2
 	}
-	return worktree.Subshell(args, c.Stdin, c.Stdout, c.Stderr)
+	return worktree.Subshell(worktree.Home(), args, c.Stdin, c.Stdout, c.Stderr)
 }
 
 // versionLine renders the single line `bench version` prints. Kept as a pure

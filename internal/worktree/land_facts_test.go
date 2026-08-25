@@ -176,10 +176,10 @@ func TestLandingReleaseFactAdapterTranslatesReleaseExit(t *testing.T) {
 	request := "release-fact-adapter"
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
 	original := releaseLandingAssignment
-	releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 1 }
+	releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 1 }
 	t.Cleanup(func() { releaseLandingAssignment = original })
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	want := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: "release", Active: true})
 	if code != want.ExitCode || !strings.Contains(stdout.String(), "worktree="+want.WorktreeState+",next=") {
 		t.Fatalf("release-failure landing = (%d, %q), want exit %d and state %q", code, stdout.String(), want.ExitCode, want.WorktreeState)

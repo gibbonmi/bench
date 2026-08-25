@@ -41,7 +41,7 @@ var reauthorizeLock = func(root, path, reason string) error {
 var reauthorizeBeforeCAS func(*intent.Assignment)
 
 // ReauthorizeCommand replaces a retained assignment request after exact identity proofs.
-func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) int {
+func ReauthorizeCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(reauthorizeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)

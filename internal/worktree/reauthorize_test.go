@@ -34,7 +34,7 @@ func TestReauthorizeCommandGrammarKeepsFlagValuesOutOfPath(t *testing.T) {
 				args = append(args, other, values[other])
 			}
 			var stdout, stderr bytes.Buffer
-			if code := ReauthorizeCommand(root, args, &stdout, &stderr); code != 2 {
+			if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 2 {
 				t.Fatalf("path-only-as-%s exit = %d, want 2; stdout=%q stderr=%q", flag, code, stdout.String(), stderr.String())
 			}
 			if got := reauthorizeEvidence(t, root, creation.Path); got != before {
@@ -46,7 +46,7 @@ func TestReauthorizeCommandGrammarKeepsFlagValuesOutOfPath(t *testing.T) {
 	root, creation, base, tip := reauthorizeFixture(t)
 	var stdout, stderr bytes.Buffer
 	args := []string{"--assignment", creation.Assignment.ID, "--request", "control-token", "--base", base, "--source-tip", tip, "--", creation.Path}
-	if code := ReauthorizeCommand(root, args, &stdout, &stderr); code != 0 {
+	if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 0 {
 		t.Fatalf("-- path control exit = %d; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }
@@ -60,7 +60,7 @@ func TestReauthorizeCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 		{"--assignment", "a", "--request", "r", "--base", "b", "path"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := ReauthorizeCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != reauthorizeGrammar.Help+"\n" {
+		if code := ReauthorizeCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != reauthorizeGrammar.Help+"\n" {
 			t.Fatalf("ReauthorizeCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), reauthorizeGrammar.Help+"\n")
 		}
 	}
@@ -70,7 +70,7 @@ func TestReauthorizeCommandEscapesControlBearingBase(t *testing.T) {
 	root, creation, _, tip := reauthorizeFixture(t)
 	var stdout, stderr bytes.Buffer
 	args := []string{"--assignment", creation.Assignment.ID, "--request", "replacement-request", "--base", "not-a-commit\nforged-output", "--source-tip", tip, creation.Path}
-	if code := ReauthorizeCommand(root, args, &stdout, &stderr); code != 1 {
+	if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 1 {
 		t.Fatalf("control-bearing base exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if strings.Count(stderr.String(), "\n") != 1 || !strings.Contains(stderr.String(), `\n`) {
@@ -84,7 +84,7 @@ func TestReauthorizeCommandNamesRecordedStartWhenNotAncestor(t *testing.T) {
 	nonAncestorBase := gitOutput(t, root, "rev-parse", "HEAD")
 	var stdout, stderr bytes.Buffer
 	want := "bench worktree reauthorize: review base is not an ancestor of source tip; wanted=" + creation.Assignment.Start + "\n"
-	if code := ReauthorizeCommand(root, []string{"--assignment", creation.Assignment.ID, "--request", "replacement", "--base", nonAncestorBase, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
+	if code := ReauthorizeCommand(root, Home(), []string{"--assignment", creation.Assignment.ID, "--request", "replacement", "--base", nonAncestorBase, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
 		t.Fatalf("ancestry refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
@@ -101,7 +101,7 @@ func TestReauthorizeCommandRefusesRecordedStartOutsideSourceHistory(t *testing.T
 	gitRun(t, root, "worktree", "lock", "--reason", lockReason(a), creation.Path)
 	var stdout, stderr bytes.Buffer
 	want := "bench worktree reauthorize: recorded start is not an ancestor of source tip; wanted=" + a.Start + "\n"
-	if code := ReauthorizeCommand(root, []string{"--assignment", a.ID, "--request", "replacement", "--base", base, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
+	if code := ReauthorizeCommand(root, Home(), []string{"--assignment", a.ID, "--request", "replacement", "--base", base, "--source-tip", tip, creation.Path}, &stdout, &stderr); code != 1 || stdout.Len() != 0 || stderr.String() != want {
 		t.Fatalf("recorded-start refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
@@ -113,7 +113,7 @@ func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T
 	var stdout, stderr bytes.Buffer
 	unknown := append([]string(nil), args...)
 	unknown[1] = strings.Repeat("f", 32)
-	if code := ReauthorizeCommand(root, unknown, &stdout, &stderr); code != 1 {
+	if code := ReauthorizeCommand(root, Home(), unknown, &stdout, &stderr); code != 1 {
 		t.Fatalf("unknown assignment exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if got := reauthorizeEvidence(t, root, creation.Path); got != before {
@@ -121,7 +121,7 @@ func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T
 	}
 	stdout.Reset()
 	stderr.Reset()
-	if code := ReauthorizeCommand(root, args, &stdout, &stderr); code != 0 {
+	if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 0 {
 		t.Fatalf("reauthorize exit = %d; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if want := "reauthorized{assignment=" + creation.Assignment.ID + ",recorded_start=" + creation.Assignment.Start + ",approved_base=" + base + ",source_tip=" + tip + ",state=active}\n"; stdout.String() != want {
@@ -154,7 +154,7 @@ func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T
 	beforeDetached := reauthorizeEvidence(t, root, creation.Path)
 	stdout.Reset()
 	stderr.Reset()
-	if code := ReauthorizeCommand(root, args, &stdout, &stderr); code != 1 {
+	if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 1 {
 		t.Fatalf("detached assignment exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if got := reauthorizeEvidence(t, root, creation.Path); got != beforeDetached {
@@ -206,7 +206,7 @@ func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
 			testCase.install(t, creation)
 			var stdout, stderr bytes.Buffer
 			args := []string{"--assignment", creation.Assignment.ID, "--request", "replacement-request", "--base", base, "--source-tip", tip, creation.Path}
-			if code := ReauthorizeCommand(root, args, &stdout, &stderr); code != 1 {
+			if code := ReauthorizeCommand(root, Home(), args, &stdout, &stderr); code != 1 {
 				t.Fatalf("%s exit = %d, want 1; stdout=%q stderr=%q", testCase.name, code, stdout.String(), stderr.String())
 			}
 			if got := reauthorizeEvidence(t, root, creation.Path); got != before {

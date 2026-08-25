@@ -21,7 +21,7 @@ type listRow struct {
 }
 
 // ListCommand implements the read-only AXI worktree population query.
-func ListCommand(root string, args []string) (string, int) {
+func ListCommand(root, _ string, args []string) (string, int) {
 	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {
 		return line + "\n", code

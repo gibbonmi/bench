@@ -27,7 +27,7 @@ func TestResumeSummaryCountsLandedAssignments(t *testing.T) {
 	commitInWorktree(t, active.Path, "active.txt", "active\n", "active")
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -48,7 +48,7 @@ func TestResumeSummaryCountsLandedProofWithoutBranchAdvance(t *testing.T) {
 	mustCreate(t, root, "landed-proof", "landed proof")
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -77,7 +77,7 @@ func TestResumeSummaryPartitionsLandedLeases(t *testing.T) {
 	mustWrite(t, unknownLease, []byte("not-a-lease\n"), 0o600)
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -101,7 +101,7 @@ func TestResumeSummaryLiveLeaseWinsOverResidue(t *testing.T) {
 	mustWrite(t, lease, []byte(strconv.Itoa(os.Getpid())+" 2026-07-15T00:00:00Z\n"), 0o600)
 
 	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 0 {
+	if code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	summary := stdout.String()
@@ -124,7 +124,7 @@ func TestResumeSummaryKeepsLandedClassificationAboveResidue(t *testing.T) {
 	mustWrite(t, filepath.Join(dirty.Path, "dirty-landed.txt"), []byte("changed\n"), 0o644)
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -151,7 +151,7 @@ func TestResumeSummarySeparatesAgedLandedAndActiveAssignments(t *testing.T) {
 	backdate(t, root, active.Assignment, 8*24*time.Hour)
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -168,7 +168,7 @@ func TestResumeSummaryAdvertisesLandedSweep(t *testing.T) {
 	landAssignment(t, root, creation, "advertised.txt")
 
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -186,13 +186,13 @@ func TestLandedClassifierUnknownDefaultStaysActive(t *testing.T) {
 	gitRun(t, root, "branch", "-m", "main", "trunk")
 
 	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 1 || !strings.Contains(stderr.String(), "no resolvable default branch") {
+	if code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr); code != 1 || !strings.Contains(stderr.String(), "no resolvable default branch") {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q, want the existing no-default refusal", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "retained active=1") || strings.Contains(stdout.String(), "landed=") {
 		t.Fatalf("summary=%q, want unknown landedness under active", stdout.String())
 	}
-	list, code := ListCommand(root, nil)
+	list, code := ListCommand(root, Home(), nil)
 	if code != 0 || strings.Contains(list, "clean --landed") {
 		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
 	}
@@ -206,13 +206,13 @@ func TestLandedClassifierErroredProofStaysActive(t *testing.T) {
 	gitRun(t, root, "update-ref", "-d", creation.Assignment.Branch)
 
 	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 0 {
+	if code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "retained active=1") || strings.Contains(stdout.String(), "landed=") {
 		t.Fatalf("summary=%q, want errored proof under active", stdout.String())
 	}
-	list, code := ListCommand(root, nil)
+	list, code := ListCommand(root, Home(), nil)
 	if code != 0 || strings.Contains(list, "clean --landed") {
 		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
 	}
@@ -239,13 +239,13 @@ func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
 	mustNoError(t, intent.PutAssignment(root, complete.Assignment))
 
 	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, nil, &stdout, &stderr); code != 0 {
+	if code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if strings.Contains(stdout.String(), "landed=") {
 		t.Fatalf("summary=%q, want no landed count for settled states", stdout.String())
 	}
-	list, code := ListCommand(root, nil)
+	list, code := ListCommand(root, Home(), nil)
 	if code != 0 || strings.Contains(list, "clean --landed") {
 		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
 	}
@@ -258,7 +258,7 @@ func TestListCommandAdvertisesOneLandedSweep(t *testing.T) {
 	active := mustCreate(t, root, "list-active", "active")
 	landAssignment(t, root, landed, "list-landed.txt")
 
-	out, code := ListCommand(root, nil)
+	out, code := ListCommand(root, Home(), nil)
 	if code != 0 {
 		t.Fatalf("ListCommand exit=%d output=%q", code, out)
 	}

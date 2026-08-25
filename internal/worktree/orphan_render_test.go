@@ -160,7 +160,7 @@ func planReclaimableCount(t *testing.T, out string) int {
 func mustResumeClean(t *testing.T, root string) (string, int) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	requireTest(t, code == 0, "resume-clean code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	return stdout.String(), code
 }

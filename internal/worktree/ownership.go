@@ -127,14 +127,16 @@ func lockCreationRequest(root, digest string) (func(), error) {
 	return func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN); _ = file.Close() }, nil
 }
 
-// Create makes one request-idempotent owned registration and persists its bundle.
+// Create makes one request-idempotent owned registration and persists its bundle. It is
+// the boundary form of createAt for a caller in another package, and resolves the clock
+// and the Bench home at the effect boundary.
 func Create(root, request, label string, fault Fault, requestedStart ...string) (Creation, error) {
-	return createAt(root, request, label, fault, currentTime(), requestedStart...)
+	return createAt(root, Home(), request, label, fault, currentTime(), requestedStart...)
 }
 
-// createAt is Create with the creation instant resolved explicitly at the caller's
-// effect boundary; Create is its temporary compatibility form.
-func createAt(root, request, label string, fault Fault, now time.Time, requestedStart ...string) (Creation, error) {
+// createAt is Create with the creation instant and the Bench home resolved explicitly at
+// the caller's effect boundary.
+func createAt(root, home, request, label string, fault Fault, now time.Time, requestedStart ...string) (Creation, error) {
 	if request == "" || label == "" {
 		return Creation{}, errors.New("worktree create requires request and label")
 	}
@@ -177,7 +179,7 @@ func createAt(root, request, label string, fault Fault, now time.Time, requested
 	if err != nil {
 		return Creation{}, fmt.Errorf("resolve assignment start: %w", err)
 	}
-	pool := Pool(root)
+	pool := poolAt(home, root)
 	if err := os.MkdirAll(pool, 0o700); err != nil {
 		return Creation{}, fmt.Errorf("create worktree pool: %w", err)
 	}

@@ -38,9 +38,10 @@ func cksum(data []byte) uint32 {
 	return ^crc
 }
 
-// Pool is the temporary compatibility form of poolAt: it resolves the Bench home
-// at the effect boundary. In-package callers below the boundary receive home explicitly.
-func Pool(root string) string { return poolAt(benchHome(), root) }
+// Pool is the boundary form of poolAt for a caller in another package: it resolves
+// the Bench home at the effect boundary. In-package callers below the boundary
+// receive home explicitly.
+func Pool(root string) string { return poolAt(Home(), root) }
 
 // poolAt derives the repository's pool directory from an explicitly resolved home.
 func poolAt(home, root string) string {
@@ -58,7 +59,7 @@ func LeaseFile(path string) (string, error) {
 	}
 	return lease, nil
 }
-func PoolCommand(args []string) (string, int) {
+func PoolCommand(home string, args []string) (string, int) {
 	var root string
 	if len(args) > 0 {
 		root = args[0]
@@ -69,7 +70,7 @@ func PoolCommand(args []string) (string, int) {
 		}
 		root = r
 	}
-	return Pool(root) + "\n", 0
+	return poolAt(home, root) + "\n", 0
 }
 func LeaseFileCommand(args []string) (string, int) {
 	if len(args) == 0 {
@@ -99,7 +100,13 @@ type Registered struct {
 	Locked   bool
 }
 
+// ClassifyRegisteredWorktrees is the boundary form of classifyRegisteredWorktreesAt for
+// a caller in another package: it resolves the Bench home at the effect boundary.
 func ClassifyRegisteredWorktrees(root string) ([]Registered, error) {
+	return classifyRegisteredWorktreesAt(root, Home())
+}
+
+func classifyRegisteredWorktreesAt(root, home string) ([]Registered, error) {
 	facts, err := git.Worktrees(root)
 	if err != nil {
 		return nil, err
@@ -109,7 +116,7 @@ func ClassifyRegisteredWorktrees(root string) ([]Registered, error) {
 	for _, fact := range facts {
 		out = append(out, Registered{Path: fact.Path, Branch: fact.Branch, Detached: fact.Detached, Locked: fact.Locked})
 	}
-	pool := Pool(mainRoot)
+	pool := poolAt(home, mainRoot)
 	for i := range out {
 		out[i].Class = classifyPath(mainRoot, pool, out[i].Path)
 	}
@@ -270,7 +277,7 @@ func cleanInvocationError(stdout io.Writer) int {
 	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run " + usage.WorktreeClean})
 	return 2
 }
-func CleanCommand(root string, args []string, stdout, stderr io.Writer) int {
+func CleanCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
 	landed := false
@@ -385,7 +392,7 @@ func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupR
 	}
 	return renderReleaseReceipt(stdout, receipt)
 }
-func ReleaseCommand(root string, args []string, stdout, stderr io.Writer) int {
+func ReleaseCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 3 || args[0] != "--request" || args[1] == "" {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreeRelease)
 		return 2
@@ -559,7 +566,7 @@ var createGrammar = usage.Grammar{
 	},
 }
 
-func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
+func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(createGrammar, args)
 	if line != "" {
 		if code == 0 {
@@ -571,7 +578,7 @@ func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	}
 	_, startRef := refreshop.Consume(root, args, stdout)
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
-	creation, err := createAt(root, request, label, nil, currentTime(), startRef)
+	creation, err := createAt(root, home, request, label, nil, currentTime(), startRef)
 	if err != nil {
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1
@@ -585,7 +592,7 @@ func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	fmt.Fprintf(stdout, "next[2]:\n  bench worktree exec \"%s\" -- <command>\n  bench worktree path \"%s\"\n", label, label)
 	return 0
 }
-func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
@@ -601,7 +608,7 @@ func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	creation, err := createAt(root, request, objective, nil, currentTime(), startRef)
+	creation, err := createAt(root, home, request, objective, nil, currentTime(), startRef)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
@@ -613,8 +620,12 @@ func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	cmd := exec.Command(shell)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = creation.Path, stdin, stdout, stderr
+	// The interactive shell runs Bench verbs against the worktree this call just
+	// created, so it reads the home the call resolved rather than the one its own
+	// process carried.
+	cmd.Env = withHome(os.Environ(), home)
 	_ = cmd.Run()
-	return ReleaseCommand(root, []string{"--request", request, creation.Path}, io.Discard, stderr)
+	return ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
 }
 func cleanupOutputSafe(value string) bool { return toon.Representable(value) }
 func cleanupOutputValue(value string) string {

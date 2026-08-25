@@ -45,7 +45,7 @@ func TestLandCommandAllowsLocalCaptureInDestinationAndReleases(t *testing.T) {
 	writeLocalCapture(t, root)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
 		t.Fatalf("land with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}
@@ -68,7 +68,7 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("interrupt") }
 	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
+	if code := LandCommand(root, Home(), "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
 		t.Fatalf("interrupted land = (%d, %q, %q), want incomplete", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -76,7 +76,7 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := LandCommand(root, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code := LandCommand(root, Home(), "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
 		t.Fatalf("resume with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}
 }
@@ -91,7 +91,7 @@ func TestLandCommandIgnoredDiagnosticListsOnlyForeignResidue(t *testing.T) {
 	mustWrite(t, filepath.Join(root, "foreign.tmp"), []byte("foreign\n"), 0o600)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n  foreign.tmp\n") {
 		t.Fatalf("mixed residue = (%d, %q, %q), want only foreign.tmp", code, stdout.String(), stderr.String())
 	}

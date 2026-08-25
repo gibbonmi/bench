@@ -78,7 +78,7 @@ func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 	stubRunningBinary(t, live)
 
 	var stdout bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", request, creation.Path}, &stdout, io.Discard)
+	code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "live-binary release exit=%d stdout=%q", code, stdout.String())
 
 	warned := warnings.String()
@@ -168,7 +168,7 @@ func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {
 			stubRunningBinary(t, elsewhere)
 
 			var stdout bytes.Buffer
-			code := ReleaseCommand(root, []string{"--request", request, creation.Path}, &stdout, io.Discard)
+			code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, &stdout, io.Discard)
 			requireTest(t, code == 0, "foreign release exit=%d stdout=%q", code, stdout.String())
 			requireTest(t, warnings.Len() == 0, "foreign %s warned: %q", foreign, warnings.String())
 		})

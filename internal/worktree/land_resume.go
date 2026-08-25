@@ -20,7 +20,7 @@ import (
 
 // ResumeLandCommand finishes only a published landing's marker, destination checkout,
 // and release work. Its proofs keep a retry from becoming a second publication attempt.
-func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int {
+func ResumeLandCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(resumeLandGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -71,7 +71,7 @@ func ResumeLandCommand(root string, args []string, stdout, stderr io.Writer) int
 	if !active {
 		return landedComplete(stdout, result, false)
 	}
-	if releaseLandingAssignment(root, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
+	if releaseLandingAssignment(root, home, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release")
 	}
 	return landedComplete(stdout, result, true)

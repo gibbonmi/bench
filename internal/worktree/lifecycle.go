@@ -170,10 +170,10 @@ func isClean(dir string) bool {
 	return err == nil && out == ""
 }
 
-// Acquire is the temporary compatibility form of acquireAt: it resolves the Bench
-// home and the instant at the effect boundary for callers that have not migrated.
+// Acquire is the boundary form of acquireAt for a caller in another package: it
+// resolves the Bench home and the instant at the effect boundary.
 func Acquire(root, resetRef, resetMode string) (string, error) {
-	return acquireAt(root, resetRef, resetMode, benchHome(), currentTime())
+	return acquireAt(root, resetRef, resetMode, Home(), currentTime())
 }
 
 // acquireAt claims a clean pool entry or mints one in three bounded attempts. It

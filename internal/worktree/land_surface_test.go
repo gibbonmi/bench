@@ -20,7 +20,7 @@ func landSurface(t *testing.T, request string) (string, Creation, string, string
 func landIn(t *testing.T, root string, args []string) (int, string, string) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", args, &stdout, &stderr)
+	code := LandCommand(root, Home(), "", args, &stdout, &stderr)
 	return code, stdout.String(), stderr.String()
 }
 

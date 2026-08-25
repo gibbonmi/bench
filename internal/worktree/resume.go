@@ -348,14 +348,14 @@ func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanup
 // that can make a ledger an older binary wrote readable again. Every step below reads
 // that ledger.
 func ConservativeCleanup(root string) (ResumeResult, error) {
-	return conservativeCleanupAt(root, benchHome(), currentTime())
+	return conservativeCleanupAt(root, Home(), currentTime())
 }
 
 // conservativeCleanupAt is ConservativeCleanup with the Bench home and the instant
 // resolved explicitly at the caller's effect boundary; ConservativeCleanup is its
-// temporary compatibility form.
+// boundary form for a caller in another package.
 func conservativeCleanupAt(root, home string, now time.Time) (ResumeResult, error) {
-	registered, err := ClassifyRegisteredWorktrees(root)
+	registered, err := classifyRegisteredWorktreesAt(root, home)
 	if err != nil {
 		return ResumeResult{}, fmt.Errorf("worktree discovery failed: %w", err)
 	}
@@ -453,7 +453,7 @@ func isRegisteredWorktree(registered []Registered, path string) bool {
 	}
 	return false
 }
-func ResumeCleanCommand(root string, args []string, stdout, stderr io.Writer) int {
+func ResumeCleanCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 0 {
 		fmt.Fprintln(stderr, "usage: bench resume-clean")
 		return 2
@@ -462,7 +462,7 @@ func ResumeCleanCommand(root string, args []string, stdout, stderr io.Writer) in
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	result, cleanupErr := ConservativeCleanup(root)
+	result, cleanupErr := conservativeCleanupAt(root, home, currentTime())
 	assignments, snapshotErr := intent.Assignments(root)
 	if snapshotErr == nil {
 		result.Open = len(assignments)

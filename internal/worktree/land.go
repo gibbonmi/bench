@@ -72,9 +72,9 @@ const rebuiltLandingEnv = "BENCH_LANDING_REBUILT"
 // invoked process is the one promotion owner for the complete landing: it never
 // consults, rebuilds, or re-executes a repository executable, so candidate landing
 // code cannot run during its own promotion.
-func LandCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
+func LandCommand(root, home, _ string, args []string, stdout, stderr io.Writer) int {
 	if hasResumeFlag(args) {
-		return ResumeLandCommand(root, args, stdout, stderr)
+		return ResumeLandCommand(root, home, args, stdout, stderr)
 	}
 	parsed, line, code := usage.Parse(landGrammar, args)
 	if line != "" {
@@ -150,7 +150,7 @@ func LandCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile")
 	}
 	var releaseDiagnostic bytes.Buffer
-	if release := releaseLandingAssignment(root, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
+	if release := releaseLandingAssignment(root, home, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
 		if releaseDiagnostic.Len() > 0 {
 			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
 		}

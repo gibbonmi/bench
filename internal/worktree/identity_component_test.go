@@ -141,7 +141,7 @@ func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
 			root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
 			fixture.mutate(t, root, creation)
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, "", landArgs(fixture.request(request), base, tip, creation.Path), &stdout, &stderr)
+			code := LandCommand(root, Home(), "", landArgs(fixture.request(request), base, tip, creation.Path), &stdout, &stderr)
 			want := "refused{" + fixture.want(creation, base, tip) + "}\n"
 			if code != 1 || stdout.String() != want {
 				t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
@@ -161,7 +161,7 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 			fixture.mutate(t, root, creation)
 			var stdout, stderr bytes.Buffer
 			args := []string{"--resume", published, "--request", fixture.request(request), "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			code := LandCommand(root, "", args, &stdout, &stderr)
+			code := LandCommand(root, Home(), "", args, &stdout, &stderr)
 			want := "refused{" + fixture.want(creation, base, tip) + "}\n"
 			if code != 1 || stdout.String() != want {
 				t.Fatalf("%s resume = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
@@ -179,7 +179,7 @@ func interruptLandingAtMarker(t *testing.T, root string, creation Creation, requ
 		return errors.New("injected marker interruption")
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	advanceLandingMarker = old
 	if code != 3 {
 		t.Fatalf("interrupted landing = (%d, %q, %q), want exit 3", code, stdout.String(), stderr.String())
@@ -313,7 +313,7 @@ func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 	registration.mutate(t, root, creation)
 	identityComponentFixtureFor(t, componentLock).mutate(t, root, creation)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	want := "refused{" + registration.want(creation, base, tip) + "}\n"
 	if code != 1 || stdout.String() != want {
 		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
@@ -329,7 +329,7 @@ func TestTargetVerbNamesTheOwnerMarkerBeforeTheBranch(t *testing.T) {
 	gitRun(t, creation.Path, "checkout", "--detach")
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := PathCommand(root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := PathCommand(root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	want := "bench worktree path: owner marker does not match assignment " + creation.Assignment.ID + "\n"
 	if code != 1 || stderr.String() != want {
 		t.Fatalf("double-fault path = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)

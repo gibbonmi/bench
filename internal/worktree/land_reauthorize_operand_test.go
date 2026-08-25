@@ -16,7 +16,7 @@ func TestLandAndReauthorizeResolveIdentifierOperands(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "operand-land")
 	chdir(t, root)
 	var stdout bytes.Buffer
-	code := LandCommand(root, "", []string{"--request", "wrong-token", "--base", creation.Assignment.Start, "--source-tip", creation.Assignment.Start, "-m", "land", creation.Assignment.Label}, &stdout, io.Discard)
+	code := LandCommand(root, Home(), "", []string{"--request", "wrong-token", "--base", creation.Assignment.Start, "--source-tip", creation.Assignment.Start, "-m", "land", creation.Assignment.Label}, &stdout, io.Discard)
 	if code == 0 {
 		t.Fatal("a mismatched request landed")
 	}
@@ -24,7 +24,7 @@ func TestLandAndReauthorizeResolveIdentifierOperands(t *testing.T) {
 		t.Fatalf("land refusal does not address the resolved assignment:\n%s", stdout.String())
 	}
 	var stderr bytes.Buffer
-	code = ReauthorizeCommand(root, []string{"--assignment", creation.Assignment.ID, "--request", "rotated-token", "--base", creation.Assignment.Start, "--source-tip", "HEAD", creation.Assignment.ID[:10]}, io.Discard, &stderr)
+	code = ReauthorizeCommand(root, Home(), []string{"--assignment", creation.Assignment.ID, "--request", "rotated-token", "--base", creation.Assignment.Start, "--source-tip", "HEAD", creation.Assignment.ID[:10]}, io.Discard, &stderr)
 	if code != 0 {
 		t.Fatalf("reauthorize via an id prefix exited %d: %s", code, stderr.String())
 	}

@@ -16,7 +16,7 @@ var listPathAction = regexp.MustCompile(`bench worktree path (\S+),inspect activ
 func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "advertised")
 	chdir(t, root)
-	listed, code := ListCommand(root, nil)
+	listed, code := ListCommand(root, Home(), nil)
 	if code != 0 {
 		t.Fatalf("list code=%d out=%q", code, listed)
 	}
@@ -28,7 +28,7 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 		t.Fatalf("path action addresses %q, want the id column %q", match[1], creation.Assignment.ID)
 	}
 	var stdout, stderr bytes.Buffer
-	if code := PathCommand(root, []string{match[1]}, &stdout, &stderr); code != 0 {
+	if code := PathCommand(root, Home(), []string{match[1]}, &stdout, &stderr); code != 0 {
 		t.Fatalf("advertised %q exited %d: %s", match[1], code, stderr.String())
 	}
 }
@@ -39,7 +39,7 @@ func TestPathResolvesTheLabelAndTheIdAlike(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "both")
 	for _, target := range []string{creation.Assignment.ID, creation.Assignment.Label} {
 		var byTarget, stderr bytes.Buffer
-		if code := PathCommand(root, []string{target}, &byTarget, &stderr); code != 0 {
+		if code := PathCommand(root, Home(), []string{target}, &byTarget, &stderr); code != 0 {
 			t.Fatalf("target %q exited %d: %s", target, code, stderr.String())
 		}
 		if byTarget.Len() == 0 {

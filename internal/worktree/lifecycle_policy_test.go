@@ -19,7 +19,7 @@ func TestReleaseDeadLeaseRemovesAndCompacts(t *testing.T) {
 	mustWrite(t, lease, []byte(deadPidLine(t)), 0o600)
 
 	var stdout bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", "landed-dead-lease-release", creation.Path}, &stdout, io.Discard)
+	code := ReleaseCommand(root, Home(), []string{"--request", "landed-dead-lease-release", creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "dead-lease release exit=%d stdout=%q", code, stdout.String())
 	_, statErr := os.Stat(creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "dead-lease worktree remains: %v", statErr)
@@ -46,7 +46,7 @@ func TestReleaseDeclaredBuildOutputRemoves(t *testing.T) {
 	mustWrite(t, filepath.Join(creation.Path, "dist", "bench"), []byte("binary\n"), 0o755)
 
 	var stdout bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", "landed-declared-output", creation.Path}, &stdout, io.Discard)
+	code := ReleaseCommand(root, Home(), []string{"--request", "landed-declared-output", creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "declared-output release exit=%d stdout=%q", code, stdout.String())
 	_, statErr := os.Stat(creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "declared-output worktree remains: %v", statErr)
@@ -81,7 +81,7 @@ func TestReleaseBuildOutputContainmentRetainsUnknownResidue(t *testing.T) {
 			tc.build(t, creation.Path)
 
 			var stderr bytes.Buffer
-			code := ReleaseCommand(root, []string{"--request", request, creation.Path}, io.Discard, &stderr)
+			code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, io.Discard, &stderr)
 			requireTest(t, code == 1 && strings.Contains(stderr.String(), "worktree retained (ignored)"),
 				"%s release exit=%d stderr=%q", tc.name, code, stderr.String())
 			_, statErr := os.Stat(creation.Path)
@@ -136,7 +136,7 @@ func TestBuildOutputDeclarationFailsClosed(t *testing.T) {
 			mustWrite(t, residual, []byte("output\n"), 0o600)
 
 			var stderr bytes.Buffer
-			code := ReleaseCommand(root, []string{"--request", request, creation.Path}, io.Discard, &stderr)
+			code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, io.Discard, &stderr)
 			requireTest(t, code == tc.wantCode, "%s release exit=%d stderr=%q", tc.name, code, stderr.String())
 			if tc.wantReason != "" {
 				requireTest(t, strings.Contains(stderr.String(), "worktree retained ("+tc.wantReason+")"),
@@ -171,7 +171,7 @@ func TestResumeReconcilesDeadLeaseAndPreservesSafetyBranches(t *testing.T) {
 
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	requireTest(t, code == 0 && stderr.String() == "", "resume exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	want := "bench resume: removed 1, swept refs 0; retained live-lease=1 unmerged=1; pruned branches 0; reconciled 0; failed 0; open assignments 2\n"
 	requireTest(t, stdout.String() == want, "resume summary=%q want=%q", stdout.String(), want)
@@ -201,7 +201,7 @@ func TestReleaseLiveLeaseRetains(t *testing.T) {
 	mustWrite(t, lease, []byte(fmt.Sprintf("%d 2026-07-15T00:00:00Z\n", os.Getpid())), 0o600)
 
 	var stderr bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", "landed-live-lease-release", creation.Path}, io.Discard, &stderr)
+	code := ReleaseCommand(root, Home(), []string{"--request", "landed-live-lease-release", creation.Path}, io.Discard, &stderr)
 	requireTest(t, code == 1, "live-lease release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (live-lease)"), "live-lease reason missing: %q", stderr.String())
 	_, statErr := os.Stat(creation.Path)
@@ -230,7 +230,7 @@ func assertReleaseLeaseRetainedAsUncertain(t *testing.T, request string, makeLea
 	makeLease(lease)
 
 	var stderr bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", "landed-" + request, creation.Path}, io.Discard, &stderr)
+	code := ReleaseCommand(root, Home(), []string{"--request", "landed-" + request, creation.Path}, io.Discard, &stderr)
 	requireTest(t, code == 1, "malformed-lease release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (uncertain)") && strings.Contains(stderr.String(), "lease state is unknown"),
 		"malformed-lease reason missing: %q", stderr.String())

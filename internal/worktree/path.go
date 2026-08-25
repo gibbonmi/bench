@@ -16,7 +16,7 @@ import (
 // PathCommand resolves one active Bench-owned assignment and prints its resolved
 // absolute path. A quoted `~` never expands in a shell, so the verb emits the form
 // every caller can paste; the path-taking verbs still accept the `~` form.
-func PathCommand(root string, args []string, stdout, stderr io.Writer) int {
+func PathCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 1 || strings.TrimSpace(args[0]) == "" {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreePath)
 		return 2

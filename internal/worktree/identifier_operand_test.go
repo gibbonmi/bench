@@ -25,7 +25,7 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 	}
 	for _, target := range targets {
 		var stdout, stderr bytes.Buffer
-		if code := PathCommand(root, []string{target}, &stdout, &stderr); code != 0 {
+		if code := PathCommand(root, Home(), []string{target}, &stdout, &stderr); code != 0 {
 			t.Fatalf("path %q exited %d: %s", target, code, stderr.String())
 		}
 		if strings.TrimSpace(stdout.String()) != creation.Path {
@@ -33,14 +33,14 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 		}
 	}
 	var planned, stderr bytes.Buffer
-	if code := CleanCommand(root, []string{creation.Assignment.ID[:10]}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(root, Home(), []string{creation.Assignment.ID[:10]}, &planned, &stderr); code != 0 {
 		t.Fatalf("clean by id prefix exited %d: %s", code, planned.String())
 	}
 	if !strings.Contains(planned.String(), creation.Path) {
 		t.Fatalf("clean by id prefix planned another target: %s", planned.String())
 	}
 	var released bytes.Buffer
-	if code := ReleaseCommand(root, []string{"--request", "landed-operand-forms", creation.Assignment.Label}, &released, &stderr); code != 0 {
+	if code := ReleaseCommand(root, Home(), []string{"--request", "landed-operand-forms", creation.Assignment.Label}, &released, &stderr); code != 0 {
 		t.Fatalf("release by label exited %d: %s", code, stderr.String())
 	}
 }
@@ -58,7 +58,7 @@ func TestPrefixOperandRefusals(t *testing.T) {
 		"too short": {"prefix-", "target is unassigned"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := PathCommand(root, []string{refusal.target}, &stdout, &stderr); code == 0 {
+		if code := PathCommand(root, Home(), []string{refusal.target}, &stdout, &stderr); code == 0 {
 			t.Fatalf("%s prefix %q resolved: %s", name, refusal.target, stdout.String())
 		}
 		if want := "bench worktree path: " + refusal.reason + "\n"; stderr.String() != want {
@@ -73,7 +73,7 @@ func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "fp-prefix")
 	chdir(t, root)
 	var planned, stderr bytes.Buffer
-	if code := CleanCommand(root, []string{creation.Path}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(root, Home(), []string{creation.Path}, &planned, &stderr); code != 0 {
 		t.Fatalf("plan exited %d: %s", code, planned.String())
 	}
 	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
@@ -85,12 +85,12 @@ func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
 		"uppercase prefix":       "ABCDEF01",
 	} {
 		var refused bytes.Buffer
-		if code := CleanCommand(root, []string{creation.Path, "--apply", bad}, &refused, &stderr); code == 0 || strings.Contains(refused.String(), ",removed,") {
+		if code := CleanCommand(root, Home(), []string{creation.Path, "--apply", bad}, &refused, &stderr); code == 0 || strings.Contains(refused.String(), ",removed,") {
 			t.Fatalf("%s %q was not refused: %s", name, bad, refused.String())
 		}
 	}
 	var applied bytes.Buffer
-	if code := CleanCommand(root, []string{creation.Path, "--apply", fingerprint[:12]}, &applied, &stderr); code != 0 {
+	if code := CleanCommand(root, Home(), []string{creation.Path, "--apply", fingerprint[:12]}, &applied, &stderr); code != 0 {
 		t.Fatalf("apply with a prefix exited %d: %s", code, applied.String())
 	}
 	if !strings.Contains(applied.String(), ",removed,") {
@@ -156,7 +156,7 @@ func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 			root, target, reason := refusalCase.setup(t)
 			chdir(t, root)
 			var stdout, stderr bytes.Buffer
-			if code := PathCommand(root, []string{target}, &stdout, &stderr); code != 1 {
+			if code := PathCommand(root, Home(), []string{target}, &stdout, &stderr); code != 1 {
 				t.Fatalf("path %q exited %d, want 1: %s", target, code, stderr.String())
 			}
 			if want := "bench worktree path: " + reason + "\n"; stderr.String() != want {
@@ -164,7 +164,7 @@ func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 			}
 			stdout.Reset()
 			stderr.Reset()
-			if code := ExecCommand(root, []string{target, "--", "true"}, nil, &stdout, &stderr); code != 1 {
+			if code := ExecCommand(root, Home(), []string{target, "--", "true"}, nil, &stdout, &stderr); code != 1 {
 				t.Fatalf("exec %q exited %d, want 1: %s", target, code, stderr.String())
 			}
 			if want := "bench worktree exec: " + reason + "\n"; stderr.String() != want {
@@ -182,11 +182,11 @@ func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
 	chdir(t, root)
 	target := creation.Assignment.Label
 	var stdout, pathErr, execErr bytes.Buffer
-	if code := PathCommand(root, []string{target}, &stdout, &pathErr); code != 1 {
+	if code := PathCommand(root, Home(), []string{target}, &stdout, &pathErr); code != 1 {
 		t.Fatalf("path exited %d: %s", code, pathErr.String())
 	}
 	stdout.Reset()
-	if code := ExecCommand(root, []string{target, "--", "true"}, nil, &stdout, &execErr); code != 1 {
+	if code := ExecCommand(root, Home(), []string{target, "--", "true"}, nil, &stdout, &execErr); code != 1 {
 		t.Fatalf("exec exited %d: %s", code, execErr.String())
 	}
 	pathTail, pathFound := strings.CutPrefix(pathErr.String(), "bench worktree path: ")

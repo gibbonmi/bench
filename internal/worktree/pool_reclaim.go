@@ -162,7 +162,7 @@ func fingerprintPoolReclaim(verdicts []poolKeyVerdict) string {
 // `--apply <fingerprint>` removes the ones that plan named. It runs inside a repository
 // like every other `bench worktree` subcommand, because the current repository's key is
 // the one key it may never name.
-func ReclaimCommand(root string, args []string, stdout, stderr io.Writer) int {
+func ReclaimCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	applying, fingerprint, code := parseReclaimArgs(args, stdout)
 	if code != 0 {
 		return code
@@ -171,7 +171,6 @@ func ReclaimCommand(root string, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, toon.NotInRepo())
 		return 1
 	}
-	home := benchHome()
 	plan, err := planPoolReclaim(root, home)
 	if err != nil {
 		fmt.Fprintln(stdout, toon.Errorf("cannot read the worktree pool", "make "+poolKeysDirAt(home)+" readable and retry"))

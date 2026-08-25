@@ -21,7 +21,7 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "dirty") || stderr.Len() != 0 {
 		t.Fatalf("destination refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
@@ -38,7 +38,7 @@ func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
 	mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
 	mustWrite(t, filepath.Join(root, "ignored", "residue"), []byte("residue\n"), 0o600)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs("refusal-ignored", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs("refusal-ignored", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "ignored/residue") || stderr.Len() != 0 {
 		t.Fatalf("ignored refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
@@ -62,7 +62,7 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 	}
 	t.Cleanup(func() { authorizeLandingSource = oldAuthorize })
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", landArgs("refusal-controls", base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, Home(), "", landArgs("refusal-controls", base, tip, creation.Path), &stdout, &stderr)
 	unsafe := strings.ContainsFunc(stdout.String(), func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
 	wantPathRow := `  "bad\\n\\u001b,comma"` + "\n"
 	if code != 1 || unsafe || !strings.Contains(stdout.String(), "refused{") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n"+wantPathRow) || strings.Count(stdout.String(), "\n") != 4 || stderr.Len() != 0 {
@@ -83,7 +83,7 @@ func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T
 	}
 
 	var stdout, stderr bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", request, creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, &stdout, &stderr)
 	out := stderr.String()
 	wantNext := "next=bench worktree release --request <request> '" + creation.Path + "'"
 	if code != 1 || stdout.Len() != 0 || !strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):") ||
@@ -109,7 +109,7 @@ func TestReleaseCommandRefusalPointsThroughAssignmentForControlBearingPath(t *te
 			wantNext := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree release --request <request> ."
 
 			var stdout, stderr bytes.Buffer
-			code := ReleaseCommand(root, []string{"--request", tc.request, creation.Path}, &stdout, &stderr)
+			code := ReleaseCommand(root, Home(), []string{"--request", tc.request, creation.Path}, &stdout, &stderr)
 			out := stderr.String()
 			unsafe := strings.ContainsFunc(out, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
 			if code != 1 || stdout.Len() != 0 || unsafe || strings.Count(out, "\n") != 1 || !strings.Contains(out, "; next="+wantNext+"\n") || strings.Contains(out, tc.request) {
@@ -128,7 +128,7 @@ func TestReleaseCommandRefusalHidesControlBearingRequestForSafePath(t *testing.T
 	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residue\n"), 0o644)
 	mustWrite(t, filepath.Join(creation.Path, "residue"), []byte("retained\n"), 0o600)
 	var stdout, stderr bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", request, creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, &stdout, &stderr)
 	out := stderr.String()
 	wantNext := "next=bench worktree release --request <request> '" + creation.Path + "'"
 	unsafe := strings.ContainsFunc(out, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
