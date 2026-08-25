@@ -47,6 +47,7 @@ func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
 }
 
 func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(t.TempDir(), "bench-home")
 	creation := mustCreate(t, root, home, "refusal-controls", "refusal")
@@ -58,13 +59,12 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	// The minimal fixture spec has no valid coverage map, so the source proof would add
 	// a second record; this test pins the destination record's shape alone.
-	oldAuthorize := authorizeLandingSource
-	authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
+	j := defaultJoins()
+	j.authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
 		return diff.SourceRange{Base: base, Tip: tip}, nil
 	}
-	t.Cleanup(func() { authorizeLandingSource = oldAuthorize })
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs("refusal-controls", base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, "", landArgs("refusal-controls", base, tip, creation.Path), &stdout, &stderr)
 	unsafe := strings.ContainsFunc(stdout.String(), func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
 	wantPathRow := `  "bad\\n\\u001b,comma"` + "\n"
 	if code != 1 || unsafe || !strings.Contains(stdout.String(), "refused{") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n"+wantPathRow) || strings.Count(stdout.String(), "\n") != 4 || stderr.Len() != 0 {
@@ -161,7 +161,7 @@ func TestLandingDestinationAllowsDeclaredAndRuntimeIgnoredOutput(t *testing.T) {
 			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare output")
 			mustMkdirAll(t, filepath.Dir(filepath.Join(root, tc.output)), 0o755)
 			mustWrite(t, filepath.Join(root, tc.output), []byte("output\n"), 0o755)
-			tip, branch, marker, fingerprint, err := landingDestination(root)
+			tip, branch, marker, fingerprint, err := landingDestination(defaultJoins(), root)
 			if err != nil || tip == "" || branch != "main" || marker != "" || fingerprint == "" {
 				t.Fatalf("destination %s = (%q, %q, %q, %q, %v)", tc.name, tip, branch, marker, fingerprint, err)
 			}

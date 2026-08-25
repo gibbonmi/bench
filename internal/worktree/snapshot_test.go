@@ -12,7 +12,7 @@ import (
 // LeaseFile, reset and cleaned.
 func mustAcquire(t *testing.T, root, home string) string {
 	t.Helper()
-	wt, err := acquireAt(root, "", "", home, currentTime())
+	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}

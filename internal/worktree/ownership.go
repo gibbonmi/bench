@@ -65,8 +65,6 @@ const (
 
 type Fault func(LifecycleStep) error
 
-var creationLockAttempt = func(string) {}
-
 // CleanupOptions carries the operator's invocation choices into every plan and the apply
 // that must reproduce it. DiscardBranch is an assertion, not a force: it supplies the
 // landedness proof git.LandedInDefault refuses to derive from an ambiguous shape. It
@@ -110,7 +108,7 @@ func relock(root string, assignment intent.Assignment, fault Fault) error {
 	}
 	return nil
 }
-func lockCreationRequest(root, digest string) (func(), error) {
+func lockCreationRequest(j joins, root, digest string) (func(), error) {
 	address, err := intent.Address(root)
 	if err != nil {
 		return nil, err
@@ -119,7 +117,7 @@ func lockCreationRequest(root, digest string) (func(), error) {
 	if err != nil {
 		return nil, fmt.Errorf("open creation request lock: %w", err)
 	}
-	creationLockAttempt(digest)
+	j.creationLockAttempt(digest)
 	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX); err != nil {
 		_ = file.Close()
 		return nil, fmt.Errorf("lock creation request: %w", err)
@@ -131,12 +129,12 @@ func lockCreationRequest(root, digest string) (func(), error) {
 // the boundary form of createAt for a caller in another package, and resolves the clock
 // and the Bench home at the effect boundary.
 func Create(root, request, label string, fault Fault, requestedStart ...string) (Creation, error) {
-	return createAt(root, Home(), request, label, fault, currentTime(), requestedStart...)
+	return createAt(defaultJoins(), root, Home(), request, label, fault, currentTime(), requestedStart...)
 }
 
 // createAt is Create with the creation instant and the Bench home resolved explicitly at
 // the caller's effect boundary.
-func createAt(root, home, request, label string, fault Fault, now time.Time, requestedStart ...string) (Creation, error) {
+func createAt(j joins, root, home, request, label string, fault Fault, now time.Time, requestedStart ...string) (Creation, error) {
 	if request == "" || label == "" {
 		return Creation{}, errors.New("worktree create requires request and label")
 	}
@@ -145,7 +143,7 @@ func createAt(root, home, request, label string, fault Fault, now time.Time, req
 		return Creation{}, err
 	}
 	digest := intent.RequestDigest(request)
-	release, err := lockCreationRequest(root, digest)
+	release, err := lockCreationRequest(j, root, digest)
 	if err != nil {
 		return Creation{}, err
 	}
@@ -322,7 +320,7 @@ func validateCreationBundle(root string, assignment intent.Assignment) error {
 
 const releaseOperation = "worktree-release"
 
-func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceipt, error) {
+func releaseAssignment(j joins, root, requestArg, targetArg string) (intent.CleanupReceipt, error) {
 	target, err := canonicalPath(targetArg)
 	if err != nil {
 		return intent.CleanupReceipt{}, err
@@ -412,10 +410,10 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 	}
 	var plan CleanupPlan
 	if resumeFingerprint == "" {
-		plan, err = applyAutomaticWithTerminal(root, target, nil, terminal)
+		plan, err = applyAutomaticWithTerminal(j, root, target, nil, terminal)
 	} else {
-		planner := func(path string) (CleanupPlan, error) { return PlanAutomatic(root, path) }
-		plan, err = applyCleanupTransaction(root, target, resumeFingerprint, planner, nil, terminal)
+		planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, currentTime()) }
+		plan, err = applyCleanupTransaction(j, root, target, resumeFingerprint, planner, nil, terminal)
 	}
 	if err != nil {
 		return intent.CleanupReceipt{}, err

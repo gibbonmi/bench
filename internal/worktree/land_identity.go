@@ -28,7 +28,7 @@ type landingSourceFact struct {
 	specMode    os.FileMode
 }
 
-func landingDestination(root string) (string, string, string, string, error) {
+func landingDestination(j joins, root string) (string, string, string, string, error) {
 	branch, ok := git.ResolvedDefault(root)
 	if !ok {
 		return "", "", "", "", errors.New("default branch is unresolved")
@@ -46,7 +46,7 @@ func landingDestination(root string) (string, string, string, string, error) {
 		}
 		return "", "", "", "", refusalError{refusal{detail: "landing destination is not clean", paths: paths}}
 	}
-	ignored, _, ignoredErr := inventoryIgnored(root, false)
+	ignored, _, ignoredErr := inventoryIgnored(j, root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
 	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinLandingAllowance(ignored, declared)) {
 		if ignoredErr == nil && declarationErr == nil {
@@ -80,7 +80,7 @@ func landingMarker(root, branch, destination string) (string, error) {
 	return marker, nil
 }
 
-func landingAssignment(root, path, request, base, requestedTip string) (intent.Assignment, error) {
+func landingAssignment(j joins, root, path, request, base, requestedTip string) (intent.Assignment, error) {
 	a, err := assignmentForRequest(root, request, assignmentRecoveryContext{
 		target: path,
 		base:   base,
@@ -98,7 +98,7 @@ func landingAssignment(root, path, request, base, requestedTip string) (intent.A
 	return a, nil
 }
 
-func landingSource(root string, a intent.Assignment, base, requestedTip, slug string) (landingSourceFact, error) {
+func landingSource(j joins, root string, a intent.Assignment, base, requestedTip, slug string) (landingSourceFact, error) {
 	branch, err := git.Output("-C", a.Worktree, "symbolic-ref", "--quiet", "HEAD")
 	if err != nil || branch != a.Branch {
 		return landingSourceFact{}, errors.New("assignment branch is not checked out")
@@ -131,7 +131,7 @@ func landingSource(root string, a intent.Assignment, base, requestedTip, slug st
 	if closeSlug != "" {
 		rangeSlug = ""
 	}
-	rangeFact, detail, err := landingSourceRange(a.Worktree, rangeSlug, base, head)
+	rangeFact, detail, err := landingSourceRange(j, a.Worktree, rangeSlug, base, head)
 	if err != nil {
 		return landingSourceFact{}, err
 	}
@@ -171,7 +171,7 @@ func landingSource(root string, a intent.Assignment, base, requestedTip, slug st
 // identity mismatch carries. A spec names an ownership fence, so its range comes from
 // the authorization owner. Without a spec there is no fence to authorize, so only the
 // range resolves; every other source proof is unchanged either way.
-func landingSourceRange(worktree, slug, base, head string) (diff.SourceRange, string, error) {
+func landingSourceRange(j joins, worktree, slug, base, head string) (diff.SourceRange, string, error) {
 	if slug == "" {
 		const detail = "reviewed source range is invalid"
 		resolved, kind, hint := diff.ResolveSourceRange(worktree, base, head)
@@ -181,7 +181,7 @@ func landingSourceRange(worktree, slug, base, head string) (diff.SourceRange, st
 		return resolved, detail, nil
 	}
 	const detail = "reviewed source range or ownership fence is invalid"
-	resolved, err := authorizeLandingSource(worktree, slug, base)
+	resolved, err := j.authorizeLandingSource(worktree, slug, base)
 	if err != nil {
 		return diff.SourceRange{}, detail, fmt.Errorf("%s: %s", detail, err)
 	}
@@ -214,14 +214,14 @@ func abbreviatedIdentity(value, full string) bool {
 	return strings.HasPrefix(strings.ToLower(full), strings.ToLower(value))
 }
 
-func reconcileLandingDestination(root, destination, published, destinationBase string) error {
-	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
+func reconcileLandingDestination(j joins, root, destination, published, destinationBase string) error {
+	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
 		return err
 	}
 	if err := exec.Command("git", "-C", root, "reset", "--merge", destination).Run(); err != nil {
 		return err
 	}
-	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
+	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
 		return err
 	}
 	return nil

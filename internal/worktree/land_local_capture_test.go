@@ -58,6 +58,7 @@ func TestLandCommandAllowsLocalCaptureInDestinationAndReleases(t *testing.T) {
 }
 
 func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
+	t.Parallel()
 	request := "local-capture-resume"
 	root, creation, _, _, _, home := specLessLandingFixture(t, request)
 	base, _ := addLocalCaptureIgnore(t, root, "")
@@ -65,19 +66,18 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	writeLocalCapture(t, root)
 
-	oldMarker := advanceLandingMarker
-	advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("interrupt") }
-	t.Cleanup(func() { advanceLandingMarker = oldMarker })
+	working := defaultJoins()
+	broken := working
+	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("interrupt") }
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
+	if code := landWith(broken, root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
 		t.Fatalf("interrupted land = (%d, %q, %q), want incomplete", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
-	advanceLandingMarker = oldMarker
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
 		t.Fatalf("resume with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}
 }

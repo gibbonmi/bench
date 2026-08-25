@@ -36,7 +36,7 @@ func insideLifecycleNamespace(ref string) bool {
 // dropped blind. Deletions are independent: a run killed partway leaves the refs it
 // already deleted deleted, and the rest exactly as they were. That is a state the next
 // run finishes rather than misreads.
-func sweepLifecycleRefs(root string) (int, error) {
+func sweepLifecycleRefs(j joins, root string) (int, error) {
 	args := append([]string{"-C", root, "for-each-ref", "--format=%(refname) %(objectname)"}, lifecycleRefNamespaces...)
 	listing, err := git.Output(args...)
 	if err != nil {
@@ -48,7 +48,7 @@ func sweepLifecycleRefs(root string) (int, error) {
 		if !ok || !insideLifecycleNamespace(ref) {
 			continue
 		}
-		if err := hit(cleanupTransactionBoundary, StepLifecycleSweep); err != nil {
+		if err := hit(j.cleanupBoundary, StepLifecycleSweep); err != nil {
 			return swept, err
 		}
 		if out, err := exec.Command("git", "-C", root, "update-ref", "-d", ref, oid).CombinedOutput(); err != nil {
@@ -91,8 +91,8 @@ func poolAssignment(a intent.Assignment, registered []Registered, now time.Time)
 // repository carrying only ledger debris is in, one the next run finishes from.
 // The instant is the caller's explicit boundary resolution: one instant for the whole
 // pass, so two records of the same age cannot straddle the staleness window and disagree.
-func reconcileLifecycleDebris(root string, registered []Registered, now time.Time) (int, int, error) {
-	swept, err := sweepLifecycleRefs(root)
+func reconcileLifecycleDebris(j joins, root string, registered []Registered, now time.Time) (int, int, error) {
+	swept, err := sweepLifecycleRefs(j, root)
 	if err != nil {
 		return swept, 0, err
 	}

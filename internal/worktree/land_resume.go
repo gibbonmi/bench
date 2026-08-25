@@ -21,6 +21,12 @@ import (
 // ResumeLandCommand finishes only a published landing's marker, destination checkout,
 // and release work. Its proofs keep a retry from becoming a second publication attempt.
 func ResumeLandCommand(root, home string, args []string, stdout, stderr io.Writer) int {
+	return resumeLandWith(defaultJoins(), root, home, args, stdout, stderr)
+}
+
+// resumeLandWith is ResumeLandCommand with the seam set resolved explicitly at the
+// caller's boundary.
+func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(resumeLandGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -37,12 +43,12 @@ func ResumeLandCommand(root, home string, args []string, stdout, stderr io.Write
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
-	published, sourceBase, destinationBase, tree, err := resumePublished(root, destination, parsed.Flags["--resume"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
+	published, sourceBase, destinationBase, tree, err := resumePublished(j, root, destination, parsed.Flags["--resume"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
 	if err != nil {
 		return landRefusalError(stdout, err)
 	}
 	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
-	assignment, active, err := resumeAssignment(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
+	assignment, active, err := resumeAssignment(j, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
 	if err != nil {
 		return landRefusalError(stdout, err)
 	}
@@ -54,24 +60,24 @@ func ResumeLandCommand(root, home string, args []string, stdout, stderr io.Write
 		}
 		assignmentID = receipt.Tracked
 	}
-	if err := resumeDestructiveDestinationState(root, destination, published, destinationBase); err != nil {
+	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
 		return landRefusal(stdout, err.Error())
 	}
 	switch landingpolicy.ResumeMarker(resumeMarkerFacts(root, destination, published, marker)) {
 	case landingpolicy.MarkerAdvance:
-		if err := advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
+		if err := j.advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
 			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker")
 		}
 	case landingpolicy.MarkerRefuse:
 		return landRefusal(stdout, landingpolicy.MarkerRefusalDetail)
 	}
-	if err := reconcileLanding(root, destination, published, destinationBase); err != nil {
+	if err := j.reconcileLanding(j, root, destination, published, destinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile")
 	}
 	if !active {
 		return landedComplete(stdout, result, false)
 	}
-	if releaseLandingAssignment(root, home, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
+	if j.releaseLandingAssignment(j, root, home, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release")
 	}
 	return landedComplete(stdout, result, true)
@@ -112,8 +118,8 @@ func resumeLandingDestination(root string) (string, string, string, error) {
 	return destination, branch, marker, nil
 }
 
-func resumeDestructiveDestinationState(root, destination, published, destinationBase string) error {
-	if detail := landingpolicy.Residue(destinationResidueFacts(root, destination, published, destinationBase)); detail != "" {
+func resumeDestructiveDestinationState(j joins, root, destination, published, destinationBase string) error {
+	if detail := landingpolicy.Residue(destinationResidueFacts(j, root, destination, published, destinationBase)); detail != "" {
 		return errors.New(detail)
 	}
 	return nil
@@ -122,10 +128,10 @@ func resumeDestructiveDestinationState(root, destination, published, destination
 // destinationResidueFacts translates the destination's Git and filesystem state
 // into the typed residue facts once at the boundary. The expensive allowance
 // and staged-content facts bind as lazy suppliers the policy consults on demand.
-func destinationResidueFacts(root, destination, published, destinationBase string) landingpolicy.ResidueFacts {
+func destinationResidueFacts(j joins, root, destination, published, destinationBase string) landingpolicy.ResidueFacts {
 	facts := landingpolicy.ResidueFacts{
 		DestinationAtPublished: destination == published,
-		IgnoredDeclared:        func() bool { return ignoredResidueDeclared(root) },
+		IgnoredDeclared:        func() bool { return ignoredResidueDeclared(j, root) },
 		StagedMatchesPublished: func() bool { return git.OK("-C", root, "diff", "--cached", "--quiet", destinationBase, "--") },
 	}
 	nested, err := classifyNestedState(root)
@@ -150,8 +156,8 @@ func destinationResidueFacts(root, destination, published, destinationBase strin
 // entirely inside its declared build outputs. Resume applies the same allowance the
 // first run did. A landing that validly proceeded with declared outputs and then
 // failed at release can still be completed, rather than being permanently stuck.
-func ignoredResidueDeclared(root string) bool {
-	ignored, _, ignoredErr := inventoryIgnored(root, false)
+func ignoredResidueDeclared(j joins, root string) bool {
+	ignored, _, ignoredErr := inventoryIgnored(j, root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
 	if ignoredErr != nil || declarationErr != nil {
 		return false
@@ -159,7 +165,7 @@ func ignoredResidueDeclared(root string) bool {
 	return ignoredWithinLandingAllowance(ignored, declared)
 }
 
-func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assignment, bool, error) {
+func resumeAssignment(j joins, root, path, request, tip, base, slug string) (intent.Assignment, bool, error) {
 	a, found, err := intent.FindAssignmentForRequest(root, request)
 	if err != nil {
 		return intent.Assignment{}, false, err
@@ -181,13 +187,13 @@ func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assig
 	if err := identityBundleRefusal(root, path, a, resumeActiveState); err != nil {
 		return intent.Assignment{}, false, err
 	}
-	if _, err := landingSource(root, a, base, tip, slug); err != nil {
+	if _, err := landingSource(j, root, a, base, tip, slug); err != nil {
 		return intent.Assignment{}, false, err
 	}
 	return a, true, nil
 }
 
-func resumePublished(root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {
+func resumePublished(j joins, root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {
 	facts, sourceBase, destinationBase := publicationFacts(root, destination, value, base, source, slug)
 	if refusal := landingpolicy.Publication(facts); refusal.Detail != "" {
 		if refusal.Observed != "" || refusal.Wanted != "" {

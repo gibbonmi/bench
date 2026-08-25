@@ -277,7 +277,13 @@ func cleanInvocationError(stdout io.Writer) int {
 	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run " + usage.WorktreeClean})
 	return 2
 }
-func CleanCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
+func CleanCommand(root, home string, args []string, stdout, stderr io.Writer) int {
+	return cleanCommandWith(defaultJoins(), root, home, args, stdout, stderr)
+}
+
+// cleanCommandWith is CleanCommand with the seam set resolved explicitly at the caller's
+// boundary.
+func cleanCommandWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
 	landed := false
@@ -327,7 +333,7 @@ func CleanCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 		target = resolveVerbOperand(root, target)
 	}
 	if landed {
-		set, planErr := planLandedSet(root, options)
+		set, planErr := planLandedSet(j, root, options)
 		if planErr != nil {
 			_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: fingerprint, Reason: planErr.Error()})
 			return 1
@@ -340,7 +346,7 @@ func CleanCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 		if fingerprint != "" {
-			plans, applyErr := applyLandedSet(root, set, options)
+			plans, applyErr := applyLandedSet(j, root, set, options)
 			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1
@@ -356,9 +362,9 @@ func CleanCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 		}
 		return 0
 	}
-	plan, err := PlanExplicitWithOptions(root, target, options)
+	plan, err := planExplicitWith(j, root, target, options)
 	if err == nil && fingerprint != "" {
-		plan, err = ApplyExplicitWithOptions(root, target, fingerprint, options)
+		plan, err = applyExplicitWith(j, root, target, fingerprint, options)
 	}
 	if errors.Is(err, errStaleFingerprint) {
 		_ = renderCleanup(stdout, plan)
@@ -392,12 +398,18 @@ func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupR
 	}
 	return renderReleaseReceipt(stdout, receipt)
 }
-func ReleaseCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
+func ReleaseCommand(root, home string, args []string, stdout, stderr io.Writer) int {
+	return releaseCommandWith(defaultJoins(), root, home, args, stdout, stderr)
+}
+
+// releaseCommandWith is ReleaseCommand with the seam set resolved explicitly at the
+// caller's boundary.
+func releaseCommandWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 3 || args[0] != "--request" || args[1] == "" {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreeRelease)
 		return 2
 	}
-	receipt, err := releaseAssignment(root, args[1], resolveVerbOperand(root, args[2]))
+	receipt, err := releaseAssignment(j, root, args[1], resolveVerbOperand(root, args[2]))
 	if err == nil {
 		return finishReleaseReceipt(root, stdout, receipt)
 	}
@@ -578,7 +590,7 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 	}
 	_, startRef := refreshop.Consume(root, args, stdout)
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
-	creation, err := createAt(root, home, request, label, nil, currentTime(), startRef)
+	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), startRef)
 	if err != nil {
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1
@@ -608,7 +620,7 @@ func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	creation, err := createAt(root, home, request, objective, nil, currentTime(), startRef)
+	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), startRef)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1

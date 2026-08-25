@@ -344,17 +344,17 @@ func anchorDetached(root string, plan CleanupPlan) error {
 	}
 	return nil
 }
-func discardIgnored(plan CleanupPlan) error {
-	current, _, err := inventoryIgnored(plan.Target, false)
+func discardIgnored(j joins, plan CleanupPlan) error {
+	current, _, err := inventoryIgnored(j, plan.Target, false)
 	if err != nil || current.Digest != plan.Ignored.Digest || current.Count != plan.Ignored.Count || current.Bytes != plan.Ignored.Bytes {
 		return errStaleFingerprint
 	}
 	for _, name := range current.Paths {
 		full := filepath.Join(plan.Target, filepath.Clean(filepath.FromSlash(name)))
-		if _, err := ignoredLstat(full); err != nil {
+		if _, err := j.ignoredLstat(full); err != nil {
 			return errStaleFingerprint
 		}
-		warnBeforeRemovingLiveBinary(plan.Target, full)
+		warnBeforeRemovingLiveBinary(j, plan.Target, full)
 		if err := os.Remove(full); err != nil {
 			return fmt.Errorf("discard ignored path: %w", err)
 		}

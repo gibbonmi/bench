@@ -152,19 +152,19 @@ func writeAssignmentLedger(t *testing.T, root string, assignment intent.Assignme
 	mustWrite(t, path, append(body, '\n'), 0o600)
 }
 func TestConcurrentCreateSerializesByRequest(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
 	attempted, registered, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
-	oldAttempt := creationLockAttempt
-	creationLockAttempt = func(request string) { attempted <- request }
-	defer func() { creationLockAttempt = oldAttempt }()
+	j := defaultJoins()
+	j.creationLockAttempt = func(request string) { attempted <- request }
 	type result struct {
 		creation Creation
 		err      error
 	}
 	results := make(chan result, 2)
 	go func() {
-		created, err := createAt(root, home, "same-request", "same label", func(step LifecycleStep) error {
+		created, err := createAt(j, root, home, "same-request", "same label", func(step LifecycleStep) error {
 			if step == StepRegistration {
 				close(registered)
 				<-proceed
@@ -176,7 +176,7 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	<-attempted
 	<-registered
 	go func() {
-		created, err := createAt(root, home, "same-request", "same label", nil, currentTime())
+		created, err := createAt(j, root, home, "same-request", "same label", nil, currentTime())
 		results <- result{created, err}
 	}()
 	<-attempted
@@ -184,7 +184,7 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	first, second := <-results, <-results
 	requireTest(t, first.err == nil && second.err == nil && first.creation.Path == second.creation.Path && first.creation.Assignment.ID == second.creation.Assignment.ID,
 		"concurrent create = %#v/%v and %#v/%v", first.creation, first.err, second.creation, second.err)
-	_, err := createAt(root, home, "same-request", "changed label", nil, currentTime())
+	_, err := createAt(j, root, home, "same-request", "changed label", nil, currentTime())
 	requireTest(t, err != nil, "changed-label replay did not conflict")
 	assignments, err := intent.Assignments(root)
 	requireTest(t, err == nil && len(assignments) == 1 && strings.Count(gitOutput(t, root, "worktree", "list", "--porcelain"), "worktree ") == 2,
@@ -194,7 +194,7 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 		request := request
 		go func() {
 			<-start
-			created, err := createAt(root, home, request, request, nil, currentTime())
+			created, err := createAt(j, root, home, request, request, nil, currentTime())
 			results <- result{created, err}
 		}()
 	}
@@ -238,6 +238,7 @@ exec "$REAL_GIT" "$@"
 	requireTest(t, err == nil && replay.Action == ActionRemoved, "SIGINT replay = %#v, %v", replay, err)
 }
 func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name                               string
 		step                               LifecycleStep
@@ -253,7 +254,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 			root := newWorktreeRepo(t)
 			home := filepath.Join(root, ".bench-home")
 			fault := errors.New("fault after " + string(tc.step))
-			creation, err := createAt(root, home, "fault-"+tc.name, "fault creation", func(got LifecycleStep) error {
+			creation, err := createAt(defaultJoins(), root, home, "fault-"+tc.name, "fault creation", func(got LifecycleStep) error {
 				if got == tc.step {
 					return fault
 				}
@@ -326,10 +327,9 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 			plan, err := PlanExplicit(root, creation.Path)
 			mustNoError(t, err)
 			fault := errors.New("interrupt at " + string(step))
-			old := cleanupTransactionBoundary
-			cleanupTransactionBoundary = failLifecycleStep(step, fault)
-			_, err = ApplyExplicit(root, creation.Path, plan.Fingerprint)
-			cleanupTransactionBoundary = old
+			faulted := defaultJoins()
+			faulted.cleanupBoundary = failLifecycleStep(step, fault)
+			_, err = applyExplicitWith(faulted, root, creation.Path, plan.Fingerprint, CleanupOptions{})
 			requireTest(t, errors.Is(err, fault), "first apply error = %v, want %v", err, fault)
 			if step == StepRecoveryRef {
 				registration := gitOutput(t, root, "worktree", "list", "--porcelain")

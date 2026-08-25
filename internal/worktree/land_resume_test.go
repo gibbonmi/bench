@@ -174,21 +174,23 @@ func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
 }
 
 func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T) {
+	t.Parallel()
 	request := "resume-reconcile"
 	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
-	oldReconcile := reconcileLanding
-	reconcileLanding = func(string, string, string, string) error { return errors.New("injected reconciliation interruption") }
-	t.Cleanup(func() { reconcileLanding = oldReconcile })
+	working := defaultJoins()
+	broken := working
+	broken.reconcileLanding = func(joins, string, string, string, string) error {
+		return errors.New("injected reconciliation interruption")
+	}
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
+	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
-	reconcileLanding = oldReconcile
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("resume reconciliation = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "HEAD"); got != published {
@@ -205,22 +207,21 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 			request := "resume-spec-form-" + strings.ReplaceAll(specArg, "/", "-")
 			root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 			chdir(t, root)
-			oldMarker := advanceLandingMarker
-			advanceLandingMarker = func(context.Context, string, string, string, string) error {
+			working := defaultJoins()
+			broken := working
+			broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 				return errors.New("injected marker interruption")
 			}
-			t.Cleanup(func() { advanceLandingMarker = oldMarker })
 
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+			if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			published := gitOutput(t, root, "rev-parse", "main")
-			advanceLandingMarker = oldMarker
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", specArg, creation.Path}
-			if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 				t.Fatalf("resume with spec %q = (%d, %q, %q)", specArg, code, stdout.String(), stderr.String())
 			}
 			if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
@@ -231,23 +232,23 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 }
 
 func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
+	t.Parallel()
 	request := "resume-marker"
 	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
-	oldMarker := advanceLandingMarker
-	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+	working := defaultJoins()
+	broken := working
+	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
-	advanceLandingMarker = oldMarker
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("resume marker = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {

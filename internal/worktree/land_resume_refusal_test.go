@@ -133,6 +133,7 @@ func TestResumeLandCommandRefusesNonAncestorReviewBaseWithoutMutation(t *testing
 }
 
 func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		marker func(*testing.T, string, string, string)
@@ -144,11 +145,11 @@ func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *te
 		t.Run(tc.name, func(t *testing.T) {
 			request := "resume-marker-" + tc.name
 			root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
-			oldRelease := releaseLandingAssignment
-			releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 1 }
-			t.Cleanup(func() { releaseLandingAssignment = oldRelease })
+			working := defaultJoins()
+			broken := working
+			broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
+			if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
@@ -157,7 +158,7 @@ func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *te
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", gitOutput(t, root, "rev-parse", "main~1"), "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=project-green marker") || stderr.Len() != 0 {
+			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=project-green marker") || stderr.Len() != 0 {
 				t.Fatalf("marker refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			if got := gitOutput(t, root, "rev-parse", "main"); got != destination {

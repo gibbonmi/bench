@@ -106,8 +106,10 @@ func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
 }
 
 func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
+	t.Parallel()
 	for _, automatic := range []bool{false, true} {
 		t.Run(fmt.Sprintf("automatic=%t", automatic), func(t *testing.T) {
+			t.Parallel()
 			root, creation, _ := newOwnedAssignment(t, fmt.Sprintf("concurrent-%t", automatic))
 			// The two planners differ on dirt: only the explicit one preserves it. Each
 			// side of this race is driven with the dirtiest tree its planner still
@@ -127,25 +129,24 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 			}
 			requireTest(t, err == nil && plan.Action == wantAction, "plan = %#v, %v; want %q", plan, err, wantAction)
 			attempted, locked, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
-			oldAttempt, oldBoundary := cleanupLockAttempt, cleanupTransactionBoundary
-			cleanupLockAttempt = func(target string) { attempted <- target }
+			j := defaultJoins()
+			j.cleanupLockAttempt = func(target string) { attempted <- target }
 			var once sync.Once
-			cleanupTransactionBoundary = func(step LifecycleStep) error {
+			j.cleanupBoundary = func(step LifecycleStep) error {
 				if step == StepApplyLocked {
 					once.Do(func() { close(locked); <-proceed })
 				}
 				return nil
 			}
-			defer func() { cleanupLockAttempt, cleanupTransactionBoundary = oldAttempt, oldBoundary }()
 			type outcome struct {
 				plan CleanupPlan
 				err  error
 			}
 			results := make(chan outcome, 2)
 			apply := func() {
-				got, applyErr := ApplyExplicit(root, creation.Path, plan.Fingerprint)
+				got, applyErr := applyExplicitWith(j, root, creation.Path, plan.Fingerprint, CleanupOptions{})
 				if automatic {
-					got, applyErr = ApplyAutomatic(root, creation.Path, nil)
+					got, applyErr = applyAutomaticWithTerminal(j, root, creation.Path, nil, nil)
 				}
 				results <- outcome{got, applyErr}
 			}
@@ -166,7 +167,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 				"transaction refs=%#v receipts=%#v error=%v", refs, ledger.CleanupReceipts, err)
 			if !automatic {
 				mustNoError(t, intent.DeleteAssignment(root, creation.Assignment.ID))
-				replay, err := ApplyExplicit(root, creation.Path, plan.Fingerprint)
+				replay, err := applyExplicitWith(j, root, creation.Path, plan.Fingerprint, CleanupOptions{})
 				requireTest(t, err == nil && replay.Action == ActionRemoved, "compacted replay = %#v, %v", replay, err)
 			}
 		})
@@ -175,16 +176,15 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		orderRoot, ordered, home := newOwnedAssignment(t, "release-receipt-order")
 		tip := gitOutput(t, orderRoot, "rev-parse", ordered.Assignment.Branch)
 		stop := errors.New("stop after terminal release receipt")
-		oldOrderBoundary := cleanupTransactionBoundary
-		cleanupTransactionBoundary = func(step LifecycleStep) error {
+		faulted := defaultJoins()
+		faulted.cleanupBoundary = func(step LifecycleStep) error {
 			if step == StepTerminalReceipt {
 				return stop
 			}
 			return nil
 		}
-		code := ReleaseCommand(orderRoot, home, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
+		code := releaseCommandWith(faulted, orderRoot, home, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
 		requireTest(t, code != 0, "terminal receipt fault unexpectedly succeeded")
-		cleanupTransactionBoundary = oldOrderBoundary
 		repo, _, _ := cleanupIdentity(orderRoot, ordered.Path)
 		receipt, found, err := intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, intent.RequestDigest("landed-release-receipt-order"))
 		requireTest(t, err == nil && found && receipt.Branch == ordered.Assignment.Branch && receipt.BranchOID == tip, "terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
@@ -196,16 +196,15 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		requireTest(t, err == nil && found && receipt.Branch == ordered.Assignment.Branch && receipt.BranchOID == tip, "replayed terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
 		root, creation, home := newOwnedAssignment(t, "concurrent-release")
 		attempted, locked, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
-		oldAttempt, oldBoundary := cleanupLockAttempt, cleanupTransactionBoundary
-		cleanupLockAttempt = func(target string) { attempted <- target }
+		j := defaultJoins()
+		j.cleanupLockAttempt = func(target string) { attempted <- target }
 		var once sync.Once
-		cleanupTransactionBoundary = func(step LifecycleStep) error {
+		j.cleanupBoundary = func(step LifecycleStep) error {
 			if step == StepApplyLocked {
 				once.Do(func() { close(locked); <-proceed })
 			}
 			return nil
 		}
-		defer func() { cleanupLockAttempt, cleanupTransactionBoundary = oldAttempt, oldBoundary }()
 		type outcome struct {
 			code           int
 			stdout, stderr string
@@ -213,7 +212,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		results := make(chan outcome, 2)
 		apply := func() {
 			var stdout, stderr bytes.Buffer
-			code := ReleaseCommand(root, home, []string{"--request", "landed-concurrent-release", creation.Path}, &stdout, &stderr)
+			code := releaseCommandWith(j, root, home, []string{"--request", "landed-concurrent-release", creation.Path}, &stdout, &stderr)
 			results <- outcome{code, stdout.String(), stderr.String()}
 		}
 		go apply()
@@ -244,19 +243,19 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 // says retain. Execution must honor the later, authoritative verdict rather than
 // the earlier one that let it through the fast path.
 func TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck(t *testing.T) {
+	t.Parallel()
 	root, creation, _ := newPendingAssignment(t, "lock-scoped-replan")
 	requirePlanAction(t, root, creation.Path, ActionRemove)
-	oldBoundary := cleanupTransactionBoundary
+	j := defaultJoins()
 	var raced bool
-	cleanupTransactionBoundary = func(step LifecycleStep) error {
+	j.cleanupBoundary = func(step LifecycleStep) error {
 		if step == StepApplyLocked && !raced {
 			raced = true
 			mustWrite(t, filepath.Join(creation.Path, "raced.txt"), []byte("raced\n"), 0o644)
 		}
 		return nil
 	}
-	defer func() { cleanupTransactionBoundary = oldBoundary }()
-	plan, err := ApplyAutomatic(root, creation.Path, nil)
+	plan, err := applyAutomaticWithTerminal(j, root, creation.Path, nil, nil)
 	requireTest(t, err == nil && plan.Action == ActionRetain,
 		"raced apply = %#v, %v; want the lock-scoped replan's retain honored", plan, err)
 	requireTest(t, raced, "boundary seam never fired; race was not exercised")
@@ -453,7 +452,7 @@ func assignmentString(a intent.Assignment) string { return fmt.Sprintf("%s/%s", 
 // home is explicit, so a parallel test keeps its pool private to itself.
 func mustCreate(t *testing.T, root, home, request, label string) Creation {
 	t.Helper()
-	creation, err := createAt(root, home, request, label, nil, currentTime())
+	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime())
 	mustNoError(t, err)
 	return creation
 }

@@ -77,23 +77,23 @@ func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
 // Edge under WL8: a --resume carrying the tickets-only slug authenticates the folder's
 // absence from the published commit, never a spec.md transition the first run never made.
 func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.T) {
+	t.Parallel()
 	request := "tickets-only-resume"
 	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
-	oldMarker := advanceLandingMarker
-	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+	working := defaultJoins()
+	broken := working
+	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := landWith(broken, root, home, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted tickets-only landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
-	advanceLandingMarker = oldMarker
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "t", creation.Path}
-	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("tickets-only resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {

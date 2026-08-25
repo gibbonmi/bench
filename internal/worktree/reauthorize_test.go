@@ -168,50 +168,50 @@ func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T
 }
 
 func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name    string
-		install func(*testing.T, Creation)
+		install func(joins, Creation) joins
 	}{
 		{
 			name: "unlock failure",
-			install: func(t *testing.T, _ Creation) {
-				old := reauthorizeUnlock
-				reauthorizeUnlock = func(string, string) error { return errors.New("injected unlock failure") }
-				t.Cleanup(func() { reauthorizeUnlock = old })
+			install: func(j joins, _ Creation) joins {
+				j.reauthorizeUnlock = func(string, string) error { return errors.New("injected unlock failure") }
+				return j
 			},
 		},
 		{
 			name: "relock failure",
-			install: func(t *testing.T, creation Creation) {
-				old := reauthorizeLock
+			install: func(j joins, creation Creation) joins {
+				old := j.reauthorizeLock
 				next := creation.Assignment
 				next.Request = intent.RequestDigest("replacement-request")
-				reauthorizeLock = func(root, path, reason string) error {
+				j.reauthorizeLock = func(root, path, reason string) error {
 					if reason == lockReason(next) {
 						return errors.New("injected relock failure")
 					}
 					return old(root, path, reason)
 				}
-				t.Cleanup(func() { reauthorizeLock = old })
+				return j
 			},
 		},
 		{
 			name: "expected-old loss",
-			install: func(t *testing.T, _ Creation) {
-				old := reauthorizeBeforeCAS
-				reauthorizeBeforeCAS = func(a *intent.Assignment) { a.Request = intent.RequestDigest("concurrent-winner") }
-				t.Cleanup(func() { reauthorizeBeforeCAS = old })
+			install: func(j joins, _ Creation) joins {
+				j.reauthorizeBeforeCAS = func(a *intent.Assignment) { a.Request = intent.RequestDigest("concurrent-winner") }
+				return j
 			},
 		},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 			root, creation, base, tip, home := reauthorizeFixture(t)
 			before := reauthorizeEvidence(t, root, creation.Path)
-			testCase.install(t, creation)
+			j := testCase.install(defaultJoins(), creation)
 			var stdout, stderr bytes.Buffer
 			args := []string{"--assignment", creation.Assignment.ID, "--request", "replacement-request", "--base", base, "--source-tip", tip, creation.Path}
-			if code := ReauthorizeCommand(root, home, args, &stdout, &stderr); code != 1 {
+			if code := reauthorizeWith(j, root, home, args, &stdout, &stderr); code != 1 {
 				t.Fatalf("%s exit = %d, want 1; stdout=%q stderr=%q", testCase.name, code, stdout.String(), stderr.String())
 			}
 			if got := reauthorizeEvidence(t, root, creation.Path); got != before {

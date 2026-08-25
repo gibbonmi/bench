@@ -7,11 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -47,17 +50,66 @@ var resumeLandGrammar = usage.Grammar{
 	},
 }
 
-var landReviewed = func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
-	return landing.New().LandReviewed(ctx, request)
+// joins is this package's injectable seam set. A verb resolves one value at its boundary
+// with defaultJoins and passes it down; nothing below the boundary reads a package
+// variable. One value carries every family because the families travel together: a
+// landing releases its assignment, a release cleans the worktree, and that cleanup reads
+// the ignored inventory and the live-binary identity. A test builds the value, replaces
+// one field, and calls the internal form, so two tests never share one stub point.
+//
+// A field whose default has to reach another seam takes the value as its first argument.
+// The default then reads the caller's joins rather than a captured copy.
+type joins struct {
+	landReviewed             func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error)
+	advanceLandingMarker     func(context.Context, string, string, string, string) error
+	reconcileLanding         func(joins, string, string, string, string) error
+	releaseLandingAssignment func(joins, string, string, []string, io.Writer, io.Writer) int
+	authorizeLandingSource   func(string, string, string) (diff.SourceRange, error)
+	// cleanupBoundary is the deterministic transaction fault seam. A nil value carries no
+	// fault, exactly as hit reads it, so it is also the default.
+	cleanupBoundary      Fault
+	cleanupLockAttempt   func(string)
+	creationLockAttempt  func(string)
+	claimTakeoverGap     func(string)
+	claimStealGap        func(string)
+	restoreClean         func(string)
+	chmodPool            func(string, os.FileMode) error
+	ignoredLstat         func(string) (os.FileInfo, error)
+	resolveRunningBinary func() (string, error)
+	liveBinaryWarnings   io.Writer
+	// planLandedExplicit exposes the target-path boundary so a hostile-path test can stand
+	// in for the planner without the fixture the real one needs.
+	planLandedExplicit   func(joins, string, string, CleanupOptions) (CleanupPlan, error)
+	reauthorizeUnlock    func(string, string) error
+	reauthorizeLock      func(string, string, string) error
+	reauthorizeBeforeCAS func(*intent.Assignment)
 }
 
-var advanceLandingMarker = authorization.AdvanceMarker
-
-var reconcileLanding = reconcileLandingDestination
-
-var releaseLandingAssignment = ReleaseCommand
-
-var authorizeLandingSource = preflight.AuthorizeReviewedSource
+// defaultJoins names the real function behind every seam. It is the one place a default
+// lives, so a verb's boundary and a test's starting value cannot disagree.
+func defaultJoins() joins {
+	return joins{
+		landReviewed: func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
+			return landing.New().LandReviewed(ctx, request)
+		},
+		advanceLandingMarker:     authorization.AdvanceMarker,
+		reconcileLanding:         reconcileLandingDestination,
+		releaseLandingAssignment: releaseCommandWith,
+		authorizeLandingSource:   preflight.AuthorizeReviewedSource,
+		cleanupLockAttempt:       func(string) {},
+		creationLockAttempt:      func(string) {},
+		claimTakeoverGap:         func(string) {},
+		claimStealGap:            func(string) {},
+		restoreClean:             restoreCleanCheckout,
+		chmodPool:                os.Chmod,
+		ignoredLstat:             os.Lstat,
+		resolveRunningBinary:     os.Executable,
+		liveBinaryWarnings:       os.Stderr,
+		planLandedExplicit:       planExplicitWith,
+		reauthorizeUnlock:        unlockWorktree,
+		reauthorizeLock:          lockWorktree,
+	}
+}
 
 // reviewedRangeDetail names the refusal a `--base` outside the assignment's reviewed
 // range carries.
@@ -72,9 +124,14 @@ const rebuiltLandingEnv = "BENCH_LANDING_REBUILT"
 // invoked process is the one promotion owner for the complete landing: it never
 // consults, rebuilds, or re-executes a repository executable, so candidate landing
 // code cannot run during its own promotion.
-func LandCommand(root, home, _ string, args []string, stdout, stderr io.Writer) int {
+func LandCommand(root, home, executable string, args []string, stdout, stderr io.Writer) int {
+	return landWith(defaultJoins(), root, home, executable, args, stdout, stderr)
+}
+
+// landWith is LandCommand with the seam set resolved explicitly at the caller's boundary.
+func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Writer) int {
 	if hasResumeFlag(args) {
-		return ResumeLandCommand(root, home, args, stdout, stderr)
+		return resumeLandWith(j, root, home, args, stdout, stderr)
 	}
 	parsed, line, code := usage.Parse(landGrammar, args)
 	if line != "" {
@@ -91,15 +148,15 @@ func LandCommand(root, home, _ string, args []string, stdout, stderr io.Writer) 
 	// names every refusal the caller must clear. The destination proofs and the
 	// assignment proofs are independent; the source proofs need the assignment.
 	var refusals []error
-	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(root)
+	destination, branch, priorMarker, destinationFingerprint, err := landingDestination(j, root)
 	if err != nil {
 		refusals = append(refusals, err)
 	}
 	var source landingSourceFact
-	assignment, err := landingAssignment(root, path, parsed.Flags["--request"], base, tip)
+	assignment, err := landingAssignment(j, root, path, parsed.Flags["--request"], base, tip)
 	if err != nil {
 		refusals = append(refusals, err)
-	} else if source, err = landingSource(root, assignment, base, tip, parsed.Flags["--spec"]); err != nil {
+	} else if source, err = landingSource(j, root, assignment, base, tip, parsed.Flags["--spec"]); err != nil {
 		refusals = append(refusals, err)
 	} else if !git.OK("-C", root, "merge-base", "--is-ancestor", assignment.Start, source.base) {
 		// The review base binds to the assignment's recorded start or to a descendant
@@ -123,7 +180,7 @@ func LandCommand(root, home, _ string, args []string, stdout, stderr io.Writer) 
 	if notice := brokerChangeNotice(assignment.Worktree, source.base, source.tip); notice != "" {
 		fmt.Fprintln(stderr, notice)
 	}
-	result, err := landReviewed(context.Background(), landing.ReviewedRequest{
+	result, err := j.landReviewed(context.Background(), landing.ReviewedRequest{
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
 		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
@@ -143,14 +200,14 @@ func LandCommand(root, home, _ string, args []string, stdout, stderr io.Writer) 
 	}
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
-	if err := advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
+	if err := j.advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker")
 	}
-	if err := reconcileLanding(root, result.Commit, result.Commit, result.DestinationBase); err != nil {
+	if err := j.reconcileLanding(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile")
 	}
 	var releaseDiagnostic bytes.Buffer
-	if release := releaseLandingAssignment(root, home, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
+	if release := j.releaseLandingAssignment(j, root, home, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
 		if releaseDiagnostic.Len() > 0 {
 			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
 		}

@@ -78,6 +78,7 @@ func TestCleanLandedTabPathRendersOneRow(t *testing.T) {
 }
 
 func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name, shape string
 		make        func(*testing.T, string)
@@ -109,13 +110,12 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			previousPlanner := planLandedExplicitWithOptions
+			j := defaultJoins()
 			plannerCalls := 0
-			planLandedExplicitWithOptions = func(root, path string, options CleanupOptions) (CleanupPlan, error) {
+			j.planLandedExplicit = func(inner joins, root, path string, options CleanupOptions) (CleanupPlan, error) {
 				plannerCalls++
-				return previousPlanner(root, path, options)
+				return planExplicitWith(inner, root, path, options)
 			}
-			t.Cleanup(func() { planLandedExplicitWithOptions = previousPlanner })
 			root := newWorktreeRepo(t)
 			home := filepath.Join(root, ".bench-home")
 			creation := mustCreate(t, root, home, "landed-special-"+strings.ReplaceAll(tc.name, " ", "-"), tc.name)
@@ -125,12 +125,12 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			}
 			tc.make(t, creation.Path)
 
-			stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
+			stdout, stderr, code := runCleanLandedWith(t, j, root, home, "--landed")
 			if code != 0 || stderr != "" || !strings.Contains(stdout, ",retain,") || !strings.Contains(stdout, "assignment path shape is "+tc.shape) {
 				t.Fatalf("plan exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 			}
 			fingerprint := landedRowFingerprint(t, stdout)
-			_, applyErr, applyCode := runCleanLanded(t, root, home, "--landed", "--apply", fingerprint)
+			_, applyErr, applyCode := runCleanLandedWith(t, j, root, home, "--landed", "--apply", fingerprint)
 			if applyCode != 0 || applyErr != "" {
 				t.Fatalf("apply exit=%d stderr=%q", applyCode, applyErr)
 			}

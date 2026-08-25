@@ -36,7 +36,7 @@ func TestLandingResidueFactAdapterTranslatesRealDestination(t *testing.T) {
 	mustMkdirAll(t, filepath.Join(root, "junk"), 0o755)
 	mustWrite(t, filepath.Join(root, "junk", "out"), []byte("ignored\n"), 0o600)
 
-	facts := destinationResidueFacts(root, destination, destination, destination+"^")
+	facts := destinationResidueFacts(defaultJoins(), root, destination, destination, destination+"^")
 	if !facts.NestedClean || !facts.StatusReadable || !facts.StatusWellFormed {
 		t.Fatalf("healthy destination facts = %+v", facts)
 	}
@@ -134,7 +134,7 @@ func TestLandingDestinationFactAdapterTranslatesCleanCheckout(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	head := gitOutput(t, root, "rev-parse", "HEAD")
-	tip, branch, marker, fingerprint, err := landingDestination(root)
+	tip, branch, marker, fingerprint, err := landingDestination(defaultJoins(), root)
 	if err != nil || tip != head || branch != "main" || marker != "" {
 		t.Fatalf("destination facts = (%q, %q, %q, %v), want (%q, main, empty marker, nil)", tip, branch, marker, err, head)
 	}
@@ -155,7 +155,7 @@ func TestLandingSourceFactAdapterTranslatesRealWorktree(t *testing.T) {
 	creation := mustCreate(t, root, home, "source-fact-adapter", "source facts")
 	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	fact, err := landingSource(root, creation.Assignment, base, tip, "")
+	fact, err := landingSource(defaultJoins(), root, creation.Assignment, base, tip, "")
 	if err != nil {
 		t.Fatalf("landingSource: %v", err)
 	}
@@ -174,13 +174,13 @@ func TestLandingSourceFactAdapterTranslatesRealWorktree(t *testing.T) {
 // nonzero release exit into the terminal release-interruption outcome, and the
 // policy's terminal verdict must own the rendered state and exit code.
 func TestLandingReleaseFactAdapterTranslatesReleaseExit(t *testing.T) {
+	t.Parallel()
 	request := "release-fact-adapter"
 	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
-	original := releaseLandingAssignment
-	releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 1 }
-	t.Cleanup(func() { releaseLandingAssignment = original })
+	j := defaultJoins()
+	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	want := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: "release", Active: true})
 	if code != want.ExitCode || !strings.Contains(stdout.String(), "worktree="+want.WorktreeState+",next=") {
 		t.Fatalf("release-failure landing = (%d, %q), want exit %d and state %q", code, stdout.String(), want.ExitCode, want.WorktreeState)

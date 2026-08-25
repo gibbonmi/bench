@@ -121,26 +121,26 @@ func TestLandCommandSpecLessLandedSourceBaseIsTheResolvedBase(t *testing.T) {
 
 // WL7: a spec-less landing interrupted after publication resumes without a spec.
 func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
+	t.Parallel()
 	request := "spec-less-resume"
 	root, creation, base, tip, tally, home := specLessLandingFixture(t, request)
-	oldMarker := advanceLandingMarker
-	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+	working := defaultJoins()
+	broken := working
+	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := landWith(broken, root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted spec-less landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if strings.Contains(stdout.String(), "--spec") {
 		t.Fatalf("spec-less resume instruction named a spec: %q", stdout.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
-	advanceLandingMarker = oldMarker
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("spec-less resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
@@ -154,23 +154,23 @@ func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
 // WL25: a resume without a spec completes a published spec-backed landing's marker and
 // release, and publishes nothing a second time.
 func TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding(t *testing.T) {
+	t.Parallel()
 	request := "spec-backed-spec-less-resume"
 	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
-	oldMarker := advanceLandingMarker
-	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+	working := defaultJoins()
+	broken := working
+	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
-	advanceLandingMarker = oldMarker
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("spec-less resume of a spec landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "main"); got != published {

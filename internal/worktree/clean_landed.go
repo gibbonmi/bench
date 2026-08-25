@@ -33,7 +33,7 @@ type landedCleanupSet struct {
 	fingerprint string
 }
 
-func planLandedSet(root string, options CleanupOptions) (landedCleanupSet, error) {
+func planLandedSet(j joins, root string, options CleanupOptions) (landedCleanupSet, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return landedCleanupSet{}, err
@@ -51,7 +51,7 @@ func planLandedSet(root string, options CleanupOptions) (landedCleanupSet, error
 	set := landedCleanupSet{rows: make([]landedCleanupRow, 0, len(assignments))}
 	for _, assignment := range assignments {
 		lease := leases[assignment.OwnerID]
-		if row, selected := selectLandedCleanupRow(root, assignment, defaultRef, lease, options); selected {
+		if row, selected := selectLandedCleanupRow(j, root, assignment, defaultRef, lease, options); selected {
 			set.rows = append(set.rows, row)
 		}
 	}
@@ -68,7 +68,7 @@ func planLandedSet(root string, options CleanupOptions) (landedCleanupSet, error
 // selectLandedCleanupRow is the selector's single per-assignment proof. The set plan and
 // every pre-mutation row re-plan use it. A row cannot become removable through a
 // different route after its shared fingerprint was validated.
-func selectLandedCleanupRow(root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions) (landedCleanupRow, bool) {
+func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions) (landedCleanupRow, bool) {
 	if assignment.State != intent.StateActive || assignment.Branch == "" {
 		return landedCleanupRow{}, false
 	}
@@ -90,12 +90,12 @@ func selectLandedCleanupRow(root string, assignment intent.Assignment, defaultRe
 	if oidErr != nil {
 		return landedCleanupRow{}, false
 	}
-	plan := planLandedAssignment(root, assignment, options)
+	plan := planLandedAssignment(j, root, assignment, options)
 	plan.Assignment = assignment.ID
 	return landedCleanupRow{assignment: assignment, plan: plan, headOID: headOID, lease: lease}, true
 }
 
-func planLandedAssignment(root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
+func planLandedAssignment(j joins, root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
 	// Only the checkout shape licenses the explicit planner. It invokes git against the
 	// target, which can block forever when a ledger path has decayed into a FIFO or socket.
 	shape, shapeErr := ClassifyPathShape(assignment.Worktree)
@@ -109,7 +109,7 @@ func planLandedAssignment(root string, assignment intent.Assignment, options Cle
 		plan.assignment, plan.owned = &assignment, true
 		return plan
 	}
-	plan, err := planLandedExplicitWithOptions(root, assignment.Worktree, options)
+	plan, err := j.planLandedExplicit(j, root, assignment.Worktree, options)
 	if err != nil {
 		plan = retainedPlan(assignment.Worktree, ReasonUncertain, err.Error())
 		plan.Assignment, plan.Recovery, plan.Tracked, plan.ignoredSummary = assignment.ID, "none", "unknown", "unknown"
@@ -278,7 +278,7 @@ func sameLandedCleanupTuple(a, b landedCleanupRow) bool {
 		a.lease == b.lease
 }
 
-func replanLandedCleanupRow(root, assignmentID string, options CleanupOptions) (landedCleanupRow, bool, error) {
+func replanLandedCleanupRow(j joins, root, assignmentID string, options CleanupOptions) (landedCleanupRow, bool, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return landedCleanupRow{}, false, err
@@ -293,21 +293,21 @@ func replanLandedCleanupRow(root, assignmentID string, options CleanupOptions) (
 	}
 	for _, assignment := range assignments {
 		if assignment.ID == assignmentID {
-			row, selected := selectLandedCleanupRow(root, assignment, defaultRef, leases[assignment.OwnerID], options)
+			row, selected := selectLandedCleanupRow(j, root, assignment, defaultRef, leases[assignment.OwnerID], options)
 			return row, selected, nil
 		}
 	}
 	return landedCleanupRow{}, false, nil
 }
 
-func applyLandedSet(root string, set landedCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
+func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	for _, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			plans = append(plans, planned.plan)
 			continue
 		}
-		current, selected, err := replanLandedCleanupRow(root, planned.assignment.ID, options)
+		current, selected, err := replanLandedCleanupRow(j, root, planned.assignment.ID, options)
 		if err != nil {
 			return append(plans, planned.plan), err
 		}
@@ -320,7 +320,7 @@ func applyLandedSet(root string, set landedCleanupSet, options CleanupOptions) (
 			return plans, errStaleFingerprint
 		}
 		planner := func(string) (CleanupPlan, error) {
-			fresh, stillSelected, planErr := replanLandedCleanupRow(root, planned.assignment.ID, options)
+			fresh, stillSelected, planErr := replanLandedCleanupRow(j, root, planned.assignment.ID, options)
 			if planErr != nil {
 				return CleanupPlan{}, planErr
 			}
@@ -331,7 +331,7 @@ func applyLandedSet(root string, set landedCleanupSet, options CleanupOptions) (
 		}
 		// The terminal callback keeps the lifecycle's post-settlement fault boundary between
 		// completed rows, where a later-row drift must still stop the set apply.
-		applied, applyErr := applyCleanupTransaction(root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
+		applied, applyErr := applyCleanupTransaction(j, root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
 		plans = append(plans, applied)
 		if applyErr != nil {
 			return plans, applyErr

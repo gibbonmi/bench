@@ -417,7 +417,7 @@ func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 	mustNoError(t, err)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", ag.Worktree) // active, tree gone, unregistered
 
-	result, err := conservativeCleanupAt(root, home, currentTime())
+	result, err := conservativeCleanupAt(defaultJoins(), root, home, currentTime())
 	mustNoError(t, err)
 	requireTest(t, result.Reconciled == 2, "Reconciled=%d, want 2", result.Reconciled)
 	for _, dropped := range []string{ra.ID, pa.ID} {
@@ -494,7 +494,7 @@ func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 }
 
 func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
-	bindGlobal(t, "ignoredLstat")
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	if err := os.WriteFile(filepath.Join(root, ".git", "info", "exclude"), []byte("ignored.txt\n"), 0o644); err != nil {
@@ -506,15 +506,14 @@ func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 	if err := os.WriteFile(ignored, []byte("secret\n"), 0o000); err != nil {
 		t.Fatal(err)
 	}
-	original := ignoredLstat
-	ignoredLstat = func(path string) (os.FileInfo, error) {
+	j := defaultJoins()
+	j.ignoredLstat = func(path string) (os.FileInfo, error) {
 		if path == ignored {
 			return nil, os.ErrNotExist
 		}
 		return os.Lstat(path)
 	}
-	t.Cleanup(func() { ignoredLstat = original })
-	plan, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardIgnored: true})
+	plan, err := planExplicitWith(j, root, target, CleanupOptions{DiscardIgnored: true})
 	if err != nil || plan.Action != ActionRetain || plan.ReasonCode != ReasonUncertain {
 		t.Fatalf("stat-race plan = %#v, %v", plan, err)
 	}

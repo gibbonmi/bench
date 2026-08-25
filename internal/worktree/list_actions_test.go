@@ -182,18 +182,16 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)))
 	creation := mustCreate(t, root, Home(), "landed-complete-assignment", "complete assignment")
-	boundary := cleanupTransactionBoundary
-	t.Cleanup(func() { cleanupTransactionBoundary = boundary })
-	cleanupTransactionBoundary = func(step LifecycleStep) error {
+	j := defaultJoins()
+	j.cleanupBoundary = func(step LifecycleStep) error {
 		if step == StepTerminalReceipt {
 			return errors.New("stop before the completed record is compacted")
 		}
 		return nil
 	}
-	if code := ReleaseCommand(root, Home(), []string{"--request", "landed-complete-assignment", creation.Path}, io.Discard, io.Discard); code == 0 {
+	if code := releaseCommandWith(j, root, Home(), []string{"--request", "landed-complete-assignment", creation.Path}, io.Discard, io.Discard); code == 0 {
 		t.Fatalf("interrupted release exit = %d, want non-zero", code)
 	}
-	cleanupTransactionBoundary = boundary
 	assignments, err := intent.Assignments(root)
 	if err != nil || len(assignments) != 1 || assignments[0].State != intent.StateComplete {
 		t.Fatalf("Assignments = %#v, %v, want one completed assignment", assignments, err)

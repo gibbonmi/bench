@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
@@ -33,36 +32,15 @@ func newResidueGuardFixture(t *testing.T, request string) (string, Creation, str
 	return root, creation, home
 }
 
-// captureLiveBinaryWarnings redirects the guard's warning sink for one test.
-func captureLiveBinaryWarnings(t *testing.T) *bytes.Buffer {
-	t.Helper()
-	previous := liveBinaryWarnings
+// stubbedLiveBinaryJoins returns a seam set whose residue-guard warning sink is the
+// returned buffer and whose running-binary resolution answers with running. Each test
+// holds its own value, so no two tests share a stub point.
+func stubbedLiveBinaryJoins(running string) (joins, *bytes.Buffer) {
 	buffer := &bytes.Buffer{}
-	liveBinaryWarnings = buffer
-	t.Cleanup(func() { liveBinaryWarnings = previous })
-	return buffer
-}
-
-// liveBinaryStubs guards the two process-global stub points, resolveRunningBinary
-// and liveBinaryWarnings.
-var liveBinaryStubs sync.Mutex
-
-// holdLiveBinaryStubs takes the stub points for one test and releases them when
-// the test ends. Only a parallel test needs the hold, because a parallel test
-// resumes after the last serial test in the package.
-func holdLiveBinaryStubs(t *testing.T) {
-	t.Helper()
-	liveBinaryStubs.Lock()
-	t.Cleanup(liveBinaryStubs.Unlock)
-}
-
-// stubRunningBinary answers the guard's "which binary did the wrapper resolve" question
-// with path, standing in for the exec the wrapper performs outside a test process.
-func stubRunningBinary(t *testing.T, path string) {
-	t.Helper()
-	previous := resolveRunningBinary
-	resolveRunningBinary = func() (string, error) { return path, nil }
-	t.Cleanup(func() { resolveRunningBinary = previous })
+	j := defaultJoins()
+	j.liveBinaryWarnings = buffer
+	j.resolveRunningBinary = func() (string, error) { return running, nil }
+	return j, buffer
 }
 
 // TestResidueGuardWarnsBeforeRemovingTheLiveBinary is H25. Removing the dist/bench the
@@ -71,15 +49,15 @@ func stubRunningBinary(t *testing.T, path string) {
 // warning has to name the scripts/go-build.sh invocation, because plain `go build` leaves
 // the package version the version and upgrade contracts read unstamped.
 func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
+	t.Parallel()
 	const request = "landed-live-binary"
 	root, creation, home := newResidueGuardFixture(t, request)
 	live := filepath.Join(creation.Path, "dist", "bench")
 	mustWrite(t, live, []byte("binary\n"), 0o755)
-	warnings := captureLiveBinaryWarnings(t)
-	stubRunningBinary(t, live)
+	j, warnings := stubbedLiveBinaryJoins(live)
 
 	var stdout bytes.Buffer
-	code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, &stdout, io.Discard)
+	code := releaseCommandWith(j, root, home, []string{"--request", request, creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "live-binary release exit=%d stdout=%q", code, stdout.String())
 
 	warned := warnings.String()
@@ -98,29 +76,31 @@ func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 // silently" is exactly the incident this guard exists to prevent. No fixture reaches
 // them through ReleaseCommand, whose stub always resolves.
 func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
-	holdLiveBinaryStubs(t)
+	t.Parallel()
 	candidate := filepath.Join(t.TempDir(), "bench")
 	mustWrite(t, candidate, []byte("binary\n"), 0o755)
 
 	t.Run("executable unresolvable", func(t *testing.T) {
-		previous := resolveRunningBinary
-		resolveRunningBinary = func() (string, error) { return "", errors.New("no executable") }
-		t.Cleanup(func() { resolveRunningBinary = previous })
-		if !isRunningBinary(candidate) {
+		t.Parallel()
+		j := defaultJoins()
+		j.resolveRunningBinary = func() (string, error) { return "", errors.New("no executable") }
+		if !isRunningBinary(j, candidate) {
 			t.Error("isRunningBinary = false when the running executable is unresolvable, want true (unknown is not absent)")
 		}
 	})
 
 	t.Run("running path unstattable", func(t *testing.T) {
-		stubRunningBinary(t, filepath.Join(t.TempDir(), "vanished", "bench"))
-		if !isRunningBinary(candidate) {
+		t.Parallel()
+		j, _ := stubbedLiveBinaryJoins(filepath.Join(t.TempDir(), "vanished", "bench"))
+		if !isRunningBinary(j, candidate) {
 			t.Error("isRunningBinary = false when the running path cannot be stat'd, want true (unknown is not absent)")
 		}
 	})
 
 	t.Run("candidate absent", func(t *testing.T) {
-		stubRunningBinary(t, candidate)
-		if isRunningBinary(filepath.Join(t.TempDir(), "absent")) {
+		t.Parallel()
+		j, _ := stubbedLiveBinaryJoins(candidate)
+		if isRunningBinary(j, filepath.Join(t.TempDir(), "absent")) {
 			t.Error("isRunningBinary = true for a candidate that does not exist, want false (no live file there to lose)")
 		}
 	})
@@ -132,7 +112,7 @@ func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
 // EvalSymlinks normalization and os.Stat following the link. So no single mutation
 // reddens this. It pins the behavior, not either mechanism.
 func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
-	holdLiveBinaryStubs(t)
+	t.Parallel()
 	dir := t.TempDir()
 	real := filepath.Join(dir, "bench")
 	mustWrite(t, real, []byte("binary\n"), 0o755)
@@ -140,8 +120,8 @@ func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
 	if err := os.Symlink(real, link); err != nil {
 		capability.Capability(t, capability.Symlink, fmt.Sprintf("cannot create a symlink: %v", err))
 	}
-	stubRunningBinary(t, link)
-	if !isRunningBinary(real) {
+	j, _ := stubbedLiveBinaryJoins(link)
+	if !isRunningBinary(j, real) {
 		t.Error("isRunningBinary = false for the target of the resolved symlink, want true")
 	}
 }
@@ -152,6 +132,7 @@ func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
 // space-and-glob name also pins that the guard resolves its candidate exactly rather than
 // through a shell-expanded pattern.
 func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct{ name, residue string }{
 		{"plain", "bench"},
 		{"space and glob", "be nch[1]*"},
@@ -163,11 +144,10 @@ func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {
 			mustWrite(t, foreign, []byte("binary\n"), 0o755)
 			elsewhere := filepath.Join(t.TempDir(), "bench")
 			mustWrite(t, elsewhere, []byte("the binary answering bench\n"), 0o755)
-			warnings := captureLiveBinaryWarnings(t)
-			stubRunningBinary(t, elsewhere)
+			j, warnings := stubbedLiveBinaryJoins(elsewhere)
 
 			var stdout bytes.Buffer
-			code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, &stdout, io.Discard)
+			code := releaseCommandWith(j, root, home, []string{"--request", request, creation.Path}, &stdout, io.Discard)
 			requireTest(t, code == 0, "foreign release exit=%d stdout=%q", code, stdout.String())
 			requireTest(t, warnings.Len() == 0, "foreign %s warned: %q", foreign, warnings.String())
 		})

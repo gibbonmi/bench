@@ -49,8 +49,6 @@ const leaseTimeLayout = lifecyclepolicy.LeaseTimeLayout
 
 const unknownLeaseReason = lifecyclepolicy.UnknownLeaseReason
 
-var chmodPool = os.Chmod
-
 // LeaseState is the policy package's lease liveness verdict;
 // internal/worktree/lifecyclepolicy owns its values and semantics.
 type LeaseState = lifecyclepolicy.LeaseState
@@ -122,7 +120,7 @@ func tryCreate(leasePath string, now time.Time) bool {
 
 // claimAt atomically creates a lease or identity-checks a provably stale takeover,
 // judging staleness against the caller's explicitly resolved instant.
-func claimAt(leasePath string, now time.Time) bool {
+func claimAt(j joins, leasePath string, now time.Time) bool {
 	if tryCreate(leasePath, now) {
 		return true
 	}
@@ -134,12 +132,12 @@ func claimAt(leasePath string, now time.Time) bool {
 	if !reclaimable(content, info.ModTime(), now, pidAlive) {
 		return false
 	}
-	claimTakeoverGap(leasePath)
+	j.claimTakeoverGap(leasePath)
 	stale := leasePath + ".stale." + strconv.Itoa(os.Getpid())
 	if os.Rename(leasePath, stale) != nil {
 		return false // another reclaimer moved it first
 	}
-	claimStealGap(leasePath)
+	j.claimStealGap(leasePath)
 	// A competing reclaimer may have replaced the judged lease. Concede unless the
 	// renamed bytes still match, and never clobber a first-writer in the vacated slot.
 	moved, err := os.ReadFile(stale)
@@ -151,12 +149,6 @@ func claimAt(leasePath string, now time.Time) bool {
 	os.Remove(stale)
 	return tryCreate(leasePath, now)
 }
-
-// claimTakeoverGap drives the post-judgment, pre-rename reclaimer interleave.
-var claimTakeoverGap = func(leasePath string) {}
-
-// claimStealGap drives the post-rename, pre-identity-check first-writer interleave.
-var claimStealGap = func(leasePath string) {}
 
 // isWorktree accepts primary (.git dir) and linked (.git file) checkouts.
 func isWorktree(dir string) bool {
@@ -173,18 +165,18 @@ func isClean(dir string) bool {
 // Acquire is the boundary form of acquireAt for a caller in another package: it
 // resolves the Bench home and the instant at the effect boundary.
 func Acquire(root, resetRef, resetMode string) (string, error) {
-	return acquireAt(root, resetRef, resetMode, Home(), currentTime())
+	return acquireAt(defaultJoins(), root, resetRef, resetMode, Home(), currentTime())
 }
 
 // acquireAt claims a clean pool entry or mints one in three bounded attempts. It
 // resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref.
 // The home and the instant are the caller's explicit boundary resolutions.
-func acquireAt(root, resetRef, resetMode, home string, now time.Time) (string, error) {
+func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (string, error) {
 	pool := poolAt(home, root)
 	if err := os.MkdirAll(pool, 0o700); err != nil {
 		return "", err
 	}
-	_ = chmodPool(pool, 0o700)
+	_ = j.chmodPool(pool, 0o700)
 	var wt string
 	entries, _ := os.ReadDir(pool) // sorted by name, matching the shell glob order
 	for _, e := range entries {
@@ -193,7 +185,7 @@ func acquireAt(root, resetRef, resetMode, home string, now time.Time) (string, e
 			continue
 		}
 		lease, err := LeaseFile(d)
-		if err != nil || !claimAt(lease, now) {
+		if err != nil || !claimAt(j, lease, now) {
 			continue
 		}
 		wt = d
@@ -211,7 +203,7 @@ func acquireAt(root, resetRef, resetMode, home string, now time.Time) (string, e
 		if err != nil {
 			continue
 		}
-		if claimAt(lease, now) {
+		if claimAt(j, lease, now) {
 			wt = cand
 		}
 	}
@@ -248,6 +240,11 @@ func worktreeAdd(root, cand, ref string) bool {
 // Release restores cleanliness before unleasing, and leaves a lease owned by another
 // live process untouched. Once unleased, a concurrent Acquire owns the checkout.
 func Release(wt string) {
+	releaseWith(defaultJoins(), wt)
+}
+
+// releaseWith is Release with the seam set resolved explicitly at the caller's boundary.
+func releaseWith(j joins, wt string) {
 	if wt == "" {
 		return
 	}
@@ -261,20 +258,16 @@ func Release(wt string) {
 			return
 		}
 	}
-	restoreClean(wt)
+	j.restoreClean(wt)
 	os.Remove(lease)
 }
 
-// restoreClean is the release-ordering test seam between cleanup and unlease.
-var restoreClean = func(wt string) {
+// restoreCleanCheckout is the release-ordering seam between cleanup and unlease.
+func restoreCleanCheckout(wt string) {
 	_ = exec.Command("git", "-C", wt, "switch", "-q", "--detach").Run()
 	_ = exec.Command("git", "-C", wt, "reset", "-q", "--hard").Run()
 	_ = exec.Command("git", "-C", wt, "clean", "-qfdx").Run()
 }
-
-// cleanupTransactionBoundary is the deterministic transaction fault seam.
-var cleanupTransactionBoundary Fault
-var cleanupLockAttempt = func(string) {}
 
 func receiptFromRelease(repo, request string, assignment intent.Assignment, action, branch, branchOID string) intent.CleanupReceipt {
 	receipt := intent.CleanupReceipt{Schema: intent.CleanupReceiptSchema, Repo: repo, Operation: releaseOperation, Target: assignment.Worktree, Fingerprint: request, State: intent.ReceiptComplete, Phase: intent.ReceiptPhaseTerminal, Action: action, Tracked: assignment.ID, Recovery: "none", Detail: string(assignment.State), Owned: true}
@@ -302,15 +295,15 @@ func ensureRecoveryRef(root string, assignment intent.Assignment, recovery inten
 func cleanupLockPath(repo, target string) string {
 	return filepath.Join(repo, "bench-cleanup-"+fingerprintParts([]byte(target))+".lock")
 }
-func lockCleanupFile(file *os.File, target string) (func(), error) {
-	cleanupLockAttempt(target)
+func lockCleanupFile(j joins, file *os.File, target string) (func(), error) {
+	j.cleanupLockAttempt(target)
 	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX); err != nil {
 		file.Close()
 		return nil, fmt.Errorf("lock cleanup registration: %w", err)
 	}
 	return func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN); _ = file.Close() }, nil
 }
-func lockCleanupRegistration(repo, target string) (func(), error) {
+func lockCleanupRegistration(j joins, repo, target string) (func(), error) {
 	admin, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
 	var file *os.File
 	if err == nil {
@@ -324,14 +317,14 @@ func lockCleanupRegistration(repo, target string) (func(), error) {
 	if err != nil {
 		return nil, fmt.Errorf("open cleanup transaction lock: %w", err)
 	}
-	return lockCleanupFile(file, target)
+	return lockCleanupFile(j, file, target)
 }
-func lockCleanupPersistence(repo, target string) (func(), error) {
+func lockCleanupPersistence(j joins, repo, target string) (func(), error) {
 	file, err := os.OpenFile(cleanupLockPath(repo, target), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		return nil, err
 	}
-	return lockCleanupFile(file, target)
+	return lockCleanupFile(j, file, target)
 }
 
 // releaseLeftover completes a release-leftover plan: the registration and the ledger entry
@@ -425,7 +418,7 @@ func releaseRegistration(root, target string) error {
 	return os.RemoveAll(admin)
 }
 
-func executeCleanup(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
 	if plan.Action == actionReleaseLeftover {
 		return releaseLeftover(root, plan, checkpoint, fault)
 	}
@@ -468,7 +461,7 @@ func executeCleanup(root string, plan CleanupPlan, checkpoint func(string) error
 		}
 	}
 	if plan.Action == ActionDiscardRemove || plan.Action == actionReleaseRemove {
-		if err := discardIgnored(plan); err != nil {
+		if err := discardIgnored(j, plan); err != nil {
 			return plan, err
 		}
 		if err := checkpoint(intent.ReceiptPhasePreserved); err != nil {

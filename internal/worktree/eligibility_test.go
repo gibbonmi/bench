@@ -186,7 +186,7 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 	facts.NestedState, facts.NestedErr = nested, nestedErr
 
 	buildOutputs, _, buildOutputErr := loadBuildOutputs(root)
-	ignored, _, ignoredErr := inventoryIgnored(target, options.Full)
+	ignored, _, ignoredErr := inventoryIgnored(defaultJoins(), target, options.Full)
 	facts.BuildOutputErr = buildOutputErr
 	facts.IgnoredErr = ignoredErr
 	facts.IgnoredOverLimit = ignored.OverLimit

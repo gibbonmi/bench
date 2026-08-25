@@ -125,21 +125,23 @@ func stageLandSpec(t *testing.T, root, source string) {
 	gitRun(t, source, "rebase", "main")
 }
 
-func stubLandJoins(t *testing.T, base, tip string) func() {
-	t.Helper()
-	oldLand, oldMarker, oldReconcile, oldRelease, oldAuthorize := landReviewed, advanceLandingMarker, reconcileLanding, releaseLandingAssignment, authorizeLandingSource
-	landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
+// stubLandJoins returns a seam set whose landing publishes a fixed result and whose
+// post-publication steps succeed. The caller replaces the one field its own case is
+// about and hands the value to landWith, so it holds every stub itself.
+// stubLandJoins returns a seam set whose landing publishes a fixed result and whose
+// post-publication steps succeed. The caller replaces the one field its own case is
+// about and hands the value to landWith, so each test holds every stub it makes.
+func stubLandJoins(base, tip string) joins {
+	j := defaultJoins()
+	j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
 		return landing.ReviewedResult{SourceBase: base, SourceTip: tip, DestinationBase: base, Commit: strings.Repeat("a", 40), Tree: strings.Repeat("b", 40)}, nil
 	}
-	advanceLandingMarker = func(context.Context, string, string, string, string) error { return nil }
-	reconcileLanding = func(string, string, string, string) error { return nil }
-	releaseLandingAssignment = ReleaseCommand
-	authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
+	j.advanceLandingMarker = func(context.Context, string, string, string, string) error { return nil }
+	j.reconcileLanding = func(joins, string, string, string, string) error { return nil }
+	j.authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
 		return diff.SourceRange{Base: base, Tip: tip}, nil
 	}
-	return func() {
-		landReviewed, advanceLandingMarker, reconcileLanding, releaseLandingAssignment, authorizeLandingSource = oldLand, oldMarker, oldReconcile, oldRelease, oldAuthorize
-	}
+	return j
 }
 
 // ticketsOnlyLandingFixture is the spec-less landing fixture with a tickets-only

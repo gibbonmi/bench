@@ -269,56 +269,53 @@ func TestLandCommandRemovesEveryTemporaryProspectiveArtifact(t *testing.T) {
 // it. Each one's failure resumes to a released landing that composes and publishes
 // nothing a second time.
 func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *testing.T) {
-	// Each stage breaks by replacing its own seam and hands back the restore the resume
-	// runs under, so the resume faces a working stage exactly as a retry does.
+	// Each stage breaks its own seam in a copy of the caller's value. The resume then
+	// runs under the untouched value, so it faces a working stage exactly as a retry does.
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
-		break_ func() func()
+		break_ func(joins) joins
 	}{
-		{name: "marker", break_: func() func() {
-			old := advanceLandingMarker
-			advanceLandingMarker = func(context.Context, string, string, string, string) error {
+		{name: "marker", break_: func(j joins) joins {
+			j.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 				return errors.New("injected marker interruption")
 			}
-			return func() { advanceLandingMarker = old }
+			return j
 		}},
-		{name: "reconcile", break_: func() func() {
-			old := reconcileLanding
-			reconcileLanding = func(string, string, string, string) error {
+		{name: "reconcile", break_: func(j joins) joins {
+			j.reconcileLanding = func(joins, string, string, string, string) error {
 				return errors.New("injected reconciliation interruption")
 			}
-			return func() { reconcileLanding = old }
+			return j
 		}},
-		{name: "release", break_: func() func() {
-			old := releaseLandingAssignment
-			releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 1 }
-			return func() { releaseLandingAssignment = old }
+		{name: "release", break_: func(j joins) joins {
+			j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+			return j
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			request := "land-owner-resume-" + tc.name
 			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 			publications := 0
-			oldLand := landReviewed
-			landReviewed = func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
+			working := defaultJoins()
+			oldLand := working.landReviewed
+			working.landReviewed = func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
 				publications++
 				return oldLand(ctx, request)
 			}
-			t.Cleanup(func() { landReviewed = oldLand })
-			restore := tc.break_()
-			t.Cleanup(restore)
+			broken := tc.break_(working)
 
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.name) {
+			if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.name) {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			published := gitOutput(t, root, "rev-parse", "main")
-			restore()
 
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
 				t.Fatalf("resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			if got := gitOutput(t, root, "rev-parse", "main"); got != published {

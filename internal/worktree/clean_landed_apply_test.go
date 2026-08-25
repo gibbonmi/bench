@@ -118,12 +118,13 @@ func TestCleanLandedApplyRefusesInitialDriftWithoutMutation(t *testing.T) {
 }
 
 func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
+	t.Parallel()
 	root, home, first, second, _ := landedSetFixture(t)
 	plan, planErr, planCode := runCleanLanded(t, root, home, "--landed")
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
 	}
-	set, err := planLandedSet(root, CleanupOptions{})
+	set, err := planLandedSet(defaultJoins(), root, CleanupOptions{})
 	if err != nil || len(set.rows) != 3 {
 		t.Fatalf("landed set = %#v, %v; want three rows", set, err)
 	}
@@ -148,17 +149,16 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 	if settled.Path == "" || drifted.Path == "" {
 		t.Fatalf("set order did not name two removable rows: %#v", set.rows)
 	}
-	previousBoundary := cleanupTransactionBoundary
-	t.Cleanup(func() { cleanupTransactionBoundary = previousBoundary })
+	j := defaultJoins()
 	mutated := false
-	cleanupTransactionBoundary = func(step LifecycleStep) error {
+	j.cleanupBoundary = func(step LifecycleStep) error {
 		if step == StepTerminalReceipt && !mutated {
 			mutated = true
 			mustWrite(t, filepath.Join(drifted.Path, "drifted.txt"), []byte("drifted\n"), 0o644)
 		}
 		return nil
 	}
-	_, stderr, code := runCleanLanded(t, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, stderr, code := runCleanLandedWith(t, j, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
 	if code != 1 || stderr != "" || !mutated {
 		t.Fatalf("apply exit=%d stderr=%q mutated=%t, want per-row stale refusal", code, stderr, mutated)
 	}
@@ -177,7 +177,7 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 			t.Fatalf("settled first row %q remains assigned", settled.Assignment.ID)
 		}
 	}
-	_, _, retryCode := runCleanLanded(t, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, _, retryCode := runCleanLandedWith(t, j, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
 	if retryCode != 1 {
 		t.Fatalf("spent fingerprint replay exit=%d, want 1", retryCode)
 	}
@@ -188,15 +188,15 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 }
 
 func TestCleanLandedApplyStopsAfterCompletedRowFault(t *testing.T) {
+	t.Parallel()
 	root, home, first, second, _ := landedSetFixture(t)
 	plan, planErr, planCode := runCleanLanded(t, root, home, "--landed")
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
 	}
-	previousBoundary := cleanupTransactionBoundary
-	t.Cleanup(func() { cleanupTransactionBoundary = previousBoundary })
+	j := defaultJoins()
 	locks := 0
-	cleanupTransactionBoundary = func(step LifecycleStep) error {
+	j.cleanupBoundary = func(step LifecycleStep) error {
 		if step == StepApplyLocked {
 			locks++
 			if locks == 2 {
@@ -205,7 +205,7 @@ func TestCleanLandedApplyStopsAfterCompletedRowFault(t *testing.T) {
 		}
 		return nil
 	}
-	_, stderr, code := runCleanLanded(t, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, stderr, code := runCleanLandedWith(t, j, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
 	if code != 1 || stderr != "" || locks != 2 {
 		t.Fatalf("apply exit=%d stderr=%q locks=%d, want second-row fault", code, stderr, locks)
 	}

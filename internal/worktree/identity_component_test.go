@@ -154,6 +154,7 @@ func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
 // TestResumeLandCommandNamesEachIdentityComponent is LR09: a resumed landing reads like
 // a first landing, so the same six mutations print the same six sentences.
 func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
+	t.Parallel()
 	for _, fixture := range identityComponentFixtures() {
 		t.Run(fixture.component, func(t *testing.T) {
 			request := "resume-component-" + fixture.component
@@ -175,13 +176,12 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 // is the state a resume exists to finish. It returns the published commit.
 func interruptLandingAtMarker(t *testing.T, root string, creation Creation, request, base, tip string) string {
 	t.Helper()
-	old := advanceLandingMarker
-	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+	j := defaultJoins()
+	j.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	advanceLandingMarker = old
+	code := landWith(j, root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 {
 		t.Fatalf("interrupted landing = (%d, %q, %q), want exit 3", code, stdout.String(), stderr.String())
 	}

@@ -31,8 +31,14 @@ func landedSetFixture(t *testing.T) (string, string, Creation, Creation, Creatio
 
 func runCleanLanded(t *testing.T, root, home string, args ...string) (string, string, int) {
 	t.Helper()
+	return runCleanLandedWith(t, defaultJoins(), root, home, args...)
+}
+
+// runCleanLandedWith runs the landed cleanup under the caller's own seam set.
+func runCleanLandedWith(t *testing.T, j joins, root, home string, args ...string) (string, string, int) {
+	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := CleanCommand(root, home, args, &stdout, &stderr)
+	code := cleanCommandWith(j, root, home, args, &stdout, &stderr)
 	return stdout.String(), stderr.String(), code
 }
 

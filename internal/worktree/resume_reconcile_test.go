@@ -163,8 +163,8 @@ func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
 		gitRun(t, root, "update-ref", name, "HEAD")
 	}
 	interrupted := errors.New("killed mid-sweep")
-	restore, sweeps := cleanupTransactionBoundary, 0
-	cleanupTransactionBoundary = func(step LifecycleStep) error {
+	j, sweeps := defaultJoins(), 0
+	j.cleanupBoundary = func(step LifecycleStep) error {
 		if step != StepLifecycleSweep {
 			return nil
 		}
@@ -175,8 +175,7 @@ func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
 	}
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	cleanupTransactionBoundary = restore
+	code := resumeCleanCommandWith(j, root, home, nil, &stdout, &stderr)
 	requireTest(t, code != 0, "interrupted reconcile exit=%d stdout=%s", code, stdout.String())
 	partial := refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/")
 	requireTest(t, partial != "" && len(strings.Split(partial, "\n")) < 4, "interruption left %q, want a partial namespace", partial)

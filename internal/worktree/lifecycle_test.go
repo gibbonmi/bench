@@ -8,24 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
-
-// claimGapMutex serializes the two parallel-eligible tests that swap the
-// package-level claimTakeoverGap and claimStealGap interleave hooks.
-// Both tests install their own hook for the call's duration; run either
-// concurrently with the other and each can observe or overwrite the other's
-// hook, producing a false takeover or steal result rather than a race in the
-// production code under test.
-var claimGapMutex sync.Mutex
-
-// restoreCleanMutex serializes the parallel-eligible tests that call Release,
-// which reads the package-level restoreClean hook, against the one test that
-// swaps it. Two Release calls never race each other; the swap does, so every
-// caller in this file takes the lock for the call's duration.
-var restoreCleanMutex sync.Mutex
 
 // TestReclaimable pins the four-way lease decision the black-box lease-hardening
 // contract exercises but cannot cheaply enumerate. A canonical lease gates on pid
@@ -114,9 +99,7 @@ func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 	t.Parallel()
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
-	restoreCleanMutex.Lock()
 	Release(dir)
-	restoreCleanMutex.Unlock()
 	if _, err := os.Stat(lease); !os.IsNotExist(err) {
 		t.Errorf("lease still present after owner release: %v", err)
 	}
@@ -142,9 +125,7 @@ func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 	}
 	dir, lease := leasedRepo(t, "1 2026-07-05T00:00:00Z\n")
 	dirty(t, dir)
-	restoreCleanMutex.Lock()
 	Release(dir)
-	restoreCleanMutex.Unlock()
 	if _, err := os.Stat(lease); err != nil {
 		t.Errorf("foreign live lease removed: %v", err)
 	}
@@ -165,18 +146,17 @@ func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 // goes red here because the simulated claimant's create succeeds mid-cleanup.
 
 func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
+	t.Parallel()
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
-	restoreCleanMutex.Lock()
-	t.Cleanup(restoreCleanMutex.Unlock)
-	real := restoreClean
-	t.Cleanup(func() { restoreClean = real })
+	j := defaultJoins()
+	real := j.restoreClean
 	claimedMidCleanup := false
-	restoreClean = func(wt string) {
-		claimedMidCleanup = claimAt(lease, time.Now())
+	j.restoreClean = func(wt string) {
+		claimedMidCleanup = claimAt(j, lease, time.Now())
 		real(wt)
 	}
-	Release(dir)
+	releaseWith(j, dir)
 	if claimedMidCleanup {
 		t.Error("entry was claimable mid-cleanup: a concurrent claimant can win while the worktree is dirty and lose its lease to the trailing remove")
 	}
@@ -213,8 +193,7 @@ func deadPidLine(t *testing.T) string {
 // reclaimable, restores the fresh lease, and concedes.
 
 func TestClaimSecondReclaimerConcedes(t *testing.T) {
-	claimGapMutex.Lock()
-	t.Cleanup(claimGapMutex.Unlock)
+	t.Parallel()
 	if os.Getpid() == 1 {
 		capability.Capability(t, capability.PID, "running as pid 1")
 	}
@@ -222,17 +201,16 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	real := claimTakeoverGap
-	t.Cleanup(func() { claimTakeoverGap = real })
+	j := defaultJoins()
 	var nestedWon, reentered bool
-	claimTakeoverGap = func(leasePath string) {
+	j.claimTakeoverGap = func(leasePath string) {
 		if reentered {
 			return // the nested reclaimer's own gap is a no-op
 		}
 		reentered = true
-		nestedWon = claimAt(leasePath, time.Now())
+		nestedWon = claimAt(j, leasePath, time.Now())
 	}
-	outerWon := claimAt(lease, time.Now())
+	outerWon := claimAt(j, lease, time.Now())
 	if !nestedWon {
 		t.Error("first (nested) reclaimer did not win the dead-pid lease")
 	}
@@ -270,8 +248,7 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 // leaving C's lease alone.
 
 func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
-	claimGapMutex.Lock()
-	t.Cleanup(claimGapMutex.Unlock)
+	t.Parallel()
 	if os.Getpid() == 1 {
 		capability.Capability(t, capability.PID, "running as pid 1")
 	}
@@ -279,23 +256,20 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	realTakeover := claimTakeoverGap
-	t.Cleanup(func() { claimTakeoverGap = realTakeover })
+	j := defaultJoins()
 	var nestedWon bool
 	inNestedTakeover := false
-	claimTakeoverGap = func(lp string) {
+	j.claimTakeoverGap = func(lp string) {
 		if inNestedTakeover {
 			return // B's own pass through this gap must not recurse again
 		}
 		inNestedTakeover = true
-		nestedWon = claimAt(lp, time.Now())
+		nestedWon = claimAt(j, lp, time.Now())
 		inNestedTakeover = false
 	}
-	realSteal := claimStealGap
-	t.Cleanup(func() { claimStealGap = realSteal })
 	const sentinel = "999999 sentinel-first-writer\n"
 	wrote := false
-	claimStealGap = func(lp string) {
+	j.claimStealGap = func(lp string) {
 		// Skip B's own pass (still inside the nested takeover). The write must land only
 		// in the slot the outer's rename vacates, not the one B's rename vacates.
 		if inNestedTakeover || wrote {
@@ -306,7 +280,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	outerWon := claimAt(lease, time.Now())
+	outerWon := claimAt(j, lease, time.Now())
 	if outerWon {
 		t.Error("outer Claim = true, want false (it must concede to the first-writer)")
 	}

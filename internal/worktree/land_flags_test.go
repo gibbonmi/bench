@@ -105,21 +105,23 @@ func TestLandCommandAcceptsDashPathOnlyAfterTerminator(t *testing.T) {
 }
 
 func TestLandCommandPostCASTerminalTable(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name, step string
-		setup      func()
+		setup      func(*joins)
 	}{
-		{"marker", "marker", func() {
-			advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("marker fault") }
+		{"marker", "marker", func(j *joins) {
+			j.advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("marker fault") }
 		}},
-		{"reconcile", "reconcile", func() {
-			reconcileLanding = func(string, string, string, string) error { return errors.New("reconcile fault") }
+		{"reconcile", "reconcile", func(j *joins) {
+			j.reconcileLanding = func(joins, string, string, string, string) error { return errors.New("reconcile fault") }
 		}},
-		{"release", "release", func() {
-			releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 1 }
+		{"release", "release", func(j *joins) {
+			j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			root := newWorktreeRepo(t)
 			home := filepath.Join(t.TempDir(), "bench-home")
 			creation := mustCreate(t, root, home, "landed-land-terminal-"+tc.name, "landing terminal")
@@ -131,11 +133,10 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 			base := gitOutput(t, root, "rev-parse", "HEAD")
 			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-			restore := stubLandJoins(t, base, tip)
-			defer restore()
-			tc.setup()
+			j := stubLandJoins(base, tip)
+			tc.setup(&j)
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, home, "", []string{"--request", "landed-land-terminal-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+			code := landWith(j, root, home, "", []string{"--request", "landed-land-terminal-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 			if code != 3 || !strings.Contains(stdout.String(), "landed{") || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.step) {
 				t.Fatalf("LandCommand = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
@@ -144,6 +145,7 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 }
 
 func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(t.TempDir(), "bench-home")
 	creation := mustCreate(t, root, home, "landed-hostile-release", "hostile release")
@@ -151,20 +153,20 @@ func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	restore := stubLandJoins(t, base, tip)
-	defer restore()
-	releaseLandingAssignment = func(_ string, _ string, _ []string, _ io.Writer, stderr io.Writer) int {
+	j := stubLandJoins(base, tip)
+	j.releaseLandingAssignment = func(_ joins, _ string, _ string, _ []string, _ io.Writer, stderr io.Writer) int {
 		fmt.Fprint(stderr, "unsafe\nlanded{forged=true}\x1b[31m\n")
 		return 1
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", []string{"--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+	code := landWith(j, root, home, "", []string{"--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 	if code != 3 || strings.Count(stdout.String(), "landed{") != 1 || strings.Contains(stderr.String(), "\nlanded{") || strings.ContainsRune(stderr.String(), '\x1b') || !strings.Contains(stderr.String(), `unsafe\nlanded{forged=true}\u001b[31m`) {
 		t.Fatalf("hostile release result = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 }
 
 func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name  string
 		setup func(*testing.T, Creation)
@@ -183,6 +185,7 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			root := newWorktreeRepo(t)
 			home := filepath.Join(t.TempDir(), "bench-home")
 			request := "landed-hostile-" + tc.name
@@ -195,12 +198,11 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 			tc.setup(t, creation)
 			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 			calls := 0
-			oldLand := landReviewed
-			landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
+			j := defaultJoins()
+			j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
 				calls++
 				return landing.ReviewedResult{}, errors.New("unexpected landing")
 			}
-			t.Cleanup(func() { landReviewed = oldLand })
 			type outcome struct {
 				code        int
 				stdout, err string
@@ -208,7 +210,7 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 			done := make(chan outcome, 1)
 			go func() {
 				var stdout, stderr bytes.Buffer
-				code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+				code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 				done <- outcome{code: code, stdout: stdout.String(), err: stderr.String()}
 			}()
 			select {
@@ -224,6 +226,7 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 }
 
 func TestLandCommandProjectGreenOrderTable(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name           string
 		seedMarker     bool
@@ -235,6 +238,7 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 		{name: "concurrently-moved", seedMarker: true, moveAtAdvance: true, wantIncomplete: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			root := newWorktreeRepo(t)
 			home := filepath.Join(t.TempDir(), "bench-home")
 			creation := mustCreate(t, root, home, "landed-marker-"+tc.name, "marker order")
@@ -245,11 +249,10 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 			if tc.seedMarker {
 				gitRun(t, root, "update-ref", "refs/bench/green/main", base)
 			}
-			restore := stubLandJoins(t, base, tip)
-			defer restore()
-			releaseLandingAssignment = func(string, string, []string, io.Writer, io.Writer) int { return 0 }
+			j := stubLandJoins(base, tip)
+			j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 0 }
 			published := strings.Repeat("a", 40)
-			advanceLandingMarker = func(_ context.Context, gotRoot, branch, destination, expected string) error {
+			j.advanceLandingMarker = func(_ context.Context, gotRoot, branch, destination, expected string) error {
 				wantExpected := ""
 				if tc.seedMarker {
 					wantExpected = base
@@ -263,7 +266,7 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 				return nil
 			}
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, home, "", []string{"--request", "landed-marker-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+			code := landWith(j, root, home, "", []string{"--request", "landed-marker-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
 			if tc.wantIncomplete {
 				if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 					t.Fatalf("moved marker result = (%d, %q, %q)", code, stdout.String(), stderr.String())
@@ -276,6 +279,7 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 }
 
 func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name  string
 		setup func(*testing.T, string, Creation)
@@ -301,6 +305,7 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 		{name: "non-default-destination", setup: func(t *testing.T, root string, _ Creation) { gitRun(t, root, "switch", "-qc", "other") }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			request := "landed-pre-gate-" + tc.name
 			root := newWorktreeRepo(t)
 			home := filepath.Join(t.TempDir(), "bench-home")
@@ -313,18 +318,17 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 				tc.setup(t, root, creation)
 			}
 			calls := 0
-			oldLand := landReviewed
-			landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
+			j := defaultJoins()
+			j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
 				calls++
 				return landing.ReviewedResult{}, errors.New("unexpected landing")
 			}
-			t.Cleanup(func() { landReviewed = oldLand })
 			args := landArgs(request, base, tip, creation.Path)
 			if tc.args != nil {
 				args = tc.args(base, tip, creation)
 			}
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 1 || calls != 0 || !strings.HasPrefix(stdout.String(), "refused{detail=") || stderr.Len() != 0 {
+			if code := landWith(j, root, home, "", args, &stdout, &stderr); code != 1 || calls != 0 || !strings.HasPrefix(stdout.String(), "refused{detail=") || stderr.Len() != 0 {
 				t.Fatalf("pre-gate refusal = (%d, calls=%d, stdout=%q, stderr=%q)", code, calls, stdout.String(), stderr.String())
 			}
 		})
