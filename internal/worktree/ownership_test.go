@@ -12,6 +12,7 @@ import (
 )
 
 func TestPlanAutomaticRejectsEveryInvalidMarkerWithoutMutation(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		mutate func(*testing.T, string, string, Marker)
@@ -60,8 +61,8 @@ func TestPlanAutomaticRejectsEveryInvalidMarkerWithoutMutation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-			creation := mustCreate(t, root, Home(), "marker-"+tc.name, "marker validation")
+			home := filepath.Join(root, ".bench-home")
+			creation := mustCreate(t, root, home, "marker-"+tc.name, "marker validation")
 			markerFile, err := markerPath(creation.Path)
 			mustNoError(t, err)
 			valid := Marker{Schema: OwnerMarkerSchema, OwnerID: creation.Assignment.OwnerID, Path: creation.Path}
@@ -86,6 +87,7 @@ func TestPlanAutomaticRejectsEveryInvalidMarkerWithoutMutation(t *testing.T) {
 	}
 }
 func TestPlanAutomaticRequiresCompleteAssignmentJoin(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		mutate func(*testing.T, string, *intent.Assignment)
@@ -112,8 +114,8 @@ func TestPlanAutomaticRequiresCompleteAssignmentJoin(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-			creation := mustCreate(t, root, Home(), "assignment-"+tc.name, "assignment join")
+			home := filepath.Join(root, ".bench-home")
+			creation := mustCreate(t, root, home, "assignment-"+tc.name, "assignment join")
 			assignment := creation.Assignment
 			assignment.State = intent.StateCleanupPending
 			tc.mutate(t, root, &assignment)
@@ -127,8 +129,8 @@ func TestPlanAutomaticRequiresCompleteAssignmentJoin(t *testing.T) {
 	}
 	t.Run("complete", func(t *testing.T) {
 		root := newWorktreeRepo(t)
-		bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-		creation := mustCreate(t, root, Home(), "assignment-complete", "assignment join")
+		home := filepath.Join(root, ".bench-home")
+		creation := mustCreate(t, root, home, "assignment-complete", "assignment join")
 		assignment := creation.Assignment
 		assignment.State = intent.StateCleanupPending
 		mustNoError(t, intent.PutAssignment(root, assignment))
@@ -151,7 +153,7 @@ func writeAssignmentLedger(t *testing.T, root string, assignment intent.Assignme
 }
 func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	attempted, registered, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
 	oldAttempt := creationLockAttempt
 	creationLockAttempt = func(request string) { attempted <- request }
@@ -162,19 +164,19 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	}
 	results := make(chan result, 2)
 	go func() {
-		created, err := Create(root, "same-request", "same label", func(step LifecycleStep) error {
+		created, err := createAt(root, home, "same-request", "same label", func(step LifecycleStep) error {
 			if step == StepRegistration {
 				close(registered)
 				<-proceed
 			}
 			return nil
-		})
+		}, currentTime())
 		results <- result{created, err}
 	}()
 	<-attempted
 	<-registered
 	go func() {
-		created, err := Create(root, "same-request", "same label", nil)
+		created, err := createAt(root, home, "same-request", "same label", nil, currentTime())
 		results <- result{created, err}
 	}()
 	<-attempted
@@ -182,7 +184,7 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	first, second := <-results, <-results
 	requireTest(t, first.err == nil && second.err == nil && first.creation.Path == second.creation.Path && first.creation.Assignment.ID == second.creation.Assignment.ID,
 		"concurrent create = %#v/%v and %#v/%v", first.creation, first.err, second.creation, second.err)
-	_, err := Create(root, "same-request", "changed label", nil)
+	_, err := createAt(root, home, "same-request", "changed label", nil, currentTime())
 	requireTest(t, err != nil, "changed-label replay did not conflict")
 	assignments, err := intent.Assignments(root)
 	requireTest(t, err == nil && len(assignments) == 1 && strings.Count(gitOutput(t, root, "worktree", "list", "--porcelain"), "worktree ") == 2,
@@ -190,7 +192,11 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	start := make(chan struct{})
 	for _, request := range []string{"distinct-a", "distinct-b"} {
 		request := request
-		go func() { <-start; created, err := Create(root, request, request, nil); results <- result{created, err} }()
+		go func() {
+			<-start
+			created, err := createAt(root, home, request, request, nil, currentTime())
+			results <- result{created, err}
+		}()
 	}
 	close(start)
 	distinctA, distinctB := <-results, <-results
@@ -245,9 +251,9 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 	} {
 		t.Run("create-"+tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+			home := filepath.Join(root, ".bench-home")
 			fault := errors.New("fault after " + string(tc.step))
-			creation, err := Create(root, "fault-"+tc.name, "fault creation", func(got LifecycleStep) error {
+			creation, err := createAt(root, home, "fault-"+tc.name, "fault creation", func(got LifecycleStep) error {
 				if got == tc.step {
 					return fault
 				}
@@ -258,7 +264,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 					return errors.New("injected relock verification failure")
 				}
 				return nil
-			})
+			}, currentTime())
 			requireTest(t, errors.Is(err, fault) && creation.Path == "",
 				"Create = %#v, %v; want no returned path and injected error", creation, err)
 			registrations := gitOutput(t, root, "worktree", "list", "--porcelain")

@@ -109,13 +109,14 @@ func TestLifecycleAgeFactAdapterTranslatesLedgerStamp(t *testing.T) {
 // declared-allowance facts: undeclared residue reads undeclared, and the same
 // residue under a build-output declaration reads declared.
 func TestLifecycleIgnoredFactAdapterTranslatesDeclaration(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore build output")
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, Home(), "fa-ignored", "ignored declaration")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "fa-ignored", "ignored declaration")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
 	mustWrite(t, filepath.Join(creation.Path, "dist", "bench"), []byte("binary\n"), 0o755)
 

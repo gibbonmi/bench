@@ -13,13 +13,14 @@ import (
 )
 
 func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".logs/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore runtime records")
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, Home(), "runtime-eligibility", "runtime eligibility")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "runtime-eligibility", "runtime eligibility")
 	mustMkdirAll(t, filepath.Join(creation.Path, ".logs"), 0o755)
 	mustWrite(t, filepath.Join(creation.Path, ".logs", "gate.jsonl"), []byte("record\n"), 0o644)
 	plan, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{})

@@ -245,15 +245,15 @@ func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 // It must not report a zero it has no basis for.
 // That is the one state where the ambient count could disagree with what the verb would say.
 func TestResumeReportsAnUnreadablePoolRatherThanZero(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
-	bindEnv(t, "BENCH_HOME", home)
 	pool := filepath.Join(home, "worktrees")
 	mustMkdirAll(t, pool, 0o700)
 	mustNoError(t, os.Chmod(pool, 0o000))
 	t.Cleanup(func() { _ = os.Chmod(pool, 0o700) })
 
-	result, err := ConservativeCleanup(root)
+	result, err := conservativeCleanupAt(root, home, currentTime())
 	requireTest(t, err == nil, "resume failed over an unreadable pool: %v", err)
 	requireTest(t, result.PoolUnreadable != nil, "an unreadable pool reported no failure")
 	requireTest(t, result.ReclaimableKeys == 0, "an unreadable pool reported %d keys", result.ReclaimableKeys)

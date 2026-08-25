@@ -11,10 +11,11 @@ import (
 )
 
 func TestCreateStampsAssignment(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	before := time.Now().UTC().Truncate(time.Second)
-	creation := mustCreate(t, root, Home(), "stamped", "creation stamp")
+	creation := mustCreate(t, root, home, "stamped", "creation stamp")
 	after := time.Now().UTC()
 	stored, err := assignmentByID(root, creation.Assignment.ID)
 	mustNoError(t, err)
@@ -111,12 +112,13 @@ func TestPlanAutomaticLabelsOrphaned(t *testing.T) {
 }
 
 func TestPlanAutomaticKeepsEarlierRetainReason(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore")
-	creation := mustCreate(t, root, Home(), "orphan-residue", "ignored residue")
+	creation := mustCreate(t, root, home, "orphan-residue", "ignored residue")
 	commitInWorktree(t, creation.Path, "orphan.txt", "orphan\n", "orphan")
 	mustWrite(t, filepath.Join(creation.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	backdate(t, root, creation.Assignment, 8*24*time.Hour)

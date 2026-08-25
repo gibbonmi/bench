@@ -15,12 +15,12 @@ import (
 )
 
 func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
+	t.Parallel()
 	oldUmask := syscall.Umask(0)
 	t.Cleanup(func() { syscall.Umask(oldUmask) })
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 			t.Errorf("mode %s = %04o, want %04o", path, got, want)
 		}
 	}
-	assertMode(Pool(root), 0o700)
+	assertMode(poolAt(home, root), 0o700)
 	lease, err := LeaseFile(wt)
 	if err != nil {
 		t.Fatalf("LeaseFile: %v", err)
@@ -45,17 +45,17 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 }
 
 func TestAcquireTightensExistingPool(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
-	pool := Pool(root)
+	pool := poolAt(home, root)
 	if err := os.MkdirAll(pool, 0o777); err != nil {
 		t.Fatalf("mkdir loose pool: %v", err)
 	}
 	if err := os.Chmod(pool, 0o777); err != nil {
 		t.Fatalf("chmod loose pool: %v", err)
 	}
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}
@@ -73,8 +73,8 @@ func TestAcquireTightensExistingPool(t *testing.T) {
 // pool-minting fallback. With no default branch to start from, the first add is already
 // the HEAD one. So the mint still succeeds rather than spending its attempt twice.
 func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "master")
 	gitRun(t, root, "branch", "feature")
@@ -82,7 +82,7 @@ func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 		t.Fatalf("fixture default resolved to %q, want no resolvable default", ref)
 	}
 
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(root, "", "", home, currentTime())
 
 	if err != nil {
 		t.Fatalf("Acquire with an unresolvable default: %v", err)
@@ -95,9 +95,8 @@ func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 
 func TestAcquireContinuesWhenPoolTightenFails(t *testing.T) {
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
-	pool := Pool(root)
+	pool := poolAt(home, root)
 	old := chmodPool
 	called := false
 	chmodPool = func(path string, mode os.FileMode) error {
@@ -108,7 +107,7 @@ func TestAcquireContinuesWhenPoolTightenFails(t *testing.T) {
 		return os.Chmod(path, mode)
 	}
 	t.Cleanup(func() { chmodPool = old })
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire after pool chmod failure: %v", err)
 	}
@@ -268,6 +267,7 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 }
 
 func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
+	t.Parallel()
 	type fixture struct {
 		root     string
 		creation Creation
@@ -275,8 +275,8 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 	newFixture := func(t *testing.T) fixture {
 		t.Helper()
 		root := newWorktreeRepo(t)
-		bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-		creation, err := Create(root, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil)
+		home := filepath.Join(root, ".bench-home")
+		creation, err := createAt(root, home, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil, currentTime())
 		if err != nil {
 			t.Fatal(err)
 		}

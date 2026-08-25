@@ -31,6 +31,7 @@ func TestReleaseDeadLeaseRemovesAndCompacts(t *testing.T) {
 }
 
 func TestReleaseDeclaredBuildOutputRemoves(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
@@ -41,19 +42,20 @@ func TestReleaseDeclaredBuildOutputRemoves(t *testing.T) {
 	declaration, err := os.ReadFile(filepath.Join(repositoryRoot, ".bench", "build-outputs.json"))
 	mustNoError(t, err)
 	mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), declaration, 0o644)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, Home(), "landed-declared-output", "declared output")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "landed-declared-output", "declared output")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
 	mustWrite(t, filepath.Join(creation.Path, "dist", "bench"), []byte("binary\n"), 0o755)
 
 	var stdout bytes.Buffer
-	code := ReleaseCommand(root, Home(), []string{"--request", "landed-declared-output", creation.Path}, &stdout, io.Discard)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-declared-output", creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "declared-output release exit=%d stdout=%q", code, stdout.String())
 	_, statErr := os.Stat(creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "declared-output worktree remains: %v", statErr)
 }
 
 func TestReleaseBuildOutputContainmentRetainsUnknownResidue(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name  string
 		build func(*testing.T, string)
@@ -76,13 +78,13 @@ func TestReleaseBuildOutputContainmentRetainsUnknownResidue(t *testing.T) {
 			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore residue")
 			mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
 			mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"dist/\"]}\n"), 0o644)
-			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+			home := filepath.Join(root, ".bench-home")
 			request := "landed-containment-" + tc.name
-			creation := mustCreate(t, root, Home(), request, tc.name)
+			creation := mustCreate(t, root, home, request, tc.name)
 			tc.build(t, creation.Path)
 
 			var stderr bytes.Buffer
-			code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, io.Discard, &stderr)
+			code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, &stderr)
 			requireTest(t, code == 1 && strings.Contains(stderr.String(), "worktree retained (ignored)"),
 				"%s release exit=%d stderr=%q", tc.name, code, stderr.String())
 			_, statErr := os.Stat(creation.Path)
@@ -92,6 +94,7 @@ func TestReleaseBuildOutputContainmentRetainsUnknownResidue(t *testing.T) {
 }
 
 func TestBuildOutputDeclarationFailsClosed(t *testing.T) {
+	t.Parallel()
 	absent := ""
 	empty := "{\"schema\":1,\"paths\":[]}\n"
 	noNewline := "{\"schema\":1,\"paths\":[\"build output/\"]}"
@@ -129,15 +132,15 @@ func TestBuildOutputDeclarationFailsClosed(t *testing.T) {
 				mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
 				mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte(tc.declaration), 0o644)
 			}
-			bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+			home := filepath.Join(root, ".bench-home")
 			request := "landed-build-output-" + tc.name
-			creation := mustCreate(t, root, Home(), request, tc.name)
+			creation := mustCreate(t, root, home, request, tc.name)
 			residual := filepath.Join(creation.Path, filepath.FromSlash(tc.residual))
 			mustMkdirAll(t, filepath.Dir(residual), 0o755)
 			mustWrite(t, residual, []byte("output\n"), 0o600)
 
 			var stderr bytes.Buffer
-			code := ReleaseCommand(root, Home(), []string{"--request", request, creation.Path}, io.Discard, &stderr)
+			code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, &stderr)
 			requireTest(t, code == tc.wantCode, "%s release exit=%d stderr=%q", tc.name, code, stderr.String())
 			if tc.wantReason != "" {
 				requireTest(t, strings.Contains(stderr.String(), "worktree retained ("+tc.wantReason+")"),
@@ -152,27 +155,27 @@ func TestBuildOutputDeclarationFailsClosed(t *testing.T) {
 func TestResumeReconcilesDeadLeaseAndPreservesSafetyBranches(t *testing.T) {
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 
-	dead := mustCreate(t, root, Home(), "landed-resume-dead", "dead owner")
+	dead := mustCreate(t, root, home, "landed-resume-dead", "dead owner")
 	markPending(t, root, dead.Assignment)
 	deadLease, err := LeaseFile(dead.Path)
 	mustNoError(t, err)
 	mustWrite(t, deadLease, []byte(deadPidLine(t)), 0o600)
 
-	live := mustCreate(t, root, Home(), "landed-resume-live", "live owner")
+	live := mustCreate(t, root, home, "landed-resume-live", "live owner")
 	markPending(t, root, live.Assignment)
 	liveLease, err := LeaseFile(live.Path)
 	mustNoError(t, err)
 	mustWrite(t, liveLease, []byte(fmt.Sprintf("%d 2026-07-15T00:00:00Z\n", os.Getpid())), 0o600)
 
-	unlanded := mustCreate(t, root, Home(), "landed-resume-unlanded", "preserved work")
+	unlanded := mustCreate(t, root, home, "landed-resume-unlanded", "preserved work")
 	commitInWorktree(t, unlanded.Path, "unique.txt", "preserve\n", "unique work")
 	markPending(t, root, unlanded.Assignment)
 
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	requireTest(t, code == 0 && stderr.String() == "", "resume exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	want := "bench resume: removed 1, swept refs 0; retained live-lease=1 unmerged=1; pruned branches 0; reconciled 0; failed 0; open assignments 2\n"
 	requireTest(t, stdout.String() == want, "resume summary=%q want=%q", stdout.String(), want)

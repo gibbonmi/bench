@@ -29,16 +29,16 @@ func ledgerIDs(t *testing.T, root string) string {
 	return strings.Join(ids, ",")
 }
 
-func newSweepRepo(t *testing.T) string {
+func newSweepRepo(t *testing.T) (string, string) {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	return root
+	home := filepath.Join(root, ".bench-home")
+	return root, home
 }
 
-func mustSweep(t *testing.T, root string) ResumeResult {
+func mustSweep(t *testing.T, root, home string) ResumeResult {
 	t.Helper()
-	result, err := ConservativeCleanup(root)
+	result, err := conservativeCleanupAt(root, home, currentTime())
 	mustNoError(t, err)
 	return result
 }
@@ -49,12 +49,13 @@ func makeUnlandedAssignment(t *testing.T, creation Creation) {
 }
 
 func TestResumeSummaryNamesCleanCommand(t *testing.T) {
-	root := newSweepRepo(t)
-	orphan := mustCreate(t, root, Home(), "summary-clean-command", "aged, tree present")
+	t.Parallel()
+	root, home := newSweepRepo(t)
+	orphan := mustCreate(t, root, home, "summary-clean-command", "aged, tree present")
 	makeUnlandedAssignment(t, orphan)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
 
-	summary := renderResumeSummary(mustSweep(t, root))
+	summary := renderResumeSummary(mustSweep(t, root, home))
 	requireTest(t, strings.Contains(summary, cleanLineFor(orphan.Path)),
 		"summary names no retirement command for the orphan at %s:\n%s", orphan.Path, summary)
 	requireTest(t, strings.Contains(summary, "--apply"),
@@ -68,11 +69,12 @@ func TestResumeSummaryNamesCleanCommand(t *testing.T) {
 // A sweep that reads the plan's reason code therefore reports nothing for exactly the
 // population this listing exists for.
 func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
-	root := newSweepRepo(t)
+	t.Parallel()
+	root, home := newSweepRepo(t)
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "commit", "-qm", "ignore")
-	orphan := mustCreate(t, root, Home(), "summary-ignored-residue", "aged, ignored residue")
+	orphan := mustCreate(t, root, home, "summary-ignored-residue", "aged, ignored residue")
 	makeUnlandedAssignment(t, orphan)
 	mustWrite(t, filepath.Join(orphan.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
@@ -81,7 +83,7 @@ func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
 	mustNoError(t, err)
 	requireTest(t, plan.ReasonCode == ReasonIgnored, "fixture does not retain on ignored residue: reason %q", plan.ReasonCode)
 
-	summary := renderResumeSummary(mustSweep(t, root))
+	summary := renderResumeSummary(mustSweep(t, root, home))
 	requireTest(t, strings.Contains(summary, cleanLineFor(orphan.Path)),
 		"summary drops the orphan whose plan retains for an earlier reason:\n%s", summary)
 }
@@ -90,12 +92,13 @@ func TestResumeSummaryReportsOrphanWithIgnoredResidue(t *testing.T) {
 // whose request-less form orphans the assignment (FT93b).
 // That suggestion would manufacture the next generation of the residue this listing reports.
 func TestResumeSummaryNeverSuggestsDiscardIgnored(t *testing.T) {
-	root := newSweepRepo(t)
-	orphan := mustCreate(t, root, Home(), "summary-no-discard", "aged, tree present")
+	t.Parallel()
+	root, home := newSweepRepo(t)
+	orphan := mustCreate(t, root, home, "summary-no-discard", "aged, tree present")
 	makeUnlandedAssignment(t, orphan)
 	backdate(t, root, orphan.Assignment, 8*24*time.Hour)
 
-	summary := renderResumeSummary(mustSweep(t, root))
+	summary := renderResumeSummary(mustSweep(t, root, home))
 	requireTest(t, strings.Contains(summary, cleanLineFor(orphan.Path)),
 		"summary names no retirement command, so its wording is untested:\n%s", summary)
 	requireTest(t, !strings.Contains(summary, "--discard-ignored"),
@@ -108,15 +111,16 @@ func TestResumeSummaryNeverSuggestsDiscardIgnored(t *testing.T) {
 // A registration is not compacted while git is about to prune it, because that would
 // leave the ledger and the registration disagreeing.
 func TestSweepCompactsOrphanedActiveResidue(t *testing.T) {
-	root := newSweepRepo(t)
-	residue := mustCreate(t, root, Home(), "orphan-residue-gone", "aged, tree gone, unregistered")
-	prunable := mustCreate(t, root, Home(), "orphan-residue-prunable", "aged, tree gone, still registered")
+	t.Parallel()
+	root, home := newSweepRepo(t)
+	residue := mustCreate(t, root, home, "orphan-residue-gone", "aged, tree gone, unregistered")
+	prunable := mustCreate(t, root, home, "orphan-residue-prunable", "aged, tree gone, still registered")
 	backdate(t, root, residue.Assignment, 8*24*time.Hour)
 	backdate(t, root, prunable.Assignment, 8*24*time.Hour)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", residue.Path)
 	mustNoError(t, os.RemoveAll(prunable.Path))
 
-	result := mustSweep(t, root)
+	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 1, "Reconciled=%d, want 1", result.Reconciled)
 	if _, err := assignmentByID(root, residue.Assignment.ID); err == nil {
 		t.Fatal("orphaned residue record survived the sweep")
@@ -141,9 +145,10 @@ func unstamp(t *testing.T, root string, assignment intent.Assignment) {
 // Both verdicts for an aged record therefore have to hold for it: a record whose tree is
 // gone and unregistered is compacted; one whose tree is present is reported and left alone.
 func TestSweepHandlesPreStampLedgerRecords(t *testing.T) {
-	root := newSweepRepo(t)
-	present := mustCreate(t, root, Home(), "prestamp-present", "unstamped, tree present")
-	gone := mustCreate(t, root, Home(), "prestamp-gone", "unstamped, tree gone")
+	t.Parallel()
+	root, home := newSweepRepo(t)
+	present := mustCreate(t, root, home, "prestamp-present", "unstamped, tree present")
+	gone := mustCreate(t, root, home, "prestamp-gone", "unstamped, tree gone")
 	makeUnlandedAssignment(t, present)
 	makeUnlandedAssignment(t, gone)
 	unstamp(t, root, present.Assignment)
@@ -156,7 +161,7 @@ func TestSweepHandlesPreStampLedgerRecords(t *testing.T) {
 		"the fixture stamped a record, so it is not the pre-stamp shape:\n%s", body)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", gone.Path)
 
-	result := mustSweep(t, root)
+	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 1,
 		"Reconciled=%d, want 1: the unstamped tree-gone residue was not compacted", result.Reconciled)
 	if _, err := assignmentByID(root, gone.Assignment.ID); err == nil {
@@ -189,18 +194,19 @@ func denyStat(t *testing.T, dir string) {
 // worktree that is still on disk holding uncommitted work.
 // That is the one loss the sweep's tree-gone verdicts exist to avoid.
 func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
-	root := newSweepRepo(t)
-	unknown := mustCreate(t, root, Home(), "orphan-stat-unknown", "aged, tree present but unreadable")
+	t.Parallel()
+	root, home := newSweepRepo(t)
+	unknown := mustCreate(t, root, home, "orphan-stat-unknown", "aged, tree present but unreadable")
 	mustWrite(t, filepath.Join(unknown.Path, "work.txt"), []byte("uncommitted\n"), 0o644)
 	backdate(t, root, unknown.Assignment, 8*24*time.Hour)
 	unregisterWorktree(t, root, unknown.Path)
-	denyStat(t, Pool(root))
+	denyStat(t, poolAt(home, root))
 
 	_, statErr := os.Stat(unknown.Path)
 	requireTest(t, statErr != nil && !os.IsNotExist(statErr),
 		"the fixture does not induce an unknown stat (this user reads a 0o000 directory): %v", statErr)
 
-	result := mustSweep(t, root)
+	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 0, "Reconciled=%d, want 0: an unstattable tree is unknown, not gone", result.Reconciled)
 	if _, err := assignmentByID(root, unknown.Assignment.ID); err != nil {
 		t.Fatalf("the sweep compacted a record whose worktree it could not stat: %v", err)
@@ -217,8 +223,9 @@ func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
 // The state it names is one only the removed lifecycle produced.
 // The ref it points at is one the same run sweeps.
 func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
-	root := newSweepRepo(t)
-	preserved := mustCreate(t, root, Home(), "orphan-preserved", "aged, holds preserved work")
+	t.Parallel()
+	root, home := newSweepRepo(t)
+	preserved := mustCreate(t, root, home, "orphan-preserved", "aged, holds preserved work")
 	a := preserved.Assignment
 	ref := intent.RecoveryRefPrefix(a.OwnerID, a.ID) + "1"
 	recovery := []intent.Recovery{{Ref: ref, Root: strings.Repeat("a", 40), Payloads: []string{strings.Repeat("b", 40)}}}
@@ -233,7 +240,7 @@ func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
 	mustNoError(t, intent.PutAssignment(root, a))
 	requireTest(t, !orphaned(a, time.Now()), "an aged recovered record reads as orphaned")
 
-	result := mustSweep(t, root)
+	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 1, "Reconciled=%d, want 1", result.Reconciled)
 	if _, err := assignmentByID(root, a.ID); err == nil {
 		t.Fatal("a recovered record whose tree is gone survived the reconcile")
@@ -246,20 +253,21 @@ func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
 // The first sweep is the settling run — it compacts the residue and so legitimately
 // differs — and the two runs after it are the compared pair.
 func TestSweepIsIdempotent(t *testing.T) {
-	root := newSweepRepo(t)
-	present := mustCreate(t, root, Home(), "idempotent-orphan", "aged, tree present")
-	gone := mustCreate(t, root, Home(), "idempotent-residue", "aged, tree gone")
+	t.Parallel()
+	root, home := newSweepRepo(t)
+	present := mustCreate(t, root, home, "idempotent-orphan", "aged, tree present")
+	gone := mustCreate(t, root, home, "idempotent-residue", "aged, tree gone")
 	makeUnlandedAssignment(t, present)
 	makeUnlandedAssignment(t, gone)
 	backdate(t, root, present.Assignment, 8*24*time.Hour)
 	backdate(t, root, gone.Assignment, 8*24*time.Hour)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", gone.Path)
 
-	requireTest(t, mustSweep(t, root).Reconciled == 1, "settling sweep did not compact the residue")
+	requireTest(t, mustSweep(t, root, home).Reconciled == 1, "settling sweep did not compact the residue")
 
-	second := renderResumeSummary(mustSweep(t, root))
+	second := renderResumeSummary(mustSweep(t, root, home))
 	before := ledgerIDs(t, root)
-	third := renderResumeSummary(mustSweep(t, root))
+	third := renderResumeSummary(mustSweep(t, root, home))
 	after := ledgerIDs(t, root)
 
 	requireTest(t, second == third, "settled sweeps disagree:\nsecond:\n%s\nthird:\n%s", second, third)

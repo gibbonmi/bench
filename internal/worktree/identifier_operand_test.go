@@ -49,16 +49,16 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 // word can never grab a worktree another assignment also answers to.
 func TestPrefixOperandRefusals(t *testing.T) {
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	mustCreate(t, root, Home(), "req-prefix-a", "prefix-shared-a")
-	mustCreate(t, root, Home(), "req-prefix-b", "prefix-shared-b")
+	home := filepath.Join(t.TempDir(), "bench-home")
+	mustCreate(t, root, home, "req-prefix-a", "prefix-shared-a")
+	mustCreate(t, root, home, "req-prefix-b", "prefix-shared-b")
 	chdir(t, root)
 	for name, refusal := range map[string]struct{ target, reason string }{
 		"ambiguous": {"prefix-share", "target is ambiguous: " + strings.Join(ledgerOrderIDs(t, root), ", ")},
 		"too short": {"prefix-", "target is unassigned"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := PathCommand(root, Home(), []string{refusal.target}, &stdout, &stderr); code == 0 {
+		if code := PathCommand(root, home, []string{refusal.target}, &stdout, &stderr); code == 0 {
 			t.Fatalf("%s prefix %q resolved: %s", name, refusal.target, stdout.String())
 		}
 		if want := "bench worktree path: " + refusal.reason + "\n"; stderr.String() != want {
@@ -110,13 +110,11 @@ func resolverRefusalCases() []resolverRefusalCase {
 	return []resolverRefusalCase{
 		{name: "unassigned", setup: func(t *testing.T) (string, string, string) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 			return root, "no-such-target", "target is unassigned"
 		}},
 		{name: "ambiguous", setup: func(t *testing.T) (string, string, string) {
 			root := newWorktreeRepo(t)
 			home := filepath.Join(t.TempDir(), "bench-home")
-			bindEnv(t, "BENCH_HOME", home)
 			mustCreate(t, root, home, "req-collide-a", "collide-shared-a")
 			mustCreate(t, root, home, "req-collide-b", "collide-shared-b")
 			return root, "collide-shar", "target is ambiguous: " + strings.Join(ledgerOrderIDs(t, root), ", ")
