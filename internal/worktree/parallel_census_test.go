@@ -456,6 +456,19 @@ func TestQuiet(t *testing.T) {
 
 // --- live-tree pins ---
 
+// TestParallelCensusOnTheLiveTree proves every eligible test in the package
+// calls t.Parallel() and no serial test calls it. (Coverage row WF01.)
+func TestParallelCensusOnTheLiveTree(t *testing.T) {
+	t.Parallel()
+	reports, err := parallelCensus(".")
+	if err != nil {
+		t.Fatalf("census the package: %v", err)
+	}
+	if len(reports) != 0 {
+		t.Fatalf("the parallel census reports %d breaks:\n%s", len(reports), strings.Join(reports, "\n"))
+	}
+}
+
 // worktreeTestFloor is the package's pinned top-level test count. A new test
 // raises the count; a removal below the pin turns the gate red.
 const worktreeTestFloor = 334

@@ -18,6 +18,7 @@ var ambientReadPattern = regexp.MustCompile(`\b(os\.Getenv|os\.LookupEnv|os\.Get
 // adapter file, effects.go, owns every ambient read; commands resolve there once
 // and pass values down. (Coverage row EI1.)
 func TestEffectBoundaryCensus(t *testing.T) {
+	t.Parallel()
 	entries, err := os.ReadDir(".")
 	if err != nil {
 		t.Fatal(err)
@@ -67,6 +68,7 @@ func TestHarnessCensusRefusesChildStartOutsideHarness(t *testing.T) {
 // TestPoolAtExplicitHome proves the pool path derives from the injected home value
 // alone, with no environment read. (Coverage row EI1.)
 func TestPoolAtExplicitHome(t *testing.T) {
+	t.Parallel()
 	root := filepath.Join(string(filepath.Separator), "repos", "example")
 	a := poolAt(filepath.Join(string(filepath.Separator), "home-a"), root)
 	b := poolAt(filepath.Join(string(filepath.Separator), "home-b"), root)
@@ -80,6 +82,7 @@ func TestPoolAtExplicitHome(t *testing.T) {
 
 // TestPoolKeysDirAtExplicitHome proves the pool parent derives from the injected home.
 func TestPoolKeysDirAtExplicitHome(t *testing.T) {
+	t.Parallel()
 	home := filepath.Join(string(filepath.Separator), "elsewhere", ".bench")
 	if got, want := poolKeysDirAt(home), filepath.Join(home, "worktrees"); got != want {
 		t.Fatalf("poolKeysDirAt = %s, want %s", got, want)
@@ -89,6 +92,7 @@ func TestPoolKeysDirAtExplicitHome(t *testing.T) {
 // TestLeaseLineExplicitTime proves the lease record carries the injected instant,
 // not an ambient clock read.
 func TestLeaseLineExplicitTime(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 8, 23, 10, 30, 0, 0, time.FixedZone("plus2", 2*3600))
 	line := string(leaseLine(now))
 	if !strings.Contains(line, now.UTC().Format(leaseTimeLayout)) {

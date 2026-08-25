@@ -52,6 +52,7 @@ func TestReauthorizeCommandGrammarKeepsFlagValuesOutOfPath(t *testing.T) {
 }
 
 func TestReauthorizeCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
+	t.Parallel()
 	for _, args := range [][]string{
 		{"--request", "r", "--base", "b", "--source-tip", "s", "path"},
 		{"--assignment", "a", "--base", "b", "--source-tip", "s", "path"},

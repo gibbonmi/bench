@@ -104,6 +104,7 @@ func testRunBinary(t *testing.T) string {
 // same identity. A per-journey builder increments more than once, or yields a second
 // path, and this test goes red.
 func TestDirectRunBuildsAndSealsOneExecutableForAllJourneys(t *testing.T) {
+	t.Parallel()
 	builds := 0
 	selector := &testRunSelector{
 		inherited: func() (string, bool) { return "", false },
@@ -134,6 +135,7 @@ func TestDirectRunBuildsAndSealsOneExecutableForAllJourneys(t *testing.T) {
 // consumption returns one identity, and the selected executable carries an adjacent
 // freshness seal, whether inherited from the gate or built by the direct-run owner.
 func TestPackageSelectionIsSealedAndStable(t *testing.T) {
+	t.Parallel()
 	first := testRunBinary(t)
 	second := testRunBinary(t)
 	requireTest(t, first == second, "package selection = %q then %q, want one identity", first, second)
@@ -146,6 +148,7 @@ func TestPackageSelectionIsSealedAndStable(t *testing.T) {
 // private builder never invoked. A private fallback build changes the counter even when
 // every journey stays green.
 func TestInheritedSelectionReachesJourneysUnchangedWithZeroBuilds(t *testing.T) {
+	t.Parallel()
 	sealed := testRunBinary(t)
 	builds := 0
 	selector := &testRunSelector{
@@ -169,6 +172,7 @@ func TestInheritedSelectionReachesJourneysUnchangedWithZeroBuilds(t *testing.T) 
 // seal-less inherited executable refuses before any journey starts: the journey-start
 // counter stays zero and the private builder stays cold.
 func TestInvalidSelectionRefusesBeforeAnyJourney(t *testing.T) {
+	t.Parallel()
 	sealed := testRunBinary(t)
 	sealedBytes, err := os.ReadFile(sealed)
 	requireTest(t, err == nil, "read sealed executable: %v", err)

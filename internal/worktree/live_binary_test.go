@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
@@ -39,6 +40,19 @@ func captureLiveBinaryWarnings(t *testing.T) *bytes.Buffer {
 	liveBinaryWarnings = buffer
 	t.Cleanup(func() { liveBinaryWarnings = previous })
 	return buffer
+}
+
+// liveBinaryStubs guards the two process-global stub points, resolveRunningBinary
+// and liveBinaryWarnings.
+var liveBinaryStubs sync.Mutex
+
+// holdLiveBinaryStubs takes the stub points for one test and releases them when
+// the test ends. Only a parallel test needs the hold, because a parallel test
+// resumes after the last serial test in the package.
+func holdLiveBinaryStubs(t *testing.T) {
+	t.Helper()
+	liveBinaryStubs.Lock()
+	t.Cleanup(liveBinaryStubs.Unlock)
 }
 
 // stubRunningBinary answers the guard's "which binary did the wrapper resolve" question
@@ -83,6 +97,8 @@ func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 // silently" is exactly the incident this guard exists to prevent. No fixture reaches
 // them through ReleaseCommand, whose stub always resolves.
 func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
+	t.Parallel()
+	holdLiveBinaryStubs(t)
 	candidate := filepath.Join(t.TempDir(), "bench")
 	mustWrite(t, candidate, []byte("binary\n"), 0o755)
 
@@ -116,6 +132,8 @@ func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
 // EvalSymlinks normalization and os.Stat following the link. So no single mutation
 // reddens this. It pins the behavior, not either mechanism.
 func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
+	t.Parallel()
+	holdLiveBinaryStubs(t)
 	dir := t.TempDir()
 	real := filepath.Join(dir, "bench")
 	mustWrite(t, real, []byte("binary\n"), 0o755)

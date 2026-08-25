@@ -56,10 +56,17 @@ func journeyRepoOnBranch(t testing.TB, branch string) string {
 	return gittest.RepoOnBranch(t, branch)
 }
 
+// journeyStubGit installs the file-backed git stub on the process PATH. It
+// binds the PATH through bindEnv, not through gittest.StubGit, so the effect
+// log records the environment bind and the parallel census sees the edge: every
+// caller is serial by construction. A caller that only needs the stub for one
+// child process wants gittest.StubGitDir through its own child environment.
 func journeyStubGit(t testing.TB, root, mode, logPath string) string {
 	t.Helper()
 	recordJourneyEffect(t, "descendant-stub", "git mode "+mode)
-	return gittest.StubGit(t, root, mode, logPath)
+	dir, commonDir := gittest.StubGitDir(t, root, mode, logPath)
+	bindEnv(t, "PATH", dir)
+	return commonDir
 }
 
 func journeyFIFOWorktreeAdmin(t testing.TB, root, id string) string {
@@ -167,13 +174,15 @@ var outsideHarnessEffect = regexp.MustCompile(`\b(exec\.Command|exec\.CommandCon
 // current directory. Those effects route through the harness, which records
 // them. (Coverage row EI1.)
 func TestSerialJourneyHarnessCensus(t *testing.T) {
-	entries, err := os.ReadDir(".")
+	t.Parallel()
+	// The walk is parseTestFiles, which the parallel census also uses, so the
+	// two censuses see the same file set and the same special-file skip.
+	_, _, names, err := parseTestFiles(".")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() || !strings.HasSuffix(name, "_test.go") || journeyHarnessFiles[name] {
+	for _, name := range names {
+		if journeyHarnessFiles[name] {
 			continue
 		}
 		data, err := os.ReadFile(name)
@@ -195,6 +204,7 @@ func TestSerialJourneyHarnessCensus(t *testing.T) {
 // TestJourneyHarnessRecordsStarts proves the harness records a repository start
 // and a descendant start under the starting test's name. (Coverage row EI1.)
 func TestJourneyHarnessRecordsStarts(t *testing.T) {
+	t.Parallel()
 	before := len(journeyEffectLog())
 	newWorktreeRepo(t)
 	log := journeyEffectLog()[before:]

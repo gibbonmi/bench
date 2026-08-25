@@ -127,6 +127,7 @@ func residueOrigins(entry string) ([]string, error) {
 }
 
 func TestPackageHomeIsPrivate(t *testing.T) {
+	t.Parallel()
 	home := os.Getenv("BENCH_HOME")
 	requireTest(t, home == privateBenchHome, "BENCH_HOME = %q, want the private home %q", home, privateBenchHome)
 	info, err := os.Stat(home)
@@ -148,6 +149,7 @@ func TestPackageHomeIsPrivate(t *testing.T) {
 }
 
 func TestHomeResidueListsLeakedWorktreesWithOrigin(t *testing.T) {
+	t.Parallel()
 	origin := filepath.Join(t.TempDir(), "TestReauthorizeSomething1234", "001")
 	leaked := t.TempDir()
 	mustMkdirAll(t, filepath.Join(leaked, "worktrees", "001-1", "abcdef"), 0o755)
@@ -207,6 +209,7 @@ func withinDir(parent, path string) bool {
 }
 
 func TestWithinDir(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		parent, path string
 		want         bool
