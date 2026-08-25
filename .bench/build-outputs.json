@@ -1,4 +1,9 @@
 {
   "schema": 1,
-  "paths": ["dist/", ".claude/scheduled_tasks.lock", ".claude/settings.local.json"]
+  "paths": [
+    "dist/",
+    ".claude/scheduled_tasks.lock",
+    ".claude/settings.local.json",
+    "bin/bench-broker.manifest"
+  ]
 }

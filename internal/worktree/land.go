@@ -1,4 +1,4 @@
-// First-run flow for the worktree landing command: grammars, injectable seams, and the rebuild-and-rerun path.
+// First-run flow for the worktree landing command: grammars, injectable seams, and the stable-owner proofs.
 package worktree
 
 import (
@@ -7,16 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/preflight"
-	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -62,20 +59,20 @@ var releaseLandingAssignment = ReleaseCommand
 
 var authorizeLandingSource = preflight.AuthorizeReviewedSource
 
-var verifyLandingExecutable = freshness.Verify
+// reviewedRangeDetail names the refusal a `--base` outside the assignment's reviewed
+// range carries.
+const reviewedRangeDetail = "review base is outside the assignment's reviewed range"
 
-var rebuildLandingExecutable = runbinary.Build
-
-var reexecLanding = syscall.Exec
-
-// rebuiltLandingEnv marks a landing process that a stale executable already rebuilt
-// and re-ran once. A second stale verdict under it is the owner's refusal, never
-// another rebuild, so a build that cannot reach freshness cannot loop.
+// rebuiltLandingEnv survives only for the retired rebuild guard in effects.go; the
+// stable owner never rebuilds or re-executes a landing, so nothing sets it.
 const rebuiltLandingEnv = "BENCH_LANDING_REBUILT"
 
 // LandCommand is the first-run reviewed-source landing operation. It performs every
-// reversible proof before the exact-tree owner receives authority to publish.
-func LandCommand(root, executable string, args []string, stdout, stderr io.Writer) int {
+// reversible proof before the exact-tree owner receives authority to publish. The
+// invoked process is the one promotion owner for the complete landing: it never
+// consults, rebuilds, or re-executes a repository executable, so candidate landing
+// code cannot run during its own promotion.
+func LandCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 	if hasResumeFlag(args) {
 		return ResumeLandCommand(root, args, stdout, stderr)
 	}
@@ -87,18 +84,6 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 	path, err := canonicalPath(resolveVerbOperand(root, parsed.Positionals[0]))
 	if err != nil {
 		return landRefusal(stdout, "worktree path is not canonical")
-	}
-	// A stale executable enforces whatever landing contract it was built with, so its own
-	// freshness is proven before any repository proof. A stale one is rebuilt through the
-	// sanctioned build and the landing re-runs under the fresh binary; only a rebuild that
-	// still fails the proof surfaces the owner's message, which carries the remedy.
-	if freshness.DeclaresBuildInputs(root) {
-		if err := verifyLandingExecutable(root, executable); err != nil {
-			if landingAlreadyRebuilt() {
-				return landRefusal(stdout, err.Error())
-			}
-			return rebuildAndRerunLanding(root, args, err, stdout, stderr)
-		}
 	}
 	base := expandIdentity(root, parsed.Flags["--base"])
 	tip := expandIdentity(root, parsed.Flags["--source-tip"])
@@ -116,6 +101,17 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 		refusals = append(refusals, err)
 	} else if source, err = landingSource(root, assignment, base, tip, parsed.Flags["--spec"]); err != nil {
 		refusals = append(refusals, err)
+	} else if !git.OK("-C", root, "merge-base", "--is-ancestor", assignment.Start, source.base) {
+		// The review base binds to the assignment's recorded start or to a descendant
+		// of it. The destination advances while an assignment is open, so a landing
+		// rebases forward and names the moved base; a base behind the recorded start
+		// instead grades a range the assignment never authorized. `--is-ancestor`
+		// accepts the recorded start itself, which is the unmoved case.
+		refusals = append(refusals, identityRefusal(source.base, assignment.Start, reviewedRangeDetail))
+	} else if destination != "" && !git.OK("-C", root, "merge-base", "--is-ancestor", source.base, destination) {
+		// The review base binds before composition: a base outside the destination's
+		// history grades a range the destination never reviewed against.
+		refusals = append(refusals, identityRefusal(source.base, destination, "review base is not an ancestor of the landing destination"))
 	}
 	if len(refusals) > 0 {
 		for _, err := range refusals {
@@ -124,6 +120,9 @@ func LandCommand(root, executable string, args []string, stdout, stderr io.Write
 		return 1
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
+	if notice := brokerChangeNotice(assignment.Worktree, source.base, source.tip); notice != "" {
+		fmt.Fprintln(stderr, notice)
+	}
 	result, err := landReviewed(context.Background(), landing.ReviewedRequest{
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
@@ -164,18 +163,31 @@ func hasResumeFlag(args []string) bool {
 	return usage.FlagPresent(landGrammar, args, "--resume")
 }
 
-// rebuildAndRerunLanding republishes the repository's own Bench executable through the
-// sanctioned build and replaces this process with the fresh binary running the same
-// landing. The marker environment bounds this to one rebuild per landing attempt.
-func rebuildAndRerunLanding(root string, args []string, cause error, stdout, stderr io.Writer) int {
-	fresh := filepath.Join(root, "dist", "bench")
-	if err := rebuildLandingExecutable(context.Background(), root, fresh); err != nil {
-		return landRefusal(stdout, cause.Error()+"; rebuild failed: "+err.Error())
+// brokerChangeNotice names the install step when the reviewed diff changes the
+// promotion broker's own build inputs. Source publication cannot replace the broker's
+// authority: the installed broker keeps landing until the release or repair path
+// installs the new one. An unresolvable input set reports nothing; the landing itself
+// stays under the installed owner either way.
+func brokerChangeNotice(worktree, base, tip string) string {
+	if !freshness.DeclaresBuildInputs(worktree) {
+		return ""
 	}
-	fmt.Fprintf(stderr, "landing executable was stale; rebuilt %s and re-ran the landing under it\n", fresh)
-	argv := append([]string{fresh, "worktree", "land"}, args...)
-	if err := reexecLanding(fresh, argv, append(os.Environ(), rebuiltLandingEnv+"=1")); err != nil {
-		return landRefusal(stdout, cause.Error()+"; re-run failed: "+err.Error())
+	inputs, err := freshness.BuildInputs(worktree)
+	if err != nil {
+		return ""
 	}
-	return landRefusal(stdout, "rebuilt landing executable did not take over the process")
+	names, err := git.Output("-C", worktree, "diff", "--name-only", base, tip)
+	if err != nil {
+		return ""
+	}
+	changed := map[string]struct{}{}
+	for _, name := range strings.Split(names, "\n") {
+		changed[name] = struct{}{}
+	}
+	for _, input := range inputs {
+		if _, ok := changed[input]; ok {
+			return "landing changes the promotion broker source; the installed broker keeps authority until 'bench repair' or the release install publishes the new broker"
+		}
+	}
+	return ""
 }

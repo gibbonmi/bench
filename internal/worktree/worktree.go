@@ -531,21 +531,28 @@ func hexIdentity(value string) bool {
 	return true
 }
 
+var createGrammar = usage.Grammar{
+	Cmd:  "bench worktree create",
+	Help: "usage: " + usage.WorktreeCreate,
+	Flags: []usage.Flag{
+		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--label", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--refresh", HasValue: false},
+	},
+}
+
 func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
-	var request, label string
-	args, startRef := refreshop.Consume(root, args, stdout)
-	for len(args) > 0 {
-		if len(args) < 2 || (args[0] != "--request" && args[0] != "--label") {
-			fmt.Fprintln(stderr, "usage: "+usage.WorktreeCreate)
-			return 2
+	parsed, line, code := usage.Parse(createGrammar, args)
+	if line != "" {
+		if code == 0 {
+			fmt.Fprintln(stdout, line)
+			return 0
 		}
-		if args[0] == "--request" {
-			request = args[1]
-		} else {
-			label = args[1]
-		}
-		args = args[2:]
+		fmt.Fprintln(stderr, line)
+		return code
 	}
+	_, startRef := refreshop.Consume(root, args, stdout)
+	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
 	creation, err := createAt(root, request, label, nil, currentTime(), startRef)
 	if err != nil {
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)

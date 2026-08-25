@@ -43,6 +43,19 @@ works on any branch. This line only states the binding.)
   destination permits the three exact ignored local-capture files without
   treating the broader `capture/` tree as disposable residue.
 
+  One installed promotion broker owns the complete landing. The wrapper
+  authenticates that broker through the installation manifest, and its land
+  route honors no inherited routing override. The broker composes the exact
+  prospective tree in private temporary storage. It builds the gate executable
+  from that same tree, and it takes the phase schedule from the destination. It alone
+  accepts the gate evidence and updates the destination ref, and resume stays
+  under the same owner.
+
+  Prospective gate evidence keys to the graded tree and to the baseline runner
+  identity, so a retry reuses green evidence only when both are unchanged. A
+  broker source change becomes active only after `bench repair` or a release
+  install publishes the new broker.
+
   `bench commit` formats changed Go files inside its named ownership fence
   before it composes and gates the prospective tree. It leaves unnamed files
   and every dry-run checkout byte unchanged.
@@ -280,6 +293,10 @@ conformance entry point, so the registry's checks run inside the oracle rather t
 under `prep-release`. The phase materializes that environment on the same terms as race
 and system — kit-only, and only where the entry test is declared. So a linked repo stays
 unaffected.
+
+A prospective gate takes its phase manifest from the landing destination, which the
+broker names in `BENCH_GATE_BASELINE`. A named baseline the run cannot read refuses;
+it never falls back to the tree under grade. Phase children do not inherit that name.
 
 There is no separate contract or conformance dev driver, per-package loop, nested Go test, fixture-executing
 canary phase, component partition, or stripped-subject phase schedule. An

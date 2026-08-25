@@ -25,7 +25,9 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT238 (MEDIUM) — hygiene batch: worktree-path ergonomics, two `bench commit` gaps, the heredoc guard gap, a run-binary glossary term, and the phase-close capture-batch rule.**
+**FT251 (MEDIUM) — a killed landing orphans the private prospective tree and its gate binary.**
+
+**FT252 (MEDIUM) — a Bench verb moves a retained worktree, or a sibling assignment, onto a new base.**
 
 **FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
 
@@ -97,8 +99,6 @@ means the repository-controlled compliance assessment.
 
 **FT244 (LOW) — a standard scratch directory for worktree runs.**
 
-**FT245 (LOW) — partial gate output is progress, not a process boundary.**
-
 **FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
@@ -135,11 +135,9 @@ means the repository-controlled compliance assessment.
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
-**FT250 (LOW) — the phase-close capture step names the prose bound.**
-
 ## False greens — verdicts that credit unchecked work
 
-Five rows share one failure class: a green whose warrant is missing. The
+Four rows share one failure class: a green whose warrant is missing. The
 missing warrant is a stale binary, a dead or skipping citation, a vacuous
 baseline, an unchecked absence, or a dependency edge nothing resolves. Each
 hardens a different oracle surface. They stay separate builds, but they read
@@ -150,8 +148,6 @@ and prioritize as one theme.
 **FT174 (MEDIUM) — ticket files have one enforced dependency, ownership, and mutation grammar.**
 
 **FT177 (MEDIUM) — a stale `dist/bench` makes contract-test mutation probes silent no-ops.**
-
-**FT103 (LOW) — existence-checked absence evidence: the gate half.**
 
 **FT201 (LOW) — production cancel-signal registrations conform to one source.**
 
@@ -297,5 +293,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT238: the hygiene batch; worktree assignments retain and print their request token, and every piece is a light-path ticket.
-2. `/bench-write-spec` — FT248: a Bash guard denies a shell follow-on appended to a `bench` command; today the rule is prose only.
+1. `/bench-implement-spec` — FT248: the shell follow-on guard; the spec and its three tickets sit in worktree `ft248-write-spec`, tickets 01 and 03 committed, ticket 02 in progress.
+2. `/bench-write-spec` — FT224: a lifecycle refusal names the component that failed and the command that fixes it; eight occurrences, no decision open.
+3. `/bench-shape-idea` — FT215: the scoped gate path; two new faces (gofmt before the full gate, and evidence reuse) price the same decision.

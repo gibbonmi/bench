@@ -428,18 +428,31 @@ func runAXICommandAsAt(t *testing.T, cwd, executable string, argv []string) axiC
 	return axiCommandResult{stdout: stdout.String(), stderr: stderr.String(), code: code}
 }
 
-// TestWorktreeLandVerifiesTheInvokedExecutable drives the real dispatcher in a repository
-// that declares Go build inputs. The landing's freshness proof runs and names the
-// executable it was given. A closure that forwarded a literal or an empty path would
-// verify a different file and never name the sentinel.
-func TestWorktreeLandVerifiesTheInvokedExecutable(t *testing.T) {
+// TestWorktreeLandNeverConsultsTheInvokedExecutable drives the real dispatcher in a
+// repository that declares Go build inputs. The stable-owner landing runs entirely
+// under the invoked process: the registry seam must hand the landing no executable
+// proof, so the refusals are repository proofs, the sentinel is never named, and the
+// planted executable never runs. A dispatcher that reintroduced the verification or
+// rebuild path would name or execute the sentinel and go red here.
+func TestWorktreeLandNeverConsultsTheInvokedExecutable(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "scripts", "go-build.inputs"), "build_script=scripts/go-build.sh\n")
+	ran := filepath.Join(t.TempDir(), "sentinel-ran")
 	sentinel := filepath.Join(t.TempDir(), "invoked-bench")
+	writeAXIFixture(t, sentinel, "#!/bin/sh\n: > "+ran+"\n")
+	if err := os.Chmod(sentinel, 0o755); err != nil {
+		t.Fatal(err)
+	}
 	argv := []string{"worktree", "land", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "land", root}
 	result := runAXICommandAsAt(t, root, sentinel, argv)
-	if result.code != 1 || result.stderr != "" || !strings.HasPrefix(result.stdout, "refused{detail=") || !strings.Contains(result.stdout, sentinel) {
-		t.Fatalf("land = stdout=%q stderr=%q exit=%d, want a refusal naming %s", result.stdout, result.stderr, result.code, sentinel)
+	if result.code != 1 || result.stderr != "" || !strings.HasPrefix(result.stdout, "refused{detail=") {
+		t.Fatalf("land = stdout=%q stderr=%q exit=%d, want repository-proof refusals", result.stdout, result.stderr, result.code)
+	}
+	if strings.Contains(result.stdout, sentinel) || strings.Contains(result.stdout, "untrusted") {
+		t.Fatalf("land consulted the invoked executable: %q", result.stdout)
+	}
+	if _, err := os.Stat(ran); !os.IsNotExist(err) {
+		t.Fatalf("land executed the invoked repository executable: %v", err)
 	}
 }
 
@@ -453,6 +466,7 @@ var keptRoutes = []struct {
 	help string
 }{
 	{[]string{"worktree", "--help"}, "usage: bench worktree"},
+	{[]string{"worktree", "create", "--help"}, "usage: bench worktree create"},
 	{[]string{"worktree", "reauthorize", "--help"}, "usage: bench worktree reauthorize"},
 	{[]string{"gate", "--help"}, "usage: bench gate"},
 	{[]string{"commit", "--help"}, "usage: bench commit"},
