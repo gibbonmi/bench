@@ -12,6 +12,14 @@ log. Provider-specific evidence lives in `open-ai-models.md` and
   Leave an uninvolved provider unchanged.
 - Replace the provider's last-incorporated-landing line and rewrite affected rows
   in place.
+- Write `observed quality` as one or two sentences that restate this landing's
+  summary for that model, effort, and role. Replace the previous text; do not
+  append to it.
+- Rewrite `## Current decisions` in full on every run. Keep a decision that still
+  steers routing, drop one a later run or the tree superseded, and add one this
+  landing earned.
+- Write every sentence in ASD-STE100; the reference is
+  `.agents/skills/bench-craft-spec/references/ste-prose.md`.
 - Aggregate at most the latest 10 comparable assignments per model/effort/role.
 - Keep at most 6 routing rows and 5 representative-evidence rows per provider.
 - Replace the least decision-relevant evidence when a stronger example arrives.

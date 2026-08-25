@@ -120,6 +120,11 @@ last-incorporated-landing line and fold the new evidence into affected aggregate
 leave an uninvolved provider unchanged. Completion means you accounted for
 every participating model/effort/role without a per-run diary row.
 
+Write each affected `observed quality` cell as one or two sentences that
+restate this landing for that row, and replace the old text. Rewrite
+`## Current decisions` in full. Write every sentence in ASD-STE100; the README
+owns the rest of the shape.
+
 These files are pending capture for `/bench-drain`, not
 a second roadmap. Do not run another gate or commit just to capture the retro.
 The successful landing boundary is already the verdict. The retro leaves
