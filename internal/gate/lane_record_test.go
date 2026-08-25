@@ -71,6 +71,29 @@ func TestRunLaneRecordsItsOwnFileOnly(t *testing.T) {
 	}
 }
 
+// A lane whose check outlives the gate timeout returns an error and writes no lane
+// record: a record of a partial run would carry an outcome no check ever reached.
+func TestRunLaneTimeoutWritesNoRecord(t *testing.T) {
+	root := outcomeFixture(t)
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+
+	previousTimeout := gateTimeout
+	gateTimeout = 100 * time.Millisecond
+	t.Cleanup(func() { gateTimeout = previousTimeout })
+
+	_, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Lane: "benchkit",
+		Checks: []Phase{{Name: "slow", Argv: []string{"sleep", "5"}}},
+	})
+	if err == nil {
+		t.Fatal("RunLane returned no error on a check that outlived the gate timeout")
+	}
+	if _, statErr := os.Stat(filepath.Join(gitdir, laneRecordFile)); !os.IsNotExist(statErr) {
+		t.Fatalf("the timed-out lane wrote a record (stat err %v)", statErr)
+	}
+}
+
 // OG19: Inspect names the lane class and never calls a lane pass reusable green.
 func TestInspectRefusesALaneRecord(t *testing.T) {
 	root := outcomeFixture(t)

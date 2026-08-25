@@ -242,6 +242,25 @@ func TestLaneDryRunStatesTheOutcomeAndPublishesNothing(t *testing.T) {
 	}
 }
 
+// OG04, OG10, OG11: a dry run takes the lane's fail authority the same as a real run. A
+// failing check exits 1, names the check, and leaves the branch ref unchanged.
+func TestLaneDryRunFailRefusesNamingTheCheckAndLeavesTheRefUnchanged(t *testing.T) {
+	root, before := laneRepo(t, 1, noWrite)
+	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
+
+	code, stdout, stderr := runCommand(t, root, "--dry-run", "-m", "m", "a.txt")
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stdout, "lane{outcome=fail,check=check}") {
+		t.Errorf("stdout = %q, want the lane fail record naming the failing check", stdout)
+	}
+	if after := head(t, root); after != before {
+		t.Fatalf("the branch ref moved from %s to %s on a dry-run lane fail", before, after)
+	}
+}
+
 // OG23: a root that declares no lane keeps today's whole-project gate at the commit. The
 // evidence is the tally the gate script writes and the published commit, which the gate
 // authority publishes only on green. The fixture's gate is a script, and the script route
