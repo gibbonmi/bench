@@ -123,6 +123,19 @@ func TestSpecUsageNamesTheSurvivingSubcommands(t *testing.T) {
 	}
 }
 
+func TestSpecHelpPrintsThePublicSubcommandInventory(t *testing.T) {
+	const want = "usage: bench spec <subcommand>\n\nsubcommands:\n  retire <slug>\n  history <slug>\n"
+	for _, arg := range []string{"--help", "-h"} {
+		out, code := Command([]string{arg})
+		if code != 0 {
+			t.Fatalf("Command(%q) code = %d, want 0; out = %q", arg, code, out)
+		}
+		if out != want {
+			t.Errorf("Command(%q) out = %q, want %q", arg, out, want)
+		}
+	}
+}
+
 func TestResolveConvention(t *testing.T) {
 	dir := t.TempDir()
 	slugPath := writeSpec(t, dir, "mine", "Status: staged\n")

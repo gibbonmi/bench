@@ -259,9 +259,9 @@ func deriveImplemented(content []byte) ([]byte, int) {
 	return bytes.Join(lines, []byte("\n")), matches
 }
 
-// Command implements `bench spec <subcommand> <slug>`. `retire` deletes a merged spec
-// and its review pickup. `history` reports the commits that retired or deleted it — a
-// read-only AXI query; see history.go.
+// Command implements `bench spec <subcommand> <slug>`. Its help lists `retire` and
+// `history`. `retire` deletes a merged spec and its review pickup. `history` reports the
+// commits that retired or deleted it — a read-only AXI query; see history.go.
 //
 // The slug's specs/<slug>/spec.md fallback is anchored at the repo root, so it
 // resolves from any cwd inside the repo, while a path argument stays cwd-relative. A
@@ -273,6 +273,8 @@ func Command(args []string) (string, int) {
 		return toon.Usage("bench spec", "expected a subcommand: retire, history") + "\n", 2
 	}
 	switch args[0] {
+	case "-h", "--help":
+		return "usage: bench spec <subcommand>\n\nsubcommands:\n  retire <slug>\n  history <slug>\n", 0
 	case "retire":
 		return retireCommand(args[1:])
 	case "history":
