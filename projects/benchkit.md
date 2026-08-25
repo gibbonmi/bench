@@ -296,7 +296,7 @@ full grade.
 | `gofmt` | `bench gate-go gofmt` |
 | `prose` | `bench gate-prose <root> -- <named Markdown>` |
 | `vet` | `go vet ./...` |
-| `build` | `go build ./...` |
+| `build` | `go build -buildvcs=false ./...` |
 
 Go owns package scheduling inside the one ordinary test driver, and that driver grades
 the live tree: the `test` phase carries the graded root and the dev tier to the

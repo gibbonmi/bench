@@ -1,6 +1,8 @@
 package gate
 
 import (
+	"context"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -15,7 +17,7 @@ func TestBenchkitLaneTable(t *testing.T) {
 		{Name: "gofmt", Argv: []string{runBinaryArgvToken, "gate-go", "gofmt"}},
 		{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose", "/repo", "--", LaneNamedMarkdownToken}},
 		{Name: "vet", Argv: []string{"go", "vet", "./..."}},
-		{Name: "build", Argv: []string{"go", "build", "./..."}},
+		{Name: "build", Argv: []string{"go", "build", disableBuildVCS, "./..."}},
 	}
 	if !reflect.DeepEqual(lane, want) {
 		t.Fatalf("kit lane = %+v, want %+v", lane, want)
@@ -128,6 +130,36 @@ func TestResolveLane(t *testing.T) {
 	}
 	if len(empty.Argv) != 4 {
 		t.Errorf("prose argv = %v, want the four leading elements only", empty.Argv)
+	}
+}
+
+// The defect behind the kit lane's build check. Go's VCS discovery treats a linked
+// worktree's `.git` file as no root, walks up, and adopts any `.git` directory above the
+// temporary checkout. Git refuses that directory, so the build fails with "error
+// obtaining VCS status". The build carries -buildvcs=false, so a stray directory above
+// TMPDIR grades nothing.
+func TestBenchkitLaneBuildIgnoresAStrayGitDirAboveTheCheckout(t *testing.T) {
+	stray := t.TempDir()
+	if err := os.Mkdir(filepath.Join(stray, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("TMPDIR", stray)
+
+	root := outcomeFixture(t)
+	outcomeWrite(t, root, "go.mod", "module example.com/x\n\ngo 1.24\n", 0o644)
+	outcomeWrite(t, root, "main.go", "package main\n\nfunc main() {}\n", 0o644)
+	outcomeGit(t, root, "add", "-A")
+	outcomeGit(t, root, "commit", "-q", "-m", "module")
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Checks: []Phase{laneCheck(t, BenchkitLane(root, root), "build")},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Passed() {
+		t.Fatalf("build check %s: %s", result.Outcome, result.Diagnostic)
 	}
 }
 
