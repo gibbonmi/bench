@@ -173,6 +173,19 @@ func TestHelpInventoryIsComplete(t *testing.T) {
 }
 
 func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The three root reads are byte-compared, so they must observe one repository and one
+	// pool that nothing else can move between reads. A concurrent session's worktree or
+	// commit in the live kit tree would otherwise change the route table under the test.
+	observed := gittest.RepoOnBranch(t, "main")
+	home := filepath.Join(t.TempDir(), "bench-home")
+	t.Setenv("BENCH_HOME", home)
+	t.Chdir(observed)
+
 	var directRoot bytes.Buffer
 	if code := (Command{Stdout: &directRoot}).Run(nil); code != 0 {
 		t.Fatalf("in-process root exit = %d, want 0", code)
@@ -181,13 +194,11 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 		t.Fatalf("in-process root = %q, want next route table", directRoot.String())
 	}
 
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
 	binary := filepath.Join(t.TempDir(), "bench")
 	build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, binary)
-	cleanEnv := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	cleanEnv := append(capability.WithoutEnvironment(
+		capability.WithoutEnvironment(os.Environ(), runbinary.Env), "BENCH_HOME"), "BENCH_HOME="+home)
+	build.Dir = root
 	build.Env = cleanEnv
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build bench: %v\n%s", err, out)
@@ -196,6 +207,7 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 	command := func(path string, args ...string) *exec.Cmd {
 		t.Helper()
 		cmd := exec.Command(path, args...)
+		cmd.Dir = observed
 		cmd.Env = cleanEnv
 		if path != binary {
 			cmd.Env = append(capability.WithoutEnvironment(runbinary.WithEnv(cleanEnv, binary), "BENCH_KIT"), "BENCH_KIT="+root)
