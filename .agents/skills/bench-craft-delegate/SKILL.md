@@ -82,9 +82,9 @@ A write-delegation runs in an isolated worktree (`bench worktree`), so stray edi
 land in reviewer-owned files. Concurrent delegates get separate worktrees, one each. The
 harness's own `isolation: worktree` cannot cut a second one, since its request ID derives
 from the session ID alone. The coordinator therefore runs
-`bench worktree create --request <opaque-id> --label <work-item>` once per delegate. It
-addresses the worktree by label: `bench worktree exec "<label>" -- <command>`,
-`bench worktree path "<label>"`, never a cached path.
+`bench worktree create --request <opaque-id> --label <work-item>` once per delegate. The
+charge names `bench worktree exec "<label>" -- <command>` as the only command form, never
+a `cd` into the path. `bench worktree path "<label>"` serves file reads and edits only.
 
 Share a worktree only when a delegate's work depends on another's output. In that case, reviewed
 dependent tickets share one retained integration source, and each charge names its root and
