@@ -27,7 +27,7 @@ spec's `Status: staged` line and removes the tickets-only folder after the sourc
 was graded, so the composed tree is new. A second cause rides with it. The landing keys
 evidence to `main`'s identity root and baseline runner (ADR 0016). The worktree
 commit keys to its own, so even a byte-identical tree does not reuse across
-checkouts. See `decisions/assets/ft215-prior-rulings.md`.
+checkouts. See `specs/one-change-one-grade/decisions/assets/ft215-prior-rulings.md`.
 
 ## #2: Where does the one full grade live?
 
@@ -220,6 +220,6 @@ demand.
 
 ## Sources
 
-- Path: `decisions/assets/ft215-prior-rulings.md`
+- Path: `specs/one-change-one-grade/decisions/assets/ft215-prior-rulings.md`
   Supports: #1's answer and the option framing of #2. It records the four closed rulings against diff-scoped gating, the retired Markdown lane, ADR 0016's evidence key, and the current gate shape with code citations. Produced 2026-08-25 by one read-only research delegate and checked against the tree.
   Drift: re-verify if `internal/gate/subject.go`'s key framing, `internal/landing/landing.go`'s transition, or ADR 0016 changes before the spec reads this map.
