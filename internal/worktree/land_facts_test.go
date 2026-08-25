@@ -22,6 +22,7 @@ import (
 // ignored path must translate into exactly those typed status entries, and the
 // lazy staged-content fact must answer from the real index.
 func TestLandingResidueFactAdapterTranslatesRealDestination(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("junk/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
@@ -64,6 +65,7 @@ func TestLandingResidueFactAdapterTranslatesRealDestination(t *testing.T) {
 // The adapter must read the real ancestry between the published landing and
 // the recorded green marker.
 func TestLandingMarkerFactAdapterTranslatesGreenMarker(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	published := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, root, "later.txt", "later\n", "destination moves on")
@@ -91,6 +93,7 @@ func TestLandingMarkerFactAdapterTranslatesGreenMarker(t *testing.T) {
 // fact group. A real two-parent landing merge must translate into the exact
 // typed identity, reachability, parent, and range facts.
 func TestLandingPublicationFactAdapterTranslatesMergeCommit(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, root, "checkout", "-q", "-b", "source")
@@ -128,6 +131,7 @@ func TestLandingPublicationFactAdapterTranslatesMergeCommit(t *testing.T) {
 // fact group. A clean default-branch checkout must translate into the exact
 // tip, branch, marker, and fingerprint facts.
 func TestLandingDestinationFactAdapterTranslatesCleanCheckout(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	head := gitOutput(t, root, "rev-parse", "HEAD")
 	tip, branch, marker, fingerprint, err := landingDestination(root)

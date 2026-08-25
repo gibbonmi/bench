@@ -181,6 +181,7 @@ func TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding(t *testing.T) {
 
 // The edge under WL1: the flag is optional, but an empty value stays a usage error.
 func TestLandCommandRefusesAnEmptySpecValue(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		args []string

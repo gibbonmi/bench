@@ -20,6 +20,7 @@ import (
 )
 
 func TestLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
+	t.Parallel()
 	for _, args := range [][]string{
 		{"--request", "would-be-path", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "m"},
 		{"--request", "r", "--base", "would-be-path", "--source-tip", "s", "--spec", "x", "-m", "m"},
@@ -35,6 +36,7 @@ func TestLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
 }
 
 func TestLandCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		args []string
@@ -64,6 +66,7 @@ func TestLandCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 }
 
 func TestResumeLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
+	t.Parallel()
 	for _, args := range [][]string{
 		{"--resume", "would-be-path", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x"},
 		{"--resume", "p", "--request", "would-be-path", "--base", "b", "--source-tip", "s", "--spec", "x"},
@@ -84,6 +87,7 @@ func TestResumeLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
 }
 
 func TestLandCommandDoesNotTreatMessageValueAsResumeFlag(t *testing.T) {
+	t.Parallel()
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "--resume", "path"}
 	var stdout, stderr bytes.Buffer
 	if code := LandCommand("", "", args, &stdout, &stderr); code == 2 {
@@ -92,6 +96,7 @@ func TestLandCommandDoesNotTreatMessageValueAsResumeFlag(t *testing.T) {
 }
 
 func TestLandCommandAcceptsDashPathOnlyAfterTerminator(t *testing.T) {
+	t.Parallel()
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "m", "--", "-path"}
 	var stdout, stderr bytes.Buffer
 	if code := LandCommand("", "", args, &stdout, &stderr); code == 2 {
