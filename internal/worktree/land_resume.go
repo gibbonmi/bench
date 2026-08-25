@@ -167,7 +167,6 @@ func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assig
 	if !found {
 		recovery, recoverable, err := unmatchedRequestRecovery(root, assignmentRecoveryContext{
 			target: path,
-			detail: assignmentMismatchDetail,
 			base:   base,
 			tip:    tip,
 		})
@@ -179,12 +178,8 @@ func resumeAssignment(root, path, request, tip, base, slug string) (intent.Assig
 		}
 		return intent.Assignment{}, false, nil
 	}
-	if (a.State != intent.StateActive && a.State != intent.StateCleanupPending) || a.Worktree != path {
-		return intent.Assignment{}, false, errors.New(assignmentMismatchDetail)
-	}
-	evidence, markerErr := validateOwnerMarker(root, path)
-	if markerErr != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree || evidence.registration.BranchRef != a.Branch || !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
-		return intent.Assignment{}, false, errors.New("owner marker or assignment branch mismatch")
+	if err := identityBundleRefusal(root, path, a, resumeActiveState); err != nil {
+		return intent.Assignment{}, false, err
 	}
 	if _, err := landingSource(root, a, base, tip, slug); err != nil {
 		return intent.Assignment{}, false, err

@@ -83,19 +83,14 @@ func landingMarker(root, branch, destination string) (string, error) {
 func landingAssignment(root, path, request, base, requestedTip string) (intent.Assignment, error) {
 	a, err := assignmentForRequest(root, request, assignmentRecoveryContext{
 		target: path,
-		detail: assignmentMismatchDetail,
 		base:   base,
 		tip:    requestedTip,
 	})
-	if err != nil || a.State != intent.StateActive || a.Worktree != path {
-		if err != nil {
-			return intent.Assignment{}, err
-		}
-		return intent.Assignment{}, errors.New(assignmentMismatchDetail)
+	if err != nil {
+		return intent.Assignment{}, err
 	}
-	evidence, err := validateOwnerMarker(root, path)
-	if err != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree || evidence.registration.BranchRef != a.Branch || !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
-		return intent.Assignment{}, errors.New("owner marker or assignment branch mismatch")
+	if err := identityBundleRefusal(root, path, a, landingActiveState); err != nil {
+		return intent.Assignment{}, err
 	}
 	if requestedTip == "" {
 		return intent.Assignment{}, errors.New("source tip is required")

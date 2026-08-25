@@ -360,13 +360,15 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 	if assignment == nil {
 		foundAssignment, findErr := assignmentForRequest(root, requestArg, assignmentRecoveryContext{
 			target: target,
-			detail: retainedAssignmentMismatchDetail,
+			suffix: retainedSuffix,
 		})
 		if findErr != nil {
 			return intent.CleanupReceipt{}, findErr
 		}
 		if foundAssignment.Worktree != target {
-			return intent.CleanupReceipt{}, errors.New(retainedAssignmentMismatchDetail)
+			retained := componentRefusal(componentAssignmentPath, foundAssignment.ID, foundAssignment.Worktree, target)
+			retained.detail += retainedSuffix
+			return intent.CleanupReceipt{}, retained
 		}
 		assignment = &foundAssignment
 	}

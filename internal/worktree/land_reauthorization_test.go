@@ -32,19 +32,21 @@ func TestResumeLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", "unknown-request", "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
 	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'"
-	want := "refused{detail=request, assignment, or path mismatch,observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "}\n"
+	want := "refused{detail=request token matches no assignment,observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "}\n"
 	if code := LandCommand(root, "", args, &stdout, &stderr); code != 1 || stdout.String() != want || stderr.Len() != 0 {
 		t.Fatalf("unknown-request resume = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
 	}
 }
 
+// TestLandCommandUnknownRequestNamesReauthorizeRecovery is LR02: one active assignment
+// owns the target, so the request refusal names the exact command that repairs it.
 func TestLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	request := "land-reauthorize-recovery"
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
 	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base '" + base + "' --source-tip '" + tip + "' '" + creation.Path + "'"
-	want := "refused{detail=request, assignment, or path mismatch,observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "}\n"
+	want := "refused{detail=request token matches no assignment,observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "}\n"
 	if code != 1 || stdout.String() != want {
 		t.Fatalf("unknown-request land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
 	}
@@ -83,7 +85,7 @@ func TestLandCommandStoredRequestDigestCannotAuthenticate(t *testing.T) {
 	beforeMarker := gitOutput(t, root, "rev-parse", "refs/bench/green/main")
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, "", landArgs(creation.Assignment.Request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=request, assignment, or path mismatch") {
+	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=request token matches no assignment") {
 		t.Fatalf("stored-digest land = (%d, %q, %q), want refusal", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/heads/main"); got != beforeDestination {
@@ -111,19 +113,24 @@ func TestLandCommandAuthenticatesDigestShapedRequestToken(t *testing.T) {
 	}
 }
 
-func TestLandCommandUnknownRequestWithoutAssignmentOmitsRecovery(t *testing.T) {
+// TestLandCommandUnknownRequestWithoutAssignmentNamesTheListing is half of LR03: with no
+// active assignment at the target there is no id to reauthorize, so the route is the
+// listing that names which assignment owns which tree.
+func TestLandCommandUnknownRequestWithoutAssignmentNamesTheListing(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, "", landArgs("unknown-request", base, base, root), &stdout, &stderr)
-	want := "refused{detail=request, assignment, or path mismatch}\n"
+	want := "refused{detail=request token matches no assignment,next=bench worktree list}\n"
 	if code != 1 || stdout.String() != want || strings.Contains(stdout.String(), "reauthorize") {
 		t.Fatalf("assignment-free land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
 	}
 }
 
-func TestLandCommandUnknownRequestWithAmbiguousAssignmentsOmitsRecovery(t *testing.T) {
+// TestLandCommandUnknownRequestWithAmbiguousAssignmentsNamesTheListing is the other half
+// of LR03: two active assignments at the target name no single id either.
+func TestLandCommandUnknownRequestWithAmbiguousAssignmentsNamesTheListing(t *testing.T) {
 	request := "ambiguous-reauthorize-recovery"
 	root, creation, base, tip, _ := publicLandingFixture(t, request, "", "")
 	second := creation.Assignment
@@ -136,7 +143,7 @@ func TestLandCommandUnknownRequestWithAmbiguousAssignmentsOmitsRecovery(t *testi
 	}
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, "", landArgs("unknown-request", base, tip, creation.Path), &stdout, &stderr)
-	want := "refused{detail=request, assignment, or path mismatch}\n"
+	want := "refused{detail=request token matches no assignment,next=bench worktree list}\n"
 	if code != 1 || stdout.String() != want || strings.Contains(stdout.String(), "reauthorize") {
 		t.Fatalf("ambiguous-assignment land = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
 	}

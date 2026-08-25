@@ -51,6 +51,12 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   `commondir`, `locked`, …), read by `git worktree` subcommands. Git-owned state
   that Bench never writes. Not "metadata file", not "worktree config" — admin
   entry.
+- **identity component** — one named check a lifecycle verb runs against an
+  assignment's own records: the request token, the assignment state, the assignment
+  path, the owner marker, the worktree registration, or the Bench lock. One registry
+  declares the set and its precedence. A refusal names exactly one component, and the
+  component that carries a sanctioned repair names the exact command. Not "identity
+  check", not "mismatch reason", not "refusal cause" — identity component.
 - **landed assignment** — an assignment worktree whose ledger state is `active`
   and whose branch has landed on the default branch. Its lease is not live:
   nobody released it. Bench derives this classification; it is never a ledger state.

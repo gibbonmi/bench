@@ -132,6 +132,21 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 	}
 }
 
+// TestLandCommandReportsIdentityAndDestinationInOnePreflight is LR10. The destination
+// proof and the identity proof are independent, so one run has to name both; a
+// first-refusal-exits rewrite would hide the second for a whole run.
+func TestLandCommandReportsIdentityAndDestinationInOnePreflight(t *testing.T) {
+	request := "land-surface-identity-preflight"
+	root, creation, base, tip := landSurface(t, request)
+	mustWrite(t, filepath.Join(root, "dirty"), []byte("dirty\n"), 0o600)
+	code, stdout, stderr := landIn(t, root, landArgs("unknown-request", base, tip, creation.Path))
+	both := strings.Contains(stdout, "refused{detail=landing destination is not clean") &&
+		strings.Contains(stdout, "refused{detail=request token matches no assignment")
+	if code != 1 || !both || strings.Count(stdout, "refused{") != 2 {
+		t.Fatalf("identity-and-destination preflight = (%d, %q, %q), want exactly two refusals", code, stdout, stderr)
+	}
+}
+
 func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {
 	request := "land-surface-fence-path"
 	root, creation, base, _ := landSurface(t, request)
