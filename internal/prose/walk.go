@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // skippedDirs are the directory names the walk never enters. A fixture tree, a
@@ -24,8 +22,8 @@ var skippedDirs = map[string]bool{
 // a tree with nothing to grade cannot fail an exclusion rule it has no use for.
 //
 // The walk keys on the `*.md` name, so a comment inside a `.go` or shell file is outside
-// the grade. Every subject goes through bounds.ClassifyNoFollow, which owns the shape
-// test, the byte bound, and the refusal reason.
+// the grade. Grade composes the same per-subject Grader that GradeNamed uses, so the
+// exclusion list, the byte classifier, and the finding render have one source.
 func Grade(root string) []string {
 	subjects, diags := collect(root)
 	if len(diags) > 0 {
@@ -34,27 +32,13 @@ func Grade(root string) []string {
 	if len(subjects) == 0 {
 		return nil
 	}
-	ex, exDiags := loadExclusions(root)
+	g, exDiags := NewGrader(root)
 	if len(exDiags) > 0 {
 		return exDiags
 	}
 	var out []string
 	for _, rel := range subjects {
-		if ex.excluded(rel) {
-			continue
-		}
-		c := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(rel)))
-		switch c.State {
-		case bounds.StateEmpty:
-		case bounds.StateParsed:
-			for _, f := range Findings(string(c.Data)) {
-				out = append(out, Render(rel, f))
-			}
-		case bounds.StateWrongType:
-			out = append(out, fmt.Sprintf("prose: %q: refused subject: %s", rel, c.Reason))
-		default:
-			out = append(out, fmt.Sprintf("prose: %q: refused unreadable subject: %s", rel, c.Reason))
-		}
+		out = append(out, g.GradeSubject(rel)...)
 	}
 	return out
 }

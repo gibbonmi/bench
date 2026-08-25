@@ -78,6 +78,7 @@ var subcommandRouting = map[string]routingEntry{
 	"freshness-check":       exempt(whyPlumbing),
 	"freshness-publish":     exempt(whyPlumbing),
 	"gate-go":               exempt(whyPlumbing),
+	"gate-prose":            exempt(whyPlumbing),
 	"gate-phases":           exempt(whyPlumbing),
 	"guard-bench-follow-on": exempt(whyPlumbing),
 	"guard-git":             exempt(whyPlumbing),

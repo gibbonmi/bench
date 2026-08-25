@@ -33,7 +33,7 @@ func TestCommandRunsVersionInProcess(t *testing.T) {
 
 func TestCommandDispositionsAreComplete(t *testing.T) {
 	want := map[processAttachment][]string{
-		attachmentDirect: {"check-agent-line", "commit", "gate-go", "guard-bench-follow-on", "guard-git", "resume-clean", "session-inspect", "shift", "spec", "version", "worktree"},
+		attachmentDirect: {"check-agent-line", "commit", "gate-go", "gate-prose", "guard-bench-follow-on", "guard-git", "resume-clean", "session-inspect", "shift", "spec", "version", "worktree"},
 		attachmentSystem: {"canary", "doctor", "freshness-check", "freshness-publish", "gate", "gate-phases", "gate-pin", "gate-run", "init", "link", "setup", "stop-verdict", "unlink", "upgrade", "worktree-hook"},
 		attachmentShip:   {"prep-release", "release", "release-preflight"},
 	}
