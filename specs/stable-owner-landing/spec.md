@@ -172,6 +172,8 @@ It proves that the stable owner and prospective gate binary have different roles
 
 **Won't handle** a promotion-owner hot swap during one process — the next command is the surviving in-scope activation point.
 
+**Won't handle** a root path that contains a newline or a control byte — the reviewed decision of 2026-08-24 disposes of these shapes. Spaces and glob characters stay covered by the landing fixtures.
+
 ## Ownership fences
 
 - `bin/bench.sh`
