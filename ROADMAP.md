@@ -33,8 +33,6 @@ means the repository-controlled compliance assessment.
 
 **FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
 
-**FT248 (MEDIUM) — a Bash guard denies a shell follow-on appended to a `bench` command, and the rule states why.**
-
 **FT249 (MEDIUM, decision required) — the idea inbox leaves the gated tree for a shared git ref.**
 
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
@@ -293,6 +291,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT248: the shell follow-on guard; the spec and its three tickets sit in worktree `ft248-write-spec`, tickets 01 and 03 committed, ticket 02 in progress.
-2. `/bench-write-spec` — FT224: a lifecycle refusal names the component that failed and the command that fixes it; eight occurrences, no decision open.
-3. `/bench-shape-idea` — FT215: the scoped gate path; two new faces (gofmt before the full gate, and evidence reuse) price the same decision.
+1. `/bench-write-spec` — FT224: a lifecycle refusal names the component that failed and the command that fixes it; eight occurrences, no decision open.
+2. `/bench-shape-idea` — FT215: the scoped gate path; two new faces (gofmt before the full gate, and evidence reuse) price the same decision.
