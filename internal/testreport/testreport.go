@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"syscall"
@@ -35,10 +36,7 @@ func Command(root string, args []string) (string, int) {
 	if line != "" {
 		return line + "\n", code
 	}
-	packageExpr := "./..."
-	if len(parsed.Positionals) == 1 {
-		packageExpr = parsed.Positionals[0]
-	}
+	packageExpr := packagePattern(root, strings.Join(parsed.Positionals, ""))
 
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
@@ -104,6 +102,23 @@ func Command(root string, args []string) (string, int) {
 		return out, 1
 	}
 	return out, 0
+}
+
+// packagePattern maps a bare directory-relative operand to a "./"-prefixed
+// pattern so go test does not resolve it against std; anything else passes through.
+func packagePattern(root, operand string) string {
+	if operand == "" {
+		return "./..."
+	}
+	if strings.HasPrefix(operand, "./") || strings.HasPrefix(operand, "../") || strings.HasPrefix(operand, "/") {
+		return operand
+	}
+	dir := strings.TrimSuffix(operand, "/...")
+	info, err := os.Stat(filepath.Join(root, dir))
+	if err != nil || !info.IsDir() {
+		return operand
+	}
+	return "./" + operand
 }
 
 func testBenchSource(root string) string {
