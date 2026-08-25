@@ -23,9 +23,21 @@ func Repo(t testing.TB) string {
 	return initialize(t)
 }
 
-// StubGit installs a pure file-backed git stub for worktree-resolution tests. It
-// returns the common-directory path emitted by successful resolution modes.
+// StubGit installs a pure file-backed git stub on the process PATH for
+// worktree-resolution tests. It returns the common-directory path emitted by
+// successful resolution modes. A caller that starts a child process wants
+// StubGitDir instead, which binds no environment and so stays parallel-eligible.
 func StubGit(t testing.TB, root, mode, logPath string) string {
+	t.Helper()
+	dir, commonDir := StubGitDir(t, root, mode, logPath)
+	t.Setenv("PATH", dir)
+	return commonDir
+}
+
+// StubGitDir writes the same stub into a fresh directory and returns that
+// directory with the common-directory path. It mutates no environment, so the
+// caller hands the directory to one child on its own PATH.
+func StubGitDir(t testing.TB, root, mode, logPath string) (string, string) {
 	t.Helper()
 	dir := t.TempDir()
 	script := filepath.Join(dir, "git")
@@ -42,8 +54,7 @@ func StubGit(t testing.TB, root, mode, logPath string) string {
 	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
 		t.Fatalf("stub git: %v", err)
 	}
-	t.Setenv("PATH", dir)
-	return commonDir
+	return dir, commonDir
 }
 
 // RepoOnBranch initializes an empty repository on branch, with a commit identity

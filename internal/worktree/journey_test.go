@@ -92,6 +92,20 @@ func bindEnv(t testing.TB, key, value string) {
 	t.Setenv(key, value)
 }
 
+// journeyChildEnv is the environment one journey child runs under: the private
+// home the caller owns, and the values git needs from the process environment.
+// A child environment leaves the process environment alone, so the journey that
+// builds one stays parallel-eligible.
+func journeyChildEnv(t testing.TB, home string) []string {
+	t.Helper()
+	recordJourneyEffect(t, "child-environment", home)
+	env := []string{"BENCH_HOME=" + home, "PATH=" + os.Getenv("PATH"), "HOME=" + os.Getenv("HOME")}
+	if temp := os.Getenv("TMPDIR"); temp != "" {
+		env = append(env, "TMPDIR="+temp)
+	}
+	return env
+}
+
 func chdir(t testing.TB, dir string) {
 	t.Helper()
 	recordJourneyEffect(t, "directory", dir)
