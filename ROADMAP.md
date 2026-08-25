@@ -53,8 +53,6 @@ means the repository-controlled compliance assessment.
 
 **FT207 (MEDIUM, decision required) — worktree-mutating paths share malformed-admin refusal.**
 
-**FT224 (MEDIUM) — a lifecycle refusal names the component that failed and the command that fixes it.**
-
 **FT199 (MEDIUM) — a recovery-aware branch-retirement coordinator closes one repository-wide ref inventory.**
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
@@ -291,5 +289,4 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT224: a lifecycle refusal names the component that failed and the command that fixes it; eight occurrences, no decision open.
-2. `/bench-shape-idea` — FT215: the scoped gate path; two new faces (gofmt before the full gate, and evidence reuse) price the same decision.
+1. `/bench-shape-idea` — FT215: the scoped gate path; two new faces (gofmt before the full gate, and evidence reuse) price the same decision.
