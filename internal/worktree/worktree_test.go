@@ -489,7 +489,7 @@ func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 }
 
 func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
-	t.Parallel()
+	bindGlobal(t, "ignoredLstat")
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	if err := os.WriteFile(filepath.Join(root, ".git", "info", "exclude"), []byte("ignored.txt\n"), 0o644); err != nil {

@@ -119,6 +119,16 @@ func chdir(t testing.TB, dir string) {
 	t.Chdir(dir)
 }
 
+// bindGlobal is the census edge for a package-level injectable swap whose
+// readers hold no lock. The caller swaps the named variable itself; this
+// helper records the effect, and the census reads the call edge and keeps the
+// test serial. A swap whose readers all take a test-local lock uses that lock
+// instead and stays parallel.
+func bindGlobal(t testing.TB, name string) {
+	t.Helper()
+	recordJourneyEffect(t, "global", name)
+}
+
 // --- descendant processes ---
 
 // descendant prepares one child process start. The caller sets Dir, Env, and

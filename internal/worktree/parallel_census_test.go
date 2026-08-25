@@ -2,8 +2,8 @@ package worktree
 
 // This file owns the parallel census and the package's static pins. The census
 // parses a directory's _test.go files with the Go AST and derives the serial
-// set from call edges to the harness helpers bindEnv and chdir. A top-level
-// test that reaches neither helper is eligible and must call t.Parallel().
+// set from call edges to the serialHelpers harness helpers. A top-level test
+// that reaches no such helper is eligible and must call t.Parallel().
 // (Coverage rows WF02-WF05, WF12, WF14.)
 
 import (
@@ -21,11 +21,12 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
-// serialHelpers name the harness helpers that bind the process environment or
-// change the working directory. The census decides by bare identifier, not by
-// type resolution, because a synthetic file set has no harness to resolve the
-// name against. The census parses; it never builds.
-var serialHelpers = map[string]bool{"bindEnv": true, "chdir": true}
+// serialHelpers name the harness helpers that bind the process environment,
+// change the working directory, or swap a package-level injectable whose
+// readers hold no lock. The census decides by bare identifier, not by type
+// resolution, because a synthetic file set has no harness to resolve the name
+// against. The census parses; it never builds.
+var serialHelpers = map[string]bool{"bindEnv": true, "chdir": true, "bindGlobal": true}
 
 // testFileFunc is one function declared in a test file: its declaration, the
 // file that holds it, and the line of its name.
@@ -107,8 +108,8 @@ func calleeName(call *ast.CallExpr) string {
 	return ""
 }
 
-// callsSerialHelper reports whether the body of decl calls bindEnv or chdir
-// anywhere, a subtest closure included.
+// callsSerialHelper reports whether the body of decl calls a serialHelpers
+// helper anywhere, a subtest closure included.
 func callsSerialHelper(decl *ast.FuncDecl) bool {
 	found := false
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
@@ -166,7 +167,7 @@ func callsParallelDirectly(decl *ast.FuncDecl) bool {
 }
 
 // reachesSerialHelper walks the call edges from decl over the test-file
-// functions and reports whether any reached function calls bindEnv or chdir.
+// functions and reports whether any reached function calls a serialHelpers helper.
 // The walk is transitive, so a helper that reaches the helper through another
 // helper is still a serial edge.
 func reachesSerialHelper(decl *ast.FuncDecl, funcs map[string]testFileFunc) bool {
@@ -193,7 +194,7 @@ func reachesSerialHelper(decl *ast.FuncDecl, funcs map[string]testFileFunc) bool
 // parallelCensus reports every top-level test in dir that breaks the parallel
 // rule: an eligible test without t.Parallel(), or a serial test with it. A test
 // is serial when its body, or any test-file function it reaches through call
-// edges, calls bindEnv or chdir.
+// edges, calls a serialHelpers helper.
 func parallelCensus(dir string) ([]string, error) {
 	files, fset, _, err := parseTestFiles(dir)
 	if err != nil {
@@ -347,6 +348,44 @@ func TestPair(t *testing.T) {
 `})
 	reports := censusOf(t, dir)
 	want := "pair_test.go:5: TestPair is serial and calls t.Parallel()"
+	if len(reports) != 1 || reports[0] != want {
+		t.Fatalf("census = %q, want exactly [%q]", reports, want)
+	}
+}
+
+// TestCensusFollowsBindGlobal proves a test that swaps a package-level
+// injectable through bindGlobal is serial, so the census does not report it for
+// the missing t.Parallel() call.
+func TestCensusFollowsBindGlobal(t *testing.T) {
+	t.Parallel()
+	dir := plantTestFiles(t, map[string]string{"global_test.go": `package worktree
+
+import "testing"
+
+func TestSwap(t *testing.T) {
+	bindGlobal(t, "ignoredLstat")
+}
+`})
+	if reports := censusOf(t, dir); len(reports) != 0 {
+		t.Fatalf("census = %q, want no report for a serial test without t.Parallel()", reports)
+	}
+}
+
+// TestCensusReportsBindGlobalWithParallel proves the census names a test that
+// swaps a package-level injectable and still calls t.Parallel().
+func TestCensusReportsBindGlobalWithParallel(t *testing.T) {
+	t.Parallel()
+	dir := plantTestFiles(t, map[string]string{"global_pair_test.go": `package worktree
+
+import "testing"
+
+func TestGlobalPair(t *testing.T) {
+	t.Parallel()
+	bindGlobal(t, "ignoredLstat")
+}
+`})
+	reports := censusOf(t, dir)
+	want := "global_pair_test.go:5: TestGlobalPair is serial and calls t.Parallel()"
 	if len(reports) != 1 || reports[0] != want {
 		t.Fatalf("census = %q, want exactly [%q]", reports, want)
 	}
