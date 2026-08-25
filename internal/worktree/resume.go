@@ -3,15 +3,16 @@ package worktree
 import (
 	"errors"
 	"fmt"
-	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/toon"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 var errStaleFingerprint = errors.New("cleanup fingerprint is stale")
@@ -72,13 +73,19 @@ func renderReleaseReceipt(stdout io.Writer, receipt intent.CleanupReceipt) int {
 }
 
 func ApplyExplicit(root, path, fingerprint string) (CleanupPlan, error) {
-	return ApplyExplicitWithOptions(root, path, fingerprint, CleanupOptions{})
+	return applyExplicitWith(defaultJoins(), root, path, fingerprint, CleanupOptions{})
 }
 func ApplyExplicitWithOptions(root, path, fingerprint string, options CleanupOptions) (CleanupPlan, error) {
+	return applyExplicitWith(defaultJoins(), root, path, fingerprint, options)
+}
+
+// applyExplicitWith is ApplyExplicitWithOptions with the seam set resolved explicitly at
+// the caller's boundary.
+func applyExplicitWith(j joins, root, path, fingerprint string, options CleanupOptions) (CleanupPlan, error) {
 	planner := func(target string) (CleanupPlan, error) {
-		return PlanExplicitWithOptions(root, target, options)
+		return planExplicitWith(j, root, target, options)
 	}
-	return applyCleanupTransaction(root, path, fingerprint, planner, nil, nil)
+	return applyCleanupTransaction(j, root, path, fingerprint, planner, nil, nil)
 }
 
 type cleanupPlanner func(string) (CleanupPlan, error)
@@ -94,7 +101,7 @@ func (plan CleanupPlan) eligible() bool {
 	return plan.Action != ActionRetain
 }
 
-func applyCleanupTransaction(root, path, fingerprint string, planner cleanupPlanner, localFault Fault, terminal cleanupTerminal) (CleanupPlan, error) {
+func applyCleanupTransaction(j joins, root, path, fingerprint string, planner cleanupPlanner, localFault Fault, terminal cleanupTerminal) (CleanupPlan, error) {
 	repo, target, err := cleanupIdentity(root, path)
 	if err != nil {
 		return CleanupPlan{}, err
@@ -106,13 +113,13 @@ func applyCleanupTransaction(root, path, fingerprint string, planner cleanupPlan
 	if found && receipt.State == intent.ReceiptComplete {
 		return planFromReceipt(receipt), nil
 	}
-	release, err := lockCleanupRegistration(repo, target)
+	release, err := lockCleanupRegistration(j, repo, target)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
 	defer release()
 	fault := func(step LifecycleStep) error {
-		if err := hit(cleanupTransactionBoundary, step); err != nil {
+		if err := hit(j.cleanupBoundary, step); err != nil {
 			return err
 		}
 		return hit(localFault, step)
@@ -152,7 +159,7 @@ func applyCleanupTransaction(root, path, fingerprint string, planner cleanupPlan
 		}
 		return plan, nil
 	}
-	releasePersistence, err := lockCleanupPersistence(repo, target)
+	releasePersistence, err := lockCleanupPersistence(j, repo, target)
 	if err != nil {
 		return plan, err
 	}
@@ -177,7 +184,7 @@ func applyCleanupTransaction(root, path, fingerprint string, planner cleanupPlan
 		}
 		return intent.PutCleanupReceipt(root, receipt)
 	}
-	plan, err = executeCleanup(root, plan, checkpoint, fault)
+	plan, err = executeCleanup(j, root, plan, checkpoint, fault)
 	if err != nil {
 		return plan, err
 	}
@@ -331,15 +338,15 @@ func recoveryAssignmentForPlan(root string, plan CleanupPlan) (intent.Assignment
 	}, nil
 }
 func ApplyAutomatic(root, path string, fault Fault) (CleanupPlan, error) {
-	return applyAutomaticWithTerminal(root, path, fault, nil)
+	return applyAutomaticWithTerminal(defaultJoins(), root, path, fault, nil)
 }
-func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanupTerminal) (CleanupPlan, error) {
-	plan, err := PlanAutomatic(root, path)
+func applyAutomaticWithTerminal(j joins, root, path string, fault Fault, terminal cleanupTerminal) (CleanupPlan, error) {
+	plan, err := planAutomaticAt(j, root, path, currentTime())
 	if err != nil || !plan.eligible() {
 		return plan, err
 	}
-	planner := func(target string) (CleanupPlan, error) { return PlanAutomatic(root, target) }
-	return applyCleanupTransaction(root, path, plan.Fingerprint, planner, fault, terminal)
+	planner := func(target string) (CleanupPlan, error) { return planAutomaticAt(j, root, target, currentTime()) }
+	return applyCleanupTransaction(j, root, path, plan.Fingerprint, planner, fault, terminal)
 }
 
 // ConservativeCleanup reconciles the lifecycle debris, then cleans owned worktrees and
@@ -347,14 +354,14 @@ func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanup
 // that can make a ledger an older binary wrote readable again. Every step below reads
 // that ledger.
 func ConservativeCleanup(root string) (ResumeResult, error) {
-	return conservativeCleanupAt(root, benchHome(), currentTime())
+	return conservativeCleanupAt(defaultJoins(), root, Home(), currentTime())
 }
 
 // conservativeCleanupAt is ConservativeCleanup with the Bench home and the instant
 // resolved explicitly at the caller's effect boundary; ConservativeCleanup is its
-// temporary compatibility form.
-func conservativeCleanupAt(root, home string, now time.Time) (ResumeResult, error) {
-	registered, err := ClassifyRegisteredWorktrees(root)
+// boundary form for a caller in another package.
+func conservativeCleanupAt(j joins, root, home string, now time.Time) (ResumeResult, error) {
+	registered, err := classifyRegisteredWorktreesAt(root, home)
 	if err != nil {
 		return ResumeResult{}, fmt.Errorf("worktree discovery failed: %w", err)
 	}
@@ -368,7 +375,7 @@ func conservativeCleanupAt(root, home string, now time.Time) (ResumeResult, erro
 	} else {
 		result.PoolUnreadable = planErr
 	}
-	result.SweptRefs, result.Reconciled, err = reconcileLifecycleDebris(root, registered, now)
+	result.SweptRefs, result.Reconciled, err = reconcileLifecycleDebris(j, root, registered, now)
 	if err != nil {
 		return result, err
 	}
@@ -384,7 +391,7 @@ func conservativeCleanupAt(root, home string, now time.Time) (ResumeResult, erro
 			result.Retained[ReasonUncertain]++
 			continue
 		}
-		plan, err := planAutomaticAt(root, wt.Path, now)
+		plan, err := planAutomaticAt(j, root, wt.Path, now)
 		if err != nil {
 			return result, err
 		}
@@ -396,13 +403,13 @@ func conservativeCleanupAt(root, home string, now time.Time) (ResumeResult, erro
 			result.Retained[reason]++
 			continue
 		}
-		if _, err := ApplyAutomatic(root, wt.Path, nil); err != nil {
+		if _, err := applyAutomaticWithTerminal(j, root, wt.Path, nil, nil); err != nil {
 			result.Failed++
 			return result, err
 		}
 		result.Removed++
 	}
-	if err := sweepOrphanAssignments(root, &result, now); err != nil {
+	if err := sweepOrphanAssignments(j, root, &result, now); err != nil {
 		return result, err
 	}
 	result.PrunedBranches, err = intent.PruneUnclaimedLandedBranches(root)
@@ -425,7 +432,7 @@ func conservativeCleanupAt(root, home string, now time.Time) (ResumeResult, erro
 // which ones the pool still answers for.
 // The instant is the caller's explicit boundary resolution: one instant for the whole
 // pass, so two records of the same age cannot straddle the window and disagree.
-func sweepOrphanAssignments(root string, result *ResumeResult, now time.Time) error {
+func sweepOrphanAssignments(j joins, root string, result *ResumeResult, now time.Time) error {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return err
@@ -435,7 +442,7 @@ func sweepOrphanAssignments(root string, result *ResumeResult, now time.Time) er
 			continue
 		}
 		if _, statErr := os.Stat(a.Worktree); statErr == nil {
-			if plan := planLandedAssignment(root, a, CleanupOptions{}); assignmentLanded(a, plan) {
+			if plan := planLandedAssignment(j, root, a, CleanupOptions{}); assignmentLanded(a, plan) {
 				continue
 			}
 			result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})
@@ -452,17 +459,22 @@ func isRegisteredWorktree(registered []Registered, path string) bool {
 	}
 	return false
 }
-func ResumeCleanCommand(args []string, stdout, stderr io.Writer) int {
+func ResumeCleanCommand(root, home string, args []string, stdout, stderr io.Writer) int {
+	return resumeCleanCommandWith(defaultJoins(), root, home, args, stdout, stderr)
+}
+
+// resumeCleanCommandWith is ResumeCleanCommand with the seam set resolved explicitly at
+// the caller's boundary.
+func resumeCleanCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 0 {
 		fmt.Fprintln(stderr, "usage: bench resume-clean")
 		return 2
 	}
-	root, err := git.Root()
-	if err != nil {
+	if !inRepository(root) {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	result, cleanupErr := ConservativeCleanup(root)
+	result, cleanupErr := conservativeCleanupAt(j, root, home, currentTime())
 	assignments, snapshotErr := intent.Assignments(root)
 	if snapshotErr == nil {
 		result.Open = len(assignments)

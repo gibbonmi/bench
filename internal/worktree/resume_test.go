@@ -17,12 +17,12 @@ import (
 )
 
 func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	journeyFIFOWorktreeAdmin(t, root, "resume")
-	chdir(t, root)
 	var stdout, stderr bytes.Buffer
 	done := make(chan int, 1)
-	go func() { done <- ResumeCleanCommand(nil, &stdout, &stderr) }()
+	go func() { done <- ResumeCleanCommand(root, Home(), nil, &stdout, &stderr) }()
 	select {
 	case code := <-done:
 		out := stdout.String() + stderr.String()
@@ -65,12 +65,11 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	created := time.Unix(1, 0).UTC()
 	mustNoError(t, intent.Upsert(root, intent.Entry{Key: "auto-cleaned", Kind: intent.KindWorktree, CreatedAt: created, Worktree: clean}))
 	mustNoError(t, intent.Upsert(root, intent.Entry{Key: "unrelated", Kind: intent.KindShift, CreatedAt: created}))
-	owned := mustCreate(t, root, "resume-owned", "owned cleanup")
+	owned := mustCreate(t, root, home, "resume-owned", "owned cleanup")
 	markPending(t, root, owned.Assignment)
-	chdir(t, root)
 	before, _ := os.ReadFile(filepath.Join(dirty, "dirty.txt"))
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
 	requireTest(t, stdout.String() == "bench resume: removed 1, swept refs 0; retained foreign=2 live-lease=1 unexpected-lock=1; pruned branches 2; reconciled 0; failed 0; open assignments 0\n", "resume report = %q", stdout.String())
 	_, err = os.Stat(owned.Path)
@@ -93,14 +92,13 @@ func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ignore")
-	owned := mustCreate(t, root, "ignored-only", "ignored residual")
+	owned := mustCreate(t, root, Home(), "ignored-only", "ignored residual")
 	candidate := owned.Path
 	markPending(t, root, owned.Assignment)
 	ignored := filepath.Join(candidate, "ignored.txt")
 	mustWrite(t, ignored, []byte("retain me\n"), 0o644)
-	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	_, err := os.Stat(ignored)
 	requireTest(t, err == nil, "ignored-only WIP was not retained: %v", err)
@@ -108,9 +106,11 @@ func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
 }
 
 func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
+	t.Parallel()
 	for _, automatic := range []bool{false, true} {
 		t.Run(fmt.Sprintf("automatic=%t", automatic), func(t *testing.T) {
-			root, creation := newOwnedAssignment(t, fmt.Sprintf("concurrent-%t", automatic))
+			t.Parallel()
+			root, creation, _ := newOwnedAssignment(t, fmt.Sprintf("concurrent-%t", automatic))
 			// The two planners differ on dirt: only the explicit one preserves it. Each
 			// side of this race is driven with the dirtiest tree its planner still
 			// removes. That is what makes the recovery-ref count below meaningful for
@@ -129,25 +129,24 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 			}
 			requireTest(t, err == nil && plan.Action == wantAction, "plan = %#v, %v; want %q", plan, err, wantAction)
 			attempted, locked, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
-			oldAttempt, oldBoundary := cleanupLockAttempt, cleanupTransactionBoundary
-			cleanupLockAttempt = func(target string) { attempted <- target }
+			j := defaultJoins()
+			j.cleanupLockAttempt = func(target string) { attempted <- target }
 			var once sync.Once
-			cleanupTransactionBoundary = func(step LifecycleStep) error {
+			j.cleanupBoundary = func(step LifecycleStep) error {
 				if step == StepApplyLocked {
 					once.Do(func() { close(locked); <-proceed })
 				}
 				return nil
 			}
-			defer func() { cleanupLockAttempt, cleanupTransactionBoundary = oldAttempt, oldBoundary }()
 			type outcome struct {
 				plan CleanupPlan
 				err  error
 			}
 			results := make(chan outcome, 2)
 			apply := func() {
-				got, applyErr := ApplyExplicit(root, creation.Path, plan.Fingerprint)
+				got, applyErr := applyExplicitWith(j, root, creation.Path, plan.Fingerprint, CleanupOptions{})
 				if automatic {
-					got, applyErr = ApplyAutomatic(root, creation.Path, nil)
+					got, applyErr = applyAutomaticWithTerminal(j, root, creation.Path, nil, nil)
 				}
 				results <- outcome{got, applyErr}
 			}
@@ -168,46 +167,44 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 				"transaction refs=%#v receipts=%#v error=%v", refs, ledger.CleanupReceipts, err)
 			if !automatic {
 				mustNoError(t, intent.DeleteAssignment(root, creation.Assignment.ID))
-				replay, err := ApplyExplicit(root, creation.Path, plan.Fingerprint)
+				replay, err := applyExplicitWith(j, root, creation.Path, plan.Fingerprint, CleanupOptions{})
 				requireTest(t, err == nil && replay.Action == ActionRemoved, "compacted replay = %#v, %v", replay, err)
 			}
 		})
 	}
 	t.Run("release", func(t *testing.T) {
-		orderRoot, ordered := newOwnedAssignment(t, "release-receipt-order")
+		orderRoot, ordered, home := newOwnedAssignment(t, "release-receipt-order")
 		tip := gitOutput(t, orderRoot, "rev-parse", ordered.Assignment.Branch)
 		stop := errors.New("stop after terminal release receipt")
-		oldOrderBoundary := cleanupTransactionBoundary
-		cleanupTransactionBoundary = func(step LifecycleStep) error {
+		faulted := defaultJoins()
+		faulted.cleanupBoundary = func(step LifecycleStep) error {
 			if step == StepTerminalReceipt {
 				return stop
 			}
 			return nil
 		}
-		code := ReleaseCommand(orderRoot, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
+		code := releaseCommandWith(faulted, orderRoot, home, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
 		requireTest(t, code != 0, "terminal receipt fault unexpectedly succeeded")
-		cleanupTransactionBoundary = oldOrderBoundary
 		repo, _, _ := cleanupIdentity(orderRoot, ordered.Path)
 		receipt, found, err := intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, intent.RequestDigest("landed-release-receipt-order"))
 		requireTest(t, err == nil && found && receipt.Branch == ordered.Assignment.Branch && receipt.BranchOID == tip, "terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
 		_, err = assignmentByID(orderRoot, ordered.Assignment.ID)
 		requireTest(t, err == nil, "assignment compacted before terminal receipt checkpoint: %v", err)
-		code = ReleaseCommand(orderRoot, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
+		code = ReleaseCommand(orderRoot, home, []string{"--request", "landed-release-receipt-order", ordered.Path}, io.Discard, io.Discard)
 		requireTest(t, code == 0, "terminal receipt replay exit=%d", code)
 		receipt, found, err = intent.CleanupReceiptFor(orderRoot, repo, releaseOperation, ordered.Path, intent.RequestDigest("landed-release-receipt-order"))
 		requireTest(t, err == nil && found && receipt.Branch == ordered.Assignment.Branch && receipt.BranchOID == tip, "replayed terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
-		root, creation := newOwnedAssignment(t, "concurrent-release")
+		root, creation, home := newOwnedAssignment(t, "concurrent-release")
 		attempted, locked, proceed := make(chan string, 8), make(chan struct{}), make(chan struct{})
-		oldAttempt, oldBoundary := cleanupLockAttempt, cleanupTransactionBoundary
-		cleanupLockAttempt = func(target string) { attempted <- target }
+		j := defaultJoins()
+		j.cleanupLockAttempt = func(target string) { attempted <- target }
 		var once sync.Once
-		cleanupTransactionBoundary = func(step LifecycleStep) error {
+		j.cleanupBoundary = func(step LifecycleStep) error {
 			if step == StepApplyLocked {
 				once.Do(func() { close(locked); <-proceed })
 			}
 			return nil
 		}
-		defer func() { cleanupLockAttempt, cleanupTransactionBoundary = oldAttempt, oldBoundary }()
 		type outcome struct {
 			code           int
 			stdout, stderr string
@@ -215,7 +212,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		results := make(chan outcome, 2)
 		apply := func() {
 			var stdout, stderr bytes.Buffer
-			code := ReleaseCommand(root, []string{"--request", "landed-concurrent-release", creation.Path}, &stdout, &stderr)
+			code := releaseCommandWith(j, root, home, []string{"--request", "landed-concurrent-release", creation.Path}, &stdout, &stderr)
 			results <- outcome{code, stdout.String(), stderr.String()}
 		}
 		go apply()
@@ -228,11 +225,11 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		requireTest(t, first.code == 0 && second.code == 0 && first.stderr == "" && second.stderr == "" && first.stdout == second.stdout,
 			"concurrent release = %#v / %#v", first, second)
 		var replay, replayErr bytes.Buffer
-		code = ReleaseCommand(root, []string{"--request", "landed-concurrent-release", creation.Path}, &replay, &replayErr)
+		code = ReleaseCommand(root, home, []string{"--request", "landed-concurrent-release", creation.Path}, &replay, &replayErr)
 		requireTest(t, code == 0 && replay.String() == first.stdout, "compacted release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
-		code = ReleaseCommand(root, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard)
+		code = ReleaseCommand(root, home, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard)
 		requireTest(t, code != 0, "changed request replay was authorized")
-		code = ReleaseCommand(root, []string{"--request", "landed-concurrent-release", root}, io.Discard, io.Discard)
+		code = ReleaseCommand(root, home, []string{"--request", "landed-concurrent-release", root}, io.Discard, io.Discard)
 		requireTest(t, code != 0, "changed path replay was authorized")
 		_, err = assignmentByID(root, creation.Assignment.ID)
 		requireTest(t, err != nil, "terminal release did not compact assignment")
@@ -246,19 +243,19 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 // says retain. Execution must honor the later, authoritative verdict rather than
 // the earlier one that let it through the fast path.
 func TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck(t *testing.T) {
-	root, creation := newPendingAssignment(t, "lock-scoped-replan")
+	t.Parallel()
+	root, creation, _ := newPendingAssignment(t, "lock-scoped-replan")
 	requirePlanAction(t, root, creation.Path, ActionRemove)
-	oldBoundary := cleanupTransactionBoundary
+	j := defaultJoins()
 	var raced bool
-	cleanupTransactionBoundary = func(step LifecycleStep) error {
+	j.cleanupBoundary = func(step LifecycleStep) error {
 		if step == StepApplyLocked && !raced {
 			raced = true
 			mustWrite(t, filepath.Join(creation.Path, "raced.txt"), []byte("raced\n"), 0o644)
 		}
 		return nil
 	}
-	defer func() { cleanupTransactionBoundary = oldBoundary }()
-	plan, err := ApplyAutomatic(root, creation.Path, nil)
+	plan, err := applyAutomaticWithTerminal(j, root, creation.Path, nil, nil)
 	requireTest(t, err == nil && plan.Action == ActionRetain,
 		"raced apply = %#v, %v; want the lock-scoped replan's retain honored", plan, err)
 	requireTest(t, raced, "boundary seam never fired; race was not exercised")
@@ -268,12 +265,13 @@ func TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck(t *testing.T) {
 }
 
 func TestPlanAutomaticUsesLandedInDefaultMatrix(t *testing.T) {
+	t.Parallel()
 	t.Run("ancestry eligible", func(t *testing.T) {
-		root, creation := newPendingAssignment(t, "ancestry")
+		root, creation, _ := newPendingAssignment(t, "ancestry")
 		requirePlanAction(t, root, creation.Path, ActionRemove)
 	})
 	t.Run("complete patch equivalence eligible", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "patch")
+		root, creation, _ := newOwnedAssignment(t, "patch")
 		commitInWorktree(t, creation.Path, "patch.txt", "landed\n", "patch")
 		gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "--allow-empty", "-qm", "diverge")
 		gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "cherry-pick", strings.TrimPrefix(creation.Assignment.Branch, "refs/heads/"))
@@ -281,13 +279,13 @@ func TestPlanAutomaticUsesLandedInDefaultMatrix(t *testing.T) {
 		requirePlanAction(t, root, creation.Path, ActionRemove)
 	})
 	t.Run("unique patch retained", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "unique")
+		root, creation, _ := newOwnedAssignment(t, "unique")
 		commitInWorktree(t, creation.Path, "unique.txt", "unique\n", "unique")
 		markPending(t, root, creation.Assignment)
 		requirePlanAction(t, root, creation.Path, ActionRetain)
 	})
 	t.Run("evil merge retained", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "evil")
+		root, creation, _ := newOwnedAssignment(t, "evil")
 		commitInWorktree(t, creation.Path, "feature.txt", "feature\n", "feature")
 		mustWrite(t, filepath.Join(root, "main.txt"), []byte("mainline\n"), 0o644)
 		gitRun(t, root, "add", "main.txt")
@@ -301,7 +299,7 @@ func TestPlanAutomaticUsesLandedInDefaultMatrix(t *testing.T) {
 		requirePlanAction(t, root, creation.Path, ActionRetain)
 	})
 	t.Run("squash landing eligible", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "squash")
+		root, creation, _ := newOwnedAssignment(t, "squash")
 		commitInWorktree(t, creation.Path, "one.txt", "one\n", "one")
 		commitInWorktree(t, creation.Path, "two.txt", "two\n", "two")
 		short := strings.TrimPrefix(creation.Assignment.Branch, "refs/heads/")
@@ -311,13 +309,13 @@ func TestPlanAutomaticUsesLandedInDefaultMatrix(t *testing.T) {
 		requirePlanAction(t, root, creation.Path, ActionRemove)
 	})
 	t.Run("missing default retained", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "missing-default")
+		root, creation, _ := newOwnedAssignment(t, "missing-default")
 		gitRun(t, root, "branch", "-m", "main", "trunk")
 		markPending(t, root, creation.Assignment)
 		requirePlanAction(t, root, creation.Path, ActionRetain)
 	})
 	t.Run("landedness query failure retained", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "query-failure")
+		root, creation, _ := newOwnedAssignment(t, "query-failure")
 		commitInWorktree(t, creation.Path, "query.txt", "query\n", "query")
 		branchOID := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 		replace := filepath.Join(root, ".git", "refs", "replace", branchOID)
@@ -329,8 +327,9 @@ func TestPlanAutomaticUsesLandedInDefaultMatrix(t *testing.T) {
 }
 
 func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
+	t.Parallel()
 	t.Run("dirty nested repository", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "dirty-nested")
+		root, creation, _ := newOwnedAssignment(t, "dirty-nested")
 		nested := filepath.Join(creation.Path, "nested")
 		mustMkdirAll(t, nested, 0o755)
 		gitRun(t, nested, "init", "-q", "-b", "main")
@@ -342,13 +341,13 @@ func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
 		requirePlanAction(t, root, creation.Path, ActionRetain)
 	})
 	t.Run("dirty submodule", func(t *testing.T) {
-		root, creation := newOwnedSubmoduleAssignment(t, "dirty-submodule")
+		root, creation, _ := newOwnedSubmoduleAssignment(t, "dirty-submodule")
 		mustWrite(t, filepath.Join(creation.Path, "sub", "sub.txt"), []byte("dirty\n"), 0o644)
 		markPending(t, root, creation.Assignment)
 		requirePlanAction(t, root, creation.Path, ActionRetain)
 	})
 	t.Run("clean gitlink remains classifiable", func(t *testing.T) {
-		root, creation := newOwnedSubmoduleAssignment(t, "clean-submodule")
+		root, creation, _ := newOwnedSubmoduleAssignment(t, "clean-submodule")
 		markPending(t, root, creation.Assignment)
 		requirePlanAction(t, root, creation.Path, ActionRemove)
 	})
@@ -356,7 +355,7 @@ func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
 	// as the reason it retains. This separates a checkout holding uncommitted
 	// work from one whose state it could not read.
 	t.Run("ordinary parent dirt remains classifiable", func(t *testing.T) {
-		root, creation := newOwnedAssignment(t, "ordinary-dirt")
+		root, creation, _ := newOwnedAssignment(t, "ordinary-dirt")
 		mustWrite(t, filepath.Join(creation.Path, "ordinary.txt"), []byte("ordinary\n"), 0o644)
 		markPending(t, root, creation.Assignment)
 		requirePlanAction(t, root, creation.Path, ActionRetain)
@@ -367,6 +366,7 @@ func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
 }
 
 func TestExplicitApplyBindsRecoveryActionsAndDiscardFlag(t *testing.T) {
+	t.Parallel()
 	t.Run("recovery action", func(t *testing.T) {
 		root := newWorktreeRepo(t)
 		gitRun(t, root, "branch", "-M", "main")
@@ -397,7 +397,7 @@ func TestExplicitApplyBindsRecoveryActionsAndDiscardFlag(t *testing.T) {
 		requireTest(t, err == nil && string(body) == "secret\n", "discard flag drift changed ignored file: %q, %v", body, err)
 	})
 }
-func newOwnedSubmoduleAssignment(t *testing.T, request string) (string, Creation) {
+func newOwnedSubmoduleAssignment(t *testing.T, request string) (string, Creation, string) {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	source := journeyRepoOnBranch(t, "main")
@@ -407,23 +407,27 @@ func newOwnedSubmoduleAssignment(t *testing.T, request string) (string, Creation
 	gitRun(t, root, "-c", "protocol.file.allow=always", "submodule", "add", "-q", source, "sub")
 	gitRun(t, root, "add", ".gitmodules", "sub")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "add submodule")
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, "nested-"+request, "nested state")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "nested-"+request, "nested state")
 	gitRun(t, creation.Path, "-c", "protocol.file.allow=always", "submodule", "update", "--init", "-q")
-	return root, creation
+	return root, creation, home
 }
-func newOwnedAssignment(t *testing.T, request string) (string, Creation) {
+
+// newOwnedAssignment returns the repository, its one owned registration, and the
+// private home that registration lives under. The caller passes that home to every
+// verb, so the fixture binds no process environment.
+func newOwnedAssignment(t *testing.T, request string) (string, Creation, string) {
 	t.Helper()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, "landed-"+request, "landedness")
-	return root, creation
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "landed-"+request, "landedness")
+	return root, creation, home
 }
-func newPendingAssignment(t *testing.T, request string) (string, Creation) {
+func newPendingAssignment(t *testing.T, request string) (string, Creation, string) {
 	t.Helper()
-	root, creation := newOwnedAssignment(t, request)
+	root, creation, home := newOwnedAssignment(t, request)
 	markPending(t, root, creation.Assignment)
-	return root, creation
+	return root, creation, home
 }
 func markPending(t *testing.T, root string, assignment intent.Assignment) {
 	t.Helper()
@@ -444,9 +448,11 @@ func requirePlanAction(t *testing.T, root, path string, want CleanupAction) {
 }
 func assignmentString(a intent.Assignment) string { return fmt.Sprintf("%s/%s", a.OwnerID, a.ID) }
 
-func mustCreate(t *testing.T, root, request, label string) Creation {
+// mustCreate creates one owned registration under the home the caller names. The
+// home is explicit, so a parallel test keeps its pool private to itself.
+func mustCreate(t *testing.T, root, home, request, label string) Creation {
 	t.Helper()
-	creation, err := Create(root, request, label, nil)
+	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime())
 	mustNoError(t, err)
 	return creation
 }

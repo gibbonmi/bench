@@ -20,6 +20,7 @@ const noWriterDeadline = 15 * time.Second
 // path's own Lstat fails for a reason other than absence. A regular file makes an
 // impossible parent for any further component, so the child never resolves.
 func TestClassifyPathShapeUnknownFileAsParent(t *testing.T) {
+	t.Parallel()
 	parent := filepath.Join(t.TempDir(), "not-a-directory")
 	mustWrite(t, parent, []byte("not a directory\n"), 0o644)
 	path := filepath.Join(parent, "child")
@@ -33,6 +34,7 @@ func TestClassifyPathShapeUnknownFileAsParent(t *testing.T) {
 // path's Lstat succeeds (the symlink entry itself exists) but the follow-on Stat fails
 // resolving it. A symlink pointing at itself is a loop no resolution terminates.
 func TestClassifyPathShapeUnknownSelfSymlink(t *testing.T) {
+	t.Parallel()
 	path := filepath.Join(t.TempDir(), "self-loop")
 	if err := os.Symlink(path, path); err != nil {
 		capability.Capability(t, capability.Symlink, "cannot create a symlink: "+err.Error())
@@ -50,6 +52,7 @@ func TestClassifyPathShapeUnknownSelfSymlink(t *testing.T) {
 // denies search access into it. Root bypasses that mode entirely, so the fixture
 // is skipped under root rather than silently passing without exercising the site.
 func TestClassifyPathShapeUnknownUnreadableGitEntry(t *testing.T) {
+	t.Parallel()
 	if os.Geteuid() == 0 {
 		capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny search access to simulate the site")
 	}
@@ -68,7 +71,8 @@ func TestClassifyPathShapeUnknownUnreadableGitEntry(t *testing.T) {
 // pointer. ClassifyPathShape must decide by shape alone, so it runs off the test
 // goroutine. It fails the moment it misses the deadline instead of wedging the suite.
 func TestClassifyPathShapeRefusesSpecialGitEntry(t *testing.T) {
-	_, creation := newOwnedAssignment(t, "special-git-fifo")
+	t.Parallel()
+	_, creation, _ := newOwnedAssignment(t, "special-git-fifo")
 	mustRemove(t, filepath.Join(creation.Path, ".git"))
 	mustNoError(t, syscall.Mkfifo(filepath.Join(creation.Path, ".git"), 0o600))
 

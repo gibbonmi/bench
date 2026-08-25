@@ -47,7 +47,7 @@ func resolveOperand(path string) (string, error) {
 }
 
 func PlanExplicit(root, path string) (CleanupPlan, error) {
-	return PlanExplicitWithOptions(root, path, CleanupOptions{})
+	return planExplicitWith(defaultJoins(), root, path, CleanupOptions{})
 }
 
 // explicitRetainFingerprint binds a refusal decided before the registration is known to
@@ -61,6 +61,12 @@ func explicitRetainFingerprint(common, defaultRef, defaultOID, target string, pl
 	)
 }
 func PlanExplicitWithOptions(root, path string, options CleanupOptions) (CleanupPlan, error) {
+	return planExplicitWith(defaultJoins(), root, path, options)
+}
+
+// planExplicitWith is PlanExplicitWithOptions with the seam set resolved explicitly at
+// the caller's boundary.
+func planExplicitWith(j joins, root, path string, options CleanupOptions) (CleanupPlan, error) {
 	root = canonicalRoot(root)
 	target, err := resolveOperand(path)
 	if err != nil {
@@ -208,7 +214,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 		nestedEvidence += ":" + nestedErr.Error()
 	}
 	facts.NestedState, facts.NestedErr = nested, nestedErr
-	ignored, ignoredCanonical, ignoredErr := inventoryIgnored(target, options.Full)
+	ignored, ignoredCanonical, ignoredErr := inventoryIgnored(j, target, options.Full)
 	plan.Ignored = ignored
 	declaredIgnored := buildOutputErr == nil && ignoredWithinLandingAllowance(ignored, buildOutputs)
 	facts.BuildOutputErr = buildOutputErr
@@ -376,7 +382,7 @@ func predictedForeignRef(root, target, admin string) (string, error) {
 		}
 	}
 }
-func inventoryIgnored(target string, full bool) (IgnoredInventory, []byte, error) {
+func inventoryIgnored(j joins, target string, full bool) (IgnoredInventory, []byte, error) {
 	raw, err := git.Raw("--no-optional-locks", "-C", target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z", "--")
 	if err != nil {
 		return IgnoredInventory{Uncertain: true}, nil, err
@@ -405,7 +411,7 @@ func inventoryIgnored(target string, full bool) (IgnoredInventory, []byte, error
 			inventory.Uncertain = true
 			return inventory, canonicalParts(parts...), errors.New("ignored path escapes worktree")
 		}
-		info, statErr := ignoredLstat(filepath.Join(target, rel))
+		info, statErr := j.ignoredLstat(filepath.Join(target, rel))
 		if statErr != nil {
 			inventory.Uncertain = true
 			return inventory, canonicalParts(parts...), statErr

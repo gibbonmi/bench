@@ -15,11 +15,12 @@ import (
 // landing, keeps both reviewed parents and the marker, transitions no spec, and prints
 // the same record.
 func TestLandCommandSpecLessLandsPublishesAndReleases(t *testing.T) {
+	t.Parallel()
 	request := "spec-less-land"
-	root, creation, base, tip, tally := specLessLandingFixture(t, request)
+	root, creation, base, tip, tally, home := specLessLandingFixture(t, request)
 	specsBefore := gitOutput(t, creation.Path, "rev-parse", tip+":specs")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
 	tree := gitOutput(t, root, "rev-parse", published+"^{tree}")
 	want := "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=released}\n"
@@ -50,9 +51,10 @@ func TestLandCommandSpecLessLandsPublishesAndReleases(t *testing.T) {
 // WL3 and WL22: the gate still owns the spec-less path, and its refusal exits 1 with
 // nothing published.
 func TestLandCommandSpecLessGateRefusalPublishesNothing(t *testing.T) {
+	t.Parallel()
 	request := "spec-less-gate-red"
-	root, creation, _, _, tally := specLessLandingFixture(t, request)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nprintf g >> \"$LAND_GATE_TALLY\"\nexit 1\n"), 0o755)
+	root, creation, _, _, tally, home := specLessLandingFixture(t, request)
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nprintf g >> '"+tally+"'\nexit 1\n"), 0o755)
 	gitRun(t, root, "add", ".bench/gate-prospective.sh")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "red prospective gate")
 	base := gitOutput(t, root, "rev-parse", "HEAD")
@@ -60,7 +62,7 @@ func TestLandCommandSpecLessGateRefusalPublishesNothing(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=prospective authorization refused") {
 		t.Fatalf("spec-less gate refusal = (%d, %q, %q), want exit 1 and an authorization refusal", code, stdout.String(), stderr.String())
 	}
@@ -74,10 +76,11 @@ func TestLandCommandSpecLessGateRefusalPublishesNothing(t *testing.T) {
 
 // WL6: the identity proofs still run without a spec, and the refusal names both sides.
 func TestLandCommandSpecLessRefusesSourceTipMismatch(t *testing.T) {
+	t.Parallel()
 	request := "spec-less-tip-mismatch"
-	root, creation, base, tip, tally := specLessLandingFixture(t, request)
+	root, creation, base, tip, tally, home := specLessLandingFixture(t, request)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", specLessLandArgs(request, base, base, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", specLessLandArgs(request, base, base, creation.Path), &stdout, &stderr)
 	want := "refused{detail=worktree source tip mismatch,observed=" + base + ",wanted=" + tip + "}\n"
 	if code != 1 || stdout.String() != want || stderr.Len() != 0 {
 		t.Fatalf("spec-less tip mismatch = (%d, %q, %q), want (1, %q, empty)", code, stdout.String(), stderr.String(), want)
@@ -89,12 +92,13 @@ func TestLandCommandSpecLessRefusesSourceTipMismatch(t *testing.T) {
 
 // WL23: the range proof still runs without a spec, and it refuses before the gate.
 func TestLandCommandSpecLessRefusesNonAncestorBaseBeforeTheGate(t *testing.T) {
+	t.Parallel()
 	request := "spec-less-nonancestor-base"
-	root, creation, _, tip, tally := specLessLandingFixture(t, request)
+	root, creation, _, tip, tally, home := specLessLandingFixture(t, request)
 	commitInWorktree(t, root, "destination-only", "destination\n", "destination movement")
 	unrelated := gitOutput(t, root, "rev-parse", "HEAD")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", specLessLandArgs(request, unrelated, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", specLessLandArgs(request, unrelated, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "reviewed source range is invalid") || !strings.Contains(stdout.String(), "not an ancestor") {
 		t.Fatalf("spec-less non-ancestor base = (%d, %q, %q), want an invalid-range refusal", code, stdout.String(), stderr.String())
 	}
@@ -105,10 +109,11 @@ func TestLandCommandSpecLessRefusesNonAncestorBaseBeforeTheGate(t *testing.T) {
 
 // WL24: the landed record carries the resolved review base, never the flag's spelling.
 func TestLandCommandSpecLessLandedSourceBaseIsTheResolvedBase(t *testing.T) {
+	t.Parallel()
 	request := "spec-less-resolved-base"
-	root, creation, base, tip, _ := specLessLandingFixture(t, request)
+	root, creation, base, tip, _, home := specLessLandingFixture(t, request)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, "", specLessLandArgs(request, base[:12], tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, "", specLessLandArgs(request, base[:12], tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), "landed{source_base="+base+",") || strings.Contains(stdout.String(), base[:12]+",") {
 		t.Fatalf("abbreviated spec-less base = (%d, %q, %q), want the resolved base in the record", code, stdout.String(), stderr.String())
 	}
@@ -116,26 +121,26 @@ func TestLandCommandSpecLessLandedSourceBaseIsTheResolvedBase(t *testing.T) {
 
 // WL7: a spec-less landing interrupted after publication resumes without a spec.
 func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
+	t.Parallel()
 	request := "spec-less-resume"
-	root, creation, base, tip, tally := specLessLandingFixture(t, request)
-	oldMarker := advanceLandingMarker
-	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+	root, creation, base, tip, tally, home := specLessLandingFixture(t, request)
+	working := defaultJoins()
+	broken := working
+	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := landWith(broken, root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted spec-less landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if strings.Contains(stdout.String(), "--spec") {
 		t.Fatalf("spec-less resume instruction named a spec: %q", stdout.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
-	advanceLandingMarker = oldMarker
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := LandCommand(root, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("spec-less resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
@@ -149,23 +154,23 @@ func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
 // WL25: a resume without a spec completes a published spec-backed landing's marker and
 // release, and publishes nothing a second time.
 func TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding(t *testing.T) {
+	t.Parallel()
 	request := "spec-backed-spec-less-resume"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
-	oldMarker := advanceLandingMarker
-	advanceLandingMarker = func(context.Context, string, string, string, string) error {
+	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
+	working := defaultJoins()
+	broken := working
+	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	t.Cleanup(func() { advanceLandingMarker = oldMarker })
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
-	advanceLandingMarker = oldMarker
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := LandCommand(root, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
 		t.Fatalf("spec-less resume of a spec landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "main"); got != published {
@@ -181,6 +186,7 @@ func TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding(t *testing.T) {
 
 // The edge under WL1: the flag is optional, but an empty value stays a usage error.
 func TestLandCommandRefusesAnEmptySpecValue(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		args []string
@@ -190,7 +196,7 @@ func TestLandCommandRefusesAnEmptySpecValue(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
-			code := LandCommand("", "", tc.args, &stdout, &stderr)
+			code := LandCommand("", Home(), "", tc.args, &stdout, &stderr)
 			if code != 2 || stdout.Len() != 0 || !strings.Contains(stderr.String(), `--spec ""`) {
 				t.Fatalf("empty --spec = (%d, %q, %q), want (2, empty, a usage line naming the empty value)", code, stdout.String(), stderr.String())
 			}

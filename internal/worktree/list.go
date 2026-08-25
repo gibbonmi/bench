@@ -21,13 +21,13 @@ type listRow struct {
 }
 
 // ListCommand implements the read-only AXI worktree population query.
-func ListCommand(args []string) (string, int) {
+func ListCommand(root, _ string, args []string) (string, int) {
+	j := defaultJoins()
 	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
-	root, err := git.Root()
-	if err != nil {
+	if !inRepository(root) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	registrations, err := git.Worktrees(root)
@@ -48,7 +48,7 @@ func ListCommand(args []string) (string, int) {
 	assignedPaths := make(map[string]bool, len(assignments))
 	for _, assignment := range assignments {
 		assignedPaths[assignment.Worktree] = true
-		rows = append(rows, listRow{values: listAssignmentRow(root, assignment, def, defaultResolved)})
+		rows = append(rows, listRow{values: listAssignmentRow(j, root, assignment, def, defaultResolved)})
 	}
 	mainRoot := canonicalRoot(root)
 	for _, registration := range registrations {
@@ -61,7 +61,7 @@ func ListCommand(args []string) (string, int) {
 		}
 		tree := listTree(registration.Path)
 		row := listRow{values: []any{"foreign", label, "", "foreign", "foreign", tree, listLease(registration.Path), listLanded(root, registration.Branch, def, defaultResolved)}}
-		row.values = append(row.values, listIgnored(registration.Path))
+		row.values = append(row.values, listIgnored(j, registration.Path))
 		if tree == "missing" {
 			row.orphanPath = registration.Path
 		}
@@ -76,7 +76,7 @@ func ListCommand(args []string) (string, int) {
 		if assignment.State != intent.StateActive {
 			continue
 		}
-		if plan := planLandedAssignment(root, assignment, CleanupOptions{}); assignmentLanded(assignment, plan) {
+		if plan := planLandedAssignment(j, root, assignment, CleanupOptions{}); assignmentLanded(assignment, plan) {
 			landed = true
 			break
 		}
@@ -119,8 +119,8 @@ func actionsForRows(rows []listRow) []axi.Action {
 	return actions
 }
 
-func listAssignmentRow(root string, assignment intent.Assignment, def string, defaultResolved bool) []any {
-	return []any{assignment.ID, assignment.Label, assignment.RequestToken, string(assignment.State), "assignment", listTree(assignment.Worktree), listLease(assignment.Worktree), listLanded(root, assignment.Branch, def, defaultResolved), listIgnored(assignment.Worktree)}
+func listAssignmentRow(j joins, root string, assignment intent.Assignment, def string, defaultResolved bool) []any {
+	return []any{assignment.ID, assignment.Label, assignment.RequestToken, string(assignment.State), "assignment", listTree(assignment.Worktree), listLease(assignment.Worktree), listLanded(root, assignment.Branch, def, defaultResolved), listIgnored(j, assignment.Worktree)}
 }
 
 func listTree(path string) string {
@@ -164,14 +164,14 @@ func listLanded(root, branch, def string, defaultResolved bool) any {
 	return landed
 }
 
-func listIgnored(path string) any {
+func listIgnored(j joins, path string) any {
 	if _, err := os.Stat(path); err != nil {
 		return "unknown"
 	}
 	if listPathHasSpecialGitMetadata(path) {
 		return "unknown"
 	}
-	inventory, _, err := inventoryIgnored(path, true)
+	inventory, _, err := inventoryIgnored(j, path, true)
 	if err != nil || inventory.Uncertain {
 		return "unknown"
 	}

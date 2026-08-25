@@ -26,22 +26,28 @@ var reauthorizeGrammar = usage.Grammar{
 	},
 }
 
-var reauthorizeUnlock = func(root, path string) error {
+// unlockWorktree and lockWorktree are the ownership-lock effects the reauthorize refresh
+// performs. The joins value carries them, together with reauthorizeBeforeCAS, which lets
+// the operation test model a ledger winner after the lock refresh but before the
+// expected-old comparison.
+func unlockWorktree(root, path string) error {
 	_, err := exec.Command("git", "-C", root, "worktree", "unlock", path).CombinedOutput()
 	return err
 }
 
-var reauthorizeLock = func(root, path, reason string) error {
+func lockWorktree(root, path, reason string) error {
 	_, err := exec.Command("git", "-C", root, "worktree", "lock", "--reason", reason, path).CombinedOutput()
 	return err
 }
 
-// reauthorizeBeforeCAS lets the operation test model a ledger winner after the lock
-// refresh but before the expected-old comparison.
-var reauthorizeBeforeCAS func(*intent.Assignment)
-
 // ReauthorizeCommand replaces a retained assignment request after exact identity proofs.
-func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) int {
+func ReauthorizeCommand(root, home string, args []string, stdout, stderr io.Writer) int {
+	return reauthorizeWith(defaultJoins(), root, home, args, stdout, stderr)
+}
+
+// reauthorizeWith is ReauthorizeCommand with the seam set resolved explicitly at the
+// caller's boundary.
+func reauthorizeWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(reauthorizeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -97,8 +103,8 @@ func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) in
 		approvedBase = rangeTip.Base
 		return nil
 	}, func(old, next intent.Assignment) (func(), error) {
-		return refreshReauthorizeLock(root, path, old, next)
-	}, reauthorizeBeforeCAS)
+		return refreshReauthorizeLock(j, root, path, old, next)
+	}, j.reauthorizeBeforeCAS)
 	if err != nil {
 		var typed refusalError
 		if errors.As(err, &typed) {
@@ -112,19 +118,19 @@ func ReauthorizeCommand(root string, args []string, stdout, stderr io.Writer) in
 	return 0
 }
 
-func refreshReauthorizeLock(root, path string, old, next intent.Assignment) (func(), error) {
-	if err := reauthorizeUnlock(root, path); err != nil {
+func refreshReauthorizeLock(j joins, root, path string, old, next intent.Assignment) (func(), error) {
+	if err := j.reauthorizeUnlock(root, path); err != nil {
 		return nil, errors.New("refresh ownership lock")
 	}
-	if err := reauthorizeLock(root, path, lockReason(next)); err != nil {
-		if restoreErr := reauthorizeLock(root, path, lockReason(old)); restoreErr != nil {
+	if err := j.reauthorizeLock(root, path, lockReason(next)); err != nil {
+		if restoreErr := j.reauthorizeLock(root, path, lockReason(old)); restoreErr != nil {
 			return nil, errors.Join(errors.New("refresh ownership lock"), restoreErr)
 		}
 		return nil, errors.New("refresh ownership lock")
 	}
 	return func() {
-		if reauthorizeUnlock(root, path) == nil {
-			_ = reauthorizeLock(root, path, lockReason(old))
+		if j.reauthorizeUnlock(root, path) == nil {
+			_ = j.reauthorizeLock(root, path, lockReason(old))
 		}
 	}, nil
 }

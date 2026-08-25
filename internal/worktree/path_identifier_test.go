@@ -14,9 +14,9 @@ var listPathAction = regexp.MustCompile(`bench worktree path (\S+),inspect activ
 // A follow-up that fails is worse than no follow-up at all.
 // It is the only address an agent has for a worktree it did not create.
 func TestListPathActionRunsAsAdvertised(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "advertised")
+	root, creation, home := newOwnedAssignment(t, "advertised")
 	chdir(t, root)
-	listed, code := ListCommand(nil)
+	listed, code := ListCommand(root, home, nil)
 	if code != 0 {
 		t.Fatalf("list code=%d out=%q", code, listed)
 	}
@@ -28,7 +28,7 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 		t.Fatalf("path action addresses %q, want the id column %q", match[1], creation.Assignment.ID)
 	}
 	var stdout, stderr bytes.Buffer
-	if code := PathCommand(root, []string{match[1]}, &stdout, &stderr); code != 0 {
+	if code := PathCommand(root, home, []string{match[1]}, &stdout, &stderr); code != 0 {
 		t.Fatalf("advertised %q exited %d: %s", match[1], code, stderr.String())
 	}
 }
@@ -36,10 +36,11 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 // The label stays a valid address; accepting the id widens the grammar, it does not
 // replace it.
 func TestPathResolvesTheLabelAndTheIdAlike(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "both")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "both")
 	for _, target := range []string{creation.Assignment.ID, creation.Assignment.Label} {
 		var byTarget, stderr bytes.Buffer
-		if code := PathCommand(root, []string{target}, &byTarget, &stderr); code != 0 {
+		if code := PathCommand(root, home, []string{target}, &byTarget, &stderr); code != 0 {
 			t.Fatalf("target %q exited %d: %s", target, code, stderr.String())
 		}
 		if byTarget.Len() == 0 {

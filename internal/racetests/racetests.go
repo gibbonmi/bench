@@ -10,6 +10,8 @@ type Test struct {
 // suite cannot observe their concurrent failure modes.
 var Tests = []Test{
 	{PackagePath: "./internal/worktree", Name: "TestConcurrentCleanupRecordsOneTransaction"},
+	{PackagePath: "./internal/worktree", Name: "TestParallelJourneysShareTheHarnessSafely"},
+	{PackagePath: "./internal/worktree", Name: "TestParallelJourneysRecordEverySelection"},
 	{PackagePath: "./internal/guards", Name: "TestScanTimeoutPreservesPartialRowsAndHonestCounts"},
 	{PackagePath: "./internal/guards", Name: "TestScanEnumerationTimeoutUsesUnknownCounts"},
 }

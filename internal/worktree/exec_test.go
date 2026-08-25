@@ -15,12 +15,19 @@ import (
 // routing variables set, and returns what that child wrote.
 func childOutput(t *testing.T, worktree, script string) string {
 	t.Helper()
+	return childOutputAtHome(t, worktree, script, Home())
+}
+
+// childOutputAtHome is childOutput with the home the verb resolved passed explicitly, so
+// a row can separate the caller's home from the one the process carries.
+func childOutputAtHome(t *testing.T, worktree, script, home string) string {
+	t.Helper()
 	bindEnv(t, "BENCH_KIT", "/caller/kit")
 	bindEnv(t, "BENCH_WRAPPER", "/caller/bin/bench")
 	bindEnv(t, runbinary.Env, "/caller/run/bench")
 	bindEnv(t, "BENCH_EXEC_TEST_CARRIED", "carried-value")
 	var stdout, stderr bytes.Buffer
-	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, nil, &stdout, &stderr)
+	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, home, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "child exit = %d, stderr %q", code, stderr.String())
 	return stdout.String()
 }
@@ -69,6 +76,21 @@ func assignment(seen, name string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// TestExecChildTakesTheExplicitHome covers WF16. The child reads the home the verb was
+// given, not the one the caller's process carries, so it resolves the same pool the verb
+// resolved. The two homes differ here, so an inherited value fails the comparison. The
+// child emits the value as a NUL-terminated field, which no environment value can forge.
+// The bind keeps this test serial.
+func TestExecChildTakesTheExplicitHome(t *testing.T) {
+	worktree, _ := worktreeWithWrapper(t)
+	explicit := t.TempDir()
+	bindEnv(t, homeEnv, t.TempDir())
+	emitted := childOutputAtHome(t, worktree, `printf '%s\0' "${BENCH_HOME-}"`, explicit)
+	fields := strings.Split(emitted, "\x00")
+	requireTest(t, len(fields) == 2 && fields[1] == "", "child emitted %q, want one NUL-terminated field", emitted)
+	requireTest(t, fields[0] == explicit, "child saw BENCH_HOME=%q, want the explicit home %q", fields[0], explicit)
 }
 
 // TestExecChildIsRootedAtTheWorktreeWrapper covers WX1 and WX2.

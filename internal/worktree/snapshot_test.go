@@ -10,9 +10,9 @@ import (
 // mustAcquire leases a fresh linked pool worktree from root. It matches the
 // shift-charged worktree shape: a real `git worktree add`, a lease file at
 // LeaseFile, reset and cleaned.
-func mustAcquire(t *testing.T, root string) string {
+func mustAcquire(t *testing.T, root, home string) string {
 	t.Helper()
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}
@@ -24,9 +24,10 @@ func mustAcquire(t *testing.T, root string) string {
 // locked with the given reason, and the pool lease file is gone. The dirty
 // file on disk stays untouched: no reset, no clean, no release.
 func TestRetainAndLockLocksDropsLeaseAndPreservesDirt(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	worktreePath := mustAcquire(t, root)
+	home := filepath.Join(root, ".bench-home")
+	worktreePath := mustAcquire(t, root, home)
 
 	lease, err := LeaseFile(worktreePath)
 	if err != nil {

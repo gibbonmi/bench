@@ -16,10 +16,16 @@ import (
 // passes it down, so decision code can be tested with an injected time.
 func currentTime() time.Time { return time.Now() }
 
-// benchHome resolves the Bench home directory from the process environment, with
-// the user's home as the fallback. Commands resolve it once at the boundary.
-func benchHome() string {
-	if h := os.Getenv("BENCH_HOME"); h != "" {
+// homeEnv names the Bench home in a process environment. Home reads it here, and a
+// verb writes it onto every child it starts, so both halves name it once.
+const homeEnv = "BENCH_HOME"
+
+// Home resolves the Bench home directory from the process environment, with the
+// user's home as the fallback. It is the one BENCH_HOME read in the tree. A command
+// boundary resolves it once and passes the value down; a caller in another package
+// resolves it at its own boundary and hands it to the verb.
+func Home() string {
+	if h := os.Getenv(homeEnv); h != "" {
 		return h
 	}
 	home, _ := os.UserHomeDir()

@@ -641,3 +641,40 @@ func TestHelpSpecRowsNameRetireAndHistoryOnly(t *testing.T) {
 		}
 	}
 }
+
+// TestWorktreeRoutesKeepTheirBytesFromASubdirectory grades WF11. The four verbs that now
+// receive an explicit root must answer the same bytes from a subdirectory as from the
+// repository root, because the boundary resolves the root and the verb no longer reads
+// the working directory.
+//
+// The two invocations run against a fixture repository, not the live checkout.
+// The population the answer names is the one registered in the root the boundary
+// resolves, so a worktree that arrives in the real repository between the runs
+// cannot reach the fixture root and cannot flip the comparison. The "a worktree
+// arrives between the runs" row proves that root scope: it registers a linked
+// worktree in a second fixture repository between the two runs, and the bytes
+// stay the same.
+func TestWorktreeRoutesKeepTheirBytesFromASubdirectory(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	subdirectory := filepath.Join(root, "nested", "deep")
+	for _, argv := range [][]string{{"worktree", "clean", "--help"}, {"worktree", "list"}} {
+		for _, row := range []struct {
+			name    string
+			between func(*testing.T)
+		}{
+			{name: "quiet", between: func(*testing.T) {}},
+			{name: "a worktree arrives between the runs", between: func(t *testing.T) {
+				setupAXIWorktree(t, newAXIEnvelopeRepo(t))
+			}},
+		} {
+			t.Run(strings.Join(argv, " ")+"/"+row.name, func(t *testing.T) {
+				atRoot := runAXICommandAt(t, root, argv)
+				row.between(t)
+				below := runAXICommandAt(t, subdirectory, argv)
+				if atRoot != below {
+					t.Fatalf("%v from %s = %+v, from %s = %+v, want the same bytes and exit code", argv, root, atRoot, subdirectory, below)
+				}
+			})
+		}
+	}
+}

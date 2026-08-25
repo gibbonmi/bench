@@ -12,9 +12,10 @@ import (
 )
 
 func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
+	t.Parallel()
 	for _, afterRemoval := range []bool{false, true} {
 		t.Run(fmt.Sprintf("after-removal=%t", afterRemoval), func(t *testing.T) {
-			root, creation := newOwnedAssignment(t, fmt.Sprintf("recovery-ref-clean-drift-%t", afterRemoval))
+			root, creation, _ := newOwnedAssignment(t, fmt.Sprintf("recovery-ref-clean-drift-%t", afterRemoval))
 			dirty := filepath.Join(creation.Path, "dirty.txt")
 			mustWrite(t, dirty, []byte("preserve once\n"), 0o644)
 			first, err := PlanExplicit(root, creation.Path)
@@ -23,10 +24,9 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 			mustNoError(t, err)
 
 			stop := errors.New("stop before recovery ref creation")
-			old := cleanupTransactionBoundary
-			cleanupTransactionBoundary = failLifecycleStep(StepRecoveryMetadata, stop)
-			_, err = ApplyExplicit(root, creation.Path, first.Fingerprint)
-			cleanupTransactionBoundary = old
+			faulted := defaultJoins()
+			faulted.cleanupBoundary = failLifecycleStep(StepRecoveryMetadata, stop)
+			_, err = applyExplicitWith(faulted, root, creation.Path, first.Fingerprint, CleanupOptions{})
 			requireTest(t, errors.Is(err, stop), "first apply error = %v, want %v", err, stop)
 
 			pending, err := assignmentByID(root, creation.Assignment.ID)
@@ -47,9 +47,8 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 				"clean-drift retry plan = %#v", retry)
 			if afterRemoval {
 				stop = errors.New("stop after worktree removal")
-				cleanupTransactionBoundary = failLifecycleStep(StepRemoval, stop)
-				_, err = ApplyExplicit(root, creation.Path, retry.Fingerprint)
-				cleanupTransactionBoundary = old
+				faulted.cleanupBoundary = failLifecycleStep(StepRemoval, stop)
+				_, err = applyExplicitWith(faulted, root, creation.Path, retry.Fingerprint, CleanupOptions{})
 				requireTest(t, errors.Is(err, stop), "removal interruption = %v, want %v", err, stop)
 				interrupted, readErr := assignmentByID(root, creation.Assignment.ID)
 				requireTest(t, readErr == nil && interrupted.State == intent.StateCleanupPending && len(interrupted.Recovery) == 1,

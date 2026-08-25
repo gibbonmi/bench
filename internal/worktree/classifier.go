@@ -166,8 +166,6 @@ func (plan CleanupPlan) preserves() bool {
 	return lifecyclepolicy.Preserves(plan.Action, plan.Tracked, plan.registration.Detached)
 }
 
-var ignoredLstat = os.Lstat
-
 // PathShape names what the entry at an assignment path is.
 type PathShape string
 
@@ -307,13 +305,13 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 // inapplicable. It calls decideAutomatic exactly once, then projects the returned
 // verdict onto the plan.
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
-	return planAutomaticAt(root, path, currentTime())
+	return planAutomaticAt(defaultJoins(), root, path, currentTime())
 }
 
 // planAutomaticAt is PlanAutomatic with the instant resolved explicitly at the
 // caller's effect boundary; PlanAutomatic is its temporary compatibility form.
-func planAutomaticAt(root, path string, now time.Time) (CleanupPlan, error) {
-	explicitPlan, explicitErr := PlanExplicit(root, path)
+func planAutomaticAt(j joins, root, path string, now time.Time) (CleanupPlan, error) {
+	explicitPlan, explicitErr := planExplicitWith(j, root, path, CleanupOptions{})
 	facts := automaticFacts{ExplicitErr: explicitErr, Explicit: explicitOutcome(explicitPlan)}
 
 	var missingBranchAssignment *intent.Assignment

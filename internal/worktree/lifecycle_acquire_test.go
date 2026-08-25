@@ -15,12 +15,12 @@ import (
 )
 
 func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
+	t.Parallel()
 	oldUmask := syscall.Umask(0)
 	t.Cleanup(func() { syscall.Umask(oldUmask) })
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 			t.Errorf("mode %s = %04o, want %04o", path, got, want)
 		}
 	}
-	assertMode(Pool(root), 0o700)
+	assertMode(poolAt(home, root), 0o700)
 	lease, err := LeaseFile(wt)
 	if err != nil {
 		t.Fatalf("LeaseFile: %v", err)
@@ -45,17 +45,17 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 }
 
 func TestAcquireTightensExistingPool(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
-	pool := Pool(root)
+	pool := poolAt(home, root)
 	if err := os.MkdirAll(pool, 0o777); err != nil {
 		t.Fatalf("mkdir loose pool: %v", err)
 	}
 	if err := os.Chmod(pool, 0o777); err != nil {
 		t.Fatalf("chmod loose pool: %v", err)
 	}
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}
@@ -73,8 +73,8 @@ func TestAcquireTightensExistingPool(t *testing.T) {
 // pool-minting fallback. With no default branch to start from, the first add is already
 // the HEAD one. So the mint still succeeds rather than spending its attempt twice.
 func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "master")
 	gitRun(t, root, "branch", "feature")
@@ -82,7 +82,7 @@ func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 		t.Fatalf("fixture default resolved to %q, want no resolvable default", ref)
 	}
 
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
 
 	if err != nil {
 		t.Fatalf("Acquire with an unresolvable default: %v", err)
@@ -94,21 +94,20 @@ func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 }
 
 func TestAcquireContinuesWhenPoolTightenFails(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
-	pool := Pool(root)
-	old := chmodPool
+	pool := poolAt(home, root)
+	j := defaultJoins()
 	called := false
-	chmodPool = func(path string, mode os.FileMode) error {
+	j.chmodPool = func(path string, mode os.FileMode) error {
 		if path == pool {
 			called = true
 			return os.ErrPermission
 		}
 		return os.Chmod(path, mode)
 	}
-	t.Cleanup(func() { chmodPool = old })
-	wt, err := Acquire(root, "", "")
+	wt, err := acquireAt(j, root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire after pool chmod failure: %v", err)
 	}
@@ -119,6 +118,7 @@ func TestAcquireContinuesWhenPoolTightenFails(t *testing.T) {
 }
 
 func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name       string
 		setup      func(*testing.T, string)
@@ -182,7 +182,7 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			root, creation := newOwnedAssignment(t, "recovery-"+tc.name)
+			root, creation, _ := newOwnedAssignment(t, "recovery-"+tc.name)
 			tc.setup(t, creation.Path)
 			markPending(t, root, creation.Assignment)
 			indexPath := gitOutput(t, creation.Path, "rev-parse", "--path-format=absolute", "--git-path", "index")
@@ -195,15 +195,14 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 			// an unattended resume or release drives retains a checkout it could only remove
 			// by preserving first. So the layer capture runs through the surface that still
 			// reaches it.
-			restore := cleanupTransactionBoundary
-			defer func() { cleanupTransactionBoundary = restore }()
+			j := defaultJoins()
 			plan, err := PlanExplicit(root, creation.Path)
 			if err != nil {
 				t.Fatal(err)
 			}
 			stop := errors.New("stop after recovery metadata")
-			cleanupTransactionBoundary = failLifecycleStep(StepRecoveryMetadata, stop)
-			_, err = ApplyExplicit(root, creation.Path, plan.Fingerprint)
+			j.cleanupBoundary = failLifecycleStep(StepRecoveryMetadata, stop)
+			_, err = applyExplicitWith(j, root, creation.Path, plan.Fingerprint, CleanupOptions{})
 			if !errors.Is(err, stop) {
 				t.Fatalf("ApplyExplicit error = %v, want recovery-metadata fault", err)
 			}
@@ -219,12 +218,11 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 			if err != nil {
 				t.Fatal(err)
 			}
-			cleanupTransactionBoundary = failLifecycleStep(StepRecoveryRef, stop)
-			_, err = ApplyExplicit(root, creation.Path, replayPlan.Fingerprint)
+			j.cleanupBoundary = failLifecycleStep(StepRecoveryRef, stop)
+			_, err = applyExplicitWith(j, root, creation.Path, replayPlan.Fingerprint, CleanupOptions{})
 			if !errors.Is(err, stop) {
 				t.Fatalf("ApplyExplicit replay error = %v, want recovery-ref fault", err)
 			}
-			cleanupTransactionBoundary = restore
 			indexAfter, err := os.ReadFile(indexPath)
 			if err != nil {
 				t.Fatal(err)
@@ -268,6 +266,7 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 }
 
 func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
+	t.Parallel()
 	type fixture struct {
 		root     string
 		creation Creation
@@ -275,8 +274,8 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 	newFixture := func(t *testing.T) fixture {
 		t.Helper()
 		root := newWorktreeRepo(t)
-		bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-		creation, err := Create(root, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil)
+		home := filepath.Join(root, ".bench-home")
+		creation, err := createAt(defaultJoins(), root, home, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil, currentTime())
 		if err != nil {
 			t.Fatal(err)
 		}

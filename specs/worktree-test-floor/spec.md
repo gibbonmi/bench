@@ -1,12 +1,12 @@
 # The worktree test floor
 
-Status: staged
+Status: implemented
 
 Roadmap: FT215
 
 Decision source: ready compiled map `specs/worktree-test-floor/decisions/worktree-test-floor.md`, resolved 2026-08-25
 
-Verification log: 1 iteration to accept — the round accepted the eleven-ticket chain; the closing ticket carries the live-tree census so every ticket lands green
+Verification log: 1 iteration to accept — the round accepted the eleven-ticket chain; the closing ticket carries the live-tree census so every ticket lands green. Amended 2026-08-25 after the build measured a 73 s wall. The reviewer dropped the five-slowest pin and reopened the `BENCH_HOME` seam. The verbs take an explicit home, and the `BENCH_HOME`-bound tests join the parallel set.
 
 ## Problem
 
@@ -29,6 +29,12 @@ Four verbs resolve their root from the working directory today: `clean`,
 other seven verbs, so their tests need no `chdir`. No test is removed, merged,
 or weakened, and the gate's phase table does not change.
 
+Every verb reads `BENCH_HOME` inside the package today, so a test that runs a
+verb in-process binds the process environment and stays serial. The verbs
+take an explicit home in the shape of the explicit root, and a child a verb
+starts carries that home on its environment. The test fixtures pass a private
+home, so the `BENCH_HOME`-bound tests join the parallel set.
+
 ## User stories
 
 ### Eligible tests run in parallel
@@ -44,8 +50,7 @@ census catch it, so the cached mid routing applies.
 4. As a kit maintainer, I want a test that binds environment or changes directory to stay serial, so that Go's rules hold.
 5. As a kit maintainer, I want the harness's shared state to stay correct under parallel siblings, so that the race phase stays green.
 6. As a kit maintainer, I want a race sentinel that runs parallel journeys under `-race`, so that a harness data race turns the gate red.
-7. As a kit maintainer, I want the five slowest tests to run in parallel, so that the priced cut lands where it pays most.
-8. As a kit maintainer, I want the build's retro to record the package's serial sum and wall, so that the destination is measured.
+7. As a kit maintainer, I want the build's retro to record the package's serial sum and wall, so that the destination is measured.
 
 ### Four verbs take an explicit root
 
@@ -53,8 +58,21 @@ Line: opus / medium.
 
 The change composes the root-taking seam seven verbs already use.
 
-9. As a kit maintainer, I want `clean`, `reclaim`, `list`, and `resume clean` to take an explicit root, so that their tests need no `chdir`.
-10. As an operator, I want those four verbs to behave as before from any directory inside the repo, so that no grammar or output changes.
+8. As a kit maintainer, I want `clean`, `reclaim`, `list`, and `resume clean` to take an explicit root, so that their tests need no `chdir`.
+9. As an operator, I want those four verbs to behave as before from any directory inside the repo, so that no grammar or output changes.
+
+### Every verb takes an explicit home
+
+Line: opus / high.
+
+The change hoists a process-environment read to thirteen verb boundaries and
+must carry the home into every child the verbs start. A leak reaches the
+operator's real home, so the top of the mid tier applies.
+
+14. As a kit maintainer, I want every verb to take an explicit home after its root, so that an in-process test binds no environment.
+15. As an operator, I want the exec and subshell children to carry that home, so that a private home reaches them without a process bind.
+16. As a kit maintainer, I want the shared fixtures to bind no environment, so that the tests they serve are eligible.
+17. As a reviewer, I want a ceiling pin on the serial set, so that a fixture cannot fall back to a process bind.
 
 ### What the gate proves does not change
 
@@ -62,10 +80,10 @@ Line: sonnet / low.
 
 Two pins keep the cut honest, and each is an exact static check.
 
-11. As a reviewer, I want the package's test count to stay at least 334, so that no test is removed or merged for wall-clock.
-12. As a reviewer, I want the harness effect census to keep forbidding effects outside the harness files, so that parallel tests cannot bypass the harness.
-13. As a reviewer, I want the `internal/freshness` and `internal/runbinary` floors left to FT246, so that this spec stays one capability.
-14. As a reviewer, I want no sub-package split and no export of internal identifiers, so that the package's surface does not change.
+10. As a reviewer, I want the package's test count to stay at least 334, so that no test is removed or merged for wall-clock.
+11. As a reviewer, I want the harness effect census to keep forbidding effects outside the harness files, so that parallel tests cannot bypass the harness.
+12. As a reviewer, I want the `internal/freshness` and `internal/runbinary` floors left to FT246, so that this spec stays one capability.
+13. As a reviewer, I want no sub-package split and no export of internal identifiers, so that the package's surface does not change.
 
 ## Implementation decisions
 
@@ -97,6 +115,35 @@ output, and exit codes do not change.
 **The race sentinel.** The race-test registry gains one worktree sentinel that
 runs two parallel journeys against two repositories and reads the effect log.
 The gate's `race` phase runs it.
+
+**Every verb takes a home.** `effects.go` exports `Home()`, the one
+`BENCH_HOME` read. Each public verb gains a `home string` parameter after
+`root`, and each caller resolves the home once at the command boundary, as it
+resolves the root. Some package functions read the home and serve another
+package: `Pool`, `Acquire`, `Create`, `ConservativeCleanup`, and their kin.
+Each keeps its form for that caller and gains an `At` form that takes the
+home. A function this package alone calls takes the home outright. The tests
+call the form that takes the home. The verbs' grammar, output, and exit
+codes do not change.
+
+**The exec and subshell children carry the home.** `ExecCommand` and
+`Subshell` start a child in the worktree. Each child receives
+`BENCH_HOME=<home>` on its environment, set from the resolved value. The gate
+child is different: the gate-inputs closure names its environment, the gate
+resolves each declared name from the process, and it hashes the value into
+the subject identity. A verb never overrides that closure. The harness's home-residue guard turns red when
+a child writes below the operator's real home.
+
+**The fixtures stop binding.** `landingFixtureAtHome` writes the tally path
+into the gate scripts as a literal and declares no environment in
+`gate-inputs.json`, so it binds neither `BENCH_HOME` nor `LAND_GATE_TALLY`.
+`newOwnedAssignment`, `newPendingAssignment`, `mustCreate`, `newReclaimPool`,
+`reauthorizeFixture`, and `newResidueGuardFixture` pass the home they own. A
+test that grades the boundary default itself keeps its bind and stays serial.
+
+**The serial ceiling.** The census reports the serial set's size, and a pin
+requires it at or below the count the closing ticket observes. A fixture that
+falls back to a process bind raises the count above the pin.
 
 **The count pin.** The census requires at least 334 top-level tests in the
 package. A new test raises the count; a removal below the pin turns the gate
@@ -144,16 +191,19 @@ explicit root while the working directory is elsewhere. The gate's `test` and
 | WF05 | 4 | A synthetic serial test that calls `t.Parallel()` makes the census report the pair. | census unit on a temp dir | Go panics at run time, and the census names it statically first. |
 | WF06 | 5 | Two goroutines that call the run-binary selector record two journey lines. | selector unit under `-race` | An unguarded append loses a line or races. |
 | WF07 | 6 | The race-test registry names one worktree sentinel that runs two parallel journeys. | racetests registry test | A sentinel outside the registry never runs under `-race`. |
-| WF08 | 7 | The five tests the asset names each call `t.Parallel()`. | census unit on the live tree | The priced cut lands elsewhere. |
-| WF09 | 9 | `CleanCommand` with an explicit root acts on that root while the working directory is a temp dir. | package unit | A verb that still resolves the working directory acts on the wrong repo. |
-| WF10 | 9 | `ReclaimCommand`, `ListCommand`, and `ResumeCleanCommand` accept an explicit root in the same way. | package unit | One verb left on the working directory keeps its tests serial. |
-| WF11 | 10 | `bench worktree clean --help` and `bench worktree list` from a subdirectory print the same bytes as before. | command registry test | A caller that passes the subdirectory as root changes the output. |
-| WF12 | 11 | The census requires at least 334 top-level tests in the package. | package census test | A removal below the pin passes silently. |
-| WF13 | 12 | The harness effect census still reports an `exec.Command` outside the harness files. | existing census test | A relaxed regex lets a parallel test spawn outside the harness. |
-| WF14 | 14 | Every `internal/worktree` test file keeps `package worktree`. | package census test | An external test package is a sub-package split by another name. |
+| WF09 | 8 | `CleanCommand` with an explicit root acts on that root while the working directory is a temp dir. | package unit | A verb that still resolves the working directory acts on the wrong repo. |
+| WF10 | 8 | `ReclaimCommand`, `ListCommand`, and `ResumeCleanCommand` accept an explicit root in the same way. | package unit | One verb left on the working directory keeps its tests serial. |
+| WF11 | 9 | `bench worktree clean --help` and `bench worktree list` from a subdirectory print the same bytes as before. | command registry test | A caller that passes the subdirectory as root changes the output. |
+| WF12 | 10 | The census requires at least 334 top-level tests in the package. | package census test | A removal below the pin passes silently. |
+| WF13 | 11 | The harness effect census still reports an `exec.Command` outside the harness files. | existing census test | A relaxed regex lets a parallel test spawn outside the harness. |
+| WF14 | 13 | Every `internal/worktree` test file keeps `package worktree`. | package census test | An external test package is a sub-package split by another name. |
+| WF15 | 14 | `CreateCommand` with an explicit home writes its pool below that home while the process `BENCH_HOME` names a different directory. | package unit | A verb that still reads the environment writes to the wrong home. |
+| WF16 | 15 | `ExecCommand` with an explicit home starts its child with `BENCH_HOME` set to that home while the process names another. | package unit | A child that inherits the process environment reads the wrong pool. |
+| WF17 | 16 | The landing fixture binds no environment, and a test it serves calls `t.Parallel()` under the census. | package census test | A fixture that binds keeps every landing test serial. |
+| WF18 | 17 | The census reports the serial set's size, and a pin refuses a count above the ceiling. | package census test | A fixture that falls back to a bind passes silently. |
 
-Not covered: story 8 — retro evidence, not gate behavior.
-Not covered: story 13 — an exclusion; FT246 owns those packages.
+Not covered: story 7 — retro evidence, not gate behavior.
+Not covered: story 12 — an exclusion; FT246 owns those packages.
 
 ### Edge inventory
 
@@ -169,7 +219,8 @@ Not covered: story 13 — an exclusion; FT246 owns those packages.
 
 **Won't handle** a sub-package split — every test file is `package worktree`, and the internal surface stays.
 
-**Won't handle** a `BENCH_HOME` injection seam in production code — the environment is process-global, and env-bound tests stay serial.
+- A test that grades the boundary default (`Home()` without `BENCH_HOME`) binds the environment and stays serial.
+- A gate child reads `BENCH_HOME` only when `gate-inputs.json` declares it; the fixture's gate scripts never read it.
 
 **Won't handle** conversion of in-process verb calls to child processes — 250 tests would change seam, and the census makes the serial set explicit instead.
 
@@ -183,15 +234,20 @@ Not covered: story 13 — an exclusion; FT246 owns those packages.
 - `cmd/bench/main.go`
 - `cmd/bench/command_registry_test.go`
 - `internal/sessioninspect/sessioninspect.go`
+- `internal/harness/worktree.go`
+- `internal/shift/`
+- `internal/status/status.go`
+- `internal/dashboard/dashboard.go`
 - `CHANGELOG.md`
 
 The tickets run serially on one source. The root ticket lands first, the
 harness and census ticket second, and the parallel marks follow file by file.
+The home seam lands after the marks: the verb ticket first, the fixture ticket
+second, the direct-bind tickets in parallel, and the ceiling ticket last.
 
 ## Out of scope
 
 - The `internal/freshness` and `internal/runbinary` floors: 10 edits, 2 gate runs, owned by FT246.
-- A `BENCH_HOME` injection seam in production code: 12 edits, 2 gate runs.
 - Conversion of in-process verb tests to child-process journeys: 250 edits, 6 gate runs.
 - A sub-package split with exported test seams: 80 edits, 4 gate runs, and it changes the package surface.
 - The gate's phase table and what green means. The cadence spec pins the `test` argv.

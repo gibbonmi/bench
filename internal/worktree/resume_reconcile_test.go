@@ -69,11 +69,11 @@ func refsUnder(t *testing.T, root string, namespaces ...string) string {
 	return gitOutput(t, root, args...)
 }
 
-func runResume(t *testing.T, root string) string {
+func runResume(t *testing.T, root, home string) string {
 	t.Helper()
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
 	return stdout.String()
 }
@@ -83,13 +83,13 @@ func runResume(t *testing.T, root string) string {
 // store shares the refs/bench/ prefix, so an over-broad delete would destroy
 // green evidence at every session start.
 func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
-	bindEnv(t, "BENCH_HOME", t.TempDir())
+	home := t.TempDir()
 	root := newWorktreeRepo(t)
 	green := seedLifecycleDebris(t, root)
 	diagnostic := "refs/bench/diagnostic/probe"
 	gitRun(t, root, "update-ref", diagnostic, "HEAD")
 
-	runResume(t, root)
+	runResume(t, root, home)
 
 	remaining := refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/")
 	requireTest(t, remaining == "", "lifecycle refs survived the reconcile: %q", remaining)
@@ -102,17 +102,17 @@ func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
 // after it are the compared pair: once the tree has settled, a reconcile writes
 // nothing and reports exactly what its predecessor did.
 func TestResumeReconcileIsIdempotent(t *testing.T) {
-	bindEnv(t, "BENCH_HOME", t.TempDir())
+	home := t.TempDir()
 	root := newWorktreeRepo(t)
 	seedLifecycleDebris(t, root)
 
-	requireTest(t, strings.Contains(runResume(t, root), "swept refs 2"), "settling reconcile did not report the sweep")
+	requireTest(t, strings.Contains(runResume(t, root, home), "swept refs 2"), "settling reconcile did not report the sweep")
 	before := refsUnder(t, root, "refs/bench/")
 	ledgerPath := filepath.Join(root, ".git", intent.Filename)
 	ledgerBefore, _ := os.ReadFile(ledgerPath)
 
-	second := runResume(t, root)
-	third := runResume(t, root)
+	second := runResume(t, root, home)
+	third := runResume(t, root, home)
 	ledgerAfter, _ := os.ReadFile(ledgerPath)
 	requireTest(t, second == third, "settled reconciles disagree:\nsecond=%q\nthird=%q", second, third)
 	requireTest(t, refsUnder(t, root, "refs/bench/") == before, "a settled reconcile churned refs")
@@ -124,13 +124,13 @@ func TestResumeReconcileIsIdempotent(t *testing.T) {
 // decoder can read, exits zero and drops them. It leaves the pool's own record
 // alone and authors nothing.
 func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
-	bindEnv(t, "BENCH_HOME", t.TempDir())
+	home := t.TempDir()
 	root := newWorktreeRepo(t)
-	pool := mustCreate(t, root, "reconcile-pool", "pool work")
+	pool := mustCreate(t, root, home, "reconcile-pool", "pool work")
 	green := seedLifecycleDebris(t, root)
 	seedLegacyAssignments(t, root)
 
-	first := runResume(t, root)
+	first := runResume(t, root, home)
 
 	surviving, err := intent.Assignments(root)
 	requireTest(t, err == nil, "ledger unreadable after purge: %v", err)
@@ -144,8 +144,8 @@ func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 		"settling reconcile did not report what it removed: %q", first)
 	ledgerPath := filepath.Join(root, ".git", intent.Filename)
 	ledgerBefore, _ := os.ReadFile(ledgerPath)
-	second := runResume(t, root)
-	third := runResume(t, root)
+	second := runResume(t, root, home)
+	third := runResume(t, root, home)
 	ledgerAfter, _ := os.ReadFile(ledgerPath)
 	requireTest(t, second == third, "settled reconciles disagree:\nsecond=%q\nthird=%q", second, third)
 	requireTest(t, bytes.Equal(ledgerBefore, ledgerAfter), "a settled reconcile rewrote the ledger")
@@ -154,17 +154,17 @@ func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 // TestResumeReconcileConvergesAfterInterruption is RM9: a reconcile killed between two ref
 // deletions leaves a partial namespace and an unpurged ledger, and re-entry finishes both.
 func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
-	bindEnv(t, "BENCH_HOME", t.TempDir())
+	home := t.TempDir()
 	root := newWorktreeRepo(t)
-	pool := mustCreate(t, root, "interrupted-pool", "pool work")
+	pool := mustCreate(t, root, home, "interrupted-pool", "pool work")
 	green := seedLifecycleDebris(t, root)
 	seedLegacyAssignments(t, root)
 	for _, name := range []string{"refs/bench/specbuild/checkpoint/one", "refs/bench/specbuild/checkpoint/two"} {
 		gitRun(t, root, "update-ref", name, "HEAD")
 	}
 	interrupted := errors.New("killed mid-sweep")
-	restore, sweeps := cleanupTransactionBoundary, 0
-	cleanupTransactionBoundary = func(step LifecycleStep) error {
+	j, sweeps := defaultJoins(), 0
+	j.cleanupBoundary = func(step LifecycleStep) error {
 		if step != StepLifecycleSweep {
 			return nil
 		}
@@ -175,13 +175,12 @@ func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
 	}
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
-	cleanupTransactionBoundary = restore
+	code := resumeCleanCommandWith(j, root, home, nil, &stdout, &stderr)
 	requireTest(t, code != 0, "interrupted reconcile exit=%d stdout=%s", code, stdout.String())
 	partial := refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/")
 	requireTest(t, partial != "" && len(strings.Split(partial, "\n")) < 4, "interruption left %q, want a partial namespace", partial)
 
-	runResume(t, root)
+	runResume(t, root, home)
 
 	requireTest(t, refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/") == "", "re-entry did not finish the sweep")
 	surviving, err := intent.Assignments(root)

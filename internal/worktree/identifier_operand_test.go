@@ -14,7 +14,7 @@ import (
 // prefix of either. The resolver is shared; path proves each address form resolves to
 // the one worktree, clean proves a verb consumes it, and release closes end to end.
 func TestVerbsResolveIdentifierOperands(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "operand-forms")
+	root, creation, home := newOwnedAssignment(t, "operand-forms")
 	chdir(t, root)
 	targets := []string{
 		creation.Assignment.ID,
@@ -25,7 +25,7 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 	}
 	for _, target := range targets {
 		var stdout, stderr bytes.Buffer
-		if code := PathCommand(root, []string{target}, &stdout, &stderr); code != 0 {
+		if code := PathCommand(root, home, []string{target}, &stdout, &stderr); code != 0 {
 			t.Fatalf("path %q exited %d: %s", target, code, stderr.String())
 		}
 		if strings.TrimSpace(stdout.String()) != creation.Path {
@@ -33,14 +33,14 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 		}
 	}
 	var planned, stderr bytes.Buffer
-	if code := CleanCommand([]string{creation.Assignment.ID[:10]}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(root, home, []string{creation.Assignment.ID[:10]}, &planned, &stderr); code != 0 {
 		t.Fatalf("clean by id prefix exited %d: %s", code, planned.String())
 	}
 	if !strings.Contains(planned.String(), creation.Path) {
 		t.Fatalf("clean by id prefix planned another target: %s", planned.String())
 	}
 	var released bytes.Buffer
-	if code := ReleaseCommand(root, []string{"--request", "landed-operand-forms", creation.Assignment.Label}, &released, &stderr); code != 0 {
+	if code := ReleaseCommand(root, home, []string{"--request", "landed-operand-forms", creation.Assignment.Label}, &released, &stderr); code != 0 {
 		t.Fatalf("release by label exited %d: %s", code, stderr.String())
 	}
 }
@@ -49,16 +49,16 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 // word can never grab a worktree another assignment also answers to.
 func TestPrefixOperandRefusals(t *testing.T) {
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	mustCreate(t, root, "req-prefix-a", "prefix-shared-a")
-	mustCreate(t, root, "req-prefix-b", "prefix-shared-b")
+	home := filepath.Join(t.TempDir(), "bench-home")
+	mustCreate(t, root, home, "req-prefix-a", "prefix-shared-a")
+	mustCreate(t, root, home, "req-prefix-b", "prefix-shared-b")
 	chdir(t, root)
 	for name, refusal := range map[string]struct{ target, reason string }{
 		"ambiguous": {"prefix-share", "target is ambiguous: " + strings.Join(ledgerOrderIDs(t, root), ", ")},
 		"too short": {"prefix-", "target is unassigned"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := PathCommand(root, []string{refusal.target}, &stdout, &stderr); code == 0 {
+		if code := PathCommand(root, home, []string{refusal.target}, &stdout, &stderr); code == 0 {
 			t.Fatalf("%s prefix %q resolved: %s", name, refusal.target, stdout.String())
 		}
 		if want := "bench worktree path: " + refusal.reason + "\n"; stderr.String() != want {
@@ -70,10 +70,10 @@ func TestPrefixOperandRefusals(t *testing.T) {
 // `clean --apply` accepts a fingerprint prefix of at least 8 characters: one plan
 // carries one digest, so the prefix is unambiguous and applies the same plan.
 func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "fp-prefix")
+	root, creation, home := newOwnedAssignment(t, "fp-prefix")
 	chdir(t, root)
 	var planned, stderr bytes.Buffer
-	if code := CleanCommand([]string{creation.Path}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(root, home, []string{creation.Path}, &planned, &stderr); code != 0 {
 		t.Fatalf("plan exited %d: %s", code, planned.String())
 	}
 	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
@@ -85,12 +85,12 @@ func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
 		"uppercase prefix":       "ABCDEF01",
 	} {
 		var refused bytes.Buffer
-		if code := CleanCommand([]string{creation.Path, "--apply", bad}, &refused, &stderr); code == 0 || strings.Contains(refused.String(), ",removed,") {
+		if code := CleanCommand(root, home, []string{creation.Path, "--apply", bad}, &refused, &stderr); code == 0 || strings.Contains(refused.String(), ",removed,") {
 			t.Fatalf("%s %q was not refused: %s", name, bad, refused.String())
 		}
 	}
 	var applied bytes.Buffer
-	if code := CleanCommand([]string{creation.Path, "--apply", fingerprint[:12]}, &applied, &stderr); code != 0 {
+	if code := CleanCommand(root, home, []string{creation.Path, "--apply", fingerprint[:12]}, &applied, &stderr); code != 0 {
 		t.Fatalf("apply with a prefix exited %d: %s", code, applied.String())
 	}
 	if !strings.Contains(applied.String(), ",removed,") {
@@ -110,25 +110,24 @@ func resolverRefusalCases() []resolverRefusalCase {
 	return []resolverRefusalCase{
 		{name: "unassigned", setup: func(t *testing.T) (string, string, string) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 			return root, "no-such-target", "target is unassigned"
 		}},
 		{name: "ambiguous", setup: func(t *testing.T) (string, string, string) {
 			root := newWorktreeRepo(t)
-			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-			mustCreate(t, root, "req-collide-a", "collide-shared-a")
-			mustCreate(t, root, "req-collide-b", "collide-shared-b")
+			home := filepath.Join(t.TempDir(), "bench-home")
+			mustCreate(t, root, home, "req-collide-a", "collide-shared-a")
+			mustCreate(t, root, home, "req-collide-b", "collide-shared-b")
 			return root, "collide-shar", "target is ambiguous: " + strings.Join(ledgerOrderIDs(t, root), ", ")
 		}},
 		{name: "inactive", setup: func(t *testing.T) (string, string, string) {
-			root, creation := newOwnedAssignment(t, "resolver-inactive")
+			root, creation, _ := newOwnedAssignment(t, "resolver-inactive")
 			a := creation.Assignment
 			a.State = intent.StateComplete
 			mustNoError(t, intent.PutAssignment(root, a))
 			return root, a.Label, "assignment " + a.ID + " is not active"
 		}},
 		{name: "owner marker", setup: func(t *testing.T) (string, string, string) {
-			root, creation := newOwnedAssignment(t, "resolver-marker")
+			root, creation, _ := newOwnedAssignment(t, "resolver-marker")
 			rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
 			return root, creation.Assignment.Label, "owner marker does not match assignment " + creation.Assignment.ID
 		}},
@@ -156,7 +155,7 @@ func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 			root, target, reason := refusalCase.setup(t)
 			chdir(t, root)
 			var stdout, stderr bytes.Buffer
-			if code := PathCommand(root, []string{target}, &stdout, &stderr); code != 1 {
+			if code := PathCommand(root, Home(), []string{target}, &stdout, &stderr); code != 1 {
 				t.Fatalf("path %q exited %d, want 1: %s", target, code, stderr.String())
 			}
 			if want := "bench worktree path: " + reason + "\n"; stderr.String() != want {
@@ -164,7 +163,7 @@ func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 			}
 			stdout.Reset()
 			stderr.Reset()
-			if code := ExecCommand(root, []string{target, "--", "true"}, nil, &stdout, &stderr); code != 1 {
+			if code := ExecCommand(root, Home(), []string{target, "--", "true"}, nil, &stdout, &stderr); code != 1 {
 				t.Fatalf("exec %q exited %d, want 1: %s", target, code, stderr.String())
 			}
 			if want := "bench worktree exec: " + reason + "\n"; stderr.String() != want {
@@ -177,16 +176,16 @@ func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 // TestTargetVerbsShareOneRefusalPrinter is LR15: one broken target yields byte-identical
 // stderr from both verbs once the verb prefix is stripped, so the two cannot drift.
 func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "shared-printer")
+	root, creation, home := newOwnedAssignment(t, "shared-printer")
 	rewriteMarkerOwner(t, creation.Path, strings.Repeat("b", 32))
 	chdir(t, root)
 	target := creation.Assignment.Label
 	var stdout, pathErr, execErr bytes.Buffer
-	if code := PathCommand(root, []string{target}, &stdout, &pathErr); code != 1 {
+	if code := PathCommand(root, home, []string{target}, &stdout, &pathErr); code != 1 {
 		t.Fatalf("path exited %d: %s", code, pathErr.String())
 	}
 	stdout.Reset()
-	if code := ExecCommand(root, []string{target, "--", "true"}, nil, &stdout, &execErr); code != 1 {
+	if code := ExecCommand(root, home, []string{target, "--", "true"}, nil, &stdout, &execErr); code != 1 {
 		t.Fatalf("exec exited %d: %s", code, execErr.String())
 	}
 	pathTail, pathFound := strings.CutPrefix(pathErr.String(), "bench worktree path: ")

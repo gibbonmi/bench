@@ -18,15 +18,13 @@ environment or changes the directory stays serial. `TestMain` is neither
 eligible nor serial, and it keeps its shape.
 
 Add the live-tree census test. It runs the census of ticket 03 over the
-package's own `_test.go` files and reports each mismatch by file and line. Add
-the five-slowest pin, which names the five tests the decision asset lists.
+package's own `_test.go` files and reports each mismatch by file and line.
 
 Record the user-facing change in `CHANGELOG.md` under Unreleased.
 
 ## Acceptance
 
 - [ ] WF01 pins the parallel census on the live tree.
-- [ ] WF08 pins `t.Parallel()` in each of the five tests that the decision asset names.
 - [ ] Every eligible test in the six files calls `t.Parallel()`.
 - [ ] The package passes `go test -race`.
 - [ ] `CHANGELOG.md` names the parallel `internal/worktree` suite under Unreleased.

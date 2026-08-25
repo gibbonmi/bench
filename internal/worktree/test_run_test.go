@@ -34,7 +34,10 @@ type testRunSelector struct {
 
 	// journeys is the identity log: one "journey path" line per successful selection
 	// consumer. A refusal appends nothing, so its length is the journey-start counter.
-	journeys []string
+	// Parallel journeys share one selector, so the mutex guards every append and every
+	// read; journeyLog is the only reader.
+	journeysMu sync.Mutex
+	journeys   []string
 }
 
 func (s *testRunSelector) selectFor(journey string) (string, error) {
@@ -42,8 +45,17 @@ func (s *testRunSelector) selectFor(journey string) (string, error) {
 	if s.err != nil {
 		return "", s.err
 	}
+	s.journeysMu.Lock()
 	s.journeys = append(s.journeys, journey+" "+s.selection.Path)
+	s.journeysMu.Unlock()
 	return s.selection.Path, nil
+}
+
+// journeyLog returns a copy of the identity log.
+func (s *testRunSelector) journeyLog() []string {
+	s.journeysMu.Lock()
+	defer s.journeysMu.Unlock()
+	return append([]string(nil), s.journeys...)
 }
 
 func (s *testRunSelector) selectOnce() (*runbinary.Selection, error) {
@@ -92,6 +104,7 @@ func testRunBinary(t *testing.T) string {
 // same identity. A per-journey builder increments more than once, or yields a second
 // path, and this test goes red.
 func TestDirectRunBuildsAndSealsOneExecutableForAllJourneys(t *testing.T) {
+	t.Parallel()
 	builds := 0
 	selector := &testRunSelector{
 		inherited: func() (string, bool) { return "", false },
@@ -111,8 +124,9 @@ func TestDirectRunBuildsAndSealsOneExecutableForAllJourneys(t *testing.T) {
 	}
 	requireTest(t, builds == 1, "builder ran %d times across three journeys, want exactly 1", builds)
 	requireTest(t, len(paths) == 1, "journeys observed %d executable identities %v, want 1", len(paths), paths)
-	requireTest(t, len(selector.journeys) == 3, "identity log = %q, want three journey entries", selector.journeys)
-	for _, entry := range selector.journeys {
+	log := selector.journeyLog()
+	requireTest(t, len(log) == 3, "identity log = %q, want three journey entries", log)
+	for _, entry := range log {
 		requireTest(t, strings.HasSuffix(entry, " "+selector.selection.Path), "identity log entry %q does not carry the selected path %q", entry, selector.selection.Path)
 	}
 }
@@ -121,6 +135,7 @@ func TestDirectRunBuildsAndSealsOneExecutableForAllJourneys(t *testing.T) {
 // consumption returns one identity, and the selected executable carries an adjacent
 // freshness seal, whether inherited from the gate or built by the direct-run owner.
 func TestPackageSelectionIsSealedAndStable(t *testing.T) {
+	t.Parallel()
 	first := testRunBinary(t)
 	second := testRunBinary(t)
 	requireTest(t, first == second, "package selection = %q then %q, want one identity", first, second)
@@ -133,6 +148,7 @@ func TestPackageSelectionIsSealedAndStable(t *testing.T) {
 // private builder never invoked. A private fallback build changes the counter even when
 // every journey stays green.
 func TestInheritedSelectionReachesJourneysUnchangedWithZeroBuilds(t *testing.T) {
+	t.Parallel()
 	sealed := testRunBinary(t)
 	builds := 0
 	selector := &testRunSelector{
@@ -156,6 +172,7 @@ func TestInheritedSelectionReachesJourneysUnchangedWithZeroBuilds(t *testing.T) 
 // seal-less inherited executable refuses before any journey starts: the journey-start
 // counter stays zero and the private builder stays cold.
 func TestInvalidSelectionRefusesBeforeAnyJourney(t *testing.T) {
+	t.Parallel()
 	sealed := testRunBinary(t)
 	sealedBytes, err := os.ReadFile(sealed)
 	requireTest(t, err == nil, "read sealed executable: %v", err)
@@ -192,7 +209,51 @@ func TestInvalidSelectionRefusesBeforeAnyJourney(t *testing.T) {
 			_, err := selector.selectFor("journey-a")
 			requireTest(t, err != nil, "selectFor with %s selection %q = nil, want refusal", tc.name, tc.value)
 			requireTest(t, builds == 0, "%s selection caused %d fallback builds, want 0", tc.name, builds)
-			requireTest(t, len(selector.journeys) == 0, "%s selection started %d journeys %q, want 0", tc.name, len(selector.journeys), selector.journeys)
+			log := selector.journeyLog()
+			requireTest(t, len(log) == 0, "%s selection started %d journeys %q, want 0", tc.name, len(log), log)
 		})
+	}
+}
+
+// TestParallelJourneysRecordEverySelection is WF06. Two parallel journeys share one
+// selector: the sync.Once still yields one executable, and the identity log keeps one
+// line per journey. An unguarded append drops a line or races.
+func TestParallelJourneysRecordEverySelection(t *testing.T) {
+	t.Parallel()
+	selector := &testRunSelector{
+		inherited: func() (string, bool) { return "", false },
+		tempRoot:  t.TempDir(),
+		build: func(_ context.Context, _, output string) error {
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		verify: func(string, string) error { return nil },
+	}
+	t.Cleanup(selector.close)
+	names := []string{"parallel-journey-a", "parallel-journey-b"}
+	var wait sync.WaitGroup
+	paths := make([]string, len(names))
+	errs := make([]error, len(names))
+	for i, journey := range names {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			paths[i], errs[i] = selector.selectFor(journey)
+		}()
+	}
+	wait.Wait()
+	for i, journey := range names {
+		requireTest(t, errs[i] == nil, "selectFor(%s): %v", journey, errs[i])
+		requireTest(t, paths[i] == paths[0], "journey %s received %q, want the one identity %q", journey, paths[i], paths[0])
+	}
+	log := selector.journeyLog()
+	requireTest(t, len(log) == len(names), "identity log = %q, want one line per parallel journey (%d)", log, len(names))
+	for _, journey := range names {
+		found := false
+		for _, entry := range log {
+			if strings.HasPrefix(entry, journey+" ") {
+				found = true
+			}
+		}
+		requireTest(t, found, "identity log %q lacks the line for journey %s", log, journey)
 	}
 }

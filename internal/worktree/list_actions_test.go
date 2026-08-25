@@ -21,10 +21,10 @@ import (
 )
 
 func TestListCommandRendersTypedAdminRefusal(t *testing.T) {
+	t.Parallel()
 	root := journeyRepoOnBranch(t, "main")
 	journeyFIFOWorktreeAdmin(t, root, "typed")
-	chdir(t, root)
-	out, code := ListCommand(nil)
+	out, code := ListCommand(root, Home(), nil)
 	if code == 0 || !strings.Contains(out, "worktrees/typed/gitdir") || !strings.Contains(out, "fifo") || !strings.Contains(out, "inspect and remove it") {
 		t.Fatalf("typed list output code=%d out=%q", code, out)
 	}
@@ -40,8 +40,7 @@ func TestListCommandKeepsTypedAndPorcelainFailureActionsDistinct(t *testing.T) {
 		t.Run(tc.mode, func(t *testing.T) {
 			root := journeyRepoOnBranch(t, "main")
 			journeyStubGit(t, root, tc.mode, filepath.Join(t.TempDir(), "argv"))
-			chdir(t, root)
-			out, code := ListCommand(nil)
+			out, code := ListCommand(root, Home(), nil)
 			if code != 1 || !strings.Contains(out, tc.detail) || !strings.Contains(out, tc.action) {
 				t.Fatalf("%s list output code=%d out=%q", tc.mode, code, out)
 			}
@@ -54,8 +53,7 @@ func TestListCommandRendersBoundExpiryAsTypedFailure(t *testing.T) {
 	t.Cleanup(restore)
 	root := journeyRepoOnBranch(t, "main")
 	journeyStubGit(t, root, "block-worktree", filepath.Join(t.TempDir(), "argv"))
-	chdir(t, root)
-	out, code := ListCommand(nil)
+	out, code := ListCommand(root, Home(), nil)
 	if code != 1 || !strings.Contains(out, "worktree list") || !strings.Contains(out, "investigate the git failure") || strings.Contains(out, "inspect and remove it") || strings.Contains(out, "retry") {
 		t.Fatalf("bound list output code=%d out=%q", code, out)
 	}
@@ -86,6 +84,7 @@ func setRandomReader(t *testing.T, data []byte) {
 }
 
 func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("testdata/pre-disclosure-argv-pairs.json")
 	if err != nil {
 		t.Fatal(err)
@@ -95,9 +94,8 @@ func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := journeyRepo(t)
-	chdir(t, root)
 	for _, pair := range pairs {
-		out, code := ListCommand(pair.Argv)
+		out, code := ListCommand(root, Home(), pair.Argv)
 		if out != pair.New.Stdout || pair.New.Stderr != "" || code != pair.New.Exit {
 			t.Fatalf("ListCommand(%q) = stdout=%q stderr=%q exit=%d, want checked-in new response", pair.Argv, out, "", code)
 		}
@@ -110,16 +108,16 @@ func TestListCommandCheckedInOldNewArgvCompatibility(t *testing.T) {
 }
 
 func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
+	t.Parallel()
 	root := journeyRepo(t)
-	chdir(t, root)
 	for _, arg := range []string{"--help", "-h", "help"} {
-		out, code := ListCommand([]string{arg})
+		out, code := ListCommand(root, Home(), []string{arg})
 		if code != 0 || out != "usage: bench worktree list\n" {
 			t.Errorf("ListCommand(%q) = (%d, %q)", arg, code, out)
 		}
 	}
 	for _, args := range [][]string{{"--unknown"}, {"extra"}, {"--"}} {
-		out, code := ListCommand(args)
+		out, code := ListCommand(root, Home(), args)
 		want := "usage: bench worktree list (unknown argument: " + args[0] + ")\n"
 		if code != 2 || out != want {
 			t.Errorf("ListCommand(%q) = (%d, %q), want usage exit 2", args, code, out)
@@ -128,19 +126,20 @@ func TestListCommandHelpAndArgumentMatrix(t *testing.T) {
 }
 
 func TestListCommandPreservesCheckedInEmptyPrimaryResponse(t *testing.T) {
+	t.Parallel()
 	primary, err := os.ReadFile("testdata/pre-disclosure-empty.stdout")
 	if err != nil {
 		t.Fatal(err)
 	}
 	root := journeyRepo(t)
-	chdir(t, root)
-	out, code := ListCommand(nil)
+	out, code := ListCommand(root, Home(), nil)
 	if code != 0 || out != string(primary)+"help[0]{cmd,why}:\n" {
 		t.Fatalf("ListCommand = (%d, %q), want checked-in primary plus exactly one help block", code, out)
 	}
 }
 
 func TestListCommandCheckedInPresentForeignTerminalPair(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("testdata/pre-disclosure-present-foreign-pair.json")
 	if err != nil {
 		t.Fatal(err)
@@ -152,8 +151,7 @@ func TestListCommandCheckedInPresentForeignTerminalPair(t *testing.T) {
 	root := newWorktreeRepo(t)
 	present := filepath.Join(t.TempDir(), "present foreign")
 	gitRun(t, root, "worktree", "add", "-q", "--detach", present, "HEAD")
-	chdir(t, root)
-	out, code := ListCommand(nil)
+	out, code := ListCommand(root, Home(), nil)
 	pair.Old.Stdout = strings.ReplaceAll(pair.Old.Stdout, "{{PRESENT}}", present)
 	pair.New.Stdout = strings.ReplaceAll(pair.New.Stdout, "{{PRESENT}}", present)
 	if pair.Old.Stderr != "" || pair.New.Stderr != "" || pair.Old.Exit != 0 || pair.New.Exit != 0 || pair.New.Stdout != pair.Old.Stdout+"help[0]{cmd,why}:\n" {
@@ -183,25 +181,22 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)))
-	creation := mustCreate(t, root, "landed-complete-assignment", "complete assignment")
-	boundary := cleanupTransactionBoundary
-	t.Cleanup(func() { cleanupTransactionBoundary = boundary })
-	cleanupTransactionBoundary = func(step LifecycleStep) error {
+	creation := mustCreate(t, root, Home(), "landed-complete-assignment", "complete assignment")
+	j := defaultJoins()
+	j.cleanupBoundary = func(step LifecycleStep) error {
 		if step == StepTerminalReceipt {
 			return errors.New("stop before the completed record is compacted")
 		}
 		return nil
 	}
-	if code := ReleaseCommand(root, []string{"--request", "landed-complete-assignment", creation.Path}, io.Discard, io.Discard); code == 0 {
+	if code := releaseCommandWith(j, root, Home(), []string{"--request", "landed-complete-assignment", creation.Path}, io.Discard, io.Discard); code == 0 {
 		t.Fatalf("interrupted release exit = %d, want non-zero", code)
 	}
-	cleanupTransactionBoundary = boundary
 	assignments, err := intent.Assignments(root)
 	if err != nil || len(assignments) != 1 || assignments[0].State != intent.StateComplete {
 		t.Fatalf("Assignments = %#v, %v, want one completed assignment", assignments, err)
 	}
-	chdir(t, root)
-	out, code := ListCommand(nil)
+	out, code := ListCommand(root, Home(), nil)
 	materialize := strings.NewReplacer("{{LABEL}}", assignments[0].Label)
 	pair.Old.Stdout = materialize.Replace(pair.Old.Stdout)
 	pair.New.Stdout = materialize.Replace(pair.New.Stdout)
@@ -214,6 +209,7 @@ func TestListCommandCheckedInCompletedAssignmentTerminalPair(t *testing.T) {
 }
 
 func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
+	t.Parallel()
 	rows := [][]any{
 		{"a", "active", "", "active"},
 		{"done", "complete", "", "complete"},
@@ -245,8 +241,8 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	setRandomReader(t, []byte(strings.Repeat("\x10", 16)+strings.Repeat("\x01", 16)+strings.Repeat("\x20", 16)+strings.Repeat("\x02", 16)))
-	mustCreate(t, root, "request-a", "alpha")
-	mustCreate(t, root, "request-b", "beta")
+	mustCreate(t, root, Home(), "request-a", "alpha")
+	mustCreate(t, root, Home(), "request-b", "beta")
 	present := filepath.Join(t.TempDir(), "present foreign")
 	missing := filepath.Join(t.TempDir(), "missing foreign * path")
 	gitRun(t, root, "worktree", "add", "-q", "--detach", present, "HEAD")
@@ -254,8 +250,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 	if err := os.RemoveAll(missing); err != nil {
 		t.Fatal(err)
 	}
-	chdir(t, root)
-	out, code := ListCommand(nil)
+	out, code := ListCommand(root, Home(), nil)
 	assignments, err := intent.Assignments(root)
 	if err != nil || len(assignments) != 2 {
 		t.Fatalf("Assignments = %#v, %v, want two producer-ordered rows", assignments, err)
@@ -273,6 +268,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 }
 
 func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing.T) {
+	t.Parallel()
 	for _, control := range []string{"\t", "\n", "\r"} {
 		t.Run("control", func(t *testing.T) {
 			root := newWorktreeRepo(t)
@@ -281,8 +277,7 @@ func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing
 			if err := os.RemoveAll(missing); err != nil {
 				t.Fatal(err)
 			}
-			chdir(t, root)
-			out, code := ListCommand(nil)
+			out, code := ListCommand(root, Home(), nil)
 			if code != 0 || !strings.HasPrefix(out, "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n") {
 				t.Fatalf("ListCommand = (%d, %q), want primary worktree response and exit 0", code, out)
 			}
@@ -302,6 +297,7 @@ func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing
 }
 
 func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *testing.T) {
+	t.Parallel()
 	for _, marker := range []string{"<", ">"} {
 		t.Run(marker, func(t *testing.T) {
 			root := newWorktreeRepo(t)
@@ -310,8 +306,7 @@ func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *t
 			if err := os.RemoveAll(missing); err != nil {
 				t.Fatal(err)
 			}
-			chdir(t, root)
-			out, code := ListCommand(nil)
+			out, code := ListCommand(root, Home(), nil)
 			primary := "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n  foreign," + missing + ",\"\",foreign,foreign,missing,none,unknown,unknown\n"
 			want := primary + "help[0]{cmd,why}:\n"
 			if code != 0 || out != want {

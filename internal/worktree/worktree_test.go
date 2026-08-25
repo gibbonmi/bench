@@ -25,6 +25,7 @@ var cksumGolden = []struct {
 }
 
 func TestCksumMatchesGolden(t *testing.T) {
+	t.Parallel()
 	for _, g := range cksumGolden {
 		got := cksum([]byte(g.root + "\n"))
 		if got != g.sum {
@@ -38,6 +39,7 @@ func TestCksumMatchesGolden(t *testing.T) {
 // skipped where `cksum` is unavailable, keeping the suite hermetic there.
 
 func TestCksumMatchesSystemTool(t *testing.T) {
+	t.Parallel()
 	if _, err := exec.LookPath("cksum"); err != nil {
 		capability.Capability(t, capability.Tool, "cksum not available")
 	}
@@ -101,10 +103,10 @@ func TestPoolDefaultBenchHome(t *testing.T) {
 }
 
 func TestClassifyRegisteredWorktrees(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
-	pool := Pool(root)
+	pool := poolAt(home, root)
 	warm := filepath.Join(pool, "warm")
 	leased := filepath.Join(pool, "leased")
 	outOfPool := filepath.Join(filepath.Dir(root), "outside pool")
@@ -121,9 +123,9 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 	if err := os.WriteFile(lease, []byte("123 2026-07-06T00:00:00Z\n"), 0o644); err != nil {
 		t.Fatalf("write lease: %v", err)
 	}
-	entries, err := ClassifyRegisteredWorktrees(root)
+	entries, err := classifyRegisteredWorktreesAt(root, home)
 	if err != nil {
-		t.Fatalf("ClassifyRegisteredWorktrees: %v", err)
+		t.Fatalf("classifyRegisteredWorktreesAt: %v", err)
 	}
 	got := map[string]Class{}
 	for _, entry := range entries {
@@ -140,9 +142,9 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 			t.Errorf("class %q = %q, want %q", path, got[path], class)
 		}
 	}
-	linkedEntries, err := ClassifyRegisteredWorktrees(leased)
+	linkedEntries, err := classifyRegisteredWorktreesAt(leased, home)
 	if err != nil {
-		t.Fatalf("ClassifyRegisteredWorktrees from linked worktree: %v", err)
+		t.Fatalf("classifyRegisteredWorktreesAt from linked worktree: %v", err)
 	}
 	got = map[string]Class{}
 	for _, entry := range linkedEntries {
@@ -157,12 +159,10 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 }
 
 func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
+	t.Parallel()
 	t.Run("clean assignment compacts and spares sibling", func(t *testing.T) {
-		root, target := newOwnedAssignment(t, "terminal-clean")
-		sibling, err := Create(root, "terminal-clean-sibling", "sibling", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
+		root, target, home := newOwnedAssignment(t, "terminal-clean")
+		sibling := mustCreate(t, root, home, "terminal-clean-sibling", "sibling")
 		siblingRef := "refs/bench/recovery/" + sibling.Assignment.OwnerID + "/" + sibling.Assignment.ID + "/1"
 		gitRun(t, root, "update-ref", siblingRef, target.Assignment.Start)
 		markPending(t, root, target.Assignment)
@@ -186,10 +186,11 @@ func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
 // created worktree by the actual --label value. A caller never has to invent
 // the exec/path syntax.
 func TestCreateCommandPrintsNextHint(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
+	home := filepath.Join(root, ".bench-home")
 	var stdout, stderr bytes.Buffer
-	code := CreateCommand(root, []string{"--request", "next-hint", "--label", "next hint label"}, &stdout, &stderr)
+	code := CreateCommand(root, home, []string{"--request", "next-hint", "--label", "next hint label"}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("CreateCommand exit = %d, stderr = %q", code, stderr.String())
 	}
@@ -209,6 +210,7 @@ func TestCreateCommandPrintsNextHint(t *testing.T) {
 // usage.Parse: every help spelling prints the declared grammar on stdout and
 // exits 0, whether or not required flags are present.
 func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
+	t.Parallel()
 	want := "usage: " + usage.WorktreeCreate + "\n"
 	for _, args := range [][]string{
 		{"--help"},
@@ -217,7 +219,7 @@ func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
 		{"--request", "x", "--help"},
 	} {
 		var stdout, stderr bytes.Buffer
-		code := CreateCommand("", args, &stdout, &stderr)
+		code := CreateCommand("", Home(), args, &stdout, &stderr)
 		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
 			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want (0, %q, empty)", args, code, stdout.String(), stderr.String(), want)
 		}
@@ -228,8 +230,9 @@ func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
 // usage.Parse answers --help before refreshop.Consume ever sees the args, so a
 // --refresh alongside --help prints only the help line, not a worktree_refresh table.
 func TestCreateCommandHelpPerformsNoRefresh(t *testing.T) {
+	t.Parallel()
 	var stdout, stderr bytes.Buffer
-	code := CreateCommand("", []string{"--request", "x", "--refresh", "--help"}, &stdout, &stderr)
+	code := CreateCommand("", Home(), []string{"--request", "x", "--refresh", "--help"}, &stdout, &stderr)
 	want := "usage: " + usage.WorktreeCreate + "\n"
 	if code != 0 || stdout.String() != want || stderr.Len() != 0 {
 		t.Fatalf("CreateCommand with --refresh --help = (%d, %q, %q), want (0, %q, empty)", code, stdout.String(), stderr.String(), want)
@@ -239,12 +242,13 @@ func TestCreateCommandHelpPerformsNoRefresh(t *testing.T) {
 // TestCreateCommandRequiredFlagsKeepDeclaredHelp pins that a missing required
 // flag exits 2 with the declared grammar, matching the reauthorize sibling.
 func TestCreateCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
+	t.Parallel()
 	for _, args := range [][]string{
 		{"--request", "r"},
 		{"--label", "l"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := CreateCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != createGrammar.Help+"\n" {
+		if code := CreateCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != createGrammar.Help+"\n" {
 			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), createGrammar.Help+"\n")
 		}
 	}
@@ -253,12 +257,13 @@ func TestCreateCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 // TestCreateCommandRejectsEmptyFlagValues pins the shared empty-value rule on
 // --request and --label: an empty string names nothing and exits 2 naming it.
 func TestCreateCommandRejectsEmptyFlagValues(t *testing.T) {
+	t.Parallel()
 	for _, args := range [][]string{
 		{"--request", "", "--label", "l"},
 		{"--request", "r", "--label", ""},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := CreateCommand("", args, &stdout, &stderr); code != 2 || stdout.Len() != 0 {
+		if code := CreateCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 {
 			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want exit 2 with empty stdout", args, code, stdout.String(), stderr.String())
 		}
 	}
@@ -271,18 +276,19 @@ func TestCreateCommandRejectsEmptyFlagValues(t *testing.T) {
 // retain plan finds no terminal receipt and returns the masking error; this
 // test goes red on that message.
 func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residual.txt\n"), 0o644)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	creation := mustCreate(t, root, "retain-verdict", "retain verdict")
+	home := filepath.Join(root, ".bench-home")
+	creation := mustCreate(t, root, home, "retain-verdict", "retain verdict")
 	residual := filepath.Join(creation.Path, "residual.txt")
 	mustWrite(t, residual, []byte("build output\n"), 0o600)
 	requirePlanAction(t, root, creation.Path, ActionRetain)
 
 	args := []string{"--request", "retain-verdict", creation.Path}
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, args, &out, &errb)
+	code := ReleaseCommand(root, home, args, &out, &errb)
 	msg := errb.String()
 	requireTest(t, code != 0, "retained release exit = %d, want non-zero", code)
 	requireTest(t, !strings.Contains(msg, "terminal receipt missing"), "masking error still present: %q", msg)
@@ -291,16 +297,17 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 
 	mustNoError(t, os.Remove(residual))
 	var out2 strings.Builder
-	code = ReleaseCommand(root, args, &out2, io.Discard)
+	code = ReleaseCommand(root, home, args, &out2, io.Discard)
 	requireTest(t, code == 0, "recovery release exit = %d, want 0; out=%q", code, out2.String())
 }
 
 // TestReleaseUnknownRequestNamesReauthorizeRecovery is LR19: release names the request
 // component, its own retained clause, and the same recovery command the landing names.
 func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "release-reauthorize-recovery")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "release-reauthorize-recovery")
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
 	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + creation.Path + "'"
 	want := "bench worktree release: request token matches no assignment; checkout retained; observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
@@ -332,7 +339,8 @@ func removeOutOfBand(t *testing.T, root string, a intent.Assignment, action Clea
 // reconciles and compacts the record instead of dead-ending on "cleanup
 // receipt does not authorize release reconciliation". Replay is idempotent.
 func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "oob-residue")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "oob-residue")
 	a, err := assignmentByID(root, creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, len(a.Recovery) == 0, "fixture already holds recovery metadata")
@@ -340,13 +348,13 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 
 	args := []string{"--request", "landed-oob-residue", creation.Path}
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, args, &out, &errb)
+	code := ReleaseCommand(root, home, args, &out, &errb)
 	requireTest(t, code == 0, "residue release exit=%d stderr=%q", code, errb.String())
 	if _, err := assignmentByID(root, a.ID); err == nil {
 		t.Fatal("residue record survived reconcile")
 	}
 	var replay strings.Builder
-	code = ReleaseCommand(root, args, &replay, io.Discard)
+	code = ReleaseCommand(root, home, args, &replay, io.Discard)
 	requireTest(t, code == 0 && replay.String() == out.String(), "replay exit=%d out=%q", code, replay.String())
 }
 
@@ -355,7 +363,8 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 // returns a verdict handing over the ref itself and leaves the record and its
 // recovery pointer intact: release never silently discards preserved work.
 func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "oob-preserved")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "oob-preserved")
 	a, err := assignmentByID(root, creation.Assignment.ID)
 	mustNoError(t, err)
 	ref := intent.RecoveryRefPrefix(a.OwnerID, a.ID) + "1"
@@ -364,7 +373,7 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	removeOutOfBand(t, root, a, ActionRemoved)
 
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
 	requireTest(t, code != 0, "preserved release exit=%d, want non-zero", code)
 	requireTest(t, strings.Contains(errb.String(), "git show "+ref),
 		"preserved verdict does not hand over the ref: %q", errb.String())
@@ -383,12 +392,13 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 // this fixture guards: a reconcile that dropped on tree-absence alone would
 // catch a session between `worktree add` and its first write.
 func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
-	bindEnv(t, "BENCH_HOME", filepath.Join(root, ".bench-home"))
-	residue := mustCreate(t, root, "landed-sweep-residue", "residue")
-	preserved := mustCreate(t, root, "landed-sweep-preserved", "preserved")
-	activeGone := mustCreate(t, root, "landed-sweep-active", "active gone")
-	live := mustCreate(t, root, "landed-sweep-live", "live present")
+	home := filepath.Join(root, ".bench-home")
+	residue := mustCreate(t, root, home, "landed-sweep-residue", "residue")
+	preserved := mustCreate(t, root, home, "landed-sweep-preserved", "preserved")
+	activeGone := mustCreate(t, root, home, "landed-sweep-active", "active gone")
+	live := mustCreate(t, root, home, "landed-sweep-live", "live present")
 
 	ra, err := assignmentByID(root, residue.Assignment.ID)
 	mustNoError(t, err)
@@ -407,7 +417,7 @@ func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 	mustNoError(t, err)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", ag.Worktree) // active, tree gone, unregistered
 
-	result, err := ConservativeCleanup(root)
+	result, err := conservativeCleanupAt(defaultJoins(), root, home, currentTime())
 	mustNoError(t, err)
 	requireTest(t, result.Reconciled == 2, "Reconciled=%d, want 2", result.Reconciled)
 	for _, dropped := range []string{ra.ID, pa.ID} {
@@ -423,7 +433,8 @@ func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 }
 
 func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
-	root, creation := newPendingAssignment(t, "release-in-flight")
+	t.Parallel()
+	root, creation, home := newPendingAssignment(t, "release-in-flight")
 	stop := errors.New("crash after removal")
 	_, err := ApplyAutomatic(root, creation.Path, func(step LifecycleStep) error {
 		if step == StepRemoval {
@@ -434,15 +445,16 @@ func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
 	requireTest(t, errors.Is(err, stop), "automatic interruption = %v", err)
 	args := []string{"--request", "landed-release-in-flight", creation.Path}
 	var first, firstErr strings.Builder
-	code := ReleaseCommand(root, args, &first, &firstErr)
+	code := ReleaseCommand(root, home, args, &first, &firstErr)
 	requireTest(t, code == 0 && firstErr.String() == "", "in-flight release code=%d stderr=%q", code, firstErr.String())
 	var replay strings.Builder
-	code = ReleaseCommand(root, args, &replay, io.Discard)
+	code = ReleaseCommand(root, home, args, &replay, io.Discard)
 	requireTest(t, code == 0 && replay.String() == first.String(), "in-flight replay code=%d stdout=%q", code, replay.String())
-	requireTest(t, ReleaseCommand(root, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
-	requireTest(t, ReleaseCommand(root, []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
+	requireTest(t, ReleaseCommand(root, home, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
+	requireTest(t, ReleaseCommand(root, home, []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
 }
 func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	target := filepath.Join(filepath.Dir(root), "content drift target")
@@ -482,6 +494,7 @@ func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 }
 
 func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	if err := os.WriteFile(filepath.Join(root, ".git", "info", "exclude"), []byte("ignored.txt\n"), 0o644); err != nil {
@@ -493,15 +506,14 @@ func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 	if err := os.WriteFile(ignored, []byte("secret\n"), 0o000); err != nil {
 		t.Fatal(err)
 	}
-	original := ignoredLstat
-	ignoredLstat = func(path string) (os.FileInfo, error) {
+	j := defaultJoins()
+	j.ignoredLstat = func(path string) (os.FileInfo, error) {
 		if path == ignored {
 			return nil, os.ErrNotExist
 		}
 		return os.Lstat(path)
 	}
-	t.Cleanup(func() { ignoredLstat = original })
-	plan, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardIgnored: true})
+	plan, err := planExplicitWith(j, root, target, CleanupOptions{DiscardIgnored: true})
 	if err != nil || plan.Action != ActionRetain || plan.ReasonCode != ReasonUncertain {
 		t.Fatalf("stat-race plan = %#v, %v", plan, err)
 	}
@@ -511,6 +523,7 @@ func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 }
 
 func TestLeaseFile(t *testing.T) {
+	t.Parallel()
 	dir := journeyRepo(t)
 	lease, err := LeaseFile(dir)
 	if err != nil {
@@ -525,6 +538,7 @@ func TestLeaseFile(t *testing.T) {
 }
 
 func TestLeaseFileCommandMissingArg(t *testing.T) {
+	t.Parallel()
 	out, code := LeaseFileCommand(nil)
 	if code != 2 {
 		t.Errorf("exit = %d, want 2", code)
@@ -534,10 +548,29 @@ func TestLeaseFileCommandMissingArg(t *testing.T) {
 	}
 }
 
+// TestCreateCommandWritesBelowTheExplicitHome covers WF15. The verb takes its home from
+// the caller, so the bound environment naming a different directory changes nothing. A
+// verb that still read the environment would put the pool under the bound home, and the
+// second assertion names that directory empty. The bind keeps this test serial.
+func TestCreateCommandWritesBelowTheExplicitHome(t *testing.T) {
+	root := newWorktreeRepo(t)
+	bound, explicit := t.TempDir(), t.TempDir()
+	bindEnv(t, homeEnv, bound)
+	var stdout, stderr bytes.Buffer
+	code := CreateCommand(root, explicit, []string{"--request", "wf15-explicit-home", "--label", "explicit home"}, &stdout, &stderr)
+	requireTest(t, code == 0, "create exit = %d, stderr %q", code, stderr.String())
+	canonical, err := canonicalPath(root)
+	requireTest(t, err == nil, "canonical root: %v", err)
+	entries, err := os.ReadDir(poolAt(explicit, canonical))
+	requireTest(t, err == nil && len(entries) == 1, "explicit home pool holds %d entries (%v), want one worktree", len(entries), err)
+	_, err = os.Stat(poolKeysDirAt(bound))
+	requireTest(t, os.IsNotExist(err), "the verb wrote below the bound home %s: %v", bound, err)
+}
+
 func TestPoolCommandExplicitRoot(t *testing.T) {
 	home := t.TempDir()
 	bindEnv(t, "BENCH_HOME", home)
-	out, code := PoolCommand([]string{"/home/mgibs/workspace/bench"})
+	out, code := PoolCommand(home, []string{"/home/mgibs/workspace/bench"})
 	if code != 0 {
 		t.Errorf("exit = %d, want 0", code)
 	}
@@ -551,10 +584,11 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 // bundle component other than the request token: a rewritten owner marker names the marker
 // and keeps the checkout.
 func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "release-owner-marker")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "release-owner-marker")
 	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
 	want := "bench worktree release: owner marker does not match assignment " + creation.Assignment.ID + "; checkout retained\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
 		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)

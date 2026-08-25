@@ -22,7 +22,8 @@ import (
 // and the production classifier must reach the child policy's verdict over
 // exactly those facts.
 func TestReclaimFactAdapterTranslatesDeadAndLivePointers(t *testing.T) {
-	pool, _ := newReclaimPool(t)
+	t.Parallel()
+	pool, _, _ := newReclaimPool(t)
 	deadTarget := plantDeadChild(t, pool, "dead-key", "wt")
 	plantLiveChild(t, pool, "live-key", "wt")
 
@@ -52,10 +53,11 @@ func TestReclaimFactAdapterTranslatesDeadAndLivePointers(t *testing.T) {
 // key must translate into a present gitdir: target, and the same key must
 // read provably absent after the source repository is deleted.
 func TestReclaimFactAdapterTranslatesARealRegistrationKey(t *testing.T) {
-	pool, _ := newReclaimPool(t)
+	t.Parallel()
+	pool, _, home := newReclaimPool(t)
 	source := newWorktreeRepo(t)
 	key := filepath.Base(Pool(canonicalRoot(source)))
-	created := mustCreate(t, source, "fa-registration", "fareg")
+	created := mustCreate(t, source, home, "fa-registration", "fareg")
 	requireTest(t, filepath.Dir(created.Path) == filepath.Join(pool, key), "created worktree %q is not under key %q", created.Path, key)
 
 	registered := gatherPoolKeyFacts(filepath.Join(pool, key), key)
@@ -77,7 +79,8 @@ func TestReclaimFactAdapterTranslatesARealRegistrationKey(t *testing.T) {
 // FIFO where a pointer belongs must translate to a non-regular shape with no
 // body — proof the adapter never opened it.
 func TestReclaimFactAdapterTranslatesHostileShapesUnopened(t *testing.T) {
-	pool, _ := newReclaimPool(t)
+	t.Parallel()
+	pool, _, _ := newReclaimPool(t)
 
 	mustNoError(t, os.Symlink(t.TempDir(), filepath.Join(pool, "symlinked-key")))
 	linked := gatherPoolKeyFacts(filepath.Join(pool, "symlinked-key"), "symlinked-key")
@@ -100,10 +103,11 @@ func TestReclaimFactAdapterTranslatesHostileShapesUnopened(t *testing.T) {
 // translate into unreadable shapes and unknown existence carrying the exact
 // error text, never into proof of absence.
 func TestReclaimFactAdapterTranslatesDeniedReads(t *testing.T) {
+	t.Parallel()
 	if os.Geteuid() == 0 {
 		capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny the stat that leaves existence unknown")
 	}
-	pool, _ := newReclaimPool(t)
+	pool, _, _ := newReclaimPool(t)
 
 	plantDeadChild(t, pool, "unreadable-child", "wt")
 	sealed := filepath.Join(pool, "unreadable-child", "wt")

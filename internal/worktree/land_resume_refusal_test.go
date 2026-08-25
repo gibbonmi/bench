@@ -14,6 +14,7 @@ import (
 )
 
 func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	for _, journey := range []struct {
 		name  string
@@ -59,7 +60,7 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 		} {
 			t.Run(journey.name+"/"+tc.name, func(t *testing.T) {
 				request := "resume-destination-state-" + strings.ReplaceAll(journey.name+"-"+tc.name, " ", "-")
-				root, creation, base, tip, tally := publicLandingFixture(t, request, "private/output", "dist/")
+				root, creation, base, tip, tally, _ := publicLandingFixture(t, request, "private/output", "dist/")
 				land := func(args ...string) (int, string, string) {
 					var stdout, stderr bytes.Buffer
 					cmd := descendant(t, binary, append([]string{"worktree", "land"}, args...)...)
@@ -100,9 +101,10 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 }
 
 func TestResumeLandCommandRefusesNonAncestorReviewBaseWithoutMutation(t *testing.T) {
+	t.Parallel()
 	binary := testRunBinary(t)
 	request := "resume-nonancestor-base"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, tally, _ := publicLandingFixture(t, request, "", "")
 	run := func(args ...string) (int, string, string) {
 		var stdout, stderr bytes.Buffer
 		cmd := descendant(t, binary, append([]string{"worktree", "land"}, args...)...)
@@ -131,6 +133,7 @@ func TestResumeLandCommandRefusesNonAncestorReviewBaseWithoutMutation(t *testing
 }
 
 func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		marker func(*testing.T, string, string, string)
@@ -141,12 +144,12 @@ func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *te
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "resume-marker-" + tc.name
-			root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
-			oldRelease := releaseLandingAssignment
-			releaseLandingAssignment = func(string, []string, io.Writer, io.Writer) int { return 1 }
-			t.Cleanup(func() { releaseLandingAssignment = oldRelease })
+			root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
+			working := defaultJoins()
+			broken := working
+			broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
+			if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
@@ -155,7 +158,7 @@ func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *te
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", gitOutput(t, root, "rev-parse", "main~1"), "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			if code := LandCommand(root, "", args, &stdout, &stderr); code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=project-green marker") || stderr.Len() != 0 {
+			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=project-green marker") || stderr.Len() != 0 {
 				t.Fatalf("marker refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			if got := gitOutput(t, root, "rev-parse", "main"); got != destination {
@@ -169,10 +172,11 @@ func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *te
 }
 
 func TestResumeLandCommandRefusesWhenTerminalReceiptWasEvicted(t *testing.T) {
+	t.Parallel()
 	request := "resume-evicted-receipt"
-	root, creation, base, tip, tally := publicLandingFixture(t, request, "", "")
+	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
 		t.Fatalf("landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -192,7 +196,7 @@ func TestResumeLandCommandRefusesWhenTerminalReceiptWasEvicted(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := LandCommand(root, "", args, &stdout, &stderr); code != 1 || !strings.Contains(stdout.String(), "missing-terminal-receipt") || stderr.Len() != 0 {
+	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 1 || !strings.Contains(stdout.String(), "missing-terminal-receipt") || stderr.Len() != 0 {
 		t.Fatalf("evicted resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "main"); got != published {

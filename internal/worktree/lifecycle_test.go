@@ -18,6 +18,7 @@ import (
 // So a fresh-empty writer mid-claim is never stolen while a legacy/crashed lease is.
 
 func TestReclaimable(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 7, 4, 12, 0, 0, 0, time.UTC)
 	dead := func(int) bool { return false }
 	live := func(int) bool { return true }
@@ -95,6 +96,7 @@ func dirty(t *testing.T, dir string) {
 // pool-entry invariant: an unleased entry is always claimably clean.
 
 func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
+	t.Parallel()
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
 	Release(dir)
@@ -117,6 +119,7 @@ func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 // Pid 1 is live for any test runner (kill -0 yields nil or EPERM, both alive).
 
 func TestReleaseRespectsLiveForeignLease(t *testing.T) {
+	t.Parallel()
 	if os.Getpid() == 1 {
 		capability.Capability(t, capability.PID, "running as pid 1")
 	}
@@ -143,16 +146,17 @@ func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 // goes red here because the simulated claimant's create succeeds mid-cleanup.
 
 func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
+	t.Parallel()
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
-	real := restoreClean
-	t.Cleanup(func() { restoreClean = real })
+	j := defaultJoins()
+	real := j.restoreClean
 	claimedMidCleanup := false
-	restoreClean = func(wt string) {
-		claimedMidCleanup = claimAt(lease, time.Now())
+	j.restoreClean = func(wt string) {
+		claimedMidCleanup = claimAt(j, lease, time.Now())
 		real(wt)
 	}
-	Release(dir)
+	releaseWith(j, dir)
 	if claimedMidCleanup {
 		t.Error("entry was claimable mid-cleanup: a concurrent claimant can win while the worktree is dirty and lose its lease to the trailing remove")
 	}
@@ -189,6 +193,7 @@ func deadPidLine(t *testing.T) string {
 // reclaimable, restores the fresh lease, and concedes.
 
 func TestClaimSecondReclaimerConcedes(t *testing.T) {
+	t.Parallel()
 	if os.Getpid() == 1 {
 		capability.Capability(t, capability.PID, "running as pid 1")
 	}
@@ -196,17 +201,16 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	real := claimTakeoverGap
-	t.Cleanup(func() { claimTakeoverGap = real })
+	j := defaultJoins()
 	var nestedWon, reentered bool
-	claimTakeoverGap = func(leasePath string) {
+	j.claimTakeoverGap = func(leasePath string) {
 		if reentered {
 			return // the nested reclaimer's own gap is a no-op
 		}
 		reentered = true
-		nestedWon = claimAt(leasePath, time.Now())
+		nestedWon = claimAt(j, leasePath, time.Now())
 	}
-	outerWon := claimAt(lease, time.Now())
+	outerWon := claimAt(j, lease, time.Now())
 	if !nestedWon {
 		t.Error("first (nested) reclaimer did not win the dead-pid lease")
 	}
@@ -244,6 +248,7 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 // leaving C's lease alone.
 
 func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
+	t.Parallel()
 	if os.Getpid() == 1 {
 		capability.Capability(t, capability.PID, "running as pid 1")
 	}
@@ -251,23 +256,20 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	realTakeover := claimTakeoverGap
-	t.Cleanup(func() { claimTakeoverGap = realTakeover })
+	j := defaultJoins()
 	var nestedWon bool
 	inNestedTakeover := false
-	claimTakeoverGap = func(lp string) {
+	j.claimTakeoverGap = func(lp string) {
 		if inNestedTakeover {
 			return // B's own pass through this gap must not recurse again
 		}
 		inNestedTakeover = true
-		nestedWon = claimAt(lp, time.Now())
+		nestedWon = claimAt(j, lp, time.Now())
 		inNestedTakeover = false
 	}
-	realSteal := claimStealGap
-	t.Cleanup(func() { claimStealGap = realSteal })
 	const sentinel = "999999 sentinel-first-writer\n"
 	wrote := false
-	claimStealGap = func(lp string) {
+	j.claimStealGap = func(lp string) {
 		// Skip B's own pass (still inside the nested takeover). The write must land only
 		// in the slot the outer's rename vacates, not the one B's rename vacates.
 		if inNestedTakeover || wrote {
@@ -278,7 +280,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	outerWon := claimAt(lease, time.Now())
+	outerWon := claimAt(j, lease, time.Now())
 	if outerWon {
 		t.Error("outer Claim = true, want false (it must concede to the first-writer)")
 	}
@@ -307,6 +309,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 // directory — a wrong name would mint outside the pool and silently break warm reuse.
 
 func TestCandidateNameStaysInPool(t *testing.T) {
+	t.Parallel()
 	pool := "/home/x/.bench/worktrees/bench-123"
 	got := candidateName(pool, 1751630400, 4242, 2)
 	if filepath.Dir(got) != pool {
@@ -321,6 +324,7 @@ func TestCandidateNameStaysInPool(t *testing.T) {
 }
 
 func TestIgnoredInventoryEntryAndByteBoundaries(t *testing.T) {
+	t.Parallel()
 	for _, count := range []int{0, 1, 20, 21, 1000, 1001} {
 		t.Run(fmt.Sprintf("entries-%d", count), func(t *testing.T) {
 			root := newWorktreeRepo(t)
@@ -379,15 +383,16 @@ func TestIgnoredInventoryEntryAndByteBoundaries(t *testing.T) {
 	}
 }
 func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
-	root, creation := newPendingAssignment(t, "release-crash-window")
+	t.Parallel()
+	root, creation, home := newPendingAssignment(t, "release-crash-window")
 	plan, err := ApplyAutomatic(root, creation.Path, nil)
 	requireTest(t, err == nil && plan.Action == ActionRemoved, "automatic cleanup = %#v, %v", plan, err)
 	args := []string{"--request", "landed-release-crash-window", creation.Path}
 	var first, firstErr strings.Builder
-	code := ReleaseCommand(root, args, &first, &firstErr)
+	code := ReleaseCommand(root, home, args, &first, &firstErr)
 	requireTest(t, code == 0 && firstErr.String() == "", "release reconciliation code=%d stderr=%q", code, firstErr.String())
 	var replay, replayErr strings.Builder
-	code = ReleaseCommand(root, args, &replay, &replayErr)
+	code = ReleaseCommand(root, home, args, &replay, &replayErr)
 	requireTest(t, code == 0 && replay.String() == first.String() && replayErr.String() == "", "release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
 	repo, _, _ := cleanupIdentity(root, creation.Path)
 	_, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, creation.Path, intent.RequestDigest("landed-release-crash-window"))
@@ -401,11 +406,12 @@ func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
 // automatic transaction's own state, not a bespoke pre-transition refusal) so a retry
 // replans through the same verdict.
 func TestReleaseUnmergedAssignmentRetains(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "unmerged-release")
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "unmerged-release")
 	commitInWorktree(t, creation.Path, "unique.txt", "preserve\n", "unique work")
 
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, []string{"--request", "landed-unmerged-release", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(root, home, []string{"--request", "landed-unmerged-release", creation.Path}, &stdout, &stderr)
 	requireTest(t, code == 1, "unmerged release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (unmerged)") && strings.Contains(stderr.String(), "assignment branch has not landed"),
 		"unmerged reason missing: %q", stderr.String())

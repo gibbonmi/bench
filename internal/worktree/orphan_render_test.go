@@ -43,6 +43,7 @@ func oneShellArgument(t *testing.T, quoted string) (int, string) {
 // An unquoted one splits on a space or expands on a glob, and the pasted command names a
 // different tree, or none.
 func TestResumeSummaryQuotesHostilePaths(t *testing.T) {
+	t.Parallel()
 	cases := map[string]string{
 		"space":        "/pool/a b/wt",
 		"glob":         "/pool/wt*?[abc]",
@@ -75,6 +76,7 @@ func TestResumeSummaryQuotesHostilePaths(t *testing.T) {
 // One embedded newline would forge a whole extra summary line for a reader.
 // A raw ESC byte would drive the terminal that prints it.
 func TestResumeSummaryPreservesLineStructure(t *testing.T) {
+	t.Parallel()
 	for name, path := range map[string]string{
 		"newline": "/pool/wt\nreconciled 999; failed 0",
 		"escape":  "/pool/wt\x1b[2J\x1b[H",
@@ -99,6 +101,7 @@ func TestResumeSummaryPreservesLineStructure(t *testing.T) {
 // `bench worktree list` reports.
 // The fallback must not send the reader after a path, because no route emits one.
 func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
+	t.Parallel()
 	line := summaryLines(summaryFor([]OrphanCandidate{{ID: "a1", Path: "/pool/wt\nforged"}}))[1]
 	requireTest(t, strings.Contains(line, "orphan a1:") && strings.Contains(line, "id row in bench worktree list"),
 		"fallback line does not point at the ledger row `bench worktree list` reports: %q", line)
@@ -110,6 +113,7 @@ func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
 // A cap that does not state what it withholds would read as "that is all of them".
 // That is the one way this output could mislead rather than help.
 func TestResumeSummaryCapsListings(t *testing.T) {
+	t.Parallel()
 	var orphans []OrphanCandidate
 	for i := range 5 {
 		orphans = append(orphans, OrphanCandidate{ID: fmt.Sprintf("o%d", i), Path: fmt.Sprintf("/pool/o%d", i)})
@@ -153,10 +157,10 @@ func planReclaimableCount(t *testing.T, out string) int {
 	return count
 }
 
-func mustResumeClean(t *testing.T) (string, int) {
+func mustResumeClean(t *testing.T, root, home string) (string, int) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(nil, &stdout, &stderr)
+	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "resume-clean code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	return stdout.String(), code
 }
@@ -178,6 +182,7 @@ func plantHostilePool(t *testing.T, pool, root string) {
 // verb.
 // One that prints the line over a clean pool trains the operator to ignore it.
 func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testing.T) {
+	t.Parallel()
 	summary := renderResumeSummary(ResumeResult{ReclaimableKeys: 2})
 	requireTest(t, strings.Contains(summary, "pool: 2 reclaimable keys") && strings.Contains(summary, "bench worktree reclaim"),
 		"resume summary does not count the reclaimable keys and name the verb:\n%s", summary)
@@ -192,12 +197,13 @@ func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testin
 // the command plans with.
 // The drift would only show up as a plan that names a different set than resume promised.
 func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
+	t.Parallel()
 	t.Run("hostile pool", func(t *testing.T) {
-		pool, root := newReclaimPool(t)
+		pool, root, home := newReclaimPool(t)
 		plantHostilePool(t, pool, root)
 
-		summary, _ := mustResumeClean(t)
-		plan, code := mustReclaim(t)
+		summary, _ := mustResumeClean(t, root, home)
+		plan, code := mustReclaim(t, root, home)
 		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
 		want := planReclaimableCount(t, plan)
 		requireTest(t, want == 3, "the hostile pool plans %d reclaimable keys, want the two dead and the empty one: %q", want, plan)
@@ -205,12 +211,12 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 			"resume reported %d reclaimable keys, the plan targets %d:\n%s\n%s", resumeReclaimableCount(t, summary), want, summary, plan)
 	})
 	t.Run("clean pool", func(t *testing.T) {
-		pool, root := newReclaimPool(t)
+		pool, root, home := newReclaimPool(t)
 		plantLiveChild(t, pool, "live-key", "wt")
 		mustMkdirAll(t, filepath.Join(pool, filepath.Base(Pool(canonicalRoot(root)))), 0o700)
 
-		summary, _ := mustResumeClean(t)
-		plan, code := mustReclaim(t)
+		summary, _ := mustResumeClean(t, root, home)
+		plan, code := mustReclaim(t, root, home)
 		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
 		want := planReclaimableCount(t, plan)
 		requireTest(t, want == 0, "the clean pool plans %d reclaimable keys, want none: %q", want, plan)
@@ -224,11 +230,12 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 // The whole recursive listing must survive a resume byte-identical, including the keys it
 // just counted as reclaimable.
 func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
-	pool, root := newReclaimPool(t)
+	t.Parallel()
+	pool, root, home := newReclaimPool(t)
 	plantHostilePool(t, pool, root)
 	before := poolListing(t, pool)
 
-	summary, _ := mustResumeClean(t)
+	summary, _ := mustResumeClean(t, root, home)
 	requireTest(t, resumeReclaimableCount(t, summary) > 0, "the fixture pool reported nothing reclaimable:\n%s", summary)
 	requireTest(t, poolListing(t, pool) == before,
 		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
@@ -238,15 +245,15 @@ func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 // It must not report a zero it has no basis for.
 // That is the one state where the ambient count could disagree with what the verb would say.
 func TestResumeReportsAnUnreadablePoolRatherThanZero(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
-	bindEnv(t, "BENCH_HOME", home)
 	pool := filepath.Join(home, "worktrees")
 	mustMkdirAll(t, pool, 0o700)
 	mustNoError(t, os.Chmod(pool, 0o000))
 	t.Cleanup(func() { _ = os.Chmod(pool, 0o700) })
 
-	result, err := ConservativeCleanup(root)
+	result, err := conservativeCleanupAt(defaultJoins(), root, home, currentTime())
 	requireTest(t, err == nil, "resume failed over an unreadable pool: %v", err)
 	requireTest(t, result.PoolUnreadable != nil, "an unreadable pool reported no failure")
 	requireTest(t, result.ReclaimableKeys == 0, "an unreadable pool reported %d keys", result.ReclaimableKeys)
