@@ -54,6 +54,12 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		{"FOG26 or", "bench help extra || touch <marker>"},
 		{"FOG27 env prefix", "env X=1 bench help | touch <marker>"},
 		{"FOG40 assignment prefix", "X=1 bench help | touch <marker>"},
+		{"leading descriptor redirect", "2>/dev/null bench help | touch <marker>"},
+		{"env options and end marker", "env -i -- X=1 bench help | touch <marker>"},
+		{"command end marker", "command -- bench help | touch <marker>"},
+		{"nohup end marker", "nohup -- bench help | touch <marker>"},
+		{"timeout options and end marker", "timeout -- 5 bench help | touch <marker>"},
+		{"xargs end marker", "xargs -- bench help | touch <marker>"},
 		{"FOG34 deeper relative", "../../bin/bench.sh help | touch <marker>"},
 		{"FOG35 absolute", filepath.Join(owner.kit, "bin", "bench.sh") + " help | touch <marker>"},
 		{"FOG37 output redirect", "bench help > <marker>"},
@@ -70,6 +76,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		{"FOG09 worktree redirect", "bench worktree exec label -- bench gate --fresh > /tmp/bench-follow-on-output"},
 		{"FOG10 worktree pipeline", "bench worktree exec label -- bench gate --fresh | cat"},
 		{"FOG18 wrapper", "bash -lc 'bench help | cat'"},
+		{"FOG18 wrapper outer pipeline", "bash -lc 'bench help' | cat"},
 		{"FOG38 heredoc redirect", "bench gate <<'EOF'\ninput\nEOF"},
 	} {
 		result := run(repo, tc.command)

@@ -14,6 +14,7 @@ import (
 )
 
 var assignment = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
+var fileDescriptor = regexp.MustCompile(`^\d+$`)
 var wrapperFlag = regexp.MustCompile(`^-[A-Za-z]*c[A-Za-z]*$`)
 
 type Resolver struct {
@@ -67,10 +68,22 @@ func scan(stream shellcommand.Stream, resolver Resolver, wrapper bool) bool {
 		}
 		if wrapper && index < len(words) && isWrapper(words[index]) {
 			for i := index + 1; i+1 < len(words); i++ {
-				if wrapperFlag.MatchString(words[i]) && scan(shellcommand.Parse(words[i+1]), resolver, false) {
+				child := shellcommand.Parse(words[i+1])
+				if wrapperFlag.MatchString(words[i]) && containsBench(child, resolver) && (hasOuterSyntax(stream) || scan(child, resolver, false)) {
 					return true
 				}
 			}
+		}
+	}
+	return false
+}
+
+func containsBench(stream shellcommand.Stream, resolver Resolver) bool {
+	for _, span := range stream.Commands {
+		words := commandWords(stream.Tokens[span.Start:span.End])
+		index := resolvePrefix(words)
+		if index < len(words) && isBench(words[index], resolver) {
+			return true
 		}
 	}
 	return false
@@ -80,6 +93,9 @@ func commandWords(tokens []shellcommand.Token) []string {
 	words := make([]string, 0, len(tokens))
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].Kind == shellcommand.Redirection {
+			if len(words) > 0 && fileDescriptor.MatchString(words[len(words)-1]) {
+				words = words[:len(words)-1]
+			}
 			i++
 			continue
 		}
@@ -98,17 +114,25 @@ func resolvePrefix(words []string) int {
 		switch filepath.Base(words[i]) {
 		case "env":
 			i++
-			for i < len(words) && assignment.MatchString(words[i]) {
+			for i < len(words) && (strings.HasPrefix(words[i], "-") || assignment.MatchString(words[i])) {
 				i++
 			}
 		case "command", "nohup":
 			i++
-		case "timeout", "xargs":
+			for i < len(words) && strings.HasPrefix(words[i], "-") {
+				i++
+			}
+		case "timeout":
 			i++
 			for i < len(words) && strings.HasPrefix(words[i], "-") {
 				i++
 			}
 			if i < len(words) {
+				i++
+			}
+		case "xargs":
+			i++
+			for i < len(words) && strings.HasPrefix(words[i], "-") {
 				i++
 			}
 		default:
