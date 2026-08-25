@@ -46,6 +46,24 @@ func TestEffectBoundaryCensus(t *testing.T) {
 	}
 }
 
+// TestHarnessCensusRefusesChildStartOutsideHarness proves the harness effect
+// census still refuses a child-process start in a test file outside the harness
+// file set. The census walks the package directory itself, so this test drives
+// its two sources — the effect pattern and the harness file set — over a
+// synthetic line instead. The subject text is assembled from parts, because the
+// census reads this file too and a literal would report this line.
+// (Coverage row WF13.)
+func TestHarnessCensusRefusesChildStartOutsideHarness(t *testing.T) {
+	t.Parallel()
+	line := "\tcmd := " + "exec" + "." + "Command(\"git\", \"status\")"
+	if journeyHarnessFiles["clean_test.go"] {
+		t.Fatal("clean_test.go is not a harness file")
+	}
+	if match := outsideHarnessEffect.FindString(line); match == "" {
+		t.Fatalf("the harness census accepts a child start outside the harness: %q", line)
+	}
+}
+
 // TestPoolAtExplicitHome proves the pool path derives from the injected home value
 // alone, with no environment read. (Coverage row EI1.)
 func TestPoolAtExplicitHome(t *testing.T) {
