@@ -458,13 +458,16 @@ func lineSafe(value string) bool { return sanitize.LineSafe(value) }
 
 type assignmentRecoveryContext struct {
 	target string
-	detail string
+	// suffix is the calling verb's own clause after the component sentence. The release
+	// verb names its retained checkout there; the landing verbs add nothing.
+	suffix string
 	base   string
 	tip    string
 }
 
-const assignmentMismatchDetail = "request, assignment, or path mismatch"
-const retainedAssignmentMismatchDetail = assignmentMismatchDetail + "; checkout retained"
+// retainedSuffix is the release verb's clause. A release that refuses leaves the
+// checkout in place, and the operator has to know that before choosing a next command.
+const retainedSuffix = "; checkout retained"
 
 // assignmentForRequest keeps opaque-token resolution in intent. Only an unmatched
 // token permits path-derived recovery discovery.
@@ -488,7 +491,8 @@ func unmatchedRequestRecovery(root string, recoveryContext assignmentRecoveryCon
 	if err != nil {
 		return refusal{}, false, err
 	}
-	recovery := refusal{detail: recoveryContext.detail}
+	recovery := componentRefusal(componentRequest, "", "", "").refusal
+	recovery.detail += recoveryContext.suffix
 	candidate, count := intent.Assignment{}, 0
 	for _, assignment := range assignments {
 		if assignment.State == intent.StateActive && assignment.Worktree == recoveryContext.target {
@@ -500,6 +504,9 @@ func unmatchedRequestRecovery(root string, recoveryContext assignmentRecoveryCon
 		recovery.next = reauthorizeRecoveryNext(candidate.ID, recoveryContext.target, recoveryContext.base, recoveryContext.tip)
 		return recovery, true, nil
 	}
+	// Without one active assignment at the target there is no id to reauthorize, so the
+	// route is the listing that names which assignment owns which tree.
+	recovery.next = "bench worktree list"
 	return recovery, false, nil
 }
 

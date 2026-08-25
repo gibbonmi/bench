@@ -295,12 +295,14 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 	requireTest(t, code == 0, "recovery release exit = %d, want 0; out=%q", code, out2.String())
 }
 
+// TestReleaseUnknownRequestNamesReauthorizeRecovery is LR19: release names the request
+// component, its own retained clause, and the same recovery command the landing names.
 func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	root, creation := newOwnedAssignment(t, "release-reauthorize-recovery")
 	var stdout, stderr strings.Builder
 	code := ReleaseCommand(root, []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
 	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + creation.Path + "'"
-	want := "bench worktree release: request, assignment, or path mismatch; checkout retained; observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "\n"
+	want := "bench worktree release: request token matches no assignment; checkout retained; observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
 		t.Fatalf("unknown-request release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
 	}
@@ -542,5 +544,19 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 	want := filepath.Join(home, "worktrees", "bench-2826441890") + "\n"
 	if out != want {
 		t.Errorf("out = %q, want %q", out, want)
+	}
+}
+
+// TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout pins release's retained clause on a
+// bundle component other than the request token: a rewritten owner marker names the marker
+// and keeps the checkout.
+func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "release-owner-marker")
+	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
+	var stdout, stderr strings.Builder
+	code := ReleaseCommand(root, []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
+	want := "bench worktree release: owner marker does not match assignment " + creation.Assignment.ID + "; checkout retained\n"
+	if code != 1 || stdout.String() != "" || stderr.String() != want {
+		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
 	}
 }

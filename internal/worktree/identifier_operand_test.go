@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // Every path-taking verb accepts the label, the id, or an unambiguous 8-12 character
@@ -51,16 +53,16 @@ func TestPrefixOperandRefusals(t *testing.T) {
 	mustCreate(t, root, "req-prefix-a", "prefix-shared-a")
 	mustCreate(t, root, "req-prefix-b", "prefix-shared-b")
 	chdir(t, root)
-	for name, target := range map[string]string{
-		"ambiguous": "prefix-share",
-		"too short": "prefix-",
+	for name, refusal := range map[string]struct{ target, reason string }{
+		"ambiguous": {"prefix-share", "target is ambiguous: " + strings.Join(ledgerOrderIDs(t, root), ", ")},
+		"too short": {"prefix-", "target is unassigned"},
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := PathCommand(root, []string{target}, &stdout, &stderr); code == 0 {
-			t.Fatalf("%s prefix %q resolved: %s", name, target, stdout.String())
+		if code := PathCommand(root, []string{refusal.target}, &stdout, &stderr); code == 0 {
+			t.Fatalf("%s prefix %q resolved: %s", name, refusal.target, stdout.String())
 		}
-		if !strings.Contains(stderr.String(), "not one active Bench-owned worktree") {
-			t.Fatalf("%s prefix %q lost the named refusal: %s", name, target, stderr.String())
+		if want := "bench worktree path: " + refusal.reason + "\n"; stderr.String() != want {
+			t.Fatalf("%s prefix %q printed %q, want %q", name, refusal.target, stderr.String(), want)
 		}
 	}
 }
@@ -93,5 +95,106 @@ func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
 	}
 	if !strings.Contains(applied.String(), ",removed,") {
 		t.Fatalf("prefix apply did not remove: %s", applied.String())
+	}
+}
+
+// resolverRefusalCase breaks one dimension of a target and names the sentence both
+// target-taking verbs must print for it. setup returns the repository root, the target
+// the operator types, and the resolver's reason.
+type resolverRefusalCase struct {
+	name  string
+	setup func(t *testing.T) (root, target, reason string)
+}
+
+func resolverRefusalCases() []resolverRefusalCase {
+	return []resolverRefusalCase{
+		{name: "unassigned", setup: func(t *testing.T) (string, string, string) {
+			root := newWorktreeRepo(t)
+			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+			return root, "no-such-target", "target is unassigned"
+		}},
+		{name: "ambiguous", setup: func(t *testing.T) (string, string, string) {
+			root := newWorktreeRepo(t)
+			bindEnv(t, "BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
+			mustCreate(t, root, "req-collide-a", "collide-shared-a")
+			mustCreate(t, root, "req-collide-b", "collide-shared-b")
+			return root, "collide-shar", "target is ambiguous: " + strings.Join(ledgerOrderIDs(t, root), ", ")
+		}},
+		{name: "inactive", setup: func(t *testing.T) (string, string, string) {
+			root, creation := newOwnedAssignment(t, "resolver-inactive")
+			a := creation.Assignment
+			a.State = intent.StateComplete
+			mustNoError(t, intent.PutAssignment(root, a))
+			return root, a.Label, "assignment " + a.ID + " is not active"
+		}},
+		{name: "owner marker", setup: func(t *testing.T) (string, string, string) {
+			root, creation := newOwnedAssignment(t, "resolver-marker")
+			rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
+			return root, creation.Assignment.Label, "owner marker does not match assignment " + creation.Assignment.ID
+		}},
+	}
+}
+
+// ledgerOrderIDs lists the assignment ids in ledger order, which is the order the ambiguity
+// refusal names them in.
+func ledgerOrderIDs(t *testing.T, root string) []string {
+	t.Helper()
+	assignments, err := intent.Assignments(root)
+	mustNoError(t, err)
+	ids := make([]string, 0, len(assignments))
+	for _, a := range assignments {
+		ids = append(ids, a.ID)
+	}
+	return ids
+}
+
+// TestTargetVerbsNameTheResolverReason is LR11 through LR14: an operator reads the check
+// that failed rather than one blanket sentence covering four causes.
+func TestTargetVerbsNameTheResolverReason(t *testing.T) {
+	for _, refusalCase := range resolverRefusalCases() {
+		t.Run(refusalCase.name, func(t *testing.T) {
+			root, target, reason := refusalCase.setup(t)
+			chdir(t, root)
+			var stdout, stderr bytes.Buffer
+			if code := PathCommand(root, []string{target}, &stdout, &stderr); code != 1 {
+				t.Fatalf("path %q exited %d, want 1: %s", target, code, stderr.String())
+			}
+			if want := "bench worktree path: " + reason + "\n"; stderr.String() != want {
+				t.Errorf("path %q printed %q, want %q", target, stderr.String(), want)
+			}
+			stdout.Reset()
+			stderr.Reset()
+			if code := ExecCommand(root, []string{target, "--", "true"}, nil, &stdout, &stderr); code != 1 {
+				t.Fatalf("exec %q exited %d, want 1: %s", target, code, stderr.String())
+			}
+			if want := "bench worktree exec: " + reason + "\n"; stderr.String() != want {
+				t.Errorf("exec %q printed %q, want %q", target, stderr.String(), want)
+			}
+		})
+	}
+}
+
+// TestTargetVerbsShareOneRefusalPrinter is LR15: one broken target yields byte-identical
+// stderr from both verbs once the verb prefix is stripped, so the two cannot drift.
+func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "shared-printer")
+	rewriteMarkerOwner(t, creation.Path, strings.Repeat("b", 32))
+	chdir(t, root)
+	target := creation.Assignment.Label
+	var stdout, pathErr, execErr bytes.Buffer
+	if code := PathCommand(root, []string{target}, &stdout, &pathErr); code != 1 {
+		t.Fatalf("path exited %d: %s", code, pathErr.String())
+	}
+	stdout.Reset()
+	if code := ExecCommand(root, []string{target, "--", "true"}, nil, &stdout, &execErr); code != 1 {
+		t.Fatalf("exec exited %d: %s", code, execErr.String())
+	}
+	pathTail, pathFound := strings.CutPrefix(pathErr.String(), "bench worktree path: ")
+	execTail, execFound := strings.CutPrefix(execErr.String(), "bench worktree exec: ")
+	if !pathFound || !execFound {
+		t.Fatalf("verb prefixes missing: path=%q exec=%q", pathErr.String(), execErr.String())
+	}
+	if pathTail != execTail {
+		t.Errorf("path tail %q and exec tail %q differ", pathTail, execTail)
 	}
 }

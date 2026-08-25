@@ -1,6 +1,6 @@
 # Lifecycle refusals name the component that failed
 
-Status: staged
+Status: implemented
 
 Roadmap: FT224
 

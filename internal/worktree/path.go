@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -22,8 +23,7 @@ func PathCommand(root string, args []string, stdout, stderr io.Writer) int {
 	}
 	path, err := resolvePath(root, args[0])
 	if err != nil {
-		fmt.Fprintln(stderr, "bench worktree path: target is not one active Bench-owned worktree")
-		return 1
+		return printTargetRefusal(stderr, "bench worktree path", err)
 	}
 	if !lineSafe(path) {
 		fmt.Fprintln(stderr, "bench worktree path: resolved path is not safe for line output")
@@ -53,8 +53,8 @@ func resolveWorktree(root, target string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if selected.State != intent.StateActive {
-		return "", errors.New("assignment is not active")
+	if !landingActiveState(selected.State) {
+		return "", componentRefusal(componentAssignmentState, selected.ID, string(selected.State), string(intent.StateActive))
 	}
 	if err := validateCreationBundle(root, selected); err != nil {
 		return "", err
@@ -67,41 +67,59 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 	if err != nil {
 		return intent.Assignment{}, err
 	}
-	var selected *intent.Assignment
-	for i := range assignments {
+	matched := matchingAssignments(assignments, func(a intent.Assignment) bool {
+		if isPath {
+			worktree, worktreeErr := canonicalPath(a.Worktree)
+			return worktreeErr == nil && worktree == path
+		}
 		// The id is the address `bench worktree list` advertises in its executable help
 		// rows, and it is the only unique one. Labels can collide, and the ambiguity
-		// guard below is what answers when they do.
-		matches := assignments[i].Label == target || assignments[i].ID == target
-		if isPath {
-			worktree, worktreeErr := canonicalPath(assignments[i].Worktree)
-			matches = worktreeErr == nil && worktree == path
-		}
-		if !matches {
-			continue
-		}
-		if selected != nil {
-			return intent.Assignment{}, errors.New("target is ambiguous")
-		}
-		selected = &assignments[i]
-	}
-	if selected == nil && !isPath && len(target) >= minOperandPrefix && len(target) <= maxIdentifierPrefix {
+		// refusal below is what answers when they do.
+		return a.Label == target || a.ID == target
+	})
+	if len(matched) == 0 && !isPath && len(target) >= minOperandPrefix && len(target) <= maxIdentifierPrefix {
 		// An unambiguous 8-12 character prefix of the label or the id also resolves.
 		// Shorter prefixes stay unresolved so a short word cannot grab a worktree.
-		for i := range assignments {
-			if !strings.HasPrefix(assignments[i].ID, target) && !strings.HasPrefix(assignments[i].Label, target) {
-				continue
-			}
-			if selected != nil {
-				return intent.Assignment{}, errors.New("target is ambiguous")
-			}
-			selected = &assignments[i]
-		}
+		matched = matchingAssignments(assignments, func(a intent.Assignment) bool {
+			return strings.HasPrefix(a.ID, target) || strings.HasPrefix(a.Label, target)
+		})
 	}
-	if selected == nil {
+	if len(matched) == 0 {
 		return intent.Assignment{}, errors.New("target is unassigned")
 	}
-	return *selected, nil
+	if len(matched) > 1 {
+		// The refusal names every colliding id, because the id is the address that
+		// resolves the collision the operator just hit.
+		ids := make([]string, 0, len(matched))
+		for _, a := range matched {
+			ids = append(ids, a.ID)
+		}
+		return intent.Assignment{}, errors.New("target is ambiguous: " + strings.Join(ids, ", "))
+	}
+	return matched[0], nil
+}
+
+func matchingAssignments(assignments []intent.Assignment, matches func(intent.Assignment) bool) []intent.Assignment {
+	var selected []intent.Assignment
+	for _, a := range assignments {
+		if matches(a) {
+			selected = append(selected, a)
+		}
+	}
+	return selected
+}
+
+// printTargetRefusal is the one printer both target-taking verbs use, so `worktree path`
+// and `worktree exec` cannot describe one failure two ways. A component refusal prints
+// its detail sentence: the operator reads the named check, not the refused record.
+func printTargetRefusal(stderr io.Writer, verb string, err error) int {
+	reason := err.Error()
+	var refused refusalError
+	if errors.As(err, &refused) {
+		reason = refused.detail
+	}
+	fmt.Fprintln(stderr, verb+": "+sanitize.Controls(reason))
+	return 1
 }
 
 // minOperandPrefix and maxIdentifierPrefix bound the unambiguous-prefix window. The

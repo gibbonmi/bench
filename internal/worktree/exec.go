@@ -37,8 +37,7 @@ func ExecCommand(root string, args []string, stdin io.Reader, stdout, stderr io.
 	}
 	path, err := resolveWorktree(root, parsed.Positionals[0])
 	if err != nil {
-		fmt.Fprintln(stderr, "bench worktree exec: target is not one active Bench-owned worktree")
-		return 1
+		return printTargetRefusal(stderr, "bench worktree exec", err)
 	}
 	return runWorktreeChild(parsed.Positionals[1:], path, stdin, stdout, stderr)
 }

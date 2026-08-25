@@ -299,19 +299,23 @@ func decodeMarker(data []byte) (Marker, error) {
 	}
 	return marker, nil
 }
+
+// validateCreationBundle names the one identity component the assignment's own records
+// fail. The checked-out branch is the bundle's own predicate, not a registry component,
+// so it keeps its own sentence between the marker read and the recorded evidence.
 func validateCreationBundle(root string, assignment intent.Assignment) error {
-	evidence, err := validateOwnerMarker(root, assignment.Worktree)
-	if err != nil || evidence.marker.OwnerID != assignment.OwnerID {
-		return errors.New("owner marker does not match assignment")
+	// The marker step runs before the branch check, because the branch check decides
+	// nothing on evidence the marker step has not accepted. The caller already holds the
+	// assignment, so the state component stays the caller's own check.
+	evidence, err := ownerMarkerRefusal(root, assignment.Worktree, assignment)
+	if err != nil {
+		return err
 	}
-	branch, err := git.Output("-C", assignment.Worktree, "symbolic-ref", "--quiet", "HEAD")
-	if err != nil || branch != assignment.Branch {
+	branch, branchErr := git.Output("-C", assignment.Worktree, "symbolic-ref", "--quiet", "HEAD")
+	if branchErr != nil || branch != assignment.Branch {
 		return errors.New("assignment branch is not checked out")
 	}
-	if evidence.registration.BranchRef == assignment.Branch && evidence.registration.LockReason == lockReason(assignment) {
-		return nil
-	}
-	return errors.New("registration or Bench lock does not match assignment")
+	return registrationRefusal(evidence, assignment)
 }
 
 const releaseOperation = "worktree-release"
@@ -360,13 +364,15 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 	if assignment == nil {
 		foundAssignment, findErr := assignmentForRequest(root, requestArg, assignmentRecoveryContext{
 			target: target,
-			detail: retainedAssignmentMismatchDetail,
+			suffix: retainedSuffix,
 		})
 		if findErr != nil {
 			return intent.CleanupReceipt{}, findErr
 		}
 		if foundAssignment.Worktree != target {
-			return intent.CleanupReceipt{}, errors.New(retainedAssignmentMismatchDetail)
+			retained := componentRefusal(componentAssignmentPath, foundAssignment.ID, foundAssignment.Worktree, target)
+			retained.detail += retainedSuffix
+			return intent.CleanupReceipt{}, retained
 		}
 		assignment = &foundAssignment
 	}
