@@ -232,7 +232,8 @@ judgment, not global sorting.
 ## 8. Batch-propose, then commit once on green
 
 Follow `## Delegate the evidence`. If tracked changes remain, charge the one
-later write delegate to draft the complete tracked batch. If no tracked changes
+later write delegate to draft the complete tracked pass as one uncommitted batch diff.
+If no tracked changes
 remain, start no batch writer.
 
 The reviewer batch contains the tracked diff, proposed ignored-source removals,
