@@ -343,6 +343,6 @@ Three terms, written in this pass:
 
 ## Sources
 
-- Path: `decisions/assets/exec-census-tree-facts.md`
+- Path: `specs/exec-census/decisions/assets/exec-census-tree-facts.md`
   Supports: #5, #6, #10, #11, and #13 through the eight cited findings.
   Drift: re-read after any change to `internal/worktree/exec.go`, `internal/worktree/path.go`, or the hook wiring files.
