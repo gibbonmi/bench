@@ -289,6 +289,15 @@ Not covered: story 13 — the `PreToolUse` matcher `Bash` is pinned by the exist
 - `CONTEXT.md`
 - `CHANGELOG.md`
 - `specs/exec-census/`
+- `internal/gitguard/scan.go`
+- `internal/systemtest/owner_land_race_test.go`
+- `tests/canary/package-core-guard/reintroduced-bare-skip/`
+
+The last three fences were added during the build. The `git` subcommand
+finder has one source in the destructive-git guard, so the verb head
+reads it there. The `census=<n>` key changes every pinned landed record,
+including the one in the system test. The bare-skip canary fixture anchors
+on the `cksum` skip, which moved to `internal/poolkey` with the key.
 
 The recording tickets land first on one integration source. The visibility
 tickets follow them, and the guidance ticket lands last so its account names
