@@ -304,6 +304,102 @@ func TestRecordRefusesASymlinkedCensusDirectory(t *testing.T) {
 	}
 }
 
+// TestRecordNamesTheHeadBehindAHeredocBody proves a scripted edit still counts with a
+// real head: the pool path sits in the heredoc body the parser strips, so the head
+// falls back to the first command's resolved head. (Coverage row EC05.)
+func TestRecordNamesTheHeadBehindAHeredocBody(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	path := filepath.Join(pool, ownerID+"-"+knownID, "x")
+	command := "python3 - <<EOF\nopen(\"" + path + "\")\nEOF"
+	if err := Record(command, root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	got := records(t, home, root, knownID)
+	if len(got) != 1 {
+		t.Fatalf("records = %v, want one", got)
+	}
+	if head := strings.Split(got[0], "\t")[1]; head != "python3" {
+		t.Fatalf("record head = %q, want %q", head, "python3")
+	}
+}
+
+// TestRecordNamesTheGitSubcommand proves a bare `git` head never hides the missing
+// verb: the head carries the first subcommand word. (Coverage row EC07.)
+func TestRecordNamesTheGitSubcommand(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	path := filepath.Join(pool, ownerID+"-"+knownID, "x")
+	command := "git add " + path
+	if err := Record(command, root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	got := records(t, home, root, knownID)
+	if len(got) != 1 {
+		t.Fatalf("records = %v, want one", got)
+	}
+	if head := strings.Split(got[0], "\t")[1]; head != "git add" {
+		t.Fatalf("record head = %q, want %q", head, "git add")
+	}
+}
+
+// TestRecordSkipsARoutinePrefix proves an unresolved prefix never gets recorded in
+// the verb's place: an assignment and `timeout` are stepped over. (Coverage row EC08.)
+func TestRecordSkipsARoutinePrefix(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	path := filepath.Join(pool, ownerID+"-"+knownID, "y")
+	command := "FOO=1 timeout 5 sed -i x " + path
+	if err := Record(command, root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	got := records(t, home, root, knownID)
+	if len(got) != 1 {
+		t.Fatalf("records = %v, want one", got)
+	}
+	if head := strings.Split(got[0], "\t")[1]; head != "sed" {
+		t.Fatalf("record head = %q, want %q", head, "sed")
+	}
+}
+
+// TestRecordNamesCdOverACompoundEdit proves a `cd` into the assignment directory
+// records the real head `cd`, not the trailing `make`.
+func TestRecordNamesCdOverACompoundEdit(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	dir := filepath.Join(pool, ownerID+"-"+knownID)
+	command := "cd " + dir + " && make"
+	if err := Record(command, root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	got := records(t, home, root, knownID)
+	if len(got) != 1 {
+		t.Fatalf("records = %v, want one", got)
+	}
+	if head := strings.Split(got[0], "\t")[1]; head != "cd" {
+		t.Fatalf("record head = %q, want %q", head, "cd")
+	}
+}
+
+// TestRecordSkipsAGitGlobalFlagBeforeTheSubcommand proves a flag before the
+// subcommand, such as `-C`, never becomes the subcommand.
+func TestRecordSkipsAGitGlobalFlagBeforeTheSubcommand(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	dir := filepath.Join(pool, ownerID+"-"+knownID)
+	command := "git -C " + dir + " add x"
+	if err := Record(command, root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	got := records(t, home, root, knownID)
+	if len(got) != 1 {
+		t.Fatalf("records = %v, want one", got)
+	}
+	if head := strings.Split(got[0], "\t")[1]; head != "git add" {
+		t.Fatalf("record head = %q, want %q", head, "git add")
+	}
+}
+
 // TestRecordMatchesOnlyAPoolPath walks the edges of the raw-text match: the separator
 // after the pool, the absolute form, the folded quoted word, and the assignment shape
 // of the segment.

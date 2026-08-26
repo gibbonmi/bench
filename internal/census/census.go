@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/benchguard"
+	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/shellcommand"
@@ -75,9 +76,9 @@ func firstSegment(text string) string {
 	return text
 }
 
-// verbHead returns the head of the first simple command whose words name a pool path.
-// A text that names the pool only where the parser cannot see it, such as a heredoc
-// body, falls back to the first command's head.
+// verbHead returns the resolved head of the first simple command whose words name a
+// pool path. A text that names the pool only where the parser cannot see it, such as a
+// heredoc body, falls back to the first command's resolved head.
 func verbHead(command, prefix string) string {
 	stream := shellcommand.Parse(command)
 	first := ""
@@ -86,16 +87,37 @@ func verbHead(command, prefix string) string {
 		if len(words) == 0 {
 			continue
 		}
+		head := resolvedHead(words)
 		if first == "" {
-			first = words[0]
+			first = head
 		}
 		for _, word := range words {
 			if strings.Contains(word, prefix) {
-				return words[0]
+				return head
 			}
 		}
 	}
 	return first
+}
+
+// resolvedHead names the executable a simple command's words actually run, stepping
+// over the routine prefixes (an assignment, `env`, `timeout`, `xargs`) that would
+// otherwise be recorded in the verb's place. A `git` head also carries the first
+// subcommand word, because a bare `git` head hides which verb the drain should
+// propose.
+func resolvedHead(words []string) string {
+	prefix := shellcommand.ResolveRoutinePrefix(words)
+	index := prefix.Index
+	if index >= len(words) {
+		index = 0
+	}
+	head := words[index]
+	if filepath.Base(head) == "git" {
+		if sub, _, ok := gitguard.FindSubcommand(words, index+1, len(words)); ok {
+			return head + " " + sub
+		}
+	}
+	return head
 }
 
 // write appends one line to the assignment's record file. The directory is never
