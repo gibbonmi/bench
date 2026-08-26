@@ -241,8 +241,6 @@ and signing-key custody remain outside this repository-controlled roadmap.
 
 **FT38 (LOW, decision required) — dashboard visual identity pass.**
 
-**FT197 (MEDIUM) — the promotion broker inherits the wrapper's recovered toolchain.**
-
 **FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
 
 **FT232 (EXPERIMENT, decision required) — repair-loop tripwire: an advisory signal from gate records.**

@@ -386,7 +386,7 @@ file_sha256() {
 }
 
 land_route() {
-  local script bindir manifest key value broker='' version='' platform='' digest='' installed actual
+  local script bindir install manifest key value broker='' version='' platform='' digest='' installed actual
   if [[ -n "${BENCH_KIT+x}" ]]; then
     echo 'bench: worktree land does not honor inherited BENCH_KIT; unset it and re-run' >&2
     exit 1
@@ -401,6 +401,7 @@ land_route() {
   fi
   script="$(resolve_script_path)"
   bindir="$(cd -P "$(dirname "$script")" && pwd)"
+  install="$(cd -P "$bindir/.." && pwd)"
   manifest="$bindir/bench-broker.manifest"
   if [[ ! -f "$manifest" ]]; then
     echo "bench: no promotion-broker manifest at $manifest" >&2
@@ -420,13 +421,13 @@ land_route() {
     land_repair_advice
     exit 127
   fi
-  installed="$(package_version "$(cd -P "$bindir/.." && pwd)" 2>/dev/null || true)"
+  installed="$(package_version "$install" 2>/dev/null || true)"
   if [[ -n "$installed" && "$installed" != "$version" ]]; then
     echo "bench: promotion broker version $version does not match installed package $installed" >&2
     land_repair_advice
     exit 127
   fi
-  [[ "$broker" == /* ]] || broker="$(cd -P "$bindir/.." && pwd)/$broker"
+  [[ "$broker" == /* ]] || broker="$install/$broker"
   if [[ ! -f "$broker" || ! -x "$broker" || ! -s "$broker" || -L "$broker" ]]; then
     echo "bench: promotion broker at $broker is not a regular executable" >&2
     land_repair_advice
@@ -438,6 +439,9 @@ land_route() {
     land_repair_advice
     exit 127
   fi
+  # The authenticated broker builds the prospective executable. Give it the same
+  # bounded toolchain recovery that ordinary wrapper routes receive.
+  recover_source_go_path "$install"
   exec "$broker" "$@"
 }
 
