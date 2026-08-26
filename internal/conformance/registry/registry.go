@@ -149,6 +149,7 @@ var Checks = []Check{
 	{Name: "row-next-grammar", Implementation: "checkRowNextGrammar", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "prose-mechanics", Implementation: "checkProseMechanics", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "entry-point-parity", Implementation: "checkEntryPointParity", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "harness-record", Implementation: "checkHarnessRecord", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
@@ -177,6 +178,7 @@ var familyChecks = map[string]string{
 	"row-next-grammar":              "row-next-grammar",
 	"prose-mechanics":               "prose-mechanics",
 	"entry-point-parity":            "entry-point-parity",
+	"harness-record":                "harness-record",
 }
 
 // Families lists the family names this table binds, in sorted order. They are the table's

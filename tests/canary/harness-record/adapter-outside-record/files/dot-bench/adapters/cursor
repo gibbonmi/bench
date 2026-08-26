@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# A headless adapter the harness record does not carry. It ships a harness Bench cannot
+# grade, so the record must gain a row before this adapter can run.
+exit 0
