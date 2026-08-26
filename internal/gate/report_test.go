@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -280,7 +281,7 @@ func TestPhaseSkippedByARedNeedContributesNoRow(t *testing.T) {
 func TestARedReportCallbackTurnsTheRunRed(t *testing.T) {
 	streams := newPhaseStreams(io.Discard)
 	var stdout, stderr bytes.Buffer
-	code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func() ([]string, bool) { return nil, true })
+	code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func(io.Writer) ([]string, bool) { return nil, true })
 
 	if code != 1 {
 		t.Errorf("callback red exit = %d, want 1", code)
@@ -365,8 +366,8 @@ func TestEnvironmentSkipEntersARowUnderTheCapabilityPhase(t *testing.T) {
 	path := writeSkipLog(t, capability.Skip{Kind: capability.KindEnvironment, Name: "TestRootConformance", Reason: "BENCH_CONFORMANCE_ROOT not set"})
 	streams := newPhaseStreams(io.Discard)
 	var stdout, stderr bytes.Buffer
-	code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func() ([]string, bool) {
-		return reportCapabilitySkips(path, &stdout)
+	code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
+		return reportCapabilitySkips(path, w)
 	})
 
 	if code != 1 {
@@ -385,8 +386,8 @@ func TestStrictDiagnosesEachEnterARowUnderTheCapabilityPhase(t *testing.T) {
 		t.Helper()
 		streams := newPhaseStreams(io.Discard)
 		var stdout, stderr bytes.Buffer
-		if code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func() ([]string, bool) {
-			return reportCapabilitySkips(path, &stdout)
+		if code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
+			return reportCapabilitySkips(path, w)
 		}); code != 1 {
 			t.Fatalf("strict exit = %d, want 1", code)
 		}
@@ -427,8 +428,8 @@ func TestCapabilitySkipOutsideStrictModeEntersNoRow(t *testing.T) {
 	streams := newPhaseStreams(io.Discard)
 	writePhaseStream(t, streams, "vet", "vet finding\n", "")
 	var stdout, stderr bytes.Buffer
-	aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 1}}, false, streams, &stdout, &stderr, func() ([]string, bool) {
-		return reportCapabilitySkips(path, &stdout)
+	aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 1}}, false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
+		return reportCapabilitySkips(path, w)
 	})
 
 	if got := rowsForPhase(t, stdout.String(), capabilityPhase); len(got) != 0 {
@@ -472,21 +473,189 @@ func TestFailureLineWithOneBackslashRendersWithOneBackslash(t *testing.T) {
 	}
 }
 
-// A green run prints its verdict and no phase's stream. Ticket 04 adds the phase table
-// above this line.
-func TestGreenRunPrintsTheVerdictAlone(t *testing.T) {
+// A green run prints its phase table and its verdict, and no phase's stream.
+func TestGreenRunPrintsTheTableAndTheVerdict(t *testing.T) {
 	streams := newPhaseStreams(io.Discard)
 	writePhaseStream(t, streams, "vet", "vet chatter\n", "")
 	var stdout, stderr bytes.Buffer
-	code := aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 0}}, false, streams, &stdout, &stderr)
+	code := aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 0, ElapsedMS: 12}}, false, streams, &stdout, &stderr)
 
 	if code != 0 {
 		t.Errorf("green exit = %d, want 0", code)
 	}
-	if want := "gate: green\n"; stdout.String() != want {
+	if want := "phases[1]{phase,verdict,elapsed_ms}:\n  vet,green,12\ngate: green\n"; stdout.String() != want {
 		t.Errorf("green stdout = %q, want %q", stdout.String(), want)
 	}
 	if stderr.Len() != 0 {
 		t.Errorf("green stderr = %q, want nothing", stderr.String())
+	}
+}
+
+// greenPhaseResults builds n settled-green phases with a distinct elapsed time each, so a
+// test that pins the table also pins that each row carries its own phase's number.
+func greenPhaseResults(n int) []phaseResult {
+	results := make([]phaseResult, 0, n)
+	for i := 1; i <= n; i++ {
+		results = append(results, phaseResult{Name: fmt.Sprintf("phase%d", i), Argv: []string{"go", "build"}, ElapsedMS: int64(i)})
+	}
+	return results
+}
+
+// stdoutLines answers the printed lines of a report, which is the unit the bound counts.
+func stdoutLines(stdout string) []string {
+	return strings.Split(strings.TrimSuffix(stdout, "\n"), "\n")
+}
+
+// BG16, BG30: a green six-phase run is the table, one capability-skips line, and the
+// verdict — nine lines, with no phase's own stream among them. The line count is asserted
+// beside the bytes because the bound, not only the wording, is the contract: a build that
+// added the table and kept relaying the phase streams would satisfy BG16 alone.
+func TestGreenSixPhaseRunPrintsNineLines(t *testing.T) {
+	t.Setenv(requireCapabilitiesEnv, "")
+	// An absent log is a run whose phases skipped nothing, which is the zero-class case.
+	path := filepath.Join(t.TempDir(), "absent.log")
+	streams := newPhaseStreams(io.Discard)
+	results := greenPhaseResults(6)
+	for _, result := range results {
+		writePhaseStream(t, streams, result.Name, result.Name+" chatter\n", "")
+	}
+	var stdout, stderr bytes.Buffer
+	code := aggregateAndReport(results, false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
+		return reportCapabilitySkips(path, w)
+	})
+
+	if code != 0 {
+		t.Errorf("green exit = %d, want 0", code)
+	}
+	want := "phases[6]{phase,verdict,elapsed_ms}:\n" +
+		"  phase1,green,1\n" +
+		"  phase2,green,2\n" +
+		"  phase3,green,3\n" +
+		"  phase4,green,4\n" +
+		"  phase5,green,5\n" +
+		"  phase6,green,6\n" +
+		"capability-skips: 0 (capability=0 environment=0)\n" +
+		"gate: green\n"
+	if stdout.String() != want {
+		t.Errorf("green stdout =\n%q\nwant\n%q", stdout.String(), want)
+	}
+	lines := stdoutLines(stdout.String())
+	if len(lines) != 9 {
+		t.Errorf("green stdout = %d lines, want 9: %q", len(lines), lines)
+	}
+	for _, line := range lines {
+		if strings.HasPrefix(line, "[") {
+			t.Errorf("green stdout carried a phase-prefixed line: %q", line)
+		}
+		if strings.HasPrefix(line, "phase ") {
+			t.Errorf("green stdout carried a per-phase summary line: %q", line)
+		}
+	}
+	if strings.Contains(stdout.String(), "chatter") {
+		t.Errorf("green stdout carried a phase's stream: %q", stdout.String())
+	}
+}
+
+// The table holds at exactly the cap. Eight lines of table, the skip-count line, and the
+// verdict are the ten the bound allows, so this is the widest run that still names its
+// phases. It pins the threshold from below; the eight-phase test pins it from above.
+func TestGreenSevenPhaseRunStillPrintsTheTable(t *testing.T) {
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	aggregateAndReport(greenPhaseResults(7), false, streams, &stdout, &stderr)
+
+	if !strings.HasPrefix(stdout.String(), "phases[7]{phase,verdict,elapsed_ms}:\n") {
+		t.Errorf("seven-phase stdout = %q, want a seven-row phases table", stdout.String())
+	}
+	if got := len(stdoutLines(stdout.String())); got != 9 {
+		t.Errorf("seven-phase stdout = %d lines, want 9", got)
+	}
+}
+
+// BG17: above seven phases the table collapses to one counted row, so a wide gate cannot
+// spend the bound on rows. Every phase graded green here, so the count is 8/8.
+func TestGreenEightPhaseRunCollapsesToOneRow(t *testing.T) {
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	code := aggregateAndReport(greenPhaseResults(8), false, streams, &stdout, &stderr)
+
+	if code != 0 {
+		t.Errorf("collapsed exit = %d, want 0", code)
+	}
+	if want := "phases: 8/8 green\ngate: green\n"; stdout.String() != want {
+		t.Errorf("eight-phase stdout = %q, want %q", stdout.String(), want)
+	}
+}
+
+// The collapsed row counts what graded, not what the run contained. A skip leaves the run
+// green and still costs the numerator, because the table this row stands in for would
+// have shown that phase as `skipped`.
+func TestCollapsedRowCountsOnlyTheGradedPhases(t *testing.T) {
+	results := greenPhaseResults(8)
+	results[2].Skipped = true
+	results[3].SkippedBy = "phase3"
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	code := aggregateAndReport(results, false, streams, &stdout, &stderr)
+
+	if code != 0 {
+		t.Errorf("collapsed exit = %d, want 0", code)
+	}
+	if want := "phases: 6/8 green\ngate: green\n"; stdout.String() != want {
+		t.Errorf("collapsed stdout = %q, want %q", stdout.String(), want)
+	}
+}
+
+// BG18: a phase its own absent tool skipped, and a phase a skip kept from launching, both
+// read `skipped`. Neither is a red, so the run stays green. A phase that never launched
+// carries no elapsed time, and the zero is the honest cell for it.
+func TestSkippedPhaseReadsSkippedAndKeepsTheRunGreen(t *testing.T) {
+	streams := newPhaseStreams(io.Discard)
+	results := []phaseResult{
+		{Name: "build", Argv: []string{"go", "build", "./..."}, ElapsedMS: 40},
+		{Name: "shellcheck", Argv: []string{"shellcheck", "-S", "warning"}, Skipped: true},
+		{Name: "shellfmt", Argv: []string{"shfmt", "-l", "."}, SkippedBy: "shellcheck"},
+	}
+	var stdout, stderr bytes.Buffer
+	code := aggregateAndReport(results, false, streams, &stdout, &stderr)
+
+	if code != 0 {
+		t.Errorf("skipped-phase exit = %d, want 0", code)
+	}
+	want := "phases[3]{phase,verdict,elapsed_ms}:\n" +
+		"  build,green,40\n" +
+		"  shellcheck,skipped,0\n" +
+		"  shellfmt,skipped,0\n" +
+		"gate: green\n"
+	if stdout.String() != want {
+		t.Errorf("skipped-phase stdout = %q, want %q", stdout.String(), want)
+	}
+}
+
+// BG19: every class folds into the one capability-skips line, in the package's declared
+// order. Three skips in two classes used to cost three lines; they cost one now, and the
+// line still names both classes so the reader learns what the host could not run.
+func TestCapabilitySkipsInTwoClassesPrintOneLine(t *testing.T) {
+	t.Setenv(requireCapabilitiesEnv, "")
+	path := writeSkipLog(t,
+		capability.Skip{Kind: capability.KindCapability, Class: capability.Privilege, Name: "TestDropPrivilege", Reason: "requires a second uid"},
+		capability.Skip{Kind: capability.KindCapability, Class: capability.Fifo, Name: "TestFifoRefusal", Reason: "requires a host fifo"},
+		capability.Skip{Kind: capability.KindCapability, Class: capability.Fifo, Name: "TestFifoTimeout", Reason: "requires a host fifo"},
+	)
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	code := aggregateAndReport(greenPhaseResults(1), false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
+		return reportCapabilitySkips(path, w)
+	})
+
+	if code != 0 {
+		t.Errorf("capability-skip exit = %d, want 0", code)
+	}
+	want := "phases[1]{phase,verdict,elapsed_ms}:\n" +
+		"  phase1,green,1\n" +
+		"capability-skips: 3 (capability=3 environment=0; fifo=2 privilege=1)\n" +
+		"gate: green\n"
+	if stdout.String() != want {
+		t.Errorf("capability-skip stdout = %q, want %q", stdout.String(), want)
 	}
 }

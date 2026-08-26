@@ -101,23 +101,41 @@ func readSkipTally(path string) (skipTally, error) {
 	return tally, nil
 }
 
-// skipRows renders the tally. The totals row is unconditional; a run with nothing to
-// report says so, because absent output and zero skips must not read alike. Classes
-// follow the package's declared order so the rows are stable run to run. The
-// environment row names every skip it counts, because this population is the one the
-// gate reds on. A reader who must go find which test stopped running has a number, not
-// a diagnosis.
-func skipRows(tally skipTally) []string {
-	rows := []string{fmt.Sprintf("%s: %d (capability=%d environment=%d)", skipRowPrefix, tally.capability+len(tally.environment), tally.capability, len(tally.environment))}
+// skipRow renders the whole tally as one line. The line is unconditional; a run with
+// nothing to report says so, because absent output and zero skips must not read alike.
+// It is one line rather than one per class because a green run's stdout is bounded, and
+// a per-class line spends that bound on counts that are almost always zero.
+//
+// The parenthetical opens with the two kinds and then lists every nonzero class. A tally
+// with no class at all closes after the kinds rather than printing a separator with
+// nothing behind it.
+//
+// The line is a pure count. It names no environment skip, because each of those is its
+// own row of the red failure table through environmentFailures, where the reader is
+// asked to act on it. Naming them twice would put the same diagnosis in two places.
+func skipRow(tally skipTally) string {
+	row := fmt.Sprintf("%s: %d (capability=%d environment=%d", skipRowPrefix, tally.capability+len(tally.environment), tally.capability, len(tally.environment))
+	counts := make([]string, 0, len(tally.byClass))
+	for _, class := range nonzeroClasses(tally) {
+		counts = append(counts, fmt.Sprintf("%s=%d", class, tally.byClass[class]))
+	}
+	if len(counts) > 0 {
+		row += "; " + strings.Join(counts, " ")
+	}
+	return row + ")"
+}
+
+// nonzeroClasses answers the classes this tally counted, in the package's declared order
+// so the answer is stable run to run. Both the count line and the strict-mode diagnosis
+// read it, so which classes a run has to name is decided once.
+func nonzeroClasses(tally skipTally) []capability.Class {
+	var classes []capability.Class
 	for _, class := range capability.Classes() {
-		if count := tally.byClass[class]; count > 0 {
-			rows = append(rows, fmt.Sprintf("%s class=%s: %d", skipRowPrefix, class, count))
+		if tally.byClass[class] > 0 {
+			classes = append(classes, class)
 		}
 	}
-	if len(tally.environment) > 0 {
-		rows = append(rows, fmt.Sprintf("%s class=environment: %d (%s)", skipRowPrefix, len(tally.environment), strings.Join(namedReasons(tally.environment), ", ")))
-	}
-	return rows
+	return classes
 }
 
 // namedReasons renders each environment skip as "TestName: reason", the form both the
@@ -154,18 +172,17 @@ func strictFailure(tally skipTally) string {
 	if !strict() || tally.capability == 0 {
 		return ""
 	}
-	var classes []string
-	for _, class := range capability.Classes() {
-		if tally.byClass[class] > 0 {
-			classes = append(classes, string(class))
-		}
+	names := make([]string, 0, len(tally.byClass))
+	for _, class := range nonzeroClasses(tally) {
+		names = append(names, string(class))
 	}
-	return fmt.Sprintf("capability skips are fatal under %s=1: %s", requireCapabilitiesEnv, strings.Join(classes, ", "))
+	return fmt.Sprintf("capability skips are fatal under %s=1: %s", requireCapabilitiesEnv, strings.Join(names, ", "))
 }
 
-// reportCapabilitySkips prints the skip totals, answers its red diagnoses as rows, and
-// reports whether the run is red on their account. The diagnoses are rows rather than
-// stderr lines so that one table holds everything a red run asks the reader to fix.
+// reportCapabilitySkips prints the one skip-count line, answers its red diagnoses as
+// rows, and reports whether the run is red on their account. The diagnoses are rows
+// rather than stderr lines so that one table holds everything a red run asks the reader
+// to fix.
 //
 // A diagnosis and a red are separate answers here. reportCapabilitySkips diagnoses an
 // unreadable log on every run but turns the run red only under strict mode. This matches
@@ -175,9 +192,7 @@ func strictFailure(tally skipTally) string {
 // because the table prints only when the run is already red for some other reason.
 func reportCapabilitySkips(path string, stdout io.Writer) (rows []string, red bool) {
 	tally, readErr := readSkipTally(path)
-	for _, row := range skipRows(tally) {
-		fmt.Fprintln(stdout, row)
-	}
+	fmt.Fprintln(stdout, skipRow(tally))
 	if readErr != nil {
 		rows = append(rows, fmt.Sprintf("capability skip log %s is unreadable, so the counts above prove nothing: %v", path, readErr))
 		if strict() {

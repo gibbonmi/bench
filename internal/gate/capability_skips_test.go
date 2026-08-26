@@ -54,9 +54,14 @@ func TestEnvironmentSkipIsRedInsideTheOracle(t *testing.T) {
 	if !slices.Equal(rows, want) {
 		t.Fatalf("diagnosis rows = %q, want %q", rows, want)
 	}
-	wantRow := "capability-skips class=environment: 1 (TestRootConformance: BENCH_CONFORMANCE_ROOT not set)"
-	if !strings.Contains(stdout.String(), wantRow) {
-		t.Fatalf("skip rows =\n%s\nwant a row %q", stdout.String(), wantRow)
+	wantRow := "capability-skips: 2 (capability=1 environment=1; fifo=1)\n"
+	if stdout.String() != wantRow {
+		t.Fatalf("skip line = %q, want %q", stdout.String(), wantRow)
+	}
+	// The count line counts; the diagnosis names. Naming the test in both would put one
+	// finding in two places, and the reader would fix it twice or once at random.
+	if strings.Contains(stdout.String(), "TestRootConformance") {
+		t.Fatalf("skip line %q named a skip the diagnosis row already names", stdout.String())
 	}
 }
 
@@ -78,10 +83,23 @@ func TestCapabilitySkipsStayInformational(t *testing.T) {
 	if len(rows) != 0 {
 		t.Fatalf("diagnosis rows = %q, want none", rows)
 	}
-	if want := "capability-skips: 1 (capability=1 environment=0)"; !strings.Contains(stdout.String(), want) {
-		t.Fatalf("skip rows =\n%s\nwant %q", stdout.String(), want)
+	// One line, whatever the tally holds: the report says what happened without spending
+	// the green run's bounded stdout on a line per class.
+	if want := "capability-skips: 1 (capability=1 environment=0; fifo=1)\n"; stdout.String() != want {
+		t.Fatalf("skip line = %q, want %q", stdout.String(), want)
 	}
-	if strings.Contains(stdout.String(), "class=environment") {
-		t.Fatalf("skip rows =\n%s\nwant no environment row when none were tallied", stdout.String())
+}
+
+// A tally with no class at all closes after the two kinds. A separator with nothing
+// behind it would read as a list the report failed to finish.
+func TestAnEmptyTallyPrintsTheKindsAndNoClassList(t *testing.T) {
+	t.Setenv(requireCapabilitiesEnv, "")
+	var stdout bytes.Buffer
+	rows, red := reportCapabilitySkips(filepath.Join(t.TempDir(), "absent.log"), &stdout)
+	if red || len(rows) != 0 {
+		t.Fatalf("an absent log reported red=%v rows=%q, want neither", red, rows)
+	}
+	if want := "capability-skips: 0 (capability=0 environment=0)\n"; stdout.String() != want {
+		t.Fatalf("skip line = %q, want %q", stdout.String(), want)
 	}
 }

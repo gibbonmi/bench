@@ -118,6 +118,11 @@ type phaseResult struct {
 	// straggler report names. A phase that chose exit 130 itself carries the same code
 	// and is an ordinary red, so the code alone cannot identify the interrupted set.
 	Interrupted bool
+	// ElapsedMS is the phase's wall time, and it is the green table's third cell. It
+	// carries the same measurement the `phase.finish` log record takes, so the table and
+	// the progress log cannot disagree about one phase. A phase that never launched keeps
+	// the zero: nothing ran, so there is no time to report.
+	ElapsedMS int64
 }
 
 // green reports whether a settled phase satisfies a dependent's edge. Both skip flavors
@@ -141,8 +146,8 @@ func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr 
 func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
 	streams := newPhaseStreams(stderr)
 	results, cancelled := schedule(ctx, root, phases, streams.open)
-	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() ([]string, bool) {
-		return reportCapabilitySkips(skipLog, stdout)
+	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func(w io.Writer) ([]string, bool) {
+		return reportCapabilitySkips(skipLog, w)
 	})
 }
 
@@ -225,8 +230,13 @@ func schedule(ctx context.Context, root string, phases []Phase, open func(Phase)
 				started := time.Now()
 				out, errOut, closeWriters := open(phase)
 				results[i] = runPhase(ctx, root, phase, out, errOut)
+				// One reading of the clock feeds both the result and the log record. Two
+				// calls would answer two different numbers, and the report and the progress
+				// log would then disagree about the same phase.
+				elapsed := time.Since(started).Milliseconds()
+				results[i].ElapsedMS = elapsed
 				exit := results[i].Code
-				logGateEvent(ctx, gateLogRecord{Event: "phase.finish", Phase: phase.Name, Exit: &exit, ElapsedMS: time.Since(started).Milliseconds()})
+				logGateEvent(ctx, gateLogRecord{Event: "phase.finish", Phase: phase.Name, Exit: &exit, ElapsedMS: elapsed})
 				closeWriters()
 				done <- i
 			}()

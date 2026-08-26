@@ -1,10 +1,11 @@
 package gate
 
-// The engine's projection of a settled schedule: the failure table, the verdict line,
-// and the exit code. The execution engine lives in runner.go and knows nothing of the
-// shape reported here.
+// The engine's projection of a settled schedule: the red failure table, the green phase
+// table, the verdict line, and the exit code. The execution engine lives in runner.go
+// and knows nothing of the shape reported here.
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -25,6 +26,13 @@ const failureRowCap = 20
 // scheduled phase, so its rows follow every phase's, and no phase may take this name.
 const capabilityPhase = "capability"
 
+// phaseTableCap is the largest phase count the green report still renders as a table.
+// Seven phases cost eight lines with the header, and the skip-count line and the verdict
+// take the run to ten. An eighth phase would pass that bound, so the table collapses to
+// one row instead. The bound is on the report, not on the schedule: a longer table is a
+// legal gate, and only its projection changes.
+const phaseTableCap = 7
+
 // aggregateAndReport is the one verdict tail every settled schedule reports through.
 // It carries the failure table, any extra red-reporting checks (capability skips, the
 // stripped-subject skip posture), and the `gate: red` / `gate: green` line. This is the
@@ -38,7 +46,7 @@ const capabilityPhase = "capability"
 // An interrupt is not a verdict, so a cancelled run publishes neither rows nor a gate
 // line. Reporting one would grade phases that never got to answer. Naming the stragglers
 // is not a verdict either; it only says what the run was doing.
-func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStreams, stdout, stderr io.Writer, redReports ...func() ([]string, bool)) int {
+func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStreams, stdout, stderr io.Writer, redReports ...func(io.Writer) ([]string, bool)) int {
 	if cancelled {
 		reportStragglers(results, stderr)
 		return 130
@@ -51,23 +59,84 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 	}
 	// A red report hands back its diagnoses rather than printing them, so they read as
 	// rows of the one table instead of as loose lines ahead of it. Whatever such a report
-	// prints for itself — the skip totals — still precedes the table.
+	// prints for itself — the skip counts — is buffered rather than written straight
+	// through: a report may still turn the run red, and the two verdicts file that line
+	// on opposite sides of their table.
+	var reported bytes.Buffer
 	var capabilityRows []string
 	for _, report := range redReports {
-		rows, reportRed := report()
+		rows, reportRed := report(&reported)
 		capabilityRows = append(capabilityRows, rows...)
 		if reportRed {
 			red = true
 		}
 	}
 	if red {
+		fmt.Fprint(stdout, reported.String())
 		printFailures(results, capabilityRows, streams, stdout)
 		fmt.Fprintln(stdout, "gate: red")
 		return 1
 	}
-	// Ticket 04 adds the phase table and the capability-skips line above this verdict.
+	// Green leads with the phase table: it is the run's whole answer, and the skip counts
+	// read after it as a footnote about the host rather than as a preamble to it.
+	printPhases(results, stdout)
+	fmt.Fprint(stdout, reported.String())
 	fmt.Fprintln(stdout, "gate: green")
 	return 0
+}
+
+// printPhases emits the green run's one table, in phase-table order: what ran, how it
+// settled, and how long it took. A green phase's own stream is not reported at all, so
+// this table is the only account of a run that found nothing to say.
+//
+// Above phaseTableCap the table becomes one counted row. A reader of a green run wants
+// the verdict and the shape of the run, and past that width the per-phase rows stop
+// paying for the lines they cost.
+func printPhases(results []phaseResult, stdout io.Writer) {
+	if len(results) > phaseTableCap {
+		fmt.Fprintf(stdout, "phases: %d/%d green\n", greenPhases(results), len(results))
+		return
+	}
+	rows := make([][]any, 0, len(results))
+	for _, result := range results {
+		// The name passes the same control-byte filter a failure line does, so no cell
+		// reaches the encoder unfiltered. The other two cells are the engine's own: a
+		// fixed word and a count of milliseconds.
+		rows = append(rows, []any{sanitize.Strip(result.Name), phaseVerdict(result), result.ElapsedMS})
+	}
+	block, err := toon.TableTyped("phases", []string{"phase", "verdict", "elapsed_ms"}, rows)
+	if err != nil {
+		// Unreachable through a filtered name and two engine-owned cells. It stays because
+		// the encoder, not this file, owns which cells it refuses.
+		return
+	}
+	fmt.Fprint(stdout, block)
+}
+
+// phaseVerdict answers one phase's cell. Both flavors of skip read alike: the cell says
+// this phase produced no verdict, and whether an absent tool or an unsatisfied need
+// caused that is not something a green run asks the reader to act on. Neither flavor is
+// a red, so a run carrying either still settles green.
+func phaseVerdict(result phaseResult) string {
+	if result.Skipped || result.SkippedBy != "" {
+		return "skipped"
+	}
+	return "green"
+}
+
+// greenPhases counts the phases that actually graded something. It is the numerator of
+// the collapsed row, and it excludes a skip on purpose: the table this row replaces
+// would have said `skipped` in that phase's cell, and folding skips into the green count
+// would drop the one fact the table carried. The run is still green — the verdict line
+// below the row says so — and `6/8 green` tells the reader that two phases never ran.
+func greenPhases(results []phaseResult) int {
+	count := 0
+	for _, result := range results {
+		if result.green() {
+			count++
+		}
+	}
+	return count
 }
 
 // printFailures emits the run's one failure table, in phase-table order. The skip
