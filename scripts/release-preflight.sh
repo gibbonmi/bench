@@ -15,4 +15,4 @@ if [ ! -x "$binary" ]; then
   mkdir -p "$root/dist"
   bash "$root/scripts/go-build.sh" "$root" "$binary"
 fi
-exec "$binary" release-preflight "$@"
+exec env BENCH_RUN_BINARY="$binary" "$binary" release-preflight "$@"

@@ -14,6 +14,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -306,14 +308,15 @@ func main() {
 	}
 	fakePath := fake.Name()
 	defer os.Remove(fakePath)
-	if _, err := fake.WriteString("#!/bin/sh\nprintf '{}\\n'\nexit 0\n"); err != nil || fake.Chmod(0o755) != nil || fake.Close() != nil {
+	preflightBinary := filepath.Join(root, "dist", "bench-preflight")
+	fixture := fmt.Sprintf("#!/bin/sh\nif [ \"${BENCH_RUN_BINARY-}\" = %q ]; then printf '{}\\n'; exit 0; fi\nprintf 'phase selected binary = %%s\\n' \"${BENCH_RUN_BINARY-}\" >&2\nexit 1\n", preflightBinary)
+	if _, err := fake.WriteString(fixture); err != nil || fake.Chmod(0o755) != nil || fake.Close() != nil {
 		return []string{"release evidence probe could not prepare phase fixture"}
 	}
-	env := append([]string{}, os.Environ()...)
+	env := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
 	for _, phase := range []string{"gate", "race", "vet", "vulnerability", "artifacts", "smoke"} {
 		env = append(env, "BENCH_PREFLIGHT_"+strings.ToUpper(phase)+"="+fakePath)
 	}
-	preflightBinary := filepath.Join(root, "dist", "bench-preflight")
 	if err := os.Remove(preflightBinary); err != nil && !os.IsNotExist(err) {
 		return []string{"release evidence probe could not reset the preflight command"}
 	}
