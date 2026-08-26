@@ -102,6 +102,43 @@ func TestLandPreAuthorizationRefusalTable(t *testing.T) {
 	}
 }
 
+func TestLandPreservesTrackedPathCompositionFailureBeforeAuthorization(t *testing.T) {
+	root := fixture(t)
+	base := git(t, root, "rev-parse", "HEAD")
+	write(t, root, "named", "modified bytes that require a new object")
+
+	objectDirectory := filepath.Join(t.TempDir(), "objects")
+	if err := os.Mkdir(objectDirectory, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	blob := git(t, root, "hash-object", "--no-filters", "--", "named")
+	if err := os.WriteFile(filepath.Join(objectDirectory, blob[:2]), []byte("not a directory"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GIT_OBJECT_DIRECTORY", objectDirectory)
+	t.Setenv("GIT_ALTERNATE_OBJECT_DIRECTORIES", filepath.Join(root, ".git", "objects"))
+
+	calls := 0
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		calls++
+		return authorization.Result{Kind: authorization.Green}
+	}
+	_, err := o.Land(context.Background(), Request{
+		Root: root, Destination: "refs/heads/main", Expected: base,
+		Message: "composition failure", Paths: []string{"named"},
+	})
+	if err == nil || !strings.Contains(err.Error(), `compose attributed path "named"`) {
+		t.Fatalf("Land error = %v, want attributed composition error", err)
+	}
+	if strings.Contains(err.Error(), "nothing to commit") {
+		t.Fatalf("Land error = %v, must preserve the composition failure", err)
+	}
+	if calls != 0 {
+		t.Fatalf("authorization calls = %d, want 0", calls)
+	}
+}
+
 func requireLandingFIFO(t *testing.T, path string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

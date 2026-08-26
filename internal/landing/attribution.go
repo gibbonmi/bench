@@ -135,6 +135,7 @@ func compose(r Request, paths []string) (composedSnapshot, error) {
 			if !trackedAt(r.Root, r.Expected, path) {
 				return composedSnapshot{}, fmt.Errorf("named path %q not found in worktree, index, or expected base", path)
 			}
+			return composedSnapshot{}, fmt.Errorf("compose attributed path %q: %w", path, err)
 		}
 	}
 	var snapshot composedSnapshot
