@@ -50,6 +50,39 @@ func TestFinalCommunicationMarkerTuples(t *testing.T) {
 	}
 }
 
+// TestBoundedGateOutputAnchorTuples pins BG27. The two needles are written here
+// independently of the registry, so a needle edited to match prose that dropped the
+// bounded-output account cannot define itself green.
+func TestBoundedGateOutputAnchorTuples(t *testing.T) {
+	wanted := []Anchor{
+		{
+			Group:   AfterSpecAuthorization,
+			File:    "projects/benchkit.md",
+			Kind:    Require,
+			Section: "",
+			Needle:  "A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table.",
+		},
+		{
+			Group:   AfterSpecAuthorization,
+			File:    ".bench/BENCH-reference.md",
+			Kind:    Require,
+			Section: "",
+			Needle:  "A red run prints one `failures[N]{phase,line}` table, and then `gate: red`.",
+		},
+	}
+	for _, want := range wanted {
+		matches := 0
+		for _, entry := range Entries() {
+			if entry.Group == want.Group && entry.File == want.File && entry.Kind == want.Kind && entry.Section == want.Section && entry.Needle == want.Needle {
+				matches++
+			}
+		}
+		if matches != 1 {
+			t.Errorf("registry has %d rows matching %+v; want exactly one", matches, want)
+		}
+	}
+}
+
 // TestLandedRetirementAnchorTuples keeps the accepted tuples independent of the
 // production registry so a self-consistent omission cannot define itself green.
 func TestLandedRetirementAnchorTuples(t *testing.T) {

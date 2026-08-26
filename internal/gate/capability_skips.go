@@ -16,7 +16,6 @@ package gate
 import (
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"strings"
@@ -101,23 +100,41 @@ func readSkipTally(path string) (skipTally, error) {
 	return tally, nil
 }
 
-// skipRows renders the tally. The totals row is unconditional; a run with nothing to
-// report says so, because absent output and zero skips must not read alike. Classes
-// follow the package's declared order so the rows are stable run to run. The
-// environment row names every skip it counts, because this population is the one the
-// gate reds on. A reader who must go find which test stopped running has a number, not
-// a diagnosis.
-func skipRows(tally skipTally) []string {
-	rows := []string{fmt.Sprintf("%s: %d (capability=%d environment=%d)", skipRowPrefix, tally.capability+len(tally.environment), tally.capability, len(tally.environment))}
+// skipRow renders the whole tally as one line. A green run prints it whatever the tally
+// holds, an empty one included, because absent output and zero skips must not read alike.
+// It is one line rather than one per class because a green run's stdout is bounded, and
+// a per-class line spends that bound on counts that are almost always zero.
+//
+// The parenthetical opens with the two kinds and then lists every nonzero class. A tally
+// with no class at all closes after the kinds rather than printing a separator with
+// nothing behind it.
+//
+// The line is a pure count. It names no environment skip, because each of those is its
+// own row of the red failure table through environmentFailures, where the reader is
+// asked to act on it. Naming them twice would put the same diagnosis in two places.
+func skipRow(tally skipTally) string {
+	row := fmt.Sprintf("%s: %d (capability=%d environment=%d", skipRowPrefix, tally.capability+len(tally.environment), tally.capability, len(tally.environment))
+	counts := make([]string, 0, len(tally.byClass))
+	for _, class := range nonzeroClasses(tally) {
+		counts = append(counts, fmt.Sprintf("%s=%d", class, tally.byClass[class]))
+	}
+	if len(counts) > 0 {
+		row += "; " + strings.Join(counts, " ")
+	}
+	return row + ")"
+}
+
+// nonzeroClasses answers the classes this tally counted, in the package's declared order
+// so the answer is stable run to run. Both the count line and the strict-mode diagnosis
+// read it, so which classes a run has to name is decided once.
+func nonzeroClasses(tally skipTally) []capability.Class {
+	var classes []capability.Class
 	for _, class := range capability.Classes() {
-		if count := tally.byClass[class]; count > 0 {
-			rows = append(rows, fmt.Sprintf("%s class=%s: %d", skipRowPrefix, class, count))
+		if tally.byClass[class] > 0 {
+			classes = append(classes, class)
 		}
 	}
-	if len(tally.environment) > 0 {
-		rows = append(rows, fmt.Sprintf("%s class=environment: %d (%s)", skipRowPrefix, len(tally.environment), strings.Join(namedReasons(tally.environment), ", ")))
-	}
-	return rows
+	return classes
 }
 
 // namedReasons renders each environment skip as "TestName: reason", the form both the
@@ -130,64 +147,63 @@ func namedReasons(skips []capability.Skip) []string {
 	return named
 }
 
-// environmentFailure is the red message for a check the oracle asked for and did not
-// get. Unlike a capability skip, an environment skip is never a fact about the host. It
-// says a test found its staging absent, and inside the gate, the gate itself stages it.
-// Marking this informational lets the kit's own conformance suite go unenforced
-// behind a green verdict. So the posture is unconditional: there is no developer-host
-// exemption to grant, because the missing staging is the gate's own.
-func environmentFailure(tally skipTally) string {
-	if len(tally.environment) == 0 {
-		return ""
-	}
-	return fmt.Sprintf("gate: the oracle staged no environment for %d skipped check(s), so their verdict is absent, not green: %s", len(tally.environment), strings.Join(namedReasons(tally.environment), "; "))
+// environmentFailures is the red diagnosis for checks the oracle asked for and did not
+// get, one row per skip. Unlike a capability skip, an environment skip is never a fact
+// about the host. It says a test found its staging absent, and inside the gate, the gate
+// itself stages it. Marking this informational lets the kit's own conformance suite go
+// unenforced behind a green verdict. So the posture is unconditional: there is no
+// developer-host exemption to grant, because the missing staging is the gate's own.
+//
+// One row per skip rather than one row naming them all: the table's own row count is
+// then the count of absent verdicts, and a long population cannot arrive as one
+// unreadable cell.
+func environmentFailures(tally skipTally) []string {
+	return namedReasons(tally.environment)
 }
 
 // strict reports whether this run treats an incomplete capability population as red.
 func strict() bool { return os.Getenv(requireCapabilitiesEnv) == "1" }
 
-// strictFailure is the red message for a strict run, naming the classes that did not
+// strictFailure is the red diagnosis for a strict run, naming the classes that did not
 // run so the verdict is actionable. Environment skips never contribute: an absent
 // subject binary is a staging fact, not a security class.
 func strictFailure(tally skipTally) string {
 	if !strict() || tally.capability == 0 {
 		return ""
 	}
-	var classes []string
-	for _, class := range capability.Classes() {
-		if tally.byClass[class] > 0 {
-			classes = append(classes, string(class))
-		}
+	names := make([]string, 0, len(tally.byClass))
+	for _, class := range nonzeroClasses(tally) {
+		names = append(names, string(class))
 	}
-	return fmt.Sprintf("gate: capability skips are fatal under %s=1: %s", requireCapabilitiesEnv, strings.Join(classes, ", "))
+	return fmt.Sprintf("capability skips are fatal under %s=1: %s", requireCapabilitiesEnv, strings.Join(names, ", "))
 }
 
-// reportCapabilitySkips prints the rows and reports whether strict mode makes the run
-// red on their account. reportCapabilitySkips diagnoses an unreadable log on every run,
-// but turns the run red only under strict mode. This matches the fail posture of the
-// skips themselves: a developer's host is not held to a population it never promised.
-// An unconditional red on a transient read failure would make the gate unusable
-// locally.
-func reportCapabilitySkips(path string, stdout, stderr io.Writer) bool {
+// reportCapabilitySkips answers the one skip-count line, its red diagnoses as rows, and
+// whether the run is red on their account. It writes none of them: the caller prints the
+// count line on a green run only, and the diagnoses are rows rather than stderr lines so
+// that one table holds everything a red run asks the reader to fix.
+//
+// A diagnosis and a red are separate answers here. reportCapabilitySkips diagnoses an
+// unreadable log on every run but turns the run red only under strict mode. This matches
+// the fail posture of the skips themselves: a developer's host is not held to a
+// population it never promised, and an unconditional red on a transient read failure
+// would make the gate unusable locally. A row the run is not red for costs nothing,
+// because the table prints only when the run is already red for some other reason.
+func reportCapabilitySkips(path string) (rows []string, greenLine string, red bool) {
 	tally, readErr := readSkipTally(path)
-	for _, row := range skipRows(tally) {
-		fmt.Fprintln(stdout, row)
-	}
-	red := false
 	if readErr != nil {
-		fmt.Fprintf(stderr, "gate: capability skip log %s is unreadable, so the counts above prove nothing: %v\n", path, readErr)
+		rows = append(rows, fmt.Sprintf("capability skip log %s is unreadable, so the counts above prove nothing: %v", path, readErr))
 		if strict() {
-			fmt.Fprintf(stderr, "gate: an unreadable skip log is fatal under %s=1\n", requireCapabilitiesEnv)
 			red = true
 		}
 	}
-	if failure := environmentFailure(tally); failure != "" {
-		fmt.Fprintln(stderr, failure)
+	if failures := environmentFailures(tally); len(failures) > 0 {
+		rows = append(rows, failures...)
 		red = true
 	}
 	if failure := strictFailure(tally); failure != "" {
-		fmt.Fprintln(stderr, failure)
+		rows = append(rows, failure)
 		red = true
 	}
-	return red
+	return rows, skipRow(tally), red
 }

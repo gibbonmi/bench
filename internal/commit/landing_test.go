@@ -353,6 +353,46 @@ func TestPublicationRemainderSanitizesTheFailedPathAndPointsAtNamedPaths(t *test
 	}
 }
 
+// cannedRedShape is what a bounded red run prints: one failure table and the verdict. The
+// fixture gate below prints these bytes itself, so the journey grades the relay rather
+// than the engine that would have produced them.
+const cannedRedShape = "failures[1]{phase,line}:\n  vet,a canned finding\ngate: red\n"
+
+// cannedShapeGate writes a fixture gate that prints one canned shape and settles with
+// code. It replaces the exit-only stub, so the gate's whole answer is bytes the test
+// owns.
+func cannedShapeGate(shape string, code int) func(t *testing.T, root string) {
+	return func(t *testing.T, root string) {
+		t.Helper()
+		script := "#!/bin/sh\nprintf '%s' " + sanitize.ShellQuote(shape) + "\nexit " + strconv.Itoa(code) + "\n"
+		mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), script, 0o755)
+	}
+}
+
+// BG21: the gate's bounded red shape reaches `bench commit`'s stdout byte for byte, and
+// the command's own refusal record follows on stderr. A relay that filtered, wrapped, or
+// re-rendered the table would lose the one account of what failed.
+func TestCommitRelaysTheBoundedRedShapeThenItsRefusalRecord(t *testing.T) {
+	root, before := landingRepo(t, 0, cannedShapeGate(cannedRedShape, 1))
+	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
+
+	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
+
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if stdout != cannedRedShape {
+		t.Errorf("stdout = %q, want the gate's bytes unchanged %q", stdout, cannedRedShape)
+	}
+	if !strings.Contains(stderr, "error: ") {
+		t.Errorf("stderr = %q, want the refusal record", stderr)
+	}
+	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+		t.Errorf("HEAD moved from %s to %s", before, after)
+	}
+}
+
 // FB5: a refusal before publication keeps exit 1 with the error: prefix and moves no ref.
 func TestRedGateRefusesWithExitOneAndMovesNoRef(t *testing.T) {
 	root, before := landingRepo(t, 1, func(t *testing.T, root string) {})

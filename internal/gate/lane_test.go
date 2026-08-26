@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"path/filepath"
@@ -160,6 +161,34 @@ func TestBenchkitLaneBuildIgnoresAStrayGitDirAboveTheCheckout(t *testing.T) {
 	}
 	if !result.Passed() {
 		t.Fatalf("build check %s: %s", result.Outcome, result.Diagnostic)
+	}
+}
+
+// BG29: the lane keeps its relay. The engine buffers each phase's stream and prints
+// failure rows instead, but a worktree commit still prints its red check's own lines,
+// each under that check's prefix. A lane routed through the engine's buffer would print
+// nothing here.
+func TestLaneRelaysARedCheckOwnLines(t *testing.T) {
+	diagnostics := &laneDiagnostics{first: map[string]string{}}
+	var stdout, stderr bytes.Buffer
+	checks := []Phase{{Name: "prose", Argv: []string{"sh", "-c", "echo prose refused a marker phrase; echo on stderr too >&2; exit 1"}}}
+	results, cancelled := schedule(context.Background(), t.TempDir(), checks, laneWriters(&stdout, &stderr, diagnostics))
+
+	if cancelled || len(results) != 1 || results[0].Code == 0 {
+		t.Fatalf("lane schedule = %+v, cancelled %v; want one red check", results, cancelled)
+	}
+	if want := "[prose] prose refused a marker phrase\n"; stdout.String() != want {
+		t.Errorf("lane stdout = %q, want %q", stdout.String(), want)
+	}
+	if want := "[prose] on stderr too\n"; stderr.String() != want {
+		t.Errorf("lane stderr = %q, want %q", stderr.String(), want)
+	}
+	// Which stream reached the tap first is the copier goroutines' race, so the
+	// diagnostic is pinned to being one of the check's own lines, not to which one.
+	switch diagnostics.firstLine("prose", nil) {
+	case "prose refused a marker phrase", "on stderr too":
+	default:
+		t.Errorf("lane diagnostic = %q, want one of the check's own lines", diagnostics.firstLine("prose", nil))
 	}
 }
 

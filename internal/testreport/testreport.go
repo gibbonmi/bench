@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/testlines"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -206,7 +207,7 @@ func decode(stream io.Reader) (*report, error) {
 				report.test(e.Package, e.Test).structured = reason + ": " + structured.Reason
 				continue
 			}
-			if runnerLine(line) {
+			if testlines.RunnerLine(line) {
 				continue
 			}
 			if e.Test == "" {
@@ -250,10 +251,6 @@ func (r *report) test(packageName, name string) *testResult {
 		r.tests[key] = &testResult{packageName: packageName, test: name}
 	}
 	return r.tests[key]
-}
-
-func runnerLine(line string) bool {
-	return strings.HasPrefix(line, "bench-skip ") || strings.HasPrefix(line, "# ") || strings.HasPrefix(line, "=== RUN") || strings.HasPrefix(line, "=== PAUSE") || strings.HasPrefix(line, "=== CONT") || strings.HasPrefix(line, "=== NAME") || strings.HasPrefix(line, "--- FAIL:") || strings.HasPrefix(line, "--- PASS:") || strings.HasPrefix(line, "--- SKIP:") || line == "FAIL" || strings.HasPrefix(line, "FAIL ") || strings.HasPrefix(line, "FAIL\t") || strings.HasPrefix(line, "ok ") || strings.HasPrefix(line, "ok\t") || strings.HasPrefix(line, "? ") || strings.HasPrefix(line, "?\t")
 }
 
 func (r *report) render(full bool) (string, error) {

@@ -47,6 +47,21 @@ func seedRecords(t *testing.T, root string, ages ...int) []string {
 	return names
 }
 
+// seedRunPairs seeds what a run that opened its stream leaves behind: a record and a
+// stream beside it, under one run token.
+func seedRunPairs(t *testing.T, root string, ages ...int) []string {
+	t.Helper()
+	names := seedRecords(t, root, ages...)
+	for _, age := range ages {
+		run := seededRun(age)
+		if err := os.WriteFile(gateLogStreamPath(root, run), []byte("[vet] a line\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		names = append(names, gateLogStreamName(run))
+	}
+	return names
+}
+
 func ages(from, to int) []int {
 	out := make([]int, 0, to-from+1)
 	for age := from; age <= to; age++ {
@@ -74,7 +89,7 @@ func assertLogDirHolds(t *testing.T, root string, want []string) {
 	sort.Strings(want)
 	got := logDirEntries(t, root)
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
-		t.Fatalf("surviving records\n got %d: %v\nwant %d: %v", len(got), got, len(want), want)
+		t.Fatalf("surviving files\n got %d: %v\nwant %d: %v", len(got), got, len(want), want)
 	}
 }
 
@@ -93,8 +108,51 @@ func TestPruneGateRunLogsRetainsExactlyTheNewestRecords(t *testing.T) {
 	for _, age := range ages(6, 24) {
 		want = append(want, gateLogRecordName(seededRun(age)))
 	}
-	if len(want) != gateLogRetainedRecords {
-		t.Fatalf("expectation names %d records, retention is %d", len(want), gateLogRetainedRecords)
+	if len(want) != gateLogRetainedRuns {
+		t.Fatalf("expectation names %d runs, retention is %d", len(want), gateLogRetainedRuns)
+	}
+	assertLogDirHolds(t, root, want)
+}
+
+// BG25: the retention counts runs, not files. Twenty-one runs that each opened a stream
+// leave forty-two files, and a pruner counting files would keep ten runs. The oldest
+// run's two files go together, so no surviving table points at a stream that is gone.
+func TestPruneGateRunLogsCountsRunsAndRemovesEachRunsPairTogether(t *testing.T) {
+	root := newPruneRoot(t)
+	seedRunPairs(t, root, ages(0, 19)...)
+	current := seededRun(20)
+	seedRunPairs(t, root, 20)
+
+	pruneGateRunLogs(root, current, io.Discard)
+
+	want := make([]string, 0, 2*gateLogRetainedRuns)
+	for _, age := range ages(1, 20) {
+		run := seededRun(age)
+		want = append(want, gateLogRecordName(run), gateLogStreamName(run))
+	}
+	if len(want) != 2*gateLogRetainedRuns {
+		t.Fatalf("expectation names %d files, retention is %d runs", len(want), gateLogRetainedRuns)
+	}
+	assertLogDirHolds(t, root, want)
+}
+
+// A run that opened no stream prunes on its record alone, so a directory mixing the two
+// shapes still retains twenty runs. The oldest run here has a pair and the run above the
+// cut has only its record; neither shape changes what the count keeps.
+func TestPruneGateRunLogsCountsARunWithNoStreamAsOneRun(t *testing.T) {
+	root := newPruneRoot(t)
+	seedRunPairs(t, root, ages(0, 9)...)
+	seedRecords(t, root, ages(10, 20)...)
+
+	pruneGateRunLogs(root, seededRun(20), io.Discard)
+
+	want := make([]string, 0)
+	for _, age := range ages(1, 9) {
+		run := seededRun(age)
+		want = append(want, gateLogRecordName(run), gateLogStreamName(run))
+	}
+	for _, age := range ages(10, 20) {
+		want = append(want, gateLogRecordName(seededRun(age)))
 	}
 	assertLogDirHolds(t, root, want)
 }
@@ -239,21 +297,28 @@ func TestGateRunPrunesThroughTheClosureBeginHandsBack(t *testing.T) {
 	}
 	finish(Result{GateExit: 0, ActionExit: 0})
 
+	// The retention is a count of runs, and this run left both of its files, so the
+	// survivors are counted by their run token rather than by name.
 	survivors := logDirEntries(t, root)
-	if len(survivors) != gateLogRetainedRecords {
-		t.Fatalf("after one gate run: %d records retained, want %d\n%v", len(survivors), gateLogRetainedRecords, survivors)
-	}
-	// The record this run wrote is the newest of all, so it must have survived its own
-	// pruning. A pruner that counts before the write would drop it.
 	seededNames := strings.Join(seeded, "\n")
-	own := 0
+	runs, own := map[string]bool{}, map[string]bool{}
 	for _, name := range survivors {
+		run, _, ok := gateLogRunFromRecordName(name)
+		if !ok {
+			t.Fatalf("survivor %q is not a name the gate writes\n%v", name, survivors)
+		}
+		runs[run] = true
 		if !strings.Contains(seededNames, name) {
-			own++
+			own[run] = true
 		}
 	}
-	if own != 1 {
-		t.Errorf("survivors hold %d records this run wrote, want exactly 1\n%v", own, survivors)
+	if len(runs) != gateLogRetainedRuns {
+		t.Fatalf("after one gate run: %d runs retained, want %d\n%v", len(runs), gateLogRetainedRuns, survivors)
+	}
+	// The files this run wrote are the newest of all, so they must have survived their
+	// own pruning. A pruner that counts before the write would drop them.
+	if len(own) != 1 {
+		t.Errorf("survivors hold %d runs this run wrote, want exactly 1\n%v", len(own), survivors)
 	}
 }
 
@@ -281,8 +346,8 @@ func TestPruneGateRunLogsBreaksTimestampTiesDeterministically(t *testing.T) {
 	pruneGateRunLogs(root, "", io.Discard)
 	survivors := strings.Join(logDirEntries(t, root), "\n")
 
-	if got := len(logDirEntries(t, root)); got != gateLogRetainedRecords {
-		t.Fatalf("retained %d, want %d", got, gateLogRetainedRecords)
+	if got := len(logDirEntries(t, root)); got != gateLogRetainedRuns {
+		t.Fatalf("retained %d runs, want %d", got, gateLogRetainedRuns)
 	}
 	if !strings.Contains(survivors, tied[2]) {
 		t.Errorf("the greatest-named tied record was dropped; the comparator must keep it\n%s", survivors)
@@ -300,8 +365,14 @@ func TestPruneGateRunLogsBreaksTimestampTiesDeterministically(t *testing.T) {
 func newLoggingPruneRoot(t *testing.T) string {
 	t.Helper()
 	root := newPruneRoot(t)
+	stubGateLogPathIgnored(t)
+	return root
+}
+
+// stubGateLogPathIgnored satisfies the ignore precondition for this test's run.
+func stubGateLogPathIgnored(t *testing.T) {
+	t.Helper()
 	previous := gateLogPathIgnored
 	gateLogPathIgnored = func(string) bool { return true }
 	t.Cleanup(func() { gateLogPathIgnored = previous })
-	return root
 }

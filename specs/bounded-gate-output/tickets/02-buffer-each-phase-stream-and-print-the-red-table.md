@@ -54,7 +54,10 @@ the control-byte filter.
 - [ ] `gate: red` appears on stdout and not on stderr. (BG11)
 - [ ] A cancelled run prints the stragglers on stderr and no verdict on either stream. (BG12)
 - [ ] A red stream whose last line has no newline yields that line as a row. (BG15)
-- [ ] A red Go phase whose stream holds only `WARNING: DATA RACE` lines prints its last twenty non-empty lines. (BG32)
+- [x] A red Go phase whose stream classifies to no row prints its last
+      twenty non-empty lines. (BG32, reworded by ticket 08: a
+      `WARNING: DATA RACE` stream now classifies, per BG38, so it no longer
+      names this fallback's example fixture.)
 - [ ] A lane run with a red prose check prints that check's lines as it does today. (BG29)
 - [ ] Two red phases print their rows in phase-table order.
 - [ ] A phase whose failure arrives on stderr yields its stderr lines as rows.

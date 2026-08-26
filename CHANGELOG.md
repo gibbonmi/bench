@@ -24,6 +24,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- The gate now prints a bounded verdict instead of every phase's stream. A green
+  run prints one `phases[N]{phase,verdict,elapsed_ms}` table, one
+  `capability-skips` line, and `gate: green`. A red run prints one
+  `failures[N]{phase,line}` table, capped at twenty rows for each phase, and
+  `gate: red`. The complete phase stream goes to `.logs/gate-<run>.out`, beside
+  the progress log and under the same retention. `bench commit` and
+  `bench worktree land` relay that output.
 - Every drain now delegates independent evidence reads in parallel and centralizes
   tracked batch writing, ignored capture removal, verification, and landing.
 - The `internal/worktree` test suite now runs its eligible tests in parallel
