@@ -114,6 +114,11 @@ func TestCellFault(t *testing.T) {
 		{"opencode", "gpt-5.6-luna", "is not provider-qualified"},
 		{"opencode", "openai//gpt-5", "is not provider-qualified"},
 		{"opencode", "openai/gpt-5/", "is not provider-qualified"},
+		// The rule reads the record's provider binding, not a harness name. The row that
+		// binds any provider demands the qualification; a row that binds one provider
+		// takes a bare id.
+		{"opencode", "gpt-5", "is not provider-qualified"},
+		{"codex", "gpt-5", ""},
 	} {
 		got := CellFault(tt.harness, tt.value)
 		if (tt.want == "" && got != "") || (tt.want != "" && !contains(got, tt.want)) {

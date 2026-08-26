@@ -125,6 +125,18 @@ func TestModelFromEnvelope(t *testing.T) {
 	}
 }
 
+// TestHarnessesDerivesFromRecord pins the matrix columns to the harness record. The
+// columns are the rows that bind a provider, in record order, so the model-free row takes
+// no column. The package holds no harness list of its own.
+func TestHarnessesDerivesFromRecord(t *testing.T) {
+	if got, want := strings.Join(Harnesses, ","), "codex,claude,opencode"; got != want {
+		t.Errorf("Harnesses = %q, want %q", got, want)
+	}
+	if KnownHarness("none") {
+		t.Error("the model-free row reads as a matrix column")
+	}
+}
+
 func TestParseBinding(t *testing.T) {
 	b := ParseBinding([]byte(fullBinding))
 	for _, tt := range []struct {
@@ -172,6 +184,9 @@ func TestParseBindingRejectsForeignHarnessKeys(t *testing.T) {
 		// here would be a key neither path ever reads. It would be ignored by the reader
 		// and unreported by the gate at once.
 		{"non-canonical harness case", "BENCH_CODEX_TOP=a\nBENCH_CODEX_MID=b\nBENCH_CODEX_CHEAP=c\nBENCH_claude_TOP=f\n", []string{"BENCH_claude_TOP"}},
+		// The record holds a model-free row, and that row binds no provider. It therefore
+		// takes no column, so its key is foreign like any other unknown harness.
+		{"model-free row", "BENCH_CODEX_TOP=a\nBENCH_CODEX_MID=b\nBENCH_CODEX_CHEAP=c\nBENCH_NONE_MID=\n", []string{"BENCH_NONE_MID"}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			b := ParseBinding([]byte(tt.content))

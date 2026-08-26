@@ -20,6 +20,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/harnesses"
 	"github.com/gibbonmi/bench/internal/modelid"
 )
 
@@ -138,7 +139,43 @@ func parseDelegation(data []byte) (delegation, error) {
 // Harnesses is the closed set of harnesses the binding matrix covers, in the order
 // diagnostics list them. A harness outside this set names no column: the matrix is closed
 // so a typo cannot quietly create a phantom column that nothing grades.
-var Harnesses = []string{"codex", "claude", "opencode"}
+//
+// The set derives from the harness record: a row that binds no provider takes no cell, so
+// the model-free row stays out. The record's order is therefore the diagnostic order.
+var Harnesses = boundHarnesses()
+
+// boundHarnesses names each record row that binds a provider, in record order.
+func boundHarnesses() []string {
+	names := make([]string, 0, len(harnesses.Rows))
+	for _, row := range harnesses.Rows {
+		if row.Providers == harnesses.NoProvider {
+			continue
+		}
+		names = append(names, row.Harness)
+	}
+	return names
+}
+
+// harnessBinding returns the provider binding of the row named harness. The second result
+// is false for a name the record does not hold.
+func harnessBinding(harness string) (harnesses.Provider, bool) {
+	row, ok := harnesses.Lookup(harness)
+	if !ok {
+		return "", false
+	}
+	return row.Providers, true
+}
+
+// harnessOf names the one record row that binds provider. A retired key family migrates to
+// that row's column.
+func harnessOf(provider harnesses.Provider) string {
+	for _, row := range harnesses.Rows {
+		if row.Providers == provider {
+			return row.Harness
+		}
+	}
+	return ""
+}
 
 // Tiers is the closed set of tier names BENCH_MODEL and the matrix share, in descending
 // capability order.
@@ -299,8 +336,8 @@ func (b Binding) UnboundKeys(harness string) []string {
 // hard cut with no dual read. So the pairing is migration advice, and never a second
 // reading of a binding.
 var retiredFamilies = []struct{ prefix, harness string }{
-	{"BENCH_TIER_", "codex"},
-	{"BENCH_ALIAS_", "claude"},
+	{"BENCH_TIER_", harnessOf(harnesses.OpenAI)},
+	{"BENCH_ALIAS_", harnessOf(harnesses.Anthropic)},
 }
 
 // RetiredKeyPrefixes returns the retired schema's key stems in schema order. Consumers
@@ -348,14 +385,15 @@ func RetiredKeyRewrites(content []byte) []RetiredKeyRewrite {
 }
 
 // CellFault reports why value cannot serve as harness's bound cell, or "" when it can.
-// Every cell is an opaque safe token. opencode's namespace is provider-qualified, so
-// that requirement is a rule on opencode's own cells rather than a filter applied to
-// whatever a resolution returns.
+// Every cell is an opaque safe token. A harness that binds any provider carries a
+// provider-qualified namespace, so that requirement is a rule on that row's own cells
+// rather than a filter applied to whatever a resolution returns. A row that binds one
+// provider names the provider already, so a bare id serves.
 func CellFault(harness, value string) string {
 	if !modelid.SafeToken(value) {
 		return "is not a safe model token"
 	}
-	if harness == "opencode" && !isProviderModel(value) {
+	if binding, ok := harnessBinding(harness); ok && binding == harnesses.AnyProvider && !isProviderModel(value) {
 		return "is not provider-qualified (opencode model ids are provider/model)"
 	}
 	return ""
