@@ -33,7 +33,7 @@ means the repository-controlled compliance assessment.
 
 **FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
 
-**FT249 (MEDIUM, decision required) — the idea inbox leaves the gated tree for a shared git ref.**
+**FT249 (MEDIUM, decision required) — a primary-local idea inbox moves to a shared Git ref.**
 
 **FT235 (MEDIUM) — a pool directory's name says what the worktree is for.**
 
@@ -49,7 +49,7 @@ means the repository-controlled compliance assessment.
 
 **FT98 (MEDIUM) — one preserve-then-discard primitive; four faces.**
 
-**FT169 (MEDIUM) — the landing command's refusals name what to do next, and its authority is decided.**
+**FT169 (MEDIUM) — the landing command names its refusals and recovery, and its authority is decided.**
 
 **FT253 (MEDIUM) — one landing lease in the intent ledger, from composition through publish.**
 
@@ -99,6 +99,10 @@ means the repository-controlled compliance assessment.
 
 **FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
 
+**FT259 (MEDIUM) — repair coverage changes retain a ticket owner through repair-scoped re-review.**
+
+**FT260 (LOW, decision required) — coordinator worktree diff inspection needs a scoped native path.**
+
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
@@ -129,7 +133,7 @@ means the repository-controlled compliance assessment.
 
 **FT182 (LOW) — a Planned-phase receipt over an absent target wedges the abandon retry.**
 
-**FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture set.**
+**FT166 (LOW) — a sanctioned writer and parser validator for primary-local learnings and retros.**
 
 **FT168 (LOW) — focused iteration evidence: a fixture-selecting canary and mutation probe.**
 
@@ -294,4 +298,5 @@ fixture-proven.
 ## Recommended sequence
 
 1. `/bench-shape-idea` — FT215: decide the scoped gate and focused-iteration surfaces before adding another independent projection.
-2. `/bench-shape-idea` — FT255: settle one test-concurrency budget before more parallel builds compete for the host.
+2. `/bench-drain` — FT259: add the repair-ticket handoff to shared review guidance.
+3. `/bench-shape-idea` — FT255: settle one test-concurrency budget before more parallel builds compete for the host.
