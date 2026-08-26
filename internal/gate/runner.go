@@ -102,7 +102,11 @@ func processExitCode(cmd *exec.Cmd, err error) int {
 }
 
 type phaseResult struct {
-	Name     string
+	Name string
+	// Argv is the phase's declared command. The report reads it to tell a `go test`
+	// phase, whose red stream has a classifier, from every other phase, whose red stream
+	// is failure rows line by line.
+	Argv     []string
 	Code     int
 	Skipped  bool
 	StartErr error
@@ -135,8 +139,9 @@ func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr 
 }
 
 func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
-	results, cancelled := schedule(ctx, root, phases, prefixedPhaseWriters(stdout, stderr))
-	return aggregateAndReport(results, cancelled, stdout, stderr, func() bool {
+	streams := newPhaseStreams(stderr)
+	results, cancelled := schedule(ctx, root, phases, streams.open)
+	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() bool {
 		return reportCapabilitySkips(skipLog, stdout, stderr)
 	})
 }
@@ -150,40 +155,6 @@ func prefixedPhaseWriters(stdout, stderr io.Writer) func(Phase) (io.Writer, io.W
 		errOut := newPrefixWriter(&writeMu, stderr, phase.Name)
 		return out, errOut, func() { out.Close(); errOut.Close() }
 	}
-}
-
-// aggregateAndReport is the one verdict tail every settled schedule reports through.
-// It carries the per-phase summaries, any extra red-reporting checks (capability
-// skips, the stripped-subject skip posture), and the `gate: red` / `gate: green`
-// line. This is the operator's view of one command whichever schedule produced the
-// results, so an edit to the reported shape lands everywhere at once.
-//
-// An interrupt is not a verdict, so a cancelled run publishes neither summaries nor a
-// gate line. Reporting one would grade phases that never got to answer. Naming the
-// stragglers is not a verdict either; it only says what the run was doing.
-func aggregateAndReport(results []phaseResult, cancelled bool, stdout, stderr io.Writer, redReports ...func() bool) int {
-	if cancelled {
-		reportStragglers(results, stderr)
-		return 130
-	}
-	red := false
-	for _, result := range results {
-		fmt.Fprintln(stdout, phaseSummary(result))
-		if result.Code != 0 {
-			red = true
-		}
-	}
-	for _, report := range redReports {
-		if report() {
-			red = true
-		}
-	}
-	if red {
-		fmt.Fprintln(stderr, "gate: red")
-		return 1
-	}
-	fmt.Fprintln(stdout, "gate: green")
-	return 0
 }
 
 // reportStragglers names, in table order, the phases a cancellation caught mid-run.
@@ -236,7 +207,7 @@ func schedule(ctx context.Context, root string, phases []Phase, open func(Phase)
 			}
 			blocker, ready := edgeState(phase, index, settled, results)
 			if blocker != "" {
-				results[i] = phaseResult{Name: phase.Name, SkippedBy: blocker}
+				results[i] = phaseResult{Name: phase.Name, Argv: phase.Argv, SkippedBy: blocker}
 				logGateEvent(ctx, gateLogRecord{Event: "phase.skip", Phase: phase.Name, Detail: blocker})
 				settled[i] = true
 				progressed = true
@@ -286,10 +257,10 @@ func schedule(ctx context.Context, root string, phases []Phase, open func(Phase)
 		}
 		need := firstUnsettledNeed(phase, index, settled)
 		if !interrupted {
-			results[i] = phaseResult{Name: phase.Name, Code: 1, StartErr: fmt.Errorf("stuck behind unsatisfied need %s", need)}
+			results[i] = phaseResult{Name: phase.Name, Argv: phase.Argv, Code: 1, StartErr: fmt.Errorf("stuck behind unsatisfied need %s", need)}
 			continue
 		}
-		results[i] = phaseResult{Name: phase.Name, Skipped: true, SkippedBy: need, StartErr: errInterruptedBeforeLaunch}
+		results[i] = phaseResult{Name: phase.Name, Argv: phase.Argv, Skipped: true, SkippedBy: need, StartErr: errInterruptedBeforeLaunch}
 	}
 	// A deadline is not an interrupt: it keeps its own exit code and its summaries, so
 	// only an operator's signal suppresses the run's report.
@@ -331,27 +302,8 @@ func firstUnsettledNeed(phase Phase, index map[string]int, settled []bool) strin
 	return ""
 }
 
-func phaseSummary(result phaseResult) string {
-	if result.SkippedBy != "" {
-		return "phase " + result.Name + ": skipped (needs " + result.SkippedBy + ")"
-	}
-	if result.Skipped {
-		if result.StartErr != nil {
-			return fmt.Sprintf("phase %s: skipped (%v)", result.Name, result.StartErr)
-		}
-		return "phase " + result.Name + ": skipped (not installed)"
-	}
-	if result.Code == 0 {
-		return "phase " + result.Name + ": green"
-	}
-	if result.StartErr != nil {
-		return fmt.Sprintf("phase %s: red (%v)", result.Name, result.StartErr)
-	}
-	return fmt.Sprintf("phase %s: red (exit %d)", result.Name, result.Code)
-}
-
 func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.Writer) phaseResult {
-	result := phaseResult{Name: phase.Name}
+	result := phaseResult{Name: phase.Name, Argv: phase.Argv}
 	if len(phase.Argv) == 0 || phase.Argv[0] == "" {
 		result.Code = 1
 		result.StartErr = fmt.Errorf("empty argv")
