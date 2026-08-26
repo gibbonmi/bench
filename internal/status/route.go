@@ -71,10 +71,10 @@ type RouteResult struct {
 }
 
 // Route selects the first signal this harness can invoke, in ladder order, and translates
-// its phase action. It does not re-rank the board; later invocable signals remain
-// runners-up. Selection reads the harness because a phase action is a command only where
-// the harness has a phase form; the ladder itself is the same for every harness, so the
-// lead's state and reason do not change with the harness.
+// its phase action. The ladder is not re-ranked per harness; later invocable signals remain
+// runners-up in ladder order. Selection reads the harness because a phase action is a
+// command only where the harness has a phase form. A formless harness therefore skips a
+// phase action, and the lead moves down the ladder to the first signal it can invoke.
 func Route(signals []Signal, harness string) RouteResult {
 	if i, signal, ok := firstInvocable(signals, harness); ok {
 		route := RouteResult{Lead: translateSignal(signal, harness)}

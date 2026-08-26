@@ -111,6 +111,13 @@ const (
 	srcReference   = ".bench/BENCH-reference.md"
 )
 
+// adapterPath builds the repository-relative path of one harness's headless adapter. Every
+// adapter path and every headless cell source comes from here, so the directory is spelled
+// once.
+func adapterPath(name string) string {
+	return srcAdapters + name
+}
+
 // The dates the initial cells carry. codexGuardChecked is the Hook Layers verdict's own
 // date, because that bullet records the read of the upstream Codex hooks docs.
 const (
@@ -144,8 +151,8 @@ func mechanics(recorded map[string]Cell) map[string]Cell {
 // matchers therefore names that event twice, qualified by its matcher, because the two
 // groups run different scripts.
 //
-// The effort cells read the reference's adapter rule: effort has no harness flag and stays
-// in the declared line. The record grades what Bench's own entry exposes.
+// The effort cells stay unknown. The reference's adapter rule states Bench's own entry
+// surface, not the facility a harness offers, so it grades no row.
 var Rows = []Row{
 	{
 		Harness:    "codex",
@@ -161,11 +168,10 @@ var Rows = []Row{
 			Source:  srcReference + " Hook Layers, the agent-line bullet (Codex hooks docs)",
 			Checked: codexGuardChecked,
 		},
-		Headless: ".bench/adapters/codex",
+		Headless: adapterPath("codex"),
 		Mechanics: mechanics(map[string]Cell{
 			MechanicHooks:    {Value: Yes, Source: srcCodexHooks, Checked: treeChecked},
-			MechanicEffort:   {Value: No, Source: srcReference + " the adapter line rule", Checked: treeChecked},
-			MechanicHeadless: {Value: Yes, Source: ".bench/adapters/codex", Checked: treeChecked},
+			MechanicHeadless: {Value: Yes, Source: adapterPath("codex"), Checked: treeChecked},
 		}),
 	},
 	{
@@ -186,11 +192,10 @@ var Rows = []Row{
 			Source:  srcClaudeHooks + " PreToolUse Agent matcher runs .bench/hooks/check-agent-line.sh",
 			Checked: treeChecked,
 		},
-		Headless: ".bench/adapters/claude",
+		Headless: adapterPath("claude"),
 		Mechanics: mechanics(map[string]Cell{
 			MechanicHooks:    {Value: Yes, Source: srcClaudeHooks, Checked: treeChecked},
-			MechanicEffort:   {Value: No, Source: srcReference + " the adapter line rule", Checked: treeChecked},
-			MechanicHeadless: {Value: Yes, Source: ".bench/adapters/claude", Checked: treeChecked},
+			MechanicHeadless: {Value: Yes, Source: adapterPath("claude"), Checked: treeChecked},
 		}),
 	},
 	{
@@ -200,10 +205,9 @@ var Rows = []Row{
 		HookConfig:      "",
 		HookEvents:      nil,
 		DelegationGuard: Cell{Value: Unknown},
-		Headless:        ".bench/adapters/opencode",
+		Headless:        adapterPath("opencode"),
 		Mechanics: mechanics(map[string]Cell{
-			MechanicEffort:   {Value: No, Source: srcReference + " the adapter line rule", Checked: treeChecked},
-			MechanicHeadless: {Value: Yes, Source: ".bench/adapters/opencode", Checked: treeChecked},
+			MechanicHeadless: {Value: Yes, Source: adapterPath("opencode"), Checked: treeChecked},
 		}),
 	},
 	{
@@ -220,7 +224,6 @@ var Rows = []Row{
 		Headless: "",
 		Mechanics: mechanics(map[string]Cell{
 			MechanicHooks:    {Value: No, Source: srcAdapters + " names no none entry, and no config names none", Checked: treeChecked},
-			MechanicEffort:   {Value: No, Source: srcReference + " the adapter line rule", Checked: treeChecked},
 			MechanicHeadless: {Value: No, Source: srcAdapters + " names no none entry", Checked: treeChecked},
 		}),
 	},

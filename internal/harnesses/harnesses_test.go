@@ -16,13 +16,16 @@ type want struct {
 	events    int
 	guard     Value
 	headless  string
+	// headlessCell is the row's headless-execution cell value. The `none` row records no
+	// adapter, so its cell must stay no.
+	headlessCell Value
 }
 
 var expected = []want{
-	{"codex", OpenAI, "$bench-", ".codex/hooks.json", 3, No, ".bench/adapters/codex"},
-	{"claude", Anthropic, "/bench-", ".claude/settings.json", 6, Yes, ".bench/adapters/claude"},
-	{"opencode", AnyProvider, "", "", 0, Unknown, ".bench/adapters/opencode"},
-	{"none", NoProvider, "", "", 0, No, ""},
+	{"codex", OpenAI, "$bench-", ".codex/hooks.json", 3, No, ".bench/adapters/codex", Yes},
+	{"claude", Anthropic, "/bench-", ".claude/settings.json", 6, Yes, ".bench/adapters/claude", Yes},
+	{"opencode", AnyProvider, "", "", 0, Unknown, ".bench/adapters/opencode", Yes},
+	{"none", NoProvider, "", "", 0, No, "", No},
 }
 
 // wantMechanics is an independent expectation of the twelve mechanic names and their
@@ -98,6 +101,9 @@ func walk(rows []Row, today time.Time) []string {
 		faults = append(faults, cellFaults(row.Harness, "delegation_guard", row.DelegationGuard, today)...)
 		if row.Headless != w.headless {
 			faults = append(faults, fmt.Sprintf("%s headless adapter is %q, want %q", row.Harness, row.Headless, w.headless))
+		}
+		if cell := row.Mechanics[MechanicHeadless]; cell.Value != w.headlessCell {
+			faults = append(faults, fmt.Sprintf("%s headless execution is %q, want %q", row.Harness, cell.Value, w.headlessCell))
 		}
 		if len(row.Mechanics) != len(Mechanics) {
 			faults = append(faults, fmt.Sprintf("%s holds %d mechanics, want %d", row.Harness, len(row.Mechanics), len(Mechanics)))
@@ -228,6 +234,9 @@ func TestRecordWalkBites(t *testing.T) {
 		}},
 		{"guard on codex", func(rows []Row) {
 			rows[0].DelegationGuard = Cell{Value: Yes, Source: ".codex/hooks.json", Checked: "2026-08-26"}
+		}},
+		{"none row claims headless execution", func(rows []Row) {
+			rows[3].Mechanics[MechanicHeadless] = Cell{Value: Yes, Source: ".bench/adapters/none", Checked: "2026-08-26"}
 		}},
 		{"none row names an adapter", func(rows []Row) {
 			rows[3].Headless = ".bench/adapters/none"

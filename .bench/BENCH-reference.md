@@ -56,8 +56,8 @@ assignments; the file map, adapter contracts, and hook layers live below.
 - `.agents/skills/` contains portable Bench skills.
 - `.bench/adapters/` contains reference harness adapters for `bench shift`
   (`claude`, `codex`, `opencode`). Point `BENCH_AGENT` at one of them.
-  `internal/harnesses` is the one source of that adapter list, and it holds one
-  row per harness.
+  `internal/harnesses` holds one row per harness, and each row names that
+  harness's headless adapter.
 - `.bench/hooks/` contains shared hook scripts used by harness adapters.
 - `.bench/lib/` contains shared shell functions the hooks and adapters source.
   `resolve-bench.sh` is the one source of the bench-wrapper search order. The

@@ -394,7 +394,7 @@ func CellFault(harness, value string) string {
 		return "is not a safe model token"
 	}
 	if binding, ok := harnessBinding(harness); ok && binding == harnesses.AnyProvider && !isProviderModel(value) {
-		return "is not provider-qualified (opencode model ids are provider/model)"
+		return "is not provider-qualified (a row that binds any provider needs provider/model)"
 	}
 	return ""
 }
