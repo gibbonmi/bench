@@ -95,6 +95,6 @@ demoable path from parsed record to rendered row, sized to a fresh context.
 Spec-backed builds work the unblocked frontier. One ticket equals **one fresh write-delegate charge**. Frontier tickets run in parallel by default, one worktree each.
 The coordinator serializes a pair only for a conflict it names in the charge. A conflict is an overlapping `Writes:` note, a contract one ticket reads from the other's diff, or the test budget. Dependent tickets run sequentially.
 
-Run focused checks during the ticket, not a standalone full gate. For a reviewed spec chain, the coordinator folds each
-returned diff onto one retained integration source in `Blocked by:` order, one gate per commit. Review freezes that source's
+Run focused checks during the ticket, not a standalone full gate. For a reviewed spec chain, fold each returned diff in
+`Blocked by:` order and commit tickets serially on one retained integration source, one gate per commit. Review freezes that source's
 base and tip. `bench worktree land` composes and gates it, and final-check reports the evidence.
