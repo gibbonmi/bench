@@ -57,7 +57,7 @@ hides a red. The cached routing for foundational Go-seam work applies.
 14. As an agent, I want a control byte in a failure line removed before the row renders, so that the emitter never refuses the table.
 15. As an agent, I want a stream's last line without a newline flushed as one row, so that a truncated tool output still shows.
 16. As an agent, I want a `# <package>` build-error block's lines as rows, so that a compile error names its file and line.
-17. As an agent, I want a red Go phase with no classified row to print its last twenty lines, so that a race report shows.
+17. As an agent, I want a red Go phase with no classified row to print its last twenty lines, so that an unclassifiable diagnostic shows. (Ticket 08 moved a race report out of this fallback into the classifier itself, per BG38.)
 18. As an agent, I want the fast lane's relay unchanged, so that a worktree commit still prints its check's own lines.
 
 ### A green gate prints at most ten rows
@@ -85,7 +85,7 @@ cached mid routing applies.
 
 27. As a reviewer, I want every phase line written to `.logs/gate-<run>.out` as it arrives, so that a killed run keeps its stream.
 28. As a reviewer, I want twenty runs retained, each with its `.jsonl` and its `.out`, so that `.logs` stays readable.
-29. As a reviewer, I want an unwritable `.logs` to leave the projection bounded with the row `+<k> more lines (stream unavailable)`, so that a logging failure never unbounds stdout.
+29. As a reviewer, I want a `.logs` the run cannot open its stream through to leave the projection bounded. It must add the row `+<k> more lines (stream unavailable)`, so that a logging failure never unbounds stdout.
 30. As a reviewer, I want the engine to name the stream file once on stderr, so that a short red points at the whole.
 31. As a reviewer, I want the tests that pin `gate: green` and the reused line to stay green, so that the contract holds.
 
@@ -223,7 +223,7 @@ The gate's `test` phase observes all of it.
 | BG23 | 26 | A phase's `elapsed_ms` cell equals the `phase.finish` record's `elapsed_ms` in the progress log. | in-package phases command reading the log | A second timer disagrees with the log. |
 | BG24 | 27 | A run killed after its first phase leaves that phase's lines in `.logs/gate-<run>.out`. | in-package phases command with a killed fixture | A buffer written at settle loses a killed run's lines. |
 | BG25 | 28 | A twenty-first run leaves twenty `.jsonl` files and twenty `.out` files and removes the oldest pair. | run log prune unit | A prune that counts files keeps ten runs. |
-| BG26 | 29 | An unwritable `.logs` leaves the red table at twenty rows plus `+<k> more lines (stream unavailable)`. | engine report unit with a refused stream file | A failed open unbounds the relay. |
+| BG26 | 29 | A `.logs` the run cannot open its stream through leaves the red table at twenty rows plus `+<k> more lines (stream unavailable)`. | engine report unit with a refused stream file | A failed open unbounds the relay. |
 | BG27 | 32 | The profile's gate section and the reference each carry the bounded-output sentence needle. | anchors registry test | A dropped sentence leaves the shape undocumented. |
 | BG28 | 31 | The run-outcome test that pins the reused line and the adoption test that pins `gate: green` pass unchanged. | existing tests | A pin on the old shape reds the gate. |
 | BG29 | 18 | A lane run with a red prose check prints that check's lines as it does today. | lane unit | A lane routed through the buffer prints nothing. |

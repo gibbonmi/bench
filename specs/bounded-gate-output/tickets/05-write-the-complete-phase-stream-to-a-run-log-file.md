@@ -30,9 +30,14 @@ parallel with ticket 04; the two write no common file except
 
 ## Acceptance
 
-- [ ] A run killed after its first phase leaves that phase's lines in `.logs/gate-<run>.out`. (BG24)
+- [x] A run killed after its first phase leaves that phase's lines in
+      `.logs/gate-<run>.out`. (BG24, its end-to-end seam test added by
+      ticket 08.)
 - [ ] A twenty-first run leaves twenty `.jsonl` files and twenty `.out` files and removes the oldest pair. (BG25)
-- [ ] An unwritable `.logs` leaves the red table at twenty rows plus `+<k> more lines (stream unavailable)`. (BG26)
+- [x] A `.logs` the run cannot open its stream through leaves the red table
+      at twenty rows plus `+<k> more lines (stream unavailable)`. (BG26,
+      retargeted by ticket 08 from a chmod fixture to a symlinked `.logs` —
+      both reach the same refusal in `openGateStreamFile`.)
 - [ ] A run whose stream file opens prints `gate: stream <path>` once on stderr. (BG35)
 - [ ] Every phase line of a completed run appears in the `.out` file in arrival order.
 - [ ] A `.logs` symlink writes no stream file and reports the stream unavailable.

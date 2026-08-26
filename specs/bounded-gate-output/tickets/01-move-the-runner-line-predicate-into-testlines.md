@@ -40,5 +40,7 @@ keeps it low enough for both callers.
 - [ ] A stream with `# github.com/x/y` and `./x.go:12:3: undefined: y` yields both as rows. (BG31)
 - [ ] An indented `--- FAIL:` line starts a block like a top-level line does.
 - [ ] A `--- PASS:` line ends a block and adds no row.
-- [ ] A stream of only `WARNING: DATA RACE` lines yields an empty slice.
+- [x] A stream of only `WARNING: DATA RACE` lines yields rows (superseded by
+      BG38, ticket 08: a `WARNING: DATA RACE` line now opens a block, so this
+      no longer yields an empty slice).
 - [ ] `testreport.decode` calls `testlines.RunnerLine`, and no copy of the predicate remains in `internal/testreport`.
