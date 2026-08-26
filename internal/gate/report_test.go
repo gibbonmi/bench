@@ -318,6 +318,27 @@ func TestRedPhasePastTheCapPrintsTwentyRowsAndACountOfTheRest(t *testing.T) {
 	}
 }
 
+// The same row, on a run that retained its stream: the cap names the file where the rest
+// of the phase is readable. This is the whole point of the bound, so the path in the row
+// must be the file the buffer actually wrote to.
+func TestRedPhasePastTheCapNamesTheRetainedStreamFile(t *testing.T) {
+	streams := newPhaseStreams(io.Discard)
+	file := openTestStreamFile(t)
+	streams.retain(file)
+	var raw strings.Builder
+	for i := 1; i <= 50; i++ {
+		fmt.Fprintf(&raw, "finding %d\n", i)
+	}
+	writePhaseStream(t, streams, "vet", raw.String(), "")
+	var stdout, stderr bytes.Buffer
+	aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 1}}, false, streams, &stdout, &stderr)
+
+	rows := rowsForPhase(t, stdout.String(), "vet")
+	if want := "+30 more lines: " + file.Name(); rows[len(rows)-1] != want {
+		t.Errorf("more-row = %q, want %q", rows[len(rows)-1], want)
+	}
+}
+
 // A phase at exactly the cap dropped nothing, so it gets no more-row. An off-by-one that
 // counts the cap itself as an omission reports a loss that did not happen.
 func TestRedPhaseAtExactlyTheCapPrintsNoMoreRow(t *testing.T) {

@@ -8,6 +8,7 @@ package gate
 import (
 	"bytes"
 	"io"
+	"os"
 	"sync"
 )
 
@@ -18,12 +19,26 @@ type phaseStreams struct {
 	mu      sync.Mutex
 	buffers map[string][]string
 	// stderr carries the buffer's own diagnostics, which is a stream separate from any
-	// phase's. Nothing writes to it yet; ticket 05 names the retained stream file on it.
+	// phase's. It stays quiet: the run log owner names the retained stream file when the
+	// file opens, and reports the directory it cannot use when the file does not.
 	stderr io.Writer
+	// file is the run's retained stream, or nil when the run opened none. The buffer
+	// writes each line through as the line arrives, so a killed run keeps what its
+	// phases already said.
+	file *os.File
 }
 
 func newPhaseStreams(stderr io.Writer) *phaseStreams {
 	return &phaseStreams{buffers: make(map[string][]string), stderr: stderr}
+}
+
+// retain names the file every line is written through to. A run that opened none stays
+// in memory, and its report says the stream is unavailable rather than naming a file
+// that holds nothing.
+func (s *phaseStreams) retain(file *os.File) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.file = file
 }
 
 // open is the writer factory the engine hands to schedule, in place of the lane's
@@ -45,15 +60,29 @@ func (s *phaseStreams) lines(phase string) []string {
 
 // path names the file that holds every buffered line, or answers "" when this run
 // retained none. It is the one place the report asks where the lines the row cap left
-// out can be read. Ticket 05 opens the file and answers its path here; until then no run
-// retains one, and the report says the stream is unavailable rather than pointing a
-// reader at nothing.
-func (s *phaseStreams) path() string { return "" }
+// out can be read.
+func (s *phaseStreams) path() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.file == nil {
+		return ""
+	}
+	return s.file.Name()
+}
 
+// appendLine files one line under its phase and writes it through to the retained
+// stream in the same step. The write happens as the line arrives rather than when the
+// phase settles, so a killed run's file holds everything that reached it. Each line
+// carries its phase the way the fast lane's relay prefixes one, so one file reads as
+// one run. A write that fails costs the reader the whole, never the verdict, so it is
+// silent: the run log owner already reported a .logs it cannot use.
 func (s *phaseStreams) appendLine(phase, line string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.buffers[phase] = append(s.buffers[phase], line)
+	if s.file != nil {
+		_, _ = io.WriteString(s.file, "["+phase+"] "+line+"\n")
+	}
 }
 
 // phaseLineWriter splits one stream into lines the way prefixWriter does, and appends
