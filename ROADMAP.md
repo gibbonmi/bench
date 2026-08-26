@@ -133,7 +133,7 @@ means the repository-controlled compliance assessment.
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture set.**
 
-**FT168 (LOW) — focused iteration evidence: a fixture-selecting canary.**
+**FT168 (LOW) — focused iteration evidence: a fixture-selecting canary and mutation probe.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
