@@ -85,8 +85,6 @@ means the repository-controlled compliance assessment.
 
 **FT222 (MEDIUM, decision required) — delegate-tier routing has one source in `projects/benchkit.md`.**
 
-**FT239 (MEDIUM, decision required) — the adapter seam: a versioned capability matrix, and parity tests that prove one core.**
-
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 
 **FT58 (LOW) — hardened pool roots.**
