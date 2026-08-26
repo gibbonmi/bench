@@ -38,19 +38,19 @@ definition.
 |---|---|---|---|
 | exact | known shape | covered | cheap + low |
 | partial | known shape | covered | mid + medium |
-| any | genuinely uncertain | any | top + high |
+| any | genuinely uncertain | any | mid + high; offer the top tier to the reviewer |
 | any | any | weak / uncovered | bump one tier |
 
 Rows read top-down, first match wins. A stage both genuinely uncertain and weakly gated takes the
-top row — never demote uncertainty to a bump. Tier and effort are one joint output. The last row
+uncertain row — never demote uncertainty to a bump. Tier and effort are one joint output. The last row
 is the up-bias, and it is load-bearing. Where the gate can't catch a confidently wrong answer, buy
 insurance at the start rather than trust the ladder to correct later. Under-escalation is the
 expensive error; a covered gate catches a wrong downgrade cheaply.
 
 A fourth signal, **leverage**, overrides the table. An artifact that steers future generation — a
-skill, a command phase, shared platform rules — routes top + high regardless of the rows above. A
-defect in guidance prose multiplies through every session that loads it. Before you assess from
-scratch, read `Lines` for a cached routing; a cache hit still gets declared.
+skill, a command phase, shared platform rules — routes mid + high regardless of the rows above. A
+defect in guidance prose multiplies through every session that loads it. The top tier implements nothing, guidance included, unless the reviewer names it for that run.
+Before you assess from scratch, read `Lines` for a cached routing; a cache hit still gets declared.
 
 ## Ticketed-build stage defaults
 
@@ -65,7 +65,7 @@ line is a **ceiling, not a binding**: re-run the decision table per ticket at ch
 routed mid for its uncertain seam often decomposes into tickets that are exact-spec, known-shape,
 gate-covered tickets.
 
-The leverage override still wins: kit guidance prose routes top + high in every stage.
+The leverage override still wins: kit guidance prose routes mid + high in every stage.
 `craft-delegate` owns whether authorship runs inline or in an isolated worktree; this skill routes
 the chosen author. When stories land as one atomic diff, run the author at the highest tier any
 story needs. Flag each collapsed line in the exit report.

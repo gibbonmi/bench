@@ -80,10 +80,10 @@ work, so the cached high routing for that work applies.
 
 ### The duty and the charge
 
-Line: fable / high.
+Line: opus / high.
 
 The final-check command, the delegate skill, and the reference docs are
-guidance prose, so the leverage override routes them top and high.
+guidance prose, so the leverage override routes them mid and high.
 
 28. As a reviewer, I want final-check to write one `bench learning --rule` entry per landing with `n > 0`, so that findings reach the drain.
 29. As a reviewer, I want the entry's title, `--what`, `--right`, and `--rule` fields in the fixed shape below, so that the drain can act.
