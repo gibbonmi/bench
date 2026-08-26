@@ -111,8 +111,12 @@ lines, not bytes, so a partial last line flushes as one line at close.
 **One classifier owns Go test lines.** `internal/testreport` classifies
 runner lines today. That predicate moves to a new low package,
 `internal/testlines`, with one more: the failure rows of a red stream. A
-`--- FAIL:` line at any indent starts a block, and a `# <package>` line
-starts a build-error block; each block ends at the next runner line. `FAIL
+`--- FAIL:` line at any indent starts a block. A `# <package>` line starts a
+build-error block. A `WARNING: DATA RACE` line also starts a block. Each
+block ends at the next runner line.
+
+A race report's stack precedes its `--- FAIL:` block, and the new opener
+turns the whole thing into rows instead of dropped lines (BG38). `FAIL
 <package>` and `panic:` lines are rows on their own. When the classifier
 yields no row for a red Go phase, the phase's last twenty non-empty lines
 are the rows. `testreport` composes the moved predicate, so one source names
@@ -127,10 +131,16 @@ so a one-phase red fits the stop hook's thirty-line tail.
 
 Every red diagnosis the skip reporter produces is a row under phase
 `capability`: an environment skip, a strict-mode capability skip, and an
-unreadable skip log. A phase skipped by a red need adds no row. Every cell
+unreadable skip log. `capability` is a reserved filing name; a manifest that
+declares a phase with that name is refused before the run starts (BG39). A
+phase skipped by a red need adds no row. Every cell
 passes a control-byte filter that removes bytes below 0x20 except tab and
 escapes nothing, so a backslash reaches the reader once. A long line renders
-whole; the cap counts rows, not bytes.
+whole. The cap counts rows, not bytes.
+
+A red phase can carry a `StartErr`: a bad working directory, an empty argv,
+an exec failure, or a scheduler deadlock. Such a phase renders that error's
+text as its row, instead of the no-output text (BG37).
 
 **The green shape.** The engine prints `phases[N]{phase,verdict,elapsed_ms}`
 in phase-table order, with `green` or `skipped` in the verdict cell and the
@@ -219,11 +229,19 @@ The gate's `test` phase observes all of it.
 | BG29 | 18 | A lane run with a red prose check prints that check's lines as it does today. | lane unit | A lane routed through the buffer prints nothing. |
 | BG30 | 20 | A green run of six phases prints exactly nine stdout lines and no line with a `[phase]` prefix. | engine report unit | A relaying build adds the table and passes BG16. |
 | BG31 | 16 | A stream with `# github.com/x/y` and `./x.go:12:3: undefined: y` yields both as rows. | testlines unit | A FAIL-block-only classifier drops a compile error. |
-| BG32 | 17 | A red Go phase whose stream holds only `WARNING: DATA RACE` lines prints its last twenty non-empty lines. | engine report unit | A classifier with no fallback prints an empty table. |
+| BG32 | 17 | A red Go phase whose stream holds no `--- FAIL:`, `# `, `FAIL`, `panic:`, or `WARNING: DATA RACE` line prints its last twenty non-empty lines. | engine report unit | A classifier with no fallback prints an empty table. |
 | BG33 | 10 | A strict-mode capability skip and an unreadable skip log each print a row under phase `capability`. | engine report unit | A diagnosis left on stderr leaves an empty red table. |
 | BG34 | 13 | A green run of fixture phase scripts exits 0. | in-package phases command with fixture scripts | A changed code breaks every caller. |
 | BG36 | 13 | A cancelled run of fixture phase scripts exits 130. | in-package phases command with fixture scripts | A changed code breaks every caller. |
 | BG35 | 30 | A run whose stream file opens prints `gate: stream <path>` once on stderr. | in-package phases command reading stderr | A short red never names the whole stream. |
+| BG37 | 1 | A phase red with a `StartErr` (a bad `Dir`, an empty argv, an exec failure, or a scheduler deadlock) renders that error's text as its row. | engine report unit | The generic no-output row hides the real reason. |
+| BG38 | 17 | A red Go phase whose stream carries a `WARNING: DATA RACE` block followed by a `--- FAIL:` block yields rows for both. | testlines unit | A `--- FAIL:`-only opener drops the race report before it. |
+| BG39 | 10 | A manifest phase named `capability` is refused before the run starts. | manifest validation unit | An unreserved name lets a phase's rows merge with the skip reporter's. |
+
+Review repair (2026-08-26): the initial review found the red table printed the
+`capability-skips` totals line on every run, not only on green, so BG01's
+"and nothing else" did not hold. The fix moves that print to the green
+branch; BG01 already covers the corrected behavior and gets no new row.
 
 ### Edge inventory
 
@@ -260,6 +278,8 @@ The gate's `test` phase observes all of it.
 - `internal/systemtest/`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
+- `internal/toon/toon.go` (review-approved addition, 2026-08-26: `sanitize.Strip`
+  composes the encoder's own control-byte predicate instead of re-deriving it)
 - `projects/benchkit.md`
 - `.bench/BENCH-reference.md`
 - `CHANGELOG.md`
@@ -286,3 +306,10 @@ questions: filter the plain stream rather than switch the argv, and print the
 phase table with the verdict rather than one aggregate row. Four choices are the author's and stand for veto. They are the twenty-row
 cap per phase, the collapse above seven phases, the stream file with its
 twenty-run retention, and the `gate: stream <path>` line.
+
+The initial review (2026-08-26) closed four judgment calls. Capability rows
+stay uncapped, since they carry no backing stream file to point a reader at.
+`sanitize.Strip` composes `toon`'s own control-byte predicate rather than
+re-deriving it, which is the fence addition above. A `StartErr` red renders
+that error's text (BG37). A `WARNING: DATA RACE` line opens a block the same
+way `--- FAIL:` and `# ` do (BG38).
