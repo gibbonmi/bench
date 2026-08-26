@@ -191,3 +191,27 @@ func assertLeadControlRoute(t *testing.T, relativePath, body, want string) {
 		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
 	}
 }
+
+// HC50. A harness with a phase form keeps the translation through the command surface.
+func TestCommandRoutePrintsTheCodexPhaseForm(t *testing.T) {
+	root := initRepo(t)
+	if err := os.WriteFile(filepath.Join(root, "capture", "IDEAS.md"), []byte("- 2026-08-18 pending\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+
+	got, code := Command([]string{"--route", "--harness", "codex"})
+	if code != 0 || !strings.Contains(got, ",$bench-drain\n") {
+		t.Fatalf("Command(--route --harness codex) = (%q, %d), want the $bench- form", got, code)
+	}
+}

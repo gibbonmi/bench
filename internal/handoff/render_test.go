@@ -61,7 +61,34 @@ func TestCommandUsesCodexRouteForPhase(t *testing.T) {
 	}
 }
 
-func runHandoffCommand(t *testing.T, commandArgs []string, files map[string]string) []byte {
+// HC22. `--harness none` is accepted, and the routed shell command is the one a cold
+// session without a harness reads. The board is led by `git push`: a clean tree one commit
+// ahead of its upstream.
+func TestCommandUsesShellRouteForNoHarness(t *testing.T) {
+	got := runHandoffCommand(t, []string{"--harness", "none"}, map[string]string{"ROADMAP.md": "# Roadmap\n"}, unpushedCommit)
+	if !strings.Contains(string(got), "## Next command\n\n`git push`") {
+		t.Fatalf("handoff next command = %q, want git push", got)
+	}
+}
+
+// unpushedCommit gives the repository an upstream it is one commit ahead of, which is the
+// `git push` board.
+func unpushedCommit(t *testing.T, root string) {
+	t.Helper()
+	remote := filepath.Join(t.TempDir(), "remote.git")
+	for _, args := range [][]string{
+		{"init", "-q", "--bare", remote},
+		{"-C", root, "remote", "add", "origin", remote},
+		{"-C", root, "push", "-q", "-u", "origin", "HEAD"},
+		{"-C", root, "commit", "-q", "--allow-empty", "-m", "ahead"},
+	} {
+		if out, err := exec.Command("git", args...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
+	}
+}
+
+func runHandoffCommand(t *testing.T, commandArgs []string, files map[string]string, setup ...func(*testing.T, string)) []byte {
 	t.Helper()
 	root := t.TempDir()
 	for _, args := range [][]string{{"init", "-q", root}, {"-C", root, "config", "user.email", "t@example.com"}, {"-C", root, "config", "user.name", "t"}} {
@@ -84,6 +111,9 @@ func runHandoffCommand(t *testing.T, commandArgs []string, files map[string]stri
 	}
 	if out, err := exec.Command("git", "-C", root, "commit", "-qm", "base").CombinedOutput(); err != nil {
 		t.Fatalf("git commit: %v: %s", err, out)
+	}
+	for _, step := range setup {
+		step(t, root)
 	}
 
 	oldWD, err := os.Getwd()

@@ -70,13 +70,16 @@ type RouteResult struct {
 	NoCommand bool
 }
 
-// Route selects the first invocable signal in ladder order and translates its phase action
-// for harness. It does not re-rank the board; later invocable signals remain runners-up.
+// Route selects the first signal this harness can invoke, in ladder order, and translates
+// its phase action. It does not re-rank the board; later invocable signals remain
+// runners-up. Selection reads the harness because a phase action is a command only where
+// the harness has a phase form; the ladder itself is the same for every harness, so the
+// lead's state and reason do not change with the harness.
 func Route(signals []Signal, harness string) RouteResult {
-	if i, signal, ok := firstInvocable(signals); ok {
+	if i, signal, ok := firstInvocable(signals, harness); ok {
 		route := RouteResult{Lead: translateSignal(signal, harness)}
 		for _, runnerUp := range signals[i+1:] {
-			if runnerUp.invocable() {
+			if invocableFor(runnerUp, harness) {
 				route.RunnersUp = append(route.RunnersUp, translateSignal(runnerUp, harness))
 			}
 		}
@@ -100,26 +103,39 @@ func RouteFor(root string, signals []Signal, harness string) RouteResult {
 		command = commandAction(roadmapAction)
 	}
 	route.Lead = translateSignal(newSignal(0, "clean", "nothing pending", command), harness)
+	// A fallback the harness cannot invoke is a no-command board, not a command.
+	route.NoCommand = route.Lead.Action == ""
 	return route
 }
 
-func firstInvocable(signals []Signal) (index int, signal Signal, ok bool) {
+func firstInvocable(signals []Signal, harness string) (index int, signal Signal, ok bool) {
 	for index, signal = range signals {
-		if signal.invocable() {
+		if invocableFor(signal, harness) {
 			return index, signal, true
 		}
 	}
 	return 0, Signal{}, false
 }
 
+// invocableFor reports whether harness can run signal's action. A phase action needs a
+// phase form, so a formless harness cannot invoke one. Such a signal is skipped the way a
+// prose action is skipped: it stays on the board, but it is not a next command.
+func invocableFor(signal Signal, harness string) bool {
+	if !signal.invocable() {
+		return false
+	}
+	return signal.actionID.kind() != actionPhase || harnessPrefix[harness] != ""
+}
+
 func translateSignal(signal Signal, harness string) Signal {
 	if signal.actionID.kind() != actionPhase {
 		return signal
 	}
-	// A row with no phase form leaves the action untranslated, which is what an unrecorded
-	// harness has always done.
+	// A harness with no phase form has no key to press. The command cell is emptied rather
+	// than left with a form the reader cannot run.
 	prefix := harnessPrefix[harness]
 	if prefix == "" {
+		signal.Action = ""
 		return signal
 	}
 	signal.Action = strings.Replace(signal.Action, harnessPrefix[HarnessClaude], prefix, 1)
