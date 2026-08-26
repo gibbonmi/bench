@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/harnesses"
 )
@@ -405,14 +406,6 @@ func TestHarnessRecordBites(t *testing.T) {
 			want: "harness-record: codex records headless adapter .bench/adapters/codex, and the tree ships no such entry",
 		},
 		{
-			name: "a live headless adapter link",
-			fault: harnessRecordFault{
-				drop:  ".bench/adapters/codex",
-				plant: map[string]func(*testing.T, string){".bench/adapters/codex": hostileSkillPlanters["live symlink"]},
-			},
-			want: "harness-record: codex records headless adapter .bench/adapters/codex, and that path is a symlink the record refuses to follow",
-		},
-		{
 			name:  "an invalid hook config",
 			fault: harnessRecordFault{write: map[string]string{".codex/hooks.json": `{"hooks":{`}},
 			want:  "harness-record: .codex/hooks.json is not valid JSON",
@@ -469,6 +462,37 @@ func harnessRecordCodexConfigDiags(t *testing.T, diags []string) string {
 	}
 	t.Fatalf("no codex config diagnostic:\n%s", strings.Join(diags, "\n"))
 	return ""
+}
+
+// plantAdapterLinkOutsideTheScan makes the adapter path a live symlink whose target sits
+// outside .bench/adapters/. A target beside the link would be a second adapter the record
+// maps to no row, and the case must plant one fault, not two.
+func plantAdapterLinkOutsideTheScan(t *testing.T, path string) {
+	t.Helper()
+	target := filepath.Join(filepath.Dir(filepath.Dir(path)), "adapter-target")
+	if err := os.WriteFile(target, []byte("#!/usr/bin/env bash\nexit 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, path); err != nil {
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+	}
+}
+
+// TestHarnessRecordRefusesALiveAdapterLink proves the record refuses a link at an adapter
+// path rather than follow it. The refusal is the row's only verdict, because a check that
+// also graded the target would be reporting on bytes it must not read.
+func TestHarnessRecordRefusesALiveAdapterLink(t *testing.T) {
+	root := harnessRecordRoot(t, harnessRecordFault{
+		drop:  ".bench/adapters/codex",
+		plant: map[string]func(*testing.T, string){".bench/adapters/codex": plantAdapterLinkOutsideTheScan},
+	})
+
+	diags := checkHarnessRecord(root)
+
+	want := "harness-record: codex records headless adapter .bench/adapters/codex, and that path is a symlink the record refuses to follow"
+	if len(diags) != 1 || !containsDiagnostic(diags, want) {
+		t.Fatalf("the live adapter link did not bite with %q alone:\n%s", want, strings.Join(diags, "\n"))
+	}
 }
 
 // TestHarnessRecordRefusesANonRegularConfig proves the classifier runs before the read.

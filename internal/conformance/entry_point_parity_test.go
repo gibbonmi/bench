@@ -93,7 +93,9 @@ var entryPointParity = map[string]parityRow{
 		command: "status", direct: []string{"status", "--route"}, compare: true,
 	},
 	// The CI chain is two static halves: the script execs the verb, and the workflow runs
-	// the script. A staged binary would prove no more than the exec line does.
+	// the script. A staged binary would prove no more than the exec line does. The exec line
+	// may carry an env prefix, because the script passes the binary it built to the child
+	// phases through BENCH_RUN_BINARY.
 	"scripts/release-preflight.sh": {
 		command: "release-preflight", must: parityVerb(`(?m)^exec (env BENCH_RUN_BINARY="\$binary" )?"\$binary" `, "release-preflight"),
 	},
@@ -409,6 +411,26 @@ func parityStaticRoot(t *testing.T, rel, content string) string {
 		files[rel] = content
 	}
 	return throwawayRoot{files: files}.build(t)
+}
+
+// parityEnvPrefixedPreflight is the second honest form of the CI exec line: the script
+// hands the binary it built to the child phases. The row accepts both forms, so this tree
+// grades the alternation rather than leave it to the live root alone.
+const parityEnvPrefixedPreflight = "#!/usr/bin/env bash\nbinary=x\nexec env BENCH_RUN_BINARY=\"$binary\" \"$binary\" release-preflight \"$@\"\n"
+
+// TestEntryPointParityAcceptsTheEnvPrefixedPreflight proves the env prefix stays green and
+// the verb name still carries the verdict.
+func TestEntryPointParityAcceptsTheEnvPrefixedPreflight(t *testing.T) {
+	rel := "scripts/release-preflight.sh"
+	if diags := checkEntryPointParity(parityStaticRoot(t, rel, parityEnvPrefixedPreflight)); len(diags) != 0 {
+		t.Fatalf("the env-prefixed exec line is not green:\n%s", strings.Join(diags, "\n"))
+	}
+
+	mutated := strings.Replace(parityEnvPrefixedPreflight, "release-preflight ", "release-preflight-2 ", 1)
+	want := `scripts/release-preflight.sh does not name the registry command "release-preflight"`
+	if diags := checkEntryPointParity(parityStaticRoot(t, rel, mutated)); !containsDiagnostic(diags, want) {
+		t.Fatalf("the mutated env-prefixed exec line did not bite with %q:\n%s", want, strings.Join(diags, "\n"))
+	}
 }
 
 // TestEntryPointParityNamesAnUnreachedInternalCommand proves the table cannot lose a

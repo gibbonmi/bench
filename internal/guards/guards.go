@@ -215,12 +215,9 @@ func WiresScript(config []byte, script string) bool {
 
 // wiredHarnesses names the harness configs that reference scriptRel, its relative
 // path token. It scans the hook config of every harnesses record row that names one.
-// A row with no hook config
-// contributes nothing, so a new harness joins the report as one record row. An absent
-// config contributes nothing too; a repo without .codex/ cannot wire Codex. An
-// unparseable config scans as not-wired, because guards is a read-only wiring reporter
-// and the JSON-validity conformance family owns malformedness. The names sort, so the
-// cell stays stable against the record's own row order. The result is one name, the
+// A row with no hook config contributes nothing, so a new harness joins the report as one
+// record row. An absent config contributes nothing too; a repo without .codex/ cannot wire
+// Codex. The names sort, so the cell stays stable against the record's own row order. The result is one name, the
 // comma-joined names, or the definitive "none", never a blank cell.
 func wiredHarnesses(root, scriptRel string) string {
 	var wired []string
