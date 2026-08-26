@@ -14,8 +14,9 @@ reconciles the roadmap against the tree, drains all three capture sources,
 refreshes the recommended sequence, and hands the reviewer one diff to approve.
 
 The "not a workflow phase" label above is scope, not an exemption. `main`
-still takes writes only through a landing. Open a bench worktree before the
-first edit, and close through `bench worktree land`.
+still takes writes only through a landing. Implement-now writers use their
+own bench worktrees. Create the batch worktree only when the protocol below
+allows it, and close it through `bench worktree land`.
 
 At entry, invoke `bench roadmap --context` exactly once. Its successful schema-4
 index is the complete local inventory for every step below. It covers every
@@ -37,6 +38,26 @@ snapshot. When it is false, stop before any batch mutation. Report every
 `occurrence_discrepancies` row together with the complete index snapshot. The
 structural evidence remains visible for reviewer diagnosis. Do not infer a
 ledger or a sequence from partial sources.
+
+## Delegate the evidence
+
+Use at most three read-only delegates after the snapshot passes its trust check.
+Assign at most one delegate to each scope: roadmap reconcile, idea and journal mapping, and retro analysis.
+Skip a scope when its indexed source set is empty. Charge every delegate under
+`craft-delegate` and `craft-line`.
+
+Read delegates edit nothing, take no new inventory, and use only the snapshot and its named paths.
+Each read delegate returns these fields: proposed owner, classification, occurrence, evidence, and reviewer decision.
+
+Resolve duplicate incidents and reviewer decisions before any batch writer starts.
+Verify that the tree stayed unchanged. Keep ignored capture removal, the handoff,
+verification, and landing with the coordinator. An implement-now writer may run
+while other reads continue. Route each implement-now writer through
+`craft-delegate` isolation and `craft-line` routing.
+
+If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.
+If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions.
+If tracked changes remain, one later write delegate authors the complete tracked batch.
 
 ## Exit handoff
 
@@ -210,18 +231,21 @@ judgment, not global sorting.
 
 ## 8. Batch-propose, then commit once on green
 
-Draft the full pass as one uncommitted batch diff. It holds the reconciled
-roadmap, the emptied inbox, retro dispositions and removals, and journal
-verdicts including dismissals. It also holds every `bench spec retire` the
-reconcile earned, and the rewritten `capture/session-handoff.md`. Include any
-provider scorecards that `/bench-final-check` refreshed with the landing
-evidence. Unlike per-spec retros, the scorecards persist after this batch.
+Follow `## Delegate the evidence`. If tracked changes remain, charge the one
+later write delegate to draft the complete tracked pass as one uncommitted batch diff.
+If no tracked changes
+remain, start no batch writer.
 
-Everything the pass touches lands in that one diff and one commit. The gate
-is what a commit costs, and this pass is bookkeeping. If it splits across a
-drain commit, a retire commit, and a handoff commit, it buys nothing and pays
-the oracle three times. Leave no part of the pass for a follow-up invocation
-to commit.
+The reviewer batch contains the tracked diff, proposed ignored-source removals,
+and every journal verdict. The tracked diff contains roadmap dispositions, retro removals, earned `bench spec retire` work, and provider scorecards.
+`/bench-final-check` refreshes those scorecards with landing evidence. Unlike
+per-spec retros, scorecards persist after this batch.
+
+Everything tracked in the pass lands in one diff and one commit. Ignored local
+changes do not enter that diff or commit. The gate is what a commit costs, and
+this pass is bookkeeping. A split of other tracked work buys nothing and pays
+the oracle twice. The later required per-spec commit exceptions still apply.
+Leave no tracked part for a later run.
 
 The diff includes the run's concise `CHANGELOG.md` entry only when the pass
 changes notable user-facing behavior. The approved commit and Git history own
@@ -248,7 +272,8 @@ or more specs takes one extra commit per additional slug. The exit says so.
 That is rare, and correctness of the history query outranks the saved
 gate.
 
-The run writes the handoff last, immediately before the commit. Its pin
-block names the pre-commit HEAD by construction, which is correct rather than
-stale. `bench status` dates the handoff by the commit that wrote it. The tree
-wins wherever the two disagree.
+After approval, the coordinator empties ignored inbox and journal sources. It
+writes ignored `capture/session-handoff.md` last. Its pin block names the
+pre-commit HEAD by construction, which is correct rather than stale. `bench
+status` dates the ignored handoff by its write time. The tree wins wherever the
+two disagree.
