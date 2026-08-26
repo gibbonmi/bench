@@ -95,7 +95,7 @@ var entryPointParity = map[string]parityRow{
 	// The CI chain is two static halves: the script execs the verb, and the workflow runs
 	// the script. A staged binary would prove no more than the exec line does.
 	"scripts/release-preflight.sh": {
-		command: "release-preflight", must: parityVerb(`(?m)^exec "\$binary" `, "release-preflight"),
+		command: "release-preflight", must: parityVerb(`(?m)^exec (env BENCH_RUN_BINARY="\$binary" )?"\$binary" `, "release-preflight"),
 	},
 	".github/workflows/native-runtime.yml": {
 		command: "release-preflight", must: regexp.MustCompile(`bash scripts/release-preflight\.sh\b`),
