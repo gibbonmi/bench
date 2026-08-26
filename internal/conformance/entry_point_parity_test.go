@@ -171,6 +171,9 @@ func parityEnumerationDiags(root string) []string {
 	return diags
 }
 
+// parityStaticDiags grades every static row's text. An absent or refused entry is red
+// rather than skipped: the row is the only grader of that route, so a silent skip would
+// leave the route ungraded the moment the file is deleted or replaced by a link.
 func parityStaticDiags(root string) []string {
 	var diags []string
 	for _, rel := range parityRelPaths() {
@@ -180,6 +183,7 @@ func parityStaticDiags(root string) []string {
 		}
 		text, readable := parityRead(filepath.Join(root, filepath.FromSlash(rel)))
 		if !readable {
+			diags = append(diags, fmt.Sprintf("entry-point-parity: %s is absent or unreadable, and the registry command %q is therefore ungraded", rel, row.command))
 			continue
 		}
 		if !row.must.MatchString(text) {
@@ -229,8 +233,8 @@ func parityInternalCommand(entry commandRegistryEntry) bool {
 }
 
 // parityRead returns an entry's text through the no-follow classifier. A link, a FIFO, or
-// bytes outside the bounded read is refused rather than followed, and an absent entry
-// reads the same way an unreadable one does: not graded.
+// bytes outside the bounded read is refused rather than followed. An absent entry reads
+// the same way a refused one does, and the caller decides what that means for its row.
 func parityRead(path string) (string, bool) {
 	classified := bounds.ClassifyNoFollow(path)
 	if classified.State != bounds.StateParsed {
@@ -328,6 +332,26 @@ func parityObserved(stderr, command string) bool {
 	return false
 }
 
+// parityHonestStatics is the shortest text each static row accepts. A fixture that means
+// to grade something else plants all of them, so the only red it can take is its own.
+var parityHonestStatics = map[string]string{
+	".bench/hooks/worktree-lifecycle.sh":   "#!/usr/bin/env bash\ncmd=x\nexec \"$cmd\" worktree-hook \"$@\"\n",
+	"scripts/release-preflight.sh":         "#!/usr/bin/env bash\nbinary=x\nexec \"$binary\" release-preflight \"$@\"\n",
+	".github/workflows/native-runtime.yml": "jobs:\n  run:\n    steps:\n      - run: bash scripts/release-preflight.sh\n",
+	".agents/commands/bench.md":            "# bench\n\nRun `bench status --route` and take its one row.\n",
+}
+
+// TestEntryPointParityNamesAnAbsentStaticEntry proves a static row reds when its subject
+// leaves the tree. A skip would retire the row's whole route in silence.
+func TestEntryPointParityNamesAnAbsentStaticEntry(t *testing.T) {
+	diags := checkEntryPointParity(throwawayRoot{}.build(t))
+
+	want := `entry-point-parity: scripts/release-preflight.sh is absent or unreadable, and the registry command "release-preflight" is therefore ungraded`
+	if !containsDiagnostic(diags, want) {
+		t.Fatalf("an absent static entry did not bite with %q:\n%s", want, strings.Join(diags, "\n"))
+	}
+}
+
 func TestEntryPointParityNamesAShimOutsideTheTable(t *testing.T) {
 	root := throwawayRoot{files: map[string]string{".bench/hooks/extra.sh": "#!/usr/bin/env bash\nexit 0\n"}}.build(t)
 
@@ -341,35 +365,50 @@ func TestEntryPointParityNamesAShimOutsideTheTable(t *testing.T) {
 // TestEntryPointParityStaticRowsBite grades the two rows whose subject is text. Each case
 // keeps the honest form green, so the mutation, not the row's shape, is what reds.
 func TestEntryPointParityStaticRowsBite(t *testing.T) {
-	const preflight = "#!/usr/bin/env bash\nbinary=x\nexec \"$binary\" %s \"$@\"\n"
-	const frontDoor = "# bench\n\nRun `bench status %s` and take its one row.\n"
+	if diags := checkEntryPointParity(parityStaticRoot(t, "", "")); len(diags) != 0 {
+		t.Fatalf("the honest static tree is not green:\n%s", strings.Join(diags, "\n"))
+	}
 	tests := []struct {
-		name, rel, honest, mutated, want string
+		name, rel, from, to, want string
 	}{
 		{
 			name: "CI exec line", rel: "scripts/release-preflight.sh",
-			honest:  fmt.Sprintf(preflight, "release-preflight"),
-			mutated: fmt.Sprintf(preflight, "release-preflight-2"),
-			want:    `scripts/release-preflight.sh does not name the registry command "release-preflight"`,
+			from: "release-preflight ", to: "release-preflight-2 ",
+			want: `scripts/release-preflight.sh does not name the registry command "release-preflight"`,
 		},
 		{
 			name: "front-door verb", rel: ".agents/commands/bench.md",
-			honest:  fmt.Sprintf(frontDoor, "--route"),
-			mutated: fmt.Sprintf(frontDoor, "--routes"),
-			want:    `.agents/commands/bench.md does not name the registry command "status"`,
+			from: "--route", to: "--routes",
+			want: `.agents/commands/bench.md does not name the registry command "status"`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if diags := checkEntryPointParity(throwawayRoot{files: map[string]string{tt.rel: tt.honest}}.build(t)); containsDiagnostic(diags, tt.want) {
-				t.Fatalf("the honest %s is not green:\n%s", tt.rel, strings.Join(diags, "\n"))
+			mutated := strings.Replace(parityHonestStatics[tt.rel], tt.from, tt.to, 1)
+			if mutated == parityHonestStatics[tt.rel] {
+				t.Fatalf("the mutation of %s changed nothing", tt.rel)
 			}
-			diags := checkEntryPointParity(throwawayRoot{files: map[string]string{tt.rel: tt.mutated}}.build(t))
+			diags := checkEntryPointParity(parityStaticRoot(t, tt.rel, mutated))
 			if !containsDiagnostic(diags, tt.want) {
 				t.Fatalf("the mutated %s did not bite with %q:\n%s", tt.rel, tt.want, strings.Join(diags, "\n"))
 			}
 		})
 	}
+}
+
+// parityStaticRoot plants every honest static entry, then overwrites the one a case
+// mutates. A root that planted only the subject would red on the other rows too, and the
+// case could no longer prove which fault it caught.
+func parityStaticRoot(t *testing.T, rel, content string) string {
+	t.Helper()
+	files := map[string]string{}
+	for staticRel, honest := range parityHonestStatics {
+		files[staticRel] = honest
+	}
+	if rel != "" {
+		files[rel] = content
+	}
+	return throwawayRoot{files: files}.build(t)
 }
 
 // TestEntryPointParityNamesAnUnreachedInternalCommand proves the table cannot lose a
@@ -428,7 +467,11 @@ func parityRuntimeRoot(t *testing.T, rel, body string) string {
 		"cat >/dev/null 2>/dev/null\n" +
 		"printf 'core %s\\n' \"$cmd\"\n" +
 		"exit 0\n"
-	root := throwawayRoot{files: map[string]string{"bin/bench.sh": core, rel: body}}.build(t)
+	files := map[string]string{"bin/bench.sh": core, rel: body}
+	for staticRel, content := range parityHonestStatics {
+		files[staticRel] = content
+	}
+	root := throwawayRoot{files: files}.build(t)
 	if err := os.Chmod(filepath.Join(root, "bin", "bench.sh"), 0o755); err != nil {
 		t.Fatal(err)
 	}

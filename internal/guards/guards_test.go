@@ -373,6 +373,31 @@ func TestRowsReportFollowOnManifestAndBothHarnessWires(t *testing.T) {
 	}
 }
 
+// TestWiresScriptAnswersTheOneWiringRule grades the predicate two readers share. The
+// invalid-JSON row is the load-bearing one: the wiring reader must not report a wire out
+// of bytes no parser accepts.
+func TestWiresScriptAnswersTheOneWiringRule(t *testing.T) {
+	const script = ".bench/hooks/check-agent-line.sh"
+	tests := []struct {
+		name   string
+		config string
+		want   bool
+	}{
+		{"a command that names the script", `{"hooks":{"PreToolUse":[{"hooks":[{"command":"$CLAUDE_PROJECT_DIR/.bench/hooks/check-agent-line.sh"}]}]}}`, true},
+		{"a brace expansion of the same path", `{"c":"${CLAUDE_PROJECT_DIR}/.bench/hooks/check-agent-line.sh"}`, true},
+		{"a config that names another script", `{"c":"$CLAUDE_PROJECT_DIR/.bench/hooks/stop.sh"}`, false},
+		{"an unparseable config", `{"c":"$CLAUDE_PROJECT_DIR/.bench/hooks/check-agent-line.sh"`, false},
+		{"an empty config", "", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := WiresScript([]byte(tt.config), script); got != tt.want {
+				t.Fatalf("WiresScript(%q) = %v, want %v", tt.config, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestGuardRowRejectsFIFOWithoutOpening(t *testing.T) {
 	if fifo := os.Getenv("BENCH_TEST_GUARD_FIFO"); fifo != "" {
 		row, emit := guardRow(fifo, "fifo")

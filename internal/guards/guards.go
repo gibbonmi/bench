@@ -202,9 +202,20 @@ func Scan(ctx context.Context, root string) ScanResult {
 	return ScanResult{Rows: rows, Status: "complete", Inspected: strconv.Itoa(inspected), Total: strconv.Itoa(len(candidates)), Omitted: "0", Reason: "none"}
 }
 
+// WiresScript reports whether a harness hook config wires the script at script, its
+// repository-relative path token. A command reaches the script through
+// $CLAUDE_PROJECT_DIR, a brace form, or a git toplevel expansion, so the relative token
+// is the one part every form shares, and a substring test is the rule. An unparseable
+// config wires nothing, because this predicate is a read-only wiring reader and the
+// JSON-validity conformance family owns malformedness. This function is the one owner of
+// the rule: the guards report and the harness-record conformance check both call it.
+func WiresScript(config []byte, script string) bool {
+	return json.Valid(config) && bytes.Contains(config, []byte(script))
+}
+
 // wiredHarnesses names the harness configs that reference scriptRel, its relative
-// path token. It scans the hook config of every harnesses record row that names one,
-// with the same substring convention conformance uses. A row with no hook config
+// path token. It scans the hook config of every harnesses record row that names one.
+// A row with no hook config
 // contributes nothing, so a new harness joins the report as one record row. An absent
 // config contributes nothing too; a repo without .codex/ cannot wire Codex. An
 // unparseable config scans as not-wired, because guards is a read-only wiring reporter
@@ -212,17 +223,16 @@ func Scan(ctx context.Context, root string) ScanResult {
 // cell stays stable against the record's own row order. The result is one name, the
 // comma-joined names, or the definitive "none", never a blank cell.
 func wiredHarnesses(root, scriptRel string) string {
-	token := []byte(scriptRel)
 	var wired []string
 	for _, row := range harnesses.Rows {
 		if row.HookConfig == "" {
 			continue
 		}
 		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(row.HookConfig)))
-		if err != nil || !json.Valid(content) {
+		if err != nil {
 			continue
 		}
-		if bytes.Contains(content, token) {
+		if WiresScript(content, scriptRel) {
 			wired = append(wired, row.Harness)
 		}
 	}

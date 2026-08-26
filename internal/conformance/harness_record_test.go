@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/harnesses"
 )
 
@@ -205,8 +206,7 @@ func harnessRecordWiredGroups(config harnessHookConfig) map[string][]string {
 
 // harnessRecordScript extracts the repository-relative script path a command names. A
 // command reaches the script through $CLAUDE_PROJECT_DIR, ${CLAUDE_PROJECT_DIR}, or a git
-// toplevel expansion, so the relative token is the one part every form shares. That is the
-// same acceptance rule the guards wiring reader applies.
+// toplevel expansion, so the relative token is the one part every form shares.
 func harnessRecordScript(command string) string {
 	index := strings.Index(command, harnessHooksDir)
 	if index < 0 {
@@ -235,9 +235,10 @@ func harnessRecordSortedKeys(wired map[string][]string) []string {
 }
 
 // harnessRecordGuardDiags grades the delegation_guard cell against the guard wiring. An
-// unknown cell records no fact, so the tree cannot contradict it.
+// unknown cell records no fact, so the tree cannot contradict it. The wiring question goes
+// to guards, which owns the rule the guards report also asks.
 func harnessRecordGuardDiags(row harnesses.Row, config []byte) []string {
-	wired := strings.Contains(string(config), harnessGuardScript)
+	wired := guards.WiresScript(config, harnessGuardScript)
 	switch {
 	case row.DelegationGuard.Value == harnesses.Yes && !wired:
 		return []string{fmt.Sprintf("harness-record: %s records delegation_guard yes, and %s wires no %s", row.Harness, row.HookConfig, harnessGuardScript)}
@@ -247,17 +248,31 @@ func harnessRecordGuardDiags(row harnesses.Row, config []byte) []string {
 	return nil
 }
 
-// harnessRecordHeadlessDiags grades the adapter path against disk. The resolving stat is
-// deliberate: a dangling symlink names an adapter that cannot run, so it counts as absent
-// rather than as a refusal.
+// harnessRecordHeadlessDiags grades the adapter path against disk. The no-follow
+// classifier runs before the stat, so a link at an adapter path is named rather than
+// followed: it redirects a launch at bytes outside the graded tree. A dangling link
+// resolves to nothing, so it names an adapter that cannot run and counts as absent. A
+// regular file and a directory both stay green, because neither redirects the launch.
 func harnessRecordHeadlessDiags(root string, row harnesses.Row) []string {
 	if row.Headless == "" {
 		return nil
 	}
-	if exists(filepath.Join(root, filepath.FromSlash(row.Headless))) {
+	path := filepath.Join(root, filepath.FromSlash(row.Headless))
+	live := exists(path)
+	if harnessRecordIsLink(bounds.ClassifyNoFollow(path)) && live {
+		return []string{fmt.Sprintf("harness-record: %s records headless adapter %s, and that path is a symlink the record refuses to follow", row.Harness, row.Headless)}
+	}
+	if live {
 		return nil
 	}
 	return []string{fmt.Sprintf("harness-record: %s records headless adapter %s, and the tree ships no such entry", row.Harness, row.Headless)}
+}
+
+// harnessRecordIsLink reads a link verdict out of the no-follow classifier. The classifier
+// refuses every non-regular object with one state, so the mode type in the reason is what
+// separates a link from a directory or a FIFO.
+func harnessRecordIsLink(classified bounds.Classified) bool {
+	return classified.State == bounds.StateWrongType && strings.Contains(classified.Reason, os.ModeSymlink.String())
 }
 
 // harnessRecordConfig renders a hook config from its wired groups. A test states the
@@ -390,6 +405,19 @@ func TestHarnessRecordBites(t *testing.T) {
 			want: "harness-record: codex records headless adapter .bench/adapters/codex, and the tree ships no such entry",
 		},
 		{
+			name: "a live headless adapter link",
+			fault: harnessRecordFault{
+				drop:  ".bench/adapters/codex",
+				plant: map[string]func(*testing.T, string){".bench/adapters/codex": hostileSkillPlanters["live symlink"]},
+			},
+			want: "harness-record: codex records headless adapter .bench/adapters/codex, and that path is a symlink the record refuses to follow",
+		},
+		{
+			name:  "an invalid hook config",
+			fault: harnessRecordFault{write: map[string]string{".codex/hooks.json": `{"hooks":{`}},
+			want:  "harness-record: .codex/hooks.json is not valid JSON",
+		},
+		{
 			name: "a delegation guard the config contradicts",
 			fault: harnessRecordFault{write: map[string]string{".claude/settings.json": harnessRecordConfig(
 				"WorktreeCreate=worktree-lifecycle.sh",
@@ -443,23 +471,29 @@ func harnessRecordCodexConfigDiags(t *testing.T, diags []string) string {
 	return ""
 }
 
-// TestHarnessRecordRefusesAFIFOConfig proves the classifier runs before the read. The
-// refusal is the row's only verdict, because a check that also graded the events would be
-// reporting on bytes it never read.
-func TestHarnessRecordRefusesAFIFOConfig(t *testing.T) {
-	root := harnessRecordRoot(t, harnessRecordFault{
-		drop:  ".codex/hooks.json",
-		plant: map[string]func(*testing.T, string){".codex/hooks.json": hostileSkillPlanters["fifo"]},
-	})
+// TestHarnessRecordRefusesANonRegularConfig proves the classifier runs before the read.
+// The FIFO carries the load-bearing half: a reader that opens before it classifies blocks
+// in open(2). The live link carries the redirection half. In both cases the refusal is the
+// row's only verdict, because a check that also graded the events would be reporting on
+// bytes it never read.
+func TestHarnessRecordRefusesANonRegularConfig(t *testing.T) {
+	for _, kind := range []string{"fifo", "live symlink"} {
+		t.Run(kind, func(t *testing.T) {
+			root := harnessRecordRoot(t, harnessRecordFault{
+				drop:  ".codex/hooks.json",
+				plant: map[string]func(*testing.T, string){".codex/hooks.json": hostileSkillPlanters[kind]},
+			})
 
-	diags := checkHarnessRecord(root)
+			diags := checkHarnessRecord(root)
 
-	if !containsDiagnostic(diags, "harness-record: .codex/hooks.json is refused by the no-follow classifier") {
-		t.Fatalf("the FIFO config was not refused:\n%s", strings.Join(diags, "\n"))
-	}
-	for _, diag := range diags {
-		if strings.Contains(diag, "codex") && !strings.Contains(diag, "refused by the no-follow classifier") {
-			t.Fatalf("the refused row carries a second diagnostic: %q", diag)
-		}
+			if !containsDiagnostic(diags, "harness-record: .codex/hooks.json is refused by the no-follow classifier") {
+				t.Fatalf("the %s config was not refused:\n%s", kind, strings.Join(diags, "\n"))
+			}
+			for _, diag := range diags {
+				if strings.Contains(diag, "codex") && !strings.Contains(diag, "refused by the no-follow classifier") {
+					t.Fatalf("the refused row carries a second diagnostic: %q", diag)
+				}
+			}
+		})
 	}
 }
