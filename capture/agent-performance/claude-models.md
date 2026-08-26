@@ -12,7 +12,7 @@ binding.
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Fable / high, medium | orchestrator, 8 landings + implementer, 9 charges + reviewer, 2 specs | On `worktree-test-floor` it ran up to seven delegates in parallel worktrees, folded 19 diffs by patch, and every probe bit at a site distinct from the delegate's. It measured the wall after eleven tickets, found the spec premise false, and amended the spec three times. It caused two red gates itself: a hand-typed path list and a worktree created during a gate. | Top tier for guidance prose, for coordination of a parallel build, and for adversarial spec review |
+| Fable / high, medium | orchestrator, 8 landings + implementer, 9 charges + reviewer, 2 specs | On `worktree-test-floor` it ran up to seven delegates in parallel worktrees, folded 19 diffs by patch, and every probe bit at a site distinct from the delegate's. It measured the wall after eleven tickets, found the spec premise false, and amended the spec three times. It caused two red gates itself: a hand-typed path list and a worktree created during a gate. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
 | Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `worktree-test-floor` ticket 12 stopped before any code on a gate-closure seam the ticket had wrong, and landed first-pass after the re-scope. Ticket 13c moved seventeen injectables into one per-call value across 47 files and landed first-pass, and it attributed a one-off red instead of calling it transient. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
 | Opus / medium, low | implementer, latest 10 medium charges + 11 low charges | On `worktree-test-floor` nine medium charges landed; one took a repair round for a census row the coordinator's probe found, and three stopped correctly on a defect outside their fence. The low charge threaded a root through four verbs and eleven test files first-pass. | Medium for gate and conformance logic; low for a ticket from an exact spec at a known seam under a covering gate |
 | Opus / medium | orchestrator, latest 10 of 14 landings | On `learnings-dated-line-visibility` it found untested marker leniency no review axis raised and pinned it. It reproduces every accepted finding and probes every done-claim at a distinct site and kind. | Continue; the distinct-site probe discipline holds |
@@ -32,6 +32,8 @@ binding.
 ## Current decisions
 
 - Change routing only after two comparable runs or one controlled model comparison.
+- The top tier implements nothing, code or guidance prose, unless the reviewer names it
+  for the run (reviewer direction, 2026-08-26). Guidance prose routes to Opus/high.
 - Review axes route to Sonnet (reviewer's direction, 2026-08-19). Twelve landings held
   the citation standard at three axes each with no re-run.
 - Opus/low beats Sonnet/medium on exact-spec Go file moves: equal correctness, better

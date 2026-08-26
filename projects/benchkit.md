@@ -466,10 +466,11 @@ row pauses and asks the reviewer, whichever harness column you run in
 (the ladder lives in `craft-line`). Tier moves still get declared — no silent
 escalation.
 
-- **Skill / command / doc authoring** → **top model, high effort**. This is the
+- **Skill / command / doc authoring** → **mid model, high effort**. This is the
   leverage override in `craft-line`: guidance prose compounds through every
-  session that loads it while the edit costs few tokens. The `craft-skills` and
-  `craft-adr` skills apply. Spend here.
+  session that loads it, so the effort is high. The top tier implements
+  nothing, code or prose, unless the reviewer names it for the run (reviewer
+  direction, 2026-08-26). The `craft-skills` and `craft-adr` skills apply.
 - **Spec and ticket authoring** → **the session holding the decision source, at
   whatever tier it runs**.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
@@ -477,7 +478,7 @@ escalation.
   It authors the spec and tickets from that source and the current tree. Top +
   high remains a reviewer-approved escalation. After ticket approval, a fresh
   mid-tier session starts the build. Distinct from the doc-authoring leverage
-  override above: that spends the top tier on the kit's guidance prose.
+  override above: that spends high effort on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   This stays mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
