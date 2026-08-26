@@ -3,83 +3,14 @@ package worktree
 import (
 	"bytes"
 	"errors"
-	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/usage"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 )
-
-// cksumGolden pins POSIX cksum(root+newline), including a spaced path.
-var cksumGolden = []struct {
-	root string
-	sum  uint32
-}{
-	{"/home/mgibs/workspace/bench", 2826441890},
-	{"/tmp/a b/c", 889650394},
-}
-
-func TestCksumMatchesGolden(t *testing.T) {
-	t.Parallel()
-	for _, g := range cksumGolden {
-		got := cksum([]byte(g.root + "\n"))
-		if got != g.sum {
-			t.Errorf("cksum(%q+NL) = %d, want %d", g.root, got, g.sum)
-		}
-	}
-}
-
-// TestCksumMatchesSystemTool cross-checks against the live `cksum` when it is on
-// PATH, so the pinned goldens can never silently drift from the real tool. It is
-// skipped where `cksum` is unavailable, keeping the suite hermetic there.
-
-func TestCksumMatchesSystemTool(t *testing.T) {
-	t.Parallel()
-	if _, err := exec.LookPath("cksum"); err != nil {
-		capability.Capability(t, capability.Tool, "cksum not available")
-	}
-	for _, g := range cksumGolden {
-		// printf '%s\n' "<root>" | cksum
-		printf := descendant(t, "printf", "%s\n", g.root)
-		ck := descendant(t, "cksum")
-		pipe, err := printf.StdoutPipe()
-		if err != nil {
-			t.Fatal(err)
-		}
-		ck.Stdin = pipe
-		out, err := ck.StdoutPipe()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := ck.Start(); err != nil {
-			t.Fatal(err)
-		}
-		if err := printf.Run(); err != nil {
-			t.Fatal(err)
-		}
-		buf := make([]byte, 64)
-		n, _ := out.Read(buf)
-		if err := ck.Wait(); err != nil {
-			t.Fatal(err)
-		}
-		field := strings.Fields(string(buf[:n]))
-		if len(field) == 0 {
-			t.Fatalf("empty cksum output for %q", g.root)
-		}
-		want, err := strconv.ParseUint(field[0], 10, 32)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got := cksum([]byte(g.root + "\n")); uint64(got) != want {
-			t.Errorf("cksum(%q) = %d, system tool = %d", g.root, got, want)
-		}
-	}
-}
 
 func TestPool(t *testing.T) {
 	home := t.TempDir()

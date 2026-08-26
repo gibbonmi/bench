@@ -67,7 +67,7 @@ func scan(stream shellcommand.Stream, resolver Resolver, wrapper bool) bool {
 		if wrapper && prefix.Executes && prefix.Index < len(words) && isWrapper(words[prefix.Index]) {
 			for i := prefix.Index + 1; i+1 < len(words); i++ {
 				child := shellcommand.Parse(words[i+1])
-				if wrapperFlag.MatchString(words[i]) && containsBench(child, resolver) && (hasOuterSyntax(stream) || scan(child, resolver, false)) {
+				if wrapperFlag.MatchString(words[i]) && invokes(child, resolver, false) && (hasOuterSyntax(stream) || scan(child, resolver, false)) {
 					return true
 				}
 			}
@@ -76,12 +76,30 @@ func scan(stream shellcommand.Stream, resolver Resolver, wrapper bool) bool {
 	return false
 }
 
-func containsBench(stream shellcommand.Stream, resolver Resolver) bool {
+// InvokesBench reports whether command invokes Bench, in a simple command or in a
+// string that a shell wrapper runs. The scan goes one wrapper level deep, which is
+// the depth Classify reads, so both tests name the same set of Bench calls.
+func InvokesBench(command string, r Resolver) bool {
+	return invokes(shellcommand.Parse(command), r, true)
+}
+
+func invokes(stream shellcommand.Stream, resolver Resolver, wrapper bool) bool {
 	for _, span := range stream.Commands {
 		words := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
 		prefix := shellcommand.ResolveRoutinePrefix(words)
-		if prefix.Executes && prefix.Index < len(words) && isBench(words[prefix.Index], resolver) {
+		if !prefix.Executes || prefix.Index >= len(words) {
+			continue
+		}
+		if isBench(words[prefix.Index], resolver) {
 			return true
+		}
+		if !wrapper || !isWrapper(words[prefix.Index]) {
+			continue
+		}
+		for i := prefix.Index + 1; i+1 < len(words); i++ {
+			if wrapperFlag.MatchString(words[i]) && invokes(shellcommand.Parse(words[i+1]), resolver, false) {
+				return true
+			}
 		}
 	}
 	return false

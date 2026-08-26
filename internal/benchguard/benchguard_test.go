@@ -51,3 +51,19 @@ func TestCommandFromEnvelope(t *testing.T) {
 		}
 	}
 }
+
+// TestInvokesBenchWalksOneWrapperLevel proves the exported Bench test reads a
+// wrapped string, so a `bash -c` call that runs Bench is a Bench call.
+func TestInvokesBenchWalksOneWrapperLevel(t *testing.T) {
+	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+	for _, command := range []string{"bench status", "bash -c 'bench status'", "bench worktree exec a -- sed -i x /pool/id/b", "sh -c 'cd /tmp && bench gate'"} {
+		if !InvokesBench(command, resolver) {
+			t.Errorf("InvokesBench(%q) = false, want true", command)
+		}
+	}
+	for _, command := range []string{"ls", "rg bench AGENTS.md", "bash -c 'ls /pool/id'"} {
+		if InvokesBench(command, resolver) {
+			t.Errorf("InvokesBench(%q) = true, want false", command)
+		}
+	}
+}
