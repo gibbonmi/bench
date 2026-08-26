@@ -270,7 +270,6 @@ recommended table is sequencing advice.
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
-| FT239 | FT222 | FT222 decides where routing's one source lives; the capability record joins that file rather than opening a second one. |
 | FT253 | FT169 | The lease is one answer to the landing's authority questions; decide those first so the lease keys on the settled lifecycle. |
 | FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
 
