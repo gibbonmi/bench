@@ -434,3 +434,60 @@ func TestCensusDutyAnchorsRedOnRemoval(t *testing.T) {
 		}
 	}
 }
+
+// TestHarnessRecordPointerAnchorsRedOnRemoval pins HC45 and HC47. Each needle and its
+// diagnostic are written here independently of the registry, so a reference whose Hook
+// Layers bullet dropped the record pointer, or a changelog that never names the verb,
+// cannot define itself green.
+func TestHarnessRecordPointerAnchorsRedOnRemoval(t *testing.T) {
+	rules := []struct{ file, needle, want string }{
+		{
+			".bench/BENCH-reference.md",
+			"bench harnesses codex",
+			".bench/BENCH-reference.md Hook Layers dropped the pointer to bench harnesses codex; the record holds the Codex delegation-guard verdict with its source and its date",
+		},
+		{
+			"CHANGELOG.md",
+			"bench harnesses",
+			"CHANGELOG.md dropped the bench harnesses CLI-addition entry",
+		},
+	}
+
+	// evaluate writes one minimal tree that carries every needle except the dropped one.
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]string{}
+		for i, r := range rules {
+			if i == dropped {
+				continue
+			}
+			bodies[r.file] += r.needle + "\n\n"
+		}
+		for _, r := range rules {
+			path := filepath.Join(root, filepath.FromSlash(r.file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte("# subject\n\n"+bodies[r.file]), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterSpecAuthorization)
+	}
+
+	// Other rows of the group fire against this minimal tree; only these two rows are the
+	// test's subject, so both directions are read by membership.
+	full := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(full, r.want) {
+			t.Errorf("tree carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree without %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+	}
+}
