@@ -40,7 +40,7 @@ func TestLandCommandIncompleteNextUsesAssignmentPointerForUnsafePath(t *testing.
 	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	wantNext := "next=bench worktree exec " + creation.Assignment.ID + " -- bench worktree land --resume '"
 	unsafe := strings.ContainsRune(stdout.String(), '\x1b') || strings.Count(stdout.String(), "\n") != 1
-	if code != 3 || unsafe || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), " --spec 'x' .}") {
+	if code != 3 || unsafe || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), " --spec 'x' .,census=0}") {
 		t.Fatalf("unsafe-path incomplete = (%d, %q, %q), want one safe pointer record containing %q", code, stdout.String(), stderr.String(), wantNext)
 	}
 }
@@ -72,7 +72,7 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
 	destination := gitOutput(t, root, "rev-parse", "main")
 	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
-	if code != 0 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=released}") || stderr != "" {
+	if code != 0 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=released,census=0}") || stderr != "" {
 		t.Fatalf("resume = (%d, %q, %q)", code, stdout, stderr)
 	}
 	if got := gitOutput(t, root, "rev-parse", "main"); got != destination {
@@ -82,7 +82,7 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 		t.Fatalf("resume reran gate: tally=%q error=%v", got, err)
 	}
 	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
-	if code != 0 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=already-complete}") || stderr != "" {
+	if code != 0 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=already-complete,census=0}") || stderr != "" {
 		t.Fatalf("completed resume = (%d, %q, %q)", code, stdout, stderr)
 	}
 }
@@ -127,7 +127,7 @@ func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
 	if err := os.Remove(filepath.Join(creation.Path, "private", "output")); err != nil {
 		t.Fatal(err)
 	}
-	if code, stdout, stderr := land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path); code != 0 || !strings.Contains(stdout, "worktree=released}") || stderr != "" {
+	if code, stdout, stderr := land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path); code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") || stderr != "" {
 		t.Fatalf("active resume = (%d, %q, %q)", code, stdout, stderr)
 	}
 	repo, _, err := cleanupIdentity(root, creation.Path)
@@ -190,7 +190,7 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 		t.Fatalf("resume reconciliation = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "HEAD"); got != published {
@@ -221,7 +221,7 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", specArg, creation.Path}
-			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 				t.Fatalf("resume with spec %q = (%d, %q, %q)", specArg, code, stdout.String(), stderr.String())
 			}
 			if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
@@ -248,7 +248,7 @@ func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 		t.Fatalf("resume marker = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
@@ -291,5 +291,29 @@ func TestResumeLandCommandPreauthenticatesCompletedRequestAndPath(t *testing.T) 
 				t.Fatal("forged completed resume recreated project-green marker")
 			}
 		})
+	}
+}
+
+// TestResumeLandCommandRepeatsTheCensusCount is EC22. The incomplete landing keeps
+// the record file, because its release step never ran, so the resume reads the same
+// count and states it again. A drop before the landed record would lose the evidence.
+func TestResumeLandCommandRepeatsTheCensusCount(t *testing.T) {
+	t.Parallel()
+	request := "census-resume-count"
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "private/output", "dist/")
+	recordRawCalls(t, home, root, creation.Path, 2)
+	var stdout, stderr bytes.Buffer
+	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.HasSuffix(stdout.String(), ",census=2}\n") {
+		t.Fatalf("incomplete landing = (%d, %q, %q), want exit 3 and census=2", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); err != nil {
+		t.Fatalf("the incomplete landing dropped the census records: %v", err)
+	}
+	published := gitOutput(t, root, "rev-parse", "main")
+	stdout.Reset()
+	stderr.Reset()
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
+	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 3 || !strings.HasSuffix(stdout.String(), ",census=2}\n") {
+		t.Fatalf("resumed landing = (%d, %q, %q), want exit 3 and census=2 again", code, stdout.String(), stderr.String())
 	}
 }

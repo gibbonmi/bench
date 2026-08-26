@@ -41,7 +41,7 @@ func TestLandCommandPublicLandsAnInRangeSpecAmendment(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land the amended source", creation.Path)
 	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
-	if code := exitCode(cmd.Run()); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code := exitCode(cmd.Run()); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("amended landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -79,7 +79,7 @@ func TestResumeLandCommandPublicCompletesAnAmendedSourceLanding(t *testing.T) {
 	}
 
 	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
-	if code != 0 || !strings.Contains(stdout, "worktree=released}") || stderr != "" {
+	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") || stderr != "" {
 		t.Fatalf("amended resume = (%d, %q, %q)", code, stdout, stderr)
 	}
 	if got := gitOutput(t, root, "rev-parse", "main"); got != published {

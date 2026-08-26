@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -523,5 +524,71 @@ func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
 	want := "bench worktree release: owner marker does not match assignment " + creation.Assignment.ID + "; checkout retained\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
 		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
+// TestReleaseDropsTheCensusRecords is EC23. The release retires the assignment, so
+// its records leave with it; a kept file shows a stale row on every later board.
+func TestReleaseDropsTheCensusRecords(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "census-release")
+	recordRawCalls(t, home, root, creation.Path, 2)
+	var stdout, stderr strings.Builder
+	code := ReleaseCommand(root, home, []string{"--request", "landed-census-release", creation.Path}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
+		t.Fatalf("the release kept the census record: %v", err)
+	}
+}
+
+// TestCleanDropsTheCensusRecords is the clean half of EC24. Release and clean reach
+// the one retirement path, so neither leaves a stale record file behind.
+func TestCleanDropsTheCensusRecords(t *testing.T) {
+	t.Parallel()
+	root, creation, home := newOwnedAssignment(t, "census-clean")
+	recordRawCalls(t, home, root, creation.Path, 2)
+	var planned, stderr bytes.Buffer
+	if code := CleanCommand(root, home, []string{creation.Path}, &planned, &stderr); code != 0 {
+		t.Fatalf("clean plan = (%d, %q, %q)", code, planned.String(), stderr.String())
+	}
+	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
+	if fingerprint == "" {
+		t.Fatalf("clean plan carried no fingerprint: %s", planned.String())
+	}
+	var applied bytes.Buffer
+	if code := CleanCommand(root, home, []string{creation.Path, "--apply", fingerprint}, &applied, &stderr); code != 0 || !strings.Contains(applied.String(), ",removed,") {
+		t.Fatalf("clean apply = (%d, %q, %q)", code, applied.String(), stderr.String())
+	}
+	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
+		t.Fatalf("the clean kept the census record: %v", err)
+	}
+}
+
+// TestCensusDropHasOneCallSiteInThisPackage pins the one drop owner. A second call
+// site is a second retirement rule, and the two drift.
+func TestCensusDropHasOneCallSiteInThisPackage(t *testing.T) {
+	t.Parallel()
+	entries, err := os.ReadDir(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sites := map[string]int{}
+	for _, entry := range entries {
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		body, readErr := os.ReadFile(name)
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		if count := strings.Count(string(body), "census.Drop("); count > 0 {
+			sites[name] = count
+		}
+	}
+	if len(sites) != 1 || sites["lifecycle.go"] != 1 {
+		t.Fatalf("census.Drop call sites = %v, want one in lifecycle.go", sites)
 	}
 }

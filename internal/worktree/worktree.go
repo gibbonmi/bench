@@ -260,7 +260,8 @@ func CleanCommand(root, home string, args []string, stdout, stderr io.Writer) in
 
 // cleanCommandWith is CleanCommand with the seam set resolved explicitly at the caller's
 // boundary.
-func cleanCommandWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
+func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+	j.home = home
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
 	landed := false
@@ -381,7 +382,8 @@ func ReleaseCommand(root, home string, args []string, stdout, stderr io.Writer) 
 
 // releaseCommandWith is ReleaseCommand with the seam set resolved explicitly at the
 // caller's boundary.
-func releaseCommandWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
+func releaseCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+	j.home = home
 	if len(args) != 3 || args[0] != "--request" || args[1] == "" {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreeRelease)
 		return 2

@@ -544,3 +544,50 @@ func TestCountsCountsTheRecordedCalls(t *testing.T) {
 		t.Fatalf("Counts = %v, %v; want %s = 3", counts, err, knownID)
 	}
 }
+
+// TestDropRemovesOneAssignmentsRecords proves the drop is exact: the retired
+// assignment's file goes, and every other assignment keeps its records.
+func TestDropRemovesOneAssignmentsRecords(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	writeRecordFile(t, home, root, knownID, "t\tsed\n")
+	writeRecordFile(t, home, root, unknownID, "t\tsed\n")
+	if err := Drop(home, root, knownID); err != nil {
+		t.Fatalf("Drop = %v, want no error", err)
+	}
+	counts, err := Counts(home, root)
+	if err != nil || len(counts) != 1 || counts[unknownID] != 1 {
+		t.Fatalf("Counts after the drop = %v, %v; want only %s", counts, err, unknownID)
+	}
+}
+
+// TestDropReadsAnAbsentFileAsDone proves a retirement of an assignment that made no
+// raw call, and a retirement that runs twice, both complete.
+func TestDropReadsAnAbsentFileAsDone(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	if err := Drop(home, root, knownID); err != nil {
+		t.Fatalf("Drop of an absent file = %v, want no error", err)
+	}
+	writeRecordFile(t, home, root, knownID, "t\tsed\n")
+	if err := Drop(home, root, knownID); err != nil {
+		t.Fatal(err)
+	}
+	if err := Drop(home, root, knownID); err != nil {
+		t.Fatalf("second Drop = %v, want no error", err)
+	}
+}
+
+// TestDropRefusesAnIdentifierThatIsNotAnAssignment proves the drop never removes a
+// path a malformed identifier composes, because the removal is unrecoverable.
+func TestDropRefusesAnIdentifierThatIsNotAnAssignment(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	writeRecordFile(t, home, root, knownID, "t\tsed\n")
+	if err := Drop(home, root, filepath.Join("..", "census")); err == nil {
+		t.Fatal("Drop accepted an identifier that is not an assignment")
+	}
+	if counts, err := Counts(home, root); err != nil || counts[knownID] != 1 {
+		t.Fatalf("the refused drop changed the records: %v, %v", counts, err)
+	}
+}

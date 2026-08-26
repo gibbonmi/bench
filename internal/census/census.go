@@ -190,3 +190,18 @@ func lineCount(text string) int {
 	}
 	return count
 }
+
+// Drop removes one assignment's record file, which the assignment's retirement calls.
+// An absent file is not an error, so an assignment that made no raw call and a
+// retirement that runs twice both complete. An identifier that is not an assignment
+// id is refused rather than composed into a path, because the removal is
+// unrecoverable.
+func Drop(home, root, assignment string) error {
+	if !isAssignmentID(assignment) {
+		return fmt.Errorf("census assignment id is malformed: %s", sanitize.Controls(assignment))
+	}
+	if err := os.Remove(filepath.Join(Dir(home, root), assignment)); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove census record: %w", err)
+	}
+	return nil
+}

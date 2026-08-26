@@ -81,7 +81,7 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				before := resumeDestinationState(t, root)
 				code, stdout, stderr := land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
 				if tc.setup == nil || tc.allowed {
-					if code != 0 || !strings.Contains(stdout, "worktree=released}") || stderr != "" {
+					if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") || stderr != "" {
 						t.Fatalf("resume = (%d, %q, %q)", code, stdout, stderr)
 					}
 					return
@@ -111,7 +111,7 @@ func TestResumeLandCommandRefusesNonAncestorReviewBaseWithoutMutation(t *testing
 		cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
 		return exitCode(cmd.Run()), stdout.String(), stderr.String()
 	}
-	if code, stdout, stderr := run("--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path); code != 0 || !strings.Contains(stdout, "worktree=released}") || stderr == "" {
+	if code, stdout, stderr := run("--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path); code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") || stderr == "" {
 		t.Fatalf("landing = (%d, %q, %q)", code, stdout, stderr)
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -176,7 +176,7 @@ func TestResumeLandCommandRefusesWhenTerminalReceiptWasEvicted(t *testing.T) {
 	request := "resume-evicted-receipt"
 	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")

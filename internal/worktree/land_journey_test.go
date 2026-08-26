@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -53,7 +55,7 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 			cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
 			err := cmd.Run()
 			wantExit := 0
-			wantState := "worktree=" + tc.wantState + "}"
+			wantState := "worktree=" + tc.wantState + ",census=0}"
 			if tc.wantState != "released" {
 				wantExit = 3
 				wantState = "worktree=" + tc.wantState + ",next="
@@ -132,7 +134,7 @@ func TestLandCommandPublicPreservesHistoricalRuntimeLogs(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
 	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
-	if code := exitCode(cmd.Run()); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code := exitCode(cmd.Run()); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("runtime-log landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got, err := os.ReadFile(history); err != nil || string(got) != "historical progress\n" {
@@ -265,7 +267,7 @@ func TestLandCommandPublishedReleaseFailureExitsIncomplete(t *testing.T) {
 	published := gitOutput(t, root, "rev-parse", "main")
 	tree := gitOutput(t, root, "rev-parse", published+"^{tree}")
 	wantNext := "bench worktree land --resume '" + published + "' --request <request> --base '" + base + "' --source-tip '" + tip + "' --spec 'x' '" + creation.Path + "'"
-	want := "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=incomplete:release,next=" + wantNext + "}\n"
+	want := "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=incomplete:release,next=" + wantNext + ",census=0}\n"
 	if stdout.String() != want || strings.Contains(stdout.String(), request) {
 		t.Fatalf("published release stdout = %q, want %q without caller token", stdout.String(), want)
 	}
@@ -350,7 +352,7 @@ func TestLandGradesASourceCommittedByALanePass(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	land := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land the laned source", creation.Path)
 	land.Dir, land.Stdout, land.Stderr = root, &stdout, &stderr
-	if err := land.Run(); err != nil || !strings.Contains(stdout.String(), "worktree=released}") {
+	if err := land.Run(); err != nil || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("land exit=%d stdout=%q stderr=%q", exitCode(err), stdout.String(), stderr.String())
 	}
 	if recorded, err := os.ReadFile(tally); err != nil || string(recorded) != "g" {
@@ -362,5 +364,74 @@ func TestLandGradesASourceCommittedByALanePass(t *testing.T) {
 	}
 	if got := gitOutput(t, root, "show", published+":owned.txt"); got != "lane bytes" {
 		t.Fatalf("published owned.txt = %q, want the lane-committed bytes", got)
+	}
+}
+
+// recordRawCalls appends n raw-call records for the assignment the pool path names.
+// The fixture calls the recorder rather than write the file, so the test and the
+// production writer keep one shape.
+func recordRawCalls(t *testing.T, home, root, path string, n int) {
+	t.Helper()
+	for range n {
+		if err := census.Record("sed -i s/a/b/ "+filepath.Join(path, "owned.txt"), root, home, time.Now()); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// censusRecordPath names one assignment's record file.
+func censusRecordPath(home, root, assignment string) string {
+	return filepath.Join(census.Dir(home, root), assignment)
+}
+
+// TestLandCommandStatesTheCensusCountAndDropsTheRecords is EC20 and the landing half
+// of EC24. The landed record carries the count as its last key, and the release step
+// the landing runs leaves no record file for the retired assignment.
+func TestLandCommandStatesTheCensusCountAndDropsTheRecords(t *testing.T) {
+	t.Parallel()
+	request := "census-landed-count"
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	recordRawCalls(t, home, root, creation.Path, 3)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.HasSuffix(stdout.String(), ",census=3}\n") {
+		t.Fatalf("landed record = (%d, %q, %q), want census=3 as the last key", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
+		t.Fatalf("the released landing kept the census record: %v", err)
+	}
+}
+
+// TestLandCommandStatesZeroForAnAssignmentWithNoRecords is EC21. Zero is a stated
+// fact, and an absent record file is not a landing failure.
+func TestLandCommandStatesZeroForAnAssignmentWithNoRecords(t *testing.T) {
+	t.Parallel()
+	request := "census-landed-zero"
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.HasSuffix(stdout.String(), ",census=0}\n") {
+		t.Fatalf("landed record = (%d, %q, %q), want census=0", code, stdout.String(), stderr.String())
+	}
+}
+
+// TestLandCommandRefusalKeepsTheCensusRecords proves a landing that refuses before
+// its gate prints no landed record and drops nothing, so the operator can repair the
+// invocation and land with the evidence intact.
+func TestLandCommandRefusalKeepsTheCensusRecords(t *testing.T) {
+	t.Parallel()
+	request := "census-landed-refusal"
+	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
+	recordRawCalls(t, home, root, creation.Path, 2)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, home, "", landArgs("no-such-request", base, tip, creation.Path), &stdout, &stderr)
+	if code == 0 || !strings.Contains(stdout.String(), "refused{") || strings.Contains(stdout.String(), "landed{") {
+		t.Fatalf("refused landing = (%d, %q, %q), want a refusal and no landed record", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("the refusal ran the gate: %v", err)
+	}
+	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); err != nil {
+		t.Fatalf("the refusal dropped the census records: %v", err)
 	}
 }

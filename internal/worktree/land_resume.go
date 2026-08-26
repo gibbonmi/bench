@@ -27,6 +27,7 @@ func ResumeLandCommand(root, home string, args []string, stdout, stderr io.Write
 // resumeLandWith is ResumeLandCommand with the seam set resolved explicitly at the
 // caller's boundary.
 func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+	j.home = home
 	parsed, line, code := usage.Parse(resumeLandGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -60,27 +61,31 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 		}
 		assignmentID = receipt.Tracked
 	}
+	// The count is read before the release step, which drops the records. An earlier
+	// landing that stopped before its own release left the file in place, so the
+	// resume states the same count it stated then.
+	records := censusCount(home, root, assignmentID)
 	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
 		return landRefusal(stdout, err.Error())
 	}
 	switch landingpolicy.ResumeMarker(resumeMarkerFacts(root, destination, published, marker)) {
 	case landingpolicy.MarkerAdvance:
 		if err := j.advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
-			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker")
+			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker", records)
 		}
 	case landingpolicy.MarkerRefuse:
 		return landRefusal(stdout, landingpolicy.MarkerRefusalDetail)
 	}
 	if err := j.reconcileLanding(j, root, destination, published, destinationBase); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile", records)
 	}
 	if !active {
-		return landedComplete(stdout, result, false)
+		return landedComplete(stdout, result, false, records)
 	}
 	if j.releaseLandingAssignment(j, root, home, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release", records)
 	}
-	return landedComplete(stdout, result, true)
+	return landedComplete(stdout, result, true, records)
 }
 
 func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {

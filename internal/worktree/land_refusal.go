@@ -12,18 +12,18 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
 )
 
-func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, specArg, path, assignment, step string) int {
+func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, specArg, path, assignment, step string, records int) int {
 	next := landingResumeNext(result, specArg, path, assignment)
 	outcome := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: step, Active: true})
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=%s,next=%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, outcome.WorktreeState, sanitize.Controls(next))
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=%s,next=%s,census=%d}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, outcome.WorktreeState, sanitize.Controls(next), records)
 	return outcome.ExitCode
 }
 
 // landedComplete renders the terminal landed record for a landing whose
 // follow-up steps all completed, in this run (active) or a prior one.
-func landedComplete(stdout io.Writer, result landing.ReviewedResult, active bool) int {
+func landedComplete(stdout io.Writer, result landing.ReviewedResult, active bool, records int) int {
 	outcome := landingpolicy.Terminal(landingpolicy.TerminalFacts{Active: active})
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=%s}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, outcome.WorktreeState)
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=%s,census=%d}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, outcome.WorktreeState, records)
 	return outcome.ExitCode
 }
 
