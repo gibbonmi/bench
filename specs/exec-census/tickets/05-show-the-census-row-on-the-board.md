@@ -23,8 +23,8 @@ and the detail `<n> raw call(s) across <k> worktree(s)`. The board's own
 no action, because no command is the remedy.
 
 `bench status --all` expands the row to one row per active assignment, detail
-`<label> <n> raw call(s)`, through a sibling of the `intent` expander in the
-same `--all` branch of the render. The five-row budget therefore holds with
+`<label> <n> raw call(s)`. The expander is a sibling of the `intent` expander
+in the same `--all` render branch. The five-row budget therefore holds with
 many worktrees.
 
 The row appears only for active assignments. An assignment with no records

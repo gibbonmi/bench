@@ -23,9 +23,8 @@ into one word and matches.
 
 The `bench` test is `benchguard.InvokesBench`. A text where any simple
 command invokes `bench`, at the top level or one wrapper level deep, records
-nothing. A `bench worktree exec` text therefore records nothing, and so does
-a `bash -c` string around it, and so does a text that spells the wrapper by
-an absolute path.
+nothing. A `bench worktree exec` text therefore records nothing. A `bash -c`
+string around it records nothing, and so does an absolute wrapper path.
 
 The record key is the assignment id. Take the path segment directly after the
 pool and read the part after the owner id and the hyphen. A segment without the

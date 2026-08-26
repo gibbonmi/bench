@@ -12,10 +12,14 @@ both harnesses; write nothing under `.claude/`.
 The post-merge tail of `.agents/commands/bench-final-check.md` gains the
 census duty. The duty reads `census=<n>` from the landed record the phase
 already holds. For `n > 0` it writes exactly one `bench learning --rule`
-entry per landing. The entry's title names the assignment label and `n`. Its
+entry per landing.
+
+The entry's title names the assignment label and `n`. Its
 `--what` lists each verb head with its count. Its `--right` names the Bench
 form per head, or `none`. Its `--rule` proposes the verb or the help change
-the drain should open. For `n = 0` the close states `census: 0 raw calls`.
+the drain should open.
+
+For `n = 0` the close states `census: 0 raw calls`.
 The duty is advisory: a nonzero count never blocks a landing and never reds
 the gate. The retro section states that a spec retro cites the landing's
 census entry under `### Bench CLI` with its `Feeds:` line.
@@ -30,26 +34,34 @@ learning --rule`, `n = 0`, `census: 0 raw calls`) and register the exact
 text.
 
 The charge section of `.agents/skills/bench-craft-delegate/SKILL.md` gains
-this needle: `Ask the delegate for zero to two Bench CLI improvements derived
-from its own calls, and fold them into the landing's census entry.` The file
-sits at its prose budget in `projects/benchkit.md`, so the sentence absorbs
-into an existing paragraph without a new line; raising the budget is a
+this needle:
+
+- `Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the landing's census entry.`
+
+The file sits at its prose budget in `projects/benchkit.md`, so the sentence
+absorbs into an existing paragraph without a new line. A raised budget is a
 reviewer decision this ticket does not take.
 
 `internal/anchors/registry_data.go` gains `Require` needles in the
-`AfterImplementSpec` group beside the existing final-check rows: the duty
-needle, the zero-close needle, the charge needle, and one census sentence
-each for the reference and the profile. Each needle stays on one physical
+`AfterImplementSpec` group beside the existing final-check rows:
+
+- the duty needle
+- the zero-close needle
+- the charge needle
+- one census sentence each for the reference and the profile
+
+Each needle stays on one physical
 line and carries its own diagnostic. A test in
 `internal/anchors/registry_data_test.go` removes each needle's text from a
 copy of its file and proves the registry reports the diagnostic.
 
-`.bench/BENCH-reference.md` and `projects/benchkit.md` each gain the needle
-sentence `The census signal counts raw calls per assignment from
-$BENCH_HOME/census/<repo-key>/.` in their signal accounts, with `census` and
-the path as code spans. `CONTEXT.md` already lists `census` in the signal
+`.bench/BENCH-reference.md` and `projects/benchkit.md` each gain this needle
+sentence in their signal accounts, with `census` and the path as code spans. The needle reads:
+
+- `The census signal counts raw calls per assignment from $BENCH_HOME/census/<repo-key>/.`
+ `CONTEXT.md` already lists `census` in the signal
 enumeration after ticket 05 and defines `census`, `raw call`, and `verb
-head`; add the records' home to the `census` entry and change nothing else.
+head`. Add the records' home to the `census` entry and change nothing else.
 `CHANGELOG.md` gains one entry under `## [Unreleased]` that states the new
 signal, the landed key, and the duty.
 

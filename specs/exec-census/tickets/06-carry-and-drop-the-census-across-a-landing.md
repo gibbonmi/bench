@@ -28,9 +28,9 @@ release`, `bench worktree clean`, and the landing's own release step all reach
 that path, so no second copy exists.
 
 The landing already holds the home. `ReleaseCommand` and `CleanCommand`
-receive a home and discard it today; thread it through `releaseAssignment` in
-`ownership.go` and `applyCleanupTransaction` in `resume.go` to the drop;
-the `clean --landed` sweep in `clean_landed.go` is the fourth caller. Do
+receive a home and discard it today. Thread it through `releaseAssignment` in
+`ownership.go` and `applyCleanupTransaction` in `resume.go` to the drop.
+The `clean --landed` sweep in `clean_landed.go` is the fourth caller. Do
 not read the environment below the command boundary; pass the value. Call
 `t.Parallel()` in each eligible new test, because the package census grades
 that call.

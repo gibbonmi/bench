@@ -13,12 +13,13 @@ census drop. A direct import in both directions makes an import cycle. Move
 the pool-key derivation and the canonical-root derivation out of
 `internal/worktree/worktree.go` into a new low package, `internal/poolkey`.
 `poolAt` and every `canonicalRoot` caller then call that package, and the
-pool path stays byte-identical for a canonical root. `Key` canonicalizes
-any root first, so `bench worktree-pool` inside a linked worktree now names
-the primary pool instead of a pool keyed by the worktree path; state that
-change in the ticket's landing note. The checksum helper and its POSIX `cksum`
-goldens in `internal/worktree/worktree_test.go` move with the key, so one
-source derives the key and one test pins it.
+pool path stays byte-identical for a canonical root.
+
+`Key` canonicalizes any root first. `bench worktree-pool` inside a linked
+worktree therefore names the primary pool, not a pool keyed by the worktree
+path. State that change in the ticket's landing note. The checksum helper
+and its POSIX `cksum` goldens in `internal/worktree/worktree_test.go` move
+with the key, so one source derives the key and one test pins it.
 
 Add `internal/census` with the records' home only. The records sit under
 `<home>/census/<repo-key>/`, a sibling of `<home>/worktrees/<repo-key>/`.

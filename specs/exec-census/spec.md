@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: ready compiled map `specs/exec-census/decisions/exec-census.md`, resolved 2026-08-25
 
-Verification log: 2 iterations to accept — the first round returned nine blocking findings, all tree facts the author had not read: the signal-vocabulary check, the `.claude/commands` symlink, the delegate skill's prose budget, the unexported canonical root, the wrapper-aware `bench` test, the five-row board budget, and a dropped map promise. The second iteration folded them and a scoped re-review accepted.
+Verification log: 2 iterations to accept — nine blocking findings in round one, all unread tree facts. The second iteration folded them, and a scoped re-review accepted.
 
 ## Problem
 
@@ -92,7 +92,7 @@ guidance prose, so the leverage override routes them top and high.
 32. As a reviewer, I want the delegate charge to ask for zero to two CLI improvements, so that delegate friction reaches the drain.
 33. As a reviewer, I want the anchors registry to require the census duty's marker in final-check, so that an edit cannot drop the duty silently.
 34. As a reviewer, I want the reference, the profile, and the glossary to describe the `census` signal, so that a cold session reads one account.
-35. As a reviewer, I want a spec retro to cite the landing's census entry with its `Feeds:` line, so that the retro and the drain agree.
+35. As a reviewer, I want a spec retro to cite the landing's census entry with its `Feeds:` line, so that retro and drain agree.
 
 ## Implementation decisions
 
@@ -130,19 +130,22 @@ primary repository.
 
 **The records live beside the pool, not inside it.** The files sit at
 `$BENCH_HOME/census/<repo-key>/<assignment-id>`, one line per record, opened
-for append. The map's discretion note placed them under the pool directory;
-they sit beside it because `bench worktree reclaim` reads the pool parent,
-and a foreign file there changes a plan. An absent file and an empty file
-both read as zero. The record holds the time and the verb head; the
+for append. The map's discretion note placed them under the pool directory.
+They sit beside it instead, because `bench worktree reclaim` reads the pool
+parent and a foreign file there changes a plan.
+
+An absent file and an empty file both read as zero. The record holds the time and the verb head. The
 assignment label lives in the ledger and joins at render time, so the map's
 label field collapses into the file's key.
 
 **The signal.** `bench status` gains `appendCensus`. It sums the counts of
 the active assignments and adds one row at severity 3, signal `census`, and
 no action. The detail is `<n> raw call(s) across <k> worktree(s)` through
-the board's own `Plural`. `--all` expands the row to one row per assignment,
-detail `<label> <n> raw call(s)`, through a sibling of the `intent` expander in
-the same `--all` render branch, so the five-row budget holds. The label passes through
+the board's own `Plural`.
+
+`--all` expands the row to one row per assignment,
+detail `<label> <n> raw call(s)`. The expansion is a sibling of the `intent`
+expander in the same render branch, so the five-row budget holds. The label passes through
 `sanitize.Controls`.
 
 **The landed record.** Both landed forms gain `census=<n>` as the last key.
@@ -237,7 +240,7 @@ bites, and the signal-vocabulary check proves the enumeration. The gate's
 | EC33 | 34 | The `**signal**` enumeration in `CONTEXT.md` names `census`, and the reference and the profile each carry the census sentence needle. | signal-vocabulary check and anchors registry test | A missing name reds the vocabulary check; a missing sentence reds the needle. |
 | EC34 | 27 | `bench status --all` with two active assignments renders two `census` rows, each `<label> <n> raw call(s)`. | status render test | A board that only sums hides which worktree. |
 
-Not covered: story 12 — the destructive-git guard is a separate hook process, and the harness runs every `PreToolUse` hook, so the record never depends on that verdict.
+Not covered: story 12 — the destructive-git guard runs as a separate hook process, so the record never depends on its verdict.
 
 Not covered: story 13 — the `PreToolUse` matcher `Bash` is pinned by the existing conformance registry, and the census verb reads only that envelope.
 

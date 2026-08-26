@@ -13,7 +13,7 @@ the current time.
 The verb resolves the home at the command boundary. It tests the text for the
 `<home>/worktrees/` substring before it resolves any root, so an ordinary
 call spawns no git process. When the substring is present, the verb resolves
-the root with `git.Root()` and passes it down; `poolkey.Key` canonicalizes
+the root with `git.Root()` and passes it down. `poolkey.Key` canonicalizes
 it, so a call from inside a linked worktree keys the primary repository.
 
 The record never changes the verdict or the exit code. Its own error is
