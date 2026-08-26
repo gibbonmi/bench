@@ -24,6 +24,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Every drain now delegates independent evidence reads in parallel and centralizes
+  tracked batch writing, ignored capture removal, verification, and landing.
 - The `internal/worktree` test suite now runs its eligible tests in parallel
   under a census. The census parses the package test files and turns the gate
   red when an eligible test omits `t.Parallel()`, or when a test that binds
