@@ -41,7 +41,7 @@ owns its model and effort. A read-only helper does not satisfy this requirement.
 Work the user stories in vertical slices at the agreed seams. Use TDD only where
 `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
 harness's native task list from `bench coverage <spec>`, whose
-`rows[N]{story,behavior,seam}` projection is one task per row. Each write
+`rows[N]{story,behavior,seam}` projection is one task per row. Charge the whole frontier in parallel unless `craft-tickets` names a conflict. Each write
 delegate runs its ticket's focused checks and its own mutation probe. The
 coordinator independently verifies the returned diff before it lands.
 
