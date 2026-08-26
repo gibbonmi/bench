@@ -43,6 +43,13 @@ func (s *phaseStreams) lines(phase string) []string {
 	return append([]string(nil), s.buffers[phase]...)
 }
 
+// path names the file that holds every buffered line, or answers "" when this run
+// retained none. It is the one place the report asks where the lines the row cap left
+// out can be read. Ticket 05 opens the file and answers its path here; until then no run
+// retains one, and the report says the stream is unavailable rather than pointing a
+// reader at nothing.
+func (s *phaseStreams) path() string { return "" }
+
 func (s *phaseStreams) appendLine(phase, line string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

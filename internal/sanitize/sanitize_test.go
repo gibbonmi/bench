@@ -73,6 +73,30 @@ func TestControlsEscapesWithoutCapping(t *testing.T) {
 	}
 }
 
+// TestStripRemovesControlsAndEscapesNothing pins the third duty against the other two.
+// An ESC leaves no trace, a tab survives because a cell may be tab-aligned, and a
+// backslash stays single: the sink's own encoder escapes it, and escaping here first
+// would double what the encoder then doubles again. A non-ASCII rune passes whole, which
+// is what separates a rune-wise filter from a byte-wise one.
+func TestStripRemovesControlsAndEscapesNothing(t *testing.T) {
+	in := "a" + string(rune(0x1b)) + "[31mb" + string(rune(0x0a)) + "c" + string(rune(0x09)) + "d"
+	want := "a[31mbc" + "\t" + "d"
+	if got := Strip(in); got != want {
+		t.Errorf("Strip(%q) = %q, want %q", in, got, want)
+	}
+	if got := Strip("back" + bs + "slash"); got != "back"+bs+"slash" {
+		t.Errorf("Strip escaped a literal backslash: %q", got)
+	}
+	if got := Strip("caf" + "é" + " ☃"); got != "café ☃" {
+		t.Errorf("Strip corrupted a non-ASCII rune: %q", got)
+	}
+	// DEL and the C1 controls sit at or above U+0020, so they pass. This filter guards
+	// what the cell encoder refuses, and the encoder refuses only below U+0020.
+	if got := Strip(string(rune(0x7f)) + string(rune(0x85))); got != string(rune(0x7f))+string(rune(0x85)) {
+		t.Errorf("Strip removed a rune at or above U+0020: %q", got)
+	}
+}
+
 // TestPreformattedPreservesLayoutWhitespace pins the <pre>-panel variant. Newline and
 // tab pass through verbatim, so multi-line layout survives. Carriage return and every
 // other control rune still escape through the same \uXXXX mechanism Controls uses. A

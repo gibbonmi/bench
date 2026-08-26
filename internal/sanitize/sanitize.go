@@ -1,14 +1,16 @@
 // Package sanitize is the one policy for rendering operator-influenced text into a sink
-// that could misread it. It covers two sinks and two duties. For a terminal render,
+// that could misread it. It covers three sinks and three duties. For a terminal render,
 // Controls and its siblings escape control runes, so a control byte in a commit
 // subject, an objective, or a git-sourced string is escaped one way everywhere. For a
 // command line a reader will paste, ShellQuote renders a value as exactly one shell
-// argument.
+// argument. For a table cell that must read as the text it came from, Strip removes the
+// control bytes and rewrites nothing else.
 //
 // This package is deliberately distinct from internal/toon's cell policy. toon
-// *refuses* a control-bearing cell, a closed AXI decision, while this package escapes
-// or quotes. The two duties here do not substitute for each other. Quoting leaves a
-// control byte intact; escaping produces text that no longer names what it came from.
+// *refuses* a control-bearing cell, a closed AXI decision, while this package escapes,
+// quotes, or strips. The three duties here do not substitute for each other. Quoting
+// leaves a control byte intact; escaping produces text that no longer names what it came
+// from; stripping keeps the remaining text verbatim and so cannot report what it removed.
 package sanitize
 
 import (
@@ -54,6 +56,27 @@ func Preview(value string) string {
 	writeEscaped(&b, runes, false)
 	if truncated {
 		fmt.Fprintf(&b, "… (%d bytes)", len(value))
+	}
+	return b.String()
+}
+
+// Strip removes every rune below U+0020 except tab, and escapes nothing. It is the
+// filter for a sink whose own encoder escapes, where escaping first would reach the
+// reader doubled: a backslash in a path would arrive as four. Every rune from U+0020 up
+// passes verbatim, including DEL and the C1 controls, because this guards what an
+// encoder refuses rather than what a terminal renders. Stripping runs on runes, so a
+// multi-byte sequence is never cut into a fragment.
+//
+// Removal is all it does. The result no longer says that anything was removed, so a
+// caller that must account for the original text escapes it instead.
+func Strip(value string) string {
+	var b strings.Builder
+	b.Grow(len(value))
+	for _, r := range value {
+		if r < 0x20 && r != '\t' {
+			continue
+		}
+		b.WriteRune(r)
 	}
 	return b.String()
 }

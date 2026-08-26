@@ -141,8 +141,8 @@ func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr 
 func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
 	streams := newPhaseStreams(stderr)
 	results, cancelled := schedule(ctx, root, phases, streams.open)
-	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() bool {
-		return reportCapabilitySkips(skipLog, stdout, stderr)
+	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() ([]string, bool) {
+		return reportCapabilitySkips(skipLog, stdout)
 	})
 }
 

@@ -9,13 +9,21 @@ import (
 	"io"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testlines"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// failureTailLines bounds the tail a red Go phase falls back to when its stream
-// classified no failure row. Ticket 03 adds the general per-phase row cap.
-const failureTailLines = 20
+// failureRowCap bounds what one phase contributes to the red table: at most twenty rows,
+// and at most a twenty-line tail when a red Go phase's stream classified nothing. Both
+// uses read the same number because a longer tail would only be cut again by the cap,
+// and the more-row would then count lines the tail had already dropped. Twenty is the
+// bound that lets a one-phase red fit the stop hook's thirty-line tail.
+const failureRowCap = 20
+
+// capabilityPhase files the skip reporter's red diagnoses in the table. It is not a
+// scheduled phase, so its rows follow every phase's, and no phase may take this name.
+const capabilityPhase = "capability"
 
 // aggregateAndReport is the one verdict tail every settled schedule reports through.
 // It carries the failure table, any extra red-reporting checks (capability skips, the
@@ -30,7 +38,7 @@ const failureTailLines = 20
 // An interrupt is not a verdict, so a cancelled run publishes neither rows nor a gate
 // line. Reporting one would grade phases that never got to answer. Naming the stragglers
 // is not a verdict either; it only says what the run was doing.
-func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStreams, stdout, stderr io.Writer, redReports ...func() bool) int {
+func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStreams, stdout, stderr io.Writer, redReports ...func() ([]string, bool)) int {
 	if cancelled {
 		reportStragglers(results, stderr)
 		return 130
@@ -41,15 +49,19 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 			red = true
 		}
 	}
-	// A red report prints as it diagnoses, so its lines precede the table. Ticket 03
-	// makes each such diagnosis a row under phase `capability` instead.
+	// A red report hands back its diagnoses rather than printing them, so they read as
+	// rows of the one table instead of as loose lines ahead of it. Whatever such a report
+	// prints for itself — the skip totals — still precedes the table.
+	var capabilityRows []string
 	for _, report := range redReports {
-		if report() {
+		rows, reportRed := report()
+		capabilityRows = append(capabilityRows, rows...)
+		if reportRed {
 			red = true
 		}
 	}
 	if red {
-		printFailures(results, streams, stdout)
+		printFailures(results, capabilityRows, streams, stdout)
 		fmt.Fprintln(stdout, "gate: red")
 		return 1
 	}
@@ -58,21 +70,58 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 	return 0
 }
 
-// printFailures emits the run's one failure table, in phase-table order.
-func printFailures(results []phaseResult, streams *phaseStreams, stdout io.Writer) {
+// printFailures emits the run's one failure table, in phase-table order. The skip
+// reporter's rows follow, because `capability` is a filing name and not a phase the
+// schedule ran.
+//
+// Only a phase's rows are capped. capabilityRows carries one row per diagnosis the
+// reporter actually made, and a more-row pointing at the phase stream file would name a
+// place those diagnoses were never written.
+func printFailures(results []phaseResult, capabilityRows []string, streams *phaseStreams, stdout io.Writer) {
 	rows := make([][]string, 0, len(results))
 	for _, result := range results {
-		for _, line := range failureRows(result, streams) {
-			rows = append(rows, []string{result.Name, line})
-		}
+		rows = appendRows(rows, result.Name, boundRows(failureRows(result, streams), streams.path()))
 	}
+	rows = appendRows(rows, capabilityPhase, capabilityRows)
 	block, err := toon.Table("failures", []string{"phase", "line"}, rows)
 	if err != nil {
-		// A cell spec-TOON cannot carry costs the table, never the verdict. Ticket 03
-		// adds the control-byte filter that keeps every cell representable.
+		// A cell spec-TOON cannot carry costs the table, never the verdict. appendRows
+		// strips what the encoder refuses, so this answer is unreachable by a phase's own
+		// output; it stays because the encoder, not this file, owns that contract.
 		return
 	}
 	fmt.Fprint(stdout, block)
+}
+
+// appendRows files one phase's lines as table rows. Every cell passes the control-byte
+// filter here, at the one point a line becomes a cell, so no row can reach the encoder
+// unfiltered. The filter strips rather than escapes: the encoder escapes a backslash
+// itself, and escaping twice would show a path with four.
+func appendRows(rows [][]string, phase string, lines []string) [][]string {
+	for _, line := range lines {
+		rows = append(rows, []string{phase, sanitize.Strip(line)})
+	}
+	return rows
+}
+
+// boundRows caps one phase at failureRowCap rows and names what it dropped. A phase at
+// exactly the cap dropped nothing and gets no extra row, so the reader is never told
+// about an omission that did not happen.
+func boundRows(lines []string, streamPath string) []string {
+	if len(lines) <= failureRowCap {
+		return lines
+	}
+	return append(append([]string(nil), lines[:failureRowCap]...), moreRow(len(lines)-failureRowCap, streamPath))
+}
+
+// moreRow says how many lines the cap dropped and where the rest is readable. An absent
+// stream file gets its own wording rather than the same sentence with nothing after the
+// colon: a reader sent to a place must be given one.
+func moreRow(dropped int, streamPath string) string {
+	if streamPath == "" {
+		return fmt.Sprintf("+%d more lines (stream unavailable)", dropped)
+	}
+	return fmt.Sprintf("+%d more lines: %s", dropped, streamPath)
 }
 
 // failureRows answers one phase's rows. A green phase contributes none, and neither does
@@ -94,7 +143,7 @@ func failureRows(result phaseResult, streams *phaseStreams) []string {
 		}
 		// A red Go phase whose stream classified nothing — a race report, say — falls
 		// back to its own tail. An empty table would report the failure as no failure.
-		return lastLines(lines, failureTailLines)
+		return lastLines(lines, failureRowCap)
 	}
 	return lines
 }
