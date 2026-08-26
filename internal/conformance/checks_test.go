@@ -80,6 +80,7 @@ func init() {
 		"retro-improvement-markers":     {retros.ValidateImprovementMarkers, registry.Dev, registry.SubjectRoot},
 		"row-next-grammar":              {checkRowNextGrammar, registry.Dev, registry.SubjectRoot},
 		"prose-mechanics":               {checkProseMechanics, registry.Dev, registry.SubjectRoot},
+		"entry-point-parity":            {checkEntryPointParity, registry.Dev, registry.SubjectRoot},
 	}
 }
 

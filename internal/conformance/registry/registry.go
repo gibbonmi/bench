@@ -148,6 +148,7 @@ var Checks = []Check{
 	{Name: "retro-improvement-markers", Implementation: "ValidateImprovementMarkers", Tier: Dev, Subject: SubjectRoot, Inputs: InputCaptureRetros},
 	{Name: "row-next-grammar", Implementation: "checkRowNextGrammar", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "prose-mechanics", Implementation: "checkProseMechanics", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "entry-point-parity", Implementation: "checkEntryPointParity", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
@@ -175,6 +176,7 @@ var familyChecks = map[string]string{
 	"retro-improvement-markers":     "retro-improvement-markers",
 	"row-next-grammar":              "row-next-grammar",
 	"prose-mechanics":               "prose-mechanics",
+	"entry-point-parity":            "entry-point-parity",
 }
 
 // Families lists the family names this table binds, in sorted order. They are the table's

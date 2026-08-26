@@ -379,6 +379,7 @@ current-state advertisement of its non-meta input bindings:
 | `retro-improvement-markers` | `capture-retros` |
 | `row-next-grammar` | `catch-all` |
 | `prose-mechanics` | `catch-all` |
+| `entry-point-parity` | `catch-all` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
 current exact green; partial/component and reduced-scope records are legacy input classes

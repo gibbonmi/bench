@@ -203,6 +203,10 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/roadmap/tree_validation.go",
 		"internal/conformance/checks_test.go",
 	),
+	"entry-point-parity": conformanceGoFixture(
+		"internal/conformance/entry_point_parity_test.go",
+		"internal/conformance/checks_test.go",
+	),
 }
 
 func conformanceFixture(shellSources ...string) fixtureRegistration {
