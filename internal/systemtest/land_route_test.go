@@ -191,6 +191,56 @@ func TestWorktreeLandRouteSelectsOneOwnerFromEveryDirectory(t *testing.T) {
 	}
 }
 
+func TestWorktreeLandRouteGivesRecoveredGoPathToBroker(t *testing.T) {
+	install := newLandRouteInstall(t)
+	if err := os.WriteFile(filepath.Join(install.root, "go.mod"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	buildScript := filepath.Join(install.root, "scripts", "go-build.sh")
+	if err := os.MkdirAll(filepath.Dir(buildScript), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(buildScript, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	goDir := filepath.Join(t.TempDir(), "recovered go", "bin")
+	if err := os.MkdirAll(goDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	goExecutable := filepath.Join(goDir, "go")
+	if err := os.WriteFile(goExecutable, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	home := t.TempDir()
+	profile := "export PATH='" + goDir + "':\"$PATH\"\n"
+	if err := os.WriteFile(filepath.Join(home, ".bash_profile"), []byte(profile), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	broker := "#!/bin/sh\nprintf 'go=%s\\n' \"$(command -v go)\"\n"
+	if err := os.WriteFile(install.broker, []byte(broker), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	install.writeManifest(t, landRouteManifest(install.broker, "9.9.9", brokerPlatformSuffix(), fileDigest(t, install.broker)))
+
+	repo := landRouteRepo(t, "land-route [go recovery]-")
+	shimDir, marker := landRouteGitShim(t)
+	path := shimDir + string(os.PathListSeparator) + privateToolPath(t,
+		"awk", "bash", "basename", "dirname", "env", "readlink", "sha256sum", "timeout", "tr")
+	if err := owner.observeSelected(); err != nil {
+		t.Fatal(err)
+	}
+	result := owner.runAt(repo, landRouteEnv(shimDir, marker,
+		"PATH="+path,
+		"HOME="+home), "bash", install.wrapper,
+		"worktree", "land", "--request", "r", "--base", "b", "--source-tip", "t", "-m", "m", ".")
+	if result.code != 0 || result.stdout != "go="+goExecutable+"\n" {
+		t.Fatalf("land route recovered Go = (%d, %q, %q), want broker Go %q", result.code, result.stdout, result.stderr, goExecutable)
+	}
+	if _, err := os.Stat(marker); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("land route read the repository before broker selection: %v", err)
+	}
+}
+
 // TestWorktreeLandRouteRefusesInheritedRoutingBeforeRepositoryReads is SOL03. Each
 // inherited routing override makes the public landing refuse before any repository
 // read: no broker starts, no git runs, and the message names the variable.

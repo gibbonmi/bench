@@ -58,6 +58,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- `bench worktree land` now gives the authenticated promotion broker the Go path
+  that the installed wrapper recovers from a bounded clean login. A partial
+  harness environment no longer requires a manual `PATH` prefix before landing.
 - `bench worktree land` now treats only `capture/IDEAS.md`,
   `capture/learnings.md`, and `capture/session-handoff.md` as destination-local
   ignored state. The notes survive landing and resume, while foreign ignored
