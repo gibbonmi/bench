@@ -53,9 +53,9 @@ own finished work and report the observed result. Require the delegate to add th
 the mutation comes back silently green. Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the landing's census entry.
 
 A delegate blocked by a defect outside its fence stops and reports rather than fixing out of fence.
-A new worktree charge opens with the stale-base check (`git merge --ff-only main`, verify HEAD
-equals main, stop if denied). Dependent tickets in a reviewed spec chain share the retained
-integration source and verify its expected tip. A fix-pass charge names a commit-specific sentinel.
+A new worktree charge starts after the coordinator runs `git rev-parse HEAD main`.
+If the refs differ, only the coordinator runs `git merge --ff-only main` and verifies equality before the delegate starts. Dependent tickets in a reviewed spec chain share the retained integration source and verify its expected tip.
+A fix-pass charge names a commit-specific sentinel.
 
 A ticket delegate returns focused evidence and its own mutation probe from
 its worktree; it does not land the diff. The coordinator probes the exact
