@@ -384,6 +384,10 @@ func ReleaseCommand(root, home string, args []string, stdout, stderr io.Writer) 
 // caller's boundary.
 func releaseCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	j.home = home
+	if len(args) == 1 && args[0] == "--help" {
+		fmt.Fprintln(stdout, "usage: "+usage.WorktreeRelease)
+		return 0
+	}
 	if len(args) != 3 || args[0] != "--request" || args[1] == "" {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreeRelease)
 		return 2
