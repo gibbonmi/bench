@@ -114,6 +114,23 @@ func TestRecordCountsAChainOnce(t *testing.T) {
 	}
 }
 
+// TestRecordKeysOnTheFirstAssignmentID proves a text naming two assignment ids
+// records once, under the first id in the text. (Coverage row EC02.)
+func TestRecordKeysOnTheFirstAssignmentID(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	command := "cat " + filepath.Join(pool, ownerID+"-"+knownID, "x") + " " + filepath.Join(pool, ownerID+"-"+unknownID, "y")
+	if err := Record(command, root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	if got := records(t, home, root, knownID); len(got) != 1 {
+		t.Fatalf("records under the first id = %v, want one", got)
+	}
+	if got := records(t, home, root, unknownID); len(got) != 0 {
+		t.Fatalf("records under the second id = %v, want none", got)
+	}
+}
+
 // TestRecordSkipsABenchCall proves the verb is free: a text whose pool path sits in a
 // `bench` command records nothing, at the top level and one wrapper level deep.
 // (Coverage rows EC03 and EC11.)

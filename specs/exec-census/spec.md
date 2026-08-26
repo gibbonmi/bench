@@ -263,6 +263,7 @@ Not covered: story 13 — the `PreToolUse` matcher `Bash` is pinned by the exist
 - A landing that refuses before its gate prints no landed record and drops nothing.
 - A `bench status` run inside a linked worktree keys the primary repository and shows the same rows.
 - Three active assignments with records still take one board row; `--all` shows the three.
+- A text that names two assignment ids records once, under the first id in the text.
 
 **Won't handle** a pool path of another repository — the prefix is this repository's key, and a cross-repository call stays a habit for review.
 
