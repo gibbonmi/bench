@@ -59,6 +59,10 @@ means the repository-controlled compliance assessment.
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
 
+**FT254 (MEDIUM, decision required) — `bench worktree exec` is the comfortable path for multi-step work.**
+
+**FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
+
 **FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
 
 **FT173 (MEDIUM, decision required) — AXI residual: the active-assignment-with-deleted-tree disclosure class.**
@@ -125,6 +129,8 @@ means the repository-controlled compliance assessment.
 
 **FT200 (MEDIUM, decision required) — make preflight mechanical at the landing chokepoint.**
 
+**FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set without weakening its ownership fence.**
+
 **FT182 (LOW) — a Planned-phase receipt over an absent target wedges the abandon retry.**
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture set.**
@@ -165,6 +171,8 @@ defect.
 **FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**
 
 **FT120 (LOW) — gate, canary, and contract test-harness defects nothing asserts.**
+
+**FT257 (LOW) — the maps template and diagnostics state the grammar they enforce.**
 
 ## Standards debt — one batched light-path pass
 
@@ -292,6 +300,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT215: the scoped gate path; three faces (gofmt and the prose check before the full gate, and evidence reuse) price the same decision.
-2. `/bench-write-spec` — FT185: gate and commit output projection; two 2026-08-25 occurrences, and every run pays the unbounded output.
-3. `/bench-implement-spec` — FT120: the live-tree test sweep in `cmd/bench` as one light-path ticket.
+1. `/bench-implement-spec` — FT185: build the staged bounded-gate-output spec.
+2. `/bench-shape-idea` — FT215: decide the scoped gate and focused-iteration surfaces before adding another independent projection.
+3. `/bench-shape-idea` — FT255: settle one test-concurrency budget before more parallel builds compete for the host.
