@@ -220,8 +220,8 @@ func failureRows(result phaseResult, streams *phaseStreams) []string {
 		if rows := testlines.FailureRows(lines); len(rows) > 0 {
 			return rows
 		}
-		// A red Go phase whose stream classified nothing — a race report, say — falls
-		// back to its own tail. An empty table would report the failure as no failure.
+		// A red Go phase whose stream classified nothing falls back to its own tail. An
+		// empty table would report the failure as no failure.
 		return lastLines(lines, failureRowCap)
 	}
 	return lines

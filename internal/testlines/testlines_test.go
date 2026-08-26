@@ -85,8 +85,35 @@ func TestFailureRows(t *testing.T) {
 		},
 		{
 			name:  "an unmatched stream yields an empty slice",
-			lines: []string{"WARNING: DATA RACE", "WARNING: DATA RACE"},
+			lines: []string{"linting internal/x", "0 issues found"},
 			want:  []string{},
+		},
+		{
+			// BG38: a race report's stack precedes its "--- FAIL:" block, so both blocks
+			// have to survive. A "--- FAIL:"-only opener would drop the race evidence.
+			name: "a race report and the failure after it are both rows",
+			lines: []string{
+				"==================",
+				"WARNING: DATA RACE",
+				"Write at 0x00c000123456 by goroutine 8:",
+				"  github.com/x/y.bump()",
+				"      /src/y.go:12 +0x44",
+				"==================",
+				"--- FAIL: TestRacy (0.00s)",
+				"    testing.go:1465: race detected during execution of test",
+				"FAIL",
+				"FAIL\tgithub.com/x/y\t0.01s",
+			},
+			want: []string{
+				"WARNING: DATA RACE",
+				"Write at 0x00c000123456 by goroutine 8:",
+				"github.com/x/y.bump()",
+				"/src/y.go:12 +0x44",
+				"==================",
+				"--- FAIL: TestRacy (0.00s)",
+				"testing.go:1465: race detected during execution of test",
+				"FAIL\tgithub.com/x/y\t0.01s",
+			},
 		},
 	}
 	for _, c := range cases {

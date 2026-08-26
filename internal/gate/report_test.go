@@ -223,14 +223,14 @@ func TestRedStreamFlushesALastLineWithoutANewline(t *testing.T) {
 	}
 }
 
-// BG32: a red Go phase whose stream classified nothing — a race report — falls back to its
-// own tail. An empty table would report the failure as no failure.
+// BG32: a red Go phase whose stream holds no "--- FAIL:", "# ", "FAIL", "panic:", or
+// "WARNING: DATA RACE" line prints its last twenty non-empty lines. An empty table would
+// report the failure as no failure.
 func TestRedGoPhaseWithNoClassifiedRowFallsBackToItsTail(t *testing.T) {
 	streams := newPhaseStreams(io.Discard)
 	var raw strings.Builder
-	raw.WriteString("WARNING: DATA RACE\n")
-	for i := 1; i <= 24; i++ {
-		fmt.Fprintf(&raw, "race detail %d\n", i)
+	for i := 1; i <= 25; i++ {
+		fmt.Fprintf(&raw, "internal/x/x.go:%d:3: unchecked error\n", i)
 	}
 	writePhaseStream(t, streams, "test", raw.String(), "")
 	var stdout, stderr bytes.Buffer
@@ -238,10 +238,11 @@ func TestRedGoPhaseWithNoClassifiedRowFallsBackToItsTail(t *testing.T) {
 
 	rows := tableRows(t, stdout.String())
 	if len(rows) != failureRowCap {
-		t.Fatalf("race fallback yielded %d rows, want %d", len(rows), failureRowCap)
+		t.Fatalf("unclassified fallback yielded %d rows, want %d", len(rows), failureRowCap)
 	}
-	if rows[0] != "race detail 5" || rows[len(rows)-1] != "race detail 24" {
-		t.Errorf("race fallback rows = %q, want the last twenty non-empty lines", rows)
+	first, last := "internal/x/x.go:6:3: unchecked error", "internal/x/x.go:25:3: unchecked error"
+	if rows[0] != first || rows[len(rows)-1] != last {
+		t.Errorf("unclassified fallback rows = %q, want the last twenty non-empty lines", rows)
 	}
 }
 
