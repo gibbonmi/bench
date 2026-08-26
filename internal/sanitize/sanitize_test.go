@@ -95,6 +95,29 @@ func TestStripRemovesControlsAndEscapesNothing(t *testing.T) {
 	if got := Strip(string(rune(0x7f)) + string(rune(0x85))); got != string(rune(0x7f))+string(rune(0x85)) {
 		t.Errorf("Strip removed a rune at or above U+0020: %q", got)
 	}
+	// Carriage return is Strip's own exclusion rather than the encoder's. The encoder
+	// escapes it, so toon.Representable passes it, and Strip still drops it: a cell
+	// that carries one would break the row it sits on.
+	if got := Strip("a" + string(rune(0x0d)) + "b"); got != "ab" {
+		t.Errorf("Strip kept a carriage return: %q", got)
+	}
+}
+
+// TestStripKeepsOnlyTabBelowSpace sweeps every C0 byte to pin the composed result:
+// tab is the one rune below U+0020 a cell may carry. Strip asks the cell encoder's own
+// predicate which byte it refuses, so this sweep is what catches a widened cell policy
+// arriving through that composition.
+func TestStripKeepsOnlyTabBelowSpace(t *testing.T) {
+	for b := byte(0); b < 0x20; b++ {
+		in := "x" + string([]byte{b}) + "y"
+		want := "xy"
+		if b == '\t' {
+			want = "x\ty"
+		}
+		if got := Strip(in); got != want {
+			t.Errorf("Strip(%q) = %q, want %q", in, got, want)
+		}
+	}
 }
 
 // TestPreformattedPreservesLayoutWhitespace pins the <pre>-panel variant. Newline and
