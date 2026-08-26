@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -16,27 +17,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
 func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
-func cksum(data []byte) uint32 {
-	var crc uint32
-	step := func(value byte) {
-		crc ^= uint32(value) << 24
-		for range 8 {
-			crc = crc<<1 ^ 0x04C11DB7*(crc>>31)
-		}
-	}
-	for _, value := range data {
-		step(value)
-	}
-	for n := len(data); n > 0; n >>= 8 {
-		step(byte(n))
-	}
-	return ^crc
-}
 
 // Pool is the boundary form of poolAt for a caller in another package: it resolves
 // the Bench home at the effect boundary. In-package callers below the boundary
@@ -44,11 +28,7 @@ func cksum(data []byte) uint32 {
 func Pool(root string) string { return poolAt(Home(), root) }
 
 // poolAt derives the repository's pool directory from an explicitly resolved home.
-func poolAt(home, root string) string {
-	sum := cksum([]byte(root + "\n"))
-	key := filepath.Base(root) + "-" + strconv.FormatUint(uint64(sum), 10)
-	return filepath.Join(home, "worktrees", key)
-}
+func poolAt(home, root string) string { return poolkey.Pool(home, root) }
 func LeaseFile(path string) (string, error) {
 	lease, err := git.Output("-C", path, "rev-parse", "--git-path", git.BenchLeaseFilename)
 	if err != nil {
@@ -122,13 +102,10 @@ func classifyRegisteredWorktreesAt(root, home string) ([]Registered, error) {
 	}
 	return out, nil
 }
-func canonicalRoot(root string) string {
-	common, err := git.CommonDir(root)
-	if err != nil || filepath.Base(common) != ".git" {
-		return root
-	}
-	return filepath.Dir(common)
-}
+
+// canonicalRoot is the in-package spelling of the shared derivation. A path builder
+// below receives an already canonical root, so it never repeats the resolution.
+func canonicalRoot(root string) string { return poolkey.Canonical(root) }
 func classifyPath(root, pool, path string) Class {
 	if samePath(path, root) {
 		return ClassRoot
@@ -283,7 +260,8 @@ func CleanCommand(root, home string, args []string, stdout, stderr io.Writer) in
 
 // cleanCommandWith is CleanCommand with the seam set resolved explicitly at the caller's
 // boundary.
-func cleanCommandWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
+func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+	j.home = home
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
 	landed := false
@@ -404,7 +382,8 @@ func ReleaseCommand(root, home string, args []string, stdout, stderr io.Writer) 
 
 // releaseCommandWith is ReleaseCommand with the seam set resolved explicitly at the
 // caller's boundary.
-func releaseCommandWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
+func releaseCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+	j.home = home
 	if len(args) != 3 || args[0] != "--request" || args[1] == "" {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreeRelease)
 		return 2

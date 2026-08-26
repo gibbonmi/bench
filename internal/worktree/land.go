@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
@@ -83,6 +84,12 @@ type joins struct {
 	reauthorizeUnlock    func(string, string) error
 	reauthorizeLock      func(string, string, string) error
 	reauthorizeBeforeCAS func(*intent.Assignment)
+	// home is the Bench home the verb's own boundary resolved. The retirement path
+	// needs it to drop the retired assignment's census records, and it travels in the
+	// seam set because every verb that retires an assignment already carries the set
+	// down to that path. The default names the operator's home, so an in-package entry
+	// point that resolves no home of its own still drops the right records.
+	home string
 }
 
 // defaultJoins names the real function behind every seam. It is the one place a default
@@ -106,6 +113,7 @@ func defaultJoins() joins {
 		resolveRunningBinary:     os.Executable,
 		liveBinaryWarnings:       os.Stderr,
 		planLandedExplicit:       planExplicitWith,
+		home:                     Home(),
 		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
 	}
@@ -130,6 +138,7 @@ func LandCommand(root, home, executable string, args []string, stdout, stderr io
 
 // landWith is LandCommand with the seam set resolved explicitly at the caller's boundary.
 func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Writer) int {
+	j.home = home
 	if hasResumeFlag(args) {
 		return resumeLandWith(j, root, home, args, stdout, stderr)
 	}
@@ -176,6 +185,10 @@ func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Wr
 		}
 		return 1
 	}
+	// The count is read before the release step, because that step drops the records.
+	// A landing that stops at an earlier step states the same count, and its resume
+	// reads the file the release never removed.
+	records := censusCount(home, root, assignment.ID)
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
 	if notice := brokerChangeNotice(assignment.Worktree, source.base, source.tip); notice != "" {
 		fmt.Fprintln(stderr, notice)
@@ -201,19 +214,27 @@ func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Wr
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
 	if err := j.advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
 	}
 	if err := j.reconcileLanding(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)
 	}
 	var releaseDiagnostic bytes.Buffer
 	if release := j.releaseLandingAssignment(j, root, home, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
 		if releaseDiagnostic.Len() > 0 {
 			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
 		}
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release")
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
-	return landedComplete(stdout, result, true)
+	return landedComplete(stdout, result, true, records)
+}
+
+// censusCount is the assignment's raw-call count for the landed record. An unreadable
+// census reads as zero: the count is evidence beside the landing, never a condition
+// on it.
+func censusCount(home, root, assignment string) int {
+	counts, _ := census.Counts(home, root)
+	return counts[assignment]
 }
 
 func hasResumeFlag(args []string) bool {

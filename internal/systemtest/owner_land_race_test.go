@@ -117,7 +117,7 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 	published := systemGitOutput(t, root, "rev-parse", "main")
 	publishedTree := systemGitOutput(t, root, "rev-parse", published+"^{tree}")
 	next := "bench worktree land --resume '" + published + "' --request <request> --base '" + base + "' --source-tip '" + loser.tip + "' --spec 'x' '" + loser.path + "'"
-	rerunEnvelope := "landed{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=incomplete:release,next=" + next + "}\n"
+	rerunEnvelope := "landed{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=incomplete:release,next=" + next + ",census=0}\n"
 	if rerun.stdout != rerunEnvelope {
 		t.Fatalf("rerun terminal envelope = %q, want %q", rerun.stdout, rerunEnvelope)
 	}
@@ -128,7 +128,7 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 		t.Fatal(err)
 	}
 	resumed := systemSelected(t, root, systemLandEnv(root, home, tally, trees, ready, release), "worktree", "land", "--resume", published, "--request", loser.request, "--base", base, "--source-tip", loser.tip, "--spec", "x", loser.path)
-	releasedEnvelope := "landed{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=released}\n"
+	releasedEnvelope := "landed{source_base=" + base + ",source_tip=" + loser.tip + ",destination_base=" + winnerCommit + ",published_commit=" + published + ",tree=" + publishedTree + ",worktree=released,census=0}\n"
 	if resumed.code != 0 || resumed.stdout != releasedEnvelope || !strings.Contains(resumed.stderr, "command-registry:worktree") {
 		t.Fatalf("resume land = (%d, %q, %q), want %q", resumed.code, resumed.stdout, resumed.stderr, releasedEnvelope)
 	}

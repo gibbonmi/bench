@@ -43,7 +43,7 @@ func TestLandCommandAcceptsAbbreviatedIdentities(t *testing.T) {
 	request := "land-surface-abbreviated"
 	root, creation, base, tip := landSurface(t, request)
 	code, stdout, stderr := landIn(t, root, landArgs(request, base[:12], tip[:12], creation.Path))
-	if code != 0 || !strings.Contains(stdout, "worktree=released}") || !strings.Contains(stdout, "source_base="+base+",source_tip="+tip+",") {
+	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") || !strings.Contains(stdout, "source_base="+base+",source_tip="+tip+",") {
 		t.Fatalf("abbreviated landing = (%d, %q, %q), want released with full identities", code, stdout, stderr)
 	}
 	parents := strings.Fields(gitOutput(t, root, "rev-list", "--parents", "-n", "1", "main"))
@@ -66,7 +66,7 @@ func TestLandCommandComposesCaptureOntoMovedDestination(t *testing.T) {
 	commitInWorktree(t, root, "capture/session-handoff.md", "handoff destination\n", "destination handoff")
 	commitInWorktree(t, root, "capture/learnings.md", "learnings destination\n", "destination learnings")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
-	if code != 0 || !strings.Contains(stdout, "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") {
 		t.Fatalf("capture-conflict landing = (%d, %q, %q), want released", code, stdout, stderr)
 	}
 	if got := gitOutput(t, root, "show", "main:capture/session-handoff.md"); got != "handoff source" {
@@ -92,7 +92,7 @@ func TestLandCommandDisclosesAUnionResolution(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, root, "capture/learnings.md", "learnings base\nlearnings destination\n", "destination learnings")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
-	if code != 0 || !strings.Contains(stdout, "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") {
 		t.Fatalf("union landing = (%d, %q, %q), want released", code, stdout, stderr)
 	}
 	lines := 0
@@ -117,7 +117,7 @@ func TestLandCommandAuthorizesCaptureOutsideTheFence(t *testing.T) {
 	commitInWorktree(t, creation.Path, "capture/learnings.md", "learning\n", "phase-owned learning")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
-	if code != 0 || !strings.Contains(stdout, "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") {
 		t.Fatalf("capture landing = (%d, %q, %q), want released", code, stdout, stderr)
 	}
 	if got := gitOutput(t, root, "show", "main:capture/learnings.md"); got != "learning" {
@@ -192,7 +192,7 @@ func TestLandCommandFenceRidesWithTheSpec(t *testing.T) {
 				}
 				return
 			}
-			if code != 0 || !strings.Contains(stdout, "worktree=released}") {
+			if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") {
 				t.Fatalf("spec-less out-of-fence landing = (%d, %q, %q), want released", code, stdout, stderr)
 			}
 			if got := gitOutput(t, root, "show", "main:stray.txt"); got != "stray" {

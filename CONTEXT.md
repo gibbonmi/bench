@@ -141,7 +141,7 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   the ambient dashboard is the terminal print. Not "the dashboard" unqualified — that name
   ambiguously means both.
 - **signal** — one ranked line on the **ambient dashboard** (setup, gate, git, worktree, intent, guards,
-  drain, structure, decisions, specs, reviews, roadmap). The dashboard shows a signal only
+  census, drain, structure, decisions, specs, reviews, roadmap). The dashboard shows a signal only
   when it fires. Not "check", not "alert".
 - **severity ladder** — the fixed rank order that decides which **signal** leads the
   dashboard and which drop under the five-row budget. Not "priority queue".
@@ -149,6 +149,7 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   the closed oracle subject in the Git dir. Read-only consumers can then project gate
   state without a cold run. Not "gate log".
 - **census** — the hook-recorded count of **raw calls** per assignment worktree,
+  kept under `$BENCH_HOME/census/<repo-key>/`,
   shown as the `census` **signal** and carried in the landing record. Not "log",
   not "audit", not "trace" — census.
 - **raw call** — one Bash tool call that names a path under the repository's

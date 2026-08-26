@@ -23,7 +23,7 @@ func TestLandCommandSpecLessLandsPublishesAndReleases(t *testing.T) {
 	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
 	tree := gitOutput(t, root, "rev-parse", published+"^{tree}")
-	want := "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=released}\n"
+	want := "landed{source_base=" + base + ",source_tip=" + tip + ",destination_base=" + base + ",published_commit=" + published + ",tree=" + tree + ",worktree=released,census=0}\n"
 	if code != 0 || stdout.String() != want {
 		t.Fatalf("spec-less land = (%d, %q, %q), want (0, %q)", code, stdout.String(), stderr.String(), want)
 	}
@@ -140,7 +140,7 @@ func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 		t.Fatalf("spec-less resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
@@ -170,7 +170,7 @@ func TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 		t.Fatalf("spec-less resume of a spec landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "main"); got != published {

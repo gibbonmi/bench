@@ -47,7 +47,7 @@ func TestLandCommandAllowsLocalCaptureInDestinationAndReleases(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("land with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}
 	for _, rel := range localCapturePaths {
@@ -77,7 +77,7 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("resume with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}
 }

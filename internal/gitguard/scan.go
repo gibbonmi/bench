@@ -43,7 +43,7 @@ func scan(stream shellcommand.Stream, chk Checker, allowWrapper bool) string {
 		if prefix.Executes && j < len(tokens) {
 			base := filepath.Base(tokens[j])
 			if base == "git" {
-				sub, argsStart, ok := findSubcommand(tokens, j+1, len(tokens))
+				sub, argsStart, ok := FindSubcommand(tokens, j+1, len(tokens))
 				if ok {
 					if reason := classify(sub, tokens[argsStart:], viaXargs, chk); reason != "" {
 						return reason
@@ -67,9 +67,9 @@ func scan(stream shellcommand.Stream, chk Checker, allowWrapper bool) string {
 	return ""
 }
 
-// findSubcommand skips git's global options (and their values) after the `git` token.
+// FindSubcommand skips git's global options (and their values) after the `git` token.
 // It returns the subcommand, the index its args start at, and whether one was found.
-func findSubcommand(tokens []string, start, end int) (string, int, bool) {
+func FindSubcommand(tokens []string, start, end int) (string, int, bool) {
 	j := start
 	for j < end {
 		current := tokens[j]

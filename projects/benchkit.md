@@ -97,6 +97,7 @@ works on any branch. This line only states the binding.)
   aggregating unpushed commits and unique local branches across the repository.
   Severity-2 intent joins the shared common-directory ledger, compact by default and
   expanded by `--all`.
+  The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.
 - **The capture inbox and working roadmap** (`bench idea` → `capture/IDEAS.md`,
   and `bench roadmap` → the `ROADMAP.md` index). Each roadmap row owns a
   `roadmap/FT<n>.md` detail file, holding that row's body, `Occurrence:` ledger,

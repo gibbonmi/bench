@@ -20,7 +20,7 @@ func TestLandCommandTicketsOnlySpecClosesTheFolder(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
-	if code != 0 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.HasSuffix(stdout.String(), "worktree=released}\n") {
+	if code != 0 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.HasSuffix(stdout.String(), "worktree=released,census=0}\n") {
 		t.Fatalf("tickets-only close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
 	}
 	if descendant(t, "git", "-C", root, "cat-file", "-e", published+":specs/t").Run() == nil {
@@ -49,7 +49,7 @@ func TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolde
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
 	published := gitOutput(t, root, "rev-parse", "main")
-	if code != 0 || !strings.HasSuffix(stdout.String(), "worktree=released}\n") {
+	if code != 0 || !strings.HasSuffix(stdout.String(), "worktree=released,census=0}\n") {
 		t.Fatalf("already-removed close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
 	}
 	if descendant(t, "git", "-C", root, "cat-file", "-e", published+":specs/t").Run() == nil {
@@ -93,7 +93,7 @@ func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "t", creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 		t.Fatalf("tickets-only resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {

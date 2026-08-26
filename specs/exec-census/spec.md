@@ -1,6 +1,6 @@
 # The exec census
 
-Status: staged
+Status: implemented
 
 Decision source: ready compiled map `specs/exec-census/decisions/exec-census.md`, resolved 2026-08-25
 
@@ -263,6 +263,7 @@ Not covered: story 13 — the `PreToolUse` matcher `Bash` is pinned by the exist
 - A landing that refuses before its gate prints no landed record and drops nothing.
 - A `bench status` run inside a linked worktree keys the primary repository and shows the same rows.
 - Three active assignments with records still take one board row; `--all` shows the three.
+- A text that names two assignment ids records once, under the first id in the text.
 
 **Won't handle** a pool path of another repository — the prefix is this repository's key, and a cross-repository call stays a habit for review.
 
@@ -289,6 +290,15 @@ Not covered: story 13 — the `PreToolUse` matcher `Bash` is pinned by the exist
 - `CONTEXT.md`
 - `CHANGELOG.md`
 - `specs/exec-census/`
+- `internal/gitguard/scan.go`
+- `internal/systemtest/owner_land_race_test.go`
+- `tests/canary/package-core-guard/reintroduced-bare-skip/`
+
+The last three fences were added during the build. The `git` subcommand
+finder has one source in the destructive-git guard, so the verb head
+reads it there. The `census=<n>` key changes every pinned landed record,
+including the one in the system test. The bare-skip canary fixture anchors
+on the `cksum` skip, which moved to `internal/poolkey` with the key.
 
 The recording tickets land first on one integration source. The visibility
 tickets follow them, and the guidance ticket lands last so its account names

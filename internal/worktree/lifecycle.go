@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"os"
@@ -418,7 +420,27 @@ func releaseRegistration(root, target string) error {
 	return os.RemoveAll(admin)
 }
 
+// executeCleanup retires one checkout and the raw-call records that describe it. It is
+// the one shared retirement path, so `bench worktree release`, `bench worktree clean`,
+// `clean --landed`, and the landing's own release step all drop the records here and
+// nowhere else. The assignment id comes from the pool segment, which is the same
+// segment the recorder read, so the writer and the drop never disagree. A target that
+// names no assignment drops nothing. The drop error goes the way the recorder's does,
+// because an advisory board never changes a retirement's verdict.
 func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+	plan, err := retireCheckout(j, root, plan, checkpoint, fault)
+	if err != nil {
+		return plan, err
+	}
+	if id, ok := poolkey.SplitAssignmentSegment(filepath.Base(plan.Target)); ok {
+		_ = census.Drop(j.home, root, id)
+	}
+	return plan, nil
+}
+
+// retireCheckout performs the removal itself: the recovery preservation, the ignored
+// discard, the registration removal, and the terminal record states.
+func retireCheckout(j joins, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
 	if plan.Action == actionReleaseLeftover {
 		return releaseLeftover(root, plan, checkpoint, fault)
 	}

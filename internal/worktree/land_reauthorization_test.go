@@ -112,7 +112,7 @@ func TestLandCommandAuthenticatesDigestShapedRequestToken(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("digest-shaped request land = (%d, %q, %q), want successful authentication", code, stdout.String(), stderr.String())
 	}
 }
@@ -172,7 +172,7 @@ func TestLandCommandExpandsAbbreviatedSourceTip(t *testing.T) {
 	for _, abbreviated := range []string{tip[:4], tip[:12], tip[:39], strings.ToUpper(tip[:12])} {
 		var stdout, stderr bytes.Buffer
 		code := landWith(j, root, home, "", landArgs(request, base, abbreviated, creation.Path), &stdout, &stderr)
-		if code != 0 || !strings.Contains(stdout.String(), "source_tip="+tip+",") || !strings.Contains(stdout.String(), "worktree=released}") {
+		if code != 0 || !strings.Contains(stdout.String(), "source_tip="+tip+",") || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 			t.Fatalf("abbreviated source tip %q = (%d, %q, %q), want released with the full tip", abbreviated, code, stdout.String(), stderr.String())
 		}
 	}
@@ -197,7 +197,7 @@ func TestLandCommandExpandsAbbreviatedBase(t *testing.T) {
 	}
 	var stdout, stderr bytes.Buffer
 	code := landWith(j, root, home, "", landArgs(request, base[:12], tip, creation.Path), &stdout, &stderr)
-	if code != 0 || authorized != base || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code != 0 || authorized != base || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("abbreviated base = (%d, authorized=%q, %q, %q), want the full base authorized and released", code, authorized, stdout.String(), stderr.String())
 	}
 }

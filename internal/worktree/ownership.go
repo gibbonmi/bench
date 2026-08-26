@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
+	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
@@ -182,7 +183,7 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 		return Creation{}, fmt.Errorf("create worktree pool: %w", err)
 	}
 	_ = os.Chmod(pool, 0o700)
-	path := filepath.Join(pool, ownerID+"-"+assignmentID)
+	path := filepath.Join(pool, poolkey.AssignmentSegment(ownerID, assignmentID))
 	path, err = canonicalPath(path)
 	if err != nil {
 		return Creation{}, err

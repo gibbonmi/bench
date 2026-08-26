@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/maps"
 )
@@ -364,4 +366,104 @@ func TestSignalsRendersDrainLearningsUnknownForALostDatedLine(t *testing.T) {
 		}
 	}
 	t.Fatalf("Signals = %#v, want a drain row", Signals(root))
+}
+
+// censusOwnerID is the one owner every census fixture assignment belongs to. The owner
+// half of an assignment segment does not change what the board counts.
+const censusOwnerID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+// seedAssignment writes one assignment row into root's ledger in the given state.
+func seedAssignment(t *testing.T, root, id, label string, state intent.AssignmentState) {
+	t.Helper()
+	if err := intent.PutAssignment(root, intent.Assignment{
+		Schema:   intent.AssignmentRecordSchema,
+		ID:       id,
+		OwnerID:  censusOwnerID,
+		Request:  intent.RequestDigest("request-" + id),
+		Label:    label,
+		Start:    strings.Repeat("0", 40),
+		Branch:   intent.AssignmentBranchRef(censusOwnerID, id),
+		Worktree: filepath.Join(t.TempDir(), "worktree"),
+		State:    state,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// seedCensus writes one assignment's record file with the given number of records.
+func seedCensus(t *testing.T, home, root, id string, records int) {
+	t.Helper()
+	dir := census.Dir(home, root)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, id), []byte(strings.Repeat("t\tsed\n", records)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestAppendCensusSumsTheActiveAssignments proves the board states one total across the
+// worktrees that hold records. (Coverage row EC17.)
+func TestAppendCensusSumsTheActiveAssignments(t *testing.T) {
+	t.Parallel()
+	root, home := initRepo(t), t.TempDir()
+	first, second := strings.Repeat("b", 32), strings.Repeat("c", 32)
+	seedAssignment(t, root, first, "alpha", intent.StateActive)
+	seedAssignment(t, root, second, "beta", intent.StateActive)
+	seedCensus(t, home, root, first, 2)
+	seedCensus(t, home, root, second, 1)
+
+	rows := appendCensus(nil, root, home)
+	if len(rows) != 1 || rows[0].detail != "3 raw calls across 2 worktrees" {
+		t.Fatalf("census rows = %#v, want one summed row", rows)
+	}
+}
+
+// TestAppendCensusStatesOneCallInSingularWords proves the board's own Plural renders
+// both counts, so the row never reads "1 raw calls".
+func TestAppendCensusStatesOneCallInSingularWords(t *testing.T) {
+	t.Parallel()
+	root, home := initRepo(t), t.TempDir()
+	id := strings.Repeat("b", 32)
+	seedAssignment(t, root, id, "alpha", intent.StateActive)
+	seedCensus(t, home, root, id, 1)
+
+	rows := appendCensus(nil, root, home)
+	if len(rows) != 1 || rows[0].detail != "1 raw call across 1 worktree" {
+		t.Fatalf("census rows = %#v, want the singular row", rows)
+	}
+}
+
+// TestAppendCensusIgnoresEmptyAndReleasedAssignments proves an active assignment with
+// no records and a count with no active ledger entry both add nothing, so the board
+// never names a dead worktree. (Coverage row EC18.)
+func TestAppendCensusIgnoresEmptyAndReleasedAssignments(t *testing.T) {
+	t.Parallel()
+	root, home := initRepo(t), t.TempDir()
+	active, released := strings.Repeat("b", 32), strings.Repeat("c", 32)
+	seedAssignment(t, root, active, "alpha", intent.StateActive)
+	seedCensus(t, home, root, released, 2)
+
+	if rows := appendCensus(nil, root, home); len(rows) != 0 {
+		t.Fatalf("census rows = %#v, want none", rows)
+	}
+	seedAssignment(t, root, released, "beta", intent.StateComplete)
+	if rows := appendCensus(nil, root, home); len(rows) != 0 {
+		t.Fatalf("census rows for a settled assignment = %#v, want none", rows)
+	}
+}
+
+// TestAppendCensusRanksAtGuardsSeverityWithNoAction proves the row ranks beside the
+// guards row and names no remedy. (Coverage row EC19.)
+func TestAppendCensusRanksAtGuardsSeverityWithNoAction(t *testing.T) {
+	t.Parallel()
+	root, home := initRepo(t), t.TempDir()
+	id := strings.Repeat("b", 32)
+	seedAssignment(t, root, id, "alpha", intent.StateActive)
+	seedCensus(t, home, root, id, 4)
+
+	rows := appendCensus(nil, root, home)
+	if len(rows) != 1 || rows[0].sev != 3 || rows[0].signal != "census" || rows[0].action.render() != "" {
+		t.Fatalf("census row = %#v, want severity 3 and no action", rows)
+	}
 }

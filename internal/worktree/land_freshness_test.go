@@ -36,7 +36,7 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, filepath.Join(root, "dist", "bench"), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("stable-owner landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
@@ -66,7 +66,7 @@ func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.
 	ownerPid := os.Getpid()
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, filepath.Join(root, "dist", "bench"), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("single-owner landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	if os.Getpid() != ownerPid {
@@ -105,7 +105,7 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
 	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
 	code := exitCode(cmd.Run())
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("forged-primary landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
@@ -148,7 +148,7 @@ func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "bench repair") {
@@ -315,7 +315,7 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released}") {
+			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 				t.Fatalf("resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			if got := gitOutput(t, root, "rev-parse", "main"); got != published {

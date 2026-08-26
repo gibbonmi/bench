@@ -10,12 +10,14 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/dashboard"
@@ -32,6 +34,7 @@ import (
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/outline"
+	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preprelease"
 	"github.com/gibbonmi/bench/internal/publication"
@@ -513,11 +516,28 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 		fmt.Fprintln(stderr, "WARNING: block-bench-follow-on: unreadable command field — allowing Bash.")
 		return 0
 	}
+	recordFollowOn(command)
 	if !benchguard.Classify(command, benchguard.DefaultResolver()) {
 		return 0
 	}
 	fmt.Fprintln(stderr, benchguard.BlockMessage())
 	return 2
+}
+
+// recordFollowOn records a raw call through the exec census. It tests the command
+// text for the pool prefix before it resolves any root, so an ordinary call outside
+// a Bench worktree spawns no git process. Its own failure is silent and never reaches
+// the verdict: this call sits before the verdict, so no later return can skip it.
+func recordFollowOn(command string) {
+	home := worktree.Home()
+	if !strings.Contains(command, poolkey.Pools(home)+string(filepath.Separator)) {
+		return
+	}
+	root, err := git.Root()
+	if err != nil {
+		return
+	}
+	_ = census.Record(command, root, home, time.Now())
 }
 
 // boundaryRoot resolves the repository root once for a verb that receives one. Outside a
