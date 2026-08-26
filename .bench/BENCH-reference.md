@@ -227,9 +227,10 @@ is no separate conformance phase, driver, or per-check evidence partition.
 
 The document is one object with a `phases` array. Each phase carries:
 
-- `name` (required) — the phase's addressable identity. It appears in summary
-  lines and output prefixes, so it must be non-empty, with no whitespace or
-  control character.
+- `name` (required) — the phase's addressable identity. It fills the `phase`
+  cell of the bounded output table, so it must be non-empty, with no whitespace
+  or control character. It also prefixes the phase's lines in
+  `.logs/gate-<run>.out`.
 - `argv` (required, non-empty) — the command as an argument vector. Bench
   execs it directly, never through a shell, so it allows no interpolation,
   globbing, or quoting.
@@ -272,6 +273,19 @@ A manifest with any of these defects means the loader cannot know what its
 author intended. A guessed-at table would grade the tree with the wrong
 oracle. If you hit one of these reds, the refusal is deliberate: fix the
 manifest. There is no lenient mode.
+
+### Gate output
+
+A red run prints one `failures[N]{phase,line}` table, and then `gate: red`.
+The table holds failure rows only. Each phase gives at most twenty rows, and one
+more row names the file that holds the complete stream.
+
+A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table, one
+`capability-skips` line, and then `gate: green`. Above seven phases the table
+collapses to one `phases: N/N green` row.
+
+The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
+the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.
 
 ## Harness adapter for the shift loop
 

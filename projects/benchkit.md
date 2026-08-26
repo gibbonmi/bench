@@ -400,6 +400,19 @@ publication/preflight rehearsal. Dev green proves the complete branch-native
 source architecture; it does not grant publish authority or claim release
 artifacts were reproduced.
 
+### Gate output
+
+A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table.
+It also prints one `capability-skips` line, and then `gate: green`. Above seven
+phases the table collapses to one `phases: N/N green` row.
+
+A red run prints one `failures[N]{phase,line}` table, and then `gate: red`. The
+table holds failure rows only. Each phase gives at most twenty rows, and one
+more row names the file that holds the complete stream.
+
+The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
+the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.
+
 ### Guidance prose budgets
 
 Guidance prose that outgrows a session's attention stops being read. This table is the
