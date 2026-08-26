@@ -351,6 +351,7 @@ live root.
 - `internal/anchors/registry_data_test.go`
 - `cmd/bench/main.go`
 - `cmd/bench/main_test.go`
+- `cmd/bench/command_registry_test.go`
 - `bin/bench.sh`
 - `tests/canary/harness-record/`
 - `tests/canary/entry-point-parity/`
