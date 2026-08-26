@@ -7,8 +7,9 @@
 //
 // The `wired` cell names which harness configs actually reference a hook script, so the
 // deny surface the reader sees matches the hooks that can fire here. This cell is
-// derived, never declared, by scanning .claude/settings.json and .codex/hooks.json for
-// the script's relative path token, the same substring convention conformance uses.
+// derived, never declared, by scanning the hook config of every harnesses record row
+// that names one for the script's relative path token, the same substring convention
+// conformance uses.
 // The pre-push hook is wired through git rather than a harness config, so its wired
 // cell is the constant `git`, and its install posture (managed/unmanaged/not
 // installed) stays in the denies column.
@@ -21,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -28,6 +30,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/harnesses"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -200,30 +203,33 @@ func Scan(ctx context.Context, root string) ScanResult {
 }
 
 // wiredHarnesses names the harness configs that reference scriptRel, its relative
-// path token. It scans .claude/settings.json and .codex/hooks.json with the same
-// substring convention conformance uses. An absent config contributes nothing; a repo
-// without .codex/ cannot wire Codex. An unparseable config scans as not-wired, because
-// guards is a read-only wiring reporter and the JSON-validity conformance family owns
-// malformedness. It returns "claude", "codex", the comma-joined "claude,codex", or the
-// definitive "none", never a blank cell.
+// path token. It scans the hook config of every harnesses record row that names one,
+// with the same substring convention conformance uses. A row with no hook config
+// contributes nothing, so a new harness joins the report as one record row. An absent
+// config contributes nothing too; a repo without .codex/ cannot wire Codex. An
+// unparseable config scans as not-wired, because guards is a read-only wiring reporter
+// and the JSON-validity conformance family owns malformedness. The names sort, so the
+// cell stays stable against the record's own row order. The result is one name, the
+// comma-joined names, or the definitive "none", never a blank cell.
 func wiredHarnesses(root, scriptRel string) string {
 	token := []byte(scriptRel)
 	var wired []string
-	for _, cfg := range []struct{ name, rel string }{
-		{"claude", filepath.Join(".claude", "settings.json")},
-		{"codex", filepath.Join(".codex", "hooks.json")},
-	} {
-		content, err := os.ReadFile(filepath.Join(root, cfg.rel))
+	for _, row := range harnesses.Rows {
+		if row.HookConfig == "" {
+			continue
+		}
+		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(row.HookConfig)))
 		if err != nil || !json.Valid(content) {
 			continue
 		}
 		if bytes.Contains(content, token) {
-			wired = append(wired, cfg.name)
+			wired = append(wired, row.Harness)
 		}
 	}
 	if len(wired) == 0 {
 		return "none"
 	}
+	sort.Strings(wired)
 	return strings.Join(wired, ",")
 }
 

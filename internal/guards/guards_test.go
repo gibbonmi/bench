@@ -340,6 +340,12 @@ func TestRowsReportFollowOnManifestAndBothHarnessWires(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(hooks, "block-bench-follow-on.sh"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	// A second script no config names holds the other end of the wired cell: the report
+	// says "none", not a blank cell.
+	const unwired = "#!/usr/bin/env bash\n# name: zz-unwired\n# boundary: PreToolUse:Bash\n# denies: nothing here\n# why: this script is wired by no harness config\nexit 0\n"
+	if err := os.WriteFile(filepath.Join(hooks, "zz-unwired.sh"), []byte(unwired), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	for _, cfg := range []string{filepath.Join(root, ".claude", "settings.json"), filepath.Join(root, ".codex", "hooks.json")} {
 		if err := os.MkdirAll(filepath.Dir(cfg), 0o755); err != nil {
 			t.Fatal(err)
@@ -353,6 +359,10 @@ func TestRowsReportFollowOnManifestAndBothHarnessWires(t *testing.T) {
 	want := []string{"block-bench-follow-on", "PreToolUse:Bash", "Bench shell follow-ons", "", "", "", "claude,codex"}
 	if len(rows) < 1 || !reflect.DeepEqual(rows[0], want) {
 		t.Fatalf("Rows = %#v, want first row %#v", rows, want)
+	}
+	wantUnwired := []string{"zz-unwired", "PreToolUse:Bash", "nothing here", "", "", "", "none"}
+	if len(rows) < 2 || !reflect.DeepEqual(rows[1], wantUnwired) {
+		t.Fatalf("Rows = %#v, want second row %#v", rows, wantUnwired)
 	}
 
 	if err := os.WriteFile(filepath.Join(root, ".codex", "hooks.json"), []byte(`{"hook":"other"}`), 0o644); err != nil {
