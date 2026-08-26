@@ -66,7 +66,8 @@ works on any branch. This line only states the binding.)
   reclaimability predicate. `bench resume-clean` counts through that same predicate,
   reports the count and the verb, and never removes a pool key itself.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
-  `bench diff`, `bench coverage`, `bench roadmap`, and `bench worktree list`, and the
+  `bench diff`, `bench coverage`, `bench harnesses`, `bench roadmap`, and
+  `bench worktree list`, and the
   shared flat-table TOON emitter behind them). This is the agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract. It emits TOON
   stdout, definitive empty states, structured errors on stdout, and exit 0/1/2. The

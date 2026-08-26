@@ -14,7 +14,7 @@ with one row per record row. The `none` row appears like the rest, because
 the degraded path must stay visible.
 
 With one harness argument, the verb prints
-`cells[12]{field,value,source,checked}` for that row. Each cell carries its
+`cells[13]{field,value,source,checked}` for that row. Each cell carries its
 source and its ISO date, and an `unknown` cell leaves both empty. So
 `bench harnesses codex` names the Codex hooks docs as the `delegation_guard`
 source.
@@ -38,7 +38,7 @@ collide.
 ## Acceptance
 
 - [ ] `bench harnesses` prints `schema: 1` and then `harnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}` with four rows. (covers HC24)
-- [ ] `bench harnesses codex` prints `cells[12]{field,value,source,checked}` with the `delegation_guard` source naming the Codex hooks docs. (covers HC25)
+- [ ] `bench harnesses codex` prints `cells[13]{field,value,source,checked}` with the `delegation_guard` source naming the Codex hooks docs. (covers HC25)
 - [ ] `bench harnesses cursor` prints the usage line and exits 2. (covers HC26)
 - [ ] `checkAXIQueryRegistry` over the live root reports no diagnostic. (covers HC27)
 - [ ] `bin/bench.sh harnesses` prints the same output as the direct verb. (covers HC28)

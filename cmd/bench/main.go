@@ -28,6 +28,7 @@ import (
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/handoff"
 	"github.com/gibbonmi/bench/internal/harness"
+	"github.com/gibbonmi/bench/internal/harnesses"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/lines"
@@ -78,6 +79,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "maps", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 17, Description: "unresolved decision-map tickets as TOON (map, ticket, type, state)"}), Run: outputCommand(maps.Command)},
 	{Name: "guards", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 18, Description: "every guard's deny surface as TOON (guard, boundary, denies)"}), Run: outputCommand(guards.Command)},
 	{Name: "diff", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 19, Description: "review base + changed files as TOON (--full appends log + diff body; --base freezes source)"}), Run: outputCommand(diff.Command)},
+	{Name: "harnesses", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 19, Suffix: " [<harness>]", Description: "the harness record as TOON (harness, provider, phase_form, hooks, delegation_guard); one name prints that harness's cells"}), Run: outputCommand(harnesses.Command)},
 	{Name: "preflight", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 21, Suffix: " review|build <slug>", Description: "phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check"}), Run: outputCommand(preflight.Command)},
 	{Name: "coverage", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 20, Suffix: " <spec>", Description: "acceptance-coverage state and rows as TOON (--check to validate)"}), Run: outputCommand(coverage.Command)},
 	{Name: "status", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 10, Description: "ambient dashboard: what needs attention + the next action"}), Run: outputCommand(status.Command)},

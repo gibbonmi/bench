@@ -494,6 +494,7 @@ case "${1:-}" in
   maps)     route_porcelain "$@" ;;
   guards)   route_porcelain "$@" ;;
   diff)     route_porcelain "$@" ;;
+  harnesses) route_porcelain "$@" ;;
   preflight) route_porcelain "$@" ;;
   coverage) route_porcelain "$@" ;;
   test)     route_porcelain "$@" ;;

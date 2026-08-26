@@ -92,6 +92,23 @@ func TestGuardsQueryReportsFollowOnGuardThroughCommandSeam(t *testing.T) {
 	}
 }
 
+func TestHarnessesQueryProjectsTheRecordThroughCommandSeam(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"harnesses"})
+	if code != 0 || stderr.Len() != 0 {
+		t.Fatalf("bench harnesses = stdout=%q stderr=%q exit=%d, want stdout/0", stdout.String(), stderr.String(), code)
+	}
+	for _, want := range []string{
+		"schema: 1\n",
+		"harnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}:\n",
+		"help[0]{cmd,why}:\n",
+	} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("bench harnesses = %q, want %q", stdout.String(), want)
+		}
+	}
+}
+
 func TestHelpRendersPublicCommandRegistryRows(t *testing.T) {
 	old := commandRegistry
 	t.Cleanup(func() { commandRegistry = old })
@@ -141,6 +158,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench diff                 review base + changed files as TOON (--full appends log + diff body; --base freezes source)
+  bench harnesses [<harness>]  the harness record as TOON (harness, provider, phase_form, hooks, delegation_guard); one name prints that harness's cells
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
   bench test [--full] [package]  run fresh Go tests and render package, failure, and skip evidence as TOON
@@ -255,6 +273,25 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 		}
 		if wrapperHelp := run(wrapper, spelling); wrapperHelp != binaryHelp {
 			t.Errorf("wrapper %s = %q, binary help = %q", spelling, wrapperHelp, binaryHelp)
+		}
+	}
+
+	// bench harnesses projects a record compiled into the binary, so the wrapper and the
+	// binary must agree byte for byte on both projections. A wrapper that reshapes the TOON
+	// on the way through breaks every agent that parses it.
+	for _, probe := range []struct {
+		argv   []string
+		header string
+	}{
+		{argv: []string{"harnesses"}, header: "schema: 1\nharnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}:\n"},
+		{argv: []string{"harnesses", "codex"}, header: "schema: 1\ncells[13]{field,value,source,checked}:\n"},
+	} {
+		binaryHarnesses := run(binary, probe.argv...)
+		if !strings.HasPrefix(binaryHarnesses, probe.header) {
+			t.Errorf("binary %v = %q, want the %q header", probe.argv, binaryHarnesses, probe.header)
+		}
+		if wrapperHarnesses := run(wrapper, probe.argv...); wrapperHarnesses != binaryHarnesses {
+			t.Errorf("wrapper %v = %q, binary %v = %q", probe.argv, wrapperHarnesses, probe.argv, binaryHarnesses)
 		}
 	}
 

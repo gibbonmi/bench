@@ -103,6 +103,12 @@ type axiEnvelopeCase struct {
 	blocks                                         []string
 	route, successArgv, deepSuccessArgv, emptyArgv []string
 	setupSuccess, setupEmpty                       func(*testing.T, string)
+	// recordBacked marks a query that projects a record compiled into the binary. Such a
+	// query reads no disk and needs no repository. So it has no empty projection and no
+	// path it can refuse, and the definitive-empty and structured-refusal subtests do not
+	// apply to it. Every other subtest still runs. A query that reads the repository must
+	// leave this field false.
+	recordBacked bool
 }
 
 // resultBlock names the table whose rows differ between the success and empty cases.
@@ -164,24 +170,34 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 			}
 		})
 
-		t.Run(name+"/definitive-empty", func(t *testing.T) {
-			root := newAXIEnvelopeRepo(t)
-			tc.setupEmpty(t, root)
-			result := runAXICommandAt(t, root, tc.emptyArgv)
-			if result.code != 0 || result.stderr != "" || !strings.Contains(result.stdout, tc.emptyMarker) {
-				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want definitive %q on stdout/0", result.stdout, result.stderr, result.code, tc.emptyMarker)
-			}
-			if rows := axiEnvelopeRows(t, tc, result); len(rows) != 0 {
-				t.Fatalf("stdout = %q, want a zero-row result table", result.stdout)
-			}
-		})
+		// The empty and refusal subtests do not apply to a record-backed query, so they
+		// are not registered for one. A registered-and-skipped subtest would report a
+		// missing capability, and the fixture reports a declared shape instead.
+		if !tc.recordBacked {
+			t.Run(name+"/definitive-empty", func(t *testing.T) {
+				// A fixture that declares no empty case, and does not declare why, is an
+				// incomplete fixture. The check names it rather than crashing on the nil.
+				if tc.setupEmpty == nil {
+					t.Fatalf("fixture %q declares no empty case; set recordBacked if the query has none", name)
+				}
+				root := newAXIEnvelopeRepo(t)
+				tc.setupEmpty(t, root)
+				result := runAXICommandAt(t, root, tc.emptyArgv)
+				if result.code != 0 || result.stderr != "" || !strings.Contains(result.stdout, tc.emptyMarker) {
+					t.Fatalf("result = stdout=%q stderr=%q exit=%d; want definitive %q on stdout/0", result.stdout, result.stderr, result.code, tc.emptyMarker)
+				}
+				if rows := axiEnvelopeRows(t, tc, result); len(rows) != 0 {
+					t.Fatalf("stdout = %q, want a zero-row result table", result.stdout)
+				}
+			})
 
-		t.Run(name+"/structured-refusal", func(t *testing.T) {
-			result := runAXICommandAt(t, t.TempDir(), tc.successArgv)
-			if result.code != 1 || result.stderr != "" || !strings.HasPrefix(result.stdout, "error:") {
-				t.Fatalf("result = stdout=%q stderr=%q exit=%d; want structured stdout refusal/1", result.stdout, result.stderr, result.code)
-			}
-		})
+			t.Run(name+"/structured-refusal", func(t *testing.T) {
+				result := runAXICommandAt(t, t.TempDir(), tc.successArgv)
+				if result.code != 1 || result.stderr != "" || !strings.HasPrefix(result.stdout, "error:") {
+					t.Fatalf("result = stdout=%q stderr=%q exit=%d; want structured stdout refusal/1", result.stdout, result.stderr, result.code)
+				}
+			})
+		}
 
 		t.Run(name+"/unknown-flag", func(t *testing.T) {
 			argv := append(append([]string(nil), tc.route...), "--unknown-axi-probe")
@@ -257,6 +273,13 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 			route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
 			blocks:        []string{"worktrees", "help"},
 			successMarker: "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,request,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
+		},
+		// harnesses projects a record compiled into the binary, so it declares no empty
+		// case and no refusal case. See recordBacked.
+		"harnesses": {
+			route: []string{"harnesses"}, successArgv: []string{"harnesses"},
+			blocks:        []string{"schema", "harnesses", "help"},
+			successMarker: "harnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}:\n", usage: "usage: bench harnesses", setupSuccess: noSetup, recordBacked: true,
 		},
 		"roadmap": {
 			route: []string{"roadmap"}, successArgv: []string{"roadmap"}, emptyArgv: []string{"roadmap"},

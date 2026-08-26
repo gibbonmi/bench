@@ -287,7 +287,7 @@ live root.
 | HC22 | 22 | `bench handoff --harness none` on a board led by `git push` writes `git push` under `## Next command`. | handoff unit | A handoff that rejects `none` cannot pin a shell resume. |
 | HC23 | 23 | `bench status --route --harness cursor` prints the grammar and exits 2. | status command unit | A permissive parse routes a typo. |
 | HC24 | 24 | `bench harnesses` prints `schema: 1` and then `harnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}` with four rows. | verb unit | A projection that skips `none` hides the degraded path. |
-| HC25 | 25 | `bench harnesses codex` prints `cells[12]{field,value,source,checked}` with the `delegation_guard` source naming the Codex hooks docs. | verb unit | A detail view without sources restates prose. |
+| HC25 | 25 | `bench harnesses codex` prints `cells[13]{field,value,source,checked}` with the `delegation_guard` source naming the Codex hooks docs. | verb unit | A detail view without sources restates prose. |
 | HC26 | 26 | `bench harnesses cursor` prints the usage line and exits 2. | verb unit | An unknown name rendered as an empty table reads as a definitive empty state. |
 | HC27 | 27 | `checkAXIQueryRegistry` over the live root reports no diagnostic. | conformance over the live root | A verb missing from any of the three seams reds the registry check. |
 | HC28 | 28 | `bin/bench.sh harnesses` prints the same output as the direct verb. | entry-point-parity row | A wrapper without the label reaches the default case with no routing entry. |
