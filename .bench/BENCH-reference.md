@@ -36,6 +36,7 @@ assignments; the file map, adapter contracts, and hook layers live below.
 - `bin/bench.sh` is the CLI launcher and strangler router to the Go core.
 - `.bench/hooks/session-start.sh` renders ambient repository status when a
   harness session starts.
+  The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.
 - `projects/<name>.md` holds the project's seams, gate shape, and line bindings.
 - `capture/learnings.md` is the usage journal for process learnings.
 - `capture/IDEAS.md` is the parked-idea sink `bench idea` writes. If

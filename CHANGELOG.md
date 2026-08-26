@@ -6,6 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A `census` signal now counts the raw shell calls each assignment worktree
+  makes. `bench worktree land` carries the count as the `census=<n>` key of its
+  landed record, and `/bench-final-check` writes one advisory `bench learning`
+  entry per landing with a nonzero count. The count never blocks a landing.
+
 ### Changed
 
 - The `internal/worktree` test suite now runs its eligible tests in parallel

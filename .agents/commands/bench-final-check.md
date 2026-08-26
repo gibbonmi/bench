@@ -47,6 +47,15 @@ Promote or delete an orphaned review pickup by hand.
 Scratch branches go through `bench worktree clean`.
 Leftover worktrees are retired by `bench worktree clean --landed`: run the plan, apply it, and carry the plan and apply result in the landing report.
 
+Read `census=<n>` from the landed record; for `n > 0`, write exactly one `bench learning --rule` entry for the landing.
+The entry's title names the assignment label and `n`. Its `--what` lists each
+verb head with its count. Its `--right` names the Bench form per head, or
+`none`. Its `--rule` proposes the verb or the help change. Fold a delegate's
+zero to two CLI improvements into that same entry.
+
+For `n = 0`, state `census: 0 raw calls` in the close; a nonzero count never blocks a landing.
+The duty is advisory, so a nonzero count never reds the gate.
+
 Leave the roadmap and capture rows to
 `/bench-drain`; that phase owns the reconcile and the drain, and this duty
 never restates it. On a topic branch these duties defer by design: the rows
@@ -91,6 +100,9 @@ Record concrete evidence:
 - how ticket-sized delegate charges performed against charges handed a spec slice
 - what the coordinator caught while accepting delegate claims
 - specific improvements to Bench CLI, skills, and process, with the friction and expected effect named
+
+A spec retro cites the landing's census entry under `### Bench CLI` with its
+`Feeds:` line.
 
 Write each improvement item as one list item. Give the item one sentence that
 states the change to make. End the item with one line that reads `Feeds: FT<n>`,

@@ -345,3 +345,82 @@ func TestFastLaneAnchorsRedOnRemoval(t *testing.T) {
 		t.Errorf("guide with the fast-lane sentence under Workflow = %v, want %q", diags, rules[0].want)
 	}
 }
+
+// TestCensusDutyAnchorsRedOnRemoval pins EC27, EC29, EC31, EC32, and EC33. Each needle and
+// its diagnostic are written here independently of the registry, so a command, a skill, a
+// reference, or a profile that dropped the census account cannot define itself green. The
+// reference and the profile carry the same sentence, so a dropped file must raise only its
+// own diagnostic.
+func TestCensusDutyAnchorsRedOnRemoval(t *testing.T) {
+	rules := []struct{ file, needle, want string }{
+		{
+			".agents/commands/bench-final-check.md",
+			"Read `census=<n>` from the landed record; for `n > 0`, write exactly one `bench learning --rule` entry for the landing.",
+			".agents/commands/bench-final-check.md post-merge tail dropped the census duty: read census=<n> and write one bench learning --rule entry",
+		},
+		{
+			".agents/commands/bench-final-check.md",
+			"For `n = 0`, state `census: 0 raw calls` in the close; a nonzero count never blocks a landing.",
+			".agents/commands/bench-final-check.md post-merge tail dropped the zero census close and its advisory rule",
+		},
+		{
+			".agents/skills/bench-craft-delegate/SKILL.md",
+			"Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the landing's census entry.",
+			".agents/skills/bench-craft-delegate/SKILL.md charge dropped the delegate's zero to two Bench CLI improvements",
+		},
+		{
+			".bench/BENCH-reference.md",
+			"The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.",
+			".bench/BENCH-reference.md dropped the census signal account: raw calls per assignment under $BENCH_HOME/census/<repo-key>/",
+		},
+		{
+			"projects/benchkit.md",
+			"The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.",
+			"projects/benchkit.md dropped the census signal account: raw calls per assignment under $BENCH_HOME/census/<repo-key>/",
+		},
+	}
+
+	// evaluate writes one minimal tree that carries every needle except the dropped one.
+	// A file that owns two needles keeps the other one, so each row is read alone.
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]string{}
+		for i, r := range rules {
+			if i == dropped {
+				continue
+			}
+			bodies[r.file] += r.needle + "\n\n"
+		}
+		for _, r := range rules {
+			path := filepath.Join(root, filepath.FromSlash(r.file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte("# subject\n\n"+bodies[r.file]), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	// Other rows of the group fire against this minimal tree; only the five census rows are
+	// this test's subject, so both directions are read by membership.
+	full := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(full, r.want) {
+			t.Errorf("tree carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree without %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q from %s also raised %q", r.needle, r.file, other.want)
+			}
+		}
+	}
+}
