@@ -28,9 +28,7 @@ func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]
 func Pool(root string) string { return poolAt(Home(), root) }
 
 // poolAt derives the repository's pool directory from an explicitly resolved home.
-func poolAt(home, root string) string {
-	return filepath.Join(home, "worktrees", poolkey.Key(root))
-}
+func poolAt(home, root string) string { return poolkey.Pool(home, root) }
 func LeaseFile(path string) (string, error) {
 	lease, err := git.Output("-C", path, "rev-parse", "--git-path", git.BenchLeaseFilename)
 	if err != nil {

@@ -120,3 +120,43 @@ func repositoryWithLinkedWorktree(t *testing.T) (string, string) {
 	run(primary, "worktree", "add", "--quiet", "--detach", linked)
 	return primary, linked
 }
+
+// TestPoolJoinsTheHomeAndTheKey pins the pool path, which `bench worktree` and the exec
+// census both address and an existing pool on disk already carries.
+func TestPoolJoinsTheHomeAndTheKey(t *testing.T) {
+	t.Parallel()
+	home := filepath.Join(string(filepath.Separator), "home-a", ".bench")
+	root := cksumGolden[0].root
+	want := filepath.Join(home, "worktrees", Key(root))
+	if got := Pool(home, root); got != want {
+		t.Errorf("Pool = %q, want %q", got, want)
+	}
+	if got, wantSuffix := Pool(home, root), Key(root); filepath.Base(got) != wantSuffix {
+		t.Errorf("Pool = %q, want the key %q as its last element", got, wantSuffix)
+	}
+}
+
+// TestAssignmentSegmentRoundTrips proves the writer of a pool directory name and the
+// reader of one agree, so a reader never restates the name's shape.
+func TestAssignmentSegmentRoundTrips(t *testing.T) {
+	t.Parallel()
+	owner, id := strings.Repeat("a", 32), strings.Repeat("b", 32)
+	got, ok := SplitAssignmentSegment(AssignmentSegment(owner, id))
+	if !ok {
+		t.Fatalf("SplitAssignmentSegment refused %q", AssignmentSegment(owner, id))
+	}
+	if got != id {
+		t.Errorf("assignment id = %q, want %q", got, id)
+	}
+}
+
+// TestSplitAssignmentSegmentRejectsOtherNames proves a pool entry that is not an
+// assignment is refused, so a reader of the pool needs no ledger.
+func TestSplitAssignmentSegmentRejectsOtherNames(t *testing.T) {
+	t.Parallel()
+	for _, segment := range []string{"scratch", strings.Repeat("a", 32), strings.Repeat("a", 32) + "-" + strings.Repeat("z", 32), ""} {
+		if got, ok := SplitAssignmentSegment(segment); ok {
+			t.Errorf("SplitAssignmentSegment(%q) = %q, want a refusal", segment, got)
+		}
+	}
+}
