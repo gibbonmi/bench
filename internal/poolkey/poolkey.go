@@ -32,11 +32,18 @@ func Key(root string) string {
 	return filepath.Base(canonical) + "-" + strconv.FormatUint(uint64(sum), 10)
 }
 
+// Pools returns the worktree pool parent below an explicitly resolved Bench home.
+// A caller that tests a raw command's text for a pool path, before it resolves any
+// root, tests against this prefix rather than restating "worktrees" itself.
+func Pools(home string) string {
+	return filepath.Join(home, "worktrees")
+}
+
 // Pool returns the repository's worktree pool directory below an explicitly resolved
 // Bench home. The pool and the exec census are siblings under the home, and both name
 // the repository by the same key.
 func Pool(home, root string) string {
-	return filepath.Join(home, "worktrees", Key(root))
+	return filepath.Join(Pools(home), Key(root))
 }
 
 // idPattern matches one 16-byte random identifier in hexadecimal, the form both

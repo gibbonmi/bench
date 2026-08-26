@@ -136,6 +136,18 @@ func TestPoolJoinsTheHomeAndTheKey(t *testing.T) {
 	}
 }
 
+// TestPoolSitsDirectlyUnderPools pins that Pool(home, root) sits directly below
+// Pools(home), so a caller that tests a command's text for Pools(home) also matches
+// every repository's pool without restating the join.
+func TestPoolSitsDirectlyUnderPools(t *testing.T) {
+	t.Parallel()
+	home := filepath.Join(string(filepath.Separator), "home-a", ".bench")
+	root := cksumGolden[0].root
+	if got, want := filepath.Dir(Pool(home, root)), Pools(home); got != want {
+		t.Errorf("Dir(Pool) = %q, want Pools(home) = %q", got, want)
+	}
+}
+
 // TestAssignmentSegmentRoundTrips proves the writer of a pool directory name and the
 // reader of one agree, so a reader never restates the name's shape.
 func TestAssignmentSegmentRoundTrips(t *testing.T) {

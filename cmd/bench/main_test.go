@@ -11,8 +11,10 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -432,6 +434,125 @@ printf '%s\n' "$BENCH_KIT" "$@" > "$BENCH_TEST_ARGV"
 	want := []string{kit, "gate-phases", "/tmp/repo root"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("wrapper routed argv = %#v, want %#v\noutput:\n%s", got, want, out)
+	}
+}
+
+// followOnEnvelope builds a raw-call envelope whose command names a path under the
+// given root's worktree pool, keyed to a fixed owner and assignment id.
+func followOnEnvelope(home, root string) (string, string) {
+	owner := strings.Repeat("a", 32)
+	id := strings.Repeat("b", 32)
+	segment := poolkey.AssignmentSegment(owner, id)
+	path := filepath.Join(poolkey.Pool(home, root), segment, "x")
+	return `{"tool_input":{"command":"sed -n 1p ` + path + `"}}`, id
+}
+
+// TestGuardBenchFollowOnRecordsRawCall covers EC09: a raw-call envelope whose command
+// names a path under the pool makes the verb exit 0 and write one census record.
+// The verdict must change if this record is skipped, since a record's own error can
+// never surface here.
+func TestGuardBenchFollowOnRecordsRawCall(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	home := filepath.Join(t.TempDir(), "home")
+	t.Setenv("BENCH_HOME", home)
+	envelope, id := followOnEnvelope(home, root)
+	var errb bytes.Buffer
+	if code := guardBenchFollowOn(nil, strings.NewReader(envelope), io.Discard, &errb); code != 0 {
+		t.Fatalf("exit = %d, want 0", code)
+	}
+	if errb.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", errb.String())
+	}
+	if _, err := os.Stat(filepath.Join(census.Dir(home, root), id)); err != nil {
+		t.Fatalf("census record not written: %v", err)
+	}
+}
+
+// TestGuardBenchFollowOnUnwritableHomeStaysSilent covers EC10: a home the record
+// cannot write under still exits 0 with empty stderr, because a record error never
+// surfaces as a diagnostic or a block.
+func TestGuardBenchFollowOnUnwritableHomeStaysSilent(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	home := filepath.Join(t.TempDir(), "home-is-a-file")
+	if err := os.WriteFile(home, []byte("not a directory"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_HOME", home)
+	envelope, _ := followOnEnvelope(home, root)
+	var errb bytes.Buffer
+	if code := guardBenchFollowOn(nil, strings.NewReader(envelope), io.Discard, &errb); code != 0 {
+		t.Fatalf("exit = %d, want 0", code)
+	}
+	if errb.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", errb.String())
+	}
+}
+
+// TestGuardBenchFollowOnNoCommandFieldRecordsNothing keeps the warning path: an
+// envelope with no command field records nothing, because the decode fails before
+// the record call.
+func TestGuardBenchFollowOnNoCommandFieldRecordsNothing(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	home := filepath.Join(t.TempDir(), "home")
+	t.Setenv("BENCH_HOME", home)
+	var errb bytes.Buffer
+	if code := guardBenchFollowOn(nil, strings.NewReader(`{"tool_input":{}}`), io.Discard, &errb); code != 0 {
+		t.Fatalf("exit = %d, want 0", code)
+	}
+	if !strings.Contains(errb.String(), "WARNING") {
+		t.Fatalf("stderr = %q, want WARNING", errb.String())
+	}
+	if _, err := os.Stat(filepath.Join(home, "census")); !os.IsNotExist(err) {
+		t.Fatalf("census dir should not exist, stat err = %v", err)
+	}
+}
+
+// TestGuardBenchFollowOnWithoutPoolPrefixResolvesNoRoot proves the substring test runs
+// before any root resolution: outside a git repository, a plain command still exits 0,
+// so the verb never called git.Root for it.
+func TestGuardBenchFollowOnWithoutPoolPrefixResolvesNoRoot(t *testing.T) {
+	dir := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	home := filepath.Join(t.TempDir(), "home")
+	t.Setenv("BENCH_HOME", home)
+	var errb bytes.Buffer
+	envelope := `{"tool_input":{"command":"echo hi"}}`
+	if code := guardBenchFollowOn(nil, strings.NewReader(envelope), io.Discard, &errb); code != 0 {
+		t.Fatalf("exit = %d, want 0", code)
+	}
+	if _, err := os.Stat(filepath.Join(home, "census")); !os.IsNotExist(err) {
+		t.Fatalf("census dir should not exist, stat err = %v", err)
 	}
 }
 
