@@ -5,14 +5,42 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/harnesses"
 )
 
-// HarnessClaude is the canonical form in which board phase actions are written.
-const HarnessClaude = "claude"
+// HarnessClaude is the canonical form in which board phase actions are written. The record
+// owns the name, so the constant reads out of the row rather than restating it.
+var HarnessClaude = claudeName()
 
-var harnessPrefix = map[string]string{
-	HarnessClaude: "/bench-",
-	"codex":       "$bench-",
+// harnessPrefix maps every recorded harness to its phase invocation form. The record owns
+// both the names and the forms, so a new row reaches the grammar without an edit here. A
+// row with no phase surface holds an empty form.
+var harnessPrefix = buildHarnessPrefix()
+
+// claudeName returns the record's canonical harness: the row whose phase form the action
+// table already writes its phase commands in. Both halves are read rather than restated, so
+// neither the harness name nor the form appears here as a literal.
+func claudeName() string {
+	for _, definition := range actionDefinitions {
+		if definition.kind != actionPhase || definition.command == "" {
+			continue
+		}
+		for _, row := range harnesses.Rows {
+			if row.PhaseForm != "" && strings.HasPrefix(definition.command, row.PhaseForm) {
+				return row.Harness
+			}
+		}
+	}
+	return ""
+}
+
+func buildHarnessPrefix() map[string]string {
+	table := make(map[string]string, len(harnesses.Rows))
+	for _, row := range harnesses.Rows {
+		table[row.Harness] = row.PhaseForm
+	}
+	return table
 }
 
 // HarnessChoices returns the accepted harness names, with the canonical form first.
@@ -27,7 +55,8 @@ func HarnessChoices() string {
 	return strings.Join(append([]string{HarnessClaude}, rest...), "|")
 }
 
-// ValidHarness reports whether harness has a phase-invocation form.
+// ValidHarness reports whether the record holds harness. A recorded harness with no phase
+// surface is still a valid choice, because the grammar names every row.
 func ValidHarness(harness string) bool {
 	_, ok := harnessPrefix[harness]
 	return ok
@@ -87,8 +116,10 @@ func translateSignal(signal Signal, harness string) Signal {
 	if signal.actionID.kind() != actionPhase {
 		return signal
 	}
-	prefix, ok := harnessPrefix[harness]
-	if !ok {
+	// A row with no phase form leaves the action untranslated, which is what an unrecorded
+	// harness has always done.
+	prefix := harnessPrefix[harness]
+	if prefix == "" {
 		return signal
 	}
 	signal.Action = strings.Replace(signal.Action, harnessPrefix[HarnessClaude], prefix, 1)

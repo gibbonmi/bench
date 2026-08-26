@@ -23,13 +23,14 @@ func TestCommandArgs(t *testing.T) {
 	if r, c := Command([]string{"-h"}); c != 0 || !strings.Contains(r, "usage: bench status") {
 		t.Errorf("help: report %q exit %d", r, c)
 	}
-	if r, c := Command([]string{"-h"}); !strings.Contains(r, "[--route [--harness claude|codex]]") {
+	// HC21: the help line advertises the record's four names with claude first.
+	if r, c := Command([]string{"-h"}); !strings.Contains(r, "[--route [--harness claude|codex|none|opencode]]") {
 		t.Errorf("help usage should advertise route grammar, got %q exit %d", r, c)
 	}
 	if r, c := Command([]string{"--all"}); c != 0 {
 		t.Errorf("--all should be accepted with exit 0, got report %q exit %d", r, c)
 	}
-	for _, bad := range [][]string{{"--all", "extra"}, {"--allx"}, {"-a"}, {"--route", "--all"}, {"--harness", "codex"}, {"--route", "--harness", "opencode"}, {"--route", "extra"}} {
+	for _, bad := range [][]string{{"--all", "extra"}, {"--allx"}, {"-a"}, {"--route", "--all"}, {"--harness", "codex"}, {"--route", "--harness", "cursor"}, {"--route", "extra"}} {
 		if r, c := Command(bad); c != 2 || !strings.Contains(r, "usage:") {
 			t.Errorf("args %q: report %q exit %d, want usage exit 2", bad, r, c)
 		}
@@ -41,7 +42,8 @@ func TestCommandMalformedRoutePrintsExactGrammar(t *testing.T) {
 	for _, args := range [][]string{
 		{"--route", "--all"},
 		{"--harness", "codex"},
-		{"--route", "--harness", "opencode"},
+		// HC23: an unrecorded harness prints the grammar and exits 2.
+		{"--route", "--harness", "cursor"},
 		{"--route", "extra"},
 	} {
 		if got, code := Command(args); code != 2 || got != want {

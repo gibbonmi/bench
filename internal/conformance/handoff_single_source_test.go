@@ -169,17 +169,19 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	}
 }
 
-// handoffPkgDir holds the consumer package. prefixTablePkgDir and prefixTableFile hold
-// the route owner's harness table. prefixTableVar holds its name.
+// handoffPkgDir holds the consumer package. prefixTablePkgDir and prefixTableFile hold the
+// harness record, which owns the phase invocation forms. prefixTableVar holds its rows
+// variable, and prefixTableKey holds the row field the forms sit behind.
 const (
 	handoffPkgDir     = "internal/handoff"
-	prefixTablePkgDir = "internal/status"
-	prefixTableFile   = "route.go"
-	prefixTableVar    = "harnessPrefix"
+	prefixTablePkgDir = "internal/harnesses"
+	prefixTableFile   = "harnesses.go"
+	prefixTableVar    = "Rows"
+	prefixTableKey    = "PhaseForm"
 )
 
 // checkHarnessPrefix reports any string literal in the handoff package that writes a
-// phase invocation form the status route owner already owns. Examples include a trailing
+// phase invocation form the harness record already owns. Examples include a trailing
 // replacement with a hardcoded target, an inline conditional, or a second table. Each is
 // a producer the table cannot see. A harness added as a row would leave any of them
 // behind.
@@ -204,7 +206,7 @@ func checkHarnessPrefix(root string) []string {
 	if err != nil {
 		return []string{fmt.Sprintf("%s/%s cannot be parsed for harness prefix literals: %v", prefixTablePkgDir, prefixTableFile, err)}
 	}
-	forms, _ := prefixTable(tableFile)
+	forms := prefixTable(tableFile)
 	if len(forms) == 0 {
 		return []string{fmt.Sprintf("%s/%s declares no %s table, so no single owner of the phase-invocation forms remains", prefixTablePkgDir, prefixTableFile, prefixTableVar)}
 	}
@@ -253,14 +255,14 @@ func checkHarnessPrefix(root string) []string {
 	return uniqueSorted(diags)
 }
 
-// prefixTable returns the harness table's values and the positions of the literals
-// holding them. The table is both what the rest of the package is measured against and
-// the only place its own values are exempt.
-func prefixTable(file *ast.File) ([]string, map[token.Pos]bool) {
+// prefixTable returns the phase invocation forms the record declares. The rows are struct
+// literals nested inside a slice literal, so the reader descends one level and collects the
+// string literal behind each prefixTableKey field. A row with an empty form contributes no
+// forbidden string, because an empty string matches every literal.
+func prefixTable(file *ast.File) []string {
 	var forms []string
-	owned := map[token.Pos]bool{}
 	if file == nil {
-		return nil, owned
+		return nil
 	}
 	for _, decl := range file.Decls {
 		gen, ok := decl.(*ast.GenDecl)
@@ -278,29 +280,47 @@ func prefixTable(file *ast.File) ([]string, map[token.Pos]bool) {
 					continue
 				}
 				for _, element := range literal.Elts {
-					pair, ok := element.(*ast.KeyValueExpr)
+					row, ok := element.(*ast.CompositeLit)
 					if !ok {
 						continue
 					}
-					form, ok := stringLiteral(pair.Value)
-					if !ok || form == "" {
-						continue
-					}
-					forms = append(forms, form)
-					owned[pair.Value.Pos()] = true
+					forms = append(forms, rowPhaseForms(row)...)
 				}
 			}
 		}
 	}
-	return uniqueSorted(forms), owned
+	return uniqueSorted(forms)
+}
+
+// rowPhaseForms returns the non-empty forms one row's prefixTableKey fields hold.
+func rowPhaseForms(row *ast.CompositeLit) []string {
+	var forms []string
+	for _, field := range row.Elts {
+		pair, ok := field.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+		key, ok := pair.Key.(*ast.Ident)
+		if !ok || key.Name != prefixTableKey {
+			continue
+		}
+		form, ok := stringLiteral(pair.Value)
+		if !ok || form == "" {
+			continue
+		}
+		forms = append(forms, form)
+	}
+	return forms
 }
 
 // TestHarnessPrefixSingleSourcedBites is the recorded bite proof for checkHarnessPrefix.
-// It runs against a synthetic package whose table carries invented forms. The forms come
-// from the table, so a fixture needs no copy of the real ones and cannot go stale when a
-// harness is added. It walks four states: a table alone, and the same forms named only in
-// prose. The other two states are an inline literal beside the table, and a second table-
-// shaped literal in another file.
+// It runs against a synthetic record whose rows carry invented forms. The forms come from
+// the record, so a fixture needs no copy of the real ones and cannot go stale when a
+// harness is added. The fixture takes the record's nested row shape, so the test proves the
+// reader against the shape the live tree carries, and it holds a formless row to prove an
+// empty form forbids nothing. It walks four states: a table alone, and the same forms named
+// only in prose. The other two states are an inline literal beside the table, and a second
+// table-shaped literal in another file.
 func TestHarnessPrefixSingleSourcedBites(t *testing.T) {
 	root := t.TempDir()
 	handoffDir := filepath.Join(root, filepath.FromSlash(handoffPkgDir))
@@ -316,7 +336,10 @@ func TestHarnessPrefixSingleSourcedBites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	table := "package status\n\nvar " + prefixTableVar + " = map[string]string{\n\t\"claude\": \"/synth-\",\n\t\"codex\":  \"$synth-\",\n}\n"
+	table := "package harnesses\n\nvar " + prefixTableVar + " = []Row{\n" +
+		"\t{Harness: \"claude\", " + prefixTableKey + ": \"/synth-\"},\n" +
+		"\t{Harness: \"codex\", " + prefixTableKey + ": \"$synth-\"},\n" +
+		"\t{Harness: \"opencode\", " + prefixTableKey + ": \"\"},\n}\n"
 
 	if !containsDiagnostic(checkHarnessPrefix(root), prefixTablePkgDir+"/"+prefixTableFile+" declares no "+prefixTableVar+" table") {
 		t.Fatalf("missing route owner: want a diagnostic, got %v", checkHarnessPrefix(root))
@@ -340,7 +363,13 @@ func TestHarnessPrefixSingleSourcedBites(t *testing.T) {
 	}
 
 	write(handoffDir, "sections.go", "package handoff\n\nvar legacyPrefix = map[string]string{\n\t\"claude\": \"/synth-\",\n}\n")
-	if !containsDiagnostic(checkHarnessPrefix(root), "sections.go writes the phase-invocation form") {
+	if !containsDiagnostic(checkHarnessPrefix(root), `sections.go writes the phase-invocation form "/synth-"`) {
 		t.Fatalf("second table-shaped literal: want a diagnostic naming the file, got %v", checkHarnessPrefix(root))
+	}
+
+	// The formless row forbids nothing. An empty form would otherwise match every literal.
+	write(handoffDir, "sections.go", "package handoff\n\nfunc name() string { return \"handoff\" }\n")
+	if diags := checkHarnessPrefix(root); len(diags) != 0 {
+		t.Fatalf("formless row: want no diagnostics, got %v", diags)
 	}
 }

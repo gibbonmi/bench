@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/harnesses"
 )
 
 func testSignal(severity int, name, detail, text string) Signal {
@@ -79,6 +81,37 @@ func TestProducedDrainRoutesFromItsConstruction(t *testing.T) {
 	got := RouteFor(root, SignalsWith(root, Query{}), HarnessClaude)
 	if got.NoCommand || got.Lead.Name != "drain" || got.Lead.Action != "/bench-drain" {
 		t.Fatalf("produced drain route = %#v, want /bench-drain as the lead command", got)
+	}
+}
+
+// HC13. The choice list names every record row, with claude first and the rest sorted.
+func TestHarnessChoicesNamesTheRecord(t *testing.T) {
+	if got, want := HarnessChoices(), "claude|codex|none|opencode"; got != want {
+		t.Errorf("HarnessChoices() = %q, want %q", got, want)
+	}
+	for _, name := range []string{"claude", "codex", "opencode", "none"} {
+		if !ValidHarness(name) {
+			t.Errorf("ValidHarness(%q) = false, want true", name)
+		}
+	}
+	if ValidHarness("cursor") {
+		t.Error(`ValidHarness("cursor") = true, want false`)
+	}
+}
+
+// The table holds one entry per record row, and a formless row holds an empty form.
+func TestHarnessPrefixMirrorsTheRecord(t *testing.T) {
+	if len(harnessPrefix) != len(harnesses.Rows) {
+		t.Fatalf("harnessPrefix has %d entries, want %d", len(harnessPrefix), len(harnesses.Rows))
+	}
+	for _, row := range harnesses.Rows {
+		form, ok := harnessPrefix[row.Harness]
+		if !ok || form != row.PhaseForm {
+			t.Errorf("harnessPrefix[%q] = (%q, %v), want %q", row.Harness, form, ok, row.PhaseForm)
+		}
+	}
+	if HarnessClaude != "claude" {
+		t.Errorf("HarnessClaude = %q, want %q", HarnessClaude, "claude")
 	}
 }
 
