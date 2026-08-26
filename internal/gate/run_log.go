@@ -18,11 +18,11 @@ import (
 
 const gateLogSchema = 1
 
-// gateLogRetainedRecords is how many gate runs .logs keeps. Twenty is a
+// gateLogRetainedRuns is how many gate runs .logs keeps. Twenty is a
 // reviewer-owned size: enough to hold a full build session's runs, small enough
 // that the directory stays readable without a separate pruning chore. A run owns
 // both of its files, so the retention counts runs and never half a run.
-const gateLogRetainedRecords = 20
+const gateLogRetainedRuns = 20
 
 // The file name shape, spelled once. A run leaves two files: the record of what it
 // did, and the stream of what its phases said. Every producer builds a name through
@@ -341,7 +341,7 @@ func (l *gateRunLog) warn(err error) {
 	}
 }
 
-// pruneGateRunLogs bounds .logs to the newest gateLogRetainedRecords gate runs. It
+// pruneGateRunLogs bounds .logs to the newest gateLogRetainedRuns gate runs. It
 // counts runs, not files: a run owns a record and, when its stream opened, a stream
 // beside it, and both go together. A pruner that counted files would keep half that
 // many runs, and would leave a table pointing at a stream it had just removed.
@@ -395,10 +395,10 @@ func pruneGateRunLogs(root, currentRun string, stderr io.Writer) {
 		}
 		return runs[i].started.After(runs[j].started)
 	})
-	if len(runs) <= gateLogRetainedRecords {
+	if len(runs) <= gateLogRetainedRuns {
 		return
 	}
-	for _, run := range runs[gateLogRetainedRecords:] {
+	for _, run := range runs[gateLogRetainedRuns:] {
 		if run.run == currentRun {
 			continue
 		}

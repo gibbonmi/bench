@@ -137,6 +137,41 @@ func TestPhaseElapsedCellEqualsItsFinishRecord(t *testing.T) {
 	}
 }
 
+// BG24 at the seam the row names, the in-package phases command: the one production line
+// that hands the engine's buffer the run's stream file is driven end to end here, and the
+// file is then read off disk. A genuinely killed process is out of reach for a unit test,
+// so this proves the wiring rather than the kill: the phases the manifest declares reach
+// `.logs/gate-<run>.out`, in arrival order, each line under the phase that wrote it. That
+// a line lands when it arrives rather than when the phase settles, which is what makes a
+// killed run keep anything, is pinned beside it in run_stream_test.go.
+func TestFixturePhaseLinesReachTheRunsStreamFile(t *testing.T) {
+	root := fixturePhaseRoot(t, `{"phases":[`+
+		`{"name":"first","argv":["sh","-c","echo first said one; echo first said two"]},`+
+		`{"name":"second","argv":["sh","-c","echo second said one"]}]}`)
+	stubGateLogPathIgnored(t)
+	var stdout, stderr bytes.Buffer
+
+	ctx, finish := beginGateRunLog(context.Background(), root, &stderr, "dev")
+	stream := gateRunStreamFile(ctx)
+	if stream == nil {
+		t.Fatalf("the run opened no stream file, so this asserts nothing: %q", stderr.String())
+	}
+	code := phasesCommandAtKitWithSelection(ctx, root, root, fixtureSelection(root), &stdout, &stderr)
+	finish(Result{GateExit: code, ActionExit: code})
+
+	if code != 0 {
+		t.Fatalf("fixture run exit = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	data, err := os.ReadFile(stream.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "[first] first said one\n[first] first said two\n[second] second said one\n"
+	if string(data) != want {
+		t.Errorf("%s =\n%q\nwant\n%q", stream.Name(), data, want)
+	}
+}
+
 // phaseTableRow answers one phase's row of the green table as its three cells. The green
 // table's cells are a filtered name and two engine-owned values, so a plain split is
 // exact here.

@@ -18,18 +18,17 @@ import (
 type phaseStreams struct {
 	mu      sync.Mutex
 	buffers map[string][]string
-	// stderr carries the buffer's own diagnostics, which is a stream separate from any
-	// phase's. It stays quiet: the run log owner names the retained stream file when the
-	// file opens, and reports the directory it cannot use when the file does not.
-	stderr io.Writer
 	// file is the run's retained stream, or nil when the run opened none. The buffer
 	// writes each line through as the line arrives, so a killed run keeps what its
 	// phases already said.
 	file *os.File
 }
 
-func newPhaseStreams(stderr io.Writer) *phaseStreams {
-	return &phaseStreams{buffers: make(map[string][]string), stderr: stderr}
+// newPhaseStreams builds one run's line buffer. The writer it takes is the run's stderr,
+// and the buffer does not read it: the buffer emits no diagnosis of its own, because the
+// run log owner already names the retained file and reports the .logs it cannot use.
+func newPhaseStreams(_ io.Writer) *phaseStreams {
+	return &phaseStreams{buffers: make(map[string][]string)}
 }
 
 // retain names the file every line is written through to. A run that opened none stays

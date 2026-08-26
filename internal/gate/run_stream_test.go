@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // openTestStreamFile opens one stream file the way a run's own open does, so a test
@@ -99,7 +97,7 @@ func TestGateRunNamesTheStreamFileOnceOnStderr(t *testing.T) {
 	if want := "gate: stream " + stream.Name() + "\n"; !strings.Contains(stderr.String(), want) {
 		t.Errorf("stderr = %q, want it to carry %q", stderr.String(), want)
 	}
-	// The stream line is an addition. The run still names its progress log, once.
+	// A run that opened both files names both, and names each exactly once.
 	if got := strings.Count(stderr.String(), "gate: progress log "); got != 1 {
 		t.Errorf("stderr named the progress log %d times, want 1:\n%s", got, stderr.String())
 	}
@@ -110,11 +108,7 @@ func TestGateRunNamesTheStreamFileOnceOnStderr(t *testing.T) {
 // tree it names. The report then says the stream is unavailable rather than naming a
 // file that holds nothing.
 func TestGateRunWritesNoStreamThroughASymlinkedLogDir(t *testing.T) {
-	root, target := t.TempDir(), t.TempDir()
-	if err := os.Symlink(target, gateLogDir(root)); err != nil {
-		t.Fatal(err)
-	}
-	stubGateLogPathIgnored(t)
+	root, target := newSymlinkedLogRoot(t)
 	var stderr bytes.Buffer
 
 	ctx, finish := beginGateRunLog(context.Background(), root, &stderr, "dev")
@@ -142,25 +136,23 @@ func TestGateRunWritesNoStreamThroughASymlinkedLogDir(t *testing.T) {
 	}
 }
 
-// BG26: a .logs the run cannot write leaves the table bounded and the more-row saying
-// the stream is unavailable. A refused stream costs the reader the whole, never the
-// bound, and the run names no file it did not open.
-func TestUnwritableLogDirLeavesTheTableBoundedAndTheStreamUnavailable(t *testing.T) {
-	root := newLoggingPruneRoot(t)
-	logs := gateLogDir(root)
-	t.Cleanup(func() { _ = os.Chmod(logs, 0o700) })
-	if err := os.Chmod(logs, 0o500); err != nil {
-		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip directory permissions: %v", err))
-	}
-	if file, err := os.Create(filepath.Join(logs, "probe")); err == nil {
-		file.Close()
-		capability.Capability(t, capability.Privilege, "mode 0o500 directory is still writable by this user")
-	}
+// BG26: a run whose stream file is refused leaves the table bounded and the more-row
+// saying the stream is unavailable. The refusal is partial by construction here. The
+// record's own open runs first and succeeds, and only the stream is refused, which is the
+// state a run reaches when it keeps its verdict and loses the whole its table points at.
+// A refused stream costs the reader that whole, never the bound, and the run names no
+// file it did not open.
+func TestARefusedStreamLeavesTheTableBoundedAndTheStreamUnavailable(t *testing.T) {
+	root, _ := newSymlinkedLogRoot(t)
 
 	var runErr bytes.Buffer
 	ctx, finish := beginGateRunLog(context.Background(), root, &runErr, "dev")
-	defer finish(Result{})
-
+	if strings.Contains(runErr.String(), "progress logging unavailable") {
+		t.Fatalf("the run opened no record, so the refusal here is not the partial one: %q", runErr.String())
+	}
+	if stream := gateRunStreamFile(ctx); stream != nil {
+		t.Fatalf("the run opened %s, so this asserts nothing about a refused stream", stream.Name())
+	}
 	if strings.Contains(runErr.String(), "gate: stream ") {
 		t.Errorf("stderr named a stream the run never opened: %q", runErr.String())
 	}
@@ -181,6 +173,68 @@ func TestUnwritableLogDirLeavesTheTableBoundedAndTheStreamUnavailable(t *testing
 	if want := "+30 more lines (stream unavailable)"; rows[failureRowCap] != want {
 		t.Errorf("more-row = %q, want %q", rows[failureRowCap], want)
 	}
+
+	// The record the run did open still holds this run's own start and finish, so the
+	// refusal above cost the run its stream alone.
+	finish(Result{})
+	record := gateRunLogFrom(t, ctx).file.Name()
+	data, err := os.ReadFile(record)
+	if err != nil {
+		t.Fatalf("the record the run opened is unreadable: %v", err)
+	}
+	for _, event := range []string{`"event":"gate.start"`, `"event":"gate.finish"`} {
+		if !strings.Contains(string(data), event) {
+			t.Errorf("%s = %q, want it to carry %s", record, data, event)
+		}
+	}
+}
+
+// A run's stream file is never opened over a path some other run already took.
+// openGateStreamFile opens with O_EXCL, so a taken name is a refusal rather than an
+// append, and two runs sharing one instant cannot interleave their lines in one file.
+func TestGateRunOpensNoStreamOverATakenPath(t *testing.T) {
+	root := newPruneRoot(t)
+	run := seededRun(0)
+	if err := os.WriteFile(gateLogStreamPath(root, run), []byte("another run's lines\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if file := openGateStreamFile(root, run); file != nil {
+		file.Close()
+		t.Fatalf("the run opened %s over a path already taken", file.Name())
+	}
+	data, err := os.ReadFile(gateLogStreamPath(root, run))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "another run's lines\n" {
+		t.Errorf("the taken file = %q, want it untouched", data)
+	}
+}
+
+// newSymlinkedLogRoot builds a root whose .logs is a symlink to a directory elsewhere.
+// MkdirAll and the record's own open both follow such a link, so the run keeps its
+// record; only the stream's Lstat refuses. This is the one fixture that reaches a run
+// with a record and no stream.
+func newSymlinkedLogRoot(t *testing.T) (root, target string) {
+	t.Helper()
+	root, target = t.TempDir(), t.TempDir()
+	if err := os.Symlink(target, gateLogDir(root)); err != nil {
+		t.Fatal(err)
+	}
+	stubGateLogPathIgnored(t)
+	return root, target
+}
+
+// gateRunLogFrom answers the run log a context carries, which is where a test asks what
+// the run actually opened.
+func gateRunLogFrom(t *testing.T, ctx context.Context) *gateRunLog {
+	t.Helper()
+	log, _ := ctx.Value(gateRunLogKey{}).(*gateRunLog)
+	if log == nil {
+		t.Fatal("the context carries no run log")
+	}
+	return log
 }
 
 // The child process that runs the phases appends to the parent's file. The parent hands
