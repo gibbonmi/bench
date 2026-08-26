@@ -364,6 +364,16 @@ func TestCensusDutyAnchorsRedOnRemoval(t *testing.T) {
 			".agents/commands/bench-final-check.md post-merge tail dropped the zero census close and its advisory rule",
 		},
 		{
+			".agents/commands/bench-final-check.md",
+			"Its `--what` lists each verb head with its count. Its `--right` names the Bench form per head, or `none`. Its `--rule` proposes the verb or the help change.",
+			".agents/commands/bench-final-check.md post-merge tail dropped the census learning fields: --what, --right, and --rule",
+		},
+		{
+			".agents/commands/bench-final-check.md",
+			"A spec retro cites the landing's census entry under `### Bench CLI` with its `Feeds:` line.",
+			".agents/commands/bench-final-check.md retro section dropped the census citation under ### Bench CLI with its Feeds: line",
+		},
+		{
 			".agents/skills/bench-craft-delegate/SKILL.md",
 			"Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the landing's census entry.",
 			".agents/skills/bench-craft-delegate/SKILL.md charge dropped the delegate's zero to two Bench CLI improvements",
