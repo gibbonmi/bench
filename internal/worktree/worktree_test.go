@@ -158,6 +158,29 @@ func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
 	}
 }
 
+func TestReleaseCommandHelpAndInvalidArguments(t *testing.T) {
+	t.Parallel()
+	want := "usage: " + usage.WorktreeRelease + "\n"
+	for _, tc := range []struct {
+		name       string
+		args       []string
+		wantCode   int
+		wantStdout string
+		wantStderr string
+	}{
+		{name: "help", args: []string{"--help"}, wantCode: 0, wantStdout: want},
+		{name: "invalid", args: []string{"invalid"}, wantCode: 2, wantStderr: want},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := ReleaseCommand("", Home(), tc.args, &stdout, &stderr)
+			if code != tc.wantCode || stdout.String() != tc.wantStdout || stderr.String() != tc.wantStderr {
+				t.Fatalf("ReleaseCommand(%q) = (%d, %q, %q), want (%d, %q, %q)", tc.args, code, stdout.String(), stderr.String(), tc.wantCode, tc.wantStdout, tc.wantStderr)
+			}
+		})
+	}
+}
+
 // TestCreateCommandHelpPerformsNoRefresh pins that a help request never fetches:
 // usage.Parse answers --help before refreshop.Consume ever sees the args, so a
 // --refresh alongside --help prints only the help line, not a worktree_refresh table.
