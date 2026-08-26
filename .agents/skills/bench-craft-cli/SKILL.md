@@ -79,6 +79,7 @@ applies to each surface. Commands not listed retain their own contracts.
 | `bench guards` | Offer the applicable repair for each stale or unwired guard. |
 | `bench diff` | Offer full inspection or retry only when snapshot state warrants it. |
 | `bench coverage` | Successful default extraction offers one check action per mapped coverage row: `bench coverage --check <spec>`. For repairable mapped rows, that exact command is the retry with why `retry after repairing coverage map`. `coverage --check` and every refusal retain their error contracts and append no disclosure. |
+| `bench harnesses` | Project the compiled harness record; both views are terminal reads, so the disposition is always `help[0]`. |
 | `bench roadmap` | Default index omits bodies; request selected complete rows with `bench roadmap --context --row <ID,...>` or the complete snapshot with `bench roadmap --context --full`. |
 | `bench worktree list` | Offer inspect, execute, or clean actions according to each worktree state. |
 

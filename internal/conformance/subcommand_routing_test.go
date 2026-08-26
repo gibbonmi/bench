@@ -59,6 +59,7 @@ var subcommandRouting = map[string]routingEntry{
 	"diff":      routed("internal/diff"),
 	"guards":    routed("internal/guards"),
 	"handoff":   routed("internal/handoff"),
+	"harnesses": routed("internal/harnesses"),
 	"idea":      routed("internal/roadmap"),
 	"learning":  routed("internal/roadmap"),
 	"learnings": routed("internal/learnings"),

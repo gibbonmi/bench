@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/harnesses"
 )
 
 func testSignal(severity int, name, detail, text string) Signal {
@@ -82,6 +84,37 @@ func TestProducedDrainRoutesFromItsConstruction(t *testing.T) {
 	}
 }
 
+// HC13. The choice list names every record row, with claude first and the rest sorted.
+func TestHarnessChoicesNamesTheRecord(t *testing.T) {
+	if got, want := HarnessChoices(), "claude|codex|none|opencode"; got != want {
+		t.Errorf("HarnessChoices() = %q, want %q", got, want)
+	}
+	for _, name := range []string{"claude", "codex", "opencode", "none"} {
+		if !ValidHarness(name) {
+			t.Errorf("ValidHarness(%q) = false, want true", name)
+		}
+	}
+	if ValidHarness("cursor") {
+		t.Error(`ValidHarness("cursor") = true, want false`)
+	}
+}
+
+// The table holds one entry per record row, and a formless row holds an empty form.
+func TestHarnessPrefixMirrorsTheRecord(t *testing.T) {
+	if len(harnessPrefix) != len(harnesses.Rows) {
+		t.Fatalf("harnessPrefix has %d entries, want %d", len(harnessPrefix), len(harnesses.Rows))
+	}
+	for _, row := range harnesses.Rows {
+		form, ok := harnessPrefix[row.Harness]
+		if !ok || form != row.PhaseForm {
+			t.Errorf("harnessPrefix[%q] = (%q, %v), want %q", row.Harness, form, ok, row.PhaseForm)
+		}
+	}
+	if HarnessClaude != "claude" {
+		t.Errorf("HarnessClaude = %q, want %q", HarnessClaude, "claude")
+	}
+}
+
 func TestRouteTranslatesHarnessPrefix(t *testing.T) {
 	signals := []Signal{testSignal(4, "drain", "1 idea", "/bench-drain")}
 	for _, tc := range []struct {
@@ -92,6 +125,60 @@ func TestRouteTranslatesHarnessPrefix(t *testing.T) {
 	} {
 		if got := Route(signals, tc.harness).Lead.Action; got != tc.want {
 			t.Errorf("Route(%q).Lead.Action = %q, want %q", tc.harness, got, tc.want)
+		}
+	}
+}
+
+// HC17 and HC18. A phase signal is not a command for a harness with no phase form, so the
+// route falls through to the shell command below it. The skipped phase also leaves the
+// runners-up, which is the ticket's runners-up row.
+func TestRouteSkipsAPhaseSignalForAFormlessHarness(t *testing.T) {
+	signals := []Signal{
+		testSignal(4, "drain", "1 idea", "/bench-drain"),
+		testSignal(5, "git", "1 unpushed commit", "git push"),
+		testSignal(8, "specs", "1 staged spec", "/bench-implement-spec"),
+	}
+	for _, harness := range []string{"none", "opencode"} {
+		route := Route(signals, harness)
+		if route.NoCommand || route.Lead.Name != "git" || route.Lead.Action != "git push" {
+			t.Errorf("Route(%q).Lead = %#v, want the git push signal", harness, route.Lead)
+		}
+		if len(route.RunnersUp) != 0 {
+			t.Errorf("Route(%q).RunnersUp = %#v, want the phase signal left out", harness, route.RunnersUp)
+		}
+	}
+}
+
+// HC19. A board of phase signals alone leaves a formless harness with no command. The lead
+// still names the board's first signal, so the state and the reason survive.
+func TestRouteReportsNoCommandForAPhaseOnlyBoard(t *testing.T) {
+	signals := []Signal{
+		testSignal(4, "drain", "1 idea", "/bench-drain"),
+		testSignal(8, "specs", "1 staged spec", "/bench-implement-spec"),
+	}
+	route := Route(signals, "none")
+	if !route.NoCommand || route.Lead.Name != "drain" || route.Lead.Action != "" {
+		t.Fatalf("Route(none) = %#v, want an empty command on the first signal", route)
+	}
+	if len(route.RunnersUp) != 0 {
+		t.Fatalf("Route(none).RunnersUp = %#v, want none", route.RunnersUp)
+	}
+}
+
+// HC20. Route does not re-rank the board per harness: only the command cell moves.
+func TestRouteKeepsTheLeadStateAcrossHarnesses(t *testing.T) {
+	signals := []Signal{
+		testSignal(4, "drain", "1 idea", "/bench-drain"),
+		testSignal(8, "specs", "1 staged spec", "/bench-implement-spec"),
+	}
+	want := map[string]string{HarnessClaude: "/bench-drain", "codex": "$bench-drain", "none": "", "opencode": ""}
+	for _, harness := range []string{HarnessClaude, "codex", "none", "opencode"} {
+		lead := Route(signals, harness).Lead
+		if lead.Name != "drain" || lead.Detail != "1 idea" {
+			t.Errorf("Route(%q).Lead = (%q, %q), want (drain, 1 idea)", harness, lead.Name, lead.Detail)
+		}
+		if lead.Action != want[harness] {
+			t.Errorf("Route(%q).Lead.Action = %q, want %q", harness, lead.Action, want[harness])
 		}
 	}
 }
@@ -148,7 +235,7 @@ func TestFirstInvocable(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		_, signal, ok := firstInvocable(tc.signals)
+		_, signal, ok := firstInvocable(tc.signals, HarnessClaude)
 		if ok != tc.wantPresent || signal.Action != tc.action || signal.Name != tc.wantName {
 			t.Fatalf("%s: firstInvocable = (%q, %q, %v), want (%q, %q, %v)",
 				tc.what, signal.Action, signal.Name, ok, tc.action, tc.wantName, tc.wantPresent)

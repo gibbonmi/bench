@@ -17,8 +17,9 @@ import (
 
 var approvedAXIQueries = map[string][]string{
 	"anchors": nil, "learnings": nil, "maps": nil, "guards": nil, "diff": nil, "coverage": nil,
-	"roadmap":  nil,
-	"worktree": {"list"},
+	"harnesses": nil,
+	"roadmap":   nil,
+	"worktree":  {"list"},
 }
 
 var axiChildName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)

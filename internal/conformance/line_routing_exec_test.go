@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/harnesses"
 )
 
 // matrixBinding is the routed fixture every runtime check resolves against. codex and
@@ -25,6 +29,29 @@ const openCodeBinding = matrixBinding +
 	"BENCH_OPENCODE_TOP=openai/gpt-5.6-sol\n" +
 	"BENCH_OPENCODE_MID=openai/gpt-5.6-terra\n" +
 	"BENCH_OPENCODE_CHEAP=openai/gpt-5.6-luna\n"
+
+// midCellOf names the environment key a fixture binding uses for one harness's mid cell.
+func midCellOf(harness string) string {
+	return "BENCH_" + strings.ToUpper(harness) + "_MID="
+}
+
+// boundIn reports whether binding binds harness's mid cell. A fixture that leaves the
+// cell out holds that harness unadopted.
+func boundIn(binding, harness string) bool {
+	return strings.Contains(binding, midCellOf(harness))
+}
+
+// fixtureMid returns the model binding gives harness's mid cell. The fixture text is the
+// one source of the expected token, so a surface that reads another harness's column
+// names a token this function never returns.
+func fixtureMid(binding, harness string) string {
+	_, rest, found := strings.Cut(binding, midCellOf(harness))
+	if !found {
+		return ""
+	}
+	value, _, _ := strings.Cut(rest, "\n")
+	return value
+}
 
 // coreless returns env with a PATH carrying neither a bench wrapper nor the stub dir. The
 // shims' wrapper search then comes up empty, and each one takes its own missing-core rim.
@@ -141,9 +168,18 @@ func checkAgentHookBehavior(root string) []string {
 	return diags
 }
 
-// harnessOf maps each adapter to the harness column it must ask the core for. An adapter
+// adapterRows names every harness the record gives a headless adapter, in the record's
+// order. An adapter asks the core for its own row's harness column, because an adapter
 // that asks for another harness's column launches the wrong family.
-var harnessOf = map[string]string{"claude": "claude", "codex": "codex", "opencode": "opencode"}
+func adapterRows() []harnesses.Row {
+	var rows []harnesses.Row
+	for _, row := range harnesses.Rows {
+		if row.Headless != "" {
+			rows = append(rows, row)
+		}
+	}
+	return rows
+}
 
 func checkAdapterLineGuards(root string) []string {
 	if !exists(filepath.Join(root, ".bench", "adapters")) {
@@ -161,8 +197,9 @@ func checkAdapterLineGuards(root string) []string {
 		}
 		defer cleanup()
 	}
-	for _, name := range []string{"claude", "codex", "opencode"} {
-		path := filepath.Join(root, ".bench", "adapters", name)
+	for _, row := range adapterRows() {
+		name := row.Harness
+		path := filepath.Join(root, filepath.FromSlash(row.Headless))
 		if !exists(path) {
 			diags = append(diags, "adapter missing from .bench/adapters: "+name)
 			continue
@@ -174,7 +211,7 @@ func checkAdapterLineGuards(root string) []string {
 			diags = append(diags, fmt.Sprintf("adapter %s does not refuse an unbound BENCH_MODEL in a routed repo", name))
 			continue
 		}
-		if !strings.Contains(text, `resolve-model --harness `+harnessOf[name]) {
+		if !strings.Contains(text, `resolve-model --harness `+name) {
 			diags = append(diags, fmt.Sprintf("adapter %s does not name its own harness when resolving the line", name))
 		}
 	}
@@ -204,25 +241,26 @@ func checkAdapterLineGuards(root string) []string {
 	}
 	defer cleanupUnbound()
 
-	for _, name := range []string{"claude", "codex", "opencode"} {
-		path := filepath.Join(root, ".bench", "adapters", name)
+	for _, row := range adapterRows() {
+		name := row.Harness
+		path := filepath.Join(root, filepath.FromSlash(row.Headless))
 		if !exists(path) {
 			continue
 		}
-		harness := harnessOf[name]
 		envBase := append(conformanceSubprocessEnv(), "PATH="+bindir+string(os.PathListSeparator)+os.Getenv("PATH"))
-		// opencode's column is unbound in the shared fixture, so its launch cases run
-		// against the provider-qualified fixture instead.
+		// A harness the shared fixture leaves unadopted has no bound column there, so its
+		// launch cases run against the provider-qualified fixture instead.
+		unadopted := !boundIn(matrixBinding, name)
 		boundRepo := routed
-		if name == "opencode" {
+		if unadopted {
 			boundRepo = openCodeRouted
 		}
 		// The adapter must launch on exactly what the core resolves for its own harness and
 		// tier. A shim that recomputes resolution passes a "calls resolve-model" check while
 		// drifting from the core. The test therefore compares the values directly.
-		core := runWithInputEnv(boundRepo, append(envBase, "BENCH_MODEL=mid"), "", filepath.Join(bindir, "bench"), "resolve-model", "--harness", harness)
+		core := runWithInputEnv(boundRepo, append(envBase, "BENCH_MODEL=mid"), "", filepath.Join(bindir, "bench"), "resolve-model", "--harness", name)
 		if core == nil || core.ExitCode != 0 || strings.TrimSpace(core.Stdout) == "" {
-			diags = append(diags, fmt.Sprintf("adapter %s core comparison failed: bench resolve-model --harness %s produced %+v", name, harness, core))
+			diags = append(diags, fmt.Sprintf("adapter %s core comparison failed: bench resolve-model --harness %s produced %+v", name, name, core))
 			continue
 		}
 		coreModel := strings.TrimSpace(core.Stdout)
@@ -233,11 +271,11 @@ func checkAdapterLineGuards(root string) []string {
 		if name == "codex" && (bound == nil || !strings.Contains(bound.Stdout, "--sandbox\nworkspace-write")) {
 			diags = append(diags, "adapter codex routed path does not select the workspace-write sandbox")
 		}
-		if name == "opencode" {
+		if unadopted {
 			// An unadopted harness fails closed. It has no fallback to another harness's column.
 			unboundColumn := runWithInputEnv(routed, append(envBase, "BENCH_MODEL=mid"), "line probe prompt", "bash", path)
-			if unboundColumn == nil || unboundColumn.ExitCode == 0 || !strings.Contains(unboundColumn.Stderr, "opencode column is unbound") {
-				diags = append(diags, fmt.Sprintf("adapter opencode does not refuse to launch while its column is unbound: %+v", unboundColumn))
+			if unboundColumn == nil || unboundColumn.ExitCode == 0 || !strings.Contains(unboundColumn.Stderr, name+" column is unbound") {
+				diags = append(diags, fmt.Sprintf("adapter %s does not refuse to launch while its column is unbound: %+v", name, unboundColumn))
 			}
 		}
 		unset := runWithInputEnv(boundRepo, envBase, "line probe prompt", "bash", path)
@@ -297,13 +335,26 @@ func checkLineHarnessSurfaces(root string) []string {
 		"PATH="+bindir+string(os.PathListSeparator)+os.Getenv("PATH"),
 		"BENCH_MODEL=mid")
 
-	var diags []string
-	for _, surface := range []struct {
+	type surfaceCase struct {
 		name, want string
 		args       []string
 		input      string
 		wantExit   int
-	}{
+	}
+	// The adapter surfaces come from the record, one per row that names a headless
+	// adapter, and each one wants the fixture's own binding for its harness.
+	var surfaces []surfaceCase
+	for _, row := range adapterRows() {
+		surfaces = append(surfaces, surfaceCase{
+			name:  row.Harness + " adapter",
+			want:  fixtureMid(openCodeBinding, row.Harness),
+			args:  []string{"bash", filepath.Join(root, filepath.FromSlash(row.Headless))},
+			input: "prompt",
+		})
+	}
+
+	var diags []string
+	for _, surface := range append([]surfaceCase{
 		// This case is the kit's own CLI, invoked from the kit checkout the way a session runs
 		// it.
 		{name: "kit CLI", want: "gpt-5.3-codex-spark", args: []string{"bash", realBench, "resolve-model", "--harness", "codex"}},
@@ -311,10 +362,7 @@ func checkLineHarnessSurfaces(root string) []string {
 		{name: "linked-repo CLI", want: "opus-4-8", args: []string{"bash", filepath.Join(bindir, "bench"), "resolve-model", "--harness", "claude"}},
 		// The guard names claude, so its denial advises in the claude column.
 		{name: "claude hook", want: "harness claude binds top=fable-5", args: []string{"bash", hook}, input: `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, wantExit: 2},
-		{name: "codex adapter", want: "gpt-5.3-codex-spark", args: []string{"bash", filepath.Join(root, ".bench", "adapters", "codex")}, input: "prompt"},
-		{name: "claude adapter", want: "opus-4-8", args: []string{"bash", filepath.Join(root, ".bench", "adapters", "claude")}, input: "prompt"},
-		{name: "opencode adapter", want: "openai/gpt-5.6-terra", args: []string{"bash", filepath.Join(root, ".bench", "adapters", "opencode")}, input: "prompt"},
-	} {
+	}, surfaces...) {
 		probe := runWithInputEnv(routed, env, surface.input, surface.args...)
 		if probe == nil || probe.ExitCode != surface.wantExit {
 			got := -1
@@ -329,4 +377,50 @@ func checkLineHarnessSurfaces(root string) []string {
 		}
 	}
 	return diags
+}
+
+// TestAdapterLineGuardsNameEveryRecordAdapter holds the check to the record. A root that
+// holds every adapter but one names exactly the missing one, so a new record row with a
+// headless adapter joins the check without an edit here.
+//
+// The independent expectation names the harnesses the tree adopts today. A filter that
+// drops one of them therefore turns this test red, where a wholly record-derived
+// expectation would follow the drop and stay green.
+func TestAdapterLineGuardsNameEveryRecordAdapter(t *testing.T) {
+	rows := adapterRows()
+	var got []string
+	for _, row := range rows {
+		got = append(got, row.Harness)
+	}
+	want := []string{"codex", "claude", "opencode"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("adapterRows = %#v, want %#v", got, want)
+	}
+	for _, missing := range rows {
+		root := t.TempDir()
+		adapters := filepath.Join(root, ".bench", "adapters")
+		if err := os.MkdirAll(adapters, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for _, row := range rows {
+			if row.Harness == missing.Harness {
+				continue
+			}
+			body := "#!/usr/bin/env bash\nmodel=\"$(bench resolve-model --harness " + row.Harness + ")\"\n"
+			if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(row.Headless)), []byte(body), 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}
+		diags := checkAdapterLineGuards(root)
+		want := "adapter missing from .bench/adapters: " + missing.Harness
+		found := false
+		for _, d := range diags {
+			if d == want {
+				found = true
+			}
+		}
+		if !found {
+			t.Fatalf("checkAdapterLineGuards without %s = %#v, want %q", missing.Harness, diags, want)
+		}
+	}
 }

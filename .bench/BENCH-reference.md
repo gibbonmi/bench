@@ -56,6 +56,8 @@ assignments; the file map, adapter contracts, and hook layers live below.
 - `.agents/skills/` contains portable Bench skills.
 - `.bench/adapters/` contains reference harness adapters for `bench shift`
   (`claude`, `codex`, `opencode`). Point `BENCH_AGENT` at one of them.
+  `internal/harnesses` holds one row per harness, and each row names that
+  harness's headless adapter.
 - `.bench/hooks/` contains shared hook scripts used by harness adapters.
 - `.bench/lib/` contains shared shell functions the hooks and adapters source.
   `resolve-bench.sh` is the one source of the bench-wrapper search order. The
@@ -325,11 +327,10 @@ Bench layers git safety:
   Codex build new enough to support hooks. An older Codex ignores the file
   and keeps only the backstops below.
 - The agent-line guard (`check-agent-line`) wires on Claude Code only. Codex
-  cannot host it: a delegation (`spawn_agent`) never surfaces as a matchable
-  `tool_name` on a deny-capable event. `SubagentStart` carries the active
-  model through its common input fields. It cannot deny the spawn:
-  `continue: false` does not stop the subagent (Codex hooks docs, checked
-  2026-07-11). The line's harness-independent backstop is the shift adapters'
+  cannot host it, because a delegation (`spawn_agent`) never surfaces as a
+  matchable `tool_name` on a deny-capable event. Run `bench harnesses codex`
+  for that verdict with its source and its date. The line's harness-independent
+  backstop is the shift adapters'
   refusal to run with an unset or unbound `BENCH_MODEL`. If the Codex
   changelog adds a spawn tool name or a deny-capable SubagentStart, revisit
   this rule.

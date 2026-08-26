@@ -8,6 +8,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added `bench harnesses` to print the harness record, one TOON row per harness.
+  A row names the providers, the phase form, the hook config with its wired
+  events, the delegation-guard verdict, and the headless adapter.
+  `bench harnesses <harness>` prints that harness's cells. A graded cell names
+  the source that was read and the date of that read.
+- Added the `--harness none` route for a shell operator with no agent harness.
+  `bench status` gives that operator the first invocable non-phase command, or
+  an empty command cell when the board holds no such command. The `opencode`
+  harness routes the same way, because it carries no phase form.
 - A `census` signal now counts the raw shell calls each assignment worktree
   makes. `bench worktree land` carries the count as the `census=<n>` key of its
   landed record, and `/bench-final-check` writes one advisory `bench learning`

@@ -340,6 +340,12 @@ func TestRowsReportFollowOnManifestAndBothHarnessWires(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(hooks, "block-bench-follow-on.sh"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	// A second script no config names holds the other end of the wired cell: the report
+	// says "none", not a blank cell.
+	const unwired = "#!/usr/bin/env bash\n# name: zz-unwired\n# boundary: PreToolUse:Bash\n# denies: nothing here\n# why: this script is wired by no harness config\nexit 0\n"
+	if err := os.WriteFile(filepath.Join(hooks, "zz-unwired.sh"), []byte(unwired), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	for _, cfg := range []string{filepath.Join(root, ".claude", "settings.json"), filepath.Join(root, ".codex", "hooks.json")} {
 		if err := os.MkdirAll(filepath.Dir(cfg), 0o755); err != nil {
 			t.Fatal(err)
@@ -354,12 +360,41 @@ func TestRowsReportFollowOnManifestAndBothHarnessWires(t *testing.T) {
 	if len(rows) < 1 || !reflect.DeepEqual(rows[0], want) {
 		t.Fatalf("Rows = %#v, want first row %#v", rows, want)
 	}
+	wantUnwired := []string{"zz-unwired", "PreToolUse:Bash", "nothing here", "", "", "", "none"}
+	if len(rows) < 2 || !reflect.DeepEqual(rows[1], wantUnwired) {
+		t.Fatalf("Rows = %#v, want second row %#v", rows, wantUnwired)
+	}
 
 	if err := os.WriteFile(filepath.Join(root, ".codex", "hooks.json"), []byte(`{"hook":"other"}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if got := Rows(root); len(got) < 1 || got[0][6] != "claude" {
 		t.Fatalf("Rows after Codex wire omission = %#v, want Claude-only row", got)
+	}
+}
+
+// TestWiresScriptAnswersTheOneWiringRule grades the predicate two readers share. The
+// invalid-JSON row is the load-bearing one: the wiring reader must not report a wire out
+// of bytes no parser accepts.
+func TestWiresScriptAnswersTheOneWiringRule(t *testing.T) {
+	const script = ".bench/hooks/check-agent-line.sh"
+	tests := []struct {
+		name   string
+		config string
+		want   bool
+	}{
+		{"a command that names the script", `{"hooks":{"PreToolUse":[{"hooks":[{"command":"$CLAUDE_PROJECT_DIR/.bench/hooks/check-agent-line.sh"}]}]}}`, true},
+		{"a brace expansion of the same path", `{"c":"${CLAUDE_PROJECT_DIR}/.bench/hooks/check-agent-line.sh"}`, true},
+		{"a config that names another script", `{"c":"$CLAUDE_PROJECT_DIR/.bench/hooks/stop.sh"}`, false},
+		{"an unparseable config", `{"c":"$CLAUDE_PROJECT_DIR/.bench/hooks/check-agent-line.sh"`, false},
+		{"an empty config", "", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := WiresScript([]byte(tt.config), script); got != tt.want {
+				t.Fatalf("WiresScript(%q) = %v, want %v", tt.config, got, tt.want)
+			}
+		})
 	}
 }
 

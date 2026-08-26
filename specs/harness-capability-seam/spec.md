@@ -1,6 +1,6 @@
 # Harness capability seam
 
-Status: staged
+Status: implemented
 
 Roadmap: FT239
 
@@ -189,7 +189,8 @@ record's file, so the handoff package still holds no literal.
 invocable for a harness only when that harness has a phase form. `Route`
 skips a phase action for a formless harness the way it skips prose today. A
 board with only phase actions therefore renders an empty command cell for
-`none` and `opencode`. The lead's state and why never depend on the harness.
+`none` and `opencode`. The ladder is not re-ranked per harness, so for a
+harness that can invoke the lead, only the command cell differs.
 
 **`bench harnesses` is an AXI query.** Bare, it prints
 `schema: <n>` and `harnesses[N]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}`.
@@ -287,10 +288,10 @@ live root.
 | HC22 | 22 | `bench handoff --harness none` on a board led by `git push` writes `git push` under `## Next command`. | handoff unit | A handoff that rejects `none` cannot pin a shell resume. |
 | HC23 | 23 | `bench status --route --harness cursor` prints the grammar and exits 2. | status command unit | A permissive parse routes a typo. |
 | HC24 | 24 | `bench harnesses` prints `schema: 1` and then `harnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}` with four rows. | verb unit | A projection that skips `none` hides the degraded path. |
-| HC25 | 25 | `bench harnesses codex` prints `cells[12]{field,value,source,checked}` with the `delegation_guard` source naming the Codex hooks docs. | verb unit | A detail view without sources restates prose. |
+| HC25 | 25 | `bench harnesses codex` prints `cells[13]{field,value,source,checked}` with the `delegation_guard` source naming the Codex hooks docs. | verb unit | A detail view without sources restates prose. |
 | HC26 | 26 | `bench harnesses cursor` prints the usage line and exits 2. | verb unit | An unknown name rendered as an empty table reads as a definitive empty state. |
 | HC27 | 27 | `checkAXIQueryRegistry` over the live root reports no diagnostic. | conformance over the live root | A verb missing from any of the three seams reds the registry check. |
-| HC28 | 28 | `bin/bench.sh harnesses` prints the same output as the direct verb. | entry-point-parity row | A wrapper without the label reaches the default case with no routing entry. |
+| HC28 | 28 | `bin/bench.sh harnesses` prints the same output as the direct verb. | wrapper parity test | A wrapper without the label reaches the default case with no routing entry. |
 | HC29 | 29 | A root with `.bench/adapters/cursor` and no `cursor` row yields a diagnostic naming the adapter. | conformance unit | A check that walks only the record never sees a new adapter. |
 | HC30 | 30 | A root with `.cursor/hooks.json` naming a `.bench/hooks/` script and no `cursor` row yields a diagnostic naming the config. | conformance unit | A check that walks only the record never sees a new config. |
 | HC31 | 31 | A `claude` config missing the `Stop` wiring yields a diagnostic naming `Stop`. | conformance unit | The record overclaims a hook. |
@@ -351,6 +352,7 @@ live root.
 - `internal/anchors/registry_data_test.go`
 - `cmd/bench/main.go`
 - `cmd/bench/main_test.go`
+- `cmd/bench/command_registry_test.go`
 - `bin/bench.sh`
 - `tests/canary/harness-record/`
 - `tests/canary/entry-point-parity/`
