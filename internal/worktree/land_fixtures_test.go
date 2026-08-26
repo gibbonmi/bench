@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // publicLandingFixture mints one private Bench home and returns it last. The caller
@@ -80,6 +81,23 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 		mustWrite(t, filepath.Join(creation.Path, filepath.FromSlash(ignored)), []byte("residue\n"), 0o600)
 	}
 	return root, creation, base, tip, tally
+}
+
+// cannedGreenShape is what a bounded green run prints: the phase table, the skip count,
+// and the verdict. A landing fixture prints these bytes itself, so the journey grades the
+// relay rather than the engine that would have produced them.
+const cannedGreenShape = "phases[1]{phase,verdict,elapsed_ms}:\n  build,green,12\ncapability-skips: 0 (capability=0 environment=0)\ngate: green\n"
+
+// commitCannedShapeGate replaces the fixture's prospective gate with one that prints a
+// canned shape and settles green. The landing runs the prospective script, so that is the
+// one script the relay carries.
+func commitCannedShapeGate(t *testing.T, root, shape string) (base string) {
+	t.Helper()
+	script := "#!/bin/sh\nprintf '%s' " + sanitize.ShellQuote(shape) + "\nexit 0\n"
+	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte(script), 0o755)
+	gitRun(t, root, "add", ".bench/gate-prospective.sh")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "canned bounded gate")
+	return gitOutput(t, root, "rev-parse", "HEAD")
 }
 
 func exitCode(err error) int {

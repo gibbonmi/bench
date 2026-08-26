@@ -367,6 +367,31 @@ func TestLandGradesASourceCommittedByALanePass(t *testing.T) {
 	}
 }
 
+// BG22: the gate's bounded green shape reaches `bench worktree land`'s stdout byte for
+// byte, ahead of the landing's own record. The landing relays the gate's writers, so it
+// filters nothing out of the shape and puts nothing between it and the record.
+func TestLandRelaysTheBoundedGreenShapeBeforeTheLandedRecord(t *testing.T) {
+	t.Parallel()
+	request := "public-land-canned-shape"
+	root, creation, _, _, _, home := publicLandingFixture(t, request, "", "")
+	base := commitCannedShapeGate(t, root, cannedGreenShape)
+	gitRun(t, creation.Path, "rebase", "main")
+	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("land exit = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	if !strings.HasPrefix(stdout.String(), cannedGreenShape) {
+		t.Fatalf("stdout = %q, want it to open with the gate's bytes unchanged %q", stdout.String(), cannedGreenShape)
+	}
+	if rest := strings.TrimPrefix(stdout.String(), cannedGreenShape); !strings.HasPrefix(rest, "landed{") {
+		t.Errorf("stdout after the shape = %q, want the landed record next", rest)
+	}
+}
+
 // recordRawCalls appends n raw-call records for the assignment the pool path names.
 // The fixture calls the recorder rather than write the file, so the test and the
 // production writer keep one shape.
