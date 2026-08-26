@@ -69,8 +69,6 @@ means the repository-controlled compliance assessment.
 
 **FT202 (MEDIUM, decision required) — a shared purity-census helper, and the census scope for process-backed fixtures.**
 
-**FT185 (MEDIUM) — gate results join the structured Bench output contract.**
-
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.**
 
 **FT106 (MEDIUM) — doc claims re-verified against the tree.**
@@ -295,6 +293,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT185: build the staged bounded-gate-output spec.
-2. `/bench-shape-idea` — FT215: decide the scoped gate and focused-iteration surfaces before adding another independent projection.
-3. `/bench-shape-idea` — FT255: settle one test-concurrency budget before more parallel builds compete for the host.
+1. `/bench-shape-idea` — FT215: decide the scoped gate and focused-iteration surfaces before adding another independent projection.
+2. `/bench-shape-idea` — FT255: settle one test-concurrency budget before more parallel builds compete for the host.
