@@ -43,9 +43,10 @@ type DiffFacts struct {
 // LandedStateFact is the offline git verdict used by status. DirtyPaths describes the named
 // checkout; commit and branch counts describe the repository.
 type LandedStateFact struct {
-	DirtyPaths      int
-	UnpushedCommits int
-	UniqueBranches  int
+	DirtyPaths        int
+	UnpushedCommits   int
+	UniqueBranches    int
+	UniqueBranchNames []string
 }
 
 // LandedState derives checkout-local dirtiness and repository-wide commit and branch
@@ -103,7 +104,12 @@ func LandedState(root string, excludedDirtyPaths ...string) (LandedStateFact, er
 			}
 		}
 	}
-	return LandedStateFact{DirtyPaths: len(dirty), UnpushedCommits: len(commits), UniqueBranches: len(unique)}, nil
+	uniqueNames := make([]string, 0, len(unique))
+	for branch := range unique {
+		uniqueNames = append(uniqueNames, branch)
+	}
+	sort.Strings(uniqueNames)
+	return LandedStateFact{DirtyPaths: len(dirty), UnpushedCommits: len(commits), UniqueBranches: len(uniqueNames), UniqueBranchNames: uniqueNames}, nil
 }
 
 // CheckedOutBranch names the branch HEAD points at, or the literal "HEAD" when detached.

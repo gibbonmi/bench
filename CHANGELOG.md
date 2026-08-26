@@ -8,6 +8,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added a plan-before-apply cleanup for unclaimed local `bench/assign/` refs.
+
 - Added `bench harnesses` to print the harness record, one TOON row per harness.
   A row names the providers, the phase form, the hook config with its wired
   events, the delegation-guard verdict, and the headless adapter.

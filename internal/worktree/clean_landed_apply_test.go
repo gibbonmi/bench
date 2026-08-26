@@ -12,16 +12,43 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
+func TestCleanUnclaimedDiscardBranchPlansThenDeletesExactAssignmentRef(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	home := filepath.Join(root, ".bench-home")
+	branch := intent.AssignmentBranchRef(strings.Repeat("a", 32), strings.Repeat("b", 32))
+	short := strings.TrimPrefix(branch, "refs/heads/")
+	gitRun(t, root, "checkout", "-qb", short)
+	commitInWorktree(t, root, "orphan.txt", "orphan\n", "orphan assignment")
+	gitRun(t, root, "checkout", "-q", "main")
+
+	plan, planErr, planCode := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
+	if planCode != 0 || planErr != "" || !strings.Contains(plan, branch) {
+		t.Fatalf("plan exit=%d stdout=%q stderr=%q, want unclaimed assignment branch plan", planCode, plan, planErr)
+	}
+	if !git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) {
+		t.Fatalf("plan deleted %q", branch)
+	}
+
+	output, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply", cleanupRowFingerprint(t, plan))
+	if code != 0 || stderr != "" || !strings.Contains(output, branch) {
+		t.Fatalf("apply exit=%d stdout=%q stderr=%q, want exact branch deletion", code, output, stderr)
+	}
+	if git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) {
+		t.Fatalf("apply retained %q", branch)
+	}
+}
+
 func TestCleanLandedApplyRemovesAndSettles(t *testing.T) {
 	t.Parallel()
 	binary := testRunBinary(t)
 	root, home, first, second, dirty := landedSetFixture(t)
-	plan, planErr, planCode := runCleanLanded(t, root, home, "--landed")
+	plan, planErr, planCode := runCleanup(t, root, home, "--landed")
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
 	}
 
-	output, stderr, code := runCleanLanded(t, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	output, stderr, code := runCleanup(t, root, home, "--landed", "--apply", cleanupRowFingerprint(t, plan))
 	if code != 0 || stderr != "" {
 		t.Fatalf("apply exit=%d stdout=%q stderr=%q", code, output, stderr)
 	}
@@ -79,16 +106,16 @@ func TestCleanLandedApplyRefusesInitialDriftWithoutMutation(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root, home, first, second, _ := landedSetFixture(t)
-			plan, planErr, planCode := runCleanLanded(t, root, home, "--landed")
+			plan, planErr, planCode := runCleanup(t, root, home, "--landed")
 			if planCode != 0 || planErr != "" {
 				t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
 			}
 			tc.mutate(t, root, home, first)
-			args := []string{"--landed", "--apply", landedRowFingerprint(t, plan)}
+			args := []string{"--landed", "--apply", cleanupRowFingerprint(t, plan)}
 			if tc.args != nil {
-				args = tc.args(landedRowFingerprint(t, plan))
+				args = tc.args(cleanupRowFingerprint(t, plan))
 			}
-			stdout, stderr, code := runCleanLanded(t, root, home, args...)
+			stdout, stderr, code := runCleanup(t, root, home, args...)
 			if code != 1 || stderr != "" || !strings.HasPrefix(stdout, "worktree_cleanup[") || !strings.Contains(stdout, "unknown,error,unknown,unknown,none,") || strings.Count(stdout, errStaleFingerprint.Error()) != 1 {
 				t.Fatalf("apply exit=%d stdout=%q stderr=%q, want stale refusal diagnostic", code, stdout, stderr)
 			}
@@ -120,7 +147,7 @@ func TestCleanLandedApplyRefusesInitialDriftWithoutMutation(t *testing.T) {
 func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 	t.Parallel()
 	root, home, first, second, _ := landedSetFixture(t)
-	plan, planErr, planCode := runCleanLanded(t, root, home, "--landed")
+	plan, planErr, planCode := runCleanup(t, root, home, "--landed")
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
 	}
@@ -158,7 +185,7 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 		}
 		return nil
 	}
-	_, stderr, code := runCleanLandedWith(t, j, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, stderr, code := runCleanupWith(t, j, root, home, "--landed", "--apply", cleanupRowFingerprint(t, plan))
 	if code != 1 || stderr != "" || !mutated {
 		t.Fatalf("apply exit=%d stderr=%q mutated=%t, want per-row stale refusal", code, stderr, mutated)
 	}
@@ -177,11 +204,11 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 			t.Fatalf("settled first row %q remains assigned", settled.Assignment.ID)
 		}
 	}
-	_, _, retryCode := runCleanLandedWith(t, j, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, _, retryCode := runCleanupWith(t, j, root, home, "--landed", "--apply", cleanupRowFingerprint(t, plan))
 	if retryCode != 1 {
 		t.Fatalf("spent fingerprint replay exit=%d, want 1", retryCode)
 	}
-	fresh, freshErr, freshCode := runCleanLanded(t, root, home, "--landed")
+	fresh, freshErr, freshCode := runCleanup(t, root, home, "--landed")
 	if freshCode != 0 || freshErr != "" || strings.Contains(fresh, settled.Assignment.ID) || !strings.Contains(fresh, drifted.Assignment.ID) {
 		t.Fatalf("fresh plan = (%d, %q, %q), want only second row", freshCode, fresh, freshErr)
 	}
@@ -190,7 +217,7 @@ func TestCleanLandedApplyReplansEachRowBeforeMutation(t *testing.T) {
 func TestCleanLandedApplyStopsAfterCompletedRowFault(t *testing.T) {
 	t.Parallel()
 	root, home, first, second, _ := landedSetFixture(t)
-	plan, planErr, planCode := runCleanLanded(t, root, home, "--landed")
+	plan, planErr, planCode := runCleanup(t, root, home, "--landed")
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
 	}
@@ -205,7 +232,7 @@ func TestCleanLandedApplyStopsAfterCompletedRowFault(t *testing.T) {
 		}
 		return nil
 	}
-	_, stderr, code := runCleanLandedWith(t, j, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, stderr, code := runCleanupWith(t, j, root, home, "--landed", "--apply", cleanupRowFingerprint(t, plan))
 	if code != 1 || stderr != "" || locks != 2 {
 		t.Fatalf("apply exit=%d stderr=%q locks=%d, want second-row fault", code, stderr, locks)
 	}
@@ -226,11 +253,11 @@ func TestCleanLandedApplyStopsAfterCompletedRowFault(t *testing.T) {
 	if err != nil || len(assignments) != 2 {
 		t.Fatalf("assignments after fault = %#v, %v; want retained dirty row and one unstarted removable row", assignments, err)
 	}
-	_, _, retryCode := runCleanLanded(t, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, _, retryCode := runCleanup(t, root, home, "--landed", "--apply", cleanupRowFingerprint(t, plan))
 	if retryCode != 1 {
 		t.Fatalf("interrupted fingerprint replay exit=%d, want 1", retryCode)
 	}
-	fresh, freshErr, freshCode := runCleanLanded(t, root, home, "--landed")
+	fresh, freshErr, freshCode := runCleanup(t, root, home, "--landed")
 	if freshCode != 0 || freshErr != "" || strings.Count(fresh, ",remove,") != 1 {
 		t.Fatalf("fresh plan = (%d, %q, %q), want one remaining removable row", freshCode, fresh, freshErr)
 	}
@@ -239,7 +266,7 @@ func TestCleanLandedApplyStopsAfterCompletedRowFault(t *testing.T) {
 func TestCleanLandedPlanRetainsPreservedRowThroughEligibilityOwner(t *testing.T) {
 	t.Parallel()
 	root, home, _, _, dirty := landedSetFixture(t)
-	plan, planErr, planCode := runCleanLanded(t, root, home, "--landed")
+	plan, planErr, planCode := runCleanup(t, root, home, "--landed")
 	if planCode != 0 || planErr != "" {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", planCode, plan, planErr)
 	}
@@ -263,15 +290,15 @@ func TestCleanLandedApplyCarriesModifiersAndDeletesProvenBranches(t *testing.T) 
 	landAssignment(t, root, ignored, "landed.txt")
 	mustWrite(t, filepath.Join(ignored.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 
-	bare, bareErr, bareCode := runCleanLanded(t, root, home, "--landed")
+	bare, bareErr, bareCode := runCleanup(t, root, home, "--landed")
 	if bareCode != 0 || bareErr != "" || !strings.Contains(bare, ignored.Path+",retain,") || !strings.Contains(bare, "ignored residuals require --discard-ignored") {
 		t.Fatalf("bare plan = (%d, %q, %q), want ignored retain", bareCode, bare, bareErr)
 	}
-	widened, widenedErr, widenedCode := runCleanLanded(t, root, home, "--discard-ignored", "--full", "--landed")
+	widened, widenedErr, widenedCode := runCleanup(t, root, home, "--discard-ignored", "--full", "--landed")
 	if widenedCode != 0 || widenedErr != "" || !strings.Contains(widened, ignored.Path+",discard-remove,") || !strings.Contains(widened, "ignored_paths[1]") {
 		t.Fatalf("widened plan = (%d, %q, %q), want discard removal and preview", widenedCode, widened, widenedErr)
 	}
-	applied, applyErr, applyCode := runCleanLanded(t, root, home, "--discard-ignored", "--full", "--landed", "--apply", landedRowFingerprint(t, widened))
+	applied, applyErr, applyCode := runCleanup(t, root, home, "--discard-ignored", "--full", "--landed", "--apply", cleanupRowFingerprint(t, widened))
 	if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 2 {
 		t.Fatalf("modifier apply = (%d, %q, %q), want two removals", applyCode, applied, applyErr)
 	}
@@ -291,11 +318,11 @@ func TestCleanLandedDiscardBranchOnlyChangesDetail(t *testing.T) {
 	home := filepath.Join(root, ".bench-home")
 	creation := mustCreate(t, root, home, "landed-branch-assertion", "branch assertion")
 	landAssignment(t, root, creation, "branch.txt")
-	plan, planErr, planCode := runCleanLanded(t, root, home, "--discard-branch", "--landed")
+	plan, planErr, planCode := runCleanup(t, root, home, "--discard-branch", "--landed")
 	if planCode != 0 || planErr != "" || !strings.Contains(plan, "discards branch "+creation.Assignment.Branch) {
 		t.Fatalf("assertion plan = (%d, %q, %q), want asserted branch detail", planCode, plan, planErr)
 	}
-	_, applyErr, applyCode := runCleanLanded(t, root, home, "--discard-branch", "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, applyErr, applyCode := runCleanup(t, root, home, "--discard-branch", "--landed", "--apply", cleanupRowFingerprint(t, plan))
 	if applyCode != 0 || applyErr != "" {
 		t.Fatalf("assertion apply = (%d, %q), want success", applyCode, applyErr)
 	}
@@ -315,7 +342,7 @@ func TestCleanLandedRetainsUnparseableLeaseAndSkipsUnprovableBranch(t *testing.T
 	lease, err := LeaseFile(unknown.Path)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte("not-a-lease\n"), 0o600)
-	plan, planErr, planCode := runCleanLanded(t, root, home, "--landed")
+	plan, planErr, planCode := runCleanup(t, root, home, "--landed")
 	if planCode != 0 || planErr != "" || !strings.Contains(plan, unknown.Path+",retain,") || !strings.Contains(plan, "uncertain") || strings.Contains(plan, unprovable.Path) {
 		t.Fatalf("plan = (%d, %q, %q), want unknown retain and no unprovable row", planCode, plan, planErr)
 	}
@@ -323,7 +350,7 @@ func TestCleanLandedRetainsUnparseableLeaseAndSkipsUnprovableBranch(t *testing.T
 	if code := ResumeCleanCommand(root, home, nil, &summary, &summaryErr); code != 0 || !strings.Contains(summary.String(), "landed=1") {
 		t.Fatalf("resume = (%d, %q, %q), want unknown lease counted landed", code, summary.String(), summaryErr.String())
 	}
-	_, applyErr, applyCode := runCleanLanded(t, root, home, "--landed", "--apply", landedRowFingerprint(t, plan))
+	_, applyErr, applyCode := runCleanup(t, root, home, "--landed", "--apply", cleanupRowFingerprint(t, plan))
 	if applyCode != 0 || applyErr != "" {
 		t.Fatalf("unknown lease apply = (%d, %q), want no-op success", applyCode, applyErr)
 	}
