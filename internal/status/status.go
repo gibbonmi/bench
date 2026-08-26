@@ -26,6 +26,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -323,8 +324,16 @@ func Signals(root string) []Signal {
 	return SignalsWith(root, Query{})
 }
 
-// SignalsWith gathers the ambient board under root using the supplied query.
+// SignalsWith gathers the ambient board under root using the supplied query. It
+// resolves the Bench home at this boundary and passes it down, so no signal owner
+// reads the environment itself.
 func SignalsWith(root string, query Query) []Signal {
+	return signalsWith(root, query, worktree.Home())
+}
+
+// signalsWith is SignalsWith with the Bench home already resolved. The render path
+// resolves the home once and shares it with the --all expanders.
+func signalsWith(root string, query Query, home string) []Signal {
 	var rows []row
 
 	rows = appendSetup(rows, root)
@@ -333,6 +342,7 @@ func SignalsWith(root string, query Query) []Signal {
 	rows = appendWorktree(rows, root)
 	rows = appendIntent(rows, root)
 	rows = appendGuards(rows, root)
+	rows = appendCensus(rows, root, home)
 	rows = appendStagedSpecs(rows, root)
 	rows = appendDrain(rows, root)
 	rows = appendStructure(rows, root)
@@ -460,9 +470,11 @@ func renderRoute(route RouteResult) (string, int) {
 // `bench status --all`, it prints every row and emits no overflow line. The SessionStart
 // hook calls with all=false so the ambient surface stays bounded.
 func render(root string, all bool) string {
-	signals := Signals(root)
+	home := worktree.Home()
+	signals := signalsWith(root, Query{}, home)
 	if all {
 		signals = expandIntentSignals(root, signals)
+		signals = expandCensusSignals(root, home, signals)
 	}
 
 	var b strings.Builder
@@ -741,6 +753,90 @@ func appendGuards(rows []row, root string) []row {
 		return rows
 	}
 	return append(rows, row{3, "guards", prePushDetail(health), commandAction(linkAction)})
+}
+
+// appendCensus adds the raw-call signal (sev 3), which ranks beside the guards row. It
+// joins the census counts to the ledger's active assignments, so a count with no active
+// entry names a worktree the reviewer has already released and never reaches the board.
+// The row names no action, because no command is the remedy: the drain reads the heads
+// and proposes the Bench form.
+func appendCensus(rows []row, root, home string) []row {
+	calls, worktrees := censusTotals(root, home)
+	if calls == 0 {
+		return rows
+	}
+	detail := Plural(calls, "raw call", "raw calls") + " across " + Plural(worktrees, "worktree", "worktrees")
+	return append(rows, row{3, "census", detail, advisoryAction("")})
+}
+
+// censusTotals returns the raw-call count and the number of active assignments that
+// hold at least one record. A census read failure and a ledger read failure both
+// return zero, because the census is ambient evidence and never a board failure.
+func censusTotals(root, home string) (calls, worktrees int) {
+	for _, entry := range activeCensusCounts(root, home) {
+		calls += entry.count
+		worktrees++
+	}
+	return calls, worktrees
+}
+
+// censusEntry is one active assignment's identity, sanitized label, and record count.
+type censusEntry struct {
+	id, label string
+	count     int
+}
+
+// activeCensusCounts pairs each active assignment with its record count, and drops
+// every pair whose count is zero. The row and its --all expansion read the same join,
+// so the sum and the per-worktree lines cannot disagree. The result is ordered by
+// label, then by assignment id, so two worktrees that share a label stay two rows.
+func activeCensusCounts(root, home string) []censusEntry {
+	counts, err := census.Counts(home, root)
+	if err != nil || len(counts) == 0 {
+		return nil
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return nil
+	}
+	var active []censusEntry
+	for _, assignment := range assignments {
+		if assignment.State != intent.StateActive {
+			continue
+		}
+		if count := counts[assignment.ID]; count > 0 {
+			active = append(active, censusEntry{assignment.ID, sanitize.Controls(assignment.Label), count})
+		}
+	}
+	sort.SliceStable(active, func(i, j int) bool {
+		if active[i].label != active[j].label {
+			return active[i].label < active[j].label
+		}
+		return active[i].id < active[j].id
+	})
+	return active
+}
+
+// expandCensusSignals replaces the summed census row with one row per active
+// assignment. It is the sibling of expandIntentSignals: both run only under --all, so
+// the default board keeps its five-row budget however many worktrees are live.
+func expandCensusSignals(root, home string, signals []Signal) []Signal {
+	active := activeCensusCounts(root, home)
+	if len(active) == 0 {
+		return signals
+	}
+	out := make([]Signal, 0, len(signals)+len(active))
+	for _, signal := range signals {
+		if signal.Name != "census" {
+			out = append(out, signal)
+		}
+	}
+	for _, entry := range active {
+		detail := entry.label + " " + Plural(entry.count, "raw call", "raw calls")
+		out = append(out, newSignal(3, "census", detail, advisoryAction("")))
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Severity < out[j].Severity })
+	return out
 }
 
 // prePushDetail names the pre-push gap the guards row reports. It mirrors the adopt

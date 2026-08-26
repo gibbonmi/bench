@@ -1,1 +1,1 @@
-internal/worktree/worktree_test.go calls t.Skip outside internal/capability
+internal/poolkey/poolkey_test.go calls t.Skip outside internal/capability

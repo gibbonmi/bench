@@ -141,7 +141,7 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   the ambient dashboard is the terminal print. Not "the dashboard" unqualified — that name
   ambiguously means both.
 - **signal** — one ranked line on the **ambient dashboard** (setup, gate, git, worktree, intent, guards,
-  drain, structure, decisions, specs, reviews, roadmap). The dashboard shows a signal only
+  census, drain, structure, decisions, specs, reviews, roadmap). The dashboard shows a signal only
   when it fires. Not "check", not "alert".
 - **severity ladder** — the fixed rank order that decides which **signal** leads the
   dashboard and which drop under the five-row budget. Not "priority queue".

@@ -2,14 +2,17 @@ package census
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/benchguard"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
@@ -289,7 +292,7 @@ func TestRecordRefusesASymlinkedCensusDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(target, Dir(home, root)); err != nil {
-		t.Skipf("the filesystem refuses symlinks: %v", err)
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("the filesystem refuses symlinks: %v", err))
 	}
 	err := Record("sed -i x "+filepath.Join(pool, ownerID+"-"+knownID, "x"), root, home, fixedTime)
 	if err == nil {
@@ -433,5 +436,111 @@ func TestRecordMatchesOnlyAPoolPath(t *testing.T) {
 				t.Fatalf("records = %v, want %d", got, tc.want)
 			}
 		})
+	}
+}
+
+// writeRecordFile puts raw bytes at one name in the census directory, so a test can
+// state a file shape the writer never makes.
+func writeRecordFile(t *testing.T, home, root, name, body string) {
+	t.Helper()
+	dir := Dir(home, root)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestCountsReadsAnAbsentDirectoryAsEmpty proves the board gets a map, not a failure,
+// before any raw call is recorded.
+func TestCountsReadsAnAbsentDirectoryAsEmpty(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	counts, err := Counts(home, root)
+	if err != nil || len(counts) != 0 {
+		t.Fatalf("Counts on an absent directory = %v, %v; want an empty map and no error", counts, err)
+	}
+}
+
+// TestCountsReadsEachRecordFileShape proves an empty file counts zero and a last line
+// with no newline still counts as one record.
+func TestCountsReadsEachRecordFileShape(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, body string
+		want       int
+	}{
+		{"empty file", "", 0},
+		{"one closed line", "t\tsed\n", 1},
+		{"one unterminated line", "t\tsed", 1},
+		{"two lines, the last unterminated", "t\tsed\nt\tpython3", 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			home, root, _ := fixtureHome(t)
+			writeRecordFile(t, home, root, knownID, tc.body)
+			counts, err := Counts(home, root)
+			if err != nil || counts[knownID] != tc.want {
+				t.Fatalf("Counts = %v, %v; want %s = %d", counts, err, knownID, tc.want)
+			}
+		})
+	}
+}
+
+// TestCountsIgnoresAForeignName proves only a 32-hex assignment id is read, so a
+// stray file in the census directory never becomes a count.
+func TestCountsIgnoresAForeignName(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	writeRecordFile(t, home, root, "README", "t\tsed\n")
+	writeRecordFile(t, home, root, ownerID+"-"+knownID, "t\tsed\n")
+	counts, err := Counts(home, root)
+	if err != nil || len(counts) != 0 {
+		t.Fatalf("Counts = %v, %v; want no foreign name counted", counts, err)
+	}
+}
+
+// TestCountsRefusesAFifoWithoutBlocking proves a refused file type reads as zero and
+// never holds the board open on a reader that has no writer.
+func TestCountsRefusesAFifoWithoutBlocking(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	dir := Dir(home, root)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(dir, knownID), 0o600); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+	}
+	done := make(chan map[string]int, 1)
+	go func() {
+		counts, _ := Counts(home, root)
+		done <- counts
+	}()
+	select {
+	case counts := <-done:
+		if len(counts) != 0 {
+			t.Fatalf("Counts on a FIFO record = %v, want none", counts)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Counts blocked on a FIFO record file")
+	}
+}
+
+// TestCountsCountsTheRecordedCalls proves the reader and the writer agree: the count
+// is the number of lines Record appended.
+func TestCountsCountsTheRecordedCalls(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	command := "sed -i s/a/b/ " + filepath.Join(pool, ownerID+"-"+knownID, "x")
+	for range 3 {
+		if err := Record(command, root, home, fixedTime); err != nil {
+			t.Fatal(err)
+		}
+	}
+	counts, err := Counts(home, root)
+	if err != nil || counts[knownID] != 3 {
+		t.Fatalf("Counts = %v, %v; want %s = 3", counts, err, knownID)
 	}
 }

@@ -140,3 +140,53 @@ func write(dir, id, line string) error {
 	}
 	return nil
 }
+
+// Counts returns the number of records each assignment holds under root's census
+// directory. The ambient board is the caller, so no condition on the disk becomes a
+// board failure: an absent directory, an absent or empty file, and a file type the
+// reader refuses each count zero. A last line with no newline still counts as one
+// record, because a concurrent writer can be between its two writes.
+func Counts(home, root string) (map[string]int, error) {
+	counts := map[string]int{}
+	entries, err := os.ReadDir(Dir(home, root))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return counts, nil
+		}
+		return counts, fmt.Errorf("read census directory: %w", err)
+	}
+	for _, entry := range entries {
+		// Only a regular file is read. A directory, a FIFO, or a device in the census
+		// directory is foreign, and an open of a FIFO blocks the board.
+		if !entry.Type().IsRegular() || !isAssignmentID(entry.Name()) {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(Dir(home, root), entry.Name()))
+		if err != nil {
+			continue
+		}
+		counts[entry.Name()] = lineCount(string(data))
+	}
+	return counts, nil
+}
+
+// isAssignmentID reports whether name is one 32-hex assignment id. The test composes
+// the segment pair rather than restating the hexadecimal shape, so poolkey stays the
+// one source of what an identifier looks like.
+func isAssignmentID(name string) bool {
+	_, ok := poolkey.SplitAssignmentSegment(poolkey.AssignmentSegment(name, name))
+	return ok
+}
+
+// lineCount returns the number of records in one file's text. A trailing newline
+// closes the last record and adds none of its own.
+func lineCount(text string) int {
+	if text == "" {
+		return 0
+	}
+	count := strings.Count(text, "\n")
+	if !strings.HasSuffix(text, "\n") {
+		count++
+	}
+	return count
+}

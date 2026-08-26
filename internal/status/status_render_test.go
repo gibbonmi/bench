@@ -10,6 +10,8 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // A clean, committed tree with no signals renders the clean message and nothing else.
@@ -144,5 +146,73 @@ func TestAppendWorktreeRendersTypedAdminRefusal(t *testing.T) {
 	rows := appendWorktree(nil, root)
 	if len(rows) != 1 || !strings.Contains(rows[0].detail, "worktrees/typed/gitdir") || !strings.Contains(rows[0].detail, "fifo") || rows[0].action.render() != "bench worktree list" {
 		t.Fatalf("typed row = %#v", rows)
+	}
+}
+
+// TestExpandCensusSignalsEscapesTheLabel proves a control byte in a label is replaced
+// before the fixed-width row renders, so no label splits a row. (Coverage row EC25.)
+func TestExpandCensusSignalsEscapesTheLabel(t *testing.T) {
+	t.Parallel()
+	root, home := initRepo(t), t.TempDir()
+	id := strings.Repeat("b", 32)
+	seedAssignment(t, root, id, "alpha\x1b[31m", intent.StateActive)
+	seedCensus(t, home, root, id, 2)
+
+	signals := expandCensusSignals(root, home, censusSignals(t, root, home))
+	if len(signals) != 1 || strings.ContainsRune(signals[0].Detail, 0x1b) {
+		t.Fatalf("expanded census signals = %#v, want one row with no raw control byte", signals)
+	}
+	if want := "alpha" + sanitize.Controls("\x1b") + "[31m 2 raw calls"; signals[0].Detail != want {
+		t.Fatalf("expanded detail = %q, want %q", signals[0].Detail, want)
+	}
+}
+
+// censusSignals renders the summed census row as the Signal list the --all expanders
+// consume.
+func censusSignals(t *testing.T, root, home string) []Signal {
+	t.Helper()
+	rows := appendCensus(nil, root, home)
+	out := make([]Signal, len(rows))
+	for i, r := range rows {
+		out[i] = newSignal(r.sev, r.signal, r.detail, r.action)
+	}
+	return out
+}
+
+// TestRenderAllExpandsTheCensusRowPerWorktree proves --all names each worktree, while
+// the default board keeps the one summed row inside its five-row budget.
+// (Coverage rows EC34 and EC17.)
+func TestRenderAllExpandsTheCensusRowPerWorktree(t *testing.T) {
+	root, home := initRepo(t), t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	first, second := strings.Repeat("b", 32), strings.Repeat("c", 32)
+	seedAssignment(t, root, first, "alpha", intent.StateActive)
+	seedAssignment(t, root, second, "beta", intent.StateActive)
+	seedCensus(t, home, root, first, 2)
+	seedCensus(t, home, root, second, 1)
+
+	board := render(root, false)
+	if !strings.Contains(board, "3 raw calls across 2 worktrees") {
+		t.Fatalf("default board missing the summed census row:\n%s", board)
+	}
+	all := render(root, true)
+	if !strings.Contains(all, "alpha 2 raw calls") || !strings.Contains(all, "beta 1 raw call") {
+		t.Fatalf("--all board missing a per-worktree census row:\n%s", all)
+	}
+	if strings.Contains(all, "3 raw calls across 2 worktrees") {
+		t.Fatalf("--all board kept the summed census row:\n%s", all)
+	}
+}
+
+// TestRenderStatesOneRawCall proves the singular row reaches the rendered board.
+func TestRenderStatesOneRawCall(t *testing.T) {
+	root, home := initRepo(t), t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	id := strings.Repeat("b", 32)
+	seedAssignment(t, root, id, "alpha", intent.StateActive)
+	seedCensus(t, home, root, id, 1)
+
+	if board := render(root, false); !strings.Contains(board, "1 raw call across 1 worktree") {
+		t.Fatalf("board missing the singular census row:\n%s", board)
 	}
 }
