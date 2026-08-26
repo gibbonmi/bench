@@ -5,7 +5,6 @@ package gate
 // and knows nothing of the shape reported here.
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -39,6 +38,11 @@ const phaseTableCap = 7
 // operator's view of one command whichever schedule produced the results, so an edit to
 // the reported shape lands everywhere at once.
 //
+// An extra check writes nothing itself. It answers its red diagnoses as rows and its own
+// summary as one line, and this function decides where each belongs: the rows join the
+// failure table, and the line prints on a green run only. A check that printed for itself
+// would land ahead of the red table, which carries the whole of a red run's stdout.
+//
 // The verdict goes to stdout on both answers, so the rows and the word that grades them
 // share one stream. The two operational refusals that print `gate: red` before any phase
 // runs keep stderr: they are not this report.
@@ -46,7 +50,7 @@ const phaseTableCap = 7
 // An interrupt is not a verdict, so a cancelled run publishes neither rows nor a gate
 // line. Reporting one would grade phases that never got to answer. Naming the stragglers
 // is not a verdict either; it only says what the run was doing.
-func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStreams, stdout, stderr io.Writer, redReports ...func(io.Writer) ([]string, bool)) int {
+func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStreams, stdout, stderr io.Writer, redReports ...func() (rows []string, greenLine string, red bool)) int {
 	if cancelled {
 		reportStragglers(results, stderr)
 		return 130
@@ -57,22 +61,20 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 			red = true
 		}
 	}
-	// A red report hands back its diagnoses rather than printing them, so they read as
-	// rows of the one table instead of as loose lines ahead of it. Whatever such a report
-	// prints for itself — the skip counts — is buffered rather than written straight
-	// through: a report may still turn the run red, and the two verdicts file that line
-	// on opposite sides of their table.
-	var reported bytes.Buffer
-	var capabilityRows []string
+	// Every check answers before either shape prints, because a check can turn the run red
+	// itself and the two shapes file its answers in different places.
+	var capabilityRows, greenLines []string
 	for _, report := range redReports {
-		rows, reportRed := report(&reported)
+		rows, greenLine, reportRed := report()
 		capabilityRows = append(capabilityRows, rows...)
+		if greenLine != "" {
+			greenLines = append(greenLines, greenLine)
+		}
 		if reportRed {
 			red = true
 		}
 	}
 	if red {
-		fmt.Fprint(stdout, reported.String())
 		printFailures(results, capabilityRows, streams, stdout)
 		fmt.Fprintln(stdout, "gate: red")
 		return 1
@@ -80,7 +82,9 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 	// Green leads with the phase table: it is the run's whole answer, and the skip counts
 	// read after it as a footnote about the host rather than as a preamble to it.
 	printPhases(results, stdout)
-	fmt.Fprint(stdout, reported.String())
+	for _, line := range greenLines {
+		fmt.Fprintln(stdout, line)
+	}
 	fmt.Fprintln(stdout, "gate: green")
 	return 0
 }
@@ -203,7 +207,13 @@ func failureRows(result phaseResult, streams *phaseStreams) []string {
 	lines := nonEmptyLines(streams.lines(result.Name))
 	if len(lines) == 0 {
 		// A red that said nothing still has to show, or its exit code is the run's only
-		// evidence and stdout carries none of it.
+		// evidence and stdout carries none of it. A phase that never reached its program
+		// says nothing because it never ran, and StartErr holds the reason it did not: a
+		// bad working directory, an empty argv, an exec failure, or a deadlocked need. The
+		// exit code names none of those, so the error's own text is the row.
+		if result.StartErr != nil {
+			return []string{result.StartErr.Error()}
+		}
 		return []string{fmt.Sprintf("exit %d with no output", result.Code)}
 	}
 	if goTestPhase(result.Argv) {

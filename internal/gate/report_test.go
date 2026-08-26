@@ -2,6 +2,7 @@ package gate
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -83,12 +84,20 @@ func unquoteCell(cell string) string {
 }
 
 // BG01, BG11: a red run's stdout is the failure table and the verdict, and nothing else.
-// The verdict shares the rows' stream, so stderr carries no part of the answer.
+// The capability reporter runs on a red run too, and its count line belongs to the green
+// shape alone, so the report is asserted whole rather than by what it contains. The
+// verdict shares the rows' stream, so stderr carries no part of the answer.
 func TestRedRunPrintsOnlyTheFailureTableAndTheVerdict(t *testing.T) {
+	t.Setenv(requireCapabilitiesEnv, "")
+	// An absent log is a run whose phases skipped nothing, which is the tally a reader
+	// gains least from and the line most likely to be printed unconditionally.
+	path := filepath.Join(t.TempDir(), "absent.log")
 	streams := newPhaseStreams(io.Discard)
 	writePhaseStream(t, streams, "vet", "vet found a shadowed err\n", "")
 	var stdout, stderr bytes.Buffer
-	code := aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 1}}, false, streams, &stdout, &stderr)
+	code := aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 1}}, false, streams, &stdout, &stderr, func() ([]string, string, bool) {
+		return reportCapabilitySkips(path)
+	})
 
 	want := "failures[1]{phase,line}:\n  vet,vet found a shadowed err\ngate: red\n"
 	if stdout.String() != want {
@@ -141,7 +150,9 @@ func TestRedVetPhaseYieldsOneRowPerNonEmptyLine(t *testing.T) {
 }
 
 // BG08: a red that said nothing still shows. Its exit code is otherwise the run's only
-// evidence and stdout would carry none of it.
+// evidence and stdout would carry none of it. This phase reached its program and chose to
+// exit nonzero in silence, so it carries no start error and the code is all there is to
+// name.
 func TestRedPhaseWithAnEmptyStreamNamesItsExitCode(t *testing.T) {
 	streams := newPhaseStreams(io.Discard)
 	var stdout, stderr bytes.Buffer
@@ -150,6 +161,30 @@ func TestRedPhaseWithAnEmptyStreamNamesItsExitCode(t *testing.T) {
 	want := "failures[1]{phase,line}:\n  shellcheck,exit 1 with no output\ngate: red\n"
 	if stdout.String() != want {
 		t.Errorf("silent red stdout = %q, want %q", stdout.String(), want)
+	}
+}
+
+// BG37: a phase that never reached its program says nothing, and its start error holds
+// the reason: a bad working directory, an empty argv, an exec failure, or a deadlocked
+// need. That reason is the row, because the exit code names none of the four and every
+// one of them would otherwise read alike.
+func TestRedPhaseWithAStartErrorNamesTheReason(t *testing.T) {
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	result := phaseResult{
+		Name:     "shellcheck",
+		Argv:     []string{"shellcheck", "-S", "warning"},
+		Code:     1,
+		StartErr: errors.New("chdir /gone: no such file or directory"),
+	}
+	aggregateAndReport([]phaseResult{result}, false, streams, &stdout, &stderr)
+
+	want := []string{"chdir /gone: no such file or directory"}
+	if got := rowsForPhase(t, stdout.String(), "shellcheck"); !slices.Equal(got, want) {
+		t.Errorf("start-error rows = %q, want %q", got, want)
+	}
+	if strings.Contains(stdout.String(), "with no output") {
+		t.Errorf("start-error stdout kept the generic row: %q", stdout.String())
 	}
 }
 
@@ -281,7 +316,7 @@ func TestPhaseSkippedByARedNeedContributesNoRow(t *testing.T) {
 func TestARedReportCallbackTurnsTheRunRed(t *testing.T) {
 	streams := newPhaseStreams(io.Discard)
 	var stdout, stderr bytes.Buffer
-	code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func(io.Writer) ([]string, bool) { return nil, true })
+	code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func() ([]string, string, bool) { return nil, "", true })
 
 	if code != 1 {
 		t.Errorf("callback red exit = %d, want 1", code)
@@ -311,8 +346,8 @@ func TestRedPhasePastTheCapPrintsTwentyRowsAndACountOfTheRest(t *testing.T) {
 	if rows[0] != "finding 1" || rows[failureRowCap-1] != "finding 20" {
 		t.Errorf("capped rows = %q, want the first twenty findings", rows[:failureRowCap])
 	}
-	// This run retained no stream file, so the row counts the drop and says where the
-	// rest is not. Ticket 05 opens the file and the same row names it.
+	// This run retained no stream file, so the row counts the drop and says the rest is
+	// unreadable rather than sending the reader to a path that holds nothing.
 	if want := "+30 more lines (stream unavailable)"; rows[failureRowCap] != want {
 		t.Errorf("more-row = %q, want %q", rows[failureRowCap], want)
 	}
@@ -360,9 +395,10 @@ func TestRedPhaseAtExactlyTheCapPrintsNoMoreRow(t *testing.T) {
 	}
 }
 
-// BG07, second half: when the run does retain a stream file, the more-row names it, so a
-// reader is sent to the complete output rather than told it is gone. Ticket 05 wires the
-// path; this pins the row the wiring must produce.
+// BG07, second half: when the run retains a stream file, the more-row names it, so a
+// reader is sent to the complete output rather than told it is gone. This attaches to
+// boundRows alone — a path in, the row out — so it pins the wording against any caller
+// that happens to hold a path.
 func TestMoreRowNamesTheStreamFileWhenTheRunRetainedOne(t *testing.T) {
 	lines := make([]string, failureRowCap+3)
 	for i := range lines {
@@ -381,14 +417,15 @@ func TestMoreRowNamesTheStreamFileWhenTheRunRetainedOne(t *testing.T) {
 // BG10: an environment skip is a check the oracle asked for and did not get, so it enters
 // the table as its own row under `capability`. The reporter is the real one and the log is
 // a real fixture, so a drift between what the reporter diagnoses and what the table files
-// turns this red.
+// turns this red. The tally behind the diagnosis is nonzero, which is the case where the
+// count line has something to say and a red run still owes the reader only the table.
 func TestEnvironmentSkipEntersARowUnderTheCapabilityPhase(t *testing.T) {
 	t.Setenv(requireCapabilitiesEnv, "")
 	path := writeSkipLog(t, capability.Skip{Kind: capability.KindEnvironment, Name: "TestRootConformance", Reason: "BENCH_CONFORMANCE_ROOT not set"})
 	streams := newPhaseStreams(io.Discard)
 	var stdout, stderr bytes.Buffer
-	code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
-		return reportCapabilitySkips(path, w)
+	code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func() ([]string, string, bool) {
+		return reportCapabilitySkips(path)
 	})
 
 	if code != 1 {
@@ -397,6 +434,9 @@ func TestEnvironmentSkipEntersARowUnderTheCapabilityPhase(t *testing.T) {
 	want := []string{"TestRootConformance: BENCH_CONFORMANCE_ROOT not set"}
 	if got := rowsForPhase(t, stdout.String(), capabilityPhase); !slices.Equal(got, want) {
 		t.Errorf("capability rows = %q, want %q", got, want)
+	}
+	if strings.Contains(stdout.String(), skipRowPrefix+":") {
+		t.Errorf("red stdout carried the count line: %q", stdout.String())
 	}
 }
 
@@ -407,8 +447,8 @@ func TestStrictDiagnosesEachEnterARowUnderTheCapabilityPhase(t *testing.T) {
 		t.Helper()
 		streams := newPhaseStreams(io.Discard)
 		var stdout, stderr bytes.Buffer
-		if code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
-			return reportCapabilitySkips(path, w)
+		if code := aggregateAndReport(nil, false, streams, &stdout, &stderr, func() ([]string, string, bool) {
+			return reportCapabilitySkips(path)
 		}); code != 1 {
 			t.Fatalf("strict exit = %d, want 1", code)
 		}
@@ -449,8 +489,8 @@ func TestCapabilitySkipOutsideStrictModeEntersNoRow(t *testing.T) {
 	streams := newPhaseStreams(io.Discard)
 	writePhaseStream(t, streams, "vet", "vet finding\n", "")
 	var stdout, stderr bytes.Buffer
-	aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 1}}, false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
-		return reportCapabilitySkips(path, w)
+	aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 1}}, false, streams, &stdout, &stderr, func() ([]string, string, bool) {
+		return reportCapabilitySkips(path)
 	})
 
 	if got := rowsForPhase(t, stdout.String(), capabilityPhase); len(got) != 0 {
@@ -541,8 +581,8 @@ func TestGreenSixPhaseRunPrintsNineLines(t *testing.T) {
 		writePhaseStream(t, streams, result.Name, result.Name+" chatter\n", "")
 	}
 	var stdout, stderr bytes.Buffer
-	code := aggregateAndReport(results, false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
-		return reportCapabilitySkips(path, w)
+	code := aggregateAndReport(results, false, streams, &stdout, &stderr, func() ([]string, string, bool) {
+		return reportCapabilitySkips(path)
 	})
 
 	if code != 0 {
@@ -654,8 +694,9 @@ func TestSkippedPhaseReadsSkippedAndKeepsTheRunGreen(t *testing.T) {
 }
 
 // BG19: every class folds into the one capability-skips line, in the package's declared
-// order. Three skips in two classes used to cost three lines; they cost one now, and the
-// line still names both classes so the reader learns what the host could not run.
+// order. Three skips in two classes cost one line, and that line names both classes, so
+// the reader learns what the host could not run without the green run spending a line per
+// class.
 func TestCapabilitySkipsInTwoClassesPrintOneLine(t *testing.T) {
 	t.Setenv(requireCapabilitiesEnv, "")
 	path := writeSkipLog(t,
@@ -665,8 +706,8 @@ func TestCapabilitySkipsInTwoClassesPrintOneLine(t *testing.T) {
 	)
 	streams := newPhaseStreams(io.Discard)
 	var stdout, stderr bytes.Buffer
-	code := aggregateAndReport(greenPhaseResults(1), false, streams, &stdout, &stderr, func(w io.Writer) ([]string, bool) {
-		return reportCapabilitySkips(path, w)
+	code := aggregateAndReport(greenPhaseResults(1), false, streams, &stdout, &stderr, func() ([]string, string, bool) {
+		return reportCapabilitySkips(path)
 	})
 
 	if code != 0 {

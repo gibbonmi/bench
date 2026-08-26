@@ -16,7 +16,6 @@ package gate
 import (
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"strings"
@@ -101,8 +100,8 @@ func readSkipTally(path string) (skipTally, error) {
 	return tally, nil
 }
 
-// skipRow renders the whole tally as one line. The line is unconditional; a run with
-// nothing to report says so, because absent output and zero skips must not read alike.
+// skipRow renders the whole tally as one line. A green run prints it whatever the tally
+// holds, an empty one included, because absent output and zero skips must not read alike.
 // It is one line rather than one per class because a green run's stdout is bounded, and
 // a per-class line spends that bound on counts that are almost always zero.
 //
@@ -179,10 +178,10 @@ func strictFailure(tally skipTally) string {
 	return fmt.Sprintf("capability skips are fatal under %s=1: %s", requireCapabilitiesEnv, strings.Join(names, ", "))
 }
 
-// reportCapabilitySkips prints the one skip-count line, answers its red diagnoses as
-// rows, and reports whether the run is red on their account. The diagnoses are rows
-// rather than stderr lines so that one table holds everything a red run asks the reader
-// to fix.
+// reportCapabilitySkips answers the one skip-count line, its red diagnoses as rows, and
+// whether the run is red on their account. It writes none of them: the caller prints the
+// count line on a green run only, and the diagnoses are rows rather than stderr lines so
+// that one table holds everything a red run asks the reader to fix.
 //
 // A diagnosis and a red are separate answers here. reportCapabilitySkips diagnoses an
 // unreadable log on every run but turns the run red only under strict mode. This matches
@@ -190,9 +189,8 @@ func strictFailure(tally skipTally) string {
 // population it never promised, and an unconditional red on a transient read failure
 // would make the gate unusable locally. A row the run is not red for costs nothing,
 // because the table prints only when the run is already red for some other reason.
-func reportCapabilitySkips(path string, stdout io.Writer) (rows []string, red bool) {
+func reportCapabilitySkips(path string) (rows []string, greenLine string, red bool) {
 	tally, readErr := readSkipTally(path)
-	fmt.Fprintln(stdout, skipRow(tally))
 	if readErr != nil {
 		rows = append(rows, fmt.Sprintf("capability skip log %s is unreadable, so the counts above prove nothing: %v", path, readErr))
 		if strict() {
@@ -207,5 +205,5 @@ func reportCapabilitySkips(path string, stdout io.Writer) (rows []string, red bo
 		rows = append(rows, failure)
 		red = true
 	}
-	return rows, red
+	return rows, skipRow(tally), red
 }

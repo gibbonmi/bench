@@ -197,6 +197,9 @@ func validateManifest(path, root string, declared []manifestPhase) ([]Phase, err
 		if !validPhaseName(decl.Name) {
 			return nil, defect(path, "invalid phase name", strconv.Quote(decl.Name))
 		}
+		if decl.Name == capabilityPhase {
+			return nil, defect(path, "reserved phase name", decl.Name)
+		}
 		if declaredNames[decl.Name] {
 			return nil, defect(path, "duplicate phase name", decl.Name)
 		}
@@ -237,9 +240,13 @@ func validateManifest(path, root string, declared []manifestPhase) ([]Phase, err
 }
 
 // validPhaseName holds a name to bytes that survive the contracts it must remain
-// addressable through. Those contracts are the "phase <name>:" summary lines and the
-// "[name] " output prefixes. Whitespace or a control byte splits at least one of
-// them.
+// addressable through. Those contracts are a `needs` edge, the report table's `phase`
+// cell, and the "[name] " prefix of each line in the retained stream file. Whitespace or
+// a control byte splits at least one of them.
+//
+// The one reserved name is checked by the caller, not here: this predicate answers
+// whether a name is spellable at all, and the reservation is about which spellable name
+// the report has already taken.
 func validPhaseName(name string) bool {
 	if name == "" {
 		return false

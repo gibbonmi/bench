@@ -147,8 +147,8 @@ func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog s
 	streams := newPhaseStreams(stderr)
 	streams.retain(gateRunStreamFile(ctx))
 	results, cancelled := schedule(ctx, root, phases, streams.open)
-	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func(w io.Writer) ([]string, bool) {
-		return reportCapabilitySkips(skipLog, w)
+	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() ([]string, string, bool) {
+		return reportCapabilitySkips(skipLog)
 	})
 }
 

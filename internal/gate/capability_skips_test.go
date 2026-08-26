@@ -45,8 +45,7 @@ func TestEnvironmentSkipIsRedInsideTheOracle(t *testing.T) {
 		capability.Skip{Kind: capability.KindEnvironment, Name: "TestRootConformance", Reason: "BENCH_CONFORMANCE_ROOT not set"},
 		capability.Skip{Kind: capability.KindCapability, Class: capability.Fifo, Name: "TestFifoRefusal", Reason: "requires a host fifo"},
 	)
-	var stdout bytes.Buffer
-	rows, red := reportCapabilitySkips(path, &stdout)
+	rows, greenLine, red := reportCapabilitySkips(path)
 	if !red {
 		t.Fatal("an environment skip inside the oracle did not report red")
 	}
@@ -54,14 +53,14 @@ func TestEnvironmentSkipIsRedInsideTheOracle(t *testing.T) {
 	if !slices.Equal(rows, want) {
 		t.Fatalf("diagnosis rows = %q, want %q", rows, want)
 	}
-	wantRow := "capability-skips: 2 (capability=1 environment=1; fifo=1)\n"
-	if stdout.String() != wantRow {
-		t.Fatalf("skip line = %q, want %q", stdout.String(), wantRow)
+	wantRow := "capability-skips: 2 (capability=1 environment=1; fifo=1)"
+	if greenLine != wantRow {
+		t.Fatalf("skip line = %q, want %q", greenLine, wantRow)
 	}
 	// The count line counts; the diagnosis names. Naming the test in both would put one
 	// finding in two places, and the reader would fix it twice or once at random.
-	if strings.Contains(stdout.String(), "TestRootConformance") {
-		t.Fatalf("skip line %q named a skip the diagnosis row already names", stdout.String())
+	if strings.Contains(greenLine, "TestRootConformance") {
+		t.Fatalf("skip line %q named a skip the diagnosis row already names", greenLine)
 	}
 }
 
@@ -75,8 +74,7 @@ func TestCapabilitySkipsStayInformational(t *testing.T) {
 	path := writeSkipLog(t,
 		capability.Skip{Kind: capability.KindCapability, Class: capability.Fifo, Name: "TestFifoRefusal", Reason: "requires a host fifo"},
 	)
-	var stdout bytes.Buffer
-	rows, red := reportCapabilitySkips(path, &stdout)
+	rows, greenLine, red := reportCapabilitySkips(path)
 	if red {
 		t.Fatalf("capability-only skips reported red: %q", rows)
 	}
@@ -85,8 +83,8 @@ func TestCapabilitySkipsStayInformational(t *testing.T) {
 	}
 	// One line, whatever the tally holds: the report says what happened without spending
 	// the green run's bounded stdout on a line per class.
-	if want := "capability-skips: 1 (capability=1 environment=0; fifo=1)\n"; stdout.String() != want {
-		t.Fatalf("skip line = %q, want %q", stdout.String(), want)
+	if want := "capability-skips: 1 (capability=1 environment=0; fifo=1)"; greenLine != want {
+		t.Fatalf("skip line = %q, want %q", greenLine, want)
 	}
 }
 
@@ -94,12 +92,11 @@ func TestCapabilitySkipsStayInformational(t *testing.T) {
 // behind it would read as a list the report failed to finish.
 func TestAnEmptyTallyPrintsTheKindsAndNoClassList(t *testing.T) {
 	t.Setenv(requireCapabilitiesEnv, "")
-	var stdout bytes.Buffer
-	rows, red := reportCapabilitySkips(filepath.Join(t.TempDir(), "absent.log"), &stdout)
+	rows, greenLine, red := reportCapabilitySkips(filepath.Join(t.TempDir(), "absent.log"))
 	if red || len(rows) != 0 {
 		t.Fatalf("an absent log reported red=%v rows=%q, want neither", red, rows)
 	}
-	if want := "capability-skips: 0 (capability=0 environment=0)\n"; stdout.String() != want {
-		t.Fatalf("skip line = %q, want %q", stdout.String(), want)
+	if want := "capability-skips: 0 (capability=0 environment=0)"; greenLine != want {
+		t.Fatalf("skip line = %q, want %q", greenLine, want)
 	}
 }
