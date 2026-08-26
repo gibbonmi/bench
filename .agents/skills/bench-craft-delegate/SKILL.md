@@ -48,9 +48,9 @@ A write-delegation from a spec carries its stories' coverage rows every time —
 it catches the failure. It requires the delegate to show each row red before the edit and green
 after. First compare each slice with `craft-spec`'s "Slicing a build for delegates".
 
-Name the mutation that breaks the change's central property. Require the delegate to apply it to its own finished work and report the observed result.
-Require the delegate to add the missing row when the mutation comes back silently green.
-Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the landing's census entry.
+Name the mutation that breaks the change's central property. Require the delegate to apply it to its
+own finished work and report the observed result. Require the delegate to add the missing row when
+the mutation comes back silently green. Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the landing's census entry.
 
 A delegate blocked by a defect outside its fence stops and reports rather than fixing out of fence.
 A new worktree charge opens with the stale-base check (`git merge --ff-only main`, verify HEAD
