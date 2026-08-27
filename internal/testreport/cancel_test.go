@@ -66,6 +66,7 @@ func TestParkingParent(t *testing.T) {
 	defer signal.Stop(signals)
 	child := exec.Command(os.Args[0], "-test.run=^TestParkingChild$")
 	child.Env = append(os.Environ(), cancelParkingEnv+"=child")
+	child.Stdout = os.Stdout
 	if err := child.Start(); err != nil {
 		t.Fatal(err)
 	}

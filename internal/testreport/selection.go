@@ -119,7 +119,6 @@ func currentPackagesWithEnvironment(ctx context.Context, root string, env []stri
 	case <-ctx.Done():
 		cancelGoProcessGroup(cmd, done)
 		err = <-completed
-		drainGoProcessGroup(cmd.Process.Pid)
 		return nil, fmt.Errorf("go list interrupted: %s", goChildGroupCancelled)
 	}
 	if err != nil {

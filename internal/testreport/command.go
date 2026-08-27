@@ -212,7 +212,6 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		cancelGoProcessGroup(cmd, decodedDone)
 		result = <-decodedResult
 		_ = cmd.Wait()
-		drainGoProcessGroup(cmd.Process.Pid)
 		return toon.Errorf("go test interrupted", goChildGroupCancelled) + "\n", 1
 	}
 	completed := make(chan error, 1)
@@ -227,7 +226,6 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	case <-ctx.Done():
 		cancelGoProcessGroup(cmd, done)
 		<-completed
-		drainGoProcessGroup(cmd.Process.Pid)
 		return toon.Errorf("go test interrupted", goChildGroupCancelled) + "\n", 1
 	}
 	report, decodeErr := result.report, result.err
@@ -261,9 +259,8 @@ func cancelGoProcessGroup(cmd *exec.Cmd, completed <-chan struct{}) {
 	select {
 	case <-completed:
 	case <-time.After(runbinary.BuilderCancelGrace):
-		_ = cmd.Process.Kill()
-		<-completed
 	}
+	drainGoProcessGroup(cmd.Process.Pid)
 }
 
 func drainGoProcessGroup(pgid int) {

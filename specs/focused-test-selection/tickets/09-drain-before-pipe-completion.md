@@ -11,6 +11,9 @@ Make the parking descendant inherit stdout. Delete the review pickup after the r
 
 ## Acceptance
 
-- [ ] N02 — a SIGINT-resistant descendant can retain stdout without blocking cancellation.
-- [ ] N02 — both Go hops drain before they await final pipe or process completion.
-- [ ] N02 — interrupted Go hops return no partial package table.
+- [x] N02 — a SIGINT-resistant descendant can retain stdout without blocking cancellation.
+- [x] N02 — both Go hops drain before they await final pipe or process completion.
+- [x] N02 — interrupted Go hops return no partial package table.
+
+Delivered outcome: the central canceller drains the full process group before
+either Go hop waits for final pipe or process completion.
