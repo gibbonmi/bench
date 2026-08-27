@@ -19,6 +19,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/gocache"
 )
 
 const processGroupCancelGrace = 2 * time.Second
@@ -149,7 +151,7 @@ func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog s
 	results, cancelled := schedule(ctx, root, phases, streams.open)
 	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() ([]string, string, bool) {
 		return reportCapabilitySkips(skipLog)
-	})
+	}, cacheFootprintReport(ctx, os.Environ(), gocache.Measure, gocache.Bound))
 }
 
 // prefixedPhaseWriters is the outer phase output plumbing. The mutex keeps each
@@ -358,7 +360,17 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		cmd.Stdout = io.MultiWriter(stdout, &observed)
 	}
 	cmd.Stderr = stderr
-	cmd.Env = mergeEnv(gateEnv(), phase.Env)
+	baseEnv, err := gateEnv()
+	if err != nil {
+		// The phase reds before the child starts. A child launched without the entry
+		// would write to the ambient cache, which is the state this refusal exists to
+		// prevent.
+		fmt.Fprintf(stderr, "%s cache environment unavailable: %v\n", phase.Name, err)
+		result.Code = 1
+		result.StartErr = err
+		return result
+	}
+	cmd.Env = mergeEnv(baseEnv, phase.Env)
 	run := runProcessGroupCommand(ctx, cmd)
 	result.Interrupted = run.Cancelled
 	if run.StartErr != nil {

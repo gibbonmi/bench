@@ -34,16 +34,16 @@ func checkOrdinaryBuildCensus(root string) []string {
 		gotNames = append(gotNames, phase.Name)
 		switch phase.Name {
 		case "test":
-			if !slices.Equal(phase.Argv, []string{"go", "test", "-count=1", "./..."}) {
+			if !slices.Equal(phase.Argv, []string{"go", "test", "-trimpath", "-count=1", "./..."}) {
 				diags = append(diags, fmt.Sprintf("ordinary test argv = %q", phase.Argv))
 			}
 		case "race":
 			joined := strings.Join(phase.Argv, " ")
-			if !strings.HasPrefix(joined, "go test -race -count=1 -v ") || strings.Contains(joined, "internal/systemtest") {
+			if !strings.HasPrefix(joined, "go test -trimpath -count=1 -race -v ") || strings.Contains(joined, "internal/systemtest") {
 				diags = append(diags, fmt.Sprintf("race argv is not the registry-only driver: %q", phase.Argv))
 			}
 		case "system":
-			if !slices.Equal(phase.Argv, []string{"go", "test", "-count=1", "-tags=system", "./internal/systemtest"}) {
+			if !slices.Equal(phase.Argv, []string{"go", "test", "-trimpath", "-count=1", "-tags=system", "./internal/systemtest"}) {
 				diags = append(diags, fmt.Sprintf("system argv = %q", phase.Argv))
 			}
 		}

@@ -6,10 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -108,19 +108,27 @@ func resolveGradedRoot() (string, error) {
 	if root := os.Getenv("BENCH_CONFORMANCE_ROOT"); root != "" {
 		return filepath.Abs(root)
 	}
-	out, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
+	root, err := git.Root()
 	if err != nil {
 		return "", fmt.Errorf("git rev-parse --show-toplevel: %w", err)
 	}
-	return strings.TrimRight(string(out), "\n"), nil
+	return root, nil
 }
 
+// startWorkingDir is the process working directory as the test binary started, before
+// any test calls t.Chdir. Go strips the compiled source file name under -trimpath, so a
+// runtime.Caller anchor cannot find the kit. The go test binary starts in its own
+// package directory, which is inside the kit, so this is the stable anchor.
+var startWorkingDir, startWorkingDirErr = os.Getwd()
+
+// findKitRoot walks up from startWorkingDir to the directory that holds go.mod. It must
+// not read the live working directory, because a test that chdirs into a fixture
+// repository would otherwise move the kit root with it.
 func findKitRoot() (string, error) {
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		return "", errors.New("runtime caller unavailable")
+	if startWorkingDirErr != nil {
+		return "", fmt.Errorf("resolve start working directory: %w", startWorkingDirErr)
 	}
-	dir := filepath.Dir(file)
+	dir := startWorkingDir
 	for {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
 			return dir, nil

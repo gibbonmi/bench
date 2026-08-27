@@ -23,9 +23,9 @@ directory `/home/mgibs/.cache/bench-go-build`.
 
 ## Acceptance
 
-- [ ] `go env -u GOCACHE` has run on this box, and the result is recorded here.
-- [ ] `go env GOCACHE` prints `/home/mgibs/.cache/go-build`.
-- [ ] The directory `/home/mgibs/.cache/bench-go-build` no longer exists.
+- [x] `go env -u GOCACHE` has run on this box, and the result is recorded here: it ran on 2026-08-27 with no output and exit 0.
+- [x] `go env GOCACHE` prints `/home/mgibs/.cache/go-build`.
+- [x] The directory `/home/mgibs/.cache/bench-go-build` no longer exists. It held 1.8 GB before the delete.
 
 Delivered outcome: this box carries no unowned directory that looks
 Bench-owned, and the handoff reader sees the revert done.

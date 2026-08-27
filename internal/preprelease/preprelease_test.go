@@ -6,13 +6,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 // TestStepsNameScriptsThisRepoShips grades the step plan against the tree it will run
@@ -254,11 +254,26 @@ func stepNamed(t *testing.T, steps []Step, name string) Step {
 	return Step{}
 }
 
+// repoRoot resolves the repository root from git, not from the compiled source file
+// name. Go strips that name under -trimpath, so a runtime.Caller root resolves to a
+// relative module path and every stat of it fails.
 func repoRoot(t *testing.T) string {
 	t.Helper()
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("resolve repo root: runtime caller unavailable")
+	root, err := git.Root()
+	if err != nil {
+		t.Fatalf("resolve repo root: %v", err)
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
+	return filepath.Clean(root)
+}
+
+// T07: the ship conformance step composes the gate's one test-argv producer, so its
+// prefix is `go -C <kit> test -trimpath -count=1`.
+func TestShipConformanceStepArgvPrefix(t *testing.T) {
+	root, kit := filepath.Join("elsewhere", "graded root"), filepath.Join("other", "kit")
+	step := stepNamed(t, Steps(root, kit), "conformance-ship")
+
+	want := []string{"go", "-C", kit, "test", "-trimpath", "-count=1"}
+	if len(step.Argv) < len(want) || !slices.Equal(step.Argv[:len(want)], want) {
+		t.Fatalf("ship conformance argv = %v, want the prefix %v", step.Argv, want)
+	}
 }

@@ -9,6 +9,22 @@ All notable user-facing changes to Bench are documented here. The format follows
 ### Added
 
 - Added a plan-before-apply cleanup for unclaimed local `bench/assign/` refs.
+- Added `bench cache`, a read-only report of the Bench Go build cache footprint. One
+  `go_build_cache` TOON table gives the directory, the byte total, the regular-file
+  count, the last trim time, the 10 GiB bound, and the over-bound flag. The command
+  reads the environment alone, so it runs anywhere on the machine, outside a git
+  repository included. An absent or empty cache directory reports zeros at exit 0.
+- Added `bench cache clean`, which empties the Bench Go build cache under the cache lock.
+  Every gate run, lane run, and `bench test` run now holds that lock shared for its span,
+  so a clean beside a live run refuses at exit 1, names the blocking pid, and removes
+  nothing. With no holder the command reports the bytes and files it removed in one
+  `go_build_cache_clean` table. An absent cache directory reports zero at exit 0.
+- Added the Go build cache footprint to the gate's verdict tail. A green run prints one
+  `go-build-cache:` line after the phase table with the bytes, the files, the directory,
+  and the 10 GiB bound. Above the bound the line says `over bound` and names
+  `bench cache clean`, and the verdict stays green, because disk pressure never grades
+  the tree. Every run that reaches a verdict, red or green, records one `cache.footprint`
+  event in the run log.
 
 - Added `bench harnesses` to print the harness record, one TOON row per harness.
   A row names the providers, the phase form, the hook config with its wired
@@ -26,6 +42,21 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Every Go toolchain child Bench spawns now writes to one Bench-owned build cache
+  at `$HOME/.cache/bench/go-build`. The gate oracle closure, the gate phase
+  children, the private run-binary build, and `bench test` all carry that
+  `GOCACHE` entry, so an ambient cache and a `go env -w GOCACHE` setting no longer
+  steer a Bench build. The directory comes from `HOME` alone. A root with no
+  absolute `HOME` refuses before its child starts and names `HOME`.
+- Every Bench-owned Go argv now carries `-trimpath`, and every Bench-owned
+  `go test` argv keeps `-count=1`. Without `-trimpath` Go hashes the package
+  directory into each compile action ID, so every worktree wrote a complete new
+  set of archives. One producer in the gate package now owns the base test argv
+  `go test -trimpath -count=1`, and the gate `test`, `race`, and `system`
+  phases, `bench test`, the release core test step, and the ship conformance
+  step all compose it. The gate `vet` phase and the kit lane's `vet` and `build`
+  checks take the flag from one shared owner. A linked repository's declared
+  phase or lane argv keeps its own flags.
 - The gate now prints a bounded verdict instead of every phase's stream. A green
   run prints one `phases[N]{phase,verdict,elapsed_ms}` table, one
   `capability-skips` line, and `gate: green`. A red run prints one

@@ -1,6 +1,6 @@
 # go-build-cache-footprint
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation, 2026-08-27 — the `/bench-write-spec go-build-cache-footprint` charge with its six numbered requirements, the measured problem, and the npm, uv, and pip question.
 
@@ -129,7 +129,8 @@ them.
     every Bench test form, so that the flags cannot drift. The forms are test,
     race, system, focused, release, and ship conformance.
 15. As a test author, I want the three `runtime.Caller` root helpers to use the
-    working directory or git, so that their packages pass under `-trimpath`.
+    working directory or git, so that their packages pass under `-trimpath`. I
+    also want the bounds test to resolve `go/build`'s GOROOT from the toolchain.
 
 ### Bound the footprint without a compile race
 
@@ -229,9 +230,9 @@ Line: none — the coordinating session runs these operator steps itself.
   `git rev-parse --show-toplevel` resolution. The conformance harness already
   holds a git-based resolver to mirror.
 - The cache lock is a POSIX record lock on `<directory>/bench.lock`. It
-  mirrors the gate execution lock. A holder takes a read lock and keeps its
-  descriptor open for the run's span. `bench cache clean` requests a write
-  lock with a no-wait set, and `EAGAIN` is the refusal. The refusal names the
+  mirrors the gate execution lock. A holder takes a read lock, waits for a
+  running clean, and keeps its descriptor open for the run's span.
+  `bench cache clean` requests a write lock with a no-wait set, and `EAGAIN` is the refusal. The refusal names the
   blocking pid that `F_GETLK` reports. `go clean -cache` removes only the
   two-hex subdirectories, so the lock file survives a clean.
 - `bench cache clean` composes `go clean -cache` with `GOCACHE` set to the
@@ -244,11 +245,13 @@ Line: none — the coordinating session runs these operator steps itself.
   `lstat` regular-file check. The report renders it as UTC RFC 3339, or empty
   when the file is absent, not regular, or unparsable.
 - The gate reporter is one more report closure beside the capability-skips
-  reporter in the verdict tail. It reads the directory from its own `GOCACHE`
-  entry, walks once, and answers no rows, one green line, and never red. It
-  logs `cache.footprint` through the inherited run log on every run that
-  reaches a verdict. An interrupted run reaches no verdict, so it logs no
-  event.
+  reporter in the verdict tail. It takes the directory from its own `GOCACHE`
+  entry, or from the `HOME` derivation when that entry is absent. With a
+  directory it walks once, and it answers no rows, one green line, and never
+  red. With neither source it prints no line and logs no event. It logs
+  `cache.footprint` through the inherited run log on every run that reaches a
+  verdict and has a directory. An interrupted run reaches no verdict, so it
+  logs no event.
 - The green line reads `go-build-cache: <bytes> bytes in <files> files at <dir> (bound <bound> bytes)`.
   Above the bound the parenthesis reads `(over bound <bound> bytes, next: bench cache clean)`.
 - `bench cache` and `bench cache clean` join the command registry and the
@@ -277,9 +280,9 @@ Line: none — the coordinating session runs these operator steps itself.
   - the oracle closure tests
   - the report tail tests
   - the command registry conformance tests
-- The whole-tree gate observes every row through its `test` phase. The
-  `system` phase's adoption journey observes the run log event after a real
-  gate.
+- The whole-tree gate observes every row through its `test` phase. The gate
+  runner integration test observes the run log event after a real run of the
+  kit's phase runner.
 
 ### Seam diagram
 
@@ -314,13 +317,13 @@ Line: none — the coordinating session runs these operator steps itself.
 | C09 | 2 | The run-binary builder's env carries the Bench `GOCACHE` entry. | runbinary unit | An untouched builder env passes the ambient entry through. |
 | C10 | 4 | The `bench test` child env carries the Bench `GOCACHE` entry. | testreport unit | An untouched test env passes the ambient entry through. |
 | C11 | 7 | A phase run whose env has no absolute `HOME` reds before the child starts with `HOME` on stderr. | phase runner unit | A silent fallback starts the child against the ambient cache. |
-| C12 | 1, 29 | After one green gate in the adoption journey, the run's `.jsonl` holds one `cache.footprint` event whose `path` equals the derived dir of the journey env. | system journey | A gate that never hands the directory down records no path or another path. |
+| C12 | 1, 29 | After one green run of the kit's phase runner under the process env, the run's `.jsonl` holds one `cache.footprint` event whose `path` equals the derived dir of that env. | gate runner integration | A gate that never hands the directory down records no path or another path. |
 | T01 | 9, 13, 14 | The `test`, `race`, and `system` phase argvs each begin with `go test -trimpath -count=1`. | ordinary build census literals | A comparison against the producer itself passes, so only the census literals red on a missing flag. |
 | T02 | 10 | The `vet` phase argv is `go -C <root> vet -trimpath ./...`. | phase table unit | An untouched vet argv fails the verbatim comparison. |
 | T03 | 11 | The kit lane's `vet` and `build` argvs each carry `-trimpath`. | lane table unit | An untouched lane table fails the verbatim comparison. |
 | T04 | 12, 13, 14 | The `bench test` argv carries `-trimpath` and `-count=1`. | testreport unit | An untouched focused argv lacks `-trimpath`. |
 | T05 | 12, 13, 14 | The release `coreTestStep` argv carries `-trimpath` and `-count=1`. | gate-go unit | An untouched release argv lacks `-trimpath`. |
-| T06 | 15 | `go test -trimpath` on `internal/runbinary`, `internal/conformance`, and `internal/preprelease` is green. | package run under `-trimpath` | A `runtime.Caller` root fails with `lstat github.com: no such file or directory`, as observed on 2026-08-27. |
+| T06 | 15 | `go test -trimpath` on `internal/runbinary`, `internal/conformance`, `internal/preprelease`, and `internal/bounds` is green. | package run under `-trimpath` | A `runtime.Caller` root fails with `lstat github.com: no such file or directory`, as observed on 2026-08-27. |
 | T07 | 12, 14 | The ship conformance step argv begins with `go -C <kit> test -trimpath -count=1`. | preprelease unit | A second producer in the release package keeps the old flags. |
 | L01 | 16, 19 | While a gate run holds the cache lock, `bench cache clean` exits 1. | two-process lock test | A clean that takes no lock proceeds under a live gate. |
 | L02 | 17, 19 | While a `bench test` run holds the cache lock, `bench cache clean` exits 1. | two-process lock test | A focused run that takes no lock lets the clean proceed. |
@@ -351,6 +354,7 @@ Line: none — the coordinating session runs these operator steps itself.
 | R15 | 31 | The gate line prints the directory with a control byte stripped. | report tail unit | An unfiltered path puts a control byte on stdout. |
 | R16 | 23 | The `cache` verb routes to the new module in the subcommand routing map. | routing conformance test | An unregistered verb fails the routing census. |
 | R17 | 29 | A red gate run prints no `go-build-cache:` line. | report tail unit | A reporter that prints on red lands its line ahead of the failure table. |
+| R18 | 26, 29 | A reporter env with no `GOCACHE` entry names the `HOME`-derived directory in the line and the event. | report tail unit | A reporter that reads only the entry prints an empty directory and logs an empty path. |
 
 Not covered: story 32 — a reviewed exclusion, so `bench status` gains no section and no test changes.
 Not covered: story 33 — an operator measurement, recorded in the closing ticket's checklist.
@@ -426,13 +430,15 @@ reporter runs.
 - `internal/gate/`
 - `internal/runbinary/`
 - `internal/testreport/`
-- `internal/systemtest/`
 - `cmd/bench/`
 - `internal/conformance/subcommand_routing_test.go`
 - `internal/conformance/ordinary_build_census_test.go`
 - `internal/conformance/harness_test.go`
 - `internal/preprelease/preprelease.go`
 - `internal/preprelease/preprelease_test.go`
+- `internal/bounds/bounds_test.go`
+- `internal/bounds/bounds.go`
+- `internal/conformance/bounds_policy_test.go`
 - `projects/benchkit.md`
 - `CHANGELOG.md`
 - `specs/go-build-cache-footprint/`

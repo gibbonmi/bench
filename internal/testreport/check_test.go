@@ -49,7 +49,7 @@ func TestNamedCheckOwnsConformanceEnvironment(t *testing.T) {
 		t.Fatalf("named check = %d, want 0\n%s", code, output)
 	}
 	environment := readTestReportFile(t, marker)
-	if want := "argv=test -json -count=1 ./internal/conformance -run ^" + registry.RootConformanceTest + "$\n"; !strings.Contains(environment, want) {
+	if want := "argv=test -trimpath -count=1 -json ./internal/conformance -run ^" + registry.RootConformanceTest + "$\n"; !strings.Contains(environment, want) {
 		t.Errorf("named-check Go argv missing %q:\n%s", strings.TrimSpace(want), environment)
 	}
 	for name, want := range map[string]string{

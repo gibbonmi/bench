@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"go/ast"
+	"go/build"
 	"go/constant"
 	"go/format"
 	"go/importer"
@@ -101,6 +102,7 @@ func registryDurations(t *testing.T) map[string]time.Duration {
 	if err != nil {
 		t.Fatalf("parse extracted registry: %v", err)
 	}
+	restoreBuildGOROOT(t)
 	config := types.Config{Importer: importer.ForCompiler(synthetic, "source", nil)}
 	pkg, err := config.Check("bounds", synthetic, []*ast.File{parsed}, nil)
 	if err != nil {
@@ -119,6 +121,25 @@ func registryDurations(t *testing.T) map[string]time.Duration {
 		durations[name] = time.Duration(value)
 	}
 	return durations
+}
+
+// restoreBuildGOROOT gives the source importer a standard library to resolve: Go strips
+// GOROOT from the binary under -trimpath, so build.Default.GOROOT arrives empty and the
+// importer cannot find package time. The toolchain still reports the real path.
+func restoreBuildGOROOT(t *testing.T) {
+	t.Helper()
+	if build.Default.GOROOT != "" {
+		return
+	}
+	out, err := exec.Command("go", "env", "GOROOT").Output()
+	if err != nil {
+		t.Fatalf("resolve GOROOT: %v", err)
+	}
+	root := strings.TrimSpace(string(out))
+	if root == "" {
+		t.Fatal("go env GOROOT is empty")
+	}
+	build.Default.GOROOT = root
 }
 
 // scalarConstBlock admits the policy registry and rejects the package's string-enum const

@@ -12,6 +12,8 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -123,7 +125,11 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 		if kind != "" {
 			return toon.Errorf("changed selection failed", kind+": "+hint) + "\n", 1
 		}
-		packages, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, selectedRunEnvironment(os.Environ(), selection))
+		changedEnv, err := selectedRunEnvironment(os.Environ(), selection)
+		if err != nil {
+			return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+		}
+		packages, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, changedEnv)
 		if err != nil {
 			return toon.Errorf("changed selection failed", err.Error()) + "\n", 1
 		}
@@ -135,35 +141,64 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	if request.check != "" {
 		return runNamedCheck(ctx, root, request, selection)
 	}
-	argv := []string{"test", "-json", "-count=1"}
+	operands := []string{}
 	if request.run != "" {
-		argv = append(argv, "-run", request.run)
+		operands = append(operands, "-run", request.run)
 	}
 	if len(request.packages) != 0 {
-		argv = append(argv, request.packages...)
+		operands = append(operands, request.packages...)
 	} else {
-		argv = append(argv, request.packageExpr)
+		operands = append(operands, request.packageExpr)
 	}
-	return runGoTest(ctx, root, request, argv, selectedRunEnvironment(os.Environ(), selection))
+	env, err := selectedRunEnvironment(os.Environ(), selection)
+	if err != nil {
+		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+	}
+	return runGoTest(ctx, root, request, focusedTestArgv(operands...), env)
 }
 
 func runNamedCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (string, int) {
-	argv := []string{"test", "-json", "-count=1", "./internal/conformance", "-run", "^" + registry.RootConformanceTest + "$"}
-	return runGoTest(ctx, root, request, argv, conformanceEnvironment(os.Environ(), root, request.check, selection))
+	argv := focusedTestArgv("./internal/conformance", "-run", "^"+registry.RootConformanceTest+"$")
+	env, err := conformanceEnvironment(os.Environ(), root, request.check, selection)
+	if err != nil {
+		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+	}
+	return runGoTest(ctx, root, request, argv, env)
 }
 
-func conformanceEnvironment(base []string, root, scope string, selection *runbinary.Selection) []string {
-	env := selectedRunEnvironment(base, selection)
+// focusedTestArgv is the `bench test` invocation over one operand list. It takes its
+// flag pair from the gate's one test-argv producer, so the focused run shares the gate's
+// build cache entries instead of writing a second, path-keyed set.
+func focusedTestArgv(operands ...string) []string {
+	return gate.BaseTestArgv("", append([]string{"-json"}, operands...)...)
+}
+
+func conformanceEnvironment(base []string, root, scope string, selection *runbinary.Selection) ([]string, error) {
+	env, err := selectedRunEnvironment(base, selection)
+	if err != nil {
+		return nil, err
+	}
 	return append(env,
 		registry.ConformanceRootEnv+"="+root,
 		registry.ConformanceTierEnv+"="+string(registry.Dev),
 		registry.ConformanceScopeEnv+"="+scope,
-	)
+	), nil
 }
 
-func selectedRunEnvironment(base []string, selection *runbinary.Selection) []string {
-	env := runbinary.WithEnv(withoutConformanceEnvironment(base), selection.Path)
-	return append(env, "BENCH_KIT="+selection.SourceRoot)
+func selectedRunEnvironment(base []string, selection *runbinary.Selection) ([]string, error) {
+	env, err := testEnvironment(base, selection.Path)
+	if err != nil {
+		return nil, err
+	}
+	return append(env, "BENCH_KIT="+selection.SourceRoot), nil
+}
+
+// testEnvironment returns the environment the focused run's Go child carries: the
+// caller's, without the inherited conformance and capability entries, with the selected
+// Bench executable, and with the Bench build cache entry so a focused run warms the
+// archives a gate reads.
+func testEnvironment(base []string, binary string) ([]string, error) {
+	return gocache.Apply(runbinary.WithEnv(withoutConformanceEnvironment(base), binary))
 }
 
 func withoutConformanceEnvironment(base []string) []string {
@@ -183,9 +218,14 @@ func withoutConformanceEnvironment(base []string) []string {
 }
 
 func runGoTest(ctx context.Context, root string, request focusedRequest, argv, env []string) (string, int) {
-	cmd := exec.Command("go", argv...)
+	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
 	cmd.Env = env
+	// The focused run holds the shared cache lock for its span, so a clean cannot remove an
+	// archive this run is writing or reading. A lock it cannot take never fails the run.
+	if holder, err := gocache.Hold(env); err == nil {
+		defer holder.Release()
+	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {

@@ -25,6 +25,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gitguard"
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/handoff"
 	"github.com/gibbonmi/bench/internal/harness"
@@ -87,6 +88,14 @@ var commandRegistry = []commandDefinition{
 	{Name: "commands", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 12, Suffix: " --brief", Description: "print the direct, read-only command probe"}), Run: outputCommand(commandsCommand)},
 	{Name: "dashboard", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 13, Suffix: " [--stdout]", Gap: 1, Description: "write a self-contained HTML snapshot of the board (--stdout emits it)"}), Run: outputCommand(dashboard.Command)},
 	{Name: "structure", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 6, Description: "flag oversized files + crowded dirs (wire into the gate)"}), Run: outputCommand(structure.Command)},
+	// The bare verb is the operational report the exemption names. Its `clean` child is a
+	// mutation, exempt for the reason the `setup` row states; one row carries one
+	// disposition, so the parent's exemption covers both and the child stays out of the
+	// AXI query set the way every mutating `worktree` child does.
+	{Name: "cache", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(
+		helpRow{Order: 6, Description: "report the Bench Go build cache footprint (bytes, files, last trim)"},
+		helpRow{Order: 6, Suffix: " clean", Description: "take the cache lock and empty the Bench Go build cache (refuses under a live run)"},
+	), Run: outputCommand(gocache.Command)},
 	{Name: "models", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 5, Description: "list advisory model-id candidates for the line binding"}), Run: outputCommand(models.Command)},
 	{Name: "outline", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 23, Suffix: " [path] [--full]", Description: "top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams"}), Run: outputCommand(outline.Command)},
 	{Name: "idea", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<text>\"", Description: "park an out-of-scope idea in capture/IDEAS.md (commit to nothing)"}), Run: outputCommand(roadmap.IdeaCommand)},

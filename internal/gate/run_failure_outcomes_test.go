@@ -14,6 +14,8 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
 )
 
 const (
@@ -321,7 +323,7 @@ func runGateLockHolder(t *testing.T, root, readyPath, releasePath string) {
 		t.Fatal(err)
 	}
 	defer lock.Close()
-	flock := recordLock(syscall.F_WRLCK)
+	flock := gocache.RecordLock(syscall.F_WRLCK)
 	if err := syscall.FcntlFlock(lock.Fd(), syscall.F_SETLK, &flock); err != nil {
 		t.Fatal(err)
 	}
@@ -400,4 +402,49 @@ func requireDirectoryWriteDenied(t *testing.T) {
 		file.Close()
 		capability.Capability(t, capability.Privilege, "mode 0500 directory remains writable")
 	}
+}
+
+// TestCacheCleanProbe is the second process the two holder rows drive. The shared body
+// runs `bench cache clean` and records the verb's own answer.
+func TestCacheCleanProbe(t *testing.T) { cleanprobe.Answer(t) }
+
+// probeArgv is the child invocation that runs the clean probe: this test binary with one
+// row selected.
+func probeArgv(t *testing.T) []string {
+	t.Helper()
+	binary, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	return []string{binary, "-test.run=^TestCacheCleanProbe$"}
+}
+
+// requireRefusedClean reads the probe's answer file and grades it through the shared
+// grader.
+func requireRefusedClean(t *testing.T, answerPath string) {
+	t.Helper()
+	cleanprobe.Require(t, string(outcomeRead(t, answerPath)))
+}
+
+// L01: a gate run holds the shared cache lock across its phases, so `bench cache clean`
+// exits 1 while the oracle is compiling. The probe runs from the gate's own child, which
+// is the one point inside the run's span a second process can observe.
+func TestGateRunHoldsTheCacheLockAcrossItsPhases(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	answerPath := filepath.Join(t.TempDir(), "clean-answer")
+	argv := probeArgv(t)
+	root := outcomeFixture(t, "HOME="+home+" "+cleanprobe.Env+"="+answerPath+
+		" "+argv[0]+" "+argv[1]+" >/dev/null 2>&1\n")
+	// The holder derives its directory from the closure's HOME, so the closure has to
+	// declare that name. A closure without it locks nothing.
+	outcomeWrite(t, root, ".bench/gate-inputs.json",
+		`{"schema":1,"closure":"local","environment":["HOME"],"paths":[],"tools":[]}`+"\n", 0o644)
+	outcomeCommit(t, root, "declare HOME")
+
+	var stdout, stderr bytes.Buffer
+	if result := Execute(context.Background(), root, &stdout, &stderr); result.ActionExit != 0 {
+		t.Fatalf("gate result = %#v, stderr=%q", result, stderr.String())
+	}
+	requireRefusedClean(t, answerPath)
 }

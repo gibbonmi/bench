@@ -2,7 +2,7 @@
 
 Blocked by: 05-hold-the-cache-lock-and-add-bench-cache-clean.md
 
-Writes: internal/gocache/ (new), internal/gate/report.go, internal/gate/runner.go, internal/gate/run_log.go, internal/gate/report_test.go, internal/systemtest/adoption_test.go, CHANGELOG.md
+Writes: internal/gocache/ (new), internal/gate/report.go, internal/gate/runner.go, internal/gate/run_log.go, internal/gate/report_test.go, internal/gate/cache_footprint_run_test.go, CHANGELOG.md
 
 ## What to build
 
@@ -26,9 +26,9 @@ run prints no line at all.
 Every run that reaches a verdict, red or green, logs one `cache.footprint`
 event through the inherited run log. The event carries the directory, the
 bytes, the files, and the over-bound flag. An interrupted run reaches no
-verdict, so it logs no event. The adoption journey in
-`internal/systemtest/adoption_test.go` runs a real gate, so it observes the
-event after one green run.
+verdict, so it logs no event. The gate runner integration test in
+`internal/gate/cache_footprint_run_test.go` runs the real phase runner. It
+observes the event after one green run.
 
 The hostile-input rows for the walk land here beside the line. A FIFO and a
 dangling symlink each add zero bytes, and neither blocks the walk nor raises an
@@ -36,7 +36,7 @@ error.
 
 ## Acceptance
 
-- [ ] C12 — After one green gate in the adoption journey, the run's `.jsonl` holds one `cache.footprint` event whose `path` equals the derived dir.
+- [ ] C12 — The kit's phase runner runs green once under the process env. The run's `.jsonl` then holds one `cache.footprint` event whose `path` equals the derived dir of that env.
 - [ ] R08 — A green gate prints the `go-build-cache:` line after the phase table and before `gate: green`.
 - [ ] R09 — Above the bound the line's parenthesis reads `(over bound <bound> bytes, next: bench cache clean)`.
 - [ ] R10 — Above the bound the run still prints `gate: green`.

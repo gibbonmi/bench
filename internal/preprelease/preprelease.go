@@ -96,7 +96,7 @@ func Steps(root, kit string) []Step {
 			// without it this step runs a check that silently returns nil. The suite
 			// grades no package suites of its own; the step below runs those.
 			Name: "conformance-ship",
-			Argv: append(goTestArgv(kit), "-tags", "stress", "./internal/conformance", "-run", ShipConformanceRun()),
+			Argv: gate.BaseTestArgv(kit, "-tags", "stress", "./internal/conformance", "-run", ShipConformanceRun()),
 			Env:  []string{registry.ConformanceRootEnv + "=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
 		},
 		{
@@ -124,17 +124,6 @@ func Steps(root, kit string) []Step {
 			},
 		},
 	}
-}
-
-// goTestArgv mirrors the gate's conformance invocation: -C so the suite compiles in the
-// kit checkout while grading a root that may be elsewhere, and -count=1 so a cached
-// verdict can never stand in for the release rehearsal.
-func goTestArgv(kit string) []string {
-	argv := []string{"go"}
-	if kit != "" {
-		argv = append(argv, "-C", kit)
-	}
-	return append(argv, "test", "-count=1")
 }
 
 // Command runs the ship-tier rehearsal. `help`, `--help`, and `-h` print the declared

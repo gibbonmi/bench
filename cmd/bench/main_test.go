@@ -144,6 +144,8 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench upgrade [--check] [--force]  plan and apply a relink onto the installed kit version
   bench models               list advisory model-id candidates for the line binding
   bench structure            flag oversized files + crowded dirs (wire into the gate)
+  bench cache                report the Bench Go build cache footprint (bytes, files, last trim)
+  bench cache clean          take the cache lock and empty the Bench Go build cache (refuses under a live run)
   bench skills-index [--check|--write]  print skills-index drift (default) or regenerate it
   bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
   bench learning "<title>" --what --right [--rule]  append one open entry to capture/learnings.md (the drain verdicts it)
