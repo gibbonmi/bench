@@ -25,7 +25,118 @@ const (
 	cancelHelperEnv   = "BENCH_TEST_CANCEL_HELPER"
 	cancelTempRootEnv = "BENCH_TEST_CANCEL_TEMPROOT"
 	cancelSourceEnv   = "BENCH_TEST_CANCEL_SOURCE"
+	cancelGoModeEnv   = "BENCH_TEST_CANCEL_GO_MODE"
+	cancelGoPathEnv   = "BENCH_TEST_CANCEL_GO_PATH"
+	cancelGoPIDEnv    = "BENCH_TEST_CANCEL_GO_PID"
 )
+
+func TestChangedGoListDrainsGroupOnCancelSignal(t *testing.T) {
+	if mode := os.Getenv(cancelGoModeEnv); mode != "" {
+		runGoHopCancelHelper(t, mode)
+		return
+	}
+	signalGoHopCancelHelper(t, "TestChangedGoListDrainsGroupOnCancelSignal", "list")
+}
+
+func TestFocusedGoTestDrainsGroupOnCancelSignal(t *testing.T) {
+	if mode := os.Getenv(cancelGoModeEnv); mode != "" {
+		runGoHopCancelHelper(t, mode)
+		return
+	}
+	signalGoHopCancelHelper(t, "TestFocusedGoTestDrainsGroupOnCancelSignal", "test")
+}
+
+func signalGoHopCancelHelper(t *testing.T, testName, mode string) {
+	t.Helper()
+	pidFile := filepath.Join(t.TempDir(), "go-list-descendant")
+	goPath := parkingGo(t, pidFile)
+	helper := exec.Command(os.Args[0], "-test.run=^"+testName+"$", "-test.timeout="+deadline().String())
+	helper.Env = append(os.Environ(),
+		cancelGoModeEnv+"="+mode,
+		cancelGoPathEnv+"="+goPath,
+		cancelGoPIDEnv+"="+pidFile,
+	)
+	output, err := helper.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	helper.Stderr = helper.Stdout
+	if err := helper.Start(); err != nil {
+		t.Fatal(err)
+	}
+	waited := make(chan error, 1)
+	go func() { _, _ = io.ReadAll(output); waited <- helper.Wait() }()
+	t.Cleanup(func() { _ = helper.Process.Kill() })
+
+	descendant := waitForPID(t, pidFile)
+	t.Cleanup(func() { _ = syscall.Kill(descendant, syscall.SIGKILL) })
+	if err := helper.Process.Signal(syscall.SIGINT); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err := <-waited:
+		if err != nil {
+			t.Fatalf("cancel helper: %v", err)
+		}
+	case <-time.After(deadline()):
+		t.Fatalf("cancel helper did not exit within %s", deadline())
+	}
+	requireProcessGone(t, descendant)
+}
+
+func runGoHopCancelHelper(t *testing.T, mode string) {
+	goPath := os.Getenv(cancelGoPathEnv)
+	pidFile := os.Getenv(cancelGoPIDEnv)
+	if goPath == "" || pidFile == "" {
+		t.Fatal("missing fake go command")
+	}
+	t.Setenv("PATH", filepath.Dir(goPath)+string(os.PathListSeparator)+os.Getenv("PATH"))
+	var output string
+	var code int
+	want := ""
+	switch mode {
+	case "list":
+		root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
+		output, code = Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
+		want = "error: changed selection failed — go list interrupted: child process group cancelled\n"
+	case "test":
+		installTestSelectionFactory(t, runbinary.Factory{
+			TempRoot: t.TempDir(),
+			Build: func(_ context.Context, _, output string) error {
+				return os.WriteFile(output, []byte("selected"), 0o755)
+			},
+			Verify: func(string, string) error { return nil },
+		})
+		output, code = Command(focusedTestModule(t), nil)
+		want = "error: go test interrupted — child process group cancelled\n"
+	default:
+		t.Fatalf("unknown go-hop mode %q", mode)
+	}
+	if code != 1 || output != want {
+		t.Fatalf("go-hop cancellation = (%d, %q), want (1, %q)", code, output, want)
+	}
+	for _, table := range []string{"packages[", "failures[", "skips["} {
+		if strings.Contains(output, table) {
+			t.Fatalf("changed cancellation rendered partial table %q in %q", table, output)
+		}
+	}
+}
+
+func parkingGo(t *testing.T, pidFile string) string {
+	t.Helper()
+	dir := t.TempDir()
+	script := `#!/usr/bin/env bash
+sleep ` + strconv.Itoa(int(parkSeconds())) + ` &
+printf %s "$!" > "` + pidFile + `.partial"
+mv "` + pidFile + `.partial" "` + pidFile + `"
+wait
+`
+	path := filepath.Join(dir, "go")
+	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
 
 // TestCommandDrainsBuilderGroupOnCancelSignal grades what a cancel signal does to
 // the builder group `bench test` detaches: a signal the owner does not trap leaves

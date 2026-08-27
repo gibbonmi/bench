@@ -11,6 +11,9 @@ Keep the existing process-group behavior for the focused `go test` child. Add in
 
 ## Acceptance
 
-- [ ] N02 — cancellation of `go list` leaves no child or descendant alive.
-- [ ] N02 — cancellation of `go test` leaves no child or descendant alive.
-- [ ] N02 — an interrupted Go hop emits no partial package table.
+- [x] N02 — cancellation of `go list` leaves no child or descendant alive.
+- [x] N02 — cancellation of `go test` leaves no child or descendant alive.
+- [x] N02 — an interrupted Go hop emits no partial package table.
+
+Delivered outcome: both Go hops drain their private process groups and return
+one interruption posture without a partial report.

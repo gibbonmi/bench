@@ -12,6 +12,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"syscall"
 )
 
 const currentPackagePattern = "./..."
@@ -83,13 +84,33 @@ func inspectChangedPath(root, path string) (changedPath, error) {
 }
 
 func currentPackages(ctx context.Context, root string) ([]listedPackage, error) {
-	cmd := exec.CommandContext(ctx, "go", "list", "-buildvcs=false", "-json", "-test", currentPackagePattern)
+	cmd := exec.Command("go", "list", "-buildvcs=false", "-json", "-test", currentPackagePattern)
 	cmd.Dir = root
-	output, err := cmd.Output()
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("go list failed: %w", err)
+	}
+	completed := make(chan error, 1)
+	done := make(chan struct{})
+	go func() {
+		completed <- cmd.Wait()
+		close(done)
+	}()
+	var err error
+	select {
+	case err = <-completed:
+	case <-ctx.Done():
+		cancelGoProcessGroup(cmd, done)
+		err = <-completed
+		drainGoProcessGroup(cmd.Process.Pid)
+		return nil, fmt.Errorf("go list interrupted: %s", goChildGroupCancelled)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("go list failed: %w", err)
 	}
-	decoder := json.NewDecoder(bytes.NewReader(output))
+	decoder := json.NewDecoder(bytes.NewReader(output.Bytes()))
 	var packages []listedPackage
 	for {
 		var pkg listedPackage

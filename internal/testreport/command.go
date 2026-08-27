@@ -35,6 +35,8 @@ var grammar = usage.Grammar{
 
 var selectRunBinary = runbinary.ReuseOrOwn
 
+const goChildGroupCancelled = "child process group cancelled"
+
 type focusedRequest struct {
 	packageExpr string
 	packages    []string
@@ -197,23 +199,21 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		err    error
 	}
 	decodedResult := make(chan decoded, 1)
+	decodedDone := make(chan struct{})
 	go func() {
 		report, err := decode(stream)
 		decodedResult <- decoded{report: report, err: err}
+		close(decodedDone)
 	}()
 	var result decoded
 	select {
 	case result = <-decodedResult:
 	case <-ctx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
-		select {
-		case result = <-decodedResult:
-		case <-time.After(2 * time.Second):
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			result = <-decodedResult
-		}
+		cancelGoProcessGroup(cmd, decodedDone)
+		result = <-decodedResult
 		_ = cmd.Wait()
-		return toon.Errorf("go test interrupted", "child process group cancelled") + "\n", 1
+		drainGoProcessGroup(cmd.Process.Pid)
+		return toon.Errorf("go test interrupted", goChildGroupCancelled) + "\n", 1
 	}
 	waitErr := cmd.Wait()
 	report, decodeErr := result.report, result.err
@@ -240,6 +240,20 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		return out, 1
 	}
 	return out, 0
+}
+
+func cancelGoProcessGroup(cmd *exec.Cmd, completed <-chan struct{}) {
+	_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
+	select {
+	case <-completed:
+	case <-time.After(runbinary.BuilderCancelGrace):
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		<-completed
+	}
+}
+
+func drainGoProcessGroup(pgid int) {
+	_ = syscall.Kill(-pgid, syscall.SIGKILL)
 }
 
 func emptyReport(full bool) (string, int) {
