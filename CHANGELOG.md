@@ -78,6 +78,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- `bench status --route` now returns an atomic cleanup command for unclaimed
+  assignment branches. The command prints the exact plan before it deletes the
+  current branch set.
 - `bench worktree clean --help` now prints its grammar to stdout and exits zero.
 
 - `bench worktree land` now gives the authenticated promotion broker the Go path

@@ -545,7 +545,7 @@ func TestKeptWorktreeOperationsKeepTheirGrammar(t *testing.T) {
 
 func TestWorktreeHelpNamesCleanGrammar(t *testing.T) {
 	out, code := runKeptRoute([]string{"worktree", "--help"})
-	const grammar = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>] | bench worktree clean --discard-branch --unclaimed [--apply <fingerprint>]"
+	const grammar = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>] | bench worktree clean --discard-branch --unclaimed [--apply <fingerprint> | --apply-current]"
 	if code != 0 || !strings.Contains(out, grammar) {
 		t.Fatalf("worktree --help exit=%d output=%q, want %q", code, out, grammar)
 	}

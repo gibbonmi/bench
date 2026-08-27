@@ -12,7 +12,7 @@ const (
 	WorktreeExec        = "bench worktree exec <target> -- <command> [args...]"
 	WorktreeCreate      = "bench worktree create [--refresh] --request <opaque-id> --label <work-item>"
 	WorktreeRelease     = "bench worktree release --request <opaque-id> <path>"
-	WorktreeClean       = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>] | bench worktree clean --discard-branch --unclaimed [--apply <fingerprint>]"
+	WorktreeClean       = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>] | bench worktree clean --discard-branch --unclaimed [--apply <fingerprint> | --apply-current]"
 	WorktreeReclaim     = "bench worktree reclaim [--apply <fingerprint>]"
 	WorktreeReauthorize = "bench worktree reauthorize --assignment <assignment-id> --request <opaque-id> --base <commit> --source-tip <commit> <path>"
 	WorktreeLand        = "bench worktree land --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] -m <message> <path>"
