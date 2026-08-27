@@ -106,7 +106,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "resolve-model", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(resolveModel)},
 	{Name: "worktree-pool", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(poolCommand)},
 	{Name: "worktree-lease-file", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(worktree.LeaseFileCommand)},
-	{Name: "test", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 22, Suffix: " [--full] [package]", Description: "run fresh Go tests and render package, failure, and skip evidence as TOON"}), Run: outputCommand(testCommand)},
+	{Name: "test", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 22, Suffix: " [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>", Description: "run focused Go-test or named-check evidence as TOON; no gate verdict"}), Run: outputCommand(testCommand)},
 	{Name: "help", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(), Kind: commandHelp},
 	{Name: "repair", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 25, Suffix: " [--prune]", Description: "explicitly install the pinned platform binary or prune stale cache entries"}), WrapperOnly: true},
 

@@ -28,6 +28,56 @@ type SourceRange struct {
 	CommittedPaths []string
 }
 
+// ChangedSubject is one coherent set of repository-relative paths.
+type ChangedSubject struct {
+	Base, Tip string
+	Paths     []string
+	Live      bool
+}
+
+// ResolveChangedSubject resolves the changed paths a focused command may select.
+func ResolveChangedSubject(root, base, sourceTip string) (ChangedSubject, string, string) {
+	if sourceTip != "" {
+		tip, err := git.Output("-C", root, "rev-parse", "--verify", sourceTip+"^{commit}")
+		if err != nil {
+			return ChangedSubject{}, "cannot resolve --source-tip", "'" + sourceTip + "' does not name a commit reachable in this repository"
+		}
+		source, kind, hint := ResolveSourceRange(root, base, tip)
+		if kind != "" {
+			return ChangedSubject{}, kind, hint
+		}
+		return ChangedSubject{Base: source.Base, Tip: source.Tip, Paths: source.CommittedPaths}, "", ""
+	}
+	var subject ChangedSubject
+	result := MovementCheckedRetry(root, func(snapshot MovementSnapshot) (string, string) {
+		resolvedBase := base
+		if resolvedBase == "" {
+			dr, kind, hint := resolveBranchRangeFromFacts(root, snapshot.Facts)
+			if kind != "" {
+				return kind, hint
+			}
+			resolvedBase = dr.base
+		}
+		source, kind, hint := snapshot.ResolveSourceRange(resolvedBase)
+		if kind != "" {
+			return kind, hint
+		}
+		paths, err := snapshot.SourceSnapshotPaths(source)
+		if err != nil {
+			return "changed paths not readable", err.Error()
+		}
+		subject = ChangedSubject{Base: source.Base, Tip: source.Tip, Paths: paths, Live: true}
+		return "", ""
+	})
+	if result.Kind != "" {
+		return ChangedSubject{}, result.Kind, result.Hint
+	}
+	if result.DriftKind != "" {
+		return ChangedSubject{}, "changed subject drift", result.DriftHint
+	}
+	return subject, "", ""
+}
+
 // MovementSnapshot is the typed checkout state one movement-checked read exposes to
 // its caller. The root and facts stay coupled so derived source ranges and paths
 // cannot accidentally inspect the process working directory.

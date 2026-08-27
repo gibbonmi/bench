@@ -667,6 +667,23 @@ func TestHelpSpecRowsNameRetireAndHistoryOnly(t *testing.T) {
 	}
 }
 
+func TestTestHelpNamesOnlyRunnableFocusedForms(t *testing.T) {
+	help := renderCommandHelp()
+	if !strings.Contains(help, "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>") {
+		t.Errorf("bench help is missing the focused test grammar:\n%s", help)
+	}
+}
+
+func TestFocusedHelpNamesCheckAsEvidenceWithoutVerdict(t *testing.T) {
+	help := renderCommandHelp()
+	if !strings.Contains(help, "bench test [--full] --check <name>") {
+		t.Fatalf("bench help is missing the named-check form:\n%s", help)
+	}
+	if strings.Contains(strings.ToLower(help), "test --check <name>  gate") {
+		t.Fatalf("bench help presents a focused check as a verdict:\n%s", help)
+	}
+}
+
 // TestWorktreeRoutesKeepTheirBytesFromASubdirectory grades WF11. The four verbs that now
 // receive an explicit root must answer the same bytes from a subdirectory as from the
 // repository root, because the boundary resolves the root and the verb no longer reads

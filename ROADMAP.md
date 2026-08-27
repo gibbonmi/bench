@@ -97,11 +97,15 @@ means the repository-controlled compliance assessment.
 
 **FT244 (LOW) — a standard scratch directory for worktree runs.**
 
-**FT215 (MEDIUM) — no changed-package-scoped gate path; every diff pays the full fixed-cost floor.**
+**FT215 (MEDIUM) — `bench commit` uses a path-aware fast lane before the full gate.**
+
+**FT261 (MEDIUM, decision required) — preflight review classifies an in-progress untracked spec folder without blocking ticket slicing.**
 
 **FT259 (MEDIUM) — repair coverage changes retain a ticket owner through repair-scoped re-review.**
 
 **FT260 (LOW, decision required) — coordinator worktree diff inspection needs a scoped native path.**
+
+**FT262 (LOW) — preflight reports uncited coverage rows while a ticket breakdown is in progress.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
@@ -297,6 +301,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — build the approved staged FT215 `specs/focused-test-selection/spec.md` on one retained integration source.
-2. `/bench-shape-idea` — FT255: decide one explicit machine budget for concurrent tests.
-3. `/bench-write-spec` — FT251: specify recovery for a killed landing's prospective tree and gate binary.
+1. `/bench-implement-spec` — build staged `specs/go-build-cache-footprint/spec.md` on one retained integration source.
+2. `/bench-write-spec` — FT251: specify recovery for a killed landing's prospective tree and gate binary.
+3. `/bench-write-spec` — FT215: specify the path-aware `bench commit` fast lane.
