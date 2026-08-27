@@ -1,6 +1,6 @@
 # FT215 focused test runs and the fast lane
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -94,7 +94,14 @@ Do not choose the public grammar.
 
 ### Answer
 
-— (open)
+Resolved 2026-08-27. The cited summary is
+`decisions/assets/ft215-focused-test-inputs.md`. The current command accepts
+one package expression and no test filter. The diff owner supplies coherent
+live and frozen subjects.
+
+A live Go 1.25 query verified production, test, and
+external-test import edges. No current producer maps diff paths to packages or
+conformance checks. Tickets #7, #8, and #9 own the remaining choices.
 
 ## #6: Which paths can narrow the fast lane?
 
@@ -117,7 +124,14 @@ choice.
 
 ### Answer
 
-— (open)
+Resolved 2026-08-27. The cited summary is
+`decisions/assets/ft215-fast-lane-inputs.md`. The attributed-path producer
+accepts safe files, directories, deletions, and symlinks.
+
+The current lane
+always runs gofmt, prose, vet, and build. Positive path classes can omit a
+check only when its producer cannot observe that class. Unknown paths have no
+safe narrow selection. Ticket #10 owns the class and fallback policy.
 
 ## #7: Which diff subject does changed selection use?
 
@@ -132,7 +146,13 @@ package?
 
 ### Answer
 
-— (open)
+Resolved 2026-08-27. Changed mode accepts both coherent subject families. Its
+default and explicit base produce live subjects. An explicit base and source
+tip produce an immutable subject.
+
+A proven non-Go subject emits an explicit
+empty result. Any Go-relevant path that cannot resolve safely refuses. The
+command never drops or widens that path silently.
 
 ## #8: What is the focused test grammar?
 
@@ -147,7 +167,15 @@ retain?
 
 ### Answer
 
-— (open)
+Resolved 2026-08-27. The public forms are:
+
+- `bench test [--full] [--package <expr> | <legacy-package> | --changed]
+  [--run <go-regex>]`
+- `bench test [--full] --check <name>`
+
+The positional package form remains compatible. `--check` is exclusive.
+`--run` can combine with the default, package, or changed subject. A run that
+matches zero tests refuses. Ticket #11 adds the changed-subject flags.
 
 ## #9: Does changed selection include conformance checks?
 
@@ -161,7 +189,10 @@ it also select conformance checks through their registered input derivations?
 
 ### Answer
 
-— (open)
+Resolved 2026-08-27. Changed mode selects Go packages and their reverse
+dependents only. It does not derive conformance checks from changed paths. The
+`Inputs` labels are not path selectors, and catch-all rows would make the
+result unbounded. `--check <name>` remains the explicit conformance form.
 
 ## #10: How does the fast lane narrow safely?
 
@@ -175,7 +206,36 @@ current complete fast lane, or refuse the commit?
 
 ### Answer
 
-— (open)
+Resolved 2026-08-27. The lane classifies the composed changed paths and takes
+the union of their checks:
+
+- Go source selects gofmt, vet, and build.
+- Go metadata or a named embed input selects vet and build.
+- Markdown or prose policy selects prose.
+- A known document class also selects its existing focused validator.
+- Mixed known paths select the union.
+- Any unknown or symlink path selects the current complete lane.
+
+The attribution owner continues to refuse special and unreadable paths before
+the lane. The composed-path input expands named directories and represents a
+rename as its deletion and addition.
+
+## #11: How does changed mode name a frozen subject?
+
+Blocked by: #7, #8
+Type: Grill
+
+### Question
+
+Should changed mode reuse the coherent diff flags for live and frozen
+subjects?
+
+### Answer
+
+Resolved 2026-08-27. Changed mode accepts
+`--base <commit> [--source-tip <commit>]`. A base without a source tip
+selects the live subject. A base with a source tip selects the immutable pair.
+A source tip without a base refuses as a grammar error.
 
 ## Not yet specified
 
@@ -213,3 +273,9 @@ current complete fast lane, or refuse the commit?
 - Path: `internal/gate/lane.go`
   Supports: #4 and #6's current fast-lane phase and record boundaries.
   Drift: Re-read before #6 if the lane declaration or record changes.
+- Path: `decisions/assets/ft215-focused-test-inputs.md`
+  Supports: #5's producer-derived package, diff, and conformance input partitions.
+  Drift: Re-run the research if test, diff, Go graph, or conformance producers change.
+- Path: `decisions/assets/ft215-fast-lane-inputs.md`
+  Supports: #6's producer-derived attributed-path and fast-lane partitions.
+  Drift: Re-run the research if attribution, lane, embed, or document producers change.
