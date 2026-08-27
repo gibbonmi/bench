@@ -114,3 +114,38 @@ func TestExplicitBaseRetriesThenRefusesMovement(t *testing.T) {
 		t.Fatalf("missing structured drift: %s", out)
 	}
 }
+
+func TestChangedSubjectDefaultLiveComposition(t *testing.T) {
+	root, base, _ := seedCompatibilityRepo(t)
+	subject, kind, hint := ResolveChangedSubject(root, "", "")
+	if kind != "" {
+		t.Fatalf("ResolveChangedSubject = (%q, %q)", kind, hint)
+	}
+	if !subject.Live || subject.Base != base {
+		t.Fatalf("subject identity = %#v, want live subject from %s", subject, base)
+	}
+	for _, want := range []string{"committed.txt", "tracked.txt", "untracked.txt"} {
+		found := false
+		for _, path := range subject.Paths {
+			found = found || path == want
+		}
+		if !found {
+			t.Errorf("paths = %v, want %q", subject.Paths, want)
+		}
+	}
+}
+
+func TestChangedSubjectRetriesThenRefusesMovement(t *testing.T) {
+	root, base, _ := seedCompatibilityRepo(t)
+	old := snapshotAfterRead
+	defer func() { snapshotAfterRead = old }()
+	calls := 0
+	snapshotAfterRead = func() {
+		calls++
+		mustWriteFile(t, filepath.Join(root, "tracked.txt"), "moved "+strconv.Itoa(calls)+"\n")
+	}
+	_, kind, hint := ResolveChangedSubject(root, base, "")
+	if kind != "changed subject drift" || calls != 2 {
+		t.Fatalf("movement = (%q, %q), calls=%d, want second-drift refusal", kind, hint, calls)
+	}
+}

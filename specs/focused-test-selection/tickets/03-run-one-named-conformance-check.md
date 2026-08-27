@@ -2,7 +2,7 @@
 
 Blocked by: 02-select-changed-packages-from-one-subject
 
-Writes: internal/conformance/registry/scope.go (new), internal/conformance/gate_entry_test.go, internal/conformance/tier_test.go, internal/testreport/command.go (new), internal/testreport/testreport.go, internal/testreport/testreport_test.go, internal/testreport/runbinary_test.go, internal/testreport/cancel_test.go, internal/testreport/selection_test.go (new), internal/testreport/check_test.go (new), cmd/bench/main.go, cmd/bench/command_registry_test.go, specs/focused-test-selection/
+Writes: internal/conformance/registry/scope.go (new), internal/conformance/gate_entry_test.go, internal/conformance/tier_test.go, internal/testreport/command.go (new), internal/testreport/testreport.go, internal/testreport/testreport_test.go, internal/testreport/runbinary_test.go, internal/testreport/cancel_test.go, internal/testreport/selection_test.go (new), internal/testreport/check_test.go (new), cmd/bench/main.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, specs/focused-test-selection/
 
 ## What to build
 

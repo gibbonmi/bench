@@ -2,7 +2,7 @@
 
 Blocked by: none
 
-Writes: internal/testreport/command.go (new), internal/testreport/testreport.go, internal/testreport/testreport_test.go, internal/testreport/runbinary_test.go, internal/testreport/cancel_test.go, cmd/bench/main.go, cmd/bench/command_registry_test.go, specs/focused-test-selection/
+Writes: internal/testreport/command.go (new), internal/testreport/testreport.go, internal/testreport/testreport_test.go, internal/testreport/runbinary_test.go, internal/testreport/cancel_test.go, cmd/bench/main.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, specs/focused-test-selection/
 
 ## What to build
 

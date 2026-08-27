@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -17,12 +18,15 @@ import (
 )
 
 var grammar = usage.Grammar{
-	Cmd:  "bench test [--full] [--package <expr> | <legacy-package>] [--run <go-regex>]",
-	Help: "usage: bench test [--full] [--package <expr> | <legacy-package>] [--run <go-regex>]",
+	Cmd:  "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>]",
+	Help: "usage: bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>]",
 	Flags: []usage.Flag{
 		{Name: "--full"},
 		{Name: "--package", HasValue: true, NoEmptyValue: true},
 		{Name: "--run", HasValue: true, NoEmptyValue: true},
+		{Name: "--changed"},
+		{Name: "--base", HasValue: true, NoEmptyValue: true},
+		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
 	},
 	MaxArgs: 1,
 }
@@ -31,8 +35,12 @@ var selectRunBinary = runbinary.ReuseOrOwn
 
 type focusedRequest struct {
 	packageExpr string
+	packages    []string
 	full        bool
 	run         string
+	changed     bool
+	base        string
+	sourceTip   string
 }
 
 // Command runs Go from root and renders one stable row for each observed result.
@@ -49,10 +57,27 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if line != "" {
 		return focusedRequest{}, line, code
 	}
+	_, changed := parsed.Flags["--changed"]
+	_, explicit := parsed.Flags["--package"]
+	base, hasBase := parsed.Flags["--base"]
+	sourceTip, hasSourceTip := parsed.Flags["--source-tip"]
 	if len(parsed.Positionals) > 0 {
-		if _, explicit := parsed.Flags["--package"]; explicit {
+		if explicit || changed {
 			return focusedRequest{}, toon.Usage(grammar.Cmd, parsed.Positionals[0]), 2
 		}
+	}
+	if changed && explicit {
+		return focusedRequest{}, toon.Usage(grammar.Cmd, "--changed"), 2
+	}
+	if (hasBase || hasSourceTip) && !changed {
+		flag := "--base"
+		if hasSourceTip {
+			flag = "--source-tip"
+		}
+		return focusedRequest{}, toon.Usage(grammar.Cmd, flag), 2
+	}
+	if hasSourceTip && !hasBase {
+		return focusedRequest{}, toon.Usage(grammar.Cmd, "--source-tip"), 2
 	}
 	packageOperand := strings.Join(parsed.Positionals, "")
 	if explicit, ok := parsed.Flags["--package"]; ok {
@@ -63,12 +88,29 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 		packageExpr: packagePattern(root, packageOperand),
 		full:        full,
 		run:         parsed.Flags["--run"],
+		changed:     changed,
+		base:        base,
+		sourceTip:   sourceTip,
 	}, "", 0
 }
 
 func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
+	if request.changed {
+		subject, kind, hint := diff.ResolveChangedSubject(root, request.base, request.sourceTip)
+		if kind != "" {
+			return toon.Errorf("changed selection failed", kind+": "+hint) + "\n", 1
+		}
+		packages, err := resolveChangedPackages(ctx, root, subject.Paths)
+		if err != nil {
+			return toon.Errorf("changed selection failed", err.Error()) + "\n", 1
+		}
+		if len(packages) == 0 {
+			return emptyReport(request.full)
+		}
+		request.packages = packages
+	}
 	selection, err := selectRunBinary(ctx, testBenchSource(root))
 	if err != nil {
 		return toon.Errorf("Bench executable selection failed", err.Error()) + "\n", 1
@@ -78,7 +120,11 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	if request.run != "" {
 		argv = append(argv, "-run", request.run)
 	}
-	argv = append(argv, request.packageExpr)
+	if len(request.packages) != 0 {
+		argv = append(argv, request.packages...)
+	} else {
+		argv = append(argv, request.packageExpr)
+	}
 	cmd := exec.Command("go", argv...)
 	cmd.Dir = root
 	cmd.Env = runbinary.WithEnv(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), selection.Path)
@@ -136,6 +182,14 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	}
 	if waitErr != nil {
 		return out, 1
+	}
+	return out, 0
+}
+
+func emptyReport(full bool) (string, int) {
+	out, err := (&report{statuses: map[string]string{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string]string{}}).render(full)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
 	}
 	return out, 0
 }

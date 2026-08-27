@@ -32,6 +32,26 @@ func TestSourceTipPairReportsTheImmutableRange(t *testing.T) {
 	}
 }
 
+func TestChangedSubjectExplicitLiveAndFrozenPair(t *testing.T) {
+	root, base, feature := seedCompatibilityRepo(t)
+	live, kind, hint := ResolveChangedSubject(root, base, "")
+	if kind != "" {
+		t.Fatalf("live subject = (%q, %q)", kind, hint)
+	}
+	frozen, kind, hint := ResolveChangedSubject(root, base, feature)
+	if kind != "" {
+		t.Fatalf("frozen subject = (%q, %q)", kind, hint)
+	}
+	if !live.Live || frozen.Live || frozen.Tip != feature {
+		t.Fatalf("live/frozen identity = %#v / %#v", live, frozen)
+	}
+	for _, path := range frozen.Paths {
+		if path == "untracked.txt" {
+			t.Fatalf("frozen paths leaked checkout state: %v", frozen.Paths)
+		}
+	}
+}
+
 // The tip never comes from the checkout implicitly, and the pair never mixes with
 // --commit; a misuse of the grammar exits 2 with the usage line, and a bad value is a
 // structured error that blames the flag the caller got wrong.
