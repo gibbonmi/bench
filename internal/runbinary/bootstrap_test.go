@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 const missingGoDiagnostic = "Go is absent from PATH; prepend an executable Go toolchain directory to PATH and retry"
@@ -137,11 +139,14 @@ func newBootstrapFixture(t *testing.T) *bootstrapFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("resolve test source path")
+	// The repository root comes from git, not from the compiled source file name. Go
+	// strips that name under -trimpath, so a runtime.Caller root resolves to a relative
+	// module path and every lstat of it fails.
+	gitRoot, err := git.Root()
+	if err != nil {
+		t.Fatalf("resolve repo root: %v", err)
 	}
-	root, err := filepath.EvalSymlinks(filepath.Join(filepath.Dir(file), "..", ".."))
+	root, err := filepath.EvalSymlinks(gitRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
