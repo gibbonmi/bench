@@ -204,8 +204,7 @@ func laneCheck(t *testing.T, lane []Phase, name string) Phase {
 }
 
 // T03: the kit lane's two toolchain checks carry -trimpath, so a lane checkout writes no
-// path-keyed archive. The literals are independent of the flag owner on purpose: a lane
-// table that reads the flag from somewhere else, or drops it, reds here.
+// path-keyed archive. The literals are independent of the flag owner.
 func TestBenchkitLaneToolchainChecksCarryTrimPath(t *testing.T) {
 	lane := BenchkitLane("/repo", "/repo")
 	for name, want := range map[string][]string{
@@ -216,4 +215,28 @@ func TestBenchkitLaneToolchainChecksCarryTrimPath(t *testing.T) {
 			t.Errorf("lane %s argv = %v, want %v", name, got, want)
 		}
 	}
+}
+
+// L03: a lane run holds the shared cache lock across its checks, so `bench cache clean`
+// exits 1 while a lane check is compiling. The probe is the lane's own check, which is the
+// one point inside the lane's span a second process can observe.
+func TestLaneRunHoldsTheCacheLockAcrossItsChecks(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	answerPath := filepath.Join(t.TempDir(), "clean-answer")
+	t.Setenv(cacheCleanProbeEnv, answerPath)
+
+	root := outcomeFixture(t)
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree,
+		Checks: []Phase{{Name: "probe", Argv: probeArgv(t)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Passed() {
+		t.Fatalf("probe check %s: %s", result.Outcome, result.Diagnostic)
+	}
+	requireRefusedClean(t, answerPath)
 }

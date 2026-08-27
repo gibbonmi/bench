@@ -3,6 +3,7 @@ package gocache
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -73,26 +74,22 @@ func cleanEnv(home string) []string {
 	return []string{"HOME=" + home, "PATH=" + os.Getenv("PATH")}
 }
 
-// L01, L02, L03: while a gate run, a focused run, or a lane run holds the cache lock, the
-// clean exits 1. Each holder calls the same Hold, so the row drives that one function and
-// attempts the clean from a second process. A clean that takes no lock proceeds here.
-func TestCleanRefusesWhileEachHolderRuns(t *testing.T) {
-	for _, holderName := range []string{"gate run", "focused run", "lane run"} {
-		t.Run(holderName, func(t *testing.T) {
-			fixture := newCacheFixture(t)
-			holder, err := Hold([]string{"HOME=" + fixture.home})
-			if err != nil {
-				t.Fatalf("%s hold = %v", holderName, err)
-			}
-			defer holder.Release()
-			out, code := runCleanProcess(t, fixture.home)
-			if code != 1 {
-				t.Fatalf("clean under a %s = exit %d, want 1; out=%q", holderName, code, out)
-			}
-			if !strings.HasPrefix(out, "error: cache in use — ") {
-				t.Fatalf("clean under a %s = %q, want the cache-in-use refusal", holderName, out)
-			}
-		})
+// While a holder holds the cache lock, the clean exits 1. This row grades the Hold-to-clean
+// contract itself. L01, L02, and L03 bind that contract to each production holder, and they
+// live beside those call sites.
+func TestCleanRefusesWhileAHolderRuns(t *testing.T) {
+	fixture := newCacheFixture(t)
+	holder, err := Hold([]string{"HOME=" + fixture.home})
+	if err != nil {
+		t.Fatalf("hold = %v", err)
+	}
+	defer holder.Release()
+	out, code := runCleanProcess(t, fixture.home)
+	if code != 1 {
+		t.Fatalf("clean under a holder = exit %d, want 1; out=%q", code, out)
+	}
+	if !strings.HasPrefix(out, "error: cache in use — ") {
+		t.Fatalf("clean under a holder = %q, want the cache-in-use refusal", out)
 	}
 }
 
@@ -109,7 +106,7 @@ func TestRefusedCleanRemovesNoFile(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("clean = exit %d, want 1; out=%q", code, out)
 	}
-	if got, want := entries(t, fixture.dir), []string{"README", "aa", LockFile, "bf", trimFile}; !equal(got, want) {
+	if got, want := entries(t, fixture.dir), []string{"README", "aa", LockFile, "bf", trimFile}; !slices.Equal(got, want) {
 		t.Fatalf("directory after a refused clean = %q, want %q", got, want)
 	}
 	// The shards plus the three files a clean would keep: README, trim.txt, and the lock.
@@ -144,7 +141,7 @@ func TestCleanRemovesTheShardsAndKeepsTheRest(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("clean = exit %d, want 0; out=%q", code, out)
 	}
-	if got, want := entries(t, fixture.dir), []string{"README", LockFile, trimFile}; !equal(got, want) {
+	if got, want := entries(t, fixture.dir), []string{"README", LockFile, trimFile}; !slices.Equal(got, want) {
 		t.Fatalf("directory after a clean = %q, want %q", got, want)
 	}
 }
@@ -193,7 +190,7 @@ func TestCleanWithoutGoOnPath(t *testing.T) {
 	if !strings.HasPrefix(out, "error: go not found — ") || !strings.Contains(out, "`go`") {
 		t.Fatalf("clean = %q, want a refusal that names go", out)
 	}
-	if got, want := entries(t, fixture.dir), []string{"README", "aa", LockFile, "bf", trimFile}; !equal(got, want) {
+	if got, want := entries(t, fixture.dir), []string{"README", "aa", LockFile, "bf", trimFile}; !slices.Equal(got, want) {
 		t.Fatalf("directory after the refusal = %q, want %q", got, want)
 	}
 }
@@ -213,16 +210,4 @@ func TestCleanRefusesAControlByteInThePath(t *testing.T) {
 	if code != 1 || !strings.HasPrefix(out, "error: unrepresentable cache directory — ") {
 		t.Fatalf("clean = %q exit %d, want the unrepresentable refusal at 1", out, code)
 	}
-}
-
-func equal(got, want []string) bool {
-	if len(got) != len(want) {
-		return false
-	}
-	for i := range got {
-		if got[i] != want[i] {
-			return false
-		}
-	}
-	return true
 }

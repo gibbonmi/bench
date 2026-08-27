@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -401,4 +402,68 @@ func requireDirectoryWriteDenied(t *testing.T) {
 		file.Close()
 		capability.Capability(t, capability.Privilege, "mode 0500 directory remains writable")
 	}
+}
+
+// cacheCleanProbeEnv names the file the clean probe writes its answer to. A child with no
+// entry is inert, so the probe row is a no-op inside an ordinary suite run.
+const cacheCleanProbeEnv = "BENCH_TEST_CACHE_CLEAN_PROBE"
+
+// TestCacheCleanProbe is the second process the two holder rows drive. It runs
+// `bench cache clean` and records the verb's own answer, because a POSIX record lock is
+// owned per process: a clean inside the holder's process could never contend with it.
+func TestCacheCleanProbe(t *testing.T) {
+	answerPath := os.Getenv(cacheCleanProbeEnv)
+	if answerPath == "" {
+		return
+	}
+	answer, code := gocache.Command([]string{"clean"})
+	if err := os.WriteFile(answerPath, []byte(strconv.Itoa(code)+"\n"+answer), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// probeArgv is the child invocation that runs the clean probe: this test binary with one
+// row selected.
+func probeArgv(t *testing.T) []string {
+	t.Helper()
+	binary, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	return []string{binary, "-test.run=^TestCacheCleanProbe$"}
+}
+
+// requireRefusedClean reads the probe's answer and grades it as the refusal a live holder
+// produces. An unheld lock lets the clean through, and that is what a missing hold looks
+// like here.
+func requireRefusedClean(t *testing.T, answerPath string) {
+	t.Helper()
+	answer := string(outcomeRead(t, answerPath))
+	code, rest, _ := strings.Cut(answer, "\n")
+	if code != "1" || !strings.HasPrefix(rest, "error: cache in use — ") {
+		t.Fatalf("clean beside the run = exit %s, %q; want the cache-in-use refusal at exit 1", code, rest)
+	}
+}
+
+// L01: a gate run holds the shared cache lock across its phases, so `bench cache clean`
+// exits 1 while the oracle is compiling. The probe runs from the gate's own child, which
+// is the one point inside the run's span a second process can observe.
+func TestGateRunHoldsTheCacheLockAcrossItsPhases(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	answerPath := filepath.Join(t.TempDir(), "clean-answer")
+	argv := probeArgv(t)
+	root := outcomeFixture(t, "HOME="+home+" "+cacheCleanProbeEnv+"="+answerPath+
+		" "+argv[0]+" "+argv[1]+" >/dev/null 2>&1\n")
+	// The holder derives its directory from the closure's HOME, so the closure has to
+	// declare that name. A closure without it locks nothing.
+	outcomeWrite(t, root, ".bench/gate-inputs.json",
+		`{"schema":1,"closure":"local","environment":["HOME"],"paths":[],"tools":[]}`+"\n", 0o644)
+	outcomeCommit(t, root, "declare HOME")
+
+	var stdout, stderr bytes.Buffer
+	if result := Execute(context.Background(), root, &stdout, &stderr); result.ActionExit != 0 {
+		t.Fatalf("gate result = %#v, stderr=%q", result, stderr.String())
+	}
+	requireRefusedClean(t, answerPath)
 }

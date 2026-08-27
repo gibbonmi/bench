@@ -230,9 +230,9 @@ Line: none — the coordinating session runs these operator steps itself.
   `git rev-parse --show-toplevel` resolution. The conformance harness already
   holds a git-based resolver to mirror.
 - The cache lock is a POSIX record lock on `<directory>/bench.lock`. It
-  mirrors the gate execution lock. A holder takes a read lock and keeps its
-  descriptor open for the run's span. `bench cache clean` requests a write
-  lock with a no-wait set, and `EAGAIN` is the refusal. The refusal names the
+  mirrors the gate execution lock. A holder takes a read lock, waits for a
+  running clean, and keeps its descriptor open for the run's span.
+  `bench cache clean` requests a write lock with a no-wait set, and `EAGAIN` is the refusal. The refusal names the
   blocking pid that `F_GETLK` reports. `go clean -cache` removes only the
   two-hex subdirectories, so the lock file survives a clean.
 - `bench cache clean` composes `go clean -cache` with `GOCACHE` set to the

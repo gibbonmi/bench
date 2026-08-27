@@ -29,12 +29,8 @@ const (
 	GitRefreshTimeout           = 30 * time.Second
 	// Git 2.43.0 can block while reading malformed worktree admin files; this
 	// backstop retires when upstream bounds those reads itself.
-	WorktreeListTimeout = 15 * time.Second
-	GuardScanTimeout    = 5 * time.Second
-	// CacheHoldWait bounds how long a build-cache holder waits for a running clean. A
-	// clean is one `go clean -cache` call, so a run that starts beside one waits
-	// milliseconds. The wait is bounded, because a stuck clean must not hold a gate.
-	CacheHoldWait                   = 5 * time.Second
+	WorktreeListTimeout             = 15 * time.Second
+	GuardScanTimeout                = 5 * time.Second
 	GateTimeout                     = 45 * time.Minute
 	ModelReadLimit            int64 = 5 << 20
 	OutlineFileLimit          int64 = 2 << 20
