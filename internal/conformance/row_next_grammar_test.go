@@ -169,11 +169,11 @@ func TestRowNextGrammarBindsTableToParserTokens(t *testing.T) {
 		}
 		return root
 	}
-	const complete = "| token | phase |\n|---|---|\n| `shape` | a |\n| `spec` | b |\n| `ticket` | c |\n| `decide` | d |\n| `kit-edit` | e |\n"
+	const complete = "| token | phase |\n|---|---|\n| `shape` | a |\n| `spec` | b |\n| `ticket` | c |\n| `decide` | d |\n| `ready-for-agent` | e |\n| `kit-edit` | f |\n"
 	if diags := checkRowNextGrammar(write(t, complete)); len(diags) != 0 {
 		t.Fatalf("complete table = %v, want no diagnostic", diags)
 	}
-	lacking := strings.Replace(complete, "| `kit-edit` | e |\n", "", 1)
+	lacking := strings.Replace(complete, "| `kit-edit` | f |\n", "", 1)
 	if diags := checkRowNextGrammar(write(t, lacking)); !containsDiagnostic(diags, "token table lacks token 'kit-edit'") {
 		t.Fatalf("table without kit-edit = %v, want drift naming kit-edit", diags)
 	}

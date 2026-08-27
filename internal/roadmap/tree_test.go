@@ -228,7 +228,7 @@ func TestTreeParseReportsEmptyRowFileAsHeadingMismatch(t *testing.T) {
 	doc, _, diagnostics := ParseDocument(tree, nil, true)
 	want := []string{
 		"roadmap/FT7.md: heading does not match ROADMAP.md row FT7",
-		"roadmap/FT7.md: missing Next: line; expected one of shape, spec, ticket, decide, kit-edit",
+		"roadmap/FT7.md: missing Next: line; expected one of shape, spec, ticket, decide, ready-for-agent, kit-edit",
 	}
 	if !reflect.DeepEqual(diagnosticStrings(diagnostics), want) {
 		t.Fatalf("diagnostics = %#v, want %#v", diagnostics, want)
@@ -370,7 +370,7 @@ func TestIdeaOwnerValidatesThroughTheSplitTree(t *testing.T) {
 	}
 }
 
-// TestRowNextAcceptsEveryToken pins RF13 and RF19: each of the five decided tokens
+// TestRowNextAcceptsEveryToken pins RF13 and RF19: each decided token
 // passes. The last line of a hand-edited file needs no trailing newline to be read.
 func TestRowNextAcceptsEveryToken(t *testing.T) {
 	for _, token := range RowNextTokens() {
@@ -389,12 +389,19 @@ func TestRowNextAcceptsEveryToken(t *testing.T) {
 	})
 }
 
+func TestRowNextAcceptsReadyForAgent(t *testing.T) {
+	_, _, diagnostics := ParseDocument(rowNextTree("", "Next: ready-for-agent\n"), nil, true)
+	if len(diagnostics) != 0 {
+		t.Fatalf("ready-for-agent diagnostics = %#v, want none", diagnosticStrings(diagnostics))
+	}
+}
+
 // TestRowNextReportsUnknownToken pins RF12: a value outside the token set is named. A
 // typo therefore cannot pass as a decision. An empty value is a value, not an absence.
 func TestRowNextReportsUnknownToken(t *testing.T) {
 	for _, tc := range []struct{ name, body, want string }{
-		{"typo", "Next: refactor\n", `roadmap/FT1.md: unknown Next: token "refactor" at line 2; expected one of shape, spec, ticket, decide, kit-edit`},
-		{"empty", "Next: \n", `roadmap/FT1.md: unknown Next: token "" at line 2; expected one of shape, spec, ticket, decide, kit-edit`},
+		{"typo", "Next: refactor\n", `roadmap/FT1.md: unknown Next: token "refactor" at line 2; expected one of shape, spec, ticket, decide, ready-for-agent, kit-edit`},
+		{"empty", "Next: \n", `roadmap/FT1.md: unknown Next: token "" at line 2; expected one of shape, spec, ticket, decide, ready-for-agent, kit-edit`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, _, diagnostics := ParseDocument(rowNextTree("", tc.body), nil, true)
@@ -409,7 +416,7 @@ func TestRowNextReportsUnknownToken(t *testing.T) {
 // with its path. A marker inside a fenced code block is a documented example, not a live
 // row grammar. It therefore leaves the row missing its line.
 func TestRowNextReportsMissingLine(t *testing.T) {
-	const want = "roadmap/FT1.md: missing Next: line; expected one of shape, spec, ticket, decide, kit-edit"
+	const want = "roadmap/FT1.md: missing Next: line; expected one of shape, spec, ticket, decide, ready-for-agent, kit-edit"
 	for _, tc := range []struct{ name, body string }{
 		{"no marker", "The row's body.\n"},
 		{"fenced marker", "```\nNext: shape\n```\n"},
@@ -430,7 +437,7 @@ func TestRowNextExemptsParkedSection(t *testing.T) {
 		t.Fatalf("parked row diagnostics = %#v, want none", diagnosticStrings(diagnostics))
 	}
 	_, _, diagnostics := ParseDocument(rowNextTree("## Features", "The row's body.\n"), nil, true)
-	want := []string{"roadmap/FT1.md: missing Next: line; expected one of shape, spec, ticket, decide, kit-edit"}
+	want := []string{"roadmap/FT1.md: missing Next: line; expected one of shape, spec, ticket, decide, ready-for-agent, kit-edit"}
 	if got := diagnosticStrings(diagnostics); !reflect.DeepEqual(got, want) {
 		t.Fatalf("features-section diagnostics = %#v, want %#v", got, want)
 	}
