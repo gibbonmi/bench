@@ -78,6 +78,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- `bench worktree clean --help` now prints its grammar to stdout and exits zero.
+
 - `bench worktree land` now gives the authenticated promotion broker the Go path
   that the installed wrapper recovers from a bounded clean login. A partial
   harness environment no longer requires a manual `PATH` prefix before landing.

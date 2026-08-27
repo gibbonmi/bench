@@ -262,6 +262,10 @@ func CleanCommand(root, home string, args []string, stdout, stderr io.Writer) in
 // boundary.
 func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	j.home = home
+	if len(args) == 1 && args[0] == "--help" {
+		fmt.Fprintln(stdout, "usage: "+usage.WorktreeClean)
+		return 0
+	}
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
 	landed, unclaimed := false, false
