@@ -14,6 +14,7 @@ import (
 	gitpkg "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 func TestCommandRunsVersionInProcess(t *testing.T) {
@@ -700,5 +701,13 @@ func TestWorktreeRoutesKeepTheirBytesFromASubdirectory(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestWorktreeCleanHelpUsesItsGrammar(t *testing.T) {
+	result := runAXICommandAt(t, t.TempDir(), []string{"worktree", "clean", "--help"})
+	want := "usage: " + usage.WorktreeClean + "\n"
+	if result.stdout != want || result.stderr != "" || result.code != 0 {
+		t.Fatalf("worktree clean --help = stdout=%q stderr=%q exit=%d, want stdout=%q stderr=\"\" exit=0", result.stdout, result.stderr, result.code, want)
 	}
 }
