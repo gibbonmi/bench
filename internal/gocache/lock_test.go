@@ -8,8 +8,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // The helper-process protocol. A lock row needs two processes, because a POSIX record lock
@@ -29,8 +27,9 @@ const (
 // reports nothing, so the deadline turns a lost signal into a named failure.
 const helperWait = 20 * time.Second
 
-// TestGocacheHelperProcess is the second process every lock row drives. It is a test
-// function so the row can re-execute this binary, and it is inert in an ordinary run.
+// TestGocacheHelperProcess is the second process every lock row drives, inert unless the
+// parent selects it through the role environment variable. It is a test function so the
+// row can re-execute this binary.
 func TestGocacheHelperProcess(t *testing.T) {
 	home := os.Getenv(helperHomeEnv)
 	switch os.Getenv(helperRoleEnv) {
@@ -51,7 +50,7 @@ func TestGocacheHelperProcess(t *testing.T) {
 		_ = holder.Release()
 		os.Exit(0)
 	default:
-		capability.Environment(t, "helper process only")
+		return
 	}
 }
 
