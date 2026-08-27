@@ -245,11 +245,13 @@ Line: none — the coordinating session runs these operator steps itself.
   `lstat` regular-file check. The report renders it as UTC RFC 3339, or empty
   when the file is absent, not regular, or unparsable.
 - The gate reporter is one more report closure beside the capability-skips
-  reporter in the verdict tail. It reads the directory from its own `GOCACHE`
-  entry, walks once, and answers no rows, one green line, and never red. It
-  logs `cache.footprint` through the inherited run log on every run that
-  reaches a verdict. An interrupted run reaches no verdict, so it logs no
-  event.
+  reporter in the verdict tail. It takes the directory from its own `GOCACHE`
+  entry, or from the `HOME` derivation when that entry is absent. With a
+  directory it walks once, and it answers no rows, one green line, and never
+  red. With neither source it prints no line and logs no event. It logs
+  `cache.footprint` through the inherited run log on every run that reaches a
+  verdict and has a directory. An interrupted run reaches no verdict, so it
+  logs no event.
 - The green line reads `go-build-cache: <bytes> bytes in <files> files at <dir> (bound <bound> bytes)`.
   Above the bound the parenthesis reads `(over bound <bound> bytes, next: bench cache clean)`.
 - `bench cache` and `bench cache clean` join the command registry and the

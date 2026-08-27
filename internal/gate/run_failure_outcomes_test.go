@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -16,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
 )
 
 const (
@@ -404,23 +404,9 @@ func requireDirectoryWriteDenied(t *testing.T) {
 	}
 }
 
-// cacheCleanProbeEnv names the file the clean probe writes its answer to. A child with no
-// entry is inert, so the probe row is a no-op inside an ordinary suite run.
-const cacheCleanProbeEnv = "BENCH_TEST_CACHE_CLEAN_PROBE"
-
-// TestCacheCleanProbe is the second process the two holder rows drive. It runs
-// `bench cache clean` and records the verb's own answer, because a POSIX record lock is
-// owned per process: a clean inside the holder's process could never contend with it.
-func TestCacheCleanProbe(t *testing.T) {
-	answerPath := os.Getenv(cacheCleanProbeEnv)
-	if answerPath == "" {
-		return
-	}
-	answer, code := gocache.Command([]string{"clean"})
-	if err := os.WriteFile(answerPath, []byte(strconv.Itoa(code)+"\n"+answer), 0o600); err != nil {
-		t.Fatal(err)
-	}
-}
+// TestCacheCleanProbe is the second process the two holder rows drive. The shared body
+// runs `bench cache clean` and records the verb's own answer.
+func TestCacheCleanProbe(t *testing.T) { cleanprobe.Answer(t) }
 
 // probeArgv is the child invocation that runs the clean probe: this test binary with one
 // row selected.
@@ -433,16 +419,11 @@ func probeArgv(t *testing.T) []string {
 	return []string{binary, "-test.run=^TestCacheCleanProbe$"}
 }
 
-// requireRefusedClean reads the probe's answer and grades it as the refusal a live holder
-// produces. An unheld lock lets the clean through, and that is what a missing hold looks
-// like here.
+// requireRefusedClean reads the probe's answer file and grades it through the shared
+// grader.
 func requireRefusedClean(t *testing.T, answerPath string) {
 	t.Helper()
-	answer := string(outcomeRead(t, answerPath))
-	code, rest, _ := strings.Cut(answer, "\n")
-	if code != "1" || !strings.HasPrefix(rest, "error: cache in use — ") {
-		t.Fatalf("clean beside the run = exit %s, %q; want the cache-in-use refusal at exit 1", code, rest)
-	}
+	cleanprobe.Require(t, string(outcomeRead(t, answerPath)))
 }
 
 // L01: a gate run holds the shared cache lock across its phases, so `bench cache clean`
@@ -453,7 +434,7 @@ func TestGateRunHoldsTheCacheLockAcrossItsPhases(t *testing.T) {
 	t.Setenv("HOME", home)
 	answerPath := filepath.Join(t.TempDir(), "clean-answer")
 	argv := probeArgv(t)
-	root := outcomeFixture(t, "HOME="+home+" "+cacheCleanProbeEnv+"="+answerPath+
+	root := outcomeFixture(t, "HOME="+home+" "+cleanprobe.Env+"="+answerPath+
 		" "+argv[0]+" "+argv[1]+" >/dev/null 2>&1\n")
 	// The holder derives its directory from the closure's HOME, so the closure has to
 	// declare that name. A closure without it locks nothing.

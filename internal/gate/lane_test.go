@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
 )
 
 // OG21, OG13: the kit root's lane is exactly the four declared checks, and the two
@@ -224,7 +226,7 @@ func TestLaneRunHoldsTheCacheLockAcrossItsChecks(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	answerPath := filepath.Join(t.TempDir(), "clean-answer")
-	t.Setenv(cacheCleanProbeEnv, answerPath)
+	t.Setenv(cleanprobe.Env, answerPath)
 
 	root := outcomeFixture(t)
 	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")

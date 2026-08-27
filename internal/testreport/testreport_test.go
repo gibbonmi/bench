@@ -4,11 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -101,27 +101,13 @@ func TestFocusedTestArgvCarriesTrimPathAndCountOne(t *testing.T) {
 	}
 }
 
-// The clean probe's protocol. The answer file carries the verb's exit code and its own
-// output, and the binary entry lets the module under test re-execute this test binary. A
-// child with no answer entry is inert, so the probe row is a no-op in an ordinary run.
-const (
-	cacheCleanProbeEnv       = "BENCH_TEST_CACHE_CLEAN_PROBE"
-	cacheCleanProbeBinaryEnv = "BENCH_TEST_CACHE_CLEAN_PROBE_BIN"
-)
+// cacheCleanProbeBinaryEnv names this test binary, so the module under test can
+// re-execute it. The answer entry's name and wire format live in cleanprobe.
+const cacheCleanProbeBinaryEnv = "BENCH_TEST_CACHE_CLEAN_PROBE_BIN"
 
-// TestCacheCleanProbe is the second process the holder row drives. It runs
-// `bench cache clean` and records the verb's own answer, because a POSIX record lock is
-// owned per process: a clean inside the holder's process could never contend with it.
-func TestCacheCleanProbe(t *testing.T) {
-	answerPath := os.Getenv(cacheCleanProbeEnv)
-	if answerPath == "" {
-		return
-	}
-	answer, code := gocache.Command([]string{"clean"})
-	if err := os.WriteFile(answerPath, []byte(strconv.Itoa(code)+"\n"+answer), 0o600); err != nil {
-		t.Fatal(err)
-	}
-}
+// TestCacheCleanProbe is the second process the holder row drives. The shared body runs
+// `bench cache clean` and records the verb's own answer.
+func TestCacheCleanProbe(t *testing.T) { cleanprobe.Answer(t) }
 
 // L02: a `bench test` run holds the shared cache lock across its go test child, so
 // `bench cache clean` exits 1 while that child is compiling. The probe runs from inside
@@ -131,7 +117,7 @@ func TestFocusedRunHoldsTheCacheLockAcrossItsGoTestChild(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	answerPath := filepath.Join(t.TempDir(), "clean-answer")
-	t.Setenv(cacheCleanProbeEnv, answerPath)
+	t.Setenv(cleanprobe.Env, answerPath)
 	binary, err := filepath.Abs(os.Args[0])
 	if err != nil {
 		t.Fatal(err)
@@ -148,11 +134,7 @@ func TestFocusedRunHoldsTheCacheLockAcrossItsGoTestChild(t *testing.T) {
 	if output, code := Command(cleanProbeModule(t), nil); code != 0 {
 		t.Fatalf("Command = %d\n%s", code, output)
 	}
-	answer := readTestReportFile(t, answerPath)
-	exit, rest, _ := strings.Cut(answer, "\n")
-	if exit != "1" || !strings.HasPrefix(rest, "error: cache in use — ") {
-		t.Fatalf("clean beside the focused run = exit %s, %q; want the cache-in-use refusal at exit 1", exit, rest)
-	}
+	cleanprobe.Require(t, readTestReportFile(t, answerPath))
 }
 
 // cleanProbeModule writes the one-package module the focused run compiles. Its single test
