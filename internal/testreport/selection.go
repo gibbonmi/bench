@@ -132,6 +132,12 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			}
 			continue
 		}
+		if input.absent && !strings.HasSuffix(input.path, ".go") {
+			if _, ok := byEmbed[input.path]; ok {
+				return nil, fmt.Errorf("changed embed path is not in the current package graph")
+			}
+			continue
+		}
 		if importPath, ok := byEmbed[input.path]; ok {
 			selected[importPath] = true
 			continue
@@ -143,9 +149,6 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			}
 			selected[importPath] = true
 			continue
-		}
-		if input.absent {
-			return nil, fmt.Errorf("changed path is not in the current package graph")
 		}
 	}
 	reverse := make(map[string][]string)

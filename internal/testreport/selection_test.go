@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -89,10 +91,16 @@ func TestChangedPackageSelectionRefusalMatrix(t *testing.T) {
 	if !reflect.DeepEqual(got, []string{"changedfixture/direct", "changedfixture/production", "changedfixture/testedge", "changedfixture/xtestedge"}) {
 		t.Fatalf("deleted surviving-package selection = %v", got)
 	}
+	if err := os.Remove(filepath.Join(root, "embedprod", "input.txt")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := resolveChangedPackages(context.Background(), root, []string{"embedprod/input.txt"}); err == nil {
+		t.Fatal("deleted embed selection succeeded")
+	}
 }
 
 func TestChangedNonGoSubjectRendersExplicitEmpty(t *testing.T) {
-	root, base, tip := changedCommandRepository(t, "README.md", "docs\n")
+	root, base, tip := changedCommandRepository(t, "README.md", "docs\n", "README.md", "")
 	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
 		return os.WriteFile(output, []byte("selected"), 0o755)
 	}, Verify: func(string, string) error { return nil }})
@@ -108,7 +116,7 @@ func TestChangedNonGoSubjectRendersExplicitEmpty(t *testing.T) {
 }
 
 func TestChangedPackageRunPattern(t *testing.T) {
-	root, base, tip := changedCommandRepository(t, "changed/changed.go", "package changed\n")
+	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
 	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
 		return os.WriteFile(output, []byte("selected"), 0o755)
 	}, Verify: func(string, string) error { return nil }})
@@ -124,7 +132,7 @@ func TestChangedPackageRunPattern(t *testing.T) {
 }
 
 func TestChangedRunsWriteNoGateOwnedRecords(t *testing.T) {
-	root, base, tip := changedCommandRepository(t, "changed/changed.go", "package changed\n")
+	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
 	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
 		return os.WriteFile(output, []byte("selected"), 0o755)
 	}, Verify: func(string, string) error { return nil }})
@@ -137,6 +145,78 @@ func TestChangedRunsWriteNoGateOwnedRecords(t *testing.T) {
 	}
 	if got := readTestReportFile(t, record); got != "before" {
 		t.Fatalf("gate record = %q, want unchanged", got)
+	}
+}
+
+func TestOrdinaryFocusedModesScrubConformanceEnvironment(t *testing.T) {
+	marker := filepath.Join(t.TempDir(), "environment")
+	goDir := t.TempDir()
+	writeCheckGo(t, filepath.Join(goDir, "go"), marker)
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	for name, value := range map[string]string{
+		registry.ConformanceRootEnv:      "/ambient/root",
+		registry.ConformanceTierEnv:      "ship",
+		registry.ConformanceScopeEnv:     "ambient-scope",
+		registry.ConformanceChecksEnv:    "ambient-checks",
+		registry.ConformanceInheritedEnv: "ambient-inherited",
+		capability.LogEnv:                filepath.Join(t.TempDir(), "capability-log"),
+		"BENCH_KIT":                      t.TempDir(),
+	} {
+		t.Setenv(name, value)
+	}
+	var selected, source string
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, sourceRoot, output string) error {
+			source = sourceRoot
+			selected = output
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+
+	for _, tc := range []struct {
+		name string
+		run  func() (string, int)
+	}{
+		{name: "default", run: func() (string, int) { return Command(focusedTestModule(t), nil) }},
+		{name: "package", run: func() (string, int) { return Command(focusedTestModule(t), []string{"--package", "chosen"}) }},
+		{name: "changed", run: func() (string, int) {
+			root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
+			previous := listCurrentPackages
+			listCurrentPackages = func(context.Context, string) ([]listedPackage, error) {
+				return []listedPackage{{Dir: filepath.Join(root, "changed"), ImportPath: "changedcommand/changed"}}, nil
+			}
+			t.Cleanup(func() { listCurrentPackages = previous })
+			return Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := os.Remove(marker); err != nil && !os.IsNotExist(err) {
+				t.Fatal(err)
+			}
+			if output, code := tc.run(); code != 0 {
+				t.Fatalf("ordinary focused run = %d\n%s", code, output)
+			}
+			environment := readTestReportFile(t, marker)
+			for _, name := range []string{
+				registry.ConformanceRootEnv,
+				registry.ConformanceTierEnv,
+				registry.ConformanceScopeEnv,
+				registry.ConformanceChecksEnv,
+				registry.ConformanceInheritedEnv,
+				capability.LogEnv,
+			} {
+				if strings.Contains(environment, name+"=") {
+					t.Errorf("ordinary child retained %s:\n%s", name, environment)
+				}
+			}
+			for name, want := range map[string]string{"BENCH_KIT": source, runbinary.Env: selected} {
+				if !strings.Contains(environment, name+"="+want+"\n") {
+					t.Errorf("ordinary child missing %s=%q:\n%s", name, want, environment)
+				}
+			}
+		})
 	}
 }
 
@@ -163,7 +243,7 @@ func TestCurrentPackageGraphLoadsAllEmbedClasses(t *testing.T) {
 	}
 }
 
-func changedCommandRepository(t *testing.T, changedPath, changedSource string) (string, string, string) {
+func changedCommandRepository(t *testing.T, basePath, baseSource, changedPath, changedSource string) (string, string, string) {
 	t.Helper()
 	root := t.TempDir()
 	write := func(path, source string) {
@@ -191,13 +271,22 @@ func TestSelected(t *testing.T) {
 	}
 }
 `)
+	if basePath != "" {
+		write(basePath, baseSource)
+	}
 	runChangedGit(t, root, "init")
 	runChangedGit(t, root, "config", "user.email", "test@example.com")
 	runChangedGit(t, root, "config", "user.name", "Test")
 	runChangedGit(t, root, "add", ".")
 	runChangedGit(t, root, "commit", "-m", "base")
 	base := strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
-	write(changedPath, changedSource)
+	if changedSource == "" {
+		if err := os.Remove(filepath.Join(root, changedPath)); err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		write(changedPath, changedSource)
+	}
 	runChangedGit(t, root, "add", ".")
 	runChangedGit(t, root, "commit", "-m", "changed")
 	tip := strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
@@ -240,18 +329,18 @@ func changedSelectionModule(t *testing.T) string {
 	files := map[string]string{
 		"go.mod":                      "module changedfixture\n\ngo 1.25\n",
 		"direct/direct.go":            "package direct\n",
-		"production/production.go":    "package production\n\nimport _ \"changedfixture/direct\"\n",
+		"production/production.go":    "package production\n",
 		"testedge/testedge.go":        "package testedge\n",
-		"testedge/testedge_test.go":   "package testedge\n\nimport _ \"changedfixture/production\"\n",
+		"testedge/testedge_test.go":   "package testedge\n",
 		"xtestedge/xtestedge.go":      "package xtestedge\n",
-		"xtestedge/xtestedge_test.go": "package xtestedge_test\n\nimport _ \"changedfixture/testedge\"\n",
-		"embedprod/embed.go":          "package embedprod\n\nimport \"embed\"\n\nvar _ embed.FS\n\n//go:embed input.txt\nvar input string\n",
+		"xtestedge/xtestedge_test.go": "package xtestedge_test\n",
+		"embedprod/embed.go":          "package embedprod\n",
 		"embedprod/input.txt":         "production\n",
 		"embedtest/embed.go":          "package embedtest\n",
-		"embedtest/embed_test.go":     "package embedtest\n\nimport \"embed\"\n\nvar _ embed.FS\n\n//go:embed input.txt\nvar input string\n",
+		"embedtest/embed_test.go":     "package embedtest\n",
 		"embedtest/input.txt":         "test\n",
 		"embedxtest/embed.go":         "package embedxtest\n",
-		"embedxtest/embed_test.go":    "package embedxtest_test\n\nimport \"embed\"\n\nvar _ embed.FS\n\n//go:embed input.txt\nvar input string\n",
+		"embedxtest/embed_test.go":    "package embedxtest_test\n",
 		"embedxtest/input.txt":        "external test\n",
 	}
 	for path, source := range files {

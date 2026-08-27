@@ -142,7 +142,7 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	} else {
 		argv = append(argv, request.packageExpr)
 	}
-	return runGoTest(ctx, root, request, argv, runbinary.WithEnv(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), selection.Path))
+	return runGoTest(ctx, root, request, argv, selectedRunEnvironment(os.Environ(), selection))
 }
 
 func runNamedCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (string, int) {
@@ -151,6 +151,20 @@ func runNamedCheck(ctx context.Context, root string, request focusedRequest, sel
 }
 
 func conformanceEnvironment(base []string, root, scope string, selection *runbinary.Selection) []string {
+	env := selectedRunEnvironment(base, selection)
+	return append(env,
+		registry.ConformanceRootEnv+"="+root,
+		registry.ConformanceTierEnv+"="+string(registry.Dev),
+		registry.ConformanceScopeEnv+"="+scope,
+	)
+}
+
+func selectedRunEnvironment(base []string, selection *runbinary.Selection) []string {
+	env := runbinary.WithEnv(withoutConformanceEnvironment(base), selection.Path)
+	return append(env, "BENCH_KIT="+selection.SourceRoot)
+}
+
+func withoutConformanceEnvironment(base []string) []string {
 	env := base
 	for _, name := range []string{
 		registry.ConformanceRootEnv,
@@ -163,13 +177,7 @@ func conformanceEnvironment(base []string, root, scope string, selection *runbin
 	} {
 		env = capability.WithoutEnvironment(env, name)
 	}
-	env = runbinary.WithEnv(env, selection.Path)
-	return append(env,
-		registry.ConformanceRootEnv+"="+root,
-		registry.ConformanceTierEnv+"="+string(registry.Dev),
-		registry.ConformanceScopeEnv+"="+scope,
-		"BENCH_KIT="+selection.SourceRoot,
-	)
+	return env
 }
 
 func runGoTest(ctx context.Context, root string, request focusedRequest, argv, env []string) (string, int) {

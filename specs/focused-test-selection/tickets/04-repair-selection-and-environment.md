@@ -13,8 +13,11 @@ Keep one source for the injected changed-package graph. Use the fixture module o
 
 ## Acceptance
 
-- [ ] C06 — a deleted non-Go-only subject returns the three zero-row tables and exit 0.
-- [ ] C07 — a deleted Go-relevant input keeps its current mapping or refusal posture.
-- [ ] K03 — every focused mode removes all ambient conformance controls.
-- [ ] K03 — a named check installs only its exact conformance controls.
-- [ ] C09 — the changed-selection fixture has one source for package-graph facts.
+- [x] C06 — a deleted non-Go-only subject returns the three zero-row tables and exit 0.
+- [x] C07 — a deleted Go-relevant input keeps its current mapping or refusal posture.
+- [x] K03 — every focused mode removes all ambient conformance controls.
+- [x] K03 — a named check installs only its exact conformance controls.
+- [x] C09 — the changed-selection fixture has one source for package-graph facts.
+
+Delivered outcome: focused runs own their environment, and changed selection
+distinguishes deleted non-Go paths from deleted Go-relevant paths.
