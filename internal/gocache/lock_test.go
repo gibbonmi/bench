@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // The helper-process protocol. A lock row needs two processes, because a POSIX record lock
@@ -49,7 +51,7 @@ func TestGocacheHelperProcess(t *testing.T) {
 		_ = holder.Release()
 		os.Exit(0)
 	default:
-		t.Skip("helper process only")
+		capability.Environment(t, "helper process only")
 	}
 }
 

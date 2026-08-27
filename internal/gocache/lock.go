@@ -8,6 +8,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // LockFile is the name of the cache lock inside the Bench build cache. A holder locks it
@@ -15,12 +17,7 @@ import (
 // Go's own clean removes the two-hex subdirectories alone, so the file survives a clean.
 const LockFile = "bench.lock"
 
-// holdWait bounds how long a holder waits for a clean to finish. A clean is one
-// `go clean -cache` call, so a run that starts beside one waits milliseconds. The wait is
-// bounded rather than open, because a stuck clean must not hold a gate forever.
-const holdWait = 5 * time.Second
-
-// holdPoll is the interval between the retries inside holdWait.
+// holdPoll is the interval between the retries inside bounds.CacheHoldWait.
 const holdPoll = 20 * time.Millisecond
 
 // RecordLock is the whole-file fcntl lock request of the given type. Every Bench record
@@ -92,11 +89,11 @@ func HoldDir(dir string) (*Holder, error) {
 	return &Holder{path: path}, nil
 }
 
-// acquireShared requests the read lock without waiting, then retries until holdWait runs
-// out. Only an exclusive holder — a running clean — refuses the request, so the retry
+// acquireShared requests the read lock without waiting, then retries until
+// bounds.CacheHoldWait runs out. Only an exclusive holder — a running clean — refuses the request, so the retry
 // answers the one contention that exists and reports the refusal rather than blocking.
 func acquireShared(file *os.File) error {
-	deadline := time.Now().Add(holdWait)
+	deadline := time.Now().Add(bounds.CacheHoldWait)
 	for {
 		lock := RecordLock(syscall.F_RDLCK)
 		err := syscall.FcntlFlock(file.Fd(), syscall.F_SETLK, &lock)

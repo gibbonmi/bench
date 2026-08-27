@@ -434,6 +434,8 @@ reporter runs.
 - `internal/preprelease/preprelease.go`
 - `internal/preprelease/preprelease_test.go`
 - `internal/bounds/bounds_test.go`
+- `internal/bounds/bounds.go`
+- `internal/conformance/bounds_policy_test.go`
 - `projects/benchkit.md`
 - `CHANGELOG.md`
 - `specs/go-build-cache-footprint/`

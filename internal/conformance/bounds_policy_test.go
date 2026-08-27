@@ -32,6 +32,7 @@ func checkBoundsPolicy(root string) []string {
 		"internal/maps/maps.go":                     {"bounds.ControlRecordLimit"},
 		"internal/roadmap/roadmap.go":               {"bounds.ControlRecordLimit"},
 		"internal/guards/guards.go":                 {"bounds.GuardScanTimeout"},
+		"internal/gocache/lock.go":                  {"bounds.CacheHoldWait"},
 		"internal/gate/gate.go":                     {"bounds.GateTimeout"},
 		"internal/worktree/refresh/refresh.go":      {"bounds.GitRefreshTimeout"},
 		"internal/git/git.go":                       {"bounds.WorktreeListTimeout"},
