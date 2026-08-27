@@ -2,16 +2,19 @@ package testreport
 
 import (
 	"context"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -43,16 +46,20 @@ func TestChangedPackageClosureAcrossAllGoEdges(t *testing.T) {
 func TestChangedPackageSelectionMetadataAndMixedUnion(t *testing.T) {
 	root := changedSelectionModule(t)
 	packages := changedSelectionGraph(root)
-	got, err := selectCurrentPackages(root, packages, []changedPath{{path: "go.mod"}, {path: "direct/direct.go"}})
-	if err != nil {
-		t.Fatal(err)
-	}
 	want := []string{
 		"changedfixture/direct", "changedfixture/embedprod", "changedfixture/embedtest",
-		"changedfixture/embedxtest", "changedfixture/production", "changedfixture/testedge", "changedfixture/xtestedge",
+		"changedfixture/embedxtest", "changedfixture/production", "changedfixture/spaceglob", "changedfixture/testedge", "changedfixture/xtestedge",
 	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("selected packages = %v, want %v", got, want)
+	for _, metadata := range []string{"go.mod", "go.sum", "go.work", "go.work.sum"} {
+		t.Run(metadata, func(t *testing.T) {
+			got, err := selectCurrentPackages(root, packages, []changedPath{{path: metadata}, {path: "direct/direct.go"}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Fatalf("selected packages = %v, want %v", got, want)
+			}
+		})
 	}
 }
 
@@ -65,18 +72,43 @@ func TestChangedPackageSelectionRefusalMatrix(t *testing.T) {
 		return changedSelectionGraph(root), nil
 	}
 	t.Cleanup(func() { listCurrentPackages = previous })
-	unsafe := filepath.Join(root, "unsafe-link")
-	if err := os.Symlink("direct/direct.go", unsafe); err != nil {
+	if err := os.Symlink("direct/direct.go", filepath.Join(root, "unsafe-live-link")); err != nil {
 		t.Fatal(err)
 	}
-	fifo := filepath.Join(root, "unsafe-fifo")
-	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
+	if err := os.Symlink("missing-target", filepath.Join(root, "unsafe-dangling-link")); err != nil {
 		t.Fatal(err)
 	}
-	for _, path := range []string{"bad\x1bpath", "unsafe-link", "unsafe-fifo", "missing/package.go"} {
-		if _, err := resolveChangedPackages(context.Background(), root, []string{path}); err == nil {
-			t.Fatalf("resolveChangedPackages(%q) succeeded", path)
-		}
+	if err := syscall.Mkfifo(filepath.Join(root, "unsafe-fifo"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	socket, err := net.Listen("unix", filepath.Join(root, "unsafe-socket"))
+	hasSocket := err == nil
+	if hasSocket {
+		t.Cleanup(func() { _ = socket.Close() })
+	} else {
+		t.Logf("socket case skipped: cannot create Unix socket: %v", err)
+	}
+	device := filepath.Join(root, "unsafe-device")
+	if err := syscall.Mknod(device, syscall.S_IFCHR|0o600, 0); err != nil {
+		t.Logf("device case skipped: cannot create character device: %v", err)
+		device = ""
+	}
+	paths := []string{
+		"bad\x1bpath", "bad\x07path", "tab\tpath", "newline\npath", "return\rpath",
+		"unsafe-live-link", "unsafe-dangling-link", "unsafe-fifo", "missing/package.go",
+	}
+	if hasSocket {
+		paths = append(paths, "unsafe-socket")
+	}
+	if device != "" {
+		paths = append(paths, "unsafe-device")
+	}
+	for _, path := range paths {
+		t.Run(strings.ReplaceAll(path, "\n", " newline "), func(t *testing.T) {
+			if _, err := resolveChangedPackages(context.Background(), root, []string{path}); err == nil {
+				t.Fatalf("resolveChangedPackages(%q) succeeded", path)
+			}
+		})
 	}
 	if calls != 0 {
 		t.Fatalf("go list calls = %d, want zero for refused inputs", calls)
@@ -99,6 +131,20 @@ func TestChangedPackageSelectionRefusalMatrix(t *testing.T) {
 	}
 }
 
+func TestChangedPackageSelectionKeepsSpaceAndGlobPathsTyped(t *testing.T) {
+	root := changedSelectionModule(t)
+	got, err := selectCurrentPackages(root, changedSelectionGraph(root), []changedPath{
+		{path: "space [glob]/package file.go"},
+		{path: "space [glob]/embed input[*].txt"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"changedfixture/spaceglob"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("selected packages = %v, want %v", got, want)
+	}
+}
+
 func TestChangedNonGoSubjectRendersExplicitEmpty(t *testing.T) {
 	root, base, tip := changedCommandRepository(t, "README.md", "docs\n", "README.md", "")
 	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
@@ -117,6 +163,16 @@ func TestChangedNonGoSubjectRendersExplicitEmpty(t *testing.T) {
 
 func TestChangedPackageRunPattern(t *testing.T) {
 	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
+	other := filepath.Join(root, "other", "other_test.go")
+	if err := os.MkdirAll(filepath.Dir(other), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(other, []byte("package other\n\nimport \"testing\"\n\nfunc TestSelected(t *testing.T) {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runChangedGit(t, root, "add", "other/other_test.go")
+	runChangedGit(t, root, "commit", "-m", "second changed package")
+	tip = strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
 	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
 		return os.WriteFile(output, []byte("selected"), 0o755)
 	}, Verify: func(string, string) error { return nil }})
@@ -128,6 +184,40 @@ func TestChangedPackageRunPattern(t *testing.T) {
 	}
 	if got := readTestReportFile(t, marker); !strings.Contains(got, "-test.run=^TestSelected$") {
 		t.Fatalf("test argv = %q, want unchanged run pattern", got)
+	}
+	if !strings.Contains(output, "packages[2]") {
+		t.Fatalf("changed run output = %q, want the complete two-package union", output)
+	}
+}
+
+func TestChangedRenameFeedsDeletionAndAdditionToSelection(t *testing.T) {
+	root, base, tip := changedCommandRepository(t, "changed/old.go", "package changed\n", "changed/old.go", "")
+	newPath := filepath.Join(root, "changed", "new.go")
+	if err := os.WriteFile(newPath, []byte("package changed\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runChangedGit(t, root, "add", "changed/new.go")
+	runChangedGit(t, root, "commit", "-m", "add renamed path")
+	tip = strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
+	subject, kind, hint := diff.ResolveChangedSubject(root, base, tip)
+	if kind != "" {
+		t.Fatalf("changed subject = (%q, %q)", kind, hint)
+	}
+	for _, want := range []string{"changed/old.go", "changed/new.go"} {
+		if !slices.Contains(subject.Paths, want) {
+			t.Fatalf("rename paths = %v, want %q", subject.Paths, want)
+		}
+	}
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+	output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
+	if code != 0 || !strings.Contains(output, "changedcommand/changed") {
+		t.Fatalf("changed rename = (%d, %q), want selected surviving package", code, output)
 	}
 }
 
@@ -320,28 +410,32 @@ func changedSelectionGraph(root string) []listedPackage {
 	embedTest.TestEmbedFiles = []string{"input.txt"}
 	embedXTest := packageAt("embedxtest", "changedfixture/embedxtest")
 	embedXTest.XTestEmbedFiles = []string{"input.txt"}
-	return []listedPackage{direct, production, testEdge, xTestEdge, embedProd, embedTest, embedXTest}
+	spaceGlob := packageAt("space [glob]", "changedfixture/spaceglob")
+	spaceGlob.EmbedFiles = []string{"embed input[*].txt"}
+	return []listedPackage{direct, production, testEdge, xTestEdge, embedProd, embedTest, embedXTest, spaceGlob}
 }
 
 func changedSelectionModule(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	files := map[string]string{
-		"go.mod":                      "module changedfixture\n\ngo 1.25\n",
-		"direct/direct.go":            "package direct\n",
-		"production/production.go":    "package production\n",
-		"testedge/testedge.go":        "package testedge\n",
-		"testedge/testedge_test.go":   "package testedge\n",
-		"xtestedge/xtestedge.go":      "package xtestedge\n",
-		"xtestedge/xtestedge_test.go": "package xtestedge_test\n",
-		"embedprod/embed.go":          "package embedprod\n",
-		"embedprod/input.txt":         "production\n",
-		"embedtest/embed.go":          "package embedtest\n",
-		"embedtest/embed_test.go":     "package embedtest\n",
-		"embedtest/input.txt":         "test\n",
-		"embedxtest/embed.go":         "package embedxtest\n",
-		"embedxtest/embed_test.go":    "package embedxtest_test\n",
-		"embedxtest/input.txt":        "external test\n",
+		"go.mod":                          "module changedfixture\n\ngo 1.25\n",
+		"direct/direct.go":                "package direct\n",
+		"production/production.go":        "package production\n",
+		"testedge/testedge.go":            "package testedge\n",
+		"testedge/testedge_test.go":       "package testedge\n",
+		"xtestedge/xtestedge.go":          "package xtestedge\n",
+		"xtestedge/xtestedge_test.go":     "package xtestedge_test\n",
+		"embedprod/embed.go":              "package embedprod\n",
+		"embedprod/input.txt":             "production\n",
+		"embedtest/embed.go":              "package embedtest\n",
+		"embedtest/embed_test.go":         "package embedtest\n",
+		"embedtest/input.txt":             "test\n",
+		"embedxtest/embed.go":             "package embedxtest\n",
+		"embedxtest/embed_test.go":        "package embedxtest_test\n",
+		"embedxtest/input.txt":            "external test\n",
+		"space [glob]/package file.go":    "package spaceglob\n",
+		"space [glob]/embed input[*].txt": "embedded\n",
 	}
 	for path, source := range files {
 		file := filepath.Join(root, path)

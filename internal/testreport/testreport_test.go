@@ -119,6 +119,55 @@ func TestRunPatternReachesGoAsOneArgument(t *testing.T) {
 	}
 }
 
+func TestFocusedCommandKeepsHostilePackageAndRunValuesTyped(t *testing.T) {
+	root := focusedTestModule(t)
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+	for _, tc := range []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "package flag", args: []string{"--package", "-flagged package[1];$HOME"}, want: "-flagged package[1];$HOME"},
+		{name: "legacy terminator", args: []string{"--", "-legacy package[1];$HOME"}, want: "-legacy package[1];$HOME"},
+		{name: "run flag", args: []string{"--run", "^-flagged test[1];$HOME$"}, want: "^-flagged test[1];$HOME$"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			marker := filepath.Join(t.TempDir(), "argv")
+			goDir := t.TempDir()
+			writeFocusedArgumentGo(t, filepath.Join(goDir, "go"), marker)
+			t.Setenv("PATH", goDir)
+			output, code := Command(root, tc.args)
+			if code != 0 {
+				t.Fatalf("Command(%v) = %d\n%s", tc.args, code, output)
+			}
+			if got := readTestReportFile(t, marker); !strings.Contains(got, tc.want+"\n") {
+				t.Fatalf("go argv = %q, want typed value %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestFocusedCommandRefusesMissingGoWithStructuredStartError(t *testing.T) {
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+	t.Setenv("PATH", t.TempDir())
+	output, code := Command(focusedTestModule(t), nil)
+	if code != 1 || !strings.HasPrefix(output, "error: go test failed to start — ") {
+		t.Fatalf("missing go = (%d, %q), want structured start refusal", code, output)
+	}
+}
+
 func TestRunPatternRefusesZeroMatches(t *testing.T) {
 	root := focusedTestModule(t)
 	addFocusedFailureCases(t, root)
@@ -245,6 +294,14 @@ func TestMatchedSkip(t *testing.T) { t.Skip("matched skip") }
 func TestMatchedFailure(t *testing.T) { t.Fatal("matched failure") }
 `
 	if err := os.WriteFile(filepath.Join(root, "chosen", "failure_test.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func writeFocusedArgumentGo(t *testing.T, path, marker string) {
+	t.Helper()
+	source := "#!/bin/bash\nprintf '%s\\n' \"$@\" > \"" + marker + "\"\nprintf '%s\\n' '{\"Action\":\"run\",\"Package\":\"focusedfixture\",\"Test\":\"TestOK\"}' '{\"Action\":\"pass\",\"Package\":\"focusedfixture\"}'\n"
+	if err := os.WriteFile(path, []byte(source), 0o755); err != nil {
 		t.Fatal(err)
 	}
 }

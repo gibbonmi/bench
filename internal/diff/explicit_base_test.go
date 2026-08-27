@@ -117,6 +117,9 @@ func TestExplicitBaseRetriesThenRefusesMovement(t *testing.T) {
 
 func TestChangedSubjectDefaultLiveComposition(t *testing.T) {
 	root, base, _ := seedCompatibilityRepo(t)
+	mustWriteFile(t, "staged-only.txt", "staged\n")
+	runGit(t, "add", "staged-only.txt")
+	mustWriteFile(t, "worktree-only.txt", "worktree\n")
 	subject, kind, hint := ResolveChangedSubject(root, "", "")
 	if kind != "" {
 		t.Fatalf("ResolveChangedSubject = (%q, %q)", kind, hint)
@@ -124,7 +127,7 @@ func TestChangedSubjectDefaultLiveComposition(t *testing.T) {
 	if !subject.Live || subject.Base != base {
 		t.Fatalf("subject identity = %#v, want live subject from %s", subject, base)
 	}
-	for _, want := range []string{"committed.txt", "tracked.txt", "untracked.txt"} {
+	for _, want := range []string{"committed.txt", "staged-only.txt", "worktree-only.txt", "untracked.txt"} {
 		found := false
 		for _, path := range subject.Paths {
 			found = found || path == want

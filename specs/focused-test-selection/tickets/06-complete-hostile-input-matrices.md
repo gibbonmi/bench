@@ -11,14 +11,18 @@ Delete the review pickup file after every repair predicate is green.
 
 ## Acceptance
 
-- [ ] C01 — distinct paths prove the committed, staged, tracked-worktree, and untracked producers.
-- [ ] C05 — each module-wide Go metadata name selects all retained packages.
-- [ ] C07 — the matrix covers both control-byte postures and every named special-node or symlink state.
-- [ ] C08 — the unchanged run filter reaches the complete changed-package union.
-- [ ] C09 — package and embed paths with spaces or glob characters remain typed values.
-- [ ] C07 — Git rename deletion and addition both reach focused classification.
-- [ ] F01 — flag-looking and hostile package values remain one value.
-- [ ] F03 — flag-looking and hostile run values remain one value.
-- [ ] F04 — the legacy terminator route remains available.
-- [ ] N02 — a missing Go executable returns a structured start refusal.
-- [ ] N02 — every accepted repair predicate remains green.
+- [x] C01 — distinct paths prove the committed, staged, tracked-worktree, and untracked producers.
+- [x] C05 — each module-wide Go metadata name selects all retained packages.
+- [x] C07 — the matrix covers both control-byte postures and every named special-node or symlink state.
+- [x] C08 — the unchanged run filter reaches the complete changed-package union.
+- [x] C09 — package and embed paths with spaces or glob characters remain typed values.
+- [x] C07 — Git rename deletion and addition both reach focused classification.
+- [x] F01 — flag-looking and hostile package values remain one value.
+- [x] F03 — flag-looking and hostile run values remain one value.
+- [x] F04 — the legacy terminator route remains available.
+- [x] N02 — a missing Go executable returns a structured start refusal.
+- [x] N02 — every accepted repair predicate remains green.
+
+Delivered outcome: the focused seams now exercise each required producer and
+hostile input. The node matrix logs a platform restriction when it cannot
+create a socket or a device.
