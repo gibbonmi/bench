@@ -297,6 +297,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT215: decide the scoped gate and focused-iteration surfaces before adding another independent projection.
-2. `/bench-drain` — FT259: add the repair-ticket handoff to shared review guidance.
-3. `/bench-shape-idea` — FT255: settle one test-concurrency budget before more parallel builds compete for the host.
+1. `/bench-shape-idea` — FT215: decide the scoped gate and focused-iteration surfaces.
+2. `/bench-shape-idea` — FT255: decide one explicit machine budget for concurrent tests.
+3. `/bench-write-spec` — FT251: specify recovery for a killed landing's prospective tree and gate binary.
