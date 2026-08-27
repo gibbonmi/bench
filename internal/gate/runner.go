@@ -358,7 +358,17 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		cmd.Stdout = io.MultiWriter(stdout, &observed)
 	}
 	cmd.Stderr = stderr
-	cmd.Env = mergeEnv(gateEnv(), phase.Env)
+	baseEnv, err := gateEnv()
+	if err != nil {
+		// The phase reds before the child starts. A child launched without the entry
+		// would write to the ambient cache, which is the state this refusal exists to
+		// prevent.
+		fmt.Fprintf(stderr, "%s cache environment unavailable: %v\n", phase.Name, err)
+		result.Code = 1
+		result.StartErr = err
+		return result
+	}
+	cmd.Env = mergeEnv(baseEnv, phase.Env)
 	run := runProcessGroupCommand(ctx, cmd)
 	result.Interrupted = run.Cancelled
 	if run.StartErr != nil {

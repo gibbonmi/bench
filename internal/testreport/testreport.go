@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -48,7 +49,11 @@ func Command(root string, args []string) (string, int) {
 	defer selection.Close()
 	cmd := exec.Command("go", "test", "-json", "-count=1", packageExpr)
 	cmd.Dir = root
-	cmd.Env = runbinary.WithEnv(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), selection.Path)
+	childEnv, err := testEnvironment(os.Environ(), selection.Path)
+	if err != nil {
+		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+	}
+	cmd.Env = childEnv
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {
@@ -103,6 +108,13 @@ func Command(root string, args []string) (string, int) {
 		return out, 1
 	}
 	return out, 0
+}
+
+// testEnvironment returns the environment the focused run's Go child carries: the
+// caller's, without the inherited capability log, with the selected Bench executable,
+// and with the Bench build cache entry so a focused run warms the archives a gate reads.
+func testEnvironment(base []string, binary string) ([]string, error) {
+	return gocache.Apply(runbinary.WithEnv(capability.WithoutEnvironment(base, capability.LogEnv), binary))
 }
 
 // packagePattern maps a bare directory-relative operand to a "./"-prefixed

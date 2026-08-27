@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gocache"
 )
 
 // TestDecodeSkipsRunnerLines pins that decode classifies runner lines through testlines.
@@ -52,5 +54,37 @@ func TestPackagePattern(t *testing.T) {
 		if got := packagePattern(root, c.operand); got != c.want {
 			t.Errorf("packagePattern(%q) = %q, want %q", c.operand, got, c.want)
 		}
+	}
+}
+
+// C10: the `bench test` child carries the Bench build cache entry, so a focused run
+// warms the archives a later gate reads.
+func TestTestEnvironmentCarriesTheBenchBuildCache(t *testing.T) {
+	child, err := testEnvironment([]string{"HOME=/home/agent", "GOCACHE=/ambient/cache"}, "/selected/bench")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := gocache.Dir([]string{"HOME=/home/agent"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries := []string{}
+	for _, entry := range child {
+		if strings.HasPrefix(entry, gocache.Env+"=") {
+			entries = append(entries, entry)
+		}
+	}
+	if len(entries) != 1 || entries[0] != gocache.Env+"="+want {
+		t.Fatalf("cache entries = %#v, want exactly %s=%s", entries, gocache.Env, want)
+	}
+}
+
+func TestTestEnvironmentRefusesWithoutAnAbsoluteHome(t *testing.T) {
+	child, err := testEnvironment([]string{"PATH=/usr/bin"}, "/selected/bench")
+	if err == nil {
+		t.Fatalf("testEnvironment = %#v, want an error", child)
+	}
+	if !strings.Contains(err.Error(), "HOME") {
+		t.Fatalf("error = %q, want it to name HOME", err)
 	}
 }

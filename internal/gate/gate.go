@@ -26,6 +26,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -150,11 +151,16 @@ func (r Resolution) command(root string) *exec.Cmd {
 // The capability skip log goes too. A run owns the log its own phases append to, so an
 // inherited path must never survive into a child. A collecting run sets its own value
 // back on each phase.
-func gateEnv() []string {
+//
+// The Bench build cache entry is applied last, so a gate child writes to the one
+// Bench-owned directory and an ambient GOCACHE never reaches it. An environment with
+// no absolute HOME cannot name that directory, so gateEnv refuses rather than let a
+// child fall back to Go's default.
+func gateEnv() ([]string, error) {
 	// The baseline phase-schedule selector goes too. It addresses the one gate-phases
 	// process the owner launched; a phase child that inherited it would resolve its own
 	// schedule against a root it was never handed.
-	return env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv))
+	return gocache.Apply(env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv)))
 }
 
 // Run executes the resolved gate from the repo root and returns its exit code, with
@@ -163,7 +169,12 @@ func gateEnv() []string {
 // tripwire, not this call site, keeps that safe. None must not reach here; the caller
 // handles the no-gate exit-3-nothing-recorded case.
 func Run(root string, res Resolution, stdout, stderr io.Writer) int {
-	return runResolved(context.Background(), root, res, gateEnv(), stdout, stderr, false).Code
+	childEnv, err := gateEnv()
+	if err != nil {
+		fmt.Fprintf(stderr, "gate environment unavailable: %v\n", err)
+		return 1
+	}
+	return runResolved(context.Background(), root, res, childEnv, stdout, stderr, false).Code
 }
 
 // RunContext executes the resolved gate like Run, but puts the gate in its own process
@@ -172,7 +183,12 @@ func Run(root string, res Resolution, stdout, stderr io.Writer) int {
 // running and writing into it. Standalone `bench gate` uses Run, which preserves normal
 // foreground-process signal delivery.
 func RunContext(ctx context.Context, root string, res Resolution, stdout, stderr io.Writer) int {
-	result := runResolved(ctx, root, res, gateEnv(), stdout, stderr, true)
+	childEnv, err := gateEnv()
+	if err != nil {
+		fmt.Fprintf(stderr, "gate environment unavailable: %v\n", err)
+		return 1
+	}
+	result := runResolved(ctx, root, res, childEnv, stdout, stderr, true)
 	if result.StartErr != nil {
 		return 1
 	}

@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/gocache"
 )
 
 func TestFactoryOwnBuildsOnePrivateAbsoluteSelectionAndCleansIt(t *testing.T) {
@@ -197,4 +200,32 @@ func requireProcessExit(t *testing.T, pid int) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	t.Fatalf("process %d survived builder return", pid)
+}
+
+// C09: the private build's environment carries the Bench build cache entry, so the
+// builder writes to the one Bench-owned directory instead of the ambient one.
+func TestBuildEnvironmentCarriesTheBenchBuildCache(t *testing.T) {
+	t.Parallel()
+	built, err := buildEnvironment([]string{"HOME=/home/agent", "GOCACHE=/ambient/cache", "GOOS=plan9"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := gocache.Dir([]string{"HOME=/home/agent"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(built, []string{"HOME=/home/agent", gocache.Env + "=" + want}) {
+		t.Fatalf("buildEnvironment = %#v, want HOME and %s=%s only", built, gocache.Env, want)
+	}
+}
+
+func TestBuildEnvironmentRefusesWithoutAnAbsoluteHome(t *testing.T) {
+	t.Parallel()
+	built, err := buildEnvironment([]string{"PATH=/usr/bin"})
+	if err == nil {
+		t.Fatalf("buildEnvironment = %#v, want an error", built)
+	}
+	if !strings.Contains(err.Error(), "HOME") {
+		t.Fatalf("error = %q, want it to name HOME", err)
+	}
 }

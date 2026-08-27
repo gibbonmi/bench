@@ -26,6 +26,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Every Go toolchain child Bench spawns now writes to one Bench-owned build cache
+  at `$HOME/.cache/bench/go-build`. The gate oracle closure, the gate phase
+  children, the private run-binary build, and `bench test` all carry that
+  `GOCACHE` entry, so an ambient cache and a `go env -w GOCACHE` setting no longer
+  steer a Bench build. The directory comes from `HOME` alone. A root with no
+  absolute `HOME` refuses before its child starts and names `HOME`.
 - The gate now prints a bounded verdict instead of every phase's stream. A green
   run prints one `phases[N]{phase,verdict,elapsed_ms}` table, one
   `capability-skips` line, and `gate: green`. A red run prints one

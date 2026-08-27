@@ -18,6 +18,7 @@ import (
 	"unicode/utf8"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gocache"
 )
 
 var envNameRE = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
@@ -106,6 +107,13 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 				s.open("declared tool unavailable")
 			}
 		}
+	}
+	// The build cache entry rides the closure unhashed. It is derived from the
+	// declared HOME the loop above already framed, so hashing it would frame the same
+	// fact twice. A closure that declares no absolute HOME carries no entry, because
+	// nothing in it names the directory.
+	if applied, err := gocache.Apply(s.Env); err == nil {
+		s.Env = applied
 	}
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
 	return s, nil

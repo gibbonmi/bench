@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gocache"
 )
 
 // Env carries the exact Bench executable selected by the current top-level run.
@@ -202,7 +203,11 @@ func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
 	}
 	cmd := exec.Command("bash", filepath.Join(sourceRoot, "scripts", "go-build.sh"), sourceRoot, output)
 	cmd.Dir = sourceRoot
-	cmd.Env = buildEnvironment(os.Environ())
+	buildEnv, err := buildEnvironment(os.Environ())
+	if err != nil {
+		return err
+	}
+	cmd.Env = buildEnv
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	var outputBytes bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &outputBytes, &outputBytes
@@ -242,7 +247,10 @@ func drainBuilderGroup(pgid int) {
 	}
 }
 
-func buildEnvironment(base []string) []string {
+// buildEnvironment returns the environment the build script runs under. The cross
+// compilation names and the selection name go, and the Bench build cache entry
+// arrives, so the private build shares the archives the gate's phases read.
+func buildEnvironment(base []string) ([]string, error) {
 	env := make([]string, 0, len(base))
 	for _, item := range base {
 		if strings.HasPrefix(item, "GOOS=") || strings.HasPrefix(item, "GOARCH=") || strings.HasPrefix(item, Env+"=") {
@@ -250,5 +258,5 @@ func buildEnvironment(base []string) []string {
 		}
 		env = append(env, item)
 	}
-	return env
+	return gocache.Apply(env)
 }
