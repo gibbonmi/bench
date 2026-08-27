@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -28,6 +29,8 @@ const (
 	cancelGoModeEnv   = "BENCH_TEST_CANCEL_GO_MODE"
 	cancelGoPathEnv   = "BENCH_TEST_CANCEL_GO_PATH"
 	cancelGoPIDEnv    = "BENCH_TEST_CANCEL_GO_PID"
+	cancelParkingEnv  = "BENCH_TEST_CANCEL_PARKING"
+	cancelParkingPath = "BENCH_TEST_CANCEL_PARKING_PATH"
 )
 
 func TestChangedGoListDrainsGroupOnCancelSignal(t *testing.T) {
@@ -46,15 +49,61 @@ func TestFocusedGoTestDrainsGroupOnCancelSignal(t *testing.T) {
 	signalGoHopCancelHelper(t, "TestFocusedGoTestDrainsGroupOnCancelSignal", "test")
 }
 
+func TestFocusedGoTestCancelsAfterDecode(t *testing.T) {
+	if mode := os.Getenv(cancelGoModeEnv); mode != "" {
+		runGoHopCancelHelper(t, mode)
+		return
+	}
+	signalGoHopCancelHelper(t, "TestFocusedGoTestCancelsAfterDecode", "test-after-decode")
+}
+
+func TestParkingParent(t *testing.T) {
+	if os.Getenv(cancelParkingEnv) != "parent" {
+		return
+	}
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT)
+	defer signal.Stop(signals)
+	child := exec.Command(os.Args[0], "-test.run=^TestParkingChild$")
+	child.Env = append(os.Environ(), cancelParkingEnv+"=child")
+	if err := child.Start(); err != nil {
+		t.Fatal(err)
+	}
+	pidFile := os.Getenv(cancelGoPIDEnv)
+	if pidFile == "" {
+		t.Fatal("missing parking pid file")
+	}
+	partial := pidFile + ".partial"
+	if err := os.WriteFile(partial, []byte(strconv.Itoa(child.Process.Pid)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(partial, pidFile); err != nil {
+		t.Fatal(err)
+	}
+	<-signals
+	if err := child.Process.Release(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestParkingChild(t *testing.T) {
+	if os.Getenv(cancelParkingEnv) != "child" {
+		return
+	}
+	signal.Ignore(syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
+	select {}
+}
+
 func signalGoHopCancelHelper(t *testing.T, testName, mode string) {
 	t.Helper()
 	pidFile := filepath.Join(t.TempDir(), "go-list-descendant")
-	goPath := parkingGo(t, pidFile)
+	goPath := parkingGo(t, mode == "test-after-decode")
 	helper := exec.Command(os.Args[0], "-test.run=^"+testName+"$", "-test.timeout="+deadline().String())
 	helper.Env = append(os.Environ(),
 		cancelGoModeEnv+"="+mode,
 		cancelGoPathEnv+"="+goPath,
 		cancelGoPIDEnv+"="+pidFile,
+		cancelParkingPath+"="+os.Args[0],
 	)
 	output, err := helper.StdoutPipe()
 	if err != nil {
@@ -106,7 +155,7 @@ func runGoHopCancelHelper(t *testing.T, mode string) {
 		root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
 		output, code = Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
 		want = "error: changed selection failed — go list interrupted: child process group cancelled\n"
-	case "test":
+	case "test", "test-after-decode":
 		installTestSelectionFactory(t, runbinary.Factory{
 			TempRoot: t.TempDir(),
 			Build: func(_ context.Context, _, output string) error {
@@ -129,17 +178,11 @@ func runGoHopCancelHelper(t *testing.T, mode string) {
 	}
 }
 
-func parkingGo(t *testing.T, pidFile string) string {
+func parkingGo(t *testing.T, terminalJSON bool) string {
 	t.Helper()
 	dir := t.TempDir()
-	script := `#!/usr/bin/env bash
-sleep ` + strconv.Itoa(int(parkSeconds())) + ` &
-printf %s "$!" > "` + pidFile + `.partial"
-mv "` + pidFile + `.partial" "` + pidFile + `"
-wait
-`
 	path := filepath.Join(dir, "go")
-	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+	if err := os.WriteFile(path, []byte(parkingScript(terminalJSON)), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	return path
@@ -189,7 +232,9 @@ func signalCancelHelper(t *testing.T, signal syscall.Signal) (string, int) {
 	helper.Env = append(os.Environ(),
 		cancelHelperEnv+"="+signal.String(),
 		cancelTempRootEnv+"="+tempRoot,
-		cancelSourceEnv+"="+parkingBuilderSource(t, pidFile),
+		cancelSourceEnv+"="+parkingBuilderSource(t),
+		cancelGoPIDEnv+"="+pidFile,
+		cancelParkingPath+"="+os.Args[0],
 	)
 	output, err := helper.StdoutPipe()
 	if err != nil {
@@ -239,25 +284,30 @@ func runCancelHelper(t *testing.T) {
 }
 
 // parkingBuilderSource writes a source root whose builder reports one live
-// descendant and then parks, holding the cancellation window open. The descendant
-// is an ordinary background child, so it belongs to the detached group and only a
-// group-wide signal reaches it.
-func parkingBuilderSource(t *testing.T, pidFile string) string {
+// descendant and then parks, holding the cancellation window open. The test-binary
+// descendant ignores graceful signals, so the final group drain removes it.
+func parkingBuilderSource(t *testing.T) string {
 	t.Helper()
 	source := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(source, "scripts"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	script := `#!/usr/bin/env bash
-sleep ` + strconv.Itoa(int(parkSeconds())) + ` &
-printf %s "$!" > "` + pidFile + `.partial"
-mv "` + pidFile + `.partial" "` + pidFile + `"
-wait
-`
-	if err := os.WriteFile(filepath.Join(source, "scripts", "go-build.sh"), []byte(script), 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(source, "scripts", "go-build.sh"), []byte(parkingScript(false)), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	return source
+}
+
+func parkingScript(terminalJSON bool) string {
+	terminal := ""
+	if terminalJSON {
+		terminal = `printf '%s\n' '{"Action":"pass","Package":"example.com/park"}'
+exec 1>&-
+`
+	}
+	return `#!/usr/bin/env bash
+` + terminal + `exec env ` + cancelParkingEnv + `=parent "$` + cancelParkingPath + `" -test.run='^TestParkingParent$'
+`
 }
 
 func waitForPID(t *testing.T, pidFile string) int {

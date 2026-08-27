@@ -215,7 +215,21 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		drainGoProcessGroup(cmd.Process.Pid)
 		return toon.Errorf("go test interrupted", goChildGroupCancelled) + "\n", 1
 	}
-	waitErr := cmd.Wait()
+	completed := make(chan error, 1)
+	done := make(chan struct{})
+	go func() {
+		completed <- cmd.Wait()
+		close(done)
+	}()
+	var waitErr error
+	select {
+	case waitErr = <-completed:
+	case <-ctx.Done():
+		cancelGoProcessGroup(cmd, done)
+		<-completed
+		drainGoProcessGroup(cmd.Process.Pid)
+		return toon.Errorf("go test interrupted", goChildGroupCancelled) + "\n", 1
+	}
 	report, decodeErr := result.report, result.err
 	if decodeErr != nil {
 		return toon.Errorf("go test output malformed", decodeErr.Error()) + "\n", 1
@@ -247,7 +261,7 @@ func cancelGoProcessGroup(cmd *exec.Cmd, completed <-chan struct{}) {
 	select {
 	case <-completed:
 	case <-time.After(runbinary.BuilderCancelGrace):
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		_ = cmd.Process.Kill()
 		<-completed
 	}
 }

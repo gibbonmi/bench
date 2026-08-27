@@ -13,8 +13,11 @@ Delete the review pickup after every repair predicate is green.
 
 ## Acceptance
 
-- [ ] N02 — `go test` cancellation cannot block after decode completes.
-- [ ] N02 — the `go list` oracle requires the final group drain.
-- [ ] N02 — the `go test` oracle requires the final group drain.
-- [ ] N02 — interrupted Go hops return no partial package table.
-- [ ] N02 — the parking fixture has one source.
+- [x] N02 — `go test` cancellation cannot block after decode completes.
+- [x] N02 — the `go list` oracle requires the final group drain.
+- [x] N02 — the `go test` oracle requires the final group drain.
+- [x] N02 — interrupted Go hops return no partial package table.
+- [x] N02 — the parking fixture has one source.
+
+Delivered outcome: cancellation handles either decode and process completion
+order. Both Go-hop oracles require the final group drain.
