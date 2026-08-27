@@ -129,7 +129,8 @@ them.
     every Bench test form, so that the flags cannot drift. The forms are test,
     race, system, focused, release, and ship conformance.
 15. As a test author, I want the three `runtime.Caller` root helpers to use the
-    working directory or git, so that their packages pass under `-trimpath`.
+    working directory or git, so that their packages pass under `-trimpath`. I
+    also want the bounds test to resolve `go/build`'s GOROOT from the toolchain.
 
 ### Bound the footprint without a compile race
 
@@ -320,7 +321,7 @@ Line: none — the coordinating session runs these operator steps itself.
 | T03 | 11 | The kit lane's `vet` and `build` argvs each carry `-trimpath`. | lane table unit | An untouched lane table fails the verbatim comparison. |
 | T04 | 12, 13, 14 | The `bench test` argv carries `-trimpath` and `-count=1`. | testreport unit | An untouched focused argv lacks `-trimpath`. |
 | T05 | 12, 13, 14 | The release `coreTestStep` argv carries `-trimpath` and `-count=1`. | gate-go unit | An untouched release argv lacks `-trimpath`. |
-| T06 | 15 | `go test -trimpath` on `internal/runbinary`, `internal/conformance`, and `internal/preprelease` is green. | package run under `-trimpath` | A `runtime.Caller` root fails with `lstat github.com: no such file or directory`, as observed on 2026-08-27. |
+| T06 | 15 | `go test -trimpath` on `internal/runbinary`, `internal/conformance`, `internal/preprelease`, and `internal/bounds` is green. | package run under `-trimpath` | A `runtime.Caller` root fails with `lstat github.com: no such file or directory`, as observed on 2026-08-27. |
 | T07 | 12, 14 | The ship conformance step argv begins with `go -C <kit> test -trimpath -count=1`. | preprelease unit | A second producer in the release package keeps the old flags. |
 | L01 | 16, 19 | While a gate run holds the cache lock, `bench cache clean` exits 1. | two-process lock test | A clean that takes no lock proceeds under a live gate. |
 | L02 | 17, 19 | While a `bench test` run holds the cache lock, `bench cache clean` exits 1. | two-process lock test | A focused run that takes no lock lets the clean proceed. |
@@ -433,6 +434,7 @@ reporter runs.
 - `internal/conformance/harness_test.go`
 - `internal/preprelease/preprelease.go`
 - `internal/preprelease/preprelease_test.go`
+- `internal/bounds/bounds_test.go`
 - `projects/benchkit.md`
 - `CHANGELOG.md`
 - `specs/go-build-cache-footprint/`

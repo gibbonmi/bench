@@ -283,10 +283,10 @@ The kit phase table is exactly:
 | phase | authoritative argv |
 |---|---|
 | `gofmt` | `bench gate-go gofmt <root>` |
-| `vet` | `go -C <root> vet ./...` |
-| `test` | `go test -count=1 ./...` |
-| `race` | one `go test -race -count=1 -v` invocation derived from `internal/racetests.Tests` |
-| `system` | `go test -count=1 -tags=system ./internal/systemtest` |
+| `vet` | `go -C <root> vet -trimpath ./...` |
+| `test` | `go test -trimpath -count=1 ./...` |
+| `race` | one `go test -trimpath -count=1 -race -v` invocation derived from `internal/racetests.Tests` |
+| `system` | `go test -trimpath -count=1 -tags=system ./internal/systemtest` |
 | `shellcheck` | the stable shell-file inventory, optional when shellcheck is absent |
 
 A worktree commit runs the fast lane, which is the short check list below. The
@@ -297,8 +297,8 @@ full grade.
 |---|---|
 | `gofmt` | `bench gate-go gofmt` |
 | `prose` | `bench gate-prose <root> -- <named Markdown>` |
-| `vet` | `go vet ./...` |
-| `build` | `go build -buildvcs=false ./...` |
+| `vet` | `go vet -trimpath ./...` |
+| `build` | `go build -trimpath -buildvcs=false ./...` |
 
 Go owns package scheduling inside the one ordinary test driver, and that driver grades
 the live tree: the `test` phase carries the graded root and the dev tier to the

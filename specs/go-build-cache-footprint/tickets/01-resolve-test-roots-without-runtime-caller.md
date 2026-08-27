@@ -2,7 +2,7 @@
 
 Blocked by: none
 
-Writes: internal/runbinary/bootstrap_test.go, internal/conformance/harness_test.go, internal/preprelease/preprelease_test.go
+Writes: internal/runbinary/bootstrap_test.go, internal/conformance/harness_test.go, internal/preprelease/preprelease_test.go, internal/bounds/bounds_test.go
 
 ## What to build
 
@@ -23,7 +23,7 @@ already survive the flag.
 
 ## Acceptance
 
-- [ ] T06 — `go test -trimpath` on `internal/runbinary`, `internal/conformance`, and `internal/preprelease` is green.
+- [ ] T06 — `go test -trimpath` on `internal/runbinary`, `internal/conformance`, `internal/preprelease`, and `internal/bounds` is green.
 
 Delivered outcome: the three packages that read their own source tree stay
 green when Go strips the file paths.
