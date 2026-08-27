@@ -773,8 +773,7 @@ func footprintEvents(t *testing.T, path string) []gateLogRecord {
 }
 
 // R08: a green run prints the build-cache line after the phase table and before the
-// verdict. The report is asserted whole, because the line's place in the tail is as much
-// of the contract as its wording.
+// verdict. The report is asserted whole.
 func TestGreenRunPrintsTheBuildCacheLineAfterTheTable(t *testing.T) {
 	streams := newPhaseStreams(io.Discard)
 	var stdout, stderr bytes.Buffer

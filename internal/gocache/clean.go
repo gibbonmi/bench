@@ -27,12 +27,9 @@ const goTool = "go"
 // the lock it measures the footprint, runs `go clean -cache` against the directory, and
 // reports the difference the removal made.
 func clean(env []string) (string, int) {
-	dir, err := Dir(env)
-	if err != nil {
-		return toon.Errorf("cache directory not derived", err.Error()) + "\n", 1
-	}
-	if !toon.Representable(dir) {
-		return toon.Errorf("unrepresentable cache directory", "the Bench build cache path holds a control byte; clear it from HOME") + "\n", 1
+	dir, refusal := derivedDir(env)
+	if refusal != "" {
+		return refusal, 1
 	}
 	// An absent directory is answered before any lock, so a fresh machine passes without
 	// the clean creating the very directory it reports as empty.
@@ -50,7 +47,7 @@ func clean(env []string) (string, int) {
 	}
 	childEnv, err := Apply(env)
 	if err != nil {
-		return toon.Errorf("cache directory not derived", err.Error()) + "\n", 1
+		return notDerived(err), 1
 	}
 	before := Measure(dir)
 	child := exec.Command(tool, "clean", "-cache")

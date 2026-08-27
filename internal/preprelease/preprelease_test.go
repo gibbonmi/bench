@@ -267,8 +267,7 @@ func repoRoot(t *testing.T) string {
 }
 
 // T07: the ship conformance step composes the gate's one test-argv producer, so its
-// prefix is `go -C <kit> test -trimpath -count=1`. The release package held its own copy
-// of that prefix before; a second copy is what this pins against.
+// prefix is `go -C <kit> test -trimpath -count=1`.
 func TestShipConformanceStepArgvPrefix(t *testing.T) {
 	root, kit := filepath.Join("elsewhere", "graded root"), filepath.Join("other", "kit")
 	step := stepNamed(t, Steps(root, kit), "conformance-ship")

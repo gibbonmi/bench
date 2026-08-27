@@ -11,12 +11,8 @@ import (
 	"github.com/gibbonmi/bench/internal/gocache"
 )
 
-// C12: the kit's own phase runner wires its process environment to the build-cache
-// report. runPhases hands os.Environ() down, gocache.FromEnv reads the entry
-// gocache.Apply wrote there, and the run records one cache.footprint event at that
-// directory. This is an integration test on purpose: the reporter's own tests inject a
-// measure and a bound, so none of them catches a runner that hands the reporter an
-// environment carrying no build-cache entry.
+// C12: runPhases hands os.Environ() down, gocache.FromEnv reads the entry gocache.Apply
+// wrote there, and the run records one cache.footprint event at that directory.
 func TestGateRunnerRecordsOneCacheFootprintEventForItsProcessEnv(t *testing.T) {
 	applyProcessBuildCache(t)
 	root := newLoggingPruneRoot(t)

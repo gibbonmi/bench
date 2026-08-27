@@ -43,17 +43,33 @@ func Command(args []string) (string, int) {
 	return report(os.Environ())
 }
 
+// derivedDir answers the build cache directory for env, or the operator's refusal line
+// when the environment gives no directory or the path holds a control byte. A control
+// byte is refused before any walk, so no cell reaches the encoder that the encoder would
+// refuse for a second reason.
+func derivedDir(env []string) (string, string) {
+	dir, err := Dir(env)
+	if err != nil {
+		return "", notDerived(err)
+	}
+	if !toon.Representable(dir) {
+		return "", toon.Errorf("unrepresentable cache directory", "the Bench build cache path holds a control byte; clear it from HOME") + "\n"
+	}
+	return dir, ""
+}
+
+// notDerived is the one refusal a failed derivation produces, for the report, the clean,
+// and the clean's child environment alike.
+func notDerived(err error) string {
+	return toon.Errorf("cache directory not derived", err.Error()) + "\n"
+}
+
 // report is the command body over an explicit environment slice, which is the seam the
 // command tests drive.
 func report(env []string) (string, int) {
-	dir, err := Dir(env)
-	if err != nil {
-		return toon.Errorf("cache directory not derived", err.Error()) + "\n", 1
-	}
-	// A control byte in the path is refused before the walk, so no table renders it and
-	// no cell reaches the encoder that the encoder would refuse for a second reason.
-	if !toon.Representable(dir) {
-		return toon.Errorf("unrepresentable cache directory", "the Bench build cache path holds a control byte; clear it from HOME") + "\n", 1
+	dir, refusal := derivedDir(env)
+	if refusal != "" {
+		return refusal, 1
 	}
 	footprint := Measure(dir)
 	row := []any{footprint.Dir, footprint.Bytes, footprint.Files, footprint.LastTrim, Bound, footprint.OverBound()}
