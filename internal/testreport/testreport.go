@@ -56,6 +56,11 @@ func Command(root string, args []string) (string, int) {
 		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
 	}
 	cmd.Env = childEnv
+	// The focused run holds the shared cache lock for its span, so a clean cannot remove an
+	// archive this run is writing or reading. A lock it cannot take never fails the run.
+	if holder, err := gocache.Hold(childEnv); err == nil {
+		defer holder.Release()
+	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {

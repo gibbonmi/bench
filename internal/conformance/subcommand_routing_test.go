@@ -51,7 +51,9 @@ const (
 // reaching either dispatch surface with no row here turns red. This makes the check fail
 // closed against the next subcommand someone adds.
 var subcommandRouting = map[string]routingEntry{
-	"anchors":   routed("cmd/bench"),
+	"anchors": routed("cmd/bench"),
+	// The `clean` child is dispatched inside the module, whose one grammar declares both
+	// the bare verb and the child. So the verb stays routed rather than nested-exempt.
 	"cache":     routed("internal/gocache"),
 	"commands":  routed("cmd/bench"),
 	"commit":    routed("internal/commit"),

@@ -15,6 +15,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -24,10 +25,6 @@ var executionLockOwners = struct {
 	sync.Mutex
 	paths map[string]bool
 }{paths: map[string]bool{}}
-
-func recordLock(typ int16) syscall.Flock_t {
-	return syscall.Flock_t{Type: typ, Whence: int16(io.SeekStart), Start: 0, Len: 0}
-}
 
 func productionRunBinaryOwner() runBinaryOwner {
 	if _, inherited := os.LookupEnv(runbinary.Env); inherited {
@@ -108,6 +105,16 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	}
 	runCtx, cancelRun := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
 	defer cancelRun()
+	// The cache lock spans the whole run: it opens before the run-binary build, the first
+	// Go child of the run, and the deferred release closes it after every teardown above.
+	// A clean that arrives between those two points refuses instead of removing an archive
+	// a phase is reading. A lock this run cannot take never grades the tree, so the run
+	// continues and the log records why.
+	if holder, err := gocache.Hold(plan.Env); err == nil {
+		defer holder.Release()
+	} else {
+		logGateEvent(ctx, gateLogRecord{Event: "cache.lock.unavailable", Root: storageRoot, Detail: err.Error()})
+	}
 	var selection *runbinary.Selection
 	if owner != nil && phaseTableGate(runtimeRoot, plan.Resolution) {
 		source := runBinarySource(runtimeRoot, storageRoot, plan)
@@ -214,7 +221,7 @@ func acquireExecutionLock(f *os.File) error {
 	if executionLockOwners.paths[f.Name()] {
 		return syscall.EAGAIN
 	}
-	lock := recordLock(syscall.F_WRLCK)
+	lock := gocache.RecordLock(syscall.F_WRLCK)
 	if err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock); err != nil {
 		return err
 	}
@@ -225,7 +232,7 @@ func acquireExecutionLock(f *os.File) error {
 func unlockExecutionLock(f *os.File) error {
 	executionLockOwners.Lock()
 	defer executionLockOwners.Unlock()
-	lock := recordLock(syscall.F_UNLCK)
+	lock := gocache.RecordLock(syscall.F_UNLCK)
 	err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock)
 	delete(executionLockOwners.paths, f.Name())
 	return err
@@ -334,7 +341,7 @@ func lockHeld(gitdir string) (bool, error) {
 		return false, err
 	}
 	defer f.Close()
-	lock := recordLock(syscall.F_RDLCK)
+	lock := gocache.RecordLock(syscall.F_RDLCK)
 	if err := syscall.FcntlFlock(f.Fd(), syscall.F_GETLK, &lock); err != nil {
 		return false, err
 	}

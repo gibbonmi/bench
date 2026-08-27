@@ -14,6 +14,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gocache"
 )
 
 const (
@@ -321,7 +322,7 @@ func runGateLockHolder(t *testing.T, root, readyPath, releasePath string) {
 		t.Fatal(err)
 	}
 	defer lock.Close()
-	flock := recordLock(syscall.F_WRLCK)
+	flock := gocache.RecordLock(syscall.F_WRLCK)
 	if err := syscall.FcntlFlock(lock.Fd(), syscall.F_SETLK, &flock); err != nil {
 		t.Fatal(err)
 	}

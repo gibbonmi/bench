@@ -25,6 +25,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -142,6 +143,13 @@ func RunLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		return LaneResult{}, err
 	}
 	defer cleanup()
+
+	// The lane holds the shared cache lock for its span, so one rule covers every holder
+	// and a clean cannot remove an archive a lane check is reading. A lock the lane cannot
+	// take never fails the lane: the checks, not the cache, decide the outcome.
+	if holder, err := gocache.Hold(os.Environ()); err == nil {
+		defer holder.Release()
+	}
 
 	checks := resolveLane(req.Checks, req.Root, checkout, req.NamedMarkdown)
 	runBinary, checks, closeSelection, err := selectLaneRunBinary(ctx, req, checkout, checks)

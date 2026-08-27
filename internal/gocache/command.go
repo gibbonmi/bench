@@ -10,23 +10,35 @@ import (
 // grammar is the declared argument shape usage.Parse enforces for this subcommand.
 // Arity, flag recognition, `--`, and help all come from there, instead of a local switch.
 var grammar = usage.Grammar{
-	Cmd:  "bench cache",
-	Help: "usage: bench cache",
+	Cmd:     "bench cache [clean]",
+	Help:    "usage: bench cache\n       bench cache clean\n",
+	MaxArgs: 1,
 }
+
+// cleanChild is the one word the verb accepts as a subcommand. Anything else is an unknown
+// argument, answered by the same usage line an unknown flag gets.
+const cleanChild = "clean"
 
 // tableName is the one block `bench cache` prints, and tableFields is its schema.
 const tableName = "go_build_cache"
 
 var tableFields = []string{"dir", "bytes", "files", "last_trim", "bound", "over_bound"}
 
-// Command implements `bench cache`: a read-only report of the Bench build cache
-// footprint. It derives the directory from the process environment, so it reads no
-// repository and resolves no git root. An operator therefore runs it anywhere on the
-// machine, a directory outside a repository included. An absent or empty directory is a
-// zero row at exit 0, because a first run must pass.
+// Command implements `bench cache` and its one mutating child, `bench cache clean`. Both
+// derive the directory from the process environment, so they read no repository and
+// resolve no git root; an operator runs them anywhere on the machine, a directory outside
+// a repository included. The bare verb is a read-only report, and an absent or empty
+// directory is a zero row at exit 0, because a first run must pass.
 func Command(args []string) (string, int) {
-	if _, line, code := usage.Parse(grammar, args); line != "" {
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
 		return line + "\n", code
+	}
+	if len(parsed.Positionals) == 1 {
+		if parsed.Positionals[0] != cleanChild {
+			return toon.Usage(grammar.Cmd, parsed.Positionals[0]) + "\n", 2
+		}
+		return clean(os.Environ())
 	}
 	return report(os.Environ())
 }

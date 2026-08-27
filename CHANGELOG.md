@@ -14,6 +14,11 @@ All notable user-facing changes to Bench are documented here. The format follows
   count, the last trim time, the 10 GiB bound, and the over-bound flag. The command
   reads the environment alone, so it runs anywhere on the machine, outside a git
   repository included. An absent or empty cache directory reports zeros at exit 0.
+- Added `bench cache clean`, which empties the Bench Go build cache under the cache lock.
+  Every gate run, lane run, and `bench test` run now holds that lock shared for its span,
+  so a clean beside a live run refuses at exit 1, names the blocking pid, and removes
+  nothing. With no holder the command reports the bytes and files it removed in one
+  `go_build_cache_clean` table. An absent cache directory reports zero at exit 0.
 
 - Added `bench harnesses` to print the harness record, one TOON row per harness.
   A row names the providers, the phase form, the hook config with its wired

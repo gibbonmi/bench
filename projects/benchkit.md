@@ -72,6 +72,16 @@ works on any branch. This line only states the binding.)
   a `-d` executable directory. `bench cache` prints one `go_build_cache` TOON table,
   resolves no git root, and runs anywhere. An absent or empty directory is a zero row at
   exit 0. A control byte in the path is a named refusal at exit 1.
+
+  A gate run, a lane run, and a `bench test` run each hold a shared record lock on
+  `bench.lock` inside that directory for their span. Two runs therefore never wait on
+  each other. `bench cache clean` takes the same lock exclusively without waiting.
+
+  A live holder makes the clean a refusal at exit 1 that names the blocking pid and
+  removes nothing. With no holder the clean measures the footprint, runs
+  `go clean -cache`, and prints one `go_build_cache_clean` table of the bytes and the
+  files it removed. An absent directory reports zero at exit 0 and creates nothing. A
+  missing `go` on `PATH` is a named refusal.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench harnesses`, `bench roadmap`, and
   `bench worktree list`, and the
