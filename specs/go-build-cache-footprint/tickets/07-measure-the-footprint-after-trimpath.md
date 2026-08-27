@@ -31,7 +31,7 @@ shape is fixed.
 
 - [x] The after numbers for one `bench gate` on a fresh worktree path are recorded here as a byte total and a file count.
 - [x] The after numbers for one `bench gate --fresh` on that same path are recorded here as a byte total and a file count.
-- [ ] The reviewer's decision on tickets 04 to 06 is recorded here.
+- [x] The reviewer's decision on tickets 04 to 06 is recorded here: build all three (2026-08-27). The fence widening to `internal/bounds/bounds_test.go` and the closure's no-`HOME` behavior both stand.
 
 ## Measurement, 2026-08-27, source tip `62e0c703`
 
