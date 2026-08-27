@@ -19,7 +19,7 @@ Delete the review pickup file after every repair predicate is green.
 - [x] C07 — Git rename deletion and addition both reach focused classification.
 - [x] F01 — flag-looking and hostile package values remain one value.
 - [x] F03 — flag-looking and hostile run values remain one value.
-- [x] F04 — the legacy terminator route remains available.
+- [x] F01 — the legacy terminator route remains available.
 - [x] N02 — a missing Go executable returns a structured start refusal.
 - [x] N02 — every accepted repair predicate remains green.
 

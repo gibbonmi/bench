@@ -113,12 +113,17 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
+	selection, err := selectRunBinary(ctx, testBenchSource(root))
+	if err != nil {
+		return toon.Errorf("Bench executable selection failed", err.Error()) + "\n", 1
+	}
+	defer selection.Close()
 	if request.changed {
 		subject, kind, hint := diff.ResolveChangedSubject(root, request.base, request.sourceTip)
 		if kind != "" {
 			return toon.Errorf("changed selection failed", kind+": "+hint) + "\n", 1
 		}
-		packages, err := resolveChangedPackages(ctx, root, subject.Paths)
+		packages, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, selectedRunEnvironment(os.Environ(), selection))
 		if err != nil {
 			return toon.Errorf("changed selection failed", err.Error()) + "\n", 1
 		}
@@ -127,11 +132,6 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 		}
 		request.packages = packages
 	}
-	selection, err := selectRunBinary(ctx, testBenchSource(root))
-	if err != nil {
-		return toon.Errorf("Bench executable selection failed", err.Error()) + "\n", 1
-	}
-	defer selection.Close()
 	if request.check != "" {
 		return runNamedCheck(ctx, root, request, selection)
 	}

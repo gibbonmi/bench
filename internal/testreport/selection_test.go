@@ -2,6 +2,7 @@ package testreport
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 	"os"
 	"os/exec"
@@ -16,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 func TestChangedPackageClosureAcrossAllGoEdges(t *testing.T) {
@@ -131,17 +133,120 @@ func TestChangedPackageSelectionRefusalMatrix(t *testing.T) {
 	}
 }
 
-func TestChangedPackageSelectionKeepsSpaceAndGlobPathsTyped(t *testing.T) {
-	root := changedSelectionModule(t)
-	got, err := selectCurrentPackages(root, changedSelectionGraph(root), []changedPath{
-		{path: "space [glob]/package file.go"},
-		{path: "space [glob]/embed input[*].txt"},
-	})
-	if err != nil {
-		t.Fatal(err)
+func TestChangedSpaceAndGlobPathsReachResolverAndCommand(t *testing.T) {
+	root, _, base := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
+	paths := []string{"space [glob]/package file.go", "space [glob]/embed input[*].txt"}
+	for _, path := range paths {
+		file := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte("package spaceglob\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
 	}
-	if want := []string{"changedfixture/spaceglob"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("selected packages = %v, want %v", got, want)
+	runChangedGit(t, root, "add", ".")
+	runChangedGit(t, root, "commit", "-m", "add space and glob inputs")
+	tip := strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
+	subject, kind, hint := diff.ResolveChangedSubject(root, base, tip)
+	if kind != "" {
+		t.Fatalf("changed subject = (%q, %q)", kind, hint)
+	}
+	for _, path := range paths {
+		if !slices.Contains(subject.Paths, path) {
+			t.Fatalf("changed paths = %v, want %q", subject.Paths, path)
+		}
+	}
+
+	goDir := t.TempDir()
+	writeChangedSubjectGo(t, filepath.Join(goDir, "go"), filepath.Join(t.TempDir(), "list-environment"), filepath.Join(t.TempDir(), "test-environment"), []listedPackage{{
+		Dir:        filepath.Join(root, "space [glob]"),
+		ImportPath: "changedcommand/spaceglob",
+		Match:      []string{currentPackagePattern},
+		EmbedFiles: []string{"embed input[*].txt"},
+	}}, "changedcommand/spaceglob")
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
+		return os.WriteFile(output, []byte("selected"), 0o755)
+	}, Verify: func(string, string) error { return nil }})
+
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			got, err := resolveChangedPackages(context.Background(), root, []string{path})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := []string{"changedcommand/spaceglob"}; !reflect.DeepEqual(got, want) {
+				t.Fatalf("selected packages = %v, want %v", got, want)
+			}
+		})
+	}
+	output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
+	if code != 0 || !strings.Contains(output, "changedcommand/spaceglob") {
+		t.Fatalf("changed command = (%d, %q), want selected special-path package", code, output)
+	}
+}
+
+func TestChangedGraphUsesOneClosedSelectionEnvironment(t *testing.T) {
+	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
+	listEnvironment := filepath.Join(t.TempDir(), "list-environment")
+	testEnvironment := filepath.Join(t.TempDir(), "test-environment")
+	goDir := t.TempDir()
+	writeChangedSubjectGo(t, filepath.Join(goDir, "go"), listEnvironment, testEnvironment, []listedPackage{{
+		Dir:        filepath.Join(root, "changed"),
+		ImportPath: "changedcommand/changed",
+		Match:      []string{currentPackagePattern},
+	}}, "changedcommand/changed")
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	for name, value := range map[string]string{
+		registry.ConformanceRootEnv:      "/ambient/root",
+		registry.ConformanceTierEnv:      "ship",
+		registry.ConformanceScopeEnv:     "ambient-scope",
+		registry.ConformanceChecksEnv:    "ambient-checks",
+		registry.ConformanceInheritedEnv: "ambient-inherited",
+		capability.LogEnv:                filepath.Join(t.TempDir(), "capability-log"),
+	} {
+		t.Setenv(name, value)
+	}
+
+	builds := 0
+	var selected, source string
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, sourceRoot, output string) error {
+			builds++
+			source, selected = sourceRoot, output
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+
+	output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
+	if code != 0 {
+		t.Fatalf("changed command = %d\n%s", code, output)
+	}
+	if builds != 1 {
+		t.Fatalf("selection builds = %d, want one", builds)
+	}
+	for _, environment := range []string{listEnvironment, testEnvironment} {
+		got := readTestReportFile(t, environment)
+		for _, name := range []string{
+			registry.ConformanceRootEnv,
+			registry.ConformanceTierEnv,
+			registry.ConformanceScopeEnv,
+			registry.ConformanceChecksEnv,
+			registry.ConformanceInheritedEnv,
+			capability.LogEnv,
+		} {
+			if strings.Contains(got, name+"=") {
+				t.Errorf("%s retained ambient %s:\n%s", environment, name, got)
+			}
+		}
+		for name, want := range map[string]string{"BENCH_KIT": source, runbinary.Env: selected} {
+			if !strings.Contains(got, name+"="+want+"\n") {
+				t.Errorf("%s missing %s=%q:\n%s", environment, name, want, got)
+			}
+		}
 	}
 }
 
@@ -190,7 +295,7 @@ func TestChangedPackageRunPattern(t *testing.T) {
 	}
 }
 
-func TestChangedRenameFeedsDeletionAndAdditionToSelection(t *testing.T) {
+func TestChangedRenameHalvesSelectIndependently(t *testing.T) {
 	root, base, tip := changedCommandRepository(t, "changed/old.go", "package changed\n", "changed/old.go", "")
 	newPath := filepath.Join(root, "changed", "new.go")
 	if err := os.WriteFile(newPath, []byte("package changed\n"), 0o644); err != nil {
@@ -203,10 +308,19 @@ func TestChangedRenameFeedsDeletionAndAdditionToSelection(t *testing.T) {
 	if kind != "" {
 		t.Fatalf("changed subject = (%q, %q)", kind, hint)
 	}
-	for _, want := range []string{"changed/old.go", "changed/new.go"} {
-		if !slices.Contains(subject.Paths, want) {
-			t.Fatalf("rename paths = %v, want %q", subject.Paths, want)
-		}
+	for _, path := range []string{"changed/old.go", "changed/new.go"} {
+		t.Run(path, func(t *testing.T) {
+			if !slices.Contains(subject.Paths, path) {
+				t.Fatalf("rename paths = %v, want %q", subject.Paths, path)
+			}
+			got, err := resolveChangedPackages(context.Background(), root, []string{path})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := []string{"changedcommand/changed"}; !reflect.DeepEqual(got, want) {
+				t.Fatalf("selected packages = %v, want %v", got, want)
+			}
+		})
 	}
 	installTestSelectionFactory(t, runbinary.Factory{
 		TempRoot: t.TempDir(),
@@ -273,11 +387,13 @@ func TestOrdinaryFocusedModesScrubConformanceEnvironment(t *testing.T) {
 		{name: "package", run: func() (string, int) { return Command(focusedTestModule(t), []string{"--package", "chosen"}) }},
 		{name: "changed", run: func() (string, int) {
 			root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
-			previous := listCurrentPackages
-			listCurrentPackages = func(context.Context, string) ([]listedPackage, error) {
-				return []listedPackage{{Dir: filepath.Join(root, "changed"), ImportPath: "changedcommand/changed"}}, nil
-			}
-			t.Cleanup(func() { listCurrentPackages = previous })
+			changedGoDir := t.TempDir()
+			writeChangedSubjectGo(t, filepath.Join(changedGoDir, "go"), filepath.Join(t.TempDir(), "list-environment"), marker, []listedPackage{{
+				Dir:        filepath.Join(root, "changed"),
+				ImportPath: "changedcommand/changed",
+				Match:      []string{currentPackagePattern},
+			}}, "changedcommand/changed")
+			t.Setenv("PATH", changedGoDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 			return Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
 		}},
 	} {
@@ -471,4 +587,20 @@ func currentPackageGraphModule(t *testing.T) string {
 		}
 	}
 	return root
+}
+
+func writeChangedSubjectGo(t *testing.T, path, listEnvironment, testEnvironment string, packages []listedPackage, testPackage string) {
+	t.Helper()
+	listOutput, err := json.Marshal(packages[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	testOutput, err := json.Marshal(map[string]string{"Action": "pass", "Package": testPackage})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := "#!/usr/bin/env bash\ncase \"$1\" in\nlist)\nenv > " + sanitize.ShellQuote(listEnvironment) + "\nprintf '%s\\n' " + sanitize.ShellQuote(string(listOutput)) + "\n;;\ntest)\nenv > " + sanitize.ShellQuote(testEnvironment) + "\nprintf '%s\\n' " + sanitize.ShellQuote(string(testOutput)) + "\n;;\nesac\n"
+	if err := os.WriteFile(path, []byte(source), 0o755); err != nil {
+		t.Fatal(err)
+	}
 }

@@ -96,6 +96,13 @@ func runGoHopCancelHelper(t *testing.T, mode string) {
 	want := ""
 	switch mode {
 	case "list":
+		installTestSelectionFactory(t, runbinary.Factory{
+			TempRoot: t.TempDir(),
+			Build: func(_ context.Context, _, output string) error {
+				return os.WriteFile(output, []byte("selected"), 0o755)
+			},
+			Verify: func(string, string) error { return nil },
+		})
 		root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
 		output, code = Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
 		want = "error: changed selection failed — go list interrupted: child process group cancelled\n"

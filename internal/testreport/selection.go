@@ -33,6 +33,16 @@ type listedPackage struct {
 var listCurrentPackages = currentPackages
 
 func resolveChangedPackages(ctx context.Context, root string, paths []string) ([]string, error) {
+	return resolveChangedPackagesWithLoader(ctx, root, paths, listCurrentPackages)
+}
+
+func resolveChangedPackagesWithEnvironment(ctx context.Context, root string, paths, env []string) ([]string, error) {
+	return resolveChangedPackagesWithLoader(ctx, root, paths, func(ctx context.Context, root string) ([]listedPackage, error) {
+		return currentPackagesWithEnvironment(ctx, root, env)
+	})
+}
+
+func resolveChangedPackagesWithLoader(ctx context.Context, root string, paths []string, load func(context.Context, string) ([]listedPackage, error)) ([]string, error) {
 	inputs := make([]changedPath, 0, len(paths))
 	for _, path := range paths {
 		input, err := inspectChangedPath(root, path)
@@ -44,7 +54,7 @@ func resolveChangedPackages(ctx context.Context, root string, paths []string) ([
 	if len(inputs) == 0 {
 		return nil, nil
 	}
-	packages, err := listCurrentPackages(ctx, root)
+	packages, err := load(ctx, root)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +94,13 @@ func inspectChangedPath(root, path string) (changedPath, error) {
 }
 
 func currentPackages(ctx context.Context, root string) ([]listedPackage, error) {
+	return currentPackagesWithEnvironment(ctx, root, os.Environ())
+}
+
+func currentPackagesWithEnvironment(ctx context.Context, root string, env []string) ([]listedPackage, error) {
 	cmd := exec.Command("go", "list", "-buildvcs=false", "-json", "-test", currentPackagePattern)
 	cmd.Dir = root
+	cmd.Env = env
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	var output bytes.Buffer
 	cmd.Stdout = &output
