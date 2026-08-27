@@ -329,7 +329,7 @@ func ideaLines(file string) ([]string, bounds.FileState) {
 // per phase a row can reach. It is the one source for this grammar. The split-board
 // parser validates against it, and the drain's token table is graded against it. The
 // enforcement and its documentation therefore cannot drift apart.
-var rowNextTokens = []string{"shape", "spec", "ticket", "decide", "kit-edit"}
+var rowNextTokens = []string{"shape", "spec", "ticket", "decide", "ready-for-agent", "kit-edit"}
 
 // RowNextTokens returns the ordered row-token set. It hands back a fresh slice, so a
 // caller that sorts or trims its copy cannot rewrite the grammar for everyone else.
