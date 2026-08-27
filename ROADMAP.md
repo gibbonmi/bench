@@ -297,6 +297,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT215: decide the scoped gate and focused-iteration surfaces.
+1. `/bench-implement-spec` — build the approved staged FT215 `specs/focused-test-selection/spec.md` on one retained integration source.
 2. `/bench-shape-idea` — FT255: decide one explicit machine budget for concurrent tests.
 3. `/bench-write-spec` — FT251: specify recovery for a killed landing's prospective tree and gate binary.
