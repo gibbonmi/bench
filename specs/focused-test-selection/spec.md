@@ -1,18 +1,20 @@
 # focused-test-selection
 
-Status: staged
+Status: implemented
 
 Roadmap: FT215
 
 Decision source: specs/focused-test-selection/decisions/ft215-focused-iteration.md (compiled ready map, resolved 2026-08-27; focused-test decisions #1–#9 and #11 govern this spec)
 
-Verification log: 1 iteration(s) to accept — one independent `gpt-5.6-terra`
-high-effort round found four blockers. The author folded final-row ownership,
-the unsafe-path oracle, the executable trust trace, and exact new-file fences.
+Verification log: 2 iteration(s) to accept — the initial independent
+`gpt-5.6-terra` high-effort round found four blockers. The amendment's
+`gpt-5.6-terra` high-effort round accepted the live-loader seam, the resolver
+closure row, and the complete help inventory fences with no findings.
 
-Reviewer disposition: 2026-08-27 — approve all three tickets after those four
-repairs, with no merge or split. Ticket 01 is the narrower capability that can
-ship on its own gate; the complete surface remains serial at `command.go`.
+Reviewer disposition: 2026-08-27 — approve the live-loader seam, the resolver
+closure row, and the expanded help inventory fences. Retain the three-ticket
+graph with no merge or split. Ticket 01 is the narrower capability that can
+ship alone; the remaining surface stays serial at `command.go`.
 
 ## Problem
 
@@ -122,13 +124,19 @@ lane record, or reusable evidence.
   resolution, explicit base and tip validation, live movement retry, and path
   collection. `testreport` receives paths plus resolved identity and never
   calls raw Git.
-- **One current package graph.** One `go list -json ./...` read supplies
-  package directory, import path, `Imports`, `TestImports`,
-  `XTestImports`, `EmbedFiles`, `TestEmbedFiles`, and
-  `XTestEmbedFiles`. The resolver maps ordinary Go files by containing
-  package directory. It maps named embed files by exact repository-relative
-  path. The files `go.mod`, `go.sum`, `go.work`, and `go.work.sum`
-  are module-wide inputs that select every listed package.
+- **One current package graph.** One
+  `go list -buildvcs=false -json -test ./...` read supplies the current graph.
+  The loader retains records with an empty `ForTest` value and the original
+  `./...` match. This rule excludes synthesized test binaries and test
+  variants without an import-path suffix rule. Each retained record supplies
+  its package directory, import path, imports, test imports, external-test
+  imports, and all three embed-file classes.
+
+  The resolver maps ordinary Go files by their containing package directory.
+  It maps named embed files by
+  their exact repository-relative path. The files `go.mod`, `go.sum`,
+  `go.work`, and `go.work.sum` are module-wide inputs that select every
+  retained package.
 - **Reverse closure includes test edges.** Starting from directly touched
   packages, repeatedly add current-module packages whose production, test, or
   external-test imports name a selected package. Sort and deduplicate the final
@@ -186,8 +194,11 @@ lane record, or reusable evidence.
   They prove default and explicit live composition, immutable base-to-tip
   isolation, one retry then drift refusal, rename-as-delete-plus-add, and no
   Git config or ref mutation.
+- One live-loader test attaches at `currentPackages`. Its fixture module uses
+  production, test, and external-test embed inputs. It proves the retained
+  ordinary graph contains each exact input and no synthesized package.
 - Package-selection tests attach below process execution at the typed
-  `testreport` resolver. Fixture modules cover all three reverse edge classes,
+  `testreport` resolver. Injected graphs cover all three reverse edge classes,
   named embeds, metadata-wide selection, mixed paths, and deterministic order.
   They also cover surviving-directory deletion, deleted package/embed refusal,
   special files, and symlinks.
@@ -233,11 +244,12 @@ lane record, or reusable evidence.
 | C01 | 3 | default changed mode returns committed, staged, tracked-worktree, and untracked paths from one movement-checked live subject | `TestChangedSubjectDefaultLiveComposition` | Omitting any producer or rereading it outside the captured identity changes the exact path set. |
 | C02 | 3 | explicit base keeps the complete live subject, while base plus source tip returns only the immutable range | `TestChangedSubjectExplicitLiveAndFrozenPair` | Checkout-only paths leaking into the frozen pair, or disappearing from live mode, are red. |
 | C03 | 3 | movement gets one retry and a second drift refuses without emitting a partial selection | `TestChangedSubjectRetriesThenRefusesMovement` | A mixed-revision package list cannot reach execution. |
-| C04 | 4 | Go files and exact production/test/external-test embed inputs map to their current packages, then all three reverse-import edge classes close transitively | `TestChangedPackageClosureAcrossAllGoEdges` | Dropping a test-only dependent or treating an arbitrary non-Go file as an embed changes the expected set. |
+| C04 | 4 | one live current graph exposes exact production, test, and external-test embed inputs on retained ordinary packages | `TestCurrentPackageGraphLoadsAllEmbedClasses` | Plain `go list` or acceptance of a synthesized record omits an expected input or adds a non-runnable package. |
 | C05 | 4 | Go metadata selects every current package and mixed known paths select the deterministic union once | `TestChangedPackageSelectionMetadataAndMixedUnion` | A global graph input cannot be narrowed to one directory or produce duplicate invocations. |
 | C06 | 4 | empty and proven non-Go-only subjects emit zero-row package, failure, and skip tables and exit 0 | `TestChangedNonGoSubjectRendersExplicitEmpty` | Returning no bytes or invoking `go test ./...` is red. |
 | C07 | 4 | control-byte paths, special nodes, symlinks, and unmappable Go-relevant paths refuse without `go list` or `go test`, while a deleted file in a surviving package still maps | `TestChangedPackageSelectionRefusalMatrix` | Silent omission, unsafe reads, raw control output, and broad fallback all fail the expected no-child cases. |
 | C08 | 4 | `--run` applies unchanged to the complete changed-package union | `TestChangedPackageRunPattern` | Dropping the filter or applying it while resolving the graph changes the observed selected tests. |
+| C09 | 4 | Go files and exact embed inputs map to current packages before all three reverse-import edge classes close transitively | `TestChangedPackageClosureAcrossAllGoEdges` | Dropping a test-only dependent or treating an arbitrary non-Go file as an embed changes the expected set. |
 | K01 | 5 | one known dev check runs through the singular scope and no other conformance check appears in timing | `TestNamedCheckRunsOnlyRegisteredDevScope` | Reusing the gate's ordered partition or falling back to the full tier is visible in the timing names. |
 | K02 | 5 | unknown and ship-only names, plus `--check` combined with any selector or `--run`, refuse before child start | `TestNamedCheckRefusalMatrix` | Registry drift cannot become an empty green or an unexpectedly broad run. |
 | K03 | 5 | root, dev tier, scope, kit, and selected binary are exact, ambient controls are absent, and a corrupt inherited selection refuses before child start | `TestNamedCheckOwnsConformanceEnvironment` plus `TestNamedCheckRefusesCorruptInheritedSelection` | An inherited redirect or self-authenticating executable changes captured state or starts the forbidden child. |
@@ -304,31 +316,37 @@ during sign-off.
   `internal/testreport/testreport_test.go`,
   `internal/testreport/runbinary_test.go`,
   `internal/testreport/cancel_test.go`,
-  `cmd/bench/main.go`, and
-  `cmd/bench/command_registry_test.go`.
+  `cmd/bench/main.go`,
+  `cmd/bench/command_registry_test.go`, and
+  `cmd/bench/main_test.go`.
 - Stories 3–4:
   `internal/diff/range.go`,
   `internal/diff/explicit_base_test.go`,
   `internal/diff/source_tip_pair_test.go`,
   `internal/testreport/command.go`,
-  `internal/testreport/selection.go` (new), and
-  `internal/testreport/selection_test.go` (new).
+  `internal/testreport/selection.go` (new),
+  `internal/testreport/selection_test.go` (new),
+  `cmd/bench/main.go`,
+  `cmd/bench/command_registry_test.go`, and
+  `cmd/bench/main_test.go`.
 - Story 5:
   `internal/conformance/registry/scope.go` (new),
   `internal/conformance/gate_entry_test.go`,
   `internal/conformance/tier_test.go`,
   `internal/testreport/command.go`,
   `internal/testreport/check_test.go` (new),
-  `cmd/bench/main.go`, and
-  `cmd/bench/command_registry_test.go`.
+  `cmd/bench/main.go`,
+  `cmd/bench/command_registry_test.go`, and
+  `cmd/bench/main_test.go`.
 - Story 6: `internal/testreport/testreport.go`,
   `internal/testreport/testreport_test.go`,
   `internal/testreport/runbinary_test.go`,
   `internal/testreport/cancel_test.go`,
   `internal/testreport/selection_test.go` (new),
   `internal/testreport/check_test.go` (new),
-  `cmd/bench/main.go`, and
-  `cmd/bench/command_registry_test.go`. No `internal/gate` production file.
+  `cmd/bench/main.go`,
+  `cmd/bench/command_registry_test.go`, and
+  `cmd/bench/main_test.go`. No `internal/gate` production file.
 - Spec compilation only: `ROADMAP.md`, `roadmap/FT215.md`,
   `decisions/ft215-focused-iteration.md`,
   `decisions/assets/ft215-focused-test-inputs.md`,
