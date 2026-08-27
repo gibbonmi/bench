@@ -23,6 +23,10 @@ if [[ -n "$source_status" ]]; then
 fi
 parent="$(dirname "$output")"
 mkdir -p "$parent"
+# Every path below derives from the output, and Go refuses a relative GOMODCACHE.
+# The source root resolves the same way above, so both operands stay absolute.
+parent="$(cd "$parent" && pwd -P)"
+output="$parent/$(basename "$output")"
 stage="$(mktemp -d "$parent/.bench-artifacts.XXXXXX")"
 backup=""
 lock=""
