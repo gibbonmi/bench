@@ -352,6 +352,7 @@ Line: none — the coordinating session runs these operator steps itself.
 | R15 | 31 | The gate line prints the directory with a control byte stripped. | report tail unit | An unfiltered path puts a control byte on stdout. |
 | R16 | 23 | The `cache` verb routes to the new module in the subcommand routing map. | routing conformance test | An unregistered verb fails the routing census. |
 | R17 | 29 | A red gate run prints no `go-build-cache:` line. | report tail unit | A reporter that prints on red lands its line ahead of the failure table. |
+| R18 | 26, 29 | A reporter env with no `GOCACHE` entry names the `HOME`-derived directory in the line and the event. | report tail unit | A reporter that reads only the entry prints an empty directory and logs an empty path. |
 
 Not covered: story 32 — a reviewed exclusion, so `bench status` gains no section and no test changes.
 Not covered: story 33 — an operator measurement, recorded in the closing ticket's checklist.
