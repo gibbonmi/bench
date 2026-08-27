@@ -278,9 +278,9 @@ Line: none — the coordinating session runs these operator steps itself.
   - the oracle closure tests
   - the report tail tests
   - the command registry conformance tests
-- The whole-tree gate observes every row through its `test` phase. The
-  `system` phase's adoption journey observes the run log event after a real
-  gate.
+- The whole-tree gate observes every row through its `test` phase. The gate
+  runner integration test observes the run log event after a real run of the
+  kit's phase runner.
 
 ### Seam diagram
 
@@ -315,7 +315,7 @@ Line: none — the coordinating session runs these operator steps itself.
 | C09 | 2 | The run-binary builder's env carries the Bench `GOCACHE` entry. | runbinary unit | An untouched builder env passes the ambient entry through. |
 | C10 | 4 | The `bench test` child env carries the Bench `GOCACHE` entry. | testreport unit | An untouched test env passes the ambient entry through. |
 | C11 | 7 | A phase run whose env has no absolute `HOME` reds before the child starts with `HOME` on stderr. | phase runner unit | A silent fallback starts the child against the ambient cache. |
-| C12 | 1, 29 | After one green gate in the adoption journey, the run's `.jsonl` holds one `cache.footprint` event whose `path` equals the derived dir of the journey env. | system journey | A gate that never hands the directory down records no path or another path. |
+| C12 | 1, 29 | After one green run of the kit's phase runner under the process env, the run's `.jsonl` holds one `cache.footprint` event whose `path` equals the derived dir of that env. | gate runner integration | A gate that never hands the directory down records no path or another path. |
 | T01 | 9, 13, 14 | The `test`, `race`, and `system` phase argvs each begin with `go test -trimpath -count=1`. | ordinary build census literals | A comparison against the producer itself passes, so only the census literals red on a missing flag. |
 | T02 | 10 | The `vet` phase argv is `go -C <root> vet -trimpath ./...`. | phase table unit | An untouched vet argv fails the verbatim comparison. |
 | T03 | 11 | The kit lane's `vet` and `build` argvs each carry `-trimpath`. | lane table unit | An untouched lane table fails the verbatim comparison. |
@@ -427,7 +427,6 @@ reporter runs.
 - `internal/gate/`
 - `internal/runbinary/`
 - `internal/testreport/`
-- `internal/systemtest/`
 - `cmd/bench/`
 - `internal/conformance/subcommand_routing_test.go`
 - `internal/conformance/ordinary_build_census_test.go`
