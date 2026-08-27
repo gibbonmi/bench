@@ -87,6 +87,10 @@ func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) 
 		}
 	}
 	runGit("init", "-q", "-b", "main")
+	// The shift loop runs its own git commit here, so the identity has to sit in the
+	// repository config. A per-command -c leaves the product's commit without an author.
+	runGit("config", "user.email", "bench@local")
+	runGit("config", "user.name", "bench")
 	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -99,8 +103,8 @@ func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) 
 	if extra != nil {
 		extra(root)
 	}
-	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "add", "-A")
-	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "init")
+	runGit("add", "-A")
+	runGit("commit", "-q", "-m", "init")
 
 	oldWD, err := os.Getwd()
 	if err != nil {

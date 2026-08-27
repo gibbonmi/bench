@@ -171,6 +171,13 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	if result := owner.runAt(root, nil, "git", "init", "-q", "-b", "main"); result.code != 0 {
 		t.Fatalf("git init landing race = (%d, %q)", result.code, result.stderr)
 	}
+	// The landing creates its own commit in this repository, so the identity belongs in
+	// the config. A per-command -c leaves the product's commit without an author.
+	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
+		if result := owner.runAt(root, nil, "git", "config", identity[0], identity[1]); result.code != 0 {
+			t.Fatalf("git config %s = (%d, %q)", identity[0], result.code, result.stderr)
+		}
+	}
 	home, err = os.MkdirTemp(owner.root, "landing-race [home]-")
 	if err != nil {
 		t.Fatal(err)
@@ -188,7 +195,7 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	gate := "#!/bin/sh\nset -eu\nruntime=$1\nrg -q '^Status: implemented$' \"$runtime/specs/x/spec.md\"\ntree=$(git -C \"$runtime\" write-tree)\nprintf '%s\\n' \"$tree\" >> \"$LAND_GATE_TREES\"\nif [ -f \"$runtime/loser.txt\" ]; then\n  printf l >> \"$LAND_GATE_TALLY\"\n  if [ ! -f \"$runtime/winner.txt\" ]; then\n    printf r > \"$LAND_RACE_READY\"\n    IFS= read -r _ < \"$LAND_RACE_RELEASE\"\n  fi\nelse\n  printf w >> \"$LAND_GATE_TALLY\"\nfi\n"
+	gate := "#!/bin/sh\nset -eu\nruntime=$1\ngrep -q '^Status: implemented$' \"$runtime/specs/x/spec.md\"\ntree=$(git -C \"$runtime\" write-tree)\nprintf '%s\\n' \"$tree\" >> \"$LAND_GATE_TREES\"\nif [ -f \"$runtime/loser.txt\" ]; then\n  printf l >> \"$LAND_GATE_TALLY\"\n  if [ ! -f \"$runtime/winner.txt\" ]; then\n    printf r > \"$LAND_RACE_READY\"\n    IFS= read -r _ < \"$LAND_RACE_RELEASE\"\n  fi\nelse\n  printf w >> \"$LAND_GATE_TALLY\"\nfi\n"
 	for _, file := range []string{"gate.sh", "gate-prospective.sh"} {
 		if err := os.WriteFile(filepath.Join(root, ".bench", file), []byte(gate), 0o755); err != nil {
 			t.Fatal(err)
