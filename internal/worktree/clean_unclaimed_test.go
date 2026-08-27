@@ -48,6 +48,55 @@ func TestPlanUnclaimedAssignmentSetExcludesDefaultBranchInAssignmentNamespace(t 
 	}
 }
 
+func TestCleanUnclaimedApplyCurrent(t *testing.T) {
+	t.Parallel()
+	t.Run("renders plan before removal", func(t *testing.T) {
+		root := newWorktreeRepo(t)
+		home := filepath.Join(root, ".bench-home")
+		branch := intent.AssignmentBranchRef(strings.Repeat("c", 32), strings.Repeat("d", 32))
+		gitRun(t, root, "branch", strings.TrimPrefix(branch, "refs/heads/"))
+
+		output, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply-current")
+		planned := strings.Index(output, branch+",discard-remove,")
+		removed := strings.Index(output, branch+",removed,")
+		if code != 0 || stderr != "" || planned < 0 || removed < 0 || planned >= removed {
+			t.Fatalf("cleanup = exit %d stdout=%q stderr=%q, want plan before removal", code, output, stderr)
+		}
+		if git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) {
+			t.Fatalf("apply-current retained %q", branch)
+		}
+	})
+
+	for _, tc := range []struct {
+		name string
+		args []string
+	}{
+		{name: "without discard branch", args: []string{"--unclaimed", "--apply-current"}},
+		{name: "without unclaimed", args: []string{"--discard-branch", "--apply-current", "."}},
+		{name: "with fingerprint", args: []string{"--discard-branch", "--unclaimed", "--apply-current", "--apply", strings.Repeat("a", 64)}},
+		{name: "with discard ignored", args: []string{"--discard-branch", "--unclaimed", "--apply-current", "--discard-ignored"}},
+		{name: "with full", args: []string{"--discard-branch", "--unclaimed", "--apply-current", "--full"}},
+		{name: "with landed", args: []string{"--discard-branch", "--unclaimed", "--apply-current", "--landed"}},
+		{name: "with path", args: []string{"--discard-branch", "--unclaimed", "--apply-current", "."}},
+		{name: "duplicate", args: []string{"--discard-branch", "--unclaimed", "--apply-current", "--apply-current"}},
+	} {
+		t.Run("refuses "+tc.name, func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			home := filepath.Join(root, ".bench-home")
+			branch := intent.AssignmentBranchRef(strings.Repeat("5", 32), strings.Repeat("6", 32))
+			gitRun(t, root, "branch", strings.TrimPrefix(branch, "refs/heads/"))
+
+			stdout, stderr, code := runCleanup(t, root, home, tc.args...)
+			if code != 2 || stderr != "" || !strings.Contains(stdout, usage.WorktreeClean) {
+				t.Fatalf("cleanup = exit %d stdout=%q stderr=%q, want usage refusal", code, stdout, stderr)
+			}
+			if !git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) {
+				t.Fatalf("invalid invocation deleted %q", branch)
+			}
+		})
+	}
+}
+
 func TestCleanUnclaimedDiscardBranchRefusesMovedPlan(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)

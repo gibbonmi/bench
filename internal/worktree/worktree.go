@@ -268,7 +268,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 	}
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
-	landed, unclaimed := false, false
+	landed, unclaimed, applyCurrent := false, false, false
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--discard-ignored":
@@ -293,6 +293,11 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			}
 			i++
 			fingerprint = args[i]
+		case "--apply-current":
+			if applyCurrent {
+				return cleanInvocationError(stdout)
+			}
+			applyCurrent = true
 		case "--":
 			if i+1 >= len(args) || target != "" {
 				return cleanInvocationError(stdout)
@@ -310,6 +315,9 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 		return cleanInvocationError(stdout)
 	}
 	if unclaimed && (!options.DiscardBranch || options.DiscardIgnored || options.Full) {
+		return cleanInvocationError(stdout)
+	}
+	if applyCurrent && (!unclaimed || fingerprint != "") {
 		return cleanInvocationError(stdout)
 	}
 	if fingerprint != "" && !wellFormedFingerprintOrPrefix(fingerprint) {
@@ -343,6 +351,16 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 		if err := renderUnclaimedAssignmentSet(stdout, set); err != nil {
 			fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
 			return 1
+		}
+		if applyCurrent {
+			plans, applyErr := applyUnclaimedAssignmentSet(root, set)
+			if renderErr := renderCleanups(stdout, plans); renderErr != nil {
+				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
+				return 1
+			}
+			if applyErr != nil {
+				return 1
+			}
 		}
 		return 0
 	}

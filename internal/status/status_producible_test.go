@@ -208,7 +208,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			commit(t, root)
 			gitRun(t, root, "checkout", "main")
 			return root, Query{}
-		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch", "bench worktree clean --discard-branch --unclaimed")}},
+		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch", "bench worktree clean --discard-branch --unclaimed --apply-current")}},
 		{name: "git mixed unclaimed assignment and feature branches", signal: "git", detail: "1 unclaimed assignment branch, 1 unique branch", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/mixed")
@@ -219,7 +219,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			write(t, root, "feature-mixed.txt", "feature\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch, 1 unique branch", "bench worktree clean --discard-branch --unclaimed")}},
+		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch, 1 unique branch", "bench worktree clean --discard-branch --unclaimed --apply-current")}},
 		{name: "worktree leased and out of pool", signal: "worktree", count: 2, setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			t.Setenv("BENCH_HOME", t.TempDir())
