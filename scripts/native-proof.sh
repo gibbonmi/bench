@@ -30,7 +30,9 @@ archive_name="$(node "$root/scripts/release-plan.mjs" "$root" artifact-name "$ve
 native="$artifacts/$native_name"
 archive="$artifacts/$archive_name"
 [[ -f "$native" && -f "$archive" ]] || { printf 'native proof: target artifacts are missing for %s\n' "$target" >&2; exit 1; }
-tmp="$(mktemp -d)"
+# macOS puts every temporary directory under /var, which is a symlink to /private/var.
+# The builder refuses a symlinked ancestor of its output, so resolve the physical path.
+tmp="$(cd "$(mktemp -d)" && pwd -P)"
 trap 'rm -rf "$tmp"' EXIT INT TERM HUP
 rebuild="$tmp/bench"
 export GOCACHE="$tmp/go-cache"
