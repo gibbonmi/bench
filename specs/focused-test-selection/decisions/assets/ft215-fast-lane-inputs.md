@@ -1,4 +1,4 @@
-# FT215 fast-lane input facts
+# Fast-lane input facts for FT215
 
 Produced 2026-08-27 by one read-only mid-tier delegate. The coordinator
 spot-checked the cited attribution, lane, and parser producers at `97bb035`.

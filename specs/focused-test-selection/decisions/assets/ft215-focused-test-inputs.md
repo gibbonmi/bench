@@ -1,4 +1,4 @@
-# FT215 focused test input facts
+# Focused test input facts for FT215
 
 Produced 2026-08-27 by one read-only mid-tier delegate. The coordinator
 verified the cited sources and the live Go package producer at `97bb035`.

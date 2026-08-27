@@ -80,7 +80,9 @@ Type: Research
 
 ### Question
 
-Produce `decisions/assets/ft215-focused-test-inputs.md`. Derive the input
+Produce
+`specs/focused-test-selection/decisions/assets/ft215-focused-test-inputs.md`.
+Derive the input
 partitions from these producers:
 
 - The current `bench test` grammar, run binary, and result renderer.
@@ -95,7 +97,8 @@ Do not choose the public grammar.
 ### Answer
 
 Resolved 2026-08-27. The cited summary is
-`decisions/assets/ft215-focused-test-inputs.md`. The current command accepts
+`specs/focused-test-selection/decisions/assets/ft215-focused-test-inputs.md`.
+The current command accepts
 one package expression and no test filter. The diff owner supplies coherent
 live and frozen subjects.
 
@@ -110,7 +113,9 @@ Type: Research
 
 ### Question
 
-Produce `decisions/assets/ft215-fast-lane-inputs.md`. Derive the path
+Produce
+`specs/focused-test-selection/decisions/assets/ft215-fast-lane-inputs.md`.
+Derive the path
 partitions from these producers:
 
 - The paths that `bench commit` attributes to one commit.
@@ -125,7 +130,8 @@ choice.
 ### Answer
 
 Resolved 2026-08-27. The cited summary is
-`decisions/assets/ft215-fast-lane-inputs.md`. The attributed-path producer
+`specs/focused-test-selection/decisions/assets/ft215-fast-lane-inputs.md`.
+The attributed-path producer
 accepts safe files, directories, deletions, and symlinks.
 
 The current lane
@@ -273,9 +279,9 @@ A source tip without a base refuses as a grammar error.
 - Path: `internal/gate/lane.go`
   Supports: #4 and #6's current fast-lane phase and record boundaries.
   Drift: Re-read before #6 if the lane declaration or record changes.
-- Path: `decisions/assets/ft215-focused-test-inputs.md`
+- Path: `specs/focused-test-selection/decisions/assets/ft215-focused-test-inputs.md`
   Supports: #5's producer-derived package, diff, and conformance input partitions.
   Drift: Re-run the research if test, diff, Go graph, or conformance producers change.
-- Path: `decisions/assets/ft215-fast-lane-inputs.md`
+- Path: `specs/focused-test-selection/decisions/assets/ft215-fast-lane-inputs.md`
   Supports: #6's producer-derived attributed-path and fast-lane partitions.
   Drift: Re-run the research if attribution, lane, embed, or document producers change.
