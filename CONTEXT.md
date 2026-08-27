@@ -118,6 +118,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   a decision map, linked to other decision tickets by `Blocked by`. Distinct
   from an **implementation ticket**, the independently-green build unit under
   `specs/<slug>/tickets/`.
+- **focused test run** — one `bench test` execution limited by explicit or
+  diff-derived package, test, or conformance selection. It writes no gate
+  verdict and moves no green marker. Not "scoped gate", not "partial gate".
 - **coverage row** — one row of a spec's acceptance coverage map. It ties one
   story to one observable behavior at a seam, behind an optional leading row
   ID. It carries four parts: story, behavior, seam, why it catches the
