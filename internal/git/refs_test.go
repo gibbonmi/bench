@@ -31,6 +31,28 @@ func TestPruneLandedBranchesUsesNeutralDiscoveryFailure(t *testing.T) {
 	}
 }
 
+func TestDeleteBranchExactRefusesMovedRef(t *testing.T) {
+	t.Parallel()
+	root := newRepo(t)
+	ref := "refs/heads/topic"
+	runGit(t, root, "branch", "topic")
+	oldOID := strings.TrimSpace(runGit(t, root, "rev-parse", ref))
+	if err := os.WriteFile(filepath.Join(root, "advanced.txt"), []byte("advanced\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "add", "advanced.txt")
+	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "advance")
+	newOID := strings.TrimSpace(runGit(t, root, "rev-parse", "HEAD"))
+	runGit(t, root, "update-ref", ref, newOID, oldOID)
+
+	if err := DeleteBranchExact(root, ref, oldOID); err == nil {
+		t.Fatal("DeleteBranchExact accepted a stale OID")
+	}
+	if got := strings.TrimSpace(runGit(t, root, "rev-parse", ref)); got != newOID {
+		t.Fatalf("moved ref = %q, want retained %q", got, newOID)
+	}
+}
+
 // TestRefResolvesAndBranchExists exercises the two guard probes and their fail-safe
 // posture. They run in the process cwd (the agent's working dir), so the test chdirs
 // into a fixture repo and restores.

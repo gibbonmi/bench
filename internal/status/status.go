@@ -87,6 +87,7 @@ const (
 	statusAllAction
 	benchWorktreeListAction
 	cleanWorktreeAction
+	cleanUnclaimedWorktreeAction
 	linkAction
 	mapsAction
 	roadmapAction
@@ -124,25 +125,26 @@ type actionDefinition struct {
 }
 
 var actionDefinitions = [actionCount]actionDefinition{
-	setupAction:             {kind: actionBench, command: "bench setup"},
-	gateAction:              {kind: actionBench, command: "bench gate"},
-	freshGateAction:         {kind: actionBench, command: "bench gate --fresh"},
-	statusAllAction:         {kind: actionBench, command: "bench status --all"},
-	benchWorktreeListAction: {kind: actionBench, command: "bench worktree list"},
-	cleanWorktreeAction:     {kind: actionBench, command: "bench worktree clean", argument: oneWordArgument},
-	linkAction:              {kind: actionBench, command: "bench link"},
-	mapsAction:              {kind: actionBench, command: "bench maps"},
-	roadmapAction:           {kind: actionBench, command: "bench roadmap"},
-	structureAction:         {kind: actionBench, command: "bench structure"},
-	retireSpecAction:        {kind: actionBench, command: "bench spec retire", argument: oneWordArgument},
-	closeTicketsAction:      {kind: actionBench, command: "bench commit --spec", argument: oneWordArgument},
-	handoffAction:           {kind: actionBench, command: "bench handoff"},
-	gitPushAction:           {kind: actionGit, command: "git push"},
-	gitStatusAction:         {kind: actionGit, command: "git status"},
-	gitWorktreeListAction:   {kind: actionGit, command: "git worktree list"},
-	debugPhaseAction:        {kind: actionPhase, command: "/bench-debug"},
-	drainPhaseAction:        {kind: actionPhase, command: "/bench-drain"},
-	finalCheckPhaseAction:   {kind: actionPhase, command: "/bench-final-check"},
+	setupAction:                  {kind: actionBench, command: "bench setup"},
+	gateAction:                   {kind: actionBench, command: "bench gate"},
+	freshGateAction:              {kind: actionBench, command: "bench gate --fresh"},
+	statusAllAction:              {kind: actionBench, command: "bench status --all"},
+	benchWorktreeListAction:      {kind: actionBench, command: "bench worktree list"},
+	cleanWorktreeAction:          {kind: actionBench, command: "bench worktree clean", argument: oneWordArgument},
+	cleanUnclaimedWorktreeAction: {kind: actionBench, command: "bench worktree clean --discard-branch --unclaimed"},
+	linkAction:                   {kind: actionBench, command: "bench link"},
+	mapsAction:                   {kind: actionBench, command: "bench maps"},
+	roadmapAction:                {kind: actionBench, command: "bench roadmap"},
+	structureAction:              {kind: actionBench, command: "bench structure"},
+	retireSpecAction:             {kind: actionBench, command: "bench spec retire", argument: oneWordArgument},
+	closeTicketsAction:           {kind: actionBench, command: "bench commit --spec", argument: oneWordArgument},
+	handoffAction:                {kind: actionBench, command: "bench handoff"},
+	gitPushAction:                {kind: actionGit, command: "git push"},
+	gitStatusAction:              {kind: actionGit, command: "git status"},
+	gitWorktreeListAction:        {kind: actionGit, command: "git worktree list"},
+	debugPhaseAction:             {kind: actionPhase, command: "/bench-debug"},
+	drainPhaseAction:             {kind: actionPhase, command: "/bench-drain"},
+	finalCheckPhaseAction:        {kind: actionPhase, command: "/bench-final-check"},
 	implementSpecPhaseAction: {
 		kind: actionPhase, command: "/bench-implement-spec", argument: optionalSpecPath,
 	},
@@ -601,14 +603,31 @@ func appendGit(rows []row, root string, query Query) []row {
 		return append(rows, row{1, "git", "git state unavailable", commandAction(gitStatusAction)})
 	}
 	var details []string
+	unclaimedUniqueBranches := 0
 	if fact.DirtyPaths > 0 {
 		details = append(details, Plural(fact.DirtyPaths, "dirty path", "dirty paths"))
 	}
 	if fact.UnpushedCommits > 0 {
 		details = append(details, Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits"))
 	}
-	if fact.UniqueBranches > 0 {
-		details = append(details, Plural(fact.UniqueBranches, "unique branch", "unique branches"))
+	unclaimedRefs, unclaimedErr := worktree.UnclaimedAssignmentBranchRefs(root)
+	if unclaimedErr == nil {
+		uniqueRefs := make(map[string]bool, len(fact.UniqueBranchNames))
+		for _, branch := range fact.UniqueBranchNames {
+			uniqueRefs["refs/heads/"+branch] = true
+		}
+		for _, ref := range unclaimedRefs {
+			if uniqueRefs[ref] {
+				unclaimedUniqueBranches++
+			}
+		}
+	}
+	if unclaimedUniqueBranches > 0 {
+		details = append(details, Plural(unclaimedUniqueBranches, "unclaimed assignment branch", "unclaimed assignment branches"))
+	}
+	ordinaryUniqueBranches := fact.UniqueBranches - unclaimedUniqueBranches
+	if ordinaryUniqueBranches > 0 {
+		details = append(details, Plural(ordinaryUniqueBranches, "unique branch", "unique branches"))
 	}
 	if len(details) == 0 {
 		return rows
@@ -616,6 +635,9 @@ func appendGit(rows []row, root string, query Query) []row {
 	command := commandAction(gitPushAction)
 	if fact.DirtyPaths > 0 {
 		command = commandAction(finalCheckPhaseAction)
+	}
+	if unclaimedUniqueBranches > 0 {
+		command = commandAction(cleanUnclaimedWorktreeAction)
 	}
 	return append(rows, row{1, "git", strings.Join(details, ", "), command})
 }

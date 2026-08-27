@@ -23,14 +23,14 @@ func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
 	landAssignment(t, root, dirty, "dirty.txt")
 	mustWrite(t, filepath.Join(dirty.Path, "dirty.txt"), []byte("changed\n"), 0o644)
 
-	stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
+	stdout, stderr, code := runCleanup(t, root, home, "--landed")
 	if code != 0 || stderr != "" {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	if !strings.Contains(stdout, clean.Path+",remove,") || !strings.Contains(stdout, "bench worktree clean '"+dirty.Path+"'") || !strings.Contains(stdout, "bench worktree clean --landed --apply ") {
 		t.Fatalf("output=%q, want safe row and pasteable help", stdout)
 	}
-	_, applyErr, applyCode := runCleanLanded(t, root, home, "--landed", "--apply", landedRowFingerprint(t, stdout))
+	_, applyErr, applyCode := runCleanup(t, root, home, "--landed", "--apply", cleanupRowFingerprint(t, stdout))
 	if applyCode != 0 || applyErr != "" {
 		t.Fatalf("apply exit=%d stderr=%q", applyCode, applyErr)
 	}
@@ -49,13 +49,13 @@ func TestCleanLandedControlBytePathRetained(t *testing.T) {
 	creation := mustCreate(t, root, home, "landed-control", "control")
 	landAssignment(t, root, creation, "control.txt")
 
-	stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
+	stdout, stderr, code := runCleanup(t, root, home, "--landed")
 	pointer := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree clean ."
 	if code != 0 || stderr != "" || strings.ContainsRune(stdout, '\x1b') || !strings.Contains(stdout, "sha256:") || !strings.Contains(stdout, ",retain,") || !strings.Contains(stdout, "unsafe control bytes") || strings.Count(stdout, pointer) != 1 {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	fingerprint := landedRowFingerprint(t, stdout)
-	applied, applyErr, applyCode := runCleanLanded(t, root, home, "--landed", "--apply", fingerprint)
+	fingerprint := cleanupRowFingerprint(t, stdout)
+	applied, applyErr, applyCode := runCleanup(t, root, home, "--landed", "--apply", fingerprint)
 	if applyCode != 0 || applyErr != "" || strings.ContainsRune(applied, '\x1b') {
 		t.Fatalf("apply exit=%d stdout=%q stderr=%q", applyCode, applied, applyErr)
 	}
@@ -71,7 +71,7 @@ func TestCleanLandedTabPathRendersOneRow(t *testing.T) {
 	creation := mustCreate(t, root, home, "landed-tab", "tab")
 	landAssignment(t, root, creation, "tab.txt")
 
-	stdout, stderr, code := runCleanLanded(t, root, home, "--landed")
+	stdout, stderr, code := runCleanup(t, root, home, "--landed")
 	if code != 0 || stderr != "" || !strings.HasPrefix(stdout, "worktree_cleanup[1]") || strings.ContainsRune(stdout, '\t') || !strings.Contains(stdout, `\t`) {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
@@ -125,12 +125,12 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			}
 			tc.make(t, creation.Path)
 
-			stdout, stderr, code := runCleanLandedWith(t, j, root, home, "--landed")
+			stdout, stderr, code := runCleanupWith(t, j, root, home, "--landed")
 			if code != 0 || stderr != "" || !strings.Contains(stdout, ",retain,") || !strings.Contains(stdout, "assignment path shape is "+tc.shape) {
 				t.Fatalf("plan exit=%d stdout=%q stderr=%q", code, stdout, stderr)
 			}
-			fingerprint := landedRowFingerprint(t, stdout)
-			_, applyErr, applyCode := runCleanLandedWith(t, j, root, home, "--landed", "--apply", fingerprint)
+			fingerprint := cleanupRowFingerprint(t, stdout)
+			_, applyErr, applyCode := runCleanupWith(t, j, root, home, "--landed", "--apply", fingerprint)
 			if applyCode != 0 || applyErr != "" {
 				t.Fatalf("apply exit=%d stderr=%q", applyCode, applyErr)
 			}

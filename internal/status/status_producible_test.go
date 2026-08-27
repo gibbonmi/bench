@@ -201,6 +201,25 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			commit(t, root)
 			return root, Query{}
 		}, exact: []Signal{testSignal(1, "git", "1 unique branch", "git push")}},
+		{name: "git unclaimed assignment branch", signal: "git", detail: "unclaimed assignment branch", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/ref")
+			write(t, root, "orphan.txt", "orphan\n", 0o644)
+			commit(t, root)
+			gitRun(t, root, "checkout", "main")
+			return root, Query{}
+		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch", "bench worktree clean --discard-branch --unclaimed")}},
+		{name: "git mixed unclaimed assignment and feature branches", signal: "git", detail: "1 unclaimed assignment branch, 1 unique branch", setup: func(t *testing.T) (string, Query) {
+			root := cleanRepo(t)
+			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/mixed")
+			write(t, root, "orphan-mixed.txt", "orphan\n", 0o644)
+			commit(t, root)
+			gitRun(t, root, "checkout", "main")
+			gitRun(t, root, "checkout", "-b", "feature-mixed")
+			write(t, root, "feature-mixed.txt", "feature\n", 0o644)
+			commit(t, root)
+			return root, Query{}
+		}, exact: []Signal{testSignal(1, "git", "1 unclaimed assignment branch, 1 unique branch", "bench worktree clean --discard-branch --unclaimed")}},
 		{name: "worktree leased and out of pool", signal: "worktree", count: 2, setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			t.Setenv("BENCH_HOME", t.TempDir())
@@ -387,5 +406,18 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestGitSignalIgnoresLandedUnclaimedAssignmentBranch(t *testing.T) {
+	t.Parallel()
+	root := initRepo(t)
+	gitRun(t, root, "commit", "--allow-empty", "-m", "base")
+	gitRun(t, root, "branch", "-M", "main")
+	gitRun(t, root, "branch", "bench/assign/orphan/landed")
+	for _, signal := range SignalsWith(root, Query{}) {
+		if signal.Name == "git" {
+			t.Fatalf("landed unclaimed assignment branch produced git signal %#v", signal)
+		}
 	}
 }

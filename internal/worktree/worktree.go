@@ -264,7 +264,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 	j.home = home
 	options := CleanupOptions{}
 	target, fingerprint := "", ""
-	landed := false
+	landed, unclaimed := false, false
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--discard-ignored":
@@ -273,6 +273,11 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			options.DiscardBranch = true
 		case "--full":
 			options.Full = true
+		case "--unclaimed":
+			if unclaimed {
+				return cleanInvocationError(stdout)
+			}
+			unclaimed, options.Unclaimed = true, true
 		case "--landed":
 			if landed {
 				return cleanInvocationError(stdout)
@@ -297,7 +302,10 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			target = args[i]
 		}
 	}
-	if target == "" && !landed || target != "" && landed {
+	if target == "" && !landed && !unclaimed || target != "" && (landed || unclaimed) || landed && unclaimed {
+		return cleanInvocationError(stdout)
+	}
+	if unclaimed && (!options.DiscardBranch || options.DiscardIgnored || options.Full) {
 		return cleanInvocationError(stdout)
 	}
 	if fingerprint != "" && !wellFormedFingerprintOrPrefix(fingerprint) {
@@ -309,6 +317,30 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 	}
 	if target != "" {
 		target = resolveVerbOperand(root, target)
+	}
+	if unclaimed {
+		set, planErr := planUnclaimedAssignmentSet(root, options)
+		if planErr != nil {
+			_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: fingerprint, Reason: planErr.Error()})
+			return 1
+		}
+		if fingerprint != "" && (len(set.rows) == 0 || !matchesFingerprint(set.fingerprint, fingerprint)) {
+			_ = renderCleanups(stdout, staleUnclaimedPlans(set))
+			return 1
+		}
+		if fingerprint != "" {
+			plans, applyErr := applyUnclaimedAssignmentSet(root, set)
+			_ = renderCleanups(stdout, plans)
+			if applyErr != nil {
+				return 1
+			}
+			return 0
+		}
+		if err := renderUnclaimedAssignmentSet(stdout, set); err != nil {
+			fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
+			return 1
+		}
+		return 0
 	}
 	if landed {
 		set, planErr := planLandedSet(j, root, options)

@@ -3,6 +3,7 @@ package git
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -173,7 +174,7 @@ func TestLandedStateCountsDirtyPathsOnlyInNamedCheckout(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if state.DirtyPaths != tc.wantDirty || state.UnpushedCommits != 1 || state.UniqueBranches != 2 {
+			if state.DirtyPaths != tc.wantDirty || state.UnpushedCommits != 1 || state.UniqueBranches != 2 || !reflect.DeepEqual(state.UniqueBranchNames, []string{"ahead", "ahead-copy"}) {
 				t.Fatalf("LandedState = %#v, want dirty=%d ahead=1 unique=2", state, tc.wantDirty)
 			}
 		})

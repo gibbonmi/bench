@@ -75,6 +75,7 @@ type CleanupOptions struct {
 	DiscardIgnored bool
 	DiscardBranch  bool
 	Full           bool
+	Unclaimed      bool
 }
 
 func hit(fault Fault, step LifecycleStep) error {

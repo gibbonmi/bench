@@ -17,6 +17,9 @@ const AssignmentRecordSchema = "bench-assignment/v1"
 
 const assignmentBranchNamespace = "refs/heads/bench/assign/"
 
+// AssignmentBranchPrefix names the local-ref namespace reserved for assignment branches.
+func AssignmentBranchPrefix() string { return assignmentBranchNamespace }
+
 // RecoveryRefNamespace is the one name for the namespace preserved work lives under.
 // Both the writer that puts refs there and the standing cleaner that sweeps it read
 // this constant. Neither can address a namespace the other does not.
