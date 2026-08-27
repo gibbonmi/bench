@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -18,8 +19,8 @@ import (
 )
 
 var grammar = usage.Grammar{
-	Cmd:  "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>]",
-	Help: "usage: bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>]",
+	Cmd:  "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>",
+	Help: "usage: bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>",
 	Flags: []usage.Flag{
 		{Name: "--full"},
 		{Name: "--package", HasValue: true, NoEmptyValue: true},
@@ -27,6 +28,7 @@ var grammar = usage.Grammar{
 		{Name: "--changed"},
 		{Name: "--base", HasValue: true, NoEmptyValue: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
+		{Name: "--check", HasValue: true, NoEmptyValue: true},
 	},
 	MaxArgs: 1,
 }
@@ -41,6 +43,7 @@ type focusedRequest struct {
 	changed     bool
 	base        string
 	sourceTip   string
+	check       string
 }
 
 // Command runs Go from root and renders one stable row for each observed result.
@@ -59,15 +62,19 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	}
 	_, changed := parsed.Flags["--changed"]
 	_, explicit := parsed.Flags["--package"]
+	check, hasCheck := parsed.Flags["--check"]
 	base, hasBase := parsed.Flags["--base"]
 	sourceTip, hasSourceTip := parsed.Flags["--source-tip"]
 	if len(parsed.Positionals) > 0 {
-		if explicit || changed {
+		if explicit || changed || hasCheck {
 			return focusedRequest{}, toon.Usage(grammar.Cmd, parsed.Positionals[0]), 2
 		}
 	}
 	if changed && explicit {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--changed"), 2
+	}
+	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "") {
+		return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
 	}
 	if (hasBase || hasSourceTip) && !changed {
 		flag := "--base"
@@ -78,6 +85,12 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	}
 	if hasSourceTip && !hasBase {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--source-tip"), 2
+	}
+	if hasCheck {
+		check, found := registry.Find(check)
+		if !found || !check.RunsAt(registry.Dev) {
+			return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
+		}
 	}
 	packageOperand := strings.Join(parsed.Positionals, "")
 	if explicit, ok := parsed.Flags["--package"]; ok {
@@ -91,6 +104,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 		changed:     changed,
 		base:        base,
 		sourceTip:   sourceTip,
+		check:       check,
 	}, "", 0
 }
 
@@ -116,6 +130,9 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 		return toon.Errorf("Bench executable selection failed", err.Error()) + "\n", 1
 	}
 	defer selection.Close()
+	if request.check != "" {
+		return runNamedCheck(ctx, root, request, selection)
+	}
 	argv := []string{"test", "-json", "-count=1"}
 	if request.run != "" {
 		argv = append(argv, "-run", request.run)
@@ -125,9 +142,40 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 	} else {
 		argv = append(argv, request.packageExpr)
 	}
+	return runGoTest(ctx, root, request, argv, runbinary.WithEnv(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), selection.Path))
+}
+
+func runNamedCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (string, int) {
+	argv := []string{"test", "-json", "-count=1", "./internal/conformance", "-run", "^" + registry.RootConformanceTest + "$"}
+	return runGoTest(ctx, root, request, argv, conformanceEnvironment(os.Environ(), root, request.check, selection))
+}
+
+func conformanceEnvironment(base []string, root, scope string, selection *runbinary.Selection) []string {
+	env := base
+	for _, name := range []string{
+		registry.ConformanceRootEnv,
+		registry.ConformanceTierEnv,
+		registry.ConformanceScopeEnv,
+		registry.ConformanceChecksEnv,
+		registry.ConformanceInheritedEnv,
+		capability.LogEnv,
+		"BENCH_KIT",
+	} {
+		env = capability.WithoutEnvironment(env, name)
+	}
+	env = runbinary.WithEnv(env, selection.Path)
+	return append(env,
+		registry.ConformanceRootEnv+"="+root,
+		registry.ConformanceTierEnv+"="+string(registry.Dev),
+		registry.ConformanceScopeEnv+"="+scope,
+		"BENCH_KIT="+selection.SourceRoot,
+	)
+}
+
+func runGoTest(ctx context.Context, root string, request focusedRequest, argv, env []string) (string, int) {
 	cmd := exec.Command("go", argv...)
 	cmd.Dir = root
-	cmd.Env = runbinary.WithEnv(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), selection.Path)
+	cmd.Env = env
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {

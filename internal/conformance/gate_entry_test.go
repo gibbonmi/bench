@@ -29,7 +29,7 @@ func TestRootConformance(t *testing.T) {
 	if inheritedSet {
 		inheritedValue = &inherited
 	}
-	for _, diag := range RunConformanceSelection(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), "", selectedValue, inheritedValue) {
+	for _, diag := range RunConformanceSelection(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceScopeEnv), selectedValue, inheritedValue) {
 		t.Errorf("gate: %s", diag)
 	}
 }

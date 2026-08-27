@@ -669,13 +669,18 @@ func TestHelpSpecRowsNameRetireAndHistoryOnly(t *testing.T) {
 
 func TestTestHelpNamesOnlyRunnableFocusedForms(t *testing.T) {
 	help := renderCommandHelp()
-	if !strings.Contains(help, "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>]") {
+	if !strings.Contains(help, "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>") {
 		t.Errorf("bench help is missing the focused test grammar:\n%s", help)
 	}
-	for _, unavailable := range []string{"bench test --check"} {
-		if strings.Contains(help, unavailable) {
-			t.Errorf("bench help advertises an unavailable focused form %q:\n%s", unavailable, help)
-		}
+}
+
+func TestFocusedHelpNamesCheckAsEvidenceWithoutVerdict(t *testing.T) {
+	help := renderCommandHelp()
+	if !strings.Contains(help, "bench test [--full] --check <name>") {
+		t.Fatalf("bench help is missing the named-check form:\n%s", help)
+	}
+	if strings.Contains(strings.ToLower(help), "test --check <name>  gate") {
+		t.Fatalf("bench help presents a focused check as a verdict:\n%s", help)
 	}
 }
 
