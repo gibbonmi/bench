@@ -1,6 +1,6 @@
 # focused-test-selection
 
-Status: implemented
+Status: staged
 
 Roadmap: FT215
 
