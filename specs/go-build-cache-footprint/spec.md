@@ -6,6 +6,8 @@ Decision source: reviewer-confirmed conversation, 2026-08-27 — the `/bench-wri
 
 Verification log: 1 iteration(s) to accept — one independent `opus` medium round found five blockers and seven folds. The author folded all twelve. The largest folds are the `HOME`-only derivation, the unhashed closure entry, the ship conformance argv, the AXI-exempt verb, and the verb and gate-tail split.
 
+Reviewer disposition: 2026-08-27 — approve all eight tickets, every line, seam, fence, and cut, with no merge or split. Ticket 07 is the build checkpoint for tickets 04 to 06.
+
 ## Problem
 
 On 2026-08-27 the Go build cache on the development box held 53.4 GB across
