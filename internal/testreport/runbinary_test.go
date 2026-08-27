@@ -13,10 +13,6 @@ import (
 
 func TestCommandOwnsOneSelectionAndPropagatesItToGoTest(t *testing.T) {
 	root, marker := selectedPathTestModule(t)
-	t.Setenv(runbinary.Env, "")
-	if err := os.Unsetenv(runbinary.Env); err != nil {
-		t.Fatal(err)
-	}
 
 	builds := 0
 	var selectedPath, selectedDir string
@@ -52,7 +48,6 @@ func TestCommandReusesInheritedSelectionWithoutBuild(t *testing.T) {
 	if err := os.WriteFile(selected, []byte("selected"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv(runbinary.Env, selected)
 
 	builds := 0
 	factory := runbinary.Factory{
@@ -60,6 +55,7 @@ func TestCommandReusesInheritedSelectionWithoutBuild(t *testing.T) {
 		Verify: func(string, string) error { return nil },
 	}
 	installTestSelectionFactory(t, factory)
+	t.Setenv(runbinary.Env, selected)
 
 	if output, code := Command(root, nil); code != 0 {
 		t.Fatalf("Command = %d\n%s", code, output)
@@ -74,10 +70,6 @@ func TestCommandReusesInheritedSelectionWithoutBuild(t *testing.T) {
 
 func TestSeparateTopLevelCommandsSelectDifferentPrivatePaths(t *testing.T) {
 	root, marker := selectedPathTestModule(t)
-	t.Setenv(runbinary.Env, "")
-	if err := os.Unsetenv(runbinary.Env); err != nil {
-		t.Fatal(err)
-	}
 	factory := runbinary.Factory{
 		TempRoot: t.TempDir(),
 		Build: func(_ context.Context, _, output string) error {
@@ -105,6 +97,12 @@ func TestSeparateTopLevelCommandsSelectDifferentPrivatePaths(t *testing.T) {
 
 func installTestSelectionFactory(t *testing.T, factory runbinary.Factory) {
 	t.Helper()
+	for _, name := range []string{runbinary.Env, "BENCH_KIT"} {
+		t.Setenv(name, "")
+		if err := os.Unsetenv(name); err != nil {
+			t.Fatal(err)
+		}
+	}
 	previous := selectRunBinary
 	selectRunBinary = factory.ReuseOrOwn
 	t.Cleanup(func() { selectRunBinary = previous })

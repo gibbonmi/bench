@@ -11,5 +11,8 @@ Keep tests that explicitly install an inherited selection able to do so after th
 
 ## Acceptance
 
-- [ ] K03 — the named-check environment test uses its installed selection under the gate environment.
-- [ ] N02 — tests that explicitly set an inherited selection keep their refusal and reuse coverage.
+- [x] K03 — the named-check environment test uses its installed selection under the gate environment.
+- [x] N02 — tests that explicitly set an inherited selection keep their refusal and reuse coverage.
+
+Delivered outcome: the shared test factory clears the outer gate selection.
+Tests can install deliberate inherited selections after that boundary.
