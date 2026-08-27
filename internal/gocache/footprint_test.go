@@ -103,3 +103,24 @@ func TestLastTrimIsEmptyWithoutARegularFile(t *testing.T) {
 		})
 	}
 }
+
+// R12, R13: a FIFO and a dangling symlink each add zero bytes. The walk lstats and never
+// opens, so the FIFO does not block it, and it never follows a link, so the dangling one
+// raises no not-found error. The regular file beside them proves the walk finished.
+func TestMeasureIgnoresAFifoAndADanglingSymlink(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "regular"), []byte("abcd"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(dir, "pipe"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(dir, "absent"), filepath.Join(dir, "dangling")); err != nil {
+		t.Fatal(err)
+	}
+	footprint := Measure(dir)
+	if footprint.Bytes != 4 || footprint.Files != 1 {
+		t.Fatalf("Measure = %d bytes in %d files, want 4 bytes in 1 file", footprint.Bytes, footprint.Files)
+	}
+}

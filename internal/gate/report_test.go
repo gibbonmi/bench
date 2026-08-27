@@ -2,15 +2,19 @@ package gate
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gocache"
 )
 
 // writePhaseStream fills one phase's buffer through the writers the engine hands the
@@ -721,4 +725,169 @@ func TestCapabilitySkipsInTwoClassesPrintOneLine(t *testing.T) {
 	if stdout.String() != want {
 		t.Errorf("capability-skip stdout = %q, want %q", stdout.String(), want)
 	}
+}
+
+// footprintReport builds the build-cache reporter over a fixed footprint, so a test
+// drives an over-bound run without staging ten gibibytes. The environment slice is the
+// one the reporter reads its directory from, exactly as the production call site hands
+// it the process environment gocache.Apply prepared.
+func footprintReport(ctx context.Context, dir string, bytes, files, bound int64) func() ([]string, string, bool) {
+	env := []string{"PATH=/usr/bin", gocache.Env + "=" + dir}
+	measure := func(measured string) gocache.Footprint {
+		return gocache.Footprint{Dir: measured, Bytes: bytes, Files: files}
+	}
+	return cacheFootprintReport(ctx, env, measure, bound)
+}
+
+// loggedRunContext opens one run log and answers its context and its record path, so a
+// test reads back what a run actually recorded.
+func loggedRunContext(t *testing.T) (context.Context, string) {
+	t.Helper()
+	stubGateLogPathIgnored(t)
+	ctx, finish := beginGateRunLog(context.Background(), t.TempDir(), io.Discard, "dev")
+	t.Cleanup(func() { finish(Result{}) })
+	return ctx, gateRunLogFrom(t, ctx).file.Name()
+}
+
+// footprintEvents answers every cache.footprint record a run wrote, decoded.
+func footprintEvents(t *testing.T, path string) []gateLogRecord {
+	t.Helper()
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var events []gateLogRecord
+	for _, line := range strings.Split(strings.TrimSuffix(string(body), "\n"), "\n") {
+		if line == "" {
+			continue
+		}
+		var record gateLogRecord
+		if err := json.Unmarshal([]byte(line), &record); err != nil {
+			t.Fatalf("record %q: %v", line, err)
+		}
+		if record.Event == "cache.footprint" {
+			events = append(events, record)
+		}
+	}
+	return events
+}
+
+// R08: a green run prints the build-cache line after the phase table and before the
+// verdict. The report is asserted whole, because the line's place in the tail is as much
+// of the contract as its wording.
+func TestGreenRunPrintsTheBuildCacheLineAfterTheTable(t *testing.T) {
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	results := []phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, ElapsedMS: 12}}
+	code := aggregateAndReport(results, false, streams, &stdout, &stderr,
+		footprintReport(context.Background(), "/home/dev/.cache/bench/go-build", 2048, 7, gocache.Bound))
+
+	if code != 0 {
+		t.Errorf("green exit = %d, want 0", code)
+	}
+	want := "phases[1]{phase,verdict,elapsed_ms}:\n" +
+		"  vet,green,12\n" +
+		"go-build-cache: 2048 bytes in 7 files at /home/dev/.cache/bench/go-build (bound 10737418240 bytes)\n" +
+		"gate: green\n"
+	if stdout.String() != want {
+		t.Errorf("green stdout = %q, want %q", stdout.String(), want)
+	}
+}
+
+// R09, R10: above the bound the parenthesis names the remedy, and the verdict stays
+// green. Disk pressure is a machine fact, so it never grades the tree.
+func TestOverBoundLinePrintsTheRemedyAndKeepsTheRunGreen(t *testing.T) {
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	results := []phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, ElapsedMS: 3}}
+	code := aggregateAndReport(results, false, streams, &stdout, &stderr,
+		footprintReport(context.Background(), "/home/dev/.cache/bench/go-build", 11, 2, 10))
+
+	if code != 0 {
+		t.Errorf("over-bound exit = %d, want 0", code)
+	}
+	want := "go-build-cache: 11 bytes in 2 files at /home/dev/.cache/bench/go-build (over bound 10 bytes, next: bench cache clean)"
+	if !slices.Contains(stdoutLines(stdout.String()), want) {
+		t.Errorf("over-bound stdout = %q, want the line %q", stdout.String(), want)
+	}
+	if !hasVerdictLine(stdout.String(), "gate: green") {
+		t.Errorf("over-bound stdout = %q, want the green verdict", stdout.String())
+	}
+}
+
+// R11, R17: a red run records its footprint and prints no line. The line belongs to the
+// green shape alone, and a reporter that printed on red would land it ahead of the
+// failure table that carries the whole of a red run's stdout.
+func TestRedRunLogsTheFootprintAndPrintsNoLine(t *testing.T) {
+	ctx, record := loggedRunContext(t)
+	streams := newPhaseStreams(io.Discard)
+	writePhaseStream(t, streams, "vet", "vet found a shadowed err\n", "")
+	var stdout, stderr bytes.Buffer
+	code := aggregateAndReport([]phaseResult{{Name: "vet", Argv: []string{"go", "vet", "./..."}, Code: 1}}, false, streams, &stdout, &stderr,
+		footprintReport(ctx, "/home/dev/.cache/bench/go-build", 4096, 9, gocache.Bound))
+
+	if code != 1 {
+		t.Errorf("red exit = %d, want 1", code)
+	}
+	if strings.Contains(stdout.String(), "go-build-cache:") {
+		t.Errorf("red stdout = %q, want no go-build-cache line", stdout.String())
+	}
+	events := footprintEvents(t, record)
+	if len(events) != 1 {
+		t.Fatalf("cache.footprint events = %d, want 1", len(events))
+	}
+	event := events[0]
+	if event.Path != "/home/dev/.cache/bench/go-build" || event.Bytes == nil || *event.Bytes != 4096 ||
+		event.Files == nil || *event.Files != 9 || event.OverBound == nil || *event.OverBound {
+		t.Errorf("cache.footprint event = %+v, want the measured directory, 4096 bytes, 9 files, and not over bound", event)
+	}
+}
+
+// R15: the line prints a directory with a control byte stripped. HOME is the operator's
+// own value, and no byte of it reaches stdout unfiltered.
+func TestBuildCacheLineStripsAControlByteFromTheDirectory(t *testing.T) {
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	aggregateAndReport(greenPhaseResults(1), false, streams, &stdout, &stderr,
+		footprintReport(context.Background(), "/home/de\x1b[2Jv/.cache/bench/go-build", 8, 1, gocache.Bound))
+
+	want := "go-build-cache: 8 bytes in 1 files at /home/de[2Jv/.cache/bench/go-build (bound 10737418240 bytes)"
+	if !slices.Contains(stdoutLines(stdout.String()), want) {
+		t.Errorf("stripped stdout = %q, want the line %q", stdout.String(), want)
+	}
+	if strings.Contains(stdout.String(), "\x1b") {
+		t.Errorf("stdout = %q, want no control byte", stdout.String())
+	}
+}
+
+// L09: the reporter given an over-bound footprint removes no file and answers not red.
+// No gate evicts: an eviction inside a run would make one checkout's verdict depend on
+// another checkout's cache state.
+func TestOverBoundReporterRemovesNoFileAndIsNotRed(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "aa", "cached")
+	if err := os.MkdirAll(filepath.Dir(entry), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(entry, []byte("archive"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	env := []string{gocache.Env + "=" + dir}
+	rows, greenLine, red := cacheFootprintReport(context.Background(), env, gocache.Measure, 1)()
+
+	if red || len(rows) != 0 {
+		t.Errorf("reporter = (%v, red %v), want no rows and not red", rows, red)
+	}
+	if !strings.Contains(greenLine, "over bound 1 bytes, next: bench cache clean") {
+		t.Errorf("green line = %q, want the over-bound remedy", greenLine)
+	}
+	if _, err := os.Stat(entry); err != nil {
+		t.Errorf("cache entry after the report: %v", err)
+	}
+}
+
+// hasVerdictLine matches a whole printed line, so a verdict is never satisfied by a
+// substring of some other line the tail printed.
+func hasVerdictLine(stdout, want string) bool {
+	return slices.Contains(stdoutLines(stdout), want)
 }

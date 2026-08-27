@@ -19,6 +19,12 @@ All notable user-facing changes to Bench are documented here. The format follows
   so a clean beside a live run refuses at exit 1, names the blocking pid, and removes
   nothing. With no holder the command reports the bytes and files it removed in one
   `go_build_cache_clean` table. An absent cache directory reports zero at exit 0.
+- Added the Go build cache footprint to the gate's verdict tail. A green run prints one
+  `go-build-cache:` line after the phase table with the bytes, the files, the directory,
+  and the 10 GiB bound. Above the bound the line says `over bound` and names
+  `bench cache clean`, and the verdict stays green, because disk pressure never grades
+  the tree. Every run that reaches a verdict, red or green, records one `cache.footprint`
+  event in the run log.
 
 - Added `bench harnesses` to print the harness record, one TOON row per harness.
   A row names the providers, the phase form, the hook config with its wired

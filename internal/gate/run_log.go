@@ -155,6 +155,12 @@ type gateLogRecord struct {
 	Detail    string `json:"detail,omitempty"`
 	Exit      *int   `json:"exit,omitempty"`
 	ElapsedMS int64  `json:"elapsed_ms,omitempty"`
+	// The build-cache footprint fields. They are pointers, like Exit, because a
+	// measured zero is a real answer: a fresh machine's cache is empty, and an
+	// omitted field would report that run as one that measured nothing.
+	Bytes     *int64 `json:"bytes,omitempty"`
+	Files     *int64 `json:"files,omitempty"`
+	OverBound *bool  `json:"over_bound,omitempty"`
 }
 
 func beginGateRunLog(ctx context.Context, root string, stderr io.Writer, mode string) (context.Context, func(Result)) {

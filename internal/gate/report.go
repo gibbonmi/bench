@@ -5,10 +5,12 @@ package gate
 // and knows nothing of the shape reported here.
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testlines"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -251,4 +253,44 @@ func lastLines(lines []string, n int) []string {
 		return lines
 	}
 	return lines[len(lines)-n:]
+}
+
+// cacheFootprintReport builds the verdict tail's build-cache reporter. It is one more
+// report closure beside the capability-skips one: it answers no rows, one green line,
+// and never a red. Disk pressure is a machine fact, and a gate that reddened on it would
+// grade the host rather than the tree.
+//
+// The reporter reads its directory from the environment it is handed, which is the one
+// GOCACHE entry gocache.Apply wrote for this process. It walks that directory once and
+// removes nothing, because no gate evicts: an eviction inside a run would make one
+// checkout's span depend on another's cache state.
+//
+// The event is logged here rather than beside the green line, so a red run records its
+// footprint too. The tail calls every report before it decides which shape to print, and
+// it calls none at all on an interrupt, so this placement gives the log exactly the runs
+// that reached a verdict.
+//
+// measure and bound are parameters rather than direct calls on the gocache package, so a
+// test drives an over-bound footprint without staging ten gibibytes of fixture.
+func cacheFootprintReport(ctx context.Context, env []string, measure func(string) gocache.Footprint, bound int64) func() ([]string, string, bool) {
+	return func() ([]string, string, bool) {
+		footprint := measure(gocache.FromEnv(env))
+		over := footprint.Bytes > bound
+		bytes, files := footprint.Bytes, footprint.Files
+		logGateEvent(ctx, gateLogRecord{Event: "cache.footprint", Path: footprint.Dir, Bytes: &bytes, Files: &files, OverBound: &over})
+		return nil, cacheFootprintLine(footprint, bound, over), false
+	}
+}
+
+// cacheFootprintLine spells the green run's one build-cache line. Above the bound the
+// parenthesis names the remedy, because a number alone leaves the operator holding a
+// disk problem with no next command. The directory passes the same control-byte filter a
+// table cell does: the path comes from HOME, which the operator owns, and no byte of it
+// reaches stdout unfiltered.
+func cacheFootprintLine(footprint gocache.Footprint, bound int64, over bool) string {
+	parenthesis := fmt.Sprintf("(bound %d bytes)", bound)
+	if over {
+		parenthesis = fmt.Sprintf("(over bound %d bytes, next: bench cache clean)", bound)
+	}
+	return fmt.Sprintf("go-build-cache: %d bytes in %d files at %s %s", footprint.Bytes, footprint.Files, sanitize.Strip(footprint.Dir), parenthesis)
 }

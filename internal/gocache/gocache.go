@@ -57,3 +57,9 @@ func value(env []string, name string) string {
 	}
 	return found
 }
+
+// FromEnv returns the build cache directory the given environment slice carries. A
+// process that Apply prepared reads its own directory back through this function, so no
+// caller re-derives a path that Apply already decided. An environment without the entry
+// answers an empty string.
+func FromEnv(env []string) string { return value(env, Env) }

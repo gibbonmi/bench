@@ -19,6 +19,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/gocache"
 )
 
 const processGroupCancelGrace = 2 * time.Second
@@ -149,7 +151,7 @@ func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog s
 	results, cancelled := schedule(ctx, root, phases, streams.open)
 	return aggregateAndReport(results, cancelled, streams, stdout, stderr, func() ([]string, string, bool) {
 		return reportCapabilitySkips(skipLog)
-	})
+	}, cacheFootprintReport(ctx, os.Environ(), gocache.Measure, gocache.Bound))
 }
 
 // prefixedPhaseWriters is the outer phase output plumbing. The mutex keeps each
