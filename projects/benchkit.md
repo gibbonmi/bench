@@ -65,6 +65,13 @@ works on any branch. This line only states the binding.)
   `--apply <fingerprint>` removes exactly what that plan named. It owns the single
   reclaimability predicate. `bench resume-clean` counts through that same predicate,
   reports the count and the verb, and never removes a pool key itself.
+- **The Bench build cache** (`internal/gocache`, `bench cache`) owns every cache fact:
+  the directory, the child `GOCACHE` entry, the footprint walk, and the bound. The
+  directory comes from the environment's `HOME` alone, so no machine setting steers it.
+  The walk uses `lstat` only, opens no cache file, follows no symlink, and recurses into
+  a `-d` executable directory. `bench cache` prints one `go_build_cache` TOON table,
+  resolves no git root, and runs anywhere. An absent or empty directory is a zero row at
+  exit 0. A control byte in the path is a named refusal at exit 1.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench harnesses`, `bench roadmap`, and
   `bench worktree list`, and the

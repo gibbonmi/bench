@@ -52,6 +52,7 @@ const (
 // closed against the next subcommand someone adds.
 var subcommandRouting = map[string]routingEntry{
 	"anchors":   routed("cmd/bench"),
+	"cache":     routed("internal/gocache"),
 	"commands":  routed("cmd/bench"),
 	"commit":    routed("internal/commit"),
 	"coverage":  routed("internal/coverage"),

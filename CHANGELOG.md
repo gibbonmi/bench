@@ -9,6 +9,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 ### Added
 
 - Added a plan-before-apply cleanup for unclaimed local `bench/assign/` refs.
+- Added `bench cache`, a read-only report of the Bench Go build cache footprint. One
+  `go_build_cache` TOON table gives the directory, the byte total, the regular-file
+  count, the last trim time, the 10 GiB bound, and the over-bound flag. The command
+  reads the environment alone, so it runs anywhere on the machine, outside a git
+  repository included. An absent or empty cache directory reports zeros at exit 0.
 
 - Added `bench harnesses` to print the harness record, one TOON row per harness.
   A row names the providers, the phase form, the hook config with its wired
