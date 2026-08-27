@@ -14,10 +14,10 @@ Advertise only the forms this ticket makes runnable.
 
 ## Acceptance checklist
 
-- [ ] F01 — default, positional, and `--package` selection preserve package-expression compatibility.
-- [ ] F03 — `--run` reaches Go as one unchanged argv value for default and explicit-package subjects.
-- [ ] F04 — zero matched tests refuses while matched skips and failures remain observed runs.
-- [ ] N01 — default, package, and run-filtered forms write no gate-owned record.
+- [x] F01 — default, positional, and `--package` selection preserve package-expression compatibility.
+- [x] F03 — `--run` reaches Go as one unchanged argv value for default and explicit-package subjects.
+- [x] F04 — zero matched tests refuses while matched skips and failures remain observed runs.
+- [x] N01 — default, package, and run-filtered forms write no gate-owned record.
 
 Delivered outcome: agents can run one package or one test pattern through the
 supported focused renderer without reconstructing a Go command.
