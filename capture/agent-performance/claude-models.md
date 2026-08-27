@@ -1,19 +1,19 @@
 # Claude model scorecard
 
-Last incorporated landing: `bounded-gate-output` (`253d01ec`, 2026-08-26) —
-Sonnet/high as orchestrator over eleven Opus charges (seven ticket-sized,
-four review-repair-sized), all landing first-pass on behavior.
+Last incorporated landing: `go-build-cache-footprint` (`5df9c8c3`, 2026-08-27) —
+Fable/low as orchestrator over eleven Opus write charges, eight review axes,
+and one merge composition, with eight of eleven charges first-pass on behavior.
 
-Twenty-nine completed landings are recorded. Routing follows the harness-to-tier
+Thirty completed landings are recorded. Routing follows the harness-to-tier
 binding.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Fable / low, high | orchestrator, 10 landings + implementer, 9 charges + reviewer, 2 specs | On `harness-capability-seam` at low effort it charged eleven tickets and probed every fold at a distinct site and kind. One vacuous wrapper-label probe exposed a missing test and a hand-kept check list, and a `main` diff against the frozen base caught a CI-script change before the landing. It ran eight worktree cleans in parallel and staled every plan. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
+| Fable / low, high | orchestrator, 11 landings + implementer, 9 charges + reviewer, 2 specs | On `go-build-cache-footprint` at low effort it charged eleven tickets and probed every fold at a distinct site and kind, and every probe bit. It paused at the measurement checkpoint and on two spec contradictions for reviewer decisions, reverted one out-of-fence edit, and composed a moved `main` through the landing's prescribed merge. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
 | Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `harness-capability-seam` the record package and the parity check each landed first-pass on behavior; the parity charge found and joined one fixture registry the ticket did not name. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium + 10 low implementer charges, 5 review passes, 10 of 15 orchestrated landings | On `bounded-gate-output` eleven ticket- and repair-sized charges each landed first-pass on behavior under a Sonnet orchestrator; every coordinator mutation probe at a distinct site from the delegate's own still bit. On `harness-capability-seam` eight medium and two low charges each landed first-pass, and two stopped correctly on a spec contradiction and an oracle narrowing. | Medium for gate and conformance logic, a new package's algorithm, guidance prose, review axes, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium + 10 low implementer charges, 13 review axes, 10 of 15 orchestrated landings | On `go-build-cache-footprint` eight of eleven charges landed first-pass on behavior. One stopped correctly on a spec contradiction, one crossed the fence on a mirror-the-sibling instruction, and one misplaced a doc comment. Eight review axes at low and medium each returned cited findings, and the merge delegate composed three seams into a rewritten package first-pass. | Medium for gate and conformance logic, a new package's algorithm, guidance prose, review axes, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate |
 | Sonnet / high | orchestrator, 1 landing | On `bounded-gate-output` it declared the line once for eleven charges, ran a fresh mutation probe distinct from each delegate's own before every commit, and caught a coverage-map amendment with no owning ticket file before it reached preflight. Two rounds of parallel charges on disjoint files landed with no collision. | New this landing; continue and compare after a second orchestrated build |
 | Sonnet / low–high | implementer, latest 10 of 70 ticket-sized charges | On `exec-census` three low charges landed first-pass on behavior; two restated a table or a join that an existing package owned and took one repair round each. One ran `cd` into the pool path against its charge and reported it. | Low for an exact-spec ticket at a known seam; medium or high for a behavior-preserving refactor; charges name the package that owns each shared fact |
 | Sonnet / high | reviewer, 3 axes on 13 landings + 12 scoped re-reviews | On `exec-census` the three axes returned one cited finding each, collapsed to two repair targets; the Coverage axis probed a two-id text with a throwaway test and found the undecided edge. The re-review verified both predicates and the delta. | Standing tier for the three review axes; medium or high where the charge names a concern to settle by measurement |
@@ -34,10 +34,14 @@ binding.
 - The top tier implements nothing, code or guidance prose, unless the reviewer names it
   for the run (reviewer direction, 2026-08-26).
 - Every subagent runs Opus at low or medium effort (reviewer direction, 2026-08-26).
-  On `harness-capability-seam` and `bounded-gate-output`, both under this rule, every
-  charge across both landings landed first-pass on behavior. Two comparable runs now
-  confirm it; the Sonnet review routing and the Opus/high prose routing stay recorded
-  since neither run touched them.
+  Three landings now run under this rule. On `go-build-cache-footprint` eight of eleven
+  charges landed first-pass. The three misses were a fence crossing, a comment
+  placement, and a correct stop on a spec contradiction. The rule stands.
+- Opus at low and medium serves the review axes as well as the write charges. Eight axes
+  on `go-build-cache-footprint` each returned cited findings, and the scoped re-reviews
+  verified every predicate. The Sonnet review routing is superseded.
+- A merge of a moved `main` into a retained source is an Opus/medium charge. It reads
+  both sides' history first and reports a one-parent commit rather than a raw fallback.
 - A non-Opus orchestrator (Sonnet, `bounded-gate-output`) can drive an Opus-only
   delegate set under this rule with no role restriction of its own. The rule
   binds the delegate's tier, not the coordinator's.
