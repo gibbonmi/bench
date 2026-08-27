@@ -45,7 +45,9 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 	gateSpec, prospectiveSpec := "", ""
 	if gradeSpec {
 		gateSpec = "IFS= read -r status < specs/x/spec.md\n[ \"$status\" = \"Status: implemented\" ]\n"
-		prospectiveSpec = "rg -q '^Status: implemented$' specs/x/spec.md\n"
+		// The two scripts assert the same status by different means, so a landing that ran
+		// the wrong one goes red. Both means stay POSIX, because a bare runner has no rg.
+		prospectiveSpec = "grep -q '^Status: implemented$' specs/x/spec.md\n"
 	}
 	root := newWorktreeRepo(t)
 	common := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
