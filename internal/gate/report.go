@@ -270,11 +270,18 @@ func lastLines(lines []string, n int) []string {
 // it calls none at all on an interrupt, so this placement gives the log exactly the runs
 // that reached a verdict.
 //
+// An environment that names no directory, through neither the entry nor an absolute HOME,
+// gets no line and no event: the reporter has no directory to name.
+//
 // measure and bound are parameters rather than direct calls on the gocache package, so a
 // test drives an over-bound footprint without staging ten gibibytes of fixture.
 func cacheFootprintReport(ctx context.Context, env []string, measure func(string) gocache.Footprint, bound int64) func() ([]string, string, bool) {
 	return func() ([]string, string, bool) {
-		footprint := measure(gocache.FromEnv(env))
+		dir := gocache.FromEnv(env)
+		if dir == "" {
+			return nil, "", false
+		}
+		footprint := measure(dir)
 		over := footprint.Bytes > bound
 		bytes, files := footprint.Bytes, footprint.Files
 		logGateEvent(ctx, gateLogRecord{Event: "cache.footprint", Path: footprint.Dir, Bytes: &bytes, Files: &files, OverBound: &over})

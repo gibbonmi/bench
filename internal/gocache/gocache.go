@@ -60,6 +60,17 @@ func value(env []string, name string) string {
 
 // FromEnv returns the build cache directory the given environment slice carries. A
 // process that Apply prepared reads its own directory back through this function, so no
-// caller re-derives a path that Apply already decided. An environment without the entry
-// answers an empty string.
-func FromEnv(env []string) string { return value(env, Env) }
+// caller re-derives a path that Apply already decided. A slice without the entry falls
+// back to the HOME derivation, because a runner launched from a plain shell carries no
+// GOCACHE entry and still reads the same directory. A slice with neither the entry nor an
+// absolute HOME answers an empty string.
+func FromEnv(env []string) string {
+	if entry := value(env, Env); entry != "" {
+		return entry
+	}
+	dir, err := Dir(env)
+	if err != nil {
+		return ""
+	}
+	return dir
+}

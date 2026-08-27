@@ -732,7 +732,12 @@ func TestCapabilitySkipsInTwoClassesPrintOneLine(t *testing.T) {
 // one the reporter reads its directory from, exactly as the production call site hands
 // it the process environment gocache.Apply prepared.
 func footprintReport(ctx context.Context, dir string, bytes, files, bound int64) func() ([]string, string, bool) {
-	env := []string{"PATH=/usr/bin", gocache.Env + "=" + dir}
+	return footprintReportFor(ctx, []string{"PATH=/usr/bin", gocache.Env + "=" + dir}, bytes, files, bound)
+}
+
+// footprintReportFor builds the reporter over a caller-given environment slice, so a test
+// drives a slice that carries no GOCACHE entry through the same fixed footprint.
+func footprintReportFor(ctx context.Context, env []string, bytes, files, bound int64) func() ([]string, string, bool) {
 	measure := func(measured string) gocache.Footprint {
 		return gocache.Footprint{Dir: measured, Bytes: bytes, Files: files}
 	}
@@ -889,4 +894,30 @@ func TestOverBoundReporterRemovesNoFileAndIsNotRed(t *testing.T) {
 // substring of some other line the tail printed.
 func hasVerdictLine(stdout, want string) bool {
 	return slices.Contains(stdoutLines(stdout), want)
+}
+
+// R18: an environment with no GOCACHE entry names the HOME-derived directory in the line
+// and in the event. A phase runner launched from a plain shell carries no entry.
+func TestReporterWithoutTheEntryNamesTheHomeDerivedDirectory(t *testing.T) {
+	ctx, record := loggedRunContext(t)
+	streams := newPhaseStreams(io.Discard)
+	var stdout, stderr bytes.Buffer
+	env := []string{"PATH=/usr/bin", "HOME=/home/agent"}
+	code := aggregateAndReport(greenPhaseResults(1), false, streams, &stdout, &stderr,
+		footprintReportFor(ctx, env, 512, 3, gocache.Bound))
+
+	if code != 0 {
+		t.Errorf("exit = %d, want 0", code)
+	}
+	want := "go-build-cache: 512 bytes in 3 files at /home/agent/.cache/bench/go-build (bound 10737418240 bytes)"
+	if !slices.Contains(stdoutLines(stdout.String()), want) {
+		t.Errorf("stdout = %q, want the line %q", stdout.String(), want)
+	}
+	events := footprintEvents(t, record)
+	if len(events) != 1 {
+		t.Fatalf("cache.footprint events = %d, want 1", len(events))
+	}
+	if events[0].Path != "/home/agent/.cache/bench/go-build" {
+		t.Errorf("cache.footprint path = %q, want the HOME-derived directory", events[0].Path)
+	}
 }

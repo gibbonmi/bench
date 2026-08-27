@@ -78,3 +78,23 @@ func TestApplyReportsADerivationRefusal(t *testing.T) {
 		t.Fatalf("error = %q, want it to name HOME", err)
 	}
 }
+
+// R18: FromEnv answers the entry when the slice carries one, falls back to the HOME
+// derivation when it does not, and answers an empty string when the slice names neither.
+func TestFromEnvFallsBackToTheHomeDerivation(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		env  []string
+		want string
+	}{
+		{"entry", []string{"HOME=/home/agent", "GOCACHE=/ambient/cache"}, "/ambient/cache"},
+		{"home derivation", []string{"HOME=/home/agent", "PATH=/usr/bin"}, "/home/agent/.cache/bench/go-build"},
+		{"neither", []string{"PATH=/usr/bin"}, ""},
+		{"relative home", []string{"HOME=agent"}, ""},
+	} {
+		if got := FromEnv(tc.env); got != tc.want {
+			t.Errorf("%s: FromEnv = %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}
