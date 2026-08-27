@@ -25,6 +25,14 @@ var raceTests = racetests.Tests
 
 const gateGoUsage = "usage: bench gate-go <gofmt|test> [root]"
 const disableBuildVCS = "-buildvcs=false"
+
+// trimPath is the one owner of the path-trimming flag for every Bench-owned Go argv
+// that is not a test: the vet phase and the kit lane's vet and build checks. Without it
+// Go hashes the package directory into each compile action ID, so every worktree writes
+// its own archive set. It stays separate from the release build flags in
+// internal/releaseevidence, because those state the shipped binary's evidence contract
+// rather than gate policy.
+const trimPath = "-trimpath"
 const runBinaryArgvToken = "<bench-run-binary>"
 
 // GateGoCommand is the `bench gate-go <step> [root]` plumbing command. Exit 0 is a
@@ -135,7 +143,12 @@ func coreTestStep(root string, stdout, stderr io.Writer) int {
 	if len(packages) == 0 {
 		return 0
 	}
-	return runStep(root, append([]string{"go", "test", "-count=1"}, packages...), stdout, stderr)
+	return runStep(root, coreTestArgv(packages), stdout, stderr)
+}
+
+// coreTestArgv is the release core test step's argv over the enumerated packages.
+func coreTestArgv(packages []string) []string {
+	return BaseTestArgv("", packages...)
 }
 
 func raceTestFilter() string {
@@ -155,7 +168,7 @@ func raceTestNames() []string {
 }
 
 func raceDriverArgv() []string {
-	argv := []string{"go", "test", "-race", "-count=1", "-v"}
+	argv := BaseTestArgv("", "-race", "-v")
 	for _, test := range raceTests {
 		if !contains(argv, test.PackagePath) {
 			argv = append(argv, test.PackagePath)

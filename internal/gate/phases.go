@@ -58,7 +58,7 @@ func BenchkitPhases(root, kit string) []Phase {
 	if sameDirectory(root, kit) {
 		phases = append(phases, Phase{
 			Name: "system",
-			Argv: goTestArgv("", "-tags=system", "./internal/systemtest"),
+			Argv: BaseTestArgv("", "-tags=system", "./internal/systemtest"),
 			Env:  []string{"BENCH_SYSTEM_ROOT=" + root},
 			Dir:  kit,
 		})
@@ -85,8 +85,8 @@ func toolchainPhases(root, kit string) []Phase {
 		{Name: canary.PhaseGofmt, Argv: gatePhaseGoArgv("gofmt", root)},
 		// vet needs no gate-go wrapper: it exits nonzero on its own findings and carries
 		// no policy the argv would have to encode.
-		{Name: canary.PhaseVet, Argv: []string{"go", "-C", root, "vet", "./..."}},
-		{Name: canary.PhaseTest, Argv: []string{"go", "test", "-count=1", "./..."}, Dir: root, Env: rootConformanceEnv(root, kit)},
+		{Name: canary.PhaseVet, Argv: []string{"go", "-C", root, "vet", trimPath, "./..."}},
+		{Name: canary.PhaseTest, Argv: BaseTestArgv("", "./..."), Dir: root, Env: rootConformanceEnv(root, kit)},
 	}
 	if sameDirectory(root, kit) && declaresRaceTest(root) {
 		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: raceDriverArgv(), Dir: root, ExpectedRuns: raceTestNames()})
@@ -191,12 +191,19 @@ func declaresTest(dir, name string) bool {
 	return false
 }
 
-func goTestArgv(kit string, args ...string) []string {
+// BaseTestArgv is the one producer of every Bench-owned `go test` argv. It returns
+// `go test -trimpath -count=1` before the caller's arguments, with `-C kit` inserted
+// when the caller names a kit checkout to compile in. -trimpath keeps the package
+// directory out of Go's compile action IDs, so two checkouts with identical content
+// share one cache entry instead of each writing a full archive set. -count=1 keeps a
+// cached verdict from standing in for a run. Every test form composes this, so the
+// flag pair cannot drift between the gate, the lane, the focused run, and the release.
+func BaseTestArgv(kit string, args ...string) []string {
 	argv := []string{"go"}
 	if kit != "" {
 		argv = append(argv, "-C", kit)
 	}
-	return append(append(argv, "test", "-count=1"), args...)
+	return append(append(argv, "test", trimPath, "-count=1"), args...)
 }
 
 // kitRoot resolves the wrapper-selected kit before an exported entry starts its work.

@@ -32,6 +32,15 @@ All notable user-facing changes to Bench are documented here. The format follows
   `GOCACHE` entry, so an ambient cache and a `go env -w GOCACHE` setting no longer
   steer a Bench build. The directory comes from `HOME` alone. A root with no
   absolute `HOME` refuses before its child starts and names `HOME`.
+- Every Bench-owned Go argv now carries `-trimpath`, and every Bench-owned
+  `go test` argv keeps `-count=1`. Without `-trimpath` Go hashes the package
+  directory into each compile action ID, so every worktree wrote a complete new
+  set of archives. One producer in the gate package now owns the base test argv
+  `go test -trimpath -count=1`, and the gate `test`, `race`, and `system`
+  phases, `bench test`, the release core test step, and the ship conformance
+  step all compose it. The gate `vet` phase and the kit lane's `vet` and `build`
+  checks take the flag from one shared owner. A linked repository's declared
+  phase or lane argv keeps its own flags.
 - The gate now prints a bounded verdict instead of every phase's stream. A green
   run prints one `phases[N]{phase,verdict,elapsed_ms}` table, one
   `capability-skips` line, and `gate: green`. A red run prints one

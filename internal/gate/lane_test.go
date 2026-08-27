@@ -17,8 +17,8 @@ func TestBenchkitLaneTable(t *testing.T) {
 	want := []Phase{
 		{Name: "gofmt", Argv: []string{runBinaryArgvToken, "gate-go", "gofmt"}},
 		{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose", "/repo", "--", LaneNamedMarkdownToken}},
-		{Name: "vet", Argv: []string{"go", "vet", "./..."}},
-		{Name: "build", Argv: []string{"go", "build", disableBuildVCS, "./..."}},
+		{Name: "vet", Argv: []string{"go", "vet", "-trimpath", "./..."}},
+		{Name: "build", Argv: []string{"go", "build", "-trimpath", disableBuildVCS, "./..."}},
 	}
 	if !reflect.DeepEqual(lane, want) {
 		t.Fatalf("kit lane = %+v, want %+v", lane, want)
@@ -40,7 +40,7 @@ func TestBenchkitPhasesKeepWholeProjectTestArgv(t *testing.T) {
 		if phase.Name != "test" {
 			continue
 		}
-		if want := []string{"go", "test", "-count=1", "./..."}; !reflect.DeepEqual(phase.Argv, want) {
+		if want := []string{"go", "test", "-trimpath", "-count=1", "./..."}; !reflect.DeepEqual(phase.Argv, want) {
 			t.Fatalf("test phase argv = %v, want %v", phase.Argv, want)
 		}
 		return
@@ -120,7 +120,7 @@ func TestResolveLane(t *testing.T) {
 	if dir := laneCheck(t, resolved, "sub").Dir; dir != filepath.Join("/checkout", "sub") {
 		t.Errorf("sub dir = %q, want the checkout counterpart", dir)
 	}
-	if vet := laneCheck(t, resolved, "vet"); !reflect.DeepEqual(vet.Argv, []string{"go", "vet", "./..."}) {
+	if vet := laneCheck(t, resolved, "vet"); !reflect.DeepEqual(vet.Argv, []string{"go", "vet", "-trimpath", "./..."}) {
 		t.Errorf("vet argv = %v, want it unchanged", vet.Argv)
 	}
 
@@ -201,4 +201,19 @@ func laneCheck(t *testing.T, lane []Phase, name string) Phase {
 	}
 	t.Fatalf("lane declares no check named %s", name)
 	return Phase{}
+}
+
+// T03: the kit lane's two toolchain checks carry -trimpath, so a lane checkout writes no
+// path-keyed archive. The literals are independent of the flag owner on purpose: a lane
+// table that reads the flag from somewhere else, or drops it, reds here.
+func TestBenchkitLaneToolchainChecksCarryTrimPath(t *testing.T) {
+	lane := BenchkitLane("/repo", "/repo")
+	for name, want := range map[string][]string{
+		"vet":   {"go", "vet", "-trimpath", "./..."},
+		"build": {"go", "build", "-trimpath", "-buildvcs=false", "./..."},
+	} {
+		if got := laneCheck(t, lane, name).Argv; !reflect.DeepEqual(got, want) {
+			t.Errorf("lane %s argv = %v, want %v", name, got, want)
+		}
+	}
 }

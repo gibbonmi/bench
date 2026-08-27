@@ -99,10 +99,10 @@ func TestBenchkitPhasesUseBranchNativeDrivers(t *testing.T) {
 	if !reflect.DeepEqual(gotNames, wantNames) {
 		t.Fatalf("phase names = %v, want %v", gotNames, wantNames)
 	}
-	if want := []string{"go", "test", "-count=1", "./..."}; !reflect.DeepEqual(byName["test"].Argv, want) {
+	if want := []string{"go", "test", "-trimpath", "-count=1", "./..."}; !reflect.DeepEqual(byName["test"].Argv, want) {
 		t.Fatalf("ordinary test argv = %#v, want %#v", byName["test"].Argv, want)
 	}
-	if want := []string{"go", "test", "-count=1", "-tags=system", "./internal/systemtest"}; !reflect.DeepEqual(byName["system"].Argv, want) {
+	if want := []string{"go", "test", "-trimpath", "-count=1", "-tags=system", "./internal/systemtest"}; !reflect.DeepEqual(byName["system"].Argv, want) {
 		t.Fatalf("system test argv = %#v, want %#v", byName["system"].Argv, want)
 	}
 	if want := raceDriverArgv(); !reflect.DeepEqual(byName["race"].Argv, want) {
@@ -157,5 +157,33 @@ func TestPhaseTableGateRequiresSelectedBinaryRoute(t *testing.T) {
 	}
 	if !phaseTableGate(root, Resolution{Kind: ProspectiveGateSh}) {
 		t.Fatal("selected-binary gate-phases route was not recognized")
+	}
+}
+
+// T02: the vet phase argv is verbatim `go -C <root> vet -trimpath ./...`. Vet compiles
+// and writes facts entries of its own, so it keys on the package directory exactly as a
+// test build does.
+func TestVetPhaseArgvCarriesTrimPath(t *testing.T) {
+	root := t.TempDir()
+	writeLaneFile(t, filepath.Join(root, "go.mod"), "module example.com/x\n\ngo 1.24\n")
+	for _, phase := range BenchkitPhases(root, root) {
+		if phase.Name != "vet" {
+			continue
+		}
+		if want := []string{"go", "-C", root, "vet", "-trimpath", "./..."}; !reflect.DeepEqual(phase.Argv, want) {
+			t.Fatalf("vet phase argv = %#v, want %#v", phase.Argv, want)
+		}
+		return
+	}
+	t.Fatal("the kit phase table declares no vet phase")
+}
+
+// T05: the release core test step runs the enumerated packages under -trimpath and
+// -count=1. Nothing else asserts this argv, so a release run that keys on its own
+// checkout path would otherwise go unobserved.
+func TestCoreTestArgvCarriesTrimPathAndCountOne(t *testing.T) {
+	want := []string{"go", "test", "-trimpath", "-count=1", "./internal/gate", "./internal/toon"}
+	if got := coreTestArgv([]string{"./internal/gate", "./internal/toon"}); !reflect.DeepEqual(got, want) {
+		t.Fatalf("core test argv = %#v, want %#v", got, want)
 	}
 }

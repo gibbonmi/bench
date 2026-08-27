@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -47,7 +48,8 @@ func Command(root string, args []string) (string, int) {
 		return toon.Errorf("Bench executable selection failed", err.Error()) + "\n", 1
 	}
 	defer selection.Close()
-	cmd := exec.Command("go", "test", "-json", "-count=1", packageExpr)
+	argv := focusedTestArgv(packageExpr)
+	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
 	childEnv, err := testEnvironment(os.Environ(), selection.Path)
 	if err != nil {
@@ -115,6 +117,13 @@ func Command(root string, args []string) (string, int) {
 // and with the Bench build cache entry so a focused run warms the archives a gate reads.
 func testEnvironment(base []string, binary string) ([]string, error) {
 	return gocache.Apply(runbinary.WithEnv(capability.WithoutEnvironment(base, capability.LogEnv), binary))
+}
+
+// focusedTestArgv is the `bench test` invocation over one package expression. It takes
+// its flag pair from the gate's one test-argv producer, so the focused run shares the
+// gate's build cache entries instead of writing a second, path-keyed set.
+func focusedTestArgv(packageExpr string) []string {
+	return gate.BaseTestArgv("", "-json", packageExpr)
 }
 
 // packagePattern maps a bare directory-relative operand to a "./"-prefixed
