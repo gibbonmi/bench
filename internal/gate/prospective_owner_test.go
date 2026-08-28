@@ -4,13 +4,16 @@
 package gate
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -193,5 +196,141 @@ func TestProspectiveGateReportsAFailedBuildWithNoResidue(t *testing.T) {
 	}
 	if len(entries) != 0 {
 		t.Fatalf("failed prospective build left %d entries under its temporary root", len(entries))
+	}
+}
+
+func TestTimedOutProspectiveProducerLeavesNoBundle(t *testing.T) {
+	root, tree, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nset -eu\nwhile :; do sleep 1; done\n")
+	oldTimeout := gateTimeout
+	gateTimeout = 100 * time.Millisecond
+	t.Cleanup(func() { gateTimeout = oldTimeout })
+
+	var stdout, stderr bytes.Buffer
+	result := executeTreeWithOwner(context.Background(), root, tree, &stdout, &stderr, inertProspectiveSelection)
+	if result.ActionExit != 124 {
+		t.Fatalf("timed-out prospective result = %#v, stderr=%q", result, stderr.String())
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+func TestCancelledProspectiveProducerLeavesNoBundle(t *testing.T) {
+	root, tree, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nset -eu\nprintf ready > \"$PAR_READY\"\nwhile :; do sleep 1; done\n")
+	ready := filepath.Join(t.TempDir(), "ready")
+	t.Setenv("PAR_READY", ready)
+	writeGateFixtureFile(t, root, ".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[\"HOME\",\"PAR_READY\"],\"paths\":[],\"tools\":[]}\n", 0o644)
+	outcomeCommit(t, root, "declare cancellation barrier")
+	tree = outcomeGit(t, root, "write-tree")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	result := make(chan Result, 1)
+	go func() {
+		result <- executeTreeWithOwner(ctx, root, tree, &bytes.Buffer{}, &bytes.Buffer{}, inertProspectiveSelection)
+	}()
+	waitForProspectiveBarrier(t, ready, result)
+	cancel()
+	select {
+	case got := <-result:
+		if got.ActionExit == 0 {
+			t.Fatalf("cancelled prospective result = %#v, want refusal", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("cancelled prospective producer did not return")
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+func TestProspectiveBuildRefusalLeavesNoBundle(t *testing.T) {
+	root, _, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nexit 0\n")
+	writeGateFixtureFile(t, root, "go.mod", "module prospectivefixture\n\ngo 1.24\n", 0o644)
+	writeGateFixtureFile(t, root, "scripts/go-build.sh", "#!/bin/sh\nexit 0\n", 0o755)
+	writeGateFixtureFile(t, root, "scripts/go-build.inputs", "build_script=scripts/go-build.sh\n", 0o644)
+	outcomeCommit(t, root, "declare prospective build")
+	tree := outcomeGit(t, root, "write-tree")
+	old := prospectiveRunBinary
+	prospectiveRunBinary = runbinary.Factory{
+		Build:  func(context.Context, string, string) error { return errors.New("build refused") },
+		Verify: func(string, string) error { return nil },
+	}
+	t.Cleanup(func() { prospectiveRunBinary = old })
+
+	var stderr bytes.Buffer
+	result := executeTreeWithOwner(context.Background(), root, tree, &bytes.Buffer{}, &stderr, nil)
+	if result.ActionExit == 0 || !strings.Contains(stderr.String(), "gate Bench executable unavailable") {
+		t.Fatalf("build-refused prospective result = %#v, stderr=%q", result, stderr.String())
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+func TestProspectiveBundleCloseRetainsInheritedBaselineBinary(t *testing.T) {
+	root, tree, tempRoot := prospectiveProducerFixture(t, "")
+	baseline := filepath.Join(t.TempDir(), "baseline-bench")
+	if err := os.WriteFile(baseline, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(runbinary.Env, baseline)
+	old := prospectiveRunBinary
+	prospectiveRunBinary = runbinary.Factory{Verify: func(string, string) error { return nil }}
+	t.Cleanup(func() { prospectiveRunBinary = old })
+
+	var stderr bytes.Buffer
+	result := executeTreeWithOwner(context.Background(), root, tree, &bytes.Buffer{}, &stderr, nil)
+	if result.ActionExit != 0 {
+		t.Fatalf("inherited-binary prospective result = %#v, stderr=%q", result, stderr.String())
+	}
+	if data, err := os.ReadFile(baseline); err != nil || string(data) != "#!/bin/sh\nexit 0\n" {
+		t.Fatalf("inherited baseline binary = %q, %v, want retained", data, err)
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+func prospectiveProducerFixture(t *testing.T, prospectiveScript string) (string, string, string) {
+	t.Helper()
+	root := gittest.RepoOnBranch(t, "main")
+	tempRoot := t.TempDir()
+	t.Setenv("TMPDIR", tempRoot)
+	writeGateFixtureFile(t, root, ".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[\"HOME\"],\"paths\":[],\"tools\":[]}\n", 0o644)
+	writeGateFixtureFile(t, root, ".bench/gate.sh", "#!/bin/sh\nset -eu\nbench=${BENCH_RUN_BINARY:?}\nif false; then \"$bench\" gate-phases; fi\nexit 0\n", 0o755)
+	if prospectiveScript != "" {
+		writeGateFixtureFile(t, root, prospectiveGatePath, prospectiveScript, 0o755)
+	}
+	writeGateFixtureFile(t, root, "tracked.txt", "prospective fixture\n", 0o644)
+	outcomeCommit(t, root, "prospective producer fixture")
+	return root, outcomeGit(t, root, "write-tree"), tempRoot
+}
+
+func inertProspectiveSelection(_ context.Context, source string) (*runbinary.Selection, error) {
+	return &runbinary.Selection{Path: "/bin/true", SourceRoot: source}, nil
+}
+
+func waitForProspectiveBarrier(t *testing.T, path string, result <-chan Result) {
+	t.Helper()
+	deadline := time.NewTimer(5 * time.Second)
+	defer deadline.Stop()
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case got := <-result:
+			t.Fatalf("prospective producer returned before cancellation barrier: %#v", got)
+		case <-deadline.C:
+			t.Fatal("prospective producer did not reach cancellation barrier")
+		case <-ticker.C:
+			if data, err := os.ReadFile(path); err == nil && string(data) == "ready" {
+				return
+			}
+		}
+	}
+}
+
+func requireNoProspectiveBundles(t *testing.T, tempRoot string) {
+	t.Helper()
+	entries, err := os.ReadDir(tempRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), "bench-prospective-artifact-") {
+			t.Fatalf("prospective bundle %q survived terminal outcome", entry.Name())
+		}
 	}
 }

@@ -24,9 +24,17 @@ var prospectiveRunBinary = runbinary.Factory{}
 // and would record a source digest the graded subject never produced. Any other source
 // is the baseline's own kit, whose inherited selection is already the baseline runner.
 func prospectiveRunBinaryOwner(checkout string) runBinaryOwner {
+	return prospectiveRunBinaryOwnerAt(checkout, "")
+}
+
+func prospectiveRunBinaryOwnerAt(checkout, artifactRoot string) runBinaryOwner {
 	return func(ctx context.Context, source string) (*runbinary.Selection, error) {
 		if sameDirectory(source, checkout) {
-			return prospectiveRunBinary.Own(ctx, source)
+			factory := prospectiveRunBinary
+			if artifactRoot != "" {
+				factory.TempRoot = artifactRoot
+			}
+			return factory.Own(ctx, source)
 		}
 		return prospectiveRunBinary.ReuseOrOwn(ctx, source)
 	}

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
+	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -41,14 +42,19 @@ func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Write
 }
 
 func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr io.Writer, owner runBinaryOwner) Result {
-	checkout, cleanup, err := prospectiveCheckout(root, tree)
+	artifacts, err := prospectiveartifact.Open(root)
 	if err != nil {
 		fmt.Fprintln(stderr, "prospective gate subject unavailable")
 		return Result{ActionExit: 1}
 	}
-	defer cleanup()
+	defer artifacts.Close()
+	if err := artifacts.Materialize(tree); err != nil {
+		fmt.Fprintln(stderr, "prospective gate subject unavailable")
+		return Result{ActionExit: 1}
+	}
+	checkout := artifacts.Checkout()
 	if owner == nil {
-		owner = prospectiveRunBinaryOwner(checkout)
+		owner = prospectiveRunBinaryOwnerAt(checkout, artifacts.Root())
 	}
 	evaluation := newProspectiveTreeEvaluation(checkout, root, tree)
 	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, nil, reuseFreshGreen, evaluation, owner, root)
