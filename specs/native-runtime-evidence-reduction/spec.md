@@ -138,14 +138,20 @@ The gate seam is `bench gate`, which runs the conformance package, the canary gu
 | B10 | 15 | Finalization fails when one proven target has no proof | `internal/releaseevidence` probe | A relaxed count would accept a release with no Linux proof |
 | B11 | 16 | `native-proof.sh` contains no Darwin branch | script execution test | A surviving branch keeps an assertion no run can pass |
 | B12 | 17 | A plan that marks a Darwin target proven yields a Darwin proof row | plan reader unit test | A hard-coded Linux-only path would make the flag decorative |
-| B13 | 18 | `verify-release-artifact.mjs` accepts an index holding proofs for the proven targets only | verifier unit test | A count against shipped targets fails every offline verification |
+| B13 | 18 | `verify-release-artifact.mjs` accepts an index holding proofs for the proven targets only | clause extraction, reviewer-graded | A count against shipped targets fails every offline verification |
 | B14 | 19 | The release evidence probe writes a proof per proven target | `internal/conformance` probe | A probe on the shipped list grades a set no run produces |
 | C1 | 20, 21 | Each changed conformance check names its own diagnostic | `internal/conformance` mutation test | A check with no red is advertisement, not enforcement |
 | C2 | 22 | Every mutation in the changed checks turns the check red | `internal/conformance` mutation test | An anchor that no longer occurs makes the mutation a no-op |
 | C3 | 23 | Every canary fixture under `package-core-guard` still bites | canary fixture-bite test | A stale anchor silently retires a guard |
 | C4 | 24, 25 | The release docs state the current claim and name both retired claims | reviewer reading | A stale doc tells a cold reader we prove something we do not |
 
-Row C4 is graded by the reviewer, not by the gate. Prose accuracy has no red-capable seam here, and a keyword sweep would bind the docs to one wording.
+Two rows are graded by the reviewer, not by the gate.
+
+Row C4 covers prose accuracy. It has no red-capable seam here, and a keyword sweep would bind the docs to one wording.
+
+Row B13 covers the consumer-side verifier. Nothing the gate runs executes `scripts/verify-release-artifact.mjs`. Its only callers are the two smoke scripts, and those run in the workflow.
+
+The row's evidence is a clause extraction. The build evaluated the live count expression against a real release index. It went green at the proven count and red at the shipped count. The change under it is one token, and the per-proof predicate is untouched. A real execution seam for that verifier is out of scope and parked.
 
 ### Edge inventory
 
