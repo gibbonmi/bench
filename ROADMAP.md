@@ -135,6 +135,14 @@ means the repository-controlled compliance assessment.
 
 **FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set without weakening its ownership fence.**
 
+**FT263 (MEDIUM, decision required) — `bench commit` has one explicit `MERGE_HEAD` contract.**
+
+**FT264 (MEDIUM, decision required) — Go build-cache validation residuals.**
+
+**FT265 (MEDIUM, decision required) — one coordinator-owned immutable drain evidence bundle.**
+
+**FT266 (LOW) — `craft-tdd` re-exec helpers return silently outside their role environment.**
+
 **FT182 (LOW) — a Planned-phase receipt over an absent target wedges the abandon retry.**
 
 **FT166 (LOW) — a sanctioned writer and parser validator for primary-local learnings and retros.**
@@ -301,6 +309,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — build staged `specs/go-build-cache-footprint/spec.md` on one retained integration source.
-2. `/bench-write-spec` — FT251: specify recovery for a killed landing's prospective tree and gate binary.
-3. `/bench-write-spec` — FT215: specify the path-aware `bench commit` fast lane.
+1. `/bench-write-spec` — FT251: specify recovery for a killed landing's prospective tree and gate binary.
+2. `/bench-write-spec` — FT252: specify a Bench verb that moves a retained worktree or sibling assignment onto a new base.
+3. `/bench-shape-idea` — FT246: shape one selected gate executable for other binary-building test packages.
