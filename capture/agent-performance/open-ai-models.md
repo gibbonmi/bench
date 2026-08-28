@@ -1,8 +1,8 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `bench-shell-follow-on-guard` (`7bfbf012`, 2026-08-25) —
-Terra/medium+high as implementers and Terra/high across initial, repair-scoped,
-and composition review axes, under a Sol orchestrator.
+Last incorporated landing: `prospective-artifact-recovery` (`0ec709aa`, 2026-08-28) —
+Terra/high as the ticket 01 implementer under a Sol orchestrator in a Codex
+session; the build finished under Claude models in a later session.
 
 ## Cost assumptions
 
@@ -16,10 +16,10 @@ currently available.
 | --- | --- | --- | --- |
 | Terra / medium, high | implementation, latest 10 bounded tickets/repairs | On `bench-shell-follow-on-guard`, medium returned clean bounded seams and biting probes but missed the routing registry, value-taking prefix options, and an ownership fence; high single-sourced projection/prefix policy across two guards and closed the expanded process matrix in one pass | Medium for exact one-seam tickets under coordinator mutation; high when one fact crosses multiple policy consumers |
 | Luna / max, medium | implementation, 7 bounded tickets/repairs + reviewer, 4 axis passes on `stable-owner-landing` | Implementation: 2/7 first-pass with all terminal gates green. Review: three initial axes returned 9 raw findings and 8 de-duplicated targets with the citation standard held (one axis refuted four of its own leads by enumeration), and the repair-scoped re-review verified all seven predicates and stayed inside its blocking scope | Low-cost writer for narrow slices under mandatory inspection; standing tier for the three review axes |
-| Terra / high | implementation, 2 cross-fence lifecycle charges | 0/2 first-pass; found the exact landed predicate but initially preserved a conflicting fixture assumption, and the review-repair charge needed a real-process boundary oracle after a self-referential seam stayed green | Use when one behavior crosses classifier, planner, and lifecycle consumers; require consumer inventory in the charge |
+| Terra / high | implementation, 3 cross-fence lifecycle charges | 0/3 first-pass on review. On `prospective-artifact-recovery` ticket 01 landed with green rows, probes, and lane, but one branch left an authored binary outside the bundle, an unresolved temporary root leaked the Git registration, and its tests violated the branch-native census | Use when one behavior crosses classifier, planner, and lifecycle consumers; require consumer inventory in the charge |
 | Terra / high | semantic review, latest 10 independent axis passes across 4 landings | Found concrete wrapper, descriptor, prefix-value, query-seam, grammar, and one-source gaps with executable probes; final composition axes were clean, while one repair-scoped Standards pass reopened an untouched wrapper-grammar observation that the coordinator correctly kept advisory | Standards, Spec, and Coverage review in separate contexts; pin accepted predicates and prior tip for correction validation |
 | Sol / high | implementation and semantic review, 4 lifecycle charges + latest 10 axis passes | On `stable-owner-landing` the wrapper-broker ticket landed in one build pass plus one fence-extended continuation: it refused to edit an out-of-fence stale test and reported the exact red instead, ran its own biting route-omission probe, and one env-override case exposed that the old route executed a repository decoy; earlier lifecycle and repair charges keep their attributed probes | Kit-level and security-seam implementation and review; the out-of-fence stop discipline is holding |
-| Sol / high | orchestration, 5 full spec lifecycles | On `bench-shell-follow-on-guard`, preserved frozen review identity, ran distinct mutations, converged two repair rounds, recovered one merge conflict, re-reviewed the destination diff, and completed landing plus retirement; it also paid avoidable gate churn, first used the semantic-review commit as the landing base, and named only the conflict path during an active merge before recovering through the retained `MERGE_HEAD` | Complex lifecycle coordination; separate review and composition bases, preflight broker toolchains, and treat merge continuation as its own state transition |
+| Sol / high | orchestration, 5 full spec lifecycles + 1 partial | On `prospective-artifact-recovery` it accepted ticket 01 after a repository-identity probe, then hit the agent thread limit and wrote a handoff that a later session resumed cleanly; its probe did not reach the run-binary branch or the symlinked root that review found later | Complex lifecycle coordination; separate review and composition bases, preflight broker toolchains, and treat merge continuation as its own state transition |
 
 ## Representative evidence
 
