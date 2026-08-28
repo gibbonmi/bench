@@ -42,7 +42,7 @@ func productionRunBinaryOwner() runBinaryOwner {
 func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string) Result {
 	plan, err := evaluation.acceptPre()
 	if err != nil {
-		return operational(storageRoot, 0, stderr, "gate subject unavailable")
+		return operational(storageRoot, 0, stderr, fmt.Sprintf("gate subject unavailable: %v", err))
 	}
 	decision := Decide(DecisionInput{Subject: plan.Tree, Resolution: plan.Resolution})
 	if plan.Resolution.Kind == None {

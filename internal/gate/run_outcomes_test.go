@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,6 +16,22 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
+
+type failedAcceptEvaluation struct {
+	err error
+}
+
+func (e failedAcceptEvaluation) acceptPre() (subject, error) {
+	return subject{}, e.err
+}
+
+func (failedAcceptEvaluation) validatePre() (subject, error) {
+	return subject{}, nil
+}
+
+func (failedAcceptEvaluation) capturePost() (subject, error) {
+	return subject{}, nil
+}
 
 func TestGateRunGreenReusesRecordedVerdict(t *testing.T) {
 	root := outcomeFixture(t)
@@ -140,6 +157,20 @@ func TestGateRunWithoutGateExitsThree(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "no gate found") {
 		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestGateRunRetainsSubjectConstructionCause(t *testing.T) {
+	root := outcomeFixture(t)
+	cause := errors.New("sentinel subject construction failure")
+	var stdout, stderr bytes.Buffer
+
+	result := executeSubjectWithRunBinary(context.Background(), root, root, &stdout, &stderr, nil, forceRun, failedAcceptEvaluation{err: cause}, nil, "")
+	if result.ActionExit != 1 {
+		t.Fatalf("result = %#v, want action exit 1", result)
+	}
+	if got := stderr.String(); !strings.Contains(got, "gate subject unavailable") || !strings.Contains(got, cause.Error()) {
+		t.Fatalf("stderr = %q, want the subject diagnostic and cause %q", got, cause)
 	}
 }
 
