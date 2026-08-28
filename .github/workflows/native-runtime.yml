@@ -113,6 +113,15 @@ jobs:
           pattern: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-first-*
           path: dist/native-proofs
           merge-multiple: true
+      # The offline smoke runs its native journeys under bwrap --unshare-net. Ubuntu
+      # 24.04 ships no bubblewrap and restricts unprivileged user namespaces through
+      # AppArmor, so the runner provides the sentinel before the smoke runs.
+      - name: Provide the offline smoke network sentinel
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bubblewrap
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Finalize the release evidence
         run: |
           bash scripts/install-govulncheck.sh
@@ -154,4 +163,10 @@ jobs:
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-preflight-evidence
           path: dist/preflight
+      - name: Provide the offline smoke network sentinel
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bubblewrap
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: bash scripts/smoke-artifacts.sh dist/artifacts dist/preflight
