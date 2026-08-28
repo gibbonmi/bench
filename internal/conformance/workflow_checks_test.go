@@ -116,8 +116,8 @@ func checkNativeRuntimeWorkflow(root string) []string {
 	if !strings.Contains(smoke, "matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}") {
 		diags = append(diags, "native smoke matrix does not read the shipped targets")
 	}
-	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" && !strings.Contains(proof, "docker run --rm --network none") {
-		diags = append(diags, "native proof does not isolate the Linux non-glibc execution")
+	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" {
+		diags = append(diags, nativeProofBindingDiags(proof)...)
 	}
 	return diags
 }

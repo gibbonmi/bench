@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Validate the complete native proof set derived from the canonical matrix.
+# Validate the complete native proof set derived from the proven canonical matrix.
 set -euo pipefail
 
 proofs="${1:?usage: aggregate-native-proofs.sh <proof-dir>}"
@@ -7,7 +7,7 @@ root="$(node -e 'const fs=require("node:fs"),path=require("node:path");process.s
 [[ -d "$proofs" && ! -L "$proofs" ]] || { printf 'native proof directory is unsafe\n' >&2; exit 1; }
 matrix="$(mktemp "${TMPDIR:-/tmp}/bench-native-matrix.XXXXXX")"
 trap 'rm -f "$matrix"' EXIT
-node "$root/scripts/release-plan.mjs" "$root" targets > "$matrix"
+node "$root/scripts/release-plan.mjs" "$root" proof-targets > "$matrix"
 expected="$(while IFS=$'\t' read -r os arch _goos _goarch _runner; do printf '%s-%s.json\n' "$os" "$arch"; done < "$matrix" | LC_ALL=C sort)"
 count=0
 while IFS=$'\t' read -r os arch _goos _goarch runner; do

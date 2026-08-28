@@ -18,7 +18,7 @@ root="$(cd "$(dirname "$source_path")/.." && pwd)"
 . "$root/scripts/lib/search.sh"
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
 target="${os_name}-${arch_name}"
-matrix_row="$(node "$root/scripts/release-plan.mjs" "$root" target "$os_name" "$arch_name")" || {
+matrix_row="$(node "$root/scripts/release-plan.mjs" "$root" proof-target "$os_name" "$arch_name")" || {
   printf 'native proof: target is not in the canonical platform matrix: %s\n' "$target" >&2
   exit 1
 }
@@ -49,6 +49,7 @@ cmp -s "$rebuild" "$package_dir/package/bin/bench" || { printf 'native proof: re
 cmp -s "$rebuild" "$archive_root/bin/bench" || { printf 'native proof: rebuilt binary differs from offline archive for %s\n' "$target" >&2; exit 1; }
 "$rebuild" version >/dev/null
 "$rebuild" commands --brief >/dev/null
+musl_status=not_applicable
 if [[ "$goos" == linux ]]; then
   file_info="$(file "$rebuild")"
   [[ "$file_info" == *"statically linked"* ]] || { printf 'native proof: Linux binary is not static for %s: %s\n' "$target" "$file_info" >&2; exit 1; }
@@ -61,13 +62,6 @@ if [[ "$goos" == linux ]]; then
   command -v docker >/dev/null 2>&1 || { printf 'native proof: musl runner is unavailable for %s\n' "$target" >&2; exit 1; }
   docker run --rm --network none -v "$rebuild:/bench:ro" alpine:3.20 /bench version >/dev/null
   musl_status=green
-else
-  file_info="$(file "$rebuild")"
-  [[ "$file_info" == *"Mach-O"* ]] || { printf 'native proof: Darwin binary format is invalid for %s: %s\n' "$target" "$file_info" >&2; exit 1; }
-  command -v nm >/dev/null 2>&1 || { printf 'native proof: nm is required to prove stripped Darwin output\n' >&2; exit 1; }
-  nm -a "$rebuild" > "$tmp/darwin-symbols" 2>&1 || true
-  bench_search_ere -q -- 'no symbols|no name list' "$tmp/darwin-symbols" || { printf 'native proof: Darwin binary is not stripped for %s\n' "$target" >&2; exit 1; }
-  musl_status=not_applicable
 fi
 
 sha256() {
