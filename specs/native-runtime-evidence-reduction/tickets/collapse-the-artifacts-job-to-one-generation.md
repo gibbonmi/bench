@@ -9,6 +9,8 @@ The `artifacts` job builds one generation and publishes one upload.
 
 The job drops its second-source clone and its second build. It publishes one artifact whose `path` names `dist/artifacts` and `dist/reproducibility.json`, so the upload action resolves `dist` as the common root. The archive root therefore moves up one level, and every consumer downloads into `dist` instead of `dist/artifacts`. The consumers are the `evidence` and `smoke` jobs here, and the `authorize` and `publish` jobs in `release.yml`.
 
+The `native-proof` job loses its second generation as well. It drops its second-source clone, its `-artifacts-second` download, its second `native-proof.sh` run, and its second proof upload. Its remaining download moves to `dist`.
+
 The `evidence` job also drops its second clone, its second aggregate and preflight run, and its `compare-artifacts.sh` call. `dist/workflow-reproducibility.json` leaves the tree entirely.
 
 `scripts/build-artifacts.sh` is unchanged. Its inner reproducibility build still writes `dist/reproducibility.json`, so the byte-for-byte artifact comparison survives and `reproducibility.builds` stays at 2.
@@ -27,6 +29,8 @@ The `evidence` job also drops its second clone, its second aggregate and preflig
 - [ ] The `evidence` job still runs `release-preflight.sh --mode verify` (row A7).
 - [ ] The `smoke` job downloads the one artifact into `dist` (row A8).
 - [ ] The `authorize` and `publish` jobs in `release.yml` download the one artifact into `dist` (row A9).
+- [ ] The `native-proof` job contains no second-source clone (row A10).
+- [ ] The `native-proof` job downloads the one artifact into `dist` (row A11).
 - [ ] Each changed conformance check names its own diagnostic (row C1).
 - [ ] Every mutation in the changed checks turns its check red (row C2).
 - [ ] Every canary fixture under `package-core-guard` still bites (row C3).

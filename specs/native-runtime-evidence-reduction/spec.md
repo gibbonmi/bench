@@ -37,6 +37,7 @@ Line: `opus` / medium. The change edits two workflows and their handoff paths, s
 7. As a release engineer, I want the `evidence` job to keep its preflight verification, so that the finalized evidence is still graded.
 8. As a release engineer, I want the `smoke` job to download from the new upload root, so that its run finds the tarballs.
 9. As a release engineer, I want the tag release jobs to download from the new upload root, so that publication still finds the tarballs.
+26. As a release engineer, I want the `native-proof` job to build one generation, so that it stops reading an upload that nothing publishes.
 
 ### Group B — shipped targets and proven targets are separate facts
 
@@ -78,7 +79,11 @@ Line: `opus` / high. The group edits the oracle, and every changed check needs a
 
 **Every proof count derives from the proven list.** Three consumers count proofs today, and all three move together. `internal/releaseevidence` finalization compares against the proven-target count. `scripts/verify-release-artifact.mjs` compares its `native_proofs` length against the proven-target count. The release evidence probe in `internal/conformance` synthesizes a proof per proven target. Each keeps its per-operating-system clauses unchanged.
 
-**The workflow hands over one object.** The `artifacts` job uploads one artifact whose `path` names `dist/artifacts` and `dist/reproducibility.json`. The upload action resolves `dist` as the common root, so the archive root moves up one level. Every consumer of that artifact therefore downloads into `dist`, not into `dist/artifacts`. The consumers are the `evidence` and `smoke` jobs in `native-runtime.yml`, and the `authorize` and `publish` jobs in `release.yml`.
+**The workflow hands over one object.** The `artifacts` job uploads one artifact whose `path` names `dist/artifacts` and `dist/reproducibility.json`. The upload action resolves `dist` as the common root, so the archive root moves up one level.
+
+Every consumer therefore downloads into `dist`, not into `dist/artifacts`. There are five. Three sit in `native-runtime.yml`: the `native-proof`, `evidence`, and `smoke` jobs. Two sit in `release.yml`: the `authorize` and `publish` jobs.
+
+**The `native-proof` job loses its second generation too.** It clones a second source, runs `scripts/native-proof.sh` twice, and publishes a second proof upload. Each of those reads or writes a retired artifact. So the clone, the second download, the second proof run, and the second upload all go.
 
 **`workflow-reproducibility.json` is retired.** No Go evidence reads it. Its only producer is the `evidence` job's `compare-artifacts.sh` call, and that call goes with the second generation. `scripts/compare-artifacts.sh` itself stays, because `build-artifacts.sh` still calls it. `reproducibility.builds` stays at 2, because the inner build still performs two builds.
 
@@ -119,6 +124,8 @@ The gate seam is `bench gate`, which runs the conformance package, the canary gu
 | A7 | 7 | The `evidence` job still runs `release-preflight.sh --mode verify` | `internal/conformance` workflow check | A dropped preflight ships evidence that nothing graded |
 | A8 | 8 | The `smoke` job downloads the one artifact into `dist` | `internal/conformance` workflow check | A download into `dist/artifacts` nests the tarballs one level too deep |
 | A9 | 9 | The `authorize` and `publish` jobs download the one artifact into `dist` | `internal/conformance` workflow check | A stale path makes every tag release fail after the upload root moves |
+| A10 | 26 | The `native-proof` job contains no second-source clone | `internal/conformance` workflow check | A second generation reads an upload that nothing publishes |
+| A11 | 26 | The `native-proof` job downloads the one artifact into `dist` | `internal/conformance` workflow check | A download into `dist/artifacts` nests the tarballs one level too deep |
 | B1 | 10 | `readReleasePlan` rejects a target with no boolean `native_proof` field | plan reader unit test | A silent default hides which targets carry a proof |
 | B2 | 10 | `readReleasePlan` rejects a plan whose proven set is empty | plan reader unit test | An empty set makes the aggregator pass with no proof at all |
 | B3 | 11 | `proof-matrix-json` omits every unproven target | plan reader unit test | A leaked Darwin row starts the macOS runner this spec removes |
