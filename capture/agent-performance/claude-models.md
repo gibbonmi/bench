@@ -1,19 +1,20 @@
 # Claude model scorecard
 
-Last incorporated landing: `go-build-cache-footprint` (`5df9c8c3`, 2026-08-27) —
-Fable/low as orchestrator over eleven Opus write charges, eight review axes,
-and one merge composition, with eight of eleven charges first-pass on behavior.
+Last incorporated landing: `native-runtime-evidence-reduction` (`e1299080`,
+2026-08-28) — Opus/medium as orchestrator over eight Opus write charges. It also
+ran one Fable/high spec review, three Opus review axes, and one scoped
+re-review. Six of eight charges landed first-pass on behavior.
 
-Thirty completed landings are recorded. Routing follows the harness-to-tier
+Thirty-one completed landings are recorded. Routing follows the harness-to-tier
 binding.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Fable / low, high | orchestrator, 11 landings + implementer, 9 charges + reviewer, 2 specs | On `go-build-cache-footprint` at low effort it charged eleven tickets and probed every fold at a distinct site and kind, and every probe bit. It paused at the measurement checkpoint and on two spec contradictions for reviewer decisions, reverted one out-of-fence edit, and composed a moved `main` through the landing's prescribed merge. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
+| Fable / low, high | orchestrator, 11 landings + implementer, 9 charges + reviewer, 3 specs | On `native-runtime-evidence-reduction` at high effort it reviewed one spec and six tickets, and it blocked. It found two readers of a changed count that the spec never listed, and it proved the first ticket was not independently green by tracing a strict JSON decode. Every finding carried a file and a line. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
 | Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `harness-capability-seam` the record package and the parity check each landed first-pass on behavior; the parity charge found and joined one fixture registry the ticket did not name. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium + 10 low implementer charges, 13 review axes, 10 of 15 orchestrated landings | On `go-build-cache-footprint` eight of eleven charges landed first-pass on behavior. One stopped correctly on a spec contradiction, one crossed the fence on a mirror-the-sibling instruction, and one misplaced a doc comment. Eight review axes at low and medium each returned cited findings, and the merge delegate composed three seams into a rewritten package first-pass. | Medium for gate and conformance logic, a new package's algorithm, guidance prose, review axes, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium + 10 low implementer charges, 16 review axes, 11 of 16 orchestrated landings | On `native-runtime-evidence-reduction` six of eight charges landed first-pass on behavior, and both misses traced to a defective spec row rather than the delegate. Two charges beat their ticket: one stopped and reported an unlisted consumer instead of widening scope, and one refused to claim an acceptance row it could not evidence. Three review axes found nine distinct problems, and two axes found the worst one independently. | Medium for gate and conformance logic, a new package's algorithm, guidance prose, review axes, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate |
 | Sonnet / high | orchestrator, 1 landing | On `bounded-gate-output` it declared the line once for eleven charges, ran a fresh mutation probe distinct from each delegate's own before every commit, and caught a coverage-map amendment with no owning ticket file before it reached preflight. Two rounds of parallel charges on disjoint files landed with no collision. | New this landing; continue and compare after a second orchestrated build |
 | Sonnet / low–high | implementer, latest 10 of 70 ticket-sized charges | On `exec-census` three low charges landed first-pass on behavior; two restated a table or a join that an existing package owned and took one repair round each. One ran `cd` into the pool path against its charge and reported it. | Low for an exact-spec ticket at a known seam; medium or high for a behavior-preserving refactor; charges name the package that owns each shared fact |
 | Sonnet / high | reviewer, 3 axes on 13 landings + 12 scoped re-reviews | On `exec-census` the three axes returned one cited finding each, collapsed to two repair targets; the Coverage axis probed a two-id text with a throwaway test and found the undecided edge. The re-review verified both predicates and the delta. | Standing tier for the three review axes; medium or high where the charge names a concern to settle by measurement |
@@ -26,7 +27,8 @@ binding.
 | `exec-census` review | Sonnet / high / reviewer | The Coverage axis wrote a throwaway test for a text that names two assignment ids, showed the second id uncounted, and cited the loop that returns on the first match. |
 | `worktree-test-floor` ticket 12 | Opus / high / implementer | The charge asked the verb to set the gate child's environment. The delegate traced the closure to `internal/gate/subject.go`, showed the value hashes into the subject identity, and stopped with the seam gap instead of editing three packages outside its fence. |
 | `ft228-debug-restoration` IP10 | Opus / medium / orchestrator | A coverage row required a description to carry a trigger and omit an anti-trigger. The check graded only the omission, and the delegate's own probe could not see the gap. A coordinator probe written from the row's text set the description to neither, and the gate stayed green. |
-| `bounded-gate-output` review | Sonnet / high / orchestrator | The Spec axis traced a red run's stdout and found the capability-skips totals line printed ahead of the failure table on every run, violating the acceptance row's "and nothing else." The orchestrator routed the fix, then a coordinator swap-mutation on the verdict stream independently confirmed the same violation before the repair. |
+| `native-runtime-evidence-reduction` review | Opus / medium / reviewer | The Spec and Coverage axes each found, without seeing the other, that the gate graded a workflow matrix consumer and never its producer. One token on the producer step restarted the runners the landing existed to remove, with the gate green. |
+| `native-runtime-evidence-reduction` ticket 05 | Opus / high / implementer | The charge listed four consumers of a changed upload root. A fifth existed. The delegate finished its own scope, then stopped and reported the gap as a spec contradiction rather than editing a job no ticket owned. |
 
 ## Current decisions
 
@@ -34,30 +36,37 @@ binding.
 - The top tier implements nothing, code or guidance prose, unless the reviewer names it
   for the run (reviewer direction, 2026-08-26).
 - Every subagent runs Opus at low or medium effort (reviewer direction, 2026-08-26).
-  Three landings now run under this rule. On `go-build-cache-footprint` eight of eleven
-  charges landed first-pass. The three misses were a fence crossing, a comment
-  placement, and a correct stop on a spec contradiction. The rule stands.
-- Opus at low and medium serves the review axes as well as the write charges. Eight axes
-  on `go-build-cache-footprint` each returned cited findings, and the scoped re-reviews
-  verified every predicate. The Sonnet review routing is superseded.
-- A merge of a moved `main` into a retained source is an Opus/medium charge. It reads
-  both sides' history first and reports a one-parent commit rather than a raw fallback.
-- A non-Opus orchestrator (Sonnet, `bounded-gate-output`) can drive an Opus-only
-  delegate set under this rule with no role restriction of its own. The rule
-  binds the delegate's tier, not the coordinator's.
+  Four landings now run under this rule. On `native-runtime-evidence-reduction` six of
+  eight charges landed first-pass, and both misses came from the spec. The rule stands.
+- Opus at low and medium serves the review axes as well as the write charges. The
+  Sonnet review routing is superseded.
+- The top tier reviews a spec and its tickets as one round. On
+  `native-runtime-evidence-reduction` that round blocked on three findings, and two of
+  them were readers of a changed value that the spec never listed.
+- A gate check on a derived or indirected value names both ends. A check that asserts a
+  consumer's reference to an output proves nothing about what fills that output. Two
+  independent axes found this hole on `native-runtime-evidence-reduction`, and the
+  coordinator had missed it twice.
+- Before the coverage map locks, sweep the whole tree for readers of every value the
+  change derives. Four of five repair rounds on `native-runtime-evidence-reduction`
+  traced to unlisted readers.
+- A Standards finding that deletes a test is a coverage question first. One such finding
+  removed the only assertion binding a plan's proven set, and the scoped re-review caught
+  the loss.
+- A charge that names an exact verification command must name one the coordinator has
+  run. A ship-tier probe command missing its root variable skips in milliseconds and
+  reports ok.
 - Route a ticket from the decision table at charge time, not from its story's line. An
   exact spec, a known seam, and a covering gate make the cheap row.
 - A charge names the package that owns each fact the ticket touches, and it names every
-  registry the family already appears in. On `harness-capability-seam` ticket 06 named
-  five of eight registries, and the two it missed cost two round trips.
+  registry the family already appears in.
 - A charge that moves a test or reflows anchored prose names the canary fixtures that
   anchor on it. Its focused checks run the fixture-bite test.
 - Independent tickets run in parallel under disjoint fences; dependent tickets share the
   retained integration source. At most two delegates run tests at once, each at
   `-parallel 2`.
 - The coordinator probes every done-claim at a distinct site and kind, through the
-  writer the test captures. A probe that stays green is a finding, not a pass: on
-  `harness-capability-seam` one such probe exposed a missing test and a hand-kept list.
+  writer the test captures. A probe that stays green is a finding, not a pass.
 - A hand-verified acceptance row is not closed. The coordinator asks for the test name
   before it folds a done-claim.
 - Before a landing, the coordinator compares `main` against the frozen base and grades
@@ -70,6 +79,4 @@ binding.
   It never creates or cleans a worktree while a gate runs, and it runs per-path
   worktree cleans serially.
 - A spec amendment that adds acceptance rows during a repair pass needs a ticket
-  file before the next `bench preflight review`. The `rows-owned` check refuses
-  an uncited row. On `bounded-gate-output` the coordinator wrote one retroactive
-  ticket, naming the four accepted repairs, to clear it.
+  file before the next `bench preflight review`.
