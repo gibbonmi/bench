@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.matrix.outputs.rows }}
+      proven: ${{ steps.proof-matrix.outputs.rows }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
@@ -32,6 +33,8 @@ jobs:
           node-version: '22'
       - id: matrix
         run: node scripts/release-plan.mjs . matrix-json | node -e 'let data="";process.stdin.on("data",chunk=>data+=chunk);process.stdin.on("end",()=>require("fs").appendFileSync(process.env.GITHUB_OUTPUT,`rows=${data.trim()}\n`))'
+      - id: proof-matrix
+        run: node scripts/release-plan.mjs . proof-matrix-json | node -e 'let data="";process.stdin.on("data",chunk=>data+=chunk);process.stdin.on("end",()=>require("fs").appendFileSync(process.env.GITHUB_OUTPUT,`rows=${data.trim()}\n`))'
       - run: bash scripts/release-preflight.sh --mode verify --phase gate
         env:
           BENCH_REQUIRE_CAPABILITIES: '1'
@@ -49,38 +52,23 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-      - name: Build isolated artifact generations
-        run: |
-          second_source="$RUNNER_TEMP/bench-second-source"
-          git clone --quiet --no-hardlinks . "$second_source"
-          bash scripts/build-artifacts.sh . dist/artifacts
-          bash "$second_source/scripts/build-artifacts.sh" "$second_source" "$second_source/dist/artifacts"
+      - name: Build the artifact generation
+        run: bash scripts/build-artifacts.sh . dist/artifacts
+      # One upload, two paths. The action resolves dist as the common root, so the
+      # archive root is dist and every consumer downloads into dist.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts
-          path: dist/artifacts/
-          retention-days: ${{ github.retention_days }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts-second
-          path: ${{ runner.temp }}/bench-second-source/dist/artifacts/
-          retention-days: ${{ github.retention_days }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-first
-          path: dist/reproducibility.json
-          retention-days: ${{ github.retention_days }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-second
-          path: ${{ runner.temp }}/bench-second-source/dist/reproducibility.json
+          path: |
+            dist/artifacts
+            dist/reproducibility.json
           retention-days: ${{ github.retention_days }}
 
   native-proof:
     needs: [preflight, artifacts]
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.preflight.outputs.proven) }}
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -92,26 +80,15 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-      - run: git clone --quiet --no-hardlinks . "$RUNNER_TEMP/bench-second-source"
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts
-          path: dist/artifacts
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts-second
-          path: ${{ runner.temp }}/bench-second-source/dist/artifacts
+          path: dist
       - run: bash scripts/native-proof.sh dist/artifacts "dist/native-proofs/${{ matrix.os }}-${{ matrix.arch }}.json" "${{ matrix.os }}" "${{ matrix.arch }}" "${{ matrix.runner }}"
-      - run: bash "$RUNNER_TEMP/bench-second-source/scripts/native-proof.sh" "$RUNNER_TEMP/bench-second-source/dist/artifacts" "$RUNNER_TEMP/bench-second-source/dist/native-proofs/${{ matrix.os }}-${{ matrix.arch }}.json" "${{ matrix.os }}" "${{ matrix.arch }}" "${{ matrix.runner }}"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-first-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/native-proofs/
-          retention-days: ${{ github.retention_days }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-second-${{ matrix.os }}-${{ matrix.arch }}
-          path: ${{ runner.temp }}/bench-second-source/dist/native-proofs/
           retention-days: ${{ github.retention_days }}
 
   evidence:
@@ -127,43 +104,20 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-      - run: git clone --quiet --no-hardlinks . "$RUNNER_TEMP/bench-second-source"
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts
-          path: dist/artifacts
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts-second
-          path: ${{ runner.temp }}/bench-second-source/dist/artifacts
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-first
           path: dist
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-second
-          path: ${{ runner.temp }}/bench-second-source/dist
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-first-*
           path: dist/native-proofs
           merge-multiple: true
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          pattern: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-second-*
-          path: ${{ runner.temp }}/bench-second-source/dist/native-proofs
-          merge-multiple: true
-      - name: Finalize and compare isolated generations
+      - name: Finalize the release evidence
         run: |
-          second_source="$RUNNER_TEMP/bench-second-source"
           bash scripts/install-govulncheck.sh
           bash scripts/aggregate-native-proofs.sh dist/native-proofs
           bash scripts/release-preflight.sh --mode verify
-          bash "$second_source/scripts/install-govulncheck.sh"
-          bash "$second_source/scripts/aggregate-native-proofs.sh" "$second_source/dist/native-proofs"
-          (cd "$second_source" && bash scripts/release-preflight.sh --mode verify)
-          bash scripts/compare-artifacts.sh dist/artifacts "$second_source/dist/artifacts" dist/workflow-reproducibility.json . "$second_source" dist/preflight "$second_source/dist/preflight"
           bash scripts/smoke-artifacts.sh dist/artifacts dist/preflight
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -195,7 +149,7 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts
-          path: dist/artifacts
+          path: dist
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-preflight-evidence

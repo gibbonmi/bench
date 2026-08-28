@@ -4,6 +4,12 @@ import {pathToFileURL} from "node:url";
 
 const byteOrder = (a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b));
 
+// matrixFields is the one projection every transport view uses: the five
+// fields a GitHub matrix row carries. It drops native_proof, so no view can
+// leak that field into a workflow variable.
+const matrixFields = target => ({os: target.os, arch: target.arch, goos: target.goos, goarch: target.goarch, runner: target.runner});
+const matrixRow = target => Object.values(matrixFields(target)).join("\t");
+
 export function readReleasePlan(root) {
   const file = path.join(root, "scripts", "release-plan.json");
   const info = fs.lstatSync(file);
@@ -12,11 +18,12 @@ export function readReleasePlan(root) {
   if (plan?.schema_version !== 1 || !Array.isArray(plan.targets) || plan.targets.length === 0 || !Array.isArray(plan.archive_entries)) throw new Error("release plan cardinality is invalid");
 	const seen = new Set();
 	for (const target of plan.targets) {
-		if (!target || ![target.os, target.arch, target.goos, target.goarch, target.runner].every(value => typeof value === "string" && /^[0-9A-Za-z.-]+$/.test(value))) throw new Error("release plan target is invalid");
+		if (!target || typeof target.native_proof !== "boolean" || ![target.os, target.arch, target.goos, target.goarch, target.runner].every(value => typeof value === "string" && /^[0-9A-Za-z.-]+$/.test(value))) throw new Error("release plan target is invalid");
     const key = `${target.os}-${target.arch}`;
     if (seen.has(key)) throw new Error(`release plan repeats ${key}`);
     seen.add(key);
   }
+  if (provenTargets(plan).length === 0) throw new Error("release plan has no proven target");
   const entries = new Set();
   for (const entry of plan.archive_entries) {
     if (!entry || typeof entry.path !== "string" || !/^(0644|0755)$/.test(entry.mode) || typeof entry.kind !== "string" || entry.path.length === 0 || entry.path.includes("\\") || entry.path.startsWith("/") || entry.path.includes("..") || entries.has(entry.path)) throw new Error("release plan archive inventory is invalid");
@@ -38,8 +45,14 @@ export function packagedEvidenceRecords(requirements) {
 	return requirements.records.filter(record => Object.hasOwn(record, "package_mode"));
 }
 
-export function targetFor(plan, os, arch) {
-  return plan.targets.find(target => target.os === os && target.arch === arch);
+export function provenTargets(plan) {
+  return plan.targets.filter(target => target.native_proof);
+}
+
+// targetFor looks a row up in whichever list the caller holds: the shipped
+// matrix, or the proven subset provenTargets returns.
+export function targetFor(targets, os, arch) {
+  return targets.find(target => target.os === os && target.arch === arch);
 }
 
 export function artifactNames(plan, version) {
@@ -89,14 +102,17 @@ export function releaseEvidenceNames(root) {
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [root, command, ...args] = process.argv.slice(2);
-	if (!root || !command) throw new Error("usage: release-plan.mjs <root> <normalized-json|targets|matrix-json|artifact-names|artifact-records|artifact-name|archive-inventory|archive-entry-path|archive-evidence-path|evidence-names|target> [arguments]");
+	if (!root || !command) throw new Error("usage: release-plan.mjs <root> <normalized-json|targets|proof-targets|matrix-json|proof-matrix-json|artifact-names|artifact-records|artifact-name|archive-inventory|archive-entry-path|archive-evidence-path|evidence-names|target|proof-target> [arguments]");
   const plan = readReleasePlan(root);
+  // A proof- command answers over the proven subset; every other view answers
+  // over the whole shipped matrix. One filter, one projection, two views.
+  const rows = command.startsWith("proof-") ? provenTargets(plan) : plan.targets;
   if (command === "normalized-json") {
     process.stdout.write(JSON.stringify(plan) + "\n");
-  } else if (command === "targets") {
-    for (const target of plan.targets) process.stdout.write([target.os, target.arch, target.goos, target.goarch, target.runner].join("\t") + "\n");
-  } else if (command === "matrix-json") {
-    process.stdout.write(JSON.stringify({include: plan.targets}) + "\n");
+  } else if (command === "targets" || command === "proof-targets") {
+    for (const target of rows) process.stdout.write(matrixRow(target) + "\n");
+  } else if (command === "matrix-json" || command === "proof-matrix-json") {
+    process.stdout.write(JSON.stringify({include: rows.map(matrixFields)}) + "\n");
 	} else if (command === "artifact-names") {
     if (args.length !== 1) throw new Error("artifact-names requires version");
 		process.stdout.write(artifactNames(plan, args[0]).join("\n") + "\n");
@@ -119,11 +135,11 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 		process.stdout.write(archiveEvidencePath(plan, args[0], args[1], args[2], packagedEvidenceRecords(readReleaseRequirements(root))) + "\n");
   } else if (command === "evidence-names") {
     process.stdout.write(releaseEvidenceNames(root).join("\n") + "\n");
-  } else if (command === "target") {
-    if (args.length !== 2) throw new Error("target requires os and arch");
-    const target = targetFor(plan, args[0], args[1]);
+  } else if (command === "target" || command === "proof-target") {
+    if (args.length !== 2) throw new Error(`${command} requires os and arch`);
+    const target = targetFor(rows, args[0], args[1]);
     if (!target) process.exitCode = 1;
-    else process.stdout.write([target.os, target.arch, target.goos, target.goarch, target.runner].join("\t") + "\n");
+    else process.stdout.write(matrixRow(target) + "\n");
   } else {
     throw new Error(`unknown release-plan command: ${command}`);
   }

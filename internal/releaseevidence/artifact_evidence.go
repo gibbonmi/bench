@@ -104,7 +104,7 @@ func ReadPackageVersion(root string) (string, error) {
 	return pkg.Version, nil
 }
 
-func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string, error) {
+func inspectArtifacts(root string) ([]artifactEvidence, []planTarget, string, error) {
 	plan, err := readReleasePlan(root)
 	if err != nil {
 		return nil, nil, "", err
@@ -124,7 +124,6 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 	}
 	want := make(map[string]string, len(plannedArtifacts))
 	plannedByTarget := map[string]map[string]string{}
-	targets := append([]targetEvidence(nil), plan.Targets...)
 	for _, artifact := range plannedArtifacts {
 		want[artifact.Name] = artifact.Target
 		if plannedByTarget[artifact.Target] == nil {
@@ -235,7 +234,7 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 			return nil, nil, "", fmt.Errorf("offline archive %s component evidence differs from package evidence", archiveName)
 		}
 	}
-	return artifacts, targets, hex.EncodeToString(setHash.Sum(nil)), nil
+	return artifacts, plan.Targets, hex.EncodeToString(setHash.Sum(nil)), nil
 }
 
 func fingerprintArtifactSet(root string) (string, error) {

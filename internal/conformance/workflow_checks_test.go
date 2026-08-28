@@ -17,6 +17,49 @@ type workflowTriggerShape struct {
 // adapter and provenance selections make the run reach real npm.
 const releaseSubmitInvocation = `dist/bench release submit --version "${GITHUB_REF_NAME#v}" --profile public --path first --adapter npm --provenance --registry https://registry.npmjs.org`
 
+// secondSourceMarker names the isolated checkout the reduction retired. Every second
+// generation reached it through this directory, so one marker covers the clone, the
+// build, the uploads, and the downloads that would restore it.
+const secondSourceMarker = "bench-second-source"
+
+// The artifacts job publishes one upload naming both paths, so the upload action
+// resolves dist as the archive root. nativeArtifactDownload is the matching consumer
+// shape: a download into dist, never into dist/artifacts.
+const (
+	nativeArtifactName     = "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts\n"
+	nativeArtifactUpload   = nativeArtifactName + "          path: |\n            dist/artifacts\n            dist/reproducibility.json\n"
+	nativeArtifactDownload = nativeArtifactName + "          path: dist\n"
+)
+
+// releaseArtifactDownload is the same archive root seen from the tag workflow, whose
+// jobs name the release prefix literally.
+const releaseArtifactDownload = "name: release-artifacts\n          path: dist\n"
+
+// staleReleaseArtifactDownload is the pre-reduction path, one level below the archive
+// root. The mutations below use it to prove each tag job graded separately.
+const staleReleaseArtifactDownload = "name: release-artifacts\n          path: dist/artifacts\n"
+
+// replaceOccurrence rewrites the nth occurrence, counting from zero, so a mutation
+// reaches exactly one of several jobs that carry byte-identical steps.
+func replaceOccurrence(text, old, replacement string, n int) string {
+	for offset, index := 0, 0; ; index++ {
+		found := strings.Index(text[offset:], old)
+		if found < 0 {
+			return text
+		}
+		found += offset
+		if index == n {
+			return text[:found] + replacement + text[found+len(old):]
+		}
+		offset = found + len(old)
+	}
+}
+
+// retiredReproducibilityRecord is the cross-checkout comparison output the reduction
+// retired. The name is assembled from two pieces because the sweep below reads this
+// source file, and a whole literal would report itself.
+const retiredReproducibilityRecord = "workflow-" + "reproducibility.json"
+
 // The workflow seam is the job body: these checks parse job ownership before
 // asserting that evidence follows all native proof rows.
 func checkReleaseWorkflow(root string) []string {
@@ -58,6 +101,34 @@ func checkReleaseWorkflow(root string) []string {
 	if job := workflowJob(text, "verify"); !strings.Contains(job, "uses: ./.github/workflows/native-runtime.yml") || !strings.Contains(job, "artifact-prefix: release") {
 		diags = append(diags, "release workflow does not compose shared native verification")
 	}
+	// Both tag jobs consume the shared upload, whose archive root is dist. A stale
+	// dist/artifacts download nests the tarballs and fails every tag release.
+	for _, job := range []string{"authorize", "publish"} {
+		if !strings.Contains(workflowJob(text, job), releaseArtifactDownload) {
+			diags = append(diags, "release workflow "+job+" job does not download the artifacts at their archive root")
+		}
+	}
+	return diags
+}
+
+// checkRetiredReproducibilityRecord sweeps the source trees for the cross-checkout
+// record that retired with the second generation. Nothing writes the file now, so any
+// surviving reference sends a reader to evidence that never arrives.
+func checkRetiredReproducibilityRecord(root string) []string {
+	var diags []string
+	for _, top := range []string{".github", "scripts", "internal", "tests", "docs"} {
+		_ = filepath.WalkDir(filepath.Join(root, top), func(path string, entry os.DirEntry, walkErr error) error {
+			if walkErr != nil || entry.IsDir() || !strings.Contains(readIfExists(path), retiredReproducibilityRecord) {
+				return nil
+			}
+			rel, err := filepath.Rel(root, path)
+			if err != nil {
+				rel = path
+			}
+			diags = append(diags, "retired cross-checkout reproducibility record is still named by "+filepath.ToSlash(rel))
+			return nil
+		})
+	}
 	return diags
 }
 
@@ -89,25 +160,66 @@ func checkNativeRuntimeWorkflow(root string) []string {
 	if !strings.Contains(evidence, "needs: [artifacts, native-proof]") || !strings.Contains(evidence, "scripts/release-preflight.sh --mode verify") {
 		diags = append(diags, "native verification does not finalize evidence after every native proof")
 	}
-	if !strings.Contains(artifacts, `git clone --quiet --no-hardlinks . "$second_source"`) || !strings.Contains(artifacts, `"$second_source/scripts/build-artifacts.sh" "$second_source" "$second_source/dist/artifacts"`) || !strings.Contains(evidence, `bash scripts/compare-artifacts.sh dist/artifacts "$second_source/dist/artifacts" dist/workflow-reproducibility.json . "$second_source" dist/preflight "$second_source/dist/preflight"`) {
-		diags = append(diags, "native verification does not compare independently finalized evidence")
+	if strings.Count(artifacts, "uses: actions/upload-artifact@") != 1 {
+		diags = append(diags, "native artifact construction does not publish exactly one upload")
 	}
-	for _, handoff := range []struct{ name, upload, download string }{
-		{name: "first", upload: "path: dist/reproducibility.json", download: "path: dist"},
-		{name: "second", upload: "path: ${{ runner.temp }}/bench-second-source/dist/reproducibility.json", download: "path: ${{ runner.temp }}/bench-second-source/dist"},
+	// The one upload carries the artifacts and the reproducibility record, so the
+	// action resolves dist as the archive root.
+	if !strings.Contains(artifacts, nativeArtifactUpload) {
+		diags = append(diags, "native verification does not hand reproducibility records to evidence finalization")
+	}
+	proof, smoke := workflowJob(text, "native-proof"), workflowJob(text, "smoke")
+	// The workflow builds one generation, so a restored second source in a producing
+	// job both returns the cost this reduction removed and reads an upload nothing
+	// publishes. Every consuming job downloads at the archive root, because a download
+	// into dist/artifacts nests the tarballs one level too deep. One table over the
+	// four jobs states which fact each job carries, and names the job that failed.
+	for _, job := range []struct {
+		name, body       string
+		builds, consumes bool
+	}{
+		{name: "artifacts", body: artifacts, builds: true},
+		{name: "native-proof", body: proof, builds: true, consumes: true},
+		{name: "evidence", body: evidence, builds: true, consumes: true},
+		{name: "smoke", body: smoke, consumes: true},
 	} {
-		upload := "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-" + handoff.name + "\n          " + handoff.upload + "\n"
-		download := "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-" + handoff.name + "\n          " + handoff.download + "\n"
-		if !strings.Contains(artifacts, upload) || !strings.Contains(evidence, download) {
-			diags = append(diags, "native verification does not hand reproducibility records to evidence finalization")
-			break
+		if job.builds && strings.Contains(job.body, secondSourceMarker) {
+			diags = append(diags, "native "+job.name+" job rebuilds a second source generation")
+		}
+		if job.consumes && !strings.Contains(job.body, nativeArtifactDownload) {
+			diags = append(diags, "native "+job.name+" job does not download the artifact upload at its archive root")
 		}
 	}
-	if job := workflowJob(text, "smoke"); !strings.Contains(job, "needs: [preflight, artifacts, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
+	if !strings.Contains(smoke, "needs: [preflight, artifacts, evidence]") || !strings.Contains(smoke, "preflight-evidence") || !strings.Contains(smoke, "scripts/smoke-artifacts.sh") {
 		diags = append(diags, "native verification does not run smoke from finalized evidence")
 	}
-	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" && !strings.Contains(proof, "docker run --rm --network none") {
-		diags = append(diags, "native proof does not isolate the Linux non-glibc execution")
+	// Shipped targets and proven targets are separate facts. The proof job reads the
+	// proven view, so an unproven target starts no runner; smoke keeps the shipped
+	// view, so every shipped binary still executes on its own operating system.
+	if !strings.Contains(proof, "matrix: ${{ fromJSON(needs.preflight.outputs.proven) }}") {
+		diags = append(diags, "native proof matrix does not read the proven targets")
+	}
+	if !strings.Contains(smoke, "matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}") {
+		diags = append(diags, "native smoke matrix does not read the shipped targets")
+	}
+	// A consumer edge is only as good as the command that fills the output it reads.
+	// A proof-matrix step that runs the shipped command restarts every macOS runner
+	// with both consumer assertions still green, so each output binds to its declaring
+	// step, and that step binds to its own release-plan command. One table over the two
+	// output-and-command pairs states each view once.
+	for _, produced := range []struct{ label, output, step, command string }{
+		{label: "shipped", output: "matrix", step: "matrix", command: "matrix-json"},
+		{label: "proven", output: "proven", step: "proof-matrix", command: "proof-matrix-json"},
+	} {
+		if !strings.Contains(preflight, produced.output+": ${{ steps."+produced.step+".outputs.rows }}") {
+			diags = append(diags, "native verification preflight does not publish the "+produced.label+" matrix output")
+		}
+		if !strings.Contains(workflowStep(preflight, produced.step), "scripts/release-plan.mjs . "+produced.command) {
+			diags = append(diags, "native verification preflight "+produced.label+" matrix output does not derive from "+produced.command)
+		}
+	}
+	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" {
+		diags = append(diags, nativeProofBindingDiags(proof)...)
 	}
 	return diags
 }
@@ -139,6 +251,22 @@ func workflowJob(workflow, name string) string {
 		}
 	}
 	return rest[:end]
+}
+
+// workflowStep returns one step's body from a job, keyed by the step id. The body
+// ends at the next step marker, so a run line found inside it provably belongs to
+// the step that declares that id.
+func workflowStep(job, id string) string {
+	needle := "      - id: " + id + "\n"
+	start := strings.Index(job, needle)
+	if start < 0 {
+		return ""
+	}
+	rest := job[start+len(needle):]
+	if end := strings.Index(rest, "\n      - "); end >= 0 {
+		return rest[:end]
+	}
+	return rest
 }
 
 func nativeWorkflowTriggers(text string) workflowTriggerShape {
@@ -245,6 +373,20 @@ func TestReleaseWorkflowPublicationBites(t *testing.T) {
 			broken: workflow + "      - run: dist/bench release promote --version \"${GITHUB_REF_NAME#v}\"\n",
 			want:   "release workflow promotes from CI",
 		},
+		// The authorize job downloads first and the publish job last, so the two cases
+		// mutate opposite ends of the same repeated block.
+		{
+			name:   "authorize job downloads below the archive root",
+			broken: replaceOccurrence(workflow, releaseArtifactDownload, staleReleaseArtifactDownload, 0),
+			want:   "release workflow authorize job does not download the artifacts at their archive root",
+			cheat:  releaseArtifactDownload,
+		},
+		{
+			name:   "publish job downloads below the archive root",
+			broken: replaceOccurrence(workflow, releaseArtifactDownload, staleReleaseArtifactDownload, 1),
+			want:   "release workflow publish job does not download the artifacts at their archive root",
+			cheat:  releaseArtifactDownload,
+		},
 	} {
 		t.Run(bite.name, func(t *testing.T) {
 			if bite.cheat != "" && !strings.Contains(bite.broken, bite.cheat) {
@@ -276,72 +418,140 @@ func TestNativeWorkflowEvidenceEdgeBites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	workflow, err := os.ReadFile(filepath.Join(kit, ".github", "workflows", "native-runtime.yml"))
+	workflowBytes, err := os.ReadFile(filepath.Join(kit, ".github", "workflows", "native-runtime.yml"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	broken := strings.Replace(string(workflow), "needs: [preflight, artifacts, evidence]", "needs: [preflight, artifacts]", 1)
-	if broken == string(workflow) {
-		t.Fatal("native workflow mutation did not remove the evidence edge")
-	}
+	workflow := string(workflowBytes)
 	path := filepath.Join(root, ".github", "workflows", "native-runtime.yml")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+	diagnose := func(t *testing.T, broken string) string {
+		t.Helper()
+		if broken == workflow {
+			t.Fatal("native workflow mutation changed nothing")
+		}
+		if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return strings.Join(checkNativeRuntimeWorkflow(root), "\n")
+	}
+	const (
+		artifactsBuild      = "      - name: Build the artifact generation\n        run: bash scripts/build-artifacts.sh . dist/artifacts\n"
+		proofRun            = "      - run: bash scripts/native-proof.sh dist/artifacts "
+		evidenceFinalize    = "      - name: Finalize the release evidence\n        run: |\n"
+		secondSourceClone   = "          git clone --quiet --no-hardlinks . \"$RUNNER_TEMP/bench-second-source\"\n"
+		artifactsUploadTail = "            dist/reproducibility.json\n          retention-days: ${{ github.retention_days }}\n"
+		secondUpload        = "      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4\n        with:\n          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts-second\n          path: dist/artifacts\n"
+	)
+	staleDownload := nativeArtifactName + "          path: dist/artifacts\n"
+	for _, bite := range []struct{ name, broken, want string }{
+		{
+			name:   "smoke loses its evidence edge",
+			broken: strings.Replace(workflow, "needs: [preflight, artifacts, evidence]", "needs: [preflight, artifacts]", 1),
+			want:   "native verification does not run smoke from finalized evidence",
+		},
+		{
+			name:   "artifact construction bypasses preflight authorization",
+			broken: strings.Replace(workflow, "needs: preflight", "needs: []", 1),
+			want:   "native artifact construction or upload bypasses preflight authorization",
+		},
+		{
+			name:   "gate step loses the capability flag",
+			broken: strings.Replace(workflow, "\n        env:\n          BENCH_REQUIRE_CAPABILITIES: '1'\n", "\n", 1),
+			want:   "native verification does not require capabilities on the gate step",
+		},
+		{
+			name:   "proof matrix reads the shipped targets",
+			broken: strings.Replace(workflow, "outputs.proven)", "outputs.matrix)", 1),
+			want:   "native proof matrix does not read the proven targets",
+		},
+		{
+			name:   "smoke matrix reads the proven targets",
+			broken: strings.Replace(workflow, "outputs.matrix)", "outputs.proven)", 1),
+			want:   "native smoke matrix does not read the shipped targets",
+		},
+		// The producer side carries its own three reds. A swapped command and a dropped
+		// output are both gate-green and run-broken without them.
+		{
+			name:   "the proof matrix step produces the shipped rows",
+			broken: strings.Replace(workflow, ". proof-matrix-json", ". matrix-json", 1),
+			want:   "native verification preflight proven matrix output does not derive from proof-matrix-json",
+		},
+		{
+			name:   "the shipped matrix step produces the proven rows",
+			broken: strings.Replace(workflow, ". matrix-json", ". proof-matrix-json", 1),
+			want:   "native verification preflight shipped matrix output does not derive from matrix-json",
+		},
+		{
+			name:   "the preflight drops the proven output",
+			broken: strings.Replace(workflow, "      proven: ${{ steps.proof-matrix.outputs.rows }}\n", "", 1),
+			want:   "native verification preflight does not publish the proven matrix output",
+		},
+		{
+			name:   "the reproducibility record leaves the upload",
+			broken: strings.Replace(workflow, "            dist/reproducibility.json\n", "", 1),
+			want:   "native verification does not hand reproducibility records to evidence finalization",
+		},
+		// The three consuming jobs carry byte-identical download steps in source order:
+		// native-proof, then evidence, then smoke. Each case mutates one of them, and
+		// the job-named diagnostic proves the mutation reached the job it claims.
+		{
+			name:   "native-proof downloads below the archive root",
+			broken: replaceOccurrence(workflow, nativeArtifactDownload, staleDownload, 0),
+			want:   "native native-proof job does not download the artifact upload at its archive root",
+		},
+		{
+			name:   "evidence downloads below the archive root",
+			broken: replaceOccurrence(workflow, nativeArtifactDownload, staleDownload, 1),
+			want:   "native evidence job does not download the artifact upload at its archive root",
+		},
+		{
+			name:   "smoke downloads below the archive root",
+			broken: replaceOccurrence(workflow, nativeArtifactDownload, staleDownload, 2),
+			want:   "native smoke job does not download the artifact upload at its archive root",
+		},
+		{
+			name:   "a second source returns to artifact construction",
+			broken: strings.Replace(workflow, artifactsBuild, "      - name: Build the artifact generation\n        run: |\n"+secondSourceClone+"          bash scripts/build-artifacts.sh . dist/artifacts\n", 1),
+			want:   "native artifacts job rebuilds a second source generation",
+		},
+		{
+			name:   "a second source returns to the native proof",
+			broken: strings.Replace(workflow, proofRun, "      - run: git clone --quiet --no-hardlinks . \"$RUNNER_TEMP/bench-second-source\"\n"+proofRun, 1),
+			want:   "native native-proof job rebuilds a second source generation",
+		},
+		{
+			name:   "a second source returns to evidence finalization",
+			broken: strings.Replace(workflow, evidenceFinalize, evidenceFinalize+secondSourceClone, 1),
+			want:   "native evidence job rebuilds a second source generation",
+		},
+		{
+			name:   "artifact construction publishes a second upload",
+			broken: strings.Replace(workflow, artifactsUploadTail, artifactsUploadTail+secondUpload, 1),
+			want:   "native artifact construction does not publish exactly one upload",
+		},
+	} {
+		t.Run(bite.name, func(t *testing.T) {
+			if diagnostics := diagnose(t, bite.broken); !strings.Contains(diagnostics, bite.want) {
+				t.Fatalf("mutation did not bite with %q:\n%s", bite.want, diagnostics)
+			}
+		})
+	}
+	// The retired record leaves the whole tree, not one job, so its sweep takes a
+	// restored reference in a source file rather than a workflow mutation.
+	if err := os.WriteFile(path, workflowBytes, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not run smoke from finalized evidence") {
-		t.Fatalf("removed evidence edge did not bite:\n%s", diagnostics)
-	}
-	broken = strings.Replace(string(workflow), "needs: preflight", "needs: []", 1)
-	if broken == string(workflow) {
-		t.Fatal("native workflow mutation did not bypass preflight authorization")
-	}
-	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+	stale := filepath.Join(root, "docs", "release-runbook.md")
+	if err := os.MkdirAll(filepath.Dir(stale), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native artifact construction or upload bypasses preflight authorization") {
-		t.Fatalf("bypassed preflight authorization did not bite:\n%s", diagnostics)
-	}
-	broken = strings.Replace(string(workflow), "\n        env:\n          BENCH_REQUIRE_CAPABILITIES: '1'\n", "\n", 1)
-	if broken == string(workflow) {
-		t.Fatal("native workflow mutation did not strip the capability flag from the gate step")
-	}
-	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+	if err := os.WriteFile(stale, []byte("The evidence job writes dist/"+retiredReproducibilityRecord+".\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not require capabilities on the gate step") {
-		t.Fatalf("gate step detached from the capability flag did not bite:\n%s", diagnostics)
-	}
-	broken = strings.Replace(string(workflow), ` "$second_source/dist/preflight"`, "", 1)
-	if broken == string(workflow) {
-		t.Fatal("native workflow mutation did not remove the second finalized-evidence operand")
-	}
-	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not compare independently finalized evidence") {
-		t.Fatalf("removed finalized-evidence comparison did not bite:\n%s", diagnostics)
-	}
-	broken = strings.Replace(string(workflow), "path: dist/reproducibility.json", "path: dist/wrong-reproducibility.json", 1)
-	if broken == string(workflow) {
-		t.Fatal("native workflow mutation did not break reproducibility upload path")
-	}
-	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not hand reproducibility records to evidence finalization") {
-		t.Fatalf("broken reproducibility upload path did not bite:\n%s", diagnostics)
-	}
-	broken = strings.Replace(string(workflow), "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-first\n          path: dist\n      - uses: actions/download-artifact@", "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-first\n          path: wrong-dist\n      - uses: actions/download-artifact@", 1)
-	if broken == string(workflow) {
-		t.Fatal("native workflow mutation did not break reproducibility download path")
-	}
-	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not hand reproducibility records to evidence finalization") {
-		t.Fatalf("broken reproducibility download path did not bite:\n%s", diagnostics)
+	if diagnostics := strings.Join(checkRetiredReproducibilityRecord(root), "\n"); !strings.Contains(diagnostics, "retired cross-checkout reproducibility record is still named by docs/release-runbook.md") {
+		t.Fatalf("restored reproducibility record reference did not bite:\n%s", diagnostics)
 	}
 }

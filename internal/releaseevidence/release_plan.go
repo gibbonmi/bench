@@ -6,9 +6,30 @@ import (
 	"path/filepath"
 )
 
+// planTarget is one release-plan target row. It carries the evidence fields the
+// release index publishes plus native_proof, which states whether the target
+// runs a native proof. The field stays out of targetEvidence so the index shape
+// does not change.
+type planTarget struct {
+	targetEvidence
+	NativeProof bool `json:"native_proof"`
+}
+
+// provenTargets returns the plan targets that carry a native proof. Every proof
+// count derives from this filter, so the proven-target fact has one reader.
+func provenTargets(targets []planTarget) []planTarget {
+	proven := make([]planTarget, 0, len(targets))
+	for _, target := range targets {
+		if target.NativeProof {
+			proven = append(proven, target)
+		}
+	}
+	return proven
+}
+
 type releasePlan struct {
 	SchemaVersion  int              `json:"schema_version"`
-	Targets        []targetEvidence `json:"targets"`
+	Targets        []planTarget     `json:"targets"`
 	ArchiveEntries []map[string]any `json:"archive_entries"`
 }
 
