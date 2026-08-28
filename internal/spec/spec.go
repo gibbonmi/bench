@@ -379,36 +379,134 @@ func retireCommand(rest []string) (string, int) {
 		return toon.Errorf("spec implemented in the working tree but not at HEAD: "+RelTo(base, resolved),
 			"commit the finishing flip before retiring") + "\n", 1
 	}
+	plan := retirementPlan(base, resolved)
+	if blocked := blockedRemovalTargets(base, plan); len(blocked) > 0 {
+		return toon.Errorf("retirement plan is not writable: "+strings.Join(blocked, ", "), "check file permissions") + "\n", 1
+	}
 	// Deletion order leaves each recoverable interrupt state with a spec file, never an
 	// orphaned review pickup. Once the spec file is gone, remaining folder content is terminal.
 	var b strings.Builder
 	slug := slugOf(resolved)
-	if pickup := filepath.Join(base, "reviews", slug+".md"); fileExists(pickup) {
-		if err := os.Remove(pickup); err != nil {
-			return toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, pickup), err), "check file permissions") + "\n", 1
+	for _, target := range plan {
+		if err := target.remove(); err != nil {
+			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, target.path), err), "check file permissions") + "\n", 1
 		}
-		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, pickup))
-	}
-	if filepath.Base(resolved) == "spec.md" {
-		folder := filepath.Dir(resolved)
-		if err := os.RemoveAll(filepath.Join(folder, "tickets")); err != nil {
-			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, filepath.Join(folder, "tickets")), err), "check file permissions") + "\n", 1
+		switch target.path {
+		case filepath.Join(base, "reviews", slug+".md"):
+			fmt.Fprintf(&b, "retired: %s\n", RelTo(base, target.path))
+		case filepath.Dir(resolved):
+			fmt.Fprintf(&b, "retired: %s\n", RelTo(base, target.path))
+		case resolved:
+			if filepath.Base(resolved) != "spec.md" {
+				fmt.Fprintf(&b, "retired: %s\n", RelTo(base, target.path))
+			}
 		}
-		if err := os.Remove(resolved); err != nil {
-			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, resolved), err), "check file permissions") + "\n", 1
-		}
-		if err := os.RemoveAll(folder); err != nil {
-			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, folder), err), "check file permissions") + "\n", 1
-		}
-		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, folder))
-	} else if err := os.Remove(resolved); err != nil {
-		return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, resolved), err), "check file permissions") + "\n", 1
-	} else {
-		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, resolved))
 	}
 	_, roadmapID := metadata(content)
 	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row%s, commit as `spec-retire: %s`\n", roadmapRemainder(base, roadmapID), slug)
 	return b.String(), 0
+}
+
+// removalTarget is one planned filesystem removal. The plan is shared by the
+// writability preflight and the apply loop so no target can be deleted without first
+// being checked.
+type removalTarget struct {
+	path      string
+	recursive bool
+}
+
+func (target removalTarget) remove() error {
+	if target.recursive {
+		return os.RemoveAll(target.path)
+	}
+	return os.Remove(target.path)
+}
+
+// retirementPlan resolves every target before the first removal. A folder spec's
+// tickets, spec file, and folder are distinct planned removals because each has its
+// own filesystem permission boundary.
+func retirementPlan(base, resolved string) []removalTarget {
+	plan := []removalTarget{}
+	slug := slugOf(resolved)
+	if pickup := filepath.Join(base, "reviews", slug+".md"); fileExists(pickup) {
+		plan = append(plan, removalTarget{path: pickup})
+	}
+	if filepath.Base(resolved) != "spec.md" {
+		return append(plan, removalTarget{path: resolved})
+	}
+	folder := filepath.Dir(resolved)
+	return append(plan,
+		removalTarget{path: filepath.Join(folder, "tickets"), recursive: true},
+		removalTarget{path: resolved},
+		removalTarget{path: folder, recursive: true},
+	)
+}
+
+// blockedRemovalTargets probes each target's parent with a temporary file. Deletion
+// permission belongs to the parent directory, so this establishes the same local
+// write capability without touching a planned target. Recursive targets additionally
+// probe every real descendant directory because RemoveAll deletes entries there. The
+// returned rendering is sorted to keep a refusal stable even when apply order differs.
+func blockedRemovalTargets(base string, plan []removalTarget) []string {
+	blocked := []string{}
+	for _, target := range plan {
+		err := writableDirectory(filepath.Dir(target.path))
+		if err == nil && target.recursive {
+			err = writableRemovalTree(target.path)
+		}
+		if err != nil {
+			blocked = append(blocked, RelTo(base, target.path))
+		}
+	}
+	sort.Strings(blocked)
+	return blocked
+}
+
+// writableDirectory confirms that entries can be created and removed in dir without
+// retaining a filesystem change. That is the capability a removal in dir requires.
+func writableDirectory(dir string) error {
+	probe, err := os.CreateTemp(dir, ".bench-retire-preflight-")
+	if err != nil {
+		return err
+	}
+	if err := probe.Close(); err != nil {
+		_ = os.Remove(probe.Name())
+		return err
+	}
+	return os.Remove(probe.Name())
+}
+
+// writableRemovalTree checks the directories RemoveAll will empty. Lstat keeps a
+// symlink as a leaf: preflight never follows it into a directory outside the plan.
+func writableRemovalTree(path string) error {
+	info, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return err
+	}
+	if err := writableDirectory(path); err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		child := filepath.Join(path, entry.Name())
+		info, err := os.Lstat(child)
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+			continue
+		}
+		if err := writableRemovalTree(child); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // roadmapRe matches a well-formed Roadmap: value: `FT` followed by one or more ASCII
