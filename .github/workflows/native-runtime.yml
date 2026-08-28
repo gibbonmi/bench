@@ -87,7 +87,7 @@ jobs:
       - run: bash scripts/native-proof.sh dist/artifacts "dist/native-proofs/${{ matrix.os }}-${{ matrix.arch }}.json" "${{ matrix.os }}" "${{ matrix.arch }}" "${{ matrix.runner }}"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-first-${{ matrix.os }}-${{ matrix.arch }}
+          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/native-proofs/
           retention-days: ${{ github.retention_days }}
 
@@ -110,7 +110,7 @@ jobs:
           path: dist
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          pattern: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-first-*
+          pattern: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-*
           path: dist/native-proofs
           merge-multiple: true
       # The offline smoke runs its native journeys under bwrap --unshare-net. Ubuntu
