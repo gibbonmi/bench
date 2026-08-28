@@ -1,6 +1,6 @@
 # Prospective artifact recovery
 
-Status: staged
+Status: implemented
 
 Roadmap: FT251
 

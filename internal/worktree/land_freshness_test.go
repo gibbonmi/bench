@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	"github.com/gibbonmi/bench/internal/landing"
 )
 
@@ -170,8 +171,8 @@ func redProspectiveGateLanding(t *testing.T, request string) (root string, creat
 	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally, home
 }
 
-// temporaryProspectiveArtifacts lists the private prospective checkouts and gate
-// executables left under dir. Both are the landing's own temporary storage, so after a
+// temporaryProspectiveArtifacts lists the private prospective bundles and gate
+// executables left under dir. They are the landing's own temporary storage, so after a
 // landing settles either way none may remain.
 func temporaryProspectiveArtifacts(t *testing.T, dir string) []string {
 	t.Helper()
@@ -181,7 +182,7 @@ func temporaryProspectiveArtifacts(t *testing.T, dir string) []string {
 	}
 	var residue []string
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), "bench-gate-subject-") || strings.HasPrefix(entry.Name(), "bench-run-") {
+		if strings.HasPrefix(entry.Name(), prospectiveartifact.BundlePrefix) || strings.HasPrefix(entry.Name(), "bench-run-") {
 			residue = append(residue, entry.Name())
 		}
 	}

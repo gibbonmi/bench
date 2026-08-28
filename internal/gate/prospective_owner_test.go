@@ -4,13 +4,18 @@
 package gate
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
+	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -46,7 +51,7 @@ func TestProspectiveGateAuthorsItsExecutableFromTheGradedTree(t *testing.T) {
 	}
 	t.Setenv(runbinary.Env, inherited)
 	sources := stubProspectiveBuilder(t)
-	owner := prospectiveRunBinaryOwner(checkout)
+	owner := prospectiveRunBinaryOwnerAt(checkout, "")
 
 	graded, err := owner(t.Context(), checkout)
 	if err != nil {
@@ -73,6 +78,48 @@ func TestProspectiveGateAuthorsItsExecutableFromTheGradedTree(t *testing.T) {
 	}
 	if len(*sources) != 1 || baseline.Path != inherited {
 		t.Fatalf("baseline selection = %q with sources %#v, want the inherited %q", baseline.Path, *sources, inherited)
+	}
+}
+
+// TestProspectiveGateConfinesABaselineKitBinaryToTheBundle is the confinement half of the
+// bundle layout: the bundle root contains every run binary the owner authors. A candidate
+// that carries no inherited selection authors from the baseline kit, so that branch owns
+// bytes the bundle must be able to remove. An inherited selection is another owner's
+// bytes and stays outside.
+func TestProspectiveGateConfinesABaselineKitBinaryToTheBundle(t *testing.T) {
+	checkout := t.TempDir()
+	kit := t.TempDir()
+	artifactRoot := t.TempDir()
+	if raw, present := os.LookupEnv(runbinary.Env); present {
+		t.Setenv(runbinary.Env, raw)
+		if err := os.Unsetenv(runbinary.Env); err != nil {
+			t.Fatal(err)
+		}
+	}
+	sources := stubProspectiveBuilder(t)
+
+	authored, err := prospectiveRunBinaryOwnerAt(checkout, artifactRoot)(t.Context(), kit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(*sources) != 1 || (*sources)[0] != kit {
+		t.Fatalf("baseline-kit sources = %#v, want one selection built from %q", *sources, kit)
+	}
+	if !strings.HasPrefix(authored.Path, artifactRoot+string(filepath.Separator)) {
+		t.Fatalf("authored baseline-kit selection = %q, want a path under the bundle root %q", authored.Path, artifactRoot)
+	}
+
+	inherited := filepath.Join(t.TempDir(), "bench")
+	if err := os.WriteFile(inherited, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(runbinary.Env, inherited)
+	baseline, err := prospectiveRunBinaryOwnerAt(checkout, artifactRoot)(t.Context(), kit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(*sources) != 1 || baseline.Path != inherited {
+		t.Fatalf("inherited selection = %q with sources %#v, want the inherited %q", baseline.Path, *sources, inherited)
 	}
 }
 
@@ -180,7 +227,7 @@ func TestProspectiveGateReportsAFailedBuildWithNoResidue(t *testing.T) {
 	}
 	t.Cleanup(func() { prospectiveRunBinary = old })
 
-	selection, err := prospectiveRunBinaryOwner(checkout)(t.Context(), checkout)
+	selection, err := prospectiveRunBinaryOwnerAt(checkout, "")(t.Context(), checkout)
 	if err == nil || selection != nil {
 		t.Fatalf("failed prospective build = (%#v, %v), want no selection and an error", selection, err)
 	}
@@ -193,5 +240,195 @@ func TestProspectiveGateReportsAFailedBuildWithNoResidue(t *testing.T) {
 	}
 	if len(entries) != 0 {
 		t.Fatalf("failed prospective build left %d entries under its temporary root", len(entries))
+	}
+}
+
+func TestTimedOutProspectiveProducerLeavesNoBundle(t *testing.T) {
+	root, tree, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nset -eu\nwhile :; do sleep 1; done\n")
+	oldTimeout := gateTimeout
+	gateTimeout = 100 * time.Millisecond
+	t.Cleanup(func() { gateTimeout = oldTimeout })
+
+	var stdout, stderr bytes.Buffer
+	result := executeTreeWithOwner(context.Background(), root, tree, &stdout, &stderr, inertProspectiveSelection)
+	if result.ActionExit != 124 {
+		t.Fatalf("timed-out prospective result = %#v, stderr=%q", result, stderr.String())
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+func TestCancelledProspectiveProducerLeavesNoBundle(t *testing.T) {
+	root, tree, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nset -eu\nprintf ready > \"$PAR_READY\"\nwhile :; do sleep 1; done\n")
+	ready := filepath.Join(t.TempDir(), "ready")
+	t.Setenv("PAR_READY", ready)
+	writeGateFixtureFile(t, root, ".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[\"HOME\",\"PAR_READY\"],\"paths\":[],\"tools\":[]}\n", 0o644)
+	outcomeCommit(t, root, "declare cancellation barrier")
+	tree = outcomeGit(t, root, "write-tree")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	result := make(chan Result, 1)
+	go func() {
+		result <- executeTreeWithOwner(ctx, root, tree, &bytes.Buffer{}, &bytes.Buffer{}, inertProspectiveSelection)
+	}()
+	waitForProspectiveBarrier(t, ready, result)
+	cancel()
+	select {
+	case got := <-result:
+		if got.ActionExit == 0 {
+			t.Fatalf("cancelled prospective result = %#v, want refusal", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("cancelled prospective producer did not return")
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+func TestProspectiveBuildRefusalLeavesNoBundle(t *testing.T) {
+	root, _, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nexit 0\n")
+	writeGateFixtureFile(t, root, "go.mod", "module prospectivefixture\n\ngo 1.24\n", 0o644)
+	writeGateFixtureFile(t, root, "scripts/go-build.sh", "#!/bin/sh\nexit 0\n", 0o755)
+	writeGateFixtureFile(t, root, "scripts/go-build.inputs", "build_script=scripts/go-build.sh\n", 0o644)
+	outcomeCommit(t, root, "declare prospective build")
+	tree := outcomeGit(t, root, "write-tree")
+	old := prospectiveRunBinary
+	prospectiveRunBinary = runbinary.Factory{
+		Build:  func(context.Context, string, string) error { return errors.New("build refused") },
+		Verify: func(string, string) error { return nil },
+	}
+	t.Cleanup(func() { prospectiveRunBinary = old })
+
+	var stderr bytes.Buffer
+	result := executeTreeWithOwner(context.Background(), root, tree, &bytes.Buffer{}, &stderr, nil)
+	if result.ActionExit == 0 || !strings.Contains(stderr.String(), "gate Bench executable unavailable") {
+		t.Fatalf("build-refused prospective result = %#v, stderr=%q", result, stderr.String())
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+func TestProspectiveBundleCloseRetainsInheritedBaselineBinary(t *testing.T) {
+	root, tree, tempRoot := prospectiveProducerFixture(t, "")
+	baseline := filepath.Join(t.TempDir(), "baseline-bench")
+	if err := os.WriteFile(baseline, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(runbinary.Env, baseline)
+	old := prospectiveRunBinary
+	prospectiveRunBinary = runbinary.Factory{Verify: func(string, string) error { return nil }}
+	t.Cleanup(func() { prospectiveRunBinary = old })
+
+	var stderr bytes.Buffer
+	result := executeTreeWithOwner(context.Background(), root, tree, &bytes.Buffer{}, &stderr, nil)
+	if result.ActionExit != 0 {
+		t.Fatalf("inherited-binary prospective result = %#v, stderr=%q", result, stderr.String())
+	}
+	if data, err := os.ReadFile(baseline); err != nil || string(data) != "#!/bin/sh\nexit 0\n" {
+		t.Fatalf("inherited baseline binary = %q, %v, want retained", data, err)
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+func prospectiveProducerFixture(t *testing.T, prospectiveScript string) (string, string, string) {
+	t.Helper()
+	root := gittest.RepoOnBranch(t, "main")
+	tempRoot := t.TempDir()
+	t.Setenv("TMPDIR", tempRoot)
+	writeGateFixtureFile(t, root, ".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[\"HOME\"],\"paths\":[],\"tools\":[]}\n", 0o644)
+	writeGateFixtureFile(t, root, ".bench/gate.sh", "#!/bin/sh\nset -eu\nbench=${BENCH_RUN_BINARY:?}\nif false; then \"$bench\" gate-phases; fi\nexit 0\n", 0o755)
+	if prospectiveScript != "" {
+		writeGateFixtureFile(t, root, prospectiveGatePath, prospectiveScript, 0o755)
+	}
+	writeGateFixtureFile(t, root, "tracked.txt", "prospective fixture\n", 0o644)
+	outcomeCommit(t, root, "prospective producer fixture")
+	return root, outcomeGit(t, root, "write-tree"), tempRoot
+}
+
+func inertProspectiveSelection(_ context.Context, source string) (*runbinary.Selection, error) {
+	return &runbinary.Selection{Path: "/bin/true", SourceRoot: source}, nil
+}
+
+func waitForProspectiveBarrier(t *testing.T, path string, result <-chan Result) {
+	t.Helper()
+	deadline := time.NewTimer(5 * time.Second)
+	defer deadline.Stop()
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case got := <-result:
+			t.Fatalf("prospective producer returned before cancellation barrier: %#v", got)
+		case <-deadline.C:
+			t.Fatal("prospective producer did not reach cancellation barrier")
+		case <-ticker.C:
+			if data, err := os.ReadFile(path); err == nil && string(data) == "ready" {
+				return
+			}
+		}
+	}
+}
+
+func requireNoProspectiveBundles(t *testing.T, tempRoot string) {
+	t.Helper()
+	entries, err := os.ReadDir(tempRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), prospectiveartifact.BundlePrefix) {
+			t.Fatalf("prospective bundle %q survived terminal outcome", entry.Name())
+		}
+	}
+}
+
+// TestEvidenceInspectionPublishesTheOwnerRecord is PAR29. Evidence inspection creates a
+// private checkout of its own, so it publishes the same owner record every other producer
+// publishes.
+func TestEvidenceInspectionPublishesTheOwnerRecord(t *testing.T) {
+	root, tree, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nexit 0\n")
+	snapshot := observeProspectiveOwnerRecord(t, root)
+
+	if inspection := InspectTree(root, tree); inspection.Tree != tree {
+		t.Fatalf("inspection = %#v, want the graded tree %q", inspection, tree)
+	}
+	requireProspectiveOwnerRecord(t, snapshot, root)
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+// observeProspectiveOwnerRecord returns the path a copy of the next prospective owner
+// record appears at. Git runs a post-checkout hook inside the private checkout while the
+// bundle is still open, which is the one point a producer's caller reaches a record the
+// producer removes before it returns. The hook copies nothing when the record is absent
+// or is not a regular file, so the absent copy is itself the refusal.
+func observeProspectiveOwnerRecord(t *testing.T, root string) string {
+	t.Helper()
+	common, err := benchgit.CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot := filepath.Join(t.TempDir(), "published-owner-record")
+	hook := "#!/bin/sh\nrecord=\"$PWD/../" + prospectiveartifact.RecordName + "\"\nif [ -h \"$record\" ] || [ ! -f \"$record\" ]; then exit 0; fi\ncp -p \"$record\" \"" + snapshot + "\"\n"
+	writeGateFixtureFile(t, common, filepath.Join("hooks", "post-checkout"), hook, 0o755)
+	return snapshot
+}
+
+// requireProspectiveOwnerRecord grades one observed record against the published shape,
+// which the owner module is the source of, and against this process and this repository.
+// Every producer row asks for exactly this shape.
+func requireProspectiveOwnerRecord(t *testing.T, snapshot, root string) {
+	t.Helper()
+	record, err := prospectiveartifact.ReadPublished(snapshot)
+	if err != nil {
+		t.Fatalf("published owner record: %v", err)
+	}
+	common, err := prospectiveartifact.CanonicalCommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := prospectiveartifact.Record{
+		Schema:    prospectiveartifact.RecordSchema,
+		OwnerPID:  os.Getpid(),
+		CommonDir: common,
+	}
+	if record != want {
+		t.Fatalf("published owner record = %#v, want %#v", record, want)
 	}
 }

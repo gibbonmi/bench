@@ -18,17 +18,23 @@ const prospectiveGatePath = ".bench/gate-prospective.sh"
 // production code.
 var prospectiveRunBinary = runbinary.Factory{}
 
-// prospectiveRunBinaryOwner selects the executable the prospective gate runs under.
+// prospectiveRunBinaryOwnerAt selects the executable the prospective gate runs under.
 // When the run binary's source is the graded checkout, the gate authors a private
 // executable from that exact tree: an inherited selection was built from another tree
 // and would record a source digest the graded subject never produced. Any other source
 // is the baseline's own kit, whose inherited selection is already the baseline runner.
-func prospectiveRunBinaryOwner(checkout string) runBinaryOwner {
+// Every executable the gate authors is written inside artifactRoot, so the bundle owns
+// it; an inherited selection is another owner's bytes and stays where that owner put it.
+func prospectiveRunBinaryOwnerAt(checkout, artifactRoot string) runBinaryOwner {
 	return func(ctx context.Context, source string) (*runbinary.Selection, error) {
-		if sameDirectory(source, checkout) {
-			return prospectiveRunBinary.Own(ctx, source)
+		factory := prospectiveRunBinary
+		if artifactRoot != "" {
+			factory.TempRoot = artifactRoot
 		}
-		return prospectiveRunBinary.ReuseOrOwn(ctx, source)
+		if sameDirectory(source, checkout) {
+			return factory.Own(ctx, source)
+		}
+		return factory.ReuseOrOwn(ctx, source)
 	}
 }
 
