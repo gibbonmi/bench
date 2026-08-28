@@ -30,8 +30,8 @@ the landing.
 
 ### Group A — resolved consumer queries
 
-Line: opus / medium. A new package's algorithm at a new seam takes the mid
-tier per the scorecard routing.
+Line: opus / low. The reviewer's 2026-08-28 routing starts every charge at
+opus low.
 
 1. As an agent, I want `bench consumers <symbol>` to list every reference to
    a resolved Go symbol, so that a universal consumer claim cites an
@@ -73,8 +73,8 @@ tier per the scorecard routing.
 
 ### Group B — blast mode
 
-Line: opus / medium. The mode composes the resolver with the existing diff
-and revision seams.
+Line: opus / low. The reviewer's 2026-08-28 routing starts every charge at
+opus low.
 
 16. As a reviewer, I want `bench consumers --changed --base <b> --source-tip <t>`
     to enumerate consumers of every touched symbol, so that review walks the
@@ -107,9 +107,8 @@ Line: opus / low. The change extends a known package under existing tests.
 
 ### Group D — advertisement and review wiring
 
-Line: opus / medium. The delegate cap holds every subagent at opus low or
-medium (reviewer direction, 2026-08-26). The profile's mid-plus-high doc
-line is flagged below for reviewer veto as a tree contradiction.
+Line: opus / low. The reviewer's 2026-08-28 routing starts every charge at
+opus low.
 
 27. As a reviewer, I want `/bench-review-implementation` to run the blast
     enumeration and walk it, so that unlisted consumers stop slipping
@@ -333,7 +332,8 @@ blessing, and outline keeps LOCATE. The `testdata/` rule never reaches
 `tests/canary/`, because no canary file sits under a `testdata/` segment,
 and `bench canary` keeps that inventory.
 
-Flagged for reviewer veto: the
-profile's doc-authoring line still says mid model at high effort. The
-2026-08-26 delegate cap holds subagents at opus medium, and this spec
-follows the cap.
+Build routing (reviewer, 2026-08-28): every ticket charge starts at opus
+low. A charge that fails or stalls at that line re-charges once at fable
+low. The reviewer pre-approved this top-row escalation for this spec, so it
+needs no pause. No other rung exists. This routing supersedes the profile's
+doc-authoring effort line for this build.
