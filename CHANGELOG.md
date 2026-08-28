@@ -235,6 +235,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 - `/bench-implement-spec` now creates or retains its integration worktree before
   running build preflight, so earlier local `main` commits cannot contaminate the
   spec-owned changed-path check.
+- A prospective gate, evidence inspection, or fast lane that is killed before its
+  cleanup no longer leaves its private checkout, its Git registration, or its
+  authored executable behind. The next prospective operation on that repository
+  removes the dead owner's bundle before it creates its own, and retains every
+  live, invalid, or foreign entry.
 
 ### Removed
 

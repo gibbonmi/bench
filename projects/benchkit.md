@@ -281,6 +281,12 @@ coverage map; a class skipped here returns as a regression.
   region must decide where the region ends. Name that decision and assert it. A
   parser that swallows the rest of the file grades nothing after the opening
   marker
+- a temporary root whose path carries a symbolic-link component, as macOS gives
+  with `/var` linked to `/private/var`. Git registers the resolved spelling of a
+  worktree, so a comparison of an unresolved root against `git worktree list`
+  never matches. A filesystem-only cleanup then removes the directory and leaves
+  the registration forever. Resolve the root the way the registrar resolves it,
+  and assert against the registrar's own output
 
 Known residual risk: `bench setup`'s real-TTY confirm wiring is one untested
 constructor line binding stdin. Testing it needs a pty dependency, which is a
