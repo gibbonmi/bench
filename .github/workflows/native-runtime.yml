@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.matrix.outputs.rows }}
+      proven: ${{ steps.proof-matrix.outputs.rows }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
@@ -32,6 +33,8 @@ jobs:
           node-version: '22'
       - id: matrix
         run: node scripts/release-plan.mjs . matrix-json | node -e 'let data="";process.stdin.on("data",chunk=>data+=chunk);process.stdin.on("end",()=>require("fs").appendFileSync(process.env.GITHUB_OUTPUT,`rows=${data.trim()}\n`))'
+      - id: proof-matrix
+        run: node scripts/release-plan.mjs . proof-matrix-json | node -e 'let data="";process.stdin.on("data",chunk=>data+=chunk);process.stdin.on("end",()=>require("fs").appendFileSync(process.env.GITHUB_OUTPUT,`rows=${data.trim()}\n`))'
       - run: bash scripts/release-preflight.sh --mode verify --phase gate
         env:
           BENCH_REQUIRE_CAPABILITIES: '1'
@@ -80,7 +83,7 @@ jobs:
     needs: [preflight, artifacts]
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.preflight.outputs.proven) }}
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4

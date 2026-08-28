@@ -103,8 +103,18 @@ func checkNativeRuntimeWorkflow(root string) []string {
 			break
 		}
 	}
-	if job := workflowJob(text, "smoke"); !strings.Contains(job, "needs: [preflight, artifacts, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
+	smoke := workflowJob(text, "smoke")
+	if !strings.Contains(smoke, "needs: [preflight, artifacts, evidence]") || !strings.Contains(smoke, "preflight-evidence") || !strings.Contains(smoke, "scripts/smoke-artifacts.sh") {
 		diags = append(diags, "native verification does not run smoke from finalized evidence")
+	}
+	// Shipped targets and proven targets are separate facts. The proof job reads the
+	// proven view, so an unproven target starts no runner; smoke keeps the shipped
+	// view, so every shipped binary still executes on its own operating system.
+	if !strings.Contains(workflowJob(text, "native-proof"), "matrix: ${{ fromJSON(needs.preflight.outputs.proven) }}") {
+		diags = append(diags, "native proof matrix does not read the proven targets")
+	}
+	if !strings.Contains(smoke, "matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}") {
+		diags = append(diags, "native smoke matrix does not read the shipped targets")
 	}
 	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" && !strings.Contains(proof, "docker run --rm --network none") {
 		diags = append(diags, "native proof does not isolate the Linux non-glibc execution")
@@ -323,6 +333,26 @@ func TestNativeWorkflowEvidenceEdgeBites(t *testing.T) {
 	}
 	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not compare independently finalized evidence") {
 		t.Fatalf("removed finalized-evidence comparison did not bite:\n%s", diagnostics)
+	}
+	broken = strings.Replace(string(workflow), "outputs.proven)", "outputs.matrix)", 1)
+	if broken == string(workflow) {
+		t.Fatal("native workflow mutation did not point the proof matrix at the shipped targets")
+	}
+	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native proof matrix does not read the proven targets") {
+		t.Fatalf("proof matrix on the shipped targets did not bite:\n%s", diagnostics)
+	}
+	broken = strings.Replace(string(workflow), "outputs.matrix)", "outputs.proven)", 1)
+	if broken == string(workflow) {
+		t.Fatal("native workflow mutation did not point the smoke matrix at the proven targets")
+	}
+	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native smoke matrix does not read the shipped targets") {
+		t.Fatalf("smoke matrix on the proven targets did not bite:\n%s", diagnostics)
 	}
 	broken = strings.Replace(string(workflow), "path: dist/reproducibility.json", "path: dist/wrong-reproducibility.json", 1)
 	if broken == string(workflow) {
