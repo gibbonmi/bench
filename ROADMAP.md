@@ -25,7 +25,7 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT252 (MEDIUM) — a Bench verb moves a retained worktree, or a sibling assignment, onto a new base.**
+**FT252 (MEDIUM) — a Bench verb moves a retained worktree, or a sibling assignment, onto a new base, and folds a sibling's diff into it.**
 
 **FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
 
@@ -104,6 +104,18 @@ means the repository-controlled compliance assessment.
 **FT260 (LOW, decision required) — coordinator worktree diff inspection needs a scoped native path.**
 
 **FT262 (LOW) — preflight reports uncited coverage rows while a ticket breakdown is in progress.**
+
+**FT267 (LOW) — `scripts/verify-release-artifact.mjs` has a gate-owned execution seam.**
+
+**FT268 (LOW) — FT251 residual test hardening: negative callers, bundle confinement, and one checkout-name source.**
+
+**FT269 (LOW) — `craft-gate`: a check on an indirected value grades both ends.**
+
+**FT270 (LOW) — `bench test` names its checks, prints every finding, and runs the system suite.**
+
+**FT271 (LOW) — the landing prints the census verb-head breakdown before it drops the records.**
+
+**FT272 (LOW) — `bench status` routes a tickets-only spec folder to a grammar `bench commit` refuses.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
@@ -307,5 +319,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT252: specify a Bench verb that moves a retained worktree or sibling assignment onto a new base.
-2. `/bench-shape-idea` — FT246: shape one selected gate executable for other binary-building test packages.
+1. `/bench-write-spec` — FT252: specify a Bench verb that moves a retained worktree or sibling assignment onto a new base, and folds a sibling's diff into it.
+2. `/bench-implement-spec` — FT214: the `craft-spec` kit edit, now carrying the reader sweep, the cleanup-error rows, and the gate-lock seam check.
+3. `/bench-shape-idea` — FT246: shape one selected gate executable for other binary-building test packages.
