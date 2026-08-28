@@ -25,7 +25,7 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT252 (MEDIUM) — a Bench verb moves a retained worktree, or a sibling assignment, onto a new base.**
+**FT252 (MEDIUM) — a Bench verb moves a retained worktree, or a sibling assignment, onto a new base, and folds a sibling's diff into it.**
 
 **FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
 
