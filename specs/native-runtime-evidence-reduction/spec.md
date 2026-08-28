@@ -12,7 +12,7 @@ The `native runtime` workflow costs more than the evidence it returns.
 
 The `artifacts` job runs four complete artifact builds. It builds two isolated generations, and `scripts/build-artifacts.sh` already clones its own second source and builds again inside each generation. Each build produces four platform binaries. The job then publishes four uploads, and the `evidence` job downloads six.
 
-The `native-proof` job also runs on two macOS runners. Those runners have never returned a green proof. The Darwin branch of `scripts/native-proof.sh` asserts that `nm -a` reports no symbols, and a loadable Mach-O cannot satisfy that assertion, because dyld resolves every libSystem call through the undefined-import table.
+The `native-proof` job also runs on two macOS runners. Those runners have never returned a green proof. The Darwin branch of `scripts/native-proof.sh` asserts that `nm -a` reports no symbols. A loadable Mach-O cannot satisfy that assertion, because dyld resolves every libSystem call through the undefined-import table.
 
 ## Solution
 
@@ -35,8 +35,8 @@ Line: `opus` / medium. The change edits two workflows and their handoff paths, s
 5. As a release engineer, I want the `evidence` job to download one generation, so that it does not clone or finalize a second source.
 6. As a release engineer, I want `dist/workflow-reproducibility.json` removed from every reference, so that no consumer reads a file that nothing writes.
 7. As a release engineer, I want the `evidence` job to keep its preflight verification, so that the finalized evidence is still graded.
-8. As a release engineer, I want the `smoke` job to download the one artifact at its new root, so that the smoke run still finds the tarballs.
-9. As a release engineer, I want the tag release jobs to download the one artifact at its new root, so that authorization and publication still find the tarballs.
+8. As a release engineer, I want the `smoke` job to download from the new upload root, so that its run finds the tarballs.
+9. As a release engineer, I want the tag release jobs to download from the new upload root, so that publication still finds the tarballs.
 
 ### Group B — shipped targets and proven targets are separate facts
 
@@ -45,24 +45,24 @@ Line: `opus` / medium. The change adds one field and derives every count from it
 10. As a release engineer, I want `scripts/release-plan.json` to state per target whether that target carries a native proof, so that one file holds both facts.
 11. As a release engineer, I want the `native-proof` matrix derived from the proven targets, so that no macOS runner starts.
 12. As a release engineer, I want the `smoke` matrix derived from the shipped targets, so that the shipped macOS binary still runs on macOS.
-13. As a release engineer, I want `scripts/aggregate-native-proofs.sh` to require exactly the proven proof set, so that a missing proof and an extra proof both stay red.
+13. As a release engineer, I want `scripts/aggregate-native-proofs.sh` to require exactly the proven proof set, so that a missing or extra proof stays red.
 14. As a release engineer, I want `scripts/native-proof.sh` to refuse an unproven target, so that a stray call cannot mint a proof the aggregator would reject.
-15. As a release engineer, I want release evidence finalization to count native proofs against the proven targets, so that finalization does not demand a proof that never runs.
+15. As a release engineer, I want finalization to count native proofs against the proven targets, so that it demands no proof that never runs.
 16. As a maintainer, I want the Darwin branch of `scripts/native-proof.sh` removed, so that no unreachable and unverifiable assertion stays in the tree.
 17. As a maintainer, I want the per-operating-system proof predicates kept generic, so that a target returning to the proven list needs plan data only.
 18. As a release consumer, I want `scripts/verify-release-artifact.mjs` to count proofs against the proven targets, so that the offline verification of a published artifact still passes.
-19. As a reviewer, I want the release evidence probe to synthesize proofs for the proven targets only, so that the gate's probe matches a real release run.
+19. As a reviewer, I want the release evidence probe to synthesize proofs for the proven targets, so that it matches a real run.
 
 ### Group C — the gate grades the new shape
 
 Line: `opus` / high. The group edits the oracle, and every changed check needs a demonstrated red.
 
 20. As a reviewer, I want the workflow conformance check to grade the one-generation shape, so that a return to two generations fails the gate.
-21. As a reviewer, I want the conformance check to grade the proof matrix source, so that a `native-proof` job reading the shipped matrix fails the gate.
+21. As a reviewer, I want the conformance check to grade the proof matrix source, so that reading the shipped matrix fails the gate.
 22. As a reviewer, I want each changed conformance check to carry a mutation that turns it red, so that the check provably bites.
 23. As a reviewer, I want the canary fixtures re-anchored on lines that survive, so that the guard suite stays green and still bites.
 24. As a teammate with no history, I want the release docs to state the current claim, so that I do not read a retired promise.
-25. As a reviewer, I want the two retired claims named in the docs, so that the reduction reads as a decision rather than a silent drop.
+25. As a reviewer, I want the two retired claims named in the docs, so that the reduction reads as a decision.
 
 ## Implementation decisions
 
@@ -149,7 +149,7 @@ Row C4 is graded by the reviewer, not by the gate. Prose accuracy has no red-cap
 - A release index whose proof count matches the shipped list. The verifier rejects it (row B13).
 - An upload whose common root resolves higher than `dist`. Rows A8 and A9 pin every download path against that root.
 
-**Won't handle:** a corrected Darwin strip assertion — the branch is unreachable while no Darwin target is proven, and a re-proved Darwin target re-authors it against real macOS `nm -a` output.
+**Won't handle:** a corrected Darwin strip assertion. The branch is unreachable while no Darwin target is proven. A re-proved Darwin target re-authors that assertion against real macOS `nm -a` output.
 
 **Won't handle:** the cross-checkout comparison of final release evidence — it retires with the second generation, and the in-script artifact comparison remains for every in-scope consumer.
 
