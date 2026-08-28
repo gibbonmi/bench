@@ -4,9 +4,7 @@ package systemtest
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,6 +12,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 )
 
 func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
@@ -84,14 +84,22 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 	if err != nil || string(gateTally) != "lw" {
 		t.Fatalf("recovery gate tally = %q, %v, want one killed and one green run", gateTally, err)
 	}
+	// PAR04: the second fresh-process sweep of the removed bundle changes no path, so the
+	// row records the shared temporary root before it runs and asks for it back byte for
+	// byte. The landing moves its own worktrees either way, so the registration half asks
+	// only that no registration names a prospective bundle.
+	plantedRoot := artifactRootEntries(t, private)
 	if result := systemSelected(t, root, artifactLandEnv(root, home, tally, trees, ready, release), systemLandArgs(fresh, base)...); result.code != 0 {
 		t.Fatalf("second prospective authorization = (%d, %q, %q)", result.code, result.stdout, result.stderr)
 	}
 	if repeatedTally, err := os.ReadFile(tally); err != nil || string(repeatedTally) != string(gateTally) {
 		t.Fatalf("reused exact-green tally = %q, %v, want unchanged %q", repeatedTally, err, gateTally)
 	}
-	if bundles := prospectiveBundles(t, private); len(bundles) != 0 {
-		t.Fatalf("prospective bundles after idempotent retry = %v, want none", bundles)
+	if after := artifactRootEntries(t, private); after != plantedRoot {
+		t.Fatalf("temporary root after the second sweep =\n%s\nwant\n%s", after, plantedRoot)
+	}
+	if registrations := systemGitOutput(t, root, "worktree", "list", "--porcelain"); strings.Contains(registrations, prospectiveartifact.BundlePrefix) {
+		t.Fatalf("a prospective checkout registration survived the second sweep:\n%s", registrations)
 	}
 	owner.markTerminal("green")
 }
@@ -143,39 +151,41 @@ func configureArtifactLandingFixture(t *testing.T, root string) {
 
 func requirePublishedArtifactOwnerRecord(t *testing.T, bundle string, pid int, repository string) {
 	t.Helper()
-	path := filepath.Join(bundle, "owner.json")
-	info, err := os.Lstat(path)
+	record, err := prospectiveartifact.ReadPublished(filepath.Join(bundle, prospectiveartifact.RecordName))
+	if err != nil {
+		t.Fatalf("published owner record: %v", err)
+	}
+	common, err := prospectiveartifact.CanonicalCommonDir(repository)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
-		t.Fatalf("published owner record mode = %v, want regular 0600", info.Mode())
+	want := prospectiveartifact.Record{
+		Schema:    prospectiveartifact.RecordSchema,
+		OwnerPID:  pid,
+		CommonDir: common,
 	}
-	data, err := os.ReadFile(path)
+	if record != want {
+		t.Fatalf("published owner record = %#v, want %#v", record, want)
+	}
+}
+
+// artifactRootEntries names what the shared temporary root holds, entry by entry with its
+// mode. A row that must prove a sweep changed no path compares two of these.
+func artifactRootEntries(t *testing.T, root string) string {
+	t.Helper()
+	entries, err := os.ReadDir(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var record struct {
-		Schema    int    `json:"schema"`
-		OwnerPID  int    `json:"owner_pid"`
-		CommonDir string `json:"common_dir"`
+	described := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			t.Fatal(err)
+		}
+		described = append(described, entry.Name()+" "+info.Mode().String())
 	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&record); err != nil {
-		t.Fatalf("decode published owner record: %v", err)
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		t.Fatalf("published owner record trailing data = %v, want EOF", err)
-	}
-	common := systemGitOutput(t, repository, "rev-parse", "--path-format=absolute", "--git-common-dir")
-	common, err = filepath.EvalSymlinks(common)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if record.Schema != 1 || record.OwnerPID != pid || record.CommonDir != filepath.Clean(common) {
-		t.Fatalf("published owner record = %#v, want schema 1, pid %d, common directory %q", record, pid, filepath.Clean(common))
-	}
+	return strings.Join(described, "\n")
 }
 
 func releaseArtifactBarrier(t *testing.T, release string) {
@@ -271,7 +281,7 @@ func prospectiveBundles(t *testing.T, root string) []string {
 	}
 	var bundles []string
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), "bench-prospective-artifact-") {
+		if strings.HasPrefix(entry.Name(), prospectiveartifact.BundlePrefix) {
 			bundles = append(bundles, filepath.Join(root, entry.Name()))
 		}
 	}
@@ -375,24 +385,20 @@ func plantLiveProspectiveBundle(t *testing.T, private, root string) (string, str
 			<-done
 		}
 	})
-	bundle, err := os.MkdirTemp(private, "bench-prospective-artifact-")
+	bundle, err := os.MkdirTemp(private, prospectiveartifact.BundlePrefix)
 	if err != nil {
 		t.Fatal(err)
 	}
-	common := systemGitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
-	resolved, err := filepath.EvalSymlinks(common)
+	common, err := prospectiveartifact.CanonicalCommonDir(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	record, err := json.Marshal(struct {
-		Schema    int    `json:"schema"`
-		OwnerPID  int    `json:"owner_pid"`
-		CommonDir string `json:"common_dir"`
-	}{Schema: 1, OwnerPID: live.Process.Pid, CommonDir: filepath.Clean(resolved)})
-	if err != nil {
-		t.Fatal(err)
+	record := prospectiveartifact.Record{
+		Schema:    prospectiveartifact.RecordSchema,
+		OwnerPID:  live.Process.Pid,
+		CommonDir: common,
 	}
-	if err := os.WriteFile(filepath.Join(bundle, "owner.json"), append(record, '\n'), 0o600); err != nil {
+	if err := prospectiveartifact.Publish(bundle, record); err != nil {
 		t.Fatal(err)
 	}
 	checkout := filepath.Join(bundle, "checkout")

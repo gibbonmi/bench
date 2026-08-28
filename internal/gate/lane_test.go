@@ -244,8 +244,7 @@ func TestLaneRunHoldsTheCacheLockAcrossItsChecks(t *testing.T) {
 }
 
 // TestFastLanePublishesTheOwnerRecord is PAR30. The fast lane materializes its own
-// private checkout, so it publishes the same owner record the full gate publishes. A
-// lane still on the defer-only helper leaves its checkout unowned.
+// private checkout, so it publishes the same owner record the full gate publishes.
 func TestFastLanePublishesTheOwnerRecord(t *testing.T) {
 	tempRoot := t.TempDir()
 	t.Setenv("TMPDIR", tempRoot)

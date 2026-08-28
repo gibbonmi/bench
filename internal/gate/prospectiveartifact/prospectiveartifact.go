@@ -16,13 +16,25 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
-const (
-	bundlePrefix    = "bench-prospective-artifact-"
-	ownerRecordName = "owner.json"
-	checkoutName    = "checkout"
-)
+// BundlePrefix names every prospective artifact bundle root. The prefix is the sweep's
+// whole claim over a directory in the shared temporary root.
+const BundlePrefix = "bench-prospective-artifact-"
 
-type ownerRecord struct {
+// RecordName is the owner record's fixed name inside a bundle root.
+const RecordName = "owner.json"
+
+// RecordSchema is the one owner-record schema this version publishes and accepts.
+const RecordSchema = 1
+
+// RecordMode is the private mode the owner publishes its record with. A record any other
+// account can read, or the owner cannot rewrite, is not a published record.
+const RecordMode os.FileMode = 0o600
+
+const checkoutName = "checkout"
+
+// Record is the owner record's wire shape: the schema, the process that owns the bundle,
+// and the canonical Git common directory naming the repository the bundle belongs to.
+type Record struct {
 	Schema    int    `json:"schema"`
 	OwnerPID  int    `json:"owner_pid"`
 	CommonDir string `json:"common_dir"`
@@ -57,13 +69,13 @@ func Open(repository string) (*Owner, error) {
 
 // Open recovers dead bundles before it publishes a new owner record.
 func (f Factory) Open(repository string) (*Owner, error) {
-	common, err := canonicalCommonDir(repository)
+	common, err := CanonicalCommonDir(repository)
 	if err != nil {
 		return nil, err
 	}
-	base := f.TempRoot
-	if base == "" {
-		base = os.TempDir()
+	base, err := canonicalBase(f.TempRoot)
+	if err != nil {
+		return nil, err
 	}
 	remove := f.Remove
 	if remove == nil {
@@ -72,13 +84,13 @@ func (f Factory) Open(repository string) (*Owner, error) {
 	if err := sweep(base, repository, common, f.probe(), remove); err != nil {
 		return nil, err
 	}
-	root, err := os.MkdirTemp(base, bundlePrefix)
+	root, err := os.MkdirTemp(base, BundlePrefix)
 	if err != nil {
 		return nil, fmt.Errorf("create prospective artifact bundle: %w", err)
 	}
 	o := &Owner{root: root, repository: repository, remove: remove}
-	record := ownerRecord{Schema: 1, OwnerPID: os.Getpid(), CommonDir: common}
-	if err := writeRecord(root, record); err != nil {
+	record := Record{Schema: RecordSchema, OwnerPID: os.Getpid(), CommonDir: common}
+	if err := Publish(root, record); err != nil {
 		_ = os.RemoveAll(root)
 		return nil, err
 	}
@@ -112,7 +124,9 @@ func (f Factory) probe() func(int) error {
 	return func(pid int) error { return syscall.Kill(pid, 0) }
 }
 
-func canonicalCommonDir(repository string) (string, error) {
+// CanonicalCommonDir answers the canonical Git common-directory identity an owner record
+// carries for repository. It is the one fact that binds a bundle to its repository.
+func CanonicalCommonDir(repository string) (string, error) {
 	common, err := benchgit.CommonDir(repository)
 	if err != nil {
 		return "", fmt.Errorf("resolve prospective repository: %w", err)
@@ -128,13 +142,28 @@ func canonicalCommonDir(repository string) (string, error) {
 	return filepath.Clean(resolved), nil
 }
 
+// canonicalBase answers the spelling of the temporary root that Git records for a
+// checkout under it. Git resolves every symbolic-link component before it registers a
+// worktree, so an owner that kept the link spelling would compare two spellings of one
+// path and never find the registration it must remove.
+func canonicalBase(root string) (string, error) {
+	if root == "" {
+		root = os.TempDir()
+	}
+	resolved, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", fmt.Errorf("resolve prospective artifact root: %w", err)
+	}
+	return filepath.Clean(resolved), nil
+}
+
 func sweep(base, repository, common string, probe func(int) error, remove func(string, string) error) error {
 	entries, err := os.ReadDir(base)
 	if err != nil {
 		return fmt.Errorf("scan prospective artifact bundles: %w", err)
 	}
 	for _, entry := range entries {
-		if !strings.HasPrefix(entry.Name(), bundlePrefix) {
+		if !strings.HasPrefix(entry.Name(), BundlePrefix) {
 			continue
 		}
 		root := filepath.Join(base, entry.Name())
@@ -146,9 +175,9 @@ func sweep(base, repository, common string, probe func(int) error, remove func(s
 		if !ok || record.CommonDir != common {
 			continue
 		}
-		if err := probe(record.OwnerPID); err == nil || errors.Is(err, syscall.EPERM) {
-			continue
-		} else if !errors.Is(err, syscall.ESRCH) {
+		// The absent-process result is the only death proof. An answering probe, a
+		// permission refusal, and every other failure all retain the bundle.
+		if err := probe(record.OwnerPID); !errors.Is(err, syscall.ESRCH) {
 			continue
 		}
 		if err := removeBundle(repository, root, filepath.Join(root, checkoutName), remove); err != nil {
@@ -158,29 +187,45 @@ func sweep(base, repository, common string, probe func(int) error, remove func(s
 	return nil
 }
 
-func readRecord(root string) (ownerRecord, bool) {
-	path := filepath.Join(root, ownerRecordName)
+// ReadPublished reads the owner record published at path and grades it against the
+// published shape: a private regular file carrying exactly one strict record of the
+// known schema. Every reader of a record, the sweep included, asks this one question.
+func ReadPublished(path string) (Record, error) {
+	record, ok := readRecordAt(path)
+	if !ok {
+		return Record{}, fmt.Errorf("%q is not a published prospective owner record", path)
+	}
+	return record, nil
+}
+
+func readRecord(root string) (Record, bool) {
+	return readRecordAt(filepath.Join(root, RecordName))
+}
+
+func readRecordAt(path string) (Record, bool) {
 	info, err := os.Lstat(path)
-	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
-		return ownerRecord{}, false
+	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm() != RecordMode {
+		return Record{}, false
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return ownerRecord{}, false
+		return Record{}, false
 	}
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
-	var record ownerRecord
-	if decoder.Decode(&record) != nil || record.Schema != 1 || record.OwnerPID <= 0 || record.CommonDir == "" {
-		return ownerRecord{}, false
+	var record Record
+	if decoder.Decode(&record) != nil || record.Schema != RecordSchema || record.OwnerPID <= 0 || record.CommonDir == "" {
+		return Record{}, false
 	}
 	if decoder.Decode(&struct{}{}) != io.EOF {
-		return ownerRecord{}, false
+		return Record{}, false
 	}
 	return record, true
 }
 
-func writeRecord(root string, record ownerRecord) error {
+// Publish writes record into root the way an owner publishes its own: an atomic rename of
+// a private regular file, followed by a directory sync.
+func Publish(root string, record Record) error {
 	data, err := json.Marshal(record)
 	if err != nil {
 		return err
@@ -191,7 +236,7 @@ func writeRecord(root string, record ownerRecord) error {
 	}
 	name := temporary.Name()
 	defer func() { _ = temporary.Close(); _ = os.Remove(name) }()
-	if err := temporary.Chmod(0o600); err != nil {
+	if err := temporary.Chmod(RecordMode); err != nil {
 		return err
 	}
 	if _, err := temporary.Write(append(data, '\n')); err != nil {
@@ -203,7 +248,7 @@ func writeRecord(root string, record ownerRecord) error {
 	if err := temporary.Close(); err != nil {
 		return err
 	}
-	if err := os.Rename(name, filepath.Join(root, ownerRecordName)); err != nil {
+	if err := os.Rename(name, filepath.Join(root, RecordName)); err != nil {
 		return err
 	}
 	directory, err := os.Open(root)

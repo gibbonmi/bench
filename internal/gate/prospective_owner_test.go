@@ -6,15 +6,14 @@ package gate
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -52,7 +51,7 @@ func TestProspectiveGateAuthorsItsExecutableFromTheGradedTree(t *testing.T) {
 	}
 	t.Setenv(runbinary.Env, inherited)
 	sources := stubProspectiveBuilder(t)
-	owner := prospectiveRunBinaryOwner(checkout)
+	owner := prospectiveRunBinaryOwnerAt(checkout, "")
 
 	graded, err := owner(t.Context(), checkout)
 	if err != nil {
@@ -79,6 +78,48 @@ func TestProspectiveGateAuthorsItsExecutableFromTheGradedTree(t *testing.T) {
 	}
 	if len(*sources) != 1 || baseline.Path != inherited {
 		t.Fatalf("baseline selection = %q with sources %#v, want the inherited %q", baseline.Path, *sources, inherited)
+	}
+}
+
+// TestProspectiveGateConfinesABaselineKitBinaryToTheBundle is the confinement half of the
+// bundle layout: the bundle root contains every run binary the owner authors. A candidate
+// that carries no inherited selection authors from the baseline kit, so that branch owns
+// bytes the bundle must be able to remove. An inherited selection is another owner's
+// bytes and stays outside.
+func TestProspectiveGateConfinesABaselineKitBinaryToTheBundle(t *testing.T) {
+	checkout := t.TempDir()
+	kit := t.TempDir()
+	artifactRoot := t.TempDir()
+	if raw, present := os.LookupEnv(runbinary.Env); present {
+		t.Setenv(runbinary.Env, raw)
+		if err := os.Unsetenv(runbinary.Env); err != nil {
+			t.Fatal(err)
+		}
+	}
+	sources := stubProspectiveBuilder(t)
+
+	authored, err := prospectiveRunBinaryOwnerAt(checkout, artifactRoot)(t.Context(), kit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(*sources) != 1 || (*sources)[0] != kit {
+		t.Fatalf("baseline-kit sources = %#v, want one selection built from %q", *sources, kit)
+	}
+	if !strings.HasPrefix(authored.Path, artifactRoot+string(filepath.Separator)) {
+		t.Fatalf("authored baseline-kit selection = %q, want a path under the bundle root %q", authored.Path, artifactRoot)
+	}
+
+	inherited := filepath.Join(t.TempDir(), "bench")
+	if err := os.WriteFile(inherited, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(runbinary.Env, inherited)
+	baseline, err := prospectiveRunBinaryOwnerAt(checkout, artifactRoot)(t.Context(), kit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(*sources) != 1 || baseline.Path != inherited {
+		t.Fatalf("inherited selection = %q with sources %#v, want the inherited %q", baseline.Path, *sources, inherited)
 	}
 }
 
@@ -186,7 +227,7 @@ func TestProspectiveGateReportsAFailedBuildWithNoResidue(t *testing.T) {
 	}
 	t.Cleanup(func() { prospectiveRunBinary = old })
 
-	selection, err := prospectiveRunBinaryOwner(checkout)(t.Context(), checkout)
+	selection, err := prospectiveRunBinaryOwnerAt(checkout, "")(t.Context(), checkout)
 	if err == nil || selection != nil {
 		t.Fatalf("failed prospective build = (%#v, %v), want no selection and an error", selection, err)
 	}
@@ -332,15 +373,15 @@ func requireNoProspectiveBundles(t *testing.T, tempRoot string) {
 		t.Fatal(err)
 	}
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), "bench-prospective-artifact-") {
+		if strings.HasPrefix(entry.Name(), prospectiveartifact.BundlePrefix) {
 			t.Fatalf("prospective bundle %q survived terminal outcome", entry.Name())
 		}
 	}
 }
 
 // TestEvidenceInspectionPublishesTheOwnerRecord is PAR29. Evidence inspection creates a
-// private checkout of its own, so it needs the same bundle owner the full gate uses. A
-// producer still on the defer-only helper publishes no record at all.
+// private checkout of its own, so it publishes the same owner record every other producer
+// publishes.
 func TestEvidenceInspectionPublishesTheOwnerRecord(t *testing.T) {
 	root, tree, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nexit 0\n")
 	snapshot := observeProspectiveOwnerRecord(t, root)
@@ -364,49 +405,30 @@ func observeProspectiveOwnerRecord(t *testing.T, root string) string {
 		t.Fatal(err)
 	}
 	snapshot := filepath.Join(t.TempDir(), "published-owner-record")
-	hook := "#!/bin/sh\nrecord=\"$PWD/../owner.json\"\nif [ -h \"$record\" ] || [ ! -f \"$record\" ]; then exit 0; fi\ncp -p \"$record\" \"" + snapshot + "\"\n"
+	hook := "#!/bin/sh\nrecord=\"$PWD/../" + prospectiveartifact.RecordName + "\"\nif [ -h \"$record\" ] || [ ! -f \"$record\" ]; then exit 0; fi\ncp -p \"$record\" \"" + snapshot + "\"\n"
 	writeGateFixtureFile(t, common, filepath.Join("hooks", "post-checkout"), hook, 0o755)
 	return snapshot
 }
 
-// requireProspectiveOwnerRecord grades one observed record against the published shape:
-// a private regular file carrying schema 1, this process, and this repository's
-// canonical common directory. Every producer row asks for exactly this shape.
+// requireProspectiveOwnerRecord grades one observed record against the published shape,
+// which the owner module is the source of, and against this process and this repository.
+// Every producer row asks for exactly this shape.
 func requireProspectiveOwnerRecord(t *testing.T, snapshot, root string) {
 	t.Helper()
-	info, err := os.Lstat(snapshot)
+	record, err := prospectiveartifact.ReadPublished(snapshot)
 	if err != nil {
-		t.Fatalf("published owner record = %v, want one observed record", err)
+		t.Fatalf("published owner record: %v", err)
 	}
-	if !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
-		t.Fatalf("published owner record mode = %v, want regular 0600", info.Mode())
-	}
-	data, err := os.ReadFile(snapshot)
+	common, err := prospectiveartifact.CanonicalCommonDir(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var record struct {
-		Schema    int    `json:"schema"`
-		OwnerPID  int    `json:"owner_pid"`
-		CommonDir string `json:"common_dir"`
+	want := prospectiveartifact.Record{
+		Schema:    prospectiveartifact.RecordSchema,
+		OwnerPID:  os.Getpid(),
+		CommonDir: common,
 	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&record); err != nil {
-		t.Fatalf("decode published owner record: %v", err)
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		t.Fatalf("published owner record trailing data = %v, want EOF", err)
-	}
-	common, err := benchgit.CommonDir(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	resolved, err := filepath.EvalSymlinks(common)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if want := filepath.Clean(resolved); record.Schema != 1 || record.OwnerPID != os.Getpid() || record.CommonDir != want {
-		t.Fatalf("published owner record = %#v, want schema 1, pid %d, common directory %q", record, os.Getpid(), want)
+	if record != want {
+		t.Fatalf("published owner record = %#v, want %#v", record, want)
 	}
 }

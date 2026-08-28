@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	"github.com/gibbonmi/bench/internal/landing"
 )
 
@@ -181,7 +182,7 @@ func temporaryProspectiveArtifacts(t *testing.T, dir string) []string {
 	}
 	var residue []string
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), "bench-gate-subject-") || strings.HasPrefix(entry.Name(), "bench-prospective-artifact-") || strings.HasPrefix(entry.Name(), "bench-run-") {
+		if strings.HasPrefix(entry.Name(), prospectiveartifact.BundlePrefix) || strings.HasPrefix(entry.Name(), "bench-run-") {
 			residue = append(residue, entry.Name())
 		}
 	}
