@@ -50,7 +50,7 @@ Line: `opus` / medium. The change adds one field and derives every count from it
 14. As a release engineer, I want `scripts/native-proof.sh` to refuse an unproven target, so that a stray call cannot mint a proof the aggregator would reject.
 15. As a release engineer, I want finalization to count native proofs against the proven targets, so that it demands no proof that never runs.
 16. As a maintainer, I want the Darwin branch of `scripts/native-proof.sh` removed, so that no unreachable and unverifiable assertion stays in the tree.
-17. As a maintainer, I want the per-operating-system proof predicates kept generic, so that a target returning to the proven list needs plan data only.
+17. As a maintainer, I want the proof script to refuse a target it cannot verify, so that no plan edit mints an unverified proof.
 18. As a release consumer, I want `scripts/verify-release-artifact.mjs` to count proofs against the proven targets, so that the offline verification of a published artifact still passes.
 19. As a reviewer, I want the release evidence probe to synthesize proofs for the proven targets, so that it matches a real run.
 
@@ -75,7 +75,9 @@ Line: `opus` / high. The group edits the oracle, and every changed check needs a
 
 **The proof script refuses an unproven target.** `scripts/native-proof.sh` calls `proof-target` in place of `target`. That command exits non-zero for an unproven target, and the script's existing failure message covers the case.
 
-**The Darwin branch goes.** With no proven Darwin target the branch is unreachable. The script keeps the Linux branch whole, and `musl_status` keeps its two values, because the per-operating-system predicates stay generic. A future Darwin proof is a plan-data change plus a re-authored strip assertion, written against real macOS `nm -a` output.
+**The Darwin branch goes, and the script fails closed.** With no proven Darwin target the branch is unreachable. The script keeps the Linux branch whole and `musl_status` keeps its two values.
+
+The script refuses any proven target whose operating system has no platform predicate. Without that refusal it would emit a green strip status for a target nothing verified. A future Darwin proof is therefore a plan-data change plus a re-authored strip assertion, written against real macOS `nm -a` output.
 
 **Every proof count derives from the proven list.** Three consumers count proofs today, and all three move together. `internal/releaseevidence` finalization compares against the proven-target count. `scripts/verify-release-artifact.mjs` compares its `native_proofs` length against the proven-target count. The release evidence probe in `internal/conformance` synthesizes a proof per proven target. Each keeps its per-operating-system clauses unchanged.
 
@@ -137,7 +139,7 @@ The gate seam is `bench gate`, which runs the conformance package, the canary gu
 | B9 | 15 | Finalization succeeds with proofs for the proven targets only | `internal/releaseevidence` probe | A count against shipped targets blocks every release |
 | B10 | 15 | Finalization fails when one proven target has no proof | `internal/releaseevidence` probe | A relaxed count would accept a release with no Linux proof |
 | B11 | 16 | `native-proof.sh` contains no Darwin branch | script execution test | A surviving branch keeps an assertion no run can pass |
-| B12 | 17 | A plan that marks a Darwin target proven yields a Darwin proof row | plan reader unit test | A hard-coded Linux-only path would make the flag decorative |
+| B12 | 17 | The proof script refuses a proven target whose operating system has no platform predicate | script execution test | An unverified target would otherwise mint a green strip status |
 | B13 | 18 | `verify-release-artifact.mjs` accepts an index holding proofs for the proven targets only | clause extraction, reviewer-graded | A count against shipped targets fails every offline verification |
 | B14 | 19 | The release evidence probe writes a proof per proven target | `internal/conformance` probe | A probe on the shipped list grades a set no run produces |
 | C1 | 20, 21 | Each changed conformance check names its own diagnostic | `internal/conformance` mutation test | A check with no red is advertisement, not enforcement |
