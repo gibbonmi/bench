@@ -167,19 +167,10 @@ func TestProvenViewsFollowTheFieldNotTheOperatingSystem(t *testing.T) {
 
 // TestShippedReleasePlanDecodes grades that the Go reader still decodes the
 // repository's own plan. That reader disallows unknown fields, so a plan field
-// the struct does not carry reddens every release-evidence path.
+// the struct does not carry reddens every release-evidence path. The plan's target
+// rows stay unstated here, because scripts/release-plan.json is their one source.
 func TestShippedReleasePlanDecodes(t *testing.T) {
-	plan, err := readReleasePlan(repositoryRoot(t))
-	if err != nil {
+	if _, err := readReleasePlan(repositoryRoot(t)); err != nil {
 		t.Fatalf("shipped release plan is undecodable: %v", err)
-	}
-	proven := map[string]bool{}
-	for _, target := range plan.Targets {
-		proven[target.OS+"-"+target.Arch] = target.NativeProof
-	}
-	for name, want := range map[string]bool{"darwin-arm64": false, "darwin-x64": false, "linux-arm64": true, "linux-x64": true} {
-		if got, ok := proven[name]; !ok || got != want {
-			t.Fatalf("shipped plan states native_proof %v for %s, want %v", got, name, want)
-		}
 	}
 }

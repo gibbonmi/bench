@@ -15,22 +15,33 @@ func verifyAuthoritativeNativeProofMutations(root, proofPath string, env []strin
 	if err != nil {
 		return []string{"release evidence probe could not read authoritative native proof"}
 	}
+	// A row with a field rewrites the proof and grades the content comparison. The row
+	// with no field removes the proof, which leaves a proven target unproven and grades
+	// the proof count instead. Each row names the diagnostic it requires, so a mutation
+	// that fails for another reason stays a red.
 	for _, mutation := range []struct {
-		name, field string
-		value       any
+		name, field, want string
+		value             any
 	}{
-		{name: "digest", field: "binary_sha256", value: strings.Repeat("0", 64)},
-		{name: "Linux musl", field: "musl_status", value: "red"},
-		{name: "strip", field: "strip_status", value: "red"},
+		{name: "digest", field: "binary_sha256", value: strings.Repeat("0", 64), want: "does not match inspected artifacts"},
+		{name: "Linux musl", field: "musl_status", value: "red", want: "does not match inspected artifacts"},
+		{name: "strip", field: "strip_status", value: "red", want: "does not match inspected artifacts"},
+		{name: "removal", want: "native target proof is incomplete"},
 	} {
-		var proof map[string]any
-		if json.Unmarshal(originalProof, &proof) != nil {
-			return []string{"release evidence probe could not decode authoritative native proof"}
-		}
-		proof[mutation.field] = mutation.value
-		mutated, _ := json.Marshal(proof)
-		if os.WriteFile(proofPath, append(mutated, '\n'), 0o644) != nil {
-			return []string{"release evidence probe could not mutate authoritative native proof"}
+		if mutation.field == "" {
+			if os.Remove(proofPath) != nil {
+				return []string{"release evidence probe could not remove authoritative native proof"}
+			}
+		} else {
+			var proof map[string]any
+			if json.Unmarshal(originalProof, &proof) != nil {
+				return []string{"release evidence probe could not decode authoritative native proof"}
+			}
+			proof[mutation.field] = mutation.value
+			mutated, _ := json.Marshal(proof)
+			if os.WriteFile(proofPath, append(mutated, '\n'), 0o644) != nil {
+				return []string{"release evidence probe could not mutate authoritative native proof"}
+			}
 		}
 		mutationCommand := exec.Command("bash", filepath.Join(root, "scripts", "release-preflight.sh"), "--mode", "verify")
 		mutationCommand.Dir, mutationCommand.Env = root, env
@@ -41,7 +52,7 @@ func verifyAuthoritativeNativeProofMutations(root, proofPath string, env []strin
 		if runErr == nil {
 			return []string{"authoritative native proof " + mutation.name + " mutation passed"}
 		}
-		if !strings.Contains(string(output), "does not match inspected artifacts") {
+		if !strings.Contains(string(output), mutation.want) {
 			return []string{"authoritative native proof " + mutation.name + " mutation was not attributed"}
 		}
 	}

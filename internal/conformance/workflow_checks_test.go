@@ -202,6 +202,22 @@ func checkNativeRuntimeWorkflow(root string) []string {
 	if !strings.Contains(smoke, "matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}") {
 		diags = append(diags, "native smoke matrix does not read the shipped targets")
 	}
+	// A consumer edge is only as good as the command that fills the output it reads.
+	// A proof-matrix step that runs the shipped command restarts every macOS runner
+	// with both consumer assertions still green, so each output binds to its declaring
+	// step, and that step binds to its own release-plan command. One table over the two
+	// output-and-command pairs states each view once.
+	for _, produced := range []struct{ label, output, step, command string }{
+		{label: "shipped", output: "matrix", step: "matrix", command: "matrix-json"},
+		{label: "proven", output: "proven", step: "proof-matrix", command: "proof-matrix-json"},
+	} {
+		if !strings.Contains(preflight, produced.output+": ${{ steps."+produced.step+".outputs.rows }}") {
+			diags = append(diags, "native verification preflight does not publish the "+produced.label+" matrix output")
+		}
+		if !strings.Contains(workflowStep(preflight, produced.step), "scripts/release-plan.mjs . "+produced.command) {
+			diags = append(diags, "native verification preflight "+produced.label+" matrix output does not derive from "+produced.command)
+		}
+	}
 	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" {
 		diags = append(diags, nativeProofBindingDiags(proof)...)
 	}
@@ -235,6 +251,22 @@ func workflowJob(workflow, name string) string {
 		}
 	}
 	return rest[:end]
+}
+
+// workflowStep returns one step's body from a job, keyed by the step id. The body
+// ends at the next step marker, so a run line found inside it provably belongs to
+// the step that declares that id.
+func workflowStep(job, id string) string {
+	needle := "      - id: " + id + "\n"
+	start := strings.Index(job, needle)
+	if start < 0 {
+		return ""
+	}
+	rest := job[start+len(needle):]
+	if end := strings.Index(rest, "\n      - "); end >= 0 {
+		return rest[:end]
+	}
+	return rest
 }
 
 func nativeWorkflowTriggers(text string) workflowTriggerShape {
@@ -439,6 +471,23 @@ func TestNativeWorkflowEvidenceEdgeBites(t *testing.T) {
 			name:   "smoke matrix reads the proven targets",
 			broken: strings.Replace(workflow, "outputs.matrix)", "outputs.proven)", 1),
 			want:   "native smoke matrix does not read the shipped targets",
+		},
+		// The producer side carries its own three reds. A swapped command and a dropped
+		// output are both gate-green and run-broken without them.
+		{
+			name:   "the proof matrix step produces the shipped rows",
+			broken: strings.Replace(workflow, ". proof-matrix-json", ". matrix-json", 1),
+			want:   "native verification preflight proven matrix output does not derive from proof-matrix-json",
+		},
+		{
+			name:   "the shipped matrix step produces the proven rows",
+			broken: strings.Replace(workflow, ". matrix-json", ". proof-matrix-json", 1),
+			want:   "native verification preflight shipped matrix output does not derive from matrix-json",
+		},
+		{
+			name:   "the preflight drops the proven output",
+			broken: strings.Replace(workflow, "      proven: ${{ steps.proof-matrix.outputs.rows }}\n", "", 1),
+			want:   "native verification preflight does not publish the proven matrix output",
 		},
 		{
 			name:   "the reproducibility record leaves the upload",
