@@ -36,11 +36,7 @@ tmp="$(cd "$(mktemp -d)" && pwd -P)"
 trap 'rm -rf "$tmp"' EXIT INT TERM HUP
 rebuild="$tmp/bench"
 export GOCACHE="$tmp/go-cache"
-if [[ "$goos" == linux ]]; then
-  CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" bash "$root/scripts/go-build.sh" --mode artifact "$root" "$rebuild"
-else
-  GOOS="$goos" GOARCH="$goarch" bash "$root/scripts/go-build.sh" --mode artifact "$root" "$rebuild"
-fi
+GOOS="$goos" GOARCH="$goarch" bash "$root/scripts/go-build.sh" --mode artifact "$root" "$rebuild"
 chmod 0755 "$rebuild"
 
 package_dir="$tmp/package"

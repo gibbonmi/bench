@@ -128,11 +128,7 @@ else
 
   while IFS=$'\t' read -r os arch goos goarch _runner; do
     binary="$packages/$os-$arch/bin/bench"
-    if [[ "$goos" == linux ]]; then
-      CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" --mode artifact "$source_root" "$binary"
-    else
-      GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" --mode artifact "$source_root" "$binary"
-    fi
+    GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" --mode artifact "$source_root" "$binary"
     chmod 0755 "$binary"
   done < "$matrix_file"
 

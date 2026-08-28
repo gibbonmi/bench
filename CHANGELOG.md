@@ -109,6 +109,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- The Go builder now pins `CGO_ENABLED=0` for every target, so the same source gives
+  the same bytes on every runner. Go derives that variable from the host, so the Linux
+  runner that built each Darwin package got cgo off, and the macOS runner that rebuilt
+  it got cgo on. The native proof read the disagreement as an unreproducible build and
+  failed both Darwin targets. The Linux artifact bytes do not change.
 - `bench status --route` now returns an atomic cleanup command for unclaimed
   assignment branches. The command prints the exact plan before it deletes the
   current branch set.
