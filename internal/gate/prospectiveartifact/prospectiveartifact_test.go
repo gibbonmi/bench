@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -14,10 +13,11 @@ import (
 	"time"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	owner, err := (Factory{TempRoot: t.TempDir()}).Open(repository)
 	if err != nil {
 		t.Fatal(err)
@@ -50,7 +50,7 @@ func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
 }
 
 func TestOpenRetainsForeignBundleAndRecoversDeadRecordOnlyBundle(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	common, err := benchgit.CommonDir(repository)
 	if err != nil {
 		t.Fatal(err)
@@ -74,7 +74,7 @@ func TestOpenRetainsForeignBundleAndRecoversDeadRecordOnlyBundle(t *testing.T) {
 }
 
 func TestOpenRecoversARegisteredDeadBundleBeforeItCreatesAnother(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	common, err := benchgit.CommonDir(repository)
 	if err != nil {
 		t.Fatal(err)
@@ -107,7 +107,7 @@ func TestOpenRecoversARegisteredDeadBundleBeforeItCreatesAnother(t *testing.T) {
 }
 
 func TestOpenRecoversARegisteredDeadCheckoutWithoutARunBinary(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	common, err := CanonicalCommonDir(repository)
 	if err != nil {
 		t.Fatal(err)
@@ -131,7 +131,7 @@ func TestOpenRecoversARegisteredDeadCheckoutWithoutARunBinary(t *testing.T) {
 }
 
 func TestOpenRecoversAStaleRegistrationWithoutACheckoutPath(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	common, err := CanonicalCommonDir(repository)
 	if err != nil {
 		t.Fatal(err)
@@ -158,7 +158,7 @@ func TestOpenRecoversAStaleRegistrationWithoutACheckoutPath(t *testing.T) {
 }
 
 func TestOpenRefusesRecoveryWhenRegistrationRemovalFails(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	common, err := benchgit.CommonDir(repository)
 	if err != nil {
 		t.Fatal(err)
@@ -193,7 +193,7 @@ func TestOpenRefusesRecoveryWhenRegistrationRemovalFails(t *testing.T) {
 // an owner that kept the link spelling compares two spellings of one checkout, leaves the
 // registration behind, and still deletes the bundle root the registration names.
 func TestOpenRecoversARegisteredDeadBundleUnderASymbolicallyLinkedRoot(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	tree := gitOutput(t, repository, "write-tree")
 	common, err := CanonicalCommonDir(repository)
 	if err != nil {
@@ -237,7 +237,7 @@ func TestOpenRecoversARegisteredDeadBundleUnderASymbolicallyLinkedRoot(t *testin
 // expansion or a widened removal would reach the neighbouring bundle and the sentinel
 // beside it.
 func TestCloseConfinesRemovalToItsBundle(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	tree := gitOutput(t, repository, "write-tree")
 	parent := t.TempDir()
 	base := filepath.Join(parent, "temp root [*]")
@@ -249,7 +249,7 @@ func TestCloseConfinesRemovalToItsBundle(t *testing.T) {
 		t.Fatal(err)
 	}
 	neighbour := plantedBundle(t, base)
-	plantRecord(t, neighbour, recordBody(t, newRepository(t), RecordSchema, 42))
+	plantRecord(t, neighbour, recordBody(t, fixtureRepository(t), RecordSchema, 42))
 	planted := snapshotPath(t, neighbour)
 
 	owner, err := (Factory{TempRoot: base}).Open(repository)
@@ -308,7 +308,7 @@ func requireCheckoutRegistered(t *testing.T, repository, checkout string) {
 }
 
 func TestCloseRemovesTheRegisteredCheckoutBeforeItsBundle(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	tree := gitOutput(t, repository, "write-tree")
 	owner, err := (Factory{TempRoot: t.TempDir()}).Open(repository)
 	if err != nil {
@@ -338,38 +338,32 @@ func testBundle(t *testing.T, base string, record Record) string {
 	return root
 }
 
-func newRepository(t *testing.T) string {
+func fixtureRepository(t *testing.T) string {
 	t.Helper()
-	repository := t.TempDir()
-	if output, err := exec.Command("git", "-C", repository, "init", "-q").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, output)
-	}
-	gitRun(t, repository, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "--allow-empty", "-qm", "base")
+	repository := gittest.RepoOnBranch(t, "main")
+	gitRun(t, repository, "commit", "--allow-empty", "-qm", "base")
 	return repository
 }
 
 func gitRun(t *testing.T, repository string, args ...string) {
 	t.Helper()
-	output, err := exec.Command("git", append([]string{"-C", repository}, args...)...).CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v: %s", args, err, output)
-	}
+	gitOutput(t, repository, args...)
 }
 
 func gitOutput(t *testing.T, repository string, args ...string) string {
 	t.Helper()
-	output, err := exec.Command("git", append([]string{"-C", repository}, args...)...).CombinedOutput()
+	output, err := benchgit.Output(append([]string{"-C", repository}, args...)...)
 	if err != nil {
-		t.Fatalf("git %v: %v: %s", args, err, output)
+		t.Fatalf("git %v: %v", args, err)
 	}
-	return string(output[:len(output)-1])
+	return output
 }
 
 // TestSweepRetainsABundleWithAnUnsupportedRecordSchema is PAR12. The record names this
 // repository and a definitely absent PID, so the unknown schema is the only fact that
 // denies removal.
 func TestSweepRetainsABundleWithAnUnsupportedRecordSchema(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	base := t.TempDir()
 	candidate := plantedBundle(t, base)
 	plantRecord(t, candidate, recordBody(t, repository, RecordSchema+1, 42))
@@ -391,7 +385,7 @@ func TestSweepRetainsABundleWithAMissingEmptyOrMalformedRecord(t *testing.T) {
 		{name: "malformed", present: true, truncated: true},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			repository := newRepository(t)
+			repository := fixtureRepository(t)
 			base := t.TempDir()
 			candidate := plantedBundle(t, base)
 			if row.present {
@@ -436,7 +430,7 @@ func TestSweepRetainsABundleWithANonRegularRecord(t *testing.T) {
 		}},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			repository := newRepository(t)
+			repository := fixtureRepository(t)
 			base := t.TempDir()
 			candidate := plantedBundle(t, base)
 			row.plant(t, candidate, recordBody(t, repository, RecordSchema, 42))
@@ -458,7 +452,7 @@ func TestSweepRetainsARecordThatIsNotPrivate(t *testing.T) {
 		{name: "read only", mode: 0o400},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			repository := newRepository(t)
+			repository := fixtureRepository(t)
 			base := t.TempDir()
 			candidate := plantedBundle(t, base)
 			path := filepath.Join(candidate, RecordName)
@@ -478,7 +472,7 @@ func TestSweepRetainsARecordThatIsNotPrivate(t *testing.T) {
 // would delete resources its own namespace never held.
 func TestSweepRetainsASymbolicLinkOrSpecialFileBundleCandidate(t *testing.T) {
 	t.Run("symbolic link", func(t *testing.T) {
-		repository := newRepository(t)
+		repository := fixtureRepository(t)
 		base := t.TempDir()
 		target := plantedBundle(t, t.TempDir())
 		plantRecord(t, target, recordBody(t, repository, RecordSchema, 42))
@@ -489,7 +483,7 @@ func TestSweepRetainsASymbolicLinkOrSpecialFileBundleCandidate(t *testing.T) {
 		requireSweepRetains(t, repository, base, deadProbe, link, target)
 	})
 	t.Run("named pipe", func(t *testing.T) {
-		repository := newRepository(t)
+		repository := fixtureRepository(t)
 		base := t.TempDir()
 		pipe := filepath.Join(base, BundlePrefix+"pipe")
 		if err := syscall.Mkfifo(pipe, 0o600); err != nil {
@@ -503,10 +497,10 @@ func TestSweepRetainsASymbolicLinkOrSpecialFileBundleCandidate(t *testing.T) {
 // prefix and arbitrary content, and its record names another repository, so the prefix
 // alone must grant no authority over it.
 func TestSweepRetainsAForeignSamePrefixDirectory(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	base := t.TempDir()
 	foreign := plantedBundle(t, base)
-	plantRecord(t, foreign, recordBody(t, newRepository(t), RecordSchema, 42))
+	plantRecord(t, foreign, recordBody(t, fixtureRepository(t), RecordSchema, 42))
 	if err := os.MkdirAll(filepath.Join(foreign, "notes"), 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -520,7 +514,7 @@ func TestSweepRetainsAForeignSamePrefixDirectory(t *testing.T) {
 // TestSweepRetainsAPermissionRefusedBundle is PAR17. A refused probe proves the owner
 // exists and is unreachable, never that it is absent.
 func TestSweepRetainsAPermissionRefusedBundle(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	base := t.TempDir()
 	candidate := plantedBundle(t, base)
 	plantRecord(t, candidate, recordBody(t, repository, RecordSchema, 42))
@@ -539,7 +533,7 @@ func TestSweepRetainsABundleWithAnUnknownProbeFailure(t *testing.T) {
 		{name: "invalid request", probe: func(int) error { return syscall.EINVAL }},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			repository := newRepository(t)
+			repository := fixtureRepository(t)
 			base := t.TempDir()
 			candidate := plantedBundle(t, base)
 			plantRecord(t, candidate, recordBody(t, repository, RecordSchema, 42))
@@ -551,7 +545,7 @@ func TestSweepRetainsABundleWithAnUnknownProbeFailure(t *testing.T) {
 // TestSweepRetainsAnAnsweringPIDWithAnOldRecord is PAR19. The record is a year old, so a
 // sweep that fell back on age would delete a live owner's resources.
 func TestSweepRetainsAnAnsweringPIDWithAnOldRecord(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	base := t.TempDir()
 	candidate := plantedBundle(t, base)
 	plantRecord(t, candidate, recordBody(t, repository, RecordSchema, 42))
@@ -569,7 +563,7 @@ func TestSweepRetainsAnAnsweringPIDWithAnOldRecord(t *testing.T) {
 // Both bundles name this repository, so only the per-candidate probe result separates
 // them.
 func TestOneSweepRemovesOnlyTheDeadBundleOfADeadAndLivePair(t *testing.T) {
-	repository := newRepository(t)
+	repository := fixtureRepository(t)
 	base := t.TempDir()
 	dead := plantedBundle(t, base)
 	plantRecord(t, dead, recordBody(t, repository, RecordSchema, 42))
