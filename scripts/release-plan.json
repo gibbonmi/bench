@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "targets": [
-    {"os":"darwin","arch":"arm64","goos":"darwin","goarch":"arm64","runner":"macos-15"},
-    {"os":"darwin","arch":"x64","goos":"darwin","goarch":"amd64","runner":"macos-15-intel"},
-    {"os":"linux","arch":"arm64","goos":"linux","goarch":"arm64","runner":"ubuntu-24.04-arm"},
-    {"os":"linux","arch":"x64","goos":"linux","goarch":"amd64","runner":"ubuntu-24.04"}
+    {"os":"darwin","arch":"arm64","goos":"darwin","goarch":"arm64","runner":"macos-15","native_proof":false},
+    {"os":"darwin","arch":"x64","goos":"darwin","goarch":"amd64","runner":"macos-15-intel","native_proof":false},
+    {"os":"linux","arch":"arm64","goos":"linux","goarch":"arm64","runner":"ubuntu-24.04-arm","native_proof":true},
+    {"os":"linux","arch":"x64","goos":"linux","goarch":"amd64","runner":"ubuntu-24.04","native_proof":true}
   ],
   "archive_entries": [
     {"path":"bin/bench","mode":"0755","kind":"binary"},

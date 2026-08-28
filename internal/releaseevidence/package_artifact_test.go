@@ -13,11 +13,7 @@ import (
 )
 
 func TestOfflineNetworkControlEnvelopeWriter(t *testing.T) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	root := filepath.Clean(filepath.Join(cwd, "..", ".."))
+	root := repositoryRoot(t)
 	dir := t.TempDir()
 	payloadFile, evidenceRoot := filepath.Join(dir, "payload.json"), filepath.Join(dir, "evidence")
 	payload := map[string]any{"flag": "BENCH_OFFLINE=1", "journeys": []string{"direct", "local-npm", "loopback-registry"}, "operations": []map[string]any{
@@ -68,11 +64,7 @@ func TestOfflineNetworkControlEnvelopeWriter(t *testing.T) {
 }
 
 func TestBuildReleaseEvidenceIncludesRegisteredPackageEvidence(t *testing.T) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	root := filepath.Clean(filepath.Join(cwd, "..", ".."))
+	root := repositoryRoot(t)
 	staging := t.TempDir()
 	wrapper, packages := filepath.Join(staging, "wrapper"), filepath.Join(staging, "packages")
 	cmd := exec.Command("node", filepath.Join(root, "scripts", "build-release-evidence.mjs"), root, wrapper, packages)
@@ -96,11 +88,7 @@ func TestBuildReleaseEvidenceIncludesRegisteredPackageEvidence(t *testing.T) {
 }
 
 func TestOfflineNetworkControlNonzeroSentinelIsNotPass(t *testing.T) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	root := filepath.Clean(filepath.Join(cwd, "..", ".."))
+	root := repositoryRoot(t)
 	dir := t.TempDir()
 	payload, evidenceRoot := filepath.Join(dir, "payload.json"), filepath.Join(dir, "evidence")
 	if err := os.WriteFile(payload, []byte(`{"operations":[{"class":"wrapper_binary_repair","observed_attempts":1}]}`), 0o644); err != nil {

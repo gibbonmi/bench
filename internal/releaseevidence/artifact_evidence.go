@@ -124,7 +124,10 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 	}
 	want := make(map[string]string, len(plannedArtifacts))
 	plannedByTarget := map[string]map[string]string{}
-	targets := append([]targetEvidence(nil), plan.Targets...)
+	targets := make([]targetEvidence, 0, len(plan.Targets))
+	for _, target := range plan.Targets {
+		targets = append(targets, target.targetEvidence)
+	}
 	for _, artifact := range plannedArtifacts {
 		want[artifact.Name] = artifact.Target
 		if plannedByTarget[artifact.Target] == nil {

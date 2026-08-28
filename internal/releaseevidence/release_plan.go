@@ -6,9 +6,18 @@ import (
 	"path/filepath"
 )
 
+// planTarget is one release-plan target row. It carries the evidence fields the
+// release index publishes plus native_proof, which states whether the target
+// runs a native proof. The field stays out of targetEvidence so the index shape
+// does not change.
+type planTarget struct {
+	targetEvidence
+	NativeProof bool `json:"native_proof"`
+}
+
 type releasePlan struct {
 	SchemaVersion  int              `json:"schema_version"`
-	Targets        []targetEvidence `json:"targets"`
+	Targets        []planTarget     `json:"targets"`
 	ArchiveEntries []map[string]any `json:"archive_entries"`
 }
 
