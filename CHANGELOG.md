@@ -8,6 +8,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added a front-door choice when `bench status --route` selects `git push`.
+  The reviewer can push now or continue with the next sequenced roadmap item.
 - Added a plan-before-apply cleanup for unclaimed local `bench/assign/` refs.
 - Added `bench cache`, a read-only report of the Bench Go build cache footprint. One
   `go_build_cache` TOON table gives the directory, the byte total, the regular-file
