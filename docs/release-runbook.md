@@ -95,6 +95,37 @@ unpublish, so automation never unpublishes and the operator does not either.
 tags, and deprecates the bad version with a recovery message pointing at the
 replacement. Recovery is always a new version.
 
+## Proof scope
+
+Bench ships more targets than it proves. The release plan in
+`scripts/release-plan.json` gives each target a `native_proof` field, and that
+field is the one source for the proven list. The shipped list and the proven
+list are separate facts, and the plan is the one place that states which is
+which.
+
+The release ships four targets:
+
+- `darwin/arm64`
+- `darwin/x64`
+- `linux/arm64`
+- `linux/x64`
+
+The release proves two of them with a native proof: `linux/arm64` and
+`linux/x64`. Bench does not prove the two Darwin binaries with a native proof.
+The `smoke` job still runs on macOS runners, so it remains the macOS execution
+evidence for the shipped macOS binaries.
+
+## Reproducibility
+
+The release keeps a byte-for-byte comparison of the artifacts. The artifact
+build makes a second independent build from the same source, compares the two
+outputs, and writes the verdict to `dist/reproducibility.json`. The release
+evidence reads that record, so the published reproducibility claim stays true.
+
+Bench does not compare the finalized release evidence of two independent
+checkouts. Bench retired that cross-checkout comparison, and no release
+document promises it now.
+
 ## Evidence
 
 Every run appends ordered transitions to the durable
