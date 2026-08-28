@@ -6,7 +6,11 @@
 #
 # -trimpath plus the pinned toolchain in go.mod give reproducible builds.
 # -buildvcs=false stops checkout topology from changing embedded module or VCS
-# facts. The version stamp comes from package.json, the one canonical version, so an
+# facts. CGO_ENABLED=0 belongs to the same set, and this file pins it. Go defaults
+# that variable from the host: a cross-compiling builder gets 0, and a builder whose
+# host equals its target gets 1. A caller-owned default therefore makes the same
+# source produce different bytes on different runners, which the native proof reads
+# as an unreproducible build. The version stamp comes from package.json, the one canonical version, so an
 # unstamped build, which prints "dev", never masquerades as a release.
 #
 #   Usage: go-build.sh [--mode artifact] <module-root> <output-path>
@@ -64,6 +68,7 @@ version="$(node -e '
 ' "$modroot/$package_version")"
 
 cd "$modroot"
+export CGO_ENABLED=0
 if [[ "$out" != /* ]]; then out="./$out"; fi
 go_build_flags=()
 while IFS= read -r arg; do go_build_flags+=("$arg"); done < <(node -e '
