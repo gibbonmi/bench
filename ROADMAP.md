@@ -25,8 +25,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT251 (MEDIUM) — a killed landing orphans the private prospective tree and its gate binary.**
-
 **FT252 (MEDIUM) — a Bench verb moves a retained worktree, or a sibling assignment, onto a new base.**
 
 **FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
@@ -309,6 +307,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT251: specify recovery for a killed landing's prospective tree and gate binary.
-2. `/bench-write-spec` — FT252: specify a Bench verb that moves a retained worktree or sibling assignment onto a new base.
-3. `/bench-shape-idea` — FT246: shape one selected gate executable for other binary-building test packages.
+1. `/bench-write-spec` — FT252: specify a Bench verb that moves a retained worktree or sibling assignment onto a new base.
+2. `/bench-shape-idea` — FT246: shape one selected gate executable for other binary-building test packages.
