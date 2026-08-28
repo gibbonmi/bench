@@ -273,6 +273,35 @@ func TestSignalsRenderDirtyAndUnpushedTogether(t *testing.T) {
 	}
 }
 
+func TestRouteForLeavesClaimedAssignmentBranchToItsOwner(t *testing.T) {
+	root := initRepo(t)
+	start := commitFile(t, root, "base.txt")
+	gitRun(t, root, "branch", "-M", "main")
+	ownerID, assignmentID := strings.Repeat("a", 32), strings.Repeat("b", 32)
+	branch := intent.AssignmentBranchRef(ownerID, assignmentID)
+	gitRun(t, root, "checkout", "-b", strings.TrimPrefix(branch, "refs/heads/"))
+	commitFile(t, root, "assigned.txt")
+	gitRun(t, root, "checkout", "main")
+	if err := intent.PutAssignment(root, intent.Assignment{
+		Schema:   intent.AssignmentRecordSchema,
+		ID:       assignmentID,
+		OwnerID:  ownerID,
+		Request:  intent.RequestDigest("claimed-assignment"),
+		Label:    "claimed",
+		Start:    start,
+		Branch:   branch,
+		Worktree: filepath.Join(root, "claimed"),
+		State:    intent.StateActive,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	route := RouteFor(root, Signals(root), "codex")
+	if route.Lead.Name != "clean" || route.Lead.Action != "$bench-drain" {
+		t.Fatalf("claimed assignment route = %#v, want clean $bench-drain", route)
+	}
+}
+
 func TestRouteForInvokesStagedSpecWhosePathContainsSpacesAheadOfDrain(t *testing.T) {
 	root := initRepo(t)
 	for path, body := range map[string]string{

@@ -603,7 +603,11 @@ func appendGit(rows []row, root string, query Query) []row {
 		return append(rows, row{1, "git", "git state unavailable", commandAction(gitStatusAction)})
 	}
 	var details []string
-	unclaimedUniqueBranches := 0
+	unclaimedUniqueBranches, claimedUniqueBranches := 0, 0
+	uniqueRefs := make(map[string]bool, len(fact.UniqueBranchNames))
+	for _, branch := range fact.UniqueBranchNames {
+		uniqueRefs["refs/heads/"+branch] = true
+	}
 	if fact.DirtyPaths > 0 {
 		details = append(details, Plural(fact.DirtyPaths, "dirty path", "dirty paths"))
 	}
@@ -612,20 +616,23 @@ func appendGit(rows []row, root string, query Query) []row {
 	}
 	unclaimedRefs, unclaimedErr := worktree.UnclaimedAssignmentBranchRefs(root)
 	if unclaimedErr == nil {
-		uniqueRefs := make(map[string]bool, len(fact.UniqueBranchNames))
-		for _, branch := range fact.UniqueBranchNames {
-			uniqueRefs["refs/heads/"+branch] = true
-		}
 		for _, ref := range unclaimedRefs {
 			if uniqueRefs[ref] {
 				unclaimedUniqueBranches++
 			}
 		}
 	}
+	if assignments, err := intent.Assignments(root); err == nil {
+		for _, assignment := range assignments {
+			if uniqueRefs[assignment.Branch] {
+				claimedUniqueBranches++
+			}
+		}
+	}
 	if unclaimedUniqueBranches > 0 {
 		details = append(details, Plural(unclaimedUniqueBranches, "unclaimed assignment branch", "unclaimed assignment branches"))
 	}
-	ordinaryUniqueBranches := fact.UniqueBranches - unclaimedUniqueBranches
+	ordinaryUniqueBranches := fact.UniqueBranches - unclaimedUniqueBranches - claimedUniqueBranches
 	if ordinaryUniqueBranches > 0 {
 		details = append(details, Plural(ordinaryUniqueBranches, "unique branch", "unique branches"))
 	}
