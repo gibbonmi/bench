@@ -57,8 +57,9 @@ func helpText() string {
 }
 
 // Symbol is one located declaration: the 1-based line it sits on, the kind the
-// language pattern emits (func, type, function, heading, def, class, const), and the
-// declared name.
+// language pattern emits (func, type, function, heading, def, class, const), the
+// candidate-inventory kind a name or a path refines it to (helper, double, fixture),
+// and the declared name.
 type Symbol struct {
 	Line int
 	Kind string
@@ -66,12 +67,14 @@ type Symbol struct {
 }
 
 // pattern is one ordered declaration form for a language: a compiled line-anchored
-// regex, the kind it emits, and the capture group holding the name. Adding a language
-// or a form is adding a table entry — never a new code path.
+// regex, the kind it emits, the capture group holding the name, and an optional path
+// predicate that limits the form to the paths it accepts. Adding a language or a form
+// is adding a table entry — never a new code path.
 type pattern struct {
 	re    *regexp.Regexp
 	kind  string
 	group int
+	path  func(string) bool // nil means every path the language table scans
 }
 
 // langTable is the one source of the per-language pattern fact: file extension →
@@ -83,6 +86,7 @@ var langTable = map[string][]pattern{
 		{re: regexp.MustCompile(`^[ \t]*function[ \t]+([A-Za-z_][A-Za-z0-9_-]*)`), kind: "function", group: 1},
 	},
 	".go": {
+		{re: regexp.MustCompile(`^func[ \t]+((?:new|make|with)[A-Z][A-Za-z0-9_]*)`), kind: "helper", group: 1, path: isGoTestFile},
 		{re: regexp.MustCompile(`^func[ \t]+\([^)]*\)[ \t]*([A-Za-z_][A-Za-z0-9_]*)`), kind: "func", group: 1},
 		{re: regexp.MustCompile(`^func[ \t]+([A-Za-z_][A-Za-z0-9_]*)`), kind: "func", group: 1},
 		{re: regexp.MustCompile(`^type[ \t]+([A-Za-z_][A-Za-z0-9_]*)`), kind: "type", group: 1},
@@ -123,6 +127,9 @@ func Symbols(path string, content []byte) []Symbol {
 	for i, line := range strings.Split(string(content), "\n") {
 		line = strings.TrimSuffix(line, "\r")
 		for _, p := range patterns {
+			if p.path != nil && !p.path(path) {
+				continue
+			}
 			m := p.re.FindStringSubmatch(line)
 			if m == nil {
 				continue
@@ -131,11 +138,59 @@ func Symbols(path string, content []byte) []Symbol {
 			if name == "" {
 				continue
 			}
-			out = append(out, Symbol{Line: i + 1, Kind: p.kind, Name: name})
+			out = append(out, Symbol{Line: i + 1, Kind: kindFor(p.kind, name), Name: name})
 			break // one row per line: the first matching form wins
 		}
 	}
 	return out
+}
+
+// isGoTestFile is the helper form's path predicate: a helper is a construction function
+// a test file owns, so the same name in production code stays a plain func.
+func isGoTestFile(path string) bool {
+	return strings.HasSuffix(path, "_test.go")
+}
+
+// doublePrefixes are the test-double name forms, matched case-insensitively.
+var doublePrefixes = []string{"fake", "stub", "mock", "spy"}
+
+// kindFor refines a matched row's kind: a name carrying a double prefix reports
+// "double" whatever form matched it, in any file the language tables scan. The
+// refinement rides the matched name rather than a double entry per language, because a
+// per-language entry would restate that language's declaration grammar N times.
+// Precedence: the pattern table's kind (helper included) resolves first, and the double
+// prefix overrides it. The helper and double prefix sets are disjoint, so no name
+// reaches both and the precedence is unobservable.
+func kindFor(kind, name string) string {
+	lower := strings.ToLower(name)
+	for _, prefix := range doublePrefixes {
+		if strings.HasPrefix(lower, prefix) {
+			return "double"
+		}
+	}
+	return kind
+}
+
+// fixtureDir is the path segment that marks prior-art fixture data.
+const fixtureDir = "testdata"
+
+// fileSymbols is the walk's dispatch. A file under a fixtureDir segment reports one
+// fixture row at line 1 and is never scanned, because such a file carries no scanned
+// extension and the extension dispatch would drop it silently. Every other file goes
+// through the language table.
+func fileSymbols(rel string, content []byte) []Symbol {
+	if strings.HasPrefix(rel, fixtureDir+"/") || strings.Contains(rel, "/"+fixtureDir+"/") {
+		return []Symbol{{Line: 1, Kind: "fixture", Name: baseName(rel)}}
+	}
+	return Symbols(rel, content)
+}
+
+// baseName is the final segment of git's slash-separated path.
+func baseName(rel string) string {
+	if i := strings.LastIndex(rel, "/"); i >= 0 {
+		return rel[i+1:]
+	}
+	return rel
 }
 
 // listFiles returns the tracked files git reports, root-relative, in git's ls-files
@@ -254,7 +309,7 @@ func Command(args []string) (string, int) {
 				dirCount[dir] = 0
 			}
 		}
-		for _, s := range Symbols(rel, content) {
+		for _, s := range fileSymbols(rel, content) {
 			totalSymbols++
 			if !toon.Representable(rel) || !toon.Representable(s.Name) {
 				continue // one poisoned path or name drops only its own row
