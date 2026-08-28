@@ -292,3 +292,173 @@ func oneOwnerBinary(t *testing.T, bundle string) string {
 	t.Fatal("prospective owner published no run binary")
 	return ""
 }
+
+// TestConcurrentAuthorizationRetainsALiveOwner is PAR11. A live owner holds a registered
+// checkout and an owner-authored run binary under the shared temporary root while a
+// second authorization runs from end to end. An unconditional prefix sweep takes those
+// resources with it.
+//
+// The live owner is a live process beside a planted bundle rather than a second gate
+// run: the gate's own execution lock refuses a second concurrent authorization in one
+// repository, so the sweep never sees two gate runs. The classification input -- a
+// recognized bundle for this repository whose recorded PID answers -- is the same one a
+// second gate run would present.
+func TestConcurrentAuthorizationRetainsALiveOwner(t *testing.T) {
+	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
+	configureArtifactLandingFixture(t, root)
+	private := t.TempDir()
+	t.Setenv("TMPDIR", private)
+	base := systemGitOutput(t, root, "rev-parse", "main")
+	live, liveCheckout, liveBinary := plantLiveProspectiveBundle(t, private, root)
+
+	_, out, errOut, done := startArtifactAuthorization(t, root, home, tally, trees, ready, release, base, "artifact-second", "winner.txt", "second prospective subject")
+	awaitArtifactBarrier(t, ready, done, out, errOut)
+	releaseArtifactBarrier(t, release)
+	<-done
+
+	requireLiveBundleRetained(t, root, live, liveCheckout, liveBinary)
+}
+
+// TestOneAuthorizationRecoversTheDeadBundleOfADeadAndLivePair is PAR20 across the
+// process boundary. One killed owner's bundle and one live owner's bundle share the
+// temporary root, so a sweep that classified the pair together would expose the live
+// owner's resources to the dead owner's recovery. The live owner is a live process
+// beside a planted bundle for the reason PAR11 records.
+func TestOneAuthorizationRecoversTheDeadBundleOfADeadAndLivePair(t *testing.T) {
+	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
+	configureArtifactLandingFixture(t, root)
+	private := t.TempDir()
+	t.Setenv("TMPDIR", private)
+	base := systemGitOutput(t, root, "rev-parse", "main")
+	live, liveCheckout, liveBinary := plantLiveProspectiveBundle(t, private, root)
+
+	deadCommand, deadOut, deadErr, deadDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, base, "artifact-dead", "loser.txt", "dead prospective subject")
+	awaitArtifactBarrier(t, ready, deadDone, deadOut, deadErr)
+	dead := otherProspectiveBundle(t, private, live)
+	deadCheckout := filepath.Join(dead, "checkout")
+	requireCheckoutRegistered(t, root, deadCheckout, true)
+	if err := syscall.Kill(-deadCommand.Process.Pid, syscall.SIGKILL); err != nil {
+		t.Fatal(err)
+	}
+	if code := systemExitCode(<-deadDone); code == 0 {
+		t.Fatal("killed prospective owner exited green")
+	}
+	releaseArtifactBarrier(t, release)
+
+	_, freshOut, freshErr, freshDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, base, "artifact-fresh", "winner.txt", "fresh prospective subject")
+	awaitArtifactBarrier(t, ready, freshDone, freshOut, freshErr)
+
+	if _, err := os.Stat(dead); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("dead bundle = %v, want absent", err)
+	}
+	requireCheckoutRegistered(t, root, deadCheckout, false)
+	requireLiveBundleRetained(t, root, live, liveCheckout, liveBinary)
+
+	releaseArtifactBarrier(t, release)
+	<-freshDone
+}
+
+// plantLiveProspectiveBundle publishes one bundle for root whose recorded owner is a
+// live process, and gives it the resources a blocked owner holds: a registered private
+// checkout and an owner-authored run binary.
+func plantLiveProspectiveBundle(t *testing.T, private, root string) (string, string, string) {
+	t.Helper()
+	live := exec.Command("sleep", "600")
+	if err := live.Start(); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() { done <- live.Wait() }()
+	t.Cleanup(func() {
+		if live.ProcessState == nil {
+			_ = live.Process.Kill()
+			<-done
+		}
+	})
+	bundle, err := os.MkdirTemp(private, "bench-prospective-artifact-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	common := systemGitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	resolved, err := filepath.EvalSymlinks(common)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := json.Marshal(struct {
+		Schema    int    `json:"schema"`
+		OwnerPID  int    `json:"owner_pid"`
+		CommonDir string `json:"common_dir"`
+	}{Schema: 1, OwnerPID: live.Process.Pid, CommonDir: filepath.Clean(resolved)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bundle, "owner.json"), append(record, '\n'), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	checkout := filepath.Join(bundle, "checkout")
+	systemGit(t, root, "worktree", "add", "-q", "--detach", checkout, "HEAD")
+	binary := filepath.Join(bundle, "bench-run-live", "bench")
+	if err := os.MkdirAll(filepath.Dir(binary), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(binary, []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	return bundle, checkout, binary
+}
+
+func requireLiveBundleRetained(t *testing.T, root, bundle, checkout, binary string) {
+	t.Helper()
+	if _, err := os.Stat(bundle); err != nil {
+		t.Fatalf("live bundle = %v, want retained", err)
+	}
+	if _, err := os.Stat(checkout); err != nil {
+		t.Fatalf("live checkout = %v, want retained", err)
+	}
+	if _, err := os.Stat(binary); err != nil {
+		t.Fatalf("live owner binary = %v, want retained", err)
+	}
+	requireCheckoutRegistered(t, root, checkout, true)
+}
+
+// startArtifactAuthorization reviews one new source worktree and starts its landing, so
+// a row names the authorizations it wants rather than repeating the review and start
+// sequence for each.
+func startArtifactAuthorization(t *testing.T, root, home, tally, trees, ready, release, base, name, file, message string) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer, chan error) {
+	t.Helper()
+	source := systemCreateLandingWorktree(t, root, home, name, name)
+	systemCommit(t, source.path, file, message+"\n", message)
+	source.tip = systemGitOutput(t, source.path, "rev-parse", "HEAD")
+	if review := systemSelected(t, source.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base); review.code != 0 {
+		t.Fatalf("%s review = (%d, %q, %q)", name, review.code, review.stdout, review.stderr)
+	}
+	return startArtifactLand(t, root, home, tally, trees, ready, release, source, base)
+}
+
+// otherProspectiveBundle answers the one bundle under private that no held owner opened.
+// Each owner opens its own bundle, so a row names the bundles it already holds and takes
+// the newcomer.
+func otherProspectiveBundle(t *testing.T, private string, held ...string) string {
+	t.Helper()
+	holders := map[string]bool{}
+	for _, bundle := range held {
+		holders[bundle] = true
+	}
+	var others []string
+	for _, bundle := range prospectiveBundles(t, private) {
+		if !holders[bundle] {
+			others = append(others, bundle)
+		}
+	}
+	if len(others) != 1 {
+		t.Fatalf("unheld prospective bundles = %v, want one", others)
+	}
+	return others[0]
+}
+
+func requireCheckoutRegistered(t *testing.T, root, checkout string, want bool) {
+	t.Helper()
+	if got := strings.Contains(systemGitOutput(t, root, "worktree", "list", "--porcelain"), checkout); got != want {
+		t.Fatalf("registration of %q = %v, want %v", checkout, got, want)
+	}
+}

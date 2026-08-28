@@ -9,9 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
@@ -42,16 +40,12 @@ func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Write
 }
 
 func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr io.Writer, owner runBinaryOwner) Result {
-	artifacts, err := prospectiveartifact.Open(root)
+	artifacts, err := openProspectiveArtifacts(root, tree)
 	if err != nil {
 		fmt.Fprintln(stderr, "prospective gate subject unavailable")
 		return Result{ActionExit: 1}
 	}
 	defer artifacts.Close()
-	if err := artifacts.Materialize(tree); err != nil {
-		fmt.Fprintln(stderr, "prospective gate subject unavailable")
-		return Result{ActionExit: 1}
-	}
 	checkout := artifacts.Checkout()
 	if owner == nil {
 		owner = prospectiveRunBinaryOwnerAt(checkout, artifacts.Root())
@@ -82,12 +76,12 @@ func ValidateProjectGreen(root, branch string) EvidenceInspection {
 }
 
 func inspectProspective(root, tree string, now time.Time) EvidenceInspection {
-	checkout, cleanup, err := prospectiveCheckout(root, tree)
+	artifacts, err := openProspectiveArtifacts(root, tree)
 	if err != nil {
 		return EvidenceInspection{Reason: "subject unavailable"}
 	}
-	defer cleanup()
-	plan, err := buildProspectiveSubjectFor(checkout, root)
+	defer artifacts.Close()
+	plan, err := buildProspectiveSubjectFor(artifacts.Checkout(), root)
 	if err != nil || plan.Tree != tree {
 		return EvidenceInspection{Reason: "subject unavailable"}
 	}
@@ -144,27 +138,24 @@ func evidenceName(plan subject) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func prospectiveCheckout(root, tree string) (string, func(), error) {
+// openProspectiveArtifacts opens one artifact bundle for root and materializes tree in
+// its private checkout. Every prospective producer -- the full gate, evidence
+// inspection, and the fast lane -- enters its checkout through here, so the tree
+// validation, the owner record, and the teardown scope have one source. The caller
+// closes the returned owner.
+func openProspectiveArtifacts(root, tree string) (*prospectiveartifact.Owner, error) {
 	if !treeHashRE.MatchString(tree) {
-		return "", nil, errors.New("invalid tree")
+		return nil, errors.New("invalid tree")
 	}
-	path, err := os.MkdirTemp("", "bench-gate-subject-")
+	artifacts, err := prospectiveartifact.Open(root)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
-	cleanup := func() {
-		_ = exec.Command("git", "-C", root, "worktree", "remove", "--force", path).Run()
-		_ = os.RemoveAll(path)
+	if err := artifacts.Materialize(tree); err != nil {
+		_ = artifacts.Close()
+		return nil, err
 	}
-	if output, err := exec.Command("git", "-C", root, "worktree", "add", "--quiet", "--detach", path, "HEAD").CombinedOutput(); err != nil {
-		cleanup()
-		return "", nil, fmt.Errorf("create prospective checkout: %s", strings.TrimSpace(string(output)))
-	}
-	if output, err := exec.Command("git", "-C", path, "read-tree", "--reset", "-u", tree).CombinedOutput(); err != nil {
-		cleanup()
-		return "", nil, fmt.Errorf("materialize prospective tree: %s", strings.TrimSpace(string(output)))
-	}
-	return path, cleanup, nil
+	return artifacts, nil
 }
 
 func durableReplaceAt(dir, name string, rec verdictRecord) error {

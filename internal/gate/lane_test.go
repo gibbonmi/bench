@@ -242,3 +242,26 @@ func TestLaneRunHoldsTheCacheLockAcrossItsChecks(t *testing.T) {
 	}
 	requireRefusedClean(t, answerPath)
 }
+
+// TestFastLanePublishesTheOwnerRecord is PAR30. The fast lane materializes its own
+// private checkout, so it publishes the same owner record the full gate publishes. A
+// lane still on the defer-only helper leaves its checkout unowned.
+func TestFastLanePublishesTheOwnerRecord(t *testing.T) {
+	tempRoot := t.TempDir()
+	t.Setenv("TMPDIR", tempRoot)
+	root := outcomeFixture(t)
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	snapshot := observeProspectiveOwnerRecord(t, root)
+
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Checks: []Phase{{Name: "declared", Argv: []string{"true"}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Passed() {
+		t.Fatalf("lane check %s: %s", result.Outcome, result.Diagnostic)
+	}
+	requireProspectiveOwnerRecord(t, snapshot, root)
+	requireNoProspectiveBundles(t, tempRoot)
+}

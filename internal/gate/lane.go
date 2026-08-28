@@ -50,11 +50,11 @@ const laneRecordFile = "bench-last-lane"
 // defaultLaneName identifies a lane whose caller named none.
 const defaultLaneName = "lane"
 
-// laneRunBinary selects the Bench executable the lane's Bench-owned checks run. It is
-// the gate's own selection chain, so those checks grade with the tree's own code. It is
-// a variable for the same reason the phase table is: a test supplies a stub rather than
-// paying a real build.
-var laneRunBinary = runbinary.ReuseOrOwn
+// laneRunBinary is the factory the lane selects its Bench executable through. It is the
+// gate's own selection chain, so the Bench-owned checks grade with the tree's own code.
+// It is a variable for the same reason the phase table is: a test supplies its build and
+// verification seams rather than paying a real build.
+var laneRunBinary = runbinary.Factory{}
 
 // BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, and
 // build, in that order. The two Bench-owned checks carry the run-binary token, which the
@@ -138,11 +138,12 @@ func RunLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 	if err != nil || gitdir == "" {
 		return LaneResult{}, errors.New("gate: git directory unavailable")
 	}
-	checkout, cleanup, err := prospectiveCheckout(req.Root, req.Tree)
+	artifacts, err := openProspectiveArtifacts(req.Root, req.Tree)
 	if err != nil {
 		return LaneResult{}, err
 	}
-	defer cleanup()
+	defer artifacts.Close()
+	checkout := artifacts.Checkout()
 
 	// The lane holds the shared cache lock for its span, so one rule covers every holder
 	// and a clean cannot remove an archive a lane check is reading. A lock the lane cannot
@@ -152,7 +153,7 @@ func RunLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 	}
 
 	checks := resolveLane(req.Checks, req.Root, checkout, req.NamedMarkdown)
-	runBinary, checks, closeSelection, err := selectLaneRunBinary(ctx, req, checkout, checks)
+	runBinary, checks, closeSelection, err := selectLaneRunBinary(ctx, req, checkout, artifacts.Root(), checks)
 	if err != nil {
 		return LaneResult{}, err
 	}
@@ -237,8 +238,10 @@ func reanchor(value, root, checkout string) string {
 // selectLaneRunBinary answers the run binary the lane records, and hands back the checks
 // bound to it. A lane naming the token gets the gate's own selection chain. A lane naming
 // no token runs no Bench-owned check, so there is nothing to select and the record
-// carries the executable that ran the lane.
-func selectLaneRunBinary(ctx context.Context, req LaneRequest, checkout string, checks []Phase) (string, []Phase, func(), error) {
+// carries the executable that ran the lane. An authored selection is written inside
+// artifactRoot, so the bundle owns every executable it authors; an inherited selection
+// stays where its own owner put it.
+func selectLaneRunBinary(ctx context.Context, req LaneRequest, checkout, artifactRoot string, checks []Phase) (string, []Phase, func(), error) {
 	if !laneUsesRunBinary(checks) {
 		digest, err := ownExecutableDigest()
 		return digest, checks, func() {}, err
@@ -247,7 +250,9 @@ func selectLaneRunBinary(ctx context.Context, req LaneRequest, checkout string, 
 	if source == "" {
 		source = checkout
 	}
-	selection, err := laneRunBinary(ctx, source)
+	factory := laneRunBinary
+	factory.TempRoot = artifactRoot
+	selection, err := factory.ReuseOrOwn(ctx, source)
 	if err != nil {
 		return "", nil, func() {}, fmt.Errorf("gate: lane Bench executable unavailable: %w", err)
 	}

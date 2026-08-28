@@ -6,13 +6,16 @@ package gate
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -332,5 +335,78 @@ func requireNoProspectiveBundles(t *testing.T, tempRoot string) {
 		if strings.HasPrefix(entry.Name(), "bench-prospective-artifact-") {
 			t.Fatalf("prospective bundle %q survived terminal outcome", entry.Name())
 		}
+	}
+}
+
+// TestEvidenceInspectionPublishesTheOwnerRecord is PAR29. Evidence inspection creates a
+// private checkout of its own, so it needs the same bundle owner the full gate uses. A
+// producer still on the defer-only helper publishes no record at all.
+func TestEvidenceInspectionPublishesTheOwnerRecord(t *testing.T) {
+	root, tree, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nexit 0\n")
+	snapshot := observeProspectiveOwnerRecord(t, root)
+
+	if inspection := InspectTree(root, tree); inspection.Tree != tree {
+		t.Fatalf("inspection = %#v, want the graded tree %q", inspection, tree)
+	}
+	requireProspectiveOwnerRecord(t, snapshot, root)
+	requireNoProspectiveBundles(t, tempRoot)
+}
+
+// observeProspectiveOwnerRecord returns the path a copy of the next prospective owner
+// record appears at. Git runs a post-checkout hook inside the private checkout while the
+// bundle is still open, which is the one point a producer's caller reaches a record the
+// producer removes before it returns. The hook copies nothing when the record is absent
+// or is not a regular file, so the absent copy is itself the refusal.
+func observeProspectiveOwnerRecord(t *testing.T, root string) string {
+	t.Helper()
+	common, err := benchgit.CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot := filepath.Join(t.TempDir(), "published-owner-record")
+	hook := "#!/bin/sh\nrecord=\"$PWD/../owner.json\"\nif [ -h \"$record\" ] || [ ! -f \"$record\" ]; then exit 0; fi\ncp -p \"$record\" \"" + snapshot + "\"\n"
+	writeGateFixtureFile(t, common, filepath.Join("hooks", "post-checkout"), hook, 0o755)
+	return snapshot
+}
+
+// requireProspectiveOwnerRecord grades one observed record against the published shape:
+// a private regular file carrying schema 1, this process, and this repository's
+// canonical common directory. Every producer row asks for exactly this shape.
+func requireProspectiveOwnerRecord(t *testing.T, snapshot, root string) {
+	t.Helper()
+	info, err := os.Lstat(snapshot)
+	if err != nil {
+		t.Fatalf("published owner record = %v, want one observed record", err)
+	}
+	if !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
+		t.Fatalf("published owner record mode = %v, want regular 0600", info.Mode())
+	}
+	data, err := os.ReadFile(snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record struct {
+		Schema    int    `json:"schema"`
+		OwnerPID  int    `json:"owner_pid"`
+		CommonDir string `json:"common_dir"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&record); err != nil {
+		t.Fatalf("decode published owner record: %v", err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		t.Fatalf("published owner record trailing data = %v, want EOF", err)
+	}
+	common, err := benchgit.CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := filepath.EvalSymlinks(common)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := filepath.Clean(resolved); record.Schema != 1 || record.OwnerPID != os.Getpid() || record.CommonDir != want {
+		t.Fatalf("published owner record = %#v, want schema 1, pid %d, common directory %q", record, os.Getpid(), want)
 	}
 }
