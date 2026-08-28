@@ -7,7 +7,7 @@ Writes: scripts/native-proof.sh, scripts/aggregate-native-proofs.sh, internal/co
 
 The two proof scripts read the proven list rather than the shipped list.
 
-`scripts/native-proof.sh` calls `proof-target` in place of `target`, so an unproven target exits non-zero on the existing matrix message. The script's Darwin branch goes with it, because no proven target reaches that branch. The Linux branch stays whole, and `musl_status` keeps both of its values.
+`scripts/native-proof.sh` calls `proof-target` in place of `target`, so an unproven target exits non-zero on the existing matrix message. The script's Darwin branch goes with it, because no proven target reaches that branch. The Linux branch stays whole.
 
 `scripts/aggregate-native-proofs.sh` iterates the proven targets and compares the directory against the proven proof file set. A missing proven proof stays red, and a proof file for an unproven target stays red.
 

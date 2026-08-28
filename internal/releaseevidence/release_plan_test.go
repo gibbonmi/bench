@@ -174,3 +174,21 @@ func TestShippedReleasePlanDecodes(t *testing.T) {
 		t.Fatalf("shipped release plan is undecodable: %v", err)
 	}
 }
+
+// TestShippedPlanProvesOnlyPredicatedTargets grades the one property that binds
+// the plan's proven set to what scripts/native-proof.sh can verify. That script
+// carries platform predicates for Linux alone and refuses every other operating
+// system, so a proven target on any other operating system cannot produce a
+// proof. The assertion is a property over whatever the plan holds, not a copy of
+// its rows.
+func TestShippedPlanProvesOnlyPredicatedTargets(t *testing.T) {
+	plan, err := readReleasePlan(repositoryRoot(t))
+	if err != nil {
+		t.Fatalf("shipped release plan is undecodable: %v", err)
+	}
+	for _, target := range provenTargets(plan.Targets) {
+		if target.GOOS != "linux" {
+			t.Fatalf("plan proves %s-%s on %s, which native-proof.sh refuses", target.OS, target.Arch, target.GOOS)
+		}
+	}
+}
