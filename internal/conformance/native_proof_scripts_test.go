@@ -16,7 +16,7 @@ import (
 // goos, goarch, and runner as tab-separated fields, so one decoder serves the
 // shipped view and the proven view alike.
 type planTarget struct {
-	os, arch, runner string
+	os, arch, goos, runner string
 }
 
 func (target planTarget) name() string { return target.os + "-" + target.arch }
@@ -39,7 +39,7 @@ func planTargets(t *testing.T, kit, command string) []planTarget {
 		if len(fields) != 5 {
 			t.Fatalf("release-plan.mjs %s: row %q has %d fields, want 5", command, line, len(fields))
 		}
-		targets = append(targets, planTarget{os: fields[0], arch: fields[1], runner: fields[4]})
+		targets = append(targets, planTarget{os: fields[0], arch: fields[1], goos: fields[2], runner: fields[4]})
 	}
 	if len(targets) == 0 {
 		t.Fatalf("release-plan.mjs %s returned no rows", command)
@@ -61,7 +61,7 @@ func unprovenTargetName(t *testing.T, kit string) planTarget {
 			return target
 		}
 	}
-	return planTarget{os: "openbsd", arch: "riscv64", runner: "openbsd-latest"}
+	return planTarget{os: "openbsd", arch: "riscv64", goos: "openbsd", runner: "openbsd-latest"}
 }
 
 // writeProofFile writes the proof record the aggregator accepts for one target.
@@ -117,12 +117,70 @@ func provenProofDir(t *testing.T, kit string, omit ...string) (string, []planTar
 	return dir, proven
 }
 
+// unpredicatedProofRoot builds a scratch root whose plan proves a target with no
+// platform predicate, and it names that target. native-proof.sh resolves its root
+// from its own location, so a copy of the script beside a copy of the plan reader
+// grades the refusal against a plan the working tree never carries.
+func unpredicatedProofRoot(t *testing.T, kit string) (string, planTarget) {
+	t.Helper()
+	root := t.TempDir()
+	for _, relative := range []string{"package.json", "scripts/release-plan.mjs", "scripts/native-proof.sh", "scripts/lib/search.sh"} {
+		data, err := os.ReadFile(filepath.Join(kit, filepath.FromSlash(relative)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		copied := filepath.Join(root, filepath.FromSlash(relative))
+		if err := os.MkdirAll(filepath.Dir(copied), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(copied, data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	planBytes, err := os.ReadFile(filepath.Join(kit, "scripts", "release-plan.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plan struct {
+		SchemaVersion  int              `json:"schema_version"`
+		Targets        []map[string]any `json:"targets"`
+		ArchiveEntries []any            `json:"archive_entries"`
+	}
+	if err := json.Unmarshal(planBytes, &plan); err != nil {
+		t.Fatal(err)
+	}
+	text := func(value any) string { field, _ := value.(string); return field }
+	proven := planTarget{}
+	for _, target := range plan.Targets {
+		if text(target["goos"]) == "linux" {
+			continue
+		}
+		target["native_proof"] = true
+		proven = planTarget{os: text(target["os"]), arch: text(target["arch"]), goos: text(target["goos"]), runner: text(target["runner"])}
+		break
+	}
+	// A plan that ships only Linux still needs the refusal graded, so the fallback
+	// adds an operating system no plan carries.
+	if proven.os == "" {
+		proven = planTarget{os: "openbsd", arch: "riscv64", goos: "openbsd", runner: "openbsd-latest"}
+		plan.Targets = append(plan.Targets, map[string]any{"os": proven.os, "arch": proven.arch, "goos": proven.goos, "goarch": "riscv64", "runner": proven.runner, "native_proof": true})
+	}
+	body, err := json.Marshal(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "scripts", "release-plan.json"), append(body, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return root, proven
+}
+
 // runScript executes one release script and returns its merged output. The proof
 // scripts report every refusal on standard error, so the caller grades one stream.
-func runScript(t *testing.T, kit, script string, args ...string) (string, error) {
+func runScript(t *testing.T, root, script string, args ...string) (string, error) {
 	t.Helper()
-	command := exec.Command("bash", append([]string{filepath.Join(kit, "scripts", script)}, args...)...)
-	command.Dir = kit
+	command := exec.Command("bash", append([]string{filepath.Join(root, "scripts", script)}, args...)...)
+	command.Dir = root
 	out, err := command.CombinedOutput()
 	return string(out), err
 }
@@ -199,10 +257,33 @@ func TestNativeProofRefusesUnprovenTarget(t *testing.T) {
 	}
 }
 
-// nativeProofBindingDiags grades the proof builder script itself. The Darwin branch
-// asserted that `nm -a` reports no symbols, which a loadable Mach-O can never
-// satisfy, so no proven target could reach a green Darwin proof. The branch is gone,
-// and the script resolves its target through the proven view alone.
+func TestNativeProofRefusesTargetWithoutPlatformPredicate(t *testing.T) {
+	kit, err := findKitRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, proven := unpredicatedProofRoot(t, kit)
+	work := t.TempDir()
+
+	out, err := runScript(t, root, "native-proof.sh",
+		filepath.Join(work, "artifacts"),
+		filepath.Join(work, "proof.json"),
+		proven.os, proven.arch, proven.runner)
+
+	if err == nil {
+		t.Fatalf("native-proof.sh proved %s, which has no platform predicate:\n%s", proven.name(), out)
+	}
+	RequireSubstring(t, out,
+		"native proof: no platform predicate exists for operating system "+proven.goos, "unverifiable operating system refusal")
+	if _, statErr := os.Stat(filepath.Join(work, "proof.json")); statErr == nil {
+		t.Fatalf("native-proof.sh minted a proof for %s, which has no platform predicate", proven.name())
+	}
+}
+
+// nativeProofBindingDiags grades the proof builder script itself. The script resolves
+// its target through the proven view, isolates the Linux non-glibc execution, and
+// carries no Darwin symbol assertion: a loadable Mach-O always reports symbols, so
+// such an assertion can never go green, and a Darwin proof needs a new one.
 func nativeProofBindingDiags(proof string) []string {
 	var diags []string
 	if !strings.Contains(proof, "docker run --rm --network none") {

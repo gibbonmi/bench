@@ -24,6 +24,12 @@ matrix_row="$(node "$root/scripts/release-plan.mjs" "$root" proof-target "$os_na
 }
 IFS=$'\t' read -r _matrix_os _matrix_arch goos goarch matrix_runner <<< "$matrix_row"
 [[ "$matrix_runner" == "$runner" ]] || { printf 'native proof: runner does not match canonical matrix for %s\n' "$target" >&2; exit 1; }
+# The emitted proof states a green strip status. Only Linux carries the platform
+# predicates that make the statement true, so any other operating system stops here.
+case "$goos" in
+  linux) ;;
+  *) printf 'native proof: no platform predicate exists for operating system %s, so %s cannot be proven\n' "$goos" "$target" >&2; exit 1 ;;
+esac
 
 native_name="$(node "$root/scripts/release-plan.mjs" "$root" artifact-name "$version" "$target" platform)"
 archive_name="$(node "$root/scripts/release-plan.mjs" "$root" artifact-name "$version" "$target" archive)"

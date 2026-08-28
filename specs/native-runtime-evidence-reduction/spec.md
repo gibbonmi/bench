@@ -75,7 +75,7 @@ Line: `opus` / high. The group edits the oracle, and every changed check needs a
 
 **The proof script refuses an unproven target.** `scripts/native-proof.sh` calls `proof-target` in place of `target`. That command exits non-zero for an unproven target, and the script's existing failure message covers the case.
 
-**The Darwin branch goes, and the script fails closed.** With no proven Darwin target the branch is unreachable. The script keeps the Linux branch whole and `musl_status` keeps its two values.
+**The Darwin branch goes, and the script fails closed.** With no proven Darwin target the branch is unreachable. The script keeps the Linux branch whole.
 
 The script refuses any proven target whose operating system has no platform predicate. Without that refusal it would emit a green strip status for a target nothing verified. A future Darwin proof is therefore a plan-data change plus a re-authored strip assertion, written against real macOS `nm -a` output.
 
