@@ -15,6 +15,18 @@ type planTarget struct {
 	NativeProof bool `json:"native_proof"`
 }
 
+// provenTargets returns the plan targets that carry a native proof. Every proof
+// count derives from this filter, so the proven-target fact has one reader.
+func provenTargets(targets []planTarget) []planTarget {
+	proven := make([]planTarget, 0, len(targets))
+	for _, target := range targets {
+		if target.NativeProof {
+			proven = append(proven, target)
+		}
+	}
+	return proven
+}
+
 type releasePlan struct {
 	SchemaVersion  int              `json:"schema_version"`
 	Targets        []planTarget     `json:"targets"`

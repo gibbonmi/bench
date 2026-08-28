@@ -71,7 +71,8 @@ func reproducibilityInputs(root string) (map[string]reproducibilityArtifact, err
 	return result, nil
 }
 
-func inspectNativeProofs(root string, targets []targetEvidence, artifacts []artifactEvidence) ([]nativeProofEvidence, error) {
+func inspectNativeProofs(root string, planTargets []planTarget, artifacts []artifactEvidence) ([]nativeProofEvidence, error) {
+	targets := provenTargets(planTargets)
 	dir := filepath.Join(root, "dist", "native-proofs")
 	info, err := os.Lstat(dir)
 	if os.IsNotExist(err) {
@@ -131,7 +132,7 @@ func inspectNativeProofs(root string, targets []targetEvidence, artifacts []arti
 			return nil, fmt.Errorf("native proof %s cannot inspect platform binary: %w", name, err)
 		}
 		binaryDigest := digest(packageFiles["bin/bench"].data)
-		if !nativeProofMatches(proof, target, binaryDigest, digestByName[platform], digestByName[archive]) {
+		if !nativeProofMatches(proof, target.targetEvidence, binaryDigest, digestByName[platform], digestByName[archive]) {
 			return nil, fmt.Errorf("native proof %s does not match inspected artifacts", name)
 		}
 		proofs = append(proofs, proof)

@@ -135,7 +135,7 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 		return assembledEvidence{}, err
 	}
 	flags := phaseFlags(run)
-	artifacts, targets, artifactFingerprint, err := inspectArtifacts(root)
+	artifacts, planTargets, artifactFingerprint, err := inspectArtifacts(root)
 	if err != nil {
 		return assembledEvidence{}, err
 	}
@@ -146,11 +146,15 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 	if err != nil {
 		return assembledEvidence{}, err
 	}
-	nativeProofs, err := inspectNativeProofs(root, targets, artifacts)
+	nativeProofs, err := inspectNativeProofs(root, planTargets, artifacts)
 	if err != nil {
 		return assembledEvidence{}, err
 	}
-	if len(nativeProofs) != len(targets) {
+	targets := make([]targetEvidence, 0, len(planTargets))
+	for _, target := range planTargets {
+		targets = append(targets, target.targetEvidence)
+	}
+	if len(nativeProofs) != len(provenTargets(planTargets)) {
 		if unsatisfied != "" {
 			unsatisfied += "; "
 		}

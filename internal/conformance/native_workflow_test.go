@@ -244,9 +244,10 @@ func main() {
 	}
 	var plan struct {
 		Targets []struct {
-			OS     string `json:"os"`
-			Arch   string `json:"arch"`
-			Runner string `json:"runner"`
+			OS          string `json:"os"`
+			Arch        string `json:"arch"`
+			Runner      string `json:"runner"`
+			NativeProof bool   `json:"native_proof"`
 		} `json:"targets"`
 	}
 	if err := readJSONAt(root, filepath.Join("scripts", "release-plan.json"), &plan); err != nil {
@@ -285,6 +286,9 @@ func main() {
 	}
 	digest := func(data []byte) string { sum := sha256.Sum256(data); return fmt.Sprintf("%x", sum) }
 	for _, target := range plan.Targets {
+		if !target.NativeProof {
+			continue
+		}
 		platform := fmt.Sprintf("redbench-%s-%s-%s.tgz", target.OS, target.Arch, pkg.Version)
 		archive := fmt.Sprintf("redbench-%s-%s-%s.tar.gz", pkg.Version, target.OS, target.Arch)
 		files, err := archiveFiles(filepath.Join(root, "dist", "artifacts", platform))
