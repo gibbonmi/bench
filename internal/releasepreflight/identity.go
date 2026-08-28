@@ -50,7 +50,6 @@ func (r *runner) checkIdentity(ctx context.Context) error {
 	}
 	r.identity.Tag = &tag
 	r.identity.PackageVersion = &pkg
-	r.identity.BinaryVersion = &r.binaryVersion
 	r.identity.Toolchain = &toolchain
 	return nil
 }

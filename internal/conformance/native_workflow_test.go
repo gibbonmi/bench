@@ -350,6 +350,15 @@ func main() {
 		}
 	}
 	proofPath := filepath.Join(proofDir, proofTarget.OS+"-"+proofTarget.Arch+".json")
+	// The offline smoke verifier is the consumer of a verify-mode index, so the index
+	// the probe generated is graded by the verifier itself rather than by a restatement
+	// of its rules here.
+	archive := filepath.Join(root, "dist", "artifacts", fmt.Sprintf("redbench-%s-%s-%s.tar.gz", pkg.Version, proofTarget.OS, proofTarget.Arch))
+	verify := exec.Command("node", filepath.Join(root, "scripts", "verify-release-artifact.mjs"), filepath.Join(root, "dist", "preflight", "release-index.json"), filepath.Join(root, "dist", "preflight", "SHA256SUMS"), archive)
+	verify.Dir = root
+	if output, err := verify.CombinedOutput(); err != nil {
+		return []string{"release evidence probe index does not satisfy the offline smoke verifier: " + strings.TrimSpace(string(output))}
+	}
 	return verifyAuthoritativeNativeProofMutations(root, proofPath, env)
 }
 

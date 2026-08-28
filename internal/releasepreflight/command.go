@@ -290,6 +290,7 @@ func (r *runner) populateBaseIdentity() error {
 		return commandFailure{failure: Failure{Kind: "input", Message: "package.json version is unreadable"}}
 	}
 	r.identity.PackageVersion = &packageVersion
+	r.identity.BinaryVersion = &r.binaryVersion
 	r.identity.Toolchain = &toolchain
 	return nil
 }
