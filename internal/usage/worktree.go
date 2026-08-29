@@ -9,7 +9,8 @@ import (
 const (
 	WorktreeList        = "bench worktree list"
 	WorktreePath        = "bench worktree path <target>"
-	WorktreeExec        = "bench worktree exec <target> -- <command> [args...]"
+	WorktreeExec        = "bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]"
+	WorktreeShow        = "bench worktree show <target> <rev>:<path>"
 	WorktreeCreate      = "bench worktree create [--refresh] --request <opaque-id> --label <work-item>"
 	WorktreeRelease     = "bench worktree release --request <opaque-id> <path>"
 	WorktreeClean       = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>] | bench worktree clean --discard-branch --unclaimed [--apply <fingerprint> | --apply-current]"
@@ -24,6 +25,7 @@ var worktreeCommands = []string{
 	WorktreeList,
 	WorktreePath,
 	WorktreeExec,
+	WorktreeShow,
 	WorktreeCreate,
 	WorktreeRelease,
 	WorktreeClean,

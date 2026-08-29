@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -61,7 +62,7 @@ func TestPrefixOperandRefusals(t *testing.T) {
 		if code := PathCommand(root, home, []string{refusal.target}, &stdout, &stderr); code == 0 {
 			t.Fatalf("%s prefix %q resolved: %s", name, refusal.target, stdout.String())
 		}
-		if want := "bench worktree path: " + refusal.reason + "\n"; stderr.String() != want {
+		if want := "bench worktree path: " + refusal.reason + "\nnext=" + nextList + "\n"; stderr.String() != want {
 			t.Fatalf("%s prefix %q printed %q, want %q", name, refusal.target, stderr.String(), want)
 		}
 	}
@@ -98,38 +99,57 @@ func TestCleanApplyAcceptsAFingerprintPrefix(t *testing.T) {
 	}
 }
 
-// resolverRefusalCase breaks one dimension of a target and names the sentence both
+// resolverRefusalCase breaks one dimension of a target and names the two lines both
 // target-taking verbs must print for it. setup returns the repository root, the target
-// the operator types, and the resolver's reason.
+// the operator types, the resolver's reason, and the verb the refusal routes to.
 type resolverRefusalCase struct {
 	name  string
-	setup func(t *testing.T) (root, target, reason string)
+	setup func(t *testing.T) (root, target, reason, next string)
 }
+
+// nextList is the route every refusal before the target resolves names.
+const nextList = "bench worktree list"
 
 func resolverRefusalCases() []resolverRefusalCase {
 	return []resolverRefusalCase{
-		{name: "unassigned", setup: func(t *testing.T) (string, string, string) {
+		{name: "unassigned", setup: func(t *testing.T) (string, string, string, string) {
 			root := newWorktreeRepo(t)
-			return root, "no-such-target", "target is unassigned"
+			return root, "no-such-target", "target is unassigned", nextList
 		}},
-		{name: "ambiguous", setup: func(t *testing.T) (string, string, string) {
+		{name: "ambiguous", setup: func(t *testing.T) (string, string, string, string) {
 			root := newWorktreeRepo(t)
 			home := filepath.Join(t.TempDir(), "bench-home")
 			mustCreate(t, root, home, "req-collide-a", "collide-shared-a")
 			mustCreate(t, root, home, "req-collide-b", "collide-shared-b")
-			return root, "collide-shar", "target is ambiguous: " + strings.Join(ledgerOrderIDs(t, root), ", ")
+			return root, "collide-shar", "target is ambiguous: " + strings.Join(ledgerOrderIDs(t, root), ", "), nextList
 		}},
-		{name: "inactive", setup: func(t *testing.T) (string, string, string) {
+		{name: "inactive", setup: func(t *testing.T) (string, string, string, string) {
 			root, creation, _ := newOwnedAssignment(t, "resolver-inactive")
 			a := creation.Assignment
 			a.State = intent.StateComplete
 			mustNoError(t, intent.PutAssignment(root, a))
-			return root, a.Label, "assignment " + a.ID + " is not active"
+			return root, a.Label, "assignment " + a.ID + " is not active", nextList
 		}},
-		{name: "owner marker", setup: func(t *testing.T) (string, string, string) {
+		{name: "owner marker", setup: func(t *testing.T) (string, string, string, string) {
 			root, creation, _ := newOwnedAssignment(t, "resolver-marker")
 			rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
-			return root, creation.Assignment.Label, "owner marker does not match assignment " + creation.Assignment.ID
+			return root, creation.Assignment.Label, "owner marker does not match assignment " + creation.Assignment.ID, nextList
+		}},
+		// F7 and F9: a removed tree is refused by name, and an assignment whose branch has
+		// not landed leaves through its own release.
+		{name: "missing tree unlanded", setup: func(t *testing.T) (string, string, string, string) {
+			root, creation, _ := newOwnedAssignment(t, "resolver-missing")
+			makeUnlandedAssignment(t, creation)
+			mustNoError(t, os.RemoveAll(creation.Path))
+			a := creation.Assignment
+			return root, a.Label, "worktree tree is missing", "bench worktree release --request " + a.RequestToken + " '" + a.Worktree + "'"
+		}},
+		// F7 and F8: a landed assignment leaves with the batch clean instead.
+		{name: "missing tree landed", setup: func(t *testing.T) (string, string, string, string) {
+			root, creation, _ := newOwnedAssignment(t, "resolver-missing-landed")
+			landAssignment(t, root, creation, "landed.txt")
+			mustNoError(t, os.RemoveAll(creation.Path))
+			return root, creation.Assignment.Label, "worktree tree is missing", "bench worktree clean --landed"
 		}},
 	}
 }
@@ -147,18 +167,19 @@ func ledgerOrderIDs(t *testing.T, root string) []string {
 	return ids
 }
 
-// TestTargetVerbsNameTheResolverReason is LR11 through LR14: an operator reads the check
-// that failed rather than one blanket sentence covering four causes.
+// TestTargetVerbsNameTheResolverReason is LR11 through LR14 and F5, F7, F8, and F9: an
+// operator reads the check that failed rather than one blanket sentence, and then reads
+// the one verb that answers it.
 func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 	for _, refusalCase := range resolverRefusalCases() {
 		t.Run(refusalCase.name, func(t *testing.T) {
-			root, target, reason := refusalCase.setup(t)
+			root, target, reason, next := refusalCase.setup(t)
 			chdir(t, root)
 			var stdout, stderr bytes.Buffer
 			if code := PathCommand(root, Home(), []string{target}, &stdout, &stderr); code != 1 {
 				t.Fatalf("path %q exited %d, want 1: %s", target, code, stderr.String())
 			}
-			if want := "bench worktree path: " + reason + "\n"; stderr.String() != want {
+			if want := "bench worktree path: " + reason + "\nnext=" + next + "\n"; stderr.String() != want {
 				t.Errorf("path %q printed %q, want %q", target, stderr.String(), want)
 			}
 			stdout.Reset()
@@ -166,21 +187,30 @@ func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 			if code := ExecCommand(root, Home(), []string{target, "--", "true"}, nil, &stdout, &stderr); code != 1 {
 				t.Fatalf("exec %q exited %d, want 1: %s", target, code, stderr.String())
 			}
-			if want := "bench worktree exec: " + reason + "\n"; stderr.String() != want {
+			if want := "bench worktree exec: " + reason + "\nnext=" + next + "\n"; stderr.String() != want {
 				t.Errorf("exec %q printed %q, want %q", target, stderr.String(), want)
+			}
+			stdout.Reset()
+			stderr.Reset()
+			if code := ShowCommand(root, Home(), []string{target, "HEAD:x"}, &stdout, &stderr); code != 1 {
+				t.Fatalf("show %q exited %d, want 1: %s", target, code, stderr.String())
+			}
+			if want := "bench worktree show: " + reason + "\nnext=" + next + "\n"; stderr.String() != want {
+				t.Errorf("show %q printed %q, want %q", target, stderr.String(), want)
 			}
 		})
 	}
 }
 
-// TestTargetVerbsShareOneRefusalPrinter is LR15: one broken target yields byte-identical
-// stderr from both verbs once the verb prefix is stripped, so the two cannot drift.
+// TestTargetVerbsShareOneRefusalPrinter is LR15, F6, and S6: one broken target yields
+// byte-identical stderr from every target-taking verb once the verb prefix is stripped,
+// and each ends with the same route line, so the three cannot drift.
 func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
 	root, creation, home := newOwnedAssignment(t, "shared-printer")
 	rewriteMarkerOwner(t, creation.Path, strings.Repeat("b", 32))
 	chdir(t, root)
 	target := creation.Assignment.Label
-	var stdout, pathErr, execErr bytes.Buffer
+	var stdout, pathErr, execErr, showErr bytes.Buffer
 	if code := PathCommand(root, home, []string{target}, &stdout, &pathErr); code != 1 {
 		t.Fatalf("path exited %d: %s", code, pathErr.String())
 	}
@@ -188,12 +218,20 @@ func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
 	if code := ExecCommand(root, home, []string{target, "--", "true"}, nil, &stdout, &execErr); code != 1 {
 		t.Fatalf("exec exited %d: %s", code, execErr.String())
 	}
+	stdout.Reset()
+	if code := ShowCommand(root, home, []string{target, "HEAD:x"}, &stdout, &showErr); code != 1 {
+		t.Fatalf("show exited %d: %s", code, showErr.String())
+	}
 	pathTail, pathFound := strings.CutPrefix(pathErr.String(), "bench worktree path: ")
 	execTail, execFound := strings.CutPrefix(execErr.String(), "bench worktree exec: ")
-	if !pathFound || !execFound {
-		t.Fatalf("verb prefixes missing: path=%q exec=%q", pathErr.String(), execErr.String())
+	showTail, showFound := strings.CutPrefix(showErr.String(), "bench worktree show: ")
+	if !pathFound || !execFound || !showFound {
+		t.Fatalf("verb prefixes missing: path=%q exec=%q show=%q", pathErr.String(), execErr.String(), showErr.String())
 	}
-	if pathTail != execTail {
-		t.Errorf("path tail %q and exec tail %q differ", pathTail, execTail)
+	if pathTail != execTail || pathTail != showTail {
+		t.Errorf("path tail %q, exec tail %q, and show tail %q differ", pathTail, execTail, showTail)
+	}
+	if want := "owner marker does not match assignment " + creation.Assignment.ID + "\nnext=" + nextList + "\n"; pathTail != want {
+		t.Errorf("refusal tail = %q, want %q", pathTail, want)
 	}
 }

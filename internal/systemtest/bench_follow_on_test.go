@@ -30,6 +30,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		envelope := `{"tool_name":"Bash","tool_input":{"command":` + shellQuoteJSON(command) + `}}`
 		return owner.runWithInput(dir, []string{"BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}, envelope, shell, hook)
 	}
+	// blocked asserts the fixed refusal sentence on every refusal. (Coverage row G11.)
 	blocked := func(name, dir, command string) {
 		t.Helper()
 		marker := filepath.Join(t.TempDir(), "marker")
@@ -82,6 +83,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		{"FOG18 wrapper", "bash -lc 'bench help | cat'"},
 		{"FOG18 wrapper outer pipeline", "bash -lc 'bench help' | cat"},
 		{"wrapper outer and", "bash -lc 'bench help' && cat"},
+		// FOG38 is coverage row G6: a heredoc on any head but exec still refuses.
 		{"FOG38 heredoc redirect", "bench gate <<'EOF'\ninput\nEOF"},
 	} {
 		result := run(repo, tc.command)
@@ -89,6 +91,18 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 			t.Errorf("%s = (%d, %q, %q), want refusal", tc.name, result.code, result.stdout, result.stderr)
 		}
 	}
+	// The refusal line names the Bench segment and the operator that caused it, so
+	// an agent reads the cause at the hook seam. (Coverage rows G8 and G9.)
+	for _, tc := range []struct{ row, command, tail string }{
+		{"G8", "cat a && echo x; bench maps", "segment=bench maps operator=;"},
+		{"G9", "bench gate 2>&1", "segment=bench gate operator=2>&1"},
+	} {
+		result := run(repo, tc.command)
+		if result.code != 2 || !strings.HasSuffix(strings.TrimRight(result.stderr, "\n"), tc.tail) {
+			t.Errorf("%s = (%d, %q, %q), want stderr ending with %q", tc.row, result.code, result.stdout, result.stderr, tc.tail)
+		}
+	}
+
 	for _, envelope := range []string{
 		`{"tool_name":"Bash","tool_input":{"command":"bench help \u0026\u0026 touch nowhere"}}`,
 		`{"tool_name":"Bash","tool_input":{"command":"bench help \u003e nowhere"}}`,
@@ -103,6 +117,8 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 	blocked("FOG36 live symlink", repo, "./kit-command help | touch <marker>")
+	// The last two rows are the exec exception: a non-Bench step after the exec
+	// child, and a heredoc that feeds the child. (Coverage row G12.)
 	for _, command := range []string{
 		"bench gate --fresh",
 		"bench worktree exec label -- bash -lc 'go test && go vet'",
@@ -111,6 +127,8 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		"cat <<'EOF'\nbench gate | tail -20\nEOF",
 		"command -V bench | cat",
 		"command -v bench | cat",
+		"bench worktree exec label -- cp a b; cp b a",
+		"bench worktree exec label -- cat <<'EOF'\nbody line\nEOF",
 	} {
 		if result := run(repo, command); result.code != 0 || strings.Contains(result.stderr, "BLOCKED:") {
 			t.Errorf("allowed command %q = (%d, %q, %q)", command, result.code, result.stdout, result.stderr)
