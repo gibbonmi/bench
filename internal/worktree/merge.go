@@ -223,13 +223,15 @@ func activeAssignments(assignments []intent.Assignment) []intent.Assignment {
 func mergeSiblingTip(root string, assignments []intent.Assignment, target intent.Assignment, from string) (tip, id string, ok bool, err error) {
 	selected, selectErr := selectAssignment(activeAssignments(assignments), from)
 	if selectErr != nil {
-		// A spelling that names no active assignment is a candidate for the commit lookup.
-		// Every other selector outcome — an ambiguous prefix above all — refuses, because
-		// the commit lookup resolves no collision between assignments.
-		if errors.Is(selectErr, errTargetUnassigned) {
-			return "", "", false, nil
+		// An ambiguous prefix alone refuses, because the commit lookup resolves no
+		// collision between assignments. Every other selector outcome — an unassigned
+		// spelling, and a spelling the target grammar rejects as a path above all — is a
+		// candidate for the commit lookup, so it falls through as no sibling.
+		var ambiguous ambiguousTargetError
+		if errors.As(selectErr, &ambiguous) {
+			return "", "", false, refusalError{refusal{detail: selectErr.Error(), observed: from}}
 		}
-		return "", "", false, refusalError{refusal{detail: selectErr.Error(), observed: from}}
+		return "", "", false, nil
 	}
 	if selected.ID == target.ID {
 		return "", "", false, refusalError{refusal{detail: "--from resolves to the target itself", observed: selected.ID}}

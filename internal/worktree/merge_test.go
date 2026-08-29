@@ -842,3 +842,30 @@ func TestLandingDestinationNamesAnUnreadableStatusThroughTheSharedPredicate(t *t
 		t.Fatalf("landing destination error = %v, want the shared predicate's unreadable-status refusal", err)
 	}
 }
+
+// WM39: a `--from` spelling the target grammar rejects as a path resolves through the
+// commit lookup, and an absolute path that names no assignment falls through to the same
+// lookup. A sibling lookup that refuses on every selector error reports the path grammar
+// where a legitimate default-branch commit was named.
+func TestMergeResolvesASlashedFromThroughTheCommitLookup(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration")
+	target := created[0]
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", "/nonexistent/path", target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "--from names no assignment and no commit", "observed=/nonexistent/path")
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+
+	incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+	code, stdout, stderr = runMerge(t, j, root, home, "--from", "refs/heads/main", target.Assignment.ID)
+	if code != 0 {
+		t.Fatalf("merge exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if record := mergedRecord(t, stdout); !strings.Contains(record, "kind=fast-forward") {
+		t.Fatalf("record = %q, want kind=fast-forward", record)
+	}
+	if tip := gitOutput(t, root, "rev-parse", target.Assignment.Branch); tip != incoming {
+		t.Fatalf("branch tip = %s, want the incoming commit %s", tip, incoming)
+	}
+}
