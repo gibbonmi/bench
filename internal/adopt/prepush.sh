@@ -23,6 +23,9 @@ fi
 if [[ -z "$pin_tree" ]]; then
   echo "bench: gate unpinned - run 'bench gate pin' to enable .bench drift checks." >&2
 fi
+# The reviewer who owns the merge can lift the branch clause for one repository with
+# 'git config bench.allowProtectedPush true'. The drift clause stays armed regardless.
+allow_protected="$(git config --type=bool --get bench.allowProtectedPush 2>/dev/null || true)"
 ref_lines=()
 while IFS= read -r line || [ -n "$line" ]; do
   ref_lines+=("$line")
@@ -40,7 +43,7 @@ while IFS= read -r line || [ -n "$line" ]; do
 done
 for line in "${ref_lines[@]}"; do
   read -r _ _ remote_ref _ <<< "$line"
-  if [[ "$remote_ref" == "refs/heads/$protected" ]]; then
+  if [[ "$allow_protected" != "true" && "$remote_ref" == "refs/heads/$protected" ]]; then
     echo "blocked: direct push to $protected. Open a PR or merge it yourself." >&2
     exit 1
   fi

@@ -204,3 +204,40 @@ func runHookGit(t *testing.T, root string, args ...string) {
 		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, out)
 	}
 }
+
+// runPrePushHook executes the rendered hook the way git does: cwd at the repo root, one
+// "<local ref> <local oid> <remote ref> <remote oid>" line on stdin. It returns the exit
+// error, if any, and the hook's stderr.
+func runPrePushHook(t *testing.T, root, path, remoteRef string) (error, string) {
+	t.Helper()
+	command := exec.Command("bash", path)
+	command.Dir = root
+	oid := strings.Repeat("a", 40)
+	command.Stdin = strings.NewReader("refs/heads/topic " + oid + " " + remoteRef + " " + oid + "\n")
+	var stderr strings.Builder
+	command.Stderr = &stderr
+	return command.Run(), stderr.String()
+}
+
+func TestPrePushHookAllowProtectedPushConfig(t *testing.T) {
+	root := hookTestRepo(t)
+	path := filepath.Join(root, ".git", "hooks", "pre-push")
+	writeHook(t, path, "main")
+
+	if err, out := runPrePushHook(t, root, path, "refs/heads/main"); err == nil || !strings.Contains(out, "blocked: direct push to main") {
+		t.Fatalf("default hook: err=%v stderr=%q, want a block", err, out)
+	}
+	if err, out := runPrePushHook(t, root, path, "refs/heads/topic"); err != nil {
+		t.Fatalf("default hook on a topic branch: %v\n%s", err, out)
+	}
+
+	runHookGit(t, root, "config", "bench.allowProtectedPush", "true")
+	if err, out := runPrePushHook(t, root, path, "refs/heads/main"); err != nil {
+		t.Fatalf("allowed hook: %v\n%s", err, out)
+	}
+
+	runHookGit(t, root, "config", "bench.allowProtectedPush", "false")
+	if err, _ := runPrePushHook(t, root, path, "refs/heads/main"); err == nil {
+		t.Fatal("bench.allowProtectedPush=false must keep the block")
+	}
+}

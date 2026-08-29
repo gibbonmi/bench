@@ -279,7 +279,8 @@ changed. It proposes; you own the merge.
 the repository. Read the Harness Invocation section in
 `.bench/BENCH-reference.md` when you need a harness's phase syntax or adapter
 details. The pre-push hook protects the branch it resolves, whichever harness
-or human pushes.
+or human pushes; `git config bench.allowProtectedPush true` lifts that
+protection for one repository.
 
 Env knobs: `BENCH_AGENT` (required for `bench shift` — a harness adapter
 executable that reads the prompt from stdin; reference adapters ship in
