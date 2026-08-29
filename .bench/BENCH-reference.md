@@ -158,6 +158,12 @@ describe the hook and adapter plumbing.
 - Oracle commands inspect or enforce readiness from development through release.
 - Work commands own isolated execution, gated changes, and spec lifecycle operations.
 
+`bench consumers` is the resolved-reference query for a Go symbol. With
+`--changed`, the same verb is the review blast over a frozen base and source
+tip. Each success response ends with one citation row before the help
+envelope, so a reviewer replays the answer. The review phase runs the blast
+step before it dispatches the axes.
+
 A reviewed spec-backed build keeps its serial ticket commits in one retained
 integration source. Semantic review freezes the explicit base and source tip.
 Accepted findings commit there on the same cadence.

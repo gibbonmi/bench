@@ -497,6 +497,7 @@ case "${1:-}" in
   harnesses) route_porcelain "$@" ;;
   preflight) route_porcelain "$@" ;;
   coverage) route_porcelain "$@" ;;
+  consumers) route_porcelain "$@" ;;
   test)     route_porcelain "$@" ;;
   tree-hash) route_binary "$@" ;;
   gate-run) route_binary "$@" ;;

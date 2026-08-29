@@ -20,13 +20,12 @@ package outline
 
 import (
 	"bytes"
-	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -50,15 +49,14 @@ const promise = "outline locates candidate seams (file:line); it does not identi
 
 const usageLine = "usage: bench outline [path] [--full]"
 
-var openOutlineFile = os.Open
-
 func helpText() string {
 	return usageLine + "\n" + promise + "\n"
 }
 
 // Symbol is one located declaration: the 1-based line it sits on, the kind the
-// language pattern emits (func, type, function, heading, def, class, const), and the
-// declared name.
+// language pattern emits (func, type, function, heading, def, class, const), the
+// candidate-inventory kind a name or a path refines it to (helper, double, fixture),
+// and the declared name.
 type Symbol struct {
 	Line int
 	Kind string
@@ -66,12 +64,14 @@ type Symbol struct {
 }
 
 // pattern is one ordered declaration form for a language: a compiled line-anchored
-// regex, the kind it emits, and the capture group holding the name. Adding a language
-// or a form is adding a table entry — never a new code path.
+// regex, the kind it emits, the capture group holding the name, and an optional path
+// predicate that limits the form to the paths it accepts. Adding a language or a form
+// is adding a table entry — never a new code path.
 type pattern struct {
 	re    *regexp.Regexp
 	kind  string
 	group int
+	path  func(string) bool // nil means every path the language table scans
 }
 
 // langTable is the one source of the per-language pattern fact: file extension →
@@ -83,6 +83,7 @@ var langTable = map[string][]pattern{
 		{re: regexp.MustCompile(`^[ \t]*function[ \t]+([A-Za-z_][A-Za-z0-9_-]*)`), kind: "function", group: 1},
 	},
 	".go": {
+		{re: regexp.MustCompile(`^func[ \t]+((?:new|make|with)[A-Z][A-Za-z0-9_]*)`), kind: "helper", group: 1, path: isGoTestFile},
 		{re: regexp.MustCompile(`^func[ \t]+\([^)]*\)[ \t]*([A-Za-z_][A-Za-z0-9_]*)`), kind: "func", group: 1},
 		{re: regexp.MustCompile(`^func[ \t]+([A-Za-z_][A-Za-z0-9_]*)`), kind: "func", group: 1},
 		{re: regexp.MustCompile(`^type[ \t]+([A-Za-z_][A-Za-z0-9_]*)`), kind: "type", group: 1},
@@ -123,6 +124,9 @@ func Symbols(path string, content []byte) []Symbol {
 	for i, line := range strings.Split(string(content), "\n") {
 		line = strings.TrimSuffix(line, "\r")
 		for _, p := range patterns {
+			if p.path != nil && !p.path(path) {
+				continue
+			}
 			m := p.re.FindStringSubmatch(line)
 			if m == nil {
 				continue
@@ -131,11 +135,37 @@ func Symbols(path string, content []byte) []Symbol {
 			if name == "" {
 				continue
 			}
-			out = append(out, Symbol{Line: i + 1, Kind: p.kind, Name: name})
+			out = append(out, Symbol{Line: i + 1, Kind: kindFor(p.kind, name), Name: name})
 			break // one row per line: the first matching form wins
 		}
 	}
 	return out
+}
+
+// isGoTestFile is the helper form's path predicate: a helper is a construction function
+// a test file owns, so the same name in production code stays a plain func.
+func isGoTestFile(path string) bool {
+	return strings.HasSuffix(path, "_test.go")
+}
+
+// doublePrefixes are the test-double name forms, matched case-insensitively.
+var doublePrefixes = []string{"fake", "stub", "mock", "spy"}
+
+// kindFor refines a matched row's kind: a name carrying a double prefix reports
+// "double" whatever form matched it, in any file the language tables scan. The
+// refinement rides the matched name rather than a double entry per language, because a
+// per-language entry would restate that language's declaration grammar N times.
+// Precedence: the pattern table's kind (helper included) resolves first, and the double
+// prefix overrides it. The helper and double prefix sets are disjoint, so no name
+// reaches both and the precedence is unobservable.
+func kindFor(kind, name string) string {
+	lower := strings.ToLower(name)
+	for _, prefix := range doublePrefixes {
+		if strings.HasPrefix(lower, prefix) {
+			return "double"
+		}
+	}
+	return kind
 }
 
 // listFiles returns the tracked files git reports, root-relative, in git's ls-files
@@ -177,8 +207,26 @@ func listFiles(root, path string, havePath bool) ([]string, error) {
 	return files, nil
 }
 
+// walkSymbols is the walk's per-file dispatch. A fixture path answers with its one row
+// before any content is read, so a binary, oversized, or otherwise unscannable fixture is
+// still listed; only the stat policy can skip it. Every other file passes the whole read
+// policy and goes through the language table.
+func walkSymbols(rel, abs string) ([]Symbol, string, bool) {
+	if isFixture(rel) {
+		if reason, ok := statPolicy(abs); !ok {
+			return nil, reason, false
+		}
+		return []Symbol{{Line: 1, Kind: "fixture", Name: path.Base(rel)}}, "", true
+	}
+	content, reason, ok := ReadScannable(abs)
+	if !ok {
+		return nil, reason, false
+	}
+	return Symbols(rel, content), "", true
+}
+
 // Command implements `bench outline [path] [--full]`. It walks the tracked files, scoped
-// to an optional path, and dispatches each by extension through Symbols. It drops any
+// to an optional path, and dispatches each through walkSymbols. It drops any
 // row a control byte would make unrepresentable, and renders the symbol table for a
 // path or `--full`, and the per-directory summary for the bare form. Each form has the
 // definitive empty state when nothing matches, a structured stdout error with exit 1
@@ -217,33 +265,9 @@ func Command(args []string) (string, int) {
 	totalSymbols := 0
 	for _, rel := range files {
 		abs := filepath.Join(root, filepath.FromSlash(rel))
-		info, statErr := os.Lstat(abs)
-		if statErr != nil {
-			skips = appendSkip(skips, rel, "unreadable")
-			continue
-		}
-		if !info.Mode().IsRegular() {
-			skips = appendSkip(skips, rel, "nonregular")
-			continue
-		}
-		file, err := openOutlineFile(abs)
-		if err != nil {
-			skips = appendSkip(skips, rel, "unreadable")
-			continue
-		}
-		read := bounds.Read(file, bounds.OutlineFileLimit)
-		closeErr := file.Close()
-		if read.Status == bounds.ReadOversized {
-			skips = appendSkip(skips, rel, "oversized")
-			continue
-		}
-		if read.Status == bounds.ReadFailed || closeErr != nil {
-			skips = appendSkip(skips, rel, "unreadable")
-			continue
-		}
-		content := read.Data
-		if bytes.IndexByte(content, 0) >= 0 {
-			skips = appendSkip(skips, rel, "binary")
+		symbols, reason, ok := walkSymbols(rel, abs)
+		if !ok {
+			skips = appendSkip(skips, rel, reason)
 			continue
 		}
 		scanned++
@@ -254,7 +278,7 @@ func Command(args []string) (string, int) {
 				dirCount[dir] = 0
 			}
 		}
-		for _, s := range Symbols(rel, content) {
+		for _, s := range symbols {
 			totalSymbols++
 			if !toon.Representable(rel) || !toon.Representable(s.Name) {
 				continue // one poisoned path or name drops only its own row
@@ -312,4 +336,11 @@ func appendSkip(rows [][]string, file, reason string) [][]string {
 		return rows
 	}
 	return append(rows, []string{file, reason})
+}
+
+// TrackedFiles is the tracked-file census other packages read: git's ls-files order for
+// the whole repository rooted at root. It is the listing half of the outline walk, and it
+// is exported so a caller sweeping the same files scans one census rather than a second.
+func TrackedFiles(root string) ([]string, error) {
+	return listFiles(root, "", false)
 }

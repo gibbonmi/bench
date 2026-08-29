@@ -262,14 +262,21 @@ func validHarnessPhase(phase string) bool {
 	}
 }
 
+// ShellQuote renders one value as a single POSIX shell token. It is the one derivation of
+// the kit's shell quoting, so every surface that prints a replayable command line — a help
+// row here, a citation's replay spelling elsewhere — keeps the same token boundaries.
+func ShellQuote(value string) string {
+	if shellSafeToken(value) {
+		return value
+	}
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
+}
+
 func renderKnownArgument(value string) (string, error) {
 	if !validKnownArgument(value) {
 		return "", errors.New("known argument is invalid")
 	}
-	if shellSafeToken(value) {
-		return value, nil
-	}
-	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'", nil
+	return ShellQuote(value), nil
 }
 
 func validKnownArgument(value string) bool {

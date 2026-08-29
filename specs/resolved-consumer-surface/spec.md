@@ -1,6 +1,6 @@
 # Resolved consumer surface
 
-Status: staged
+Status: implemented
 
 Roadmap: FT191
 
@@ -141,8 +141,9 @@ reflowing.
 - Row identity uses origin objects: alias-resolved, generic-origin, with
   positions from the file set. Rows sort by file, line, then column. No
   printed instantiation name reaches the output.
-- The citation row is `citation{sha,state,version,cmd,hash}`. It emits
-  immediately before the help envelope, because the AXI contract pins `help`
+- The citation row renders as the one-row table
+  `citation[1]{sha,state,version,cmd,hash}:`, because TOON has no
+  single-object form. It emits immediately before the help envelope, because the AXI contract pins `help`
   as the terminal block. The hash is sha256 over all output bytes before the
   citation row. `state` is `clean` or `dirty`, and `version` is the bench
   version.
@@ -152,8 +153,9 @@ reflowing.
   every row, and the review blast step runs `--full`.
 - Blast derivation is a pure function of the hunk list and the tip packages.
   Enumeration runs at the tip. A deleted declaration emits one
-  `blast_deleted[N]{changed_symbol,base_file,base_line}` row. The git
-  queries stay at the rim, through `internal/git`.
+  `blast_deleted[N]{changed_symbol,base_file,base_line}` row. `--changed`
+  refuses a `--source-tip` that is not the checkout's HEAD, and it refuses a
+  dirty checkout. The git queries stay at the rim, through `internal/git`.
 - `touched` is true when the row's consumer file sits in the diff's
   changed-file set. The outside-diff rows are the FT210 review signal.
 - Refusals are fail-closed structured stdout errors at exit 1: an ill-typed
@@ -186,6 +188,8 @@ reflowing.
   forms are names with a case-insensitive `fake`, `stub`, `mock`, or `spy`
   prefix. Fixture rows come from a walk-level path classifier beside the
   extension dispatch, because `testdata/` files carry no scanned extension.
+- The loader drops a file outside the repository root before enumeration,
+  because the citation cannot replay it.
 - The meta table carries packages, files, matches, rows, and truncated. The
   default build context is the only graded configuration.
 - `internal/consumers` splits by responsibility under the structure budgets:
@@ -197,8 +201,8 @@ reflowing.
 - A good test drives the public command behavior: argv in, TOON bytes and
   exit code out. Core tests type-check fixture source in process
   (`go/parser` plus `go/types`) and never spawn a subprocess.
-- One focused loader test runs the real `go list` path against a minimal
-  fixture module; it is the single subprocess site.
+- The loader seam is the one subprocess site; its real-path tests and the
+  AXI envelope cases exercise it.
 - The determinism probe runs the command twice at one SHA and compares
   bytes. The alias row compares an alias-spelled query against an
   origin-spelled query.
@@ -215,7 +219,7 @@ reflowing.
         ▼
     argv ──▶ [ usage.Parse ] ──▶ [ loader seam (go/packages) ] ──▶ [ consumers core ] ──▶ result tables + citation
                                         ◀ tests attach here: in-process typed fixtures drive the core;
-                                          one focused test drives the real loader; command tests inject the seam
+                                          the loader seam's real-path tests drive the loader; command tests inject the seam
 
 ### Acceptance coverage map
 
@@ -230,7 +234,7 @@ reflowing.
 | CS7 | 6 | a query resolved to a `.ts` file emits a structured stdout refusal at exit 1 naming the language | command surface | an empty-table answer states the false "no callers" the research forbids |
 | CS8 | 7 | a fixture with one type error emits a structured stdout refusal at exit 1 naming that first error position | loader rim, fixture module | a tolerant loader enumerates over an ill-typed tree and under-reports |
 | CS9 | 8 | with `go` absent from `PATH` the command emits a structured stdout refusal at exit 1 naming the missing binary | loader rim, env-injected | a raw exec error surfaces as an unactionable stack |
-| CS10 | 9 | every success response carries one `citation{sha,state,version,cmd,hash}` row before the terminal help envelope | command surface | a response without the row leaves the claim uncitable |
+| CS10 | 9 | every success response carries one `citation[1]{sha,state,version,cmd,hash}` row before the terminal help envelope | command surface | a response without the row leaves the claim uncitable |
 | CS11 | 10 | a dirty checkout emits `state=dirty` in the citation row | command surface, dirty fixture repo | a clean-marked dirty citation promises a replay that cannot match |
 | CS12 | 11 | two identical runs at one SHA produce byte-equal output | determinism probe at the command seam | unsorted map iteration leaks ordering into the bytes |
 | CS13 | 12 | an alias-spelled query and an origin-spelled query emit byte-identical tables | consumers core, alias fixture | a resolver that skips `types.Unalias` emits different rows for the two spellings |
@@ -252,6 +256,8 @@ reflowing.
 | BL5 | 20 | `--source-tip` without `--base` exits 2 with usage | usage grammar | a tip against a defaulted base grades the wrong pair |
 | BL6 | 31 | a consumer row inside the diff's file set emits `touched=true` and one outside emits `touched=false` | blast core, fixture pair | an unmarked table hides the FT210 outside-diff signal |
 | BL7 | 31 | a blast result offers one per-symbol `--full` help action for each symbol with an untouched consumer | command surface, axi owner | a bare blast table gives no executable next step |
+| BL8 | 19 | a dirty checkout in `--changed` mode emits a structured stdout refusal at exit 1 naming the remedy | command surface, dirty fixture repo | a blast over working-tree bytes cannot byte-match a review recomputation |
+| BL9 | 19 | a `--source-tip` that is not the checkout's HEAD emits a structured stdout refusal at exit 1 naming both commits | command surface, two-commit fixture | a blast at the wrong tip grades the wrong pair |
 | OI1 | 21 | a `_test.go` function named with a declared helper prefix emits kind `helper` | outline symbol table | the plain `func` kind hides helpers in the undifferentiated list |
 | OI2 | 22 | a name with the fake, stub, mock, or spy prefix emits kind `double` | outline symbol table | a fake-only classifier reds the stub, mock, and spy plants |
 | OI3 | 23 | a file under a `testdata/` segment emits one fixture row carrying line 1 and its base name | outline walk classifier | extension-only dispatch skips fixture files entirely |
@@ -292,16 +298,21 @@ The walk covers the profile's hostile-input classes that reach this surface:
   scope; the review walk stays reviewer judgment.
 - Non-default build-tag graphs — the default context is the one graded
   configuration, stated in help.
+- A generic type as an implementer — the implements pass lists named types
+  only, and help states the limit.
+- Packages under `vendor/` — they sit outside `./...`, and help states the
+  limit.
 
 ## Ownership fences
 
 - `internal/consumers/` (new)
 - `internal/outline/`
 - `internal/conformance/`
+- `internal/axi/`
 - `cmd/bench/`
 - `bin/bench.sh`
 - `go.mod`
-- `go.sum` (new)
+- `go.sum`
 - `projects/benchkit.md`
 - `.agents/commands/bench-review-implementation.md`
 - `.agents/skills/bench-craft-cli/SKILL.md`

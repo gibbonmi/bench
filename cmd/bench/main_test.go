@@ -165,6 +165,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight review|build <slug>  phase-entry checks that a spec's artifacts agree with the tree, one verdict row per check
   bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench outline [path] [--full]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
+  bench consumers <qualified-symbol> [--full]  every resolved Go reference edge as TOON (file:line, via, enclosing); identifies edges, never blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate [--fresh]       run the project gate (the oracle; --fresh ignores a reusable green)

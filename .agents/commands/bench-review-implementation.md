@@ -22,7 +22,7 @@ numbers; never report one number where the reviewer asks for the other.
 
 Accepted findings become slim repair tickets with an advisory `Writes:` note,
 and they return to `/bench-implement-spec`. Findings that need a later fix pass
-use the pickup-file route in step 5. A clean review proceeds to `/bench-final-check`.
+use the pickup-file route in step 6. A clean review proceeds to `/bench-final-check`.
 
 The gate is deterministic: it runs the phase table the project profile declares,
 and nothing else. Review supplies the semantic judgment that phase table cannot
@@ -59,7 +59,17 @@ it never restarts initial discovery over the original range.
    `CLAUDE.md` holds import pointers only. Also use `projects/<name>.md` and
    any `CONTRIBUTING` or conventions docs in the repo.
 
-3. **Spawn the axes in parallel sub-agents.** This isolation keeps one axis's
+3. **Run the blast before axis dispatch.** Run
+   `bench consumers --changed --base <b> --source-tip <t> --full` over the same
+   frozen pair that preflight and `bench diff` pinned. Attach the returned
+   tables and their citation row to the review record. Walk the `touched=false`
+   rows first, because a consumer outside the diff's file set is the FT210 class
+   an unlisted-consumer miss hides. Then hand each axis the table.
+
+   - Walk a `blast_deleted` row as a deletion whose consumers the tip already edited.
+   - A blast refusal stops the review, as a red preflight does.
+
+4. **Spawn the axes in parallel sub-agents.** This isolation keeps one axis's
    derivation from polluting another's context, and stops one axis from seeding
    another's findings. Spawn one delegate per axis — Standards, Spec, and the
    Coverage axis — each under ~400 words. Charge and verify each delegate per
@@ -88,7 +98,7 @@ it never restarts initial discovery over the original range.
    State that fallback in the exit handoff. Keep the same charges and citation
    standard.
 
-4. **Aggregate, don't merge.** Report under `## Standards`, `## Spec`, and
+5. **Aggregate, don't merge.** Report under `## Standards`, `## Spec`, and
    `## Coverage` headings, and keep the findings separate. Do not rerank across
    axes. Do not pick a single winner. Code can pass one axis and fail another:
 
@@ -110,7 +120,7 @@ it never restarts initial discovery over the original range.
    A disposition is a repair-routing label; it is not permission for this
    read-only phase to make the edit itself.
 
-5. **Write and commit the pickup state, in that order, before repair begins.**
+6. **Write and commit the pickup state, in that order, before repair begins.**
    The actionable findings that need a later fix pass go in
    `reviews/<spec-slug>.md`. Keep one section per axis: `## Standards`,
    `## Spec`, and `## Coverage`. Each section carries its
@@ -136,7 +146,7 @@ it never restarts initial discovery over the original range.
    the same green fix commit that closes them, so resolved findings cannot
    resurface.
 
-6. **Hand off, don't repair.** This phase makes no fixes and runs no gate.
+7. **Hand off, don't repair.** This phase makes no fixes and runs no gate.
    Accepted findings become slim repair tickets carrying an advisory `Writes:`
    note and return to `/bench-implement-spec` on the same integration source.
    A spec amendment commits to that same source on the finding cadence. The

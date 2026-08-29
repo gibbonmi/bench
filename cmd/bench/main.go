@@ -19,6 +19,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/commit"
+	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/dashboard"
 	"github.com/gibbonmi/bench/internal/diff"
@@ -98,6 +99,7 @@ var commandRegistry = []commandDefinition{
 	), Run: outputCommand(gocache.Command)},
 	{Name: "models", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 5, Description: "list advisory model-id candidates for the line binding"}), Run: outputCommand(models.Command)},
 	{Name: "outline", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 23, Suffix: " [path] [--full]", Description: "top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams"}), Run: outputCommand(outline.Command)},
+	{Name: "consumers", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 23, Suffix: " <qualified-symbol> [--full]", Description: "every resolved Go reference edge as TOON (file:line, via, enclosing); identifies edges, never blessed seams"}), Run: outputCommand(consumers.CommandWithVersion(version))},
 	{Name: "idea", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<text>\"", Description: "park an out-of-scope idea in capture/IDEAS.md (commit to nothing)"}), Run: outputCommand(roadmap.IdeaCommand)},
 	{Name: "learning", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<title>\" --what --right [--rule]", Description: "append one open entry to capture/learnings.md (the drain verdicts it)"}), Run: outputCommand(roadmap.LearningCommand)},
 	{Name: "roadmap", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 9, Description: "show the top 10 roadmap rows + drain state"}), Run: outputCommand(roadmapCommand)},
