@@ -306,6 +306,7 @@ The walk covers the profile's hostile-input classes that reach this surface:
 - `internal/consumers/` (new)
 - `internal/outline/`
 - `internal/conformance/`
+- `internal/axi/`
 - `cmd/bench/`
 - `bin/bench.sh`
 - `go.mod`
