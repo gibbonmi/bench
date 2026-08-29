@@ -223,7 +223,7 @@ every subagent at medium.
 | X5 | 5 | a child `sh -c 'echo child-usage >&2; exit 2'` yields exit 2 and stderr equal to `child-usage` plus the `worktree:` line | `internal/worktree/exec_test.go` | a wrapper that rewrites the child's stderr or maps its code breaks the pass-through |
 | X6 | 6 | the exec help's third line names `usage: bench worktree exec` as the prefix of an exit-2 grammar refusal | `internal/worktree/exec_test.go` | a help without the rule leaves the two exit-2 cases indistinguishable |
 | X7 | 7 | `bench worktree exec <target> --env FOO=bar -- sh -c 'echo $FOO'` prints `bar`, and the caller's process has no `FOO` | `internal/worktree/exec_test.go` | a flag the parser accepts but the child never receives |
-| X8 | 8 | `--env A=1 --env B=2` sets both `A` and `B` in the child | `internal/usage/parse_test.go` | the repeated-flag usage error refuses the second `--env` today |
+| X8 | 8 | `--env A=1 --env B=2` sets both `A` and `B` in the child | `internal/usage/parse_test.go`, `internal/worktree/exec_test.go` | the repeated-flag usage error refuses the second `--env` today |
 | X9 | 8 | `bench commit -m a -m b` still returns the usage line naming `-m` at exit 2 | `internal/usage/parse_test.go` | a parser that makes every flag repeatable hides a mistyped invocation |
 | X10 | 9 | `--env FOO` and `--env 1X=y` each return the usage line naming the value at exit 2 and start no child | `internal/worktree/exec_test.go` | a value with no `=` would otherwise reach `execEnv` as a malformed entry |
 | X11 | 10 | `--env BENCH_HOME=/x -- sh -c 'echo $BENCH_HOME'` prints the verb's resolved home | `internal/worktree/exec_test.go` | an `--env` applied last repoints the child's pool |
