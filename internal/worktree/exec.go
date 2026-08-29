@@ -84,13 +84,13 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(stderr, "bench worktree exec: %v\n", err)
-		return 1
+		return nameWorktree(stderr, dir, 1)
 	}
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
 	select {
 	case err := <-done:
-		return childExitCode(cmd, err)
+		return nameWorktree(stderr, dir, childExitCode(cmd, err))
 	case <-ctx.Done():
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
 		select {
@@ -100,8 +100,21 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 			<-done
 		}
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		return 130
+		return nameWorktree(stderr, dir, 130)
 	}
+}
+
+// nameWorktree returns code, and names the tree the child ran in when that code is a
+// failure. Every exit path returns through here, so the line prints one time for one
+// child run and never on a green run. It follows the child's own stderr, which the verb
+// passes through unchanged, so the reader gets the failure first and then the path the
+// recovery command needs.
+func nameWorktree(stderr io.Writer, dir string, code int) int {
+	if code == 0 {
+		return code
+	}
+	fmt.Fprintf(stderr, "worktree: %s\n", dir)
+	return code
 }
 
 // execEnv is the environment a worktree child runs under, with that child owning its run.

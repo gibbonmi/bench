@@ -320,3 +320,76 @@ func TestExecEnvCannotRestoreTheStrippedKit(t *testing.T) {
 	requireTest(t, code == 0, "exec exited %d: %s", code, stderr)
 	requireTest(t, strings.TrimSpace(stdout) == "unset", "child saw BENCH_KIT=%q, want it stripped", strings.TrimSpace(stdout))
 }
+
+// childFailure runs a real child through the exec path and returns the stderr the agent
+// reads plus the exit code, so a failure row grades the stream and the code together.
+func childFailure(t *testing.T, dir string, argv ...string) (string, int) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	code := runWorktreeChild(argv, dir, t.TempDir(), nil, nil, &stdout, &stderr)
+	return stderr.String(), code
+}
+
+// TestExecPassesTheChildStderrAndCodeThrough covers X5. The child's own stderr arrives
+// byte for byte and its code arrives unmapped, with the worktree line appended after it.
+func TestExecPassesTheChildStderrAndCodeThrough(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	stderr, code := childFailure(t, dir, "sh", "-c", "echo child-usage >&2; exit 2")
+	requireTest(t, code == 2, "child exited %d, want 2 (stderr %q)", code, stderr)
+	want := "child-usage\nworktree: " + dir + "\n"
+	requireTest(t, stderr == want, "stderr = %q, want %q", stderr, want)
+}
+
+// TestExecStartFailurePrintsTheWorktreeLine covers F1. A child that never starts leaves
+// the os/exec error line and then the path, so the reader has both.
+func TestExecStartFailurePrintsTheWorktreeLine(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	stderr, code := childFailure(t, dir, "no-such-binary-xyz")
+	requireTest(t, code == 1, "start failure exited %d, want 1 (stderr %q)", code, stderr)
+	lines := strings.Split(strings.TrimRight(stderr, "\n"), "\n")
+	requireTest(t, len(lines) == 2, "start failure printed %d lines, want 2:\n%s", len(lines), stderr)
+	requireTest(t, strings.HasPrefix(lines[0], "bench worktree exec: exec: "),
+		"start failure line 1 = %q, want the os/exec error line", lines[0])
+	requireTest(t, lines[1] == "worktree: "+dir, "start failure line 2 = %q, want the worktree line", lines[1])
+}
+
+// TestExecNonzeroExitPrintsTheWorktreeLine covers F2.
+func TestExecNonzeroExitPrintsTheWorktreeLine(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	stderr, code := childFailure(t, dir, "sh", "-c", "exit 3")
+	requireTest(t, code == 3, "child exited %d, want 3 (stderr %q)", code, stderr)
+	requireTest(t, stderr == "worktree: "+dir+"\n", "stderr = %q, want the worktree line alone", stderr)
+}
+
+// execCancelHelperEnv carries the worktree the helper process runs its child in.
+const execCancelHelperEnv = "BENCH_EXEC_CANCEL_HELPER"
+
+// TestExecCancelPathPrintsTheWorktreeLine covers F3. The cancel path needs a real signal,
+// so the row runs itself as a helper process by the precedent of
+// TestActualSIGINTAfterUnlockRestoresExactLockAndReplays. The child signals the helper,
+// the helper's cancel path kills the child, and the helper grades the exit and the line.
+func TestExecCancelPathPrintsTheWorktreeLine(t *testing.T) {
+	t.Parallel()
+	if dir := os.Getenv(execCancelHelperEnv); dir != "" {
+		stderr, code := childFailure(t, dir, "sh", "-c", "kill -INT $PPID; while :; do sleep 1; done")
+		requireTest(t, code == 130, "cancelled child exited %d, want 130 (stderr %q)", code, stderr)
+		requireTest(t, strings.HasSuffix(stderr, "worktree: "+dir+"\n"),
+			"cancelled child stderr = %q, want it to end with the worktree line", stderr)
+		return
+	}
+	cmd := descendant(t, os.Args[0], "-test.run=^TestExecCancelPathPrintsTheWorktreeLine$", "-test.v")
+	cmd.Env = append(os.Environ(), execCancelHelperEnv+"="+t.TempDir())
+	out, err := cmd.CombinedOutput()
+	requireTest(t, err == nil, "cancel helper: %v\n%s", err, out)
+}
+
+// TestExecZeroExitPrintsNoWorktreeLine covers F4. A green run stays silent.
+func TestExecZeroExitPrintsNoWorktreeLine(t *testing.T) {
+	t.Parallel()
+	stderr, code := childFailure(t, t.TempDir(), "true")
+	requireTest(t, code == 0, "child exited %d, want 0", code)
+	requireTest(t, stderr == "", "stderr = %q, want it empty", stderr)
+}
