@@ -531,10 +531,11 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 		return 0
 	}
 	recordFollowOn(command)
-	if !benchguard.Classify(command, benchguard.DefaultResolver()) {
+	verdict := benchguard.Judge(command, benchguard.DefaultResolver())
+	if !verdict.Blocked {
 		return 0
 	}
-	fmt.Fprintln(stderr, benchguard.BlockMessage())
+	fmt.Fprintln(stderr, verdict.Message())
 	return 2
 }
 

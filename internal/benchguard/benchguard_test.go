@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -64,6 +65,63 @@ func TestInvokesBenchWalksOneWrapperLevel(t *testing.T) {
 	for _, command := range []string{"ls", "rg bench AGENTS.md", "bash -c 'ls /pool/id'"} {
 		if InvokesBench(command, resolver) {
 			t.Errorf("InvokesBench(%q) = true, want false", command)
+		}
+	}
+}
+
+// TestClassifySpanScopedFollowOns drives the span-scoped rule. A `bench worktree
+// exec` head allows a heredoc in its span and a `;` or `&&` after it; every other
+// shape refuses. (Coverage rows G1, G2, G3, G4, G5, G7, G14.)
+func TestClassifySpanScopedFollowOns(t *testing.T) {
+	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+	for _, tc := range []struct{ row, command string }{
+		{"G1", "bench worktree exec L -- cp a b; cp b a"},
+		{"G1", "bench worktree exec L -- cp a b && rg -n x b"},
+		{"G5", "bench worktree exec L -- cat <<'EOF'\nbench gate\nEOF"},
+		{"G7", "cat <<'EOF'\nfirst line\nsecond line\nEOF"},
+	} {
+		if Classify(tc.command, resolver) {
+			t.Errorf("%s: Classify(%q) = true, want false", tc.row, tc.command)
+		}
+	}
+	for _, tc := range []struct{ row, command string }{
+		{"G2", "cp a b && bench worktree exec L -- true"},
+		{"G3", "bench worktree exec L -- true | cat"},
+		{"G3", "bench worktree exec L -- true || echo x"},
+		{"G3", "bench worktree exec L -- true &"},
+		{"G3", "bench worktree exec L -- true > out"},
+		{"G3", "bench worktree exec L -- true <<< x"},
+		{"G4", "bench worktree exec L -- true; bench maps"},
+		{"G14", "bench gate; cp a b"},
+	} {
+		if !Classify(tc.command, resolver) {
+			t.Errorf("%s: Classify(%q) = false, want true", tc.row, tc.command)
+		}
+	}
+}
+
+// TestJudgeNamesTheSegmentAndTheOperator proves the refusal line keeps the fixed
+// sentence and then names the Bench segment and the operator that caused it.
+// (Coverage rows G8, G9, G10.)
+func TestJudgeNamesTheSegmentAndTheOperator(t *testing.T) {
+	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+	for _, tc := range []struct{ row, command, want string }{
+		{"G8", "cat a && echo x; bench maps", "segment=bench maps operator=;"},
+		{"G9", "bench gate 2>&1", "segment=bench gate operator=2>&1"},
+		{"G10", "cp a b && bench worktree exec L -- true | cat", "segment=bench worktree exec L -- true operator=&&"},
+		{"G9b", "bench worktree exec L -- cat <<'EOF' 2>&1\nx\nEOF", "segment=bench worktree exec L -- cat operator=2>&1"},
+	} {
+		verdict := Judge(tc.command, resolver)
+		if !verdict.Blocked {
+			t.Errorf("%s: Judge(%q) allowed the call", tc.row, tc.command)
+			continue
+		}
+		message := verdict.Message()
+		if !strings.HasPrefix(message, BlockMessage()) {
+			t.Errorf("%s: message %q does not start with the fixed sentence", tc.row, message)
+		}
+		if !strings.HasSuffix(message, tc.want) {
+			t.Errorf("%s: message %q does not end with %q", tc.row, message, tc.want)
 		}
 	}
 }

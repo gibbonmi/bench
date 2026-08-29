@@ -24,6 +24,10 @@ Output too long to read is CLI-owned projection work, not call-site shaping. Nev
 append extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on.
 `bench gate` is valid. `bench gate 2>&1 | tail -20` is not valid.
 
+`bench worktree exec` is the one exception. A heredoc can feed the exec child, and
+a `;` or `&&` after the exec segment can start a non-Bench step. A second Bench
+call in the same line is still not valid.
+
 ## The four invariants (these override convenience, always)
 
 1. **The gate is the oracle — you never grade your own work.** "Done" means
