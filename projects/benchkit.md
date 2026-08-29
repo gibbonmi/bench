@@ -173,6 +173,10 @@ coverage map; a class skipped here returns as a regression.
 - paths and directory names containing spaces or glob characters
 - control bytes (ESC, BEL) in git-sourced text — commit subjects, branch names,
   paths — which `toon.Table` refuses rather than renders
+- a path in a `git diff` patch header: git C-quotes a double quote, a backslash,
+  and a control character there whatever `core.quotePath` says. A reader that
+  matches header paths against the tree must unquote them first. The setting
+  changes only the non-ASCII bytes
 - control bytes a sink *permits* but cannot survive: `toon.Representable` allows
   tab, newline, and return because the encoder escapes them. A line-structured
   markdown or single-line sink borrowing that predicate accepts a value that

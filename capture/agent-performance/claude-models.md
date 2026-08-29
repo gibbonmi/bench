@@ -1,21 +1,21 @@
 # Claude model scorecard
 
-Last incorporated landing: `prospective-artifact-recovery` (`0ec709aa`,
-2026-08-28) — Fable/medium as orchestrator over four Opus write charges, six
-Opus review axes, and three scoped re-review axes. Every charge landed
-first-pass on behavior; the review found two real defects in the prior
-session's ticket.
+Last incorporated landing: `resolved-consumer-surface` (`41b329f9`,
+2026-08-28) — Fable/medium as orchestrator over eight Opus/low ticket charges,
+four Opus/low repair charges, and three codex Sol/high review passes. Seven of
+eight ticket charges landed first-pass on behavior; both behavior gaps the
+review found sat in the one ticket that showed no pre-edit red.
 
-Thirty-two completed landings are recorded. Routing follows the harness-to-tier
+Thirty-three completed landings are recorded. Routing follows the harness-to-tier
 binding.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Fable / low–high | orchestrator, 12 landings + implementer, 9 charges + reviewer, 3 specs | On `prospective-artifact-recovery` at medium effort it refuted a delegate's false absence claim, attributed two environmental reds before it believed them, and bit four distinct probe sites. It charged two gate-package test files without the branch-native census, and the landing went red once for that omission. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
+| Fable / low–high | orchestrator, 13 landings + implementer, 9 charges + reviewer, 3 specs | On `resolved-consumer-surface` at medium effort it ran a distinct-kind probe before each of thirteen commits, and one probe that stayed green became a repair. It missed the registry line for a moved file and the fence for an accepted export, and preflight and the landing gate found them. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
 | Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `harness-capability-seam` the record package and the parity check each landed first-pass on behavior; the parity charge found and joined one fixture registry the ticket did not name. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium + 10 low implementer charges, 25 review axes, 11 of 17 orchestrated landings | On `prospective-artifact-recovery` all four charges landed first-pass on behavior with biting self-probes, and one reported an unreachable spec seam instead of working around it. One charge duplicated a record shape across three test files. Six review axes found 15 raw findings in 4 targets, and the Coverage axis proved the worst one with a real repository run. | Medium for gate and conformance logic, a new package's algorithm, guidance prose, review axes, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium + 10 low implementer charges, 25 review axes, 11 of 17 orchestrated landings | On `resolved-consumer-surface` twelve low charges built a new 2,500-line package diff-ready with biting self-probes, and seven of eight ticket charges showed each row red first. The blast ticket wrote its tests and code in one pass, and both review behavior gaps sat there; three low repair charges then closed sixteen review predicates. | Medium for gate and conformance logic, guidance prose, review axes, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate, with the red-first rule enforced |
 | Sonnet / high | orchestrator, 1 landing | On `bounded-gate-output` it declared the line once for eleven charges, ran a fresh mutation probe distinct from each delegate's own before every commit, and caught a coverage-map amendment with no owning ticket file before it reached preflight. Two rounds of parallel charges on disjoint files landed with no collision. | New this landing; continue and compare after a second orchestrated build |
 | Sonnet / low–high | implementer, latest 10 of 70 ticket-sized charges | On `exec-census` three low charges landed first-pass on behavior; two restated a table or a join that an existing package owned and took one repair round each. One ran `cd` into the pool path against its charge and reported it. | Low for an exact-spec ticket at a known seam; medium or high for a behavior-preserving refactor; charges name the package that owns each shared fact |
 | Sonnet / high | reviewer, 3 axes on 13 landings + 12 scoped re-reviews | On `exec-census` the three axes returned one cited finding each, collapsed to two repair targets; the Coverage axis probed a two-id text with a throwaway test and found the undecided edge. The re-review verified both predicates and the delta. | Standing tier for the three review axes; medium or high where the charge names a concern to settle by measurement |
@@ -86,3 +86,12 @@ binding.
   on `prospective-artifact-recovery`, and the landing went red on that census.
 - A review axis refutes a strong finding with a real run before it reports. One
   repository probe made the symlinked-root defect undeniable.
+- A ticket charge that returns without a pre-edit red per row goes back for the reds
+  before it commits. On `resolved-consumer-surface` both review behavior gaps sat in
+  the one ticket that wrote tests and code in one pass.
+- A charge that moves a file a conformance registry names by path runs that check with
+  `bench test --check` in its focused checks. The `bounds-policy` line for a moved read
+  policy went red only at the landing gate.
+- A cross-family top-tier reviewer (codex Sol/high) found two behavior gaps and one
+  repair miss on a new-package landing. Keep it available for a large new package, and
+  compare it against Opus axes on the next one.
