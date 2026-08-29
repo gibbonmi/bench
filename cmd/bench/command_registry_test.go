@@ -267,7 +267,7 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 		},
 		"consumers": {
 			route: []string{"consumers"}, successArgv: []string{"consumers", "target.Symbol"}, emptyArgv: []string{"consumers", "target.Symbol"},
-			blocks:        []string{"consumers", "meta", "help"},
+			blocks:        []string{"consumers", "meta", "citation", "help"},
 			successMarker: "consumers[1]{file,line,via,enclosing}:\n", emptyMarker: "consumers[0]{file,line,via,enclosing}:\n", usage: "usage: bench consumers", setupSuccess: setupAXIConsumers, setupEmpty: setupAXIEmptyConsumers,
 		},
 		"coverage": {

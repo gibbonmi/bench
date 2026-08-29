@@ -62,9 +62,13 @@ func splitFixture(first, second int) func(string) []fixturePkg {
 	}
 }
 
+// testVersion is the version cell every command test sees. The command takes its
+// version by injection, so a test pins one value instead of reading the build stamp.
+const testVersion = "test-version"
+
 func run(t *testing.T, args ...string) (string, int) {
 	t.Helper()
-	return Command(args)
+	return CommandWithVersion(testVersion)(args)
 }
 
 // CS6 (story 5): a matched symbol with zero references answers with the definitive empty

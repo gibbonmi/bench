@@ -40,8 +40,12 @@ func capLine() string {
 // the whole result vocabulary before it runs the command.
 const viaLine = "via is call, reference, or implements; a bare name with several matches answers consumers_candidates[N]{qualified,file,line,kind} at exit 0 with one re-query action per row."
 
+// citationLine tells the reader that every success response discloses the run that
+// produced it, so a reviewer knows a replay identity is available without one to read.
+const citationLine = "every success response ends with citation{sha,state,version,cmd,hash}: the checkout, its clean or dirty state, and a sha256 over the answer above the row."
+
 func helpText() string {
-	return usageLine + "\n" + promise + "\n" + soundness + "\n" + viaLine + "\n" + capLine() + "\n"
+	return usageLine + "\n" + promise + "\n" + soundness + "\n" + viaLine + "\n" + capLine() + "\n" + citationLine + "\n"
 }
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand. Arity,
@@ -66,11 +70,18 @@ var aggregateFields = []string{"dir", "rows"}
 // metaFields is the response accounting every form carries.
 var metaFields = []string{"packages", "files", "matches", "rows", "truncated"}
 
-// Command implements `bench consumers <qualified-symbol> [--full]`. It resolves the
-// symbol over the repository's packages and emits the consumers table, the meta
-// accounting, and the terminal help envelope. A symbol result is a terminal read, so its
-// envelope is empty unless the default truncated.
-func Command(args []string) (string, int) {
+// CommandWithVersion implements `bench consumers <qualified-symbol> [--full]` for one
+// bench version. The version is a cell of every success response's citation row, and it
+// lives in package main, so the registration injects it here rather than the package
+// reading a second copy. The command resolves the symbol over the repository's packages
+// and emits the consumers table, the meta accounting, the citation row, and the terminal
+// help envelope. A symbol result is a terminal read, so its envelope is empty unless the
+// default truncated.
+func CommandWithVersion(version string) func([]string) (string, int) {
+	return func(args []string) (string, int) { return command(version, args) }
+}
+
+func command(version string, args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		return line + "\n", code
@@ -90,16 +101,17 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.Errorf(err.Error(), "pass a qualified symbol such as outline.Command") + "\n", 1
 	}
+	source := citation{root: root, version: version, args: args}
 	if len(matches) > 1 {
-		return candidates(pkgs, matches, root)
+		return candidates(source, pkgs, matches)
 	}
-	return response(symbol, len(pkgs), len(matches), Rows(pkgs, matches[0].Obj, root), full)
+	return response(source, symbol, len(pkgs), len(matches), Rows(pkgs, matches[0].Obj, root), full)
 }
 
 // response renders the whole answer for one resolved symbol: the result block, the meta
 // accounting, and the help envelope. Row rendering itself belongs to the core, so this
 // function composes Render rather than restating the row schema.
-func response(symbol string, pkgCount, matchCount int, rows []Row, full bool) (string, int) {
+func response(source citation, symbol string, pkgCount, matchCount int, rows []Row, full bool) (string, int) {
 	truncated := !full && len(rows) > rowCap
 	var block string
 	var err error
@@ -116,13 +128,14 @@ func response(symbol string, pkgCount, matchCount int, rows []Row, full bool) (s
 		actions = append(actions, axi.ExecutableInvocation("emit every consumer row",
 			axi.KnownArgument("consumers"), axi.KnownArgument(symbol), axi.KnownArgument("--full")))
 	}
-	return envelope(block, pkgCount, countFiles(rows), matchCount, len(rows), truncated, actions)
+	return envelope(source, block, pkgCount, countFiles(rows), matchCount, len(rows), truncated, actions)
 }
 
-// envelope closes every response shape: the result block, the meta accounting, then the
-// terminal help block. Both the symbol answer and the candidates answer render through
-// it, so neither can grow a second accounting or drop the terminal envelope.
-func envelope(block string, pkgCount, fileCount, matchCount, rowCount int, truncated bool, actions []axi.Action) (string, int) {
+// envelope closes every response shape: the result block, the meta accounting, the
+// citation row, then the terminal help block. Both the symbol answer and the candidates
+// answer render through it, so neither can grow a second accounting, lose its citation,
+// or drop the terminal envelope.
+func envelope(source citation, block string, pkgCount, fileCount, matchCount, rowCount int, truncated bool, actions []axi.Action) (string, int) {
 	// The counts and the flag are typed cells, so an integer stays bare and the flag stays
 	// a boolean through a TOON round-trip.
 	meta, err := toon.TableTyped("meta", metaFields, [][]any{{
@@ -131,21 +144,27 @@ func envelope(block string, pkgCount, fileCount, matchCount, rowCount int, trunc
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	// The citation hashes every byte before it, so it renders after the answer is complete
+	// and before the help block the AXI contract pins as terminal.
+	cited, err := source.row(block + meta)
+	if err != nil {
+		return toon.Errorf("citation failed: "+err.Error(), "run the command inside a git checkout with a resolvable HEAD") + "\n", 1
+	}
 	help, err := axi.RenderHelp(actions)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	return block + meta + help, 0
+	return block + meta + cited + help, 0
 }
 
 // candidates answers an ambiguous bare name. It is an answer, not a refusal: the table
 // names every declaration the name reached, the meta accounting states zero consumer
 // rows, and the envelope carries one literal re-query per row in table order. Every
 // argument is known, so no row offers a slot the agent must fill.
-func candidates(pkgs []*Package, matches []Match, root string) (string, int) {
+func candidates(source citation, pkgs []*Package, matches []Match) (string, int) {
 	rows := make([][]any, 0, len(matches))
 	actions := make([]axi.Action, 0, len(matches))
-	for _, m := range candidateOrder(pkgs, matches, root) {
+	for _, m := range candidateOrder(pkgs, matches, source.root) {
 		rows = append(rows, []any{m.qualified, m.file, m.line, m.kind})
 		actions = append(actions, axi.ExecutableInvocation("re-query the qualified symbol",
 			axi.KnownArgument("consumers"), axi.KnownArgument(m.qualified)))
@@ -154,7 +173,7 @@ func candidates(pkgs []*Package, matches []Match, root string) (string, int) {
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	return envelope(block, len(pkgs), 0, len(matches), 0, false, actions)
+	return envelope(source, block, len(pkgs), 0, len(matches), 0, false, actions)
 }
 
 // candidateRow is one match rendered for the candidates table, in the sort order the
