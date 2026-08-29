@@ -337,9 +337,11 @@ verbatim. Effort has no harness flag and stays in the declared line.
 
 Bench layers git safety:
 
-- The git `pre-push` hook blocks a direct push to the default branch. When a
+- The git `pre-push` hook blocks a direct push to the default branch. The
+  reviewer lifts that clause for one repository with
+  `git config bench.allowProtectedPush true`. When a
   gate pin exists (`bench gate pin`), it also blocks `.bench` drift from the
-  pinned tree. Without a pin, the drift check stays disarmed; guard discovery
+  pinned tree, and the config knob does not lift the drift clause. Without a pin, the drift check stays disarmed; guard discovery
   reports a static, generic deny surface while enforcement stays live.
 - Claude Code and Codex hook adapters call the shared scripts in
   `.bench/hooks/`. Codex loads `.codex/hooks.json` only after you trust it
