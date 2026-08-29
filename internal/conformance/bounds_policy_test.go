@@ -27,7 +27,7 @@ func checkBoundsPolicy(root string) []string {
 	owners := map[string][]string{
 		"internal/models/models.go":                 {"bounds.ProviderTimeout", "bounds.ModelReadLimit"},
 		"internal/sessioninspect/sessioninspect.go": {"bounds.ProviderTimeout"},
-		"internal/outline/outline.go":               {"bounds.OutlineFileLimit"},
+		"internal/outline/read.go":                  {"bounds.OutlineFileLimit"},
 		"internal/learnings/learnings.go":           {"bounds.ControlRecordLimit"},
 		"internal/maps/maps.go":                     {"bounds.ControlRecordLimit"},
 		"internal/roadmap/roadmap.go":               {"bounds.ControlRecordLimit"},
