@@ -28,6 +28,9 @@ lookup runs over active assignments only. The same commit deletes
       commit matches.
 - [ ] WM38: a failed ancestry query in the `--from` lookup refuses naming the
       query, not the history.
+- [ ] WM39: a `--from` spelling the target grammar rejects as a path, such as
+      `refs/heads/main`, resolves through the commit lookup; only the
+      ambiguity outcome refuses.
 - [ ] `landingDestination` and `mergeTargetTip` refuse a dirty checkout
       through one predicate. `landingSource`, `validateCreationBundle`, and
       `mergeOnAssignmentBranch` read the checked-out branch through one

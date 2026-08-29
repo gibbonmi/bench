@@ -316,6 +316,7 @@ subagent at medium.
 | WM36 | 24 | an incoming Markdown path with a non-ASCII byte reaches the lane's prose check as its own bytes | lane authority unit test | a C-quoted path names a file that does not exist, so the prose is never graded |
 | WM37 | 13 | a `--from` spelling that names only a non-active assignment resolves through the commit lookup, or refuses naming the value | command seam, retired-assignment fixture | a lookup over every state refuses a legitimate default-branch commit |
 | WM38 | 32 | a failed ancestry query in the `--from` lookup refuses naming the query | command seam, unresolved default branch fixture | a failed query classified as unowned misattributes the value |
+| WM39 | 13 | a `--from` spelling the target grammar rejects as a path, such as `refs/heads/main`, resolves through the commit lookup | command seam | a sibling lookup that refuses on every selector error hides a legitimate default-branch commit |
 
 Not covered: story 26 — the profile paragraph is prose; the review round and
 the gate's prose check grade it, and no behavior seam exists.
