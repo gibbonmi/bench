@@ -38,3 +38,4 @@ files after this ticket lands, and it owns the child's failure surfaces.
       the value at exit 2, and each starts no child.
 - [ ] X11: `--env BENCH_HOME=/x -- sh -c 'echo $BENCH_HOME'` prints the verb's
       resolved home.
+- [ ] X13: `--env BENCH_KIT=/x -- sh -c 'echo ${BENCH_KIT-unset}'` prints `unset`.

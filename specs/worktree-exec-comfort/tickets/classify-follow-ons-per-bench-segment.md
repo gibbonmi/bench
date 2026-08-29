@@ -17,14 +17,16 @@ keeps the stream-wide rule.
 adjacent operator token. The refusal message is the fixed sentence, one space,
 then `segment=<words> operator=<token>`. The words join by single spaces. The
 token is a redirection inside the span when one exists, else the control
-operator before the span, else the one after.
+operator before the span, else the one after. A redirection prints as its
+source text, with the fd digits, the operator, and the operand joined without
+spaces. The exec allowance covers a heredoc only; a here-string `<<<` refuses.
 
 The refusal's first line stays
 `BLOCKED: Bench response is bounded, complete, and self-contained`, because the
 hook's pin and the system suite read that sentence. The census keeps skipping a
 Bench-headed call, so an exec follow-on records no entry.
 
-This ticket also carries the guidance for stories 41 and 42, because both
+This ticket also carries the guidance for stories 42 and 43, because both
 sentences describe this classifier and no other ticket owns them. The operating
 guide's contract sentence in `.bench/BENCH.md` names the exec exception, and
 `CONTEXT.md`'s `follow-on` term states the same exception. The review round
@@ -39,15 +41,15 @@ verdict path, or a second copy of the sentence, drifts from the hook's pin.
 - [ ] G1: `bench worktree exec L -- cp a b; cp b a` and
       `bench worktree exec L -- cp a b && rg -n x b` are allowed.
 - [ ] G2: `cp a b && bench worktree exec L -- true` is refused.
-- [ ] G3: `bench worktree exec L -- true | cat`, `... || echo x`, `... &`, and
-      `... > out` are each refused.
+- [ ] G3: `bench worktree exec L -- true | cat`, `... || echo x`, `... &`,
+      `... > out`, and `... <<< x` are each refused.
 - [ ] G4: `bench worktree exec L -- true; bench maps` is refused.
 - [ ] G5: `bench worktree exec L -- cat <<'EOF'` with the body line
       `bench gate` is allowed.
 - [ ] G6: `bench gate <<'EOF'` with the body line `input` is refused.
 - [ ] G7: `cat <<'EOF'` with two non-bench body lines is allowed.
-- [ ] G8: the refusal for `cat roadmap/FT254.md; echo ---; bench maps` ends
-      with `segment=bench maps operator=;`.
+- [ ] G8: the refusal for `cat a && echo x; bench maps` ends with
+      `segment=bench maps operator=;`.
 - [ ] G9: the refusal for `bench gate 2>&1` ends with
       `segment=bench gate operator=2>&1`.
 - [ ] G10: the refusal for `cp a b && bench worktree exec L -- true | cat`
@@ -58,3 +60,4 @@ verdict path, or a second copy of the sentence, drifts from the hook's pin.
       and `bench worktree exec label -- cat <<'EOF'` with a body.
 - [ ] G13: `bench worktree exec L -- sed -i x <pool path>; cp a b` records no
       census entry.
+- [ ] G14: `bench gate; cp a b` is refused.

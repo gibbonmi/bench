@@ -18,8 +18,8 @@ the caller when the object is missing.
 
 `show` joins the worktree command list, the `bench help` inventory, and the
 kept routes. The exec row in both inventories gains `[--env KEY=VALUE]...`, so
-the help and the parser agree. That row delivers story 43. The guard ticket
-carries stories 41 and 42.
+the help and the parser agree. That row delivers story 41. The guard ticket
+carries stories 42 and 43.
 
 Package invariant for `internal/worktree`: one resolver and one refusal printer
 serve `path`, `exec`, and `show`, and the `next=` line has one producer per
@@ -46,5 +46,4 @@ new verb names itself in both, and the registry row is their one source.
 - [ ] S7: `bench help` prints the `show` row and the exec row with
       `[--env KEY=VALUE]...`, byte-equal to the fixture.
 - [ ] S8: `bench worktree --help` names
-      `bench worktree show <target> <rev>:<path>` and the exec grammar with
-      `--env`.
+      `bench worktree show <target> <rev>:<path>`.
