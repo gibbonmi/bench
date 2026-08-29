@@ -60,6 +60,9 @@ func TestNPMCLIRegistryRefusesStagedOpsBelowNodeFloor(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "node 24.0") {
 		t.Fatalf("expected the tool-floor error to require Node 24.0, got: %v", err)
 	}
+	if err := registry.Approve(context.Background(), "stage-1"); err == nil || !strings.Contains(err.Error(), "node 24.0") {
+		t.Fatalf("expected approval to require Node 24.0, got: %v", err)
+	}
 }
 
 // TestNPMCLIRegistryAcceptsStagedOpsAtToolFloor confirms a tool pair at or

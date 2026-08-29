@@ -23,6 +23,7 @@ func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
 	var diags []string
 	diags = append(diags, checkPackageFiles(root, tier)...)
 	diags = append(diags, checkGoToolchain(root)...)
+	diags = append(diags, checkNodeRuntimePolicy(root)...)
 	diags = append(diags, checkReleaseWorkflow(root)...)
 	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
 	diags = append(diags, checkRetiredReproducibilityRecord(root)...)
