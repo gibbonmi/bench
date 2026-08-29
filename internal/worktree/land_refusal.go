@@ -53,16 +53,33 @@ func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment 
 	return atSourceWorktree(command, path, assignment)
 }
 
+// conflictRepairPrefix names the hand repair a composition conflict demands, up to the
+// commit that records the resolution: merge the incoming commit into the worktree, then
+// commit it. The landing and `bench worktree merge` refuse the same conflict, so both
+// name this one repair, and the landing appends its own review-and-re-run tail. Neither
+// verb composes the repair itself, so the merge step is raw Git and the value says so.
+func conflictRepairPrefix(incoming, assignment, path string) string {
+	merge := "git -C " + sanitize.ShellQuote(path) + " merge " + conflictCommitArg(incoming)
+	if !lineSafe(path) {
+		merge = "bench worktree exec " + assignment + " -- git merge " + conflictCommitArg(incoming)
+	}
+	return merge + " (bench worktree merge refuses this conflict; resolve it by hand); then bench commit"
+}
+
+// conflictCommitArg renders the commit a repair line names, and the placeholder that
+// stands in when the value is not line-safe.
+func conflictCommitArg(commit string) string {
+	if lineSafe(commit) {
+		return sanitize.ShellQuote(commit)
+	}
+	return "<full-destination-commit>"
+}
+
 // landingConflictNext names the source repair a conflict outside the rule table
 // demands, in the order the operator runs it: merge the destination into the source
 // worktree, commit the repair, review the new range, and re-run the landing with the
-// repaired tip. `bench worktree merge` refuses the same conflict, so the merge step is
-// raw Git and the value says so.
+// repaired tip.
 func landingConflictNext(destination, assignment, specArg, path string) string {
-	destinationArg := "<full-destination-commit>"
-	if lineSafe(destination) {
-		destinationArg = sanitize.ShellQuote(destination)
-	}
 	// A spec-less landing re-runs spec-less, so it names no --spec at all rather than an
 	// empty value the grammar refuses.
 	specFlag := ""
@@ -72,12 +89,8 @@ func landingConflictNext(destination, assignment, specArg, path string) string {
 			specFlag = " --spec " + sanitize.ShellQuote(specArg)
 		}
 	}
-	merge := "git -C " + sanitize.ShellQuote(path) + " merge " + destinationArg
-	if !lineSafe(path) {
-		merge = "bench worktree exec " + assignment + " -- git merge " + destinationArg
-	}
-	rerun := atSourceWorktree("bench worktree land --request <request> --base "+destinationArg+" --source-tip <repaired-source-tip>"+specFlag+" -m <message>", path, assignment)
-	return merge + " (bench worktree merge refuses this conflict; resolve it by hand); then bench commit; then /bench-review-implementation; then " + rerun
+	rerun := atSourceWorktree("bench worktree land --request <request> --base "+conflictCommitArg(destination)+" --source-tip <repaired-source-tip>"+specFlag+" -m <message>", path, assignment)
+	return conflictRepairPrefix(destination, assignment, path) + "; then /bench-review-implementation; then " + rerun
 }
 
 // atSourceWorktree addresses the source worktree a command's trailing positional

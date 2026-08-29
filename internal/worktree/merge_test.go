@@ -343,10 +343,28 @@ func TestMergeRefusesAConflictingNonCapturePath(t *testing.T) {
 	incoming := commitOnDefault(t, root, "tracked.txt", "incoming edit\n")
 
 	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
-	requireMergeRefusal(t, code, stdout, stderr, "composition conflict: textual", "paths_total=1", "tracked.txt")
+	requireMergeRefusal(t, code, stdout, stderr, "composition conflict: textual", "paths_total=1", "tracked.txt", "next=")
 	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
 	if status := gitOutput(t, target.Path, "status", "--porcelain=v1", "--untracked-files=all"); status != "" {
 		t.Fatalf("checkout status = %q, want no conflict residue", status)
+	}
+}
+
+// WM40: the conflict refusal names the hand repair in the order the operator runs it, up
+// to the commit that records the resolution. An empty next= leaves the operator to invent
+// the repair the landing already spells.
+func TestMergeConflictRefusalNamesTheHandRepair(t *testing.T) {
+	t.Parallel()
+	j, root, home, _, created := mergeFixture(t, "integration")
+	target := created[0]
+	commitInWorktree(t, target.Path, "tracked.txt", "target edit\n", "target edit")
+	incoming := commitOnDefault(t, root, "tracked.txt", "incoming edit\n")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	wantNext := "next=git -C '" + target.Assignment.Worktree + "' merge '" + incoming +
+		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit"
+	if code != 1 || !strings.Contains(stdout, wantNext) {
+		t.Fatalf("conflict repair next = (%d, %q, %q), want %q", code, stdout, stderr, wantNext)
 	}
 }
 
