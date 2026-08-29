@@ -532,6 +532,7 @@ var keptWorktreeGrammars = []string{
 	"bench worktree create",
 	"bench worktree path",
 	"bench worktree exec",
+	"bench worktree show",
 	"bench worktree release",
 	"bench worktree clean",
 	"bench worktree reauthorize",

@@ -190,19 +190,27 @@ func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 			if want := "bench worktree exec: " + reason + "\nnext=" + next + "\n"; stderr.String() != want {
 				t.Errorf("exec %q printed %q, want %q", target, stderr.String(), want)
 			}
+			stdout.Reset()
+			stderr.Reset()
+			if code := ShowCommand(root, Home(), []string{target, "HEAD:x"}, &stdout, &stderr); code != 1 {
+				t.Fatalf("show %q exited %d, want 1: %s", target, code, stderr.String())
+			}
+			if want := "bench worktree show: " + reason + "\nnext=" + next + "\n"; stderr.String() != want {
+				t.Errorf("show %q printed %q, want %q", target, stderr.String(), want)
+			}
 		})
 	}
 }
 
-// TestTargetVerbsShareOneRefusalPrinter is LR15 and F6: one broken target yields
-// byte-identical stderr from both verbs once the verb prefix is stripped, and each ends
-// with the same route line, so the two cannot drift.
+// TestTargetVerbsShareOneRefusalPrinter is LR15, F6, and S6: one broken target yields
+// byte-identical stderr from every target-taking verb once the verb prefix is stripped,
+// and each ends with the same route line, so the three cannot drift.
 func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
 	root, creation, home := newOwnedAssignment(t, "shared-printer")
 	rewriteMarkerOwner(t, creation.Path, strings.Repeat("b", 32))
 	chdir(t, root)
 	target := creation.Assignment.Label
-	var stdout, pathErr, execErr bytes.Buffer
+	var stdout, pathErr, execErr, showErr bytes.Buffer
 	if code := PathCommand(root, home, []string{target}, &stdout, &pathErr); code != 1 {
 		t.Fatalf("path exited %d: %s", code, pathErr.String())
 	}
@@ -210,13 +218,18 @@ func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
 	if code := ExecCommand(root, home, []string{target, "--", "true"}, nil, &stdout, &execErr); code != 1 {
 		t.Fatalf("exec exited %d: %s", code, execErr.String())
 	}
+	stdout.Reset()
+	if code := ShowCommand(root, home, []string{target, "HEAD:x"}, &stdout, &showErr); code != 1 {
+		t.Fatalf("show exited %d: %s", code, showErr.String())
+	}
 	pathTail, pathFound := strings.CutPrefix(pathErr.String(), "bench worktree path: ")
 	execTail, execFound := strings.CutPrefix(execErr.String(), "bench worktree exec: ")
-	if !pathFound || !execFound {
-		t.Fatalf("verb prefixes missing: path=%q exec=%q", pathErr.String(), execErr.String())
+	showTail, showFound := strings.CutPrefix(showErr.String(), "bench worktree show: ")
+	if !pathFound || !execFound || !showFound {
+		t.Fatalf("verb prefixes missing: path=%q exec=%q show=%q", pathErr.String(), execErr.String(), showErr.String())
 	}
-	if pathTail != execTail {
-		t.Errorf("path tail %q and exec tail %q differ", pathTail, execTail)
+	if pathTail != execTail || pathTail != showTail {
+		t.Errorf("path tail %q, exec tail %q, and show tail %q differ", pathTail, execTail, showTail)
 	}
 	if want := "owner marker does not match assignment " + creation.Assignment.ID + "\nnext=" + nextList + "\n"; pathTail != want {
 		t.Errorf("refusal tail = %q, want %q", pathTail, want)
