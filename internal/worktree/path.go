@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -56,10 +57,26 @@ func resolveWorktree(root, target string) (string, error) {
 	if !landingActiveState(selected.State) {
 		return "", componentRefusal(componentAssignmentState, selected.ID, string(selected.State), string(intent.StateActive))
 	}
+	// The tree check runs before the creation bundle, because every bundle component reads
+	// evidence inside the tree. A tree that is gone is the fact the operator acts on. Any
+	// other stat error leaves the bundle to describe what it can read.
+	if _, statErr := os.Stat(selected.Worktree); statErr != nil && errors.Is(statErr, os.ErrNotExist) {
+		return "", missingTreeRefusal(root, selected)
+	}
 	if err := validateCreationBundle(root, selected); err != nil {
 		return "", err
 	}
 	return selected.Worktree, nil
+}
+
+// missingTreeRefusal names the fact the operator can act on and the one verb that clears
+// the record, so a retained assignment whose tree is gone is never a dead end. The
+// landedness comes from the branch, because a tree that is gone proves nothing.
+func missingTreeRefusal(root string, assignment intent.Assignment) error {
+	def, defaultResolved := git.ResolvedDefault(root)
+	landed := listLanded(root, assignment.Branch, def, defaultResolved) == true
+	recovery := recoverMissingTree(landed, assignment.RequestToken, assignment.Worktree)
+	return refusalError{refusal{detail: "worktree tree is missing", next: recovery.line()}}
 }
 
 // errTargetUnassigned is the selector outcome a caller may act on rather than report: the
@@ -125,14 +142,20 @@ func matchingAssignments(assignments []intent.Assignment, matches func(intent.As
 
 // printTargetRefusal is the one printer both target-taking verbs use, so `worktree path`
 // and `worktree exec` cannot describe one failure two ways. A component refusal prints
-// its detail sentence: the operator reads the named check, not the refused record.
+// its detail sentence: the operator reads the named check, not the refused record. The
+// second line names the verb that answers the refusal; a target that never resolved is
+// answered by the lookup, so that is the default.
 func printTargetRefusal(stderr io.Writer, verb string, err error) int {
-	reason := err.Error()
+	reason, next := err.Error(), "bench worktree list"
 	var refused refusalError
 	if errors.As(err, &refused) {
 		reason = refused.detail
+		if refused.next != "" {
+			next = refused.next
+		}
 	}
 	fmt.Fprintln(stderr, verb+": "+sanitize.Controls(reason))
+	fmt.Fprintln(stderr, "next="+sanitize.Controls(next))
 	return 1
 }
 

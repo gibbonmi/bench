@@ -315,3 +315,72 @@ func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *t
 		})
 	}
 }
+
+// activeListRow builds one owned assignment row in the field order the list response
+// declares, so an action test reads the same cells the command produces.
+func activeListRow(id, request, tree string, landed any, path string) listRow {
+	return listRow{
+		values:         []any{id, "label", request, string(intent.StateActive), "assignment", tree, "none", landed, "unknown"},
+		assignmentPath: path,
+	}
+}
+
+// TestActionsForRowsReadsTheTreeCell is F10, F11, and F12: an advertised action must be
+// one the operator can run, so a row whose tree is gone offers its recovery verb alone,
+// and a present row keeps the two actions it always had.
+func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		row  listRow
+		want string
+	}{
+		{
+			name: "missing tree, not landed",
+			row:  activeListRow("gone", "req-gone", "missing", false, "/tmp/gone one"),
+			want: "help[1]{cmd,why}:\n  bench worktree release --request req-gone '/tmp/gone one',release the assignment whose worktree tree is missing\n",
+		},
+		{
+			name: "missing tree, landed",
+			row:  activeListRow("done", "req-done", "missing", true, "/tmp/done"),
+			want: "help[1]{cmd,why}:\n  bench worktree clean --landed,clean landed assignments\n",
+		},
+		{
+			name: "present tree",
+			row:  activeListRow("here", "req-here", "present", false, "/tmp/here"),
+			want: "help[2]{cmd,why}:\n  bench worktree path here,inspect active worktree\n  bench worktree exec here -- <command>,run a command in the active worktree\n",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			help, err := axi.RenderHelp(actionsForRows([]listRow{tc.row}))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if help != tc.want {
+				t.Fatalf("help = %q, want %q", help, tc.want)
+			}
+		})
+	}
+}
+
+// TestListCommandNamesOneCleanLandedRowForAMissingTree is F13: the landed recovery verb
+// is one route, so the response advertises it once however many rows reach it.
+func TestListCommandNamesOneCleanLandedRowForAMissingTree(t *testing.T) {
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "list-missing-landed")
+	landAssignment(t, root, creation, "landed.txt")
+	if err := os.RemoveAll(creation.Path); err != nil {
+		t.Fatal(err)
+	}
+	out, code := ListCommand(root, Home(), nil)
+	if code != 0 {
+		t.Fatalf("ListCommand = (%d, %q), want exit 0", code, out)
+	}
+	if got := strings.Count(out, "bench worktree clean --landed"); got != 1 {
+		t.Fatalf("ListCommand printed %d clean --landed rows, want 1: %q", got, out)
+	}
+	if strings.Contains(out, "bench worktree path") || strings.Contains(out, "bench worktree exec") {
+		t.Fatalf("ListCommand advertised an action on a missing tree: %q", out)
+	}
+}
