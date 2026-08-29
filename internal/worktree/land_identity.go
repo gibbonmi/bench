@@ -1,4 +1,5 @@
-// Landing identity resolution: destination, marker, assignment, source range, and identity reconciliation.
+// Landing identity resolution: destination, marker, assignment, source range, and identity
+// reconciliation, with the checkout predicates every identity proof in the package shares.
 package worktree
 
 import (
@@ -37,14 +38,8 @@ func landingDestination(j joins, root string) (string, string, string, string, e
 	if err != nil || current != branch {
 		return "", "", "", "", errors.New("landing checkout is not attached to the default branch")
 	}
-	if raw, err := git.Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all"); err != nil {
-		return "", "", "", "", errors.New("landing destination is not clean")
-	} else if entries, err := git.ParsePorcelainZStrict(raw); err != nil || len(entries) > 0 {
-		paths := make([]string, 0, len(entries))
-		for _, entry := range entries {
-			paths = append(paths, entry.Path)
-		}
-		return "", "", "", "", refusalError{refusal{detail: "landing destination is not clean", paths: paths}}
+	if err := checkoutClean(root, "landing destination is not clean", ""); err != nil {
+		return "", "", "", "", err
 	}
 	ignored, _, ignoredErr := inventoryIgnored(j, root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
@@ -99,8 +94,7 @@ func landingAssignment(j joins, root, path, request, base, requestedTip string) 
 }
 
 func landingSource(j joins, root string, a intent.Assignment, base, requestedTip, slug string) (landingSourceFact, error) {
-	branch, err := git.Output("-C", a.Worktree, "symbolic-ref", "--quiet", "HEAD")
-	if err != nil || branch != a.Branch {
+	if _, ok := assignmentBranchCheckedOut(a); !ok {
 		return landingSourceFact{}, errors.New("assignment branch is not checked out")
 	}
 	head, err := git.Output("-C", a.Worktree, "rev-parse", "HEAD^{commit}")
@@ -117,7 +111,9 @@ func landingSource(j joins, root string, a intent.Assignment, base, requestedTip
 	if branchTip != requestedTip {
 		return landingSourceFact{}, identityRefusal(requestedTip, branchTip, "assignment branch source tip mismatch")
 	}
-	if dirty, err := git.Output("-C", a.Worktree, "status", "--porcelain=v1", "--untracked-files=all"); err != nil || dirty != "" {
+	if err := checkoutClean(a.Worktree, "reviewed source is not clean", ""); err != nil {
+		// The hostile-source surface pins this refusal to one line, so the source reads the
+		// shared fact and states it without the predicate's path table.
 		return landingSourceFact{}, errors.New("reviewed source is not clean")
 	}
 	// A --spec naming a tickets-only folder is a close, not a staged spec. It names no
@@ -225,4 +221,35 @@ func reconcileLandingDestination(j joins, root, destination, published, destinat
 		return err
 	}
 	return nil
+}
+
+// checkoutClean proves one checkout holds no uncommitted work. It refuses any status
+// entry, untracked included; ignored residue is excluded, because a worktree's build
+// output is not uncommitted work. Each caller states the detail and the repair its own
+// refusal carries, because the fact reads the same but the repair does not.
+func checkoutClean(path, detail, next string) error {
+	raw, err := git.Raw("-C", path, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
+	if err != nil {
+		return refusalError{refusal{detail: "checkout status is unreadable"}}
+	}
+	entries, err := git.ParsePorcelainZStrict(raw)
+	if err != nil {
+		return refusalError{refusal{detail: "checkout status is unreadable"}}
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+	paths := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		paths = append(paths, entry.Path)
+	}
+	return refusalError{refusal{detail: detail, next: next, paths: paths}}
+}
+
+// assignmentBranchCheckedOut reports the ref one assignment's checkout has attached, and
+// whether that ref is the assignment's own branch. The observed value is returned even
+// when it disagrees, because a refusal that names it tells the operator what to restore.
+func assignmentBranchCheckedOut(a intent.Assignment) (string, bool) {
+	branch, err := git.Output("-C", a.Worktree, "symbolic-ref", "--quiet", "HEAD")
+	return branch, err == nil && branch == a.Branch
 }

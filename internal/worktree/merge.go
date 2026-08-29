@@ -128,8 +128,8 @@ func mergeReconcileNext(target intent.Assignment, tip string) string {
 // before the identity bundle reads the same registration, because the bundle's
 // registration sentence reports the fact without naming the ref the operator restores.
 func mergeOnAssignmentBranch(a intent.Assignment, detail string) error {
-	branch, err := git.Output("-C", a.Worktree, "symbolic-ref", "--quiet", "HEAD")
-	if err != nil || branch != a.Branch {
+	branch, ok := assignmentBranchCheckedOut(a)
+	if !ok {
 		return refusalError{refusal{detail: detail, observed: branch, wanted: a.Branch}}
 	}
 	return nil
@@ -167,31 +167,10 @@ func mergeTargetTip(root string, a intent.Assignment) (string, error) {
 	if err != nil || tip != head {
 		return "", refusalError{refusal{detail: "merge target branch tip is not the checkout HEAD", observed: head, wanted: tip}}
 	}
-	if err := mergeCheckoutClean(a.Worktree, "merge target checkout is not clean", ""); err != nil {
+	if err := checkoutClean(a.Worktree, "merge target checkout is not clean", ""); err != nil {
 		return "", err
 	}
 	return tip, nil
-}
-
-// mergeCheckoutClean refuses any status entry, untracked included. Ignored residue is
-// excluded, because a worktree's build output is not uncommitted work.
-func mergeCheckoutClean(path, detail, next string) error {
-	raw, err := git.Raw("-C", path, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
-	if err != nil {
-		return refusalError{refusal{detail: "checkout status is unreadable"}}
-	}
-	entries, err := git.ParsePorcelainZStrict(raw)
-	if err != nil {
-		return refusalError{refusal{detail: "checkout status is unreadable"}}
-	}
-	if len(entries) == 0 {
-		return nil
-	}
-	paths := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		paths = append(paths, entry.Path)
-	}
-	return refusalError{refusal{detail: detail, next: next, paths: paths}}
 }
 
 // mergeIncoming resolves `--from` in the two lookups the bootstrap authority allows: a
@@ -206,7 +185,10 @@ func mergeIncoming(root string, assignments []intent.Assignment, target intent.A
 	if err != nil {
 		return "", err
 	}
-	commit, resolved, owned := mergeDefaultBranchCommit(root, from)
+	commit, resolved, owned, err := mergeDefaultBranchCommit(root, from)
+	if err != nil {
+		return "", err
+	}
 	switch {
 	case hasSibling && owned:
 		// The assignment id, not its tip, is the unambiguous respelling of the label, so
@@ -222,13 +204,32 @@ func mergeIncoming(root string, assignments []intent.Assignment, target intent.A
 	return "", refusalError{refusal{detail: "--from names no assignment and no commit", observed: from}}
 }
 
+// activeAssignments narrows the sibling lookup to the assignments the bootstrap authority
+// accepts. A retired assignment authenticates nothing, so its label names no sibling and
+// falls through to the commit lookup rather than refusing by state.
+func activeAssignments(assignments []intent.Assignment) []intent.Assignment {
+	active := make([]intent.Assignment, 0, len(assignments))
+	for _, a := range assignments {
+		if landingActiveState(a.State) {
+			active = append(active, a)
+		}
+	}
+	return active
+}
+
 // mergeSiblingTip answers the assignment lookup. A sibling contributes its committed
 // branch tip alone: `bench commit` stays the one snapshot composer, so a detached or
 // dirty sibling refuses rather than have its uncommitted work silently dropped.
 func mergeSiblingTip(root string, assignments []intent.Assignment, target intent.Assignment, from string) (tip, id string, ok bool, err error) {
-	selected, err := selectAssignment(assignments, from)
-	if err != nil {
-		return "", "", false, nil
+	selected, selectErr := selectAssignment(activeAssignments(assignments), from)
+	if selectErr != nil {
+		// A spelling that names no active assignment is a candidate for the commit lookup.
+		// Every other selector outcome — an ambiguous prefix above all — refuses, because
+		// the commit lookup resolves no collision between assignments.
+		if errors.Is(selectErr, errTargetUnassigned) {
+			return "", "", false, nil
+		}
+		return "", "", false, refusalError{refusal{detail: selectErr.Error(), observed: from}}
 	}
 	if selected.ID == target.ID {
 		return "", "", false, refusalError{refusal{detail: "--from resolves to the target itself", observed: selected.ID}}
@@ -247,7 +248,7 @@ func mergeSiblingTip(root string, assignments []intent.Assignment, target intent
 	if err != nil || head != tip {
 		return "", "", false, refusalError{refusal{detail: "sibling checkout is not at its branch tip", observed: head, wanted: tip}}
 	}
-	if err := mergeCheckoutClean(selected.Worktree, "sibling checkout is not clean", "bench worktree exec "+selected.ID+" -- bench commit"); err != nil {
+	if err := checkoutClean(selected.Worktree, "sibling checkout is not clean", "bench worktree exec "+selected.ID+" -- bench commit"); err != nil {
 		return "", "", false, err
 	}
 	return tip, selected.ID, true, nil
@@ -255,22 +256,27 @@ func mergeSiblingTip(root string, assignments []intent.Assignment, target intent
 
 // mergeDefaultBranchCommit answers the commit lookup. The two results are separate
 // facts: a spelling Git can peel, and a commit the default branch's history contains.
-// Only the second authorizes the lane to execute the tree.
-func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned bool) {
-	commit, err := git.Output("-C", root, "rev-parse", "--verify", "--quiet", from+"^{commit}")
-	if err != nil || commit == "" {
-		return "", false, false
+// Only the second authorizes the lane to execute the tree. A query the lookup cannot run
+// is a third fact: it refuses and names the failure, because an unread history classifies
+// nothing.
+func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned bool, err error) {
+	commit, peelErr := git.Output("-C", root, "rev-parse", "--verify", "--quiet", from+"^{commit}")
+	if peelErr != nil || commit == "" {
+		return "", false, false, nil
 	}
 	branch, ok := git.ResolvedDefault(root)
 	if !ok {
-		return commit, true, false
+		return commit, true, false, refusalError{refusal{detail: "default branch is unresolved", observed: from}}
 	}
-	tip, err := git.Output("-C", root, "rev-parse", "--verify", branch+"^{commit}")
-	if err != nil {
-		return commit, true, false
+	tip, tipErr := git.Output("-C", root, "rev-parse", "--verify", branch+"^{commit}")
+	if tipErr != nil {
+		return commit, true, false, refusalError{refusal{detail: "default branch tip is unreadable", observed: branch}}
 	}
-	contains, err := authorization.IsAncestor(root, commit, tip)
-	return commit, true, err == nil && contains
+	contains, ancestryErr := authorization.IsAncestor(root, commit, tip)
+	if ancestryErr != nil {
+		return commit, true, false, refusalError{refusal{detail: "ancestry query failed: " + ancestryErr.Error(), observed: commit, wanted: tip}}
+	}
+	return commit, true, contains, nil
 }
 
 // mergeOwner resolves the authority the composed tree is graded under, the way

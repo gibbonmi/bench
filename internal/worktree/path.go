@@ -62,6 +62,11 @@ func resolveWorktree(root, target string) (string, error) {
 	return selected.Worktree, nil
 }
 
+// errTargetUnassigned is the selector outcome a caller may act on rather than report: the
+// spelling names no assignment, so a caller with a second lookup falls through to it. The
+// ambiguity outcome names the colliding ids, so it stays a constructed error.
+var errTargetUnassigned = errors.New("target is unassigned")
+
 func selectAssignment(assignments []intent.Assignment, target string) (intent.Assignment, error) {
 	path, isPath, err := targetPath(target)
 	if err != nil {
@@ -85,7 +90,7 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 		})
 	}
 	if len(matched) == 0 {
-		return intent.Assignment{}, errors.New("target is unassigned")
+		return intent.Assignment{}, errTargetUnassigned
 	}
 	if len(matched) > 1 {
 		// The refusal names every colliding id, because the id is the address that

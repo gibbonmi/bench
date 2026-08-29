@@ -228,11 +228,20 @@ func (a LaneAuthority) namedMarkdown(root, tree string) []string {
 	if a.PreviousTip == "" {
 		return a.NamedMarkdown
 	}
-	out, err := benchgit.Output("-C", root, "diff", "--name-only", a.PreviousTip+"^{tree}", tree, "--", "*.md")
-	if err != nil || out == "" {
+	// The NUL framing is load-bearing: under the default `core.quotepath` a newline-framed
+	// name with a byte above ASCII arrives C-quoted, so the check would grade a path no
+	// file carries.
+	raw, err := benchgit.Raw("-C", root, "diff", "--name-only", "-z", a.PreviousTip+"^{tree}", tree, "--", "*.md")
+	if err != nil || len(raw) == 0 {
 		return nil
 	}
-	return strings.Split(out, "\n")
+	var paths []string
+	for _, path := range strings.Split(string(raw), "\x00") {
+		if path != "" {
+			paths = append(paths, path)
+		}
+	}
+	return paths
 }
 
 func checkNames(checks []gate.Phase) []string {

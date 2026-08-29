@@ -313,8 +313,7 @@ func validateCreationBundle(root string, assignment intent.Assignment) error {
 	if err != nil {
 		return err
 	}
-	branch, branchErr := git.Output("-C", assignment.Worktree, "symbolic-ref", "--quiet", "HEAD")
-	if branchErr != nil || branch != assignment.Branch {
+	if _, ok := assignmentBranchCheckedOut(assignment); !ok {
 		return errors.New("assignment branch is not checked out")
 	}
 	return registrationRefusal(evidence, assignment)

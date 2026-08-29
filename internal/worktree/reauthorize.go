@@ -77,8 +77,7 @@ func reauthorizeWith(j joins, root, _ string, args []string, stdout, stderr io.W
 		if evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree || evidence.registration.BranchRef != a.Branch || !evidence.registration.Locked || evidence.registration.LockReason != lockReason(a) {
 			return errors.New("owner marker or branch mismatch")
 		}
-		branch, err := git.Output("-C", path, "symbolic-ref", "--quiet", "HEAD")
-		if err != nil || branch != a.Branch {
+		if _, ok := assignmentBranchCheckedOut(a); !ok {
 			return errors.New("assignment branch is not checked out")
 		}
 		head, err := git.Output("-C", path, "rev-parse", "HEAD")

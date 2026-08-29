@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -753,5 +754,91 @@ func TestMergeResolvesTheProsePlaceholderToTheIncomingMarkdown(t *testing.T) {
 	}
 	if got := string(recorded); got != "incoming-only.md\n" {
 		t.Fatalf("prose argv = %q, want the incoming side's Markdown alone", got)
+	}
+}
+
+// --- the review repairs ---
+
+// WM35: an ambiguous `--from` prefix refuses naming every matching assignment id, whether
+// or not a branch of the same spelling exists. A resolver that swallows the ambiguity
+// merges whichever object happens to carry the name.
+func TestMergeRefusesAnAmbiguousFromPrefix(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "shared-prefix-one", "shared-prefix-two", "integration")
+	target := created[2]
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+
+	for _, branched := range []bool{false, true} {
+		if branched {
+			gitRun(t, root, "branch", "shared-p", "HEAD")
+		}
+		code, stdout, stderr := runMerge(t, j, root, home, "--from", "shared-p", target.Assignment.ID)
+		requireMergeRefusal(t, code, stdout, stderr, "target is ambiguous",
+			created[0].Assignment.ID, created[1].Assignment.ID)
+		requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+	}
+}
+
+// WM37: the sibling lookup runs over active assignments only, so a retired assignment's
+// label names no sibling and falls through to the commit lookup. A lookup over every
+// state refuses a legitimate default-branch commit by the assignment's state.
+func TestMergeResolvesARetiredSiblingLabelThroughTheCommitLookup(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration", "retired")
+	target, retired := created[0], created[1].Assignment
+	commitInWorktree(t, target.Path, "target.txt", "target\n", "target work")
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	retired.State = intent.StateComplete
+	if err := intent.PutAssignment(root, retired); err != nil {
+		t.Fatal(err)
+	}
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", retired.Label, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "--from names no assignment and no commit", "observed="+retired.Label)
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+
+	incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+	gitRun(t, root, "branch", retired.Label, incoming)
+	code, stdout, stderr = runMerge(t, j, root, home, "--from", retired.Label, target.Assignment.ID)
+	if code != 0 {
+		t.Fatalf("merge exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	tip := gitOutput(t, root, "rev-parse", target.Assignment.Branch)
+	if second := gitOutput(t, root, "rev-parse", tip+"^2"); second != incoming {
+		t.Fatalf("second parent = %s, want the commit the branch names %s", second, incoming)
+	}
+}
+
+// WM38: an unresolved default branch is a failed query, not a classification, so the
+// commit lookup refuses naming the query. A fold into `owned=false` reports the commit as
+// outside a history the verb never read.
+func TestMergeRefusesAnUnresolvedDefaultBranch(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration")
+	target := created[0]
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+	// Two local branches remain and none of them is the `main` candidate, so no default
+	// branch resolves and the ancestry the lookup needs has no subject.
+	gitRun(t, root, "branch", "-m", "main", "trunk")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "default branch is unresolved")
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+}
+
+// S1: the landing destination and the merge target read one checkout-clean predicate, so
+// an unreadable status names the failed read at both. The destination's own derivation
+// reported an unreadable status as a dirty destination and named no path.
+func TestLandingDestinationNamesAnUnreadableStatusThroughTheSharedPredicate(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	// A corrupt index fails `git status` while every ref read the destination proof runs
+	// before it still answers.
+	mustWrite(t, filepath.Join(root, ".git", "index"), []byte("not an index\n"), 0o644)
+
+	_, _, _, _, err := landingDestination(defaultJoins(), root)
+	if err == nil || !strings.Contains(err.Error(), "checkout status is unreadable") {
+		t.Fatalf("landing destination error = %v, want the shared predicate's unreadable-status refusal", err)
 	}
 }
