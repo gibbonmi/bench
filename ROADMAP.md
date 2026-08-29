@@ -25,8 +25,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT252 (MEDIUM) — a Bench verb moves a retained worktree, or a sibling assignment, onto a new base, and folds a sibling's diff into it.**
-
 **FT246 (MEDIUM) — other binary-building test packages select the gate executable once.**
 
 **FT247 (MEDIUM) — the next slow test packages extract pure policy from effect adapters.**
@@ -317,6 +315,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT252: specify a Bench verb that moves a retained worktree or sibling assignment onto a new base, and folds a sibling's diff into it.
-2. `/bench-implement-spec` — FT214: the `craft-spec` kit edit, now carrying the reader sweep, the cleanup-error rows, and the gate-lock seam check.
-3. `/bench-shape-idea` — FT246: shape one selected gate executable for other binary-building test packages.
+1. `/bench-implement-spec` — FT214: the `craft-spec` kit edit, now carrying the reader sweep, the cleanup-error rows, the gate-lock seam check, and the read-every-enforcement-file clause.
+2. `/bench-implement-spec` — FT213: the `craft-delegate` kit edit, now carrying the red-first return, the fence-extension continuation, and the integration-source ticket rule.
+3. `/bench-shape-idea` — FT254: decide the `bench worktree exec` comfort set, now including `create --from <target>` and the pass-through follow-on.
