@@ -12,7 +12,10 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
-var nodeRuntimeVersionRE = regexp.MustCompile(`^([0-9]+)\.[0-9]+\.[0-9]+$`)
+var (
+	nodeRuntimeVersionRE   = regexp.MustCompile(`^([0-9]+)\.[0-9]+\.[0-9]+$`)
+	setupNodeVersionFileRE = regexp.MustCompile(`(?m)^[ \t]+node-version-file:[ \t]*['"]\.node-version['"][ \t]*(?:#.*)?$`)
+)
 
 func checkNodeRuntimePolicy(root string) []string {
 	publication := filepath.Join(root, "internal", "publication", "npm_registry.go")
@@ -68,7 +71,7 @@ func checkSetupNodeVersionFile(rel, workflow string) []string {
 		if end := strings.Index(rest, "\n      - "); end >= 0 {
 			rest = rest[:end]
 		}
-		if !strings.Contains(rest, "node-version-file: '.node-version'") {
+		if !setupNodeVersionFileRE.MatchString(rest) {
 			diags = append(diags, rel+" setup-node step "+strconv.Itoa(index+1)+" does not read .node-version")
 		}
 	}
@@ -108,6 +111,7 @@ func TestNodeRuntimePolicyProjectionsBite(t *testing.T) {
 		{"stale release guidance", "docs/release-runbook.md", "The operator uses Node 23+.\n", "release guidance Node floor does not project .node-version"},
 		{"literal release workflow version", ".github/workflows/release.yml", "jobs:\n  release:\n    steps:\n      - uses: actions/setup-node@digest\n        with:\n          node-version: '24'\n", ".github/workflows/release.yml setup-node step 1 does not read .node-version"},
 		{"literal native workflow version", ".github/workflows/native-runtime.yml", "jobs:\n  verify:\n    steps:\n      - uses: actions/setup-node@digest\n        with:\n          node-version: '24'\n", ".github/workflows/native-runtime.yml setup-node step 1 does not read .node-version"},
+		{"commented canonical workflow version", ".github/workflows/release.yml", "jobs:\n  release:\n    steps:\n      - uses: actions/setup-node@digest\n        with:\n          node-version: '23'\n          # node-version-file: '.node-version'\n", ".github/workflows/release.yml setup-node step 1 does not read .node-version"},
 	} {
 		t.Run(mutation.name, func(t *testing.T) {
 			write(mutation.rel, mutation.body)
