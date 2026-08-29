@@ -306,6 +306,8 @@ against G1 through G5.
 - `.bench/BENCH.md`
 - `CONTEXT.md`
 - `specs/worktree-exec-comfort/`
+- `decisions/worktree-exec-comfort.md`
+- `decisions/assets/ft254-exec-comfort-research.md`
 
 ## Out of scope
 
