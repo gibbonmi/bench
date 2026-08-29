@@ -44,8 +44,12 @@ const viaLine = "via is call, reference, or implements; a bare name with several
 // produced it, so a reviewer knows a replay identity is available without one to read.
 const citationLine = "every success response ends with citation{sha,state,version,cmd,hash}: the checkout, its clean or dirty state, and a sha256 over the answer above the row."
 
+// refusalLine names the three unsound inputs the command refuses, so an agent knows a
+// refusal is a stated outcome rather than a crash, and knows it carries no citation.
+const refusalLine = "three inputs refuse at exit 1 with no citation row: an ill-typed tree names its first error position, a missing go binary names itself, and a name only a non-Go file declares names that file's language."
+
 func helpText() string {
-	return usageLine + "\n" + promise + "\n" + soundness + "\n" + viaLine + "\n" + capLine() + "\n" + citationLine + "\n"
+	return usageLine + "\n" + promise + "\n" + soundness + "\n" + viaLine + "\n" + capLine() + "\n" + citationLine + "\n" + refusalLine + "\n"
 }
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand. Arity,
@@ -95,11 +99,11 @@ func command(version string, args []string) (string, int) {
 	}
 	pkgs, err := load(root, "./...")
 	if err != nil {
-		return toon.Errorf("package load failed: "+err.Error(), "fix the tree so it type-checks, then retry") + "\n", 1
+		return refuseLoad(err) + "\n", 1
 	}
 	matches, err := Resolve(pkgs, symbol)
 	if err != nil {
-		return toon.Errorf(err.Error(), "pass a qualified symbol such as outline.Command") + "\n", 1
+		return refuseUnresolved(root, symbol, err) + "\n", 1
 	}
 	source := citation{root: root, version: version, args: args}
 	if len(matches) > 1 {

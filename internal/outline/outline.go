@@ -368,3 +368,10 @@ func appendSkip(rows [][]string, file, reason string) [][]string {
 	}
 	return append(rows, []string{file, reason})
 }
+
+// TrackedFiles is the tracked-file census other packages read: git's ls-files order for
+// the whole repository rooted at root. It is the listing half of the outline walk, and it
+// is exported so a caller sweeping the same files scans one census rather than a second.
+func TrackedFiles(root string) ([]string, error) {
+	return listFiles(root, "", false)
+}
