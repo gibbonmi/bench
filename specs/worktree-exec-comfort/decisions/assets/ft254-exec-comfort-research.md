@@ -1,7 +1,7 @@
 # FT254 exec-comfort research
 
 Four read-only research delegations ran on 2026-08-29 against commit `a712f84f`.
-Each section answers one ticket of `decisions/worktree-exec-comfort.md`.
+Each section answers one ticket of `specs/worktree-exec-comfort/decisions/worktree-exec-comfort.md`.
 Line citations bind to that commit. Re-resolve them before a spec reads this asset.
 
 ## #1 Exec surface as built
