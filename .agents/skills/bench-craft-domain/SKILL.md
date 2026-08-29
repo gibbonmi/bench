@@ -39,6 +39,11 @@ bad input" names a family; "an empty input list exits 2 and prints the input
 path" names one behavior. Complete when each edge in the work at hand carries
 a scenario sharp enough to become an acceptance row unchanged.
 
+When a new ordering or grouping requirement lands on a collection that had
+none, fix the cardinality at that edge. Ask whether one member can carry two,
+and answer with a fixture that exercises the many case. The natural
+implementation of "ordered by key" quietly answers one.
+
 ## Producer-derived equivalence partitions
 
 Derive input families from what the real producer can emit, not from

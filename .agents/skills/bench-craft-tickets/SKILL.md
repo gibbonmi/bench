@@ -17,7 +17,8 @@ commit is the grading rule.
 ## Draft the breakdown
 
 Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any
-prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices.
+prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. A rewrite
+ticket is sized by the lines the delegate must read, not the lines it edits.
 
 Name every real blocker by sibling ticket file basename. A ticket with all blockers
 landed is on the **frontier**, and blockers order before consumers. A wide mechanical
@@ -32,9 +33,8 @@ every ticket. The coordinator asks: does the granularity feel right, too coarse 
 and are the blocking edges correct? Does each ticket depend only on tickets that genuinely
 gate it, and should any ticket be merged or split? Iterate until the reviewer approves, and
 record approval.
-For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out
-in `.bench/BENCH.md` is the sole no-round-trip exception. The light path is the exception:
-`.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and the main session implements it inline.
+For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out in `.bench/BENCH.md` is the sole no-round-trip exception.
+The light path is the exception: `.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and the main session implements it inline.
 
 ## Write one file per ticket
 
