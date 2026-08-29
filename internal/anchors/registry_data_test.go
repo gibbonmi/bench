@@ -524,3 +524,71 @@ func TestHarnessRecordPointerAnchorsRedOnRemoval(t *testing.T) {
 		}
 	}
 }
+
+// TestCraftSpecMapDisciplineAnchorsRedOnRemoval pins the three sentences the FT214 visit
+// adds to craft-spec. Each section, needle, and diagnostic is written here independently
+// of the registry, so a skill that drops the build fence, the per-row rubric question, or
+// the map-discipline pointer cannot define itself green.
+func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
+	const file = ".agents/skills/bench-craft-spec/SKILL.md"
+	rules := []struct{ section, needle, want string }{
+		{
+			"Slicing a build for delegates",
+			"A build may not edit its own spec's acceptance rows, budget targets, or ownership fences.",
+			".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the rule that a build may not edit its own spec's acceptance rows, budget targets, or ownership fences",
+		},
+		{
+			"Review rubric",
+			"Per row, does the map name the gate check or test that reds it, or mark the row review-owned?",
+			".agents/skills/bench-craft-spec/SKILL.md Review rubric dropped the per-row question that names the gate check or test which reds the row",
+		},
+		{
+			"The acceptance coverage map",
+			"`references/map-discipline.md` states the rule each row must satisfy",
+			".agents/skills/bench-craft-spec/SKILL.md The acceptance coverage map dropped the pointer to references/map-discipline.md",
+		},
+	}
+
+	// evaluate writes one minimal skill that carries every section, and every needle except
+	// the dropped one. The section survives the drop, so a red reports the missing sentence
+	// rather than a missing section.
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		body := "# subject\n"
+		for i, r := range rules {
+			body += "\n## " + r.section + "\n\n"
+			if i != dropped {
+				body += r.needle + "\n"
+			}
+		}
+		path := filepath.Join(root, filepath.FromSlash(file))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	// Other rows of the group fire against this minimal tree; only these three rows are the
+	// test's subject, so both directions are read by membership.
+	full := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(full, r.want) {
+			t.Errorf("tree carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree without %q in %s = %v, want %q", r.needle, file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
