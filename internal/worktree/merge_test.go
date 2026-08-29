@@ -589,3 +589,169 @@ func TestMergeRefusesAnOffBranchFromCommit(t *testing.T) {
 		"--from is outside the default branch's history and is no sibling tip", "observed="+offBranch)
 	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
 }
+
+// --- the publication boundary ---
+
+// mergeLaneOf replaces the fixture's lane with the checks one row needs, so a row
+// controls the outcome the boundary reacts to without a second fixture.
+func mergeLaneOf(checks ...gate.Phase) func(string) ([]gate.Phase, string, error) {
+	return func(string) ([]gate.Phase, string, error) { return checks, "", nil }
+}
+
+// requireMergeLaneRefusal pins the surface a lane fail leaves: exit 1, the lane's own
+// fail line naming the check, and the refusal record after it.
+func requireMergeLaneRefusal(t *testing.T, code int, stdout, check string) {
+	t.Helper()
+	if code != 1 {
+		t.Fatalf("merge exit = %d, want 1; stdout=%q", code, stdout)
+	}
+	fail := "lane{outcome=fail,check=" + check + "}"
+	if !strings.Contains(stdout, fail) {
+		t.Fatalf("stdout = %q, want %q", stdout, fail)
+	}
+	if index := strings.Index(stdout, "refused{"); index < 0 || index < strings.Index(stdout, fail) {
+		t.Fatalf("stdout = %q, want the refusal record after the lane's fail line", stdout)
+	}
+}
+
+// WM19: a failing lane check names itself at exit 1, and the tip and the checkout stay
+// unchanged. A verb that publishes on a lane fail ships an ungraded tree.
+func TestMergeRefusesAFailingLaneCheck(t *testing.T) {
+	t.Parallel()
+	j, root, home, _, created := mergeFixture(t, "integration")
+	target := created[0]
+	commitInWorktree(t, target.Path, "target.txt", "target\n", "target work")
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+	j.mergeLane = mergeLaneOf(gate.Phase{Name: "unit", Argv: []string{"sh", "-c", "echo the lane says no; exit 1"}})
+
+	code, stdout, _ := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	requireMergeLaneRefusal(t, code, stdout, "unit")
+	if tip := gitOutput(t, root, "rev-parse", target.Assignment.Branch); tip != previous {
+		t.Fatalf("branch tip = %s, want it unchanged at %s", tip, previous)
+	}
+	if status := gitOutput(t, target.Path, "status", "--porcelain=v1", "--untracked-files=all"); status != "" {
+		t.Fatalf("checkout status = %q, want the checkout untouched", status)
+	}
+	if _, err := os.Stat(filepath.Join(target.Path, "incoming.txt")); !os.IsNotExist(err) {
+		t.Fatalf("incoming.txt reached the checkout of a refused merge: %v", err)
+	}
+}
+
+// WM23: a fast-forward grades the incoming tree too, so a commit whose tree fails the
+// lane refuses and the tip stays. A lane skipped on fast-forward publishes an ungraded
+// tree.
+func TestMergeRefusesAFastForwardTheLaneFails(t *testing.T) {
+	t.Parallel()
+	j, root, home, _, created := mergeFixture(t, "delegate")
+	target := created[0]
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+	// The check reads the graded tree's own checkout, so it passes on the previous tip
+	// and fails on the incoming one.
+	j.mergeLane = mergeLaneOf(gate.Phase{Name: "unit", Argv: []string{"sh", "-c", "test ! -f incoming.txt"}})
+
+	code, stdout, _ := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	requireMergeLaneRefusal(t, code, stdout, "unit")
+	if tip := gitOutput(t, root, "rev-parse", target.Assignment.Branch); tip != previous {
+		t.Fatalf("branch tip = %s, want it unchanged at %s", tip, previous)
+	}
+}
+
+// WM22: a checkout edited between the pre-check and the ref update refuses before the ref
+// moves, and the edit survives. A verb that trusts the first read resets over a fresh
+// edit.
+func TestMergeRefusesACheckoutEditedDuringTheLane(t *testing.T) {
+	t.Parallel()
+	j, root, home, _, created := mergeFixture(t, "integration")
+	target := created[0]
+	commitInWorktree(t, target.Path, "target.txt", "target\n", "target work")
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+	fresh := filepath.Join(target.Path, "fresh.txt")
+	j.mergeLane = mergeLaneOf(gate.Phase{Name: "unit", Argv: []string{"sh", "-c",
+		"printf 'fresh\\n' > " + sanitize.ShellQuote(fresh)}})
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	// The lane ran and passed, so its own line precedes the refusal record on stdout.
+	if code != 1 || stderr != "" {
+		t.Fatalf("merge = (%d, %q), want exit 1 with stderr empty; stdout=%q", code, stderr, stdout)
+	}
+	if !strings.Contains(stdout, "refused{detail=merge target checkout changed}") {
+		t.Fatalf("stdout = %q, want the fingerprint recheck's refusal", stdout)
+	}
+	if tip := gitOutput(t, root, "rev-parse", target.Assignment.Branch); tip != previous {
+		t.Fatalf("branch tip = %s, want it unchanged at %s", tip, previous)
+	}
+	if body, err := os.ReadFile(fresh); err != nil || string(body) != "fresh\n" {
+		t.Fatalf("fresh.txt = %q, %v; want the edit to survive the refusal", body, err)
+	}
+}
+
+// WM21: a reconcile failure after the ref update exits 3 and names the repair at the
+// published commit. A refusal-shaped exit hides that the ref moved.
+func TestMergeExitsThreeWhenTheReconcileFails(t *testing.T) {
+	t.Parallel()
+	j, root, home, _, created := mergeFixture(t, "integration")
+	target := created[0]
+	commitInWorktree(t, target.Path, "target.txt", "target\n", "target work")
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+	j.mergeReconcile = func(string, string) error { return errors.New("reset refused") }
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	if code != 3 {
+		t.Fatalf("merge exit = %d, want 3; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	tip := gitOutput(t, root, "rev-parse", target.Assignment.Branch)
+	if tip == previous {
+		t.Fatal("the exit-3 record reports a publication the ref never took")
+	}
+	record := mergedRecord(t, stdout)
+	if !strings.Contains(record, ",tip="+tip+",") {
+		t.Fatalf("record = %q, want it to name the published tip %s", record, tip)
+	}
+	if !strings.Contains(record, "next=git -C ") || !strings.Contains(record, target.Path) {
+		t.Fatalf("record = %q, want the repair at the target checkout %s", record, target.Path)
+	}
+	if !strings.HasSuffix(record, " reset --merge "+tip+"}") {
+		t.Fatalf("record = %q, want the repair to name the published commit %s", record, tip)
+	}
+	// A linked worktree's HEAD follows the branch ref whether or not the checkout was
+	// reconciled, so the unreconciled state reads through the status and the tree.
+	if status := gitOutput(t, target.Path, "status", "--porcelain=v1", "--untracked-files=all"); status == "" {
+		t.Fatal("checkout status is clean, so the fixture never left the reconcile undone")
+	}
+	if _, err := os.Stat(filepath.Join(target.Path, "incoming.txt")); !os.IsNotExist(err) {
+		t.Fatalf("incoming.txt is in the checkout, so the reconcile ran: %v", err)
+	}
+}
+
+// WM24: the lane's prose placeholder is exactly the Markdown that differs between the
+// previous tip's tree and the composed tree. An empty placeholder grades no incoming
+// prose, and a whole-tree placeholder grades unchanged files.
+func TestMergeResolvesTheProsePlaceholderToTheIncomingMarkdown(t *testing.T) {
+	t.Parallel()
+	j, root, home, _, created := mergeFixture(t, "integration")
+	target := created[0]
+	// README.md rides the base commit unchanged; the target side changes one Markdown
+	// file the composed tree shares with the previous tip; the incoming side changes one.
+	commitInWorktree(t, target.Path, "target-only.md", "target prose\n", "target prose")
+	incoming := commitOnDefault(t, root, "incoming-only.md", "incoming prose\n")
+	argv := filepath.Join(t.TempDir(), "prose-argv")
+	j.mergeLane = mergeLaneOf(gate.Phase{Name: "prose", Argv: []string{"sh", "-c",
+		`for path in "$@"; do printf '%s\n' "$path"; done > ` + sanitize.ShellQuote(argv),
+		"prose", gate.LaneNamedMarkdownToken}})
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	if code != 0 {
+		t.Fatalf("merge exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	recorded, err := os.ReadFile(argv)
+	if err != nil {
+		t.Fatalf("the prose check recorded no argv: %v", err)
+	}
+	if got := string(recorded); got != "incoming-only.md\n" {
+		t.Fatalf("prose argv = %q, want the incoming side's Markdown alone", got)
+	}
+}

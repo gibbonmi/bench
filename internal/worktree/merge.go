@@ -72,7 +72,7 @@ func mergeWith(j joins, root, _ string, args []string, stdout, stderr io.Writer)
 	if err != nil {
 		return landRefusal(stdout, "merge target checkout fingerprint is unreadable")
 	}
-	owner, err := mergeOwner(j, root, target.Worktree, previous, incoming)
+	owner, err := mergeOwner(j, target.Worktree, previous)
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
@@ -276,7 +276,7 @@ func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned
 // mergeOwner resolves the authority the composed tree is graded under, the way
 // `bench commit` resolves it, but for the target worktree. A root with no declared lane
 // keeps the whole-project gate.
-func mergeOwner(j joins, root, target, previous, incoming string) (landing.Owner, error) {
+func mergeOwner(j joins, target, previous string) (landing.Owner, error) {
 	checks, kit, err := j.mergeLane(target)
 	if err != nil {
 		return landing.Owner{}, err
@@ -284,17 +284,8 @@ func mergeOwner(j joins, root, target, previous, incoming string) (landing.Owner
 	if checks == nil {
 		return landing.New(), nil
 	}
-	return landing.NewLane(authorization.LaneAuthority{
-		Checks: checks, Kit: kit, NamedMarkdown: mergeNamedMarkdown(root, previous, incoming),
-	}), nil
-}
-
-// mergeNamedMarkdown is the lane prose check's subject: the Markdown the incoming commit
-// changes against the target's tip, so incoming prose is graded like named Markdown.
-func mergeNamedMarkdown(root, previous, incoming string) []string {
-	out, err := git.Output("-C", root, "diff", "--name-only", previous, incoming, "--", "*.md")
-	if err != nil || out == "" {
-		return nil
-	}
-	return strings.Split(out, "\n")
+	// The previous tip, not a path list, is what the authority needs: it grades the
+	// composed tree it already holds, so the verb never composes a second time to learn
+	// which prose the merge brought in.
+	return landing.NewLane(authorization.LaneAuthority{Checks: checks, Kit: kit, PreviousTip: previous}), nil
 }
