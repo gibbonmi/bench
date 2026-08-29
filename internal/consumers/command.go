@@ -47,7 +47,7 @@ const viaLine = "via is call, reference, or implements; a bare name with several
 
 // citationLine tells the reader that every success response discloses the run that
 // produced it, so a reviewer knows a replay identity is available without one to read.
-const citationLine = "every success response ends with citation{sha,state,version,cmd,hash}: the checkout, its clean or dirty state, and a sha256 over the answer above the row."
+const citationLine = "every success response ends with citation[1]{sha,state,version,cmd,hash}: the checkout, its clean or dirty state, and a sha256 over the answer above the row."
 
 // emptyInterfaceLine and genericImplementerLine name the two types the implements pass
 // leaves out, so a missing row reads as a stated limit.

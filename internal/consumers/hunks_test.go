@@ -54,7 +54,7 @@ func TestParseHunksReadsAddedAndRemovedRuns(t *testing.T) {
 	}
 }
 
-// R1: a deletion-only hunk carries a zero-count tip side, and the run it names is the two
+// A deletion-only hunk carries a zero-count tip side, and the run it names is the two
 // tip lines the removed run sat between. An insertion's zero-count base side dropped no
 // base line, so it names no removed run.
 func TestZeroCountSidesReadPerSide(t *testing.T) {
@@ -73,7 +73,7 @@ func TestZeroCountSidesReadPerSide(t *testing.T) {
 	}
 }
 
-// R2: git C-quotes a patch header path carrying a non-ASCII byte unless the diff runs with
+// Git C-quotes a patch header path carrying a non-ASCII byte unless the diff runs with
 // core.quotePath disabled. A quoted header path matches no loaded file, so the declarations
 // it holds are never marked touched.
 func TestHunkHeaderPathsArriveUnquoted(t *testing.T) {
@@ -90,5 +90,25 @@ func TestHunkHeaderPathsArriveUnquoted(t *testing.T) {
 	}
 	if hunks[0].TipPath != rel || hunks[0].BasePath != rel {
 		t.Fatalf("hunk paths = %q and %q, want the raw path %q", hunks[0].BasePath, hunks[0].TipPath, rel)
+	}
+}
+
+// Git C-quotes a double quote, a backslash, and a control byte in a patch header path
+// whatever core.quotePath says, so the parse unquotes a header before it names a file.
+func TestQuotedHeaderPathIsUnquoted(t *testing.T) {
+	const rel = "pkg/a\"b\x1bc.go"
+	const text = "diff --git \"a/pkg/a\\\"b\\033c.go\" \"b/pkg/a\\\"b\\033c.go\"\n" +
+		"--- \"a/pkg/a\\\"b\\033c.go\"\n" +
+		"+++ \"b/pkg/a\\\"b\\033c.go\"\n" +
+		"@@ -3 +3 @@\n" +
+		"-\told := 1\n" +
+		"+\tnew := 2\n"
+	want := []fileHunks{{
+		BasePath: rel, TipPath: rel,
+		Added:   []lineSpan{{3, 3}},
+		Removed: []lineSpan{{3, 3}},
+	}}
+	if got := parseHunks(text); !reflect.DeepEqual(got, want) {
+		t.Fatalf("parseHunks = %#v, want %#v", got, want)
 	}
 }

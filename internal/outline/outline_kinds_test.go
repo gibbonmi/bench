@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // writeKindFixtureTree plants one tree carrying a helper, all four double prefixes in
@@ -102,7 +104,7 @@ func TestTestdataFileEmitsOneFixtureRow(t *testing.T) {
 func TestUnscannableTestdataFilesStillEmitFixtureRows(t *testing.T) {
 	root := outlineRepo(t)
 	writeOutlineFile(t, root, "pkg/testdata/blob.bin", "head\x00tail\n")
-	writeOutlineFile(t, root, "pkg/testdata/huge.txt", strings.Repeat("x", (2<<20)+1))
+	writeOutlineFile(t, root, "pkg/testdata/huge.txt", strings.Repeat("x", int(bounds.OutlineFileLimit)+1))
 	writeOutlineFile(t, root, "pkg/widget.go", "package pkg\nfunc Kept() {}\n")
 	gitAddOutline(t, root)
 
@@ -120,9 +122,9 @@ func TestUnscannableTestdataFilesStillEmitFixtureRows(t *testing.T) {
 	}
 }
 
-// oldOutline and newOutline are the two reviewed renderings of writeKindFixtureTree:
+// oldOutline and newOutline are the two pinned renderings of writeKindFixtureTree:
 // oldOutline is the kind vocabulary without helper, double, and fixture, and newOutline is
-// the one this package emits. The pair pins the byte delta: any unreviewed change to an
+// the one this package emits. The pair pins the byte delta: any change to an
 // outline row reds this test.
 const oldOutline = `outline[9]{file,line,kind,name}:
   pkg/doubles_test.go,"2",type,FakeClock
@@ -155,7 +157,7 @@ outline_meta[1]{tracked_files,scanned_files,skipped_files,total_symbols,emitted_
 outline_skips[0]{file,reason}:
 `
 
-// OI4: the old-to-new fixture pair reds on any unreviewed outline byte delta. The
+// OI4: the old-to-new fixture pair reds on any outline byte delta. The
 // emitted bytes must equal newOutline, and the old-to-new difference must be exactly
 // the planted rows — no unplanted line may move.
 func TestOldToNewFixturePairPinsTheKindDelta(t *testing.T) {

@@ -185,7 +185,7 @@ func shellSplit(t *testing.T, command string) []string {
 	return fields[:len(fields)-1]
 }
 
-// R8 (story 9): a revision name carrying a shell metacharacter keeps its token boundary in
+// A revision name carrying a shell metacharacter keeps its token boundary in
 // the citation's replay spelling, so the printed line replays as the argv that answered.
 func TestCitationCmdRoundTripsThroughAPOSIXShellSplit(t *testing.T) {
 	base := blastRepo(t)

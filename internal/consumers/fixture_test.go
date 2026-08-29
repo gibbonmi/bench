@@ -12,7 +12,7 @@ import (
 
 // fixturePkg is one package of in-process fixture source: its import path and its files.
 // The core's whole input is typed packages, so a test builds them with go/parser plus
-// go/types and never spawns a process. Exactly one test in this package drives the real
+// go/types and never spawns a process. The loader seam's real-path tests drive the real
 // loader instead.
 type fixturePkg struct {
 	path  string

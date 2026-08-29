@@ -90,7 +90,7 @@ func TestHelpNamesTheThreeRefusals(t *testing.T) {
 	}
 }
 
-// R5 (story 6): a repository the Go loader cannot load still refuses with the language
+// A repository the Go loader cannot load still refuses with the language
 // named, because a tree with no go.mod says nothing about the query. This test drives the
 // real loader, so the sweep is what decides the answer.
 func TestUnloadableTreeRefusesWithTheNonGoLanguage(t *testing.T) {
@@ -107,7 +107,7 @@ func TestUnloadableTreeRefusesWithTheNonGoLanguage(t *testing.T) {
 	}
 }
 
-// R7: the sweep reads a candidate the way `bench outline` does. A tracked path replaced on
+// The sweep reads a candidate the way `bench outline` does. A tracked path replaced on
 // disk by a symlink is not followed, and one replaced by a FIFO does not block, so the
 // command still returns its refusal. Both names sort before the declaring file, so the
 // sweep reaches them.

@@ -6,7 +6,7 @@
 // already-typed packages and returns rows; it never reads the tree and never spawns a
 // process. A package-internal loader seam (loader.go) wraps go/packages and is the only
 // site that shells out to the go tool. Core tests therefore type-check fixture source in
-// process, and exactly one test drives the real loader.
+// process, and the loader seam's real-path tests drive the loader.
 //
 // The tool IDENTIFIES resolved reference edges. It does not see reflection,
 // go:linkname, plugin, or exec edges; a textual sweep stays the candidate-class

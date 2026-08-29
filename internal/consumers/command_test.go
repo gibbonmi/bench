@@ -222,7 +222,7 @@ func escapeFixture(root string) []fixturePkg {
 	}
 }
 
-// R2: a control byte in a path drops only its own row and sets truncated, the way
+// A control byte in a path drops only its own row and sets truncated, the way
 // `bench outline` drops a poisoned row. The whole response must still stand.
 func TestUnrepresentablePathDropsOnlyItsOwnRow(t *testing.T) {
 	stubLoad(t, escapeFixture)
