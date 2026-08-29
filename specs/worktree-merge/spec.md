@@ -297,7 +297,7 @@ subagent at medium.
 | WM14 | 14 | a `--from` that resolves to the target's own assignment refuses | command seam | a self-merge prints `kind=current` and hides the operand error |
 | WM15 | 15 | a `--from` that names nothing refuses at exit 1 naming the value | command seam | a silent `kind=current` on a typo |
 | WM16 | 16 | a target whose owner marker or lock fails refuses naming that component, a non-active state refuses naming the state, and a checkout off the assignment branch refuses naming the branch ref | command seam, identity component registry | a verb that skips the bundle writes to a foreign tree |
-| WM17 | 17 | a target whose branch tip is not its checkout HEAD refuses naming both commits | command seam | the compare-and-swap old value comes from the checkout while the ref differs |
+| WM17 | 17 | a target whose branch tip is not its checkout HEAD refuses naming both commits | helper seam (`mergeTargetTip`), because a linked worktree's HEAD cannot disagree with the shared ref inside one repository | the compare-and-swap old value comes from the checkout while the ref differs |
 | WM18 | 18 | a declared lane runs on the composed tree before the ref moves, and stdout carries `lane{outcome=pass,checks=...}` | command seam, lane manifest fixture | a verb that skips the lane publishes a broken build |
 | WM19 | 19 | a failing lane check prints `lane{outcome=fail,check=<name>}` at exit 1, and the tip and the checkout stay unchanged | command seam | a verb that publishes on a lane fail |
 | WM20 | 20 | a branch tip moved after the lane makes the ref update refuse, and the moved tip survives | owner seam, update-ref field | an unconditional update-ref overwrites a concurrent commit |
@@ -312,6 +312,10 @@ subagent at medium.
 | WM32 | 31 | a missing `--from`, an empty `--from`, or a second positional exits 2 with usage on stderr | usage grammar | a defaulted `--from` merges the default branch silently |
 | WM33 | 9 | an add/add `capture/learnings.md` whose two sides differ in file mode refuses naming the path | command seam, add/add fixture | an edit-shaped fixture auto-resolves the mode and never reds |
 | WM34 | 32 | a `--from` commit that is not an ancestor of the default branch tip and is no sibling tip refuses at exit 1 naming the commit, and no lane runs | command seam, off-branch commit fixture | a verb that lanes any commit executes an unowned tree's checks |
+| WM35 | 13 | a `--from` prefix that matches two assignments refuses naming both ids, with and without a branch of the same spelling | command seam, two-assignment fixture | a resolver that swallows the ambiguity merges a colliding commit at exit 0 |
+| WM36 | 24 | an incoming Markdown path with a non-ASCII byte reaches the lane's prose check as its own bytes | lane authority unit test | a C-quoted path names a file that does not exist, so the prose is never graded |
+| WM37 | 13 | a `--from` spelling that names only a non-active assignment resolves through the commit lookup, or refuses naming the value | command seam, retired-assignment fixture | a lookup over every state refuses a legitimate default-branch commit |
+| WM38 | 32 | a failed ancestry query in the `--from` lookup refuses naming the query | command seam, unresolved default branch fixture | a failed query classified as unowned misattributes the value |
 
 Not covered: story 26 — the profile paragraph is prose; the review round and
 the gate's prose check grade it, and no behavior seam exists.
