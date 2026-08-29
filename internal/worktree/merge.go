@@ -84,10 +84,12 @@ func mergeWith(j joins, root, _ string, args []string, stdout, stderr io.Writer)
 	})
 	if err != nil {
 		// A composition conflict carries its paths typed, so it renders through the
-		// refusal record's path table rather than as a bare sentence.
+		// refusal record's path table rather than as a bare sentence. The repair is the
+		// landing's own, up to the commit that records the resolution.
 		var conflict landing.ConflictError
 		if errors.As(err, &conflict) {
-			return landRefusalError(stdout, refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths}})
+			repair := conflictRepairPrefix(incoming, target.ID, target.Worktree)
+			return landRefusalError(stdout, refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths, next: repair}})
 		}
 		return landRefusalError(stdout, err)
 	}
