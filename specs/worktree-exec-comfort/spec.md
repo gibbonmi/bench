@@ -134,9 +134,11 @@ every subagent at medium.
   names `bench worktree clean --landed` for a landed assignment. It names
   `bench worktree release --request <request> '<abs path>'` otherwise, with the
   assignment's absolute path quoted.
-- A landed missing-tree row adds no per-row action, because `list` already prints
-  one global `bench worktree clean --landed` action for a landed assignment. A
-  not-landed missing-tree row adds exactly one action, the release form.
+- A landed missing-tree row emits the producer's `bench worktree clean --landed`
+  action. The help renderer collapses it with the global landed action, so
+  `list` prints that verb once. A not-landed missing-tree row adds exactly one
+  action, the release form. The landed fact is the branch's landing in the default
+  branch, because a missing tree proves nothing about the assignment.
 - The target resolver checks the tree after the active-state check and before the
   creation bundle. A not-exist stat error is `worktree tree is missing`. Any other
   stat error keeps today's path.
@@ -308,6 +310,7 @@ against G1 through G5.
 - `internal/worktree/show.go`
 - `internal/worktree/exec_test.go`
 - `internal/worktree/identifier_operand_test.go`
+- `internal/worktree/identity_component_test.go`
 - `internal/worktree/list_actions_test.go`
 - `internal/worktree/show_test.go`
 - `internal/worktree/testdata/`
@@ -362,6 +365,19 @@ Review round 1 folded these findings:
 - Every existing seam names its function, and the direct-call precedent is stated.
 - Story 41 moved to Group D.
 - The new G14 keeps the allowance exec-only.
+
+The build recorded three decisions on 2026-08-29, open to reviewer veto. The
+missing-tree ticket found that the landed plan a present tree needs cannot see a
+missing tree. So the landed fact for the recovery producer is the branch's landing
+in the default branch. The global landed action does not fire on a missing tree.
+F13 holds because the landed missing-tree row emits the same action, and the
+help renderer collapses the pair.
+
+The new `next=` line reds one expectation in
+`internal/worktree/identity_component_test.go`, so the fence gained that file. The
+guard ticket's `segment=` and `operator=` half reaches the hook's stderr only
+through `cmd/bench/main.go`. That file is inside the fence, so the ticket's
+`Writes:` list gained it in a continuation.
 
 The review's own question found a clean partition. The guard set shares no file,
 row, or seam with the other five tickets. That set is `internal/benchguard`,
