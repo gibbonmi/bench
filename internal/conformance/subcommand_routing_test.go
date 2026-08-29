@@ -56,6 +56,7 @@ var subcommandRouting = map[string]routingEntry{
 	// the bare verb and the child. So the verb stays routed rather than nested-exempt.
 	"cache":     routed("internal/gocache"),
 	"commands":  routed("cmd/bench"),
+	"consumers": routed("internal/consumers"),
 	"commit":    routed("internal/commit"),
 	"coverage":  routed("internal/coverage"),
 	"dashboard": routed("internal/dashboard"),

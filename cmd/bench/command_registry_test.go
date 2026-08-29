@@ -265,6 +265,11 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 			blocks:        []string{"revision", "aggregate", "files", "checkout", "whitespace", "help"},
 			successMarker: "files[1]{status,path,kind}:\n", emptyMarker: "files[0]{status,path,kind}:\n", usage: "usage: bench diff", setupSuccess: setupAXIDiff, setupEmpty: noSetup,
 		},
+		"consumers": {
+			route: []string{"consumers"}, successArgv: []string{"consumers", "target.Symbol"}, emptyArgv: []string{"consumers", "target.Symbol"},
+			blocks:        []string{"consumers", "meta", "help"},
+			successMarker: "consumers[1]{file,line,via,enclosing}:\n", emptyMarker: "consumers[0]{file,line,via,enclosing}:\n", usage: "usage: bench consumers", setupSuccess: setupAXIConsumers, setupEmpty: setupAXIEmptyConsumers,
+		},
 		"coverage": {
 			route: []string{"coverage"}, successArgv: []string{"coverage", "fixture"}, emptyArgv: []string{"coverage", "empty"},
 			blocks:        []string{"spec", "state", "rows", "help"},
@@ -395,6 +400,22 @@ func setupAXIEmptyCoverage(t *testing.T, root string) {
 |---|---|---|---|---|
 `
 	writeAXIFixture(t, filepath.Join(root, "specs", "empty", "spec.md"), spec)
+}
+
+// setupAXIConsumers plants the smallest real Go module the resolver can answer over: one
+// declaration and one reference to it. The loader seam is package-internal, so this
+// surface test drives the real go/packages path rather than a stub.
+func setupAXIConsumers(t *testing.T, root string) {
+	setupAXIEmptyConsumers(t, root)
+	writeAXIFixture(t, filepath.Join(root, "consumer", "consumer.go"),
+		"package consumer\n\nimport \"example.com/axifixture/target\"\n\nfunc Direct() { target.Symbol() }\n")
+}
+
+// setupAXIEmptyConsumers plants the same module without a consumer, so the resolved
+// symbol has zero references and the response is the definitive empty table.
+func setupAXIEmptyConsumers(t *testing.T, root string) {
+	writeAXIFixture(t, filepath.Join(root, "go.mod"), "module example.com/axifixture\n\ngo 1.25\n")
+	writeAXIFixture(t, filepath.Join(root, "target", "target.go"), "package target\n\nfunc Symbol() {}\n")
 }
 
 func setupAXIWorktree(t *testing.T, root string) {
