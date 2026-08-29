@@ -1,6 +1,6 @@
 # Worktree exec comfort (FT254)
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -256,7 +256,17 @@ owns the commit contract in one place.
 
 ### Answer
 
-— (open)
+No continue (reviewer, 2026-08-29). `bench worktree resolve <target> <path>...`
+stages each named path with `git add` inside the worktree. A named path that still
+holds a conflict marker is refused, and the refusal prints that path. After the
+stage, the verb prints the remaining unmerged paths from
+`git diff --name-only --diff-filter=U`.
+
+When no unmerged path remains, it prints one `next=` line with the live operation's
+continuation. That line is `git -C '<path>' merge --continue`,
+`cherry-pick --continue`, or `revert --continue`, read from the per-worktree state
+file. The verb never runs that continuation and never starts an operation. FT263
+owns the `bench commit` contract on a pending `MERGE_HEAD`.
 
 ## #6: Which recovery does a retained assignment get?
 
@@ -275,7 +285,15 @@ missing tree and the recovery verb?
 
 ### Answer
 
-— (open)
+Both name it (reviewer, 2026-08-29). For an assignment row whose `tree` column is
+`missing`, `bench worktree list` prints no `path` action and no `exec` action. It
+prints one help row that names the row's recovery verb. That verb is
+`bench worktree clean --landed` for a landed row and the retained row's release form
+otherwise. The exec
+refusal for that row reads `bench worktree exec: worktree tree is missing` and
+carries a `next=` line that names the same verb. `bench worktree release` keeps its
+existing `next=bench worktree release --request <request> '<abs path>'` line for
+every retain reason.
 
 ## #7: Which form runs a worktree's own grammar?
 
@@ -293,7 +311,14 @@ bare `bench`. `bench gate` and `bench test` under exec already grade the worktre
 
 ### Answer
 
-— (open)
+Build verb plus the exec convention (reviewer, 2026-08-29).
+`bench worktree build <label>` is a CLI surface over the exported `runbinary.Build`.
+It builds the worktree's tree, writes `<worktree>/dist/bench` and its seal, and
+prints the exec form `bench worktree exec <label> -- ./dist/bench <verb>` as its
+`next=`. That exec form runs the worktree's own grammar. The wrapper on PATH keeps
+serving the main checkout's build for a bare `bench`. The worktree usage trailer
+`bash bin/bench.sh gate --fresh` is replaced by
+`bench worktree exec <label> -- bench gate`, which already grades the worktree.
 
 ## #8: One spec, or independent slices?
 
@@ -322,7 +347,32 @@ sequenced after FT263. The two light-path items land ahead of any slice.
 
 ### Answer
 
-— (open)
+Three slices, light path first (reviewer, 2026-08-29). The light-path item lands
+first: the `bench worktree merge` conflict refusal carries the same `next=` the
+landing conflict refusal composes.
+
+Slice 1 is the exec surface:
+
+- the stdin heredoc line in the exec help;
+- every argument after `--` reaches the child (the empty-argument fix);
+- the `worktree: <absolute path>` stderr line before every post-resolution failure;
+- `bench worktree list` as the `next=` of every pre-resolution refusal;
+- the tree-missing handling in `list` and exec (#6);
+- `--env KEY=VALUE`;
+- the guard token naming (#9) with the exec follow-on acceptance (#10);
+- `bench worktree show`.
+
+Slice 2 is the forms:
+
+- `bench worktree build` and the usage trailer replacement (#7);
+- `bench test --check system` (#12);
+- `bench worktree create --from <target>`;
+- the preflight `next` column (#13).
+
+Slice 3 is `bench worktree resolve` (#5), sequenced after FT263 lands.
+
+Slice 1's spec compiles this map into its `decisions/` folder. Slices 2 and 3 read
+that compiled map as settled provenance.
 
 ## #9: Which token does a refusal name when the operator precedes the Bench segment?
 
@@ -338,7 +388,12 @@ to the Bench segment?
 
 ### Answer
 
-— (open)
+The operator adjacent to the Bench segment (reviewer, 2026-08-29). The refusal
+line names the Bench segment's text and the one operator token that joins it to the
+rest of the call. For `cat roadmap/FT254.md; echo ---; bench maps` it names
+`bench maps` and the `;` after `echo ---`. For `bench gate 2>&1` it names
+`bench gate` and `2>&1`. The fixed sentence stays; the segment and the operator
+append to it.
 
 ## #10: Does a non-bench segment before an exec call pass?
 
@@ -354,7 +409,12 @@ Bench segment still refuse?
 
 ### Answer
 
-— (open)
+A prefix segment still refuses (reviewer, 2026-08-29). The guard accepts one shape
+only: a `bench worktree exec` segment followed by non-bench segments joined with
+`;` or `&&`. So `bench worktree exec L -- cp a b; cp b a` passes. Every segment
+before a Bench-headed segment refuses, so `cp a b && bench worktree exec L -- true`
+refuses. A redirection or a pipe on the exec segment itself still refuses. Every
+other Bench verb keeps the stream-wide refusal.
 
 ## #11: Which exit code does an exec grammar refusal use?
 
@@ -371,7 +431,10 @@ contract.
 
 ### Answer
 
-— (open)
+Keep exit 2 for both (reviewer, 2026-08-29). The exec grammar refusal exits 2 and
+its stderr starts with `usage: bench worktree exec`. A child's exit code and stderr
+pass through unchanged, so a child's exit 2 also reaches the caller as 2. The stderr
+prefix is the only discriminator, and the exec help states it.
 
 ## #12: Does `bench test` gain a system-suite form?
 
@@ -388,7 +451,10 @@ gate-only?
 
 ### Answer
 
-— (open)
+A named check (reviewer, 2026-08-29). `bench test --check system` is a row in the
+named-check registry. It runs the gate's system phase argv
+(`go test -trimpath -count=1 -tags=system ./internal/systemtest`) with the owned run
+binary and `BENCH_KIT` set the way the gate sets them. No new flag is added.
 
 ## #13: Does the preflight `next=` remedy stay in scope?
 
@@ -404,7 +470,12 @@ case the one string, or decline the cut again as the worktree-merge spec did?
 
 ### Answer
 
-— (open)
+A `next` column on every check row (reviewer, 2026-08-29). `CheckResult` gains a
+`Next` field, and the preflight table becomes `checks{check,verdict,detail,next}`.
+A green row carries an empty `next`. The `base-current` red
+`default branch tip is not an ancestor of HEAD` carries
+`bench worktree merge --from <default-branch> <target>` as its `next`. Other reds
+keep an empty `next` until a later row decides theirs.
 
 ## Not yet specified
 
@@ -412,6 +483,12 @@ case the one string, or decline the cut again as the worktree-merge spec did?
 
 - How `Classify` carries the offending token to the refusal printer, given that the
   token is already in scope at the refusal point.
+- The exact layout of the segment and the operator on the refusal line, as long as
+  both appear after the fixed sentence.
+- Where `bench worktree build` writes the seal and how it reports a build failure,
+  as long as the success path prints the exec form.
+- How the `system` named check reaches the gate's system argv producer, as long as
+  one producer serves both.
 - Which existing helper `create --from <target>` composes to resolve a sibling tip,
   and how the self-reference check adapts to a target that does not exist yet.
 - Whether the `worktree: <absolute path>` line composes the `next` field that the
