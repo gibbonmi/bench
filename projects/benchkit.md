@@ -65,6 +65,13 @@ works on any branch. This line only states the binding.)
   `--apply <fingerprint>` removes exactly what that plan named. It owns the single
   reclaimability predicate. `bench resume-clean` counts through that same predicate,
   reports the count and the verb, and never removes a pool key itself.
+
+  `bench worktree merge --from <commit|target> <target>` is the one verb for a base
+  move and for a sibling fold. `--from` takes a commit in the default branch's history
+  or a sibling assignment's branch tip, and ancestry decides the kind: `current`,
+  `fast-forward`, or `merge`. The target's fast lane grades the composed tree, and
+  publication is a compare-and-swap on the target's branch. Each refusal renders as
+  `refused{...}` at exit 1, and exit 3 names the reset that reconciles the checkout.
 - **The Bench build cache** (`internal/gocache`, `bench cache`) owns every cache fact:
   the directory, the child `GOCACHE` entry, the footprint walk, and the bound. The
   directory comes from the environment's `HOME` alone, so no machine setting steers it.

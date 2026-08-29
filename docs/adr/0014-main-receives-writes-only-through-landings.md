@@ -22,4 +22,4 @@ The rule is guidance, not enforcement. No hook refuses a commit on the default b
 - Two sessions can land in either order. The second composes onto the moved default branch, and only a genuine conflict outside the table stops it.
 - Hand landings on the default branch stop being the writes that move it under everyone else.
 - A worktree that loses its request token cannot land until it is reauthorized; the refusal names that verb.
-- No Bench verb yet moves a retained worktree onto the destination; the repair names raw Git until one exists.
+- The worktree merge verb moves a retained worktree onto a new base, and it folds a sibling's tip. The conflict repair stays raw Git, because that conflict is one the composition cannot settle.

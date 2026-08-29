@@ -238,11 +238,14 @@ func TestLandCommandConflictRefusalNamesTheSourceRepair(t *testing.T) {
 	destination := gitOutput(t, root, "rev-parse", "HEAD")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
 	wantNext := "next=git -C '" + creation.Path + "' merge '" + destination +
-		"' (no Bench verb moves a retained worktree onto the destination yet); then bench commit; then /bench-review-implementation; then " +
+		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit; then /bench-review-implementation; then " +
 		"bench worktree land --request <request> --base '" + destination +
 		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> '" + creation.Path + "'}"
 	if code != 1 || !strings.Contains(stdout, "composition conflict: textual") || !strings.Contains(stdout, wantNext) {
 		t.Fatalf("conflict repair next = (%d, %q, %q), want %q", code, stdout, stderr, wantNext)
+	}
+	if strings.Contains(stdout, "no Bench verb") {
+		t.Fatalf("conflict next still denies the merge verb: %q", stdout)
 	}
 	if strings.Contains(stdout, request) {
 		t.Fatalf("conflict next leaked the caller token: %q", stdout)
@@ -293,11 +296,14 @@ func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
 	destination := gitOutput(t, root, "rev-parse", "HEAD")
 	code, stdout, stderr := landIn(t, root, landArgs(request, base, tip, creation.Path))
 	wantNext := "next=bench worktree exec " + creation.Assignment.ID + " -- git merge '" + destination +
-		"' (no Bench verb moves a retained worktree onto the destination yet); then bench commit; then /bench-review-implementation; then " +
+		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit; then /bench-review-implementation; then " +
 		"bench worktree exec " + creation.Assignment.ID + " -- bench worktree land --request <request> --base '" + destination +
 		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> .}"
 	if code != 1 || strings.ContainsRune(stdout, '\x1b') || !strings.Contains(stdout, wantNext) {
 		t.Fatalf("unsafe-path conflict next = (%d, %q, %q), want the pointer form %q", code, stdout, stderr, wantNext)
+	}
+	if strings.Contains(stdout, "no Bench verb") {
+		t.Fatalf("unsafe-path conflict next still denies the merge verb: %q", stdout)
 	}
 }
 
@@ -320,6 +326,9 @@ func TestLandCommandConflictNextPlaceholdsAnUnsafeSpec(t *testing.T) {
 		"' --source-tip <repaired-source-tip> --spec <spec> -m <message> '" + creation.Path + "'}"
 	if code != 1 || !strings.Contains(stdout, "composition conflict: textual") || !strings.Contains(stdout, wantNext) {
 		t.Fatalf("unsafe-spec conflict next = (%d, %q, %q), want the placeholder form %q", code, stdout, stderr, wantNext)
+	}
+	if strings.Contains(stdout, "no Bench verb") {
+		t.Fatalf("unsafe-spec conflict next still denies the merge verb: %q", stdout)
 	}
 	if strings.ContainsRune(stdout, '\x1b') {
 		t.Fatalf("unsafe-spec conflict next leaked a raw control byte: %q", stdout)

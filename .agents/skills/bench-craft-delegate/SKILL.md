@@ -54,7 +54,7 @@ the mutation comes back silently green. Ask the delegate for zero to two Bench C
 
 A delegate blocked by a defect outside its fence stops and reports rather than fixing out of fence.
 A new worktree charge starts after the coordinator runs `git rev-parse HEAD main`.
-If the refs differ, only the coordinator runs `git merge --ff-only main` and verifies equality before the delegate starts. Dependent tickets in a reviewed spec chain share the retained integration source and verify its expected tip.
+If the refs differ, only the coordinator runs `bench worktree merge --from main <target>` and verifies equality before the delegate starts. Dependent tickets in a reviewed spec chain share the retained integration source and verify its expected tip.
 A fix-pass charge names a commit-specific sentinel.
 
 A ticket delegate returns focused evidence and its own mutation probe from

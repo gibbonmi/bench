@@ -191,8 +191,8 @@ resolution, and `capture/` is authorized for every reviewed range. Any other
 conflict refuses and names every path, and its `next=` names the repair in
 order:
 
-- merge the destination into the source worktree with raw Git, because no
-  Bench verb moves a retained worktree onto the destination yet (FT238)
+- merge the destination into the source worktree with raw Git, because
+  `bench worktree merge` refuses this same conflict
 - commit the repair with `bench commit`
 - review the new range
 - re-run the landing with the new source tip
