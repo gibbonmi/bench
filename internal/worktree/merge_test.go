@@ -4,6 +4,7 @@ package worktree
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -287,4 +288,304 @@ func TestMergeRefusesInvalidUsage(t *testing.T) {
 			}
 		})
 	}
+}
+
+// --- refusals before publication ---
+
+// commitCapture commits one capture-directory file at the mode the caller names, so a
+// fixture repository tracks the capture file this repository git-ignores.
+func commitCapture(t *testing.T, dir, name, body string, mode os.FileMode, message string) {
+	t.Helper()
+	mustMkdirAll(t, filepath.Dir(filepath.Join(dir, name)), 0o755)
+	mustWrite(t, filepath.Join(dir, name), []byte(body), mode)
+	gitRun(t, dir, "add", name)
+	gitRun(t, dir, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", message)
+}
+
+// requireMergeRefusal pins the refusal surface every pre-publication refusal shares: exit
+// 1, the `refused{` record on stdout alone, and the fragments the row names.
+func requireMergeRefusal(t *testing.T, code int, stdout, stderr string, fragments ...string) {
+	t.Helper()
+	if code != 1 || !strings.HasPrefix(stdout, "refused{") || stderr != "" {
+		t.Fatalf("refusal = (%d, %q, %q), want exit 1 with refused{ on stdout alone", code, stdout, stderr)
+	}
+	for _, fragment := range fragments {
+		if !strings.Contains(stdout, fragment) {
+			t.Fatalf("refusal = %q, want it to carry %q", stdout, fragment)
+		}
+	}
+}
+
+// requireMergeUnchanged pins what a refusal leaves behind: the branch tip, the checkout
+// HEAD, a clean checkout, and no lane record.
+func requireMergeUnchanged(t *testing.T, root, path, branch, previous, tally string) {
+	t.Helper()
+	if tip := gitOutput(t, root, "rev-parse", branch); tip != previous {
+		t.Fatalf("branch tip = %s, want it unchanged at %s", tip, previous)
+	}
+	if head := gitOutput(t, path, "rev-parse", "HEAD"); head != previous {
+		t.Fatalf("checkout HEAD = %s, want it unchanged at %s", head, previous)
+	}
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("the refusal ran the lane: %v", err)
+	}
+}
+
+// WM9: a conflicting non-capture path refuses with the path table and changes nothing. A
+// verb that writes conflict markers leaves the worktree mid-merge.
+func TestMergeRefusesAConflictingNonCapturePath(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration")
+	target := created[0]
+	commitInWorktree(t, target.Path, "tracked.txt", "target edit\n", "target edit")
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	incoming := commitOnDefault(t, root, "tracked.txt", "incoming edit\n")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "composition conflict: textual", "paths_total=1", "tracked.txt")
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+	if status := gitOutput(t, target.Path, "status", "--porcelain=v1", "--untracked-files=all"); status != "" {
+		t.Fatalf("checkout status = %q, want no conflict residue", status)
+	}
+}
+
+// WM10: a conflicted `capture/learnings.md` composes as the union and the verb discloses
+// the side it took. A verb that bypasses the rule table refuses what the landing settles.
+func TestMergeSettlesAConflictedCaptureJournalAsTheUnion(t *testing.T) {
+	t.Parallel()
+	j, root, home, _, created := mergeFixture(t, "integration")
+	target := created[0]
+	commitCapture(t, target.Path, "capture/learnings.md", "target entry\n", 0o644, "target journal")
+	commitCapture(t, root, "capture/learnings.md", "incoming entry\n", 0o644, "incoming journal")
+	incoming := gitOutput(t, root, "rev-parse", "HEAD")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	if code != 0 {
+		t.Fatalf("merge exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stderr, "merge composition{resolved=capture/learnings.md:union}") {
+		t.Fatalf("stderr = %q, want the union disclosure", stderr)
+	}
+	settled, err := os.ReadFile(filepath.Join(target.Path, "capture/learnings.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range []string{"target entry", "incoming entry"} {
+		if !strings.Contains(string(settled), entry) {
+			t.Fatalf("settled journal = %q, want it to keep %q", settled, entry)
+		}
+	}
+}
+
+// WM11: a dirty target refuses before composition and names the path. A reconcile over a
+// dirty checkout discards the edit.
+func TestMergeRefusesADirtyTarget(t *testing.T) {
+	t.Parallel()
+	for name, dirty := range map[string]func(t *testing.T, path string){
+		"untracked": func(t *testing.T, path string) {
+			mustWrite(t, filepath.Join(path, "untracked.txt"), []byte("scratch\n"), 0o644)
+		},
+		"modified": func(t *testing.T, path string) {
+			mustWrite(t, filepath.Join(path, "tracked.txt"), []byte("edited\n"), 0o644)
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			j, root, home, tally, created := mergeFixture(t, "integration")
+			target := created[0]
+			previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+			incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+			dirty(t, target.Path)
+
+			code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+			want := "untracked.txt"
+			if name == "modified" {
+				want = "tracked.txt"
+			}
+			requireMergeRefusal(t, code, stdout, stderr, "merge target checkout is not clean", want)
+			if tip := gitOutput(t, root, "rev-parse", target.Assignment.Branch); tip != previous {
+				t.Fatalf("branch tip = %s, want it unchanged at %s", tip, previous)
+			}
+			if _, err := os.Stat(tally); !os.IsNotExist(err) {
+				t.Fatalf("the refusal ran the lane: %v", err)
+			}
+		})
+	}
+}
+
+// WM12: a sibling contributes its committed branch tip alone, so a dirty sibling names
+// `bench commit` at the sibling and a detached sibling names its assignment branch ref. A
+// fold of the branch tip would silently omit the uncommitted delegate work.
+func TestMergeRefusesADirtyOrDetachedSibling(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration", "delegate")
+	target, sibling := created[0], created[1]
+	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	mustWrite(t, filepath.Join(sibling.Path, "sibling.txt"), []byte("uncommitted\n"), 0o644)
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", sibling.Assignment.Label, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "sibling checkout is not clean",
+		"next=bench worktree exec "+sibling.Assignment.ID+" -- bench commit", "sibling.txt")
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+
+	gitRun(t, sibling.Path, "checkout", "-q", "--", "sibling.txt")
+	gitRun(t, sibling.Path, "checkout", "-q", "--detach", "HEAD")
+	code, stdout, stderr = runMerge(t, j, root, home, "--from", sibling.Assignment.Label, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, sibling.Assignment.Branch)
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+}
+
+// WM13: a `--from` both lookups answer is ambiguous, and the refusal names the assignment
+// id and the full commit. A first-match resolver merges whichever lookup runs first.
+func TestMergeRefusesAnAmbiguousFrom(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration", "delegate")
+	target, sibling := created[0], created[1]
+	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	gitRun(t, root, "branch", sibling.Assignment.Label, "HEAD")
+	commit := gitOutput(t, root, "rev-parse", "HEAD")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", sibling.Assignment.Label, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "--from names both an assignment and a commit",
+		"observed="+sibling.Assignment.Label, "wanted="+sibling.Assignment.ID+" or "+commit)
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+}
+
+// WM14: a `--from` that resolves to the target's own assignment refuses. A self-merge
+// prints `kind=current` and hides the operand error.
+func TestMergeRefusesAFromThatNamesTheTarget(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration")
+	target := created[0]
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", target.Assignment.Label, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "--from resolves to the target itself", "observed="+target.Assignment.ID)
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+}
+
+// WM15: a `--from` that names nothing refuses naming the value, rather than reporting a
+// silent `kind=current` on a typo.
+func TestMergeRefusesAnUnknownFrom(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration")
+	target := created[0]
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", "no-such-thing", target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "--from names no assignment and no commit", "observed=no-such-thing")
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+}
+
+// WM16: the identity bundle is the verb's whole authority, so each failed component names
+// itself and a checkout off its assignment branch names the branch ref. A verb that skips
+// the bundle writes to a foreign tree.
+func TestMergeRefusesAFailedTargetIdentityComponent(t *testing.T) {
+	t.Parallel()
+	for _, component := range []string{componentOwnerMarker, componentLock, componentAssignmentState} {
+		t.Run(component, func(t *testing.T) {
+			t.Parallel()
+			j, root, home, tally, created := mergeFixture(t, "integration")
+			target := created[0]
+			previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+			incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+			fixture := identityComponentFixtureFor(t, component)
+			fixture.mutate(t, root, target)
+
+			code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+			requireMergeRefusal(t, code, stdout, stderr, fixture.want(target, "", ""))
+			requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+		})
+	}
+	t.Run("off-branch", func(t *testing.T) {
+		t.Parallel()
+		j, root, home, tally, created := mergeFixture(t, "integration")
+		target := created[0]
+		previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+		incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
+		gitRun(t, target.Path, "checkout", "-q", "--detach", "HEAD")
+
+		code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+		requireMergeRefusal(t, code, stdout, stderr, target.Assignment.Branch)
+		requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+	})
+}
+
+// WM17: the compare-and-swap old value is the branch tip, so a branch tip that is not the
+// checkout HEAD refuses naming both commits. The pair cannot diverge inside one
+// repository, so the check reads a root whose view of the branch is another commit —
+// exactly the race the check guards.
+func TestMergeRefusesABranchTipThatIsNotTheCheckoutHead(t *testing.T) {
+	t.Parallel()
+	_, _, _, _, created := mergeFixture(t, "integration")
+	target := created[0]
+	head := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	other := newWorktreeRepo(t)
+	commitOnDefault(t, other, "elsewhere.txt", "elsewhere\n")
+	gitRun(t, other, "update-ref", target.Assignment.Branch, gitOutput(t, other, "rev-parse", "HEAD"))
+	elsewhere := gitOutput(t, other, "rev-parse", target.Assignment.Branch)
+	if elsewhere == head {
+		t.Fatalf("fixture premise failed: both roots report %s", head)
+	}
+
+	_, err := mergeTargetTip(other, target.Assignment)
+	var typed refusalError
+	if !errors.As(err, &typed) {
+		t.Fatalf("mergeTargetTip error = %v, want a refusal", err)
+	}
+	if typed.detail != "merge target branch tip is not the checkout HEAD" || typed.observed != head || typed.wanted != elsewhere {
+		t.Fatalf("refusal = %+v, want both commits named", typed.refusal)
+	}
+}
+
+// WM31: a conflicting path that holds a control byte renders escaped, so no raw control
+// byte splits the refusal record.
+func TestMergeRefusalEscapesAControlBytePath(t *testing.T) {
+	t.Parallel()
+	j, root, home, _, created := mergeFixture(t, "integration")
+	target := created[0]
+	name := "board\x1bfile.md"
+	commitInWorktree(t, target.Path, name, "target bytes\n", "target control-byte path")
+	incoming := commitOnDefault(t, root, name, "incoming bytes\n")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "composition conflict: textual", `"board\\u001bfile.md"`)
+	if strings.ContainsRune(stdout, '\x1b') {
+		t.Fatalf("refusal = %q, want no raw control byte", stdout)
+	}
+}
+
+// WM33: two sides of an add/add capture path that disagree on the file mode leave no
+// settled mode, so the rule table cannot settle it and the refusal names the path.
+func TestMergeRefusesACaptureAddAddWithDisagreeingModes(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration")
+	target := created[0]
+	commitCapture(t, target.Path, "capture/learnings.md", "target entry\n", 0o644, "target journal")
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	commitCapture(t, root, "capture/learnings.md", "incoming entry\n", 0o755, "incoming journal")
+	incoming := gitOutput(t, root, "rev-parse", "HEAD")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", incoming, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr, "composition conflict: mode", "capture/learnings.md")
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
+}
+
+// WM34: only the default branch's history and a sibling tip authorize the lane, so an
+// off-branch commit refuses naming the commit and no lane executes an unowned tree.
+func TestMergeRefusesAnOffBranchFromCommit(t *testing.T) {
+	t.Parallel()
+	j, root, home, tally, created := mergeFixture(t, "integration")
+	target := created[0]
+	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
+	gitRun(t, root, "checkout", "-q", "-b", "unowned")
+	offBranch := commitOnDefault(t, root, "off.txt", "off branch\n")
+	gitRun(t, root, "checkout", "-q", "main")
+
+	code, stdout, stderr := runMerge(t, j, root, home, "--from", offBranch, target.Assignment.ID)
+	requireMergeRefusal(t, code, stdout, stderr,
+		"--from is outside the default branch's history and is no sibling tip", "observed="+offBranch)
+	requireMergeUnchanged(t, root, target.Path, target.Assignment.Branch, previous, tally)
 }

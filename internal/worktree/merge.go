@@ -4,6 +4,7 @@ package worktree
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -82,6 +83,12 @@ func mergeWith(j joins, root, _ string, args []string, stdout, stderr io.Writer)
 		Stdout:  stdout, Stderr: stderr,
 	})
 	if err != nil {
+		// A composition conflict carries its paths typed, so it renders through the
+		// refusal record's path table rather than as a bare sentence.
+		var conflict landing.ConflictError
+		if errors.As(err, &conflict) {
+			return landRefusalError(stdout, refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths}})
+		}
 		return landRefusalError(stdout, err)
 	}
 	if len(result.Resolved) > 0 {
@@ -117,6 +124,17 @@ func mergeReconcileNext(target intent.Assignment, tip string) string {
 	return "git -C " + sanitize.ShellQuote(target.Worktree) + " reset --merge " + tip
 }
 
+// mergeOnAssignmentBranch proves one checkout is on its assignment's branch. It runs
+// before the identity bundle reads the same registration, because the bundle's
+// registration sentence reports the fact without naming the ref the operator restores.
+func mergeOnAssignmentBranch(a intent.Assignment, detail string) error {
+	branch, err := git.Output("-C", a.Worktree, "symbolic-ref", "--quiet", "HEAD")
+	if err != nil || branch != a.Branch {
+		return refusalError{refusal{detail: detail, observed: branch, wanted: a.Branch}}
+	}
+	return nil
+}
+
 // mergeTarget resolves the operand to the assignment record the verb needs: the id for
 // the record, the label for the subject, and the branch for the compare-and-swap. The
 // identity bundle is this verb's whole authority, so it is proved before anything moves.
@@ -128,20 +146,19 @@ func mergeTarget(root string, assignments []intent.Assignment, operand string) (
 	if err != nil {
 		return intent.Assignment{}, refusalError{refusal{detail: err.Error()}}
 	}
+	if err := mergeOnAssignmentBranch(selected, "merge target is not on its assignment branch"); err != nil {
+		return intent.Assignment{}, err
+	}
 	if err := identityBundleRefusal(root, selected.Worktree, selected, landingActiveState); err != nil {
 		return intent.Assignment{}, err
 	}
 	return selected, nil
 }
 
-// mergeTargetTip proves the two moving identities the compare-and-swap depends on: the
-// checkout is on the assignment branch, and that branch's tip is the checkout's HEAD.
-// It then refuses a dirty target, because the reconcile after publication resets it.
+// mergeTargetTip proves the moving identity the compare-and-swap depends on: the
+// assignment branch's tip is the checkout's HEAD. It then refuses a dirty target,
+// because the reconcile after publication resets it.
 func mergeTargetTip(root string, a intent.Assignment) (string, error) {
-	branch, err := git.Output("-C", a.Worktree, "symbolic-ref", "--quiet", "HEAD")
-	if err != nil || branch != a.Branch {
-		return "", refusalError{refusal{detail: "merge target is not on its assignment branch", observed: branch, wanted: a.Branch}}
-	}
 	head, err := git.Output("-C", a.Worktree, "rev-parse", "HEAD^{commit}")
 	if err != nil {
 		return "", refusalError{refusal{detail: "merge target checkout has no commit"}}
@@ -185,14 +202,16 @@ func mergeIncoming(root string, assignments []intent.Assignment, target intent.A
 	if !lineSafe(from) {
 		return "", refusalError{refusal{detail: "--from contains control characters"}}
 	}
-	sibling, hasSibling, err := mergeSiblingTip(root, assignments, target, from)
+	sibling, siblingID, hasSibling, err := mergeSiblingTip(root, assignments, target, from)
 	if err != nil {
 		return "", err
 	}
 	commit, resolved, owned := mergeDefaultBranchCommit(root, from)
 	switch {
 	case hasSibling && owned:
-		return "", refusalError{refusal{detail: "--from names both an assignment and a commit", observed: from, wanted: sibling + " or " + commit}}
+		// The assignment id, not its tip, is the unambiguous respelling of the label, so
+		// the operator can retype either lookup exactly.
+		return "", refusalError{refusal{detail: "--from names both an assignment and a commit", observed: from, wanted: siblingID + " or " + commit}}
 	case hasSibling:
 		return sibling, nil
 	case owned:
@@ -206,33 +225,32 @@ func mergeIncoming(root string, assignments []intent.Assignment, target intent.A
 // mergeSiblingTip answers the assignment lookup. A sibling contributes its committed
 // branch tip alone: `bench commit` stays the one snapshot composer, so a detached or
 // dirty sibling refuses rather than have its uncommitted work silently dropped.
-func mergeSiblingTip(root string, assignments []intent.Assignment, target intent.Assignment, from string) (string, bool, error) {
+func mergeSiblingTip(root string, assignments []intent.Assignment, target intent.Assignment, from string) (tip, id string, ok bool, err error) {
 	selected, err := selectAssignment(assignments, from)
 	if err != nil {
-		return "", false, nil
+		return "", "", false, nil
 	}
 	if selected.ID == target.ID {
-		return "", false, refusalError{refusal{detail: "--from resolves to the target itself", observed: selected.ID}}
+		return "", "", false, refusalError{refusal{detail: "--from resolves to the target itself", observed: selected.ID}}
+	}
+	if err := mergeOnAssignmentBranch(selected, "sibling is not on its assignment branch"); err != nil {
+		return "", "", false, err
 	}
 	if err := identityBundleRefusal(root, selected.Worktree, selected, landingActiveState); err != nil {
-		return "", false, err
+		return "", "", false, err
 	}
-	tip, err := git.Output("-C", root, "rev-parse", "--verify", selected.Branch+"^{commit}")
+	tip, err = git.Output("-C", root, "rev-parse", "--verify", selected.Branch+"^{commit}")
 	if err != nil {
-		return "", false, refusalError{refusal{detail: "sibling assignment branch has no commit", observed: selected.Branch}}
-	}
-	branch, err := git.Output("-C", selected.Worktree, "symbolic-ref", "--quiet", "HEAD")
-	if err != nil || branch != selected.Branch {
-		return "", false, refusalError{refusal{detail: "sibling is not on its assignment branch", observed: branch, wanted: selected.Branch}}
+		return "", "", false, refusalError{refusal{detail: "sibling assignment branch has no commit", observed: selected.Branch}}
 	}
 	head, err := git.Output("-C", selected.Worktree, "rev-parse", "HEAD^{commit}")
 	if err != nil || head != tip {
-		return "", false, refusalError{refusal{detail: "sibling checkout is not at its branch tip", observed: head, wanted: tip}}
+		return "", "", false, refusalError{refusal{detail: "sibling checkout is not at its branch tip", observed: head, wanted: tip}}
 	}
 	if err := mergeCheckoutClean(selected.Worktree, "sibling checkout is not clean", "bench worktree exec "+selected.ID+" -- bench commit"); err != nil {
-		return "", false, err
+		return "", "", false, err
 	}
-	return tip, true, nil
+	return tip, selected.ID, true, nil
 }
 
 // mergeDefaultBranchCommit answers the commit lookup. The two results are separate
