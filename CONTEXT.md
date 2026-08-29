@@ -81,6 +81,13 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   verb that composes a commit into an active owned worktree by merge. It serves a base
   move from the default branch's history and a fold of a sibling assignment's branch
   tip. Not "sync", not "rebase", not "fold" alone — worktree merge.
+- **exec child** — the one process that `bench worktree exec <target> -- <command>`
+  starts in the assignment worktree. The verb passes stdin, stdout, stderr, and the
+  exit code through, and the child owns its environment. Not "subshell", not
+  "wrapped command", not "delegate" — exec child.
+- **follow-on** — a Bash tool call that is Bench-headed in any segment and carries a
+  redirection or a control operator anywhere in its token stream. The follow-on
+  guard refuses it. Not "pipeline", not "chain", not "shell wrapper" — follow-on.
 - **invariant** — one of the four non-negotiable rules (canonical in `.bench/BENCH.md`)
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,
