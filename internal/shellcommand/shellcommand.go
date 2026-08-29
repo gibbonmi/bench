@@ -107,6 +107,24 @@ func ProjectCommandWords(tokens []Token) []string {
 	return words
 }
 
+// RedirectionText rebuilds a redirection's source text from one simple command's
+// tokens. The fd digits, the operator, and the operand join without spaces, so the
+// three tokens of `2>&1` print as `2>&1`.
+func RedirectionText(tokens []Token, index int) string {
+	text := tokens[index].Text
+	if index > 0 && tokens[index-1].Kind == Word && isDigits(tokens[index-1].Text) {
+		text = tokens[index-1].Text + text
+	}
+	if index+1 < len(tokens) && tokens[index+1].Kind == Word {
+		text += tokens[index+1].Text
+	}
+	return text
+}
+
+// IsHeredoc reports whether a token opens a heredoc. Parse removes the body and
+// keeps this operator, and a here-string `<<<` stays a plain redirection.
+func IsHeredoc(token Token) bool { return token.Kind == Redirection && token.Text == "<<" }
+
 // ResolveRoutinePrefix finds the command word after shell assignments and routine prefixes.
 func ResolveRoutinePrefix(words []string) RoutinePrefix {
 	prefix := RoutinePrefix{Executes: true}

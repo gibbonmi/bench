@@ -85,9 +85,11 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   starts in the assignment worktree. The verb passes stdin, stdout, stderr, and the
   exit code through, and the child owns its environment. Not "subshell", not
   "wrapped command", not "delegate" — exec child.
-- **follow-on** — a Bash tool call that is Bench-headed in any segment and carries a
-  redirection or a control operator anywhere in its token stream. The follow-on
-  guard refuses it. Not "pipeline", not "chain", not "shell wrapper" — follow-on.
+- **follow-on** — a Bash tool call that adds a redirection or a control operator to
+  a Bench-headed segment. The follow-on guard reads the first Bench segment and
+  refuses the call. A `bench worktree exec` head is the one exception. It allows a
+  heredoc in the segment, and a `;` or `&&` before a non-Bench step.
+  Not "pipeline", not "chain", not "shell wrapper" — follow-on.
 - **invariant** — one of the four non-negotiable rules (canonical in `.bench/BENCH.md`)
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,

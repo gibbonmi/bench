@@ -132,8 +132,9 @@ func TestRecordKeysOnTheFirstAssignmentID(t *testing.T) {
 }
 
 // TestRecordSkipsABenchCall proves the verb is free: a text whose pool path sits in a
-// `bench` command records nothing, at the top level and one wrapper level deep.
-// (Coverage rows EC03 and EC11.)
+// `bench` command records nothing, at the top level and one wrapper level deep. An
+// allowed exec follow-on also records nothing, because the verb reads the call's own
+// head and never re-classifies the follow-on. (Coverage rows EC03, EC11, and G13.)
 func TestRecordSkipsABenchCall(t *testing.T) {
 	t.Parallel()
 	inner := "bench worktree exec a -- sed -i x "
@@ -143,6 +144,7 @@ func TestRecordSkipsABenchCall(t *testing.T) {
 	}{
 		{"top level", func(path string) string { return inner + path }},
 		{"inside a bash string", func(path string) string { return "bash -c '" + inner + path + "'" }},
+		{"with an allowed follow-on", func(path string) string { return inner + path + "; cp a b" }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
