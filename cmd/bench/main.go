@@ -532,7 +532,7 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 		return 0
 	}
 	recordFollowOn(command)
-	verdict := benchguard.Judge(command, benchguard.DefaultResolver())
+	verdict := benchguard.Classify(command, benchguard.DefaultResolver())
 	if !verdict.Blocked {
 		return 0
 	}

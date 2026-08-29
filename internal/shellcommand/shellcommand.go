@@ -50,6 +50,11 @@ const spaceChars = " \t\r"
 var redirectRe = regexp.MustCompile(`^(?:[0-9]+)?(?:>>?|<<?<?)(?:[|&])?$|^&>>?$`)
 var assignmentRe = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
 
+// IsAssignment reports whether word is a shell assignment: a portable KEY, then "=",
+// then any VALUE including the empty one. It is the one source for that shape, so a
+// prefix scan and an --env check agree on what a caller may write.
+func IsAssignment(word string) bool { return assignmentRe.MatchString(word) }
+
 // Parse folds quotes, removes heredoc bodies, and returns the remaining shell tokens.
 // A heredoc's operator stays in the stream because it is an outer redirection.
 func Parse(command string) Stream {
@@ -128,11 +133,11 @@ func IsHeredoc(token Token) bool { return token.Kind == Redirection && token.Tex
 // ResolveRoutinePrefix finds the command word after shell assignments and routine prefixes.
 func ResolveRoutinePrefix(words []string) RoutinePrefix {
 	prefix := RoutinePrefix{Executes: true}
-	for prefix.Index < len(words) && assignmentRe.MatchString(words[prefix.Index]) {
+	for prefix.Index < len(words) && IsAssignment(words[prefix.Index]) {
 		prefix.Index++
 	}
 	for prefix.Index < len(words) {
-		if assignmentRe.MatchString(words[prefix.Index]) {
+		if IsAssignment(words[prefix.Index]) {
 			prefix.Index++
 			continue
 		}
@@ -166,8 +171,8 @@ func skipEnv(words []string, i int) int {
 		if word == "--" {
 			return i + 1
 		}
-		if assignmentRe.MatchString(word) || !strings.HasPrefix(word, "-") {
-			if assignmentRe.MatchString(word) {
+		if IsAssignment(word) || !strings.HasPrefix(word, "-") {
+			if IsAssignment(word) {
 				i++
 				continue
 			}
