@@ -15,8 +15,8 @@ root="$(cd "$(dirname "$source_path")/.." && pwd)"
 # shellcheck source=scripts/lib/search.sh
 . "$root/scripts/lib/search.sh"
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
-host_os="$(case "$(uname -s)" in Darwin) printf darwin ;; Linux) printf linux ;; *) printf unsupported ;; esac)"
-host_arch="$(case "$(uname -m)" in arm64|aarch64) printf arm64 ;; x86_64|amd64) printf x64 ;; *) printf unsupported ;; esac)"
+case "$(uname -s)" in Darwin) host_os=darwin ;; Linux) host_os=linux ;; *) host_os=unsupported ;; esac
+case "$(uname -m)" in arm64|aarch64) host_arch=arm64 ;; x86_64|amd64) host_arch=x64 ;; *) host_arch=unsupported ;; esac
 target_row="$(node "$root/scripts/release-plan.mjs" "$root" target "$host_os" "$host_arch")" || true
 target="$(cut -f1-2 <<< "$target_row" | tr '\t' '-')"
 [[ -n "$target" ]] || { printf 'offline smoke: unsupported host %s/%s\n' "$host_os" "$host_arch" >&2; exit 2; }
