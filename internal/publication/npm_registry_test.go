@@ -52,14 +52,27 @@ func TestNPMCLIRegistryRefusesStagedOpsBelowToolFloor(t *testing.T) {
 	}
 }
 
+// TestNPMCLIRegistryRefusesStagedOpsBelowNodeFloor keeps the Node floor independent from the npm floor.
+func TestNPMCLIRegistryRefusesStagedOpsBelowNodeFloor(t *testing.T) {
+	withStubbedTools(t, "11.15.0", "23.99.0")
+	registry := NewNPMCLIRegistry("")
+	_, err := registry.StageSubmit(context.Background(), "redbench", "1.0.0", []byte("x"))
+	if err == nil || !strings.Contains(err.Error(), "node 24.0") {
+		t.Fatalf("expected the tool-floor error to require Node 24.0, got: %v", err)
+	}
+	if err := registry.Approve(context.Background(), "stage-1"); err == nil || !strings.Contains(err.Error(), "node 24.0") {
+		t.Fatalf("expected approval to require Node 24.0, got: %v", err)
+	}
+}
+
 // TestNPMCLIRegistryAcceptsStagedOpsAtToolFloor confirms a tool pair at or
 // above the floor passes the precondition. Only then does it hit the
 // construct-only "not implemented" stub, which is expected for this adapter.
 func TestNPMCLIRegistryAcceptsStagedOpsAtToolFloor(t *testing.T) {
-	withStubbedTools(t, "11.15.0", "22.14.0")
+	withStubbedTools(t, "11.15.0", "24.0.0")
 	registry := NewNPMCLIRegistry("")
 	_, err := registry.StageSubmit(context.Background(), "redbench", "1.0.0", []byte("x"))
-	if err == nil || strings.Contains(err.Error(), "npm 11.15") || strings.Contains(err.Error(), "node 22.14") {
+	if err == nil || strings.Contains(err.Error(), "npm 11.15") || strings.Contains(err.Error(), "node 24.0") {
 		t.Fatalf("expected the tool-floor check to pass and fall through to the not-implemented stub, got: %v", err)
 	}
 	if !strings.Contains(err.Error(), "not implemented") {
