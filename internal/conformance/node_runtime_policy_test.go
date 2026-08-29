@@ -71,11 +71,35 @@ func checkSetupNodeVersionFile(rel, workflow string) []string {
 		if end := strings.Index(rest, "\n      - "); end >= 0 {
 			rest = rest[:end]
 		}
-		if !setupNodeVersionFileRE.MatchString(rest) {
+		if !setupNodeReadsVersionFile(rest) {
 			diags = append(diags, rel+" setup-node step "+strconv.Itoa(index+1)+" does not read .node-version")
 		}
 	}
 	return diags
+}
+
+func setupNodeReadsVersionFile(step string) bool {
+	withIndent := -1
+	for _, line := range strings.Split(step, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		indent := len(line) - len(strings.TrimLeft(line, " \t"))
+		if withIndent < 0 {
+			if trimmed == "with:" {
+				withIndent = indent
+			}
+			continue
+		}
+		if indent <= withIndent {
+			return false
+		}
+		if indent == withIndent+2 && setupNodeVersionFileRE.MatchString(line) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestNodeRuntimePolicyProjectionsBite(t *testing.T) {
@@ -112,6 +136,7 @@ func TestNodeRuntimePolicyProjectionsBite(t *testing.T) {
 		{"literal release workflow version", ".github/workflows/release.yml", "jobs:\n  release:\n    steps:\n      - uses: actions/setup-node@digest\n        with:\n          node-version: '24'\n", ".github/workflows/release.yml setup-node step 1 does not read .node-version"},
 		{"literal native workflow version", ".github/workflows/native-runtime.yml", "jobs:\n  verify:\n    steps:\n      - uses: actions/setup-node@digest\n        with:\n          node-version: '24'\n", ".github/workflows/native-runtime.yml setup-node step 1 does not read .node-version"},
 		{"commented canonical workflow version", ".github/workflows/release.yml", "jobs:\n  release:\n    steps:\n      - uses: actions/setup-node@digest\n        with:\n          node-version: '23'\n          # node-version-file: '.node-version'\n", ".github/workflows/release.yml setup-node step 1 does not read .node-version"},
+		{"wrong workflow mapping", ".github/workflows/release.yml", "jobs:\n  release:\n    steps:\n      - uses: actions/setup-node@digest\n        with:\n          node-version: '23'\n        env:\n          node-version-file: '.node-version'\n", ".github/workflows/release.yml setup-node step 1 does not read .node-version"},
 	} {
 		t.Run(mutation.name, func(t *testing.T) {
 			write(mutation.rel, mutation.body)
