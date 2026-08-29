@@ -86,6 +86,22 @@ func TestPlanAutomaticRejectsEveryInvalidMarkerWithoutMutation(t *testing.T) {
 		})
 	}
 }
+
+func TestCreatePersistsCanonicalPathThroughSymlinkedHome(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	realHome := t.TempDir()
+	linkedHome := filepath.Join(t.TempDir(), "bench-home")
+	if err := os.Symlink(realHome, linkedHome); err != nil {
+		t.Fatal(err)
+	}
+
+	creation, err := createAt(defaultJoins(), root, linkedHome, "symlinked-home", "symlinked home", nil, currentTime())
+	mustNoError(t, err)
+	requireTest(t, creation.Path == creation.Assignment.Worktree,
+		"creation path %q differs from assignment path %q", creation.Path, creation.Assignment.Worktree)
+}
+
 func TestPlanAutomaticRequiresCompleteAssignmentJoin(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

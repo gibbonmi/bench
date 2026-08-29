@@ -230,6 +230,7 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 	if err != nil {
 		return rollback(err)
 	}
+	assignment.Worktree = path
 	marker := Marker{Schema: OwnerMarkerSchema, OwnerID: ownerID, Path: path}
 	if err := writeMarker(path, marker); err != nil {
 		return rollback(fmt.Errorf("write owner marker: %w", err))
