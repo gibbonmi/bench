@@ -85,16 +85,16 @@ func MaterializeMutationFixture(root, fixture, dst string) error {
 func RestoreMutationFixture(root, fixture, dst string) error {
 	// A dst that resolves to root makes the overlay walk delete real files and copy the
 	// source over itself. The refusal fires before the first write.
-	rootAbs, err := filepath.Abs(root)
+	rootResolved, err := resolvePath(root)
 	if err != nil {
 		return err
 	}
-	dstAbs, err := filepath.Abs(dst)
+	dstResolved, err := resolvePath(dst)
 	if err != nil {
 		return err
 	}
-	if filepath.Clean(rootAbs) == filepath.Clean(dstAbs) {
-		return fmt.Errorf("RestoreMutationFixture refuses dst == root: %s", filepath.Clean(rootAbs))
+	if rootResolved == dstResolved {
+		return fmt.Errorf("RestoreMutationFixture refuses dst == root: %s", rootResolved)
 	}
 	filesDir := filepath.Join(fixture, filesDirName)
 	if info, err := os.Stat(filesDir); err == nil && info.IsDir() {
@@ -149,6 +149,21 @@ func RestoreMutationFixture(root, fixture, dst string) error {
 		}
 	}
 	return nil
+}
+
+// resolvePath returns one cleaned absolute spelling of path. A symbolic link resolves to
+// its target, so two spellings of one directory compare equal. A path that does not exist
+// yet carries no link to follow, so it keeps its absolute spelling.
+func resolvePath(path string) (string, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return filepath.Clean(abs), nil
+	}
+	return filepath.Clean(resolved), nil
 }
 
 func restoredFixturePath(rel string) string {
