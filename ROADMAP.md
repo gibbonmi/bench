@@ -55,7 +55,7 @@ means the repository-controlled compliance assessment.
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that traps automation and leaks on signals.**
 
-**FT254 (MEDIUM, decision required) — `bench worktree exec` is the comfortable path for multi-step work.**
+**FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
@@ -313,6 +313,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT254: decide the `bench worktree exec` comfort set, now including child pass-through of flags and stderr after `--`.
-2. `/bench-implement-spec` — FT270: one light-path ticket so `bench test --check` prints every finding and `--package` names the graded-root path when `TestRootConformance` skips.
-3. `/bench-implement-spec` — FT273: one light-path kit edit that folds the probe-oracle bullets into the delegation-discipline reference of `craft-delegate`.
+1. `/bench-write-spec` — FT254: specify decided slice 2 of the `bench worktree exec` comfort work.
+2. `/bench-shape-idea` — FT255: decide the machine budget and load policy.
+3. `/bench-implement-spec` — FT270: add named checks, including the prose lane.
