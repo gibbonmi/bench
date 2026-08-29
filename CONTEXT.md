@@ -73,6 +73,14 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   `bench worktree clean --landed` retires it. Not "orphan" (that names age
   alone), not "stale", "idle", "abandoned", or "unreleased" (true of every
   active row) — landed.
+- **sibling assignment** — a second active owned assignment worktree in the same
+  repository. A coordinator folds its committed branch tip into the integration
+  source. Not "peer worktree", not "delegate worktree", not "parallel checkout" —
+  sibling assignment.
+- **worktree merge** — `bench worktree merge --from <commit|target> <target>`, the one
+  verb that composes a commit into an active owned worktree by merge. It serves a base
+  move from the default branch's history and a fold of a sibling assignment's branch
+  tip. Not "sync", not "rebase", not "fold" alone — worktree merge.
 - **invariant** — one of the four non-negotiable rules (canonical in `.bench/BENCH.md`)
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,

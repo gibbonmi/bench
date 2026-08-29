@@ -4,6 +4,8 @@ package authorization
 import (
 	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -88,5 +90,95 @@ func TestLaneAuthorityRefusesAnUnrunnableLane(t *testing.T) {
 	}
 	if strings.Contains(stdout.String(), "outcome=") {
 		t.Errorf("stdout = %q, want no outcome record for a lane that never ran", stdout.String())
+	}
+}
+
+// A declared previous tip makes the authority derive the prose placeholder itself: the
+// Markdown the graded tree changes against that tip's tree, and nothing else. A caller
+// that stated the whole tree would grade unchanged prose.
+func TestLaneAuthorityDerivesTheProseSubjectFromThePreviousTip(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	commitFiles(t, root, "base", map[string]string{"kept.md": "kept\n", "changed.md": "before\n"})
+	previous, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{commit}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	commitFiles(t, root, "graded", map[string]string{"changed.md": "after\n", "added.md": "added\n", "notes.txt": "prose is not this\n"})
+	tree, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{tree}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := filepath.Join(t.TempDir(), "prose-argv")
+	var stdout, stderr bytes.Buffer
+	authority := LaneAuthority{
+		PreviousTip: previous,
+		// A stated list must lose to the derived one, so the row proves which input wins.
+		NamedMarkdown: []string{"kept.md"},
+		Checks: []gate.Phase{{Name: "prose", Argv: []string{"sh", "-c",
+			`for path in "$@"; do printf '%s\n' "$path"; done > ` + argv, "prose", gate.LaneNamedMarkdownToken}}},
+	}
+
+	if got := authority.Authorize(context.Background(), root, tree, &stdout, &stderr); got.Kind != LanePass {
+		t.Fatalf("kind = %q, want %q; stdout=%q stderr=%q", got.Kind, LanePass, stdout.String(), stderr.String())
+	}
+	recorded, err := os.ReadFile(argv)
+	if err != nil {
+		t.Fatalf("the prose check recorded no argv: %v", err)
+	}
+	if got := string(recorded); got != "added.md\nchanged.md\n" {
+		t.Fatalf("prose argv = %q, want the Markdown the graded tree changes against the previous tip", got)
+	}
+}
+
+// commitFiles writes and commits one set of files, so a row states the two trees its
+// derivation is measured between.
+func commitFiles(t *testing.T, root, message string, files map[string]string) {
+	t.Helper()
+	for name, body := range files {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if out, err := benchgit.Raw("-C", root, "add", "-A"); err != nil {
+		t.Fatalf("stage %s: %v\n%s", message, err, out)
+	}
+	if out, err := benchgit.Raw("-C", root, "commit", "-q", "-m", message); err != nil {
+		t.Fatalf("commit %s: %v\n%s", message, err, out)
+	}
+}
+
+// WM36: the prose subject is read with `-z` and split on NUL, so a path with a non-ASCII
+// byte reaches the prose check as its own bytes. A newline split under the default
+// `core.quotepath` hands the check a C-quoted name that matches no file, and the prose
+// is never graded.
+func TestLaneAuthorityCarriesANonASCIIProsePathVerbatim(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	commitFiles(t, root, "base", map[string]string{"kept.md": "kept\n"})
+	previous, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{commit}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	commitFiles(t, root, "graded", map[string]string{"café-notes.md": "prose\n"})
+	tree, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{tree}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := filepath.Join(t.TempDir(), "prose-argv")
+	var stdout, stderr bytes.Buffer
+	authority := LaneAuthority{
+		PreviousTip: previous,
+		Checks: []gate.Phase{{Name: "prose", Argv: []string{"sh", "-c",
+			`for path in "$@"; do printf '%s\n' "$path"; done > ` + argv, "prose", gate.LaneNamedMarkdownToken}}},
+	}
+
+	if got := authority.Authorize(context.Background(), root, tree, &stdout, &stderr); got.Kind != LanePass {
+		t.Fatalf("kind = %q, want %q; stdout=%q stderr=%q", got.Kind, LanePass, stdout.String(), stderr.String())
+	}
+	recorded, err := os.ReadFile(argv)
+	if err != nil {
+		t.Fatalf("the prose check recorded no argv: %v", err)
+	}
+	if got := string(recorded); got != "café-notes.md\n" {
+		t.Fatalf("prose argv = %q, want the incoming path's own bytes", got)
 	}
 }

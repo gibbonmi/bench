@@ -62,6 +62,20 @@ func resolveWorktree(root, target string) (string, error) {
 	return selected.Worktree, nil
 }
 
+// errTargetUnassigned is the selector outcome a caller may act on rather than report: the
+// spelling names no assignment, so a caller with a second lookup falls through to it. The
+// ambiguity outcome carries the colliding ids, so it stays a typed error a caller can
+// tell apart from the grammar and lookup outcomes it may fall through.
+var errTargetUnassigned = errors.New("target is unassigned")
+
+// ambiguousTargetError is the one selector outcome no second lookup can resolve: the
+// spelling names more than one assignment. Callers match it with errors.As.
+type ambiguousTargetError struct{ IDs []string }
+
+func (e ambiguousTargetError) Error() string {
+	return "target is ambiguous: " + strings.Join(e.IDs, ", ")
+}
+
 func selectAssignment(assignments []intent.Assignment, target string) (intent.Assignment, error) {
 	path, isPath, err := targetPath(target)
 	if err != nil {
@@ -85,7 +99,7 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 		})
 	}
 	if len(matched) == 0 {
-		return intent.Assignment{}, errors.New("target is unassigned")
+		return intent.Assignment{}, errTargetUnassigned
 	}
 	if len(matched) > 1 {
 		// The refusal names every colliding id, because the id is the address that
@@ -94,7 +108,7 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 		for _, a := range matched {
 			ids = append(ids, a.ID)
 		}
-		return intent.Assignment{}, errors.New("target is ambiguous: " + strings.Join(ids, ", "))
+		return intent.Assignment{}, ambiguousTargetError{IDs: ids}
 	}
 	return matched[0], nil
 }

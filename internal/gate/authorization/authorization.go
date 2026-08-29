@@ -79,7 +79,7 @@ func checkMarker(root, branch, destination, expected string, advance bool) error
 		if !fullCommit(root, expected) {
 			return errors.New("project-green marker does not match expected prior tip")
 		}
-		ancestor, err := isAncestor(root, expected, destination)
+		ancestor, err := IsAncestor(root, expected, destination)
 		if err != nil {
 			return fmt.Errorf("check expected project-green marker ancestry: %w", err)
 		}
@@ -92,7 +92,7 @@ func checkMarker(root, branch, destination, expected string, advance bool) error
 			return errors.New("project-green marker conflicts with another tip")
 		}
 		for _, ancestorOf := range []string{expected, destination} {
-			ancestor, err := isAncestor(root, actual, ancestorOf)
+			ancestor, err := IsAncestor(root, actual, ancestorOf)
 			if err != nil {
 				return fmt.Errorf("check project-green marker ancestry: %w", err)
 			}
@@ -114,7 +114,9 @@ func fullCommit(root, value string) bool {
 	return err == nil && resolved == value
 }
 
-func isAncestor(root, ancestor, descendant string) (bool, error) {
+// IsAncestor reports whether ancestor is reachable from descendant. It separates Git's
+// exit 1, which is a truthful "no", from a failed query, which is an error.
+func IsAncestor(root, ancestor, descendant string) (bool, error) {
 	_, err := benchgit.Raw("-C", root, "merge-base", "--is-ancestor", ancestor, descendant)
 	if err == nil {
 		return true, nil
@@ -180,13 +182,18 @@ func evidenceToken(kind Kind, tree string, inspection gate.EvidenceInspection) s
 // the whole-project gate. It is the worktree commit's authority. Checks is the lane the
 // root declares, resolved by the caller so one read answers both whether a lane exists
 // and what it is. Kit is the source root the Bench-owned checks are built from, empty
-// for the graded tree's own checkout. NamedMarkdown is the path list the lane's prose
-// placeholder resolves to.
+// for the graded tree's own checkout. Two fields answer the lane's prose placeholder.
 type LaneAuthority struct {
-	Checks        []gate.Phase
-	Kit           string
-	Lane          string
+	Checks []gate.Phase
+	Kit    string
+	Lane   string
+	// NamedMarkdown states the prose placeholder's paths outright. A caller that already
+	// knows which paths it composed sets this and leaves PreviousTip empty.
 	NamedMarkdown []string
+	// PreviousTip is the commit the graded tree is measured against. When it is set, the
+	// authority derives the prose placeholder itself, and it wins over NamedMarkdown: the
+	// caller composes the tree once and states no path list of its own.
+	PreviousTip string
 }
 
 // Authorize runs the lane on tree and attributes its outcome. It writes the one outcome
@@ -196,7 +203,7 @@ type LaneAuthority struct {
 func (a LaneAuthority) Authorize(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
 	result, err := gate.RunLane(ctx, gate.LaneRequest{
 		Root: root, Kit: a.Kit, Tree: tree, Lane: a.Lane,
-		Checks: a.Checks, NamedMarkdown: a.NamedMarkdown,
+		Checks: a.Checks, NamedMarkdown: a.namedMarkdown(root, tree),
 		Stdout: stdout, Stderr: stderr,
 	})
 	if err != nil {
@@ -212,6 +219,29 @@ func (a LaneAuthority) Authorize(ctx context.Context, root, tree string, stdout,
 	}
 	fmt.Fprintf(stdout, "lane{outcome=pass,checks=%s}\n", strings.Join(checkNames(a.Checks), ","))
 	return Result{Kind: LanePass}
+}
+
+// namedMarkdown answers the prose placeholder's paths. With a previous tip declared it is
+// the Markdown the graded tree changes against that tip's tree, so a composed tree grades
+// the prose one side brought and no unchanged file.
+func (a LaneAuthority) namedMarkdown(root, tree string) []string {
+	if a.PreviousTip == "" {
+		return a.NamedMarkdown
+	}
+	// The NUL framing is load-bearing: under the default `core.quotepath` a newline-framed
+	// name with a byte above ASCII arrives C-quoted, so the check would grade a path no
+	// file carries.
+	raw, err := benchgit.Raw("-C", root, "diff", "--name-only", "-z", a.PreviousTip+"^{tree}", tree, "--", "*.md")
+	if err != nil || len(raw) == 0 {
+		return nil
+	}
+	var paths []string
+	for _, path := range strings.Split(string(raw), "\x00") {
+		if path != "" {
+			paths = append(paths, path)
+		}
+	}
+	return paths
 }
 
 func checkNames(checks []gate.Phase) []string {

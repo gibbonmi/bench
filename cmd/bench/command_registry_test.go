@@ -513,6 +513,7 @@ var keptRoutes = []struct {
 	{[]string{"worktree", "--help"}, "usage: bench worktree"},
 	{[]string{"worktree", "create", "--help"}, "usage: bench worktree create"},
 	{[]string{"worktree", "reauthorize", "--help"}, "usage: bench worktree reauthorize"},
+	{[]string{"worktree", "merge", "--help"}, "usage: bench worktree merge"},
 	{[]string{"gate", "--help"}, "usage: bench gate"},
 	{[]string{"commit", "--help"}, "usage: bench commit"},
 	{[]string{"status", "--help"}, "usage: bench status"},
@@ -534,6 +535,7 @@ var keptWorktreeGrammars = []string{
 	"bench worktree release",
 	"bench worktree clean",
 	"bench worktree reauthorize",
+	"bench worktree merge",
 	"bench worktree land",
 }
 
