@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -14,15 +15,41 @@ import (
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
 var worktreeExecGrammar = usage.Grammar{
-	Cmd:                                 "bench worktree exec",
-	Help:                                "usage: " + usage.WorktreeExec,
+	Cmd: "bench worktree exec",
+	// The help carries the stdin form and the exit-2 rule because neither reads off the
+	// grammar line. A child inherits this process's stdin, so a heredoc is the shape an
+	// agent reaches for; and the child's own exit 2 looks like a grammar refusal until
+	// the reader knows which prefix marks the refusal.
+	Help: "usage: " + usage.WorktreeExec + "\n" +
+		"stdin: bench worktree exec <target> -- python3 - <<'EOF'\n" +
+		`exit 2: a line starting "usage: bench worktree exec" is a grammar refusal; any other exit 2 is the child's own`,
+	Flags:                               []usage.Flag{{Name: "--env", HasValue: true, NoEmptyValue: true, Repeatable: true}},
 	MinArgs:                             2,
 	MaxArgs:                             -1,
 	ReservedPositionalsBeforeTerminator: 1,
+	ChildArgvAfterTerminator:            true,
+}
+
+// envAssignment is the shape a child assignment takes: a portable KEY, then "=", then
+// any VALUE including the empty one.
+var envAssignment = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
+
+// childEnvValues returns the --env assignments in argv order, or the usage line for the
+// first malformed one. The check runs before the target resolves, so a typo names itself
+// and no child starts on a half-read environment.
+func childEnvValues(parsed usage.Result) ([]string, string) {
+	values := parsed.Repeated["--env"]
+	for _, value := range values {
+		if !envAssignment.MatchString(value) {
+			return nil, toon.Usage(worktreeExecGrammar.Cmd, value)
+		}
+	}
+	return values, ""
 }
 
 // ExecCommand runs a direct child argv from one active Bench-owned worktree.
@@ -36,19 +63,24 @@ func ExecCommand(root, home string, args []string, stdin io.Reader, stdout, stde
 		fmt.Fprintln(stderr, worktreeExecGrammar.Help)
 		return 2
 	}
+	values, refusal := childEnvValues(parsed)
+	if refusal != "" {
+		fmt.Fprintln(stderr, refusal)
+		return 2
+	}
 	path, err := resolveWorktree(root, parsed.Positionals[0])
 	if err != nil {
 		return printTargetRefusal(stderr, "bench worktree exec", err)
 	}
-	return runWorktreeChild(parsed.Positionals[1:], path, home, stdin, stdout, stderr)
+	return runWorktreeChild(parsed.Positionals[1:], path, home, values, stdin, stdout, stderr)
 }
 
-func runWorktreeChild(argv []string, dir, home string, stdin io.Reader, stdout, stderr io.Writer) int {
+func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = dir, stdin, stdout, stderr
-	cmd.Env = execEnv(dir, home)
+	cmd.Env = execEnv(dir, home, extraEnv)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(stderr, "bench worktree exec: %v\n", err)
@@ -97,8 +129,12 @@ func runWorktreeChild(argv []string, dir, home string, stdin io.Reader, stdout, 
 // BENCH_HOME comes from the verb's resolved home, not from the caller's process. A
 // child that inherited the name would read a different pool than the verb that
 // started it.
-func execEnv(dir, home string) []string {
-	base := withHome(env.WithoutWrapperRouting(os.Environ(), runbinary.Env), home)
+//
+// The order is the caller's environment, then the --env values, then the values this
+// verb owns. A named routing variable therefore meets the same strip an inherited one
+// meets, and --env cannot repoint the child's pool or its kit.
+func execEnv(dir, home string, extra []string) []string {
+	base := withHome(env.WithoutWrapperRouting(append(os.Environ(), extra...), runbinary.Env), home)
 	wrapper := filepath.Join(dir, "bin", "bench.sh")
 	if !isRegularFile(wrapper) {
 		return base

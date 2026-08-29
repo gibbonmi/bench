@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // childOutput runs a real child through the exec path against worktree, with the caller's
@@ -27,7 +29,7 @@ func childOutputAtHome(t *testing.T, worktree, script, home string) string {
 	bindEnv(t, runbinary.Env, "/caller/run/bench")
 	bindEnv(t, "BENCH_EXEC_TEST_CARRIED", "carried-value")
 	var stdout, stderr bytes.Buffer
-	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, home, nil, &stdout, &stderr)
+	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, home, nil, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "child exit = %d, stderr %q", code, stderr.String())
 	return stdout.String()
 }
@@ -228,4 +230,93 @@ func TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName(t *testing.T) {
 	value, ok := childWrapper(t, worktree)
 	requireTest(t, ok, "an awkwardly named worktree took no marker, want BENCH_WRAPPER=%q", wrapper)
 	requireTest(t, value == wrapper, "child saw BENCH_WRAPPER=%q, want the exact path %q", value, wrapper)
+}
+
+// execAtOwnedTarget runs ExecCommand against a real owned assignment, so a row grades the
+// public seam an agent types. It returns the home the verb resolved, the child's stdout,
+// the refusal stream, and the exit code.
+func execAtOwnedTarget(t *testing.T, request string, args ...string) (string, string, string, int) {
+	t.Helper()
+	root, creation, home := newOwnedAssignment(t, request)
+	var stdout, stderr bytes.Buffer
+	code := ExecCommand(root, home, append([]string{creation.Assignment.Label}, args...), nil, &stdout, &stderr)
+	return home, stdout.String(), stderr.String(), code
+}
+
+// TestExecHelpCarriesStdinAndTheExitRule covers X3 and X6. The help is three lines: the
+// grammar, a stdin heredoc example, and the rule that tells a grammar refusal from a
+// child's own exit 2.
+func TestExecHelpCarriesStdinAndTheExitRule(t *testing.T) {
+	t.Parallel()
+	var stdout, stderr bytes.Buffer
+	code := ExecCommand(t.TempDir(), t.TempDir(), []string{"--help"}, nil, &stdout, &stderr)
+	requireTest(t, code == 0, "help exited %d", code)
+	lines := strings.Split(strings.TrimRight(stderr.String(), "\n"), "\n")
+	requireTest(t, len(lines) == 3, "help printed %d lines, want 3:\n%s", len(lines), stderr.String())
+	requireTest(t, lines[0] == "usage: "+usage.WorktreeExec, "help line 1 = %q, want the grammar line", lines[0])
+	requireTest(t, strings.Contains(lines[1], "<<'EOF'") && strings.Contains(lines[1], "-- python3 -"),
+		"help line 2 = %q, want a heredoc feeding -- python3 -", lines[1])
+	requireTest(t, strings.Contains(lines[2], "usage: bench worktree exec") && strings.Contains(lines[2], "exit 2"),
+		"help line 3 = %q, want the exit-2 rule naming the refusal prefix", lines[2])
+}
+
+// TestExecChildReadsTheCallersStdin covers X4. The caller's reader reaches the child byte
+// for byte, so a heredoc arrives whole. The NUL byte proves no line-oriented rewrite.
+func TestExecChildReadsTheCallersStdin(t *testing.T) {
+	t.Parallel()
+	fed := "first\nsecond\nthird\x00"
+	var stdout, stderr bytes.Buffer
+	code := runWorktreeChild([]string{"cat"}, t.TempDir(), t.TempDir(), nil, strings.NewReader(fed), &stdout, &stderr)
+	requireTest(t, code == 0, "cat exited %d, stderr %q", code, stderr.String())
+	requireTest(t, stdout.String() == fed, "child emitted %q, want the fed bytes %q", stdout.String(), fed)
+}
+
+// TestExecEnvReachesTheChildOnly covers X7. The child reads the assignment the caller
+// never set, so the flag the parser accepts is the flag the child receives.
+func TestExecEnvReachesTheChildOnly(t *testing.T) {
+	t.Parallel()
+	requireTest(t, os.Getenv("FOO") == "", "the test process already carries FOO")
+	_, stdout, stderr, code := execAtOwnedTarget(t, "env-child-only", "--env", "FOO=bar", "--", "sh", "-c", "echo $FOO")
+	requireTest(t, code == 0, "exec exited %d: %s", code, stderr)
+	requireTest(t, strings.TrimSpace(stdout) == "bar", "child printed %q, want bar", stdout)
+	requireTest(t, os.Getenv("FOO") == "", "the caller's process gained FOO")
+}
+
+// TestExecRefusesAMalformedEnvValue covers X10. A value with no "=" and a value with a
+// bad KEY each refuse at exit 2 naming the value, and neither starts a child. The marker
+// file the child would write stays absent.
+func TestExecRefusesAMalformedEnvValue(t *testing.T) {
+	t.Parallel()
+	for _, value := range []string{"FOO", "1X=y"} {
+		t.Run(value, func(t *testing.T) {
+			marker := filepath.Join(t.TempDir(), "started")
+			_, stdout, stderr, code := execAtOwnedTarget(t, "env-malformed",
+				"--env", value, "--", "sh", "-c", "touch '"+marker+"'")
+			requireTest(t, code == 2, "--env %q exited %d, want 2", value, code)
+			requireTest(t, strings.TrimSpace(stderr) == toon.Usage("bench worktree exec", value),
+				"--env %q printed %q, want the usage line naming the value", value, stderr)
+			_, err := os.Stat(marker)
+			requireTest(t, os.IsNotExist(err), "--env %q started a child: %s exists (stdout %q)", value, marker, stdout)
+		})
+	}
+}
+
+// TestExecEnvCannotRepointTheChildsPool covers X11. The verb's own routing values apply
+// after the --env values, so the child reads the home the verb resolved.
+func TestExecEnvCannotRepointTheChildsPool(t *testing.T) {
+	t.Parallel()
+	home, stdout, stderr, code := execAtOwnedTarget(t, "env-home-loses",
+		"--env", "BENCH_HOME=/x", "--", "sh", "-c", "echo $BENCH_HOME")
+	requireTest(t, code == 0, "exec exited %d: %s", code, stderr)
+	requireTest(t, strings.TrimSpace(stdout) == home, "child saw BENCH_HOME=%q, want the resolved home %q", strings.TrimSpace(stdout), home)
+}
+
+// TestExecEnvCannotRestoreTheStrippedKit covers X13. The routing strip runs after the
+// --env values, so a named kit leaves the child with no assignment at all.
+func TestExecEnvCannotRestoreTheStrippedKit(t *testing.T) {
+	t.Parallel()
+	_, stdout, stderr, code := execAtOwnedTarget(t, "env-kit-stripped",
+		"--env", "BENCH_KIT=/x", "--", "sh", "-c", "echo ${BENCH_KIT-unset}")
+	requireTest(t, code == 0, "exec exited %d: %s", code, stderr)
+	requireTest(t, strings.TrimSpace(stdout) == "unset", "child saw BENCH_KIT=%q, want it stripped", strings.TrimSpace(stdout))
 }
