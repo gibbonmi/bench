@@ -95,11 +95,12 @@ func TestHunkHeaderPathsArriveUnquoted(t *testing.T) {
 
 // Git C-quotes a double quote, a backslash, and a control byte in a patch header path
 // whatever core.quotePath says, so the parse unquotes a header before it names a file.
+// The planted path carries all three, so no escape arm goes ungraded.
 func TestQuotedHeaderPathIsUnquoted(t *testing.T) {
-	const rel = "pkg/a\"b\x1bc.go"
-	const text = "diff --git \"a/pkg/a\\\"b\\033c.go\" \"b/pkg/a\\\"b\\033c.go\"\n" +
-		"--- \"a/pkg/a\\\"b\\033c.go\"\n" +
-		"+++ \"b/pkg/a\\\"b\\033c.go\"\n" +
+	const rel = "pkg/a\"b\\c\x1bd.go"
+	const text = "diff --git \"a/pkg/a\\\"b\\\\c\\033d.go\" \"b/pkg/a\\\"b\\\\c\\033d.go\"\n" +
+		"--- \"a/pkg/a\\\"b\\\\c\\033d.go\"\n" +
+		"+++ \"b/pkg/a\\\"b\\\\c\\033d.go\"\n" +
 		"@@ -3 +3 @@\n" +
 		"-\told := 1\n" +
 		"+\tnew := 2\n"
