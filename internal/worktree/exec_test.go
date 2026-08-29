@@ -282,6 +282,16 @@ func TestExecEnvReachesTheChildOnly(t *testing.T) {
 	requireTest(t, os.Getenv("FOO") == "", "the caller's process gained FOO")
 }
 
+// TestExecRepeatedEnvValuesAllReachTheChild covers X8. The flag is repeatable, so every
+// occurrence reaches the child in argv order rather than the last one winning.
+func TestExecRepeatedEnvValuesAllReachTheChild(t *testing.T) {
+	t.Parallel()
+	_, stdout, stderr, code := execAtOwnedTarget(t, "env-repeated",
+		"--env", "A=1", "--env", "B=2", "--", "sh", "-c", "echo $A$B")
+	requireTest(t, code == 0, "exec exited %d: %s", code, stderr)
+	requireTest(t, strings.TrimSpace(stdout) == "12", "child printed %q, want 12", stdout)
+}
+
 // TestExecRefusesAMalformedEnvValue covers X10. A value with no "=" and a value with a
 // bad KEY each refuse at exit 2 naming the value, and neither starts a child. The marker
 // file the child would write stays absent.

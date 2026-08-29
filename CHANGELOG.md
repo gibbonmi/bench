@@ -8,6 +8,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added `bench worktree show <target> <rev>:<path>`, which prints one blob from a
+  revision of an active owned worktree, with Git's own streams and exit code. Added
+  `bench worktree exec <target> --env KEY=VALUE -- <command>`, a repeatable flag whose
+  values reach the child alone. Every target refusal now ends with a `next=` line that
+  names the one verb which answers it, and an exec failure writes one
+  `worktree: <absolute path>` line to stderr. The delegation guard now excepts
+  `bench worktree exec`, so a heredoc inside the span and a non-Bench follow-on after it
+  both run. Its refusals now end with `segment=` and `operator=`, which name the Bench
+  segment and the token that broke it.
 - Added a front-door choice when `bench status --route` selects `git push`.
   The reviewer can push now or continue with the next sequenced roadmap item.
 - Added a plan-before-apply cleanup for unclaimed local `bench/assign/` refs.

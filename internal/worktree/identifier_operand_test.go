@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -138,11 +139,15 @@ func resolverRefusalCases() []resolverRefusalCase {
 		// F7 and F9: a removed tree is refused by name, and an assignment whose branch has
 		// not landed leaves through its own release.
 		{name: "missing tree unlanded", setup: func(t *testing.T) (string, string, string, string) {
-			root, creation, _ := newOwnedAssignment(t, "resolver-missing")
+			// The home sits under a directory that holds a `'`, so the recovery path is one
+			// the operator cannot paste unless the producer quotes it as axi does.
+			root := newWorktreeRepo(t)
+			home := filepath.Join(t.TempDir(), "it's", "bench-home")
+			creation := mustCreate(t, root, home, "landed-resolver-missing", "landedness")
 			makeUnlandedAssignment(t, creation)
 			mustNoError(t, os.RemoveAll(creation.Path))
 			a := creation.Assignment
-			return root, a.Label, "worktree tree is missing", "bench worktree release --request " + a.RequestToken + " '" + a.Worktree + "'"
+			return root, a.Label, "worktree tree is missing", "bench worktree release --request " + a.RequestToken + " " + axi.ShellQuote(a.Worktree)
 		}},
 		// F7 and F8: a landed assignment leaves with the batch clean instead.
 		{name: "missing tree landed", setup: func(t *testing.T) (string, string, string, string) {

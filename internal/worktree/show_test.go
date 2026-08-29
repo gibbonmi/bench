@@ -87,3 +87,37 @@ func TestShowRefusesAnOperandThatIsNotARevision(t *testing.T) {
 		}
 	}
 }
+
+// TestShowHelpPrintsTheGrammarLine is S4's help half: the sole help spelling is a request
+// and not an operand, so it answers with the grammar line at exit 0.
+func TestShowHelpPrintsTheGrammarLine(t *testing.T) {
+	t.Parallel()
+	var stdout, stderr bytes.Buffer
+	if code := ShowCommand(t.TempDir(), t.TempDir(), []string{"--help"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("help exited %d, want 0: %s", code, stderr.String())
+	}
+	if want := "usage: bench worktree show <target> <rev>:<path>\n"; stderr.String() != want {
+		t.Fatalf("help printed %q, want %q", stderr.String(), want)
+	}
+	if stdout.String() != "" {
+		t.Fatalf("help printed %q on stdout, want nothing", stdout.String())
+	}
+}
+
+// TestShowRefusesAControlByteInTheOperand pins the operand's line-safety check. A newline
+// would break the one-line refusal shape, so the operand refuses at exit 2 with the
+// grammar line. The target is unresolvable, so the grammar line proves no Git ran.
+func TestShowRefusesAControlByteInTheOperand(t *testing.T) {
+	t.Parallel()
+	root, _, home := newOwnedAssignment(t, "show-control")
+	var stdout, stderr bytes.Buffer
+	if code := ShowCommand(root, home, []string{"no-such-label", "HEAD:a\nb"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("control-byte operand exited %d, want 2: %s", code, stderr.String())
+	}
+	if want := "usage: bench worktree show <target> <rev>:<path>\n"; stderr.String() != want {
+		t.Fatalf("control-byte operand printed %q, want %q", stderr.String(), want)
+	}
+	if stdout.String() != "" {
+		t.Fatalf("control-byte operand printed %q on stdout, want nothing", stdout.String())
+	}
+}

@@ -132,8 +132,8 @@ every subagent at medium.
   `bench worktree list`, except `worktree tree is missing`.
 - One recovery producer serves the missing-tree `next` for exec and for `list`. It
   names `bench worktree clean --landed` for a landed assignment. It names
-  `bench worktree release --request <request> '<abs path>'` otherwise, with the
-  assignment's absolute path quoted.
+  `bench worktree release --request <request> <abs path>` otherwise, with the path
+  shell-quoted as `axi.ShellQuote` renders it.
 - A landed missing-tree row emits the producer's `bench worktree clean --landed`
   action. The help renderer collapses it with the global landed action, so
   `list` prints that verb once. A not-landed missing-tree row adds exactly one
@@ -237,9 +237,9 @@ every subagent at medium.
 | F6 | 17 | `bench worktree path no-such-label` prints the same two lines with the `bench worktree path` prefix | `internal/worktree/identifier_operand_test.go` (`TestTargetVerbsShareOneRefusalPrinter`) | a second printer describes one failure two ways |
 | F7 | 18 | an active assignment whose worktree directory is removed refuses exec with `bench worktree exec: worktree tree is missing` at exit 1 | `internal/worktree/identifier_operand_test.go` (`TestTargetVerbsNameTheResolverReason`) | the creation bundle names the owner marker today |
 | F8 | 19 | that refusal's second line is `next=bench worktree clean --landed` when the assignment branch has landed | `internal/worktree/identifier_operand_test.go` (`TestTargetVerbsNameTheResolverReason`) | a refusal with no route leaves the record immortal |
-| F9 | 19 | that refusal's second line is `next=bench worktree release --request <request> '<abs path>'` with the assignment's absolute path when the branch has not landed | `internal/worktree/identifier_operand_test.go` (`TestTargetVerbsNameTheResolverReason`) | a producer that only knows the landed case prints a wrong verb |
+| F9 | 19 | that refusal's second line is `next=bench worktree release --request <request> <abs path>`, shell-quoted as `axi.ShellQuote` renders it, when the branch has not landed | `internal/worktree/identifier_operand_test.go` (`TestTargetVerbsNameTheResolverReason`) | a producer that only knows the landed case prints a wrong verb |
 | F10 | 20 | `actionsForRows` yields no `path` and no `exec` action for an active assignment row whose tree cell is `missing` | `internal/worktree/list_actions_test.go` | the active branch returns before it reads the tree cell today |
-| F11 | 21 | a not-landed active row whose tree cell is `missing` yields exactly one action, `bench worktree release --request <request> '<abs path>'` | `internal/worktree/list_actions_test.go` | a list that drops the actions and adds nothing loses the route |
+| F11 | 21 | a not-landed active row whose tree cell is `missing` yields exactly one action, `bench worktree release --request <request> <abs path>`, shell-quoted as `axi.ShellQuote` renders it | `internal/worktree/list_actions_test.go` | a list that drops the actions and adds nothing loses the route |
 | F12 | 22 | an active row whose tree cell is `present` keeps its `path` and `exec` actions unchanged | `internal/worktree/list_actions_test.go` (`TestActionsForRowsEnumeratesActiveAndOrphanRows`) | a change that keys on state alone strips every active row |
 | F13 | 21 | `bench worktree list` with one landed active assignment whose tree is missing prints exactly one `bench worktree clean --landed` help row | `internal/worktree/list_actions_test.go` | a per-row action beside the global landed action prints the verb twice |
 | G1 | 23 | `bench worktree exec L -- cp a b; cp b a` and `bench worktree exec L -- cp a b && rg -n x b` are allowed | `internal/benchguard/benchguard_test.go` | the stream-wide scan refuses the `;` today |
@@ -300,6 +300,8 @@ against G1 through G5.
   yet, and `next=bench worktree list` survives.
 - **Won't handle** `show` on a commit or tree object — `cat-file blob` refuses with
   Git's own error, and a blob path survives.
+- **Won't handle** the `show` exit code under an interrupt — Git's own code for a
+  killed child survives, and `exec`'s 130 rule stays exec's.
 
 ## Ownership fences
 
@@ -326,6 +328,7 @@ against G1 through G5.
 - `specs/worktree-exec-comfort/`
 - `decisions/worktree-exec-comfort.md`
 - `decisions/assets/ft254-exec-comfort-research.md`
+- `CHANGELOG.md`
 
 ## Out of scope
 

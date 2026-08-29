@@ -165,12 +165,12 @@ func recoverMissingTree(landed bool, request, path string) missingTreeRecovery {
 	return missingTreeRecovery{words: []string{"worktree", "release", "--request", request}, path: path, why: "release the assignment whose worktree tree is missing"}
 }
 
-// line renders the refusal's route. The path is quoted whatever it holds, because the
-// operator pastes the whole line into a shell.
+// line renders the refusal's route. axi owns the quoting here too, so the `next=` line
+// and the help row give the operator one pasteable spelling of the same path.
 func (r missingTreeRecovery) line() string {
 	line := "bench " + strings.Join(r.words, " ")
 	if r.path != "" {
-		line += " '" + r.path + "'"
+		line += " " + axi.ShellQuote(r.path)
 	}
 	return line
 }
