@@ -22,7 +22,7 @@ is optional polish. Automation submits and verifies; only a person authorizes.
    be present: FT88 data handling, FT87 offline/network control, and for
    `bank` FT71 local events. A red or focused preflight never authorizes
    publication — there is no override path.
-3. **Toolchain pins.** The staged path requires npm 11.15+ and Node 22.14+ on
+3. **Toolchain pins.** The staged path requires npm 11.15+ and Node 24+ on
    the operator machine. Older npm has no `stage` command; do not substitute
    direct publish for a staged release because the tool is missing.
 4. **Reviewer presence.** First publication, staged approval or rejection, and
