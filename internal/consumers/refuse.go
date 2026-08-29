@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/outline"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -97,7 +96,7 @@ func nonGoDeclaration(root, query string) (string, bool) {
 		if strings.HasSuffix(rel, ".go") {
 			continue
 		}
-		content, ok := readSweepFile(filepath.Join(root, filepath.FromSlash(rel)))
+		content, _, ok := outline.ReadScannable(filepath.Join(root, filepath.FromSlash(rel)))
 		if !ok {
 			continue
 		}
@@ -108,24 +107,4 @@ func nonGoDeclaration(root, query string) (string, bool) {
 		}
 	}
 	return "", false
-}
-
-// readSweepFile reads one candidate file under the read policy `bench outline` applies to
-// a tracked file. The stat is an Lstat and a nonregular entry is skipped rather than
-// opened, so a symlink is not followed out of the checkout and a FIFO cannot block the
-// sweep, and the read is bounded by bounds.OutlineFileLimit.
-func readSweepFile(abs string) ([]byte, bool) {
-	info, err := os.Lstat(abs)
-	if err != nil || !info.Mode().IsRegular() {
-		return nil, false
-	}
-	file, err := os.Open(abs)
-	if err != nil {
-		return nil, false
-	}
-	read := bounds.Read(file, bounds.OutlineFileLimit)
-	if closeErr := file.Close(); closeErr != nil || read.Status != bounds.ReadComplete {
-		return nil, false
-	}
-	return read.Data, true
 }

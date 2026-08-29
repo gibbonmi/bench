@@ -37,6 +37,10 @@ func capLine() string {
 	return "over " + strconv.Itoa(rowCap) + " rows the default emits consumers_packages[N]{dir,rows} instead; --full always emits every row."
 }
 
+// vendorLine names the enumeration's package scope, so an empty answer for a vendored
+// declaration reads as a scope limit rather than as an absence.
+const vendorLine = "packages under vendor/ sit outside ./... and are not enumerated."
+
 // viaLine names the three edge classes and the ambiguous-name answer, so an agent reads
 // the whole result vocabulary before it runs the command.
 const viaLine = "via is call, reference, or implements; a bare name with several matches answers consumers_candidates[N]{qualified,file,line,kind} at exit 0 with one re-query action per row."
@@ -45,16 +49,27 @@ const viaLine = "via is call, reference, or implements; a bare name with several
 // produced it, so a reviewer knows a replay identity is available without one to read.
 const citationLine = "every success response ends with citation{sha,state,version,cmd,hash}: the checkout, its clean or dirty state, and a sha256 over the answer above the row."
 
+// emptyInterfaceLine and genericImplementerLine name the two types the implements pass
+// leaves out, so a missing row reads as a stated limit.
+const (
+	emptyInterfaceLine     = "an empty interface emits no implements rows."
+	genericImplementerLine = "a generic type is not listed as an implementer."
+)
+
 // changedLine names the blast mode's answer and its one frozen-pair rule, so an agent
 // reads what --changed enumerates and which revision the rows are positioned in.
 const changedLine = "--changed answers blast[N]{changed_symbol,file,line,touched} for every declaration the pair's diff touched, enumerated at the tip; a declaration the pair deleted answers blast_deleted[N]{changed_symbol,base_file,base_line} instead, and touched says the consumer file is itself inside the diff."
+
+// sourceTipLine names the blast mode's revision limit, so a stale tip refuses rather than
+// grading a pair the checkout cannot reproduce.
+const sourceTipLine = "--changed refuses a --source-tip that is not the checkout's HEAD."
 
 // refusalLine names the three unsound inputs the command refuses, so an agent knows a
 // refusal is a stated outcome rather than a crash, and knows it carries no citation.
 const refusalLine = "three inputs refuse at exit 1 with no citation row: an ill-typed tree names its first error position, a missing go binary names itself, and a name only a non-Go file declares names that file's language."
 
 func helpText() string {
-	return usageLine + "\n" + promise + "\n" + soundness + "\n" + viaLine + "\n" + changedLine + "\n" + capLine() + "\n" + citationLine + "\n" + refusalLine + "\n"
+	return usageLine + "\n" + promise + "\n" + soundness + "\n" + vendorLine + "\n" + viaLine + "\n" + emptyInterfaceLine + "\n" + genericImplementerLine + "\n" + changedLine + "\n" + sourceTipLine + "\n" + capLine() + "\n" + citationLine + "\n" + refusalLine + "\n"
 }
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand. Arity,

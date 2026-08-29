@@ -20,13 +20,12 @@ package outline
 
 import (
 	"bytes"
-	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -49,8 +48,6 @@ var grammar = usage.Grammar{
 const promise = "outline locates candidate seams (file:line); it does not identify which are the project's blessed seams — projects/<name>.md owns that."
 
 const usageLine = "usage: bench outline [path] [--full]"
-
-var openOutlineFile = os.Open
 
 func helpText() string {
 	return usageLine + "\n" + promise + "\n"
@@ -171,28 +168,6 @@ func kindFor(kind, name string) string {
 	return kind
 }
 
-// fixtureDir is the path segment that marks prior-art fixture data.
-const fixtureDir = "testdata"
-
-// fileSymbols is the walk's dispatch. A file under a fixtureDir segment reports one
-// fixture row at line 1 and is never scanned, because such a file carries no scanned
-// extension and the extension dispatch would drop it silently. Every other file goes
-// through the language table.
-func fileSymbols(rel string, content []byte) []Symbol {
-	if strings.HasPrefix(rel, fixtureDir+"/") || strings.Contains(rel, "/"+fixtureDir+"/") {
-		return []Symbol{{Line: 1, Kind: "fixture", Name: baseName(rel)}}
-	}
-	return Symbols(rel, content)
-}
-
-// baseName is the final segment of git's slash-separated path.
-func baseName(rel string) string {
-	if i := strings.LastIndex(rel, "/"); i >= 0 {
-		return rel[i+1:]
-	}
-	return rel
-}
-
 // listFiles returns the tracked files git reports, root-relative, in git's ls-files
 // order. With no path argument it lists the whole repo. With one, it resolves the
 // argument from the process cwd to a root-relative `:(literal,top)` pathspec. A glob
@@ -232,8 +207,26 @@ func listFiles(root, path string, havePath bool) ([]string, error) {
 	return files, nil
 }
 
+// walkSymbols is the walk's per-file dispatch. A fixture path answers with its one row
+// before any content is read, so a binary, oversized, or otherwise unscannable fixture is
+// still listed; only the stat policy can skip it. Every other file passes the whole read
+// policy and goes through the language table.
+func walkSymbols(rel, abs string) ([]Symbol, string, bool) {
+	if isFixture(rel) {
+		if reason, ok := statPolicy(abs); !ok {
+			return nil, reason, false
+		}
+		return []Symbol{{Line: 1, Kind: "fixture", Name: path.Base(rel)}}, "", true
+	}
+	content, reason, ok := ReadScannable(abs)
+	if !ok {
+		return nil, reason, false
+	}
+	return Symbols(rel, content), "", true
+}
+
 // Command implements `bench outline [path] [--full]`. It walks the tracked files, scoped
-// to an optional path, and dispatches each by extension through Symbols. It drops any
+// to an optional path, and dispatches each through walkSymbols. It drops any
 // row a control byte would make unrepresentable, and renders the symbol table for a
 // path or `--full`, and the per-directory summary for the bare form. Each form has the
 // definitive empty state when nothing matches, a structured stdout error with exit 1
@@ -272,33 +265,9 @@ func Command(args []string) (string, int) {
 	totalSymbols := 0
 	for _, rel := range files {
 		abs := filepath.Join(root, filepath.FromSlash(rel))
-		info, statErr := os.Lstat(abs)
-		if statErr != nil {
-			skips = appendSkip(skips, rel, "unreadable")
-			continue
-		}
-		if !info.Mode().IsRegular() {
-			skips = appendSkip(skips, rel, "nonregular")
-			continue
-		}
-		file, err := openOutlineFile(abs)
-		if err != nil {
-			skips = appendSkip(skips, rel, "unreadable")
-			continue
-		}
-		read := bounds.Read(file, bounds.OutlineFileLimit)
-		closeErr := file.Close()
-		if read.Status == bounds.ReadOversized {
-			skips = appendSkip(skips, rel, "oversized")
-			continue
-		}
-		if read.Status == bounds.ReadFailed || closeErr != nil {
-			skips = appendSkip(skips, rel, "unreadable")
-			continue
-		}
-		content := read.Data
-		if bytes.IndexByte(content, 0) >= 0 {
-			skips = appendSkip(skips, rel, "binary")
+		symbols, reason, ok := walkSymbols(rel, abs)
+		if !ok {
+			skips = appendSkip(skips, rel, reason)
 			continue
 		}
 		scanned++
@@ -309,7 +278,7 @@ func Command(args []string) (string, int) {
 				dirCount[dir] = 0
 			}
 		}
-		for _, s := range fileSymbols(rel, content) {
+		for _, s := range symbols {
 			totalSymbols++
 			if !toon.Representable(rel) || !toon.Representable(s.Name) {
 				continue // one poisoned path or name drops only its own row

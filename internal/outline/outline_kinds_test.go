@@ -96,9 +96,34 @@ func TestTestdataFileEmitsOneFixtureRow(t *testing.T) {
 	}
 }
 
-// oldOutline is what HEAD emitted for writeKindFixtureTree before the kind vocabulary
-// grew. newOutline is the reviewed replacement. The pair pins the byte delta: any
-// unreviewed change to an outline row reds this test.
+// OI3: a fixture row needs no content read, so a fixture the read policy would reject
+// still gets its row. A NUL-carrying file and a file over bounds.OutlineFileLimit both
+// plant here, and neither may reach the skip table.
+func TestUnscannableTestdataFilesStillEmitFixtureRows(t *testing.T) {
+	root := outlineRepo(t)
+	writeOutlineFile(t, root, "pkg/testdata/blob.bin", "head\x00tail\n")
+	writeOutlineFile(t, root, "pkg/testdata/huge.txt", strings.Repeat("x", (2<<20)+1))
+	writeOutlineFile(t, root, "pkg/widget.go", "package pkg\nfunc Kept() {}\n")
+	gitAddOutline(t, root)
+
+	out, code := Command([]string{"--full"})
+	if code != 0 {
+		t.Fatalf("code = %d\n%s", code, headOf(out))
+	}
+	for _, want := range []string{`  pkg/testdata/blob.bin,"1",fixture,blob.bin`, `  pkg/testdata/huge.txt,"1",fixture,huge.txt`} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("output missing %q:\n%s", want, headOf(out))
+		}
+	}
+	if !strings.Contains(out, "outline_skips[0]{file,reason}:") {
+		t.Fatalf("an unscannable fixture was skipped instead of listed:\n%s", headOf(out))
+	}
+}
+
+// oldOutline and newOutline are the two reviewed renderings of writeKindFixtureTree:
+// oldOutline is the kind vocabulary without helper, double, and fixture, and newOutline is
+// the one this package emits. The pair pins the byte delta: any unreviewed change to an
+// outline row reds this test.
 const oldOutline = `outline[9]{file,line,kind,name}:
   pkg/doubles_test.go,"2",type,FakeClock
   pkg/doubles_test.go,"3",type,stubStore

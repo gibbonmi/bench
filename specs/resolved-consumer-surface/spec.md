@@ -141,8 +141,9 @@ reflowing.
 - Row identity uses origin objects: alias-resolved, generic-origin, with
   positions from the file set. Rows sort by file, line, then column. No
   printed instantiation name reaches the output.
-- The citation row is `citation{sha,state,version,cmd,hash}`. It emits
-  immediately before the help envelope, because the AXI contract pins `help`
+- The citation row renders as the one-row table
+  `citation[1]{sha,state,version,cmd,hash}:`, because TOON has no
+  single-object form. It emits immediately before the help envelope, because the AXI contract pins `help`
   as the terminal block. The hash is sha256 over all output bytes before the
   citation row. `state` is `clean` or `dirty`, and `version` is the bench
   version.
@@ -152,8 +153,9 @@ reflowing.
   every row, and the review blast step runs `--full`.
 - Blast derivation is a pure function of the hunk list and the tip packages.
   Enumeration runs at the tip. A deleted declaration emits one
-  `blast_deleted[N]{changed_symbol,base_file,base_line}` row. The git
-  queries stay at the rim, through `internal/git`.
+  `blast_deleted[N]{changed_symbol,base_file,base_line}` row. `--changed`
+  refuses a `--source-tip` that is not the checkout's HEAD, and it refuses a
+  dirty checkout. The git queries stay at the rim, through `internal/git`.
 - `touched` is true when the row's consumer file sits in the diff's
   changed-file set. The outside-diff rows are the FT210 review signal.
 - Refusals are fail-closed structured stdout errors at exit 1: an ill-typed
@@ -186,6 +188,8 @@ reflowing.
   forms are names with a case-insensitive `fake`, `stub`, `mock`, or `spy`
   prefix. Fixture rows come from a walk-level path classifier beside the
   extension dispatch, because `testdata/` files carry no scanned extension.
+- The loader drops a file outside the repository root before enumeration,
+  because the citation cannot replay it.
 - The meta table carries packages, files, matches, rows, and truncated. The
   default build context is the only graded configuration.
 - `internal/consumers` splits by responsibility under the structure budgets:
@@ -197,8 +201,8 @@ reflowing.
 - A good test drives the public command behavior: argv in, TOON bytes and
   exit code out. Core tests type-check fixture source in process
   (`go/parser` plus `go/types`) and never spawn a subprocess.
-- One focused loader test runs the real `go list` path against a minimal
-  fixture module; it is the single subprocess site.
+- The loader seam is the one subprocess site; its real-path tests and the
+  AXI envelope cases exercise it.
 - The determinism probe runs the command twice at one SHA and compares
   bytes. The alias row compares an alias-spelled query against an
   origin-spelled query.
@@ -292,6 +296,10 @@ The walk covers the profile's hostile-input classes that reach this surface:
   scope; the review walk stays reviewer judgment.
 - Non-default build-tag graphs — the default context is the one graded
   configuration, stated in help.
+- A generic type as an implementer — the implements pass lists named types
+  only, and help states the limit.
+- Packages under `vendor/` — they sit outside `./...`, and help states the
+  limit.
 
 ## Ownership fences
 
@@ -301,7 +309,7 @@ The walk covers the profile's hostile-input classes that reach this surface:
 - `cmd/bench/`
 - `bin/bench.sh`
 - `go.mod`
-- `go.sum` (new)
+- `go.sum`
 - `projects/benchkit.md`
 - `.agents/commands/bench-review-implementation.md`
 - `.agents/skills/bench-craft-cli/SKILL.md`

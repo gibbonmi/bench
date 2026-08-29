@@ -185,8 +185,10 @@ func objKind(obj types.Object) string {
 	return "decl"
 }
 
-// declKey is the one source of declaration identity, and every comparison of "is this
-// the same declaration" goes through it. Object pointers cannot serve: go/packages loads
+// declKey is the one source of typed declaration identity: every comparison of two loaded
+// objects goes through it. The base side of a blast pair is parsed without type
+// information and has no object to key, so tipDeclNames keys a package by its directory
+// there. Object pointers cannot serve: go/packages loads
 // a package that has tests both plainly and as a test variant, so one declaration arrives
 // as two objects with no pointer relation. The key names the declaring package and the
 // origin declaration's position instead, which is stable across every load of one tree.

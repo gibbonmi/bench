@@ -132,6 +132,25 @@ func TestHelpCarriesPromiseClause(t *testing.T) {
 	}
 }
 
+// CS16 (story 15): the help text states each enumeration limit an empty answer could
+// otherwise read as an absence.
+func TestHelpStatesTheEnumerationLimits(t *testing.T) {
+	out, code := run(t, "--help")
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; out=%q", code, out)
+	}
+	for _, want := range []string{
+		"an empty interface emits no implements rows.",
+		"a generic type is not listed as an implementer.",
+		"--changed refuses a --source-tip that is not the checkout's HEAD.",
+		"packages under vendor/ sit outside ./... and are not enumerated.",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("help = %q, want the limit line %q", out, want)
+		}
+	}
+}
+
 // CS19 (story 14): a symbol result is a terminal read, so its envelope is honestly empty.
 func TestTerminalSymbolResultEndsWithEmptyHelpEnvelope(t *testing.T) {
 	stubLoad(t, referencesFixture(3))
