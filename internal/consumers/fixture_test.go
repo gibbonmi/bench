@@ -77,7 +77,9 @@ var referenceFixture = []fixturePkg{
 		/* 2 */ "\n" +
 		/* 3 */ "func Symbol() {}\n" +
 		/* 4 */ "\n" +
-		/* 5 */ "type T struct{ Run func() }\n"}},
+		/* 5 */ "type T struct{ Run func() }\n" +
+		/* 6 */ "\n" +
+		/* 7 */ "type Count int\n"}},
 	{path: "example.com/consumer", files: map[string]string{"/repo/consumer/consumer.go": "" +
 		/* 1 */ "package consumer\n" +
 		/* 2 */ "\n" +
@@ -89,7 +91,47 @@ var referenceFixture = []fixturePkg{
 		/* 8 */ "\n" +
 		/* 9 */ "type Holder struct{}\n" +
 		/* 10 */ "\n" +
-		/* 11 */ "func (h Holder) Use() { tg.Symbol() }\n"}},
+		/* 11 */ "func (h Holder) Use() { tg.Symbol() }\n" +
+		/* 12 */ "\n" +
+		/* 13 */ "func Convert(n int) tg.Count { return tg.Count(n) }\n" +
+		/* 14 */ "\n" +
+		/* 15 */ "func use(f func()) { _ = f }\n" +
+		/* 16 */ "\n" +
+		/* 17 */ "func Pass() { use(tg.Symbol) }\n"}},
+}
+
+// implementsFixture plants an interface, a second interface that structurally satisfies
+// it, a value-receiver implementer, a pointer-receiver implementer, a type that
+// implements nothing, and one plain reference to the interface name. An interface query
+// answers with the two implementers and the reference, and with nothing else.
+var implementsFixture = []fixturePkg{
+	{path: "example.com/target", files: map[string]string{"/repo/target/target.go": "" +
+		/* 1 */ "package target\n" +
+		/* 2 */ "\n" +
+		/* 3 */ "type Runner interface{ Run() }\n" +
+		/* 4 */ "\n" +
+		/* 5 */ "type Other interface {\n" +
+		/* 6 */ "\tRun()\n" +
+		/* 7 */ "\tStop()\n" +
+		/* 8 */ "}\n"}},
+	{path: "example.com/consumer", files: map[string]string{"/repo/consumer/consumer.go": "" +
+		/* 1 */ "package consumer\n" +
+		/* 2 */ "\n" +
+		/* 3 */ "import \"example.com/target\"\n" +
+		/* 4 */ "\n" +
+		/* 5 */ "type Value struct{}\n" +
+		/* 6 */ "\n" +
+		/* 7 */ "func (Value) Run() {}\n" +
+		/* 8 */ "\n" +
+		/* 9 */ "type Pointer struct{}\n" +
+		/* 10 */ "\n" +
+		/* 11 */ "func (p *Pointer) Run() {}\n" +
+		/* 12 */ "\n" +
+		/* 13 */ "type Nope struct{}\n" +
+		/* 14 */ "\n" +
+		/* 15 */ "func (Nope) Walk() {}\n" +
+		/* 16 */ "\n" +
+		/* 17 */ "var Check target.Runner = Value{}\n"}},
 }
 
 // aliasFixture plants one alias declaration and a consumer spelled each way, so the two

@@ -35,10 +35,10 @@ func TestLoadPackagesDrivesTheRealGoList(t *testing.T) {
 	}
 	got := summary(rows)
 	want := []string{
-		"consumer/consumer.go:6 via=reference enclosing=Direct",
+		"consumer/consumer.go:6 via=call enclosing=Direct",
 		"consumer/consumer.go:9 via=reference enclosing=registry",
-		"consumer/consumer.go:15 via=reference enclosing=Holder.Use",
-		"target/target_test.go:7 via=reference enclosing=TestSymbol",
+		"consumer/consumer.go:15 via=call enclosing=Holder.Use",
+		"target/target_test.go:7 via=call enclosing=TestSymbol",
 	}
 	if len(got) != len(want) {
 		t.Fatalf("loaded reference rows: got %d %v, want %d %v", len(got), got, len(want), want)

@@ -6,14 +6,49 @@ import (
 	"sort"
 )
 
-// viaReference is the classification every row carries today. A later ticket splits call
-// and implements out of this one function; the callers do not change when it does.
-const viaReference = "reference"
+// The three values the via column carries. reference is the default: an appearance of
+// the declaration that is neither a static call nor a method-set satisfaction.
+const (
+	viaReference  = "reference"
+	viaCall       = "call"
+	viaImplements = "implements"
+)
 
 // classify names the edge one use forms. It is deliberately a single small function, so
-// the call and implements classes land here and nowhere else.
-func classify(*Package, *ast.Ident) string {
+// the call and implements classes land here and nowhere else. callee says the walker
+// reached this identifier as the static callee of a call expression; the type check then
+// separates a real call from a conversion spelled the same way.
+func classify(pkg *Package, id *ast.Ident, callee bool) string {
+	if !callee || pkg.Info == nil {
+		return viaReference
+	}
+	if _, isFunc := pkg.Info.Uses[id].(*types.Func); isFunc {
+		return viaCall
+	}
 	return viaReference
+}
+
+// staticCallee is the identifier a call expression names as its callee, or nil when the
+// callee is computed rather than named. It strips the parentheses and the explicit type
+// arguments a generic call carries, because neither changes which declaration is called.
+func staticCallee(call *ast.CallExpr) *ast.Ident {
+	expr := call.Fun
+	for {
+		switch e := expr.(type) {
+		case *ast.ParenExpr:
+			expr = e.X
+		case *ast.IndexExpr:
+			expr = e.X
+		case *ast.IndexListExpr:
+			expr = e.X
+		case *ast.SelectorExpr:
+			return e.Sel
+		case *ast.Ident:
+			return e
+		default:
+			return nil
+		}
+	}
 }
 
 // Rows enumerates every reference to target across pkgs, sorted by file, line, then
@@ -40,6 +75,7 @@ func Rows(pkgs []*Package, target types.Object, root string) []Row {
 			out = append(out, fileRows(pkg, file, targets, root)...)
 		}
 	}
+	out = append(out, implementsRows(pkgs, target, root)...)
 	sort.Slice(out, func(i, j int) bool {
 		a, b := out[i], out[j]
 		if a.File != b.File {
@@ -74,6 +110,10 @@ func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root st
 	var out []Row
 	var names []string
 	var pushed []bool
+	// Inspect visits a call expression before the identifier inside it, so the callee set
+	// is complete for every identifier by the time the walk reaches it. This is the one
+	// derivation of call position; classify reads it and never re-walks.
+	callees := map[*ast.Ident]bool{}
 	ast.Inspect(file, func(n ast.Node) bool {
 		if n == nil {
 			if pushed[len(pushed)-1] {
@@ -87,6 +127,11 @@ func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root st
 			names = append(names, name)
 		}
 		pushed = append(pushed, ok)
+		if call, isCall := n.(*ast.CallExpr); isCall {
+			if id := staticCallee(call); id != nil {
+				callees[id] = true
+			}
+		}
 		if id, isIdent := n.(*ast.Ident); isIdent && targets[id] {
 			pos := pkg.Fset.Position(id.Pos())
 			enclosing := ""
@@ -97,12 +142,66 @@ func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root st
 				File:      relPath(root, pos.Filename),
 				Line:      pos.Line,
 				Column:    pos.Column,
-				Via:       classify(pkg, id),
+				Via:       classify(pkg, id, callees[id]),
 				Enclosing: enclosing,
 			})
 		}
 		return true
 	})
+	return out
+}
+
+// implementsRows answers the interface half of the via column. A query for an interface
+// type name lists every named type in the loaded packages whose method set satisfies it,
+// positioned at that type's own declaration. A row is emitted once per declaration, and
+// the value and pointer method sets are one question: a pointer-receiver implementer is
+// the edge an agent most needs, and it never appears in the value method set.
+//
+// A non-interface query, and an empty interface that every type would satisfy, emit
+// nothing. The interface itself and every other interface are excluded, because "this
+// interface implements that interface" is an embedding question, not a consumer edge.
+func implementsRows(pkgs []*Package, target types.Object, root string) []Row {
+	name, isType := target.(*types.TypeName)
+	if !isType {
+		return nil
+	}
+	iface, isIface := types.Unalias(name.Type()).Underlying().(*types.Interface)
+	if !isIface || iface.Empty() {
+		return nil
+	}
+	var out []Row
+	seen := map[string]bool{}
+	for _, pkg := range pkgs {
+		if pkg.Types == nil {
+			continue
+		}
+		scope := pkg.Types.Scope()
+		for _, member := range scope.Names() {
+			named, ok := types.Unalias(scope.Lookup(member).Type()).(*types.Named)
+			if !ok || named.Obj().Name() != member || named.TypeParams().Len() > 0 {
+				continue
+			}
+			if _, other := named.Underlying().(*types.Interface); other {
+				continue
+			}
+			if !types.Implements(named, iface) && !types.Implements(types.NewPointer(named), iface) {
+				continue
+			}
+			key := declKey(pkg.Fset, named.Obj())
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			pos := pkg.Fset.Position(named.Obj().Pos())
+			out = append(out, Row{
+				File:      relPath(root, pos.Filename),
+				Line:      pos.Line,
+				Column:    pos.Column,
+				Via:       viaImplements,
+				Enclosing: named.Obj().Name(),
+			})
+		}
+	}
 	return out
 }
 

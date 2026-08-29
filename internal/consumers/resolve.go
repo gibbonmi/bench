@@ -32,6 +32,7 @@ func Resolve(pkgs []*Package, query string) ([]Match, error) {
 		}
 	}
 	var out []Match
+	var names []string
 	seen := map[string]bool{}
 	add := func(pkg *Package, obj types.Object, name, kind string) {
 		if obj == nil {
@@ -43,7 +44,8 @@ func Resolve(pkgs []*Package, query string) ([]Match, error) {
 			return
 		}
 		seen[key] = true
-		out = append(out, Match{Obj: o, PkgPath: pkg.PkgPath, Qualified: lastSegment(pkg.PkgPath) + "." + name, Kind: kind})
+		names = append(names, name)
+		out = append(out, Match{Obj: o, PkgPath: pkg.PkgPath, Kind: kind})
 	}
 	n := len(parts)
 	for _, pkg := range pkgs {
@@ -70,7 +72,55 @@ func Resolve(pkgs []*Package, query string) ([]Match, error) {
 	if len(out) == 0 {
 		return nil, fmt.Errorf("no declaration named %q", query)
 	}
+	qualify(out, names)
 	return out, nil
+}
+
+// qualify fills in each match's re-query spelling. The spelling is an import-path suffix
+// plus the declaration name, and it must resolve back to one match, or the agent re-runs
+// the same ambiguous query. So the suffix grows one path segment at a time until every
+// spelling is unique. Growing is enough because a suffix spelling matches exactly the
+// declarations of that name in packages the suffix qualifies, which is a subset of what
+// the original query already matched.
+//
+// Two limits stop the growth. A segment that contains a dot cannot be spelled, because
+// the grammar splits the query on dots; and two matches can share a whole import path,
+// as a package and its external test package do not but a repeated load would. At either
+// limit the longest distinguishing suffix stands, and the spelling stays ambiguous.
+func qualify(out []Match, names []string) {
+	for depth := 1; ; depth++ {
+		counts := map[string]int{}
+		for i := range out {
+			out[i].Qualified = pathSuffix(out[i].PkgPath, depth) + "." + names[i]
+			counts[out[i].Qualified]++
+		}
+		unique := true
+		for i := range out {
+			if counts[out[i].Qualified] > 1 {
+				unique = false
+			}
+		}
+		if unique || !spellableDeeper(out, depth+1) {
+			return
+		}
+	}
+}
+
+// spellableDeeper reports whether a longer suffix would say something new. It is false
+// when no match has another segment left, and false when the next segment of any match
+// carries a dot the query grammar cannot express.
+func spellableDeeper(out []Match, depth int) bool {
+	longer := false
+	for _, m := range out {
+		next := pathSuffix(m.PkgPath, depth)
+		if strings.Contains(next, ".") {
+			return false
+		}
+		if next != pathSuffix(m.PkgPath, depth-1) {
+			longer = true
+		}
+	}
+	return longer
 }
 
 // lookupMember finds the method or field named member on the package-scope named type
@@ -104,12 +154,14 @@ func pkgSuffixMatches(path string, suffix []string) bool {
 	return path == want || strings.HasSuffix(path, "/"+want)
 }
 
-// lastSegment is the import path's final element, the spelling a qualified re-query uses.
-func lastSegment(path string) string {
-	if i := strings.LastIndex(path, "/"); i >= 0 {
-		return path[i+1:]
+// pathSuffix is the import path's last depth elements, the spelling a qualified re-query
+// carries. A depth past the path's own length is the whole path.
+func pathSuffix(path string, depth int) string {
+	parts := strings.Split(path, "/")
+	if depth >= len(parts) {
+		return path
 	}
-	return path
+	return strings.Join(parts[len(parts)-depth:], "/")
 }
 
 // objKind names the declaration class for a candidates row.

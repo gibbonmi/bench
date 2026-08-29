@@ -1,6 +1,7 @@
 package consumers
 
 import (
+	"go/token"
 	"path"
 	"sort"
 	"strconv"
@@ -35,8 +36,12 @@ func capLine() string {
 	return "over " + strconv.Itoa(rowCap) + " rows the default emits consumers_packages[N]{dir,rows} instead; --full always emits every row."
 }
 
+// viaLine names the three edge classes and the ambiguous-name answer, so an agent reads
+// the whole result vocabulary before it runs the command.
+const viaLine = "via is call, reference, or implements; a bare name with several matches answers consumers_candidates[N]{qualified,file,line,kind} at exit 0 with one re-query action per row."
+
 func helpText() string {
-	return usageLine + "\n" + promise + "\n" + soundness + "\n" + capLine() + "\n"
+	return usageLine + "\n" + promise + "\n" + soundness + "\n" + viaLine + "\n" + capLine() + "\n"
 }
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand. Arity,
@@ -48,6 +53,10 @@ var grammar = usage.Grammar{
 	MinArgs: 1,
 	MaxArgs: 1,
 }
+
+// candidateFields is the ambiguous-name schema: one row per declaration the bare name
+// reached. qualified is the exact re-query argument, so the agent retypes nothing.
+var candidateFields = []string{"qualified", "file", "line", "kind"}
 
 // aggregateFields is the over-cap schema: one row per consumer directory, which is one Go
 // package, with the row count that directory contributed. The queried symbol is constant
@@ -81,8 +90,8 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.Errorf(err.Error(), "pass a qualified symbol such as outline.Command") + "\n", 1
 	}
-	if len(matches) != 1 {
-		return toon.Errorf("ambiguous symbol "+symbol, "qualify the symbol with its package, such as "+matches[0].Qualified) + "\n", 1
+	if len(matches) > 1 {
+		return candidates(pkgs, matches, root)
 	}
 	return response(symbol, len(pkgs), len(matches), Rows(pkgs, matches[0].Obj, root), full)
 }
@@ -102,24 +111,84 @@ func response(symbol string, pkgCount, matchCount int, rows []Row, full bool) (s
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	// The counts and the flag are typed cells, so an integer stays bare and the flag stays
-	// a boolean through a TOON round-trip.
-	meta, err := toon.TableTyped("meta", metaFields, [][]any{{
-		pkgCount, countFiles(rows), matchCount, len(rows), truncated,
-	}})
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
 	var actions []axi.Action
 	if truncated {
 		actions = append(actions, axi.ExecutableInvocation("emit every consumer row",
 			axi.KnownArgument("consumers"), axi.KnownArgument(symbol), axi.KnownArgument("--full")))
+	}
+	return envelope(block, pkgCount, countFiles(rows), matchCount, len(rows), truncated, actions)
+}
+
+// envelope closes every response shape: the result block, the meta accounting, then the
+// terminal help block. Both the symbol answer and the candidates answer render through
+// it, so neither can grow a second accounting or drop the terminal envelope.
+func envelope(block string, pkgCount, fileCount, matchCount, rowCount int, truncated bool, actions []axi.Action) (string, int) {
+	// The counts and the flag are typed cells, so an integer stays bare and the flag stays
+	// a boolean through a TOON round-trip.
+	meta, err := toon.TableTyped("meta", metaFields, [][]any{{
+		pkgCount, fileCount, matchCount, rowCount, truncated,
+	}})
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
 	}
 	help, err := axi.RenderHelp(actions)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
 	return block + meta + help, 0
+}
+
+// candidates answers an ambiguous bare name. It is an answer, not a refusal: the table
+// names every declaration the name reached, the meta accounting states zero consumer
+// rows, and the envelope carries one literal re-query per row in table order. Every
+// argument is known, so no row offers a slot the agent must fill.
+func candidates(pkgs []*Package, matches []Match, root string) (string, int) {
+	rows := make([][]any, 0, len(matches))
+	actions := make([]axi.Action, 0, len(matches))
+	for _, m := range candidateOrder(pkgs, matches, root) {
+		rows = append(rows, []any{m.qualified, m.file, m.line, m.kind})
+		actions = append(actions, axi.ExecutableInvocation("re-query the qualified symbol",
+			axi.KnownArgument("consumers"), axi.KnownArgument(m.qualified)))
+	}
+	block, err := toon.TableTyped("consumers_candidates", candidateFields, rows)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return envelope(block, len(pkgs), 0, len(matches), 0, false, actions)
+}
+
+// candidateRow is one match rendered for the candidates table, in the sort order the
+// table prints: by file, then by line.
+type candidateRow struct {
+	qualified string
+	file      string
+	line      int
+	kind      string
+}
+
+// candidateOrder positions every match at its declaration. The position comes from the
+// declaring package's own file set, because a match names the package it was found in.
+func candidateOrder(pkgs []*Package, matches []Match, root string) []candidateRow {
+	fsets := map[string]*token.FileSet{}
+	for _, pkg := range pkgs {
+		fsets[pkg.PkgPath] = pkg.Fset
+	}
+	out := make([]candidateRow, 0, len(matches))
+	for _, m := range matches {
+		row := candidateRow{qualified: m.Qualified, kind: m.Kind}
+		if fset := fsets[m.PkgPath]; fset != nil {
+			pos := fset.Position(m.Obj.Pos())
+			row.file, row.line = relPath(root, pos.Filename), pos.Line
+		}
+		out = append(out, row)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].file != out[j].file {
+			return out[i].file < out[j].file
+		}
+		return out[i].line < out[j].line
+	})
+	return out
 }
 
 // aggregate collapses rows to one row per consumer directory, in directory order. Rows

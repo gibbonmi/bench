@@ -16,6 +16,17 @@ func summary(rows []Row) []string {
 	return out
 }
 
+// located is the same rendering without the via cell, for a test whose subject is which
+// rows exist rather than how they are classified. The via values are asserted once, in
+// the classifier tests.
+func located(rows []Row) []string {
+	out := make([]string, len(rows))
+	for i, r := range rows {
+		out[i] = fmt.Sprintf("%s:%d enclosing=%s", r.File, r.Line, r.Enclosing)
+	}
+	return out
+}
+
 func mustFind(t *testing.T, pkgs []*Package, query string) []Row {
 	t.Helper()
 	rows, err := Find(pkgs, query, "/repo")
@@ -30,11 +41,12 @@ func mustFind(t *testing.T, pkgs []*Package, query string) []Row {
 // spelling `target.Symbol` never sees.
 func TestQualifiedQueryEmitsEveryPlantedReference(t *testing.T) {
 	pkgs := typecheckFixture(t, referenceFixture)
-	got := summary(mustFind(t, pkgs, "target.Symbol"))
+	got := located(mustFind(t, pkgs, "target.Symbol"))
 	want := []string{
-		"consumer/consumer.go:5 via=reference enclosing=Direct",
-		"consumer/consumer.go:7 via=reference enclosing=someRegistry",
-		"consumer/consumer.go:11 via=reference enclosing=Holder.Use",
+		"consumer/consumer.go:5 enclosing=Direct",
+		"consumer/consumer.go:7 enclosing=someRegistry",
+		"consumer/consumer.go:11 enclosing=Holder.Use",
+		"consumer/consumer.go:17 enclosing=Pass",
 	}
 	if len(got) != len(want) {
 		t.Fatalf("planted reference count: got %d rows %v, want %d rows %v", len(got), got, len(want), want)
@@ -107,8 +119,8 @@ func TestGenericInstantiationsResolveToTheGenericOrigin(t *testing.T) {
 		want  []string
 	}{
 		{"target.Box.Get", []string{
-			"consumer/consumer.go:5 via=reference enclosing=UseInt",
-			"consumer/consumer.go:7 via=reference enclosing=UseString",
+			"consumer/consumer.go:5 via=call enclosing=UseInt",
+			"consumer/consumer.go:7 via=call enclosing=UseString",
 		}},
 		{"target.Box.First", []string{
 			"consumer/consumer.go:9 via=reference enclosing=FieldInt",
