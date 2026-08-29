@@ -129,3 +129,31 @@ func TestMissingGoBinaryRefusesNamingTheBinaryAndRemedy(t *testing.T) {
 		t.Fatalf("stdout = %q, want no citation row", out)
 	}
 }
+
+// A query of a test function reaches the file go/packages synthesizes for the test
+// binary, which sits in the build cache rather than in the tree. The loader must not
+// deliver it: a row there names no file a reviewer can open, and the citation promises a
+// replay of the checkout alone.
+func TestLoadedRowsNeverEscapeTheRoot(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("testdata", "fixturemod"))
+	if err != nil {
+		t.Fatalf("resolve fixture module: %v", err)
+	}
+	pkgs, err := load(root, "./...")
+	if err != nil {
+		t.Fatalf("load fixture module: %v", err)
+	}
+	rows, err := Find(pkgs, "target.TestSymbol", root)
+	if err != nil {
+		t.Fatalf("Find over loaded packages: %v", err)
+	}
+	for _, r := range rows {
+		if strings.HasPrefix(r.File, "..") || filepath.IsAbs(r.File) {
+			t.Errorf("row %q escapes the root; every enumerated file must sit inside it", r.File)
+		}
+	}
+	got := summary(rows)
+	if len(got) != 0 {
+		t.Fatalf("loaded reference rows for a test function: got %d %v, want none in the tree", len(got), got)
+	}
+}

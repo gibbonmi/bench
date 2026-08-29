@@ -19,6 +19,7 @@ import (
 	"go/token"
 	"go/types"
 	"path/filepath"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -71,6 +72,23 @@ func relPath(root, filename string) string {
 		return filename
 	}
 	return rel
+}
+
+// insideRoot reports whether filename names a file under root. It is the one test of
+// "this file belongs to the tree the answer is about", and the loader applies it before
+// any file reaches the core. An out-of-root file is never a tree the citation can
+// replay: the citation promises a replay at one checkout sha, so a row pointing outside
+// that checkout names a file no reviewer can open and no re-run can reproduce. An empty
+// root asserts nothing, so every file passes.
+func insideRoot(root, filename string) bool {
+	if root == "" {
+		return true
+	}
+	rel, err := filepath.Rel(root, filename)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 // Find resolves query to exactly one declaration and enumerates its references. It is

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -27,7 +28,7 @@ const (
 // per-directory aggregate instead, so one hot symbol never floods an agent's context.
 const rowCap = 200
 
-const usageLine = "usage: bench consumers <qualified-symbol> [--full]"
+const usageLine = "usage: bench consumers <qualified-symbol> [--full] | bench consumers --changed [--base <commit> [--source-tip <commit>]] [--full]"
 
 // capLine tells the reader which block an over-cap default emits and how to get the rows.
 // It reads rowCap rather than restating the number, so the help cannot promise one cap
@@ -44,21 +45,29 @@ const viaLine = "via is call, reference, or implements; a bare name with several
 // produced it, so a reviewer knows a replay identity is available without one to read.
 const citationLine = "every success response ends with citation{sha,state,version,cmd,hash}: the checkout, its clean or dirty state, and a sha256 over the answer above the row."
 
+// changedLine names the blast mode's answer and its one frozen-pair rule, so an agent
+// reads what --changed enumerates and which revision the rows are positioned in.
+const changedLine = "--changed answers blast[N]{changed_symbol,file,line,touched} for every declaration the pair's diff touched, enumerated at the tip; a declaration the pair deleted answers blast_deleted[N]{changed_symbol,base_file,base_line} instead, and touched says the consumer file is itself inside the diff."
+
 // refusalLine names the three unsound inputs the command refuses, so an agent knows a
 // refusal is a stated outcome rather than a crash, and knows it carries no citation.
 const refusalLine = "three inputs refuse at exit 1 with no citation row: an ill-typed tree names its first error position, a missing go binary names itself, and a name only a non-Go file declares names that file's language."
 
 func helpText() string {
-	return usageLine + "\n" + promise + "\n" + soundness + "\n" + viaLine + "\n" + capLine() + "\n" + citationLine + "\n" + refusalLine + "\n"
+	return usageLine + "\n" + promise + "\n" + soundness + "\n" + viaLine + "\n" + changedLine + "\n" + capLine() + "\n" + citationLine + "\n" + refusalLine + "\n"
 }
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand. Arity,
 // flag recognition, `--`, and help all come from there rather than a local switch.
 var grammar = usage.Grammar{
-	Cmd:     "bench consumers",
-	Help:    strings.TrimSuffix(helpText(), "\n"),
-	Flags:   []usage.Flag{{Name: "--full"}},
-	MinArgs: 1,
+	Cmd:  "bench consumers",
+	Help: strings.TrimSuffix(helpText(), "\n"),
+	Flags: []usage.Flag{
+		{Name: "--full"},
+		{Name: "--changed"},
+		{Name: "--base", HasValue: true, NoEmptyValue: true},
+		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
+	},
 	MaxArgs: 1,
 }
 
@@ -90,7 +99,13 @@ func command(version string, args []string) (string, int) {
 	if line != "" {
 		return line + "\n", code
 	}
+	if line, code := checkModes(parsed); line != "" {
+		return line + "\n", code
+	}
 	_, full := parsed.Flags["--full"]
+	if _, changed := parsed.Flags["--changed"]; changed {
+		return changedCommand(version, args, parsed.Flags["--base"], parsed.Flags["--source-tip"], full)
+	}
 	symbol := parsed.Positionals[0]
 
 	root, err := git.Root()
@@ -240,4 +255,81 @@ func countFiles(rows []Row) int {
 		seen[r.File] = true
 	}
 	return len(seen)
+}
+
+// checkModes separates the two invocation shapes usage.Parse cannot: the symbol query and
+// the blast query. The revision rules are the rules `bench test --changed` applies, so one
+// revision grammar serves both surfaces — a positional with --changed names two subjects,
+// a revision flag without --changed grades a pair nothing selected, and a source tip
+// without a base grades the wrong pair against a defaulted base.
+func checkModes(parsed usage.Result) (string, int) {
+	_, changed := parsed.Flags["--changed"]
+	_, hasBase := parsed.Flags["--base"]
+	_, hasTip := parsed.Flags["--source-tip"]
+	if len(parsed.Positionals) > 0 && changed {
+		return toon.Usage(grammar.Cmd, parsed.Positionals[0]), 2
+	}
+	if (hasBase || hasTip) && !changed {
+		flag := "--base"
+		if hasTip {
+			flag = "--source-tip"
+		}
+		return toon.Usage(grammar.Cmd, flag), 2
+	}
+	if hasTip && !hasBase {
+		return toon.Usage(grammar.Cmd, "--source-tip"), 2
+	}
+	if !changed && len(parsed.Positionals) == 0 {
+		return toon.MissingArg(grammar.Cmd, "argument"), 2
+	}
+	return "", 0
+}
+
+// changedCommand answers the blast query over one frozen pair. The pair, the changed
+// paths, the hunks, and the base-side sources are all read here, at the rim; everything
+// below is a pure function of those bytes and the tip packages.
+//
+// Enumeration runs at the tip, and the loader reads the checkout in place, so a tip that
+// is not this checkout's HEAD refuses rather than answering from the wrong tree. Building
+// a temporary checkout for a historical tip is a separate priced path.
+func changedCommand(version string, args []string, base, sourceTip string, full bool) (string, int) {
+	root, err := git.Root()
+	if err != nil {
+		return toon.NotInRepo() + "\n", 1
+	}
+	subject, kind, hint := diff.ResolveChangedSubject(root, base, sourceTip)
+	if kind != "" {
+		return toon.Errorf("changed selection failed", kind+": "+hint) + "\n", 1
+	}
+	head, err := git.Output("-C", root, "rev-parse", "HEAD")
+	if err != nil {
+		return toon.Errorf("cannot resolve HEAD", "run the command inside a git checkout with a resolvable HEAD") + "\n", 1
+	}
+	if subject.Tip != head {
+		return toon.Errorf("tip "+subject.Tip+" is not this checkout's HEAD "+head,
+			"blast enumerates at the tip in this checkout; check out the tip commit, then retry") + "\n", 1
+	}
+	hunks, err := readHunks(root, subject.Base, subject.Tip, subject.Paths)
+	if err != nil {
+		return toon.Errorf("diff read failed: "+err.Error(), "the pair must be readable in this repository; retry the exact invocation") + "\n", 1
+	}
+	pkgs, err := load(root, "./...")
+	if err != nil {
+		return refuseLoad(err) + "\n", 1
+	}
+	added := map[string][]lineSpan{}
+	for _, fh := range hunks {
+		if fh.TipPath != "" {
+			added[fh.TipPath] = append(added[fh.TipPath], fh.Added...)
+		}
+	}
+	changed := map[string]bool{}
+	for _, p := range subject.Paths {
+		changed[p] = true
+	}
+	decls := touchedDecls(pkgs, root, added)
+	rows := blastRows(pkgs, root, decls, changed)
+	deleted := deletedRows(pkgs, root, hunks, readBaseSources(root, subject.Base, hunks))
+	source := citation{root: root, version: version, args: args}
+	return blastResponse(source, len(pkgs), len(decls), rows, deleted, full, args)
 }

@@ -2,6 +2,7 @@ package consumers
 
 import (
 	"fmt"
+	"go/ast"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -36,10 +37,21 @@ func loadPackages(dir string, patterns ...string) ([]*Package, error) {
 		if p.TypesInfo == nil || p.Types == nil {
 			continue
 		}
+		// go/packages synthesizes a test-binary main file in the build cache and delivers
+		// it inside the [pkg.test] variant. It references every Test function, so a query
+		// of one would otherwise enumerate a file outside the checkout. This is the one
+		// place an out-of-root file is first seen, so it is dropped here rather than
+		// filtered again in each renderer.
+		files := make([]*ast.File, 0, len(p.Syntax))
+		for _, f := range p.Syntax {
+			if insideRoot(dir, p.Fset.Position(f.Pos()).Filename) {
+				files = append(files, f)
+			}
+		}
 		out = append(out, &Package{
 			PkgPath: p.PkgPath,
 			Fset:    p.Fset,
-			Files:   p.Syntax,
+			Files:   files,
 			Types:   p.Types,
 			Info:    p.TypesInfo,
 		})
