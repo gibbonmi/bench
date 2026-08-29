@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -48,8 +49,13 @@ func (c citation) state() string {
 	return "clean"
 }
 
-// cmd is the replay spelling of the run. usage.Parse already refused an argument TOON
-// cannot carry, so the join asserts nothing more about the cells.
+// cmd is the replay spelling of the run. Each argument renders through the kit's one
+// shell-quoting owner, so a revision name carrying a shell metacharacter keeps its token
+// boundary and the printed line replays as the argv that produced the answer.
 func (c citation) cmd() string {
-	return strings.Join(append([]string{"bench", "consumers"}, c.args...), " ")
+	parts := []string{"bench", "consumers"}
+	for _, arg := range c.args {
+		parts = append(parts, axi.ShellQuote(arg))
+	}
+	return strings.Join(parts, " ")
 }

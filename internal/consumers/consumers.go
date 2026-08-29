@@ -60,9 +60,9 @@ func Render(rows []Row) (string, error) {
 	return toon.TableTyped("consumers", rowFields, cells)
 }
 
-// relPath renders a file-set filename relative to root. A path outside root, or an
-// empty root, falls back to the filename as the loader reported it: a wrong-looking
-// absolute path is more useful than a silently dropped row.
+// relPath renders a file-set filename relative to root. An empty root, or a filename
+// filepath.Rel cannot relate to root at all, keeps the filename as the loader reported it:
+// a wrong-looking absolute path is more useful than a silently dropped row.
 func relPath(root, filename string) string {
 	if root == "" {
 		return filename

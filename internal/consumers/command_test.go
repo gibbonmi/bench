@@ -190,3 +190,37 @@ func TestHelpSpellingsPrintUsageOnStdout(t *testing.T) {
 		}
 	}
 }
+
+// escapeFixture plants two consumers of one symbol: one in a file whose path carries an
+// escape byte, and one in a plain file. A git-sourced path can carry that byte, and only
+// its own row may drop.
+func escapeFixture(root string) []fixturePkg {
+	return []fixturePkg{
+		targetPkg(root),
+		usePkg(root, "clean", 1),
+		{path: "example.com/poison", files: map[string]string{
+			root + "/poi\x1bson/poison.go": "package poison\n\nimport \"example.com/target\"\n\nfunc Use() { target.Symbol() }\n"}},
+	}
+}
+
+// R2: a control byte in a path drops only its own row and sets truncated, the way
+// `bench outline` drops a poisoned row. The whole response must still stand.
+func TestUnrepresentablePathDropsOnlyItsOwnRow(t *testing.T) {
+	stubLoad(t, escapeFixture)
+	out, code := run(t, "target.Symbol")
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; out=%q", code, out)
+	}
+	if !strings.Contains(out, "consumers[1]{file,line,via,enclosing}:\n") {
+		t.Fatalf("stdout = %q, want the one representable consumer row", out)
+	}
+	if !strings.Contains(out, "clean/clean.go") {
+		t.Fatalf("stdout = %q, want the clean consumer row kept", out)
+	}
+	if strings.Contains(out, "\x1b") {
+		t.Fatalf("stdout = %q, want no escape byte in the response", out)
+	}
+	if !strings.Contains(out, "meta[1]{packages,files,matches,rows,truncated}:\n  3,1,1,1,true\n") {
+		t.Fatalf("stdout = %q, want rows=1 and truncated=true", out)
+	}
+}

@@ -207,17 +207,9 @@ func declKey(fset *token.FileSet, obj types.Object) string {
 	return path + "@" + pos + "@" + o.Name()
 }
 
-// origin is the object-level half of identity. It normalizes through the documented
-// go/types contract: an alias resolves to the origin type's name, and a generic
-// instantiation resolves to its generic origin, so no instantiation name can reach the
-// output. The Unalias step is load-bearing on its own, because an alias declaration sits
-// at a different position from its origin. The Origin steps are today defensive rather
-// than observable: go/types gives an instantiated method or field the origin's position,
-// so declKey already unifies the two. They stay because the position behavior is an
-// implementation detail and Origin is the contract. Two spellings of one declaration must key to
-// one object, or the same reference set renders differently per spelling. An alias
-// resolves to the origin type's name, and a generic instantiation resolves to its
-// generic origin, so no instantiation name can reach the output.
+// origin is the object-level half of identity: an alias resolves to the origin type's
+// name, and a generic instantiation resolves to its generic origin, so two spellings of
+// one declaration key to one object.
 func origin(obj types.Object) types.Object {
 	switch o := obj.(type) {
 	case *types.TypeName:

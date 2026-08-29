@@ -67,40 +67,43 @@ const (
 func blastRepo(t *testing.T) string {
 	t.Helper()
 	root := gittest.RepoOnBranch(t, "main")
-	commit := func(files map[string]string, message string) string {
-		t.Helper()
-		for rel, body := range files {
-			full := filepath.Join(root, filepath.FromSlash(rel))
-			if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-				t.Fatalf("mkdir %s: %v", rel, err)
-			}
-			if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
-				t.Fatalf("write %s: %v", rel, err)
-			}
-		}
-		if _, err := git.Output("-C", root, "add", "-A"); err != nil {
-			t.Fatalf("git add: %v", err)
-		}
-		if _, err := git.Output("-C", root, "commit", "-q", "-m", message); err != nil {
-			t.Fatalf("git commit: %v", err)
-		}
-		sha, err := git.Output("-C", root, "rev-parse", "HEAD")
-		if err != nil {
-			t.Fatalf("rev-parse: %v", err)
-		}
-		return sha
-	}
-	base := commit(map[string]string{
+	base := commitTree(t, root, map[string]string{
 		"target/target.go":   baseTarget,
 		"inside/inside.go":   baseInside,
 		"outside/outside.go": sameOutside,
 	}, "base")
-	commit(map[string]string{
+	commitTree(t, root, map[string]string{
 		"target/target.go": tipTarget,
 		"inside/inside.go": tipInside,
 	}, "tip")
 	t.Chdir(root)
 	return base
+}
+
+// commitTree writes one revision of a fixture repository and commits it, returning the new
+// sha. Every blast fixture builds its pair through this one helper.
+func commitTree(t *testing.T, root string, files map[string]string, message string) string {
+	t.Helper()
+	for rel, body := range files {
+		full := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", rel, err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatalf("write %s: %v", rel, err)
+		}
+	}
+	if _, err := git.Output("-C", root, "add", "-A"); err != nil {
+		t.Fatalf("git add: %v", err)
+	}
+	if _, err := git.Output("-C", root, "commit", "-q", "-m", message); err != nil {
+		t.Fatalf("git commit: %v", err)
+	}
+	sha, err := git.Output("-C", root, "rev-parse", "HEAD")
+	if err != nil {
+		t.Fatalf("rev-parse: %v", err)
+	}
+	return sha
 }
 
 // tipFixture is the typed tip tree the stubbed loader returns for the blast fixture.

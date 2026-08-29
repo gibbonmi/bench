@@ -114,7 +114,7 @@ func command(version string, args []string) (string, int) {
 	}
 	pkgs, err := load(root, "./...")
 	if err != nil {
-		return refuseLoad(err) + "\n", 1
+		return refuseLoadForQuery(root, symbol, err) + "\n", 1
 	}
 	matches, err := Resolve(pkgs, symbol)
 	if err != nil {
@@ -131,11 +131,12 @@ func command(version string, args []string) (string, int) {
 // accounting, and the help envelope. Row rendering itself belongs to the core, so this
 // function composes Render rather than restating the row schema.
 func response(source citation, symbol string, pkgCount, matchCount int, rows []Row, full bool) (string, int) {
-	truncated := !full && len(rows) > rowCap
+	rows, files, dropped := representableFiles(rows, func(r Row) string { return r.File })
+	overCap := !full && len(rows) > rowCap
 	var block string
 	var err error
-	if truncated {
-		block, err = toon.TableTyped("consumers_packages", aggregateFields, aggregate(rows))
+	if overCap {
+		block, err = toon.TableTyped("consumers_packages", aggregateFields, aggregate(files))
 	} else {
 		block, err = Render(rows)
 	}
@@ -143,11 +144,29 @@ func response(source citation, symbol string, pkgCount, matchCount int, rows []R
 		return toon.RenderError(err) + "\n", 1
 	}
 	var actions []axi.Action
-	if truncated {
+	if overCap {
 		actions = append(actions, axi.ExecutableInvocation("emit every consumer row",
 			axi.KnownArgument("consumers"), axi.KnownArgument(symbol), axi.KnownArgument("--full")))
 	}
-	return envelope(source, block, pkgCount, countFiles(rows), matchCount, len(rows), truncated, actions)
+	return envelope(source, block, pkgCount, countFiles(files), matchCount, len(rows), overCap || dropped, actions)
+}
+
+// representableFiles projects each row's file cell and drops the rows TOON cannot carry.
+// Every consumers response form routes through it, so a control byte in a git-sourced path
+// drops only its own row and reports truncated, the way `bench outline` drops a poisoned
+// row. The third result says a row was dropped, which is what the meta flag reports.
+func representableFiles[T any](rows []T, file func(T) string) ([]T, []string, bool) {
+	kept := make([]T, 0, len(rows))
+	files := make([]string, 0, len(rows))
+	for _, row := range rows {
+		name := file(row)
+		if !toon.Representable(name) {
+			continue
+		}
+		kept = append(kept, row)
+		files = append(files, name)
+	}
+	return kept, files, len(kept) != len(rows)
 }
 
 // envelope closes every response shape: the result block, the meta accounting, the
@@ -229,12 +248,13 @@ func candidateOrder(pkgs []*Package, matches []Match, root string) []candidateRo
 	return out
 }
 
-// aggregate collapses rows to one row per consumer directory, in directory order. Rows
-// arrive sorted by file, so the collapse is a single pass over a stable order.
-func aggregate(rows []Row) [][]any {
+// aggregate collapses the rows' file cells to one row per consumer directory, in directory
+// order. It is the one derivation of the over-cap block, and both the symbol form and the
+// blast form pass their own rows' files to it.
+func aggregate(files []string) [][]any {
 	counts := map[string]int{}
-	for _, r := range rows {
-		counts[path.Dir(r.File)]++
+	for _, f := range files {
+		counts[path.Dir(f)]++
 	}
 	dirs := make([]string, 0, len(counts))
 	for dir := range counts {
@@ -249,10 +269,10 @@ func aggregate(rows []Row) [][]any {
 }
 
 // countFiles is the meta table's files cell: the number of distinct files the rows name.
-func countFiles(rows []Row) int {
+func countFiles(files []string) int {
 	seen := map[string]bool{}
-	for _, r := range rows {
-		seen[r.File] = true
+	for _, f := range files {
+		seen[f] = true
 	}
 	return len(seen)
 }
@@ -297,6 +317,14 @@ func changedCommand(version string, args []string, base, sourceTip string, full 
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
+	source := citation{root: root, version: version, args: args}
+	// Enumeration reads the checkout in place, so a dirty checkout would position rows in
+	// bytes the pair does not contain. The rows must come only from the frozen pair, so a
+	// dirty checkout refuses rather than answering from a tree nothing froze.
+	if source.state() != "clean" {
+		return toon.Errorf("checkout is dirty; blast rows come only from the frozen pair",
+			"commit or clean the checkout, then rerun the exact invocation") + "\n", 1
+	}
 	subject, kind, hint := diff.ResolveChangedSubject(root, base, sourceTip)
 	if kind != "" {
 		return toon.Errorf("changed selection failed", kind+": "+hint) + "\n", 1
@@ -308,6 +336,12 @@ func changedCommand(version string, args []string, base, sourceTip string, full 
 	if subject.Tip != head {
 		return toon.Errorf("tip "+subject.Tip+" is not this checkout's HEAD "+head,
 			"blast enumerates at the tip in this checkout; check out the tip commit, then retry") + "\n", 1
+	}
+	// A pair that changed no Go file has the definitive empty answer, and no package the
+	// loader could name would change it. The answer therefore precedes the load: a tree the
+	// loader cannot load still gets its empty table rather than a refusal.
+	if len(goPaths(subject.Paths)) == 0 {
+		return blastResponse(source, 0, 0, nil, nil, full, args)
 	}
 	hunks, err := readHunks(root, subject.Base, subject.Tip, subject.Paths)
 	if err != nil {
@@ -330,6 +364,5 @@ func changedCommand(version string, args []string, base, sourceTip string, full 
 	decls := touchedDecls(pkgs, root, added)
 	rows := blastRows(pkgs, root, decls, changed)
 	deleted := deletedRows(pkgs, root, hunks, readBaseSources(root, subject.Base, hunks))
-	source := citation{root: root, version: version, args: args}
 	return blastResponse(source, len(pkgs), len(decls), rows, deleted, full, args)
 }

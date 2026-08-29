@@ -4,8 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
@@ -84,5 +87,74 @@ func TestHelpNamesTheThreeRefusals(t *testing.T) {
 	}
 	if !strings.Contains(out, "refuse at exit 1") {
 		t.Fatalf("help = %q, want the refusal line", out)
+	}
+}
+
+// R5 (story 6): a repository the Go loader cannot load still refuses with the language
+// named, because a tree with no go.mod says nothing about the query. This test drives the
+// real loader, so the sweep is what decides the answer.
+func TestUnloadableTreeRefusesWithTheNonGoLanguage(t *testing.T) {
+	nonGoRepo(t, "web/app.ts", "export function Symbol() {}\n")
+	out, code := run(t, "Symbol")
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; out=%q", code, out)
+	}
+	if !strings.Contains(out, "TypeScript") {
+		t.Fatalf("stdout = %q, want the language named", out)
+	}
+	if !strings.Contains(out, "web/app.ts") {
+		t.Fatalf("stdout = %q, want the declaring file named", out)
+	}
+}
+
+// R7: the sweep reads a candidate the way `bench outline` does. A tracked path replaced on
+// disk by a symlink is not followed, and one replaced by a FIFO does not block, so the
+// command still returns its refusal. Both names sort before the declaring file, so the
+// sweep reaches them.
+func TestSweepSkipsSymlinkAndFifoCandidates(t *testing.T) {
+	root := nonGoRepo(t, "web/app.ts", "export function Symbol() {}\n")
+	fifo := filepath.Join(root, "web", "aaa-pipe.txt")
+	link := filepath.Join(root, "web", "aab-link.txt")
+	for _, path := range []string{fifo, link} {
+		if err := os.WriteFile(path, []byte("placeholder\n"), 0o644); err != nil {
+			t.Fatalf("write %s: %v", path, err)
+		}
+	}
+	if _, err := git.Output("-C", root, "add", "-A"); err != nil {
+		t.Fatalf("track the candidates: %v", err)
+	}
+	if _, err := git.Output("-C", root, "commit", "-q", "-m", "candidates"); err != nil {
+		t.Fatalf("commit the candidates: %v", err)
+	}
+	if err := os.Remove(fifo); err != nil {
+		t.Fatalf("remove the placeholder: %v", err)
+	}
+	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
+		t.Fatalf("mkfifo: %v", err)
+	}
+	if err := os.Remove(link); err != nil {
+		t.Fatalf("remove the placeholder: %v", err)
+	}
+	if err := os.Symlink(fifo, link); err != nil {
+		t.Fatalf("symlink: %v", err)
+	}
+	stubLoad(t, otherPkg)
+
+	type answer struct {
+		out  string
+		code int
+	}
+	done := make(chan answer, 1)
+	go func() {
+		out, code := CommandWithVersion(testVersion)([]string{"Symbol"})
+		done <- answer{out, code}
+	}()
+	select {
+	case got := <-done:
+		if got.code != 1 || !strings.Contains(got.out, "TypeScript") {
+			t.Fatalf("stdout = %q exit %d, want the language refusal at 1", got.out, got.code)
+		}
+	case <-time.After(bounds.TestDeadline(bounds.GuardScanTimeout)):
+		t.Fatal("the sweep blocked on a nonregular candidate")
 	}
 }

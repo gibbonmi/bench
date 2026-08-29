@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -167,5 +169,43 @@ func TestCitationNamesHeadVersionAndReplaySpelling(t *testing.T) {
 	}
 	if cells[3] != "bench consumers target.Symbol --full" {
 		t.Fatalf("cmd = %q, want the replay spelling", cells[3])
+	}
+}
+
+// shellSplit recovers the argv a POSIX shell reads from one printed command line. It is
+// the same recovery internal/axi applies to a help row, so a citation's replay spelling is
+// graded against a real shell rather than against a re-spelling.
+func shellSplit(t *testing.T, command string) []string {
+	t.Helper()
+	out, err := exec.Command("sh", "-c", "set -- "+command+`; for argument do printf '%s\000' "$argument"; done`).Output()
+	if err != nil {
+		t.Fatalf("shell split %q: %v", command, err)
+	}
+	fields := strings.Split(string(out), "\x00")
+	return fields[:len(fields)-1]
+}
+
+// R8 (story 9): a revision name carrying a shell metacharacter keeps its token boundary in
+// the citation's replay spelling, so the printed line replays as the argv that answered.
+func TestCitationCmdRoundTripsThroughAPOSIXShellSplit(t *testing.T) {
+	base := blastRepo(t)
+	stubLoad(t, tipFixture)
+	root, err := git.Root()
+	if err != nil {
+		t.Fatalf("git root: %v", err)
+	}
+	const ref = "feature;echo"
+	if _, err := git.Output("-C", root, "branch", ref, base); err != nil {
+		t.Fatalf("create the fixture ref: %v", err)
+	}
+	args := []string{"--changed", "--base", ref, "--source-tip", head(t), "--full"}
+	out, code := run(t, args...)
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; out=%q", code, out)
+	}
+	cells, _ := citationCells(t, out)
+	want := append([]string{"bench", "consumers"}, args...)
+	if got := shellSplit(t, cells[3]); !slices.Equal(got, want) {
+		t.Fatalf("shell argv = %q, want %q (cmd cell %q)", got, want, cells[3])
 	}
 }

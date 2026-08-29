@@ -122,9 +122,9 @@ func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root st
 			pushed = pushed[:len(pushed)-1]
 			return false
 		}
-		name, ok := declName(n, len(names) == 0)
+		declared, ok := declNames(n, len(names) == 0)
 		if ok {
-			names = append(names, name)
+			names = append(names, declared[0])
 		}
 		pushed = append(pushed, ok)
 		if call, isCall := n.(*ast.CallExpr); isCall {
@@ -205,30 +205,38 @@ func implementsRows(pkgs []*Package, target types.Object, root string) []Row {
 	return out
 }
 
-// declName is the one derivation of the enclosing-declaration name. It reports the four
-// forms the surface names: a function, a Type.Method, a package-level type, and a
-// package-level var or const spec. A node outside those reports false, so the walker's
-// innermost open name is the answer for every row. A use with no enclosing declaration at
-// all keeps the empty string. fileScope says no named declaration is open yet.
-func declName(n ast.Node, fileScope bool) (string, bool) {
+// declNames is the one derivation of the declaration-name forms this surface reports: a
+// function, a Type.Method, a package-level type, and a package-level var or const spec. A
+// node outside those reports false, so the row walker's innermost open name is the answer
+// for every row, and a use with no enclosing declaration at all keeps the empty string.
+// fileScope says no named declaration is open yet.
+//
+// A spec declaring several names reports them all, because the blast walk names each
+// declaration separately. The row walker reads the first, because a use inside the spec
+// sits inside one declaration statement whatever that statement declares.
+func declNames(n ast.Node, fileScope bool) ([]string, bool) {
 	switch d := n.(type) {
 	case *ast.FuncDecl:
 		if recv := receiverName(d); recv != "" {
-			return recv + "." + d.Name.Name, true
+			return []string{recv + "." + d.Name.Name}, true
 		}
-		return d.Name.Name, true
+		return []string{d.Name.Name}, true
 	case *ast.TypeSpec:
 		if fileScope {
-			return d.Name.Name, true
+			return []string{d.Name.Name}, true
 		}
 	case *ast.ValueSpec:
 		// Only a package-level spec names a row. A local `var x = ...` inside a function
 		// is not the declaration an agent is looking for; the function is.
 		if fileScope && len(d.Names) > 0 {
-			return d.Names[0].Name, true
+			names := make([]string, 0, len(d.Names))
+			for _, name := range d.Names {
+				names = append(names, name.Name)
+			}
+			return names, true
 		}
 	}
-	return "", false
+	return nil, false
 }
 
 // receiverName is the base type name a method hangs off, with the pointer star and any

@@ -108,10 +108,9 @@ func TestAliasAndOriginSpellingsRenderIdenticalBytes(t *testing.T) {
 	}
 }
 
-// Row identity is the generic origin. Two instantiations of one declaration are one
-// declaration, so a query for the generic method emits one row per use site and no
-// instantiation name reaches the bytes. A resolver that skips (*types.Func).Origin()
-// keys each instantiation separately and emits nothing.
+// Row identity is the generic origin. This pins the row set a query for the generic
+// method and the generic field answers with: one row per use site across both
+// instantiations, and no instantiation spelling in the rendered bytes.
 func TestGenericInstantiationsResolveToTheGenericOrigin(t *testing.T) {
 	pkgs := typecheckFixture(t, genericFixture)
 	for _, tc := range []struct {

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/outline"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -24,6 +25,26 @@ func refuseLoad(err error) string {
 	}
 	return toon.Errorf("package load failed: "+err.Error(),
 		"the tree must type-check before any enumeration; fix the named position, then retry")
+}
+
+// refuseLoadForQuery chooses the refusal one failed load earns for one query. A tree with
+// no go.mod cannot type-check at all, so the loader's failure says nothing about the
+// query, and the non-Go sweep answers first when it names the declaration. A tree that
+// has a module keeps the load refusal, because there the failure is the real cause.
+func refuseLoadForQuery(root, query string, err error) string {
+	if _, statErr := os.Stat(filepath.Join(root, "go.mod")); statErr != nil {
+		if file, ok := nonGoDeclaration(root, query); ok {
+			return refuseNonGo(file, query)
+		}
+	}
+	return refuseLoad(err)
+}
+
+// refuseNonGo is the one spelling of the non-Go refusal, so the unresolved path and the
+// unloadable-tree path name the language the same way.
+func refuseNonGo(file, query string) string {
+	return toon.Errorf("no Go declaration named "+query+"; "+file+" declares it in "+languageOf(file),
+		"non-Go resolution is unsupported; a textual sweep is the candidate-class citation")
 }
 
 // languageNames maps a scanned extension to the language a refusal names. An extension
@@ -51,8 +72,7 @@ func languageOf(rel string) string {
 // it refuses with the language named. Anything else keeps the plain unresolved refusal.
 func refuseUnresolved(root, query string, err error) string {
 	if file, ok := nonGoDeclaration(root, query); ok {
-		return toon.Errorf("no Go declaration named "+query+"; "+file+" declares it in "+languageOf(file),
-			"non-Go resolution is unsupported; a textual sweep is the candidate-class citation")
+		return refuseNonGo(file, query)
 	}
 	return toon.Errorf(err.Error(), "pass a qualified symbol such as outline.Command")
 }
@@ -77,8 +97,8 @@ func nonGoDeclaration(root, query string) (string, bool) {
 		if strings.HasSuffix(rel, ".go") {
 			continue
 		}
-		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel)))
-		if err != nil {
+		content, ok := readSweepFile(filepath.Join(root, filepath.FromSlash(rel)))
+		if !ok {
 			continue
 		}
 		for _, symbol := range outline.Symbols(rel, content) {
@@ -88,4 +108,24 @@ func nonGoDeclaration(root, query string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// readSweepFile reads one candidate file under the read policy `bench outline` applies to
+// a tracked file. The stat is an Lstat and a nonregular entry is skipped rather than
+// opened, so a symlink is not followed out of the checkout and a FIFO cannot block the
+// sweep, and the read is bounded by bounds.OutlineFileLimit.
+func readSweepFile(abs string) ([]byte, bool) {
+	info, err := os.Lstat(abs)
+	if err != nil || !info.Mode().IsRegular() {
+		return nil, false
+	}
+	file, err := os.Open(abs)
+	if err != nil {
+		return nil, false
+	}
+	read := bounds.Read(file, bounds.OutlineFileLimit)
+	if closeErr := file.Close(); closeErr != nil || read.Status != bounds.ReadComplete {
+		return nil, false
+	}
+	return read.Data, true
 }

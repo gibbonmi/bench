@@ -7,7 +7,6 @@ import (
 	"go/types"
 	"path"
 	"sort"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -57,44 +56,39 @@ type declSite struct {
 	Pos        token.Pos
 }
 
-// topLevelDecls names every package-level declaration in one file. The forms are the
-// forms declName names: a function, a Type.Method, a type, and a var or const spec. A
-// parenthesized group spans per spec, so one edited constant in a long block does not
-// touch the whole block.
+// topLevelDecls names every package-level declaration in one file and the lines it spans.
+// declNames owns which nodes name a declaration and how each one is spelled, so this walk
+// contributes the spans only. A parenthesized group spans per spec, so one edited constant
+// in a long block does not touch the whole block.
 func topLevelDecls(fset *token.FileSet, file *ast.File) []declSite {
 	var out []declSite
-	add := func(name string, node ast.Node) {
-		if name == "" || name == "_" {
-			return
+	add := func(names []string, node ast.Node) {
+		for _, name := range names {
+			if name == "_" {
+				continue
+			}
+			out = append(out, declSite{
+				Name:  name,
+				Start: fset.Position(node.Pos()).Line,
+				End:   fset.Position(node.End()).Line,
+				Pos:   node.Pos(),
+			})
 		}
-		out = append(out, declSite{
-			Name:  name,
-			Start: fset.Position(node.Pos()).Line,
-			End:   fset.Position(node.End()).Line,
-			Pos:   node.Pos(),
-		})
 	}
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			name := d.Name.Name
-			if recv := receiverName(d); recv != "" {
-				name = recv + "." + name
+			if names, ok := declNames(d, true); ok {
+				add(names, d)
 			}
-			add(name, d)
 		case *ast.GenDecl:
 			for _, spec := range d.Specs {
 				node := ast.Node(spec)
 				if !d.Lparen.IsValid() {
 					node = d
 				}
-				switch s := spec.(type) {
-				case *ast.TypeSpec:
-					add(s.Name.Name, node)
-				case *ast.ValueSpec:
-					for _, n := range s.Names {
-						add(n.Name, node)
-					}
+				if names, ok := declNames(spec, true); ok {
+					add(names, node)
 				}
 			}
 		}
@@ -102,18 +96,23 @@ func topLevelDecls(fset *token.FileSet, file *ast.File) []declSite {
 	return out
 }
 
-// lookupDecl resolves a declaration spelling against one package's scope. A dotted
-// spelling is a method or field on a package-level type; a bare spelling is a
-// package-scope declaration.
+// lookupDecl resolves a declaration spelling inside one package. Resolve owns the query
+// grammar, so the spelling is read there rather than split a second time here, and the
+// answer is kept only when the declaration belongs to this package.
 func lookupDecl(pkg *Package, name string) types.Object {
 	if pkg.Types == nil {
 		return nil
 	}
-	scope := pkg.Types.Scope()
-	if typeName, member, dotted := strings.Cut(name, "."); dotted {
-		return lookupMember(scope, typeName, member)
+	matches, err := Resolve([]*Package{pkg}, name)
+	if err != nil {
+		return nil
 	}
-	return scope.Lookup(name)
+	for _, m := range matches {
+		if m.Obj.Pkg() == pkg.Types {
+			return m.Obj
+		}
+	}
+	return nil
 }
 
 // touchedDecls names every tip declaration whose span meets an added line run in its own
@@ -271,11 +270,13 @@ func tipDeclNames(pkgs []*Package, root string) map[string]bool {
 // It composes envelope, so the blast mode cannot grow its own accounting or lose its
 // disclosure.
 func blastResponse(source citation, pkgCount, matchCount int, rows []blastRow, deleted []deletedRow, full bool, replay []string) (string, int) {
-	truncated := !full && len(rows) > rowCap
+	rows, files, dropped := representableFiles(rows, func(r blastRow) string { return r.File })
+	deleted, _, deletedDropped := representableFiles(deleted, func(r deletedRow) string { return r.BaseFile })
+	overCap := !full && len(rows) > rowCap
 	var block string
 	var err error
-	if truncated {
-		block, err = toon.TableTyped("consumers_packages", aggregateFields, blastAggregate(rows))
+	if overCap {
+		block, err = toon.TableTyped("consumers_packages", aggregateFields, aggregate(files))
 	} else {
 		cells := make([][]any, len(rows))
 		for i, r := range rows {
@@ -297,8 +298,8 @@ func blastResponse(source citation, pkgCount, matchCount int, rows []blastRow, d
 		}
 		block += deletedBlock
 	}
-	return envelope(source, block, pkgCount, blastFileCount(rows), matchCount, len(rows), truncated,
-		blastActions(rows, truncated, replay))
+	return envelope(source, block, pkgCount, countFiles(files), matchCount, len(rows),
+		overCap || dropped || deletedDropped, blastActions(rows, overCap, replay))
 }
 
 // blastActions is the blast envelope. An over-cap default offers the one invocation that
@@ -329,31 +330,4 @@ func blastActions(rows []blastRow, truncated bool, replay []string) []axi.Action
 			axi.KnownArgument("consumers"), axi.KnownArgument(symbol), axi.KnownArgument("--full")))
 	}
 	return actions
-}
-
-// blastAggregate collapses blast rows to one row per consumer directory, the shape the
-// symbol form's over-cap default uses.
-func blastAggregate(rows []blastRow) [][]any {
-	counts := map[string]int{}
-	for _, r := range rows {
-		counts[path.Dir(r.File)]++
-	}
-	dirs := make([]string, 0, len(counts))
-	for dir := range counts {
-		dirs = append(dirs, dir)
-	}
-	sort.Strings(dirs)
-	out := make([][]any, 0, len(dirs))
-	for _, dir := range dirs {
-		out = append(out, []any{dir, counts[dir]})
-	}
-	return out
-}
-
-func blastFileCount(rows []blastRow) int {
-	seen := map[string]bool{}
-	for _, r := range rows {
-		seen[r.File] = true
-	}
-	return len(seen)
 }
