@@ -403,6 +403,10 @@ The walk covers the profile's hostile-input classes that reach this surface:
 
 ## Further notes
 
+The reviewer approved the stories, the lines, the seams, the coverage map,
+the fences, the out-of-scope list, and the five-ticket breakdown on
+2026-08-29. The two named veto calls stand as written.
+
 Round 1 folded eight changes. `--from` narrowed to the default branch's
 history and sibling tips. One refusal renderer prints on stdout. The branch
 refusal names the ref without a new identity component. The reconcile is the
