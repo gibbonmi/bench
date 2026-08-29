@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -84,6 +85,14 @@ type joins struct {
 	reauthorizeUnlock    func(string, string) error
 	reauthorizeLock      func(string, string, string) error
 	reauthorizeBeforeCAS func(*intent.Assignment)
+	// mergeLane resolves the fast lane the merge's composed tree is graded under. It is a
+	// seam because the resolution reads the kit root out of the process environment, and a
+	// fixture that bound that environment would leave the package's parallel set.
+	mergeLane func(string) ([]gate.Phase, string, error)
+	// mergeReconcile is the merge verb's publication boundary: the checkout catch-up that
+	// runs after the branch ref moved. It is a seam because its failure is the one
+	// outcome that reads apart from a refusal, and no fixture can make a bare reset fail.
+	mergeReconcile func(string, string) error
 	// home is the Bench home the verb's own boundary resolved. The retirement path
 	// needs it to drop the retired assignment's census records, and it travels in the
 	// seam set because every verb that retires an assignment already carries the set
@@ -116,6 +125,8 @@ func defaultJoins() joins {
 		home:                     Home(),
 		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
+		mergeLane:                gate.LaneForCommit,
+		mergeReconcile:           reconcileMergeCheckout,
 	}
 }
 

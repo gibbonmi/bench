@@ -119,7 +119,8 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 33, Suffix: " path <target>", Description: "print one active owned worktree's absolute path"},
 		helpRow{Order: 34, Suffix: " exec <target> -- <command> [args...]", Description: "run a child directly in an active owned worktree"},
 		helpRow{Order: 35, Suffix: " reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>", Description: "replace one lost request token after identity proof"},
-		helpRow{Order: 36, Suffix: " --help", Description: "show exact list, path, exec, create, release, clean, reclaim, and reauthorize grammar"},
+		helpRow{Order: 36, Suffix: " merge --from <commit|target> <target>", Description: "merge a default-branch commit or a sibling's tip into an owned worktree"},
+		helpRow{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, create, release, clean, reclaim, reauthorize, and merge grammar"},
 	), Run: worktreeCommand},
 	{Name: "resume-clean", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
 	{Name: "session-inspect", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
@@ -630,6 +631,14 @@ func worktreeCommand(c Command, args []string) int {
 			return 1
 		}
 		return worktree.ReauthorizeCommand(root, worktree.Home(), args[1:], c.Stdout, c.Stderr)
+	}
+	if len(args) > 0 && args[0] == "merge" {
+		root, err := git.Root()
+		if err != nil {
+			fmt.Fprintln(c.Stderr, toon.NotInRepo())
+			return 1
+		}
+		return worktree.MergeCommand(root, worktree.Home(), args[1:], c.Stdout, c.Stderr)
 	}
 	if len(args) > 0 && args[0] == "land" {
 		root, err := git.Root()
