@@ -346,7 +346,7 @@ route_binary() {
       exit 2
       ;;
     *)
-      if [[ "${BENCH_ALLOW_IMPLICIT_REPAIR:-}" == 1 && "${BENCH_REPAIR:-}" == 1 ]]; then
+      if [[ "${BENCH_OFFLINE:-}" == 1 || ( "${BENCH_ALLOW_IMPLICIT_REPAIR:-}" == 1 && "${BENCH_REPAIR:-}" == 1 ) ]]; then
         repair_binary "$kit" "$wrapper" && repair_rc=0 || repair_rc=$?
         [[ "$repair_rc" == 130 || "$repair_rc" == 143 ]] && exit "$repair_rc"
         bin="$(bench_binary_path "$kit")" && BENCH_KIT="${BENCH_KIT:-$kit}" BENCH_WRAPPER="${BENCH_WRAPPER:-$wrapper}" exec "$bin" "$@"

@@ -477,6 +477,31 @@ printf '%s\n' "$BENCH_KIT" "$@" > "$BENCH_TEST_ARGV"
 	}
 }
 
+func TestShellWrapperOfflineMissingBinarySuppressesRepairBeforeStartingNode(t *testing.T) {
+	root := t.TempDir()
+	kit := filepath.Join(root, "kit")
+	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
+	marker := filepath.Join(root, "node-started")
+	nodeDir := filepath.Join(root, "bin")
+	writeExecutable(t, filepath.Join(nodeDir, "node"), "#!/usr/bin/env bash\ntouch \"$BENCH_TEST_NODE_MARKER\"\n")
+
+	cmd := exec.Command("bash", filepath.Join(kit, "bin", "bench.sh"), "models")
+	env := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	for _, name := range []string{"BENCH_KIT", "BENCH_WRAPPER", "BENCH_REPAIR", "BENCH_OFFLINE"} {
+		env = capability.WithoutEnvironment(env, name)
+	}
+	cmd.Env = append(env,
+		"BENCH_HOME="+filepath.Join(root, "home"), "BENCH_KIT="+kit, "BENCH_OFFLINE=1",
+		"BENCH_TEST_NODE_MARKER="+marker, "PATH="+nodeDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	out, err := cmd.CombinedOutput()
+	exit, ok := err.(*exec.ExitError)
+	_, markerErr := os.Stat(marker)
+	markerStarted := markerErr == nil
+	if !ok || exit.ExitCode() != 127 || !strings.Contains(string(out), "bench: repair suppressed by BENCH_OFFLINE=1") || markerStarted {
+		t.Fatalf("offline missing binary = (exit %v, output %q, node started %t), want exit 127, offline suppression, and no node start", err, out, markerStarted)
+	}
+}
+
 // followOnEnvelope builds a raw-call envelope whose command names a path under the
 // given root's worktree pool, keyed to a fixed owner and assignment id.
 func followOnEnvelope(home, root string) (string, string) {
