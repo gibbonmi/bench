@@ -79,7 +79,7 @@ func checkMarker(root, branch, destination, expected string, advance bool) error
 		if !fullCommit(root, expected) {
 			return errors.New("project-green marker does not match expected prior tip")
 		}
-		ancestor, err := isAncestor(root, expected, destination)
+		ancestor, err := IsAncestor(root, expected, destination)
 		if err != nil {
 			return fmt.Errorf("check expected project-green marker ancestry: %w", err)
 		}
@@ -92,7 +92,7 @@ func checkMarker(root, branch, destination, expected string, advance bool) error
 			return errors.New("project-green marker conflicts with another tip")
 		}
 		for _, ancestorOf := range []string{expected, destination} {
-			ancestor, err := isAncestor(root, actual, ancestorOf)
+			ancestor, err := IsAncestor(root, actual, ancestorOf)
 			if err != nil {
 				return fmt.Errorf("check project-green marker ancestry: %w", err)
 			}
@@ -114,7 +114,9 @@ func fullCommit(root, value string) bool {
 	return err == nil && resolved == value
 }
 
-func isAncestor(root, ancestor, descendant string) (bool, error) {
+// IsAncestor reports whether ancestor is reachable from descendant. It separates Git's
+// exit 1, which is a truthful "no", from a failed query, which is an error.
+func IsAncestor(root, ancestor, descendant string) (bool, error) {
 	_, err := benchgit.Raw("-C", root, "merge-base", "--is-ancestor", ancestor, descendant)
 	if err == nil {
 		return true, nil
