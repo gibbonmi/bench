@@ -53,6 +53,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Raised the minimum supported Node runtime to Node 24 for the package, staged publication, and release workflows.
 - Every Go toolchain child Bench spawns now writes to one Bench-owned build cache
   at `$HOME/.cache/bench/go-build`. The gate oracle closure, the gate phase
   children, the private run-binary build, and `bench test` all carry that

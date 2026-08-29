@@ -92,7 +92,7 @@ func (n *NPMCLIRegistry) Publish(ctx context.Context, name, version, tag string,
 // cannot control.
 const (
 	minStagedNPMVersion  = "11.15.0"
-	minStagedNodeVersion = "22.14.0"
+	minStagedNodeVersion = "24.0.0"
 )
 
 func (n *NPMCLIRegistry) checkStagedToolPreconditions(ctx context.Context) error {

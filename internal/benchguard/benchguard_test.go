@@ -16,12 +16,12 @@ func TestClassifyFollowOns(t *testing.T) {
 		return "", errors.New("not bench")
 	}}
 	for _, command := range []string{"bench help | touch marker", "bench gate 2>&1", "X=1 bench help && touch marker", "bash -lc 'bench help || touch marker'", "bench worktree exec a -- bench gate > marker"} {
-		if !Classify(command, resolver) {
+		if !Classify(command, resolver).Blocked {
 			t.Errorf("Classify(%q) = false, want true", command)
 		}
 	}
 	for _, command := range []string{"bench gate --fresh", "rg bench AGENTS.md", "bench worktree exec a -- bash -lc 'go test && go vet'", "cat <<'EOF'\nbench gate | tail\nEOF"} {
-		if Classify(command, resolver) {
+		if Classify(command, resolver).Blocked {
 			t.Errorf("Classify(%q) = true, want false", command)
 		}
 	}
@@ -37,7 +37,7 @@ func TestClassifyResolvesBareAliasFromProcessPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", dir)
-	if !Classify("kit-command help | touch marker", DefaultResolver()) {
+	if !Classify("kit-command help | touch marker", DefaultResolver()).Blocked {
 		t.Fatal("bare PATH alias did not classify as Bench")
 	}
 }
@@ -80,7 +80,7 @@ func TestClassifySpanScopedFollowOns(t *testing.T) {
 		{"G5", "bench worktree exec L -- cat <<'EOF'\nbench gate\nEOF"},
 		{"G7", "cat <<'EOF'\nfirst line\nsecond line\nEOF"},
 	} {
-		if Classify(tc.command, resolver) {
+		if Classify(tc.command, resolver).Blocked {
 			t.Errorf("%s: Classify(%q) = true, want false", tc.row, tc.command)
 		}
 	}
@@ -94,16 +94,16 @@ func TestClassifySpanScopedFollowOns(t *testing.T) {
 		{"G4", "bench worktree exec L -- true; bench maps"},
 		{"G14", "bench gate; cp a b"},
 	} {
-		if !Classify(tc.command, resolver) {
+		if !Classify(tc.command, resolver).Blocked {
 			t.Errorf("%s: Classify(%q) = false, want true", tc.row, tc.command)
 		}
 	}
 }
 
-// TestJudgeNamesTheSegmentAndTheOperator proves the refusal line keeps the fixed
+// TestClassifyNamesTheSegmentAndTheOperator proves the refusal line keeps the fixed
 // sentence and then names the Bench segment and the operator that caused it.
 // (Coverage rows G8, G9, G10.)
-func TestJudgeNamesTheSegmentAndTheOperator(t *testing.T) {
+func TestClassifyNamesTheSegmentAndTheOperator(t *testing.T) {
 	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
 	for _, tc := range []struct{ row, command, want string }{
 		{"G8", "cat a && echo x; bench maps", "segment=bench maps operator=;"},
@@ -111,9 +111,9 @@ func TestJudgeNamesTheSegmentAndTheOperator(t *testing.T) {
 		{"G10", "cp a b && bench worktree exec L -- true | cat", "segment=bench worktree exec L -- true operator=&&"},
 		{"G9b", "bench worktree exec L -- cat <<'EOF' 2>&1\nx\nEOF", "segment=bench worktree exec L -- cat operator=2>&1"},
 	} {
-		verdict := Judge(tc.command, resolver)
+		verdict := Classify(tc.command, resolver)
 		if !verdict.Blocked {
-			t.Errorf("%s: Judge(%q) allowed the call", tc.row, tc.command)
+			t.Errorf("%s: Classify(%q) allowed the call", tc.row, tc.command)
 			continue
 		}
 		message := verdict.Message()

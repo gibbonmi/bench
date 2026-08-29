@@ -63,20 +63,14 @@ func (v Verdict) Message() string {
 	return BlockMessage() + " segment=" + strings.Join(v.Segment, " ") + " operator=" + v.Operator
 }
 
-// Classify reports whether command invokes Bench with a refused shell follow-on.
-// It reads Judge's verdict, so one rule decides both the flag and the refusal line.
-func Classify(command string, resolver Resolver) bool {
-	return Judge(command, resolver).Blocked
-}
-
-// Judge returns the verdict, the Bench segment's projected words, and the adjacent
+// Classify returns the verdict, the Bench segment's projected words, and the adjacent
 // operator token. The rule is span-scoped: it reads the first Bench-headed simple
 // command. A `bench worktree exec` head allows a heredoc redirection inside its
 // span, and a `;` or `&&` after the span when every later simple command is
 // non-Bench. Any other Bench head refuses on an operator or a redirection anywhere
 // in the stream. The named token follows one precedence: a redirection inside the
 // span, else the control operator before the span, else the one after it.
-func Judge(command string, resolver Resolver) Verdict {
+func Classify(command string, resolver Resolver) Verdict {
 	return judge(shellcommand.Parse(command), resolver, true)
 }
 

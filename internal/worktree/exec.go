@@ -7,13 +7,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/shellcommand"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -35,17 +35,13 @@ var worktreeExecGrammar = usage.Grammar{
 	ChildArgvAfterTerminator:            true,
 }
 
-// envAssignment is the shape a child assignment takes: a portable KEY, then "=", then
-// any VALUE including the empty one.
-var envAssignment = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
-
 // childEnvValues returns the --env assignments in argv order, or the usage line for the
 // first malformed one. The check runs before the target resolves, so a typo names itself
 // and no child starts on a half-read environment.
 func childEnvValues(parsed usage.Result) ([]string, string) {
 	values := parsed.Repeated["--env"]
 	for _, value := range values {
-		if !envAssignment.MatchString(value) {
+		if !shellcommand.IsAssignment(value) {
 			return nil, toon.Usage(worktreeExecGrammar.Cmd, value)
 		}
 	}
