@@ -342,3 +342,106 @@ func TestParseRequiredFlagKeepsDeclaredHelp(t *testing.T) {
 		t.Fatalf("Parse missing required flag = (%q, %d), want %q, 2", line, code, g.Help)
 	}
 }
+
+// execGrammar is the exec-shaped fixture: one reserved target slot, a repeatable
+// value flag, and child argv past the terminator. It mirrors the exec verb's
+// declared shape so the rows below read the same rules the verb parses under.
+func execGrammar() Grammar {
+	return Grammar{
+		Cmd:                                 "bench worktree exec",
+		Help:                                "usage: " + WorktreeExec + "\n",
+		Flags:                               []Flag{{Name: "--env", HasValue: true, NoEmptyValue: true, Repeatable: true}},
+		MinArgs:                             2,
+		MaxArgs:                             -1,
+		ReservedPositionalsBeforeTerminator: 1,
+		ChildArgvAfterTerminator:            true,
+	}
+}
+
+// commitShapedGrammar mirrors the declaration in internal/commit: a value flag, a
+// boolean flag, and unbounded positionals, with neither new attribute set. The
+// commit package imports this one, so its grammar value cannot be read from here;
+// the rows below assert the rules a path verb keeps, not that package's wiring.
+func commitShapedGrammar() Grammar {
+	return Grammar{
+		Cmd:     "bench commit",
+		Help:    "usage: bench commit [--dry-run] -m <msg> [--] <path>...",
+		Flags:   []Flag{{Name: "-m", HasValue: true}, {Name: "--dry-run"}},
+		MaxArgs: -1,
+	}
+}
+
+// TestParseChildArgvPassesTokensThrough covers rows X1 and X12: a grammar that
+// declares child argv passes every token past "--" through unchanged, so the empty
+// token an unset shell variable expands to reaches the child, and a token spelled
+// like a declared flag stays the child's argument rather than being parsed again.
+func TestParseChildArgvPassesTokensThrough(t *testing.T) {
+	g := execGrammar()
+	for _, tc := range []struct {
+		row  string
+		args []string
+		want []string
+	}{
+		{"X1", []string{"label", "--", "rg", "-N", "", "README.md"}, []string{"label", "rg", "-N", "", "README.md"}},
+		{"X12", []string{"label", "--", "printf", "%s", "--env"}, []string{"label", "printf", "%s", "--env"}},
+	} {
+		t.Run(tc.row, func(t *testing.T) {
+			res, line, code := Parse(g, tc.args)
+			if line != "" || code != 0 {
+				t.Fatalf("Parse(%q) = (%q, %d), want success", tc.args, line, code)
+			}
+			if len(res.Positionals) != len(tc.want) {
+				t.Fatalf("positionals = %q, want %q", res.Positionals, tc.want)
+			}
+			for i := range tc.want {
+				if res.Positionals[i] != tc.want[i] {
+					t.Fatalf("positionals = %q, want %q", res.Positionals, tc.want)
+				}
+			}
+			if !res.EndedFlags || res.PositionalsBeforeTerminator != 1 {
+				t.Errorf("terminator result = %+v, want one positional before the terminator", res)
+			}
+		})
+	}
+}
+
+// TestParseEmptyChildArgvStaysGrammarScoped covers row X2: a grammar without the
+// child-argv attribute keeps the empty-positional refusal past "--", so an unset
+// shell variable cannot widen a path verb.
+func TestParseEmptyChildArgvStaysGrammarScoped(t *testing.T) {
+	g := commitShapedGrammar()
+	res, line, code := Parse(g, []string{"-m", "x", "--", ""})
+	if want := toon.Usage(g.Cmd, `""`); line != want || code != 2 {
+		t.Errorf("Parse(-m x -- \"\") = (%+v, %q, %d), want (%q, 2)", res, line, code, want)
+	}
+}
+
+// TestParseRepeatableFlagCollectsValuesInOrder covers row X8: a flag declared
+// repeatable collects each value in argv order instead of refusing the second
+// occurrence.
+func TestParseRepeatableFlagCollectsValuesInOrder(t *testing.T) {
+	g := execGrammar()
+	res, line, code := Parse(g, []string{"label", "--env", "A=1", "--env", "B=2", "--", "true"})
+	if line != "" || code != 0 {
+		t.Fatalf("Parse(--env A=1 --env B=2) = (%q, %d), want success", line, code)
+	}
+	want := []string{"A=1", "B=2"}
+	got := res.Repeated["--env"]
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("Repeated[--env] = %q, want %q", got, want)
+	}
+	if _, ok := res.Flags["--env"]; !ok {
+		t.Errorf("flags = %v, want --env recorded for a presence check", res.Flags)
+	}
+}
+
+// TestParseRepeatedFlagStaysAnErrorWithoutTheAttribute covers row X9: a flag that
+// is not declared repeatable keeps the duplicate-flag usage error, so a mistyped
+// invocation still names the flag.
+func TestParseRepeatedFlagStaysAnErrorWithoutTheAttribute(t *testing.T) {
+	g := commitShapedGrammar()
+	res, line, code := Parse(g, []string{"-m", "a", "-m", "b"})
+	if want := toon.Usage(g.Cmd, "-m"); line != want || code != 2 {
+		t.Errorf("Parse(-m a -m b) = (%+v, %q, %d), want (%q, 2)", res, line, code, want)
+	}
+}

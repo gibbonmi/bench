@@ -15,11 +15,17 @@ import (
 // whose value names something, a command, a path, a message, treats it as
 // the mistyped invocation it almost always is. Declaring it here keeps the
 // rule in the shared parser rather than having each subcommand re-derive it.
+//
+// Repeatable declares that the flag may appear more than once. Parse then collects
+// its values in argv order in Result.Repeated instead of refusing the second
+// occurrence. A flag without it keeps the duplicate-flag usage error, so a mistyped
+// invocation still names the flag.
 type Flag struct {
 	Name         string
 	HasValue     bool
 	NoEmptyValue bool
 	Required     bool
+	Repeatable   bool
 }
 
 // Grammar declares the argument shape one subcommand parses through Parse:
@@ -40,15 +46,23 @@ type Grammar struct {
 	MaxArgs                             int
 	ReservedPositionalsBeforeTerminator int
 	HelpOnlyWhenSole                    bool
+	// ChildArgvAfterTerminator declares that every token after the terminator is
+	// another program's argv. Parse passes those tokens through unchanged, so an
+	// empty token reaches the child rather than meeting the empty-positional
+	// refusal, which belongs to a grammar that resolves its own positionals.
+	ChildArgvAfterTerminator bool
 	// UnquotedEmptyPositional retains an established usage response whose
 	// unknown-argument cell was empty instead of the shared quoted marker.
 	UnquotedEmptyPositional bool
 }
 
 // Result is a successful parse: the flags present (an empty string value for
-// a boolean flag) and the positionals in argv order.
+// a boolean flag) and the positionals in argv order. Repeated holds every value
+// of a flag declared Repeatable, in argv order; Flags carries that flag's last
+// value too, so a presence check reads the same way for every flag.
 type Result struct {
 	Flags                       map[string]string
+	Repeated                    map[string][]string
 	Positionals                 []string
 	PositionalsBeforeTerminator int
 	EndedFlags                  bool
@@ -81,6 +95,7 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 	valueFlags := make(map[string]bool, len(g.Flags))
 	knownFlags := make(map[string]bool, len(g.Flags))
 	noEmptyFlags := make(map[string]bool, len(g.Flags))
+	repeatable := make(map[string]bool, len(g.Flags))
 	for _, f := range g.Flags {
 		knownFlags[f.Name] = true
 		if f.HasValue {
@@ -89,9 +104,12 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 		if f.NoEmptyValue {
 			noEmptyFlags[f.Name] = true
 		}
+		if f.Repeatable {
+			repeatable[f.Name] = true
+		}
 	}
 
-	result := Result{Flags: map[string]string{}}
+	result := Result{Flags: map[string]string{}, Repeated: map[string][]string{}}
 	// endedFlags becomes permanent at the first "--"; every later "--" or
 	// dash-prefixed token is then an ordinary positional rather than being
 	// re-examined as a separator or a flag.
@@ -119,7 +137,7 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 				// two spellings disagree. The check precedes the value read, so a
 				// repeated value flag names the flag instead of consuming another
 				// argument, and one rule covers value and boolean flags alike.
-				if _, repeated := result.Flags[a]; repeated {
+				if _, repeated := result.Flags[a]; repeated && !repeatable[a] {
 					return Result{}, toon.Usage(g.Cmd, a), 2
 				}
 				if valueFlags[a] {
@@ -134,6 +152,9 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 				} else {
 					result.Flags[a] = ""
 				}
+				if repeatable[a] {
+					result.Repeated[a] = append(result.Repeated[a], result.Flags[a])
+				}
 				continue
 			}
 		}
@@ -141,7 +162,7 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 		// expands to inside quotes, and a subcommand that resolves it against the
 		// filesystem silently widens to the cwd. Rejecting it here gives every
 		// grammar the guard instead of each path-taking subcommand re-deriving it.
-		if a == "" {
+		if a == "" && !(endedFlags && g.ChildArgvAfterTerminator) {
 			if g.UnquotedEmptyPositional {
 				return Result{}, toon.Usage(g.Cmd, ""), 2
 			}
