@@ -332,7 +332,7 @@ func TestTargetVerbNamesTheOwnerMarkerBeforeTheBranch(t *testing.T) {
 	chdir(t, root)
 	var stdout, stderr bytes.Buffer
 	code := PathCommand(root, home, []string{creation.Assignment.Label}, &stdout, &stderr)
-	want := "bench worktree path: owner marker does not match assignment " + creation.Assignment.ID + "\n"
+	want := "bench worktree path: owner marker does not match assignment " + creation.Assignment.ID + "\nnext=" + nextList + "\n"
 	if code != 1 || stderr.String() != want {
 		t.Fatalf("double-fault path = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
 	}

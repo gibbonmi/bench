@@ -50,6 +50,11 @@ const spaceChars = " \t\r"
 var redirectRe = regexp.MustCompile(`^(?:[0-9]+)?(?:>>?|<<?<?)(?:[|&])?$|^&>>?$`)
 var assignmentRe = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
 
+// IsAssignment reports whether word is a shell assignment: a portable KEY, then "=",
+// then any VALUE including the empty one. It is the one source for that shape, so a
+// prefix scan and an --env check agree on what a caller may write.
+func IsAssignment(word string) bool { return assignmentRe.MatchString(word) }
+
 // Parse folds quotes, removes heredoc bodies, and returns the remaining shell tokens.
 // A heredoc's operator stays in the stream because it is an outer redirection.
 func Parse(command string) Stream {
@@ -107,14 +112,32 @@ func ProjectCommandWords(tokens []Token) []string {
 	return words
 }
 
+// RedirectionText rebuilds a redirection's source text from one simple command's
+// tokens. The fd digits, the operator, and the operand join without spaces, so the
+// three tokens of `2>&1` print as `2>&1`.
+func RedirectionText(tokens []Token, index int) string {
+	text := tokens[index].Text
+	if index > 0 && tokens[index-1].Kind == Word && isDigits(tokens[index-1].Text) {
+		text = tokens[index-1].Text + text
+	}
+	if index+1 < len(tokens) && tokens[index+1].Kind == Word {
+		text += tokens[index+1].Text
+	}
+	return text
+}
+
+// IsHeredoc reports whether a token opens a heredoc. Parse removes the body and
+// keeps this operator, and a here-string `<<<` stays a plain redirection.
+func IsHeredoc(token Token) bool { return token.Kind == Redirection && token.Text == "<<" }
+
 // ResolveRoutinePrefix finds the command word after shell assignments and routine prefixes.
 func ResolveRoutinePrefix(words []string) RoutinePrefix {
 	prefix := RoutinePrefix{Executes: true}
-	for prefix.Index < len(words) && assignmentRe.MatchString(words[prefix.Index]) {
+	for prefix.Index < len(words) && IsAssignment(words[prefix.Index]) {
 		prefix.Index++
 	}
 	for prefix.Index < len(words) {
-		if assignmentRe.MatchString(words[prefix.Index]) {
+		if IsAssignment(words[prefix.Index]) {
 			prefix.Index++
 			continue
 		}
@@ -148,8 +171,8 @@ func skipEnv(words []string, i int) int {
 		if word == "--" {
 			return i + 1
 		}
-		if assignmentRe.MatchString(word) || !strings.HasPrefix(word, "-") {
-			if assignmentRe.MatchString(word) {
+		if IsAssignment(word) || !strings.HasPrefix(word, "-") {
+			if IsAssignment(word) {
 				i++
 				continue
 			}
