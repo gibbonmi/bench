@@ -71,8 +71,6 @@ means the repository-controlled compliance assessment.
 
 **FT106 (MEDIUM) — doc claims re-verified against the tree.**
 
-**FT191 (MEDIUM) — a fixture-and-seam inventory a charge can carry for free.**
-
 **FT213 (MEDIUM) — `craft-delegate` visit: worktree isolation, end-of-life, and probes that prove something.**
 
 **FT214 (MEDIUM) — `craft-spec` visit: fences the build may not move, one source per fact, and rows that prove what they claim.**

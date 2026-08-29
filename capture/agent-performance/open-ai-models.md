@@ -1,8 +1,9 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `prospective-artifact-recovery` (`0ec709aa`, 2026-08-28) —
-Terra/high as the ticket 01 implementer under a Sol orchestrator in a Codex
-session; the build finished under Claude models in a later session.
+Last incorporated landing: `resolved-consumer-surface` (`41b329f9`, 2026-08-28) —
+Sol/high as the cross-family reviewer for three initial axes, one repair-scoped
+re-review, and one scoped re-check, through `codex exec`, under a Claude
+orchestrator with Opus/low writers.
 
 ## Cost assumptions
 
@@ -18,7 +19,7 @@ currently available.
 | Luna / max, medium | implementation, 7 bounded tickets/repairs + reviewer, 4 axis passes on `stable-owner-landing` | Implementation: 2/7 first-pass with all terminal gates green. Review: three initial axes returned 9 raw findings and 8 de-duplicated targets with the citation standard held (one axis refuted four of its own leads by enumeration), and the repair-scoped re-review verified all seven predicates and stayed inside its blocking scope | Low-cost writer for narrow slices under mandatory inspection; standing tier for the three review axes |
 | Terra / high | implementation, 3 cross-fence lifecycle charges | 0/3 first-pass on review. On `prospective-artifact-recovery` ticket 01 landed with green rows, probes, and lane, but one branch left an authored binary outside the bundle, an unresolved temporary root leaked the Git registration, and its tests violated the branch-native census | Use when one behavior crosses classifier, planner, and lifecycle consumers; require consumer inventory in the charge |
 | Terra / high | semantic review, latest 10 independent axis passes across 4 landings | Found concrete wrapper, descriptor, prefix-value, query-seam, grammar, and one-source gaps with executable probes; final composition axes were clean, while one repair-scoped Standards pass reopened an untouched wrapper-grammar observation that the coordinator correctly kept advisory | Standards, Spec, and Coverage review in separate contexts; pin accepted predicates and prior tip for correction validation |
-| Sol / high | implementation and semantic review, 4 lifecycle charges + latest 10 axis passes | On `stable-owner-landing` the wrapper-broker ticket landed in one build pass plus one fence-extended continuation: it refused to edit an out-of-fence stale test and reported the exact red instead, ran its own biting route-omission probe, and one env-override case exposed that the old route executed a repository decoy; earlier lifecycle and repair charges keep their attributed probes | Kit-level and security-seam implementation and review; the out-of-fence stop discipline is holding |
+| Sol / high | implementation and semantic review, 4 lifecycle charges + latest 10 axis passes | On `resolved-consumer-surface` three initial axes returned 28 raw findings that collapsed to 10 repair targets, two of them real behavior gaps in a new blast derivation, and each axis refuted its own leads by enumeration. The repair-scoped re-review found one more real gap the repair had missed (git C-quotes control bytes in patch headers) and stayed inside its scope; the final re-check found one unpinned decoder arm. | Kit-level and security-seam implementation and review; the cross-family reviewer on a large new-package landing |
 | Sol / high | orchestration, 5 full spec lifecycles + 1 partial | On `prospective-artifact-recovery` it accepted ticket 01 after a repository-identity probe, then hit the agent thread limit and wrote a handoff that a later session resumed cleanly; its probe did not reach the run-binary branch or the symlinked root that review found later | Complex lifecycle coordination; separate review and composition bases, preflight broker toolchains, and treat merge continuation as its own state transition |
 
 ## Representative evidence
@@ -46,5 +47,9 @@ currently available.
 - Give initial review the full frozen range and closed decisions explicitly. Give
   repair re-review the accepted predicates and prior reviewed tip; unrelated older
   observations are follow-ons, not blockers.
+- A cross-family Sol/high review through `codex exec` is a valid reviewer for a
+  Claude-built landing. The recipe closes stdin, sets `-C` to the source, and writes
+  the final message with `-o`. A scoped re-review at that tier found a gap the first
+  repair missed, so a repair pass gets its own scoped check before it lands.
 - Change routing only after two comparable runs or one controlled model
   comparison.
