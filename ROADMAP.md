@@ -109,6 +109,8 @@ means the repository-controlled compliance assessment.
 
 **FT272 (LOW) — `bench status` routes a tickets-only spec folder to a grammar `bench commit` refuses.**
 
+**FT273 (LOW) — a charge names the live-tree check as its probe oracle, and a green probe is verified against the mutated bytes.**
+
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
@@ -311,4 +313,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT254: decide the `bench worktree exec` comfort set, now including `create --from <target>` and the pass-through follow-on.
+1. `/bench-shape-idea` — FT254: decide the `bench worktree exec` comfort set, now including child pass-through of flags and stderr after `--`.
+2. `/bench-implement-spec` — FT270: one light-path ticket so `bench test --check` prints every finding and `--package` names the graded-root path when `TestRootConformance` skips.
+3. `/bench-implement-spec` — FT273: one light-path kit edit that folds the probe-oracle bullets into the delegation-discipline reference of `craft-delegate`.
