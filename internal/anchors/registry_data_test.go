@@ -525,10 +525,11 @@ func TestHarnessRecordPointerAnchorsRedOnRemoval(t *testing.T) {
 	}
 }
 
-// TestCraftSpecMapDisciplineAnchorsRedOnRemoval pins the three sentences the FT214 visit
-// adds to craft-spec. Each section, needle, and diagnostic is written here independently
-// of the registry, so a skill that drops the build fence, the per-row rubric question, or
-// the map-discipline pointer cannot define itself green.
+// TestCraftSpecMapDisciplineAnchorsRedOnRemoval holds the spec-authoring rules that
+// guidance must keep: a build may not edit its own spec's rows, budgets, or fences, the
+// review rubric asks the per-row question, and the coverage map points at its discipline
+// reference. Each section, needle, and diagnostic is written here independently of the
+// registry, so guidance that drops a rule cannot define itself green.
 func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/skills/bench-craft-spec/SKILL.md"
 	rules := []struct{ section, needle, want string }{
@@ -591,4 +592,162 @@ func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestCraftDelegateDisciplineAnchorsRedOnRemoval holds the delegation rules that guidance
+// must keep: a read-only delegate that reads a graded tree gets its own worktree, a mutation
+// probe mutates behavior, the skill points at its discipline reference, and a review round
+// declares its iteration cap. It also holds the retired no-worktree sentence out of the
+// skill. Each needle and diagnostic is written here independently of the registry, so
+// guidance that drops a rule cannot define itself green.
+func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
+	const (
+		skill     = ".agents/skills/bench-craft-delegate/SKILL.md"
+		writeSpec = ".agents/commands/bench-write-spec.md"
+	)
+	rules := []struct {
+		file, section, needle, want string
+		forbidden                   bool
+	}{
+		{
+			file:    skill,
+			section: "Isolation",
+			needle:  "A read-only delegate that reads a tree the coordinator will grade runs in its own worktree",
+			want:    ".agents/skills/bench-craft-delegate/SKILL.md Isolation dropped the own-worktree rule for a read-only delegate that reads a graded tree",
+		},
+		{
+			file:    skill,
+			section: "The charge",
+			needle:  "A mutation probe requires a behavioral mutation",
+			want:    ".agents/skills/bench-craft-delegate/SKILL.md The charge dropped the behavioral-mutation requirement for a mutation probe",
+		},
+		{
+			file:   skill,
+			needle: "`references/delegation-discipline.md` holds the rest of the discipline",
+			want:   ".agents/skills/bench-craft-delegate/SKILL.md dropped the pointer to references/delegation-discipline.md",
+		},
+		{
+			file:      skill,
+			needle:    "Read-only delegations need no worktree",
+			want:      ".agents/skills/bench-craft-delegate/SKILL.md retained the retired rule that a read-only delegation needs no worktree",
+			forbidden: true,
+		},
+		{
+			file:   writeSpec,
+			needle: "The round declares its iteration cap before the first charge",
+			want:   ".agents/commands/bench-write-spec.md dropped the review round's iteration-cap declaration",
+		},
+	}
+
+	// evaluate writes one minimal file per subject. A required needle is present unless it
+	// is the broken one; a forbidden needle is present only when it is the broken one. Every
+	// section survives the break, so a red reports the sentence rather than a missing section.
+	evaluate := func(t *testing.T, broken int) []string {
+		t.Helper()
+		root := t.TempDir()
+		bodies := map[string]string{skill: "# subject\n", writeSpec: "# subject\n"}
+		sections := map[string]map[string]bool{}
+		for i, r := range rules {
+			present := (i == broken) == r.forbidden
+			if r.section == "" {
+				if present {
+					bodies[r.file] += "\n" + r.needle + "\n"
+				}
+				continue
+			}
+			if !sections[r.file][r.section] {
+				if sections[r.file] == nil {
+					sections[r.file] = map[string]bool{}
+				}
+				sections[r.file][r.section] = true
+				bodies[r.file] += "\n## " + r.section + "\n\n"
+			}
+			if present {
+				bodies[r.file] += r.needle + "\n"
+			}
+		}
+		for file, body := range bodies {
+			path := filepath.Join(root, filepath.FromSlash(file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	// Other rows of the group fire against this minimal tree; only these rows are the test's
+	// subject, so both directions are read by membership.
+	conformant := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(conformant, r.want) {
+			t.Errorf("tree conformant with %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree broken at %q in %s = %v, want %q", r.needle, r.file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("breaking %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
+
+// TestReferenceFileAnchorsRedOnAbsence holds the two discipline references in the tree. A
+// skill that points at a reference the tree lost leaves the reader with a dead pointer, so
+// an absent file raises the missing-file diagnostic. The paths and the lead sentences are
+// written here independently of the registry.
+func TestReferenceFileAnchorsRedOnAbsence(t *testing.T) {
+	references := []struct{ file, lead, want string }{
+		{
+			".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+			"Charged from `craft-delegate` when the coordinator writes a charge, runs a probe, or accepts a return.",
+			".agents/skills/bench-craft-delegate/references/delegation-discipline.md is absent or dropped its charge-time lead",
+		},
+		{
+			".agents/skills/bench-craft-spec/references/map-discipline.md",
+			"Charged from `craft-spec` when the author writes or audits an acceptance coverage map.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md is absent or dropped its map-time lead",
+		},
+	}
+	for _, reference := range references {
+		missing := "acceptance coverage anchor file missing: " + reference.file
+		present := EvaluateGroup(writeReferences(t, references, reference.file), AfterImplementSpec)
+		if slices.Contains(present, missing) {
+			t.Errorf("tree carrying %s raised %q", reference.file, missing)
+		}
+		if slices.Contains(present, reference.want) {
+			t.Errorf("tree carrying %s raised %q", reference.file, reference.want)
+		}
+		absent := EvaluateGroup(writeReferences(t, references, ""), AfterImplementSpec)
+		if !slices.Contains(absent, missing) {
+			t.Errorf("tree without %s = %v, want %q", reference.file, absent, missing)
+		}
+	}
+}
+
+// writeReferences builds a tree that carries the named reference file and no other. It
+// returns the tree root.
+func writeReferences(t *testing.T, references []struct{ file, lead, want string }, keep string) string {
+	t.Helper()
+	root := t.TempDir()
+	for _, reference := range references {
+		if reference.file != keep {
+			continue
+		}
+		path := filepath.Join(root, filepath.FromSlash(reference.file))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("# subject\n\n"+reference.lead+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return root
 }

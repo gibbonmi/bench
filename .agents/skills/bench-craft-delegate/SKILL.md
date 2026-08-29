@@ -6,8 +6,9 @@ index: spawning a delegate / verifying a delegate's done-claim
 
 # Delegating without losing the plot
 
-A delegate buys parallelism and isolates a heavy read-set. A misjudged delegate
-costs the thing that matters: the work happens unseen.
+A delegate buys parallelism and isolates a heavy read-set. A misjudged delegate costs the thing
+that matters: the work happens unseen. `references/delegation-discipline.md` holds the rest of the
+discipline: the charge contents, the probe rules, and the landing checks.
 
 ## Delegate or inline
 
@@ -50,16 +51,18 @@ after. First compare each slice with `craft-spec`'s "Slicing a build for delegat
 
 Name the mutation that breaks the change's central property. Require the delegate to apply it to its
 own finished work and report the observed result. Require the delegate to add the missing row when
-the mutation comes back silently green. Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the landing's census entry.
+the mutation comes back silently green. A mutation probe requires a behavioral mutation. A probe
+that fails to compile proves nothing, and a probe of provably redundant code passes by
+construction. Ask the delegate for zero to two Bench CLI improvements derived from its own calls,
+and fold them into the landing's census entry.
 
 A delegate blocked by a defect outside its fence stops and reports rather than fixing out of fence.
 A new worktree charge starts after the coordinator runs `git rev-parse HEAD main`.
 If the refs differ, only the coordinator runs `bench worktree merge --from main <target>` and verifies equality before the delegate starts. Dependent tickets in a reviewed spec chain share the retained integration source and verify its expected tip.
 A fix-pass charge names a commit-specific sentinel.
 
-A ticket delegate returns focused evidence and its own mutation probe from
-its worktree; it does not land the diff. The coordinator probes the exact
-returned tree independently before landing it. The
+A ticket delegate returns focused evidence and its own mutation probe from its worktree; it does
+not land the diff. The coordinator probes the exact returned tree independently before landing it. The
 coordinator probe's mutation kind differs from the delegate author's mutation
 kind. It also differs in site from every probe the delegate ran. A second probe
 at the same site is vacuous, and a vacuous probe is indistinguishable from a
@@ -91,17 +94,14 @@ dependent tickets share one retained integration source, and each charge names i
 expected tip. The whole-tree gate runs serially: a write-delegate stops at diff-ready with focused tests
 green; the coordinator runs `bench commit` per worktree, one at a time.
 
-A worktree isolates the
-working tree, not the repo-global stash stack a concurrent delegate shares.
-A charge bans `git stash` — the destructive-git guard refuses it — and names the substitute.
-`cp` the working file aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it
-back. The copy lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a
+A worktree isolates the working tree, not the repo-global stash stack a concurrent delegate shares. A charge
+bans `git stash` — the destructive-git guard refuses it — and names the substitute. `cp` the working file
+aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it back. The copy
+lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a
 glob.
 
-Read-only delegations need no worktree; say "do not edit any file" and mean it. A large
-uncommitted build that no worktree can hold may run in the main checkout under exactly four
-conditions. The conditions are one writer, a named file allowlist, no commit authority, and
-a `git status` check verified on return.
+A read-only delegate that reads a tree the coordinator will grade runs in its own worktree.
+Without that worktree, the coordinator verifies the tree unchanged before the landing gate.
 
 ## Verifying the done-claim
 

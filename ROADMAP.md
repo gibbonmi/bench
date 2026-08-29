@@ -69,8 +69,6 @@ means the repository-controlled compliance assessment.
 
 **FT106 (MEDIUM) — doc claims re-verified against the tree.**
 
-**FT213 (MEDIUM) — `craft-delegate` visit: worktree isolation, end-of-life, and probes that prove something.**
-
 **FT208 (MEDIUM, decision required) — skills-index producer-hardening residuals: one refusal grammar, per-shape marker diagnostics, and HI14's seam.**
 
 **FT222 (MEDIUM, decision required) — delegate-tier routing has one source in `projects/benchkit.md`.**
@@ -313,5 +311,4 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT213: the `craft-delegate` kit edit, now carrying the red-first return, the fence-extension continuation, and the integration-source ticket rule.
-2. `/bench-shape-idea` — FT254: decide the `bench worktree exec` comfort set, now including `create --from <target>` and the pass-through follow-on.
+1. `/bench-shape-idea` — FT254: decide the `bench worktree exec` comfort set, now including `create --from <target>` and the pass-through follow-on.
