@@ -83,6 +83,19 @@ func MaterializeMutationFixture(root, fixture, dst string) error {
 // subject. This proves the mutation, rather than ambient repository state, caused
 // the red.
 func RestoreMutationFixture(root, fixture, dst string) error {
+	// A dst that resolves to root makes the overlay walk delete real files and copy the
+	// source over itself. The refusal fires before the first write.
+	rootAbs, err := filepath.Abs(root)
+	if err != nil {
+		return err
+	}
+	dstAbs, err := filepath.Abs(dst)
+	if err != nil {
+		return err
+	}
+	if filepath.Clean(rootAbs) == filepath.Clean(dstAbs) {
+		return fmt.Errorf("RestoreMutationFixture refuses dst == root: %s", filepath.Clean(rootAbs))
+	}
 	filesDir := filepath.Join(fixture, filesDirName)
 	if info, err := os.Stat(filesDir); err == nil && info.IsDir() {
 		var overlayDirs []string

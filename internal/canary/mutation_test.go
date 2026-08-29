@@ -3,6 +3,7 @@ package canary
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -58,6 +59,46 @@ func TestRestoreMutationFixtureUsesSourceForOverlayPaths(t *testing.T) {
 		got, restoredErr := os.ReadFile(filepath.Join(dst, test.rel))
 		if sourceErr != nil || restoredErr != nil || string(got) != string(want) {
 			t.Fatalf("%s restored %s differs from source: source=%v restored=%v", test.fixture, test.rel, sourceErr, restoredErr)
+		}
+	}
+}
+
+// TestRestoreMutationFixtureRefusesDestinationEqualToRoot pins the refusal that keeps a
+// restore off the real tree. A dst equal to root makes the overlay walk delete tracked
+// files, so the refusal fires before the first write.
+func TestRestoreMutationFixtureRefusesDestinationEqualToRoot(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "owned.txt"), []byte("clean\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "added.txt"), []byte("real\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	fixture := t.TempDir()
+	files := filepath.Join(fixture, filesDirName)
+	if err := os.MkdirAll(files, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for name, body := range map[string]string{"owned.txt": "overlay\n", "added.txt": "added\n"} {
+		if err := os.WriteFile(filepath.Join(files, name), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(fixture, "BASE"), []byte("owned.txt\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// Each spelling resolves to root, so the refusal reads cleaned absolute paths rather
+	// than the caller's string.
+	for _, dst := range []string{root, root + string(filepath.Separator), filepath.Join(root, "child", "..")} {
+		err := RestoreMutationFixture(root, fixture, dst)
+		if err == nil {
+			t.Fatalf("restore with dst %q returned no error", dst)
+		}
+		if !strings.Contains(err.Error(), "RestoreMutationFixture refuses dst == root") {
+			t.Fatalf("restore with dst %q error = %v, want the dst == root refusal", dst, err)
+		}
+		if got, readErr := os.ReadFile(filepath.Join(root, "added.txt")); readErr != nil || string(got) != "real\n" {
+			t.Fatalf("refused restore with dst %q touched root: %q, %v", dst, got, readErr)
 		}
 	}
 }

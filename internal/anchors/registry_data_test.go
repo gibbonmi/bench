@@ -592,3 +592,77 @@ func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 		}
 	}
 }
+
+// TestCraftDelegateDisciplineAnchorsRedOnRemoval pins the three sentences the FT213 visit
+// adds to craft-delegate. Each section, needle, and diagnostic is written here independently
+// of the registry, so a skill that drops the read-only worktree rule, the behavioral-mutation
+// rule, or the delegation-discipline pointer cannot define itself green.
+func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
+	const file = ".agents/skills/bench-craft-delegate/SKILL.md"
+	rules := []struct{ section, needle, want string }{
+		{
+			"Isolation",
+			"A read-only delegate that reads a tree the coordinator will grade runs in its own worktree",
+			".agents/skills/bench-craft-delegate/SKILL.md Isolation dropped the own-worktree rule for a read-only delegate that reads a graded tree",
+		},
+		{
+			"The charge",
+			"A mutation probe requires a behavioral mutation",
+			".agents/skills/bench-craft-delegate/SKILL.md The charge dropped the behavioral-mutation requirement for a mutation probe",
+		},
+		{
+			"",
+			"`references/delegation-discipline.md` holds the rest of the discipline",
+			".agents/skills/bench-craft-delegate/SKILL.md dropped the pointer to references/delegation-discipline.md",
+		},
+	}
+
+	// evaluate writes one minimal skill that carries every section, and every needle except
+	// the dropped one. A rule with no section states its needle above the first heading, so
+	// the whole-file anchor reads it.
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		body := "# subject\n"
+		for i, r := range rules {
+			if r.section == "" {
+				if i != dropped {
+					body += "\n" + r.needle + "\n"
+				}
+				continue
+			}
+			body += "\n## " + r.section + "\n\n"
+			if i != dropped {
+				body += r.needle + "\n"
+			}
+		}
+		path := filepath.Join(root, filepath.FromSlash(file))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	// Other rows of the group fire against this minimal tree; only these three rows are the
+	// test's subject, so both directions are read by membership.
+	full := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(full, r.want) {
+			t.Errorf("tree carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("tree without %q in %s = %v, want %q", r.needle, file, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}

@@ -63,7 +63,7 @@ compatibility, or a reviewer-chosen seam.
    one question of its own. Where the stories partition into disjoint package or fence sets, could a narrower
    capability ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule.
 
-   The author folds partials left after the round and names them in the verification log.
+   The round declares its iteration cap before the first charge. The author folds partials left after the round and names them in the verification log.
    `--reviewer <tier> [effort]` overrides the round's delegate. The tier resolves through the invoking harness's
    own `.bench/lines.env` column and runs same-family through its native agent surface. For example,
    `--reviewer top high` under Codex resolves `BENCH_CODEX_TOP` at high. A model id is an invocation error.
