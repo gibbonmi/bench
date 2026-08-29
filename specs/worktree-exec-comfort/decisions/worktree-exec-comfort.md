@@ -413,7 +413,7 @@ A prefix segment still refuses (reviewer, 2026-08-29). The guard accepts one sha
 only: a `bench worktree exec` segment followed by non-bench segments joined with
 `;` or `&&`. So `bench worktree exec L -- cp a b; cp b a` passes. Every segment
 before a Bench-headed segment refuses, so `cp a b && bench worktree exec L -- true`
-refuses. A redirection or a pipe on the exec segment itself still refuses. Every
+refuses. A pipe or a non-heredoc redirection on the exec segment still refuses. A heredoc into the exec child is allowed (late question, 2026-08-29). Every
 other Bench verb keeps the stream-wide refusal.
 
 ## #11: Which exit code does an exec grammar refusal use?
@@ -508,7 +508,7 @@ keep an empty `next` until a later row decides theirs.
 
 ## Sources
 
-- Path: `decisions/assets/ft254-exec-comfort-research.md`
+- Path: `specs/worktree-exec-comfort/decisions/assets/ft254-exec-comfort-research.md`
   Supports: #1 through #4 and the factual premises of #5 through #13. Four read-only research delegations ran 2026-08-29 at `a712f84f`. The coordinator spot-checked two or three citations per delegation against the tree. Its #4 section quotes the retired worktree-merge spec (`049d12b0^:specs/worktree-merge/spec.md`) and the retired census decision map (`bf4b1f9e^:specs/exec-census/decisions/exec-census.md`) verbatim. Those quotes settle #8's declined cuts and the veto flag behind #5.
   Drift: re-resolve the line citations before `/bench-write-spec` reads this map if `internal/worktree`, `internal/benchguard`, `internal/usage`, `internal/preflight`, or `bin/bench.sh` change. The quoted retired passages are commit-pinned and do not drift.
 - Path: `roadmap/FT263.md`
