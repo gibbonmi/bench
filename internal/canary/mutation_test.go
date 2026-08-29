@@ -1,10 +1,13 @@
 package canary
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestRestoreMutationFixtureReinstatesBaseAndRemovesOverlay(t *testing.T) {
@@ -82,7 +85,7 @@ func TestRestoreMutationFixtureRefusesSymlinkedRootSpelling(t *testing.T) {
 	root, fixture := refusalSubject(t)
 	link := filepath.Join(t.TempDir(), "root-link")
 	if err := os.Symlink(root, link); err != nil {
-		t.Skipf("symbolic links unavailable: %v", err)
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("symbolic links unavailable: %v", err))
 	}
 	assertRefusedAndRootIntact(t, link, fixture, root)
 	assertRefusedAndRootIntact(t, root, fixture, link)
