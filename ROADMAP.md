@@ -37,7 +37,7 @@ means the repository-controlled compliance assessment.
 
 **FT162 (MEDIUM, decision required) — the handoff's pins resolve, and its shape has one owner.**
 
-**FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
+**FT142 (MEDIUM) — FT91 review residuals, two tracks.**
 
 **FT144 (MEDIUM) — kit specs have two audiences and the discipline names neither.**
 
@@ -57,9 +57,13 @@ means the repository-controlled compliance assessment.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
+**FT276 (MEDIUM, decision required) — one cycle-free owner derives canonical repository paths.**
+
+**FT277 (MEDIUM) — `bench test --changed` selects the edited packages and explains a widened set.**
+
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
-**FT274 (MEDIUM) — Bench traces its own seams with OpenTelemetry and records the FT231 measures.**
+**FT274 (MEDIUM) — Bench records Bench-owned FT231 measures with OpenTelemetry.**
 
 **FT275 (MEDIUM) — code built under Bench traces its declared seams with OpenTelemetry.**
 
@@ -114,6 +118,8 @@ means the repository-controlled compliance assessment.
 **FT272 (LOW) — `bench status` routes a tickets-only spec folder to a grammar `bench commit` refuses.**
 
 **FT273 (LOW) — a charge names the live-tree check as its probe oracle, and a green probe is verified against the mutated bytes.**
+
+**FT278 (LOW) — `craft-spec` gives every edge-inventory promise a coverage row.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
@@ -295,6 +301,7 @@ recommended table is sequencing advice.
 | FT71 | FT274 | The event schema should be expressed in the OpenTelemetry record rather than version a second one. |
 | FT232 | FT274 | The advisory reads the red set the record retains. |
 | FT204 | FT71 | The query reads the settled event schema before it reads transcript text. |
+| FT254 | FT263 | The resolution slice requires the decided `MERGE_HEAD` contract. |
 
 ### Goal track: guidance prose
 
@@ -320,6 +327,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT254: specify decided slice 2 of the `bench worktree exec` comfort work.
-2. `/bench-shape-idea` — FT255: decide the machine budget and load policy.
-3. `/bench-implement-spec` — FT270: add named checks, including the prose lane.
+1. `/bench-write-spec` — FT215: specify the path-aware fast lane before it adds a new commit cost.
+2. Light path — FT98: write the preserve-aside and restore-HEAD worktree ticket.
+3. `/bench-write-spec` — FT274: specify Bench-owned FT231 measures.
