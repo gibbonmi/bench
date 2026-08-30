@@ -278,6 +278,7 @@ test code in the private checkout, as ADR 0002 accepts for the gate.
 - `internal/packagesurface/assets.go`
 - `internal/packagesurface/assets_test.go`
 - `internal/conformance/profile_lane_table_test.go`
+- `internal/conformance/tier_test.go` (the live-tree test inventory that PL37 joins)
 - `projects/benchkit.md`
 - `CONTEXT.md`
 - `CHANGELOG.md`
