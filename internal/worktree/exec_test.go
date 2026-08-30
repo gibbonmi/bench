@@ -34,6 +34,20 @@ func childOutputAtHome(t *testing.T, worktree, script, home string) string {
 	return stdout.String()
 }
 
+// WF10: the exec form reaches the worktree's own build. The child runs with the worktree
+// as its working directory, so the relative `./dist/bench` spelling resolves there and
+// stays independent of the caller's own cwd.
+func TestExecRunsTheWorktreeDistBench(t *testing.T) {
+	t.Parallel()
+	worktree := t.TempDir()
+	mustMkdirAll(t, filepath.Join(worktree, "dist"), 0o755)
+	mustWrite(t, filepath.Join(worktree, "dist", "bench"), []byte("#!/bin/sh\nprintf 'worktree-grammar'\n"), 0o755)
+	var stdout, stderr bytes.Buffer
+	code := runWorktreeChild([]string{"./dist/bench", "version"}, worktree, Home(), nil, nil, &stdout, &stderr)
+	requireTest(t, code == 0, "child exit = %d, stderr %q", code, stderr.String())
+	requireTest(t, stdout.String() == "worktree-grammar", "child printed %q, want the built file's word", stdout.String())
+}
+
 // childEnvironment returns the environment the child actually received, one assignment
 // per line. That format cannot frame a value holding a newline, so it grades presence and
 // absence over known-safe values only; childWrapper grades the marker's exact value.

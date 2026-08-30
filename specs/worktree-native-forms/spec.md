@@ -359,6 +359,7 @@ against WF1 and WF16.
 - `internal/worktree/merge_test.go`
 - `internal/worktree/exec_test.go`
 - `internal/worktree/identifier_operand_test.go`
+- `internal/worktree/parallel_census_test.go`
 - `internal/gate/phases.go`
 - `internal/gate/phases_test.go`
 - `internal/testreport/command.go`

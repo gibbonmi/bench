@@ -19,6 +19,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -89,6 +90,10 @@ type joins struct {
 	// seam because the resolution reads the kit root out of the process environment, and a
 	// fixture that bound that environment would leave the package's parallel set.
 	mergeLane func(string) ([]gate.Phase, string, error)
+	// build authors one executable from a worktree's own tree. It is a seam because the
+	// default reaches a build script and a Go toolchain, and a fixture for that pair
+	// would make every output row wait on a real compile.
+	build func(context.Context, string, string) error
 	// mergeReconcile is the merge verb's publication boundary: the checkout catch-up that
 	// runs after the branch ref moved. It is a seam because its failure is the one
 	// outcome that reads apart from a refusal, and no fixture can make a bare reset fail.
@@ -127,6 +132,7 @@ func defaultJoins() joins {
 		reauthorizeLock:          lockWorktree,
 		mergeLane:                gate.LaneForCommit,
 		mergeReconcile:           reconcileMergeCheckout,
+		build:                    runbinary.Build,
 	}
 }
 

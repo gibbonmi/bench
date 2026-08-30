@@ -178,9 +178,10 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree path <target>  print one active owned worktree's absolute path
   bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]  run a child directly in an active owned worktree
   bench worktree show <target> <rev>:<path>  print one blob from a revision of an active owned worktree
+  bench worktree build <target>  build an active owned worktree's tree into its own dist/bench
   bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
   bench worktree merge --from <commit|target> <target>  merge a default-branch commit or a sibling's tip into an owned worktree
-  bench worktree --help      show exact list, path, exec, show, create, release, clean, reclaim, reauthorize, and merge grammar
+  bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, and merge grammar
   bash bin/bench.sh gate --fresh  run the current worktree's gate
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green

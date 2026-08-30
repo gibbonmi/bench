@@ -203,6 +203,16 @@ func TestTargetVerbsNameTheResolverReason(t *testing.T) {
 			if want := "bench worktree show: " + reason + "\nnext=" + next + "\n"; stderr.String() != want {
 				t.Errorf("show %q printed %q, want %q", target, stderr.String(), want)
 			}
+			stdout.Reset()
+			stderr.Reset()
+			// WF8: build shares the resolver and the printer, so a broken target reads the
+			// same way through it as through path, exec, and show.
+			if code := BuildCommand(root, Home(), []string{target}, &stdout, &stderr); code != 1 {
+				t.Fatalf("build %q exited %d, want 1: %s", target, code, stderr.String())
+			}
+			if want := "bench worktree build: " + reason + "\nnext=" + next + "\n"; stderr.String() != want {
+				t.Errorf("build %q printed %q, want %q", target, stderr.String(), want)
+			}
 		})
 	}
 }
@@ -215,7 +225,7 @@ func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
 	rewriteMarkerOwner(t, creation.Path, strings.Repeat("b", 32))
 	chdir(t, root)
 	target := creation.Assignment.Label
-	var stdout, pathErr, execErr, showErr bytes.Buffer
+	var stdout, pathErr, execErr, showErr, buildErr bytes.Buffer
 	if code := PathCommand(root, home, []string{target}, &stdout, &pathErr); code != 1 {
 		t.Fatalf("path exited %d: %s", code, pathErr.String())
 	}
@@ -227,14 +237,20 @@ func TestTargetVerbsShareOneRefusalPrinter(t *testing.T) {
 	if code := ShowCommand(root, home, []string{target, "HEAD:x"}, &stdout, &showErr); code != 1 {
 		t.Fatalf("show exited %d: %s", code, showErr.String())
 	}
+	stdout.Reset()
+	// WF8: build is the fourth verb through the one printer.
+	if code := BuildCommand(root, home, []string{target}, &stdout, &buildErr); code != 1 {
+		t.Fatalf("build exited %d: %s", code, buildErr.String())
+	}
 	pathTail, pathFound := strings.CutPrefix(pathErr.String(), "bench worktree path: ")
 	execTail, execFound := strings.CutPrefix(execErr.String(), "bench worktree exec: ")
 	showTail, showFound := strings.CutPrefix(showErr.String(), "bench worktree show: ")
-	if !pathFound || !execFound || !showFound {
-		t.Fatalf("verb prefixes missing: path=%q exec=%q show=%q", pathErr.String(), execErr.String(), showErr.String())
+	buildTail, buildFound := strings.CutPrefix(buildErr.String(), "bench worktree build: ")
+	if !pathFound || !execFound || !showFound || !buildFound {
+		t.Fatalf("verb prefixes missing: path=%q exec=%q show=%q build=%q", pathErr.String(), execErr.String(), showErr.String(), buildErr.String())
 	}
-	if pathTail != execTail || pathTail != showTail {
-		t.Errorf("path tail %q, exec tail %q, and show tail %q differ", pathTail, execTail, showTail)
+	if pathTail != execTail || pathTail != showTail || pathTail != buildTail {
+		t.Errorf("path tail %q, exec tail %q, show tail %q, and build tail %q differ", pathTail, execTail, showTail, buildTail)
 	}
 	if want := "owner marker does not match assignment " + creation.Assignment.ID + "\nnext=" + nextList + "\n"; pathTail != want {
 		t.Errorf("refusal tail = %q, want %q", pathTail, want)
