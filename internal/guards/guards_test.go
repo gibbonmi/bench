@@ -336,7 +336,7 @@ func TestRowsReportFollowOnManifestAndBothHarnessWires(t *testing.T) {
 	if err := os.MkdirAll(hooks, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	const script = "#!/usr/bin/env bash\n# name: block-bench-follow-on\n# boundary: PreToolUse:Bash\n# denies: Bench shell follow-ons\n# why: Bench responses are bounded, complete, and self-contained evidence\nexit 0\n"
+	const script = "#!/usr/bin/env bash\n# name: block-bench-follow-on\n# boundary: PreToolUse:Bash\n# denies: Bench shell follow-ons and a cd into the Bench worktree pool path\n# why: Bench responses are bounded, complete, and self-contained evidence\nexit 0\n"
 	if err := os.WriteFile(filepath.Join(hooks, "block-bench-follow-on.sh"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -356,7 +356,7 @@ func TestRowsReportFollowOnManifestAndBothHarnessWires(t *testing.T) {
 	}
 
 	rows := Rows(root)
-	want := []string{"block-bench-follow-on", "PreToolUse:Bash", "Bench shell follow-ons", "", "", "", "claude,codex"}
+	want := []string{"block-bench-follow-on", "PreToolUse:Bash", "Bench shell follow-ons and a cd into the Bench worktree pool path", "", "", "", "claude,codex"}
 	if len(rows) < 1 || !reflect.DeepEqual(rows[0], want) {
 		t.Fatalf("Rows = %#v, want first row %#v", rows, want)
 	}

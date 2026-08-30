@@ -751,3 +751,42 @@ func writeReferences(t *testing.T, references []struct{ file, lead, want string 
 	}
 	return root
 }
+
+// TestCraftTicketsPremiseCheckAnchorRedsOnRemoval holds the breakdown method's premise
+// check. A ticket author who implements a roadmap row's decided fix without reading the
+// code builds the row's mistake, so the rule stays in the skill. The sentence and the
+// diagnostic are written here independently of the registry.
+func TestCraftTicketsPremiseCheckAnchorRedsOnRemoval(t *testing.T) {
+	const (
+		skill   = ".agents/skills/bench-craft-tickets/SKILL.md"
+		section = "Draft the breakdown"
+		needle  = "A ticket that implements a roadmap row's decided fix first verifies the row's premise against the code. A premise the code contradicts is a reviewer decision, not a fix to implement as written."
+		want    = ".agents/skills/bench-craft-tickets/SKILL.md dropped the roadmap-row premise check from the breakdown method"
+	)
+
+	// evaluate writes one minimal subject. The section survives the break, so a red
+	// reports the missing sentence rather than a missing section.
+	evaluate := func(t *testing.T, present bool) []string {
+		t.Helper()
+		root := t.TempDir()
+		body := "# subject\n\n## " + section + "\n\n"
+		if present {
+			body += needle + "\n"
+		}
+		path := filepath.Join(root, filepath.FromSlash(skill))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	if diags := evaluate(t, true); slices.Contains(diags, want) {
+		t.Errorf("tree carrying the premise check raised %q", want)
+	}
+	if diags := evaluate(t, false); !slices.Contains(diags, want) {
+		t.Errorf("tree without the premise check = %v, want %q", diags, want)
+	}
+}

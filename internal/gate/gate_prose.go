@@ -6,15 +6,22 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/prose"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 const gateProseUsage = "usage: bench gate-prose <root> [--] [path...]"
+
+// gateProseFields is the pass table's schema, the shape `roadmap/FT270.md` decides for
+// this verb.
+var gateProseFields = []string{"path", "verdict"}
 
 // GateProseCommand is the `bench gate-prose <root> [--] [path...]` plumbing command. It
 // grades the named paths through the same per-subject grader the whole-tree prose check
 // composes, so the lane and the gate agree on one rule. Exit 0 is a clean list, 1 is a
 // list with findings printed to stdout, and 2 is a usage error: an unknown flag or an
-// omitted root.
+// omitted root. A pass states its verdict as a `prose[N]{path,verdict}` table, so a caller
+// tells a clean list from a list that graded nothing. The word `green` stays out of that
+// table: the lane composes this verb, and a lane pass is not a graded green.
 func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 	root, paths, ok := parseGateProseArgs(args)
 	if !ok {
@@ -23,6 +30,18 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	findings := prose.GradeNamed(root, paths)
 	if len(findings) == 0 {
+		rows := make([][]string, 0, len(paths))
+		for _, path := range paths {
+			rows = append(rows, []string{path, "pass"})
+		}
+		out, err := toon.Table("prose", gateProseFields, rows)
+		if err != nil {
+			// A path the encoder cannot carry leaves the verb no honest pass block, so it
+			// reports the refusal and exits red rather than forging one.
+			fmt.Fprintln(stdout, toon.RenderError(err))
+			return 1
+		}
+		fmt.Fprint(stdout, out)
 		return 0
 	}
 	for _, f := range findings {
