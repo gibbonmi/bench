@@ -715,3 +715,121 @@ func TestHeadBreakdownSanitizesAForeignHead(t *testing.T) {
 		t.Fatalf("HeadBreakdown = %q, want the control character removed", got)
 	}
 }
+
+// TestRecordCodecIsTheOneSourceOfTheLineLayout proves the writer and the reader share
+// one record codec: a head the writer composes reads back through the reader, and the
+// package states the field separator once, so no second call site knows where the head
+// sits.
+func TestRecordCodecIsTheOneSourceOfTheLineLayout(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	command := "sed -i s/a/b/ " + filepath.Join(pool, ownerID+"-"+knownID, "x")
+	if err := Record(command, root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	if got := heads(home, root, knownID); len(got) != 1 || got["sed"] != 1 {
+		t.Fatalf("heads = %v, want one record under %q", got, "sed")
+	}
+	source, err := os.ReadFile("census.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Count(string(source), `"\t"`); got != 1 {
+		t.Fatalf("the separator literal appears %d times in census.go, want one codec", got)
+	}
+}
+
+// TestHeadBreakdownEscapesTheGrammarDelimiters proves a foreign head cannot forge the
+// breakdown's own `,` and `=` grammar, and pins the order of the two renders: the
+// control escape runs first, so the delimiter escape adds an introducer that a
+// left-to-right reader recovers the head from.
+func TestHeadBreakdownEscapesTheGrammarDelimiters(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, head, want string
+	}{
+		{"a head that forges two entries", "sed=9,rm", `sed\=9\,rm=1`},
+		{"a head with a backslash and a delimiter", `a\,b`, `a\\\,b=1`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			home, root, _ := fixtureHome(t)
+			writeRecordFile(t, home, root, knownID, "t\t"+tc.head+"\n")
+			if got := HeadBreakdown(home, root, knownID); got != tc.want {
+				t.Fatalf("HeadBreakdown = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestHeadBreakdownKeepsThePlainShape proves the escape changes nothing a plain head
+// prints: the landing's evidence line reads as it did before.
+func TestHeadBreakdownKeepsThePlainShape(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	dir := filepath.Join(pool, ownerID+"-"+knownID)
+	for range 2 {
+		if err := Record("sed -i x "+filepath.Join(dir, "x"), root, home, fixedTime); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := Record("awk -f p "+filepath.Join(dir, "y"), root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	if got := HeadBreakdown(home, root, knownID); got != "sed=2,awk=1" {
+		t.Fatalf("HeadBreakdown = %q, want %q", got, "sed=2,awk=1")
+	}
+}
+
+// TestRecordNamesTheCommandAfterABareAssignment proves an assignment that holds the
+// pool path is never itself a head: the head is the next simple command that has a
+// command word.
+func TestRecordNamesTheCommandAfterABareAssignment(t *testing.T) {
+	t.Parallel()
+	home, root, pool := fixtureHome(t)
+	dir := filepath.Join(pool, ownerID+"-"+knownID)
+	command := "W=" + dir + `; git -C "$W" rev-parse HEAD`
+	if err := Record(command, root, home, fixedTime); err != nil {
+		t.Fatal(err)
+	}
+	got := records(t, home, root, knownID)
+	if len(got) != 1 {
+		t.Fatalf("records = %v, want one", got)
+	}
+	if head := strings.Split(got[0], "\t")[1]; head != "git rev-parse" {
+		t.Fatalf("record head = %q, want %q", head, "git rev-parse")
+	}
+}
+
+// TestRecordDegeneratesAnAssignmentOnlyText proves a text that runs no command at all
+// records the key of the assignment that carries the pool path, with the value dropped,
+// and never an unrelated co-assignment's key.
+func TestRecordDegeneratesAnAssignmentOnlyText(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name    string
+		command func(dir string) string
+	}{
+		{"one assignment alone", func(dir string) string { return "W=" + dir }},
+		{"an assignment between two others", func(dir string) string { return "X=1 W=" + dir + " Y=2" }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			home, root, pool := fixtureHome(t)
+			dir := filepath.Join(pool, ownerID+"-"+knownID)
+			if err := Record(tc.command(dir), root, home, fixedTime); err != nil {
+				t.Fatal(err)
+			}
+			got := records(t, home, root, knownID)
+			if len(got) != 1 {
+				t.Fatalf("records = %v, want one", got)
+			}
+			if head := strings.Split(got[0], "\t")[1]; head != "W=" {
+				t.Fatalf("record head = %q, want %q", head, "W=")
+			}
+			if breakdown := HeadBreakdown(home, root, knownID); breakdown != `W\==1` {
+				t.Fatalf("HeadBreakdown = %q, want %q", breakdown, `W\==1`)
+			}
+		})
+	}
+}
