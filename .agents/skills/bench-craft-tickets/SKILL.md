@@ -16,9 +16,9 @@ commit is the grading rule.
 
 ## Draft the breakdown
 
-Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any
-prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. A rewrite
-ticket is sized by the lines the delegate must read, not the lines it edits.
+Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. A rewrite ticket is sized by the lines the delegate must read, not the lines it edits.
+
+A ticket that implements a roadmap row's decided fix first verifies the row's premise against the code. A premise the code contradicts is a reviewer decision, not a fix to implement as written. The check reads the definition of every kind, state, or error the row names.
 
 Name every real blocker by sibling ticket file basename. A ticket with all blockers
 landed is on the **frontier**, and blockers order before consumers. A wide mechanical

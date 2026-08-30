@@ -49,18 +49,45 @@ func CommandFromEnvelope(data []byte) (string, error) {
 	return command, nil
 }
 
+// Side names where the refused operator sits relative to the Bench segment. The
+// reader repairs a different thing on each side, so the refusal sentence follows it.
+type Side uint8
+
+const (
+	// SideAfter is a control operator after the Bench segment, the default side.
+	SideAfter Side = iota
+	// SideBefore is a control operator before the Bench segment.
+	SideBefore
+	// SideRedirection is a redirection inside the Bench segment.
+	SideRedirection
+)
+
 // Verdict is the guard's decision for one command. Segment holds the Bench
-// segment's projected words, and Operator names the token that caused a refusal.
+// segment's projected words, Operator names the token that caused a refusal, and
+// Side names which side of the segment that token sits on.
 type Verdict struct {
 	Blocked  bool
 	Segment  []string
 	Operator string
+	Side     Side
 }
 
-// Message returns the refusal line: the fixed sentence, then the Bench segment and
-// the operator that caused the refusal.
+// Message returns the refusal line: the fixed prefix, the repair sentence for the
+// operator's side, then the Bench segment and the operator that caused the refusal.
 func (v Verdict) Message() string {
-	return BlockMessage() + " segment=" + strings.Join(v.Segment, " ") + " operator=" + v.Operator
+	return blockedPrefix + " " + repairSentence(v.Side) + " segment=" + strings.Join(v.Segment, " ") + " operator=" + v.Operator
+}
+
+// repairSentence names the one repair that removes the refused token.
+func repairSentence(side Side) string {
+	switch side {
+	case SideBefore:
+		return "Run the Bench command from the current directory; it resolves the worktree itself."
+	case SideRedirection:
+		return "Run the Bench command without a redirection."
+	default:
+		return followOnSentence
+	}
 }
 
 // Classify returns the verdict, the Bench segment's projected words, and the adjacent
@@ -88,7 +115,9 @@ func judge(stream shellcommand.Stream, resolver Resolver, outer bool) Verdict {
 			if outer && isExecHead(words, prefix.Index) {
 				return judgeExec(stream, index, words, resolver)
 			}
-			return Verdict{Blocked: hasOuterSyntax(stream), Segment: words, Operator: operatorFor(stream, index, false)}
+			blocked := refusal(stream, index, words, false)
+			blocked.Blocked = hasOuterSyntax(stream)
+			return blocked
 		}
 		if !outer || !isWrapper(words[prefix.Index]) {
 			continue
@@ -99,7 +128,7 @@ func judge(stream shellcommand.Stream, resolver Resolver, outer bool) Verdict {
 				continue
 			}
 			if hasOuterSyntax(stream) {
-				return Verdict{Blocked: true, Segment: words, Operator: operatorFor(stream, index, false)}
+				return refusal(stream, index, words, false)
 			}
 			if inner := judge(child, resolver, false); inner.Blocked {
 				return inner
@@ -114,26 +143,26 @@ func judge(stream shellcommand.Stream, resolver Resolver, outer bool) Verdict {
 // other than `;` or `&&` after it consumes the response, and a later Bench segment
 // makes two responses share one call.
 func judgeExec(stream shellcommand.Stream, index int, words []string, resolver Resolver) Verdict {
-	refusal := Verdict{Blocked: true, Segment: words, Operator: operatorFor(stream, index, true)}
+	refused := refusal(stream, index, words, true)
 	if index > 0 {
-		return refusal
+		return refused
 	}
 	span := stream.Commands[index]
 	for i := span.Start; i < span.End; i++ {
 		if stream.Tokens[i].Kind == shellcommand.Redirection && !shellcommand.IsHeredoc(stream.Tokens[i]) {
-			return refusal
+			return refused
 		}
 	}
 	if span.End < len(stream.Tokens) {
 		switch stream.Tokens[span.End].Text {
 		case ";", "&&":
 		default:
-			return refusal
+			return refused
 		}
 	}
 	for _, later := range stream.Commands[index+1:] {
 		if spanInvokesBench(shellcommand.ProjectCommandWords(stream.Tokens[later.Start:later.End]), resolver, true) {
-			return refusal
+			return refused
 		}
 	}
 	return Verdict{}
@@ -145,10 +174,11 @@ func isExecHead(words []string, index int) bool {
 	return index+2 < len(words) && words[index+1] == "worktree" && words[index+2] == "exec"
 }
 
-// operatorFor names the token adjacent to one segment, by the refusal's precedence.
-// The heredocAllowed flag marks a segment the exec exception covers: a heredoc there
-// is legal, so it never names the cause, and the next redirection does.
-func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) string {
+// operatorFor names the token adjacent to one segment, and the side it sits on, by the
+// refusal's precedence. The heredocAllowed flag marks a segment the exec exception
+// covers: a heredoc there is legal, so it never names the cause, and the next
+// redirection does.
+func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) (string, Side) {
 	span := stream.Commands[index]
 	tokens := stream.Tokens[span.Start:span.End]
 	for i := range tokens {
@@ -158,15 +188,53 @@ func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) str
 		if heredocAllowed && shellcommand.IsHeredoc(tokens[i]) {
 			continue
 		}
-		return shellcommand.RedirectionText(tokens, i)
+		return shellcommand.RedirectionText(tokens, i), SideRedirection
 	}
 	if span.Start > 0 && stream.Tokens[span.Start-1].Kind == shellcommand.ControlOperator {
-		return stream.Tokens[span.Start-1].Text
+		return stream.Tokens[span.Start-1].Text, SideBefore
 	}
 	if span.End < len(stream.Tokens) && stream.Tokens[span.End].Kind == shellcommand.ControlOperator {
-		return stream.Tokens[span.End].Text
+		return stream.Tokens[span.End].Text, SideAfter
+	}
+	return "", SideAfter
+}
+
+// refusal builds the verdict for one refused segment from the adjacent token.
+func refusal(stream shellcommand.Stream, index int, words []string, heredocAllowed bool) Verdict {
+	operator, side := operatorFor(stream, index, heredocAllowed)
+	return Verdict{Blocked: true, Segment: words, Operator: operator, Side: side}
+}
+
+// PoolCd names the pool path that a `cd` in command targets, or the empty string when
+// no simple command changes directory into the pool. The scan reads the command text
+// only: it never resolves a path, so an unexpanded variable and a relative target stay
+// allowed. A wrapper string is one word here, so a relative `cd` inside an exec child
+// stays allowed too.
+func PoolCd(command, pools string) string {
+	if pools == "" {
+		return ""
+	}
+	prefix := pools + string(filepath.Separator)
+	stream := shellcommand.Parse(command)
+	for _, span := range stream.Commands {
+		words := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
+		routine := shellcommand.ResolveRoutinePrefix(words)
+		if !routine.Executes || routine.Index >= len(words) || words[routine.Index] != "cd" {
+			continue
+		}
+		for _, argument := range words[routine.Index+1:] {
+			if strings.HasPrefix(argument, prefix) {
+				return argument
+			}
+		}
 	}
 	return ""
+}
+
+// PoolCdMessage returns the refusal line for a `cd` into the pool path. It names the one
+// command form a Bench worktree takes, and the target it read.
+func PoolCdMessage(target string) string {
+	return `BLOCKED: a Bench worktree runs through bench worktree exec "<label>" -- <command>; never cd into the pool path. target=` + target
 }
 
 // InvokesBench reports whether command invokes Bench, in a simple command or in a
@@ -256,6 +324,15 @@ func hasOuterSyntax(stream shellcommand.Stream) bool {
 	}
 	return false
 }
+
+// blockedPrefix opens every refusal, and followOnSentence is the repair for the
+// default side. BlockMessage joins them, so a caller that reads the exported text and
+// a caller that reads a verdict read one source.
+const (
+	blockedPrefix    = "BLOCKED: Bench response is bounded, complete, and self-contained."
+	followOnSentence = "Run the Bench command without a shell follow-on."
+)
+
 func BlockMessage() string {
-	return "BLOCKED: Bench response is bounded, complete, and self-contained. Run the Bench command without a shell follow-on."
+	return blockedPrefix + " " + followOnSentence
 }

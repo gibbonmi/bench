@@ -8,6 +8,10 @@ import (
 	"testing"
 )
 
+// blockedPrefixWant is the refusal prefix every side keeps, written here independently
+// of the production constant.
+const blockedPrefixWant = "BLOCKED: Bench response is bounded, complete, and self-contained."
+
 func TestClassifyFollowOns(t *testing.T) {
 	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(path string) (string, error) {
 		if path == "/work/kit-command" {
@@ -117,11 +121,77 @@ func TestClassifyNamesTheSegmentAndTheOperator(t *testing.T) {
 			continue
 		}
 		message := verdict.Message()
-		if !strings.HasPrefix(message, BlockMessage()) {
-			t.Errorf("%s: message %q does not start with the fixed sentence", tc.row, message)
+		if !strings.HasPrefix(message, blockedPrefixWant) {
+			t.Errorf("%s: message %q does not start with the fixed prefix", tc.row, message)
 		}
 		if !strings.HasSuffix(message, tc.want) {
 			t.Errorf("%s: message %q does not end with %q", tc.row, message, tc.want)
 		}
+	}
+}
+
+// TestClassifyNamesTheSideOfTheOperator proves the refusal names the side the operator
+// sits on. A leading operator is not a follow-on, so the sentence that tells the reader
+// to remove a follow-on points at nothing.
+func TestClassifyNamesTheSideOfTheOperator(t *testing.T) {
+	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+	const prefix = blockedPrefixWant
+	for _, tc := range []struct{ name, command, want string }{
+		{
+			name:    "leading operator",
+			command: "cd /tmp && bench gate",
+			want:    prefix + " Run the Bench command from the current directory; it resolves the worktree itself. segment=bench gate operator=&&",
+		},
+		{
+			name:    "trailing operator",
+			command: "bench gate && echo done",
+			want:    prefix + " Run the Bench command without a shell follow-on. segment=bench gate operator=&&",
+		},
+		{
+			name:    "redirection inside the span",
+			command: "bench gate 2>&1",
+			want:    prefix + " Run the Bench command without a redirection. segment=bench gate operator=2>&1",
+		},
+	} {
+		verdict := Classify(tc.command, resolver)
+		if !verdict.Blocked {
+			t.Errorf("%s: Classify(%q) allowed the call", tc.name, tc.command)
+			continue
+		}
+		if got := verdict.Message(); got != tc.want {
+			t.Errorf("%s: message = %q, want %q", tc.name, got, tc.want)
+		}
+		if !strings.HasPrefix(verdict.Message(), prefix) {
+			t.Errorf("%s: message %q does not start with the fixed prefix", tc.name, verdict.Message())
+		}
+	}
+}
+
+// TestPoolCdRefusesAnAbsolutePoolTarget drives the `cd` denial. A worktree runs through
+// `bench worktree exec`, so a `cd` into the pool path is the mistake the guard names. A
+// relative target inside a wrapper string stays allowed, because the guard reads text
+// only and never resolves a path.
+func TestPoolCdRefusesAnAbsolutePoolTarget(t *testing.T) {
+	const pools = "/home/agent/.bench/worktrees"
+	const assignment = pools + "/bench-123/abc-def"
+	for _, tc := range []struct{ name, command, want string }{
+		{"bare cd into the pool", "cd " + assignment, assignment},
+		{"cd into the pool then a follow-on", "cd " + assignment + " && go test ./...", assignment},
+		{"relative cd inside a wrapper string", "bench worktree exec \"x\" -- sh -c 'cd sub && go test ./...'", ""},
+		{"cd outside the pool", "cd /tmp", ""},
+		{"cd through an unexpanded variable", "cd \"$W\"", ""},
+	} {
+		if got := PoolCd(tc.command, pools); got != tc.want {
+			t.Errorf("%s: PoolCd(%q) = %q, want %q", tc.name, tc.command, got, tc.want)
+		}
+	}
+}
+
+// TestPoolCdMessageNamesTheTarget proves the refusal states the one command form and the
+// path it read.
+func TestPoolCdMessageNamesTheTarget(t *testing.T) {
+	const want = `BLOCKED: a Bench worktree runs through bench worktree exec "<label>" -- <command>; never cd into the pool path. target=/home/agent/.bench/worktrees/bench-123/abc-def`
+	if got := PoolCdMessage("/home/agent/.bench/worktrees/bench-123/abc-def"); got != want {
+		t.Errorf("PoolCdMessage = %q, want %q", got, want)
 	}
 }

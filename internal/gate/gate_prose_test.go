@@ -7,7 +7,26 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/toon"
 )
+
+// wantProseTable renders the pass table this verb owes for the named paths. The block
+// name, the field order, and the verdict cell are written here; the escaping derives
+// through the encoder that renders the real output, so a path the encoder quotes cannot
+// red the expectation for the wrong reason.
+func wantProseTable(t *testing.T, paths ...string) string {
+	t.Helper()
+	rows := make([][]string, 0, len(paths))
+	for _, path := range paths {
+		rows = append(rows, []string{path, "pass"})
+	}
+	out, err := toon.Table("prose", []string{"path", "verdict"}, rows)
+	if err != nil {
+		t.Fatalf("render the expected prose table: %v", err)
+	}
+	return out
+}
 
 // write puts a fixture at the repository-relative path rel under root and makes every
 // parent directory it needs.
@@ -52,9 +71,14 @@ func TestGateProseCommandFindsAnOverLongSentence(t *testing.T) {
 	if !strings.Contains(out, "line 1") {
 		t.Fatalf("stdout = %q, want it to name line 1", out)
 	}
+	if strings.Contains(out, "prose[") {
+		t.Fatalf("stdout = %q, want no pass table on a red list", out)
+	}
 }
 
-// TestGateProseCommandCleanList exits 0 on a clean named file.
+// TestGateProseCommandCleanList exits 0 on a clean named file and states its verdict as a
+// `prose[N]{path,verdict}` table, so a caller reads the pass rather than inferring it from
+// the exit code.
 func TestGateProseCommandCleanList(t *testing.T) {
 	root := t.TempDir()
 	write(t, root, ".bench/prose-exclusions", "")
@@ -66,10 +90,16 @@ func TestGateProseCommandCleanList(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
+	if want := wantProseTable(t, "docs/notes.md"); stdout.String() != want {
+		t.Fatalf("stdout = %q, want the pass table %q", stdout.String(), want)
+	}
+	if strings.Contains(stdout.String(), "green") {
+		t.Fatalf("stdout = %q, want no green token: the lane states that a pass is not a graded green", stdout.String())
+	}
 }
 
 // TestGateProseCommandEmptyPathList passes with no findings when the lane names no
-// Markdown.
+// Markdown, and its pass table carries no row.
 func TestGateProseCommandEmptyPathList(t *testing.T) {
 	root := t.TempDir()
 	write(t, root, ".bench/prose-exclusions", "")
@@ -79,6 +109,12 @@ func TestGateProseCommandEmptyPathList(t *testing.T) {
 
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	if want := wantProseTable(t); stdout.String() != want {
+		t.Fatalf("stdout = %q, want the empty pass table %q", stdout.String(), want)
+	}
+	if strings.Contains(stdout.String(), "green") {
+		t.Fatalf("stdout = %q, want no green token on an empty path list", stdout.String())
 	}
 }
 
