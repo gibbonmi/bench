@@ -1,23 +1,23 @@
 # Claude model scorecard
 
-Last incorporated landing: `worktree-native-forms` (`1925f8de`, 2026-08-30) —
-Fable/medium as orchestrator over six Opus ticket charges (four low, two
-medium) and three Opus repair charges (two low, one medium). Three Opus/medium
-review axes and two Opus/medium scoped re-reviews ran. Five ticket charges landed
-first-pass on behavior; the build charge stopped at an out-of-fence census
-ceiling. The review found 13 raw findings that collapsed to 4 repair targets,
-the first re-review opened two more, and the second was clean.
+Last incorporated landing: `path-aware-lane` (`fc3a4046`, 2026-08-30) —
+Fable/medium as orchestrator over five Opus ticket charges (one low, four
+medium) and one Opus/medium repair charge with one continuation. Three
+Opus/medium review axes and one Opus/medium scoped re-review ran. All five ticket charges
+landed first-pass on behavior. The review found 17 raw findings that collapsed
+to six repair targets and five reviewer decisions; the re-review found one
+citation defect.
 
-Thirty-six completed landings are recorded. Routing follows the harness-to-tier
+Thirty-seven completed landings are recorded. Routing follows the harness-to-tier
 binding.
 
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use |
 | --- | --- | --- | --- |
-| Fable / low–high | orchestrator, 15 landings + implementer, 9 charges + reviewer, 3 specs | On `worktree-native-forms` at medium effort it probed seven returned diffs at distinct sites and kinds, and every probe bit. It refuted the Coverage axis's worst finding with one code read before the pickup file. Its own pickup prose broke the prose lane on four sentences. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
+| Fable / low–high | orchestrator, 16 landings + implementer, 9 charges + reviewer, 3 specs | On `path-aware-lane` at medium effort it probed five returned diffs at distinct sites and kinds, and every probe bit. It refuted the Coverage axis's worst finding with two live runs. Its own review artifact broke the prose lane on four sentences, and two fence gaps reached preflight and the landing before it amended the spec. | Coordination of a parallel build and adversarial spec review; it implements nothing unless the reviewer names it |
 | Opus / high | implementer, latest 10 charges (Go-seam rewrites, lifecycle, guidance prose) | On `harness-capability-seam` the record package and the parity check each landed first-pass on behavior; the parity charge found and joined one fixture registry the ticket did not name. | High for process-lifecycle, cleanup-authority, destructive-command, anchored guidance prose, and foundational Go-seam rewrites |
-| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium + 10 low implementer charges, 34 review axes, 11 of 17 orchestrated landings | On `worktree-native-forms` eight of nine write charges landed first-pass on behavior with biting self-probes; the build charge stopped at the census ceiling outside its fence and reported the one edit. The create charge found a WF43/WF30 contradiction and kept the tree's rule. The three medium axes returned 13 cited findings with 4 repair targets, one worst finding was wrong on a variable the producer sets, and the two re-reviews caught a comment arity miss and a 4% flaky row. | Medium for gate and conformance logic, guidance prose, review axes, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate, with the red-first rule enforced |
+| Opus / medium, low | implementer, orchestrator, and reviewer combined; latest 10 medium + 10 low implementer charges, 37 review axes, 11 of 17 orchestrated landings | On `path-aware-lane` five of five ticket charges and the repair charge landed first-pass on behavior with biting self-probes; two charges reported an out-of-fence file instead of an edit. The three medium axes returned 17 cited findings with six repair targets, the Coverage axis's worst finding was refuted by live evidence, and the re-review caught a renamed test still cited by a coverage row. | Medium for gate and conformance logic, guidance prose, review axes, and orchestration; low for a ticket from an exact spec at a known seam under a covering gate, with the red-first rule enforced |
 | Sonnet / high | orchestrator, 1 landing | On `bounded-gate-output` it declared the line once for eleven charges, ran a fresh mutation probe distinct from each delegate's own before every commit, and caught a coverage-map amendment with no owning ticket file before it reached preflight. Two rounds of parallel charges on disjoint files landed with no collision. | New this landing; continue and compare after a second orchestrated build |
 | Sonnet / low–high | implementer, latest 10 of 70 ticket-sized charges | On `exec-census` three low charges landed first-pass on behavior; two restated a table or a join that an existing package owned and took one repair round each. One ran `cd` into the pool path against its charge and reported it. | Low for an exact-spec ticket at a known seam; medium or high for a behavior-preserving refactor; charges name the package that owns each shared fact |
 | Sonnet / high | reviewer, 3 axes on 13 landings + 12 scoped re-reviews | On `exec-census` the three axes returned one cited finding each, collapsed to two repair targets; the Coverage axis probed a two-id text with a throwaway test and found the undecided edge. The re-review verified both predicates and the delta. | Standing tier for the three review axes; medium or high where the charge names a concern to settle by measurement |
@@ -39,52 +39,41 @@ binding.
 - The top tier implements nothing, code or guidance prose, unless the reviewer names it
   for the run (reviewer direction, 2026-08-26).
 - Every subagent runs Opus at low or medium effort (reviewer direction, 2026-08-26).
-  Seven landings now run under this rule. On `worktree-native-forms` eight of nine
-  write charges landed first-pass, and the one stop was a fence gap, not a
-  capability gap. The rule stands.
+  Eight landings now run under this rule. On `path-aware-lane` five of five ticket
+  charges landed first-pass. The rule stands.
 - Opus at low and medium serves the review axes and the scoped re-reviews. On
-  `worktree-native-forms` the axes found a double ledger read, a replay ordering
-  defect, and a shadowed check name; the re-review found a flaky row.
-- A Coverage finding on an environment variable cites the producer that sets it. On
-  `worktree-native-forms` the axis's worst finding claimed `BENCH_KIT` unset while
-  `selectedRunEnvironment` sets it; the coordinator refuted it in one read.
-- A test expectation over a random id derives through the encoder that renders it.
-  On `worktree-native-forms` a hand-built TOON row reds when the id starts with `0`
-  and a digit.
-- A promise in a spec's edge inventory gets a coverage row. On `worktree-native-forms`
-  the replay promise shipped without a row and became repair C3.
-- A charge whose test binds `PATH` or the process environment names the serial-census
-  ceiling file in its fence. On `worktree-native-forms` the build charge stopped at
-  that pin.
-- A prose file runs `bench gate-prose` before `bench commit`. On
-  `worktree-native-forms` four sentences in the pickup artifacts refused.
-- A sibling repair worktree folds from the integration source only, or is created
-  before `main` moves.
-- The top tier reviews a spec and its tickets as one round.
-- A gate check on a derived or indirected value names both ends.
-- A Standards finding that deletes a test is a coverage question first.
-- A charge that names an exact verification command names one the coordinator has
-  run; otherwise the delegate reports wall time and proves no skip.
-- Route a ticket from the decision table at charge time, not from its story's line.
-- A charge names the package that owns each fact the ticket touches, and it names every
-  registry the family already appears in.
-- A charge whose collapse crosses its Writes list inside the spec fence gets a fence
-  extension in a continuation.
-- Independent tickets run in parallel in separate worktrees and fold through
-  `bench worktree merge`; dependent tickets share the retained integration source. At
-  most two delegates run tests at once, each at `-parallel 2`.
+  `path-aware-lane` the axes found an imprecise guidance claim, an unbound class
+  table, and four undecided prefix edges; the re-review found a stale test citation.
+- A Coverage finding on a hop the build ran live is refuted by that run before it
+  becomes a repair. On `path-aware-lane` two live runs of `bench test --check`
+  refuted the axis's worst finding.
+- A promise in a spec's edge inventory gets a coverage row. On `path-aware-lane` the
+  PL5 glob clause shipped without a row and became repair P1.
+- The review pickup file and every file a repair adds join the spec fence before the
+  next preflight or landing. On `path-aware-lane` the fence reddened twice.
+- A repair that renames a test updates every coverage row that cites it, because
+  `bench coverage --check` grades structure and not names.
+- The coordinator reads the census record before `bench worktree land`, because the
+  release deletes it.
+- A prose file runs `bench gate-prose` before `bench commit`. On `path-aware-lane`
+  four sentences in the pickup artifacts refused.
+- A sibling worktree folds from the integration source only, or is created before
+  `main` moves. Independent tickets run in parallel in separate worktrees and fold
+  through `bench worktree merge`. Dependent tickets share the retained source. At most
+  two delegates run tests at once, each at `-parallel 2`.
 - The coordinator probes every done-claim at a distinct site and kind. A row that
   admits one mutation keeps the delegate's red proof as its evidence.
 - A hand-verified acceptance row is not closed. A red is attributed or it is not resolved.
-- A charge names `bench worktree exec` as the only command form. It forbids a
-  background test run and a build into the worktree root.
+- A charge names `bench worktree exec` as the only command form and forbids a
+  background test run. It names the package that owns each fact and every registry
+  the family already appears in.
 - The coordinator takes a commit's path list from the checkout's status, never by hand.
   It never creates or cleans a worktree while a gate runs.
-- A spec amendment that adds acceptance rows during a repair pass needs a ticket
-  file before the next `bench preflight review`.
 - A repair-scoped re-review runs after every repair charge, because a repair induces
-  defects. On `worktree-native-forms` the first re-review opened two findings.
+  defects. On `path-aware-lane` it found the renamed-test citation.
 - The landing's `--base` is the assignment's recorded start or a descendant of it on
-  `main`.
+  `main`. The review preflight runs from inside the integration worktree.
+- A spec with an open review pickup is not retired by the build session; the reviewer
+  decides the pickup first.
 - A cross-family top-tier reviewer (codex Sol/high) stays available for a large new
   package; compare it against Opus axes on the next one.
