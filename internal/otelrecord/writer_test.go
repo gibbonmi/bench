@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
@@ -108,7 +109,7 @@ func TestWriterRefusesASymlinkedDirectory(t *testing.T) {
 // TestWriterReportsAnUnwritableDirectory covers OT11: the writer swallows nothing.
 func TestWriterReportsAnUnwritableDirectory(t *testing.T) {
 	if os.Geteuid() == 0 {
-		t.Skip("root ignores the directory mode")
+		capability.Capability(t, capability.Privilege, "root ignores the directory mode")
 	}
 	home := t.TempDir()
 	root := t.TempDir()
