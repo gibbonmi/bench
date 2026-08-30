@@ -397,6 +397,132 @@ func TestExplicitApplyBindsRecoveryActionsAndDiscardFlag(t *testing.T) {
 		requireTest(t, err == nil && string(body) == "secret\n", "discard flag drift changed ignored file: %q, %v", body, err)
 	})
 }
+
+// TestResumeSupersedesPlannedReceiptOverAbsentTarget proves a cleanup that stopped in
+// the window between its receipt write and its first checkpoint does not wedge the
+// retry once the target is gone. Phase planned means no side effect ran, so the retry
+// re-plans the current tree instead of finishing a cleanup that never started. A
+// preserved phase and a present target keep the refusal they already had.
+func TestResumeSupersedesPlannedReceiptOverAbsentTarget(t *testing.T) {
+	t.Parallel()
+	t.Run("absent target", func(t *testing.T) {
+		t.Parallel()
+		root, creation, _ := newPendingAssignment(t, "planned-absent")
+		fingerprint := crashedInCleanupReceiptWindow(t, root, creation.Path, false)
+		mustNoError(t, os.RemoveAll(creation.Path))
+		plan, err := resumeCleanupTransaction(root, creation.Path, fingerprint)
+		requireTest(t, err == nil, "resume over absent target = %#v, %v", plan, err)
+		receipt := cleanupReceiptAt(t, root, creation.Path, fingerprint)
+		requireTest(t, receipt.State == intent.ReceiptComplete && receipt.Phase == intent.ReceiptPhaseTerminal,
+			"resumed receipt = state %q phase %q", receipt.State, receipt.Phase)
+		replay, err := resumeCleanupTransaction(root, creation.Path, fingerprint)
+		requireTest(t, err == nil && replay.Fingerprint == fingerprint,
+			"replayed resume = %#v, %v", replay, err)
+	})
+	t.Run("absent target of a preserving plan", func(t *testing.T) {
+		t.Parallel()
+		root, creation, _ := newOwnedAssignment(t, "planned-absent-preserving")
+		mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("preserve me\n"), 0o644)
+		fingerprint := crashedInCleanupReceiptWindow(t, root, creation.Path, true)
+		mustNoError(t, os.RemoveAll(creation.Path))
+		plan, err := resumeCleanupTransaction(root, creation.Path, fingerprint)
+		requireTest(t, err == nil, "resume over absent preserving target = %#v, %v", plan, err)
+		receipt := cleanupReceiptAt(t, root, creation.Path, fingerprint)
+		requireTest(t, receipt.State == intent.ReceiptComplete && receipt.Phase == intent.ReceiptPhaseTerminal,
+			"resumed preserving receipt = state %q phase %q", receipt.State, receipt.Phase)
+		ledger, err := intent.Read(root)
+		mustNoError(t, err)
+		for _, current := range ledger.CleanupReceipts {
+			requireTest(t, current.State != intent.ReceiptInFlight, "superseded receipt survived: %#v", current)
+		}
+	})
+	t.Run("absent target at the preserved phase", func(t *testing.T) {
+		t.Parallel()
+		root, creation, _ := newOwnedAssignment(t, "preserved-absent")
+		mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("preserve me\n"), 0o644)
+		plan, err := PlanExplicit(root, creation.Path)
+		requireTest(t, err == nil && plan.preserves(), "preserving plan = %#v, %v", plan, err)
+		stop := errors.New("stop after the preserved checkpoint")
+		faulted := defaultJoins()
+		faulted.cleanupBoundary = func(step LifecycleStep) error {
+			if step == StepRecoveryRef {
+				return stop
+			}
+			return nil
+		}
+		_, err = applyExplicitWith(faulted, root, creation.Path, plan.Fingerprint, CleanupOptions{})
+		requireTest(t, errors.Is(err, stop), "preserved window fault = %v", err)
+		receipt := cleanupReceiptAt(t, root, creation.Path, plan.Fingerprint)
+		requireTest(t, receipt.State == intent.ReceiptInFlight && receipt.Phase == intent.ReceiptPhasePreserved,
+			"preserved receipt = state %q phase %q", receipt.State, receipt.Phase)
+		mustNoError(t, os.RemoveAll(creation.Path))
+		got, err := resumeCleanupTransaction(root, creation.Path, plan.Fingerprint)
+		requireTest(t, errors.Is(err, errStaleFingerprint) && got.Fingerprint == receipt.Fingerprint &&
+			got.Action == CleanupAction(receipt.Action) && got.Recovery == receipt.Recovery,
+			"preserved resume = %#v, %v; want the receipt's own plan refused", got, err)
+	})
+	// The explicit fingerprint is content-derived, so drift in the surviving tree is
+	// what makes the retry ask a different question than the receipt answers.
+	t.Run("present target", func(t *testing.T) {
+		t.Parallel()
+		root, creation, _ := newOwnedAssignment(t, "planned-present")
+		mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("preserve me\n"), 0o644)
+		fingerprint := crashedInCleanupReceiptWindow(t, root, creation.Path, true)
+		mustWrite(t, filepath.Join(creation.Path, "drift.txt"), []byte("drift\n"), 0o644)
+		got, err := ApplyExplicit(root, creation.Path, fingerprint)
+		requireTest(t, errors.Is(err, errStaleFingerprint), "present-target resume = %#v, %v", got, err)
+	})
+}
+
+// crashedInCleanupReceiptWindow drives one cleanup to the deterministic StepReceipt seam,
+// which is the window between the in-flight receipt write and the first checkpoint. It
+// returns the fingerprint that receipt carries. The explicit planner is the preserving
+// one; the automatic planner removes a pending assignment without preserving.
+func crashedInCleanupReceiptWindow(t *testing.T, root, target string, preserving bool) string {
+	t.Helper()
+	plan, err := PlanAutomatic(root, target)
+	if preserving {
+		plan, err = PlanExplicit(root, target)
+	}
+	requireTest(t, err == nil && plan.preserves() == preserving, "crash-window plan = %#v, %v", plan, err)
+	stop := errors.New("stop in the cleanup receipt window")
+	faulted := defaultJoins()
+	faulted.cleanupBoundary = func(step LifecycleStep) error {
+		if step == StepReceipt {
+			return stop
+		}
+		return nil
+	}
+	if preserving {
+		_, err = applyExplicitWith(faulted, root, target, plan.Fingerprint, CleanupOptions{})
+	} else {
+		_, err = applyAutomaticWithTerminal(faulted, root, target, nil, nil)
+	}
+	requireTest(t, errors.Is(err, stop), "cleanup receipt window fault = %v", err)
+	receipt := cleanupReceiptAt(t, root, target, plan.Fingerprint)
+	requireTest(t, receipt.State == intent.ReceiptInFlight && receipt.Phase == intent.ReceiptPhasePlanned,
+		"crash-window receipt = state %q phase %q", receipt.State, receipt.Phase)
+	return plan.Fingerprint
+}
+
+func cleanupReceiptAt(t *testing.T, root, target, fingerprint string) intent.CleanupReceipt {
+	t.Helper()
+	repo, canonical, err := cleanupIdentity(root, target)
+	mustNoError(t, err)
+	receipt, found, err := intent.CleanupReceiptFor(root, repo, cleanupOperation, canonical, fingerprint)
+	requireTest(t, err == nil && found, "cleanup receipt for %q found=%t error=%v", canonical, found, err)
+	return receipt
+}
+
+// resumeCleanupTransaction is the retry an abandon runs when it finds an in-flight
+// cleanup receipt over an absent target: the receipt's own fingerprint carried back into
+// the transaction behind the automatic planner.
+func resumeCleanupTransaction(root, target, fingerprint string) (CleanupPlan, error) {
+	j := defaultJoins()
+	planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, currentTime()) }
+	return applyCleanupTransaction(j, root, target, fingerprint, planner, nil, nil)
+}
+
 func newOwnedSubmoduleAssignment(t *testing.T, request string) (string, Creation, string) {
 	t.Helper()
 	root := newWorktreeRepo(t)

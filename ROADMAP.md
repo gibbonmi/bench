@@ -157,8 +157,6 @@ means the repository-controlled compliance assessment.
 
 **FT266 (LOW) — `craft-tdd` re-exec helpers return silently outside their role environment.**
 
-**FT182 (LOW) — a Planned-phase receipt over an absent target wedges the abandon retry.**
-
 **FT166 (LOW) — a sanctioned writer and parser validator for primary-local learnings and retros.**
 
 **FT168 (LOW) — focused iteration evidence: a fixture-selecting canary and mutation probe.**

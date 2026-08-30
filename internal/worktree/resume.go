@@ -135,12 +135,18 @@ func applyCleanupTransaction(j joins, root, path, fingerprint string, planner cl
 		return planFromReceipt(receipt), nil
 	}
 	if found && receipt.State == intent.ReceiptInFlight {
-		resumable, resumeErr := interruptedCleanupIsPastReplanning(root, receipt, target)
-		if resumeErr != nil {
-			return planFromReceipt(receipt), resumeErr
+		superseded, supersedeErr := interruptedCleanupNeverStarted(receipt, target)
+		if supersedeErr != nil {
+			return planFromReceipt(receipt), supersedeErr
 		}
-		if resumable {
-			return finishInterruptedExplicit(root, receipt, terminal, fault)
+		if !superseded {
+			resumable, resumeErr := interruptedCleanupIsPastReplanning(root, receipt, target)
+			if resumeErr != nil {
+				return planFromReceipt(receipt), resumeErr
+			}
+			if resumable {
+				return finishInterruptedExplicit(root, receipt, terminal, fault)
+			}
 		}
 	}
 	plan, err := planner(target)
@@ -210,6 +216,27 @@ func completeCleanupTransaction(root string, plan CleanupPlan, receipt intent.Cl
 		}
 	}
 	return planFromReceipt(receipt), nil
+}
+
+// interruptedCleanupNeverStarted reports whether an in-flight cleanup is one the retry
+// must supersede rather than finish. Phase planned is the window between the receipt
+// write and the first checkpoint, so no side effect ran. An absent target then leaves
+// nothing to preserve and nothing to remove, and the receipt describes a cleanup that
+// never started. Finishing such a receipt refuses the retry on a stale fingerprint
+// forever, so the retry re-plans the target instead and the fresh plan's terminal
+// receipt replaces this one.
+//
+// A phase past planned already spent something, and a target that still exists still
+// holds what the plan was decided from. Both keep the behavior they had.
+func interruptedCleanupNeverStarted(receipt intent.CleanupReceipt, target string) (bool, error) {
+	if receipt.Phase != intent.ReceiptPhasePlanned {
+		return false, nil
+	}
+	shape, err := ClassifyPathShape(target)
+	if err != nil {
+		return false, err
+	}
+	return shape == ShapeAbsent, nil
 }
 
 // interruptedCleanupIsPastReplanning reports whether an in-flight cleanup already spent
