@@ -104,16 +104,3 @@ information; the next session does not need to confirm it.
   and `bench <verb> --help` for a grammar. Note that `bench commands --brief`
   is a three-verb liveness probe, not an inventory. Never discover a verb by
   trying a bare unknown verb.
-
-<!-- bench:start -->
-## Bench
-
-Bench is installed in this repo.
-
-- The gate is the oracle: run `bench gate`; done means it exits zero.
-- Full operating guide: `.bench/BENCH.md`.
-- Portable commands: `.agents/commands/`.
-- Portable skills: `.agents/skills/`.
-- Project profile: `projects/<name>.md` when present.
-- The reviewer owns merge decisions.
-<!-- bench:end -->
