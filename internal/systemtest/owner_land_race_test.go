@@ -205,7 +205,7 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(inputs), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| LX1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `loser.txt`\n- `winner.txt`\n"
+	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| LX1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `loser.txt`\n- `winner.txt`\n- `reviews/x.md`\n"
 	if err := os.MkdirAll(filepath.Join(root, "specs", "x", "tickets"), 0o755); err != nil {
 		t.Fatal(err)
 	}

@@ -33,11 +33,6 @@ type BootstrapFailure struct {
 // never mistakes itself for "PF1".
 var tokenRe = regexp.MustCompile(`\b[A-Z]+[0-9]+\b`)
 
-// fencesEndRe bounds the `## Ownership fences` section the same way coverage.go
-// bounds `### Acceptance coverage map`: a level-2-or-deeper heading ends it. The
-// section itself is opened by an exact `## Ownership fences` line match.
-var fencesEndRe = regexp.MustCompile(`^#{2,} `)
-
 // Gather is the thin gatherer: it reads git, the exported diff-base
 // resolution, the spec resolver, the coverage parser, and tickets/
 // enumeration. It returns either an immutable Facts value ready for
@@ -121,6 +116,11 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		return Facts{}, &BootstrapFailure{"spec not staged", "spec " + slug + " has Status: " + status + " (want staged)"}
 	}
 
+	fenceEntries, _ := specref.FenceTokens(content)
+	if len(fenceEntries) == 0 {
+		return Facts{}, &BootstrapFailure{"ownership fences empty", "## Ownership fences declares no backticked entry outside parentheses"}
+	}
+
 	optIn, ids, violations, cerr := coverage.ParseSpec(resolved)
 	if cerr != nil {
 		return Facts{}, &BootstrapFailure{"coverage map not readable", cerr.Error()}
@@ -130,11 +130,6 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	}
 	if len(violations) > 0 {
 		return Facts{}, &BootstrapFailure{"coverage map invalid", strings.Join(violations, "; ")}
-	}
-
-	fenceEntries := fenceTokens(content)
-	if len(fenceEntries) == 0 {
-		return Facts{}, &BootstrapFailure{"ownership fences empty", "## Ownership fences declares no backticked entry outside parentheses"}
 	}
 
 	tokens, ticketsDirExists, ticketErr := gatherTicketTokens(filepath.Join(filepath.Dir(resolved), "tickets"), mode)
@@ -257,74 +252,6 @@ func specTag(ids []string) string {
 		return ""
 	}
 	return tagOf(ids[0])
-}
-
-// fenceTokens extracts every backticked token in the `## Ownership fences`
-// section that is not inside parentheses; parenthetical prose is
-// annotation, never authorization.
-//
-// Paren depth and backtick state carry across line boundaries. A
-// parenthetical that opens on one line and closes on a later one still
-// shields every token inside it. Depth returns to zero once it closes, so
-// a later real entry authorizes normally.
-func fenceTokens(content []byte) []string {
-	var tokens []string
-	inSection := false
-	depth := 0
-	inTick := false
-	depthAtOpen := 0
-	var cur strings.Builder
-	for _, raw := range strings.Split(string(content), "\n") {
-		line := strings.TrimSuffix(raw, "\r")
-		if strings.TrimSpace(line) == "## Ownership fences" {
-			inSection = true
-			continue
-		}
-		if inSection && fencesEndRe.MatchString(line) {
-			inSection = false
-		}
-		if inSection {
-			fenceTokensInLine(line, &depth, &inTick, &depthAtOpen, &cur, &tokens)
-		}
-	}
-	return tokens
-}
-
-// fenceTokensInLine is one line's pass through the fence-section state
-// machine. Paren depth, backtick state, and the token under construction
-// are threaded in by pointer. The caller carries them across every line
-// of the section this way.
-//
-// A backtick-quoted token is captured into tokens only when the depth at
-// the moment its opening backtick appeared was zero. Inside an open
-// paren, whether opened on this line or an earlier one, a token never
-// authorizes.
-func fenceTokensInLine(line string, depth *int, inTick *bool, depthAtOpen *int, cur *strings.Builder, tokens *[]string) {
-	for _, r := range line {
-		switch r {
-		case '(':
-			*depth++
-		case ')':
-			if *depth > 0 {
-				*depth--
-			}
-		case '`':
-			if *inTick {
-				if *depthAtOpen == 0 {
-					*tokens = append(*tokens, cur.String())
-				}
-				cur.Reset()
-				*inTick = false
-			} else {
-				*inTick = true
-				*depthAtOpen = *depth
-			}
-		default:
-			if *inTick {
-				cur.WriteRune(r)
-			}
-		}
-	}
 }
 
 // gatherTicketTokens enumerates specs/<slug>/tickets/, recursing into

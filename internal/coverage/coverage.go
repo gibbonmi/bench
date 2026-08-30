@@ -167,6 +167,11 @@ type parsed struct {
 	storyNums  map[int]bool
 	notCovered map[int]string
 	dataRows   []dataRow
+	// The spec's `## Ownership fences` tokens, read through internal/spec's one fence
+	// parser. fencesDeclared separates a spec that opens the section from one that
+	// never declares it; only the first is graded for the review pickup.
+	fences         []string
+	fencesDeclared bool
 }
 
 // projection is the descriptor Rows reads cells through. A header matching no
@@ -182,6 +187,7 @@ func (p parsed) projection() schema {
 
 func parse(content []byte) parsed {
 	var p parsed
+	p.fences, p.fencesDeclared = specref.FenceTokens(content)
 	inStories, inMap := false, false
 	for _, raw := range strings.Split(string(content), "\n") {
 		line := strings.TrimSuffix(raw, "\r")
@@ -485,7 +491,7 @@ func ParseSpec(path string) (optIn bool, ids []string, violations []string, err 
 		return false, nil, nil, err
 	}
 	p := parse(content)
-	return p.sch.optIn(), rowIDs(p), Check(p), nil
+	return p.sch.optIn(), rowIDs(p), CheckFiles(p, path), nil
 }
 
 // Command implements `bench coverage [--check] <spec.md | slug>`.
@@ -517,7 +523,7 @@ func Command(args []string) (string, int) {
 	spec = filepath.ToSlash(specref.RelTo(base, resolved))
 	p := parse(content)
 	if check {
-		violations := Check(p)
+		violations := CheckFiles(p, resolved)
 		if len(violations) == 0 {
 			// A pass is always a definitive one-line result, never silence, so "nothing to
 			// validate" is never mistaken for "nothing printed by accident." Check stays
@@ -543,7 +549,7 @@ func Command(args []string) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	b.WriteString(tbl)
-	violations := Check(p)
+	violations := CheckFiles(p, resolved)
 	rows := Rows(p)
 	actions := make([]axi.Action, 0, len(rows))
 	if len(rows) > 0 && len(violations) > 0 {

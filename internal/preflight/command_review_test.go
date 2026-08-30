@@ -115,7 +115,7 @@ func TestCommandFencePrefixBoundary(t *testing.T) {
 	body := "# boundary\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | catches z |\n\n" +
-		"## Ownership fences\n\n- `internal/git`\n"
+		"## Ownership fences\n\n- `internal/git`\n- `reviews/boundary.md`\n"
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
 	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1.\n")
 	runGit(t, "add", ".")

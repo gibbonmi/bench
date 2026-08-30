@@ -1,7 +1,6 @@
 package preflight
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -10,32 +9,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/intent"
 )
-
-// TestFenceTokensTrailingNewlineParity is PF17's fenceTokens half, made
-// real at the gatherer seam itself. It replaces the tautological
-// Decide(x)==Decide(x) it used to stand in for. A `## Ownership fences`
-// section whose final line lacks a trailing newline parses to the same
-// token slice as its terminated form.
-//
-// fenceTokens splits on "\n" directly, so the unterminated last element
-// from strings.Split still carries its content. A scanner keyed on a
-// trailing "\n" per token instead would drop it.
-func TestFenceTokensTrailingNewlineParity(t *testing.T) {
-	terminated := []byte("## Ownership fences\n\n- `internal/example/`\n")
-	unterminated := bytes.TrimSuffix(terminated, []byte("\n"))
-	if bytes.Equal(terminated, unterminated) {
-		t.Fatal("fixture invalid: terminated fixture already lacks a trailing newline")
-	}
-
-	got := fenceTokens(unterminated)
-	want := fenceTokens(terminated)
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("fenceTokens(unterminated) = %#v, want %#v (same as terminated)", got, want)
-	}
-	if !reflect.DeepEqual(want, []string{"internal/example/"}) {
-		t.Fatalf("fixture invalid: terminated form parsed to %#v, want [\"internal/example/\"]", want)
-	}
-}
 
 // TestTicketTokenScanTrailingNewlineParity is PF17's ticket-token-scan
 // half, made real at the gatherer seam itself. A ticket file whose only
