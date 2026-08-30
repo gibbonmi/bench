@@ -113,7 +113,7 @@ means the repository-controlled compliance assessment.
 
 **FT270 (LOW) — `bench test` names its checks, prints every finding, and runs the system suite.**
 
-**FT271 (LOW) — the landing prints the census verb-head breakdown before it drops the records.**
+**FT271 (LOW, decision required) — census-heads residuals: one record parser, and delimiter-safe head evidence.**
 
 **FT272 (LOW) — `bench status` routes a tickets-only spec folder to a grammar `bench commit` refuses.**
 
@@ -124,6 +124,8 @@ means the repository-controlled compliance assessment.
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
 **FT279 (LOW, decision required) — `bench link` refuses the kit source checkout.**
+
+**FT280 (LOW, decision required) — a Bench-owned worktree tip projection replaces raw `git rev-parse` in the landing pin.**
 
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
@@ -323,6 +325,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. Light path — FT271: `bench worktree land` prints the census verb-head breakdown before it drops the records.
-2. Light path — FT133: `bench coverage --check` resolves each cited test name and names the review pickup as a fence member.
-3. `/bench-write-spec` — FT274: specify Bench-owned FT231 measures.
+1. Light path — FT133: `bench coverage --check` resolves each cited test name and names the review pickup as a fence member.
+2. `/bench-write-spec` — FT274: specify Bench-owned FT231 measures.
+3. Reviewer decision — FT271 census-heads residuals, and the FT280 tip-projection surface.
