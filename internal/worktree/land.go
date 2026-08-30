@@ -89,7 +89,7 @@ type joins struct {
 	// mergeLane resolves the fast lane the merge's composed tree is graded under. It is a
 	// seam because the resolution reads the kit root out of the process environment, and a
 	// fixture that bound that environment would leave the package's parallel set.
-	mergeLane func(string) ([]gate.Phase, string, error)
+	mergeLane func(string) (*gate.Lane, error)
 	// build authors one executable from a worktree's own tree. It is a seam because the
 	// default reaches a build script and a Go toolchain, and a fixture for that pair
 	// would make every output row wait on a real compile.

@@ -300,15 +300,15 @@ func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned
 // `bench commit` resolves it, but for the target worktree. A root with no declared lane
 // keeps the whole-project gate.
 func mergeOwner(j joins, target, previous string) (landing.Owner, error) {
-	checks, kit, err := j.mergeLane(target)
+	lane, err := j.mergeLane(target)
 	if err != nil {
 		return landing.Owner{}, err
 	}
-	if checks == nil {
+	if lane == nil {
 		return landing.New(), nil
 	}
-	// The previous tip, not a path list, is what the authority needs: it grades the
-	// composed tree it already holds, so the verb never composes a second time to learn
-	// which prose the merge brought in.
-	return landing.NewLane(authorization.LaneAuthority{Checks: checks, Kit: kit, PreviousTip: previous}), nil
+	// The previous tip, not a path list, is what the authority needs: it derives the
+	// composed tree's change list itself, so the verb never composes a second time to
+	// learn which prose the merge brought in.
+	return landing.NewLane(authorization.LaneAuthority{Checks: lane.Checks, Kit: lane.Kit, Base: previous}), nil
 }

@@ -75,35 +75,22 @@ func BenchkitLane(root, kit string) []Phase {
 	}
 }
 
-// LaneForCommit resolves the lane a worktree commit at root runs, and the source root
-// the lane's Bench-owned checks are built from. It applies the gate's own kit-root
-// selection, so a caller outside this package asks the lane question once. The source
-// root is empty when the graded root is the kit root itself, which selects the private
-// checkout of the composed tree: the kit grades with its own code.
-func LaneForCommit(root string) ([]Phase, string, error) {
-	kit := kitRoot(root)
-	checks, err := LaneFor(root, kit)
-	if err != nil || checks == nil || sameDirectory(root, kit) {
-		return checks, "", err
-	}
-	return checks, kit, nil
-}
-
 // LaneRequest is one lane run. Root is the repository whose Git dir receives the record
 // and whose object store holds Tree. Tree is the composed snapshot the lane grades. Lane
 // names the lane in its record. Checks is the declared check list, resolved through
-// LaneFor. NamedMarkdown is the path list the prose placeholder resolves to. Kit is the
+// LaneFor. Changes is the composed change list the prose placeholder resolves from. Kit
+// is the
 // source root the run binary is built from; empty selects the private checkout, which is
 // the composed tree itself.
 type LaneRequest struct {
-	Root          string
-	Kit           string
-	Tree          string
-	Lane          string
-	Checks        []Phase
-	NamedMarkdown []string
-	Stdout        io.Writer
-	Stderr        io.Writer
+	Root    string
+	Kit     string
+	Tree    string
+	Lane    string
+	Checks  []Phase
+	Changes []ComposedChange
+	Stdout  io.Writer
+	Stderr  io.Writer
 }
 
 // LaneResult is what one lane run decided. Outcome is "pass" or "fail". Check names the
@@ -152,7 +139,7 @@ func RunLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		defer holder.Release()
 	}
 
-	checks := resolveLane(req.Checks, req.Root, checkout, req.NamedMarkdown)
+	checks := resolveLane(req.Checks, req.Root, checkout, proseSubject(req.Changes))
 	runBinary, checks, closeSelection, err := selectLaneRunBinary(ctx, req, checkout, artifacts.Root(), checks)
 	if err != nil {
 		return LaneResult{}, err

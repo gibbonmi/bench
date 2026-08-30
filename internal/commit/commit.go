@@ -71,7 +71,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	// The lane is resolved before anything is graded. A declared lane replaces the
 	// whole-project gate for this commit; a malformed declaration refuses the run and
 	// names the defect, because a lane nobody can read grades nothing.
-	lane, laneKit, laneErr := gate.LaneForCommit(root)
+	lane, laneErr := gate.LaneForCommit(root)
 	if laneErr != nil {
 		fmt.Fprintf(stderr, "error: %v\n", laneErr)
 		return 1
@@ -93,7 +93,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	owner := landing.New()
 	if lane != nil {
 		owner = landing.NewLane(authorization.LaneAuthority{
-			Checks: lane, Kit: laneKit, NamedMarkdown: namedMarkdown(named),
+			Checks: lane.Checks, Kit: lane.Kit, Base: strings.TrimSpace(string(expectedBytes)),
 		})
 	}
 	if dryRun {
@@ -132,19 +132,6 @@ func Command(args []string, stdout, stderr io.Writer) int {
 // commit exists and the checkout does not match it. The record uses the landing verb's
 // name{key=value,...} grammar, and its exit code separates this outcome from a refusal
 // that published nothing.
-// namedMarkdown is the lane prose check's subject: the Markdown among the named paths.
-// The check itself is declared, so an empty list still runs it; only its subject follows
-// the commit.
-func namedMarkdown(named []string) []string {
-	var markdown []string
-	for _, path := range named {
-		if strings.HasSuffix(path, ".md") {
-			markdown = append(markdown, path)
-		}
-	}
-	return markdown
-}
-
 func publicationRemainder(stdout io.Writer, remainder *landing.PublishedUnreconciledError) int {
 	fmt.Fprintf(stdout, "committed{published_commit=%s,path=%s,next=%s}\n",
 		remainder.Commit, sanitize.Controls(remainder.Path), restoreNext(remainder.Commit, remainder.Paths))
