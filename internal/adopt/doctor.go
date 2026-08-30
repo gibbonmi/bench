@@ -242,8 +242,9 @@ func doctorReport(stdout io.Writer, version string) int {
 // and returns whether the row is red. git does not clone hooks, so a fresh clone silently
 // drops the default-branch backstop; this catches that the next time doctor runs. A stale
 // bench-managed hook is repaired by bench doctor --fix; an absent, foreign, or diverted hook
-// is left untouched and points to bench link instead. A red row makes doctor exit 1 even when
-// the shim is healthy.
+// is left untouched and points to bench link instead. In the kit source checkout bench link
+// is not a remedy at all, so an absent hook names bench doctor --fix, which installs it
+// there. A red row makes doctor exit 1 even when the shim is healthy.
 func reportPrePush(stdout io.Writer) bool {
 	root, err := git.Root()
 	if err != nil {
@@ -263,9 +264,35 @@ func reportPrePush(stdout io.Writer) bool {
 	case PrePushDiverted:
 		fmt.Fprintf(stdout, "  pre-push: diverted by core.hooksPath to %s with no bench-managed hook - run bench link\n", health.Path)
 	default: // PrePushAbsent
-		fmt.Fprintf(stdout, "  pre-push: absent at %s - a fresh clone drops it (git does not clone hooks); run bench link\n", health.Path)
+		remedy := "run bench link"
+		if kitSourceCheckout(root) {
+			remedy = "run bench doctor --fix"
+		}
+		fmt.Fprintf(stdout, "  pre-push: absent at %s - a fresh clone drops it (git does not clone hooks); %s\n", health.Path, remedy)
 	}
 	return true
+}
+
+// kitSourceCheckout reports whether root is the kit's own source tree. The kit repo is
+// where the managed AGENTS.md block and the bin/bench.sh launcher are authored, so it
+// never carries the consumer-side copy of either, and a row that sent its reader to bench
+// link would name a remedy that breaks the shim route and the land route. A consumer repo
+// never satisfies the predicate, because its kit resolves to a package or cache directory
+// outside the repository. Both paths resolve through symlinks first, so a repository
+// reached by one spelling and a BENCH_KIT set to another still match.
+func kitSourceCheckout(root string) bool {
+	kit := kitDir()
+	if root == "" || kit == "" {
+		return false
+	}
+	return resolvedPath(root) == resolvedPath(kit)
+}
+
+func resolvedPath(path string) string {
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		return resolved
+	}
+	return filepath.Clean(path)
 }
 
 func printSkewWarning(stdout io.Writer, version string) {
@@ -394,6 +421,17 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 	case PrePushForeign:
 		fmt.Fprintf(stderr, "  refusing: %s exists and is not a bench-managed pre-push; left unchanged\n", health.Path)
 		return 1
+	case PrePushAbsent:
+		// Only in the kit source checkout, where the absent-hook row names this fix because
+		// bench link is not a remedy there. Elsewhere an absent hook stays bench link's, so
+		// the fix does not silently take over a route the link transaction owns.
+		if !kitSourceCheckout(root) {
+			return 0
+		}
+		if err := installGitHook(root, stderr); err != nil {
+			return 1
+		}
+		fmt.Fprintf(stdout, "  installed pre-push at %s\n", health.Path)
 	}
 	return 0
 }

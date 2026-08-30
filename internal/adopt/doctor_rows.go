@@ -65,6 +65,9 @@ func reportDoctorRows(stdout io.Writer) bool {
 }
 
 func evalAgentsRow(root string) (bool, string) {
+	if kitSourceCheckout(root) {
+		return true, "kit source checkout - AGENTS.md is the source agreement; no managed block applies"
+	}
 	path := filepath.Join(root, "AGENTS.md")
 	// A FIFO/socket/device must never be opened for read - see isSpecialFile's doc
 	// comment. Route it to a red row instead of a hang, same posture as the link
@@ -150,6 +153,9 @@ func evalProfileRow(root string) (bool, string) {
 }
 
 func evalRepoLocalBenchRow(root string) (bool, string) {
+	if kitSourceCheckout(root) {
+		return true, "kit source checkout - the launcher is bin/bench.sh; no .bench/bin copy applies"
+	}
 	path := filepath.Join(root, ".bench", "bin", "bench.sh")
 	return evalExecutableRow(path, ".bench/bin/bench.sh", "repo-local bench resolvable at .bench/bin/bench.sh", "run bench link")
 }
