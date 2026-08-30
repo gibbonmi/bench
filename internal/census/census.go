@@ -51,7 +51,34 @@ func recordWith(command, root, home string, now time.Time, resolver benchguard.R
 	if head == "" {
 		return nil
 	}
-	return write(Dir(home, root), id, now.UTC().Format(time.RFC3339)+"\t"+sanitize.Controls(head)+"\n")
+	return write(Dir(home, root), id, composeRecord(now.UTC().Format(time.RFC3339), head))
+}
+
+// recordSeparator divides a record line's two fields.
+const recordSeparator = "\t"
+
+// composeRecord renders one record line: the time, the separator, the head, and the
+// newline that closes the record. The head passes through sanitize.Controls here,
+// because a raw tab or newline in it would forge a second field or a second record.
+// This function and parseRecord are the one source of the line's layout, so no other
+// call site states where the head sits.
+func composeRecord(timestamp, head string) string {
+	return timestamp + recordSeparator + sanitize.Controls(head) + "\n"
+}
+
+// parseRecord returns the head one record line carries. The head is the second field,
+// and a later field is not part of it. A line with no separator, and a line whose head
+// field is empty, carry no head at all; only a foreign writer makes either.
+func parseRecord(line string) (string, bool) {
+	_, rest, ok := strings.Cut(line, recordSeparator)
+	if !ok {
+		return "", false
+	}
+	head, _, _ := strings.Cut(rest, recordSeparator)
+	if head == "" {
+		return "", false
+	}
+	return head, true
 }
 
 // assignment returns the assignment id of the first pool path in the raw command text.
@@ -83,13 +110,17 @@ func firstSegment(text string) string {
 // heredoc body, falls back to the first command's resolved head.
 func verbHead(command, prefix string) string {
 	stream := shellcommand.Parse(command)
-	first := ""
+	commands := make([][]string, 0, len(stream.Commands))
 	for _, span := range stream.Commands {
 		words := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
 		if len(words) == 0 {
 			continue
 		}
-		head := resolvedHead(words)
+		commands = append(commands, words)
+	}
+	first := ""
+	for index, words := range commands {
+		head := headAt(commands, index, prefix)
 		if first == "" {
 			first = head
 		}
@@ -102,11 +133,63 @@ func verbHead(command, prefix string) string {
 	return first
 }
 
+// headAt names the executable the simple command at index runs. A command of only
+// assignments runs none of its own, so the head comes from the next command in the same
+// text that has a command word; the assignment text itself is never a head, because it
+// names a variable and its operand rather than a verb. A text whose commands are all
+// assignments has no executable at all, and the head degenerates to a key.
+func headAt(commands [][]string, index int, prefix string) string {
+	for i := index; i < len(commands); i++ {
+		if !onlyAssignments(commands[i]) {
+			return resolvedHead(commands[i])
+		}
+	}
+	return degenerateHead(commands[index], prefix)
+}
+
+// onlyAssignments reports whether a simple command's words set variables and run
+// nothing. ResolveRoutinePrefix cannot answer this alone, because it also runs off the
+// end of a command whose last word is a routine prefix such as a bare `env`.
+func onlyAssignments(words []string) bool {
+	for _, word := range words {
+		if !shellcommand.IsAssignment(word) {
+			return false
+		}
+	}
+	return len(words) > 0
+}
+
+// degenerateHead names an assignment-only text by the key it assigns, with the `=` kept
+// and the value dropped, such as `W=`. The key of the assignment whose value carries the
+// pool path is the one recorded, because an unrelated co-assignment says nothing about
+// the call. The value stays out, because the record holds a head and never an operand.
+func degenerateHead(words []string, prefix string) string {
+	chosen := ""
+	for _, word := range words {
+		if !shellcommand.IsAssignment(word) {
+			continue
+		}
+		if chosen == "" {
+			chosen = word
+		}
+		if strings.Contains(word, prefix) {
+			chosen = word
+			break
+		}
+	}
+	if chosen == "" {
+		return ""
+	}
+	key, _, _ := strings.Cut(chosen, "=")
+	return key + "="
+}
+
 // resolvedHead names the executable a simple command's words actually run, stepping
 // over the routine prefixes (an assignment, `env`, `timeout`, `xargs`) that would
 // otherwise be recorded in the verb's place. A `git` head also carries the first
 // subcommand word, because a bare `git` head hides which verb the drain should
-// propose.
+// propose. The caller filters an assignment-only command out first, so the fallback to
+// the first word here answers a prefix that runs off the end, such as a bare `env`.
 func resolvedHead(words []string) string {
 	prefix := shellcommand.ResolveRoutinePrefix(words)
 	index := prefix.Index
@@ -183,8 +266,9 @@ func HeadBreakdown(home, root, assignment string) string {
 }
 
 // heads returns the number of records each verb head holds in one assignment's file.
-// The head is the record line's second tab field, which is where the writer puts it. A
-// line with no head, which only a foreign writer makes, counts under no head.
+// The head comes from parseRecord, the same codec the writer composes with, so the two
+// ends never disagree on where the head sits. A line with no head, which only a foreign
+// writer makes, counts under no head.
 func heads(home, root, assignment string) map[string]int {
 	counts := map[string]int{}
 	text, ok := readRecords(Dir(home, root), assignment)
@@ -192,11 +276,11 @@ func heads(home, root, assignment string) map[string]int {
 		return counts
 	}
 	for _, line := range recordLines(text) {
-		fields := strings.Split(line, "\t")
-		if len(fields) < 2 || fields[1] == "" {
+		head, ok := parseRecord(line)
+		if !ok {
 			continue
 		}
-		counts[fields[1]]++
+		counts[head]++
 	}
 	return counts
 }
@@ -214,10 +298,20 @@ func renderHeads(counts map[string]int) string {
 	})
 	parts := make([]string, 0, len(names))
 	for _, name := range names {
-		parts = append(parts, fmt.Sprintf("%s=%d", sanitize.Controls(name), counts[name]))
+		parts = append(parts, fmt.Sprintf("%s=%d", escapeDelimiters(sanitize.Controls(name)), counts[name]))
 	}
 	return strings.Join(parts, ",")
 }
+
+// escapeDelimiters backslash-escapes the two characters the breakdown line uses as its
+// own grammar. sanitize.Controls runs first and this escape second, never the other way
+// around: Controls has already doubled every literal backslash by then, so each
+// backslash this step adds is an escape introducer and a left-to-right reader recovers
+// the head exactly. The reverse order doubles the added backslash, and the head forges a
+// delimiter again.
+var delimiterEscaper = strings.NewReplacer(",", `\,`, "=", `\=`)
+
+func escapeDelimiters(head string) string { return delimiterEscaper.Replace(head) }
 
 // readRecords returns one assignment's record text under dir. Only a regular file is
 // read: a directory, a symlink, a FIFO, or a device at the record's name is foreign,
