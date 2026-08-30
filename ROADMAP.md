@@ -95,7 +95,7 @@ means the repository-controlled compliance assessment.
 
 **FT244 (LOW) — a standard scratch directory for worktree runs.**
 
-**FT215 (MEDIUM) — `bench commit` uses a path-aware fast lane before the full gate.**
+**FT215 (MEDIUM, decision required) — the path-aware lane's open edges: the empty-diff merge, the real-binary hop, and the unknown-path cost.**
 
 **FT261 (MEDIUM, decision required) — preflight review classifies an in-progress untracked spec folder without blocking ticket slicing.**
 
@@ -123,6 +123,8 @@ means the repository-controlled compliance assessment.
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
+**FT279 (LOW, decision required) — `bench link` refuses the kit source checkout.**
+
 **FT218 (LOW) — named git readers instead of learned CLI flags.**
 
 **FT219 (LOW) — `/bench-deepen` refreshes a ready map's frontier to current state before handoff.**
@@ -147,9 +149,7 @@ means the repository-controlled compliance assessment.
 
 **FT200 (MEDIUM, decision required) — make preflight mechanical at the landing chokepoint.**
 
-**FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set without weakening its ownership fence.**
-
-**FT263 (MEDIUM, decision required) — `bench commit` has one explicit `MERGE_HEAD` contract.**
+**FT258 (MEDIUM, decision required) — `bench commit` derives a complete change set and has one explicit `MERGE_HEAD` contract, without weakening its ownership fence.**
 
 **FT264 (MEDIUM, decision required) — Go build-cache validation residuals.**
 
@@ -297,7 +297,7 @@ recommended table is sequencing advice.
 | FT71 | FT274 | The event schema should be expressed in the OpenTelemetry record rather than version a second one. |
 | FT232 | FT274 | The advisory reads the red set the record retains. |
 | FT204 | FT71 | The query reads the settled event schema before it reads transcript text. |
-| FT254 | FT263 | The resolution slice requires the decided `MERGE_HEAD` contract. |
+| FT254 | FT258 | The resolution slice requires the decided `MERGE_HEAD` contract. |
 
 ### Goal track: guidance prose
 
@@ -323,6 +323,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT215: specify the path-aware fast lane before it adds a new commit cost.
-2. Light path — FT98: write the preserve-aside and restore-HEAD worktree ticket.
+1. Light path — FT271: `bench worktree land` prints the census verb-head breakdown before it drops the records.
+2. Light path — FT133: `bench coverage --check` resolves each cited test name and names the review pickup as a fence member.
 3. `/bench-write-spec` — FT274: specify Bench-owned FT231 measures.
