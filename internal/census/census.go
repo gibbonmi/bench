@@ -3,8 +3,10 @@ package census
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -161,13 +163,72 @@ func Counts(home, root string) (map[string]int, error) {
 		if !entry.Type().IsRegular() || !isAssignmentID(entry.Name()) {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(Dir(home, root), entry.Name()))
-		if err != nil {
+		text, ok := readRecords(Dir(home, root), entry.Name())
+		if !ok {
 			continue
 		}
-		counts[entry.Name()] = lineCount(string(data))
+		counts[entry.Name()] = lineCount(text)
 	}
 	return counts, nil
+}
+
+// HeadBreakdown renders one assignment's raw calls per verb head, in the shape
+// `<head>=<count>,...`. The heads sort by count, largest first, and a tie sorts by
+// the head name, so the reader sees the heaviest verb first. An assignment with no
+// records renders no text, because the landing prints the line only where there is
+// evidence to print. The reader has the same posture as Counts: an absent directory,
+// an absent file, and a file the reader refuses each render no text, because the
+// census is evidence beside the landing and never a condition on it.
+func HeadBreakdown(home, root, assignment string) string {
+	return renderHeads(heads(home, root, assignment))
+}
+
+// heads returns the number of records each verb head holds in one assignment's file.
+// The head is the record line's second tab field, which is where the writer puts it. A
+// line with no head, which only a foreign writer makes, counts under no head.
+func heads(home, root, assignment string) map[string]int {
+	counts := map[string]int{}
+	text, ok := readRecords(Dir(home, root), assignment)
+	if !ok {
+		return counts
+	}
+	for _, line := range recordLines(text) {
+		fields := strings.Split(line, "\t")
+		if len(fields) < 2 || fields[1] == "" {
+			continue
+		}
+		counts[fields[1]]++
+	}
+	return counts
+}
+
+// renderHeads joins the counted heads into the breakdown text. The head text passes
+// through sanitize.Controls here rather than at the writer alone, because a record
+// file that a foreign writer changed must still print safely.
+func renderHeads(counts map[string]int) string {
+	names := slices.Collect(maps.Keys(counts))
+	slices.SortFunc(names, func(a, b string) int {
+		if counts[a] != counts[b] {
+			return counts[b] - counts[a]
+		}
+		return strings.Compare(a, b)
+	})
+	parts := make([]string, 0, len(names))
+	for _, name := range names {
+		parts = append(parts, fmt.Sprintf("%s=%d", sanitize.Controls(name), counts[name]))
+	}
+	return strings.Join(parts, ",")
+}
+
+// readRecords returns one assignment's record text under dir. A file the reader
+// refuses, such as an absent file or a file type it never opens, reads as no text at
+// all, which every census reader states as no records.
+func readRecords(dir, name string) (string, bool) {
+	data, err := os.ReadFile(filepath.Join(dir, name))
+	if err != nil {
+		return "", false
+	}
+	return string(data), true
 }
 
 // isAssignmentID reports whether name is one 32-hex assignment id. The test composes
@@ -178,17 +239,19 @@ func isAssignmentID(name string) bool {
 	return ok
 }
 
-// lineCount returns the number of records in one file's text. A trailing newline
-// closes the last record and adds none of its own.
+// lineCount returns the number of records in one file's text.
 func lineCount(text string) int {
+	return len(recordLines(text))
+}
+
+// recordLines splits one file's text into its record lines. A trailing newline closes
+// the last record and opens none of its own. A last line with no newline is still one
+// record, because a concurrent writer can be between its two writes.
+func recordLines(text string) []string {
 	if text == "" {
-		return 0
+		return nil
 	}
-	count := strings.Count(text, "\n")
-	if !strings.HasSuffix(text, "\n") {
-		count++
-	}
-	return count
+	return strings.Split(strings.TrimSuffix(text, "\n"), "\n")
 }
 
 // Drop removes one assignment's record file, which the assignment's retirement calls.

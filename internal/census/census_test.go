@@ -610,3 +610,79 @@ func TestDropRefusesAnIdentifierThatIsNotAnAssignment(t *testing.T) {
 		t.Fatalf("the refused drop changed the records: %v, %v", counts, err)
 	}
 }
+
+// TestHeadBreakdownCountsEachHeadAndSortsByCount proves the landing's evidence line
+// states one count for each verb head, largest first, and settles a tie by the head
+// name so the text is stable between runs.
+func TestHeadBreakdownCountsEachHeadAndSortsByCount(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	writeRecordFile(t, home, root, knownID, "t\tsed\nt\tpython3\nt\tsed\nt\tsed\nt\tawk\nt\tpython3\n")
+	if got := HeadBreakdown(home, root, knownID); got != "sed=3,python3=2,awk=1" {
+		t.Fatalf("HeadBreakdown = %q, want %q", got, "sed=3,python3=2,awk=1")
+	}
+}
+
+// TestHeadBreakdownSortsATieByHeadName proves two heads with the same count print in
+// name order, not in the order the file happens to hold them.
+func TestHeadBreakdownSortsATieByHeadName(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	writeRecordFile(t, home, root, knownID, "t\tsed\nt\tawk\nt\tsed\nt\tawk\n")
+	if got := HeadBreakdown(home, root, knownID); got != "awk=2,sed=2" {
+		t.Fatalf("HeadBreakdown = %q, want %q", got, "awk=2,sed=2")
+	}
+}
+
+// TestHeadBreakdownReadsTheSecondTabField proves the head comes from the field the
+// writer puts it in, and that a last line with no newline is still one record.
+func TestHeadBreakdownReadsTheSecondTabField(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, body, want string
+	}{
+		{"one closed line", "t\tsed\n", "sed=1"},
+		{"one unterminated line", "t\tsed", "sed=1"},
+		{"a third field is not the head", "t\tsed\textra\n", "sed=1"},
+		{"a line with no head counts under none", "t\n\tsed\n", "sed=1"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			home, root, _ := fixtureHome(t)
+			writeRecordFile(t, home, root, knownID, tc.body)
+			if got := HeadBreakdown(home, root, knownID); got != tc.want {
+				t.Fatalf("HeadBreakdown = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestHeadBreakdownReadsAnUnreadableCensusAsEmpty proves the breakdown is evidence
+// beside the landing and never a condition on it: an absent directory, an absent
+// file, and an empty file each render no text.
+func TestHeadBreakdownReadsAnUnreadableCensusAsEmpty(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	if got := HeadBreakdown(home, root, knownID); got != "" {
+		t.Fatalf("HeadBreakdown on an absent directory = %q, want no text", got)
+	}
+	writeRecordFile(t, home, root, unknownID, "t\tsed\n")
+	if got := HeadBreakdown(home, root, knownID); got != "" {
+		t.Fatalf("HeadBreakdown on an absent file = %q, want no text", got)
+	}
+	writeRecordFile(t, home, root, knownID, "")
+	if got := HeadBreakdown(home, root, knownID); got != "" {
+		t.Fatalf("HeadBreakdown on an empty file = %q, want no text", got)
+	}
+}
+
+// TestHeadBreakdownSanitizesAForeignHead proves a head that a foreign writer put in
+// the record file cannot move the terminal cursor when the landing prints the line.
+func TestHeadBreakdownSanitizesAForeignHead(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	writeRecordFile(t, home, root, knownID, "t\tse\x1b[2Kd\n")
+	if got := HeadBreakdown(home, root, knownID); strings.ContainsRune(got, '\x1b') {
+		t.Fatalf("HeadBreakdown = %q, want the control character removed", got)
+	}
+}

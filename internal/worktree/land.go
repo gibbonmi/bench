@@ -207,6 +207,7 @@ func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Wr
 	// reads the file the release never removed.
 	records := censusCount(home, root, assignment.ID)
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
+	printCensusHeads(stderr, home, root, assignment.ID)
 	if notice := brokerChangeNotice(assignment.Worktree, source.base, source.tip); notice != "" {
 		fmt.Fprintln(stderr, notice)
 	}
@@ -252,6 +253,16 @@ func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Wr
 func censusCount(home, root, assignment string) int {
 	counts, _ := census.Counts(home, root)
 	return counts[assignment]
+}
+
+// printCensusHeads states the raw-call count for each verb head the assignment used,
+// beside the landing's other evidence. The line prints before the release step, which
+// drops the records, so the retro reads the breakdown from the run instead of from
+// memory. An assignment with no records prints nothing.
+func printCensusHeads(stderr io.Writer, home, root, assignment string) {
+	if breakdown := census.HeadBreakdown(home, root, assignment); breakdown != "" {
+		fmt.Fprintf(stderr, "census heads{%s}\n", breakdown)
+	}
 }
 
 func hasResumeFlag(args []string) bool {
