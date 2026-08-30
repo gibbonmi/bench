@@ -2,6 +2,8 @@
 
 Frozen base `a8724eb4341db33993db93ffbe299d4004f5d345`, reviewed tip
 `b768fcc99322f6cbce92571a65387201fd396aea`. Three Opus axes at medium effort.
+The repair-scoped re-review at `10362adf` closed S1, S2, C2, and C3 and
+opened STD-1 and COV-1 below.
 
 ## Standards
 
@@ -15,8 +17,9 @@ Count: 8 raw, 6 repair targets before collapse. Worst: S2.
   reads the ledger and selects the assignment a second time after
   `resolveWorktree` did the same and kept the path alone. No other verb pairs
   the two. Same ticket.
-- J2, `auto-fix`. `craft-comments`, Aging. `internal/worktree/path.go:143` says
-  "both target-taking verbs"; four verbs share the printer. Same ticket.
+- J2, closed at `41e334a3`. STD-1, `auto-fix`: the replacement comment in
+  `internal/worktree/path.go` names four verbs, and five call the printer
+  (`create` joined at `41e334a3`). Ticket `repair-re-review-follow-ups.md`.
 - S3, `ask-user`. Same rule. `internal/preflight/gather.go` `canonicalRoot` is a
   third copy of the canonical-path form beside `internal/worktree/subshell.go`
   `canonicalPath` and `internal/canary/mutation.go` `resolvePath`.
@@ -39,7 +42,13 @@ Count: 2 raw, 0 repair targets. All 44 rows closed with named tests.
 
 ## Coverage
 
-Count: 3 raw, 2 repair targets after refutation. Worst: C3.
+Count: 3 raw, 2 repair targets after refutation. Worst: C3. The re-review
+added COV-1.
+
+- COV-1, `auto-fix`. `TestBuildPrintsTheTable` (WF3) hand-derives the TOON
+  row from a random assignment id. The encoder quotes an id that starts with
+  `0` and a digit, so the row reds about 4% of runs. Derive the expectation
+  through `toon.Table`. Ticket `repair-re-review-follow-ups.md`.
 
 - C1, `no-op`. Claim: with `BENCH_KIT` unset the kit-only guard is vacuous and
   the child loses `BENCH_KIT`. Refutation: `selectedRunEnvironment` appends
