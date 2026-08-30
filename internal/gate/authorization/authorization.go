@@ -195,6 +195,9 @@ type LaneAuthority struct {
 	Checks []gate.Phase
 	Kit    string
 	Lane   string
+	// Selective runs the checks the composed changes select rather than the whole
+	// declared list, and it makes the pass line name the classes that selected them.
+	Selective bool
 	// Base is the commit the graded tree is measured against. The authority derives the
 	// composed change list from it, so the caller composes the tree once and states no
 	// path list of its own.
@@ -213,7 +216,7 @@ func (a LaneAuthority) Authorize(ctx context.Context, root, tree string, stdout,
 	}
 	result, err := gate.RunLane(ctx, gate.LaneRequest{
 		Root: root, Kit: a.Kit, Tree: tree, Lane: a.Lane,
-		Checks: a.Checks, Changes: changes,
+		Checks: a.Checks, Changes: changes, Selective: a.Selective,
 		Stdout: stdout, Stderr: stderr,
 	})
 	if err != nil {
@@ -227,14 +230,13 @@ func (a LaneAuthority) Authorize(ctx context.Context, root, tree string, stdout,
 		}
 		return Result{Kind: LaneFail}
 	}
-	fmt.Fprintf(stdout, "lane{outcome=pass,checks=%s}\n", strings.Join(checkNames(a.Checks), ","))
-	return Result{Kind: LanePass}
-}
-
-func checkNames(checks []gate.Phase) []string {
-	names := make([]string, len(checks))
-	for i, check := range checks {
-		names[i] = check.Name
+	// The run already decided which checks ran, so the line reads its result rather than
+	// selecting a second time.
+	if a.Selective {
+		fmt.Fprintf(stdout, "lane{outcome=pass,checks=%s,classes=%s}\n",
+			strings.Join(result.Checks, ","), strings.Join(result.Classes, ","))
+		return Result{Kind: LanePass}
 	}
-	return names
+	fmt.Fprintf(stdout, "lane{outcome=pass,checks=%s}\n", strings.Join(result.Checks, ","))
+	return Result{Kind: LanePass}
 }

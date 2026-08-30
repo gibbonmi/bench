@@ -140,3 +140,23 @@ func TestGateProseCommandMissingRootIsUsageError(t *testing.T) {
 		t.Fatalf("exit = %d, want 2; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }
+
+// TestGateProseCommandRefusesAMalformedExclusionRowWithNoSubject is PL14. The lane runs
+// this verb on an empty path list when a commit changes the exclusion list alone, so the
+// policy is graded before any subject is. A verb that read the policy only per subject
+// would pass an empty list and let a malformed row land.
+func TestGateProseCommandRefusesAMalformedExclusionRowWithNoSubject(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "docs/notes.md", "A short sentence.\n")
+	write(t, root, ".bench/prose-exclusions", "docs/notes.md\n")
+
+	var stdout, stderr bytes.Buffer
+	code := GateProseCommand([]string{root}, &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "malformed exclusion row") {
+		t.Fatalf("stdout = %q, want the malformed row named", stdout.String())
+	}
+}

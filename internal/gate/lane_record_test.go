@@ -30,12 +30,15 @@ func TestRunLaneRecordsItsOwnFileOnly(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := outcomeFixture(t)
+			root := laneSelectableFixture(t)
 			tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
 			gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
 
+			// PL24: the run selects, and the record's schema is unchanged by it. The
+			// changed path is in no class, so the unknown class selects the one check.
 			result, err := RunLane(context.Background(), LaneRequest{
 				Root: root, Tree: tree, Lane: "benchkit", Checks: []Phase{tc.check},
+				Selective: true, Changes: []ComposedChange{laneChange("bin/x.sh")},
 			})
 			if err != nil {
 				t.Fatal(err)

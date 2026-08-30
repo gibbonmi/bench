@@ -138,7 +138,11 @@ func TestLaneAuthorityDerivesTheProseSubjectFromTheBase(t *testing.T) {
 func commitFiles(t *testing.T, root, message string, files map[string]string) {
 	t.Helper()
 	for name, body := range files {
-		if err := os.WriteFile(filepath.Join(root, name), []byte(body), 0o644); err != nil {
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -177,5 +181,36 @@ func TestLaneAuthorityCarriesANonASCIIProsePathVerbatim(t *testing.T) {
 	}
 	if got := string(recorded); got != "café notes.md\n" {
 		t.Fatalf("prose argv = %q, want the added path's own bytes as one argument", got)
+	}
+}
+
+// TestLaneAuthorityNamesTheSelectedChecksAndClasses is PL20. A selective lane's pass
+// line names the checks that ran and the classes that selected them, so a reader learns
+// why each check ran and why the others did not.
+func TestLaneAuthorityNamesTheSelectedChecksAndClasses(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	// The two directories the embed derivation walks. The kit's own checkout carries
+	// them, and a tree that omits one reports an absent directory rather than an empty
+	// embed list.
+	commitFiles(t, root, "base", map[string]string{
+		"kept.md": "kept\n", "cmd/bench/main.go": "package main\n\nfunc main() {}\n",
+		"internal/x/x.go": "package x\n",
+	})
+	base := laneRev(t, root, "HEAD^{commit}")
+	commitFiles(t, root, "graded", map[string]string{"note.md": "note\n"})
+	tree := laneRev(t, root, "HEAD^{tree}")
+	var stdout, stderr bytes.Buffer
+	authority := LaneAuthority{Base: base, Selective: true, Checks: []gate.Phase{
+		{Name: "gofmt", Argv: []string{"true"}},
+		{Name: "prose", Argv: []string{"true"}},
+		{Name: "vet", Argv: []string{"true"}},
+	}}
+
+	got := authority.Authorize(context.Background(), root, tree, &stdout, &stderr)
+	if got.Kind != LanePass {
+		t.Fatalf("kind = %q, want %q; stderr=%q", got.Kind, LanePass, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "lane{outcome=pass,checks=prose,classes=markdown}") {
+		t.Errorf("stdout = %q, want the selected checks and their classes", stdout.String())
 	}
 }

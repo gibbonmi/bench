@@ -93,7 +93,8 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	owner := landing.New()
 	if lane != nil {
 		owner = landing.NewLane(authorization.LaneAuthority{
-			Checks: lane.Checks, Kit: lane.Kit, Base: strings.TrimSpace(string(expectedBytes)),
+			Checks: lane.Checks, Kit: lane.Kit, Selective: lane.Selective,
+			Base: strings.TrimSpace(string(expectedBytes)),
 		})
 	}
 	if dryRun {

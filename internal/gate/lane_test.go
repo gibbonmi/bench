@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // OG21, OG13: the kit root's lane is exactly the four declared checks, and the two
@@ -263,4 +264,94 @@ func TestFastLanePublishesTheOwnerRecord(t *testing.T) {
 	}
 	requireProspectiveOwnerRecord(t, snapshot, root)
 	requireNoProspectiveBundles(t, tempRoot)
+}
+
+// laneRecordsArgv replaces the lane's run-binary factory with a stub whose executable
+// appends its own argv to record and exits 0. It is the seam that lets a row observe
+// which Bench-owned checks ran without paying for a real build. An inherited selection
+// would bypass the stub, so the variable is removed for the row's own span.
+func laneRecordsArgv(t *testing.T, record string) {
+	t.Helper()
+	if _, present := os.LookupEnv(runbinary.Env); present {
+		t.Setenv(runbinary.Env, "")
+		if err := os.Unsetenv(runbinary.Env); err != nil {
+			t.Fatal(err)
+		}
+	}
+	previous := laneRunBinary
+	t.Cleanup(func() { laneRunBinary = previous })
+	laneRunBinary = runbinary.Factory{
+		Build: func(_ context.Context, _, output string) error {
+			script := "#!/bin/sh\nprintf '%s\\n' \"$*\" >> " + record + "\nexit 0\n"
+			return os.WriteFile(output, []byte(script), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	}
+}
+
+// TestBenchkitLaneRunsOnlyTheSelectedChecks is PL19. The fixture holds no `go.mod`, so
+// a selected `vet` or `build` reds the lane. The pass and the one recorded `gate-prose`
+// invocation together prove the Markdown change selected the prose check alone.
+func TestBenchkitLaneRunsOnlyTheSelectedChecks(t *testing.T) {
+	root := laneSelectableFixture(t)
+	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
+	outcomeWrite(t, root, "note.md", "# Note\n", 0o644)
+	outcomeGit(t, root, "add", "-A")
+	outcomeGit(t, root, "commit", "-q", "-m", "note")
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	changes, err := ComposedChanges(root, base, tree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := filepath.Join(t.TempDir(), "lane-argv")
+	laneRecordsArgv(t, record)
+
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Lane: "benchkit", Selective: true,
+		Checks: BenchkitLane(root, root), Changes: changes,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Passed() {
+		t.Fatalf("lane %s on check %s: %s", result.Outcome, result.Check, result.Diagnostic)
+	}
+	if !reflect.DeepEqual(result.Checks, []string{"prose"}) || !reflect.DeepEqual(result.Classes, []string{"markdown"}) {
+		t.Fatalf("result checks %v classes %v, want [prose] and [markdown]", result.Checks, result.Classes)
+	}
+	invocations := strings.Split(strings.TrimSpace(string(outcomeRead(t, record))), "\n")
+	if len(invocations) != 1 || !strings.Contains(invocations[0], "gate-prose") {
+		t.Fatalf("recorded invocations = %v, want one gate-prose run", invocations)
+	}
+	if strings.Contains(strings.Join(invocations, " "), "gate-go") {
+		t.Errorf("recorded invocations = %v, want no gate-go run: gofmt was not selected", invocations)
+	}
+}
+
+// TestLaneForCommitMarksOnlyTheKitLaneSelective is PL22. The selection has one switch,
+// and it follows the built-in-versus-manifest decision rather than a second rule.
+func TestLaneForCommitMarksOnlyTheKitLaneSelective(t *testing.T) {
+	kit := t.TempDir()
+	t.Setenv("BENCH_KIT", kit)
+
+	built, err := LaneForCommit(kit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if built == nil || !built.Selective {
+		t.Fatalf("kit lane = %+v, want a selective lane", built)
+	}
+
+	project := t.TempDir()
+	writeLaneFile(t, filepath.Join(project, ".bench", "phases.json"), `{
+	  "phases": [{"name": "build", "argv": ["go", "build", "./..."]}],
+	  "lane": [{"name": "fmt", "argv": ["make", "fmt"]}]
+	}`)
+	declared, err := LaneForCommit(project)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if declared == nil || declared.Selective {
+		t.Fatalf("manifest lane = %+v, want a lane that is not selective", declared)
+	}
 }

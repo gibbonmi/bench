@@ -310,5 +310,7 @@ func mergeOwner(j joins, target, previous string) (landing.Owner, error) {
 	// The previous tip, not a path list, is what the authority needs: it derives the
 	// composed tree's change list itself, so the verb never composes a second time to
 	// learn which prose the merge brought in.
-	return landing.NewLane(authorization.LaneAuthority{Checks: lane.Checks, Kit: lane.Kit, Base: previous}), nil
+	return landing.NewLane(authorization.LaneAuthority{
+		Checks: lane.Checks, Kit: lane.Kit, Selective: lane.Selective, Base: previous,
+	}), nil
 }

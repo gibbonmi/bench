@@ -230,8 +230,12 @@ func TestLaneDryRunStatesTheOutcomeAndPublishesNothing(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	if !strings.Contains(stdout, "lane{outcome=pass,checks=") {
-		t.Errorf("stdout = %q, want the lane record line", stdout)
+	// PL23: a dry run takes the same lane the real run takes, check for check.
+	if !strings.Contains(stdout, "lane{outcome=pass,checks=check,gofmt,prose,build}") {
+		t.Errorf("stdout = %q, want the lane record line naming every declared check", stdout)
+	}
+	if strings.Contains(stdout, "classes=") {
+		t.Errorf("stdout = %q, want no classes cell on a manifest lane", stdout)
 	}
 	if strings.Contains(stdout, "phase ") {
 		t.Errorf("stdout = %q, want no gate phase line", stdout)
@@ -360,5 +364,26 @@ func TestLaneRefusesASpecialNamedPathBeforeAnyCheckRuns(t *testing.T) {
 	}
 	if after := head(t, root); after != before {
 		t.Fatalf("the branch ref moved from %s to %s on an unattributable path", before, after)
+	}
+}
+
+// TestManifestLaneRunsAsDeclared is PL21. A linked project's declared lane keeps the
+// meaning its manifest gives it: every check runs, and the line names no class. A
+// selection applied here would drop three of the four checks, because the manifest's
+// names match the kit's.
+func TestManifestLaneRunsAsDeclared(t *testing.T) {
+	root, _ := laneRepo(t, 0, noWrite)
+	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	mustWrite(t, filepath.Join(root, "note.md"), "# Note\n", 0o644)
+
+	code, stdout, stderr := runCommand(t, root, "-m", "m", "note.md")
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stdout, "lane{outcome=pass,checks=check,gofmt,prose,build}") {
+		t.Errorf("stdout = %q, want every declared check named", stdout)
+	}
+	if strings.Contains(stdout, "classes=") {
+		t.Errorf("stdout = %q, want no classes cell on a manifest lane", stdout)
 	}
 }
