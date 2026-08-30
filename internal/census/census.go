@@ -145,8 +145,8 @@ func write(dir, id, line string) error {
 
 // Counts returns the number of records each assignment holds under root's census
 // directory. The ambient board is the caller, so no condition on the disk becomes a
-// board failure: an absent directory, an absent or empty file, and a file type the
-// reader refuses each count zero. A last line with no newline still counts as one
+// board failure: an absent directory, an absent or empty file, and a file type
+// readRecords refuses each count zero. A last line with no newline still counts as one
 // record, because a concurrent writer can be between its two writes.
 func Counts(home, root string) (map[string]int, error) {
 	counts := map[string]int{}
@@ -158,9 +158,7 @@ func Counts(home, root string) (map[string]int, error) {
 		return counts, fmt.Errorf("read census directory: %w", err)
 	}
 	for _, entry := range entries {
-		// Only a regular file is read. A directory, a FIFO, or a device in the census
-		// directory is foreign, and an open of a FIFO blocks the board.
-		if !entry.Type().IsRegular() || !isAssignmentID(entry.Name()) {
+		if !isAssignmentID(entry.Name()) {
 			continue
 		}
 		text, ok := readRecords(Dir(home, root), entry.Name())
@@ -176,9 +174,10 @@ func Counts(home, root string) (map[string]int, error) {
 // `<head>=<count>,...`. The heads sort by count, largest first, and a tie sorts by
 // the head name, so the reader sees the heaviest verb first. An assignment with no
 // records renders no text, because the landing prints the line only where there is
-// evidence to print. The reader has the same posture as Counts: an absent directory,
-// an absent file, and a file the reader refuses each render no text, because the
-// census is evidence beside the landing and never a condition on it.
+// evidence to print. The reader has the same posture as Counts, because both read
+// through readRecords: an absent directory, an absent file, and a file type the
+// reader refuses each render no text, because the census is evidence beside the
+// landing and never a condition on it.
 func HeadBreakdown(home, root, assignment string) string {
 	return renderHeads(heads(home, root, assignment))
 }
@@ -220,11 +219,17 @@ func renderHeads(counts map[string]int) string {
 	return strings.Join(parts, ",")
 }
 
-// readRecords returns one assignment's record text under dir. A file the reader
-// refuses, such as an absent file or a file type it never opens, reads as no text at
-// all, which every census reader states as no records.
+// readRecords returns one assignment's record text under dir. Only a regular file is
+// read: a directory, a symlink, a FIFO, or a device at the record's name is foreign,
+// and an open of a FIFO blocks the caller forever. An absent file and a refused file
+// type each read as no text at all, which every census reader states as no records.
 func readRecords(dir, name string) (string, bool) {
-	data, err := os.ReadFile(filepath.Join(dir, name))
+	path := filepath.Join(dir, name)
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return "", false
+	}
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", false
 	}

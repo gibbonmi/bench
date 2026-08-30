@@ -645,6 +645,8 @@ func TestHeadBreakdownReadsTheSecondTabField(t *testing.T) {
 		{"one unterminated line", "t\tsed", "sed=1"},
 		{"a third field is not the head", "t\tsed\textra\n", "sed=1"},
 		{"a line with no head counts under none", "t\n\tsed\n", "sed=1"},
+		{"an empty head counts under none", "t\t\n", ""},
+		{"an empty head beside a real head", "t\t\nt\tsed\n", "sed=1"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -673,6 +675,33 @@ func TestHeadBreakdownReadsAnUnreadableCensusAsEmpty(t *testing.T) {
 	writeRecordFile(t, home, root, knownID, "")
 	if got := HeadBreakdown(home, root, knownID); got != "" {
 		t.Fatalf("HeadBreakdown on an empty file = %q, want no text", got)
+	}
+}
+
+// TestHeadBreakdownRefusesAFifoWithoutBlocking proves the breakdown has the same
+// file-type posture as Counts: a refused file type renders no text and never holds
+// the landing open on a reader that has no writer.
+func TestHeadBreakdownRefusesAFifoWithoutBlocking(t *testing.T) {
+	t.Parallel()
+	home, root, _ := fixtureHome(t)
+	dir := Dir(home, root)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(dir, knownID), 0o600); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+	}
+	done := make(chan string, 1)
+	go func() {
+		done <- HeadBreakdown(home, root, knownID)
+	}()
+	select {
+	case got := <-done:
+		if got != "" {
+			t.Fatalf("HeadBreakdown on a FIFO record = %q, want no text", got)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("HeadBreakdown blocked on a FIFO record file")
 	}
 }
 
