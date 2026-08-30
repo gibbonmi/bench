@@ -61,36 +61,18 @@ func RequiredBuildPackAssets(root string) ([]string, error) {
 		"scripts/go-build.sh",
 		"scripts/go-build.inputs",
 	}
-	var goFiles []string
-	rootEntries, err := os.ReadDir(root)
+	goFiles, err := buildGoSources(root)
 	if err != nil {
 		return nil, err
 	}
-	for _, entry := range rootEntries {
-		if entry.IsDir() || !isBuildGoSource(entry.Name()) {
-			continue
-		}
-		assets = append(assets, entry.Name())
-		goFiles = append(goFiles, filepath.Join(root, entry.Name()))
-	}
-	for _, dir := range []string{"cmd", "internal"} {
-		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, entry fs.DirEntry, err error) error {
-			if err != nil || entry.IsDir() || !isBuildGoSource(entry.Name()) {
-				return err
-			}
-			rel, err := filepath.Rel(root, path)
-			if err != nil {
-				return err
-			}
-			assets = append(assets, filepath.ToSlash(rel))
-			goFiles = append(goFiles, path)
-			return nil
-		})
+	for _, file := range goFiles {
+		rel, err := filepath.Rel(root, file)
 		if err != nil {
 			return nil, err
 		}
+		assets = append(assets, filepath.ToSlash(rel))
 	}
-	embeds, err := embeddedPackAssets(root, goFiles)
+	embeds, err := EmbedTargets(root)
 	if err != nil {
 		return nil, err
 	}
@@ -99,18 +81,17 @@ func RequiredBuildPackAssets(root string) ([]string, error) {
 	return assets, nil
 }
 
-func isBuildGoSource(name string) bool {
-	return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
-}
-
-var goEmbedDirective = regexp.MustCompile(`^//go:embed\s+(.+)$`)
-
-// embeddedPackAssets reads each Go source in goFiles and returns the repo-relative
-// path of every //go:embed target it names, resolved against that source's own
-// directory (embed patterns are directory-relative). A source with no embed
-// directive contributes nothing.
-func embeddedPackAssets(root string, goFiles []string) ([]string, error) {
-	var assets []string
+// EmbedTargets returns the repo-relative slash path of every //go:embed target the
+// checkout's build sources name, resolved against the naming source's own directory
+// because an embed pattern is directory-relative. The paths carry the form a
+// composed change carries, so a caller can test a changed path for membership
+// directly. A source with no embed directive contributes nothing.
+func EmbedTargets(root string) ([]string, error) {
+	goFiles, err := buildGoSources(root)
+	if err != nil {
+		return nil, err
+	}
+	var targets []string
 	for _, file := range goFiles {
 		data, err := os.ReadFile(file)
 		if err != nil {
@@ -128,9 +109,46 @@ func embeddedPackAssets(root string, goFiles []string) ([]string, error) {
 				if err != nil {
 					return nil, err
 				}
-				assets = append(assets, filepath.ToSlash(rel))
+				targets = append(targets, filepath.ToSlash(rel))
 			}
 		}
 	}
-	return assets, nil
+	return targets, nil
 }
+
+// buildGoSources returns the absolute path of every non-test Go source the build
+// packages: the module root's own package, plus everything under cmd/ and internal/.
+// Both pack derivations walk this one enumeration, so a new source directory joins
+// them together.
+func buildGoSources(root string) ([]string, error) {
+	var goFiles []string
+	rootEntries, err := os.ReadDir(root)
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range rootEntries {
+		if entry.IsDir() || !isBuildGoSource(entry.Name()) {
+			continue
+		}
+		goFiles = append(goFiles, filepath.Join(root, entry.Name()))
+	}
+	for _, dir := range []string{"cmd", "internal"} {
+		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, entry fs.DirEntry, err error) error {
+			if err != nil || entry.IsDir() || !isBuildGoSource(entry.Name()) {
+				return err
+			}
+			goFiles = append(goFiles, path)
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return goFiles, nil
+}
+
+func isBuildGoSource(name string) bool {
+	return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
+}
+
+var goEmbedDirective = regexp.MustCompile(`^//go:embed\s+(.+)$`)
