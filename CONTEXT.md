@@ -85,6 +85,11 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   starts in the assignment worktree. The verb passes stdin, stdout, stderr, and the
   exit code through, and the child owns its environment. Not "subshell", not
   "wrapped command", not "delegate" — exec child.
+- **worktree build** — `bench worktree build <target>`, the verb that builds an
+  assignment worktree's tree into that worktree's own `dist/bench` through the
+  sanctioned build script. The file is a development artifact; no gate, no fast lane,
+  and no `bench test` run reuses it. Not "local build", not "worktree binary", not
+  "dist build" — worktree build.
 - **follow-on** — a Bash tool call that adds a redirection or a control operator to
   a Bench-headed segment. The follow-on guard reads the first Bench segment and
   refuses the call. A `bench worktree exec` head is the one exception. It allows a
@@ -137,7 +142,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   `specs/<slug>/tickets/`.
 - **focused test run** — one `bench test` execution limited by explicit or
   diff-derived package, test, or conformance selection. It writes no gate
-  verdict and moves no green marker. Not "scoped gate", not "partial gate".
+  verdict and moves no green marker. `bench test --check system` is the named check
+  that runs the gate's system phase as a focused run over the kit checkout only.
+  Not "scoped gate", not "partial gate".
 - **coverage row** — one row of a spec's acceptance coverage map. It ties one
   story to one observable behavior at a seam, behind an optional leading row
   ID. It carries four parts: story, behavior, seam, why it catches the
