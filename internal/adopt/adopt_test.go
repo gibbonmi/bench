@@ -496,3 +496,147 @@ func TestScaffoldLearningsMirrorsTheParserBoundary(t *testing.T) {
 		t.Fatalf("internal/learnings/testdata/scaffold-learnings.md has drifted from scaffoldLearnings()\nfixture = %q\nscaffold = %q", mirror, got)
 	}
 }
+
+// doctorGreenRepo builds a git repo whose doctor rows and shim row are all green, with a
+// bench-managed pre-push hook in place. The caller sets BENCH_KIT to decide whether the
+// repo is the kit source checkout or a consumer repo. BENCH_WRAPPER keeps doctor --fix's
+// shim and broker-manifest writes inside the fixture.
+func doctorGreenRepo(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	runAdoptGit(t, root, "init", "-q")
+	for _, dir := range [][]string{{".bench"}, {"projects"}, {".agents", "commands"}} {
+		if err := os.MkdirAll(filepath.Join(append([]string{root}, dir...)...), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeFixtureFile(t, filepath.Join(root, ".bench", "gate.sh"), "#!/bin/sh\nexit 0\n", 0o755)
+	writeFixtureFile(t, filepath.Join(root, "CLAUDE.md"), strings.Join(claudeImportLines(), "\n")+"\n", 0o644)
+	writeFixtureFile(t, filepath.Join(root, "projects", "kit.md"), "# kit\n", 0o644)
+	writeFixtureFile(t, filepath.Join(root, ".agents", "commands", "bench-setup-repo.md"), "# setup\n", 0o644)
+	writeHook(t, filepath.Join(root, ".git", "hooks", "pre-push"), fallbackProtectedBranch)
+
+	bin := filepath.Join(t.TempDir(), "bin")
+	if err := os.MkdirAll(bin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(bin, "bench-wrapper")
+	writeFixtureFile(t, target, "#!/bin/sh\n", 0o755)
+	writeFixtureFile(t, filepath.Join(bin, "bench"), ShimContent(target)+"\n", 0o755)
+	t.Setenv("BENCH_WRAPPER", target)
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Chdir(root)
+	return root
+}
+
+func writeFixtureFile(t *testing.T, path, content string, mode os.FileMode) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte(content), mode); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestDoctorKitSourceCheckoutRowsAreGreen pins the kit source checkout's two ok rows. The
+// kit repo is the source of the managed block and of bin/bench.sh, so neither asset can
+// exist in the shape a consumer repo carries, and doctor must say so instead of sending
+// the reader to bench link.
+func TestDoctorKitSourceCheckoutRowsAreGreen(t *testing.T) {
+	root := doctorGreenRepo(t)
+	t.Setenv("BENCH_KIT", root)
+
+	var stdout, stderr bytes.Buffer
+	if code := Doctor(nil, &stdout, &stderr, "1.0.0"); code != 0 {
+		t.Fatalf("Doctor = %d, want 0\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	got := stdout.String()
+	for _, want := range []string{
+		"ok: kit source checkout - AGENTS.md is the source agreement; no managed block applies",
+		"ok: kit source checkout - the launcher is bin/bench.sh; no .bench/bin copy applies",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("doctor output missing %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "run bench link") {
+		t.Fatalf("kit source checkout doctor output names bench link:\n%s", got)
+	}
+}
+
+// TestDoctorKitSourceCheckoutAbsentPrePushRoutesToFix pins the one remedy the kit checkout
+// can act on. bench link is not that remedy here, so the absent-hook row names the fix
+// that installs the managed hook, and the fix installs it.
+func TestDoctorKitSourceCheckoutAbsentPrePushRoutesToFix(t *testing.T) {
+	root := doctorGreenRepo(t)
+	t.Setenv("BENCH_KIT", root)
+	hook := filepath.Join(root, ".git", "hooks", "pre-push")
+	if err := os.Remove(hook); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	if code := Doctor(nil, &stdout, &stderr, "1.0.0"); code != 1 {
+		t.Fatalf("Doctor with absent hook = %d, want 1\n%s", code, stdout.String())
+	}
+	if got := stdout.String(); !strings.Contains(got, "hooks); run bench doctor --fix") {
+		t.Fatalf("absent pre-push row does not name bench doctor --fix:\n%s", got)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	if code := Doctor([]string{"--fix"}, &stdout, &stderr, "1.0.0"); code != 0 {
+		t.Fatalf("Doctor --fix = %d, want 0\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	if health := InspectPrePush(root); health.State != PrePushManaged || health.Currency != PrePushCurrent {
+		t.Fatalf("pre-push after --fix = %#v, want managed current", health)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	if code := Doctor(nil, &stdout, &stderr, "1.0.0"); code != 0 {
+		t.Fatalf("Doctor after --fix = %d, want 0\n%s", code, stdout.String())
+	}
+}
+
+// TestDoctorConsumerRepoKeepsLinkRemedies is the regression side: a repo whose kit lives
+// elsewhere keeps every current red row and keeps bench link as the remedy, and --fix
+// still leaves an absent hook alone there.
+func TestDoctorConsumerRepoKeepsLinkRemedies(t *testing.T) {
+	root := t.TempDir()
+	runAdoptGit(t, root, "init", "-q")
+	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), "# project\n", 0o644)
+	t.Setenv("BENCH_KIT", t.TempDir())
+	t.Chdir(root)
+
+	var stdout bytes.Buffer
+	if !reportDoctorRows(&stdout) {
+		t.Fatal("consumer doctor rows report no red")
+	}
+	got := stdout.String()
+	for _, want := range []string{
+		"red: AGENTS.md has no Bench managed block (run bench link)",
+		"red: .bench/bin/bench.sh absent (run bench link)",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("consumer doctor rows missing %q:\n%s", want, got)
+		}
+	}
+
+	stdout.Reset()
+	if !reportPrePush(&stdout) {
+		t.Fatal("consumer absent pre-push row is not red")
+	}
+	if row := stdout.String(); !strings.Contains(row, "hooks); run bench link") {
+		t.Fatalf("consumer absent pre-push row = %q, want it to name bench link", row)
+	}
+
+	var fixOut, fixErr bytes.Buffer
+	if code := repairStalePrePush(&fixOut, &fixErr); code != 0 {
+		t.Fatalf("repairStalePrePush = %d, want 0\n%s", code, fixErr.String())
+	}
+	if _, err := os.Lstat(filepath.Join(root, ".git", "hooks", "pre-push")); !os.IsNotExist(err) {
+		t.Fatalf("consumer --fix installed a pre-push hook: %v", err)
+	}
+}
