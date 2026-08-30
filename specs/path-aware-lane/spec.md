@@ -238,7 +238,7 @@ test code in the private checkout, as ADR 0002 accepts for the gate.
 
 ### Edge inventory
 
-- A path with a space, a glob character, or a non-ASCII byte. The `-z` framing carries the bytes, and PL5 proves the prose subject.
+- A path with a space or a non-ASCII byte. The `-z` framing carries the bytes, and PL5 proves the prose subject.
 - A path with a control byte. The lane line names checks and classes and no path (PL20).
 - An empty change list. The landing refuses `nothing to commit` before the authority runs (PL40).
 - A deleted Go file, a deleted embed target, and a renamed Go file. Each side classifies by its own path (PL47), so `build` runs and reds a dangling reference.

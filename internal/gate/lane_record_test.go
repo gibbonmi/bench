@@ -30,7 +30,7 @@ func TestRunLaneRecordsItsOwnFileOnly(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := laneSelectableFixture(t)
+			root := outcomeFixture(t)
 			tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
 			gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
 

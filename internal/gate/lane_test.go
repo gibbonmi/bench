@@ -329,7 +329,7 @@ func laneRecordsArgv(t *testing.T, record string) {
 // a selected `vet` or `build` reds the lane. The pass and the one recorded `gate-prose`
 // invocation together prove the Markdown change selected the prose check alone.
 func TestBenchkitLaneRunsOnlyTheSelectedChecks(t *testing.T) {
-	root := laneSelectableFixture(t)
+	root := outcomeFixture(t)
 	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
 	outcomeWrite(t, root, "note.md", "# Note\n", 0o644)
 	outcomeGit(t, root, "add", "-A")
@@ -419,7 +419,7 @@ func laneRefusesArgv(t *testing.T, marker string) {
 // document check run as optional would read this red as a pass.
 func TestBenchkitLaneDocumentCheckFailsTheLane(t *testing.T) {
 	const check = "roadmap-detail-integrity"
-	root := laneSelectableFixture(t)
+	root := outcomeFixture(t)
 	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
 	outcomeWrite(t, root, "ROADMAP.md", "# Roadmap\n", 0o644)
 	outcomeGit(t, root, "add", "-A")

@@ -135,20 +135,6 @@ func laneDeletion(path string) ComposedChange {
 	return ComposedChange{Status: "D", SrcMode: "100644", DstMode: "000000", Path: path}
 }
 
-// laneSelectableFixture is an outcome fixture whose committed tree carries the two
-// source directories the embed derivation walks. The kit's own checkout always carries
-// them, and a tree that omits one makes the derivation report an absent directory
-// instead of an empty embed list.
-func laneSelectableFixture(t *testing.T) string {
-	t.Helper()
-	root := outcomeFixture(t)
-	outcomeWrite(t, root, "cmd/bench/main.go", "package main\n\nfunc main() {}\n", 0o644)
-	outcomeWrite(t, root, "internal/x/x.go", "package x\n", 0o644)
-	outcomeGit(t, root, "add", "-A")
-	outcomeGit(t, root, "commit", "-q", "-m", "sources")
-	return root
-}
-
 // TestSelectLaneByClass is PL9 to PL13, PL15 to PL18, PL42, and PL47. Each row states
 // the checks the kit lane runs for one change set, and the classes that selected them.
 func TestSelectLaneByClass(t *testing.T) {
@@ -274,6 +260,36 @@ func TestSelectLaneByClass(t *testing.T) {
 			checks:  []string{"vet", "build"},
 			classes: []string{"go-build-input"},
 		},
+		{
+			name:    "a known class beside an unknown one keeps the whole lane",
+			changes: []ComposedChange{laneChange("a.go"), laneChange("bin/x.sh")},
+			checks:  every,
+			classes: []string{"go-source", "unknown"},
+		},
+		{
+			name:    "a directory prefix claims no sibling that shares its letters",
+			changes: []ComposedChange{laneChange("roadmapx/a.md")},
+			checks:  []string{"prose"},
+			classes: []string{"markdown"},
+		},
+		{
+			name:    "the roadmap index claims the repository root alone",
+			changes: []ComposedChange{laneChange("docs/ROADMAP.md")},
+			checks:  []string{"prose"},
+			classes: []string{"markdown"},
+		},
+		{
+			name:    "a decision tree under specs needs a slug between the two names",
+			changes: []ComposedChange{laneChange("specs/decisions/x.md")},
+			checks:  []string{"prose"},
+			classes: []string{"markdown"},
+		},
+		{
+			name:    "the retro directory name as a file claims no class",
+			changes: []ComposedChange{laneChange("capture/retros")},
+			checks:  every,
+			classes: []string{"unknown"},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), tc.changes, tc.embeds)
@@ -341,6 +357,20 @@ func TestDocumentClassesAreRegistryInputSources(t *testing.T) {
 			check, found := registry.Find(name)
 			if !found || !check.RunsAt(registry.Dev) || check.Inputs != family.source {
 				t.Errorf("class %s selects %s, which the registry does not bind to it at the dev tier", row.Name, name)
+			}
+		}
+	}
+}
+
+// TestLaneClassesNameOnlyDeclaredChecks is PL38's table-side half. A class names its
+// checks by string, so a name the kit lane does not declare selects nothing and the
+// class silently narrows the run instead of widening it.
+func TestLaneClassesNameOnlyDeclaredChecks(t *testing.T) {
+	declared := laneCheckNames(BenchkitLane("/repo", "/repo"))
+	for _, class := range LaneClasses() {
+		for _, name := range class.Checks {
+			if !slices.Contains(declared, name) {
+				t.Errorf("class %s names %s, which the kit lane does not declare: %v", class.Name, name, declared)
 			}
 		}
 	}

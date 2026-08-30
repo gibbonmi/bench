@@ -78,9 +78,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 - A worktree `bench commit` on the kit root now runs only the checks its composed
   changes select. The commit derives its change list from the diff between the expected
   base tree and the composed tree, and each path's classes select checks from the
-  declared lane. A Markdown commit pays no Go toolchain, and a Go commit pays no prose
-  check. An unknown path, a symbolic link, or a gitlink selects every declared check, so
-  the selection never narrows below the declared lane. The lane line now reads
+  declared lane. A Markdown commit runs no `vet` check and no `build` check, and a Go
+  commit runs no prose check. An unknown path, a symbolic link, or a gitlink selects
+  every declared check, so the selection never narrows below the declared lane. The
+  lane line now reads
   `lane{outcome=pass,checks=<names>,classes=<classes>}`, whose `classes=` cell names why
   each check ran. A manifest lane in a linked repo runs as declared and keeps
   `lane{outcome=pass,checks=<names>}`.

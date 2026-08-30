@@ -27,7 +27,7 @@ with no selection. A repo with no declared lane keeps the full-gate commit.
 
 ## Consequence
 
-One landed change pays the whole-project gate once, at the landing. A prose
-commit pays no Go toolchain, and a Go commit pays no prose check. A lane pass
-never reads as green, so no consumer can mistake a worktree commit for a graded
-tree.
+One landed change pays the whole-project gate once, at the landing. A Markdown
+commit runs no vet check and no build check, and a Go commit runs no prose
+check. A lane pass never reads as green, so no consumer can mistake a worktree
+commit for a graded tree.

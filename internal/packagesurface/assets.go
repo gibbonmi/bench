@@ -1,6 +1,7 @@
 package packagesurface
 
 import (
+	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -119,7 +120,8 @@ func EmbedTargets(root string) ([]string, error) {
 // buildGoSources returns the absolute path of every non-test Go source the build
 // packages: the module root's own package, plus everything under cmd/ and internal/.
 // Both pack derivations walk this one enumeration, so a new source directory joins
-// them together.
+// them together. An absent cmd/ or internal/ contributes nothing, because a module
+// that carries one of the two is a legitimate tree.
 func buildGoSources(root string) ([]string, error) {
 	var goFiles []string
 	rootEntries, err := os.ReadDir(root)
@@ -133,7 +135,11 @@ func buildGoSources(root string) ([]string, error) {
 		goFiles = append(goFiles, filepath.Join(root, entry.Name()))
 	}
 	for _, dir := range []string{"cmd", "internal"} {
-		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, entry fs.DirEntry, err error) error {
+		base := filepath.Join(root, dir)
+		err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {
+			if err != nil && path == base && errors.Is(err, fs.ErrNotExist) {
+				return nil
+			}
 			if err != nil || entry.IsDir() || !isBuildGoSource(entry.Name()) {
 				return err
 			}

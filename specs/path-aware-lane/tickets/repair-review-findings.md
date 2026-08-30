@@ -1,7 +1,7 @@
 # Repair the accepted review findings
 
 Blocked by: add-document-family-checks.md, record-the-selection-in-guidance.md
-Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, CHANGELOG.md, internal/gate/lane_select.go, internal/gate/lane_select_test.go, internal/gate/lane_test.go, internal/gate/authorization/lane_test.go, internal/packagesurface/assets.go, internal/packagesurface/assets_test.go, specs/path-aware-lane/spec.md, reviews/path-aware-lane.md
+Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, CHANGELOG.md, internal/gate/lane_select.go, internal/gate/lane_select_test.go, internal/gate/lane_test.go, internal/gate/lane_record_test.go, internal/gate/authorization/lane_test.go, internal/packagesurface/assets.go, internal/packagesurface/assets_test.go, specs/path-aware-lane/spec.md, reviews/path-aware-lane.md
 
 ## What to build
 
@@ -24,11 +24,11 @@ rows. The resolved findings leave `reviews/path-aware-lane.md`; the
 
 ## Acceptance
 
-- [ ] S1: neither guidance file says "no Go toolchain"; each says the commit runs no `vet` and no `build` check.
-- [ ] S2: the file comment carries no placement rationale.
-- [ ] S4: a test reds when a class names a check the kit lane does not declare.
-- [ ] S5: `EmbedTargets` over a root with no `cmd/` returns the `internal/` targets, and no lane fixture plants a placeholder Go source.
-- [ ] P1: the PL5 edge line names a space and a non-ASCII byte only.
-- [ ] F3: entries for `a.go` and `bin/x.sh` return every declared check and the classes `go-source,unknown`.
-- [ ] F4: `roadmapx/a.md` and `docs/ROADMAP.md` return `prose` alone; `specs/decisions/x.md` returns `prose` alone; `capture/retros` as a file returns every declared check and `unknown`.
-- [ ] the gate `test` phase stays green for `internal/gate`, `internal/packagesurface`, and `internal/conformance`.
+- [x] S1: neither guidance file says "no Go toolchain"; each says the commit runs no `vet` and no `build` check.
+- [x] S2: the file comment carries no placement rationale.
+- [x] S4: a test reds when a class names a check the kit lane does not declare.
+- [x] S5: `EmbedTargets` over a root with no `cmd/` returns the `internal/` targets, and no lane fixture plants a placeholder Go source.
+- [x] P1: the PL5 edge line names a space and a non-ASCII byte only.
+- [x] F3: entries for `a.go` and `bin/x.sh` return every declared check and the classes `go-source,unknown`.
+- [x] F4: `roadmapx/a.md` and `docs/ROADMAP.md` return `prose` alone; `specs/decisions/x.md` returns `prose` alone; `capture/retros` as a file returns every declared check and `unknown`.
+- [x] the gate `test` phase stays green for `internal/gate`, `internal/packagesurface`, and `internal/conformance`.

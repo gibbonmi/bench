@@ -189,13 +189,7 @@ func TestLaneAuthorityCarriesANonASCIIProsePathVerbatim(t *testing.T) {
 // why each check ran and why the others did not.
 func TestLaneAuthorityNamesTheSelectedChecksAndClasses(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
-	// The two directories the embed derivation walks. The kit's own checkout carries
-	// them, and a tree that omits one reports an absent directory rather than an empty
-	// embed list.
-	commitFiles(t, root, "base", map[string]string{
-		"kept.md": "kept\n", "cmd/bench/main.go": "package main\n\nfunc main() {}\n",
-		"internal/x/x.go": "package x\n",
-	})
+	commitFiles(t, root, "base", map[string]string{"kept.md": "kept\n"})
 	base := laneRev(t, root, "HEAD^{commit}")
 	commitFiles(t, root, "graded", map[string]string{"note.md": "note\n"})
 	tree := laneRev(t, root, "HEAD^{tree}")

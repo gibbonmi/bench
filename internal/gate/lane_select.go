@@ -1,8 +1,7 @@
 package gate
 
 // The lane's subject: what the composed tree changes against its base, and the lane the
-// change list is graded under. The derivation lives here rather than beside the lane run
-// because the run's own file is already at its structure budget.
+// change list is graded under.
 
 import (
 	"errors"

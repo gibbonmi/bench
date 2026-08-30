@@ -18,17 +18,15 @@ func TestRequiredPackAssetsIncludeFollowOnGuard(t *testing.T) {
 }
 
 // embedFixtureRoot builds the smallest tree the pack-asset derivations walk: a
-// module root with the two source directories they descend, and one internal
-// source whose //go:embed names a sibling file. The sibling is what a
-// root-relative resolution would miss, so the fixture is the discriminating case
-// for both derivations.
+// module root with one internal source whose //go:embed names a sibling file, and
+// no cmd/ at all. The sibling is what a root-relative resolution would miss, and
+// the absent directory is what an unforgiving walk would refuse, so the fixture is
+// the discriminating case for both derivations.
 func embedFixtureRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	for _, dir := range []string{"cmd", filepath.Join("internal", "adopt")} {
-		if err := os.MkdirAll(filepath.Join(root, dir), 0o755); err != nil {
-			t.Fatal(err)
-		}
+	if err := os.MkdirAll(filepath.Join(root, "internal", "adopt"), 0o755); err != nil {
+		t.Fatal(err)
 	}
 	source := "package adopt\n\nimport _ \"embed\"\n\n//go:embed prepush.sh\nvar prepushHook string\n"
 	for path, body := range map[string]string{
@@ -59,10 +57,12 @@ func TestRequiredBuildPackAssetsCarryEmbedTargets(t *testing.T) {
 	t.Fatalf("RequiredBuildPackAssets = %v, want it to carry %q", assets, want)
 }
 
-// TestEmbedTargetsResolveAgainstTheSourceDirectory pins the exported derivation the
-// path-aware lane consumes. A pattern is directory-relative, so a resolution against
+// TestEmbedTargetsSkipAnAbsentSourceDirectory pins the exported derivation the
+// path-aware lane consumes. An absent cmd/ contributes nothing, because a module that
+// carries only internal/ is a legitimate tree and an error there makes every caller
+// plant a placeholder source. A pattern is directory-relative, so a resolution against
 // the module root names a path no checkout carries and the lane grades the wrong file.
-func TestEmbedTargetsResolveAgainstTheSourceDirectory(t *testing.T) {
+func TestEmbedTargetsSkipAnAbsentSourceDirectory(t *testing.T) {
 	targets, err := EmbedTargets(embedFixtureRoot(t))
 	if err != nil {
 		t.Fatal(err)
