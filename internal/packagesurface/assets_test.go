@@ -57,11 +57,9 @@ func TestRequiredBuildPackAssetsCarryEmbedTargets(t *testing.T) {
 	t.Fatalf("RequiredBuildPackAssets = %v, want it to carry %q", assets, want)
 }
 
-// TestEmbedTargetsSkipAnAbsentSourceDirectory pins the exported derivation the
-// path-aware lane consumes. An absent cmd/ contributes nothing, because a module that
-// carries only internal/ is a legitimate tree and an error there makes every caller
-// plant a placeholder source. A pattern is directory-relative, so a resolution against
-// the module root names a path no checkout carries and the lane grades the wrong file.
+// TestEmbedTargetsSkipAnAbsentSourceDirectory pins the exported derivation the lane
+// consumes: over a tree with no cmd/, an embed pattern resolves against its own
+// source directory.
 func TestEmbedTargetsSkipAnAbsentSourceDirectory(t *testing.T) {
 	targets, err := EmbedTargets(embedFixtureRoot(t))
 	if err != nil {
