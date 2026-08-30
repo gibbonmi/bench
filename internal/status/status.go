@@ -531,7 +531,7 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 			detail := partialGreenDetail(gv.Partition, gv.CheckPartition)
 			return append(rows, row{7, "gate", detail, commandAction(freshGateAction)})
 		}
-		detail, command := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
+		detail, command := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree, gv.Reason)
 		return append(rows, row{7, "gate", detail, command})
 	}
 	if gv.Status == "timeout" {
@@ -568,8 +568,15 @@ func GateVerdict(root string) GateInfo {
 	return gi
 }
 
-func staleGateDetailAction(root, cachedTree, currentTree string) (detail string, action statusAction) {
-	return fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree)), commandAction(gateAction)
+// staleGateDetailAction states the staleness the reader must act on. The gate's reason
+// joins the two trees when it has one: matching trees otherwise read as a staleness with
+// no cause.
+func staleGateDetailAction(root, cachedTree, currentTree, reason string) (detail string, action statusAction) {
+	detail = fmt.Sprintf("stale (gated tree %s, work tree %s", Short(cachedTree), Short(currentTree))
+	if reason != "" {
+		detail += "; " + reason
+	}
+	return detail + ")", commandAction(gateAction)
 }
 
 func skippedComponentNames(p *gate.Partition) []string {

@@ -29,12 +29,21 @@ func TestShort(t *testing.T) {
 }
 
 func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
-	detail, action := staleGateDetailAction(t.TempDir(), "0123456789abcdef", "none")
+	detail, action := staleGateDetailAction(t.TempDir(), "0123456789abcdef", "none", "")
 	if detail != "stale (gated tree 0123456, work tree none)" {
 		t.Fatalf("detail = %q, want strong stale detail", detail)
 	}
 	if action.render() != "bench gate" {
 		t.Fatalf("action = %q, want bench gate", action.render())
+	}
+}
+
+// The gate names why it no longer stands behind the record. Without that reason a reader
+// whose two trees match sees a staleness with no cause and no way to judge the rerun.
+func TestStaleGateDetailActionNamesTheGateReason(t *testing.T) {
+	detail, _ := staleGateDetailAction(t.TempDir(), "0123456789abcdef", "0123456789abcdef", "evidence changed")
+	if detail != "stale (gated tree 0123456, work tree 0123456; evidence changed)" {
+		t.Fatalf("detail = %q, want the stale detail naming the gate reason", detail)
 	}
 }
 

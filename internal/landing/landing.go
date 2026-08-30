@@ -154,7 +154,7 @@ func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, comp
 		return nil, composedSnapshot{}, errors.New("nothing to commit")
 	}
 	if got := o.authorize(ctx, r.Root, snapshot.tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
-		return nil, composedSnapshot{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
+		return nil, composedSnapshot{}, errors.New(refusalMessage(got))
 	}
 	return paths, snapshot, nil
 }
@@ -256,7 +256,7 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 		}
 	}
 	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); !o.reviewedPublishes.permits(got.Kind) {
-		return ReviewedResult{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
+		return ReviewedResult{}, errors.New(refusalMessage(got))
 	}
 	// Recheck the two moving identities after the gate and before creating an
 	// otherwise unreachable object. Tree equality is insufficient: review binds a commit.
@@ -277,6 +277,40 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 		return ReviewedResult{}, destinationUpdateFailure(r.Root, r.Destination, destination, err)
 	}
 	return ReviewedResult{SourceBase: r.ReviewBase, SourceTip: source, DestinationBase: destination, Commit: commit, Tree: tree}, nil
+}
+
+// refusalMessage renders the one refusal line every authorization caller prints. The
+// literal prefix and the kind stay, because two tests and the operator's own memory read
+// them; the sentence after names what the attribution means and what to run next.
+func refusalMessage(got authorization.Result) string {
+	line := "prospective authorization refused: " + string(got.Kind)
+	explanation, action := refusalGuidance(got.Kind)
+	// An Infrastructure attribution carries the gate's own reason, which is more exact than
+	// anything this renderer could state about the kind.
+	if got.Reason != "" {
+		explanation = got.Reason
+	}
+	if explanation != "" {
+		line += " (" + explanation + ")"
+	}
+	if action != "" {
+		line += "; " + action
+	}
+	return line
+}
+
+// refusalGuidance answers what a refused kind means to the operator and what to do next.
+// The two lane outcomes answer nothing: a lane states its own outcome line already.
+func refusalGuidance(kind authorization.Kind) (explanation, action string) {
+	switch kind {
+	case authorization.Inherited:
+		return "the gate ran red on the composed tree and no green baseline attributes the red to this diff", "run bench gate --fresh"
+	case authorization.Candidate:
+		return "the gate ran red on the composed tree and the green baseline attributes the red to this diff", "fix the failures above"
+	case authorization.Infrastructure:
+		return "", "run bench doctor"
+	}
+	return "", ""
 }
 
 // CheckoutFingerprint binds the attached branch, commit, index, worktree,
