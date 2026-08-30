@@ -190,6 +190,12 @@ coverage map; a class skipped here returns as a regression.
   splits its own field. Assert the permitted bytes, not only the refused ones.
   A test that exercises only what the predicate rejects proves nothing about the
   half that reaches the document
+- a cell whose text looks numeric to the sink. `toon.Table` gives the escaping
+  to the TOON encoder, which quotes a value that reads as a number. A hex id or
+  a digest that starts with `0` and a digit meets that rule about four times in
+  a hundred. So a joined-by-hand expectation is correct for most fixtures and
+  wrong for the rest. Derive the expectation through the same `toon.Table` call
+  the producer makes, which keeps the quoting rule in one source
 - a whitespace predicate applied to hand-edited text, where the class boundary
   is what a reader can see. `unicode.IsSpace` carries the whole `White_Space`
   property, so every `Zs` separator — U+00A0, U+2000 through U+200A, U+3000 —
@@ -564,7 +570,9 @@ escalation.
   consumer receives. Do not reopen it as a link/upgrade ergonomics fix.
 - Never build `dist/bench` with plain `go build`; use
   `bash scripts/go-build.sh <root> <out>` so the binary carries the package
-  version the version and upgrade contracts require. `bench worktree land`
+  version the version and upgrade contracts require. Inside an assignment
+  worktree, `bench worktree build <target>` is the sanctioned form: it runs that
+  script and writes the worktree's own `dist/bench`. `bench worktree land`
   now refuses a dev executable that was not built from the current sources, and
   names that command as the remedy. The proof is self-attestation, so it cannot
   catch an executable that predates it or one patched to skip its own check. Nor
@@ -573,10 +581,15 @@ escalation.
   that survive both are the gate's private exact-source build and the operator's
   sanctioned rebuild.
 - To exercise or measure a durable worktree artifact directly, invoke that
-  worktree's own `./dist/bench`. `bench` on PATH resolves to the main checkout's
-  wrapper and may belong to a different source tree. Gate and `bench test` runs
-  do not reuse that artifact: their owner builds one private exact-source binary.
-  It propagates that binary through every ordinary child, and removes it after teardown.
+  worktree's own `./dist/bench`. The wrapper on PATH resolves a working
+  directory inside a worktree of this repository to that worktree, and it
+  prefers that kit's `dist/bench`. So a bare `bench` serves the worktree's own
+  build after `bench worktree build <target>`, and serves the main checkout's
+  build from anywhere else. `bench worktree exec <target> -- ./dist/bench <verb>`
+  is the spelling that no working directory can change. Gate and `bench test`
+  runs never reuse that artifact: their owner builds one private exact-source
+  binary. It propagates that binary through every ordinary child, and removes it
+  after teardown.
 - A direct `./dist/bench` invocation needs `BENCH_HOME` exported (the wrapper
   exports it; the gate-inputs closure declares it). Without it the prospective
   subject stays open, so a landing's gate can run fully green and still refuse
