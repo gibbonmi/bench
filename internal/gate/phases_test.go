@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -214,4 +216,35 @@ func phaseFinishElapsed(t *testing.T, root, phase string) int64 {
 	}
 	t.Fatalf("phase %s has no finish record in\n%s", phase, data)
 	return 0
+}
+
+// WF18: the gate's system phase reads the one system-suite producer. The named check
+// `bench test --check system` reads the same producer, so neither surface can hold an
+// argv list the other does not.
+func TestBenchkitPhasesSystemPhaseReadsTheProducer(t *testing.T) {
+	kit, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	operands, suiteEnv := SystemSuite(kit)
+	var system Phase
+	found := false
+	for _, phase := range BenchkitPhases(kit, kit) {
+		if phase.Name == SystemPhaseName {
+			system, found = phase, true
+		}
+	}
+	if !found {
+		t.Fatal("BenchkitPhases holds no system phase")
+	}
+	tail := system.Argv[len(system.Argv)-len(operands):]
+	if !reflect.DeepEqual(tail, operands) {
+		t.Fatalf("system argv tail = %#v, want the producer's operands %#v", tail, operands)
+	}
+	if !reflect.DeepEqual(system.Env, suiteEnv) {
+		t.Fatalf("system env = %#v, want the producer's environment %#v", system.Env, suiteEnv)
+	}
+	if want := SystemRootEnv + "=" + kit; !slices.Contains(system.Env, want) {
+		t.Fatalf("system env = %#v, want %q", system.Env, want)
+	}
 }

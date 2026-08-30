@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -238,4 +239,122 @@ func writeGoBoundaryWrapper(t *testing.T, path, realGo, conformanceRoot string) 
 	if err := os.WriteFile(path, []byte(source), 0o755); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// WF16, WF17, WF19: the system check owns the gate's system operands and environment.
+// It carries the selected run binary, the kit, and the suite's root, and it carries no
+// conformance variable, because the system suite is not a conformance scope.
+func TestSystemCheckOwnsTheGateEnvironment(t *testing.T) {
+	root := canonicalTestDir(t)
+	marker := filepath.Join(t.TempDir(), "environment")
+	goDir := t.TempDir()
+	writeCheckGo(t, filepath.Join(goDir, "go"), marker)
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	for name, value := range map[string]string{
+		registry.ConformanceRootEnv:      "/ambient/root",
+		registry.ConformanceTierEnv:      "ship",
+		registry.ConformanceScopeEnv:     "ambient-scope",
+		registry.ConformanceChecksEnv:    "ambient-checks",
+		registry.ConformanceInheritedEnv: "ambient-inherited",
+	} {
+		t.Setenv(name, value)
+	}
+
+	var selected string
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
+			selected = output
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+	t.Setenv("BENCH_KIT", root)
+
+	output, code := Command(root, []string{"--check", "system"})
+	if code != 0 {
+		t.Fatalf("system check = %d, want 0\n%s", code, output)
+	}
+	environment := readTestReportFile(t, marker)
+	if want := "argv=test -trimpath -count=1 -json -tags=system ./internal/systemtest\n"; !strings.Contains(environment, want) {
+		t.Errorf("system-check Go argv missing %q:\n%s", strings.TrimSpace(want), environment)
+	}
+	for name, want := range map[string]string{
+		runbinary.Env:      selected,
+		"BENCH_KIT":        root,
+		gate.SystemRootEnv: root,
+	} {
+		if !strings.Contains(environment, name+"="+want+"\n") {
+			t.Errorf("child environment missing %s=%q:\n%s", name, want, environment)
+		}
+	}
+	for _, name := range []string{registry.ConformanceScopeEnv, registry.ConformanceRootEnv, registry.ConformanceTierEnv} {
+		if strings.Contains(environment, name+"=") {
+			t.Errorf("child environment retained %s:\n%s", name, environment)
+		}
+	}
+}
+
+// WF20: the system suite drives the kit's own wrapper and pool, so a graded root that
+// is not the kit refuses before any Go starts.
+func TestSystemCheckRefusesAForeignRoot(t *testing.T) {
+	root := canonicalTestDir(t)
+	marker := filepath.Join(t.TempDir(), "go-ran")
+	goDir := t.TempDir()
+	writeCheckGo(t, filepath.Join(goDir, "go"), marker)
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("BENCH_KIT", canonicalTestDir(t))
+
+	output, code := Command(root, []string{"--check", "system"})
+	if code != 1 || !strings.Contains(output, "system check unavailable") {
+		t.Fatalf("foreign root = %d, %q; want the system-check refusal at exit 1", code, output)
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatalf("foreign-root refusal started go child: %v", err)
+	}
+}
+
+// WF21: a red suite reads as red. The check renders the child's package terminal rather
+// than its own opinion of the run.
+func TestSystemCheckReportsAFailingSuite(t *testing.T) {
+	root := canonicalTestDir(t)
+	goDir := t.TempDir()
+	writeFailingCheckGo(t, filepath.Join(goDir, "go"))
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+	t.Setenv("BENCH_KIT", root)
+
+	output, code := Command(root, []string{"--check", "system"})
+	if code != 1 {
+		t.Fatalf("failing system check = %d, want 1\n%s", code, output)
+	}
+	if want := "packages[1]{package,status}:\n  checkfixture,fail\n"; !strings.Contains(output, want) {
+		t.Fatalf("failing system check output = %q, want %q", output, want)
+	}
+}
+
+func writeFailingCheckGo(t *testing.T, path string) {
+	t.Helper()
+	source := "#!/usr/bin/env bash\nprintf '%s\\n' '{\"Action\":\"fail\",\"Package\":\"checkfixture\"}'\nexit 1\n"
+	if err := os.WriteFile(path, []byte(source), 0o755); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// canonicalTestDir returns a temporary directory with its symlinks already resolved.
+// The run owner canonicalizes the source root it reports, so an unresolved fixture path
+// would not compare equal to the environment the child carries.
+func canonicalTestDir(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return dir
 }

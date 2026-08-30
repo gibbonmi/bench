@@ -55,11 +55,12 @@ var benchkitPhasesForCommand = BenchkitPhases
 // and no phase authors another Bench binary.
 func BenchkitPhases(root, kit string) []Phase {
 	phases := toolchainPhases(root, kit)
-	if sameDirectory(root, kit) {
+	if SystemSuiteRuns(root, kit) {
+		operands, env := SystemSuite(root)
 		phases = append(phases, Phase{
-			Name: "system",
-			Argv: BaseTestArgv("", "-tags=system", "./internal/systemtest"),
-			Env:  []string{"BENCH_SYSTEM_ROOT=" + root},
+			Name: SystemPhaseName,
+			Argv: BaseTestArgv("", operands...),
+			Env:  env,
 			Dir:  kit,
 		})
 	}
@@ -68,6 +69,28 @@ func BenchkitPhases(root, kit string) []Phase {
 		Argv:     shellcheckArgv(kit),
 		Optional: true,
 	})
+}
+
+// SystemPhaseName names the system suite on both of its surfaces: the gate's phase
+// table and the `bench test --check` grammar. One name serves both because both run the
+// same suite.
+const SystemPhaseName = "system"
+
+// SystemRootEnv carries the tree under grade to the system suite's owner.
+const SystemRootEnv = "BENCH_SYSTEM_ROOT"
+
+// SystemSuite returns the `go test` operands of the system suite and the environment its
+// owner reads, for the tree under grade. The gate's system phase and the named check
+// `bench test --check system` both compose it, so the two invocations cannot drift.
+func SystemSuite(root string) (operands, env []string) {
+	return []string{"-tags=system", "./internal/systemtest"}, []string{SystemRootEnv + "=" + root}
+}
+
+// SystemSuiteRuns reports whether root is the checkout the system suite may grade. The
+// suite drives the kit's own wrapper, pool, and hooks, so it grades the kit alone. Both
+// surfaces ask this, so a linked repo never starts the suite from either one.
+func SystemSuiteRuns(root, kit string) bool {
+	return sameDirectory(root, kit)
 }
 
 // toolchainPhases are the Go steps that grade source rather than the built binary.
