@@ -149,34 +149,34 @@ Not covered: story 28 — the FT71 condition is a build-exit rule, and the workf
 
 ## Ownership fences
 
-- specs/otel-seam-record/
-- reviews/otel-seam-record.md
-- internal/otelrecord/
-- internal/benchhome/
-- go.mod
-- go.sum
-- internal/gate/gate.go
-- internal/gate/engine.go
-- internal/gate/runner.go
-- internal/gate/lane.go
-- internal/gate/lane_test.go
-- internal/gate/lane_record_test.go
-- internal/commit/commit.go
-- internal/landing/landing.go
-- internal/landing/composition.go
-- internal/worktree/worktree.go
-- internal/worktree/effects.go
-- internal/worktree/exec.go
-- internal/worktree/merge.go
-- internal/worktree/land.go
-- internal/harnesses/harnesses.go
-- internal/harnesses/harnesses_test.go
-- internal/harnesses/command.go
-- internal/harnesses/command_test.go
-- internal/conformance/
-- cmd/bench/main.go
-- DATA_HANDLING.md
-- internal/systemtest/
+- `specs/otel-seam-record/`
+- `reviews/otel-seam-record.md`
+- `internal/otelrecord/`
+- `internal/benchhome/`
+- `go.mod`
+- `go.sum`
+- `internal/gate/gate.go`
+- `internal/gate/engine.go`
+- `internal/gate/runner.go`
+- `internal/gate/lane.go`
+- `internal/gate/lane_test.go`
+- `internal/gate/lane_record_test.go`
+- `internal/commit/commit.go`
+- `internal/landing/landing.go`
+- `internal/landing/composition.go`
+- `internal/worktree/worktree.go`
+- `internal/worktree/effects.go`
+- `internal/worktree/exec.go`
+- `internal/worktree/merge.go`
+- `internal/worktree/land.go`
+- `internal/harnesses/harnesses.go`
+- `internal/harnesses/harnesses_test.go`
+- `internal/harnesses/command.go`
+- `internal/harnesses/command_test.go`
+- `internal/conformance/`
+- `cmd/bench/main.go`
+- `DATA_HANDLING.md`
+- `internal/systemtest/`
 
 ## Out of scope
 
