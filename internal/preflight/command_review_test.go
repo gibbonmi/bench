@@ -21,6 +21,11 @@ func TestCommandConformantTree(t *testing.T) {
 			t.Errorf("output missing green %s row:\n%s", name, first)
 		}
 	}
+	// WF32: the rendered header carries the next column on every run, green
+	// included. A Next field the renderer never reads would leave the old header.
+	if !strings.Contains(first, "checks[5]{check,verdict,detail,next}") {
+		t.Errorf("output missing the four-column checks header:\n%s", first)
+	}
 	second, code2 := Command([]string{"review", slug})
 	if code2 != 0 || second != first {
 		t.Errorf("second run = (%q, %d), want byte-identical to first (%q, 0)", second, code2, first)
@@ -43,6 +48,12 @@ func TestCommandStaleBase(t *testing.T) {
 	}
 	if !strings.Contains(out, "base-current,red") {
 		t.Errorf("output missing red base-current row:\n%s", out)
+	}
+	// WF37: the remedy reaches the rendered row, so the gatherer's default-branch
+	// and assignment facts are proved beside the pure decision. This tree is no
+	// worktree of an assignment, so the id is the placeholder.
+	if !strings.Contains(out, "base-current,red,default branch tip is not an ancestor of HEAD,bench worktree merge --from main <target>") {
+		t.Errorf("output missing the base-current row's remedy:\n%s", out)
 	}
 }
 

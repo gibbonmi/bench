@@ -65,9 +65,9 @@ func Command(args []string) (string, int) {
 	verdict := Decide(facts)
 	rows := make([][]string, len(verdict.Checks))
 	for i, c := range verdict.Checks {
-		rows[i] = []string{c.Check, c.Verdict, c.Detail}
+		rows[i] = []string{c.Check, c.Verdict, c.Detail, c.Next}
 	}
-	tbl, err := toon.Table("checks", []string{"check", "verdict", "detail"}, rows)
+	tbl, err := toon.Table("checks", []string{"check", "verdict", "detail", "next"}, rows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
