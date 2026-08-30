@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // buildRecorder is the `build` join a row drives instead of a real compile. It records
@@ -120,7 +121,8 @@ func TestBuildPrintsTheTable(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := buildWith(buildJoins(&buildRecorder{}), root, []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
-	want := "worktree_build[1]{worktree,executable}:\n  " + creation.Assignment.ID + "," + filepath.Join(creation.Assignment.Worktree, "dist", "bench") + "\n"
+	want, err := toon.Table("worktree_build", []string{"worktree", "executable"}, [][]string{{creation.Assignment.ID, filepath.Join(creation.Assignment.Worktree, "dist", "bench")}})
+	mustNoError(t, err)
 	requireTest(t, strings.HasPrefix(stdout.String(), want), "build printed %q, want the table %q", stdout.String(), want)
 }
 

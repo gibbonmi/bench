@@ -152,8 +152,8 @@ func matchingAssignments(assignments []intent.Assignment, matches func(intent.As
 }
 
 // printTargetRefusal is the one printer every target-taking verb uses, so `worktree path`,
-// `worktree exec`, `worktree show`, and `worktree build` cannot describe one failure four
-// ways. A component refusal prints
+// `worktree exec`, `worktree show`, `worktree build`, and `worktree create` cannot each
+// describe one failure their own way. A component refusal prints
 // its detail sentence: the operator reads the named check, not the refused record. The
 // second line names the verb that answers the refusal; a target that never resolved is
 // answered by the lookup, so that is the default.
