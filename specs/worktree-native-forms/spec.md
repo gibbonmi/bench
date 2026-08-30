@@ -296,6 +296,8 @@ is self-attestation, as `projects/benchkit.md` records for every hand build.
 | WF42 | 33 | `bench worktree --help` names `bench worktree create [--refresh] --request <opaque-id> --label <work-item> [--from <target>]` | `cmd/bench/command_registry_test.go` (`TestKeptWorktreeOperationsKeepTheirGrammar`) | the kept list holds the bare verb today, so a grammar line without the flag passes |
 | WF43 | 34 | a mutated owner marker or lock on the sibling makes `--from <sibling>` refuse with that component's named detail, a mutated assignment state refuses with `--from names no active assignment` because the active filter runs before the bundle, and the ledger gains no record in each case | `internal/worktree/worktree_test.go` (`TestCreateFromRefusesAFailedSiblingIdentityComponent`) | a lookup that checks state, cleanliness, and the branch alone skips the bundle |
 | WF44 | 15 | `bench help` prints `bench worktree exec <target> -- bench gate  run one active owned worktree's gate` and no `bash bin/bench.sh` row, byte-equal to the fixture | `cmd/bench/main_test.go` (`TestHelpInventoryIsComplete`) | an appended row beside the old gate row keeps the raw path alive |
+| WF45 | 24 | a `create --from <sibling>` replay with the same `--request` after the sibling takes an uncommitted edit exits 0 with the existing record, and the ledger gains no second record | `internal/worktree/worktree_test.go` (`TestCreateFromReplayReturnsTheRecord`) | a `--from` resolved before the replay lookup refuses a no-op replay |
+| WF46 | 17 | the conformance registry names no check equal to `gate.SystemPhaseName` | `internal/testreport/check_test.go` (`TestSystemCheckNameIsReserved`) | a registry check named `system` would be shadowed with no refusal |
 
 Not covered: story 43 — the changelog entry is prose. The review round grades it
 against WF1, WF14, WF16, WF23, and WF32.
@@ -359,6 +361,7 @@ against WF1 and WF16.
 - `internal/worktree/merge_test.go`
 - `internal/worktree/exec_test.go`
 - `internal/worktree/identifier_operand_test.go`
+- `internal/worktree/path.go`
 - `internal/worktree/parallel_census_test.go`
 - `internal/gate/phases.go`
 - `internal/gate/phases_test.go`
