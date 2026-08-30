@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"io"
 	"os"
@@ -143,7 +144,12 @@ func TestCreateCommandPrintsNextHint(t *testing.T) {
 // exits 0, whether or not required flags are present.
 func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
 	t.Parallel()
-	want := "usage: " + usage.WorktreeCreate + "\n"
+	// WF31: the grammar the command prints is exact, so the flag's spelling and its
+	// optional brackets are pinned against the literal rather than against the const.
+	if usage.WorktreeCreate != strings.TrimPrefix(createFromGrammar, "usage: ") {
+		t.Fatalf("create grammar = %q, want %q", usage.WorktreeCreate, createFromGrammar)
+	}
+	want := createFromGrammar + "\n"
 	for _, args := range [][]string{
 		{"--help"},
 		{"-h"},
@@ -614,4 +620,296 @@ func TestCensusDropHasOneCallSiteInThisPackage(t *testing.T) {
 	if len(sites) != 1 || sites["lifecycle.go"] != 1 {
 		t.Fatalf("census.Drop call sites = %v, want one in lifecycle.go", sites)
 	}
+}
+
+// --- create --from: the sibling start ---
+
+// createFromGrammar is the exact create usage line. The help rows below read this literal
+// rather than the const the command prints, so a grammar that loses `[--from <target>]`
+// turns them red instead of following the change.
+const createFromGrammar = "usage: bench worktree create [--refresh] --request <opaque-id> --label <work-item> [--from <target>]"
+
+// runCreate drives CreateCommand against a fixture repository and returns the exit code
+// with both streams.
+func runCreate(t *testing.T, root, home string, args ...string) (int, string, string) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	code := CreateCommand(root, home, args, &stdout, &stderr)
+	return code, stdout.String(), stderr.String()
+}
+
+// requireCreateFromRefusal pins the surface every `--from` refusal shares: exit 1, an empty
+// stdout, and the shared target printer's two stderr lines.
+func requireCreateFromRefusal(t *testing.T, code int, stdout, stderr string, fragments ...string) {
+	t.Helper()
+	if code != 1 || stdout != "" {
+		t.Fatalf("create --from = (%d, %q, %q), want (1, empty stdout, a refusal)", code, stdout, stderr)
+	}
+	for _, fragment := range fragments {
+		if !strings.Contains(stderr, fragment) {
+			t.Fatalf("create --from stderr = %q, want it to hold %q", stderr, fragment)
+		}
+	}
+}
+
+// assignmentCount reads how many records the ledger holds, so a refusal row can prove the
+// verb registered nothing.
+func assignmentCount(t *testing.T, root string) int {
+	t.Helper()
+	assignments, err := intent.Assignments(root)
+	mustNoError(t, err)
+	return len(assignments)
+}
+
+// identityComponentDetail is the detail sentence inside a fixture's whole refused record.
+// The shared target printer prints that sentence alone, so a row reads the registry's text
+// through the same fixture the merge rows read.
+func identityComponentDetail(t *testing.T, fixture identityComponentFixture, creation Creation) string {
+	t.Helper()
+	field, _, _ := strings.Cut(fixture.want(creation, "", ""), ",")
+	detail, ok := strings.CutPrefix(field, "detail=")
+	if !ok {
+		t.Fatalf("fixture record %q names no detail field", field)
+	}
+	return detail
+}
+
+// WF23: `--from <sibling>` starts the new assignment at the sibling's committed tip. The
+// ledger start, the checkout HEAD, and the new assignment's own branch all read that tip,
+// so the sibling's branch stays untouched.
+func TestCreateFromStartsAtTheSiblingTip(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, created := mergeFixture(t, "delegate")
+	sibling := created[0]
+	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
+	tip := gitOutput(t, sibling.Path, "rev-parse", "HEAD")
+
+	const request = "create-from-tip"
+	code, stdout, stderr := runCreate(t, root, home,
+		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
+	if code != 0 {
+		t.Fatalf("create --from = (%d, %q, %q), want 0", code, stdout, stderr)
+	}
+	record, ok, err := intent.FindAssignmentForRequest(root, request)
+	mustNoError(t, err)
+	if !ok {
+		t.Fatalf("request %q registered no assignment", request)
+	}
+	if record.Start != tip {
+		t.Errorf("ledger start = %s, want the sibling tip %s", record.Start, tip)
+	}
+	if head := gitOutput(t, record.Worktree, "rev-parse", "HEAD"); head != tip {
+		t.Errorf("new worktree HEAD = %s, want the sibling tip %s", head, tip)
+	}
+	want := intent.AssignmentBranchRef(record.OwnerID, record.ID)
+	if branch := gitOutput(t, record.Worktree, "rev-parse", "--symbolic-full-name", "HEAD"); branch != want {
+		t.Errorf("new worktree branch = %s, want its own assignment branch %s", branch, want)
+	}
+	if head := gitOutput(t, sibling.Path, "rev-parse", "HEAD"); head != tip {
+		t.Errorf("sibling HEAD = %s, want it unmoved at %s", head, tip)
+	}
+}
+
+// WF45: a replay of `create --from <sibling>` with the same request returns the existing
+// record whatever the sibling's checkout now holds. The request lookup is the first fact
+// the creation reads, so an edit the sibling took after the first run refuses nothing and
+// the ledger gains no second record.
+func TestCreateFromReplayReturnsTheRecord(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, created := mergeFixture(t, "delegate")
+	sibling := created[0]
+	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
+
+	const request = "create-from-replay"
+	code, first, stderr := runCreate(t, root, home,
+		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
+	if code != 0 {
+		t.Fatalf("create --from = (%d, %q, %q), want 0", code, first, stderr)
+	}
+	mustWrite(t, filepath.Join(sibling.Path, "sibling.txt"), []byte("uncommitted\n"), 0o644)
+
+	code, second, stderr := runCreate(t, root, home,
+		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
+	if code != 0 {
+		t.Fatalf("create --from replay = (%d, %q, %q), want 0", code, second, stderr)
+	}
+	if second != first {
+		t.Errorf("replay stdout = %q, want the first run's %q", second, first)
+	}
+	assignments, err := intent.Assignments(root)
+	mustNoError(t, err)
+	held := 0
+	for _, a := range assignments {
+		if a.RequestToken == request {
+			held++
+		}
+	}
+	if held != 1 {
+		t.Errorf("ledger holds %d records for request %q, want 1", held, request)
+	}
+}
+
+// WF24: a `--from` that names no active assignment refuses through the shared printer and
+// registers nothing. The flag composes no commit lookup, so a typo never falls through to
+// the default tip.
+func TestCreateFromRefusesAnUnknownSibling(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, _ := mergeFixture(t, "delegate")
+	before := assignmentCount(t, root)
+
+	code, stdout, stderr := runCreate(t, root, home,
+		"--request", "create-from-unknown", "--label", "dependent", "--from", "no-such-label")
+	requireCreateFromRefusal(t, code, stdout, stderr,
+		"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
+	if after := assignmentCount(t, root); after != before {
+		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
+	}
+}
+
+// WF25 and WF26: a sibling contributes its committed branch tip alone, so a dirty sibling
+// names `bench commit` at the sibling and a detached sibling names its assignment branch.
+func TestCreateFromRefusesADirtyOrDetachedSibling(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, created := mergeFixture(t, "delegate")
+	sibling := created[0]
+	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
+	before := assignmentCount(t, root)
+	mustWrite(t, filepath.Join(sibling.Path, "sibling.txt"), []byte("uncommitted\n"), 0o644)
+
+	code, stdout, stderr := runCreate(t, root, home,
+		"--request", "create-from-dirty", "--label", "dependent", "--from", sibling.Assignment.Label)
+	requireCreateFromRefusal(t, code, stdout, stderr,
+		"bench worktree create: sibling checkout is not clean\n",
+		"next=bench worktree exec "+sibling.Assignment.ID+" -- bench commit\n")
+
+	gitRun(t, sibling.Path, "checkout", "-q", "--", "sibling.txt")
+	gitRun(t, sibling.Path, "checkout", "-q", "--detach", "HEAD")
+	code, stdout, stderr = runCreate(t, root, home,
+		"--request", "create-from-detached", "--label", "dependent", "--from", sibling.Assignment.Label)
+	requireCreateFromRefusal(t, code, stdout, stderr,
+		"bench worktree create: sibling is not on its assignment branch\n", "next=bench worktree list\n")
+	if after := assignmentCount(t, root); after != before {
+		t.Fatalf("ledger holds %d records, want the %d it held before the refusals", after, before)
+	}
+}
+
+// WF27: `--from` and `--refresh` name two starts, so the pair is invalid usage. The
+// refusal runs before refreshop.Consume, and an empty stdout is the evidence: a refresh
+// that ran would have written its own table there.
+func TestCreateFromWithRefreshRefusesBeforeTheRefresh(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, created := mergeFixture(t, "delegate")
+	sibling := created[0]
+	before := assignmentCount(t, root)
+
+	code, stdout, stderr := runCreate(t, root, home, "--request", "create-from-refresh",
+		"--label", "dependent", "--refresh", "--from", sibling.Assignment.Label)
+	want := toon.Usage(createGrammar.Cmd, "--from with --refresh") + "\n"
+	if code != 2 || stdout != "" || stderr != want {
+		t.Fatalf("create --refresh --from = (%d, %q, %q), want (2, empty, %q)", code, stdout, stderr, want)
+	}
+	if after := assignmentCount(t, root); after != before {
+		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
+	}
+}
+
+// WF28: two siblings whose labels share the prefix make it ambiguous, and the refusal names
+// both ids. A first-match lookup would start the new worktree at the wrong sibling.
+func TestCreateFromRefusesAnAmbiguousPrefix(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, created := mergeFixture(t, "delegate-alpha", "delegate-beta")
+	before := assignmentCount(t, root)
+
+	code, stdout, stderr := runCreate(t, root, home,
+		"--request", "create-from-ambiguous", "--label", "dependent", "--from", "delegate-")
+	requireCreateFromRefusal(t, code, stdout, stderr,
+		"bench worktree create: target is ambiguous: ",
+		created[0].Assignment.ID, created[1].Assignment.ID, "next=bench worktree list\n")
+	if after := assignmentCount(t, root); after != before {
+		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
+	}
+}
+
+// WF29: a `--from` with a control byte refuses before the ledger read. The malformed
+// ledger file is the proof: a lookup that ran first would report the unreadable file
+// instead, and the file's bytes stay as written.
+func TestCreateFromRefusesControlBytes(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, _ := mergeFixture(t, "delegate")
+	address, err := intent.Address(root)
+	mustNoError(t, err)
+	malformed := []byte("{ this is not a ledger\n")
+	mustWrite(t, address, malformed, 0o600)
+
+	code, stdout, stderr := runCreate(t, root, home,
+		"--request", "create-from-control", "--label", "dependent", "--from", "a\x01b")
+	requireCreateFromRefusal(t, code, stdout, stderr,
+		"bench worktree create: --from contains control characters\n", "next=bench worktree list\n")
+	after, err := os.ReadFile(address)
+	mustNoError(t, err)
+	if string(after) != string(malformed) {
+		t.Fatalf("ledger bytes = %q, want them unread and unwritten at %q", after, malformed)
+	}
+}
+
+// WF30: a sibling whose state is no longer active authenticates nothing, so its label names
+// no sibling. A lookup over every state would start the new worktree at a retired tip.
+func TestCreateFromRefusesARetiredSibling(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, created := mergeFixture(t, "delegate")
+	sibling := created[0]
+	retired := sibling.Assignment
+	retired.State = intent.StateComplete
+	mustNoError(t, intent.PutAssignment(root, retired))
+	before := assignmentCount(t, root)
+
+	code, stdout, stderr := runCreate(t, root, home,
+		"--request", "create-from-retired", "--label", "dependent", "--from", sibling.Assignment.Label)
+	requireCreateFromRefusal(t, code, stdout, stderr,
+		"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
+	if after := assignmentCount(t, root); after != before {
+		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
+	}
+}
+
+// WF43: the sibling's creation bundle is the flag's whole authority, so a broken component
+// names itself and the verb registers nothing. The assignment-state component is the
+// exception this package can reach: the lookup narrows to the active assignments before
+// the bundle runs, so a non-active sibling meets WF30's sentence instead.
+func TestCreateFromRefusesAFailedSiblingIdentityComponent(t *testing.T) {
+	t.Parallel()
+	for _, component := range []string{componentOwnerMarker, componentLock} {
+		t.Run(component, func(t *testing.T) {
+			t.Parallel()
+			_, root, home, _, created := mergeFixture(t, "delegate")
+			sibling := created[0]
+			before := assignmentCount(t, root)
+			fixture := identityComponentFixtureFor(t, component)
+			fixture.mutate(t, root, sibling)
+
+			code, stdout, stderr := runCreate(t, root, home, "--request", "create-from-"+component,
+				"--label", "dependent", "--from", sibling.Assignment.Label)
+			requireCreateFromRefusal(t, code, stdout, stderr,
+				"bench worktree create: "+identityComponentDetail(t, fixture, sibling)+"\n",
+				"next=bench worktree list\n")
+			if after := assignmentCount(t, root); after != before {
+				t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
+			}
+		})
+	}
+	t.Run(componentAssignmentState, func(t *testing.T) {
+		t.Parallel()
+		_, root, home, _, created := mergeFixture(t, "delegate")
+		sibling := created[0]
+		before := assignmentCount(t, root)
+		identityComponentFixtureFor(t, componentAssignmentState).mutate(t, root, sibling)
+
+		code, stdout, stderr := runCreate(t, root, home, "--request", "create-from-state",
+			"--label", "dependent", "--from", sibling.Assignment.Label)
+		requireCreateFromRefusal(t, code, stdout, stderr,
+			"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
+		if after := assignmentCount(t, root); after != before {
+			t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
+		}
+	})
 }

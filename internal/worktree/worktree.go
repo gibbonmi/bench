@@ -612,7 +612,28 @@ var createGrammar = usage.Grammar{
 		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
 		{Name: "--label", HasValue: true, NoEmptyValue: true, Required: true},
 		{Name: "--refresh", HasValue: false},
+		{Name: "--from", HasValue: true, NoEmptyValue: true},
 	},
+}
+
+// createSiblingStart resolves `--from` through the one sibling lookup the merge verb also
+// composes. The flag reaches no commit lookup, so a spelling that names no active
+// assignment is a refusal rather than a fallthrough to the default tip. The caller runs
+// fromRepresentable before the creation starts, so this lookup reads a value a line can
+// carry.
+func createSiblingStart(root, from string) (string, error) {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return "", err
+	}
+	tip, _, ok, err := siblingTip(root, assignments, "", from)
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "", refusalError{refusal{detail: "--from names no active assignment", observed: from}}
+	}
+	return tip, nil
 }
 
 func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) int {
@@ -625,10 +646,39 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 		fmt.Fprintln(stderr, line)
 		return code
 	}
+	from := parsed.Flags["--from"]
+	// The two flags name two starts, so the pair refuses before the refresh runs: a fetch
+	// that moved the default branch would already have taken effect by the refusal.
+	if _, refresh := parsed.Flags["--refresh"]; refresh && from != "" {
+		fmt.Fprintln(stderr, toon.Usage(createGrammar.Cmd, "--from with --refresh"))
+		return 2
+	}
+	// The value's representability is a grammar fact, so it refuses before the creation
+	// reads anything at all.
+	if from != "" {
+		if err := fromRepresentable(from); err != nil {
+			return printTargetRefusal(stderr, createGrammar.Cmd, err)
+		}
+	}
 	_, startRef := refreshop.Consume(root, args, stdout)
+	// The sibling lookup is deferred, because the creation resolves the request replay
+	// first. A replay returns its existing record, so the sibling's state gates nothing a
+	// no-op run would act on.
+	var fromErr error
+	resolveStart := func() (string, error) { return startRef, nil }
+	if from != "" {
+		resolveStart = func() (string, error) {
+			tip, err := createSiblingStart(root, from)
+			fromErr = err
+			return tip, err
+		}
+	}
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
-	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), startRef)
+	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), resolveStart)
 	if err != nil {
+		if fromErr != nil {
+			return printTargetRefusal(stderr, createGrammar.Cmd, err)
+		}
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1
 	}
@@ -657,7 +707,7 @@ func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), startRef)
+	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), func() (string, error) { return startRef, nil })
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1

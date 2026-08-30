@@ -8,6 +8,28 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added `bench worktree build <target>`, which builds an active owned worktree's tree
+  into that worktree's own `dist/bench`. The build runs the tree's `scripts/go-build.sh`,
+  so the executable carries its seal. A success prints one `worktree_build` table with
+  the assignment and the executable path, then a `next[1]:` line
+  `bench worktree exec '<label>' -- ./dist/bench <verb>`. A failure prints the builder's
+  error and one `worktree: <absolute path>` line. An interrupt exits 130. An unassigned
+  target refuses with `next=bench worktree list`.
+- Added `bench test --check system`, which runs the gate's system phase as a focused
+  run. The check carries `BENCH_RUN_BINARY`, `BENCH_KIT`, and `BENCH_SYSTEM_ROOT`, and it
+  sets no conformance variable. One producer in the gate package owns the phase argv, so
+  the phase table and the named check cannot drift. The suite grades the kit checkout
+  only, so a linked repo gets `system check unavailable` at exit 1.
+- Added `bench worktree create --from <target>`, which starts the new assignment at a
+  sibling's committed tip. The new worktree takes its own assignment branch, and the
+  ledger `start` records that tip. The flag refuses an unknown, dirty, detached, retired,
+  or ambiguous sibling through the shared refusal printer. `--from` with `--refresh` is a
+  usage refusal at exit 2, before any refresh runs.
+- Added a `next` column to the preflight `checks` table, so a red row names its remedy.
+  The `base-current` red `default branch tip is not an ancestor of HEAD` carries
+  `bench worktree merge --from <default-branch> <target>`. The remedy names the resolved
+  default branch, and it names the assignment id when the preflight root is that
+  assignment's worktree. Every other row keeps an empty `next`.
 - Added `bench worktree show <target> <rev>:<path>`, which prints one blob from a
   revision of an active owned worktree, with Git's own streams and exit code. Added
   `bench worktree exec <target> --env KEY=VALUE -- <command>`, a repeatable flag whose
@@ -53,6 +75,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- `bench worktree --help` and `bench help` now name
+  `bench worktree exec <target> -- bench gate` under the worktree rows. The form replaces
+  the raw `bash bin/bench.sh gate --fresh` line, so neither inventory names a raw gate
+  path. `.bench/gate.sh` keeps its own wrapper-less refusal, because the gate entry owns
+  that contract.
 - Raised the minimum supported Node runtime to Node 24 for the package, staged publication, and release workflows.
 - Every Go toolchain child Bench spawns now writes to one Bench-owned build cache
   at `$HOME/.cache/bench/go-build`. The gate oracle closure, the gate phase

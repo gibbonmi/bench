@@ -43,30 +43,41 @@ func resolvePath(root, target string) (string, error) {
 }
 
 func resolveWorktree(root, target string) (string, error) {
+	selected, err := resolveAssignment(root, target)
+	if err != nil {
+		return "", err
+	}
+	return selected.Worktree, nil
+}
+
+// resolveAssignment is the one authority every target-taking verb resolves through: it
+// answers the whole record, so a verb that names the assignment in its output reads the
+// ledger once. A verb that needs the path alone composes resolveWorktree.
+func resolveAssignment(root, target string) (intent.Assignment, error) {
 	if !lineSafe(target) {
-		return "", errors.New("target contains control characters")
+		return intent.Assignment{}, errors.New("target contains control characters")
 	}
 	assignments, err := intent.Assignments(root)
 	if err != nil {
-		return "", err
+		return intent.Assignment{}, err
 	}
 	selected, err := selectAssignment(assignments, target)
 	if err != nil {
-		return "", err
+		return intent.Assignment{}, err
 	}
 	if !landingActiveState(selected.State) {
-		return "", componentRefusal(componentAssignmentState, selected.ID, string(selected.State), string(intent.StateActive))
+		return intent.Assignment{}, componentRefusal(componentAssignmentState, selected.ID, string(selected.State), string(intent.StateActive))
 	}
 	// The tree check runs before the creation bundle, because every bundle component reads
 	// evidence inside the tree. A tree that is gone is the fact the operator acts on. Any
 	// other stat error leaves the bundle to describe what it can read.
 	if _, statErr := os.Stat(selected.Worktree); statErr != nil && errors.Is(statErr, os.ErrNotExist) {
-		return "", missingTreeRefusal(root, selected)
+		return intent.Assignment{}, missingTreeRefusal(root, selected)
 	}
 	if err := validateCreationBundle(root, selected); err != nil {
-		return "", err
+		return intent.Assignment{}, err
 	}
-	return selected.Worktree, nil
+	return selected, nil
 }
 
 // missingTreeRefusal names the fact the operator can act on and the one verb that clears
@@ -140,8 +151,9 @@ func matchingAssignments(assignments []intent.Assignment, matches func(intent.As
 	return selected
 }
 
-// printTargetRefusal is the one printer both target-taking verbs use, so `worktree path`
-// and `worktree exec` cannot describe one failure two ways. A component refusal prints
+// printTargetRefusal is the one printer every target-taking verb uses, so `worktree path`,
+// `worktree exec`, `worktree show`, `worktree build`, and `worktree create` cannot each
+// describe one failure their own way. A component refusal prints
 // its detail sentence: the operator reads the named check, not the refused record. The
 // second line names the verb that answers the refusal; a target that never resolved is
 // answered by the lookup, so that is the default.

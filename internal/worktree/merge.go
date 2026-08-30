@@ -175,15 +175,25 @@ func mergeTargetTip(root string, a intent.Assignment) (string, error) {
 	return tip, nil
 }
 
+// fromRepresentable is the one guard every `--from` value passes, and it owns the refusal
+// sentence both verbs print. An unrepresentable value addresses nothing, so the check runs
+// before any lookup a broken ledger or a missing tree could answer first.
+func fromRepresentable(from string) error {
+	if !lineSafe(from) {
+		return refusalError{refusal{detail: "--from contains control characters"}}
+	}
+	return nil
+}
+
 // mergeIncoming resolves `--from` in the two lookups the bootstrap authority allows: a
 // sibling assignment's branch tip, and a commit in the default branch's history. A value
 // both lookups answer is ambiguous, because a first-match resolver would merge whichever
 // lookup happened to run first.
 func mergeIncoming(root string, assignments []intent.Assignment, target intent.Assignment, from string) (string, error) {
-	if !lineSafe(from) {
-		return "", refusalError{refusal{detail: "--from contains control characters"}}
+	if err := fromRepresentable(from); err != nil {
+		return "", err
 	}
-	sibling, siblingID, hasSibling, err := mergeSiblingTip(root, assignments, target, from)
+	sibling, siblingID, hasSibling, err := siblingTip(root, assignments, target.ID, from)
 	if err != nil {
 		return "", err
 	}
@@ -219,10 +229,13 @@ func activeAssignments(assignments []intent.Assignment) []intent.Assignment {
 	return active
 }
 
-// mergeSiblingTip answers the assignment lookup. A sibling contributes its committed
-// branch tip alone: `bench commit` stays the one snapshot composer, so a detached or
-// dirty sibling refuses rather than have its uncommitted work silently dropped.
-func mergeSiblingTip(root string, assignments []intent.Assignment, target intent.Assignment, from string) (tip, id string, ok bool, err error) {
+// siblingTip answers the assignment lookup for every verb that starts from a sibling: the
+// merge verb's `--from`, and the create verb's. A sibling contributes its committed branch
+// tip alone: `bench commit` stays the one snapshot composer, so a detached or dirty
+// sibling refuses rather than have its uncommitted work silently dropped. exclude names
+// the one assignment the caller refuses to resolve to, and is empty for a caller that has
+// no such assignment yet.
+func siblingTip(root string, assignments []intent.Assignment, exclude, from string) (tip, id string, ok bool, err error) {
 	selected, selectErr := selectAssignment(activeAssignments(assignments), from)
 	if selectErr != nil {
 		// An ambiguous prefix alone refuses, because the commit lookup resolves no
@@ -235,7 +248,7 @@ func mergeSiblingTip(root string, assignments []intent.Assignment, target intent
 		}
 		return "", "", false, nil
 	}
-	if selected.ID == target.ID {
+	if exclude != "" && selected.ID == exclude {
 		return "", "", false, refusalError{refusal{detail: "--from resolves to the target itself", observed: selected.ID}}
 	}
 	if err := mergeOnAssignmentBranch(selected, "sibling is not on its assignment branch"); err != nil {

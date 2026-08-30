@@ -242,6 +242,21 @@ func TestExplicitFocusedRunsWriteNoGateOwnedRecords(t *testing.T) {
 			}
 		}
 	}
+
+	// WF22: the system check is a focused run too, so it records no verdict either. The
+	// fixture module holds no system suite, so a fake `go` stands in for the child.
+	goDir := t.TempDir()
+	writeCheckGo(t, filepath.Join(goDir, "go"), filepath.Join(t.TempDir(), "environment"))
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("BENCH_KIT", root)
+	if output, code := Command(root, []string{"--check", "system"}); code != 0 {
+		t.Fatalf("system check = %d\n%s", code, output)
+	}
+	for path, want := range records {
+		if got := readTestReportFile(t, filepath.Join(root, path)); got != want {
+			t.Fatalf("gate-owned record %s = %q, want %q after the system check", path, got, want)
+		}
+	}
 }
 
 func focusedTestModule(t *testing.T) string {

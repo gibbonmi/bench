@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	specref "github.com/gibbonmi/bench/internal/spec"
 )
 
@@ -141,6 +142,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		return Facts{}, ticketErr
 	}
 
+	defaultBranch := ""
 	defaultBranchResolved, defaultBranchCurrent := false, false
 	reviewBase, reviewBaseResolved, reviewBaseHint := "", false, ""
 	changedPaths := append([]string(nil), sourcePaths...)
@@ -149,7 +151,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		resolvedSource = *source
 		reviewBase, reviewBaseResolved = resolvedSource.Base, true
 	} else {
-		defaultBranchResolved, defaultBranchCurrent = baseCurrentFacts(root)
+		defaultBranch, defaultBranchResolved, defaultBranchCurrent = baseCurrentFacts(root)
 		resolvedSource.Tip = headTip(root)
 		reviewBase, reviewBaseResolved, reviewBaseHint = reviewBaseFacts(root)
 		if reviewBaseResolved {
@@ -163,8 +165,10 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	return Facts{
 		Mode:                  mode,
 		SpecPath:              filepath.ToSlash(specref.RelTo(root, resolved)),
+		DefaultBranch:         defaultBranch,
 		DefaultBranchResolved: defaultBranchResolved,
 		DefaultBranchCurrent:  defaultBranchCurrent,
+		AssignmentTarget:      assignmentTarget(root),
 		ReviewBaseResolved:    reviewBaseResolved,
 		ReviewBaseHint:        reviewBaseHint,
 		SourceBase:            resolvedSource.Base,
@@ -396,24 +400,67 @@ func scanTicketEntries(dir string, entries []fs.DirEntry) ([]string, *BootstrapF
 	return tokens, nil
 }
 
+// canonicalRoot is a path's absolute, symlink-resolved, cleaned form — the one
+// identity two spellings of the same tree share. internal/worktree derives the
+// same form for its own targets, but that package imports this one, so a shared
+// call would close an import cycle.
+func canonicalRoot(path string) (string, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+		abs = resolved
+	}
+	return filepath.Clean(abs), nil
+}
+
 // baseCurrentFacts backs the base-current check: it resolves the default
 // branch and reports whether its tip is an ancestor of HEAD:
 // merge-base(default, HEAD) equal to rev-parse(default).
 //
-// An unresolved default branch answers (false, false). The check itself
-// renders that as red without a separate bootstrap failure, since map #7
-// names this a per-check red rather than a bootstrap precondition.
-func baseCurrentFacts(root string) (resolved, current bool) {
+// The resolved name comes back with the two predicates, because the stale-base
+// remedy names that branch and git.ResolvedDefault is its one source.
+//
+// An unresolved default branch answers no name and both predicates false. The
+// check itself renders that as red without a separate bootstrap failure, since
+// map #7 names this a per-check red rather than a bootstrap precondition.
+func baseCurrentFacts(root string) (branch string, resolved, current bool) {
 	def, ok := git.ResolvedDefault(root)
 	if !ok {
-		return false, false
+		return "", false, false
 	}
 	mergeBase, err1 := git.Output("merge-base", def, "HEAD")
 	tip, err2 := git.Output("rev-parse", def)
 	if err1 != nil || err2 != nil {
-		return true, false
+		return def, true, false
 	}
-	return true, mergeBase == tip
+	return def, true, mergeBase == tip
+}
+
+// assignmentTarget is the id of the active assignment that owns this preflight
+// root, empty otherwise. The tree is matched by canonical path, because the
+// ledger records a resolved path while a root may arrive through a symlink. An
+// unreadable ledger answers empty: the remedy then prints its placeholder, which
+// is the same answer a root outside the pool gets.
+func assignmentTarget(root string) string {
+	canonical, err := canonicalRoot(root)
+	if err != nil {
+		return ""
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return ""
+	}
+	for _, a := range assignments {
+		if a.State != intent.StateActive {
+			continue
+		}
+		if owned, ownedErr := canonicalRoot(a.Worktree); ownedErr == nil && owned == canonical {
+			return a.ID
+		}
+	}
+	return ""
 }
 
 // reviewBaseFacts wraps the exported diff-base resolution, the single

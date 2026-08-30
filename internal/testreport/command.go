@@ -90,9 +90,9 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if hasSourceTip && !hasBase {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--source-tip"), 2
 	}
-	if hasCheck {
-		check, found := registry.Find(check)
-		if !found || !check.RunsAt(registry.Dev) {
+	if hasCheck && check != gate.SystemPhaseName {
+		registered, found := registry.Find(check)
+		if !found || !registered.RunsAt(registry.Dev) {
 			return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
 		}
 	}
@@ -113,6 +113,11 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 }
 
 func runFocusedRequest(root string, request focusedRequest) (string, int) {
+	// The refusal precedes the run-owner selection, which builds a Bench executable with
+	// Go. A root the suite may not grade therefore starts no child at all.
+	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
+		return toon.Errorf("system check unavailable", "the system suite grades the kit checkout only") + "\n", 1
+	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	selection, err := selectRunBinary(ctx, testBenchSource(root))
@@ -158,12 +163,28 @@ func runFocusedRequest(root string, request focusedRequest) (string, int) {
 }
 
 func runNamedCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (string, int) {
+	if request.check == gate.SystemPhaseName {
+		return runSystemCheck(ctx, root, request, selection)
+	}
 	argv := focusedTestArgv("./internal/conformance", "-run", "^"+registry.RootConformanceTest+"$")
 	env, err := conformanceEnvironment(os.Environ(), root, request.check, selection)
 	if err != nil {
 		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
 	}
 	return runGoTest(ctx, root, request, argv, env)
+}
+
+// runSystemCheck runs the gate's system phase as a focused run. It reads the phase's
+// operands and environment from the gate's producer, and it sets no conformance
+// variable, because the system suite is a build-tagged package rather than a
+// conformance scope.
+func runSystemCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (string, int) {
+	operands, suiteEnv := gate.SystemSuite(root)
+	env, err := selectedRunEnvironment(os.Environ(), selection)
+	if err != nil {
+		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
+	}
+	return runGoTest(ctx, root, request, focusedTestArgv(operands...), append(env, suiteEnv...))
 }
 
 // focusedTestArgv is the `bench test` invocation over one operand list. It takes its

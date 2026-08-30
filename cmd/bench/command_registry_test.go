@@ -529,10 +529,13 @@ var keptRoutes = []struct {
 // The surviving family route says nothing about the operations under it. Each operation is
 // reachable only through that dispatcher, so the grammar line is where its survival shows.
 var keptWorktreeGrammars = []string{
-	"bench worktree create",
+	// WF42: the full create grammar, so the family help pins `--from` rather than the
+	// bare verb.
+	usage.WorktreeCreate,
 	"bench worktree path",
 	"bench worktree exec",
 	usage.WorktreeShow,
+	usage.WorktreeBuild,
 	"bench worktree release",
 	"bench worktree clean",
 	"bench worktree reauthorize",
@@ -750,5 +753,24 @@ func TestWorktreeCleanHelpUsesItsGrammar(t *testing.T) {
 	want := "usage: " + usage.WorktreeClean + "\n"
 	if result.stdout != want || result.stderr != "" || result.code != 0 {
 		t.Fatalf("worktree clean --help = stdout=%q stderr=%q exit=%d, want stdout=%q stderr=\"\" exit=0", result.stdout, result.stderr, result.code, want)
+	}
+}
+
+// TestWorktreeHelpNamesTheExecGateForm pins WF14. The worktree usage trailer names the
+// gate as a worktree-native exec form, and it names no raw wrapper path. An appended
+// line beside the old trailer would keep the raw path alive, so the assertion demands
+// the trailer be the last line and demands the whole text hold no bin/bench.sh.
+func TestWorktreeHelpNamesTheExecGateForm(t *testing.T) {
+	out, code := runKeptRoute([]string{"worktree", "--help"})
+	if code != 0 {
+		t.Fatalf("worktree --help exit = %d, want 0; output=%q", code, out)
+	}
+	const trailer = "bench worktree exec <target> -- bench gate"
+	lines := strings.Split(strings.TrimSuffix(out, "\n"), "\n")
+	if last := strings.TrimSpace(lines[len(lines)-1]); last != trailer {
+		t.Errorf("worktree help last line = %q, want %q", last, trailer)
+	}
+	if strings.Contains(out, "bin/bench.sh") {
+		t.Errorf("worktree help = %q, want no bin/bench.sh", out)
 	}
 }

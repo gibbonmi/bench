@@ -17,7 +17,7 @@ func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 			if code != 0 {
 				t.Fatalf("bare %s = (%d):\n%s", mode, code, out)
 			}
-			if !strings.Contains(out, "checks[5]{check,verdict,detail}") {
+			if !strings.Contains(out, "checks[5]{check,verdict,detail,next}") {
 				t.Fatalf("bare %s did not render today's five-row table:\n%s", mode, out)
 			}
 			if strings.Contains(out, "tip-current") {
@@ -41,7 +41,9 @@ func TestSourceTipAcceptedByBothModes(t *testing.T) {
 			if code != 0 || !strings.Contains(out, "tip-current,green") {
 				t.Fatalf("bare %s --source-tip = (%d):\n%s", mode, code, out)
 			}
-			if !strings.Contains(out, "checks[6]{check,verdict,detail}") {
+			// WF41: the pinned-tip form carries the next column too, so the added
+			// row and the added column are pinned by the same fixture.
+			if !strings.Contains(out, "checks[6]{check,verdict,detail,next}") {
 				t.Fatalf("pinned %s did not add exactly one row:\n%s", mode, out)
 			}
 			// The pin is verified against the derived tip, not compared literally: a
