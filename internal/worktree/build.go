@@ -66,22 +66,13 @@ var buildGrammar = usage.Grammar{
 }
 
 // resolveBuildTarget returns the authorized worktree path and the record the output
-// names. resolveWorktree is the whole authority; it returns the path alone, so the
-// ledger read that follows supplies the id and the label the output prints.
+// names. resolveAssignment is the whole authority, and the record it answers carries both.
 func resolveBuildTarget(root, target string) (string, intent.Assignment, error) {
-	path, err := resolveWorktree(root, target)
+	assignment, err := resolveAssignment(root, target)
 	if err != nil {
 		return "", intent.Assignment{}, err
 	}
-	assignments, err := intent.Assignments(root)
-	if err != nil {
-		return "", intent.Assignment{}, err
-	}
-	assignment, err := selectAssignment(assignments, target)
-	if err != nil {
-		return "", intent.Assignment{}, err
-	}
-	return path, assignment, nil
+	return assignment.Worktree, assignment, nil
 }
 
 // buildExitCode maps an interrupted build apart from a failed one, so a reader can tell

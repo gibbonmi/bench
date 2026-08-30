@@ -618,13 +618,10 @@ var createGrammar = usage.Grammar{
 
 // createSiblingStart resolves `--from` through the one sibling lookup the merge verb also
 // composes. The flag reaches no commit lookup, so a spelling that names no active
-// assignment is a refusal rather than a fallthrough to the default tip. The control-byte
-// check runs before the ledger read, because an unrepresentable value addresses nothing
-// and an unreadable ledger would otherwise answer first.
+// assignment is a refusal rather than a fallthrough to the default tip. The caller runs
+// fromRepresentable before the creation starts, so this lookup reads a value a line can
+// carry.
 func createSiblingStart(root, from string) (string, error) {
-	if !lineSafe(from) {
-		return "", refusalError{refusal{detail: "--from contains control characters"}}
-	}
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return "", err
@@ -656,17 +653,32 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 		fmt.Fprintln(stderr, toon.Usage(createGrammar.Cmd, "--from with --refresh"))
 		return 2
 	}
-	_, startRef := refreshop.Consume(root, args, stdout)
+	// The value's representability is a grammar fact, so it refuses before the creation
+	// reads anything at all.
 	if from != "" {
-		tip, err := createSiblingStart(root, from)
-		if err != nil {
+		if err := fromRepresentable(from); err != nil {
 			return printTargetRefusal(stderr, createGrammar.Cmd, err)
 		}
-		startRef = tip
+	}
+	_, startRef := refreshop.Consume(root, args, stdout)
+	// The sibling lookup is deferred, because the creation resolves the request replay
+	// first. A replay returns its existing record, so the sibling's state gates nothing a
+	// no-op run would act on.
+	var fromErr error
+	resolveStart := func() (string, error) { return startRef, nil }
+	if from != "" {
+		resolveStart = func() (string, error) {
+			tip, err := createSiblingStart(root, from)
+			fromErr = err
+			return tip, err
+		}
 	}
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
-	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), startRef)
+	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), resolveStart)
 	if err != nil {
+		if fromErr != nil {
+			return printTargetRefusal(stderr, createGrammar.Cmd, err)
+		}
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1
 	}
@@ -695,7 +707,7 @@ func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), startRef)
+	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), func() (string, error) { return startRef, nil })
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1

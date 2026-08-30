@@ -131,12 +131,21 @@ func lockCreationRequest(j joins, root, digest string) (func(), error) {
 // the boundary form of createAt for a caller in another package, and resolves the clock
 // and the Bench home at the effect boundary.
 func Create(root, request, label string, fault Fault, requestedStart ...string) (Creation, error) {
-	return createAt(defaultJoins(), root, Home(), request, label, fault, currentTime(), requestedStart...)
+	start := ""
+	if len(requestedStart) > 0 {
+		start = requestedStart[0]
+	}
+	return createAt(defaultJoins(), root, Home(), request, label, fault, currentTime(), func() (string, error) { return start, nil })
 }
 
+// startResolver answers the start a creation branches from. It is a function, not a value,
+// because a caller whose start costs a lookup pays for it only when the request is new.
+type startResolver func() (string, error)
+
 // createAt is Create with the creation instant and the Bench home resolved explicitly at
-// the caller's effect boundary.
-func createAt(j joins, root, home, request, label string, fault Fault, now time.Time, requestedStart ...string) (Creation, error) {
+// the caller's effect boundary. The start resolver runs after the request replay lookup
+// misses, so a replay returns its existing record without resolving a start at all.
+func createAt(j joins, root, home, request, label string, fault Fault, now time.Time, resolveStart ...startResolver) (Creation, error) {
 	if request == "" || label == "" {
 		return Creation{}, errors.New("worktree create requires request and label")
 	}
@@ -169,11 +178,19 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 	if err != nil {
 		return Creation{}, fmt.Errorf("generate assignment ID: %w", err)
 	}
-	startRef := "HEAD"
-	if len(requestedStart) > 0 && requestedStart[0] != "" {
-		startRef = requestedStart[0]
-	} else if def, ok := git.ResolvedDefault(root); ok {
-		startRef = def
+	startRef := ""
+	if len(resolveStart) > 0 && resolveStart[0] != nil {
+		requested, err := resolveStart[0]()
+		if err != nil {
+			return Creation{}, err
+		}
+		startRef = requested
+	}
+	if startRef == "" {
+		startRef = "HEAD"
+		if def, ok := git.ResolvedDefault(root); ok {
+			startRef = def
+		}
 	}
 	start, err := git.Output("-C", root, "rev-parse", "--verify", startRef+"^{commit}")
 	if err != nil {

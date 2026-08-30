@@ -710,6 +710,45 @@ func TestCreateFromStartsAtTheSiblingTip(t *testing.T) {
 	}
 }
 
+// WF45: a replay of `create --from <sibling>` with the same request returns the existing
+// record whatever the sibling's checkout now holds. The request lookup is the first fact
+// the creation reads, so an edit the sibling took after the first run refuses nothing and
+// the ledger gains no second record.
+func TestCreateFromReplayReturnsTheRecord(t *testing.T) {
+	t.Parallel()
+	_, root, home, _, created := mergeFixture(t, "delegate")
+	sibling := created[0]
+	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
+
+	const request = "create-from-replay"
+	code, first, stderr := runCreate(t, root, home,
+		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
+	if code != 0 {
+		t.Fatalf("create --from = (%d, %q, %q), want 0", code, first, stderr)
+	}
+	mustWrite(t, filepath.Join(sibling.Path, "sibling.txt"), []byte("uncommitted\n"), 0o644)
+
+	code, second, stderr := runCreate(t, root, home,
+		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
+	if code != 0 {
+		t.Fatalf("create --from replay = (%d, %q, %q), want 0", code, second, stderr)
+	}
+	if second != first {
+		t.Errorf("replay stdout = %q, want the first run's %q", second, first)
+	}
+	assignments, err := intent.Assignments(root)
+	mustNoError(t, err)
+	held := 0
+	for _, a := range assignments {
+		if a.RequestToken == request {
+			held++
+		}
+	}
+	if held != 1 {
+		t.Errorf("ledger holds %d records for request %q, want 1", held, request)
+	}
+}
+
 // WF24: a `--from` that names no active assignment refuses through the shared printer and
 // registers nothing. The flag composes no commit lookup, so a typo never falls through to
 // the default tip.
