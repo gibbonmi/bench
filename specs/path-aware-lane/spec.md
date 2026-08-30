@@ -284,6 +284,7 @@ test code in the private checkout, as ADR 0002 accepts for the gate.
 - `CHANGELOG.md`
 - `docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md`
 - `specs/path-aware-lane/`
+- `reviews/path-aware-lane.md` (the review phase's pickup file)
 
 ## Out of scope
 
