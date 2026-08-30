@@ -59,6 +59,10 @@ means the repository-controlled compliance assessment.
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
+**FT274 (MEDIUM) — Bench traces its own seams with OpenTelemetry and records the FT231 measures.**
+
+**FT275 (MEDIUM) — code built under Bench traces its declared seams with OpenTelemetry.**
+
 **FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
 
 **FT173 (MEDIUM, decision required) — AXI residual: the active-assignment-with-deleted-tree disclosure class.**
@@ -288,6 +292,9 @@ recommended table is sequencing advice.
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT253 | FT169 | The lease is one answer to the landing's authority questions; decide those first so the lease keys on the settled lifecycle. |
 | FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
+| FT71 | FT274 | The event schema should be expressed in the OpenTelemetry record rather than version a second one. |
+| FT232 | FT274 | The advisory reads the red set the record retains. |
+| FT204 | FT71 | The query reads the settled event schema before it reads transcript text. |
 
 ### Goal track: guidance prose
 
