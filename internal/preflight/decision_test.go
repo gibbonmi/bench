@@ -54,6 +54,30 @@ func TestDecideAllGreen(t *testing.T) {
 	if !decisionsEqual(first, second) {
 		t.Errorf("Decide is not deterministic: first=%#v second=%#v", first, second)
 	}
+
+	// WF35: a remedy belongs to a red the verdict can answer, so no green row
+	// carries one. The build-mode pass below adds the not-applicable rows, which
+	// answer nothing and so carry none either.
+	for _, c := range first.Checks {
+		if c.Next != "" {
+			t.Errorf("green %s row carries Next = %q, want empty", c.Check, c.Next)
+		}
+	}
+	build := baseFacts()
+	build.Mode = modeBuild
+	build.TicketsDirExists = false
+	naSeen := 0
+	for _, c := range Decide(build).Checks {
+		if c.Verdict == verdictNA {
+			naSeen++
+		}
+		if c.Next != "" {
+			t.Errorf("%s row (%s) carries Next = %q, want empty", c.Check, c.Verdict, c.Next)
+		}
+	}
+	if naSeen != 3 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 3", naSeen)
+	}
 }
 
 func decisionsEqual(a, b Verdict) bool {
@@ -82,9 +106,88 @@ func TestDecideBaseCurrent(t *testing.T) {
 
 	f = baseFacts()
 	f.DefaultBranchCurrent = false
+	f.DefaultBranch = "main"
+	f.AssignmentTarget = "0123456789abcdef0123456789abcdef"
 	c, _ = checkRow(Decide(f), "base-current")
 	if c.Verdict != verdictRed {
 		t.Fatalf("base-current with stale default branch = %+v, want red", c)
+	}
+	// WF33: the stale-base red is the one red that answers itself. The remedy
+	// names the gathered branch and the assignment the operator is standing in.
+	if c.Next != "bench worktree merge --from main 0123456789abcdef0123456789abcdef" {
+		t.Errorf("stale base Next = %q, want the merge remedy naming the assignment id", c.Next)
+	}
+
+	// WF34: with no assignment owning this root, the id slot renders the
+	// placeholder rather than an empty word that would print a broken command.
+	f.AssignmentTarget = ""
+	c, _ = checkRow(Decide(f), "base-current")
+	if c.Next != "bench worktree merge --from main <target>" {
+		t.Errorf("stale base Next without an assignment = %q, want the placeholder target", c.Next)
+	}
+}
+
+// TestDecideOtherRedsCarryNoNext is WF36. One red answers itself; every other
+// red states its detail and stops. A remedy copied onto all of them would name
+// a merge for an unresolved branch or for a fence miss no merge repairs.
+func TestDecideOtherRedsCarryNoNext(t *testing.T) {
+	cases := []struct {
+		name   string
+		check  string
+		detail string
+		mutate func(*Facts)
+	}{
+		{"unresolved default branch", "base-current", "default branch does not resolve", func(f *Facts) {
+			f.DefaultBranchResolved = false
+		}},
+		{"unresolved source base", "base-current", "source base does not resolve: --base is not an ancestor", func(f *Facts) {
+			f.ExplicitSourceRange = true
+			f.ReviewBaseResolved = false
+			f.ReviewBaseHint = "--base is not an ancestor"
+		}},
+		{"unresolved source tip", "tip-current", "source tip does not resolve, so --source-tip cafe cannot be verified", func(f *Facts) {
+			f.PinnedSourceTip = "cafe"
+			f.SourceTip = ""
+		}},
+		{"pinned tip mismatch", "tip-current", "--source-tip cafe is not the derived source tip beef", func(f *Facts) {
+			f.PinnedSourceTip = "cafe"
+			f.SourceTip = "beef"
+		}},
+		{"paths unresolved review base", "paths-authorized", "review base does not resolve: no resolvable default branch", func(f *Facts) {
+			f.ReviewBaseResolved = false
+			f.ReviewBaseHint = "no resolvable default branch"
+		}},
+		{"unfenced path", "paths-authorized", "not authorized by any ownership fence: unfenced/path.go", func(f *Facts) {
+			f.ChangedPaths = []string{"unfenced/path.go"}
+		}},
+		{"uncited row", "rows-owned", "declared row(s) cited by no ticket file: PF3", func(f *Facts) {
+			f.DeclaredRowIDs = []string{"PF1", "PF2", "PF3"}
+		}},
+		{"phantom token", "rows-membership", "ticket token(s) under this spec's tag name no declared row: PF99", func(f *Facts) {
+			f.TicketTokens = []string{"PF1", "PF2", "PF99"}
+		}},
+		{"diff unresolved review base", "diff-nonempty", "review base does not resolve: no resolvable default branch", func(f *Facts) {
+			f.ReviewBaseResolved = false
+			f.ReviewBaseHint = "no resolvable default branch"
+		}},
+		{"empty diff", "diff-nonempty", "no changed files since the resolved review base", func(f *Facts) {
+			f.ChangedPaths = nil
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := baseFacts()
+			f.DefaultBranch = "main"
+			f.AssignmentTarget = "0123456789abcdef0123456789abcdef"
+			tc.mutate(&f)
+			c, ok := checkRow(Decide(f), tc.check)
+			if !ok || c.Verdict != verdictRed || c.Detail != tc.detail {
+				t.Fatalf("%s row = %+v, want the red detailed %q", tc.check, c, tc.detail)
+			}
+			if c.Next != "" {
+				t.Errorf("%s red carries Next = %q, want empty", tc.check, c.Next)
+			}
+		})
 	}
 }
 

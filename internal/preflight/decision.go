@@ -69,6 +69,16 @@ type Facts struct {
 	// foreign-tag token (FT93) is ignored rather than flagged.
 	SpecTag string
 
+	// DefaultBranch is the resolved default branch name, empty when it does not
+	// resolve. The stale-base remedy names it, so the printed command can never
+	// name a branch this repository does not have.
+	DefaultBranch string
+
+	// AssignmentTarget is the id of the active assignment whose worktree is this
+	// preflight root, empty in the primary checkout and in any tree no active
+	// assignment owns. The stale-base remedy addresses that id.
+	AssignmentTarget string
+
 	// TicketsDirExists reports whether specs/<slug>/tickets/ exists at all;
 	// present-but-empty counts as existing. Build mode uses it to tell an
 	// absent tickets/ (row checks not-applicable) from a present one. A
@@ -78,10 +88,12 @@ type Facts struct {
 }
 
 // CheckResult is one verdict row: the check's name, its verdict ("green" or
-// "red"), and a detail string. The detail is empty for green, and names the
-// offending path/ID(s) for red.
+// "red"), a detail string, and the remedy that answers it. The detail is empty
+// for green, and names the offending path/ID(s) for red. Next is empty on every
+// row but the one red a single command repairs, because a remedy on a row that
+// no command answers sends the reader down a false path.
 type CheckResult struct {
-	Check, Verdict, Detail string
+	Check, Verdict, Detail, Next string
 }
 
 const (
@@ -182,9 +194,23 @@ func baseCurrentCheck(f Facts) CheckResult {
 		return red("base-current", "default branch does not resolve")
 	}
 	if !f.DefaultBranchCurrent {
-		return red("base-current", "default branch tip is not an ancestor of HEAD")
+		return staleBaseRed(f)
 	}
 	return green("base-current")
+}
+
+// staleBaseRed is the one red that carries its own remedy: the default branch has
+// moved ahead of this tree, and one merge repairs it. A root no active assignment
+// owns renders the placeholder id, so the operator reads where their own target
+// goes rather than a command with a hole in it.
+func staleBaseRed(f Facts) CheckResult {
+	target := f.AssignmentTarget
+	if target == "" {
+		target = "<target>"
+	}
+	row := red("base-current", "default branch tip is not an ancestor of HEAD")
+	row.Next = "bench worktree merge --from " + f.DefaultBranch + " " + target
+	return row
 }
 
 // tipCurrentCheck verifies the reviewer's frozen tip against the one
