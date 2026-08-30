@@ -33,6 +33,11 @@ var detailFields = []string{"field", "value", "source", "checked"}
 // prints it after the twelve mechanics.
 const detailDelegationGuard = "delegation_guard"
 
+// measureFields is the measure projection's schema. A measure cell names its supplier
+// rather than a source that was read, so the measures render as their own table instead of
+// borrowing the cells table's source column.
+var measureFields = []string{"measure", "value", "supplier"}
+
 // Command implements `bench harnesses [<harness>]`, the record's AXI projection. Bare, it
 // prints the schema version and one row per harness, the model-free `none` row included,
 // because a projection that hides the degraded path hides the case a reader most needs to
@@ -56,7 +61,7 @@ func Command(args []string) (string, int) {
 	if !ok {
 		return toon.Usage(grammar.Cmd, parsed.Positionals[0]) + "\n", 2
 	}
-	return render("cells", detailFields, detailRows(row))
+	return renderDetail(row)
 }
 
 // render emits the schema line, the table, and the terminal help envelope. Both projections
@@ -67,11 +72,31 @@ func render(name string, fields []string, rows [][]string) (string, int) {
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	return envelope(table)
+}
+
+// renderDetail emits one harness's two tables: the graded cells, then the declared
+// measures. The measures follow the cells because a measure is a promise about a future
+// read, and the graded facts come first.
+func renderDetail(row Row) (string, int) {
+	cells, err := toon.Table("cells", detailFields, detailRows(row))
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	measures, err := toon.Table("measures", measureFields, measureRows(row))
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return envelope(cells + measures)
+}
+
+// envelope wraps rendered tables in the schema line and the terminal help block.
+func envelope(tables string) (string, int) {
 	help, err := axi.RenderHelp(nil)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	return fmt.Sprintf("schema: %d\n", Schema) + table + help, 0
+	return fmt.Sprintf("schema: %d\n", Schema) + tables + help, 0
 }
 
 // overviewRows projects every record row in record order. The checked date is the
@@ -102,6 +127,17 @@ func detailRows(row Row) [][]string {
 		rows = append(rows, cellRow(name, row.Mechanics[name]))
 	}
 	return append(rows, cellRow(detailDelegationGuard, row.DelegationGuard))
+}
+
+// measureRows projects one row's measure cells in Measures order. Every value reads unknown
+// until the named supplier ships, so the supplier is the row's one live fact.
+func measureRows(row Row) [][]string {
+	rows := make([][]string, 0, len(Measures))
+	for _, name := range Measures {
+		cell := row.Measures[name]
+		rows = append(rows, []string{name, string(cell.Value), cell.Supplier})
+	}
+	return rows
 }
 
 func cellRow(field string, cell Cell) []string {

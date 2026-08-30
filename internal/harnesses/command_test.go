@@ -64,6 +64,22 @@ func TestCommandProjectsOneHarnessCellsWithSources(t *testing.T) {
 	if !strings.Contains(out, "  structured output and exit status,unknown,\"\",\"\"\n") {
 		t.Fatalf("bench harnesses codex = %q, want an ungraded cell with an empty source and date", out)
 	}
+	// The four measure cells render as their own table. Each names its supplier and reads
+	// unknown, because no supplier ships yet.
+	const wantMeasureHeader = "measures[4]{measure,value,supplier}:"
+	if !strings.Contains(out, wantMeasureHeader+"\n") {
+		t.Fatalf("bench harnesses codex = %q, want the measures header %q", out, wantMeasureHeader)
+	}
+	for _, want := range []string{
+		"  tokens,unknown,FT204 harness transcript reader",
+		`  tool calls,unknown,FT204 harness transcript reader`,
+		`  Read paths,unknown,FT204 harness transcript reader`,
+		"  turns,unknown,FT204 harness transcript reader",
+	} {
+		if !strings.Contains(out, want+"\n") {
+			t.Fatalf("bench harnesses codex = %q, want measure row %q", out, want)
+		}
+	}
 	if !strings.HasSuffix(out, "help[0]{cmd,why}:\n") {
 		t.Fatalf("bench harnesses codex = %q, want a terminal empty help envelope", out)
 	}
