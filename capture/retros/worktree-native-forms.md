@@ -66,9 +66,8 @@ Opus at low or medium, all first-pass. Two parallel siblings folded through
 
 ### Bench CLI
 
-The census entry is `worktree-native-forms-integration census 226` in
-`capture/learnings.md`.
-
+- The census entry `worktree-native-forms-integration census 226` in `capture/learnings.md` proposes the two items below it.
+  Feeds: new
 - Add `bench worktree revert <target> <path>...` that copies each path aside and restores HEAD, so a probe needs no raw path.
   Feeds: new
 - Let the follow-on hook accept a non-Bench step before a `bench worktree exec` segment and a quoted `|` inside the exec child's argv.
