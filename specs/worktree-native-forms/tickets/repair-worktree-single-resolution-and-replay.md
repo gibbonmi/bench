@@ -1,7 +1,7 @@
 # Repair: one target resolution, one --from guard, replay before --from
 
 Blocked by: record-new-forms-in-prose.md
-Writes: internal/worktree/build.go, internal/worktree/path.go, internal/worktree/merge.go, internal/worktree/worktree.go, internal/worktree/worktree_test.go, internal/worktree/build_test.go
+Writes: internal/worktree/build.go, internal/worktree/path.go, internal/worktree/ownership.go, internal/worktree/merge.go, internal/worktree/worktree.go, internal/worktree/worktree_test.go, internal/worktree/build_test.go
 
 ## What to build
 
