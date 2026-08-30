@@ -65,6 +65,7 @@ func resumeLandWith(j joins, root, home string, args []string, stdout, stderr io
 	// landing that stopped before its own release left the file in place, so the
 	// resume states the same count it stated then.
 	records := censusCount(home, root, assignmentID)
+	printCensusHeads(stderr, home, root, assignmentID)
 	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
 		return landRefusal(stdout, err.Error())
 	}

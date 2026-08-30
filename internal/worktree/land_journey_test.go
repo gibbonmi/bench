@@ -397,8 +397,15 @@ func TestLandRelaysTheBoundedGreenShapeBeforeTheLandedRecord(t *testing.T) {
 // production writer keep one shape.
 func recordRawCalls(t *testing.T, home, root, path string, n int) {
 	t.Helper()
+	recordRawCallsWithHead(t, home, root, path, "sed -i s/a/b/", n)
+}
+
+// recordRawCallsWithHead appends n raw-call records that one command text makes, which
+// lets a test state a breakdown over more than one verb head.
+func recordRawCallsWithHead(t *testing.T, home, root, path, command string, n int) {
+	t.Helper()
 	for range n {
-		if err := census.Record("sed -i s/a/b/ "+filepath.Join(path, "owned.txt"), root, home, time.Now()); err != nil {
+		if err := census.Record(command+" "+filepath.Join(path, "owned.txt"), root, home, time.Now()); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -437,6 +444,38 @@ func TestLandCommandStatesZeroForAnAssignmentWithNoRecords(t *testing.T) {
 	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.HasSuffix(stdout.String(), ",census=0}\n") {
 		t.Fatalf("landed record = (%d, %q, %q), want census=0", code, stdout.String(), stderr.String())
+	}
+}
+
+// TestLandCommandPrintsTheCensusHeadBreakdown proves the landing states the raw-call
+// count for each verb head before the release step drops the records, so the retro
+// reads the breakdown from the run. The heaviest head prints first.
+func TestLandCommandPrintsTheCensusHeadBreakdown(t *testing.T) {
+	t.Parallel()
+	request := "census-landed-heads"
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	recordRawCallsWithHead(t, home, root, creation.Path, "sed -i s/a/b/", 2)
+	recordRawCallsWithHead(t, home, root, creation.Path, "awk -f x", 1)
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || !strings.Contains(stderr.String(), "census heads{sed=2,awk=1}\n") {
+		t.Fatalf("landing evidence = (%d, %q, %q), want the head breakdown on stderr", code, stdout.String(), stderr.String())
+	}
+	if !strings.HasSuffix(stdout.String(), ",census=3}\n") {
+		t.Fatalf("landed record = %q, want census=3 beside the breakdown", stdout.String())
+	}
+}
+
+// TestLandCommandPrintsNoHeadsLineWithoutRecords proves an assignment that made no raw
+// call prints no breakdown at all, and still states the zero count in its record.
+func TestLandCommandPrintsNoHeadsLineWithoutRecords(t *testing.T) {
+	t.Parallel()
+	request := "census-landed-no-heads"
+	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	var stdout, stderr bytes.Buffer
+	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	if code != 0 || strings.Contains(stderr.String(), "census heads{") || !strings.HasSuffix(stdout.String(), ",census=0}\n") {
+		t.Fatalf("empty census landing = (%d, %q, %q), want no heads line and census=0", code, stdout.String(), stderr.String())
 	}
 }
 

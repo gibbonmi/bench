@@ -306,6 +306,9 @@ func TestResumeLandCommandRepeatsTheCensusCount(t *testing.T) {
 	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.HasSuffix(stdout.String(), ",census=2}\n") {
 		t.Fatalf("incomplete landing = (%d, %q, %q), want exit 3 and census=2", code, stdout.String(), stderr.String())
 	}
+	if !strings.Contains(stderr.String(), "census heads{sed=2}\n") {
+		t.Fatalf("incomplete landing stderr = %q, want the head breakdown", stderr.String())
+	}
 	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); err != nil {
 		t.Fatalf("the incomplete landing dropped the census records: %v", err)
 	}
@@ -315,5 +318,8 @@ func TestResumeLandCommandRepeatsTheCensusCount(t *testing.T) {
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
 	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 3 || !strings.HasSuffix(stdout.String(), ",census=2}\n") {
 		t.Fatalf("resumed landing = (%d, %q, %q), want exit 3 and census=2 again", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "census heads{sed=2}\n") {
+		t.Fatalf("resumed landing stderr = %q, want the head breakdown again", stderr.String())
 	}
 }
