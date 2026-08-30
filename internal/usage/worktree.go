@@ -22,6 +22,11 @@ const (
 	WorktreeLandResume  = "bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>"
 )
 
+// WorktreeExecGate is the one gate form a worktree reader gets. It is an exec composition
+// rather than a worktree route, so it trails the grammar list instead of joining it, and
+// both this usage trailer and the `bench help` row read it from here.
+const WorktreeExecGate = "bench worktree exec <target> -- bench gate"
+
 var worktreeCommands = []string{
 	WorktreeList,
 	WorktreePath,
@@ -39,7 +44,7 @@ var worktreeCommands = []string{
 }
 
 func WorktreeUsage() string {
-	return "usage: bench worktree [--refresh] [objective...]\n       " + strings.Join(worktreeCommands, "\n       ") + "\n       bash bin/bench.sh gate --fresh\n"
+	return "usage: bench worktree [--refresh] [objective...]\n       " + strings.Join(worktreeCommands, "\n       ") + "\n       " + WorktreeExecGate + "\n"
 }
 
 // PrimaryCheckoutRefusal is the one refusal a Bench write verb prints from the primary

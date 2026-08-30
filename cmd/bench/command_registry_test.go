@@ -755,3 +755,22 @@ func TestWorktreeCleanHelpUsesItsGrammar(t *testing.T) {
 		t.Fatalf("worktree clean --help = stdout=%q stderr=%q exit=%d, want stdout=%q stderr=\"\" exit=0", result.stdout, result.stderr, result.code, want)
 	}
 }
+
+// TestWorktreeHelpNamesTheExecGateForm pins WF14. The worktree usage trailer names the
+// gate as a worktree-native exec form, and it names no raw wrapper path. An appended
+// line beside the old trailer would keep the raw path alive, so the assertion demands
+// the trailer be the last line and demands the whole text hold no bin/bench.sh.
+func TestWorktreeHelpNamesTheExecGateForm(t *testing.T) {
+	out, code := runKeptRoute([]string{"worktree", "--help"})
+	if code != 0 {
+		t.Fatalf("worktree --help exit = %d, want 0; output=%q", code, out)
+	}
+	const trailer = "bench worktree exec <target> -- bench gate"
+	lines := strings.Split(strings.TrimSuffix(out, "\n"), "\n")
+	if last := strings.TrimSpace(lines[len(lines)-1]); last != trailer {
+		t.Errorf("worktree help last line = %q, want %q", last, trailer)
+	}
+	if strings.Contains(out, "bin/bench.sh") {
+		t.Errorf("worktree help = %q, want no bin/bench.sh", out)
+	}
+}
