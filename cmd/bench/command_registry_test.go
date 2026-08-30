@@ -529,7 +529,9 @@ var keptRoutes = []struct {
 // The surviving family route says nothing about the operations under it. Each operation is
 // reachable only through that dispatcher, so the grammar line is where its survival shows.
 var keptWorktreeGrammars = []string{
-	"bench worktree create",
+	// WF42: the full create grammar, so the family help pins `--from` rather than the
+	// bare verb.
+	usage.WorktreeCreate,
 	"bench worktree path",
 	"bench worktree exec",
 	usage.WorktreeShow,

@@ -612,7 +612,31 @@ var createGrammar = usage.Grammar{
 		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
 		{Name: "--label", HasValue: true, NoEmptyValue: true, Required: true},
 		{Name: "--refresh", HasValue: false},
+		{Name: "--from", HasValue: true, NoEmptyValue: true},
 	},
+}
+
+// createSiblingStart resolves `--from` through the one sibling lookup the merge verb also
+// composes. The flag reaches no commit lookup, so a spelling that names no active
+// assignment is a refusal rather than a fallthrough to the default tip. The control-byte
+// check runs before the ledger read, because an unrepresentable value addresses nothing
+// and an unreadable ledger would otherwise answer first.
+func createSiblingStart(root, from string) (string, error) {
+	if !lineSafe(from) {
+		return "", refusalError{refusal{detail: "--from contains control characters"}}
+	}
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return "", err
+	}
+	tip, _, ok, err := siblingTip(root, assignments, "", from)
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "", refusalError{refusal{detail: "--from names no active assignment", observed: from}}
+	}
+	return tip, nil
 }
 
 func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) int {
@@ -625,7 +649,21 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 		fmt.Fprintln(stderr, line)
 		return code
 	}
+	from := parsed.Flags["--from"]
+	// The two flags name two starts, so the pair refuses before the refresh runs: a fetch
+	// that moved the default branch would already have taken effect by the refusal.
+	if _, refresh := parsed.Flags["--refresh"]; refresh && from != "" {
+		fmt.Fprintln(stderr, toon.Usage(createGrammar.Cmd, "--from with --refresh"))
+		return 2
+	}
 	_, startRef := refreshop.Consume(root, args, stdout)
+	if from != "" {
+		tip, err := createSiblingStart(root, from)
+		if err != nil {
+			return printTargetRefusal(stderr, createGrammar.Cmd, err)
+		}
+		startRef = tip
+	}
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
 	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), startRef)
 	if err != nil {

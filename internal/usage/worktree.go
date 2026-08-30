@@ -12,7 +12,7 @@ const (
 	WorktreeExec        = "bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]"
 	WorktreeShow        = "bench worktree show <target> <rev>:<path>"
 	WorktreeBuild       = "bench worktree build <target>"
-	WorktreeCreate      = "bench worktree create [--refresh] --request <opaque-id> --label <work-item>"
+	WorktreeCreate      = "bench worktree create [--refresh] --request <opaque-id> --label <work-item> [--from <target>]"
 	WorktreeRelease     = "bench worktree release --request <opaque-id> <path>"
 	WorktreeClean       = "bench worktree clean [--discard-ignored] [--discard-branch] [--full] (<path> | --landed) [--apply <fingerprint>] | bench worktree clean --discard-branch --unclaimed [--apply <fingerprint> | --apply-current]"
 	WorktreeReclaim     = "bench worktree reclaim [--apply <fingerprint>]"
