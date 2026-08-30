@@ -10,10 +10,18 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   *only* thing that can call work done. Not "the checks", not "CI", not "the
   suite" — the gate.
 - **fast lane** — the declared check list a worktree `bench commit` runs on a
-  private checkout of the composed snapshot. The kit's lane is gofmt, the prose
-  check on the named Markdown, `go vet`, and `go build ./...`. A lane pass authorizes the worktree
-  commit only; the gate alone authorizes a landing. Not "mini gate", not
+  private checkout of the composed snapshot. The kit's lane declares its checks,
+  and the composed changes select the checks that run. A lane pass authorizes the
+  worktree commit only; the gate alone authorizes a landing. Not "mini gate", not
   "reduced gate", not "quick gate" — fast lane.
+- **composed change** — one entry of the diff between the expected base tree and
+  the composed tree. It carries a status letter, a source mode, a destination
+  mode, and a path. The lane derives its subjects from this list. Not "the named
+  paths", not "the named Markdown" — composed change.
+- **path class** — one row of the kit's table that binds a path predicate to
+  check names. A path matches every class whose predicate holds. A path that
+  matches no class, a symbolic link, or a gitlink is `unknown`, and `unknown`
+  selects every declared check. Not "path kind", not "file type" — path class.
 - **lane record** — the one record a fast lane writes, in its own record class.
   It names the tree, the lane identity, and a `pass` or `fail` outcome. It is never
   reusable green, and no consumer reads it as a gate verdict. Not "lane verdict",
