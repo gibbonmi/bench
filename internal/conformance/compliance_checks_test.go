@@ -16,7 +16,7 @@ var (
 )
 
 func checkKitCompliance(kitRoot string) []string {
-	var diags []string
+	diags := checkOtelFootprint(kitRoot)
 	license, err := os.ReadFile(filepath.Join(kitRoot, "LICENSE"))
 	if os.IsNotExist(err) {
 		diags = append(diags, "kit root LICENSE is missing")
