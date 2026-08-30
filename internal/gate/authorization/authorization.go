@@ -190,18 +190,18 @@ func evidenceToken(kind Kind, tree string, inspection gate.EvidenceInspection) s
 // the whole-project gate. It is the worktree commit's authority. Checks is the lane the
 // root declares, resolved by the caller so one read answers both whether a lane exists
 // and what it is. Kit is the source root the Bench-owned checks are built from, empty
-// for the graded tree's own checkout. Two fields answer the lane's prose placeholder.
+// for the graded tree's own checkout. Base answers what the lane's checks are given.
 type LaneAuthority struct {
 	Checks []gate.Phase
 	Kit    string
 	Lane   string
-	// NamedMarkdown states the prose placeholder's paths outright. A caller that already
-	// knows which paths it composed sets this and leaves PreviousTip empty.
-	NamedMarkdown []string
-	// PreviousTip is the commit the graded tree is measured against. When it is set, the
-	// authority derives the prose placeholder itself, and it wins over NamedMarkdown: the
-	// caller composes the tree once and states no path list of its own.
-	PreviousTip string
+	// Selective runs the checks the composed changes select rather than the whole
+	// declared list, and it makes the pass line name the classes that selected them.
+	Selective bool
+	// Base is the commit the graded tree is measured against. The authority derives the
+	// composed change list from it, so the caller composes the tree once and states no
+	// path list of its own.
+	Base string
 }
 
 // Authorize runs the lane on tree and attributes its outcome. It writes the one outcome
@@ -209,9 +209,14 @@ type LaneAuthority struct {
 // well, because the caller refuses without re-reading the stream. The result carries no
 // evidence token: a lane pass authorizes this commit alone.
 func (a LaneAuthority) Authorize(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
+	changes, err := gate.ComposedChanges(root, a.Base, tree)
+	if err != nil {
+		fmt.Fprintf(stderr, "error: %v\n", err)
+		return Result{Kind: LaneFail}
+	}
 	result, err := gate.RunLane(ctx, gate.LaneRequest{
 		Root: root, Kit: a.Kit, Tree: tree, Lane: a.Lane,
-		Checks: a.Checks, NamedMarkdown: a.namedMarkdown(root, tree),
+		Checks: a.Checks, Changes: changes, Selective: a.Selective,
 		Stdout: stdout, Stderr: stderr,
 	})
 	if err != nil {
@@ -225,37 +230,13 @@ func (a LaneAuthority) Authorize(ctx context.Context, root, tree string, stdout,
 		}
 		return Result{Kind: LaneFail}
 	}
-	fmt.Fprintf(stdout, "lane{outcome=pass,checks=%s}\n", strings.Join(checkNames(a.Checks), ","))
+	// The run already decided which checks ran, so the line reads its result rather than
+	// selecting a second time.
+	if a.Selective {
+		fmt.Fprintf(stdout, "lane{outcome=pass,checks=%s,classes=%s}\n",
+			strings.Join(result.Checks, ","), strings.Join(result.Classes, ","))
+		return Result{Kind: LanePass}
+	}
+	fmt.Fprintf(stdout, "lane{outcome=pass,checks=%s}\n", strings.Join(result.Checks, ","))
 	return Result{Kind: LanePass}
-}
-
-// namedMarkdown answers the prose placeholder's paths. With a previous tip declared it is
-// the Markdown the graded tree changes against that tip's tree, so a composed tree grades
-// the prose one side brought and no unchanged file.
-func (a LaneAuthority) namedMarkdown(root, tree string) []string {
-	if a.PreviousTip == "" {
-		return a.NamedMarkdown
-	}
-	// The NUL framing is load-bearing: under the default `core.quotepath` a newline-framed
-	// name with a byte above ASCII arrives C-quoted, so the check would grade a path no
-	// file carries.
-	raw, err := benchgit.Raw("-C", root, "diff", "--name-only", "-z", a.PreviousTip+"^{tree}", tree, "--", "*.md")
-	if err != nil || len(raw) == 0 {
-		return nil
-	}
-	var paths []string
-	for _, path := range strings.Split(string(raw), "\x00") {
-		if path != "" {
-			paths = append(paths, path)
-		}
-	}
-	return paths
-}
-
-func checkNames(checks []gate.Phase) []string {
-	names := make([]string, len(checks))
-	for i, check := range checks {
-		names[i] = check.Name
-	}
-	return names
 }

@@ -9,8 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -228,8 +230,12 @@ func TestLaneDryRunStatesTheOutcomeAndPublishesNothing(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	if !strings.Contains(stdout, "lane{outcome=pass,checks=") {
-		t.Errorf("stdout = %q, want the lane record line", stdout)
+	// PL23: a dry run takes the same lane the real run takes, check for check.
+	if !strings.Contains(stdout, "lane{outcome=pass,checks=check,gofmt,prose,build}") {
+		t.Errorf("stdout = %q, want the lane record line naming every declared check", stdout)
+	}
+	if strings.Contains(stdout, "classes=") {
+		t.Errorf("stdout = %q, want no classes cell on a manifest lane", stdout)
 	}
 	if strings.Contains(stdout, "phase ") {
 		t.Errorf("stdout = %q, want no gate phase line", stdout)
@@ -310,5 +316,74 @@ func TestMalformedLaneEntryRefusesNamingTheDefect(t *testing.T) {
 	}
 	if after := head(t, root); after != before {
 		t.Fatalf("the branch ref moved from %s to %s on a malformed lane", before, after)
+	}
+}
+
+// PL25: the lane grades the composed tree, so a commit that names the directory `docs`
+// reaches the prose check with the Markdown under it. A named-path filter drops the
+// directory and lets the long sentence through.
+func TestLaneProseGradesAMarkdownFileUnderANamedDirectory(t *testing.T) {
+	root, _ := laneRepo(t, 0, noWrite)
+	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	mustMkdirAll(t, filepath.Join(root, "docs"))
+	mustWrite(t, filepath.Join(root, "docs", "note.md"), "# Note\n\n"+longSentence, 0o644)
+
+	code, stdout, stderr := runCommand(t, root, "-m", "m", "docs")
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stdout, "lane{outcome=fail,check=prose}") {
+		t.Errorf("stdout = %q, want the prose check named", stdout)
+	}
+	if !strings.Contains(stdout, "docs/note.md:3:") {
+		t.Errorf("stdout = %q, want the file and the line of the long sentence", stdout)
+	}
+}
+
+// PL6: attribution refuses a special named path before the lane runs. The evidence that
+// no check ran is the absent lane record: a lane that ran before attribution would grade
+// the FIFO or block on it, and it would leave a record either way.
+func TestLaneRefusesASpecialNamedPathBeforeAnyCheckRuns(t *testing.T) {
+	root, before := laneRepo(t, 0, noWrite)
+	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	fifo := filepath.Join(root, "fifo")
+	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
+		capability.Capability(t, capability.Fifo, "FIFOs unavailable: "+err.Error())
+	}
+
+	code, stdout, stderr := runCommand(t, root, "-m", "m", "fifo")
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stderr, `special file "fifo" is not attributable`) {
+		t.Fatalf("stderr = %q, want the attribution refusal naming the special file", stderr)
+	}
+	record := filepath.Join(strings.TrimSpace(string(runGit(t, root, "rev-parse", "--absolute-git-dir"))), "bench-last-lane")
+	if _, err := os.Stat(record); !os.IsNotExist(err) {
+		t.Fatalf("lane record at %s: err = %v, want it absent because no check ran", record, err)
+	}
+	if after := head(t, root); after != before {
+		t.Fatalf("the branch ref moved from %s to %s on an unattributable path", before, after)
+	}
+}
+
+// TestManifestLaneRunsAsDeclared is PL21. A linked project's declared lane keeps the
+// meaning its manifest gives it: every check runs, and the line names no class. A
+// selection applied here would drop three of the four checks, because the manifest's
+// names match the kit's.
+func TestManifestLaneRunsAsDeclared(t *testing.T) {
+	root, _ := laneRepo(t, 0, noWrite)
+	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	mustWrite(t, filepath.Join(root, "note.md"), "# Note\n", 0o644)
+
+	code, stdout, stderr := runCommand(t, root, "-m", "m", "note.md")
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stdout, "lane{outcome=pass,checks=check,gofmt,prose,build}") {
+		t.Errorf("stdout = %q, want every declared check named", stdout)
+	}
+	if strings.Contains(stdout, "classes=") {
+		t.Errorf("stdout = %q, want no classes cell on a manifest lane", stdout)
 	}
 }

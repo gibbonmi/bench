@@ -56,72 +56,23 @@ const defaultLaneName = "lane"
 // verification seams rather than paying a real build.
 var laneRunBinary = runbinary.Factory{}
 
-// BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, and
-// build, in that order. The two Bench-owned checks carry the run-binary token, which the
-// run replaces with the executable it selected. The two toolchain checks run the tool
-// directly. The build disables VCS stamping, as every gate Go argv does: the private
-// checkout is a linked worktree under a temporary directory, and Go's own discovery
-// skips its `.git` file and adopts whatever `.git` directory sits above it.
-//
-// The whole-project test phase is deliberately absent. The lane is the worktree
+// BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, build, and
+// then one check per document family the registry binds. A Bench-owned check carries the
+// run-binary token, which the run replaces with the executable it selected, and the two
+// toolchain checks run the tool directly. The build disables VCS stamping, as every gate
+// Go argv does: the private checkout is a linked worktree under a temporary directory,
+// and Go's own discovery skips its `.git` file and adopts whatever `.git` directory sits
+// above it. The whole-project test phase is deliberately absent. The lane is the worktree
 // commit's check, and the landing's gate stays the one full grade.
 func BenchkitLane(root, kit string) []Phase {
 	_ = kit
-	return []Phase{
+	return append([]Phase{
 		{Name: "gofmt", Argv: []string{runBinaryArgvToken, "gate-go", "gofmt"}},
 		{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose", root, "--", LaneNamedMarkdownToken}},
 		{Name: "vet", Argv: []string{"go", "vet", trimPath, "./..."}},
 		{Name: "build", Argv: []string{"go", "build", trimPath, disableBuildVCS, "./..."}},
-	}
+	}, documentLaneChecks()...)
 }
-
-// LaneForCommit resolves the lane a worktree commit at root runs, and the source root
-// the lane's Bench-owned checks are built from. It applies the gate's own kit-root
-// selection, so a caller outside this package asks the lane question once. The source
-// root is empty when the graded root is the kit root itself, which selects the private
-// checkout of the composed tree: the kit grades with its own code.
-func LaneForCommit(root string) ([]Phase, string, error) {
-	kit := kitRoot(root)
-	checks, err := LaneFor(root, kit)
-	if err != nil || checks == nil || sameDirectory(root, kit) {
-		return checks, "", err
-	}
-	return checks, kit, nil
-}
-
-// LaneRequest is one lane run. Root is the repository whose Git dir receives the record
-// and whose object store holds Tree. Tree is the composed snapshot the lane grades. Lane
-// names the lane in its record. Checks is the declared check list, resolved through
-// LaneFor. NamedMarkdown is the path list the prose placeholder resolves to. Kit is the
-// source root the run binary is built from; empty selects the private checkout, which is
-// the composed tree itself.
-type LaneRequest struct {
-	Root          string
-	Kit           string
-	Tree          string
-	Lane          string
-	Checks        []Phase
-	NamedMarkdown []string
-	Stdout        io.Writer
-	Stderr        io.Writer
-}
-
-// LaneResult is what one lane run decided. Outcome is "pass" or "fail". Check names the
-// first check that failed, and Diagnostic is that check's first output line, so a caller
-// can name the failure without re-reading the stream. RunBinary is the content address of
-// the executable the Bench-owned checks ran.
-type LaneResult struct {
-	Outcome    string
-	Check      string
-	Diagnostic string
-	Tree       string
-	Lane       string
-	RunBinary  string
-	RecordedAt time.Time
-}
-
-// Passed reports the one question a caller acts on.
-func (r LaneResult) Passed() bool { return r.Outcome == lanePass }
 
 // RunLane grades the composed tree against the declared checks and records one lane
 // record. It materializes the tree as a private checkout, so it grades what the commit
@@ -152,7 +103,11 @@ func RunLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		defer holder.Release()
 	}
 
-	checks := resolveLane(req.Checks, req.Root, checkout, req.NamedMarkdown)
+	selected, names, classes, err := selectLaneChecks(req, checkout)
+	if err != nil {
+		return LaneResult{}, err
+	}
+	checks := resolveLane(selected, req.Root, checkout, proseSubject(req.Changes))
 	runBinary, checks, closeSelection, err := selectLaneRunBinary(ctx, req, checkout, artifacts.Root(), checks)
 	if err != nil {
 		return LaneResult{}, err
@@ -172,6 +127,8 @@ func RunLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 
 	result := LaneResult{
 		Outcome:    lanePass,
+		Checks:     names,
+		Classes:    classes,
 		Tree:       req.Tree,
 		Lane:       laneName(req.Lane),
 		RunBinary:  runBinary,

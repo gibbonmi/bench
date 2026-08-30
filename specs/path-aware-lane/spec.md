@@ -1,6 +1,6 @@
 # Path-aware lane
 
-Status: staged
+Status: implemented
 
 Roadmap: FT215
 
@@ -212,7 +212,7 @@ test code in the private checkout, as ADR 0002 accepts for the gate.
 | PL23 | 21 | `bench commit --dry-run` with the manifest fixture prints the lane line and moves no ref | `internal/commit/lane_test.go` (`TestLaneDryRunStatesTheOutcomeAndPublishesNothing`) | a dry run that skips the authority prints no lane line |
 | PL24 | 22 | after a selective `RunLane` the lane record names the tree, the lane, and the outcome, and the gate cache and the evidence store are absent | `internal/gate/lane_record_test.go` (`TestRunLaneRecordsItsOwnFileOnly`) | a record that gains the selection or a verdict cache entry reads as green |
 | PL25 | 2 | the manifest fixture commit that names the directory `docs` holding a 27-word sentence in `docs/note.md` exits 1 and prints `docs/note.md:3:` | `internal/commit/lane_test.go` (`TestLaneProseGradesAMarkdownFileUnderANamedDirectory`) | the named-path filter drops the directory and passes the sentence |
-| PL26 | 24 | `EmbedTargets` over a source `internal/adopt/link_hook.go` that declares `//go:embed prepush.sh` returns `internal/adopt/prepush.sh` | `internal/packagesurface/assets_test.go` (`TestEmbedTargetsResolveAgainstTheSourceDirectory`) | a target resolved against the root names a path that does not exist |
+| PL26 | 24 | `EmbedTargets` over a source `internal/adopt/link_hook.go` that declares `//go:embed prepush.sh` returns `internal/adopt/prepush.sh` | `internal/packagesurface/assets_test.go` (`TestEmbedTargetsSkipAnAbsentSourceDirectory`) | a target resolved against the root names a path that does not exist |
 | PL27 | 24 | `RequiredBuildPackAssets` over that fixture lists `internal/adopt/prepush.sh` | `internal/packagesurface/assets_test.go` (`TestRequiredBuildPackAssetsCarryEmbedTargets`) | a second derivation in the pack list drifts from the exported one |
 | PL28 | 25, 26, 27, 28 | `BenchkitLane` holds one `<run binary> test --check <name>` check per entry of `registry.Checks` at the dev tier whose `Inputs` is a document class, named after it, and no other `test --check` row | `internal/gate/lane_test.go` (`TestBenchkitLaneDocumentRowsFollowTheRegistry`), expectation enumerated from `registry.Checks` | a hand-written row list misses a check the registry adds |
 | PL29 | 25, 31 | one `M` entry for `roadmap/FT1.md` returns `prose` and `roadmap-detail-integrity` and the classes `markdown,roadmap-board` | `internal/gate/lane_select_test.go` (`TestSelectLaneByClass`) | a first-match rule drops one of the two |
@@ -238,7 +238,7 @@ test code in the private checkout, as ADR 0002 accepts for the gate.
 
 ### Edge inventory
 
-- A path with a space, a glob character, or a non-ASCII byte. The `-z` framing carries the bytes, and PL5 proves the prose subject.
+- A path with a space or a non-ASCII byte. The `-z` framing carries the bytes, and PL5 proves the prose subject.
 - A path with a control byte. The lane line names checks and classes and no path (PL20).
 - An empty change list. The landing refuses `nothing to commit` before the authority runs (PL40).
 - A deleted Go file, a deleted embed target, and a renamed Go file. Each side classifies by its own path (PL47), so `build` runs and reds a dangling reference.
@@ -278,11 +278,13 @@ test code in the private checkout, as ADR 0002 accepts for the gate.
 - `internal/packagesurface/assets.go`
 - `internal/packagesurface/assets_test.go`
 - `internal/conformance/profile_lane_table_test.go`
+- `internal/conformance/tier_test.go` (the live-tree test inventory that PL37 joins)
 - `projects/benchkit.md`
 - `CONTEXT.md`
 - `CHANGELOG.md`
 - `docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md`
 - `specs/path-aware-lane/`
+- `reviews/path-aware-lane.md` (the review phase's pickup file)
 
 ## Out of scope
 

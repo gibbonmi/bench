@@ -333,12 +333,24 @@ A worktree commit runs the fast lane, which is the short check list below. The
 landing runs the phase table above, and that whole-project gate stays the one
 full grade.
 
-| check | authoritative argv |
-|---|---|
-| `gofmt` | `bench gate-go gofmt` |
-| `prose` | `bench gate-prose <root> -- <named Markdown>` |
-| `vet` | `go vet -trimpath ./...` |
-| `build` | `go build -trimpath -buildvcs=false ./...` |
+The commit does not run every check in the list. It compares the composed tree
+against its base, and it gives each changed path one or more path classes. The
+`selected by` column names the classes that select each check. A path that
+matches no class selects every check in the list. A document family, such as the
+roadmap board or the kit profile, selects the registry check that grades it. So
+a broken document reds at the commit.
+
+| check | authoritative argv | selected by |
+|---|---|---|
+| `gofmt` | `bench gate-go gofmt` | go-source |
+| `prose` | `bench gate-prose <root> -- <named Markdown>` | markdown, prose-policy |
+| `vet` | `go vet -trimpath ./...` | go-source, go-build-input |
+| `build` | `go build -trimpath -buildvcs=false ./...` | go-source, go-build-input |
+| `decision-map-integrity` | `bench test --check decision-map-integrity` | decision-documents |
+| `guidance-prose-budgets` | `bench test --check guidance-prose-budgets` | benchkit-profile |
+| `profile-lane-table` | `bench test --check profile-lane-table` | benchkit-profile |
+| `roadmap-detail-integrity` | `bench test --check roadmap-detail-integrity` | roadmap-board |
+| `retro-improvement-markers` | `bench test --check retro-improvement-markers` | capture-retros |
 
 Go owns package scheduling inside the one ordinary test driver, and that driver grades
 the live tree: the `test` phase carries the graded root and the dev tier to the

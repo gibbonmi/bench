@@ -29,8 +29,10 @@ func mergeFixture(t *testing.T, labels ...string) (j joins, root, home, tally st
 		created = append(created, mustCreate(t, root, home, "merge-"+label, label))
 	}
 	j = defaultJoins()
-	j.mergeLane = func(string) ([]gate.Phase, string, error) {
-		return []gate.Phase{{Name: "unit", Argv: []string{"sh", "-c", "printf g >> " + sanitize.ShellQuote(tally)}}}, "", nil
+	j.mergeLane = func(string) (*gate.Lane, error) {
+		return &gate.Lane{Checks: []gate.Phase{
+			{Name: "unit", Argv: []string{"sh", "-c", "printf g >> " + sanitize.ShellQuote(tally)}},
+		}}, nil
 	}
 	return j, root, home, tally, created
 }
@@ -613,8 +615,8 @@ func TestMergeRefusesAnOffBranchFromCommit(t *testing.T) {
 
 // mergeLaneOf replaces the fixture's lane with the checks one row needs, so a row
 // controls the outcome the boundary reacts to without a second fixture.
-func mergeLaneOf(checks ...gate.Phase) func(string) ([]gate.Phase, string, error) {
-	return func(string) ([]gate.Phase, string, error) { return checks, "", nil }
+func mergeLaneOf(checks ...gate.Phase) func(string) (*gate.Lane, error) {
+	return func(string) (*gate.Lane, error) { return &gate.Lane{Checks: checks}, nil }
 }
 
 // requireMergeLaneRefusal pins the surface a lane fail leaves: exit 1, the lane's own
