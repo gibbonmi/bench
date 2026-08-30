@@ -358,3 +358,12 @@ func canonicalTestDir(t *testing.T) string {
 	}
 	return dir
 }
+
+// WF46: the conformance registry must never name a check equal to the system phase.
+// The --check parser routes that one name past the registry lookup, so a registry entry
+// of the same name would run the system suite instead, and refuse nothing.
+func TestSystemCheckNameIsReserved(t *testing.T) {
+	if check, found := registry.Find(gate.SystemPhaseName); found {
+		t.Fatalf("registry names %q (implementation %s); the --check parser shadows it with the system suite", check.Name, check.Implementation)
+	}
+}
