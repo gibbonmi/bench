@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -23,14 +25,48 @@ func TestBenchkitLaneTable(t *testing.T) {
 		{Name: "vet", Argv: []string{"go", "vet", "-trimpath", "./..."}},
 		{Name: "build", Argv: []string{"go", "build", "-trimpath", disableBuildVCS, "./..."}},
 	}
-	if !reflect.DeepEqual(lane, want) {
-		t.Fatalf("kit lane = %+v, want %+v", lane, want)
+	if len(lane) < len(want) || !reflect.DeepEqual(lane[:len(want)], want) {
+		t.Fatalf("kit lane = %+v, want it to open with %+v", lane, want)
 	}
-	for _, name := range []string{"gofmt", "prose"} {
-		check := laneCheck(t, lane, name)
-		if check.Argv[0] != runBinaryArgvToken {
-			t.Errorf("lane check %s argv[0] = %q, want the run binary token %q", name, check.Argv[0], runBinaryArgvToken)
+	// PL34: every check but the two toolchain ones is Bench-owned, so it names the token
+	// rather than an installed `bench`. The document rows are Bench-owned too.
+	for _, check := range lane {
+		if check.Name == "vet" || check.Name == "build" {
+			continue
 		}
+		if check.Argv[0] != runBinaryArgvToken {
+			t.Errorf("lane check %s argv[0] = %q, want the run binary token %q", check.Name, check.Argv[0], runBinaryArgvToken)
+		}
+	}
+}
+
+// TestBenchkitLaneDocumentRowsFollowTheRegistry is PL28. The expectation is enumerated
+// from registry.Checks, so a hand-written row list that misses a check the registry adds,
+// or that carries one the registry binds to no document family, reds here.
+func TestBenchkitLaneDocumentRowsFollowTheRegistry(t *testing.T) {
+	documents := map[registry.InputSource]bool{
+		registry.InputRoadmapBoard:      true,
+		registry.InputDecisionDocuments: true,
+		registry.InputCaptureRetros:     true,
+		registry.InputBenchkitProfile:   true,
+	}
+	var want []Phase
+	for _, check := range registry.Checks {
+		if documents[check.Inputs] && check.RunsAt(registry.Dev) {
+			want = append(want, Phase{Name: check.Name, Argv: []string{runBinaryArgvToken, "test", "--check", check.Name}})
+		}
+	}
+	if len(want) == 0 {
+		t.Fatal("the registry binds no dev-tier check to a document family")
+	}
+	var got []Phase
+	for _, check := range BenchkitLane("/repo", "/repo") {
+		if slices.Contains(check.Argv, "--check") {
+			got = append(got, check)
+		}
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("lane document rows = %+v, want the registry's own %+v", got, want)
 	}
 }
 
@@ -353,5 +389,59 @@ func TestLaneForCommitMarksOnlyTheKitLaneSelective(t *testing.T) {
 	}
 	if declared == nil || declared.Selective {
 		t.Fatalf("manifest lane = %+v, want a lane that is not selective", declared)
+	}
+}
+
+// laneRefusesArgv is laneRecordsArgv's red twin: the stub exits 1 for the one invocation
+// whose argv holds marker, and 0 for every other. It is the seam a row proves a red
+// document check through without paying for a real conformance run.
+func laneRefusesArgv(t *testing.T, marker string) {
+	t.Helper()
+	if _, present := os.LookupEnv(runbinary.Env); present {
+		t.Setenv(runbinary.Env, "")
+		if err := os.Unsetenv(runbinary.Env); err != nil {
+			t.Fatal(err)
+		}
+	}
+	previous := laneRunBinary
+	t.Cleanup(func() { laneRunBinary = previous })
+	laneRunBinary = runbinary.Factory{
+		Build: func(_ context.Context, _, output string) error {
+			script := "#!/bin/sh\ncase \"$*\" in\n  *'" + marker + "'*) echo 'the check refused' >&2; exit 1 ;;\nesac\nexit 0\n"
+			return os.WriteFile(output, []byte(script), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	}
+}
+
+// TestBenchkitLaneDocumentCheckFailsTheLane is PL35. A red document check refuses the
+// commit under its own name, so the refusal names the rule the reader must satisfy. A
+// document check run as optional would read this red as a pass.
+func TestBenchkitLaneDocumentCheckFailsTheLane(t *testing.T) {
+	const check = "roadmap-detail-integrity"
+	root := laneSelectableFixture(t)
+	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
+	outcomeWrite(t, root, "ROADMAP.md", "# Roadmap\n", 0o644)
+	outcomeGit(t, root, "add", "-A")
+	outcomeGit(t, root, "commit", "-q", "-m", "roadmap")
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	changes, err := ComposedChanges(root, base, tree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	laneRefusesArgv(t, "test --check "+check)
+
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Lane: "benchkit", Selective: true,
+		Checks: BenchkitLane(root, root), Changes: changes,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Passed() || result.Check != check {
+		t.Fatalf("lane outcome %s on check %q, want a fail on %s", result.Outcome, result.Check, check)
+	}
+	if want := []string{"prose", check}; !reflect.DeepEqual(result.Checks, want) {
+		t.Errorf("lane checks = %v, want %v", result.Checks, want)
 	}
 }

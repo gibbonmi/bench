@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 	"github.com/gibbonmi/bench/internal/prose"
@@ -177,9 +178,10 @@ type PathClass struct {
 	Checks []string
 }
 
-// laneClasses is the path-class table in table order. It is the one source for what a
-// composed change selects, and the profile's `selected by` column renders from it.
-var laneClasses = []PathClass{
+// laneClasses is the path-class table in table order: the four content classes, then the
+// document families the registry binds. It is the one source for what a composed change
+// selects, and the profile's `selected by` column renders from it.
+var laneClasses = append([]PathClass{
 	{
 		Name:   "go-source",
 		Match:  func(path string, _ []string) bool { return strings.HasSuffix(path, ".go") },
@@ -202,6 +204,86 @@ var laneClasses = []PathClass{
 		Match:  func(path string, _ []string) bool { return path == prose.ExclusionFile },
 		Checks: []string{"prose"},
 	},
+}, documentClasses()...)
+
+// documentFamilies binds each document class to the paths it claims. A row's name is the
+// registry input source itself, so the lane and the registry cannot spell one family two
+// ways, and a row states no check name: the registry's own binding answers that.
+var documentFamilies = []struct {
+	source registry.InputSource
+	match  func(path string) bool
+}{
+	{registry.InputRoadmapBoard, func(path string) bool {
+		return path == "ROADMAP.md" || strings.HasPrefix(path, "roadmap/")
+	}},
+	{registry.InputDecisionDocuments, decisionDocument},
+	{registry.InputCaptureRetros, func(path string) bool {
+		return strings.HasPrefix(path, "capture/retros/")
+	}},
+	{registry.InputBenchkitProfile, func(path string) bool {
+		return path == "projects/benchkit.md"
+	}},
+}
+
+// decisionDocument claims the two places a decision map lives: the repository's own
+// `decisions/` tree, and the `decisions/` tree a spec folder carries. A rule that read
+// only the top-level tree would miss every spec-local map.
+func decisionDocument(path string) bool {
+	if strings.HasPrefix(path, "decisions/") {
+		return true
+	}
+	rest, found := strings.CutPrefix(path, "specs/")
+	if !found {
+		return false
+	}
+	slug, tail, split := strings.Cut(rest, "/")
+	return split && slug != "" && strings.HasPrefix(tail, "decisions/")
+}
+
+// documentClasses renders the document families as class-table rows, in family order.
+func documentClasses() []PathClass {
+	classes := make([]PathClass, 0, len(documentFamilies))
+	for _, family := range documentFamilies {
+		match := family.match
+		classes = append(classes, PathClass{
+			Name:   string(family.source),
+			Match:  func(path string, _ []string) bool { return match(path) },
+			Checks: documentRegistryChecks(family.source),
+		})
+	}
+	return classes
+}
+
+// documentRegistryChecks names the dev-tier registry checks bound to any of the given
+// input sources, in registry order. It is the one derivation of the family-to-check fact:
+// a class row reads it for its own source, and the kit lane declares its document rows
+// from the whole set. A check the registry adds therefore joins both with no second list.
+func documentRegistryChecks(sources ...registry.InputSource) []string {
+	var names []string
+	for _, check := range registry.Checks {
+		if !slices.Contains(sources, check.Inputs) || !check.RunsAt(registry.Dev) {
+			continue
+		}
+		names = append(names, check.Name)
+	}
+	return names
+}
+
+// documentLaneChecks is the kit lane's document half: one check per dev-tier registry
+// check a document family binds, in registry order. Each runs through the lane's own run
+// binary, so the lane builds no second executable and the check grades the composed
+// checkout that binary was built from.
+func documentLaneChecks() []Phase {
+	sources := make([]registry.InputSource, 0, len(documentFamilies))
+	for _, family := range documentFamilies {
+		sources = append(sources, family.source)
+	}
+	names := documentRegistryChecks(sources...)
+	checks := make([]Phase, 0, len(names))
+	for _, name := range names {
+		checks = append(checks, Phase{Name: name, Argv: []string{runBinaryArgvToken, "test", "--check", name}})
+	}
+	return checks
 }
 
 // LaneClasses answers the path-class table in table order. It is the read seam for a

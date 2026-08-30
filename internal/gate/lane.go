@@ -56,23 +56,22 @@ const defaultLaneName = "lane"
 // verification seams rather than paying a real build.
 var laneRunBinary = runbinary.Factory{}
 
-// BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, and
-// build, in that order. The two Bench-owned checks carry the run-binary token, which the
-// run replaces with the executable it selected. The two toolchain checks run the tool
-// directly. The build disables VCS stamping, as every gate Go argv does: the private
-// checkout is a linked worktree under a temporary directory, and Go's own discovery
-// skips its `.git` file and adopts whatever `.git` directory sits above it.
-//
-// The whole-project test phase is deliberately absent. The lane is the worktree
+// BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, build, and
+// then one check per document family the registry binds. A Bench-owned check carries the
+// run-binary token, which the run replaces with the executable it selected, and the two
+// toolchain checks run the tool directly. The build disables VCS stamping, as every gate
+// Go argv does: the private checkout is a linked worktree under a temporary directory,
+// and Go's own discovery skips its `.git` file and adopts whatever `.git` directory sits
+// above it. The whole-project test phase is deliberately absent. The lane is the worktree
 // commit's check, and the landing's gate stays the one full grade.
 func BenchkitLane(root, kit string) []Phase {
 	_ = kit
-	return []Phase{
+	return append([]Phase{
 		{Name: "gofmt", Argv: []string{runBinaryArgvToken, "gate-go", "gofmt"}},
 		{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose", root, "--", LaneNamedMarkdownToken}},
 		{Name: "vet", Argv: []string{"go", "vet", trimPath, "./..."}},
 		{Name: "build", Argv: []string{"go", "build", trimPath, disableBuildVCS, "./..."}},
-	}
+	}, documentLaneChecks()...)
 }
 
 // RunLane grades the composed tree against the declared checks and records one lane

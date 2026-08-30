@@ -436,6 +436,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestGuidanceProseBudgetsHoldOnTheLiveTree":                    true,
 	"TestProseMechanicsCanaryFixturesBite":                         true,
 	"TestProseMechanicsHoldsOnTheLiveTree":                         true,
+	"TestProfileLaneTableHoldsOnTheLiveTree":                       true,
 	"TestProseExclusionRowsStayInsideTheApprovedSet":               true,
 	"TestHarnessUsesBenchConformanceRootAsGradedRoot":              true,
 	"TestInjectedPortRegistryCheckBites":                           true,

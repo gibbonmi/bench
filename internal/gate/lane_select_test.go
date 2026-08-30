@@ -8,9 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
@@ -150,7 +152,9 @@ func laneSelectableFixture(t *testing.T) string {
 // TestSelectLaneByClass is PL9 to PL13, PL15 to PL18, PL42, and PL47. Each row states
 // the checks the kit lane runs for one change set, and the classes that selected them.
 func TestSelectLaneByClass(t *testing.T) {
-	every := []string{"gofmt", "prose", "vet", "build"}
+	// The unknown class selects the whole declared lane, so the expectation is the lane
+	// itself rather than a second copy of its row names.
+	every := laneCheckNames(BenchkitLane("/repo", "/repo"))
 	embed := []string{"internal/adopt/prepush.sh"}
 	for _, tc := range []struct {
 		name    string
@@ -193,7 +197,7 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL15 two classes take the union in declared order",
 			changes: []ComposedChange{laneChange("a.go"), laneChange("b.md")},
-			checks:  every,
+			checks:  []string{"gofmt", "prose", "vet", "build"},
 			classes: []string{"go-source", "markdown"},
 		},
 		{
@@ -232,6 +236,36 @@ func TestSelectLaneByClass(t *testing.T) {
 			changes: []ComposedChange{laneDeletion("internal/x/y.go")},
 			checks:  []string{"gofmt", "vet", "build"},
 			classes: []string{"go-source"},
+		},
+		{
+			name:    "PL29 a roadmap detail file",
+			changes: []ComposedChange{laneChange("roadmap/FT1.md")},
+			checks:  []string{"prose", "roadmap-detail-integrity"},
+			classes: []string{"markdown", "roadmap-board"},
+		},
+		{
+			name:    "PL29 the roadmap index",
+			changes: []ComposedChange{laneChange("ROADMAP.md")},
+			checks:  []string{"prose", "roadmap-detail-integrity"},
+			classes: []string{"markdown", "roadmap-board"},
+		},
+		{
+			name:    "PL30 a spec-local decision map",
+			changes: []ComposedChange{laneChange("specs/x/decisions/map.md")},
+			checks:  []string{"prose", "decision-map-integrity"},
+			classes: []string{"markdown", "decision-documents"},
+		},
+		{
+			name:    "PL31 a pending retro",
+			changes: []ComposedChange{laneChange("capture/retros/x.md")},
+			checks:  []string{"prose", "retro-improvement-markers"},
+			classes: []string{"markdown", "capture-retros"},
+		},
+		{
+			name:    "PL32 the kit profile",
+			changes: []ComposedChange{laneChange("projects/benchkit.md")},
+			checks:  []string{"prose", "guidance-prose-budgets", "profile-lane-table"},
+			classes: []string{"markdown", "benchkit-profile"},
 		},
 		{
 			name:    "PL47 a deleted embed target",
@@ -281,6 +315,33 @@ func TestSelectLaneReturnsADeclaredSubsequence(t *testing.T) {
 					laneCheckNames(selected), changes, laneCheckNames(declared))
 			}
 			next++
+		}
+	}
+}
+
+// TestDocumentClassesAreRegistryInputSources is PL33. A document class spelled apart from
+// the registry binds to no check, and a family the registry stops binding leaves a class
+// row that selects nothing. Both are silent, so the binding is asserted rather than read.
+func TestDocumentClassesAreRegistryInputSources(t *testing.T) {
+	classes := LaneClasses()
+	for _, family := range documentFamilies {
+		if !family.source.Valid() {
+			t.Errorf("document class %q is no registry input source", family.source)
+		}
+		index := slices.IndexFunc(classes, func(class PathClass) bool { return class.Name == string(family.source) })
+		if index < 0 {
+			t.Errorf("the class table declares no row named %q", family.source)
+			continue
+		}
+		row := classes[index]
+		if len(row.Checks) == 0 {
+			t.Errorf("class %s selects no check, so the registry binds none to it", row.Name)
+		}
+		for _, name := range row.Checks {
+			check, found := registry.Find(name)
+			if !found || !check.RunsAt(registry.Dev) || check.Inputs != family.source {
+				t.Errorf("class %s selects %s, which the registry does not bind to it at the dev tier", row.Name, name)
+			}
 		}
 	}
 }

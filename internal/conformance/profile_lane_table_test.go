@@ -208,6 +208,16 @@ func TestProfileLaneTableRedsAStaleSelectedByCell(t *testing.T) {
 	}
 }
 
+// TestProfileLaneTableHoldsOnTheLiveTree is PL37. The profile advertises the kit's own
+// lane, so a table with no document rows or no `selected by` column reds here rather than
+// misleading a cold reader.
+func TestProfileLaneTableHoldsOnTheLiveTree(t *testing.T) {
+	h := NewHarness(t)
+	if diags := checkProfileLaneTable(h.KitRoot); len(diags) != 0 {
+		t.Fatalf("the profile's lane table has drifted from the kit lane:\n%s", strings.Join(diags, "\n"))
+	}
+}
+
 func writeProfileFixture(t *testing.T, root, rel, body string) {
 	t.Helper()
 	path := filepath.Join(root, rel)
