@@ -38,6 +38,10 @@ const (
 type Result struct {
 	Kind     Kind
 	Evidence string
+	// Reason is the gate's own open reason behind an Infrastructure attribution, empty for
+	// every other kind. An operational outcome names no failing check, so without this the
+	// refusal the operator reads would carry the kind and no cause.
+	Reason string
 }
 
 // Bootstrap imports current reusable green proof with an expected prior marker.
@@ -156,7 +160,11 @@ func AuthorizeWithWriters(ctx context.Context, root, tree string, stdout, stderr
 			kind = Candidate
 		}
 	}
-	return Result{Kind: kind, Evidence: evidenceToken(kind, tree, inspection)}
+	result := Result{Kind: kind, Evidence: evidenceToken(kind, tree, inspection)}
+	if kind == Infrastructure {
+		result.Reason = execution.Inspection.Reason
+	}
+	return result
 }
 
 // Validate reports whether evidence still names reusable exact green proof for tree.

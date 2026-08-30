@@ -90,7 +90,7 @@ func (o Owner) Merge(ctx context.Context, r MergeRequest) (MergeResult, error) {
 		tree, resolved = composition.Tree, composition.Resolved
 	}
 	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
-		return MergeResult{}, fmt.Errorf("prospective authorization refused: %s", got.Kind)
+		return MergeResult{}, errors.New(refusalMessage(got))
 	}
 	// Recheck both moving identities after the lane and before creating an otherwise
 	// unreachable object.

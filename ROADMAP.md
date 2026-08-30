@@ -190,8 +190,6 @@ defect.
 
 **FT141 (MEDIUM, decision required) — red verdicts are recorded against a baseline, so inherited reds stop reading as caused.**
 
-**FT223 (LOW, decision required) — `bench commit`'s inherited-verdict refusal misreads as a red gate.**
-
 **FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate quiet check.**
 
 **FT115 (LOW) — load-robust test and phase deadlines derived from bounds.**

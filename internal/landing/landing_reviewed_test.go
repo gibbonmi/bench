@@ -374,3 +374,65 @@ func TestLandReviewedSpecStateTableRefusesBeforeAuthorization(t *testing.T) {
 		})
 	}
 }
+
+// The refusal every authorization caller prints keeps the kind the two prefix tests read
+// and states what the attribution means and what to run next. An infrastructure refusal
+// carries the gate's own reason when the gate named one, and the kind alone when it did
+// not.
+func TestRefusalMessageNamesTheOperatorActionAndTheOpenReason(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		result authorization.Result
+		want   string
+	}{
+		{"inherited", authorization.Result{Kind: authorization.Inherited},
+			"prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff); run bench gate --fresh"},
+		{"candidate", authorization.Result{Kind: authorization.Candidate},
+			"prospective authorization refused: candidate (the gate ran red on the composed tree and the green baseline attributes the red to this diff); fix the failures above"},
+		{"infrastructure with reason", authorization.Result{Kind: authorization.Infrastructure, Reason: "declared environment unavailable"},
+			"prospective authorization refused: infrastructure (declared environment unavailable); run bench doctor"},
+		{"infrastructure without reason", authorization.Result{Kind: authorization.Infrastructure},
+			"prospective authorization refused: infrastructure; run bench doctor"},
+		{"lane fail", authorization.Result{Kind: authorization.LaneFail},
+			"prospective authorization refused: lane fail"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := refusalMessage(tc.result); got != tc.want {
+				t.Fatalf("refusalMessage = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// The merge authorization and the composed-tree authorization refuse in one voice: the
+// same result reaches the operator as the same line whichever landing read it.
+func TestMergeAndComposedRefusalsRenderTheSameLine(t *testing.T) {
+	refused := authorization.Result{Kind: authorization.Infrastructure, Reason: "declared environment unavailable"}
+	authorize := func(context.Context, string, string, io.Writer, io.Writer) authorization.Result { return refused }
+
+	composedRoot := fixture(t)
+	write(t, composedRoot, "named", "changed")
+	base := git(t, composedRoot, "rev-parse", "HEAD")
+	o := New()
+	o.authorize = authorize
+	_, composedErr := o.Land(context.Background(), Request{Root: composedRoot, Destination: "refs/heads/main", Expected: base, Message: "x", Paths: []string{"named"}})
+
+	mergeRoot := fixture(t)
+	previous, incoming := linearPair(t, mergeRoot)
+	git(t, mergeRoot, "checkout", "-q", "destination")
+	owner := New()
+	owner.authorize = authorize
+	owner.updateRef = func(string, string, string, string) error {
+		t.Error("a refused authorization updated the branch ref")
+		return nil
+	}
+	_, mergeErr := owner.Merge(context.Background(), mergeRequest(t, mergeRoot, "destination", previous, incoming))
+
+	want := refusalMessage(refused)
+	if composedErr == nil || composedErr.Error() != want {
+		t.Fatalf("composed refusal = %v, want %q", composedErr, want)
+	}
+	if mergeErr == nil || mergeErr.Error() != want {
+		t.Fatalf("merge refusal = %v, want %q", mergeErr, want)
+	}
+}
