@@ -303,6 +303,31 @@ func TestDoctorDirSelectionAndShimRoundTrip(t *testing.T) {
 	}
 }
 
+func TestDoctorParsesHelpAndUnknownFlags(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := Doctor([]string{"--help"}, &stdout, &stderr, "1.0.0"); code != 0 {
+		t.Fatalf("Doctor --help = %d, want 0\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	if got, want := stdout.String(), "usage: bench doctor [--fix]\n"; got != want {
+		t.Fatalf("Doctor --help stdout = %q, want %q", got, want)
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("Doctor --help stderr = %q, want empty", got)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	if code := Doctor([]string{"--bogus"}, &stdout, &stderr, "1.0.0"); code != 2 {
+		t.Fatalf("Doctor --bogus = %d, want 2\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	if got := stdout.String(); got != "" {
+		t.Fatalf("Doctor --bogus stdout = %q, want empty", got)
+	}
+	if got, want := stderr.String(), "usage: bench doctor (unknown argument: --bogus)\n"; got != want {
+		t.Fatalf("Doctor --bogus stderr = %q, want %q", got, want)
+	}
+}
+
 // guardedCanaryCall is the exact guarded inventory call scaffoldGate must emit and
 // bench init must write: rooted at $root, never relative.
 const guardedCanaryCall = `if [ -d "$root/tests/canary" ]; then

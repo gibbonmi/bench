@@ -43,7 +43,7 @@ func exempt(why string) routingEntry { return routingEntry{Exempt: why} }
 // Each reason applies to a whole class of dispatch names, so the file states the reason once.
 const (
 	whyPlumbing = "hook- and adapter-driven plumbing: its argv is produced by the kit, never typed by an agent, so there is no misuse for a grammar to report"
-	whyNested   = "dispatches a subcommand tree rather than a flat argv; each leaf owns its own grammar"
+	whyNested   = "dispatches a subcommand tree: each leaf owns its grammar"
 )
 
 // subcommandRouting is the explicit registry the routing check grades cmd/bench/main.go
@@ -96,7 +96,7 @@ var subcommandRouting = map[string]routingEntry{
 	"worktree-pool":         exempt(whyPlumbing),
 
 	"canary":            exempt(whyNested),
-	"doctor":            exempt(whyNested),
+	"doctor":            routed("internal/adopt"),
 	"gate":              exempt(whyNested),
 	"gate-pin":          exempt(whyNested),
 	"gate-run":          exempt(whyNested),
@@ -441,6 +441,19 @@ func TestSubcommandRoutingRequiresFollowOnGuardEntry(t *testing.T) {
 	want := `cmd/bench/main.go dispatches "guard-bench-follow-on" with no entry in the subcommand argument-routing registry; record it as routed through usage.Parse or as an exemption with its reason`
 	if !containsDiagnostic(checkSubcommandRouting(root), want) {
 		t.Fatalf("removed %q entry did not emit %q", name, want)
+	}
+}
+
+func TestSubcommandRoutingGradesDoctorLeafThroughUsageParse(t *testing.T) {
+	if got, want := whyNested, "dispatches a subcommand tree: each leaf owns its grammar"; got != want {
+		t.Fatalf("whyNested = %q, want %q", got, want)
+	}
+	entry, found := subcommandRouting["doctor"]
+	if !found {
+		t.Fatal("subcommand routing lacks doctor")
+	}
+	if got, want := entry, routed("internal/adopt"); got != want {
+		t.Fatalf("doctor routing = %#v, want %#v", got, want)
 	}
 }
 
