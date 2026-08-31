@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: CHANGELOG.md, internal/gate/tag_census.go, internal/gate/tag_census_test.go, internal/coverage/citations.go, internal/coverage/citations_test.go, internal/coverage/citation_execution.go (new), internal/coverage/citation_execution_test.go (new), internal/bounds/bounds.go, internal/conformance/bounds_policy_test.go, tests/canary/coverage-map-validation/unexecuted-tag-citation/
-Covers: PS1, PS2, PS3, PS4, PS5, PS6, PS7, PS8, PS9, PS10, PS11, PS12
+Covers: PS1, PS2, PS3, PS4, PS5, PS6, PS7, PS8, PS9, PS10, PS11, PS12, PS13
 
 ## What to build
 
@@ -28,3 +28,4 @@ new ignored-package diagnostic reaches the gate.
 - [ ] Package selection does not weaken build-constraint matching. (covers PS10)
 - [ ] A root with no Go test phase keeps the execution check inapplicable. (covers PS11)
 - [ ] The extended canary reports the ignored-package citation. (covers PS12)
+- [ ] A phase's own env decides its package selection and its file constraints. (covers PS13)

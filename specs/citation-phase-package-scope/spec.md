@@ -6,7 +6,7 @@ Roadmap: FT281
 
 Decision source: named reviewed artifact `roadmap/FT281.md`
 
-Verification log: 1 iteration(s) to accept — the review accepted behavior, the amended fence, and the ticket graph; the author corrected one check name. A three-axis review then found that the local `packageLoadTimeout` var redeclares a `bounds` policy value. The fence widens to the registry and its conformance test, so the repair can consume `bounds.PackageLoadTimeout` instead.
+Verification log: 1 iteration(s) to accept — the review accepted behavior, the amended fence, and the ticket graph; the author corrected one check name. A three-axis review then found that the local `packageLoadTimeout` var redeclares a `bounds` policy value. The fence widens to the registry and its conformance test, so the repair can consume `bounds.PackageLoadTimeout` instead. A second review round then added row PS13, because the approved phase-environment behavior shipped with no acceptance row.
 
 ## Problem
 
@@ -57,6 +57,12 @@ Line: `gpt-5.6-terra` / high. A derivation failure must not restore the false gr
 11. As a non-Go project owner, I want no execution check without a test phase, so that unrelated specs keep their behavior.
 12. As a gate owner, I want the package-scope diagnostic to bite through the canary, so that the oracle observes the repair.
 
+### Group D — a phase carries its own environment
+
+Line: `gpt-5.6-terra` / high. The platform a phase declares decides which files it can build.
+
+13. As a project owner, I want a manifest phase's env applied, so that its own platform decides which files count as evidence.
+
 ## Implementation decisions
 
 - Replace the tag-only census result with one test-execution entry per resolved
@@ -81,6 +87,9 @@ Line: `gpt-5.6-terra` / high. A derivation failure must not restore the false gr
 - Move the execution-specific coverage code into one focused source file if
   the existing citation file would grow. Keep the citation grammar in its
   current owner.
+- Apply a phase's own `GOOS`, `GOARCH`, and `CGO_ENABLED` to the package loader
+  and to the cited file's constraints. Read an empty value as an unset one, and
+  ask the toolchain itself whether cgo is on under that platform.
 - Extend the existing unexecuted-citation canary. Do not add a second fixture
   family or a second owner registry.
 
@@ -121,6 +130,7 @@ Line: `gpt-5.6-terra` / high. A derivation failure must not restore the false gr
 | PS10 | 10 | one phase must both select the package and accept the file constraint | planned `TestCitationPackageScope` in package `internal/coverage` | independent unions weaken the existing build-constraint rule |
 | PS11 | 11 | a root with no Go test phase leaves citation execution inapplicable | existing `TestCitationUnexecutedConstraint` in package `internal/coverage` | a fail-closed default breaks non-Go roots |
 | PS12 | 12 | the unexecuted-citation canary reports the ignored-package citation | coverage-map-validation canary owner in the `docs-currency-workflow` check | a unit-only diagnostic can stay outside the oracle |
+| PS13 | 13 | a manifest phase's env decides both its package selection and its file constraints | existing `TestCitationPhaseEnv` in package `internal/coverage` | a host-only context accepts a file the phase can never compile |
 
 ### Edge inventory
 

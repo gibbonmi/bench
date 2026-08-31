@@ -97,6 +97,18 @@ func TestExecutedTagCensus(t *testing.T) {
 			},
 		},
 		{
+			// Go's flag package accepts one or two leading dashes for the same flag, and a
+			// project writes its manifest argv by hand. The two-dash form must consume its
+			// own value rather than donate it to the package list.
+			name: "a two-dash flag consumes its separated value",
+			manifest: `{"phases":[{"name":"test","argv":[
+				"go","test","--skip","TestSlow","--timeout","30s","./..."
+			]}]}`,
+			want: []TestExecution{
+				{Name: "test", Tags: TagSet{}, Packages: []string{"./..."}, Dir: rootToken},
+			},
+		},
+		{
 			name:     "a root with no test phase yields an empty census",
 			manifest: `{"phases":[{"name":"vet","argv":["go","vet","./..."]}]}`,
 			want:     nil,
@@ -134,9 +146,16 @@ func TestExecutedCensusReadsTheRaceDriverArgv(t *testing.T) {
 	if !found {
 		t.Fatalf("census = %v, want a %s entry", got, canary.PhaseRace)
 	}
-	// The expectation is spelled out rather than derived from the race registry, so an
+	// The expectation reads the race registry that raceDriverArgv builds the phase from,
+	// so a registry edit moves the argv and this expectation together. It repeats the
+	// driver's own deduplication, which keeps the first occurrence of each path. An
 	// operand list that leaked the -run pattern or a build flag's value reds here.
-	want := []string{"./internal/worktree", "./internal/guards", "./internal/census"}
+	var want []string
+	for _, test := range raceTests {
+		if !contains(want, test.PackagePath) {
+			want = append(want, test.PackagePath)
+		}
+	}
 	if !reflect.DeepEqual(race.Packages, want) {
 		t.Fatalf("race packages = %q, want %q", race.Packages, want)
 	}

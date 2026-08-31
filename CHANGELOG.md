@@ -172,7 +172,9 @@ All notable user-facing changes to Bench are documented here. The format follows
   phase`, both naming the row and the cited file. A phase entry also carries the phase's
   own `env` object, so a phase that declares `GOOS`, `GOARCH`, or `CGO_ENABLED` is graded
   on the platform it runs under rather than on the host's. The package loader runs under
-  that same environment. A manifest phase that writes a value-taking flag in its separated
+  that same environment, and the toolchain itself answers whether cgo is on under that
+  platform. An empty value reads as an unset one, the way `go` reads it. A manifest phase
+  that writes a value-taking flag in its separated
   form, such as `-skip TestSlow` or `-o out`, keeps that value out of its package
   operands.
 - The Go builder now pins `CGO_ENABLED=0` for every target, so the same source gives

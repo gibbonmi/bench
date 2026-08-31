@@ -3,6 +3,7 @@ package coverage
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -136,6 +137,9 @@ func TestCitationPackageScopeFailure(t *testing.T) {
 // and the file's build constraint.
 func TestCitationPhaseEnv(t *testing.T) {
 	arch := crossArch()
+	// One fixture source serves every cgo case, so the cases differ only in the phase
+	// environment under grade.
+	const cgoSource = "//go:build cgo\n\npackage linked\n\nfunc TestPresent() {}\n"
 
 	t.Run("the loader child runs under the phase environment", func(t *testing.T) {
 		root := t.TempDir()
@@ -172,7 +176,7 @@ func TestCitationPhaseEnv(t *testing.T) {
 	t.Run("a phase that disables cgo refuses a cgo-tagged file", func(t *testing.T) {
 		specPath := citationExecutionSpec(t,
 			`{"phases":[{"name":"test","argv":["go","test","./..."],"env":{"CGO_ENABLED":"0"}}]}`,
-			"linked/linked_test.go", "//go:build cgo\n\npackage linked\n\nfunc TestPresent() {}\n")
+			"linked/linked_test.go", cgoSource)
 
 		v := checkFilesOf(t, specPath)
 		if len(v) != 1 || !strings.Contains(v[0], "which no executed tag set builds (//go:build cgo)") {
@@ -183,10 +187,50 @@ func TestCitationPhaseEnv(t *testing.T) {
 	t.Run("a phase that enables cgo builds a cgo-tagged file", func(t *testing.T) {
 		specPath := citationExecutionSpec(t,
 			`{"phases":[{"name":"test","argv":["go","test","./..."],"env":{"CGO_ENABLED":"1"}}]}`,
-			"linked/linked_test.go", "//go:build cgo\n\npackage linked\n\nfunc TestPresent() {}\n")
+			"linked/linked_test.go", cgoSource)
 
 		if v := checkFilesOf(t, specPath); len(v) != 0 {
 			t.Fatalf("CheckFiles = %#v, want no violation when the phase enables cgo", v)
+		}
+	})
+
+	t.Run("a cross-architecture phase refuses a cgo-tagged file", func(t *testing.T) {
+		// Go turns cgo off for a cross-compiled phase unless that phase names CGO_ENABLED
+		// itself, whatever the host's own default is. So an architecture override alone
+		// must reach the file constraint.
+		specPath := citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./..."],"env":{"GOARCH":"`+arch+`"}}]}`,
+			"linked/linked_test.go", cgoSource)
+
+		v := checkFilesOf(t, specPath)
+		if len(v) != 1 || !strings.Contains(v[0], "which no executed tag set builds (//go:build cgo)") {
+			t.Fatalf("CheckFiles = %#v, want the phase architecture to refuse cgo", v)
+		}
+	})
+
+	t.Run("an empty cgo value reads as an unset one", func(t *testing.T) {
+		// Go reads an empty value as an unset variable and keeps its own default. So this
+		// phase must reach the same verdict as a phase that declares no environment.
+		empty := checkFilesOf(t, citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./..."],"env":{"CGO_ENABLED":""}}]}`,
+			"linked/linked_test.go", cgoSource))
+		absent := checkFilesOf(t, citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./..."]}]}`,
+			"linked/linked_test.go", cgoSource))
+		if !reflect.DeepEqual(empty, absent) {
+			t.Fatalf("empty CGO_ENABLED = %#v, want the absent verdict %#v", empty, absent)
+		}
+	})
+
+	t.Run("an empty platform value keeps the host platform", func(t *testing.T) {
+		// An empty GOOS declares no platform, so the cited file's own GOOS suffix still
+		// has to match the platform the phase runs on.
+		specPath := citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./..."],"env":{"GOOS":""}}]}`,
+			"host/fixture_"+runtime.GOOS+"_test.go", "package host\n\nfunc TestPresent() {}\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation under an empty GOOS", v)
 		}
 	})
 }
