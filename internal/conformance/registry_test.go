@@ -86,6 +86,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"broken-coverage-map":                        conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"no-map-not-historical":                      conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"stray-flat-live-spec":                       conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"mixed-tag-row-ids":                          conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"unexecuted-tag-citation":                    conformanceFixture(".bench/gate-docs-contracts.sh"),
 
 	"benchkit-spec-ownership":               conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"changelog-ticket-vocabulary":           conformanceFixture(".bench/gate-docs-contracts.sh"),

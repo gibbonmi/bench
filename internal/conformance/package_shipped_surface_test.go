@@ -100,6 +100,34 @@ func checkPackageShippedSurface(root string) []string {
 			diags = append(diags, fmt.Sprintf("package.json files[] is missing the derived exclusion %q for kit-only allowlist row %q", want, row.Source))
 		}
 	}
+	// A row whose source path is absent excludes nothing and ships nothing, so a
+	// misspelling clears the derived-exclusion loop vacuously once package.json mirrors
+	// it. Both audiences carry that risk, so the stat covers every row.
+	for _, row := range rows {
+		want := "regular file"
+		if row.Tree {
+			want = "directory"
+		}
+		var detail string
+		info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(row.Source)))
+		switch {
+		case os.IsNotExist(err):
+			detail = "the source path is absent"
+		case err != nil:
+			detail = "the source path is unreadable: " + err.Error()
+		case info.IsDir():
+			if !row.Tree {
+				detail = "the source path is a directory"
+			}
+		case !info.Mode().IsRegular():
+			detail = "the source path is not a regular file"
+		case row.Tree:
+			detail = "the source path is a regular file"
+		}
+		if detail != "" {
+			diags = append(diags, fmt.Sprintf("consumer payload allowlist row %q (audience %q) must name a %s: %s", row.Source, row.Audience, want, detail))
+		}
+	}
 	return diags
 }
 
@@ -476,6 +504,61 @@ func TestShippedIdentityStringSweepBites(t *testing.T) {
 		diags := checkShippedIdentityStrings(root)
 		if len(diags) != 1 || !strings.Contains(diags[0], slashRel(root, filepath.Join(root, filepath.FromSlash(c.file)))) || !strings.Contains(diags[0], c.want) {
 			t.Fatalf("seeded %q in %s: want one diagnostic naming %q, got %v", c.want, c.file, c.want, diags)
+		}
+	}
+}
+
+// TestAllowlistSourceExists is the recorded bite proof for the allowlist source-stat
+// loop. The misspelled row is mirrored in package.json files[], so the derived-exclusion
+// loop stays silent and only the stat diagnostic appears.
+func TestAllowlistSourceExists(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel, body string) {
+		t.Helper()
+		full := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("docs/present.md", "kit-only file\n")
+	write("trees/real/leaf.md", "consumer tree member\n")
+	write("trees/leaf", "a regular file where a tree row is declared\n")
+	if err := os.MkdirAll(filepath.Join(root, "flat.txt"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write(".bench/consumer-payload.json", `[
+		{"source":"docs/present.md","mode":"0644","tree":false,"audience":"kit-only"},
+		{"source":"docs/missng.md","mode":"0644","tree":false,"audience":"kit-only"},
+		{"source":"trees/real","mode":"0755","tree":true,"audience":"consumer"},
+		{"source":"trees/leaf","mode":"0755","tree":true,"audience":"consumer"},
+		{"source":"flat.txt","mode":"0644","tree":false,"audience":"consumer"}
+	]`+"\n")
+	// files[] mirrors the misspelling, so every derived kit-only exclusion is present.
+	write("package.json", `{"files":[".agents/","!docs/present.md","!docs/missng.md"]}`+"\n")
+
+	var got []string
+	for _, diag := range checkPackageShippedSurface(root) {
+		if strings.Contains(diag, "derived exclusion") {
+			t.Fatalf("mirrored files[] must keep the derived-exclusion loop silent, got %q", diag)
+		}
+		if strings.HasPrefix(diag, "consumer payload allowlist row ") {
+			got = append(got, diag)
+		}
+	}
+	want := []string{
+		`consumer payload allowlist row "docs/missng.md" (audience "kit-only") must name a regular file: the source path is absent`,
+		`consumer payload allowlist row "trees/leaf" (audience "consumer") must name a directory: the source path is a regular file`,
+		`consumer payload allowlist row "flat.txt" (audience "consumer") must name a regular file: the source path is a directory`,
+	}
+	if len(got) != len(want) {
+		t.Fatalf("allowlist source diagnostics = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("allowlist source diagnostic %d = %q, want %q", i, got[i], want[i])
 		}
 	}
 }

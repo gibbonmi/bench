@@ -1,0 +1,1 @@
+coverage map row 1 cites 'internal/example/stress_test.go', which no executed tag set builds (//go:build stress)

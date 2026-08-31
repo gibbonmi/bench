@@ -145,10 +145,12 @@ func schemaFor(header string) schema {
 }
 
 // rowIDPattern is the one row-ID grammar the map's leading `row` cell answers to:
-// an uppercase tag plus a number.
-const rowIDPattern = `[A-Z]+[0-9]+`
+// an uppercase tag plus a number. The group captures the tag.
+const rowIDPattern = `([A-Z]+)[0-9]+`
 
-// rowIDRe anchors rowIDPattern to a whole cell, spec-local unique.
+// rowIDRe anchors rowIDPattern to a whole cell, spec-local unique. Its one
+// submatch is the row's alphabetic tag, so a caller reads the tag from the same
+// match that decides whether the cell is well-formed.
 var rowIDRe = regexp.MustCompile(`^` + rowIDPattern + `$`)
 
 type dataRow struct {
@@ -332,7 +334,8 @@ func Check(p parsed) []string {
 		return []string{"coverage map has no data rows"}
 	}
 	s := p.sch
-	seenIDs := make(map[string]int) // row id -> first row number that used it
+	seenIDs := make(map[string]int)   // row id -> first row number that used it
+	seenTags := make(map[string]bool) // alphabetic row-id tags this map declares
 	referenced := make(map[int]bool)
 	var v []string
 	for idx, r := range p.dataRows {
@@ -347,12 +350,18 @@ func Check(p parsed) []string {
 			}
 		}
 		if id := s.cell(r, fieldRow); id != "" {
-			if !rowIDRe.MatchString(id) {
+			m := rowIDRe.FindStringSubmatch(id)
+			if m == nil {
 				v = append(v, fmt.Sprintf("coverage map row %d has a malformed row id '%s'", rn, id))
 			} else if first, dup := seenIDs[id]; dup {
 				v = append(v, fmt.Sprintf("coverage map row %d has a duplicate row id '%s' (first used at row %d)", rn, id, first))
 			} else {
 				seenIDs[id] = rn
+			}
+			// A malformed cell contributes no tag: its message already names the fault,
+			// and a guessed tag would add a second, derived red for the same cell.
+			if m != nil {
+				seenTags[m[1]] = true
 			}
 		}
 		if strings.Contains(stripBackticks(s.cell(r, fieldBehavior)), ";") {
@@ -397,6 +406,17 @@ func Check(p parsed) []string {
 		if fanOut > bounds.CoverageRowStories {
 			v = append(v, fmt.Sprintf("coverage map row %d references %d stories (max %d); an outcome family is not one red-capable row", rn, fanOut, bounds.CoverageRowStories))
 		}
+	}
+	// The preflight's membership check scopes to one tag, so a second tag hides its
+	// rows from that check. The map declares one tag; the message names each tag it
+	// found, sorted, so the reader sees which rows disagree.
+	if len(seenTags) > 1 {
+		tags := make([]string, 0, len(seenTags))
+		for t := range seenTags {
+			tags = append(tags, t)
+		}
+		sort.Strings(tags)
+		v = append(v, fmt.Sprintf("coverage map row ids carry more than one tag (%s); a map declares one tag", strings.Join(tags, ", ")))
 	}
 	// A declared story no row references is a breadth-floor promise nothing checks:
 	// it needs a row or an explicit, reasoned exception line.
@@ -480,6 +500,20 @@ func isDashes(s string) bool {
 // prefix over a message that names why the check passed, never silence.
 func checkOKLine(msg string) string { return fmt.Sprintf("ok: %s\n", msg) }
 
+// uncitedLine renders the informational report that rides beside the pass line: the
+// count of mapped rows no citation backs, and their names. It is one line, so a green
+// check stays a bounded read. A map with nothing to report renders nothing, which keeps
+// the pass line the whole response in the common case.
+//
+// The report joins no violation list and changes no exit code. It tells a build which
+// rows are not yet wired; it does not claim they are faults.
+func uncitedLine(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("uncited: %d row(s) with no seam-cell citation — %s\n", len(names), strings.Join(names, ", "))
+}
+
 // ParseSpec reads and parses the coverage map at path. It is the package's one
 // exported entry point for callers that cannot construct the unexported parsed type
 // themselves: internal/preflight reads a spec's opt-in verdict, ordered row IDs, and
@@ -531,7 +565,7 @@ func Command(args []string) (string, int) {
 			// marker, mapped or not. A third silent state added there needs its own pass
 			// line here.
 			if State(p) == "mapped" {
-				return checkOKLine(fmt.Sprintf("coverage map valid — %d row(s)", len(p.dataRows))), 0
+				return checkOKLine(fmt.Sprintf("coverage map valid — %d row(s)", len(p.dataRows))) + uncitedLine(uncitedRows(p)), 0
 			}
 			return checkOKLine("coverage map historical — validation skipped"), 0
 		}

@@ -188,7 +188,7 @@ func TestRowsProjectsShortRowUnderBothSchemas(t *testing.T) {
 
 	optIn := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
 		"| AB1 | 1 | does x |\n" +
-		"| CD2 | 2 | does y | gate |\n")
+		"| AB2 | 2 | does y | gate |\n")
 	if State(optIn) != "mapped" {
 		t.Fatalf("opt-in state = %q, want mapped", State(optIn))
 	}
@@ -206,7 +206,7 @@ func TestRowsProjectsShortRowUnderBothSchemas(t *testing.T) {
 func TestCheckOptIn(t *testing.T) {
 	p := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
 		"| AB1 | 1 | does x | cli seam | catches z |\n" +
-		"| CD2 | 2 | does y | gate | catches w |\n")
+		"| AB2 | 2 | does y | gate | catches w |\n")
 	if v := Check(p); len(v) != 0 {
 		t.Errorf("valid opt-in map violations = %v, want none", v)
 	}
@@ -227,7 +227,7 @@ func TestParseSpecOptIn(t *testing.T) {
 	path := filepath.Join(dir, "spec.md")
 	body := "# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
 		"| AB1 | 1 | does x | cli seam | catches z |\n" +
-		"| CD2 | 2 | does y | gate | catches w |\n"
+		"| AB2 | 2 | does y | gate | catches w |\n"
 	mustWrite(t, path, body)
 
 	optIn, ids, violations, err := ParseSpec(path)
@@ -237,7 +237,7 @@ func TestParseSpecOptIn(t *testing.T) {
 	if !optIn {
 		t.Error("optIn = false, want true for a 5-cell opt-in map")
 	}
-	if want := []string{"AB1", "CD2"}; !reflect.DeepEqual(ids, want) {
+	if want := []string{"AB1", "AB2"}; !reflect.DeepEqual(ids, want) {
 		t.Errorf("ids = %v, want %v", ids, want)
 	}
 	if len(violations) != 0 {
