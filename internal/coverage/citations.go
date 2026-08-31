@@ -25,8 +25,38 @@ var citationRe = regexp.MustCompile("`([^`]*_test\\.go)`[ \t]*(?:\\(([^)]*)\\))?
 var citedNameRe = regexp.MustCompile("`([^`]+)`")
 
 // runNameRe matches one t.Run call up to its first argument, so the argument itself
-// decides whether the subtest name is a literal the grammar can read.
-var runNameRe = regexp.MustCompile(`\.Run\([ \t\n]*`)
+// decides whether the subtest name is a literal the grammar can read. The receiver is
+// anchored to t, the name the toolchain's own template and every test in this repo give
+// the *testing.T parameter. Any other Run call — cmd.Run, a server's Run — names no
+// subtest, so it neither adds a name nor exempts the file.
+var runNameRe = regexp.MustCompile(`\bt\.Run\([ \t\n]*`)
+
+// citation is one seam-cell test token the grammar reads: the repo-relative path, and
+// the parenthesized name list when the token carries one. A token with no list is a
+// mention, which claims evidence it never names.
+type citation struct {
+	rel     string
+	hasList bool
+	list    string
+}
+
+// namesSomething reports whether the citation's list names at least one thing. It is the
+// one derivation of that rule, so the report and the checks cannot disagree on which
+// cell holds evidence.
+func (c citation) namesSomething() bool { return c.hasList && citedNameRe.MatchString(c.list) }
+
+// citationsIn projects one seam cell into the citations it holds.
+func citationsIn(cell string) []citation {
+	var out []citation
+	for _, m := range citationRe.FindAllStringSubmatchIndex(cell, -1) {
+		c := citation{rel: cell[m[2]:m[3]], hasList: m[4] >= 0}
+		if c.hasList {
+			c.list = cell[m[4]:m[5]]
+		}
+		out = append(out, c)
+	}
+	return out
+}
 
 // reviewPickup renders the review file a folder spec's fences must authorize. The
 // landing carries the review beside the build, so an unauthorized pickup blocks it.
@@ -82,13 +112,12 @@ func checkCitations(p parsed, base string) []string {
 		// Only the seam cell holds the row's evidence, so only it is graded. A test path
 		// in the why cell is prose about the failure, not a claim of coverage.
 		cell := s.cell(r, fieldSeam)
-		for _, m := range citationRe.FindAllStringSubmatchIndex(cell, -1) {
-			rel := cell[m[2]:m[3]]
-			if m[4] < 0 {
-				v = append(v, fmt.Sprintf("coverage map row %d mentions '%s' without a cited name list", rn, rel))
+		for _, c := range citationsIn(cell) {
+			if !c.hasList {
+				v = append(v, fmt.Sprintf("coverage map row %d mentions '%s' without a cited name list", rn, c.rel))
 				continue
 			}
-			v = append(v, checkCitation(rn, base, rel, cell[m[4]:m[5]], census)...)
+			v = append(v, checkCitation(rn, base, c.rel, c.list, census)...)
 		}
 	}
 	return v
@@ -120,6 +149,9 @@ func checkCitation(rn int, base, rel, list string, census []gate.TagSet) []strin
 	names := citedNameRe.FindAllStringSubmatch(list, -1)
 	if len(names) == 0 {
 		return nil
+	}
+	if !citedPathSafe(rel) {
+		return []string{fmt.Sprintf("coverage map row %d cites '%s', which is not a path inside the repo", rn, rel)}
 	}
 	path := filepath.Join(base, filepath.FromSlash(rel))
 	// The path is classified before anything opens it. A FIFO planted at a cited path
@@ -159,6 +191,23 @@ func checkCitation(rn int, base, rel, list string, census []gate.TagSet) []strin
 		v = append(v, fmt.Sprintf("coverage map row %d cites '%s', whose subtest '%s' is no t.Run name in '%s'", rn, n[1], segment, rel))
 	}
 	return append(v, checkExecution(rn, rel, path, content, census)...)
+}
+
+// citedPathSafe reports whether rel is a repo-relative forward-slash path that stays
+// inside the tree the citation resolves against. An absolute path, a backslash
+// separator, or a ".." segment would read outside that tree, so the check refuses it
+// before the join rather than resolving it. This is the rule validatePayloadRows
+// applies to an allowlist source.
+func citedPathSafe(rel string) bool {
+	if strings.HasPrefix(rel, "/") || strings.ContainsRune(rel, '\\') {
+		return false
+	}
+	for _, segment := range strings.Split(rel, "/") {
+		if segment == ".." {
+			return false
+		}
+	}
+	return true
 }
 
 // checkExecution grades the cited file against the executed tag census: a declared test
@@ -239,24 +288,35 @@ func declaresFunc(content []byte, name string) bool {
 	return re.Match(content)
 }
 
-// runNames reads the subtest names a file spells out. literal is false when any t.Run
-// call names its subtest with an expression rather than a string, because a table-driven
-// suite names its cases at run time and no scan can see them.
+// runNames reads the subtest names a file spells out. Only a t.Run call is read, so a
+// Run call on any other receiver neither names a subtest nor exempts the file. literal
+// is false when a t.Run call names its subtest with an expression rather than a string
+// literal, because a table-driven suite names its cases at run time and no scan can see
+// them.
 func runNames(content []byte) (literal bool, names []string) {
 	body := string(content)
 	literal = true
 	for _, m := range runNameRe.FindAllStringIndex(body, -1) {
 		rest := body[m[1]:]
-		if !strings.HasPrefix(rest, `"`) {
+		switch {
+		case strings.HasPrefix(rest, `"`):
+			name, err := strconv.Unquote(quotedPrefix(rest))
+			if err != nil {
+				literal = false
+				continue
+			}
+			names = append(names, name)
+		case strings.HasPrefix(rest, "`"):
+			// A raw literal is as readable as an interpreted one, so it names a subtest
+			// rather than exempting the file.
+			if i := strings.IndexByte(rest[1:], '`'); i >= 0 {
+				names = append(names, rest[1:1+i])
+				continue
+			}
 			literal = false
-			continue
-		}
-		name, err := strconv.Unquote(quotedPrefix(rest))
-		if err != nil {
+		default:
 			literal = false
-			continue
 		}
-		names = append(names, name)
 	}
 	return literal, names
 }
@@ -346,8 +406,8 @@ func uncitedRows(p parsed) []string {
 // name list that names something. A bare path is a mention and an empty list names
 // nothing, so neither is evidence, and both are graded elsewhere.
 func citesATest(cell string) bool {
-	for _, m := range citationRe.FindAllStringSubmatchIndex(cell, -1) {
-		if m[4] >= 0 && citedNameRe.MatchString(cell[m[4]:m[5]]) {
+	for _, c := range citationsIn(cell) {
+		if c.namesSomething() {
 			return true
 		}
 	}

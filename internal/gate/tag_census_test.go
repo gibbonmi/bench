@@ -3,6 +3,7 @@ package gate
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/canary"
@@ -71,19 +72,11 @@ func writeCensusFile(t *testing.T, path, content string) {
 	}
 }
 
+// assertCensus compares the census to the expected sets. normalizeTags returns a
+// non-nil slice for every set, so a deep comparison is exact here.
 func assertCensus(t *testing.T, got, want []TagSet) {
 	t.Helper()
-	if len(got) != len(want) {
+	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("census = %v, want %v", got, want)
-	}
-	for i := range want {
-		if len(got[i]) != len(want[i]) {
-			t.Fatalf("census = %v, want %v", got, want)
-		}
-		for j := range want[i] {
-			if got[i][j] != want[i][j] {
-				t.Fatalf("census = %v, want %v", got, want)
-			}
-		}
 	}
 }

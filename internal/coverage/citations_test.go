@@ -286,6 +286,21 @@ func TestCitationUnexecutedConstraint(t *testing.T) {
 		}
 	})
 
+	t.Run("a symlinked path is a violation", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/link_test.go` (`TestPresent`)", "")
+		goModuleRoot(t, root)
+		target := filepath.Join(root, "internal", "x", "real_test.go")
+		writeUnder(t, target, "package x\n\nfunc TestPresent(t *testing.T) {}\n")
+		if err := os.Symlink(target, filepath.Join(root, "internal", "x", "link_test.go")); err != nil {
+			t.Fatalf("Symlink: %v", err)
+		}
+
+		want := "coverage map row 1 cites 'internal/x/link_test.go', which is not a regular file"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+		}
+	})
+
 	t.Run("a root with no test phase is inapplicable", func(t *testing.T) {
 		// A root that is neither a Go module nor the kit itself has no test phase at
 		// all: the toolchain phases need the module, and the system phase grades the
@@ -307,6 +322,17 @@ func TestCitationUnexecutedConstraint(t *testing.T) {
 			t.Fatalf("CheckFiles = %#v, want no violation for a manifest-declared tag", v)
 		}
 	})
+}
+
+// TestCitationOutsideTheRepoIsRefused pins the containment rule: a cited path that
+// escapes the tree the spec resolves against is a violation, not a resolved file.
+func TestCitationOutsideTheRepoIsRefused(t *testing.T) {
+	_, specPath := citedSpec(t, "s", "`../outside/foo_test.go` (`TestPresent`)", "")
+
+	want := "coverage map row 1 cites '../outside/foo_test.go', which is not a path inside the repo"
+	if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+		t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+	}
 }
 
 // mentionSpecFile writes the cited file every mention and subtest case grades. body is
@@ -381,6 +407,26 @@ func TestSubtestSegmentResolves(t *testing.T) {
 		}
 	})
 
+	t.Run("a foreign Run call neither names nor exempts", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` (`TestPresent/renamed case`)", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tcmd.Run()\n\tt.Run(\"a case\", func(t *testing.T) {})\n}\n")
+
+		want := "coverage map row 1 cites 'TestPresent/renamed case', whose subtest 'renamed case' " +
+			"is no t.Run name in 'internal/x/foo_test.go'"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+		}
+	})
+
+	t.Run("a raw-string t.Run name resolves", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` (`TestPresent/a case`)", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tt.Run(`a case`, func(t *testing.T) {})\n}\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation for a raw-string subtest name", v)
+		}
+	})
+
 	t.Run("the parent function still resolves in an exempt file", func(t *testing.T) {
 		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` (`TestAbsent/any case`)", "")
 		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tt.Run(c.name, func(t *testing.T) {})\n}\n")
@@ -392,13 +438,13 @@ func TestSubtestSegmentResolves(t *testing.T) {
 	})
 }
 
-// TestHistoricalSpecSilencesTheNewChecks pins the opt-out over the checks this feature
-// added: a historical spec carries a mixed-tag row-ID set, a mention, a stale subtest,
-// and a citation into a never-executed file, and stays silent. A partial opt-out would
-// break the documented contract.
-func TestHistoricalSpecSilencesTheNewChecks(t *testing.T) {
+// citationClassesSpec writes the three-row map both class tests grade: a mention, a
+// stale subtest segment, and a citation into a never-executed file. header is the spec
+// preamble that decides whether the map is historical.
+func citationClassesSpec(t *testing.T, header string) string {
+	t.Helper()
 	root := t.TempDir()
-	body := "# s\n\n" + historicalMarker + "\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
+	body := "# s\n\n" + header + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
 		"| MT1 | 1 | b | `internal/x/foo_test.go` | w |\n" +
 		"| XT2 | 1 | c | `internal/x/foo_test.go` (`TestPresent/renamed case`) | w |\n" +
 		"| MT3 | 1 | d | `internal/x/stress_test.go` (`TestStress`) | w |\n"
@@ -409,28 +455,26 @@ func TestHistoricalSpecSilencesTheNewChecks(t *testing.T) {
 		"//go:build stress\n\npackage x\n\nfunc TestStress(t *testing.T) {}\n")
 	goModuleRoot(t, root)
 	t.Setenv("BENCH_KIT", root) // the census must be the fixture root's own, not the gate's ambient kit
+	return specPath
+}
+
+// TestHistoricalSpecSilencesCitationChecks pins the opt-out over every citation check: a
+// historical spec carries a mixed-tag row-ID set, a mention, a stale subtest, and a
+// citation into a never-executed file, and stays silent. A partial opt-out would break
+// the documented contract.
+func TestHistoricalSpecSilencesCitationChecks(t *testing.T) {
+	specPath := citationClassesSpec(t, historicalMarker+"\n\n")
 
 	if v := checkFilesOf(t, specPath); len(v) != 0 {
 		t.Fatalf("CheckFiles = %#v, want no violation for a historical spec", v)
 	}
 }
 
-// TestParseSpecReturnsTheNewViolationClasses pins the shared entry point the review
+// TestParseSpecReturnsCitationViolationClasses pins the shared entry point the review
 // preflight reads: the mixed-tag, mention, subtest, and unexecuted-constraint classes
 // all reach a caller outside this package, so the preflight and the gate agree.
-func TestParseSpecReturnsTheNewViolationClasses(t *testing.T) {
-	root := t.TempDir()
-	body := "# s\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
-		"| MT1 | 1 | b | `internal/x/foo_test.go` | w |\n" +
-		"| XT2 | 1 | c | `internal/x/foo_test.go` (`TestPresent/renamed case`) | w |\n" +
-		"| MT3 | 1 | d | `internal/x/stress_test.go` (`TestStress`) | w |\n"
-	specPath := filepath.Join(root, "specs", "s", "spec.md")
-	writeUnder(t, specPath, body)
-	mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tt.Run(\"a case\", func(t *testing.T) {})\n}\n")
-	writeUnder(t, filepath.Join(root, "internal", "x", "stress_test.go"),
-		"//go:build stress\n\npackage x\n\nfunc TestStress(t *testing.T) {}\n")
-	goModuleRoot(t, root)
-	t.Setenv("BENCH_KIT", root) // the census must be the fixture root's own, not the gate's ambient kit
+func TestParseSpecReturnsCitationViolationClasses(t *testing.T) {
+	specPath := citationClassesSpec(t, "")
 
 	optIn, ids, violations, err := ParseSpec(specPath)
 	if err != nil {
@@ -439,14 +483,14 @@ func TestParseSpecReturnsTheNewViolationClasses(t *testing.T) {
 	if !optIn || len(ids) != 3 {
 		t.Fatalf("ParseSpec = (optIn %v, ids %#v), want an opted-in map of three rows", optIn, ids)
 	}
-	for _, want := range [][]string{
-		{"coverage map row ids carry more than one tag (MT, XT); a map declares one tag"},
-		{"coverage map row 1 mentions 'internal/x/foo_test.go' without a cited name list"},
-		{"coverage map row 2 cites 'TestPresent/renamed case', whose subtest 'renamed case' is no t.Run name in 'internal/x/foo_test.go'"},
-		{"coverage map row 3 cites 'internal/x/stress_test.go', which no executed tag set builds (//go:build stress)"},
+	for _, want := range []string{
+		"coverage map row ids carry more than one tag (MT, XT); a map declares one tag",
+		"coverage map row 1 mentions 'internal/x/foo_test.go' without a cited name list",
+		"coverage map row 2 cites 'TestPresent/renamed case', whose subtest 'renamed case' is no t.Run name in 'internal/x/foo_test.go'",
+		"coverage map row 3 cites 'internal/x/stress_test.go', which no executed tag set builds (//go:build stress)",
 	} {
-		if !hasViolation(violations, want...) {
-			t.Fatalf("ParseSpec violations = %#v, want one holding %q", violations, want[0])
+		if !hasViolation(violations, want) {
+			t.Fatalf("ParseSpec violations = %#v, want one holding %q", violations, want)
 		}
 	}
 }
