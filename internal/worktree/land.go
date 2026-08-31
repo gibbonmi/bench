@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/census"
@@ -18,10 +19,13 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var landGrammar = usage.Grammar{
@@ -154,7 +158,71 @@ func LandCommand(root, home, executable string, args []string, stdout, stderr io
 }
 
 // landWith is LandCommand with the seam set resolved explicitly at the caller's boundary.
-func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Writer) int {
+// It is also the landing's record boundary: one span covers the composition and the
+// publication, and the resume path runs inside it, so a resumed landing records the same
+// seam as the first run.
+func landWith(j joins, root, home, executable string, args []string, stdout, stderr io.Writer) int {
+	var measures landingMeasures
+	finishSpan := beginLandingSpan(home, root)
+	exit := landAttributed(&measures, j, root, home, executable, args, stdout, stderr)
+	finishSpan(exit, measures)
+	return exit
+}
+
+// The landing seam's record. The span opens at the verb's own boundary, so it spans the
+// composition and the publication as one seam rather than as two.
+const otelLandingSeam = "worktree.land"
+
+// landingMeasures is what the record states about one landing: the published subject,
+// the size of the reviewed write set, and the assignment's census raw-call count. The
+// census count rides here because the release step drops the records, so the record is
+// where the count survives.
+type landingMeasures struct {
+	subject            string
+	pathCount          int
+	counted            bool
+	censusRawCalls     int
+	censusRawCallsRead bool
+}
+
+// beginLandingSpan starts the landing's span and returns the closer that ends it. The
+// home is the one the verb boundary already resolved, so the record is not addressed
+// from a second read of the environment.
+func beginLandingSpan(home, root string) func(int, landingMeasures) {
+	provider := otelrecord.NewProvider(home, root)
+	ctx, span := provider.Tracer().Start(context.Background(), otelLandingSeam,
+		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, otelLandingSeam)))
+	return func(exit int, measures landingMeasures) {
+		if measures.subject != "" {
+			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, measures.subject))
+		}
+		// A landing refused before its preflight cleared reached neither measure, and a
+		// zero would read as a landing that composed nothing and called nothing.
+		if measures.counted {
+			span.SetAttributes(attribute.String(otelrecord.AttrMeasurePathCount, strconv.Itoa(measures.pathCount)))
+		}
+		if measures.censusRawCallsRead {
+			span.SetAttributes(attribute.String(otelrecord.AttrMeasureCensusRawCalls, strconv.Itoa(measures.censusRawCalls)))
+		}
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, landingSpanOutcome(exit)))
+		span.End()
+		_ = provider.Shutdown(context.WithoutCancel(ctx))
+	}
+}
+
+// landingSpanOutcome is the verb's exit as the record spells it. An incomplete landing
+// published its commit and names its own remaining step on the verb's output, so the
+// record reads the publication as green.
+func landingSpanOutcome(exit int) string {
+	if exit == 0 || exit == 3 {
+		return "green"
+	}
+	return "red"
+}
+
+// landAttributed is the first-run landing itself, with the span's measures written to
+// measures as each becomes known.
+func landAttributed(measures *landingMeasures, j joins, root, home, _ string, args []string, stdout, stderr io.Writer) int {
 	j.home = home
 	if hasResumeFlag(args) {
 		return resumeLandWith(j, root, home, args, stdout, stderr)
@@ -206,6 +274,14 @@ func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Wr
 	// A landing that stops at an earlier step states the same count, and its resume
 	// reads the file the release never removed.
 	records := censusCount(home, root, assignment.ID)
+	measures.censusRawCalls = records
+	measures.censusRawCallsRead = true
+	// The write-set size is the reviewed name-only diff, read from the same range
+	// resolver the source proof above accepted. An unreadable range states no size.
+	if reviewed, kind, _ := diff.ResolveSourceRange(assignment.Worktree, source.base, source.tip); kind == "" {
+		measures.pathCount = len(reviewed.CommittedPaths)
+		measures.counted = true
+	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
 	printCensusHeads(stderr, home, root, assignment.ID)
 	if notice := brokerChangeNotice(assignment.Worktree, source.base, source.tip); notice != "" {
@@ -231,6 +307,7 @@ func landWith(j joins, root, home, _ string, args []string, stdout, stderr io.Wr
 	}
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
+	measures.subject = result.Commit
 	if err := j.advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
 	}
