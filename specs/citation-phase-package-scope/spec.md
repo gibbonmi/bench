@@ -6,7 +6,7 @@ Roadmap: FT281
 
 Decision source: named reviewed artifact `roadmap/FT281.md`
 
-Verification log: 1 iteration(s) to accept — the review accepted behavior, the amended fence, and the ticket graph; the author corrected one check name.
+Verification log: 1 iteration(s) to accept — the review accepted behavior, the amended fence, and the ticket graph; the author corrected one check name. A three-axis review then found that the local `packageLoadTimeout` var redeclares a `bounds` policy value. The fence widens to the registry and its conformance test, so the repair can consume `bounds.PackageLoadTimeout` instead.
 
 ## Problem
 
@@ -153,6 +153,8 @@ Line: `gpt-5.6-terra` / high. A derivation failure must not restore the false gr
 - `internal/coverage/citations_test.go`
 - `internal/coverage/citation_execution.go`
 - `internal/coverage/citation_execution_test.go`
+- `internal/bounds/bounds.go`
+- `internal/conformance/bounds_policy_test.go`
 - `tests/canary/coverage-map-validation/unexecuted-tag-citation/`
 
 ## Out of scope
