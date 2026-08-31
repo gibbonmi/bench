@@ -225,6 +225,7 @@ func TestCitationUnexecutedConstraint(t *testing.T) {
 	t.Run("a system-tagged file passes", func(t *testing.T) {
 		root, specPath := citedFileSpec(t, "internal/x/sys_test.go", "//go:build system\n\n")
 		goModuleRoot(t, root)
+		t.Setenv("BENCH_KIT", root) // the system set exists only where the root is its own kit; the gate's ambient kit must not leak in
 
 		if v := checkFilesOf(t, specPath); len(v) != 0 {
 			t.Fatalf("CheckFiles = %#v, want no violation for the executed system set", v)
