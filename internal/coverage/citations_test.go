@@ -391,3 +391,62 @@ func TestSubtestSegmentResolves(t *testing.T) {
 		}
 	})
 }
+
+// TestHistoricalSpecSilencesTheNewChecks pins the opt-out over the checks this feature
+// added: a historical spec carries a mixed-tag row-ID set, a mention, a stale subtest,
+// and a citation into a never-executed file, and stays silent. A partial opt-out would
+// break the documented contract.
+func TestHistoricalSpecSilencesTheNewChecks(t *testing.T) {
+	root := t.TempDir()
+	body := "# s\n\n" + historicalMarker + "\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
+		"| MT1 | 1 | b | `internal/x/foo_test.go` | w |\n" +
+		"| XT2 | 1 | c | `internal/x/foo_test.go` (`TestPresent/renamed case`) | w |\n" +
+		"| MT3 | 1 | d | `internal/x/stress_test.go` (`TestStress`) | w |\n"
+	specPath := filepath.Join(root, "specs", "s", "spec.md")
+	writeUnder(t, specPath, body)
+	mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tt.Run(\"a case\", func(t *testing.T) {})\n}\n")
+	writeUnder(t, filepath.Join(root, "internal", "x", "stress_test.go"),
+		"//go:build stress\n\npackage x\n\nfunc TestStress(t *testing.T) {}\n")
+	goModuleRoot(t, root)
+	t.Setenv("BENCH_KIT", root) // the census must be the fixture root's own, not the gate's ambient kit
+
+	if v := checkFilesOf(t, specPath); len(v) != 0 {
+		t.Fatalf("CheckFiles = %#v, want no violation for a historical spec", v)
+	}
+}
+
+// TestParseSpecReturnsTheNewViolationClasses pins the shared entry point the review
+// preflight reads: the mixed-tag, mention, subtest, and unexecuted-constraint classes
+// all reach a caller outside this package, so the preflight and the gate agree.
+func TestParseSpecReturnsTheNewViolationClasses(t *testing.T) {
+	root := t.TempDir()
+	body := "# s\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReducedID +
+		"| MT1 | 1 | b | `internal/x/foo_test.go` | w |\n" +
+		"| XT2 | 1 | c | `internal/x/foo_test.go` (`TestPresent/renamed case`) | w |\n" +
+		"| MT3 | 1 | d | `internal/x/stress_test.go` (`TestStress`) | w |\n"
+	specPath := filepath.Join(root, "specs", "s", "spec.md")
+	writeUnder(t, specPath, body)
+	mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tt.Run(\"a case\", func(t *testing.T) {})\n}\n")
+	writeUnder(t, filepath.Join(root, "internal", "x", "stress_test.go"),
+		"//go:build stress\n\npackage x\n\nfunc TestStress(t *testing.T) {}\n")
+	goModuleRoot(t, root)
+	t.Setenv("BENCH_KIT", root) // the census must be the fixture root's own, not the gate's ambient kit
+
+	optIn, ids, violations, err := ParseSpec(specPath)
+	if err != nil {
+		t.Fatalf("ParseSpec(%q): %v", specPath, err)
+	}
+	if !optIn || len(ids) != 3 {
+		t.Fatalf("ParseSpec = (optIn %v, ids %#v), want an opted-in map of three rows", optIn, ids)
+	}
+	for _, want := range [][]string{
+		{"coverage map row ids carry more than one tag (MT, XT); a map declares one tag"},
+		{"coverage map row 1 mentions 'internal/x/foo_test.go' without a cited name list"},
+		{"coverage map row 2 cites 'TestPresent/renamed case', whose subtest 'renamed case' is no t.Run name in 'internal/x/foo_test.go'"},
+		{"coverage map row 3 cites 'internal/x/stress_test.go', which no executed tag set builds (//go:build stress)"},
+	} {
+		if !hasViolation(violations, want...) {
+			t.Fatalf("ParseSpec violations = %#v, want one holding %q", violations, want[0])
+		}
+	}
+}
