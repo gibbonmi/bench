@@ -30,54 +30,14 @@ type recordedSpan struct {
 //
 // Rows OT14, OT15, OT16, and OT28.
 func TestOtelGateRecordJourney(t *testing.T) {
-	repo := filepath.Join(t.TempDir(), "repository")
-	if err := os.MkdirAll(repo, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if result := owner.runAt(repo, nil, "git", "init", "-q", "-b", "main"); result.code != 0 {
-		t.Fatalf("git init = (%d, %q)", result.code, result.stderr)
-	}
 	home := filepath.Join(t.TempDir(), "bench-home")
-	gate := func(benchHome string) processResult {
-		if err := owner.observeSelected(); err != nil {
-			t.Fatal(err)
-		}
-		environment := []string{"BENCH_HOME=" + benchHome, "BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
-		wrapper := filepath.Join(repo, ".bench", "bin", "bench.sh")
-		return owner.runAt(repo, environment, "bash", wrapper, "gate", "--fresh")
-	}
-
-	if setup := func() processResult {
-		if err := owner.observeSelected(); err != nil {
-			t.Fatal(err)
-		}
-		environment := []string{"BENCH_HOME=" + home, "BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
-		return owner.runAt(repo, environment, owner.selected.path, "setup", "--yes")
-	}(); setup.code != 3 {
-		t.Fatalf("bench setup --yes = (%d, %q, %q)", setup.code, setup.stdout, setup.stderr)
-	}
-	// The scaffolded gate is a fail-closed stub that runs no phase table. This gate hands
-	// off to the phase table the way the kit's own gate.sh does, which is the hand-off the
-	// run-binary selection and the phase spans both key on.
-	phaseGate := "#!/usr/bin/env bash\n" +
-		"set -uo pipefail\n" +
-		"root=\"$(git rev-parse --show-toplevel)\"\n" +
-		"cd \"$root\"\n" +
-		"bench=\"$(dirname \"$0\")/bin/bench.sh\"\n" +
-		"\"$bench\" gate-phases \"$root\"\n" +
-		"status=$?\n" +
-		"if [ \"$status\" -eq 0 ]; then echo \"gate: green\"; else echo \"gate: red\" >&2; fi\n" +
-		"exit \"$status\"\n"
-	if err := os.WriteFile(filepath.Join(repo, ".bench", "gate.sh"), []byte(phaseGate), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	manifest := `{"phases":[
+	scaffold := scaffoldRecordedGateRepo(t, home, `{"phases":[
 		{"name":"probe","argv":["true"]},
 		{"name":"blocker","argv":["false"]},
 		{"name":"dependent","argv":["true"],"needs":["blocker"]}
-	]}`
-	if err := os.WriteFile(filepath.Join(repo, ".bench", "phases.json"), []byte(manifest), 0o644); err != nil {
-		t.Fatal(err)
+	]}`)
+	gate := func(benchHome string) processResult {
+		return owner.runAt(scaffold.path, scaffold.environment(t, benchHome), "bash", scaffold.wrapper, "gate", "--fresh")
 	}
 
 	recorded := gate(home)
@@ -171,6 +131,21 @@ func gateVerdictLine(t *testing.T, result processResult) string {
 // finished span from.
 func readSeamRecord(t *testing.T, home string) map[string]recordedSpan {
 	t.Helper()
+	spans := map[string]recordedSpan{}
+	for _, span := range readRecordLines(t, home, true) {
+		if span.Ended {
+			spans[span.Name] = span
+		}
+	}
+	return spans
+}
+
+// readRecordLines answers every span the one record below home holds, in written order,
+// started lines included. strict fails the test on a line that does not parse; a caller
+// that reads the record while a run still writes to it passes false, because the last
+// line can be a partial write.
+func readRecordLines(t *testing.T, home string, strict bool) []recordedSpan {
+	t.Helper()
 	files, err := filepath.Glob(filepath.Join(home, "otel", "*", "traces.jsonl"))
 	if err != nil || len(files) != 1 {
 		t.Fatalf("record files under %s = %v, %v; want exactly one", home, files, err)
@@ -179,7 +154,7 @@ func readSeamRecord(t *testing.T, home string) map[string]recordedSpan {
 	if err != nil {
 		t.Fatal(err)
 	}
-	spans := map[string]recordedSpan{}
+	var read []recordedSpan
 	for _, line := range strings.Split(strings.TrimSuffix(string(data), "\n"), "\n") {
 		var record struct {
 			ResourceSpans []struct {
@@ -200,24 +175,77 @@ func readSeamRecord(t *testing.T, home string) map[string]recordedSpan {
 			} `json:"resourceSpans"`
 		}
 		if err := json.Unmarshal([]byte(line), &record); err != nil {
-			t.Fatalf("record line %q does not parse: %v", line, err)
+			if strict {
+				t.Fatalf("record line %q does not parse: %v", line, err)
+			}
+			continue
 		}
 		for _, resource := range record.ResourceSpans {
 			for _, scope := range resource.ScopeSpans {
 				for _, span := range scope.Spans {
-					if span.EndTime == "" {
-						continue
-					}
-					read := recordedSpan{Name: span.Name, SpanID: span.SpanID, Parent: span.ParentSpanID, Ended: true, Attributes: map[string]string{}}
+					one := recordedSpan{Name: span.Name, SpanID: span.SpanID, Parent: span.ParentSpanID, Ended: span.EndTime != "", Attributes: map[string]string{}}
 					for _, attribute := range span.Attributes {
-						read.Attributes[attribute.Key] = attribute.Value.StringValue
+						one.Attributes[attribute.Key] = attribute.Value.StringValue
 					}
-					spans[span.Name] = read
+					read = append(read, one)
 				}
 			}
 		}
 	}
-	return spans
+	return read
+}
+
+// recordedGateRepo is a scaffolded repository whose gate hands off to the phase table the
+// way the kit's own gate.sh does. That hand-off is what the run-binary selection and the
+// phase spans both key on, so every recorded-gate test scaffolds through here.
+type recordedGateRepo struct {
+	path    string
+	wrapper string
+}
+
+// scaffoldRecordedGateRepo answers a repository set up against home whose phase manifest
+// is the given JSON.
+func scaffoldRecordedGateRepo(t *testing.T, home, manifest string) recordedGateRepo {
+	t.Helper()
+	repo := filepath.Join(t.TempDir(), "repository")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if result := owner.runAt(repo, nil, "git", "init", "-q", "-b", "main"); result.code != 0 {
+		t.Fatalf("git init = (%d, %q)", result.code, result.stderr)
+	}
+	scaffold := recordedGateRepo{path: repo, wrapper: filepath.Join(repo, ".bench", "bin", "bench.sh")}
+	if setup := owner.runAt(repo, scaffold.environment(t, home), owner.selected.path, "setup", "--yes"); setup.code != 3 {
+		t.Fatalf("bench setup --yes = (%d, %q, %q)", setup.code, setup.stdout, setup.stderr)
+	}
+	// The scaffolded gate is a fail-closed stub that runs no phase table. This gate hands
+	// off to the phase table itself.
+	phaseGate := "#!/usr/bin/env bash\n" +
+		"set -uo pipefail\n" +
+		"root=\"$(git rev-parse --show-toplevel)\"\n" +
+		"cd \"$root\"\n" +
+		"bench=\"$(dirname \"$0\")/bin/bench.sh\"\n" +
+		"\"$bench\" gate-phases \"$root\"\n" +
+		"status=$?\n" +
+		"if [ \"$status\" -eq 0 ]; then echo \"gate: green\"; else echo \"gate: red\" >&2; fi\n" +
+		"exit \"$status\"\n"
+	if err := os.WriteFile(filepath.Join(repo, ".bench", "gate.sh"), []byte(phaseGate), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, ".bench", "phases.json"), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return scaffold
+}
+
+// environment answers the overrides a run against benchHome needs. Each call observes the
+// selected executable, so every run through the scaffold joins the owner's ledger.
+func (r recordedGateRepo) environment(t *testing.T, benchHome string) []string {
+	t.Helper()
+	if err := owner.observeSelected(); err != nil {
+		t.Fatal(err)
+	}
+	return []string{"BENCH_HOME=" + benchHome, "BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
 }
 
 func spanNames(spans map[string]recordedSpan) []string {
