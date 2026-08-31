@@ -304,7 +304,7 @@ func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure)
 
 	files, duplicates, refusal := tickets.Enumerate(dir, d.Entries)
 	if refusal != nil {
-		return ticketFacts{}, &BootstrapFailure{refusal.Kind, refusal.Hint}
+		return ticketFacts{}, &BootstrapFailure{refusal.Kind, refusal.Message(dir)}
 	}
 	facts, gradeErr := gradeTickets(root, files, duplicates, tag)
 	if gradeErr != nil {

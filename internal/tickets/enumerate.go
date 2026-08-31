@@ -24,9 +24,34 @@ type Entry struct {
 }
 
 // Refusal is the one fail-closed answer an enumeration gives when an entry will
-// not read. Kind names the class and Hint names the entry and the reason.
+// not read. Path is the entry, spelled relative to the enumeration base, so each
+// venue renders the path in its own frame rather than carrying one venue's
+// absolute spelling into the other's diagnostic.
 type Refusal struct {
-	Kind, Hint string
+	// Kind names the refusal class.
+	Kind string
+	// Path is the refused entry, slash-spelled and relative to the base.
+	Path string
+	// State is the classification that refused the entry. The representability
+	// refusal grades the bytes of the path itself and carries no state.
+	State string
+	// Reason is the classifier's explanation, empty for a representability refusal.
+	Reason string
+}
+
+// Message renders one refusal with the entry named under dir. An empty dir
+// names the entry by its base-relative path alone. A path spec-TOON cannot
+// represent is named by that relative path in every venue, because the fault is
+// in the bytes of the name and not in where the entry sits.
+func (r Refusal) Message(dir string) string {
+	if r.State == "" {
+		return fmt.Sprintf("ticket %q contains a byte spec-TOON cannot represent", r.Path)
+	}
+	path := r.Path
+	if dir != "" {
+		path = filepath.Join(dir, filepath.FromSlash(r.Path))
+	}
+	return path + " is " + r.State + ": " + r.Reason
 }
 
 // Enumerate walks one already-classified tickets directory and returns the
@@ -79,16 +104,16 @@ func scan(base, dir string, entries []fs.DirEntry) ([]Entry, *Refusal) {
 				}
 				files = append(files, nested...)
 			default:
-				return nil, &Refusal{"tickets directory not readable", path + " is " + string(below.State) + ": " + below.Reason}
+				return nil, &Refusal{Kind: "tickets directory not readable", Path: filepath.ToSlash(relTo(base, path)), State: string(below.State), Reason: below.Reason}
 			}
 			continue
 		}
 		rel := filepath.ToSlash(relTo(base, path))
 		if !toon.Representable(rel) {
-			return nil, &Refusal{"ticket path not representable", fmt.Sprintf("ticket %q contains a byte spec-TOON cannot represent", rel)}
+			return nil, &Refusal{Kind: "ticket path not representable", Path: rel}
 		}
 		classified := bounds.Classify(path, bounds.ControlRecordLimit)
-		unreadable := &Refusal{"ticket file not readable", path + " is " + string(classified.State) + ": " + classified.Reason}
+		unreadable := &Refusal{Kind: "ticket file not readable", Path: rel, State: string(classified.State), Reason: classified.Reason}
 		switch classified.State {
 		case bounds.StateWrongType, bounds.StateUnreadable, bounds.StateAbsent:
 			return nil, unreadable

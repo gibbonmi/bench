@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -77,7 +78,7 @@ func gradeTicketFolder(root, slug string) []string {
 	}
 	files, duplicates, refusal := tickets.Enumerate(dir, classified.Entries)
 	if refusal != nil {
-		return []string{ticketGrammarPrefix + rel + ": " + refusal.Kind + ": " + refusal.Hint}
+		return []string{ticketGrammarPrefix + refusal.Message(rel)}
 	}
 	tag := ticketGrammarSpecTag(filepath.Join(root, "specs", slug, "spec.md"))
 	names := make([]string, 0, len(files))
@@ -196,6 +197,24 @@ func TestTicketGrammarSweepRedsDanglingBlocker(t *testing.T) {
 	diags := checkTicketGrammar(root)
 	if len(diags) != 1 || diags[0] != want {
 		t.Fatalf("dangling blocker = %v, want exactly [%q]", diags, want)
+	}
+}
+
+// TestTicketGrammarSweepRefusesASpecialEntry pins the sweep's refusal shape. A
+// FIFO under tickets/ is refused by its repo-relative path, so a gate reader
+// finds the entry in the tree rather than a path from the machine that ran the
+// check.
+func TestTicketGrammarSweepRefusesASpecialEntry(t *testing.T) {
+	root := ticketGrammarRoot(t)
+	writeTicketGrammarFile(t, root, "specs/demo/spec.md", "# Demo\n\n| row | story |\n|---|---|\n| DM1 | 1 |\n")
+	writeTicketGrammarFile(t, root, "specs/demo/tickets/one.md", ticketBody("One", "none", "a.go (new)", "DM1"))
+	if err := syscall.Mkfifo(filepath.Join(root, "specs", "demo", "tickets", "pipe.md"), 0o600); err != nil {
+		t.Fatalf("Mkfifo: %v", err)
+	}
+	want := "ticket-grammar: specs/demo/tickets/pipe.md is wrong-type: not a regular file: p---------"
+	diags := checkTicketGrammar(root)
+	if len(diags) != 1 || diags[0] != want {
+		t.Fatalf("special entry = %v, want exactly [%q]", diags, want)
 	}
 }
 
