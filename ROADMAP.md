@@ -292,8 +292,6 @@ recommended table is sequencing advice.
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT253 | FT169 | The lease is one answer to the landing's authority questions; decide those first so the lease keys on the settled lifecycle. |
 | FT241 | FT231 | Retained acceptance-run evidence should reuse the harness's record shape rather than version a second one. |
-| FT71 | FT274 | The event schema should be expressed in the OpenTelemetry record rather than version a second one. |
-| FT232 | FT274 | The advisory reads the red set the record retains. |
 | FT204 | FT71 | The query reads the settled event schema before it reads transcript text. |
 | FT254 | FT258 | The resolution slice requires the decided `MERGE_HEAD` contract. |
 
@@ -322,5 +320,5 @@ fixture-proven.
 ## Recommended sequence
 
 1. Light path — FT133: `bench coverage --check` resolves each cited test name and names the review pickup as a fence member.
-2. `/bench-write-spec` — FT274: specify Bench-owned FT231 measures.
+2. Reviewer decision — FT231: settle the measurement harness now that the OpenTelemetry instrumentation record has shipped.
 3. Reviewer decision — the FT280 tip-projection surface.
