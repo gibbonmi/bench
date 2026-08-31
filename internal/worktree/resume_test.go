@@ -71,7 +71,7 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
-	requireTest(t, stdout.String() == "bench resume: removed 1, swept refs 0; retained foreign=2 live-lease=1 unexpected-lock=1; pruned branches 2; reconciled 0; failed 0; open assignments 0\n", "resume report = %q", stdout.String())
+	requireTest(t, stdout.String() == expectedResumeSummary(1, 0, "; retained foreign=2 live-lease=1 unexpected-lock=1", 2, 0, 0, 0), "resume report = %q", stdout.String())
 	_, err = os.Stat(owned.Path)
 	requireTest(t, os.IsNotExist(err), "verified owned worktree remains: %v", err)
 	for _, path := range []string{clean, dirty, locked, pool} {
