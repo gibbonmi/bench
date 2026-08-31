@@ -6,7 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/canary"
 )
 
 // citedSpec writes a folder spec at <root>/specs/<slug>/spec.md whose single mapped
@@ -187,4 +190,113 @@ func TestCommandCheckExitsOneOnAMissingReviewPickup(t *testing.T) {
 	if code != 1 || !strings.Contains(out, "reviews/s.md") {
 		t.Fatalf("Command = (%d, %q), want exit 1 naming reviews/s.md", code, out)
 	}
+}
+
+// citedFileSpec writes a folder spec whose one mapped row cites rel, and writes the
+// cited file with header ahead of its package clause. The file always declares the
+// cited name, so only the execution arm can red.
+func citedFileSpec(t *testing.T, rel, header string) (root, specPath string) {
+	t.Helper()
+	root, specPath = citedSpec(t, "s", "`"+rel+"` (`TestPresent`)", "")
+	writeUnder(t, filepath.Join(root, filepath.FromSlash(rel)), header+"package x\n\nfunc TestPresent(t *testing.T) {}\n")
+	return root, specPath
+}
+
+// goModuleRoot makes root a Go module. That is what gives the root the built-in kit
+// phase table, whose test phases are the untagged set and the system set, so the census
+// under grade is the one the gate would run here.
+func goModuleRoot(t *testing.T, root string) {
+	t.Helper()
+	writeUnder(t, filepath.Join(root, "go.mod"), "module example.test\n\ngo 1.21\n")
+}
+
+// TestCitationUnexecutedConstraint grades the execution arm of the citation check: a
+// cited test is evidence only when some tag set the gate executes compiles its file.
+func TestCitationUnexecutedConstraint(t *testing.T) {
+	t.Run("an untagged file passes", func(t *testing.T) {
+		root, specPath := citedFileSpec(t, "internal/x/plain_test.go", "")
+		goModuleRoot(t, root)
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation for an unconstrained file", v)
+		}
+	})
+
+	t.Run("a system-tagged file passes", func(t *testing.T) {
+		root, specPath := citedFileSpec(t, "internal/x/sys_test.go", "//go:build system\n\n")
+		goModuleRoot(t, root)
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation for the executed system set", v)
+		}
+	})
+
+	t.Run("a stress-tagged file is a violation", func(t *testing.T) {
+		root, specPath := citedFileSpec(t, "internal/x/stress_test.go", "//go:build stress\n\n")
+		goModuleRoot(t, root)
+
+		want := "coverage map row 1 cites 'internal/x/stress_test.go', which no executed tag set builds (//go:build stress)"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+		}
+	})
+
+	t.Run("a foreign GOOS filename suffix is a violation", func(t *testing.T) {
+		root, specPath := citedFileSpec(t, "internal/x/foo_windows_test.go", "")
+		goModuleRoot(t, root)
+
+		want := "coverage map row 1 cites 'internal/x/foo_windows_test.go', which no executed tag set builds (the filename's GOOS or GOARCH suffix)"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+		}
+	})
+
+	t.Run("a malformed constraint is a violation naming the file", func(t *testing.T) {
+		root, specPath := citedFileSpec(t, "internal/x/bad_test.go", "//go:build system &&\n\n")
+		goModuleRoot(t, root)
+
+		want := "coverage map row 1 cites 'internal/x/bad_test.go', whose //go:build expression does not parse: unexpected end of expression"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+		}
+	})
+
+	t.Run("a non-regular path is a violation", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/fifo_test.go` (`TestPresent`)", "")
+		goModuleRoot(t, root)
+		fifo := filepath.Join(root, "internal", "x", "fifo_test.go")
+		if err := os.MkdirAll(filepath.Dir(fifo), 0o755); err != nil {
+			t.Fatalf("MkdirAll: %v", err)
+		}
+		if err := syscall.Mkfifo(fifo, 0o644); err != nil {
+			t.Fatalf("mkfifo: %v", err)
+		}
+
+		want := "coverage map row 1 cites 'internal/x/fifo_test.go', which is not a regular file"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+		}
+	})
+
+	t.Run("a root with no test phase is inapplicable", func(t *testing.T) {
+		// A root that is neither a Go module nor the kit itself has no test phase at
+		// all: the toolchain phases need the module, and the system phase grades the
+		// kit alone.
+		t.Setenv("BENCH_KIT", t.TempDir())
+		_, specPath := citedFileSpec(t, "internal/x/stress_test.go", "//go:build stress\n\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation where the gate runs no test phase", v)
+		}
+	})
+
+	t.Run("a manifest-declared custom tag passes", func(t *testing.T) {
+		root, specPath := citedFileSpec(t, "internal/x/custom_test.go", "//go:build customsuite\n\n")
+		writeUnder(t, filepath.Join(root, filepath.FromSlash(canary.PhaseManifestPath)),
+			`{"phases":[{"name":"test","argv":["go","test","-tags=customsuite","./..."]}]}`+"\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation for a manifest-declared tag", v)
+		}
+	})
 }

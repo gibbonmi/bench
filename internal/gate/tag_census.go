@@ -119,3 +119,9 @@ func normalizeTags(tags []string) TagSet {
 	sort.Strings(set)
 	return set
 }
+
+// KitRoot resolves the checkout that owns the Go tests for a tree under grade, through
+// the same rule every gate entry point uses. A census consumer outside this package
+// must resolve the pair the same way, or it grades cited files in one tree against a
+// census taken in another.
+func KitRoot(root string) string { return kitRoot(root) }
