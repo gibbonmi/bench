@@ -328,3 +328,261 @@ func TestTicketAnswerStateIsSharedByReadinessAndProjection(t *testing.T) {
 		}
 	}
 }
+
+// TestDecisionMapDiagnosticsGolden pins the exact ordered diagnostic slice the
+// decision-map grammar delivers. The lift of the shared field scan and graph
+// walk must not reorder, drop, or reword one message.
+func TestDecisionMapDiagnosticsGolden(t *testing.T) {
+	const duplicated = `# Map
+
+Status: shaping
+
+## Destination
+
+Ship it.
+
+## #1: First
+
+Blocked by: none
+Blocked by: #2
+Type: Research
+Type: Grill
+
+### Question
+
+First?
+
+### Answer
+
+Resolved.
+
+## #2: Second
+
+Type: Guess
+
+### Question
+
+Second?
+
+## Not yet specified
+
+## Spec-writer discretion
+
+## Out of scope
+
+## Sources
+
+## Sources
+
+# Second title
+
+Status: ready
+`
+	const fenced = "# Map\n\nStatus: shaping\n\n## Destination\n\nShip it.\n\n```md\nStatus: ready\n## Handoff\n## Sources\n```\n\n## #1: First\n\nBlocked by: none\nType: Grill\n\n### Question\n\nFirst?\n\n### Answer\n\nResolved.\n\n## Not yet specified\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n"
+	const bare = `# Map
+
+## #1: First
+
+### Question
+
+First?
+`
+	for _, c := range []struct {
+		name     string
+		document string
+		want     []string
+	}{
+		{"duplicate and missing fields", duplicated, []string{
+			"ticket #1: duplicate Blocked by",
+			"ticket #1: duplicate Type",
+			"ticket #2: missing Blocked by",
+			`ticket #2: unsupported Type "Guess"`,
+			"ticket #2: missing Answer",
+			"duplicate Sources section",
+			"duplicate title",
+			"duplicate Status",
+		}},
+		{"fenced lines grade nothing", fenced, nil},
+		{"bare skeleton", bare, []string{
+			"ticket #1: missing Blocked by",
+			"ticket #1: missing Type",
+			"ticket #1: missing Answer",
+			"missing Status",
+			"missing Destination",
+			"missing Not yet specified section",
+			"missing Spec-writer discretion section",
+			"missing Out of scope section",
+			"missing Sources section",
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			_, diagnostics := ParseDecisionMap([]byte(c.document))
+			if got := diagnosticMessages(diagnostics); !reflect.DeepEqual(got, c.want) {
+				t.Fatalf("ParseDecisionMap diagnostics =\n%#v\nwant\n%#v", got, c.want)
+			}
+		})
+	}
+
+	const graph = `# Graph
+
+Status: shaping
+
+## Destination
+
+Settle the graph.
+
+## #1: First
+
+Blocked by: #2, #2
+Type: Grill
+
+### Question
+
+First?
+
+### Answer
+
+Resolved.
+
+## #1: Duplicate
+
+Blocked by: #9
+Type: Grill
+
+### Question
+
+Duplicate?
+
+### Answer
+
+Resolved.
+
+## #2: Second
+
+Blocked by: #2
+Type: Grill
+
+### Question
+
+Second?
+
+### Answer
+
+— (open)
+
+## #3: Third
+
+Blocked by: #4
+Type: Grill
+
+### Question
+
+Third?
+
+### Answer
+
+— (open)
+
+## #4: Fourth
+
+Blocked by: #3
+Type: Grill
+
+### Question
+
+Fourth?
+
+### Answer
+
+— (open)
+
+## Not yet specified
+
+## Spec-writer discretion
+
+## Out of scope
+
+## Sources
+`
+	_, diagnostics := ValidateDecisionMap(t.TempDir(), "decisions/graph.md", false, []byte(graph))
+	want := []string{
+		"decisions/graph.md: duplicate ID #1: Duplicate conflicts with First",
+		"decisions/graph.md: resolved ticket #1: First depends on unresolved #2: Second",
+		"decisions/graph.md: ticket #1: First duplicate blocker #2",
+		"decisions/graph.md: ticket #1: Duplicate dangling blocker #9",
+		"decisions/graph.md: ticket #2: Second self-edge #2 -> #2",
+		"decisions/graph.md: cycle edge ticket #4: Fourth -> ticket #3: Third (#4 -> #3)",
+	}
+	if got := diagnosticMessages(diagnostics); !reflect.DeepEqual(got, want) {
+		t.Fatalf("ValidateDecisionMap diagnostics =\n%#v\nwant\n%#v", got, want)
+	}
+}
+
+func diagnosticMessages(diagnostics []Diagnostic) []string {
+	var messages []string
+	for _, diagnostic := range diagnostics {
+		messages = append(messages, diagnostic.Message)
+	}
+	return messages
+}
+
+// liftedTable is a neutral field table: the lifted scan carries no decision-map vocabulary.
+var liftedTable = []FieldSpec{
+	{Name: "Owner", Syntax: "Owner: "},
+	{Name: "Note", Syntax: "Note: ", Scoped: true},
+}
+
+func liftedScan() FieldScan {
+	return FieldScan{
+		Table: liftedTable,
+		Scope: func(line string) (string, bool) {
+			if strings.HasPrefix(line, "## ") {
+				return strings.TrimPrefix(line, "## "), true
+			}
+			return "", false
+		},
+		Duplicate: func(spec FieldSpec, scope string) string {
+			if spec.Scoped {
+				return "section " + scope + ": duplicate " + spec.Name
+			}
+			return "duplicate " + spec.Name
+		},
+	}
+}
+
+func TestLiftedFieldScanReportsDuplicateField(t *testing.T) {
+	const document = `Owner: first
+Owner: second
+
+## one
+
+Note: a
+Note: b
+
+## two
+
+Note: c
+`
+	lines, diagnostics := liftedScan().Scan([]byte(document))
+	want := []string{"duplicate Owner", "section one: duplicate Note"}
+	if !reflect.DeepEqual(diagnostics, want) {
+		t.Fatalf("Scan diagnostics = %#v, want %#v", diagnostics, want)
+	}
+	if lines[0].Value != "first" || lines[1].Diagnostic != "duplicate Owner" {
+		t.Fatalf("scanned owner lines = %#v", lines[:2])
+	}
+}
+
+func TestLiftedFieldScanSkipsFencedLines(t *testing.T) {
+	const document = "Owner: real\n\n```md\nOwner: quoted\nNote: quoted\n```\n\nOwner: second\n"
+	lines, diagnostics := liftedScan().Scan([]byte(document))
+	want := []string{"duplicate Owner"}
+	if !reflect.DeepEqual(diagnostics, want) {
+		t.Fatalf("Scan diagnostics = %#v, want %#v", diagnostics, want)
+	}
+	for _, line := range lines {
+		if strings.Contains(line.Text, "quoted") && (!line.Fenced || line.Field != "") {
+			t.Fatalf("fenced line parsed as a field: %#v", line)
+		}
+	}
+}

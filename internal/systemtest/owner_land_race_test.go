@@ -161,6 +161,16 @@ type systemLandingWorktree struct {
 	path, assignment, branch, request, tip string
 }
 
+// systemTicketBody is the one grammar-conformant ticket the synthetic spec
+// carries. It cites the spec's declared row LX1, so the review preflight the
+// landing runs grades ownership green rather than reporting an unowned row.
+const systemTicketBody = "# One\n\n" +
+	"Blocked by: none\n" +
+	"Writes: specs/x/spec.md\n" +
+	"Covers: LX1\n\n" +
+	"## What to build\n\nLand the source.\n\n" +
+	"## Acceptance\n\n- [ ] The source lands.\n"
+
 func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, release string) {
 	t.Helper()
 	var err error
@@ -212,7 +222,7 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	if err := os.WriteFile(filepath.Join(root, "specs", "x", "spec.md"), []byte(specBody), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "specs", "x", "tickets", "one.md"), []byte("Ticket covers LX1.\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "specs", "x", "tickets", "one.md"), []byte(systemTicketBody), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("retained-output\n"), 0o644); err != nil {

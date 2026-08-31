@@ -7,7 +7,7 @@ import (
 	"github.com/gibbonmi/bench/internal/diff"
 )
 
-// TestCommandConformantTree is C1, the tracer: five green rows by name, exit 0, and a
+// TestCommandConformantTree is C1, the tracer: every row green by name, exit 0, and a
 // byte-identical second run.
 func TestCommandConformantTree(t *testing.T) {
 	_, slug := seedConformant(t)
@@ -16,14 +16,14 @@ func TestCommandConformantTree(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, first)
 	}
-	for _, name := range []string{"base-current", "paths-authorized", "rows-owned", "rows-membership", "diff-nonempty"} {
+	for _, name := range []string{"base-current", "paths-authorized", "tickets-parse", "blockers-resolve", "writes-resolve", "rows-owned", "rows-membership", "diff-nonempty"} {
 		if !strings.Contains(first, name+",green") {
 			t.Errorf("output missing green %s row:\n%s", name, first)
 		}
 	}
 	// WF32: the rendered header carries the next column on every run, green
 	// included. A Next field the renderer never reads would leave the old header.
-	if !strings.Contains(first, "checks[5]{check,verdict,detail,next}") {
+	if !strings.Contains(first, "checks[11]{check,verdict,detail,next}") {
 		t.Errorf("output missing the four-column checks header:\n%s", first)
 	}
 	second, code2 := Command([]string{"review", slug})
@@ -88,7 +88,7 @@ func TestCommandUnstagedOutOfFenceRed(t *testing.T) {
 	slug := "example"
 	initRepo(t)
 	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
 	mustWriteFile(t, "unfenced/other.go", "package other\n")
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
@@ -117,7 +117,7 @@ func TestCommandFencePrefixBoundary(t *testing.T) {
 		"|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | catches z |\n\n" +
 		"## Ownership fences\n\n- `internal/git`\n- `reviews/boundary.md`\n"
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")
@@ -140,7 +140,7 @@ func TestCommandUncitedRow(t *testing.T) {
 	slug := "example"
 	initRepo(t)
 	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing only PF1.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")
@@ -157,14 +157,15 @@ func TestCommandUncitedRow(t *testing.T) {
 	}
 }
 
-// TestCommandPhantomAndForeignTag is C5: a ticket token under the spec's own tag
-// naming no declared row (PF99) makes rows-membership red; a foreign-tag token (FT93)
-// is ignored.
+// TestCommandPhantomAndForeignTag is C5: a Covers: token under the spec's own
+// tag naming no declared row (PF99) makes rows-membership red. A foreign-tag
+// token (FT93) stays outside that comparison: the grammar row names it as a
+// citation fault, and rows-membership passes over it.
 func TestCommandPhantomAndForeignTag(t *testing.T) {
 	slug := "example"
 	initRepo(t)
 	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Cites PF1, PF2, PF99, and FT93.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2", "PF99", "FT93"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")
@@ -179,9 +180,25 @@ func TestCommandPhantomAndForeignTag(t *testing.T) {
 	if !strings.Contains(out, "rows-membership,red") || !strings.Contains(out, "PF99") {
 		t.Errorf("output missing red rows-membership naming PF99:\n%s", out)
 	}
-	if strings.Contains(out, "FT93") {
-		t.Errorf("a foreign-tag token must be ignored, not named in any row:\n%s", out)
+	membership, _ := rowOf(t, out, "rows-membership")
+	if strings.Contains(membership, "FT93") {
+		t.Errorf("a foreign-tag token must stay outside the membership comparison:\n%s", out)
 	}
+	if !strings.Contains(out, "tickets-parse,red") || !strings.Contains(out, "FT93") {
+		t.Errorf("a foreign-tag Covers: token must red the grammar row by name:\n%s", out)
+	}
+}
+
+// rowOf returns the rendered line for one verdict row, so an assertion about
+// that row's detail cannot pass on text some other row printed.
+func rowOf(t *testing.T, out, check string) (string, bool) {
+	t.Helper()
+	for _, line := range strings.Split(out, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), check+",") {
+			return line, true
+		}
+	}
+	return "", false
 }
 
 // TestCommandTicketsSubdirRowOwned is RG2/subdir-row-owned: a declared row cited only
@@ -191,8 +208,8 @@ func TestCommandTicketsSubdirRowOwned(t *testing.T) {
 	slug := "example"
 	initRepo(t)
 	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing only PF1.\n")
-	mustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", "Nested ticket citing PF2.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1"))
+	mustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", ticketDoc("X", "PF2"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")
@@ -215,8 +232,8 @@ func TestCommandTicketsSubdirPhantomDetected(t *testing.T) {
 	slug := "example"
 	initRepo(t)
 	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
-	mustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", "Nested ticket citing PF99.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
+	mustWriteFile(t, "specs/"+slug+"/tickets/sub/x.md", ticketDoc("X", "PF99"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")
@@ -239,7 +256,7 @@ func TestCommandEmptyDiff(t *testing.T) {
 	slug := "example"
 	initRepo(t)
 	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature") // no further commits: HEAD == merge-base
@@ -362,5 +379,102 @@ func TestCommandRecordedBaseKey(t *testing.T) {
 	afterDiff, afterCode := diff.Command(nil)
 	if afterDiff != beforeDiff || afterCode != beforeCode {
 		t.Errorf("bare bench diff output changed across preflight's use of the export: before=(%q,%d) after=(%q,%d)", beforeDiff, beforeCode, afterDiff, afterCode)
+	}
+}
+
+// seedGrammarFaults plants one tickets folder carrying exactly one fault of
+// each grammar class: a ticket with no fields at all, a blocker cycle between
+// two well-formed tickets, and a Writes: entry naming no tree path.
+func seedGrammarFaults(t *testing.T) (root, slug string) {
+	t.Helper()
+	slug = "example"
+	root = initRepo(t)
+	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
+	mustWriteFile(t, "specs/"+slug+"/tickets/broken.md", "Prose only, with no field line at all.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/a.md",
+		"# A\n\nBlocked by: b.md\nWrites: internal/example/typo.go\nCovers: PF1\n\n## What to build\n\nBuild it.\n\n## Acceptance\n\n- [ ] Built.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/b.md",
+		"# B\n\nBlocked by: a.md\nWrites: specs\nCovers: PF2\n\n## What to build\n\nBuild it.\n\n## Acceptance\n\n- [ ] Built.\n")
+	runGit(t, "add", ".")
+	runGit(t, "commit", "-q", "-m", "c0")
+	runGit(t, "checkout", "-q", "-b", "feature")
+	mustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
+	runGit(t, "add", "internal/"+slug+"/foo.go")
+	runGit(t, "commit", "-q", "-m", "c1")
+	return root, slug
+}
+
+// TestCommandGrammarRedsRenderOneRowEach is TG26's preflight half. Each
+// grammar class reds its own verdict row with its own detail. A red folded
+// into one shared row would lose the failure attribution the operator repairs
+// against.
+func TestCommandGrammarRedsRenderOneRowEach(t *testing.T) {
+	_, slug := seedGrammarFaults(t)
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+
+	rendered := map[string]string{}
+	for _, check := range []string{"tickets-parse", "blockers-resolve", "writes-resolve"} {
+		row, ok := rowOf(t, out, check)
+		if !ok {
+			t.Fatalf("output has no %s row:\n%s", check, out)
+		}
+		if !strings.Contains(row, check+",red,") {
+			t.Errorf("%s row = %q, want red:\n%s", check, row, out)
+		}
+		rendered[check] = row
+	}
+	if !strings.Contains(rendered["tickets-parse"], "broken.md") {
+		t.Errorf("tickets-parse must name the malformed ticket: %q", rendered["tickets-parse"])
+	}
+	if !strings.Contains(rendered["blockers-resolve"], "cycle edge") {
+		t.Errorf("blockers-resolve must name the cycle edge: %q", rendered["blockers-resolve"])
+	}
+	if !strings.Contains(rendered["writes-resolve"], "internal/example/typo.go") {
+		t.Errorf("writes-resolve must name the unresolved entry: %q", rendered["writes-resolve"])
+	}
+	for a, rowA := range rendered {
+		for b, rowB := range rendered {
+			if a < b && detailOf(rowA) == detailOf(rowB) {
+				t.Errorf("%s and %s share one detail %q, so one red hides the other", a, b, detailOf(rowA))
+			}
+		}
+	}
+}
+
+// detailOf is the detail cell of one rendered verdict row.
+func detailOf(row string) string {
+	fields := strings.SplitN(strings.TrimSpace(row), ",", 3)
+	if len(fields) < 3 {
+		return ""
+	}
+	return fields[2]
+}
+
+// TestCommandControlByteTicketPathRefused is TG35. A ticket path carrying a
+// control byte is refused before the verdict table renders, because spec-TOON
+// cannot represent the cell and the table would die mid-render.
+func TestCommandControlByteTicketPathRefused(t *testing.T) {
+	slug := "example"
+	initRepo(t)
+	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
+	mustWriteFile(t, "specs/"+slug+"/tickets/esc\x1bape.md", ticketDoc("Two", "PF1"))
+	runGit(t, "add", ".")
+	runGit(t, "commit", "-q", "-m", "c0")
+	runGit(t, "checkout", "-q", "-b", "feature")
+
+	out, code := Command([]string{"review", slug})
+	if code != 1 {
+		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
+	}
+	if !strings.Contains(out, "cannot represent") {
+		t.Errorf("output = %q, want the unrepresentable-cell refusal", out)
+	}
+	if strings.Contains(out, "checks[") {
+		t.Errorf("the refusal must precede the verdict table:\n%s", out)
 	}
 }

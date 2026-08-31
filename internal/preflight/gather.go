@@ -1,19 +1,22 @@
 package preflight
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"io/fs"
+	"go/build/constraint"
+	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	specref "github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // BootstrapFailure is the fail-closed bootstrap answer. An artifact
@@ -27,11 +30,6 @@ import (
 type BootstrapFailure struct {
 	Kind, Hint string
 }
-
-// tokenRe is the one grammar for a row-ID-shaped token in ticket-file
-// prose: an uppercase tag plus digits, word-boundary matched. So "PF1a"
-// never mistakes itself for "PF1".
-var tokenRe = regexp.MustCompile(`\b[A-Z]+[0-9]+\b`)
 
 // Gather is the thin gatherer: it reads git, the exported diff-base
 // resolution, the spec resolver, the coverage parser, and tickets/
@@ -132,7 +130,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		return Facts{}, &BootstrapFailure{"coverage map invalid", strings.Join(violations, "; ")}
 	}
 
-	tokens, ticketsDirExists, ticketErr := gatherTicketTokens(filepath.Join(filepath.Dir(resolved), "tickets"), mode)
+	ticketFacts, ticketErr := gatherTickets(root, filepath.Join(filepath.Dir(resolved), "tickets"), mode, specTag(ids))
 	if ticketErr != nil {
 		return Facts{}, ticketErr
 	}
@@ -173,9 +171,16 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		ChangedPaths:          changedPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,
-		TicketTokens:          tokens,
 		SpecTag:               specTag(ids),
-		TicketsDirExists:      ticketsDirExists,
+		Tickets:               ticketFacts.parsed,
+		TicketDiagnostics:     ticketFacts.diagnostics,
+		BlockerCycles:         ticketFacts.cycles,
+		WritesPathExists:      ticketFacts.writes,
+		WritesFixturePins:     ticketFacts.pins,
+		WritesBoundFiles:      ticketFacts.bound,
+		WritesSystemTagged:    ticketFacts.systemTag,
+		TicketPinsKit:         ticketFacts.kitPinned,
+		TicketsDirExists:      ticketFacts.dirExists,
 	}, nil
 }
 
@@ -251,80 +256,185 @@ func specTag(ids []string) string {
 	if len(ids) == 0 {
 		return ""
 	}
-	return tagOf(ids[0])
+	return tickets.TagOf(ids[0])
 }
 
-// gatherTicketTokens enumerates specs/<slug>/tickets/, recursing into
-// subdirectories so a token cited only under tickets/sub/ is found the
-// same as one at the top level. Every entry — file or subdirectory, at
-// every depth — is lstat-classified before it is opened or descended
-// into. So a FIFO or other special file is refused rather than blocking,
-// no matter how deep it sits.
+// ticketFacts is everything the gatherer learns from specs/<slug>/tickets/.
+// Decide grades these values and reads no file of its own.
+type ticketFacts struct {
+	parsed      []tickets.Ticket
+	diagnostics []string
+	cycles      []string
+	writes      map[string]bool
+	pins        map[string][]string
+	bound       map[string][]string
+	systemTag   map[string]bool
+	kitPinned   map[string]bool
+	dirExists   bool
+}
+
+// gatherTickets enumerates specs/<slug>/tickets/ and parses every `.md`
+// file through the ticket grammar, recursing into subdirectories so a
+// ticket filed under tickets/sub/ is graded the same as one at the top
+// level. Every entry — file or subdirectory, at every depth — is
+// lstat-classified before it is opened or descended into. So a FIFO, a
+// dangling symlink, or another special file is refused rather than
+// blocking, no matter how deep it sits.
 //
 // Review mode requires the top-level directory to exist. Build mode
-// instead reports whether it exists at all (the second return value).
-// This lets the verdict core tell an absent directory (row checks
-// not-applicable) from a present-but-empty one (row checks run for real,
-// reading as unowned rows).
-func gatherTicketTokens(dir, mode string) (tokens []string, exists bool, err *BootstrapFailure) {
+// instead reports whether it exists at all. This lets the verdict core
+// tell an absent directory (row checks not-applicable) from a
+// present-but-empty one (row checks run for real, reading as unowned
+// rows).
+func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure) {
 	d := bounds.ClassifyDir(dir)
 	switch d.State {
 	case bounds.StateAbsent:
 		if mode == "review" {
-			return nil, false, &BootstrapFailure{"tickets directory absent", dir + " does not exist"}
+			return ticketFacts{}, &BootstrapFailure{"tickets directory absent", dir + " does not exist"}
 		}
-		return nil, false, nil
+		return ticketFacts{}, nil
 	case bounds.StateEmpty:
-		return nil, true, nil
+		return ticketFacts{dirExists: true}, nil
 	case bounds.StateParsed:
 		// fall through to enumeration below
 	default:
-		return nil, false, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
+		return ticketFacts{}, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
 	}
 
-	tokens, ticketErr := scanTicketEntries(dir, d.Entries)
-	if ticketErr != nil {
-		return nil, false, ticketErr
+	files, duplicates, refusal := tickets.Enumerate(dir, d.Entries)
+	if refusal != nil {
+		return ticketFacts{}, &BootstrapFailure{refusal.Kind, refusal.Message(dir)}
 	}
-	return tokens, true, nil
+	facts, gradeErr := gradeTickets(root, files, duplicates, tag)
+	if gradeErr != nil {
+		return ticketFacts{}, gradeErr
+	}
+	facts.dirExists = true
+	return facts, nil
 }
 
-// scanTicketEntries walks one already-classified directory listing,
-// scanning files for tokens and recursing into subdirectories with the
-// same lstat-first classification gatherTicketTokens applies at the top
-// level. The special-file refusal holds at every depth, not only the
-// first.
-func scanTicketEntries(dir string, entries []fs.DirEntry) ([]string, *BootstrapFailure) {
-	var tokens []string
-	for _, entry := range entries {
-		path := filepath.Join(dir, entry.Name())
-		if entry.IsDir() {
-			sub := bounds.ClassifyDir(path)
-			switch sub.State {
-			case bounds.StateEmpty:
-				// nothing to scan
-			case bounds.StateParsed:
-				subTokens, subErr := scanTicketEntries(path, sub.Entries)
-				if subErr != nil {
-					return nil, subErr
-				}
-				tokens = append(tokens, subTokens...)
-			default:
-				return nil, &BootstrapFailure{"tickets directory not readable", path + " is " + string(sub.State) + ": " + sub.Reason}
-			}
-			continue
+// gradeTickets parses each enumerated ticket against its siblings and the
+// spec tag, and probes the tree for every declared `Writes:` entry. The
+// probe is the gatherer's whole I/O contribution to the ownership row;
+// the policy over the resulting bit belongs to Decide. The duplicate-identity
+// diagnostics the enumeration reports open the diagnostic list, so a duplicate
+// basename is named before the grammar faults below it.
+func gradeTickets(root string, files []tickets.Entry, duplicates []string, tag string) (ticketFacts, *BootstrapFailure) {
+	pins, pinErr := canary.FixturePins(root)
+	if pinErr != nil {
+		return ticketFacts{}, &BootstrapFailure{"fixture inventory not readable", pinErr.Error()}
+	}
+	facts := ticketFacts{
+		writes:    map[string]bool{},
+		pins:      map[string][]string{},
+		bound:     map[string][]string{},
+		systemTag: map[string]bool{},
+		kitPinned: map[string]bool{},
+	}
+	facts.diagnostics = append(facts.diagnostics, duplicates...)
+
+	siblings := make([]string, 0, len(files))
+	for _, file := range files {
+		siblings = append(siblings, file.Name)
+	}
+
+	for _, file := range files {
+		parsed, diagnostics := tickets.ParseTicket(file.Name, file.Data, siblings, tag)
+		if field, value, unrepresentable := tickets.UnrepresentableValue(parsed); unrepresentable {
+			return ticketFacts{}, &BootstrapFailure{"ticket path not representable", fmt.Sprintf("%s declares a %s: entry %q with a byte spec-TOON cannot represent", file.Rel, field, value)}
 		}
-		c := bounds.Classify(path, bounds.ControlRecordLimit)
-		switch c.State {
-		case bounds.StateParsed:
-			tokens = append(tokens, tokenRe.FindAllString(string(c.Data), -1)...)
-		case bounds.StateEmpty:
-			// nothing to scan
-		default:
-			return nil, &BootstrapFailure{"ticket file not readable", path + " is " + string(c.State) + ": " + c.Reason}
+		for _, diagnostic := range diagnostics {
+			facts.diagnostics = append(facts.diagnostics, file.Rel+": "+diagnostic)
+		}
+		facts.parsed = append(facts.parsed, parsed)
+		facts.kitPinned[file.Name] = bytes.Contains(file.Data, []byte(kitEnvMarker))
+		for _, entry := range parsed.Writes {
+			path, _ := splitWritesEntry(entry)
+			facts.writes[entry] = treeHolds(root, path)
+			if pinning := pins[path]; len(pinning) > 0 {
+				facts.pins[entry] = pinning
+			}
+			if bound := tickets.BoundFiles(path); len(bound) > 0 {
+				facts.bound[entry] = bound
+			}
+			if systemTagged(root, path) {
+				facts.systemTag[entry] = true
+			}
 		}
 	}
-	return tokens, nil
+	facts.cycles = tickets.Cycles(facts.parsed)
+	return facts, nil
+}
+
+// treeHolds reports whether one `Writes:` path names something in the tree.
+// Any file type answers yes: the row grades whether the path exists, not
+// what sits at it. The lstat never follows a link, so a dangling symlink
+// reads as the absent path it is.
+func treeHolds(root, path string) bool {
+	if path == "" {
+		return false
+	}
+	_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(path)))
+	return err == nil
+}
+
+// kitEnvMarker is the literal a ticket states to pin the kit a system-tagged
+// fixture reads. An ambient value flips such a fixture under composition, so the
+// ticket names the variable rather than inheriting whatever the session holds.
+const kitEnvMarker = "BENCH_KIT"
+
+// systemTagged reports whether one `Writes:` path names a Go test file whose
+// //go:build expression carries the system tag. The constraint parse is the same
+// one the coverage citations grade with, so the two never disagree about which
+// file is system-tagged. A path that is no test file, that does not read, or that
+// carries no constraint answers no.
+func systemTagged(root, path string) bool {
+	if !strings.HasSuffix(path, "_test.go") {
+		return false
+	}
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" && !strings.HasPrefix(trimmed, "//") {
+			return false
+		}
+		if !constraint.IsGoBuild(trimmed) {
+			continue
+		}
+		expr, parseErr := constraint.Parse(trimmed)
+		return parseErr == nil && exprHoldsTag(expr, "system")
+	}
+	return false
+}
+
+// exprHoldsTag reports whether a build expression mentions tag anywhere. A
+// negated mention still counts: the file's verdict depends on the tag either way.
+func exprHoldsTag(expr constraint.Expr, tag string) bool {
+	switch typed := expr.(type) {
+	case *constraint.TagExpr:
+		return typed.Tag == tag
+	case *constraint.NotExpr:
+		return exprHoldsTag(typed.X, tag)
+	case *constraint.AndExpr:
+		return exprHoldsTag(typed.X, tag) || exprHoldsTag(typed.Y, tag)
+	case *constraint.OrExpr:
+		return exprHoldsTag(typed.X, tag) || exprHoldsTag(typed.Y, tag)
+	}
+	return false
+}
+
+// relTo is path expressed against base, falling back to the full path when
+// the two share no relation. A diagnostic then still names something real.
+func relTo(base, path string) string {
+	rel, err := filepath.Rel(base, path)
+	if err != nil {
+		return path
+	}
+	return rel
 }
 
 // canonicalRoot is a path's absolute, symlink-resolved, cleaned form — the one

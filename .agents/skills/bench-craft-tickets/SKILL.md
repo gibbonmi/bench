@@ -29,10 +29,8 @@ ticket lands, `Blocked by:` naming them all.
 
 **Reviewer-approved breakdown**: before the coordinator assigns a spec-backed ticket, it
 presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for
-every ticket. The coordinator asks: does the granularity feel right, too coarse or too fine,
-and are the blocking edges correct? Does each ticket depend only on tickets that genuinely
-gate it, and should any ticket be merged or split? Iterate until the reviewer approves, and
-record approval.
+every ticket. The coordinator asks about the granularity, the blocking edges, and any
+merge or split. Iterate until the reviewer approves, and record approval.
 For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out in `.bench/BENCH.md` is the sole no-round-trip exception.
 The light path is the exception: `.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and the main session implements it inline.
 
@@ -44,7 +42,8 @@ Write each ticket under `specs/<slug>/tickets/` with a verb-first title:
 # <Verb-first title>
 
 Blocked by: <sibling ticket file basenames, or none>
-Writes: <paths this ticket expects to touch, advisory>
+Writes: <paths this ticket expects to touch>
+Covers: <coverage row ids this ticket owns, or none>
 
 ## What to build
 
@@ -56,18 +55,17 @@ Writes: <paths this ticket expects to touch, advisory>
 - [ ] <observable behavioral criterion>
 ```
 
-Write the prose in ASD-STE100 per `craft-spec`'s `references/ste-prose.md`.
-`Blocked by:` is `none`, or the sibling basenames that must land first. A
-basename survives a retitle and is what `--ticket` already names. `What to
+Write the prose in ASD-STE100 per `craft-spec`'s `references/ste-prose.md`. `What to
 build` states the end-to-end behavior. It also states any contract shared with a
-sibling: a meaningful crossing lives in this prose and in `Acceptance`, never in a
-separate schema field. Review re-derives the crossing from the tree rather than trusting
-the ticket's account alone.
+sibling: the crossing lives in this prose and in `Acceptance`, never in a separate
+schema field. Review re-derives the crossing from the tree.
 
-`Acceptance` rows are observable behavioral criteria, not a project-gate checkbox. Cite each
-coverage row id in full, because preflight reads ids, not ranges. `Writes:` is advisory only. It
-helps judge whether two frontier tickets are disjoint enough to parallelize, and nothing enforces
-it. Each path it names exists in the tree, or the ticket marks the path new.
+The parser enforces these rules. `Blocked by:` holds `none` or sibling ticket file
+basenames; a basename survives a retitle, and `--ticket` already names it. Each
+`Writes:` path exists in the tree or carries the `(new)` marker. A fixture-pinned path
+also names its fixture, and a bound package also names its registries. `Covers:` holds
+`none` or declared row ids, cited in full because preflight reads ids, not ranges.
+`Acceptance` rows are observable behavioral criteria, not a project-gate checkbox.
 
 Good:
 
@@ -77,6 +75,7 @@ Good:
 
 Blocked by: parse-cancelled-job-records.md
 Writes: internal/status, internal/render/rows.go
+Covers: CJ1, CJ2
 
 ## What to build
 

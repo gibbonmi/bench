@@ -96,6 +96,7 @@ type field struct {
 	name    string
 	syntax  string
 	heading bool
+	scoped  bool
 }
 
 type terminalSection struct {
@@ -119,10 +120,10 @@ var canonicalDecisionMapSchema = decisionMapSchema{
 		{name: "title", syntax: "# "},
 		{name: "Status", syntax: "Status: "},
 		{name: "Destination", syntax: "## Destination", heading: true},
-		{name: "Blocked by", syntax: "Blocked by: "},
-		{name: "Type", syntax: "Type: "},
-		{name: "Question", syntax: "### Question", heading: true},
-		{name: "Answer", syntax: "### Answer", heading: true},
+		{name: "Blocked by", syntax: "Blocked by: ", scoped: true},
+		{name: "Type", syntax: "Type: ", scoped: true},
+		{name: "Question", syntax: "### Question", heading: true, scoped: true},
+		{name: "Answer", syntax: "### Answer", heading: true, scoped: true},
 	},
 	terminalSections: []terminalSection{
 		{heading: "Not yet specified", syntax: "## Not yet specified"},
@@ -206,17 +207,53 @@ func (s decisionMapSchema) ticket(line string) (id, title string, ok bool) {
 	return match[1], match[2], true
 }
 
+// fieldScan drives the shared field scan with the decision-map field table. A
+// decision ticket opens one scope, and a section heading closes it.
+func (s decisionMapSchema) fieldScan() FieldScan {
+	table := make([]FieldSpec, 0, len(s.fields)+len(s.terminalSections))
+	for _, f := range s.fields {
+		table = append(table, FieldSpec{Name: f.name, Syntax: f.syntax, Heading: f.heading, Scoped: f.scoped})
+	}
+	for _, terminal := range s.terminalSections {
+		table = append(table, FieldSpec{Name: terminal.heading, Syntax: terminal.syntax, Heading: true})
+	}
+	return FieldScan{
+		Table: table,
+		Scope: func(line string) (string, bool) {
+			if id, _, ok := s.ticket(line); ok {
+				return id, true
+			}
+			if line == s.field("Destination").syntax || s.terminalHeading(line) != "" {
+				return "", true
+			}
+			for _, heading := range s.unsupportedHeadings {
+				if line == heading {
+					return "", true
+				}
+			}
+			return "", false
+		},
+		Duplicate: func(spec FieldSpec, scope string) string {
+			switch {
+			case spec.Scoped:
+				return fmt.Sprintf("ticket #%s: duplicate %s", scope, spec.Name)
+			case spec.Name == "title", spec.Name == "Status":
+				return "duplicate " + spec.Name
+			default:
+				return "duplicate " + spec.Name + " section"
+			}
+		},
+	}
+}
+
 // ParseDecisionMap parses a decision map according to the canonical schema.
 func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 	var m DecisionMap
 	var diagnostics []Diagnostic
-	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
 	seenTerminal := map[string]bool{}
 	var current *DecisionTicket
-	var ticketFields map[string]bool
+	answerSeen := false
 	section := ""
-	inFence := false
-	seenTitle, seenStatus, seenDestination := false, false, false
 
 	finishTicket := func() {
 		if current == nil {
@@ -235,37 +272,34 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 		if current.Question == "" {
 			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: missing Question", current.ID)})
 		}
-		if !ticketFields["Answer"] {
+		if !answerSeen {
 			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: missing Answer", current.ID)})
 		}
 		m.Tickets = append(m.Tickets, *current)
 		current = nil
-		ticketFields = nil
 	}
 
-	for _, line := range lines {
-		if strings.HasPrefix(line, "```") {
-			inFence = !inFence
+	scanned, _ := canonicalDecisionMapSchema.fieldScan().Scan(content)
+	for _, entry := range scanned {
+		if entry.Fenced {
 			continue
 		}
-		if inFence {
-			continue
-		}
-		if strings.HasPrefix(line, canonicalDecisionMapSchema.field("title").syntax) {
-			if seenTitle {
-				diagnostics = append(diagnostics, Diagnostic{Message: "duplicate title"})
+		line := entry.Text
+		duplicate := entry.Diagnostic != ""
+		report := func() { diagnostics = append(diagnostics, Diagnostic{Message: entry.Diagnostic}) }
+		switch entry.Field {
+		case "title":
+			if duplicate {
+				report()
 			} else {
-				m.Title = strings.TrimSpace(strings.TrimPrefix(line, canonicalDecisionMapSchema.field("title").syntax))
-				seenTitle = true
+				m.Title = entry.Value
 			}
 			continue
-		}
-		if strings.HasPrefix(line, canonicalDecisionMapSchema.field("Status").syntax) {
-			if seenStatus {
-				diagnostics = append(diagnostics, Diagnostic{Message: "duplicate Status"})
+		case "Status":
+			if duplicate {
+				report()
 			} else {
-				m.Status = strings.TrimSpace(strings.TrimPrefix(line, canonicalDecisionMapSchema.field("Status").syntax))
-				seenStatus = true
+				m.Status = entry.Value
 			}
 			continue
 		}
@@ -284,59 +318,62 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 		}
 		if heading := canonicalDecisionMapSchema.terminalHeading(line); heading != "" {
 			finishTicket()
-			if seenTerminal[heading] {
-				diagnostics = append(diagnostics, Diagnostic{Message: "duplicate " + heading + " section"})
+			if duplicate {
+				report()
 			}
 			seenTerminal[heading] = true
 			section = heading
 			continue
 		}
-		if line == canonicalDecisionMapSchema.field("Destination").syntax {
+		if entry.Field == "Destination" {
 			finishTicket()
-			if seenDestination {
-				diagnostics = append(diagnostics, Diagnostic{Message: "duplicate Destination section"})
+			if duplicate {
+				report()
 			}
-			seenDestination = true
 			section = "Destination"
 			continue
 		}
 		if id, title, ok := canonicalDecisionMapSchema.ticket(line); ok {
 			finishTicket()
 			current = &DecisionTicket{ID: id, Title: title}
-			ticketFields = map[string]bool{}
+			answerSeen = false
 			section = "ticket"
 			continue
 		}
 		if current != nil {
-			setField := func(name, value string, set func(string)) {
-				if ticketFields[name] {
-					diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: duplicate %s", current.ID, name)})
-					return
+			switch entry.Field {
+			case "Blocked by":
+				if duplicate {
+					report()
+					break
 				}
-				ticketFields[name] = true
-				set(value)
-			}
-			switch {
-			case strings.HasPrefix(line, canonicalDecisionMapSchema.field("Blocked by").syntax):
-				setField("Blocked by", strings.TrimSpace(strings.TrimPrefix(line, canonicalDecisionMapSchema.field("Blocked by").syntax)), func(value string) { current.BlockedBy = value })
-			case strings.HasPrefix(line, canonicalDecisionMapSchema.field("Type").syntax):
-				setField("Type", strings.TrimSpace(strings.TrimPrefix(line, canonicalDecisionMapSchema.field("Type").syntax)), func(value string) { current.Type = value })
-			case line == canonicalDecisionMapSchema.field("Question").syntax:
-				if ticketFields["Question"] {
-					diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: duplicate Question", current.ID)})
+				current.BlockedBy = entry.Value
+			case "Type":
+				if duplicate {
+					report()
+					break
 				}
-				ticketFields["Question"] = true
+				current.Type = entry.Value
+			case "Question":
+				if duplicate {
+					report()
+				}
 				section = "Question"
-			case line == canonicalDecisionMapSchema.field("Answer").syntax:
-				if ticketFields["Answer"] {
-					diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: duplicate Answer", current.ID)})
+			case "Answer":
+				if duplicate {
+					report()
 				}
-				ticketFields["Answer"] = true
+				answerSeen = true
 				section = "Answer"
-			case strings.TrimSpace(line) != "" && section == "Question":
-				current.Question = appendSectionLine(current.Question, strings.TrimSpace(line))
-			case strings.TrimSpace(line) != "" && section == "Answer":
-				current.Answer = appendSectionLine(current.Answer, strings.TrimSpace(line))
+			default:
+				if strings.TrimSpace(line) == "" {
+					break
+				}
+				if section == "Question" {
+					current.Question = appendSectionLine(current.Question, strings.TrimSpace(line))
+				} else if section == "Answer" {
+					current.Answer = appendSectionLine(current.Answer, strings.TrimSpace(line))
+				}
 			}
 			continue
 		}

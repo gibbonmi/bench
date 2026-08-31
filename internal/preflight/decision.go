@@ -5,11 +5,15 @@
 // It follows the decision-domain split. A thin gatherer (git, the exported
 // diff-base resolution, the spec resolver, the coverage parser, tickets/
 // enumeration) collects immutable Facts. Decide is a pure function over
-// those facts with no I/O of its own, so the five checks are table-tested
+// those facts with no I/O of its own, so every check is table-tested
 // without a repository.
 package preflight
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/tickets"
+)
 
 // Facts is the immutable evidence Decide classifies. Every field is
 // gathered once, up front, by Gather, and never re-read mid-verdict. So a
@@ -60,9 +64,40 @@ type Facts struct {
 	// DeclaredRowIDs is the spec's coverage map row IDs, in map order.
 	DeclaredRowIDs []string
 
-	// TicketTokens is every uppercase-tag token (`[A-Z]+[0-9]+`, word-boundary
-	// matched) found across tickets/ file content, regardless of tag.
-	TicketTokens []string
+	// Tickets is every `.md` ticket file under specs/<slug>/tickets/, parsed
+	// through the ticket grammar, in enumeration order. Its `Covers:` tokens are
+	// the one citation source: a row ID in prose is not evidence.
+	Tickets []tickets.Ticket
+
+	// TicketDiagnostics is the ordered grammar fault list across those files, each
+	// named by its folder-relative path. The enumeration's own duplicate-identity
+	// faults ride here too.
+	TicketDiagnostics []string
+
+	// BlockerCycles holds one edge of each blocker cycle across the parsed set.
+	BlockerCycles []string
+
+	// WritesPathExists reports, for each `Writes:` entry declared across the parsed
+	// tickets, whether the path it names resolves in the tree. The gatherer owns the
+	// probe; whether an absent path is a fault is Decide's.
+	WritesPathExists map[string]bool
+
+	// WritesFixturePins reports, for each `Writes:` entry, the canary fixture
+	// directories that pin the path it names. The gatherer enumerates the live
+	// inventory; whether an unnamed fixture is a fault is Decide's.
+	WritesFixturePins map[string][]string
+
+	// WritesBoundFiles reports, for each `Writes:` entry, the files the binding
+	// registry binds to the package the entry writes into.
+	WritesBoundFiles map[string][]string
+
+	// WritesSystemTagged reports, for each `Writes:` entry, whether it names a Go
+	// test file whose build constraint carries the system tag.
+	WritesSystemTagged map[string]bool
+
+	// TicketPinsKit reports, per ticket basename, whether the body states the
+	// literal BENCH_KIT. kit-pin grades that statement against the tagged writes.
+	TicketPinsKit map[string]bool
 
 	// SpecTag is the alphabetic prefix shared by the spec's own declared row IDs
 	// (e.g. "PF" for PF1..n) — the tag rows-membership scopes its check to, so a
@@ -121,14 +156,13 @@ type Verdict struct {
 // Mode applicability lives here rather than in the gatherer. An explicit
 // source range makes base-current grade that range's validity, while a
 // bare invocation grades default branch ancestry. Build mode always runs
-// paths-authorized, runs rows-owned and rows-membership for real only when
+// paths-authorized, runs every ticket row for real only when
 // specs/<slug>/tickets/ exists, and never runs diff-nonempty.
 //
 // tip-current is the one conditional row. It appears only when
 // --source-tip pinned a tip, directly after base-current. So the two
 // halves of the source identity are graded together, ahead of every
-// check that presupposes that identity. An invocation with no pin renders
-// exactly the five rows it always has.
+// check that presupposes that identity.
 func Decide(f Facts) Verdict {
 	checks := []CheckResult{baseCurrentCheck(f)}
 	if f.PinnedSourceTip != "" {
@@ -136,8 +170,14 @@ func Decide(f Facts) Verdict {
 	}
 	checks = append(checks,
 		pathsAuthorizedCheck(f),
-		rowsOwnedRow(f),
-		rowsMembershipRow(f),
+		ticketRow(f, "tickets-parse", ticketsParseCheck),
+		ticketRow(f, "blockers-resolve", blockersResolveCheck),
+		ticketRow(f, "writes-resolve", writesResolveCheck),
+		ticketRow(f, "fixture-closure", fixtureClosureCheck),
+		ticketRow(f, "registry-closure", registryClosureCheck),
+		ticketRow(f, "kit-pin", kitPinCheck),
+		ticketRow(f, "rows-owned", rowsOwnedCheck),
+		ticketRow(f, "rows-membership", rowsMembershipCheck),
 		diffNonemptyRow(f),
 	)
 	red := false
@@ -157,21 +197,15 @@ func notApplicable(name string) CheckResult {
 	return CheckResult{Check: name, Verdict: verdictNA}
 }
 
-// rowsOwnedRow gates rowsOwnedCheck by build-mode ticket-directory applicability:
-// not-applicable when build mode has no tickets/ directory at all, real otherwise.
-func rowsOwnedRow(f Facts) CheckResult {
+// ticketRow gates one ticket-reading check by build-mode ticket-directory
+// applicability: not-applicable when build mode has no tickets/ directory at
+// all, real otherwise. Every row that reads a parsed ticket shares this one
+// gate, so no two of them can drift on when a fresh build is graded.
+func ticketRow(f Facts, name string, check func(Facts) CheckResult) CheckResult {
 	if f.Mode == modeBuild && !f.TicketsDirExists {
-		return notApplicable("rows-owned")
+		return notApplicable(name)
 	}
-	return rowsOwnedCheck(f)
-}
-
-// rowsMembershipRow mirrors rowsOwnedRow for rows-membership.
-func rowsMembershipRow(f Facts) CheckResult {
-	if f.Mode == modeBuild && !f.TicketsDirExists {
-		return notApplicable("rows-membership")
-	}
-	return rowsMembershipCheck(f)
+	return check(f)
 }
 
 // diffNonemptyRow is not-applicable in build mode unconditionally: a build has no
@@ -298,10 +332,185 @@ func fenceAuthorizes(path string, fences []string) bool {
 	return false
 }
 
+// newMarker declares a `Writes:` entry as a path the ticket creates. An entry
+// carrying it is green whether or not the tree already holds the path, because
+// a blocker ticket may land the file first.
+const newMarker = "(new)"
+
+// splitWritesEntry separates one `Writes:` entry into the tree path it names
+// and whether it carries the (new) marker. The gatherer's existence probe and
+// the writes-resolve row read this one split, so the path probed and the path
+// graded can never disagree.
+func splitWritesEntry(entry string) (path string, isNew bool) {
+	path = strings.TrimSpace(entry)
+	if !strings.HasSuffix(path, newMarker) {
+		return path, false
+	}
+	return strings.TrimSpace(strings.TrimSuffix(path, newMarker)), true
+}
+
+// ticketsParseCheck reports the ticket grammar itself: an absent required
+// field, a duplicate field, an unterminated fence, a citation fault, a
+// declared blocker that resolves against no sibling, or one basename claimed
+// at two depths. Its detail is its own, so a grammar fault never hides behind
+// the ownership rows below it.
+func ticketsParseCheck(f Facts) CheckResult {
+	if len(f.TicketDiagnostics) > 0 {
+		return red("tickets-parse", "ticket grammar fault(s): "+strings.Join(f.TicketDiagnostics, "; "))
+	}
+	return green("tickets-parse")
+}
+
+// blockersResolveCheck reports the dependency faults only the whole parsed set
+// can show: a blocker cycle leaves the coordinator an empty frontier with no
+// signal. The per-ticket edge faults belong to the grammar row above.
+func blockersResolveCheck(f Facts) CheckResult {
+	if len(f.BlockerCycles) > 0 {
+		return red("blockers-resolve", "blocker cycle(s): "+strings.Join(f.BlockerCycles, "; "))
+	}
+	return green("blockers-resolve")
+}
+
+// writesResolveCheck grades every declared ownership entry against the tree.
+// An entry that names no path and claims no (new) file is a typo that would
+// charge a delegate against nothing, so it reds with the entry named.
+func writesResolveCheck(f Facts) CheckResult {
+	var unresolved []string
+	seen := map[string]bool{}
+	for _, ticket := range f.Tickets {
+		for _, entry := range ticket.Writes {
+			if _, isNew := splitWritesEntry(entry); isNew {
+				continue
+			}
+			named := ticket.Name + ": " + entry
+			if seen[named] || f.WritesPathExists[entry] {
+				continue
+			}
+			seen[named] = true
+			unresolved = append(unresolved, named)
+		}
+	}
+	if len(unresolved) > 0 {
+		return red("writes-resolve", "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
+	}
+	return green("writes-resolve")
+}
+
+// ownedPaths is every tree path one ticket declares, with the (new) marker
+// stripped. The three closures below grade their required names against this one
+// set, so no two of them can disagree about what a ticket already owns.
+func ownedPaths(ticket tickets.Ticket) []string {
+	paths := make([]string, 0, len(ticket.Writes))
+	for _, entry := range ticket.Writes {
+		path, _ := splitWritesEntry(entry)
+		paths = append(paths, path)
+	}
+	return paths
+}
+
+// pathCovered reports whether one required path is already named by the ticket,
+// either exactly or through a directory entry that contains it.
+func pathCovered(required string, owned []string) bool {
+	for _, path := range owned {
+		if required == path || strings.HasPrefix(required, path+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// fixtureClosureCheck grades the red-capable fixture into the ticket. A ticket
+// that edits a fixture-pinned line without naming the owning fixture directory
+// leaves the proof outside the charge, and the bite breaks unnoticed.
+func fixtureClosureCheck(f Facts) CheckResult {
+	var unnamed []string
+	seen := map[string]bool{}
+	for _, ticket := range f.Tickets {
+		owned := ownedPaths(ticket)
+		for _, entry := range ticket.Writes {
+			for _, fixture := range f.WritesFixturePins[entry] {
+				if pathCovered(fixture, owned) {
+					continue
+				}
+				named := ticket.Name + ": " + entry + " is pinned by " + fixture
+				if seen[named] {
+					continue
+				}
+				seen[named] = true
+				unnamed = append(unnamed, named)
+			}
+		}
+	}
+	if len(unnamed) > 0 {
+		return red("fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: "+strings.Join(unnamed, ", "))
+	}
+	return green("fixture-closure")
+}
+
+// registryClosureCheck grades the declared binding into the ticket. A ticket that
+// writes a bound package and omits a bound registry finds that registry mid-build
+// and pays a repair round.
+func registryClosureCheck(f Facts) CheckResult {
+	var omitted []string
+	seen := map[string]bool{}
+	for _, ticket := range f.Tickets {
+		owned := ownedPaths(ticket)
+		for _, entry := range ticket.Writes {
+			for _, file := range f.WritesBoundFiles[entry] {
+				if pathCovered(file, owned) {
+					continue
+				}
+				named := ticket.Name + ": " + entry + " requires " + file
+				if seen[named] {
+					continue
+				}
+				seen[named] = true
+				omitted = append(omitted, named)
+			}
+		}
+	}
+	if len(omitted) > 0 {
+		return red("registry-closure", "Writes: entry names a bound package without naming every bound file: "+strings.Join(omitted, ", "))
+	}
+	return green("registry-closure")
+}
+
+// kitPinCheck grades the kit pin into the ticket. A system-tagged test file reads
+// BENCH_KIT, so an ambient value flips the fixture verdict under composition
+// unless the ticket states the variable.
+func kitPinCheck(f Facts) CheckResult {
+	var unpinned []string
+	for _, ticket := range f.Tickets {
+		if f.TicketPinsKit[ticket.Name] {
+			continue
+		}
+		for _, entry := range ticket.Writes {
+			if f.WritesSystemTagged[entry] {
+				unpinned = append(unpinned, ticket.Name+": "+entry)
+			}
+		}
+	}
+	if len(unpinned) > 0 {
+		return red("kit-pin", "ticket writes a system-tagged test file without stating BENCH_KIT: "+strings.Join(unpinned, ", "))
+	}
+	return green("kit-pin")
+}
+
+// coversTokens is every row ID the parsed tickets cite, in enumeration order.
+// It is the one ownership evidence both row checks read.
+func coversTokens(f Facts) []string {
+	var tokens []string
+	for _, ticket := range f.Tickets {
+		tokens = append(tokens, ticket.Covers...)
+	}
+	return tokens
+}
+
 func rowsOwnedCheck(f Facts) CheckResult {
+	cited := coversTokens(f)
 	var uncited []string
 	for _, id := range f.DeclaredRowIDs {
-		if !containsStr(f.TicketTokens, id) {
+		if !containsStr(cited, id) {
 			uncited = append(uncited, id)
 		}
 	}
@@ -314,8 +523,8 @@ func rowsOwnedCheck(f Facts) CheckResult {
 func rowsMembershipCheck(f Facts) CheckResult {
 	seen := map[string]bool{}
 	var phantom []string
-	for _, tok := range f.TicketTokens {
-		if tagOf(tok) != f.SpecTag {
+	for _, tok := range coversTokens(f) {
+		if tickets.TagOf(tok) != f.SpecTag {
 			continue
 		}
 		if containsStr(f.DeclaredRowIDs, tok) {
@@ -349,14 +558,4 @@ func containsStr(list []string, s string) bool {
 		}
 	}
 	return false
-}
-
-// tagOf is a token's alphabetic prefix — the row-ID tag rows-membership scopes its
-// comparison to, so a foreign tag (FT93) is ignored rather than flagged.
-func tagOf(token string) string {
-	i := 0
-	for i < len(token) && token[i] >= 'A' && token[i] <= 'Z' {
-		i++
-	}
-	return token[:i]
 }

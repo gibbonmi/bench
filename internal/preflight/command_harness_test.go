@@ -78,7 +78,7 @@ func seedConformant(t *testing.T) (root, slug string) {
 	slug = "example"
 	root = initRepo(t)
 	mustWriteFile(t, "specs/"+slug+"/spec.md", specBody(slug))
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")

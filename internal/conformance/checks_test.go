@@ -82,6 +82,7 @@ func init() {
 		"prose-mechanics":               {checkProseMechanics, registry.Dev, registry.SubjectRoot},
 		"entry-point-parity":            {checkEntryPointParity, registry.Dev, registry.SubjectRoot},
 		"harness-record":                {checkHarnessRecord, registry.Dev, registry.SubjectRoot},
+		"ticket-grammar":                {checkTicketGrammar, registry.Dev, registry.SubjectRoot},
 	}
 }
 

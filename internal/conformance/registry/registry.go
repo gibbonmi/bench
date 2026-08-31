@@ -150,6 +150,7 @@ var Checks = []Check{
 	{Name: "prose-mechanics", Implementation: "checkProseMechanics", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "entry-point-parity", Implementation: "checkEntryPointParity", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "harness-record", Implementation: "checkHarnessRecord", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "ticket-grammar", Implementation: "checkTicketGrammar", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
@@ -179,6 +180,7 @@ var familyChecks = map[string]string{
 	"prose-mechanics":               "prose-mechanics",
 	"entry-point-parity":            "entry-point-parity",
 	"harness-record":                "harness-record",
+	"ticket-grammar":                "ticket-grammar",
 }
 
 // Families lists the family names this table binds, in sorted order. They are the table's

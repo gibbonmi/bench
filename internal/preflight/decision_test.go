@@ -1,6 +1,10 @@
 package preflight
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/tickets"
+)
 
 // baseFacts is a conformant Facts value: every check should answer green over it
 // unmodified. Each test case starts from a copy and breaks exactly one field.
@@ -14,9 +18,20 @@ func baseFacts() Facts {
 		ChangedPaths:          []string{"internal/example/foo.go"},
 		FenceEntries:          []string{"internal/example"},
 		DeclaredRowIDs:        []string{"PF1", "PF2"},
-		TicketTokens:          []string{"PF1", "PF2"},
 		SpecTag:               "PF",
+		Tickets: []tickets.Ticket{{
+			Name:   "one.md",
+			Writes: []string{"internal/example/foo.go"},
+			Covers: []string{"PF1", "PF2"},
+		}},
+		WritesPathExists: map[string]bool{"internal/example/foo.go": true},
 	}
+}
+
+// coveringTickets is one ticket citing exactly tokens, with no `Writes:` entry
+// of its own. A citation-shaped test says nothing about ownership.
+func coveringTickets(tokens ...string) []tickets.Ticket {
+	return []tickets.Ticket{{Name: "one.md", Covers: tokens}}
 }
 
 func checkRow(v Verdict, name string) (CheckResult, bool) {
@@ -36,7 +51,12 @@ func TestDecideAllGreen(t *testing.T) {
 	first := Decide(f)
 	second := Decide(f)
 
-	wantChecks := []string{"base-current", "paths-authorized", "rows-owned", "rows-membership", "diff-nonempty"}
+	wantChecks := []string{
+		"base-current", "paths-authorized",
+		"tickets-parse", "blockers-resolve", "writes-resolve",
+		"fixture-closure", "registry-closure", "kit-pin",
+		"rows-owned", "rows-membership", "diff-nonempty",
+	}
 	if len(first.Checks) != len(wantChecks) {
 		t.Fatalf("Checks = %#v, want %d rows", first.Checks, len(wantChecks))
 	}
@@ -75,8 +95,10 @@ func TestDecideAllGreen(t *testing.T) {
 			t.Errorf("%s row (%s) carries Next = %q, want empty", c.Check, c.Verdict, c.Next)
 		}
 	}
-	if naSeen != 3 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 3", naSeen)
+	// Every row that reads a parsed ticket, plus diff-nonempty, is
+	// not-applicable in a build with no tickets/ directory at all.
+	if naSeen != 9 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 9", naSeen)
 	}
 }
 
@@ -164,7 +186,7 @@ func TestDecideOtherRedsCarryNoNext(t *testing.T) {
 			f.DeclaredRowIDs = []string{"PF1", "PF2", "PF3"}
 		}},
 		{"phantom token", "rows-membership", "ticket token(s) under this spec's tag name no declared row: PF99", func(f *Facts) {
-			f.TicketTokens = []string{"PF1", "PF2", "PF99"}
+			f.Tickets = coveringTickets("PF1", "PF2", "PF99")
 		}},
 		{"diff unresolved review base", "diff-nonempty", "review base does not resolve: no resolvable default branch", func(f *Facts) {
 			f.ReviewBaseResolved = false
@@ -255,7 +277,7 @@ func TestDecidePathsAuthorized(t *testing.T) {
 func TestDecideRowsOwned(t *testing.T) {
 	f := baseFacts()
 	f.DeclaredRowIDs = []string{"PF1", "PF2", "PF3"}
-	f.TicketTokens = []string{"PF1", "PF2"}
+	f.Tickets = coveringTickets("PF1", "PF2")
 	c, _ := checkRow(Decide(f), "rows-owned")
 	if c.Verdict != verdictRed || c.Detail == "" {
 		t.Fatalf("rows-owned with one uncited declared row = %+v, want red naming PF3", c)
@@ -265,7 +287,7 @@ func TestDecideRowsOwned(t *testing.T) {
 func TestDecideRowsMembership(t *testing.T) {
 	// A token under the spec's own tag naming no declared row is red.
 	f := baseFacts()
-	f.TicketTokens = []string{"PF1", "PF2", "PF99"}
+	f.Tickets = coveringTickets("PF1", "PF2", "PF99")
 	c, _ := checkRow(Decide(f), "rows-membership")
 	if c.Verdict != verdictRed || c.Detail == "" {
 		t.Fatalf("rows-membership with a phantom same-tag token = %+v, want red naming PF99", c)
@@ -273,10 +295,135 @@ func TestDecideRowsMembership(t *testing.T) {
 
 	// A foreign-tag token is ignored, not flagged.
 	f = baseFacts()
-	f.TicketTokens = []string{"PF1", "PF2", "FT93"}
+	f.Tickets = coveringTickets("PF1", "PF2", "FT93")
 	c, _ = checkRow(Decide(f), "rows-membership")
 	if c.Verdict != verdictGreen {
 		t.Fatalf("rows-membership with a foreign-tag token = %+v, want green (ignored)", c)
+	}
+}
+
+// TestWritesResolveNamesAbsentPath is TG12. A typo path charges a delegate
+// against nothing, so the row names the offending entry and the ticket that
+// declared it.
+func TestWritesResolveNamesAbsentPath(t *testing.T) {
+	f := baseFacts()
+	f.Tickets = []tickets.Ticket{{
+		Name:   "one.md",
+		Writes: []string{"internal/example/foo.go", "internal/example/tpyo.go"},
+		Covers: []string{"PF1", "PF2"},
+	}}
+	f.WritesPathExists = map[string]bool{
+		"internal/example/foo.go":  true,
+		"internal/example/tpyo.go": false,
+	}
+
+	c, ok := checkRow(Decide(f), "writes-resolve")
+	want := "Writes: entry names no tree path and carries no (new) marker: one.md: internal/example/tpyo.go"
+	if !ok || c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("writes-resolve = %+v, want the red detailed %q", c, want)
+	}
+}
+
+// TestWritesResolveAcceptsNewMarker is TG13. A blocker ticket may land the
+// file first, so a declared new file is green while the tree still lacks it.
+// An unconditional exists check would red every new-file ticket.
+func TestWritesResolveAcceptsNewMarker(t *testing.T) {
+	f := baseFacts()
+	f.Tickets = []tickets.Ticket{{
+		Name:   "one.md",
+		Writes: []string{"internal/example/next.go (new)"},
+		Covers: []string{"PF1", "PF2"},
+	}}
+	f.WritesPathExists = map[string]bool{"internal/example/next.go (new)": false}
+	if c, _ := checkRow(Decide(f), "writes-resolve"); c.Verdict != verdictGreen {
+		t.Fatalf("writes-resolve over a (new) entry the tree lacks = %+v, want green", c)
+	}
+
+	// Mutation control: strip the marker and the same absent path reds.
+	f.Tickets[0].Writes = []string{"internal/example/next.go"}
+	f.WritesPathExists = map[string]bool{"internal/example/next.go": false}
+	if c, _ := checkRow(Decide(f), "writes-resolve"); c.Verdict != verdictRed {
+		t.Fatalf("writes-resolve over the same path without the marker = %+v, want red", c)
+	}
+}
+
+// TestCoversDrivesRowOwnership is TG21 and TG22. The parsed Covers: field is
+// the one citation source, so an uncited declared row and a phantom token each
+// red their own row by name.
+func TestCoversDrivesRowOwnership(t *testing.T) {
+	// TG21: a declared row no ticket cites reds rows-owned naming the row.
+	f := baseFacts()
+	f.DeclaredRowIDs = []string{"PF1", "PF2", "PF3"}
+	c, _ := checkRow(Decide(f), "rows-owned")
+	want := "declared row(s) cited by no ticket file: PF3"
+	if c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("rows-owned = %+v, want the red detailed %q", c, want)
+	}
+
+	// TG22: a Covers: token naming no declared row reds rows-membership naming
+	// the token.
+	f = baseFacts()
+	f.Tickets = coveringTickets("PF1", "PF2", "PF99")
+	c, _ = checkRow(Decide(f), "rows-membership")
+	want = "ticket token(s) under this spec's tag name no declared row: PF99"
+	if c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("rows-membership = %+v, want the red detailed %q", c, want)
+	}
+
+	// Two tickets may share one row: rows-owned needs one owner, not exactly one.
+	f = baseFacts()
+	f.Tickets = []tickets.Ticket{
+		{Name: "one.md", Covers: []string{"PF1"}},
+		{Name: "two.md", Covers: []string{"PF1", "PF2"}},
+	}
+	if c, _ := checkRow(Decide(f), "rows-owned"); c.Verdict != verdictGreen {
+		t.Errorf("rows-owned with a shared row = %+v, want green", c)
+	}
+}
+
+// TestProseRowIDIsNotOwnership is TG20 at the preflight seam. A row ID that
+// appears only in a ticket's prose lands in no parsed Covers: set, so it is
+// not evidence. The deleted bare-token scrape read it as ownership.
+func TestProseRowIDIsNotOwnership(t *testing.T) {
+	f := baseFacts()
+	f.Tickets = []tickets.Ticket{{
+		Name:   "one.md",
+		Title:  "Cover PF1 and mention PF2 in passing",
+		Covers: []string{"PF1"},
+	}}
+	c, _ := checkRow(Decide(f), "rows-owned")
+	want := "declared row(s) cited by no ticket file: PF2"
+	if c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("rows-owned with PF2 named only in prose = %+v, want the red detailed %q", c, want)
+	}
+
+	// A phantom token in prose is equally invisible to rows-membership.
+	f.DeclaredRowIDs = []string{"PF1"}
+	f.Tickets[0].Title = "Cover PF1; PF99 is only prose"
+	if c, _ := checkRow(Decide(f), "rows-membership"); c.Verdict != verdictGreen {
+		t.Errorf("rows-membership with PF99 named only in prose = %+v, want green", c)
+	}
+}
+
+// TestTicketGrammarRowsCarryOwnDetails is the attribution contract: each
+// grammar row reds on its own fact with its own detail, so one red never
+// hides another.
+func TestTicketGrammarRowsCarryOwnDetails(t *testing.T) {
+	f := baseFacts()
+	f.TicketDiagnostics = []string{"one.md: missing Writes"}
+	f.BlockerCycles = []string{"cycle edge one.md -> two.md"}
+	f.Tickets = []tickets.Ticket{{Name: "one.md", Writes: []string{"gone.go"}, Covers: []string{"PF1", "PF2"}}}
+	f.WritesPathExists = map[string]bool{"gone.go": false}
+
+	for _, tc := range []struct{ check, detail string }{
+		{"tickets-parse", "ticket grammar fault(s): one.md: missing Writes"},
+		{"blockers-resolve", "blocker cycle(s): cycle edge one.md -> two.md"},
+		{"writes-resolve", "Writes: entry names no tree path and carries no (new) marker: one.md: gone.go"},
+	} {
+		c, ok := checkRow(Decide(f), tc.check)
+		if !ok || c.Verdict != verdictRed || c.Detail != tc.detail {
+			t.Errorf("%s row = %+v, want the red detailed %q", tc.check, c, tc.detail)
+		}
 	}
 }
 
@@ -345,5 +492,109 @@ func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
 	f.ChangedPaths = []string{"unfenced/path.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictRed {
 		t.Errorf("LS11: path outside every fence and the spec folder = %+v, want red", c)
+	}
+}
+
+// TestFixtureClosureNamesUnnamedFixture covers TG14. A ticket that writes a
+// fixture-pinned path and does not name the pinning fixture directory reds with
+// both the path and the fixture named.
+func TestFixtureClosureNamesUnnamedFixture(t *testing.T) {
+	f := baseFacts()
+	f.WritesFixturePins = map[string][]string{
+		"internal/example/foo.go": {"tests/canary/example-family/pinning-fixture"},
+	}
+	c, ok := checkRow(Decide(f), "fixture-closure")
+	const want = "Writes: entry names a fixture-pinned path without naming the fixture: " +
+		"one.md: internal/example/foo.go is pinned by tests/canary/example-family/pinning-fixture"
+	if !ok || c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("fixture-closure row = %+v, want the red detailed %q", c, want)
+	}
+
+	// Naming the fixture directory closes the row.
+	f.Tickets[0].Writes = append(f.Tickets[0].Writes, "tests/canary/example-family/pinning-fixture")
+	if c, _ := checkRow(Decide(f), "fixture-closure"); c.Verdict != verdictGreen {
+		t.Errorf("fixture-closure with the fixture named = %+v, want green", c)
+	}
+}
+
+// TestRegistryClosureNamesOmittedRegistry covers TG16. A ticket that writes a
+// bound package and omits a bound file reds with the omitted file named.
+func TestRegistryClosureNamesOmittedRegistry(t *testing.T) {
+	f := baseFacts()
+	f.WritesBoundFiles = map[string][]string{
+		"internal/example/foo.go": {"cmd/bench/command_registry.go", "cmd/bench/main_test.go"},
+	}
+	f.Tickets[0].Writes = []string{"internal/example/foo.go", "cmd/bench/command_registry.go"}
+	c, ok := checkRow(Decide(f), "registry-closure")
+	const want = "Writes: entry names a bound package without naming every bound file: " +
+		"one.md: internal/example/foo.go requires cmd/bench/main_test.go"
+	if !ok || c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("registry-closure row = %+v, want the red detailed %q", c, want)
+	}
+
+	f.Tickets[0].Writes = append(f.Tickets[0].Writes, "cmd/bench/main_test.go")
+	if c, _ := checkRow(Decide(f), "registry-closure"); c.Verdict != verdictGreen {
+		t.Errorf("registry-closure with every bound file named = %+v, want green", c)
+	}
+}
+
+// TestKitPinRequiresBenchKit covers TG19 and its green counterpart. A written
+// system-tagged test file reds unless the ticket body states BENCH_KIT; a test
+// file with no system tag stays green either way.
+func TestKitPinRequiresBenchKit(t *testing.T) {
+	f := baseFacts()
+	f.Tickets[0].Writes = []string{"internal/example/sys_test.go"}
+	f.WritesPathExists = map[string]bool{"internal/example/sys_test.go": true}
+	f.WritesSystemTagged = map[string]bool{"internal/example/sys_test.go": true}
+	c, ok := checkRow(Decide(f), "kit-pin")
+	const want = "ticket writes a system-tagged test file without stating BENCH_KIT: " +
+		"one.md: internal/example/sys_test.go"
+	if !ok || c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("kit-pin row = %+v, want the red detailed %q", c, want)
+	}
+
+	f.TicketPinsKit = map[string]bool{"one.md": true}
+	if c, _ := checkRow(Decide(f), "kit-pin"); c.Verdict != verdictGreen {
+		t.Errorf("kit-pin with BENCH_KIT stated = %+v, want green", c)
+	}
+
+	untagged := baseFacts()
+	untagged.Tickets[0].Writes = []string{"internal/example/plain_test.go"}
+	untagged.WritesPathExists = map[string]bool{"internal/example/plain_test.go": true}
+	if c, _ := checkRow(Decide(untagged), "kit-pin"); c.Verdict != verdictGreen {
+		t.Errorf("kit-pin over a test file with no system tag = %+v, want green", c)
+	}
+}
+
+// TestSixRowsNotApplicableWithoutTickets covers TG39. In build mode with no
+// tickets/ directory, the six grammar rows render not-applicable, in order.
+func TestSixRowsNotApplicableWithoutTickets(t *testing.T) {
+	f := baseFacts()
+	f.Mode = modeBuild
+	f.TicketsDirExists = false
+	v := Decide(f)
+
+	want := []string{
+		"tickets-parse", "blockers-resolve", "writes-resolve",
+		"fixture-closure", "registry-closure", "kit-pin",
+	}
+	at := -1
+	for i, c := range v.Checks {
+		if c.Check == want[0] {
+			at = i
+			break
+		}
+	}
+	if at < 0 || at+len(want) > len(v.Checks) {
+		t.Fatalf("Checks = %#v, want the six grammar rows", v.Checks)
+	}
+	for i, name := range want {
+		row := v.Checks[at+i]
+		if row.Check != name || row.Verdict != verdictNA || row.Detail != "" {
+			t.Errorf("grammar row %d = %+v, want %s not-applicable with no detail", i, row, name)
+		}
+	}
+	if v.Red {
+		t.Errorf("Verdict.Red = true, want false when every grammar row is not-applicable")
 	}
 }
