@@ -21,6 +21,10 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/otelrecord"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const processGroupCancelGrace = 2 * time.Second
@@ -135,6 +139,8 @@ func (r phaseResult) green() bool {
 }
 
 func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
+	ctx, closeRecord := beginPhaseRecord(ctx)
+	defer closeRecord()
 	skipLog, cleanup, err := newSkipLog()
 	if err != nil {
 		fmt.Fprintf(stderr, "gate: cannot open the capability skip log: %v\n", err)
@@ -216,6 +222,7 @@ func schedule(ctx context.Context, root string, phases []Phase, open func(Phase)
 			blocker, ready := edgeState(phase, index, settled, results)
 			if blocker != "" {
 				results[i] = phaseResult{Name: phase.Name, Argv: phase.Argv, SkippedBy: blocker}
+				endPhaseSpan(startPhaseSpan(ctx, phase.Name), results[i])
 				logGateEvent(ctx, gateLogRecord{Event: "phase.skip", Phase: phase.Name, Detail: blocker})
 				settled[i] = true
 				progressed = true
@@ -231,8 +238,10 @@ func schedule(ctx context.Context, root string, phases []Phase, open func(Phase)
 			logGateEvent(ctx, gateLogRecord{Event: "phase.start", Phase: phase.Name, Root: phase.Dir})
 			go func() {
 				started := time.Now()
+				span := startPhaseSpan(ctx, phase.Name)
 				out, errOut, closeWriters := open(phase)
 				results[i] = runPhase(ctx, root, phase, out, errOut)
+				endPhaseSpan(span, results[i])
 				// One reading of the clock feeds both the result and the log record. Two
 				// calls would answer two different numbers, and the report and the progress
 				// log would then disagree about the same phase.
@@ -537,4 +546,50 @@ func bytesIndexByte(b []byte, c byte) int {
 		}
 	}
 	return -1
+}
+
+// beginPhaseRecord attaches the seam record of the gate run that started this process.
+// The phases run in their own process, so the repository and the trace come from the
+// environment the run's parent composed. A process outside a recorded run records
+// nothing: TracerFrom then answers a no-op tracer, and the phase spans cost nothing.
+func beginPhaseRecord(ctx context.Context) (context.Context, func()) {
+	root := os.Getenv(otelRootEnv)
+	if root == "" {
+		return ctx, func() {}
+	}
+	provider := otelrecord.NewProvider("", root)
+	ctx = otelrecord.WithTracer(ctx, provider.Tracer())
+	if parent := os.Getenv(otelTraceparentEnv); parent != "" {
+		ctx = propagation.TraceContext{}.Extract(ctx, propagation.MapCarrier{"traceparent": parent})
+	}
+	return ctx, func() { _ = provider.Shutdown(context.WithoutCancel(ctx)) }
+}
+
+// startPhaseSpan opens one phase's span. The phase name is the span name, so a reader
+// derives the per-phase time from the record without a second attribute for it.
+func startPhaseSpan(ctx context.Context, name string) trace.Span {
+	_, span := otelrecord.TracerFrom(ctx).Start(ctx, name,
+		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, otelGatePhaseSeam)))
+	return span
+}
+
+// endPhaseSpan closes a settled phase's span with its exit, and names the need that
+// skipped it. A cascade skip stays attributed to the phase that actually failed.
+func endPhaseSpan(span trace.Span, result phaseResult) {
+	span.SetAttributes(attribute.String(otelrecord.AttrOutcome, phaseSpanOutcome(result)))
+	if result.SkippedBy != "" {
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcomeBlocker, result.SkippedBy))
+	}
+	span.End()
+}
+
+func phaseSpanOutcome(result phaseResult) string {
+	switch {
+	case result.Skipped || result.SkippedBy != "":
+		return "skipped"
+	case result.Code == 0:
+		return "green"
+	default:
+		return "red"
+	}
 }
