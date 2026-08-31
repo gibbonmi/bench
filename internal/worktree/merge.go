@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -89,11 +90,21 @@ func mergeAttributed(assignment *string, j joins, root string, parsed usage.Resu
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
-	result, err := owner.Merge(context.Background(), landing.MergeRequest{
+	request := landing.MergeRequest{
 		Root: root, Branch: target.Branch, PreviousTip: previous, Incoming: incoming,
 		Worktree: target.Worktree, Fingerprint: fingerprint,
 		Subject: mergeSubject(spelling, incoming, target.Label),
 		Stdout:  stdout, Stderr: stderr,
+	}
+	result, err := owner.Merge(context.Background(), request)
+	err = retryEmptyReasonInfrastructureFold(err, func() int {
+		output, code := testreport.Command(root, []string{"--changed", "--base", previous, "--source-tip", incoming})
+		fmt.Fprint(stdout, output)
+		return code
+	}, func() error {
+		var retryErr error
+		result, retryErr = owner.Merge(context.Background(), request)
+		return retryErr
 	})
 	if err != nil {
 		// A composition conflict carries its paths typed, so it renders through the
@@ -121,6 +132,16 @@ func mergeAttributed(assignment *string, j joins, root string, parsed usage.Resu
 	}
 	fmt.Fprintln(stdout, record+"}")
 	return 0
+}
+
+func retryEmptyReasonInfrastructureFold(first error, verify func() int, retry func() error) error {
+	if first == nil || first.Error() != "prospective authorization refused: infrastructure; run bench doctor" {
+		return first
+	}
+	if verify() != 0 {
+		return first
+	}
+	return retry()
 }
 
 // mergeSubject derives the one message the verb publishes, so no `-m` exists and the log
