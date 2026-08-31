@@ -163,13 +163,11 @@ means the repository-controlled compliance assessment.
 
 ## False greens — verdicts that credit unchecked work
 
-Four rows share one failure class: a green whose warrant is missing. The
+Three rows share one failure class: a green whose warrant is missing. The
 missing warrant is a stale binary, a dead or skipping citation, a vacuous
 baseline, an unchecked absence, or a dependency edge nothing resolves. Each
 hardens a different oracle surface. They stay separate builds, but they read
 and prioritize as one theme.
-
-**FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations resolve.**
 
 **FT174 (MEDIUM) — ticket files have one enforced dependency, ownership, and mutation grammar.**
 
@@ -311,7 +309,7 @@ FT100 builds last: after FT89 establishes which guidance is authoritative, and
 after FT231 supplies the measurement that tells a cut from a regression.
 
 FT99 rides the prose batch. FT106 and FT162 remain independently sequenced by
-their existing dependencies. FT133 remains parallel evidence hardening; FT71
+their existing dependencies. FT71
 stays deferred behind its existing FT169 recommendation. FT172 is outside this
 critical path; the FT156 anchor registry shipped, so section-scoped
 `.bench/BENCH.md` anchors — the exact surface the prose batch edits — are now
@@ -319,6 +317,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. Light path — FT133: `bench coverage --check` resolves each cited test name and names the review pickup as a fence member.
-2. Reviewer decision — FT231: settle the measurement harness now that the OpenTelemetry instrumentation record has shipped.
-3. Reviewer decision — the FT280 tip-projection surface.
+1. Reviewer decision — FT231: settle the measurement harness now that the OpenTelemetry instrumentation record has shipped.
+2. Reviewer decision — the FT280 tip-projection surface.
