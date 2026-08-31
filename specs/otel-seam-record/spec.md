@@ -169,6 +169,7 @@ Not covered: story 28 — the FT71 condition is a build-exit rule, and the workf
 - `internal/worktree/exec.go`
 - `internal/worktree/merge.go`
 - `internal/worktree/land.go`
+- `internal/worktree/main_test.go`
 - `internal/harnesses/harnesses.go`
 - `internal/harnesses/harnesses_test.go`
 - `internal/harnesses/command.go`
