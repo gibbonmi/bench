@@ -2,6 +2,7 @@
 
 Blocked by: none
 Writes: CHANGELOG.md, internal/gate/tag_census.go, internal/gate/tag_census_test.go, internal/coverage/citations.go, internal/coverage/citation_execution.go (new), internal/coverage/citation_execution_test.go (new), tests/canary/coverage-map-validation/unexecuted-tag-citation/
+Covers: PS1, PS2, PS3, PS4, PS5, PS6, PS7, PS8, PS9, PS10, PS11, PS12
 
 ## What to build
 
