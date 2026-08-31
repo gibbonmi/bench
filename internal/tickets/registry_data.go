@@ -24,10 +24,20 @@ var commandRegistries = []string{
 	"internal/conformance/subcommand_routing_test.go",
 }
 
+// seedOwners are the package prefixes the table binds beyond the command rows:
+// the dispatcher, the renderer, and the terminal-lifecycle owner. Each one owns
+// pinned test files a ticket must co-name, so the table is the one place their
+// names are stated.
+var seedOwners = []string{"cmd/bench", "internal/toon", "internal/terminal"}
+
+// SeedOwners returns the owner prefixes the binding registry must carry.
+func SeedOwners() []string {
+	return append([]string(nil), seedOwners...)
+}
+
 // bindings is the ordered binding registry, sorted by prefix. The command rows
-// carry the shared registry set. The three owner rows below them are the
-// dispatcher, the renderer, and the terminal-lifecycle owner: established owners
-// that recent builds reconstructed by hand.
+// carry the shared registry set. The rows for the seed owners bind their pinned
+// test files instead.
 var bindings = []BindingRow{
 	{Prefix: "cmd/bench", Files: commandRegistries},
 	{Prefix: "internal/anchors", Files: commandRegistries},

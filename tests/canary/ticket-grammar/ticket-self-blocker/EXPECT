@@ -1,1 +1,1 @@
-ticket-grammar: specs/demo/tickets: solo.md: self blocker solo.md
+ticket-grammar: specs/demo/tickets: solo.md: solo.md: self blocker solo.md

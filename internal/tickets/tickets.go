@@ -1,7 +1,8 @@
-// Package tickets owns the ticket-file grammar. It is a pure decision domain:
-// immutable bytes in, a parsed ticket and ordered diagnostics out. It reads no
-// file, and it drives the shared field scan and graph walk that internal/maps
-// exports, so the two schemas cannot drift.
+// Package tickets owns the ticket-file grammar. The parser is a pure decision
+// domain: immutable bytes in, a parsed ticket and ordered diagnostics out. It
+// drives the shared field scan and graph walk that internal/maps exports, so
+// the two schemas cannot drift. Enumerate is the one seam that reads a tickets
+// directory, so every venue that grades ticket grammar enumerates alike.
 package tickets
 
 import (

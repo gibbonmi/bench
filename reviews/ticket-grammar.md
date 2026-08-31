@@ -76,14 +76,21 @@ TOON detail cell.
 
 ## Repair targets
 
-- R1 — single-source the ticket enumeration and the spec-tag derivation.
-  The sweep gains classify-first order, the duplicate-identity diagnostic,
-  the preflight size bound, and per-file diagnostic prefixes. Update the
-  affected canary EXPECT lines. Add the degenerate-tag case.
-- R2 — guard blocker basenames for representability like `Writes:` entries.
-  Plant a control byte in a field value in both suites. Add the lax-separator
-  `Covers:` table rows.
-- R3 — add the absent-bound-registry-file canary fixture through
-  `MUTATE.json` over `registry_data.go`.
-- R4 — single-source the seed-owner list; reword the provenance comments
-  timelessly; drop the SKILL.md rule numeral.
+- R1 — repaired. `internal/tickets/enumerate.go` is the one enumeration and
+  tag source; both venues call it. The eight affected EXPECT lines carry the
+  per-file prefix.
+- R2 — repaired. `UnrepresentableValue` guards blocker basenames; the
+  control-byte and lax-separator cases are pinned in both suites.
+- R3 — closed as no-op, pending the reviewer veto. The binding table compiles
+  into the binary, so no fixture state can flip the check between the mutated
+  and restored runs. A probe showed both runs emit the same 61 binding
+  diagnostics. TG17 stays pinned by `TestTicketGrammarRedsMissingRegistryFile`.
+  The alternative is a seam change: derive the rows from the subject root's
+  source. That is a reviewer decision, and it is not taken.
+- R4 — repaired. `SeedOwners()` is the one owner list; the gate-side literal
+  stays because its independence makes a deleted owner row red the gate.
+
+## Open for the reviewer
+
+P2 (TG25 narrowing), P5 (closure ergonomics, parked idea), P7 (row-name
+split), P8 (fence amendments), and the R3 no-op closure.

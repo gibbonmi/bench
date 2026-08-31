@@ -1,1 +1,1 @@
-ticket-grammar: specs/demo/tickets: foreign Covers token XY9: spec tag is DM
+ticket-grammar: specs/demo/tickets: one.md: foreign Covers token XY9: spec tag is DM

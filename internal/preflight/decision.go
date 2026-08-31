@@ -524,7 +524,7 @@ func rowsMembershipCheck(f Facts) CheckResult {
 	seen := map[string]bool{}
 	var phantom []string
 	for _, tok := range coversTokens(f) {
-		if tagOf(tok) != f.SpecTag {
+		if tickets.TagOf(tok) != f.SpecTag {
 			continue
 		}
 		if containsStr(f.DeclaredRowIDs, tok) {
@@ -558,14 +558,4 @@ func containsStr(list []string, s string) bool {
 		}
 	}
 	return false
-}
-
-// tagOf is a token's alphabetic prefix — the row-ID tag rows-membership scopes its
-// comparison to, so a foreign tag (FT93) is ignored rather than flagged.
-func tagOf(token string) string {
-	i := 0
-	for i < len(token) && token[i] >= 'A' && token[i] <= 'Z' {
-		i++
-	}
-	return token[:i]
 }

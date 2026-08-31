@@ -60,7 +60,7 @@ build` states the end-to-end behavior. It also states any contract shared with a
 sibling: the crossing lives in this prose and in `Acceptance`, never in a separate
 schema field. Review re-derives the crossing from the tree.
 
-The parser enforces three rules. `Blocked by:` holds `none` or sibling ticket file
+The parser enforces these rules. `Blocked by:` holds `none` or sibling ticket file
 basenames; a basename survives a retitle, and `--ticket` already names it. Each
 `Writes:` path exists in the tree or carries the `(new)` marker. A fixture-pinned path
 also names its fixture, and a bound package also names its registries. `Covers:` holds

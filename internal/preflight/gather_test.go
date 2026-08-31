@@ -89,6 +89,24 @@ func TestNonMarkdownFileIsIgnored(t *testing.T) {
 	}
 }
 
+// TestBlockerControlByteRefused is TG35's field-value half. A blocker basename
+// reaches a rendered detail cell the same way a `Writes:` entry does, so a
+// control byte in one is refused before any verdict row renders.
+func TestBlockerControlByteRefused(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "tickets")
+	document := strings.Replace(ticketDoc("One", "PF1"), "Blocked by: none", "Blocked by: two\x01.md", 1)
+	mustWriteFile(t, filepath.Join(dir, "one.md"), document)
+
+	facts, bootErr := gatherTicketsAt(t, root, dir)
+	if bootErr == nil {
+		t.Fatalf("gatherTickets = (%+v, nil), want a refusal naming the blocker", facts)
+	}
+	if bootErr.Kind != "ticket path not representable" || !strings.Contains(bootErr.Hint, "Blocked by") {
+		t.Fatalf("refusal = %+v, want the Blocked by entry named as unrepresentable", bootErr)
+	}
+}
+
 // TestDuplicateBasenameAcrossDepths is TG38. A blocker edge resolves by
 // basename, so one basename at two depths is an ambiguous identity rather
 // than two tickets.

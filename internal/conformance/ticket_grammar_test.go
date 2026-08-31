@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -19,9 +18,9 @@ import (
 const ticketGrammarPrefix = "ticket-grammar: "
 
 // ticketGrammarOwners are the binding rows the table must always carry: the
-// dispatcher, the renderer, and the terminal-lifecycle owner. They are
-// established owners that recent builds reconstructed by hand, so their absence
-// is a fault rather than a choice.
+// dispatcher, the renderer, and the terminal-lifecycle owner. The list is
+// stated here rather than read from the registry, so a deleted owner row reds
+// the gate instead of quietly shrinking the expectation with it.
 var ticketGrammarOwners = []string{"cmd/bench", "internal/toon", "internal/terminal"}
 
 // checkTicketGrammar grades every staged spec's ticket files and the binding
@@ -63,7 +62,8 @@ func sweepTicketFolders(root string) []string {
 // gradeTicketFolder grades one spec folder's tickets. The spec tag scopes the
 // citation grammar. A folder with no spec.md is a light-path tickets folder:
 // the empty tag skips the Covers row checks, and every other grammar stays in
-// force there.
+// force there. The enumeration is the tickets package seam preflight reads
+// through, so the two venues cannot disagree about what a ticket folder holds.
 func gradeTicketFolder(root, slug string) []string {
 	rel := "specs/" + slug + "/tickets"
 	dir := filepath.Join(root, "specs", slug, "tickets")
@@ -75,23 +75,29 @@ func gradeTicketFolder(root, slug string) []string {
 	default:
 		return []string{ticketGrammarUnreadable(rel, classified.State, classified.Reason)}
 	}
-	files, refusal := ticketGrammarFiles(dir, classified)
-	if refusal != "" {
-		return []string{ticketGrammarUnreadable(rel, bounds.StateUnreadable, refusal)}
+	files, duplicates, refusal := tickets.Enumerate(dir, classified.Entries)
+	if refusal != nil {
+		return []string{ticketGrammarPrefix + rel + ": " + refusal.Kind + ": " + refusal.Hint}
 	}
 	tag := ticketGrammarSpecTag(filepath.Join(root, "specs", slug, "spec.md"))
 	names := make([]string, 0, len(files))
-	for name := range files {
-		names = append(names, name)
+	for _, file := range files {
+		names = append(names, file.Name)
 	}
-	sort.Strings(names)
 	var diags []string
-	parsed := make([]tickets.Ticket, 0, len(names))
-	for _, name := range names {
-		ticket, ticketDiags := tickets.ParseTicket(name, files[name], names, tag)
+	for _, duplicate := range duplicates {
+		diags = append(diags, ticketGrammarPrefix+rel+": "+duplicate)
+	}
+	parsed := make([]tickets.Ticket, 0, len(files))
+	for _, file := range files {
+		ticket, ticketDiags := tickets.ParseTicket(file.Name, file.Data, names, tag)
 		parsed = append(parsed, ticket)
+		if field, value, unrepresentable := tickets.UnrepresentableValue(ticket); unrepresentable {
+			diags = append(diags, fmt.Sprintf("%s%s: %s declares a %s: entry %q with a byte spec-TOON cannot represent", ticketGrammarPrefix, rel, file.Rel, field, value))
+			continue
+		}
 		for _, diag := range ticketDiags {
-			diags = append(diags, ticketGrammarPrefix+rel+": "+diag)
+			diags = append(diags, ticketGrammarPrefix+rel+": "+file.Rel+": "+diag)
 		}
 	}
 	for _, cycle := range tickets.Cycles(parsed) {
@@ -100,64 +106,15 @@ func gradeTicketFolder(root, slug string) []string {
 	return diags
 }
 
-// ticketGrammarFiles collects every `.md` ticket under one already-classified
-// directory, keyed by basename, recursing with the same lstat-first
-// classification at every depth. A non-`.md` entry is an asset the grammar
-// ignores. A refusal anywhere below returns the reason, so the folder reds
-// rather than grading a partial listing.
-func ticketGrammarFiles(dir string, classified bounds.ClassifiedDir) (map[string][]byte, string) {
-	files := map[string][]byte{}
-	for _, entry := range classified.Entries {
-		path := filepath.Join(dir, entry.Name())
-		if entry.IsDir() {
-			below := bounds.ClassifyDir(path)
-			switch below.State {
-			case bounds.StateEmpty:
-				continue
-			case bounds.StateParsed:
-			default:
-				return nil, entry.Name() + " is " + string(below.State) + ": " + below.Reason
-			}
-			nested, refusal := ticketGrammarFiles(path, below)
-			if refusal != "" {
-				return nil, refusal
-			}
-			for name, data := range nested {
-				files[name] = data
-			}
-			continue
-		}
-		if !strings.HasSuffix(entry.Name(), ".md") {
-			continue
-		}
-		read := bounds.ClassifyNoFollow(path)
-		switch read.State {
-		case bounds.StateEmpty:
-			files[entry.Name()] = nil
-		case bounds.StateParsed:
-			files[entry.Name()] = read.Data
-		default:
-			return nil, entry.Name() + " is " + string(read.State) + ": " + read.Reason
-		}
-	}
-	return files, ""
-}
-
-// ticketGrammarSpecTag is the alphabetic prefix the spec's declared row IDs
-// share. A folder with no readable coverage map answers the empty tag, which is
-// the tickets-only posture the parser already understands.
+// ticketGrammarSpecTag is the tag the spec's declared row IDs share. A folder
+// with no readable coverage map answers the empty tag, which is the
+// tickets-only posture the parser already understands.
 func ticketGrammarSpecTag(specPath string) string {
 	_, ids, _, err := coverage.ParseSpec(specPath)
 	if err != nil || len(ids) == 0 {
 		return ""
 	}
-	id := ids[0]
-	for i := 0; i < len(id); i++ {
-		if id[i] >= '0' && id[i] <= '9' {
-			return id[:i]
-		}
-	}
-	return id
+	return tickets.TagOf(ids[0])
 }
 
 // gradeTicketBindings grades the command-to-registry binding table the
@@ -235,7 +192,7 @@ func TestTicketGrammarSweepRedsDanglingBlocker(t *testing.T) {
 	root := ticketGrammarRoot(t)
 	writeTicketGrammarFile(t, root, "specs/demo/spec.md", "# Demo\n\n| row | story |\n|---|---|\n| DM1 | 1 |\n")
 	writeTicketGrammarFile(t, root, "specs/demo/tickets/one.md", ticketBody("One", "gone.md", "a.go (new)", "DM1"))
-	want := "ticket-grammar: specs/demo/tickets: one.md: dangling blocker gone.md"
+	want := "ticket-grammar: specs/demo/tickets: one.md: one.md: dangling blocker gone.md"
 	diags := checkTicketGrammar(root)
 	if len(diags) != 1 || diags[0] != want {
 		t.Fatalf("dangling blocker = %v, want exactly [%q]", diags, want)
@@ -261,7 +218,7 @@ func TestTicketGrammarSweepSkipsCoversWithoutSpec(t *testing.T) {
 		t.Fatalf("tickets-only folder = %v, want the Covers checks skipped", diags)
 	}
 	writeTicketGrammarFile(t, root, "specs/light/tickets/two.md", ticketBody("Two", "gone.md", "b.go (new)", "XY8"))
-	want := "ticket-grammar: specs/light/tickets: two.md: dangling blocker gone.md"
+	want := "ticket-grammar: specs/light/tickets: two.md: two.md: dangling blocker gone.md"
 	if diags := checkTicketGrammar(root); len(diags) != 1 || diags[0] != want {
 		t.Fatalf("tickets-only folder with a dangling blocker = %v, want exactly [%q]", diags, want)
 	}

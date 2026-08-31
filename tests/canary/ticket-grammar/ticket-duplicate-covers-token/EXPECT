@@ -1,1 +1,1 @@
-ticket-grammar: specs/demo/tickets: duplicate Covers token DM1
+ticket-grammar: specs/demo/tickets: one.md: duplicate Covers token DM1

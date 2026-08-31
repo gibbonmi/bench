@@ -1,1 +1,1 @@
-ticket-grammar: specs/demo/tickets: duplicate Blocked by
+ticket-grammar: specs/demo/tickets: one.md: duplicate Blocked by

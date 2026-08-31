@@ -258,6 +258,20 @@ func TestParseTicketCoversGrammar(t *testing.T) {
 			parsed: []string{"TG1", "XX2"},
 		},
 		{
+			name:   "a lax comma separator is one malformed token",
+			covers: "TG1,TG2",
+			tag:    "TG",
+			want:   []string{`malformed Covers token "TG1,TG2"`},
+			parsed: []string{"TG1,TG2"},
+		},
+		{
+			name:   "a trailing comma is one malformed token",
+			covers: "TG1,",
+			tag:    "TG",
+			want:   []string{`malformed Covers token "TG1,"`},
+			parsed: []string{"TG1,"},
+		},
+		{
 			name:   "a malformed token is named",
 			covers: "TG1, TG-2",
 			tag:    "TG",

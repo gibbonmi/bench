@@ -1,1 +1,1 @@
-ticket-grammar: specs/demo/tickets: one.md: dangling blocker gone.md
+ticket-grammar: specs/demo/tickets: one.md: one.md: dangling blocker gone.md

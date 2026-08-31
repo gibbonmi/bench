@@ -34,11 +34,11 @@ func TestRegistryBindingRowsAreSorted(t *testing.T) {
 	}
 }
 
-// TestBindingRegistryCarriesTheSeedOwners keeps the dispatcher, the renderer, and
-// the terminal-lifecycle owner in the table. Recent builds reconstructed these
-// three by hand because no registry named them.
+// TestBindingRegistryCarriesTheSeedOwners keeps a binding row for every declared
+// seed owner. An owner with no row is an owner a ticket author reconstructs by
+// hand.
 func TestBindingRegistryCarriesTheSeedOwners(t *testing.T) {
-	for _, prefix := range []string{"cmd/bench", "internal/toon", "internal/terminal"} {
+	for _, prefix := range SeedOwners() {
 		found := false
 		for _, row := range Bindings() {
 			if row.Prefix == prefix {

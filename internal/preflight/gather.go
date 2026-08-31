@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"go/build/constraint"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,7 +17,6 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/tickets"
-	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // BootstrapFailure is the fail-closed bootstrap answer. An artifact
@@ -258,19 +256,7 @@ func specTag(ids []string) string {
 	if len(ids) == 0 {
 		return ""
 	}
-	return tagOf(ids[0])
-}
-
-// ticketExt is the one extension the grammar parses. Any other entry under
-// tickets/ is an asset the grammar ignores rather than grades.
-const ticketExt = ".md"
-
-// ticketFile is one enumerated ticket: the path it is named by in a
-// diagnostic, its basename identity, and its bytes.
-type ticketFile struct {
-	rel  string
-	name string
-	data []byte
+	return tickets.TagOf(ids[0])
 }
 
 // ticketFacts is everything the gatherer learns from specs/<slug>/tickets/.
@@ -316,11 +302,11 @@ func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure)
 		return ticketFacts{}, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
 	}
 
-	files, scanErr := scanTicketEntries(dir, dir, d.Entries)
-	if scanErr != nil {
-		return ticketFacts{}, scanErr
+	files, duplicates, refusal := tickets.Enumerate(dir, d.Entries)
+	if refusal != nil {
+		return ticketFacts{}, &BootstrapFailure{refusal.Kind, refusal.Hint}
 	}
-	facts, gradeErr := gradeTickets(root, files, tag)
+	facts, gradeErr := gradeTickets(root, files, duplicates, tag)
 	if gradeErr != nil {
 		return ticketFacts{}, gradeErr
 	}
@@ -328,69 +314,13 @@ func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure)
 	return facts, nil
 }
 
-// scanTicketEntries walks one already-classified directory listing,
-// collecting the `.md` files and recursing into subdirectories with the
-// same lstat-first classification gatherTickets applies at the top level.
-// The special-file refusal holds at every depth, not only the first.
-//
-// A path spec-TOON cannot render is refused here, before any verdict row
-// can carry it into a detail cell. The refusal never depends on which row
-// a later check would sort the path into.
-func scanTicketEntries(base, dir string, entries []fs.DirEntry) ([]ticketFile, *BootstrapFailure) {
-	var files []ticketFile
-	for _, entry := range entries {
-		path := filepath.Join(dir, entry.Name())
-		if entry.IsDir() {
-			sub := bounds.ClassifyDir(path)
-			switch sub.State {
-			case bounds.StateEmpty:
-				// nothing to scan
-			case bounds.StateParsed:
-				subFiles, subErr := scanTicketEntries(base, path, sub.Entries)
-				if subErr != nil {
-					return nil, subErr
-				}
-				files = append(files, subFiles...)
-			default:
-				return nil, &BootstrapFailure{"tickets directory not readable", path + " is " + string(sub.State) + ": " + sub.Reason}
-			}
-			continue
-		}
-		rel := filepath.ToSlash(relTo(base, path))
-		if !toon.Representable(rel) {
-			return nil, &BootstrapFailure{"ticket path not representable", fmt.Sprintf("ticket %q contains a byte spec-TOON cannot represent", rel)}
-		}
-		c := bounds.Classify(path, bounds.ControlRecordLimit)
-		unreadable := &BootstrapFailure{"ticket file not readable", path + " is " + string(c.State) + ": " + c.Reason}
-		// A special file, a dangling symlink, and an unreadable entry are
-		// refused whatever they are named. The extension decides what parses
-		// as a ticket, never whether a broken entry may read as green.
-		switch c.State {
-		case bounds.StateWrongType, bounds.StateUnreadable, bounds.StateAbsent:
-			return nil, unreadable
-		}
-		if filepath.Ext(entry.Name()) != ticketExt {
-			continue
-		}
-		switch c.State {
-		case bounds.StateParsed, bounds.StateEmpty:
-			files = append(files, ticketFile{rel: rel, name: entry.Name(), data: c.Data})
-		default:
-			return nil, unreadable
-		}
-	}
-	return files, nil
-}
-
 // gradeTickets parses each enumerated ticket against its siblings and the
 // spec tag, and probes the tree for every declared `Writes:` entry. The
 // probe is the gatherer's whole I/O contribution to the ownership row;
-// the policy over the resulting bit belongs to Decide.
-//
-// A basename that appears at two depths is a duplicate identity, because a
-// blocker edge resolves by basename alone. The second copy is named and
-// dropped, so the sibling set stays one name per ticket.
-func gradeTickets(root string, files []ticketFile, tag string) (ticketFacts, *BootstrapFailure) {
+// the policy over the resulting bit belongs to Decide. The duplicate-identity
+// diagnostics the enumeration reports open the diagnostic list, so a duplicate
+// basename is named before the grammar faults below it.
+func gradeTickets(root string, files []tickets.Entry, duplicates []string, tag string) (ticketFacts, *BootstrapFailure) {
 	pins, pinErr := canary.FixturePins(root)
 	if pinErr != nil {
 		return ticketFacts{}, &BootstrapFailure{"fixture inventory not readable", pinErr.Error()}
@@ -402,33 +332,24 @@ func gradeTickets(root string, files []ticketFile, tag string) (ticketFacts, *Bo
 		systemTag: map[string]bool{},
 		kitPinned: map[string]bool{},
 	}
-	seen := make(map[string]string, len(files))
-	unique := make([]ticketFile, 0, len(files))
+	facts.diagnostics = append(facts.diagnostics, duplicates...)
+
+	siblings := make([]string, 0, len(files))
 	for _, file := range files {
-		if first, duplicate := seen[file.name]; duplicate {
-			facts.diagnostics = append(facts.diagnostics, fmt.Sprintf("duplicate ticket basename %s at %s and %s", file.name, first, file.rel))
-			continue
+		siblings = append(siblings, file.Name)
+	}
+
+	for _, file := range files {
+		parsed, diagnostics := tickets.ParseTicket(file.Name, file.Data, siblings, tag)
+		if field, value, unrepresentable := tickets.UnrepresentableValue(parsed); unrepresentable {
+			return ticketFacts{}, &BootstrapFailure{"ticket path not representable", fmt.Sprintf("%s declares a %s: entry %q with a byte spec-TOON cannot represent", file.Rel, field, value)}
 		}
-		seen[file.name] = file.rel
-		unique = append(unique, file)
-	}
-
-	siblings := make([]string, 0, len(unique))
-	for _, file := range unique {
-		siblings = append(siblings, file.name)
-	}
-
-	for _, file := range unique {
-		parsed, diagnostics := tickets.ParseTicket(file.name, file.data, siblings, tag)
 		for _, diagnostic := range diagnostics {
-			facts.diagnostics = append(facts.diagnostics, file.rel+": "+diagnostic)
+			facts.diagnostics = append(facts.diagnostics, file.Rel+": "+diagnostic)
 		}
 		facts.parsed = append(facts.parsed, parsed)
-		facts.kitPinned[file.name] = bytes.Contains(file.data, []byte(kitEnvMarker))
+		facts.kitPinned[file.Name] = bytes.Contains(file.Data, []byte(kitEnvMarker))
 		for _, entry := range parsed.Writes {
-			if !toon.Representable(entry) {
-				return ticketFacts{}, &BootstrapFailure{"ticket path not representable", fmt.Sprintf("%s declares a Writes: entry %q with a byte spec-TOON cannot represent", file.rel, entry)}
-			}
 			path, _ := splitWritesEntry(entry)
 			facts.writes[entry] = treeHolds(root, path)
 			if pinning := pins[path]; len(pinning) > 0 {

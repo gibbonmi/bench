@@ -1,1 +1,1 @@
-ticket-grammar: specs/demo/tickets: unterminated fence
+ticket-grammar: specs/demo/tickets: one.md: unterminated fence
