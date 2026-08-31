@@ -63,8 +63,6 @@ means the repository-controlled compliance assessment.
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
-**FT274 (MEDIUM) — Bench records Bench-owned FT231 measures with OpenTelemetry.**
-
 **FT275 (MEDIUM) — code built under Bench traces its declared seams with OpenTelemetry.**
 
 **FT172 (MEDIUM, decision required) — the roadmap row grammar is a contract, and `roadmap_id` has one decided source.**
