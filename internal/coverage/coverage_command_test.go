@@ -2,6 +2,7 @@
 package coverage
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -350,4 +351,89 @@ func TestCommandAngleBracketSpecPathPreservesPrimaryAndHonestFallback(t *testing
 			}
 		})
 	}
+}
+
+// uncitedFixture writes a folder spec at <root>/specs/s/spec.md whose rows carry the
+// three seam cells the report classifies, chdirs to that root, and writes the one cited
+// test file those rows resolve against. hdr picks the schema and row renders one row for
+// it, so the same cells drive the opted-in and the non-opt-in arm.
+//
+// BENCH_KIT points at an empty tree, so the gate derives no test phase for this root and
+// the execution arm stays inapplicable. Without that pin the ambient kit would decide
+// whether the fixture's citation greens.
+func uncitedFixture(t *testing.T, marker, hdr string, row func(n int, seam string) string) {
+	t.Helper()
+	root := t.TempDir()
+	t.Setenv("BENCH_KIT", t.TempDir())
+	seams := []string{
+		"prose about the seam, with no citation",
+		"review-owned: the Standards axis reads the type",
+		"`internal/x/foo_test.go` (`TestPresent`)",
+	}
+	body := "# s\n\n" + marker + stories + "\n### Acceptance coverage map\n" + hdr
+	for i, seam := range seams {
+		body += row(i+1, seam)
+	}
+	writeUnder(t, filepath.Join(root, "specs", "s", "spec.md"), body)
+	writeUnder(t, filepath.Join(root, "internal", "x", "foo_test.go"), "package x\n\nfunc TestPresent(t *testing.T) {}\n")
+	t.Chdir(root)
+}
+
+// TestUncitedRowReport grades the uncited-row report at the surface a build reads. The
+// report is informational: it names the rows no citation backs, and it leaves the pass
+// line and the exit code alone.
+func TestUncitedRowReport(t *testing.T) {
+	reducedRow := func(n int, seam string) string {
+		return fmt.Sprintf("| 1 | b%d | %s | w |\n", n, seam)
+	}
+	optInRow := func(n int, seam string) string {
+		return fmt.Sprintf("| CE%d | 1 | b%d | %s | w |\n", n, n, seam)
+	}
+	pass := checkOKLine("coverage map valid — 3 row(s)")
+
+	t.Run("a non-opt-in map names the uncited row by its row number", func(t *testing.T) {
+		uncitedFixture(t, "", hdrReduced, reducedRow)
+
+		out, code := Command([]string{"--check", "specs/s/spec.md"})
+		want := pass + "uncited: 1 row(s) with no seam-cell citation — 1\n"
+		if code != 0 || out != want {
+			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+		}
+	})
+
+	t.Run("an opted-in map names the uncited row by its row id", func(t *testing.T) {
+		uncitedFixture(t, "", hdrReducedID, optInRow)
+
+		out, code := Command([]string{"--check", "specs/s/spec.md"})
+		want := pass + "uncited: 1 row(s) with no seam-cell citation — CE1\n"
+		if code != 0 || out != want {
+			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+		}
+	})
+
+	t.Run("a historical spec emits no report", func(t *testing.T) {
+		uncitedFixture(t, historicalMarker+"\n\n", hdrReduced, reducedRow)
+
+		out, code := Command([]string{"--check", "specs/s/spec.md"})
+		want := checkOKLine("coverage map historical — validation skipped")
+		if code != 0 || out != want {
+			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+		}
+	})
+
+	t.Run("a fully cited map emits no report", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("BENCH_KIT", t.TempDir())
+		body := "# s\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced +
+			"| 1 | b | `internal/x/foo_test.go` (`TestPresent`) | w |\n"
+		writeUnder(t, filepath.Join(root, "specs", "s", "spec.md"), body)
+		writeUnder(t, filepath.Join(root, "internal", "x", "foo_test.go"), "package x\n\nfunc TestPresent(t *testing.T) {}\n")
+		t.Chdir(root)
+
+		out, code := Command([]string{"--check", "specs/s/spec.md"})
+		want := checkOKLine("coverage map valid — 1 row(s)")
+		if code != 0 || out != want {
+			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
+		}
+	})
 }

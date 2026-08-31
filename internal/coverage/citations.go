@@ -309,3 +309,47 @@ func checkReviewPickup(p parsed, slug string) []string {
 	}
 	return []string{fmt.Sprintf("coverage map spec declares ownership fences without the review pickup '%s'", want)}
 }
+
+// reviewOwnedPrefix marks a seam cell whose evidence a review axis owns rather than a
+// test. It is the one marker grammar for that state, matched literally on the lowercase
+// form, so a deliberate exclusion reads the same to a human and to this check.
+const reviewOwnedPrefix = "review-owned:"
+
+// uncitedRows names each mapped row whose seam cell holds no citation and carries no
+// review-owned marker. It reads the same seam-cell projection and the same citation
+// grammar the violation checks read, so a cell cannot be a citation to one and prose to
+// the other.
+//
+// An opted-in map names its rows by their row IDs, which survive a reorder. A non-opt-in
+// map has only the positional row number to name.
+func uncitedRows(p parsed) []string {
+	if State(p) != "mapped" {
+		return nil
+	}
+	s := p.projection()
+	var names []string
+	for idx, r := range p.dataRows {
+		cell := strings.TrimSpace(s.cell(r, fieldSeam))
+		if strings.HasPrefix(cell, reviewOwnedPrefix) || citesATest(cell) {
+			continue
+		}
+		if s.optIn() {
+			names = append(names, s.cell(r, fieldRow))
+			continue
+		}
+		names = append(names, strconv.Itoa(idx+1))
+	}
+	return names
+}
+
+// citesATest reports whether a seam cell holds at least one citation: a test path with a
+// name list that names something. A bare path is a mention and an empty list names
+// nothing, so neither is evidence, and both are graded elsewhere.
+func citesATest(cell string) bool {
+	for _, m := range citationRe.FindAllStringSubmatchIndex(cell, -1) {
+		if m[4] >= 0 && citedNameRe.MatchString(cell[m[4]:m[5]]) {
+			return true
+		}
+	}
+	return false
+}

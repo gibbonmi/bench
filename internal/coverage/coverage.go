@@ -500,6 +500,20 @@ func isDashes(s string) bool {
 // prefix over a message that names why the check passed, never silence.
 func checkOKLine(msg string) string { return fmt.Sprintf("ok: %s\n", msg) }
 
+// uncitedLine renders the informational report that rides beside the pass line: the
+// count of mapped rows no citation backs, and their names. It is one line, so a green
+// check stays a bounded read. A map with nothing to report renders nothing, which keeps
+// the pass line the whole response in the common case.
+//
+// The report joins no violation list and changes no exit code. It tells a build which
+// rows are not yet wired; it does not claim they are faults.
+func uncitedLine(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("uncited: %d row(s) with no seam-cell citation — %s\n", len(names), strings.Join(names, ", "))
+}
+
 // ParseSpec reads and parses the coverage map at path. It is the package's one
 // exported entry point for callers that cannot construct the unexported parsed type
 // themselves: internal/preflight reads a spec's opt-in verdict, ordered row IDs, and
@@ -551,7 +565,7 @@ func Command(args []string) (string, int) {
 			// marker, mapped or not. A third silent state added there needs its own pass
 			// line here.
 			if State(p) == "mapped" {
-				return checkOKLine(fmt.Sprintf("coverage map valid — %d row(s)", len(p.dataRows))), 0
+				return checkOKLine(fmt.Sprintf("coverage map valid — %d row(s)", len(p.dataRows))) + uncitedLine(uncitedRows(p)), 0
 			}
 			return checkOKLine("coverage map historical — validation skipped"), 0
 		}
