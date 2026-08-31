@@ -253,6 +253,7 @@ exclusions:
 - `tests/canary/workflow-guidance-anchors`
 - `.agents/skills/bench-craft-tickets/SKILL.md`
 - `projects/benchkit.md`
+- `internal/systemtest/owner_land_race_test.go`
 
 ## Out of scope
 

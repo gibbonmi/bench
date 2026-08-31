@@ -1,7 +1,7 @@
 # Register the ticket-grammar conformance sweep
 
 Blocked by: close-the-ownership-closures.md
-Writes: internal/conformance/ticket_grammar_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/registry.go, projects/benchkit.md
+Writes: internal/conformance/ticket_grammar_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/registry.go, projects/benchkit.md, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading, tests/canary/workflow-guidance-anchors/benchkit-review-round-owner, tests/canary/workflow-guidance-anchors/benchkit-review-round-routing, tests/canary/workflow-guidance-anchors/benchkit-spec-ownership
 Covers: TG17, TG18, TG25, TG27, TG28, TG36
 
 ## What to build

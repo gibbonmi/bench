@@ -1,7 +1,7 @@
 # Lift the shared field grammar out of the maps package
 
 Blocked by: none
-Writes: internal/maps/fields.go (new), internal/maps/schema.go, internal/maps/validation.go, internal/maps/maps_parse_test.go, internal/maps/maps_graph_test.go
+Writes: internal/maps/fields.go (new), internal/maps/schema.go, internal/maps/validation.go, internal/maps/maps_parse_test.go, internal/maps/maps_graph_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_test.go
 Covers: TG4, TG5
 
 ## What to build
