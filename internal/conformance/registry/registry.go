@@ -180,6 +180,7 @@ var familyChecks = map[string]string{
 	"prose-mechanics":               "prose-mechanics",
 	"entry-point-parity":            "entry-point-parity",
 	"harness-record":                "harness-record",
+	"ticket-grammar":                "ticket-grammar",
 }
 
 // Families lists the family names this table binds, in sorted order. They are the table's

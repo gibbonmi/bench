@@ -214,6 +214,11 @@ var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
 		"internal/conformance/harness_record_test.go",
 		"internal/conformance/checks_test.go",
 	),
+	"ticket-grammar": conformanceGoFixture(
+		"internal/tickets/tickets.go",
+		"internal/tickets/registry_data.go",
+		"internal/conformance/ticket_grammar_test.go",
+	),
 }
 
 func conformanceFixture(shellSources ...string) fixtureRegistration {
