@@ -229,7 +229,7 @@ exclusions:
   edits, and `paths-authorized` still grades the real diff against the spec
   fence.
 - **Won't handle:** cross-folder blocker edges — a ticket blocks only on
-  siblings; single-spec builds survive as the in-scope caller.
+  siblings; a build inside one spec survives as the in-scope caller.
 - **Won't handle:** `## Delegate charge` content grading — `craft-delegate`
   and review own charge quality; the parser only tolerates the heading.
 - **Won't handle:** needle tables pinned inside Go test files — the fixture
@@ -249,6 +249,7 @@ exclusions:
 - `internal/conformance`
 - `internal/canary`
 - `tests/canary/ticket-grammar` (new)
+- `reviews/ticket-grammar.md` (new)
 - `tests/canary/workflow-guidance-anchors`
 - `.agents/skills/bench-craft-tickets/SKILL.md`
 - `projects/benchkit.md`
