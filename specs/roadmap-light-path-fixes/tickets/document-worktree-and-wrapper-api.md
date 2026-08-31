@@ -1,0 +1,19 @@
+# Document worktree and wrapper contracts
+
+Blocked by: add-retrospective-writer.md, retain-explicit-signal-safe-worktree-shell.md
+Writes: internal/worktree/lifecycle.go, internal/worktree/ownership.go, internal/worktree/worktree.go, cmd/bench/main.go
+Covers: LF19
+
+## What to build
+
+Document ProbeLease, Acquire, Release, Create, Pool, LeaseFile,
+ClassifyRegisteredWorktrees, CleanCommand, ReleaseCommand, CreateCommand,
+Subshell, and top-level worktree dispatch. State lease, ownership, cleanup,
+and parser boundaries without port narration.
+
+## Acceptance
+
+- [ ] All eleven named functions state their caller-facing contracts.
+- [ ] Cleanup comments distinguish planning from mutation.
+- [ ] Wrapper dispatch identifies which leaf owns each grammar.
+- [ ] Edited comments contain no provenance or reviewer argument.
