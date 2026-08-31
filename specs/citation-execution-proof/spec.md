@@ -6,7 +6,7 @@ Roadmap: FT133
 
 Decision source: roadmap/FT133.md plus the recommended sequence in ROADMAP.md (reviewed 2026-08-30 drain 2238d8fa). Commit 926af243 delivered the light-path half; this spec covers the remainder.
 
-Verification log: 2 iteration(s) to accept — the author folded the round's named B2 repair after the cap: the census reads the resolved phase table.
+Verification log: 2 iteration(s) to accept — the author folded the round's named B2 repair after the cap: the census reads the resolved phase table. Amendment round (uncited-row report): 2 iteration(s) to accept — the round caught the missing cited-row exclusion, folded as row CE27.
 
 ## Problem
 
@@ -31,6 +31,11 @@ mention, a stale subtest segment, and a mixed-tag row-ID set as violations.
 Make the shipped-surface conformance check stat every allowlist source path.
 Prove each new diagnostic with a canary fixture in the
 coverage-map-validation family.
+
+Add one informational report to `--check`: name each mapped row whose seam
+cell holds no citation, unless the seam cell carries the `review-owned:`
+prefix. The report adds no violation, so a staged spec stays green and a
+build proves a new row is wired in one call.
 
 ## User stories
 
@@ -82,6 +87,15 @@ Line: opus / medium. The scorecard routes gate and conformance logic to Opus at 
 17. As a spec author, I want the historical marker to keep silencing every coverage check, so that the opt-out stays whole.
 18. As a preflight consumer, I want the new violations surfaced through the shared parse entry point, so that the review preflight and the gate agree.
 
+### Group G — an uncited row is named
+
+Line: opus / medium. The scorecard routes gate and conformance logic to Opus at medium effort.
+
+19. As a build delegate, I want `--check` to name each row with no seam-cell citation, so that I prove a new row is wired.
+20. As a spec author, I want the `review-owned:` prefix to exempt a seam cell from the report, so that a deliberate exclusion adds no noise.
+21. As a preflight consumer, I want the uncited report kept out of the violation list, so that a staged spec with planned-test prose stays green.
+22. As a build delegate, I want the report to name an opted-in row by its row ID, so that the name survives a row reorder.
+
 ## Implementation decisions
 
 - The executed tag census is one exported derivation in the gate package. It
@@ -113,14 +127,25 @@ Line: opus / medium. The scorecard routes gate and conformance logic to Opus at 
   file row must name a regular file, on both audiences.
 - Cited paths are classified before an open, with `bounds.ClassifyNoFollow`,
   so a FIFO or a link reds instead of blocking.
+- The uncited report is one row classification beside the citation grammar. A
+  row is cited when its seam cell holds at least one citation. A row is exempt
+  when its trimmed seam cell starts with the `review-owned:` prefix. Every
+  other mapped row is uncited. That prefix is the one marker grammar, and the
+  delivered no-citation test already uses it. The match is literal and
+  case-sensitive on the lowercase form.
+- The report renders in the `--check` arm of the coverage command, beside the
+  pass line. It joins no violation list, and the exit code does not change.
+  An opted-in map's report names the row ID; a non-opt-in map's report names
+  the row number. The report is one bounded line: the row count plus the row
+  names.
 
 ## Testing decisions
 
 - A good test drives `bench coverage --check` or the shared parse entry point
   over a written spec fixture and asserts the exact violation text.
-- Seams with prior art: the coverage package's citation tests, the gate
-  package's phase-table tests, the shipped-surface conformance test, and the
-  coverage-map-validation canary family.
+- Seams with prior art: the coverage package's citation tests, its command
+  tests, the gate package's phase-table tests, the shipped-surface
+  conformance test, and the coverage-map-validation canary family.
 - The gate observes the feature through the staged-spec sweep in the
   docs-currency conformance family and through the canary meta-gate.
 
@@ -165,6 +190,11 @@ Line: opus / medium. The scorecard routes gate and conformance logic to Opus at 
 | CE21 | 1 | a graded root with no test phase leaves the execution check inapplicable | coverage test over a fixture root without a test phase | a fail-closed default would red every non-Go root |
 | CE22 | 3 | a cited file behind a manifest-declared custom tag passes | new manifest fixture case in TestCitationUnexecutedConstraint | a hardcoded census copy cannot see a manifest tag |
 | CE19 | 18 | the shared parse entry point returns the mixed-tag, mention, subtest, and unexecuted-constraint classes | new assertion in the coverage package on the exported entry point | the preflight and the gate would otherwise disagree |
+| CE23 | 19 | `--check` on a green non-opt-in map names each uncited row by its row number | new test TestUncitedRowReport in package internal/coverage | a build cannot prove a new row is wired without a hand read |
+| CE24 | 20 | a seam cell with the `review-owned:` prefix is absent from the uncited report | the same command test adds a marked row | an unexempt marker turns every deliberate exclusion into noise |
+| CE25 | 21 | the uncited report leaves the check's exit code at zero | the same command test asserts the exit code | a fail-closed report would red every staged spec |
+| CE26 | 22 | an opted-in map's uncited report names the row by its row ID | the same command test drives an opted-in fixture | a positional number goes stale on a row reorder |
+| CE27 | 19 | a row whose seam cell holds a citation is absent from the uncited report | the same command test cites a declared test file | a report that names every mapped row would pass the sibling rows |
 
 ### Edge inventory
 
@@ -173,6 +203,10 @@ Line: opus / medium. The scorecard routes gate and conformance logic to Opus at 
 - A cited file with no build constraint always satisfies the census (CE4 covers the untagged arm).
 - An empty parenthesized list stays a non-citation, unchanged (existing behavior, pinned by the delivered tests).
 - A spec path with spaces resolves through the existing resolver (delivered behavior, unchanged).
+- A historical spec emits no uncited report; the historical pass line stays unchanged (the historical arm of row CE23's test, at the command seam).
+- A fully cited map reports nothing beside the pass line (the green arm of row CE23's test).
+- A check with violations emits no uncited report, because the violation arm returns first (row CE23 scopes the report to a green map).
+- The report's exact wording is build-owned; the rows pin the named fields, and the build's test pins the string.
 
 **Won't handle** — a citation valid only on another operating system — the census grades the gating host, and cross-OS evidence has no oracle here.
 **Won't handle** — a dynamic subtest name that a literal scan cannot see — the exemption in story 11 keeps the suite citable by function name.
@@ -194,8 +228,6 @@ Line: opus / medium. The scorecard routes gate and conformance logic to Opus at 
 
 ## Out of scope
 
-- Uncited-row reporting, where `--check` names each row whose seam cell cites no test, behind a review-owned marker grammar — about 12 edits, 3 gate runs. This cut disposes of the FT133 line "names the rows that no test names". The sign-off decides it.
-
 - Mechanical sole-red verification, which runs a mutation against each cited test and requires the red — about 30 edits, 8 gate runs.
 - Allowlist mode enforcement, which compares each row's declared mode with the on-disk permission — about 6 edits, 2 gate runs.
 - AST-level subtest name resolution for composed names — about 10 edits, 3 gate runs.
@@ -206,8 +238,9 @@ Commit 926af243 (2026-08-30) delivered the resolution half: citation
 resolution against declared functions, the shared fence parser, and the
 review-pickup fence member. The 2026-08-18 roadmap annotation closed the
 capability-skip half inside the gate runner. This spec closes the rest of
-FT133 and the FT103 absence half that joined it. The uncited-row line sits
-in Out of scope for the sign-off.
+FT133 and the FT103 absence half that joined it. The 2026-08-31 sign-off
+pulled the uncited-row report into scope, so this spec also disposes of the
+FT133 line "names the rows that no test names".
 
 The fixture inventory asset under decisions/assets records two
 coverage-map-validation fixtures. Three exist on disk, and two more land
