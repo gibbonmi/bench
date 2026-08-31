@@ -223,6 +223,7 @@ Line: opus / medium. The scorecard routes gate and conformance logic to Opus at 
 - `internal/gate/tag_census.go`
 - `internal/gate/tag_census_test.go`
 - `internal/conformance/package_shipped_surface_test.go`
+- `internal/conformance/registry_test.go`
 - `internal/preflight/gather.go`
 - `tests/canary/coverage-map-validation/`
 
