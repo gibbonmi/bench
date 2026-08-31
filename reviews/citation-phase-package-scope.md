@@ -2,6 +2,52 @@
 
 Base `55ae66f0`, tip `f463c1c5`, worktree `ft281-citation-scope`. Initial review.
 
+## Repair-scoped re-review
+
+Prior tip `f463c1c5`, repair tip `996e886d`. All 9 initial repair targets
+verify closed. Scope is the repair delta only, per the repair-scoped rule.
+
+### Standards
+
+1 finding. `internal/gate/tag_census_test.go` hand-copies the race phase's
+package paths (`./internal/worktree`, `./internal/guards`, `./internal/census`)
+instead of deriving them from the `racetests.Tests[]` registry. AGENTS.md:
+"an executable registry" stays single-sourced. The independent-expectation
+exception needs a demonstrated red for the copied form; none was shown. —
+`auto-fix`
+
+### Spec
+
+2 findings.
+
+1. **Phase env has no acceptance row.** The approved phase-env behavior
+   shipped with no coverage-map row, no `Covers:` update, and no verification
+   log note — the written spec still ends at PS12. — `auto-fix` (add the row,
+   the decision line, and a log note)
+2. **An empty env value false-reds.** `contextFor` reads `value == "1"` for
+   `CGO_ENABLED`, so `{"env":{"CGO_ENABLED":""}}` forces cgo off; real `go`
+   treats an empty value as unset and still runs a `cgo`-tagged file. Same
+   shape for an empty `GOOS`/`GOARCH`. — `auto-fix`
+
+### Coverage
+
+3 findings. Worst: a cross-`GOARCH` phase silently keeps the host's
+`CgoEnabled`, so it can accept a citation the phase can never really compile.
+
+1. **`CgoEnabled` ignores a `GOARCH` override.** A manifest phase with
+   `{"env":{"GOARCH":"386"}}` and no `CGO_ENABLED` leaves `ctxt.CgoEnabled` at
+   the host's `true`. On this host, `GOARCH=386 go env CGO_ENABLED` answers
+   `0` — the real phase cannot build a `cgo`-tagged file, but `contextFor`
+   still accepts one. — `auto-fix`
+2. **Leading-dash normalization is untested.** `testFlagTakesValue` now
+   accepts one or two leading dashes; no test exercises the two-dash form
+   (`go test --skip X`). Behavior is correct (verified live), just unproven. —
+   `auto-fix`
+3. **`-test.`-prefixed flags still break the operand read** (e.g.
+   `-test.run`). Pre-existing, not introduced by this repair, and outside the
+   accepted repair predicates. — non-blocking follow-on, parked as an idea
+   (`bench idea`); does not block this landing.
+
 ## Standards
 
 5 findings. Worst: `packageLoadTimeout` redeclares a `bounds` policy value, and a
