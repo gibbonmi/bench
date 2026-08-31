@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"go.opentelemetry.io/otel/attribute"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -57,4 +58,34 @@ func TracerFrom(ctx context.Context) trace.Tracer {
 		return tracer
 	}
 	return noop.NewTracerProvider().Tracer(ScopeName)
+}
+
+// Begin opens one seam's span below home and returns the span with the closer that ends
+// it. The closer ends the span and shuts the provider down, in that order, so the end
+// line is written before the provider goes away. The returned context carries the tracer
+// and the span, so a seam that runs work below it parents that work here.
+//
+// Every instrumented seam opens through this call. The protocol — build the provider,
+// start the span with its seam attribute, end, shut down — has one source, so a new seam
+// cannot record a span the consumer cannot read.
+func Begin(home, root, seam string) (context.Context, trace.Span, func()) {
+	return BeginIn(context.Background(), home, root, seam, seam)
+}
+
+// BeginIn is Begin with the parent context given, and with the span name separate from
+// the seam. A gate run and a lane run start below a context that is already threaded,
+// and both name the span for the mode or the lane while the seam attribute stays the
+// seam. An empty name takes the seam.
+func BeginIn(ctx context.Context, home, root, seam, name string) (context.Context, trace.Span, func()) {
+	if name == "" {
+		name = seam
+	}
+	provider := NewProvider(home, root)
+	tracer := provider.Tracer()
+	ctx = WithTracer(ctx, tracer)
+	ctx, span := tracer.Start(ctx, name, trace.WithAttributes(attribute.String(AttrSeam, seam)))
+	return ctx, span, func() {
+		span.End()
+		_ = provider.Shutdown(context.WithoutCancel(ctx))
+	}
 }

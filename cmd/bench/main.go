@@ -3,7 +3,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -59,7 +58,6 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // version is stamped at build time via -ldflags "-X main.version=<pkg.json version>";
@@ -481,30 +479,19 @@ const otelHookSeamPrefix = "hook."
 // beginHookSpan starts one hook verb's span and returns the closer that ends it with the
 // verb's own exit. The record is addressed by repository, so a hook that runs outside a
 // repository records nothing and its closer does nothing.
+//
+// A guard that refused the call it graded exits nonzero, so a refusal reads red: the
+// record states the exit the harness saw, not whether the guard was right to refuse.
 func beginHookSpan(verb string) func(int) {
 	root, err := git.Root()
 	if err != nil {
 		return func(int) {}
 	}
-	seam := otelHookSeamPrefix + verb
-	provider := otelrecord.NewProvider("", root)
-	ctx, span := provider.Tracer().Start(context.Background(), seam,
-		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, seam)))
+	_, span, finish := otelrecord.Begin("", root, otelHookSeamPrefix+verb)
 	return func(exit int) {
-		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, hookSpanOutcome(exit)))
-		span.End()
-		_ = provider.Shutdown(context.WithoutCancel(ctx))
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.ExitOutcome(exit)))
+		finish()
 	}
-}
-
-// hookSpanOutcome is a hook verb's exit as the record spells it. A guard that refused the
-// call it graded exits nonzero, so a refusal reads red: the record states the exit the
-// harness saw, not whether the guard was right to refuse.
-func hookSpanOutcome(exit int) string {
-	if exit == 0 {
-		return "green"
-	}
-	return "red"
 }
 
 // treeHash exposes git.TreeHash as the `bench tree-hash [root]` plumbing subcommand:

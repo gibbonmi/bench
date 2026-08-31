@@ -2,7 +2,6 @@
 package worktree
 
 import (
-	"context"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -16,7 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"io"
 	"os"
 	"os/exec"
@@ -782,25 +780,12 @@ const (
 // and a refusal before that resolution has none. The id passes through the encoder, which
 // escapes every control rune, so a hostile id forges no second record line.
 func beginVerbSpan(home, root, seam string) func(int, string) {
-	provider := otelrecord.NewProvider(home, root)
-	ctx, span := provider.Tracer().Start(context.Background(), seam,
-		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, seam)))
+	_, span, finish := otelrecord.Begin(home, root, seam)
 	return func(exit int, assignment string) {
 		if assignment != "" {
 			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, assignment))
 		}
-		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, worktreeSpanOutcome(exit)))
-		span.End()
-		_ = provider.Shutdown(context.WithoutCancel(ctx))
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.PublishedExitOutcome(exit)))
+		finish()
 	}
-}
-
-// worktreeSpanOutcome is a worktree verb's exit as the record spells it. Exit 3 published
-// its commit and named its own remaining step on the verb's output, so the record reads
-// that publication as green.
-func worktreeSpanOutcome(exit int) string {
-	if exit == 0 || exit == 3 {
-		return "green"
-	}
-	return "red"
 }

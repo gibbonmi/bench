@@ -25,7 +25,6 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var landGrammar = usage.Grammar{
@@ -189,9 +188,7 @@ type landingMeasures struct {
 // home is the one the verb boundary already resolved, so the record is not addressed
 // from a second read of the environment.
 func beginLandingSpan(home, root string) func(int, landingMeasures) {
-	provider := otelrecord.NewProvider(home, root)
-	ctx, span := provider.Tracer().Start(context.Background(), otelLandingSeam,
-		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, otelLandingSeam)))
+	_, span, finish := otelrecord.Begin(home, root, otelLandingSeam)
 	return func(exit int, measures landingMeasures) {
 		if measures.subject != "" {
 			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, measures.subject))
@@ -204,9 +201,8 @@ func beginLandingSpan(home, root string) func(int, landingMeasures) {
 		if measures.censusRawCallsRead {
 			span.SetAttributes(attribute.String(otelrecord.AttrMeasureCensusRawCalls, strconv.Itoa(measures.censusRawCalls)))
 		}
-		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, worktreeSpanOutcome(exit)))
-		span.End()
-		_ = provider.Shutdown(context.WithoutCancel(ctx))
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.PublishedExitOutcome(exit)))
+		finish()
 	}
 }
 

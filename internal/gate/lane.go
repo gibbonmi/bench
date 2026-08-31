@@ -29,7 +29,6 @@ import (
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // The two lane outcomes. A lane never reports "green": that word belongs to the
@@ -168,11 +167,7 @@ const otelLaneSeam = "lane"
 // span name, the way the gate's mode does, since the declared attribute set carries no
 // lane identity.
 func beginLaneSpan(ctx context.Context, req LaneRequest) (context.Context, func(LaneResult, error)) {
-	provider := otelrecord.NewProvider("", req.Root)
-	tracer := provider.Tracer()
-	ctx = otelrecord.WithTracer(ctx, tracer)
-	ctx, span := tracer.Start(ctx, otelLaneSeam+"."+laneName(req.Lane),
-		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, otelLaneSeam)))
+	ctx, span, finish := otelrecord.BeginIn(ctx, "", req.Root, otelLaneSeam, otelLaneSeam+"."+laneName(req.Lane))
 	return ctx, func(result LaneResult, err error) {
 		if req.Tree != "" {
 			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, req.Tree))
@@ -190,8 +185,7 @@ func beginLaneSpan(ctx context.Context, req LaneRequest) (context.Context, func(
 				span.SetAttributes(attribute.String(otelrecord.AttrOutcomeDiagnostic, result.Diagnostic))
 			}
 		}
-		span.End()
-		_ = provider.Shutdown(context.WithoutCancel(ctx))
+		finish()
 	}
 }
 

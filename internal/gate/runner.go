@@ -584,12 +584,8 @@ func endPhaseSpan(span trace.Span, result phaseResult) {
 }
 
 func phaseSpanOutcome(result phaseResult) string {
-	switch {
-	case result.Skipped || result.SkippedBy != "":
-		return "skipped"
-	case result.Code == 0:
-		return "green"
-	default:
-		return "red"
+	if result.Skipped || result.SkippedBy != "" {
+		return otelrecord.OutcomeSkipped
 	}
+	return otelrecord.ExitOutcome(result.Code)
 }

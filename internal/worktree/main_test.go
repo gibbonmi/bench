@@ -84,6 +84,11 @@ func (e residueEntry) render() []string {
 	return append([]string{e.path}, e.origins...)
 }
 
+// otelRecordEntry is the one home entry the seam record owns: the FT274 spec puts the
+// record at <home>/otel/<key>/traces.jsonl, so a fixture gate run writes it even in a
+// private home. Every other entry in a home is residue or a leak.
+const otelRecordEntry = "otel"
+
 // homeResidue computes the residue for one home. A directory it cannot walk costs
 // that entry its origin lines, never the entry itself. The report has to name the
 // leak even when it cannot name the leaker.
@@ -94,10 +99,7 @@ func homeResidue(home string) ([]residueEntry, error) {
 	}
 	var entries []residueEntry
 	for _, name := range names {
-		// The seam record lives at <home>/otel/<key>/traces.jsonl by the FT274
-		// spec's decision, so a fixture gate run writes it even here. Every other
-		// entry stays residue.
-		if name.Name() == "otel" {
+		if name.Name() == otelRecordEntry {
 			continue
 		}
 		path := filepath.Join(home, name.Name())
@@ -140,11 +142,8 @@ func TestPackageHomeIsPrivate(t *testing.T) {
 	requireTest(t, err == nil && info.IsDir(), "private home stat = %v, %v", info, err)
 	entries, err := os.ReadDir(home)
 	requireTest(t, err == nil, "private home read = %v", err)
-	// The seam record lives at <home>/otel/<key>/traces.jsonl by the FT274 spec's
-	// decision, so a fixture gate run writes it even here. Every other entry stays
-	// a leak.
 	for _, entry := range entries {
-		requireTest(t, entry.Name() == "otel", "private home entries = %#v, want only the seam record", entries)
+		requireTest(t, entry.Name() == otelRecordEntry, "private home entries = %#v, want only the seam record", entries)
 	}
 	requireTest(t, home != inheritedBenchHome, "private home equals the inherited BENCH_HOME %q", inheritedBenchHome)
 	// An empty inherited value means benchHome falls back to the operator's ~/.bench,

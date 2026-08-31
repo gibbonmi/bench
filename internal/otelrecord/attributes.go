@@ -1,9 +1,10 @@
 package otelrecord
 
-// This file declares the whole attribute set a Bench span may carry. Story 19 limits a
-// span to the seam name, the subject id, the outcome, and the measures, and row OT22 is
-// review-owned: no mechanical check enforces the limit, so a review grades each new
-// attribute against this declaration. A key that is not declared here does not ship.
+// This file declares the whole attribute set a Bench span may carry, and the outcome
+// vocabulary those spans state. Story 19 limits a span to the seam name, the subject id,
+// the outcome, and the measures. No mechanical check enforces the limit, so a review
+// grades each new attribute against this declaration. A key that is not declared here
+// does not ship.
 //
 // No attribute carries payload. A subject is identified by its digest — a tree id or a
 // commit id — and never by its subject text.
@@ -53,4 +54,31 @@ var DeclaredAttributes = []string{
 	AttrMeasurePathCount,
 	AttrMeasureCensusRawCalls,
 	AttrRecord,
+}
+
+// The outcome vocabulary. A consumer groups runs by these three words, so a seam states
+// one of them and never its own spelling of the same idea.
+const (
+	OutcomeGreen   = "green"
+	OutcomeRed     = "red"
+	OutcomeSkipped = "skipped"
+)
+
+// ExitOutcome is the outcome for a seam whose zero alone is green. A guard, a gate, and
+// a worktree child all speak this policy: any nonzero exit the operator saw reads red.
+func ExitOutcome(exit int) string {
+	if exit == 0 {
+		return OutcomeGreen
+	}
+	return OutcomeRed
+}
+
+// PublishedExitOutcome is the outcome for a publication seam, where exit 3 published its
+// commit and named its own remaining step on the verb's output. The record reads that
+// publication as green, and the remainder stays on the verb's output rather than here.
+func PublishedExitOutcome(exit int) string {
+	if exit == 3 {
+		return OutcomeGreen
+	}
+	return ExitOutcome(exit)
 }

@@ -23,7 +23,6 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // The commit seam's record. The verb boundary builds the provider once the repository is
@@ -43,9 +42,7 @@ type commitMeasures struct {
 // carries the subject digest and never the commit subject text: the message holds
 // objective text by design, and DATA_HANDLING.md keeps it out of a third durable place.
 func beginCommitSpan(root string) func(int, commitMeasures) {
-	provider := otelrecord.NewProvider("", root)
-	ctx, span := provider.Tracer().Start(context.Background(), otelCommitSeam,
-		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, otelCommitSeam)))
+	_, span, finish := otelrecord.Begin("", root, otelCommitSeam)
 	return func(exit int, measures commitMeasures) {
 		if measures.subject != "" {
 			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, measures.subject))
@@ -55,20 +52,9 @@ func beginCommitSpan(root string) func(int, commitMeasures) {
 		if measures.counted {
 			span.SetAttributes(attribute.String(otelrecord.AttrMeasurePathCount, strconv.Itoa(measures.pathCount)))
 		}
-		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, commitSpanOutcome(exit)))
-		span.End()
-		_ = provider.Shutdown(context.WithoutCancel(ctx))
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.PublishedExitOutcome(exit)))
+		finish()
 	}
-}
-
-// commitSpanOutcome is the verb's exit as the record spells it. A publication that left
-// the checkout unreconciled published its commit, so it reads green with the remainder
-// stated on the verb's own output rather than in the record.
-func commitSpanOutcome(exit int) string {
-	if exit == 0 || exit == 3 {
-		return "green"
-	}
-	return "red"
 }
 
 // Command runs a path-attributed prospective landing. Help exits 0, grammar errors exit

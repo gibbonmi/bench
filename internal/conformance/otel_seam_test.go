@@ -81,9 +81,13 @@ func seamFunctionBody(dir, function string) (*ast.BlockStmt, bool, error) {
 	return nil, false, nil
 }
 
-// startsSpan reports whether the body calls a tracer's Start. Every Bench span opens
-// through the OpenTelemetry tracer's one Start method, so the selector name is the
-// evidence a reader of the source would use.
+// spanOpeners are the calls that open a Bench span: the OpenTelemetry tracer's own Start
+// method, and the otelrecord primitives that own the open-and-close protocol above it. A
+// seam that reaches one of these has instrumentation a reader of the source can see.
+var spanOpeners = map[string]bool{"Start": true, "Begin": true, "BeginIn": true}
+
+// startsSpan reports whether the body opens a span. The selector name is the evidence,
+// so the check needs no build and no type information.
 func startsSpan(body *ast.BlockStmt) bool {
 	started := false
 	ast.Inspect(body, func(node ast.Node) bool {
@@ -91,7 +95,7 @@ func startsSpan(body *ast.BlockStmt) bool {
 		if !ok {
 			return true
 		}
-		if selector, ok := call.Fun.(*ast.SelectorExpr); ok && selector.Sel.Name == "Start" {
+		if selector, ok := call.Fun.(*ast.SelectorExpr); ok && spanOpeners[selector.Sel.Name] {
 			started = true
 			return false
 		}
@@ -105,6 +109,12 @@ const otelSeamFixtureInstrumented = `package sample
 func beginSampleSpan(ctx context.Context) {
 	_, span := tracerFrom(ctx).Start(ctx, "sample")
 	span.End()
+}
+
+func beginPrimitiveSpan(ctx context.Context) {
+	_, span, finish := otelrecord.Begin("", "/root", "sample.primitive")
+	span.End()
+	finish()
 }
 
 func beginQuietSpan(ctx context.Context) {
@@ -125,6 +135,11 @@ func TestOtelSeamCheckBites(t *testing.T) {
 
 	if diags := otelSeamDiags(root, []otelrecord.SeamEntry{instrumented}); len(diags) != 0 {
 		t.Fatalf("the instrumented fixture is not clean: %v", diags)
+	}
+
+	primitive := otelrecord.SeamEntry{Seam: "sample.primitive", Package: "internal/sample", Function: "beginPrimitiveSpan"}
+	if diags := otelSeamDiags(root, []otelrecord.SeamEntry{primitive}); len(diags) != 0 {
+		t.Fatalf("a seam opened through the otelrecord primitive reads uninstrumented: %v", diags)
 	}
 
 	quiet := otelrecord.SeamEntry{Seam: "sample.quiet", Package: "internal/sample", Function: "beginQuietSpan"}

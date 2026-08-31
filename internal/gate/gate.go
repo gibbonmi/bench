@@ -32,7 +32,6 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var gateTimeout = bounds.GateTimeout
@@ -425,30 +424,19 @@ type otelRecordRootKey struct{}
 // mode rides in the span name: story 19's declared attribute set names the seam, the
 // subject, the outcome, and the measures, and none of those carries a run mode.
 func beginGateSpan(ctx context.Context, root, mode string) (context.Context, func(Result)) {
-	provider := otelrecord.NewProvider("", root)
-	tracer := provider.Tracer()
-	ctx = context.WithValue(otelrecord.WithTracer(ctx, tracer), otelRecordRootKey{}, root)
-	ctx, span := tracer.Start(ctx, otelGateSeam+"."+mode,
-		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, otelGateSeam)))
+	ctx, span, finish := otelrecord.BeginIn(ctx, "", root, otelGateSeam, otelGateSeam+"."+mode)
+	ctx = context.WithValue(ctx, otelRecordRootKey{}, root)
 	return ctx, func(result Result) {
 		// A subject the run never resolved has no digest to group its iterations by, and
 		// an empty attribute would read as one.
 		if subject := result.Inspection.CurrentTree; subject != "" {
 			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, subject))
 		}
-		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, gateSpanOutcome(result)))
-		span.End()
-		_ = provider.Shutdown(context.WithoutCancel(ctx))
+		// The action exit is the one the operator sees, so the record and the shell
+		// agree about the same run.
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.ExitOutcome(result.ActionExit)))
+		finish()
 	}
-}
-
-// gateSpanOutcome is the run's exit as the record spells it. The action exit is the one
-// the operator sees, so the record and the shell agree about the same run.
-func gateSpanOutcome(result Result) string {
-	if result.ActionExit == 0 {
-		return "green"
-	}
-	return "red"
 }
 
 // withGateSpanEnv hands the phases child the repository it records under and this run's
