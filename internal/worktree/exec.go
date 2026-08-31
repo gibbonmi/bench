@@ -69,7 +69,14 @@ func ExecCommand(root, home string, args []string, stdin io.Reader, stdout, stde
 	var assignment string
 	finishSpan := beginVerbSpan(home, root, otelExecSeam)
 	exit := execAttributed(&assignment, parsed, root, home, values, stdin, stdout, stderr)
-	finishSpan(exit, assignment)
+	// The verb returns the child's own code, which the grammar help promises. The span
+	// takes the outcome instead: a 3 here is the child speaking rather than a Bench
+	// publication, so only a zero reads green.
+	spanExit := exit
+	if spanExit != 0 {
+		spanExit = 1
+	}
+	finishSpan(spanExit, assignment)
 	return exit
 }
 
@@ -82,17 +89,7 @@ func execAttributed(assignment *string, parsed usage.Result, root, home string, 
 		return printTargetRefusal(stderr, "bench worktree exec", err)
 	}
 	*assignment = selected.ID
-	return execSpanExit(runWorktreeChild(parsed.Positionals[1:], selected.Worktree, home, values, stdin, stdout, stderr))
-}
-
-// execSpanExit maps the child's exit onto the outcome derivation the worktree verbs
-// share. The exit this verb returns is the child's own, and a 3 there is the child
-// speaking rather than a Bench publication, so only a zero reads green.
-func execSpanExit(code int) int {
-	if code == 0 {
-		return 0
-	}
-	return 1
+	return runWorktreeChild(parsed.Positionals[1:], selected.Worktree, home, values, stdin, stdout, stderr)
 }
 
 func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {

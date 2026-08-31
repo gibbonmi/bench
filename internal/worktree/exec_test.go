@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -416,4 +417,16 @@ func TestExecZeroExitPrintsNoWorktreeLine(t *testing.T) {
 	stderr, code := childFailure(t, t.TempDir(), "true")
 	requireTest(t, code == 0, "child exited %d, want 0", code)
 	requireTest(t, stderr == "", "stderr = %q, want it empty", stderr)
+}
+
+// TestExecVerbReturnsTheChildsOwnExit covers X5 through the public seam. The seam record
+// closed over this verb once, so the row runs ExecCommand itself rather than the child
+// runner below it: only the verb can map the exit the caller receives.
+func TestExecVerbReturnsTheChildsOwnExit(t *testing.T) {
+	t.Parallel()
+	for _, want := range []int{3, 7} {
+		_, _, stderr, code := execAtOwnedTarget(t, fmt.Sprintf("exec-exit-%d", want),
+			"--", "sh", "-c", fmt.Sprintf("exit %d", want))
+		requireTest(t, code == want, "exec exited %d, want the child's own %d (stderr %q)", code, want, stderr)
+	}
 }
