@@ -20,4 +20,5 @@ type SeamEntry struct {
 var Registry = []SeamEntry{
 	{Seam: "gate", Package: "internal/gate", Function: "beginGateSpan"},
 	{Seam: "gate.phase", Package: "internal/gate", Function: "startPhaseSpan"},
+	{Seam: "lane", Package: "internal/gate", Function: "beginLaneSpan"},
 }
