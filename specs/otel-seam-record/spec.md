@@ -176,6 +176,7 @@ Not covered: story 28 — the FT71 condition is a build-exit rule, and the workf
 - `internal/harnesses/command_test.go`
 - `internal/conformance/`
 - `cmd/bench/main.go`
+- `cmd/bench/command_registry.go`
 - `DATA_HANDLING.md`
 - `internal/systemtest/`
 
