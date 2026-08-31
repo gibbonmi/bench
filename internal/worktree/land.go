@@ -204,20 +204,10 @@ func beginLandingSpan(home, root string) func(int, landingMeasures) {
 		if measures.censusRawCallsRead {
 			span.SetAttributes(attribute.String(otelrecord.AttrMeasureCensusRawCalls, strconv.Itoa(measures.censusRawCalls)))
 		}
-		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, landingSpanOutcome(exit)))
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, worktreeSpanOutcome(exit)))
 		span.End()
 		_ = provider.Shutdown(context.WithoutCancel(ctx))
 	}
-}
-
-// landingSpanOutcome is the verb's exit as the record spells it. An incomplete landing
-// published its commit and names its own remaining step on the verb's output, so the
-// record reads the publication as green.
-func landingSpanOutcome(exit int) string {
-	if exit == 0 || exit == 3 {
-		return "green"
-	}
-	return "red"
 }
 
 // landAttributed is the first-run landing itself, with the span's measures written to

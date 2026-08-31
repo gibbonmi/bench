@@ -23,4 +23,8 @@ var Registry = []SeamEntry{
 	{Seam: "lane", Package: "internal/gate", Function: "beginLaneSpan"},
 	{Seam: "commit", Package: "internal/commit", Function: "beginCommitSpan"},
 	{Seam: "worktree.land", Package: "internal/worktree", Function: "beginLandingSpan"},
+	{Seam: "worktree.create", Package: "internal/worktree", Function: "beginVerbSpan"},
+	{Seam: "worktree.exec", Package: "internal/worktree", Function: "beginVerbSpan"},
+	{Seam: "worktree.merge", Package: "internal/worktree", Function: "beginVerbSpan"},
+	{Seam: "worktree.release", Package: "internal/worktree", Function: "beginVerbSpan"},
 }
