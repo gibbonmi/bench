@@ -23,7 +23,7 @@ func TestCommandConformantTree(t *testing.T) {
 	}
 	// WF32: the rendered header carries the next column on every run, green
 	// included. A Next field the renderer never reads would leave the old header.
-	if !strings.Contains(first, "checks[8]{check,verdict,detail,next}") {
+	if !strings.Contains(first, "checks[11]{check,verdict,detail,next}") {
 		t.Errorf("output missing the four-column checks header:\n%s", first)
 	}
 	second, code2 := Command([]string{"review", slug})

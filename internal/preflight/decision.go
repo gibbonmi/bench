@@ -82,6 +82,23 @@ type Facts struct {
 	// probe; whether an absent path is a fault is Decide's.
 	WritesPathExists map[string]bool
 
+	// WritesFixturePins reports, for each `Writes:` entry, the canary fixture
+	// directories that pin the path it names. The gatherer enumerates the live
+	// inventory; whether an unnamed fixture is a fault is Decide's.
+	WritesFixturePins map[string][]string
+
+	// WritesBoundFiles reports, for each `Writes:` entry, the files the binding
+	// registry binds to the package the entry writes into.
+	WritesBoundFiles map[string][]string
+
+	// WritesSystemTagged reports, for each `Writes:` entry, whether it names a Go
+	// test file whose build constraint carries the system tag.
+	WritesSystemTagged map[string]bool
+
+	// TicketPinsKit reports, per ticket basename, whether the body states the
+	// literal BENCH_KIT. kit-pin grades that statement against the tagged writes.
+	TicketPinsKit map[string]bool
+
 	// SpecTag is the alphabetic prefix shared by the spec's own declared row IDs
 	// (e.g. "PF" for PF1..n) — the tag rows-membership scopes its check to, so a
 	// foreign-tag token (FT93) is ignored rather than flagged.
@@ -156,6 +173,9 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, "tickets-parse", ticketsParseCheck),
 		ticketRow(f, "blockers-resolve", blockersResolveCheck),
 		ticketRow(f, "writes-resolve", writesResolveCheck),
+		ticketRow(f, "fixture-closure", fixtureClosureCheck),
+		ticketRow(f, "registry-closure", registryClosureCheck),
+		ticketRow(f, "kit-pin", kitPinCheck),
 		ticketRow(f, "rows-owned", rowsOwnedCheck),
 		ticketRow(f, "rows-membership", rowsMembershipCheck),
 		diffNonemptyRow(f),
@@ -374,6 +394,106 @@ func writesResolveCheck(f Facts) CheckResult {
 		return red("writes-resolve", "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
 	}
 	return green("writes-resolve")
+}
+
+// ownedPaths is every tree path one ticket declares, with the (new) marker
+// stripped. The three closures below grade their required names against this one
+// set, so no two of them can disagree about what a ticket already owns.
+func ownedPaths(ticket tickets.Ticket) []string {
+	paths := make([]string, 0, len(ticket.Writes))
+	for _, entry := range ticket.Writes {
+		path, _ := splitWritesEntry(entry)
+		paths = append(paths, path)
+	}
+	return paths
+}
+
+// pathCovered reports whether one required path is already named by the ticket,
+// either exactly or through a directory entry that contains it.
+func pathCovered(required string, owned []string) bool {
+	for _, path := range owned {
+		if required == path || strings.HasPrefix(required, path+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// fixtureClosureCheck grades the red-capable fixture into the ticket. A ticket
+// that edits a fixture-pinned line without naming the owning fixture directory
+// leaves the proof outside the charge, and the bite breaks unnoticed.
+func fixtureClosureCheck(f Facts) CheckResult {
+	var unnamed []string
+	seen := map[string]bool{}
+	for _, ticket := range f.Tickets {
+		owned := ownedPaths(ticket)
+		for _, entry := range ticket.Writes {
+			for _, fixture := range f.WritesFixturePins[entry] {
+				if pathCovered(fixture, owned) {
+					continue
+				}
+				named := ticket.Name + ": " + entry + " is pinned by " + fixture
+				if seen[named] {
+					continue
+				}
+				seen[named] = true
+				unnamed = append(unnamed, named)
+			}
+		}
+	}
+	if len(unnamed) > 0 {
+		return red("fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: "+strings.Join(unnamed, ", "))
+	}
+	return green("fixture-closure")
+}
+
+// registryClosureCheck grades the declared binding into the ticket. A ticket that
+// writes a bound package and omits a bound registry finds that registry mid-build
+// and pays a repair round.
+func registryClosureCheck(f Facts) CheckResult {
+	var omitted []string
+	seen := map[string]bool{}
+	for _, ticket := range f.Tickets {
+		owned := ownedPaths(ticket)
+		for _, entry := range ticket.Writes {
+			for _, file := range f.WritesBoundFiles[entry] {
+				if pathCovered(file, owned) {
+					continue
+				}
+				named := ticket.Name + ": " + entry + " requires " + file
+				if seen[named] {
+					continue
+				}
+				seen[named] = true
+				omitted = append(omitted, named)
+			}
+		}
+	}
+	if len(omitted) > 0 {
+		return red("registry-closure", "Writes: entry names a bound package without naming every bound file: "+strings.Join(omitted, ", "))
+	}
+	return green("registry-closure")
+}
+
+// kitPinCheck grades the kit pin into the ticket. A system-tagged test file reads
+// BENCH_KIT, so an ambient value flips the fixture verdict under composition
+// unless the ticket states the variable.
+func kitPinCheck(f Facts) CheckResult {
+	var unpinned []string
+	for _, ticket := range f.Tickets {
+		if f.TicketPinsKit[ticket.Name] {
+			continue
+		}
+		for _, entry := range ticket.Writes {
+			if f.WritesSystemTagged[entry] {
+				unpinned = append(unpinned, ticket.Name+": "+entry)
+			}
+		}
+	}
+	if len(unpinned) > 0 {
+		return red("kit-pin", "ticket writes a system-tagged test file without stating BENCH_KIT: "+strings.Join(unpinned, ", "))
+	}
+	return green("kit-pin")
 }
 
 // coversTokens is every row ID the parsed tickets cite, in enumeration order.

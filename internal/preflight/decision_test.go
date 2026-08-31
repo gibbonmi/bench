@@ -54,6 +54,7 @@ func TestDecideAllGreen(t *testing.T) {
 	wantChecks := []string{
 		"base-current", "paths-authorized",
 		"tickets-parse", "blockers-resolve", "writes-resolve",
+		"fixture-closure", "registry-closure", "kit-pin",
 		"rows-owned", "rows-membership", "diff-nonempty",
 	}
 	if len(first.Checks) != len(wantChecks) {
@@ -96,8 +97,8 @@ func TestDecideAllGreen(t *testing.T) {
 	}
 	// Every row that reads a parsed ticket, plus diff-nonempty, is
 	// not-applicable in a build with no tickets/ directory at all.
-	if naSeen != 6 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 6", naSeen)
+	if naSeen != 9 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 9", naSeen)
 	}
 }
 
@@ -491,5 +492,109 @@ func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
 	f.ChangedPaths = []string{"unfenced/path.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictRed {
 		t.Errorf("LS11: path outside every fence and the spec folder = %+v, want red", c)
+	}
+}
+
+// TestFixtureClosureNamesUnnamedFixture covers TG14. A ticket that writes a
+// fixture-pinned path and does not name the pinning fixture directory reds with
+// both the path and the fixture named.
+func TestFixtureClosureNamesUnnamedFixture(t *testing.T) {
+	f := baseFacts()
+	f.WritesFixturePins = map[string][]string{
+		"internal/example/foo.go": {"tests/canary/example-family/pinning-fixture"},
+	}
+	c, ok := checkRow(Decide(f), "fixture-closure")
+	const want = "Writes: entry names a fixture-pinned path without naming the fixture: " +
+		"one.md: internal/example/foo.go is pinned by tests/canary/example-family/pinning-fixture"
+	if !ok || c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("fixture-closure row = %+v, want the red detailed %q", c, want)
+	}
+
+	// Naming the fixture directory closes the row.
+	f.Tickets[0].Writes = append(f.Tickets[0].Writes, "tests/canary/example-family/pinning-fixture")
+	if c, _ := checkRow(Decide(f), "fixture-closure"); c.Verdict != verdictGreen {
+		t.Errorf("fixture-closure with the fixture named = %+v, want green", c)
+	}
+}
+
+// TestRegistryClosureNamesOmittedRegistry covers TG16. A ticket that writes a
+// bound package and omits a bound file reds with the omitted file named.
+func TestRegistryClosureNamesOmittedRegistry(t *testing.T) {
+	f := baseFacts()
+	f.WritesBoundFiles = map[string][]string{
+		"internal/example/foo.go": {"cmd/bench/command_registry.go", "cmd/bench/main_test.go"},
+	}
+	f.Tickets[0].Writes = []string{"internal/example/foo.go", "cmd/bench/command_registry.go"}
+	c, ok := checkRow(Decide(f), "registry-closure")
+	const want = "Writes: entry names a bound package without naming every bound file: " +
+		"one.md: internal/example/foo.go requires cmd/bench/main_test.go"
+	if !ok || c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("registry-closure row = %+v, want the red detailed %q", c, want)
+	}
+
+	f.Tickets[0].Writes = append(f.Tickets[0].Writes, "cmd/bench/main_test.go")
+	if c, _ := checkRow(Decide(f), "registry-closure"); c.Verdict != verdictGreen {
+		t.Errorf("registry-closure with every bound file named = %+v, want green", c)
+	}
+}
+
+// TestKitPinRequiresBenchKit covers TG19 and its green counterpart. A written
+// system-tagged test file reds unless the ticket body states BENCH_KIT; a test
+// file with no system tag stays green either way.
+func TestKitPinRequiresBenchKit(t *testing.T) {
+	f := baseFacts()
+	f.Tickets[0].Writes = []string{"internal/example/sys_test.go"}
+	f.WritesPathExists = map[string]bool{"internal/example/sys_test.go": true}
+	f.WritesSystemTagged = map[string]bool{"internal/example/sys_test.go": true}
+	c, ok := checkRow(Decide(f), "kit-pin")
+	const want = "ticket writes a system-tagged test file without stating BENCH_KIT: " +
+		"one.md: internal/example/sys_test.go"
+	if !ok || c.Verdict != verdictRed || c.Detail != want {
+		t.Fatalf("kit-pin row = %+v, want the red detailed %q", c, want)
+	}
+
+	f.TicketPinsKit = map[string]bool{"one.md": true}
+	if c, _ := checkRow(Decide(f), "kit-pin"); c.Verdict != verdictGreen {
+		t.Errorf("kit-pin with BENCH_KIT stated = %+v, want green", c)
+	}
+
+	untagged := baseFacts()
+	untagged.Tickets[0].Writes = []string{"internal/example/plain_test.go"}
+	untagged.WritesPathExists = map[string]bool{"internal/example/plain_test.go": true}
+	if c, _ := checkRow(Decide(untagged), "kit-pin"); c.Verdict != verdictGreen {
+		t.Errorf("kit-pin over a test file with no system tag = %+v, want green", c)
+	}
+}
+
+// TestSixRowsNotApplicableWithoutTickets covers TG39. In build mode with no
+// tickets/ directory, the six grammar rows render not-applicable, in order.
+func TestSixRowsNotApplicableWithoutTickets(t *testing.T) {
+	f := baseFacts()
+	f.Mode = modeBuild
+	f.TicketsDirExists = false
+	v := Decide(f)
+
+	want := []string{
+		"tickets-parse", "blockers-resolve", "writes-resolve",
+		"fixture-closure", "registry-closure", "kit-pin",
+	}
+	at := -1
+	for i, c := range v.Checks {
+		if c.Check == want[0] {
+			at = i
+			break
+		}
+	}
+	if at < 0 || at+len(want) > len(v.Checks) {
+		t.Fatalf("Checks = %#v, want the six grammar rows", v.Checks)
+	}
+	for i, name := range want {
+		row := v.Checks[at+i]
+		if row.Check != name || row.Verdict != verdictNA || row.Detail != "" {
+			t.Errorf("grammar row %d = %+v, want %s not-applicable with no detail", i, row, name)
+		}
+	}
+	if v.Red {
+		t.Errorf("Verdict.Red = true, want false when every grammar row is not-applicable")
 	}
 }

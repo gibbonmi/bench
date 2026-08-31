@@ -1,14 +1,17 @@
 package preflight
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"go/build/constraint"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
@@ -175,6 +178,10 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		TicketDiagnostics:     ticketFacts.diagnostics,
 		BlockerCycles:         ticketFacts.cycles,
 		WritesPathExists:      ticketFacts.writes,
+		WritesFixturePins:     ticketFacts.pins,
+		WritesBoundFiles:      ticketFacts.bound,
+		WritesSystemTagged:    ticketFacts.systemTag,
+		TicketPinsKit:         ticketFacts.kitPinned,
 		TicketsDirExists:      ticketFacts.dirExists,
 	}, nil
 }
@@ -273,6 +280,10 @@ type ticketFacts struct {
 	diagnostics []string
 	cycles      []string
 	writes      map[string]bool
+	pins        map[string][]string
+	bound       map[string][]string
+	systemTag   map[string]bool
+	kitPinned   map[string]bool
 	dirExists   bool
 }
 
@@ -380,7 +391,17 @@ func scanTicketEntries(base, dir string, entries []fs.DirEntry) ([]ticketFile, *
 // blocker edge resolves by basename alone. The second copy is named and
 // dropped, so the sibling set stays one name per ticket.
 func gradeTickets(root string, files []ticketFile, tag string) (ticketFacts, *BootstrapFailure) {
-	facts := ticketFacts{writes: map[string]bool{}}
+	pins, pinErr := canary.FixturePins(root)
+	if pinErr != nil {
+		return ticketFacts{}, &BootstrapFailure{"fixture inventory not readable", pinErr.Error()}
+	}
+	facts := ticketFacts{
+		writes:    map[string]bool{},
+		pins:      map[string][]string{},
+		bound:     map[string][]string{},
+		systemTag: map[string]bool{},
+		kitPinned: map[string]bool{},
+	}
 	seen := make(map[string]string, len(files))
 	unique := make([]ticketFile, 0, len(files))
 	for _, file := range files {
@@ -403,12 +424,22 @@ func gradeTickets(root string, files []ticketFile, tag string) (ticketFacts, *Bo
 			facts.diagnostics = append(facts.diagnostics, file.rel+": "+diagnostic)
 		}
 		facts.parsed = append(facts.parsed, parsed)
+		facts.kitPinned[file.name] = bytes.Contains(file.data, []byte(kitEnvMarker))
 		for _, entry := range parsed.Writes {
 			if !toon.Representable(entry) {
 				return ticketFacts{}, &BootstrapFailure{"ticket path not representable", fmt.Sprintf("%s declares a Writes: entry %q with a byte spec-TOON cannot represent", file.rel, entry)}
 			}
 			path, _ := splitWritesEntry(entry)
 			facts.writes[entry] = treeHolds(root, path)
+			if pinning := pins[path]; len(pinning) > 0 {
+				facts.pins[entry] = pinning
+			}
+			if bound := tickets.BoundFiles(path); len(bound) > 0 {
+				facts.bound[entry] = bound
+			}
+			if systemTagged(root, path) {
+				facts.systemTag[entry] = true
+			}
 		}
 	}
 	facts.cycles = tickets.Cycles(facts.parsed)
@@ -425,6 +456,54 @@ func treeHolds(root, path string) bool {
 	}
 	_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(path)))
 	return err == nil
+}
+
+// kitEnvMarker is the literal a ticket states to pin the kit a system-tagged
+// fixture reads. An ambient value flips such a fixture under composition, so the
+// ticket names the variable rather than inheriting whatever the session holds.
+const kitEnvMarker = "BENCH_KIT"
+
+// systemTagged reports whether one `Writes:` path names a Go test file whose
+// //go:build expression carries the system tag. The constraint parse is the same
+// one the coverage citations grade with, so the two never disagree about which
+// file is system-tagged. A path that is no test file, that does not read, or that
+// carries no constraint answers no.
+func systemTagged(root, path string) bool {
+	if !strings.HasSuffix(path, "_test.go") {
+		return false
+	}
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" && !strings.HasPrefix(trimmed, "//") {
+			return false
+		}
+		if !constraint.IsGoBuild(trimmed) {
+			continue
+		}
+		expr, parseErr := constraint.Parse(trimmed)
+		return parseErr == nil && exprHoldsTag(expr, "system")
+	}
+	return false
+}
+
+// exprHoldsTag reports whether a build expression mentions tag anywhere. A
+// negated mention still counts: the file's verdict depends on the tag either way.
+func exprHoldsTag(expr constraint.Expr, tag string) bool {
+	switch typed := expr.(type) {
+	case *constraint.TagExpr:
+		return typed.Tag == tag
+	case *constraint.NotExpr:
+		return exprHoldsTag(typed.X, tag)
+	case *constraint.AndExpr:
+		return exprHoldsTag(typed.X, tag) || exprHoldsTag(typed.Y, tag)
+	case *constraint.OrExpr:
+		return exprHoldsTag(typed.X, tag) || exprHoldsTag(typed.Y, tag)
+	}
+	return false
 }
 
 // relTo is path expressed against base, falling back to the full path when
