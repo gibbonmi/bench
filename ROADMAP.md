@@ -173,8 +173,6 @@ baseline, an unchecked absence, or a dependency edge nothing resolves. Each
 hardens a different oracle surface. They stay separate builds, but they read
 and prioritize as one theme.
 
-**FT174 (MEDIUM) — ticket files have one enforced dependency, ownership, and mutation grammar.**
-
 **FT177 (MEDIUM, decision required) — a stale `dist/bench` invalidates tests and its promotion-broker manifest.**
 
 **FT201 (LOW) — production cancel-signal registrations conform to one source.**
@@ -321,6 +319,5 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. `$bench-write-spec` — FT174: specify the actionable MEDIUM ticket-file grammar.
-2. `$bench-write-spec` — FT281: define package-scope matching for citation execution.
-3. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
+1. `$bench-write-spec` — FT281: define package-scope matching for citation execution.
+2. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
