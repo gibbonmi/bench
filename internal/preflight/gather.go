@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -14,6 +14,8 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	specref "github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/tickets"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // BootstrapFailure is the fail-closed bootstrap answer. An artifact
@@ -27,11 +29,6 @@ import (
 type BootstrapFailure struct {
 	Kind, Hint string
 }
-
-// tokenRe is the one grammar for a row-ID-shaped token in ticket-file
-// prose: an uppercase tag plus digits, word-boundary matched. So "PF1a"
-// never mistakes itself for "PF1".
-var tokenRe = regexp.MustCompile(`\b[A-Z]+[0-9]+\b`)
 
 // Gather is the thin gatherer: it reads git, the exported diff-base
 // resolution, the spec resolver, the coverage parser, and tickets/
@@ -132,7 +129,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		return Facts{}, &BootstrapFailure{"coverage map invalid", strings.Join(violations, "; ")}
 	}
 
-	tokens, ticketsDirExists, ticketErr := gatherTicketTokens(filepath.Join(filepath.Dir(resolved), "tickets"), mode)
+	ticketFacts, ticketErr := gatherTickets(root, filepath.Join(filepath.Dir(resolved), "tickets"), mode, specTag(ids))
 	if ticketErr != nil {
 		return Facts{}, ticketErr
 	}
@@ -173,9 +170,12 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		ChangedPaths:          changedPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,
-		TicketTokens:          tokens,
 		SpecTag:               specTag(ids),
-		TicketsDirExists:      ticketsDirExists,
+		Tickets:               ticketFacts.parsed,
+		TicketDiagnostics:     ticketFacts.diagnostics,
+		BlockerCycles:         ticketFacts.cycles,
+		WritesPathExists:      ticketFacts.writes,
+		TicketsDirExists:      ticketFacts.dirExists,
 	}, nil
 }
 
@@ -254,48 +254,79 @@ func specTag(ids []string) string {
 	return tagOf(ids[0])
 }
 
-// gatherTicketTokens enumerates specs/<slug>/tickets/, recursing into
-// subdirectories so a token cited only under tickets/sub/ is found the
-// same as one at the top level. Every entry — file or subdirectory, at
-// every depth — is lstat-classified before it is opened or descended
-// into. So a FIFO or other special file is refused rather than blocking,
-// no matter how deep it sits.
+// ticketExt is the one extension the grammar parses. Any other entry under
+// tickets/ is an asset the grammar ignores rather than grades.
+const ticketExt = ".md"
+
+// ticketFile is one enumerated ticket: the path it is named by in a
+// diagnostic, its basename identity, and its bytes.
+type ticketFile struct {
+	rel  string
+	name string
+	data []byte
+}
+
+// ticketFacts is everything the gatherer learns from specs/<slug>/tickets/.
+// Decide grades these values and reads no file of its own.
+type ticketFacts struct {
+	parsed      []tickets.Ticket
+	diagnostics []string
+	cycles      []string
+	writes      map[string]bool
+	dirExists   bool
+}
+
+// gatherTickets enumerates specs/<slug>/tickets/ and parses every `.md`
+// file through the ticket grammar, recursing into subdirectories so a
+// ticket filed under tickets/sub/ is graded the same as one at the top
+// level. Every entry — file or subdirectory, at every depth — is
+// lstat-classified before it is opened or descended into. So a FIFO, a
+// dangling symlink, or another special file is refused rather than
+// blocking, no matter how deep it sits.
 //
 // Review mode requires the top-level directory to exist. Build mode
-// instead reports whether it exists at all (the second return value).
-// This lets the verdict core tell an absent directory (row checks
-// not-applicable) from a present-but-empty one (row checks run for real,
-// reading as unowned rows).
-func gatherTicketTokens(dir, mode string) (tokens []string, exists bool, err *BootstrapFailure) {
+// instead reports whether it exists at all. This lets the verdict core
+// tell an absent directory (row checks not-applicable) from a
+// present-but-empty one (row checks run for real, reading as unowned
+// rows).
+func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure) {
 	d := bounds.ClassifyDir(dir)
 	switch d.State {
 	case bounds.StateAbsent:
 		if mode == "review" {
-			return nil, false, &BootstrapFailure{"tickets directory absent", dir + " does not exist"}
+			return ticketFacts{}, &BootstrapFailure{"tickets directory absent", dir + " does not exist"}
 		}
-		return nil, false, nil
+		return ticketFacts{}, nil
 	case bounds.StateEmpty:
-		return nil, true, nil
+		return ticketFacts{dirExists: true}, nil
 	case bounds.StateParsed:
 		// fall through to enumeration below
 	default:
-		return nil, false, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
+		return ticketFacts{}, &BootstrapFailure{"tickets directory not readable", dir + " is " + string(d.State) + ": " + d.Reason}
 	}
 
-	tokens, ticketErr := scanTicketEntries(dir, d.Entries)
-	if ticketErr != nil {
-		return nil, false, ticketErr
+	files, scanErr := scanTicketEntries(dir, dir, d.Entries)
+	if scanErr != nil {
+		return ticketFacts{}, scanErr
 	}
-	return tokens, true, nil
+	facts, gradeErr := gradeTickets(root, files, tag)
+	if gradeErr != nil {
+		return ticketFacts{}, gradeErr
+	}
+	facts.dirExists = true
+	return facts, nil
 }
 
 // scanTicketEntries walks one already-classified directory listing,
-// scanning files for tokens and recursing into subdirectories with the
-// same lstat-first classification gatherTicketTokens applies at the top
-// level. The special-file refusal holds at every depth, not only the
-// first.
-func scanTicketEntries(dir string, entries []fs.DirEntry) ([]string, *BootstrapFailure) {
-	var tokens []string
+// collecting the `.md` files and recursing into subdirectories with the
+// same lstat-first classification gatherTickets applies at the top level.
+// The special-file refusal holds at every depth, not only the first.
+//
+// A path spec-TOON cannot render is refused here, before any verdict row
+// can carry it into a detail cell. The refusal never depends on which row
+// a later check would sort the path into.
+func scanTicketEntries(base, dir string, entries []fs.DirEntry) ([]ticketFile, *BootstrapFailure) {
+	var files []ticketFile
 	for _, entry := range entries {
 		path := filepath.Join(dir, entry.Name())
 		if entry.IsDir() {
@@ -304,27 +335,106 @@ func scanTicketEntries(dir string, entries []fs.DirEntry) ([]string, *BootstrapF
 			case bounds.StateEmpty:
 				// nothing to scan
 			case bounds.StateParsed:
-				subTokens, subErr := scanTicketEntries(path, sub.Entries)
+				subFiles, subErr := scanTicketEntries(base, path, sub.Entries)
 				if subErr != nil {
 					return nil, subErr
 				}
-				tokens = append(tokens, subTokens...)
+				files = append(files, subFiles...)
 			default:
 				return nil, &BootstrapFailure{"tickets directory not readable", path + " is " + string(sub.State) + ": " + sub.Reason}
 			}
 			continue
 		}
+		rel := filepath.ToSlash(relTo(base, path))
+		if !toon.Representable(rel) {
+			return nil, &BootstrapFailure{"ticket path not representable", fmt.Sprintf("ticket %q contains a byte spec-TOON cannot represent", rel)}
+		}
 		c := bounds.Classify(path, bounds.ControlRecordLimit)
+		unreadable := &BootstrapFailure{"ticket file not readable", path + " is " + string(c.State) + ": " + c.Reason}
+		// A special file, a dangling symlink, and an unreadable entry are
+		// refused whatever they are named. The extension decides what parses
+		// as a ticket, never whether a broken entry may read as green.
 		switch c.State {
-		case bounds.StateParsed:
-			tokens = append(tokens, tokenRe.FindAllString(string(c.Data), -1)...)
-		case bounds.StateEmpty:
-			// nothing to scan
+		case bounds.StateWrongType, bounds.StateUnreadable, bounds.StateAbsent:
+			return nil, unreadable
+		}
+		if filepath.Ext(entry.Name()) != ticketExt {
+			continue
+		}
+		switch c.State {
+		case bounds.StateParsed, bounds.StateEmpty:
+			files = append(files, ticketFile{rel: rel, name: entry.Name(), data: c.Data})
 		default:
-			return nil, &BootstrapFailure{"ticket file not readable", path + " is " + string(c.State) + ": " + c.Reason}
+			return nil, unreadable
 		}
 	}
-	return tokens, nil
+	return files, nil
+}
+
+// gradeTickets parses each enumerated ticket against its siblings and the
+// spec tag, and probes the tree for every declared `Writes:` entry. The
+// probe is the gatherer's whole I/O contribution to the ownership row;
+// the policy over the resulting bit belongs to Decide.
+//
+// A basename that appears at two depths is a duplicate identity, because a
+// blocker edge resolves by basename alone. The second copy is named and
+// dropped, so the sibling set stays one name per ticket.
+func gradeTickets(root string, files []ticketFile, tag string) (ticketFacts, *BootstrapFailure) {
+	facts := ticketFacts{writes: map[string]bool{}}
+	seen := make(map[string]string, len(files))
+	unique := make([]ticketFile, 0, len(files))
+	for _, file := range files {
+		if first, duplicate := seen[file.name]; duplicate {
+			facts.diagnostics = append(facts.diagnostics, fmt.Sprintf("duplicate ticket basename %s at %s and %s", file.name, first, file.rel))
+			continue
+		}
+		seen[file.name] = file.rel
+		unique = append(unique, file)
+	}
+
+	siblings := make([]string, 0, len(unique))
+	for _, file := range unique {
+		siblings = append(siblings, file.name)
+	}
+
+	for _, file := range unique {
+		parsed, diagnostics := tickets.ParseTicket(file.name, file.data, siblings, tag)
+		for _, diagnostic := range diagnostics {
+			facts.diagnostics = append(facts.diagnostics, file.rel+": "+diagnostic)
+		}
+		facts.parsed = append(facts.parsed, parsed)
+		for _, entry := range parsed.Writes {
+			if !toon.Representable(entry) {
+				return ticketFacts{}, &BootstrapFailure{"ticket path not representable", fmt.Sprintf("%s declares a Writes: entry %q with a byte spec-TOON cannot represent", file.rel, entry)}
+			}
+			path, _ := splitWritesEntry(entry)
+			facts.writes[entry] = treeHolds(root, path)
+		}
+	}
+	facts.cycles = tickets.Cycles(facts.parsed)
+	return facts, nil
+}
+
+// treeHolds reports whether one `Writes:` path names something in the tree.
+// Any file type answers yes: the row grades whether the path exists, not
+// what sits at it. The lstat never follows a link, so a dangling symlink
+// reads as the absent path it is.
+func treeHolds(root, path string) bool {
+	if path == "" {
+		return false
+	}
+	_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(path)))
+	return err == nil
+}
+
+// relTo is path expressed against base, falling back to the full path when
+// the two share no relation. A diagnostic then still names something real.
+func relTo(base, path string) string {
+	rel, err := filepath.Rel(base, path)
+	if err != nil {
+		return path
+	}
+	return rel
 }
 
 // canonicalRoot is a path's absolute, symlink-resolved, cleaned form — the one

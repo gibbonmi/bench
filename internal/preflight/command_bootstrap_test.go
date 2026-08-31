@@ -285,7 +285,7 @@ func TestCommandFencesWrappedParenNeverAuthorizes(t *testing.T) {
 	initRepo(t)
 	body := specBody(slug, "- see also (", "  `internal/wrapped/`)")
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")
@@ -311,7 +311,7 @@ func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
 	initRepo(t)
 	body := specBody(slug, "- see also (", "  `internal/aside/`)", "- `internal/real/`")
 	mustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", "Ticket citing PF1 and PF2.\n")
+	mustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticketDoc("One", "PF1", "PF2"))
 	runGit(t, "add", ".")
 	runGit(t, "commit", "-q", "-m", "c0")
 	runGit(t, "checkout", "-q", "-b", "feature")
@@ -365,9 +365,9 @@ func TestCommandTrailingNewlineParity(t *testing.T) {
 		specBody  string
 		ticketDoc string
 	}{
-		{"terminated", terminated, "Ticket citing PF1 and PF2.\n"},
-		{"unterminated spec", unterminated, "Ticket citing PF1 and PF2.\n"},
-		{"unterminated ticket", terminated, "Ticket citing PF1 and PF2."},
+		{"terminated", terminated, ticketDoc("One", "PF1", "PF2")},
+		{"unterminated spec", unterminated, ticketDoc("One", "PF1", "PF2")},
+		{"unterminated ticket", terminated, strings.TrimSuffix(ticketDoc("One", "PF1", "PF2"), "\n")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			initRepo(t)
