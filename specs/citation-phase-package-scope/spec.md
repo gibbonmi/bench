@@ -6,7 +6,7 @@ Roadmap: FT281
 
 Decision source: named reviewed artifact `roadmap/FT281.md`
 
-Verification log: 1 iteration(s) to accept — the review accepted behavior, fences, and the ticket graph; the author corrected one check name.
+Verification log: 1 iteration(s) to accept — the review accepted behavior, the amended fence, and the ticket graph; the author corrected one check name.
 
 ## Problem
 
@@ -150,6 +150,7 @@ Line: `gpt-5.6-terra` / high. A derivation failure must not restore the false gr
 - `internal/gate/tag_census.go`
 - `internal/gate/tag_census_test.go`
 - `internal/coverage/citations.go`
+- `internal/coverage/citations_test.go`
 - `internal/coverage/citation_execution.go`
 - `internal/coverage/citation_execution_test.go`
 - `tests/canary/coverage-map-validation/unexecuted-tag-citation/`
