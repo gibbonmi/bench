@@ -164,10 +164,16 @@ Not covered: story 28 — the FT71 condition is a build-exit rule, and the workf
 - `internal/gate/lane.go`
 - `internal/gate/lane_test.go`
 - `internal/gate/lane_record_test.go`
+- `internal/gate/otel_env_test.go`
 - `internal/commit/commit.go`
 - `internal/landing/landing.go`
 - `internal/landing/composition.go`
 - `internal/worktree/worktree.go`
+- `internal/worktree/build.go`
+- `internal/worktree/build_test.go`
+- `internal/worktree/reauthorize.go`
+- `internal/worktree/exec_test.go`
+- `internal/worktree/otel_seams_test.go`
 - `internal/worktree/effects.go`
 - `internal/worktree/exec.go`
 - `internal/worktree/merge.go`
@@ -180,6 +186,7 @@ Not covered: story 28 — the FT71 condition is a build-exit rule, and the workf
 - `internal/conformance/`
 - `cmd/bench/main.go`
 - `cmd/bench/command_registry.go`
+- `cmd/bench/otel_hook_seams_test.go`
 - `DATA_HANDLING.md`
 - `internal/systemtest/`
 
