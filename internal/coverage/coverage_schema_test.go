@@ -23,7 +23,7 @@ func TestCommandProjectsOneRowShapeAcrossSchemas(t *testing.T) {
 		"help[2]{cmd,why}:\n" +
 		"  bench coverage --check spec.md,check coverage for stories 1\n" +
 		"  bench coverage --check spec.md,check coverage for stories 2\n"
-	rows := [][4]string{{"AB1", "1", "does x", "cli seam"}, {"CD2", "2", "does y", "gate"}}
+	rows := [][4]string{{"AB1", "1", "does x", "cli seam"}, {"AB2", "2", "does y", "gate"}}
 	for _, shape := range mapShapes {
 		t.Run(shape.name, func(t *testing.T) {
 			t.Chdir(t.TempDir())
@@ -181,6 +181,33 @@ func TestViolationsAreIdenticalAcrossSchemas(t *testing.T) {
 				if !reflect.DeepEqual(got, first) {
 					t.Errorf("%s violations = %v, but %s reported %v; the same map must be refused identically under every schema", s.name, got, firstName, first)
 				}
+			}
+		})
+	}
+}
+
+// TestMixedTagRowIDs pins the mixed-tag refusal. A coverage map declares one row-ID
+// tag, and the preflight membership check scopes to the tag of the first row, so a
+// foreign-tag row escapes that check. CE12 asserts the two-tag map is a violation and
+// CE13 asserts the message names every tag it found, in a stable order. The one-tag
+// arm is the anti-regression: the ordinary map must stay silent.
+func TestMixedTagRowIDs(t *testing.T) {
+	const want = "coverage map row ids carry more than one tag (AB, CD); a map declares one tag"
+	for _, s := range mapShapes {
+		if !s.optIn {
+			continue
+		}
+		t.Run(s.name+"/two tags", func(t *testing.T) {
+			rows := [][4]string{{"AB1", "1", "does x", "cli seam"}, {"CD2", "2", "does y", "gate"}}
+			got := Check(spec(s.body(stories, rows)))
+			if !reflect.DeepEqual(got, []string{want}) {
+				t.Errorf("violations = %v, want exactly [%q]", got, want)
+			}
+		})
+		t.Run(s.name+"/one tag", func(t *testing.T) {
+			rows := [][4]string{{"AB1", "1", "does x", "cli seam"}, {"AB2", "2", "does y", "gate"}}
+			if got := Check(spec(s.body(stories, rows))); len(got) != 0 {
+				t.Errorf("violations = %v, want none", got)
 			}
 		})
 	}
