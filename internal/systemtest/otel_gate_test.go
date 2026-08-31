@@ -256,3 +256,38 @@ func spanNames(spans map[string]recordedSpan) []string {
 	slices.Sort(names)
 	return names
 }
+
+// TestOtelGateIgnoresAnAmbientRecordRoot covers the record's env pair at the child side.
+// The two variables address one gate run, and the operator's shell can carry stale
+// values from an earlier run. The gate strips both and sets its own, so the phase spans
+// join this run's root span and the record stays keyed by this repository alone.
+func TestOtelGateIgnoresAnAmbientRecordRoot(t *testing.T) {
+	home := filepath.Join(t.TempDir(), "bench-home")
+	scaffold := scaffoldRecordedGateRepo(t, home, `{"phases":[{"name":"probe","argv":["true"]}]}`)
+	ambient := append(scaffold.environment(t, home),
+		"BENCH_OTEL_ROOT="+filepath.Join(t.TempDir(), "another-repository"),
+		"BENCH_OTEL_TRACEPARENT=00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01")
+
+	recorded := owner.runAt(scaffold.path, ambient, "bash", scaffold.wrapper, "gate", "--fresh")
+	if recorded.code != 0 {
+		t.Fatalf("gate with an ambient record root = (%d, %q, %q)", recorded.code, recorded.stdout, recorded.stderr)
+	}
+
+	// readSeamRecord fails unless exactly one record file sits below the home, so the
+	// ambient root started no second record of its own.
+	spans := readSeamRecord(t, home)
+	root, present := spans["gate.fresh"]
+	if !present {
+		t.Fatalf("the record has no root gate span; it holds %v", spanNames(spans))
+	}
+	if root.Parent != "" {
+		t.Fatalf("root span parent = %q, want the ambient traceparent ignored", root.Parent)
+	}
+	phase, present := spans["probe"]
+	if !present {
+		t.Fatalf("the record has no phase span; it holds %v", spanNames(spans))
+	}
+	if phase.Parent != root.SpanID {
+		t.Fatalf("phase parent = %q, want this run's root span %q", phase.Parent, root.SpanID)
+	}
+}

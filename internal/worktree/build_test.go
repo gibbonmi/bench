@@ -94,7 +94,7 @@ func TestBuildCallsTheJoinWithTheWorktreeAndOutput(t *testing.T) {
 	root, creation, _ := newOwnedAssignment(t, "build-join-arguments")
 	recorder := &buildRecorder{}
 	var stdout, stderr bytes.Buffer
-	code := buildWith(buildJoins(recorder), root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := buildWith(buildJoins(recorder), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
 	want := [2]string{creation.Assignment.Worktree, filepath.Join(creation.Assignment.Worktree, "dist", "bench")}
 	requireTest(t, len(recorder.calls) == 1, "build join calls = %d, want 1", len(recorder.calls))
@@ -108,7 +108,7 @@ func TestBuildRunsTheWorktreeBuildScript(t *testing.T) {
 	root, creation, _ := newOwnedAssignment(t, "build-runs-script")
 	plantBuildScript(t, creation.Path, "script-authored")
 	var stdout, stderr bytes.Buffer
-	code := buildWith(defaultJoins(), root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
 	requireTest(t, builtExecutable(t, creation.Path) == "script-authored", "dist/bench = %q, want the script's bytes", builtExecutable(t, creation.Path))
 }
@@ -119,7 +119,7 @@ func TestBuildPrintsTheTable(t *testing.T) {
 	t.Parallel()
 	root, creation, _ := newOwnedAssignment(t, "build-prints-table")
 	var stdout, stderr bytes.Buffer
-	code := buildWith(buildJoins(&buildRecorder{}), root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := buildWith(buildJoins(&buildRecorder{}), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
 	want, err := toon.Table("worktree_build", []string{"worktree", "executable"}, [][]string{{creation.Assignment.ID, filepath.Join(creation.Assignment.Worktree, "dist", "bench")}})
 	mustNoError(t, err)
@@ -143,7 +143,7 @@ func TestBuildNamesTheExecFormForTheLabel(t *testing.T) {
 			root, creation, _ := newOwnedAssignment(t, "build-next-"+strings.ReplaceAll(row.name, " ", "-"))
 			assignment := relabelAssignment(t, root, creation.Assignment, row.label)
 			var stdout, stderr bytes.Buffer
-			code := buildWith(buildJoins(&buildRecorder{}), root, []string{assignment.ID}, &stdout, &stderr)
+			code := buildWith(buildJoins(&buildRecorder{}), root, Home(), []string{assignment.ID}, &stdout, &stderr)
 			requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
 			want := "next[1]:\n  bench worktree exec " + row.address(assignment) + " -- ./dist/bench <verb>\n"
 			requireTest(t, strings.HasSuffix(stdout.String(), want), "build printed %q, want it to end with %q", stdout.String(), want)
@@ -158,7 +158,7 @@ func TestBuildFailureNamesTheWorktree(t *testing.T) {
 	root, creation, _ := newOwnedAssignment(t, "build-failure-names")
 	recorder := &buildRecorder{result: errors.New("build script exited 1")}
 	var stdout, stderr bytes.Buffer
-	code := buildWith(buildJoins(recorder), root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := buildWith(buildJoins(recorder), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 1, "build exit = %d, want 1", code)
 	want := "bench worktree build: build script exited 1\nworktree: " + creation.Assignment.Worktree + "\n"
 	requireTest(t, stderr.String() == want, "build printed %q, want %q", stderr.String(), want)
@@ -171,7 +171,7 @@ func TestBuildRefusesWithoutGoOnPath(t *testing.T) {
 	plantBuildScript(t, creation.Path, "never-runs")
 	bindEnv(t, "PATH", pathWithoutGo(t))
 	var stdout, stderr bytes.Buffer
-	code := buildWith(defaultJoins(), root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 1, "build exit = %d, want 1", code)
 	requireTest(t, strings.Contains(stderr.String(), "Go is absent from PATH"), "build printed %q, want the builder's Go sentence", stderr.String())
 	requireTest(t, strings.HasSuffix(stderr.String(), "worktree: "+creation.Assignment.Worktree+"\n"), "build printed %q, want it to end with the worktree line", stderr.String())
@@ -184,7 +184,7 @@ func TestBuildCancelExitsOneHundredThirty(t *testing.T) {
 	root, creation, _ := newOwnedAssignment(t, "build-cancelled")
 	recorder := &buildRecorder{result: context.Canceled}
 	var stdout, stderr bytes.Buffer
-	code := buildWith(buildJoins(recorder), root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := buildWith(buildJoins(recorder), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 130, "build exit = %d, want 130", code)
 	requireTest(t, strings.HasSuffix(stderr.String(), "worktree: "+creation.Assignment.Worktree+"\n"), "build printed %q, want it to end with the worktree line", stderr.String())
 }
@@ -199,7 +199,7 @@ func TestBuildReplacesAPriorExecutable(t *testing.T) {
 		plantBuildScript(t, creation.Path, marker)
 		stdout.Reset()
 		stderr.Reset()
-		code := buildWith(defaultJoins(), root, []string{creation.Assignment.Label}, &stdout, &stderr)
+		code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 		requireTest(t, code == 0, "build for %s exit = %d, stderr %q", marker, code, stderr.String())
 	}
 	requireTest(t, builtExecutable(t, creation.Path) == "second-build", "dist/bench = %q, want the second build's bytes", builtExecutable(t, creation.Path))
@@ -214,7 +214,7 @@ func TestBuildWritesOnlyUnderDist(t *testing.T) {
 	gitRun(t, creation.Path, "add", "scripts/go-build.sh")
 	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "add the build script")
 	var stdout, stderr bytes.Buffer
-	code := buildWith(defaultJoins(), root, []string{creation.Assignment.Label}, &stdout, &stderr)
+	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
 	listing, err := descendant(t, "git", "-C", creation.Path, "status", "--porcelain", "--untracked-files=all").Output()
 	mustNoError(t, err)

@@ -769,11 +769,24 @@ func cleanupOutputValue(value string) string {
 //
 // The landing keeps its own boundary in land.go: it carries measures no other verb has.
 const (
-	otelCreateSeam  = "worktree.create"
-	otelExecSeam    = "worktree.exec"
-	otelMergeSeam   = "worktree.merge"
-	otelReleaseSeam = "worktree.release"
+	otelCreateSeam      = "worktree.create"
+	otelExecSeam        = "worktree.exec"
+	otelMergeSeam       = "worktree.merge"
+	otelReleaseSeam     = "worktree.release"
+	otelBuildSeam       = "worktree.build"
+	otelReauthorizeSeam = "worktree.reauthorize"
 )
+
+// otelVerbSeams is the set beginVerbSpan records, in registry order. The bulk verbs
+// (clean, reclaim) and the read-only verbs carry no span by the story 17 decision.
+var otelVerbSeams = []string{
+	otelCreateSeam,
+	otelExecSeam,
+	otelMergeSeam,
+	otelReleaseSeam,
+	otelBuildSeam,
+	otelReauthorizeSeam,
+}
 
 // beginVerbSpan starts one worktree verb's span and returns the closer that ends it. The
 // closer takes the assignment id, because a verb resolves its assignment inside the span

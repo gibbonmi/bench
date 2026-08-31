@@ -47,12 +47,22 @@ func ReauthorizeCommand(root, home string, args []string, stdout, stderr io.Writ
 
 // reauthorizeWith is ReauthorizeCommand with the seam set resolved explicitly at the
 // caller's boundary.
-func reauthorizeWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
+func reauthorizeWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(reauthorizeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
 		return code
 	}
+	// The record opens after the grammar answers. The assignment the caller named is the
+	// subject, because a refusal inside the swap still acted on that named assignment.
+	finishSpan := beginVerbSpan(home, root, otelReauthorizeSeam)
+	exit := reauthorizeParsed(j, root, parsed, stdout, stderr)
+	finishSpan(exit, parsed.Flags["--assignment"])
+	return exit
+}
+
+// reauthorizeParsed is the reauthorize verb's own work, with the grammar already answered.
+func reauthorizeParsed(j joins, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	id, request := parsed.Flags["--assignment"], parsed.Flags["--request"]
 	base, tip := parsed.Flags["--base"], parsed.Flags["--source-tip"]
 	path, err := canonicalPath(resolveVerbOperand(root, parsed.Positionals[0]))

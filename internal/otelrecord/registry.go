@@ -27,6 +27,8 @@ var Registry = []SeamEntry{
 	{Seam: "worktree.exec", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.merge", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.release", Package: "internal/worktree", Function: "beginVerbSpan"},
+	{Seam: "worktree.build", Package: "internal/worktree", Function: "beginVerbSpan"},
+	{Seam: "worktree.reauthorize", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "hook.guard-git", Package: "cmd/bench", Function: "beginHookSpan"},
 	{Seam: "hook.guard-bench-follow-on", Package: "cmd/bench", Function: "beginHookSpan"},
 	{Seam: "hook.check-agent-line", Package: "cmd/bench", Function: "beginHookSpan"},

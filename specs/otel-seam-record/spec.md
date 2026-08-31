@@ -42,6 +42,8 @@ Line: opus / medium. The instrumentation crosses packages at reviewed seams unde
 15. As a retro reader, I want a commit span with the subject digest and the outcome, so that commit cost lands in the record.
 16. As a retro reader, I want `bench worktree land` to write a landing span covering composition and publication, so that landing cost lands in the record.
 17. As a retro reader, I want a span per worktree verb that names the assignment, so that worktree traffic lands in the record.
+    The instrumented set is `create`, `exec`, `merge`, `release`, `land`, `build`, and `reauthorize`. Each acts on one named assignment.
+    `clean` and `reclaim` stay out, because a bulk verb acts on many assignments and names no single subject. The read-only verbs stay out too.
 18. As a retro reader, I want a span per hook plumbing verb with its exit, so that the harness events join the record.
 19. As a reviewer, I want span attributes limited to seam name, subject id, outcome, and measures, so that no payload enters the record.
 
@@ -143,7 +145,7 @@ Not covered: story 28 — the FT71 condition is a build-exit rule, and the workf
 - **Won't handle:** live collector ingest verification — the fixture pins the documented line shape, and no collector binary enters the gate.
 - **Won't handle:** harness-owned measures (tokens, tool calls, Read paths, turns) — FT204 owns the transcript reader, and the cells stay Unknown.
 - **Won't handle:** a merge of the start and end lines — the start marker lets any consumer filter, and no consumer ships here.
-- **Won't handle:** cross-process span parenting — each verb records its own spans, and the subject id joins them for a reader.
+- **Won't handle:** span parenting across a process the gate did not start — an external propagation format enters no Bench seam. The subject id joins those spans for a reader. The gate hands its own phases child this run's traceparent, so the phase spans do join the run's root span.
 - **Won't handle:** an operator disable switch — the record is a local file under the operator's own home, and a future spec can add one.
 - **Won't handle:** control characters in a subject id — `encoding/json` escapes every control rune, and `internal/sanitize` owns the intake policy.
 - **Won't handle:** a record line near the receiver's 1 MiB split bound — the no-payload rule keeps every line far under it.
