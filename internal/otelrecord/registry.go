@@ -3,8 +3,10 @@ package otelrecord
 // This file is the one source for the instrumented set. Each entry names one seam and
 // the Go symbol that starts that seam's span. The `go/ast` conformance check enumerates
 // Registry and reds when a named symbol starts no span, so a seam cannot stay silently
-// uninstrumented. A second list of instrumented seams does not exist: an instrumentation
-// ticket adds its row here, and the check stays red until the symbol starts its span.
+// uninstrumented. An instrumentation ticket adds its row here, and the check stays red
+// until the symbol starts its span. The dispatch and seam declarations in the owning
+// packages are reconciled against Registry by set-equality tests, so a drop on either
+// side reds.
 
 // SeamEntry binds a seam name to the symbol that opens its span. Package is the module-
 // relative package directory, such as "internal/gate", so the check resolves the source
