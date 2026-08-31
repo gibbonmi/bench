@@ -1,6 +1,6 @@
 # Citation phase package scope
 
-Status: implemented
+Status: staged
 
 Roadmap: FT281
 
