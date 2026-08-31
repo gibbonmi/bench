@@ -16,14 +16,17 @@ import (
 // The empty set is the untagged default, which the ordinary test phase carries.
 type TagSet []string
 
-// TestExecution is one resolved Go test phase. Its package operands and tags stay
-// together, so one phase cannot authorize a file with another phase's facts.
+// TestExecution is one resolved Go test phase. Its package operands, tags, and
+// environment stay together, so one phase cannot authorize a file with another phase's
+// facts. Env carries the phase's own KEY=VALUE overrides, which decide what the
+// toolchain selects and compiles as surely as the argv does.
 type TestExecution struct {
 	Name     string
 	Tags     TagSet
 	Packages []string
 	Dir      string
 	GoC      string
+	Env      []string
 }
 
 // ExecutedTestCensus reports every Go test phase the gate executes for the tree under
@@ -41,7 +44,7 @@ func ExecutedTestCensus(root, kit string) ([]TestExecution, error) {
 	}
 	var census []TestExecution
 	for _, phase := range phases {
-		testAt := goTestIndex(phase.Argv)
+		testAt, goC := goTestIndex(phase.Argv)
 		if testAt < 0 {
 			continue
 		}
@@ -49,7 +52,6 @@ func ExecutedTestCensus(root, kit string) ([]TestExecution, error) {
 		if dir == "" {
 			dir = root
 		}
-		goC := goCOf(phase.Argv, testAt)
 		effectiveDir := dir
 		if goC != "" {
 			effectiveDir = goC
@@ -64,6 +66,7 @@ func ExecutedTestCensus(root, kit string) ([]TestExecution, error) {
 			Packages: testPackagesOf(phase.Argv, testAt),
 			Dir:      filepath.Clean(effectiveDir),
 			GoC:      goC,
+			Env:      phase.Env,
 		})
 	}
 	return census, nil
@@ -74,21 +77,30 @@ func ExecutedTestCensus(root, kit string) ([]TestExecution, error) {
 // between the executable and the subcommand, so the scan steps over that pair rather
 // than reading a fixed position. The index is what the package-operand reader needs,
 // because every operand follows the subcommand.
-func goTestIndex(argv []string) int {
+//
+// The same walk answers the Go process directory setting, because both facts live in the
+// one region between the executable and the subcommand. That setting stays attached to
+// the phase: Go resolves a relative package operand after it changes to that directory.
+func goTestIndex(argv []string) (testAt int, goC string) {
 	if len(argv) == 0 || goExecutable(argv[0]) == "" {
-		return -1
+		return -1, ""
 	}
 	for i := 1; i < len(argv); i++ {
-		if argv[i] == "-C" {
+		switch {
+		case argv[i] == "-C":
+			// Go accepts -C only as the first argument, so a second occurrence makes the
+			// phase fail on its own terms. The first is the one this scan reports.
+			if goC == "" && i+1 < len(argv) {
+				goC = argv[i+1]
+			}
 			i++
-			continue
+		case argv[i] == "test":
+			return i, goC
+		default:
+			return -1, ""
 		}
-		if argv[i] == "test" {
-			return i
-		}
-		return -1
 	}
-	return -1
+	return -1, ""
 }
 
 // goExecutable answers the argv[0] forms that name the Go toolchain: the bare name a
@@ -115,17 +127,6 @@ func tagSetOf(argv []string) TagSet {
 	return normalizeTags(tags)
 }
 
-// goCOf returns the Go process directory setting. It stays attached to the phase because
-// Go resolves a relative package operand after it changes to that directory.
-func goCOf(argv []string, testAt int) string {
-	for i := 1; i < testAt; i++ {
-		if argv[i] == "-C" && i+1 < testAt {
-			return argv[i+1]
-		}
-	}
-	return ""
-}
-
 // testPackagesOf reads package operands from one Go test argv. Test-binary arguments
 // begin at -args or at a -test flag, so neither can become package evidence.
 func testPackagesOf(argv []string, testAt int) []string {
@@ -146,14 +147,36 @@ func testPackagesOf(argv []string, testAt int) []string {
 	return packages
 }
 
+// testFlagTakesValue reports whether a `go test` flag consumes the argument after it.
+// The set is every value-taking flag `go help build` and `go help testflag` document for
+// `go test`, less the ones that carry no separated value: a boolean flag, and any flag
+// written in the `-flag=value` form. An omission here reads a flag's own value as a
+// package operand, which makes `go list` reject the phase and false-reds every citation
+// that phase could have supplied.
+//
+// `-C` is absent because Go accepts it only as the first argument of the whole command
+// line, which is ahead of the subcommand this scan starts from. `-gocoverdir` is absent
+// because cmd/go withholds it from the end-user flag set.
 func testFlagTakesValue(arg string) bool {
 	if strings.Contains(arg, "=") {
 		return false
 	}
-	switch arg {
-	case "-tags", "--tags", "-mod", "-modfile", "-overlay", "-p", "-pkgdir", "-covermode",
-		"-coverpkg", "-coverprofile", "-vet", "-run", "-bench", "-benchtime", "-count", "-cpu",
-		"-parallel", "-shuffle", "-timeout":
+	// Go's flag package accepts one or two leading dashes for the same flag, so the bare
+	// name is what this table keys on.
+	switch strings.TrimPrefix(strings.TrimPrefix(arg, "-"), "-") {
+	// Build flags, which `go test` shares with `go build`.
+	case "asmflags", "buildmode", "compiler", "covermode", "coverpkg", "gccgoflags",
+		"gcflags", "installsuffix", "ldflags", "mod", "modfile", "overlay", "p", "pgo",
+		"pkgdir", "tags", "toolexec":
+		return true
+	// Flags `go test` itself handles.
+	case "coverprofile", "exec", "o", "vet":
+		return true
+	// Flags `go test` forwards to the test binary.
+	case "bench", "benchtime", "blockprofile", "blockprofilerate", "count", "cpu",
+		"cpuprofile", "fuzz", "fuzzminimizetime", "fuzztime", "list", "memprofile",
+		"memprofilerate", "mutexprofile", "mutexprofilefraction", "outputdir", "parallel",
+		"run", "shuffle", "skip", "timeout", "trace":
 		return true
 	default:
 		return false

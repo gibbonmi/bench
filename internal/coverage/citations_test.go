@@ -206,6 +206,21 @@ func TestCommandCheckExitsOneOnAMissingReviewPickup(t *testing.T) {
 	}
 }
 
+// TestCommandCheckAcceptsARelativeSpecPath pins the documented invocation. `go list`
+// always prints an absolute package directory, so the repo root that a relative spec path
+// yields must become absolute before the two are compared. A relative root otherwise
+// matches no package, and every citation in the spec reports that no executed phase
+// selects it.
+func TestCommandCheckAcceptsARelativeSpecPath(t *testing.T) {
+	root, _ := citedFileSpec(t, "internal/x/plain_test.go", "")
+	goModuleRoot(t, root)
+	t.Chdir(root)
+
+	if out, code := Command([]string{"--check", "specs/s/spec.md"}); code != 0 {
+		t.Fatalf("Command = (%d, %q), want exit 0 for a relative spec path", code, out)
+	}
+}
+
 // citedFileSpec writes a folder spec whose one mapped row cites rel, and writes the
 // cited file with header ahead of its package clause. The file always declares the
 // cited name, so only the execution arm can red.
@@ -213,12 +228,9 @@ func citedFileSpec(t *testing.T, rel, header string) (root, specPath string) {
 	t.Helper()
 	root, specPath = citedSpec(t, "s", "`"+rel+"` (`TestPresent`)", "")
 	cited := filepath.Join(root, filepath.FromSlash(rel))
-	writeUnder(t, cited, header+"package x\n\nfunc TestPresent(t *testing.T) {}\n")
-	// The cited package also holds one file no constraint excludes. Go drops a directory
-	// whose every file is excluded out of a recursive pattern, so a package holding the
-	// cited file alone is never selected, and the tag arm this helper grades is never
-	// reached.
-	writeUnder(t, filepath.Join(filepath.Dir(cited), "compiled.go"), "package x\n")
+	source := header + "package x\n\nfunc TestPresent(t *testing.T) {}\n"
+	writeUnder(t, cited, source)
+	writeCompiledCompanion(t, cited, source)
 	return root, specPath
 }
 

@@ -3,6 +3,7 @@ package coverage
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -129,6 +130,76 @@ func TestCitationPackageScopeFailure(t *testing.T) {
 	})
 }
 
+// TestCitationPhaseEnv grades the phase-environment arm. A phase declares its own
+// platform, and `go test` would select and compile different files under it. So the check
+// reads the phase's environment rather than the host's on both sides: the package loader,
+// and the file's build constraint.
+func TestCitationPhaseEnv(t *testing.T) {
+	arch := crossArch()
+
+	t.Run("the loader child runs under the phase environment", func(t *testing.T) {
+		root := t.TempDir()
+		writeUnder(t, filepath.Join(root, "go.mod"), "module example.test/phaseenv\n\ngo 1.24\n")
+		// This package holds one file only the cross architecture builds. A recursive
+		// pattern drops the directory on every other architecture, so the loader lists it
+		// only when the loader itself runs under the phase's own GOARCH.
+		writeUnder(t, filepath.Join(root, "arch", "arch_"+arch+".go"), "package arch\n")
+
+		dirs, err := selectedPackageDirs(gate.TestExecution{
+			Name: "test", Packages: []string{"./..."}, Dir: root, Env: []string{"GOARCH=" + arch},
+		})
+		if err != nil {
+			t.Fatalf("selectedPackageDirs: %v", err)
+		}
+		if !containsDirectory(dirs, filepath.Join(root, "arch")) {
+			t.Fatalf("selectedPackageDirs = %q, want the package the phase's own GOARCH selects", dirs)
+		}
+	})
+
+	t.Run("a phase GOARCH override builds an arch-suffixed file", func(t *testing.T) {
+		specPath := citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./..."],"env":{"GOARCH":"`+arch+`"}}]}`,
+			"arch/fixture_"+arch+"_test.go",
+			"package arch\n\nfunc TestPresent() {}\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation under the phase's own GOARCH", v)
+		}
+	})
+
+	// The two cgo cases are symmetric on purpose. One of them contradicts the host's own
+	// CgoEnabled default whichever way that default falls, so the pair bites on any host.
+	t.Run("a phase that disables cgo refuses a cgo-tagged file", func(t *testing.T) {
+		specPath := citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./..."],"env":{"CGO_ENABLED":"0"}}]}`,
+			"linked/linked_test.go", "//go:build cgo\n\npackage linked\n\nfunc TestPresent() {}\n")
+
+		v := checkFilesOf(t, specPath)
+		if len(v) != 1 || !strings.Contains(v[0], "which no executed tag set builds (//go:build cgo)") {
+			t.Fatalf("CheckFiles = %#v, want the cgo constraint refused", v)
+		}
+	})
+
+	t.Run("a phase that enables cgo builds a cgo-tagged file", func(t *testing.T) {
+		specPath := citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./..."],"env":{"CGO_ENABLED":"1"}}]}`,
+			"linked/linked_test.go", "//go:build cgo\n\npackage linked\n\nfunc TestPresent() {}\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation when the phase enables cgo", v)
+		}
+	})
+}
+
+// crossArch names an architecture the host is not, so a phase's own override is
+// observable rather than a restatement of the host's platform.
+func crossArch() string {
+	if runtime.GOARCH == "386" {
+		return "amd64"
+	}
+	return "386"
+}
+
 // TestCitationPackageScopeTimeout grades the loader's time bound. A cited FIFO never
 // starts the loader, because the grammar refuses a non-regular file first, but a FIFO
 // planted anywhere else under a phase's package tree still blocks the loader in open(2)
@@ -202,12 +273,18 @@ func citationExecutionSpec(t *testing.T, manifest, rel, source string) string {
 	writeUnder(t, filepath.Join(root, "other", "other.go"), "package other\n")
 	cited := filepath.Join(root, filepath.FromSlash(rel))
 	writeUnder(t, cited, source)
-	// The cited package also holds one file no constraint excludes. Go refuses an
-	// explicit operand for a directory whose every file a constraint excludes, and drops
-	// such a directory out of a recursive pattern, so a package holding the cited file
-	// alone could never be selected at all.
-	writeUnder(t, filepath.Join(filepath.Dir(cited), "compiled.go"), "package "+packageOf(t, source)+"\n")
+	writeCompiledCompanion(t, cited, source)
 	return citedSpecPath(t, root, rel)
+}
+
+// writeCompiledCompanion gives a cited fixture file one companion that no constraint
+// excludes. Go refuses an explicit operand for a directory whose every file a constraint
+// excludes, and drops such a directory out of a recursive pattern. So a package holding
+// the cited file alone could never be selected at all, and the arm under grade would
+// never be reached.
+func writeCompiledCompanion(t *testing.T, cited, source string) {
+	t.Helper()
+	writeUnder(t, filepath.Join(filepath.Dir(cited), "compiled.go"), "package "+packageOf(t, source)+"\n")
 }
 
 // packageOf reads the package clause a fixture source declares, so the companion file

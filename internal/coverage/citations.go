@@ -83,11 +83,20 @@ func CheckFiles(p parsed, specPath string) []string {
 // spec.md`, yields both. Any other shape yields the directory that holds the spec and
 // an empty slug, which leaves the pickup check inapplicable rather than guessing a
 // name.
+//
+// The root is absolute, because the two consumers downstream both need it that way: the
+// phase census anchors a manifest phase's directory to it, and the package loader answers
+// with absolute directories that a relative root can never match. A working directory
+// that no longer resolves leaves the path as written, which reports a missing file rather
+// than a panic.
 func specLocation(specPath string) (base, slug string) {
 	if specPath == "" {
 		return "", ""
 	}
 	clean := filepath.Clean(specPath)
+	if absolute, err := filepath.Abs(clean); err == nil {
+		clean = absolute
+	}
 	dir := filepath.Dir(clean)
 	if filepath.Base(clean) == "spec.md" && filepath.Base(filepath.Dir(dir)) == "specs" {
 		return filepath.Dir(filepath.Dir(dir)), filepath.Base(dir)

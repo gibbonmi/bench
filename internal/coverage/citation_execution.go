@@ -6,23 +6,16 @@ import (
 	"fmt"
 	"go/build"
 	"go/build/constraint"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
-// packageLoadTimeout bounds one loader invocation. It is this check's own fail-safe
-// rather than the shared resource policy: the loader opens every file it walks, so one
-// FIFO anywhere under a phase's package tree blocks it in open(2) with no deadline of its
-// own. A citation's own cited path never starts the loader, because the grammar refuses a
-// non-regular file first, but another row's honest citation still points the loader at
-// the same tree. The bound sits far above a cold expansion of `./...` on a large tree, so
-// only a loader that will never return reaches it.
-var packageLoadTimeout = 30 * time.Second
+var packageLoadTimeout = bounds.PackageLoadTimeout
 
 // executionScope is one Go test phase and the package directories the Go loader expands
 // its operands to. The phase and its packages stay paired here, so no citation can
@@ -80,7 +73,7 @@ func checkExecution(rn int, rel, path string, content []byte, scopes []*executio
 			continue
 		}
 		selected = true
-		ctxt := contextFor(scope.phase.Tags)
+		ctxt := contextFor(scope.phase)
 		if matched, err := ctxt.MatchFile(dir, name); err == nil && matched {
 			return nil
 		}
@@ -92,8 +85,8 @@ func checkExecution(rn int, rel, path string, content []byte, scopes []*executio
 }
 
 // selectedPackageDirs delegates package-pattern expansion to the installed Go loader.
-// The invocation retains the phase directory, tags, and Go -C setting so its package
-// selection has the same terms as the phase that can execute the cited test.
+// The invocation retains the phase directory, tags, environment, and Go -C setting so its
+// package selection has the same terms as the phase that can execute the cited test.
 //
 // Only stdout is read. `go list` writes its matched-no-packages warning to stderr, and a
 // combined stream would let that sentence pose as a package directory. The loader is
@@ -116,6 +109,11 @@ func selectedPackageDirs(execution gate.TestExecution) ([]string, error) {
 	args = append(args, packages...)
 	cmd := exec.Command("go", args...)
 	cmd.Dir = execution.Dir
+	if len(execution.Env) != 0 {
+		// The phase's own overrides reach the loader whole and last, so the loader answers
+		// for the platform and module mode the phase runs under rather than the host's.
+		cmd.Env = append(os.Environ(), execution.Env...)
+	}
 	var stdout bytes.Buffer
 	// The run waits for the child, so an interrupted loader reports its terminal result
 	// here rather than leaving a partial directory list behind. It also kills the whole
@@ -156,12 +154,31 @@ func containsDirectory(dirs []string, want string) bool {
 	return false
 }
 
-// contextFor is the build context one executed tag set compiles in. It starts from the
-// toolchain's own default, so the host GOOS and GOARCH, release tags, and toolchain
-// tags retain their real values. MatchFile then applies the file constraint and suffix.
-func contextFor(set gate.TagSet) build.Context {
+// contextFor is the build context one executed phase compiles in. It starts from the
+// toolchain's own default, so the release tags and toolchain tags retain their real
+// values, and the host GOOS and GOARCH stand where the phase declares nothing else.
+// MatchFile then applies the file constraint and suffix.
+//
+// Three environment variables name the platform a file is selected for, so the phase's
+// own settings for them override the host's. Every other variable the phase declares
+// reaches the loader child instead, where Go itself applies it.
+func contextFor(execution gate.TestExecution) build.Context {
 	ctxt := build.Default
-	ctxt.BuildTags = append(append([]string(nil), build.Default.BuildTags...), set...)
+	ctxt.BuildTags = append(append([]string(nil), build.Default.BuildTags...), execution.Tags...)
+	for _, entry := range execution.Env {
+		key, value, found := strings.Cut(entry, "=")
+		if !found {
+			continue
+		}
+		switch key {
+		case "GOOS":
+			ctxt.GOOS = value
+		case "GOARCH":
+			ctxt.GOARCH = value
+		case "CGO_ENABLED":
+			ctxt.CgoEnabled = value == "1"
+		}
+	}
 	return ctxt
 }
 
