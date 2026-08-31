@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,6 +37,7 @@ import (
 	"github.com/gibbonmi/bench/internal/lines"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/models"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/outline"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight"
@@ -56,6 +58,8 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // version is stamped at build time via -ldflags "-X main.version=<pkg.json version>";
@@ -126,7 +130,7 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, and merge grammar"},
 	), Run: worktreeCommand},
 	{Name: "resume-clean", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
-	{Name: "session-inspect", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
+	{Name: "session-inspect", Hook: true, Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "shift", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " [--refresh] \"<objective>\"", Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "commit", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 39, Suffix: " -m <msg> <path>...", Description: "gate, then commit named paths on green"}), Run: func(c Command, args []string) int { return commit.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "spec", Attachment: attachmentDirect, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(
@@ -135,9 +139,9 @@ var commandRegistry = []commandDefinition{
 	), Run: outputCommand(spec.Command)},
 	{Name: "gate-go", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "gate-prose", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateProseCommand(args, c.Stdout, c.Stderr) }},
-	{Name: "guard-git", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},
-	{Name: "guard-bench-follow-on", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardBenchFollowOn(args, c.Stdin, c.Stdout, c.Stderr) }},
-	{Name: "check-agent-line", Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return checkAgentLine(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "guard-git", Hook: true, Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "guard-bench-follow-on", Hook: true, Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardBenchFollowOn(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "check-agent-line", Hook: true, Attachment: attachmentDirect, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return checkAgentLine(args, c.Stdin, c.Stdout, c.Stderr) }},
 
 	{Name: "setup", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 0, Suffix: " [--plan|--yes]", Description: "inspect, preview, and converge the current repository"}), Run: adoptCommand("setup")},
 	{Name: "link", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 1, Suffix: " [copy|symlink]", Description: "safely wire the kit into this repo for every harness"}), Run: adoptCommand("link")},
@@ -145,7 +149,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "doctor", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 24, Suffix: " [--fix]", Description: "report (and repair) the PATH shim under a node version manager"}), Run: adoptCommand("doctor")},
 	{Name: "unlink", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 3, Suffix: " [--dry-run]", Description: "remove the per-repo Bench footprint the manifest records"}), Run: adoptCommand("unlink")},
 	{Name: "upgrade", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 4, Suffix: " [--check] [--force]", Description: "plan and apply a relink onto the installed kit version"}), Run: adoptCommand("upgrade")},
-	{Name: "worktree-hook", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return harness.WorktreeCommand(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "worktree-hook", Hook: true, Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return harness.WorktreeCommand(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "gate", Attachment: attachmentSystem, AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(
 		helpRow{Order: 26, Suffix: " [--fresh]", Description: "run the project gate (the oracle; --fresh ignores a reusable green)"},
 		helpRow{Order: 30, Suffix: " pin", Description: "pin HEAD's .bench tree for pre-push verification"},
@@ -156,7 +160,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "freshness-check", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return freshnessCheck(args, c.Executable, c.Stderr) }},
 	{Name: "freshness-publish", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return freshnessPublish(args, c.Executable, c.Stderr) }},
 	{Name: "canary", Attachment: attachmentSystem, AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 14, Suffix: " [root]", Description: "validate fixture inventory"}), Run: func(c Command, args []string) int { return canary.Run(args, c.Stdout, c.Stderr) }},
-	{Name: "stop-verdict", Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return stopVerdict(args, c.Stdin, c.Stderr) }},
+	{Name: "stop-verdict", Hook: true, Attachment: attachmentSystem, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return stopVerdict(args, c.Stdin, c.Stderr) }},
 
 	{Name: "release-preflight", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 28, Suffix: " --mode verify|publish [--profile public|bank] [--phase name]", Description: "run repository release authorization"}), Run: func(c Command, args []string) int { return releasepreflight.Command(args, version, c.Stderr) }},
 	{Name: "prep-release", Attachment: attachmentShip, AXI: axiExempt(axiReasonRelease), Inventory: publicInventory(helpRow{Order: 27, Description: "ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary"}), Run: func(c Command, args []string) int { return preprelease.Command(args, c.Stdout, c.Stderr) }},
@@ -468,6 +472,39 @@ func stopVerdict(args []string, stdin io.Reader, stderr io.Writer) (code int) {
 	data, _ := io.ReadAll(stdin)
 	armed := os.Getenv("BENCH_SHIFT") == "1"
 	return stophook.Run(data, args[0], armed, stderr)
+}
+
+// The hook plumbing verbs' record. A seam name is the verb's own name under one prefix,
+// so a reader of the record tells a harness event from a verb the reviewer typed.
+const otelHookSeamPrefix = "hook."
+
+// beginHookSpan starts one hook verb's span and returns the closer that ends it with the
+// verb's own exit. The record is addressed by repository, so a hook that runs outside a
+// repository records nothing and its closer does nothing.
+func beginHookSpan(verb string) func(int) {
+	root, err := git.Root()
+	if err != nil {
+		return func(int) {}
+	}
+	seam := otelHookSeamPrefix + verb
+	provider := otelrecord.NewProvider("", root)
+	ctx, span := provider.Tracer().Start(context.Background(), seam,
+		trace.WithAttributes(attribute.String(otelrecord.AttrSeam, seam)))
+	return func(exit int) {
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, hookSpanOutcome(exit)))
+		span.End()
+		_ = provider.Shutdown(context.WithoutCancel(ctx))
+	}
+}
+
+// hookSpanOutcome is a hook verb's exit as the record spells it. A guard that refused the
+// call it graded exits nonzero, so a refusal reads red: the record states the exit the
+// harness saw, not whether the guard was right to refuse.
+func hookSpanOutcome(exit int) string {
+	if exit == 0 {
+		return "green"
+	}
+	return "red"
 }
 
 // treeHash exposes git.TreeHash as the `bench tree-hash [root]` plumbing subcommand:
