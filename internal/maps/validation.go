@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -35,73 +34,41 @@ func graphDiagnostics(m DecisionMap) []Diagnostic {
 		}
 		byID[ticket.ID] = ticket
 	}
+	walk := GraphWalk{}
 	for _, ticket := range m.Tickets {
-		seen := make(map[string]bool)
-		for _, blocker := range blockers(ticket.BlockedBy) {
-			if seen[blocker] {
-				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: %s duplicate blocker #%s", ticket.ID, ticket.Title, blocker)})
-				continue
-			}
-			seen[blocker] = true
-			blockerTicket, exists := byID[blocker]
-			if !exists {
-				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: %s dangling blocker #%s", ticket.ID, ticket.Title, blocker)})
-				continue
-			}
-			if blocker == ticket.ID {
-				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: %s self-edge #%s -> #%s", ticket.ID, ticket.Title, ticket.ID, blocker)})
-			}
-			if resolved(ticket) && !resolved(blockerTicket) {
-				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("resolved ticket #%s: %s depends on unresolved #%s: %s", ticket.ID, ticket.Title, blocker, blockerTicket.Title)})
-			}
+		walk.Names = append(walk.Names, ticket.ID)
+		walk.Edges = append(walk.Edges, blockers(ticket.BlockedBy))
+	}
+	walk.Fault = func(fault GraphFault, node int, target string) string {
+		ticket := m.Tickets[node]
+		switch fault {
+		case FaultDuplicateEdge:
+			return fmt.Sprintf("ticket #%s: %s duplicate blocker #%s", ticket.ID, ticket.Title, target)
+		case FaultDanglingEdge:
+			return fmt.Sprintf("ticket #%s: %s dangling blocker #%s", ticket.ID, ticket.Title, target)
+		case FaultSelfEdge:
+			return fmt.Sprintf("ticket #%s: %s self-edge #%s -> #%s", ticket.ID, ticket.Title, ticket.ID, target)
+		default:
+			blocked := byID[target]
+			return fmt.Sprintf("cycle edge ticket #%s: %s -> ticket #%s: %s (#%s -> #%s)", ticket.ID, ticket.Title, target, blocked.Title, ticket.ID, target)
 		}
 	}
-	diagnostics = append(diagnostics, cycleDiagnostics(byID)...)
-	return diagnostics
-}
-
-func cycleDiagnostics(tickets map[string]DecisionTicket) []Diagnostic {
-	var diagnostics []Diagnostic
-	visiting, visited := make(map[string]bool), make(map[string]bool)
-	var visit func(string, string)
-	visit = func(id, from string) {
-		if visiting[id] {
-			fromTicket, toTicket := tickets[from], tickets[id]
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("cycle edge ticket #%s: %s -> ticket #%s: %s (#%s -> #%s)", from, fromTicket.Title, id, toTicket.Title, from, id)})
-			return
+	walk.Edge = func(node int, target string) string {
+		ticket, blocker := m.Tickets[node], byID[target]
+		if resolved(ticket) && !resolved(blocker) {
+			return fmt.Sprintf("resolved ticket #%s: %s depends on unresolved #%s: %s", ticket.ID, ticket.Title, target, blocker.Title)
 		}
-		if visited[id] {
-			return
-		}
-		visiting[id] = true
-		for _, blocker := range blockers(tickets[id].BlockedBy) {
-			if _, exists := tickets[blocker]; exists && blocker != id {
-				visit(blocker, id)
-			}
-		}
-		delete(visiting, id)
-		visited[id] = true
+		return ""
 	}
-	ids := make([]string, 0, len(tickets))
-	for id := range tickets {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-	for _, id := range ids {
-		visit(id, "")
+	for _, message := range walk.Diagnostics() {
+		diagnostics = append(diagnostics, Diagnostic{Message: message})
 	}
 	return diagnostics
 }
 
+// blockers names the decision-map dependency list inside the shared field grammar.
 func blockers(value string) []string {
-	if value == "none" {
-		return nil
-	}
-	parts := strings.Split(value, ", ")
-	for i := range parts {
-		parts[i] = strings.TrimPrefix(parts[i], "#")
-	}
-	return parts
+	return FieldList(value, "none", "#")
 }
 
 func resolved(ticket DecisionTicket) bool {

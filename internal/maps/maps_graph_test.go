@@ -4,6 +4,7 @@ package maps
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing"
@@ -289,4 +290,31 @@ func hasDiagnostic(diagnostics []Diagnostic, want string) bool {
 		}
 	}
 	return false
+}
+
+// TestLiftedGraphWalkReportsEveryEdgeFault drives the lifted walk with a
+// neutral vocabulary, so no decision-map word reaches the shared symbol.
+func TestLiftedGraphWalkReportsEveryEdgeFault(t *testing.T) {
+	walk := GraphWalk{
+		Names: []string{"a", "b", "c"},
+		Edges: [][]string{{"b", "b", "z"}, {"b", "c"}, {"b"}},
+		Fault: func(fault GraphFault, node int, target string) string {
+			return string(fault) + " " + []string{"a", "b", "c"}[node] + "->" + target
+		},
+	}
+	want := []string{
+		"duplicate a->b",
+		"dangling a->z",
+		"self b->b",
+		"cycle c->b",
+	}
+	if got := walk.Diagnostics(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("GraphWalk diagnostics = %#v, want %#v", got, want)
+	}
+	if got := FieldList("none", "none", "#"); got != nil {
+		t.Fatalf("FieldList(none) = %#v", got)
+	}
+	if got := FieldList("#1, #2", "none", "#"); !reflect.DeepEqual(got, []string{"1", "2"}) {
+		t.Fatalf("FieldList = %#v", got)
+	}
 }
