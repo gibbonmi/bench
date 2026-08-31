@@ -137,11 +137,27 @@ func TestGateRunRefusesMovedSubject(t *testing.T) {
 	if result.GateExit != 0 || result.ActionExit != 1 {
 		t.Fatalf("result = %#v, stderr=%q", result, stderr.String())
 	}
-	if !strings.Contains(stderr.String(), "gate subject changed during execution") {
+	if !strings.Contains(stderr.String(), "gate subject changed during execution: tree ") {
 		t.Fatalf("stderr = %q", stderr.String())
 	}
 	if result.Inspection.ReusableGreen || Inspect(root).ReusableGreen {
 		t.Fatalf("moved subject retained reusable green: result=%#v inspect=%#v", result.Inspection, Inspect(root))
+	}
+}
+
+func TestGateRunRefusesMovedDeclaredInput(t *testing.T) {
+	root := outcomeFixture(t, "printf 'moved\\n' >> declared.txt\nprintf '%s\\n' '{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}' > .bench/gate-inputs.json\n")
+	outcomeWrite(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":["declared.txt"],"tools":[]}`+"\n", 0o644)
+	outcomeWrite(t, root, "declared.txt", "declared\n", 0o644)
+	outcomeCommit(t, root, "declare input")
+
+	var stdout, stderr bytes.Buffer
+	result := Execute(context.Background(), root, &stdout, &stderr)
+	if result.GateExit != 0 || result.ActionExit != 1 {
+		t.Fatalf("result = %#v, stderr=%q", result, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "gate subject changed during execution: declared input declared.txt") {
+		t.Fatalf("stderr = %q", stderr.String())
 	}
 }
 

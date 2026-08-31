@@ -44,6 +44,10 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	if err != nil {
 		return operational(storageRoot, 0, stderr, fmt.Sprintf("gate subject unavailable: %v", err))
 	}
+	var declaredPaths []string
+	if m, _, reason := loadManifest(runtimeRoot); reason == "" {
+		declaredPaths = append(declaredPaths, m.Paths...)
+	}
 	decision := Decide(DecisionInput{Subject: plan.Tree, Resolution: plan.Resolution})
 	if plan.Resolution.Kind == None {
 		fmt.Fprintln(stderr, "no gate found: add an executable .bench/gate.sh or set BENCH_GATE")
@@ -174,7 +178,7 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	}
 	after, err := evaluation.capturePost()
 	if err != nil || !sameSubject(plan, after) {
-		fmt.Fprintln(stderr, "gate subject changed during execution")
+		fmt.Fprintln(stderr, subjectChangeDiagnostic(runtimeRoot, declaredPaths, plan, after, err))
 		inspection := inspectAt(storageRoot, time.Now().UTC())
 		if err == nil {
 			inspection = inspectSubjectAt(storageRoot, after, time.Now().UTC())
@@ -320,6 +324,22 @@ func interruptedRecord(plan subject, now time.Time) verdictRecord {
 
 func sameSubject(a, b subject) bool {
 	return a.Tree == b.Tree && a.Oracle == b.Oracle && a.Resolution == b.Resolution && a.Closed == b.Closed && a.Reason == b.Reason
+}
+
+func subjectChangeDiagnostic(root string, declaredPaths []string, before, after subject, err error) string {
+	if err == nil && before.Tree != after.Tree {
+		if changed, ok := benchgit.ChangedPathsBetweenTrees(root, before.Tree, after.Tree); ok {
+			for _, path := range declaredPaths {
+				for _, moved := range changed {
+					if moved == path || strings.HasPrefix(moved, path+"/") {
+						return "gate subject changed during execution: declared input " + path
+					}
+				}
+			}
+		}
+		return "gate subject changed during execution: tree " + after.Tree
+	}
+	return "gate subject changed during execution"
 }
 
 func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) int {
