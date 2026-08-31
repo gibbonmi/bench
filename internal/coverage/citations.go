@@ -7,20 +7,26 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
-// citationRe matches one seam-cell citation: a backticked repo-relative `_test.go`
-// path immediately followed by a parenthesized list. The list holds the backticked
-// names that file must declare. A backticked test path with no such list is a
-// mention, not a citation, so it grades nothing.
-var citationRe = regexp.MustCompile("`([^`]*_test\\.go)`[ \t]*\\(([^)]*)\\)")
+// citationRe matches one seam-cell test token: a backticked repo-relative `_test.go`
+// path, and the parenthesized list that may follow it. The list holds the backticked
+// names that file must declare. The list is optional in the pattern so that one
+// grammar sees both shapes: a token with no list is a mention, which claims evidence
+// it never names, and the mention rule grades it.
+var citationRe = regexp.MustCompile("`([^`]*_test\\.go)`[ \t]*(?:\\(([^)]*)\\))?")
 
 // citedNameRe pulls each backticked name out of a citation's parenthesized list.
 var citedNameRe = regexp.MustCompile("`([^`]+)`")
+
+// runNameRe matches one t.Run call up to its first argument, so the argument itself
+// decides whether the subtest name is a literal the grammar can read.
+var runNameRe = regexp.MustCompile(`\.Run\([ \t\n]*`)
 
 // reviewPickup renders the review file a folder spec's fences must authorize. The
 // landing carries the review beside the build, so an unauthorized pickup blocks it.
@@ -73,8 +79,16 @@ func checkCitations(p parsed, base string) []string {
 	census := executedCensus(base)
 	for idx, r := range p.dataRows {
 		rn := idx + 1
-		for _, m := range citationRe.FindAllStringSubmatch(s.cell(r, fieldSeam), -1) {
-			v = append(v, checkCitation(rn, base, m[1], m[2], census)...)
+		// Only the seam cell holds the row's evidence, so only it is graded. A test path
+		// in the why cell is prose about the failure, not a claim of coverage.
+		cell := s.cell(r, fieldSeam)
+		for _, m := range citationRe.FindAllStringSubmatchIndex(cell, -1) {
+			rel := cell[m[2]:m[3]]
+			if m[4] < 0 {
+				v = append(v, fmt.Sprintf("coverage map row %d mentions '%s' without a cited name list", rn, rel))
+				continue
+			}
+			v = append(v, checkCitation(rn, base, rel, cell[m[4]:m[5]], census)...)
 		}
 	}
 	return v
@@ -118,16 +132,31 @@ func checkCitation(rn int, base, rel, list string, census []gate.TagSet) []strin
 		return []string{fmt.Sprintf("coverage map row %d cites '%s', which does not exist", rn, rel)}
 	}
 	var v []string
+	literal, subtests := runNames(content)
 	for _, n := range names {
 		// A subtest citation names its parent function before the slash. The function is
 		// what the file declares, so that leading segment is what resolves.
 		name := strings.TrimSpace(n[1])
+		segment := ""
 		if i := strings.IndexByte(name, '/'); i >= 0 {
-			name = name[:i]
+			// Only the first segment is graded. A deeper composed name needs the call
+			// graph, which this grammar does not read.
+			name, segment = name[:i], name[i+1:]
+			if j := strings.IndexByte(segment, '/'); j >= 0 {
+				segment = segment[:j]
+			}
 		}
 		if name == "" || !declaresFunc(content, name) {
 			v = append(v, fmt.Sprintf("coverage map row %d cites '%s', which '%s' does not declare", rn, n[1], rel))
+			continue
 		}
+		// The parent resolves against a declaration; the segment resolves against the
+		// t.Run names the file spells out. A file that computes a name spells none, so
+		// its segments are unreadable here and stay unjudged.
+		if segment == "" || !literal || hasSubtest(subtests, segment) {
+			continue
+		}
+		v = append(v, fmt.Sprintf("coverage map row %d cites '%s', whose subtest '%s' is no t.Run name in '%s'", rn, n[1], segment, rel))
 	}
 	return append(v, checkExecution(rn, rel, path, content, census)...)
 }
@@ -208,6 +237,58 @@ func declaresFunc(content []byte, name string) bool {
 		return false
 	}
 	return re.Match(content)
+}
+
+// runNames reads the subtest names a file spells out. literal is false when any t.Run
+// call names its subtest with an expression rather than a string, because a table-driven
+// suite names its cases at run time and no scan can see them.
+func runNames(content []byte) (literal bool, names []string) {
+	body := string(content)
+	literal = true
+	for _, m := range runNameRe.FindAllStringIndex(body, -1) {
+		rest := body[m[1]:]
+		if !strings.HasPrefix(rest, `"`) {
+			literal = false
+			continue
+		}
+		name, err := strconv.Unquote(quotedPrefix(rest))
+		if err != nil {
+			literal = false
+			continue
+		}
+		names = append(names, name)
+	}
+	return literal, names
+}
+
+// quotedPrefix returns the quoted string literal that starts s, or s itself when the
+// literal never closes. An unclosed literal fails to unquote, which marks the file
+// unreadable rather than inventing a name for it.
+func quotedPrefix(s string) string {
+	for i := 1; i < len(s); i++ {
+		switch s[i] {
+		case '\\':
+			i++
+		case '"':
+			return s[:i+1]
+		case '\n':
+			return s
+		}
+	}
+	return s
+}
+
+// hasSubtest reports whether a cited segment names one of the file's t.Run literals. Go
+// replaces a space with an underscore when it runs a subtest, so a citation written in
+// either form resolves.
+func hasSubtest(names []string, segment string) bool {
+	want := strings.ReplaceAll(segment, " ", "_")
+	for _, n := range names {
+		if strings.ReplaceAll(n, " ", "_") == want {
+			return true
+		}
+	}
+	return false
 }
 
 // checkReviewPickup requires the review pickup among the fence tokens of a folder

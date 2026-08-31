@@ -17,9 +17,16 @@ import (
 // non-empty, is appended verbatim so a test can shape the section it grades.
 func citedSpec(t *testing.T, slug, seam, fences string) (root, specPath string) {
 	t.Helper()
+	return citedCellSpec(t, slug, seam, "w", fences)
+}
+
+// citedCellSpec is citedSpec with the why cell under the test's control, so a test can
+// prove which cell the grammar reads.
+func citedCellSpec(t *testing.T, slug, seam, why, fences string) (root, specPath string) {
+	t.Helper()
 	root = t.TempDir()
 	body := "# " + slug + "\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced +
-		"| 1 | b | " + seam + " | w |\n" + fences
+		"| 1 | b | " + seam + " | " + why + " |\n" + fences
 	specPath = filepath.Join(root, "specs", slug, "spec.md")
 	writeUnder(t, specPath, body)
 	return root, specPath
@@ -92,7 +99,7 @@ func TestCheckFilesRejectAnAbsentCitedFile(t *testing.T) {
 func TestCheckFilesAcceptADeclaredCitation(t *testing.T) {
 	root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` (`TestPresent`, `TestOther/a case`)", "")
 	writeUnder(t, filepath.Join(root, "internal", "x", "foo_test.go"),
-		"package x\n\nfunc TestPresent(t *testing.T) {}\n\nfunc TestOther(t *testing.T) {}\n")
+		"package x\n\nfunc TestPresent(t *testing.T) {}\n\nfunc TestOther(t *testing.T) {\n\tt.Run(\"a case\", func(t *testing.T) {})\n}\n")
 
 	if v := checkFilesOf(t, specPath); len(v) != 0 {
 		t.Fatalf("CheckFiles = %#v, want no violation", v)
@@ -298,6 +305,89 @@ func TestCitationUnexecutedConstraint(t *testing.T) {
 
 		if v := checkFilesOf(t, specPath); len(v) != 0 {
 			t.Fatalf("CheckFiles = %#v, want no violation for a manifest-declared tag", v)
+		}
+	})
+}
+
+// mentionSpecFile writes the cited file every mention and subtest case grades. body is
+// the file's declarations after its package clause.
+func mentionSpecFile(t *testing.T, root, body string) {
+	t.Helper()
+	writeUnder(t, filepath.Join(root, "internal", "x", "foo_test.go"), "package x\n\n"+body)
+}
+
+// TestMentionIsNotACitation grades the mention rule: a seam-cell test path with no name
+// list claims evidence it never names, and the why cell stays outside the grammar.
+func TestMentionIsNotACitation(t *testing.T) {
+	t.Run("a seam-cell path with no name list is a violation", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go`", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {}\n")
+
+		want := "coverage map row 1 mentions 'internal/x/foo_test.go' without a cited name list"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+		}
+	})
+
+	t.Run("an empty name list stays a non-citation", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` ()", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {}\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation for an empty list", v)
+		}
+	})
+
+	t.Run("a why-cell path is not graded", func(t *testing.T) {
+		root, specPath := citedCellSpec(t, "s", "review-owned: the Standards axis reads the type",
+			"`internal/x/foo_test.go` names the shape", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {}\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation for a why-cell mention", v)
+		}
+	})
+}
+
+// TestSubtestSegmentResolves grades the subtest rule: a cited segment must appear as a
+// t.Run string literal, and a file with a computed t.Run name is exempt.
+func TestSubtestSegmentResolves(t *testing.T) {
+	t.Run("a declared segment passes", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` (`TestPresent/a case`)", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tt.Run(\"a case\", func(t *testing.T) {})\n}\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation for a declared segment", v)
+		}
+	})
+
+	t.Run("an absent segment is a violation", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` (`TestPresent/renamed case`)", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tt.Run(\"a case\", func(t *testing.T) {})\n}\n")
+
+		want := "coverage map row 1 cites 'TestPresent/renamed case', whose subtest 'renamed case' " +
+			"is no t.Run name in 'internal/x/foo_test.go'"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
+		}
+	})
+
+	t.Run("a non-literal t.Run name exempts the file", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` (`TestPresent/renamed case`)", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tfor _, c := range cases {\n\t\tt.Run(c.name, func(t *testing.T) {})\n\t}\n}\n")
+
+		if v := checkFilesOf(t, specPath); len(v) != 0 {
+			t.Fatalf("CheckFiles = %#v, want no violation where a t.Run name is computed", v)
+		}
+	})
+
+	t.Run("the parent function still resolves in an exempt file", func(t *testing.T) {
+		root, specPath := citedSpec(t, "s", "`internal/x/foo_test.go` (`TestAbsent/any case`)", "")
+		mentionSpecFile(t, root, "func TestPresent(t *testing.T) {\n\tt.Run(c.name, func(t *testing.T) {})\n}\n")
+
+		want := "coverage map row 1 cites 'TestAbsent/any case', which 'internal/x/foo_test.go' does not declare"
+		if v := checkFilesOf(t, specPath); len(v) != 1 || v[0] != want {
+			t.Fatalf("CheckFiles = %#v, want exactly %q", v, want)
 		}
 	})
 }
