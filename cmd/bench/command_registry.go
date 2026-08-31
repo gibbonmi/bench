@@ -90,8 +90,11 @@ type commandDefinition struct {
 	AXI         commandAXIDisposition
 	Inventory   commandInventory
 	WrapperOnly bool
-	Kind        commandKind
-	Run         commandHandler
+	// Hook marks a hook plumbing verb: a verb a harness hook shim pipes its envelope to.
+	// The set is the record's one source for which dispatches open a hook span.
+	Hook bool
+	Kind commandKind
+	Run  commandHandler
 }
 
 // Command is the in-process production entry for ordinary command behavior.
@@ -130,6 +133,14 @@ func (c Command) Run(args []string) int {
 	}
 	if definition.Kind == commandHelp {
 		return helpCommand(c, args[1:])
+	}
+	// The hook plumbing verbs record here, at their one shared dispatch, so no adapter
+	// package opens a span of its own.
+	if definition.Hook {
+		finishSpan := beginHookSpan(definition.Name)
+		exit := definition.Run(c, args[1:])
+		finishSpan(exit)
+		return exit
 	}
 	return definition.Run(c, args[1:])
 }

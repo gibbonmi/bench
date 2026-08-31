@@ -11,16 +11,51 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
+	"go.opentelemetry.io/otel/attribute"
 )
+
+// The commit seam's record. The verb boundary builds the provider once the repository is
+// known and closes the span with the verb's own exit, the way the gate's boundary does.
+const otelCommitSeam = "commit"
+
+// commitMeasures is what the record states about the work one commit did: the subject
+// the commit published, and the size of the write set it composed. A refusal reaches
+// neither, so each carries its own presence.
+type commitMeasures struct {
+	subject   string
+	pathCount int
+	counted   bool
+}
+
+// beginCommitSpan starts the commit's span and returns the closer that ends it. The span
+// carries the subject digest and never the commit subject text: the message holds
+// objective text by design, and DATA_HANDLING.md keeps it out of a third durable place.
+func beginCommitSpan(root string) func(int, commitMeasures) {
+	_, span, finish := otelrecord.Begin("", root, otelCommitSeam)
+	return func(exit int, measures commitMeasures) {
+		if measures.subject != "" {
+			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, measures.subject))
+		}
+		// A refusal before attribution composed no path set, and a zero would read as an
+		// empty commit rather than as a commit that never got that far.
+		if measures.counted {
+			span.SetAttributes(attribute.String(otelrecord.AttrMeasurePathCount, strconv.Itoa(measures.pathCount)))
+		}
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.PublishedExitOutcome(exit)))
+		finish()
+	}
+}
 
 // Command runs a path-attributed prospective landing. Help exits 0, grammar errors exit
 // 2, operational refusals exit 1, and a commit that published without reconciling its
@@ -41,6 +76,19 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
+	// The seam record opens once the repository is known, because the record is addressed
+	// by repository. A grammar answer reaches no repository and records nothing.
+	var measures commitMeasures
+	finishSpan := beginCommitSpan(root)
+	exit := commitAttributed(&measures, root, msg, paths, dryRun, stdout, stderr)
+	finishSpan(exit, measures)
+	return exit
+}
+
+// commitAttributed is the verb's own work, with the span's measures written to measures
+// as each becomes known. The exit code it returns is the verb's, so the record and the
+// shell agree about the same commit.
+func commitAttributed(measures *commitMeasures, root, msg string, paths []string, dryRun bool, stdout, stderr io.Writer) int {
 	primary, err := git.IsPrimaryCheckout(root)
 	if err != nil {
 		fmt.Fprintln(stderr, toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree"))
@@ -68,6 +116,10 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "error: %v\n", err)
 		return 1
 	}
+	// The composed path count is the attributed set the commit publishes. It is counted
+	// where the list already exists, so no second counter derives the same fact.
+	measures.pathCount = len(named)
+	measures.counted = true
 	// The lane is resolved before anything is graded. A declared lane replaces the
 	// whole-project gate for this commit; a malformed declaration refuses the run and
 	// names the defect, because a lane nobody can read grades nothing.
@@ -114,10 +166,14 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		}
 		return 0
 	}
-	if _, err := owner.Land(context.Background(), landing.Request{
+	result, err := owner.Land(context.Background(), landing.Request{
 		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
 		Message: msg, Paths: named, Stdout: stdout, Stderr: stderr,
-	}); err != nil {
+	})
+	// A published commit identifies the subject, whether or not the checkout reconciled
+	// after it. A refusal published nothing and names no subject.
+	measures.subject = result.Commit
+	if err != nil {
 		var remainder *landing.PublishedUnreconciledError
 		if errors.As(err, &remainder) {
 			return publicationRemainder(stdout, remainder)

@@ -33,9 +33,11 @@ func InspectTree(root, tree string) EvidenceInspection {
 
 // ExecuteTree runs or reuses the gate for an unpublished Git tree.
 func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
+	ctx, finishSpan := beginGateSpan(ctx, root, "prospective")
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, "prospective")
 	result := executeTreeWithOwner(ctx, root, tree, stdout, stderr, nil)
 	finishLog(result)
+	finishSpan(result)
 	return result
 }
 
@@ -222,7 +224,7 @@ func runResolved(ctx context.Context, root string, res Resolution, env []string,
 	if cmd == nil {
 		return processGroupResult{Code: 3}
 	}
-	cmd.Dir, cmd.Stdout, cmd.Stderr, cmd.Env = root, stdout, stderr, append([]string(nil), env...)
+	cmd.Dir, cmd.Stdout, cmd.Stderr, cmd.Env = root, stdout, stderr, withGateSpanEnv(ctx, append([]string(nil), env...))
 	if processGroup {
 		return runProcessGroupCommand(ctx, cmd)
 	}

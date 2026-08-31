@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
+	"go.opentelemetry.io/otel/attribute"
 	"io"
 	"os"
 	"os/exec"
@@ -446,8 +448,20 @@ func releaseCommandWith(j joins, root, home string, args []string, stdout, stder
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreeRelease)
 		return 2
 	}
+	// The record opens after the grammar answers, so a usage refusal records nothing.
+	var assignment string
+	finishSpan := beginVerbSpan(home, root, otelReleaseSeam)
+	exit := releaseAttributed(&assignment, j, root, args, stdout, stderr)
+	finishSpan(exit, assignment)
+	return exit
+}
+
+// releaseAttributed is the release verb's own work, with the released assignment written
+// to assignment as the receipt names it.
+func releaseAttributed(assignment *string, j joins, root string, args []string, stdout, stderr io.Writer) int {
 	receipt, err := releaseAssignment(j, root, args[1], resolveVerbOperand(root, args[2]))
 	if err == nil {
+		*assignment = receipt.Tracked
 		return finishReleaseReceipt(root, stdout, receipt)
 	}
 	fmt.Fprintf(stderr, "bench worktree release: %v\n", err)
@@ -646,6 +660,18 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 		fmt.Fprintln(stderr, line)
 		return code
 	}
+	// The seam record opens once the grammar has answered, the way the commit boundary
+	// opens once the repository is known: a grammar answer creates nothing to record.
+	var assignment string
+	finishSpan := beginVerbSpan(home, root, otelCreateSeam)
+	exit := createAttributed(&assignment, parsed, root, home, args, stdout, stderr)
+	finishSpan(exit, assignment)
+	return exit
+}
+
+// createAttributed is the create verb's own work, with the assignment the record names
+// written to assignment once the creation resolves it.
+func createAttributed(assignment *string, parsed usage.Result, root, home string, args []string, stdout, stderr io.Writer) int {
 	from := parsed.Flags["--from"]
 	// The two flags name two starts, so the pair refuses before the refresh runs: a fetch
 	// that moved the default branch would already have taken effect by the refusal.
@@ -675,6 +701,9 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 	}
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
 	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), resolveStart)
+	if err == nil {
+		*assignment = creation.Assignment.ID
+	}
 	if err != nil {
 		if fromErr != nil {
 			return printTargetRefusal(stderr, createGrammar.Cmd, err)
@@ -732,4 +761,44 @@ func cleanupOutputValue(value string) string {
 		return value
 	}
 	return "sha256:" + textDigest(value)
+}
+
+// The worktree verbs' record. Each verb opens one span named for the verb, and the span
+// carries the assignment the verb acted on as its subject. The verbs share one span
+// boundary, so a new verb records the same shape rather than a second one.
+//
+// The landing keeps its own boundary in land.go: it carries measures no other verb has.
+const (
+	otelCreateSeam      = "worktree.create"
+	otelExecSeam        = "worktree.exec"
+	otelMergeSeam       = "worktree.merge"
+	otelReleaseSeam     = "worktree.release"
+	otelBuildSeam       = "worktree.build"
+	otelReauthorizeSeam = "worktree.reauthorize"
+)
+
+// otelVerbSeams is the set beginVerbSpan records, in registry order. The bulk verbs
+// (clean, reclaim) and the read-only verbs carry no span by the story 17 decision.
+var otelVerbSeams = []string{
+	otelCreateSeam,
+	otelExecSeam,
+	otelMergeSeam,
+	otelReleaseSeam,
+	otelBuildSeam,
+	otelReauthorizeSeam,
+}
+
+// beginVerbSpan starts one worktree verb's span and returns the closer that ends it. The
+// closer takes the assignment id, because a verb resolves its assignment inside the span
+// and a refusal before that resolution has none. The id passes through the encoder, which
+// escapes every control rune, so a hostile id forges no second record line.
+func beginVerbSpan(home, root, seam string) func(int, string) {
+	_, span, finish := otelrecord.Begin(home, root, seam)
+	return func(exit int, assignment string) {
+		if assignment != "" {
+			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, assignment))
+		}
+		span.SetAttributes(attribute.String(otelrecord.AttrOutcome, otelrecord.PublishedExitOutcome(exit)))
+		finish()
+	}
 }

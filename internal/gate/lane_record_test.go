@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -9,7 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
 // OG25: the record names the composed tree, the lane identity, and the outcome. OG16 and
@@ -141,4 +144,106 @@ func writeLaneFile(t *testing.T, path, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// OT17: a red lane's span carries the first failing check and that check's first
+// diagnostic line, and a green lane's span names no failing check. The tripwire reads
+// the lane's red from this one pair, so a phase-and-exit-only record reds here.
+func TestRunLaneSpanCarriesTheFailingCheck(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		check      Phase
+		outcome    string
+		failing    string
+		diagnostic string
+	}{
+		{name: "pass", check: Phase{Name: "unit", Argv: []string{"true"}}, outcome: lanePass},
+		{
+			name:       "fail",
+			check:      Phase{Name: "unit", Argv: []string{"sh", "-c", "echo first line >&2; echo second >&2; exit 3"}},
+			outcome:    laneFail,
+			failing:    "unit",
+			diagnostic: "first line",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home := t.TempDir()
+			t.Setenv(benchhome.Env, home)
+			root := outcomeFixture(t)
+			tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+
+			if _, err := RunLane(context.Background(), LaneRequest{
+				Root: root, Tree: tree, Lane: "benchkit", Checks: []Phase{tc.check},
+			}); err != nil {
+				t.Fatal(err)
+			}
+
+			attributes := laneSpanAttributes(t, home, root)
+			if attributes[otelrecord.AttrSubjectID] != tree {
+				t.Errorf("span subject = %q, want the composed tree %q", attributes[otelrecord.AttrSubjectID], tree)
+			}
+			if attributes[otelrecord.AttrOutcome] != tc.outcome {
+				t.Errorf("span outcome = %q, want %q", attributes[otelrecord.AttrOutcome], tc.outcome)
+			}
+			if attributes[otelrecord.AttrOutcomeCheck] != tc.failing {
+				t.Errorf("span failing check = %q, want %q", attributes[otelrecord.AttrOutcomeCheck], tc.failing)
+			}
+			if attributes[otelrecord.AttrOutcomeDiagnostic] != tc.diagnostic {
+				t.Errorf("span diagnostic = %q, want %q", attributes[otelrecord.AttrOutcomeDiagnostic], tc.diagnostic)
+			}
+			// No diagnostic payload beyond the first line enters the record.
+			if record := outcomeRead(t, otelrecord.Path(home, root)); bytes.Contains(record, []byte("second")) {
+				t.Error("the record carries diagnostic output beyond the failing check's first line")
+			}
+		})
+	}
+}
+
+// laneSpanAttributes reads the lane seam's ended span back out of the record. The start
+// line carries no outcome, so the reader keeps the line the seam's end wrote.
+func laneSpanAttributes(t *testing.T, home, root string) map[string]string {
+	t.Helper()
+	var found map[string]string
+	for _, line := range strings.Split(strings.TrimSpace(string(outcomeRead(t, otelrecord.Path(home, root)))), "\n") {
+		var parsed struct {
+			ResourceSpans []struct {
+				ScopeSpans []struct {
+					Spans []struct {
+						Name            string `json:"name"`
+						EndTimeUnixNano string `json:"endTimeUnixNano"`
+						Attributes      []struct {
+							Key   string `json:"key"`
+							Value struct {
+								StringValue string `json:"stringValue"`
+							} `json:"value"`
+						} `json:"attributes"`
+					} `json:"spans"`
+				} `json:"scopeSpans"`
+			} `json:"resourceSpans"`
+		}
+		if err := json.Unmarshal([]byte(line), &parsed); err != nil {
+			t.Fatalf("record line does not parse: %v: %s", err, line)
+		}
+		for _, resource := range parsed.ResourceSpans {
+			for _, scope := range resource.ScopeSpans {
+				for _, span := range scope.Spans {
+					attributes := map[string]string{}
+					for _, pair := range span.Attributes {
+						attributes[pair.Key] = pair.Value.StringValue
+					}
+					if attributes[otelrecord.AttrSeam] != "lane" || span.EndTimeUnixNano == "" {
+						continue
+					}
+					if found != nil {
+						t.Fatalf("the record holds a second ended lane span %q", span.Name)
+					}
+					found = attributes
+				}
+			}
+		}
+	}
+	if found == nil {
+		t.Fatal("the record holds no ended lane span")
+	}
+	return found
 }

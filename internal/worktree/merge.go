@@ -45,12 +45,24 @@ func MergeCommand(root, home string, args []string, stdout, stderr io.Writer) in
 
 // mergeWith is MergeCommand with the seam set resolved explicitly at the caller's
 // boundary.
-func mergeWith(j joins, root, _ string, args []string, stdout, stderr io.Writer) int {
+func mergeWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(mergeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
 		return code
 	}
+	// The record opens after the grammar answers, so a usage refusal composes and records
+	// nothing. The target resolves inside the span.
+	var assignment string
+	finishSpan := beginVerbSpan(home, root, otelMergeSeam)
+	exit := mergeAttributed(&assignment, j, root, parsed, stdout, stderr)
+	finishSpan(exit, assignment)
+	return exit
+}
+
+// mergeAttributed is the merge verb's own work, with the target assignment written to
+// assignment once the target resolves.
+func mergeAttributed(assignment *string, j joins, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return landRefusal(stdout, "assignment ledger is unreadable")
@@ -59,6 +71,7 @@ func mergeWith(j joins, root, _ string, args []string, stdout, stderr io.Writer)
 	if err != nil {
 		return landRefusalError(stdout, err)
 	}
+	*assignment = target.ID
 	spelling := parsed.Flags["--from"]
 	incoming, err := mergeIncoming(root, assignments, target, spelling)
 	if err != nil {

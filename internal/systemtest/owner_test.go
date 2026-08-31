@@ -171,6 +171,57 @@ func (o *systemOwner) runWithInput(dir string, overrides []string, input string,
 	return processResult{stdout: stdout.String(), stderr: stderr.String(), code: code}
 }
 
+// ownedProcess is a started process the caller kills by signal. A test that must observe
+// a run's durable evidence mid-flight needs the process alive while it reads, so the
+// blocking runWithInput cannot serve it.
+type ownedProcess struct {
+	cmd  *exec.Cmd
+	pgid int
+}
+
+// startProcessGroup starts an owned process in its own process group. It joins the same
+// starts ledger as runWithInput.
+func (o *systemOwner) startProcessGroup(dir string, overrides []string, program string, args ...string) (*ownedProcess, error) {
+	o.mu.Lock()
+	o.starts++
+	o.mu.Unlock()
+	cmd := exec.Command(program, args...)
+	cmd.Dir = dir
+	cmd.Env = mergeEnvironment(os.Environ(), overrides)
+	cmd.Stdin = strings.NewReader("")
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	pgid, err := syscall.Getpgid(cmd.Process.Pid)
+	if err != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return nil, err
+	}
+	return &ownedProcess{cmd: cmd, pgid: pgid}, nil
+}
+
+// kill signals the whole process group, so the phase child dies with the verb.
+func (p *ownedProcess) kill(signal syscall.Signal) error {
+	return syscall.Kill(-p.pgid, signal)
+}
+
+// wait reaps the process and answers whether it exited on a signal rather than by its
+// own choice.
+func (p *ownedProcess) wait() (signaled bool) {
+	err := p.cmd.Wait()
+	exit, ok := err.(*exec.ExitError)
+	if !ok {
+		return false
+	}
+	status, ok := exit.Sys().(syscall.WaitStatus)
+	return ok && status.Signaled()
+}
+
 func (o *systemOwner) timeoutProcessGroup(timeout time.Duration) (int, error) {
 	o.mu.Lock()
 	o.starts++

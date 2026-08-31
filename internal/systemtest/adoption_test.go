@@ -155,7 +155,13 @@ func assertPrivateHomeEmpty(t *testing.T, home string) {
 		}
 		t.Fatal(err)
 	}
-	if len(entries) != 0 {
+	// The seam record lives at <home>/otel/<key>/traces.jsonl by the FT274 spec's
+	// decision, so a gate run writes it even in a private home. Every other entry
+	// stays a leak.
+	for _, entry := range entries {
+		if entry.Name() == "otel" {
+			continue
+		}
 		t.Fatalf("private BENCH_HOME %s is not empty: %v", home, entries)
 	}
 }

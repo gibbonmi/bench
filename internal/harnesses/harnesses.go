@@ -1,7 +1,7 @@
 // Package harnesses is the one record of every harness Bench knows. One row names one
 // harness. A row carries the providers the harness binds, the phase invocation form, the
 // hook config with its wired events, the deny-capable delegation verdict, the headless
-// adapter, and the mechanics as cells.
+// adapter, the mechanics as cells, and the run measures as cells.
 //
 // Every reader derives from this record: the tier-binding matrix, the route's prefix
 // table, the guard wiring reader, and the conformance harness loops. A new harness
@@ -56,10 +56,19 @@ type Cell struct {
 	Checked string
 }
 
+// Measure is one declared measure of a harness run. Supplier names the source that will
+// read the measure. Value stays Unknown until that supplier ships, because the record holds
+// only a fact the tree records today.
+type Measure struct {
+	Value    Value
+	Supplier string
+}
+
 // Row is one harness. HookConfig and Headless are repository-relative paths, and each is
 // empty when the harness has none. PhaseForm is the phase invocation prefix, and it is
 // empty when the harness has no phase surface. Mechanics holds one cell for every name in
-// Mechanics order, so a reader can print the cells in a stable order.
+// Mechanics order, and Measures holds one cell for every name in Measures order, so a
+// reader can print both sets in a stable order.
 type Row struct {
 	Harness         string
 	Providers       Provider
@@ -69,6 +78,7 @@ type Row struct {
 	DelegationGuard Cell
 	Headless        string
 	Mechanics       map[string]Cell
+	Measures        map[string]Measure
 }
 
 // The twelve mechanic names. Each row holds a cell for each one.
@@ -103,6 +113,27 @@ var Mechanics = []string{
 	MechanicHeadless,
 }
 
+// The four measure names. Each row holds a measure cell for each one.
+const (
+	MeasureTokens    = "tokens"
+	MeasureToolCalls = "tool calls"
+	MeasureReadPaths = "Read paths"
+	MeasureTurns     = "turns"
+)
+
+// Measures is the measure order the detail view prints.
+var Measures = []string{
+	MeasureTokens,
+	MeasureToolCalls,
+	MeasureReadPaths,
+	MeasureTurns,
+}
+
+// measureSupplier names the source that will read every harness-owned measure. One reader
+// serves all four measures, so the name is spelled once. The cells stay unknown until that
+// reader ships.
+const measureSupplier = "FT204 harness transcript reader"
+
 // The sources the initial cells name. Each one is a file in this tree.
 const (
 	srcClaudeHooks = ".claude/settings.json"
@@ -131,6 +162,16 @@ func unknownCells() map[string]Cell {
 	cells := make(map[string]Cell, len(Mechanics))
 	for _, name := range Mechanics {
 		cells[name] = Cell{Value: Unknown}
+	}
+	return cells
+}
+
+// unknownMeasures builds the four measure cells with no value recorded. Each cell names its
+// supplier, because the supplier is decided today and the value is not.
+func unknownMeasures() map[string]Measure {
+	cells := make(map[string]Measure, len(Measures))
+	for _, name := range Measures {
+		cells[name] = Measure{Value: Unknown, Supplier: measureSupplier}
 	}
 	return cells
 }
@@ -173,6 +214,7 @@ var Rows = []Row{
 			MechanicHooks:    {Value: Yes, Source: srcCodexHooks, Checked: treeChecked},
 			MechanicHeadless: {Value: Yes, Source: adapterPath("codex"), Checked: treeChecked},
 		}),
+		Measures: unknownMeasures(),
 	},
 	{
 		Harness:    "claude",
@@ -197,6 +239,7 @@ var Rows = []Row{
 			MechanicHooks:    {Value: Yes, Source: srcClaudeHooks, Checked: treeChecked},
 			MechanicHeadless: {Value: Yes, Source: adapterPath("claude"), Checked: treeChecked},
 		}),
+		Measures: unknownMeasures(),
 	},
 	{
 		Harness:         "opencode",
@@ -209,6 +252,7 @@ var Rows = []Row{
 		Mechanics: mechanics(map[string]Cell{
 			MechanicHeadless: {Value: Yes, Source: adapterPath("opencode"), Checked: treeChecked},
 		}),
+		Measures: unknownMeasures(),
 	},
 	{
 		Harness:    "none",
@@ -226,6 +270,7 @@ var Rows = []Row{
 			MechanicHooks:    {Value: No, Source: srcAdapters + " names no none entry, and no config names none", Checked: treeChecked},
 			MechanicHeadless: {Value: No, Source: srcAdapters + " names no none entry", Checked: treeChecked},
 		}),
+		Measures: unknownMeasures(),
 	},
 }
 

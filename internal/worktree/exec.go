@@ -64,11 +64,32 @@ func ExecCommand(root, home string, args []string, stdin io.Reader, stdout, stde
 		fmt.Fprintln(stderr, refusal)
 		return 2
 	}
-	path, err := resolveWorktree(root, parsed.Positionals[0])
+	// The record opens after the grammar answers. The verb resolves its assignment inside
+	// the span, so a target refusal records the verb with no subject.
+	var assignment string
+	finishSpan := beginVerbSpan(home, root, otelExecSeam)
+	exit := execAttributed(&assignment, parsed, root, home, values, stdin, stdout, stderr)
+	// The verb returns the child's own code, which the grammar help promises. The span
+	// takes the outcome instead: a 3 here is the child speaking rather than a Bench
+	// publication, so only a zero reads green.
+	spanExit := exit
+	if spanExit != 0 {
+		spanExit = 1
+	}
+	finishSpan(spanExit, assignment)
+	return exit
+}
+
+// execAttributed is the exec verb's own work, with the assignment that owns the child's
+// tree written to assignment. The ledger is read once, through the one target authority,
+// so the record names the same assignment the child ran in.
+func execAttributed(assignment *string, parsed usage.Result, root, home string, values []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	selected, err := resolveAssignment(root, parsed.Positionals[0])
 	if err != nil {
 		return printTargetRefusal(stderr, "bench worktree exec", err)
 	}
-	return runWorktreeChild(parsed.Positionals[1:], path, home, values, stdin, stdout, stderr)
+	*assignment = selected.ID
+	return runWorktreeChild(parsed.Positionals[1:], selected.Worktree, home, values, stdin, stdout, stderr)
 }
 
 func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {

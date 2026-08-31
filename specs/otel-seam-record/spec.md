@@ -1,6 +1,6 @@
 # Bench OpenTelemetry seam record
 
-Status: staged
+Status: implemented
 
 Roadmap: FT274
 
@@ -42,6 +42,8 @@ Line: opus / medium. The instrumentation crosses packages at reviewed seams unde
 15. As a retro reader, I want a commit span with the subject digest and the outcome, so that commit cost lands in the record.
 16. As a retro reader, I want `bench worktree land` to write a landing span covering composition and publication, so that landing cost lands in the record.
 17. As a retro reader, I want a span per worktree verb that names the assignment, so that worktree traffic lands in the record.
+    The instrumented set is `create`, `exec`, `merge`, `release`, `land`, `build`, and `reauthorize`. Each acts on one named assignment.
+    `clean` and `reclaim` stay out, because a bulk verb acts on many assignments and names no single subject. The read-only verbs stay out too.
 18. As a retro reader, I want a span per hook plumbing verb with its exit, so that the harness events join the record.
 19. As a reviewer, I want span attributes limited to seam name, subject id, outcome, and measures, so that no payload enters the record.
 
@@ -128,6 +130,7 @@ Line: opus / medium. A kill-based system test and a `go/ast` check need care.
 | OT26 | 26 | The conformance check reds on a registered seam whose symbol starts no span | new `go/ast` check test in `internal/conformance` | an uninstrumented seam otherwise stays silently green |
 | OT27 | 27 | `DATA_HANDLING.md` names the record file under the Bench home | review-owned | prose carries no mechanical seam, so the review grades the claim |
 | OT28 | 9 | `bench gate` keeps its exit code with an unwritable record directory | system test with an unwritable record directory | a propagated record error flips the verb exit and the row reds |
+| OT29 | 8 | A non-regular file at the record path refuses the write | writer test with a FIFO at the record path | an open of a FIFO blocks the first span and every recorded verb hangs |
 
 Not covered: story 22 — the iteration count is a consumer derivation, and no reader ships in this spec.
 Not covered: story 28 — the FT71 condition is a build-exit rule, and the workflow's material-shortfall rule owns it.
@@ -142,7 +145,7 @@ Not covered: story 28 — the FT71 condition is a build-exit rule, and the workf
 - **Won't handle:** live collector ingest verification — the fixture pins the documented line shape, and no collector binary enters the gate.
 - **Won't handle:** harness-owned measures (tokens, tool calls, Read paths, turns) — FT204 owns the transcript reader, and the cells stay Unknown.
 - **Won't handle:** a merge of the start and end lines — the start marker lets any consumer filter, and no consumer ships here.
-- **Won't handle:** cross-process span parenting — each verb records its own spans, and the subject id joins them for a reader.
+- **Won't handle:** span parenting across a process the gate did not start — an external propagation format enters no Bench seam. The subject id joins those spans for a reader. The gate hands its own phases child this run's traceparent, so the phase spans do join the run's root span.
 - **Won't handle:** an operator disable switch — the record is a local file under the operator's own home, and a future spec can add one.
 - **Won't handle:** control characters in a subject id — `encoding/json` escapes every control rune, and `internal/sanitize` owns the intake policy.
 - **Won't handle:** a record line near the receiver's 1 MiB split bound — the no-payload rule keeps every line far under it.
@@ -161,20 +164,29 @@ Not covered: story 28 — the FT71 condition is a build-exit rule, and the workf
 - `internal/gate/lane.go`
 - `internal/gate/lane_test.go`
 - `internal/gate/lane_record_test.go`
+- `internal/gate/otel_env_test.go`
 - `internal/commit/commit.go`
 - `internal/landing/landing.go`
 - `internal/landing/composition.go`
 - `internal/worktree/worktree.go`
+- `internal/worktree/build.go`
+- `internal/worktree/build_test.go`
+- `internal/worktree/reauthorize.go`
+- `internal/worktree/exec_test.go`
+- `internal/worktree/otel_seams_test.go`
 - `internal/worktree/effects.go`
 - `internal/worktree/exec.go`
 - `internal/worktree/merge.go`
 - `internal/worktree/land.go`
+- `internal/worktree/main_test.go`
 - `internal/harnesses/harnesses.go`
 - `internal/harnesses/harnesses_test.go`
 - `internal/harnesses/command.go`
 - `internal/harnesses/command_test.go`
 - `internal/conformance/`
 - `cmd/bench/main.go`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/otel_hook_seams_test.go`
 - `DATA_HANDLING.md`
 - `internal/systemtest/`
 

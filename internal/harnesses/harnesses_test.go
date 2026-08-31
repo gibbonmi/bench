@@ -47,6 +47,17 @@ var wantMechanics = []string{
 	"headless execution",
 }
 
+// wantMeasures is an independent expectation of the four measure names and their order.
+// The record's own Measures slice cannot grade itself: a dropped name shrinks the slice and
+// every row's measure map together. This list is therefore the only thing that reds a
+// dropped measure.
+var wantMeasures = []string{
+	"tokens",
+	"tool calls",
+	"Read paths",
+	"turns",
+}
+
 // walk grades one record against the expected rows and the cell rules. It returns one
 // message per fault, so a mutation names what it broke.
 func walk(rows []Row, today time.Time) []string {
@@ -61,6 +72,18 @@ func walk(rows []Row, today time.Time) []string {
 		}
 		if Mechanics[i] != name {
 			faults = append(faults, fmt.Sprintf("mechanic %d is %q, want %q", i, Mechanics[i], name))
+		}
+	}
+	if len(Measures) != len(wantMeasures) {
+		faults = append(faults, fmt.Sprintf("the record names %d measures, want %d", len(Measures), len(wantMeasures)))
+	}
+	for i, name := range wantMeasures {
+		if i >= len(Measures) {
+			faults = append(faults, fmt.Sprintf("the record names no measure %q", name))
+			continue
+		}
+		if Measures[i] != name {
+			faults = append(faults, fmt.Sprintf("measure %d is %q, want %q", i, Measures[i], name))
 		}
 	}
 	if len(rows) != len(expected) {
@@ -115,6 +138,25 @@ func walk(rows []Row, today time.Time) []string {
 				continue
 			}
 			faults = append(faults, cellFaults(row.Harness, name, cell, today)...)
+		}
+		if len(row.Measures) != len(wantMeasures) {
+			faults = append(faults, fmt.Sprintf("%s holds %d measures, want %d", row.Harness, len(row.Measures), len(wantMeasures)))
+		}
+		for _, name := range wantMeasures {
+			cell, ok := row.Measures[name]
+			if !ok {
+				faults = append(faults, fmt.Sprintf("%s holds no %q measure", row.Harness, name))
+				continue
+			}
+			if !validValue(cell.Value) {
+				faults = append(faults, fmt.Sprintf("%s measure %s value %q is outside the enum", row.Harness, name, cell.Value))
+			}
+			if cell.Value != Unknown {
+				faults = append(faults, fmt.Sprintf("%s measure %s is %q, want unknown until a supplier ships", row.Harness, name, cell.Value))
+			}
+			if cell.Supplier == "" {
+				faults = append(faults, fmt.Sprintf("%s measure %s names no supplier", row.Harness, name))
+			}
 		}
 	}
 	return faults
@@ -175,6 +217,11 @@ func copyRows() []Row {
 			cells[name] = cell
 		}
 		row.Mechanics = cells
+		measures := make(map[string]Measure, len(row.Measures))
+		for name, cell := range row.Measures {
+			measures[name] = cell
+		}
+		row.Measures = measures
 		out[i] = row
 	}
 	return out
@@ -237,6 +284,15 @@ func TestRecordWalkBites(t *testing.T) {
 		}},
 		{"none row claims headless execution", func(rows []Row) {
 			rows[3].Mechanics[MechanicHeadless] = Cell{Value: Yes, Source: ".bench/adapters/none", Checked: "2026-08-26"}
+		}},
+		{"dropped measure cell", func(rows []Row) {
+			delete(rows[1].Measures, MeasureReadPaths)
+		}},
+		{"measure with no supplier", func(rows []Row) {
+			rows[0].Measures[MeasureTokens] = Measure{Value: Unknown}
+		}},
+		{"measure claiming a value with no supplier shipped", func(rows []Row) {
+			rows[2].Measures[MeasureTurns] = Measure{Value: Yes, Supplier: "a guess"}
 		}},
 		{"none row names an adapter", func(rows []Row) {
 			rows[3].Headless = ".bench/adapters/none"

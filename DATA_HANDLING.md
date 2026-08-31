@@ -132,6 +132,13 @@ rather than reported as a stray entry. A gate-side need is declared in
   text by design. This is reviewer-authored content, and a readable git history
   is a feature, not a leak — the text is intended to persist in the repository's
   history.
+- **Seam record (`traces.jsonl`, mode 0600).** Bench appends one JSON line for
+  each instrumented seam entry and exit to
+  `<Bench home>/otel/<repository key>/traces.jsonl`. The default Bench home is
+  `~/.bench`, and `BENCH_HOME` moves it. The file is a sibling of the census
+  record, and it stays on the local machine. A line carries the seam name, the
+  subject digest, the outcome, and the measures. It carries no objective text,
+  no commit subject, and no environment value, and Bench sends it nowhere.
 - **`.bench/env.allow` and `.bench/gate-inputs.json`.** Committed, reviewable
   declarations of passlist and gate-subject widenings. They carry variable
   *names*, never values.

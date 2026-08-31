@@ -19,12 +19,15 @@ import (
 // `dist/bench`, so the assignment's own grammar has an executable. The build runs the
 // tree's sanctioned build script, which writes the executable and its seal, so the verb
 // authors no artifact of its own.
-func BuildCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
-	return buildWith(defaultJoins(), root, args, stdout, stderr)
+func BuildCommand(root, home string, args []string, stdout, stderr io.Writer) int {
+	return buildWith(defaultJoins(), root, home, args, stdout, stderr)
 }
 
-// buildWith is BuildCommand with the seam set resolved at the caller's boundary.
-func buildWith(j joins, root string, args []string, stdout, stderr io.Writer) int {
+// buildWith is BuildCommand with the seam set resolved at the caller's boundary. It is
+// also the verb's record boundary. The record opens after the grammar answers, and the
+// verb resolves its target inside the span, so a target refusal records the verb with
+// no subject.
+func buildWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(buildGrammar, args)
 	if line != "" {
 		if code == 0 {
@@ -34,10 +37,22 @@ func buildWith(j joins, root string, args []string, stdout, stderr io.Writer) in
 		fmt.Fprintln(stderr, line)
 		return code
 	}
+	var assignment string
+	finishSpan := beginVerbSpan(home, root, otelBuildSeam)
+	exit := buildAttributed(&assignment, j, root, parsed, stdout, stderr)
+	finishSpan(exit, assignment)
+	return exit
+}
+
+// buildAttributed is the build verb's own work, with the assignment the build wrote for
+// written to attributed. The target authority is read once, so the record names the same
+// assignment the executable landed in.
+func buildAttributed(attributed *string, j joins, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	path, assignment, err := resolveBuildTarget(root, parsed.Positionals[0])
 	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, err)
 	}
+	*attributed = assignment.ID
 	output := filepath.Join(path, "dist", "bench")
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()

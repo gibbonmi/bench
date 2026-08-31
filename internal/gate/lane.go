@@ -26,7 +26,9 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // The two lane outcomes. A lane never reports "green": that word belongs to the
@@ -82,6 +84,13 @@ func BenchkitLane(root, kit string) []Phase {
 // An interrupted or timed-out run returns an error and writes nothing. A record of a
 // partial run would carry an outcome no check ever reached.
 func RunLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
+	ctx, finishSpan := beginLaneSpan(ctx, req)
+	result, err := runLane(ctx, req)
+	finishSpan(result, err)
+	return result, err
+}
+
+func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 	if len(req.Checks) == 0 {
 		return LaneResult{}, errors.New("gate: lane declares no checks")
 	}
@@ -146,6 +155,38 @@ func RunLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		return LaneResult{}, fmt.Errorf("gate: lane record persistence failed: %w", err)
 	}
 	return result, nil
+}
+
+// The lane's seam record. The lane runs in this process, so the boundary that opens the
+// span is the lane itself rather than a verb above it.
+const otelLaneSeam = "lane"
+
+// beginLaneSpan starts the lane's span and returns the closer that ends it. A red lane
+// carries the first failing check and that check's first diagnostic line, because the
+// FT232 tripwire reads the lane's red from that one pair. The lane name rides in the
+// span name, the way the gate's mode does, since the declared attribute set carries no
+// lane identity.
+func beginLaneSpan(ctx context.Context, req LaneRequest) (context.Context, func(LaneResult, error)) {
+	ctx, span, finish := otelrecord.BeginIn(ctx, "", req.Root, otelLaneSeam, otelLaneSeam+"."+laneName(req.Lane))
+	return ctx, func(result LaneResult, err error) {
+		if req.Tree != "" {
+			span.SetAttributes(attribute.String(otelrecord.AttrSubjectID, req.Tree))
+		}
+		// An interrupted or timed-out run settles no check, so it reaches no outcome to
+		// record. The lane writes no lane record for that run either.
+		if err == nil {
+			span.SetAttributes(attribute.String(otelrecord.AttrOutcome, result.Outcome))
+			// A pass names no failing check, and an empty attribute would read as one.
+			if result.Check != "" {
+				span.SetAttributes(attribute.String(otelrecord.AttrOutcomeCheck, result.Check))
+			}
+			// The first line alone. No further diagnostic output enters the record.
+			if result.Diagnostic != "" {
+				span.SetAttributes(attribute.String(otelrecord.AttrOutcomeDiagnostic, result.Diagnostic))
+			}
+		}
+		finish()
+	}
 }
 
 func laneName(declared string) string {
