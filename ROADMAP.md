@@ -57,6 +57,8 @@ means the repository-controlled compliance assessment.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
+**FT281 (MEDIUM) — citations record Go test package operands for every test phase.**
+
 **FT276 (MEDIUM, decision required) — one cycle-free owner derives canonical repository paths.**
 
 **FT277 (MEDIUM) — `bench test --changed` selects the edited packages and explains a widened set.**
@@ -116,6 +118,8 @@ means the repository-controlled compliance assessment.
 **FT273 (LOW) — a charge names the live-tree check as its probe oracle, and a green probe is verified against the mutated bytes.**
 
 **FT278 (LOW) — `craft-spec` gives every edge-inventory promise a coverage row.**
+
+**FT282 (LOW) — a phase close reads its assignment census before it lands a worktree.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
@@ -317,5 +321,6 @@ fixture-proven.
 
 ## Recommended sequence
 
-1. Reviewer decision — FT231: settle the measurement harness now that the OpenTelemetry instrumentation record has shipped.
-2. Reviewer decision — the FT280 tip-projection surface.
+1. `$bench-write-spec` — FT174: specify the actionable MEDIUM ticket-file grammar.
+2. `$bench-write-spec` — FT281: define package-scope matching for citation execution.
+3. `$bench` — open FT142's light-path ticket for the next unblocked MEDIUM fix.
