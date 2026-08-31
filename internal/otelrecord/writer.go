@@ -27,13 +27,54 @@ func Path(home, root string) string {
 // the Bench home and passes it in, the census form, so the package reads no
 // environment variable itself.
 type Writer struct {
-	dir string
+	home string
+	dir  string
 }
 
 // NewWriter returns the writer for root's record below an explicitly resolved home.
-// The writer opens the file on each append, so two writers share no state.
+// The writer opens the file on each append, so two writers share no state. The home
+// is kept because the record path is graded against it on each append.
 func NewWriter(home, root string) *Writer {
-	return &Writer{dir: Dir(home, root)}
+	return &Writer{home: home, dir: Dir(home, root)}
+}
+
+// gradeRecordPath refuses a record path that the appender must not follow or open.
+// Two failures live here. A symlink at any level below the home redirects the record
+// outside the home, because os.MkdirAll follows a link at a parent level as readily as
+// at the leaf. A non-regular file at the record path — a FIFO or a device — blocks the
+// open, so every recorded verb would hang on its first span.
+func (w *Writer) gradeRecordPath(file string) error {
+	for _, level := range levelsBelow(w.home, file) {
+		info, err := os.Lstat(level)
+		if err != nil {
+			continue
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("record path %s is a symlink", level)
+		}
+	}
+	info, err := os.Lstat(file)
+	if err != nil || info.Mode().IsRegular() {
+		return nil
+	}
+	return fmt.Errorf("record path %s is not a regular file", file)
+}
+
+// levelsBelow returns each path level from home down to path, outermost first. The
+// home itself is the operator's own directory and is not graded: the writer owns what
+// it creates below the home, not the home. A path outside the home grades whole.
+func levelsBelow(home, path string) []string {
+	var levels []string
+	for current := path; current != home; current = filepath.Dir(current) {
+		levels = append(levels, current)
+		if parent := filepath.Dir(current); parent == current {
+			break
+		}
+	}
+	for left, right := 0, len(levels)-1; left < right; left, right = left+1, right-1 {
+		levels[left], levels[right] = levels[right], levels[left]
+	}
+	return levels
 }
 
 // Append writes one encoded record line. Encode returns a line with no terminator,
@@ -42,13 +83,14 @@ func NewWriter(home, root string) *Writer {
 // The writer returns every failure and swallows none; the caller decides whether a
 // failed record changes its outcome.
 func (w *Writer) Append(line []byte) error {
-	if info, err := os.Lstat(w.dir); err == nil && info.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("record directory %s is a symlink", w.dir)
+	record := filepath.Join(w.dir, recordFile)
+	if err := w.gradeRecordPath(record); err != nil {
+		return err
 	}
 	if err := os.MkdirAll(w.dir, 0o700); err != nil {
 		return fmt.Errorf("create record directory: %w", err)
 	}
-	file, err := os.OpenFile(filepath.Join(w.dir, recordFile), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+	file, err := os.OpenFile(record, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("open seam record: %w", err)
 	}

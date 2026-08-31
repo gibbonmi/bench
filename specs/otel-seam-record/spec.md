@@ -128,6 +128,7 @@ Line: opus / medium. A kill-based system test and a `go/ast` check need care.
 | OT26 | 26 | The conformance check reds on a registered seam whose symbol starts no span | new `go/ast` check test in `internal/conformance` | an uninstrumented seam otherwise stays silently green |
 | OT27 | 27 | `DATA_HANDLING.md` names the record file under the Bench home | review-owned | prose carries no mechanical seam, so the review grades the claim |
 | OT28 | 9 | `bench gate` keeps its exit code with an unwritable record directory | system test with an unwritable record directory | a propagated record error flips the verb exit and the row reds |
+| OT29 | 8 | A non-regular file at the record path refuses the write | writer test with a FIFO at the record path | an open of a FIFO blocks the first span and every recorded verb hangs |
 
 Not covered: story 22 — the iteration count is a consumer derivation, and no reader ships in this spec.
 Not covered: story 28 — the FT71 condition is a build-exit rule, and the workflow's material-shortfall rule owns it.
