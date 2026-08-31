@@ -16,17 +16,31 @@ func TestExecutedTagCensus(t *testing.T) {
 		name     string
 		manifest string
 		goMod    bool
-		want     []TagSet
+		want     []TestExecution
 	}{
 		{
 			name:  "kit root holds the untagged set and the system set",
 			goMod: true,
-			want:  []TagSet{{}, {SystemPhaseName}},
+			want: []TestExecution{
+				{Name: "test", Tags: TagSet{}, Packages: []string{"./..."}},
+				{Name: SystemPhaseName, Tags: TagSet{SystemPhaseName}, Packages: []string{"./internal/systemtest"}},
+			},
 		},
 		{
-			name:     "a manifest-declared custom tag joins the census",
+			name:     "a manifest-declared phase keeps its package operands",
 			manifest: `{"phases":[{"name":"test","argv":["go","test","-tags=fixturetag","./..."]}]}`,
-			want:     []TagSet{{"fixturetag"}},
+			want:     []TestExecution{{Name: "test", Tags: TagSet{"fixturetag"}, Packages: []string{"./..."}}},
+		},
+		{
+			name: "equal tags retain separate package operands",
+			manifest: `{"phases":[
+				{"name":"first","argv":["go","test","-tags=fixturetag","./first"]},
+				{"name":"second","argv":["go","test","-tags=fixturetag","./second"]}
+			]}`,
+			want: []TestExecution{
+				{Name: "first", Tags: TagSet{"fixturetag"}, Packages: []string{"./first"}},
+				{Name: "second", Tags: TagSet{"fixturetag"}, Packages: []string{"./second"}},
+			},
 		},
 		{
 			name:     "a root with no test phase yields an empty census",
@@ -38,9 +52,13 @@ func TestExecutedTagCensus(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Setenv(baselinePolicyEnv, "")
 			root := censusRoot(t, test.goMod, test.manifest)
-			got, err := ExecutedTagCensus(root, root)
+			got, err := ExecutedTestCensus(root, root)
 			if err != nil {
-				t.Fatalf("ExecutedTagCensus: %v", err)
+				t.Fatalf("ExecutedTestCensus: %v", err)
+			}
+			for i := range got {
+				got[i].Dir = ""
+				got[i].GoC = ""
 			}
 			assertCensus(t, got, test.want)
 		})
@@ -74,7 +92,7 @@ func writeCensusFile(t *testing.T, path, content string) {
 
 // assertCensus compares the census to the expected sets. normalizeTags returns a
 // non-nil slice for every set, so a deep comparison is exact here.
-func assertCensus(t *testing.T, got, want []TagSet) {
+func assertCensus(t *testing.T, got, want []TestExecution) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("census = %v, want %v", got, want)

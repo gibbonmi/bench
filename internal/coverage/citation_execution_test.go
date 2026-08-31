@@ -1,0 +1,233 @@
+package coverage
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/gate"
+)
+
+// TestCitationPackageScope grades the package arm of the citation check: a cited file is
+// evidence only where one complete test phase both selects its package and builds it.
+func TestCitationPackageScope(t *testing.T) {
+	tests := []struct {
+		name     string
+		manifest string
+		rel      string
+		source   string
+		want     string
+	}{
+		{
+			name: "package scope and tags from different phases do not combine",
+			manifest: `{"phases":[
+				{"name":"scope","argv":["go","test","-tags=scope","./match"]},
+				{"name":"match","argv":["go","test","-tags=match","./other"]}
+			]}`,
+			rel:    "match/match_test.go",
+			source: "//go:build match\n\npackage match\n\nfunc TestPresent() {}\n",
+			want:   "which no executed tag set builds",
+		},
+		{
+			name:     "recursive pattern excludes testdata",
+			manifest: `{"phases":[{"name":"test","argv":["go","test","./..."]}]}`,
+			rel:      "testdata/fixture/fixture_test.go",
+			source:   "package fixture\n\nfunc TestPresent() {}\n",
+			want:     "which no executed test phase selects",
+		},
+		{
+			name:     "recursive pattern excludes underscore-prefixed packages",
+			manifest: `{"phases":[{"name":"test","argv":["go","test","./..."]}]}`,
+			rel:      "_private/fixture/fixture_test.go",
+			source:   "package fixture\n\nfunc TestPresent() {}\n",
+			want:     "which no executed test phase selects",
+		},
+		{
+			name:     "explicit package selects evidence under testdata",
+			manifest: `{"phases":[{"name":"test","argv":["go","test","./testdata/fixture"]}]}`,
+			rel:      "testdata/fixture/fixture_test.go",
+			source:   "package fixture\n\nfunc TestPresent() {}\n",
+		},
+		{
+			name:     "absent package operands select the effective phase directory",
+			manifest: `{"phases":[{"name":"test","argv":["go","test"]}]}`,
+			rel:      "fixture_test.go",
+			source:   "package fixture\n\nfunc TestPresent() {}\n",
+		},
+		{
+			// The first phase selects the cited package but refuses its build constraint.
+			// The second phase does both, which is what the citation needs. A check that
+			// stopped at the first selecting phase, or that required every phase to
+			// agree, would red here.
+			name: "one phase that both selects and builds accepts the citation",
+			manifest: `{"phases":[
+				{"name":"plain","argv":["go","test","./match"]},
+				{"name":"tagged","argv":["go","test","-tags=match","./match"]}
+			]}`,
+			rel:    "match/match_test.go",
+			source: "//go:build match\n\npackage match\n\nfunc TestPresent() {}\n",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			specPath := citationExecutionSpec(t, test.manifest, test.rel, test.source)
+			v := checkFilesOf(t, specPath)
+			if test.want == "" {
+				if len(v) != 0 {
+					t.Fatalf("CheckFiles = %#v, want no violation", v)
+				}
+				return
+			}
+			if len(v) != 1 || !strings.Contains(v[0], "coverage map row 1") ||
+				!strings.Contains(v[0], test.rel) || !strings.Contains(v[0], test.want) {
+				t.Fatalf("CheckFiles = %#v, want row, file, and %q", v, test.want)
+			}
+		})
+	}
+}
+
+// TestCitationPackageScopeFailure grades the failure arm: a phase whose package operands
+// the Go loader cannot expand rejects the citation and names the row and the file. A
+// pattern the loader resolves to nothing is not that failure; it selects nothing.
+func TestCitationPackageScopeFailure(t *testing.T) {
+	const source = "package fixture\n\nfunc TestPresent() {}\n"
+
+	t.Run("an unresolvable package operand rejects the citation", func(t *testing.T) {
+		specPath := citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./missing"]}]}`,
+			"fixture_test.go", source)
+
+		assertExpansionRefusal(t, checkFilesOf(t, specPath), "fixture_test.go")
+	})
+
+	t.Run("an absent Go executable rejects the citation", func(t *testing.T) {
+		// The phase manifest resolves the phase table without the toolchain, so the only
+		// step this PATH deprives is the package loader itself.
+		specPath := citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./..."]}]}`,
+			"fixture_test.go", source)
+		t.Setenv("PATH", t.TempDir())
+
+		assertExpansionRefusal(t, checkFilesOf(t, specPath), "fixture_test.go")
+	})
+
+	t.Run("a pattern that matches no package is no expansion failure", func(t *testing.T) {
+		// Go excludes testdata from a recursive pattern, so this phase resolves to no
+		// package at all. The loader says so on its error stream and exits zero, which
+		// leaves the citation unselected rather than unexpandable.
+		specPath := citationExecutionSpec(t,
+			`{"phases":[{"name":"test","argv":["go","test","./testdata/..."]}]}`,
+			"testdata/fixture/fixture_test.go", source)
+
+		v := checkFilesOf(t, specPath)
+		if len(v) != 1 || !strings.Contains(v[0], "which no executed test phase selects") {
+			t.Fatalf("CheckFiles = %#v, want the selection violation rather than an expansion failure", v)
+		}
+	})
+}
+
+// TestCitationPackageScopeTimeout grades the loader's time bound. A cited FIFO never
+// starts the loader, because the grammar refuses a non-regular file first, but a FIFO
+// planted anywhere else under a phase's package tree still blocks the loader in open(2)
+// on another row's honest citation. The bound must end that wait and report it as the
+// expansion failure it is, rather than hold the check open with no deadline.
+func TestCitationPackageScopeTimeout(t *testing.T) {
+	specPath := citationExecutionSpec(t,
+		`{"phases":[{"name":"test","argv":["go","test","./..."]}]}`,
+		"fixture_test.go", "package fixture\n\nfunc TestPresent() {}\n")
+	// The stub sleeps far past the shrunk bound, and it sleeps in a child of the shell
+	// the kernel actually executes. Only a process-group kill reaches that child, so a
+	// bound that killed the shell alone would still wait on the inherited output pipe.
+	stub := t.TempDir()
+	writeExecutable(t, filepath.Join(stub, "go"), "#!/bin/sh\nsleep 600 &\nwait\n")
+	// The stub shadows the real toolchain rather than replacing PATH, because the script
+	// itself needs the commands the rest of PATH provides.
+	t.Setenv("PATH", stub+string(os.PathListSeparator)+os.Getenv("PATH"))
+	shrinkPackageLoadTimeout(t, 50*time.Millisecond)
+
+	started := time.Now()
+	v := checkFilesOf(t, specPath)
+	elapsed := time.Since(started)
+
+	assertExpansionRefusal(t, v, "fixture_test.go")
+	if !strings.Contains(v[0], `executed phase "test"`) || !strings.Contains(v[0], "timed out") {
+		t.Fatalf("CheckFiles = %#v, want the phase name and a timeout", v)
+	}
+	if elapsed > 2*time.Second {
+		t.Fatalf("CheckFiles took %s, want the loader bound to end the wait promptly", elapsed)
+	}
+}
+
+// shrinkPackageLoadTimeout installs a test-only loader bound and restores the production
+// one, so a hang test costs milliseconds rather than the real bound.
+func shrinkPackageLoadTimeout(t *testing.T, limit time.Duration) {
+	t.Helper()
+	previous := packageLoadTimeout
+	packageLoadTimeout = limit
+	t.Cleanup(func() { packageLoadTimeout = previous })
+}
+
+// writeExecutable writes an executable file at an absolute path, creating its parents.
+func writeExecutable(t *testing.T, path, content string) {
+	t.Helper()
+	writeUnder(t, path, content)
+	if err := os.Chmod(path, 0o755); err != nil {
+		t.Fatalf("Chmod(%q): %v", path, err)
+	}
+}
+
+func assertExpansionRefusal(t *testing.T, v []string, rel string) {
+	t.Helper()
+	if len(v) != 1 || !strings.Contains(v[0], "coverage map row 1") ||
+		!strings.Contains(v[0], rel) || !strings.Contains(v[0], "could not expand packages") {
+		t.Fatalf("CheckFiles = %#v, want an expansion violation naming the row and file", v)
+	}
+}
+
+// citationExecutionSpec writes one temporary Go module, the phase manifest that declares
+// its test phases, and the folder spec whose single mapped row cites rel. The module
+// root holds a space, because the loader prints a filesystem path and the check must
+// keep such a path whole.
+func citationExecutionSpec(t *testing.T, manifest, rel, source string) string {
+	t.Helper()
+	// A prospective landing gate points the phase schedule at its baseline, which would
+	// answer this root with the kit's table instead of the manifest written here.
+	t.Setenv(gate.BaselinePolicyEnv, "")
+	root := filepath.Join(t.TempDir(), "with space")
+	writeUnder(t, filepath.Join(root, "go.mod"), "module example.test/citation\n\ngo 1.24\n")
+	writeUnder(t, filepath.Join(root, filepath.FromSlash(canary.PhaseManifestPath)), manifest+"\n")
+	writeUnder(t, filepath.Join(root, "other", "other.go"), "package other\n")
+	cited := filepath.Join(root, filepath.FromSlash(rel))
+	writeUnder(t, cited, source)
+	// The cited package also holds one file no constraint excludes. Go refuses an
+	// explicit operand for a directory whose every file a constraint excludes, and drops
+	// such a directory out of a recursive pattern, so a package holding the cited file
+	// alone could never be selected at all.
+	writeUnder(t, filepath.Join(filepath.Dir(cited), "compiled.go"), "package "+packageOf(t, source)+"\n")
+	return citedSpecPath(t, root, rel)
+}
+
+// packageOf reads the package clause a fixture source declares, so the companion file
+// joins that package rather than making the directory hold two.
+func packageOf(t *testing.T, source string) string {
+	t.Helper()
+	for _, line := range strings.Split(source, "\n") {
+		if name, found := strings.CutPrefix(line, "package "); found {
+			return strings.TrimSpace(name)
+		}
+	}
+	t.Fatalf("fixture source declares no package clause: %q", source)
+	return ""
+}
+
+func citedSpecPath(t *testing.T, root, rel string) string {
+	t.Helper()
+	path := filepath.Join(root, "specs", "citation", "spec.md")
+	writeUnder(t, path, "# citation fixture\n\n## User stories\n\n1. A story.\n\n"+
+		"### Acceptance coverage map\n\n| story | behavior | seam | why it catches the failure |\n"+
+		"|---|---|---|---|\n| 1 | a behavior | `"+rel+"` (`TestPresent`) | why |\n")
+	return path
+}

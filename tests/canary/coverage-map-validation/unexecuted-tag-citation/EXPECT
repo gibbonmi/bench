@@ -1,1 +1,1 @@
-coverage map row 1 cites 'internal/example/stress_test.go', which no executed tag set builds (//go:build stress)
+coverage map row 2 cites 'testdata/fixture/fixture_test.go', which no executed test phase selects
