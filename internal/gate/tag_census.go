@@ -127,13 +127,15 @@ func tagSetOf(argv []string) TagSet {
 	return normalizeTags(tags)
 }
 
-// testPackagesOf reads package operands from one Go test argv. Test-binary arguments
-// begin at -args or at a -test flag, so neither can become package evidence.
+// testPackagesOf reads package operands from one Go test argv. Only -args ends the
+// operand region, because every argument after it reaches the test binary
+// uninterpreted. A -test.-prefixed argument is an ordinary flag the toolchain forwards,
+// so the scan steps over it and keeps reading the operands behind it.
 func testPackagesOf(argv []string, testAt int) []string {
 	var packages []string
 	for i := testAt + 1; i < len(argv); i++ {
 		arg := argv[i]
-		if arg == "-args" || strings.HasPrefix(arg, "-test.") {
+		if arg == "-args" {
 			break
 		}
 		if strings.HasPrefix(arg, "-") {
