@@ -8,9 +8,13 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/retros"
+	retrotestdata "github.com/gibbonmi/bench/internal/retros/testdata"
 )
 
-const retroBody = "## Outcome\n\nLand the ticket.\n\n## Gate-stage timings\n\n- test: 1s\n\n## Ticket-versus-spec-slice and delegate performance\n\nOne ticket.\n\n## Coordinator catches\n\nNone.\n\n## Repair attribution\n\n| ticket | rounds | causes |\n|---|---|---|\n| retro | 1 | none |\n\n## Agent-experience improvements\n\n### Bench CLI\n\n- Add the writer.\n  Feeds: none\n\n### Skills\n\n### Process\n"
+func eligibleRetro(t *testing.T) string {
+	t.Helper()
+	return retrotestdata.Eligible()
+}
 
 func TestRetroRejectsMalformedBodyWithoutWriting(t *testing.T) {
 	root := newRepo(t)
@@ -25,7 +29,7 @@ func TestRetroRejectsMalformedBodyWithoutWriting(t *testing.T) {
 
 func TestRetroRoundTripsOneEligibleArtifact(t *testing.T) {
 	root := newRepo(t)
-	out, code := RetroCommand([]string{"first", "--body", retroBody})
+	out, code := RetroCommand([]string{"first", "--body", eligibleRetro(t)})
 	if code != 0 || out != "captured: first\n" {
 		t.Fatalf("retro = %q/%d, want captured on exit 0", out, code)
 	}
@@ -41,8 +45,9 @@ func TestRetroRoundTripsOneEligibleArtifact(t *testing.T) {
 
 func TestRetroRepeatedWritesPreserveEarlierCapture(t *testing.T) {
 	root := newRepo(t)
+	body := eligibleRetro(t)
 	for _, slug := range []string{"first", "second"} {
-		if _, code := RetroCommand([]string{slug, "--body", retroBody}); code != 0 {
+		if _, code := RetroCommand([]string{slug, "--body", body}); code != 0 {
 			t.Fatalf("retro %q exit = %d, want 0", slug, code)
 		}
 	}
@@ -57,7 +62,8 @@ func TestRetroRepeatedWritesPreserveEarlierCapture(t *testing.T) {
 
 func TestRetroRefusesSameSlugWithoutChangingEarlierCapture(t *testing.T) {
 	root := newRepo(t)
-	if _, code := RetroCommand([]string{"repeat", "--body", retroBody}); code != 0 {
+	body := eligibleRetro(t)
+	if _, code := RetroCommand([]string{"repeat", "--body", body}); code != 0 {
 		t.Fatalf("first retro exit = %d, want 0", code)
 	}
 	path := filepath.Join(root, retros.Path("repeat"))
@@ -65,7 +71,7 @@ func TestRetroRefusesSameSlugWithoutChangingEarlierCapture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	secondBody := strings.Replace(retroBody, "Land the ticket.", "Preserve the first capture.", 1)
+	secondBody := strings.Replace(body, "Land the ticket.", "Preserve the first capture.", 1)
 	if _, code := RetroCommand([]string{"repeat", "--body", secondBody}); code == 0 {
 		t.Fatal("second retro exit = 0, want a refusal")
 	}
@@ -91,7 +97,7 @@ func TestRetroIgnoredDirectoryWritesToPrimaryCheckout(t *testing.T) {
 	}
 	linked := newLinkedWorktree(t, primary)
 	t.Chdir(linked)
-	if out, code := RetroCommand([]string{"primary-local", "--body", retroBody}); code != 0 || out != "captured: primary-local\n" {
+	if out, code := RetroCommand([]string{"primary-local", "--body", eligibleRetro(t)}); code != 0 || out != "captured: primary-local\n" {
 		t.Fatalf("ignored retro = %q/%d, want captured on exit 0", out, code)
 	}
 	if _, err := os.Stat(filepath.Join(linked, retros.Path("primary-local"))); !os.IsNotExist(err) {
@@ -99,5 +105,30 @@ func TestRetroIgnoredDirectoryWritesToPrimaryCheckout(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(primary, retros.Path("primary-local"))); err != nil {
 		t.Fatalf("retro did not land in primary checkout: %v", err)
+	}
+}
+
+func TestRetroRefusesSymlinkedDestinationComponents(t *testing.T) {
+	for _, target := range []string{"outside", "missing"} {
+		t.Run(target, func(t *testing.T) {
+			root := newRepo(t)
+			outside := filepath.Join(t.TempDir(), target)
+			if target == "outside" {
+				if err := os.Mkdir(outside, 0o755); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := os.Symlink(outside, filepath.Join(root, retros.Directory)); err != nil {
+				t.Fatal(err)
+			}
+
+			out, code := RetroCommand([]string{"linked", "--body", eligibleRetro(t)})
+			if code == 0 || !strings.Contains(out, "symbolic link") {
+				t.Fatalf("retro through %s symlink = %q/%d, want a symbolic-link refusal", target, out, code)
+			}
+			if _, err := os.Stat(filepath.Join(outside, "linked.md")); !os.IsNotExist(err) {
+				t.Fatalf("retro wrote through %s symlink: %v", target, err)
+			}
+		})
 	}
 }

@@ -1,8 +1,10 @@
 package roadmap
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -38,6 +40,9 @@ func RetroCommand(args []string) (string, int) {
 		return refusal, code
 	}
 	file := filepath.Join(root, filepath.FromSlash(path))
+	if err := refuseSymlinkComponents(root, path); err != nil {
+		return cannotWrite(path, err), 1
+	}
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 		return cannotWrite(path, err), 1
 	}
@@ -53,4 +58,22 @@ func RetroCommand(args []string) (string, int) {
 		return cannotWrite(path, err), 1
 	}
 	return "captured: " + parsed.Positionals[0] + "\n", 0
+}
+
+func refuseSymlinkComponents(root, relPath string) error {
+	current := root
+	for _, component := range strings.Split(filepath.Clean(filepath.FromSlash(relPath)), string(filepath.Separator)) {
+		current = filepath.Join(current, component)
+		info, err := os.Lstat(current)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("destination component is a symbolic link: %s", component)
+		}
+	}
+	return nil
 }
