@@ -11,6 +11,51 @@ import (
 	"github.com/gibbonmi/bench/internal/adopt"
 )
 
+func TestDetectedProjectGateRejectsIgnoredDeclaredInput(t *testing.T) {
+	repo := t.TempDir()
+	home := filepath.Join(t.TempDir(), "bench-home")
+	environment := []string{"BENCH_HOME=" + home, "BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
+	launch := func(program string, args ...string) processResult {
+		if err := owner.observeSelected(); err != nil {
+			t.Fatal(err)
+		}
+		return owner.runAt(repo, environment, program, args...)
+	}
+	if initialized := launch("git", "init", "-q"); initialized.code != 0 {
+		t.Fatalf("git init = (%d, %q, %q)", initialized.code, initialized.stdout, initialized.stderr)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "go.mod"), []byte("module example.com/detected\n\ngo 1.22\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	setup := launch(owner.selected.path, "setup", "--yes")
+	if setup.code != 0 || !strings.Contains(setup.stdout, "go.mod detected") {
+		t.Fatalf("detected-project setup = (%d, %q, %q)", setup.code, setup.stdout, setup.stderr)
+	}
+	if err := os.WriteFile(filepath.Join(repo, ".gitignore"), []byte("ignored file\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(repo, ".bench", "gate-inputs.json")
+	declaration, err := os.ReadFile(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	declared := strings.Replace(string(declaration), `"paths": []`, `"paths": ["ignored file"]`, 1)
+	if declared == string(declaration) {
+		t.Fatalf("seeded gate input manifest has no empty paths list:\n%s", declaration)
+	}
+	if err := os.WriteFile(manifest, []byte(declared), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	wrapper := filepath.Join(repo, ".bench", "bin", "bench.sh")
+	gate := launch("bash", wrapper, "gate", "--fresh")
+	if gate.code != 1 || !strings.Contains(gate.stdout+gate.stderr, "gate input path ignored file is gitignored") {
+		t.Fatalf("detected-project gate = (%d, %q, %q)", gate.code, gate.stdout, gate.stderr)
+	}
+	assertPrivateHomeEmpty(t, home)
+}
+
 // TestAdoptionSmokeJourney adopts one disposable repository with `bench setup --yes` and
 // drives its scaffolded gate through the installed wrapper. The kit's own oracle observes
 // the adopter's side of adoption, not an audit. Every launch binds one private BENCH_HOME
