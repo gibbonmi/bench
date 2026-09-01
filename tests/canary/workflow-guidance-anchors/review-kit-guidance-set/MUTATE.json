@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "any file under `.agents/` or",
+    "new": "any file under `.agents/`, and not"
+  }
+]

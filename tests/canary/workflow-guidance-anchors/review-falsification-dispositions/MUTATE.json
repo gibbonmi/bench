@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "disposition of accept, merge, or dismiss.",
+    "new": "disposition."
+  }
+]

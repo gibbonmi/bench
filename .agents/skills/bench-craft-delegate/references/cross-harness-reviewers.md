@@ -19,3 +19,10 @@ Codex:
 `-C` sets the reviewer's working root, which a backgrounded call cannot inherit
 from the caller's shell. `-o` writes the final message alone, so findings are
 read without parsing the event stream around them.
+
+Inside a Bench worktree, take the exec form with an empty quoted heredoc,
+because the guard refuses any non-heredoc redirection inside an exec span:
+
+`bench worktree exec <target> -- claude -p --model <id> "<charge>" <<'EOF'`
+
+`EOF`

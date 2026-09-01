@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md",
+    "old": "\"<charge>\" <<'EOF'`",
+    "new": "\"<charge>\" < /dev/null`"
+  }
+]

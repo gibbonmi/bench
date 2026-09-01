@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "takes a standing cross-harness",
+    "new": "takes an offered cross-harness"
+  }
+]
