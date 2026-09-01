@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	"github.com/gibbonmi/bench/internal/anchors"
 )
 
 const (
@@ -62,7 +64,15 @@ func materializeMutationFixture(root, fixture, dst string) error {
 		if err != nil {
 			return err
 		}
-		if strings.Count(string(body), mutation.Old) != 1 {
+		switch count := strings.Count(string(body), mutation.Old); {
+		case count == 1:
+		case count == 0 && strings.Contains(anchors.CollapseSpace(string(body)), anchors.CollapseSpace(mutation.Old)):
+			// The anchor evaluator matches under collapsed whitespace, so a needle the
+			// target wraps across a line passes the evaluator and misses here. The
+			// materializer keeps the byte-exact match because it cannot reconstruct the
+			// bytes it would rewrite.
+			return fmt.Errorf("mutation anchor in %s did not occur exactly once: it spans a line wrap in the target file, so the fixture must quote the physical line bytes", mutation.Path)
+		default:
 			return fmt.Errorf("mutation anchor in %s did not occur exactly once", mutation.Path)
 		}
 		body = []byte(strings.Replace(string(body), mutation.Old, mutation.New, 1))
