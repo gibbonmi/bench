@@ -47,6 +47,12 @@ func TestLandCommandRefusalListsIgnoredPaths(t *testing.T) {
 	if code != 1 || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "ignored/residue") || stderr.Len() != 0 {
 		t.Fatalf("ignored refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
+	// LRS10 and LRS11. The operator chooses between the two routes out of undeclared
+	// residue, so the field names the declaration file and the removal of the exact path.
+	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationResidue).detail)
+	if !printed || !strings.Contains(next, ".bench/build-outputs.json") || !strings.Contains(next, "rm -rf 'ignored/residue'") {
+		t.Fatalf("ignored refusal next = (%v, %q), want the declaration file and the removal command", printed, next)
+	}
 }
 
 func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {

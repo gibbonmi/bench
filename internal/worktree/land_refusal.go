@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
@@ -152,6 +153,7 @@ func atSourceWorktree(command, path, assignment string) string {
 // the name and the registry entry are the same fact.
 const (
 	faceDestinationNotClean = "destination-not-clean"
+	faceDestinationResidue  = "destination-residue"
 	faceSourceNotClean      = "source-not-clean"
 	faceSourceNotFenced     = "source-not-fenced"
 	// The resume path refuses on its own destination and marker state, so those two
@@ -167,14 +169,50 @@ func destinationCleanRepair(rerun string) string {
 	return "commit the destination's uncommitted work, or discard it; then " + rerun
 }
 
+// destinationResidueRepair is the repair a destination that carries undeclared ignored
+// residue demands. The operator has two routes out of the state, so the line names both:
+// the declaration file that adopts the paths, and the removal that discards them.
+func destinationResidueRepair(rerun string, paths []string) string {
+	return "declare the refusal_paths entries in .bench/build-outputs.json, or remove them from the landing checkout with " +
+		residueRemovalCommand(paths) + "; then " + rerun
+}
+
+// residueRemovalCommand is the exact removal the residue repair names. Git owns no
+// removal of an ignored path, so the command is plain `rm`, and the value it names is the
+// destination-relative path the refusal's own table lists. A path the operator could not
+// paste back takes the placeholder, which the table beside the route resolves.
+func residueRemovalCommand(paths []string) string {
+	arguments := make([]string, 0, len(paths))
+	for _, path := range paths {
+		if !lineSafe(path) {
+			return "rm -rf <refusal_paths entries>"
+		}
+		arguments = append(arguments, sanitize.ShellQuote(path))
+	}
+	if len(arguments) == 0 {
+		return "rm -rf <refusal_paths entries>"
+	}
+	return "rm -rf " + strings.Join(arguments, " ")
+}
+
 // landingRefusalFace is one refusal the landing's preflight prints. detail is the
-// sentence, and route composes the face's own repair ahead of the caller's re-run. The
-// registry test walks the slice and drives one producing fixture per entry, so a face
-// added without a fixture, or with an empty route, turns the gate red.
+// sentence, and repair composes the face's own repair ahead of the caller's re-run, from
+// the refusal's own paths where the repair names them. The registry test walks the slice
+// and drives one producing fixture per entry, so a face added without a fixture, or with
+// an empty repair, turns the gate red.
 type landingRefusalFace struct {
 	name   string
 	detail string
-	route  func(rerun string) string
+	repair func(rerun string, paths []string) string
+}
+
+// route is the path-free reading of a face's repair, which the proofs that pin a repair
+// with no paths of its own read.
+func (f landingRefusalFace) route(rerun string) string { return f.repair(rerun, nil) }
+
+// pathless adapts a repair that reads no paths to the registry's shape.
+func pathless(build func(rerun string) string) func(rerun string, paths []string) string {
+	return func(rerun string, _ []string) string { return build(rerun) }
 }
 
 // landingRefusalFaces is the declared registry. It is the authoritative inventory of the
@@ -184,34 +222,39 @@ var landingRefusalFaces = []landingRefusalFace{
 	{
 		name:   faceDestinationNotClean,
 		detail: "landing destination is not clean",
-		route:  destinationCleanRepair,
+		repair: pathless(destinationCleanRepair),
+	},
+	{
+		name:   faceDestinationResidue,
+		detail: "landing destination has undeclared ignored residue",
+		repair: destinationResidueRepair,
 	},
 	{
 		name:   faceSourceNotClean,
 		detail: "reviewed source is not clean",
-		route: func(rerun string) string {
+		repair: pathless(func(rerun string) string {
 			return "commit the reviewed source's uncommitted work, or discard it; then " + rerun
-		},
+		}),
 	},
 	{
 		name:   faceSourceNotFenced,
 		detail: "reviewed source range or ownership fence is invalid",
-		route: func(rerun string) string {
+		repair: pathless(func(rerun string) string {
 			return "take the refusal_paths entries out of the reviewed range, or declare them under the spec's ## Ownership fences; then " + rerun
-		},
+		}),
 	},
 	{
 		// The residue policy owns the sentence this face prints, so the entry declares
 		// none and the constructor carries the observed one.
-		name:  faceResumeDestinationResidue,
-		route: destinationCleanRepair,
+		name:   faceResumeDestinationResidue,
+		repair: pathless(destinationCleanRepair),
 	},
 	{
 		name:   faceResumeMarker,
 		detail: landingpolicy.MarkerRefusalDetail,
-		route: func(rerun string) string {
+		repair: pathless(func(rerun string) string {
 			return "run bench gate in the landing checkout to record its green marker; then " + rerun
-		},
+		}),
 	},
 }
 
@@ -227,7 +270,7 @@ func landingRefusalFaceByName(name string) landingRefusalFace {
 	return landingRefusalFace{
 		name:   name,
 		detail: "landing refusal face " + name + " is unregistered",
-		route:  func(rerun string) string { return rerun },
+		repair: pathless(func(rerun string) string { return rerun }),
 	}
 }
 
@@ -253,7 +296,7 @@ func landingFaceRefusal(name, detail, rerun string, paths []string) refusalError
 	if face.detail != "" {
 		detail = face.detail
 	}
-	return refusalError{refusal{detail: detail, next: face.route(rerun), paths: paths}}
+	return refusalError{refusal{detail: detail, next: face.repair(rerun, paths), paths: paths}}
 }
 
 // landingFaceRoute attaches the caller's own re-run to a preflight refusal whose sentence

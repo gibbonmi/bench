@@ -50,11 +50,15 @@ func landingDestination(j joins, root string) (string, string, string, string, e
 	}
 	ignored, _, ignoredErr := inventoryIgnored(j, root, false)
 	declared, _, declarationErr := loadBuildOutputs(root)
+	// The residue face reads its own paths, so the declared route names the removal of
+	// the exact entries beside the declaration file that would adopt them. An unreadable
+	// inventory or declaration names no path, and the same face routes it.
 	if ignoredErr != nil || declarationErr != nil || (ignored.Count > 0 && !ignoredWithinLandingAllowance(ignored, declared)) {
+		residue := []string(nil)
 		if ignoredErr == nil && declarationErr == nil {
-			return "", "", "", "", refusalError{refusal{detail: "landing destination has undeclared ignored residue", paths: undeclaredLandingIgnoredPaths(ignored, declared)}}
+			residue = undeclaredLandingIgnoredPaths(ignored, declared)
 		}
-		return "", "", "", "", errors.New("landing destination has undeclared ignored residue")
+		return "", "", "", "", landingFaceRefusal(faceDestinationResidue, "", "", residue)
 	}
 	tip, err := git.Output("-C", root, "rev-parse", "HEAD^{commit}")
 	if err != nil {

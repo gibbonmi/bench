@@ -236,6 +236,14 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			},
 		},
 		{
+			face: faceDestinationResidue,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored/\n"), 0o644)
+				mustMkdirAll(t, filepath.Join(root, "ignored"), 0o755)
+				mustWrite(t, filepath.Join(root, "ignored", "residue"), []byte("residue\n"), 0o600)
+			},
+		},
+		{
 			face: faceSourceNotClean,
 			mutate: func(t *testing.T, _ string, creation Creation) {
 				mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
