@@ -112,9 +112,11 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 			t.Errorf("Unicode envelope %q = (%d, %q, %q), want refusal", envelope, result.code, result.stdout, result.stderr)
 		}
 	}
-	// A `cd` into the worktree pool refuses with its own message, because the one
-	// command form for a Bench worktree is `bench worktree exec`. The denial runs before
-	// the follow-on verdict, so a `cd` with a follow-on names the `cd`.
+	// A route into the worktree pool refuses with its own message, because the one command
+	// form for a Bench worktree is `bench worktree exec`. A `cd`, an assignment, and a git
+	// repository option are the three routes. The denial runs before the follow-on
+	// verdict, so a pool reference with a follow-on names the reference. A read of a file
+	// under the pool, and a pool path the `bench worktree` grammar takes, stay allowed.
 	poolHome := t.TempDir()
 	target := filepath.Join(poolHome, "worktrees", "bench-1", strings.Repeat("a", 32)+"-"+strings.Repeat("b", 32))
 	poolEnv := []string{"BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit, "BENCH_HOME=" + poolHome}
@@ -122,17 +124,21 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		{"FOG41 bare cd into the pool", "cd " + target},
 		{"FOG42 cd into the pool then a follow-on", "cd " + target + " && go test ./..."},
 		{"FOG43 cd into the pool then a Bench call", "cd " + target + " && bench gate"},
+		{"FOG44 assignment then git -C the variable", "W=" + target + "; git -C $W log"},
+		{"FOG45 git -C into the pool", "git -C " + target + " log"},
+		{"FOG46 git --work-tree into the pool", "git --work-tree " + target + " status"},
+		{"FOG47 export of the pool path", "export W=" + target},
 	} {
 		envelope := `{"tool_name":"Bash","tool_input":{"command":` + shellQuoteJSON(tc.command) + `}}`
 		result := owner.runWithInput(repo, poolEnv, envelope, shellPath(t), hook)
-		if result.code != 2 || !strings.Contains(result.stderr, `never cd into the pool path. target=`+target) {
+		if result.code != 2 || !strings.Contains(result.stderr, `never cd, assign, or git -C into the pool path. target=`+target) {
 			t.Errorf("%s = (%d, %q, %q), want the pool refusal naming the target", tc.name, result.code, result.stdout, result.stderr)
 		}
 		if strings.Contains(result.stderr, "BLOCKED: Bench response is bounded") {
-			t.Errorf("%s = %q, want the cd denial rather than the follow-on refusal", tc.name, result.stderr)
+			t.Errorf("%s = %q, want the pool denial rather than the follow-on refusal", tc.name, result.stderr)
 		}
 	}
-	for _, command := range []string{"cd /tmp", `cd "$W"`, "bench worktree exec \"x\" -- sh -c 'cd sub && go test ./...'"} {
+	for _, command := range []string{"cd /tmp", `cd "$W"`, "bench worktree exec \"x\" -- sh -c 'cd sub && go test ./...'", "cat " + target + "/x", "bench worktree release --request r " + target} {
 		envelope := `{"tool_name":"Bash","tool_input":{"command":` + shellQuoteJSON(command) + `}}`
 		if result := owner.runWithInput(repo, poolEnv, envelope, shellPath(t), hook); result.code != 0 || strings.Contains(result.stderr, "BLOCKED:") {
 			t.Errorf("allowed command %q = (%d, %q, %q)", command, result.code, result.stdout, result.stderr)
