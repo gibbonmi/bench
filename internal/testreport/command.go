@@ -60,7 +60,7 @@ func Command(root string, args []string) (string, int) {
 }
 
 func parseFocusedRequest(root string, args []string) (focusedRequest, string, int) {
-	parsed, line, code := usage.Parse(grammar, args)
+	parsed, line, code := usage.Parse(testGrammar(), args)
 	if line != "" {
 		return focusedRequest{}, line, code
 	}
@@ -93,7 +93,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if hasCheck && check != gate.SystemPhaseName {
 		registered, found := registry.Find(check)
 		if !found || !registered.RunsAt(registry.Dev) {
-			return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
+			return focusedRequest{}, unknownCheck(check), 2
 		}
 	}
 	packageOperand := strings.Join(parsed.Positionals, "")
@@ -110,6 +110,21 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 		sourceTip:   sourceTip,
 		check:       check,
 	}, "", 0
+}
+
+func testGrammar() usage.Grammar {
+	withInventory := grammar
+	withInventory.Help = grammar.Help + "\n" + namedCheckInventory()
+	return withInventory
+}
+
+func unknownCheck(check string) string {
+	return "unknown check: " + check + "\n" + namedCheckInventory()
+}
+
+func namedCheckInventory() string {
+	checks := append(registry.Names(registry.Dev), gate.SystemPhaseName)
+	return "checks:\n  " + strings.Join(checks, "\n  ")
 }
 
 func runFocusedRequest(root string, request focusedRequest) (string, int) {

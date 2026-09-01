@@ -104,8 +104,6 @@ func TestNamedCheckRefusalMatrix(t *testing.T) {
 	writeCheckGo(t, filepath.Join(goDir, "go"), marker)
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	for _, args := range [][]string{
-		{"--check", "not-registered"},
-		{"--check", "release-evidence-probe"},
 		{"--check", "line-routing", "--package", "./internal/conformance"},
 		{"--check", "line-routing", "--changed"},
 		{"--check", "line-routing", "--run", "^TestRootConformance$"},
@@ -116,6 +114,32 @@ func TestNamedCheckRefusalMatrix(t *testing.T) {
 	}
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
 		t.Fatalf("named-check refusal started go child: %v", err)
+	}
+}
+
+func TestNamedCheckHelpListsEverySupportedCheck(t *testing.T) {
+	output, code := Command(t.TempDir(), []string{"--help"})
+	if code != 0 {
+		t.Fatalf("named-check help = %d, want 0\n%s", code, output)
+	}
+	for _, check := range append(registry.Names(registry.Dev), gate.SystemPhaseName) {
+		if !strings.Contains(output, "\n  "+check+"\n") {
+			t.Errorf("named-check help missing %q:\n%s", check, output)
+		}
+	}
+}
+
+func TestUnknownNamedCheckReportsOperandAndInventory(t *testing.T) {
+	inventory := "\nchecks:\n  " + strings.Join(append(registry.Names(registry.Dev), gate.SystemPhaseName), "\n  ") + "\n"
+	for _, unknown := range []string{"not-registered", "release-evidence-probe"} {
+		output, code := Command(t.TempDir(), []string{"--check", unknown})
+		if code != 2 {
+			t.Errorf("unknown named check %q = %d, want 2\n%s", unknown, code, output)
+			continue
+		}
+		if want := "unknown check: " + unknown + inventory; output != want {
+			t.Errorf("unknown named check %q = %q, want %q", unknown, output, want)
+		}
 	}
 }
 
