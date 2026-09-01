@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.",
+    "new": "Each in-scope promise takes a row."
+  }
+]

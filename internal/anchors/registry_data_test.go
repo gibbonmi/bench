@@ -540,36 +540,54 @@ func TestHarnessRecordPointerAnchorsRedOnRemoval(t *testing.T) {
 // registry, so guidance that drops a rule cannot define itself green.
 func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 	const file = ".agents/skills/bench-craft-spec/SKILL.md"
-	rules := []struct{ section, needle, want string }{
+	rules := []struct {
+		section, needle, want string
+		forbidden             bool
+	}{
 		{
-			"Slicing a build for delegates",
-			"A build may not edit its own spec's acceptance rows, budget targets, or ownership fences.",
-			".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the rule that a build may not edit its own spec's acceptance rows, budget targets, or ownership fences",
+			section: "Template",
+			needle:  "## Further notes\nThe flagged-additions list",
+			want:    ".agents/skills/bench-craft-spec/SKILL.md Template put contract text under the Further notes heading; that heading stays bare",
+
+			forbidden: true,
 		},
 		{
-			"Review rubric",
-			"Per row, does the map name the gate check or test that reds it, or mark the row review-owned?",
-			".agents/skills/bench-craft-spec/SKILL.md Review rubric dropped the per-row question that names the gate check or test which reds the row",
+			section: "Slicing a build for delegates",
+			needle:  "A build may not edit its own spec's acceptance rows, budget targets, or ownership fences.",
+			want:    ".agents/skills/bench-craft-spec/SKILL.md Slicing a build for delegates dropped the rule that a build may not edit its own spec's acceptance rows, budget targets, or ownership fences",
 		},
 		{
-			"The acceptance coverage map",
-			"`references/map-discipline.md` states the rule each row must satisfy",
-			".agents/skills/bench-craft-spec/SKILL.md The acceptance coverage map dropped the pointer to references/map-discipline.md",
+			section: "Review rubric",
+			needle:  "Per row, does the map name the gate check or test that reds it, or mark the row review-owned?",
+			want:    ".agents/skills/bench-craft-spec/SKILL.md Review rubric dropped the per-row question that names the gate check or test which reds the row",
+		},
+		{
+			section: "The acceptance coverage map",
+			needle:  "`references/map-discipline.md` states the rule each row must satisfy",
+			want:    ".agents/skills/bench-craft-spec/SKILL.md The acceptance coverage map dropped the pointer to references/map-discipline.md",
 		},
 	}
 
-	// evaluate writes one minimal skill that carries every section, and every needle except
-	// the dropped one. The section survives the drop, so a red reports the missing sentence
-	// rather than a missing section.
-	evaluate := func(t *testing.T, dropped int) []string {
+	// evaluate writes one minimal skill that carries every section, and every needle a
+	// conformant tree holds. A required needle leaves when the run breaks it; a forbidden
+	// needle arrives instead. The section survives either break, so a red reports the
+	// sentence rather than a missing section.
+	evaluate := func(t *testing.T, broken int) []string {
 		t.Helper()
 		root := t.TempDir()
 		body := "# subject\n"
 		for i, r := range rules {
 			body += "\n## " + r.section + "\n\n"
-			if i != dropped {
-				body += r.needle + "\n"
+			if (i == broken) != r.forbidden {
+				continue
 			}
+			if r.forbidden {
+				// The forbidden needle opens with an H2 heading. A fence keeps that
+				// heading from closing the section that must hold it.
+				body += "```markdown\n" + r.needle + "\n```\n"
+				continue
+			}
+			body += r.needle + "\n"
 		}
 		path := filepath.Join(root, filepath.FromSlash(file))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -1158,19 +1176,74 @@ func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T)
 			"A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.",
 			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the three transaction verification failure rows",
 		},
+		{
+			"Per row",
+			"Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the one-red-capable-row rule for each in-scope promise",
+		},
+		{
+			"In the edge inventory",
+			"Each excluded edge takes a Won't handle line that names a surviving in-scope caller.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the surviving-in-scope-caller clause from the Won't handle line",
+		},
+		{
+			"Before the map locks",
+			"The flagged-additions list sits under Further notes before the first review charge.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the flagged-additions list under Further notes before the first review charge",
+		},
+		{
+			"Before the map locks",
+			"The source-sentence-to-row table sits under Further notes before the first review charge.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the source-sentence-to-row table under Further notes before the first review charge",
+		},
+		{
+			"At review",
+			"The review round demands one row for each listed addition, and it removes each unlisted addition.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md At review dropped one arm of the addition disposition",
+		},
+		{
+			"Per row",
+			"An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the two-row rule for an either-side predicate",
+		},
+		{
+			"Before the map locks",
+			"Each canary row and each conformance row traces to its executed root before the coverage map locks.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md Before the map locks dropped the executed-root trace for a canary or conformance row",
+		},
+		{
+			"Per row",
+			"Each named diagnostic state is addable or mutable in a fixture.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the fixture-reachable rule for a named diagnostic state",
+		},
+		{
+			"At ticket slicing",
+			"The author quotes each pasted operand in the delegate charge.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md At ticket slicing dropped the quoted-operand rule for a pasted operand in the delegate charge",
+		},
 	}
 
-	// evaluate writes one minimal reference that carries every section, and every needle
-	// except the dropped one. The section survives the drop, so a red reports the missing
-	// sentence rather than a missing section.
+	// evaluate writes one minimal reference that carries every section once, and every
+	// needle except the dropped one. Several rules share a section, and MarkdownH2Sections
+	// reads only the first occurrence of a heading, so the needles group under one heading
+	// per section. The section survives the drop, so a red reports the missing sentence
+	// rather than a missing section.
 	evaluate := func(t *testing.T, dropped int) []string {
 		t.Helper()
 		root := t.TempDir()
 		body := "# subject\n"
-		for i, r := range rules {
-			body += "\n## " + r.section + "\n\n"
-			if i != dropped {
-				body += r.needle + "\n"
+		var sections []string
+		for _, r := range rules {
+			if !slices.Contains(sections, r.section) {
+				sections = append(sections, r.section)
+			}
+		}
+		for _, section := range sections {
+			body += "\n## " + section + "\n\n"
+			for i, r := range rules {
+				if r.section == section && i != dropped {
+					body += r.needle + "\n"
+				}
 			}
 		}
 		path := filepath.Join(root, filepath.FromSlash(file))

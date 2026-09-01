@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "Each excluded edge takes a Won't handle line that names a surviving in-scope caller.",
+    "new": "Each excluded edge takes a Won't handle line."
+  }
+]
