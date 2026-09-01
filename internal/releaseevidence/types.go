@@ -201,8 +201,12 @@ func loadRequirements() Registry {
 	return value
 }
 
+// RequirementsRegistry returns the canonical release requirements registry from embedded requirements.json.
+// Callers must treat the registry as read-only. The package panics when the embedded source is invalid.
 func RequirementsRegistry() Registry { return requirements }
 
+// PackageEvidenceRegistry returns package-evidence entries from the canonical requirements registry.
+// It includes only records with a package mode.
 func PackageEvidenceRegistry() []PackageEvidence {
 	var evidence []PackageEvidence
 	for _, record := range requirements.Records {
@@ -213,10 +217,14 @@ func PackageEvidenceRegistry() []PackageEvidence {
 	return evidence
 }
 
+// Requirements returns a copy of the requirement records in canonical registry order.
+// Callers must treat the returned records as read-only.
 func Requirements() []Requirement {
 	return append([]Requirement(nil), requirements.Records...)
 }
 
+// PhaseNames returns registered phase names in execution order.
+// Callers must pass ModeVerify or ModePublish. ModePublish includes publish phases before and after verification.
 func PhaseNames(mode Mode) []string {
 	names := append([]string{}, registry.Verify...)
 	if mode == ModePublish {
@@ -225,6 +233,8 @@ func PhaseNames(mode Mode) []string {
 	return names
 }
 
+// PhaseDefinitionFor returns the definition for a registered name and false for an unregistered name.
+// Callers must check the boolean result before they use the definition.
 func PhaseDefinitionFor(name string) (PhaseDefinition, bool) {
 	definition, ok := registry.Phases[name]
 	return definition, ok
@@ -250,6 +260,8 @@ func releaseInputPaths() []string {
 	return paths
 }
 
+// PhaseSummaries returns ordered summaries of results without failure details.
+// Callers must retain failures when they need failure diagnostics.
 func PhaseSummaries(results []Result) []PhaseSummary {
 	out := make([]PhaseSummary, 0, len(results))
 	for _, result := range results {
