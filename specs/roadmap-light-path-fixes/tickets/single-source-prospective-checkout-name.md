@@ -8,6 +8,7 @@ Covers: LF21
 
 Expose one checkout child-name owner from prospectiveartifact. Make the system
 journey and package tests consume it instead of retyping the value.
+The system journey preserves the current BENCH_KIT pin for its fixture gate.
 
 ## Acceptance
 
