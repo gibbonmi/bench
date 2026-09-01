@@ -167,31 +167,44 @@ func TestClassifyNamesTheSideOfTheOperator(t *testing.T) {
 	}
 }
 
-// TestPoolCdRefusesAnAbsolutePoolTarget drives the `cd` denial. A worktree runs through
-// `bench worktree exec`, so a `cd` into the pool path is the mistake the guard names. A
-// relative target inside a wrapper string stays allowed, because the guard reads text
-// only and never resolves a path.
-func TestPoolCdRefusesAnAbsolutePoolTarget(t *testing.T) {
+// TestPoolReferenceRefusesAPoolPathOutsideTheExecVerb drives the pool denial. A worktree
+// runs through `bench worktree exec`, so a `cd`, an assignment, or a git repository
+// option that reaches the pool path is the mistake the guard names. A read of a file
+// under the pool, a pool path the `bench worktree` grammar takes, and a relative target
+// inside a wrapper string stay allowed, because the guard reads text only and never
+// resolves a path.
+func TestPoolReferenceRefusesAPoolPathOutsideTheExecVerb(t *testing.T) {
 	const pools = "/home/agent/.bench/worktrees"
 	const assignment = pools + "/bench-123/abc-def"
 	for _, tc := range []struct{ name, command, want string }{
 		{"bare cd into the pool", "cd " + assignment, assignment},
 		{"cd into the pool then a follow-on", "cd " + assignment + " && go test ./...", assignment},
+		{"assignment then git -C the variable", "W=" + assignment + "; git -C $W log", assignment},
+		{"git -C into the pool", "git -C " + assignment + " log", assignment},
+		{"git --git-dir into the pool", "git --git-dir=" + assignment + "/.git log", assignment + "/.git"},
+		{"git --work-tree into the pool", "git --work-tree " + assignment + " status", assignment},
+		{"export of the pool path", "export W=" + assignment, assignment},
+		{"env assignment of the pool path", "env W=" + assignment + " git log", assignment},
 		{"relative cd inside a wrapper string", "bench worktree exec \"x\" -- sh -c 'cd sub && go test ./...'", ""},
 		{"cd outside the pool", "cd /tmp", ""},
 		{"cd through an unexpanded variable", "cd \"$W\"", ""},
+		{"cat a file in the pool", "cat " + assignment + "/specs/x.md", ""},
+		{"sed a file in the pool", "sed -n 1,5p " + assignment + "/f", ""},
+		{"worktree release takes the pool path", "bench worktree release --request r " + assignment, ""},
+		{"worktree land takes the pool path", "bench worktree land --request r --base a --source-tip b -m m " + assignment, ""},
+		{"assignment and git -C outside the pool", "W=/tmp/x; git -C /tmp/x log", ""},
 	} {
-		if got := PoolCd(tc.command, pools); got != tc.want {
-			t.Errorf("%s: PoolCd(%q) = %q, want %q", tc.name, tc.command, got, tc.want)
+		if got := PoolReference(tc.command, pools); got != tc.want {
+			t.Errorf("%s: PoolReference(%q) = %q, want %q", tc.name, tc.command, got, tc.want)
 		}
 	}
 }
 
-// TestPoolCdMessageNamesTheTarget proves the refusal states the one command form and the
-// path it read.
-func TestPoolCdMessageNamesTheTarget(t *testing.T) {
-	const want = `BLOCKED: a Bench worktree runs through bench worktree exec "<label>" -- <command>; never cd into the pool path. target=/home/agent/.bench/worktrees/bench-123/abc-def`
-	if got := PoolCdMessage("/home/agent/.bench/worktrees/bench-123/abc-def"); got != want {
-		t.Errorf("PoolCdMessage = %q, want %q", got, want)
+// TestPoolReferenceMessageNamesTheTarget proves the refusal states the one command form
+// and the path it read.
+func TestPoolReferenceMessageNamesTheTarget(t *testing.T) {
+	const want = `BLOCKED: a Bench worktree runs through bench worktree exec "<label>" -- <command>; never cd, assign, or git -C into the pool path. target=/home/agent/.bench/worktrees/bench-123/abc-def`
+	if got := PoolReferenceMessage("/home/agent/.bench/worktrees/bench-123/abc-def"); got != want {
+		t.Errorf("PoolReferenceMessage = %q, want %q", got, want)
 	}
 }

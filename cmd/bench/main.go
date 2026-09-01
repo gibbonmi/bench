@@ -558,10 +558,10 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 		return 0
 	}
 	recordFollowOn(command)
-	// The `cd` denial runs first. A `cd` into the pool followed by a Bench call has two
-	// faults, and the `cd` is the cause the reader repairs.
-	if target := benchguard.PoolCd(command, poolkey.Pools(worktree.Home())); target != "" {
-		fmt.Fprintln(stderr, benchguard.PoolCdMessage(target))
+	// The pool denial runs first. A pool reference with a Bench call after it has two
+	// faults, and the pool reference is the cause the reader repairs.
+	if target := benchguard.PoolReference(command, poolkey.Pools(worktree.Home())); target != "" {
+		fmt.Fprintln(stderr, benchguard.PoolReferenceMessage(target))
 		return 2
 	}
 	verdict := benchguard.Classify(command, benchguard.DefaultResolver())
