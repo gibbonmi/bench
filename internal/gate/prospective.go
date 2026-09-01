@@ -28,9 +28,7 @@ var prospectiveRunBinary = runbinary.Factory{}
 func prospectiveRunBinaryOwnerAt(checkout, artifactRoot string) runBinaryOwner {
 	return func(ctx context.Context, source string) (*runbinary.Selection, error) {
 		factory := prospectiveRunBinary
-		if artifactRoot != "" {
-			factory.TempRoot = artifactRoot
-		}
+		factory.TempRoot = artifactRoot
 		if sameDirectory(source, checkout) {
 			return factory.Own(ctx, source)
 		}
