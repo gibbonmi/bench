@@ -55,6 +55,29 @@ func TestRetroRepeatedWritesPreserveEarlierCapture(t *testing.T) {
 	}
 }
 
+func TestRetroRefusesSameSlugWithoutChangingEarlierCapture(t *testing.T) {
+	root := newRepo(t)
+	if _, code := RetroCommand([]string{"repeat", "--body", retroBody}); code != 0 {
+		t.Fatalf("first retro exit = %d, want 0", code)
+	}
+	path := filepath.Join(root, retros.Path("repeat"))
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondBody := strings.Replace(retroBody, "Land the ticket.", "Preserve the first capture.", 1)
+	if _, code := RetroCommand([]string{"repeat", "--body", secondBody}); code == 0 {
+		t.Fatal("second retro exit = 0, want a refusal")
+	}
+	after, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != string(before) {
+		t.Fatalf("retrospective changed after refusal:\n got %q\nwant %q", after, before)
+	}
+}
+
 func TestRetroIgnoredDirectoryWritesToPrimaryCheckout(t *testing.T) {
 	primary := resolvedToplevel(t, newPrimaryRepo(t))
 	if err := os.WriteFile(filepath.Join(primary, ".gitignore"), []byte(retros.Directory+"/\n"), 0o644); err != nil {

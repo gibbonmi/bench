@@ -16,7 +16,7 @@ var retroGrammar = usage.Grammar{
 	MaxArgs: 1,
 }
 
-// RetroCommand validates and replaces one primary-local implementation retrospective.
+// RetroCommand validates and writes one primary-local implementation retrospective.
 func RetroCommand(args []string) (string, int) {
 	parsed, line, code := usage.Parse(retroGrammar, args)
 	if line != "" {
@@ -41,7 +41,15 @@ func RetroCommand(args []string) (string, int) {
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 		return cannotWrite(path, err), 1
 	}
-	if err := os.WriteFile(file, []byte(body), 0o644); err != nil {
+	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if err != nil {
+		return cannotWrite(path, err), 1
+	}
+	if _, err := f.Write([]byte(body)); err != nil {
+		_ = f.Close()
+		return cannotWrite(path, err), 1
+	}
+	if err := f.Close(); err != nil {
 		return cannotWrite(path, err), 1
 	}
 	return "captured: " + parsed.Positionals[0] + "\n", 0
