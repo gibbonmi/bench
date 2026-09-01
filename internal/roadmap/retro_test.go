@@ -132,3 +132,29 @@ func TestRetroRefusesSymlinkedDestinationComponents(t *testing.T) {
 		})
 	}
 }
+
+func TestRetroContainsDestinationComponentReplacement(t *testing.T) {
+	root := newRepo(t)
+	outside := t.TempDir()
+	originalOpenRoot := openRetroRoot
+	t.Cleanup(func() { openRetroRoot = originalOpenRoot })
+	openRetroRoot = func(name string) (*os.Root, error) {
+		opened, err := os.OpenRoot(name)
+		if err != nil {
+			return nil, err
+		}
+		if err := os.Symlink(outside, filepath.Join(root, "capture")); err != nil {
+			_ = opened.Close()
+			return nil, err
+		}
+		return opened, nil
+	}
+
+	out, code := RetroCommand([]string{"raced", "--body", eligibleRetro(t)})
+	if code == 0 {
+		t.Fatalf("retro after destination replacement = %q/%d, want a refusal", out, code)
+	}
+	if _, err := os.Stat(filepath.Join(outside, "retrospectives", "raced.md")); !os.IsNotExist(err) {
+		t.Fatalf("retro escaped through replaced component: %v", err)
+	}
+}
