@@ -54,12 +54,14 @@ the explore reads, the fence rules, and the review rubric.
 - A loader-derived row drives the live loader.
 - A seam that names two concurrent gate runs in one repository first checks the
   gate execution lock, because the lock refuses the second authorization.
+- A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.
 
 ## In the edge inventory
 
 - The edge inventory asks which tests swap a package variable.
 - The inventory lists each fail-closed cleanup error and each refusal beside the
   happy paths. Each one gets one red-capable row before the first review charge.
+- A kit spec names the audience each behavior serves: this repository, or every repository that links the kit. The inventory walks the absent-versus-empty pair for each directory the spec reads, because the two audiences can want different answers.
 
 ## At ticket slicing
 

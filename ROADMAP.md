@@ -39,8 +39,6 @@ means the repository-controlled compliance assessment.
 
 **FT142 (MEDIUM) — FT91 review residuals, two tracks.**
 
-**FT144 (MEDIUM) — kit specs have two audiences and the discipline names neither.**
-
 **FT158 (MEDIUM) — make cross-harness falsification standing for kit-guidance diffs.**
 
 **FT98 (MEDIUM) — one preserve-then-discard primitive; four faces.**

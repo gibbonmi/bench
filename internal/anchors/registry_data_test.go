@@ -1139,3 +1139,65 @@ func TestCommentAndReviewRuleAnchorsRedOnRemoval(t *testing.T) {
 		}
 	}
 }
+
+// TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval holds the two rules a kit
+// spec keeps missing. A kit behavior serves this repository and every linked repository,
+// and the two audiences can want different answers for one directory state. A
+// transaction-shaped spec loses its middle failure when one row covers all three. Each
+// section, needle, and diagnostic is written here independently of the registry.
+func TestMapDisciplineTwoAudienceAndTransactionAnchorsRedOnRemoval(t *testing.T) {
+	const file = ".agents/skills/bench-craft-spec/references/map-discipline.md"
+	rules := []struct{ section, needle, want string }{
+		{
+			"In the edge inventory",
+			"A kit spec names the audience each behavior serves: this repository, or every repository that links the kit. The inventory walks the absent-versus-empty pair for each directory the spec reads",
+			".agents/skills/bench-craft-spec/references/map-discipline.md In the edge inventory dropped the two-audience prompt with its absent-versus-empty directory pair",
+		},
+		{
+			"Per row",
+			"A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.",
+			".agents/skills/bench-craft-spec/references/map-discipline.md Per row dropped the three transaction verification failure rows",
+		},
+	}
+
+	// evaluate writes one minimal reference that carries every section, and every needle
+	// except the dropped one. The section survives the drop, so a red reports the missing
+	// sentence rather than a missing section.
+	evaluate := func(t *testing.T, dropped int) []string {
+		t.Helper()
+		root := t.TempDir()
+		body := "# subject\n"
+		for i, r := range rules {
+			body += "\n## " + r.section + "\n\n"
+			if i != dropped {
+				body += r.needle + "\n"
+			}
+		}
+		path := filepath.Join(root, filepath.FromSlash(file))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return EvaluateGroup(root, AfterImplementSpec)
+	}
+
+	present := evaluate(t, -1)
+	for _, r := range rules {
+		if slices.Contains(present, r.want) {
+			t.Errorf("reference carrying %q raised %q", r.needle, r.want)
+		}
+	}
+	for i, r := range rules {
+		diags := evaluate(t, i)
+		if !slices.Contains(diags, r.want) {
+			t.Errorf("reference without %q = %v, want %q", r.needle, diags, r.want)
+		}
+		for j, other := range rules {
+			if j != i && slices.Contains(diags, other.want) {
+				t.Errorf("dropping %q also raised %q", r.needle, other.want)
+			}
+		}
+	}
+}
