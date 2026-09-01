@@ -20,7 +20,7 @@ import (
 const wantSeededGateInputs = `{
   "schema": 1,
   "closure": "local",
-  "environment": ["BENCH_HOME", "HOME"],
+  "environment": ["BENCH_HOME", "BENCH_KIT", "BENCH_RUN_BINARY", "HOME"],
   "paths": [],
   "tools": ["bash", "basename", "dirname", "git", "readlink", "uname"]
 }
