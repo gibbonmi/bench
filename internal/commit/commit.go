@@ -68,6 +68,10 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	if usageErr != "" {
+		if strings.HasPrefix(usageErr, "usage: ") {
+			fmt.Fprintln(stderr, usageErr)
+			return 2
+		}
 		fmt.Fprintln(stderr, grammar.Help+" ("+usageErr+")")
 		return 2
 	}
